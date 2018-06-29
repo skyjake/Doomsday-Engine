@@ -30,23 +30,23 @@ MapManifest::MapManifest(PathTree::NodeArgs const &args)
 
 String MapManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
-    String info = String("%1").arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
-                                   ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) );
+    String info = composeUri().compose(uriCompositionFlags | de::Uri::DecodePath); //,
+                                   //( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 );
+    // FIXME: Was used for alignment?
     if (_sourceFile)
     {
-        info += String(" " _E(C) "\"%1\"" _E(.)).arg(NativePath(sourceFile()->composePath()).pretty());
+        info += String::format(" " _E(C) "\"%s\"" _E(.),
+                               NativePath(sourceFile()->composePath()).pretty().c_str());
     }
     return info;
 }
 
 String MapManifest::composeUniqueId(Game const &currentGame) const
 {
-    return String("%1|%2|%3|%4")
-              .arg(gets("id").fileNameWithoutExtension())
-              .arg(sourceFile()->name().fileNameWithoutExtension())
-              .arg(sourceFile()->hasCustom()? "pwad" : "iwad")
-              .arg(currentGame.id())
-              .toLower();
+    return (gets("id").fileNameWithoutExtension() + "|" +
+            sourceFile()->name().fileNameWithoutExtension() + "|" +
+            (sourceFile()->hasCustom() ? "pwad|" : "iwad|") + currentGame.id())
+        .lower();
 }
 
 MapManifest &MapManifest::setSourceFile(File1 *newSourceFile)
@@ -68,7 +68,7 @@ MapManifest &MapManifest::setRecognizer(Id1MapRecognizer *newRecognizer)
 
 Id1MapRecognizer const &MapManifest::recognizer() const
 {
-    DE_ASSERT(bool(_recognized));
+    DE_ASSERT(_recognized);
     return *_recognized;
 }
 

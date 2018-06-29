@@ -95,7 +95,7 @@ struct IndexEntry
         // To achieve uniformity we apply a percent encoding to the "raw" names.
         if (!normName.isEmpty())
         {
-            normName = QString(normName.toLatin1().toPercentEncoding());
+            normName = normName.toPercentEncoding();
         }
         else
         {
@@ -114,11 +114,11 @@ struct IndexEntry
     }
 };
 
-static QString Wad_invalidIndexMessage(int invalidIdx, int lastValidIdx)
+static String Wad_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
-    QString msg = QString("Invalid lump index %1 ").arg(invalidIdx);
+    String msg = String::format("Invalid lump index %i ", invalidIdx);
     if (lastValidIdx < 0) msg += "(file is empty)";
-    else                 msg += QString("(valid range: [0..%2])").arg(lastValidIdx);
+    else                  msg += String::format("(valid range: [0..%i])", lastValidIdx);
     return msg;
 }
 
@@ -137,7 +137,7 @@ String const &Wad::LumpFile::name() const
     return directoryNode().name();
 }
 
-Uri Wad::LumpFile::composeUri(QChar delimiter) const
+Uri Wad::LumpFile::composeUri(Char delimiter) const
 {
     return directoryNode().path(delimiter);
 }
@@ -176,7 +176,7 @@ Wad &Wad::LumpFile::wad() const
 DE_PIMPL_NOREF(Wad)
 {
     LumpTree entries;                     ///< Directory structure and entry records for all lumps.
-    QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
+    std::unique_ptr<LumpCache> dataCache;  ///< Data payload cache.
 
     Impl() : entries(PathTree::MultiLeaf) {}
 };
@@ -204,7 +204,7 @@ Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
         lump << *handle_;
 
         // Determine the name for this lump in the VFS.
-        String absPath = String::fromStdString(DoomsdayApp::app().doomsdayBasePath()) / lump.nameNormalized();
+        String absPath = String(DoomsdayApp::app().doomsdayBasePath()) / lump.nameNormalized();
 
         // Make an index entry for this lump.
         Entry &entry = d->entries.insert(absPath);
@@ -233,7 +233,7 @@ void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 
     if (hasLump(lumpIndex))
     {
-        if (!d->dataCache.isNull())
+        if (d->dataCache)
         {
             d->dataCache->remove(lumpIndex, retCleared);
         }
@@ -247,7 +247,7 @@ void Wad::clearCachedLump(int lumpIndex, bool *retCleared)
 void Wad::clearLumpCache()
 {
     LOG_AS("Wad::clearLumpCache");
-    if (!d->dataCache.isNull())
+    if (d->dataCache)
     {
         d->dataCache->clear();
     }
@@ -265,7 +265,7 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
             << (lumpFile.info().isCompressed()? ", compressed" : ""));
 
     // Time to create the cache?
-    if (d->dataCache.isNull())
+    if (!d->dataCache)
     {
         d->dataCache.reset(new LumpCache(LumpIndex::size()));
     }
@@ -274,7 +274,11 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
     if (data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
-    if (!region) throw Error("Wad::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
+    if (!region)
+        throw Error("Wad::cacheLump",
+                    stringf("Failed on allocation of %zu bytes for cache copy of lump #%i",
+                            lumpFile.info().size,
+                            lumpIndex));
 
     readLump(lumpIndex, region, false);
     d->dataCache->insert(lumpIndex, region);
@@ -291,7 +295,7 @@ void Wad::unlockLump(int lumpIndex)
 
     if (hasLump(lumpIndex))
     {
-        if (!d->dataCache.isNull())
+        if (d->dataCache)
         {
             d->dataCache->unlock(lumpIndex);
         }
@@ -325,7 +329,7 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     // Try to avoid a file system read by checking for a cached copy.
     if (tryCache)
     {
-        uint8_t const *data = (!d->dataCache.isNull() ? d->dataCache->data(lumpIndex) : 0);
+        uint8_t const *data = (d->dataCache ? d->dataCache->data(lumpIndex) : 0);
         LOGDEV_RES_XVERBOSE("Cache %s on #%i", (data? "hit" : "miss") << lumpIndex);
         if (data)
         {
@@ -340,7 +344,9 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
 
     /// @todo Do not check the read length here.
     if (readBytes < length)
-        throw Error("Wad::readLumpSection", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIndex));
+        throw Error(
+            "Wad::readLumpSection",
+            stringf("Only read %zu of %zu bytes of lump #%i", readBytes, length, lumpIndex));
 
     return readBytes;
 }
@@ -348,7 +354,7 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
 uint Wad::calculateCRC()
 {
     uint crc = 0;
-    foreach (File1 *file, allLumps())
+    for (File1 *file : allLumps())
     {
         Entry &entry = static_cast<Entry &>(file->as<LumpFile>().directoryNode());
         entry.update();
@@ -389,7 +395,7 @@ Wad::LumpTree const &Wad::lumpTree() const
 
 Wad::LumpFile &Wad::Entry::file() const
 {
-    DE_ASSERT(!lumpFile.isNull());
+    DE_ASSERT(lumpFile);
     return *lumpFile;
 }
 
@@ -397,10 +403,9 @@ void Wad::Entry::update()
 {
     crc = uint(file().size());
     String const lumpName = Node::name();
-    int const nameLen = lumpName.length();
-    for (int i = 0; i < nameLen; ++i)
+    for (Char ch : lumpName)
     {
-        crc += lumpName.at(i).unicode();
+        crc += uint(ch);
     }
 }
 

@@ -79,8 +79,7 @@ void MobjThinkerData::initBindings()
     ThinkerData::initBindings();
 
     // World.Thing is the class for mobjs.
-    objectNamespace().addSuperRecord(ScriptSystem::builtInClass(
-            QStringLiteral("World"), QStringLiteral("Thing")));
+    objectNamespace().addSuperRecord(ScriptSystem::builtInClass(DE_STR("World"), DE_STR("Thing")));
 
     // The ID is important because this is how the object is identified in
     // script functions (relied upon by World.Thing).

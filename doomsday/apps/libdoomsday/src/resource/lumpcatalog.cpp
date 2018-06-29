@@ -32,7 +32,7 @@ namespace res {
 DE_PIMPL(LumpCatalog)
 {
     StringList packageIds;
-    QList<const DataBundle *> bundles; /// @todo Should observe for deletion. -jk
+    List<const DataBundle *> bundles; /// @todo Should observe for deletion. -jk
 
     Impl(Public *i)
         : Base(i)
@@ -54,7 +54,7 @@ DE_PIMPL(LumpCatalog)
     {
         bundles.clear();
 
-        foreach (const auto &pkg, packageIds)
+        for (const auto &pkg : packageIds)
         {
             // The package must be available as a file.
             if (const File *file = App::packageLoader().select(pkg))
@@ -70,13 +70,12 @@ DE_PIMPL(LumpCatalog)
 
     LumpPos findLump(const String &name) const
     {
-        Block const lumpName = name.toLatin1();
         LumpPos found{nullptr, LumpDirectory::InvalidPos};
 
         // The last bundle is checked first.
         for (auto i = bundles.rbegin(); i != bundles.rend(); ++i)
         {
-            auto const pos = (*i)->lumpDirectory()->find(lumpName);
+            auto const pos = (*i)->lumpDirectory()->find(name);
             if (pos != LumpDirectory::InvalidPos)
             {
                 found = {*i, pos};
@@ -86,14 +85,14 @@ DE_PIMPL(LumpCatalog)
         return found;
     }
 
-    QList<LumpPos> findAllLumps(const String &name) const
+    List<LumpPos> findAllLumps(const String &name) const
     {
-        QList<LumpPos> found;
-        const Block lumpName = name.toLatin1();
+        List<LumpPos> found;
+//        const Block lumpName = name;
         for (auto i = bundles.rbegin(); i != bundles.rend(); ++i)
         {
             const auto *bundle = *i;
-            found += map<QList<LumpPos>>(bundle->lumpDirectory()->findAll(lumpName),
+            found += map<List<LumpPos>>(bundle->lumpDirectory()->findAll(name),
                                          [bundle](dsize pos) -> LumpPos {
                                              return {bundle, pos};
                                          });
@@ -101,9 +100,9 @@ DE_PIMPL(LumpCatalog)
         return found;
     }
 
-    QList<LumpRange> flatRanges() const
+    List<LumpRange> flatRanges() const
     {
-        QList<LumpRange> ranges;
+        List<LumpRange> ranges;
         for (auto i = bundles.rbegin(); i != bundles.rend(); ++i)
         {
             const auto flats = (*i)->lumpDirectory()->findRanges(LumpDirectory::Flats);
@@ -142,7 +141,7 @@ StringList LumpCatalog::packages() const
     return d->packageIds;
 }
 
-void LumpCatalog::setBundles(const QList<const DataBundle *> &bundles)
+void LumpCatalog::setBundles(const List<const DataBundle *> &bundles)
 {
     d->packageIds.clear();
     d->bundles = bundles;
@@ -153,12 +152,12 @@ LumpCatalog::LumpPos LumpCatalog::find(const String &lumpName) const
     return d->findLump(lumpName);
 }
 
-QList<LumpCatalog::LumpPos> LumpCatalog::findAll(const String &lumpName) const
+List<LumpCatalog::LumpPos> LumpCatalog::findAll(const String &lumpName) const
 {
     return d->findAllLumps(lumpName);
 }
 
-QList<LumpCatalog::LumpRange> LumpCatalog::flatRanges() const
+List<LumpCatalog::LumpRange> LumpCatalog::flatRanges() const
 {
     return d->flatRanges();
 }

@@ -18,6 +18,8 @@
 
 #include "doomsday/resource/idtech1util.h"
 
+#include <de/CString>
+
 namespace res {
 
 using namespace de;
@@ -84,8 +86,8 @@ void Image8::blit(const Vec2i &pos, const Image8 &img)
 String wad::nameString(const char *name, dsize maxLen)
 {
     dsize len = 0;
-    while (len < maxLen && name[len]) len++;
-    return String(name, len).toUpper();
+    while (len < maxLen && name[len]) { len++; }
+    return CString(name, name + len).upper();
 }
 
 } // namespace res

@@ -25,7 +25,6 @@
 #include "doomsday/defs/sprite.h"
 
 #include <de/types.h>
-#include <QMap>
 
 namespace res {
 
@@ -33,7 +32,7 @@ using namespace de;
 
 DE_PIMPL_NOREF(Sprites)
 {
-    QHash<spritenum_t, SpriteSet> sprites;
+    Hash<spritenum_t, SpriteSet> sprites;
 
     ~Impl()
     {
@@ -47,8 +46,8 @@ DE_PIMPL_NOREF(Sprites)
 
     SpriteSet *tryFindSpriteSet(spritenum_t id) const
     {
-        auto found = sprites.constFind(id);
-        return (found != sprites.constEnd()? const_cast<SpriteSet *>(&found.value()) : nullptr);
+        auto found = sprites.find(id);
+        return (found != sprites.end()? const_cast<SpriteSet *>(&found->second) : nullptr);
     }
 
     SpriteSet &findSpriteSet(spritenum_t id)
@@ -56,13 +55,14 @@ DE_PIMPL_NOREF(Sprites)
         if (SpriteSet *frames = tryFindSpriteSet(id)) return *frames;
         /// @throw MissingResourceError An unknown/invalid id was specified.
         throw Resources::MissingResourceError("Sprites::findSpriteSet",
-                                              "Unknown sprite id " + String::number(id));
+                                              "Unknown sprite id " + String::asText(id));
     }
 
     SpriteSet &addSpriteSet(spritenum_t id, SpriteSet const &frames)
     {
         DE_ASSERT(!tryFindSpriteSet(id));  // sanity check.
-        return sprites.insert(id, frames).value();
+        sprites.insert(id, frames);
+        return sprites[id];
     }
 };
 
@@ -82,7 +82,7 @@ Sprites::SpriteSet &Sprites::addSpriteSet(spritenum_t id, SpriteSet const &frame
 
 dint Sprites::spriteCount() const
 {
-    return d->sprites.count();
+    return d->sprites.size();
 }
 
 bool Sprites::hasSprite(spritenum_t id, dint frame) const
@@ -96,7 +96,7 @@ bool Sprites::hasSprite(spritenum_t id, dint frame) const
 
 defn::CompiledSpriteRecord &Sprites::sprite(spritenum_t id, dint frame)
 {
-    return d->findSpriteSet(id).find(frame).value();
+    return d->findSpriteSet(id).find(frame)->second;
 }
 
 defn::CompiledSpriteRecord const *Sprites::spritePtr(spritenum_t id, de::dint frame) const
@@ -104,7 +104,7 @@ defn::CompiledSpriteRecord const *Sprites::spritePtr(spritenum_t id, de::dint fr
     if (Sprites::SpriteSet const *sprSet = tryFindSpriteSet(id))
     {
         auto found = sprSet->find(frame);
-        if (found != sprSet->end()) return &found.value();
+        if (found != sprSet->end()) return &found->second;
     }
     return nullptr;
 }
@@ -127,8 +127,8 @@ struct SpriteFrameDef
 };
 
 // Tempory storage, used when reading sprite definitions.
-typedef QMultiMap<dint, SpriteFrameDef> SpriteFrameDefs;  ///< frame => frame angle def.
-typedef QHash<String, SpriteFrameDefs> SpriteDefs;        ///< sprite name => frame set.
+typedef std::multimap<dint, SpriteFrameDef> SpriteFrameDefs;  ///< frame => frame angle def.
+typedef Hash<String, SpriteFrameDefs> SpriteDefs;        ///< sprite name => frame set.
 
 /**
  * In DOOM, a sprite frame is a patch texture contained in a lump existing between
@@ -157,7 +157,7 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
     static dint const NAME_LENGTH = 4;
 
     SpriteDefs frameSets;
-    frameSets.reserve(texIndex.leafNodes().count() / 8);  // overestimate.
+//    frameSets.reserve(texIndex.leafNodes().count() / 8);  // overestimate.
 
     PathTreeIterator<res::TextureScheme::Index> iter(texIndex.leafNodes());
     while (iter.hasNext())
@@ -166,40 +166,33 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
 
         String const material   = de::Uri("Sprites", texManifest.path()).compose();
         // Decode the sprite frame descriptor.
-        String const desc       = QString(QByteArray::fromPercentEncoding(texManifest.path().toUtf8()));
+        String const desc       = String::fromPercentEncoding(texManifest.path().toString());
 
         // Find/create a new sprite frame set.
-        String const spriteName = desc.left(NAME_LENGTH).toLower();
-        SpriteFrameDefs *frames = nullptr;
-        if (frameSets.contains(spriteName))
-        {
-            frames = &frameSets.find(spriteName).value();
-        }
-        else
-        {
-            frames = &frameSets.insert(spriteName, SpriteFrameDefs()).value();
-        }
+        String const spriteName = desc.left(String::CharPos(NAME_LENGTH)).lower();
+        SpriteFrameDefs *frames = &frameSets[spriteName];
 
         // The descriptor may define either one or two frames.
         bool const haveMirror = desc.length() >= 8;
         for (dint i = 0; i < (haveMirror ? 2 : 1); ++i)
         {
-            dint const frameNumber = desc.at(NAME_LENGTH + i * 2).toUpper().unicode() - QChar('A').unicode();
-            dint const angleNumber = Sprites::toSpriteAngle(desc.at(NAME_LENGTH + i * 2 + 1));
+            const String nums = desc.mid(String::CharPos(NAME_LENGTH + i * 2), 2);
+            dint const frameNumber = towupper(nums.first()) - Char('A');
+            dint const angleNumber = Sprites::toSpriteAngle(nums.last());
 
             if (frameNumber < 0) continue;
 
             // Find/create a new frame.
             SpriteFrameDef *frame = nullptr;
             auto found = frames->find(frameNumber);
-            if (found != frames->end() && found.value().angle == angleNumber)
+            if (found != frames->end() && found->second.angle == angleNumber)
             {
-                frame = &found.value();
+                frame = &found->second;
             }
             else
             {
                 // Create a new frame.
-                frame = &frames->insert(frameNumber, SpriteFrameDef()).value();
+                frame = &frames->insert(std::make_pair(frameNumber, SpriteFrameDef()))->second;
             }
 
             // (Re)Configure the frame.
@@ -225,35 +218,35 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
  *
  * @todo Don't do this here (no need for two-stage construction). -ds
  */
-static Sprites::SpriteSet buildSprites(QMultiMap<dint, SpriteFrameDef> const &frameDefs)
+static Sprites::SpriteSet buildSprites(const std::multimap<dint, SpriteFrameDef> &frameDefs)
 {
     static de::dint const MAX_ANGLES = 16;
 
     Sprites::SpriteSet frames;
 
     // Build initial Sprites and add views.
-    for (auto it = frameDefs.constBegin(); it != frameDefs.constEnd(); ++it)
+    for (auto it = frameDefs.begin(); it != frameDefs.end(); ++it)
     {
         defn::CompiledSpriteRecord *rec = nullptr;
-        auto found = frames.find(it.key());
+        auto found = frames.find(it->first);
         if (found != frames.end())
         {
-            rec = &found.value();
+            rec = &found->second;
         }
         else
         {
-            rec = &frames[it.key()];
+            rec = &frames[it->first];
             defn::Sprite(*rec).resetToDefaults();
         }
 
-        SpriteFrameDef const &def = it.value();
+        SpriteFrameDef const &def = it->second;
         defn::Sprite(*rec).addView(def.material, def.angle, def.mirrored);
     }
 
     // Duplicate views to complete angle sets (if defined).
-    for (defn::CompiledSpriteRecord &rec : frames)
+    for (const auto &fit : frames)
     {
-        defn::Sprite sprite(rec);
+        defn::Sprite sprite(fit.second);
 
         if (sprite.viewCount() < 2)
             continue;
@@ -289,10 +282,10 @@ void Sprites::initSprites()
     /// @todo It should no longer be necessary to split this into two phases -ds
     dint customIdx = 0;
     SpriteDefs spriteDefs = buildSpriteFramesFromTextures(res::Textures::get().textureScheme("Sprites").index());
-    for (auto it = spriteDefs.constBegin(); it != spriteDefs.constEnd(); ++it)
+    for (auto it = spriteDefs.begin(); it != spriteDefs.end(); ++it)
     {
         // Lookup the id for the named sprite.
-        spritenum_t id = DED_Definitions()->getSpriteNum(it.key());
+        spritenum_t id = DED_Definitions()->getSpriteNum(it->first);
         if (id == -1)
         {
             // Assign a new id from the end of the range.
@@ -300,7 +293,7 @@ void Sprites::initSprites()
         }
 
         // Build a Sprite (frame) set from these definitions.
-        addSpriteSet(id, buildSprites(it.value()));
+        addSpriteSet(id, buildSprites(it->second));
     }
 
     // We're done with the definitions.
@@ -309,18 +302,18 @@ void Sprites::initSprites()
     LOG_RES_VERBOSE("Sprites built in %.2f seconds") << begunAt.since();
 }
 
-dint Sprites::toSpriteAngle(QChar angleCode) // static
+dint Sprites::toSpriteAngle(Char angleCode) // static
 {
     static dint const MAX_ANGLES = 16;
 
     dint angle = -1; // Unknown.
-    if (angleCode.isDigit())
+    if (iswdigit(angleCode))
     {
-        angle = angleCode.digitValue();
+        angle = angleCode - '0';
     }
-    else if (angleCode.isLetter())
+    else if (iswalpha(angleCode))
     {
-        char charCodeLatin1 = angleCode.toUpper().toLatin1();
+        Char charCodeLatin1 = towupper(angleCode);
         if (charCodeLatin1 >= 'A')
         {
             angle = charCodeLatin1 - 'A' + 10;
@@ -342,15 +335,15 @@ dint Sprites::toSpriteAngle(QChar angleCode) // static
     }
 }
 
-bool Sprites::isValidSpriteName(String name) // static
+bool Sprites::isValidSpriteName(const String& name) // static
 {
     if (name.length() < 6) return false;
 
     // Character at position 5 is a view (angle) index.
-    if (toSpriteAngle(name.at(5)) < 0) return false;
+    if (toSpriteAngle(name.at(String::CharPos(5))) < 0) return false;
 
     // If defined, the character at position 7 is also a rotation number.
-    return (name.length() <= 7 || toSpriteAngle(name.at(7)) >= 0);
+    return (name.length() <= 7 || toSpriteAngle(name.at(String::CharPos(7))) >= 0);
 }
 
 Sprites &Sprites::get() // static

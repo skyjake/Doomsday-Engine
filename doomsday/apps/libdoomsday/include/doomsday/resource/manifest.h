@@ -56,7 +56,7 @@ public:
      *
      * @param newIdentityKey  New identity key (e.g., a lump/file name).
      */
-    void addIdentityKey(de::String newIdentityKey);
+    void addIdentityKey(const de::String& newIdentityKey);
 
     /**
      * Returns a list of known-names for the associated resource.

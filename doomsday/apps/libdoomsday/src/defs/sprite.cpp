@@ -53,7 +53,7 @@ CompiledSprite::CompiledSprite(Record const &spriteDef)
         ++viewCount;
 
         int angle = iter->first.value->asInt();
-        if (views.size() <= angle) views.resize(angle + 1);
+        if (views.sizei() <= angle) views.resize(angle + 1);
 
         Record const &viewDef = iter->second->as<RecordValue>().dereference();
         auto &view = views[angle];
@@ -126,7 +126,7 @@ bool Sprite::hasView(dint angle) const
 
     //return viewsDict().contains(NumberValue(angle));
 
-    return (angle < cmpl.views.size() && !cmpl.views.at(angle).uri.isEmpty());
+    return (angle < cmpl.views.sizei() && !cmpl.views.at(angle).uri.isEmpty());
 
     /*for (Value const *val : geta("views").elements())
     {
@@ -178,7 +178,7 @@ Sprite::View Sprite::view(de::dint angle) const
     if (cmpl.frontOnly) angle = 0;
 
     View v;
-    if (angle < cmpl.views.size())
+    if (angle < cmpl.views.sizei())
     {
         v.material = &cmpl.views.at(angle).uri;
         v.mirrorX  = cmpl.views.at(angle).mirrorX;
@@ -194,7 +194,7 @@ Sprite::View Sprite::view(de::dint angle) const
 de::Uri const &Sprite::viewMaterial(de::dint angle) const
 {
     auto const &cmpl = def().compiled();
-    if (angle < cmpl.views.size())
+    if (angle < cmpl.views.sizei())
     {
         return cmpl.views.at(angle).uri;
     }

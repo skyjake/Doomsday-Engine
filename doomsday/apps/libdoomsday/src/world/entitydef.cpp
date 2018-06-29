@@ -98,7 +98,7 @@ AutoStr *P_NameForMapEntityDef(MapEntityDef const *def)
             return LoopContinue;
         });
     }
-    return AutoStr_FromText(name.toUtf8().constData());
+    return AutoStr_FromText(name);
 }
 
 int MapEntityDef_Property(MapEntityDef *def, int propertyId,
@@ -129,7 +129,7 @@ int MapEntityDef_PropertyByName(MapEntityDef *def, char const *propertyName,
         for (uint i = 0; i < def->numProps; ++i)
         {
             MapEntityPropertyDef *prop = def->props + i;
-            if (!qstricmp(prop->name, propertyName))
+            if (!iCmpStrCase(prop->name, propertyName))
             {
                 found = prop;
                 break;

@@ -20,7 +20,7 @@
 #include "doomsday/resource/colorpalettes.h"
 #include "doomsday/resource/resources.h"
 
-#include <QMap>
+#include <de/Map>
 
 using namespace de;
 
@@ -28,10 +28,10 @@ namespace res {
 
 DE_PIMPL_NOREF(ColorPalettes)
 {
-    typedef QMap<Id::Type, ColorPalette *> ColorPalettes;
+    typedef Map<Id::Type, ColorPalette *> ColorPalettes;
     ColorPalettes colorPalettes; // owned
 
-    typedef QMap<String, ColorPalette *> ColorPaletteNames;
+    typedef Map<String, ColorPalette *> ColorPaletteNames;
     ColorPaletteNames colorPaletteNames;
 
     Id defaultColorPalette { Id::None };
@@ -43,7 +43,7 @@ DE_PIMPL_NOREF(ColorPalettes)
 
     void clear()
     {
-        qDeleteAll(colorPalettes);
+        colorPalettes.deleteAll();
         colorPalettes.clear();
         colorPaletteNames.clear();
 
@@ -66,13 +66,13 @@ void ColorPalettes::clearAllColorPalettes()
 
 dint ColorPalettes::colorPaletteCount() const
 {
-    return d->colorPalettes.count();
+    return dint(d->colorPalettes.size());
 }
 
 ColorPalette &ColorPalettes::colorPalette(Id const &id) const
 {
     auto found = d->colorPalettes.find(id.isNone()? d->defaultColorPalette : id);
-    if (found != d->colorPalettes.end()) return *found.value();
+    if (found != d->colorPalettes.end()) return *found->second;
     /// @throw MissingResourceError An unknown/invalid id was specified.
     throw Resources::MissingResourceError("ColorPalettes::colorPalette",
                                           "Invalid ID " + id.asText());
@@ -80,23 +80,22 @@ ColorPalette &ColorPalettes::colorPalette(Id const &id) const
 
 String ColorPalettes::colorPaletteName(ColorPalette &palette) const
 {
-    QList<String> const names = d->colorPaletteNames.keys(&palette);
-    if (!names.isEmpty())
+    for (auto &i : d->colorPaletteNames)
     {
-        return names.first();
+        if (i.second == &palette) return i.first;
     }
-    return String();
+    return {};
 }
 
-bool ColorPalettes::hasColorPalette(String name) const
+bool ColorPalettes::hasColorPalette(const String& name) const
 {
     return d->colorPaletteNames.contains(name);
 }
 
-ColorPalette &ColorPalettes::colorPalette(String name) const
+ColorPalette &ColorPalettes::colorPalette(const String& name) const
 {
     auto found = d->colorPaletteNames.find(name);
-    if (found != d->colorPaletteNames.end()) return *found.value();
+    if (found != d->colorPaletteNames.end()) return *found->second;
     /// @throw MissingResourceError An unknown name was specified.
     throw Resources::MissingResourceError("ColorPalettes::colorPalette", "Unknown name '" + name + "'");
 }
@@ -115,7 +114,7 @@ void ColorPalettes::addColorPalette(ColorPalette &newPalette, String const &name
     }
 
     // If this is the first palette automatically set it as the default.
-    if (d->colorPalettes.count() == 1)
+    if (d->colorPalettes.size() == 1)
     {
         d->defaultColorPalette = newPalette.id();
     }

@@ -57,14 +57,14 @@ public:
     /**
      * Returns @c true iff a ColorPalette with the specified @a name is present.
      */
-    bool hasColorPalette(de::String name) const;
+    bool hasColorPalette(const de::String& name) const;
 
     /**
      * Returns the ColorPalette associated with @a name.
      *
      * @see hasColorPalette()
      */
-    ColorPalette &colorPalette(de::String name) const;
+    ColorPalette &colorPalette(const de::String& name) const;
 
     /**
      * @param newPalette  Color palette to add. Ownership of the palette is given

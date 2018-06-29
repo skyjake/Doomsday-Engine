@@ -28,11 +28,12 @@
 #include <de/Process>
 #include <de/String>
 #include <de/TextValue>
-#include <QMap>
+#include <de/Map>
 
 using namespace de;
 
-static QMap<String, acfnptr_t> s_actions; ///< name => native function pointer.
+using ActionMap = Map<String, acfnptr_t, String::InsensitiveLessThan>;  ///< name => native function pointer.
+static ActionMap actions;
 static String s_currentAction;
 
 static void C_DECL A_DoomsdayScript(void *actor)
@@ -81,7 +82,7 @@ static bool isScriptAction(const String &name)
 
 void P_GetGameActions()
 {
-    s_actions.clear();
+    actions.clear();
 
     // Action links are provided by the game (which owns the actual action functions).
     if (auto getVar = DoomsdayApp::plugins().gameExports().GetPointer)
@@ -89,7 +90,7 @@ void P_GetGameActions()
         auto const *links = (actionlink_t const *) getVar(DD_ACTION_LINK);
         for (actionlink_t const *link = links; link && link->name; link++)
         {
-            s_actions.insert(String(link->name).toLower(), link->func);
+            actions.insert(String(link->name).lower(), link->func);
         }
     }
 }
@@ -107,13 +108,14 @@ void P_SetCurrentActionState(int state)
 acfnptr_t P_GetAction(const String &name)
 {
     if (!name.isEmpty())
+        auto found = actions.find(name);
     {
         if (isScriptAction(name))
         {
             return de::function_cast<acfnptr_t>(A_DoomsdayScript);
         }
-        auto found = s_actions.find(name.toLower());
-        if (found != s_actions.end()) return found.value();
+        auto found = actions.find(name);
+        if (found != actions.end()) return found->second;
     }
     return nullptr;  // Not found.
 }

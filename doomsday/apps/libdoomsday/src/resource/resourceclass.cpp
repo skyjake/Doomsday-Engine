@@ -36,7 +36,7 @@ DE_PIMPL_NOREF(ResourceClass)
 
     ~Impl()
     {
-        qDeleteAll(fileTypes);
+        deleteAll(fileTypes);
     }
 };
 

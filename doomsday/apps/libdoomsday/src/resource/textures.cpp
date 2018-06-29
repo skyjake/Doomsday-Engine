@@ -35,10 +35,10 @@ using namespace de;
 
 namespace res {
 
-uint qHash(TextureSchemeHashKey const &key)
-{
-    return key.scheme.at(2).toLower().unicode();
-}
+//uint qHash(TextureSchemeHashKey const &key)
+//{
+//    return key.scheme.at(2).toLower().unicode();
+//}
 
 DE_PIMPL(Textures)
 , DE_OBSERVES(TextureScheme,   ManifestDefined)
@@ -46,7 +46,7 @@ DE_PIMPL(Textures)
 , DE_OBSERVES(Texture,         Deletion)
 {
     TextureSchemes textureSchemes;
-    QVector<TextureScheme *> textureSchemeCreationOrder;
+    List<TextureScheme *> textureSchemeCreationOrder;
     Composite::ArchiveFormat compositeFormat = Composite::DoomFormat;
 
     /// All texture instances in the system (from all schemes).
@@ -87,22 +87,22 @@ DE_PIMPL(Textures)
 
     void clearTextureManifests()
     {
-        qDeleteAll(textureSchemes);
+        textureSchemes.deleteAll();
         textureSchemes.clear();
         textureSchemeCreationOrder.clear();
     }
 
     void clearAllTextureSchemes()
     {
-        foreach (TextureScheme *scheme, textureSchemes)
+        for (const auto &scheme : textureSchemes)
         {
-            scheme->clear();
+            scheme.second->clear();
         }
     }
 
     void createTextureScheme(String const &name)
     {
-        DE_ASSERT(name.length() >= TextureScheme::min_name_length);
+        DE_ASSERT(name.size() >= TextureScheme::min_name_length);
 
         // Create a new scheme.
         TextureScheme *newScheme = new TextureScheme(name);
@@ -135,9 +135,9 @@ DE_PIMPL(Textures)
 
 //- Texture Initialization --------------------------------------------------------------
 
-    static QVector<File1 *> collectPatchCompositeDefinitionFiles()
+    static List<File1 *> collectPatchCompositeDefinitionFiles()
     {
-        QVector<File1 *> result;
+        List<File1 *> result;
 
         // Precedence order of definitions is defined by id tech1 which processes
         // the TEXTURE1/2 lumps in the following order:
@@ -179,8 +179,8 @@ DE_PIMPL(Textures)
         return result;
     }
 
-    typedef QVector<Composite *> Composites;
-    typedef QVector<PatchName>   PatchNames;
+    typedef List<Composite *> Composites;
+    typedef List<PatchName>   PatchNames;
 
     static PatchNames readPatchNames(File1 &file)
     {
@@ -258,7 +258,7 @@ DE_PIMPL(Textures)
         reader >> definitionCount;
 
         // Next is directory of offsets to the definitions.
-        typedef QMap<dint32, int> Offsets;
+        typedef Map<dint32, int> Offsets;
         Offsets offsets;
         for (int i = 0; i < definitionCount; ++i)
         {
@@ -281,11 +281,11 @@ DE_PIMPL(Textures)
         DE_FOR_EACH_CONST(Offsets, i, offsets)
         {
             // Read the next definition.
-            reader.setOffset(i.key());
+            reader.setOffset(i->first);
             Composite *def = Composite::constructFrom(reader, patchNames, format);
 
             // Attribute the "original index".
-            def->setOrigIndex(i.value());
+            def->setOrigIndex(i->second);
 
             // If the composite contains at least one known component image it is
             // considered valid and we will therefore produce a Texture for it.
@@ -314,7 +314,7 @@ DE_PIMPL(Textures)
     {
         LOG_AS("loadCompositeTextureDefs");
 
-        typedef QMultiMap<String, Composite *> CompositeTextureMap;
+        typedef std::multimap<String, Composite *> CompositeTextureMap;
 
         // Load the patch names from the PNAMES lump.
         PatchNames pnames;

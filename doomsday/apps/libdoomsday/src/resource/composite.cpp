@@ -24,8 +24,8 @@
 #include "doomsday/resource/patch.h"
 #include "doomsday/resource/patchname.h"
 
-#include <QList>
-#include <QRect>
+#include <de/List>
+#include <de/Rectangle>
 #include <de/ByteRefArray>
 #include <de/String>
 #include <de/Reader>
@@ -45,7 +45,7 @@ static String readAndPercentEncodeRawName(de::Reader &from)
 
     // WAD format allows characters not typically permitted in native paths.
     // To achieve uniformity we apply a percent encoding to the "raw" names.
-    return QString(QByteArray(asciiName).toPercentEncoding());
+    return String(asciiName).toPercentEncoding();
 }
 
 } // namespace internal
@@ -148,12 +148,12 @@ Composite::Components const &Composite::components() const
     return d->components;
 }
 
-Composite::Flags Composite::flags() const
+Flags Composite::flags() const
 {
     return d->flags;
 }
 
-void Composite::setFlags(Composite::Flags flagsToChange, FlagOp operation)
+void Composite::setFlags(Flags flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
@@ -169,7 +169,7 @@ void Composite::setOrigIndex(int newIndex)
 }
 
 Composite *Composite::constructFrom(de::Reader &reader,
-                                    QVector<PatchName> const &patchNames,
+                                    List<PatchName> const &patchNames,
                                     ArchiveFormat format)
 {
     Composite *pctex = new Composite;
@@ -208,8 +208,8 @@ Composite *Composite::constructFrom(de::Reader &reader,
     dint16 componentCount;
     reader >> componentCount;
 
-    QRect geom(QPoint(0, 0), QSize(pctex->d->logicalDimensions.x,
-                                   pctex->d->logicalDimensions.y));
+    Rectanglei geom(Vec2i(0, 0),
+                    Vec2i(pctex->d->logicalDimensions.x, pctex->d->logicalDimensions.y));
 
     int foundComponentCount = 0;
     for (dint16 i = 0; i < componentCount; ++i)
@@ -252,8 +252,8 @@ Composite *Composite::constructFrom(de::Reader &reader,
                     try
                     {
                         auto info = res::Patch::loadMetadata(fileData);
-                        geom |= QRect(QPoint(comp.origin().x, comp.origin().y),
-                                      QSize(info.dimensions.x, info.dimensions.y));
+                        geom |= Rectanglei::fromSize(Vec2i(comp.origin().x, comp.origin().y),
+                                                     Vec2ui(info.dimensions.x, info.dimensions.y));
                     }
                     catch (IByteArray::OffsetError const &)
                     {
@@ -281,8 +281,8 @@ Composite *Composite::constructFrom(de::Reader &reader,
     }
 
     // Clip and apply the final height.
-    if (geom.top()  < 0) geom.setTop(0);
-    if (geom.height() > int(pctex->d->logicalDimensions.y))
+    if (geom.top() < 0) geom.topLeft.y = 0;
+    if (geom.height() > pctex->d->logicalDimensions.y)
     {
         pctex->d->dimensions.y = geom.height();
     }

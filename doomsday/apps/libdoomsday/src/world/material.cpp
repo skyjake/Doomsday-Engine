@@ -28,8 +28,6 @@
 #include "doomsday/world/detailtexturemateriallayer.h"
 #include "doomsday/world/shinetexturemateriallayer.h"
 
-#include <QFlag>
-#include <QtAlgorithms>
 #include <de/Log>
 
 using namespace de;
@@ -38,7 +36,7 @@ namespace world {
 
 Material::Layer::~Layer()
 {
-    qDeleteAll(_stages);
+    deleteAll(_stages);
 }
 
 Material::Layer::Stage &Material::Layer::stage(int index) const
@@ -65,10 +63,10 @@ String Material::Layer::describe() const
 String Material::Layer::description() const
 {
     int const numStages = stageCount();
-    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
+    String str = _E(b) + describe() + _E(.) + " (" + String::asText(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {
-        str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
+        str += String::format("\n  [%2i] ", i) + _E(>) + stage(i).description() + _E(<);
     }
     return str;
 }
@@ -86,7 +84,7 @@ DE_PIMPL(Material)
 
     ~Impl()
     {
-        qDeleteAll(self()._layers);
+        deleteAll(self()._layers);
         //self().clearAllLayers();
     }
 
@@ -251,7 +249,7 @@ void Material::clearAllLayers()
 {
     d->maybeCancelTextureDimensionsChangeNotification();
 
-    qDeleteAll(_layers);
+    deleteAll(_layers);
     _layers.clear();
 }
 
@@ -322,7 +320,7 @@ int Material::property(DmuArgs &args) const
     switch (args.prop)
     {
     case DMU_FLAGS: {
-        short f = _flags;
+        short f = short(_flags);
         args.setValue(DMT_MATERIAL_FLAGS, &f, 0);
         break; }
 

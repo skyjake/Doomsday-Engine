@@ -20,8 +20,8 @@
 
 #include "doomsday/resource/patch.h"
 
-#include <QList>
-#include <QRect>
+#include <de/List>
+#include <de/Rectangle>
 #include <de/libcore.h>
 #include <de/Log>
 #include <de/math.h>
@@ -71,12 +71,12 @@ struct Post : public IReadable
 };
 
 /// A @em Column is a list of 0 or more posts.
-typedef QList<Post> Posts;
+typedef List<Post> Posts;
 typedef Posts Column;
-typedef QList<Column> Columns;
+typedef List<Column> Columns;
 
 /// Offsets to columns from the start of the source data.
-typedef QList<dint32> ColumnOffsets;
+typedef List<dint32> ColumnOffsets;
 
 /**
  * Attempt to read another @a post from the @a reader.
@@ -157,7 +157,7 @@ static inline Columns readColumns(int width, Reader &reader)
  */
 static int calcRealHeight(Columns const &columns)
 {
-    QRect geom(QPoint(0, 0), QSize(1, 0));
+    auto geom = Rectanglei::fromSize(Vec2ui(1, 0));
 
     DE_FOR_EACH_CONST(Columns, colIt, columns)
     {
@@ -177,16 +177,18 @@ static int calcRealHeight(Columns const &columns)
             if (post.length <= 0) continue;
 
             // Unite the geometry of the post.
-            geom |= QRect(QPoint(0, tallTop), QSize(1, post.length));
+            geom |= Rectanglei::fromSize(Vec2i(0, tallTop), Vec2ui(1, post.length));
         }
     }
 
     return geom.height();
 }
 
-static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatTable,
-                            Columns const &columns, Patch::Metadata const &meta,
-                            Patch::Flags flags)
+static Block compositeImage(Reader &                       reader,
+                            ColorPaletteTranslation const *xlatTable,
+                            Columns const &                columns,
+                            Patch::Metadata const &        meta,
+                            Flags                          flags)
 {
     bool const maskZero                = flags.testFlag(Patch::MaskZero);
     bool const clipToLogicalDimensions = flags.testFlag(Patch::ClipToLogicalDimensions);
@@ -215,7 +217,8 @@ static Block compositeImage(Reader &reader, ColorPaletteTranslation const *xlatT
     size_t const pels = w * h;
 
     // Create the output buffer and fill with default color (black) and alpha (transparent).
-    Block output = QByteArray(2 * pels, 0);
+    Block output{2 * pels};
+    output.fill(0);
 
     // Map the pixel color channels in the output buffer.
     dbyte *top      = output.data();

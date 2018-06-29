@@ -38,11 +38,11 @@ DE_PIMPL(TextureScheme)
 
     /// LUT which translates scheme-unique-ids to their associated manifest (if any).
     /// Index with uniqueId - uniqueIdBase.
-    QList<TextureManifest *> uniqueIdLut;
+    List<TextureManifest *> uniqueIdLut;
     bool uniqueIdLutDirty;
     int uniqueIdBase;
 
-    Impl(Public *i, String symbolicName) : Base(i),
+    Impl(Public *i, const String &symbolicName) : Base(i),
         name(symbolicName),
         uniqueIdLut(),
         uniqueIdLutDirty(false),
@@ -188,9 +188,12 @@ String const &TextureScheme::name() const
     return d->name;
 }
 
-TextureManifest &TextureScheme::declare(Path const &path,
-    Texture::Flags flags, Vec2ui const &dimensions, Vec2i const &origin,
-    int uniqueId, de::Uri const *resourceUri)
+TextureManifest &TextureScheme::declare(Path const &   path,
+                                        Flags          flags,
+                                        Vec2ui const & dimensions,
+                                        Vec2i const &  origin,
+                                        int            uniqueId,
+                                        de::Uri const *resourceUri)
 {
     LOG_AS("TextureScheme::declare");
 
@@ -331,7 +334,7 @@ TextureManifest const &TextureScheme::findByUniqueId(int uniqueId) const
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
     throw NotFoundError("TextureScheme::findByUniqueId",
-                        "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
+                        "No manifest found with a unique ID matching \"" + String::asText(uniqueId) + "\"");
 }
 
 TextureManifest &TextureScheme::findByUniqueId(int uniqueId)

@@ -683,7 +683,7 @@ bool FS1::checkFileId(de::Uri const &path)
 
     // Calculate the identifier.
     FileId fileId = FileId::fromPath(path.compose());
-    FileIds::iterator place = qLowerBound(d->fileIds.begin(), d->fileIds.end(), fileId);
+    FileIds::iterator place = std::lower_bound(d->fileIds.begin(), d->fileIds.end(), fileId);
     if (place != d->fileIds.end() && *place == fileId) return false;
 
     LOGDEV_RES_XVERBOSE_DEBUGONLY("checkFileId \"%s\" => %s", fileId.path() << fileId); /* path() is debug-only */
@@ -912,7 +912,7 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
         FileTypes const &fileTypes = DD_FileTypes();
         DE_FOR_EACH_CONST(FileTypes, i, fileTypes)
         {
-            if (NativeFileType const *fileType = dynamic_cast<NativeFileType const *>(*i))
+            if (NativeFileType const *fileType = dynamic_cast<NativeFileType const *>(i->second))
             {
                 // Already tried this?
                 if (fileType == &ftypeGuess) continue;
@@ -1083,7 +1083,7 @@ void FS1::printDirectory(Path path)
     PathList found;
     if (findAllPaths(path, 0, found))
     {
-        qSort(found.begin(), found.end());
+        found.sort();
 
         DE_FOR_EACH_CONST(PathList, i, found)
         {
@@ -1164,7 +1164,7 @@ D_CMD(ListLumps)
 
     LumpIndex const &lumpIndex = App_FileSystem().nameIndex();
     int const numRecords       = lumpIndex.size();
-    int const numIndexDigits   = de::max(3, M_NumDigits(numRecords));
+//    int const numIndexDigits   = de::max(3, M_NumDigits(numRecords));
 
     LOG_RES_MSG("LumpIndex %p (%i records):") << &lumpIndex << numRecords;
 
@@ -1175,12 +1175,12 @@ D_CMD(ListLumps)
         String containerPath  = NativePath(lump.container().composePath()).pretty();
         String lumpPath       = NativePath(lump.composePath()).pretty();
 
-        LOG_RES_MSG(String("%1 - \"%2:%3\" (size: %4 bytes%5)")
-                        .arg(idx++, numIndexDigits, 10, QChar('0'))
-                        .arg(containerPath)
-                        .arg(lumpPath)
-                        .arg(lump.info().size)
-                        .arg(lump.info().isCompressed()? " compressed" : ""));
+        LOG_RES_MSG(String::format("%04s - \"%s:%s\" (size: %zu bytes%s)",
+                                   idx++,
+                                   containerPath.c_str(),
+                                   lumpPath.c_str(),
+                                   lump.info().size,
+                                   lump.info().isCompressed() ? " compressed" : ""));
     }
     LOG_RES_MSG("---End of lumps---");
 
@@ -1219,7 +1219,7 @@ D_CMD(ListFiles)
                     << NativePath(file.composePath()).pretty()
                     << fileCount << (fileCount != 1 ? "files" : "file")
                     << (file.hasStartup()? ", startup" : "")
-                    << (crc? QString(" [%1]").arg(crc, 0, 16) : "");
+                    << (crc? String::format(" [%x]", crc).c_str() : "");
 
             totalFiles += fileCount;
             ++totalPackages;

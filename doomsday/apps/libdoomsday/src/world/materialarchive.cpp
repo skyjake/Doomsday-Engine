@@ -44,7 +44,7 @@ static String readArchivedPath(reader_s &reader)
 {
     char _path[9];
     Reader_Read(&reader, _path, 8); _path[8] = 0;
-    return QString(QByteArray(_path, qstrlen(_path)).toPercentEncoding());
+    return String(_path).toPercentEncoding();
 }
 
 static void readArchivedUri(de::Uri &uri, int version, reader_s &reader)
@@ -65,7 +65,7 @@ static void readArchivedUri(de::Uri &uri, int version, reader_s &reader)
     {
         // An unencoded textual URI.
         ddstring_t *_uri = Str_NewFromReader(&reader);
-        uri.setUri(QString(QByteArray(Str_Text(_uri), Str_Length(_uri)).toPercentEncoding()), RC_NULL);
+        uri.setUri(String(Str_Text(_uri)).toPercentEncoding(), RC_NULL);
         Str_Delete(_uri);
     }
     else // ver 1
@@ -82,7 +82,7 @@ static void readArchivedUri(de::Uri &uri, int version, reader_s &reader)
         case 2: uri.setScheme("Sprites");  break;
         case 3: uri.setScheme("System");   break;
         default:
-            throw Error("readArchiveUri", QString("Unknown old-scheme id #%1, expected [0..3)").arg(oldSchemeId));
+            throw Error("readArchiveUri", stringf("Unknown old-scheme id #%i, expected [0..3)", oldSchemeId));
         }
     }
 }
@@ -145,9 +145,10 @@ DE_PIMPL(MaterialArchive)
         int i = Reader_ReadUInt32(&reader);
         if (i != seg)
         {
-            throw MaterialArchive::ReadError("MaterialArchive::assertSegment",
-                                             QString("Expected ASEG_MATERIAL_ARCHIVE (%1), but got %2")
-                                                 .arg(ASEG_MATERIAL_ARCHIVE).arg(i));
+            throw MaterialArchive::ReadError(
+                "MaterialArchive::assertSegment",
+                stringf("Expected ASEG_MATERIAL_ARCHIVE (%i), but got %i",
+                        ASEG_MATERIAL_ARCHIVE, i));
         }
     }
 
@@ -254,7 +255,7 @@ world::Material *MaterialArchive::find(materialarchive_serialid_t serialId, int 
     {
         // The special case "unknown" material?
         de::Uri uri(d->records.stringRef(serialId), RC_NULL);
-        if (!uri.path().toStringRef().compareWithoutCase(UNKNOWN_MATERIALNAME))
+        if (!uri.path().toString().compareWithoutCase(UNKNOWN_MATERIALNAME))
             return 0;
     }
 

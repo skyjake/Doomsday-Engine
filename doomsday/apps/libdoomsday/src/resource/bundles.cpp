@@ -27,9 +27,7 @@
 #include <de/LinkFile>
 #include <de/Loop>
 #include <de/TaskPool>
-
-#include <QList>
-#include <QSet>
+#include <de/RegExp>
 
 using namespace de;
 
@@ -46,9 +44,9 @@ DE_PIMPL(Bundles)
 {
     String defPath;
     de::Info identityRegistry;
-    QSet<DataBundle const *> bundlesToIdentify; // lock for access
+    Set<DataBundle const *> bundlesToIdentify; // lock for access
     LoopCallback mainCall;
-    QHash<DataBundle::Format, BlockElements> formatEntries;
+    Hash<int /*DataBundle::Format*/, BlockElements> formatEntries;
     TaskPool tasks;
 
     Impl(Public * i, String const &bundleDefPath)
@@ -151,13 +149,13 @@ DE_PIMPL(Bundles)
             }
 
             Info::BlockElement &block = elem->as<Info::BlockElement>();
-            if (block.blockType() != QStringLiteral("package"))
+            if (block.blockType() != DE_STR("package"))
             {
                 // Not sure what this is...
                 continue;
             }
 
-            String format = block.keyValue(QStringLiteral("format")).text.toLower();
+            String format = block.keyValue(DE_STR("format")).text.lower();
 
             DataBundle::Format bundleFormat =
                     (format == "iwad"? DataBundle::Iwad :
@@ -251,7 +249,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         int score = 0;
 
         // Match the file name.
-        if (auto const *fileName = def->find(QStringLiteral("fileName")))
+        if (auto const *fileName = def->find(DE_STR("fileName")))
         {
             if (fileName->isKey() &&
                 fileName->as<Info::KeyElement>().value()
@@ -274,17 +272,17 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         }
 
         // Match the file type.
-        String fileType = def->keyValue(QStringLiteral("fileType"));
+        String fileType = def->keyValue(DE_STR("fileType"));
         if (fileType.isEmpty()) fileType = "file"; // prefer files by default
-        if ((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Type::File) ||
-            (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Type::Folder))
+        if ((!fileType.compareWithoutCase(DE_STR("file"))   && source.status().type() == File::Type::File) ||
+            (!fileType.compareWithoutCase(DE_STR("folder")) && source.status().type() == File::Type::Folder))
         {
             ++score;
         }
 
         // Match the file size.
-        String fileSize = def->keyValue(QStringLiteral("fileSize"));
-        if (!fileSize.isEmpty() && fileSize.toUInt() == source.size())
+        String fileSize = def->keyValue(DE_STR("fileSize"));
+        if (!fileSize.isEmpty() && fileSize.toUInt32() == source.size())
         {
             ++score;
         }
@@ -295,10 +293,10 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         if (bundle.format() == DataBundle::Iwad ||
             bundle.format() == DataBundle::Pwad)
         {
-            String lumpDirCRC32 = def->keyValue(QStringLiteral("lumpDirCRC32"));
+            String lumpDirCRC32 = def->keyValue(DE_STR("lumpDirCRC32"));
             if (!lumpDirCRC32.isEmpty())
             {
-                if (lumpDirCRC32.toUInt(nullptr, 16) == bundle.lumpDirectory()->crc32())
+                if (lumpDirCRC32.toUInt32(nullptr, 16) == bundle.lumpDirectory()->crc32())
                 {
                     // Low probability of a false negative => more significant.
                     score += 2;
@@ -309,24 +307,25 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
                 }
             }
 
-            if (auto const *lumps = maybeAs<Info::ListElement>(def->find(QStringLiteral("lumps"))))
+            if (auto const *lumps = maybeAs<Info::ListElement>(def->find(DE_STR("lumps"))))
             {
                 ++score; // will be subtracted if not matched
 
                 for (auto const &val : lumps->values())
                 {
-                    QRegExp const sizeCondition("(.*)==([0-9]+)");
+                    static const RegExp sizeCondition("(.*)==([0-9]+)");
+
                     Block lumpName;
                     int requiredSize = 0;
-
-                    if (sizeCondition.exactMatch(val))
+                    RegExpMatch match;
+                    if (sizeCondition.exactMatch(val, match))
                     {
-                        lumpName     = sizeCondition.cap(1).toUtf8();
-                        requiredSize = sizeCondition.cap(2).toInt();
+                        lumpName     = match.captured(1);
+                        requiredSize = match.captured(2).toInt();
                     }
                     else
                     {
-                        lumpName     = val.text.toUtf8();
+                        lumpName     = val.text;
                         requiredSize = -1;
                     }
 

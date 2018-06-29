@@ -22,6 +22,7 @@
 
 #include <de/Log>
 #include <de/Range>
+#include <de/Map>
 #include <de/reader.h>
 #include <de/mathutil.h>
 
@@ -34,20 +35,20 @@ namespace res {
 /*
  * Example: "R8G8B8"
  */
-static void parseColorFormat(QString const &fmt, Vec3ui &compOrder, Vec3ui &compBits)
+static void parseColorFormat(const String &fmt, Vec3ui &compOrder, Vec3ui &compBits)
 {
     compBits = Vec3ui();
 
-    int const end = fmt.length();
+    mb_iterator end = fmt.end();
 
     int readComponents = 0;
-    int pos = 0;
-    while (pos < end)
+    mb_iterator pos = fmt.begin();
+    while (pos != end)
     {
-        QChar ch = fmt[pos]; pos++;
+        Char ch = *pos++;
 
         int comp = -1;
-        if     (ch == 'R' || ch == 'r') comp = 0;
+        if      (ch == 'R' || ch == 'r') comp = 0;
         else if (ch == 'G' || ch == 'g') comp = 1;
         else if (ch == 'B' || ch == 'b') comp = 2;
 
@@ -56,17 +57,17 @@ static void parseColorFormat(QString const &fmt, Vec3ui &compOrder, Vec3ui &comp
             compOrder[comp] = readComponents++;
 
             // Read the number of bits.
-            int start = pos;
-            ch = fmt[pos];
-            while (ch.isDigit() && ++pos < end)
+            mb_iterator start = pos;
+            ch = *pos;
+            while (iswdigit(ch) && ++pos != end)
             {
-                ch = fmt[pos];
+                ch = *pos;
             }
 
-            int numDigits = pos - start;
+            auto numDigits = pos - start;
             if (numDigits)
             {
-                compBits[comp] = fmt.mid(start, numDigits).toInt();
+                compBits[comp] = fmt.substr(start.pos(), numDigits).toInt();
 
                 // Are we done?
                 if (readComponents == 3)
@@ -77,7 +78,9 @@ static void parseColorFormat(QString const &fmt, Vec3ui &compOrder, Vec3ui &comp
         }
 
         /// @throw ColorTableReader::FormatError
-        throw ColorTableReader::FormatError("parseColorFormat", QString("Unexpected character '%1' at position %2").arg(ch).arg(pos));
+        throw ColorTableReader::FormatError(
+            "parseColorFormat",
+            stringf("Unexpected character '%lc' at position %zu", ch, pos.pos().index));
     }
 
     if (readComponents != 3)
@@ -87,10 +90,10 @@ static void parseColorFormat(QString const &fmt, Vec3ui &compOrder, Vec3ui &comp
     }
 }
 
-typedef QVector<de::Vec3ub> ColorTable;
+typedef List<de::Vec3ub> ColorTable;
 
 ColorTable ColorTableReader::read(String format, int colorCount,
-    dbyte const *colorData) // static
+                                  dbyte const *colorData) // static
 {
     Vec3ui order;
     Vec3ui bits;
@@ -160,15 +163,15 @@ ColorTable ColorTableReader::read(String format, int colorCount,
 DE_PIMPL(ColorPalette)
 {
     typedef Vec3ub Color;
-    typedef QVector<Color> ColorTable;
+    typedef List<Color> ColorTable;
     ColorTable colors;
 
-    typedef QMap<String, Translation> Translations;
+    typedef Map<String, Translation> Translations;
     Translations translations;
 
     /// 18-bit to 8-bit, nearest color translation table.
-    typedef QVector<int> XLat18To8;
-    QScopedPointer<XLat18To8> xlat18To8;
+    typedef List<int> XLat18To8;
+    std::unique_ptr<XLat18To8> xlat18To8;
     bool need18To8Update = false;  // Table built only when needed.
 
     Id id;
@@ -178,12 +181,12 @@ DE_PIMPL(ColorPalette)
         LOG_RES_VERBOSE("New color palette %s") << id;
     }
 
-    Translation *translation(String id)
+    Translation *translation(const String& id)
     {
         Translations::iterator found = translations.find(id);
         if (found != translations.end())
         {
-            return &found.value();
+            return &found->second;
         }
         return 0;
     }
@@ -203,7 +206,7 @@ DE_PIMPL(ColorPalette)
 
         need18To8Update = false;
 
-        if (xlat18To8.isNull())
+        if (!xlat18To8)
         {
             xlat18To8.reset(new XLat18To8(COLORS18BIT));
         }
@@ -309,7 +312,7 @@ int ColorPalette::nearestIndex(Vec3ub const &rgb) const
     if (d->colors.isEmpty()) return -1;
 
     // Ensure we've prepared the 18 to 8 table.
-    if (d->need18To8Update || d->xlat18To8.isNull())
+    if (d->need18To8Update || !d->xlat18To8)
     {
         d->prepareNearestLUT();
     }
@@ -347,7 +350,8 @@ void ColorPalette::newTranslation(String xlatId, Translation const &mappings)
         if (!xlat)
         {
             // An entirely new translation.
-            xlat = &d->translations.insert(xlatId, Translation()).value();
+            d->translations.insert(xlatId, Translation());
+            xlat = &d->translations.find(xlatId)->second;
         }
 
         // Replace the whole mapping table.

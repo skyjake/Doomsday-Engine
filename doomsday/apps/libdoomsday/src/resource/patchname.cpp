@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file patchname.cpp PatchName
  *
  * @authors Copyright &copy; 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -30,7 +32,7 @@ using namespace de;
 namespace res {
 
 PatchName::PatchName(String percentEncodedName, lumpnum_t lumpNum)
-    : _name(percentEncodedName)
+    : _name(std::move(percentEncodedName))
     , _lumpNum(lumpNum)
 {}
 
@@ -64,7 +66,7 @@ void PatchName::operator << (de::Reader &from)
 
     // WAD format allows characters not normally permitted in native paths.
     // To achieve uniformity we apply a percent encoding to the "raw" names.
-    _name = QString(QByteArray(asciiName).toPercentEncoding());
+    _name = String(asciiName).toPercentEncoding();
 
     // The cached found lump number is no longer valid.
     _lumpNum = -2;

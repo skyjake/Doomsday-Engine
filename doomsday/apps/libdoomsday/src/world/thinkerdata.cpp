@@ -20,11 +20,11 @@
 #include "doomsday/world/thinkerdata.h"
 #include "doomsday/world/map.h"
 
-#include <QMultiHash>
+#include <de/Hash>
 
 using namespace de;
 
-static QMultiHash<Id::Type, ThinkerData *> thinkerLookup;
+static std::unordered_multimap<Id::Type, ThinkerData *> thinkerLookup;
 
 DE_PIMPL(ThinkerData)
 {
@@ -65,7 +65,7 @@ ThinkerData::ThinkerData(Id const &id)
 {
     if (d->id)
     {
-        thinkerLookup.insert(d->id, this);
+        thinkerLookup.insert(std::make_pair(d->id, this));
     }
 }
 
@@ -73,7 +73,7 @@ ThinkerData::ThinkerData(ThinkerData const &other) : d(new Impl(this, *other.d))
 {
     if (d->id)
     {
-        thinkerLookup.insert(d->id, this);
+        thinkerLookup.insert(std::make_pair(d->id, this));
     }
 }
 
@@ -85,7 +85,7 @@ Id const &ThinkerData::id() const
 void ThinkerData::setId(Id const &id)
 {
     thinkerLookup.remove(d->id, this);
-    thinkerLookup.insert(id, this);
+    thinkerLookup.insert(std::make_pair(id, this));
 
     d->id = id;
 }
@@ -152,25 +152,24 @@ void ThinkerData::operator << (Reader &from)
 
     default:
         throw DeserializationError("ThinkerData::operator <<",
-                                   "Invalid serial identifier " +
-                                   String::number(sid));
+                                   "Invalid serial identifier " + String::asText(sid));
     }
 
     // The thinker has a new ID.
-    thinkerLookup.insert(d->id, this);
+    thinkerLookup.insert(std::make_pair(d->id, this));
 }
 
 ThinkerData *ThinkerData::find(Id const &id)
 {
-    auto found = thinkerLookup.constFind(id);
-    if (found != thinkerLookup.constEnd())
+    auto found = thinkerLookup.find(id);
+    if (found != thinkerLookup.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
 
 #ifdef DE_DEBUG
 duint32 ThinkerData::DebugCounter::total = 0;
-ThinkerData::DebugValidator ensureAllPrivateDataIsReleased;
+static ThinkerData::DebugValidator ensureAllPrivateDataIsReleased;
 #endif

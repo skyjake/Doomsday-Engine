@@ -28,13 +28,13 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>
-#include <QMap>
+#include <de/Map>
 
 using namespace de;
 
 namespace res {
 
-typedef QHash<Texture::AnalysisId, void *> Analyses;
+typedef Hash<int /*Texture::AnalysisId*/, void *> Analyses;
 
 DE_PIMPL(Texture)
 {
@@ -160,9 +160,9 @@ void Texture::release(/*TextureVariantSpec *spec*/)
 
 void Texture::clearAnalyses()
 {
-    foreach (void *data, d->analyses)
+    for (const auto &i : d->analyses)
     {
-        M_Free(data);
+        M_Free(i.second);
     }
     d->analyses.clear();
 }
@@ -173,7 +173,7 @@ void *Texture::analysisDataPointer(AnalysisId analysisId) const
     auto found = analyses.find(analysisId);
     if (found != analyses.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
@@ -196,21 +196,21 @@ void Texture::setAnalysisDataPointer(AnalysisId analysisId, void *newData)
     d->analyses.insert(analysisId, newData);
 }
 
-Texture::Flags Texture::flags() const
+Flags Texture::flags() const
 {
     return d->flags;
 }
 
-void Texture::setFlags(Texture::Flags flagsToChange, FlagOp operation)
+void Texture::setFlags(Flags flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
 String Texture::description() const
 {
-    String str = String("Texture " _E(b) "%1" _E(.)).arg(manifest().composeUri().asText());
+    String str = String::format("Texture " _E(b) "%s" _E(.), manifest().composeUri().asText().c_str());
 #ifdef DE_DEBUG
-    str += String(" [addr:0x%1]").arg(de::dintptr(this), 0, 16);
+    str += String::format(" [addr:%p]", this);
 #endif
     str += _E(l) " Dimensions:" _E(.)
         +  (width() == 0 && height() == 0? String("unknown (not yet prepared)")

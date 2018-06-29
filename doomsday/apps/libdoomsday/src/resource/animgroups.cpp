@@ -20,7 +20,6 @@
 #include "doomsday/resource/resources.h"
 
 #include <de/Log>
-#include <QList>
 
 namespace res {
 
@@ -28,7 +27,7 @@ using namespace de;
 
 DE_PIMPL_NOREF(AnimGroups)
 {
-    QList<res::AnimGroup *> animGroups;
+    List<res::AnimGroup *> animGroups;
 
     ~Impl()
     {
@@ -37,7 +36,7 @@ DE_PIMPL_NOREF(AnimGroups)
 
     void clearAllAnimGroups()
     {
-        qDeleteAll(animGroups);
+        deleteAll(animGroups);
         animGroups.clear();
     }
 };

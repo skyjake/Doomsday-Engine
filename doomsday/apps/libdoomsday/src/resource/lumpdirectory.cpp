@@ -27,9 +27,9 @@ using namespace de;
 
 namespace res {
 
-const dsize LumpDirectory::InvalidPos = dsize(-1);
+const dsize LumpDirectory::InvalidPos = std::numeric_limits<dsize>::max();
 
-static const String CACHE_CATEGORY = "LumpDirectory";
+DE_STATIC_STRING(CACHE_CATEGORY, "LumpDirectory");
 
 static const RegExp regExMy ("^E[1-9]M[1-9]$");
 static const RegExp regMAPxx("^MAP[0-9][0-9]$");
@@ -77,13 +77,13 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
             Entry entry;
             lumpReader >> entry.offset >> entry.size;
             lumpReader.readBytes(8, entry.name);
-            entry.name.resize(strlen(entry.name.data())); // QByteArray is zero-terminated
+            entry.name.resize(strlen(entry.name.c_str())); // Block is zero-terminated
             entries.append(entry);
         }
 
         // Make an index of all the lumps.
         index.clear();
-        for (int i = 0; i < entries.size(); ++i)
+        for (int i = 0; i < entries.sizei(); ++i)
         {
             index.insert(entries.at(i).name, i);
 
@@ -91,11 +91,11 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
             if (mapType == None)
             {
                 String const lumpName = String::fromLatin1(entries.at(i).name);
-                if (regExMy.match(lumpName).hasMatch())
+                if (regExMy.hasMatch(lumpName))
                 {
                     mapType = ExMy;
                 }
-                else if (regMAPxx.match(lumpName).hasMatch())
+                else if (regMAPxx.hasMatch(lumpName))
                 {
                     mapType = MAPxx;
                 }
@@ -112,14 +112,14 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
     {
         try
         {
-            if (Block const data = MetadataBank::get().check(CACHE_CATEGORY, id))
+            if (Block const data = MetadataBank::get().check(CACHE_CATEGORY(), id))
             {
                 // We're in luck.
                 Reader reader(data);
                 reader.withHeader() >> *this;
 
                 // Update the name lookup.
-                for (int i = 0; i < entries.size(); ++i)
+                for (int i = 0; i < entries.sizei(); ++i)
                 {
                     index.insert(entries.at(i).name, i);
                 }
@@ -138,7 +138,7 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
         Block data;
         Writer writer(data);
         writer.withHeader() << *this;
-        MetadataBank::get().setMetadata(CACHE_CATEGORY, id, data);
+        MetadataBank::get().setMetadata(CACHE_CATEGORY(), id, data);
     }
 
     void operator >> (Writer &to) const override
@@ -186,8 +186,8 @@ LumpDirectory::Entry const &LumpDirectory::entry(Pos pos) const
     if (pos >= count())
     {
         throw OffsetError("LumpDirectory::entry",
-                          QString("Invalid position %1 (lump count: %2)")
-                          .arg(pos).arg(count()));
+                          stringf("Invalid position %zu (lump count: %zu)",
+                          pos, count()));
     }
     return d->entries.at(int(pos));
 }
@@ -199,10 +199,10 @@ duint32 LumpDirectory::crc32() const
 
 duint32 LumpDirectory::lumpSize(Block const &lumpName) const
 {
-    auto found = d->index.constFind(lumpName);
-    if (found != d->index.constEnd())
+    auto found = d->index.find(lumpName);
+    if (found != d->index.end())
     {
-        return d->entries.at(found.value()).size;
+        return d->entries.at(found->second).size;
     }
     return 0;
 }
@@ -214,18 +214,18 @@ bool LumpDirectory::has(Block const &lumpName) const
 
 LumpDirectory::Pos LumpDirectory::find(Block const &lumpName) const
 {
-    auto found = d->index.constFind(lumpName);
-    if (found != d->index.constEnd())
+    auto found = d->index.find(lumpName);
+    if (found != d->index.end())
     {
-        return Pos(found.value());
+        return Pos(found->second);
     }
     return InvalidPos;
 }
 
-QList<LumpDirectory::Pos> LumpDirectory::findAll(const Block &lumpName) const
+List<LumpDirectory::Pos> LumpDirectory::findAll(const Block &lumpName) const
 {
-    QList<LumpDirectory::Pos> found;
-    for (int i = d->entries.size() - 1; i >= 0; --i)
+    List<LumpDirectory::Pos> found;
+    for (int i = d->entries.sizei() - 1; i >= 0; --i)
     {
         if (d->entries.at(i).name == lumpName)
         {
@@ -235,9 +235,9 @@ QList<LumpDirectory::Pos> LumpDirectory::findAll(const Block &lumpName) const
     return found;
 }
 
-QList<LumpDirectory::Range> LumpDirectory::findRanges(RangeType rangeType) const
+List<LumpDirectory::Range> LumpDirectory::findRanges(RangeType rangeType) const
 {
-    QList<Range> ranges;
+    List<Range> ranges;
     if (rangeType == Flats)
     {
         auto start = find(flatMarkers[0]);
@@ -257,18 +257,17 @@ QList<LumpDirectory::Range> LumpDirectory::findRanges(RangeType rangeType) const
     return ranges;
 }
 
-QList<LumpDirectory::Pos> res::LumpDirectory::findMaps() const
+List<LumpDirectory::Pos> res::LumpDirectory::findMaps() const
 {
-    QList<LumpDirectory::Pos> maps;
+    List<LumpDirectory::Pos> maps;
     if (d->mapType != None)
     {
-        for (auto i = d->index.constBegin(); i != d->index.constEnd(); ++i)
+        for (auto i = d->index.begin(); i != d->index.end(); ++i)
         {
-            String const name = QString::fromLatin1(i.key());
-            if (regMAPxx.match(name).hasMatch() ||
-                regExMy .match(name).hasMatch())
+            const String &name = i->first;
+            if (regMAPxx.hasMatch(name) || regExMy.hasMatch(name))
             {
-                maps << Pos(i.value());
+                maps << Pos(i->second);
             }
         }
     }
@@ -278,11 +277,11 @@ QList<LumpDirectory::Pos> res::LumpDirectory::findMaps() const
 StringList LumpDirectory::findMapLumpNames() const
 {
     StringList maps;
-    foreach (auto pos, findMaps())
+    for (const auto &pos : findMaps())
     {
         maps << String::fromLatin1(entry(pos).name);
     }
-    qSort(maps);
+    maps.sort();
     return maps;
 }
 
@@ -290,32 +289,33 @@ StringList LumpDirectory::mapsInContiguousRangesAsText() const
 {
     StringList mapRanges;
     auto const maps = findMapLumpNames();
-    static StringList const prefixes({ "MAP", "E1M", "E2M", "E3M", "E4M", "E5M", "E6M",
-                                       "E7M", "E8M", "E9M" });
+    static const StringList prefixes(
+        {"MAP", "E1M", "E2M", "E3M", "E4M", "E5M", "E6M", "E7M", "E8M", "E9M"});
 
-    foreach (String const &prefix, prefixes)
+    for (const String &prefix : prefixes)
     {
-        QList<int> numbers;
-        foreach (String const &map, maps)
+        List<int> numbers;
+        for (String const &map : maps)
         {
-            if (map.startsWith(prefix))
+            if (map.beginsWith(prefix))
             {
-                int number = map.substr(3).toInt(nullptr, 10);
+                int number = map.substr(BytePos(3)).toInt(nullptr, 10);
                 numbers.append(number);
             }
         }
 
         auto mapNumberText = [] (int num, int fieldWidth) {
-            return QString("%1").arg(num, fieldWidth, 10, QChar('0'));
+            return String::format(fieldWidth == 2? "%02i" : "%i", num);
         };
-        int const numFieldWidth = (prefix == QStringLiteral("MAP")? 2 : 0);
+        int const numFieldWidth = (prefix == DE_STR("MAP")? 2 : 0);
 
-        foreach (Rangei range, Rangei::findContiguousRanges(numbers))
+        for (const Rangei &range : Rangei::findContiguousRanges(numbers))
         {
             String mr = prefix + mapNumberText(range.start, numFieldWidth);
             if (range.size() > 1)
             {
-                mr += QString("-%1").arg(mapNumberText(range.end - 1, numFieldWidth));
+                mr += "-";
+                mr += mapNumberText(range.end - 1, numFieldWidth);
             }
             mapRanges << mr;
         }

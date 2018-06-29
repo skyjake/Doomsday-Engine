@@ -21,7 +21,6 @@
 #include "doomsday/resource/animgroup.h"
 
 #include <de/Log>
-#include <QtAlgorithms>
 
 namespace res {
 
@@ -38,7 +37,7 @@ DE_PIMPL_NOREF(AnimGroup)
 
     void clearAllFrames()
     {
-        qDeleteAll(frames);
+        deleteAll(frames);
         frames.clear();
     }
 };
@@ -66,7 +65,7 @@ int AnimGroup::flags() const
 
 bool AnimGroup::hasFrameFor(TextureManifest const &textureManifest) const
 {
-    foreach (Frame *frame, d->frames)
+    for (Frame *frame : d->frames)
     {
         if (&frame->textureManifest() == &textureManifest)
             return true;

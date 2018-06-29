@@ -182,9 +182,9 @@ static bool readCentralEnd(FileHandle &file, centralend_t &end)
 
 static String Zip_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
-    String msg = String("Invalid lump index %1").arg(invalidIdx);
+    String msg = String::format("Invalid lump index %i", invalidIdx);
     if (lastValidIdx < 0) msg += " (file is empty)";
-    else                 msg += String(", valid range: [0..%2)").arg(lastValidIdx);
+    else                  msg += String::format(", valid range: [0..%i)", lastValidIdx);
     return msg;
 }
 
@@ -865,7 +865,7 @@ Zip::LumpTree const &Zip::lumpTree() const
 
 Zip::LumpFile &Zip::Entry::file() const
 {
-    DE_ASSERT(!lumpFile.isNull());
+    DE_ASSERT(lumpFile);
     return *lumpFile;
 }
 

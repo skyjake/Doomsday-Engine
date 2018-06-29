@@ -261,7 +261,7 @@ dd_bool F_ToNativeSlashes(ddstring_t* dstStr, const ddstring_t* srcStr)
 static bool F_IsRelativeToBase(char const *path, char const *base)
 {
     DE_ASSERT(path != 0 && base != 0);
-    return !qstrnicmp(path, base, strlen(base));
+    return !iCmpStrNCase(path, base, strlen(base));
 }
 
 /**

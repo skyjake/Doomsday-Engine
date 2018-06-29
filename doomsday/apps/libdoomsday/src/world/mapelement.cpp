@@ -126,8 +126,8 @@ dint MapElement::property(DmuArgs &args) const
 
     default:
         /// @throw UnknownPropertyError  The requested property is not readable.
-        throw UnknownPropertyError(QString("%1::property").arg(DMU_Str(d->type)),
-                                   QString("'%1' is unknown/not readable").arg(DMU_Str(args.prop)));
+        throw UnknownPropertyError(stringf("%s::property", DMU_Str(d->type)),
+                                   stringf("'%s' is unknown/not readable", DMU_Str(args.prop)));
     }
 
     return false; // Continue iteration.
@@ -136,8 +136,8 @@ dint MapElement::property(DmuArgs &args) const
 dint MapElement::setProperty(DmuArgs const &args)
 {
     /// @throw WritePropertyError  The requested property is not writable.
-    throw WritePropertyError(QString("%1::setProperty").arg(DMU_Str(d->type)),
-                             QString("'%1' is unknown/not writable").arg(DMU_Str(args.prop)));
+    throw WritePropertyError(stringf("%s::setProperty", DMU_Str(d->type)),
+                             stringf("'%s' is unknown/not writable", DMU_Str(args.prop)));
 }
 
 }  // namespace world

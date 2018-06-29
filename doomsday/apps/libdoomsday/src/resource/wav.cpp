@@ -197,7 +197,7 @@ void *WAV_Load(char const *filename, int *bits, int *rate, int *samples)
     {
         // Relative paths are relative to the native working directory.
         de::String path = (de::NativePath::workPath() / de::NativePath(filename).expand()).withSeparators('/');
-        QScopedPointer<de::FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
+        std::unique_ptr<de::FileHandle> hndl(&App_FileSystem().openFile(path, "rb"));
 
         // Read in the whole thing.
         size_t size = hndl->length();

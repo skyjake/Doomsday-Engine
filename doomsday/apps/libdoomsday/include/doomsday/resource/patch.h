@@ -79,7 +79,6 @@ public:
         /// ; otherwise perform no clipping (use the pixel dimensions).
         ClipToLogicalDimensions = 0x2
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     /**
@@ -115,8 +114,6 @@ public:
      */
     static bool recognize(IByteArray const &data);
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Patch::Flags)
 
 typedef Patch::Metadata PatchMetadata;
 

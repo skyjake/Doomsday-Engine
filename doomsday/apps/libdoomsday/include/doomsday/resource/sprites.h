@@ -25,13 +25,14 @@
 #include "../defs/sprite.h"
 #include <de/types.h>
 #include <de/Record>
+#include <de/Hash>
 
 namespace res {
 
 class LIBDOOMSDAY_PUBLIC Sprites
 {
 public:
-    typedef QHash<de::dint, defn::CompiledSpriteRecord> SpriteSet;  ///< frame => Sprite
+    typedef de::Hash<int, defn::CompiledSpriteRecord> SpriteSet;  ///< frame => Sprite
 
     static Sprites &get();
 
@@ -56,12 +57,12 @@ public:
      * @see hasSprite(), spritePtr()
      */
     defn::CompiledSpriteRecord &sprite(spritenum_t id, de::dint frame);
-        
+
     /**
      * Returns a pointer to the identified Sprite, or @c nullptr.
      */
     defn::CompiledSpriteRecord const *spritePtr(spritenum_t id, de::dint frame) const;
-    
+
     SpriteSet const *tryFindSpriteSet(spritenum_t id) const;
 
     /**
@@ -77,10 +78,10 @@ public:
 public:
     /// Returns a value in the range [0..Sprite::MAX_VIEWS] if @a angleCode can be
     /// interpreted as a sprite view (angle) index; otherwise @c -1
-    static de::dint toSpriteAngle(QChar angleCode);
+    static de::dint toSpriteAngle(de::Char angleCode);
 
     /// Returns @c true if @a name is a well-formed sprite name.
-    static bool isValidSpriteName(de::String name);
+    static bool isValidSpriteName(const de::String& name);
 
 private:
     DE_PRIVATE(d)

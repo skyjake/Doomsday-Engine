@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file texturemanifest.cpp  Texture Manifest.
  *
  * @authors Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
@@ -30,13 +32,13 @@ static TextureManifest::TextureConstructor textureConstructor;
 DE_PIMPL(TextureManifest)
 , DE_OBSERVES(Texture, Deletion)
 {
-    int uniqueId;                    ///< Scheme-unique identifier (user defined).
-    de::Uri resourceUri;             ///< Image resource path, to be loaded.
-    Vec2ui logicalDimensions;     ///< Dimensions in map space.
-    Vec2i origin;                 ///< Origin offset in map space.
-    Texture::Flags flags;            ///< Classification flags.
-    std::unique_ptr<Texture> texture;///< Associated resource (if any).
-    TextureScheme *ownerScheme = nullptr;
+    int                      uniqueId;          ///< Scheme-unique identifier (user defined).
+    de::Uri                  resourceUri;       ///< Image resource path, to be loaded.
+    Vec2ui                   logicalDimensions; ///< Dimensions in map space.
+    Vec2i                    origin;            ///< Origin offset in map space.
+    Flags                    flags;             ///< Classification flags.
+    std::unique_ptr<Texture> texture;           ///< Associated resource (if any).
+    TextureScheme *          ownerScheme = nullptr;
 
     Impl(Public *i)
         : Base(i)
@@ -105,14 +107,19 @@ String const &TextureManifest::schemeName() const
 
 String TextureManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
-    String info = String("%1 %2")
-                      .arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
-                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
-                      .arg(sourceDescription(), -7);
+//    String info = String("%1 %2")
+//                      .arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
+//                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
+//                      .arg(sourceDescription(), -7);
+
+    String info =
+        composeUri().compose(uriCompositionFlags | de::Uri::DecodePath) + " " + sourceDescription();
+
 #ifdef __CLIENT__
-    info += String("x%1").arg(!hasTexture()? 0 : texture().variantCount());
+    info += String::format("x%i", !hasTexture()? 0 : texture().variantCount());
 #endif
-    info += " " + (!hasResourceUri()? "N/A" : resourceUri().asText());
+    info += " ";
+    info += (!hasResourceUri()? "N/A" : resourceUri().asText());
     return info;
 }
 
@@ -166,12 +173,12 @@ bool TextureManifest::setUniqueId(int newUniqueId)
     return true;
 }
 
-Texture::Flags TextureManifest::flags() const
+Flags TextureManifest::flags() const
 {
     return d->flags;
 }
 
-void TextureManifest::setFlags(Texture::Flags flagsToChange, FlagOp operation)
+void TextureManifest::setFlags(Flags flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
@@ -243,7 +250,7 @@ void TextureManifest::setTexture(Texture *newTexture)
 
 void TextureManifest::setTextureConstructor(TextureConstructor constructor)
 {
-    textureConstructor = constructor;
+    textureConstructor = std::move(constructor);
 }
 
 } // namespace res

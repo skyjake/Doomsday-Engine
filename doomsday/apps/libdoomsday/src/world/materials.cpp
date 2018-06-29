@@ -23,26 +23,28 @@
 #include "doomsday/resource/resources.h"
 
 #include <de/memory.h>
+#include <de/Map>
+#include <de/List>
 #include <unordered_set>
 
 using namespace de;
 
 namespace world {
 
-struct SchemeHashKey
-{
-    String scheme;
+//struct SchemeHashKey
+//{
+//    String scheme;
 
-    SchemeHashKey(String const &s) : scheme(s) {}
-    bool operator == (SchemeHashKey const &other) const {
-        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
-    }
-};
+//    SchemeHashKey(String const &s) : scheme(s) {}
+//    bool operator == (SchemeHashKey const &other) const {
+//        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
+//    }
+//};
 
-uint qHash(SchemeHashKey const &key)
-{
-    return key.scheme.at(1).toLower().unicode();
-}
+//uint qHash(SchemeHashKey const &key)
+//{
+//    return key.scheme.at(1).toLower().unicode();
+//}
 
 DE_PIMPL(Materials)
 , DE_OBSERVES(MaterialScheme,   ManifestDefined)
@@ -51,10 +53,10 @@ DE_PIMPL(Materials)
 , DE_OBSERVES(Material,         Deletion)
 {
     /// System subspace schemes containing the manifests/resources.
-    QHash<SchemeHashKey, MaterialScheme *> materialSchemes;
-    QList<MaterialScheme *> materialSchemeCreationOrder;
+    de::Map<String, MaterialScheme *, String::InsensitiveLessThan> materialSchemes;
+    List<MaterialScheme *> materialSchemeCreationOrder;
 
-    QList<Material *> materials;       ///< From all schemes.
+    List<Material *> materials;       ///< From all schemes.
     int materialManifestCount = 0;     ///< Total number of material manifests (in all schemes).
 
     std::unordered_set<Material *> animatedMaterialsSubset; ///< Subset of materials (not owned) that need to animate.
@@ -82,7 +84,7 @@ DE_PIMPL(Materials)
 
     void clearMaterialManifests()
     {
-        qDeleteAll(materialSchemes);
+        materialSchemes.deleteAll();
         materialSchemes.clear();
         materialSchemeCreationOrder.clear();
 
@@ -148,7 +150,7 @@ DE_PIMPL(Materials)
     /// Observes MaterialManifest Deletion.
     void materialManifestBeingDeleted(MaterialManifest const &manifest)
     {
-        foreach (MaterialManifestGroup *group, materialGroups)
+        for (MaterialManifestGroup *group : materialGroups)
         {
             group->remove(const_cast<MaterialManifest *>(&manifest));
         }
@@ -171,19 +173,19 @@ Materials::Materials()
     : d(new Impl(this))
 {}
 
-MaterialScheme &Materials::materialScheme(String name) const
+MaterialScheme &Materials::materialScheme(const String& name) const
 {
     if (!name.isEmpty())
     {
         auto found = d->materialSchemes.find(name);
-        if (found != d->materialSchemes.end()) return **found;
+        if (found != d->materialSchemes.end()) return *found->second;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw Resources::UnknownSchemeError("Materials::materialScheme",
                                         "No scheme found matching '" + name + "'");
 }
 
-bool Materials::isKnownMaterialScheme(String name) const
+bool Materials::isKnownMaterialScheme(const String& name) const
 {
     if (!name.isEmpty())
     {
@@ -194,14 +196,14 @@ bool Materials::isKnownMaterialScheme(String name) const
 
 int Materials::materialSchemeCount() const
 {
-    return d->materialSchemes.count();
+    return d->materialSchemes.size();
 }
 
-LoopResult Materials::forAllMaterialSchemes(std::function<LoopResult (MaterialScheme &)> func) const
+LoopResult Materials::forAllMaterialSchemes(const std::function<LoopResult (MaterialScheme &)>& func) const
 {
-    for (MaterialScheme *scheme : d->materialSchemes)
+    for (const auto &s : d->materialSchemes)
     {
-        if (auto result = func(*scheme)) return result;
+        if (auto result = func(*s.second)) return result;
     }
     return LoopContinue;
 }
@@ -216,11 +218,11 @@ MaterialManifest &Materials::toMaterialManifest(materialid_t id) const
             return *d->materialManifestIdMap[idx];
         }
         // Internal bookeeping error.
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("Bad index");
     }
     /// @throw InvalidMaterialIdError The specified material id is invalid.
     throw UnknownMaterialIdError("Materials::toMaterialManifest",
-                                 "Invalid material ID " + String::number(id) +
+                                 "Invalid material ID " + String::asText(id) +
                                  ", valid range " +
                                  Rangei(1, d->materialManifestCount + 1).asText());
 }
@@ -258,7 +260,7 @@ MaterialManifest *Materials::materialManifestPtr(de::Uri const &uri) const
     else
     {
         // No, check each scheme in priority order.
-        foreach (MaterialScheme *scheme, d->materialSchemeCreationOrder)
+        for (MaterialScheme *scheme : d->materialSchemeCreationOrder)
         {
             if (auto *manifest = scheme->tryFind(uri.path()))
             {
@@ -326,7 +328,8 @@ Materials::MaterialManifestGroup &Materials::materialGroup(dint groupIdx) const
     }
     /// @throw UnknownMaterialGroupError An unknown material group was referenced.
     throw UnknownMaterialGroupError("Materials::materialGroup",
-                                    "Invalid group #" + String::number(groupIdx+1) + ", valid range " +
+                                    "Invalid group #" + String::asText(groupIdx + 1) +
+                                        ", valid range " +
                                     Rangeui(1, d->materialGroups.count() + 1).asText());
 }
 
@@ -337,7 +340,7 @@ Materials::MaterialManifestGroups const &Materials::allMaterialGroups() const
 
 void Materials::clearAllMaterialGroups()
 {
-    qDeleteAll(d->materialGroups);
+    deleteAll(d->materialGroups);
     d->materialGroups.clear();
 }
 

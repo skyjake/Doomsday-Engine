@@ -56,7 +56,8 @@ DE_PIMPL(IdgamesLink)
 
     Impl(Public *i) : Base(i)
     {
-        localRootPath = "/remote/" + QUrl(self().address()).host();
+        //localRootPath = "/remote/" + QUrl(self().address()).host();
+        DE_ASSERT_FAIL("Need to use Uri to parse host");
     }
 
     String packageIdentifierForFileEntry(FileEntry const &entry) const
@@ -176,23 +177,23 @@ void IdgamesLink::parseRepositoryIndex(const Block &data)
                 if (!currentPath)
                 {
                     // This should be a directory path.
-                    auto match = reDir.match(line);
-                    if (match.hasMatch())
+                    RegExpMatch match;
+                    if (reDir.match(line, match))
                     {
                         currentPath = match.captured(1);
                         //qDebug() << "[WebRepositoryLink] Parsing path:" << currentPath;
 
-                        ignore = !reIncludedPaths.match(currentPath).hasMatch();
+                        ignore = !reIncludedPaths.hasMatch(currentPath);
                     }
                 }
-                else if (!ignore && reTotal.match(line).hasMatch())
+                else if (!ignore && reTotal.hasMatch(line))
                 {
                     // Ignore directory sizes.
                 }
                 else if (!ignore)
                 {
-                    auto match = reFile.match(line);
-                    if (match.hasMatch())
+                    RegExpMatch match;
+                    if (reFile.match(line, match))
                     {
                         bool const isFolder = (match.captured(1) == DE_STR("d"));
                         if (!isFolder)
@@ -202,7 +203,7 @@ void IdgamesLink::parseRepositoryIndex(const Block &data)
                                 continue;
 
                             auto &entry = tree->insert((currentPath / name).lower());
-                            entry.size = match.captured(2).toULongLong(nullptr, 10);;
+                            entry.size = std::strtoull(match.captured(2), nullptr, 10);
                             entry.modTime = Time::fromText(match.captured(3), Time::UnixLsStyleDateTime);
                         }
                     }

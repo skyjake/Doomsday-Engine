@@ -26,28 +26,28 @@
 
 #include <de/types.h>
 
-#include <QHash>
-#include <QSet>
+#include <de/Map>
+#include <de/Set>
 
 namespace res {
 
-struct TextureSchemeHashKey
-{
-    de::String scheme;
+//struct TextureSchemeHashKey
+//{
+//    de::String scheme;
 
-    TextureSchemeHashKey(de::String const &s) : scheme(s) {}
-    bool operator == (TextureSchemeHashKey const &other) const {
-        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
-    }
-};
+//    TextureSchemeHashKey(de::String const &s) : scheme(s) {}
+//    bool operator == (TextureSchemeHashKey const &other) const {
+//        return !scheme.compare(other.scheme, Qt::CaseInsensitive);
+//    }
+//};
 
-LIBDOOMSDAY_PUBLIC uint qHash(TextureSchemeHashKey const &key);
+//LIBDOOMSDAY_PUBLIC uint qHash(TextureSchemeHashKey const &key);
 
 class LIBDOOMSDAY_PUBLIC Textures
 {
 public:
-    typedef QHash<TextureSchemeHashKey, TextureScheme *> TextureSchemes;
-    typedef QSet<Texture *> AllTextures;
+    typedef Map<de::String, TextureScheme *, de::String::InsensitiveLessThan> TextureSchemes;
+    typedef Set<Texture *> AllTextures;
 
     static Textures &get();
 
@@ -162,7 +162,7 @@ public:
      * Returns the total number of manifest schemes in the collection.
      */
     inline de::dint textureSchemeCount() const {
-        return allTextureSchemes().count();
+        return allTextureSchemes().size();
     }
 
     /**
@@ -200,7 +200,7 @@ public:
      */
     inline TextureManifest &declareTexture(
             de::Uri const &uri,
-            Texture::Flags flags,
+            de::Flags flags,
             de::Vec2ui const &dimensions,
             de::Vec2i const &origin,
             de::dint uniqueId,

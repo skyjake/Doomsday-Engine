@@ -94,12 +94,10 @@ String const &MaterialManifest::schemeName() const
 
 String MaterialManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
-    String info = String("%1 %2")
-                      .arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
-                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
-                      .arg(sourceDescription(), -7);
+    String info =
+        composeUri().compose(uriCompositionFlags | de::Uri::DecodePath) + " " + sourceDescription();
 #ifdef __CLIENT__
-    info += String("x%1").arg(!hasMaterial()? 0 : material().animatorCount());
+    info += String::format("x%i", !hasMaterial()? 0 : material().animatorCount());
 #endif
     return info;
 }
@@ -111,12 +109,12 @@ String MaterialManifest::sourceDescription() const
     return "def";
 }
 
-MaterialManifest::Flags MaterialManifest::flags() const
+Flags MaterialManifest::flags() const
 {
     return d->flags;
 }
 
-void MaterialManifest::setFlags(MaterialManifest::Flags flagsToChange, FlagOp operation)
+void MaterialManifest::setFlags(Flags flagsToChange, FlagOp operation)
 {
     applyFlagOperation(d->flags, flagsToChange, operation);
 }

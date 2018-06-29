@@ -24,7 +24,7 @@ namespace res {
 DE_PIMPL(IdTech1FlatLib)
 {
     const LumpCatalog &catalog;
-    QHash<String, LumpCatalog::LumpPos> flats;
+    Map<String, LumpCatalog::LumpPos, String::InsensitiveLessThan> flats;
     Block palette;
 
     Impl(Public *i, const LumpCatalog &catalog) : Base(i), catalog(catalog)
@@ -64,10 +64,10 @@ IdTech1Image IdTech1FlatLib::flatImage(const String &name) const
 
     const auto *_d = d.get();
 
-    auto found = _d->flats.find(name.toUpper());
+    auto found = _d->flats.find(name);
     if (found != _d->flats.end())
     {
-        return IdTech1Image(flatSize, _d->catalog.read(found.value()), _d->palette);
+        return IdTech1Image(flatSize, _d->catalog.read(found->second), _d->palette);
     }
     return {};
 }

@@ -22,6 +22,7 @@
 
 #include <de/ByteOrder>
 #include <de/ByteSubArray>
+#include <de/Map>
 
 using namespace de;
 
@@ -84,7 +85,7 @@ DE_PIMPL(IdTech1TextureLib)
     const LumpCatalog &    catalog;
     Block                  palette;
     Block                  pnames;
-    QHash<String, Texture> textures;
+    Map<String, Texture, String::InsensitiveLessThan> textures;
 
     Impl(Public *i, const LumpCatalog &catalog) : Base(i), catalog(catalog)
     {
@@ -104,11 +105,11 @@ DE_PIMPL(IdTech1TextureLib)
         const auto tex1 = catalog.findAll("TEXTURE1");
         const auto tex2 = catalog.findAll("TEXTURE2");
 
-        QList<LumpCatalog::LumpPos> texturesPos = {tex2.front(), tex1.front()};
-        texturesPos += tex2.mid(1);
-        texturesPos += tex1.mid(1);
+        List<LumpCatalog::LumpPos> texturesPos = {tex2.front(), tex1.front()};
+        texturesPos << tex2.mid(1);
+        texturesPos << tex1.mid(1);
 
-        foreach (const auto &pos, texturesPos)
+        for (const auto &pos : texturesPos)
         {
             const Block lumpData = catalog.read(pos);
             const auto *header   = reinterpret_cast<const wad::TextureIndex *>(lumpData.data());
@@ -144,12 +145,12 @@ DE_PIMPL(IdTech1TextureLib)
 
     IdTech1Image composeTexture(const String &textureName) const
     {
-        const auto found = textures.constFind(textureName);
-        if (found == textures.constEnd())
+        const auto found = textures.find(textureName);
+        if (found == textures.end())
         {
             return IdTech1Image();
         }
-        const auto &texture = *found;
+        const auto &texture = found->second;
 
         // Blit all the patches into the image.
         Image8 image{texture.size};
@@ -171,7 +172,7 @@ IdTech1TextureLib::IdTech1TextureLib(const LumpCatalog &catalog)
 
 IdTech1Image IdTech1TextureLib::textureImage(const String &name) const
 {
-    return d->composeTexture(name.toUpper());
+    return d->composeTexture(name);
 }
 
 } // namespace res

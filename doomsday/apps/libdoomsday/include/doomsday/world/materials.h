@@ -129,7 +129,7 @@ public:
     /**
      * Returns @c true iff a MaterialScheme exists with the symbolic @a name.
      */
-    bool isKnownMaterialScheme(de::String name) const;
+    bool isKnownMaterialScheme(const de::String& name) const;
 
     /**
      * Lookup a material resource scheme by symbolic name.
@@ -141,7 +141,7 @@ public:
      *
      * @see knownMaterialScheme()
      */
-    MaterialScheme &materialScheme(de::String name) const;
+    MaterialScheme &materialScheme(const de::String& name) const;
 
     /**
      * Returns the total number of material manifest schemes in the collection.
@@ -153,7 +153,7 @@ public:
      *
      * @param func  Callback to make for each MaterialScheme.
      */
-    de::LoopResult forAllMaterialSchemes(std::function<de::LoopResult (MaterialScheme &)> func) const;
+    de::LoopResult forAllMaterialSchemes(const std::function<de::LoopResult (MaterialScheme &)>& func) const;
 
     /**
      * Lookup a material manifest group by unique @a number.

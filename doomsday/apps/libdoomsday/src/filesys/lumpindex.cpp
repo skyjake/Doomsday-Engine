@@ -466,7 +466,7 @@ DE_PIMPL(LumpIndex)
                     }
 
                     // Move the info for the lump to be pruned to the end.
-                    lumps.move(newIdx, lumps.size() - 1);
+                    lumps.push_back(lumps.takeAt(newIdx));
                 }
 
                 // Erase the pruned lumps from the end of the list.
@@ -502,7 +502,7 @@ LumpIndex::~LumpIndex()
 bool LumpIndex::hasLump(lumpnum_t lumpNum) const
 {
     d->pruneDuplicatesIfNeeded();
-    return (lumpNum >= 0 && lumpNum < d->lumps.size());
+    return (lumpNum >= 0 && lumpNum < d->lumps.sizei());
 }
 
 static String LumpIndex_invalidIndexMessage(int invalidIdx, int lastValidIdx)
@@ -675,7 +675,7 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
     lumpnum_t earliest = -1; // Not found.
 
     // Perform the search.
-    DE_ASSERT(!d->lumpsByPath.isNull());
+    DE_ASSERT(d->lumpsByPath);
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
@@ -694,7 +694,7 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
 
 Uri LumpIndex::composeResourceUrn(lumpnum_t lumpNum) // static
 {
-    return Uri("LumpIndex", Path(String("%1").arg(lumpNum)));
+    return Uri("LumpIndex", Path(String::asText(lumpNum)));
 }
 
 } // namespace de

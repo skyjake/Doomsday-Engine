@@ -36,7 +36,7 @@ DE_PIMPL(ResourceManifest)
 {
     resourceclassid_t classId;
 
-    int flags;         ///< @ref fileFlags.
+    int flags;        ///< @ref fileFlags.
     StringList names; ///< Known names in precedence order.
 
     /// Vector of resource identifier keys (e.g., file or lump names).
@@ -73,18 +73,18 @@ void ResourceManifest::addName(const String& newName)
     if (newName.isEmpty()) return;
 
     // Is this name unique? We don't want duplicates.
-    if (!d->names.contains(newName, Qt::CaseInsensitive))
+    if (!String::contains(d->names, newName))
     {
         d->names.prepend(newName);
     }
 }
 
-void ResourceManifest::addIdentityKey(String newIdKey)
+void ResourceManifest::addIdentityKey(const String& newIdKey)
 {
     if (newIdKey.isEmpty()) return;
 
     // Is this key unique? We don't want duplicates.
-    if (!d->identityKeys.contains(newIdKey, Qt::CaseInsensitive))
+    if (!String::contains(d->identityKeys, newIdKey))
     {
         d->identityKeys.append(newIdKey);
     }
@@ -109,28 +109,28 @@ static void checkSizeConditionInIdentityKey(String &idKey, lumpsizecondition_t *
     *pCond = LSCOND_NONE;
     *pSize = 0;
 
-    int condPos = -1;
-    int argPos  = -1;
-    if ((condPos = idKey.indexOf("==")) >= 0)
+    BytePos condPos;
+    BytePos argPos;
+    if (auto condPos = idKey.indexOf("=="))
     {
         *pCond = LSCOND_EQUAL;
         argPos = condPos + 2;
     }
-    else if ((condPos = idKey.indexOf(">=")) >= 0)
+    else if (auto condPos = idKey.indexOf(">="))
     {
         *pCond = LSCOND_GREATER_OR_EQUAL;
         argPos = condPos + 2;
     }
-    else if ((condPos = idKey.indexOf("<=")) >= 0)
+    else if (auto condPos = idKey.indexOf("<="))
     {
         *pCond = LSCOND_LESS_OR_EQUAL;
         argPos = condPos + 2;
     }
 
-    if (condPos < 0) return;
+    if (!condPos) return;
 
     // Get the argument.
-    *pSize = idKey.mid(argPos).toULong();
+    *pSize = strtoul(idKey.substr(argPos), nullptr, 0);
 
     // Remove it from the name.
     idKey.truncate(condPos);
@@ -180,7 +180,7 @@ static lumpnum_t lumpNumForIdentityKey(LumpIndex const &lumpIndex, String idKey)
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool validateWad(String const &filePath, QStringList const &identityKeys)
+static bool validateWad(String const &filePath, const StringList &identityKeys)
 {
     bool validated = true;
     try
@@ -207,9 +207,9 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
                     }
 
                     // Check each lump.
-                    DE_FOR_EACH_CONST(QStringList, i, identityKeys)
+                    for (const auto &i : identityKeys)
                     {
-                        if (lumpNumForIdentityKey(lumpIndex, *i) < 0)
+                        if (lumpNumForIdentityKey(lumpIndex, i) < 0)
                         {
                             validated = false;
                             break;
@@ -234,7 +234,7 @@ static bool validateWad(String const &filePath, QStringList const &identityKeys)
 }
 
 /// @return  @c true, iff the resource appears to be what we think it is.
-static bool validateZip(String const &filePath, QStringList const & /*identityKeys*/)
+static bool validateZip(String const &filePath, const StringList & /*identityKeys*/)
 {
     try
     {
@@ -257,7 +257,7 @@ void ResourceManifest::locateFile()
 
     // Perform the search.
     int nameIndex = 0;
-    for (QStringList::const_iterator i = d->names.constBegin(); i != d->names.constEnd(); ++i, ++nameIndex)
+    for (auto i = d->names.begin(); i != d->names.end(); ++i, ++nameIndex)
     {
         StringList candidates;
 
@@ -284,7 +284,7 @@ void ResourceManifest::locateFile()
             return LoopContinue;
         });
 
-        for (String foundPath : candidates)
+        for (const String &foundPath : candidates)
         {
             // Perform identity validation.
             bool validated = false;
@@ -342,12 +342,12 @@ int ResourceManifest::fileFlags() const
     return d->flags;
 }
 
-QStringList const &ResourceManifest::identityKeys() const
+const StringList &ResourceManifest::identityKeys() const
 {
     return d->identityKeys;
 }
 
-QStringList const &ResourceManifest::names() const
+const StringList &ResourceManifest::names() const
 {
     return d->names;
 }
