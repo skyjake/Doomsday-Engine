@@ -25,7 +25,7 @@
 namespace de {
 namespace ui {
 
-dsize const Data::InvalidPos = dsize(-1);
+dsize const Data::InvalidPos = std::numeric_limits<dsize>::max();
 
 DE_PIMPL_NOREF(Data)
 {
