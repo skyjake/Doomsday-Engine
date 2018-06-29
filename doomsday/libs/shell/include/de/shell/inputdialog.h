@@ -32,7 +32,7 @@ class MenuWidget;
  *
  * @ingroup textUi
  */
-class InputDialogWidget : public DialogWidget
+class LIBSHELL_PUBLIC InputDialogWidget : public DialogWidget
 {
 public:
     InputDialogWidget(const String &name = {});

@@ -29,7 +29,7 @@ namespace de { namespace shell {
  *
  * @ingroup textUi
  */
-class Action : public de::Action
+class LIBSHELL_PUBLIC Action : public de::Action
 {
 public:
     using Func = std::function<void()>;
