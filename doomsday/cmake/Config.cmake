@@ -32,8 +32,6 @@ endif ()
 
 find_package (CPlus REQUIRED)
 
-#include (QtConfig)
-
 # Platform-Specific Configuration --------------------------------------------
 
 if (IOS)

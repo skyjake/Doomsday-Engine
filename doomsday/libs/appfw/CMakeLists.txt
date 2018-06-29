@@ -5,9 +5,6 @@ project (DE_LIBAPPFW)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore)
-find_package (DengGui)
-find_package (DengShell)
 find_package (glbinding REQUIRED)
 find_package (SDL2Libs)
 find_package (OculusVR QUIET)
@@ -27,16 +24,13 @@ deng_merge_sources (widgets  src/widgets/*.cpp)
 
 deng_add_library (libappfw ${SOURCES} ${HEADERS})
 
-target_link_libraries (libappfw
-    PUBLIC Deng::libcore Deng::libgui Deng::libshell
-    PRIVATE SDL2
-)
+deng_link_libraries (libappfw PUBLIC DengCore DengGui DengShell)
+target_link_libraries (libappfw PRIVATE SDL2)
 if (TARGET LibOVR)
     target_link_libraries (libappfw PRIVATE LibOVR)
 endif ()
 
 deng_deploy_library (libappfw DengAppfw)
-
 deng_cotire (libappfw src/precompiled.h)
 
 if (DE_ENABLE_TESTS)

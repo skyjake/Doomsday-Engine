@@ -544,7 +544,7 @@ DE_PIMPL(ModelDrawable)
                 {
                     if (sceneMaterial.GetTexture(type, s, &texPath) == AI_SUCCESS)
                     {
-                        setTexture(mesh, texMap, sourcePath.fileNamePath() / NativePath(texPath.C_Str()));
+                        setTexture(mesh, texMap, NativePath(sourcePath.fileNamePath()) / texPath.C_Str());
                         break;
                     }
                 }

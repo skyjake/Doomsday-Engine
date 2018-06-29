@@ -4,9 +4,6 @@ cmake_minimum_required (VERSION 3.1)
 project (DE_LIBLEGACY)
 include (../../cmake/Config.cmake)
 
-# Dependencies.
-find_package (DengCore REQUIRED)
-
 # Options.
 option (DE_LIBLEGACY_WRITER_TYPE_CHECK
     "Type-check Writer1/Reader1 behavior (incompatible with no type checking)"
@@ -30,7 +27,7 @@ file (GLOB_RECURSE SOURCES src/*.cpp src/*.c)
 include_directories (include include/de)
 
 deng_add_library (liblegacy ${SOURCES} ${HEADERS})
-target_link_libraries (liblegacy PUBLIC Deng::libcore)
+deng_link_libraries (liblegacy PUBLIC DengCore)
 if (WIN32)
     target_link_libraries (liblegacy PRIVATE winmm)
 endif ()

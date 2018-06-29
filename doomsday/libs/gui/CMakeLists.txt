@@ -61,12 +61,6 @@ endif ()
 # Apply Doomsday's configuration.
 include (../../cmake/Config.cmake)
 
-# libgui uses Qt 5.4 OpenGL APIs.
-#qmake_query (QT_VERSION "QT_VERSION")
-#if (QT_VERSION VERSION_LESS 5.4)
-#    message (FATAL_ERROR "libgui requires Qt 5.4 or newer! You can disable all GUI features with DE_ENABLE_GUI=OFF.")
-#endif ()
-
 if (APPLE)
     # Don't change display modes on macOS/iOS. We'll instead resize the
     # frame buffer and scale up.
@@ -85,7 +79,6 @@ if (IOS)
 endif ()
 
 # Dependencies.
-find_package (DengCore)
 find_package (SDL2Libs)
 find_package (Stb)
 find_package (glbinding REQUIRED)
@@ -134,8 +127,9 @@ list_remove_matches (SOURCES ".*_qml.*")
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
+deng_link_libraries (libgui PUBLIC DengCore)
 target_link_libraries (libgui
-    PUBLIC  Deng::libcore glbinding::glbinding
+    PUBLIC  glbinding::glbinding
     PRIVATE SDL2 SDL2_ttf stb libassimp
 )
 if (WIN32)
