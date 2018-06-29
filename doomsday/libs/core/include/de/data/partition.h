@@ -24,7 +24,7 @@
 #include "../String"
 #include "../Vector"
 
-#include <QTextStream>
+#include <sstream>
 
 namespace de {
 
@@ -112,10 +112,9 @@ public:
 
     String asText() const
     {
-        String str;
-        QTextStream s(&str);
-        s << direction.x << "/" << direction.y << " " << origin.asText();
-        return str;
+        std::ostringstream s;
+        s << direction.x << "/" << direction.y << " " << origin;
+        return s.str();
     }
 };
 

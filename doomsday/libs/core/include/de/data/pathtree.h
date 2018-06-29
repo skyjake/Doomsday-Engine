@@ -431,7 +431,8 @@ inline bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTre
 {
 //    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
 //    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
-    return a->path().compareWithoutCase(b->path()) < 0;
+    return String::fromPercentEncoding(a->path().toString()).compareWithoutCase(
+               String::fromPercentEncoding(b->path().toString())) < 0;
 }
 
 /**

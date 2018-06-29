@@ -93,7 +93,7 @@ int TextApp::exec(const std::function<void()> &startup)
 
     int code = d->eventLoop.exec([this, startup]() {
         d->loop.start();
-        startup();
+        if (startup) startup();
     });
 
     LOGDEV_NOTE("TextApp event loop exited with code %i") << code;

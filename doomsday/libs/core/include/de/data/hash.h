@@ -123,6 +123,29 @@ public:
         _iter = _hash.erase(_cur);
     }
 };
+
+template <typename MultiContainer>
+inline bool multiRemove(MultiContainer &multi,
+                        const typename MultiContainer::value_type::first_type &key,
+                        const typename MultiContainer::value_type::second_type &value)
+{
+    bool removed = false;
+    const auto keys = multi.equal_range(key);
+    for (auto i = keys.first; i != keys.second; )
+    {
+        if (i->second == value)
+        {
+            i = multi.erase(i);
+            removed = true;
+        }
+        else
+        {
+            ++i;
+        }
+    }
+    return removed;
+}
+
 } // namespace de
 
 #endif // LIBCORE_HASH_H
