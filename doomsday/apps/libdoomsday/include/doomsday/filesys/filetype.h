@@ -30,8 +30,8 @@
 #ifdef __cplusplus
 #ifndef DE_C_API_ONLY
 
-#include <QStringList>
-#include <QMap>
+#include <de/String>
+#include <de/Map>
 #include <de/Log>
 #include <de/NativePath>
 #include <de/String>
@@ -50,7 +50,7 @@ namespace de
     class LIBDOOMSDAY_PUBLIC FileType
     {
     public:
-        FileType(String _name, resourceclassid_t _defaultClass)
+        FileType(const String& _name, resourceclassid_t _defaultClass)
             : name_(_name), defaultClass_(_defaultClass)
         {}
 
@@ -75,7 +75,7 @@ namespace de
          * @param ext  Extension to add (including period).
          * @return  This instance.
          */
-        FileType& addKnownExtension(String ext)
+        FileType& addKnownExtension(const String& ext)
         {
             knownFileNameExtensions_.push_back(ext);
             return *this;
@@ -87,7 +87,7 @@ namespace de
          *
          * @return  List of known extensions.
          */
-        QStringList const& knownFileNameExtensions() const
+        StringList const& knownFileNameExtensions() const
         {
             return knownFileNameExtensions_;
         }
@@ -98,13 +98,13 @@ namespace de
          * @param path  File name/path to test.
          * @return  @c true if matched.
          */
-        bool fileNameIsKnown(String path) const
+        bool fileNameIsKnown(const String& path) const
         {
             // We require an extension for this.
             String ext = path.fileNameExtension();
             if (!ext.isEmpty())
             {
-                return knownFileNameExtensions_.contains(ext, Qt::CaseInsensitive);
+                return String::contains(knownFileNameExtensions_, ext, CaseInsensitive);
             }
             return false;
         }
@@ -117,7 +117,7 @@ namespace de
         resourceclassid_t defaultClass_;
 
         /// List of known extensions for this file type.
-        QStringList knownFileNameExtensions_;
+        StringList knownFileNameExtensions_;
     };
 
     /**
@@ -143,7 +143,7 @@ namespace de
     class LIBDOOMSDAY_PUBLIC NativeFileType : public FileType
     {
     public:
-        NativeFileType(String name, resourceclassid_t rclassId)
+        NativeFileType(const String& name, resourceclassid_t rclassId)
             : FileType(name, rclassId)
         {}
 
@@ -165,7 +165,7 @@ namespace de
     }
 
     /// Map of symbolic file type names to file types (not owned).
-    typedef QMap<String, FileType const *> FileTypes;
+    typedef Map<String, FileType const *> FileTypes;
 
 } // namespace de
 

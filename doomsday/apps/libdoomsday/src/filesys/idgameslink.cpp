@@ -25,8 +25,8 @@
 #include <de/RemoteFile>
 #include <de/data/gzip.h>
 
-#include <QRegularExpression>
-#include <QUrl>
+#include <de/RegExp>
+//#include <QUrl>
 
 using namespace de;
 
@@ -61,38 +61,37 @@ DE_PIMPL(IdgamesLink)
 
     String packageIdentifierForFileEntry(FileEntry const &entry) const
     {
-        if (entry.name().fileNameExtension() == QStringLiteral(".zip"))
+        if (entry.name().fileNameExtension() == DE_STR(".zip"))
         {
             Path const path = entry.path();
-            String id = QString("%1_%2")
-                    .arg(DataBundle::cleanIdentifier(path.fileName().fileNameWithoutExtension()))
-                    .arg(DataBundle::versionFromTimestamp(entry.modTime));
+            String id = DataBundle::cleanIdentifier(path.fileName().fileNameWithoutExtension()) +
+                        "_" + DataBundle::versionFromTimestamp(entry.modTime);
 
             // Remove the hour:minute part.
-            id.truncate(id.size() - 5);
+            id.truncate(id.sizeb() - 5);
 
             if (path.segment(1) == CATEGORY_MUSIC ||
                 path.segment(1) == CATEGORY_SOUNDS ||
                 path.segment(1) == CATEGORY_THEMES)
             {
-                return String("%1.%2.%3")
-                        .arg(DOMAIN_IDGAMES)
-                        .arg(path.segment(1))
-                        .arg(id);
+                return String::format("%s.%s.%s",
+                        DOMAIN_IDGAMES.c_str(),
+                        path.segment(1).toString().c_str(),
+                        id.c_str());
             }
             if (path.segment(1) == CATEGORY_LEVELS)
             {
                 String subset;
-                if      (path.segment(3) == QStringLiteral("deathmatch")) subset = QStringLiteral("deathmatch.");
-                else if (path.segment(3) == QStringLiteral("megawads"))   subset = QStringLiteral("megawads.");
-                return String("%1.%2.%3.%4%5")
-                        .arg(DOMAIN_IDGAMES)
-                        .arg(CATEGORY_LEVELS)
-                        .arg(path.segment(2))
-                        .arg(subset)
-                        .arg(id);
+                if      (path.segment(3) == DE_STR("deathmatch")) subset = DE_STR("deathmatch.");
+                else if (path.segment(3) == DE_STR("megawads"))   subset = DE_STR("megawads.");
+                return String::format("%s.%s.%s.%s%s",
+                        DOMAIN_IDGAMES.c_str(),
+                        CATEGORY_LEVELS.c_str(),
+                        path.segment(2).toString().c_str(),
+                        subset.c_str(),
+                        id.c_str());
             }
-            return String("%1.%2").arg(DOMAIN_IDGAMES).arg(id);
+            return String::format("%s.%s", DOMAIN_IDGAMES.c_str(), id.c_str());
         }
         else
         {
@@ -117,7 +116,7 @@ DE_PIMPL(IdgamesLink)
             }
         }
 
-        qDebug() << "idgames package index has" << packageIndex.size() << "entries";
+        debug("idgames package index has %zu entries", packageIndex.size());
     }
 
     PackageIndexEntry const *findPackage(String const &packageId) const
@@ -151,29 +150,28 @@ IdgamesLink::IdgamesLink(String const &address)
     , d(new Impl(this))
 {}
 
-void IdgamesLink::parseRepositoryIndex(QByteArray data)
+void IdgamesLink::parseRepositoryIndex(const Block &data)
 {
     // This may be a long list, so let's do it in a background thread.
     // The link will be marked connected only after the data has been parsed.
 
     scope() += async([this, data] () -> String
     {
-        Block const listing = gDecompress(data);
-        QTextStream is(listing, QIODevice::ReadOnly);
-        is.setCodec("UTF-8");
-        QRegularExpression const reDir("^\\.?(.*):$");
-        QRegularExpression const reTotal("^total\\s+\\d+$");
-        QRegularExpression const reFile("^(-|d)[-rwxs]+\\s+\\d+\\s+\\w+\\s+\\w+\\s+"
+        const String listing = gDecompress(data);
+
+        const RegExp reDir("^\\.?(.*):$");
+        const RegExp reTotal("^total\\s+\\d+$");
+        const RegExp reFile("^(-|d)[-rwxs]+\\s+\\d+\\s+\\w+\\s+\\w+\\s+"
                                         "(\\d+)\\s+(\\w+\\s+\\d+\\s+[0-9:]+)\\s+(.*)$",
-                                        QRegularExpression::CaseInsensitiveOption);
+                                        CaseInsensitive);
         String currentPath;
         bool ignore = false;
-        QRegularExpression const reIncludedPaths("^/(levels|music|sounds|themes)");
+        const RegExp reIncludedPaths("^/(levels|music|sounds|themes)");
 
         std::unique_ptr<FileTree> tree(new FileTree);
-        while (!is.atEnd())
+        for (const auto &lineRef : listing.splitRef("\n"))
         {
-            if (String const line = is.readLine().trimmed())
+            if (const String line = String(lineRef).strip())
             {
                 if (!currentPath)
                 {
@@ -196,14 +194,14 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
                     auto match = reFile.match(line);
                     if (match.hasMatch())
                     {
-                        bool const isFolder = (match.captured(1) == QStringLiteral("d"));
+                        bool const isFolder = (match.captured(1) == DE_STR("d"));
                         if (!isFolder)
                         {
                             String const name = match.captured(4);
-                            if (name.startsWith(QChar('.')) || name.contains(" -> "))
+                            if (name.beginsWith('.') || name.contains(" -> "))
                                 continue;
 
-                            auto &entry = tree->insert((currentPath / name).toLower());
+                            auto &entry = tree->insert((currentPath / name).lower());
                             entry.size = match.captured(2).toULongLong(nullptr, 10);;
                             entry.modTime = Time::fromText(match.captured(3), Time::UnixLsStyleDateTime);
                         }
@@ -215,7 +213,7 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
                 currentPath.clear();
             }
         }
-        qDebug() << "idgames file tree contains" << tree->size() << "entries";
+        debug("idgames file tree contains %zu entries", tree->size());
         setFileTree(tree.release());
         return String();
     },
@@ -235,10 +233,7 @@ void IdgamesLink::parseRepositoryIndex(QByteArray data)
 
 StringList IdgamesLink::categoryTags() const
 {
-    return StringList({ CATEGORY_LEVELS,
-                        CATEGORY_MUSIC,
-                        CATEGORY_SOUNDS,
-                        CATEGORY_THEMES });
+    return {CATEGORY_LEVELS, CATEGORY_MUSIC, CATEGORY_SOUNDS, CATEGORY_THEMES};
 }
 
 LoopResult IdgamesLink::forPackageIds(std::function<LoopResult (String const &)> func) const
@@ -265,7 +260,7 @@ String IdgamesLink::findPackagePath(String const &packageId) const
 
 filesys::Link *IdgamesLink::construct(String const &address)
 {
-    if ((address.startsWith("http:") || address.startsWith("https:")) &&
+    if ((address.beginsWith("http:") || address.beginsWith("https:")) &&
         !address.contains("dengine.net"))
     {
         return new IdgamesLink(address);

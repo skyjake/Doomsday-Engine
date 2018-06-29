@@ -52,7 +52,7 @@ typedef enum resourceclassid_e {
 #ifdef __cplusplus
 
 #include <de/String>
-#include <QList>
+#include <de/List>
 
 namespace de { class FileType; }
 
@@ -65,7 +65,7 @@ namespace de { class FileType; }
 class LIBDOOMSDAY_PUBLIC ResourceClass
 {
 public:
-    typedef QList<de::FileType *> FileTypes;
+    typedef de::List<de::FileType *> FileTypes;
 
 public:
     ResourceClass(de::String name, de::String defaultScheme);

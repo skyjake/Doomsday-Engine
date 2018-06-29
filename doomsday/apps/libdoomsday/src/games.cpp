@@ -34,7 +34,7 @@
 #include <de/ScriptSystem>
 #include <de/TextValue>
 #include <de/charsymbols.h>
-#include <QtAlgorithms>
+#include <algorithm>
 
 using namespace de;
 
@@ -47,10 +47,10 @@ DE_PIMPL(Games)
     /// Special "null-game" object for this collection.
     NullGame *nullGame;
 
-    QHash<String, Game *> idLookup; // not owned, lower case
+    Hash<String, Game *> idLookup; // not owned, lower case
 
     LoopCallback mainCall;
-    QSet<Game const *> lastCheckedPlayable; // determines when notification sent
+    Set<Game const *> lastCheckedPlayable; // determines when notification sent
 
     /**
      * Delegates game addition notifications to scripts.
@@ -69,7 +69,7 @@ DE_PIMPL(Games)
 
     GameAdditionScriptAudience scriptAudienceForGameAddition;
 
-    Impl(Public *i) : Base(i), games(), nullGame(0)
+    Impl(Public *i) : Base(i), games(), nullGame(nullptr)
     {
         /*
          * One-time creation and initialization of the special "null-game"
@@ -91,9 +91,9 @@ DE_PIMPL(Games)
 
     void clear()
     {
-        DE_ASSERT(nullGame != 0);
+        DE_ASSERT(nullGame);
 
-        qDeleteAll(games);
+        deleteAll(games);
         games.clear();
         idLookup.clear();
     }
@@ -103,7 +103,7 @@ DE_PIMPL(Games)
         DE_ASSERT(game != nullptr);
 
         games.push_back(game);
-        idLookup.insert(game->id().toLower(), game);
+        idLookup.insert(game->id().lower(), game);
 
         DoomsdayApp::bundles().audienceForIdentify() += this;
 
@@ -115,17 +115,16 @@ DE_PIMPL(Games)
 
     Game *findById(String id) const
     {
-        if (id.beginsWith("doom-"))
+       if (id.beginsWith("doom-"))
         {
             // Originally, Freedoom and BFG variants used an inconsistently named ID.
             id = "doom1-" + id.substr(5);
         }
-
-        auto found = idLookup.constFind(id.toLower());
-        if (found != idLookup.constEnd())
+        auto found = idLookup.find(id.lower());
+        if (found != idLookup.end())
         {
-            return found.value();
-        }
+            return found->second;
+        }        
         return nullptr;
     }
 
@@ -137,14 +136,10 @@ DE_PIMPL(Games)
         }
     }
 
-    DE_PIMPL_AUDIENCE(Addition)
-    DE_PIMPL_AUDIENCE(Readiness)
-    DE_PIMPL_AUDIENCE(Progress)
+    DE_PIMPL_AUDIENCES(Addition, Readiness, Progress)
 };
 
-DE_AUDIENCE_METHOD(Games, Addition)
-DE_AUDIENCE_METHOD(Games, Readiness)
-DE_AUDIENCE_METHOD(Games, Progress)
+DE_AUDIENCE_METHODS(Games, Addition, Readiness, Progress)
 
 Games::Games() : d(new Impl(this))
 {}
@@ -162,7 +157,7 @@ Game &Games::nullGame() // static
 int Games::numPlayable() const
 {
     int count = 0;
-    foreach (Game *game, d->games)
+    for (Game *game : d->games)
     {
         if (game->allStartupFilesFound())
         {
@@ -175,7 +170,7 @@ int Games::numPlayable() const
 int Games::numPlayable(String const &family) const
 {
     int count = 0;
-    foreach (Game *game, d->games)
+    for (Game *game : d->games)
     {
         if (game->isPlayableWithDefaultPackages() && game->family() == family)
         {
@@ -187,7 +182,7 @@ int Games::numPlayable(String const &family) const
 
 GameProfile const *Games::firstPlayable() const
 {
-    foreach (Game *game, d->games)
+    for (Game *game : d->games)
     {
         if (game->profile().isPlayable()) return &game->profile();
     }
@@ -214,10 +209,10 @@ bool Games::contains(String const &id) const
 
 Game &Games::byIndex(int idx) const
 {
-    if (idx < 0 || idx > d->games.count())
+    if (idx < 0 || idx > d->games.sizei())
     {
         /// @throw NotFoundError  No game is associated with index @a idx.
-        throw NotFoundError("Games::byIndex", QString("There is no Game at index %i").arg(idx));
+        throw NotFoundError("Games::byIndex", stringf("There is no Game at index %i", idx));
     }
     return *d->games[idx];
 }
@@ -234,12 +229,12 @@ Games::All const &Games::all() const
 
 int Games::collectAll(GameList &collected)
 {
-    int numFoundSoFar = collected.count();
-    foreach (Game *game, d->games)
+    int numFoundSoFar = collected.sizei();
+    for (Game *game : d->games)
     {
         collected.push_back(GameListItem(game));
     }
-    return collected.count() - numFoundSoFar;
+    return collected.sizei() - numFoundSoFar;
 }
 
 Game &Games::defineGame(String const &id, Record const &parameters)
@@ -297,9 +292,9 @@ void Games::locateStartupResources(Game &game)
 }
 */
 
-LoopResult Games::forAll(std::function<LoopResult (Game &)> callback) const
+LoopResult Games::forAll(const std::function<LoopResult (Game &)>& callback) const
 {
-    foreach (Game *game, all())
+    for (Game *game : all())
     {
         if (auto result = callback(*game))
         {
@@ -342,8 +337,8 @@ void Games::checkReadiness()
     });
 */
 
-    QSet<Game const *> playable;
-    forAll([&playable](Game &game) {
+    Set<Game const *> playable;
+    forAll([&playable] (Game &game)
         if (game.isPlayable()) playable.insert(&game);
         return LoopContinue;
     });
@@ -356,12 +351,12 @@ void Games::checkReadiness()
             i->gameReadinessUpdated();
         }
     }
-    d->lastCheckedPlayable = playable;
+    d->lastCheckedPlayable = std::move(playable);
 }
 
 /*void Games::forgetAllResources()
 {
-    foreach (Game *game, d->games)
+    for (Game *game : d->games)
     {
         foreach (ResourceManifest *manifest, game->manifests())
         {
@@ -393,7 +388,7 @@ D_CMD(ListGames)
     Games::GameList found;
     games.collectAll(found);
     // Sort so we get a nice alphabetical list.
-    qSort(found.begin(), found.end());
+    found.sort();
 
     String list;
 
@@ -405,16 +400,16 @@ D_CMD(ListGames)
 
         if (!list.isEmpty()) list += "\n";
 
-        list += String(_E(0)
-                       _E(Ta) "%1%2 "
-                       _E(Tb) "%3 "
-                       _E(Tc) _E(2) "%4 " _E(i) "(%5)")
-                .arg(isCurrent? _E(B) _E(b) :
-                     !game->allStartupFilesFound()? _E(D) : "")
-                .arg(isCurrent? "*" : !game->allStartupFilesFound()? "!" : " ")
-                .arg(game->id())
-                .arg(game->title())
-                .arg(game->author());
+        list += String::format(_E(0)
+                       _E(Ta) "%s%s "
+                       _E(Tb) "%s "
+                       _E(Tc) _E(2) "%s " _E(i) "(%s)",
+                isCurrent? _E(B) _E(b) :
+                     !game->allStartupFilesFound()? _E(D) : "",
+                isCurrent? "*" : !game->allStartupFilesFound()? "!" : " ",
+                game->id().c_str(),
+                game->title().c_str(),
+                game->author().c_str());
 
         if (game->allStartupFilesFound())
         {

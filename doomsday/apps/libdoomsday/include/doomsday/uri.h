@@ -73,9 +73,9 @@ public:
 
         DefaultComposeAsTextFlags = 0
     };
-    Q_DECLARE_FLAGS(ComposeAsTextFlags, ComposeAsTextFlag)
+    using ComposeAsTextFlags = Flags;
 
-    typedef String (*ResolverFunc)(String const &symbol);
+    typedef String (*ResolverFunc)(const String &symbol);
 
 public:
     /**
@@ -99,7 +99,7 @@ public:
      * @param sep             Character used to separate path segments
      *                        in @a path.
      */
-    Uri(String const &percentEncoded, resourceclassid_t defaultResClass, QChar sep = '/');
+    Uri(String const &percentEncoded, resourceclassid_t defaultResClass, Char sep = '/');
 
     /**
      * Construct a Uri from a textual scheme and a path.
@@ -204,7 +204,7 @@ public:
      *                     attempting to resolve ambiguous cases (only the one argument
      *                     is provided.
      */
-    static Uri fromUserInput(char **argv, int argc, bool (*knownScheme) (String name) = 0);
+    static Uri fromUserInput(char **argv, int argc, bool (*knownScheme)(String name) = nullptr);
 
     /**
      * Convert this URI to a text string.
@@ -234,8 +234,6 @@ public:
      */
     String resolved() const;
 
-    String const &resolvedRef() const;
-
     /**
      * @return Scheme of the URI.
      */
@@ -256,15 +254,15 @@ public:
      */
     char const *pathCStr() const;
 
-    /**
+    /*
      * @return  Scheme of the URI as plain text (UTF-8 encoding).
      */
-    struct ddstring_s const *schemeStr() const;
+//    struct ddstring_s const *schemeStr() const;
 
-    /**
+    /*
      * @return  Path of the URI as plain text (UTF-8 encoding).
      */
-    struct ddstring_s const *pathStr() const;
+//    struct ddstring_s const *pathStr() const;
 
     /**
      * Change the scheme of the URI to @a newScheme.
@@ -284,7 +282,7 @@ public:
      * @param newPath  New path for the URI.
      * @param sep      Character used to separate path segments in @a path.
      */
-    Uri &setPath(String newPath, QChar sep = '/');
+    Uri &setPath(const String& newPath, Char sep = '/');
 
     Uri &setPath(char const *newPathUtf8, char sep = '/');
 
@@ -299,7 +297,7 @@ public:
      *
      * @param sep  Character used to separate path segments in @a path.
      */
-    Uri &setUri(String newUri, resourceclassid_t defaultResourceClass = RC_IMPLICIT, QChar sep = '/');
+    Uri &setUri(const String& newUri, resourceclassid_t defaultResourceClass = RC_IMPLICIT, Char sep = '/');
 
     /**
      * Compose from this URI a plain-text representation. Any symbolic identifiers
@@ -312,7 +310,7 @@ public:
      * @return  Plain-text String representation.
      */
     String compose(ComposeAsTextFlags compositionFlags = DefaultComposeAsTextFlags,
-                   QChar sep = '/') const;
+                   Char sep = '/') const;
 
     /**
      * Transform the URI into a human-friendly representation. Percent-encoded
@@ -329,7 +327,7 @@ public:
     void operator << (Reader &from) override;
 
     // Legacy Reader/Writer.
-    void readUri(reader_s *reader, de::String defaultScheme = "");
+    void readUri(reader_s *reader, const de::String& defaultScheme = "");
     void writeUri(writer_s *writer, int omitComponents = 0) const;
 
 public:
@@ -344,9 +342,7 @@ private:
     DE_PRIVATE(d)
 };
 
-Q_DECLARE_OPERATORS_FOR_FLAGS(Uri::ComposeAsTextFlags)
-
-inline Uri makeUri(String const &percentEncoded, QChar sep = '/')
+inline Uri makeUri(String const &percentEncoded, Char sep = '/')
 {
     return Uri(percentEncoded, RC_NULL, sep);
 }

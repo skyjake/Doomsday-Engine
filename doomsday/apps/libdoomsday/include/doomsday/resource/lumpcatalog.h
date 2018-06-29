@@ -25,8 +25,6 @@
 #include <de/String>
 #include <de/Block>
 
-#include <QList>
-
 namespace res {
 
 using namespace de;
@@ -62,18 +60,18 @@ public:
      */
     bool setPackages(const StringList &packageIds);
 
-    void setBundles(const QList<const DataBundle *> &bundles);
+    void setBundles(const List<const DataBundle *> &bundles);
 
     inline void setBundles(std::initializer_list<const DataBundle *> bundles)
     {
-        setBundles(QList<const DataBundle *>(bundles));
+        setBundles(List<const DataBundle *>(bundles));
     }
 
     LumpPos find(const String &lumpName) const;
 
-    QList<LumpPos> findAll(const String &lumpName) const;
+    List<LumpPos> findAll(const String &lumpName) const;
     
-    QList<LumpRange> flatRanges() const;
+    List<LumpRange> flatRanges() const;
 
     /**
      * Reads the contents of a lump.

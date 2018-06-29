@@ -83,7 +83,7 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
         for (int i = 0; i < hubCount(); ++i)
         {
             Record &hubRec = hub(i);
-            foreach (Value *mapIt, hubRec.geta("map").elements())
+            for (auto *mapIt : hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
                 if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
@@ -93,7 +93,7 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
             }
         }
     }
-    return 0; // Not found.
+    return nullptr; // Not found.
 }
 
 Record *Episode::tryFindMapGraphNode(String const &mapId)
@@ -105,7 +105,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
         for (int i = 0; i < hubCount(); ++i)
         {
             Record const &hubRec = hub(i);
-            foreach (Value *mapIt, hubRec.geta("map").elements())
+            for (Value *mapIt : hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
                 if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
@@ -115,7 +115,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
             }
         }
         // Try the non-hub maps.
-        foreach (Value *mapIt, geta("map").elements())
+        for (Value *mapIt : geta("map").elements())
         {
             Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
             if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
@@ -135,7 +135,7 @@ de::Record *Episode::tryFindMapGraphNodeByWarpNumber(int warpNumber)
         for (int i = 0; i < hubCount(); ++i)
         {
             Record const &hubRec = hub(i);
-            foreach (Value *mapIt, hubRec.geta("map").elements())
+            for (Value *mapIt : hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
                 if (mgNodeDef.geti("warpNumber") == warpNumber)
@@ -145,7 +145,7 @@ de::Record *Episode::tryFindMapGraphNodeByWarpNumber(int warpNumber)
             }
         }
         // Try the non-hub maps.
-        foreach (Value *mapIt, geta("map").elements())
+        for (Value *mapIt : geta("map").elements())
         {
             Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
             if (mgNodeDef.geti("warpNumber") == warpNumber)
@@ -154,7 +154,7 @@ de::Record *Episode::tryFindMapGraphNodeByWarpNumber(int warpNumber)
             }
         }
     }
-    return 0; // Not found.
+    return nullptr; // Not found.
 }
 
 } // namespace defn

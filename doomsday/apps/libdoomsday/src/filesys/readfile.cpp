@@ -124,7 +124,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
     // Try the virtual file system.
     try
     {
-        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(Str_Text(path), "rb"));
+        std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(Str_Text(path), "rb"));
 
         if (isCustom)
         {
@@ -141,7 +141,7 @@ AutoStr *M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom)
             Block buffer;
             buffer.resize(lumpLength);
             hndl->read((uint8_t *)buffer.data(), lumpLength);
-            string = Str_PartAppend(AutoStr_NewStd(), buffer.constData(), 0, lumpLength);
+            string = Str_PartAppend(AutoStr_NewStd(), buffer.c_str(), 0, lumpLength);
         }
 
         App_FileSystem().releaseFile(hndl->file());

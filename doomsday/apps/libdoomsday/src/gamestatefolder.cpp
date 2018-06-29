@@ -29,6 +29,7 @@
 #include <de/NativePath>
 #include <de/NumberValue>
 #include <de/PackageLoader>
+#include <de/RegExp>
 #include <de/TextValue>
 #include <de/Writer>
 #include <de/ZipArchive>
@@ -260,27 +261,27 @@ void GameStateFolder::Metadata::parse(String const &source)
         clear();
 
         Info info;
-        info.setAllowDuplicateBlocksOfType(QStringList() << BLOCK_GROUP << BLOCK_GAMERULE);
+        info.setAllowDuplicateBlocksOfType({BLOCK_GROUP, BLOCK_GAMERULE});
         info.parse(source);
 
         // Rebuild the game rules subrecord.
         Record &rules = addSubrecord("gameRules");
-        foreach (Info::Element const *elem, info.root().contentsInOrder())
+        for (const auto *elem : info.root().contentsInOrder())
         {
             if (Info::KeyElement const *key = maybeAs<Info::KeyElement>(elem))
             {
-                QScopedPointer<Value> v(makeValueFromInfoValue(key->value()));
-                add(key->name()) = v.take();
+                std::unique_ptr<Value> v(makeValueFromInfoValue(key->value()));
+                add(key->name()) = v.release();
                 continue;
             }
             if (Info::ListElement const *list = maybeAs<Info::ListElement>(elem))
             {
-                QScopedPointer<ArrayValue> arr(new ArrayValue);
-                foreach (Info::Element::Value const &v, list->values())
+                std::unique_ptr<ArrayValue> arr(new ArrayValue);
+                for (Info::Element::Value const &v : list->values())
                 {
                     *arr << makeValueFromInfoValue(v);
                 }
-                addArray(list->name(), arr.take());
+                addArray(list->name(), arr.release());
                 continue;
             }
             if (Info::BlockElement const *block = maybeAs<Info::BlockElement>(elem))
@@ -288,7 +289,7 @@ void GameStateFolder::Metadata::parse(String const &source)
                 // Perhaps a ruleset group?
                 if (block->blockType() == BLOCK_GROUP)
                 {
-                    foreach (Info::Element const *grpElem, block->contentsInOrder())
+                    for (Info::Element const *grpElem : block->contentsInOrder())
                     {
                         if (!grpElem->isBlock()) continue;
 
@@ -296,8 +297,8 @@ void GameStateFolder::Metadata::parse(String const &source)
                         Info::BlockElement const &ruleBlock = grpElem->as<Info::BlockElement>();
                         if (ruleBlock.blockType() == BLOCK_GAMERULE)
                         {
-                            QScopedPointer<Value> v(makeValueFromInfoValue(ruleBlock.keyValue("value")));
-                            rules.add(ruleBlock.name()) = v.take();
+                            std::unique_ptr<Value> v(makeValueFromInfoValue(ruleBlock.keyValue("value")));
+                            rules.add(ruleBlock.name()) = v.release();
                         }
                     }
                 }
@@ -306,7 +307,7 @@ void GameStateFolder::Metadata::parse(String const &source)
         }
 
         // Ensure the map URI has the "Maps" scheme set.
-        if (!gets("mapUri").beginsWith("Maps:", String::CaseInsensitive))
+        if (!gets("mapUri").beginsWith("Maps:", CaseInsensitive))
         {
             set("mapUri", String("Maps:") + gets("mapUri"));
         }
@@ -317,14 +318,14 @@ void GameStateFolder::Metadata::parse(String const &source)
         // is encoded in the map URI and extract it.
         if (!has("episode"))
         {
-            String const mapUriPath = gets("mapUri").substr(5);
-            if (mapUriPath.beginsWith("MAP", String::CaseInsensitive))
+            String const mapUriPath = gets("mapUri").substr(BytePos(5));
+            if (mapUriPath.beginsWith("MAP", CaseInsensitive))
             {
                 set("episode", "1");
             }
-            else if (mapUriPath.at(0).toLower() == 'e' && mapUriPath.at(2).toLower() == 'm')
+            else if (towlower(mapUriPath.first()) == 'e' && towlower(mapUriPath.at(BytePos(2))) == 'm')
             {
-                set("episode", mapUriPath.substr(1, 1));
+                set("episode", mapUriPath.substr(BytePos(1), 1));
             }
             else
             {
@@ -364,11 +365,11 @@ void GameStateFolder::Metadata::parse(String const &source)
 
 String GameStateFolder::Metadata::asStyledText() const
 {
-    String currentMapText = String(
-                _E(Ta)_E(l) "  Episode: " _E(.)_E(Tb) "%1\n"
-                _E(Ta)_E(l) "  Uri: "     _E(.)_E(Tb) "%2")
-            .arg(gets("episode"))
-            .arg(gets("mapUri"));
+    String currentMapText = String::format(
+                _E(Ta)_E(l) "  Episode: " _E(.)_E(Tb) "%s\n"
+                _E(Ta)_E(l) "  Uri: "     _E(.)_E(Tb) "%s",
+            gets("episode").c_str(),
+            gets("mapUri").c_str());
     // Is the time in the current map known?
     if (has("mapTime"))
     {
@@ -376,15 +377,16 @@ String GameStateFolder::Metadata::asStyledText() const
         int const hours   = time / 3600; time -= hours * 3600;
         int const minutes = time / 60;   time -= minutes * 60;
         int const seconds = time;
-        currentMapText += String("\n" _E(Ta)_E(l) "  Time: " _E(.)_E(Tb) "%1:%2:%3" )
-                             .arg(hours,   2, 10, QChar('0'))
-                             .arg(minutes, 2, 10, QChar('0'))
-                             .arg(seconds, 2, 10, QChar('0'));
+        currentMapText += String::format(
+            "\n" _E(Ta) _E(l) "  Time: " _E(.) _E(Tb) "%02d:%02d:%02d", hours, minutes, seconds);
     }
 
-    QStringList rules = gets("gameRules", "None").split("\n", QString::SkipEmptyParts);
-    rules.replaceInStrings(QRegExp("\\s*(.*)\\s*:\\s*([^ ].*)\\s*"), _E(l) "\\1: " _E(.) "\\2");
-    String gameRulesText = String::join(toStringList(rules), "\n - ");
+    StringList rules = gets("gameRules", "None").split(RegExp::WHITESPACE);
+    for (auto &r : rules)
+    {
+        r.replace(RegExp("\\s*(.*)\\s*:\\s*([^ ].*)\\s*"), _E(l) "\\1: " _E(.) "\\2");
+    }
+    String gameRulesText = String::join(rules, "\n - ");
 
     auto const &pkgs = geta("packages");
     StringList pkgIds;
@@ -393,18 +395,18 @@ String GameStateFolder::Metadata::asStyledText() const
         pkgIds << Package::splitToHumanReadable(val->asText());
     }
 
-    return String(_E(1) "%1\n" _E(.)
-                  _E(Ta)_E(l) "  Game: "  _E(.)_E(Tb) "%2\n"
-                  _E(Ta)_E(l) "  Session ID: "   _E(.)_E(Tb)_E(m) "0x%3" _E(.) "\n"
-                  _E(T`)_E(D) "Current map:\n" _E(.) "%4\n"
-                  _E(T`)_E(D) "Game rules:\n"  _E(.) " - %5\n"
-                  _E(T`)_E(D) "Packages:\n" _E(.) " - %6")
-             .arg(gets("userDescription", ""))
-             .arg(gets("gameIdentityKey", ""))
-             .arg(getui("sessionId", 0), 0, 16)
-             .arg(currentMapText)
-             .arg(gameRulesText)
-             .arg(String::join(pkgIds, "\n - "));
+    return String::format(_E(1) "%s\n" _E(.)
+                  _E(Ta)_E(l) "  Game: "  _E(.)_E(Tb) "%s\n"
+                  _E(Ta)_E(l) "  Session ID: "   _E(.)_E(Tb)_E(m) "0x%x" _E(.) "\n"
+                  _E(T`)_E(D) "Current map:\n" _E(.) "%s\n"
+                  _E(T`)_E(D) "Game rules:\n"  _E(.) " - %s\n"
+                  _E(T`)_E(D) "Packages:\n" _E(.) " - %s",
+             gets("userDescription", "").c_str(),
+             gets("gameIdentityKey", "").c_str(),
+             getui("sessionId"),
+             currentMapText.c_str(),
+             gameRulesText.c_str(),
+             String::join(pkgIds, "\n - ").c_str());
 }
 
 /*
@@ -415,9 +417,7 @@ String GameStateFolder::Metadata::asInfo() const
 {
     /// @todo Use a more generic Record => Info conversion logic.
 
-    String text;
-    QTextStream os(&text);
-    os.setCodec("UTF-8");
+    std::ostringstream os;
 
     if (has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
     if (has("packages"))
@@ -425,7 +425,7 @@ String GameStateFolder::Metadata::asInfo() const
         os << "\npackages " << geta("packages").asInfo();
     }
     if (has("episode"))         os << "\nepisode: "         << gets("episode");
-    if (has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
+    if (has("mapTime"))         os << "\nmapTime: "         << geti("mapTime");
     if (has("mapUri"))          os << "\nmapUri: "          << gets("mapUri");
     if (has("players"))
     {
@@ -443,7 +443,7 @@ String GameStateFolder::Metadata::asInfo() const
     {
         os << "\nvisitedMaps " << geta("visitedMaps").asInfo();
     }
-    if (has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
+    if (has("sessionId"))       os << "\nsessionId: "       << geti("sessionId");
     if (has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
 
     if (hasSubrecord("gameRules"))
@@ -453,18 +453,18 @@ String GameStateFolder::Metadata::asInfo() const
         Record const &rules = subrecord("gameRules");
         DE_FOR_EACH_CONST(Record::Members, i, rules.members())
         {
-            Value const &value = i.value()->value();
+            const Value &value = i->second->value();
             String valueAsText = value.asText();
             if (is<Value::Text>(value))
             {
                 valueAsText = "\"" + valueAsText.replace("\"", "''") + "\"";
             }
-            os << "\n    " << BLOCK_GAMERULE << " \"" << i.key() << "\""
+            os << "\n    " << BLOCK_GAMERULE << " \"" << i->first << "\""
                << " { value = " << valueAsText << " }";
         }
 
         os << "\n}";
     }
 
-    return text;
+    return os.str();
 }

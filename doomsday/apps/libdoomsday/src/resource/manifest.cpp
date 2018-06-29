@@ -37,11 +37,11 @@ DE_PIMPL(ResourceManifest)
     resourceclassid_t classId;
 
     int flags;         ///< @ref fileFlags.
-    QStringList names; ///< Known names in precedence order.
+    StringList names; ///< Known names in precedence order.
 
     /// Vector of resource identifier keys (e.g., file or lump names).
     /// Used for identification purposes.
-    QStringList identityKeys;
+    StringList identityKeys;
 
     /// Index (in Manifest::Impl::names) of the name used to locate
     /// this resource if found. Set during resource location.
@@ -68,7 +68,7 @@ ResourceManifest::ResourceManifest(resourceclassid_t resClass, int fFlags, Strin
     if (name) addName(*name);
 }
 
-void ResourceManifest::addName(String newName)
+void ResourceManifest::addName(const String& newName)
 {
     if (newName.isEmpty()) return;
 

@@ -22,7 +22,7 @@
 
 namespace de {
 
-SearchPath::SearchPath(de::Uri const &_uri, SearchPath::Flags _flags)
+SearchPath::SearchPath(de::Uri const &_uri, Flags _flags)
     : Uri(_uri), flags_(_flags)
 {}
 
@@ -30,7 +30,7 @@ SearchPath::SearchPath(SearchPath const &other)
     : Uri(other), flags_(other.flags_)
 {}
 
-SearchPath::Flags SearchPath::flags() const
+Flags SearchPath::flags() const
 {
     return flags_;
 }

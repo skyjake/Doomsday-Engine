@@ -23,8 +23,9 @@
 #include <de/DictionaryValue>
 #include <de/TextValue>
 #include <de/RecordValue>
-#include <QSet>
-#include <QMap>
+#include <de/RegExp>
+#include <de/Set>
+#include <de/Map>
 
 using namespace de;
 
@@ -42,9 +43,9 @@ DE_PIMPL(DEDRegister)
         LookupFlags flags;
         Key(LookupFlags const &f = DefaultLookup) : flags(f) {}
     };
-    typedef QMap<String, Key> Keys;
+    typedef Map<String, Key> Keys;
     Keys keys;
-    QMap<Variable *, Record *> parents;
+    Map<Variable *, Record *> parents;
 
     Impl(Public *i, Record &rec) : Base(i), names(&rec)
     {
@@ -69,9 +70,9 @@ DE_PIMPL(DEDRegister)
 
 #ifdef DE_DEBUG
         DE_ASSERT(parents.isEmpty());
-        foreach (String const &key, keys.keys())
+        for (const auto &k : keys)
         {
-            DE_ASSERT(lookup(key).size() == 0);
+            DE_ASSERT(lookup(k.first).size() == 0);
         }
 #endif
     }
@@ -108,10 +109,10 @@ DE_PIMPL(DEDRegister)
     Type lookupOperation(String const &key, String value,
                          std::function<Type (DictionaryValue const &, String)> operation) const
     {
-        auto foundKey = keys.constFind(key);
-        if (foundKey == keys.constEnd()) return 0;
+        auto foundKey = keys.find(key);
+        if (foundKey == keys.end()) return Type{0};
 
-        if (!foundKey.value().flags.testFlag(CaseSensitive))
+        if (!foundKey->second.flags.testFlag(CaseSensitive))
         {
             // Case insensitive lookup is done in lower case.
             value = value.lower();
@@ -126,7 +127,7 @@ DE_PIMPL(DEDRegister)
             [] (DictionaryValue const &lut, String v) -> Record const * {
                 TextValue const val(v);
                 auto i = lut.elements().find(DictionaryValue::ValueRef(&val));
-                if (i == lut.elements().end()) return 0; // Value not in dictionary.
+                if (i == lut.elements().end()) return nullptr; // Value not in dictionary.
                 return i->second->as<RecordValue>().record();
             });
     }
@@ -298,18 +299,18 @@ Record &DEDRegister::appendCopy(int index)
 
 Record &DEDRegister::copy(int fromIndex, Record &to)
 {
-    QStringList omitted;
+    StringList omitted;
     omitted << "__.*"; // double-underscore
 
     // By default lookup keys are not copied, as they are used as identifiers and
     // therefore duplicates should not occur.
-    DE_FOR_EACH_CONST(Impl::Keys, i, d->keys)
+    for (const auto &i : d->keys)
     {
-        if (i.value().flags.testFlag(AllowCopy)) continue;
-        omitted << i.key();
+        if (i.second.flags.testFlag(AllowCopy)) continue;
+        omitted << i.first;
     }
 
-    return to.assign((*this)[fromIndex], QRegExp(omitted.join("|")));
+    return to.assign((*this)[fromIndex], RegExp(String::join(omitted, "|")));
 }
 
 int DEDRegister::size() const
@@ -337,7 +338,7 @@ Record *DEDRegister::tryFind(String const &key, String const &value)
     return const_cast<Record *>(d->tryFind(key, value));
 }
 
-Record const *DEDRegister::tryFind(String const &key, String value) const
+Record const *DEDRegister::tryFind(String const &key, const String &value) const
 {
     return d->tryFind(key, value);
 }

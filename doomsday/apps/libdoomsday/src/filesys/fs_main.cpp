@@ -33,9 +33,6 @@
 #include "doomsday/filesys/zip.h"
 
 #include <ctime>
-#include <QDir>
-#include <QList>
-#include <QtAlgorithms>
 #include <de/App>
 #include <de/Log>
 #include <de/NativePath>
@@ -50,7 +47,7 @@ extern uint F_GetLastModified(char const *path);
 
 static FS1 *fileSystem;
 
-typedef QList<FileId> FileIds;
+typedef List<FileId> FileIds;
 
 /**
  * Virtual (file) path => Lump name mapping.
@@ -59,8 +56,8 @@ typedef QList<FileId> FileIds;
  *       unique, several of the existing algorithms which match using patterns
  *       assume they are sorted in a quasi load ordering.
  */
-typedef QPair<QString, QString> LumpMapping;
-typedef QList<LumpMapping> LumpMappings;
+typedef std::pair<String, String> LumpMapping;
+typedef List<LumpMapping> LumpMappings;
 
 /**
  * Virtual file-directory mapping.
@@ -70,8 +67,8 @@ typedef QList<LumpMapping> LumpMappings;
  *       unique, several of the existing algorithms which match using patterns
  *       assume they are sorted in a quasi load ordering.
  */
-typedef QPair<QString, QString> PathMapping;
-typedef QList<PathMapping> PathMappings;
+typedef std::pair<String, String> PathMapping;
+typedef List<PathMapping> PathMappings;
 
 /**
  * @note Performance is O(n).
@@ -106,7 +103,7 @@ static FS1::FileList::iterator findListFileByPath(FS1::FileList &list, String pa
     for (i = list.begin(); i != list.end(); ++i)
     {
         File1 &file = (*i)->file();
-        if (!file.composePath().compare(path, Qt::CaseInsensitive))
+        if (!file.composePath().compare(path, CaseInsensitive))
         {
             break; // This is the node we are looking for.
         }
@@ -127,23 +124,24 @@ static bool applyPathMapping(ddstring_t *path, PathMapping const &vdm);
  */
 static bool matchFileName(String const &string, String const &pattern)
 {
-    static QChar const ASTERISK('*');
-    static QChar const QUESTION_MARK('?');
+    static const Char ASTERISK('*');
+    static const Char QUESTION_MARK('?');
 
-    QChar const *in = string.constData(), *st = pattern.constData();
+    mb_iterator in = string.begin();
+    mb_iterator st = pattern.begin();
 
-    while (!in->isNull())
+    while (*in)
     {
         if (*st == ASTERISK)
         {
-            st++;
+            ++st;
             continue;
         }
 
-        if (*st != QUESTION_MARK && st->toLower() != in->toLower())
+        if (*st != QUESTION_MARK && towlower(*st) != towlower(*in))
         {
             // A mismatch. Hmm. Go back to a previous '*'.
-            while (st >= pattern && *st != ASTERISK) { st--; }
+            while (st >= pattern && *st != ASTERISK) { --st; }
 
             if (st < pattern)
                 return false; // No match!
@@ -151,16 +149,16 @@ static bool matchFileName(String const &string, String const &pattern)
         }
 
         // This character of the pattern is OK.
-        st++;
-        in++;
+        ++st;
+        ++in;
     }
 
     // Match is good if the end of the pattern was reached.
 
     // Skip remaining asterisks.
-    while (*st == ASTERISK) { st++; }
+    while (*st == ASTERISK) { ++st; }
 
-    return st->isNull();
+    return *st == 0;
 }
 
 DE_PIMPL(FS1)
@@ -205,18 +203,18 @@ DE_PIMPL(FS1)
     {
         DE_FOR_EACH(Schemes, i, schemes)
         {
-            delete *i;
+            delete i->second;
         }
         schemes.clear();
     }
 
     /// @return  @c true if the FileId associated with @a path was released.
-    bool releaseFileId(String path)
+    bool releaseFileId(const String& path)
     {
         if (!path.isEmpty())
         {
             FileId fileId = FileId::fromPath(path);
-            FileIds::iterator place = qLowerBound(fileIds.begin(), fileIds.end(), fileId);
+            FileIds::iterator place = std::lower_bound(fileIds.begin(), fileIds.end(), fileId);
             if (place != fileIds.end() && *place == fileId)
             {
                 LOGDEV_RES_XVERBOSE_DEBUGONLY("Released FileId %s - \"%s\"", *place << fileId.path());
@@ -232,7 +230,7 @@ DE_PIMPL(FS1)
         loadedFilesCRC = 0;
 
         // Unload in reverse load order.
-        for (int i = loadedFiles.size() - 1; i >= 0; i--)
+        for (int i = loadedFiles.sizei() - 1; i >= 0; i--)
         {
             File1 &file = loadedFiles[i]->file();
             if (!index || index->catalogues(file))
@@ -291,8 +289,8 @@ DE_PIMPL(FS1)
         {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
-        QScopedPointer<File1> file(openFile(search.path(), "rb", 0, true /* allow duplicates */));
-        if (!file.isNull())
+        std::unique_ptr<File1> file(openFile(search.path(), "rb", 0, true /* allow duplicates */));
+        if (file)
         {
             return file->composePath();
         }
@@ -305,10 +303,7 @@ DE_PIMPL(FS1)
         if (path.isEmpty()) return 0;
 
         // We must have an absolute path - prepend the base path if necessary.
-        if (QDir::isRelativePath(path))
-        {
-            path = App_BasePath() / path;
-        }
+        path = NativePath(App_BasePath()) / path;
 
         // First check the Zip lump index.
         lumpnum_t lumpNum = zipFileIndex.findLast(path);
@@ -351,7 +346,7 @@ DE_PIMPL(FS1)
 
         // First try a real native file at this absolute path.
         NativePath nativePath = NativePath(path);
-        FILE *nativeFile = fopen(nativePath.toUtf8().constData(), mode);
+        FILE *nativeFile = fopen(nativePath, mode);
         if (nativeFile)
         {
             foundPath = nativePath.expand().withSeparators('/');
@@ -361,16 +356,15 @@ DE_PIMPL(FS1)
         // Nope. Any applicable virtual directory mappings?
         if (!pathMappings.empty())
         {
-            QByteArray pathUtf8 = path.toUtf8();
             AutoStr *mapped = AutoStr_NewStd();
             DE_FOR_EACH_CONST(PathMappings, i, pathMappings)
             {
-                Str_Set(mapped, pathUtf8.constData());
+                Str_Set(mapped, path);
                 if (!applyPathMapping(mapped, *i)) continue;
                 // The mapping was successful.
 
                 nativePath = NativePath(Str_Text(mapped));
-                nativeFile = fopen(nativePath.toUtf8().constData(), mode);
+                nativeFile = fopen(nativePath, mode);
                 if (nativeFile)
                 {
                     foundPath = nativePath.expand().withSeparators('/');
@@ -434,7 +428,7 @@ DE_PIMPL(FS1)
                 hndl = FileHandle::fromNativeFile(*found, baseOffset);
 
                 // Prepare the temporary info descriptor.
-                info = FileInfo(F_GetLastModified(foundPath.toUtf8().constData()));
+                info = FileInfo(F_GetLastModified(foundPath));
             }
         }
 
@@ -459,7 +453,7 @@ DE_PIMPL(FS1)
 FS1::FS1() : d(new Impl(this))
 {}
 
-FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)
+FS1::Scheme &FS1::createScheme(const String& name, Flags flags)
 {
     DE_ASSERT(name.length() >= Scheme::min_name_length);
 
@@ -468,7 +462,7 @@ FS1::Scheme &FS1::createScheme(String name, Scheme::Flags flags)
 
     // Create a new scheme.
     Scheme *newScheme = new Scheme(name, flags);
-    d->schemes.insert(name.toLower(), newScheme);
+    d->schemes.insert(name.lower(), newScheme);
     return *newScheme;
 }
 
@@ -544,10 +538,7 @@ File1 &FS1::find(de::Uri const &search)
             String searchPath = search.resolved();
 
             // Convert to an absolute path.
-            if (!QDir::isAbsolutePath(searchPath))
-            {
-                searchPath = App_BasePath() / searchPath;
-            }
+            searchPath = NativePath(App_BasePath()) / searchPath;
 
             FileList::iterator found = findListFileByPath(d->loadedFiles, searchPath);
             if (found != d->loadedFiles.end())
@@ -592,13 +583,13 @@ String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
             /*
              * Try each expected file type name extension for this resource class.
              */
-            String searchPathWithoutFileNameExtension = searchPath.fileNamePath() / searchPath.fileNameWithoutExtension();
+            String searchPathWithoutFileNameExtension =
+                String(searchPath.fileNamePath()) / searchPath.fileNameWithoutExtension();
 
             DE_FOR_EACH_CONST(ResourceClass::FileTypes, typeIt, rclass.fileTypes())
             {
-                DE_FOR_EACH_CONST(QStringList, i, (*typeIt)->knownFileNameExtensions())
+                for (auto &ext : (*typeIt)->knownFileNameExtensions())
                 {
-                    String const &ext = *i;
                     String found = d->findPath(de::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
                     if (!found.isEmpty()) return found;
                 }
@@ -664,7 +655,7 @@ int FS1::unloadAllNonStartupFiles()
 
     // Perform non-startup file unloading (in reverse load order).
     int numUnloadedFiles = 0;
-    for (int i = d->loadedFiles.size() - 1; i >= 0; i--)
+    for (int i = d->loadedFiles.sizei() - 1; i >= 0; i--)
     {
         File1 &file = d->loadedFiles[i]->file();
         if (file.hasStartup()) continue;
@@ -734,7 +725,7 @@ lumpnum_t FS1::lumpNumForName(String name)
 
 void FS1::releaseFile(File1 &file)
 {
-    for (int i = d->openFiles.size() - 1; i >= 0; i--)
+    for (int i = d->openFiles.sizei() - 1; i >= 0; i--)
     {
         FileHandle &hndl = *(d->openFiles[i]);
         if (&hndl.file() == &file)
@@ -802,10 +793,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
     int const numFoundSoFar = found.count();
 
     // We must have an absolute path - prepend the base path if necessary.
-    if (!QDir::isAbsolutePath(searchPattern))
-    {
-        searchPattern = App_BasePath() / searchPattern;
-    }
+    searchPattern = Path(App_BasePath()) / searchPattern;
 
     /*
      * Check the Zip directory.
@@ -859,15 +847,15 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
     String searchDirectory = searchPattern.toString().fileNamePath();
     if (!searchDirectory.isEmpty())
     {
-        QByteArray searchDirectoryUtf8 = searchDirectory.toUtf8();
+//        QByteArray searchDirectoryUtf8 = searchDirectory.toUtf8();
         PathList nativeFilePaths;
         AutoStr *wildPath = AutoStr_NewStd();
-        Str_Reserve(wildPath, searchDirectory.length() + 2 + 16); // Conservative estimate.
+        Str_Reserve(wildPath, searchDirectory.size() + 2 + 16); // Conservative estimate.
 
         for (int i = -1; i < (int)d->pathMappings.count(); ++i)
         {
             Str_Clear(wildPath);
-            Str_Appendf(wildPath, "%s/", searchDirectoryUtf8.constData());
+            Str_Appendf(wildPath, "%s/", searchDirectory.c_str());
 
             if (i > -1)
             {
@@ -896,7 +884,7 @@ int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
         }
 
         // Sort the native file paths.
-        qSort(nativeFilePaths.begin(), nativeFilePaths.end());
+        std::sort(nativeFilePaths.begin(), nativeFilePaths.end());
 
         // Add the native file paths to the found results.
         found.append(nativeFilePaths);
@@ -950,9 +938,10 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
 FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOffset, bool allowDuplicate)
 {
 #ifdef DE_DEBUG
-    for (int i = 0; i < mode.length(); ++i)
+    //for (int i = 0; i < mode.length(); ++i)
+    for (Char i : mode)
     {
-        if (mode[i] != 'r' && mode[i] != 't' && mode[i] != 'b' && mode[i] != 'f')
+        if (i != 'r' && i != 't' && i != 'b' && i != 'f')
             throw Error("FS1::openFile", "Unknown argument in mode string '" + mode + "'");
     }
 #endif
@@ -978,8 +967,8 @@ bool FS1::accessFile(de::Uri const &search)
 {
     try
     {
-        QScopedPointer<File1> file(d->openFile(search.resolved(), "rb", 0, true /* allow duplicates */));
-        return !file.isNull();
+        std::unique_ptr<File1> file(d->openFile(search.resolved(), "rb", 0, true /* allow duplicates */));
+        return bool(file);
     }
     catch (de::Uri::ResolveError const &er)
     {
@@ -994,7 +983,7 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
     if (lumpName.isEmpty() || destination.isEmpty()) return;
 
     // We require an absolute path - prepend the CWD if necessary.
-    if (QDir::isRelativePath(destination))
+    if (NativePath(destination).isRelative())
     {
         String workPath = DE_APP->currentWorkPath().withSeparators('/');
         destination = workPath / destination;
@@ -1005,7 +994,7 @@ void FS1::addPathLumpMapping(String lumpName, String destination)
     for (; found != d->lumpMappings.end(); ++found)
     {
         LumpMapping const &ldm = *found;
-        if (!ldm.first.compare(destination, Qt::CaseInsensitive))
+        if (!ldm.first.compare(destination, CaseInsensitive))
             break;
     }
 
@@ -1035,14 +1024,15 @@ void FS1::clearPathLumpMappings()
 static bool applyPathMapping(ddstring_t *path, PathMapping const &pm)
 {
     if (!path) return false;
-    QByteArray destUtf8 = pm.first.toUtf8();
-    AutoStr *dest = AutoStr_FromTextStd(destUtf8.constData());
-    if (qstrnicmp(Str_Text(path), Str_Text(dest), Str_Length(dest))) return false;
+//    QByteArray destUtf8 = pm.first.toUtf8();
+    const auto &dest = pm.first;
+//    AutoStr *dest = AutoStr_FromTextStd(dest);
+    if (iCmpStrNCase(Str_Text(path), dest, dest.size())) return false;
 
     // Replace the beginning with the source path.
-    QByteArray sourceUtf8 = pm.second.toUtf8();
-    AutoStr *temp = AutoStr_FromTextStd(sourceUtf8.constData());
-    Str_PartAppend(temp, Str_Text(path), pm.first.length(), Str_Length(path) - pm.first.length());
+    const auto &source = pm.second;
+    AutoStr *temp = AutoStr_FromTextStd(source);
+    Str_PartAppend(temp, Str_Text(path), pm.first.size(), Str_Length(path) - pm.first.size());
     Str_Copy(path, temp);
     return true;
 }
@@ -1056,7 +1046,7 @@ void FS1::addPathMapping(String source, String destination)
     for (; found != d->pathMappings.end(); ++found)
     {
         PathMapping const &pm = *found;
-        if (!pm.second.compare(source, Qt::CaseInsensitive))
+        if (!pm.second.compare(source, CaseInsensitive))
             break;
     }
 
@@ -1102,22 +1092,22 @@ void FS1::printDirectory(Path path)
     }
 }
 
-bool FS1::knownScheme(String name)
+bool FS1::knownScheme(const String& name)
 {
     if (!name.isEmpty())
     {
-        Schemes::iterator found = d->schemes.find(name.toLower());
+        Schemes::iterator found = d->schemes.find(name.lower());
         if (found != d->schemes.end()) return true;
     }
     return false;
 }
 
-FS1::Scheme &FS1::scheme(String name)
+FS1::Scheme &FS1::scheme(const String& name)
 {
     if (!name.isEmpty())
     {
-        Schemes::iterator found = d->schemes.find(name.toLower());
-        if (found != d->schemes.end()) return **found;
+        Schemes::iterator found = d->schemes.find(name.lower());
+        if (found != d->schemes.end()) return *found->second;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw UnknownSchemeError("FS1::scheme", "No scheme found matching '" + name + "'");

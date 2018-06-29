@@ -26,11 +26,10 @@
 #include <de/FileSystem>
 #include <de/Folder>
 #include <de/Library>
+#include <de/List>
 #include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/str.h>
-
-#include <QList>
 
 struct library_s  // typedef Library
 {
@@ -42,7 +41,7 @@ struct library_s  // typedef Library
 
 static ddstring_t *lastError;
 
-typedef QList<Library *> LoadedLibs;
+typedef de::List<Library *> LoadedLibs;
 static LoadedLibs loadedLibs;
 
 void Library_Init()
@@ -129,7 +128,7 @@ Library *Library_New(char const *filePath)
     }
     catch (de::Error const &er)
     {
-        Str_Set(lastError, er.asText().toLatin1().constData());
+        Str_Set(lastError, er.asText().c_str());
         LOG_RES_WARNING("Library_New: Error opening \"%s\": ") << filePath << er.asText();
     }
     return nullptr;
@@ -172,7 +171,7 @@ void *Library_Symbol(Library *lib, char const *symbolName)
     }
     catch (de::Library::SymbolMissingError const &er)
     {
-        Str_Set(lastError, er.asText().toLatin1().constData());
+        Str_Set(lastError, er.asText().c_str());
         return nullptr;
     }
 }
@@ -182,10 +181,10 @@ char const *Library_LastError()
     return Str_Text(lastError);
 }
 
-de::LoopResult Library_ForAll(std::function<de::LoopResult (de::LibraryFile &)> func)
+de::LoopResult Library_ForAll(const std::function<de::LoopResult (de::LibraryFile &)>& func)
 {
-    auto const &libs = de::App::fileSystem().indexFor(DE_TYPE_NAME(de::LibraryFile));
-    foreach (de::File *file, libs.files())
+    const auto &libs = de::App::fileSystem().indexFor(DE_TYPE_NAME(de::LibraryFile));
+    for (auto *file : libs.files())
     {
         if (file->path().beginsWith("/bin/"))
         {

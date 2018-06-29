@@ -37,7 +37,7 @@
 #include <de/PackageLoader>
 #include <de/TextValue>
 #include <de/charsymbols.h>
-#include <QtAlgorithms>
+#include <algorithm>
 
 using namespace de;
 
@@ -92,7 +92,7 @@ DE_PIMPL(Game), public Lockable
     ~Impl()
     {
         DENG2_GUARD(this);
-        qDeleteAll(manifests);
+        for (auto &i : manifests) delete i.second;
     }
 
     GameProfile *profile() const
@@ -152,13 +152,13 @@ String Game::family() const
     return "";
 }
 
-void Game::setRequiredPackages(StringList packageIds)
+void Game::setRequiredPackages(const StringList &packageIds)
 {
     DENG2_GUARD(d);
     d->requiredPackages = packageIds;
 }
 
-void Game::addRequiredPackage(String const &packageId)
+void Game::addRequiredPackage(const String &packageId)
 {
     DENG2_GUARD(d);
     d->requiredPackages.append(packageId);
@@ -218,11 +218,12 @@ void Game::addManifest(ResourceManifest &manifest)
 {
     DENG2_GUARD(d);
     // Ensure we don't add duplicates.
-    Manifests::const_iterator found = d->manifests.find(manifest.resourceClass(), &manifest);
-    if (found == d->manifests.end())
-    {
-        d->manifests.insert(manifest.resourceClass(), &manifest);
-    }
+//    auto found = d->manifests.find(manifest.resourceClass(), &manifest);
+//    if (found == d->manifests.end())
+//    {
+//        d->manifests.insert(manifest.resourceClass(), &manifest);
+//    }
+    d->manifests.insert(std::make_pair(manifest.resourceClass(), &manifest));
 }
 
 bool Game::allStartupFilesFound() const
@@ -235,9 +236,9 @@ bool Game::allStartupFilesFound() const
             return false;
     }
 
-    foreach (ResourceManifest *manifest, d->manifests)
+    for (const auto &i : d->manifests)
     {
-        int const flags = manifest->fileFlags();
+        int const flags = i.second->fileFlags();
 
         if ((flags & FF_STARTUP) && !(flags & FF_FOUND))
             return false;
@@ -289,21 +290,21 @@ String const &Game::statusAsText() const
 String Game::description() const
 {
     DENG2_GUARD(d);
-    return String(_E(b) "%1 - %2\n" _E(.)
-                  _E(l) "ID: " _E(.) "%3 "
-                  _E(l) "PluginId: "    _E(.) "%4\n"
-                  _E(D)_E(b) "Packages:\n" _E(.)_E(.) "%5\n"
+    return String::format(_E(b) "%s - %s\n" _E(.)
+                  _E(l) "ID: " _E(.) "%s "
+                  _E(l) "PluginId: "    _E(.) "%i\n"
+                  _E(D)_E(b) "Packages:\n" _E(.)_E(.) "%s\n"
                   //_E(D)_E(b) "Startup resources:\n" _E(.)_E(.) "%6\n"
-                  _E(D)_E(b) "Custom resources:\n" _E(.)_E(.) "%7\n"
-                  _E(D)_E(b) "Status: " _E(.) "%8")
-            .arg(title())
-            .arg(author())
-            .arg(id())
-            .arg(int(pluginId()))
-            .arg(" - " _E(>) + String::join(d->requiredPackages, _E(<) "\n - " _E(>)) + _E(<))
+                  _E(D)_E(b) "Custom resources:\n" _E(.)_E(.) "%s\n"
+                  _E(D)_E(b) "Status: " _E(.) "%s",
+            title().c_str(),
+            author().c_str(),
+            id().c_str(),
+            int(pluginId()),
+            (" - " _E(>) + String::join(d->requiredPackages, _E(<) "\n - " _E(>)) + _E(<)).c_str(),
             //.arg(filesAsText(FF_STARTUP))
-            .arg(filesAsText(0, false))
-            .arg(statusAsText());
+            filesAsText(0, false).c_str(),
+            statusAsText().c_str());
 }
 
 pluginid_t Game::pluginId() const
@@ -427,13 +428,13 @@ bool Game::isRequiredFile(File1 &file) const
     String absolutePath = rootFile.composePath();
     bool isRequired = false;
 
-    for (Manifests::const_iterator i = d->manifests.find(RC_PACKAGE);
-        i != d->manifests.end() && i.key() == RC_PACKAGE; ++i)
+    const auto packages = d->manifests.equal_range(RC_PACKAGE);
+    for (auto i = packages.first; i != packages.second; ++i)
     {
-        ResourceManifest &manifest = **i;
+        ResourceManifest &manifest = *i->second;
         if (!(manifest.fileFlags() & FF_STARTUP)) continue;
 
-        if (!manifest.resolvedPath(true/*try locate*/).compare(absolutePath, Qt::CaseInsensitive))
+        if (!manifest.resolvedPath(true/*try locate*/).compare(absolutePath, CaseInsensitive))
         {
             isRequired = true;
             break;
@@ -451,7 +452,7 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     if (!VALID_RESOURCECLASSID(classId))
     {
         throw Error("Game::addResource",
-                    "Unknown resource class " + QString::number(classId));
+                    "Unknown resource class " + String::asText(classId));
     }
 
     if (!names || !names[0])
@@ -464,8 +465,8 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     addManifest(*manifest);
 
     // Add the name list to the resource record.
-    QStringList nameList = String(names).split(";", QString::SkipEmptyParts);
-    foreach (QString const &nameRef, nameList)
+    StringList nameList = String(names).split(";");
+    for (String const &nameRef : nameList)
     {
         manifest->addName(nameRef);
     }
@@ -473,8 +474,8 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     if (params && classId == RC_PACKAGE)
     {
         // Add the identityKey list to the resource record.
-        QStringList idKeys = String((char const *) params).split(";", QString::SkipEmptyParts);
-        foreach (QString const &idKeyRef, idKeys)
+        StringList idKeys = String((char const *) params).split(";");
+        for (String const &idKeyRef : idKeys)
         {
             manifest->addIdentityKey(idKeyRef);
         }
@@ -514,10 +515,10 @@ String Game::filesAsText(int rflags, bool withStatus) const
     for (uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
         resourceclassid_t const classId = resourceclassid_t(i);
-        for (Manifests::const_iterator i = manifs.find(classId);
-            i != manifs.end() && i.key() == classId; ++i)
+        const auto range = manifs.equal_range(classId);
+        for (auto i = range.first; i != range.second; ++i)
         {
-            ResourceManifest &manifest = **i;
+            ResourceManifest &manifest = *i->second;
             if (rflags >= 0 && (rflags & manifest.fileFlags()))
             {
                 bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
@@ -530,16 +531,21 @@ String Game::filesAsText(int rflags, bool withStatus) const
                 }
 
                 // Format the resource name list.
-                text += String(_E(>) "%1%2")
-                        .arg(!resourceFound? _E(D) : "")
-                        .arg(manifest.names().join(_E(l) " or " _E(.)));
+                text += String::format(_E(>) "%1%2",
+                        !resourceFound? _E(D) : "",
+                        String::join(manifest.names(), _E(l) " or " _E(.)).c_str());
 
                 if (withStatus)
                 {
                     text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
                     if (resourceFound)
                     {
-                        text += String(_E(C) "\"%1\"" _E(.)).arg(NativePath(manifest.resolvedPath(false/*don't try to locate*/)).expand().pretty());
+                        text += String::format(
+                            _E(C) "\"%s\"" _E(.),
+                            NativePath(manifest.resolvedPath(false /*don't try to locate*/))
+                                .expand()
+                                .pretty()
+                                .c_str());
                     }
                     text += _E(<);
                 }
@@ -563,7 +569,7 @@ D_CMD(InspectGame)
 {
     DE_UNUSED(src);
 
-    Game const *game = 0;
+    Game const *game = nullptr;
     if (argc < 2)
     {
         // No game identity key was specified - assume the current game.

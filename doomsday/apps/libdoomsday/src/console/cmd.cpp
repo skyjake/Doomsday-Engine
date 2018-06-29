@@ -27,7 +27,7 @@
 #include <de/Log>
 #include <de/Config>
 #include <de/TextValue>
-#include <QMap>
+#include <de/Map>
 
 using namespace de;
 
@@ -39,7 +39,7 @@ static blockset_t *ccmdBlockSet;
 /// Running total of the number of uniquely-named commands.
 static uint numUniqueNamedCCmds;
 
-static QMap<String, String> mappedConfigVariables;
+static Map<String, String> mappedConfigVariables;
 
 void Con_InitCommands()
 {
@@ -249,7 +249,7 @@ ccmd_t *Con_FindCommand(char const *name)
     {
         for (ccmd_t *ccmd = ccmdListHead; ccmd; ccmd = ccmd->next)
         {
-            if (qstricmp(name, ccmd->name)) continue;
+            if (iCmpStrCase(name, ccmd->name)) continue;
 
             // Locate the head of the overload list.
             while (ccmd->prevOverload) { ccmd = ccmd->prevOverload; }
@@ -397,11 +397,11 @@ String Con_CmdAsStyledText(ccmd_t *cmd)
     char const *str;
     if ((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
     {
-        return String(_E(b) "%1 " _E(.) _E(>) _E(2) "%2" _E(.) _E(<)).arg(cmd->name).arg(str);
+        return String::format(_E(b) "%1 " _E(.) _E(>) _E(2) "%2" _E(.) _E(<), cmd->name, str);
     }
     else
     {
-        return String(_E(b) "%1" _E(.)).arg(cmd->name);
+        return String::format(_E(b) "%s" _E(.), cmd->name);
     }
 }
 
@@ -410,10 +410,10 @@ D_CMD(MappedConfigVariable)
     DE_UNUSED(src);
 
     // Look up the variable.
-    auto const found = mappedConfigVariables.constFind(argv[0]);
-    DE_ASSERT(found != mappedConfigVariables.constEnd()); // mapping must be defined
+    auto const found = mappedConfigVariables.find(argv[0]);
+    DE_ASSERT(found != mappedConfigVariables.end()); // mapping must be defined
 
-    Variable &var = Config::get(found.value());
+    Variable &var = Config::get(found->second);
 
     if (argc == 1)
     {
@@ -421,7 +421,7 @@ D_CMD(MappedConfigVariable)
         LOG_SCR_MSG(_E(b) "%s" _E(.) " = " _E(>) "%s " _E(l)_E(C) "[Config.%s]")
                 << argv[0]
                 << var.value().asText()
-                << found.value();
+                << found->second;
     }
     else if (argc > 1)
     {

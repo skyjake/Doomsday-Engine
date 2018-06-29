@@ -38,7 +38,7 @@ namespace res {
 class LIBDOOMSDAY_PUBLIC Bundles
 {
 public:
-    typedef QList<de::Info::BlockElement const *> BlockElements;
+    typedef de::List<de::Info::BlockElement const *> BlockElements;
 
     /// Notified when a data bundle refresh/identification has been completed.
     DE_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified())

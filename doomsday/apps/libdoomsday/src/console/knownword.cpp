@@ -31,14 +31,14 @@
 #include <de/memory.h>
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
-#include <QList>
-#include <QRegExp>
+#include <de/List>
+#include <de/RegExp>
 
 using namespace de;
 
 /// The list of known words (for completion).
 /// @todo Replace with a persistent self-balancing BST (Treap?)?
-static QList<knownword_t> knownWords;
+static List<knownword_t> knownWords;
 static dd_bool knownWordsNeedUpdate;
 
 static void (*appWordsCallback)();
@@ -61,7 +61,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_CALIAS:   textA = AutoStr_FromTextStd(((calias_t *)wA->data)->name); break;
     case WT_CCMD:     textA = AutoStr_FromTextStd(((ccmd_t *)wA->data)->name); break;
     case WT_CVAR:     textA = CVar_ComposePath((cvar_t *)wA->data); break;
-    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wA->data)->id().toUtf8().constData()); break;
+    case WT_GAME:     textA = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wA->data)->id()); break;
 
     default:
         DE_ASSERT_FAIL("compareKnownWordByName: Invalid type for word A");
@@ -73,7 +73,7 @@ static bool compareKnownWordByName(knownword_t const &a, knownword_t const &b)
     case WT_CALIAS:   textB = AutoStr_FromTextStd(((calias_t *)wB->data)->name); break;
     case WT_CCMD:     textB = AutoStr_FromTextStd(((ccmd_t *)wB->data)->name); break;
     case WT_CVAR:     textB = CVar_ComposePath((cvar_t *)wB->data); break;
-    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wB->data)->id().toUtf8().constData()); break;
+    case WT_GAME:     textB = AutoStr_FromTextStd(reinterpret_cast<Game const *>(wB->data)->id()); break;
 
     default:
         DE_ASSERT_FAIL("compareKnownWordByName: Invalid type for word B");
@@ -95,7 +95,7 @@ static AutoStr *textForKnownWord(knownword_t const *word)
     case WT_CALIAS:   text = AutoStr_FromTextStd(((calias_t *)word->data)->name); break;
     case WT_CCMD:     text = AutoStr_FromTextStd(((ccmd_t *)word->data)->name); break;
     case WT_CVAR:     text = CVar_ComposePath((cvar_t *)word->data); break;
-    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<Game const *>(word->data)->id().toUtf8().constData()); break;
+    case WT_GAME:     text = AutoStr_FromTextStd(reinterpret_cast<Game const *>(word->data)->id()); break;
 
     default:
         DE_ASSERT_FAIL("textForKnownWord: Invalid type for word");
@@ -185,7 +185,7 @@ static void updateKnownWords(void)
     }
 
     // Sort it so we get nice alphabetical word completions.
-    qSort(knownWords.begin(), knownWords.end(), compareKnownWordByName);
+    std::sort(knownWords.begin(), knownWords.end(), compareKnownWordByName);
 
     knownWordsNeedUpdate = false;
 }
@@ -212,11 +212,11 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
     knownwordtype_t matchType = (VALID_KNOWNWORDTYPE(type)? type : WT_ANY);
     size_t patternLength = (pattern? strlen(pattern) : 0);
     int result = 0;
-    QRegExp const regex(matchMode == KnownWordRegex? pattern : "", Qt::CaseInsensitive);
+    RegExp const regex(matchMode == KnownWordRegex? pattern : "", CaseInsensitive);
 
     updateKnownWords();
 
-    for (int i = 0; i < knownWords.size(); ++i)
+    for (int i = 0; i < knownWords.sizei(); ++i)
     {
         knownword_t const *word = &knownWords.at(i);
         if (matchType != WT_ANY && word->type != type) continue;
@@ -226,12 +226,12 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
             AutoStr* textString = textForKnownWord(word);
             if (matchMode == KnownWordStartsWith)
             {
-                if (qstrnicmp(Str_Text(textString), pattern, patternLength))
+                if (iCmpStrNCase(Str_Text(textString), pattern, patternLength))
                     continue; // Didn't match.
             }
             else if (matchMode == KnownWordExactMatch)
             {
-                if (strcasecmp(Str_Text(textString), pattern))
+                if (iCmpStrCase(Str_Text(textString), pattern))
                     continue; // Didn't match.
             }
             else if (matchMode == KnownWordRegex)
@@ -304,8 +304,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
             "cmd ", "var ", "alias ", "game "
         };
 
-        String str;
-        QTextStream os(&str);
+        std::ostringstream os;
 
         os << _E(l) << wType[word->type]
            << _E(0) << _E(b) << Str_Text(text) << " " << _E(2) << _E(>);
@@ -327,7 +326,7 @@ static int aproposPrinter(knownword_t const *word, void *matching)
 
         os << tmp;
 
-        LOG_SCR_MSG("%s") << str;
+        LOG_SCR_MSG("%s") << os.str();
     }
 
     return 0;
@@ -349,7 +348,7 @@ D_CMD(HelpApropos)
 
 struct AnnotationWork
 {
-    QSet<QString> terms;
+    de::Set<de::String> terms;
     de::String result;
 };
 
@@ -399,14 +398,14 @@ static int annotateMatchedWordCallback(knownword_t const *word, void *parameters
     return false; // don't stop
 }
 
-de::String Con_AnnotatedConsoleTerms(QStringList terms)
+de::String Con_AnnotatedConsoleTerms(const StringList &terms)
 {
     AnnotationWork work;
-    foreach (QString term, terms)
+    for (const String &term : terms)
     {
         work.terms.insert(term);
     }
-    Con_IterateKnownWords(NULL, WT_ANY, annotateMatchedWordCallback, &work);
+    Con_IterateKnownWords(nullptr, WT_ANY, annotateMatchedWordCallback, &work);
     return work.result;
 }
 
@@ -420,7 +419,7 @@ static int addToTerms(knownword_t const *word, void *parameters)
 shell::Lexicon Con_Lexicon()
 {
     shell::Lexicon lexi;
-    Con_IterateKnownWords(0, WT_ANY, addToTerms, &lexi);
+    Con_IterateKnownWords(nullptr, WT_ANY, addToTerms, &lexi);
     lexi.setAdditionalWordChars("-_.");
     return lexi;
 }
@@ -440,6 +439,6 @@ static int addToStringList(knownword_t const *word, void *parameters)
 void Con_TermsRegex(StringList &terms, String const &pattern, knownwordtype_t wordType)
 {
     terms.clear();
-    Con_IterateKnownWords(KnownWordRegex, pattern.toUtf8(), wordType,
+    Con_IterateKnownWords(KnownWordRegex, pattern, wordType,
                           addToStringList, &terms);
 }

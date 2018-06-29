@@ -29,7 +29,7 @@ public:
     de::File *populateRemotePath(de::String const &packageId,
                                  de::filesys::RepositoryPath const &path) const override;
 
-    void parseRepositoryIndex(QByteArray data) override;
+    void parseRepositoryIndex(const de::Block &data) override;
 
     de::StringList categoryTags() const override;
 

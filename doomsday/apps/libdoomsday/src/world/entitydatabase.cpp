@@ -88,9 +88,10 @@ DE_PIMPL(EntityDatabase)
          Entity const *entity = entityByElementIndex(*set, elementIndex, false /*do not create*/);
          if (!entity)
          {
-             throw Error("EntityDatabase::property", QString("There is no element %1 of type %2")
-                                                         .arg(elementIndex)
-                                                         .arg(Str_Text(P_NameForMapEntityDef(def.entity))));
+             throw Error("EntityDatabase::property",
+                         stringf("There is no element %i of type %s",
+                                 elementIndex,
+                                 Str_Text(P_NameForMapEntityDef(def.entity))));
          }
          Entity::const_iterator found = entity->find(def.id);
          if (found == entity->end())
@@ -127,10 +128,10 @@ PropertyValue const &EntityDatabase::property(MapEntityPropertyDef const *def,
         return *propValue;
     }
     throw Error("EntityDatabase::property",
-                QString("Element %1 of type %2 has no value for property %3")
-                .arg(elementIndex)
-                .arg(Str_Text(P_NameForMapEntityDef(def->entity)))
-                .arg(def->id));
+                stringf("Element %i of type %s has no value for property %i",
+                        elementIndex,
+                        Str_Text(P_NameForMapEntityDef(def->entity)),
+                        def->id));
 }
 
 bool EntityDatabase::hasPropertyValue(MapEntityPropertyDef const *def, int elementIndex) const

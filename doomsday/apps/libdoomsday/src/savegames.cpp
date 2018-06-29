@@ -30,6 +30,7 @@
 #include <de/Folder>
 #include <de/LogBuffer>
 #include <de/Loop>
+#include <de/RegExp>
 #include <de/ScriptSystem>
 #include <de/Task>
 #include <de/TaskPool>
@@ -108,9 +109,9 @@ DE_PIMPL(SaveGames)
                 String const outputPath = String("/home/savegames") / gameId;
                 FileSystem::get().makeFolder(outputPath);
 
-                Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath.toUtf8().constData());
-                Str_Set(Str_InitStd(&parm.outputPath),     outputPath.toUtf8().constData());
-                Str_Set(Str_InitStd(&parm.fallbackGameId), gameId.toUtf8().constData());
+                Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath);
+                Str_Set(Str_InitStd(&parm.outputPath),     outputPath);
+                Str_Set(Str_InitStd(&parm.fallbackGameId), gameId);
             }
             else
             {
@@ -232,9 +233,9 @@ bool SaveGames::convertLegacySavegames(String const &gameId, String const &sourc
             /// attempting to convert Hexen's map state sidecar files separately when this
             /// is called from Doomsday Script (in bootstrap.de).
             Game const &game = DoomsdayApp::games()[gameId];
-            QRegExp namePattern(game.legacySavegameNameExp(), Qt::CaseInsensitive);
-            if (namePattern.isValid() && !namePattern.isEmpty())
+            if (game.legacySavegameNameExp())
             {
+                RegExp namePattern(game.legacySavegameNameExp(), CaseInsensitive);
                 saveFolder->forContents([this, &gameId, &namePattern, &didSchedule] (String name, File &file)
                 {
                     if (namePattern.exactMatch(name.fileName()))

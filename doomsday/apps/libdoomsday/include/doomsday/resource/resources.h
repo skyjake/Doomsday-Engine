@@ -138,7 +138,7 @@ namespace res
     {
         auto const *path = reinterpret_cast<de::Path *>(context);
         /// @todo Use PathTree::Node::compare()
-        return manifest.path().toStringRef().beginsWith(*path, de::String::CaseInsensitive);
+        return manifest.path().toString().beginsWith(*path, de::CaseInsensitive);
     }
 }
 

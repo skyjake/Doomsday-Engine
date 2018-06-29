@@ -61,7 +61,6 @@ public:
         /// All resources are by default flagged as "custom".
         DefaultFlags = Custom
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /// This file is not contained. @ingroup errors
     DE_ERROR(NotContainedError);
@@ -95,7 +94,7 @@ public:
      *
      * @return The composed URI.
      */
-    virtual de::Uri composeUri(QChar delimiter = '/') const;
+    virtual de::Uri composeUri(Char delimiter = '/') const;
 
     /**
      * Compose the absolute VFS path to this file.
@@ -106,7 +105,7 @@ public:
      *
      * @deprecated Prefer to use composeUri() instead.
      */
-    String composePath(QChar delimiter = '/') const {
+    String composePath(Char delimiter = '/') const {
         return composeUri(delimiter).compose();
     }
 
@@ -269,8 +268,6 @@ private:
     /// Load order depth index.
     uint order;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(File1::Flags)
 
 } // namespace de
 

@@ -364,7 +364,7 @@ public:  // Function hooks: ----------------------------------------------------
      *
      * @see callAllHooks()
      */
-    de::LoopResult forAllHooks(HookType type, std::function<de::LoopResult (Hook const &)> func) const;
+    de::LoopResult forAllHooks(HookType type, const std::function<de::LoopResult (Hook const &)>& func) const;
 
     /**
      * Convenient method of executing all hook functions of the given @a type in

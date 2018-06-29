@@ -173,7 +173,7 @@ public:
      *
      * @return List of bundles.
      */
-    static QList<DataBundle const *> loadedBundles();
+    static de::List<DataBundle const *> loadedBundles();
 
     /**
      * Finds all DataFile and DataFolder instances with a matching file name or
@@ -186,7 +186,7 @@ public:
      *
      * @return List of matching files.
      */
-    static QList<DataBundle const *> findAllNative(de::String const &fileNameOrPartialNativePath);
+    static de::List<DataBundle const *> findAllNative(de::String const &fileNameOrPartialNativePath);
 
     static de::StringList gameTags();
     static de::String anyGameTagPattern();

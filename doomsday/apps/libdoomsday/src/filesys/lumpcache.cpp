@@ -120,7 +120,7 @@ uint8_t const *LumpCache::data(uint lumpIdx) const
 LumpCache &LumpCache::insert(uint lumpIdx, uint8_t *data)
 {
     LOG_AS("LumpCache::insert");
-    if (!isValidIndex(lumpIdx)) throw Error("LumpCache::insert", QString("Invalid index %1").arg(lumpIdx));
+    if (!isValidIndex(lumpIdx)) throw Error("LumpCache::insert", stringf("Invalid index %u", lumpIdx));
 
     // Time to allocate the data cache?
     if (!_dataCache)
@@ -141,7 +141,7 @@ LumpCache &LumpCache::insertAndLock(uint lumpIdx, uint8_t *data)
 LumpCache &LumpCache::lock(uint lumpIdx)
 {
     LOG_AS("LumpCache::lock");
-    if (!isValidIndex(lumpIdx)) throw Error("LumpCache::lock", QString("Invalid index %1").arg(lumpIdx));
+    if (!isValidIndex(lumpIdx)) throw Error("LumpCache::lock", stringf("Invalid index %u", lumpIdx));
     Data* record = cacheRecord(lumpIdx);
     record->lock();
     return *this;
@@ -150,7 +150,7 @@ LumpCache &LumpCache::lock(uint lumpIdx)
 LumpCache &LumpCache::unlock(uint lumpIdx)
 {
     LOG_AS("LumpCache::unlock");
-    if (!isValidIndex(lumpIdx)) throw Error("LumpCache::unlock", QString("Invalid index %1").arg(lumpIdx));
+    if (!isValidIndex(lumpIdx)) throw Error("LumpCache::unlock", stringf("Invalid index %u", lumpIdx));
     Data* record = cacheRecord(lumpIdx);
     record->unlock();
     return *this;

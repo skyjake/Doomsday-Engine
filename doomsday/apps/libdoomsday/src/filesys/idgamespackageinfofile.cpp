@@ -26,8 +26,7 @@
 #include <de/Folder>
 #include <de/Package>
 #include <de/TextValue>
-
-#include <QRegularExpression>
+#include <de/RegExp>
 
 using namespace de;
 
@@ -48,7 +47,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
     String cacheFolderPath() const
     {
         String const hex = dataFile->metaId().asHexadecimalText();
-        return RemoteFile::CACHE_PATH / hex.right(1) / hex;
+        return RemoteFile::CACHE_PATH / hex.right(String::CharPos(1)) / hex;
     }
 
     void assetStateChanged(Asset &)
@@ -56,7 +55,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
         if (!assets.isEmpty() && assets.isReady())
         {
             // Looks like we can process the file contents.
-            qDebug() << "[IdgamesPackageInfoFile] Time to unzip and analyze!";
+            debug("[IdgamesPackageInfoFile] Time to unzip and analyze!");
 
             DE_ASSERT(dataFile->isReady());
             DE_ASSERT(descriptionFile->isReady());
@@ -90,7 +89,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
 //            qDebug() << dataFile->target().size() << dataFile->target().status().modifiedAt.asText();
 
             //qDebug() << "remote file timestamp:" << DataBundle::versionFromTimestamp(dataFile->target().status().modifiedAt);
-            meta.set("title",   dataFile->name().fileNameWithoutExtension().toUpper() + " (idgames)");
+            meta.set("title",   dataFile->name().fileNameWithoutExtension().upper() + " (idgames)");
             meta.set("version", DataBundle::versionFromTimestamp(dataFile->target().status().modifiedAt));
 
             if (Folder *zip = const_cast<Folder *>(maybeAs<Folder>(dataFile->target())))
@@ -98,7 +97,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
                 zip->populate();
                 zip->forContents([this, &dataFiles] (String name, File &file)
                 {
-                    String const ext = name.fileNameExtension().toLower();
+                    String const ext = name.fileNameExtension().lower();
                     if (ext == ".wad" || ext == ".deh" || ext == ".lmp" || ext == ".pk3")
                     {
                         File &copied = FS::copySerialized
@@ -110,7 +109,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
                 FS::waitForIdle();
 
                 StringList components;
-                foreach (String path, dataFiles)
+                for (String path : dataFiles)
                 {
                     if (DataBundle const *bundle = FS::tryLocate<DataBundle const>(path))
                     {
@@ -145,26 +144,26 @@ DE_PIMPL(IdgamesPackageInfoFile)
                     }
                 }
                 std::unique_ptr<ArrayValue> comps { new ArrayValue };
-                foreach (String comp, components)
+                for (const String &comp : components)
                 {
                     comps->add(new TextValue(comp));
                 }
                 meta.addArray("dataFiles", comps.release());
 
                 meta.set("tags", meta.gets("tags", "")
-                         .removed(QRegularExpression("\\b(hidden|cached)\\b"))
+                         .removed(RegExp("\\b(hidden|cached)\\b"))
                          .normalizeWhitespace());
 
                 // Version should match the idgames index version (or overridden from
                 // metadata with an actual version).
-                qDebug() << "idgames package will contain:" << components;
-                qDebug() << meta.asText().toUtf8().constData();
+                debug("idgames package will contain: %s", String::join(components, " ").c_str());
+                debug(meta.asText().c_str());
 
                 if (packageId.segment(1) == "levels")
                 {
                     // Tag with the right game.
                     meta.set("tags", meta.gets("tags", "")
-                             .removed(QRegularExpression(DataBundle::anyGameTagPattern()))
+                             .removed(RegExp(DataBundle::anyGameTagPattern()))
                              .normalizeWhitespace());
                     meta.appendUniqueWord("tags", packageId.segment(2).toString());
                 }
@@ -180,11 +179,11 @@ DE_PIMPL(IdgamesPackageInfoFile)
                     delete info.remove("path");
                     String const cachePath = cacheFolderPath();
                     ArrayValue *pkgData = new ArrayValue;
-                    foreach (String path, info.getStringList("dataFiles"))
+                    for (String path : info.getStringList("dataFiles"))
                     {
-                        if (path.startsWith(cachePath))
+                        if (path.beginsWith(cachePath))
                         {
-                            path.remove(0, cachePath.size() + 1);
+                            path.remove(BytePos(0), cachePath.size() + 1);
                         }
                         pkgData->add(new TextValue(path));
                     }
@@ -240,8 +239,8 @@ void IdgamesPackageInfoFile::download()
 void IdgamesPackageInfoFile::cancelDownload()
 {}
 
-IIStream const &IdgamesPackageInfoFile::operator >> (IByteArray &bytes) const
+IIStream const &IdgamesPackageInfoFile::operator>>(IByteArray &bytes) const
 {
-    bytes.set(0, d->serializedContent.dataConst(), d->serializedContent.size());
+    bytes.set(0, d->serializedContent.data(), d->serializedContent.size());
     return *this;
 }

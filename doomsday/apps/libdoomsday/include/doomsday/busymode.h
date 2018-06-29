@@ -37,7 +37,7 @@ struct LIBDOOMSDAY_PUBLIC BusyTask
     void *workerData; ///< Data context for the worker thread.
 
     int mode; ///< Busy mode flags @ref busyModeFlags
-    char const *name; ///< Optional task name (drawn with the progress bar).
+    const char *name; ///< Optional task name (drawn with the progress bar).
 
     /// Used with task lists:
     int maxProgress;
@@ -134,7 +134,7 @@ public:
      *
      * @return  Return value from the worker.
      */
-    int runNewTaskWithName(int mode, de::String const &taskName, std::function<int (void *)> worker);
+    int runNewTaskWithName(int mode, de::String const &taskName, const std::function<int (void *)>& worker);
 
     /**
      * Abnormally aborts the currently running task. Call this when the task encounters

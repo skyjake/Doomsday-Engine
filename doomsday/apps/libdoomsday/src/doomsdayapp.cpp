@@ -48,20 +48,21 @@
 #include <de/Loop>
 #include <de/MetadataBank>
 #include <de/NativeFile>
+#include <de/NativePath>
 #include <de/PackageLoader>
 #include <de/RemoteFeedRelay>
 #include <de/ScriptSystem>
 #include <de/TextValue>
+#include <de/Timer>
 #include <de/c_wrapper.h>
 #include <de/strutil.h>
 #include <de/memoryzone.h>
 #include <de/memory.h>
 
-#include <QDir>
-#include <QSettings>
-#include <QStandardPaths>
-#include <QCoreApplication>
-#include <QTimer>
+//#include <QSettings>
+//#include <QStandardPaths>
+//#include <QCoreApplication>
+//#include <QTimer>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
@@ -83,24 +84,24 @@ DE_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
-    Binder binder;
-    bool initialized = false;
-    bool gameBeingChanged = false;
-    bool shuttingDown = false;
-    Plugins plugins;
-    Games games;
-    Game *currentGame = nullptr;
-    GameProfile adhocProfile;
-    GameProfile const *currentProfile = nullptr;
-    StringList preGamePackages;
-    GameProfiles gameProfiles;
-    BusyMode busyMode;
-    Players players;
-    res::Bundles dataBundles;
+    Binder                   binder;
+    bool                     initialized      = false;
+    bool                     gameBeingChanged = false;
+    bool                     shuttingDown     = false;
+    Plugins                  plugins;
+    Games                    games;
+    Game *                   currentGame = nullptr;
+    GameProfile              adhocProfile;
+    GameProfile const *      currentProfile = nullptr;
+    StringList               preGamePackages;
+    GameProfiles             gameProfiles;
+    BusyMode                 busyMode;
+    Players                  players;
+    res::Bundles             dataBundles;
     shell::PackageDownloader packageDownloader;
-    SaveGames saveGames;
-    LoopCallback mainCall;
-    QTimer configSaveTimer;
+    SaveGames                saveGames;
+    LoopCallback             mainCall;
+    Timer                    configSaveTimer;
 
 #ifdef WIN32
     HINSTANCE hInstance = NULL;
@@ -123,7 +124,7 @@ DE_PIMPL(DoomsdayApp)
 
     GameChangeScriptAudience scriptAudienceForGameChange;
 
-    Impl(Public *i, Players::Constructor playerConstructor)
+    Impl(Public *i, const Players::Constructor &playerConstructor)
         : Base(i)
         , players(playerConstructor)
     {
@@ -144,9 +145,9 @@ DE_PIMPL(DoomsdayApp)
         audienceForFolderPopulation += this;
 
         // Periodically save the configuration files (after they've been changed).
-        configSaveTimer.setInterval(1000);
+        configSaveTimer.setInterval(1.0);
         configSaveTimer.setSingleShot(false);
-        QObject::connect(&configSaveTimer, &QTimer::timeout, [this] ()
+        configSaveTimer += [this]()
         {
             DE_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
             {
@@ -155,7 +156,7 @@ DE_PIMPL(DoomsdayApp)
                     i->periodicAutosave();
                 }
             }
-        });
+        };
         configSaveTimer.start();
 
         // File system extensions.
@@ -282,7 +283,7 @@ DE_PIMPL(DoomsdayApp)
             {
                 auto &cmdLine = CommandLine::get();
                 cmdLine.makeAbsolutePath(pos);
-                Folder &argFolder = FS::get().makeFolder(String("/sys/cmdline/arg%1").arg(pos, 3, 10, QChar('0')));
+                Folder &argFolder = FS::get().makeFolder(String::format("/sys/cmdline/arg%03i", pos));
                 File const &argFile = DirectoryFeed::manuallyPopulateSingleFile
                         (cmdLine.at(pos), argFolder);
                 // For future reference, store the name of the actual intended file as
@@ -293,8 +294,9 @@ DE_PIMPL(DoomsdayApp)
             catch (Error const &er)
             {
                 throw Error("DoomsdayApp::initCommandLineFiles",
-                            QString("Problem with file path in command line argument %1: %2")
-                            .arg(pos).arg(er.asText()));
+                            stringf("Problem with file path in command line argument %u: %s",
+                                    pos,
+                                    er.asText().c_str()));
             }
         });
     }
@@ -346,7 +348,7 @@ DE_PIMPL(DoomsdayApp)
         // Check for games installed from GOG.com.
         if (!cmdLine.has("-nogog"))
         {
-            foreach (NativePath gogPath, gogComPaths())
+            for (const NativePath &gogPath : gogComPaths())
             {
                 attachWadFeed("GOG.com", gogPath);
             }
@@ -364,8 +366,7 @@ DE_PIMPL(DoomsdayApp)
         if (getenv("DOOMWADPATH"))
         {
             // Interpreted similarly to the PATH variable.
-            QStringList paths = String(getenv("DOOMWADPATH"))
-                    .split(ENV_PATH_SEP_CHAR, String::SkipEmptyParts);
+            StringList paths = String(getenv("DOOMWADPATH")).split(ENV_PATH_SEP_CHAR);
             while (!paths.isEmpty())
             {
                 attachWadFeed(_E(m) "DOOMWADPATH" _E(.), startupPath / paths.takeLast());
@@ -390,7 +391,7 @@ DE_PIMPL(DoomsdayApp)
         // Command line paths.
         if (auto arg = cmdLine.check("-iwad", 1)) // has at least one parameter
         {
-            for (dint p = arg.pos + 1; p < cmdLine.count(); ++p)
+            for (dint p = arg.pos + 1; p < cmdLine.sizei(); ++p)
             {
                 if (cmdLine.isOption(p)) break;
 
@@ -430,7 +431,7 @@ DE_PIMPL(DoomsdayApp)
         // Command line paths.
         if (auto arg = cmdLine.check("-packs", 1))
         {
-            for (dint p = arg.pos + 1; p < cmdLine.count(); ++p)
+            for (dint p = arg.pos + 1; p < cmdLine.sizei(); ++p)
             {
                 if (cmdLine.isOption(p)) break;
 
@@ -538,10 +539,8 @@ void DoomsdayApp::initialize()
     auto &fs = FileSystem::get();
 
     // Folder for temporary native files.
-    NativePath tmpPath = NativePath(QStandardPaths::writableLocation(QStandardPaths::TempLocation))
-            / ("doomsday-" + QString::number(qApp->applicationPid()));
     Folder &tmpFolder = fs.makeFolder("/tmp");
-    tmpFolder.attach(new DirectoryFeed(tmpPath,
+    tmpFolder.attach(new DirectoryFeed(App::tempPath(),
                                        DirectoryFeed::AllowWrite |
                                        DirectoryFeed::CreateIfMissing |
                                        DirectoryFeed::OnlyThisFolder));
@@ -582,14 +581,14 @@ void DoomsdayApp::initPackageFolders()
     d->initPackageFolders();
 }
 
-QList<File *> DoomsdayApp::filesFromCommandLine() const
+List<File *> DoomsdayApp::filesFromCommandLine() const
 {
-    QList<File *> files;
+    List<File *> files;
     FS::locate<Folder const>("/sys/cmdline").forContents([&files] (String name, File &file)
     {
         try
         {
-            if (name.startsWith("arg"))
+            if (name.beginsWith("arg"))
             {
                 files << &FS::locate<File>(file.as<Folder>().objectNamespace().gets("argPath"));
             }
@@ -671,21 +670,21 @@ NativePath DoomsdayApp::steamBasePath()
     }
     return "";
 #elif MACOSX
-    return NativePath(QDir::homePath()) / "Library/Application Support/Steam/";
+    return NativePath::homePath() / "Library/Application Support/Steam/";
 #else
     /// @todo Where are Steam apps located on Linux?
     return "";
 #endif
 }
 
-QList<NativePath> DoomsdayApp::gogComPaths()
+List<NativePath> DoomsdayApp::gogComPaths()
 {
-    QList<NativePath> paths;
+    List<NativePath> paths;
 
 #ifdef WIN32
     // Look up all the Doom GOG.com paths.
-    QList<QString> const subfolders({ "", "doom2", "master\\wads", "Plutonia", "TNT" });
-    QList<QString> const gogIds    ({ "1435827232", "1435848814", "1435848742" });
+    StringList const subfolders({ "", "doom2", "master\\wads", "Plutonia", "TNT" });
+    StringList const gogIds    ({ "1435827232", "1435848814", "1435848742" });
     foreach (auto gogId, gogIds)
     {
         NativePath basePath = QSettings("HKEY_LOCAL_MACHINE\\Software\\GOG.com\\Games\\" + gogId,
@@ -766,12 +765,15 @@ bool DoomsdayApp::isGameLoaded()
 StringList DoomsdayApp::loadedPackagesAffectingGameplay() // static
 {
     StringList ids = PackageLoader::get().loadedPackageIdsInOrder();
-    QMutableListIterator<String> iter(ids);
-    while (iter.hasNext())
+    for (auto iter = ids.begin(); iter != ids.end(); )
     {
-        if (!GameStateFolder::isPackageAffectingGameplay(iter.next()))
+        if (!GameStateFolder::isPackageAffectingGameplay(*iter))
+    {
+            iter = ids.erase(iter);
+        }
+        else
         {
-            iter.remove();
+            ++iter;
         }
     }
     return ids;
@@ -800,11 +802,11 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
         }
 
         // Unload all packages that weren't loaded before the game was loaded.
-        for (String const &packageId : PackageLoader::get().loadedPackages().keys())
+        for (const auto &i : PackageLoader::get().loadedPackages())
         {
-            if (!d->preGamePackages.contains(packageId))
+            if (!d->preGamePackages.contains(i.first))
             {
-                PackageLoader::get().unload(packageId);
+                PackageLoader::get().unload(i.first);
             }
         }
 
@@ -904,8 +906,8 @@ void DoomsdayApp::makeGameCurrent(const GameProfile &profile)
         if (!plugins().exchangeGameEntryPoints(newGame.pluginId()))
         {
             throw Plugins::EntryPointError("DoomsdayApp::makeGameCurrent",
-                                           "Failed to exchange entrypoints with plugin " +
-                                           QString::number(newGame.pluginId()));
+                                           stringf("Failed to exchange entrypoints with plugin %i",
+                                                   newGame.pluginId()));
         }
     }
 
@@ -942,7 +944,7 @@ extern int loadGameStartupResourcesBusyWorker(void *context);
 extern int loadAddonResourcesBusyWorker(void *context);
 
 bool DoomsdayApp::changeGame(GameProfile const &profile,
-                             std::function<int (void *)> gameActivationFunc,
+                             const std::function<int (void *)> &gameActivationFunc,
                              Behaviors behaviors)
 {
     const auto &newGame = profile.game();

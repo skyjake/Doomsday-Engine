@@ -27,15 +27,15 @@ static FileTypes fileTypeMap;
 
 void DD_AddFileType(FileType const &ftype)
 {
-    fileTypeMap.insert(ftype.name().toLower(), &ftype);
+    fileTypeMap.insert(ftype.name().lower(), &ftype);
 }
 
 FileType const &DD_FileTypeByName(String name)
 {
     if (!name.isEmpty())
     {
-        FileTypes::const_iterator found = fileTypeMap.constFind(name.toLower());
-        if (found != fileTypeMap.constEnd()) return **found;
+        FileTypes::const_iterator found = fileTypeMap.find(name.lower());
+        if (found != fileTypeMap.end()) return *found->second;
     }
     return nullFileType; // Not found.
 }
@@ -46,7 +46,7 @@ FileType const &DD_GuessFileTypeFromFileName(String path)
     {
         DE_FOR_EACH_CONST(FileTypes, i, fileTypeMap)
         {
-            FileType const &ftype = **i;
+            FileType const &ftype = *i->second;
             if (ftype.fileNameIsKnown(path))
                 return ftype;
         }

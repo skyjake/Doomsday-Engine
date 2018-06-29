@@ -27,7 +27,6 @@
 #include <de/timer.h>
 #include <de/Lockable>
 #include <de/Log>
-#include <QEventLoop>
 
 using namespace de;
 
@@ -86,18 +85,10 @@ DE_PIMPL(BusyMode)
         return result.returnValue;
     }
 
-    DE_PIMPL_AUDIENCE(Beginning)
-    DE_PIMPL_AUDIENCE(End)
-    DE_PIMPL_AUDIENCE(Abort)
-    DE_PIMPL_AUDIENCE(TaskWillStart)
-    DE_PIMPL_AUDIENCE(TaskComplete)
+    DE_PIMPL_AUDIENCES(Beginning, End, Abort, TaskWillStart, TaskComplete)
 };
 
-DE_AUDIENCE_METHOD(BusyMode, Beginning)
-DE_AUDIENCE_METHOD(BusyMode, End)
-DE_AUDIENCE_METHOD(BusyMode, Abort)
-DE_AUDIENCE_METHOD(BusyMode, TaskWillStart)
-DE_AUDIENCE_METHOD(BusyMode, TaskComplete)
+DE_AUDIENCE_METHODS(BusyMode, Beginning, End, Abort, TaskWillStart, TaskComplete)
 
 BusyMode::BusyMode() : d(new Impl(this))
 {}
@@ -149,8 +140,10 @@ void BusyMode::abort(String const &message)
  * @param workerData    Data context for the worker thread.
  * @param taskName      Optional task name (drawn with the progress bar).
  */
-static BusyTask *newTask(int mode, std::function<int (void *)> worker, void* workerData,
-                         String const &taskName)
+static BusyTask *newTask(int                               mode,
+                         const std::function<int(void *)> &worker,
+                         void *                            workerData,
+                         const String &                    taskName)
 {
     BusyTask *task = new BusyTask;
     zapPtr(task);
@@ -163,7 +156,7 @@ static BusyTask *newTask(int mode, std::function<int (void *)> worker, void* wor
     // Take a copy of the task name.
     if (!taskName.isEmpty())
     {
-        task->name = M_StrDup(taskName.toLatin1());
+        task->name = M_StrDup(taskName.c_str());
     }
 
     return task;
@@ -172,11 +165,11 @@ static BusyTask *newTask(int mode, std::function<int (void *)> worker, void* wor
 static void deleteTask(BusyTask *task)
 {
     DE_ASSERT(task);
-    if (task->name) M_Free((void *)task->name);
+    if (task->name) M_Free((void *) task->name);
     delete task;
 }
 
-int BusyMode::runNewTaskWithName(int mode, String const &taskName, std::function<int (void *)> worker)
+int BusyMode::runNewTaskWithName(int mode, String const &taskName, const std::function<int (void *)>& worker)
 {
     BusyTask *task = newTask(mode, worker, nullptr, taskName);
     int result = runTask(task);

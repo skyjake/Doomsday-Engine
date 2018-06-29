@@ -21,8 +21,7 @@
 #include <de/MetadataBank>
 #include <de/Reader>
 #include <de/mathutil.h>
-#include <QList>
-#include <QRegularExpression>
+#include <de/RegExp>
 
 using namespace de;
 
@@ -32,17 +31,17 @@ const dsize LumpDirectory::InvalidPos = dsize(-1);
 
 static const String CACHE_CATEGORY = "LumpDirectory";
 
-static const QRegularExpression regExMy ("^E[1-9]M[1-9]$");
-static const QRegularExpression regMAPxx("^MAP[0-9][0-9]$");
-static const Block              flatMarkers[4] = {"FF_START", "FF_END", "F_START", "F_END"};
+static const RegExp regExMy ("^E[1-9]M[1-9]$");
+static const RegExp regMAPxx("^MAP[0-9][0-9]$");
+static const Block  flatMarkers[4] = {"FF_START", "FF_END", "F_START", "F_END"};
 
 DE_PIMPL_NOREF(LumpDirectory), public ISerializable
 {
-    Type                   type    = Invalid;
-    MapType                mapType = None;
-    duint32                crc     = 0;
-    QList<Entry>           entries;
-    QHash<QByteArray, int> index; // points to entries
+    Type             type    = Invalid;
+    MapType          mapType = None;
+    duint32          crc     = 0;
+    List<Entry>      entries;
+    Hash<Block, int> index; // points to entries
 
     void read(IByteArray const &source)
     {
@@ -69,7 +68,7 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
         reader.setOffset(dirOffset);
         reader.readBytes(16 * count, data);
 
-        crc = M_CRC32(data.dataConst(), uint(data.size()));
+        crc = crc32_Block(data);
 
         // Read all the entries.
         Reader lumpReader(data);
@@ -78,7 +77,7 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
             Entry entry;
             lumpReader >> entry.offset >> entry.size;
             lumpReader.readBytes(8, entry.name);
-            entry.name.resize(qstrlen(entry.name)); // QByteArray is zero-terminated
+            entry.name.resize(strlen(entry.name.data())); // QByteArray is zero-terminated
             entries.append(entry);
         }
 

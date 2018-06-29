@@ -26,10 +26,11 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
-#include <QFlag>
-#include <QList>
+#include <de/List>
 
 namespace res {
+
+using namespace de;
 
 class TextureManifest;
 
@@ -61,7 +62,6 @@ public:
         /// Apply the upscaleAndSharpen filter to the processed image.
         UpscaleAndSharpen   = 0x8
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
      * Image analysis identifiers.
@@ -108,14 +108,14 @@ public:
      *
      * @return Human-friendly description/overview of the texture.
      */
-    virtual de::String description() const;
+    virtual String description() const;
 
     /**
      * Returns the world dimensions of the texture, in map coordinate space
      * units. The DimensionsChange audience is notified whenever dimensions
      * are changed.
      */
-    de::Vec2ui const &dimensions() const;
+    Vec2ui const &dimensions() const;
 
     /**
      * Convenient accessor method for returning the X axis size (width) of
@@ -139,7 +139,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setDimensions(de::Vec2ui const &newDimensions);
+    void setDimensions(Vec2ui const &newDimensions);
 
     /**
      * Change the world width of the texture.
@@ -147,7 +147,7 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setWidth(de::duint newWidth);
+    void setWidth(duint newWidth);
 
     /**
      * Change the world height of the texture.
@@ -155,18 +155,18 @@ public:
      *
      * @todo Update any Materials (and thus Surfaces) which reference this.
      */
-    void setHeight(de::duint newHeight);
+    void setHeight(duint newHeight);
 
     /**
      * Returns the world origin offset of texture in map coordinate space units.
      */
-    de::Vec2i const &origin() const;
+    Vec2i const &origin() const;
 
     /**
      * Change the world origin offset of the texture.
      * @param newOrigin  New origin in map coordinate space units.
      */
-    void setOrigin(de::Vec2i const &newOrigin);
+    void setOrigin(Vec2i const &newOrigin);
 
     /**
      * Returns @c true if the texture is flagged @a flagsToTest.
@@ -184,7 +184,7 @@ public:
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    void setFlags(Flags flagsToChange, FlagOp operation = SetFlags);
 
     /**
      * Release prepared GL-textures for identified variants.
@@ -242,8 +242,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Texture::Flags)
 
 } // namespace res
 

@@ -42,7 +42,7 @@ struct LIBDOOMSDAY_PUBLIC CompiledSprite
         de::Uri uri;
         bool mirrorX = false;
     };
-    QVector<View> views;    // missing ones have an empty Uri
+    de::List<View> views;    // missing ones have an empty Uri
     int viewCount = 0;      // number of non-missing views
 
     CompiledSprite();

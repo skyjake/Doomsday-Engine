@@ -201,8 +201,8 @@ static bool applyGamePathMappings(String &path)
     // Manually mapped to Defs?
     if (path.beginsWith('@'))
     {
-        path.remove(0, 1);
-        if (path.at(0) == '/') path.remove(0, 1);
+        path.remove(BytePos(0), 1);
+        if (path.first() == '/') path.remove(BytePos(0), 1);
 
         path = String("$(App.DefsPath)/$(GamePlugin.Name)/auto") / path;
         return true;
@@ -211,11 +211,11 @@ static bool applyGamePathMappings(String &path)
     // Manually mapped to Data?
     if (path.beginsWith('#'))
     {
-        path.remove(0, 1);
-        if (path.at(0) == '/') path.remove(0, 1);
+        path.remove(BytePos(0), 1);
+        if (path.first() == '/') path.remove(BytePos(0), 1);
 
         // Is there a prefix to be omitted in the name?
-        if (int slash = path.lastIndexOf('/'))
+        if (auto slash = path.lastIndexOf('/'))
         {
             // The slash must not be too early in the string.
             if (slash >= 2)
@@ -257,7 +257,7 @@ static bool applyGamePathMappings(String &path)
     FS1::Schemes const &schemes = App_FileSystem().allSchemes();
     DE_FOR_EACH_CONST(FS1::Schemes, i, schemes)
     {
-        if ((*i)->mapPath(path))
+        if (i->second->mapPath(path))
         {
             return true;
         }
@@ -280,7 +280,7 @@ String const &Zip::LumpFile::name() const
     return directoryNode().name();
 }
 
-Uri Zip::LumpFile::composeUri(QChar delimiter) const
+Uri Zip::LumpFile::composeUri(Char delimiter) const
 {
     return directoryNode().path(delimiter);
 }
@@ -319,7 +319,7 @@ Zip &Zip::LumpFile::zip() const
 DE_PIMPL(Zip)
 {
     LumpTree entries;                     ///< Directory structure and entry records for all lumps.
-    QScopedPointer<LumpCache> dataCache;  ///< Data payload cache.
+    std::unique_ptr<LumpCache> dataCache;  ///< Data payload cache.
 
     Impl(Public *i) : Base(i)
     {}
@@ -340,7 +340,10 @@ DE_PIMPL(Zip)
         {
             bool result;
             uint8_t *compressedData = (uint8_t *) M_Malloc(lumpInfo.compressedSize);
-            if (!compressedData) throw Error("Zip::bufferLump", QString("Failed on allocation of %1 bytes for decompression buffer").arg(lumpInfo.compressedSize));
+            if (!compressedData)
+                throw Error("Zip::bufferLump",
+                            stringf("Failed on allocation of %zu bytes for decompression buffer",
+                                    lumpInfo.compressedSize));
 
             // Read the compressed data into a temporary buffer for decompression.
             self().handle_->read(compressedData, lumpInfo.compressedSize);
@@ -405,7 +408,11 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
     // local buffer before we process it into our runtime representation.
     // Read the entire central directory into memory.
     void *centralDirectory = M_Malloc(summary.size);
-    if (!centralDirectory) throw FormatError("Zip", String("Failed on allocation of %1 bytes for temporary copy of the central centralDirectory").arg(summary.size));
+    if (!centralDirectory)
+        throw FormatError("Zip",
+                          stringf("Failed on allocation of %u bytes for temporary copy of the "
+                                  "central centralDirectory",
+                                  summary.size));
 
     handle_->seek(summary.offset, SeekSet);
     handle_->read((uint8_t *)centralDirectory, summary.size);
@@ -536,7 +543,7 @@ void Zip::clearCachedLump(int lumpIndex, bool *retCleared)
 
     if (hasLump(lumpIndex))
     {
-        if (!d->dataCache.isNull())
+        if (d->dataCache)
         {
             d->dataCache->remove(lumpIndex, retCleared);
         }
@@ -550,7 +557,7 @@ void Zip::clearCachedLump(int lumpIndex, bool *retCleared)
 void Zip::clearLumpCache()
 {
     LOG_AS("Zip::clearLumpCache");
-    if (!d->dataCache.isNull())
+    if (d->dataCache)
     {
         d->dataCache->clear();
     }
@@ -568,7 +575,7 @@ uint8_t const *Zip::cacheLump(int lumpIndex)
                         << (lumpFile.info().isCompressed()? ", compressed" : ""));
 
     // Time to create the cache?
-    if (d->dataCache.isNull())
+    if (!d->dataCache)
     {
         d->dataCache.reset(new LumpCache(lumpCount()));
     }
@@ -577,7 +584,8 @@ uint8_t const *Zip::cacheLump(int lumpIndex)
     if (data) return data;
 
     uint8_t *region = (uint8_t *) Z_Malloc(lumpFile.info().size, PU_APPSTATIC, 0);
-    if (!region) throw Error("Zip::cacheLump", QString("Failed on allocation of %1 bytes for cache copy of lump #%2").arg(lumpFile.info().size).arg(lumpIndex));
+    if (!region) throw Error("Zip::cacheLump", stringf("Failed on allocation of %zu bytes for cache copy of lump #%i",
+                                                       lumpFile.info().size, lumpIndex));
 
     readLump(lumpIndex, region, false);
     d->dataCache->insert(lumpIndex, region);
@@ -593,7 +601,7 @@ void Zip::unlockLump(int lumpIndex)
 
     if (hasLump(lumpIndex))
     {
-        if (!d->dataCache.isNull())
+        if (d->dataCache)
         {
             d->dataCache->unlock(lumpIndex);
         }
@@ -627,7 +635,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     // Try to avoid a file system read by checking for a cached copy.
     if (tryCache)
     {
-        uint8_t const *data = (!d->dataCache.isNull() ? d->dataCache->data(lumpIndex) : 0);
+        uint8_t const *data = (d->dataCache ? d->dataCache->data(lumpIndex) : 0);
         LOGDEV_RES_XVERBOSE("Cache %s on #%i", (data? "hit" : "miss") << lumpIndex);
         if (data)
         {
@@ -647,7 +655,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     {
         // Allocate a temporary buffer and read the whole lump into it(!).
         uint8_t *readBuf = (uint8_t *) M_Malloc(lumpFile.size());
-        if (!readBuf) throw Error("Zip::readLump", QString("Failed on allocation of %1 bytes for work buffer").arg(lumpFile.size()));
+        if (!readBuf) throw Error("Zip::readLump", stringf("Failed on allocation of %u bytes for work buffer", lumpFile.size()));
 
         if (d->bufferLump(lumpFile, readBuf))
         {
@@ -660,7 +668,7 @@ size_t Zip::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
 
     /// @todo Do not check the read length here.
     if (readBytes < de::min(size_t(lumpFile.size()), length))
-        throw Error("Zip::readLump", QString("Only read %1 of %2 bytes of lump #%3").arg(readBytes).arg(length).arg(lumpIndex));
+        throw Error("Zip::readLump", stringf("Only read %zu of %zu bytes of lump #%i", readBytes, length, lumpIndex));
 
     return readBytes;
 }

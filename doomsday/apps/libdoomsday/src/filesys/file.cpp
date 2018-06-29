@@ -70,7 +70,7 @@ FileHandle &File1::handle()
     return *handle_;
 }
 
-Uri File1::composeUri(QChar delimiter) const
+Uri File1::composeUri(Char delimiter) const
 {
     return Uri(path_, RC_NULL, delimiter);
 }

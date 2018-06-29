@@ -107,11 +107,11 @@ public:
      */
     Pos find(const Block &lumpName) const;
 
-    QList<Pos> findAll(const Block &lumpName) const;
+    List<Pos> findAll(const Block &lumpName) const;
 
-    QList<Range> findRanges(RangeType rangeType) const;
+    List<Range> findRanges(RangeType rangeType) const;
 
-    QList<Pos> findMaps() const;
+    List<Pos> findMaps() const;
 
     StringList findMapLumpNames() const;
 

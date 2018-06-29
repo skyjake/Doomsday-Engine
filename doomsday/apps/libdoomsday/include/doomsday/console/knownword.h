@@ -103,7 +103,7 @@ LIBDOOMSDAY_PUBLIC knownword_t const **Con_CollectKnownWordsMatchingWord(char co
 
 LIBDOOMSDAY_PUBLIC AutoStr *Con_KnownWordToString(knownword_t const *word);
 
-LIBDOOMSDAY_PUBLIC de::String Con_AnnotatedConsoleTerms(QStringList terms);
+LIBDOOMSDAY_PUBLIC de::String Con_AnnotatedConsoleTerms(const de::StringList &terms);
 
 /**
  * Collects all the known words of the console into a Lexicon.

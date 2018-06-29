@@ -28,13 +28,12 @@
 #include <de/LogBuffer>
 #include <de/Reader>
 
-#include <QMap>
-#include <QStringBuilder>
+#include <de/Map>
 
 using namespace de;
 
-typedef QMap<int, String> StringsByType; // HST_* type => string
-typedef QMap<String, StringsByType> HelpStrings; // id => typed strings
+typedef Map<int, String> StringsByType; // HST_* type => string
+typedef Map<String, StringsByType> HelpStrings; // id => typed strings
 
 static HelpStrings helps;
 
@@ -49,68 +48,70 @@ void Help_ReadStrings(File const &file)
     LOG_RES_VERBOSE("Reading help strings from ") << file.description();
 
     de::Reader reader(file);
-    StringsByType *node = 0;
+    StringsByType *node = nullptr;
 
     while (!reader.atEnd())
     {
-        String line = reader.readLine().trimmed();
+        String line = reader.readLine().strip();
 
         // Comments and empty lines are ignored.
-        if (line.isEmpty() || line.startsWith("#"))
+        if (line.isEmpty() || line.beginsWith("#"))
             continue;
 
         // A new node?
-        if (line.startsWith("["))
+        if (line.beginsWith("["))
         {
-            int end = line.indexOf(']');
-            String id = line.mid(1, end > 0? end - 1 : -1).trimmed().toLower();
-            node = &helps.insert(id, StringsByType()).value();
+            auto end = line.indexOf(']');
+            String id = line.substr(BytePos(1), end > 0 ? (end.index - 1) : String::npos)
+                    .strip().lower();
+            helps.insert(id, StringsByType());
+            node = &helps.find(id)->second;
 
             LOG_TRACE_DEBUGONLY("Help node '%s'", id);
         }
         else if (node && line.contains('=')) // It must be a key?
         {
             int type = HST_DESCRIPTION;
-            if (line.startsWith("cv", Qt::CaseInsensitive))
+            if (line.beginsWith("cv", CaseInsensitive))
             {
                 type = HST_CONSOLE_VARIABLE;
             }
-            else if (line.startsWith("def", Qt::CaseInsensitive))
+            else if (line.beginsWith("def", CaseInsensitive))
             {
                 type = HST_DEFAULT_VALUE;
             }
-            else if (line.startsWith("inf", Qt::CaseInsensitive))
+            else if (line.beginsWith("inf", CaseInsensitive))
             {
                 type = HST_INFO;
             }
 
             // Strip the beginning.
-            line = line.mid(line.indexOf('=') + 1).trimmed();
+            line = line.substr(line.indexOf('=') + 1).strip();
 
             // The full text is collected here.
-            QString text;
+            String text;
 
             // The value may be split over multiple lines.
             while (!line.isEmpty())
             {
                 // Process the current line.
                 bool escape = false;
-                foreach (QChar ch, line)
+                for (Char ch : line)
                 {
-                    if (ch == QChar('\\'))
+                    if (ch == Char('\\'))
                     {
                         escape = true;
                     }
                     else if (escape)
                     {
-                        if     (ch == QChar('n') ) text = text % "\n";
-                        else if (ch == QChar('b') ) text = text % "\b";
-                        else if (ch == QChar('\\')) text = text % "\\";
+                        if     (ch == Char('n') ) text += "\n";
+                        else if (ch == Char('b') ) text += "\b";
+                        else if (ch == Char('\\')) text += "\\";
                         escape = false;
                     }
                     else
                     {
-                        text = text % ch;
+                        text += ch;
                     }
                 }
 
@@ -120,7 +121,7 @@ void Help_ReadStrings(File const &file)
                 if (escape)
                 {
                     // Line ended with a backslash; read the next line.
-                    line = reader.readLine().trimmed();
+                    line = reader.readLine().strip();
                 }
             }
 
@@ -134,27 +135,27 @@ void Help_ReadStrings(File const &file)
 HelpId DH_Find(char const *id)
 {
     // The identifiers are case insensitive.
-    HelpStrings::const_iterator found = helps.constFind(String(id).lower());
-    if (found != helps.constEnd())
+    HelpStrings::const_iterator found = helps.find(String(id).lower());
+    if (found != helps.end())
     {
-        return &found.value();
+        return &found->second;
     }
-    return 0;
+    return nullptr;
 }
 
 char const *DH_GetString(HelpId found, int type)
 {
-    if (!found) return 0;
-    if (type < 0 || type > NUM_HELPSTRING_TYPES) return 0;
+    if (!found) return nullptr;
+    if (type < 0 || type > NUM_HELPSTRING_TYPES) return nullptr;
 
     StringsByType const *hs = reinterpret_cast<StringsByType const *>(found);
 
-    StringsByType::const_iterator i = hs->constFind(type);
-    if (i != hs->constEnd())
+    StringsByType::const_iterator i = hs->find(type);
+    if (i != hs->end())
     {
-        return Str_Text(AutoStr_FromTextStd(i.value().toUtf8().constData()));
+        return Str_Text(AutoStr_FromTextStd(i->second.c_str()));
     }
-    return 0;
+    return nullptr;
 }
 
 void DD_InitHelp()

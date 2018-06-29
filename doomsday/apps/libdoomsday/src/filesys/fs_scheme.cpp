@@ -19,9 +19,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDir>
-#include <cstring>
-
 #include <de/App>
 #include <de/Log>
 #include <de/NativePath>
@@ -143,9 +140,9 @@ public:
     {
         hash_type hashKey = 0;
         int op = 0;
-        for (int i = 0; i < str.length(); ++i)
+        for (Char ch : str)
         {
-            ushort unicode = str.at(i).toLower().unicode();
+            Char unicode = towlower(ch);
             switch (op)
             {
             case 0: hashKey ^= unicode; ++op;   break;
@@ -165,7 +162,7 @@ struct FS1::Scheme::Impl
     String name;
 
     /// Flags which govern behavior.
-    FS1::Scheme::Flags flags;
+    Flags flags;
 
     /// Associated path directory.
     /// @todo It should not be necessary for a unique directory per scheme.
@@ -184,7 +181,7 @@ struct FS1::Scheme::Impl
     /// Each set is in order of greatest-importance, right to left.
     FS1::Scheme::SearchPaths searchPaths;
 
-    Impl(FS1::Scheme &d, String _name, FS1::Scheme::Flags _flags)
+    Impl(FS1::Scheme &d, String _name, Flags _flags)
         : self(d), name(_name), flags(_flags), directory(), rootNode(0),
           nameHash(), nameHashIsDirty(true)
     {}
@@ -217,10 +214,10 @@ struct FS1::Scheme::Impl
      */
     void addFromSearchPaths(FS1::PathGroup group)
     {
-        for (FS1::Scheme::SearchPaths::const_iterator i = searchPaths.find(group);
-             i != searchPaths.end() && i.key() == group; ++i)
+        const auto found = searchPaths.equal_range(group);
+        for (auto i = found.first; i != found.second; ++i)
         {
-            addFromSearchPath(*i);
+            addFromSearchPath(i->second);
         }
     }
 
@@ -229,12 +226,12 @@ struct FS1::Scheme::Impl
         if (path.isEmpty()) return 0;
 
         // Try to make it a relative path.
-        if (QDir::isAbsolutePath(path))
+        if (NativePath(path).isAbsolute())
         {
             String const basePath = App_BasePath();
             if (path.beginsWith(basePath))
             {
-                path = path.mid(basePath.length() + 1);
+                path = path.substr(basePath.sizeb() + 1);
             }
         }
 
@@ -276,8 +273,10 @@ struct FS1::Scheme::Impl
      * param isFolder           @c true = @a filePath is a folder in the virtual file system.
      * @param flags             @ref searchPathFlags
      */
-    void addDirectoryPathAndMaybeDescendBranch(bool descendBranch,
-        String filePath, bool /*isFolder*/, int flags)
+    void addDirectoryPathAndMaybeDescendBranch(bool          descendBranch,
+                                               const String &filePath,
+                                               bool /*isFolder*/,
+                                               int flags)
     {
         // Add this path to the directory.
         UserDataNode *node = addDirectoryPath(filePath);
@@ -294,7 +293,7 @@ struct FS1::Scheme::Impl
                     // Process it again?
                     DE_FOR_EACH_CONST(PathTree::Nodes, i, directory.leafNodes())
                     {
-                        PathTree::Node &sibling = **i;
+                        PathTree::Node &sibling = *i->second;
                         if (&sibling.parent() == node)
                         {
                             self.add(sibling);
@@ -323,7 +322,7 @@ struct FS1::Scheme::Impl
 
 FS1::Scheme::Scheme(String symbolicName, Flags flags)
 {
-    d = new Impl(*this, symbolicName, flags);
+    d = new Impl(*this, std::move(symbolicName), flags);
 }
 
 FS1::Scheme::~Scheme()
@@ -445,15 +444,15 @@ bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
     DE_FOR_EACH(SearchPaths, i, d->searchPaths)
     {
         // Compare using the unresolved textual representations.
-        if (!i->asText().compareWithoutCase(search.asText()))
+        if (!i->second.asText().compareWithoutCase(search.asText()))
         {
-            i->setFlags(search.flags());
+            i->second.setFlags(search.flags());
             return true;
         }
     }
 
     // Prepend to the path list - newer paths have priority.
-    d->searchPaths.insert(group, search);
+    d->searchPaths.insert(std::make_pair(group, search));
 
     LOGDEV_RES_MSG("\"%s\" added to scheme '%s' (group:%s)")
         << search << name() << nameForPathGroup(group);
@@ -463,7 +462,7 @@ bool FS1::Scheme::addSearchPath(SearchPath const &search, FS1::PathGroup group)
 
 void FS1::Scheme::clearSearchPathGroup(FS1::PathGroup group)
 {
-    d->searchPaths.remove(group);
+    d->searchPaths.erase(group);
 }
 
 void FS1::Scheme::clearAllSearchPaths()
@@ -476,7 +475,7 @@ FS1::Scheme::SearchPaths const &FS1::Scheme::allSearchPaths() const
     return d->searchPaths;
 }
 
-int FS1::Scheme::findAll(String name, FoundNodes &found)
+int FS1::Scheme::findAll(const String& name, FoundNodes &found)
 {
     int numFoundSoFar = found.count();
 
@@ -500,7 +499,7 @@ int FS1::Scheme::findAll(String name, FoundNodes &found)
             FileRef &fileRef = hashNode->fileRef;
             PathTree::Node &node = fileRef.directoryNode();
 
-            if (!name.isEmpty() && !node.name().beginsWith(name, String::CaseInsensitive)) continue;
+            if (!name.isEmpty() && !node.name().beginsWith(name, CaseInsensitive)) continue;
 
             found.push_back(&node);
         }
@@ -518,8 +517,8 @@ bool FS1::Scheme::mapPath(String &path) const
 
     // Does this path qualify for mapping?
     if (path.length() <= name().length()) return false;
-    if (path.at(name().length()) != '/')  return false;
-    if (!path.beginsWith(name(), String::CaseInsensitive)) return false;
+    if (path.substr(name().sizec(), 1) != "/")  return false;
+    if (!path.beginsWith(name(), CaseInsensitive)) return false;
 
     // Yes.
     path = String("$(App.DataPath)/$(GamePlugin.Name)") / path;

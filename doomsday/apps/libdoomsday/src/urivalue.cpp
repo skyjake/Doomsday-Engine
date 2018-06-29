@@ -65,7 +65,7 @@ bool UriValue::contains(Value const &value) const
     // type conversions.
     if (is<TextValue>(value))
     {
-        return _uri.asText().indexOf(value.asText(), Qt::CaseSensitive) >= 0;
+        return _uri.asText().indexOf(value.asText(), CaseSensitive) >= 0;
     }
     return Value::contains(value);
 }

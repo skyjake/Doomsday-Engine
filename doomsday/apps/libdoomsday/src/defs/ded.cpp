@@ -366,7 +366,7 @@ int ded_s::getMobjNum(String const &id) const
     }
     /*
     for (i = 0; i < mobjs.size(); ++i)
-        if (!qstricmp(mobjs[i].id, id))
+        if (!iCmpStrCase(mobjs[i].id, id))
             return i;*/
 
     return -1;
@@ -379,7 +379,7 @@ int ded_s::getMobjNumForName(const char *name) const
 
     /*
     for (int i = mobjs.size() - 1; i >= 0; --i)
-        if (!qstricmp(mobjs[i].name, name))
+        if (!iCmpStrCase(mobjs[i].name, name))
             return i;*/
     if (Record const *def = things.tryFind("name", name))
     {
@@ -420,7 +420,7 @@ dint ded_s::evalFlags(char const *ptr) const
     {
         ptr = M_SkipWhite(const_cast<char *>(ptr));
 
-        dint flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
+        dsize flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
@@ -496,7 +496,7 @@ int ded_s::getModelNum(const char *id) const
     {
         int i = 0;
         do {
-            if (!qstricmp(models[i].id, id)) idx = i;
+            if (!iCmpStrCase(models[i].id, id)) idx = i;
         } while (idx == -1 && ++i < (int)models.size());
     }
     return idx;*/
@@ -514,7 +514,7 @@ int ded_s::getSkyNum(char const *id) const
 
     for (int i = skies.size() - 1; i >= 0; i--)
     {
-        if (!qstricmp(skies[i].id, id))
+        if (!iCmpStrCase(skies[i].id, id))
             return i;
     }
     return -1;*/
@@ -522,7 +522,7 @@ int ded_s::getSkyNum(char const *id) const
 
 int ded_s::getSoundNum(String const &id) const
 {
-    return getSoundNum(id.toUtf8());
+    return getSoundNum(id.c_str());
 }
 
 int ded_s::getSoundNum(const char *id) const
@@ -532,7 +532,7 @@ int ded_s::getSoundNum(const char *id) const
     {
         int i = 0;
         do {
-            if (!qstricmp(sounds[i].id, id)) idx = i;
+            if (!iCmpStrCase(sounds[i].id, id)) idx = i;
         } while (idx == -1 && ++i < sounds.size());
     }
     return idx;
@@ -544,7 +544,7 @@ int ded_s::getSoundNumForName(const char *name) const
         return -1;
 
     for (int i = 0; i < sounds.size(); ++i)
-        if (!qstricmp(sounds[i].name, name))
+        if (!iCmpStrCase(sounds[i].name, name))
             return i;
 
     return 0;
@@ -552,7 +552,7 @@ int ded_s::getSoundNumForName(const char *name) const
 
 int ded_s::getSpriteNum(String const &id) const
 {
-    return getSpriteNum(id.toLatin1());
+    return getSpriteNum(id.c_str());
 }
 
 int ded_s::getSpriteNum(char const *id) const
@@ -561,7 +561,7 @@ int ded_s::getSpriteNum(char const *id) const
     {
         for (dint i = 0; i < sprites.size(); ++i)
         {
-            if (!qstricmp(sprites[i].id, id))
+            if (!iCmpStrCase(sprites[i].id, id))
                 return i;
         }
     }
@@ -581,7 +581,7 @@ int ded_s::getMusicNum(char const *id) const
     {
         int i = 0;
         do {
-            if (!qstricmp(musics[i].id, id)) idx = i;
+            if (!iCmpStrCase(musics[i].id, id)) idx = i;
         } while (idx == -1 && ++i < musics.size());
     }
     return idx;*/
@@ -594,7 +594,7 @@ int ded_s::getValueNum(char const *id) const
         // Read backwards to allow patching.
         for (dint i = values.size() - 1; i >= 0; i--)
         {
-            if (!qstricmp(values[i].id, id))
+            if (!iCmpStrCase(values[i].id, id))
                 return i;
         }
     }
@@ -603,7 +603,7 @@ int ded_s::getValueNum(char const *id) const
 
 int ded_s::getValueNum(String const &id) const
 {
-    return getValueNum(id.toLatin1());
+    return getValueNum(id.c_str());
 }
 
 ded_value_t *ded_s::getValueById(char const *id) const
@@ -613,14 +613,14 @@ ded_value_t *ded_s::getValueById(char const *id) const
     // Read backwards to allow patching.
     for (dint i = values.size() - 1; i >= 0; i--)
     {
-        if (!qstricmp(values[i].id, id))
+        if (!iCmpStrCase(values[i].id, id))
             return &values[i];
     }
     return nullptr;
 }
 ded_value_t *ded_s::getValueById(String const &id) const
 {
-    return getValueById(id.toLatin1());
+    return getValueById(id.c_str());
 }
 
 ded_value_t *ded_s::getValueByUri(de::Uri const &uri) const
@@ -697,7 +697,7 @@ int ded_s::getTextNum(char const *id) const
         // Search in reverse insertion order to allow patching.
         for (int i = text.size() - 1; i >= 0; i--)
         {
-            if (!qstricmp(text[i].id, id)) return i;
+            if (!iCmpStrCase(text[i].id, id)) return i;
         }
     }
     return -1; // Not found.

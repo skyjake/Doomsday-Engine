@@ -22,9 +22,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDir>
-#include <QCryptographicHash>
-
 #include <de/App>
 #include <de/Log>
 
@@ -33,7 +30,7 @@
 
 using namespace de;
 
-FileId::FileId(Md5Hash _md5)
+FileId::FileId(const Md5Hash& _md5)
     : md5_(_md5.left(16))
 #ifdef DE_DEBUG
     , path_("unknown-path")
@@ -71,16 +68,10 @@ bool FileId::operator != (FileId const &other) const
 
 String FileId::asText() const
 {
-    String txt;
-    txt.reserve(32);
-    for (int i = 0; i < 16; ++i)
-    {
-        txt += String("%1").arg(String::number((byte)md5_.at(i), 16), 2, '0');
-    }
-    return txt;
+    return md5_.asHexadecimalText();
 }
 
-FileId FileId::fromPath(String path)
+FileId FileId::fromPath(const String& path)
 {
     FileId fileId = FileId(hash(path));
 #ifdef DE_DEBUG
@@ -92,14 +83,12 @@ FileId FileId::fromPath(String path)
 FileId::Md5Hash FileId::hash(String path)
 {
     // Ensure we've a normalized path.
-    if (QDir::isRelativePath(path))
-    {
-        path = App_BasePath() / path;
-    }
+    path = App_BasePath() / path;
 
 #if defined(WIN32) || defined(MACOSX)
     // This is a case insensitive operation.
-    path = path.toUpper();
+    path = path.upper();
 #endif
-    return QCryptographicHash::hash(path.toUtf8(), QCryptographicHash::Md5);
+
+    return Block(path).md5Hash();
 }

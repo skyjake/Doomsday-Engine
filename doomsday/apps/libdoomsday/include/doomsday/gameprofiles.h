@@ -51,7 +51,7 @@ public:
 
         void setGame(de::String const &id);
         void setCustomDataFile(const de::String &id);
-        void setPackages(de::StringList packagesInOrder);
+        void setPackages(const de::StringList& packagesInOrder);
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
         void setAutoStartMap(de::String const &map);
@@ -130,9 +130,9 @@ public:
     de::LoopResult forAll(std::function<de::LoopResult (Profile &)> func);
     de::LoopResult forAll(std::function<de::LoopResult (Profile const &)> func) const;
 
-    QList<Profile const *> allPlayableProfiles() const;
-    QList<Profile *> profilesInFamily(de::String const &family);
-    QList<Profile *> profilesSortedByFamily();
+    de::List<Profile const *> allPlayableProfiles() const;
+    de::List<Profile *> profilesInFamily(de::String const &family);
+    de::List<Profile *> profilesSortedByFamily();
 
     static Profile const &null();
 

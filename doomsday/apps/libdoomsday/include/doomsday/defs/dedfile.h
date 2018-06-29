@@ -26,7 +26,7 @@
 #include "ded.h"
 #include <de/String>
 
-LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, de::String path);
+LIBDOOMSDAY_PUBLIC void Def_ReadProcessDED(ded_t *defs, const de::String& path);
 
 /**
  * Reads definitions from the given lump.
@@ -47,7 +47,7 @@ LIBDOOMSDAY_PUBLIC int DED_ReadData(ded_t *ded, char const *buffer, de::String s
 /**
  * @return  @c true, if the file was successfully loaded.
  */
-int DED_Read(ded_t *ded, de::String path);
+int DED_Read(ded_t *ded, const de::String& path);
 
 void DED_SetError(de::String const &message);
 

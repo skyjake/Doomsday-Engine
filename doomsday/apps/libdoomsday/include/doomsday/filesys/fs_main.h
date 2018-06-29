@@ -51,15 +51,16 @@
 
 #ifdef __cplusplus
 
-#include <QList>
-#include <QMultiMap>
-#include <de/String>
-#include <de/PathTree>
 #include "fileinfo.h"
 #include "filetype.h"
 #include "searchpath.h"
 #include "../resource/resourceclass.h"
 #include "../filesys/lumpindex.h"
+
+#include <de/List>
+#include <de/String>
+#include <de/PathTree>
+#include <de/Map>
 
 /**
  * @defgroup fs File System
@@ -147,13 +148,12 @@ public:
             /// @see mapPath()
             MappedInPackages    = 0x01
         };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
         /// Groups of search paths ordered by priority.
-        typedef QMultiMap<PathGroup, SearchPath> SearchPaths;
+        typedef std::multimap<PathGroup, SearchPath> SearchPaths;
 
         /// List of found file nodes.
-        typedef QList<PathTree::Node *> FoundNodes;
+        typedef de::List<PathTree::Node *> FoundNodes;
 
     public:
         explicit Scheme(String symbolicName, Flags flags = 0);
@@ -204,7 +204,7 @@ public:
          *
          * @return  Number of found resources.
          */
-        int findAll(String name, FoundNodes &found);
+        int findAll(const String& name, FoundNodes &found);
 
         /**
          * Add a new search path to this scheme. Newer paths have priority over
@@ -260,7 +260,7 @@ public:
     };
 
     /// File system subspace schemes.
-    typedef QMap<String, Scheme *> Schemes;
+    typedef Map<String, Scheme *> Schemes;
 
     /**
      * PathListItem represents a found path for find file search results.
@@ -281,10 +281,10 @@ public:
     };
 
     /// List of found path search results.
-    typedef QList<PathListItem> PathList;
+    typedef List<PathListItem> PathList;
 
     /// List of file search results.
-    typedef QList<FileHandle *> FileList;
+    typedef List<FileHandle *> FileList;
 
 public:
     /**
@@ -306,19 +306,19 @@ public:
      * @param name  Symbolic name of the scheme.
      * @return  Scheme associated with @a name.
      */
-    Scheme &scheme(String name);
+    Scheme &scheme(const String& name);
 
     /**
      * @param name      Unique symbolic name of the new scheme. Must be at least
      *                  @c Scheme::min_name_length characters long.
      * @param flags     @ref Scheme::Flag
      */
-    Scheme &createScheme(String name, Scheme::Flags flags = 0);
+    Scheme &createScheme(const String& name, Flags flags = 0);
 
     /**
      * Returns @c true iff a Scheme exists with the symbolic @a name.
      */
-    bool knownScheme(String name);
+    bool knownScheme(const String& name);
 
     /**
      * Returns the schemes for efficient traversal.
@@ -331,7 +331,7 @@ public:
      */
     inline void resetAllSchemes() {
         Schemes schemes = allSchemes();
-        DE_FOR_EACH(Schemes, i, schemes){ (*i)->reset(); }
+        for (auto &i : schemes) { i.second->reset(); }
     }
 
     /**
@@ -505,16 +505,18 @@ public:
     {
         findAll(predicate, parameters, found);
         // Filter out the wrong types.
-        QMutableListIterator<FileHandle *> i(found);
-        while (i.hasNext())
+        for (auto i = found.begin(); i != found.end(); )
         {
-            i.next();
-            if (!is<Type>(i.value()->file()))
+            if (!is<Type>((*i)->file()))
             {
-                i.remove();
+                i = found.erase(i);
+            }
+            else
+            {
+                ++i;
             }
         }
-        return found.count();
+        return found.sizei();
     }
 
     /**
@@ -577,8 +579,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(FS1::Scheme::Flags)
 
 } // namespace de
 

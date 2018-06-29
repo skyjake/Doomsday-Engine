@@ -34,9 +34,6 @@
 #include <de/Writer>
 #include <de/App>
 
-#include <QDebug>
-#include <QList>
-
 namespace de {
 
 static Uri::ResolverFunc resolverFunc;
@@ -51,22 +48,23 @@ static Uri::ResolverFunc resolverFunc;
 static String extractScheme(String &stringWithScheme)
 {
     String scheme;
-    int pos = stringWithScheme.indexOf(':');
-    if (pos > URI_MINSCHEMELENGTH) // could be Windows-style driver letter "c:"
+    auto pos = stringWithScheme.indexOf(':');
+    if (pos && pos > URI_MINSCHEMELENGTH) // could be Windows-style driver letter "c:"
     {
         scheme = stringWithScheme.left(pos);
-        stringWithScheme.remove(0, pos + 1);
+        stringWithScheme.remove(BytePos(0), pos + 1);
     }
     return scheme;
 }
 
 DE_PIMPL_NOREF(Uri)
 {
+    DE_NO_ASSIGN(Impl)
+
     Path path; ///< Path of the Uri.
 
-    DualString strPath; // Redundant; for legacy access, remove this!
-
-    DualString scheme; ///< Scheme of the Uri.
+    String strPath; // Redundant; for legacy access, remove this!
+    String scheme; ///< Scheme of the Uri.
 
     /// Cached copy of the resolved path.
     Path resolvedPath;
@@ -77,9 +75,9 @@ DE_PIMPL_NOREF(Uri)
      * @note Add any other conditions here that result in different results for
      * resolveUri().
      */
-    void *resolvedForGame;
+    const Game *resolvedForGame;
 
-    Impl() : resolvedForGame(0)
+    Impl() : resolvedForGame(nullptr)
     {}
 
     Impl(Impl const &other)
@@ -94,10 +92,10 @@ DE_PIMPL_NOREF(Uri)
     void clearCachedResolved()
     {
         resolvedPath.clear();
-        resolvedForGame = 0;
+        resolvedForGame = nullptr;
     }
 
-    void parseRawUri(String rawUri, QChar sep, resourceclassid_t defaultResourceClass)
+    void parseRawUri(String rawUri, Char sep, resourceclassid_t defaultResourceClass)
     {
         LOG_AS("Uri::parseRawUri");
 
@@ -131,16 +129,16 @@ DE_PIMPL_NOREF(Uri)
         }
     }
 
-    String resolveSymbol(QStringRef const &symbol) const
+    String resolveSymbol(const String &symbol) const
     {
         if (!resolverFunc)
         {
-            return symbol.toString();
+            return symbol;
         }
-        return resolverFunc(symbol.toString());
+        return resolverFunc(symbol);
     }
 
-    inline String parseExpression(QStringRef const &expression) const
+    inline String parseExpression(const String &expression) const
     {
         // Presently the expression consists of a single symbol.
         return resolveSymbol(expression);
@@ -153,33 +151,33 @@ DE_PIMPL_NOREF(Uri)
         String result;
 
         // Keep scanning the path for embedded expressions.
-        QStringRef expression;
-        int expEnd = 0, expBegin;
-        while ((expBegin = strPath.indexOf('$', expEnd)) >= 0)
+        String expression;
+        BytePos expEnd{0}, expBegin;
+        while ((expBegin = strPath.indexOf("$", expEnd)) != BytePos::npos)
         {
             // Is the next char the start-of-expression character?
             if (strPath.at(expBegin + 1) == '(')
             {
                 // Copy everything up to the '$'.
-                result += strPath.mid(expEnd, expBegin - expEnd);
+                result += strPath.substr(expEnd, expBegin - expEnd);
 
                 // Skip over the '$'.
                 ++expBegin;
 
                 // Find the end-of-expression character.
-                expEnd = strPath.indexOf(')', expBegin);
-                if (expEnd < 0)
+                expEnd = strPath.indexOf(")", expBegin);
+                if (!expEnd)
                 {
                     LOG_RES_WARNING("Ignoring expression \"" + strPath + "\": "
                                     "missing a closing ')'");
-                    expEnd = strPath.length();
+                    expEnd = strPath.sizeb();
                 }
 
                 // Skip over the '('.
                 ++expBegin;
 
                 // The range of the expression substring is now known.
-                expression = strPath.midRef(expBegin, expEnd - expBegin);
+                expression = strPath.substr(expBegin, expEnd - expBegin);
 
                 result += parseExpression(expression);
             }
@@ -193,12 +191,10 @@ DE_PIMPL_NOREF(Uri)
         }
 
         // Copy anything remaining.
-        result += strPath.mid(expEnd);
+        result += strPath.substr(expEnd);
 
         return result;
     }
-
-    Impl &operator = (Impl const &) = delete; // no assignment
 };
 
 Uri::Uri() : d(new Impl)
@@ -212,7 +208,7 @@ Uri::Uri(String const &percentEncoded) : d(new Impl)
     }
 }
 
-Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, QChar sep)
+Uri::Uri(String const &percentEncoded, resourceclassid_t defaultResourceClass, Char sep)
     : d(new Impl)
 {
     if (!percentEncoded.isEmpty())
@@ -253,12 +249,11 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
         case 1: {
             // Try to extract the scheme and encode the rest of the path.
             String rawUri(argv[0]);
-            int pos = rawUri.indexOf(':');
-            if (pos >= 0)
+            if (auto pos = rawUri.indexOf(':'))
             {
                 output.setScheme(rawUri.left(pos));
-                rawUri.remove(0, pos + 1);
-                output.setPath(Path::normalize(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
+                rawUri.remove(BytePos(0), pos + 1);
+                output.setPath(Path::normalize(rawUri.toPercentEncoding()));
             }
             // Just a scheme name?
             else if (knownScheme && knownScheme(rawUri))
@@ -268,7 +263,7 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
             else
             {
                 // Just a path.
-                output.setPath(Path::normalize(QString(QByteArray(rawUri.toUtf8()).toPercentEncoding())));
+                output.setPath(Path::normalize(rawUri.toPercentEncoding()));
             }
             break; }
 
@@ -276,7 +271,7 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
         case 2:
             // Assign the scheme and encode the path.
             output.setScheme(argv[0]);
-            output.setPath(Path::normalize(QString(QByteArray(argv[1]).toPercentEncoding())));
+            output.setPath(Path::normalize(String(argv[1]).toPercentEncoding()));
             break;
 
         default: break;
@@ -296,7 +291,7 @@ Uri Uri::fromNativePath(NativePath const &path, resourceclassid_t defaultResourc
 Uri Uri::fromNativeDirPath(NativePath const &nativeDirPath, resourceclassid_t defaultResourceClass)
 {
     // Uri follows the convention of having a slash at the end for directories.
-    return Uri(nativeDirPath.expand().withSeparators('/') + '/', defaultResourceClass);
+    return Uri(nativeDirPath.expand().withSeparators('/') + "/", defaultResourceClass);
 }
 
 bool Uri::isEmpty() const
@@ -318,9 +313,9 @@ bool Uri::operator == (Uri const &other) const
     try
     {
         // Do not match partial paths.
-        if (resolvedRef().length() != other.resolvedRef().length()) return false;
+        if (resolved().length() != other.resolved().length()) return false;
 
-        return resolvedRef().compareWithoutCase(other.resolvedRef()) == 0;
+        return resolved().compareWithoutCase(other.resolved()) == 0;
     }
     catch (ResolveError const &)
     {
@@ -350,15 +345,15 @@ Path const &Uri::path() const
 
 char const *Uri::schemeCStr() const
 {
-    return d->scheme.utf8CStr();
+    return d->scheme;
 }
 
 char const *Uri::pathCStr() const
 {
-    return d->strPath.utf8CStr();
+    return d->strPath;
 }
 
-ddstring_s const *Uri::schemeStr() const
+/*ddstring_s const *Uri::schemeStr() const
 {
     return d->scheme.toStr();
 }
@@ -366,22 +361,18 @@ ddstring_s const *Uri::schemeStr() const
 ddstring_s const *Uri::pathStr() const
 {
     return d->strPath.toStr();
-}
+}*/
 
 String Uri::resolved() const
 {
-    return resolvedRef();
-}
-
-String const &Uri::resolvedRef() const
-{
-    void *currentGame = (void *) (!App::appExists() || DoomsdayApp::game().isNull()? 0 : &DoomsdayApp::game());
+    const Game *currentGame =
+        (!App::appExists() || DoomsdayApp::game().isNull() ? nullptr : &DoomsdayApp::game());
 
 #ifndef DE_DISABLE_URI_RESOLVE_CACHING
     if (d->resolvedForGame && d->resolvedForGame == currentGame)
     {
         // We can just return the previously prepared resolved URI.
-        return d->resolvedPath.toStringRef();
+        return d->resolvedPath;
     }
 #endif
 
@@ -390,16 +381,16 @@ String const &Uri::resolvedRef() const
     // Keep a copy of this, we'll likely need it many, many times.
     d->resolvedPath = d->resolve();
 
-    DE_ASSERT(d->resolvedPath.separator() == QChar('/'));
+    DE_ASSERT(d->resolvedPath.separator() == Char('/'));
 
     d->resolvedForGame = currentGame;
 
-    return d->resolvedPath.toStringRef();
+    return d->resolvedPath.toString();
 }
 
 Uri &Uri::setScheme(String newScheme)
 {
-    d->scheme = newScheme;
+    d->scheme = std::move(newScheme);
     d->clearCachedResolved();
     return *this;
 }
@@ -409,29 +400,29 @@ Uri &Uri::setPath(Path const &newPath)
     // Force to slashes.
     d->path = newPath.withSeparators('/');
 
-    d->strPath = d->path.toStringRef(); // legacy support
+    d->strPath = d->path.toString(); // legacy support
     d->clearCachedResolved();
     return *this;
 }
 
-Uri &Uri::setPath(String newPath, QChar sep)
+Uri &Uri::setPath(const String& newPath, Char sep)
 {
-    return setPath(Path(newPath.trimmed(), sep));
+    return setPath(Path(newPath.strip(), sep));
 }
 
 Uri &Uri::setPath(char const *newPathUtf8, char sep)
 {
-    return setPath(Path(QString::fromUtf8(newPathUtf8).trimmed(), sep));
+    return setPath(Path(String(newPathUtf8).strip(), sep));
 }
 
-Uri &Uri::setUri(String rawUri, resourceclassid_t defaultResourceClass, QChar sep)
+Uri &Uri::setUri(const String& rawUri, resourceclassid_t defaultResourceClass, Char sep)
 {
     LOG_AS("Uri::setUri");
-    d->parseRawUri(rawUri.trimmed(), sep, defaultResourceClass);
+    d->parseRawUri(rawUri.strip(), sep, defaultResourceClass);
     return *this;
 }
 
-String Uri::compose(ComposeAsTextFlags compositionFlags, QChar sep) const
+String Uri::compose(ComposeAsTextFlags compositionFlags, Char sep) const
 {
     String text;
     if (!(compositionFlags & OmitScheme))
@@ -443,10 +434,10 @@ String Uri::compose(ComposeAsTextFlags compositionFlags, QChar sep) const
     }
     if (!(compositionFlags & OmitPath))
     {
-        QString path = d->path.withSeparators(sep);
+        String path = d->path.withSeparators(sep);
         if (compositionFlags & DecodePath)
         {
-            path = QByteArray::fromPercentEncoding(path.toUtf8());
+            path = String::fromPercentEncoding(path);
         }
         text += path;
     }
@@ -477,7 +468,7 @@ void Uri::setResolverFunc(ResolverFunc resolver)
     resolverFunc = resolver;
 }
 
-void Uri::readUri(reader_s *reader, String defaultScheme)
+void Uri::readUri(reader_s *reader, const String& defaultScheme)
 {
     clear();
 
@@ -491,7 +482,7 @@ void Uri::readUri(reader_s *reader, String defaultScheme)
 
     if (Str_IsEmpty(&scheme) && !defaultScheme.isEmpty())
     {
-        Str_Set(&scheme, defaultScheme.toUtf8().constData());
+        Str_Set(&scheme, defaultScheme);
     }
 
     setScheme(Str_Text(&scheme));
@@ -508,9 +499,9 @@ void Uri::writeUri(writer_s *writer, int omitComponents) const
     }
     else
     {
-        Str_Write(DualString(scheme()).toStrUtf8(), writer);
+        Str_Write(AutoStr_FromTextStd(scheme()), writer);
     }
-    Str_Write(DualString(path()).toStrUtf8(), writer);
+    Str_Write(AutoStr_FromTextStd(path()), writer);
 }
 
 #ifdef _DEBUG
@@ -608,7 +599,7 @@ DE_DEFINE_UNITTEST(Uri)
     }
     catch (Error const &er)
     {
-        qWarning() << er.asText();
+        er.warnPlainText();
         return false;
     }
     return true;

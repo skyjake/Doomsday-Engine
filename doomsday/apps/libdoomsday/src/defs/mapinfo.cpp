@@ -50,9 +50,9 @@ void MapInfo::resetToDefaults()
     def().addText  ("execute", "");
     def().addText  (QStringLiteral("intermissionBg"), "");
 
-    QScopedPointer<Record> sky(new Record);
+    std::unique_ptr<Record> sky(new Record);
     Sky(*sky).resetToDefaults();
-    def().add      ("sky", sky.take());
+    def().add      ("sky", sky.release());
 }
 
 } // namespace defn

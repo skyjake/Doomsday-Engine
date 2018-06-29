@@ -32,10 +32,10 @@ using namespace de;
 
 namespace defn {
 
-static QString const VAR_VIEWS     ("views");
-static QString const VAR_FRONT_ONLY("frontOnly");
-static QString const VAR_MATERIAL  ("material"); // UriValue
-static QString const VAR_MIRROR_X  ("mirrorX");
+static String const VAR_VIEWS     ("views");
+static String const VAR_FRONT_ONLY("frontOnly");
+static String const VAR_MATERIAL  ("material"); // UriValue
+static String const VAR_MIRROR_X  ("mirrorX");
 
 //---------------------------------------------------------------------------------------
 

@@ -26,7 +26,7 @@ using namespace de;
 
 PropertyValue *BuildPropertyValue(valuetype_t type, void *valueAdr)
 {
-    DE_ASSERT(valueAdr != 0);
+    DE_ASSERT(valueAdr != nullptr);
     switch (type)
     {
     case DDVT_BYTE:     return new PropertyByteValue  (*(   (byte *) valueAdr));
@@ -37,6 +37,6 @@ PropertyValue *BuildPropertyValue(valuetype_t type, void *valueAdr)
     case DDVT_FLOAT:    return new PropertyFloatValue (*(  (float *) valueAdr));
     case DDVT_DOUBLE:   return new PropertyDoubleValue(*( (double *) valueAdr));
     default:
-        throw Error("BuildPropertyValue", QString("Unknown/not-supported value type %1").arg(type));
+        throw Error("BuildPropertyValue", stringf("Unknown/not-supported value type %d", type));
     }
 }

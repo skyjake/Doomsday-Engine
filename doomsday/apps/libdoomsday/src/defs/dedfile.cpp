@@ -36,10 +36,10 @@ static char dedReadError[512];
 void DED_SetError(String const &message)
 {
     String msg = "Error: " + message + ".";
-    strncpy(dedReadError, msg.toUtf8().constData(), sizeof(dedReadError));
+    strncpy(dedReadError, msg, sizeof(dedReadError));
 }
 
-void Def_ReadProcessDED(ded_t *defs, String sourcePath)
+void Def_ReadProcessDED(ded_t *defs, const String& sourcePath)
 {
      LOG_AS("Def_ReadProcessDED");
 
@@ -50,7 +50,7 @@ void Def_ReadProcessDED(ded_t *defs, String sourcePath)
      {
          Block text;
          App::rootFolder().locate<File const>(sourcePath) >> text;
-         if (!DED_ReadData(defs, text, sourcePath, true/*consider it custom; there is no way to check...*/))
+         if (!DED_ReadData(defs, String(text), sourcePath, true/*consider it custom; there is no way to check...*/))
          {
              App_FatalError("Def_ReadProcessDED: %s\n", dedReadError);
          }
@@ -103,14 +103,14 @@ int DED_ReadLump(ded_t *ded, lumpnum_t lumpNum)
     return false;
 }
 
-int DED_Read(ded_t *ded, String path)
+int DED_Read(ded_t *ded, const String& path)
 {
     // Attempt to open a definition file on this path.
     try
     {
         // Relative paths are relative to the native working directory.
         String fullPath = (NativePath::workPath() / NativePath(path).expand()).withSeparators('/');
-        QScopedPointer<FileHandle> hndl(&App_FileSystem().openFile(fullPath, "rb"));
+        std::unique_ptr<FileHandle> hndl(&App_FileSystem().openFile(fullPath, "rb"));
 
         // We will buffer a local copy of the file. How large a buffer do we need?
         hndl->seek(0, SeekEnd);

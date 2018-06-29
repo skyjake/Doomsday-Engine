@@ -68,7 +68,7 @@ calias_t *Con_FindAlias(char const *name)
     {
         pivot = bottomIdx + (topIdx - bottomIdx)/2;
 
-        result = qstricmp(caliases[pivot]->name, name);
+        result = iCmpStrCase(caliases[pivot]->name, name);
         if (result == 0)
         {
             // Found.
@@ -105,7 +105,7 @@ calias_t* Con_AddAlias(char const* name, char const* command)
     uint idx;
     for (idx = 0; idx < numCAliases-1; ++idx)
     {
-        if (qstricmp(caliases[idx]->name, name) > 0)
+        if (iCmpStrCase(caliases[idx]->name, name) > 0)
             break;
     }
 
@@ -152,12 +152,7 @@ void Con_DeleteAlias(calias_t* cal)
 
 String Con_AliasAsStyledText(calias_t *alias)
 {
-    QString str;
-    QTextStream os(&str);
-
-    os << _E(b) << alias->name << _E(.) " == " _E(>) << alias->command << _E(<);
-
-    return str;
+    return String(_E(b)) + alias->name + _E(.) " == " _E(>) + alias->command + _E(<);
 }
 
 void Con_AddKnownWordsForAliases()

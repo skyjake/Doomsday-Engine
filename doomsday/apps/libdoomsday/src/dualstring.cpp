@@ -1,3 +1,5 @@
+#if 0 /* obsolete */
+
 /** @file dualstring.cpp
  *
  * Utility class for strings that need both Unicode and C-string access.
@@ -102,3 +104,5 @@ const char* DualString::utf8CStr()
 {
     return Str_Text(toStrUtf8());
 }
+
+#endif // 0

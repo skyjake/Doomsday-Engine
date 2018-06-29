@@ -72,7 +72,7 @@ public:
          *
          * @return The absolute URI.
          */
-        Uri composeUri(QChar delimiter = '/') const;
+        Uri composeUri(Char delimiter = '/') const;
 
         /**
          * Retrieve the directory node for this file.
@@ -278,7 +278,7 @@ protected:
         dsize offset;
         dsize size;
         dsize compressedSize;
-        QScopedPointer<LumpFile> lumpFile;  ///< File system object for the lump data.
+        std::unique_ptr<LumpFile> lumpFile;  ///< File system object for the lump data.
 
         Entry(PathTree::NodeArgs const &args)
             : Node(args), offset(0), size(0), compressedSize(0)

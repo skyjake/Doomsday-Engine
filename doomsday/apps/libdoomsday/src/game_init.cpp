@@ -42,8 +42,7 @@ using namespace de;
 
 static void updateProgress(int progress)
 {
-    DE_FOR_EACH_OBSERVER(Games::ProgressAudience, i,
-                            DoomsdayApp::games().audienceForProgress())
+    DE_FOR_EACH_OBSERVER(i, DoomsdayApp::games().audienceForProgress())
     {
         i->gameWorkerProgress(progress);
     }
@@ -304,16 +303,16 @@ int loadGameStartupResourcesBusyWorker(void *context)
      *        against by the virtual file system layer.
      */
     GameManifests const &gameManifests = DoomsdayApp::game().manifests();
-    int const numPackages = gameManifests.count(RC_PACKAGE);
+    const dsize numPackages = gameManifests.count(RC_PACKAGE);
     if (numPackages)
     {
         LOG_RES_MSG("Loading game resources...");
 
         int packageIdx = 0;
-        for (GameManifests::const_iterator i = gameManifests.find(RC_PACKAGE);
-            i != gameManifests.end() && i.key() == RC_PACKAGE; ++i, ++packageIdx)
+        const auto packages = gameManifests.equal_range(RC_PACKAGE);
+        for (auto i = packages.first; i != packages.second; ++i, ++packageIdx)
         {
-            loadResource(**i);
+            loadResource(*i->second);
 
             // Update our progress.
             if (parms.initiatedBusyMode)

@@ -19,6 +19,8 @@
 #ifndef LIBDOOMSDAY_MAIN_H
 #define LIBDOOMSDAY_MAIN_H
 
+#include <de/libcore.h>
+
 /**
  * @mainpage Doomsday Engine
  *
@@ -41,8 +43,7 @@
 #    define LIBDOOMSDAY_PUBLIC __declspec(dllimport)
 #  endif
 #else
-// No need to use any special declarators.
-#  define LIBDOOMSDAY_PUBLIC
+#  define LIBDOOMSDAY_PUBLIC    DE_PUBLIC
 #endif
 
 #ifdef __cplusplus

@@ -29,7 +29,7 @@
 #define DE_FILEID_H
 
 #include "../libdoomsday.h"
-#include <QByteArray>
+#include <de/Block>
 #include <de/Log>
 #include <de/String>
 
@@ -41,10 +41,10 @@ namespace de {
 class LIBDOOMSDAY_PUBLIC FileId : public LogEntry::Arg::Base
 {
 public:
-    typedef QByteArray Md5Hash;
+    typedef Block Md5Hash;
 
 public:
-    explicit FileId(Md5Hash _md5);
+    explicit FileId(const Md5Hash& _md5);
 
     FileId(FileId const& other);
 
@@ -61,16 +61,9 @@ public:
 
     friend void swap(FileId& first, FileId& second) // nothrow
     {
-#ifdef DE_QT_4_8_OR_NEWER
-        first.md5_.swap(second.md5_);
-#  ifdef DE_DEBUG
-        first.path_.swap(second.path_);
-#  endif
-#else
         std::swap(first.md5_, second.md5_);
-#  ifdef DE_DEBUG
+#ifdef DE_DEBUG
         std::swap(first.path_, second.path_);
-#  endif
 #endif
     }
 
@@ -103,7 +96,7 @@ public:
      * @param path  Path to be hashed.
      * @return Newly construced FileId.
      */
-    static FileId fromPath(String path);
+    static FileId fromPath(const String& path);
 
     /**
      * Calculate an MD5 identifier for the absolute @a path.

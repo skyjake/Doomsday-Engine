@@ -29,8 +29,6 @@
 #include <cstdarg>
 #include <cstdio>
 #include <cstdlib>
-#include <QFile>
-#include <QTextStream>
 
 #include <de/memory.h>
 #include <de/charsymbols.h>
@@ -660,7 +658,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
         hasCallback = (cvar->notifyChanged != 0);
 
         if (args.argc == 2 ||
-           (args.argc == 3 && !qstricmp(args.argv[1], "force")))
+           (args.argc == 3 && !iCmpStrCase(args.argv[1], "force")))
         {
             char* argptr = args.argv[args.argc - 1];
             dd_bool forced = args.argc == 3;
@@ -889,16 +887,15 @@ bool Con_Parse(File const &file, bool silently)
     String contents = String::fromUtf8(utf8);
 
     // This file is filled with console commands.
-    QTextStream in(&contents);
     int currentLine = 1;
-    while (!in.atEnd())
+    for (const auto &lineRef : contents.splitRef("\n"))
     {
         // Each line is a command.
-        String const line = String(in.readLine()).leftStrip();
+        String const line = String(lineRef).leftStrip();
         if (!line.isEmpty() && line.first() != '#')
         {
             // Execute the commands silently.
-            if (!Con_Execute(CMDS_CONFIG, line.toUtf8(), silently, false))
+            if (!Con_Execute(CMDS_CONFIG, line, silently, false))
             {
                 if (!silently)
                 {
@@ -1084,11 +1081,11 @@ D_CMD(AddSub)
     }
     if (argc >= 4)
     {
-        force = !qstricmp(argv[3], "force");
+        force = !iCmpStrCase(argv[3], "force");
     }
 
     delta = strtod(argv[2], NULL);
-    if (!qstricmp(argv[0], "sub"))
+    if (!iCmpStrCase(argv[0], "sub"))
         delta = -delta;
 
     return cvarAddSub(argv[1], delta, force);
@@ -1113,7 +1110,7 @@ D_CMD(IncDec)
     }
     if (argc >= 3)
     {
-        force = !qstricmp(argv[2], "force");
+        force = !iCmpStrCase(argv[2], "force");
     }
     cvar = Con_FindVariable(argv[1]);
     if (!cvar)
@@ -1126,7 +1123,7 @@ D_CMD(IncDec)
     }
 
     val = CVar_Float(cvar);
-    val += !qstricmp(argv[0], "inc")? 1 : -1;
+    val += !iCmpStrCase(argv[0], "inc")? 1 : -1;
 
     if (!force)
     {
@@ -1190,7 +1187,7 @@ D_CMD(If)
 
     // Which operator?
     for (i = 0; operators[i].opstr; ++i)
-        if (!qstricmp(operators[i].opstr, argv[2]))
+        if (!iCmpStrCase(operators[i].opstr, argv[2]))
         {
             oper = operators[i].op;
             break;
@@ -1230,7 +1227,7 @@ D_CMD(If)
         }
     case CVT_CHARPTR:
         {
-        int comp = qstricmp(CV_CHARPTR(var), argv[3]);
+        int comp = iCmpStrCase(CV_CHARPTR(var), argv[3]);
 
         isTrue = (oper == IF_EQUAL     ? comp == 0 :
                   oper == IF_NOT_EQUAL ? comp != 0 :

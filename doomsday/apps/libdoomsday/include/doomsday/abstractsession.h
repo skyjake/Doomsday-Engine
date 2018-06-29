@@ -25,7 +25,7 @@
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>
-#include <QMap>
+#include <de/Map>
 
 class GameStateFolder;
 
@@ -94,29 +94,6 @@ public:
      *                 available. Caller retains ownership.
      */
     void setThinkerMapping(world::IThinkerMapping *mapping);
-
-public:
-//    /**
-//     * Configuration profile.
-//     * @todo Remove this. Could just point to a GameProfile instead. -jk
-//     */
-//    struct Profile
-//    {
-//        // Unique identifier of the game this profile is used with.
-//        de::String gameId;
-
-//        // List of resource files (specified via the command line or in a cfg, or found using
-//        // the default search algorithm (e.g., /auto and DOOMWADDIR)).
-//        QStringList resourceFiles;
-//    };
-
-    /*
-     * Returns the current configuration profile for the game session.
-     */
-//    static Profile &profile();
-
-    // Convenient method of looking up the game identity key from the game session profile.
-//    static de::String gameId() const;
 
 protected:
     void setMapUri(de::Uri const &uri);

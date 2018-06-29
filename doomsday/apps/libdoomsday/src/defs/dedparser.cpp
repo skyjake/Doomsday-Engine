@@ -235,7 +235,7 @@ DE_PIMPL(DEDParser)
     String readPosAsText()
     {
         return "\"" + (source? source->fileName : "[buffered-data]") + "\""
-               " on line #" + String::number(source? source->lineNumber : 0);
+               " on line #" + String::asText(source? source->lineNumber : 0);
     }
 
     void setError(String const &message)
@@ -438,10 +438,10 @@ DE_PIMPL(DEDParser)
 
     int ReadString(char *dest, int maxLen)
     {
-        DE_ASSERT(dest != 0);
+        DE_ASSERT(dest != nullptr);
         String buffer;
         if (!ReadString(buffer)) return false;
-        qstrncpy(dest, buffer.toUtf8().constData(), maxLen);
+        strncpy(dest, buffer, maxLen);
         return true;
     }
 
@@ -464,13 +464,11 @@ DE_PIMPL(DEDParser)
             return false;
 
         // Get rid of the old string.
-        if (*dest)
-            M_Free(*dest);
+        if (*dest) M_Free(*dest);
 
         // Make a copy.
-        QByteArray bufferUtf8 = buffer.toUtf8();
-        *dest = (char *) M_Malloc(bufferUtf8.length() + 1);
-        qstrcpy(*dest, bufferUtf8.constData());
+        *dest = (char *) M_Malloc(buffer.size() + 1);
+        strcpy(*dest, buffer);
 
         return true;
     }
@@ -633,12 +631,12 @@ DE_PIMPL(DEDParser)
 
             if (!flag.isEmpty())
             {
-                *dest = ded->evalFlags(flag.toUtf8().constData());
+                *dest = ded->evalFlags(flag);
             }
             return true;
         }
 
-        forever
+        for (;;)
         {
             // Read the flag.
             ReadToken();
@@ -655,7 +653,7 @@ DE_PIMPL(DEDParser)
 
             if (!flag.isEmpty())
             {
-                *dest |= ded->evalFlags(flag.toUtf8().constData());
+                *dest |= ded->evalFlags(flag);
             }
 
             if (!ReadToken())
@@ -704,7 +702,7 @@ DE_PIMPL(DEDParser)
             // The old format.
             if (!ReadString(flag)) return false;
 
-            bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
+            bm = blendmode_t(ded->evalFlags(flag));
         }
         else
         {
@@ -713,7 +711,7 @@ DE_PIMPL(DEDParser)
 
             flag = String("bm_") + String(token);
 
-            bm = blendmode_t(ded->evalFlags(flag.toUtf8().constData()));
+            bm = blendmode_t(ded->evalFlags(flag));
         }
 
         if (bm != BM_NORMAL)
@@ -949,7 +947,7 @@ DE_PIMPL(DEDParser)
                 de::zap(id);
 
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", id)
@@ -959,7 +957,7 @@ DE_PIMPL(DEDParser)
                     CHECKSC;
                 }
 
-                if (qstrlen(id))
+                if (strlen(id))
                 {
                     ded->addFlag(id, value);
                     Record &flag = ded->flags.find(VAR_ID, id);
@@ -1023,7 +1021,7 @@ DE_PIMPL(DEDParser)
                 int hub = 0;
                 int notHubMap = 0;
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
@@ -1050,7 +1048,7 @@ DE_PIMPL(DEDParser)
 
                         int map = 0;
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_STR("ID", (*hubRec)[VAR_ID])
@@ -1059,10 +1057,10 @@ DE_PIMPL(DEDParser)
                                 // Add another map.
                                 if (map >= int(hubRec->geta("map").size()))
                                 {
-                                    QScopedPointer<Record> map(new Record);
+                                    std::unique_ptr<Record> map(new Record);
                                     defn::MapGraphNode(*map).resetToDefaults();
                                     (*hubRec)["map"].array()
-                                            .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
+                                            .add(new RecordValue(map.release(), RecordValue::OwnsRecord));
                                 }
                                 DE_ASSERT(map < int(hubRec->geta("map").size()));
                                 Record &mapRec = *hubRec->geta("map")[map].as<RecordValue>().record();
@@ -1070,7 +1068,7 @@ DE_PIMPL(DEDParser)
 
                                 int exit = 0;
                                 FINDBEGIN;
-                                forever
+                                for (;;)
                                 {
                                     READLABEL;
                                     RV_URI("ID", mapRec[VAR_ID], "Maps")
@@ -1089,7 +1087,7 @@ DE_PIMPL(DEDParser)
                                         if (source->custom) exitRec.set("custom", true);
 
                                         FINDBEGIN;
-                                        forever
+                                        for (;;)
                                         {
                                             READLABEL;
                                             RV_STR("ID", exitRec[VAR_ID])
@@ -1114,10 +1112,10 @@ DE_PIMPL(DEDParser)
                         // Add another none-hub map.
                         if (notHubMap >= int(epsd->geta("map").size()))
                         {
-                            QScopedPointer<Record> map(new Record);
+                            std::unique_ptr<Record> map(new Record);
                             defn::MapGraphNode(*map).resetToDefaults();
                             (*epsd)["map"].array()
-                                    .add(new RecordValue(map.take(), RecordValue::OwnsRecord));
+                                    .add(new RecordValue(map.release(), RecordValue::OwnsRecord));
                         }
                         DE_ASSERT(notHubMap < int(epsd->geta("map").size()));
                         Record &mapRec = *epsd->geta("map")[notHubMap].as<RecordValue>().record();
@@ -1125,7 +1123,7 @@ DE_PIMPL(DEDParser)
 
                         int exit = 0;
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_URI("ID", mapRec[VAR_ID], "Maps")
@@ -1144,7 +1142,7 @@ DE_PIMPL(DEDParser)
                                 if (source->custom) exitRec.set("custom", true);
 
                                 FINDBEGIN;
-                                forever
+                                for (;;)
                                 {
                                     READLABEL;
                                     RV_STR("ID", exitRec[VAR_ID])
@@ -1498,7 +1496,7 @@ DE_PIMPL(DEDParser)
                 int decor = 0;
                 int layer = 0;
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
@@ -1525,7 +1523,7 @@ DE_PIMPL(DEDParser)
 
                         int stage = 0;
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             if (ISLABEL("Stage"))
@@ -1545,7 +1543,7 @@ DE_PIMPL(DEDParser)
                                 Record &st = layerDef.stage(stage);
 
                                 FINDBEGIN;
-                                forever
+                                for (;;)
                                 {
                                     READLABEL;
                                     RV_URI("Texture", st["texture"], 0) // Default to "any" scheme.
@@ -1579,7 +1577,7 @@ DE_PIMPL(DEDParser)
 
                         int stage = 0;
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_VEC_VAR("Pattern offset", decorDef.def()["patternOffset"], 2)
@@ -1594,7 +1592,7 @@ DE_PIMPL(DEDParser)
                                 Record &st = decorDef.stage(stage);
 
                                 FINDBEGIN;
-                                forever
+                                for (;;)
                                 {
                                     READLABEL;
                                     RV_INT("Tics", st["tics"])
@@ -1662,7 +1660,7 @@ DE_PIMPL(DEDParser)
                 if (source->custom) mdl.set("custom", true);
 
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", mdl[VAR_ID])
@@ -1825,7 +1823,7 @@ DE_PIMPL(DEDParser)
                 if (source->custom) music->set("custom", true);
 
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
@@ -1866,7 +1864,7 @@ DE_PIMPL(DEDParser)
                 if (source->custom) sky.set("custom", true);
 
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", sky[VAR_ID])
@@ -1881,7 +1879,7 @@ DE_PIMPL(DEDParser)
                         if (source->custom) layerDef.set("custom", true);
 
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_URI("Material", layerDef["material"], 0)
@@ -1917,7 +1915,7 @@ DE_PIMPL(DEDParser)
                         if (source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_STR("ID", mdlDef[VAR_ID])
@@ -1988,7 +1986,7 @@ DE_PIMPL(DEDParser)
                     {
                         bool negate = false;
                         bool testCustom = false;
-                        forever
+                        for (;;)
                         {
                             ReadToken();
                             if (ISTOKEN("{"))
@@ -2052,7 +2050,7 @@ DE_PIMPL(DEDParser)
                 if (source->custom) sky.set("custom", true);
 
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     // ID cannot be changed when modifying
@@ -2089,7 +2087,7 @@ DE_PIMPL(DEDParser)
                         if (source->custom) layerDef.set("custom", true);
 
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_URI("Material", layerDef["material"], 0)
@@ -2125,7 +2123,7 @@ DE_PIMPL(DEDParser)
                         if (source->custom) mdlDef.set("custom", true);
 
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_STR("ID", mdlDef[VAR_ID])
@@ -2169,9 +2167,8 @@ DE_PIMPL(DEDParser)
                         String buffer;
                         if (ReadString(buffer))
                         {
-                            QByteArray bufferUtf8 = buffer.toUtf8();
-                            txt->text = (char *) M_Realloc(txt->text, bufferUtf8.length() + 1);
-                            qstrcpy(txt->text, bufferUtf8.constData());
+                            txt->text = (char *) M_Realloc(txt->text, buffer.size() + 1);
+                            strcpy(txt->text, buffer);
                         }
                         else
                         {
@@ -2309,9 +2306,9 @@ DE_PIMPL(DEDParser)
                             idx = DED_AddValue(ded, 0);
                             ded_value_t *val = &ded->values[idx];
 
-                            QByteArray bufferUtf8 = buffer.toUtf8();
-                            val->text = (char *) M_Malloc(bufferUtf8.length() + 1);
-                            qstrcpy(val->text, bufferUtf8.constData());
+//                            QByteArray bufferUtf8 = buffer.toUtf8();
+                            val->text = (char *) M_Malloc(buffer.size() + 1);
+                            strcpy(val->text, buffer);
 
                             // Compose the identifier.
                             val->id = (char *) M_Malloc(strlen(rootStr) + strlen(label) + 1);
@@ -2575,7 +2572,7 @@ DE_PIMPL(DEDParser)
                 if (source->custom) fin.set("custom", true);
 
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     RV_STR("ID", fin[VAR_ID])
@@ -2584,8 +2581,7 @@ DE_PIMPL(DEDParser)
                     RV_INT("Game", dummyInt)
                     if (ISLABEL("Script"))
                     {
-                        String buffer; buffer.reserve(1600);
-
+                        String buffer;
                         FINDBEGIN;
                         ReadToken();
                         while (!ISTOKEN("}") && !source->atEnd)
@@ -2601,7 +2597,6 @@ DE_PIMPL(DEDParser)
                             }
                             ReadToken();
                         }
-                        buffer.squeeze();
                         fin.set("script", buffer);
                     }
                     else RV_END
@@ -2624,7 +2619,7 @@ DE_PIMPL(DEDParser)
                 defn::Decoration mainDef(decor);
                 int light = 0;
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     RV_FLAGS("Flags", decor["flags"], "dcf_")
@@ -2656,7 +2651,7 @@ DE_PIMPL(DEDParser)
                         // One implicit stage.
                         Record &st = (lightDef.stageCount()? lightDef.stage(0) : lightDef.addStage());
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_VEC_VAR("Offset", st["origin"], 2)
@@ -2703,7 +2698,7 @@ DE_PIMPL(DEDParser)
 
                 int sub = 0;
                 FINDBEGIN;
-                forever
+                for (;;)
                 {
                     READLABEL;
                     if (ISLABEL("Texture") || ISLABEL("Flat"))
@@ -2718,7 +2713,7 @@ DE_PIMPL(DEDParser)
                         ded_group_member_t *memb = &grp->members[sub];
 
                         FINDBEGIN;
-                        forever
+                        for (;;)
                         {
                             READLABEL;
                             RV_URI("ID", &memb->material, (haveTexture? "Textures" : "Flats"))
@@ -3064,7 +3059,7 @@ DE_PIMPL(DEDParser)
         if (!F_IsAbsolute(&tmp))
         {
             Str_PrependChar(&tmp, '/');
-            Str_Prepend(&tmp, parentDirectory.toUtf8().constData());
+            Str_Prepend(&tmp, parentDirectory);
         }
 
         Def_ReadProcessDED(ded, String(Str_Text(&tmp)));

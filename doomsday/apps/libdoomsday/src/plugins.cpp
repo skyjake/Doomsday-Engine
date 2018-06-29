@@ -25,8 +25,8 @@
 #include <de/NativeFile>
 #include <de/findfile.h>
 #include <de/strutil.h>
-#include <QList>
-#include <QThreadStorage>
+#include <de/List>
+#include <de/ThreadLocal>
 
 using namespace de;
 
@@ -36,15 +36,7 @@ struct ThreadState
     ThreadState() : currentPlugin(0) {}
 };
 
-#ifndef DE_QT_4_8_OR_NEWER // Qt 4.7 requires a pointer as the local data type
-# define DE_LOCAL_DATA_POINTER
-QThreadStorage<ThreadState *> pluginState; ///< Thread-local plugin state.
-void initLocalData() {
-    if (!pluginState.hasLocalData()) pluginState.setLocalData(new ThreadState);
-}
-#else
-QThreadStorage<ThreadState> pluginState; ///< Thread-local plugin state.
-#endif
+static de::ThreadLocal<ThreadState> pluginState; ///< Thread-local plugin state.
 
 bool Plugins::Hook::operator == (Hook const &other) const
 {
@@ -81,7 +73,7 @@ DE_PIMPL_NOREF(Plugins)
 
     ::Library *hInstPlug[MAX_PLUGS];  ///< @todo Remove arbitrary MAX_PLUGS.
 
-    typedef QList<Hook> HookRegister;
+    typedef List<Hook> HookRegister;
     HookRegister hooks[NUM_HOOK_TYPES];
 
     Impl()
@@ -113,13 +105,13 @@ DE_PIMPL_NOREF(Plugins)
 #endif
 
         DE_ASSERT(!lib.path().isEmpty());
-        if (strcasestr("/bin/audio_", lib.path().toUtf8().constData()))
+        if (lib.path().beginsWith("/bin/audio_", CaseInsensitive))
         {
             // Do not touch audio plugins at this point.
             return true;
         }
 
-        ::Library *plugin = Library_New(lib.path().toUtf8().constData());
+        ::Library *plugin = Library_New(lib.path());
         if (!plugin)
         {
 #ifdef UNIX
@@ -189,30 +181,18 @@ DE_PIMPL_NOREF(Plugins)
 
     void setActivePluginId(pluginid_t id)
     {
-#ifdef DE_LOCAL_DATA_POINTER
-        initLocalData();
-        pluginState.localData()->currentPlugin = id;
-#else
-        pluginState.localData().currentPlugin = id;
-#endif
+        pluginState.get().currentPlugin = id;
     }
 
     pluginid_t activePluginId() const
     {
-#ifdef DE_LOCAL_DATA_POINTER
-        initLocalData();
-        return pluginState.localData()->currentPlugin;
-#else
-        return pluginState.localData().currentPlugin;
-#endif
+        return pluginState.get().currentPlugin;
     }
 
-    DE_PIMPL_AUDIENCE(PublishAPI)
-    DE_PIMPL_AUDIENCE(Notification)
+    DE_PIMPL_AUDIENCES(PublishAPI, Notification)
 };
 
-DE_AUDIENCE_METHOD(Plugins, PublishAPI)
-DE_AUDIENCE_METHOD(Plugins, Notification)
+DE_AUDIENCE_METHODS(Plugins, PublishAPI, Notification)
 
 Plugins::Plugins() : d(new Impl)
 {}
@@ -399,7 +379,7 @@ bool Plugins::removeHook(HookType type, hookfunc_t function)
     return false;
 }
 
-LoopResult Plugins::forAllHooks(HookType type, std::function<de::LoopResult (Hook const &)> func) const
+LoopResult Plugins::forAllHooks(HookType type, const std::function<de::LoopResult (Hook const &)>& func) const
 {
     for (Hook const &hook : d->hooks[type])
     {

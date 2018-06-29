@@ -56,7 +56,7 @@ public:
 
         DefaultLookup = 0       ///< Latest in order, case insensitive, omitted from copies.
     };
-    Q_DECLARE_FLAGS(LookupFlags, LookupFlag)
+    using LookupFlags = de::Flags;
 
 public:
     DEDRegister(de::Record &names);
@@ -104,7 +104,7 @@ public:
     de::Record const & operator [] (int index) const;
 
     de::Record *       tryFind(de::String const &key, de::String const &value);
-    de::Record const * tryFind(de::String const &key, de::String value) const;
+    de::Record const * tryFind(de::String const &key, de::String const &value) const;
 
     de::Record &       find(de::String const &key, de::String const &value);
     de::Record const & find(de::String const &key, de::String const &value) const;

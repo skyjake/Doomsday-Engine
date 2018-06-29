@@ -88,7 +88,7 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the TextureManifest.
      */
-    inline de::Uri composeUri(QChar sep = '/') const
+    inline de::Uri composeUri(Char sep = '/') const
     {
         return de::Uri(schemeName(), path(sep));
     }
@@ -107,7 +107,7 @@ public:
      */
     inline de::Uri composeUrn() const
     {
-        return de::Uri("urn", de::String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
+        return de::Uri("urn", de::String::format("%s:%i", schemeName().c_str(), uniqueId()));
     }
 
     /**
@@ -184,7 +184,7 @@ public:
     /**
      * Returns the texture flags property of the manifest.
      */
-    Texture::Flags flags() const;
+    Flags flags() const;
 
     /**
      * Change the texture flags property of the manifest.
@@ -192,7 +192,7 @@ public:
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Texture::Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Returns @c true if a Texture is presently associated with the manifest.

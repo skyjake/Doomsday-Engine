@@ -26,8 +26,7 @@
 #include <de/Observers>
 #include <de/String>
 #include <de/Vector>
-
-#include <QVector>
+#include <de/List>
 
 namespace res {
 
@@ -53,8 +52,7 @@ public:
      * @param colorCount  Number of discreet colors in @a colorData.
      * @param colorData   Color data (at least @a colorCount * 3 values).
      */
-    static QVector<de::Vec3ub> read(de::String format, int colorCount,
-                                       de::dbyte const *colorData);
+    static de::List<de::Vec3ub> read(de::String format, int colorCount, de::dbyte const *colorData);
 };
 
 /**
@@ -72,7 +70,7 @@ public:
     DE_DEFINE_AUDIENCE(ColorTableChange, void colorPaletteColorTableChanged(ColorPalette &colorPalette))
 
     /// Palette index translation mapping table.
-    typedef QVector<int> Translation;
+    typedef de::List<int> Translation;
 
 public:
     /**
@@ -85,7 +83,7 @@ public:
      *
      * @param colors  Color table to initialize from. A copy is made.
      */
-    ColorPalette(QVector<de::Vec3ub> const &colors);
+    ColorPalette(de::List<de::Vec3ub> const &colors);
 
     /// @see color()
     inline de::Vec3ub operator [] (int colorIndex) const {
@@ -128,7 +126,7 @@ public:
      *
      * @param colorTable  The replacement color table. A copy is made.
      */
-    ColorPalette &replaceColorTable(QVector<de::Vec3ub> const &colorTable);
+    ColorPalette &replaceColorTable(de::List<de::Vec3ub> const &colorTable);
 
     /**
      * Given an R8G8B8 color triplet return the closet matching color index.

@@ -30,7 +30,7 @@
 #include <de/Path>
 #include <de/Date>
 #include <de/String>
-#include <QMultiMap>
+#include <map>
 
 class ResourceManifest;
 namespace de { class File1; }
@@ -53,7 +53,7 @@ public:
         Incomplete
     };
 
-    typedef QMultiMap<resourceclassid_t, ResourceManifest *> Manifests;
+    typedef std::multimap<resourceclassid_t, ResourceManifest *> Manifests;
 
     /**
      * Specifies the game that this game is a variant of. For instance, "Final
@@ -99,7 +99,7 @@ public:
      *
      * @param packageIds  List of package IDs.
      */
-    void setRequiredPackages(de::StringList packageIds);
+    void setRequiredPackages(const de::StringList &packageIds);
 
     void addRequiredPackage(de::String const &packageId);
 

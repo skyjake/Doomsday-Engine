@@ -44,7 +44,7 @@ void FS_InitVirtualPathMappings()
     dint argC = CommandLine_Count();
     for (dint i = 0; i < argC; ++i)
     {
-        if (qstrnicmp("-vdmap", CommandLine_At(i), 6))
+        if (iCmpStrNCase("-vdmap", CommandLine_At(i), 6))
         {
             continue;
         }

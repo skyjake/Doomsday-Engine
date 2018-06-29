@@ -57,7 +57,6 @@ public:
         /// Interpreters should not decend into branches.
         NoDescend       = 0x1
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
 public:
     /**
@@ -100,8 +99,6 @@ public:
 private:
     Flags flags_;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(SearchPath::Flags)
 
 } // namespace de
 

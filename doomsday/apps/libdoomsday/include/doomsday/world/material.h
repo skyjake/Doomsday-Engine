@@ -24,13 +24,15 @@
 #include "../res/Texture"
 #include "mapelement.h"
 
-#include <QList>
+#include <de/List>
 #include <de/Error>
 #include <de/Observers>
 #include <de/Vector>
 #include <functional>
 
 namespace world {
+
+using namespace de;
 
 class MaterialManifest;
 
@@ -69,7 +71,7 @@ public:
     /**
      * Returns the dimension metrics of the material.
      */
-    de::Vec2ui const &dimensions() const;
+    Vec2ui const &dimensions() const;
 
     inline int width () const { return int(dimensions().x); }
     inline int height() const { return int(dimensions().y); }
@@ -77,7 +79,7 @@ public:
     /**
      * Change the world dimensions of the material to @a newDimensions.
      */
-    void setDimensions(de::Vec2ui const &newDimensions);
+    void setDimensions(Vec2ui const &newDimensions);
 
     void setWidth (int newWidth);
     void setHeight(int newHeight);
@@ -131,12 +133,12 @@ public:
     /**
      * Returns a human-friendly, textual name for the object.
      */
-    virtual de::String describe() const;
+    virtual String describe() const;
 
     /**
      * Returns a human-friendly, textual description of the full material configuration.
      */
-    virtual de::String description() const;
+    virtual String description() const;
 
 //- Layers ------------------------------------------------------------------------------
 
@@ -178,7 +180,7 @@ public:
              * Returns a human-friendly, textual description of the animation stage
              * configuration.
              */
-            virtual de::String description() const = 0;
+            virtual String description() const = 0;
         };
 
     public:
@@ -189,17 +191,17 @@ public:
         /**
          * Returns a human-friendly, textual name for the type of material layer.
          */
-        virtual de::String describe() const;
+        virtual String describe() const;
 
         /**
          * Returns a human-friendly, textual synopsis of the material layer.
          */
-        de::String description() const;
+        String description() const;
 
         /**
          * Returns the total number of animation stages for the material layer.
          */
-        inline int stageCount() const { return _stages.size(); }
+        inline int stageCount() const { return _stages.sizei(); }
 
         /**
          * Returns @c true if the material layer is animated; otherwise @c false.
@@ -216,16 +218,14 @@ public:
         int nextStageIndex(int index) const;
 
     protected:
-        typedef QVector<Stage *> Stages;
+        typedef List<Stage *> Stages;
         Stages _stages;
     };
 
     /**
      * Returns the number of material layers.
      */
-    inline int layerCount() const {
-        return _layers.count();
-    }
+    inline int layerCount() const { return _layers.sizei(); }
 
     /**
      * Add a new layer at the given layer stack position.
@@ -277,18 +277,14 @@ public:
         Valid        = 0x8,           ///< Marked as @em valid.
         DefaultFlags = Valid
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
 private:
-    // Heavily used; visible for inline access:
     /// Layers (owned), from bottom-most to top-most draw order.
-    QVector<Layer *> _layers;
+    List<Layer *> _layers; // Heavily used; visible for inline access.
     Flags _flags = DefaultFlags;
 
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Material::Flags)
 
 typedef Material::Layer MaterialLayer;
 

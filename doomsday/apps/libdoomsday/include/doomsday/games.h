@@ -26,7 +26,7 @@
 #include <de/types.h>
 #include <de/str.h>
 #include <de/Observers>
-#include <QList>
+#include <de/List>
 
 /**
  * Encapsulates a collection of Game instances and the logical operations
@@ -46,7 +46,7 @@ public:
     {
         Game *game;
 
-        GameListItem(Game *game = 0) : game(game)
+        GameListItem(Game *game = nullptr) : game(game)
         {}
 
         /// @return  @c true= this game's title is lexically less than that of @a other.
@@ -55,8 +55,8 @@ public:
         }
     };
 
-    typedef QList<GameListItem> GameList;
-    typedef QList<Game *> All;
+    typedef de::List<GameListItem> GameList;
+    typedef de::List<Game *> All;
 
     /// Notified when a new game is added.
     DE_DEFINE_AUDIENCE2(Addition, void gameAdded(Game &game))
@@ -76,7 +76,7 @@ public:
     static Game &nullGame();
 
     /// @return  Total number of registered games.
-    inline int count() const { return all().count(); }
+    inline int count() const { return all().sizei(); }
 
     /// @return  Number of games marked as currently playable.
     int numPlayable() const;
@@ -120,7 +120,7 @@ public:
      */
     All const &all() const;
 
-    de::LoopResult forAll(std::function<de::LoopResult (Game &)> callback) const;
+    de::LoopResult forAll(const std::function<de::LoopResult (Game &)>& callback) const;
 
     /**
      * Notify observers to update the readiness of games.

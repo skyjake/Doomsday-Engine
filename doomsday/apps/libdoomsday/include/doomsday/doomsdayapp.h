@@ -30,7 +30,6 @@
 #include <de/Info>
 #include <de/shell/PackageDownloader>
 
-#include <QFlags>
 #include <string>
 
 namespace res { class Bundles; }
@@ -98,7 +97,7 @@ public:
      * Lists all the files found on the command line "-file" option (and its aliases).
      * @return List of files.
      */
-    QList<de::File *> filesFromCommandLine() const;
+    de::List<de::File *> filesFromCommandLine() const;
 
     /**
      * Release all cached uncompressed entries. If the contents of the compressed
@@ -111,12 +110,11 @@ public:
      */
     void clearCache();
 
-    enum Behavior
-    {
-        AllowReload = 0x1,
+    enum Behavior {
+        AllowReload     = 0x1,
         DefaultBehavior = 0,
     };
-    Q_DECLARE_FLAGS(Behaviors, Behavior)
+    using Behaviors = de::Flags;
 
     /**
      * Switch to/activate the specified game.
@@ -127,7 +125,7 @@ public:
      * @param behaviors  Change behavior flags.
      */
     bool changeGame(GameProfile const &profile,
-                    std::function<int (void *)> gameActivationFunc,
+                    const std::function<int (void *)> &gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
     static bool isGameBeingChanged();
@@ -199,8 +197,8 @@ public:
     static BusyMode &       busyMode();
     static SaveGames &      saveGames();
 
-    static de::NativePath   steamBasePath();
-    static QList<de::NativePath> gogComPaths();
+    static de::NativePath           steamBasePath();
+    static de::List<de::NativePath> gogComPaths();
 
     /**
      * Sets the currently active game. DoomsdayApp does not take ownership of
@@ -255,7 +253,5 @@ private:
  * Returns @c true if a game module is presently loaded.
  */
 LIBDOOMSDAY_PUBLIC bool App_GameLoaded();
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(DoomsdayApp::Behaviors)
 
 #endif // LIBDOOMSDAY_DOOMSDAYAPP_H

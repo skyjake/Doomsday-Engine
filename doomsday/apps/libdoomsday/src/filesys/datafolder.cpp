@@ -60,7 +60,7 @@ String DataFolder::describe() const
     String const feedDesc = describeFeeds();
     if (!feedDesc.isEmpty())
     {
-        desc += String(" (%1)").arg(feedDesc);
+        desc += String::format(" (%s)", feedDesc.c_str());
     }
 
     return desc;

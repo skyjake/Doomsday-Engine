@@ -1,3 +1,5 @@
+#if 0 /* obsolete */
+
 /**
  * @file dualstring.h
  * Utility class for strings that need both Unicode and C-string access.
@@ -114,3 +116,5 @@ private:
 #endif // __cplusplus
 
 #endif // LIBDOOMSDAY_DUALSTRING_H
+
+#endif // 0

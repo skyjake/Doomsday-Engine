@@ -22,7 +22,6 @@
 #define LIBDOOMSDAY_RESOURCE_MANIFEST_H
 
 #include <de/String>
-#include <QStringList>
 #include "resourceclass.h"
 
 /**
@@ -39,7 +38,7 @@ public:
      * @param fFlags    @ref fileFlags
      * @param name      An expected name for the associated file.
      */
-    ResourceManifest(resourceclassid_t rClass, int fFlags, de::String *name = 0);
+    ResourceManifest(resourceclassid_t rClass, int fFlags, de::String *name = nullptr);
 
     /// @return Class of the associated resource.
     resourceclassid_t resourceClass() const;
@@ -50,7 +49,7 @@ public:
     /**
      * Returns a list of "identity keys" used to identify the resource.
      */
-    QStringList const &identityKeys() const;
+    de::StringList const &identityKeys() const;
 
     /**
      * Add a new file segment identity key to the list for this manifest.
@@ -62,14 +61,14 @@ public:
     /**
      * Returns a list of known-names for the associated resource.
      */
-    QStringList const &names() const;
+    de::StringList const &names() const;
 
     /**
      * Add a new file name to the list of names for this manifest.
      *
      * @param newName  New name for this file. Newer names have precedence.
      */
-    void addName(de::String newName);
+    void addName(const de::String& newName);
 
     /**
      * Attempt to locate this file by systematically resolving and then

@@ -23,8 +23,7 @@
 
 #include "patchname.h"
 
-#include <QList>
-#include <QMultiMap>
+#include <de/List>
 
 #include <de/Reader>
 #include <de/String>
@@ -33,6 +32,8 @@
 #include "dd_types.h" // For lumpnum_t
 
 namespace res {
+
+using namespace de;
 
 /**
  * A logical texture composite of one or more @em component images.
@@ -51,7 +52,6 @@ public:
     enum Flag {
         Custom = 0x1  ///< The texture does not originate from the current game.
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
      * Archived format variants.
@@ -67,12 +67,12 @@ public:
     struct LIBDOOMSDAY_PUBLIC Component
     {
     public:
-        explicit Component(de::Vec2i const &origin = de::Vec2i());
+        explicit Component(Vec2i const &origin = Vec2i());
 
-        void setOrigin(de::Vec2i const &origin);
+        void setOrigin(Vec2i const &origin);
 
         /// Origin of the top left corner of the component (in texture space units).
-        de::Vec2i const &origin() const;
+        Vec2i const &origin() const;
 
         bool operator == (Component const &other) const;
         bool operator != (Component const &other) const;
@@ -90,17 +90,17 @@ public:
         void setLumpNum(lumpnum_t num);
 
     private:
-        de::Vec2i _origin;    ///< Top left corner in the texture coordinate space.
+        Vec2i _origin;    ///< Top left corner in the texture coordinate space.
         lumpnum_t _lumpNum;  ///< Index of the lump containing the associated image.
     };
-    typedef QList<Component> Components;
+    typedef List<Component> Components;
 
 public:
     /**
      * Construct a default composite texture.
      */
-    explicit Composite(de::String const &percentEncodedName = "",
-                       de::Vec2ui const &logicalDimensions = de::Vec2ui(),
+    explicit Composite(String const &percentEncodedName = "",
+                       Vec2ui const &logicalDimensions = Vec2ui(),
                        Flags flags = 0);
 
     /**
@@ -115,8 +115,8 @@ public:
      *
      * @return  The deserialized composite texture. Caller gets ownership.
      */
-    static Composite *constructFrom(de::Reader &reader,
-                                    QVector<PatchName> const &patchNames,
+    static Composite *constructFrom(Reader &reader,
+                                    const List<PatchName> &patchNames,
                                     ArchiveFormat format = DoomFormat);
 
     /**
@@ -131,13 +131,13 @@ public:
     }
 
     /// Returns the percent-endcoded symbolic name of the texture.
-    de::String percentEncodedName() const;
+    String percentEncodedName() const;
 
     /// Returns the percent-endcoded symbolic name of the texture.
-    de::String const &percentEncodedNameRef() const;
+    String const &percentEncodedNameRef() const;
 
     /// Returns the logical dimensions of the texture (in map space units).
-    de::Vec2ui const &logicalDimensions() const;
+    Vec2ui const &logicalDimensions() const;
 
     /// Returns the logical width of the texture (in map space units).
     inline int logicalWidth() const { return int(logicalDimensions().x); }
@@ -146,7 +146,7 @@ public:
     inline int logicalHeight() const { return int(logicalDimensions().y); }
 
     /// Returns the pixel dimensions of the texture.
-    de::Vec2ui const &dimensions() const;
+    Vec2ui const &dimensions() const;
 
     /// Returns the pixel width of the texture.
     inline int width() const { return int(dimensions().x); }
@@ -184,13 +184,11 @@ public:
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    void setFlags(Flags flagsToChange, FlagOp operation = SetFlags);
 
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Composite::Flags)
 
 typedef Composite::Component CompositeComponent;
 

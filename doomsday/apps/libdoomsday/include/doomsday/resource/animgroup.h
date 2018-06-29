@@ -22,9 +22,11 @@
 #define LIBDOOMSDAY_RESOURCE_ANIMATIONGROUP_H
 
 #include "../TextureManifest"
-#include <QList>
+#include <de/List>
 
 namespace res {
+
+using namespace de;
 
 /**
  * Material Animation group.
@@ -65,7 +67,7 @@ public:
         ushort _randomTics;
     };
 
-    typedef QList<Frame *> Frames;
+    typedef List<Frame *> Frames;
 
 public:
     /**

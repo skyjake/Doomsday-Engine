@@ -230,8 +230,7 @@ AutoStr *CVar_ComposePath(cvar_t const *var)
 {
     DE_ASSERT(var != 0);
     CVarDirectory::Node &node = *reinterpret_cast<CVarDirectory::Node *>(var->directoryNode);
-    QByteArray path = node.path(CVARDIRECTORY_DELIMITER).toUtf8();
-    return AutoStr_FromTextStd(path.constData());
+    return AutoStr_FromTextStd(node.path(CVARDIRECTORY_DELIMITER));
 }
 
 void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
@@ -314,7 +313,7 @@ void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
     if (oldLen == 0 && newLen == 0)
         return;
 
-    if (oldLen != newLen || qstricmp(text, CV_CHARPTR(var)))
+    if (oldLen != newLen || iCmpStrCase(text, CV_CHARPTR(var)))
         changed = true;
 
     // Free the old string, if one exists.
@@ -324,7 +323,7 @@ void CVar_SetString2(cvar_t *var, char const *text, int svFlags)
     // Allocate a new string.
     var->flags |= CVF_CAN_FREE;
     CV_CHARPTR(var) = (char*) M_Malloc(newLen + 1);
-    qstrcpy(CV_CHARPTR(var), text);
+    strcpy(CV_CHARPTR(var), text);
 
     // Make the change notification callback
     if (var->notifyChanged != NULL && changed)
@@ -565,8 +564,7 @@ String Con_VarAsStyledText(cvar_t *var, char const *prefix)
     if ((var->flags & CVF_PROTECTED) || (var->flags & CVF_READ_ONLY))
         equals = ':';
 
-    String str;
-    QTextStream os(&str);
+    std::ostringstream os;
 
     if (prefix) os << prefix;
 
@@ -584,11 +582,11 @@ String Con_VarAsStyledText(cvar_t *var, char const *prefix)
         os << "\"" << (CV_URIPTR(var)? CV_URIPTR(var)->asText() : "") << "\"";
         break; }
     default:
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("Invalid cvar type");
         break;
     }
     os << _E(<);
-    return str;
+    return os.str();
 }
 
 void Con_PrintCVar(cvar_t* var, char const *prefix)
@@ -641,11 +639,11 @@ int Con_GetVariableInteger(Path const &varPath)
 static Value *Function_Console_Get(Context &, Function::ArgumentValues const &args)
 {
     String const name = args.at(0)->asText();
-    cvar_t *var = Con_FindVariable(name.toUtf8());
+    cvar_t *var = Con_FindVariable(name.c_str());
     if (!var)
     {
         throw Error("Function_Console_Get",
-                    QString("Unknown console variable: %1").arg(name));
+                    stringf("Unknown console variable: %s", name.c_str()));
     }
     switch (var->type)
     {
@@ -673,11 +671,11 @@ static Value *Function_Console_Get(Context &, Function::ArgumentValues const &ar
 static Value *Function_Console_Set(Context &, Function::ArgumentValues const &args)
 {
     String const name = args.at(0)->asText();
-    cvar_t *var = Con_FindVariable(name.toUtf8());
+    cvar_t *var = Con_FindVariable(name.c_str());
     if (!var)
     {
         throw Error("Function_Console_Set",
-                    QString("Unknown console variable: %1").arg(name));
+                    stringf("Unknown console variable: %1", name.c_str()));
     }
 
     Value const &value = *args.at(1);
@@ -693,7 +691,7 @@ static Value *Function_Console_Set(Context &, Function::ArgumentValues const &ar
         break;
 
     case CVT_CHARPTR:  ///< ptr points to a char*, which points to the string.
-        CVar_SetString(var, value.asText().toUtf8());
+        CVar_SetString(var, value.asText());
         break;
 
     case CVT_URIPTR:

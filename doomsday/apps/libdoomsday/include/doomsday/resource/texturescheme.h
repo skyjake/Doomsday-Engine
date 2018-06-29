@@ -100,7 +100,7 @@ public:
      * @return  The (possibly newly created) manifest at @a path.
      */
     Manifest &declare(de::Path const &path,
-                      Texture::Flags flags,
+                      de::Flags flags,
                       de::Vec2ui const &dimensions,
                       de::Vec2i const &origin,
                       int uniqueId,

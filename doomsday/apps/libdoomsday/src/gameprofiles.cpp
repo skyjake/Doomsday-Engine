@@ -27,7 +27,7 @@
 #include <de/PackageLoader>
 #include <de/Record>
 
-#include <QTextStream>
+#include <sstream>
 
 using namespace de;
 
@@ -112,9 +112,9 @@ LoopResult GameProfiles::forAll(std::function<LoopResult (Profile const &)> func
     });
 }
 
-QList<GameProfile *> GameProfiles::profilesInFamily(de::String const &family)
+List<GameProfile *> GameProfiles::profilesInFamily(de::String const &family)
 {
-    QList<GameProfile *> profs;
+    List<GameProfile *> profs;
     forAll([&profs, &family] (GameProfile &profile)
     {
         if (profile.game().family() == family)
@@ -126,15 +126,15 @@ QList<GameProfile *> GameProfiles::profilesInFamily(de::String const &family)
     return profs;
 }
 
-QList<GameProfile *> GameProfiles::profilesSortedByFamily()
+List<GameProfile *> GameProfiles::profilesSortedByFamily()
 {
-    QList<GameProfile *> profs;
+    List<GameProfile *> profs;
     forAll([&profs] (GameProfile &profile)
     {
         profs << &profile;
         return LoopContinue;
     });
-    qSort(profs.begin(), profs.end(), [] (GameProfile const *a, GameProfile const *b)
+    std::sort(profs.begin(), profs.end(), [] (GameProfile const *a, GameProfile const *b)
     {
         String family1 = a->game().family();
         String family2 = b->game().family();
@@ -149,9 +149,9 @@ QList<GameProfile *> GameProfiles::profilesSortedByFamily()
     return profs;
 }
 
-QList<GameProfile const *> GameProfiles::allPlayableProfiles() const
+List<GameProfile const *> GameProfiles::allPlayableProfiles() const
 {
-    QList<GameProfile const *> playable;
+    List<GameProfile const *> playable;
     forAll([&playable] (Profile const &prof)
     {
         if (prof.isPlayable()) playable << &prof;
@@ -286,7 +286,7 @@ void GameProfiles::Profile::setCustomDataFile(const String &id)
     }
 }
 
-void GameProfiles::Profile::setPackages(StringList packagesInOrder)
+void GameProfiles::Profile::setPackages(const StringList& packagesInOrder)
 {
     if (d->packages != packagesInOrder)
     {
@@ -526,12 +526,15 @@ StringList GameProfiles::Profile::allRequiredPackages() const
 StringList GameProfiles::Profile::packagesAffectingGameplay() const
 {
     StringList ids = PackageLoader::get().expandDependencies(allRequiredPackages());
-    QMutableListIterator<String> iter(ids);
-    while (iter.hasNext())
+    for (auto iter = ids.begin(); iter != ids.end(); )
     {
-        if (!GameStateFolder::isPackageAffectingGameplay(iter.next()))
+        if (!GameStateFolder::isPackageAffectingGameplay(*iter))
+    {
+            iter = ids.erase(iter);
+        }
+        else
         {
-            iter.remove();
+            ++iter;
         }
     }
     return ids;
@@ -570,7 +573,7 @@ void GameProfiles::Profile::loadPackages() const
 void GameProfiles::Profile::unloadPackages() const
 {
     StringList const allPackages = allRequiredPackages();
-    for (int i = allPackages.size() - 1; i >= 0; --i)
+    for (int i = allPackages.sizei() - 1; i >= 0; --i)
     {
         PackageLoader::get().unload(allPackages.at(i));
     }
@@ -586,9 +589,7 @@ bool GameProfiles::Profile::resetToDefaults()
 
 String GameProfiles::Profile::toInfoSource() const
 {
-    String info;
-    QTextStream os(&info);
-    os.setCodec("UTF-8");
+    std::ostringstream os;
 
     os << VAR_GAME                  << ": " << d->gameId << "\n"
        << VAR_PACKAGES              << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
@@ -615,7 +616,7 @@ String GameProfiles::Profile::toInfoSource() const
         indented.replace("\n", "\n    ");
         os << "\n" << VAR_VALUES << " {\n    " << indented << "\n}";
     }
-    return info;
+    return os.str();
 }
 
 Record &GameProfiles::Profile::objectNamespace()
@@ -634,7 +635,7 @@ bool GameProfiles::arePackageListsCompatible(StringList const &list1, StringList
 
     // The package lists must match order and IDs, but currently we ignore the
     // versions.
-    for (int i = 0; i < list1.size(); ++i)
+    for (int i = 0; i < list1.sizei(); ++i)
     {
         if (!Package::equals(list1.at(i), list2.at(i)))
         {

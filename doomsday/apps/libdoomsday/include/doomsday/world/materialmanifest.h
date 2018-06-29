@@ -58,7 +58,6 @@ public:
         /// The manifest was not produced for an original game resource.
         Custom
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     typedef std::function<Material * (MaterialManifest &)> MaterialConstructor;
 
@@ -93,7 +92,7 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the material manifest.
      */
-    inline de::Uri composeUri(QChar sep = '/') const {
+    inline de::Uri composeUri(Char sep = '/') const {
         return de::Uri(schemeName(), path(sep));
     }
 
@@ -169,8 +168,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialManifest::Flags)
 
 } // namespace world
 

@@ -29,7 +29,9 @@
 #include "file.h"
 #include "fileinfo.h"
 
-#include <QList>
+#include <list>
+#include <de/List>
+#include <de/Map>
 #include <de/Error>
 
 namespace de {
@@ -47,7 +49,7 @@ public:
     /// No file(s) found. @ingroup errors
     DE_ERROR(NotFoundError);
 
-    typedef QList<File1 *> Lumps;
+    typedef de::List<File1 *> Lumps;
     typedef std::list<lumpnum_t> FoundIndices;
 
     /**
@@ -103,7 +105,7 @@ public:
             KnownDataCount
         };
 
-        typedef QMap<DataType, File1 *> Lumps;
+        typedef Map<DataType, File1 *> Lumps;
 
     public:
         /**

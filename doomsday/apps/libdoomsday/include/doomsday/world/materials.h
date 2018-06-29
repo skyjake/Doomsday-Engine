@@ -24,8 +24,8 @@
 #include "MaterialScheme"
 #include "../uri.h"
 
-#include <QSet>
-#include <QList>
+#include <de/Set>
+#include <de/List>
 
 namespace world {
 
@@ -38,8 +38,8 @@ public:
     /// The specified material id was invalid (out of range). @ingroup errors
     DE_ERROR(UnknownMaterialIdError);
 
-    typedef QSet<MaterialManifest *>       MaterialManifestGroup;
-    typedef QList<MaterialManifestGroup *> MaterialManifestGroups;
+    typedef Set<MaterialManifest *>       MaterialManifestGroup;
+    typedef List<MaterialManifestGroup *> MaterialManifestGroups;
 
     static Materials &get();
 

@@ -24,9 +24,9 @@
  */
 
 #include "doomsday/filesys/lumpindex.h"
-#include <QBitArray>
-#include <QHash>
-#include <QVector>
+#include <de/BitArray>
+#include <de/Hash>
+#include <de/List>
 #include <de/LogBuffer>
 
 namespace de {
@@ -44,7 +44,7 @@ namespace internal
         LumpSortInfo const *infoA = (LumpSortInfo const *)a;
         LumpSortInfo const *infoB = (LumpSortInfo const *)b;
 
-        if (int delta = infoA->path.compare(infoB->path, Qt::CaseInsensitive))
+        if (int delta = infoA->path.compare(infoB->path, CaseInsensitive))
             return delta;
 
         // Still matched; try the file load order indexes.
@@ -152,8 +152,8 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(LumpIndex const &lumpIndex, lumpnu
         duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
         DE_FOR_EACH_CONST(Lumps, i, d->lumps)
         {
-            DataType const dataType = i.key();
-            File1 const &lump       = *i.value();
+            DataType const dataType = i->first;
+            File1 const &lump       = *i->second;
 
             // Determine the number of map data objects of each data type.
             duint *elemCountAddr = 0;
@@ -216,7 +216,7 @@ LumpIndex::Id1MapRecognizer::Lumps const &LumpIndex::Id1MapRecognizer::lumps() c
 File1 *LumpIndex::Id1MapRecognizer::sourceFile() const
 {
     if (d->lumps.isEmpty()) return nullptr;
-    return &lumps().first()->container();
+    return &lumps().begin()->second->container();
 }
 
 lumpnum_t LumpIndex::Id1MapRecognizer::lastLump() const
@@ -242,7 +242,7 @@ String const &LumpIndex::Id1MapRecognizer::formatName(Format id) // static
 
 LumpIndex::Id1MapRecognizer::DataType LumpIndex::Id1MapRecognizer::typeForLumpName(String name) // static
 {
-    static QHash<String, DataType> const lumpTypeInfo
+    static const Hash<String, DataType> lumpTypeInfo
     {
         std::make_pair(String("THINGS"),   ThingData      ),
         std::make_pair(String("LINEDEFS"), LineDefData    ),
@@ -269,10 +269,10 @@ LumpIndex::Id1MapRecognizer::DataType LumpIndex::Id1MapRecognizer::typeForLumpNa
     };
 
     // Ignore the file extension if present.
-    auto found = lumpTypeInfo.constFind(name.fileNameWithoutExtension().toUpper());
-    if (found != lumpTypeInfo.constEnd())
+    auto found = lumpTypeInfo.find(name.fileNameWithoutExtension().upper());
+    if (found != lumpTypeInfo.end())
     {
-        return found.value();
+        return found->second;
     }
     return UnknownData;
 }
@@ -331,8 +331,8 @@ DE_PIMPL(LumpIndex)
     {
         lumpnum_t head, nextInLoadOrder;
     };
-    typedef QVector<PathHashRecord> PathHash;
-    QScopedPointer<PathHash> lumpsByPath;
+    typedef List<PathHashRecord> PathHash;
+    std::unique_ptr<PathHash> lumpsByPath;
 
     Impl(Public *i)
         : Base(i)
@@ -344,7 +344,7 @@ DE_PIMPL(LumpIndex)
 
     void buildLumpsByPathIfNeeded()
     {
-        if (!lumpsByPath.isNull()) return;
+        if (lumpsByPath) return;
 
         int const numElements = lumps.size();
         lumpsByPath.reset(new PathHash(numElements));
@@ -376,7 +376,7 @@ DE_PIMPL(LumpIndex)
      *
      * @return Number of lumps newly flagged during this op.
      */
-    int flagContainedLumps(QBitArray &pruneFlags, File1 &file)
+    int flagContainedLumps(BitArray &pruneFlags, File1 &file)
     {
         DE_ASSERT(pruneFlags.size() == lumps.size());
 
@@ -397,7 +397,7 @@ DE_PIMPL(LumpIndex)
      * @param pruneFlags  Passed by reference to avoid deep copy on value-write.
      * @return Number of lumps newly flagged during this op.
      */
-    int flagDuplicateLumps(QBitArray &pruneFlags)
+    int flagDuplicateLumps(BitArray &pruneFlags)
     {
         DE_ASSERT(pruneFlags.size() == lumps.size());
 
@@ -426,7 +426,7 @@ DE_PIMPL(LumpIndex)
         for (int i = 1; i < numRecords; ++i)
         {
             if (pruneFlags.testBit(i)) continue;
-            if (sortInfos[i - 1].path.compare(sortInfos[i].path, Qt::CaseInsensitive)) continue;
+            if (sortInfos[i - 1].path.compare(sortInfos[i].path, CaseInsensitive)) continue;
             pruneFlags.setBit(sortInfos[i].origIndex, true);
             numFlagged += 1;
         }
@@ -438,7 +438,7 @@ DE_PIMPL(LumpIndex)
     }
 
     /// @return Number of pruned lumps.
-    int pruneFlaggedLumps(QBitArray flaggedLumps)
+    int pruneFlaggedLumps(const BitArray &flaggedLumps)
     {
         DE_ASSERT(flaggedLumps.size() == lumps.size());
 
@@ -485,7 +485,7 @@ DE_PIMPL(LumpIndex)
         int const numRecords = lumps.size();
         if (numRecords <= 1) return;
 
-        QBitArray pruneFlags(numRecords);
+        BitArray pruneFlags(numRecords);
         flagDuplicateLumps(pruneFlags);
         pruneFlaggedLumps(pruneFlags);
     }
@@ -507,9 +507,9 @@ bool LumpIndex::hasLump(lumpnum_t lumpNum) const
 
 static String LumpIndex_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
-    String msg = String("Invalid lump index %1").arg(invalidIdx);
+    String msg = String::format("Invalid lump index %i", invalidIdx);
     if (lastValidIdx < 0) msg += " (file is empty)";
-    else                 msg += String(", valid range: [0..%2)").arg(lastValidIdx);
+    else                  msg += String::format(", valid range: [0..%i)", lastValidIdx);
     return msg;
 }
 
@@ -541,7 +541,7 @@ int LumpIndex::pruneByFile(File1 &file)
     if (d->lumps.empty()) return 0;
 
     int const numRecords = d->lumps.size();
-    QBitArray pruneFlags(numRecords);
+    BitArray pruneFlags(numRecords);
 
     // We may need to prune path-duplicate lumps. We'll fold those into this
     // op as pruning may result in reallocations.
@@ -623,7 +623,7 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
     d->buildLumpsByPathIfNeeded();
 
     // Perform the search.
-    DE_ASSERT(!d->lumpsByPath.isNull());
+    DE_ASSERT(d->lumpsByPath);
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
@@ -648,7 +648,7 @@ lumpnum_t LumpIndex::findLast(Path const &path) const
     d->buildLumpsByPathIfNeeded();
 
     // Perform the search.
-    DE_ASSERT(!d->lumpsByPath.isNull());
+    DE_ASSERT(d->lumpsByPath);
     ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
