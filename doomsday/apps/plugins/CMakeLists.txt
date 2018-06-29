@@ -5,10 +5,6 @@ cmake_minimum_required (VERSION 3.1)
 project (Plugins)
 include (../../cmake/Config.cmake)
 
-# Libraries -----------------------------------------------------------------------------
-
-add_subdirectory (libgamefw)
-
 # Importers -----------------------------------------------------------------------------
 
 add_subdirectory (importdeh)

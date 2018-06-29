@@ -2,7 +2,7 @@
 
 cmake_minimum_required (VERSION 3.1)
 project (DE_LIBGAMEFW)
-include (../../../cmake/Config.cmake)
+include (../../cmake/Config.cmake)
 
 # Dependencies.
 find_package (DengCore)

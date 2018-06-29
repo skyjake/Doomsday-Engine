@@ -127,7 +127,7 @@ struct Range
         ContiguousRanges cont;
         if (values.isEmpty()) return cont;
         cont.append(Range<Type>(values.first(), values.first() + 1));
-        for (int i = 1; i < values.size(); ++i) {
+        for (dsize i = 1; i < values.size(); ++i) {
             Range<Type> &last = cont.last();
             if (values.at(i) == last.end) {
                 last.end = values.at(i) + 1;

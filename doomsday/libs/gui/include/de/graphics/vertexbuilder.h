@@ -43,7 +43,7 @@ struct VertexBuilder
             return !Base::isEmpty();
         }
         void transform(Mat4f const &matrix) {
-            for (int i = 0; i < Base::size(); ++i) {
+            for (dsize i = 0; i < Base::size(); ++i) {
                 (*this)[i].pos = matrix * (*this)[i].pos;
             }
         }
