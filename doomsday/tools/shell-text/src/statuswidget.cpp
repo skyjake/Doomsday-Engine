@@ -51,7 +51,7 @@ DE_PIMPL(StatusWidget)
 StatusWidget::StatusWidget(String const &name)
     : Widget(name), d(new Impl(this))
 {
-    d->updateTimer.audienceForTrigger() += [this]() { d->refresh(); };
+    d->updateTimer += [this]() { d->refresh(); };
 }
 
 void StatusWidget::setShellLink(Link *link)

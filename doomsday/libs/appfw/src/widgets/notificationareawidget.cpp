@@ -43,7 +43,7 @@ DE_GUI_PIMPL(NotificationAreaWidget)
     {
         dismissTimer.setSingleShot(true);
         dismissTimer.setInterval(ANIM_SPAN);
-        dismissTimer.audienceForTrigger() += [this](){ self().dismiss(); };
+        dismissTimer += [this](){ self().dismiss(); };
 
         shift = new AnimationRule(0);
     }

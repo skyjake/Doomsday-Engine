@@ -29,8 +29,6 @@
 
 namespace de {
 
-using namespace shell;
-
 static constexpr Char NEWLINE('\n');
 
 DE_PIMPL_NOREF(FontLineWrapping)
@@ -40,10 +38,10 @@ DE_PIMPL_NOREF(FontLineWrapping)
      */
     struct Line
     {
-        WrappedLine line;
+        shell::WrappedLine line;
         LineInfo    info;
 
-        Line(WrappedLine const &ln = WrappedLine(CString(), 0), int leftIndent = 0)
+        Line(shell::WrappedLine const &ln = {CString(), 0}, int leftIndent = 0)
             : line(ln)
         {
             info.indent = leftIndent;
@@ -163,7 +161,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
             width = rangeVisibleWidth(range);
         }
 
-        Line *line = new Line(WrappedLine(range, width), indent);
+        Line *line = new Line(shell::WrappedLine(range, width), indent);
 
         // Determine segments in the line.
         const char *pos = range.begin();
@@ -650,7 +648,7 @@ String const &FontLineWrapping::text() const
     return d->text;
 }
 
-WrappedLine FontLineWrapping::line(int index) const
+shell::WrappedLine FontLineWrapping::line(int index) const
 {
     DE_GUARD(this);
 
@@ -658,7 +656,7 @@ WrappedLine FontLineWrapping::line(int index) const
     return d->lines[index]->line;
 }
 
-WrapWidth FontLineWrapping::width() const
+shell::WrapWidth FontLineWrapping::width() const
 {
     DE_GUARD(this);
 
@@ -677,7 +675,7 @@ int FontLineWrapping::height() const
     return d->lines.sizei();
 }
 
-WrapWidth FontLineWrapping::rangeWidth(const CString &range) const
+shell::WrapWidth FontLineWrapping::rangeWidth(const CString &range) const
 {
     DE_GUARD(this);
     return d->rangeAdvanceWidth(range);
@@ -741,7 +739,7 @@ Vec2i FontLineWrapping::charTopLeftInPixels(int line, BytePos charIndex)
 
     if (line >= height()) return Vec2i();
 
-    WrappedLine const span = d->lines[line]->line;
+    const auto span = d->lines[line]->line;
     //    Rangei const range(span.range.start,
     //                       de::min(span.range.end, span.range.start + charIndex));
     const CString range(span.range.begin(), span.range.ptr(charIndex));

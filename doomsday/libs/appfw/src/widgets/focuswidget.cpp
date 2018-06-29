@@ -66,7 +66,7 @@ FocusWidget::FocusWidget(String const &name)
     , d(new Impl(this))
 {
     hide();
-    d->flashing.audienceForTrigger() += [this]() { updateFlash(); };
+    d->flashing += [this]() { updateFlash(); };
 }
 
 void FocusWidget::startFlashing(GuiWidget const *reference)

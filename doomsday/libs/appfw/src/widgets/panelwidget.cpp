@@ -59,7 +59,7 @@ DE_GUI_PIMPL(PanelWidget)
         openingRule->setBehavior(AnimationRule::RestartWhenTargetChanges);
 
         dismissTimer.setSingleShot(true);
-        dismissTimer.audienceForTrigger() += [this](){ self().dismiss(); };
+        dismissTimer += [this](){ self().dismiss(); };
     }
 
     ~Impl()

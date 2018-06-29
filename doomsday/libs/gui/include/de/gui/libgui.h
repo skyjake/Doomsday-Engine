@@ -43,7 +43,6 @@
 #    define LIBGUI_PUBLIC __declspec(dllimport)
 #  endif
 #else
-// No need to use any special declarators.
 #  define LIBGUI_PUBLIC DE_PUBLIC
 #endif
 

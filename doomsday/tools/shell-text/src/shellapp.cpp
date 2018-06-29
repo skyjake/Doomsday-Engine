@@ -244,7 +244,7 @@ void ShellApp::askToStartLocalServer()
     LocalServerDialog dlg;
     if (dlg.exec(rootWidget()))
     {
-        StringList opts = dlg.text().split(RegExp("\\s+"));
+        StringList opts = dlg.text().split(RegExp::WHITESPACE);
 
         LocalServer sv;
         sv.start(dlg.port(), dlg.gameMode(), opts);
