@@ -40,6 +40,17 @@ dsize BitArray::size() const
     return _bits.size();
 }
 
+dsize BitArray::count(bool bit) const
+{
+    const char bval = bit ? 1 : 0;
+    dsize num = 0;
+    for (auto &i : _bits)
+    {
+        if (i == bval) ++num;
+    }
+    return num;
+}
+
 void BitArray::resize(dsize count)
 {
     return _bits.resize(count);

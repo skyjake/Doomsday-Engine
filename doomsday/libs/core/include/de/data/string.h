@@ -26,6 +26,13 @@
 #include <c_plus/string.h>
 #include <ostream>
 
+/**
+ * Defines a static String for use as a global.
+ *
+ * Non-POD globals (such as a de::String) may not be initialized in the expected order (or at all)
+ * in libraries, so this should be used instead. Note that it defines a static function instead of
+ * a plain static variable.
+ */
 #define DE_STATIC_STRING(Name, ...) \
     static const de::String &Name() { static const de::String s{__VA_ARGS__}; return s; }
 
@@ -54,7 +61,7 @@ struct DE_PUBLIC BytePos
 {
     dsize index;
 
-    static constexpr dsize npos = dsize(-1);
+    static constexpr dsize npos = std::numeric_limits<dsize>::max();
 
     explicit BytePos(dsize i = npos)
         : index(i)
@@ -338,6 +345,8 @@ public:
 
     inline char operator[](BytePos pos) const { return c_str()[pos.index]; }
     char at(BytePos pos) const { DE_ASSERT(pos < sizeu()); return c_str()[pos.index]; }
+
+    Char at(CharPos pos) const; // Slow! Don't use this.
 
     inline String mid(CharPos pos, dsize charCount = npos) const { return substr(pos, charCount); }
     String        substr(CharPos pos, dsize charCount = npos) const;

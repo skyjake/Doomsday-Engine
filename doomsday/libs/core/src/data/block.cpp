@@ -301,6 +301,11 @@ String Block::asHexadecimalText() const
     return hex;
 }
 
+void Block::fill(Byte b)
+{
+    fill_Block(&_block, b);
+}
+
 Block Block::mapAsIndices(int                        valuesPerIndex,
                           const IByteArray &         values,
                           const std::array<Byte, 4> &defaultValues) const

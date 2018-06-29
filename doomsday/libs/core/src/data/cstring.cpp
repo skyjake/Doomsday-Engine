@@ -21,7 +21,7 @@
 
 namespace de {
 
-dsize CString::npos = dsize(-1);
+dsize CString::npos = std::numeric_limits<dsize>::max();
 
 dsize CString::length() const
 {

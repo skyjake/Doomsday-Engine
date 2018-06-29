@@ -130,6 +130,8 @@ public:
     Block  md5Hash() const;
     String asHexadecimalText() const;
 
+    void fill(Byte b);
+
     /**
      * Uses each byte in the block as an index to @a values and composes a new
      * block by copying sets of values by indices.

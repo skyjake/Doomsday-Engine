@@ -37,6 +37,7 @@ public:
     bool        testBit(dsize pos) const;
     inline bool at(dsize pos) const { return testBit(pos); }
     dsize       size() const;
+    dsize       count(bool bit) const;
 
     void resize(dsize count);
     void fill(bool bit);

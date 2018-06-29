@@ -20,6 +20,7 @@
 #define LIBCORE_LIST_H
 
 #include <vector>
+#include "../libcore.h"
 
 namespace de {
 
@@ -114,11 +115,20 @@ public:
         for (const T &v : other) *this << v;
         return *this;
     }
+    inline List &operator+=(const List &other)
+    {
+        return *this << other;
+    }
     inline List operator+(const List &other) const
     {
         List cat(*this);
         for (const T &v : other) cat << v;
         return cat;
+    }
+    List mid(size_t pos, size_t count = std::numeric_limits<size_t>::max()) const
+    {
+        auto e = count > size() - pos ? end() : (begin() + pos + count);
+        return compose<List<T>>(begin() + pos, e);
     }
 
     void sort() { std::sort(begin(), end()); }

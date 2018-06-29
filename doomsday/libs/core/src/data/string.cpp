@@ -214,6 +214,16 @@ bool String::beginsWith(Char ch, Sensitivity cs) const
     return beginsWith(mb.bytes, cs);
 }
 
+Char String::at(CharPos pos) const
+{
+    dsize index = 0;
+    for (Char ch : *this)
+    {
+        if (pos == index) return ch;
+    }
+    return 0;
+}
+
 String String::substr(CharPos pos, dsize count) const
 {
     return String::take(mid_String(&_str, pos.index, count));
