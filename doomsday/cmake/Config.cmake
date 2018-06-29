@@ -32,7 +32,7 @@ endif ()
 
 find_package (CPlus REQUIRED)
 
-include (QtConfig)
+#include (QtConfig)
 
 # Platform-Specific Configuration --------------------------------------------
 
