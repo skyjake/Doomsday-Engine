@@ -47,7 +47,7 @@
 #  endif
 #else
 // No need to use any special declarators.
-#  define LIBSHELL_PUBLIC
+#  define LIBSHELL_PUBLIC   DE_PUBLIC
 #endif
 
 namespace de {

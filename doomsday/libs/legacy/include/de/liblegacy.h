@@ -55,6 +55,7 @@
 #include <assert.h>
 #include <stddef.h>
 
+#if !defined (DE_PUBLIC)
 /*
  * The DE_PUBLIC macro is used for declaring exported symbols. It must be
  * applied in all exported classes and functions. DEF files are not used for
@@ -63,15 +64,20 @@
 #if defined(_WIN32) && defined(_MSC_VER)
 #  ifdef __DE__
 // This is defined when compiling the library.
-#    define DE_PUBLIC __declspec(dllexport)
+#    define DE_PUBLIC   __declspec(dllexport)
 #  else
-#    define DE_PUBLIC __declspec(dllimport)
+#    define DE_PUBLIC   __declspec(dllimport)
 #  endif
-#  define DE_NORETURN __declspec(noreturn)
+#  define DE_NORETURN   __declspec(noreturn)
+#elif defined (MACOSX)
+#  define DE_PUBLIC     __attribute__((visibility("default")))
+#  define DE_NORETURN   __attribute__((__noreturn__))
 #else
 #  define DE_PUBLIC
-#  define DE_NORETURN __attribute__((__noreturn__))
+#  define DE_NORETURN   __attribute__((__noreturn__))
 #endif
+
+#endif // !defined (DE_PUBLIC)
 
 #if defined (DE_IOS)
 #  define DE_VISIBLE_SYMBOL __attribute__((visibility("default")))
