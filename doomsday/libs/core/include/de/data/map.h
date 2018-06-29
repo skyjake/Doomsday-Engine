@@ -39,6 +39,8 @@ public:
     using reverse_iterator       = typename Base::reverse_iterator;
     using const_reverse_iterator = typename Base::const_reverse_iterator;
 
+    inline bool isEmpty() const { return Base::empty(); }
+
     void insert(const Key &key, const Value &value) { Base::operator[](key) = value; }
     void remove(const Key &key) { Base::erase(key); }
     bool contains(const Key &key) const { return Base::find(key) != Base::end(); }

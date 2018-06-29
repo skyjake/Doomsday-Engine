@@ -279,6 +279,11 @@ public:
     static NativePath currentWorkPath();
 
     /**
+     * Returns a directory where temporary files can be written.
+     */
+    static NativePath tempPath();
+
+    /**
      * Changes the application's current native working directory.
      *
      * @param cwd  New working directory for the application.

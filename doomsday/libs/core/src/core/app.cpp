@@ -673,6 +673,15 @@ NativePath App::currentWorkPath()
     return NativePath::workPath();
 }
 
+NativePath App::tempPath()
+{
+#if defined (WIN32)
+    DE_ASSERT_FAIL("tempPath not implemented");
+#else
+    return String::format("/tmp/doomsday-%i", pid_Process(nullptr));
+#endif
+}
+
 bool App::setCurrentWorkPath(NativePath const &cwd)
 {
     return NativePath::setWorkPath(cwd);

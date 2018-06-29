@@ -100,7 +100,7 @@ DE_PIMPL(LogBuffer)
             if (!autoFlushTimer)
             {
                 autoFlushTimer.reset(new Timer);
-                autoFlushTimer->audienceForTrigger() += [this]() { self().flush(); };
+                *autoFlushTimer += [this]() { self().flush(); };
             }
             if (!autoFlushTimer->isActive())
             {

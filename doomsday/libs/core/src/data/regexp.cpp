@@ -54,6 +54,10 @@ CString RegExpMatch::capturedCStr(int index) const
     return range;
 }
 
+//------------------------------------------------------------------------------------------------
+
+const RegExp RegExp::WHITESPACE{"\\s+"};
+
 RegExp::RegExp(const String &expression, Sensitivity cs)
 {
     _d = new_RegExp(expression, cs == CaseSensitive? caseSensitive_RegExpOption
@@ -67,10 +71,16 @@ RegExp::~RegExp()
 
 bool RegExp::exactMatch(const String &subject) const
 {
-    iRegExpMatch match;
-    if (matchString_RegExp(_d, subject, &match))
+    RegExpMatch m;
+    return exactMatch(subject, m);
+}
+
+bool RegExp::exactMatch(const String &subject, RegExpMatch &match) const
+{
+    auto &m = match.match;
+    if (matchString_RegExp(_d, subject, &m))
     {
-        return match.range.start == 0 && match.range.end == subject.sizei();
+        return m.range.start == 0 && m.range.end == subject.sizei();
     }
     return false;
 }

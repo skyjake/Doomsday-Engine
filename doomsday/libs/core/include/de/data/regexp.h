@@ -51,6 +51,9 @@ public:
     bool match(const String &subject, RegExpMatch &match) const;
     bool hasMatch(const String &subject) const;
     bool exactMatch(const String &subject) const;
+    bool exactMatch(const String &subject, RegExpMatch &match) const;
+
+    static const RegExp WHITESPACE;
 
 private:
     iRegExp *_d;

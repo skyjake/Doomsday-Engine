@@ -42,6 +42,8 @@ public:
 
     Date(const Time &time);
 
+    bool isValid() const;
+
     static Date fromJulianDayNumber(int jdn);
 
     int year() const;

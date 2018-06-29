@@ -60,11 +60,12 @@ public:
 
     // Qt style methods:
 
-    int      sizei() const { return int(Base::size()); }
-    void     clear() { Base::clear(); }
-    bool     isEmpty() const { return Base::size() == 0; }
+    inline int      count() const { return sizei(); }
+    inline int      sizei() const { return int(Base::size()); }
+    void            clear() { Base::clear(); }
+    bool            isEmpty() const { return Base::size() == 0; }
     inline explicit operator bool() const { return !isEmpty(); }
-    int indexOf(const T &v) const
+    int             indexOf(const T &v) const
     {
         auto found = std::find(begin(), end(), v);
         if (found == end()) return -1;
@@ -94,10 +95,11 @@ public:
     void     removeLast()  { Base::erase(Base::begin() + size() - 1); }
     void     removeAt(size_t pos) { Base::erase(Base::begin() + pos); }
     void     removeAll(const T &v) { Base::erase(std::remove(begin(), end(), v), end()); }
-    void     removeOne(const T &v)
+    bool     removeOne(const T &v)
     {
         auto found = std::find(begin(), end(), v);
-        if (found != end()) Base::erase(found);
+        if (found != end()) { Base::erase(found); return true; }
+        return false;
     }
     List &   operator=(const List &other) { Base::operator=(other); return *this; }
     List &   operator=(List &&other) { Base::operator=(other); return *this; }
@@ -111,6 +113,12 @@ public:
     {
         for (const T &v : other) *this << v;
         return *this;
+    }
+    inline List operator+(const List &other) const
+    {
+        List cat(*this);
+        for (const T &v : other) cat << v;
+        return cat;
     }
 
     void sort() { std::sort(begin(), end()); }

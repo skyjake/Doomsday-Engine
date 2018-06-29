@@ -26,6 +26,9 @@
 #include <c_plus/string.h>
 #include <ostream>
 
+#define DE_STATIC_STRING(Name, ...) \
+    static const de::String &Name() { static const de::String s{__VA_ARGS__}; return s; }
+
 namespace de {
 
 template <typename> struct Range;
@@ -277,6 +280,11 @@ public:
     inline bool isEmpty() const { return empty(); }
     inline explicit operator bool() const { return !empty(); }
 
+    inline char *writablePointer(BytePos offset = BytePos(0))
+    {
+        return static_cast<char *>(data_Block(&_str.chars)) + offset.index; // detaches
+    }
+
     inline const char *c_str() const { return cstr_String(&_str); }
     inline const char *data() const { return c_str(); }
     inline operator iRangecc() const { return iRangecc{data(), data() + size()}; }
@@ -480,6 +488,7 @@ public:
     BytePos indexOf(Char ch) const { return BytePos{indexOf_String(&_str, ch)}; }
     BytePos indexOf(const char *cstr) const { return BytePos{indexOfCStr_String(&_str, cstr)}; }
     BytePos indexOf(const char *cstr, BytePos from) const { return BytePos{indexOfCStrFrom_String(&_str, cstr, from.index)}; }
+    BytePos indexOf(const char *cstr, Sensitivity s) const { return BytePos(indexOfCStrFromSc_String(&_str, cstr, 0, s)); }
     BytePos lastIndexOf(char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
     BytePos lastIndexOf(Char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
     BytePos lastIndexOf(const char *cstr) const { return BytePos{lastIndexOfCStr_String(&_str, cstr)}; }
@@ -800,6 +809,10 @@ public:
                               const const_iterator &end);
 
     static String join(const List<String> &stringList, const char *sep = "");
+
+    static bool contains(const List<String> &stringList,
+                         const char *        str,
+                         Sensitivity         s = CaseSensitive);
 
 private:
     iString _str;

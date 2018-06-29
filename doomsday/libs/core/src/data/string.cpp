@@ -554,9 +554,8 @@ String String::rightStrip() const
 
 String String::normalizeWhitespace() const
 {
-    static const RegExp reg("\\s+");
     String s = *this;
-    s.replace(reg, " ");
+    s.replace(RegExp::WHITESPACE, " ");
     return s.strip();
 }
 
@@ -865,6 +864,16 @@ void String::advanceFormat(const_iterator &i, const const_iterator &end)
         throw IllegalPatternError("String::advanceFormat",
                                   "Incomplete formatting instructions");
     }
+}
+
+bool String::contains(const StringList &stringList, const char *str, Sensitivity s)
+{
+    const CString j(str);
+    for (const auto &i : stringList)
+    {
+        if (!i.compare(j, s)) return true;
+    }
+    return false;
 }
 
 String String::join(const StringList &stringList, const char *sep)

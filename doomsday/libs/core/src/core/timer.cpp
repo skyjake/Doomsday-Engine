@@ -226,6 +226,12 @@ void Timer::trigger()
     }
 }
 
+Timer &Timer::operator+=(const std::function<void ()> &callback)
+{
+    audienceForTrigger() += callback;
+    return *this;
+}
+
 void Timer::stop()
 {
     using namespace internal;

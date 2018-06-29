@@ -62,6 +62,8 @@ public:
      */
     NativePath(String const &str);
 
+    NativePath(const Path &path);
+
     NativePath(char const *nullTerminatedCStr);
     NativePath(char const *cStr, dsize length);
 
@@ -108,6 +110,8 @@ public:
      * @return @c true if absolute, otherwise it's a relative path.
      */
     bool isAbsolute() const;
+
+    bool isRelative() const;
 
     bool isDirectory() const;
 

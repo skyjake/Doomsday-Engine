@@ -20,7 +20,8 @@
 
 namespace de {
 
-BitArray::BitArray()
+BitArray::BitArray(dsize initialSize)
+    : _bits(initialSize, 0)
 {}
 
 bool BitArray::isEmpty() const
@@ -50,6 +51,12 @@ void BitArray::fill(bool bit)
     {
         b = bit ? 1 : 0;
     }
+}
+
+void BitArray::setBit(dsize pos, bool bit)
+{
+    DE_ASSERT(pos < _bits.size());
+    _bits[pos] = bit ? 1 : 0;
 }
 
 BitArray &BitArray::operator=(const BitArray &other)

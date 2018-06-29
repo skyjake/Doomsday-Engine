@@ -43,7 +43,7 @@ DE_PIMPL(Loop)
 
         audienceForIteration.setAdditionAllowedDuringIteration(true);
 
-        timer.audienceForTrigger() += [this]() { self().nextLoopIteration(); };
+        timer += [this]() { self().nextLoopIteration(); };
     }
 
     ~Impl()

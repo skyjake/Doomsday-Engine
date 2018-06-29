@@ -50,6 +50,14 @@ public:
 
     void trigger();
 
+    /**
+     * Adds a new trigger callback. This is the same as adding the callback to the Trigger
+     * audience.
+     *
+     * @param callback  Function to call when the timer is triggered.
+     */
+    Timer &operator+=(const std::function<void ()> &callback);
+
     DE_DEFINE_AUDIENCE2(Trigger, void triggered(Timer &))
 
 private:

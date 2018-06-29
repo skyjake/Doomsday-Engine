@@ -31,7 +31,7 @@ namespace de {
 class DE_PUBLIC BitArray
 {
 public:
-    BitArray();
+    BitArray(dsize initialSize = 0);
 
     bool        isEmpty() const;
     bool        testBit(dsize pos) const;
@@ -40,6 +40,7 @@ public:
 
     void resize(dsize count);
     void fill(bool bit);
+    void setBit(dsize pos, bool bit);
 
     BitArray &operator=(const BitArray &);
 

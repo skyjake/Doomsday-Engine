@@ -79,6 +79,10 @@ NativePath::NativePath(NativePath &&moved)
 NativePath::NativePath(String const &str) : Path(toNative(str), DIR_SEPARATOR)
 {}
 
+NativePath::NativePath(const Path &path)
+    : Path(toNative(path.toString()), DIR_SEPARATOR)
+{}
+
 NativePath::NativePath(char const *nullTerminatedCStr)
     : Path(toNative(nullTerminatedCStr), DIR_SEPARATOR)
 {}
@@ -144,6 +148,11 @@ NativePath NativePath::fileNamePath() const
 bool NativePath::isAbsolute() const
 {
     return isAbsolute_Path(expand().toString());
+}
+
+bool NativePath::isRelative() const
+{
+    return !isAbsolute();
 }
 
 bool NativePath::isDirectory() const

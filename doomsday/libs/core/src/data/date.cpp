@@ -48,6 +48,11 @@ Date::Date() : d(new Impl)
 Date::Date(const Time &time) : d(new Impl(time))
 {}
 
+bool Date::isValid() const
+{
+    return d->time.isValid();
+}
+
 Date Date::fromJulianDayNumber(int julianDay) // static
 {
     // https://en.wikipedia.org/wiki/Julian_day#Converting_Gregorian_calendar_date_to_Julian_Day_Number

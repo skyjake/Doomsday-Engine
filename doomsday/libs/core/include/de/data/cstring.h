@@ -81,7 +81,11 @@ public:
     int compare(const CString &other, Sensitivity cs = CaseSensitive) const;
     int compare(const char *cStr, Sensitivity cs = CaseSensitive) const;
     inline bool operator==(const char *cStr) const { return compare(cStr) == 0; }
+    inline bool operator!=(const char *cStr) const { return compare(cStr) != 0; }
     inline bool operator==(const CString &other) const { return compare(other) == 0; }
+    inline bool operator==(const String &other) const { return compare(CString(other)) == 0; }
+    inline String operator/(const CString &other) const { return String(*this) / other; }
+    inline String operator/(const String &other) const { return String(*this) / other; }
     Char first() const { return *begin(); }
     String lower() const;
     String upper() const;
