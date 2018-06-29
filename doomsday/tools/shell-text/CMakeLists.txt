@@ -12,8 +12,6 @@ include (../../cmake/Config.cmake)
 set (CURSES_NEED_NCURSES TRUE)
 
 # Dependencies.
-find_package (DengCore)
-find_package (DengShell)
 find_package (Curses REQUIRED)
 mark_as_advanced (CURSES_FORM_LIBRARY)
 find_package (Amethyst QUIET)
@@ -34,11 +32,12 @@ if (AMETHYST_FOUND)
 endif ()
 
 add_executable (shell-text ${SOURCES})
+deng_target_defaults (shell-text)
 set_target_properties (shell-text PROPERTIES
     OUTPUT_NAME doomsday-shell-text
     FOLDER Tools
 )
-target_link_libraries (shell-text Deng::libcore Deng::libshell ${CURSES_LIBRARIES})
-deng_target_defaults (shell-text)
+deng_link_libraries (shell-text PRIVATE DengCore DengShell)
+target_link_libraries (shell-text PRIVATE ${CURSES_LIBRARIES})
 
 deng_install_tool (shell-text)
