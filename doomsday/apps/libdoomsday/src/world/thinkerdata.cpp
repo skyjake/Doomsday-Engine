@@ -47,7 +47,7 @@ DE_PIMPL(ThinkerData)
 
     ~Impl()
     {
-        thinkerLookup.remove(id, &self());
+        multiRemove(thinkerLookup, id, &self());
 
         DE_FOR_PUBLIC_AUDIENCE2(Deletion, i)
         {
@@ -84,7 +84,7 @@ Id const &ThinkerData::id() const
 
 void ThinkerData::setId(Id const &id)
 {
-    thinkerLookup.remove(d->id, this);
+    multiRemove(thinkerLookup, d->id, this);
     thinkerLookup.insert(std::make_pair(id, this));
 
     d->id = id;
@@ -139,7 +139,7 @@ void ThinkerData::operator >> (Writer &to) const
 
 void ThinkerData::operator << (Reader &from)
 {
-    thinkerLookup.remove(d->id, this);
+    multiRemove(thinkerLookup, d->id, this);
 
     world::InternalSerialId sid;
     from >> sid;

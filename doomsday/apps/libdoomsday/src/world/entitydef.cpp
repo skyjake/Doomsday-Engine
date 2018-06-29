@@ -164,33 +164,25 @@ void MapEntityDef_AddProperty(MapEntityDef* def, int propertyId, const char* pro
         break;
 
     default:
-        throw Error("MapEntityDef_AddProperty", QString("Unknown/not supported value type %1").arg(type));
+        throw Error("MapEntityDef_AddProperty", stringf("Unknown/not supported value type %i", type));
     }
 
     // Ensure both the identifer and the name for the new property are unique.
     if (MapEntityDef_Property(def, propertyId) >= 0)
-        throw Error("MapEntityDef_AddProperty", QString("propertyId %1 not unique for %2")
-                                                    .arg(propertyId).arg(Str_Text(P_NameForMapEntityDef(def))));
+        throw Error("MapEntityDef_AddProperty", stringf("propertyId %i not unique for %s",
+                                                    propertyId, Str_Text(P_NameForMapEntityDef(def))));
     if (MapEntityDef_PropertyByName(def, propertyName) >= 0)
-        throw Error("MapEntityDef_AddProperty", QString("propertyName \"%1\" not unique for %2")
-                                                    .arg(propertyName).arg(Str_Text(P_NameForMapEntityDef(def))));
+        throw Error("MapEntityDef_AddProperty", stringf("propertyName \"%s\" not unique for %s",
+                                                    propertyName, Str_Text(P_NameForMapEntityDef(def))));
 
     // Looks good! Add it to the list of properties.
     def->props = (MapEntityPropertyDef*) M_Realloc(def->props, ++def->numProps * sizeof(*def->props));
-    if (!def->props)
-        throw Error("MapEntityDef_AddProperty",
-                        QString("Failed on (re)allocation of %1 bytes for new MapEntityPropertyDef array")
-                            .arg((unsigned long) sizeof(*def->props)));
 
     MapEntityPropertyDef* prop = &def->props[def->numProps - 1];
     prop->id = propertyId;
 
     int len = (int)strlen(propertyName);
     prop->name = (char *) M_Malloc(sizeof(*prop->name) * (len + 1));
-    if (!prop->name)
-        throw Error("MapEntityDef_AddProperty",
-                        QString("Failed on allocation of %1 bytes for property name")
-                            .arg((unsigned long) (sizeof(*prop->name) * (len + 1))));
 
     strncpy(prop->name, propertyName, len);
     prop->name[len] = '\0';
@@ -251,13 +243,15 @@ DE_EXTERN_C dd_bool P_RegisterMapObj(int identifier, char const *name)
     return findMapEntityDef(identifier, name, true /*do create*/) != 0;
 }
 
-DE_EXTERN_C dd_bool P_RegisterMapObjProperty(int entityId, int propertyId,
-                                               char const *propertyName, valuetype_t type)
+DE_EXTERN_C dd_bool P_RegisterMapObjProperty(int         entityId,
+                                             int         propertyId,
+                                             char const *propertyName,
+                                             valuetype_t type)
 {
     try
     {
         MapEntityDef *def = findMapEntityDef(entityId, 0, false /*do not create*/);
-        if (!def) throw Error("P_RegisterMapObjProperty", QString("Unknown entityId %1").arg(entityId));
+        if (!def) throw Error("P_RegisterMapObjProperty", stringf("Unknown entityId %i", entityId));
 
         MapEntityDef_AddProperty(def, propertyId, propertyName, type);
         return true; // Success!
@@ -284,14 +278,14 @@ static MapEntityPropertyDef *entityPropertyDef(int entityId, int propertyId)
 {
     // Is this a known entity?
     MapEntityDef *entity = P_MapEntityDef(entityId);
-    if (!entity) throw Error("entityPropertyDef", QString("Unknown entity definition id %1").arg(entityId));
+    if (!entity) throw Error("entityPropertyDef", stringf("Unknown entity definition id %i", entityId));
 
     // Is this a known property?
     MapEntityPropertyDef *property;
     if (MapEntityDef_Property(entity, propertyId, &property) < 0)
-        throw Error("entityPropertyDef", QString("Entity definition %1 has no property with id %2")
-                                                 .arg(Str_Text(P_NameForMapEntityDef(entity)))
-                                                 .arg(propertyId));
+        throw Error("entityPropertyDef", stringf("Entity definition %s has no property with id %i",
+                                                 Str_Text(P_NameForMapEntityDef(entity)),
+                                                 propertyId));
 
     return property; // Found it.
 }
@@ -308,7 +302,7 @@ static void setValue(void *dst, valuetype_t dstType, PropertyValue const &pvalue
     case DDVT_SHORT:  *(  (short *) dst) = pvalue.asInt16();  break;
     case DDVT_ANGLE:  *((angle_t *) dst) = pvalue.asAngle();  break;
     default:
-        throw Error("setValue", QString("Unknown value type %d").arg(dstType));
+        throw Error("setValue", stringf("Unknown value type %d", dstType));
     }
 }
 

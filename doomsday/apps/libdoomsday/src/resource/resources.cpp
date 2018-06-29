@@ -43,15 +43,15 @@ static Resources *theResources = nullptr;
 
 static String resolveUriSymbol(String const &symbol)
 {
-    if (!symbol.compare("App.DataPath", Qt::CaseInsensitive))
+    if (!symbol.compare("App.DataPath", CaseInsensitive))
     {
         return "data";
     }
-    else if (!symbol.compare("App.DefsPath", Qt::CaseInsensitive))
+    else if (!symbol.compare("App.DefsPath", CaseInsensitive))
     {
         return "defs";
     }
-    else if (!symbol.compare("Game.IdentityKey", Qt::CaseInsensitive))
+    else if (!symbol.compare("Game.IdentityKey", CaseInsensitive))
     {
         if (DoomsdayApp::game().isNull())
         {
@@ -61,7 +61,7 @@ static String resolveUriSymbol(String const &symbol)
         }
         return DoomsdayApp::game().id();
     }
-    else if (!symbol.compare("GamePlugin.Name", Qt::CaseInsensitive))
+    else if (!symbol.compare("GamePlugin.Name", CaseInsensitive))
     {
         auto &gx = DoomsdayApp::plugins().gameExports();
         if (DoomsdayApp::game().isNull() || !gx.GetPointer)
@@ -84,7 +84,7 @@ DE_PIMPL(Resources)
 , DE_OBSERVES(PackageLoader, Load)
 , DE_OBSERVES(PackageLoader, Unload)
 {
-    typedef QList<ResourceClass *> ResourceClasses;
+    typedef List<ResourceClass *> ResourceClasses;
 
     ResourceClasses     resClasses;
     NullResourceClass   nullResourceClass;
@@ -133,7 +133,7 @@ DE_PIMPL(Resources)
 
     ~Impl()
     {
-        qDeleteAll(resClasses);
+        deleteAll(resClasses);
         textures.clear();
 
         theResources = nullptr;
@@ -234,11 +234,11 @@ Resources &Resources::get()
     return *theResources;
 }
 
-ResourceClass &Resources::resClass(String name)
+ResourceClass &Resources::resClass(const String& name)
 {
     if (!name.isEmpty())
     {
-        foreach (ResourceClass *resClass, d->resClasses)
+        for (ResourceClass *resClass : d->resClasses)
         {
             if (!resClass->name().compareWithoutCase(name))
                 return *resClass;
@@ -255,7 +255,7 @@ ResourceClass &Resources::resClass(resourceclassid_t id)
         return *d->resClasses.at(uint(id));
     }
     /// @throw UnknownResourceClass Attempted with an unknown id.
-    throw UnknownResourceClassError("ResourceResources::toClass", QString("Invalid id '%1'").arg(int(id)));
+    throw UnknownResourceClassError("ResourceResources::toClass", stringf("Invalid id '%i'", int(id)));
 }
 
 NativePath Resources::nativeSavePath() const
@@ -324,7 +324,7 @@ String Resources::tryFindMusicFile(Record const &definition)
     {
         // All external music files are specified relative to the base path.
         String fullPath = App_BasePath() / songUri.path();
-        if (F_Access(fullPath.toUtf8().constData()))
+        if (F_Access(fullPath))
         {
             return fullPath;
         }
@@ -349,7 +349,7 @@ String Resources::tryFindMusicFile(Record const &definition)
     return "";  // None found.
 }
 
-ResourceClass &App_ResourceClass(String className)
+ResourceClass &App_ResourceClass(const String& className)
 {
     return Resources::get().resClass(className);
 }
@@ -377,18 +377,17 @@ static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags compos
     //if (!printSchemeName && scheme)
     //    heading += " in scheme '" + scheme->name() + "'";
     if (!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+        heading += " like \"" _E(b) + like.toString() + _E(.) "\"";
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::MapManifest>);
-    dint const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    std::sort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::MapManifest>);
+//    dint const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     dint idx = 0;
     for (res::MapManifest *mapManifest : found)
     {
-        String info = String("%1: " _E(1) "%2" _E(.))
-                        .arg(idx, numFoundDigits)
-                        .arg(mapManifest->description(composeUriFlags));
+        String info = String::format(
+            "%3i: " _E(1) "%s" _E(.), idx, mapManifest->description(composeUriFlags).c_str());
 
         LOG_RES_MSG("  " _E(>)) << info;
         idx++;
@@ -428,19 +427,19 @@ static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
     if (!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
     if (!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+        heading += " like \"" _E(b) + like.toString() + _E(.) "\"";
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<world::MaterialManifest>);
-    int const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    std::sort(found.begin(), found.end(), comparePathTreeNodePathsAscending<world::MaterialManifest>);
+//    int const num/FoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
-    foreach (world::MaterialManifest *manifest, found)
+    for (world::MaterialManifest *manifest : found)
     {
-        String info = String("%1: %2%3" _E(.))
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasMaterial()? _E(1) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
+        String info = String::format("%#i: %s%s" _E(.),
+                        idx,
+                        manifest->hasMaterial()? _E(1) : _E(2),
+                        manifest->description(composeUriFlags).c_str());
 
         LOG_RES_MSG("  " _E(>)) << info;
         idx++;
@@ -465,9 +464,9 @@ static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
     }
     else  // Consider resources in any scheme.
     {
-        foreach (res::TextureScheme *scheme, res::Textures::get().allTextureSchemes())
+        for (const auto &s : res::Textures::get().allTextureSchemes())
         {
-            scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
+            s.second->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
         }
     }
     if (found.isEmpty()) return 0;
@@ -479,19 +478,19 @@ static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
     if (!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
     if (!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+        heading += " like \"" _E(b) + like.toString() + _E(.) "\"";
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index key.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::TextureManifest>);
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    std::sort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::TextureManifest>);
+//    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
-    foreach (res::TextureManifest *manifest, found)
+    for (res::TextureManifest *manifest : found)
     {
-        String info = String("%1: %2%3")
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasTexture()? _E(0) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
+        String info = String::format("%3i: %s%s",
+                        idx,
+                        manifest->hasTexture()? _E(0) : _E(2),
+                        manifest->description(composeUriFlags).c_str());
 
         LOG_RES_MSG("  " _E(>)) << info;
         idx++;
@@ -566,9 +565,9 @@ static void printTextureIndex(de::Uri const &search,
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach (res::TextureScheme *scheme, textures.allTextureSchemes())
+        for (const auto &s : textures.allTextureSchemes())
         {
-            int numPrinted = printTextureIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printTextureIndex2(s.second, search.path(), flags | de::Uri::OmitScheme);
             if (numPrinted)
             {
                 LOG_RES_MSG(_E(R));
@@ -674,13 +673,13 @@ D_CMD(PrintTextureStats)
     DE_UNUSED(src, argc, argv);
 
     LOG_MSG(_E(b) "Texture Statistics:");
-    foreach (res::TextureScheme *scheme, res::Textures::get().allTextureSchemes())
+    for (const auto &s : res::Textures::get().allTextureSchemes())
     {
-        res::TextureScheme::Index const &index = scheme->index();
+        res::TextureScheme::Index const &index = s.second->index();
 
         uint const count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
-            << scheme->name() << count << (count == 1? "texture" : "textures");
+            << s.second->name() << count << (count == 1? "texture" : "textures");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }

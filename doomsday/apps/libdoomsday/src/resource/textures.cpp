@@ -351,8 +351,7 @@ DE_PIMPL(Textures)
 
         // Process each definition file.
         int origIndexBase = 0;
-        //DE_FOR_EACH_CONST(QList<File1 *>, i, defFiles)
-        foreach (auto *file, defFiles)
+        for (auto *file : defFiles)
         {
             //File1 &file = **i;
 
@@ -383,8 +382,8 @@ DE_PIMPL(Textures)
 
             // Print a summary.
             LOG_RES_MSG("Loaded %s texture definitions from \"%s:%s\"")
-                << (newDefs.count() == archiveCount? String("all %1").arg(newDefs.count())
-                                                   : String("%1 of %1").arg(newDefs.count()).arg(archiveCount))
+                << (newDefs.count() == archiveCount? String::format("all %i", newDefs.count())
+                                                   : String::format("%i of %i", newDefs.count(), archiveCount))
                 << NativePath(file->container().composeUri().asText()).pretty()
                 << NativePath(file->composeUri().asText()).pretty();
         }
@@ -395,9 +394,9 @@ DE_PIMPL(Textures)
 
             // Map the definitions for O(log n) lookup performance,
             CompositeTextureMap mappedCustomDefs;
-            foreach (Composite *custom, customDefs)
+            for (Composite *custom : customDefs)
             {
-                mappedCustomDefs.insert(custom->percentEncodedNameRef(), custom);
+                mappedCustomDefs.insert(std::make_pair(custom->percentEncodedNameRef(), custom));
             }
 
             // Perform reclassification of replaced texture definitions.
@@ -406,12 +405,12 @@ DE_PIMPL(Textures)
                 Composite *orig = defs[i];
 
                 // Does a potential replacement exist for this original definition?
-                CompositeTextureMap::const_iterator found = mappedCustomDefs.constFind(orig->percentEncodedNameRef());
-                if (found == mappedCustomDefs.constEnd())
+                CompositeTextureMap::const_iterator found = mappedCustomDefs.find(orig->percentEncodedNameRef());
+                if (found == mappedCustomDefs.end())
                     continue;
 
                 // Definition 'custom' is destined to replace 'orig'.
-                Composite *custom = found.value();
+                Composite *custom = found->second;
                 bool haveReplacement = false;
 
                 if (custom->isFlagged(Composite::Custom))
@@ -460,9 +459,9 @@ DE_PIMPL(Textures)
         while (!allDefs.isEmpty())
         {
             Composite &def = *allDefs.takeFirst();
-            de::Uri uri(QStringLiteral("Textures"), Path(def.percentEncodedName()));
+            de::Uri uri(DE_STR("Textures"), Path(def.percentEncodedName()));
 
-            Texture::Flags flags;
+            Flags flags;
             if (def.isFlagged(Composite::Custom)) flags |= Texture::Custom;
 
             /*
@@ -559,10 +558,10 @@ DE_PIMPL(Textures)
                     !percentEncodedName.compareWithoutCase("F_END")    ||
                     !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
-                de::Uri uri(QStringLiteral("Flats"), Path(percentEncodedName));
+                de::Uri uri(DE_STR("Flats"), Path(percentEncodedName));
                 if (self().textureManifestPtr(uri)) continue;
 
-                Texture::Flags flags;
+                Flags flags;
                 if (file.container().hasCustom()) flags |= Texture::Custom;
 
                 /*
@@ -607,16 +606,16 @@ DE_PIMPL(Textures)
             File1 &file = index[i];
             String fileName = file.name().fileNameWithoutExtension();
 
-            if (fileName.beginsWith('S', String::CaseInsensitive) && fileName.length() >= 5)
+            if (fileName.beginsWith('S', CaseInsensitive) && fileName.length() >= 5)
             {
-                if (fileName.endsWith("_START", String::CaseInsensitive))
+                if (fileName.endsWith("_START", CaseInsensitive))
                 {
                     // We've arrived at *a* sprite block.
                     Stack_Push(stack, NULL);
                     continue;
                 }
 
-                if (Stack_Height(stack) > 0 && fileName.endsWith("_END", String::CaseInsensitive))
+                if (Stack_Height(stack) > 0 && fileName.endsWith("_END", CaseInsensitive))
                 {
                     // The sprite block ends.
                     Stack_Pop(stack);
@@ -626,7 +625,7 @@ DE_PIMPL(Textures)
 
             if (!Stack_Height(stack)) continue;
 
-            String decodedFileName = QString(QByteArray::fromPercentEncoding(fileName.toUtf8()));
+            String decodedFileName = String::fromPercentEncoding(fileName);
             if (!Sprites::isValidSpriteName(decodedFileName))
             {
                 LOG_RES_NOTE("Ignoring invalid sprite name '%s'") << decodedFileName;
@@ -635,7 +634,7 @@ DE_PIMPL(Textures)
 
             de::Uri const uri("Sprites", Path(fileName));
 
-            Texture::Flags flags = 0;
+            Flags flags = 0;
             // If this is from an add-on flag it as "custom".
             if (file.container().hasCustom())
             {
@@ -755,10 +754,10 @@ TextureScheme *Textures::textureSchemePtr(String const &name) const
 {
     if (!name.isEmpty())
     {
-        auto found = d->textureSchemes.constFind(name);
-        if (found != d->textureSchemes.constEnd())
+        auto found = d->textureSchemes.find(name);
+        if (found != d->textureSchemes.end())
         {
-            return *found;
+            return found->second;
         }
     }
     return nullptr;
@@ -815,12 +814,11 @@ TextureManifest *Textures::textureManifestPtr(de::Uri const &uri) const
     // Is this a URN? (of the form "urn:schemename:uniqueid")
     if (!uri.scheme().compareWithoutCase("urn"))
     {
-        String const &pathStr = uri.path().toStringRef();
-        dint uIdPos = pathStr.indexOf(':');
-        if (uIdPos > 0)
+        const String pathStr = uri.path().toString();
+        if (auto uIdPos = pathStr.indexOf(":"))
         {
             String schemeName = pathStr.left(uIdPos);
-            dint uniqueId     = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+            dint uniqueId     = pathStr.substr(uIdPos + 1 /*skip delimiter*/).toInt();
 
             if (auto *ts = textureSchemePtr(schemeName))
             {
@@ -861,7 +859,7 @@ Textures::AllTextures const &Textures::allTextures() const
 
 TextureManifest &Textures::declareSystemTexture(Path const &texturePath, de::Uri const &resourceUri)
 {
-    auto &scheme = textureScheme(QStringLiteral("System"));
+    auto &scheme = textureScheme(DE_STR("System"));
     dint const uniqueId = scheme.count() + 1;
     return scheme.declare(texturePath,
                           Texture::Custom,
@@ -875,7 +873,7 @@ Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, de::Uri
 {
     if (!resourceUri.isEmpty())
     {
-        if (resourceUri.path().toStringRef() == QStringLiteral("-"))
+        if (resourceUri.path() == DE_STR("-"))
         {
             return nullptr;
         }
@@ -914,7 +912,7 @@ Texture *Textures::defineTexture(String const &schemeName,
         return nullptr;
     }
 
-    de::Uri uri(scheme.name(), Path(String("%1").arg(uniqueId, 8, 10, QChar('0'))));
+    de::Uri uri(scheme.name(), Path(String::format("%08i", uniqueId)));
     try
     {
         TextureManifest &manifest = declareTexture(uri, Texture::Custom, dimensions,
@@ -961,7 +959,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
     if (encodedName.isEmpty())
         return 0;
 
-    de::Uri uri(QStringLiteral("Patches"), Path(encodedName));
+    de::Uri uri(DE_STR("Patches"), Path(encodedName));
 
     // Already defined as a patch?
     if (auto *mft = textureManifestPtr(uri))
@@ -982,7 +980,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
     lumpnum_t const lumpNum = fs1.nameIndex().findLast(lumpPath);
     File1 &file = fs1.lump(lumpNum);
 
-    Texture::Flags flags;
+    Flags flags;
     if (file.container().hasCustom()) flags |= Texture::Custom;
 
     Vec2ui dimensions;
@@ -1010,7 +1008,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
     }
     file.unlock();
 
-    dint uniqueId       = textureScheme(QStringLiteral("Patches")).count() + 1;  // 1-based index.
+    dint uniqueId       = textureScheme(DE_STR("Patches")).count() + 1;  // 1-based index.
     de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
     try

@@ -61,7 +61,7 @@ public:
      * @param symbolicName  Symbolic name of the new subspace scheme. Must
      *                      have at least @ref min_name_length characters.
      */
-    explicit TextureScheme(de::String symbolicName);
+    explicit TextureScheme(const de::String& symbolicName);
 
     ~TextureScheme();
 

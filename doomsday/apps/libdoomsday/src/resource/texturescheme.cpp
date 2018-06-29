@@ -57,7 +57,7 @@ DE_PIMPL(TextureScheme)
 
     bool inline uniqueIdInLutRange(int uniqueId) const
     {
-        return (uniqueId - uniqueIdBase >= 0 && (uniqueId - uniqueIdBase) < uniqueIdLut.size());
+        return (uniqueId - uniqueIdBase >= 0 && (uniqueId - uniqueIdBase) < uniqueIdLut.sizei());
     }
 
     void findUniqueIdRange(int *minId, int *maxId)
@@ -128,7 +128,7 @@ DE_PIMPL(TextureScheme)
         // Fill the LUT with initial values.
         uniqueIdLut.reserve(lutSize);
         int i = 0;
-        for (; i < uniqueIdLut.size(); ++i)
+        for (; i < uniqueIdLut.sizei(); ++i)
         {
             uniqueIdLut[i] = 0;
         }
@@ -164,7 +164,8 @@ DE_PIMPL(TextureScheme)
     }
 };
 
-TextureScheme::TextureScheme(String symbolicName) : d(new Impl(this, symbolicName))
+TextureScheme::TextureScheme(const String& symbolicName)
+    : d(new Impl(this, symbolicName))
 {}
 
 TextureScheme::~TextureScheme()

@@ -82,7 +82,7 @@ public:
     /**
      * Lookup a ResourceClass by symbolic @a name.
      */
-    ResourceClass &resClass(de::String name);
+    ResourceClass &resClass(const de::String& name);
 
     /**
      * Lookup a ResourceClass by @a id.
@@ -138,7 +138,7 @@ namespace res
     {
         auto const *path = reinterpret_cast<de::Path *>(context);
         /// @todo Use PathTree::Node::compare()
-        return manifest.path().toString().beginsWith(*path, de::CaseInsensitive);
+        return manifest.path().toString().beginsWith(path->toString(), de::CaseInsensitive);
     }
 }
 
@@ -148,7 +148,7 @@ namespace res
  *
  * @param className  Resource class name.
  */
-LIBDOOMSDAY_PUBLIC ResourceClass &App_ResourceClass(de::String className);
+LIBDOOMSDAY_PUBLIC ResourceClass &App_ResourceClass(const de::String& className);
 
 /// @overload
 LIBDOOMSDAY_PUBLIC ResourceClass &App_ResourceClass(resourceclassid_t classId);
