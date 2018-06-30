@@ -39,7 +39,7 @@ DE_PIMPL(TextApp)
         loop.setRate(35);
     }
 
-    ~Impl()
+    ~Impl() override
     {
         Garbage_Recycle();
     }
@@ -58,15 +58,17 @@ TextApp::TextApp(const StringList &args)
     , d(new Impl(this))
 {}
 
-/*void TextApp::setMetadata(String const &orgName, String const &orgDomain,
-                          String const &appName, String const &appVersion)
+void TextApp::setMetadata(const String &orgName,
+                          const String &orgDomain,
+                          const String &appName,
+                          const String &appVersion)
 {
-    // Application metadata.
-    setOrganizationName  (orgName);
-    setOrganizationDomain(orgDomain);
-    setApplicationName   (appName);
-    setApplicationVersion(appVersion);
-}*/
+    auto &amd = metadata(); // Application metadata.
+    amd.set(ORG_NAME,    orgName);
+    amd.set(ORG_DOMAIN,  orgDomain);
+    amd.set(APP_NAME,    appName);
+    amd.set(APP_VERSION, appVersion);
+}
 
 /*
 bool TextApp::notify(QObject *receiver, QEvent *event)

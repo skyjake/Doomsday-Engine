@@ -40,6 +40,12 @@ bool CString::contains(char ch) const
     return false;
 }
 
+bool CString::beginsWith(const CString &prefix, Sensitivity cs) const
+{
+    if (prefix.size() > size()) return false;
+    return CString(_range.start, _range.start + prefix.size()).compare(prefix, cs) == 0;
+}
+
 bool CString::endsWith(const CString &suffix, Sensitivity cs) const
 {
     if (suffix.size() > size()) return false;
@@ -64,6 +70,31 @@ CString CString::substr(size_t start, size_t count) const
     if (start > size()) return CString();
     if (start + count > size()) count = size() - start;
     return {_range.start + start, _range.start + start + count};
+}
+
+CString CString::leftStrip() const
+{
+    CString s(*this);
+    mb_iterator i = s.begin();
+    while (!s.isEmpty() && iswspace(*i))
+    {
+        s._range.start = ++i;
+    }
+    return s;
+}
+
+CString CString::rightStrip() const
+{
+    CString s(*this);
+    mb_iterator i = s.end();
+    while (!s.isEmpty())
+    {
+        if (iswspace(*--i))
+        {
+            s._range.end = i;
+        }
+    }
+    return s;
 }
 
 int CString::compare(const CString &other, Sensitivity cs) const

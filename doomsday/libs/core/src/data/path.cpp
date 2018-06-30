@@ -388,6 +388,11 @@ bool Path::operator == (Path const &other) const
     }
 }
 
+bool Path::operator==(const char *cstr) const
+{
+    return d->path == cstr;
+}
+
 bool Path::operator < (Path const &other) const
 {
     if (d->separator == other.d->separator)

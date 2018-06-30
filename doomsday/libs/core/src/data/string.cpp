@@ -372,6 +372,11 @@ String &String::prepend(Char ch)
     return *this;
 }
 
+String &String::prepend(const String &other)
+{
+    return *this = other + *this;
+}
+
 void String::insert(BytePos pos, const char *cStr)
 {
     insertData_Block(&_str.chars, pos.index, cStr, cStr ? strlen(cStr) : 0);

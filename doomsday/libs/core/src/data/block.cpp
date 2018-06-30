@@ -161,6 +161,17 @@ void Block::remove(size_t pos, size_t len)
     remove_Block(&_block, pos, len);
 }
 
+void Block::removeAll(Byte b)
+{
+    for (dsize i = 0; i < size(); ++i)
+    {
+        if (constBegin_Block(&_block)[i] == b)
+        {
+            remove(i--, 1);
+        }
+    }
+}
+
 bool Block::beginsWith(const char *cstr) const
 {
     const dsize len = strlen(cstr);

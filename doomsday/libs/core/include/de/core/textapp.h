@@ -42,6 +42,11 @@ class DE_PUBLIC TextApp : public App
 public:
     TextApp(const StringList &args);
 
+    void setMetadata(const String &orgName,
+                     const String &orgDomain,
+                     const String &appName,
+                     const String &appVersion);
+
     /**
      * Start the application event loop.
      *

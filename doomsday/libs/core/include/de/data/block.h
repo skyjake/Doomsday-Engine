@@ -102,6 +102,7 @@ public:
     Block &append(const char *str, int len);
     Block &prepend(const Block &);
     void   remove(size_t pos, size_t len = 1);
+    void   removeAll(Byte b);
 
     operator const iBlock *() const { return &_block; }
     inline explicit operator bool() const { return !isEmpty_Block(&_block); }

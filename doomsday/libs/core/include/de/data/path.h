@@ -219,6 +219,8 @@ public:
      */
     bool operator==(Path const &other) const;
 
+    bool operator==(const char *cstr) const;
+
     /**
      * Determines if this path is not equal to @a other. The test is case
      * and separator insensitive.

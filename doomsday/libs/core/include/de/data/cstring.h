@@ -71,10 +71,14 @@ public:
     const char *endPtr() const { return ptr(BytePos(size())); }
     dsize length() const;
     bool contains(char ch) const;
+    bool beginsWith(const CString &prefix, Sensitivity cs = CaseSensitive) const;
     bool endsWith(const CString &suffix, Sensitivity cs = CaseSensitive) const;
     dsize indexOf(char ch, size_t from = 0) const;
     dsize indexOf(const char *cStr, size_t from = 0) const;
     CString substr(size_t start, size_t count = npos) const;
+    CString leftStrip() const;
+    CString rightStrip() const;
+    inline CString strip() { return leftStrip().rightStrip(); }
     CString left(BytePos pos) const { return {_range.start, _range.start + pos}; }
     inline mb_iterator begin() const { return _range.start; }
     inline mb_iterator end() const { updateEnd(); return {_range.end, _range.start}; }

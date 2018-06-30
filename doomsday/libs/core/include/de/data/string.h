@@ -388,6 +388,7 @@ public:
     String &append(const String &s) { return *this += s; }
 
     String &prepend(Char ch);
+    String &prepend(const String &other);
 
     inline void push_front(Char ch) { prepend(ch); }
     inline void push_back(Char ch) { append(ch); }
