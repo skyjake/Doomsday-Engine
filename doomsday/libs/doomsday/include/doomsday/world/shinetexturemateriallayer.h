@@ -40,8 +40,8 @@ public:
     class LIBDOOMSDAY_PUBLIC AnimationStage : public TextureMaterialLayer::AnimationStage
     {
     public:
-        AnimationStage(de::Uri const &texture, int tics, float variance,
-                       de::Uri const &maskTexture         = de::Uri(),
+        AnimationStage(res::Uri const &texture, int tics, float variance,
+                       res::Uri const &maskTexture         = res::Uri(),
                        blendmode_t blendMode              = BM_ADD,
                        float opacity                      = 1,
                        de::Vec3f const &minColor       = de::Vec3f(0, 0, 0),

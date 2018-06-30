@@ -35,7 +35,7 @@ namespace acs {
 DE_PIMPL_NOREF(System)
 {
     std::unique_ptr<Module> currentModule;
-    QList<Script *> scripts;  ///< Scripts for the current module (if any).
+    List<Script *> scripts;  ///< Scripts for the current module (if any).
 
     /**
      * When a script must be started on a map that is not currently loaded -
@@ -44,12 +44,12 @@ DE_PIMPL_NOREF(System)
     class ScriptStartTask : public ISerializable
     {
     public:
-        de::Uri mapUri;           ///< Unique identifier of the target map.
+        res::Uri mapUri;           ///< Unique identifier of the target map.
         dint32 scriptNumber;      ///< Script number to execute on the target map.
         Script::Args scriptArgs;
 
         ScriptStartTask() : scriptNumber(-1) {}
-        ScriptStartTask(de::Uri const &mapUri, dint32 scriptNumber, Script::Args const &scriptArgs)
+        ScriptStartTask(res::Uri const &mapUri, dint32 scriptNumber, Script::Args const &scriptArgs)
             : mapUri      (mapUri)
             , scriptNumber(scriptNumber)
             , scriptArgs  (scriptArgs)
@@ -73,14 +73,14 @@ DE_PIMPL_NOREF(System)
         {
             String mapUriStr;
             from >> mapUriStr;
-            mapUri = de::makeUri(mapUriStr);
+            mapUri = res::makeUri(mapUriStr);
             if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
             from >> scriptNumber;
             for(dbyte &arg : scriptArgs) from >> arg;
         }
     };
-    QList<ScriptStartTask *> tasks;
+    List<ScriptStartTask *> tasks;
 
     ~Impl()
     {
@@ -96,7 +96,7 @@ DE_PIMPL_NOREF(System)
 
     void clearScripts()
     {
-        qDeleteAll(scripts); scripts.clear();
+        deleteAll(scripts); scripts.clear();
     }
 
     void makeScripts()
@@ -112,7 +112,7 @@ DE_PIMPL_NOREF(System)
 
     void clearTasks()
     {
-        qDeleteAll(tasks); tasks.clear();
+        deleteAll(tasks); tasks.clear();
     }
 };
 
@@ -130,7 +130,7 @@ void System::reset()
     worldVars.fill(0);
 }
 
-void System::loadModuleForMap(de::Uri const &mapUri)
+void System::loadModuleForMap(res::Uri const &mapUri)
 {
 #if __JHEXEN__
     if(IS_CLIENT) return;
@@ -145,7 +145,7 @@ void System::loadModuleForMap(de::Uri const &mapUri)
     lumpnum_t const moduleLumpNum = markerLumpNum + 11 /*ML_BEHAVIOR*/;
     if(!CentralLumpIndex().hasLump(moduleLumpNum)) return;
 
-    de::File1 &file = CentralLumpIndex()[moduleLumpNum];
+    res::File1 &file = CentralLumpIndex()[moduleLumpNum];
     if(!Module::recognize(file)) return;
 
     // Attempt to load the new module.
@@ -200,7 +200,7 @@ Script &System::script(dint scriptNumber) const
         }
     }
     /// @throw MissingScriptError  Invalid script number specified.
-    throw MissingScriptError("acs::System::script", "Unknown script #" + String::number(scriptNumber));
+    throw MissingScriptError("acs::System::script", "Unknown script #" + String::asText(scriptNumber));
 }
 
 LoopResult System::forAllScripts(std::function<LoopResult (Script &)> func) const
@@ -212,7 +212,7 @@ LoopResult System::forAllScripts(std::function<LoopResult (Script &)> func) cons
     return LoopContinue;
 }
 
-bool System::deferScriptStart(de::Uri const &mapUri, dint scriptNumber,
+bool System::deferScriptStart(res::Uri const &mapUri, dint scriptNumber,
     Script::Args const &scriptArgs)
 {
     DE_ASSERT(!IS_CLIENT);
@@ -293,7 +293,7 @@ void System::readMapState(MapStateReader *msr)
     for(auto &var : mapVars) var = Reader_ReadInt32(reader);
 }
 
-void System::runDeferredTasks(de::Uri const &mapUri)
+void System::runDeferredTasks(res::Uri const &mapUri)
 {
     LOG_AS("acs::System");
     for(dint i = 0; i < d->tasks.count(); ++i)

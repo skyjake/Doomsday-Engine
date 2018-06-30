@@ -26,6 +26,7 @@
 #include <de/Log>
 
 using namespace de;
+using namespace res;
 
 template <valuetype_t VALUE_TYPE, typename Type>
 void gmoSetThingProperty(int index, char const *propertyId, Type value)
@@ -62,7 +63,9 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
             try
             {
                 // Read the contents of the TEXTMAP lump.
-                auto *src = recognizer->lumps()[Id1MapRecognizer::UDMFTextmapData];
+                auto found = recognizer->lumps().find(Id1MapRecognizer::UDMFTextmapData);
+                DE_ASSERT(found != recognizer->lumps().end());
+                auto *src = found->second;
                 Block bytes(src->size());
                 src->read(bytes.data(), false);
 
@@ -78,17 +81,17 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     int vertexCount = 0;
                     int sectorCount = 0;
 
-                    QList<UDMFParser::Block> linedefs;
-                    QList<UDMFParser::Block> sidedefs;
+                    de::List<UDMFParser::Block> linedefs;
+                    de::List<UDMFParser::Block> sidedefs;
                 };
                 ImportState importState;
 
-                parser.setGlobalAssignmentHandler([&importState] (String const &ident, QVariant const &value)
+                parser.setGlobalAssignmentHandler([&importState] (String const &ident, Value const &value)
                 {
                     if (ident == UDMFLex::NAMESPACE)
                     {
-                        LOG_MAP_VERBOSE("UDMF namespace: %s") << value.toString();
-                        String const ns = value.toString().toLower();
+                        LOG_MAP_VERBOSE("UDMF namespace: %s") << value.asText();
+                        String const ns = value.asText().lower();
                         if (ns == "hexen")
                         {
                             importState.isHexen = true;
@@ -107,29 +110,29 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                         int const index = importState.thingCount++;
 
                         // Properties common to all games.
-                        gmoSetThingProperty<DDVT_DOUBLE>(index, "X", block["x"].toDouble());
-                        gmoSetThingProperty<DDVT_DOUBLE>(index, "Y", block["y"].toDouble());
-                        gmoSetThingProperty<DDVT_DOUBLE>(index, "Z", block["z"].toDouble());
-                        gmoSetThingProperty<DDVT_ANGLE>(index, "Angle", angle_t(double(block["angle"].toInt()) / 180.0 * ANGLE_180));
-                        gmoSetThingProperty<DDVT_INT>(index, "DoomEdNum", block["type"].toInt());
+                        gmoSetThingProperty<DDVT_DOUBLE>(index, "X", block["x"]->asNumber());
+                        gmoSetThingProperty<DDVT_DOUBLE>(index, "Y", block["y"]->asNumber());
+                        gmoSetThingProperty<DDVT_DOUBLE>(index, "Z", block["z"]->asNumber());
+                        gmoSetThingProperty<DDVT_ANGLE>(index, "Angle", angle_t(double(block["angle"]->asInt()) / 180.0 * ANGLE_180));
+                        gmoSetThingProperty<DDVT_INT>(index, "DoomEdNum", block["type"]->asInt());
 
                         // Map spot flags.
                         {
                             gfw_mapspot_flags_t gfwFlags = 0;
 
-                            if (block["ambush"].toBool())      gfwFlags |= GFW_MAPSPOT_DEAF;
-                            if (block["single"].toBool())      gfwFlags |= GFW_MAPSPOT_SINGLE;
-                            if (block["dm"].toBool())          gfwFlags |= GFW_MAPSPOT_DM;
-                            if (block["coop"].toBool())        gfwFlags |= GFW_MAPSPOT_COOP;
-                            if (block["friend"].toBool())      gfwFlags |= GFW_MAPSPOT_MBF_FRIEND;
-                            if (block["dormant"].toBool())     gfwFlags |= GFW_MAPSPOT_DORMANT;
-                            if (block["class1"].toBool())      gfwFlags |= GFW_MAPSPOT_CLASS1;
-                            if (block["class2"].toBool())      gfwFlags |= GFW_MAPSPOT_CLASS2;
-                            if (block["class3"].toBool())      gfwFlags |= GFW_MAPSPOT_CLASS3;
-                            if (block["standing"].toBool())    gfwFlags |= GFW_MAPSPOT_STANDING;
-                            if (block["strifeally"].toBool())  gfwFlags |= GFW_MAPSPOT_STRIFE_ALLY;
-                            if (block["translucent"].toBool()) gfwFlags |= GFW_MAPSPOT_TRANSLUCENT;
-                            if (block["invisible"].toBool())   gfwFlags |= GFW_MAPSPOT_INVISIBLE;
+                            if (block["ambush"]->isTrue())      gfwFlags |= GFW_MAPSPOT_DEAF;
+                            if (block["single"]->isTrue())      gfwFlags |= GFW_MAPSPOT_SINGLE;
+                            if (block["dm"]->isTrue())          gfwFlags |= GFW_MAPSPOT_DM;
+                            if (block["coop"]->isTrue())        gfwFlags |= GFW_MAPSPOT_COOP;
+                            if (block["friend"]->isTrue())      gfwFlags |= GFW_MAPSPOT_MBF_FRIEND;
+                            if (block["dormant"]->isTrue())     gfwFlags |= GFW_MAPSPOT_DORMANT;
+                            if (block["class1"]->isTrue())      gfwFlags |= GFW_MAPSPOT_CLASS1;
+                            if (block["class2"]->isTrue())      gfwFlags |= GFW_MAPSPOT_CLASS2;
+                            if (block["class3"]->isTrue())      gfwFlags |= GFW_MAPSPOT_CLASS3;
+                            if (block["standing"]->isTrue())    gfwFlags |= GFW_MAPSPOT_STANDING;
+                            if (block["strifeally"]->isTrue())  gfwFlags |= GFW_MAPSPOT_STRIFE_ALLY;
+                            if (block["translucent"]->isTrue()) gfwFlags |= GFW_MAPSPOT_TRANSLUCENT;
+                            if (block["invisible"]->isTrue())   gfwFlags |= GFW_MAPSPOT_INVISIBLE;
 
                             gmoSetThingProperty<DDVT_INT>(index, "Flags",
                                     gfw_MapSpot_TranslateFlagsToInternal(gfwFlags));
@@ -143,7 +146,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                             int skillModes = 0;
                             for (int skill = 0; skill < 5; ++skill)
                             {
-                                if (block[labels[skill]].toBool())
+                                if (block[labels[skill]]->isTrue())
                                     skillModes |= 1 << skill;
                             }
                             gmoSetThingProperty<DDVT_INT>(index, "SkillModes", skillModes);
@@ -151,23 +154,23 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
 
                         if (importState.isHexen || importState.isDoom64)
                         {
-                            gmoSetThingProperty<DDVT_INT>(index, "ID", block["id"].toInt());
+                            gmoSetThingProperty<DDVT_INT>(index, "ID", block["id"]->asInt());
                         }
                         if (importState.isHexen)
                         {
-                            gmoSetThingProperty<DDVT_INT>(index, "Special", block["special"].toInt());
-                            gmoSetThingProperty<DDVT_INT>(index, "Arg0", block["arg0"].toInt());
-                            gmoSetThingProperty<DDVT_INT>(index, "Arg1", block["arg1"].toInt());
-                            gmoSetThingProperty<DDVT_INT>(index, "Arg2", block["arg2"].toInt());
-                            gmoSetThingProperty<DDVT_INT>(index, "Arg3", block["arg3"].toInt());
-                            gmoSetThingProperty<DDVT_INT>(index, "Arg4", block["arg4"].toInt());
+                            gmoSetThingProperty<DDVT_INT>(index, "Special", block["special"]->asInt());
+                            gmoSetThingProperty<DDVT_INT>(index, "Arg0", block["arg0"]->asInt());
+                            gmoSetThingProperty<DDVT_INT>(index, "Arg1", block["arg1"]->asInt());
+                            gmoSetThingProperty<DDVT_INT>(index, "Arg2", block["arg2"]->asInt());
+                            gmoSetThingProperty<DDVT_INT>(index, "Arg3", block["arg3"]->asInt());
+                            gmoSetThingProperty<DDVT_INT>(index, "Arg4", block["arg4"]->asInt());
                         }
                     }
                     else if (type == UDMFLex::VERTEX)
                     {
                         int const index = importState.vertexCount++;
 
-                        MPE_VertexCreate(block["x"].toDouble(), block["y"].toDouble(), index);
+                        MPE_VertexCreate(block["x"]->asNumber(), block["y"]->asNumber(), index);
                     }
                     else if (type == UDMFLex::LINEDEF)
                     {
@@ -181,13 +184,13 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     {
                         int const index = importState.sectorCount++;
 
-                        int lightlevel = block.contains("lightlevel")? block["lightlevel"].toInt() : 160;
+                        int lightlevel = block.contains("lightlevel")? block["lightlevel"]->asInt() : 160;
 
                         MPE_SectorCreate(float(lightlevel)/255.f, 1.f, 1.f, 1.f, index);
 
                         MPE_PlaneCreate(index,
-                                        block["heightfloor"].toDouble(),
-                                        de::Str("Flats:" + block["texturefloor"].toString()),
+                                        block["heightfloor"]->asNumber(),
+                                        de::Str("Flats:" + block["texturefloor"]->asText()),
                                         0.f, 0.f,
                                         1.f, 1.f, 1.f,  // color
                                         1.f,            // opacity
@@ -195,16 +198,16 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                                         -1);            // index in archive
 
                         MPE_PlaneCreate(index,
-                                        block["heightceiling"].toDouble(),
-                                        de::Str("Flats:" + block["textureceiling"].toString()),
+                                        block["heightceiling"]->asNumber(),
+                                        de::Str("Flats:" + block["textureceiling"]->asText()),
                                         0.f, 0.f,
                                         1.f, 1.f, 1.f,  // color
                                         1.f,            // opacity
                                         0, 0, -1.f,     // normal
                                         -1);            // index in archive
 
-                        gmoSetSectorProperty<DDVT_INT>(index, "Type", block["special"].toInt());
-                        gmoSetSectorProperty<DDVT_INT>(index, "Tag",  block["id"].toInt());
+                        gmoSetSectorProperty<DDVT_INT>(index, "Type", block["special"]->asInt());
+                        gmoSetSectorProperty<DDVT_INT>(index, "Tag",  block["id"]->asInt());
                     }
                 });
 
@@ -215,24 +218,24 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                 {
                     UDMFParser::Block const &linedef = importState.linedefs.at(index);
 
-                    int sidefront = linedef["sidefront"].toInt();
-                    int sideback  = linedef.contains("sideback")? linedef["sideback"].toInt() : -1;
+                    int sidefront = linedef["sidefront"]->asInt();
+                    int sideback  = linedef.contains("sideback")? linedef["sideback"]->asInt() : -1;
 
                     UDMFParser::Block const &front = importState.sidedefs.at(sidefront);
                     UDMFParser::Block const *back  =
                             (sideback >= 0? &importState.sidedefs.at(sideback) : nullptr);
 
-                    int frontSectorIdx = front["sector"].toInt();
-                    int backSectorIdx  = back? (*back)["sector"].toInt() : -1;
+                    int frontSectorIdx = front["sector"]->asInt();
+                    int backSectorIdx  = back? (*back)["sector"]->asInt() : -1;
 
                     // Line flags.
                     int ddLineFlags = 0;
                     short sideFlags = 0;
                     {
-                        bool const blocking      = linedef["blocking"].toBool();
-                        bool const dontpegtop    = linedef["dontpegtop"].toBool();
-                        bool const dontpegbottom = linedef["dontpegbottom"].toBool();
-                        bool const twosided      = linedef["twosided"].toBool();
+                        bool const blocking      = linedef["blocking"]->isTrue();
+                        bool const dontpegtop    = linedef["dontpegtop"]->isTrue();
+                        bool const dontpegbottom = linedef["dontpegbottom"]->isTrue();
+                        bool const twosided      = linedef["twosided"]->isTrue();
 
                         if (blocking)      ddLineFlags |= DDLF_BLOCKING;
                         if (dontpegtop)    ddLineFlags |= DDLF_DONTPEGTOP;
@@ -244,48 +247,48 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                         }
                     }
 
-                    MPE_LineCreate(linedef["v1"].toInt(),
-                                   linedef["v2"].toInt(),
+                    MPE_LineCreate(linedef["v1"]->asInt(),
+                                   linedef["v2"]->asInt(),
                                    frontSectorIdx,
                                    backSectorIdx,
                                    ddLineFlags,
                                    index);
 
-                    auto texName = [] (QVariant tex) -> String {
-                        if (tex.toString().isEmpty()) return String();
-                        return "Textures:" + tex.toString();
+                    auto texName = [] (const Value &tex) -> String {
+                        if (tex.asText().isEmpty()) return String();
+                        return "Textures:" + tex.asText();
                     };
 
                     // Front side.
                     {
-                        int const offsetx = front["offsetx"].toInt();
-                        int const offsety = front["offsety"].toInt();
+                        int const offsetx = front["offsetx"]->asInt();
+                        int const offsety = front["offsety"]->asInt();
                         float opacity = 1.f;
 
                         MPE_LineAddSide(
                             index,
                             0 /* front */,
                             sideFlags,
-                            de::Str(texName(front["texturetop"]   )), offsetx, offsety, 1, 1, 1,
-                            de::Str(texName(front["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
-                            de::Str(texName(front["texturebottom"])), offsetx, offsety, 1, 1, 1,
+                            de::Str(texName(*front["texturetop"]   )), offsetx, offsety, 1, 1, 1,
+                            de::Str(texName(*front["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
+                            de::Str(texName(*front["texturebottom"])), offsetx, offsety, 1, 1, 1,
                             sidefront);
                     }
 
                     // Back side.
                     if (back)
                     {
-                        int const offsetx = (*back)["offsetx"].toInt();
-                        int const offsety = (*back)["offsety"].toInt();
+                        int const offsetx = (*back)["offsetx"]->asInt();
+                        int const offsety = (*back)["offsety"]->asInt();
                         float opacity = 1.f;
 
                         MPE_LineAddSide(
                             index,
                             1 /* front */,
                             sideFlags,
-                            de::Str(texName((*back)["texturetop"]   )), offsetx, offsety, 1, 1, 1,
-                            de::Str(texName((*back)["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
-                            de::Str(texName((*back)["texturebottom"])), offsetx, offsety, 1, 1, 1,
+                            de::Str(texName(*(*back)["texturetop"]   )), offsetx, offsety, 1, 1, 1,
+                            de::Str(texName(*(*back)["texturemiddle"])), offsetx, offsety, 1, 1, 1, opacity,
+                            de::Str(texName(*(*back)["texturebottom"])), offsetx, offsety, 1, 1, 1,
                             sideback);
                     }
 
@@ -298,21 +301,21 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                         gmoSetLineProperty<DDVT_SHORT>(index, "Flags", flags);
                     }
 
-                    gmoSetLineProperty<DDVT_INT>(index, "Type", linedef["special"].toInt());
+                    gmoSetLineProperty<DDVT_INT>(index, "Type", linedef["special"]->asInt());
 
                     if (!importState.isHexen)
                     {
                         gmoSetLineProperty<DDVT_INT>(index, "Tag",
                                                      linedef.contains("id")?
-                                                         linedef["id"].toInt() : -1);
+                                                         linedef["id"]->asInt() : -1);
                     }
                     if (importState.isHexen)
                     {
-                        gmoSetLineProperty<DDVT_INT>(index, "Arg0", linedef["arg0"].toInt());
-                        gmoSetLineProperty<DDVT_INT>(index, "Arg1", linedef["arg1"].toInt());
-                        gmoSetLineProperty<DDVT_INT>(index, "Arg2", linedef["arg2"].toInt());
-                        gmoSetLineProperty<DDVT_INT>(index, "Arg3", linedef["arg3"].toInt());
-                        gmoSetLineProperty<DDVT_INT>(index, "Arg4", linedef["arg4"].toInt());
+                        gmoSetLineProperty<DDVT_INT>(index, "Arg0", linedef["arg0"]->asInt());
+                        gmoSetLineProperty<DDVT_INT>(index, "Arg1", linedef["arg1"]->asInt());
+                        gmoSetLineProperty<DDVT_INT>(index, "Arg2", linedef["arg2"]->asInt());
+                        gmoSetLineProperty<DDVT_INT>(index, "Arg3", linedef["arg3"]->asInt());
+                        gmoSetLineProperty<DDVT_INT>(index, "Arg4", linedef["arg4"]->asInt());
                     }
                 }
                 LOG_MAP_WARNING("Loading UDMF maps is an experimental feature");

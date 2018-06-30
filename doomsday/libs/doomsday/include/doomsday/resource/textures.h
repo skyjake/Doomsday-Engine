@@ -71,7 +71,7 @@ public:
      *
      * @see hasTextureManifest(), TextureManifest::hasTexture()
      */
-    inline bool hasTexture(de::Uri const &path) const {
+    inline bool hasTexture(res::Uri const &path) const {
         if (auto const *mft = textureManifestPtr(path)) {
             return mft->hasTexture();
         }
@@ -86,7 +86,7 @@ public:
      *
      * @see textureManifest(), TextureManifest::texture()
      */
-    inline Texture &texture(de::Uri const &path) const {
+    inline Texture &texture(res::Uri const &path) const {
         return textureManifest(path).texture();
     }
 
@@ -94,14 +94,14 @@ public:
      * Returns a pointer to the identified Texture.
      * @param path  Texture path.
      */
-    inline Texture *texturePtr(de::Uri const &path) const {
+    inline Texture *texturePtr(res::Uri const &path) const {
         if (auto const *mft = textureManifestPtr(path)) {
             return mft->texturePtr();
         }
         return nullptr;
     }
 
-    /*inline Texture *texturePtr(de::Uri const &path) {
+    /*inline Texture *texturePtr(res::Uri const &path) {
         if (hasTextureManifest(path)) return textureManifest(path).texturePtr();
         return nullptr;
     }*/
@@ -115,14 +115,14 @@ public:
      *
      * @return  The found texture; otherwise @c nullptr.
      */
-    Texture *tryFindTextureByResourceUri(de::String const &schemeName, de::Uri const &resourceUri);
+    Texture *tryFindTextureByResourceUri(de::String const &schemeName, res::Uri const &resourceUri);
 
     /*
      * Determines if a texture manifest exists for a declared texture on @a path.
      *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
-    /*inline bool hasTextureManifest(de::Uri const &path) const {
+    /*inline bool hasTextureManifest(res::Uri const &path) const {
         return tryFindTextureManifest(path) != nullptr;
     }*/
 
@@ -132,9 +132,9 @@ public:
      * @param search  The search term.
      * @return Found unique identifier.
      */
-    TextureManifest &textureManifest(de::Uri const &search) const;
+    TextureManifest &textureManifest(res::Uri const &search) const;
 
-    TextureManifest *textureManifestPtr(de::Uri const &search) const;
+    TextureManifest *textureManifestPtr(res::Uri const &search) const;
 
     /**
      * Lookup a subspace scheme by symbolic name.
@@ -199,22 +199,22 @@ public:
      * @return  Manifest for this URI.
      */
     inline TextureManifest &declareTexture(
-            de::Uri const &uri,
+            res::Uri const &uri,
             de::Flags flags,
             de::Vec2ui const &dimensions,
             de::Vec2i const &origin,
             de::dint uniqueId,
-            de::Uri const *resourceUri = nullptr)
+            res::Uri const *resourceUri = nullptr)
     {
         return textureScheme(uri.scheme())
                    .declare(uri.path(), flags, dimensions, origin, uniqueId,
                             resourceUri);
     }
 
-    TextureManifest &declareSystemTexture(de::Path const &texturePath, de::Uri const &resourceUri);
+    TextureManifest &declareSystemTexture(de::Path const &texturePath, res::Uri const &resourceUri);
 
     Texture *defineTexture(de::String    const &schemeName,
-                           de::Uri       const &resourceUri,
+                           res::Uri       const &resourceUri,
                            de::Vec2ui const &dimensions = de::Vec2ui());
 
     /**

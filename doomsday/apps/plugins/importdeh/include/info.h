@@ -23,13 +23,13 @@
 #ifndef LIBDEHREAD_INFO_H
 #define LIBDEHREAD_INFO_H
 
-#include <QString>
+#include <de/String>
 #include "importdeh.h"
 
 struct FinaleBackgroundMapping
 {
-    const QString text;
-    const QString mnemonic;
+    const de::String text;
+    const de::String mnemonic;
 };
 
 /**
@@ -44,13 +44,13 @@ struct FinaleBackgroundMapping
  * @return Index of the found finale-background-mapping in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findFinaleBackgroundMappingForText(const QString& text, const FinaleBackgroundMapping** mapping);
+int findFinaleBackgroundMappingForText(const de::String& text, const FinaleBackgroundMapping** mapping);
 
 struct FlagMapping
 {
     ushort bit;
     int group;
-    const QString dehLabel;
+    const de::String dehLabel;
 };
 
 /**
@@ -64,13 +64,13 @@ struct FlagMapping
  * @return Index of the found flag-mapping in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findMobjTypeFlagMappingByDehLabel(const QString& dehLabel, const FlagMapping** mapping=NULL);
+int findMobjTypeFlagMappingByDehLabel(const de::String& dehLabel, const FlagMapping** mapping=NULL);
 
 struct SoundMapping
 {
-    const QString dehLabel;
+    const de::String dehLabel;
     int id;
-    const QString name;
+    const de::String name;
 };
 
 /**
@@ -84,13 +84,13 @@ struct SoundMapping
  * @return Index of the found sound-mapping in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findSoundMappingByDehLabel(const QString& dehLabel, const SoundMapping** mapping);
+int findSoundMappingByDehLabel(const de::String& dehLabel, const SoundMapping** mapping);
 
 struct StateMapping
 {
-    const QString dehLabel;
+    const de::String dehLabel;
     statename_t id;
-    const QString name;
+    const de::String name;
 };
 
 /**
@@ -104,7 +104,7 @@ struct StateMapping
  * @return Index of the found state-mapping in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findStateMappingByDehLabel(const QString& dehLabel, const StateMapping** mapping=NULL);
+int findStateMappingByDehLabel(const de::String& dehLabel, const StateMapping** mapping=NULL);
 
 /// @todo Should be defined by the engine.
 typedef enum {
@@ -118,17 +118,17 @@ typedef enum {
 
 struct WeaponStateMapping
 {
-    const QString dehLabel;
+    const de::String dehLabel;
     weaponstatename_t id;
-    const QString name;
+    const de::String name;
 };
 
-int findWeaponStateMappingByDehLabel(const QString& dehLabel, const WeaponStateMapping** mapping=NULL);
+int findWeaponStateMappingByDehLabel(const de::String& dehLabel, const WeaponStateMapping** mapping=NULL);
 
 struct TextMapping
 {
-    const QString name; ///< Unique name/identifier for the text.
-    const QString text; ///< Original text string associated with the name.
+    const de::String name; ///< Unique name/identifier for the text.
+    const de::String text; ///< Original text string associated with the name.
 };
 
 /**
@@ -142,12 +142,12 @@ struct TextMapping
  * @return Index of the found Text in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int textMappingForBlob(const QString& origText, const TextMapping** mapping=NULL);
+int textMappingForBlob(const de::String& origText, const TextMapping** mapping=NULL);
 
 struct ValueMapping
 {
-    const QString dehLabel;
-    const QString valuePath;
+    const de::String dehLabel;
+    const de::String valuePath;
 };
 
 /**
@@ -161,7 +161,7 @@ struct ValueMapping
  * @return Index of the found state-mapping in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findValueMappingForDehLabel(const QString& dehLabel, const ValueMapping** mapping=NULL);
+int findValueMappingForDehLabel(const de::String& dehLabel, const ValueMapping** mapping=NULL);
 
 /**
  * Lookup a record in the music lump name table.
@@ -170,7 +170,7 @@ int findValueMappingForDehLabel(const QString& dehLabel, const ValueMapping** ma
  * @return Index of the found music name in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findMusicLumpNameInMap(const QString& name);
+int findMusicLumpNameInMap(const de::String& name);
 
 /**
  * Lookup a record in the sound lump name table.
@@ -179,7 +179,7 @@ int findMusicLumpNameInMap(const QString& name);
  * @return Index of the found sound name in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findSoundLumpNameInMap(const QString& name);
+int findSoundLumpNameInMap(const de::String& name);
 
 /**
  * Lookup a record in the sprite name table.
@@ -188,7 +188,7 @@ int findSoundLumpNameInMap(const QString& name);
  * @return Index of the found sprite name in the mapping table (0-index).
  *         Returns a negative value if not found.
  */
-int findSpriteNameInMap(const QString& name);
+int findSpriteNameInMap(const de::String& name);
 
 /**
  * Given an @a offset to a state's mobj action code pointer in the original

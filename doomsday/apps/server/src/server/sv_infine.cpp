@@ -35,7 +35,7 @@ void Sv_Finale(finaleid_t id, dint flags, char const *script)
     if (script)
     {
         flags |= FINF_SCRIPT;
-        scriptLen = qstrlen(script);
+        scriptLen = strlen(script);
     }
 
     // First the flags.

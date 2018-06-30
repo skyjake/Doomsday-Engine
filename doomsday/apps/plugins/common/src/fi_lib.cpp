@@ -130,7 +130,7 @@ static dd_bool stackHasDefId(char const *defId)
     for(uint i = 0; i < finaleStackSize; ++i)
     {
         fi_state_t *s = &finaleStack[i];
-        if(!qstricmp(s->defId, defId))
+        if(!iCmpStrCase(s->defId, defId))
         {
             return true;
         }
@@ -471,9 +471,9 @@ static int playerClassForName(char const *name)
 {
     if(name && name[0])
     {
-        if(!qstricmp(name, "fighter")) return PCLASS_FIGHTER;
-        if(!qstricmp(name, "cleric"))  return PCLASS_CLERIC;
-        if(!qstricmp(name, "mage"))    return PCLASS_MAGE;
+        if(!iCmpStrCase(name, "fighter")) return PCLASS_FIGHTER;
+        if(!iCmpStrCase(name, "cleric"))  return PCLASS_CLERIC;
+        if(!iCmpStrCase(name, "mage"))    return PCLASS_MAGE;
     }
     return PCLASS_NONE;
 }
@@ -490,20 +490,20 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
         return false;
     }
 
-    if(!qstricmp(p->token, "secret"))
+    if(!iCmpStrCase(p->token, "secret"))
     {
         // Secret exit was used?
         p->returnVal = s->conditions.secret;
         return true;
     }
 
-    if(!qstricmp(p->token, "deathmatch"))
+    if(!iCmpStrCase(p->token, "deathmatch"))
     {
         p->returnVal = (gfw_Rule(deathmatch) != false);
         return true;
     }
 
-    if(!qstricmp(p->token, "leavehub"))
+    if(!iCmpStrCase(p->token, "leavehub"))
     {
         // Current hub has been completed?
         p->returnVal = s->conditions.leave_hub;
@@ -530,7 +530,7 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
 
     // Game modes.
     /// @todo The following conditions should be moved into the engine. -dj
-    if(!qstricmp(p->token, "shareware"))
+    if(!iCmpStrCase(p->token, "shareware"))
     {
 #if __JDOOM__
         p->returnVal = ((gameMode == doom_shareware) != false);
@@ -544,12 +544,12 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
         return true;
     }
 #if __JDOOM__
-    if(!qstricmp(p->token, "ultimate"))
+    if(!iCmpStrCase(p->token, "ultimate"))
     {
         p->returnVal = (gameMode == doom_ultimate);
         return true;
     }
-    if(!qstricmp(p->token, "commercial"))
+    if(!iCmpStrCase(p->token, "commercial"))
     {
         p->returnVal = (gameModeBits & GM_ANY_DOOM2) != 0;
         return true;
@@ -608,7 +608,7 @@ D_CMD(StartFinale)
     if(Record const *finale = Defs().finales.tryFind("id", scriptId))
     {
         G_SetGameAction(GA_NONE);
-        FI_StackExecute(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_OVERLAY);
+        FI_StackExecute(finale->gets("script"), FF_LOCAL, FIMODE_OVERLAY);
         return true;
     }
 

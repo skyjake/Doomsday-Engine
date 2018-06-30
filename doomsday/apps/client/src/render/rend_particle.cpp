@@ -100,7 +100,7 @@ static Path tryFindImage(String name)
     //
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri("Textures", name + "-ck"),
+        String foundPath = App_FileSystem().findPath(res::Uri("Textures", name + "-ck"),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the path is absolute.
         return App_BasePath() / foundPath;
@@ -113,7 +113,7 @@ static Path tryFindImage(String name)
     //
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri("Textures", name),
+        String foundPath = App_FileSystem().findPath(res::Uri("Textures", name),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the path is absolute.
         return App_BasePath() / foundPath;
@@ -152,7 +152,7 @@ static dbyte loadParticleTexture(duint particleTex)
             if (foundPath.isEmpty())
                 return 0;
 
-            if (!GL_LoadImage(image, foundPath.toUtf8().constData()))
+            if (!GL_LoadImage(image, foundPath))
             {
                 LOG_RES_WARNING("Failed to load \"%s\"") << NativePath(foundPath).pretty();
                 return 0;

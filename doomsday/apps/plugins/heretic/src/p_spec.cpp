@@ -880,10 +880,10 @@ void P_AmbientSound()
     if(--AmbSfxTics)
         return;
 
-    forever
+    for (;;)
     {
         afxcmd_t cmd = afxcmd_t(*AmbSfxPtr++);
-        switch(cmd)
+        switch (cmd)
         {
         case afxcmd_play:
             AmbSfxVolume = P_Random() >> 2;
@@ -922,7 +922,7 @@ void P_AmbientSound()
             return;
 
         default:
-            Con_Error("P_AmbientSound: Unknown afxcmd %d", cmd);
+            DE_ASSERT_FAIL("P_AmbientSound: Unknown afxcmd");
             break;
         }
     }

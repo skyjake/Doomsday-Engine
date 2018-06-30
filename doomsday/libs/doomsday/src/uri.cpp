@@ -34,7 +34,9 @@
 #include <de/Writer>
 #include <de/App>
 
-namespace de {
+namespace res {
+
+using namespace de;
 
 static Uri::ResolverFunc resolverFunc;
 
@@ -410,6 +412,11 @@ Uri &Uri::setPath(const String& newPath, Char sep)
     return setPath(Path(newPath.strip(), sep));
 }
 
+Uri &Uri::setPath(const CString &newPath, Char sep)
+{
+    return setPath(newPath.toString(), sep);
+}
+
 Uri &Uri::setPath(char const *newPathUtf8, char sep)
 {
     return setPath(Path(String(newPathUtf8).strip(), sep));
@@ -610,4 +617,4 @@ DE_RUN_UNITTEST(Uri)
 #  endif // DE_MOBILE
 #endif // _DEBUG
 
-} // namespace de
+} // namespace res

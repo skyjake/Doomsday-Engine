@@ -102,7 +102,7 @@ String ClientMaterial::Decoration::describe() const
 String ClientMaterial::Decoration::description() const
 {
     int const numStages = stageCount();
-    String str = _E(b) + describe() + _E(.) + " (" + String::number(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
+    String str = _E(b) + describe() + _E(.) + " (" + String::asText(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {
         str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
@@ -245,7 +245,7 @@ void ClientMaterial::clearAllAnimators()
     d->animators.clear();
 }
 
-ClientMaterial &ClientMaterial::find(de::Uri const &uri) // static
+ClientMaterial &ClientMaterial::find(res::Uri const &uri) // static
 {
     return world::Materials::get().material(uri).as<ClientMaterial>();
 }
@@ -254,7 +254,7 @@ String ClientMaterial::description() const
 {
     String str = world::Material::description();
 
-    str += _E(b) " x" + String::number(animatorCount()) + _E(.)
+    str += _E(b) " x" + String::asText(animatorCount()) + _E(.)
          + _E(l) " EnvClass: \"" _E(.) + (audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment())) + "\"";
 
     // Add the decoration config:

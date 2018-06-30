@@ -114,7 +114,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
         materialDict = new StringPool;
     }
 
-    de::Uri materialUri(materialUriStr, RC_NULL);
+    res::Uri materialUri(materialUriStr, RC_NULL);
 
     // Intern this reference.
     StringPool::Id internId = materialDict->intern(materialUri.compose());

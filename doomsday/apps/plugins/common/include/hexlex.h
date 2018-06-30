@@ -76,7 +76,7 @@ public:
 
     de::ddouble readNumber();
     Str const *readString();
-    de::Uri readUri(de::String const &defaultScheme = "");
+    res::Uri readUri(de::String const &defaultScheme = "");
 
     /**
      * Returns the line number at the current position in the script.

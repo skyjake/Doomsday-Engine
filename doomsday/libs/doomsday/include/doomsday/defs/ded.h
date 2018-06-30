@@ -158,9 +158,9 @@ public:
 
     int getEpisodeNum(de::String const &id) const;
 
-    int getMapInfoNum(de::Uri const &uri) const;
+    int getMapInfoNum(res::Uri const &uri) const;
 
-    int getMaterialNum(de::Uri const &uri) const;
+    int getMaterialNum(res::Uri const &uri) const;
 
     int getMobjNum(de::String const &id) const;
 
@@ -197,9 +197,9 @@ public:
 
     ded_value_t *getValueById(char const *id) const;
     ded_value_t *getValueById(de::String const &id) const;
-    ded_value_t *getValueByUri(de::Uri const &uri) const;
+    ded_value_t *getValueByUri(res::Uri const &uri) const;
 
-    ded_compositefont_t *findCompositeFontDef(de::Uri const &uri) const;
+    ded_compositefont_t *findCompositeFontDef(res::Uri const &uri) const;
     ded_compositefont_t *getCompositeFont(char const *uriCString) const;
 
     /**

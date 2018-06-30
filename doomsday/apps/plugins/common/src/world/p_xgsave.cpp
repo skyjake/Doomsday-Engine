@@ -232,7 +232,7 @@ int xgplanemover_s::read(MapStateReader *msr)
     else
     {
         // Flat number is an absolute lump index.
-        de::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt32(reader)].name().fileNameWithoutExtension());
+        res::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt32(reader)].name().fileNameWithoutExtension());
         setMaterial = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
     }
 

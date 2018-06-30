@@ -39,6 +39,7 @@
 #include <de/memory.h>
 
 using namespace de;
+using namespace res;
 
 static void updateProgress(int progress)
 {
@@ -61,15 +62,15 @@ int beginGameChangeBusyWorker(void *context)
     return 0;
 }
 
-static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset = 0)
+static File1 *tryLoadFile(res::Uri const &search, size_t baseOffset = 0)
 {
     auto &fs1 = App_FileSystem();
     try
     {
         FileHandle &hndl = fs1.openFile(search.path(), "rb", baseOffset, false /* no duplicates */);
 
-        de::Uri foundFileUri = hndl.file().composeUri();
-        LOG_VERBOSE("Loading \"%s\"...") << NativePath(foundFileUri.asText()).pretty().toUtf8().constData();
+        res::Uri foundFileUri = hndl.file().composeUri();
+        LOG_VERBOSE("Loading \"%s\"...") << NativePath(foundFileUri.asText()).pretty();
 
         fs1.index(hndl.file());
 
@@ -86,7 +87,7 @@ static File1 *tryLoadFile(de::Uri const &search, size_t baseOffset = 0)
     return nullptr;
 }
 
-namespace de {
+namespace res {
 
 // Helper function for accessing files via the legacy FS1.
 static void forNativeDataFiles(DataBundle const &bundle, std::function<void (String const &)> func)
@@ -142,7 +143,7 @@ bool File1::tryUnload(Uri const &search) // static
     try
     {
         File1 &file = App_FileSystem().find(search);
-        de::Uri foundFileUri = file.composeUri();
+        res::Uri foundFileUri = file.composeUri();
         NativePath nativePath(foundFileUri.asText());
 
         // Do not attempt to unload a resource required by the current game.
@@ -182,7 +183,7 @@ File1 *File1::tryLoad(DataBundle const &bundle)
     forNativeDataFiles(bundle, [&result, loadMode] (String const &path)
     {
         NativeFile const &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
-        if (File1 *file = tryLoad(loadMode, de::Uri::fromNativePath(dataFile.nativePath())))
+        if (File1 *file = tryLoad(loadMode, res::Uri::fromNativePath(dataFile.nativePath())))
         {
             result = file; // note: multiple files may actually be loaded
             LOG_RES_VERBOSE("%s: ok") << dataFile.nativePath();
@@ -203,18 +204,18 @@ bool File1::tryUnload(DataBundle const &bundle)
     forNativeDataFiles(bundle, [&unloaded] (String const &path)
     {
         NativeFile const &dataFile = App::rootFolder().locate<File const>(path).source()->as<NativeFile>();
-        unloaded = tryUnload(de::Uri::fromNativePath(dataFile.nativePath()));
+        unloaded = tryUnload(res::Uri::fromNativePath(dataFile.nativePath()));
     });
     return unloaded;
 }
 
-} // namespace de
+} // namespace res
 
 static void loadResource(ResourceManifest &manifest)
 {
     DE_ASSERT(manifest.resourceClass() == RC_PACKAGE);
 
-    de::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
+    res::Uri path(manifest.resolvedPath(false/*do not locate resource*/), RC_NULL);
     if (path.isEmpty()) return;
 
     if (File1 *file = tryLoadFile(path))
@@ -243,7 +244,7 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     char *token = strtok(buffer, ATWSEPS);
     while (token)
     {
-        tryLoadFile(de::makeUri(token));
+        tryLoadFile(res::makeUri(token));
         token = strtok(nullptr, ATWSEPS);
     }
     M_Free(buffer);
@@ -258,7 +259,7 @@ static dint addListFiles(const StringList &list, FileType const &ftype)
         {
             continue;
         }
-        if (tryLoadFile(de::makeUri(path)))
+        if (tryLoadFile(res::makeUri(path)))
         {
             numAdded += 1;
         }
@@ -285,10 +286,10 @@ int loadGameStartupResourcesBusyWorker(void *context)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        App_FileSystem().addPathMapping("auto/", de::makeUri("$(App.DataPath)/$(GamePlugin.Name)/auto/").resolved());
+        App_FileSystem().addPathMapping("auto/", res::makeUri("$(App.DataPath)/$(GamePlugin.Name)/auto/").resolved());
 
         // Definition class resources.
-        App_FileSystem().addPathMapping("auto/", de::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/").resolved());
+        App_FileSystem().addPathMapping("auto/", res::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/").resolved());
     }
 
     // Load data files.
@@ -350,7 +351,7 @@ static dint findAllGameDataPaths(FS1::PathList &found)
     for (String const &ext : extensions)
     {
         DE_ASSERT(!ext.isEmpty());
-        String const searchPath = de::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
+        String const searchPath = res::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
         App_FileSystem().findAllPaths(searchPath, 0, found);
     }
     return found.count() - numFoundSoFar;
@@ -372,7 +373,7 @@ static dint loadFilesFromDataGameAuto()
         // Ignore directories.
         if (i->attrib & A_SUBDIR) continue;
 
-        if (tryLoadFile(de::makeUri(i->path)))
+        if (tryLoadFile(res::makeUri(i->path)))
         {
             numLoaded += 1;
         }

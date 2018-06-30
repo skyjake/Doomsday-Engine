@@ -379,11 +379,11 @@ SaveSlots::Slot *SaveSlots::slotByUserInput(String const &str) const
     // Translate slot id mnemonics.
     if (!id.compareWithoutCase("last") || !id.compareWithoutCase("<last>"))
     {
-        id = String::number(Con_GetInteger("game-save-last-slot"));
+        id = String::asText(Con_GetInteger("game-save-last-slot"));
     }
     else if (!id.compareWithoutCase("quick") || !id.compareWithoutCase("<quick>"))
     {
-        id = String::number(Con_GetInteger("game-save-quick-slot"));
+        id = String::asText(Con_GetInteger("game-save-quick-slot"));
     }
 
     return d->slotById(id);

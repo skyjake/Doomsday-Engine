@@ -22,9 +22,8 @@
 #include "common.h"           // IS_CLIENT
 #include "acs/module.h"
 
-#include <QList>
-#include <QMap>
-#include <QVector>
+#include <de/List>
+#include <de/Map>
 #include <de/Log>
 #include "acs/interpreter.h"  // ACS_INTERPRETER_MAX_SCRIPT_ARGS
 #include "gamesession.h"
@@ -35,15 +34,15 @@ namespace acs {
 
 DE_PIMPL_NOREF(Module)
 {
-    Block pcode;
-    QVector<EntryPoint> entryPoints;
-    QMap<int, EntryPoint *> epByScriptNumberLut;
-    QList<String> constants;
+    Block                  pcode;
+    List<EntryPoint>       entryPoints;
+    Map<int, EntryPoint *> epByScriptNumberLut;
+    List<String>           constants;
 
     void buildEntryPointLut()
     {
         epByScriptNumberLut.clear();
-        for(auto &ep : entryPoints)
+        for (auto &ep : entryPoints)
         {
             epByScriptNumberLut.insert(ep.scriptNumber, &ep);
         }
@@ -53,14 +52,14 @@ DE_PIMPL_NOREF(Module)
 Module::Module() : d(new Impl)
 {}
 
-bool Module::recognize(File1 const &file)  // static
+bool Module::recognize(res::File1 const &file)  // static
 {
     if(file.size() <= 4) return false;
 
     // ACS bytecode begins with the magic identifier "ACS".
     Block magic(4);
-    const_cast<File1 &>(file).read(magic.data(), 0, 4);
-    if(!magic.startsWith("ACS")) return false;
+    const_cast<res::File1 &>(file).read(magic.data(), 0, 4);
+    if(!magic.beginsWith("ACS")) return false;
 
     // ZDoom uses the fourth byte for versioning of their extended formats.
     // Currently such formats are not supported.
@@ -111,7 +110,9 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
         from >> ep.scriptArgCount;
         if(ep.scriptArgCount > ACS_INTERPRETER_MAX_SCRIPT_ARGS)
         {
-            throw FormatError("acs::Module", "Too many script arguments (" + String::number(ep.scriptArgCount) + " > " + String::number(ACS_INTERPRETER_MAX_SCRIPT_ARGS) + ")");
+            throw FormatError("acs::Module",
+                              "Too many script arguments (" + String::asText(ep.scriptArgCount) +
+                                  " > " + String::asText(ACS_INTERPRETER_MAX_SCRIPT_ARGS) + ")");
         }
 
         module->d->entryPoints << ep;  // makes a copy.
@@ -124,8 +125,8 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
     // Read constant (string-)values.
     dint32 numConstants;
     from >> numConstants;
-    QVector<dint32> constantOffsets;
-    constantOffsets.reserve(numConstants);
+    List<dint32> constantOffsets;
+//    constantOffsets.reserve(numConstants);
     for(dint32 i = 0; i < numConstants; ++i)
     {
         dint32 offset;
@@ -143,7 +144,7 @@ Module *Module::newFromBytecode(Block const &bytecode)  // static
     return module.release();
 }
 
-Module *Module::newFromFile(File1 const &file)  // static
+Module *Module::newFromFile(res::File1 const &file)  // static
 {
     DE_ASSERT(!IS_CLIENT);
     LOG_AS("acs::Module");
@@ -153,7 +154,7 @@ Module *Module::newFromFile(File1 const &file)  // static
 
     // Buffer the whole file.
     Block buffer(file.size());
-    const_cast<File1 &>(file).read(buffer.data());
+    const_cast<res::File1 &>(file).read(buffer.data());
 
     return newFromBytecode(buffer);
 }
@@ -165,7 +166,7 @@ String Module::constant(int stringNumber) const
         return d->constants[stringNumber];
     }
     /// @throw MissingConstantError  Invalid constant (string-)value number specified.
-    throw MissingConstantError("acs::Module::constant", "Unknown constant #" + String::number(stringNumber));
+    throw MissingConstantError("acs::Module::constant", "Unknown constant #" + String::asText(stringNumber));
 }
 
 int Module::entryPointCount() const
@@ -182,10 +183,10 @@ Module::EntryPoint const &Module::entryPoint(int scriptNumber) const
 {
     if(hasEntryPoint(scriptNumber)) return *d->epByScriptNumberLut[scriptNumber];
     /// @throw MissingEntryPointError  Invalid script number specified.
-    throw MissingEntryPointError("acs::Module::entryPoint", "Unknown script #" + String::number(scriptNumber));
+    throw MissingEntryPointError("acs::Module::entryPoint", "Unknown script #" + String::asText(scriptNumber));
 }
 
-LoopResult Module::forAllEntryPoints(std::function<LoopResult (EntryPoint &)> func) const
+LoopResult Module::forAllEntryPoints(const std::function<LoopResult (EntryPoint &)>& func) const
 {
     for(EntryPoint &ep : d->entryPoints)
     {

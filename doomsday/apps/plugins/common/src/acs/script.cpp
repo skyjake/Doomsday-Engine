@@ -78,15 +78,15 @@ Script::Script(Module::EntryPoint const &ep) : d(new Impl)
 String Script::describe() const
 {
     Module::EntryPoint const &ep = entryPoint();
-    return "ACScript #" DE2_ESC(b) + String::number(ep.scriptNumber)
-         + DE2_ESC(l) " Args: " DE2_ESC(.) DE2_ESC(i) + String::number(ep.scriptArgCount)
+    return "ACScript #" DE2_ESC(b) + String::asText(ep.scriptNumber)
+         + DE2_ESC(l) " Args: " DE2_ESC(.) DE2_ESC(i) + String::asText(ep.scriptArgCount)
          + DE2_ESC(l) " Open: " DE2_ESC(.) DE2_ESC(i) + DE_BOOL_YESNO(ep.startWhenMapBegins);
 }
 
 String Script::description() const
 {
     return DE2_ESC(l) "State: " DE2_ESC(.) DE2_ESC(i) + stateAsText(d->state) + DE2_ESC(.)
-         + (isWaiting()? DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) + String::number(d->waitValue) : "");
+         + (isWaiting()? DE2_ESC(l) " Wait-for: " DE2_ESC(.) DE2_ESC(i) + String::asText(d->waitValue) : "");
 }
 
 bool Script::start(Args const &args, mobj_t *activator, Line *line, int side, int delayCount)

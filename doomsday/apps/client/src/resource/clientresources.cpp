@@ -210,7 +210,7 @@ DE_PIMPL(ClientResources)
         clearModels();
     }
 
-    inline de::FS1 &fileSys() { return App_FileSystem(); }
+    inline res::FS1 &fileSys() { return App_FileSystem(); }
 
     void clearFontManifests()
     {
@@ -563,7 +563,7 @@ DE_PIMPL(ClientResources)
                 defn::Sprite const spriteDef(sprite);
                 for (auto const &view : spriteDef.def().compiled().views)
                 {
-                    //de::Uri const &viewMaterial = ; // spriteDef.viewMaterial(iter->first.value->asInt());
+                    //res::Uri const &viewMaterial = ; // spriteDef.viewMaterial(iter->first.value->asInt());
                     if (world::Material *material = world::Materials::get().materialPtr(view.uri))
                     {
                         queueCacheTasksForMaterial(material->as<ClientMaterial>(),
@@ -640,7 +640,7 @@ DE_PIMPL(ClientResources)
         }
 
         // Get a new entry.
-        modefs.append(FrameModelDef(id.toUtf8().constData()));
+        modefs.append(FrameModelDef(id));
         return &modefs.last();
     }
 
@@ -688,7 +688,7 @@ DE_PIMPL(ClientResources)
             // The "first choice" directory is that in which the model file resides.
             try
             {
-                return fileSys().findPath(de::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
+                return fileSys().findPath(res::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
                                           RLF_DEFAULT, self().resClass(RC_GRAPHIC));
             }
             catch (FS1::NotFoundError const &)
@@ -696,7 +696,7 @@ DE_PIMPL(ClientResources)
         }
 
         /// @throws FS1::NotFoundError if no resource was found.
-        return fileSys().findPath(de::Uri("Models", skinPath), RLF_DEFAULT,
+        return fileSys().findPath(res::Uri("Models", skinPath), RLF_DEFAULT,
                                   self().resClass(RC_GRAPHIC));
     }
 
@@ -705,7 +705,7 @@ DE_PIMPL(ClientResources)
      */
     short defineSkinAndAddToModelIndex(FrameModel &mdl, Path const &skinPath)
     {
-        if (ClientTexture *tex = static_cast<ClientTexture *>(self().textures().defineTexture("ModelSkins", de::Uri(skinPath))))
+        if (ClientTexture *tex = static_cast<ClientTexture *>(self().textures().defineTexture("ModelSkins", res::Uri(skinPath))))
         {
             // A duplicate? (return existing skin number)
             for (dint i = 0; i < mdl.skinCount(); ++i)
@@ -732,7 +732,7 @@ DE_PIMPL(ClientResources)
             FrameModelSkin &skin = mdl.skin(i);
             try
             {
-                de::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
+                res::Uri foundResourceUri(Path(findSkinPath(skin.name, modelFilePath)));
 
                 skin.texture = self().textures().defineTexture("ModelSkins", foundResourceUri);
 
@@ -749,7 +749,7 @@ DE_PIMPL(ClientResources)
         if (!numFoundSkins)
         {
             // Lastly try a skin named similarly to the model in the same directory.
-            de::Uri searchPath(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
+            res::Uri searchPath(modelFilePath.fileNamePath() / modelFilePath.fileNameWithoutExtension(), RC_GRAPHIC);
             try
             {
                 String foundPath = fileSys().findPath(searchPath, RLF_DEFAULT,
@@ -912,7 +912,7 @@ DE_PIMPL(ClientResources)
 
             if (subdef.gets("filename").isEmpty()) continue;
 
-            de::Uri const searchPath(subdef.gets("filename"));
+            res::Uri const searchPath(subdef.gets("filename"));
             if (searchPath.isEmpty()) continue;
 
             try
@@ -1004,7 +1004,7 @@ DE_PIMPL(ClientResources)
                 if (!subdef.gets("skinFilename").isEmpty())
                 {
                     // A specific file name has been given for the skin.
-                    String const &skinFilePath  = de::Uri(subdef.gets("skinFilename")).path();
+                    String const &skinFilePath  = res::Uri(subdef.gets("skinFilename")).path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
@@ -1031,11 +1031,11 @@ DE_PIMPL(ClientResources)
 
                 if (!subdef.gets("shinySkin").isEmpty())
                 {
-                    String const &skinFilePath  = de::Uri(subdef.gets("shinySkin")).path();
+                    String const &skinFilePath  = res::Uri(subdef.gets("shinySkin")).path();
                     String const &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
-                        de::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
+                        res::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
 
                         sub->shinySkin = self().textures().defineTexture("ModelReflectionSkins", foundResourceUri);
                     }
@@ -1262,7 +1262,7 @@ void ClientResources::initSystemTextures()
 
     for (auto const &def : texDefs)
     {
-        textures().declareSystemTexture(def.path, de::Uri("Graphics", def.graphicName));
+        textures().declareSystemTexture(def.path, res::Uri("Graphics", def.graphicName));
     }
 
     // Define any as yet undefined system textures.
@@ -1469,7 +1469,7 @@ ClientResources::FontSchemes const &ClientResources::allFontSchemes() const
     return d->fontSchemes;
 }
 
-bool ClientResources::hasFont(de::Uri const &path) const
+bool ClientResources::hasFont(res::Uri const &path) const
 {
     try
     {
@@ -1481,7 +1481,7 @@ bool ClientResources::hasFont(de::Uri const &path) const
     return false;
 }
 
-FontManifest &ClientResources::fontManifest(de::Uri const &uri) const
+FontManifest &ClientResources::fontManifest(res::Uri const &uri) const
 {
     LOG_AS("ClientResources::findFont");
 
@@ -1564,7 +1564,7 @@ AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
     LOG_AS("ClientResources::newFontFromDef");
 
     if (!def.uri) return nullptr;
-    de::Uri const &uri = *def.uri;
+    res::Uri const &uri = *def.uri;
 
     try
     {
@@ -1614,11 +1614,11 @@ AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
     return nullptr;
 }
 
-AbstractFont *ClientResources::newFontFromFile(de::Uri const &uri, String filePath)
+AbstractFont *ClientResources::newFontFromFile(res::Uri const &uri, String filePath)
 {
     LOG_AS("ClientResources::newFontFromFile");
 
-    if (!d->fileSys().accessFile(de::Uri::fromNativePath(filePath)))
+    if (!d->fileSys().accessFile(res::Uri::fromNativePath(filePath)))
     {
         LOGDEV_RES_WARNING("Ignoring invalid filePath: ") << filePath;
         return nullptr;
@@ -1692,7 +1692,7 @@ FrameModel &ClientResources::model(modelid_t id)
 {
     if (FrameModel *model = d->modelForId(id)) return *model;
     /// @throw MissingResourceError An unknown/invalid id was specified.
-    throw MissingResourceError("ClientResources::model", "Invalid id " + String::number(id));
+    throw MissingResourceError("ClientResources::model", "Invalid id " + String::asText(id));
 }
 
 bool ClientResources::hasModelDef(String id) const
@@ -1714,7 +1714,7 @@ FrameModelDef &ClientResources::modelDef(dint index)
 {
     if (index >= 0 && index < modelDefCount()) return d->modefs[index];
     /// @throw MissingModelDefError An unknown model definition was referenced.
-    throw MissingModelDefError("ClientResources::modelDef", "Invalid index #" + String::number(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
+    throw MissingModelDefError("ClientResources::modelDef", "Invalid index #" + String::asText(index) + ", valid range " + Rangeui(0, modelDefCount()).asText());
 }
 
 FrameModelDef &ClientResources::modelDef(String id)
@@ -2047,7 +2047,7 @@ void ClientResources::cacheForCurrentMap()
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
 static int printFontIndex2(FontScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
+    res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     FontScheme::Index::FoundNodes found;
     if (scheme) // Only resources in this scheme.
@@ -2063,7 +2063,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     }
     if (found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+    bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known fonts";
@@ -2091,22 +2091,22 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     return found.count();
 }
 
-static void printFontIndex(de::Uri const &search,
-    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+static void printFontIndex(res::Uri const &search,
+    res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
     int printTotal = 0;
 
     // Collate and print results from all schemes?
     if (search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printFontIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        printTotal = printFontIndex2(0/*any scheme*/, search.path(), flags & ~res::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
     else if (App_Resources().knownFontScheme(search.scheme()))
     {
         printTotal = printFontIndex2(&App_Resources().fontScheme(search.scheme()),
-                                     search.path(), flags | de::Uri::OmitScheme);
+                                     search.path(), flags | res::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     else
@@ -2114,7 +2114,7 @@ static void printFontIndex(de::Uri const &search,
         // Collect and sort results in each scheme separately.
         foreach (FontScheme *scheme, App_Resources().allFontSchemes())
         {
-            int numPrinted = printFontIndex2(scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printFontIndex2(scheme, search.path(), flags | res::Uri::OmitScheme);
             if (numPrinted)
             {
                 LOG_MSG(_E(R));
@@ -2134,7 +2134,7 @@ D_CMD(ListFonts)
 {
     DE_UNUSED(src);
 
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownFontSchemeCallback);
+    res::Uri search = res::Uri::fromUserInput(&argv[1], argc - 1, &isKnownFontSchemeCallback);
     if (!search.scheme().isEmpty() &&
        !App_Resources().knownFontScheme(search.scheme()))
     {

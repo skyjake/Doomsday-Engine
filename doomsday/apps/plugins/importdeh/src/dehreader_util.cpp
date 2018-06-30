@@ -23,15 +23,15 @@
 
 using namespace de;
 
-de::Uri composeMapUri(int episode, int map)
+res::Uri composeMapUri(int episode, int map)
 {
     if(episode > 0) // ExMy format.
     {
-        return de::Uri("Maps", String("E%1M%2").arg(episode).arg(map));
+        return res::Uri("Maps", String::format("E%dM%d", episode, map));
     }
     else // MAPxx format.
     {
-        return de::Uri("Maps", String("MAP%1").arg(map % 100, 2, 10, QChar('0')));
+        return res::Uri("Maps", String::format("MAP%02d", map % 100));
     }
 }
 
@@ -39,11 +39,10 @@ int valueDefForPath(String const &id, ded_value_t **def)
 {
     if(!id.isEmpty())
     {
-        Block idUtf8 = id.toUtf8();
         for(int i = ded->values.size() - 1; i >= 0; i--)
         {
             ded_value_t &value = ded->values[i];
-            if(!qstricmp(value.id, idUtf8.constData()))
+            if(!iCmpStrCase(value.id, id))
             {
                 if(def) *def = &value;
                 return i;
@@ -53,41 +52,42 @@ int valueDefForPath(String const &id, ded_value_t **def)
     return -1; // Not found.
 }
 
-/// @todo Reimplement with a regex?
-QStringList splitMax(QString const &str, QChar sep, int max)
+StringList splitMax(String const &str, Char sep, int max)
 {
-    if(max < 0)
+    if (max < 0)
     {
         return str.split(sep);
     }
-    else if(max == 0)
+    else if (max == 0)
     {
-        return QStringList(); // An empty list.
+        return {};
     }
-    else if(max == 1)
+    else if (max == 1)
     {
-        return QStringList(str);
+        return {str};
     }
 
-    QString buf = str;
-    QStringList tokens;
+    String     buf = str;
+    StringList tokens;
 
-    int pos = 0, substrEnd = 0;
-    while(pos < max-1 && (substrEnd = buf.indexOf(sep)) >= 0)
+    BytePos pos{0}, substrEnd{0};
+    while (pos < max - 1 && bool(substrEnd = buf.indexOf(sep)))
     {
-        tokens << buf.mid(0, substrEnd);
+        tokens << buf.substr(BytePos(0), substrEnd);
 
         // Find the start of the next token.
-        while(substrEnd < buf.size() && buf.at(substrEnd) == sep)
-        { ++substrEnd; }
+        while (substrEnd < buf.size() && buf.at(substrEnd) == sep)
+        {
+            ++substrEnd;
+        }
 
-        buf.remove(0, substrEnd);
+        buf.remove(BytePos(0), substrEnd);
 
         pos++; // On to the next substring.
     }
 
     // Anything remaining goes into the last token (the rest of the line).
-    if(pos < max)
+    if (pos < max)
     {
         tokens << buf;
     }

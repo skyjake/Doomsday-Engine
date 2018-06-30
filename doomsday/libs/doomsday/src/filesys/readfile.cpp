@@ -52,6 +52,7 @@
 #endif
 
 using namespace de;
+using namespace res;
 
 static size_t FileReader(char const* name, char** buffer);
 

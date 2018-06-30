@@ -61,13 +61,13 @@ LightMaterialDecoration::AnimationStage::AnimationStage(AnimationStage const &ot
 LightMaterialDecoration::AnimationStage *
 LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
 {
-    ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapUp"  ))));
-    ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapDown"))));
-    ClientTexture *lightmapSide = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", de::makeUri(stageDef.gets("lightmapSide"))));
+    ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapUp"  ))));
+    ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapDown"))));
+    ClientTexture *lightmapSide = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapSide"))));
 
     int haloTextureIndex  = stageDef.geti("haloTextureIndex");
     ClientTexture *haloTexture  = nullptr;
-    de::Uri const haloTextureUri(stageDef.gets("haloTexture"), RC_NULL);
+    res::Uri const haloTextureUri(stageDef.gets("haloTexture"), RC_NULL);
     if(!haloTextureUri.isEmpty())
     {
         // Select a system flare by numeric identifier?
@@ -95,11 +95,11 @@ String LightMaterialDecoration::AnimationStage::description() const
 {
     return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'g', 2) : "-1")
                 + _E(l) " Origin: "      _E(.) + origin.asText()
-                + _E(l) " Elevation: "   _E(.) + String::number(elevation, 'f', 2)
+                + _E(l) " Elevation: "   _E(.) + String::asText(elevation, 'f', 2)
                 + _E(l) " LightLevels: " _E(.) + lightLevels.asText()
                 + _E(l) "\nColor: "      _E(.) + color.asText()
-                + _E(l) " Radius: "      _E(.) + String::number(radius, 'f', 2)
-                + _E(l) " HaloRadius: "  _E(.) + String::number(haloRadius, 'f', 2);
+                + _E(l) " Radius: "      _E(.) + String::asText(radius, 'f', 2)
+                + _E(l) " HaloRadius: "  _E(.) + String::asText(haloRadius, 'f', 2);
 }
 
 // ------------------------------------------------------------------------------------

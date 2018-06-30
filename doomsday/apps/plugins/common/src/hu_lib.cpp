@@ -21,7 +21,7 @@
 #include "common.h"
 #include "hu_lib.h"
 
-#include <QList>
+#include <de/List>
 
 /// @todo remove me:
 #include "hud/widgets/automapwidget.h"
@@ -36,7 +36,7 @@ using namespace common;
 
 static bool inited;
 
-static QList<HudWidget *> widgets;
+static List<HudWidget *> widgets;
 
 static ui_rendstate_t uiRS;
 ui_rendstate_t const *uiRendState = &uiRS;
@@ -48,7 +48,7 @@ static uiwidgetid_t nextUnusedId()
 
 static void clearWidgets()
 {
-    qDeleteAll(widgets); widgets.clear();
+    deleteAll(widgets); widgets.clear();
 }
 
 void GUI_Init()
@@ -97,7 +97,7 @@ HudWidget *GUI_TryFindWidgetById(uiwidgetid_t id)
 HudWidget &GUI_FindWidgetById(uiwidgetid_t id)
 {
     if(HudWidget *wi = GUI_TryFindWidgetById(id)) return *wi;
-    throw Error("GUI_FindWidgetById", "Unknown widget id #" + String::number(id));
+    throw Error("GUI_FindWidgetById", "Unknown widget id #" + String::asText(id));
 }
 
 void GUI_UpdateWidgetGeometry(HudWidget *wi)

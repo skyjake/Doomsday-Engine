@@ -80,9 +80,9 @@ void guidata_worldtime_t::draw(Vec2i const &offset) const
 
     if(!ST_AutomapIsOpen(player())) return;
 
-    auto const secondsAsText = String("%1").arg(d->seconds, 2, 10, QChar('0'));
-    auto const minutesAsText = String("%1").arg(d->minutes, 2, 10, QChar('0'));
-    auto const hoursAsText   = String("%1").arg(d->hours  , 2, 10, QChar('0'));
+    auto const secondsAsText = String::format("%02i", d->seconds);
+    auto const minutesAsText = String::format("%02i", d->minutes);
+    auto const hoursAsText   = String::format("%02i", d->hours);
 
     FR_SetFont(font());
     FR_SetTracking(0);
@@ -102,28 +102,28 @@ void guidata_worldtime_t::draw(Vec2i const &offset) const
 
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FR_DrawTextXY(secondsAsText.toUtf8().constData(), x, y);
+    FR_DrawTextXY(secondsAsText, x, y);
     x -= spacerWidth;
 
     FR_DrawCharXY2(':', x + spacerWidth/2, y, ALIGN_TOP);
     x -= counterWidth;
 
-    FR_DrawTextXY(minutesAsText.toUtf8().constData(), x, y);
+    FR_DrawTextXY(minutesAsText, x, y);
     x -= spacerWidth;
 
     FR_DrawCharXY2(':', x + spacerWidth/2, y, ALIGN_TOP);
     x -= counterWidth;
 
-    FR_DrawTextXY(hoursAsText.toUtf8().constData(), x, y);
+    FR_DrawTextXY(hoursAsText, x, y);
     y += lineHeight;
 
     if(d->days)
     {
-        auto const daysAsText = String("%1").arg(d->days, 2, 10, QChar('0')) + " day" + DE_PLURAL_S(d->days);
+        auto const daysAsText = String::format("%02i", d->days) + " day" + DE_PLURAL_S(d->days);
 
         y += lineHeight * LEADING;  // Extra padding.
 
-        FR_DrawTextXY(daysAsText.toUtf8().constData(), 0, y);
+        FR_DrawTextXY(daysAsText, 0, y);
         y += lineHeight;
 
         if(d->days >= 5)

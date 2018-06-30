@@ -216,7 +216,7 @@ static void prepareFogTexture()
 
     if(CentralLumpIndex().contains("menufog.lmp"))
     {
-        de::File1 &lump       = CentralLumpIndex()[CentralLumpIndex().findLast("menufog.lmp")];
+        res::File1 &lump       = CentralLumpIndex()[CentralLumpIndex().findLast("menufog.lmp")];
         uint8_t const *pixels = lump.cache();
         /// @todo fixme: Do not assume dimensions.
         fogEffectData.texture = DGL_NewTextureWithParams(DGL_LUMINANCE, 64, 64,
@@ -1052,7 +1052,7 @@ static char const *patchReplacement(patchid_t patchId)
     dint idx = patchReplacementValueIndex(patchId);
     if(idx == -1) return nullptr;
     if(idx >= 0 && idx < Defs().values.size()) return Defs().values[idx].text;
-    throw Error("Hu_FindPatchReplacementString", "Failed retrieving text value #" + String::number(idx));
+    throw Error("Hu_FindPatchReplacementString", "Failed retrieving text value #" + String::asText(idx));
 }
 
 char const *Hu_FindPatchReplacementString(patchid_t patchId, int flags)
@@ -1112,7 +1112,7 @@ void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vec2i co
     {
         // Use the replacement string.
         const Point2Raw originAsPoint2Raw = {{{origin.x, origin.y}}};
-        FR_DrawText3(replacement.toUtf8().constData(), &originAsPoint2Raw, alignFlags, textFlags);
+        FR_DrawText3(replacement, &originAsPoint2Raw, alignFlags, textFlags);
         return;
     }
     // Use the original patch.
@@ -1362,13 +1362,13 @@ dd_bool Hu_IsStatusBarVisible(int player)
 int Hu_MapTitleFirstLineHeight()
 {
     int y = 0;
-    de::Uri titleImage = G_MapTitleImage(gfw_Session()->mapUri());
+    res::Uri titleImage = G_MapTitleImage(gfw_Session()->mapUri());
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
         {
             patchinfo_t info;
-            patchid_t patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            patchid_t patchId = R_DeclarePatch(titleImage.path());
             if(R_GetPatchInfo(patchId, &info))
             {
                 y = info.geometry.size.height + 2;
@@ -1400,7 +1400,7 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    de::Uri const mapUri    = gfw_Session()->mapUri();
+    res::Uri const mapUri    = gfw_Session()->mapUri();
     de::String const title  = G_MapTitle(mapUri);
     de::String const author = G_MapAuthor(mapUri, CPP_BOOL(cfg.common.hideIWADAuthor));
 
@@ -1415,12 +1415,12 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
 #if __JDOOM__ || __JDOOM64__
     patchid_t patchId = 0;
-    de::Uri const titleImage = G_MapTitleImage(mapUri);
+    res::Uri const titleImage = G_MapTitleImage(mapUri);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
         {
-            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            patchId = R_DeclarePatch(titleImage.path());
         }
     }
     WI_DrawPatch(patchId, Hu_ChoosePatchReplacement(PRM_ALLOW_TEXT, patchId, title),
@@ -1432,7 +1432,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 #elif __JHERETIC__ || __JHEXEN__
     if(!title.isEmpty())
     {
-        FR_DrawTextXY3(title.toUtf8().constData(), 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(title, 0, 0, ALIGN_TOP, DTF_ONLY_SHADOW);
         y += 20;
     }
 #endif
@@ -1445,13 +1445,13 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 #else
         FR_SetColorAndAlpha(.6f, .6f, .6f, alpha);
 #endif
-        FR_DrawTextXY3(mapUri.path().toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(mapUri.path(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
     else if(!author.isEmpty())
     {
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(.5f, .5f, .5f, alpha);
-        FR_DrawTextXY3(author.toUtf8().constData(), 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(author, 0, y, ALIGN_TOP, DTF_ONLY_SHADOW);
     }
 
     DGL_Disable(DGL_TEXTURE_2D);

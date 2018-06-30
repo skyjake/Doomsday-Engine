@@ -81,7 +81,7 @@ void guidata_ammo_t::draw(Vec2i const &offset) const
     if(_value == 1994) return;
 
     Vec2i const pos     = origin + offsets[dint( _ammotype )];
-    auto const valueAsText = String::number(_value);
+    auto const valueAsText = String::asText(_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -93,7 +93,7 @@ void guidata_ammo_t::draw(Vec2i const &offset) const
 
     FR_SetFont(font());
     FR_SetColorAndAlpha(::defFontRGB3[0], ::defFontRGB3[1], ::defFontRGB3[2], textOpacity);
-    FR_DrawTextXY3(valueAsText.toUtf8().constData(), pos.x, pos.y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(valueAsText, pos.x, pos.y, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);

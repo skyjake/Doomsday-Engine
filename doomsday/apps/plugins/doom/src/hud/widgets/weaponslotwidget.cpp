@@ -176,7 +176,7 @@ void guidata_weaponslot_t::updateGeometry()
     if(!text.isEmpty())
     {
         FR_SetFont(font());
-        Size2Raw textSize; FR_TextSize(&textSize, text.toUtf8().constData());
+        Size2Raw textSize; FR_TextSize(&textSize, text);
         Rect_SetWidthHeight(&geometry(), textSize.width  * cfg.common.statusbarScale,
                                          textSize.height * cfg.common.statusbarScale);
         return;

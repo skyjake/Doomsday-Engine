@@ -102,7 +102,7 @@ DE_PIMPL(AudioDriver)
         zap(iMusic);
         zap(iCd);
 
-        library = Library_New(libFile.path().toUtf8().constData());
+        library = Library_New(libFile.path());
         if(!library)
         {
             throw LoadError("AudioDriver::importInterfaces",

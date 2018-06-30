@@ -459,7 +459,7 @@ DE_PIMPL(Textures)
         while (!allDefs.isEmpty())
         {
             Composite &def = *allDefs.takeFirst();
-            de::Uri uri(DE_STR("Textures"), Path(def.percentEncodedName()));
+            res::Uri uri(DE_STR("Textures"), Path(def.percentEncodedName()));
 
             Flags flags;
             if (def.isFlagged(Composite::Custom)) flags |= Texture::Custom;
@@ -558,7 +558,7 @@ DE_PIMPL(Textures)
                     !percentEncodedName.compareWithoutCase("F_END")    ||
                     !percentEncodedName.compareWithoutCase("FF_END")) continue;
 
-                de::Uri uri(DE_STR("Flats"), Path(percentEncodedName));
+                res::Uri uri(DE_STR("Flats"), Path(percentEncodedName));
                 if (self().textureManifestPtr(uri)) continue;
 
                 Flags flags;
@@ -574,7 +574,7 @@ DE_PIMPL(Textures)
                 Vec2ui dimensions(64, 64);
                 Vec2i origin(0, 0);
                 int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
-                de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
+                res::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
                 self().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
             }
@@ -632,7 +632,7 @@ DE_PIMPL(Textures)
                 continue;
             }
 
-            de::Uri const uri("Sprites", Path(fileName));
+            res::Uri const uri("Sprites", Path(fileName));
 
             Flags flags = 0;
             // If this is from an add-on flag it as "custom".
@@ -669,7 +669,7 @@ DE_PIMPL(Textures)
                 file.unlock();
             }
 
-            de::Uri const resourceUri = LumpIndex::composeResourceUrn(i);
+            res::Uri const resourceUri = LumpIndex::composeResourceUrn(i);
             try
             {
                 self().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
@@ -783,7 +783,7 @@ void Textures::clearAllTextureSchemes()
 }
 
 #if 0
-bool Textures::hasTextureManifest(de::Uri const &path) const
+bool Textures::hasTextureManifest(res::Uri const &path) const
 {
     try
     {
@@ -796,7 +796,7 @@ bool Textures::hasTextureManifest(de::Uri const &path) const
 }
 #endif
 
-TextureManifest &Textures::textureManifest(de::Uri const &uri) const
+TextureManifest &Textures::textureManifest(res::Uri const &uri) const
 {
     if (auto *mft = textureManifestPtr(uri))
     {
@@ -808,7 +808,7 @@ TextureManifest &Textures::textureManifest(de::Uri const &uri) const
              "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-TextureManifest *Textures::textureManifestPtr(de::Uri const &uri) const
+TextureManifest *Textures::textureManifestPtr(res::Uri const &uri) const
 {
     // Perform the search.
     // Is this a URN? (of the form "urn:schemename:uniqueid")
@@ -857,7 +857,7 @@ Textures::AllTextures const &Textures::allTextures() const
     return d->textures;
 }
 
-TextureManifest &Textures::declareSystemTexture(Path const &texturePath, de::Uri const &resourceUri)
+TextureManifest &Textures::declareSystemTexture(Path const &texturePath, res::Uri const &resourceUri)
 {
     auto &scheme = textureScheme(DE_STR("System"));
     dint const uniqueId = scheme.count() + 1;
@@ -869,7 +869,7 @@ TextureManifest &Textures::declareSystemTexture(Path const &texturePath, de::Uri
                           &resourceUri);
 }
 
-Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, de::Uri const &resourceUri)
+Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, res::Uri const &resourceUri)
 {
     if (!resourceUri.isEmpty())
     {
@@ -890,7 +890,7 @@ Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, de::Uri
 }
 
 Texture *Textures::defineTexture(String const &schemeName,
-                                 de::Uri const &resourceUri,
+                                 res::Uri const &resourceUri,
                                  Vec2ui const &dimensions)
 {
     LOG_AS("Textures::defineTexture");
@@ -912,7 +912,7 @@ Texture *Textures::defineTexture(String const &schemeName,
         return nullptr;
     }
 
-    de::Uri uri(scheme.name(), Path(String::format("%08i", uniqueId)));
+    res::Uri uri(scheme.name(), Path(String::format("%08i", uniqueId)));
     try
     {
         TextureManifest &manifest = declareTexture(uri, Texture::Custom, dimensions,
@@ -959,7 +959,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
     if (encodedName.isEmpty())
         return 0;
 
-    de::Uri uri(DE_STR("Patches"), Path(encodedName));
+    res::Uri uri(DE_STR("Patches"), Path(encodedName));
 
     // Already defined as a patch?
     if (auto *mft = textureManifestPtr(uri))
@@ -1009,7 +1009,7 @@ patchid_t Textures::declarePatch(String const &encodedName)
     file.unlock();
 
     dint uniqueId       = textureScheme(DE_STR("Patches")).count() + 1;  // 1-based index.
-    de::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
+    res::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
     try
     {

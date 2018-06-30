@@ -150,7 +150,7 @@ DE_PIMPL(SectorPolygonizer)
         {
             return polygon.asText() + " Lines: (" +
                    String::join(
-                       de::map<StringList>(lines, [](ID id) { return String::number(id, 16); }),
+                       de::map<StringList>(lines, [](ID id) { return String::asText(id, 16); }),
                        " ") +
                    ")";
         }

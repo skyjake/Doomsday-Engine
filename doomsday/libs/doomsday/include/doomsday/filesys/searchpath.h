@@ -36,10 +36,12 @@
 #  endif
 #endif
 
-namespace de {
+namespace res {
+
+using namespace de;
 
 /**
- * SearchPath is the pairing of a @ref de::Uri plus a set of flags which
+ * SearchPath is the pairing of a @ref res::Uri plus a set of flags which
  * determine how the URI should be interpreted.
  *
  * This class is intended as a convenient way to manage these two pieces
@@ -100,12 +102,12 @@ private:
     Flags flags_;
 };
 
-} // namespace de
+} // namespace res
 
 namespace std {
-    // std::swap specialization for de::SearchPath
+    // std::swap specialization for res::SearchPath
     template <>
-    inline void swap<de::SearchPath>(de::SearchPath& a, de::SearchPath& b) {
+    inline void swap<res::SearchPath>(res::SearchPath& a, res::SearchPath& b) {
         a.swap(b);
     }
 }

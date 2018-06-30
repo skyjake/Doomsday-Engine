@@ -1,11 +1,7 @@
 /** @file api_uri.h  Public API for Universal Resource Identifiers.
  * @ingroup base
  *
- * @todo de::Uri will eventually be moved to libcore, at which point this API
- * is deprecated and the libcore c_wrapper will provide C API functions
- * equivalent to these.
- *
- * @author Copyright &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
+ * @authores::Uriight &copy; 2010-2013 Daniel Swanson <danij@dengine.net>
  * @author Copyright &copy; 2010-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License

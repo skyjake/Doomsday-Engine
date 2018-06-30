@@ -482,7 +482,7 @@ DE_PIMPL(ClientServerWorld)
         /*if (mapCache && !haveCachedMap(&map->def()))
         {
             // Ensure the destination directory exists.
-            F_MakePath(map->def().cachePath.toUtf8().constData());
+            F_MakePath(map->def().cachePath);
 
             // Cache the map!
             DAM_MapWrite(map);
@@ -545,7 +545,7 @@ DE_PIMPL(ClientServerWorld)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
-        de::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : de::makeUri("Maps:"));
+        res::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : res::makeUri("Maps:"));
         if (gx.FinalizeMapChange)
         {
             gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
@@ -664,7 +664,7 @@ DE_PIMPL(ClientServerWorld)
         String execute = mapInfo.gets("execute");
         if (!execute.isEmpty())
         {
-            Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
+            Con_Execute(CMDS_SCRIPT, execute, true, false);
         }
 
         // Run the special map setup command, which the user may alias to do
@@ -672,9 +672,9 @@ DE_PIMPL(ClientServerWorld)
         if (!mapUri.isEmpty())
         {
             String cmd = String("init-") + mapUri.path();
-            if (Con_IsValidCommand(cmd.toUtf8().constData()))
+            if (Con_IsValidCommand(cmd))
             {
-                Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
+                Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
             }
         }
 
@@ -806,7 +806,7 @@ Map &ClientServerWorld::map() const
     return World::map().as<Map>();
 }
 
-bool ClientServerWorld::changeMap(de::Uri const &mapUri)
+bool ClientServerWorld::changeMap(res::Uri const &mapUri)
 {
     res::MapManifest *mapDef = nullptr;
 
@@ -872,7 +872,7 @@ Scheduler &ClientServerWorld::scheduler()
     return d->scheduler;
 }
 
-Record const &ClientServerWorld::mapInfoForMapUri(de::Uri const &mapUri) const
+Record const &ClientServerWorld::mapInfoForMapUri(res::Uri const &mapUri) const
 {
     // Is there a MapInfo definition for the given URI?
     if (Record const *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
@@ -880,7 +880,7 @@ Record const &ClientServerWorld::mapInfoForMapUri(de::Uri const &mapUri) const
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if (Record const *def = DED_Definitions()->mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    if (Record const *def = DED_Definitions()->mapInfos.tryFind("id", res::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }

@@ -54,12 +54,12 @@ void CVarLineEditWidget_UpdateCVar(Widget &wi, Widget::Action action)
     switch(varType)
     {
     case CVT_CHARPTR:
-        Con_SetString2(edit.cvarPath(), edit.text().toUtf8().constData(), SVF_WRITE_OVERRIDE);
+        Con_SetString2(edit.cvarPath(), edit.text(), SVF_WRITE_OVERRIDE);
         break;
 
     case CVT_URIPTR: {
         /// @todo Sanitize and validate against known schemas.
-        de::Uri uri(edit.text(), RC_NULL);
+        res::Uri uri(edit.text(), RC_NULL);
         Con_SetUri2(edit.cvarPath(), reinterpret_cast<uri_s *>(&uri), SVF_WRITE_OVERRIDE);
         break; }
 

@@ -122,7 +122,7 @@ bool XS_GetType(int id, sectortype_t &outBuffer)
     }
 
     // Try the DED database.
-    return Def_Get(DD_DEF_SECTOR_TYPE, de::String::number(id).toUtf8().constData(), &outBuffer);
+    return Def_Get(DD_DEF_SECTOR_TYPE, de::String::asText(id), &outBuffer);
 }
 
 void XF_Init(Sector *sec, function_t *fn, char *func, int min, int max,

@@ -21,9 +21,7 @@
 #ifndef LIBCOMMON_UI_PAGE
 #define LIBCOMMON_UI_PAGE
 
-#include <QFlags>
-#include <QList>
-#include <QVariant>
+#include <de/List>
 #include <de/String>
 #include "widgets/widget.h"
 
@@ -41,7 +39,7 @@ struct mn_rendstate_t
 };
 extern mn_rendstate_t const *mnRendState;
 
-typedef QList<Widget *> WidgetList;
+typedef de::List<Widget *> WidgetList;
 
 /**
  * UI menu page (dialog).
@@ -61,7 +59,7 @@ public:
 
         DefaultFlags = 0
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
+    using Flags = de::Flags;
 
     using Children = WidgetList;
 
@@ -221,14 +219,12 @@ public:
 
     int handleCommand(menucommand_e cmd);
 
-    void setUserValue(QVariant const &newValue);
-    QVariant const &userValue() const;
+    void setUserValue(const de::Value &newValue);
+    const de::Value &userValue() const;
 
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Page::Flags)
 
 } // namespace menu
 } // namespace common

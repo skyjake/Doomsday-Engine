@@ -212,7 +212,7 @@ AxisInputControl &InputDevice::axis(dint id) const
 {
     if (hasAxis(id)) return *d->axes.at(id);
     /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::axis", "Invalid id:" + String::number(id));
+    throw MissingControlError("InputDevice::axis", "Invalid id:" + String::asText(id));
 }
 
 void InputDevice::addAxis(AxisInputControl *axis)
@@ -236,7 +236,7 @@ ButtonInputControl &InputDevice::button(dint id) const
 {
     if (hasButton(id)) return *d->buttons.at(id);
     /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::button", "Invalid id:" + String::number(id));
+    throw MissingControlError("InputDevice::button", "Invalid id:" + String::asText(id));
 }
 
 void InputDevice::addButton(ButtonInputControl *button)
@@ -260,7 +260,7 @@ HatInputControl &InputDevice::hat(dint id) const
 {
     if (hasHat(id)) return *d->hats.at(id);
     /// @throw MissingControlError  The given id is invalid.
-    throw MissingControlError("InputDevice::hat", "Invalid id:" + String::number(id));
+    throw MissingControlError("InputDevice::hat", "Invalid id:" + String::asText(id));
 }
 
 void InputDevice::addHat(HatInputControl *hat)

@@ -88,7 +88,7 @@ void ArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
     if(ST_AutomapIsOpen(armor->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(armor->_value) + SUFFIX;
+    auto const valueAsText = String::asText(armor->_value) + SUFFIX;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -100,10 +100,10 @@ void ArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
     FR_SetTracking(TRACKING);
 #if __JHERETIC__
     FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-    FR_DrawTextXY(valueAsText.toUtf8().constData(), 0, -2); /// @todo Why is an offset needed?
+    FR_DrawTextXY(valueAsText, 0, -2); /// @todo Why is an offset needed?
 #else
     FR_SetColorAndAlpha(::cfg.common.hudColor[0], ::cfg.common.hudColor[1], ::cfg.common.hudColor[2], textOpacity);
-    FR_DrawTextXY(valueAsText.toUtf8().constData(), 0, 0);
+    FR_DrawTextXY(valueAsText, 0, 0);
 #endif
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -153,7 +153,7 @@ void SBarArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
 #endif
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(armor->_value);
+    auto const valueAsText = String::asText(armor->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -174,7 +174,7 @@ void SBarArmorWidget_Draw(guidata_armor_t *armor, Point2Raw const *offset)
     {
         FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
     }
-    FR_DrawTextXY3(valueAsText.toUtf8().constData(), origin.x + X_OFFSET, origin.y + Y_OFFSET, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(valueAsText, origin.x + X_OFFSET, origin.y + Y_OFFSET, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 #if __JDOOM__
     FR_DrawCharXY('%', origin.x + X_OFFSET, origin.y + Y_OFFSET);
 #endif
@@ -208,11 +208,11 @@ void Armor_UpdateGeometry(guidata_armor_t *armor)
     if(ST_AutomapIsOpen(armor->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(armor->_value) + "%";
+    auto const valueAsText = String::asText(armor->_value) + "%";
 
     FR_SetFont(armor->font());
     FR_SetTracking(TRACKING);
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
     Rect_SetWidthHeight(&armor->geometry(), textSize.width  * ::cfg.common.hudScale,
                                             textSize.height * ::cfg.common.hudScale);
 
@@ -242,11 +242,11 @@ void SBarArmor_UpdateGeometry(guidata_armor_t *armor)
 #endif
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(armor->_value);
+    auto const valueAsText = String::asText(armor->_value);
 
     FR_SetFont(armor->font());
     FR_SetTracking(TRACKING);
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
 #if __JDOOM__
     Rect_SetWidthHeight(&armor->geometry(), (textSize.width + FR_CharWidth('%')) * ::cfg.common.statusbarScale,
                                              de::max(textSize.height, FR_CharHeight('%')) * ::cfg.common.statusbarScale);

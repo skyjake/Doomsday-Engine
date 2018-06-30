@@ -18,23 +18,25 @@
 
 #include "udmflex.h"
 
+#include <de/Set>
+
 using namespace de;
 
-String const UDMFLex::NAMESPACE("namespace");
-String const UDMFLex::LINEDEF("linedef");
-String const UDMFLex::SIDEDEF("sidedef");
-String const UDMFLex::VERTEX("vertex");
-String const UDMFLex::SECTOR("sector");
-String const UDMFLex::THING("thing");
-String const UDMFLex::T_TRUE("true");
-String const UDMFLex::T_FALSE("false");
-String const UDMFLex::ASSIGN("=");
-String const UDMFLex::BRACKET_OPEN("{");
-String const UDMFLex::BRACKET_CLOSE("}");
-String const UDMFLex::SEMICOLON(";");
+const String UDMFLex::NAMESPACE("namespace");
+const String UDMFLex::LINEDEF("linedef");
+const String UDMFLex::SIDEDEF("sidedef");
+const String UDMFLex::VERTEX("vertex");
+const String UDMFLex::SECTOR("sector");
+const String UDMFLex::THING("thing");
+const String UDMFLex::T_TRUE("true");
+const String UDMFLex::T_FALSE("false");
+const String UDMFLex::ASSIGN("=");
+const String UDMFLex::BRACKET_OPEN("{");
+const String UDMFLex::BRACKET_CLOSE("}");
+const String UDMFLex::SEMICOLON(";");
 
 UDMFLex::UDMFLex(String const &input)
-    : Lex(input, QChar('/'), QChar('*'), DoubleCharComment | NegativeNumbers)
+    : Lex(input, '/', '*', DoubleCharComment | NegativeNumbers)
 {}
 
 dsize UDMFLex::getExpressionFragment(TokenBuffer &output)
@@ -48,7 +50,7 @@ dsize UDMFLex::getExpressionFragment(TokenBuffer &output)
         if (atEnd() || (output.size() && peek() == '}')) break;
 
         // First character of the token.
-        QChar c = get();
+        Char c = get();
 
         output.newToken(lineNumber());
         output.appendChar(c);
@@ -79,7 +81,7 @@ dsize UDMFLex::getExpressionFragment(TokenBuffer &output)
         }
 
         // Alphanumeric characters are joined into a token.
-        if (c == '_' || c.isLetter())
+        if (c == '_' || iswalpha(c))
         {
             output.setType(Token::IDENTIFIER);
 
@@ -108,9 +110,9 @@ void UDMFLex::parseString(TokenBuffer &output)
 
     // The token already contains the first quote char.
     // This will throw an exception if the string is unterminated.
-    forever
+    for (;;)
     {
-        QChar c = get();
+        Char c = get();
         output.appendChar(c);
         if (c == '"')
         {
@@ -125,8 +127,7 @@ void UDMFLex::parseString(TokenBuffer &output)
 
 bool UDMFLex::isKeyword(Token const &token)
 {
-    static QVector<String> const keywordStr
-    {
+    static const StringList keywords{
         NAMESPACE,
         LINEDEF,
         SIDEDEF,
@@ -136,11 +137,5 @@ bool UDMFLex::isKeyword(Token const &token)
         T_TRUE,
         T_FALSE,
     };
-    foreach (auto const &kw, keywordStr)
-    {
-        if (!kw.compareWithoutCase(token.str()))
-            return true;
-    }
-    return false;
+    return String::contains(keywords, token.str(), CaseInsensitive);
 }
-

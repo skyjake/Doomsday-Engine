@@ -33,7 +33,7 @@
 #include <map>
 
 class ResourceManifest;
-namespace de { class File1; }
+namespace res { class File1; }
 
 /**
  * Represents a specific playable game that runs on top of Doomsday. There can
@@ -222,7 +222,7 @@ public:
      *
      * @return  @c true iff @a file is required by this game.
      */
-    bool isRequiredFile(de::File1 &file) const;
+    bool isRequiredFile(res::File1 &file) const;
 
     /**
      * Adds a new resource to the list for the identified @a game.

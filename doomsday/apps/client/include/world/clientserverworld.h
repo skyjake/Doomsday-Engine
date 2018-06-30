@@ -99,14 +99,14 @@ public:
      *
      * @return  @c true= the map change completed successfully.
      */
-    bool changeMap(de::Uri const &uri);
+    bool changeMap(res::Uri const &uri);
 
     /**
      * Unload the currently loaded map (if any).
      *
      * @see changeMap()
      */
-    inline void unloadMap() { changeMap(de::Uri()); }
+    inline void unloadMap() { changeMap(res::Uri()); }
 
     /**
      * Returns the effective map-info definition Record associated with the given
@@ -114,7 +114,7 @@ public:
      *
      * @param mapUri  Unique identifier for the map to lookup map-info data for.
      */
-    de::Record const &mapInfoForMapUri(de::Uri const &mapUri) const;
+    de::Record const &mapInfoForMapUri(res::Uri const &mapUri) const;
 
     /**
      * Advance time in the world.

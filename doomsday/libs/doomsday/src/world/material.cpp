@@ -164,7 +164,7 @@ DE_PIMPL(Material)
         DE_ASSERT(inheritDimensionsTexture() == &texture); // Sanity check.
 
         /// @todo kludge: Clear the association so we don't try to cancel notifications later.
-        firstTextureLayer()->stage(0).texture = de::Uri();
+        firstTextureLayer()->stage(0).texture = res::Uri();
 
 #if !defined(DE_DEBUG)
         DE_UNUSED(texture);
@@ -291,7 +291,7 @@ void Material::addLayerAt(Layer *layer, int position)
 /*Material::Layer &Material::layer(int index) const
 {
     /// @throw Material::MissingLayerError  Invalid layer reference.
-    throw MissingLayerError("Material::layer", "Unknown layer #" + String::number(index));
+    throw MissingLayerError("Material::layer", "Unknown layer #" + String::asText(index));
 }*/
 
 String Material::describe() const
@@ -344,7 +344,7 @@ D_CMD(InspectMaterial)
 {
     DE_UNUSED(src);
 
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+    res::Uri search = res::Uri::fromUserInput(&argv[1], argc - 1);
     if (!search.scheme().isEmpty() &&
         !world::Materials::get().isKnownMaterialScheme(search.scheme()))
     {

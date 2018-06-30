@@ -74,6 +74,7 @@
 #endif
 
 using namespace de;
+using namespace res;
 
 #define MAX_RECUR_DEPTH     30
 #define MAX_TOKEN_LEN       128
@@ -473,7 +474,7 @@ DE_PIMPL(DEDParser)
         return true;
     }
 
-    int ReadUri(de::Uri **dest, char const *defaultScheme)
+    int ReadUri(res::Uri **dest, char const *defaultScheme)
     {
         String buffer;
 
@@ -484,7 +485,7 @@ DE_PIMPL(DEDParser)
         buffer = Path::normalizeString(buffer);
 
         if (!*dest)
-            *dest = new de::Uri(buffer, RC_NULL);
+            *dest = new res::Uri(buffer, RC_NULL);
         else
             (*dest)->setUri(buffer, RC_NULL);
 
@@ -496,7 +497,7 @@ DE_PIMPL(DEDParser)
 
     int ReadUri(Variable &var, char const *defaultScheme)
     {
-        de::Uri *uri = 0;
+        res::Uri *uri = 0;
         if (!ReadUri(&uri, defaultScheme)) return false;
         var.set(TextValue(uri->compose()));
         delete uri;
@@ -907,9 +908,9 @@ DE_PIMPL(DEDParser)
                 READSTR(label);
                 CHECKSC;
 
-                de::Uri newSearchPath = de::Uri::fromNativeDirPath(NativePath(label));
+                res::Uri newSearchPath = res::Uri::fromNativeDirPath(NativePath(label));
                 FS1::Scheme& scheme = App_FileSystem().scheme(ResourceClass::classForId(RC_MODEL).defaultScheme());
-                scheme.addSearchPath(reinterpret_cast<de::Uri const&>(newSearchPath), FS1::ExtraPaths);
+                scheme.addSearchPath(reinterpret_cast<res::Uri const&>(newSearchPath), FS1::ExtraPaths);
             }
 
             if (ISTOKEN("Header"))
@@ -1454,7 +1455,7 @@ DE_PIMPL(DEDParser)
                 }
                 else if (!bCopyNext)
                 {
-                    de::Uri *otherMat = nullptr;
+                    res::Uri *otherMat = nullptr;
                     READURI(&otherMat, nullptr);
                     ReadToken();
 
@@ -1963,7 +1964,7 @@ DE_PIMPL(DEDParser)
                 }
                 else if (!bCopyNext)
                 {
-                    de::Uri *otherMap = nullptr;
+                    res::Uri *otherMap = nullptr;
                     READURI(&otherMap, "Maps");
                     ReadToken();
 

@@ -19,7 +19,6 @@
 
 #define DE_NO_API_MACROS_INFINE
 
-#include <QtAlgorithms>
 #include <de/Log>
 #include <doomsday/console/var.h>
 
@@ -133,7 +132,7 @@ Finale &InFineSystem::finale(finaleid_t id)
     Finale *finale = d->finaleForId(id);
     if (finale) return *finale;
     /// @throw MissingFinaleError The given id does not reference a Finale
-    throw MissingFinaleError("finale", "No Finale known by id:" + String::number(id));
+    throw MissingFinaleError("finale", "No Finale known by id:" + String::asText(id));
 }
 
 InFineSystem::Finales const &InFineSystem::finales() const

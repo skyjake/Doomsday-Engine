@@ -199,7 +199,7 @@ String TextureVariantSpec::asText() const
     {
     case TST_DETAIL: {
         detailvariantspecification_t const &spec = detailVariant;
-        text += " Contrast:" + String::number(int(.5f + spec.contrast / 255.f * 100)) + "%";
+        text += " Contrast:" + String::asText(int(.5f + spec.contrast / 255.f * 100)) + "%";
         break; }
 
     case TST_GENERAL: {
@@ -239,13 +239,13 @@ String TextureVariantSpec::asText() const
         }
 
         text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
-              + " Flags:" + String::number(spec.flags & ~TSF_INTERNAL_MASK)
-              + " Border:" + String::number(spec.border)
+              + " Flags:" + String::asText(spec.flags & ~TSF_INTERNAL_MASK)
+              + " Border:" + String::asText(spec.border)
               + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
                               + "|" + glFilterNames[glMinFilterNameIdx]
               + " MagFilter:" + filterModeNames[3 + de::clamp(-3, spec.magFilter, 0)]
                               + "|" + glFilterNames[glMagFilterNameIdx]
-              + " AnisoFilter:" + String::number(spec.anisoFilter)
+              + " AnisoFilter:" + String::asText(spec.anisoFilter)
               + " WrapS:" + nameForGLTextureWrapMode(spec.wrapS)
               + " WrapT:" + nameForGLTextureWrapMode(spec.wrapT)
               + " CorrectGamma:" + (spec.gammaCorrection? "yes" : "no")
@@ -254,8 +254,8 @@ String TextureVariantSpec::asText() const
 
         if(spec.flags & TSF_HAS_COLORPALETTE_XLAT)
         {
-            text += " Translated:(tclass:" + String::number(spec.tClass)
-                                           + " tmap:" + String::number(spec.tMap) + ")";
+            text += " Translated:(tclass:" + String::asText(spec.tClass)
+                                           + " tmap:" + String::asText(spec.tMap) + ")";
         }
         break; }
     }

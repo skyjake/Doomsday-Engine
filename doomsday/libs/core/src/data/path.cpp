@@ -254,6 +254,10 @@ Path::Path(String const &path, Char sep)
     : d(new Impl(path, sep))
 {}
 
+Path::Path(const CString &path, Char sep)
+    : d(new Impl(path.toString(), sep))
+{}
+
 Path::Path(char const *nullTerminatedCStr, Char sep)
     : d(new Impl(nullTerminatedCStr, sep))
 {}

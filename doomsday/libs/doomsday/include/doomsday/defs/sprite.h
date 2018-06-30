@@ -39,7 +39,7 @@ struct LIBDOOMSDAY_PUBLIC CompiledSprite
 
     struct View
     {
-        de::Uri uri;
+        res::Uri uri;
         bool mirrorX = false;
     };
     de::List<View> views;    // missing ones have an empty Uri
@@ -76,7 +76,7 @@ public:
 
     struct LIBDOOMSDAY_PUBLIC View
     {
-        de::Uri const *material; // never nullptr
+        res::Uri const *material; // never nullptr
         bool mirrorX;
     };
 
@@ -122,7 +122,7 @@ public:
 
     View view(de::dint angle) const;
 
-    de::Uri const &viewMaterial(de::dint angle) const;
+    res::Uri const &viewMaterial(de::dint angle) const;
 
     /**
      * Select an appropriate View for visualizing the entity, given a mobj angle and the

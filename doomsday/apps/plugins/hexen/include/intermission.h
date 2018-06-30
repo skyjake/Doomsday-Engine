@@ -29,7 +29,7 @@ struct wbstartstruct_t;
 
 struct wbstartstruct_t
 {
-    de::Uri nextMap;
+    res::Uri nextMap;
     uint nextMapEntryPoint;
 };
 

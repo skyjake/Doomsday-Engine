@@ -21,8 +21,6 @@
 #include "common.h"
 #include "hud/widgets/automapwidget.h"
 
-#include <QList>
-#include <QtAlgorithms>
 #include <de/LogBuffer>
 #include <de/ScriptSystem>
 #include <de/Vector>
@@ -42,6 +40,7 @@
 #define UIAUTOMAP_BORDER        4  ///< In fixed 320x200 pixels.
 
 using namespace de;
+using namespace res;
 
 static void AutomapWidget_UpdateGeometry(AutomapWidget *amap)
 {
@@ -264,8 +263,8 @@ DE_PIMPL(AutomapWidget)
     coord_t viewAABB[4];
 
     // Misc:
-    QList<MarkedPoint *> points;  ///< Player-marked points of interest.
-    dint followPlayer = 0;        ///< Player being followed.
+    List<MarkedPoint *> points;  ///< Player-marked points of interest.
+    dint followPlayer = 0;       ///< Player being followed.
 
     Impl(Public *i) : Base(i)
     {
@@ -289,7 +288,7 @@ DE_PIMPL(AutomapWidget)
 
     void clearPoints()
     {
-        qDeleteAll(points); points.clear();
+        deleteAll(points); points.clear();
     }
 
     void setMinScale(dfloat newMinScale)
@@ -1053,7 +1052,7 @@ DE_PIMPL(AutomapWidget)
         const Point2Raw labelOffset{};
         for (MarkedPoint const *point : points)
         {
-            String const label    = String::number(idx++);
+            String const label    = String::asText(idx++);
             Vec2d const origin = fitPointInRectangle(point->origin(), topLeft, topRight, bottomRight, bottomLeft, view);
 
             DGL_MatrixMode(DGL_MODELVIEW);
@@ -1073,7 +1072,7 @@ DE_PIMPL(AutomapWidget)
 #else
             FR_SetColorAndAlpha(1, 1, 1, alpha);
 #endif
-            FR_DrawText3(label.toUtf8().constData(), &labelOffset, 0, DTF_ONLY_SHADOW);
+            FR_DrawText3(label, &labelOffset, 0, DTF_ONLY_SHADOW);
 
             DGL_Disable(DGL_TEXTURE_2D);
             DGL_MatrixMode(DGL_MODELVIEW);
@@ -1849,8 +1848,8 @@ dint AutomapWidget::addPoint(Vec3d const &origin)
     dint pointNum = d->points.count() - 1;  // base 0.
     if (player() >= 0)
     {
-        String msg = String(AMSTR_MARKEDSPOT) + " " + String::number(pointNum);
-        P_SetMessageWithFlags(&players[player()], msg.toUtf8().constData(), LMF_NO_HIDE);
+        String msg = String(AMSTR_MARKEDSPOT) + " " + String::asText(pointNum);
+        P_SetMessageWithFlags(&players[player()], msg, LMF_NO_HIDE);
     }
     return pointNum;
 }
@@ -1864,7 +1863,7 @@ AutomapWidget::MarkedPoint &AutomapWidget::point(dint index) const
 {
     if (hasPoint(index)) return *d->points.at(index);
     /// @throw MissingPointError  Invalid point reference.
-    throw MissingPointError("AutomapWidget::point", "Unknown point #" + String::number(index));
+    throw MissingPointError("AutomapWidget::point", "Unknown point #" + String::asText(index));
 }
 
 LoopResult AutomapWidget::forAllPoints(std::function<LoopResult (MarkedPoint &)> func) const

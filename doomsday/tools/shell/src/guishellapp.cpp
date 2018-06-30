@@ -256,7 +256,7 @@ void GuiShellApp::startLocalServer()
     {
         EscapeParser esc;
         esc.parse(er.asText());
-        QMessageBox::critical(0, tr("Failed to Start Server"), esc.plainText());
+        QMessageBox::critical(0, tr("Failed to Start Server"), esc.plainText().c_str());
 
         showPreferences();
     }
@@ -284,8 +284,8 @@ void GuiShellApp::updateLocalServerMenu()
     foreach (Address const &host, d->finder.foundServers())
     {
         QString label = QString("%1 - %2 (%3/%4)")
-                .arg(host.asText())
-                .arg(d->finder.name(host))
+                .arg(host.asText().c_str())
+                .arg(d->finder.name(host).c_str())
                 .arg(d->finder.playerCount(host))
                 .arg(d->finder.maxPlayers(host));
 

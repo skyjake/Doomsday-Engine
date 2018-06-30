@@ -20,8 +20,6 @@
 
 #include "importdeh.h"
 
-#include <QDir>
-#include <QFile>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/resource/bundles.h>
 #include <doomsday/DoomsdayApp>
@@ -34,19 +32,20 @@
 #include "dehreader.h"
 
 using namespace de;
+using namespace res;
 
 // Global handle on the engine's definition databases.
 ded_t *ded;
 
 // This is the original data before it gets replaced by any patches.
-ded_sprid_t  origSpriteNames[NUMSPRITES];
-String origActionNames[NUMSTATES];
+ded_sprid_t origSpriteNames[NUMSPRITES];
+String      origActionNames[NUMSTATES];
 
 static void backupData()
 {
     for (int i = 0; i < NUMSPRITES && i < ded->sprites.size(); i++)
     {
-        qstrncpy(origSpriteNames[i].id, ded->sprites[i].id, DED_SPRITEID_LEN + 1);
+        strncpy(origSpriteNames[i].id, ded->sprites[i].id, DED_SPRITEID_LEN + 1);
     }
 
     for (int i = 0; i < NUMSTATES && i < ded->states.size(); i++)
@@ -66,7 +65,7 @@ static void readLump(LumpIndex const &lumpIndex, lumpnum_t lumpNum)
 
     File1 &lump = lumpIndex[lumpNum];
     size_t len  = lump.size();
-    Block deh   = Block::fromRawData(reinterpret_cast<char const *>(lump.cache()), len);
+    Block deh   = Block(lump.cache(), len);
     /// @attention Results in a deep-copy of the lump data into the Block
     ///            thus the cached lump can be released after this call.
     ///
@@ -130,7 +129,7 @@ static void readPatchLumps(LumpIndex const &lumpIndex)
     bool const readAll = DE_APP->commandLine().check("-alldehs");
     for (int i = lumpIndex.size() - 1; i >= 0; i--)
     {
-        if (lumpIndex[i].name().fileNameExtension().toLower() == ".deh")
+        if (lumpIndex[i].name().fileNameExtension().compare(".deh", CaseInsensitive) == 0)
         {
             readLump(lumpIndex, i);
             if (!readAll) return;
@@ -166,7 +165,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
     backupData();
 
     // Check for DEHACKED lumps.
-    readPatchLumps(*reinterpret_cast<de::LumpIndex const *>(F_LumpIndex()));
+    readPatchLumps(*reinterpret_cast<res::LumpIndex const *>(F_LumpIndex()));
 
     // Process all patch files specified with -deh options on the command line.
     readPatchFiles();

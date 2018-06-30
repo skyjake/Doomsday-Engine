@@ -117,9 +117,9 @@ de::String Image_Description(image_t const &image);
  * The allocated memory buffer always has enough space for 4-component
  * colors.
  */
-uint8_t *Image_LoadFromFile(image_t &image, de::FileHandle &file);
+uint8_t *Image_LoadFromFile(image_t &image, res::FileHandle &file);
 
-bool Image_LoadFromFileWithFormat(image_t &image, char const *format, de::FileHandle &file);
+bool Image_LoadFromFileWithFormat(image_t &image, char const *format, res::FileHandle &file);
 
 bool Image_Save(image_t const &image, char const *filePath);
 

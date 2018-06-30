@@ -159,13 +159,13 @@ void LineEditWidget::draw() const
 
         // Draw the text:
         FR_SetColorAndAlpha(color.x, color.y, color.z, color.w * fadeout);
-        FR_DrawTextXY3(useText.toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
+        FR_DrawTextXY3(useText, origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
         if(isActive() && isFocused() && (menuTime & 8) &&
            (!d->maxLength || d->text.length() < d->maxLength))
         {
-            origin.x += FR_TextWidth(useText.toUtf8().constData());
+            origin.x += FR_TextWidth(useText);
             FR_DrawCharXY3('_', origin.x, origin.y, ALIGN_TOPLEFT,  Hu_MenuMergeEffectWithDrawTextFlags(0));
         }
     }
@@ -185,8 +185,8 @@ LineEditWidget &LineEditWidget::setMaxLength(int newMaxLength)
     {
         if(newMaxLength < d->maxLength)
         {
-            d->text.truncate(newMaxLength);
-            d->oldText.truncate(newMaxLength);
+            d->text.truncate(String::CharPos(newMaxLength));
+            d->oldText.truncate(String::CharPos(newMaxLength));
         }
         d->maxLength = newMaxLength;
     }
@@ -201,7 +201,7 @@ String LineEditWidget::text() const
 LineEditWidget &LineEditWidget::setText(String const &newText, int flags)
 {
     d->text = newText;
-    if(d->maxLength) d->text.truncate(d->maxLength);
+    if(d->maxLength) d->text.truncate(String::CharPos(d->maxLength));
 
     if(flags & MNEDIT_STF_REPLACEOLD)
     {
@@ -247,7 +247,7 @@ int LineEditWidget::handleEvent(event_t const &ev)
     {
         if(!d->text.isEmpty())
         {
-            d->text.truncate(d->text.length() - 1);
+            d->text.truncate(String::CharPos(d->text.length() - 1));
             execAction(Modified);
         }
         return true;
@@ -265,7 +265,7 @@ int LineEditWidget::handleEvent(event_t const &ev)
         if(ch == '%')
             return true;
 
-        if(!d->maxLength || d->text.length() < d->maxLength)
+        if(!d->maxLength || d->text.length() < dsize(d->maxLength))
         {
             d->text += ch;
             execAction(Modified);

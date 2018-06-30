@@ -1534,7 +1534,7 @@ Map::Map(res::MapManifest *manifest)
 
 Record const &Map::mapInfo() const
 {
-    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::makeUri("Maps:"));
+    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : res::makeUri("Maps:"));
 }
 
 Mesh const &Map::mesh() const
@@ -2067,7 +2067,7 @@ Vertex &Map::vertex(dint index) const
 {
     if (Vertex *vtx = vertexPtr(index)) return *vtx;
     /// @throw MissingElementError  Invalid Vertex reference specified.
-    throw MissingElementError("Map::vertex", "Unknown Vertex index:" + String::number(index));
+    throw MissingElementError("Map::vertex", "Unknown Vertex index:" + String::asText(index));
 }
 
 Vertex *Map::vertexPtr(dint index) const
@@ -2097,7 +2097,7 @@ Line &Map::line(dint index) const
 {
     if (Line *li = linePtr(index)) return *li;
     /// @throw MissingElementError  Invalid Line reference specified.
-    throw MissingElementError("Map::line", "Unknown Line index:" + String::number(index));
+    throw MissingElementError("Map::line", "Unknown Line index:" + String::asText(index));
 }
 
 Line *Map::linePtr(dint index) const
@@ -2145,7 +2145,7 @@ ConvexSubspace &Map::subspace(dint index) const
 {
     if (ConvexSubspace *sub = subspacePtr(index)) return *sub;
     /// @throw MissingElementError  Invalid ConvexSubspace reference specified.
-    throw MissingElementError("Map::subspace", "Unknown subspace index:" + String::number(index));
+    throw MissingElementError("Map::subspace", "Unknown subspace index:" + String::asText(index));
 }
 
 ConvexSubspace *Map::subspacePtr(dint index) const
@@ -2175,7 +2175,7 @@ Polyobj &Map::polyobj(dint index) const
 {
     if (Polyobj *pob = polyobjPtr(index)) return *pob;
     /// @throw MissingObjectError  Invalid ConvexSubspace reference specified.
-    throw MissingObjectError("Map::subspace", "Unknown Polyobj index:" + String::number(index));
+    throw MissingObjectError("Map::subspace", "Unknown Polyobj index:" + String::asText(index));
 }
 
 Polyobj *Map::polyobjPtr(dint index) const
@@ -2221,7 +2221,7 @@ LineSide &Map::side(dint index) const
 {
     if (LineSide *side = sidePtr(index)) return *side;
     /// @throw MissingElementError  Invalid LineSide reference specified.
-    throw MissingElementError("Map::side", "Unknown LineSide index:" + String::number(index));
+    throw MissingElementError("Map::side", "Unknown LineSide index:" + String::asText(index));
 }
 
 LineSide *Map::sidePtr(dint index) const
@@ -2294,7 +2294,7 @@ Sector &Map::sector(dint index) const
 {
     if (Sector *sec = sectorPtr(index)) return *sec;
     /// @throw MissingElementError  Invalid Sector reference specified.
-    throw MissingElementError("Map::sector", "Unknown Sector index:" + String::number(index));
+    throw MissingElementError("Map::sector", "Unknown Sector index:" + String::asText(index));
 }
 
 Sector *Map::sectorPtr(dint index) const
@@ -2954,7 +2954,7 @@ Lumobj &Map::lumobj(dint index) const
 {
     if (Lumobj *lum = lumobjPtr(index)) return *lum;
     /// @throw MissingObjectError  Invalid Lumobj reference specified.
-    throw MissingObjectError("Map::lumobj", "Unknown Lumobj index:" + String::number(index));
+    throw MissingObjectError("Map::lumobj", "Unknown Lumobj index:" + String::asText(index));
 }
 
 Lumobj *Map::lumobjPtr(dint index) const
@@ -2989,7 +2989,7 @@ BiasSource &Map::addBiasSource(BiasSource const &biasSource)
         return *d->bias.sources.last();
     }
     /// @throw FullError  Attempt to add a new bias source when already at capcity.
-    throw FullError("Map::addBiasSource", "Already at full capacity:" + String::number(MAX_BIAS_SOURCES));
+    throw FullError("Map::addBiasSource", "Already at full capacity:" + String::asText(MAX_BIAS_SOURCES));
 }
 
 void Map::removeBiasSource(dint which)
@@ -3009,7 +3009,7 @@ BiasSource &Map::biasSource(dint index) const
 {
    if (BiasSource *bsrc = biasSourcePtr(index)) return *bsrc;
    /// @throw MissingObjectError  Invalid BiasSource reference specified.
-   throw MissingObjectError("Map::biasSource", "Unknown BiasSource index:" + String::number(index));
+   throw MissingObjectError("Map::biasSource", "Unknown BiasSource index:" + String::asText(index));
 }
 
 BiasSource *Map::biasSourcePtr(dint index) const

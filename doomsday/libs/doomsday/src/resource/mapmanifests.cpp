@@ -42,7 +42,7 @@ DE_PIMPL_NOREF(MapManifests)
 MapManifests::MapManifests() : d(new Impl)
 {}
 
-res::MapManifest &MapManifests::findMapManifest(de::Uri const &mapUri) const
+res::MapManifest &MapManifests::findMapManifest(res::Uri const &mapUri) const
 {
     // Only one resource scheme is known for maps.
     if (!mapUri.scheme().compareWithoutCase("Maps"))
@@ -55,7 +55,7 @@ res::MapManifest &MapManifests::findMapManifest(de::Uri const &mapUri) const
     throw Resources::MissingResourceManifestError("MapManifests::findMapManifest", "Failed to locate a manifest for \"" + mapUri.asText() + "\"");
 }
 
-res::MapManifest *MapManifests::tryFindMapManifest(de::Uri const &mapUri) const
+res::MapManifest *MapManifests::tryFindMapManifest(res::Uri const &mapUri) const
 {
     // Only one resource scheme is known for maps.
     if (mapUri.scheme().compareWithoutCase("Maps")) return nullptr;

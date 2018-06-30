@@ -87,20 +87,20 @@ DE_PIMPL(ShellUser), public LogSink
 
 ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Impl(*this))
 {
-    connect(this, &Link::disconnected, [this] ()
+    audienceForDisconnected() += [this]()
     {
         DE_FOR_AUDIENCE(Disconnect, i)
         {
             i->userDisconnected(*this);
         }
-    });
-    connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+    };
+    audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
 }
 
 void ShellUser::sendInitialUpdate()
 {
     // Console lexicon.
-    QScopedPointer<RecordPacket> packet(protocol().newConsoleLexicon(Con_Lexicon()));
+    std::unique_ptr<RecordPacket> packet(protocol().newConsoleLexicon(Con_Lexicon()));
     *this << *packet;
 
     sendGameState();
@@ -140,7 +140,7 @@ void ShellUser::sendGameState()
         mapTitle = Con_GetString("map-name");
     }
 
-    QScopedPointer<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
+    std::unique_ptr<RecordPacket> packet(protocol().newGameState(mode, rules, mapId, mapTitle));
     *this << *packet;
 }
 
@@ -157,7 +157,7 @@ void ShellUser::sendPlayerInfo()
 {
     if (!App_World().hasMap()) return;
 
-    QScopedPointer<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
+    std::unique_ptr<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
 
     for (uint i = 1; i < DDMAXPLAYERS; ++i)
     {
@@ -171,7 +171,7 @@ void ShellUser::sendPlayerInfo()
         info.number   = i;
         info.name     = plr->name;
         info.position = de::Vec2i(plr->publicData().mo->origin[VX],
-                                     plr->publicData().mo->origin[VY]);
+                                  plr->publicData().mo->origin[VY]);
 
         /**
          * @todo Player color is presently game-side data. Therefore, this
@@ -193,17 +193,17 @@ Address ShellUser::address() const
 
 void ShellUser::handleIncomingPackets()
 {
-    forever
+    for (;;)
     {
-        QScopedPointer<Packet> packet(nextPacket());
-        if (packet.isNull()) break;
+        std::unique_ptr<Packet> packet(nextPacket());
+        if (!packet) break;
 
         try
         {
-            switch (protocol().recognize(packet.data()))
+            switch (protocol().recognize(packet.get()))
             {
             case shell::Protocol::Command:
-                Con_Execute(CMDS_CONSOLE, protocol().command(*packet).toUtf8().constData(), false, true);
+                Con_Execute(CMDS_CONSOLE, protocol().command(*packet), false, true);
                 break;
 
             default:

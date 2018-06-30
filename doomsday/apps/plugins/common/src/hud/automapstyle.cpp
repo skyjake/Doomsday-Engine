@@ -125,7 +125,7 @@ automapcfg_lineinfo_t const *AutomapStyle::tryFindLineInfo(automapcfg_objectname
     if(name == AMO_NONE) return nullptr;  // Ignore
 
     if(name < 0 || name >= AMO_NUMOBJECTS)
-        throw Error("AutomapStyle::tryFindLineInfo", "Unknown object #" + String::number((int) name));
+        throw Error("AutomapStyle::tryFindLineInfo", "Unknown object #" + String::asText((int) name));
 
     switch(name)
     {
@@ -298,7 +298,7 @@ void AutomapStyle::applyDefaults()
 void AutomapStyle::objectColor(automapcfg_objectname_t name, float *r, float *g, float *b, float *a) const
 {
     if(name < 0 || name >= AMO_NUMOBJECTS)
-        throw Error("AutomapStyle::objectColor", "Unknown object #" + String::number((int) name));
+        throw Error("AutomapStyle::objectColor", "Unknown object #" + String::asText((int) name));
 
     // It must be an object with an info.
     automapcfg_lineinfo_t const *info = nullptr;
@@ -324,7 +324,7 @@ void AutomapStyle::setObjectColor(automapcfg_objectname_t name, float r, float g
     if(name == AMO_NONE) return;  // Ignore.
 
     if(name < 0 || name >= AMO_NUMOBJECTS)
-        throw Error("AutomapStyle::setObjectColor", "Unknown object #" + String::number((int) name));
+        throw Error("AutomapStyle::setObjectColor", "Unknown object #" + String::asText((int) name));
 
     // It must be an object with a name.
     automapcfg_lineinfo_t *info = nullptr;
@@ -347,7 +347,7 @@ void AutomapStyle::setObjectColor(automapcfg_objectname_t name, float r, float g
 void AutomapStyle::setObjectColorAndOpacity(automapcfg_objectname_t name, float r, float g, float b, float a)
 {
     if(name < 0 || name >= AMO_NUMOBJECTS)
-        throw Error("AutomapStyle::setObjectColorAndOpacity", "Unknown object #" + String::number((int) name));
+        throw Error("AutomapStyle::setObjectColorAndOpacity", "Unknown object #" + String::asText((int) name));
 
     // It must be an object with an info.
     automapcfg_lineinfo_t *info = nullptr;
@@ -372,7 +372,7 @@ void AutomapStyle::setObjectGlow(automapcfg_objectname_t name, glowtype_t type, 
     float alpha, dd_bool canScale)
 {
     if(name < 0 || name >= AMO_NUMOBJECTS)
-        throw Error("AutomapStyle::setObjectGlow", "Unknown object #" + String::number((int) name));
+        throw Error("AutomapStyle::setObjectGlow", "Unknown object #" + String::asText((int) name));
 
     automapcfg_lineinfo_t *info = nullptr;
     switch(name)
@@ -395,7 +395,7 @@ void AutomapStyle::setObjectGlow(automapcfg_objectname_t name, glowtype_t type, 
 svgid_t AutomapStyle::objectSvg(automapcfg_objectname_t name) const
 {
     if(name < 0 || name >= AMO_NUMOBJECTS)
-        throw Error("AutomapStyle::objectSvg", "Unknown object #" + String::number((int) name));
+        throw Error("AutomapStyle::objectSvg", "Unknown object #" + String::asText((int) name));
 
     switch(name)
     {
@@ -411,7 +411,7 @@ svgid_t AutomapStyle::objectSvg(automapcfg_objectname_t name) const
 void AutomapStyle::setObjectSvg(automapcfg_objectname_t name, svgid_t svg)
 {
     if(name < 0 || name >= AMO_NUMOBJECTS)
-        throw Error("AutomapStyle::setObjectSvg", "Unknown object #" + String::number((int) name));
+        throw Error("AutomapStyle::setObjectSvg", "Unknown object #" + String::asText((int) name));
 
     switch(name)
     {

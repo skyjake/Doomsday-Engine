@@ -104,7 +104,7 @@ GameRules *GameRules::fromRecord(Record const &record, GameRules const *defaults
 
     //if(rec != &record) delete rec;
 
-    //qDebug() << "GameRules from Record:\n" << gr->d->rules.asText().toUtf8().constData();
+    //qDebug() << "GameRules from Record:\n" << gr->d->rules.asText();
 
     return gr;
 }
@@ -209,8 +209,7 @@ void GameRules::read(reader_s *reader)
 
 String GameRules::asText() const
 {
-    String str;
-    QTextStream os(&str);
+    std::ostringstream os;
     os << "skillmode: " << int(values.skill);
     //os << " jumping: "  << (cfg.common.jumpEnabled ? "yes" : "no");
 #if defined(__JHEXEN__)
@@ -221,7 +220,7 @@ String GameRules::asText() const
     os << " (fast: "    << (values.fast            ? "yes" : "no");
     os << " respawn: "  << (values.respawnMonsters ? "yes" : "no") << ")";
 #endif
-    return str;
+    return os.str();
 }
 
 void GameRules::update()

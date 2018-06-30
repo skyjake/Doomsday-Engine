@@ -28,13 +28,14 @@
 
 #include "../libdoomsday.h"
 #include <de/libcore.h>
+#include <de/List>
 #include <de/types.h>
 #include <stdio.h>
 
-namespace de {
+namespace res {
 
 class File1;
-struct FileList;
+class FileHandle;
 
 /// Seek methods
 enum SeekMethod
@@ -43,6 +44,9 @@ enum SeekMethod
     SeekCur = 1,
     SeekEnd = 2
 };
+
+/// List of file search results.
+typedef de::List<FileHandle *> FileList;
 
 /**
  * Reference/handle to a unique file in the engine's virtual file system.
@@ -138,6 +142,6 @@ private:
     DE_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace res
 
 #endif /* DE_FILESYS_FILEHANDLE_H */

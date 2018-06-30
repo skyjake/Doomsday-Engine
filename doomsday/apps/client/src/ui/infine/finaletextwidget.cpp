@@ -295,7 +295,7 @@ FinaleTextWidget &FinaleTextWidget::setText(char const *newText)
     Z_Free(d->text); d->text = nullptr;
     if (newText && newText[0])
     {
-        int len = (int)qstrlen(newText) + 1;
+        int len = (int)strlen(newText) + 1;
         d->text = (char *) Z_Malloc(len, PU_APPSTATIC, 0);
         std::memcpy(d->text, newText, len);
     }

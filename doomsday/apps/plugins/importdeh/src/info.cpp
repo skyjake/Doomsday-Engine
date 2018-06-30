@@ -22,6 +22,8 @@
 #include "importdeh.h"
 #include "info.h"
 
+using namespace de;
+
 static FinaleBackgroundMapping const finaleBGMappings[] = {
     { "FLOOR4_8",   "BGFLATE1" }, ///< DOOM end of episode 1
     { "SFLR6_1",    "BGFLATE2" }, ///< DOOM end of episode 2
@@ -37,12 +39,12 @@ static FinaleBackgroundMapping const finaleBGMappings[] = {
     { "",           ""}
 };
 
-int findFinaleBackgroundMappingForText(QString const &text, FinaleBackgroundMapping const **mapping)
+int findFinaleBackgroundMappingForText(const String &text, FinaleBackgroundMapping const **mapping)
 {
     if(!text.isEmpty())
     for(int i = 0; !finaleBGMappings[i].text.isEmpty(); ++i)
     {
-        if(!finaleBGMappings[i].text.compare(text, Qt::CaseInsensitive))
+        if(!finaleBGMappings[i].text.compare(text, CaseInsensitive))
         {
             if(mapping) *mapping = &finaleBGMappings[i];
             return i;
@@ -129,13 +131,13 @@ static FlagMapping mobjtypeFlagMappings[] = {
     { 0, -1, "" } // terminator
 };
 
-int findMobjTypeFlagMappingByDehLabel(QString const &name, FlagMapping const **mapping)
+int findMobjTypeFlagMappingByDehLabel(String const &name, FlagMapping const **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
     for(int i = 0; !mobjtypeFlagMappings[i].dehLabel.isEmpty(); ++i)
     {
-        if(!mobjtypeFlagMappings[i].dehLabel.compare(name, Qt::CaseInsensitive))
+        if(!mobjtypeFlagMappings[i].dehLabel.compare(name, CaseInsensitive))
         {
             if(mapping) *mapping = &mobjtypeFlagMappings[i];
             return i;
@@ -144,7 +146,7 @@ int findMobjTypeFlagMappingByDehLabel(QString const &name, FlagMapping const **m
     return -1; // Not found.
 }
 
-static QString const MusicMap[] = {
+static String const MusicMap[] = {
     "e1m1",
     "e1m2",
     "e1m3",
@@ -215,19 +217,19 @@ static QString const MusicMap[] = {
     "" // Terminate.
 };
 
-int findMusicLumpNameInMap(QString const &name)
+int findMusicLumpNameInMap(String const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
     for(int i = 0; !MusicMap[i].isEmpty(); ++i)
     {
-        if(!MusicMap[i].compare(name, Qt::CaseInsensitive))
+        if(!MusicMap[i].compare(name, CaseInsensitive))
             return i;
     }
     return -1; // Not found.
 }
 
-static QString const SpriteMap[] = {
+static String const SpriteMap[] = {
     "TROO",
     "SHTG",
     "PUNG",
@@ -369,19 +371,19 @@ static QString const SpriteMap[] = {
     "" // Terminate.
 };
 
-int findSpriteNameInMap(QString const &name)
+int findSpriteNameInMap(String const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
     for(int i = 0; !SpriteMap[i].isEmpty(); ++i)
     {
-        if(!SpriteMap[i].compare(name, Qt::CaseInsensitive))
+        if(!SpriteMap[i].compare(name, CaseInsensitive))
             return i;
     }
     return -1; // Not found.
 }
 
-static QString const SoundMap[] = {
+static const StringList SoundMap = {
     "None",
     "pistol",
     "shotgn",
@@ -491,16 +493,15 @@ static QString const SoundMap[] = {
     "skesit",
     "skeatk",
     "radio",
-    NULL
 };
 
-int findSoundLumpNameInMap(QString const &name)
+int findSoundLumpNameInMap(String const &name)
 {
     /// @todo Optimize - replace linear search.
     if(!name.isEmpty())
     for(int i = 0; !SoundMap[i].isEmpty(); ++i)
     {
-        if(!SoundMap[i].compare(name, Qt::CaseInsensitive))
+        if(!SoundMap[i].compare(name, CaseInsensitive))
             return i;
     }
     return -1; // Not found.
@@ -515,12 +516,12 @@ static SoundMapping soundMappings[] = {
     { "",         soundname_t(-1), "" }
 };
 
-int findSoundMappingByDehLabel(QString const &dehLabel, SoundMapping const **mapping)
+int findSoundMappingByDehLabel(String const &dehLabel, SoundMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !soundMappings[i].dehLabel.isEmpty(); ++i)
     {
-        if(!soundMappings[i].dehLabel.compare(dehLabel, Qt::CaseInsensitive))
+        if(!soundMappings[i].dehLabel.compare(dehLabel, CaseInsensitive))
         {
             if(mapping) *mapping = &soundMappings[i];
             return i;
@@ -541,12 +542,12 @@ static StateMapping stateMappings[] = {
     { "",             statename_t(-1),  ""        }
 };
 
-int findStateMappingByDehLabel(QString const &dehLabel, StateMapping const **mapping)
+int findStateMappingByDehLabel(String const &dehLabel, StateMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !stateMappings[i].dehLabel.isEmpty(); ++i)
     {
-        if(!stateMappings[i].dehLabel.compare(dehLabel, Qt::CaseInsensitive))
+        if(!stateMappings[i].dehLabel.compare(dehLabel, CaseInsensitive))
         {
             if(mapping) *mapping = &stateMappings[i];
             return i;
@@ -564,12 +565,12 @@ static WeaponStateMapping weaponStateMappings[] = {
     { "",           weaponstatename_t(-1),  ""       }
 };
 
-int findWeaponStateMappingByDehLabel(QString const &dehLabel, WeaponStateMapping const **mapping)
+int findWeaponStateMappingByDehLabel(String const &dehLabel, WeaponStateMapping const **mapping)
 {
     if(!dehLabel.isEmpty())
     for(int i = 0; !weaponStateMappings[i].dehLabel.isEmpty(); ++i)
     {
-        if(!weaponStateMappings[i].dehLabel.compare(dehLabel, Qt::CaseInsensitive))
+        if(!weaponStateMappings[i].dehLabel.compare(dehLabel, CaseInsensitive))
         {
             if(mapping) *mapping = &weaponStateMappings[i];
             return i;
@@ -985,13 +986,13 @@ static TextMapping const TextMap[] = {
     { "",          "" } // Terminate.
 };
 
-int textMappingForBlob(QString const &origText, TextMapping const **mapping)
+int textMappingForBlob(String const &origText, TextMapping const **mapping)
 {
     /// @todo Optimize - replace linear search and hash the text blobs.
     if(!origText.isEmpty())
     for(int i = 0; !TextMap[i].text.isEmpty(); ++i)
     {
-        if(!TextMap[i].text.compare(origText, Qt::CaseInsensitive))
+        if(!TextMap[i].text.compare(origText, CaseInsensitive))
         {
             if(mapping) *mapping = &TextMap[i];
             return i;
@@ -1075,13 +1076,13 @@ static ValueMapping const valueMappings[] = {
     { "", "" }
 };
 
-int findValueMappingForDehLabel(QString const &dehLabel, ValueMapping const **mapping)
+int findValueMappingForDehLabel(String const &dehLabel, ValueMapping const **mapping)
 {
     /// @todo Optimize - replace linear search.
     if(!dehLabel.isEmpty())
     for(int i = 0; !valueMappings[i].dehLabel.isEmpty(); ++i)
     {
-        if(!valueMappings[i].dehLabel.compare(dehLabel, Qt::CaseInsensitive))
+        if(!valueMappings[i].dehLabel.compare(dehLabel, CaseInsensitive))
         {
             if(mapping) *mapping = &valueMappings[i];
             return i;

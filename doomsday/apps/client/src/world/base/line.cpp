@@ -209,7 +209,7 @@ DE_PIMPL(Line::Side)
             }
         }
         /// @throw Line::InvalidSectionIdError The given section identifier is not valid.
-        throw Line::InvalidSectionIdError("Line::Side::section", "Invalid section id " + String::number(sectionId));*/
+        throw Line::InvalidSectionIdError("Line::Side::section", "Invalid section id " + String::asText(sectionId));*/
 
         DE_ASSERT(sectionId >= Middle && sectionId <= Top);
 
@@ -325,7 +325,7 @@ String Line::Side::description() const
                        _E(l) " One Sided: " _E(.)_E(i) "%3" _E(.)
                        "%4")
                     .arg(Line::sideIdAsText(sideId()).upperFirstChar())
-                    .arg(hasSector() ? String::number(sector().indexInMap()) : "None")
+                    .arg(hasSector() ? String::asText(sector().indexInMap()) : "None")
                     .arg(DE_BOOL_YESNO(considerOneSided()))
                     .arg(flagsString);
 
@@ -687,7 +687,7 @@ void Line::Side::chooseSurfaceColors(dint sectionId, Vec3f const **topColor,
         }
     }
     /// @throw InvalidSectionIdError The given section identifier is not valid.
-    throw InvalidSectionIdError("Line::Side::chooseSurfaceColors", "Invalid section id " + String::number(sectionId));
+    throw InvalidSectionIdError("Line::Side::chooseSurfaceColors", "Invalid section id " + String::asText(sectionId));
 }
 
 dint Line::Side::shadowVisCount() const

@@ -60,13 +60,13 @@ FMOD::System *fmodSystem = 0;
 
 struct Driver
 {
-    de::String name;
-    FMOD_GUID guid;
-    int systemRate;
+    de::String       name;
+    FMOD_GUID        guid;
+    int              systemRate;
     FMOD_SPEAKERMODE speakerMode;
-    int speakerModeChannels;
+    int              speakerModeChannels;
 };
-static QVector<Driver> fmodDrivers;
+static de::List<Driver> fmodDrivers;
 
 static const char *speakerModeText(FMOD_SPEAKERMODE mode)
 {

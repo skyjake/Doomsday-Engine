@@ -22,10 +22,6 @@
 #include "jdoom.h"
 #include "intermission.h"
 
-#include <cstdio>
-#include <cctype>
-#include <cstring>
-#include <QList>
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
@@ -33,6 +29,12 @@
 #include "hu_stuff.h"
 #include "p_mapsetup.h"
 #include "p_start.h"
+
+#include <cstdio>
+#include <cctype>
+#include <cstring>
+#include <de/List>
+#include <de/Set>
 
 using namespace de;
 
@@ -54,11 +56,11 @@ namespace internal
         Vec2i origin;
         int tics;                     ///< Number of tics each frame of the animation lasts for.
         StringList patchNames;        ///< For each frame of the animation.
-        de::Uri mapUri;               ///< If path is not zero-length the animation should only be displayed on this map.
+        res::Uri mapUri;               ///< If path is not zero-length the animation should only be displayed on this map.
         interludestate_t beginState;  ///< State at which this animation begins/becomes visible.
 
         Animation(Vec2i const &origin, int tics, StringList patchNames,
-                  de::Uri const &mapUri       = de::makeUri("Maps:"),
+                  res::Uri const &mapUri       = res::makeUri("Maps:"),
                   interludestate_t beginState = ILS_SHOW_STATS)
             : origin    (origin)
             , tics      (tics)
@@ -67,7 +69,7 @@ namespace internal
             , beginState(beginState)
         {}
     };
-    typedef QList<Animation> Animations;
+    typedef List<Animation> Animations;
     static Animations episode1Anims;
     static Animations episode2Anims;
     static Animations episode3Anims;
@@ -75,14 +77,14 @@ namespace internal
     struct Location
     {
         Vec2i origin;
-        de::Uri mapUri;
+        res::Uri mapUri;
 
-        Location(Vec2i const &origin, de::Uri const &mapUri)
+        Location(Vec2i const &origin, res::Uri const &mapUri)
             : origin(origin)
             , mapUri(mapUri)
         {}
     };
-    typedef QList<Location> Locations;
+    typedef List<Location> Locations;
     static Locations episode1Locations;
     static Locations episode2Locations;
     static Locations episode3Locations;
@@ -93,10 +95,10 @@ namespace internal
         int frame = -1;   ///< Current frame number (index to patches); otherwise @c -1 (not yet begun).
 
         /// Graphics for each frame of the animation.
-        typedef QList<patchid_t> Patches;
+        typedef List<patchid_t> Patches;
         Patches patches;
     };
-    typedef QList<wianimstate_t> AnimationStates;
+    typedef List<wianimstate_t> AnimationStates;
     static AnimationStates animStates;
 
     static patchid_t pBackground;
@@ -129,25 +131,25 @@ namespace internal
                                          patchId, text);
     }
 
-    static void drawChar(QChar const ch, Vec2i const &origin,
+    static void drawChar(Char const ch, Vec2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
-        FR_DrawChar3(ch.toLatin1(), &rawOrigin, alignFlags, textFlags);
+        FR_DrawChar3(char(ch), &rawOrigin, alignFlags, textFlags);
     }
 
     static void drawText(String const &text, Vec2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
-        FR_DrawText3(text.toUtf8().constData(), &rawOrigin, alignFlags, textFlags);
+        FR_DrawText3(text, &rawOrigin, alignFlags, textFlags);
     }
 
     static void drawPercent(int percent, Vec2i const &origin)
     {
         if(percent < 0) return;
         drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-        drawText(String::number(percent), origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+        drawText(String::asText(percent), origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
     }
 
     /**
@@ -167,9 +169,9 @@ namespace internal
             drawChar(':', origin);
             if(minutes > 0)
             {
-                drawText(String::number(minutes), origin, ALIGN_TOPRIGHT);
+                drawText(String::asText(minutes), origin, ALIGN_TOPRIGHT);
             }
-            drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vec2i(FR_CharWidth(':'), 0));
+            drawText(String::format("%02i", seconds), origin + Vec2i(FR_CharWidth(':'), 0));
 
             return;
         }
@@ -204,37 +206,37 @@ void IN_Init()
         << Animation( Vec2i( 64,  24), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
 
     episode1Locations
-        << Location( Vec2i(185, 164), de::makeUri("Maps:E1M1") )
-        << Location( Vec2i(148, 143), de::makeUri("Maps:E1M2") )
-        << Location( Vec2i( 69, 122), de::makeUri("Maps:E1M3") )
-        << Location( Vec2i(209, 102), de::makeUri("Maps:E1M4") )
-        << Location( Vec2i(116,  89), de::makeUri("Maps:E1M5") )
-        << Location( Vec2i(166,  55), de::makeUri("Maps:E1M6") )
-        << Location( Vec2i( 71,  56), de::makeUri("Maps:E1M7") )
-        << Location( Vec2i(135,  29), de::makeUri("Maps:E1M8") )
-        << Location( Vec2i( 71,  24), de::makeUri("Maps:E1M9") );
+        << Location( Vec2i(185, 164), res::makeUri("Maps:E1M1") )
+        << Location( Vec2i(148, 143), res::makeUri("Maps:E1M2") )
+        << Location( Vec2i( 69, 122), res::makeUri("Maps:E1M3") )
+        << Location( Vec2i(209, 102), res::makeUri("Maps:E1M4") )
+        << Location( Vec2i(116,  89), res::makeUri("Maps:E1M5") )
+        << Location( Vec2i(166,  55), res::makeUri("Maps:E1M6") )
+        << Location( Vec2i( 71,  56), res::makeUri("Maps:E1M7") )
+        << Location( Vec2i(135,  29), res::makeUri("Maps:E1M8") )
+        << Location( Vec2i( 71,  24), res::makeUri("Maps:E1M9") );
 
     episode2Anims
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10000"), de::makeUri("Maps:E2M2") )
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10100"), de::makeUri("Maps:E2M3") )
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10200"), de::makeUri("Maps:E2M4") )
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10300"), de::makeUri("Maps:E2M5") )
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M6") )
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M9") )
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10500"), de::makeUri("Maps:E2M7") )
-        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10600"), de::makeUri("Maps:E2M8") )
-        << Animation( Vec2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::makeUri("Maps:E2M9"), ILS_SHOW_NEXTMAP );
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10000"), res::makeUri("Maps:E2M2") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10100"), res::makeUri("Maps:E2M3") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10200"), res::makeUri("Maps:E2M4") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10300"), res::makeUri("Maps:E2M5") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10400"), res::makeUri("Maps:E2M6") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10400"), res::makeUri("Maps:E2M9") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10500"), res::makeUri("Maps:E2M7") )
+        << Animation( Vec2i(128, 136),  0, StringList() << String("wia10600"), res::makeUri("Maps:E2M8") )
+        << Animation( Vec2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), res::makeUri("Maps:E2M9"), ILS_SHOW_NEXTMAP );
 
     episode2Locations
-        << Location( Vec2i(254,  25), de::makeUri("Maps:E2M1") )
-        << Location( Vec2i( 97,  50), de::makeUri("Maps:E2M2") )
-        << Location( Vec2i(188,  64), de::makeUri("Maps:E2M3") )
-        << Location( Vec2i(128,  78), de::makeUri("Maps:E2M4") )
-        << Location( Vec2i(214,  92), de::makeUri("Maps:E2M5") )
-        << Location( Vec2i(133, 130), de::makeUri("Maps:E2M6") )
-        << Location( Vec2i(208, 136), de::makeUri("Maps:E2M7") )
-        << Location( Vec2i(148, 140), de::makeUri("Maps:E2M8") )
-        << Location( Vec2i(235, 158), de::makeUri("Maps:E2M9") );
+        << Location( Vec2i(254,  25), res::makeUri("Maps:E2M1") )
+        << Location( Vec2i( 97,  50), res::makeUri("Maps:E2M2") )
+        << Location( Vec2i(188,  64), res::makeUri("Maps:E2M3") )
+        << Location( Vec2i(128,  78), res::makeUri("Maps:E2M4") )
+        << Location( Vec2i(214,  92), res::makeUri("Maps:E2M5") )
+        << Location( Vec2i(133, 130), res::makeUri("Maps:E2M6") )
+        << Location( Vec2i(208, 136), res::makeUri("Maps:E2M7") )
+        << Location( Vec2i(148, 140), res::makeUri("Maps:E2M8") )
+        << Location( Vec2i(235, 158), res::makeUri("Maps:E2M9") );
 
     episode3Anims
         << Animation( Vec2i(104, 168), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
@@ -245,15 +247,15 @@ void IN_Init()
         << Animation( Vec2i( 40,   0),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
 
     episode3Locations
-        << Location( Vec2i(156, 168), de::makeUri("Maps:E3M1") )
-        << Location( Vec2i( 48, 154), de::makeUri("Maps:E3M2") )
-        << Location( Vec2i(174,  95), de::makeUri("Maps:E3M3") )
-        << Location( Vec2i(265,  75), de::makeUri("Maps:E3M4") )
-        << Location( Vec2i(130,  48), de::makeUri("Maps:E3M5") )
-        << Location( Vec2i(279,  23), de::makeUri("Maps:E3M6") )
-        << Location( Vec2i(198,  48), de::makeUri("Maps:E3M7") )
-        << Location( Vec2i(140,  25), de::makeUri("Maps:E3M8") )
-        << Location( Vec2i(281, 136), de::makeUri("Maps:E3M9") );
+        << Location( Vec2i(156, 168), res::makeUri("Maps:E3M1") )
+        << Location( Vec2i( 48, 154), res::makeUri("Maps:E3M2") )
+        << Location( Vec2i(174,  95), res::makeUri("Maps:E3M3") )
+        << Location( Vec2i(265,  75), res::makeUri("Maps:E3M4") )
+        << Location( Vec2i(130,  48), res::makeUri("Maps:E3M5") )
+        << Location( Vec2i(279,  23), res::makeUri("Maps:E3M6") )
+        << Location( Vec2i(198,  48), res::makeUri("Maps:E3M7") )
+        << Location( Vec2i(140,  25), res::makeUri("Maps:E3M8") )
+        << Location( Vec2i(281, 136), res::makeUri("Maps:E3M9") );
 }
 
 void IN_Shutdown()
@@ -269,7 +271,7 @@ static String backgroundPatchForEpisode(String const &episodeId)
         int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
         if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
         {
-            return String("WIMAP%1").arg(oldEpisodeNum);
+            return String::format("WIMAP%i", oldEpisodeNum);
         }
     }
     return "INTERPIC";
@@ -297,7 +299,7 @@ static Locations const *locationsForEpisode(String const &episodeId)
     return nullptr; // Not found.
 }
 
-static Location const *tryFindLocationForMap(Locations const *locations, de::Uri const &mapUri)
+static Location const *tryFindLocationForMap(Locations const *locations, res::Uri const &mapUri)
 {
     if(locations)
     {
@@ -360,7 +362,7 @@ static common::GameSession::VisitedMaps visitedMaps()
             int lastMapNum = G_MapNumberFor(::wbs->currentMap);
             if(lastMapNum == 8) lastMapNum = G_MapNumberFor(::wbs->nextMap) - 1; // 1-based
 
-            QSet<de::Uri> visited;
+            Set<String> visited;
             for(int i = 0; i <= lastMapNum; ++i)
             {
                 visited << G_ComposeMapUri(oldEpisodeNum, i);
@@ -369,7 +371,7 @@ static common::GameSession::VisitedMaps visitedMaps()
             {
                 visited << G_ComposeMapUri(oldEpisodeNum, 8);
             }
-            return visited.toList();
+            return compose<common::GameSession::VisitedMaps>(visited.begin(), visited.end());
         }
     }
     return gfw_Session()->allVisitedMaps();
@@ -410,12 +412,12 @@ static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
     patchid_t titlePatchId = 0;
 
     String const title       = G_MapTitle(wbs->currentMap);
-    de::Uri const titleImage = G_MapTitleImage(wbs->currentMap);
+    res::Uri const titleImage = G_MapTitleImage(wbs->currentMap);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
         {
-            titlePatchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            titlePatchId = R_DeclarePatch(titleImage.path());
         }
     }
 
@@ -430,7 +432,7 @@ static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
     {
         // Draw title text.
         drawText(text, origin, ALIGN_TOP, DTF_NO_TYPEIN);
-        origin.y += (5 * FR_TextHeight(text.toUtf8().constData())) / 4;
+        origin.y += (5 * FR_TextHeight(text)) / 4;
     }
     else
     {
@@ -453,7 +455,7 @@ static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 
     /// @kludge We need to properly externalize the map progression.
     if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) &&
-       wbs->nextMap.path() == "MAP31")
+       wbs->nextMap.path().toString() == "MAP31")
     {
         return;
     }
@@ -462,12 +464,12 @@ static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
     patchid_t patchId = 0;
 
     String const title       = G_MapTitle(wbs->nextMap);
-    de::Uri const titleImage = G_MapTitleImage(wbs->nextMap);
+    res::Uri const titleImage = G_MapTitleImage(wbs->nextMap);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
         {
-            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            patchId = R_DeclarePatch(titleImage.path());
         }
     }
 
@@ -664,8 +666,7 @@ static void drawLocationMarks()
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
 
-    common::GameSession::VisitedMaps const visited = visitedMaps();
-    foreach(de::Uri const &visitedMap, visited)
+    for (res::Uri const &visitedMap : visitedMaps())
     {
         if(Location const *loc = tryFindLocationForMap(locations, visitedMap))
         {
@@ -833,7 +834,7 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
             // If more than 1 member, show the member count.
             if(1 > teamInfo[i].playerCount)
             {
-                String const count = String::number(teamInfo[i].playerCount);
+                String const count = String::asText(teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
                 drawText(count, Vec2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
@@ -872,11 +873,11 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
             {
                 if(teamInfo[k].playerCount > 0)
                 {
-                    drawText(String::number(dmFrags[i][k]), origin + Vec2i(w, 0), ALIGN_TOPRIGHT);
+                    drawText(String::asText(dmFrags[i][k]), origin + Vec2i(w, 0), ALIGN_TOPRIGHT);
                 }
                 origin.x += DM_SPACINGX;
             }
-            drawText(String::number(dmTotals[i]), Vec2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
+            drawText(String::asText(dmTotals[i]), Vec2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
         }
 
         origin.y += WI_SPACINGY;
@@ -1097,7 +1098,7 @@ static void drawNetgameStats()
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
         {
-            drawText(String::number(teamInfo[i].playerCount),
+            drawText(String::asText(teamInfo[i].playerCount),
                      Vec2i(x - info.geometry.size.width + 1,
                               y + info.geometry.size.height - 8), ALIGN_TOPLEFT);
         }
@@ -1122,7 +1123,7 @@ static void drawNetgameStats()
 
         if(doFrags)
         {
-            drawText(String::number(cntFrags[i]), Vec2i(x, y + 10), ALIGN_TOPRIGHT);
+            drawText(String::asText(cntFrags[i]), Vec2i(x, y + 10), ALIGN_TOPRIGHT);
         }
 
         y += WI_SPACINGY;
@@ -1383,7 +1384,7 @@ static void loadData()
     String const episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
-    pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
+    pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId));
 
     // Are there any animation states to initialize?
     animStates.clear();
@@ -1396,7 +1397,7 @@ static void loadData()
             wianimstate_t &state = animStates.last();
             for(String const &patchName : def.patchNames)
             {
-                state.patches << R_DeclarePatch(patchName.toUtf8().constData());
+                state.patches << R_DeclarePatch(patchName);
             }
         }
     }

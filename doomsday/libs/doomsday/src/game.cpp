@@ -40,6 +40,7 @@
 #include <algorithm>
 
 using namespace de;
+using namespace res;
 
 static String const VAR_RESOURCE_LOCAL_PACKAGES("resource.localPackages");
 static String const VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME("resource.localPackagesForGame");

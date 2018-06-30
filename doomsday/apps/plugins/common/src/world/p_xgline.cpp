@@ -2089,7 +2089,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
         return false;
     }
 
-    de::Uri newMapUri;
+    res::Uri newMapUri;
     if(info->iparm[1] == LREF_NONE)
     {
         // (ip3) will be used to determine next map (1-based).
@@ -2116,11 +2116,11 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
     }
 
     // Check that the map truly exists.
-    if(!P_MapExists(newMapUri.compose().toUtf8().constData()))
+    if(!P_MapExists(newMapUri.compose()))
     {
         // Backward compatibility dictates that invalid refs be interpreted to mean the start map
         // of the current episode (which is known to always exist).
-        newMapUri = de::makeUri(gfw_Session()->episodeDef()->gets("startMap"));
+        newMapUri = res::makeUri(gfw_Session()->episodeDef()->gets("startMap"));
     }
 
     G_SetGameActionMapCompleted(newMapUri);

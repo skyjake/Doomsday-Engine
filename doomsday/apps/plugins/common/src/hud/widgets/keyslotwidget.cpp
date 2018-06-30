@@ -205,7 +205,7 @@ void guidata_keyslot_t::prepareAssets()
 #else
     for(dint i = 0; i < NUM_KEY_TYPES; ++i)
     {
-        ::pKeySlots[i] = R_DeclarePatch(String("STKEYS%1").arg(i).toUtf8().constData());
+        ::pKeySlots[i] = R_DeclarePatch(String::format("STKEYS%d", i));
     }
 #endif
 }

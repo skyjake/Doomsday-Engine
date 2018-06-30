@@ -26,7 +26,7 @@
 
 #include <de/NativePath>
 
-namespace de {
+namespace res {
 
 File1::File1(FileHandle *hndl, String _path, FileInfo const &_info, File1 *_container)
     : handle_(hndl)
@@ -61,7 +61,12 @@ bool File1::isContained() const
 
 File1 &File1::container() const
 {
-    if (!container_) throw NotContainedError("File1::container", "File \"" + NativePath(composePath()).pretty() + " is not contained");
+    if (!container_)
+    {
+        throw NotContainedError("File1::container",
+                                "File \"" + NativePath(composePath()).pretty() +
+                                    " is not contained");
+    }
     return *container_;
 }
 
@@ -140,4 +145,4 @@ File1 &File1::clearCache(bool* /*retCleared*/)
     throw Error("File1::clearCache", "Not yet implemented");
 }
 
-} // namespace de
+} // namespace res

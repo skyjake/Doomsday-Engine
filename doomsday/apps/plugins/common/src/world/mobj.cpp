@@ -28,7 +28,6 @@
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/String>
 #include <de/mathutil.h>
-#include <QTextStream>
 
 #include "dmu_lib.h"
 #include "g_defs.h"
@@ -1072,24 +1071,26 @@ de::String Mobj_StateAsInfo(mobj_t const *mob)
 {
     using de::String;
 
-    QString str;
-    QTextStream os(&str);
-    os.setCodec("UTF-8");
+    String str;
 
-    os << "Mobj 0x" << String::number(Mobj_PrivateID(mob), 16)
-       << " {\n  target = 0x" << String::number(Mobj_PrivateID(mob->target), 16)
-       << "\n  onMobj = 0x" << String::number(Mobj_PrivateID(mob->onMobj), 16)
-       << "\n  tracer = 0x" << String::number(Mobj_PrivateID(mob->tracer), 16);
+    str += "Mobj 0x";
+    str += String::asText(Mobj_PrivateID(mob), 16);
+    str += " {\n  target = 0x";
+    str += String::asText(Mobj_PrivateID(mob->target), 16);
+    str += "\n  onMobj = 0x";
+    str += String::asText(Mobj_PrivateID(mob->onMobj), 16);
+    str += "\n  tracer = 0x";
+    str += String::asText(Mobj_PrivateID(mob->tracer), 16);
 
     #if defined (__JHERETIC__)
     {
-        os << "\n  generator = 0x" << String::number(Mobj_PrivateID(mob->generator), 16);
+        os << "\n  generator = 0x" << String::asText(Mobj_PrivateID(mob->generator), 16);
     }
     #endif
 
     #if defined (__JHEXEN__)
     {
-        os << "\n  lastEnemy = 0x" << String::number(Mobj_PrivateID(mob->lastEnemy), 16);
+        os << "\n  lastEnemy = 0x" << String::asText(Mobj_PrivateID(mob->lastEnemy), 16);
     }
     #endif
 

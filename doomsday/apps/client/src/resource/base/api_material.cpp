@@ -35,7 +35,7 @@ DE_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 
     try
     {
-        de::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<de::Uri const &>(*textureUri)).composeUri();
+        res::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<res::Uri const &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return reinterpret_cast<world_Material *>(&world::Materials::get().material(uri));
     }
@@ -59,7 +59,7 @@ DE_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
 DE_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 {
     world::MaterialManifest &manifest = world::Materials::get().toMaterialManifest(materialId);
-    return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
+    return reinterpret_cast<uri_s *>(new res::Uri(manifest.composeUri()));
 }
 
 #undef Materials_ResolveUri
@@ -67,7 +67,7 @@ DE_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
 {
     try
     {
-        return world::Materials::get().materialManifest(*reinterpret_cast<de::Uri const *>(uri)).id();
+        return world::Materials::get().materialManifest(*reinterpret_cast<res::Uri const *>(uri)).id();
     }
     catch (Resources::MissingResourceManifestError const &)
     {}  // Ignore this error.
@@ -81,7 +81,7 @@ DE_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
     {
         try
         {
-            return world::Materials::get().materialManifest(de::makeUri(uriCString)).id();
+            return world::Materials::get().materialManifest(res::makeUri(uriCString)).id();
         }
         catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.

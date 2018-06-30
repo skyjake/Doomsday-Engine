@@ -25,9 +25,9 @@ using namespace de;
 
 namespace world {
 
-static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findMask)
+static res::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findMask)
 {
-    if (de::Uri *resourceUri = (findMask? def.maskTexture : def.texture))
+    if (res::Uri *resourceUri = (findMask? def.maskTexture : def.texture))
     {
         try
         {
@@ -39,11 +39,11 @@ static de::Uri findTextureForShineStage(ded_shine_stage_t const &def, bool findM
         catch (res::TextureScheme::NotFoundError const &)
         {} // Ignore this error.
     }
-    return de::Uri();
+    return res::Uri();
 }
 
-ShineTextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
-    float variance, de::Uri const &maskTexture, blendmode_t blendMode, float opacity,
+ShineTextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &texture, int tics,
+    float variance, res::Uri const &maskTexture, blendmode_t blendMode, float opacity,
     Vec3f const &minColor, Vec2f const &maskDimensions)
     : TextureMaterialLayer::AnimationStage(texture, tics, variance, 0, 0, Vec2f(0, 0),
                                            maskTexture, maskDimensions, blendMode, opacity)
@@ -70,8 +70,8 @@ void ShineTextureMaterialLayer::AnimationStage::resetToDefaults()
 ShineTextureMaterialLayer::AnimationStage *
 ShineTextureMaterialLayer::AnimationStage::fromDef(ded_shine_stage_t const &def)
 {
-    de::Uri const texture     = findTextureForShineStage(def, false/*not mask*/);
-    de::Uri const maskTexture = findTextureForShineStage(def, true/*mask*/);
+    res::Uri const texture     = findTextureForShineStage(def, false/*not mask*/);
+    res::Uri const maskTexture = findTextureForShineStage(def, true/*mask*/);
 
     return new AnimationStage(texture, def.tics, def.variance, maskTexture,
                               def.blendMode, def.shininess, Vec3f(def.minColor),

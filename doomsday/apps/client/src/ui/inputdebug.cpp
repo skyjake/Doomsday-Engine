@@ -216,7 +216,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 
     // Calculate the size of the visual according to the dimensions of the text.
     Size2Raw textSize;
-    FR_TextSize(&textSize, label.toUtf8().constData());
+    FR_TextSize(&textSize, label);
 
     // Enlarge by BORDER pixels.
     Rectanglei textGeom = Rectanglei::fromSize(Vec2i(0, 0),
@@ -230,7 +230,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     // Draw the text.
     DGL_Enable(DGL_TEXTURE_2D);
     Point2Raw const textOffset = {{{BORDER, BORDER}}};
-    FR_DrawText(label.toUtf8().constData(), &textOffset);
+    FR_DrawText(label, &textOffset);
     DGL_Disable(DGL_TEXTURE_2D);
 
     // Mark expired?

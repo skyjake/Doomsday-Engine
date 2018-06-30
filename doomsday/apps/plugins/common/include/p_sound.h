@@ -33,7 +33,7 @@
  *
  * @c return Music was successfully started.
  */
-bool S_MapMusic(de::Uri const &mapUri);
+bool S_MapMusic(const res::Uri &mapUri);
 
 extern "C" {
 #endif

@@ -38,8 +38,8 @@ dint PlayableEpisodeCount()
     for(auto const &pair : episodesById)
     {
         Record const &episodeDef = *pair.second->as<RecordValue>().record();
-        de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
-        if(P_MapExists(startMap.compose().toUtf8().constData()))
+        res::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+        if(P_MapExists(startMap.compose()))
         {
             count += 1;
         }
@@ -53,8 +53,8 @@ String FirstPlayableEpisodeId()
     for(auto const &pair : episodesById)
     {
         Record const &episodeDef = *pair.second->as<RecordValue>().record();
-        de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
-        if(P_MapExists(startMap.compose().toUtf8().constData()))
+        res::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
+        if(P_MapExists(startMap.compose()))
         {
             return episodeDef.gets("id");
         }
@@ -62,16 +62,16 @@ String FirstPlayableEpisodeId()
     return "";  // Not found.
 }
 
-de::Uri TranslateMapWarpNumber(String const &episodeId, dint warpNumber)
+res::Uri TranslateMapWarpNumber(String const &episodeId, dint warpNumber)
 {
     if(Record const *rec = Defs().episodes.tryFind("id", episodeId))
     {
         defn::Episode episodeDef(*rec);
         if(Record const *mgNodeRec = episodeDef.tryFindMapGraphNodeByWarpNumber(warpNumber))
         {
-            return de::makeUri(mgNodeRec->gets("id"));
+            return res::makeUri(mgNodeRec->gets("id"));
         }
     }
-    return de::makeUri("Maps:");  // Not found.
+    return res::makeUri("Maps:");  // Not found.
 }
 

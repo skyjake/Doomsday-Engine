@@ -18,8 +18,7 @@
  */
 
 #include "lzss.h"
-#include <QList>
-#include <QMutableListIterator>
+#include <de/List>
 #include <de/ArrayValue>
 #include <de/FileSystem>
 #include <de/LogBuffer>
@@ -269,7 +268,7 @@ DE_PIMPL(NativeTranslator)
         {
             NativeFile const &nativeFile = DE_TEXT_APP->fileSystem().find<NativeFile const>(path);
             NativePath const nativeFilePath = nativeFile.nativePath();
-            saveFilePtr = lzOpen(nativeFilePath.toUtf8().constData(), "rp");
+            saveFilePtr = lzOpen(nativeFilePath, "rp");
             return;
         }
         catch (FileSystem::NotFoundError const &)
@@ -324,14 +323,14 @@ DE_PIMPL(NativeTranslator)
         if (saveVersion < 0 || saveVersion > 13)
         {
             /// @throw UnknownFormatError Format is from the future.
-            throw UnknownFormatError("translateMetadata", "Incompatible format version " + String::number(saveVersion));
+            throw UnknownFormatError("translateMetadata", "Incompatible format version " + String::asText(saveVersion));
         }
         // We are incompatible with v3 saves due to an invalid test used to determine present
         // sides (ver3 format's sides contain chunks of junk data).
         if (id == Hexen && saveVersion == 3)
         {
             /// @throw UnknownFormatError Map state is in an unsupported format.
-            throw UnknownFormatError("translateMetadata", "Unsupported format version " + String::number(saveVersion));
+            throw UnknownFormatError("translateMetadata", "Unsupported format version " + String::asText(saveVersion));
         }
 
         // Translate gamemode identifiers from older save versions.
@@ -351,7 +350,7 @@ DE_PIMPL(NativeTranslator)
         metadata.set("userDescription", String((char *)descBuf, len));
         free(descBuf); descBuf = 0;
 
-        QScopedPointer<Record> rules(new Record);
+        std::unique_ptr<Record> rules(new Record);
         if (id != Hexen && saveVersion < 13)
         {
             // In DOOM the high bit of the skill mode byte is also used for the
@@ -425,7 +424,7 @@ DE_PIMPL(NativeTranslator)
             rules->addBoolean("respawnMonsters", respawnMonsters);
         }
 
-        metadata.add("gameRules",           rules.take());
+        metadata.add("gameRules", rules.release());
 
         if (id != Hexen)
         {
@@ -490,7 +489,7 @@ DE_PIMPL(NativeTranslator)
             }
         }
     };
-    typedef QList<ACScriptTask *> ACScriptTasks;
+    typedef de::List<ACScriptTask *> ACScriptTasks;
 
     void translateACScriptState(ZipArchive &arch, LZReader &from)
     {
@@ -504,7 +503,7 @@ DE_PIMPL(NativeTranslator)
             if (segId != ASEG_WORLDSCRIPTDATA)
             {
                 /// @throw ReadError Failed alignment check.
-                throw ReadError("translateACScriptState", "Corrupt save game, segment #" + String::number(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
+                throw ReadError("translateACScriptState", "Corrupt save game, segment #" + String::asText(ASEG_WORLDSCRIPTDATA) + " failed alignment check");
             }
         }
 
@@ -516,7 +515,7 @@ DE_PIMPL(NativeTranslator)
         if (ver < 1 || ver > 3)
         {
             /// @throw UnknownFormatError Format is from the future.
-            throw UnknownFormatError("translateACScriptState", "Incompatible data segment version " + String::number(ver));
+            throw UnknownFormatError("translateACScriptState", "Incompatible data segment version " + String::asText(ver));
         }
 
         dint32 worldVars[MAX_ACS_WORLD_VARS];
@@ -539,14 +538,17 @@ DE_PIMPL(NativeTranslator)
             }
 
             // Prune tasks with no map number set (unused).
-            QMutableListIterator<ACScriptTask *> it(tasks);
-            while (it.hasNext())
+            for (auto it = tasks.begin(); it != tasks.end(); )
             {
-                ACScriptTask *task = it.next();
+                ACScriptTask *task = *it;
                 if (!task->mapNumber)
                 {
-                    it.remove();
+                    it = tasks.erase(it);
                     delete task;
+                }
+                else
+                {
+                    ++it;
                 }
             }
             LOG_XVERBOSE("Translated %i deferred ACScript tasks", tasks.count());
@@ -562,15 +564,16 @@ DE_PIMPL(NativeTranslator)
         }
         writer << dint32(tasks.count());
         writer.writeObjects(tasks);
-        qDeleteAll(tasks);
+        deleteAll(tasks);
 
 #undef MAX_ACS_WORLD_VARS
     }
 };
 
-NativeTranslator::NativeTranslator(FormatId formatId, QStringList knownExtensions,
-                                   QStringList baseGameIdKeys)
-    : PackageFormatter(knownExtensions, baseGameIdKeys)
+NativeTranslator::NativeTranslator(FormatId   formatId,
+                                   StringList knownExtensions,
+                                   StringList baseGameIdKeys)
+    : PackageFormatter(std::move(knownExtensions), std::move(baseGameIdKeys))
     , d(new Impl(this))
 {
     d->id = formatId;
@@ -651,8 +654,8 @@ void NativeTranslator::convert(Path path)
 
     if (d->id == Hexen)
     {
-        QScopedPointer<Block> xlatedPlayerData(d->bufferFile());
-        DE_ASSERT(!xlatedPlayerData.isNull());
+        std::unique_ptr<Block> xlatedPlayerData(d->bufferFile());
+        DE_ASSERT(xlatedPlayerData);
         d->closeFile();
 
         // Update the metadata with the present player info (this is not needed by Hexen
@@ -673,7 +676,7 @@ void NativeTranslator::convert(Path path)
             try
             {
                 d->openFile(path.toString().fileNamePath() / saveName.fileNameWithoutExtension()
-                            + String("%1").arg(i + 1, 2, 10, QChar('0'))
+                            + String::format("%02i", i + 1)
                             + saveName.fileNameExtension());
 
                 if (Block *xlatedData = d->bufferFile())
@@ -689,8 +692,8 @@ void NativeTranslator::convert(Path path)
                     }
 
                     // Concatenate the translated data to form the serialized map state file.
-                    QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
-                    DE_ASSERT(!mapStateData.isNull());
+                    std::unique_ptr<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
+                    DE_ASSERT(mapStateData);
                     *mapStateData += *xlatedPlayerData;
                     *mapStateData += *xlatedData;
 
@@ -712,8 +715,8 @@ void NativeTranslator::convert(Path path)
         {
             // Append the remaining translated data to header, forming the new serialized
             // map state data file.
-            QScopedPointer<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
-            DE_ASSERT(!mapStateData.isNull());
+            std::unique_ptr<Block> mapStateData(composeMapStateHeader(d->magic(), d->saveVersion));
+            DE_ASSERT(mapStateData);
             *mapStateData += *xlatedData;
 
             arch.add(Path("maps") / metadata.gets("mapUri") + "State", *mapStateData);

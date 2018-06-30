@@ -326,7 +326,7 @@ void X_PostInit()
     {
         scriptPath = arg.params.first()/"SNDSEQ.txt";
     }
-    SndSeqParser(AutoStr_FromTextStd(scriptPath.toUtf8().constData()));
+    SndSeqParser(AutoStr_FromTextStd(scriptPath));
 
     // Load a saved game?
     if (auto arg = cmdLine.check("-loadgame", 1))

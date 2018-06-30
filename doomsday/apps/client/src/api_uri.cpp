@@ -27,16 +27,16 @@
 #include <de/writer.h>
 #include <de/reader.h>
 
-#define TOINTERNAL(inst)        reinterpret_cast<de::Uri*>(inst)
-#define TOINTERNAL_CONST(inst)  reinterpret_cast<de::Uri const*>(inst)
+#define TOINTERNAL(inst)        reinterpret_cast<res::Uri*>(inst)
+#define TOINTERNAL_CONST(inst)  reinterpret_cast<res::Uri const*>(inst)
 
 #define SELF(inst) \
     DE_ASSERT(inst); \
-    de::Uri* self = TOINTERNAL(inst)
+    res::Uri* self = TOINTERNAL(inst)
 
 #define SELF_CONST(inst) \
     DE_ASSERT(inst); \
-    de::Uri const* self = TOINTERNAL_CONST(inst)
+    res::Uri const* self = TOINTERNAL_CONST(inst)
 
 static void readUri(Uri *uri, Reader1 *reader, de::String defaultScheme = "")
 {
@@ -74,7 +74,7 @@ Uri* Uri_SetPath(Uri* uri, char const* path)
 #undef Uri_NewWithPath3
 Uri* Uri_NewWithPath3(char const *defaultScheme, char const *path)
 {
-    de::Uri *uri = new de::Uri(defaultScheme);
+    res::Uri *uri = new res::Uri(defaultScheme);
     uri->setUri(path, RC_NULL);
     return reinterpret_cast<Uri *>(uri);
 }
@@ -82,26 +82,26 @@ Uri* Uri_NewWithPath3(char const *defaultScheme, char const *path)
 #undef Uri_NewWithPath2
 Uri* Uri_NewWithPath2(char const* path, resourceclassid_t defaultResourceClass)
 {
-    return reinterpret_cast<Uri*>( new de::Uri(path, defaultResourceClass) );
+    return reinterpret_cast<Uri*>( new res::Uri(path, defaultResourceClass) );
 }
 
 #undef Uri_NewWithPath
 Uri* Uri_NewWithPath(char const* path)
 {
-    return reinterpret_cast<Uri*>( new de::Uri(path) );
+    return reinterpret_cast<Uri*>( new res::Uri(path) );
 }
 
 #undef Uri_New
 Uri* Uri_New(void)
 {
-    return reinterpret_cast<Uri*>( new de::Uri() );
+    return reinterpret_cast<Uri*>( new res::Uri() );
 }
 
 #undef Uri_Dup
 Uri* Uri_Dup(Uri const* other)
 {
     DE_ASSERT(other);
-    return reinterpret_cast<Uri*>( new de::Uri(*(TOINTERNAL_CONST(other))) );
+    return reinterpret_cast<Uri*>( new res::Uri(*(TOINTERNAL_CONST(other))) );
 }
 
 #undef Uri_FromReader
@@ -109,7 +109,7 @@ Uri* Uri_FromReader(Reader1 *reader)
 {
     DE_ASSERT(reader);
 
-    de::Uri* self = new de::Uri;
+    res::Uri* self = new res::Uri;
     Uri* uri = reinterpret_cast<Uri*>(self);
 
     readUri(uri, reader);
@@ -157,9 +157,9 @@ AutoStr* Uri_Resolved(Uri const* uri)
     SELF_CONST(uri);
     try
     {
-        return AutoStr_FromTextStd(self->resolved().toUtf8().constData());
+        return AutoStr_FromTextStd(self->resolved());
     }
-    catch(de::Uri::ResolveError const& er)
+    catch(res::Uri::ResolveError const& er)
     {
         LOG_RES_WARNING(er.asText());
     }
@@ -201,12 +201,12 @@ Uri* Uri_SetUriStr(Uri* uri, ddstring_t const* path)
     return reinterpret_cast<Uri*>(&self->setUri(Str_Text(path)));
 }
 
-static de::Uri::ComposeAsTextFlags translateFlags(int flags)
+static res::Uri::ComposeAsTextFlags translateFlags(int flags)
 {
-    de::Uri::ComposeAsTextFlags catf;
-    if(flags & UCTF_OMITSCHEME) catf |= de::Uri::OmitScheme;
-    if(flags & UCTF_OMITPATH)   catf |= de::Uri::OmitPath;
-    if(flags & UCTF_DECODEPATH) catf |= de::Uri::DecodePath;
+    res::Uri::ComposeAsTextFlags catf;
+    if(flags & UCTF_OMITSCHEME) catf |= res::Uri::OmitScheme;
+    if(flags & UCTF_OMITPATH)   catf |= res::Uri::OmitPath;
+    if(flags & UCTF_DECODEPATH) catf |= res::Uri::DecodePath;
     return catf;
 }
 
@@ -214,21 +214,21 @@ static de::Uri::ComposeAsTextFlags translateFlags(int flags)
 AutoStr* Uri_Compose2(Uri const* uri, int flags)
 {
     SELF_CONST(uri);
-    return AutoStr_FromTextStd(self->compose(translateFlags(flags)).toUtf8().constData());
+    return AutoStr_FromTextStd(self->compose(translateFlags(flags)));
 }
 
 #undef Uri_Compose
 AutoStr* Uri_Compose(Uri const* uri)
 {
     SELF_CONST(uri);
-    return AutoStr_FromTextStd(self->compose().toUtf8().constData());
+    return AutoStr_FromTextStd(self->compose());
 }
 
 #undef Uri_ToString
 AutoStr* Uri_ToString(Uri const* uri)
 {
     SELF_CONST(uri);
-    return AutoStr_FromTextStd(self->asText().toUtf8().constData());
+    return AutoStr_FromTextStd(self->asText());
 }
 
 #undef Uri_Write2

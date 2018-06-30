@@ -26,7 +26,7 @@ using namespace de;
 
 namespace world {
 
-static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
+static res::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
 {
     try
     {
@@ -39,10 +39,10 @@ static de::Uri findTextureForDetailStage(ded_detail_stage_t const &def)
     }
     catch (res::TextureScheme::NotFoundError const &)
     {} // Ignore this error.
-    return de::Uri();
+    return res::Uri();
 }
 
-DetailTextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
+DetailTextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &texture, int tics,
     float variance, float scale, float strength, float maxDistance)
     : TextureMaterialLayer::AnimationStage(texture, tics, variance)
     , scale(scale)
@@ -75,7 +75,7 @@ void DetailTextureMaterialLayer::AnimationStage::resetToDefaults()
 DetailTextureMaterialLayer::AnimationStage *
 DetailTextureMaterialLayer::AnimationStage::fromDef(ded_detail_stage_t const &def)
 {
-    de::Uri const texture = findTextureForDetailStage(def);
+    res::Uri const texture = findTextureForDetailStage(def);
     return new AnimationStage(texture, def.tics, def.variance,
                               def.scale, def.strength, def.maxDistance);
 }

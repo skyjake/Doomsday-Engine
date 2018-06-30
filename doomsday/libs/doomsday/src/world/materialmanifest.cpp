@@ -92,10 +92,10 @@ String const &MaterialManifest::schemeName() const
     return scheme().name();
 }
 
-String MaterialManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+String MaterialManifest::description(res::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
     String info =
-        composeUri().compose(uriCompositionFlags | de::Uri::DecodePath) + " " + sourceDescription();
+        composeUri().compose(uriCompositionFlags | res::Uri::DecodePath) + " " + sourceDescription();
 #ifdef __CLIENT__
     info += String::format("x%i", !hasMaterial()? 0 : material().animatorCount());
 #endif

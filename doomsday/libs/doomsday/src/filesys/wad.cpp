@@ -30,7 +30,7 @@
 #include <de/memoryzone.h>
 #include <cstring> // memcpy
 
-namespace de {
+namespace res {
 namespace internal {
 
 struct FileHeader
@@ -409,4 +409,4 @@ void Wad::Entry::update()
     }
 }
 
-} // namespace de
+} // namespace res

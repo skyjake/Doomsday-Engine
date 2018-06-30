@@ -127,11 +127,11 @@ DE_PIMPL(Id1Translator)
 
         Block vcheck;
         from.readBytes(16, vcheck);
-        saveVersion = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
+        saveVersion = String(vcheck.c_str() + 8).toInt(0, 10, String::AllowSuffix);
         DE_ASSERT(knownFormatVersion(saveVersion));
 
         // Id Tech 1 formats omitted the majority of the game rules...
-        QScopedPointer<Record> rules(new Record);
+        std::unique_ptr<Record> rules(new Record);
         dbyte skill;
         from >> skill;
         // Interpret skill levels outside the normal range as "spawn no things".
@@ -140,7 +140,7 @@ DE_PIMPL(Id1Translator)
             skill = SM_NOTHINGS;
         }
         rules->set("skill", skill);
-        metadata.add("gameRules", rules.take());
+        metadata.add("gameRules", rules.release());
 
         uint episode, map;
         from.readAs<dchar>(episode);
@@ -185,8 +185,8 @@ DE_PIMPL(Id1Translator)
     }
 };
 
-Id1Translator::Id1Translator(FormatId id, QStringList knownExtensions, QStringList baseGameIdKeys)
-    : PackageFormatter(knownExtensions, baseGameIdKeys)
+Id1Translator::Id1Translator(FormatId id, StringList knownExtensions, StringList baseGameIdKeys)
+    : PackageFormatter(std::move(knownExtensions), std::move(baseGameIdKeys))
     , d(new Impl(this))
 {
     d->id = id;
@@ -220,10 +220,10 @@ bool Id1Translator::recognize(Path path)
         from.seek(24);
         Block vcheck;
         from.readBytes(16, vcheck);
-        if (vcheck.startsWith("version "))
+        if (vcheck.beginsWith("version "))
         {
             // The version id can be used to determine which game format the save is in.
-            int verId = String(vcheck.constData() + 8).toInt(0, 10, String::AllowSuffix);
+            int verId = String(vcheck.c_str() + 8).toInt(0, 10, String::AllowSuffix);
             if (d->knownFormatVersion(verId))
             {
                 recognized = true;
@@ -245,7 +245,7 @@ void Id1Translator::convert(Path path)
 
     d->openFile(path);
     String const nativeFilePath = d->saveFile()->source()->as<NativeFile>().nativePath();
-    QScopedPointer<Reader> from(new Reader(*d->saveFile()));
+    std::unique_ptr<Reader> from(new Reader(*d->saveFile()));
 
     // Read and translate the game session metadata.
     GameStateMetadata metadata;

@@ -56,7 +56,7 @@ namespace common {
 class GameSession : public AbstractSession
 {
 public:
-    typedef QList<de::Uri> VisitedMaps;
+    typedef de::List<res::Uri> VisitedMaps;
 
 public:
     GameSession();
@@ -106,7 +106,7 @@ public:
     /**
      * Resolves a named exit according to the map progression.
      */
-    de::Uri mapUriForNamedExit(de::String name) const;
+    res::Uri mapUriForNamedExit(de::String name) const;
 
     /**
      * Returns the current ruleset for the game session.
@@ -150,7 +150,7 @@ public:
      *
      * @throws InProgressError if the session has already begun.
      */
-    void begin(GameRules const &rules, de::String const &episodeId, de::Uri const &mapUri,
+    void begin(GameRules const &rules, de::String const &episodeId, res::Uri const &mapUri,
                uint mapEntryPoint = 0);
 
     /**
@@ -167,7 +167,7 @@ public:
      * @param nextMapUri         Map identifier.
      * @param nextMapEntryPoint  Map entry point number, for player reborn.
      */
-    void leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint = 0);
+    void leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint = 0);
 
     /**
      * Convenient method of looking up the user description of the game session in progress.

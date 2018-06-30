@@ -735,7 +735,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
         }
 
         // Use special "missing" material.
-        return &ClientMaterial::find(de::Uri("System", Path("missing")));
+        return &ClientMaterial::find(res::Uri("System", Path("missing")));
 
     case 2:  // Lighting debug mode.
         if (surface.hasMaterial() && !(!devNoTexFix && surface.hasFixMaterial()))
@@ -743,7 +743,7 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
             if (!surface.hasSkyMaskedMaterial() || devRendSkyMode)
             {
                 // Use the special "gray" material.
-                return &ClientMaterial::find(de::Uri("System", Path("gray")));
+                return &ClientMaterial::find(res::Uri("System", Path("gray")));
             }
         }
         break;
@@ -2708,7 +2708,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
             {
                 auto *actualMaterial =
                     surface.hasMaterial() ? static_cast<ClientMaterial *>(surface.materialPtr())
-                                          : &ClientMaterial::find(de::Uri("System", Path("missing")));
+                                          : &ClientMaterial::find(res::Uri("System", Path("missing")));
 
                 parm.glowing = actualMaterial->getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
@@ -2914,7 +2914,7 @@ static void writeSubspacePlane(Plane &plane)
             {
                 world::Material *actualMaterial =
                     surface.hasMaterial()? surface.materialPtr()
-                                         : &world::Materials::get().material(de::Uri("System", Path("missing")));
+                                         : &world::Materials::get().material(res::Uri("System", Path("missing")));
 
                 parm.glowing = actualMaterial->as<ClientMaterial>().getAnimator(Rend_MapSurfaceMaterialSpec()).glowStrength();
             }
@@ -3659,7 +3659,7 @@ static void projectSubspaceSprites()
                 if (Record const *spriteRec = Mobj_SpritePtr(mob))
                 {
                     defn::Sprite const sprite(*spriteRec);
-                    de::Uri const &viewMaterial = sprite.viewMaterial(0);
+                    res::Uri const &viewMaterial = sprite.viewMaterial(0);
                     if (!viewMaterial.isEmpty())
                     {
                         if (world::Material *material = world::Materials::get().materialPtr(viewMaterial))
@@ -3842,7 +3842,7 @@ MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
     {
         // Look it up...
         defn::Sprite const sprite(spriteDef);
-        de::Uri const &viewMaterial = sprite.viewMaterial(0);
+        res::Uri const &viewMaterial = sprite.viewMaterial(0);
         if (!viewMaterial.isEmpty())
         {
             if (world::Material *mat = world::Materials::get().materialPtr(viewMaterial))
@@ -3870,7 +3870,7 @@ Lumobj *Rend_MakeLumobj(Record const &spriteDef)
     LOG_AS("Rend_MakeLumobj");
 
     //defn::Sprite const sprite(spriteRec);
-    //de::Uri const &viewMaterial = sprite.viewMaterial(0);
+    //res::Uri const &viewMaterial = sprite.viewMaterial(0);
 
     // Always use the front view.
     /// @todo We could do better here...
@@ -4824,7 +4824,7 @@ static void drawLabel(String const &label, Vec3d const &origin, dfloat scale, df
     DGL_Scalef(-scale, -scale, 1);
 
     Point2Raw offset = {{{2, 2}}};
-    UI_TextOutEx(label.toUtf8().constData(), &offset, UI_Color(UIC_TITLE), opacity);
+    UI_TextOutEx(label, &offset, UI_Color(UIC_TITLE), opacity);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
@@ -4838,161 +4838,6 @@ static void drawLabel(String const &label, Vec3d const &origin, ddouble maxDista
         drawLabel(label, origin, distToEye / (DE_GAMEVIEW_WIDTH / 2), 1 - distToEye / maxDistance);
     }
 }
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
-    DGL_Translatef(origin.x, origin.z, origin.y);
-
-    DGL_Rotatef(t / 2,  0, 0, 1);
-    DGL_Rotatef(t,      1, 0, 0);
-    DGL_Rotatef(t * 15, 0, 1, 0);
-
-    DGL_Begin(DGL_LINES);
-        DGL_Vertex3f(-unit, 0, -unit);
-        DGL_Vertex3f(+unit, 0, -unit);
-        DGL_Vertex3f(+unit, 0, -unit);
-
-        DGL_Vertex3f(+unit, 0, +unit);
-
-        DGL_Vertex3f(+unit, 0, +unit);
-        DGL_Vertex3f(-unit, 0, +unit);
-
-        DGL_Vertex3f(-unit, 0, +unit);
-        DGL_Vertex3f(-unit, 0, -unit);
-    DGL_End();
-
-    DGL_PopMatrix();
-}
-
-static void drawBiasEditingVisuals(Map &map)
-{
-    if (freezeRLs) return;
-    if (!SBE_Active() || editHidden) return;
-
-    if (!map.biasSourceCount())
-        return;
-
-    ddouble const t = Timer_RealMilliseconds() / 100.0f;
-
-    if (HueCircle *hueCircle = SBE_HueCircle())
-    {
-        viewdata_t const *viewData = &viewPlayer->viewport();
-
-        GLState::current().setDepthTest(false);
-        //glDisable(GL_CULL_FACE);
-        GLState::push().setCull(gl::None);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-
-        DGL_Translatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
-        DGL_Scalef(1, 1.0f/1.2f, 1);
-        DGL_Translatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
-
-        HueCircleVisual::draw(*hueCircle, Rend_EyeOrigin(), viewData->frontVec);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-
-        GLState::current().setDepthTest(true);
-        //glEnable(GL_CULL_FACE);
-        GLState::pop();
-    }
-
-    coord_t handDistance;
-    Hand &hand = App_World().hand(&handDistance);
-
-    // Grabbed sources blink yellow.
-    Vec4f grabbedColor;
-    if (!editBlink || map.biasCurrentTime() & 0x80)
-        grabbedColor = Vec4f(1, 1, .8f, .5f);
-    else
-        grabbedColor = Vec4f(.7f, .7f, .5f, .4f);
-
-    BiasSource *nearSource = map.biasSourceNear(hand.origin());
-    DE_ASSERT(nearSource);
-
-    if ((hand.origin() - nearSource->origin()).length() > 2 * handDistance)
-    {
-        // Show where it is.
-        GLState::current().setDepthTest(false);
-    }
-
-    // The nearest cursor phases blue.
-    drawStar(nearSource->origin(), 10000,
-             nearSource->isGrabbed()? grabbedColor :
-             Vec4f(.0f + sin(t) * .2f,
-                      .2f + sin(t) * .15f,
-                      .9f + sin(t) * .3f,
-                      .8f - sin(t) * .2f));
-
-    FR_SetFont(fontFixed);
-    FR_LoadDefaultAttrib();
-    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
-    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-
-    GLState::current().setDepthTest(false);
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    drawLabel(labelForSource(nearSource), nearSource->origin());
-
-    GLState::current().setDepthTest(true);
-    DGL_Disable(DGL_TEXTURE_2D);
-
-    if (nearSource->isLocked())
-        drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
-
-    for (Grabbable *grabbable : hand.grabbed())
-    {
-        if (world::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
-        BiasSource *s = &grabbable->as<BiasSource>();
-
-        if (s == nearSource)
-            continue;
-
-        drawStar(s->origin(), 10000, grabbedColor);
-
-        GLState::current().setDepthTest(false);
-        DGL_Enable(DGL_TEXTURE_2D);
-
-        drawLabel(labelForSource(s), s->origin());
-
-        GLState::current().setDepthTest(true);
-        DGL_Disable(DGL_TEXTURE_2D);
-
-        if (s->isLocked())
-            drawLock(s->origin(), 2 + (s->origin() - eyeOrigin).length() / 100, t);
-    }
-
-    /*BiasSource *s = hand.nearestBiasSource();
-    if (s && !hand.hasGrabbed(*s))
-    {
-        GLState::current().setDepthTest(false);
-        glEnable(GL_TEXTURE_2D);
-
-        drawLabel(labelForSource(s), s->origin());
-
-        GLState::current().setDepthTest(true);
-        glDisable(GL_TEXTURE_2D);
-    }*/
-
-    // Show all sources?
-    if (editShowAll)
-    {
-        map.forAllBiasSources([&nearSource] (BiasSource &source)
-        {
-            if (&source != nearSource && !source.isGrabbed())
-            {
-                drawSource(&source);
-            }
-            return LoopContinue;
-        });
-    }
-
-    GLState::current().setDepthTest(true);
-}
-#endif
 
 void Rend_UpdateLightModMatrix()
 {
@@ -5310,7 +5155,7 @@ static void drawMobjBoundingBoxes(Map &map)
     //glDisable(GL_CULL_FACE);
     DGL_CullFace(DGL_NONE);
 
-    MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("bbox")))
+    MaterialAnimator &matAnimator = ClientMaterial::find(res::Uri("System", Path("bbox")))
             .getAnimator(Rend_SpriteMaterialSpec());
 
     // Ensure we've up to date info about the material.
@@ -6053,7 +5898,7 @@ static void drawVertexes(Map &map)
 
 static String labelForSubsector(Subsector const &subsec)
 {
-    return String::number(subsec.sector().indexInMap());
+    return String::asText(subsec.sector().indexInMap());
 }
 
 /**

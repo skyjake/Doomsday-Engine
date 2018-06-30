@@ -41,7 +41,7 @@ public:
 
     de::String defsPath() const;
 
-    de::Uri loadableUri() const;
+    res::Uri loadableUri() const;
 
 public:
     static bool hasDefinitions(de::File const &packageFile);
@@ -51,7 +51,7 @@ public:
     /**
      * Returns the URI of the package for loading via FS1.
      */
-    static de::Uri loadableUri(de::File const &packageFile);
+    static res::Uri loadableUri(de::File const &packageFile);
 
 private:
     de::Package const &_pkg;

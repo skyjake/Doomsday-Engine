@@ -20,7 +20,7 @@
 #ifndef SAVEGAMETOOL_PACKAGEFORMATER_H
 #define SAVEGAMETOOL_PACKAGEFORMATER_H
 
-#include <QStringList>
+#include <de/String>
 #include <de/Error>
 #include <de/Block>
 #include <de/Path>
@@ -42,15 +42,15 @@ public:
     /// The source file format is unknown/unsupported. @ingroup errors
     DE_SUB_ERROR(ReadError, UnknownFormatError);
 
-    QStringList knownExtensions;
-    QStringList baseGameIds;
+    de::StringList knownExtensions;
+    de::StringList baseGameIds;
 
 public:
     /**
      * @param knownExtensions  List of known file extensions for the format.
      * @param baseGameIdKeys   List of supported base game IDs for the format.
      */
-    PackageFormatter(QStringList knownExtensions, QStringList baseGameIds);
+    PackageFormatter(de::StringList knownExtensions, de::StringList baseGameIds);
 
     virtual ~PackageFormatter();
 

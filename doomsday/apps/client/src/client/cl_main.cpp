@@ -128,7 +128,7 @@ void Cl_SendHello()
 
     // The game mode is included in the hello packet.
     char buf[256]; zap(buf);
-    strncpy(buf, App_CurrentGame().id().toUtf8().constData(), sizeof(buf) - 1);
+    strncpy(buf, App_CurrentGame().id(), sizeof(buf) - 1);
 
     LOGDEV_NET_VERBOSE("game mode = %s") << buf;
 

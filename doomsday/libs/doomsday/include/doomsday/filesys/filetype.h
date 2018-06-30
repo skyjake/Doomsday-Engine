@@ -37,139 +37,141 @@
 #include <de/String>
 #include "filehandle.h"
 
-namespace de
+namespace res {
+
+using namespace de;
+
+struct FileInfo;
+
+/**
+ * Encapsulates the properties and logics belonging to a logical
+ * type of file file (e.g., Zip, PNG, WAV, etc...)
+ *
+ * @ingroup core
+ */
+class LIBDOOMSDAY_PUBLIC FileType
 {
-    struct FileInfo;
+public:
+    FileType(const String& _name, resourceclassid_t _defaultClass)
+        : name_(_name), defaultClass_(_defaultClass)
+    {}
 
-    /**
-     * Encapsulates the properties and logics belonging to a logical
-     * type of file file (e.g., Zip, PNG, WAV, etc...)
-     *
-     * @ingroup core
-     */
-    class LIBDOOMSDAY_PUBLIC FileType
+    virtual ~FileType() {}
+
+    /// Return the symbolic name of this file type.
+    String const& name() const
     {
-    public:
-        FileType(const String& _name, resourceclassid_t _defaultClass)
-            : name_(_name), defaultClass_(_defaultClass)
-        {}
+        return name_;
+    }
 
-        virtual ~FileType() {}
-
-        /// Return the symbolic name of this file type.
-        String const& name() const
-        {
-            return name_;
-        }
-
-        /// Return the unique identifier of the default class for this type of file.
-        resourceclassid_t defaultClass() const
-        {
-            return defaultClass_;
-        }
-
-        /**
-         * Add a new known extension to this file type. Earlier extensions
-         * have priority.
-         *
-         * @param ext  Extension to add (including period).
-         * @return  This instance.
-         */
-        FileType& addKnownExtension(const String& ext)
-        {
-            knownFileNameExtensions_.push_back(ext);
-            return *this;
-        }
-
-        /**
-         * Provides access to the known file name extension list for efficient
-         * iteration.
-         *
-         * @return  List of known extensions.
-         */
-        StringList const& knownFileNameExtensions() const
-        {
-            return knownFileNameExtensions_;
-        }
-
-        /**
-         * Does the file name in @a path match a known extension?
-         *
-         * @param path  File name/path to test.
-         * @return  @c true if matched.
-         */
-        bool fileNameIsKnown(const String& path) const
-        {
-            // We require an extension for this.
-            String ext = path.fileNameExtension();
-            if (!ext.isEmpty())
-            {
-                return String::contains(knownFileNameExtensions_, ext, CaseInsensitive);
-            }
-            return false;
-        }
-
-    private:
-        /// Symbolic name for this type of file.
-        String name_;
-
-        /// Default class attributed to files of this type.
-        resourceclassid_t defaultClass_;
-
-        /// List of known extensions for this file type.
-        StringList knownFileNameExtensions_;
-    };
-
-    /**
-     * The special "null" FileType object.
-     *
-     * @ingroup core
-     */
-    class LIBDOOMSDAY_PUBLIC NullFileType : public FileType
+    /// Return the unique identifier of the default class for this type of file.
+    resourceclassid_t defaultClass() const
     {
-    public:
-        NullFileType() : FileType("FT_NONE",  RC_IMPLICIT)
-        {}
-    };
-
-    /// @return  @c true= @a ftype is a "null-filetype" object (not a real file type).
-    inline bool isNullFileType(FileType const& ftype) {
-        return !!dynamic_cast<NullFileType const*>(&ftype);
+        return defaultClass_;
     }
 
     /**
-     * Base class for all native-file types.
+     * Add a new known extension to this file type. Earlier extensions
+     * have priority.
+     *
+     * @param ext  Extension to add (including period).
+     * @return  This instance.
      */
-    class LIBDOOMSDAY_PUBLIC NativeFileType : public FileType
+    FileType& addKnownExtension(const String& ext)
     {
-    public:
-        NativeFileType(const String& name, resourceclassid_t rclassId)
-            : FileType(name, rclassId)
-        {}
-
-        /**
-         * Attempt to interpret a file file of this type.
-         *
-         * @param hndl  Handle to the file to be interpreted.
-         * @param path  VFS path to associate with the file.
-         * @param info  File metadata info to attach to the file.
-         *
-         * @return  The interpreted file; otherwise @c 0.
-         */
-        virtual de::File1* interpret(de::FileHandle& hndl, String path, FileInfo const& info) const = 0;
-    };
-
-    /// @return  @c true= @a ftype is a NativeFileType object.
-    inline bool isNativeFileType(FileType const& ftype) {
-        return !!dynamic_cast<NativeFileType const*>(&ftype);
+        knownFileNameExtensions_.push_back(ext);
+        return *this;
     }
 
-    /// Map of symbolic file type names to file types (not owned).
-    typedef Map<String, FileType const *> FileTypes;
+    /**
+     * Provides access to the known file name extension list for efficient
+     * iteration.
+     *
+     * @return  List of known extensions.
+     */
+    StringList const& knownFileNameExtensions() const
+    {
+        return knownFileNameExtensions_;
+    }
 
-} // namespace de
+    /**
+     * Does the file name in @a path match a known extension?
+     *
+     * @param path  File name/path to test.
+     * @return  @c true if matched.
+     */
+    bool fileNameIsKnown(const String& path) const
+    {
+        // We require an extension for this.
+        String ext = path.fileNameExtension();
+        if (!ext.isEmpty())
+        {
+            return String::contains(knownFileNameExtensions_, ext, CaseInsensitive);
+        }
+        return false;
+    }
 
-LIBDOOMSDAY_PUBLIC void DD_AddFileType(de::FileType const &ftype);
+private:
+    /// Symbolic name for this type of file.
+    String name_;
+
+    /// Default class attributed to files of this type.
+    resourceclassid_t defaultClass_;
+
+    /// List of known extensions for this file type.
+    StringList knownFileNameExtensions_;
+};
+
+/**
+ * The special "null" FileType object.
+ *
+ * @ingroup core
+ */
+class LIBDOOMSDAY_PUBLIC NullFileType : public FileType
+{
+public:
+    NullFileType() : FileType("FT_NONE",  RC_IMPLICIT)
+    {}
+};
+
+/// @return  @c true= @a ftype is a "null-filetype" object (not a real file type).
+inline bool isNullFileType(FileType const& ftype) {
+    return !!dynamic_cast<NullFileType const*>(&ftype);
+}
+
+/**
+ * Base class for all native-file types.
+ */
+class LIBDOOMSDAY_PUBLIC NativeFileType : public FileType
+{
+public:
+    NativeFileType(const String& name, resourceclassid_t rclassId)
+        : FileType(name, rclassId)
+    {}
+
+    /**
+     * Attempt to interpret a file file of this type.
+     *
+     * @param hndl  Handle to the file to be interpreted.
+     * @param path  VFS path to associate with the file.
+     * @param info  File metadata info to attach to the file.
+     *
+     * @return  The interpreted file; otherwise @c 0.
+     */
+    virtual File1* interpret(FileHandle& hndl, String path, FileInfo const& info) const = 0;
+};
+
+/// @return  @c true= @a ftype is a NativeFileType object.
+inline bool isNativeFileType(FileType const& ftype) {
+    return !!dynamic_cast<NativeFileType const*>(&ftype);
+}
+
+/// Map of symbolic file type names to file types (not owned).
+typedef Map<String, FileType const *> FileTypes;
+
+} // namespace res
+
+LIBDOOMSDAY_PUBLIC void DD_AddFileType(res::FileType const &ftype);
 
 /**
  * Lookup a FileType by symbolic name.
@@ -177,7 +179,7 @@ LIBDOOMSDAY_PUBLIC void DD_AddFileType(de::FileType const &ftype);
  * @param name  Symbolic name of the type.
  * @return  FileType associated with @a name. May return a null-object.
  */
-LIBDOOMSDAY_PUBLIC de::FileType const &DD_FileTypeByName(de::String name);
+LIBDOOMSDAY_PUBLIC res::FileType const &DD_FileTypeByName(de::String name);
 
 /**
  * Attempts to determine which "type" should be attributed to a resource, solely
@@ -185,10 +187,10 @@ LIBDOOMSDAY_PUBLIC de::FileType const &DD_FileTypeByName(de::String name);
  *
  * @return  Type determined for this resource. May return a null-object.
  */
-LIBDOOMSDAY_PUBLIC de::FileType const &DD_GuessFileTypeFromFileName(de::String name);
+LIBDOOMSDAY_PUBLIC res::FileType const &DD_GuessFileTypeFromFileName(de::String name);
 
 /// Returns the registered file types for efficient traversal.
-LIBDOOMSDAY_PUBLIC de::FileTypes &DD_FileTypes();
+LIBDOOMSDAY_PUBLIC res::FileTypes &DD_FileTypes();
 
 #endif // DE_C_API_ONLY
 #endif // __cplusplus

@@ -24,11 +24,11 @@
 
 #include "dehreader.h"
 
-#include <QDebug>
-#include <QDir>
-#include <QFile>
-#include <QRegExp>
-#include <QStringList>
+//#include <QDebug>
+//#include <QDir>
+//#include <QFile>
+//#include <QRegExp>
+//#include <StringList>
 
 #include <de/memory.h>
 #include <doomsday/doomsdayapp.h>
@@ -42,6 +42,7 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/String>
+#include <de/RegExp>
 
 #include "importdeh.h"
 #include "dehreader_util.h"
@@ -163,7 +164,7 @@ public:
         pos++;
     }
 
-    QChar currentChar()
+    Char currentChar()
     {
         if(atEnd()) return 0;
         return QChar::fromLatin1(patch.at(pos));
@@ -194,11 +195,11 @@ public:
             }
 
             // Perform encoding conversion for this line and move on.
-            line = QString::fromLatin1(rawLine);
+            line = String::fromLatin1(rawLine);
             if(currentChar() == '\n') advance();
             return;
         }
-        throw EndOfFile(String("EOF on line #%1").arg(currentLineNumber));
+        throw EndOfFile(stringf("EOF on line #%i", currentLineNumber));
     }
 
     /**
@@ -207,10 +208,10 @@ public:
      */
     String const &skipToNextLine()
     {
-        forever
+        for (;;)
         {
             readLine();
-            if(!line.trimmed().isEmpty() && line.at(0) != '#') break;
+            if(!line.strip().isEmpty() && line.at(0) != '#') break;
         }
         return line;
     }
@@ -240,12 +241,12 @@ public:
 
     void parse()
     {
-        LOG_AS_STRING(stackDepth == 1? "DehReader" : String("[%1]").arg(stackDepth - 1));
+        LOG_AS_STRING(stackDepth == 1? "DehReader" : String::format("[%i]", stackDepth - 1));
 
         skipToNextLine();
 
         // Attempt to parse the DeHackEd patch signature and version numbers.
-        if(line.beginsWith("Patch File for DeHackEd v", String::CaseInsensitive))
+        if(line.beginsWith("Patch File for DeHackEd v", CaseInsensitive))
         {
             skipToNextLine();
             parsePatchSignature();
@@ -269,17 +270,17 @@ public:
         // Patches are subdivided into sections.
         try
         {
-            forever
+            for (;;)
             {
                 try
                 {
                     /// @note Some sections have their own grammar quirks!
-                    if(line.beginsWith("include", String::CaseInsensitive)) // BEX
+                    if(line.beginsWith("include", CaseInsensitive)) // BEX
                     {
                         parseInclude(line.substr(7).leftStrip());
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("Thing", String::CaseInsensitive))
+                    else if(line.beginsWith("Thing", CaseInsensitive))
                     {
                         Record *mobj;
                         Record dummyMobj;
@@ -300,7 +301,7 @@ public:
                         skipToNextLine();
                         parseThing(*mobj, mobj == &dummyMobj);
                     }
-                    else if(line.beginsWith("Frame", String::CaseInsensitive))
+                    else if(line.beginsWith("Frame", CaseInsensitive))
                     {
                         Record *state;
                         Record dummyState;
@@ -321,7 +322,7 @@ public:
                         skipToNextLine();
                         parseFrame(*state, state == &dummyState);
                     }
-                    else if(line.beginsWith("Pointer", String::CaseInsensitive))
+                    else if(line.beginsWith("Pointer", CaseInsensitive))
                     {
                         Record *state;
                         Record dummyState;
@@ -342,7 +343,7 @@ public:
                         skipToNextLine();
                         parsePointer(*state, state == &dummyState);
                     }
-                    else if(line.beginsWith("Sprite", String::CaseInsensitive))
+                    else if(line.beginsWith("Sprite", CaseInsensitive))
                     {
                         ded_sprid_t *sprite;
                         Dummy<ded_sprid_t> dummySprite;
@@ -363,7 +364,7 @@ public:
                         skipToNextLine();
                         parseSprite(sprite, sprite == &dummySprite);
                     }
-                    else if(line.beginsWith("Ammo", String::CaseInsensitive))
+                    else if(line.beginsWith("Ammo", CaseInsensitive))
                     {
                         String const arg          = line.substr(4).leftStrip();
                         int ammoNum               = 0;
@@ -378,7 +379,7 @@ public:
                         skipToNextLine();
                         parseAmmo(ammoNum, ignore);
                     }
-                    else if(line.beginsWith("Weapon", String::CaseInsensitive))
+                    else if(line.beginsWith("Weapon", CaseInsensitive))
                     {
                         String const arg            = line.substr(6).leftStrip();
                         int weaponNum               = 0;
@@ -393,7 +394,7 @@ public:
                         skipToNextLine();
                         parseWeapon(weaponNum, ignore);
                     }
-                    else if(line.beginsWith("Sound", String::CaseInsensitive))
+                    else if(line.beginsWith("Sound", CaseInsensitive))
                     {
                         ded_sound_t *sound;
                         Dummy<ded_sound_t> dummySound;
@@ -414,7 +415,7 @@ public:
                         skipToNextLine();
                         parseSound(sound, sound == &dummySound);
                     }
-                    else if(line.beginsWith("Text", String::CaseInsensitive))
+                    else if(line.beginsWith("Text", CaseInsensitive))
                     {
                         String args = line.substr(4).leftStrip();
                         int firstArgEnd = args.indexOf(' ');
@@ -443,12 +444,12 @@ public:
 
                         parseText(oldSize, newSize);
                     }
-                    else if(line.beginsWith("Misc", String::CaseInsensitive))
+                    else if(line.beginsWith("Misc", CaseInsensitive))
                     {
                         skipToNextLine();
                         parseMisc();
                     }
-                    else if(line.beginsWith("Cheat", String::CaseInsensitive))
+                    else if(line.beginsWith("Cheat", CaseInsensitive))
                     {
                         if(!(!patchIsCustom && DoomsdayApp::game().id() == "hacx"))
                         {
@@ -456,41 +457,41 @@ public:
                         }
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[CODEPTR]", String::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[CODEPTR]", CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parseCodePointers();
                     }
-                    else if(line.beginsWith("[PARS]", String::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[PARS]", CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parsePars();
                     }
-                    else if(line.beginsWith("[STRINGS]", String::CaseInsensitive)) // BEX
+                    else if(line.beginsWith("[STRINGS]", CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parseStrings();
                     }
-                    else if(line.beginsWith("[HELPER]", String::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[HELPER]", CaseInsensitive)) // Eternity
                     {
                         // Not yet supported (Helper Dogs from MBF).
                         //skipToNextLine();
                         parseHelper();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SPRITES]", String::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[SPRITES]", CaseInsensitive)) // Eternity
                     {
                         // Not yet supported.
                         //skipToNextLine();
                         parseSprites();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SOUNDS]", String::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[SOUNDS]", CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseSounds();
                     }
-                    else if(line.beginsWith("[MUSIC]", String::CaseInsensitive)) // Eternity
+                    else if(line.beginsWith("[MUSIC]", CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseMusic();
@@ -592,27 +593,27 @@ public:
         return (result >= 0);
     }
 
-    bool parseMobjTypeState(QString const &token, StateMapping const **state)
+    bool parseMobjTypeState(String const &token, StateMapping const **state)
     {
         return findStateMappingByDehLabel(token, state) >= 0;
     }
 
-    bool parseMobjTypeFlag(QString const &token, FlagMapping const **flag)
+    bool parseMobjTypeFlag(String const &token, FlagMapping const **flag)
     {
         return findMobjTypeFlagMappingByDehLabel(token, flag) >= 0;
     }
 
-    bool parseMobjTypeSound(QString const &token, SoundMapping const **sound)
+    bool parseMobjTypeSound(String const &token, SoundMapping const **sound)
     {
         return findSoundMappingByDehLabel(token, sound) >= 0;
     }
 
-    bool parseWeaponState(QString const &token, WeaponStateMapping const **state)
+    bool parseWeaponState(String const &token, WeaponStateMapping const **state)
     {
         return findWeaponStateMappingByDehLabel(token, state) >= 0;
     }
 
-    bool parseMiscValue(QString const &token, ValueMapping const **value)
+    bool parseMiscValue(String const &token, ValueMapping const **value)
     {
         return findValueMappingForDehLabel(token, value) >= 0;
     }
@@ -672,7 +673,7 @@ public:
         {
             DehReaderFlags includeFlags = flags & DehReaderFlagsIncludeMask;
 
-            if(arg.beginsWith("notext ", String::CaseInsensitive))
+            if(arg.beginsWith("notext ", CaseInsensitive))
             {
                 includeFlags |= NoText;
                 arg.remove(0, 7);
@@ -741,7 +742,7 @@ public:
      *
      * @return (& 0x1)= flag group #1 changed, (& 0x2)= flag group #2 changed, etc..
      */
-    int parseMobjTypeFlags(QString const &arg, int flagGroups[NUM_MOBJ_FLAGS])
+    int parseMobjTypeFlags(String const &arg, int flagGroups[NUM_MOBJ_FLAGS])
     {
         DE_ASSERT(flagGroups);
 
@@ -750,8 +751,8 @@ public:
 
         // Split the argument into discreet tokens and process each individually.
         /// @todo Re-implement with a left-to-right algorithm.
-        QStringList tokens = arg.split(QRegExp("[,+| ]|\t|\f|\r"), QString::SkipEmptyParts);
-        DE_FOR_EACH_CONST(QStringList, i, tokens)
+        StringList tokens = arg.split(QRegExp("[,+| ]|\t|\f|\r"), String::SkipEmptyParts);
+        DE_FOR_EACH_CONST(StringList, i, tokens)
         {
             String const &token = *i;
             bool tokenIsNumber;
@@ -804,7 +805,7 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(var.endsWith(" frame", String::CaseInsensitive))
+            if(var.endsWith(" frame", CaseInsensitive))
             {
                 StateMapping const *mapping;
                 String const dehStateName = var.left(var.size() - 6);
@@ -842,7 +843,7 @@ public:
                     }
                 }
             }
-            else if(var.endsWith(" sound", String::CaseInsensitive))
+            else if(var.endsWith(" sound", CaseInsensitive))
             {
                 SoundMapping const *mapping;
                 String const dehSoundName = var.left(var.size() - 6);
@@ -1122,7 +1123,7 @@ public:
                         << stateNum << state.gets("id") << state.geti("frame");
                 }
             }
-            else if(var.beginsWith("Unknown ", String::CaseInsensitive))
+            else if(var.beginsWith("Unknown ", CaseInsensitive))
             {
                 int const miscIdx = var.substr(8).toInt(0, 10, String::AllowSuffix);
                 int const value   = expr.toInt(0, 10, String::AllowSuffix);
@@ -1141,7 +1142,7 @@ public:
                     }
                 }
             }
-            else if(var.beginsWith("Args", String::CaseInsensitive)) // Eternity
+            else if(var.beginsWith("Args", CaseInsensitive)) // Eternity
             {
                 LOG_WARNING("DeHackEd Frame.%s is not supported") << var;
             }
@@ -1276,7 +1277,7 @@ public:
                     }
                     else
                     {
-                        qstrncpy(sound->lumpName, lumpIndex[lumpNum].name().toUtf8().constData(), DED_STRINGID_LEN + 1);
+                        qstrncpy(sound->lumpName, lumpIndex[lumpNum].name(), DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
                                 << soundNum << sound->id << sound->lumpName;
                     }
@@ -1303,12 +1304,12 @@ public:
             if(!var.compareWithoutCase("Max ammo"))
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String("Player|Max ammo|%1").arg(theAmmo), QString::number(value));
+                if(!ignore) createValueDef(String("Player|Max ammo|%1").arg(theAmmo), String::asText(value));
             }
             else if(!var.compareWithoutCase("Per ammo"))
             {
                 int per = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String("Player|Clip ammo|%1").arg(theAmmo), QString::number(per));
+                if(!ignore) createValueDef(String("Player|Clip ammo|%1").arg(theAmmo), String::asText(per));
             }
             else
             {
@@ -1326,7 +1327,7 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(var.endsWith(" frame", String::CaseInsensitive))
+            if(var.endsWith(" frame", CaseInsensitive))
             {
                 String const dehStateName = var.left(var.size() - 6);
                 int const value           = expr.toInt(0, 0, String::AllowSuffix);
@@ -1377,7 +1378,7 @@ public:
             else if(!var.compareWithoutCase("Ammo per shot")) // Eternity
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), QString::number(value));
+                if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), String::asText(value));
             }
             else
             {
@@ -1434,7 +1435,7 @@ public:
             if(parseMiscValue(var, &mapping))
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
-                createValueDef(mapping->valuePath, QString::number(value));
+                createValueDef(mapping->valuePath, String::asText(value));
             }
             else
             {
@@ -1454,7 +1455,7 @@ public:
 
             try
             {
-                if(line.beginsWith("par", String::CaseInsensitive))
+                if(line.beginsWith("par", CaseInsensitive))
                 {
                     String const argStr = line.substr(3).leftStrip();
                     if(argStr.isEmpty())
@@ -1473,7 +1474,7 @@ public:
                      * on the last.
                      */
                     int const maxArgs = 3;
-                    QStringList args = splitMax(argStr, ' ', maxArgs);
+                    StringList args = splitMax(argStr, ' ', maxArgs);
 
                     // If the third argument is a comment remove it.
                     if(args.size() == 3)
@@ -1495,7 +1496,7 @@ public:
                     float parTime = float(String(args.at(arg++)).toInt(0, 10, String::AllowSuffix));
 
                     // Apply.
-                    de::Uri const uri = composeMapUri(episode, map);
+                    res::Uri const uri = composeMapUri(episode, map);
                     int idx = ded->getMapInfoNum(uri);
                     if(idx >= 0)
                     {
@@ -1606,7 +1607,7 @@ public:
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(var.beginsWith("Frame ", String::CaseInsensitive))
+            if(var.beginsWith("Frame ", CaseInsensitive))
             {
                 int const stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
                 if(stateNum < 0 || stateNum >= ded->states.size())
@@ -1620,7 +1621,7 @@ public:
 
                     // Compose the action name.
                     String action = expr.rightStrip();
-                    if(!action.beginsWith("A_", String::CaseInsensitive))
+                    if(!action.beginsWith("A_", CaseInsensitive))
                         action.prepend("A_");
                     action.truncate(32);
 
@@ -1633,7 +1634,7 @@ public:
                     }
                     else
                     {
-                        if(Def_Get(DD_DEF_ACTION, action.toUtf8().constData(), nullptr))
+                        if(Def_Get(DD_DEF_ACTION, action, nullptr))
                         {
                             state.set("action", action);
                             LOG_DEBUG("State #%i \"%s\" action => \"%s\"")
@@ -1691,14 +1692,14 @@ public:
     {
         if(id.isEmpty()) return;
 
-        int textIdx = ded->getTextNum(id.toUtf8().constData());
+        int textIdx = ded->getTextNum(id);
         if(textIdx < 0) return;
 
         // We must escape new lines.
         newValue.replace("\n", "\\n");
 
         // Replace this text.
-        ded->text[textIdx].setText(newValue.toUtf8().constData());
+        ded->text[textIdx].setText(newValue);
         LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
                 << textIdx << id << newValue;
     }
@@ -1862,7 +1863,7 @@ public:
         for(int i = 0; i < ded->sounds.size(); ++i)
         {
             ded_sound_t &sound = ded->sounds[i];
-            if(qstricmp(sound.lumpName, origNamePrefUtf8.constData())) continue;
+            if(iCmpStrCase(sound.lumpName, origNamePrefUtf8.constData())) continue;
 
             qstrncpy(sound.lumpName, newNamePrefUtf8.constData(), 9);
             numPatched++;
@@ -1883,7 +1884,7 @@ public:
         // Is replacement disallowed/not-supported?
         if(textMapping->name.isEmpty()) return true; // Pretend success.
 
-        int textIdx = ded->getTextNum(textMapping->name.toUtf8().constData());
+        int textIdx = ded->getTextNum(textMapping->name);
         if(textIdx < 0) return false;
 
         // We must escape new lines.

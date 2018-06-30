@@ -28,7 +28,7 @@
 #include <de/Error>
 #include <de/PathTree>
 
-namespace de {
+namespace res {
 
 /**
  * ZIP archive file format.
@@ -297,6 +297,6 @@ private:
     DE_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace res
 
 #endif // LIBDOOMSDAY_FILESYS_ZIP_H

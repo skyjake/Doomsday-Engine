@@ -67,14 +67,14 @@ void guidata_secrets_t::draw(Vec2i const &offset) const
     String valueAsText("Secret");
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS)
     {
-        valueAsText += String(" %1/%2").arg(_value).arg(totalSecret);
+        valueAsText += String::format(" %i/%i", _value, totalSecret);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
-        valueAsText += String(" %1%2%%3")
-                           .arg((cfg.common.hudShownCheatCounters & CCH_SECRETS) ? "(" : "")
-                           .arg(totalSecret ? _value * 100 / totalSecret : 100)
-                           .arg((cfg.common.hudShownCheatCounters & CCH_SECRETS) ? ")" : "");
+        valueAsText += String::format(" %s%i%%%s",
+                                      (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? "(" : "",
+                                      totalSecret ? _value * 100 / totalSecret : 100,
+                                      (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? ")" : "");
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -85,7 +85,7 @@ void guidata_secrets_t::draw(Vec2i const &offset) const
 
     FR_SetFont(font());
     FR_SetColorAndAlpha(::cfg.common.hudColor[0], ::cfg.common.hudColor[1], ::cfg.common.hudColor[2], textOpacity);
-    FR_DrawTextXY(valueAsText.toUtf8().constData(), 0, 0);
+    FR_DrawTextXY(valueAsText, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -120,18 +120,18 @@ void guidata_secrets_t::updateGeometry()
     String valueAsText("Secret");
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS)
     {
-        valueAsText += String(" %1/%2").arg(_value).arg(totalSecret);
+        valueAsText += String::format(" %i/%i", _value, totalSecret);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
-        valueAsText += String(" %1%2%%3")
-                           .arg((cfg.common.hudShownCheatCounters & CCH_SECRETS) ? "(" : "")
-                           .arg(totalSecret ? _value * 100 / totalSecret : 100)
-                           .arg((cfg.common.hudShownCheatCounters & CCH_SECRETS) ? ")" : "");
+        valueAsText += String::format(" %s%i%%%s",
+                                      (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? "(" : "",
+                                      totalSecret ? _value * 100 / totalSecret : 100,
+                                      (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? ")" : "");
     }
 
     FR_SetFont(font());
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
     Rect_SetWidthHeight(&geometry(), .5f + textSize.width  * ::cfg.common.hudCheatCounterScale,
                                      .5f + textSize.height * ::cfg.common.hudCheatCounterScale);
 

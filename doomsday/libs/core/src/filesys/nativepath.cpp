@@ -76,7 +76,10 @@ NativePath::NativePath(NativePath &&moved)
     : Path(moved)
 {}
 
-NativePath::NativePath(String const &str) : Path(toNative(str), DIR_SEPARATOR)
+NativePath::NativePath(const String &str) : Path(toNative(str), DIR_SEPARATOR)
+{}
+
+NativePath::NativePath(const CString &str) : Path(toNative(str), DIR_SEPARATOR)
 {}
 
 NativePath::NativePath(const Path &path)

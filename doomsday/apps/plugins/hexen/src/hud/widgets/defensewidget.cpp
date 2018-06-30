@@ -110,6 +110,6 @@ void guidata_defense_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pDefenseIcon[i] = R_DeclarePatch(String("SPSHLD%1").arg(i).toUtf8().constData());
+        ::pDefenseIcon[i] = R_DeclarePatch(String("SPSHLD%d", i));
     }
 }

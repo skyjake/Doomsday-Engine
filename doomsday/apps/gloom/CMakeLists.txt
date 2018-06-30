@@ -1,31 +1,17 @@
 cmake_minimum_required (VERSION 3.1)
 project (GLOOM)
 
-# set (DE_OPENGL_API 3.3)
-# set (CMAKE_AUTOMOC ON)
-# set (CMAKE_AUTORCC ON)
-# set (DE_SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/../..)
-# set (DE_INSTALL_LIB_DIR lib)
-# if (WIN32)
-#     set (DE_INSTALL_DATA_DIR data)
-# else ()
-#     set (DE_INSTALL_DATA_DIR share/doomsday)
-# endif ()
-
-# Note: Additionally CMAKE_INSTALL_PREFIX must point to the SDK install dir.
-# This is used for finding the .pack files.
-
-# find_package (PythonInterp REQUIRED)
-# include (../../cmake/Arch.cmake)
-# include (../../cmake/Macros.cmake)
-
 include (../../cmake/Config.cmake)
+include (QtConfig)
 
 find_package (Qt5 COMPONENTS Gui Widgets Network OpenGL OpenGLExtensions)
-find_package (DengAppfw)
-find_package (DengDoomsday)
 find_package (FMOD)
 
+list (APPEND DE_REQUIRED_PACKAGES
+    net.dengine.stdlib
+    net.dengine.stdlib.gui
+    net.dengine.base
+)
 deng_add_package (net.dengine.gloom)
 
 set (SOURCES
@@ -106,9 +92,6 @@ set (SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/mainwindow.h
-    # Polygon clipper
-    #${DE_EXTERNAL_SOURCE_DIR}/gpc/gpc.c
-    #${DE_EXTERNAL_SOURCE_DIR}/gpc/gpc.h
 )
 
 # Deploy the FMOD library.
@@ -123,7 +106,8 @@ endif ()
 deng_add_application (gloom ${SOURCES} ${HEADERS})
 
 target_include_directories (gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${DE_EXTERNAL_SOURCE_DIR}/gpc)
-target_link_libraries (gloom Deng::libappfw Deng::libdoomsday fmodex)
+deng_link_libraries (gloom PRIVATE DengAppfw DengDoomsday fmodex)
+deng_target_link_qt (gloom PRIVATE Widgets)
 
 if (APPLE)
     set_target_properties (gloom PROPERTIES

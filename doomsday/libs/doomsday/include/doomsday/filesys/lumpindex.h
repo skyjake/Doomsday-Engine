@@ -34,7 +34,9 @@
 #include <de/Map>
 #include <de/Error>
 
-namespace de {
+namespace res {
+
+using namespace de;
 
 /**
  * Virtual file system component used to model an indexable collection of
@@ -49,7 +51,7 @@ public:
     /// No file(s) found. @ingroup errors
     DE_ERROR(NotFoundError);
 
-    typedef de::List<File1 *> Lumps;
+    typedef List<File1 *> Lumps;
     typedef std::list<lumpnum_t> FoundIndices;
 
     /**
@@ -294,7 +296,7 @@ public:
      * manages graphic references in animations (intermediate frames are chosen
      * by their 'original indices' rather than by name).
      */
-    static de::Uri composeResourceUrn(lumpnum_t lumpNum);
+    static res::Uri composeResourceUrn(lumpnum_t lumpNum);
 
 private:
     DE_PRIVATE(d)
@@ -302,7 +304,7 @@ private:
 
 typedef LumpIndex::Id1MapRecognizer Id1MapRecognizer;
 
-} // namespace de
+} // namespace res
 
 #endif // __cplusplus
 #endif // DE_FILESYS_LUMPINDEX_H

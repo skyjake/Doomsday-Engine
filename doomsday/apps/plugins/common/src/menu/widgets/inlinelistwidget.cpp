@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QtAlgorithms>
 #include "common.h"
 #include "menu/widgets/inlinelistwidget.h"
 
@@ -45,7 +44,7 @@ void InlineListWidget::draw() const
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(mnRendState->textFonts[font()]);
     FR_SetColorAndAlpha(color.x, color.y, color.z, color.w * scrollingFadeout());
-    FR_DrawTextXY3(item->text().toUtf8().constData(), geometry().topLeft.x, geometry().topLeft.y,
+    FR_DrawTextXY3(item->text(), geometry().topLeft.x, geometry().topLeft.y,
                    ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);

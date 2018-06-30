@@ -93,7 +93,7 @@ DE_PIMPL_NOREF(FinaleAnimWidget)
         case Frame::PFT_RAW:       f->texRef.lumpNum  = *((lumpnum_t *)texRef); break;
         case Frame::PFT_XIMAGE:    f->texRef.tex      = *((DGLuint *)texRef);   break;
 
-        default: throw Error("FinaleAnimWidget::makeFrame", "Unknown frame type #" + String::number(type));
+        default: throw Error("FinaleAnimWidget::makeFrame", "Unknown frame type #" + String::asText(type));
         }
 
         return f;

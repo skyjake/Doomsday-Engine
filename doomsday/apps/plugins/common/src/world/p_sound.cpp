@@ -33,17 +33,17 @@
 
 using namespace de;
 
-bool S_MapMusic(de::Uri const &mapUri)
+bool S_MapMusic(const res::Uri &mapUri)
 {
     String musicId = G_MapInfoForMapUri(mapUri).gets("music");
     if (musicId.isEmpty())
     {
         musicId = mapUri.path();
     }
-    if (S_StartMusic(musicId.toUtf8(), true))
+    if (S_StartMusic(musicId, true))
     {
         // Set the game status cvar for the map music.
-        Con_SetInteger2("map-music", Defs().getMusicNum(musicId.toUtf8()), SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-music", Defs().getMusicNum(musicId), SVF_WRITE_OVERRIDE);
         return true;
     }
     else

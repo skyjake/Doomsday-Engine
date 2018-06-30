@@ -390,12 +390,12 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
                 if(gfw_Rule(deathmatch))
                 {
                     // Winning in deathmatch goes back to the first map of the current episode.
-                    G_SetGameActionMapCompleted(de::makeUri(gfw_Session()->episodeDef()->gets("startMap")));
+                    G_SetGameActionMapCompleted(res::makeUri(gfw_Session()->episodeDef()->gets("startMap")));
                 }
                 else
                 {
                     // Passing a URI with an empty path starts the Finale
-                    G_SetGameActionMapCompleted(de::makeUri("Maps:"));
+                    G_SetGameActionMapCompleted(res::makeUri("Maps:"));
                 }
             }
         }
@@ -412,8 +412,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
             // Does the player possess the necessary key(s)?
             if(!(mo->player->keys & (1 << (lock - 1))))
             {
-                auto const msg = String("You need the ") + String(GET_TXT(TextKeyMessages[lock - 1]));
-                P_SetMessage(mo->player, msg.toUtf8().constData());
+                P_SetMessage(mo->player, "You need the " + String(GET_TXT(TextKeyMessages[lock - 1])));
                 S_StartSound(SFX_DOOR_LOCKED, mo);
                 break;
             }
@@ -430,7 +429,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         if(epIdx > 0) epIdx -= 1;
 
         dint mapIdx = args[1];
-        de::Uri const mapUri = (mapIdx == 0? gfw_Session()->mapUri()
+        res::Uri const mapUri = (mapIdx == 0? gfw_Session()->mapUri()
                                            : G_ComposeMapUri(epIdx, mapIdx - 1) );
         if(gfw_Session()->mapUri() == mapUri)
         {

@@ -91,8 +91,8 @@ struct wbplayerstruct_t
 
 struct wbstartstruct_t
 {
-    de::Uri currentMap;
-    de::Uri nextMap;
+    res::Uri currentMap;
+    res::Uri nextMap;
     bool didSecret;      /**< @c true= the secret map has been visited during the
                               game session. Used to generate the visited maps info
                               for backward compatibility purposes. */

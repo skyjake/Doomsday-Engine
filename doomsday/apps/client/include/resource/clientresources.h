@@ -134,7 +134,7 @@ public:
      *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
-    bool hasFont(de::Uri const &path) const;
+    bool hasFont(res::Uri const &path) const;
 
     /**
      * Convenient method of looking up a concrete font resource in the collection
@@ -159,7 +159,7 @@ public:
      * @param search  The search term.
      * @return Found unique identifier.
      */
-    de::FontManifest &fontManifest(de::Uri const &search) const;
+    de::FontManifest &fontManifest(res::Uri const &search) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -222,7 +222,7 @@ public:
      *
      * @return  The associated manifest for this URI.
      */
-    inline de::FontManifest &declareFont(de::Uri const &uri) {
+    inline de::FontManifest &declareFont(res::Uri const &uri) {
         return fontScheme(uri.scheme()).declare(uri.path());
     }
 
@@ -365,7 +365,7 @@ public:
     TextureVariantSpec &detailTextureSpec(de::dfloat contrast);
 
     AbstractFont *newFontFromDef(ded_compositefont_t const &def);
-    AbstractFont *newFontFromFile(de::Uri const &uri, de::String filePath);
+    AbstractFont *newFontFromFile(res::Uri const &uri, de::String filePath);
 
     /**
      * Release all GL-textures for fonts in the identified scheme.

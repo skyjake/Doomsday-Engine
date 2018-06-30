@@ -60,6 +60,6 @@ AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id);
  * Lookup the audio environment associated with material @a uri. If no environment
  * is defined then @c AE_NONE is returned.
  */
-AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri);
+AudioEnvironmentId S_AudioEnvironmentId(res::Uri const *uri);
 
 #endif // DE_SOUND_ENVIRON

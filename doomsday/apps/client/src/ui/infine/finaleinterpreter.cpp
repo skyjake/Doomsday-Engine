@@ -360,7 +360,7 @@ static command_t const *findCommand(char const *name)
     for (size_t i = 0; commands[i].token; ++i)
     {
         command_t const *cmd = &commands[i];
-        if (!qstricmp(cmd->token, name))
+        if (!iCmpStrCase(cmd->token, name))
         {
             return cmd;
         }
@@ -499,13 +499,13 @@ DE_PIMPL(FinaleInterpreter)
     void findBegin()
     {
         char const *tok;
-        while (!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "{")) {}
+        while (!gotoEnd && 0 != (tok = nextToken()) && iCmpStrCase(tok, "{")) {}
     }
 
     void findEnd()
     {
         char const *tok;
-        while (!gotoEnd && 0 != (tok = nextToken()) && qstricmp(tok, "}")) {}
+        while (!gotoEnd && 0 != (tok = nextToken()) && iCmpStrCase(tok, "}")) {}
     }
 
     char const *nextToken()
@@ -561,7 +561,7 @@ DE_PIMPL(FinaleInterpreter)
         char const *defaultValueEnd;
         for (defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
         {}
-        DE_ASSERT(defaultValueEnd < str + qstrlen(str));
+        DE_ASSERT(defaultValueEnd < str + strlen(str));
         return defaultValueEnd;
     }
 
@@ -570,7 +570,7 @@ DE_PIMPL(FinaleInterpreter)
         if (operands && operands[0])
         {
             // Some operands might include a default value.
-            int len = qstrlen(operands);
+            int len = strlen(operands);
             if (len > 1 && operands[1] == '(')
             {
                 // A default value begins. Find the end.
@@ -615,7 +615,7 @@ DE_PIMPL(FinaleInterpreter)
             char const charCode = *opRover;
 
             op->type = operandTypeForCharCode(charCode);
-            bool const opHasDefaultValue = (opRover < cmd->operands + (qstrlen(cmd->operands) - 2) && opRover[1] == '(');
+            bool const opHasDefaultValue = (opRover < cmd->operands + (strlen(cmd->operands) - 2) && opRover[1] == '(');
             bool const haveValue         = !!nextToken();
 
             if (!haveValue && !opHasDefaultValue)
@@ -657,7 +657,7 @@ DE_PIMPL(FinaleInterpreter)
 
             case FVT_STRING: {
                 char const *valueStr = haveValue? token : nullptr;
-                int valueLen         = haveValue? qstrlen(token) : 0;
+                int valueLen         = haveValue? strlen(token) : 0;
                 if (!valueStr)
                 {
                     // Use the default.
@@ -907,13 +907,13 @@ void FinaleInterpreter::loadScript(char const *script)
         // The start of the script may include blocks of event directive
         // commands. These commands are automatically executed in response
         // to their associated events.
-        if (!qstricmp(d->token, "OnLoad"))
+        if (!iCmpStrCase(d->token, "OnLoad"))
         {
             d->findBegin();
             forever
             {
                 d->nextToken();
-                if (!qstricmp(d->token, "}"))
+                if (!iCmpStrCase(d->token, "}"))
                     goto end_read;
 
                 if (!d->executeCommand(d->token, FID_ONLOAD))
@@ -1208,7 +1208,7 @@ FinalePageWidget &FinaleInterpreter::page(PageIndex index)
         DE_ASSERT(d->pages[index]);
         return *d->pages[index];
     }
-    throw MissingPageError("FinaleInterpreter::page", "Unknown page #" + String::number(int(index)));
+    throw MissingPageError("FinaleInterpreter::page", "Unknown page #" + String::asText(int(index)));
 }
 
 FinalePageWidget const &FinaleInterpreter::page(PageIndex index) const
@@ -1250,7 +1250,7 @@ FinaleWidget &FinaleInterpreter::findOrCreateWidget(fi_obtype_e type, String con
     }
 
     FinaleWidget *newWidget = d->makeWidget(type, name);
-    if (!newWidget) throw Error("FinaleInterpreter::findOrCreateWidget", "Failed making widget for type:" + String::number(int(type)));
+    if (!newWidget) throw Error("FinaleInterpreter::findOrCreateWidget", "Failed making widget for type:" + String::asText(int(type)));
 
     return *page(d->choosePageFor(*newWidget)).addChild(newWidget);
 }
@@ -1367,13 +1367,13 @@ DEFFC(BGMaterial)
     world::Material *material = nullptr;
     try
     {
-        if (ded_value_t *value = DED_Definitions()->getValueByUri(*reinterpret_cast<de::Uri const *>(OP_URI(0))))
+        if (ded_value_t *value = DED_Definitions()->getValueByUri(*reinterpret_cast<res::Uri const *>(OP_URI(0))))
         {
-            material = &world::Materials::get().material(de::makeUri(value->text));
+            material = &world::Materials::get().material(res::makeUri(value->text));
         }
         else
         {
-            material = &world::Materials::get().material(*reinterpret_cast<de::Uri const *>(OP_URI(0)));
+            material = &world::Materials::get().material(*reinterpret_cast<res::Uri const *>(OP_URI(0)));
         }
     }
     catch (world::MaterialManifest::MissingMaterialError const &)
@@ -1517,11 +1517,11 @@ DEFFC(If)
     bool val          = false;
 
     // Built-in conditions.
-    if (!qstricmp(token, "netgame"))
+    if (!iCmpStrCase(token, "netgame"))
     {
         val = netGame;
     }
-    else if (!qstrnicmp(token, "mode:", 5))
+    else if (!iCmpStrNCase(token, "mode:", 5))
     {
         if (App_GameLoaded())
             val = !String(token + 5).compareWithoutCase(App_CurrentGame().id());
@@ -1989,8 +1989,8 @@ DEFFC(FillColor)
 
     // Which colors to modify?
     int which = 0;
-    if (!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
-    else if (!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
+    if (!iCmpStrCase(OP_CSTRING(1), "top"))         which |= 1;
+    else if (!iCmpStrCase(OP_CSTRING(1), "bottom")) which |= 2;
     else                                         which = 3;
 
     Vec4f color;
@@ -2014,8 +2014,8 @@ DEFFC(EdgeColor)
 
     // Which colors to modify?
     int which = 0;
-    if (!qstricmp(OP_CSTRING(1), "top"))         which |= 1;
-    else if (!qstricmp(OP_CSTRING(1), "bottom")) which |= 2;
+    if (!iCmpStrCase(OP_CSTRING(1), "top"))         which |= 1;
+    else if (!iCmpStrCase(OP_CSTRING(1), "bottom")) which |= 2;
     else                                        which = 3;
 
     Vec4f color;

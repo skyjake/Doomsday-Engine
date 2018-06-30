@@ -50,7 +50,7 @@
 #include "version.h"
 #include "info.h"
 
-#define Set                 DD_SetInteger
+//#define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
 //

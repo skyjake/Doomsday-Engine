@@ -7,10 +7,6 @@ project (DE_SERVER)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore)
-find_package (DengLegacy)
-find_package (DengShell)
-find_package (DengDoomsday)
 find_package (Amethyst QUIET)
 
 include_directories (include ../client/include ${DE_API_DIR})
@@ -139,11 +135,11 @@ set_target_properties (server PROPERTIES
 # There's some old code here so relax the warnings a bit.
 relaxed_warnings (server)
 
-target_link_libraries (server
-    Deng::libcore
-    Deng::liblegacy
-    Deng::libshell
-    Deng::libdoomsday
+deng_link_libraries (server PRIVATE
+    DengCore
+    DengLegacy
+    DengShell
+    DengDoomsday
 )
 
 # Server is installed as part of the "client" component instead of the

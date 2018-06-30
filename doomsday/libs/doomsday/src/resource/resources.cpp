@@ -38,6 +38,7 @@
 #include <de/Config>
 
 using namespace de;
+using namespace res;
 
 static Resources *theResources = nullptr;
 
@@ -55,8 +56,8 @@ static String resolveUriSymbol(String const &symbol)
     {
         if (DoomsdayApp::game().isNull())
         {
-            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
-            throw de::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
+            /// @throw res::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw res::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
                                               "Symbol 'Game' did not resolve (no game loaded)");
         }
         return DoomsdayApp::game().id();
@@ -66,8 +67,8 @@ static String resolveUriSymbol(String const &symbol)
         auto &gx = DoomsdayApp::plugins().gameExports();
         if (DoomsdayApp::game().isNull() || !gx.GetPointer)
         {
-            /// @throw de::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
-            throw de::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
+            /// @throw res::Uri::ResolveSymbolError  An unresolveable symbol was encountered.
+            throw res::Uri::ResolveSymbolError("Resources::resolveUriSymbol",
                                               "Symbol 'GamePlugin' did not resolve (no game plugin loaded)");
         }
         return String(reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)));
@@ -75,7 +76,7 @@ static String resolveUriSymbol(String const &symbol)
     else
     {
         /// @throw UnknownSymbolError  An unknown symbol was encountered.
-        throw de::Uri::UnknownSymbolError("Resources::resolveUriSymbol",
+        throw res::Uri::UnknownSymbolError("Resources::resolveUriSymbol",
                                           "Symbol '" + symbol + "' is unknown");
     }
 }
@@ -106,7 +107,7 @@ DE_PIMPL(Resources)
         App::packageLoader().audienceForLoad()   += this;
         App::packageLoader().audienceForUnload() += this;
 
-        de::Uri::setResolverFunc(resolveUriSymbol);
+        res::Uri::setResolverFunc(resolveUriSymbol);
 
         resClasses << new ResourceClass("RC_PACKAGE",    "Packages")
                    << new ResourceClass("RC_DEFINITION", "Defs")
@@ -221,8 +222,8 @@ void Resources::initSystemTextures()
 {
     LOG_AS("Resources");
 
-    textures().declareSystemTexture("unknown", de::Uri("Graphics", "unknown"));
-    textures().declareSystemTexture("missing", de::Uri("Graphics", "missing"));
+    textures().declareSystemTexture("unknown", res::Uri("Graphics", "unknown"));
+    textures().declareSystemTexture("missing", res::Uri("Graphics", "missing"));
 }
 
 void Resources::reloadAllResources()
@@ -319,7 +320,7 @@ String Resources::tryFindMusicFile(Record const &definition)
 
     defn::Music const music(definition);
 
-    de::Uri songUri(music.gets("path"), RC_NULL);
+    res::Uri songUri(music.gets("path"), RC_NULL);
     if (!songUri.path().isEmpty())
     {
         // All external music files are specified relative to the base path.
@@ -339,7 +340,7 @@ String Resources::tryFindMusicFile(Record const &definition)
     {
         try
         {
-            String const foundPath = App_FileSystem().findPath(de::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
+            String const foundPath = App_FileSystem().findPath(res::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
                                                                App_ResourceClass(RC_MUSIC));
             return App_BasePath() / foundPath;  // Ensure the path is absolute.
         }
@@ -363,14 +364,14 @@ ResourceClass &App_ResourceClass(resourceclassid_t classId)
  * @param like             Map path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags composeUriFlags)
+static dint printMapsIndex2(Path const &like, res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     res::MapManifests::Tree::FoundNodes found;
     Resources::get().mapManifests().allMapManifests()
             .findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
     if (found.isEmpty()) return 0;
 
-    //bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+    //bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known maps";
@@ -403,7 +404,7 @@ static dint printMapsIndex2(Path const &like, de::Uri::ComposeAsTextFlags compos
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
 static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
-    de::Uri::ComposeAsTextFlags composeUriFlags)
+    res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     world::MaterialScheme::Index::FoundNodes found;
     if (scheme) // Consider resources in the specified scheme only.
@@ -420,7 +421,7 @@ static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
     }
     if (found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+    bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known materials";
@@ -455,7 +456,7 @@ static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
 static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
-                              de::Uri::ComposeAsTextFlags composeUriFlags)
+                              res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     res::TextureScheme::Index::FoundNodes found;
     if (scheme)  // Consider resources in the specified scheme only.
@@ -471,7 +472,7 @@ static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
     }
     if (found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(composeUriFlags & de::Uri::OmitScheme);
+    bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known textures";
@@ -499,22 +500,22 @@ static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
     return found.count();
 }
 
-static void printMaterialIndex(de::Uri const &search,
-    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+static void printMaterialIndex(res::Uri const &search,
+    res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
     int printTotal = 0;
 
     // Collate and print results from all schemes?
     if (search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printMaterialIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        printTotal = printMaterialIndex2(0/*any scheme*/, search.path(), flags & ~res::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
     else if (world::Materials::get().isKnownMaterialScheme(search.scheme()))
     {
         printTotal = printMaterialIndex2(&world::Materials::get().materialScheme(search.scheme()),
-                                         search.path(), flags | de::Uri::OmitScheme);
+                                         search.path(), flags | res::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     else
@@ -522,7 +523,7 @@ static void printMaterialIndex(de::Uri const &search,
         // Collect and sort results in each scheme separately.
         world::Materials::get().forAllMaterialSchemes([&search, &flags, &printTotal] (world::MaterialScheme &scheme)
         {
-            int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printMaterialIndex2(&scheme, search.path(), flags | res::Uri::OmitScheme);
             if (numPrinted)
             {
                 LOG_MSG(_E(R));
@@ -534,16 +535,16 @@ static void printMaterialIndex(de::Uri const &search,
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "material" : "materials in total");
 }
 
-static void printMapsIndex(de::Uri const &search,
-    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+static void printMapsIndex(res::Uri const &search,
+    res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
-    int printTotal = printMapsIndex2(search.path(), flags | de::Uri::OmitScheme);
+    int printTotal = printMapsIndex2(search.path(), flags | res::Uri::OmitScheme);
     LOG_RES_MSG(_E(R));
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "map" : "maps in total");
 }
 
-static void printTextureIndex(de::Uri const &search,
-    de::Uri::ComposeAsTextFlags flags = de::Uri::DefaultComposeAsTextFlags)
+static void printTextureIndex(res::Uri const &search,
+    res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
     auto &textures = res::Textures::get();
 
@@ -552,14 +553,14 @@ static void printTextureIndex(de::Uri const &search,
     // Collate and print results from all schemes?
     if (search.scheme().isEmpty() && !search.path().isEmpty())
     {
-        printTotal = printTextureIndex2(0/*any scheme*/, search.path(), flags & ~de::Uri::OmitScheme);
+        printTotal = printTextureIndex2(0/*any scheme*/, search.path(), flags & ~res::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     // Print results within only the one scheme?
     else if (textures.isKnownTextureScheme(search.scheme()))
     {
         printTotal = printTextureIndex2(&textures.textureScheme(search.scheme()),
-                                        search.path(), flags | de::Uri::OmitScheme);
+                                        search.path(), flags | res::Uri::OmitScheme);
         LOG_RES_MSG(_E(R));
     }
     else
@@ -567,7 +568,7 @@ static void printTextureIndex(de::Uri const &search,
         // Collect and sort results in each scheme separately.
         for (const auto &s : textures.allTextureSchemes())
         {
-            int numPrinted = printTextureIndex2(s.second, search.path(), flags | de::Uri::OmitScheme);
+            int numPrinted = printTextureIndex2(s.second, search.path(), flags | res::Uri::OmitScheme);
             if (numPrinted)
             {
                 LOG_RES_MSG(_E(R));
@@ -601,7 +602,7 @@ D_CMD(ListMaps)
 {
     DE_UNUSED(src);
 
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+    res::Uri search = res::Uri::fromUserInput(&argv[1], argc - 1);
     if (search.scheme().isEmpty()) search.setScheme("Maps");
 
     if (!search.scheme().isEmpty() && search.scheme().compareWithoutCase("Maps"))
@@ -618,7 +619,7 @@ D_CMD(ListMaterials)
 {
     DE_UNUSED(src);
 
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
+    res::Uri search = res::Uri::fromUserInput(&argv[1], argc - 1, &isKnownMaterialSchemeCallback);
 
     if (!search.scheme().isEmpty() &&
         !world::Materials::get().isKnownMaterialScheme(search.scheme()))
@@ -635,7 +636,7 @@ D_CMD(ListTextures)
 {
     DE_UNUSED(src);
 
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1, &isKnownTextureSchemeCallback);
+    res::Uri search = res::Uri::fromUserInput(&argv[1], argc - 1, &isKnownTextureSchemeCallback);
 
     if (!search.scheme().isEmpty() &&
         !res::Textures::get().isKnownTextureScheme(search.scheme()))

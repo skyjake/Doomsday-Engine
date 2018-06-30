@@ -22,7 +22,8 @@
 #include <de/AnimationValue>
 #include <de/GLUniform>
 #include <de/Range>
-#include <QList>
+#include <de/List>
+#include <de/Hash>
 
 /**
  * Animatable variable bound to a GL uniform. The value can have 1...4 float
@@ -36,7 +37,7 @@ struct ShaderVar
 
         Value(de::AnimationValue *a = nullptr) : anim(a) {} // not owned
     };
-    QList<Value> values;
+    de::List<Value> values;
     de::GLUniform *uniform = nullptr; // owned
 
 public:
@@ -69,7 +70,7 @@ public:
 
 struct ShaderVars
 {
-    QHash<de::String, ShaderVar *> members;
+    de::Hash<de::String, ShaderVar *> members;
 
     DE_ERROR(DefinitionError);
 

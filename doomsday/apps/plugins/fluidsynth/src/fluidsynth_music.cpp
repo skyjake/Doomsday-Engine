@@ -460,23 +460,23 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
 #if defined (WIN32)
     // Using MinGW.
-    QString pathStr = filename;
+    de::String pathStr = filename;
     pathStr.replace("\\", "/");
-    QByteArray const path = pathStr.toUtf8();
+    const de::String path = pathStr;
 #else
-    QByteArray const path = filename;
+    const de::String path = filename;
 #endif
 
     if (!fluid_is_midifile(path))
     {
         // It doesn't look like MIDI.
-        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\": not a MIDI file", path.constData());
+        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\": not a MIDI file", path.c_str());
         return false;
     }
 
     if (sfontId < 0)
     {
-        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\" without an SF2 soundfont", path.constData());
+        App_Log(DE2_LOG_VERBOSE, "[FluidSynth] Cannot play \"%s\" without an SF2 soundfont", path.c_str());
         return false;
     }
 
@@ -493,7 +493,7 @@ int DM_Music_PlayFile(const char *filename, int looped)
 
     startPlayer();
 
-    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << path.constData() << "' using player "
+    DSFLUIDSYNTH_TRACE("PlayFile: playing '" << path << "' using player "
                        << fsPlayer << " looped:" << looped << " sfont:" << sfontId);
     return true;
 }

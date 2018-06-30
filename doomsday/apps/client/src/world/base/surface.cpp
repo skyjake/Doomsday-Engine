@@ -320,9 +320,9 @@ Vec2f Surface::materialScale() const
     return Vec2f(materialMirrorX()? -1 : 1, materialMirrorY()? -1 : 1);
 }
 
-de::Uri Surface::composeMaterialUri() const
+res::Uri Surface::composeMaterialUri() const
 {
-    if (!hasMaterial()) return de::Uri();
+    if (!hasMaterial()) return res::Uri();
     return material().manifest().composeUri();
 }
 

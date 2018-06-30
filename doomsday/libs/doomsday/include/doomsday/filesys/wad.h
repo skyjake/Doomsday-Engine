@@ -28,7 +28,7 @@
 #include <de/Error>
 #include <de/PathTree>
 
-namespace de {
+namespace res {
 
 /**
  * WAD archive file format.
@@ -70,7 +70,7 @@ public:
          *
          * @return The absolute URI.
          */
-        Uri composeUri(Char delimiter = '/') const;
+        res::Uri composeUri(Char delimiter = '/') const;
 
         /**
          * Retrieve the directory node for this file.
@@ -244,6 +244,6 @@ private:
     DE_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace res
 
 #endif // LIBDOOMSDAY_FILESYS_WAD_H

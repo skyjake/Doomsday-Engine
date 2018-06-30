@@ -93,7 +93,7 @@ void guidata_kills_t::draw(Vec2i const &offset) const
 
     FR_SetFont(font());
     FR_SetColorAndAlpha(::cfg.common.hudColor[0], ::cfg.common.hudColor[1], ::cfg.common.hudColor[2], textOpacity);
-    FR_DrawTextXY(valueAsText.toUtf8().constData(), 0, 0);
+    FR_DrawTextXY(valueAsText, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -131,7 +131,7 @@ void guidata_kills_t::updateGeometry()
     }
 
     FR_SetFont(font());
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
     Rect_SetWidthHeight(&geometry(), .5f + textSize.width  * ::cfg.common.hudCheatCounterScale,
                                      .5f + textSize.height * ::cfg.common.hudCheatCounterScale);
 

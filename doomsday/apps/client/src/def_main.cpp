@@ -192,7 +192,7 @@ ded_compositefont_t *Def_GetCompositeFont(char const *uri)
 }
 
 /// @todo $revise-texture-animation
-static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExternal,*/ bool isCustom)
+static ded_reflection_t *tryFindReflection(res::Uri const &uri, /* bool hasExternal,*/ bool isCustom)
 {
     for (dint i = DED_Definitions()->reflections.size() - 1; i >= 0; i--)
     {
@@ -220,14 +220,14 @@ static ded_reflection_t *tryFindReflection(de::Uri const &uri, /* bool hasExtern
 }
 
 /// @todo $revise-texture-animation
-static ded_detailtexture_t *tryFindDetailTexture(de::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
+static ded_detailtexture_t *tryFindDetailTexture(res::Uri const &uri, /*bool hasExternal,*/ bool isCustom)
 {
     for (dint i = DED_Definitions()->details.size() - 1; i >= 0; i--)
     {
         ded_detailtexture_t &def = DED_Definitions()->details[i];
         for (dint k = 0; k < 2; ++k)
         {
-            de::Uri const *matUri = (k == 0 ? def.material1 : def.material2);
+            res::Uri const *matUri = (k == 0 ? def.material1 : def.material2);
             if (!matUri || *matUri != uri) continue;
 
             /*if (hasExternal)
@@ -250,7 +250,7 @@ static ded_detailtexture_t *tryFindDetailTexture(de::Uri const &uri, /*bool hasE
     return nullptr;  // Not found.
 }
 
-ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
+ded_ptcgen_t *Def_GetGenerator(res::Uri const &uri)
 {
     if (uri.isEmpty()) return nullptr;
 
@@ -285,7 +285,7 @@ ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri)
 ded_ptcgen_t *Def_GetGenerator(uri_s const *uri)
 {
     if (!uri) return nullptr;
-    return Def_GetGenerator(reinterpret_cast<de::Uri const &>(*uri));
+    return Def_GetGenerator(reinterpret_cast<res::Uri const &>(*uri));
 }
 
 ded_ptcgen_t *Def_GetDamageGenerator(int mobjType)
@@ -319,7 +319,7 @@ static void Def_InitTextDef(ddtext_t *txt, char const *str)
     // Handle null pointers with "".
     if (!str) str = "";
 
-    txt->text = (char *) M_Calloc(qstrlen(str) + 1);
+    txt->text = (char *) M_Calloc(strlen(str) + 1);
 
     char const *in = str;
     char *out = txt->text;
@@ -346,7 +346,7 @@ static void Def_InitTextDef(ddtext_t *txt, char const *str)
     }
 
     // Adjust buffer to fix exactly.
-    txt->text = (char *) M_Realloc(txt->text, qstrlen(txt->text) + 1);
+    txt->text = (char *) M_Realloc(txt->text, strlen(txt->text) + 1);
 }
 
 /**
@@ -463,7 +463,7 @@ static QStringList allMapInfoUrns()
     bool ignoreNonCustom = false;
     try
     {
-        String mainMapInfo = fileSys().findPath(de::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
+        String mainMapInfo = fileSys().findPath(res::Uri(App_CurrentGame().mainMapInfo()), RLF_MATCH_EXTENSION);
         if (!mainMapInfo.isEmpty())
         {
             foundPaths << mainMapInfo;
@@ -516,7 +516,7 @@ static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, Stri
     Str_InitStd(&parm.translatedCustom);
     try
     {
-        Str_Set(&parm.paths, delimitedPaths.toUtf8().constData());
+        Str_Set(&parm.paths, delimitedPaths);
         if (DoomsdayApp::plugins().callAllHooks(HOOK_MAPINFO_CONVERT, 0, &parm))
         {
             xlat       = Str_Text(&parm.translated);
@@ -553,7 +553,7 @@ static void readAllDefinitions()
             {
                 LOGDEV_MAP_VERBOSE("Non-custom translated MAPINFO definitions:\n") << xlat;
 
-                if (!DED_ReadData(DED_Definitions(), xlat.toUtf8().constData(),
+                if (!DED_ReadData(DED_Definitions(), xlat,
                                  "[TranslatedMapInfos]", false /*not custom*/))
                 {
                     App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
@@ -564,7 +564,7 @@ static void readAllDefinitions()
             {
                 LOGDEV_MAP_VERBOSE("Custom translated MAPINFO definitions:\n") << xlatCustom;
 
-                if (!DED_ReadData(DED_Definitions(), xlatCustom.toUtf8().constData(),
+                if (!DED_ReadData(DED_Definitions(), xlatCustom,
                                  "[TranslatedMapInfos]", true /*custom*/))
                 {
                     App_Error("readAllDefinitions: DED parse error:\n%s", DED_Error());
@@ -594,7 +594,7 @@ static void readAllDefinitions()
         if (!CommandLine_Exists("-noauto"))
         {
             FS1::PathList foundPaths;
-            if (fileSys().findAllPaths(de::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded").resolved(), 0, foundPaths))
+            if (fileSys().findAllPaths(res::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/*.ded").resolved(), 0, foundPaths))
             {
                 for (FS1::PathListItem const &found : foundPaths)
                 {
@@ -650,7 +650,7 @@ static void readAllDefinitions()
     LOG_RES_VERBOSE("readAllDefinitions: Completed in %.2f seconds") << begunAt.since();
 }
 
-static void defineFlaremap(de::Uri const &resourceUri)
+static void defineFlaremap(res::Uri const &resourceUri)
 {
     if (resourceUri.isEmpty()) return;
 
@@ -666,7 +666,7 @@ static void defineFlaremap(de::Uri const &resourceUri)
     res::Textures::get().defineTexture("Flaremaps", resourceUri);
 }
 
-static void defineLightmap(de::Uri const &resourceUri)
+static void defineLightmap(res::Uri const &resourceUri)
 {
     if (resourceUri.isEmpty()) return;
 
@@ -683,8 +683,8 @@ static void generateMaterialDefForTexture(res::TextureManifest const &manifest)
     Record &mat = DED_Definitions()->materials[DED_Definitions()->addMaterial()];
     mat.set("autoGenerated", true);
 
-    de::Uri const texUri = manifest.composeUri();
-    mat.set("id", de::Uri(DD_MaterialSchemeNameForTextureScheme(texUri.scheme()), texUri.path()).compose());
+    res::Uri const texUri = manifest.composeUri();
+    mat.set("id", res::Uri(DD_MaterialSchemeNameForTextureScheme(texUri.scheme()), texUri.path()).compose());
 
     if (manifest.hasTexture())
     {
@@ -768,10 +768,10 @@ static void generateMaterialDefs()
 /**
  * Returns @c true iff @a decorDef is compatible with the specified context.
  */
-static bool decorationIsCompatible(Record const &decorDef, de::Uri const &textureUri,
+static bool decorationIsCompatible(Record const &decorDef, res::Uri const &textureUri,
                                    bool materialIsCustom)
 {
-    if (de::makeUri(decorDef.gets("texture")) != textureUri)
+    if (res::makeUri(decorDef.gets("texture")) != textureUri)
         return false;
 
     if (materialIsCustom)
@@ -803,10 +803,10 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
         {
             Record const &st = decorDef.stage(k);
 
-            defineLightmap(de::makeUri(st.gets("lightmapUp")));
-            defineLightmap(de::makeUri(st.gets("lightmapDown")));
-            defineLightmap(de::makeUri(st.gets("lightmapSide")));
-            defineFlaremap(de::makeUri(st.gets("haloTexture")));
+            defineLightmap(res::makeUri(st.gets("lightmapUp")));
+            defineLightmap(res::makeUri(st.gets("lightmapDown")));
+            defineLightmap(res::makeUri(st.gets("lightmapSide")));
+            defineFlaremap(res::makeUri(st.gets("haloTexture")));
         }
 
         material.addDecoration(LightMaterialDecoration::fromDef(decorDef.def()));
@@ -830,7 +830,7 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
             try
             {
                 res::TextureManifest &texManifest = res::Textures::get().textureManifest(stage.texture);
-                de::Uri const texUri = texManifest.composeUri();
+                res::Uri const texUri = texManifest.composeUri();
                 for (auto const &pair : decorationsByTexture)
                 {
                     Record const &rec = *pair.second->as<RecordValue>().record();
@@ -894,7 +894,7 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
 
 #endif // __CLIENT__
 
-static ded_group_t *findGroupForMaterialLayerAnimation(de::Uri const &uri)
+static ded_group_t *findGroupForMaterialLayerAnimation(res::Uri const &uri)
 {
     if (uri.isEmpty()) return nullptr;
 
@@ -930,7 +930,7 @@ static ded_group_t *findGroupForMaterialLayerAnimation(de::Uri const &uri)
 static void configureMaterial(world::Material &mat, Record const &definition)
 {
     defn::Material matDef(definition);
-    de::Uri const materialUri(matDef.gets("id"), RC_NULL);
+    res::Uri const materialUri(matDef.gets("id"), RC_NULL);
 
     // Reconfigure basic properties.
     mat.setDimensions(Vec2ui(matDef.geta("dimensions")));
@@ -960,7 +960,7 @@ static void configureMaterial(world::Material &mat, Record const &definition)
 
             if (matDef.getb(QStringLiteral("autoGenerated")) && layer0.stageCount() == 1)
             {
-                de::Uri const &textureUri = stage0.texture;
+                res::Uri const &textureUri = stage0.texture;
 
                 // Possibly; see if there is a compatible definition with
                 // a member named similarly to the texture for layer #0.
@@ -1112,7 +1112,7 @@ static void interpretMaterialDef(Record const &definition)
 {
     LOG_AS("interpretMaterialDef");
     defn::Material matDef(definition);
-    de::Uri const materialUri(matDef.gets("id"), RC_NULL);
+    res::Uri const materialUri(matDef.gets("id"), RC_NULL);
     try
     {
         // Create/retrieve a manifest for the would-be material.
@@ -1126,7 +1126,7 @@ static void interpretMaterialDef(Record const &definition)
             defn::MaterialLayer layerDef(matDef.layer(0));
             if (layerDef.stageCount() > 0)
             {
-                de::Uri const textureUri(layerDef.stage(0).gets("texture"), RC_NULL);
+                res::Uri const textureUri(layerDef.stage(0).gets("texture"), RC_NULL);
                 try
                 {
                     res::TextureManifest &texManifest = res::Textures::get().textureManifest(textureUri);
@@ -1313,10 +1313,10 @@ void Def_Read()
             Record const &st = defn::MaterialDecoration(decorDef.light(k)).stage(0);
             if (Vec3f(st.geta("color")) != Vec3f(0, 0, 0))
             {
-                defineLightmap(de::makeUri(st["lightmapUp"]));
-                defineLightmap(de::makeUri(st["lightmapDown"]));
-                defineLightmap(de::makeUri(st["lightmapSide"]));
-                defineFlaremap(de::makeUri(st["haloTexture"]));
+                defineLightmap(res::makeUri(st["lightmapUp"]));
+                defineLightmap(res::makeUri(st["lightmapDown"]));
+                defineLightmap(res::makeUri(st["lightmapSide"]));
+                defineFlaremap(res::makeUri(st["haloTexture"]));
             }
         }
     }
@@ -1389,7 +1389,7 @@ void Def_Read()
 
         qstrcpy(si->id, snd->id);
         qstrcpy(si->lumpName, snd->lumpName);
-        si->lumpNum     = (qstrlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
+        si->lumpNum     = (strlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
         qstrcpy(si->name, snd->name);
 
         dint const soundIdx = defs.getSoundNum(snd->link);
@@ -1451,10 +1451,10 @@ void Def_Read()
         for (dint k = i + 1; k < ::runtimeDefs.texts.size(); ++k)
         {
             if (!::runtimeDefs.texts[k].text) continue; // Already done.
-            if (qstricmp(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
+            if (iCmpStrCase(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
 
             // Update the earlier string.
-            ::runtimeDefs.texts[i].text = (char *) M_Realloc(::runtimeDefs.texts[i].text, qstrlen(::runtimeDefs.texts[k].text) + 1);
+            ::runtimeDefs.texts[i].text = (char *) M_Realloc(::runtimeDefs.texts[i].text, strlen(::runtimeDefs.texts[k].text) + 1);
             qstrcpy(::runtimeDefs.texts[i].text, ::runtimeDefs.texts[k].text);
 
             // Free the later string, it isn't used (>NUMTEXT).
@@ -1797,7 +1797,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
         {
             if (def->iparmStr[k][0])
             {
-                if (!qstricmp(def->iparmStr[k], "-1"))
+                if (!iCmpStrCase(def->iparmStr[k], "-1"))
                 {
                     l->iparm[k] = -1;
                 }
@@ -1805,7 +1805,7 @@ void Def_CopyLineType(linetype_t *l, ded_linetype_t *def)
                 {
                     try
                     {
-                        l->iparm[k] = world::Materials::get().materialManifest(de::makeUri(def->iparmStr[k])).id();
+                        l->iparm[k] = world::Materials::get().materialManifest(res::makeUri(def->iparmStr[k])).id();
                     }
                     catch (Resources::MissingResourceManifestError const &)
                     {}  // Ignore this error.
@@ -1946,7 +1946,7 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
         case DD_LUMP:
             S_StopSound(index, 0);
             qstrcpy(::runtimeDefs.sounds[index].lumpName, (char const *) ptr);
-            if (qstrlen(::runtimeDefs.sounds[index].lumpName))
+            if (strlen(::runtimeDefs.sounds[index].lumpName))
             {
                 ::runtimeDefs.sounds[index].lumpNum = fileSys().lumpNumForName(::runtimeDefs.sounds[index].lumpName);
                 if (::runtimeDefs.sounds[index].lumpNum < 0)

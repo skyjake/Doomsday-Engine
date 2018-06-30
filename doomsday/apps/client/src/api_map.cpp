@@ -1392,14 +1392,14 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 DE_EXTERN_C dd_bool P_MapExists(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    return App_Resources().mapManifests().tryFindMapManifest(de::makeUri(uriCString)) != nullptr;
+    return App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)) != nullptr;
 }
 
 #undef P_MapIsCustom
 DE_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(de::makeUri(uriCString)))
+    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
     {
         return mapDef->sourceFile()->hasCustom();
     }
@@ -1410,9 +1410,9 @@ DE_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 DE_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 {
     if(!uriCString || !uriCString[0]) return nullptr;
-    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(de::makeUri(uriCString)))
+    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
     {
-        return AutoStr_FromTextStd(mapDef->sourceFile()->composePath().toUtf8().constData());
+        return AutoStr_FromTextStd(mapDef->sourceFile()->composePath());
     }
     return AutoStr_NewStd();
 }
@@ -1445,7 +1445,7 @@ DE_EXTERN_C dd_bool P_MapChange(char const *uriCString)
     }
 #endif
 
-    return (dd_bool) App_World().changeMap(de::makeUri(uriCString));
+    return (dd_bool) App_World().changeMap(res::makeUri(uriCString));
 }
 
 #undef P_CountMapObjs

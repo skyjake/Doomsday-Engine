@@ -328,7 +328,7 @@ void Sv_HandlePacket()
         {
             // Check the game mode (max 16 chars).
             char buf[17]; Reader_Read(::msgReader, buf, 16);
-            if (strnicmp(buf, App_CurrentGame().id().toUtf8().constData(), 16))
+            if (strnicmp(buf, App_CurrentGame().id(), 16))
             {
                 LOG_NET_ERROR("Client's game ID is incompatible: %-.16s") << buf;
                 N_TerminateClient(from);

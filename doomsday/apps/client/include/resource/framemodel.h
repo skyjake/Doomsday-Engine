@@ -151,7 +151,7 @@ public:
      * Determines whether the specified @a file appears to be in a recognised
      * model format.
      */
-    static bool recognise(de::FileHandle &file);
+    static bool recognise(res::FileHandle &file);
 
     /**
      * Attempt to load a new model resource from the specified @a file.
@@ -161,7 +161,7 @@ public:
      *
      * @return  The new FrameModel (if any). Ownership is given to the caller.
      */
-    static FrameModel *loadFromFile(de::FileHandle &file, float aspectScale = 1);
+    static FrameModel *loadFromFile(res::FileHandle &file, float aspectScale = 1);
 
     /**
      * Returns the unique identifier associated with the model.

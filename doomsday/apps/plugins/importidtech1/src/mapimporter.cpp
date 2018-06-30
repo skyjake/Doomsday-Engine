@@ -21,7 +21,8 @@
 #include "mapimporter.h"
 #include <vector>
 #include <list>
-#include <QVector>
+#include <de/List>
+#include <de/Map>
 #include <de/libcore.h>
 #include <de/Error>
 #include <de/ByteRefArray>
@@ -32,6 +33,7 @@
 #include "importidtech1.h"
 
 using namespace de;
+using namespace res;
 
 namespace idtech1 {
 namespace internal {
@@ -77,13 +79,13 @@ struct SideDef : public Id1MapElement
         case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
-            topMaterial    = map().toMaterialId(name.constData(), WallMaterials);
+            topMaterial    = map().toMaterialId(name, WallMaterials);
 
             from.readBytes(8, name);
-            bottomMaterial = map().toMaterialId(name.constData(), WallMaterials);
+            bottomMaterial = map().toMaterialId(name, WallMaterials);
 
             from.readBytes(8, name);
-            middleMaterial = map().toMaterialId(name.constData(), WallMaterials);
+            middleMaterial = map().toMaterialId(name, WallMaterials);
             break; }
 
         case Id1MapRecognizer::Doom64Format:
@@ -308,10 +310,10 @@ struct SectorDef : public Id1MapElement
         case Id1MapRecognizer::HexenFormat: {
             Block name;
             from.readBytes(8, name);
-            floorMaterial= map().toMaterialId(name.constData(), PlaneMaterials);
+            floorMaterial= map().toMaterialId(name, PlaneMaterials);
 
             from.readBytes(8, name);
-            ceilMaterial = map().toMaterialId(name.constData(), PlaneMaterials);
+            ceilMaterial = map().toMaterialId(name, PlaneMaterials);
 
             from >> lightLevel;
             break; }
@@ -594,7 +596,7 @@ struct TintColor : public Id1MapElement
 
 struct Polyobj
 {
-    typedef QVector<int> LineIndices;
+    typedef List<int> LineIndices;
 
     dint index;
     LineIndices lineIndices;
@@ -613,7 +615,7 @@ DE_PIMPL(MapImporter)
 {
     Id1MapRecognizer::Format format;
 
-    QVector<coord_t> vertCoords;  ///< Position coords [v0:X, vo:Y, v1:X, v1:Y, ...]
+    List<coord_t> vertCoords;  ///< Position coords [v0:X, vo:Y, v1:X, v1:Y, ...]
 
     typedef std::vector<LineDef> Lines;
     Lines lines;
@@ -647,15 +649,15 @@ DE_PIMPL(MapImporter)
             // In original DOOM, texture name references beginning with the
             // hypen '-' character are always treated as meaning "no reference"
             // or "invalid texture" and surfaces using them were not drawn.
-            if(group != PlaneMaterials && name[0] == '-')
+            if(group != PlaneMaterials && name.first() == '-')
             {
                 return 0; // Not a valid id.
             }
 
             // Prepare the encoded URI for insertion into the dictionary.
             // Material paths must be encoded.
-            AutoStr *path = Str_PercentEncode(AutoStr_FromText(name.toUtf8().constData()));
-            de::Uri uri(Str_Text(path), RC_NULL);
+            AutoStr *path = Str_PercentEncode(AutoStr_FromText(name));
+            res::Uri uri(Str_Text(path), RC_NULL);
             uri.setScheme(group == PlaneMaterials? "Flats" : "Textures");
 
             // Intern this material URI in the dictionary.
@@ -665,7 +667,7 @@ DE_PIMPL(MapImporter)
         MaterialId toMaterialId(dint uniqueId, MaterialGroup group)
         {
             // Prepare the encoded URI for insertion into the dictionary.
-            de::Uri textureUrn(String("urn:%1:%2").arg(group == PlaneMaterials? "Flats" : "Textures").arg(uniqueId), RC_NULL);
+            res::Uri textureUrn(String::format("urn:%s:%i", group == PlaneMaterials? "Flats" : "Textures", uniqueId), RC_NULL);
             uri_s *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(reinterpret_cast<uri_s *>(&textureUrn))));
             String uriComposedAsString = Str_Text(Uri_Compose(uri));
             Uri_Delete(uri);
@@ -688,7 +690,7 @@ DE_PIMPL(MapImporter)
 
     /// @todo fixme: A real performance killer...
     inline AutoStr *composeMaterialRef(MaterialId id) {
-        return AutoStr_FromTextStd(materials.find(id).toUtf8().constData());
+        return AutoStr_FromTextStd(materials.find(id));
     }
 
     void readVertexes(de::Reader &from, dint numElements)
@@ -798,7 +800,7 @@ DE_PIMPL(MapImporter)
         po->anchor[VY]  = anchorY;
         po->lineIndices = lineIndices; // A copy is made.
 
-        foreach(dint lineIdx, po->lineIndices)
+        for (dint lineIdx : po->lineIndices)
         {
             LineDef *line = &lines[lineIdx];
 
@@ -950,7 +952,7 @@ DE_PIMPL(MapImporter)
         {
             indices[i] = i;
         }
-        MPE_VertexCreatev(numVertexes, vertCoords.constData(), indices, 0);
+        MPE_VertexCreatev(numVertexes, vertCoords.data(), indices, 0);
         delete[] indices;
     }
 
@@ -1077,7 +1079,7 @@ DE_PIMPL(MapImporter)
         LOGDEV_MAP_XVERBOSE("Transfering polyobjs...", "");
         DE_FOR_EACH(Polyobjs, i, polyobjs)
         {
-            MPE_PolyobjCreate(i->lineIndices.constData(), i->lineIndices.count(),
+            MPE_PolyobjCreate(i->lineIndices.data(), i->lineIndices.count(),
                               i->tag, i->seqType,
                               coord_t(i->anchor[VX]), coord_t(i->anchor[VY]),
                               i->index);
@@ -1168,14 +1170,14 @@ MapImporter::MapImporter(Id1MapRecognizer const &recognized)
 
     // Allocate the vertices first as a large contiguous array suitable for
     // passing directly to Doomsday's MapEdit interface.
-    duint vertexCount = recognized.lumps().find(Id1MapRecognizer::VertexData).value()->size()
+    duint vertexCount = recognized.lumps().find(Id1MapRecognizer::VertexData)->second->size()
                       / Id1MapRecognizer::elementSizeForDataType(d->format, Id1MapRecognizer::VertexData);
     d->vertCoords.resize(vertexCount * 2);
 
     DE_FOR_EACH_CONST(Id1MapRecognizer::Lumps, i, recognized.lumps())
     {
-        Id1MapRecognizer::DataType dataType = i.key();
-        File1 *lump = i.value();
+        Id1MapRecognizer::DataType dataType = i->first;
+        File1 *lump = i->second;
 
         dsize lumpLength = lump->size();
         if(!lumpLength) continue;

@@ -39,13 +39,13 @@ typedef UserDataPathTree CVarDirectory;
 static CVarDirectory *cvarDirectory;
 
 static ddstring_s *emptyStr;
-static de::Uri *emptyUri;
+static res::Uri *emptyUri;
 
 void Con_InitVariableDirectory()
 {
     cvarDirectory = new CVarDirectory;
     emptyStr = Str_NewStd();
-    emptyUri = new de::Uri;
+    emptyUri = new res::Uri;
 }
 
 void Con_DeinitVariableDirectory()
@@ -103,7 +103,7 @@ static int clearVariable(CVarDirectory::Node& node, void * /*context*/)
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
                 cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
-                delete reinterpret_cast<de::Uri *>(*ptr); *ptr = emptyUri;
+                delete reinterpret_cast<res::Uri *>(*ptr); *ptr = emptyUri;
                 break;
 
             default:
@@ -233,11 +233,11 @@ AutoStr *CVar_ComposePath(cvar_t const *var)
     return AutoStr_FromTextStd(node.path(CVARDIRECTORY_DELIMITER));
 }
 
-void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
+void CVar_SetUri2(cvar_t *var, res::Uri const &uri, int svFlags)
 {
     DE_ASSERT(var);
 
-    de::Uri *newUri;
+    res::Uri *newUri;
     bool changed = false;
 
     if ((var->flags & CVF_READ_ONLY) && !(svFlags & SVF_WRITE_OVERRIDE))
@@ -260,7 +260,7 @@ void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
     */
 
     // Compose the new uri.
-    newUri = new de::Uri(uri);
+    newUri = new res::Uri(uri);
 
     if (!CV_URIPTR(var) || *CV_URIPTR(var) != *newUri)
     {
@@ -283,7 +283,7 @@ void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags)
     }
 }
 
-void CVar_SetUri(cvar_t *var, de::Uri const &uri)
+void CVar_SetUri(cvar_t *var, res::Uri const &uri)
 {
     CVar_SetUri2(var, uri, 0);
 }
@@ -496,7 +496,7 @@ char const* CVar_String(cvar_t const* var)
     }
 }
 
-de::Uri const &CVar_Uri(cvar_t const *var)
+res::Uri const &CVar_Uri(cvar_t const *var)
 {
     if (!var) return *emptyUri;
 
@@ -695,7 +695,7 @@ static Value *Function_Console_Set(Context &, Function::ArgumentValues const &ar
         break;
 
     case CVT_URIPTR:
-        CVar_SetUri(var, de::Uri(value.asText()));
+        CVar_SetUri(var, res::Uri(value.asText()));
         break;
 
     default:

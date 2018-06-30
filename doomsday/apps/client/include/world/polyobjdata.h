@@ -20,8 +20,7 @@
 #ifndef DE_WORLD_POLYOBJDATA_H
 #define DE_WORLD_POLYOBJDATA_H
 
-#include <QList>
-#include <QVector>
+#include <de/List>
 #include <de/Vector>
 #include <doomsday/world/thinker.h>
 
@@ -40,7 +39,7 @@ class PolyobjData : public Thinker::IData
 {
 public:
     /// Used to store the original/previous vertex coordinates.
-    typedef QVector<de::Vec2d> VertexCoords;
+    typedef de::List<de::Vec2d> VertexCoords;
 
 public:
     PolyobjData();
@@ -61,8 +60,8 @@ public:
     de::duint origIndex = world::MapElement::NoIndex;
 
     de::Mesh *mesh = nullptr;
-    QList<Line *> lines;
-    QList<Vertex *> uniqueVertexes;
+    de::List<Line *> lines;
+    de::List<Vertex *> uniqueVertexes;
     VertexCoords originalPts;  ///< Used as the base for the rotations.
     VertexCoords prevPts;      ///< Use to restore the old point values.
 

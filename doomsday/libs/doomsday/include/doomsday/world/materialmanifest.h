@@ -92,8 +92,8 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the material manifest.
      */
-    inline de::Uri composeUri(Char sep = '/') const {
-        return de::Uri(schemeName(), path(sep));
+    inline res::Uri composeUri(Char sep = '/') const {
+        return res::Uri(schemeName(), path(sep));
     }
 
     /**
@@ -101,7 +101,7 @@ public:
      *
      * @return Human-friendly description the manifest.
      */
-    de::String description(de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags) const;
+    de::String description(res::Uri::ComposeAsTextFlags uriCompositionFlags = res::Uri::DefaultComposeAsTextFlags) const;
 
     /**
      * Returns a textual description of the source of the manifest.

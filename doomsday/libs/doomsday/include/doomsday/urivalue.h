@@ -34,13 +34,13 @@
 class LIBDOOMSDAY_PUBLIC UriValue : public de::Value
 {
 public:
-    UriValue(de::Uri const &initialValue = "");
+    UriValue(res::Uri const &initialValue = "");
 
-    /// Converts the UriValue to plain de::Uri.
-    operator de::Uri const &() const;
+    /// Converts the UriValue to plain res::Uri.
+    operator res::Uri const &() const;
 
-    de::Uri &uri();
-    de::Uri const &uri() const;
+    res::Uri &uri();
+    res::Uri const &uri() const;
 
     Text typeId() const;
     de::Value *duplicate() const;
@@ -62,10 +62,10 @@ public:
 
 protected:
     /// Changes the URI.
-    void setValue(de::Uri const &uri);
+    void setValue(res::Uri const &uri);
 
 private:
-    de::Uri _uri;
+    res::Uri _uri;
 };
 
 #endif // LIBDOOMSDAY_URIVALUE_H

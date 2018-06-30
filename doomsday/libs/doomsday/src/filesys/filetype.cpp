@@ -19,6 +19,7 @@
 #include "doomsday/filesys/filetype.h"
 
 using namespace de;
+using namespace res;
 
 static NullFileType nullFileType;
 

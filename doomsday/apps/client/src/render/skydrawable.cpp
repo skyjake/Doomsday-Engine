@@ -101,13 +101,13 @@ struct Hemisphere
         }
         if(renderTextures == 2)
         {
-            return world::Materials::get().materialPtr(de::Uri("System", Path("gray")));
+            return world::Materials::get().materialPtr(res::Uri("System", Path("gray")));
         }
         if(world::Material *mat = layer.material())
         {
             return mat;
         }
-        return world::Materials::get().materialPtr(de::Uri("System", Path("missing")));
+        return world::Materials::get().materialPtr(res::Uri("System", Path("missing")));
     }
 
     /**
@@ -129,7 +129,7 @@ struct Hemisphere
                                                                              : res::Texture::AverageBottomColorAnalysis)));
             if (!avgColor)
             {
-                de::Uri const pTexUri = pTex.manifest().composeUri();
+                res::Uri const pTexUri = pTex.manifest().composeUri();
                 throw Error("Hemisphere::capColor", String("Texture \"%1\" has no Average%2ColorAnalysis")
                                                         .arg(pTexUri)
                                                         .arg(hemisphere == UpperHemisphere? "Top" : "Bottom"));
@@ -769,7 +769,7 @@ SkyDrawable::Animator::LayerState &SkyDrawable::Animator::layer(int index)
 {
     if(hasLayer(index)) return d->layers[index];
     /// @throw MissingLayerStateError An invalid layer state index was specified.
-    throw MissingLayerStateError("SkyDrawable::Animator::layer", "Invalid layer state index #" + String::number(index) + ".");
+    throw MissingLayerStateError("SkyDrawable::Animator::layer", "Invalid layer state index #" + String::asText(index) + ".");
 }
 
 SkyDrawable::Animator::LayerState const &SkyDrawable::Animator::layer(int index) const
@@ -786,7 +786,7 @@ SkyDrawable::Animator::ModelState &SkyDrawable::Animator::model(int index)
 {
     if(hasModel(index)) return d->models[index];
     /// @throw MissingModelStateError An invalid model state index was specified.
-    throw MissingModelStateError("SkyDrawable::Animator::model", "Invalid model state index #" + String::number(index) + ".");
+    throw MissingModelStateError("SkyDrawable::Animator::model", "Invalid model state index #" + String::asText(index) + ".");
 }
 
 SkyDrawable::Animator::ModelState const &SkyDrawable::Animator::model(int index) const
@@ -838,7 +838,7 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
             String const execute = skyModelDef.gets("execute");
             if(!execute.isEmpty())
             {
-                Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
+                Con_Execute(CMDS_SCRIPT, execute, true, false);
             }
         }
     }

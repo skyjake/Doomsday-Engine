@@ -154,7 +154,7 @@ DE_PIMPL(Plane)
         DE_UNUSED(suf);
         if (!::ddMapSetup && surface.hasMaterial())
         {
-            de::Uri uri = surface.material().manifest().composeUri();
+            res::Uri uri = surface.material().manifest().composeUri();
             self().spawnParticleGen(Def_GetGenerator(reinterpret_cast<uri_s *>(&uri)));
         }
     }

@@ -117,15 +117,15 @@ void NetCl_UpdateGameState(reader_s *msg)
     {
         gfw_Session()->end();
         gfw_Session()->begin(gsRules, Str_Text(gsEpisodeId),
-                                  *reinterpret_cast<de::Uri *>(gsMapUri),
+                                  *reinterpret_cast<res::Uri *>(gsMapUri),
                                   gfw_Session()->mapEntryPoint() /*gsMapEntrance*/);
     }
     else
     {
         /// @todo Breaks session management logic; rules cannot change once the session has
         /// begun and setting the current map and/or entrance is illogical at this point.
-        DE_ASSERT(!Str_Compare(gsEpisodeId, gfw_Session()->episodeId().toLatin1().constData()));
-        DE_ASSERT(*reinterpret_cast<de::Uri *>(gsMapUri) == gfw_Session()->mapUri());
+        DE_ASSERT(!Str_Compare(gsEpisodeId, gfw_Session()->episodeId()));
+        DE_ASSERT(*reinterpret_cast<res::Uri *>(gsMapUri) == gfw_Session()->mapUri());
 
         gfw_Session()->applyNewRules(gsRules);
     }

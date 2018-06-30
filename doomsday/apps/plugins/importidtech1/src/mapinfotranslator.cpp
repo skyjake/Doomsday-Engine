@@ -25,7 +25,6 @@
 #include <cstring>
 #include <sstream>
 #include <map>
-#include <QMultiMap>
 
 #include <doomsday/Game>
 #include <doomsday/doomsdayapp.h>
@@ -60,7 +59,7 @@ namespace internal {
                 gameIdKey.beginsWith("chex"));
     }
 
-    static inline String toMapId(de::Uri const &mapUri)
+    static inline String toMapId(res::Uri const &mapUri)
     {
         return mapUri.scheme().compareWithoutCase("Maps") ? mapUri.compose() : mapUri.path().toString();
     }
@@ -148,14 +147,14 @@ namespace internal {
     /**
      * Central database of definitions read from Hexen-derived definition formats.
      */
-    struct HexDefs
-    {
-        typedef std::map<std::string, Music> Musics;
-        Musics musics;
-        typedef std::map<std::string, EpisodeInfo> EpisodeInfos;
+    struct HexDefs {
+        typedef Map<String, Music>       Musics;
+        typedef Map<String, EpisodeInfo> EpisodeInfos;
+        typedef Map<String, MapInfo>     MapInfos;
+
+        Musics       musics;
         EpisodeInfos episodeInfos;
-        typedef std::map<std::string, MapInfo> MapInfos;
-        MapInfos mapInfos;
+        MapInfos     mapInfos;
 
         void clear()
         {
@@ -173,7 +172,7 @@ namespace internal {
         {
             if(!id.isEmpty())
             {
-                Musics::iterator found = musics.find(id.toLower().toStdString());
+                Musics::iterator found = musics.find(id.lower());
                 if(found != musics.end())
                 {
                     return &found->second;
@@ -191,7 +190,7 @@ namespace internal {
         {
             if(!id.isEmpty())
             {
-                EpisodeInfos::iterator found = episodeInfos.find(id.toLower().toStdString());
+                EpisodeInfos::iterator found = episodeInfos.find(id.lower());
                 if(found != episodeInfos.end())
                 {
                     return &found->second;
@@ -205,11 +204,11 @@ namespace internal {
          *
          * @return  MapInfo for the specified @a mapUri; otherwise @c 0 (not found).
          */
-        MapInfo *getMapInfo(de::Uri const &mapUri)
+        MapInfo *getMapInfo(res::Uri const &mapUri)
         {
             if(!mapUri.scheme().compareWithoutCase("Maps"))
             {
-                MapInfos::iterator found = mapInfos.find(mapUri.path().toString().toLower().toStdString());
+                MapInfos::iterator found = mapInfos.find(mapUri.path().toString().lower());
                 if(found != mapInfos.end())
                 {
                     return &found->second;
@@ -219,28 +218,28 @@ namespace internal {
         }
     };
 
-    static de::Uri composeMapUri(uint episode, uint map)
+    static res::Uri composeMapUri(uint episode, uint map)
     {
         String const gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic"))
         {
-            return de::makeUri(String("Maps:E%1M%2").arg(episode+1).arg(map+1));
+            return res::makeUri(String::format("Maps:E%iM%i", episode+1, map+1));
         }
-        return de::makeUri(String("Maps:MAP%1").arg(map+1, 2, 10, QChar('0')));
+        return res::makeUri(String::format("Maps:MAP%02i", map+1));
     }
 
-    static uint mapWarpNumberFor(de::Uri const &mapUri)
+    static uint mapWarpNumberFor(res::Uri const &mapUri)
     {
         String path = mapUri.path();
         if(!path.isEmpty())
         {
-            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
+            if(towlower(path.first()) == 'e' && towlower(path.at(String::CharPos(2))) == 'm')
             {
-                return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
+                return de::max(path.substr(String::CharPos(3)).toInt(0, 10, String::AllowSuffix), 1);
             }
-            if(path.beginsWith("map", String::CaseInsensitive))
+            if(path.beginsWith("map", CaseInsensitive))
             {
-                return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
+                return de::max(path.substr(String::CharPos(3)).toInt(0, 10, String::AllowSuffix), 1);
             }
         }
         return 0;
@@ -256,7 +255,7 @@ namespace internal {
         DE_ERROR(ParseError);
 
         /// Mappings from symbolic song name to music id.
-        typedef QMap<String, String> MusicMappings;
+        typedef Map<String, String> MusicMappings;
         MusicMappings musicMap;
 
         bool sourceIsCustom = false;
@@ -297,20 +296,20 @@ namespace internal {
             while(lexer.readToken())
             {
                 String tok = Str_Text(lexer.token());
-                if(tok.beginsWith("cd_", String::CaseInsensitive) &&
-                   tok.endsWith("_track", String::CaseInsensitive))
+                if(tok.beginsWith("cd_", CaseInsensitive) &&
+                   tok.endsWith("_track", CaseInsensitive))
                 {
-                    String const pubName = tok.substr(3, tok.length() - 6 - 3);
+                    String const pubName = tok.substr(BytePos(3), tok.size() - 6 - 3);
                     MusicMappings::const_iterator found = musicMap.constFind(pubName);
                     if(found != musicMap.end())
                     {
                         // Lookup an existing music from the database.
-                        String const songId = found.value();
+                        String const songId = found->second;
                         Music *music = db.getMusic(songId);
                         if(!music)
                         {
                             // A new music.
-                            music = &db.musics[songId.toUtf8().constData()];
+                            music = &db.musics[songId];
                             music->set("id", songId);
                         }
                         music->set("cdTrack", (int)lexer.readNumber());
@@ -373,7 +372,9 @@ namespace internal {
                 }
 
                 // Unexpected token encountered.
-                throw ParseError(String("Unexpected token '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
+                throw ParseError(stringf("Unexpected token '%s' on line #%i",
+                                         Str_Text(lexer.token()),
+                                         lexer.lineNumber()));
             }
         }
 
@@ -452,11 +453,11 @@ namespace internal {
 
         void parseEpisode() // ZDoom
         {
-            de::Uri mapUri(Str_Text(lexer.readString()), RC_NULL);
+            res::Uri mapUri(Str_Text(lexer.readString()), RC_NULL);
             if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
             // A new episode info.
-            String const id = String::number(db.episodeInfos.size() + 1);
+            String const id = String::asText(db.episodeInfos.size() + 1);
             EpisodeInfo *info = &db.episodeInfos[id.toStdString()];
 
             if(sourceIsCustom) info->set("custom", true);
@@ -519,8 +520,10 @@ namespace internal {
             LOG_MAP_WARNING("MAPINFO Map.next[EndGame] definitions are not supported.");
 
             lexer.readToken();
-            if(Str_CompareIgnoreCase(lexer.token(), "{"))
-                throw ParseError(String("Expected '{' but found '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
+            if (Str_CompareIgnoreCase(lexer.token(), "{"))
+                throw ParseError(stringf("Expected '{' but found '%s' on line #%i",
+                                         Str_Text(lexer.token()),
+                                         lexer.lineNumber()));
 
             while(lexer.readToken())
             {
@@ -595,18 +598,18 @@ namespace internal {
                 return;
             }
 
-            de::Uri mapUri;
+            res::Uri mapUri;
             bool isNumber;
             int mapNumber = String(Str_Text(tok)).toInt(&isNumber); // 1-based
             if(!isNumber)
             {
-                mapUri = de::makeUri(Str_Text(tok));
+                mapUri = res::makeUri(Str_Text(tok));
                 if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
                 mapInfo.set((isSecret? "secretNextMap" : "nextMap"), mapUri.compose());
             }
             else
             {
-                mapInfo.set((isSecret? "secretNextMap" : "nextMap"), String("@wt:%1").arg(mapNumber));
+                mapInfo.set((isSecret? "secretNextMap" : "nextMap"), String::format("@wt:%i", mapNumber));
             }
         }
 
@@ -618,21 +621,22 @@ namespace internal {
         {
             if(!info)
             {
-                de::Uri mapUri;
+                res::Uri mapUri;
                 String const mapRef = String(Str_Text(lexer.readString()));
 
                 bool isNumber;
                 int mapNumber = mapRef.toInt(&isNumber); // 1-based
                 if(!isNumber)
                 {
-                    mapUri = de::makeUri(mapRef);
+                    mapUri = res::makeUri(mapRef);
                     if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
                 }
                 else
                 {
                     if(mapNumber < 1)
                     {
-                        throw ParseError(String("Invalid map number '%1' on line #%2").arg(mapNumber).arg(lexer.lineNumber()));
+                        throw ParseError(stringf(
+                            "Invalid map number '%i' on line #%i", mapNumber, lexer.lineNumber()));
                     }
                     mapUri = composeMapUri(0, mapNumber - 1);
                 }
@@ -643,7 +647,7 @@ namespace internal {
                 if(!info)
                 {
                     // A new map info.
-                    info = &db.mapInfos[mapUri.path().asText().toLower().toStdString()];
+                    info = &db.mapInfos[mapUri.path().asText().lower()];
 
                     // Initialize with custom default values?
                     if(defaultMap)
@@ -747,12 +751,13 @@ namespace internal {
                     int const hubNum = (int)lexer.readNumber();
                     if(hubNum < 1)
                     {
-                        throw ParseError(String("Invalid 'cluster' (i.e., hub) number '%1' on line #%2").arg(Str_Text(lexer.token())).arg(lexer.lineNumber()));
+                        throw ParseError(stringf("Invalid 'cluster' (i.e., hub) number '%s' on line #%i",
+                                                 Str_Text(lexer.token()), lexer.lineNumber()));
                     }
                     info->set("hub", hubNum);
                     continue;
                 }
-                if(String(Str_Text(lexer.token())).beginsWith("compat_", String::CaseInsensitive)) // ZDoom
+                if(String(Str_Text(lexer.token())).beginsWith("compat_", CaseInsensitive)) // ZDoom
                 {
                     LOG_MAP_WARNING("MAPINFO Map.%s is not supported.") << lexer.token();
                     lexer.readNumber();
@@ -1196,21 +1201,23 @@ DE_PIMPL_NOREF(MapInfoTranslator)
     HexDefs defs;
     StringList translatedFiles;
 
-    typedef QMultiMap<int, MapInfo *> MapInfos;
-    MapInfos buildHubMapInfoTable(String episodeId)
+    typedef Map<int, List<const MapInfo *>> MapInfos;
+
+    MapInfos buildHubMapInfoTable(const String &episodeId)
     {
         bool const hubNumberIsEpisodeId = interpretHubNumberAsEpisodeId();
 
         MapInfos set;
-        for(HexDefs::MapInfos::const_iterator it = defs.mapInfos.begin(); it != defs.mapInfos.end(); ++it)
+        for (HexDefs::MapInfos::const_iterator it = defs.mapInfos.begin();
+             it != defs.mapInfos.end();
+             ++it)
         {
             MapInfo const &mapInfo = it->second;
 
             int hub = mapInfo.geti("hub");
-            if(hubNumberIsEpisodeId)
+            if (hubNumberIsEpisodeId)
             {
-                if(String::number(hub) != episodeId)
-                    continue;
+                if (String::asText(hub) != episodeId) continue;
 
                 /// @todo Once hubs are supported in DOOM and Heretic, whether or not this
                 /// map should be grouped into a DED Episode.Hub definition is determined
@@ -1218,32 +1225,31 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 hub = 0;
             }
 
-            set.insert(hub, const_cast<MapInfo *>(&mapInfo));
+            set[hub] << &mapInfo;
         }
-
         return set;
     }
 
-    de::Uri xlatWarpNumber(uint map)
+    res::Uri xlatWarpNumber(uint map)
     {
-        de::Uri matchedWithoutHub("Maps:", RC_NULL);
+        res::Uri matchedWithoutHub("Maps:", RC_NULL);
 
-        for(HexDefs::MapInfos::iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
+        for (HexDefs::MapInfos::iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
         {
             MapInfo const &info = i->second;
 
-            if((unsigned)info.geti("warpTrans") == map)
+            if (info.getui("warpTrans") == map)
             {
-                if(info.geti("hub"))
+                if (info.geti("hub"))
                 {
                     LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
                             << map << info.gets("id") << info.geti("hub");
-                    return de::makeUri(info.gets("id"));
+                    return res::makeUri(info.gets("id"));
                 }
 
                 LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
                         << map << info.gets("id");
-                matchedWithoutHub = de::makeUri(info.gets("id"));
+                matchedWithoutHub = res::makeUri(info.gets("id"));
             }
         }
 
@@ -1259,27 +1265,30 @@ DE_PIMPL_NOREF(MapInfoTranslator)
      */
     void translateWarpNumbers()
     {
-        for(HexDefs::EpisodeInfos::iterator i = defs.episodeInfos.begin(); i != defs.episodeInfos.end(); ++i)
+        for (HexDefs::EpisodeInfos::iterator i = defs.episodeInfos.begin();
+             i != defs.episodeInfos.end();
+             ++i)
         {
             EpisodeInfo &info = i->second;
-            de::Uri startMap(info.gets("startMap", ""), RC_NULL);
-            if(!startMap.scheme().compareWithoutCase("@wt"))
+            res::Uri     startMap(info.gets("startMap", ""), RC_NULL);
+            if (!startMap.scheme().compareWithoutCase("@wt"))
             {
-                info.set("startMap", xlatWarpNumber(startMap.path().toStringRef().toInt()).compose());
+                info.set("startMap", xlatWarpNumber(startMap.path().toString().toInt()).compose());
             }
         }
-        for(HexDefs::MapInfos::iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
+        for (HexDefs::MapInfos::iterator i = defs.mapInfos.begin(); i != defs.mapInfos.end(); ++i)
         {
             MapInfo &info = i->second;
-            de::Uri nextMap(info.gets("nextMap", ""), RC_NULL);
-            if(!nextMap.scheme().compareWithoutCase("@wt"))
+            res::Uri nextMap(info.gets("nextMap", ""), RC_NULL);
+            if (!nextMap.scheme().compareWithoutCase("@wt"))
             {
-                info.set("nextMap", xlatWarpNumber(nextMap.path().toStringRef().toInt()).compose());
+                info.set("nextMap", xlatWarpNumber(nextMap.path().toString().toInt()).compose());
             }
-            de::Uri secretNextMap(info.gets("secretNextMap", ""), RC_NULL);
-            if(!secretNextMap.scheme().compareWithoutCase("@wt"))
+            res::Uri secretNextMap(info.gets("secretNextMap", ""), RC_NULL);
+            if (!secretNextMap.scheme().compareWithoutCase("@wt"))
             {
-                info.set("secretNextMap", xlatWarpNumber(secretNextMap.path().toStringRef().toInt()).compose());
+                info.set("secretNextMap",
+                         xlatWarpNumber(secretNextMap.path().toString().toInt()).compose());
             }
         }
     }
@@ -1302,26 +1311,26 @@ DE_PIMPL_NOREF(MapInfoTranslator)
 
     void translate(String &output, bool custom)
     {
-        QTextStream os(&output);
+        std::ostringstream os;
 
         os << "# Translated definitions from:";
         // List the files we translated in input order (for debug).
-        for(int i = 0; i < translatedFiles.size(); ++i)
+        for(int i = 0; i < translatedFiles.sizei(); ++i)
         {
             String sourceFile = translatedFiles[i];
-            os << "\n# " + QString("%1: %2").arg(i).arg(NativePath(sourceFile).pretty());
+            os << "\n# " + String::format("%i: %s", i, NativePath(sourceFile).pretty().c_str());
         }
 
         // Output the header block.
         os << "\n\nHeader { Version = 6; }";
 
         // Output episode defs.
-        for(auto const pair : defs.episodeInfos)
+        for (auto const &pair : defs.episodeInfos)
         {
-            String const episodeId  = String::fromStdString(pair.first);
+            String const episodeId  = pair.first;
             EpisodeInfo const &info = pair.second;
 
-            de::Uri startMapUri(info.gets("startMap"), RC_NULL);
+            res::Uri startMapUri(info.gets("startMap"), RC_NULL);
             if(startMapUri.path().isEmpty()) continue;
 
             // Find all the hubs for this episode.
@@ -1329,14 +1338,17 @@ DE_PIMPL_NOREF(MapInfoTranslator)
 
             bool episodeIsCustom = info.getb("custom");
             // If one of the maps is custom then so too is the episode.
-            if(!episodeIsCustom)
+            if (!episodeIsCustom)
             {
-                for(MapInfo const *mapInfo : mapInfos)
+                for (const auto &mapHub : mapInfos)
                 {
-                    if(mapInfo->getb("custom"))
+                    for (const auto *mapInfo : mapHub.second)
                     {
-                        episodeIsCustom = true;
-                        break;
+                        if (mapInfo->getb("custom"))
+                        {
+                            episodeIsCustom = true;
+                            break;
+                        }
                     }
                 }
             }
@@ -1351,7 +1363,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
             {
                 os << "\n  Menu Help Info = \"" + menuHelpInfo + "\";";
             }
-            de::Uri menuImageUri(info.gets("menuImage"), RC_NULL);
+            res::Uri menuImageUri(info.gets("menuImage"), RC_NULL);
             if(!menuImageUri.path().isEmpty())
             {
                 os << "\n  Menu Image = \"" + menuImageUri.compose() + "\";";
@@ -1362,10 +1374,12 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 os << "\n  Menu Shortcut = \"" + menuShortcut + "\";";
             }
 
-            QList<int> hubs = mapInfos.uniqueKeys();
-            for(int hub : hubs)
+//            List<int> hubs = mapInfos.uniqueKeys();
+            for (const auto &mapHub : mapInfos)
             {
-                QList<MapInfo *> const mapInfosForHub = mapInfos.values(hub);
+                const int   hub            = mapHub.first;
+                const auto &mapInfosForHub = mapHub.second;
+
                 if(mapInfosForHub.isEmpty()) continue;
 
                 // Extra whitespace between hubs, for neatness.
@@ -1376,30 +1390,34 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 {
                     // Begin the hub definition.
                     os << "\n  Hub {"
-                       << "\n    ID = \"" + String::number(hub) + "\";";
+                       << "\n    ID = \"" + String::asText(hub) + "\";";
                 }
 
                 // Output each map for this hub (in reverse insertion order).
-                int n = mapInfosForHub.size();
-                while(n-- > 0)
+                dsize n = mapInfosForHub.size();
+                while (n-- > 0)
                 {
                     MapInfo const *mapInfo = mapInfosForHub.at(n);
-                    de::Uri mapUri(mapInfo->gets("id"), RC_NULL);
-                    if(!mapUri.path().isEmpty())
+                    res::Uri       mapUri(mapInfo->gets("id"), RC_NULL);
+
+                    if (!mapUri.path().isEmpty())
                     {
                         os << "\n    Map {"
                            << "\n      ID = \"" + toMapId(mapUri) + "\";";
-                        de::Uri nextMapUri(mapInfo->gets("nextMap"), RC_NULL);
-                        if(!nextMapUri.path().isEmpty())
+                        res::Uri nextMapUri(mapInfo->gets("nextMap"), RC_NULL);
+                        if (!nextMapUri.path().isEmpty())
                         {
-                            os << "\n      Exit { ID = \"next\"; Target Map = \"" + toMapId(nextMapUri) + "\"; }";
+                            os << "\n      Exit { ID = \"next\"; Target Map = \"" +
+                                      toMapId(nextMapUri) + "\"; }";
                         }
-                        de::Uri secretNextMapUri(mapInfo->gets("secretNextMap"), RC_NULL);
-                        if(!secretNextMapUri.path().isEmpty())
+                        res::Uri secretNextMapUri(mapInfo->gets("secretNextMap"), RC_NULL);
+                        if (!secretNextMapUri.path().isEmpty())
                         {
-                            os << "\n      Exit { ID = \"secret\"; Target Map = \"" + toMapId(secretNextMapUri) + "\"; }";
+                            os << "\n      Exit { ID = \"secret\"; Target Map = \"" +
+                                      toMapId(secretNextMapUri) + "\"; }";
                         }
-                        os << "\n      Warp Number = " + String::number(mapInfo->geti("warpTrans")) + ";";
+                        os << "\n      Warp Number = " +
+                                  String::asText(mapInfo->geti("warpTrans")) + ";";
                         os << "\n    }";
                     }
                 }
@@ -1412,15 +1430,18 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 }
             }
             os << "\n} # Episode '" << episodeId << "'";
+
+            output = os.str();
         }
 
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
 
         // Output mapinfo defs.
-        for(auto const pair : defs.mapInfos)
+        for (auto const &pair : defs.mapInfos)
         {
             MapInfo const &info = pair.second;
+            res::Uri mapUri(info.gets("id"), RC_NULL);
 
             const bool isCustomMapInfo = info.getb("custom");
 
@@ -1462,7 +1483,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
             {
                 os << "\n  Music = \"" + mapId + "\";";
             }
-            de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
+            res::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
             if(!titleImageUri.path().isEmpty())
             {
                 os << "\n  Title image = \"" + titleImageUri.compose() + "\";";
@@ -1470,16 +1491,16 @@ DE_PIMPL_NOREF(MapInfoTranslator)
             dfloat parTime = info.getf("par");
             if(parTime > 0)
             {
-                os << "\n  Par time = " + String::number(parTime) + ";";
+                os << "\n  Par time = " + String::asText(parTime) + ";";
             }
-            QStringList allFlags;
+            StringList allFlags;
             if(info.getb("lightning"))      allFlags << "lightning";
             if(info.getb("nointermission")) allFlags << "nointermission";
             if(!allFlags.isEmpty())
             {
-                os << "\n  Flags = " + allFlags.join(" | ") + ";";
+                os << "\n  Flags = " + String::join(allFlags, " | ") + ";";
             }
-            de::Uri skyLayer1MaterialUri(info.gets(doubleSky? "sky2Material" : "sky1Material"), RC_NULL);
+            res::Uri skyLayer1MaterialUri(info.gets(doubleSky? "sky2Material" : "sky1Material"), RC_NULL);
             if(!skyLayer1MaterialUri.path().isEmpty())
             {
                 os << "\n  Sky Layer 1 {"
@@ -1488,11 +1509,11 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 dfloat scrollDelta = info.getf(doubleSky? "sky2ScrollDelta" : "sky1ScrollDelta") * 35 /*TICSPERSEC*/;
                 if(!de::fequal(scrollDelta, 0))
                 {
-                    os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
+                    os << "\n    Offset Speed = " + String::asText(scrollDelta) + ";";
                 }
                 os << "\n  }";
             }
-            de::Uri skyLayer2MaterialUri(info.gets(doubleSky? "sky1Material" : "sky2Material"), RC_NULL);
+            res::Uri skyLayer2MaterialUri(info.gets(doubleSky? "sky1Material" : "sky2Material"), RC_NULL);
             if(!skyLayer2MaterialUri.path().isEmpty())
             {
                 os << "\n  Sky Layer 2 {";
@@ -1504,7 +1525,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 dfloat scrollDelta = info.getf(doubleSky? "sky1ScrollDelta" : "sky2ScrollDelta") * 35 /*TICSPERSEC*/;
                 if(!de::fequal(scrollDelta, 0))
                 {
-                    os << "\n    Offset Speed = " + String::number(scrollDelta) + ";";
+                    os << "\n    Offset Speed = " + String::asText(scrollDelta) + ";";
                 }
                 os << "\n  }";
             }
@@ -1512,13 +1533,13 @@ DE_PIMPL_NOREF(MapInfoTranslator)
         }
 
         // Output music modification defs for the non-map musics.
-        for(auto const pair : defs.musics)
+        for (auto const &pair : defs.musics)
         {
             Music const &music = pair.second;
             if(custom != music.getb("custom")) continue;
 
             os << "\n\nMusic Mods \"" + music.gets("id") + "\" {"
-               << "\n  CD Track = " + String::number(music.geti("cdTrack")) + ";"
+               << "\n  CD Track = " + String::asText(music.geti("cdTrack")) + ";"
                << "\n}";
         }
     }
@@ -1533,17 +1554,19 @@ void MapInfoTranslator::reset()
     d->translatedFiles.clear();
 }
 
-void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, bool sourceIsCustom)
+void MapInfoTranslator::merge(ddstring_s const &definitions,
+                              const String &    sourcePath,
+                              bool              sourceIsCustom)
 {
     LOG_AS("MapInfoTranslator");
 
-    if(Str_IsEmpty(&definitions)) return;
+    if (Str_IsEmpty(&definitions)) return;
 
-    String const source = sourcePath.isEmpty()? "[definition-data]"
+    String const source = sourcePath.isEmpty() ? "[definition-data]"
                                               : ("\"" + NativePath(sourcePath).pretty() + "\"");
     try
     {
-        if(!sourcePath.isEmpty())
+        if (!sourcePath.isEmpty())
         {
             LOG_RES_VERBOSE("Parsing %s...") << source;
             d->translatedFiles << sourcePath;
@@ -1552,7 +1575,7 @@ void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, 
         MapInfoParser parser(d->defs);
         parser.parse(definitions, sourcePath, sourceIsCustom);
     }
-    catch(MapInfoParser::ParseError const &er)
+    catch (MapInfoParser::ParseError const &er)
     {
         LOG_MAP_WARNING("Failed to parse %s as MAPINFO:\n") << source << er.asText();
     }

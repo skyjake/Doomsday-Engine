@@ -4,10 +4,6 @@ cmake_minimum_required (VERSION 3.1)
 project (DE_LIBGAMEFW)
 include (../../cmake/Config.cmake)
 
-# Dependencies.
-find_package (DengCore)
-find_package (DengLegacy)
-
 # Definitions.
     add_definitions (
     -D__LIBGAMEFW__=1
@@ -22,9 +18,7 @@ file (GLOB_RECURSE HEADERS include/gamefw/*)
 deng_merge_sources (libgamefw src/*.cpp)
 
 deng_add_library (libgamefw ${SOURCES} ${HEADERS})
-target_link_libraries (libgamefw
-    PUBLIC Deng::libcore Deng::liblegacy 
-)
+deng_link_libraries (libgamefw PUBLIC DengCore DengLegacy)
 
 if (DE_ENABLE_SDK)
     install (DIRECTORY include/gamefw

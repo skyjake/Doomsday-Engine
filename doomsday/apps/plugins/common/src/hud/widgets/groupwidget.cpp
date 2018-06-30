@@ -20,7 +20,7 @@
 
 #include "hud/widgets/groupwidget.h"
 
-#include <QVector>
+#include <de/List>
 #include "common.h"
 
 using namespace de;
@@ -36,7 +36,7 @@ DE_PIMPL_NOREF(GroupWidget)
     order_t order = ORDER_NONE;  ///< Order of child objects.
     dint flags = 0;              ///< @ref groupWidgetFlags
     dint padding = 0;
-    QVector<uiwidgetid_t> children;
+    List<uiwidgetid_t> children;
 };
 
 GroupWidget::GroupWidget(dint player)
@@ -66,7 +66,7 @@ void GroupWidget::addChild(HudWidget *other)
 }
 
 /// @todo optimize Do not peform the id => widget lookup constantly!
-LoopResult GroupWidget::forAllChildren(std::function<LoopResult (HudWidget &)> func) const
+LoopResult GroupWidget::forAllChildren(const std::function<LoopResult (HudWidget &)>& func) const
 {
     for(uiwidgetid_t const &childId : d->children)
     {

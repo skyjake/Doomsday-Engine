@@ -104,7 +104,9 @@ public:
     /**
      * Convert the value to the nearest integer. Uses asNumber().
      */
-    int asInt() const;
+    dint asInt() const;
+
+    inline duint asUInt() const { return duint(asInt()); }
 
     /**
      * Convert the value to a list of strings using asText().

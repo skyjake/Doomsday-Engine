@@ -104,11 +104,11 @@ void NetSv_UpdateGameConfigDescription()
 
     GameRules const &gameRules = gfw_Session()->rules();
 
-    QByteArray str = "skill" + QByteArray::number(gameRules.values.skill + 1);
+    String str = "skill" + String::asText(gameRules.values.skill + 1);
 
     if (gameRules.values.deathmatch > 1)
     {
-        str += " dm" + QByteArray::number(gameRules.values.deathmatch);
+        str += " dm" + String::asText(gameRules.values.deathmatch);
     }
     else if (gameRules.values.deathmatch)
     {
@@ -214,10 +214,10 @@ void NetSv_Ticker()
     }
 }
 
-static void NetSv_CycleToMapNum(de::Uri const &mapUri)
+static void NetSv_CycleToMapNum(res::Uri const &mapUri)
 {
-    de::String const warpCommand = de::String("warp ") + mapUri.compose(de::Uri::DecodePath);
-    DD_Execute(false, warpCommand.toUtf8().constData());
+    de::String const warpCommand = de::String("warp ") + mapUri.compose(res::Uri::DecodePath);
+    DD_Execute(false, warpCommand);
 
     // In a couple of seconds, send everyone the rules of this map.
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -237,7 +237,7 @@ static void NetSv_CycleToMapNum(de::Uri const &mapUri)
  * for Hexen reference maps by "warp numbers", which, can only be resolved in
  * the context of an episode.
  */
-static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
+static res::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 {
     bool clear = false, has_random = false;
 
@@ -259,7 +259,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
             // E.g. "Time:10/Frags:5" or "t:30, f:10"
             clear = false;
         }
-        else if(!qstrnicmp("time", ptr, 1))
+        else if(!iCmpStrNCase("time", ptr, 1))
         {
             // Find the colon.
             while(*ptr && *ptr != ':') { ptr++; }
@@ -278,7 +278,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
             ptr = end - 1;
         }
-        else if(!qstrnicmp("frags", ptr, 1))
+        else if(!iCmpStrNCase("frags", ptr, 1))
         {
             // Find the colon.
             while(*ptr && *ptr != ':') { ptr++; }
@@ -354,12 +354,12 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 
 #if __JHEXEN__
                     // In Hexen map numbers must be translated (urgh...).
-                    de::Uri mapUri = TranslateMapWarpNumber(gfw_Session()->episodeId(), map);
+                    res::Uri mapUri = TranslateMapWarpNumber(gfw_Session()->episodeId(), map);
 #else
-                    de::Uri mapUri = G_ComposeMapUri(episode, map);
+                    res::Uri mapUri = G_ComposeMapUri(episode, map);
 #endif
 
-                    if(P_MapExists(mapUri.compose().toUtf8().constData()))
+                    if(P_MapExists(mapUri.compose()))
                     {
                         return mapUri;
                     }
@@ -372,7 +372,7 @@ static de::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
     }
 
     // Didn't find it.
-    return de::Uri();
+    return res::Uri();
 }
 
 void NetSv_TellCycleRulesToPlayerAfterTics(int destPlr, int tics)
@@ -511,7 +511,7 @@ void NetSv_MapCycleTicker()
         else if(cycleCounter <= 0)
         {
             // Next map, please!
-            de::Uri mapUri = NetSv_ScanCycle(++cycleIndex);
+            res::Uri mapUri = NetSv_ScanCycle(++cycleIndex);
             if(mapUri.path().isEmpty())
             {
                 // Must be past the end?
@@ -663,7 +663,7 @@ void NetSv_SendGameState(int flags, int to)
 
     AutoStr *gameId    = AutoStr_FromTextStd(gfw_GameId().toLatin1().constData());
     AutoStr *episodeId = AutoStr_FromTextStd(gfw_Session()->episodeId().toLatin1().constData());
-    de::Uri mapUri     = gfw_Session()->mapUri();
+    res::Uri mapUri     = gfw_Session()->mapUri();
 
     // Print a short message that describes the game state.
     LOG_NET_NOTE("Sending game setup: %s %s %s %s")
@@ -1205,7 +1205,7 @@ void NetSv_ExecuteCheat(int player, char const *command)
 {
     // Killing self is always allowed.
     /// @todo fixme: really? Even in deathmatch?? (should be a game rule)
-    if(!qstrnicmp(command, "suicide", 7))
+    if(!iCmpStrNCase(command, "suicide", 7))
     {
         DD_Executef(false, "suicide %i", player);
     }
@@ -1218,16 +1218,16 @@ void NetSv_ExecuteCheat(int player, char const *command)
     }
 
     /// @todo Can't we use the multipurpose cheat command here?
-    if(!qstrnicmp(command, "god", 3)
-       || !qstrnicmp(command, "noclip", 6)
-       || !qstrnicmp(command, "give", 4)
-       || !qstrnicmp(command, "kill", 4)
+    if(!iCmpStrNCase(command, "god", 3)
+       || !iCmpStrNCase(command, "noclip", 6)
+       || !iCmpStrNCase(command, "give", 4)
+       || !iCmpStrNCase(command, "kill", 4)
 #ifdef __JHERETIC__
-       || !qstrnicmp(command, "chicken", 7)
+       || !iCmpStrNCase(command, "chicken", 7)
 #elif __JHEXEN__
-       || !qstrnicmp(command, "class", 5)
-       || !qstrnicmp(command, "pig", 3)
-       || !qstrnicmp(command, "runscript", 9)
+       || !iCmpStrNCase(command, "class", 5)
+       || !iCmpStrNCase(command, "pig", 3)
+       || !iCmpStrNCase(command, "runscript", 9)
 #endif
        )
     {
@@ -1531,10 +1531,10 @@ D_CMD(MapCycle)
         return false;
     }
 
-    if(!qstricmp(argv[0], "startcycle")) // (Re)start rotation?
+    if(!iCmpStrCase(argv[0], "startcycle")) // (Re)start rotation?
     {
         // Find the first map in the sequence.
-        de::Uri mapUri = NetSv_ScanCycle(cycleIndex = 0);
+        res::Uri mapUri = NetSv_ScanCycle(cycleIndex = 0);
         if(mapUri.path().isEmpty())
         {
             App_Log(DE2_SCR_ERROR, "MapCycle \"%s\" is invalid.", mapCycle);

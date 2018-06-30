@@ -33,9 +33,10 @@
 #include <de/LogBuffer>
 #include <de/NativePath>
 
-namespace de {
+namespace res {
 
-    //struct FileHandle::Impl
+using namespace de;
+
 DE_PIMPL_NOREF(FileHandle)
 {
     /// The referenced file (if any).
@@ -112,7 +113,7 @@ bool FileHandle::isValid() const
 FileList *FileHandle::list()
 {
     errorIfNotValid(*this, "FileHandle::list");
-    return (FileList *)d->list;
+    return reinterpret_cast<FileList *>(d->list);
 }
 
 FileHandle &FileHandle::setList(FileList *list)
@@ -314,4 +315,4 @@ FileHandle *FileHandle::fromLump(File1 &lump, bool dontBuffer) // static
     return hndl;
 }
 
-} // namespace de
+} // namespace res

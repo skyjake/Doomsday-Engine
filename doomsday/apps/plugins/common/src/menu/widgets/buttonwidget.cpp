@@ -97,7 +97,7 @@ void ButtonWidget::draw() const
     }
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawTextXY3(d->text.toUtf8().constData(), geometry().topLeft.x, geometry().topLeft.y,
+    FR_DrawTextXY3(d->text, geometry().topLeft.x, geometry().topLeft.y,
                    ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -154,7 +154,7 @@ void ButtonWidget::updateGeometry()
     FR_PushAttrib();
     Size2Raw size;
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
-    FR_TextSize(&size, useText.toUtf8().constData());
+    FR_TextSize(&size, useText);
     geometry().setSize(Vec2ui(size.width, size.height));
     FR_PopAttrib();
 }

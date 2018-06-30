@@ -223,7 +223,7 @@ D_CMD(InspectTexture)
 {
     DE_UNUSED(src);
 
-    de::Uri search = de::Uri::fromUserInput(&argv[1], argc - 1);
+    res::Uri search = res::Uri::fromUserInput(&argv[1], argc - 1);
 
     if (!search.scheme().isEmpty() &&
         !Resources::get().textures().isKnownTextureScheme(search.scheme()))

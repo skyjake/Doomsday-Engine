@@ -195,7 +195,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
         int const  count = gameProfile.packages().size();
         bool const shown = !isMissingPackages() && count > 0 && !self().isSelected();
 
-        packagesCounter->setText(String::number(count));
+        packagesCounter->setText(String::asText(count));
         packagesCounter->show(shown);
 
         if (shown)

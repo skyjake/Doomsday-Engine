@@ -210,7 +210,7 @@ public:
      *
      * @see hasMaterial(), MaterialManifest::composeUri()
      */
-    de::Uri composeMaterialUri() const;
+    res::Uri composeMaterialUri() const;
 
     void setDecorationState(IDecorationState *state);
 

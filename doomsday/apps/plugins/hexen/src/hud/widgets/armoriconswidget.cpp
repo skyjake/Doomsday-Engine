@@ -142,6 +142,6 @@ void guidata_armoricons_t::prepareAssets()  // static
 {
     for(dint i = 0; i < NUMARMOR; ++i)
     {
-        ::pArmorIcon[i] = R_DeclarePatch(String("ARMSLOT%1").arg(i + 1).toUtf8().constData());
+        ::pArmorIcon[i] = R_DeclarePatch(String::format("ARMSLOT%d", i + 1));
     }
 }

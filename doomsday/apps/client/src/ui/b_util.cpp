@@ -44,27 +44,27 @@ bool B_ParseButtonState(Binding::ControlTest &test, char const *toggleName)
 {
     DE_ASSERT(toggleName);
 
-    if (!qstrlen(toggleName) || !qstricmp(toggleName, "down"))
+    if (!strlen(toggleName) || !iCmpStrCase(toggleName, "down"))
     {
         test = Binding::ButtonStateDown; // this is the default, if omitted
         return true;
     }
-    if (!qstricmp(toggleName, "undefined"))
+    if (!iCmpStrCase(toggleName, "undefined"))
     {
         test = Binding::ButtonStateAny;
         return true;
     }
-    if (!qstricmp(toggleName, "repeat"))
+    if (!iCmpStrCase(toggleName, "repeat"))
     {
         test = Binding::ButtonStateRepeat;
         return true;
     }
-    if (!qstricmp(toggleName, "press"))
+    if (!iCmpStrCase(toggleName, "press"))
     {
         test = Binding::ButtonStateDownOrRepeat;
         return true;
     }
-    if (!qstricmp(toggleName, "up"))
+    if (!iCmpStrCase(toggleName, "up"))
     {
         test = Binding::ButtonStateUp;
         return true;
@@ -78,25 +78,25 @@ bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *des
 {
     DE_ASSERT(desc);
 
-    if (!qstrnicmp(desc, "within", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "within", 6) && strlen(desc) > 6)
     {
         test = Binding::AxisPositionWithin;
         pos  = String((desc + 6)).toFloat();
         return true;
     }
-    if (!qstrnicmp(desc, "beyond", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "beyond", 6) && strlen(desc) > 6)
     {
         test = Binding::AxisPositionBeyond;
         pos  = String((desc + 6)).toFloat();
         return true;
     }
-    if (!qstrnicmp(desc, "pos", 3) && qstrlen(desc) > 3)
+    if (!iCmpStrNCase(desc, "pos", 3) && strlen(desc) > 3)
     {
         test = Binding::AxisPositionBeyondPositive;
         pos  = String((desc + 3)).toFloat();
         return true;
     }
-    if (!qstrnicmp(desc, "neg", 3) && qstrlen(desc) > 3)
+    if (!iCmpStrNCase(desc, "neg", 3) && strlen(desc) > 3)
     {
         test = Binding::AxisPositionBeyondNegative;
         pos  = -String((desc + 3)).toFloat();
@@ -120,7 +120,7 @@ bool B_ParseKeyId(int &id, char const *desc)
     LOG_AS("B_ParseKeyId");
 
     // The possibilies: symbolic key name, or "codeNNN".
-    if (!qstrnicmp(desc, "code", 4) && qstrlen(desc) == 7)
+    if (!iCmpStrNCase(desc, "code", 4) && strlen(desc) == 7)
     {
         // Hexadecimal?
         if (desc[4] == 'x' || desc[4] == 'X')
@@ -159,7 +159,7 @@ bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
     }
 
     // Perhaps a generic button?
-    if (!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "button", 6) && strlen(desc) > 6)
     {
         type = E_TOGGLE;
         id   = String((desc + 6)).toInt() - 1;
@@ -195,7 +195,7 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
 {
     InputDevice &device = InputSystem::get().device(deviceId);
 
-    if (!qstrnicmp(desc, "button", 6) && qstrlen(desc) > 6)
+    if (!iCmpStrNCase(desc, "button", 6) && strlen(desc) > 6)
     {
         type = E_TOGGLE;
         id   = String((desc + 6)).toInt() - 1;
@@ -205,7 +205,7 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
         LOG_INPUT_WARNING("\"%s\" button %i does not exist") << device.title() << id;
         return false;
     }
-    if (!qstrnicmp(desc, "hat", 3) && qstrlen(desc) > 3)
+    if (!iCmpStrNCase(desc, "hat", 3) && strlen(desc) > 3)
     {
         type = E_ANGLE;
         id   = String((desc + 3)).toInt() - 1;
@@ -215,7 +215,7 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
         LOG_INPUT_WARNING("\"%s\" hat %i does not exist") << device.title() << id;
         return false;
     }
-    if (!qstricmp(desc, "hat"))
+    if (!iCmpStrCase(desc, "hat"))
     {
         type = E_ANGLE;
         id   = 0;
@@ -229,12 +229,12 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
 bool B_ParseHatAngle(float &pos, char const *desc)
 {
     DE_ASSERT(desc);
-    if (!qstricmp(desc, "center"))
+    if (!iCmpStrCase(desc, "center"))
     {
         pos = -1;
         return true;
     }
-    if (!qstrnicmp(desc, "angle", 5) && qstrlen(desc) > 5)
+    if (!iCmpStrNCase(desc, "angle", 5) && strlen(desc) > 5)
     {
         pos = String((desc + 5)).toFloat();
         return true;
@@ -686,7 +686,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
         }
         else
         {
-            str += "button" + String::number(id + 1);
+            str += "button" + String::asText(id + 1);
         }
         break; }
 
@@ -695,7 +695,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
         str += device->axis(id).name();
         break;
 
-    case E_ANGLE:    str += "hat" + String::number(id + 1); break;
+    case E_ANGLE:    str += "hat" + String::asText(id + 1); break;
     case E_SYMBOLIC: str += "sym";                          break;
 
     default: DE_ASSERT_FAIL("B_ControlDescToString: Invalid event type"); break;
@@ -737,7 +737,7 @@ String B_AxisPositionToString(Binding::ControlTest test, float pos)
 
 String B_HatAngleToString(float pos)
 {
-    return (pos < 0? "-center" : String("-angle") + String::number(pos));
+    return (pos < 0? "-center" : String("-angle") + String::asText(pos));
 }
 
 String B_ConditionToString(Record const &cond)
@@ -753,7 +753,7 @@ String B_ConditionToString(Record const &cond)
     }
     else if (cond.geti("type") == Binding::ModifierState)
     {
-        str += "modifier-" + String::number(cond.geti("id") - CTL_MODIFIER_1 + 1);
+        str += "modifier-" + String::asText(cond.geti("id") - CTL_MODIFIER_1 + 1);
     }
     else
     {
@@ -933,11 +933,11 @@ int B_KeyForShortName(char const *key)
 
     for (uint idx = 0; keyNames[idx].key; ++idx)
     {
-        if (!qstricmp(key, keyNames[idx].name))
+        if (!iCmpStrCase(key, keyNames[idx].name))
             return keyNames[idx].key;
     }
 
-    if (qstrlen(key) == 1 && key[0] < 127 && isprint(key[0]))
+    if (strlen(key) == 1 && key[0] < 127 && isprint(key[0]))
     {
         // ASCII char.
         return tolower(key[0]);

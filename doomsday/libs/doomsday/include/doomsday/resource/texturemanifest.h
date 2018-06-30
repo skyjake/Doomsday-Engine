@@ -88,9 +88,9 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the TextureManifest.
      */
-    inline de::Uri composeUri(Char sep = '/') const
+    inline res::Uri composeUri(Char sep = '/') const
     {
-        return de::Uri(schemeName(), path(sep));
+        return res::Uri(schemeName(), path(sep));
     }
 
     /**
@@ -105,9 +105,9 @@ public:
      *
      * @see uniqueId(), setUniqueId()
      */
-    inline de::Uri composeUrn() const
+    inline res::Uri composeUrn() const
     {
-        return de::Uri("urn", de::String::format("%s:%i", schemeName().c_str(), uniqueId()));
+        return res::Uri("urn", de::String::format("%s:%i", schemeName().c_str(), uniqueId()));
     }
 
     /**
@@ -115,7 +115,7 @@ public:
      *
      * @return Human-friendly description the manifest.
      */
-    de::String description(de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags) const;
+    de::String description(res::Uri::ComposeAsTextFlags uriCompositionFlags = res::Uri::DefaultComposeAsTextFlags) const;
 
     /**
      * Returns a textual description of the source of the manifest.
@@ -132,7 +132,7 @@ public:
     /**
      * Returns the URI to the associated resource.
      */
-    de::Uri resourceUri() const;
+    res::Uri resourceUri() const;
 
     /**
      * Change the resource URI associated with the manifest.
@@ -140,7 +140,7 @@ public:
      * @return  @c true iff @a newUri differed to the existing URI, which
      *          was subsequently changed.
      */
-    bool setResourceUri(de::Uri const &newUri);
+    bool setResourceUri(res::Uri const &newUri);
 
     /**
      * Returns the scheme-unique identifier for the manifest.

@@ -70,7 +70,7 @@ DE_PIMPL(ServerSystem)
 
     ListenSocket *serverSock = nullptr;
 
-    QHash<Id, RemoteUser *> users;
+    Hash<Id::Type, RemoteUser *> users;
     ShellUsers shellUsers;
     Users remoteFeedUsers;
 
@@ -282,7 +282,7 @@ void ServerSystem::convertToShellUser(RemoteUser *user)
     Socket *socket = user->takeSocket();
 
     LOGDEV_NET_VERBOSE("Remote user %s converted to shell user") << user->id();
-    user->deleteLater();
+    trash(user);
 
     d->shellUsers.add(new ShellUser(socket));
 }
@@ -293,7 +293,7 @@ void ServerSystem::convertToRemoteFeedUser(RemoteUser *user)
 
     Socket *socket = user->takeSocket();
     LOGDEV_NET_VERBOSE("Remote user %s converted to remote file system user") << user->id();
-    user->deleteLater();
+    trash(user);
 
     d->remoteFeedUsers.add(new RemoteFeedUser(socket));
 }

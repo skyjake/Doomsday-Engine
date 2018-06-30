@@ -25,13 +25,12 @@
 #ifndef LIBDEHREAD_DEHREADER_UTIL_H
 #define LIBDEHREAD_DEHREADER_UTIL_H
 
-#include <QString>
-#include <QStringList>
+#include <de/String>
 #include <doomsday/defs/mapinfo.h>
 #include "dehreader.h"
 
 /// @return Newly composed map URI.
-de::Uri composeMapUri(int episode, int map);
+res::Uri composeMapUri(int episode, int map);
 
 int valueDefForPath(de::String const &id, ded_value_t **def = 0);
 
@@ -49,10 +48,8 @@ int valueDefForPath(de::String const &id, ded_value_t **def = 0);
  *                  de::String::split() ).
  *                  If zero the resultant list will be always be empty.
  *
- * @return Resulting QStringList containing the parsed string tokens.
- *
- * @todo Should this be incorporated into de::String ?
+ * @return Resulting StringList containing the parsed string tokens.
  */
-QStringList splitMax(QString const &string, QChar sep, int max = -1);
+de::StringList splitMax(de::String const &string, de::Char sep, int max = -1);
 
 #endif // LIBDEHREAD_DEHREADER_UTIL_H

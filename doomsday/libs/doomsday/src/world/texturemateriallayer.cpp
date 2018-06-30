@@ -24,9 +24,9 @@ using namespace de;
 
 namespace world {
 
-TextureMaterialLayer::AnimationStage::AnimationStage(de::Uri const &texture, int tics,
+TextureMaterialLayer::AnimationStage::AnimationStage(res::Uri const &texture, int tics,
     float variance, float glowStrength, float glowStrengthVariance, Vec2f const origin,
-    de::Uri const &maskTexture, Vec2f const &maskDimensions, blendmode_t blendMode, float opacity)
+    res::Uri const &maskTexture, Vec2f const &maskDimensions, blendmode_t blendMode, float opacity)
     : /*Record()
     , */ Stage(tics, variance)
     , texture(texture)
@@ -62,8 +62,8 @@ TextureMaterialLayer::AnimationStage::~AnimationStage()
 void TextureMaterialLayer::AnimationStage::resetToDefaults()
 {
     origin = Vec2f();
-    texture = de::Uri();
-    maskTexture = de::Uri();
+    texture = res::Uri();
+    maskTexture = res::Uri();
     maskDimensions = Vec2f();
     blendMode = BM_NORMAL;
     opacity = 1;
@@ -83,7 +83,7 @@ void TextureMaterialLayer::AnimationStage::resetToDefaults()
 TextureMaterialLayer::AnimationStage *
 TextureMaterialLayer::AnimationStage::fromDef(Record const &stageDef)
 {
-    return new AnimationStage(de::makeUri(stageDef.gets("texture")),
+    return new AnimationStage(res::makeUri(stageDef.gets("texture")),
                               stageDef.geti("tics"),
                               stageDef.getf("variance"),
                               stageDef.getf("glowStrength"),

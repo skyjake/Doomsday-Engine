@@ -184,10 +184,10 @@ LIBDOOMSDAY_PUBLIC int CVar_Integer(cvar_t const *var);
 LIBDOOMSDAY_PUBLIC float CVar_Float(cvar_t const *var);
 LIBDOOMSDAY_PUBLIC byte CVar_Byte(cvar_t const *var);
 LIBDOOMSDAY_PUBLIC char const *CVar_String(cvar_t const *var);
-LIBDOOMSDAY_PUBLIC de::Uri const &CVar_Uri(cvar_t const *var);
+LIBDOOMSDAY_PUBLIC res::Uri const &CVar_Uri(cvar_t const *var);
 
-LIBDOOMSDAY_PUBLIC void CVar_SetUri(cvar_t *var, de::Uri const &uri);
-LIBDOOMSDAY_PUBLIC void CVar_SetUri2(cvar_t *var, de::Uri const &uri, int svFlags);
+LIBDOOMSDAY_PUBLIC void CVar_SetUri(cvar_t *var, res::Uri const &uri);
+LIBDOOMSDAY_PUBLIC void CVar_SetUri2(cvar_t *var, res::Uri const &uri, int svFlags);
 LIBDOOMSDAY_PUBLIC void CVar_SetString(cvar_t* var, char const* text);
 LIBDOOMSDAY_PUBLIC void CVar_SetString2(cvar_t *var, char const *text, int svFlags);
 LIBDOOMSDAY_PUBLIC void CVar_SetInteger(cvar_t* var, int value);

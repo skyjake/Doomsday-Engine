@@ -404,7 +404,7 @@ static String symbolicDescriptor(event_t const &event)
 #endif
         if(symbol.beginsWith("echo-"))
         {
-            return symbol.substr(5);
+            return symbol.substr(BytePos(5));
         }
     }
     return ""; // No symbolic descriptor.
@@ -443,19 +443,19 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
     String cmd;
     if (binds->command)
     {
-        cmd = String("bindevent {%1:%2%3} {%4}")
-                  .arg(context)
-                  .arg(symbol)
-                  .arg(binds->flags & CCF_MULTIPLAYER? " + multiplayer" : "")
-                  .arg(binds->command);
+        cmd = String::format("bindevent {%s:%s%s} {%s}",
+                             context.c_str(),
+                             symbol.c_str(),
+                             binds->flags & CCF_MULTIPLAYER ? " + multiplayer" : "",
+                             binds->command);
 
         // Check for repeats.
         if ((binds->flags & CCF_REPEAT) && symbol.endsWith("-down"))
         {
-            cmd += String("; bindevent {%1:%2-repeat} {%3}")
-                       .arg(context)
-                       .arg(symbol.left(symbol.length() - 5))
-                       .arg(binds->command);
+            cmd += String::format("; bindevent {%s:%s-repeat} {%s}",
+                                  context.c_str(),
+                                  symbol.left(symbol.sizeb() - 5).c_str(),
+                                  binds->command);
         }
     }
     else if (binds->controlName)
@@ -463,8 +463,8 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
         String stateFlags;
 
         // Extract the symbolic key/button name (exclude the state part).
-        int const endOfName = symbol.indexOf('-', symbol.indexOf('-') + 1);
-        if (endOfName < 0)
+        const auto endOfName = symbol.indexOf("-", symbol.indexOf("-") + 1);
+        if (!endOfName)
         {
             throw Error("InputBindingWidget::handleEvent_Privileged", "Invalid symbol:" + symbol);
         }
@@ -493,22 +493,22 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
             stateFlags += "-inverse";
         }
 
-        cmd = String("bindcontrol {%1} {%2%3%4}")
-                  .arg(binds->controlName)
-                  .arg(name)
-                  .arg(stateFlags)
-                  .arg((binds->flags & CCF_SIDESTEP_MODIFIER)? " + modifier-1-up" : "");
+        cmd = String::format("bindcontrol {%1} {%2%3%4}",
+                             binds->controlName,
+                             name.c_str(),
+                             stateFlags.c_str(),
+                             (binds->flags & CCF_SIDESTEP_MODIFIER) ? " + modifier-1-up" : "");
 
         if(binds->flags & CCF_SIDESTEP_MODIFIER)
         {
-            cmd += String("; bindcontrol sidestep {%1%2 + modifier-1-down}")
-                       .arg(name)
-                       .arg(stateFlags);
+            cmd += String::format("; bindcontrol sidestep {%s%s + modifier-1-down}",
+                                  name.c_str(),
+                                  stateFlags.c_str());
         }
     }
 
     LOGDEV_INPUT_MSG("PrivilegedResponder: ") << cmd;
-    DD_Execute(true, cmd.toUtf8().constData());
+    DD_Execute(true, cmd);
 
     // We've finished the grab.
     setFlags(Active, UnsetFlags);

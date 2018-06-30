@@ -206,11 +206,11 @@ void P_InitSwitchList()
     switchlist_t *sList = switchInfo;
 
     // Has a custom SWITCHES lump been loaded?
-    de::File1 *lump = 0;
+    res::File1 *lump = 0;
     if(CentralLumpIndex().contains("SWITCHES.lmp"))
     {
         lump = &CentralLumpIndex()[CentralLumpIndex().findLast("SWITCHES.lmp")];
-        App_Log(DE2_RES_VERBOSE, "Processing lump %s::SWITCHES", F_PrettyPath(lump->container().composePath().toUtf8().constData()));
+        App_Log(DE2_RES_VERBOSE, "Processing lump %s::SWITCHES", F_PrettyPath(lump->container().composePath()));
         sList = (switchlist_t *) lump->cache();
     }
     else

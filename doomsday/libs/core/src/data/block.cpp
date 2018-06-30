@@ -161,6 +161,16 @@ void Block::remove(size_t pos, size_t len)
     remove_Block(&_block, pos, len);
 }
 
+bool Block::beginsWith(const char *cstr) const
+{
+    const dsize len = strlen(cstr);
+    if (size() >= len)
+    {
+        return memcmp(cstr, c_str(), len) == 0;
+    }
+    return false;
+}
+
 Block::Byte &Block::operator[](size_t pos)
 {
     if (pos >= size()) resize(pos + 1);

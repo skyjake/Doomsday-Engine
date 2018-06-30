@@ -30,9 +30,9 @@
 #include "clientapp.h"
 #include "clientplayer.h"
 
-#include <QSurfaceFormat>
-#include <QTimer>
-#include <QCloseEvent>
+//#include <QSurfaceFormat>
+//#include <QTimer>
+//#include <QCloseEvent>
 #include <de/CompositorWidget>
 #include <de/Config>
 #include <de/ConstantRule>
@@ -46,7 +46,7 @@
 #include <de/LogBuffer>
 #include <de/NotificationAreaWidget>
 #include <de/NumberValue>
-#include <de/SignalAction>
+//#include <de/SignalAction>
 #include <de/VRWindowTransform>
 #include <de/concurrency.h>
 #include <doomsday/console/exec.h>
@@ -148,7 +148,7 @@ DE_PIMPL(ClientWindow)
         // Listen to input.
         self().eventHandler().audienceForMouseStateChange() += this;
 
-        foreach (String s, configVariableNames())
+        for (const String &s : configVariableNames())
         {
             App::config(s).audienceForChange() += this;
         }
@@ -167,9 +167,7 @@ DE_PIMPL(ClientWindow)
     StringList configVariableNames() const
     {
 #if !defined (DE_MOBILE)
-        return StringList()
-                << self().configName("fsaa")
-                << self().configName("vsync");
+        return {self().configName("fsaa"), self().configName("vsync")};
 #else
         return StringList();
 #endif

@@ -103,7 +103,7 @@ Library::Library(NativePath const &nativePath) : d(new Impl(this))
 
 #if defined (DE_STATIC_LINK)
     d->fileName = nativePath;
-    d->library = findStaticLibrary(nativePath.toUtf8().constData());
+    d->library = findStaticLibrary(nativePath);
 #elif defined (DE_USE_DLOPEN)
     d->fileName = nativePath;
     d->library = dlopen(nativePath, RTLD_NOW);

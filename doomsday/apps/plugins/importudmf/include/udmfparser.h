@@ -1,6 +1,6 @@
 /** @file udmfparser.h  UDMF parser.
  *
- * @authors Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2016-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -21,7 +21,8 @@
 
 #include "udmflex.h"
 #include <de/TokenRange>
-#include <QHash>
+#include <de/Hash>
+#include <de/Value>
 #include <functional>
 
 /**
@@ -33,8 +34,8 @@
 class UDMFParser
 {
 public:
-    typedef QHash<de::String, QVariant> Block;
-    typedef std::function<void (de::String const &, QVariant const &)> AssignmentFunc;
+    typedef de::Hash<de::String, std::shared_ptr<de::Value>> Block;
+    typedef std::function<void (de::String const &, de::Value const &)> AssignmentFunc;
     typedef std::function<void (de::String const &, Block const &)> BlockFunc;
 
     DE_ERROR(SyntaxError);
@@ -63,12 +64,12 @@ protected:
     void parseAssignment(Block &block);
 
 private:
-    AssignmentFunc _assignmentHandler;
-    BlockFunc _blockHandler;
-    Block _globals;
-    UDMFLex _analyzer;
+    AssignmentFunc  _assignmentHandler;
+    BlockFunc       _blockHandler;
+    Block           _globals;
+    UDMFLex         _analyzer;
     de::TokenBuffer _tokens;
-    de::TokenRange _range;
+    de::TokenRange  _range;
 };
 
 #endif // IMPORTUDMF_UDMFPARSER_H

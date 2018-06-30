@@ -5,9 +5,6 @@ project (DE_LIBDOOMSDAY)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (DengCore)
-find_package (DengLegacy)
-find_package (DengShell)
 find_package (LZSS)
 include (ZLIB)
 
@@ -39,10 +36,8 @@ deng_add_package (net.dengine.base)
 
 deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 relaxed_warnings (libdoomsday)
-target_link_libraries (libdoomsday
-    PUBLIC Deng::libcore Deng::liblegacy Deng::libshell
-    PRIVATE lzss
-)
+deng_link_libraries (libdoomsday PUBLIC DengCore DengLegacy DengShell)
+target_link_libraries (libdoomsday PRIVATE lzss)
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 
 if (DE_ENABLE_SDK)

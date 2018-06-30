@@ -77,7 +77,7 @@ Record const &Episode::hub(int index) const
 
 Record *Episode::tryFindHubByMapId(String const &mapId)
 {
-    de::Uri const mapUri(mapId, RC_NULL);
+    res::Uri const mapUri(mapId, RC_NULL);
     if (!mapUri.path().isEmpty())
     {
         for (int i = 0; i < hubCount(); ++i)
@@ -86,7 +86,7 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
             for (auto *mapIt : hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
+                if (mapUri == res::makeUri(mgNodeDef.gets(VAR_ID)))
                 {
                     return &hubRec;
                 }
@@ -98,7 +98,7 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
 
 Record *Episode::tryFindMapGraphNode(String const &mapId)
 {
-    de::Uri const mapUri(mapId, RC_NULL);
+    res::Uri const mapUri(mapId, RC_NULL);
     if (!mapUri.path().isEmpty())
     {
         // First, try the hub maps.
@@ -108,7 +108,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
             for (Value *mapIt : hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
+                if (mapUri == res::makeUri(mgNodeDef.gets(VAR_ID)))
                 {
                     return &mgNodeDef;
                 }
@@ -118,7 +118,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
         for (Value *mapIt : geta("map").elements())
         {
             Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-            if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
+            if (mapUri == res::makeUri(mgNodeDef.gets(VAR_ID)))
             {
                 return &mgNodeDef;
             }

@@ -982,7 +982,7 @@ InputDevice &InputSystem::device(int id) const
         return *d->devices.at(id);
     }
     /// @throw MissingDeviceError  Given id is not valid.
-    throw MissingDeviceError("InputSystem::device", "Unknown id:" + String::number(id));
+    throw MissingDeviceError("InputSystem::device", "Unknown id:" + String::asText(id));
 }
 
 InputDevice *InputSystem::devicePtr(int id) const
@@ -1390,7 +1390,7 @@ BindContext &InputSystem::contextAt(int position) const
         return *d->contexts.at(position);
     }
     /// @throw MissingContextError  Specified position is invalid.
-    throw MissingContextError("InputSystem::contextAt", "Invalid position:" + String::number(position));
+    throw MissingContextError("InputSystem::contextAt", "Invalid position:" + String::asText(position));
 }
 
 int InputSystem::contextPositionOf(BindContext *context) const
@@ -1499,7 +1499,7 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
     int localPlayer = 0;
     AutoStr *str    = AutoStr_NewStd();
     char const *ptr = Str_CopyDelim(str, impulseDesc, '-');
-    if (!qstrnicmp(Str_Text(str), "local", 5) && Str_Length(str) > 5)
+    if (!iCmpStrNCase(Str_Text(str), "local", 5) && Str_Length(str) > 5)
     {
         localPlayer = String((Str_Text(str) + 5)).toInt() - 1;
         if (localPlayer < 0 || localPlayer >= DDMAXPLAYERS)
@@ -1831,7 +1831,7 @@ DE_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, s
             {
                 if (numFound) out += " "; // Separator.
 
-                out += String::number(bind.geti("id")) + "@" + context.name() + ":" + bind.composeDescriptor();
+                out += String::asText(bind.geti("id")) + "@" + context.name() + ":" + bind.composeDescriptor();
                 numFound++;
             }
             return LoopContinue;
@@ -1841,7 +1841,7 @@ DE_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, s
 
     // Copy the result to the return buffer.
     std::memset(outBuf, 0, outBufSize);
-    qstrncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
+    qstrncpy(outBuf, out, outBufSize - 1);
 
     return numFound;
 }
@@ -1881,7 +1881,7 @@ DE_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCSt
                 {
                     if (numFound) out += " ";
 
-                    out += String::number(bind.id) + "@" + context.name() + ":" +
+                    out += String::asText(bind.id) + "@" + context.name() + ":" +
                             ImpulseBinding(rec).composeDescriptor();
                     numFound++;
                 }
@@ -1893,7 +1893,7 @@ DE_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCSt
 
     // Copy the result to the return buffer.
     std::memset(outBuf, 0, outBufSize);
-    qstrncpy(outBuf, out.toUtf8().constData(), outBufSize - 1);
+    qstrncpy(outBuf, out, outBufSize - 1);
 
     return numFound;
 }

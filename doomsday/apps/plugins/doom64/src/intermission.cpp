@@ -80,25 +80,29 @@ namespace internal
                                          patchId, text);
     }
 
-    static void drawChar(QChar const ch, Vec2i const &origin,
-                         int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
+    static void drawChar(Char const   ch,
+                         Vec2i const &origin,
+                         int          alignFlags = ALIGN_TOPLEFT,
+                         int          textFlags  = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
-        FR_DrawChar3(ch.toLatin1(), &rawOrigin, alignFlags, textFlags);
+        FR_DrawChar3(char(ch), &rawOrigin, alignFlags, textFlags);
     }
 
-    static void drawText(String const &text, Vec2i const &origin,
-                         int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
+    static void drawText(String const &text,
+                         Vec2i const & origin,
+                         int           alignFlags = ALIGN_TOPLEFT,
+                         int           textFlags  = DTF_NO_TYPEIN)
     {
         const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
-        FR_DrawText3(text.toUtf8().constData(), &rawOrigin, alignFlags, textFlags);
+        FR_DrawText3(text, &rawOrigin, alignFlags, textFlags);
     }
 
     static void drawPercent(int percent, Vec2i const &origin)
     {
         if(percent < 0) return;
         drawChar('%', origin, ALIGN_TOPLEFT, DTF_NO_TYPEIN);
-        drawText(String::number(percent), origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
+        drawText(String::asText(percent), origin, ALIGN_TOPRIGHT, DTF_NO_TYPEIN);
     }
 
     /**
@@ -118,7 +122,7 @@ namespace internal
             drawChar(':', origin);
             if(minutes > 0)
             {
-                drawText(String::number(minutes), origin, ALIGN_TOPRIGHT);
+                drawText(String::asText(minutes), origin, ALIGN_TOPRIGHT);
             }
 
             drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vec2i(FR_CharWidth(':'), 0));
@@ -183,12 +187,12 @@ static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
     patchid_t patchId = 0;
 
     String const title       = G_MapTitle(wbs->currentMap);
-    de::Uri const titleImage = G_MapTitleImage(wbs->currentMap);
+    res::Uri const titleImage = G_MapTitleImage(wbs->currentMap);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
         {
-            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            patchId = R_DeclarePatch(titleImage.path());
         }
     }
 
@@ -221,12 +225,12 @@ static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 
     // See if there is a title for the map...
     String const title       = G_MapTitle(wbs->nextMap);
-    de::Uri const titleImage = G_MapTitleImage(wbs->nextMap);
+    res::Uri const titleImage = G_MapTitleImage(wbs->nextMap);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
         {
-            patchId = R_DeclarePatch(titleImage.path().toUtf8().constData());
+            patchId = R_DeclarePatch(titleImage.path());
         }
     }
 
@@ -415,7 +419,7 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
             // If more than 1 member, show the member count.
             if(1 != teamInfo[i].playerCount)
             {
-                String const count = String::number(teamInfo[i].playerCount);
+                String const count = String::asText(teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
                 drawText(count, Vec2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
@@ -454,11 +458,11 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
             {
                 if(teamInfo[k].playerCount > 0)
                 {
-                    drawText(String::number(dmFrags[i][k]), origin + Vec2i(w, 0), ALIGN_TOPRIGHT);
+                    drawText(String::asText(dmFrags[i][k]), origin + Vec2i(w, 0), ALIGN_TOPRIGHT);
                 }
                 origin.x += DM_SPACINGX;
             }
-            drawText(String::number(dmTotals[i]), Vec2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
+            drawText(String::asText(dmTotals[i]), Vec2i(DM_TOTALSX + w, origin.y), ALIGN_TOPRIGHT);
         }
 
         origin.y += WI_SPACINGY;
@@ -676,7 +680,7 @@ static void drawNetgameStats()
         // If more than 1 member, show the member count.
         if(1 != teamInfo[i].playerCount)
         {
-            drawText(String::number(teamInfo[i].playerCount),
+            drawText(String::asText(teamInfo[i].playerCount),
                      Vec2i(x - info.geometry.size.width + 1,
                               y + info.geometry.size.height - 8), ALIGN_TOPLEFT);
         }
@@ -701,7 +705,7 @@ static void drawNetgameStats()
 
         if(doFrags)
         {
-            drawText(String::number(cntFrags[i]), Vec2i(x, y + 10), ALIGN_TOPRIGHT);
+            drawText(String::asText(cntFrags[i]), Vec2i(x, y + 10), ALIGN_TOPRIGHT);
         }
 
         y += WI_SPACINGY;

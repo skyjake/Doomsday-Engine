@@ -74,7 +74,7 @@ D_CMD(CheatGod)
         {
             NetCl_CheatRequest("god");
         }
-        else if((IS_NETGAME && !netSvAllowCheats) 
+        else if((IS_NETGAME && !netSvAllowCheats)
                 || gfw_Rule(skill) == SM_HARD)
         {
             return false;
@@ -215,7 +215,7 @@ D_CMD(CheatReveal)
     if(IS_NETGAME && !IS_NETWORK_SERVER)
         return false;
 
-    int option = String(argv[1]).toInt();   
+    int option = String(argv[1]).toInt();
     if(option < 0 || option > 3) return false;
 
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -293,7 +293,7 @@ D_CMD(CheatGive)
 #undef TABBED
 
         LOG_SCR_MSG(_E(D) "Examples:");
-        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "give arw"  _E(.) " for full ammo and armor " _E(l) "(equivalent to cheat IDFA)"); 
+        LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "give arw"  _E(.) " for full ammo and armor " _E(l) "(equivalent to cheat IDFA)");
         LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "give w2k1" _E(.) " for weapon two and key one");
         return true;
     }
@@ -310,18 +310,18 @@ D_CMD(CheatGive)
         if(argc < 2) return false;
 
         String const request = String("give ") + argv[1];
-        NetCl_CheatRequest(request.toUtf8().constData());
+        NetCl_CheatRequest(request);
         return true;
-    } 
+    }
     else if(IS_NETGAME && !netSvAllowCheats)
     {
         return false;
     }
-    else if(gfw_Rule(skill) == SM_HARD) 
+    else if(gfw_Rule(skill) == SM_HARD)
     {
         return false;
     }
-    
+
     player_t* plr = &players[player];
 
     // Can't give to a plr who's not playing
@@ -330,18 +330,18 @@ D_CMD(CheatGive)
     if(plr->health <= 0) return false;
 
     // Stuff is the 2nd arg.
-    String const stuff = String(argv[1]).toLower();
-    for(int i = 0; i < stuff.length(); ++i)
+    String const stuff = String(argv[1]).lower();
+    for (mb_iterator i = stuff.begin(); i != stuff.end(); ++i)
     {
-        QChar const mnemonic = stuff.at(i);
-        switch(mnemonic.toLatin1())
+        Char const mnemonic = *i;
+        switch (mnemonic)
         {
         case 'a': { // Ammo
             ammotype_t ammos = NUM_AMMO_TYPES;
 
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit()) 
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at(++i).digitValue();
+                int const arg = *(++i) - '0';
                 if(arg < AT_FIRST || arg >= NUM_AMMO_TYPES)
                 {
                     LOG_SCR_ERROR("Ammo #%d unknown. Valid range %s")
@@ -351,16 +351,16 @@ D_CMD(CheatGive)
                 ammos = ammotype_t(arg);
             }
 
-            P_GiveAmmo(plr, ammos, -1 /* max rounds */); 
+            P_GiveAmmo(plr, ammos, -1 /* max rounds */);
             break;
         }
 
         case 'r': { // Armor
             int armor = 1;
 
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at(++i).digitValue();
+                int const arg = *(++i) - '0';
                 if(arg < 0 || arg >= 4)
                 {
                     LOG_SCR_ERROR("Armor #%d unknown. Valid range %s")
@@ -376,9 +376,9 @@ D_CMD(CheatGive)
         case 'k': { // Keys
             keytype_t keys = NUM_KEY_TYPES;
 
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at(++i).digitValue();
+                int const arg = *(++i) - '0';
                 if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
                 {
                     LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
@@ -394,9 +394,9 @@ D_CMD(CheatGive)
         case 'w': { // Weapons
             weapontype_t weapons = NUM_WEAPON_TYPES;
 
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at(++i).digitValue();
+                int const arg = *(++i) - '0';
                 if(arg < WT_FIRST || arg >= NUM_WEAPON_TYPES)
                 {
                     LOG_SCR_ERROR("Weapon #%d unknown. Valid range %s")
@@ -407,12 +407,12 @@ D_CMD(CheatGive)
             }
             giveWeapon(plr, weapons);
             break;
-        }        
+        }
 
         case 'l': { // Laser Upgrades
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                switch (stuff.at(++i).digitValue())
+                switch (*(++i) - '0')
                 {
                     case 1: // DEMONKEY1
                         giveLaserUpgrade(plr, IIT_DEMONKEY1);
@@ -436,13 +436,13 @@ D_CMD(CheatGive)
                 giveLaserUpgrade(plr, IIT_DEMONKEY3);
             }
 
-           break; 
+           break;
         }
 
         // Other Items
         case 'p': P_GiveBackpack(plr); break;
         case 'h': P_GiveBody(plr, healthLimit); break;
-                
+
         // Powers
         case 'm': togglePower(plr, PT_ALLMAP); break;
         case 'f': togglePower(plr, PT_FLIGHT); break;
@@ -453,7 +453,7 @@ D_CMD(CheatGive)
         case 'b': togglePower(plr, PT_STRENGTH); break;
 
         default: // Unrecognized.
-            LOG_SCR_ERROR("No such cheat `%c` found.") << mnemonic.toLatin1();
+            LOG_SCR_ERROR("No such cheat `%c` found.") << mnemonic;
             break;
         }
     }
@@ -487,9 +487,12 @@ static void printDebugInfo(player_t *plr)
     // Output debug info to HUD and console
     {
         char textBuffer[256];
-        sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                            gfw_Session()->mapUri().path().toUtf8().constData(),
-                            plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
+        sprintf(textBuffer,
+                "MAP [%s]  X:%g  Y:%g  Z:%g",
+                gfw_Session()->mapUri().path().c_str(),
+                plrMo->origin[VX],
+                plrMo->origin[VY],
+                plrMo->origin[VZ]);
 
         P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);
 

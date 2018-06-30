@@ -137,7 +137,7 @@ DE_PIMPL(LinkWindow)
             {
                 txt = tr("<b>%1</b>:%2")
                         .arg(link->address().isLocal()? "localhost"
-                                                      : link->address().host().toString())
+                                                      : QString::fromUtf8(link->address().hostName()))
                         .arg(link->address().port());
             }
             else if (self().isConnected() && link->address().isNull())

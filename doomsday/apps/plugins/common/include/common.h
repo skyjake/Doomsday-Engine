@@ -72,7 +72,10 @@ void    Common_Register();
  *
  * @deprecated  Implement file access without depending on this specialized behavior.
  */
-inline de::LumpIndex const &CentralLumpIndex() { return *reinterpret_cast<de::LumpIndex const *>(F_LumpIndex()); }
+inline res::LumpIndex const &CentralLumpIndex()
+{
+    return *reinterpret_cast<res::LumpIndex const *>(F_LumpIndex());
+}
 
 #endif
 

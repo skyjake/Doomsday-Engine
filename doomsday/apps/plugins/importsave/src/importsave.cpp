@@ -33,9 +33,9 @@ using namespace de;
 static NativePath findSavegameTool()
 {
 #ifdef WIN32
-    return App::executablePath().fileNamePath() / "savegametool.exe";
+    return App::executableDir() / "savegametool.exe";
 #else
-    return App::executablePath().fileNamePath() / "savegametool";
+    return App::executableDir() / "savegametool";
 #endif
 }
 

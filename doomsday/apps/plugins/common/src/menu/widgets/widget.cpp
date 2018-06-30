@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <QMap>
+#include <de/Map>
 #include "common.h"
 #include "menu/widgets/widget.h"
 #include "menu/page.h"
@@ -45,15 +45,15 @@ DE_PIMPL_NOREF(Widget)
     int pageFontIdx  = 0;      ///< Index of the predefined page font to use when drawing this.
     int pageColorIdx = 0;      ///< Index of the predefined page color to use when drawing this.
 
-    typedef QMap<Action, ActionCallback> Actions;
+    typedef Map<Action, ActionCallback> Actions;
     Actions actions;
 
     OnTickCallback onTickCallback = nullptr;
     CommandResponder cmdResponder = nullptr;
 
     // User data values.
-    QVariant userValue;
-    QVariant userValue2;
+    std::unique_ptr<Value> userValue;
+    std::unique_ptr<Value> userValue2;
 };
 
 Widget::Widget() : d(new Impl)
@@ -281,26 +281,26 @@ void Widget::execAction(Action id)
     }
 }
 
-Widget &Widget::setUserValue(QVariant const &newValue)
+Widget &Widget::setUserValue(const Value &newValue)
 {
-    d->userValue = newValue;
+    d->userValue.reset(newValue.duplicate());
     return *this;
 }
 
-QVariant const &Widget::userValue() const
+const Value &Widget::userValue() const
 {
-    return d->userValue;
+    return *d->userValue;
 }
 
-Widget &Widget::setUserValue2(QVariant const &newValue)
+Widget &Widget::setUserValue2(const Value &newValue)
 {
-    d->userValue2 = newValue;
+    d->userValue2.reset(newValue.duplicate());
     return *this;
 }
 
-QVariant const &Widget::userValue2() const
+const Value &Widget::userValue2() const
 {
-    return d->userValue2;
+    return *d->userValue2;
 }
 
 float Widget::scrollingFadeout() const

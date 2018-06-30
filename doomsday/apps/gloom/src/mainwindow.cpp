@@ -105,7 +105,7 @@ DE_PIMPL(MainWindow)
     void windowInit(GLWindow &)
     {
         self().raise();
-        self().requestActivate();
+        //self().requestActivate();
     }
 
     void updateRootSize()
@@ -139,7 +139,8 @@ DE_PIMPL(MainWindow)
 };
 
 MainWindow::MainWindow(String const &id)
-    : BaseWindow(id), d(new Impl(this))
+    : BaseWindow(id)
+    , d(new Impl(this))
 {
     setTitle("test_gloom");
     d->setupUI();

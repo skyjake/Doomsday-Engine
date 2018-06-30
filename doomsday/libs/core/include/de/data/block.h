@@ -110,6 +110,8 @@ public:
     inline Byte operator[](size_t pos) const { return at(pos); }
     inline Byte at(size_t pos) const { return at_Block(&_block, pos); }
 
+    bool beginsWith(const char *cstr) const;
+
     Block mid(size_t pos, size_t len = iInvalidSize) const;
     Block left(size_t len) const;
 

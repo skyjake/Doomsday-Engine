@@ -363,6 +363,7 @@ public:
     void          remove(BytePos start, dsize count);
     inline void   remove(BytePos start, BytePos count) { remove(start, count.index); }
     void          truncate(BytePos pos);
+    inline void   truncate(CharPos pos) { *this = substr(CharPos(0), pos.index); }
     List<String>  split(const char *separator) const;
     List<String>  split(Char ch) const;
     List<String>  split(const String &separator) const { return split(separator.c_str()); }

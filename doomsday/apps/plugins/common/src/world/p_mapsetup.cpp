@@ -677,7 +677,7 @@ static void spawnMapObjects()
     P_SpawnPlayers();
 }
 
-void P_SetupMap(de::Uri const &mapUri)
+void P_SetupMap(res::Uri const &mapUri)
 {
     if (IS_DEDICATED)
     {
@@ -714,10 +714,10 @@ void P_SetupMap(de::Uri const &mapUri)
 
     P_ResetWorldState();
 
-    if (!P_MapChange(mapUri.compose().toUtf8().constData()))
+    if (!P_MapChange(mapUri.compose()))
     {
-        Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());
-        exit(1); // Unreachable.
+        throw Error("P_SetupMap",
+                    stringf("Failed changing/loading map \"%s\".\n", mapUri.compose().c_str()));
     }
 
     // Make sure the game is paused for the requested period.
@@ -898,7 +898,7 @@ static void precacheResources()
 
 void P_FinalizeMapChange(uri_s const *mapUri_)
 {
-    de::Uri const &mapUri = *reinterpret_cast<de::Uri const *>(mapUri_);
+    res::Uri const &mapUri = *reinterpret_cast<res::Uri const *>(mapUri_);
 #if !__JHEXEN__
     DE_UNUSED(mapUri);
 #endif

@@ -30,16 +30,11 @@
 #include <de/Message>
 #include <de/ByteRefArray>
 #include <de/shell/Protocol>
-
-#include <QCryptographicHash>
+#include <de/Garbage>
 
 using namespace de;
 
-enum RemoteUserState {
-    Disconnected,
-    Unjoined,
-    Joined
-};
+enum RemoteUserState { Disconnected, Unjoined, Joined };
 
 DE_PIMPL(RemoteUser)
 {
@@ -58,8 +53,10 @@ DE_PIMPL(RemoteUser)
     {
         DE_ASSERT(socket != 0);
 
-        QObject::connect(socket, SIGNAL(disconnected()),  thisPublic, SLOT(socketDisconnected()));
-        QObject::connect(socket, SIGNAL(messagesReady()), thisPublic, SLOT(handleIncomingPackets()));
+        socket->audienceForStateChange() += [this]() {
+            if (!socket->isOpen()) self().socketDisconnected();
+        };
+        socket->audienceForMessage() += [this](){ self().handleIncomingPackets(); };
 
         address = socket->peerAddress();
         isFromLocal = socket->isLocal();
@@ -124,7 +121,7 @@ DE_PIMPL(RemoteUser)
         // If the command is too long, it'll be considered invalid.
         if (length >= 256)
         {
-            self().deleteLater();
+            trash(thisPublic);
             return false;
         }
 
@@ -157,7 +154,7 @@ DE_PIMPL(RemoteUser)
             App_ServerSystem().convertToRemoteFeedUser(thisPublic);
             return false;
         }
-        else if (length >= 5 && command.startsWith("Shell"))
+        else if (length >= 5 && command.beginsWith("Shell"))
         {
             if (length == 5)
             {
@@ -172,12 +169,12 @@ DE_PIMPL(RemoteUser)
             else if (length > 5)
             {
                 // A password was included.
-                QByteArray supplied = command.mid(5);
-                QByteArray pwd(netPassword, strlen(netPassword));
-                if (supplied != QCryptographicHash::hash(pwd, QCryptographicHash::Sha1))
+                Block supplied = command.mid(5);
+                Block pwd(netPassword, strlen(netPassword));
+                if (supplied != pwd.md5Hash())
                 {
                     // Wrong!
-                    self().deleteLater();
+                    trash(thisPublic);
                     return false;
                 }
             }
@@ -187,9 +184,9 @@ DE_PIMPL(RemoteUser)
             App_ServerSystem().convertToShellUser(thisPublic);
             return false;
         }
-        else if (length >= 10 && command.startsWith("Join ") && command[9] == ' ')
+        else if (length >= 10 && command.beginsWith("Join ") && command[9] == ' ')
         {
-            protocolVersion = command.mid(5, 4).toInt(0, 16);
+            protocolVersion = String(command.mid(5, 4)).toInt(nullptr, 16);
 
             // Read the client's name and convert the network node into an actual
             // client. Here we also decide if the client's protocol is compatible
@@ -212,7 +209,7 @@ DE_PIMPL(RemoteUser)
             else
             {
                 // Couldn't join the game, so close the connection.
-                self().deleteLater();
+                trash(thisPublic);
                 return false;
             }
         }
@@ -220,21 +217,25 @@ DE_PIMPL(RemoteUser)
         {
             // Too bad, scoundrel! Goodbye.
             LOG_NET_WARNING("Received an invalid request from %s") << id;
-            self().deleteLater();
+            trash(thisPublic);
             return false;
         }
 
         // Everything was OK.
         return true;
     }
+
+    DE_PIMPL_AUDIENCE(Destroy)
 };
+
+DE_AUDIENCE_METHOD(RemoteUser, Destroy)
 
 RemoteUser::RemoteUser(Socket *socket) : d(new Impl(this, socket))
 {}
 
 RemoteUser::~RemoteUser()
 {
-    emit userDestroyed();
+    DE_FOR_AUDIENCE2(Destroy, i) { i->aboutToDestroyRemoteUser(*this); }
 
     d->disconnect();
 }
@@ -252,8 +253,10 @@ String RemoteUser::name() const
 Socket *RemoteUser::takeSocket()
 {
     Socket *sock = d->socket;
-    QObject::disconnect(sock, SIGNAL(disconnected()),  this, SLOT(socketDisconnected()));
-    QObject::disconnect(sock, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
+    sock->audienceForMessage() += [this](){ handleIncomingPackets(); };
+    sock->audienceForStateChange() += [this, sock](){
+        if (!sock->isOpen()) socketDisconnected();
+    };
     d->socket = 0;
     d->state = Disconnected; // not signaled
     return sock;
@@ -270,10 +273,10 @@ void RemoteUser::send(IByteArray const &data)
 void RemoteUser::handleIncomingPackets()
 {
     LOG_AS("RemoteUser");
-    forever
+    for (;;)
     {
-        QScopedPointer<Message> packet(d->socket->receive());
-        if (packet.isNull()) break;
+        std::unique_ptr<Message> packet(d->socket->receive());
+        if (!packet) break;
 
         switch (d->state)
         {
@@ -311,7 +314,7 @@ void RemoteUser::socketDisconnected()
     d->state = Disconnected;
     d->notifyClientExit();
 
-    deleteLater();
+    trash(this);
 }
 
 bool RemoteUser::isJoined() const

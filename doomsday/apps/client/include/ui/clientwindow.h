@@ -53,29 +53,22 @@ class HomeWidget;
  */
 class ClientWindow : public de::BaseWindow
 {
-    Q_OBJECT
-
 public:
-    enum Mode {
-        Normal,
-        Busy
-    };
-
-    enum SidebarLocation {
-        RightEdge
-    };
+    enum Mode { Normal, Busy };
+    enum SidebarLocation { RightEdge };
+    enum FadeDirection { FadeFromBlack, FadeToBlack };
 
 public:
     ClientWindow(de::String const &id = "main");
 
-    ClientRootWidget &  root();
-    TaskBarWidget &     taskBar();
-    de::GuiWidget &     taskBarBlur();
-    ConsoleWidget &     console();
-    HomeWidget &        home();
-    GameWidget &        game();
-    BusyWidget &        busy();
-    AlertDialog &       alerts();
+    ClientRootWidget &          root();
+    TaskBarWidget &             taskBar();
+    de::GuiWidget &             taskBarBlur();
+    ConsoleWidget &             console();
+    HomeWidget &                home();
+    GameWidget &                game();
+    BusyWidget &                busy();
+    AlertDialog &               alerts();
     de::NotificationAreaWidget &notifications();
 
     /**
@@ -142,13 +135,15 @@ public:
      */
     void grab(image_t &image, bool halfSized = false) const;
 
-    enum FadeDirection { FadeFromBlack, FadeToBlack };
-
     void fadeContent(FadeDirection fadeDirection, de::TimeSpan const &duration);
+
     de::FadeToBlackWidget *contentFade();
 
     void fadeInTaskBarBlur(de::TimeSpan span);
     void fadeOutTaskBarBlur(de::TimeSpan span);
+    void toggleFPSCounter();
+    void showColorAdjustments();
+    void hideTaskBarBlur();
 
     void updateRootSize();
 
@@ -164,11 +159,6 @@ public:
 
     static ClientWindow &main();
     static bool mainExists();
-
-public slots:
-    void toggleFPSCounter();
-    void showColorAdjustments();
-    void hideTaskBarBlur();
 
 protected:
     void windowAboutToClose() override;

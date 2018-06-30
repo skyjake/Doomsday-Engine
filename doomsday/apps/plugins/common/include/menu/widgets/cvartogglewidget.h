@@ -33,10 +33,7 @@ namespace menu {
 class CVarToggleWidget : public ButtonWidget
 {
 public:
-    enum State {
-        Up,
-        Down
-    };
+    enum State { Up, Down };
 
 public:
     CVarToggleWidget(char const *cvarPath, int cvarValueMask = 0,

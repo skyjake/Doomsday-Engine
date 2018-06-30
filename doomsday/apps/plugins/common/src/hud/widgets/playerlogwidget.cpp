@@ -148,7 +148,7 @@ void PlayerLogWidget::clear()
     for(LogEntry &entry : d->entries)
     {
         entry.text.clear();
-        entry.text.squeeze();
+        //entry.text.squeeze();
     }
 }
 
@@ -207,7 +207,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
 
     // Flow control note:
     // This block may or may not exit the method early.
-    // It was refactored so as not to use GOTO. 
+    // It was refactored so as not to use GOTO.
     // If it does not exit the method early, it will modify the value of firstEntry
     if(!cfg.hudShown[HUD_LOG])
     {
@@ -229,7 +229,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
         pvisEntryCount -= firstEntry - d->firstPVisEntryIdx();
     }
 
-    if(pvisEntryCount > 0) 
+    if(pvisEntryCount > 0)
     {
         // GL Setup
         // ================================================================================================
@@ -237,7 +237,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
             DGL_MatrixMode(DGL_MODELVIEW);
             DGL_PushMatrix();
             DGL_Translatef(offset.x, offset.y, 0);
-           
+
             // Calculate Y offset for map title and translate the origin
             {
                 dfloat offsetDueToMapTitle = 0;
@@ -251,12 +251,12 @@ void PlayerLogWidget::draw(Vec2i const &offset)
             DGL_Scalef(cfg.common.msgScale, cfg.common.msgScale, 1);
         }
 
-        // Render  
+        // Render
         // ================================================================================================
         {
             dint firstEntryVisibleToPlayer  = firstEntry;
             DE_UNUSED(firstEntryVisibleToPlayer);
-            
+
             dint lastEntry = firstEntry + pvisEntryCount - 1;
             if(lastEntry > LOG_MAX_ENTRIES - 1)
                 lastEntry -= LOG_MAX_ENTRIES;  // Wrap around.
@@ -304,7 +304,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
 
                 // ::w is used for opacity
                 Vec4f rgba(cfg.common.msgColor, textOpacity);
-                
+
                 // Fading HUD messages:
                 // If fading, update colour opacity each pass until it has completely faded
                 if(n == firstEntry)
@@ -344,7 +344,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
                     dint const alignFlags    = ALIGN_TOP| ((cfg.common.msgAlign == 0)? ALIGN_LEFT : (cfg.common.msgAlign == 2)? ALIGN_RIGHT : 0);
                     dshort const textFlags   = DTF_NO_EFFECTS;
                     FR_SetColorAndAlpha(rgba.x, rgba.y, rgba.z, rgba.w);
-                    FR_DrawTextXY3(entry->text.toUtf8().constData(), 0, y, alignFlags, textFlags);
+                    FR_DrawTextXY3(entry->text, 0, y, alignFlags, textFlags);
                 }
 
                 ++drawnEntryCount;
@@ -355,7 +355,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
 
         // GL Cleanup
         // ================================================================================================
-        { 
+        {
             DGL_Disable(DGL_TEXTURE_2D);
             DGL_MatrixMode(DGL_MODELVIEW);
             DGL_PopMatrix();
@@ -430,7 +430,7 @@ void PlayerLogWidget::updateGeometry()
 
         drawnEntryCount += 1;
 
-        FR_TextSize(&lineGeometry.size, entry->text.toUtf8().constData());
+        FR_TextSize(&lineGeometry.size, entry->text);
         Rect_UniteRaw(&geometry(), &lineGeometry);
 
         lineGeometry.origin.y += lineHeight;

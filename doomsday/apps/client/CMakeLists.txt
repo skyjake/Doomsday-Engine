@@ -9,8 +9,6 @@ include (../../cmake/Config.cmake)
 
 # Dependencies --------------------------------------------------------------------------
 
-find_package (DengAppfw)
-find_package (DengDoomsday)
 find_package (Amethyst QUIET)
 find_package (SDL2)
 if (WIN32)
@@ -128,11 +126,11 @@ if (APPLE AND NOT IOS)
     )
 endif ()
 
-# Windows: Use Qt resources.
-if (WIN32)
-    qt5_add_resources (RCC_SOURCES res/windows/client.qrc)
-    list (APPEND src ${RCC_SOURCES})
-endif ()
+# Windows: Compile resources.
+#if (WIN32)
+#    qt5_add_resources (RCC_SOURCES res/windows/client.qrc)
+#    list (APPEND src ${RCC_SOURCES})
+#endif ()
 
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 
@@ -208,7 +206,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "BSD")
     target_link_libraries (client PUBLIC execinfo) 
 endif()
 
-target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
+deng_link_libraries (client PUBLIC DengAppfw DengDoomsday)
 
 # Deployment ----------------------------------------------------------------------------
 

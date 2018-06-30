@@ -622,7 +622,7 @@ typedef struct {
 static bool SV_OpenFile_Dm_v19(Path path)
 {
     DE_ASSERT(saveBuffer == 0);
-    if(!M_ReadFile(NativePath(path).expand().toUtf8().constData(), (char **)&saveBuffer))
+    if(!M_ReadFile(NativePath(path).expand(), (char **)&saveBuffer))
     {
         return false;
     }
@@ -695,7 +695,8 @@ DE_PIMPL(DoomV9MapStateReader)
                 break;
 
             default:
-                throw ReadError("DoomV9MapStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9MapStateReader",
+                                "Unknown tclass #" + String::asText(tClass) + "in savegame");
             }
         }
     }
@@ -793,7 +794,8 @@ DE_PIMPL(DoomV9MapStateReader)
                 break; }
 
             default:
-                throw ReadError("DoomV9MapStateReader", "Unknown tclass #" + String::number(tClass) + "in savegame");
+                throw ReadError("DoomV9MapStateReader",
+                                "Unknown tclass #" + String::asText(tClass) + "in savegame");
             }
         }
     }

@@ -636,7 +636,7 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
     {
         String searchPath = App_BasePath() / String(Str_Text(&info->external));
         // Try loading.
-        data = WAV_Load(searchPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);
+        data = WAV_Load(searchPath, &bytesPer, &rate, &numSamples);
         if (data)
         {
             bytesPer /= 8; // Was returned as bits.
@@ -657,11 +657,11 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
         {
             try
             {
-                String foundPath = App_FileSystem().findPath(de::Uri(info->lumpName, RC_SOUND),
+                String foundPath = App_FileSystem().findPath(res::Uri(info->lumpName, RC_SOUND),
                                                              RLF_DEFAULT, App_ResourceClass(RC_SOUND));
                 foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
 
-                data = WAV_Load(foundPath.toUtf8().constData(), &bytesPer, &rate, &numSamples);
+                data = WAV_Load(foundPath, &bytesPer, &rate, &numSamples);
                 if (data)
                 {
                     // Loading was successful.

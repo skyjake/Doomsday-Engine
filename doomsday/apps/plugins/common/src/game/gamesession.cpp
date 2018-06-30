@@ -85,7 +85,7 @@ namespace internal
     /**
      * Lookup the briefing Finale for the current episode, map (if any).
      */
-    static Record const *finaleBriefing(de::Uri const &mapUri)
+    static Record const *finaleBriefing(res::Uri const &mapUri)
     {
         if (::briefDisabled) return nullptr;
 
@@ -112,7 +112,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
     duint mapEntryPoint = 0;  ///< Player entry point, for reborn.
 
     bool rememberVisitedMaps = false;
-    QSet<de::Uri> visitedMaps;
+    QSet<res::Uri> visitedMaps;
 
     acs::System acscriptSys;  ///< The One acs::System instance.
 
@@ -179,7 +179,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         episodeId = newEpisodeId;
 
         // Update the game status cvar.
-        Con_SetString2("map-episode", episodeId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+        Con_SetString2("map-episode", episodeId, SVF_WRITE_OVERRIDE);
     }
 
     /**
@@ -219,7 +219,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         if (rememberVisitedMaps)
         {
             ArrayValue *visitedMapsArray = new ArrayValue;
-            for (de::Uri const &visitedMap : visitedMaps)
+            for (res::Uri const &visitedMap : visitedMaps)
             {
                 *visitedMapsArray << TextValue(visitedMap.compose());
             }
@@ -466,7 +466,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
     GameStateFolder::MapStateReader *makeMapStateReader(
         GameStateFolder const &session, String const &mapUriAsText)
     {
-        de::Uri const mapUri(mapUriAsText, RC_NULL);
+        res::Uri const mapUri(mapUriAsText, RC_NULL);
         auto const &mapStateFile = session.locateState<File const>(String("maps") / mapUri.path());
         if (!SV_OpenFileForRead(mapStateFile))
         {
@@ -575,7 +575,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             ArrayValue const &vistedMapsArray = metadata.geta("visitedMaps");
             for (Value const *value : vistedMapsArray.elements())
             {
-                visitedMaps << de::makeUri(value->as<TextValue>());
+                visitedMaps << res::makeUri(value->as<TextValue>());
             }
         }
 
@@ -589,7 +589,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
         self().setInProgress(true);
 
-        setMap(de::makeUri(metadata.gets("mapUri")));
+        setMap(res::makeUri(metadata.gets("mapUri")));
         //mapEntryPoint = ??; // not saved??
 
         reloadMap();
@@ -605,13 +605,13 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         self().setThinkerMapping(nullptr);
     }
 
-    void setMap(de::Uri const &newMapUri)
+    void setMap(res::Uri const &newMapUri)
     {
         DE_ASSERT(self().hasBegun());
 
         self().setMapUri(newMapUri);
 
-        de::Uri const mapUri = self().mapUri();
+        res::Uri const mapUri = self().mapUri();
 
         if (rememberVisitedMaps)
         {
@@ -626,18 +626,18 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         {
             hubId = hubRec->gets("id");
         }
-        Con_SetString2("map-hub", hubId.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+        Con_SetString2("map-hub", hubId, SVF_WRITE_OVERRIDE);
 
         String mapAuthor = G_MapAuthor(mapUri);
         if (mapAuthor.isEmpty()) mapAuthor = "Unknown";
-        Con_SetString2("map-author", mapAuthor.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+        Con_SetString2("map-author", mapAuthor, SVF_WRITE_OVERRIDE);
 
         String mapTitle = G_MapTitle(mapUri);
         if (mapTitle.isEmpty()) mapTitle = "Unknown";
-        Con_SetString2("map-name", mapTitle.toUtf8().constData(), SVF_WRITE_OVERRIDE);
+        Con_SetString2("map-name", mapTitle, SVF_WRITE_OVERRIDE);
     }
 
-    inline void setMapAndEntryPoint(de::Uri const &newMapUri, duint newMapEntryPoint)
+    inline void setMapAndEntryPoint(res::Uri const &newMapUri, duint newMapEntryPoint)
     {
         setMap(newMapUri);
         mapEntryPoint = newMapEntryPoint;
@@ -699,7 +699,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             self().setThinkerMapping(nullptr);
         }
 
-        if (!briefing || !G_StartFinale(briefing->gets("script").toUtf8().constData(), 0, FIMODE_BEFORE, 0))
+        if (!briefing || !G_StartFinale(briefing->gets("script"), 0, FIMODE_BEFORE, 0))
         {
             // No briefing; begin the map.
             HU_WakeWidgets(-1/* all players */);
@@ -962,7 +962,7 @@ GameSession::VisitedMaps GameSession::allVisitedMaps() const
     return VisitedMaps();
 }
 
-de::Uri GameSession::mapUriForNamedExit(String name) const
+res::Uri GameSession::mapUriForNamedExit(String name) const
 {
     LOG_AS("GameSession");
     if (Record const *mgNode = mapGraphNodeDef())
@@ -1007,10 +1007,10 @@ de::Uri GameSession::mapUriForNamedExit(String name) const
 
         if (chosenExit)
         {
-            return de::makeUri(chosenExit->gets("targetMap"));
+            return res::makeUri(chosenExit->gets("targetMap"));
         }
     }
-    return de::Uri();
+    return res::Uri();
 }
 
 GameRules const &GameSession::rules() const
@@ -1065,7 +1065,7 @@ void GameSession::endAndBeginTitle()
 
     if (Record const *finale = Defs().finales.tryFind("id", "title"))
     {
-        G_StartFinale(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_NORMAL, "title");
+        G_StartFinale(finale->gets("script"), FF_LOCAL, FIMODE_NORMAL, "title");
         return;
     }
     /// @throw Error A title script must always be defined.
@@ -1073,7 +1073,7 @@ void GameSession::endAndBeginTitle()
 }
 
 void GameSession::begin(GameRules const &newRules, String const &episodeId,
-    de::Uri const &mapUri, uint mapEntryPoint)
+    res::Uri const &mapUri, uint mapEntryPoint)
 {
     if (hasBegun())
     {
@@ -1088,7 +1088,7 @@ void GameSession::begin(GameRules const &newRules, String const &episodeId,
     }
 
     // Ensure the map truly exists.
-    if (!P_MapExists(mapUri.compose().toUtf8().constData()))
+    if (!P_MapExists(mapUri.compose()))
     {
         throw Error("GameSession::begin", "Map \"" + mapUri.asText() + "\" does not exist");
     }
@@ -1169,7 +1169,7 @@ void GameSession::reloadMap()
     }
 }
 
-void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
+void GameSession::leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint)
 {
     if (!hasBegun())
     {
@@ -1178,7 +1178,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     }
 
     // Ensure the map truly exists.
-    if (!P_MapExists(nextMapUri.compose().toUtf8().constData()))
+    if (!P_MapExists(nextMapUri.compose()))
     {
         throw Error("GameSession::leaveMap", "Map \"" + nextMapUri.asText() + "\" does not exist");
     }

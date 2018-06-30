@@ -34,7 +34,7 @@
 #include <algorithm>
 #include <de/types.h>
 
-namespace de {
+namespace res {
 
 class File1;
 
@@ -82,7 +82,7 @@ struct LIBDOOMSDAY_PUBLIC FileInfo
     inline bool isCompressed() const { return size != compressedSize; }
 };
 
-} // namespace de
+} // namespace res
 
 #endif // __cplusplus
 

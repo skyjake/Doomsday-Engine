@@ -47,7 +47,7 @@ static String readArchivedPath(reader_s &reader)
     return String(_path).toPercentEncoding();
 }
 
-static void readArchivedUri(de::Uri &uri, int version, reader_s &reader)
+static void readArchivedUri(res::Uri &uri, int version, reader_s &reader)
 {
     if (version >= 4)
     {
@@ -103,7 +103,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         Material *material = nullptr;
         try
         {
-            material = &world::Materials::get().material(de::makeUri(records.stringRef(id)));
+            material = &world::Materials::get().material(res::makeUri(records.stringRef(id)));
         }
         catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
@@ -127,7 +127,7 @@ DE_PIMPL(MaterialArchive)
     Impl(Public *i) : Base(i)
     {}
 
-    inline SerialId insertRecord(de::Uri const &uri)
+    inline SerialId insertRecord(res::Uri const &uri)
     {
         return records.intern(uri.compose());
     }
@@ -172,7 +172,7 @@ DE_PIMPL(MaterialArchive)
         int num = Reader_ReadUInt16(&reader);
 
         // Read the group records.
-        de::Uri uri;
+        res::Uri uri;
         for (int i = 0; i < num; ++i)
         {
             readArchivedUri(uri, version, reader);
@@ -186,7 +186,7 @@ DE_PIMPL(MaterialArchive)
         Writer_WriteUInt16(&writer, records.size());
 
         // Write the group records.
-        de::Uri uri;
+        res::Uri uri;
         for (int i = 1; i < int(records.size()) + 1; ++i)
         {
             uri.setUri(records.stringRef(i), RC_NULL);
@@ -203,7 +203,7 @@ MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
     if (recordSymbolicMaterials)
     {
         // The first material is the special "unknown material".
-        d->insertRecord(de::makeUri(UNKNOWN_MATERIALNAME));
+        d->insertRecord(res::makeUri(UNKNOWN_MATERIALNAME));
     }
 }
 
@@ -254,7 +254,7 @@ world::Material *MaterialArchive::find(materialarchive_serialid_t serialId, int 
     if (d->version <= 1)
     {
         // The special case "unknown" material?
-        de::Uri uri(d->records.stringRef(serialId), RC_NULL);
+        res::Uri uri(d->records.stringRef(serialId), RC_NULL);
         if (!uri.path().toString().compareWithoutCase(UNKNOWN_MATERIALNAME))
             return 0;
     }
@@ -303,7 +303,7 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
     // on walls.
     {
         // Group 0 (floors)
-        de::Uri uri("Flats", "");
+        res::Uri uri("Flats", "");
         d->numFlats = Reader_ReadUInt16(&reader);
         for (int i = 0; i < d->numFlats; ++i)
         {
@@ -313,7 +313,7 @@ void MaterialArchive::read(reader_s &reader, int forcedVersion)
     }
     {
         // Group 1 (walls)
-        de::Uri uri("Textures", "");
+        res::Uri uri("Textures", "");
         int num = Reader_ReadUInt16(&reader);
         for (int i = 0; i < num; ++i)
         {

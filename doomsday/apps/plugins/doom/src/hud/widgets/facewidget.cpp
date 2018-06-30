@@ -425,7 +425,7 @@ void guidata_face_t::prepareAssets()  // static
     // Backgrounds for each team color.
     for(dint i = 0; i < NUMTEAMS; ++i)
     {
-        ::pBackground[i] = R_DeclarePatch(String("STFB%1").arg(i).toUtf8().constData());
+        ::pBackground[i] = R_DeclarePatch(String::format("STFB%i", i));
     }
 
     dint idx = 0;
@@ -433,13 +433,13 @@ void guidata_face_t::prepareAssets()  // static
     {
         for(dint k = 0; k < FACE_STRAIGHT_COUNT; ++k)
         {
-            ::pFaces[idx++] = R_DeclarePatch(String("STFST%1%2").arg(i).arg(k).toUtf8().constData());
+            ::pFaces[idx++] = R_DeclarePatch(String::format("STFST%i%i", i, k));
         }
-        ::pFaces[idx++] = R_DeclarePatch(String("STFTR%1"  ).arg(i * 10, 2, 'g', 2, '0').toUtf8().constData());  // Turn right.
-        ::pFaces[idx++] = R_DeclarePatch(String("STFTL%1"  ).arg(i * 10, 2, 'g', 2, '0').toUtf8().constData());  // Turn left.
-        ::pFaces[idx++] = R_DeclarePatch(String("STFOUCH%1").arg(i).toUtf8().constData());  // Ouch.
-        ::pFaces[idx++] = R_DeclarePatch(String("STFEVL%1" ).arg(i).toUtf8().constData());  // Evil grin.
-        ::pFaces[idx++] = R_DeclarePatch(String("STFKILL%1").arg(i).toUtf8().constData());  // Pissed off.
+        ::pFaces[idx++] = R_DeclarePatch(String::format("STFTR%1"  ).arg(i * 10, 2, 'g', 2, '0'));  // Turn right.
+        ::pFaces[idx++] = R_DeclarePatch(String::format("STFTL%1"  ).arg(i * 10, 2, 'g', 2, '0'));  // Turn left.
+        ::pFaces[idx++] = R_DeclarePatch(String::format("STFOUCH%i", i));  // Ouch.
+        ::pFaces[idx++] = R_DeclarePatch(String::format("STFEVL%i" , i));  // Evil grin.
+        ::pFaces[idx++] = R_DeclarePatch(String::format("STFKILL%i", i));  // Pissed off.
     }
     ::pFaces[idx++] = R_DeclarePatch("STFGOD0");
     ::pFaces[idx++] = R_DeclarePatch("STFDEAD0");

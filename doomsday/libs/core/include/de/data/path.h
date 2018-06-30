@@ -157,6 +157,8 @@ public:
      */
     Path(String const &path, Char sep = '/');
 
+    Path(const CString &path, Char sep = '/');
+
     /**
      * Construct a path from a UTF-8 C-style string.
      *

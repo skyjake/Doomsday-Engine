@@ -146,8 +146,8 @@ static int writeAliasToFileWorker(knownword_t const *word, void *context)
     DE_ASSERT(cal != 0);
 
     out->writeText(String::format("alias \"%s\" \"%s\"\n",
-                                  String(cal->name).escaped().toUtf8().constData(),
-                                  String(cal->command).escaped().toUtf8().constData()));
+                                  String(cal->name).escaped(),
+                                  String(cal->command).escaped()));
 
     return 0; // Continue iteration.
 }
@@ -226,8 +226,8 @@ static bool writeBindingsState(Path const &filePath)
             {
                 CommandBinding bind(rec);
                 out.writeText(String::format("bindevent \"%s:%s\" \"",
-                                             context.name().toUtf8().constData(),
-                                             bind.composeDescriptor().toUtf8().constData()) +
+                                             context.name(),
+                                             bind.composeDescriptor()) +
                               bind.gets("command").escaped() + "\"\n");
                 return LoopContinue;
             });
@@ -241,8 +241,8 @@ static bool writeBindingsState(Path const &filePath)
 
                 out.writeText(String::format("bindcontrol local%i-%s \"%s\"\n",
                               bind.geti("localPlayer") + 1,
-                              impulse->name.toUtf8().constData(),
-                              bind.composeDescriptor().toUtf8().constData()));
+                              impulse->name,
+                              bind.composeDescriptor()));
                 return LoopContinue;
             });
 

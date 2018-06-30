@@ -264,7 +264,7 @@ void D_NetMessageNoSound(int player, char const *msg);
 } // extern "C"
 
 de::String D_NetDefaultEpisode();
-de::Uri D_NetDefaultMap();
+res::Uri D_NetDefaultMap();
 #endif
 
 #endif  // LIBCOMMON_NETWORK_DEF_H

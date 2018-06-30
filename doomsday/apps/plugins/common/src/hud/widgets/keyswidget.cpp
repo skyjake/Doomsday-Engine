@@ -361,7 +361,7 @@ void guidata_keys_t::prepareAssets()  // static
 #elif __JHEXEN__
     for(dint i = 0; i < NUM_KEY_TYPES; ++i)
     {
-        pKeys[i] = R_DeclarePatch(String("KEYSLOT%1").arg(i + 1, 0, 16).toUpper().toUtf8().constData());
+        pKeys[i] = R_DeclarePatch(String("KEYSLOT%1").arg(i + 1, 0, 16).toUpper());
     }
 #endif
 }

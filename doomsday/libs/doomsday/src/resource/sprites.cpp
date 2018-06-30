@@ -164,7 +164,7 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
     {
         res::TextureManifest const &texManifest = iter.next();
 
-        String const material   = de::Uri("Sprites", texManifest.path()).compose();
+        String const material   = res::Uri("Sprites", texManifest.path()).compose();
         // Decode the sprite frame descriptor.
         String const desc       = String::fromPercentEncoding(texManifest.path().toString());
 

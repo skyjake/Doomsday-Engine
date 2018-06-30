@@ -150,7 +150,7 @@ DE_PIMPL(ClEdgeLoop)
         if (choice2) return choice2;
 
         // We'll assign the special "missing" material...
-        return &Materials::get().material(de::Uri("System", Path("missing")));
+        return &Materials::get().material(res::Uri("System", Path("missing")));
     }
 
     void fixMissingMaterial(HEdge &hedge, dint section) const

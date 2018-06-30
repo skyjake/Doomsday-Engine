@@ -131,7 +131,7 @@ void guidata_tomeofpower_t::draw(Vec2i const &offset) const
 
     if(d->countdownSeconds != 0)
     {
-        auto const counterAsText = String::number(d->countdownSeconds);
+        auto const counterAsText = String::asText(d->countdownSeconds);
         dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
         DGL_Enable(DGL_TEXTURE_2D);
@@ -139,7 +139,7 @@ void guidata_tomeofpower_t::draw(Vec2i const &offset) const
         FR_SetFont(font());
         FR_SetTracking(TRACKING);
         FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-        FR_DrawTextXY2(counterAsText.toUtf8().constData(), 26, 26 - 2, ALIGN_BOTTOMRIGHT);
+        FR_DrawTextXY2(counterAsText, 26, 26 - 2, ALIGN_BOTTOMRIGHT);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -170,11 +170,11 @@ void guidata_tomeofpower_t::updateGeometry()
     }
     else
     {
-        auto const counterAsText = String::number(d->countdownSeconds);
+        auto const counterAsText = String::asText(d->countdownSeconds);
 
         FR_SetFont(font());
         FR_SetTracking(TRACKING);
-        Size2Raw textSize; FR_TextSize(&textSize, counterAsText.toUtf8().constData());
+        Size2Raw textSize; FR_TextSize(&textSize, counterAsText);
         Rect_SetWidthHeight(&geometry(), textSize.width  * ::cfg.common.hudScale,
                                          textSize.height * ::cfg.common.hudScale);
     }
@@ -186,6 +186,6 @@ void guidata_tomeofpower_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pIcons[i] = R_DeclarePatch(String("SPINBK%1").arg(i).toUtf8().constData());
+        ::pIcons[i] = R_DeclarePatch(String("SPINBK%1").arg(i));
     }
 }

@@ -36,7 +36,7 @@ DE_EXTERN_C dd_bool mapSetup;
 /**
  * Change the current map to that referenced by @a mapUri.
  */
-void P_SetupMap(de::Uri const &mapUri);
+void P_SetupMap(res::Uri const &mapUri);
 
 extern "C" {
 #endif

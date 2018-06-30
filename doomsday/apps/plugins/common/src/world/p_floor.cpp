@@ -451,7 +451,11 @@ int floor_s::read(MapStateReader *msr)
         else
         {
             // Flat number is an absolute lump index.
-            de::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
+            res::Uri uri("Flats:",
+                        CentralLumpIndex()[Reader_ReadInt16(reader)]
+                            .name()
+                            .fileNameWithoutExtension()
+                            .toString());
             material = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
         }
 
@@ -495,7 +499,7 @@ int floor_s::read(MapStateReader *msr)
         newSpecial             = Reader_ReadInt32(reader);
 
         // Flat number is an absolute lump index.
-        de::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
+        res::Uri uri("Flats:", CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
         material               = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
         floorDestHeight        = FIX2FLT((fixed_t) Reader_ReadInt32(reader));

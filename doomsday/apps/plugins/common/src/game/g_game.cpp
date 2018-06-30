@@ -78,6 +78,7 @@
 #include "menu/widgets/widget.h"
 
 using namespace de;
+using namespace res;
 using namespace common;
 
 void R_LoadVectorGraphics();
@@ -109,7 +110,7 @@ dd_bool customPal; // If @c true, a non-IWAD palette is in use.
 
 wbstartstruct_t wmInfo; // Intermission parameters.
 
-de::Uri nextMapUri;
+res::Uri nextMapUri;
 uint nextMapEntryPoint;
 
 static bool quitInProgress;
@@ -127,7 +128,7 @@ static GameRules &G_NewSessionRules()
     return gaNewSessionRules;
 }
 static String  gaNewSessionEpisodeId;
-static de::Uri gaNewSessionMapUri;
+static res::Uri gaNewSessionMapUri;
 static uint    gaNewSessionMapEntrance;
 
 static String gaSaveSessionSlot;
@@ -150,7 +151,7 @@ void G_SetGameAction(gameaction_t newAction)
     }
 }
 
-void G_SetGameActionNewSession(GameRules const &rules, String episodeId, de::Uri const &mapUri,
+void G_SetGameActionNewSession(GameRules const &rules, String episodeId, res::Uri const &mapUri,
                                uint mapEntrance)
 {
     G_NewSessionRules()       = rules;
@@ -217,9 +218,10 @@ bool G_SetGameActionLoadSession(String slotId)
         {
             DoomsdayApp::app().checkPackageCompatibility(
                 meta.getStringList("packages"),
-                String::format("The savegame " _E(b) "%s" _E(.) " was created with "
-                               "mods that are different than the ones currently in use.",
-                               meta.gets("userDescription").toUtf8().constData()),
+                String::format(
+                    "The savegame " _E(b) "%s" _E(.) " was created with "
+                    "mods that are different than the ones currently in use.",
+                    meta.gets("userDescription").c_str()),
                 scheduleLoad);
         }
         else
@@ -235,7 +237,7 @@ bool G_SetGameActionLoadSession(String slotId)
     return true;
 }
 
-void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint, bool secretExit)
+void G_SetGameActionMapCompleted(res::Uri const &nextMapUri, uint nextMapEntryPoint, bool secretExit)
 {
 #if __JHEXEN__
     DE_UNUSED(secretExit);
@@ -269,7 +271,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
     // If no Wolf3D maps, no secret exit!
     if (::secretExit && (::gameModeBits & GM_ANY_DOOM2))
     {
-        if (!P_MapExists(de::makeUri("Maps:MAP31").compose().toUtf8().constData()))
+        if (!P_MapExists(res::makeUri("Maps:MAP31").compose()))
         {
             ::secretExit = false;
         }
@@ -300,7 +302,7 @@ static void initSaveSlots()
     };
     for (int i = 0; i < NUMSAVESLOTS; ++i)
     {
-        sslots->add(String::number(i), true, String(SAVEGAMENAME"%1").arg(i),
+        sslots->add(String::asText(i), true, String::format(SAVEGAMENAME"%i", i),
                     int(gameMenuSaveSlotWidgetIds[i]));
     }
 }
@@ -832,7 +834,7 @@ void G_AutoStartOrBeginTitleLoop()
     CommandLine &cmdLine = DE_APP->commandLine();
 
     String startEpisodeId;
-    de::Uri startMapUri;
+    res::Uri startMapUri;
 
     // A specific episode?
     if (int arg = cmdLine.check("-episode", 1))
@@ -841,8 +843,8 @@ void G_AutoStartOrBeginTitleLoop()
         if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
         {
             // Ensure this is a playable episode.
-            de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-            if (P_MapExists(startMap.compose().toUtf8().constData()))
+            res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+            if (P_MapExists(startMap.compose()))
             {
                 startEpisodeId = episodeId;
             }
@@ -858,8 +860,8 @@ void G_AutoStartOrBeginTitleLoop()
             if (Record const *episodeDef = Defs().episodes.tryFind("id", cmdLine.at(arg + 1)))
             {
                 // Ensure this is a playable episode.
-                de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-                if (P_MapExists(startMap.compose().toUtf8().constData()))
+                res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+                if (P_MapExists(startMap.compose()))
                 {
                     startEpisodeId = episodeDef->gets("id");
                 }
@@ -875,7 +877,7 @@ void G_AutoStartOrBeginTitleLoop()
             // It must be a URI, then.
             Block rawMapUri = cmdLine.at(arg + (haveEpisode? 2 : 1)).toUtf8();
             char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
-            startMapUri = de::Uri::fromUserInput(args, 1);
+            startMapUri = res::Uri::fromUserInput(args, 1);
             if (startMapUri.scheme().isEmpty()) startMapUri.setScheme("Maps");
         }
         else
@@ -901,15 +903,15 @@ void G_AutoStartOrBeginTitleLoop()
         }
 
         // Ensure that the map exists.
-        if (!P_MapExists(startMapUri.compose().toUtf8().constData()))
+        if (!P_MapExists(startMapUri.compose()))
         {
             startMapUri.clear();
 
             // Pick the start map from the episode, if specified and playable.
             if (Record const *episodeDef = Defs().episodes.tryFind("id", startEpisodeId))
             {
-                de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-                if (P_MapExists(startMap.compose().toUtf8().constData()))
+                res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+                if (P_MapExists(startMap.compose()))
                 {
                     startMapUri = startMap;
                 }
@@ -1093,7 +1095,7 @@ void G_StartHelp()
     if (Record const *finale = Defs().finales.tryFind("id", scriptId))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
-        G_StartFinale(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_NORMAL, scriptId);
+        G_StartFinale(finale->gets("script"), FF_LOCAL, FIMODE_NORMAL, scriptId);
         return;
     }
     LOG_SCR_WARNING("InFine script '%s' not defined") << scriptId;
@@ -1441,9 +1443,9 @@ static void runGameAction()
 
         case GA_LEAVEMAP:
             // Check that the map truly exists.
-            if (!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
+            if (!P_MapExists(::nextMapUri.compose()))
             {
-                ::nextMapUri = de::makeUri(gfw_Session()->episodeDef()->gets("startMap"));
+                ::nextMapUri = res::makeUri(gfw_Session()->episodeDef()->gets("startMap"));
             }
             gfw_Session()->leaveMap(::nextMapUri, ::nextMapEntryPoint);
             break;
@@ -1482,7 +1484,7 @@ static void runGameAction()
             // Go to an intermission?
             if (intermissionEnabled())
             {
-                S_StartMusic(intermissionMusic().toUtf8().constData(), true);
+                S_StartMusic(intermissionMusic(), true);
                 S_PauseMusic(true);
 
                 BusyMode_RunNewTask(BUSYF_TRANSITION, prepareIntermission, nullptr);
@@ -1575,7 +1577,7 @@ static void rebornPlayers()
             if (gfw_Session()->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, gfw_Session()->userDescription().toUtf8().constData());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, gfw_Session()->userDescription());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmed, 0, 0);
                 return;
             }
@@ -1851,7 +1853,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    de::Uri const mapUri = gfw_Session()->mapUri();
+    res::Uri const mapUri = gfw_Session()->mapUri();
     if (secret ||
        (mapUri.path() == "E1M9" ||
         mapUri.path() == "E2M9" ||
@@ -1951,7 +1953,7 @@ void G_IntermissionDone()
     // We have left Intermission, however if there is an InFine for debriefing we should run it now.
     if (Record const *finale = finaleDebriefing())
     {
-        if (G_StartFinale(finale->gets("script").toUtf8().constData(), 0, FIMODE_AFTER, 0))
+        if (G_StartFinale(finale->gets("script"), 0, FIMODE_AFTER, 0))
         {
             // The GA_ENDDEBRIEFING action is taken after the debriefing stops.
             return;
@@ -1990,11 +1992,11 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
     String description;
 
     // Include the source file name, for custom maps.
-    de::Uri const mapUri = gfw_Session()->mapUri();
+    res::Uri const mapUri = gfw_Session()->mapUri();
     String mapUriAsText  = mapUri.compose();
-    if (P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+    if (P_MapIsCustom(mapUriAsText))
     {
-        String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText.toUtf8().constData())));
+        String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText)));
         description += mapSourcePath.fileNameWithoutExtension() + ":";
     }
 
@@ -2029,7 +2031,7 @@ String G_EpisodeTitle(String episodeId)
         title = episodeDef->gets("title");
 
         // Perhaps the title string is a reference to a Text definition?
-        int textIdx = Defs().getTextNum(title.toUtf8().constData());
+        int textIdx = Defs().getTextNum(title);
         if (textIdx >= 0)
         {
             title = Defs().text[textIdx].text; // Yes, use the resolved text string.
@@ -2038,7 +2040,7 @@ String G_EpisodeTitle(String episodeId)
     return title;
 }
 
-uint G_MapNumberFor(de::Uri const &mapUri)
+uint G_MapNumberFor(res::Uri const &mapUri)
 {
     String path = mapUri.path();
     if (!path.isEmpty())
@@ -2064,12 +2066,12 @@ uint G_MapNumberFor(de::Uri const &mapUri)
 
 AutoStr *G_CurrentMapUriPath()
 {
-    return AutoStr_FromTextStd(gfw_Session()->mapUri().path().toStringRef().toUtf8().constData());
+    return AutoStr_FromTextStd(gfw_Session()->mapUri().path().toStringRef());
 }
 
 
 // TODO This is a great example o f a function that could be refactored out to each individual plugin via a callback (NOT a function contract!!!!)
-de::Uri G_ComposeMapUri(uint episode, uint map)
+res::Uri G_ComposeMapUri(uint episode, uint map)
 {
     String mapId;
 #if __JDOOM64__
@@ -2086,10 +2088,10 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
     DE_UNUSED(episode);
 #endif
-    return de::Uri("Maps", mapId);
+    return res::Uri("Maps", mapId);
 }
 
-Record &G_MapInfoForMapUri(de::Uri const &mapUri)
+Record &G_MapInfoForMapUri(res::Uri const &mapUri)
 {
     // Is there a MapInfo definition for the given URI?
     if (Record *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
@@ -2097,7 +2099,7 @@ Record &G_MapInfoForMapUri(de::Uri const &mapUri)
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if (Record *def = Defs().mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    if (Record *def = Defs().mapInfos.tryFind("id", res::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }
@@ -2114,13 +2116,13 @@ Record &G_MapInfoForMapUri(de::Uri const &mapUri)
     }
 }
 
-String G_MapTitle(de::Uri const &mapUri)
+String G_MapTitle(res::Uri const &mapUri)
 {
     // Perhaps a MapInfo definition exists for the map?
     String title = G_MapInfoForMapUri(mapUri).gets("title");
 
     // Perhaps the title string is a reference to a Text definition?
-    int textIdx = Defs().getTextNum(title.toUtf8().constData());
+    int textIdx = Defs().getTextNum(title);
     if (textIdx >= 0)
     {
         title = Defs().text[textIdx].text; // Yes, use the resolved text string.
@@ -2139,7 +2141,7 @@ String G_MapTitle(de::Uri const &mapUri)
     return title;
 }
 
-String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
+String G_MapAuthor(res::Uri const &mapUri, bool supressGameAuthor)
 {
     // Perhaps a MapInfo definition exists for the map?
     String author = G_MapInfoForMapUri(mapUri).gets("author");
@@ -2150,7 +2152,7 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
         /// @todo Do not do this here.
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
-        if (supressGameAuthor || P_MapIsCustom(mapUri.compose().toUtf8().constData()))
+        if (supressGameAuthor || P_MapIsCustom(mapUri.compose()))
         {
             if (!author.compareWithoutCase(Str_Text(gameInfo.author)))
                 return "";
@@ -2160,12 +2162,12 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
     return author;
 }
 
-de::Uri G_MapTitleImage(de::Uri const &mapUri)
+res::Uri G_MapTitleImage(res::Uri const &mapUri)
 {
-    return de::makeUri(G_MapInfoForMapUri(mapUri).gets("titleImage"));
+    return res::makeUri(G_MapInfoForMapUri(mapUri).gets("titleImage"));
 }
 
-String G_MapDescription(String episodeId, de::Uri const &mapUri)
+String G_MapDescription(String episodeId, res::Uri const &mapUri)
 {
     Block mapUriUtf8 = mapUri.compose().toUtf8();
     if (!P_MapExists(mapUriUtf8.constData()))
@@ -2186,7 +2188,7 @@ String G_MapDescription(String episodeId, de::Uri const &mapUri)
         {
             if (Record const *mgNodeDef = defn::Episode(*rec).tryFindMapGraphNode(mapUri.compose()))
             {
-                os << ", warp: " << String::number(mgNodeDef->geti("warpNumber"));
+                os << ", warp: " << String::asText(mgNodeDef->geti("warpNumber"));
             }
         }
 
@@ -2337,7 +2339,7 @@ D_CMD(EndSession)
     }
 
     // Is user confirmation required? (Never if this is a network server).
-    bool const confirmed = (argc >= 2 && !qstricmp(argv[argc-1], "confirm"));
+    bool const confirmed = (argc >= 2 && !iCmpStrCase(argv[argc-1], "confirm"));
     if (confirmed || (IS_NETGAME && IS_SERVER))
     {
         if (IS_NETGAME && IS_CLIENT)
@@ -2373,7 +2375,7 @@ D_CMD(LoadSession)
 {
     DE_UNUSED(src);
 
-    bool const confirmed = (argc == 3 && !qstricmp(argv[2], "confirm"));
+    bool const confirmed = (argc == 3 && !iCmpStrCase(argv[2], "confirm"));
 
     if (G_QuitInProgress()) return false;
     if (!gfw_Session()->isLoadingPossible()) return false;
@@ -2405,15 +2407,15 @@ D_CMD(LoadSession)
             // Compose the confirmation message.
             String const &existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,
-                                       sslot->id().toUtf8().constData(),
-                                       existingDescription.toUtf8().constData());
+                                       sslot->id(),
+                                       existingDescription);
 
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new String(sslot->id()));
             return true;
         }
     }
 
-    if (!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
+    if (!iCmpStrCase(argv[1], "quick") || !iCmpStrCase(argv[1], "<quick>"))
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
         Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, nullptr, 0, nullptr);
@@ -2459,7 +2461,7 @@ static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
     DE_ASSERT(p != 0);
     if (response == MSG_YES)
     {
-        DD_Executef(true, "savegame %s \"%s\" confirm", p->slotId.toUtf8().constData(), p->userDescription.toUtf8().constData());
+        DD_Executef(true, "savegame %s \"%s\" confirm", p->slotId, p->userDescription);
     }
     delete p;
     return true;
@@ -2469,7 +2471,7 @@ D_CMD(SaveSession)
 {
     DE_UNUSED(src);
 
-    bool const confirmed = (argc >= 3 && !qstricmp(argv[argc-1], "confirm"));
+    bool const confirmed = (argc >= 3 && !iCmpStrCase(argv[argc-1], "confirm"));
 
     if (G_QuitInProgress()) return false;
 
@@ -2499,7 +2501,7 @@ D_CMD(SaveSession)
         if (sslot->isUserWritable())
         {
             String userDescription;
-            if (argc >= 3 && qstricmp(argv[2], "confirm"))
+            if (argc >= 3 && iCmpStrCase(argv[2], "confirm"))
             {
                 userDescription = argv[2];
             }
@@ -2519,8 +2521,8 @@ D_CMD(SaveSession)
             // Compose the confirmation message.
             String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
-                                       sslot->id().toUtf8().constData(),
-                                       existingDescription.toUtf8().constData());
+                                       sslot->id(),
+                                       existingDescription);
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = sslot->id();
@@ -2533,7 +2535,7 @@ D_CMD(SaveSession)
         LOG_SCR_ERROR("Save slot '%s' is non-user-writable") << sslot->id();
     }
 
-    if (!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
+    if (!iCmpStrCase(argv[1], "quick") || !iCmpStrCase(argv[1], "<quick>"))
     {
         // No quick-save slot has been nominated - allow doing so now.
         Hu_MenuCommand(MCMD_OPEN);
@@ -2575,7 +2577,7 @@ D_CMD(DeleteSaveGame)
 
     if (G_QuitInProgress()) return false;
 
-    bool const confirmed = (argc >= 3 && !qstricmp(argv[argc-1], "confirm"));
+    bool const confirmed = (argc >= 3 && !iCmpStrCase(argv[argc-1], "confirm"));
     if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
         if (sslot->isUserWritable())
@@ -2596,7 +2598,7 @@ D_CMD(DeleteSaveGame)
 
                 // Compose the confirmation message.
                 String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.toUtf8().constData());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription);
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteGameStateFolderConfirmed, 0, new String(sslot->saveName()));
             }
 
@@ -2730,8 +2732,8 @@ D_CMD(WarpMap)
         if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
         {
             // Ensure that the episode is playable.
-            de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-            if (!P_MapExists(startMap.compose().toUtf8().constData()))
+            res::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
+            if (!P_MapExists(startMap.compose()))
             {
                 LOG_SCR_NOTE("Failed to locate the start map for episode '%s'."
                              " This episode is not playable") << episodeId;
@@ -2746,7 +2748,7 @@ D_CMD(WarpMap)
     }
 
     // The map.
-    de::Uri mapUri;
+    res::Uri mapUri;
     bool isNumber;
     int mapWarpNumber = String(argv[haveEpisode? 2 : 1]).toInt(&isNumber);
 
@@ -2764,7 +2766,7 @@ D_CMD(WarpMap)
         // It must be a URI, then.
         Block rawMapUri = String(argv[haveEpisode? 2 : 1]).toUtf8();
         char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
-        mapUri = de::Uri::fromUserInput(args, 1);
+        mapUri = res::Uri::fromUserInput(args, 1);
         if (mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
     }
     else
@@ -2785,13 +2787,13 @@ D_CMD(WarpMap)
     }
 
     // Catch invalid maps.
-    if (!P_MapExists(mapUri.compose().toUtf8().constData()))
+    if (!P_MapExists(mapUri.compose()))
     {
         String msg("Unknown map");
         if (argc >= 3) msg += String(" \"%1 %2\"").arg(argv[1]).arg(argv[2]);
         else          msg += String(" \"%1\"").arg(argv[1]);
 
-        P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg.toUtf8().constData(), LMF_NO_HIDE);
+        P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg, LMF_NO_HIDE);
         return false;
     }
 

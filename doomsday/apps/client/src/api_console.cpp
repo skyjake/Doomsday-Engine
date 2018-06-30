@@ -28,7 +28,7 @@ void Con_SetUri2(char const *path, uri_s const *uri, int svFlags)
 {
     cvar_t* var = Con_FindVariable(path);
     if(!var) return;
-    CVar_SetUri2(var, *reinterpret_cast<de::Uri const *>(uri), svFlags);
+    CVar_SetUri2(var, *reinterpret_cast<res::Uri const *>(uri), svFlags);
 }
 
 #undef Con_SetUri

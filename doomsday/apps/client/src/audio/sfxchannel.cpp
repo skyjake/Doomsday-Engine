@@ -496,7 +496,7 @@ void Sfx_ChannelDrawer()
         Block emitterText;
         if (ch.emitter())
         {
-            emitterText = (  " mobj:" + String::number(ch.emitter()->thinker.id)
+            emitterText = (  " mobj:" + String::asText(ch.emitter()->thinker.id)
                            + " pos:"  + ch.origin().asText()
                           ).toLatin1();
         }

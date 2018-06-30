@@ -38,7 +38,9 @@
 
 class DataBundle;
 
-namespace de {
+namespace res {
+
+using namespace de;
 
 /**
  * File1 is a core component of the filesystem intended for use as the base
@@ -94,7 +96,7 @@ public:
      *
      * @return The composed URI.
      */
-    virtual de::Uri composeUri(Char delimiter = '/') const;
+    virtual res::Uri composeUri(Char delimiter = '/') const;
 
     /**
      * Compose the absolute VFS path to this file.
@@ -161,7 +163,7 @@ public:
      * @return  Directory node for this file.
      */
     virtual PathTree::Node &directoryNode() const {
-        throw de::Error("File1::directoryNode", "No owner directory");
+        throw Error("File1::directoryNode", "No owner directory");
     }
 
     /**
@@ -269,6 +271,6 @@ private:
     uint order;
 };
 
-} // namespace de
+} // namespace res
 
 #endif /* DE_FILESYS_FILE_H */

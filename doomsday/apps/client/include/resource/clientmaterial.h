@@ -251,7 +251,7 @@ public:
      */
     void clearAllAnimators();
 
-    static ClientMaterial &find(de::Uri const &uri);
+    static ClientMaterial &find(res::Uri const &uri);
 
 private:
     DE_PRIVATE(d)

@@ -36,7 +36,6 @@
 #  include <ctype.h>
 #endif
 
-#include <QStringList>
 #include <de/charsymbols.h>
 #include <de/concurrency.h>
 #include <de/findfile.h>
@@ -148,8 +147,9 @@
 #endif
 
 using namespace de;
+using namespace res;
 
-class ZipFileType : public de::NativeFileType
+class ZipFileType : public NativeFileType
 {
 public:
     ZipFileType() : NativeFileType("FT_ZIP", RC_PACKAGE)
@@ -170,7 +170,7 @@ public:
     }
 };
 
-class WadFileType : public de::NativeFileType
+class WadFileType : public NativeFileType
 {
 public:
     WadFileType() : NativeFileType("FT_WAD", RC_PACKAGE)
@@ -338,7 +338,7 @@ static void createPackagesScheme()
     if (char *fn = UnixInfo_GetConfigValue("paths", "iwaddir"))
     {
         NativePath path = de::App::commandLine().startupPath() / fn;
-        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_RES_NOTE("Using paths.iwaddir: %s") << path.pretty();
         free(fn);
     }
@@ -366,7 +366,7 @@ static void createPackagesScheme()
             };
             for (dint i = 0; !appDirs[i].isEmpty(); ++i)
             {
-                scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(steamPath / appDirs[i]),
+                scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(steamPath / appDirs[i]),
                                                 SearchPath::NoDescend));
             }
         }
@@ -376,7 +376,7 @@ static void createPackagesScheme()
     NativePath systemWads("/usr/share/games/doom");
     if (systemWads.exists())
     {
-        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(systemWads),
+        scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(systemWads),
                                         SearchPath::NoDescend));
     }
 #endif
@@ -385,7 +385,7 @@ static void createPackagesScheme()
     if (!CommandLine_Check("-nodoomwaddir") && getenv("DOOMWADDIR"))
     {
         NativePath path = App::commandLine().startupPath() / getenv("DOOMWADDIR");
-        scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+        scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
         LOG_RES_NOTE("Using DOOMWADDIR: %s") << path.pretty();
     }
 
@@ -402,15 +402,15 @@ static void createPackagesScheme()
         for (dint i = allPaths.count(); i--> 0; )
         {
             NativePath path = App::commandLine().startupPath() / allPaths[i];
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), SearchPath::NoDescend));
             LOG_RES_NOTE("Using DOOMWADPATH: %s") << path.pretty();
         }
 
 #undef SEP_CHAR
     }
 
-    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/"), SearchPath::NoDescend));
-    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/$(GamePlugin.Name)/"), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(res::makeUri("$(App.DataPath)/"), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(res::makeUri("$(App.DataPath)/$(GamePlugin.Name)/"), SearchPath::NoDescend));
 }
 #endif
 
@@ -421,8 +421,8 @@ void DD_CreateFileSystemSchemes()
         char const *name;
         char const *optOverridePath;
         char const *optFallbackPath;
-        FS1::Scheme::Flags flags;
-        SearchPath::Flags searchPathFlags;
+        Flags flags;
+        Flags searchPathFlags;
         /// Priority is right to left.
         char const *searchPaths[schemedef_max_searchpaths];
     } defs[] = {
@@ -471,21 +471,21 @@ void DD_CreateFileSystemSchemes()
 
         for (dint i = 0; i < searchPathCount; ++i)
         {
-            scheme.addSearchPath(SearchPath(de::makeUri(def.searchPaths[i]), def.searchPathFlags));
+            scheme.addSearchPath(SearchPath(res::makeUri(def.searchPaths[i]), def.searchPathFlags));
         }
 
         if (def.optOverridePath && CommandLine_CheckWith(def.optOverridePath, 1))
         {
             NativePath path = NativePath(CommandLine_NextAsPath());
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
             path = path / "$(Game.IdentityKey)";
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::OverridePaths);
         }
 
         if (def.optFallbackPath && CommandLine_CheckWith(def.optFallbackPath, 1))
         {
             NativePath path = NativePath(CommandLine_NextAsPath());
-            scheme.addSearchPath(SearchPath(de::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::FallbackPaths);
+            scheme.addSearchPath(SearchPath(res::Uri::fromNativeDirPath(path), def.searchPathFlags), FS1::FallbackPaths);
         }
     }
 }
@@ -900,9 +900,9 @@ void App_ClearGames()
 
 static void populateGameInfo(GameInfo &info, Game const &game)
 {
-    info.identityKey = AutoStr_FromTextStd(game.id().toUtf8().constData());
-    info.title       = AutoStr_FromTextStd(game.title().toUtf8().constData());
-    info.author      = AutoStr_FromTextStd(game.author().toUtf8().constData());
+    info.identityKey = AutoStr_FromTextStd(game.id());
+    info.title       = AutoStr_FromTextStd(game.title());
+    info.author      = AutoStr_FromTextStd(game.author());
 }
 
 /// @note Part of the Doomsday public API.
@@ -1299,7 +1299,7 @@ void DD_FinishInitializationAfterWindowReady()
     {
         EscapeParser esc;
         esc.parse(er.asText());
-        Sys_CriticalMessage(esc.plainText().toUtf8().constData());
+        Sys_CriticalMessage(esc.plainText());
     }
     catch (...)
     {}
@@ -1362,10 +1362,10 @@ static dint DD_StartupWorker(void * /*context*/)
     DoomsdayApp::bundles().waitForEverythingIdentified();*/
     FS::waitForIdle();
 
-    /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
+    /*String foundPath = App_FileSystem().findPath(res::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
-    File1 *loadedFile = File1::tryLoad(de::makeUri(foundPath));
+    File1 *loadedFile = File1::tryLoad(res::makeUri(foundPath));
     DE_ASSERT(loadedFile);
     DE_UNUSED(loadedFile);*/
 
@@ -1680,7 +1680,7 @@ dint DD_GetInteger(dint ddvalue)
         if (App_World().hasMap())
         {
             Record const &mapInfo = App_World().map().mapInfo();
-            return DED_Definitions()->getMusicNum(mapInfo.gets("music").toUtf8().constData());
+            return DED_Definitions()->getMusicNum(mapInfo.gets("music"));
         }
         return -1;
 
@@ -1889,7 +1889,7 @@ void DD_ReadGameHelp()
     {
         if (App_GameLoaded())
         {
-            const de::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
+            const res::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
             FS::FoundFiles found;
             FS::get().findAll(uri.resolved(), found);
             if (found.empty())
@@ -2173,11 +2173,11 @@ D_CMD(Unload)
     {
         try
         {
-            String foundPath = App_FileSystem().findPath(de::Uri::fromNativePath(argv[1], RC_PACKAGE),
+            String foundPath = App_FileSystem().findPath(res::Uri::fromNativePath(argv[1], RC_PACKAGE),
                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-            if (File1::tryUnload(de::makeUri(foundPath)))
+            if (File1::tryUnload(res::makeUri(foundPath)))
             {
                 didUnloadFiles = true;
             }

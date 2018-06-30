@@ -24,6 +24,7 @@
 #include <de/memory.h>
 
 using namespace de;
+using namespace res;
 
 #pragma pack(1)
 typedef struct {

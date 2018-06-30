@@ -1,6 +1,6 @@
 /** @file udmfparser.cpp  UDMF parser.
  *
- * @authors Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2016-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -18,6 +18,9 @@
 
 #include "udmfparser.h"
 
+#include <de/NumberValue>
+#include <de/TextValue>
+
 using namespace de;
 
 UDMFParser::UDMFParser()
@@ -25,12 +28,12 @@ UDMFParser::UDMFParser()
 
 void UDMFParser::setGlobalAssignmentHandler(UDMFParser::AssignmentFunc func)
 {
-    _assignmentHandler = func;
+    _assignmentHandler = std::move(func);
 }
 
 void UDMFParser::setBlockHandler(UDMFParser::BlockFunc func)
 {
-    _blockHandler = func;
+    _blockHandler = std::move(func);
 }
 
 UDMFParser::Block const &UDMFParser::globals() const
@@ -47,7 +50,7 @@ void UDMFParser::parse(String const &input)
     {
         if (_range.lastToken().equals(UDMFLex::BRACKET_OPEN))
         {
-            String const blockType = _range.firstToken().str().toLower();
+            String const blockType = _range.firstToken().str().lower();
 
             Block block;
             parseBlock(block);
@@ -110,21 +113,21 @@ void UDMFParser::parseAssignment(Block &block)
                           _range.token(1).asText());
     }
 
-    String const identifier = _range.firstToken().str().toLower();
+    String const identifier = _range.firstToken().str().lower();
     Token const &valueToken = _range.token(2);
 
     // Store the assigned value into a variant.
-    QVariant value;
+    std::shared_ptr<Value> value;
     switch (valueToken.type())
     {
     case Token::KEYWORD:
         if (valueToken.equals(UDMFLex::T_TRUE))
         {
-            value.setValue(true);
+            value.reset(new NumberValue(true));
         }
         else if (valueToken.equals(UDMFLex::T_FALSE))
         {
-            value.setValue(false);
+            value.reset(new NumberValue(false));
         }
         else
         {
@@ -136,20 +139,20 @@ void UDMFParser::parseAssignment(Block &block)
     case Token::LITERAL_NUMBER:
         if (valueToken.isInteger())
         {
-            value.setValue(valueToken.toInteger());
+            value.reset(new NumberValue(valueToken.toInteger()));
         }
         else
         {
-            value.setValue(valueToken.toDouble());
+            value.reset(new NumberValue(valueToken.toDouble()));
         }
         break;
 
     case Token::LITERAL_STRING_QUOTED:
-        value.setValue(QString(valueToken.unescapeStringLiteral()));
+        value.reset(new TextValue(valueToken.unescapeStringLiteral()));
         break;
 
     case Token::IDENTIFIER:
-        value.setValue(QString(valueToken.str()));
+        value.reset(new TextValue(valueToken.str()));
         break;
 
     default:
@@ -161,6 +164,6 @@ void UDMFParser::parseAssignment(Block &block)
 
     if (_assignmentHandler && (&block == &_globals))
     {
-        _assignmentHandler(identifier, value);
+        _assignmentHandler(identifier, *value);
     }
 }

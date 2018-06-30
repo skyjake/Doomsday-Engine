@@ -760,9 +760,12 @@ D_CMD(CheatWhere)
     plrMo = plr->plr->mo;
     if(!plrMo) return true;
 
-    sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        gfw_Session()->mapUri().path().toUtf8().constData(),
-                        plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
+    sprintf(textBuffer,
+            "MAP [%s]  X:%g  Y:%g  Z:%g",
+            gfw_Session()->mapUri().path().c_str(),
+            plrMo->origin[VX],
+            plrMo->origin[VY],
+            plrMo->origin[VZ]);
     P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);
 
     // Also print some information to the console.

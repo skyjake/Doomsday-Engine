@@ -307,7 +307,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     else if(::renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("gray")))
+        MaterialAnimator &matAnimator = ClientMaterial::find(res::Uri("System", Path("gray")))
                 .getAnimator(PSprite_MaterialSpec());
 
         // Ensure we have up to date info about the material.
@@ -422,7 +422,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
     if(renderTextures == 2)
     {
         // For lighting debug, render all solid surfaces using the gray texture.
-        ClientMaterial &debugMaterial = ClientMaterial::find(de::Uri("System", Path("gray")));
+        ClientMaterial &debugMaterial = ClientMaterial::find(res::Uri("System", Path("gray")));
         MaterialAnimator &matAnimator = debugMaterial.getAnimator(Rend_SpriteMaterialSpec());
 
         // Ensure we have up to date info about the material.

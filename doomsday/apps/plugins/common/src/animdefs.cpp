@@ -30,6 +30,7 @@
 #endif
 
 using namespace de;
+using namespace res;
 
 #if !__JHEXEN__
 
@@ -240,7 +241,7 @@ static void AnimDefsParser(ddstring_s const *path)
         // string(texture-scheme) string(texture-path)
         if(char const *scheme = textureScheme(lexer.token()))
         {
-            de::Uri uri = lexer.readUri(scheme);
+            res::Uri uri = lexer.readUri(scheme);
             int const texNumBase = Textures_UniqueId2(reinterpret_cast<uri_s *>(&uri), !isCustom);
 
             bool const ignore = (texNumBase == -1);

@@ -33,6 +33,7 @@
 #endif
 
 using namespace de;
+using namespace res;
 
 void FS_InitVirtualPathMappings()
 {

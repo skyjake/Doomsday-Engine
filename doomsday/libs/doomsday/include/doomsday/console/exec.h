@@ -38,7 +38,7 @@
 #define CV_BYTE(var)        (*(byte *) var->ptr)
 #define CV_FLOAT(var)       (*(float *) var->ptr)
 #define CV_CHARPTR(var)     (*(char **) var->ptr)
-#define CV_URIPTR(var)      (*(de::Uri **) var->ptr)
+#define CV_URIPTR(var)      (*(res::Uri **) var->ptr)
 
 void Con_DataRegister();
 

@@ -25,21 +25,21 @@
 
 using namespace de;
 
-UriValue::UriValue(de::Uri const &initialValue)
+UriValue::UriValue(res::Uri const &initialValue)
     : _uri(initialValue)
 {}
 
-UriValue::operator de::Uri const &() const
+UriValue::operator res::Uri const &() const
 {
     return _uri;
 }
 
-de::Uri &UriValue::uri()
+res::Uri &UriValue::uri()
 {
     return _uri;
 }
 
-de::Uri const &UriValue::uri() const
+res::Uri const &UriValue::uri() const
 {
     return _uri;
 }
@@ -101,7 +101,7 @@ void UriValue::operator << (de::Reader &from)
     from >> _uri;
 }
 
-void UriValue::setValue(de::Uri const &uri)
+void UriValue::setValue(res::Uri const &uri)
 {
     _uri = uri;
 }

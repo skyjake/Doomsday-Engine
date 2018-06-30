@@ -56,7 +56,7 @@ DE_PIMPL(HexLex)
 
     String readPosAsText()
     {
-        return "\"" + NativePath(sourcePath).pretty() + "\" on line #" + String::number(lineNumber);
+        return "\"" + NativePath(sourcePath).pretty() + "\" on line #" + String::asText(lineNumber);
     }
 
     bool atEnd()
@@ -233,7 +233,7 @@ ddouble HexLex::readNumber()
     {
         return 0;
         //Con_Error("HexLex: Non-numeric constant '%s'\nIn %s",
-        //          Str_Text(&d->token), d->readPosAsText().toUtf8().constData());
+        //          Str_Text(&d->token), d->readPosAsText());
     }
 
     return number;
@@ -250,7 +250,7 @@ ddstring_s const *HexLex::readString()
     return &d->token;
 }
 
-de::Uri HexLex::readUri(String const &defaultScheme)
+res::Uri HexLex::readUri(String const &defaultScheme)
 {
     LOG_AS("HexLex");
     if(!readToken())
@@ -258,7 +258,7 @@ de::Uri HexLex::readUri(String const &defaultScheme)
         /// @throw SyntaxError Expected a URI value.
         throw SyntaxError("HexLex", String("Missing URI value\nIn ") + d->readPosAsText());
     }
-    return de::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&d->token))))));
+    return res::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&d->token))))));
 }
 
 } // namespace idtech1

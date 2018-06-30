@@ -17,8 +17,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QList>
-#include <QtAlgorithms>
 #include <de/DirectoryFeed>
 #include <de/TextApp>
 #include <de/CommandLine>
@@ -32,22 +30,23 @@ using namespace de;
 
 String fallbackGameId;
 
-typedef QList<PackageFormatter *> FormatTranslators;
-static FormatTranslators translators;
-static PackageFormatter *knownTranslator;
+typedef List<PackageFormatter *> FormatTranslators;
+
+static FormatTranslators         translators;
+static PackageFormatter *        knownTranslator;
 
 static void initTranslators()
 {
     // Order defines save format translator recognition order.
 
     // Add Doomsday-native formats:
-    translators << new NativeTranslator(NativeTranslator::Doom,    QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    translators << new NativeTranslator(NativeTranslator::Heretic, QStringList(".hsg"), QStringList() << "heretic");
-    translators << new NativeTranslator(NativeTranslator::Hexen,   QStringList(".hxs"), QStringList() << "hexen");
+    translators << new NativeTranslator(NativeTranslator::Doom,    {".dsg"}, {"doom", "hacx", "chex"});
+    translators << new NativeTranslator(NativeTranslator::Heretic, {".hsg"}, {"heretic"});
+    translators << new NativeTranslator(NativeTranslator::Hexen,   {".hxs"}, {"hexen"});
 
     // Add id Tech1 formats:
-    translators << new Id1Translator(Id1Translator::DoomV9,     QStringList(".dsg"), QStringList() << "doom" << "hacx" << "chex");
-    translators << new Id1Translator(Id1Translator::HereticV13, QStringList(".hsg"), QStringList() << "heretic");
+    translators << new Id1Translator(Id1Translator::DoomV9,     {".dsg"}, {"doom", "hacx", "chex"});
+    translators << new Id1Translator(Id1Translator::HereticV13, {".hsg"}, {"heretic"});
 }
 
 static void printUsage()
@@ -92,8 +91,8 @@ Folder &outputFolder()
 
 static PackageFormatter *saveFormatForGameId(String const &idKey)
 {
-    foreach (PackageFormatter *fmt, translators)
-    foreach (QString const &baseId, fmt->baseGameIds)
+    for (PackageFormatter *fmt, translators)
+    for (String const &baseId : fmt->baseGameIds)
     {
         if (idKey.beginsWith(baseId)) return fmt;
     }
@@ -167,13 +166,13 @@ int main(int argc, char **argv)
 
     try
     {
-        TextApp app(argc, argv);
+        TextApp app(makeList(argc, argv));
         app.setMetadata("Deng Team", "dengine.net", "Savegame Tool", "1.0.1");
         app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
 
         // Name the log output file appropriately.
         LogBuffer::get().setOutputFile(app.homeFolder().path() / "savegametool.out",
-                                             LogBuffer::DontFlush);
+                                       LogBuffer::DontFlush);
 
         // Default /output to the current working directory.
         app.fileSystem().makeFolderWithFeed("/output",
@@ -256,9 +255,9 @@ int main(int argc, char **argv)
     }
     catch (Error const &err)
     {
-        qWarning() << err.asText();
+        err.warnPlainText();
     }
 
-    qDeleteAll(translators);
+    deleteAll(translators);
     return 0;
 }

@@ -679,7 +679,7 @@ String Sector::planeIdAsText(dint planeId)
     case Floor:   return "floor";
     case Ceiling: return "ceiling";
 
-    default:      return "plane-" + String::number(planeId);
+    default:      return "plane-" + String::asText(planeId);
     }
 }
 

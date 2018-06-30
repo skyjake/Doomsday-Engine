@@ -86,7 +86,7 @@ DE_PIMPL(NativeMenu)
                 auto &win = ClientWindow::main();
                 win.glActivate();
                 Con_Executef(CMDS_DDAY, false, "load %s",
-                             load->data().toString().toUtf8().constData());
+                             load->data().toString());
                 win.glDone();
             });
             gameMenu->addAction(load);

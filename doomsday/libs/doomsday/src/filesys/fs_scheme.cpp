@@ -28,7 +28,9 @@
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/searchpath.h"
 
-namespace de {
+namespace res {
+
+using namespace de;
 
 /**
  * Reference to a file in the virtual file system.
@@ -201,7 +203,7 @@ struct FS1::Scheme::Impl
             addDirectoryPathAndMaybeDescendBranch(true/*do descend*/, searchPath.resolved(),
                                                   true/*is-directory*/, searchPath.flags());
         }
-        catch (de::Uri::ResolveError const &er)
+        catch (res::Uri::ResolveError const &er)
         {
             LOGDEV_RES_VERBOSE(er.asText());
         }
@@ -551,4 +553,4 @@ void FS1::Scheme::debugPrint() const
 }
 #endif
 
-} // namespace de
+} // namespace res

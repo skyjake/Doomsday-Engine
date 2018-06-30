@@ -685,7 +685,7 @@ static String const &ammoTypeName(int ammoType)
     };
     if(ammoType >= AT_FIRST && ammoType < NUM_AMMO_TYPES)
         return names[ammoType - AT_FIRST];
-    throw Error("ammoTypeName", "Unknown ammo type " + String::number(ammoType));
+    throw Error("ammoTypeName", "Unknown ammo type " + String::asText(ammoType));
 }
 #endif  // __JHEXEN__
 

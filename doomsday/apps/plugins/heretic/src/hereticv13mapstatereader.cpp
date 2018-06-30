@@ -643,7 +643,7 @@ typedef struct {
 static bool SV_OpenFile_Hr_v13(Path filePath)
 {
     DE_ASSERT(saveBuffer == 0);
-    if(!M_ReadFile(NativePath(filePath).expand().toUtf8().constData(), (char **)&saveBuffer))
+    if(!M_ReadFile(NativePath(filePath).expand(), (char **)&saveBuffer))
     {
         return false;
     }
@@ -711,7 +711,7 @@ DE_PIMPL(HereticV13MapStateReader)
                 break;
 
             default:
-                throw ReadError("HereticV13MapStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13MapStateReader", "Unknown tclass #" + String::asText(tclass) + "in savegame");
             }
         }
     }
@@ -803,7 +803,7 @@ DE_PIMPL(HereticV13MapStateReader)
                 break; }
 
             default:
-                throw ReadError("HereticV13MapStateReader", "Unknown tclass #" + String::number(tclass) + "in savegame");
+                throw ReadError("HereticV13MapStateReader", "Unknown tclass #" + String::asText(tclass) + "in savegame");
             }
         }
     }

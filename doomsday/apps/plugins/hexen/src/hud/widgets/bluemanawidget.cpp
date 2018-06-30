@@ -62,7 +62,7 @@ void BlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
     if(ST_AutomapIsOpen(mana->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(mana->_value);
+    auto const valueAsText = String::asText(mana->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -73,7 +73,7 @@ void BlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
     FR_SetFont(mana->font());
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-    FR_DrawTextXY3(valueAsText.toUtf8().constData(), 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(valueAsText, 0, 0, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -102,7 +102,7 @@ void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
     if(ST_AutomapIsOpen(mana->player())) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(mana->_value);
+    auto const valueAsText = String::asText(mana->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -114,7 +114,7 @@ void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, Point2Raw const *offset)
     FR_SetFont(mana->font());
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-    FR_DrawTextXY3(valueAsText.toUtf8().constData(), origin.x + X_OFFSET, origin.y + Y_OFFSET, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
+    FR_DrawTextXY3(valueAsText, origin.x + X_OFFSET, origin.y + Y_OFFSET, ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -138,11 +138,11 @@ void BlueMana_UpdateGeometry(guidata_bluemana_t *mana)
     if(ST_AutomapIsOpen(mana->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(mana->_value);
+    auto const valueAsText = String::asText(mana->_value);
 
     FR_SetFont(mana->font());
     FR_SetTracking(TRACKING);
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
     Rect_SetWidthHeight(&mana->geometry(), textSize.width  * cfg.common.hudScale,
                                            textSize.height * cfg.common.hudScale);
 
@@ -163,11 +163,11 @@ void SBarBlueManaWidget_UpdateGeometry(guidata_bluemana_t *mana)
     if(ST_AutomapIsOpen(mana->player())) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::number(mana->_value);
+    auto const valueAsText = String::asText(mana->_value);
 
     FR_SetFont(mana->font());
     FR_SetTracking(TRACKING);
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
     Rect_SetWidthHeight(&mana->geometry(), textSize.width  * ::cfg.common.statusbarScale,
                                            textSize.height * ::cfg.common.statusbarScale);
 

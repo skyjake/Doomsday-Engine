@@ -41,9 +41,11 @@
 #include <de/findfile.h>
 #include <de/FileSystem>
 
-using namespace de;
-
 extern uint F_GetLastModified(char const *path);
+
+namespace res {
+
+using namespace de;
 
 static FS1 *fileSystem;
 
@@ -74,11 +76,11 @@ typedef List<PathMapping> PathMappings;
  * @note Performance is O(n).
  * @return @c iterator pointing to list->end() if not found.
  */
-static FS1::FileList::iterator findListFile(FS1::FileList &list, File1 &file)
+static FileList::iterator findListFile(FileList &list, File1 &file)
 {
     if (list.empty()) return list.end();
     // Perform the search.
-    FS1::FileList::iterator i;
+    FileList::iterator i;
     for (i = list.begin(); i != list.end(); ++i)
     {
         if (&file == &(*i)->file())
@@ -93,13 +95,13 @@ static FS1::FileList::iterator findListFile(FS1::FileList &list, File1 &file)
  * @note Performance is O(n).
  * @return @c iterator pointing to list->end() if not found.
  */
-static FS1::FileList::iterator findListFileByPath(FS1::FileList &list, String path)
+static FileList::iterator findListFileByPath(FileList &list, const String& path)
 {
     if (list.empty()) return list.end();
     if (path.isEmpty()) return list.end();
 
     // Perform the search.
-    FS1::FileList::iterator i;
+    FileList::iterator i;
     for (i = list.begin(); i != list.end(); ++i)
     {
         File1 &file = (*i)->file();
@@ -252,7 +254,7 @@ DE_PIMPL(FS1)
         zipFileIndex.clear();
     }
 
-    String findPath(de::Uri const &search)
+    String findPath(res::Uri const &search)
     {
         // Within a subspace scheme?
         try
@@ -418,7 +420,7 @@ DE_PIMPL(FS1)
             if (FILE *found = findAndOpenNativeFile(path, mode, foundPath))
             {
                 // Do not read files twice.
-                if (!allowDuplicate && !self().checkFileId(de::makeUri(foundPath)))
+                if (!allowDuplicate && !self().checkFileId(res::makeUri(foundPath)))
                 {
                     fclose(found);
                     return 0;
@@ -506,7 +508,8 @@ void FS1::index(File1 &file)
 
     // Add a handle to the loaded files list.
     FileHandle *hndl = FileHandle::fromFile(file);
-    d->loadedFiles.push_back(hndl); hndl->setList(reinterpret_cast<de::FileList *>(&d->loadedFiles));
+    d->loadedFiles.push_back(hndl);
+    hndl->setList(&d->loadedFiles);
     d->loadedFilesCRC = 0;
 }
 
@@ -528,7 +531,7 @@ void FS1::deindex(File1 &file)
     delete fileHandle;
 }
 
-File1 &FS1::find(de::Uri const &search)
+File1 &FS1::find(res::Uri const &search)
 {
     LOG_AS("FS1::find");
     if (!search.isEmpty())
@@ -547,7 +550,7 @@ File1 &FS1::find(de::Uri const &search)
                 return (*found)->file();
             }
         }
-        catch (de::Uri::ResolveError const &er)
+        catch (res::Uri::ResolveError const &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -558,7 +561,7 @@ File1 &FS1::find(de::Uri const &search)
     throw NotFoundError("FS1::find", "No files found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
+String FS1::findPath(res::Uri const &search, int flags, ResourceClass &rclass)
 {
     LOG_AS("FS1::findPath");
     if (!search.isEmpty())
@@ -571,7 +574,7 @@ String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
             String ext = searchPath.fileNameExtension();
             if (!ext.isEmpty() && ext.compare(".*"))
             {
-                String found = d->findPath(de::Uri(search.scheme(), searchPath));
+                String found = d->findPath(res::Uri(search.scheme(), searchPath));
                 if (!found.isEmpty()) return found;
 
                 // If we are looking for a particular file type, get out of here.
@@ -590,12 +593,12 @@ String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
             {
                 for (auto &ext : (*typeIt)->knownFileNameExtensions())
                 {
-                    String found = d->findPath(de::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
+                    String found = d->findPath(res::Uri(search.scheme(), searchPathWithoutFileNameExtension + ext));
                     if (!found.isEmpty()) return found;
                 }
             };
         }
-        catch (de::Uri::ResolveError const &er)
+        catch (res::Uri::ResolveError const &er)
         {
             // Log but otherwise ignore unresolved paths.
             LOGDEV_RES_VERBOSE(er.asText());
@@ -606,7 +609,7 @@ String FS1::findPath(de::Uri const &search, int flags, ResourceClass &rclass)
     throw NotFoundError("FS1::findPath", "No paths found matching '" + search.compose() + "'");
 }
 
-String FS1::findPath(de::Uri const &search, int flags)
+String FS1::findPath(res::Uri const &search, int flags)
 {
     return findPath(search, flags, ResourceClass::classForId(RC_NULL));
 }
@@ -624,10 +627,10 @@ static void printFileIds(FileIds const &fileIds)
 #endif
 
 #ifdef DE_DEBUG
-static void printFileList(FS1::FileList &list)
+static void printFileList(FileList &list)
 {
     uint idx = 0;
-    DE_FOR_EACH_CONST(FS1::FileList, i, list)
+    DE_FOR_EACH_CONST(FileList, i, list)
     {
         FileHandle &hndl = **i;
         File1 &file   = hndl.file();
@@ -677,7 +680,7 @@ int FS1::unloadAllNonStartupFiles()
     return numUnloadedFiles;
 }
 
-bool FS1::checkFileId(de::Uri const &path)
+bool FS1::checkFileId(res::Uri const &path)
 {
     if (!accessFile(path)) return false;
 
@@ -736,10 +739,10 @@ void FS1::releaseFile(File1 &file)
 }
 
 /// @return @c NULL= Not found.
-static Wad *findFirstWadFile(FS1::FileList &list, bool custom)
+static Wad *findFirstWadFile(FileList &list, bool custom)
 {
     if (list.empty()) return 0;
-    DE_FOR_EACH(FS1::FileList, i, list)
+    DE_FOR_EACH(FileList, i, list)
     {
         File1 &file = (*i)->file();
         if (custom != file.hasCustom()) continue;
@@ -768,16 +771,17 @@ uint FS1::loadedFilesCRC()
     return d->loadedFilesCRC;
 }
 
-FS1::FileList const &FS1::loadedFiles() const
+FileList const &FS1::loadedFiles() const
 {
     return d->loadedFiles;
 }
 
-int FS1::findAll(bool (*predicate)(File1 &file, void *parameters), void *parameters,
-    FS1::FileList &found) const
+int FS1::findAll(bool (*predicate)(File1 &file, void *parameters),
+                 void *    parameters,
+                 FileList &found) const
 {
     int numFound = 0;
-    DE_FOR_EACH_CONST(FS1::FileList, i, d->loadedFiles)
+    DE_FOR_EACH_CONST(FileList, i, d->loadedFiles)
     {
         // Interested in this file?
         if (predicate && !predicate((*i)->file(), parameters)) continue; // Nope.
@@ -951,7 +955,7 @@ FileHandle &FS1::openFile(String const &path, String const &mode, size_t baseOff
 
     // Add a handle to the opened files list.
     FileHandle &hndl = *FileHandle::fromFile(*file);
-    d->openFiles.push_back(&hndl); hndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
+    d->openFiles.push_back(&hndl); hndl.setList(&d->openFiles);
     return hndl;
 }
 
@@ -959,18 +963,18 @@ FileHandle &FS1::openLump(File1 &lump)
 {
     // Add a handle to the opened files list.
     FileHandle &hndl = *FileHandle::fromLump(lump);
-    d->openFiles.push_back(&hndl); hndl.setList(reinterpret_cast<de::FileList *>(&d->openFiles));
+    d->openFiles.push_back(&hndl); hndl.setList(&d->openFiles);
     return hndl;
 }
 
-bool FS1::accessFile(de::Uri const &search)
+bool FS1::accessFile(res::Uri const &search)
 {
     try
     {
         std::unique_ptr<File1> file(d->openFile(search.resolved(), "rb", 0, true /* allow duplicates */));
         return bool(file);
     }
-    catch (de::Uri::ResolveError const &er)
+    catch (res::Uri::ResolveError const &er)
     {
         // Log but otherwise ignore unresolved paths.
         LOGDEV_RES_VERBOSE(er.asText());
@@ -1118,6 +1122,8 @@ FS1::Schemes const &FS1::allSchemes()
     return d->schemes;
 }
 
+} // namespace res
+
 /// Print contents of directories as Doomsday sees them.
 D_CMD(Dir)
 {
@@ -1126,13 +1132,13 @@ D_CMD(Dir)
     {
         for (int i = 1; i < argc; ++i)
         {
-            String path = NativePath(argv[i]).expand().withSeparators('/');
+            de::String path = de::NativePath(argv[i]).expand().withSeparators('/');
             App_FileSystem().printDirectory(path);
         }
     }
     else
     {
-        App_FileSystem().printDirectory(String("/"));
+        App_FileSystem().printDirectory(de::String("/"));
     }
     return true;
 }
@@ -1142,7 +1148,7 @@ D_CMD(DumpLump)
 {
     DE_UNUSED(src, argc);
 
-    if (fileSystem)
+    if (res::fileSystem)
     {
         lumpnum_t lumpNum = App_FileSystem().lumpNumForName(argv[1]);
         if (lumpNum >= 0)
@@ -1158,6 +1164,8 @@ D_CMD(DumpLump)
 /// List virtual files inside containers.
 D_CMD(ListLumps)
 {
+    using namespace res;
+
     DE_UNUSED(src, argc, argv);
 
     if (!fileSystem) return false;
@@ -1190,6 +1198,8 @@ D_CMD(ListLumps)
 /// List presently loaded files in original load order.
 D_CMD(ListFiles)
 {
+    using namespace res;
+
     DE_UNUSED(src, argc, argv);
 
     LOG_RES_MSG(_E(b) "Loaded Files " _E(l) "(in load order)" _E(w) ":");
@@ -1198,18 +1208,17 @@ D_CMD(ListFiles)
     int totalPackages = 0;
     if (fileSystem)
     {
-        FS1::FileList const &allLoadedFiles = App_FileSystem().loadedFiles();
-        DE_FOR_EACH_CONST(FS1::FileList, i, allLoadedFiles)
+        for (const auto *i : App_FileSystem().loadedFiles())
         {
-            File1 &file = (*i)->file();
+            File1 &file = i->file();
             uint crc = 0;
 
             int fileCount = 1;
-            if (de::Zip *zip = maybeAs<de::Zip>(file))
+            if (Zip *zip = maybeAs<Zip>(file))
             {
                 fileCount = zip->lumpCount();
             }
-            else if (de::Wad *wad = maybeAs<de::Wad>(file))
+            else if (Wad *wad = maybeAs<Wad>(file))
             {
                 fileCount = wad->lumpCount();
                 crc = (!file.hasCustom()? wad->calculateCRC() : 0);
@@ -1237,7 +1246,7 @@ D_CMD(ListFiles)
     return true;
 }
 
-void FS1::consoleRegister()
+void res::FS1::consoleRegister()
 {
     C_CMD("dir", "",   Dir);
     C_CMD("ls",  "",   Dir); // Alias
@@ -1249,27 +1258,28 @@ void FS1::consoleRegister()
     C_CMD("listlumps", "",  ListLumps);
 }
 
-FS1 &App_FileSystem()
+res::FS1 &App_FileSystem()
 {
-    if (!fileSystem) throw Error("App_FileSystem", "File system not yet initialized");
-    return *fileSystem;
+    if (!res::fileSystem) throw de::Error("App_FileSystem", "File system not yet initialized");
+    return *res::fileSystem;
 }
 
-String App_BasePath()
+de::String App_BasePath()
 {
-    return App::app().nativeBasePath().withSeparators('/');
+    return de::App::app().nativeBasePath().withSeparators('/');
 }
 
 void F_Init()
 {
-    DE_ASSERT(!fileSystem);
-    fileSystem = new FS1();
+    DE_ASSERT(!res::fileSystem);
+    res::fileSystem = new res::FS1();
 }
 
 void F_Shutdown()
 {
-    if (!fileSystem) return;
-    delete fileSystem; fileSystem = 0;
+    if (!res::fileSystem) return;
+    delete res::fileSystem;
+    res::fileSystem = nullptr;
 }
 
 void const *F_LumpIndex()

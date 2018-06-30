@@ -698,7 +698,7 @@ static dd_bool tokenize(char const *line, char *label, char *value, int valueSiz
     qstrncpy(label, src, de::min(int(colon - src + 1), valueSize));
 
     // Copy the value.
-    char const *end = line + qstrlen(line);
+    char const *end = line + strlen(line);
     qstrncpy(value, colon + 1, de::min(int(end - colon), valueSize));
 
     // Everything is OK.
@@ -844,7 +844,7 @@ String Net_UserAgent()
  */
 void Net_WriteChatMessage(dint from, dint toMask, char const *message)
 {
-    auto const len = de::min<dsize>(qstrlen(message), 0xffff);
+    auto const len = de::min<dsize>(strlen(message), 0xffff);
 
     Msg_Begin(PKT_CHAT);
     Writer_WriteByte(::msgWriter, from);
@@ -1244,7 +1244,7 @@ D_CMD(Net)
             {
                 // Connect using TCP/IP.
                 return Con_Executef(CMDS_CONSOLE, false, "connect %s",
-                                    info.address().asText().toUtf8().constData());
+                                    info.address().asText());
             }
             else return false;
         }

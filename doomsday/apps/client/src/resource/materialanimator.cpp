@@ -801,7 +801,7 @@ GLTextureUnit &MaterialAnimator::texUnit(int unitIndex) const
     d->updateSnapshotIfNeeded();
     if (unitIndex >= 0 && unitIndex < NUM_TEXTUREUNITS) return d->snapshot->units[unitIndex];
     /// @throw MissingTextureUnitError  Invalid GL-texture unit reference.
-    throw MissingTextureUnitError("MaterialAnimator::glTextureUnit", "Unknown GL texture unit #" + String::number(unitIndex));
+    throw MissingTextureUnitError("MaterialAnimator::glTextureUnit", "Unknown GL texture unit #" + String::asText(unitIndex));
 }
 
 MaterialAnimator::Decoration &MaterialAnimator::decoration(int decorIndex) const
@@ -809,5 +809,5 @@ MaterialAnimator::Decoration &MaterialAnimator::decoration(int decorIndex) const
     d->updateSnapshotIfNeeded();
     if (decorIndex >= 0 && decorIndex < d->decorations.count()) return *d->decorations[decorIndex];
     /// @throw MissingDecorationError  Invalid decoration reference.
-    throw MissingDecorationError("MaterialAnimator::decoration", "Unknown decoration #" + String::number(decorIndex));
+    throw MissingDecorationError("MaterialAnimator::decoration", "Unknown decoration #" + String::asText(decorIndex));
 }

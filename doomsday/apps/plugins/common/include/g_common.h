@@ -36,7 +36,7 @@ GameRules &gfw_DefaultGameRules();
 #define gfw_DefaultRule(name)           (gfw_DefaultGameRules().values.name)
 #define gfw_SetDefaultRule(name, value) GameRules_Set(gfw_DefaultGameRules(), name, value)
 
-extern de::Uri nextMapUri;
+extern res::Uri nextMapUri;
 extern uint    nextMapEntryPoint;
 
 /**
@@ -48,7 +48,7 @@ extern uint    nextMapEntryPoint;
  * @param mapEntrance  Logical map entry point number.
  */
 void G_SetGameActionNewSession(GameRules const &rules, de::String episodeId,
-                               de::Uri const &mapUri, uint mapEntrance = 0);
+                               res::Uri const &mapUri, uint mapEntrance = 0);
 
 /**
  * Schedule a game session save (deferred).
@@ -80,7 +80,7 @@ bool G_SetGameActionLoadSession(de::String slotId);
  * @param nextMapEntryPoint  Logical map entry point on the new map.
  * @param secretExit         @c true if the exit taken was marked as 'secret'.
  */
-void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoint = 0,
+void G_SetGameActionMapCompleted(res::Uri const &nextMapUri, uint nextMapEntryPoint = 0,
                                  bool secretExit = false);
 
 /**
@@ -96,22 +96,22 @@ de::String G_EpisodeTitle(de::String episodeId);
  *
  * @todo: Should use WorldSystem::mapInfoForMapUri() instead.
  */
-de::Record &G_MapInfoForMapUri(de::Uri const &mapUri);
+de::Record &G_MapInfoForMapUri(res::Uri const &mapUri);
 
 /**
  * @param mapUri  Identifier of the map to lookup the author of.
  */
-de::String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor = false);
+de::String G_MapAuthor(res::Uri const &mapUri, bool supressGameAuthor = false);
 
 /**
  * @param mapUri  Identifier of the map to lookup the title of.
  */
-de::String G_MapTitle(de::Uri const &mapUri);
+de::String G_MapTitle(res::Uri const &mapUri);
 
 /**
  * @param mapUri  Identifier of the map to lookup the title of.
  */
-de::Uri G_MapTitleImage(de::Uri const &mapUri);
+res::Uri G_MapTitleImage(res::Uri const &mapUri);
 
 /**
  * Compose a textual, rich-formatted description of the the referenced map, containing
@@ -122,7 +122,7 @@ de::Uri G_MapTitleImage(de::Uri const &mapUri);
  *
  * @return  Rich-formatted description of the map.
  */
-de::String G_MapDescription(de::String episodeId, de::Uri const &mapUri);
+de::String G_MapDescription(de::String episodeId, res::Uri const &mapUri);
 
 /**
  * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default
@@ -134,7 +134,7 @@ de::String G_MapDescription(de::String episodeId, de::Uri const &mapUri);
  *
  * @deprecated  Should use map URIs instead.
  */
-uint G_MapNumberFor(de::Uri const &mapUri);
+uint G_MapNumberFor(res::Uri const &mapUri);
 
 /**
  * Compose a Uri for the identified @a episode and @a map combination using the default
@@ -149,7 +149,7 @@ uint G_MapNumberFor(de::Uri const &mapUri);
  * and map number pair are a historical legacy that should only be used when necessary,
  * for compatibility reasons.
  */
-de::Uri G_ComposeMapUri(uint episode, uint map);
+res::Uri G_ComposeMapUri(uint episode, uint map);
 
 /**
  * Chooses a default user description for a saved session.

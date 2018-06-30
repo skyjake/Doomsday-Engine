@@ -365,7 +365,7 @@ void SV_ReadSector(Sector *sec, MapStateReader *msr)
     if(mapVersion == 1)
     {
         // The flat numbers are absolute lump indices.
-        de::Uri uri("Flats:", RC_NULL);
+        res::Uri uri("Flats:", RC_NULL);
         uri.setPath(CentralLumpIndex()[Reader_ReadInt16(reader)].name().fileNameWithoutExtension());
         floorMaterial = (world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUri(reinterpret_cast<uri_s *>(&uri)));
 
@@ -872,7 +872,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     Reader1 *reader = SV_NewReader();
 
     int const saveVersion = (*metadata)["version"].value().asNumber();
-    Uri *mapUri           = Uri_NewWithPath2((*metadata)["mapUri"].value().asText().toUtf8().constData(), RC_NULL);
+    Uri *mapUri           = Uri_NewWithPath2((*metadata)["mapUri"].value().asText(), RC_NULL);
     GameRules *rules    = 0;
     if(metadata->hasSubrecord("gameRules"))
     {
@@ -880,7 +880,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
     }
 
     // Do we need to change the map?
-    if(gfw_Session()->mapUri() != *reinterpret_cast<de::Uri *>(mapUri))
+    if(gfw_Session()->mapUri() != *reinterpret_cast<res::Uri *>(mapUri))
     {
         gfw_Session()->begin(*mapUri, 0/*default*/, *rules);
     }

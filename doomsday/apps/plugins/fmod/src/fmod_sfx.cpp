@@ -684,9 +684,11 @@ static void updateListenerEnvironmentSettings(float *reverb)
     //props.RoomHF = linearToLog(std::pow(10.f, props.RoomHF / 2000.f) * damping);
     //mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);
 
-    qDebug() << "WetLevel:" << props.WetLevel << "dB" << "input:" << reverb[SFXLP_REVERB_VOLUME]
-             << "DecayTime:" << props.DecayTime << "ms"
-             << "HighCut:" << props.HighCut << "Hz";
+    std::ostringstream os;
+    os << "WetLevel: " << props.WetLevel << " dB "
+       << "input: " << reverb[SFXLP_REVERB_VOLUME] << " DecayTime: " << props.DecayTime << " ms "
+       << "HighCut: " << props.HighCut << " Hz";
+    de::debug(os.str().c_str());
 
     // A slightly increased roll-off. (Not in FMOD?)
     //props.RoomRolloffFactor = 1.3f;

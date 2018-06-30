@@ -39,7 +39,7 @@ DE_EXTERN_C int Textures_UniqueId2(uri_s const *_uri, dd_bool quiet)
 {
     LOG_AS("Textures_UniqueId");
     if(!_uri) return -1;
-    de::Uri const &uri = reinterpret_cast<de::Uri const &>(*_uri);
+    res::Uri const &uri = reinterpret_cast<res::Uri const &>(*_uri);
 
     try
     {
@@ -74,7 +74,7 @@ DE_EXTERN_C void R_AddAnimGroupFrame(int groupId, uri_s const *textureUri_, int 
     LOG_AS("R_AddAnimGroupFrame");
 
     if(!textureUri_) return;
-    de::Uri const &textureUri = reinterpret_cast<de::Uri const &>(*textureUri_);
+    res::Uri const &textureUri = reinterpret_cast<res::Uri const &>(*textureUri_);
 
     try
     {
@@ -203,7 +203,7 @@ DE_EXTERN_C char const *R_GetColorPaletteNameForNum(colorpaletteid_t id)
     try
     {
         res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(id);
-        return App_Resources().colorPalettes().colorPaletteName(palette).toUtf8().constData();
+        return App_Resources().colorPalettes().colorPaletteName(palette);
     }
     catch(Resources::MissingResourceError const &er)
     {
@@ -295,7 +295,7 @@ DE_EXTERN_C AutoStr *R_ComposePatchPath(patchid_t id)
     try
     {
         res::TextureManifest &manifest = res::Textures::get().textureScheme("Patches").findByUniqueId(id);
-        return AutoStr_FromTextStd(manifest.path().toUtf8().constData());
+        return AutoStr_FromTextStd(manifest.path());
     }
     catch(res::TextureScheme::NotFoundError const &er)
     {
@@ -311,14 +311,14 @@ DE_EXTERN_C uri_s *R_ComposePatchUri(patchid_t id)
     try
     {
         res::TextureManifest &manifest = res::Textures::get().textureScheme("Patches").findByUniqueId(id);
-        return reinterpret_cast<uri_s *>(new de::Uri(manifest.composeUri()));
+        return reinterpret_cast<uri_s *>(new res::Uri(manifest.composeUri()));
     }
     catch(res::TextureScheme::NotFoundError const &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    return reinterpret_cast<uri_s *>(new de::Uri());
+    return reinterpret_cast<uri_s *>(new res::Uri());
 }
 
 #undef R_DeclarePatch

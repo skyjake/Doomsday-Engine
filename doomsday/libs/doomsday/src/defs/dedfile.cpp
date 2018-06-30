@@ -30,6 +30,7 @@
 #include <de/c_wrapper.h>
 
 using namespace de;
+using namespace res;
 
 static char dedReadError[512];
 
@@ -61,7 +62,7 @@ void Def_ReadProcessDED(ded_t *defs, const String& sourcePath)
         // Try FS1 as fallback.
     }
 
-    de::Uri const uri(sourcePath, RC_NULL);
+    res::Uri const uri(sourcePath, RC_NULL);
     if (!App_FileSystem().accessFile(uri))
     {
         LOG_RES_WARNING("\"%s\" not found!") << NativePath(uri.asText()).pretty();

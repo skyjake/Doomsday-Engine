@@ -69,7 +69,7 @@ CHEAT_FUNC(Music)
     int warpNumber;
     if(numEpisodes > 1)
     {
-        episodeId  = String::number(args[0] - '0');
+        episodeId  = String::asText(args[0] - '0');
         warpNumber = args[1] - '0';
     }
     else
@@ -160,10 +160,9 @@ CHEAT_FUNC(MyPos)
         return false;
 
     mobj_t const *mob = players[CONSOLEPLAYER].plr->mo;
-    String const text = String("angle:0x%1 position:%2")
-                            .arg(mob->angle, 0, 16)
-                            .arg(Vec3d(mob->origin).asText());
-    P_SetMessageWithFlags(&players[player], text.toUtf8().constData(), LMF_NO_HIDE);
+    String const  text =
+        String::format("angle:0x%x position:%s", mob->angle, Vec3d(mob->origin).asText().c_str());
+    P_SetMessageWithFlags(&players[player], text, LMF_NO_HIDE);
     return true;
 }
 
@@ -175,7 +174,7 @@ D_CMD(Cheat)
     DE_UNUSED(src, argc);
 
     // Give each of the characters in argument two to the ST event handler.
-    int const len = qstrlen(argv[1]);
+    int const len = strlen(argv[1]);
     for(int i = 0; i < len; ++i)
     {
         event_t ev; de::zap(ev);
@@ -414,7 +413,7 @@ D_CMD(CheatGive)
         if(argc < 2) return false;
 
         String const request = String("give ") + argv[1];
-        NetCl_CheatRequest(request.toUtf8().constData());
+        NetCl_CheatRequest(request);
         return true;
     }
 
@@ -428,20 +427,20 @@ D_CMD(CheatGive)
     // Can't give to a dead player.
     if(plr->health <= 0) return false;
 
-    String const stuff = String(argv[1]).toLower(); // Stuff is the 2nd arg.
-    for(int i = 0; i < stuff.length(); ++i)
+    String const stuff = String(argv[1]).lower(); // Stuff is the 2nd arg.
+    for (mb_iterator i = stuff.begin(); i != stuff.end(); ++i)
     {
-        QChar const mnemonic = stuff.at(i);
-        switch(mnemonic.toLatin1())
+        const Char mnemonic = *i;
+        switch (mnemonic)
         {
         // Ammo:
         case 'a': {
             ammotype_t ammos = NUM_AMMO_TYPES; // All types.
 
             // Give one specific ammo type?
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at( ++i ).digitValue();
+                int const arg = *(++i) - '0';
                 if(arg < AT_FIRST || arg >= NUM_AMMO_TYPES)
                 {
                     LOG_SCR_ERROR("Ammo #%d unknown. Valid range %s")
@@ -457,9 +456,9 @@ D_CMD(CheatGive)
         case 'r': {
             int armor = 1;
 
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at( ++i ).digitValue();
+                int const arg = *( ++i ) - '0';
                 if(arg < 0 || arg >= 4)
                 {
                     LOG_SCR_ERROR("Armor #%d unknown. Valid range %s")
@@ -476,9 +475,9 @@ D_CMD(CheatGive)
             keytype_t keys = NUM_KEY_TYPES; // All types.
 
             // Give one specific key type?
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at( ++i ).digitValue();
+                int const arg = *( ++i ) - '0';
                 if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
                 {
                     LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
@@ -508,9 +507,9 @@ D_CMD(CheatGive)
             weapontype_t weapons = NUM_WEAPON_TYPES; // All types.
 
             // Give one specific weapon type?
-            if((i + 1) < stuff.length() && stuff.at(i + 1).isDigit())
+            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
             {
-                int const arg = stuff.at( ++i ).digitValue();
+                int const arg = *( ++i ) - '0';
                 if(arg < WT_FIRST || arg >= NUM_WEAPON_TYPES)
                 {
                     LOG_SCR_ERROR("Weapon #%d unknown. Valid range %s")
@@ -523,7 +522,7 @@ D_CMD(CheatGive)
             break; }
 
         default: // Unrecognized.
-            LOG_SCR_ERROR("Mnemonic '%c' unknown, cannot give") << mnemonic.toLatin1();
+            LOG_SCR_ERROR("Mnemonic '%c' unknown, cannot give") << mnemonic;
             break;
         }
     }
@@ -578,10 +577,10 @@ D_CMD(CheatWhere)
     mobj_t *plrMo = plr->plr->mo;
     if(!plrMo) return true;
 
-    String const text = String("Map:%1 position:%2")
-                            .arg(gfw_Session()->mapUri().asText())
-                            .arg(Vec3d(plrMo->origin).asText());
-    P_SetMessageWithFlags(plr, text.toUtf8().constData(), LMF_NO_HIDE);
+    String const text = String::format("Map:%1 position:%2",
+                                       gfw_Session()->mapUri().asText().c_str(),
+                                       Vec3d(plrMo->origin).asText().c_str());
+    P_SetMessageWithFlags(plr, text, LMF_NO_HIDE);
 
     // Also print the some information to the console.
     LOG_SCR_NOTE("%s") << text;

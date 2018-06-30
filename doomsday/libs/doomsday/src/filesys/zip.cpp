@@ -41,7 +41,7 @@
 #  undef max
 #endif
 
-namespace de {
+namespace res {
 namespace internal {
 
 #define SIG_LOCAL_FILE_HEADER   0x04034b50
@@ -502,7 +502,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
                         // Resolve all symbolic references in the path.
                         filePath = Uri(filePathCopy, RC_NULL).resolved();
                     }
-                    catch (de::Uri::ResolveError const& er)
+                    catch (res::Uri::ResolveError const& er)
                     {
                         LOG_RES_WARNING(er.asText());
                     }
@@ -869,4 +869,4 @@ Zip::LumpFile &Zip::Entry::file() const
     return *lumpFile;
 }
 
-} // namespace de
+} // namespace res

@@ -33,7 +33,7 @@ DE_PIMPL(TextureManifest)
 , DE_OBSERVES(Texture, Deletion)
 {
     int                      uniqueId;          ///< Scheme-unique identifier (user defined).
-    de::Uri                  resourceUri;       ///< Image resource path, to be loaded.
+    res::Uri                  resourceUri;       ///< Image resource path, to be loaded.
     Vec2ui                   logicalDimensions; ///< Dimensions in map space.
     Vec2i                    origin;            ///< Origin offset in map space.
     Flags                    flags;             ///< Classification flags.
@@ -105,15 +105,15 @@ String const &TextureManifest::schemeName() const
     return scheme().name();
 }
 
-String TextureManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+String TextureManifest::description(res::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
 //    String info = String("%1 %2")
-//                      .arg(composeUri().compose(uriCompositionFlags | de::Uri::DecodePath),
-//                           ( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 ) )
+//                      .arg(composeUri().compose(uriCompositionFlags | res::Uri::DecodePath),
+//                           ( uriCompositionFlags.testFlag(res::Uri::OmitScheme)? -14 : -22 ) )
 //                      .arg(sourceDescription(), -7);
 
     String info =
-        composeUri().compose(uriCompositionFlags | de::Uri::DecodePath) + " " + sourceDescription();
+        composeUri().compose(uriCompositionFlags | res::Uri::DecodePath) + " " + sourceDescription();
 
 #ifdef __CLIENT__
     info += String::format("x%i", !hasTexture()? 0 : texture().variantCount());
@@ -135,7 +135,7 @@ bool TextureManifest::hasResourceUri() const
     return !d->resourceUri.isEmpty();
 }
 
-de::Uri TextureManifest::resourceUri() const
+res::Uri TextureManifest::resourceUri() const
 {
     if (hasResourceUri())
     {
@@ -145,7 +145,7 @@ de::Uri TextureManifest::resourceUri() const
     throw MissingResourceUriError("TextureManifest::scheme", "No resource URI is defined");
 }
 
-bool TextureManifest::setResourceUri(de::Uri const &newUri)
+bool TextureManifest::setResourceUri(res::Uri const &newUri)
 {
     // Avoid resolving; compare as text.
     if (d->resourceUri.asText() != newUri.asText())

@@ -68,7 +68,7 @@ public:
      *
      * @param func  Callback to make for each widget.
      */
-    de::LoopResult forAllChildren(std::function<de::LoopResult (HudWidget &)> func) const;
+    de::LoopResult forAllChildren(const std::function<de::LoopResult (HudWidget &)>& func) const;
 
     /**
      * Empty the list of child widgets.

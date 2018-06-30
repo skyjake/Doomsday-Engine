@@ -18,7 +18,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QtAlgorithms>
 #include "common.h"
 #include "menu/widgets/listwidget.h"
 
@@ -64,7 +63,7 @@ DE_PIMPL_NOREF(ListWidget)
     int   numvis         = 0;
     bool  reorderEnabled = false;
 
-    ~Impl() { qDeleteAll(items); }
+    ~Impl() { deleteAll(items); }
 };
 
 ListWidget::ListWidget()
@@ -106,13 +105,15 @@ void ListWidget::updateGeometry()
     {
         Item *item = d->items[i];
 
-        FR_TextSize(&itemGeometry.size, item->text().toUtf8().constData());
+        FR_TextSize(&itemGeometry.size, item->text());
         if(i != itemCount() - 1)
         {
             itemGeometry.size.height *= 1 + MNDATA_LIST_LEADING;
         }
 
-        geometry() |= Rectanglei::fromSize(Vec2i(itemGeometry.origin.xy), Vec2ui(itemGeometry.size.width, itemGeometry.size.height));
+        geometry() |=
+            Rectanglei::fromSize(Vec2i(itemGeometry.origin.xy),
+                                 Vec2ui(itemGeometry.size.width, itemGeometry.size.height));
 
         itemGeometry.origin.y += itemGeometry.size.height;
     }
@@ -152,11 +153,11 @@ void ListWidget::draw() const
             const Item *item = d->items[itemIdx];
             Vec4f const &color = d->selection == itemIdx? (flashSelection? flashColor : textColor) : dimColor;
 
-            const Vector4f &color =
+            const Vec4f &color =
                 d->selection == itemIdx ? (flashSelection ? flashColor : textColor) : dimColor;
 
             const int itemHeight =
-                FR_TextHeight(item->text().toUtf8().constData()) * (1 + MNDATA_LIST_LEADING);
+                FR_TextHeight(item->text()) * (1 + MNDATA_LIST_LEADING);
 
             FR_SetColorAndAlpha(color.x,
                                 color.y,

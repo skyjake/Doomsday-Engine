@@ -1090,7 +1090,7 @@ static void parseParamaterBlock(const char **strPtr, drawtextstate_t* state, int
                 {
                     try
                     {
-                        state->fontNum = App_Resources().fontManifest(de::makeUri(buf)).uniqueId();
+                        state->fontNum = App_Resources().fontManifest(res::makeUri(buf)).uniqueId();
                         continue;
                     }
                     catch (Resources::MissingResourceManifestError const &)
@@ -1633,7 +1633,7 @@ DE_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
     if (!uri) return NOFONTID;
     try
     {
-        return App_Resources().fontManifest(*reinterpret_cast<de::Uri const *>(uri)).uniqueId();
+        return App_Resources().fontManifest(*reinterpret_cast<res::Uri const *>(uri)).uniqueId();
     }
     catch (Resources::MissingResourceManifestError const &)
     {}

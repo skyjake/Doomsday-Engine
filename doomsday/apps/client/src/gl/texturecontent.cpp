@@ -377,7 +377,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
             grayMipmapFactor = int(255 * de::clamp(0.f, dspec.contrast / 255.f - shift, 1.f));
 
             // Announce the normalization.
-            de::Uri uri = textureManifest.composeUri();
+            res::Uri uri = textureManifest.composeUri();
             LOG_GL_VERBOSE("Normalized detail texture \"%s\" (balance: %f, high amp: %f, low amp: %f)")
                 << uri << baMul << hiMul << loMul;
         }
@@ -507,7 +507,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
     if (!(GL_LUMINANCE_ALPHA == loadFormat || GL_LUMINANCE == loadFormat ||
          GL_RGB == loadFormat || GL_RGBA == loadFormat))
     {
-        throw Error("texturecontent_t::uploadTexture", "Unsupported load format " + String::number(loadFormat));
+        throw Error("texturecontent_t::uploadTexture", "Unsupported load format " + String::asText(loadFormat));
     }
 
     // Can't operate on null texture.
@@ -570,7 +570,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
 
         bpp = BytesPerPixel(loadFormat);
         if (bpp == 0)
-            throw Error("texturecontent_t::uploadTexture", "Unknown GL format " + String::number(loadFormat));
+            throw Error("texturecontent_t::uploadTexture", "Unknown GL format " + String::asText(loadFormat));
 
         GL_OptimalTextureSize(width, height, false, true, &w, &h);
 
@@ -605,7 +605,7 @@ static dd_bool uploadTexture(int glFormat, int loadFormat, const uint8_t* pixels
                 neww, newh, /*GL_UNSIGNED_BYTE,*/ packRowLength, packAlignment,
                 packSkipRows, packSkipPixels);
             if (!newimage)
-                throw Error("texturecontent_t::uploadTexture", "Unknown error resizing mipmap level #" + String::number(mipLevel));
+                throw Error("texturecontent_t::uploadTexture", "Unknown error resizing mipmap level #" + String::asText(mipLevel));
 
             if (image != pixels)
                 M_Free(image);
@@ -666,7 +666,7 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
 
     if (!(GL_RGB == loadFormat || GL_LUMINANCE == loadFormat))
     {
-        throw Error("texturecontent_t::uploadTextureGrayMipmap", "Unsupported load format " + String::number(loadFormat));
+        throw Error("texturecontent_t::uploadTextureGrayMipmap", "Unsupported load format " + String::asText(loadFormat));
     }
 
     pixelSize = (loadFormat == GL_LUMINANCE? 1 : 3);

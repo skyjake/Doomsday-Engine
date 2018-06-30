@@ -59,6 +59,8 @@ public:
     Set &    operator<<(const Value &value) { Base::insert(value); return *this; }
     Set &    operator=(const Set &&copied) { Base::operator=(copied); return *this; }
     Set &    operator=(Set &&moved) { Base::operator=(moved); return *this; }
+
+    inline Set &push_back(const Value &value) { return *this << value; }
 };
 
 template <typename T>

@@ -281,19 +281,19 @@ D_CMD(MsgResponse)
         }
 
         char const *cmd = argv[0] + 7;
-        if(!qstricmp(cmd, "yes"))
+        if(!iCmpStrCase(cmd, "yes"))
         {
             awaitingResponse = false;
             messageResponse = MSG_YES;
             return true;
         }
-        if(!qstricmp(cmd, "no"))
+        if(!iCmpStrCase(cmd, "no"))
         {
             awaitingResponse = false;
             messageResponse = MSG_NO;
             return true;
         }
-        if(!qstricmp(cmd, "cancel"))
+        if(!iCmpStrCase(cmd, "cancel"))
         {
             awaitingResponse = false;
             messageResponse = MSG_CANCEL;

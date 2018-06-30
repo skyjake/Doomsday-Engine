@@ -666,7 +666,7 @@ D_CMD(CheatWhere)
 
     char textBuffer[256];
     sprintf(textBuffer, "MAP [%s]  X:%g  Y:%g  Z:%g",
-                        gfw_Session()->mapUri().path().toUtf8().constData(),
+                        gfw_Session()->mapUri().path().c_str(),
                         plrMo->origin[VX], plrMo->origin[VY], plrMo->origin[VZ]);
     P_SetMessageWithFlags(plr, textBuffer, LMF_NO_HIDE);
 
@@ -815,8 +815,8 @@ D_CMD(CheatRunScript)
                 if(acscriptSys().script(scriptNum).start(acs::Script::Args()/*default args*/,
                                                          plr->plr->mo, nullptr, 0))
                 {
-                    de::String msg = de::String("Running script %1").arg(scriptNum);
-                    P_SetMessageWithFlags(plr, msg.toUtf8().constData(), LMF_NO_HIDE);
+                    de::String msg = de::String::format("Running script %i", scriptNum);
+                    P_SetMessageWithFlags(plr, msg, LMF_NO_HIDE);
                 }
             }
 

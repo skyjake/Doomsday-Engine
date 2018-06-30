@@ -1028,7 +1028,7 @@ D_CMD(SetViewLock)
 
     int pl = CONSOLEPLAYER, lock;
 
-    if(!qstricmp(argv[0], "lockmode"))
+    if(!iCmpStrCase(argv[0], "lockmode"))
     {
         lock = atoi(argv[1]);
         if(lock)
@@ -1176,18 +1176,18 @@ D_CMD(SpawnMobj)
     pos[VZ] = 0;
 
     int spawnFlags = 0;
-    if(!qstricmp(argv[4], "ceil"))
+    if(!iCmpStrCase(argv[4], "ceil"))
     {
         spawnFlags |= MSF_Z_CEIL;
     }
-    else if(!qstricmp(argv[4], "random"))
+    else if(!iCmpStrCase(argv[4], "random"))
     {
         spawnFlags |= MSF_Z_RANDOM;
     }
     else
     {
         spawnFlags |= MSF_Z_FLOOR;
-        if(qstricmp(argv[4], "floor"))
+        if(iCmpStrCase(argv[4], "floor"))
         {
             pos[VZ] = strtod(argv[4], 0);
         }

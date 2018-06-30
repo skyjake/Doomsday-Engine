@@ -54,7 +54,7 @@ enum {
 
 static bool initedDraw = false;
 static int borderSize;
-static de::Uri *borderGraphicsNames[9];
+static res::Uri *borderGraphicsNames[9];
 
 /// @todo Declare the patches with URNs to avoid unnecessary duplication here -ds
 static patchid_t borderPatches[9];
@@ -96,9 +96,9 @@ DE_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths)
         {
             if(!borderGraphicsNames[i])
             {
-                borderGraphicsNames[i] = new de::Uri;
+                borderGraphicsNames[i] = new res::Uri;
             }
-            *(borderGraphicsNames[i]) = *reinterpret_cast<de::Uri const *>(paths[i]);
+            *(borderGraphicsNames[i]) = *reinterpret_cast<res::Uri const *>(paths[i]);
         }
         else
         {

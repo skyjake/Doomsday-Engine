@@ -27,12 +27,13 @@
 
 using namespace de;
 using namespace idtech1;
+using namespace res;
 
 static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0)
 {
     dd_bool _isCustom;
     ddstring_t sourcePath;
-    AutoStr *string = M_ReadFileIntoString(Str_Set(Str_InitStd(&sourcePath), path.toUtf8().constData()), &_isCustom);
+    AutoStr *string = M_ReadFileIntoString(Str_Set(Str_InitStd(&sourcePath), path), &_isCustom);
     if(isCustom) *isCustom = _isCustom;
     Str_Free(&sourcePath);
     return string;
@@ -57,7 +58,7 @@ static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0
 int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
     DE_ASSERT(context != 0);
-    Id1MapRecognizer const &recognizer = *reinterpret_cast<de::Id1MapRecognizer *>(context);
+    const auto &recognizer = *reinterpret_cast<Id1MapRecognizer *>(context);
 
     if (recognizer.format() != Id1MapRecognizer::UnknownFormat &&
         recognizer.format() != Id1MapRecognizer::UniversalFormat)
@@ -83,7 +84,7 @@ int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
     return false; // failure :(
 }
 
-static void convertMapInfos(QList<QString> const &pathsInLoadOrder, String &xlat, String &xlatCustom)
+static void convertMapInfos(const StringList &pathsInLoadOrder, String &xlat, String &xlatCustom)
 {
     xlat.clear();
     xlatCustom.clear();
@@ -116,11 +117,11 @@ int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
     LOG_AS("importidtech1");
     DE_ASSERT(context);
     auto &parm = *static_cast<ddhook_mapinfo_convert_t *>(context);
-    QStringList allPathsInLoadOrder = String(Str_Text(&parm.paths)).split(";");
+    StringList allPathsInLoadOrder = String(Str_Text(&parm.paths)).split(";");
     String xlat, xlatCustom;
     convertMapInfos(allPathsInLoadOrder, xlat, xlatCustom);
-    Str_Set(&parm.translated, xlat.toUtf8().constData());
-    Str_Set(&parm.translatedCustom, xlatCustom.toUtf8().constData());
+    Str_Set(&parm.translated, xlat);
+    Str_Set(&parm.translatedCustom, xlatCustom);
     return true;
 }
 

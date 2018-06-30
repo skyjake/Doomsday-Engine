@@ -26,7 +26,7 @@ using namespace de;
 
 extern String versionText();
 
-PackageFormatter::PackageFormatter(QStringList knownExtensions, QStringList baseGameIds)
+PackageFormatter::PackageFormatter(StringList knownExtensions, StringList baseGameIds)
     : knownExtensions(knownExtensions)
     , baseGameIds (baseGameIds)
 {}
@@ -34,23 +34,29 @@ PackageFormatter::PackageFormatter(QStringList knownExtensions, QStringList base
 PackageFormatter::~PackageFormatter() // virtual
 {}
 
-String PackageFormatter::composeInfo(GameStateMetadata const &metadata, Path const &sourceFile,
-    dint32 oldSaveVersion) const
+String PackageFormatter::composeInfo(GameStateMetadata const &metadata,
+                                     Path const &             sourceFile,
+                                     dint32                   oldSaveVersion) const
 {
     String info;
-    QTextStream os(&info);
-    os.setCodec("UTF-8");
 
     // Write header and misc info.
     Time now;
-    os << "# Doomsday Engine saved game session package.\n#"
-       << "\n# Generator: "       + versionText()
-       << "\n# Generation Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate)
-       << "\n# Source file: \""   + NativePath(sourceFile).pretty() + "\""
-       << "\n# Source version: "  + String::number(oldSaveVersion);
+    info += "# Doomsday Engine saved game session package.\n#";
+    info += "\n# Generator: ";
+    info += versionText();
+    info += "\n# Generation Date: ";
+    info += now.asText();
+    info += "\n# Source file: \"";
+    info += NativePath(sourceFile).pretty();
+    info += "\"";
+    info += "\n# Source version: ";
+    info += String::asText(oldSaveVersion);
 
     // Write metadata.
-    os << "\n\n" + metadata.asInfo() + "\n";
+    info += "\n\n";
+    info += metadata.asInfo();
+    info += "\n";
 
     return info;
 }

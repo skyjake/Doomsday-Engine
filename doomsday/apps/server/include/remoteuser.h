@@ -13,13 +13,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef REMOTEUSER_H
 #define REMOTEUSER_H
 
-#include <QObject>
 #include <de/Id>
 #include <de/Socket>
 #include <de/Transmitter>
@@ -28,10 +27,8 @@
  * User that is communicating with the server over a network socket.
  * @ingroup server
  */
-class RemoteUser : public QObject, public de::Transmitter
+class RemoteUser : public de::Transmitter
 {
-    Q_OBJECT
-
 public:
     /**
      * Constructs a new remote user from a connected network socket.
@@ -76,13 +73,11 @@ public:
     // Implements Transmitter.
     void send(de::IByteArray const &data);
 
-signals:
-    void userDestroyed();
+    DE_DEFINE_AUDIENCE2(Destroy, void aboutToDestroyRemoteUser(RemoteUser &))
 
-public slots:
     void handleIncomingPackets();
 
-protected slots:
+protected:
     void socketDisconnected();
 
 private:

@@ -115,7 +115,7 @@ DE_PIMPL(RenderSystem)
         {
             if(ProjectionList *found = tryFindList(listIdx)) return *found;
             /// @throw MissingListError  Invalid index specified.
-            throw Error("RenderSystem::projector::findList", "Invalid index #" + String::number(listIdx));
+            throw Error("RenderSystem::projector::findList", "Invalid index #" + String::asText(listIdx));
         }
 
         ProjectionList &findOrCreateList(duint *listIdx, bool sortByLuma)
@@ -187,7 +187,7 @@ DE_PIMPL(RenderSystem)
         {
             if(VectorLightList *found = tryFindList(listIdx)) return *found;
             /// @throw MissingListError  Invalid index specified.
-            throw Error("RenderSystem::vlights::findList", "Invalid index #" + String::number(listIdx));
+            throw Error("RenderSystem::vlights::findList", "Invalid index #" + String::asText(listIdx));
         }
 
         VectorLightList &findOrCreateList(duint *listIdx)

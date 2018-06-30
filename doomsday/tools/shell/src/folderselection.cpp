@@ -82,7 +82,7 @@ FolderSelection::FolderSelection(QString const &prompt, QString const &extraLabe
 
 void FolderSelection::setPath(de::NativePath const &path)
 {
-    d->edit->setText(path.toString());
+    d->edit->setText(QString::fromUtf8(path));
 }
 
 void FolderSelection::setEnabled(bool yes)

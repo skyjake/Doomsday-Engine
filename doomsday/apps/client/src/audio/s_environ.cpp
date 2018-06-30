@@ -47,7 +47,7 @@ AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
     return ::envInfo[1 + dint( id )];
 }
 
-AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri)
+AudioEnvironmentId S_AudioEnvironmentId(res::Uri const *uri)
 {
     if(uri)
     {
@@ -56,14 +56,14 @@ AudioEnvironmentId S_AudioEnvironmentId(de::Uri const *uri)
             ded_tenviron_t const *env = &DED_Definitions()->textureEnv[i];
             for(dint k = 0; k < env->materials.size(); ++k)
             {
-                de::Uri *ref = env->materials[k].uri;
+                res::Uri *ref = env->materials[k].uri;
                 if(!ref || *ref != *uri) continue;
 
                 // Is this a known environment?
                 for(dint m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
                 {
                     AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
-                    if(!qstricmp(env->id, envInfo.name))
+                    if(!iCmpStrCase(env->id, envInfo.name))
                         return AudioEnvironmentId(m);
                 }
                 return AE_NONE;

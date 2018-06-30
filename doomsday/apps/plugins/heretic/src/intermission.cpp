@@ -31,7 +31,8 @@
 #include "g_defs.h"
 #include "menu/widgets/widget.h"
 
-#include <cstring>
+#undef Set
+#include <de/Set>
 
 using namespace de;
 
@@ -48,14 +49,14 @@ namespace internal
     struct Location
     {
         Vec2i origin;
-        de::Uri mapUri;
+        res::Uri mapUri;
 
-        Location(Vec2i const &origin, de::Uri const &mapUri)
+        Location(Vec2i const &origin, res::Uri const &mapUri)
             : origin(origin)
             , mapUri(mapUri)
         {}
     };
-    typedef QList<Location> Locations;
+    typedef List<Location> Locations;
     static Locations episode1Locations;
     static Locations episode2Locations;
     static Locations episode3Locations;
@@ -108,37 +109,37 @@ void IN_Init()
     if(!episode1Locations.isEmpty()) return;
 
     episode1Locations
-        << Location( Vec2i(172,  78), de::makeUri("Maps:E1M1") )
-        << Location( Vec2i( 86,  90), de::makeUri("Maps:E1M2") )
-        << Location( Vec2i( 73,  66), de::makeUri("Maps:E1M3") )
-        << Location( Vec2i(159,  95), de::makeUri("Maps:E1M4") )
-        << Location( Vec2i(148, 126), de::makeUri("Maps:E1M5") )
-        << Location( Vec2i(132,  54), de::makeUri("Maps:E1M6") )
-        << Location( Vec2i(131,  74), de::makeUri("Maps:E1M7") )
-        << Location( Vec2i(208, 138), de::makeUri("Maps:E1M8") )
-        << Location( Vec2i( 52,  10), de::makeUri("Maps:E1M9") );
+        << Location( Vec2i(172,  78), res::makeUri("Maps:E1M1") )
+        << Location( Vec2i( 86,  90), res::makeUri("Maps:E1M2") )
+        << Location( Vec2i( 73,  66), res::makeUri("Maps:E1M3") )
+        << Location( Vec2i(159,  95), res::makeUri("Maps:E1M4") )
+        << Location( Vec2i(148, 126), res::makeUri("Maps:E1M5") )
+        << Location( Vec2i(132,  54), res::makeUri("Maps:E1M6") )
+        << Location( Vec2i(131,  74), res::makeUri("Maps:E1M7") )
+        << Location( Vec2i(208, 138), res::makeUri("Maps:E1M8") )
+        << Location( Vec2i( 52,  10), res::makeUri("Maps:E1M9") );
 
     episode2Locations
-        << Location( Vec2i(218,  57), de::makeUri("Maps:E2M1") )
-        << Location( Vec2i(137,  81), de::makeUri("Maps:E2M2") )
-        << Location( Vec2i(155, 124), de::makeUri("Maps:E2M3") )
-        << Location( Vec2i(171,  68), de::makeUri("Maps:E2M4") )
-        << Location( Vec2i(250,  86), de::makeUri("Maps:E2M5") )
-        << Location( Vec2i(136,  98), de::makeUri("Maps:E2M6") )
-        << Location( Vec2i(203,  90), de::makeUri("Maps:E2M7") )
-        << Location( Vec2i(220, 140), de::makeUri("Maps:E2M8") )
-        << Location( Vec2i(279, 106), de::makeUri("Maps:E2M9") );
+        << Location( Vec2i(218,  57), res::makeUri("Maps:E2M1") )
+        << Location( Vec2i(137,  81), res::makeUri("Maps:E2M2") )
+        << Location( Vec2i(155, 124), res::makeUri("Maps:E2M3") )
+        << Location( Vec2i(171,  68), res::makeUri("Maps:E2M4") )
+        << Location( Vec2i(250,  86), res::makeUri("Maps:E2M5") )
+        << Location( Vec2i(136,  98), res::makeUri("Maps:E2M6") )
+        << Location( Vec2i(203,  90), res::makeUri("Maps:E2M7") )
+        << Location( Vec2i(220, 140), res::makeUri("Maps:E2M8") )
+        << Location( Vec2i(279, 106), res::makeUri("Maps:E2M9") );
 
     episode3Locations
-        << Location( Vec2i( 86,  99), de::makeUri("Maps:E3M1") )
-        << Location( Vec2i(124, 103), de::makeUri("Maps:E3M2") )
-        << Location( Vec2i(154,  79), de::makeUri("Maps:E3M3") )
-        << Location( Vec2i(202,  83), de::makeUri("Maps:E3M4") )
-        << Location( Vec2i(178,  59), de::makeUri("Maps:E3M5") )
-        << Location( Vec2i(142,  58), de::makeUri("Maps:E3M6") )
-        << Location( Vec2i(219,  66), de::makeUri("Maps:E3M7") )
-        << Location( Vec2i(247,  57), de::makeUri("Maps:E3M8") )
-        << Location( Vec2i(107,  80), de::makeUri("Maps:E3M9") );
+        << Location( Vec2i( 86,  99), res::makeUri("Maps:E3M1") )
+        << Location( Vec2i(124, 103), res::makeUri("Maps:E3M2") )
+        << Location( Vec2i(154,  79), res::makeUri("Maps:E3M3") )
+        << Location( Vec2i(202,  83), res::makeUri("Maps:E3M4") )
+        << Location( Vec2i(178,  59), res::makeUri("Maps:E3M5") )
+        << Location( Vec2i(142,  58), res::makeUri("Maps:E3M6") )
+        << Location( Vec2i(219,  66), res::makeUri("Maps:E3M7") )
+        << Location( Vec2i(247,  57), res::makeUri("Maps:E3M8") )
+        << Location( Vec2i(107,  80), res::makeUri("Maps:E3M9") );
 }
 
 void IN_Shutdown()
@@ -152,7 +153,7 @@ static String backgroundPatchForEpisode(String const &episodeId)
     int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
     if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
     {
-        return String("MAPE%1").arg(oldEpisodeNum + 1);
+        return String::format("MAPE%d", oldEpisodeNum + 1);
     }
     return ""; // None.
 }
@@ -165,7 +166,7 @@ static Locations const *locationsForEpisode(String const &episodeId)
     return nullptr; // Not found.
 }
 
-static Location const *tryFindLocationForMap(Locations const *locations, de::Uri const &mapUri)
+static Location const *tryFindLocationForMap(Locations const *locations, res::Uri const &mapUri)
 {
     if(locations)
     {
@@ -226,7 +227,7 @@ static common::GameSession::VisitedMaps visitedMaps()
         int lastMapNum = G_MapNumberFor(::wbs->currentMap);
         if(lastMapNum == 8) lastMapNum = G_MapNumberFor(::wbs->nextMap) - 1; // 1-based
 
-        QSet<de::Uri> visited;
+        Set<String> visited;
         for(int i = 0; i <= lastMapNum; ++i)
         {
             visited << G_ComposeMapUri(oldEpisodeNum, i);
@@ -235,7 +236,7 @@ static common::GameSession::VisitedMaps visitedMaps()
         {
             visited << G_ComposeMapUri(oldEpisodeNum, 8);
         }
-        return visited.toList();
+        return compose<List<res::Uri>>(visited.begin(), visited.end());
     }
     return gfw_Session()->allVisitedMaps();
 }
@@ -280,7 +281,7 @@ static void drawFinishedTitle()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1],defFontRGB3[2]);
@@ -304,7 +305,7 @@ static void drawEnteringTitle()
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetColor(defFontRGB[0], defFontRGB[1], defFontRGB[2]);
-    FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8().constData(), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->nextMap), 160, 20, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -321,7 +322,7 @@ static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = t
     DGL_Color4f(1, 1, 1, 1);
 
     common::GameSession::VisitedMaps const visited = visitedMaps();
-    for(de::Uri const &visitedMap : visited)
+    for(res::Uri const &visitedMap : visited)
     {
         if(Location const *loc = tryFindLocationForMap(locations, visitedMap))
         {
@@ -578,7 +579,7 @@ static void drawNetgameStats()
     FR_DrawTextXY3(labelString("KILLS"), 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3(labelString("BONUS"), 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3(labelString("SECRET"), 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -646,7 +647,7 @@ static void drawSinglePlayerStats()
     FR_DrawTextXY3(labelString("KILLS"), 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3(labelString("ITEMS"), 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
     FR_DrawTextXY3(labelString("SECRETS"), 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
@@ -763,7 +764,7 @@ static void drawSinglePlayerStats()
 
             FR_SetFont(FID(GF_FONTB));
             FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-            FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+            FR_DrawTextXY3(G_MapTitle(wbs->nextMap), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
             DGL_Disable(DGL_TEXTURE_2D);
         }
@@ -944,7 +945,7 @@ static void loadData()
     String const episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
-    pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
+    pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId));
 
     pBeenThere  = R_DeclarePatch("IN_X");
     pGoingThere = R_DeclarePatch("IN_YAH");

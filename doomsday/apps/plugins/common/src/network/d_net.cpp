@@ -53,9 +53,9 @@ static void notifyAllowCheatsChange()
 {
     if(IS_NETGAME && IS_NETWORK_SERVER && G_GameState() != GS_STARTUP)
     {
-        String const msg = String("--- CHEATS NOW %1 ON THIS SERVER ---")
-                               .arg(netSvAllowCheats? "ENABLED" : "DISABLED");
-        NetSv_SendMessage(DDSP_ALL_PLAYERS, msg.toUtf8().constData());
+        NetSv_SendMessage(DDSP_ALL_PLAYERS,
+                          String::format("--- CHEATS NOW %s ON THIS SERVER ---",
+                                         netSvAllowCheats ? "ENABLED" : "DISABLED"));
     }
 }
 
@@ -64,14 +64,14 @@ String D_NetDefaultEpisode()
     return FirstPlayableEpisodeId();
 }
 
-de::Uri D_NetDefaultMap()
+res::Uri D_NetDefaultMap()
 {
     String const episodeId = D_NetDefaultEpisode();
 
-    de::Uri map("Maps:", RC_NULL);
+    res::Uri map("Maps:", RC_NULL);
     if(!episodeId.isEmpty())
     {
-        map = de::makeUri(Defs().episodes.find("id", episodeId).gets("startMap"));
+        map = res::makeUri(Defs().episodes.find("id", episodeId).gets("startMap"));
         DE_ASSERT(!map.isEmpty());
     }
     return map;
@@ -96,9 +96,9 @@ void D_NetConsoleRegister()
 
         // Use the first playable map as the default.
         String episodeId = D_NetDefaultEpisode();
-        de::Uri map      = D_NetDefaultMap();
+        res::Uri map      = D_NetDefaultMap();
 
-        Con_SetString("server-game-episode", episodeId.toUtf8().constData());
+        Con_SetString("server-game-episode", episodeId);
         Con_SetUri   ("server-game-map",     reinterpret_cast<uri_s *>(&map));
     }
 
@@ -212,7 +212,7 @@ int D_NetServerStarted(int before)
     P_ResetPlayerRespawnClasses();
 
     String episodeId = Con_GetString("server-game-episode");
-    de::Uri mapUri = *reinterpret_cast<de::Uri const *>(Con_GetUri("server-game-map"));
+    res::Uri mapUri = *reinterpret_cast<res::Uri const *>(Con_GetUri("server-game-map"));
     if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
     GameRules rules(gfw_Session()->rules()); // Make a copy of the current rules.
@@ -506,7 +506,7 @@ void D_HandlePacket(int fromplayer, int type, void *data, size_t length)
 
         // Tell the engine we're ready to proceed. It'll start handling
         // the world updates after this variable is set.
-        Set(DD_GAME_READY, true);
+        DD_SetInteger(DD_GAME_READY, true);
         break;
 
     case GPT_PLAYER_SPAWN_POSITION:

@@ -71,7 +71,7 @@ String const &FontManifest::schemeName() const
     return scheme().name();
 }
 
-String FontManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+String FontManifest::description(res::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
     return String("%1").arg(composeUri().compose(uriCompositionFlags | Uri::DecodePath),
                             ( uriCompositionFlags.testFlag(Uri::OmitScheme)? -14 : -22 ) );

@@ -158,7 +158,7 @@ bool Def_SameStateSequence(state_t *snew, state_t *sold);
 
 ded_compositefont_t *Def_GetCompositeFont(char const *uri);
 ded_ptcgen_t *Def_GetGenerator(struct uri_s const *uri);
-ded_ptcgen_t *Def_GetGenerator(de::Uri const &uri);
+ded_ptcgen_t *Def_GetGenerator(res::Uri const &uri);
 ded_ptcgen_t *Def_GetDamageGenerator(int mobjType);
 ded_light_t *Def_GetLightDef(int spr, int frame);
 

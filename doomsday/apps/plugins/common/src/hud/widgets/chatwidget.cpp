@@ -73,13 +73,12 @@ DE_PIMPL(ChatWidget)
                 // Send it locally.
                 for(dint i = 0; i < MAXPLAYERS; ++i)
                 {
-                    D_NetMessageNoSound(i, msg.toUtf8().constData());
+                    D_NetMessageNoSound(i, msg);
                 }
             }
             else
             {
-                String const cmd = String("chat %1").arg(msg.escaped());
-                DD_Execute(false, cmd.toUtf8().constData());
+                DD_Execute(false, String::format("chat %s", msg.escaped().c_str()));
             }
         }
         else
@@ -93,12 +92,11 @@ DE_PIMPL(ChatWidget)
                 if(!IS_NETGAME)
                 {
                     // Send it locally.
-                    D_NetMessageNoSound(i, msg.toUtf8().constData());
+                    D_NetMessageNoSound(i, msg);
                 }
                 else
                 {
-                    String const cmd = String("chatnum %1 %2").arg(i).arg(msg.escaped());
-                    DD_Execute(false, cmd.toUtf8().constData());
+                    DD_Execute(false, String::format("chatnum %i %s", i, msg.escaped().c_str()));
                 }
             }
         }
@@ -159,7 +157,7 @@ void ChatWidget::setDestination(dint newDestination)
         return;
     }
     /// @throw DestinationError  Invalid destination given.
-    throw DestinationError("ChatWidget::setDestination", "Unknown destination #" + String::number(newDestination) + " (not changed)");
+    throw DestinationError("ChatWidget::setDestination", "Unknown destination #" + String::asText(newDestination) + " (not changed)");
 }
 
 dint ChatWidget::handleEvent(event_t const &ev)
@@ -181,7 +179,7 @@ dint ChatWidget::handleEvent(event_t const &ev)
 
     if(ev.data1 == DDKEY_BACKSPACE)
     {
-        d->text.truncate(d->text.length() - 1);
+        d->text.truncate(String::CharPos(d->text.length() - 1));
         return true;
     }
 
@@ -192,7 +190,7 @@ dint ChatWidget::handleEvent(event_t const &ev)
     dchar const ch = ev.data1;
     if(ch >= ' ' && ch <= 'z')
     {
-        d->text.append(QChar::fromLatin1(d->shiftDown ? ::shiftXForm[dint( ch )] : ch));
+        d->text += Char(d->shiftDown ? ::shiftXForm[dbyte(ch)] : ch);
     }
     return oldLength != d->text.length();
 }
@@ -217,7 +215,7 @@ dint ChatWidget::handleMenuCommand(menucommand_e cmd)
         return true;
 
     case MCMD_DELETE:
-        d->text.truncate(d->text.length() - 1);
+        d->text.truncate(String::CharPos(d->text.length() - 1));
         return true;
 
     default: return false;
@@ -254,8 +252,8 @@ void ChatWidget::draw(Vec2i const &offset) const
     FR_SetFont(font());
     FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textOpacity);
 
-    Block const text       = messageAsText().toUtf8();
-    dint const textWidth   = FR_TextWidth(text.constData());
+    const String text      = messageAsText();
+    dint const textWidth   = FR_TextWidth(text);
     dint const cursorWidth = FR_CharWidth('_');
 
     dint xOffset = 0;
@@ -265,7 +263,7 @@ void ChatWidget::draw(Vec2i const &offset) const
         xOffset = -(textWidth + cursorWidth);
 
     DGL_Enable(DGL_TEXTURE_2D);
-    FR_DrawTextXY(text.constData(), xOffset, 0);
+    FR_DrawTextXY(text, xOffset, 0);
     if(actualMapTime & 12)
     {
         FR_DrawCharXY('_', xOffset + textWidth, 0);
@@ -284,9 +282,9 @@ void ChatWidget::updateGeometry()
 
     FR_SetFont(font());
 
-    Block const text = messageAsText().toUtf8();
+    const String text = messageAsText();
     Size2Raw cursorSize; FR_CharSize(&cursorSize, '_');
-    Size2Raw textSize;   FR_TextSize(&textSize, text.constData());
+    Size2Raw textSize;   FR_TextSize(&textSize, text);
     Rect_SetWidthHeight(&geometry(), cfg.common.msgScale * (textSize.width + cursorSize.width),
                                      cfg.common.msgScale * (de::max(textSize.height, cursorSize.height)));
 }
@@ -316,7 +314,6 @@ void ChatWidget::consoleRegister()
     // User-configurable macros.
     for(dint i = 0; i < 10; ++i)
     {
-        Block const cvarname = (String("chat-macro%1").arg(i)).toUtf8();
-        C_VAR_CHARPTR(cvarname.constData(), &cfg.common.chatMacros[i], 0, 0, 0);
+        C_VAR_CHARPTR(String::format("chat-macro%i", i), &cfg.common.chatMacros[i], 0, 0, 0);
     }
 }

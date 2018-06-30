@@ -107,7 +107,7 @@ Record &Sprite::addView(String material, dint angle, bool mirrorX)
     def().set(VAR_FRONT_ONLY, angle <= 0);
 
     auto *view = new Record;
-    view->add(VAR_MATERIAL).set(new UriValue(de::makeUri(material)));
+    view->add(VAR_MATERIAL).set(new UriValue(res::makeUri(material)));
     view->addBoolean(VAR_MIRROR_X, mirrorX);
     viewsDict().add(new NumberValue(de::max(0, angle - 1)), new RecordValue(view, RecordValue::OwnsRecord));
     return *view;
@@ -151,7 +151,7 @@ Record &Sprite::findView(dint angle)
             return view;
     }
     /// @throw MissingViewError  Invalid angle specified.
-    throw MissingViewError("Sprite::view", "Unknown view:" + String::number(angle));*/
+    throw MissingViewError("Sprite::view", "Unknown view:" + String::asText(angle));*/
 }
 
 Record const *Sprite::tryFindView(dint angle) const
@@ -169,7 +169,7 @@ Record const *Sprite::tryFindView(dint angle) const
 }
 #endif
 
-static de::Uri nullUri;
+static res::Uri nullUri;
 
 Sprite::View Sprite::view(de::dint angle) const
 {
@@ -191,7 +191,7 @@ Sprite::View Sprite::view(de::dint angle) const
     return v;
 }
 
-de::Uri const &Sprite::viewMaterial(de::dint angle) const
+res::Uri const &Sprite::viewMaterial(de::dint angle) const
 {
     auto const &cmpl = def().compiled();
     if (angle < cmpl.views.sizei())

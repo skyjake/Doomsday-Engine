@@ -40,12 +40,12 @@ public:
     class LIBDOOMSDAY_PUBLIC AnimationStage : public Stage
     {
     public:
-        AnimationStage(de::Uri const &texture, int tics,
+        AnimationStage(res::Uri const &texture, int tics,
                        float variance                     = 0,
                        float glowStrength                 = 0,
                        float glowStrengthVariance         = 0,
                        de::Vec2f const origin          = de::Vec2f(),
-                       de::Uri const &maskTexture         = de::Uri(),
+                       res::Uri const &maskTexture         = res::Uri(),
                        de::Vec2f const &maskDimensions = de::Vec2f(1, 1),
                        blendmode_t blendMode              = BM_NORMAL,
                        float opacity                      = 1);
@@ -62,11 +62,11 @@ public:
         de::String description() const;
 
     public:
-        de::Uri      texture;
+        res::Uri      texture;
         float        glowStrength;
         float        glowStrengthVariance;
         de::Vec2f origin;
-        de::Uri      maskTexture;
+        res::Uri      maskTexture;
         de::Vec2f maskDimensions;
         blendmode_t  blendMode;
         float        opacity;

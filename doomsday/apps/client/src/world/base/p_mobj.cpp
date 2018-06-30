@@ -437,7 +437,7 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
     return nullptr;
 }
 
-static inline ClientTexture *lightmap(de::Uri const *textureUri)
+static inline ClientTexture *lightmap(res::Uri const *textureUri)
 {
     if(!textureUri) return nullptr;
     return static_cast<ClientTexture *>

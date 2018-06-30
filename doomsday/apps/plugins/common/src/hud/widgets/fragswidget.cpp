@@ -82,7 +82,7 @@ void FragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String("Frags: %1").arg(frags->_value);
+    auto const valueAsText = String::format("Frags: %i", frags->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -94,7 +94,7 @@ void FragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
     FR_SetFont(frags->font());
     FR_SetTracking(TRACKING);
     FR_SetColorAndAlpha(::cfg.common.hudColor[0], ::cfg.common.hudColor[1], ::cfg.common.hudColor[2], textOpacity);
-    FR_DrawTextXY(valueAsText.toUtf8().constData(), 0, 0);
+    FR_DrawTextXY(valueAsText, 0, 0);
 
     DGL_Disable(DGL_TEXTURE_2D);
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -124,11 +124,11 @@ void FragsWidget_UpdateGeometry(guidata_frags_t *frags)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String("Frags: %1").arg(frags->_value);
+    auto const valueAsText = String::format("Frags: %i", frags->_value);
 
     FR_SetFont(frags->font());
     FR_SetTracking(TRACKING);
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
     textSize.width  *= ::cfg.common.hudScale;
     textSize.height *= ::cfg.common.hudScale;
     Rect_SetWidthHeight(&frags->geometry(), textSize.width, textSize.height);
@@ -180,7 +180,7 @@ void SBarFragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String::number(frags->_value);
+    auto const valueAsText = String::asText(frags->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -201,7 +201,7 @@ void SBarFragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
     {
         FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
     }
-    FR_DrawTextXY3(valueAsText.toUtf8().constData(), X_ORIGIN + X_OFFSET, Y_ORIGIN + Y_OFFSET,
+    FR_DrawTextXY3(valueAsText, X_ORIGIN + X_OFFSET, Y_ORIGIN + Y_OFFSET,
                    ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -241,11 +241,11 @@ void SBarFragsWidget_UpdateGeometry(guidata_frags_t *frags)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String::number(frags->_value);
+    auto const valueAsText = String::asText(frags->_value);
 
     FR_SetFont(frags->font());
     FR_SetTracking(TRACKING);
-    Size2Raw textSize; FR_TextSize(&textSize, valueAsText.toUtf8().constData());
+    Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
     Rect_SetWidthHeight(&frags->geometry(), textSize.width  * ::cfg.common.statusbarScale,
                                             textSize.height * ::cfg.common.statusbarScale);
 

@@ -84,7 +84,7 @@ void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();

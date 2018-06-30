@@ -31,6 +31,7 @@
 #include <de/Path>
 
 using namespace de;
+using namespace res;
 
 DE_PIMPL(ResourceManifest)
 {
@@ -264,7 +265,7 @@ void ResourceManifest::locateFile()
         // Attempt to resolve a path to the named resource using FS1.
         try
         {
-            String foundPath = App_FileSystem().findPath(de::Uri(*i, d->classId),
+            String foundPath = App_FileSystem().findPath(res::Uri(*i, d->classId),
                                                          RLF_DEFAULT, App_ResourceClass(d->classId));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
             candidates << foundPath;

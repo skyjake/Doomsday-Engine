@@ -85,7 +85,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
             // have the data file(s) and the description text in the same folder so
             // DataBundle will analyze it fully.
 
-//            qDebug() << dataFile->parent()->path() << "\n" << dataFile->parent()->contentsAsText().toUtf8().constData();
+//            qDebug() << dataFile->parent()->path() << "\n" << dataFile->parent()->contentsAsText();
 //            qDebug() << dataFile->target().size() << dataFile->target().status().modifiedAt.asText();
 
             //qDebug() << "remote file timestamp:" << DataBundle::versionFromTimestamp(dataFile->target().status().modifiedAt);

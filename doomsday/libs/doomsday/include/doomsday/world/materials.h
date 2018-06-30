@@ -65,7 +65,7 @@ public:
      *
      * @see hasMaterialManifest(), MaterialManifest::hasMaterial()
      */
-    inline bool hasMaterial(de::Uri const &path) const {
+    inline bool hasMaterial(res::Uri const &path) const {
         if (hasMaterialManifest(path)) return materialManifest(path).hasMaterial();
         return false;
     }
@@ -77,7 +77,7 @@ public:
      *
      * @see MaterialManifest::material()
      */
-    inline Material &material(de::Uri const &path) const {
+    inline Material &material(res::Uri const &path) const {
         return materialManifest(path).material();
     }
 
@@ -86,14 +86,14 @@ public:
      *
      * @see hasMaterialManifest(), MaterialManifest::materialPtr()
      */
-    Material *materialPtr(de::Uri const &path);
+    Material *materialPtr(res::Uri const &path);
 
     /**
      * Determines if a manifest exists for a material on @a path.
      *
      * @return @c true if a manifest exists; otherwise @a false.
      */
-    bool hasMaterialManifest(de::Uri const &path) const;
+    bool hasMaterialManifest(res::Uri const &path) const;
 
     /**
      * Look up a material manifest by its unique resource @a path.
@@ -101,7 +101,7 @@ public:
      * @param path  The path to search for.
      * @return  Found material manifest.
      */
-    MaterialManifest &materialManifest(de::Uri const &path) const;
+    MaterialManifest &materialManifest(res::Uri const &path) const;
 
     /**
      * Look up a material manifest by its unique resource @a path.
@@ -109,7 +109,7 @@ public:
      * @param path  The path to search for.
      * @return  Found material manifest, or nullptr if not found.
      */
-    MaterialManifest *materialManifestPtr(de::Uri const &path) const;
+    MaterialManifest *materialManifestPtr(res::Uri const &path) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -184,7 +184,7 @@ public:
      *
      * @return  Manifest for this URI.
      */
-    inline MaterialManifest &declareMaterial(de::Uri const &uri) {
+    inline MaterialManifest &declareMaterial(res::Uri const &uri) {
         return materialScheme(uri.scheme()).declare(uri.path());
     }
 

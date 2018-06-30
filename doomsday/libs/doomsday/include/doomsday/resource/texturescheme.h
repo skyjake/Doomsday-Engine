@@ -104,7 +104,7 @@ public:
                       de::Vec2ui const &dimensions,
                       de::Vec2i const &origin,
                       int uniqueId,
-                      de::Uri const *resourceUri);
+                      res::Uri const *resourceUri);
 
     /*
      * Returns @c true if a manifest exists on the given @a path.
@@ -122,10 +122,10 @@ public:
     /**
      * Lookup a Manifest in the scheme with an associated resource URI matching @a uri.
      */
-    Manifest       &findByResourceUri(de::Uri const &uri);
-    Manifest const &findByResourceUri(de::Uri const &uri) const;
+    Manifest       &findByResourceUri(res::Uri const &uri);
+    Manifest const &findByResourceUri(res::Uri const &uri) const;
 
-    Manifest *tryFindByResourceUri(de::Uri const &uri) const;
+    Manifest *tryFindByResourceUri(res::Uri const &uri) const;
 
     /**
      * Lookup a Manifest in the scheme with an associated identifier matching @a uniqueId.

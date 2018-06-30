@@ -54,7 +54,7 @@ typedef enum resourceclassid_e {
 #include <de/String>
 #include <de/List>
 
-namespace de { class FileType; }
+namespace res { class FileType; }
 
 /**
  * ResourceClass encapsulates the properties and logics belonging to a logical
@@ -65,7 +65,7 @@ namespace de { class FileType; }
 class LIBDOOMSDAY_PUBLIC ResourceClass
 {
 public:
-    typedef de::List<de::FileType *> FileTypes;
+    typedef de::List<res::FileType *> FileTypes;
 
 public:
     ResourceClass(de::String name, de::String defaultScheme);
@@ -87,7 +87,7 @@ public:
      *
      * @return This instance.
      */
-    ResourceClass& addFileType(de::FileType *ftype);
+    ResourceClass& addFileType(res::FileType *ftype);
 
     /**
      * Provides access to the file type list for efficient iteration.

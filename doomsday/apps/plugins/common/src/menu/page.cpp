@@ -72,7 +72,7 @@ DE_PIMPL(Page)
     CommandResponder cmdResponder;
 
     // User data values.
-    QVariant userValue;
+    std::unique_ptr<Value> userValue;
 
     Impl(Public *i) : Base(i)
     {
@@ -89,7 +89,7 @@ DE_PIMPL(Page)
 
     ~Impl()
     {
-        qDeleteAll(children);
+        deleteAll(children);
     }
 
     void updateAllChildGeometry()
@@ -411,7 +411,7 @@ void Page::setOnActiveCallback(const OnActiveCallback &newCallback)
 static inline String subpageText(int page = 0, int totalPages = 0)
 {
     if(totalPages <= 0) return "";
-    return String("Page %1/%2").arg(page).arg(totalPages);
+    return String::format("Page %i/%i", page, totalPages);
 }
 #endif
 
@@ -432,7 +432,7 @@ static void drawNavigation(Vec2i const origin)
     FR_SetColorv(cfg.common.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(subpageText(currentPage, totalPages).toUtf8().constData(), origin.x, origin.y,
+    FR_DrawTextXY3(subpageText(currentPage, totalPages), origin.x, origin.y,
                    ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -672,7 +672,8 @@ Widget &Page::findWidget(int flags, int group)
     {
         return *wi;
     }
-    throw Error("Page::findWidget", QString("Failed to locate widget in group #%1 with flags %2").arg(group).arg(flags));
+    throw Error("Page::findWidget",
+                stringf("Failed to locate widget in group #%i with flags %x", group, flags));
 }
 
 Widget *Page::tryFindWidget(int flags, int group)
@@ -843,14 +844,14 @@ int Page::handleCommand(menucommand_e cmd)
     return false; // Not handled.
 }
 
-void Page::setUserValue(QVariant const &newValue)
+void Page::setUserValue(const Value &newValue)
 {
-    d->userValue = newValue;
+    d->userValue.reset(newValue.duplicate());
 }
 
-QVariant const &Page::userValue() const
+const Value &Page::userValue() const
 {
-    return d->userValue;
+    return *d->userValue;
 }
 
 } // namespace menu

@@ -264,7 +264,7 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
     return sysFlareTextures[which];
 }
 
-GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
+GLuint GL_PrepareFlaremap(res::Uri const &resourceUri)
 {
     if (resourceUri.path().length() == 1)
     {
@@ -289,12 +289,12 @@ GLuint GL_PrepareFlaremap(de::Uri const &resourceUri)
 
 static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 {
-    de::FS1 &fileSys = App_FileSystem();
+    res::FS1 &fileSys = App_FileSystem();
 
     // First try an external resource.
     try
     {
-        String foundPath = fileSys.findPath(de::Uri("Patches", Path(raw.name)),
+        String foundPath = fileSys.findPath(res::Uri("Patches", Path(raw.name)),
                                              RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;

@@ -26,8 +26,6 @@
 #include "remoteuser.h"
 #include "dd_types.h"
 
-#include <QObject>
-
 /**
  * Subsystem for tending to clients.
  * @ingroup server
@@ -44,10 +42,8 @@
  * @todo This is a work in progress, as all remnants of the old network code
  * have not been removed/revised.
  */
-class ServerSystem : public QObject, public de::System
+class ServerSystem : public de::System
 {
-    Q_OBJECT
-
 public:
     /// An error related to identifiers (e.g., invalid ID specified). @ingroup errors
     DE_ERROR(IdError);
@@ -96,7 +92,7 @@ public:
 
     void timeChanged(de::Clock const &);
 
-protected slots:
+protected:
     void handleIncomingConnection();
     void userDestroyed();
 

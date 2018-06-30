@@ -20,7 +20,7 @@
 #ifndef DE_UI_INFINESYSTEM_H
 #define DE_UI_INFINESYSTEM_H
 
-#include <QList>
+#include <de/List>
 #include <de/Error>
 #include <de/String>
 #include "finale.h"
@@ -36,7 +36,7 @@ public:
     /// The referenced Finale could not be found. @ingroup errors
     DE_ERROR(MissingFinaleError);
 
-    typedef QList<Finale *> Finales;
+    typedef de::List<Finale *> Finales;
 
 public:
     InFineSystem();

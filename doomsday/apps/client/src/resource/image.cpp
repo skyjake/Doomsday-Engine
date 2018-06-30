@@ -421,7 +421,7 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
 
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri(RC_GRAPHIC, _searchPath),
+        String foundPath = App_FileSystem().findPath(res::Uri(RC_GRAPHIC, _searchPath),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
@@ -468,7 +468,7 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
     // First look for a version with an optional suffix.
     try
     {
-        String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath + optionalSuffix, RC_GRAPHIC),
+        String foundPath = App_FileSystem().findPath(res::Uri(encodedSearchPath + optionalSuffix, RC_GRAPHIC),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
@@ -483,7 +483,7 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
     {
         try
         {
-            String foundPath = App_FileSystem().findPath(de::Uri(encodedSearchPath, RC_GRAPHIC),
+            String foundPath = App_FileSystem().findPath(res::Uri(encodedSearchPath, RC_GRAPHIC),
                                                          RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
             // Ensure the found path is absolute.
             foundPath = App_BasePath() / foundPath;
@@ -554,7 +554,7 @@ static String toTranslationId(int tclass, int tmap)
 
     int trans = de::max(0, NUM_TRANSLATION_MAPS_PER_CLASS * tclass + tmap - 1);
     LOGDEV_RES_XVERBOSE("tclass=%i tmap=%i => TransPal# %i", tclass << tmap << trans);
-    return String::number(trans);
+    return String::asText(trans);
 
 #undef NUM_TRANSLATION_MAPS_PER_CLASS
 #undef NUM_TRANSLATION_CLASSES
@@ -754,7 +754,7 @@ static Source loadDetail(image_t &image, FileHandle &hndl)
 Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                           TextureVariantSpec const &spec)
 {
-    de::FS1 &fileSys = App_FileSystem();
+    res::FS1 &fileSys = App_FileSystem();
     auto &cfg = R_Config();
 
     Source source = None;
@@ -766,7 +766,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                 (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
             // First try the textures scheme.
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
@@ -791,7 +791,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
                 (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
             // First try the flats scheme.
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
 
             if (source == None)
@@ -805,7 +805,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         {
             if (tex.manifest().hasResourceUri())
             {
-                de::Uri resourceUri = tex.manifest().resourceUri();
+                res::Uri resourceUri = tex.manifest().resourceUri();
                 if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
@@ -837,7 +837,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         if (cfg.noHighResTex->value().isFalse() &&
                 (loadExtAlways || cfg.highResWithPWAD->value().isTrue() || !tex.isFlagged(Texture::Custom)))
         {
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
             source = loadExternalTexture(image, uri.compose(), "-ck");
         }
 
@@ -845,7 +845,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         {
             if (tex.manifest().hasResourceUri())
             {
-                de::Uri resourceUri = tex.manifest().resourceUri();
+                res::Uri resourceUri = tex.manifest().resourceUri();
                 if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
@@ -876,7 +876,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         // Attempt to load an external replacement for this sprite?
         if (cfg.noHighResPatches->value().isFalse())
         {
-            de::Uri uri = tex.manifest().composeUri();
+            res::Uri uri = tex.manifest().composeUri();
 
             // Prefer psprite or translated versions if available.
             if (TC_PSPRITE_DIFFUSE == vspec.context)
@@ -898,7 +898,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
         {
             if (tex.manifest().hasResourceUri())
             {
-                de::Uri resourceUri = tex.manifest().resourceUri();
+                res::Uri resourceUri = tex.manifest().resourceUri();
                 if (!resourceUri.scheme().compareWithoutCase("LumpIndex"))
                 {
                     try
@@ -921,7 +921,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
     {
         if (tex.manifest().hasResourceUri())
         {
-            de::Uri resourceUri = tex.manifest().resourceUri();
+            res::Uri resourceUri = tex.manifest().resourceUri();
             if (resourceUri.scheme().compareWithoutCase("Lumps"))
             {
                 source = loadExternalTexture(image, resourceUri.compose());
@@ -948,7 +948,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
     {
         if (tex.manifest().hasResourceUri())
         {
-            de::Uri resourceUri = tex.manifest().resourceUri();
+            res::Uri resourceUri = tex.manifest().resourceUri();
             source = loadExternalTexture(image, resourceUri.compose());
         }
     }

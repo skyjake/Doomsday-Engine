@@ -260,7 +260,7 @@ int DED_AddTextureEnv(ded_t* ded, char const* id)
 int DED_AddCompositeFont(ded_t* ded, char const *uri)
 {
     ded_compositefont_t* cfont = ded->compositeFonts.append();
-    if (uri) cfont->uri = new de::Uri(uri, RC_NULL);
+    if (uri) cfont->uri = new res::Uri(uri, RC_NULL);
     return ded->compositeFonts.indexOf(cfont);
 }
 
@@ -284,7 +284,7 @@ int DED_AddDetail(ded_t *ded, char const *lumpname)
 
     if (lumpname && lumpname[0])
     {
-        dtl->stage.texture = new de::Uri(lumpname, RC_NULL);
+        dtl->stage.texture = new res::Uri(lumpname, RC_NULL);
     }
     dtl->stage.scale = 1;
     dtl->stage.strength = 1;
@@ -445,7 +445,7 @@ int ded_s::getEpisodeNum(String const &id) const
     return -1;
 }
 
-int ded_s::getMapInfoNum(de::Uri const &uri) const
+int ded_s::getMapInfoNum(res::Uri const &uri) const
 {
     if (Record const *def = mapInfos.tryFind(defn::Definition::VAR_ID, uri.compose()))
     {
@@ -454,14 +454,14 @@ int ded_s::getMapInfoNum(de::Uri const &uri) const
     return -1;  // Not found.
 }
 
-int ded_s::getMaterialNum(de::Uri const &uri) const
+int ded_s::getMaterialNum(res::Uri const &uri) const
 {
     if (uri.isEmpty()) return -1;  // Not found.
 
     if (uri.scheme().isEmpty())
     {
         // Caller doesn't care which scheme - use a priority search order.
-        de::Uri temp(uri);
+        res::Uri temp(uri);
 
         temp.setScheme("Sprites");
         int idx = getMaterialNum(temp);
@@ -623,7 +623,7 @@ ded_value_t *ded_s::getValueById(String const &id) const
     return getValueById(id.c_str());
 }
 
-ded_value_t *ded_s::getValueByUri(de::Uri const &uri) const
+ded_value_t *ded_s::getValueByUri(res::Uri const &uri) const
 {
     if (!uri.scheme().compareWithoutCase("Values"))
     {
@@ -632,7 +632,7 @@ ded_value_t *ded_s::getValueByUri(de::Uri const &uri) const
     return nullptr;
 }
 
-ded_compositefont_t *ded_s::findCompositeFontDef(de::Uri const &uri) const
+ded_compositefont_t *ded_s::findCompositeFontDef(res::Uri const &uri) const
 {
     for (dint i = compositeFonts.size() - 1; i >= 0; i--)
     {
@@ -650,12 +650,12 @@ ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
     ded_compositefont_t *def = nullptr;
     if (uriCString && uriCString[0])
     {
-        de::Uri uri(uriCString, RC_NULL);
+        res::Uri uri(uriCString, RC_NULL);
 
         if (uri.scheme().isEmpty())
         {
             // Caller doesn't care which scheme - use a priority search order.
-            de::Uri temp(uri);
+            res::Uri temp(uri);
 
             temp.setScheme("Game");
             def = findCompositeFontDef(temp);
@@ -676,7 +676,7 @@ ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
 
 String ded_s::findEpisode(String const &mapId) const
 {
-    de::Uri mapUri(mapId, RC_NULL);
+    res::Uri mapUri(mapId, RC_NULL);
     if (mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
     for (int i = 0; i < episodes.size(); ++i)

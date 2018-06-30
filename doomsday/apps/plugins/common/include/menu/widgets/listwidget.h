@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_UI_LISTWIDGET
 #define LIBCOMMON_UI_LISTWIDGET
 
-#include <QList>
+#include <de/List>
 #include <de/String>
 #include "widget.h"
 
@@ -62,7 +62,7 @@ public:
         int _userValue = 0;
     };
 
-    typedef QList<Item *> Items;
+    typedef de::List<Item *> Items;
 
 public:
     ListWidget();

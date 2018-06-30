@@ -35,11 +35,14 @@
 #include <de/NativePath>
 #include <de/String>
 
+// liblegacy types
 struct reader_s;
 struct writer_s;
-struct ddstring_s; // libdeng Str
+struct ddstring_s;
 
-namespace de {
+namespace res {
+
+using namespace de;
 
 /**
  * Assists working with URIs and maps them to engine-managed resources.
@@ -284,6 +287,8 @@ public:
      */
     Uri &setPath(const String& newPath, Char sep = '/');
 
+    Uri &setPath(const CString& newPath, Char sep = '/');
+
     Uri &setPath(char const *newPathUtf8, char sep = '/');
 
     /**
@@ -347,12 +352,12 @@ inline Uri makeUri(String const &percentEncoded, Char sep = '/')
     return Uri(percentEncoded, RC_NULL, sep);
 }
 
-} // namespace de
+} // namespace res
 
 namespace std {
-    // std::swap specialization for de::Uri
+    // std::swap specialization for res::Uri
     template <>
-    inline void swap<de::Uri>(de::Uri &a, de::Uri &b) {
+    inline void swap<res::Uri>(res::Uri &a, res::Uri &b) {
         a.swap(b);
     }
 }

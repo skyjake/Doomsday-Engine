@@ -69,7 +69,7 @@
 /**
  * @defgroup resourceLocationFlags  Resource Location Flags
  *
- * Flags used with de::FS1::find().
+ * Flags used with FS1::find().
  * @ingroup flags
  */
 ///@{
@@ -79,7 +79,9 @@
 #define RLF_DEFAULT             0
 ///@}
 
-namespace de {
+namespace res {
+
+using namespace de;
 
 /**
  * Files with a .wad extension are archived data files with multiple 'lumps',
@@ -153,7 +155,7 @@ public:
         typedef std::multimap<PathGroup, SearchPath> SearchPaths;
 
         /// List of found file nodes.
-        typedef de::List<PathTree::Node *> FoundNodes;
+        typedef List<PathTree::Node *> FoundNodes;
 
     public:
         explicit Scheme(String symbolicName, Flags flags = 0);
@@ -282,9 +284,6 @@ public:
 
     /// List of found path search results.
     typedef List<PathListItem> PathList;
-
-    /// List of file search results.
-    typedef List<FileHandle *> FileList;
 
 public:
     /**
@@ -580,9 +579,9 @@ private:
     DE_PRIVATE(d)
 };
 
-} // namespace de
+} // namespace res
 
-LIBDOOMSDAY_PUBLIC de::FS1 &App_FileSystem();
+LIBDOOMSDAY_PUBLIC res::FS1 &App_FileSystem();
 
 /**
  * Returns the application's data base path in the format expected by FS1.

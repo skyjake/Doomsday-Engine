@@ -414,7 +414,7 @@ DE_PIMPL(ClientApp)
 
                 Con_Executef(CMDS_DDAY, false, "setdefaultskill %i; setmap %s",
                              prof->autoStartSkill(),
-                             prof->autoStartMap().toUtf8().constData());
+                             prof->autoStartMap());
             }
         }
     }

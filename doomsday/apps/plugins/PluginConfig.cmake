@@ -5,9 +5,6 @@ cmake_minimum_required (VERSION 3.0)
 project (DE_PLUGINS)
 include (${CMAKE_CURRENT_LIST_DIR}/../../cmake/Config.cmake)
 
-find_package (DengDoomsday)
-find_package (DengGamefw)   # Game framework is available in all plugins.
-
 macro (deng_add_plugin target)
     sublist (_src 1 -1 ${ARGV})
     if (WIN32)
@@ -33,7 +30,7 @@ macro (deng_add_plugin target)
         PUBLIC "${DE_API_DIR}"
         PRIVATE "${DE_SOURCE_DIR}/libs/gui/include"
     )
-    target_link_libraries (${target} PUBLIC Deng::libdoomsday Deng::libgamefw)
+    deng_link_libraries (${target} PUBLIC DengDoomsday DengGamefw)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Plugins)
 
@@ -83,15 +80,15 @@ macro (deng_add_plugin target)
                 "${stage}/${target}.bundle"
         )
         # Fix the Qt framework install names manually.
-        if (DE_ENABLE_DEPLOYQT)
-            deng_bundle_install_names (${target}
-                SCRIPT_NAME "qtlibs"
-                LD_PATH "@executable_path/../Frameworks"
-                QtCore.framework/Versions/5/QtCore
-                QtNetwork.framework/Versions/5/QtNetwork
-                VERBATIM
-            )
-        endif ()
+        # if (DE_ENABLE_DEPLOYQT)
+        #     deng_bundle_install_names (${target}
+        #         SCRIPT_NAME "qtlibs"
+        #         LD_PATH "@executable_path/../Frameworks"
+        #         QtCore.framework/Versions/5/QtCore
+        #         QtNetwork.framework/Versions/5/QtNetwork
+        #         VERBATIM
+        #     )
+        # endif ()
         deng_xcode_attribs (${target})
         deng_bundle_resources ()
     else ()

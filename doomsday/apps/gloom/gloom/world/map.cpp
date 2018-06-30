@@ -716,7 +716,7 @@ namespace util {
 
 static QString idStr(ID id)
 {
-    return String::number(id, 16);
+    return String::asText(id, 16);
 }
 
 static ID idNum(const QVariant &str)

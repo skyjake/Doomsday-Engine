@@ -151,7 +151,7 @@ static String ammoTypeName(int ammoType)
     };
     if(ammoType >= AT_FIRST && ammoType < NUM_AMMO_TYPES)
         return names[ammoType - AT_FIRST];
-    throw Error("ammoTypeName", "Unknown ammo type " + String::number(ammoType));
+    throw Error("ammoTypeName", "Unknown ammo type " + String::asText(ammoType));
 }
 
 static String weaponStateName(int weaponState)
@@ -165,7 +165,7 @@ static String weaponStateName(int weaponState)
     };
     if(weaponState >= WSN_UP && weaponState < NUM_WEAPON_STATE_NAMES)
         return names[weaponState - WSN_UP];
-    throw Error("weaponStateName", "Unknown weapon state " + String::number(weaponState));
+    throw Error("weaponStateName", "Unknown weapon state " + String::asText(weaponState));
 }
 
 /**
@@ -196,7 +196,7 @@ void P_InitWeaponInfo()
 {
     for(auto i = int( WT_FIRST ); i < NUM_WEAPON_TYPES; ++i)
     {
-        auto const id = String::number(i);
+        auto const id = String::asText(i);
 
         weaponmodeinfo_t *wminfo = WEAPON_INFO(i, PCLASS_PLAYER, 0);
         DE_ASSERT(wminfo);
@@ -271,7 +271,7 @@ void P_InitPlayerValues(player_t *plr)
 
     for(auto i = int( WT_FIRST ); i < NUM_WEAPON_TYPES; ++i)
     {
-        if(ded_value_t const *owned = Defs().getValueById("Weapon Info|" + String::number(i) + "|Owned"))
+        if(ded_value_t const *owned = Defs().getValueById("Weapon Info|" + String::asText(i) + "|Owned"))
         {
             plr->weapons[i].owned = String(owned->text).toInt();
         }

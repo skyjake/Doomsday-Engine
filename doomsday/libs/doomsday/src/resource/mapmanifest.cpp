@@ -28,10 +28,10 @@ MapManifest::MapManifest(PathTree::NodeArgs const &args)
     : Node(args), Record(), _sourceFile(nullptr)
 {}
 
-String MapManifest::description(de::Uri::ComposeAsTextFlags uriCompositionFlags) const
+String MapManifest::description(res::Uri::ComposeAsTextFlags uriCompositionFlags) const
 {
-    String info = composeUri().compose(uriCompositionFlags | de::Uri::DecodePath); //,
-                                   //( uriCompositionFlags.testFlag(de::Uri::OmitScheme)? -14 : -22 );
+    String info = composeUri().compose(uriCompositionFlags | res::Uri::DecodePath); //,
+                                   //( uriCompositionFlags.testFlag(res::Uri::OmitScheme)? -14 : -22 );
     // FIXME: Was used for alignment?
     if (_sourceFile)
     {

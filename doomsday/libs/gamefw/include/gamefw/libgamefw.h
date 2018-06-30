@@ -34,8 +34,7 @@
 #    define LIBGAMEFW_PUBLIC __declspec(dllimport)
 #  endif
 #else
-// No need to use any special declarators.
-#  define LIBGAMEFW_PUBLIC
+#  define LIBGAMEFW_PUBLIC  DE_PUBLIC
 #endif
 
 typedef enum gfw_game_id_e {

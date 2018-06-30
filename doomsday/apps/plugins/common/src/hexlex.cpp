@@ -233,13 +233,13 @@ ddstring_s const *HexLex::readString()
     return &_token;
 }
 
-de::Uri HexLex::readUri(String const &defaultScheme)
+res::Uri HexLex::readUri(String const &defaultScheme)
 {
     if(!readToken())
     {
         syntaxError("Missing uri");
     }
-    return de::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&_token))))));
+    return res::Uri(defaultScheme, Path(Str_Text(Str_PercentEncode(AutoStr_FromTextStd(Str_Text(&_token))))));
 }
 
 int HexLex::lineNumber() const

@@ -20,8 +20,6 @@
 #ifndef DE_MAIN_H
 #define DE_MAIN_H
 
-#include <QList>
-#include <QMap>
 #include <de/LibraryFile>
 #include <de/String>
 #include <doomsday/resource/resources.h>
@@ -36,7 +34,7 @@
 #include "world/clientserverworld.h"
 #include "ui/infine/infinesystem.h"
 
-namespace de { class File1; }
+namespace res { class File1; }
 
 extern de::dint verbose;
 extern de::dint isDedicated; // true if __SERVER__
@@ -45,9 +43,8 @@ extern de::dint symbolicEchoMode;
 #endif
 
 de::dint DD_EarlyInit();
-void DD_FinishInitializationAfterWindowReady();
-
-void DD_ConsoleRegister();
+void     DD_FinishInitializationAfterWindowReady();
+void     DD_ConsoleRegister();
 
 /**
  * Print an error message and quit.

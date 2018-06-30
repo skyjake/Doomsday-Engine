@@ -40,7 +40,7 @@ public:
     class LIBDOOMSDAY_PUBLIC AnimationStage : public TextureMaterialLayer::AnimationStage
     {
     public:
-        AnimationStage(de::Uri const &texture, int tics,
+        AnimationStage(res::Uri const &texture, int tics,
                        float variance    = 0,
                        float scale       = 1,
                        float strength    = 1,

@@ -20,9 +20,9 @@
 
 #include "doomsday/filesys/searchpath.h"
 
-namespace de {
+namespace res {
 
-SearchPath::SearchPath(de::Uri const &_uri, Flags _flags)
+SearchPath::SearchPath(res::Uri const &_uri, Flags _flags)
     : Uri(_uri), flags_(_flags)
 {}
 
@@ -41,4 +41,4 @@ SearchPath &SearchPath::setFlags(Flags newFlags)
     return *this;
 }
 
-} // namespace de
+} // namespace res

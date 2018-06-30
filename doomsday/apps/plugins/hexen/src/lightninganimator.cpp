@@ -23,7 +23,7 @@
 #include "lightninganimator.h"
 #include "g_common.h"
 
-#include <QVector>
+#include <de/List>
 #include "dmu_lib.h"
 #include "gamesession.h"
 
@@ -54,7 +54,7 @@ DE_PIMPL_NOREF(LightningAnimator)
 {
     int flash = 0;
     int nextFlash = 0;
-    typedef QVector<float> AmbientLightLevels;
+    typedef List<float> AmbientLightLevels;
     AmbientLightLevels sectorLightLevels;  ///< For each sector (if enabled).
 };
 

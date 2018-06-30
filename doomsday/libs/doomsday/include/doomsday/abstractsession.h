@@ -58,7 +58,7 @@ public:
      * Returns the current map URI for the game session in progress. If the session has not
      * yet begun then an empty URI is returned.
      */
-    de::Uri mapUri() const;
+    res::Uri mapUri() const;
 
     /**
      * Determines whether the game state currently allows the session to be saved.
@@ -96,7 +96,7 @@ public:
     void setThinkerMapping(world::IThinkerMapping *mapping);
 
 protected:
-    void setMapUri(de::Uri const &uri);
+    void setMapUri(res::Uri const &uri);
     void setInProgress(bool inProgress);
 
 //- Saved session management ------------------------------------------------------------

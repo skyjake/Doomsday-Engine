@@ -98,7 +98,7 @@ public:
 
     de::ddouble readNumber();
     Str const *readString();
-    de::Uri readUri(de::String const &defaultScheme = "");
+    res::Uri readUri(de::String const &defaultScheme = "");
 
 private:
     DE_PRIVATE(d)

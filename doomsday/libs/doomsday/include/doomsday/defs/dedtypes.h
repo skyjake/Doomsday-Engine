@@ -31,7 +31,7 @@
 #include "api_gl.h"
 #include "dedarray.h"
 
-#define DED_DUP_URI(u) u = (u ? new de::Uri(*u) : 0)
+#define DED_DUP_URI(u) u = (u ? new res::Uri(*u) : 0)
 
 #define DED_SPRITEID_LEN 4
 #define DED_STRINGID_LEN 31
@@ -53,7 +53,7 @@ typedef int            ded_flags_t;
 typedef char *         ded_anystring_t;
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_uri_s {
-    de::Uri *uri;
+    res::Uri *uri;
 
     void release() { delete uri; }
     void reallocate() { DED_DUP_URI(uri); }
@@ -121,8 +121,8 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_light_s {
     float         color[3];      // Red Green Blue (0,1)
     float         lightLevel[2]; // Min/max lightlevel for bias
     ded_flags_t   flags;
-    de::Uri *     up, *down, *sides;
-    de::Uri *     flare;
+    res::Uri *     up, *down, *sides;
+    res::Uri *     flare;
     float         haloRadius; // Halo radius (zero = no halo).
 
     void release()
@@ -145,7 +145,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sound_s {
     ded_soundid_t id;       // ID of this sound, refered to by others.
     ded_string_t  name;     // A tag name for the sound.
     ded_string_t  lumpName; // Actual lump name of the sound ("DS" not included).
-    de::Uri *     ext;      // External sound file (WAV).
+    res::Uri *     ext;      // External sound file (WAV).
     ded_soundid_t link;     // Link to another sound.
     int           linkPitch;
     int           linkVolume;
@@ -211,8 +211,8 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_linetype_s {
     int            actLineType;
     int            deactLineType;
     ded_flags_t    wallSection;
-    de::Uri *      actMaterial;
-    de::Uri *      deactMaterial;
+    res::Uri *      actMaterial;
+    res::Uri *      deactMaterial;
     char           actMsg[128];
     char           deactMsg[128];
     float          materialMoveAngle;
@@ -272,7 +272,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_sectortype_s {
 typedef struct LIBDOOMSDAY_PUBLIC ded_detail_stage_s {
     int      tics;
     float    variance;
-    de::Uri *texture; // The file/lump with the detail texture.
+    res::Uri *texture; // The file/lump with the detail texture.
     float    scale;
     float    strength;
     float    maxDistance;
@@ -287,8 +287,8 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_detail_stage_s {
 #define DTLF_EXTERNAL 0x4 // Can use if from external resource.
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_detailtexture_s {
-    de::Uri *   material1;
-    de::Uri *   material2;
+    res::Uri *   material1;
+    res::Uri *   material2;
     ded_flags_t flags;
     // There is only one stage.
     ded_detail_stage_t stage;
@@ -310,14 +310,14 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_detailtexture_s {
 typedef struct LIBDOOMSDAY_PUBLIC ded_ptcgen_s {
     struct ded_ptcgen_s *    stateNext; // List of generators for a state.
     ded_stateid_t            state;     // Triggered by this state (if mobj-gen).
-    de::Uri *                material;
+    res::Uri *                material;
     ded_mobjid_t             type;  // Triggered by this type of mobjs.
     ded_mobjid_t             type2; // Also triggered by this type.
     int                      typeNum;
     int                      type2Num;
     ded_mobjid_t             damage; // Triggered by mobj damage of this type.
     int                      damageNum;
-    de::Uri *                map; // Triggered by this map.
+    res::Uri *                map; // Triggered by this map.
     ded_flags_t              flags;
     float                    speed;              // Particle spawn velocity.
     float                    speedVariance;      // Spawn speed variance (0-1).
@@ -361,8 +361,8 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_ptcgen_s {
 typedef struct LIBDOOMSDAY_PUBLIC ded_shine_stage_s {
     int         tics;
     float       variance;
-    de::Uri *   texture;
-    de::Uri *   maskTexture;
+    res::Uri *   texture;
+    res::Uri *   maskTexture;
     blendmode_t blendMode; // Blend mode flags (bm_*).
     float       shininess;
     float       minColor[3];
@@ -387,7 +387,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_shine_stage_s {
 #define REFF_EXTERNAL 0x4 // Can use if from external resource.
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_reflection_s {
-    de::Uri *   material;
+    res::Uri *   material;
     ded_flags_t flags;
     // There is only one stage.
     ded_shine_stage_t stage;
@@ -405,7 +405,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_reflection_s {
 } ded_reflection_t;
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_group_member_s {
-    de::Uri *material;
+    res::Uri *material;
     int      tics;
     int      randomTics;
 
@@ -419,7 +419,7 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_group_s {
 
     void release() { members.clear(); }
 
-    ded_group_member_t *tryFindFirstMemberWithMaterial(de::Uri const &materialUri)
+    ded_group_member_t *tryFindFirstMemberWithMaterial(res::Uri const &materialUri)
     {
         if (!materialUri.isEmpty())
         {
@@ -439,14 +439,14 @@ typedef struct LIBDOOMSDAY_PUBLIC ded_group_s {
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_mappedcharacter_s {
     unsigned char ch;
-    de::Uri *     path;
+    res::Uri *     path;
 
     void release() { delete path; }
     void reallocate() { DED_DUP_URI(path); }
 } ded_compositefont_mappedcharacter_t;
 
 typedef struct LIBDOOMSDAY_PUBLIC ded_compositefont_s {
-    de::Uri *                                     uri;
+    res::Uri *                                     uri;
     DEDArray<ded_compositefont_mappedcharacter_t> charMap;
 
     void release()

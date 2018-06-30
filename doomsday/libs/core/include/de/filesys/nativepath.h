@@ -60,7 +60,9 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath(String const &str);
+    NativePath(const String &str);
+
+    NativePath(const CString &str);
 
     NativePath(const Path &path);
 

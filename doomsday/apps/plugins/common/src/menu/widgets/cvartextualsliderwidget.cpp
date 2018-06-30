@@ -64,11 +64,11 @@ DE_PIMPL(CVarTextualSliderWidget)
     {
         if(self().floatMode() && !valueIsOne(value))
         {
-            return String::number(value, 'f', de::max(0, precision));
+            return String::asText(value, de::max(0, precision));
         }
         else
         {
-            return String::number(int(value));
+            return String::asText(int(value));
         }
     }
 
@@ -146,7 +146,7 @@ void CVarTextualSliderWidget::draw() const
 
     FR_SetFont(mnRendState->textFonts[font()]);
     FR_SetColorAndAlpha(textColor.x, textColor.y, textColor.z, textColor.w * scrollingFadeout());
-    FR_DrawTextXY3(valueAsText.toUtf8().constData(), 0, 0, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(valueAsText, 0, 0, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -160,7 +160,7 @@ void CVarTextualSliderWidget::updateGeometry()
 
     FR_PushAttrib();
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
-    Size2Raw size; FR_TextSize(&size, valueAsText.toUtf8().constData());
+    Size2Raw size; FR_TextSize(&size, valueAsText);
     geometry().setSize(Vec2ui(size.width, size.height));
     FR_PopAttrib();
 }

@@ -190,8 +190,8 @@ DE_ENTRYPOINT void *GetGameAPI(char const *name)
         return ptr;
     }
 
-    #define HASH_ENTRY(Name, Func) std::make_pair(QByteArray(Name), de::function_cast<void *>(Func))
-    static QHash<QByteArray, void *> const funcs(
+    #define HASH_ENTRY(Name, Func) std::make_pair(Name, de::function_cast<void *>(Func))
+    static Hash<String, void *> const funcs(
     {
         HASH_ENTRY("DrawWindow",    H_DrawWindow),
         HASH_ENTRY("EndFrame",      H_EndFrame),
@@ -205,7 +205,7 @@ DE_ENTRYPOINT void *GetGameAPI(char const *name)
     #undef HASH_ENTRY
 
     auto found = funcs.find(name);
-    if (found != funcs.end()) return found.value();
+    if (found != funcs.end()) return found->second;
     return nullptr;
 }
 

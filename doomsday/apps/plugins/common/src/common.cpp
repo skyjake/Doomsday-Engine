@@ -27,6 +27,7 @@
 #include "r_common.h"
 
 #include <de/Binder>
+#include <de/Hash>
 #include <de/Context>
 #include <de/NoneValue>
 #include <de/ScriptSystem>
@@ -56,8 +57,8 @@ int Common_GetInteger(int id)
 
 void *Common_GetGameAPI(char const *name)
 {
-    #define HASH_ENTRY(Name, Func) std::make_pair(QByteArray(Name), de::function_cast<void *>(Func))
-    static QHash<QByteArray, void *> const funcs(
+    #define HASH_ENTRY(Name, Func) std::make_pair(Name, de::function_cast<void *>(Func))
+    static de::Hash<de::String, void *> const funcs(
     {
         HASH_ENTRY("DrawViewPort",          G_DrawViewPort),
         HASH_ENTRY("FinaleResponder",       FI_PrivilegedResponder),
@@ -86,7 +87,7 @@ void *Common_GetGameAPI(char const *name)
     #undef HASH_ENTRY
 
     auto found = funcs.find(name);
-    if (found != funcs.end()) return found.value();
+    if (found != funcs.end()) return found->second;
     return nullptr;
 }
 

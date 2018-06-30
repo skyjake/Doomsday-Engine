@@ -37,8 +37,6 @@
  */
 class ShellUser : public de::shell::Link, public User
 {
-    Q_OBJECT
-
 public:
     /**
      * Constructs a new shell user from a previously opened socket.
@@ -59,7 +57,7 @@ public:
 
     de::Address address() const override;
 
-protected slots:
+protected:
     void handleIncomingPackets();
 
 private:

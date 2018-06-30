@@ -34,7 +34,7 @@ using namespace de;
 DE_PIMPL_NOREF(AbstractSession)
 {
     bool inProgress = false;  ///< @c true: session is in progress / internal.save exists.
-    de::Uri mapUri;
+    res::Uri mapUri;
     world::IThinkerMapping *thinkerMapping = nullptr;
 };
 
@@ -50,20 +50,14 @@ void AbstractSession::setInProgress(bool inProgress)
     d->inProgress = inProgress;
 }
 
-//AbstractSession::Profile &AbstractSession::profile() //static
-//{
-//    /// @todo None current profiles should be stored persistently when the game changes.
-//    return currentProfile;
-//}
-
 bool AbstractSession::hasBegun() const
 {
     return d->inProgress;
 }
 
-de::Uri AbstractSession::mapUri() const
+res::Uri AbstractSession::mapUri() const
 {
-    return hasBegun()? d->mapUri : de::makeUri("Maps:");
+    return hasBegun()? d->mapUri : res::makeUri("Maps:");
 }
 
 world::IThinkerMapping const *AbstractSession::thinkerMapping() const
@@ -83,7 +77,7 @@ void AbstractSession::setThinkerMapping(world::IThinkerMapping *mapping)
 //    return gameProfile->gameId();
 //}
 
-void AbstractSession::setMapUri(de::Uri const &uri)
+void AbstractSession::setMapUri(res::Uri const &uri)
 {
     d->mapUri = uri;
 }

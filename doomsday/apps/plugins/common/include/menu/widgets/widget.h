@@ -23,10 +23,9 @@
 
 #include "doomsday.h"
 
-#include <QFlags>
-#include <QVariant>
 #include <de/Rectangle>
 #include <de/String>
+#include <de/Deletable>
 #include "common.h"
 
 namespace common {
@@ -39,7 +38,7 @@ class Page;
  *
  * @ingroup menu
  */
-class Widget
+class Widget : public de::Deletable
 {
 public:
     /// Required Page is presently missing. @ingroup errors
@@ -73,7 +72,7 @@ public:
 
         DefaultFlags  = 0
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
+    using Flags = de::Flags;
 
     /**
      * Logical Action identifiers. Associated with/to events which trigger user-definable
@@ -162,8 +161,8 @@ public:
      *
      * @return  Reference to this Widget.
      */
-    Widget &setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
-    Flags flags() const;
+    Widget &setFlags(de::Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    de::Flags flags() const;
 
     Widget &setLeft() { return setFlags(LeftColumn); }
     Widget &setRight() { return setFlags(RightColumn); }
@@ -225,11 +224,11 @@ public:
      */
     void execAction(Action id);
 
-    Widget &setUserValue(QVariant const &newValue);
-    QVariant const &userValue() const;
+    Widget &setUserValue(const de::Value &newValue);
+    const de::Value &userValue() const;
 
-    Widget &setUserValue2(QVariant const &newValue);
-    QVariant const &userValue2() const;
+    Widget &setUserValue2(const de::Value &newValue);
+    const de::Value &userValue2() const;
 
     float scrollingFadeout() const;
     float scrollingFadeout(int yTop, int yBottom) const;
@@ -242,8 +241,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Widget::Flags)
 
 } // namespace menu
 } // namespace common

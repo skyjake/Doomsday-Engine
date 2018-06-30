@@ -78,7 +78,7 @@
 #define MINLONG     ((long)0x80000000)
 #endif
 
-#define Set                 DD_SetInteger
+//#define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
 //

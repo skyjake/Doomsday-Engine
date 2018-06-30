@@ -320,7 +320,7 @@ void ClientMobjThinkerData::operator << (Reader &from)
     {
         throw DeserializationError("ClientMobjThinkerData::operator <<",
                                    "Invalid serial identifier " +
-                                   String::number(sid));
+                                   String::asText(sid));
     }
 
     MobjThinkerData::operator << (from);

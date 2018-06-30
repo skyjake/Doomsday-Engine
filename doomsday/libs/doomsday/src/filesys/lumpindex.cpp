@@ -29,36 +29,37 @@
 #include <de/List>
 #include <de/LogBuffer>
 
-namespace de {
-namespace internal
+namespace res {
+namespace internal {
+
+struct LumpSortInfo
 {
-    struct LumpSortInfo
-    {
-        File1 const *lump;
-        String path;
-        int origIndex;
-    };
+    File1 const *lump;
+    String path;
+    int origIndex;
+};
 
-    static int lumpSorter(void const *a, void const *b)
-    {
-        LumpSortInfo const *infoA = (LumpSortInfo const *)a;
-        LumpSortInfo const *infoB = (LumpSortInfo const *)b;
+static int lumpSorter(void const *a, void const *b)
+{
+    LumpSortInfo const *infoA = (LumpSortInfo const *)a;
+    LumpSortInfo const *infoB = (LumpSortInfo const *)b;
 
-        if (int delta = infoA->path.compare(infoB->path, CaseInsensitive))
-            return delta;
+    if (int delta = infoA->path.compare(infoB->path, CaseInsensitive))
+        return delta;
 
-        // Still matched; try the file load order indexes.
-        if (int delta = (infoA->lump->container().loadOrderIndex() -
-                         infoB->lump->container().loadOrderIndex()))
-            return delta;
+    // Still matched; try the file load order indexes.
+    if (int delta = (infoA->lump->container().loadOrderIndex() -
+                     infoB->lump->container().loadOrderIndex()))
+        return delta;
 
-        // Still matched (i.e., present in the same package); use the original indexes.
-        return (infoB->origIndex - infoA->origIndex);
-    }
+    // Still matched (i.e., present in the same package); use the original indexes.
+    return (infoB->origIndex - infoA->origIndex);
+}
 
 } // namespace internal
 
 using namespace internal;
+using namespace de;
 
 DE_PIMPL_NOREF(LumpIndex::Id1MapRecognizer)
 {
@@ -697,4 +698,4 @@ Uri LumpIndex::composeResourceUrn(lumpnum_t lumpNum) // static
     return Uri("LumpIndex", Path(String::asText(lumpNum)));
 }
 
-} // namespace de
+} // namespace res

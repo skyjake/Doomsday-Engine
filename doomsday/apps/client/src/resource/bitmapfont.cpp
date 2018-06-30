@@ -143,7 +143,7 @@ DE_PIMPL(BitmapFont)
         int bitmapFormat = inByte(file);
         if(bitmapFormat > 0)
         {
-            de::Uri uri = self().manifest().composeUri();
+            res::Uri uri = self().manifest().composeUri();
             throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 
@@ -177,7 +177,7 @@ DE_PIMPL(BitmapFont)
         int bitmapFormat = inByte(file);
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
-            de::Uri uri = self().manifest().composeUri();
+            res::Uri uri = self().manifest().composeUri();
             throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
         }
 

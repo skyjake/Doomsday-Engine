@@ -227,18 +227,18 @@ MaterialManifest &Materials::toMaterialManifest(materialid_t id) const
                                  Rangei(1, d->materialManifestCount + 1).asText());
 }
 
-Material *Materials::materialPtr(de::Uri const &path)
+Material *Materials::materialPtr(res::Uri const &path)
 {
     if (auto *manifest = materialManifestPtr(path)) return manifest->materialPtr();
     return nullptr;
 }
 
-bool Materials::hasMaterialManifest(de::Uri const &path) const
+bool Materials::hasMaterialManifest(res::Uri const &path) const
 {
     return materialManifestPtr(path) != nullptr;
 }
 
-MaterialManifest &Materials::materialManifest(de::Uri const &uri) const
+MaterialManifest &Materials::materialManifest(res::Uri const &uri) const
 {
     if (auto *mm = materialManifestPtr(uri))
     {
@@ -249,7 +249,7 @@ MaterialManifest &Materials::materialManifest(de::Uri const &uri) const
                                                   "Failed to locate a manifest matching \"" + uri.asText() + "\"");
 }
 
-MaterialManifest *Materials::materialManifestPtr(de::Uri const &uri) const
+MaterialManifest *Materials::materialManifestPtr(res::Uri const &uri) const
 {
     // Does the user want a manifest in a specific scheme?
     if (!uri.scheme().isEmpty())

@@ -194,7 +194,7 @@ TextureManifest &TextureScheme::declare(Path const &   path,
                                         Vec2ui const & dimensions,
                                         Vec2i const &  origin,
                                         int            uniqueId,
-                                        de::Uri const *resourceUri)
+                                        res::Uri const *resourceUri)
 {
     LOG_AS("TextureScheme::declare");
 
@@ -290,7 +290,7 @@ TextureManifest *TextureScheme::tryFind(Path const &path) const
     return d->index.tryFind(path, Index::NoBranch | Index::MatchFull);
 }
 
-TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) const
+TextureManifest const &TextureScheme::findByResourceUri(res::Uri const &uri) const
 {
     if (auto *mft = tryFindByResourceUri(uri))
     {
@@ -301,7 +301,7 @@ TextureManifest const &TextureScheme::findByResourceUri(de::Uri const &uri) cons
                         "No manifest found with a resource URI matching \"" + uri.asText() + "\"");
 }
 
-TextureManifest *TextureScheme::tryFindByResourceUri(de::Uri const &uri) const
+TextureManifest *TextureScheme::tryFindByResourceUri(res::Uri const &uri) const
 {
     if (!uri.isEmpty())
     {
@@ -321,7 +321,7 @@ TextureManifest *TextureScheme::tryFindByResourceUri(de::Uri const &uri) const
     return nullptr;
 }
 
-TextureManifest &TextureScheme::findByResourceUri(de::Uri const &uri)
+TextureManifest &TextureScheme::findByResourceUri(res::Uri const &uri)
 {
     TextureManifest const &found = const_cast<TextureScheme const *>(this)->findByResourceUri(uri);
     return const_cast<TextureManifest &>(found);

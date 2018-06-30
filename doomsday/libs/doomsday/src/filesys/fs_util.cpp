@@ -53,10 +53,11 @@
 #include <de/findfile.h>
 
 using namespace de;
+using namespace res;
 
 int F_Access(char const *nativePath)
 {
-    de::Uri path = de::Uri::fromNativePath(nativePath);
+    res::Uri path = res::Uri::fromNativePath(nativePath);
     return App_FileSystem().accessFile(path)? 1 : 0;
 }
 

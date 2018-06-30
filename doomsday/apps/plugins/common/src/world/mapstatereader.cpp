@@ -115,7 +115,7 @@ DE_PIMPL(MapStateReader)
         if (Reader_ReadInt32(reader) != segId)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
+            throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::asText(segId) + " failed alignment check");
         }
 #else
         DE_UNUSED(segId);
@@ -130,7 +130,7 @@ DE_PIMPL(MapStateReader)
         if (segId != ASEG_MAP_HEADER2 && segId != ASEG_MAP_HEADER)
         {
             /// @throw ReadError Failed alignment check.
-            throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::number(segId) + " failed alignment check");
+            throw ReadError("MapStateReader", "Corrupt save game, segment #" + String::asText(segId) + " failed alignment check");
         }
         formatHasMapVersionNumber = (segId == ASEG_MAP_HEADER2);
 #else
@@ -743,7 +743,7 @@ MapStateReader::~MapStateReader()
 
 void MapStateReader::read(String const &mapUriStr)
 {
-    de::Uri const mapUri(mapUriStr, RC_NULL);
+    res::Uri const mapUri(mapUriStr, RC_NULL);
     File const &mapStateFile = folder().locate<File const>(String("maps") / mapUri.path() + "State");
     SV_OpenFileForRead(mapStateFile);
     d->reader = SV_NewReader();

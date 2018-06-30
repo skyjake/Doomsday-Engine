@@ -8,10 +8,7 @@
 cmake_minimum_required (VERSION 3.1)
 project (DE_SHELL)
 include (../../cmake/Config.cmake)
-
-# Dependencies.
-find_package (DengCore)
-find_package (DengShell)
+include (QtConfig)
 
 add_definitions (
     -DSHELL_VERSION="${DE_VERSION}"
@@ -27,6 +24,8 @@ if (WIN32)
     list (APPEND SOURCES res/windows/shell.rc)
 endif ()
 
+list (APPEND DE_REQUIRED_PACKAGES net.dengine.stdlib)
+
 deng_add_application (shell ${SOURCES} EXTRA_RESOURCES ${MAC_RES})
 
 if (APPLE OR WIN32)
@@ -39,7 +38,7 @@ else ()
     set_property (TARGET shell PROPERTY OUTPUT_NAME "doomsday-shell")
 endif ()
 
-target_link_libraries (shell PUBLIC Deng::libcore Deng::libshell)
+deng_link_libraries (shell PUBLIC DengCore DengShell)
 deng_target_link_qt (shell PUBLIC Widgets)
 
 # Deployment.

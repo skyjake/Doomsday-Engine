@@ -339,7 +339,7 @@ FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vec3f const &ne
     }
     else
     {
-        throw InvalidColorError("FinalePageWidget::setPredefinedColor", "Invalid color #" + String::number(idx));
+        throw InvalidColorError("FinalePageWidget::setPredefinedColor", "Invalid color #" + String::asText(idx));
     }
     return *this;
 }
@@ -350,7 +350,7 @@ animatorvector3_t const *FinalePageWidget::predefinedColor(uint idx)
     {
         return &d->preColor[idx];
     }
-    throw InvalidColorError("FinalePageWidget::predefinedColor", "Invalid color #" + String::number(idx));
+    throw InvalidColorError("FinalePageWidget::predefinedColor", "Invalid color #" + String::asText(idx));
 }
 
 FinalePageWidget &FinalePageWidget::setPredefinedFont(uint idx, fontid_t fontNum)
@@ -361,7 +361,7 @@ FinalePageWidget &FinalePageWidget::setPredefinedFont(uint idx, fontid_t fontNum
     }
     else
     {
-        throw InvalidFontError("FinalePageWidget::setPredefinedFont", "Invalid font #" + String::number(idx));
+        throw InvalidFontError("FinalePageWidget::setPredefinedFont", "Invalid font #" + String::asText(idx));
     }
     return *this;
 }
@@ -372,5 +372,5 @@ fontid_t FinalePageWidget::predefinedFont(uint idx)
     {
         return d->preFont[idx];
     }
-    throw InvalidFontError("FinalePageWidget::predefinedFont", "Invalid font #" + String::number(idx));
+    throw InvalidFontError("FinalePageWidget::predefinedFont", "Invalid font #" + String::asText(idx));
 }

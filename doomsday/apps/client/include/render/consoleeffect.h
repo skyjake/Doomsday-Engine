@@ -85,7 +85,7 @@ private:
 /// Dynamic stack of effects. (Used currently as a fixed array, though.)
 struct ConsoleEffectStack
 {
-    typedef QList<ConsoleEffect *> EffectList;
+    typedef de::List<ConsoleEffect *> EffectList;
     EffectList effects;
 
     ~ConsoleEffectStack() {
@@ -93,7 +93,7 @@ struct ConsoleEffectStack
     }
 
     void clear() {
-        qDeleteAll(effects);
+        deleteAll(effects);
         effects.clear();
     }
 };

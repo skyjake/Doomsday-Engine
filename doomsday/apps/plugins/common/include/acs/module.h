@@ -63,7 +63,7 @@ public:
     /**
      * Returns @c true if data @a file appears to be valid ACS code module.
      */
-    static bool recognize(/*de::IByteArray const &data*/ de::File1 const &file);
+    static bool recognize(/*de::IByteArray const &data*/ res::File1 const &file);
 
     /**
      * Loads an ACS @a code module (a copy is made).
@@ -73,7 +73,7 @@ public:
     /**
      * Loads an ACS code module from the specified @a file.
      */
-    static Module *newFromFile(de::File1 const &file);
+    static Module *newFromFile(res::File1 const &file);
 
     /**
      * Provides readonly access to a constant (string-)value from the loaded code module.
@@ -100,7 +100,7 @@ public:
      *
      * @param func  Callback to make for each EntryPoint.
      */
-    de::LoopResult forAllEntryPoints(std::function<de::LoopResult (EntryPoint &)> func) const;
+    de::LoopResult forAllEntryPoints(const std::function<de::LoopResult (EntryPoint &)>& func) const;
 
     /**
      * Provides readonly access to the loaded bytecode.

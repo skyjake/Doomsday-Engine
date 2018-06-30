@@ -46,29 +46,29 @@ public:
      *
      * @return Human-friendly description the manifest.
      */
-    de::String description(de::Uri::ComposeAsTextFlags uriCompositionFlags = de::Uri::DefaultComposeAsTextFlags) const;
+    de::String description(res::Uri::ComposeAsTextFlags uriCompositionFlags = res::Uri::DefaultComposeAsTextFlags) const;
 
     /**
      * Returns the URI this resource will be known by.
      */
-    inline de::Uri composeUri() const { return de::Uri("Maps", gets("id")); }
+    inline res::Uri composeUri() const { return res::Uri("Maps", gets("id")); }
 
     /**
      * Returns the id used to uniquely reference the map in some (old) definitions.
      */
     de::String composeUniqueId(Game const &currentGame) const;
 
-    MapManifest &setSourceFile(de::File1 *newSourceFile);
-    de::File1 *sourceFile() const;
+    MapManifest &setSourceFile(File1 *newSourceFile);
+    File1 *sourceFile() const;
 
-    MapManifest &setRecognizer(de::Id1MapRecognizer *newRecognizer);
-    de::Id1MapRecognizer const &recognizer() const;
+    MapManifest &setRecognizer(Id1MapRecognizer *newRecognizer);
+    Id1MapRecognizer const &recognizer() const;
 
 private:
     //de::String cachePath;
     //bool lastLoadAttemptFailed;
-    de::File1 *_sourceFile;
-    std::unique_ptr<de::Id1MapRecognizer> _recognized;
+    File1 *_sourceFile;
+    std::unique_ptr<Id1MapRecognizer> _recognized;
 };
 
 }  // namespace res

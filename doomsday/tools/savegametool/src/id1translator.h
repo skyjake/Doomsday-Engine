@@ -38,7 +38,7 @@ public:
     };
 
 public:
-    Id1Translator(FormatId id, QStringList knownExtensions, QStringList baseGameIdKeys);
+    Id1Translator(FormatId id, de::StringList knownExtensions, de::StringList baseGameIdKeys);
     virtual ~Id1Translator();
 
     de::String formatName() const;

@@ -39,7 +39,7 @@ public:
     };
 
 public:
-    NativeTranslator(FormatId formatId, QStringList knownExtensions, QStringList baseGameIdKeys);
+    NativeTranslator(FormatId formatId, de::StringList knownExtensions, de::StringList baseGameIdKeys);
     virtual ~NativeTranslator();
 
     de::String formatName() const;

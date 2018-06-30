@@ -118,11 +118,11 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
             duint count = P_InventoryCount(item->player(), readyItem);
             if(count > 1)
             {
-                auto const countAsText = String::number(count);
+                auto const countAsText = String::asText(count);
                 FR_SetFont(item->font());
                 FR_SetTracking(TRACKING);
                 FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-                FR_DrawTextXY2(countAsText.toUtf8().constData(),
+                FR_DrawTextXY2(countAsText,
                                boxInfo.geometry.size.width - 1, boxInfo.geometry.size.height - 3,
                                ALIGN_BOTTOMRIGHT);
             }
@@ -188,11 +188,11 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
         duint count = P_InventoryCount(item->player(), readyItem);
         if(count > 1)
         {
-            auto const countAsText = String::number(count);
+            auto const countAsText = String::asText(count);
             FR_SetFont(item->font());
             FR_SetTracking(TRACKING);
             FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-            FR_DrawTextXY3(countAsText.toUtf8().constData(),
+            FR_DrawTextXY3(countAsText,
                            ORIGINX + COUNT_X_OFFSET, ORIGINY + COUNT_Y_OFFSET,
                            ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
@@ -299,12 +299,12 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw* offset)
         duint count = P_InventoryCount(item->player(), readyItem);
         if(count > 1)
         {
-            auto const countAsText = String::number(count);
+            auto const countAsText = String::asText(count);
 
             FR_SetFont(item->font());
             FR_SetTracking(0);
             FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-            FR_DrawTextXY2(countAsText.toUtf8().constData(),
+            FR_DrawTextXY2(countAsText,
                            boxInfo.geometry.size.width - 1, boxInfo.geometry.size.height - 3,
                            ALIGN_BOTTOMRIGHT);
         }
@@ -369,12 +369,12 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, Point2Raw const *offset)
         duint count = P_InventoryCount(item->player(), readyItem);
         if(count > 1)
         {
-            auto const countAsText = String::number(count);
+            auto const countAsText = String::asText(count);
 
             FR_SetFont(item->font());
             FR_SetTracking(0);
             FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
-            FR_DrawTextXY3(countAsText.toUtf8().constData(),
+            FR_DrawTextXY3(countAsText,
                            ORIGINX + ST_INVITEMCX, ORIGINY + ST_INVITEMCY,
                            ALIGN_TOPRIGHT, DTF_NO_EFFECTS);
         }
@@ -436,6 +436,6 @@ void guidata_readyitem_t::prepareAssets()  // static
     ::pBackground = R_DeclarePatch("ARTIBOX");
     for(dint i = 0; i < FLASH_FRAME_COUNT; ++i)
     {
-        ::pIcons[i] = R_DeclarePatch(String("USEARTI%1").arg(char('A' + i)).toUtf8().constData());
+        ::pIcons[i] = R_DeclarePatch(String::format("USEARTI%c", char('A' + i)));
     }
 }

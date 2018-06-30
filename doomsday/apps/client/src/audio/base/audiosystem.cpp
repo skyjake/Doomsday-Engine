@@ -176,7 +176,7 @@ static dint C_DECL sfxChannelRefreshThread(void *)
 /**
  * Returns @c true if the given @a file appears to contain MUS format music.
  */
-static bool recognizeMus(de::File1 &file)
+static bool recognizeMus(res::File1 &file)
 {
     char buf[4];
     file.read((uint8_t *)buf, 0, 4);
@@ -679,7 +679,7 @@ DE_PIMPL(AudioSystem)
             musNeedBufFileSwitch = false;
         }
         // Compose the name.
-        return MUSIC_BUFFEREDFILE + String::number(currentBufFile) + ext;
+        return MUSIC_BUFFEREDFILE + String::asText(currentBufFile) + ext;
     }
 
     void setMusicProperty(dint prop, void const *ptr)
@@ -1887,7 +1887,7 @@ void AudioSystem::updateMusicMidiFont()
         // client's package so it can be loaded by FluidSynth.
         path = App::app().nativeHomePath()/"cache/default.sf2";
     }
-    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toUtf8().constData());
+    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString());
 }
 
 bool AudioSystem::sfxIsAvailable() const
@@ -2592,15 +2592,15 @@ D_CMD(PlayMusic)
     if (argc == 3)
     {
         // Play a file referenced directly.
-        if (!qstricmp(argv[1], "lump"))
+        if (!iCmpStrCase(argv[1], "lump"))
         {
             return Mus_StartLump(App_FileSystem().lumpNumForName(argv[2]), looped);
         }
-        else if (!qstricmp(argv[1], "file"))
+        else if (!iCmpStrCase(argv[1], "file"))
         {
             return Mus_StartFile(argv[2], looped);
         }
-        else if (!qstricmp(argv[1], "cd"))
+        else if (!iCmpStrCase(argv[1], "cd"))
         {
             if (!App_AudioSystem().cd())
             {

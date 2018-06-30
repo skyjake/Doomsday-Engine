@@ -100,7 +100,7 @@ LIBDOOMSDAY_PUBLIC char const *F_PrettyPath(char const *path);
  *
  * @return  @c true iff successful.
  */
-LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(de::File1 &file, char const *outputPath);
+LIBDOOMSDAY_PUBLIC dd_bool F_DumpFile(res::File1 &file, char const *outputPath);
 
 #ifdef __cplusplus
 } // extern "C"

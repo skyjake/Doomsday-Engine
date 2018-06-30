@@ -26,6 +26,7 @@
 #include <cstring>
 
 using namespace de;
+using namespace res;
 
 enum {
     TGA_FALSE,
