@@ -17,6 +17,7 @@
  */
 
 #include "folderselection.h"
+#include "utils.h"
 #include <QLineEdit>
 #include <QPushButton>
 #include <QHBoxLayout>
@@ -29,9 +30,10 @@ DE_PIMPL(FolderSelection)
     QLineEdit *edit;
     QPushButton *button;
 
-    Impl(Public &i, QString extraLabel) : Base(i),
-        edit(0),
-        button(0)
+    Impl(Public & i, QString extraLabel)
+        : Base(i)
+        , edit(0)
+        , button(0)
     {
         /*
         // What's up with the extra spacing?
@@ -102,7 +104,7 @@ void FolderSelection::setEnabled(bool yes)
 
 de::NativePath FolderSelection::path() const
 {
-    return d->edit->text();
+    return convert(d->edit->text());
 }
 
 void FolderSelection::selectFolder()

@@ -19,6 +19,7 @@
 #include "localserverdialog.h"
 #include "folderselection.h"
 #include "guishellapp.h"
+#include "utils.h"
 #include <de/libcore.h>
 #include <de/Socket>
 #include <de/CommandLine>
@@ -84,7 +85,7 @@ DE_PIMPL(LocalServerDialog)
         games->setEditable(false);
         foreach (DoomsdayInfo::Game const &mode, DoomsdayInfo::allGames())
         {
-            games->addItem(mode.title, mode.option);
+            games->addItem(convert(mode.title), convert(mode.option));
         }
         games->setCurrentIndex(games->findData(st.value("LocalServer/gameMode", "doom1-share")));
         form->addRow(tr("&Game mode:"), games);
@@ -148,7 +149,7 @@ DE_PIMPL(LocalServerDialog)
         tabs->addTab(advancedTab, tr("&Advanced"));
 
         runtime = new FolderSelection(tr("Select Runtime Folder"));
-        runtime->setPath(st.value("LocalServer/runtime").toString());
+        runtime->setPath(convert(st.value("LocalServer/runtime").toString()));
         if (runtime->path().isEmpty())
         {
             runtime->setPath(DoomsdayInfo::defaultServerRuntimeFolder().toString());

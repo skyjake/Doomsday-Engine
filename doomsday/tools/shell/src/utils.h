@@ -20,7 +20,18 @@
 #define GUISHELLAPP_UTILS_H
 
 #include <QString>
+#include <de/String>
 
 QString imageResourcePath(QString const &path);
+
+inline de::String convert(const QString &qstr)
+{
+    return qstr.toStdWString();
+}
+
+inline QString convert(const de::String &str)
+{
+    return QString::fromUtf8(str);
+}
 
 #endif // GUISHELLAPP_UTILS_H
