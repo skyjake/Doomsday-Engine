@@ -106,7 +106,7 @@ public:
     /**
      * Resolves a named exit according to the map progression.
      */
-    res::Uri mapUriForNamedExit(de::String name) const;
+    res::Uri mapUriForNamedExit(const de::String& name) const;
 
     /**
      * Returns the current ruleset for the game session.

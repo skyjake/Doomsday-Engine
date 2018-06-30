@@ -77,6 +77,7 @@
 #include <doomsday/BspNode>
 #include <doomsday/world/Materials>
 
+#include <de/BitArray>
 #include <de/LogBuffer>
 #include <de/Rectangle>
 
@@ -87,9 +88,8 @@
 #include <de/timer.h>
 
 #include <array>
-#include <QBitArray>
-#include <QMultiMap>
-#include <QVarLengthArray>
+#include <map>
+//#include <QVarLengthArray>
 
 using namespace de;
 

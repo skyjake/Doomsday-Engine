@@ -22,8 +22,6 @@
 #include "Face"
 #include "Vertex"
 
-#include <QtAlgorithms>
-
 namespace de {
 
 Mesh::Element::Element(Mesh &owner)
@@ -76,9 +74,9 @@ Mesh::~Mesh()
 
 void Mesh::clear()
 {
-    qDeleteAll(d->vertexs); d->vertexs.clear();
-    qDeleteAll(d->hedges); d->hedges.clear();
-    qDeleteAll(d->faces); d->faces.clear();
+    deleteAll(d->vertexs); d->vertexs.clear();
+    deleteAll(d->hedges); d->hedges.clear();
+    deleteAll(d->faces); d->faces.clear();
 }
 
 Vertex *Mesh::newVertex(Vec2d const &origin)

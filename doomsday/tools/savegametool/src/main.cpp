@@ -28,7 +28,7 @@
 
 using namespace de;
 
-String fallbackGameId;
+static String fallbackGameId;
 
 typedef List<PackageFormatter *> FormatTranslators;
 
@@ -63,25 +63,22 @@ static void printDescription()
 {
     LOG_VERBOSE("%s is a utility for converting legacy Doomsday Engine, Doom and Heretic savegame"
                 " files into a format recognized by Doomsday Engine version 1.14 (or newer).")
-            << DE_TEXT_APP->applicationName();
+            << DE_TEXT_APP->metadata().gets(App::APP_NAME);
 }
 
 String versionText()
 {
-    return String("%1 version %2 (%3)")
-               .arg(DE_TEXT_APP->applicationName())
-               .arg(DE_TEXT_APP->applicationVersion())
-               .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
-                    .asDateTime().toString(Qt::SystemLocaleShortDate));
+    return DE_TEXT_APP->metadata().gets(App::APP_NAME) + " version " +
+           DE_TEXT_APP->metadata().gets(App::APP_VERSION) + " (" __DATE__ " " __TIME__ ")";
 }
 
 Path composeMapUriPath(duint32 episode, duint32 map)
 {
     if (episode > 0)
     {
-        return String("E%1M%2").arg(episode).arg(map > 0? map : 1);
+        return String::format("E%iM%i", episode, map > 0? map : 1);
     }
-    return String("MAP%1").arg(map > 0? map : 1, 2, 10, QChar('0'));
+    return String::format("MAP%02i", map > 0? map : 1);
 }
 
 Folder &outputFolder()
@@ -91,21 +88,25 @@ Folder &outputFolder()
 
 static PackageFormatter *saveFormatForGameId(String const &idKey)
 {
-    for (PackageFormatter *fmt, translators)
-    for (String const &baseId : fmt->baseGameIds)
+    for (PackageFormatter *fmt : translators)
     {
-        if (idKey.beginsWith(baseId)) return fmt;
+        for (String const &baseId : fmt->baseGameIds)
+        {
+            if (idKey.beginsWith(baseId)) return fmt;
+        }
     }
     return 0; // Not found.
 }
 
 static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
 {
-    String ext = path.lastSegment().toString().fileNameExtension().toLower();
-    foreach (PackageFormatter *fmt, translators)
-    foreach (QString const &knownExtension, fmt->knownExtensions)
+    String ext = path.lastSegment().toString().fileNameExtension().lower();
+    for (PackageFormatter *fmt : translators)
     {
-        if (!knownExtension.compare(ext, Qt::CaseInsensitive)) return fmt;
+        if (String::contains(fmt->knownExtensions, ext, CaseInsensitive))
+        {
+            return fmt;
+        }
     }
     return 0; // Not found.
 }
@@ -121,9 +122,9 @@ static PackageFormatter &translator()
 }
 
 /// @param inputPath  Path to the game state file [.dsg | .hsg | .hxs] in the vfs.
-static void convertSavegame(Path inputPath)
+static void convertSavegame(const Path& inputPath)
 {
-    foreach (PackageFormatter *xlator, translators)
+    for (PackageFormatter *xlator : translators)
     {
         if (xlator->recognize(inputPath))
         {
@@ -191,18 +192,18 @@ int main(int argc, char **argv)
         }
         else
         {
-            for (int i = 1; i < args.count(); ++i)
+            for (int i = 1; i < args.sizei(); ++i)
             {
                 if (args.isOption(i))
                 {
                     // Was a fallback game ID specified?
-                    if (i + 1 < args.count() && !args.at(i).compareWithoutCase("-idkey"))
+                    if (i + 1 < args.sizei() && !args.at(i).compareWithoutCase("-idkey"))
                     {
-                        fallbackGameId = args.at(i + 1).strip().toLower();
+                        fallbackGameId = args.at(i + 1).strip().lower();
                         i += 1;
                     }
                     // The -output option can be used to redirect .save output.
-                    if (i + 1 < args.count() && !args.at(i).compareWithoutCase("-output"))
+                    if (i + 1 < args.sizei() && !args.at(i).compareWithoutCase("-output"))
                     {
                         args.makeAbsolutePath(i + 1);
                         app.fileSystem().makeFolderWithFeed("/output",

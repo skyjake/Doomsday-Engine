@@ -528,7 +528,7 @@ void Hu_MenuInitGameTypePage()
     int y = 0;
 
     String labelText = GET_TXT(TXT_SINGLEPLAYER);
-    int shortcut     = labelText.first().isLetterOrNumber()? labelText.first().toLatin1() : 0;
+    int shortcut     = labelText.first().isLetterOrNumber()? labelText.first() : 0;
     page->addWidget(new ButtonWidget(labelText))
             .setFixedY(y)
             .setFont(MENU_FONT1)
@@ -539,7 +539,7 @@ void Hu_MenuInitGameTypePage()
     y += FIXED_LINE_HEIGHT;
 
     labelText = GET_TXT(TXT_MULTIPLAYER);
-    shortcut  = labelText.first().isLetterOrNumber()? labelText.first().toLatin1() : 0;
+    shortcut  = labelText.first().isLetterOrNumber()? labelText.first() : 0;
     page->addWidget(new ButtonWidget(labelText))
             .setFixedY(y)
             .setFont(MENU_FONT1)
@@ -801,7 +801,7 @@ void Hu_MenuInitFilesPage()
 
 static void deleteGameSave(const String& slotId)
 {
-    DD_Executef(true, "deletegamesave %s", slotId.toLatin1().constData());
+    DD_Executef(true, "deletegamesave %s", slotId.c_str());
 }
 
 int Hu_MenuLoadSlotCommandResponder(Widget &wi, menucommand_e cmd)
@@ -2184,7 +2184,7 @@ void Hu_MenuInitPlayerClassPage()
 
         auto *btn = new ButtonWidget(text);
 
-        if(!btn->text().isEmpty() && iswalnum(btn->text().first()) btn->setShortcut(btn->text().first());
+        if (!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
         btn->setFixedY(y);
         btn->setAction(Widget::Deactivated, Hu_MenuSelectPlayerClass);
         btn->setAction(Widget::FocusGained, Hu_MenuFocusOnPlayerClass);
@@ -3519,23 +3519,23 @@ void Hu_MenuSelectPlayerClass(Widget &wi, Widget::Action action)
     ButtonWidget *btn;
     btn = &skillPage.findWidget(Widget::Id0).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_BABY]));
-    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
+    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id1).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_EASY]));
-    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
+    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id2).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_MEDIUM]));
-    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
+    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id3).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_HARD]));
-    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
+    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id4).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_NIGHTMARE]));
-    if(!btn->text().isEmpty() && btn->text().first().isLetterOrNumber()) btn->setShortcut(btn->text().first().toLatin1());
+    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
 
     switch(mnPlrClass)
     {
@@ -3550,7 +3550,7 @@ void Hu_MenuFocusOnPlayerClass(Widget &wi, Widget::Action action)
 {
     if(action != Widget::FocusGained) return;
 
-    playerclass_t plrClass = playerclass_t(wi.userValue2().toInt());
+    playerclass_t plrClass = playerclass_t(wi.userValue2().asInt());
     MobjPreviewWidget &mop = wi.page().findWidget(Widget::Id0).as<MobjPreviewWidget>();
     mop.setPlayerClass(plrClass);
     mop.setMobjType((PCLASS_NONE == plrClass? MT_NONE : PCLASS_INFO(plrClass)->mobjType));

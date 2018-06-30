@@ -75,14 +75,14 @@ void guidata_kills_t::draw(Vec2i const &offset) const
     String valueAsText("Kills:");
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS)
     {
-        valueAsText += String(" %1/%2").arg(_value).arg(totalKills);
+        valueAsText += String::format(" %i/%i", _value, totalKills);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
-        valueAsText += String(" %1%2%%3")
-                           .arg((::cfg.common.hudShownCheatCounters & CCH_KILLS) ? "(" : "")
-                           .arg(totalKills ? _value * 100 / totalKills : 100)
-                           .arg((::cfg.common.hudShownCheatCounters & CCH_KILLS) ? ")" : "");
+        valueAsText += String::format(" %s%i%%%s",
+                                      (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? "(" : "",
+                                      totalKills ? _value * 100 / totalKills : 100,
+                                      (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? ")" : "");
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -120,14 +120,14 @@ void guidata_kills_t::updateGeometry()
     String valueAsText("Kills:");
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS)
     {
-        valueAsText += String(" %1/%2").arg(_value).arg(totalKills);
+        valueAsText += String::format(" %i/%i", _value, totalKills);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
-        valueAsText += String(" %1%2%%3")
-                           .arg((::cfg.common.hudShownCheatCounters & CCH_KILLS) ? "(" : "")
-                           .arg(totalKills ? _value * 100 / totalKills : 100)
-                           .arg((::cfg.common.hudShownCheatCounters & CCH_KILLS) ? ")" : "");
+        valueAsText += String::format(" %s%i%%%s",
+                                      (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? "(" : "",
+                                      totalKills ? _value * 100 / totalKills : 100,
+                                      (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? ")" : "");
     }
 
     FR_SetFont(font());

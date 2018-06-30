@@ -23,9 +23,9 @@
 #define DE_WORLD_MAP_H
 
 #include <functional>
-#include <QHash>
-#include <QList>
-#include <QSet>
+#include <de/Hash>
+#include <de/List>
+#include <de/Set>
 #include <doomsday/BspNode>
 #include <doomsday/world/map.h>
 #include <doomsday/world/ithinkermapping.h>
@@ -134,9 +134,9 @@ public:
     /// Maximum number of generators per map.
     static de::dint const MAX_GENERATORS = 512;
 
-    typedef QSet<Plane *> PlaneSet;
-    typedef QSet<Surface *> SurfaceSet;
-    typedef QHash<thid_t, struct mobj_s *> ClMobjHash;
+    typedef Set<Plane *> PlaneSet;
+    typedef Set<Surface *> SurfaceSet;
+    typedef Hash<thid_t, struct mobj_s *> ClMobjHash;
 #endif
 
 public:  /// @todo make private:
@@ -949,19 +949,19 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * Provides a list of all the editable lines in the map.
      */
-    typedef QList<Line *> Lines;
+    typedef List<Line *> Lines;
     Lines const &editableLines() const;
 
     /**
      * Provides a list of all the editable polyobjs in the map.
      */
-    typedef QList<Polyobj *> Polyobjs;
+    typedef List<Polyobj *> Polyobjs;
     Polyobjs const &editablePolyobjs() const;
 
     /**
      * Provides a list of all the editable sectors in the map.
      */
-    typedef QList<Sector *> Sectors;
+    typedef List<Sector *> Sectors;
     Sectors const &editableSectors() const;
 
     inline de::dint editableLineCount   () const { return editableLines   ().count(); }

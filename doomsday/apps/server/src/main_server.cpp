@@ -26,11 +26,11 @@
  */
 int main(int argc, char** argv)
 {
-    ServerApp serverApp(argc, argv);
+    ServerApp serverApp(makeList(argc, argv));
     try
     {
         serverApp.initialize();
-        return serverApp.execLoop();
+        return serverApp.exec();
     }
     catch (de::Error const &er)
     {

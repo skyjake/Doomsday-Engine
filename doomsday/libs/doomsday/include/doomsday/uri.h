@@ -209,6 +209,8 @@ public:
      */
     static Uri fromUserInput(char **argv, int argc, bool (*knownScheme)(String name) = nullptr);
 
+    static Uri fromUserInput(const StringList &args, bool (*knownScheme)(String name) = nullptr);
+
     /**
      * Convert this URI to a text string.
      *
@@ -360,6 +362,13 @@ namespace std {
     inline void swap<res::Uri>(res::Uri &a, res::Uri &b) {
         a.swap(b);
     }
+    // hash function
+    template <>
+    struct hash<res::Uri> {
+        std::size_t operator()(const res::Uri &key) const {
+            return hash<std::string>()(key.asText().toStdString());
+        }
+    };
 }
 
 #endif // __cplusplus

@@ -19,9 +19,9 @@
 
 #include "de_platform.h"
 
-#include <QNetworkProxyFactory>
-#include <QHostInfo>
-#include <QDebug>
+//#include <QNetworkProxyFactory>
+//#include <QHostInfo>
+//#include <QDebug>
 #include <stdlib.h>
 
 #include <doomsday/console/var.h>
@@ -64,7 +64,8 @@ static String const PATH_SERVER_FILES = "/sys/server/public";
 static void handleAppTerminate(char const *msg)
 {
     LogBuffer::get().flush();
-    qFatal("Application terminated due to exception:\n%s\n", msg);
+    warning("Application terminated due to exception:\n%s\n", msg);
+    exit(1);
 }
 
 DE_PIMPL(ServerApp)
@@ -74,9 +75,9 @@ DE_PIMPL(ServerApp)
 , DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
 , DE_OBSERVES(PackageLoader, Activity)
 {
-    QScopedPointer<ServerSystem> serverSystem;
-    QScopedPointer<Resources> resources;
-    QScopedPointer<AudioSystem> audioSys;
+    std::unique_ptr<ServerSystem> serverSystem;
+    std::unique_ptr<Resources> resources;
+    std::unique_ptr<AudioSystem> audioSys;
     ClientServerWorld world;
     InFineSystem infineSys;
     duint32 serverId;
@@ -98,7 +99,7 @@ DE_PIMPL(ServerApp)
         LOG_NET_NOTE("Server instance ID: %08x") << serverId;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         Sys_Shutdown();
         DD_Shutdown();
@@ -162,16 +163,15 @@ DE_PIMPL(ServerApp)
 #ifdef UNIX
     void printVersionToStdOut()
     {
-        printf("%s\n", String("%1 %2")
-               .arg(DOOMSDAY_NICENAME)
-               .arg(DOOMSDAY_VERSION_FULLTEXT)
-               .toLatin1().constData());
+        printf("%s %s\n",
+               DOOMSDAY_NICENAME,
+               DOOMSDAY_VERSION_FULLTEXT);
     }
 
     void printHelpToStdOut()
     {
         printVersionToStdOut();
-        printf("Usage: %s [options]\n", self().commandLine().at(0).toLatin1().constData());
+        printf("Usage: %s [options]\n", self().commandLine().at(0).c_str());
         printf(" -iwad (dir)  Set directory containing IWAD files.\n");
         printf(" -file (f)    Load one or more PWAD files at startup.\n");
         printf(" -game (id)   Set game to load at startup.\n");
@@ -181,15 +181,15 @@ DE_PIMPL(ServerApp)
 #endif
 };
 
-ServerApp::ServerApp(int &argc, char **argv)
-    : TextApp(argc, argv)
+ServerApp::ServerApp(const StringList &args)
+    : TextApp(args)
     , DoomsdayApp([] () -> Player * { return new ServerPlayer; })
     , d(new Impl(this))
 {
     novideo = true;
 
     // Use the host system's proxy configuration.
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
+//    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
     setMetadata("Deng Team", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);

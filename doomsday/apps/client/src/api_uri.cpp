@@ -170,14 +170,14 @@ AutoStr* Uri_Resolved(Uri const* uri)
 const Str* Uri_Scheme(Uri const* uri)
 {
     SELF_CONST(uri);
-    return self->schemeStr();
+    return AutoStr_FromTextStd(self->scheme());
 }
 
 #undef Uri_Path
 const Str* Uri_Path(Uri const* uri)
 {
     SELF_CONST(uri);
-    return self->pathStr();
+    return AutoStr_FromTextStd(self->path());
 }
 
 #undef Uri_SetUri2

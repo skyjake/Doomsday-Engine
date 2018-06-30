@@ -1084,17 +1084,19 @@ de::String Mobj_StateAsInfo(mobj_t const *mob)
 
     #if defined (__JHERETIC__)
     {
-        os << "\n  generator = 0x" << String::asText(Mobj_PrivateID(mob->generator), 16);
+        str += "\n  generator = 0x";
+        str += String::asText(Mobj_PrivateID(mob->generator), 16);
     }
     #endif
 
     #if defined (__JHEXEN__)
     {
-        os << "\n  lastEnemy = 0x" << String::asText(Mobj_PrivateID(mob->lastEnemy), 16);
+        str += "\n  lastEnemy = 0x";
+        str += String::asText(Mobj_PrivateID(mob->lastEnemy), 16);
     }
     #endif
 
-    os << "\n}\n";
+    str += "\n}\n";
 
     return str;
 }

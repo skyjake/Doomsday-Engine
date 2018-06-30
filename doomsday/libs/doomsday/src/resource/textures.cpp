@@ -873,11 +873,10 @@ Texture *Textures::tryFindTextureByResourceUri(String const &schemeName, res::Ur
 {
     if (!resourceUri.isEmpty())
     {
-        if (resourceUri.path() == DE_STR("-"))
+        if (resourceUri.path() == "-")
         {
             return nullptr;
         }
-
         if (auto *ts = textureSchemePtr(schemeName))
         {
             if (auto *mft = ts->tryFindByResourceUri(resourceUri))

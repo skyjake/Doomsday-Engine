@@ -86,7 +86,7 @@ void G_SetGameActionMapCompleted(res::Uri const &nextMapUri, uint nextMapEntryPo
 /**
  * @param episodeId  Identifier of the episode to lookup the title of.
  */
-de::String G_EpisodeTitle(de::String episodeId);
+de::String G_EpisodeTitle(const de::String& episodeId);
 
 /**
  * Returns the effective map-info definition Record associated with the given
@@ -122,7 +122,7 @@ res::Uri G_MapTitleImage(res::Uri const &mapUri);
  *
  * @return  Rich-formatted description of the map.
  */
-de::String G_MapDescription(de::String episodeId, res::Uri const &mapUri);
+de::String G_MapDescription(const de::String& episodeId, res::Uri const &mapUri);
 
 /**
  * Attempt to extract the logical map number encoded in the @a mapUri. Assumes the default

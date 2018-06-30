@@ -435,8 +435,8 @@ void guidata_face_t::prepareAssets()  // static
         {
             ::pFaces[idx++] = R_DeclarePatch(String::format("STFST%i%i", i, k));
         }
-        ::pFaces[idx++] = R_DeclarePatch(String::format("STFTR%1"  ).arg(i * 10, 2, 'g', 2, '0'));  // Turn right.
-        ::pFaces[idx++] = R_DeclarePatch(String::format("STFTL%1"  ).arg(i * 10, 2, 'g', 2, '0'));  // Turn left.
+        ::pFaces[idx++] = R_DeclarePatch(String::format("STFTR%i0" , i));  // Turn right.
+        ::pFaces[idx++] = R_DeclarePatch(String::format("STFTL%i0" , i));  // Turn left.
         ::pFaces[idx++] = R_DeclarePatch(String::format("STFOUCH%i", i));  // Ouch.
         ::pFaces[idx++] = R_DeclarePatch(String::format("STFEVL%i" , i));  // Evil grin.
         ::pFaces[idx++] = R_DeclarePatch(String::format("STFKILL%i", i));  // Pissed off.

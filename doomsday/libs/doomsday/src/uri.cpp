@@ -240,17 +240,22 @@ Uri::Uri(char const *nullTerminatedCStr) : d(new Impl)
     setUri(nullTerminatedCStr);
 }
 
-Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
+Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme)(String name))
+{
+    return fromUserInput(makeList(argc, argv), knownScheme);
+}
+
+Uri Uri::fromUserInput(const StringList &args, bool (*knownScheme)(String name))
 {
     Uri output;
-    if (argv)
+    if (args)
     {
         // [0: <scheme>:<path>] or [0: <scheme>] or [0: <path>].
-        switch (argc)
+        switch (args.sizei())
         {
         case 1: {
             // Try to extract the scheme and encode the rest of the path.
-            String rawUri(argv[0]);
+            String rawUri(args[0]);
             if (auto pos = rawUri.indexOf(':'))
             {
                 output.setScheme(rawUri.left(pos));
@@ -272,8 +277,8 @@ Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme) (String name))
         // [0: <scheme>, 1: <path>]
         case 2:
             // Assign the scheme and encode the path.
-            output.setScheme(argv[0]);
-            output.setPath(Path::normalize(String(argv[1]).toPercentEncoding()));
+            output.setScheme(args[0]);
+            output.setPath(Path::normalize(args[1].toPercentEncoding()));
             break;
 
         default: break;

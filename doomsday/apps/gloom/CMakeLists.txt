@@ -4,8 +4,9 @@ project (GLOOM)
 include (../../cmake/Config.cmake)
 include (QtConfig)
 
-find_package (Qt5 COMPONENTS Gui Widgets Network OpenGL OpenGLExtensions)
+find_package (Qt5 COMPONENTS Gui Widgets)
 find_package (FMOD)
+find_package (glbinding REQUIRED)
 
 list (APPEND DE_REQUIRED_PACKAGES
     net.dengine.stdlib
@@ -106,7 +107,7 @@ endif ()
 deng_add_application (gloom ${SOURCES} ${HEADERS})
 
 target_include_directories (gloom PRIVATE ${CMAKE_CURRENT_LIST_DIR} ${DE_EXTERNAL_SOURCE_DIR}/gpc)
-deng_link_libraries (gloom PRIVATE DengAppfw DengDoomsday fmodex)
+deng_link_libraries (gloom PRIVATE DengAppfw DengDoomsday fmodex glbinding::glbinding)
 deng_target_link_qt (gloom PRIVATE Widgets)
 
 if (APPLE)

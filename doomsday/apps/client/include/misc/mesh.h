@@ -20,9 +20,8 @@
 #ifndef DATA_MESH_H
 #define DATA_MESH_H
 
-#include <QList>
-
 #include <de/Error>
+#include <de/List>
 #include <de/Vector>
 
 #include <doomsday/world/MapElement>
@@ -45,9 +44,9 @@ class HEdge;
 class Mesh
 {
 public:
-    typedef QList<Vertex *> Vertexs;
-    typedef QList<Face *> Faces;
-    typedef QList<HEdge *> HEdges;
+    typedef List<Vertex *> Vertexs;
+    typedef List<Face *>   Faces;
+    typedef List<HEdge *>  HEdges;
 
     /**
      * Base class for all elements of a mesh.

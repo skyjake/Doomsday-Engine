@@ -875,9 +875,8 @@ void G_AutoStartOrBeginTitleLoop()
         if (!isNumber)
         {
             // It must be a URI, then.
-            Block rawMapUri = cmdLine.at(arg + (haveEpisode? 2 : 1)).toUtf8();
-            char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
-            startMapUri = res::Uri::fromUserInput(args, 1);
+            String rawMapUri = cmdLine.at(arg + (haveEpisode? 2 : 1));
+            startMapUri = res::Uri::fromUserInput({rawMapUri});
             if (startMapUri.scheme().isEmpty()) startMapUri.setScheme("Maps");
         }
         else
@@ -1509,21 +1508,21 @@ static void runGameAction()
         case GA_SCREENSHOT: {
             // Find an unused screenshot file name.
             String fileName = gfw_GameId() + "-";
-            int const numPos = fileName.length();
+            const auto numPos = fileName.sizeb();
             for (int i = 0; i < 1e6; ++i) // Stop eventually...
             {
-                fileName += String("%1.png").arg(i, 3, 10, QChar('0'));
-                if (!M_ScreenShot(fileName.toUtf8(), DD_SCREENSHOT_CHECK_EXISTS)) break; // Check only.
+                fileName += String::format("%03i.png", i);
+                if (!M_ScreenShot(fileName, DD_SCREENSHOT_CHECK_EXISTS)) break; // Check only.
                 fileName.truncate(numPos);
             }
 
-            if (M_ScreenShot(fileName.toUtf8(), 0))
+            if (M_ScreenShot(fileName, 0))
             {
                 /// @todo Do not use the console player's message log for this notification.
                 ///       The engine should implement it's own notification UI system for
                 ///       this sort of thing.
                 String msg = "Saved screenshot: " + NativePath(fileName).pretty();
-                P_SetMessageWithFlags(&::players[CONSOLEPLAYER], msg.toLatin1().constData(), LMF_NO_HIDE);
+                P_SetMessageWithFlags(&::players[CONSOLEPLAYER], msg, LMF_NO_HIDE);
             }
             else
             {
@@ -1577,7 +1576,8 @@ static void rebornPlayers()
             if (gfw_Session()->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, gfw_Session()->userDescription());
+                AutoStr *msg = Str_Appendf(
+                    AutoStr_NewStd(), REBORNLOAD_CONFIRM, gfw_Session()->userDescription().c_str());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmed, 0, 0);
                 return;
             }
@@ -1647,11 +1647,11 @@ void G_Ticker(timespan_t ticLength)
         if (!IS_CLIENT)
         {
             // Enable/disable sending of frames (delta sets) to clients.
-            Set(DD_SERVER_ALLOW_FRAMES, G_GameState() == GS_MAP);
+            DD_SetInteger(DD_SERVER_ALLOW_FRAMES, G_GameState() == GS_MAP);
 
             // Tell Doomsday when the game is paused (clients can't pause
             // the game.)
-            Set(DD_CLIENT_PAUSED, Pause_IsPaused());
+            DD_SetInteger(DD_CLIENT_PAUSED, Pause_IsPaused());
         }
 
         // Must be called on every tick.
@@ -1662,7 +1662,7 @@ void G_Ticker(timespan_t ticLength)
         if (!IS_CLIENT)
         {
             // Disable sending of frames (delta sets) to clients.
-            Set(DD_SERVER_ALLOW_FRAMES, false);
+            DD_SetInteger(DD_SERVER_ALLOW_FRAMES, false);
         }
     }
 
@@ -2004,7 +2004,7 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
     String mapTitle = G_MapTitle(mapUri);
     // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
     /// @todo Move this logic engine-side.
-    if (mapTitle.isEmpty() || mapTitle.at(0) == ' ')
+    if (mapTitle.isEmpty() || mapTitle.first() == ' ')
     {
         mapTitle = mapUri.path();
     }
@@ -2015,15 +2015,12 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
     int const hours   = time / 3600; time -= hours * 3600;
     int const minutes = time / 60;   time -= minutes * 60;
     int const seconds = time;
-    description += String(" %1:%2:%3")
-                       .arg(hours,   2, 10, QChar('0'))
-                       .arg(minutes, 2, 10, QChar('0'))
-                       .arg(seconds, 2, 10, QChar('0'));
+    description += String::format(" %02i:%02i:%02i", hours, minutes, seconds);
 
     return description;
 }
 
-String G_EpisodeTitle(String episodeId)
+String G_EpisodeTitle(const String& episodeId)
 {
     String title;
     if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
@@ -2050,15 +2047,15 @@ uint G_MapNumberFor(res::Uri const &mapUri)
         if (gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if (path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
+            if (towlower(path.first()) == 'e' && towlower(path.at(String::CharPos(2))) == 'm')
             {
-                return path.substr(3).toInt() - 1;
+                return path.substr(String::CharPos(3)).toInt() - 1;
             }
         }
 #endif
-        if (path.beginsWith("map", String::CaseInsensitive))
+        if (path.beginsWith("map", CaseInsensitive))
         {
-            return path.substr(3).toInt() - 1;
+            return path.substr(String::CharPos(3)).toInt() - 1;
         }
     }
     return 0;
@@ -2066,7 +2063,7 @@ uint G_MapNumberFor(res::Uri const &mapUri)
 
 AutoStr *G_CurrentMapUriPath()
 {
-    return AutoStr_FromTextStd(gfw_Session()->mapUri().path().toStringRef());
+    return AutoStr_FromTextStd(gfw_Session()->mapUri().path());
 }
 
 
@@ -2075,17 +2072,17 @@ res::Uri G_ComposeMapUri(uint episode, uint map)
 {
     String mapId;
 #if __JDOOM64__
-    mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = String::format("map%02i", map + 1);
     DE_UNUSED(episode);
 #elif __JDOOM__
     if (gameModeBits & GM_ANY_DOOM2)
-        mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
+        mapId = String::format("map%02i", map + 1);
     else
-        mapId = String("e%1m%2").arg(episode+1).arg(map+1);
+        mapId = String::format("e%im%i", episode + 1, map + 1);
 #elif  __JHERETIC__
-    mapId = String("e%1m%2").arg(episode+1).arg(map+1);
+    mapId = String::format("e%im%i", episode + 1, map + 1);
 #else
-    mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
+    mapId = String::format("map%02i", map + 1);
     DE_UNUSED(episode);
 #endif
     return res::Uri("Maps", mapId);
@@ -2129,12 +2126,10 @@ String G_MapTitle(res::Uri const &mapUri)
     }
 
     // Skip the "ExMx" part, if present.
-    int idSuffixAt = title.indexOf(':');
-    if (idSuffixAt >= 0)
+    if (auto idSuffixAt = title.indexOf(':'))
     {
-        int subStart = idSuffixAt + 1;
-        while (subStart < title.length() && title.at(subStart).isSpace()) { subStart++; }
-
+        auto subStart = idSuffixAt + 1;
+        while (subStart < title.sizeb() && isspace(title.at(subStart))) { subStart++; }
         return title.substr(subStart);
     }
 
@@ -2167,16 +2162,14 @@ res::Uri G_MapTitleImage(res::Uri const &mapUri)
     return res::makeUri(G_MapInfoForMapUri(mapUri).gets("titleImage"));
 }
 
-String G_MapDescription(String episodeId, res::Uri const &mapUri)
+String G_MapDescription(const String& episodeId, res::Uri const &mapUri)
 {
-    Block mapUriUtf8 = mapUri.compose().toUtf8();
-    if (!P_MapExists(mapUriUtf8.constData()))
+    if (!P_MapExists(mapUri.compose()))
     {
         return String("Unknown map (Episode: ") + episodeId + ", Uri: " + mapUri + ")";
     }
 
-    String desc;
-    QTextStream os(&desc);
+    std::ostringstream os;
 
     String const title = G_MapTitle(mapUri);
     if (!title.isEmpty())
@@ -2195,13 +2188,13 @@ String G_MapDescription(String episodeId, res::Uri const &mapUri)
         os << ")" << DE2_ESC(.);
     }
 
-    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUriUtf8.constData()));
+    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUri.compose()));
     if (!author.isEmpty())
     {
         os << "\n - Author: " DE2_ESC(i) << author;
     }
 
-    return desc;
+    return os.str();
 }
 
 /**
@@ -2407,8 +2400,8 @@ D_CMD(LoadSession)
             // Compose the confirmation message.
             String const &existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,
-                                       sslot->id(),
-                                       existingDescription);
+                                       sslot->id().c_str(),
+                                       existingDescription.c_str());
 
             Hu_MsgStart(MSG_YESNO, Str_Text(msg), loadSessionConfirmed, 0, new String(sslot->id()));
             return true;
@@ -2461,7 +2454,7 @@ static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
     DE_ASSERT(p != 0);
     if (response == MSG_YES)
     {
-        DD_Executef(true, "savegame %s \"%s\" confirm", p->slotId, p->userDescription);
+        DD_Executef(true, "savegame %s \"%s\" confirm", p->slotId.c_str(), p->userDescription.c_str());
     }
     delete p;
     return true;
@@ -2521,8 +2514,8 @@ D_CMD(SaveSession)
             // Compose the confirmation message.
             String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
-                                       sslot->id(),
-                                       existingDescription);
+                                       sslot->id().c_str(),
+                                       existingDescription.c_str());
 
             savesessionconfirmed_params_t *parm = new savesessionconfirmed_params_t;
             parm->slotId          = sslot->id();
@@ -2598,7 +2591,7 @@ D_CMD(DeleteSaveGame)
 
                 // Compose the confirmation message.
                 String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription);
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.c_str());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteGameStateFolderConfirmed, 0, new String(sslot->saveName()));
             }
 
@@ -2764,9 +2757,8 @@ D_CMD(WarpMap)
         }
 
         // It must be a URI, then.
-        Block rawMapUri = String(argv[haveEpisode? 2 : 1]).toUtf8();
-        char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
-        mapUri = res::Uri::fromUserInput(args, 1);
+        String rawMapUri = String(argv[haveEpisode? 2 : 1]);
+        mapUri = res::Uri::fromUserInput({rawMapUri});
         if (mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
     }
     else
@@ -2790,8 +2782,8 @@ D_CMD(WarpMap)
     if (!P_MapExists(mapUri.compose()))
     {
         String msg("Unknown map");
-        if (argc >= 3) msg += String(" \"%1 %2\"").arg(argv[1]).arg(argv[2]);
-        else          msg += String(" \"%1\"").arg(argv[1]);
+        if (argc >= 3) msg += String::format(" \"%s %s\"", argv[1], argv[2]);
+        else           msg += String::format(" \"%s\"", argv[1]);
 
         P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg, LMF_NO_HIDE);
         return false;

@@ -7,6 +7,7 @@
 #include <fmod.hpp>
 #include <fmod_errors.h>
 #include <QHash>
+#include <QSet>
 
 using namespace de;
 
@@ -157,7 +158,7 @@ DE_PIMPL(AudioSystem)
                                          wf.bitsPerSample() == 16? FMOD_SOUND_FORMAT_PCM16 :
                                          wf.bitsPerSample() == 24? FMOD_SOUND_FORMAT_PCM24 :
                                                                    FMOD_SOUND_FORMAT_PCM32);
-                system->createSound(wf.sampleData().constData(),
+                system->createSound(wf.sampleData().c_str(),
                                     FMOD_OPENRAW | FMOD_OPENMEMORY_POINT | commonFlags,
                                     &info, &sound);
             }
@@ -173,8 +174,10 @@ DE_PIMPL(AudioSystem)
 
                 // Compressed sound formats might be understood by FMOD.
                 FMOD_RESULT result = system->createSound(
-                            reinterpret_cast<char const *>(wf.sourceFile()->path().constData()),
-                            /*FMOD_UNICODE |*/ FMOD_CREATECOMPRESSEDSAMPLE | commonFlags, &info, &sound);
+                    wf.sourceFile()->path().c_str(),
+                    /*FMOD_UNICODE |*/ FMOD_CREATECOMPRESSEDSAMPLE | commonFlags,
+                    &info,
+                    &sound);
                 if(result != FMOD_OK)
                 {
                     LOG_AUDIO_WARNING("Failed to load %s: %s")

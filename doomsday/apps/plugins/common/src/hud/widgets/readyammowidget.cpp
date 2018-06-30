@@ -121,7 +121,7 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -164,7 +164,7 @@ void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     FR_SetFont(ammo->font());
     Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
@@ -183,7 +183,7 @@ void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     FR_SetFont(ammo->font());
     Size2Raw textSize; FR_TextSize(&textSize, valueAsText);
@@ -211,7 +211,7 @@ void ReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -252,7 +252,7 @@ void SBarReadyAmmo_Drawer(guidata_readyammo_t *ammo, Point2Raw const *offset)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -295,7 +295,7 @@ void ReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     FR_SetFont(ammo->font());
     FR_SetTracking(TRACKING);
@@ -319,7 +319,7 @@ void SBarReadyAmmo_UpdateGeometry(guidata_readyammo_t *ammo)
     if(ST_AutomapIsOpen(ammo->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[ammo->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = QByteArray::number(ammo->_value);
+    auto const valueAsText = String::asText(ammo->_value);
 
     FR_SetFont(ammo->font());
     FR_SetTracking(TRACKING);

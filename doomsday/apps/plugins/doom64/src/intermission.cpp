@@ -125,16 +125,21 @@ namespace internal
                 drawText(String::asText(minutes), origin, ALIGN_TOPRIGHT);
             }
 
-            drawText(String("%1").arg(seconds, 2, 10, QChar('0')), origin + Vec2i(FR_CharWidth(':'), 0));
+            drawText(String::format("%02i", seconds), origin + Vec2i(FR_CharWidth(':'), 0));
 
             return;
         }
 
         // "sucks"
         patchinfo_t info;
-        if(!R_GetPatchInfo(pSucks, &info)) return;
+        if (!R_GetPatchInfo(pSucks, &info)) return;
 
-        WI_DrawPatch(pSucks, patchReplacementText(pSucks), Vec2i(origin.x - info.geometry.size.width, origin.y), ALIGN_TOPLEFT, 0, DTF_NO_EFFECTS);
+        WI_DrawPatch(pSucks,
+                     patchReplacementText(pSucks),
+                     Vec2i(origin.x - info.geometry.size.width, origin.y),
+                     ALIGN_TOPLEFT,
+                     0,
+                     DTF_NO_EFFECTS);
     }
 }
 

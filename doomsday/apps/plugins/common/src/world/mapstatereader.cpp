@@ -79,7 +79,7 @@ DE_PIMPL(MapStateReader)
     ThingArchive *thingArchive;
     world::MaterialArchive *materialArchive;
     dmu_lib::SideArchive *sideArchive;
-    QHash<Id::Type, thinker_t *> archivedThinkerIds;
+    Hash<Id::Type, thinker_t *> archivedThinkerIds;
 
     Impl(Public *i)
         : Base(i)
@@ -538,7 +538,7 @@ DE_PIMPL(MapStateReader)
 #endif
 
         byte tClass = 0;
-        forever
+        for (;;)
         {
 #if __JHEXEN__
             if (reachedSpecialsBlock)
@@ -841,10 +841,10 @@ Side *MapStateReader::side(int sideIndex) const
 
 thinker_t *MapStateReader::thinkerForPrivateId(Id::Type id) const
 {
-    auto found = d->archivedThinkerIds.constFind(id);
-    if (found != d->archivedThinkerIds.constEnd())
+    auto found = d->archivedThinkerIds.find(id);
+    if (found != d->archivedThinkerIds.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }

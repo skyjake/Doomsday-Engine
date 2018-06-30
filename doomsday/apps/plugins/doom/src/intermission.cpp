@@ -455,7 +455,7 @@ static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 
     /// @kludge We need to properly externalize the map progression.
     if((gameModeBits & (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT)) &&
-       wbs->nextMap.path().toString() == "MAP31")
+       wbs->nextMap.path() == "MAP31")
     {
         return;
     }

@@ -67,17 +67,18 @@ namespace internal
     static String composeSaveInfo(GameStateMetadata const &metadata)
     {
         String info;
-        QTextStream os(&info);
-        os.setCodec("UTF-8");
 
         // Write header and misc info.
         Time now;
-        os <<   "# Doomsday Engine game state package.\n#"
-           << "\n# Generator: GameSession (libcommon)"
-           << "\n# Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate);
+        info += "# Doomsday Engine game state package.\n#"
+                "\n# Generator: GameSession (libcommon)"
+                "\n# Date: ";
+        info += now.asText();
 
         // Write metadata.
-        os << "\n\n" + metadata.asInfo() + "\n";
+        info += "\n\n";
+        info += metadata.asInfo();
+        info += "\n";
 
         return info;
     }
@@ -105,14 +106,15 @@ using namespace internal;
 static String const internalSavePath = "/home/cache/internal.save";
 static GameSession theSession;
 
-DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
+DE_PIMPL(GameSession)
+, public GameStateFolder::IMapStateReaderFactory
 {
     String episodeId;
     GameRules rules;
     duint mapEntryPoint = 0;  ///< Player entry point, for reborn.
 
     bool rememberVisitedMaps = false;
-    QSet<res::Uri> visitedMaps;
+    Set<res::Uri> visitedMaps;
 
     acs::System acscriptSys;  ///< The One acs::System instance.
 
@@ -200,7 +202,7 @@ DE_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         meta.add("gameRules",       new Record(self().rules().asRecord()));
 
         auto *loadedPackages = new ArrayValue;
-        for (String id : PackageLoader::get().loadedPackageIdsInOrder())
+        for (const String &id : PackageLoader::get().loadedPackageIdsInOrder())
         {
             if (GameStateFolder::isPackageAffectingGameplay(id))
             {
@@ -957,18 +959,18 @@ GameSession::VisitedMaps GameSession::allVisitedMaps() const
 {
     if (hasBegun() && d->rememberVisitedMaps)
     {
-        return d->visitedMaps.toList();
+        return compose<VisitedMaps>(d->visitedMaps.begin(), d->visitedMaps.end());
     }
     return VisitedMaps();
 }
 
-res::Uri GameSession::mapUriForNamedExit(String name) const
+res::Uri GameSession::mapUriForNamedExit(const String& name) const
 {
     LOG_AS("GameSession");
     if (Record const *mgNode = mapGraphNodeDef())
     {
         // Build a lookup table mapping exit ids to exit records.
-        QMap<String, Record const *> exits;
+        Map<String, Record const *, String::InsensitiveLessThan> exits;
         for (Value const *value : mgNode->geta("exit").elements())
         {
             Record const &exit = value->as<RecordValue>().dereference();
@@ -981,12 +983,12 @@ res::Uri GameSession::mapUriForNamedExit(String name) const
 
         // Locate the named exit record.
         Record const *chosenExit = nullptr;
-        if (exits.count() > 1)
+        if (exits.size() > 1)
         {
-            auto found = exits.constFind(name.toLower());
-            if (found != exits.constEnd())
+            auto found = exits.find(name);
+            if (found != exits.end())
             {
-                chosenExit = found.value();
+                chosenExit = found->second;
             }
             else
             {
@@ -994,14 +996,13 @@ res::Uri GameSession::mapUriForNamedExit(String name) const
                         << d->episodeId << mapUri() << name;
             }
         }
-        else if (exits.count() == 1)
+        else if (exits.size() == 1)
         {
-            chosenExit = exits.values().first();
+            chosenExit = exits.begin()->second;
             String chosenExitId = chosenExit->gets("id");
-            if (chosenExitId != name.toLower())
+            if (chosenExitId.compareWithoutCase(name))
             {
-                LOGDEV_SCR_NOTE("Exit ID:%s chosen instead of '%s'")
-                        << chosenExitId << name;
+                LOGDEV_SCR_NOTE("Exit ID:%s chosen instead of '%s'") << chosenExitId << name;
             }
         }
 
@@ -1215,10 +1216,7 @@ void GameSession::leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint)
 #endif
         {
             // Clear all saved map states in the current hub.
-            for (auto name : mapsFolder.contents().keys())
-            {
-                mapsFolder.destroyFile(name);
-            }
+            mapsFolder.destroyAllFiles();
         }
 #if __JHEXEN__
         else

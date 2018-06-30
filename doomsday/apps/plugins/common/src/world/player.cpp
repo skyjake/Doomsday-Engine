@@ -1811,7 +1811,7 @@ String Player_WeaponId(player_t const *plr)
     }
 #endif
 #if defined(__JDOOM__) || defined(__JDOOM64__) || defined(__JHEXEN__)
-    value.append(QString::number(plr->readyWeapon));
+    value.append(String::asText(plr->readyWeapon));
 #endif
     value.append("|Id");
 
@@ -1837,12 +1837,11 @@ void Player_PostTick(player_t *player)
     // Notify engine whenever the current weapon changes.
     if(player->update & PSF_READY_WEAPON)
     {
-        Block const id = Player_WeaponId(player).toUtf8();
-
+        const String id = Player_WeaponId(player);
         ddnotify_player_weapon_changed_t args;
         args.player = console;
         args.weapon = player->readyWeapon;
-        args.weaponId = id.constData();
+        args.weaponId = id;
         Plug_Notify(DD_NOTIFY_PLAYER_WEAPON_CHANGED, &args);
     }
 }
@@ -1865,7 +1864,7 @@ void Player_UpdateStatusCVars(player_t const *player)
 {
     DE_ASSERT(player);
 
-    QChar const CVAR_DELIM('-');
+    const Char CVAR_DELIM('-');
 
     static Path const var_player_health        ("player-health",         CVAR_DELIM);
     static Path const var_player_armor         ("player-armor",          CVAR_DELIM);

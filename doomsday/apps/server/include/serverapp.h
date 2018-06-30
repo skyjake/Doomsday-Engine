@@ -36,7 +36,7 @@
 class ServerApp : public de::TextApp, public DoomsdayApp
 {
 public:
-    ServerApp(int &argc, char **argv);
+    ServerApp(const de::StringList &args);
     ~ServerApp();
 
     de::duint32 instanceId() const;

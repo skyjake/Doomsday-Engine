@@ -24,12 +24,6 @@
 
 #include "dehreader.h"
 
-//#include <QDebug>
-//#include <QDir>
-//#include <QFile>
-//#include <QRegExp>
-//#include <StringList>
-
 #include <de/memory.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/lumpindex.h>
@@ -44,13 +38,16 @@
 #include <de/String>
 #include <de/RegExp>
 
+#include <fstream>
+
 #include "importdeh.h"
 #include "dehreader_util.h"
 #include "info.h"
 
 using namespace de;
+using namespace res;
 
-static int stackDepth;
+static int       stackDepth;
 static const int maxIncludeDepth = de::max(0, DEHREADER_INCLUDE_DEPTH_MAX);
 
 /// Mask containing only those reader flags which should be passed from the current
@@ -80,23 +77,27 @@ class DehReader
     DE_ERROR(EndOfFile);
 
 public:
-    Block const &patch;
-    bool patchIsCustom = true;
+    String       patch;
+    mb_iterator  pos;
+    int          currentLineNumber = 0;
+    CString      line; ///< Current line.
 
-    int pos = 0;
-    int currentLineNumber = 0;
-
-    DehReaderFlags flags = 0;
-
-    int patchVersion = -1;  ///< @c -1= Unknown.
-    int doomVersion  = -1;  ///< @c -1= Unknown.
-
-    String line;            ///< Current line.
+    bool           patchIsCustom = true;
+    DehReaderFlags flags         = 0;
+    int            patchVersion  = -1; ///< @c -1= Unknown.
+    int            doomVersion   = -1; ///< @c -1= Unknown.
 
 public:
-    DehReader(Block const &patch, bool patchIsCustom = true, DehReaderFlags flags = 0)
-        : patch(patch), patchIsCustom(patchIsCustom), flags(flags)
+    DehReader(Block patch, bool patchIsCustom = true, DehReaderFlags flags = 0)
+        : patchIsCustom(patchIsCustom)
+        , flags(flags)
     {
+        if (flags & IgnoreEOF)
+        {
+            patch.removeAll('\0');
+        }
+        this->patch = patch;
+        pos = this->patch.begin();
         stackDepth++;
     }
 
@@ -104,13 +105,6 @@ public:
     {
         stackDepth--;
     }
-
-#if 0
-    LogEntry &log(Log::LogLevel level, String const &format)
-    {
-        return LOG().enter(level, format);
-    }
-#endif
 
     /**
      * Doom version numbers in the patch use the orignal game versions,
@@ -129,28 +123,28 @@ public:
         }
     }
 
-    bool atRealEnd()
-    {
-        return size_t(pos) >= patch.size();
-    }
-
     bool atEnd()
     {
-        if(atRealEnd()) return true;
-        if(!(flags & IgnoreEOF) && patch.at(pos) == '\0') return true;
-        return false;
+        return pos == patch.end(); //size_t(pos) >= patch.size();
     }
+
+//    bool atEnd()
+//    {
+//        if (atRealEnd()) return true;
+//        if (!(flags & IgnoreEOF) && *pos == 0) return true;
+//        return false;
+//    }
 
     void advance()
     {
-        if(atEnd()) return;
+        if (atEnd()) return;
 
         // Handle special characters in the input.
-        char ch = currentChar().toLatin1();
-        switch(ch)
+        Char ch = currentChar();
+        switch (ch)
         {
         case '\0':
-            if(size_t(pos) != patch.size() - 1)
+            if (pos != patch.end())
             {
                 LOG_WARNING("Unexpected EOF encountered on line #%i") << currentLineNumber;
             }
@@ -161,70 +155,75 @@ public:
         default: break;
         }
 
-        pos++;
+        ++pos;
     }
 
     Char currentChar()
     {
-        if(atEnd()) return 0;
-        return QChar::fromLatin1(patch.at(pos));
+        if (atEnd()) return 0;
+        return *pos; // QChar::fromLatin1(patch.at(pos));
     }
 
     void skipToEOL()
     {
-        while(!atEnd() && currentChar() != '\n') advance();
+        while (!atEnd() && currentChar() != '\n') { advance(); }
     }
 
     void readLine()
     {
-        int start = pos;
-        skipToEOL();
-        if(!atEnd())
+        if (atEnd())
         {
-            int endOfLine = pos - start;
-            // Ignore any trailing carriage return.
-            if(endOfLine > 0 && patch.at(start + endOfLine - 1) == '\r') endOfLine -= 1;
+            throw EndOfFile(stringf("EOF on line #%i", currentLineNumber));
+        }
 
-            QByteArray rawLine = patch.mid(start, endOfLine);
+        mb_iterator start = pos;
+        skipToEOL();
+
+            //auto endOfLine = pos - start;
+            // Ignore any trailing carriage return.
+            //if (endOfLine > 0 && patch.at(start + endOfLine - 1) == '\r') endOfLine -= 1;
+
+        line = CString(start, pos).strip(); // = patch.mid(start, endOfLine);
 
             // When tolerating mid stream EOF characters, we must first
             // strip them before attempting any encoding conversion.
-            if(flags & IgnoreEOF)
-            {
-                rawLine.replace('\0', "");
-            }
+//            if (flags & IgnoreEOF)
+//            {
+//                rawLine.replace("\0", "");
+//            }
 
             // Perform encoding conversion for this line and move on.
-            line = String::fromLatin1(rawLine);
-            if(currentChar() == '\n') advance();
-            return;
+//            line = String::fromLatin1(rawLine);
+        if (currentChar() == '\n')
+        {
+            advance();
         }
-        throw EndOfFile(stringf("EOF on line #%i", currentLineNumber));
     }
 
     /**
      * Keep reading lines until we find one that is something other than
      * whitespace or a whole-line comment.
      */
-    String const &skipToNextLine()
+    CString skipToNextLine()
     {
         for (;;)
         {
             readLine();
-            if(!line.strip().isEmpty() && line.at(0) != '#') break;
+            if (!line.isEmpty() && line.first() != '#') break;
         }
         return line;
     }
 
     bool lineInCurrentSection()
     {
-        return line.indexOf('=') != -1;
+        return line.indexOf('=') != CString::npos;
     }
 
     void skipToNextSection()
     {
-        do skipToNextLine();
-        while(lineInCurrentSection());
+        do {
+            skipToNextLine();
+        } while (lineInCurrentSection());
     }
 
     void logPatchInfo()
@@ -233,7 +232,7 @@ public:
         LOG_RES_MSG("Patch version: %i, Doom version: %i\nNoText: %b")
             << patchVersion << doomVersion << bool(flags & NoText);
 
-        if(patchVersion != 6)
+        if (patchVersion != 6)
         {
             LOG_WARNING("Patch version %i unknown, unexpected results may occur") << patchVersion;
         }
@@ -246,7 +245,7 @@ public:
         skipToNextLine();
 
         // Attempt to parse the DeHackEd patch signature and version numbers.
-        if(line.beginsWith("Patch File for DeHackEd v", CaseInsensitive))
+        if (line.beginsWith("Patch File for DeHackEd v", CaseInsensitive))
         {
             skipToNextLine();
             parsePatchSignature();
@@ -261,7 +260,7 @@ public:
         logPatchInfo();
 
         // Is this for a known Doom version?
-        if(!normalizeDoomVersion(doomVersion))
+        if (!normalizeDoomVersion(doomVersion))
         {
             LOG_WARNING("Doom version undefined, assuming v1.9");
             doomVersion = 3;
@@ -275,12 +274,12 @@ public:
                 try
                 {
                     /// @note Some sections have their own grammar quirks!
-                    if(line.beginsWith("include", CaseInsensitive)) // BEX
+                    if (line.beginsWith("include", CaseInsensitive)) // BEX
                     {
                         parseInclude(line.substr(7).leftStrip());
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("Thing", CaseInsensitive))
+                    else if (line.beginsWith("Thing", CaseInsensitive))
                     {
                         Record *mobj;
                         Record dummyMobj;
@@ -301,7 +300,7 @@ public:
                         skipToNextLine();
                         parseThing(*mobj, mobj == &dummyMobj);
                     }
-                    else if(line.beginsWith("Frame", CaseInsensitive))
+                    else if (line.beginsWith("Frame", CaseInsensitive))
                     {
                         Record *state;
                         Record dummyState;
@@ -322,7 +321,7 @@ public:
                         skipToNextLine();
                         parseFrame(*state, state == &dummyState);
                     }
-                    else if(line.beginsWith("Pointer", CaseInsensitive))
+                    else if (line.beginsWith("Pointer", CaseInsensitive))
                     {
                         Record *state;
                         Record dummyState;
@@ -343,7 +342,7 @@ public:
                         skipToNextLine();
                         parsePointer(*state, state == &dummyState);
                     }
-                    else if(line.beginsWith("Sprite", CaseInsensitive))
+                    else if (line.beginsWith("Sprite", CaseInsensitive))
                     {
                         ded_sprid_t *sprite;
                         Dummy<ded_sprid_t> dummySprite;
@@ -364,7 +363,7 @@ public:
                         skipToNextLine();
                         parseSprite(sprite, sprite == &dummySprite);
                     }
-                    else if(line.beginsWith("Ammo", CaseInsensitive))
+                    else if (line.beginsWith("Ammo", CaseInsensitive))
                     {
                         String const arg          = line.substr(4).leftStrip();
                         int ammoNum               = 0;
@@ -379,7 +378,7 @@ public:
                         skipToNextLine();
                         parseAmmo(ammoNum, ignore);
                     }
-                    else if(line.beginsWith("Weapon", CaseInsensitive))
+                    else if (line.beginsWith("Weapon", CaseInsensitive))
                     {
                         String const arg            = line.substr(6).leftStrip();
                         int weaponNum               = 0;
@@ -394,7 +393,7 @@ public:
                         skipToNextLine();
                         parseWeapon(weaponNum, ignore);
                     }
-                    else if(line.beginsWith("Sound", CaseInsensitive))
+                    else if (line.beginsWith("Sound", CaseInsensitive))
                     {
                         ded_sound_t *sound;
                         Dummy<ded_sound_t> dummySound;
@@ -415,83 +414,87 @@ public:
                         skipToNextLine();
                         parseSound(sound, sound == &dummySound);
                     }
-                    else if(line.beginsWith("Text", CaseInsensitive))
+                    else if (line.beginsWith("Text", CaseInsensitive))
                     {
                         String args = line.substr(4).leftStrip();
-                        int firstArgEnd = args.indexOf(' ');
-                        if(firstArgEnd < 0)
+                        auto firstArgEnd = args.indexOf(' ');
+                        if (!firstArgEnd)
                         {
-                            throw SyntaxError(String("Expected old text size on line #%1")
-                                                .arg(currentLineNumber));
+                            throw SyntaxError(
+                                stringf("Expected old text size on line #%i", currentLineNumber));
                         }
 
                         bool isNumber;
                         int const oldSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
-                            throw SyntaxError(String("Expected old text size but encountered \"%1\" on line #%2")
-                                                .arg(args.substr(firstArgEnd)).arg(currentLineNumber));
+                            throw SyntaxError(
+                                stringf("Expected old text size but encountered \"%s\" on line #%i",
+                                        args.substr(firstArgEnd).c_str(),
+                                        currentLineNumber));
                         }
 
-                        args.remove(0, firstArgEnd + 1);
+                        args.remove(BytePos(0), firstArgEnd + 1);
 
                         int const newSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
-                            throw SyntaxError(String("Expected new text size but encountered \"%1\" on line #%2")
-                                                .arg(args).arg(currentLineNumber));
+                            throw SyntaxError(
+                                stringf("Expected new text size but encountered \"%s\" on line #%i",
+                                        args.c_str(),
+                                        currentLineNumber));
                         }
 
                         parseText(oldSize, newSize);
                     }
-                    else if(line.beginsWith("Misc", CaseInsensitive))
+                    else if (line.beginsWith("Misc", CaseInsensitive))
                     {
                         skipToNextLine();
                         parseMisc();
                     }
-                    else if(line.beginsWith("Cheat", CaseInsensitive))
+                    else if (line.beginsWith("Cheat", CaseInsensitive))
                     {
-                        if(!(!patchIsCustom && DoomsdayApp::game().id() == "hacx"))
+                        if (!(!patchIsCustom && DoomsdayApp::game().id() == "hacx"))
                         {
                             LOG_WARNING("DeHackEd [Cheat] patches are not supported");
                         }
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[CODEPTR]", CaseInsensitive)) // BEX
+                    else if (line.beginsWith("[CODEPTR]", CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parseCodePointers();
                     }
-                    else if(line.beginsWith("[PARS]", CaseInsensitive)) // BEX
+                    else if (line.beginsWith("[PARS]", CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parsePars();
                     }
-                    else if(line.beginsWith("[STRINGS]", CaseInsensitive)) // BEX
+                    else if (line.beginsWith("[STRINGS]", CaseInsensitive)) // BEX
                     {
                         skipToNextLine();
                         parseStrings();
                     }
-                    else if(line.beginsWith("[HELPER]", CaseInsensitive)) // Eternity
+                    else if (line.beginsWith("[HELPER]", CaseInsensitive)) // Eternity
                     {
                         // Not yet supported (Helper Dogs from MBF).
                         //skipToNextLine();
                         parseHelper();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SPRITES]", CaseInsensitive)) // Eternity
+                    else if (line.beginsWith("[SPRITES]", CaseInsensitive)) // Eternity
                     {
                         // Not yet supported.
                         //skipToNextLine();
                         parseSprites();
                         skipToNextSection();
                     }
-                    else if(line.beginsWith("[SOUNDS]", CaseInsensitive)) // Eternity
+                    else if (line.beginsWith("[SOUNDS]", CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseSounds();
                     }
-                    else if(line.beginsWith("[MUSIC]", CaseInsensitive)) // Eternity
+                    else if (line.beginsWith("[MUSIC]", CaseInsensitive)) // Eternity
                     {
                         skipToNextLine();
                         parseMusic();
@@ -499,8 +502,10 @@ public:
                     else
                     {
                         // An unknown section.
-                        throw UnknownSection(String("Expected section name but encountered \"%1\" on line #%2")
-                                                 .arg(line).arg(currentLineNumber));
+                        throw UnknownSection(
+                            stringf("Expected section name but encountered \"%s\" on line #%i",
+                                    line.toString().c_str(),
+                                    currentLineNumber));
                     }
                 }
                 catch(UnknownSection const &er)
@@ -517,30 +522,34 @@ public:
     void parseAssignmentStatement(String const &line, String &var, String &expr)
     {
         // Determine the split (or 'pivot') position.
-        int assign = line.indexOf('=');
-        if(assign < 0)
+        auto assign = line.indexOf('=');
+        if (!assign)
         {
-            throw SyntaxError("parseAssignmentStatement",
-                              String("Expected assignment statement but encountered \"%1\" on line #%2")
-                                .arg(line).arg(currentLineNumber));
+            throw SyntaxError(
+                "parseAssignmentStatement",
+                stringf("Expected assignment statement but encountered \"%s\" on line #%i",
+                        line.c_str(),
+                        currentLineNumber));
         }
 
-        var  = line.substr(0, assign).rightStrip();
+        var  = line.substr(BytePos(0), assign).rightStrip();
         expr = line.substr(assign + 1).leftStrip();
 
         // Basic grammar checking.
         // Nothing before '=' ?
-        if(var.isEmpty())
+        if (var.isEmpty())
         {
-            throw SyntaxError("parseAssignmentStatement",
-                              String("Expected keyword before '=' on line #%1").arg(currentLineNumber));
+            throw SyntaxError(
+                "parseAssignmentStatement",
+                stringf("Expected keyword before '=' on line #%i", currentLineNumber));
         }
 
         // Nothing after '=' ?
-        if(expr.isEmpty())
+        if (expr.isEmpty())
         {
-            throw SyntaxError("parseAssignmentStatement",
-                              String("Expected expression after '=' on line #%1").arg(currentLineNumber));
+            throw SyntaxError(
+                "parseAssignmentStatement",
+                stringf("Expected expression after '=' on line #%i", currentLineNumber));
         }
     }
 
@@ -620,90 +629,83 @@ public:
 
     void parsePatchSignature()
     {
-        for(; lineInCurrentSection(); skipToNextLine())
+        for (; lineInCurrentSection(); skipToNextLine())
         {
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
-            if(!var.compareWithoutCase("Doom version"))
+            if (!var.compareWithoutCase("Doom version"))
             {
                 doomVersion = expr.toInt(0, 10, String::AllowSuffix);
             }
-            else if(!var.compareWithoutCase("Patch format"))
+            else if (!var.compareWithoutCase("Patch format"))
             {
                 patchVersion = expr.toInt(0, 10, String::AllowSuffix);
             }
-            else if(!var.compareWithoutCase("Engine config") ||
-                    !var.compareWithoutCase("IWAD"))
+            else if (!var.compareWithoutCase("Engine config") || !var.compareWithoutCase("IWAD"))
             {
                 // Ignore these WhackEd2 specific values.
             }
             else
             {
                 LOG_WARNING("Unexpected symbol \"%s\" encountered on line #%i")
-                        << var << currentLineNumber;
+                    << var << currentLineNumber;
             }
         }
     }
 
     void parseInclude(String arg)
     {
-        if(flags & NoInclude)
+        if (flags & NoInclude)
         {
             LOG_AS("parseInclude");
             LOG_DEBUG("Skipping disabled Include directive");
             return;
         }
 
-        if(stackDepth > maxIncludeDepth)
+        if (stackDepth > maxIncludeDepth)
         {
             LOG_AS("parseInclude");
-            if(!maxIncludeDepth)
+            if (!maxIncludeDepth)
             {
                 LOG_WARNING("Sorry, nested includes are not supported. Directive ignored");
             }
             else
             {
-                char const *includes = (maxIncludeDepth == 1? "include" : "includes");
+                char const *includes = (maxIncludeDepth == 1 ? "include" : "includes");
                 LOG_WARNING("Sorry, there can be at most %i nested %s. Directive ignored")
-                        << maxIncludeDepth << includes;
+                    << maxIncludeDepth << includes;
             }
         }
         else
         {
             DehReaderFlags includeFlags = flags & DehReaderFlagsIncludeMask;
 
-            if(arg.beginsWith("notext ", CaseInsensitive))
+            if (arg.beginsWith("notext ", CaseInsensitive))
             {
                 includeFlags |= NoText;
-                arg.remove(0, 7);
+                arg.remove(BytePos(0), 7);
             }
 
-            if(!arg.isEmpty())
+            if (!arg.isEmpty())
             {
-                NativePath const filePath(arg);
-                QFile file(filePath);
-                if(!file.open(QFile::ReadOnly | QFile::Text))
+                const NativePath filePath{arg};
+                if (std::ifstream file{filePath})
                 {
-                    LOG_AS("parseInclude");
-                    LOG_RES_WARNING("Failed opening \"%s\" for read, aborting...") << filePath;
-                }
-                else
-                {
-                    /// @todo Do not use a local buffer.
-                    Block deh = file.readAll();
-                    file.close();
-
-                    LOG_RES_VERBOSE("Including \"%s\"...") << filePath.pretty();
-
                     try
                     {
-                        DehReader(deh, true/*is-custom*/, includeFlags).parse();
+                        LOG_RES_VERBOSE("Including \"%s\"...") << filePath.pretty();
+                        DehReader(Block::readAll(file), true /*is-custom*/, includeFlags).parse();
                     }
-                    catch(Error const &er)
+                    catch (Error const &er)
                     {
                         LOG_WARNING(er.asText() + ".");
                     }
+                }
+                else
+                {
+                    LOG_AS("parseInclude");
+                    LOG_RES_WARNING("Failed opening \"%s\" for read, aborting...") << filePath;
                 }
             }
             else
@@ -716,14 +718,14 @@ public:
 
     String readTextBlob(int size)
     {
-        if(!size) return String(); // Return an empty string.
+        if (!size) return String(); // Return an empty string.
 
         String string;
         do
         {
             // Ignore carriage returns.
-            QChar c = currentChar();
-            if(c != '\r')
+            Char c = currentChar();
+            if (c != '\r')
                 string += c;
             else
                 size++;
@@ -731,7 +733,7 @@ public:
             advance();
         } while(--size);
 
-        return string.trimmed();
+        return string.strip();
     }
 
     /**
@@ -751,10 +753,8 @@ public:
 
         // Split the argument into discreet tokens and process each individually.
         /// @todo Re-implement with a left-to-right algorithm.
-        StringList tokens = arg.split(QRegExp("[,+| ]|\t|\f|\r"), String::SkipEmptyParts);
-        DE_FOR_EACH_CONST(StringList, i, tokens)
+        for (const String &token : arg.split(RegExp("[,+| ]|\t|\f|\r")))
         {
-            String const &token = *i;
             bool tokenIsNumber;
 
             int flagsValue = token.toInt(&tokenIsNumber, 10, String::AllowSuffix);
@@ -808,7 +808,7 @@ public:
             if(var.endsWith(" frame", CaseInsensitive))
             {
                 StateMapping const *mapping;
-                String const dehStateName = var.left(var.size() - 6);
+                String const dehStateName = var.left(var.sizeb() - 6);
                 if(!parseMobjTypeState(dehStateName, &mapping))
                 {
                     if(!ignore)
@@ -846,7 +846,7 @@ public:
             else if(var.endsWith(" sound", CaseInsensitive))
             {
                 SoundMapping const *mapping;
-                String const dehSoundName = var.left(var.size() - 6);
+                String const dehSoundName = var.left(var.sizeb() - 6);
                 if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
                     if(!ignore)
@@ -867,7 +867,8 @@ public:
                         {
                             if(mapping->id < SOUNDNAMES_FIRST || mapping->id >= SOUNDNAMES_COUNT)
                             {
-                                throw Error("DehReader", String("Thing Sound %i unknown").arg(mapping->id));
+                                throw Error("DehReader",
+                                            stringf("Thing Sound %i unknown", mapping->id));
                             }
 
                             int const soundsIdx = value;
@@ -1125,14 +1126,14 @@ public:
             }
             else if(var.beginsWith("Unknown ", CaseInsensitive))
             {
-                int const miscIdx = var.substr(8).toInt(0, 10, String::AllowSuffix);
+                int const miscIdx = var.substr(BytePos(8)).toInt(0, 10, String::AllowSuffix);
                 int const value   = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
                     {
                         LOG_WARNING("DeHackEd Unknown-value '%s' unknown")
-                                << var.mid(8);
+                                << var.substr(BytePos(8));
                     }
                     else
                     {
@@ -1185,7 +1186,7 @@ public:
                     else
                     {
                         ded_sprid_t const &origSprite = origSpriteNames[offset];
-                        qstrncpy(sprite->id, origSprite.id, DED_STRINGID_LEN + 1);
+                        strncpy(sprite->id, origSprite.id, DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sprite #%i id => \"%s\" (#%i)") << sprNum << sprite->id << offset;
                     }
                 }
@@ -1277,7 +1278,7 @@ public:
                     }
                     else
                     {
-                        qstrncpy(sound->lumpName, lumpIndex[lumpNum].name(), DED_STRINGID_LEN + 1);
+                        strncpy(sound->lumpName, lumpIndex[lumpNum].name(), DED_STRINGID_LEN + 1);
                         LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
                                 << soundNum << sound->id << sound->lumpName;
                     }
@@ -1304,12 +1305,12 @@ public:
             if(!var.compareWithoutCase("Max ammo"))
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String("Player|Max ammo|%1").arg(theAmmo), String::asText(value));
+                if(!ignore) createValueDef(String::format("Player|Max ammo|%s", theAmmo), String::asText(value));
             }
             else if(!var.compareWithoutCase("Per ammo"))
             {
                 int per = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String("Player|Clip ammo|%1").arg(theAmmo), String::asText(per));
+                if(!ignore) createValueDef(String::format("Player|Clip ammo|%s", theAmmo), String::asText(per));
             }
             else
             {
@@ -1329,7 +1330,7 @@ public:
 
             if(var.endsWith(" frame", CaseInsensitive))
             {
-                String const dehStateName = var.left(var.size() - 6);
+                String const dehStateName = var.left(var.sizeb() - 6);
                 int const value           = expr.toInt(0, 0, String::AllowSuffix);
 
                 WeaponStateMapping const *weapon;
@@ -1353,15 +1354,16 @@ public:
                             DE_ASSERT(weapon->id >= 0 && weapon->id < ded->states.size());
 
                             Record const &state = ded->states[value];
-                            createValueDef(String("Weapon Info|%1|%2").arg(weapNum).arg(weapon->name),
-                                           state.gets("id"));
+                            createValueDef(
+                                String::format("Weapon Info|%i|%s", weapNum, weapon->name.c_str()),
+                                state.gets("id"));
                         }
                     }
                 }
             }
-            else if(!var.compareWithoutCase("Ammo type"))
+            else if (!var.compareWithoutCase("Ammo type"))
             {
-                String const ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
+                static const char *ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
@@ -1371,14 +1373,17 @@ public:
                     }
                     else
                     {
-                        createValueDef(String("Weapon Info|%1|Type").arg(weapNum), ammotypes[value]);
+                        createValueDef(
+                            String::format("Weapon Info|%i|Type", weapNum), ammotypes[value]);
                     }
                 }
             }
             else if(!var.compareWithoutCase("Ammo per shot")) // Eternity
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String("Weapon Info|%1|Per shot").arg(weapNum), String::asText(value));
+                if (!ignore)
+                    createValueDef(String::format("Weapon Info|%i|Per shot", weapNum),
+                                   String::asText(value));
             }
             else
             {
@@ -1448,20 +1453,21 @@ public:
     {
         LOG_AS("parsePars");
         // BEX doesn't follow the same rules as .deh
-        for(; !line.trimmed().isEmpty(); readLine())
+        for(; !line.isEmpty(); readLine())
         {
             // Skip comment lines.
-            if(line.at(0) == '#') continue;
+            if (line.first() == '#') continue;
 
             try
             {
-                if(line.beginsWith("par", CaseInsensitive))
+                if (line.beginsWith("par", CaseInsensitive))
                 {
                     String const argStr = line.substr(3).leftStrip();
-                    if(argStr.isEmpty())
+                    if (argStr.isEmpty())
                     {
-                        throw SyntaxError("parseParsBex", String("Expected format expression on line #%1")
-                                                              .arg(currentLineNumber));
+                        throw SyntaxError(
+                            "parseParsBex",
+                            stringf("Expected format expression on line #%i", currentLineNumber));
                     }
 
                     /**
@@ -1485,8 +1491,10 @@ public:
 
                     if(args.size() < 2)
                     {
-                        throw SyntaxError("parseParsBex", String("Invalid format string \"%1\" on line #%2")
-                                                              .arg(argStr).arg(currentLineNumber));
+                        throw SyntaxError("parseParsBex",
+                                          stringf("Invalid format string \"%s\" on line #%i",
+                                                  argStr.c_str(),
+                                                  currentLineNumber));
                     }
 
                     // Parse values from the arguments.
@@ -1517,7 +1525,7 @@ public:
             }
         }
 
-        if(line.trimmed().isEmpty())
+        if (line.isEmpty())
         {
             skipToNextSection();
         }
@@ -1539,27 +1547,27 @@ public:
     {
         LOG_AS("parseSounds");
         // BEX doesn't follow the same rules as .deh
-        for(; !line.trimmed().isEmpty(); readLine())
+        for (; !line.isEmpty(); readLine())
         {
             // Skip comment lines.
-            if(line.at(0) == '#') continue;
+            if (line.first() == '#') continue;
 
             try
             {
                 String var, expr;
                 parseAssignmentStatement(line, var, expr);
-                if(!patchSoundLumpNames(var, expr))
+                if (!patchSoundLumpNames(var, expr))
                 {
                     LOG_WARNING("Failed to locate sound \"%s\" for patching") << var;
                 }
             }
-            catch(SyntaxError const &er)
+            catch (SyntaxError const &er)
             {
                 LOG_WARNING("%s") << er.asText();
             }
         }
 
-        if(line.trimmed().isEmpty())
+        if (line.isEmpty())
         {
             skipToNextSection();
         }
@@ -1569,27 +1577,27 @@ public:
     {
         LOG_AS("parseMusic");
         // BEX doesn't follow the same rules as .deh
-        for(; !line.trimmed().isEmpty(); readLine())
+        for (; !line.isEmpty(); readLine())
         {
             // Skip comment lines.
-            if(line.at(0) == '#') continue;
+            if (line.first() == '#') continue;
 
             try
             {
                 String var, expr;
                 parseAssignmentStatement(line, var, expr);
-                if(!patchMusicLumpNames(var, expr))
+                if (!patchMusicLumpNames(var, expr))
                 {
                     LOG_WARNING("Failed to locate music \"%s\" for patching") << var;
                 }
             }
-            catch(SyntaxError const &er)
+            catch (SyntaxError const &er)
             {
                 LOG_WARNING("%s") << er.asText();
             }
         }
 
-        if(line.trimmed().isEmpty())
+        if (line.isEmpty())
         {
             skipToNextSection();
         }
@@ -1599,17 +1607,17 @@ public:
     {
         LOG_AS("parseCodePointers");
         // BEX doesn't follow the same rules as .deh
-        for(; !line.trimmed().isEmpty(); readLine())
+        for(; !line.isEmpty(); readLine())
         {
             // Skip comment lines.
-            if(line.at(0) == '#') continue;
+            if(line.first() == '#') continue;
 
             String var, expr;
             parseAssignmentStatement(line, var, expr);
 
             if(var.beginsWith("Frame ", CaseInsensitive))
             {
-                int const stateNum = var.substr(6).toInt(0, 0, String::AllowSuffix);
+                int const stateNum = var.substr(BytePos(6)).toInt(0, 0, String::AllowSuffix);
                 if(stateNum < 0 || stateNum >= ded->states.size())
                 {
                     LOG_WARNING("DeHackEd Frame #%d out of range\n(Create more State defs!)")
@@ -1621,9 +1629,8 @@ public:
 
                     // Compose the action name.
                     String action = expr.rightStrip();
-                    if(!action.beginsWith("A_", CaseInsensitive))
-                        action.prepend("A_");
-                    action.truncate(32);
+                    if (!action.beginsWith("A_", CaseInsensitive)) action.prepend("A_");
+                    action.truncate(BytePos(32));
 
                     // Is this a known action?
                     if(!action.compareWithoutCase("A_NULL"))
@@ -1643,14 +1650,14 @@ public:
                         else
                         {
                             LOG_WARNING("DeHackEd Action '%s' unknown")
-                                    << action.mid(2);
+                                    << action.substr(BytePos(2));
                         }
                     }
                 }
             }
         }
 
-        if(line.trimmed().isEmpty())
+        if(line.isEmpty())
         {
             skipToNextSection();
         }
@@ -1713,30 +1720,34 @@ public:
         String newValue;
 
         // BEX doesn't follow the same rules as .deh
-        for(;; readLine())
+        for (;; readLine())
         {
-            if(!multiline)
+            if (!multiline)
             {
-                if(line.trimmed().isEmpty()) break;
+                if (line.isEmpty()) break;
 
                 // Skip comment lines.
-                if(line.at(0) == '#') continue;
+                if (line.first() == '#') continue;
 
                 // Determine the split (or 'pivot') position.
-                int assign = line.indexOf('=');
-                if(assign < 0)
+                dsize assign = line.indexOf('=');
+                if (assign == CString::npos)
                 {
-                    throw SyntaxError("parseStrings", String("Expected assignment statement but encountered \"%1\" on line #%2")
-                                                        .arg(line).arg(currentLineNumber));
+                    throw SyntaxError(
+                        "parseStrings",
+                        stringf("Expected assignment statement but encountered \"%s\" on line #%i",
+                                line.toString().c_str(),
+                                currentLineNumber));
                 }
 
                 textId = line.substr(0, assign).rightStrip();
 
                 // Nothing before '=' ?
-                if(textId.isEmpty())
+                if (textId.isEmpty())
                 {
-                    throw SyntaxError("parseStrings", String("Expected keyword before '=' on line #%1")
-                                                        .arg(currentLineNumber));
+                    throw SyntaxError(
+                        "parseStrings",
+                        stringf("Expected keyword before '=' on line #%i", currentLineNumber));
                 }
 
                 newValue = line.substr(assign + 1).leftStrip();
@@ -1747,9 +1758,9 @@ public:
             }
 
             // Concatenate another multi-line replacement?
-            if(newValue.endsWith('\\'))
+            if (newValue.endsWith('\\'))
             {
-                newValue.truncate(newValue.length() - 1);
+                newValue.truncate(newValue.sizeb() - 1);
                 multiline = true;
                 continue;
             }
@@ -1758,7 +1769,7 @@ public:
             multiline = false;
         }
 
-        if(line.trimmed().isEmpty())
+        if (line.isEmpty())
         {
             skipToNextSection();
         }
@@ -1773,14 +1784,14 @@ public:
         {
             // Not found - create a new Value.
             def = ded->values.append();
-            def->id   = M_StrDup(path.toUtf8());
+            def->id   = M_StrDup(path);
             def->text = 0;
 
             idx = ded->values.indexOf(def);
         }
 
-        def->text = static_cast<char *>(M_Realloc(def->text, value.length() + 1));
-        qstrcpy(def->text, value.toUtf8());
+        def->text = static_cast<char *>(M_Realloc(def->text, value.size() + 1));
+        strcpy(def->text, value);
 
         LOG_DEBUG("Value #%i \"%s\" => \"%s\"") << idx << path << def->text;
     }
@@ -1830,8 +1841,8 @@ public:
         /// @todo Why the restriction?
         if(findMusicLumpNameInMap(origName) < 0) return false;
 
-        String origNamePref = String("D_%1").arg(origName);
-        String newNamePref = String("D_%1").arg(newName);
+        String origNamePref = "D_" + origName;
+        String newNamePref  = "D_" + newName;
 
         // Update ALL songs using this lump name.
         int numPatched = 0;
@@ -1855,17 +1866,17 @@ public:
         /// @todo Why the restriction?
         if(findSoundLumpNameInMap(origName) < 0) return false;
 
-        Block origNamePrefUtf8 = String("DS%1").arg(origName).toUtf8();
-        Block newNamePrefUtf8  = String("DS%1").arg(newName ).toUtf8();
+        String origNamePrefUtf8 = "DS" + origName;
+        String newNamePrefUtf8  = "DS" + newName;
 
         // Update ALL sounds using this lump name.
         int numPatched = 0;
         for(int i = 0; i < ded->sounds.size(); ++i)
         {
             ded_sound_t &sound = ded->sounds[i];
-            if(iCmpStrCase(sound.lumpName, origNamePrefUtf8.constData())) continue;
+            if(iCmpStrCase(sound.lumpName, origNamePrefUtf8)) continue;
 
-            qstrncpy(sound.lumpName, newNamePrefUtf8.constData(), 9);
+            strncpy(sound.lumpName, newNamePrefUtf8, 9);
             numPatched++;
 
             LOG_DEBUG("Sound #%i \"%s\" lumpName => \"%s\"")
@@ -1879,23 +1890,22 @@ public:
         TextMapping const *textMapping;
 
         // Which text are we replacing?
-        if(textMappingForBlob(origStr, &textMapping) < 0) return false;
+        if (textMappingForBlob(origStr, &textMapping) < 0) return false;
 
         // Is replacement disallowed/not-supported?
-        if(textMapping->name.isEmpty()) return true; // Pretend success.
+        if (textMapping->name.isEmpty()) return true; // Pretend success.
 
         int textIdx = ded->getTextNum(textMapping->name);
-        if(textIdx < 0) return false;
+        if (textIdx < 0) return false;
 
         // We must escape new lines.
         String newStrCopy = newStr;
-        Block newStrUtf8 = newStrCopy.replace("\n", "\\n").toUtf8();
+        newStrCopy.replace("\n", "\\n");
 
         // Replace this text.
-        ded->text[textIdx].setText(newStrUtf8.constData());
+        ded->text[textIdx].setText(newStrCopy);
 
-        LOG_DEBUG("Text #%i \"%s\" is now:\n%s")
-                << textIdx << textMapping->name << newStrUtf8.constData();
+        LOG_DEBUG("Text #%i \"%s\" is now:\n%s") << textIdx << textMapping->name << newStrCopy;
         return true;
     }
 };
