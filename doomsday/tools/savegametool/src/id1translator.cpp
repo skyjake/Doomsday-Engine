@@ -29,8 +29,8 @@
 #include <de/Writer>
 #include <de/ZipArchive>
 #include "id1translator.h"
+#include "savegametool.h"
 
-extern de::String fallbackGameId;
 extern de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
 extern de::Folder &outputFolder();
 

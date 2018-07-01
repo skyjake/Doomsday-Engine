@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file packageformatter.cpp  Abstract base for Doomsday-native .save package formatters.
  *
  * @authors Copyright © 2014 Daniel Swanson <danij@dengine.net>
@@ -21,14 +23,15 @@
 #include <de/Time>
 #include <de/Writer>
 #include "packageformatter.h"
+#include "savegametool.h"
 
 using namespace de;
 
 extern String versionText();
 
 PackageFormatter::PackageFormatter(StringList knownExtensions, StringList baseGameIds)
-    : knownExtensions(knownExtensions)
-    , baseGameIds (baseGameIds)
+    : knownExtensions(std::move(knownExtensions))
+    , baseGameIds(std::move(baseGameIds))
 {}
 
 PackageFormatter::~PackageFormatter() // virtual

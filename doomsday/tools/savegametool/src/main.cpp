@@ -28,7 +28,7 @@
 
 using namespace de;
 
-static String fallbackGameId;
+String fallbackGameId;
 
 typedef List<PackageFormatter *> FormatTranslators;
 

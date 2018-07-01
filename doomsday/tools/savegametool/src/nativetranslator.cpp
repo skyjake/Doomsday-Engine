@@ -17,7 +17,6 @@
  * 02110-1301 USA</small>
  */
 
-#include "lzss.h"
 #include <de/List>
 #include <de/ArrayValue>
 #include <de/FileSystem>
@@ -28,9 +27,10 @@
 #include <de/TextApp>
 #include <de/Writer>
 #include <de/ZipArchive>
+#include "lzss.h"
 #include "nativetranslator.h"
+#include "savegametool.h"
 
-extern de::String fallbackGameId;
 extern de::Path composeMapUriPath(de::duint32 episode, de::duint32 map);
 extern de::Folder &outputFolder();
 
