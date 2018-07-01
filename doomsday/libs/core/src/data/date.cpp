@@ -101,6 +101,11 @@ int Date::dayOfYear() const
     return d->date.dayOfYear;
 }
 
+int Date::dayOfWeek() const
+{
+    return d->date.dayOfWeek; // 0 == Sunday
+}
+
 int Date::julianDayNumber() const
 {
     // For reference, see

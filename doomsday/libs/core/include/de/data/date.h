@@ -50,6 +50,7 @@ public:
     int month() const;
     int dayOfMonth() const;
     int dayOfYear() const;
+    int dayOfWeek() const;
     int julianDayNumber() const;
     int hours() const;
     int minutes() const;

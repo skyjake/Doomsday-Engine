@@ -62,9 +62,9 @@ public:
     /// An unknown native entry point was specified. @ingroup errors
     DE_ERROR(UnknownEntryPointError);
 
-    typedef List<String> Arguments;
+    typedef List<String>         Arguments;
     typedef Map<String, Value *> Defaults;
-    typedef List<const Value *> ArgumentValues;
+    typedef List<const Value *>  ArgumentValues;
 
 public:
     Function();

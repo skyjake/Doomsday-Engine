@@ -45,9 +45,8 @@ public:
         for (const auto &v : init) Base::insert(v);
     }
 
-
-    using iterator               = typename Base::iterator;
-    using const_iterator         = typename Base::const_iterator;
+    using iterator       = typename Base::iterator;
+    using const_iterator = typename Base::const_iterator;
 
     using Base::begin;
     using Base::empty;
@@ -56,7 +55,7 @@ public:
 
     bool isEmpty() const { return empty(); }
 
-    void         insert(const Key &key, const Value &value) { Base::insert(std::make_pair(key, value)); }
+    iterator     insert(const Key &key, const Value &value) { return Base::insert(std::make_pair(key, value)).first; }
     void         remove(const Key &key) { Base::erase(key); }
     bool         contains(const Key &key) const { return Base::find(key) != Base::end(); }
     Value &      operator[](const Key &key) { return Base::operator[](key); }

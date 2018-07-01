@@ -75,11 +75,11 @@ public:
      * @param str Path. Any directory separators in the path are converted to
      * native ones.
      */
-    NativePath &operator = (String const &str);
+    NativePath &operator=(String const &str);
 
-    NativePath &operator = (NativePath &&moved);
-    NativePath &operator = (NativePath const &other);
-    NativePath &operator = (char const *nullTerminatedCStr);
+    NativePath &operator=(NativePath &&moved);
+    NativePath &operator=(NativePath const &other);
+    NativePath &operator=(char const *nullTerminatedCStr);
 
     /**
      * Does a path concatenation on a native path. The directory separator
@@ -163,6 +163,13 @@ public:
     inline void create() { createPath(*this); }
     inline bool destroy() { return destroyPath(*this); }
 
+    /**
+     * Deletes the native file at the path.
+     * @return @c true on success.
+     */
+    bool remove();
+
+public:
     /**
      * Returns the current native working path.
      */

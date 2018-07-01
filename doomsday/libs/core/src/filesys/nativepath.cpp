@@ -24,6 +24,7 @@
 
 #include <c_plus/fileinfo.h>
 #include <c_plus/path.h>
+#include <cstdio>
 
 /**
  * @def NATIVE_BASE_SYMBOLIC
@@ -262,7 +263,11 @@ bool NativePath::exists() const
 bool NativePath::isReadable() const
 {
     return exists();
-    //return QFileInfo(toString()).isReadable();
+}
+
+bool NativePath::remove()
+{
+    return ::remove(c_str()) == 0; // stdio.h
 }
 
 static std::unique_ptr<NativePath> currentNativeWorkPath;
@@ -328,7 +333,7 @@ bool NativePath::destroyPath(const NativePath &nativePath) // static
         else
         {
             return remove(nativePath.c_str()) == 0;
-
+        }
     }
     return true;
 }

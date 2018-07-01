@@ -34,6 +34,10 @@ class Map : public std::map<Key, Value, Compare>
 public:
     Map() {}
 
+    Map(const std::initializer_list<typename Base::value_type> &init)
+        : Base(init)
+    {}
+
     using iterator               = typename Base::iterator;
     using const_iterator         = typename Base::const_iterator;
     using reverse_iterator       = typename Base::reverse_iterator;
@@ -41,10 +45,20 @@ public:
 
     inline bool isEmpty() const { return Base::empty(); }
 
-    void insert(const Key &key, const Value &value) { Base::operator[](key) = value; }
-    void remove(const Key &key) { Base::erase(key); }
-    bool contains(const Key &key) const { return Base::find(key) != Base::end(); }
+    iterator insert(const Key &key, const Value &value)
+    {
+        return Base::insert(typename Base::value_type(key, value)).first;
+    }
+    void           remove(const Key &key) { Base::erase(key); }
+    bool           contains(const Key &key) const { return Base::find(key) != Base::end(); }
     const_iterator constFind(const Key &key) const { return Base::find(key); }
+    Value &        operator[](const Key &key) { return Base::operator[](key); }
+    const Value &  operator[](const Key &key) const
+    {
+        auto i = Base::find(key);
+        DE_ASSERT(i != Base::end());
+        return i->second;
+    }
 
     inline Value take(const Key &key)
     {

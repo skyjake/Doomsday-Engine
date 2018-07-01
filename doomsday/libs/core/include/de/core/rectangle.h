@@ -196,6 +196,17 @@ public:
     Range<Type> vertical() const {
         return Range<Type>(top(), bottom());
     }
+    RectangleType normalized() const {
+        Corner a = topLeft;
+        Corner b = bottomRight;
+        if (a.x > b.x) {
+            std::swap(a.x, b.x);
+        }
+        if (a.y > b.y) {
+            std::swap(a.y, b.y);
+        }
+        return {a, b};
+    }
 
 public:
     Corner topLeft;
