@@ -37,7 +37,8 @@ class ServerApp : public de::TextApp, public DoomsdayApp
 {
 public:
     ServerApp(const de::StringList &args);
-    ~ServerApp();
+
+    ~ServerApp() override;
 
     de::duint32 instanceId() const;
 
@@ -47,30 +48,27 @@ public:
      */
     void initialize();
 
-    void checkPackageCompatibility(
-            de::StringList const &packageIds,
-            de::String const &userMessageIfIncompatible,
-            std::function<void ()> finalizeFunc) override;
+    void checkPackageCompatibility(const de::StringList &       packageIds,
+                                   const de::String &           userMessageIfIncompatible,
+                                   const std::function<void()> &finalizeFunc) override;
 
+public:
     /**
      * Fill in a ServerInfo record with the current status of a running server.
      * @return Server information.
      */
     static de::shell::ServerInfo currentServerInfo();
 
-protected:
-    void unloadGame(GameProfile const &upcomingGame) override;
-
-public:
-    static ServerApp &          app();
-    static ServerSystem &       serverSystem();
-    static InFineSystem &       infineSystem();
-    static AudioSystem &        audioSystem();
-    static Resources &          resources();
-    static ClientServerWorld &  world();
+    static ServerApp &        app();
+    static ServerSystem &     serverSystem();
+    static InFineSystem &     infineSystem();
+    static AudioSystem &      audioSystem();
+    static Resources &        resources();
+    static ClientServerWorld &world();
 
 protected:
     void reset() override;
+    void unloadGame(GameProfile const &upcomingGame) override;
 
 private:
     DE_PRIVATE(d)

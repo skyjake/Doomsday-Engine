@@ -20,15 +20,15 @@
 #include "shellusers.h"
 #include "dd_main.h"
 #include <de/Garbage>
-#include <QTimer>
+#include <de/Timer>
 
 using namespace de;
 
-static int const PLAYER_INFO_INTERVAL = 2500; // ms
+static const double PLAYER_INFO_INTERVAL = 2.500; // sec
 
 DE_PIMPL_NOREF(ShellUsers)
 {
-    QTimer infoTimer;
+    Timer infoTimer;
 
     Impl()
     {
@@ -39,14 +39,12 @@ DE_PIMPL_NOREF(ShellUsers)
 ShellUsers::ShellUsers() : d(new Impl)
 {
     // Player information is sent periodically to all shell users.
-    QObject::connect(&d->infoTimer, &QTimer::timeout, [this] ()
-    {
-        forUsers([] (User &user)
-        {
+    d->infoTimer += [this]() {
+        forUsers([](User &user) {
             user.as<ShellUser>().sendPlayerInfo();
             return LoopContinue;
         });
-    });
+    };
     d->infoTimer.start();
 }
 

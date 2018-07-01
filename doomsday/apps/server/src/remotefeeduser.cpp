@@ -42,7 +42,7 @@ DE_PIMPL(RemoteFeedUser)
 
     std::unique_ptr<Socket> socket;
     RemoteFeedProtocol protocol;
-    LockableT<QList<Transfer>> transfers;
+    LockableT<List<Transfer>> transfers;
 
     Impl(Public *i, Socket *s) : Base(i), socket(s)
     {
@@ -51,15 +51,14 @@ DE_PIMPL(RemoteFeedUser)
         // The RemoteFeed protocol does not require ordered messages.
         socket->setRetainOrder(false);
 
-        QObject::connect(s, &Socket::messagesReady, [this] () { receiveMessages(); });
-        QObject::connect(s, &Socket::allSent, [this] () { continueFileTransfers(); });
-        QObject::connect(s, &Socket::disconnected, [this] ()
-        {
-            DE_FOR_PUBLIC_AUDIENCE(Disconnect, i)
+        s->audienceForMessage() += [this]() { receiveMessages(); };
+        s->audienceForAllSent() += [this]() { continueFileTransfers(); };
+        s->audienceForStateChange() += [this]() {
+            if (!socket->isOpen())
             {
-                i->userDisconnected(self());
+                DE_FOR_PUBLIC_AUDIENCE(Disconnect, i) { i->userDisconnected(self()); }
             }
-        });
+        };
 
         // We took over an open socket, there may already be messages waiting.
         receiveMessages();

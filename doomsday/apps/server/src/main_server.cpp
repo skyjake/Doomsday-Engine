@@ -20,6 +20,9 @@
  */
 
 #include "serverapp.h"
+#include <de/EscapeParser>
+
+using namespace de;
 
 /**
  * Server application entry point.
@@ -32,9 +35,11 @@ int main(int argc, char** argv)
         serverApp.initialize();
         return serverApp.exec();
     }
-    catch (de::Error const &er)
+    catch (const Error &er)
     {
-        qFatal("App init failed: %s", er.asText().toLatin1().constData());
+        EscapeParser esc;
+        esc.parse(er.asText());
+        warning("App init failed: %s", esc.plainText().c_str());
         return -1;
     }
 }

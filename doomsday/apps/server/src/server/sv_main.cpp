@@ -717,7 +717,7 @@ static StringArray *listThingTypeIDs()
     StringArray *array = StringArray_New();
     for (dint i = 0; i < DED_Definitions()->things.size(); ++i)
     {
-        StringArray_Append(array, DED_Definitions()->things[i].gets("id").toUtf8());
+        StringArray_Append(array, DED_Definitions()->things[i].gets("id"));
     }
     return array;
 }
@@ -733,7 +733,7 @@ static StringArray *listStateIDs()
     StringArray *array = StringArray_New();
     for (dint i = 0; i < DED_Definitions()->states.size(); ++i)
     {
-        StringArray_Append(array, DED_Definitions()->states[i].gets("id").toUtf8());
+        StringArray_Append(array, DED_Definitions()->states[i].gets("id"));
     }
     return array;
 }

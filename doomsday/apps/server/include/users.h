@@ -56,7 +56,7 @@ public:
 
     int count() const;
 
-    de::LoopResult forUsers(std::function<de::LoopResult (User &)> func);
+    de::LoopResult forUsers(const std::function<de::LoopResult (User &)>& func);
 
 private:
     DE_PRIVATE(d)
