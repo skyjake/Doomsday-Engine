@@ -80,11 +80,11 @@ public:
     void endNativeUIMode();
 
 public:
-    static BaseGuiApp &         app();
-    static PersistentState &    persistentUIState();
-    static GLShaderBank &       shaders();
-    static WaveformBank &       waveforms();
-    static VRConfig &           vr();
+    static BaseGuiApp &     app();
+    static PersistentState &persistentUIState();
+    static GLShaderBank &   shaders();
+    static WaveformBank &   waveforms();
+    static VRConfig &       vr();
 
 private:
     DE_PRIVATE(d)

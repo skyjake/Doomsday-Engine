@@ -128,8 +128,6 @@ public:
                     const std::function<int (void *)> &gameActivationFunc,
                     Behaviors behaviors = DefaultBehavior);
 
-    static bool isGameBeingChanged();
-
     bool isShuttingDown() const;
     void setShuttingDown(bool shuttingDown);
 
@@ -156,10 +154,9 @@ public:
      * @param finalizeFunc  Callback after the loaded packages have been checked to be
      *                      compatible. Will not be called if the operation is cancelled.
      */
-    virtual void checkPackageCompatibility(
-            de::StringList const &packageIds,
-            de::String const &userMessageIfIncompatible,
-            std::function<void ()> finalizeFunc) = 0;
+    virtual void checkPackageCompatibility(const de::StringList &       packageIds,
+                                           const de::String &           userMessageIfIncompatible,
+                                           const std::function<void()> &finalizeFunc) = 0;
 
     /**
      * Saves application state to a save folder.
@@ -186,19 +183,20 @@ public:
                                       GameStateFolder const &fromFolder);
 
 public:
-    static DoomsdayApp &    app();
-    static de::shell::PackageDownloader &
-                            packageDownloader();
-    static res::Bundles &   bundles();
-    static Plugins &        plugins();
-    static Games &          games();
-    static GameProfiles &   gameProfiles();
-    static Players &        players();
-    static BusyMode &       busyMode();
-    static SaveGames &      saveGames();
+    static DoomsdayApp &                 app();
+    static de::shell::PackageDownloader &packageDownloader();
+    static res::Bundles &                bundles();
+    static Plugins &                     plugins();
+    static Games &                       games();
+    static GameProfiles &                gameProfiles();
+    static Players &                     players();
+    static BusyMode &                    busyMode();
+    static SaveGames &                   saveGames();
 
     static de::NativePath           steamBasePath();
     static de::List<de::NativePath> gogComPaths();
+
+    static bool isGameBeingChanged();
 
     /**
      * Sets the currently active game. DoomsdayApp does not take ownership of
@@ -227,8 +225,6 @@ public:
     static de::StringList loadedPackagesAffectingGameplay();
 
 protected:
-    static void initBindings(de::Binder &binder);
-
     /**
      * Called just before a game change is about to begin. The GameUnload
      * audience has already been notified.
@@ -244,6 +240,8 @@ protected:
      * a game is being unloaded.
      */
     virtual void reset();
+
+    static void initBindings(de::Binder &binder);
 
 private:
     DE_PRIVATE(d)
