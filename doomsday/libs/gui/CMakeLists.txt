@@ -91,18 +91,6 @@ deng_add_package (net.dengine.stdlib.gui)
 
 # Definitions.
 add_definitions (-D__LIBGUI__=1)
-if (DE_OPENGL_API STREQUAL "3.3")
-    add_definitions (-DDE_OPENGL=330)
-    message (STATUS "Using OpenGL 3.3")
-elseif (DE_OPENGL_API STREQUAL "GLES3")
-    add_definitions (-DDE_OPENGL_ES=30)
-    message (STATUS "Using OpenGL ES 3.0")
-elseif (DE_OPENGL_API STREQUAL "GLES2")
-    add_definitions (-DDE_OPENGL_ES=20)
-    message (STATUS "Using OpenGL ES 2.0")
-else ()
-    message (FATAL_ERROR "Invalid value for OpenGL API: ${DE_OPENGL_API}")
-endif ()
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
@@ -126,6 +114,19 @@ list_remove_matches (HEADERS ".*_qml.*")
 list_remove_matches (SOURCES ".*_qml.*")
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
+
+if (DE_OPENGL_API STREQUAL "3.3")
+    target_compile_definitions (libgui PUBLIC -DDE_OPENGL=330)
+    message (STATUS "Using OpenGL 3.3")
+elseif (DE_OPENGL_API STREQUAL "GLES3")
+    target_compile_definitions (libgui PUBLIC -DDE_OPENGL_ES=30)
+    message (STATUS "Using OpenGL ES 3.0")
+elseif (DE_OPENGL_API STREQUAL "GLES2")
+    target_compile_definitions (libgui PUBLIC -DDE_OPENGL_ES=20)
+    message (STATUS "Using OpenGL ES 2.0")
+else ()
+    message (FATAL_ERROR "Invalid value for OpenGL API: ${DE_OPENGL_API}")
+endif ()
 
 deng_link_libraries (libgui PUBLIC DengCore)
 target_link_libraries (libgui

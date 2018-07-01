@@ -11,7 +11,6 @@ find_package (OculusVR QUIET)
 
 # Definitions.
 add_definitions (-D__LIBAPPFW__=1)
-add_definitions (-DDE_OPENGL=330) # TODO: common include w/libgui?
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
