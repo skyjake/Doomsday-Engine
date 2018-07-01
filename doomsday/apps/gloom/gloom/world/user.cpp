@@ -297,7 +297,7 @@ DE_PIMPL(User)
         {
             if (stepElapsed > .3)
             {
-                stepElapsed = 0;
+                stepElapsed = 0.0;
                 playRandomStepSound();
             }
             return;
@@ -309,7 +309,7 @@ DE_PIMPL(User)
     void playRandomStepSound()
     {
         AudioSystem::get()
-            .newSound(QString("user.step%1").arg(1 + qrand() % 5))
+            .newSound(String::format("user.step%i", 1 + qrand() % 5))
             .setVolume(.4f + .2f * frand())
             .setFrequency(.6f + frand() * .8f)
             .play();
@@ -323,7 +323,7 @@ DE_PIMPL(User)
         if (velocity < .1)
         {
             // Only play footsteps when on the ground.
-            stepElapsed = 0;
+            stepElapsed = 0.0;
             return;
         }
 
@@ -356,7 +356,7 @@ void User::setWorld(World const *world)
     }
 }
 
-de::Vec3f User::position() const
+Vec3f User::position() const
 {
     return d->pos + Vec3f(0, d->viewHeight + d->crouch, 0);
 }
@@ -403,7 +403,7 @@ void User::setInputState(InputState const &state)
 
 void User::turn(float yaw, float pitch)
 {
-    d->yaw   = de::wrap(d->yaw + yaw, -180.f, 180.f);
+    d->yaw   = wrap(d->yaw + yaw, -180.f, 180.f);
     d->pitch = Rangef(-89, 89).clamp(d->pitch + pitch);
 }
 

@@ -26,6 +26,8 @@
 
 namespace gloom {
 
+using namespace de;
+
 class World;
 
 class User
@@ -42,37 +44,35 @@ public:
         StepRight = 0x40,
         Jump      = 0x80,
     };
-    Q_DECLARE_FLAGS(InputState, InputBit)
+    using InputState = Flags;
 
     DE_DEFINE_AUDIENCE(Deletion,  void userBeingDeleted  (User &))
     DE_DEFINE_AUDIENCE(Warp,      void userWarped        (User const &))
     DE_DEFINE_AUDIENCE(PainLevel, void userPainLevel     (User const &, float pain))
-    DE_DEFINE_AUDIENCE(Move,      void userMoved         (User const &, de::Vec3f const &pos))
+    DE_DEFINE_AUDIENCE(Move,      void userMoved         (User const &, Vec3f const &pos))
     DE_DEFINE_AUDIENCE(Turn,      void userTurned        (User const &, float yaw))
 
 public:
     User();
 
     void setWorld(World const *world);
-    void setPosition(de::Vec3f const &pos);
+    void setPosition(Vec3f const &pos);
     void setYaw(float yaw);
     void setPain(float pain);
     void setInputState(InputState const &state);
     void turn(float yaw, float pitch);
-    void turn(const de::Vec2f &angles) { turn(angles.x, angles.y); }
+    void turn(const Vec2f &angles) { turn(angles.x, angles.y); }
 
-    void update(de::TimeSpan const &elapsed);
+    void update(TimeSpan const &elapsed);
 
-    de::Vec3f position() const; // User eye position.
-    float        yaw() const;
-    float        pitch() const;
-    de::Sound &  fastWindSound();
+    Vec3f  position() const; // User eye position.
+    float  yaw() const;
+    float  pitch() const;
+    Sound &fastWindSound();
 
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(User::InputState)
 
 } // namespace gloom
 

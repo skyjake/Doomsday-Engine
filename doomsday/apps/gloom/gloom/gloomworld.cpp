@@ -110,7 +110,7 @@ DE_PIMPL(GloomWorld), public Asset
             atlas->setMaxLevel(4);
             atlas->setBorderSize(16); // room for 4 miplevels
             atlas->setAutoGenMips(true);
-            atlas->setFilter(gl::Linear, gl::Linear, gl::MipNearest);
+            atlas->setFilter(de::gl::Linear, de::gl::Linear, de::gl::MipNearest);
 #endif
         }
 
@@ -138,12 +138,12 @@ DE_PIMPL(GloomWorld), public Asset
     {
         if (isReady()) return false;
 
-        qDebug() << "[GloomWorld] glInit";
+        debug("[GloomWorld] glInit");
 
         DE_ASSERT(localUser);
 
         // Cube maps are used for 360-degree env maps, so prefer seamless edge filtering.
-        LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+        glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
         sky.setSize(visibleDistance);
 
@@ -200,9 +200,9 @@ DE_PIMPL(GloomWorld), public Asset
 
         // Remember the initial plane heights.
         {
-            for (auto i = map.planes().constBegin(), end = map.planes().constEnd(); i != end; ++i)
+            for (const auto &i : map.planes())
             {
-                initialPlaneY.insert(i.key(), i.value().point.y);
+                initialPlaneY.insert(i.first, i.second.point.y);
             }
         }
     }
@@ -230,9 +230,9 @@ DE_PIMPL(GloomWorld), public Asset
 
     void updateEntities(const TimeSpan &)
     {
-        for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
+        for (const auto &i : map.entities())
         {
-            auto &ent = *i.value();
+            auto &ent = *i.second;
             Vec3d pos = ent.position();
             pos.y = self().groundSurfaceHeight(pos);
             ent.setPosition(pos);
@@ -280,7 +280,7 @@ void GloomWorld::render(const ICamera &camera)
 
     d->framebuf.resize(frameSize);
     d->framebuf.attachedTexture(GLFramebuffer::Color0)
-        ->setFilter(gl::Nearest, gl::Nearest, gl::MipNearest);
+        ->setFilter(de::gl::Nearest, de::gl::Nearest, de::gl::MipNearest);
     d->framebuf.clear(GLFramebuffer::Color0);
 
     d->gbuffer.resize(frameSize);
@@ -293,7 +293,7 @@ void GloomWorld::render(const ICamera &camera)
     // Render the G-buffer contents: material, UV, normals, depth.
     GLState::push()
             .setTarget(d->gbuffer.framebuf())
-            .setCull(gl::Back)
+            .setCull(de::gl::Back)
             .setDepthTest(true)
             .setBlend(false);
 
