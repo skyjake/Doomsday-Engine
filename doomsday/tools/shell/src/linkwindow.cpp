@@ -30,6 +30,7 @@
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
 #include <de/shell/Link>
+#include <de/Garbage>
 #include <QFile>
 #include <QToolBar>
 #include <QMenuBar>
@@ -53,7 +54,7 @@
 using namespace de;
 using namespace de::shell;
 
-static QString statusText(QString txt)
+static QString statusText(const QString& txt)
 {
 #ifdef MACOSX
     return "<small>" + txt + "</small>";
@@ -63,6 +64,8 @@ static QString statusText(QString txt)
 }
 
 DE_PIMPL(LinkWindow)
+, DE_OBSERVES(shell::CommandLineWidget, Command)
+, DE_OBSERVES(shell::ServerFinder, Update)
 {
     LogBuffer logBuffer;
     Link *link;
@@ -108,7 +111,7 @@ DE_PIMPL(LinkWindow)
         waitTimeout.setInterval(1000);
     }
 
-    ~Impl()
+    ~Impl() override
     {
         // Make sure the local sink is removed.
         LogBuffer::get().removeSink(console->log().logSink());
@@ -168,7 +171,7 @@ DE_PIMPL(LinkWindow)
 
     QString readErrorLogContents() const
     {
-        QFile logFile(errorLog);
+        QFile logFile(convert(errorLog));
         if (logFile.open(QFile::ReadOnly))
         {
             return QString::fromUtf8(logFile.readAll());
@@ -220,7 +223,7 @@ DE_PIMPL(LinkWindow)
         if (!mapId.isEmpty()) msg += " " + mapId;
         if (!rules.isEmpty()) msg += " (" + rules + ")";
 
-        gameStatus->setText(statusText(msg));
+        gameStatus->setText(statusText(convert(msg)));
     }
 
     void checkCurrentTab(bool connected)
@@ -233,6 +236,16 @@ DE_PIMPL(LinkWindow)
         {
             stack->setCurrentWidget(newLocalServerPage);
         }
+    }
+
+    void commandEntered(const String &command) override
+    {
+        self().sendCommandToServer(command);
+    }
+
+    void foundServersUpdated() override
+    {
+        self().checkFoundServers();
     }
 };
 
@@ -307,7 +320,7 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->console = new ConsolePage;
     d->stack->addWidget(d->console);
     d->logBuffer.addSink(d->console->log().logSink());
-    connect(&d->console->cli(), SIGNAL(commandEntered(de::String)), this, SLOT(sendCommandToServer(de::String)));
+    d->console->cli().audienceForCommand() += d;
 
     d->updateStyle();
 
@@ -366,8 +379,8 @@ LinkWindow::LinkWindow(QWidget *parent)
     d->stopAction->setDisabled(true);
 
     // Observer local servers.
+    GuiShellApp::app().serverFinder().audienceForUpdate() += d;
     connect(&GuiShellApp::app(), SIGNAL(localServerStopped(int)), this, SLOT(localServerStopped(int)));
-    connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()), this, SLOT(checkFoundServers()));
     connect(&d->waitTimeout, SIGNAL(timeout()), this, SLOT(checkFoundServers()));
     d->waitTimeout.start();
 }
@@ -578,14 +591,14 @@ void LinkWindow::handleIncomingPackets()
         case shell::Protocol::GameState: {
             Record &rec = static_cast<RecordPacket *>(packet.data())->record();
             String const rules = rec["rules"];
-            String gameType = rules.containsWord("dm")?  tr("Deathmatch")    :
-                              rules.containsWord("dm2")? tr("Deathmatch II") :
-                                                         tr("Co-op");
+            QString gameType = rules.containsWord("dm")?  tr("Deathmatch")    :
+                               rules.containsWord("dm2")? tr("Deathmatch II") :
+                                                          tr("Co-op");
             d->status->setGameState(
-                    rec["mode"].value().asText(),
+                    convert(rec["mode"].value().asText()),
                     gameType,
-                    rec["mapId"].value().asText(),
-                    rec["mapTitle"].value().asText());
+                    convert(rec["mapId"].value().asText()),
+                    convert(rec["mapTitle"].value().asText()));
 
             d->updateStatusBarWithGameState(rec);
             d->options->updateWithGameState(rec);
@@ -605,7 +618,7 @@ void LinkWindow::handleIncomingPackets()
     }
 }
 
-void LinkWindow::sendCommandToServer(de::String command)
+void LinkWindow::sendCommandToServer(const de::String &command)
 {
     if (d->link)
     {
@@ -623,7 +636,7 @@ void LinkWindow::sendCommandsToServer(QStringList commands)
 {
     foreach (QString c, commands)
     {
-        sendCommandToServer(c);
+        sendCommandToServer(convert(c));
     }
 }
 
@@ -641,7 +654,7 @@ void LinkWindow::connected()
     d->errorLog = "";
 
     if (d->linkName.isEmpty()) d->linkName = d->link->address().asText();
-    setTitle(d->linkName);
+    setTitle(convert(d->linkName));
     d->updateCurrentHost();
     d->console->root().setOverlaidMessage("");
     d->status->linkConnected(d->link);
@@ -661,9 +674,9 @@ void LinkWindow::disconnected()
     if (!d->link) return;
 
     // The link was disconnected.
-    disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
+    d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
 
-    d->link->deleteLater();
+    trash(d->link);
     d->link = 0;
 
     d->disconnected();

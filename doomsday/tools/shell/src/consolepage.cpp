@@ -8,12 +8,12 @@ using namespace de;
 using namespace de::shell;
 
 ConsolePage::ConsolePage(QWidget *parent)
-    : QWidget(parent),
-      _log(0),
-      _cli(0),
-      _root(0),
-      _logScrollBar(0),
-      _wheelAccum(0)
+    : QWidget(parent)
+    , _log(0)
+    , _cli(0)
+    , _root(0)
+    , _logScrollBar(0)
+    , _wheelAccum(0)
 {
     QHBoxLayout *hb = new QHBoxLayout;
     hb->setContentsMargins(0, 0, 0, 0);
@@ -48,9 +48,9 @@ ConsolePage::ConsolePage(QWidget *parent)
     root.add(_cli);
     root.setFocus(_cli);
 
-    connect(_log,          SIGNAL(scrollPositionChanged(int)), this, SLOT(updateScrollPosition(int)));
-    connect(_log,          SIGNAL(scrollMaxChanged(int)),      this, SLOT(updateMaxScroll(int)));
-    connect(_logScrollBar, SIGNAL(sliderMoved(int)),           this, SLOT(scrollLogHistory(int)));
+    _log->audienceForScroll() += this;
+    _log->audienceForMaximum() += this;
+    connect(_logScrollBar, SIGNAL(sliderMoved(int)), this, SLOT(scrollLogHistory(int)));
 }
 
 QtRootWidget &ConsolePage::root()
@@ -96,7 +96,7 @@ void ConsolePage::wheelEvent(QWheelEvent *ev)
         {
             int newPos = _log->scrollPosition() + linesToScroll;
             _log->scroll(newPos);
-            updateScrollPosition(newPos);
+            scrollPositionChanged(newPos);
             update();
         }
 #ifndef MACOSX
@@ -109,12 +109,12 @@ void ConsolePage::wheelEvent(QWheelEvent *ev)
     }
 }
 
-void ConsolePage::updateScrollPosition(int pos)
+void ConsolePage::scrollPositionChanged(int pos)
 {
     _logScrollBar->setValue(_log->maximumScroll() - pos);
 }
 
-void ConsolePage::updateMaxScroll(int maximum)
+void ConsolePage::scrollMaxChanged(int maximum)
 {
     _logScrollBar->setMaximum(maximum);
     _logScrollBar->setEnabled(maximum > 0);

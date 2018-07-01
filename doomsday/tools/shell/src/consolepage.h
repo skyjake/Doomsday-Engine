@@ -8,7 +8,10 @@
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
 
-class ConsolePage : public QWidget
+class ConsolePage
+    : public QWidget
+    , DE_OBSERVES(de::shell::LogWidget, Scroll)
+    , DE_OBSERVES(de::shell::LogWidget, Maximum)
 {
     Q_OBJECT
 
@@ -20,13 +23,14 @@ public:
     de::shell::CommandLineWidget &cli();
 
     // Qt events.
-    void wheelEvent(QWheelEvent *);
-    
+    void wheelEvent(QWheelEvent *) override;
+
+    void scrollPositionChanged(int pos) override;
+    void scrollMaxChanged(int maximum) override;
+
 signals:
-    
+
 public slots:
-    void updateScrollPosition(int pos);
-    void updateMaxScroll(int maximum);
     void scrollLogHistory(int pos);
 
 private:

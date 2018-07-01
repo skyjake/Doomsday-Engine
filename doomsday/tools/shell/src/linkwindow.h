@@ -52,7 +52,7 @@ public slots:
     void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, QString name);
     void openConnection(de::shell::Link *link, de::String name = "");
     void closeConnection();
-    void sendCommandToServer(de::String command);
+    void sendCommandToServer(const de::String& command);
     void sendCommandsToServer(QStringList commands);
     void switchToStatus();
     void switchToOptions();
