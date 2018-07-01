@@ -392,6 +392,8 @@ public:
      */
     void warnPlainText() const;
 
+    std::string asPlainText() const;
+
 protected:
     void setName(const std::string &name);
 

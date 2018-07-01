@@ -167,7 +167,7 @@ public:
      * Deletes the native file at the path.
      * @return @c true on success.
      */
-    bool remove();
+    bool remove() const;
 
 public:
     /**

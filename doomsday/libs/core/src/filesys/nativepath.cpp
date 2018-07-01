@@ -265,7 +265,7 @@ bool NativePath::isReadable() const
     return exists();
 }
 
-bool NativePath::remove()
+bool NativePath::remove() const
 {
     return ::remove(c_str()) == 0; // stdio.h
 }

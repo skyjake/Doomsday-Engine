@@ -47,9 +47,14 @@ std::string Error::asText() const
 
 void Error::warnPlainText() const
 {
+    warning("%s", asPlainText().c_str());
+}
+
+std::string Error::asPlainText() const
+{
     EscapeParser esc;
     esc.parse(asText());
-    warning("%s", esc.plainText().c_str());
+    return esc.plainText().toStdString();
 }
 
 void Error::setName(const std::string &name)
