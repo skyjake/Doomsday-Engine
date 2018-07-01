@@ -120,14 +120,14 @@ void guidata_items_t::updateGeometry()
     String valueAsText("Items:");
     if(cfg.common.hudShownCheatCounters & CCH_ITEMS)
     {
-        valueAsText += String(" %1/%2").arg(_value).arg(totalItems);
+        valueAsText += String::format(" %i/%i", _value, totalItems);
     }
     if(cfg.common.hudShownCheatCounters & CCH_ITEMS_PRCNT)
     {
-        valueAsText += String(" %1%2%%3")
-                           .arg((::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? "(" : "")
-                           .arg(totalItems ? _value * 100 / totalItems : 100)
-                           .arg((::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? ")" : "");
+        valueAsText += String::format(" %s%i%%%s",
+                                      (::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? "(" : "",
+                                      totalItems ? _value * 100 / totalItems : 100,
+                                      (::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? ")" : "");
     }
 
     FR_SetFont(font());

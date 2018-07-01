@@ -466,15 +466,7 @@ void R_LoadColorPalettes()
         {
             if (i == numPerClass) break; // Not present.
 
-            String lumpName;
-            if (xlatNum < 10)
-            {
-                lumpName = String("TRANTBL%1").arg(xlatNum);
-            }
-            else
-            {
-                lumpName = String("TRANTBL%1").arg('A' + (xlatNum - 10));
-            }
+            String lumpName = String::format("TRANTBL%X", xlatNum);
             xlatNum++;
 
             LOG_AS("R_LoadColorPalettes")
@@ -3047,8 +3039,7 @@ static void registerGameStatusCVars()
     // Fourth-weapon pieces:
     for (int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
     {
-        Block const cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
-        C_VAR_INT(cvarName.constData(), &gsvWPieces[i], READONLYCVAR, 0, 1);
+        C_VAR_INT(String::format("player-weapon-piece%i", i + 1), &gsvWPieces[i], READONLYCVAR, 0, 1);
     }
     C_VAR_INT("player-weapon-allpieces", &gsvWPieces[WEAPON_FOURTH_PIECE_COUNT], READONLYCVAR, 0, 1);
 #endif

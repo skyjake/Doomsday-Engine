@@ -201,7 +201,7 @@ void SaveSlots::Slot::setGameStateFolder(GameStateFolder *newSession)
         String statusText;
         if (d->session)
         {
-            statusText = String("associated with \"%1\"").arg(d->session->path());
+            statusText = String::format("associated with \"%s\"", d->session->path().c_str());
         }
         else
         {
@@ -299,7 +299,7 @@ DE_PIMPL(SaveSlots)
     void setAllIndexedSaves()
     {
         auto const &index = SaveGames::get().saveIndex();
-        foreach (File *file, index.files())
+        for (File *file : index.files())
         {
             fileAdded(*file, index);
         }

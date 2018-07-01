@@ -2188,7 +2188,7 @@ void Hu_MenuInitPlayerClassPage()
         btn->setFixedY(y);
         btn->setAction(Widget::Deactivated, Hu_MenuSelectPlayerClass);
         btn->setAction(Widget::FocusGained, Hu_MenuFocusOnPlayerClass);
-        btn->setUserValue2(int(info->plrClass));
+        btn->setUserValue2(NumberValue(info->plrClass));
         btn->setFont(MENU_FONT1);
 
         page->addWidget(btn);
@@ -2197,11 +2197,11 @@ void Hu_MenuInitPlayerClassPage()
 
     // Random class button.
     String const labelText = GET_TXT(TXT_RANDOMPLAYERCLASS);
-    int const shortcut     = iswlanum(labelText.first())? labelText.first() : 0;
+    int const shortcut     = iswalnum(labelText.first())? labelText.first() : 0;
     page->addWidget(new ButtonWidget(labelText))
             .setFixedY(y)
             .setShortcut(shortcut)
-            .setUserValue2(int(PCLASS_NONE))
+            .setUserValue2(NumberValue(PCLASS_NONE))
             .setFont(MENU_FONT1)
             .setColor(MENU_COLOR1)
             .setAction(Widget::Deactivated, Hu_MenuSelectPlayerClass)
@@ -2957,7 +2957,7 @@ void Hu_MenuPlayerClassBackgroundTicker(Widget &wi)
     ///        state through a focus action.
     if(Widget *mop = wi.page().focusWidget())
     {
-        playerclass_t pClass = playerclass_t(mop->userValue2().toInt());
+        playerclass_t pClass = playerclass_t(mop->userValue2().asInt());
         if(pClass == PCLASS_NONE)
         {
             // Random class.
@@ -2985,7 +2985,7 @@ void Hu_MenuPlayerClassPreviewTicker(Widget &wi)
     ///        state through a focus action.
     if(Widget *mop = wi.page().focusWidget())
     {
-        playerclass_t pClass = playerclass_t(mop->userValue2().toInt());
+        playerclass_t pClass = playerclass_t(mop->userValue2().asInt());
         if(pClass == PCLASS_NONE)
         {
             // Random class.
@@ -3495,7 +3495,7 @@ void Hu_MenuSelectSaveGame(Widget & /*wi*/, Widget::Action action)
 void Hu_MenuSelectPlayerClass(Widget &wi, Widget::Action action)
 {
     Page &skillPage = Hu_MenuPage("Skill");
-    int option = wi.userValue2().toInt();
+    int option = wi.userValue2().asInt();
 
     if(action != Widget::Deactivated) return;
 

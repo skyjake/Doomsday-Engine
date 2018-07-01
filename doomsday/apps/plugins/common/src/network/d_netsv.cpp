@@ -340,7 +340,7 @@ static res::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
                     {
                         int tens = tmp[0] == '*' ? RNG_RandByte() % 10 : tmp[0] - '0';
                         int ones = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0';
-                        map = de::String("%1%2").arg(tens).arg(ones).toInt();
+                        map = 10 * tens + ones;
                     }
 #elif __JHERETIC__
                     episode = tmp[0] == '*' ? RNG_RandByte() % 9 : tmp[0] - '0';
@@ -349,7 +349,7 @@ static res::Uri NetSv_ScanCycle(int index, maprule_t *rules = 0)
 #else // __JHEXEN__ || __JDOOM64__
                     int tens = tmp[0] == '*' ? RNG_RandByte() % 10 : tmp[0] - '0';
                     int ones = tmp[1] == '*' ? RNG_RandByte() % 10 : tmp[1] - '0';
-                    map = de::String("%1%2").arg(tens).arg(ones).toInt();
+                    map = 10 * tens + ones;
 #endif
 
 #if __JHEXEN__
@@ -661,9 +661,9 @@ void NetSv_SendGameState(int flags, int to)
 {
     if(!IS_NETWORK_SERVER) return;
 
-    AutoStr *gameId    = AutoStr_FromTextStd(gfw_GameId().toLatin1().constData());
-    AutoStr *episodeId = AutoStr_FromTextStd(gfw_Session()->episodeId().toLatin1().constData());
-    res::Uri mapUri     = gfw_Session()->mapUri();
+    AutoStr *gameId    = AutoStr_FromTextStd(gfw_GameId());
+    AutoStr *episodeId = AutoStr_FromTextStd(gfw_Session()->episodeId());
+    res::Uri mapUri    = gfw_Session()->mapUri();
 
     // Print a short message that describes the game state.
     LOG_NET_NOTE("Sending game setup: %s %s %s %s")

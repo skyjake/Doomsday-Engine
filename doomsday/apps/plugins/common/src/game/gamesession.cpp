@@ -103,7 +103,7 @@ namespace internal
 
 using namespace internal;
 
-static String const internalSavePath = "/home/cache/internal.save";
+DE_STATIC_STRING(internalSavePath, "/home/cache/internal.save");
 static GameSession theSession;
 
 DE_PIMPL(GameSession)
@@ -130,13 +130,13 @@ DE_PIMPL(GameSession)
     void cleanupInternalSave()
     {
         // Ensure the internal save folder exists.
-        App::fileSystem().makeFolder(internalSavePath.fileNamePath());
+        App::fileSystem().makeFolder(internalSavePath().fileNamePath());
 
         // Ensure that any pre-existing internal save is destroyed.
         // This may happen if the game was not shutdown properly in the event of a crash.
         /// @todo It may be possible to recover this session if it was written successfully
         /// before the fatal error occurred.
-        AbstractSession::removeSaved(internalSavePath);
+        AbstractSession::removeSaved(internalSavePath());
     }
 
     void resetStateForNewSession()
@@ -532,19 +532,19 @@ DE_PIMPL(GameSession)
 
         self().setInProgress(false);
 
-        if (savePath.compareWithoutCase(internalSavePath))
+        if (savePath.compareWithoutCase(internalSavePath()))
         {
             // Perform necessary prep.
             cleanupInternalSave();
 
             // Copy the save to the internal savegame.
-            AbstractSession::copySaved(internalSavePath, savePath);
+            AbstractSession::copySaved(internalSavePath(), savePath);
         }
 
         //
         // GameStateFolder deserialization begins.
         //
-        auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath);
+        auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath());
         GameStateMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
@@ -693,7 +693,7 @@ DE_PIMPL(GameSession)
 #endif
 
             String const mapUriAsText = self().mapUri().compose();
-            auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath);
+            auto const &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath());
             std::unique_ptr<GameStateFolder::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
             self().setThinkerMapping(reader.get());
             reader->read(mapUriAsText);
@@ -1054,7 +1054,7 @@ void GameSession::end()
         G_ResetViewEffects();
     }
 
-    AbstractSession::removeSaved(internalSavePath);
+    AbstractSession::removeSaved(internalSavePath());
 
     setInProgress(false);
     LOG_MSG("Game ended");
@@ -1123,7 +1123,7 @@ void GameSession::begin(GameRules const &newRules, String const &episodeId,
     d->reloadMap();
 
     // Create the internal .save session package.
-    d->updateGameStateFolder(internalSavePath, metadata);
+    d->updateGameStateFolder(internalSavePath(), metadata);
 }
 
 void GameSession::reloadMap()
@@ -1138,7 +1138,7 @@ void GameSession::reloadMap()
     {
         try
         {
-            d->loadSaved(internalSavePath);
+            d->loadSaved(internalSavePath());
             return;
         }
         catch (Error const &er)
@@ -1164,7 +1164,7 @@ void GameSession::reloadMap()
         d->reloadMap();
 
         // Create the internal .save session package.
-        d->updateGameStateFolder(internalSavePath, d->metadata());
+        d->updateGameStateFolder(internalSavePath(), d->metadata());
 
         ::briefDisabled = oldBriefDisabled;
     }
@@ -1202,7 +1202,7 @@ void GameSession::leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint)
     GameStateFolder *saved = nullptr;
     if (!d->rules.values.deathmatch) // Never save in deathmatch.
     {
-        saved = &App::rootFolder().locate<GameStateFolder>(internalSavePath);
+        saved = &App::rootFolder().locate<GameStateFolder>(internalSavePath());
         auto &mapsFolder = saved->locate<Folder>("maps");
 
         DE_ASSERT(saved->mode().testFlag(File::Write));
@@ -1323,7 +1323,7 @@ void GameSession::leaveMap(res::Uri const &nextMapUri, uint nextMapEntryPoint)
 String GameSession::userDescription()
 {
     if (!hasBegun()) return "";
-    return App::rootFolder().locate<GameStateFolder>(internalSavePath)
+    return App::rootFolder().locate<GameStateFolder>(internalSavePath())
                                 .metadata().gets("userDescription", "");
 }
 
@@ -1356,13 +1356,13 @@ void GameSession::save(String const &saveName, String const &userDescription)
         metadata.set("userDescription", chooseSaveDescription(savePath, userDescription));
 
         // Update the existing internal .save package.
-        d->updateGameStateFolder(internalSavePath, metadata);
+        d->updateGameStateFolder(internalSavePath(), metadata);
 
         // In networked games the server tells the clients to save also.
         NetSv_SaveGame(metadata.getui("sessionId"));
 
         // Copy the internal saved session to the destination slot.
-        AbstractSession::copySaved(savePath, internalSavePath);
+        AbstractSession::copySaved(savePath, internalSavePath());
 
         P_SetMessage(&players[CONSOLEPLAYER], TXT_GAMESAVED);
 
