@@ -22,6 +22,8 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 DE_PIMPL(Light)
 {
     const Entity *entity = nullptr;
@@ -145,7 +147,7 @@ Mat4f Light::cameraModelView() const
     return Mat4f::lookAt(cameraPosition() + cameraFront(), cameraPosition(), cameraUp());
 }
 
-Mat4f Light::lightMatrix(gl::CubeFace face) const
+Mat4f Light::lightMatrix(de::gl::CubeFace face) const
 {
     const Mat4f proj = Mat4f::perspective(90.0f, 1.0f, .05f, falloffDistance());
     const auto pos = origin();

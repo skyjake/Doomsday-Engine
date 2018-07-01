@@ -27,6 +27,8 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 DE_PIMPL(Bloom)
 {
     ScreenQuad quad;

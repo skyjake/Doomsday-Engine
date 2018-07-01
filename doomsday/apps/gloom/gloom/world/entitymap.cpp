@@ -25,9 +25,9 @@ namespace gloom {
 DE_PIMPL(EntityMap)
 {
     struct Block {
-        QList<const Entity *> entities; // owned
+        de::List<const Entity *> entities; // owned
     };
-    typedef QList<Block *> Blocks;
+    typedef de::List<Block *> Blocks;
 
     Rectangled mapBounds;
     float      blockSize;
@@ -50,7 +50,7 @@ DE_PIMPL(EntityMap)
         size.x = int(std::ceil(mapBounds.width() / blockSize));
         size.y = int(std::ceil(mapBounds.height() / blockSize));
 
-        qDebug() << "Total blocks:" << size.area();
+        debug("Total blocks: %i", size.area());
         for (int i = 0; i < size.area(); ++i)
         {
             blocks << 0;
@@ -60,7 +60,7 @@ DE_PIMPL(EntityMap)
     Vec2i blockCoord(const Vec2f &pos) const
     {
         return Vec2i(int(clamp(0.0, (pos.x + mapBounds.width()/2)  / blockSize, size.x - 1.0)),
-                        int(clamp(0.0, (pos.y + mapBounds.height()/2) / blockSize, size.y - 1.0)));
+                     int(clamp(0.0, (pos.y + mapBounds.height()/2) / blockSize, size.y - 1.0)));
     }
 
     int blockIndex(const Vec2f &pos) const
@@ -169,7 +169,7 @@ EntityMap::EntityList EntityMap::listRegionBackToFront(const Vec3f &pos, float r
     }
 
     // Sort by distance to the center.
-    qSort(found.begin(), found.end(), [&pos] (const Entity *a, const Entity *b) {
+    std::sort(found.begin(), found.end(), [&pos] (const Entity *a, const Entity *b) {
         return (a->position() - pos).lengthSquared() >
                (b->position() - pos).lengthSquared();
     });
@@ -177,12 +177,12 @@ EntityMap::EntityList EntityMap::listRegionBackToFront(const Vec3f &pos, float r
     return found;
 }
 
-void EntityMap::iterateRegion(const Vec3f &                    pos,
-                              float                               radius,
-                              std::function<void(const Entity &)> callback) const
+void EntityMap::iterateRegion(const Vec3f &pos,
+                              float        radius,
+                              const std::function<void(const Entity &)> &callback) const
 {
     // Do the callback for each.
-    foreach (Entity const *e, listRegionBackToFront(pos, radius))
+    for (const Entity *e : listRegionBackToFront(pos, radius))
     {
         callback(*e);
     }

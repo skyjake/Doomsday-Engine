@@ -128,7 +128,7 @@ DE_PIMPL_NOREF(MapImport)
 
     bool isSky(const char *texture) const
     {
-        return res::wad::nameString(texture).startsWith("F_SKY");
+        return res::wad::nameString(texture).beginsWith("F_SKY");
     }
 
     bool import(const String &mapId)
@@ -142,10 +142,11 @@ DE_PIMPL_NOREF(MapImport)
 
         levelFormat = (lumps.lumpName(headerPos + 11) == "BEHAVIOR" ? HexenFormat : DoomFormat);
 
-        qDebug() << "Importing map:" << mapId
-                 << (levelFormat == DoomFormat ? "(Doom)" : "(Hexen)");
+        debug("Importing map: %s %s",
+              mapId.c_str(),
+              levelFormat == DoomFormat ? "(Doom)" : "(Hexen)");
 
-        this->mapId = mapId.toLower();
+        this->mapId = mapId.lower();
 
         // Conversion from Doom map units (Doom texels) to meters.
         // (Approximate typical human eye height slightly adjusted for a short reciprocal.)
@@ -394,14 +395,14 @@ Image MapImport::materialImage(const String &name) const
 
     const auto &category = path.segment(0);
 
-    if (category == QStringLiteral("texture"))
+    if (category == DE_STR("texture"))
     {
-        const auto img = d->textureLib.textureImage(path.segment(1));
+        const auto img = d->textureLib.textureImage(path.segment(1).toString());
         return Image::fromRgbaData(img.pixelSize(), img.pixels());
     }
-    else if (category == QStringLiteral("flat"))
+    else if (category == DE_STR("flat"))
     {
-        const auto img = d->flatLib.flatImage(path.segment(1));
+        const auto img = d->flatLib.flatImage(path.segment(1).toString());
         return Image::fromRgbaData(img.pixelSize(), img.pixels());
     }
 
@@ -422,7 +423,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
     // Package info (with required metadata).
     {
         File & f   = root.replaceFile("info.dei");
-        String dei = "title: " + d->mapId.toUpper() +
+        String dei = "title: " + d->mapId.upper() +
                      "\nversion: 1.0"
                      "\ntags: map"
                      "\nlicense: unknown"

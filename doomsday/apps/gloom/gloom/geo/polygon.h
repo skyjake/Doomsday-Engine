@@ -19,13 +19,13 @@
 #ifndef GLOOM_POLYGON_H
 #define GLOOM_POLYGON_H
 
-#include <de/Vector>
-#include <de/Rectangle>
 #include "gloom/geo/geomath.h"
 #include "gloom/identity.h"
 
-#include <QVector>
-#include <QList>
+#include <de/Hash>
+#include <de/List>
+#include <de/Rectangle>
+#include <de/Vector>
 
 namespace gloom { namespace geo {
 
@@ -37,7 +37,7 @@ struct Polygon
         Vec2d pos; // world X, Z
         ID id;
     };
-    using Points = QVector<Point>;
+    using Points = List<Point>;
     using Line   = geo::Line<Vec2d>;
 
     Points     points; // clockwise winding
@@ -46,31 +46,31 @@ struct Polygon
     explicit Polygon(const Points &points = Points());
     Polygon(const Polygon &) = default;
 
-    int              size() const { return points.size(); }
-    inline bool      isEmpty() const { return size() == 0; }
-    const Vec2d &    at(int pos) const;
-    const Point &    pointAt(int pos) const;
-    const Line       lineAt(int pos) const;
-    bool             isConvex() const;
-    QList<Polygon>   splitConvexParts() const;
-    QVector<int>     concavePoints() const;
-    Rangei           findLoop(int findStartPos = 0) const;
-    bool             hasDegenerateEdges() const;
-    bool             isClockwiseWinding() const;
-    bool             isUnique(int pos) const;
-    bool             isEdgeLine(int start, int end) const;
-    bool             isPointInside(const Vec2d &point) const;
-    bool             isLineInside(int start, int end) const;
-    bool             isInsideOf(const Polygon &largerPoly) const;
-    int              intersect(const Line &line) const;
-    bool             split(int a, int b, Polygon halves[2]) const;
-    bool             split(const Rangei &range, Polygon halves[2]) const;
-    void             updateBounds();
-    void             clear();
-    Vec2d            center() const;
-    Vec2d            expander(int pos) const;
-    QHash<ID, Vec2d> expanders() const;
-    String           asText() const;
+    int             size() const { return points.sizei(); }
+    inline bool     isEmpty() const { return size() == 0; }
+    const Vec2d &   at(int pos) const;
+    const Point &   pointAt(int pos) const;
+    const Line      lineAt(int pos) const;
+    bool            isConvex() const;
+    List<Polygon>   splitConvexParts() const;
+    List<int>       concavePoints() const;
+    Rangei          findLoop(int findStartPos = 0) const;
+    bool            hasDegenerateEdges() const;
+    bool            isClockwiseWinding() const;
+    bool            isUnique(int pos) const;
+    bool            isEdgeLine(int start, int end) const;
+    bool            isPointInside(const Vec2d &point) const;
+    bool            isLineInside(int start, int end) const;
+    bool            isInsideOf(const Polygon &largerPoly) const;
+    int             intersect(const Line &line) const;
+    bool            split(int a, int b, Polygon halves[2]) const;
+    bool            split(const Rangei &range, Polygon halves[2]) const;
+    void            updateBounds();
+    void            clear();
+    Vec2d           center() const;
+    Vec2d           expander(int pos) const;
+    Hash<ID, Vec2d> expanders() const;
+    String          asText() const;
 };
 
 }} // namespace gloom::geo

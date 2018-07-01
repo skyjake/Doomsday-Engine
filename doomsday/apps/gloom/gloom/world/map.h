@@ -21,13 +21,15 @@
 
 #include <de/Rectangle>
 #include <de/Vector>
-#include <QHash>
-#include <array>
+#include <de/Hash>
+#include <de/List>
 
 #include "gloom/identity.h"
 #include "gloom/geo/geomath.h"
 #include "gloom/geo/polygon.h"
 #include "gloom/world/entity.h"
+
+#include <array>
 
 namespace gloom {
 
@@ -111,16 +113,16 @@ struct Edge
     bool operator==(const Edge &other) const;
 };
 
-uint qHash(const Edge &edge);
+//uint qHash(const Edge &edge);
 
-typedef QHash<ID, Point>  Points;
-typedef QHash<ID, Line>   Lines;
-typedef QHash<ID, Plane>  Planes;
-typedef QHash<ID, Sector> Sectors;
-typedef QHash<ID, Volume> Volumes;
-typedef QHash<ID, std::shared_ptr<Entity>> Entities;
+typedef Hash<ID, Point>  Points;
+typedef Hash<ID, Line>   Lines;
+typedef Hash<ID, Plane>  Planes;
+typedef Hash<ID, Sector> Sectors;
+typedef Hash<ID, Volume> Volumes;
+typedef Hash<ID, std::shared_ptr<Entity>> Entities;
 
-typedef QVector<geo::Polygon> Polygons;
+typedef List<geo::Polygon> Polygons;
 
 /**
  * Describes a map of polygon-based sectors.
@@ -197,17 +199,17 @@ public:
     const Plane &     floorPlane(ID sectorId) const;
     const Plane &     ceilingPlane(ID sectorId) const;
 
-    using WorldVerts      = QHash<ID, Vec3f>;
-    using WorldPlaneVerts = QList<WorldVerts>; // one set per plane
+    using WorldVerts      = Hash<ID, Vec3f>;
+    using WorldPlaneVerts = List<WorldVerts>; // one set per plane
 
     WorldVerts      worldPlaneVerts(const Sector &sector, const Plane &plane) const;
     WorldPlaneVerts worldSectorPlaneVerts(const Sector &sector) const;
-    QHash<ID, Map::WorldPlaneVerts> worldSectorPlaneVerts() const;
+    Hash<ID, Map::WorldPlaneVerts> worldSectorPlaneVerts() const;
 
     bool buildSector(Edge         startSide,
                      IDList &     sectorPoints,
                      IDList &     sectorWalls,
-                     QList<Edge> &sectorEdges);
+                     List<Edge> &sectorEdges);
     ID splitLine(ID lineId, const Point &splitPoint);
 
     Block serialize() const;

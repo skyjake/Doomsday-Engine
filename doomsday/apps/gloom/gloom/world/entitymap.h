@@ -29,7 +29,7 @@ namespace gloom {
 class EntityMap
 {
 public:
-    using EntityList = QList<const Entity *>;
+    using EntityList = de::List<const Entity *>;
 
     EntityMap();
 
@@ -39,9 +39,9 @@ public:
 
     EntityList listRegionBackToFront(const de::Vec3f &pos, float radius) const;
 
-    void iterateRegion(const de::Vec3f &                pos,
-                       float                               radius,
-                       std::function<void(const Entity &)> callback) const;
+    void iterateRegion(const de::Vec3f &pos,
+                       float            radius,
+                       const std::function<void(const Entity &)>& callback) const;
 
 private:
     DE_PRIVATE(d)

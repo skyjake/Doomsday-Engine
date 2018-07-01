@@ -72,10 +72,10 @@ Vec2d Polygon::expander(int pos) const
     return (-lineAt(pos - 1).normal() - lineAt(pos).normal()).normalize();
 }
 
-QHash<ID, Vec2d> Polygon::expanders() const
+Hash<ID, Vec2d> Polygon::expanders() const
 {
-    QHash<ID, Vec2d> exp;
-    for (int i = 0; i < points.size(); ++i)
+    Hash<ID, Vec2d> exp;
+    for (int i = 0; i < points.sizei(); ++i)
     {
         exp.insert(points[i].id, expander(i));
     }
@@ -84,14 +84,13 @@ QHash<ID, Vec2d> Polygon::expanders() const
 
 String Polygon::asText() const
 {
-    String str;
-    QTextStream os(&str);
+    std::ostringstream os;
     os << "Polygon: [" << points.size() << "]";
-    for (int i = 0; i < points.size(); ++i)
+    for (int i = 0; i < points.sizei(); ++i)
     {
         os << String::format(" %x", points[i].id);
     }
-    return str;
+    return os.str();
 }
 
 const Vec2d &Polygon::at(int pos) const
@@ -115,7 +114,7 @@ bool Polygon::isConvex() const
     {
         return true;
     }
-    for (int i = 0; i < points.size(); ++i)
+    for (int i = 0; i < points.sizei(); ++i)
     {
         if (lineAt(i).normal().dot(lineAt(i + 1).dir()) < 0)
         {
@@ -125,11 +124,11 @@ bool Polygon::isConvex() const
     return true;
 }
 
-QVector<int> Polygon::concavePoints() const
+List<int> Polygon::concavePoints() const
 {
-    QVector<int> concave;
+    List<int> concave;
     if (points.size() <= 3) return concave; // must be convex
-    for (int i = 0; i < points.size(); ++i)
+    for (int i = 0; i < points.sizei(); ++i)
     {
         if (lineAt(i - 1).normal().dot(lineAt(i).dir()) < 0)
         {
@@ -143,7 +142,7 @@ bool Polygon::isUnique(int pos) const
 {
     const ID pointId = pointAt(pos).id;
     int count = 0;
-    for (int i = 0; i < points.size(); ++i)
+    for (int i = 0; i < points.sizei(); ++i)
     {
         if (points[i].id == pointId) ++count;
     }
@@ -279,7 +278,7 @@ int Polygon::intersect(const Line &check) const
 {
     int count = 0;
     const auto checkDir = check.dir();
-    for (int i = 0; i < points.size(); ++i)
+    for (int i = 0; i < points.sizei(); ++i)
     {
         double t;
 //        if (check.normalDistance(pointAt(i).pos, t) < 0.0001)
@@ -354,7 +353,7 @@ bool Polygon::split(int a, int b, Polygon halves[2]) const
     return true;
 }
 
-static bool areAllConvex(const QList<Polygon> &polygon)
+static bool areAllConvex(const List<Polygon> &polygon)
 {
     for (const auto &poly : polygon)
     {
@@ -368,11 +367,11 @@ Rangei Polygon::findLoop(int findStartPos) const
     // Having a loop means there's at least two triangles.
     if (points.size() < 6) return Rangei();
 
-    for (int i = findStartPos; i < points.size(); ++i)
+    for (int i = findStartPos; i < points.sizei(); ++i)
     {
         const ID startPoint = points[i].id;
 
-        for (int j = 3; j < points.size() - 2; ++j)
+        for (int j = 3; j < points.sizei() - 2; ++j)
         {
             const ID endPoint = pointAt(i + j).id;
             if (startPoint == endPoint)
@@ -478,12 +477,12 @@ bool Polygon::split(const Rangei &range, Polygon halves[2]) const
     return !halves[0].hasDegenerateEdges() && !halves[1].hasDegenerateEdges();
 }
 
-QList<Polygon> Polygon::splitConvexParts() const
+List<Polygon> Polygon::splitConvexParts() const
 {
-    QList<Polygon> parts({*this});
+    List<Polygon> parts({*this});
 
     // The parts that are not convex will be split to smaller parts.
-    for (int i = 0; i < parts.size(); ++i)
+    for (int i = 0; i < parts.sizei(); ++i)
     {
         // Loops should be always split to separate polygons.
         int findBegin = 0;
@@ -591,8 +590,9 @@ QList<Polygon> Polygon::splitConvexParts() const
             }
             if (availableSplits.isEmpty())
             {
-                qDebug("have %i insets, couldn't find a split", insets.size());
-                qDebug() << poly.asText();
+                debug("have %i insets, couldn't find a split\n%s",
+                      insets.sizei(),
+                      poly.asText().c_str());
                 DE_ASSERT(!availableSplits.isEmpty());
             }
             else

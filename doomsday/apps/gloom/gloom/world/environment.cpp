@@ -134,7 +134,7 @@ void Environment::enable(bool enabled)
     }
     else
     {
-        d->sinceLastUpdate = 0;
+        d->sinceLastUpdate = 0.0;
     }
 }
 
