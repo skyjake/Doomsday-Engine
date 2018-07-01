@@ -277,9 +277,9 @@ void ServerApp::initialize()
     DD_FinishInitializationAfterWindowReady();
 }
 
-void ServerApp::checkPackageCompatibility(StringList const &packageIds,
-                                          String const &userMessageIfIncompatible,
-                                          std::function<void ()> finalizeFunc)
+void ServerApp::checkPackageCompatibility(const StringList &           packageIds,
+                                          const String &               userMessageIfIncompatible,
+                                          const std::function<void()> &finalizeFunc)
 {
     if (GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesAffectingGameplay()))
     {
@@ -310,7 +310,7 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     // The server player is there, it's just hidden.
     info.setMaxPlayers(de::min(svMaxPlayers, DDMAXPLAYERS - (isDedicated ? 1 : 0)));
 
-    shell::ServerInfo::Flags flags(0);
+    Flags flags = 0;
     if (CVar_Byte(Con_FindVariable("server-allowjoin"))
             && isServer != 0
             && Sv_GetNumPlayers() < svMaxPlayers)
@@ -343,10 +343,10 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     }
 
     String const publicDomain = nptIPAddress;
-    if (!publicDomain.isEmpty())
+    if (publicDomain)
     {
-        info.setDomainName(String("%1:%2").arg(publicDomain)
-                           .arg(nptIPPort? nptIPPort : shell::DEFAULT_PORT));
+        info.setDomainName(String::format(
+            "%s:%i", publicDomain.c_str(), nptIPPort ? nptIPPort : shell::DEFAULT_PORT));
     }
 
     // Let's compile a list of client names.

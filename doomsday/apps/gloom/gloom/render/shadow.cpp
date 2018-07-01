@@ -25,6 +25,8 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 DE_PIMPL_NOREF(Shadow)
 {
     Light::Type   lightType;

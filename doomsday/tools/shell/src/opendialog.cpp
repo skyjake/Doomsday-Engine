@@ -17,6 +17,7 @@
  */
 
 #include "opendialog.h"
+#include "utils.h"
 #include "guishellapp.h"
 #include <de/libcore.h>
 #include <QDialogButtonBox>
@@ -38,6 +39,7 @@ using namespace de::shell;
 static int const MAX_HISTORY_SIZE = 10;
 
 DE_PIMPL(OpenDialog)
+, DE_OBSERVES(shell::ServerFinder, Update)
 {
     QComboBox *address;
     QLabel *localCount;
@@ -79,8 +81,7 @@ DE_PIMPL(OpenDialog)
 
         localCount = new QLabel;
         form->addRow(0, localCount);
-        QObject::connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()),
-                         thisPublic, SLOT(updateLocalList()));
+        GuiShellApp::app().serverFinder().audienceForUpdate() += this;
 
         // Buttons.
         QDialogButtonBox *bbox = new QDialogButtonBox;
@@ -122,6 +123,11 @@ DE_PIMPL(OpenDialog)
         }
         return false;
     }
+
+    void foundServersUpdated()
+    {
+        self().updateLocalList();
+    }
 };
 
 OpenDialog::OpenDialog(QWidget *parent)
@@ -138,7 +144,7 @@ QString OpenDialog::address() const
     int sel = d->address->currentIndex();
     if (d->address->itemData(sel).canConvert<Address>())
     {
-        return d->address->itemData(sel).value<Address>().asText();
+        return convert(d->address->itemData(sel).value<Address>().asText());
     }
 
     // User-entered item.
@@ -174,8 +180,8 @@ void OpenDialog::updateLocalList(bool autoselect)
         // Update the list of servers.
         foreach (Address const &sv, finder.foundServers())
         {
-            String label = sv.asText() + String(" (%1; %2/%3)")
-                    .arg(finder.name(sv).left(20))
+            QString label = convert(sv.asText()) + QString(" (%1; %2/%3)")
+                    .arg(convert(finder.name(sv).left(String::CharPos(20))))
                     .arg(finder.playerCount(sv))
                     .arg(finder.maxPlayers(sv));
 
@@ -211,7 +217,7 @@ void OpenDialog::saveState()
 {
     if (d->edited)
     {
-        String text = d->address->itemText(0);
+        QString text = d->address->itemText(0);
         d->history.removeAll(text);
         d->history.prepend(text);
 
@@ -226,7 +232,7 @@ void OpenDialog::saveState()
     st.setValue("OpenDialog/history", d->history);
 }
 
-void OpenDialog::textEdited(QString text)
+void OpenDialog::textEdited(const QString& text)
 {
     if (!d->edited)
     {

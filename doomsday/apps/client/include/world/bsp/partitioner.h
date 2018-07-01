@@ -23,7 +23,7 @@
 #ifndef DE_WORLD_BSP_PARTITIONER_H
 #define DE_WORLD_BSP_PARTITIONER_H
 
-#include <QSet>
+#include <de/Set>
 #include <de/Observers>
 #include <de/Vector>
 
@@ -86,7 +86,7 @@ public:
      * @return  Root tree node of the resultant BSP; otherwise @c nullptr if no usable tree
      * data was produced.
      */
-    BspTree *makeBspTree(QSet<Line *> const &lines, de::Mesh &mesh);
+    BspTree *makeBspTree(de::Set<Line *> const &lines, de::Mesh &mesh);
 
     /**
      * Retrieve the number of Segments owned by the partitioner. When the build completes

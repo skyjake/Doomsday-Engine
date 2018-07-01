@@ -21,7 +21,6 @@
 #include "world/sky.h"
 
 #include <cmath>
-#include <QtAlgorithms>
 #include <de/Log>
 #include <doomsday/res/TextureManifest>
 #include <doomsday/world/Materials>

@@ -200,7 +200,7 @@ DE_PIMPL(Blockmap)
             }
         }
     };
-    typedef QList<Node> Nodes;
+    typedef List<Node> Nodes;
 
     AABoxd bounds;    ///< Map space units.
     duint cellSize;   ///< Map space units.

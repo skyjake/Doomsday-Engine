@@ -72,7 +72,7 @@ public:
      * @param flags     Thinker filter flags.
      * @param func      Callback to make for each thinker_t.
      */
-    de::LoopResult forAll(de::dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
+    de::LoopResult forAll(de::dbyte flags, const std::function<de::LoopResult (thinker_t *th)>& func) const;
 
     /**
      * Iterate the list of thinkers making a callback for each.
@@ -83,7 +83,9 @@ public:
      *
      * @overload
      */
-    de::LoopResult forAll(thinkfunc_t thinkFunc, de::dbyte flags, std::function<de::LoopResult (thinker_t *th)> func) const;
+    de::LoopResult forAll(thinkfunc_t thinkFunc,
+                          de::dbyte   flags,
+                          const std::function<de::LoopResult(thinker_t *th)> &func) const;
 
     /**
      * Locates a mobj by its unique identifier in the map.

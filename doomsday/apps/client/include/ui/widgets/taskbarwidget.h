@@ -19,7 +19,6 @@
 #ifndef DE_CLIENT_TASKBARWIDGET_H
 #define DE_CLIENT_TASKBARWIDGET_H
 
-#include <QObject>
 #include <de/Action>
 #include <de/GuiWidget>
 #include <de/ButtonWidget>
@@ -33,14 +32,16 @@
  */
 class TaskBarWidget : public de::GuiWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Open,  void taskBarOpened())
+    DE_DEFINE_AUDIENCE2(Close, void taskBarClosed())
 
 public:
     TaskBarWidget();
 
-    ConsoleWidget &console();
+    ConsoleWidget &    console();
     de::CommandWidget &commandLine();
-    de::ButtonWidget &logoButton();
+    de::ButtonWidget & logoButton();
 
     bool isOpen() const;
     de::Rule const &shift();
@@ -51,7 +52,7 @@ public:
     void drawContent();
     bool handleEvent(de::Event const &event);
 
-public slots:
+public:
     void open();
     void openAndPauseGame();
     void close();
@@ -70,12 +71,8 @@ public slots:
     void showUpdaterSettings();
 #endif
 
-protected slots:
+protected:
     void updateCommandLineLayout();
-
-signals:
-    void opened();
-    void closed();
 
 protected:
     void glInit();

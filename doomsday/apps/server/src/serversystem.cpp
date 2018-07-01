@@ -95,7 +95,7 @@ DE_PIMPL(ServerSystem)
         if (!(serverSock = new ListenSocket(port)))
             return false;
 
-        QObject::connect(serverSock, SIGNAL(incomingConnection()), thisPublic, SLOT(handleIncomingConnection()));
+        serverSock->audienceForIncoming() += [this](){ self().handleIncomingConnection(); };
 
         // Update the beacon with the new port.
         beacon.start(port);
@@ -108,12 +108,10 @@ DE_PIMPL(ServerSystem)
 
     void clearUsers()
     {
-        // Clear the client nodes.
-        for (RemoteUser *u : users.values())
+        while (!users.empty())
         {
-            delete u;
+            delete users.begin()->second;
         }
-        DE_ASSERT(users.isEmpty());
     }
 
     void deinit()
@@ -300,9 +298,7 @@ void ServerSystem::convertToRemoteFeedUser(RemoteUser *user)
 
 int ServerSystem::userCount() const
 {
-    return d->remoteFeedUsers.count() +
-           d->shellUsers.count() +
-           d->users.size();
+    return d->remoteFeedUsers.count() + d->shellUsers.count() + d->users.size();
 }
 
 void ServerSystem::timeChanged(Clock const &clock)
@@ -332,13 +328,13 @@ void ServerSystem::timeChanged(Clock const &clock)
 void ServerSystem::handleIncomingConnection()
 {
     LOG_AS("ServerSystem");
-    forever
+    for (;;)
     {
         Socket *sock = d->serverSock->accept();
         if (!sock) break;
 
-        RemoteUser *user = new RemoteUser(sock);
-        connect(user, SIGNAL(userDestroyed()), this, SLOT(userDestroyed()));
+        auto *user = new RemoteUser(sock);
+        user->audienceForDestroy() += [this, user](){ userDestroyed(user); };
         d->users.insert(user->id(), user);
 
         // Immediately handle pending messages, if there are any.
@@ -346,10 +342,8 @@ void ServerSystem::handleIncomingConnection()
     }
 }
 
-void ServerSystem::userDestroyed()
+void ServerSystem::userDestroyed(RemoteUser *u)
 {
-    RemoteUser *u = static_cast<RemoteUser *>(sender());
-
     LOG_AS("ServerSystem");
     LOGDEV_NET_VERBOSE("Removing user %s") << u->id();
 

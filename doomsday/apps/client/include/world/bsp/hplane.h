@@ -26,7 +26,7 @@
 #ifndef DE_WORLD_BSP_HPLANE_H
 #define DE_WORLD_BSP_HPLANE_H
 
-#include <QList>
+#include <de/List>
 #include <de/Partition>
 #include <de/Vector>
 #include "world/bsp/linesegment.h"
@@ -134,7 +134,7 @@ public:
         de::dint _edge = 0;
     };
 
-    typedef QList<Intercept> Intercepts;
+    typedef de::List<Intercept> Intercepts;
 
 public:
     /**

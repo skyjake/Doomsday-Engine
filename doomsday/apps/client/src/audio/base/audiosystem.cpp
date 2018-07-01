@@ -62,10 +62,10 @@
 #include <de/concurrency.h>
 #include <de/memory.h>
 
-#include <QMultiHash>
-#include <QtAlgorithms>
+#include <de/Hash>
 
 using namespace de;
+using namespace res;
 
 dint soundMinDist = 256;  // No distance attenuation this close.
 dint soundMaxDist = 2025;
@@ -182,7 +182,7 @@ static bool recognizeMus(res::File1 &file)
     file.read((uint8_t *)buf, 0, 4);
 
     // ASCII "MUS" and CTRL-Z (hex 4d 55 53 1a)
-    return !qstrncmp(buf, "MUS\x01a", 4);
+    return !iCmpStrN(buf, "MUS\x01a", 4);
 }
 #endif
 
@@ -393,7 +393,7 @@ DE_PIMPL(AudioSystem)
             return false;
         }
     };
-    QList<AudioInterface> activeInterfaces;
+    List<AudioInterface> activeInterfaces;
 
     bool isPrimaryInterface(audiointerfacetype_t type, void *ptr)
     {
@@ -418,7 +418,7 @@ DE_PIMPL(AudioSystem)
             {
                 // A dummy interface as the primary one removes the need to have any
                 // other interfaces of the same type.
-                for (int i = activeInterfaces.size() - 1; i >= 0; --i)
+                for (int i = activeInterfaces.sizei() - 1; i >= 0; --i)
                 {
                     if (activeInterfaces[i].type == type)
                     {
@@ -617,16 +617,16 @@ DE_PIMPL(AudioSystem)
     struct LogicSound
     {
         //dint soundId     = 0;
-        mobj_t const *emitter = nullptr;
-        duint endTime = 0;
-        bool isRepeating = false;
+        mobj_t const *emitter     = nullptr;
+        duint         endTime     = 0;
+        bool          isRepeating = false;
 
         bool inline isPlaying(duint nowTime) const {
             return (isRepeating || endTime > nowTime);
         }
     };
-    typedef QMultiHash<dint /*key: soundId*/, LogicSound *> LogicSoundHash;
-    typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicSoundHashIterator;
+    typedef std::multimap<dint /*key: soundId*/, LogicSound *> LogicSoundHash;
+//    typedef QMutableHashIterator<dint /*key: soundId*/, LogicSound *> MutableLogicSoundHashIterator;
 
 #if __CLIENT__
     bool musAvail = false;              ///< @c true if at least one driver is initialized for music playback.
@@ -737,7 +737,7 @@ DE_PIMPL(AudioSystem)
                     hndl->read(buf.data(), buf.size());
                     file << buf;
                     file.flush();
-                    return iMusic->PlayFile(file.as<NativeFile>().nativePath().toUtf8(), looped);
+                    return iMusic->PlayFile(file.as<NativeFile>().nativePath(), looped);
                 }
                 else if (iMusic->Play && iMusic->SongBuffer)
                 {
@@ -794,7 +794,7 @@ DE_PIMPL(AudioSystem)
                 auto *iMusic = (audiointerface_music_t *) ifs;
                 if (iMusic->PlayFile)
                 {
-                    return iMusic->PlayFile(midi.as<NativeFile>().nativePath().toUtf8(), looped);
+                    return iMusic->PlayFile(midi.as<NativeFile>().nativePath(), looped);
                 }
                 return 0;  // Continue.
             });
@@ -819,13 +819,13 @@ DE_PIMPL(AudioSystem)
             else if (iMusic->PlayFile)
             {
                 String bufName = composeMusicBufferFilename();
-                if (!F_DumpFile(lump, bufName.toUtf8()))
+                if (!F_DumpFile(lump, bufName))
                 {
                     // Failed to write the lump...
                     return 0;
                 }
-                return iMusic->PlayFile(FS::rootFolder().locate<File const>(bufName)
-                                        .as<NativeFile>().nativePath().toUtf8(), looped);
+                return iMusic->PlayFile(FS::rootFolder().locate<const File>(bufName)
+                                        .as<NativeFile>().nativePath(), looped);
             }
 
             return 0;  // Continue.
@@ -1153,7 +1153,10 @@ DE_PIMPL(AudioSystem)
 
     void sfxClearLogical()
     {
-        qDeleteAll(sfxLogicHash);
+        for (const auto &i : sfxLogicHash)
+        {
+            delete i.second;
+        }
         sfxLogicHash.clear();
     }
 
@@ -1171,16 +1174,18 @@ DE_PIMPL(AudioSystem)
         sfxLogicLastPurge = nowTime;
 
         // Check all sounds in the hash.
-        MutableLogicSoundHashIterator it(sfxLogicHash);
-        while (it.hasNext())
+        for (auto it = sfxLogicHash.begin(); it != sfxLogicHash.end(); )
         {
-            it.next();
-            LogicSound &lsound = *it.value();
+            LogicSound &lsound = *it->second;
             if (!lsound.isRepeating && lsound.endTime < nowTime)
             {
                 // This has stopped.
                 delete &lsound;
-                it.remove();
+                it = sfxLogicHash.erase(it);
+            }
+            else
+            {
+                ++it;
             }
         }
     }
@@ -1197,23 +1202,26 @@ DE_PIMPL(AudioSystem)
     dint sfxStopLogical(dint soundId, mobj_t const *emitter)
     {
         dint stopCount = 0;
-        MutableLogicSoundHashIterator it(sfxLogicHash);
-        while (it.hasNext())
+        for (auto it = sfxLogicHash.begin(); it != sfxLogicHash.end(); )
         {
-            it.next();
-
-            LogicSound const &lsound = *it.value();
+            LogicSound const &lsound = *it->second;
             if (soundId)
             {
-                if (it.key() != soundId) continue;
+                if (it->first != soundId)
+            {
+                    ++it; continue;
+                }
             }
             else if (emitter)
             {
-                if (lsound.emitter != emitter) continue;
+                if (lsound.emitter != emitter)
+                {
+                    ++it; continue;
+                }
             }
 
             delete &lsound;
-            it.remove();
+            it = sfxLogicHash.erase(it);
             stopCount++;
         }
         return stopCount;
@@ -1264,7 +1272,7 @@ DE_PIMPL(AudioSystem)
             ls->emitter     = emitter;
             ls->isRepeating = isRepeating;
             ls->endTime     = Timer_RealMilliseconds() + length;
-            sfxLogicHash.insert(soundId, ls);
+            sfxLogicHash.insert(std::make_pair(soundId, ls));
         }
     }
 
@@ -1487,8 +1495,7 @@ String AudioSystem::description() const
 {
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << (B) << "\n"
 
-    String str;
-    QTextStream os(&str);
+    std::ostringstream os;
 
     os << _E(b) "Audio configuration:\n" _E(.);
 
@@ -1515,7 +1522,7 @@ String AudioSystem::description() const
                          ifs.type == AUDIO_ISFX?   "SFX" : "CD");
         if (++ifCounts[ifs.type] > 1)
         {
-            ifName += String(" %1").arg(ifCounts[ifs.type]);
+            ifName += String::format(" %i", ifCounts[ifs.type]);
         }
 
         os << _E(Ta) _E(l) "  " << ifName << ": " << _E(.) _E(Tb)
@@ -1529,7 +1536,7 @@ String AudioSystem::description() const
     }
 #endif
 
-    return str.rightStrip();
+    return String(os.str()).rightStrip();
 
 #undef TABBED
 }
@@ -1926,27 +1933,24 @@ bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
     duint const nowTime = Timer_RealMilliseconds();
     if (soundId)
     {
-        auto it = d->sfxLogicHash.constFind(soundId);
-        while (it != d->sfxLogicHash.constEnd() && it.key() == soundId)
+        const auto sounds = d->sfxLogicHash.equal_range(soundId);
+        for (auto it = sounds.first; it != sounds.second; ++it)
         {
-            Impl::LogicSound const &lsound = *it.value();
+            Impl::LogicSound const &lsound = *it->second;
             if (lsound.emitter == emitter && lsound.isPlaying(nowTime))
+            {
                 return true;
-
-            ++it;
+            }
         }
     }
     else if (emitter)
     {
         // Check if the emitter is playing any sound.
-        auto it = d->sfxLogicHash.constBegin();
-        while (it != d->sfxLogicHash.constEnd())
+        for (const auto &s : d->sfxLogicHash)
         {
-            Impl::LogicSound const &lsound = *it.value();
+            Impl::LogicSound const &lsound = *s.second;
             if (lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
-
-            ++it;
         }
     }
     return false;

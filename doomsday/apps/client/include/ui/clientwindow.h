@@ -61,14 +61,14 @@ public:
 public:
     ClientWindow(de::String const &id = "main");
 
-    ClientRootWidget &          root();
-    TaskBarWidget &             taskBar();
-    de::GuiWidget &             taskBarBlur();
-    ConsoleWidget &             console();
-    HomeWidget &                home();
-    GameWidget &                game();
-    BusyWidget &                busy();
-    AlertDialog &               alerts();
+    ClientRootWidget &root();
+    TaskBarWidget &   taskBar();
+    de::GuiWidget &   taskBarBlur();
+    ConsoleWidget &   console();
+    HomeWidget &      home();
+    GameWidget &      game();
+    BusyWidget &      busy();
+    AlertDialog &     alerts();
     de::NotificationAreaWidget &notifications();
 
     /**

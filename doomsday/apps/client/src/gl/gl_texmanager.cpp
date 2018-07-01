@@ -23,8 +23,6 @@
 #include "gl/gl_texmanager.h"
 
 #include <cstring>
-#include <QList>
-#include <QMutableListIterator>
 #include <de/concurrency.h>
 #include <de/memory.h>
 #include <de/memoryzone.h>
@@ -269,7 +267,7 @@ GLuint GL_PrepareFlaremap(res::Uri const &resourceUri)
     if (resourceUri.path().length() == 1)
     {
         // Select a system flare by numeric identifier?
-        int number = resourceUri.path().toStringRef().first().digitValue();
+        int number = resourceUri.path().toString().first() - '0';
         if (number == 0) return 0; // automatic
         if (number >= 1 && number <= 4)
         {
@@ -301,12 +299,12 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 
         return GL_LoadImage(image, foundPath)? res::External : res::None;
     }
-    catch (FS1::NotFoundError const&)
+    catch (res::FS1::NotFoundError const&)
     {} // Ignore this error.
 
     try
     {
-        FileHandle &file = fileSys.openLump(fileSys.lump(raw.lumpNum));
+        res::FileHandle &file = fileSys.openLump(fileSys.lump(raw.lumpNum));
         if (Image_LoadFromFile(image, file))
         {
             fileSys.releaseFile(file.file());
@@ -342,7 +340,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
     }
-    catch (LumpIndex::NotFoundError const &)
+    catch (res::LumpIndex::NotFoundError const &)
     {} // Ignore error.
 
     return res::None;
@@ -392,10 +390,10 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
         if (raw->tex) // Is the texture loaded?
         {
             DE_ASSERT_IN_MAIN_THREAD();
-            DE_ASSERT_GL_CONTEXT_ACTIVE();
+            LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
-            LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, raw->tex);
-            LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
+            glBindTexture(GL_TEXTURE_2D, raw->tex);
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, newMinFilter);
         }
     }
 }

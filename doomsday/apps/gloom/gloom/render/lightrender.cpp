@@ -29,6 +29,8 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 struct LightData {
     Vec3f lightOrigin;
     Vec3f lightIntensity;

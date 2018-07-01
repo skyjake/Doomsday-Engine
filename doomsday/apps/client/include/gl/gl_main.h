@@ -53,7 +53,7 @@ DE_EXTERN_C float vid_gamma, vid_bright, vid_contrast;
 DE_EXTERN_C int r_detail;
 
 #ifdef _DEBUG
-#  define DE_ASSERT_GL_CONTEXT_ACTIVE()  {DE_ASSERT(QOpenGLContext::currentContext() != nullptr);}
+#  define DE_ASSERT_GL_CONTEXT_ACTIVE()  LIBGUI_ASSERT_GL_CONTEXT_ACTIVE()
 #else
 #  define DE_ASSERT_GL_CONTEXT_ACTIVE()
 #endif
@@ -263,9 +263,23 @@ dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool 
  */
 int GL_ChooseSmartFilter(int width, int height, int flags);
 
-GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags);
-GLuint GL_NewTextureWithParams(dgltexformat_t format, int width, int height, uint8_t const *pixels, int flags,
-                               int grayMipmap, int minFilter, int magFilter, int anisoFilter, int wrapS, int wrapT);
+GLuint GL_NewTextureWithParams(dgltexformat_t format,
+                               int            width,
+                               int            height,
+                               uint8_t const *pixels,
+                               int            flags);
+
+GLuint GL_NewTextureWithParams(dgltexformat_t format,
+                               int            width,
+                               int            height,
+                               uint8_t const *pixels,
+                               int            flags,
+                               int            grayMipmap,
+                               GLenum         minFilter,
+                               GLenum         magFilter,
+                               int            anisoFilter,
+                               GLenum         wrapS,
+                               GLenum         wrapT);
 
 /**
  * in/out format:

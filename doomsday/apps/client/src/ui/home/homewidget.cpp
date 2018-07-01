@@ -40,8 +40,7 @@
 #include <de/SequentialLayout>
 #include <de/StyleProceduralImage>
 #include <de/TabWidget>
-
-#include <QTimer>
+#include <de/Timer>
 
 using namespace de;
 
@@ -65,22 +64,23 @@ DE_GUI_PIMPL(HomeWidget)
     LoopCallback mainCall;
     SaveListData savedItems; ///< All the available save games as items.
 
-    dsize visibleColumnCount = 2;
-    QList<Column> allColumns; // not owned
-    QList<ColumnWidget *> columns; // Only the visible ones (not owned).
-    IndirectRule *columnWidth;
-    LabelWidget *tabsBackground;
-    TabWidget *tabs;
+    dsize                visibleColumnCount = 2;
+    List<Column>         allColumns; // not owned
+    List<ColumnWidget *> columns;    // Only the visible ones (not owned).
+    IndirectRule *       columnWidth;
+    LabelWidget *        tabsBackground;
+    TabWidget *          tabs;
+    int                  currentOffsetTab = 0;
+    AnimationRule *      scrollOffset;
+    AnimationRule *      dismissOffset;
+    ButtonWidget *       moveLeft;
+    ButtonWidget *       moveRight;
+    Timer                moveShowTimer;
+    ButtonWidget *       taskBarHintButton;
+    bool                 dismissing   = false;
+    bool                 havePackages = false;
+
     SafeWidgetPtr<FadeToBlackWidget> blanker;
-    int currentOffsetTab = 0;
-    AnimationRule *scrollOffset;
-    AnimationRule *dismissOffset;
-    ButtonWidget *moveLeft;
-    ButtonWidget *moveRight;
-    QTimer moveShowTimer;
-    ButtonWidget *taskBarHintButton;
-    bool dismissing = false;
-    bool havePackages = false;
 
     int restoredOffsetTab = -1;
     int restoredActiveTab = -1;
@@ -137,12 +137,12 @@ DE_GUI_PIMPL(HomeWidget)
         // The task bar is created later, so defer the signal connects.
         mainCall.enqueue([this] ()
         {
-            QObject::connect(&ClientWindow::main().taskBar(), &TaskBarWidget::opened, [this] ()
+            ClientWindow::main().taskBar() += [this] ()
             {
                 taskBarHintButton->disable();
                 taskBarHintButton->setOpacity(0, 0.25);
-            });
-            QObject::connect(&ClientWindow::main().taskBar(), &TaskBarWidget::closed, [this] ()
+            };
+            ClientWindow::main().taskBar(), &TaskBarWidget::closed, [this] ()
             {
                 taskBarHintButton->enable();
                 taskBarHintButton->setOpacity(.66f, 0.5);
@@ -153,7 +153,7 @@ DE_GUI_PIMPL(HomeWidget)
         // may inadvertely click on them right after they're gone.
         moveShowTimer.setSingleShot(true);
         moveShowTimer.setInterval(SCROLL_SPAN.asMilliSeconds());
-        QObject::connect(&moveShowTimer, &QTimer::timeout, [this] ()
+        moveShowTimer += [this] ()
         {
             moveLeft ->show(tabs->current() != 0);
             moveRight->show(tabs->current() < tabs->items().size() - 1);

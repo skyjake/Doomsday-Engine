@@ -37,8 +37,7 @@
 #include "world/p_object.h"
 
 #include <de/memoryzone.h>
-#include <QList>
-#include <QtAlgorithms>
+#include <de/List>
 
 using namespace de;
 
@@ -127,9 +126,9 @@ DE_PIMPL(Thinkers)
     dint idtable[2048];     ///< 65536 bits telling which IDs are in use.
     dushort iddealer = 0;
 
-    QList<ThinkerList *> lists;
-    QHash<thid_t, mobj_t *> mobjIdLookup;  ///< public only
-    QHash<thid_t, thinker_t *> thinkerIdLookup; ///< all thinkers with ID
+    List<ThinkerList *>       lists;
+    Hash<thid_t, mobj_t *>    mobjIdLookup;    ///< public only
+    Hash<thid_t, thinker_t *> thinkerIdLookup; ///< all thinkers with ID
 
     bool inited = false;
 
@@ -146,7 +145,7 @@ DE_PIMPL(Thinkers)
         // Note that most thinkers are allocated from the memory zone
         // so there is no memory leak here as this memory will be purged
         // automatically when the map is "unloaded".
-        qDeleteAll(lists);
+        deleteAll(lists);
     }
 
     void releaseAllThinkers()
@@ -215,20 +214,20 @@ void Thinkers::setMobjId(thid_t id, bool inUse)
 
 struct mobj_s *Thinkers::mobjById(dint id)
 {
-    auto found = d->mobjIdLookup.constFind(id);
-    if (found != d->mobjIdLookup.constEnd())
+    auto found = d->mobjIdLookup.find(thid_t(id));
+    if (found != d->mobjIdLookup.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
 
 thinker_t *Thinkers::find(thid_t id)
 {
-    auto found = d->thinkerIdLookup.constFind(id);
-    if (found != d->thinkerIdLookup.constEnd())
+    auto found = d->thinkerIdLookup.find(id);
+    if (found != d->thinkerIdLookup.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
@@ -295,7 +294,7 @@ void Thinkers::remove(thinker_t &th)
 #endif
     }
 
-    th.function = (thinkfunc_t) -1;
+    th.function = thinkfunc_t(-1);
 
     Thinker::release(th);
 }
@@ -328,7 +327,7 @@ bool Thinkers::isInited() const
     return d->inited;
 }
 
-LoopResult Thinkers::forAll(dbyte flags, std::function<LoopResult (thinker_t *)> func) const
+LoopResult Thinkers::forAll(dbyte flags, const std::function<LoopResult (thinker_t *)>& func) const
 {
     if (!d->inited) return LoopContinue;
 
@@ -358,7 +357,9 @@ LoopResult Thinkers::forAll(dbyte flags, std::function<LoopResult (thinker_t *)>
     return LoopContinue;
 }
 
-LoopResult Thinkers::forAll(thinkfunc_t thinkFunc, dbyte flags, std::function<LoopResult (thinker_t *)> func) const
+LoopResult Thinkers::forAll(thinkfunc_t thinkFunc,
+                            dbyte       flags,
+                            const std::function<LoopResult(thinker_t *)> &func) const
 {
     if (!d->inited) return LoopContinue;
 
@@ -503,14 +504,14 @@ void Thinker_Run()
             if (Thinker_InStasis(th)) return LoopContinue; // Skip.
 
             // Time to remove it?
-            if (th->function == (thinkfunc_t) -1)
+        if (th->function == thinkfunc_t(-1))
             {
                 unlinkThinkerFromList(th);
 
                 if (th->id)
                 {
                     // Recycle for reduced allocation overhead.
-                    P_MobjRecycle((mobj_t *) th);
+                P_MobjRecycle(reinterpret_cast<mobj_t *>(th));
                 }
                 else
                 {

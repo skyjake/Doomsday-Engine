@@ -30,8 +30,6 @@
  */
 class HomeWidget : public de::GuiWidget, public de::IPersistent
 {
-    Q_OBJECT
-
 public:
     HomeWidget();
 
@@ -43,6 +41,9 @@ public:
     void moveOnscreen(de::TimeSpan span = 1.5);
     void moveOffscreen(de::TimeSpan span = 1.5);
 
+    void tabChanged();
+    void mouseActivityInColumn(const de::GuiWidget *);
+
     // Events.
     void update() override;
 
@@ -51,10 +52,6 @@ public:
     void operator << (de::PersistentState const &fromState);
 
     static de::PopupWidget *makeSettingsPopup();
-
-public slots:
-    void tabChanged();
-    void mouseActivityInColumn(QObject const *);
 
 protected:
     void updateStyle() override;

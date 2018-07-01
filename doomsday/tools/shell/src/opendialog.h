@@ -21,7 +21,7 @@ public slots:
 
 protected slots:
     void saveState();
-    void textEdited(QString);
+    void textEdited(const QString&);
 
 private:
     DE_PRIVATE(d)

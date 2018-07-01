@@ -25,20 +25,19 @@
 
 #include "world/bsp/hplane.h"
 
-#include <memory>
-#include <QtAlgorithms>
+#include "Line"
+#include "Sector"
+#include "Vertex"
+#include "world/bsp/edgetip.h"
+#include "world/bsp/linesegment.h"
+#include "world/bsp/partitioner.h"
+
 #include <de/mathutil.h> // M_InverseAngle
 #include <de/vector1.h>  // remove me
 #include <de/Error>
 #include <de/Log>
 
-#include "Line"
-#include "Sector"
-#include "Vertex"
-
-#include "world/bsp/edgetip.h"
-#include "world/bsp/linesegment.h"
-#include "world/bsp/partitioner.h"
+#include <memory>
 
 using namespace de;
 
@@ -290,7 +289,7 @@ void HPlane::sortAndMergeIntercepts()
     // Any work to do?
     if(!d->needSortIntercepts) return;
 
-    qSort(d->intercepts.begin(), d->intercepts.end());
+    std::sort(d->intercepts.begin(), d->intercepts.end());
 
     for(int i = 0; i < d->intercepts.count() - 1; ++i)
     {
@@ -301,10 +300,9 @@ void HPlane::sortAndMergeIntercepts()
         ddouble distance = next.distance() - cur.distance();
         if(distance < -0.1)
         {
-            throw Error("HPlane::sortAndMergeIntercepts",
-                        String("Invalid intercept order - %1 > %2")
-                            .arg(cur.distance(),  0, 'f', 3)
-                            .arg(next.distance(), 0, 'f', 3));
+            throw Error(
+                "HPlane::sortAndMergeIntercepts",
+                stringf("Invalid intercept order - %.3f > %.3f", cur.distance(), next.distance()));
         }
 
         // Are we merging this pair?

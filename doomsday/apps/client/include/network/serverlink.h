@@ -26,7 +26,6 @@
 #include <de/shell/Protocol>
 #include <de/shell/ServerInfo>
 #include <de/shell/PackageDownloader>
-#include <QObject>
 #include "network/net_main.h"
 
 /**
@@ -35,8 +34,6 @@
  */
 class ServerLink : public de::shell::AbstractLink
 {
-    Q_OBJECT
-
 public:
     DE_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
     DE_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeSpan))
@@ -45,17 +42,17 @@ public:
     DE_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
     DE_DEFINE_AUDIENCE2(Leave, void networkGameLeft())
 
-    enum Flag
-    {
+    DE_DEFINE_AUDIENCE2(Discovery, void serversDiscovered())
+
+    enum Flag {
         DiscoverLocalServers = 0x1,
         ManualConnectionOnly = 0,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     static ServerLink &get();
 
 public:
-    ServerLink(Flags flags = DiscoverLocalServers);
+    ServerLink(de::Flags flags = DiscoverLocalServers);
 
     de::shell::PackageDownloader &packageDownloader();
 
@@ -95,7 +92,7 @@ public:
 
     void ping(de::Address const &address);
 
-    void connectDomain(de::String const &domain, de::TimeSpan const &timeout = 0) override;
+    void connectDomain(de::String const &domain, de::TimeSpan const &timeout = 0.0) override;
     void connectHost(de::Address const &address) override;
 
     /**
@@ -126,7 +123,7 @@ public:
 
         Any = Direct | LocalNetwork | MasterServer
     };
-    Q_DECLARE_FLAGS(FoundMask, FoundMaskFlag)
+    using FoundMask = de::Flags;
 
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
@@ -136,7 +133,7 @@ public:
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    QList<de::Address> foundServers(FoundMask mask = Any) const;
+    de::List<de::Address> foundServers(FoundMask mask = Any) const;
 
     bool isFound(de::Address const &host, FoundMask mask = Any) const;
 
@@ -154,24 +151,18 @@ public:
 
     bool isServerOnLocalNetwork(de::Address const &host) const;
 
-signals:
-    void serversDiscovered();
-
-public slots:
+public:
     void handleIncomingPackets();
 
-protected slots:
+protected:
     void localServersFound();
     void linkDisconnected();
 
-protected:
     de::Packet *interpret(de::Message const &msg) override;
     void initiateCommunications() override;
 
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ServerLink::FoundMask)
 
 #endif // CLIENT_LINK_H

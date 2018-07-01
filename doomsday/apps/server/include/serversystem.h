@@ -94,7 +94,7 @@ public:
 
 protected:
     void handleIncomingConnection();
-    void userDestroyed();
+    void userDestroyed(RemoteUser *);
 
 private:
     DE_PRIVATE(d)

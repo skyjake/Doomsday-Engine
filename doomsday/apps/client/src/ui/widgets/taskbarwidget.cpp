@@ -59,15 +59,12 @@
 #include <de/Painter>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
-
-#include <QFileDialog>
 
 using namespace de;
 using namespace de::ui;
 
-static TimeSpan OPEN_CLOSE_SPAN = 0.2;
+static const TimeSpan OPEN_CLOSE_SPAN = 0.2;
 
 enum MenuItemPositions
 {
