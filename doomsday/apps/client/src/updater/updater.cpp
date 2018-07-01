@@ -27,12 +27,12 @@
  * 02110-1301 USA</small>
  */
 
-#include <QDateTime>
-#include <QStringList>
-#include <QDesktopServices>
-#include <QNetworkAccessManager>
-#include <QTextStream>
-#include <QDir>
+//#include <QDateTime>
+//#include <QStringList>
+//#include <QDesktopServices>
+//#include <QNetworkAccessManager>
+//#include <QTextStream>
+//#include <QDir>
 
 #include "de_platform.h"
 
@@ -63,7 +63,7 @@
 #include <de/Date>
 #include <de/LogBuffer>
 #include <de/NotificationAreaWidget>
-#include <de/SignalAction>
+//#include <de/SignalAction>
 #include <de/Time>
 #include <de/data/json.h>
 #include <doomsday/console/exec.h>
@@ -143,7 +143,7 @@ private:
 DE_PIMPL(Updater)
 , DE_OBSERVES(App, StartupComplete)
 {
-    QNetworkAccessManager *network = nullptr;
+//    QNetworkAccessManager *network = nullptr;
     UpdateDownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
     UniqueWidgetPtr<UpdaterStatusWidget> status;
     UpdateAvailableDialog *availableDlg = nullptr; ///< If currently open (not owned).
@@ -151,13 +151,13 @@ DE_PIMPL(Updater)
     bool savingSuggested = false;
 
     Version latestVersion;
-    QString latestPackageUri;
-    QString latestPackageUri2; // fallback location
-    QString latestLogUri;
+    String latestPackageUri;
+    String latestPackageUri2; // fallback location
+    String latestLogUri;
 
     Impl(Public *i) : Base(i)
     {
-        network = new QNetworkAccessManager(thisPublic);
+//        network = new QNetworkAccessManager(thisPublic);
 
         // Delete a package installed earlier?
         UpdaterSettings st;
@@ -166,7 +166,7 @@ DE_PIMPL(Updater)
             de::String p = st.pathToDeleteAtStartup();
             if (!p.isEmpty())
             {
-                QFile file(p);
+                NativePath file(p);
                 if (file.exists())
                 {
                     LOG_NOTE("Deleting previously installed package: %s") << p;
@@ -182,14 +182,15 @@ DE_PIMPL(Updater)
         status.reset(new UpdaterStatusWidget);
     }
 
-    QString composeCheckUri()
+    String composeCheckUri()
     {
         UpdaterSettings st;
-        String uri = String("%1builds?latest_for=%2&type=%3")
-                .arg(App::apiUrl())
-                .arg(DE_PLATFORM_ID)
-                .arg(st.channel() == UpdaterSettings::Stable? "stable" :
-                     st.channel() == UpdaterSettings::Unstable? "unstable" : "candidate");
+        String uri = String::format("%sbuilds?latest_for=%s&type=%s",
+                App::apiUrl().c_str(),
+                DE_PLATFORM_ID,
+                st.channel() == UpdaterSettings::Stable   ? "stable" :
+                st.channel() == UpdaterSettings::Unstable ? "unstable"
+                                                          : "candidate");
         LOG_XVERBOSE("URI: ", uri);
         return uri;
     }
@@ -232,9 +233,7 @@ DE_PIMPL(Updater)
 
         if (st.frequency() == UpdaterSettings::Biweekly)
         {
-            // Check on Tuesday and Saturday, as the builds are usually on
-            // Monday and Friday.
-            int weekday = now.asDateTime().date().dayOfWeek();
+            int weekday = Date(now).dayOfWeek();
             if (weekday == 2 || weekday == 6) return true;
         }
 
@@ -285,9 +284,10 @@ DE_PIMPL(Updater)
 
         UpdaterSettings().setLastCheckTime(de::Time());
         alwaysShowNotification = notifyAlways;
-        network->get(QNetworkRequest(composeCheckUri()));
+//        network->get(QNetworkRequest(composeCheckUri()));
     }
 
+#if 0
     void handleReply(QNetworkReply *reply)
     {
         reply->deleteLater(); // make sure it gets deleted
@@ -368,6 +368,7 @@ DE_PIMPL(Updater)
             showAvailableDialogAndPause();
         }
     }
+#endif
 
     void showAvailableDialogAndPause()
     {
@@ -534,6 +535,7 @@ ProgressWidget &Updater::progress()
     return *d->status;
 }
 
+#if 0
 void Updater::gotReply(QNetworkReply *reply)
 {
     d->handleReply(reply);
@@ -586,6 +588,7 @@ void Updater::downloadFailed(QString message)
 {
     LOG_NOTE("Update cancelled: ") << message;
 }
+#endif
 
 void Updater::recheck()
 {
@@ -649,6 +652,7 @@ void Updater::printLastUpdated(void)
     }
 }
 
+#if 0
 void Updater::downloadDialogClosed()
 {
     if (!d->download || d->download->isFailed())
@@ -661,3 +665,4 @@ void Updater::downloadDialogClosed()
         d->showNotification(false);
     }
 }
+#endif

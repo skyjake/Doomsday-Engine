@@ -307,7 +307,7 @@ static void printExtensions(QStringList extensions)
 
     // Find all the prefixes.
     QSet<QString> prefixes;
-    foreach(QString ext, extensions)
+    for (QString ext : extensions)
     {
         ext = omitGLPrefix(ext);
         int pos = ext.indexOf("_");
@@ -319,7 +319,7 @@ static void printExtensions(QStringList extensions)
 
     QStringList sortedPrefixes = prefixes.toList();
     qSort(sortedPrefixes);
-    foreach(QString prefix, sortedPrefixes)
+    for (QString prefix : sortedPrefixes)
     {
         de::String str;
         QTextStream os(&str);
@@ -327,7 +327,7 @@ static void printExtensions(QStringList extensions)
         os << "    " << prefix << " extensions:\n        " _E(>) _E(2);
 
         bool first = true;
-        foreach(QString ext, extensions)
+        for (QString ext : extensions)
         {
             ext = omitGLPrefix(ext);
             if(ext.startsWith(prefix + "_"))
@@ -347,7 +347,7 @@ void Sys_GLPrintExtensions(void)
 {
     LOG_GL_MSG(_E(b) "OpenGL Extensions:");
     QStringList exts;
-    foreach (QByteArray extName, QOpenGLContext::currentContext()->extensions())
+    for (QByteArray extName : QOpenGLContext::currentContext()->extensions())
     {
         exts << extName;
     }

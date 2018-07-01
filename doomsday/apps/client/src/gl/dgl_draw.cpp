@@ -491,7 +491,7 @@ struct DGLDrawState
     {
         if (gl)
         {
-            foreach (GLData::DrawBuffer *dbuf, gl->buffers)
+            for (GLData::DrawBuffer *dbuf : gl->buffers)
             {
                 dbuf->release();
                 delete dbuf;

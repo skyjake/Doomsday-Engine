@@ -736,7 +736,7 @@ void Blockmap::drawDebugVisual() const
      * Draw the Quadtree.
      */
     DGL_Color4f(1.f, 1.f, 1.f, 1.f / d->nodes.first().size);
-    foreach(Impl::Node const &node, d->nodes)
+    for (Impl::Node const &node : d->nodes)
     {
         // Only leafs with user data.
         if(!node.isLeaf()) continue;

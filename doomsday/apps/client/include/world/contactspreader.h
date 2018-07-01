@@ -23,7 +23,7 @@
 #define DE_CLIENT_WORLD_CONTACTSPREADER_H
 
 #include <de/aabox.h>
-#include <QBitArray>
+#include <de/BitArray>
 #include "world/blockmap.h"
 
 namespace world {
@@ -31,7 +31,7 @@ namespace world {
 /**
  * Performs contact spreading for the specified @a blockmap.
  */
-void spreadContacts(Blockmap const &blockmap, AABoxd const &region, QBitArray *spreadBlocks = 0);
+void spreadContacts(Blockmap const &blockmap, AABoxd const &region, de::BitArray *spreadBlocks = 0);
 
 }  // namespace world
 

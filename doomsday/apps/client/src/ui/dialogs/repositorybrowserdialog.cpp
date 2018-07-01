@@ -168,7 +168,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
     {
         const auto oldTerms = filterTerms;
         filterTerms.clear();
-        foreach (String term, search->text().split(' '))
+        for (String term : search->text().split(' '))
         {
             if (auto cleaned = term.strip())
             {
@@ -333,7 +333,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         categoryData.append(new ui::Item(ui::Item::ShownAsButton, ALL_CATEGORIES));
         StringList tags = link().categoryTags();
         qSort(tags);
-        foreach (String category, tags)
+        for (String category : tags)
         {
             categoryData.append(new ui::Item(ui::Item::ShownAsButton, category));
         }

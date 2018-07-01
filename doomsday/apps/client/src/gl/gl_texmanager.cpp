@@ -276,7 +276,7 @@ GLuint GL_PrepareFlaremap(res::Uri const &resourceUri)
             return GL_PrepareSysFlaremap(flaretexid_t(number - 1));
         }
     }
-    if (auto *tex = res::Textures::get().tryFindTextureByResourceUri(QStringLiteral("Flaremaps"), resourceUri))
+    if (auto *tex = res::Textures::get().tryFindTextureByResourceUri(DE_STR("Flaremaps"), resourceUri))
     {
         if (TextureVariant const *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
         {
@@ -387,7 +387,7 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
 
 void GL_SetRawTexturesMinFilter(int newMinFilter)
 {
-    foreach (rawtex_t *raw, App_Resources().collectRawTextures())
+    for (rawtex_t *raw : App_Resources().collectRawTextures())
     {
         if (raw->tex) // Is the texture loaded?
         {
@@ -402,7 +402,7 @@ void GL_SetRawTexturesMinFilter(int newMinFilter)
 
 void GL_ReleaseTexturesForRawImages()
 {
-    foreach (rawtex_t *raw, App_Resources().collectRawTextures())
+    for (rawtex_t *raw : App_Resources().collectRawTextures())
     {
         if (raw->tex)
         {

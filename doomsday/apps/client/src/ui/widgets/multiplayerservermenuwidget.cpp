@@ -112,7 +112,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         ui::Data &items = self().items();
 
         QSet<String> foundHosts;
-        foreach (Address const &host, link.foundServers(mask))
+        for (Address const &host : link.foundServers(mask))
         {
             shell::ServerInfo info;
             if (link.foundServerInfo(host, info, mask))
@@ -132,7 +132,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         }
 
         // Add new entries and update existing ones.
-        foreach (Address const &host, link.foundServers(mask))
+        for (Address const &host : link.foundServers(mask))
         {
             shell::ServerInfo info;
             if (!link.foundServerInfo(host, info, mask)) continue;
@@ -197,7 +197,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
 
     void gameReadinessUpdated() override
     {
-        foreach (GuiWidget *w, self().childWidgets())
+        for (GuiWidget *w : self().childWidgets())
         {
             updateAvailability(*w);
         }

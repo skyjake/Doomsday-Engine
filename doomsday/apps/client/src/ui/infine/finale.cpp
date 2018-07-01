@@ -54,13 +54,13 @@ DE_PIMPL(Finale)
         if (script.isEmpty()) return;
 
         LOGDEV_SCR_MSG("Begin Finale - id:%i '%.30s'") << id << script;
-        Block const scriptAsUtf8 = script.toUtf8();
-        interpreter.loadScript(scriptAsUtf8.constData());
+        interpreter.loadScript(script);
+
 #ifdef __SERVER__
         if (!(flags & FF_LOCAL) && ::isServer)
         {
             // Instruct clients to start playing this Finale.
-            Sv_Finale(id, FINF_BEGIN | FINF_SCRIPT, scriptAsUtf8.constData());
+            Sv_Finale(id, FINF_BEGIN | FINF_SCRIPT, script);
         }
 #endif
 

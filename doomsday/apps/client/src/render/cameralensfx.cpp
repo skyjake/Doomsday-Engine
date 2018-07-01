@@ -91,7 +91,7 @@ void LensFx_GLRelease()
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        foreach (ConsoleEffect *effect, DD_Player(i)->fxStack().effects)
+        for (ConsoleEffect *effect : DD_Player(i)->fxStack().effects)
         {
             if (effect->isInited())
             {
@@ -121,7 +121,7 @@ void LensFx_Draw(int playerNum)
     auto const &effects = player.fxStack().effects;
 
     // Initialize these effects if they currently are not.
-    foreach (ConsoleEffect *effect, effects)
+    for (ConsoleEffect *effect : effects)
     {
         if (!effect->isInited())
         {
@@ -129,12 +129,12 @@ void LensFx_Draw(int playerNum)
         }
     }
 
-    foreach (ConsoleEffect *effect, effects)
+    for (ConsoleEffect *effect : effects)
     {
         effect->beginFrame();
     }
 
-    foreach (ConsoleEffect *effect, effects)
+    for (ConsoleEffect *effect : effects)
     {
         effect->draw();
     }

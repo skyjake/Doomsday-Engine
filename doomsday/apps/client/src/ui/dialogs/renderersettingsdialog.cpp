@@ -117,7 +117,7 @@ DE_GUI_PIMPL(RendererSettingsDialog)
 
     void fetch()
     {
-        foreach (GuiWidget *child, self().area().childWidgets() + devPopup->content().childWidgets())
+        for (GuiWidget *child : self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *w = maybeAs<ICVarWidget>(child))
             {

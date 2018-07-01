@@ -31,6 +31,8 @@
 
 using namespace de;
 
+namespace dgl = de::gl;
+
 /**
  * Drawing condition flags.
  *
@@ -60,28 +62,27 @@ enum DrawCondition
     SetMatrixTexture   = SetMatrixTexture0 | SetMatrixTexture1
 };
 
+using DrawConditions = Flags;
+
 static duint32 const BLEND_MODE_MASK = 0xf;
 
-Q_DECLARE_FLAGS(DrawConditions, DrawCondition)
-Q_DECLARE_OPERATORS_FOR_FLAGS(DrawConditions)
-
-DrawList::PrimitiveParams::PrimitiveParams(de::gl::Primitive type,
-                                           de::Vec2f texScale,
-                                           de::Vec2f texOffset,
-                                           de::Vec2f detailTexScale,
-                                           de::Vec2f detailTexOffset,
-                                           Flags        flags,
-                                           blendmode_t  blendMode,
-                                           DGLuint      modTexture,
-                                           de::Vec3f modColor)
-    : type           (type)
+DrawList::PrimitiveParams::PrimitiveParams(dgl::Primitive type,
+                                           de::Vec2f      texScale,
+                                           de::Vec2f      texOffset,
+                                           de::Vec2f      detailTexScale,
+                                           de::Vec2f      detailTexOffset,
+                                           Flags          flags,
+                                           blendmode_t    blendMode,
+                                           DGLuint        modTexture,
+                                           de::Vec3f      modColor)
+    : type(type)
     , flags_blendMode(uint(blendMode) | uint(flags))
-    , texScale       (texScale)
-    , texOffset      (texOffset)
-    , detailTexScale (detailTexScale)
+    , texScale(texScale)
+    , texOffset(texOffset)
+    , detailTexScale(detailTexScale)
     , detailTexOffset(detailTexOffset)
-    , modTexture     (modTexture)
-    , modColor       (modColor)
+    , modTexture(modTexture)
+    , modColor(modColor)
 {}
 
 DE_PIMPL(DrawList)
@@ -123,7 +124,7 @@ DE_PIMPL(DrawList)
                     // Use the correct texture and color for the light.
                     DGL_SetInteger(DGL_ACTIVE_TEXTURE, (conditions & SetLightEnv0)? 0 : 1);
                     GL_BindTextureUnmanaged(!renderTextures? 0 : primitive.modTexture,
-                                            gl::ClampToEdge, gl::ClampToEdge);
+                                            dgl::ClampToEdge, dgl::ClampToEdge);
 
                     DGL_SetModulationColor(Vec4f(primitive.modColor, 0.f));
                 }
@@ -186,7 +187,7 @@ DE_PIMPL(DrawList)
                     GL_BlendMode(blendmode_t(primitive.flags_blendMode & BLEND_MODE_MASK));
                 }
 
-                DGL_Begin(primitive.type == gl::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
+                DGL_Begin(primitive.type == dgl::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
                 for (duint i = 0; i < numIndices; ++i)
                 {
                     duint const index = indices[i];
@@ -745,28 +746,33 @@ bool DrawList::isEmpty() const
     return d->last == nullptr;
 }
 
-DrawList &DrawList::write(Store const &buffer,
+DrawList &DrawList::write(Store const &            buffer,
                           DrawList::Indices const &indices,
-                          PrimitiveParams const &params)
+                          PrimitiveParams const &  params)
 {
     if (indices.isEmpty()) return *this;
-    return write(buffer, indices.constData(), indices.size(), params);
+    return write(buffer, indices.data(), indices.size(), params);
 }
 
-DrawList &DrawList::write(Store const &buffer, Indices const &indices, gl::Primitive primitiveType)
+DrawList &DrawList::write(Store const &buffer, Indices const &indices, dgl::Primitive primitiveType)
 {
-    return write(buffer, indices.constData(), indices.size(), primitiveType);
+    return write(buffer, indices.data(), indices.size(), primitiveType);
 }
 
-DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCount, gl::Primitive primitiveType)
+DrawList &DrawList::write(Store const & buffer,
+                          duint const * indices,
+                          int           indexCount,
+                          dgl::Primitive primitiveType)
 {
-    static PrimitiveParams defaultParams(gl::TriangleFan); // NOTE: rendering is single-threaded atm
+    static PrimitiveParams defaultParams(dgl::TriangleFan); // NOTE: rendering is single-threaded atm
 
     defaultParams.type = primitiveType;
     return write(buffer, indices, indexCount, defaultParams);
 }
 
-DrawList &DrawList::write(Store const &buffer, duint const *indices, int indexCount,
+DrawList &DrawList::write(Store const &          buffer,
+                          duint const *          indices,
+                          int                    indexCount,
                           PrimitiveParams const &params)
 {
 #ifdef DE_DEBUG
@@ -816,7 +822,7 @@ void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
     using Parm = PrimitiveParams;
 
     DE_ASSERT_IN_RENDER_THREAD();
-    DE_ASSERT_GL_CONTEXT_ACTIVE();
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup GL state for this list.
     DrawConditions const conditions = d->pushGLState(mode);

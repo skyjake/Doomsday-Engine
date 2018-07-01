@@ -23,14 +23,13 @@
 #include <de/Observers>
 #include <de/Rectangle>
 #include <de/Vector>
-#include <QFlags>
 
 namespace de {
 class FontManifest;
 }
 
 /// Special value used to signify an invalid font id.
-#define NOFONTID                    0
+#define NOFONTID  0
 
 /**
  * Abstract font resource.
@@ -53,7 +52,6 @@ public:
         Colorize  = 0x1, ///< Can be colored.
         Shadowed  = 0x2  ///< A shadow is embedded in the font.
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     static int const MAX_CHARS = 256; // Normal 256 ANSI characters.
 
@@ -61,7 +59,7 @@ public:
     /// Resource manifest for the font.
     de::FontManifest &_manifest;
 
-    Flags _flags;
+    de::Flags _flags;
 
     AbstractFont(de::FontManifest &manifest);
     virtual ~AbstractFont();
@@ -74,18 +72,16 @@ public:
     de::FontManifest &manifest() const;
 
     /// @return  Returns a copy of the font's flags.
-    Flags flags() const;
+    de::Flags flags() const;
 
     virtual int ascent() const;
     virtual int descent() const;
     virtual int lineSpacing() const;
-    virtual de::Rectanglei const &glyphPosCoords(uchar ch) const = 0;
-    virtual de::Rectanglei const &glyphTexCoords(uchar ch) const = 0;
+    virtual de::Rectanglei const &glyphPosCoords(de::dbyte ch) const = 0;
+    virtual de::Rectanglei const &glyphTexCoords(de::dbyte ch) const = 0;
 
     virtual void glInit() const;
     virtual void glDeinit() const;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractFont::Flags)
 
 #endif // CLIENT_RESOURCE_ABSTRACTFONT_H

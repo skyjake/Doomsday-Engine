@@ -441,7 +441,7 @@ static inline ClientTexture *lightmap(res::Uri const *textureUri)
 {
     if(!textureUri) return nullptr;
     return static_cast<ClientTexture *>
-            (res::Textures::get().tryFindTextureByResourceUri(QStringLiteral("Lightmaps"), *textureUri));
+            (res::Textures::get().tryFindTextureByResourceUri(DE_STR("Lightmaps"), *textureUri));
 }
 
 void Mobj_GenerateLumobjs(mobj_t *mob)

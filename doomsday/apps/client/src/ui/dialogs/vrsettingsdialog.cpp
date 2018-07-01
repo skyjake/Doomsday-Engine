@@ -104,7 +104,7 @@ DE_GUI_PIMPL(VRSettingsDialog)
 
     void fetch()
     {
-        foreach (GuiWidget *child, self().area().childWidgets())
+        for (GuiWidget *child : self().area().childWidgets())
         {
             if (ICVarWidget *w = maybeAs<ICVarWidget>(child))
             {

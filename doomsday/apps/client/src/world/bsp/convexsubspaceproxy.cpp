@@ -19,31 +19,25 @@
 
 #include "de_platform.h"
 #include "world/bsp/convexsubspaceproxy.h"
-
 #include "Face"
 #include "HEdge"
 #include "Mesh"
-
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Line"
 #include "Sector"
 #include "world/bsp/linesegment.h"
-
 #include "world/clientserverworld.h" /// validCount @todo Remove me
 
+#include <de/Set>
 #include <de/Log>
-#include <QHash>
-#include <QSet>
-#include <QVarLengthArray>
-#include <QtAlgorithms>
 
 using namespace de;
 
 namespace world {
 namespace bsp {
 
-typedef QList<LineSegmentSide *> SegmentList;
+typedef List<LineSegmentSide *> SegmentList;
 
 /**
  * Represents a clockwise ordering of a subset of the line segments and implements logic
@@ -51,7 +45,7 @@ typedef QList<LineSegmentSide *> SegmentList;
  */
 struct Continuity
 {
-    typedef QList<OrderedSegment *> OrderedSegmentList;
+    typedef List<OrderedSegment *> OrderedSegmentList;
 
     Sector *sector = nullptr;  ///< Front sector uniformly referenced by all line segments.
     double coverage = 0;       ///< Coverage metric.
@@ -176,7 +170,7 @@ struct Continuity
 
 DE_PIMPL_NOREF(ConvexSubspaceProxy)
 {
-    typedef QSet<LineSegmentSide *> Segments;
+    typedef Set<LineSegmentSide *> Segments;
 
     Segments segments;                ///< All line segments.
     OrderedSegments orderedSegments;  ///< All line segments in clockwise order, with angle info.
@@ -266,7 +260,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
                 OrderedSegment const &b = orderedSegments.at(i+1);
                 if(a.fromAngle < b.fromAngle)
                 {
-                    orderedSegments.swap(i, i + 1);
+                    std::swap(orderedSegments[i], orderedSegments[i + 1]);
                     swappedAny = true;
                 }
             }
@@ -284,7 +278,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
                 {
                     if(b.segment->length() > a.segment->length())
                     {
-                        orderedSegments.swap(i, i + 1);
+                        std::swap(orderedSegments[i], orderedSegments[i + 1]);
                         swappedAny = true;
                     }
                 }
@@ -302,7 +296,7 @@ ConvexSubspaceProxy::ConvexSubspaceProxy()
     : d(new Impl)
 {}
 
-ConvexSubspaceProxy::ConvexSubspaceProxy(QList<LineSegmentSide *> const &segments)
+ConvexSubspaceProxy::ConvexSubspaceProxy(List<LineSegmentSide *> const &segments)
     : d(new Impl)
 {
     addSegments(segments);
@@ -318,11 +312,11 @@ ConvexSubspaceProxy &ConvexSubspaceProxy::operator = (ConvexSubspaceProxy const 
     return *this;
 }
 
-void ConvexSubspaceProxy::addSegments(QList<LineSegmentSide *> const &newSegments)
+void ConvexSubspaceProxy::addSegments(List<LineSegmentSide *> const &newSegments)
 {
     int sizeBefore = d->segments.size();
 
-    d->segments.unite(QSet<LineSegmentSide *>::fromList(newSegments));
+    d->segments.unite(Set<LineSegmentSide *>::fromList(newSegments));
 
     if(d->segments.size() != sizeBefore)
     {
@@ -373,28 +367,28 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     /*
      * Build the line segment -> sector continuity map.
      */
-    typedef QList<Continuity> Continuities;
+    typedef List<Continuity> Continuities;
     Continuities continuities;
 
-    typedef QHash<Sector *, Continuity *> SectorContinuityMap;
+    typedef Hash<Sector *, Continuity *> SectorContinuityMap;
     SectorContinuityMap scMap;
 
     for(OrderedSegment const &oseg : d->orderedSegments)
     {
         Sector *frontSector = oseg.segment->sectorPtr();
 
-        SectorContinuityMap::iterator found = scMap.find(frontSector);
+        auto found = scMap.find(frontSector);
         if(found == scMap.end())
         {
             continuities.append(Continuity(frontSector));
             found = scMap.insert(frontSector, &continuities.last());
         }
 
-        Continuity *conty = found.value();
+        Continuity *conty = found->second;
         conty->addOneSegment(oseg);
     }
 
-    QVarLengthArray<Mesh *, 2> extraMeshes;
+    List<Mesh *> extraMeshes;
 
     int extraMeshSegments = 0;
     for(int i = 0; i < continuities.count(); ++i)
@@ -454,7 +448,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             {
                 // Link the half-edges anticlockwise and close the ring.
                 HEdge *hedge = face->hedge();
-                forever
+                for (;;)
                 {
                     // There is now one more half-edge in this face.
                     /// @todo Face should encapsulate.
@@ -549,7 +543,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
         // Link the half-edges anticlockwise and close the ring.
         HEdge *hedge = face->hedge();
-        forever
+        for (;;)
         {
             // There is now one more half-edge in this face.
             /// @todo Face should encapsulate.

@@ -27,9 +27,9 @@
 #include <de/ChoiceWidget>
 #include <de/VariableToggleWidget>
 #include <de/GridLayout>
-#include <de/SignalAction>
+//#include <de/SignalAction>
 #include <de/Log>
-#include <QDesktopServices>
+//#include <QDesktopServices>
 
 using namespace de;
 
@@ -49,8 +49,8 @@ static QString defaultLocationName()
 }
 #endif
 
-DE_PIMPL(UpdaterSettingsDialog),
-DE_OBSERVES(ToggleWidget, Toggle)
+DE_PIMPL(UpdaterSettingsDialog)
+, DE_OBSERVES(ToggleWidget, Toggle)
 {
     ToggleWidget *autoCheck;
     ChoiceWidget *freqs;

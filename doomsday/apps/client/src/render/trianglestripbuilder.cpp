@@ -17,8 +17,6 @@
  * 02110-1301 USA</small>
  */
 
-#include <QScopedPointer>
-
 #include "render/trianglestripbuilder.h"
 
 using namespace de;
@@ -29,16 +27,14 @@ DE_PIMPL(TriangleStripBuilder)
     bool buildTexCoords;
     int initialReserveElements;
 
-    QScopedPointer<PositionBuffer> positions;
-    QScopedPointer<TexCoordBuffer> texcoords;
+    std::unique_ptr<PositionBuffer> positions;
+    std::unique_ptr<TexCoordBuffer> texcoords;
 
     Impl(Public *i, bool buildTexCoords)
-        : Base(i),
-          direction(Clockwise),
-          buildTexCoords(buildTexCoords),
-          initialReserveElements(0),
-          positions(0),
-          texcoords(0)
+        : Base(i)
+        , direction(Clockwise)
+        , buildTexCoords(buildTexCoords)
+        , initialReserveElements(0)
     {}
 
     void reserveElements(int num)
@@ -46,7 +42,7 @@ DE_PIMPL(TriangleStripBuilder)
         if(num < 0) return; // Huh?
 
         // Time to allocate the buffers?
-        if(positions.isNull())
+        if (!positions)
         {
             positions.reset(new PositionBuffer());
             if(buildTexCoords)
@@ -101,17 +97,16 @@ void TriangleStripBuilder::extend(AbstractEdge &edge)
 
 int TriangleStripBuilder::numElements() const
 {
-    return d->positions.isNull()? 0 : d->positions->size();
+    return d->positions? d->positions->sizei() : 0;
 }
 
 int TriangleStripBuilder::take(PositionBuffer **positions, TexCoordBuffer **texcoords)
 {
-    int retNumElements = numElements();
-
-    *positions = d->positions.take();
-    if(texcoords)
+    const int retNumElements = numElements();
+    *positions = d->positions.release();
+    if (texcoords)
     {
-        *texcoords = d->texcoords.take();
+        *texcoords = d->texcoords.release();
     }
     return retNumElements;
 }

@@ -3174,14 +3174,14 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
                 // Restore the state according to the serialized info.
                 gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
 
-            #if defined (DE_DEBUG)
-                // Verify that the state is now correct.
+                #if defined (DE_DEBUG)
                 {
+                    // Verify that the state is now correct.                
                     Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
                     Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
                             .first()->as<Info::BlockElement>();
                     DE_ASSERT(currentState.name() == state.name());
-                    foreach (String const &key, state.contents().keys())
+                    for (String const &key : state.contents().keys())
                     {
                         if (state.keyValue(key).text != currentState.keyValue(key).text)
                         {
@@ -3194,8 +3194,8 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
                             LOGDEV_MAP_WARNING("%s") << msg;
                         }
                     }
-                }
-            #endif
+                 }
+                 #endif
             }
             else
             {

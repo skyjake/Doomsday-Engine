@@ -53,7 +53,7 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
             {
                 Record const &meta = file->objectNamespace();
                 setLabel(meta.gets(Package::VAR_PACKAGE_TITLE));
-                category = meta.gets(QStringLiteral("package.category"), "");
+                category = meta.gets(DE_STR("package.category"), "");
             }
             else
             {

@@ -19,6 +19,8 @@
 #ifndef DE_CLIENT_MODELRENDERER_H
 #define DE_CLIENT_MODELRENDERER_H
 
+#include "model.h"
+
 #include <de/Function>
 #include <de/ModelDrawable>
 #include <de/ModelBank>
@@ -26,12 +28,7 @@
 #include <de/Timeline>
 #include <de/MultiAtlas>
 
-#include <QList>
-#include <QMap>
-#include <QBitArray>
 #include <functional>
-
-#include "model.h"
 
 struct vissprite_t;
 struct vispsprite_t;
@@ -63,12 +60,10 @@ public:
     ModelRenderer();
 
     void glInit();
-
     void glDeinit();
 
-    render::ModelLoader &loader();
-
-    render::ModelLoader const &loader() const;
+    render::ModelLoader &      loader();
+    const render::ModelLoader &loader() const;
 
     /**
      * Provides access to the bank containing available drawable models.

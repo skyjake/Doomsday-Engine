@@ -28,25 +28,16 @@
 
 #include <de/libcore.h>
 #include <de/shell/ServerInfo>
-#include <QObject>
-#include <QNetworkReply>
-#include <QByteArray>
 
 /**
  * Network request worker for communicating with the master server.
  * @ingroup network
  */
-class MasterWorker : public QObject
+class MasterWorker
 {
-    Q_OBJECT
-
 public:
     // Actions for the master worker.
-    enum Action {
-        NONE,
-        REQUEST_SERVERS,
-        ANNOUNCE
-    };
+    enum Action { NONE, REQUEST_SERVERS, ANNOUNCE };
 
 public:
     MasterWorker();
@@ -60,9 +51,8 @@ public:
 
 protected:
     void nextJob();
-    bool parseResponse(QByteArray const &response);
+    bool parseResponse(const de::Block &response);
 
-public slots:
     void requestFinished(QNetworkReply *reply);
 
 private:

@@ -25,12 +25,12 @@
 #endif
 
 #include <signal.h>
-#ifdef MACOSX
-#  include <QDir>
-#endif
-#ifdef WIN32
-#  include <QSettings>
-#endif
+//#ifdef MACOSX
+//#  include <QDir>
+//#endif
+//#ifdef WIN32
+//#  include <QSettings>
+//#endif
 
 #include <de/concurrency.h>
 #include <de/timer.h>
@@ -267,12 +267,12 @@ DE_EXTERN_C void Sys_Quit(void)
     if (ClientWindow::mainExists())
     {
         ClientWindow::main().fadeContent(ClientWindow::FadeToBlack, 0.1);
-        de::Loop::get().timer(0.1, [] () { DE_APP->stopLoop(DD_GameLoopExitCode()); });
+        de::Loop::get().timer(0.1, []() { DE_GUI_APP->quit(DD_GameLoopExitCode()); });
     }
     else
 #endif
     {
         // It's time to stop the main loop.
-        DE_APP->stopLoop(DD_GameLoopExitCode());
+        DE_GUI_APP->quit(DD_GameLoopExitCode());
     }
 }

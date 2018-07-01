@@ -22,7 +22,6 @@
 
 #include <de/BaseGuiApp>
 #include <doomsday/doomsdayapp.h>
-#include <QUrl>
 
 class AudioSystem;
 class ClientPlayer;
@@ -46,8 +45,6 @@ class BusyRunner;
  */
 class ClientApp : public de::BaseGuiApp, public DoomsdayApp
 {
-    Q_OBJECT
-
 public:
     ClientApp(int &argc, char **argv);
 
@@ -61,13 +58,12 @@ public:
     void preFrame();
     void postFrame();
 
-    void checkPackageCompatibility(
-            de::StringList const &packageIds,
-            de::String const &userMessageIfIncompatible,
-            std::function<void ()> finalizeFunc) override;
+    void checkPackageCompatibility(const de::StringList &       packageIds,
+                                   const de::String &           userMessageIfIncompatible,
+                                   const std::function<void()> &finalizeFunc) override;
 
-    void gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder) override;
-    void gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder) override;
+    void openInBrowser(const de::String &url);
+    void openHomepageInBrowser();
 
 public:
     /**
@@ -107,14 +103,12 @@ public:
     static Updater &updater();
 #endif
 
-public slots:
-    void openHomepageInBrowser();
-    void openInBrowser(QUrl url);
-
 protected:
-    void unloadGame(GameProfile const &upcomingGame) override;
-    void makeGameCurrent(GameProfile const &newGame) override;
     void reset() override;
+    void makeGameCurrent(GameProfile const &newGame) override;
+    void unloadGame(GameProfile const &upcomingGame) override;
+    void gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder) override;
+    void gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder) override;
 
 private:
     DE_PRIVATE(d)

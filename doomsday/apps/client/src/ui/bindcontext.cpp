@@ -314,7 +314,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
         return LoopContinue;
     });
 
-    foreach (int id, ids)
+    for (int id : ids)
     {
         deleteBinding(id);
     }
@@ -393,7 +393,7 @@ Record *BindContext::findCommandBinding(char const *command, int deviceId) const
         for (Record const *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
-            if (bind.gets(QStringLiteral("command")).compareWithoutCase(command)) continue;
+            if (bind.gets(DE_STR("command")).compareWithoutCase(command)) continue;
 
             if ((deviceId < 0 || deviceId >= NUM_INPUT_DEVICES) || bind.geti(VAR_DEVICE_ID) == deviceId)
             {

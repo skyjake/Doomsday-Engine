@@ -197,7 +197,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     void clearGroups()
     {
-        foreach (Group *g, groups)
+        for (Group *g : groups)
         {
             // Ownership of the optional title and reset button was given
             // to the container, but the container is not being destroyed.
@@ -426,7 +426,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
             Record const &shaderDef = modelLoader.shaderDefinition(*pass.program);
 
             // Check the variable declarations.
-            auto vars = ScriptedInfo::subrecordsOfType(QStringLiteral("variable"),
+            auto vars = ScriptedInfo::subrecordsOfType(DE_STR("variable"),
                                                        shaderDef).keys();
             qSort(vars);
             QStringList names;
@@ -463,7 +463,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         SequentialLayout &layout = self().layout();
         layout.clear();
         layout << *assetLabel << *info << *instLabel;
-        foreach (Group *g, groups)
+        for (Group *g : groups)
         {
             layout << g->title() << *g;
         }

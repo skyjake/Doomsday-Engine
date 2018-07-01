@@ -134,13 +134,13 @@ static dbyte loadParticleTexture(duint particleTex)
     try
     {
         // First check if there is a texture asset for this particle.
-        String const assetId = QStringLiteral("texture.particle.%1").arg(particleTex, 2, 10, QChar('0'));
+        String const assetId = DE_STR("texture.particle.%1").arg(particleTex, 2, 10, QChar('0'));
         if (App::assetExists(assetId))
         {
             auto asset = App::asset(assetId);
 
             ImageFile const &img = App::rootFolder().locate<ImageFile const>
-                    (asset.absolutePath(QStringLiteral("path")));
+                    (asset.absolutePath(DE_STR("path")));
 
             Image_InitFromImage(image, img.image());
         }

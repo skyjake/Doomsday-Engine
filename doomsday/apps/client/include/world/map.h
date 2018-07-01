@@ -949,19 +949,19 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * Provides a list of all the editable lines in the map.
      */
-    typedef List<Line *> Lines;
+    typedef de::List<Line *> Lines;
     Lines const &editableLines() const;
 
     /**
      * Provides a list of all the editable polyobjs in the map.
      */
-    typedef List<Polyobj *> Polyobjs;
+    typedef de::List<Polyobj *> Polyobjs;
     Polyobjs const &editablePolyobjs() const;
 
     /**
      * Provides a list of all the editable sectors in the map.
      */
-    typedef List<Sector *> Sectors;
+    typedef de::List<Sector *> Sectors;
     Sectors const &editableSectors() const;
 
     inline de::dint editableLineCount   () const { return editableLines   ().count(); }

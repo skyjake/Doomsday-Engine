@@ -35,24 +35,16 @@
 
 #include <de/libcore.h>
 #include <de/App>
-#include <QObject>
-#include <QNetworkReply>
 #include <de/ProgressWidget>
 
 /**
  * Automatic updater. Communicates with dengine.net and coordinates the
  * download and reinstall procedure.
  */
-class Updater : public QObject
+class Updater
 {
-    Q_OBJECT
-
 public:
-    enum CheckMode
-    {
-        AlwaysShowResult,
-        OnlyShowResultIfUpdateAvailable
-    };
+    enum CheckMode { AlwaysShowResult, OnlyShowResultIfUpdateAvailable };
 
 public:
     /**
@@ -66,11 +58,10 @@ public:
 
     de::ProgressWidget &progress();
 
-public slots:
-    void gotReply(QNetworkReply *);
-    void downloadProgressed(int percentage);
-    void downloadCompleted(int result);
-    void downloadFailed(QString);
+//    void gotReply(QNetworkReply *);
+//    void downloadProgressed(int percentage);
+//    void downloadCompleted(int result);
+//    void downloadFailed(QString);
 
     void recheck();
 
@@ -97,8 +88,8 @@ public slots:
      */
     void printLastUpdated();
 
-protected slots:
-    void downloadDialogClosed();
+//protected slots:
+//    void downloadDialogClosed();
 
 private:
     DE_PRIVATE(d)

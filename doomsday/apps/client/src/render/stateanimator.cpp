@@ -204,9 +204,9 @@ DE_PIMPL(StateAnimator)
         void handleTriggered(String const &trigger) override
         {
             Record ns;
-            ns.add(QStringLiteral("self")).set(new RecordValue(names));
+            ns.add(DE_STR("self")).set(new RecordValue(names));
             Process::scriptCall(Process::IgnoreResult, ns,
-                                QStringLiteral("self.__asset__.onStateChange"),
+                                DE_STR("self.__asset__.onStateChange"),
                                 "$self",    // StateAnimator instance
                                 trigger);   // new state
         }
@@ -248,8 +248,8 @@ DE_PIMPL(StateAnimator)
     {
         // Initialize the StateAnimator script object.
         names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
-        names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
-                                                        QStringLiteral("StateAnimator")));
+        names.addSuperRecord(ScriptSystem::builtInClass(DE_STR("Render"),
+                                                        DE_STR("StateAnimator")));
         names.addText(VAR_ID, assetId).setReadOnly();
         Record const &assetDef = App::asset(assetId).accessedRecord();
         names.add(VAR_ASSET).set(new RecordValue(assetDef)).setReadOnly();
@@ -263,7 +263,7 @@ DE_PIMPL(StateAnimator)
             // The states to notify can be chosen later.
             names.addArray(VAR_NOTIFIED_STATES);
         }
-        if (assetDef.has(QStringLiteral("onStateChange")))
+        if (assetDef.has(DE_STR("onStateChange")))
         {
             stateCallback.reset(new StateCallback(names));
         }
@@ -495,16 +495,16 @@ DE_PIMPL(StateAnimator)
 
     void updateAnimationValuePointers()
     {
-        foreach (String passName, passVars.keys())
+        for (String passName : passVars.keys())
         {
             ShaderVars *vars = passVars[passName];
-            foreach (String name, vars->members.keys())
+            for (String name : vars->members.keys())
             {
                 vars->members[name]->updateValuePointers(names, passName.concatenateMember(name));
             }
         }
 
-        foreach (String name, animVars.keys())
+        for (String name : animVars.keys())
         {
             AnimVar &animVar = *animVars[name];
             animVar.angle = &names[animVar.variableName.concatenateMember(DEF_ANGLE)].value<AnimationValue>();
@@ -624,10 +624,10 @@ void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
     d->names.add(d->ownerNamespaceVarName).set(new RecordValue(names));
 
     // Call the onInit() function if there is one.
-    if (d->names.has(QStringLiteral("__asset__.onInit")))
+    if (d->names.has(DE_STR("__asset__.onInit")))
     {
         Record ns;
-        ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
+        ns.add(DE_STR("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
                             "self.__asset__.onInit",
                             "$self");
@@ -660,7 +660,7 @@ void StateAnimator::triggerByState(String const &stateName)
 
     d->currentStateName = stateName;
 
-    foreach (Model::AnimSequence const &seq, found.value())
+    for (Model::AnimSequence const &seq : found.value())
     {
         try
         {
@@ -754,7 +754,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
      * variable holds a direct pointer to the asset definition, where the
      * function is defined.
      */
-    if (d->names.has(QStringLiteral("__asset__.onDamage")))
+    if (d->names.has(DE_STR("__asset__.onDamage")))
     {
         /*
          * We need to provide the StateAnimator instance to the script as an
@@ -762,9 +762,9 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
          * method is executed, "self" refers to the asset.
          */
         Record ns;
-        ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
+        ns.add(DE_STR("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            QStringLiteral("self.__asset__.onDamage"),
+                            DE_STR("self.__asset__.onDamage"),
                             "$self", points,
                             inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData) :
                                        nullptr);

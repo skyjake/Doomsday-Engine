@@ -77,7 +77,7 @@ DE_PIMPL(NativeMenu)
             return a->id().compare(b->id()) < 0;
         });
 
-        foreach (Game *game, allGames)
+        for (Game *game : allGames)
         {
             QAction *load = new QAction(tr("Load %1").arg(game->title()), thisPublic);
             load->setData(game->id());

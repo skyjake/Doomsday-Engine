@@ -32,10 +32,8 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Game>
-
-#include <QMap>
-#include <QList>
-#include <QTextStream>
+#include <de/Map>
+#include <sstream>
 
 using namespace de;
 
@@ -58,42 +56,35 @@ DE_PIMPL(ConfigProfiles)
          *
          * @param val  New value.
          */
-        void setValue(QVariant const &val) const
+        void setValue(const Value &val) const
         {
             switch (type)
             {
             case IntCVar:
-                Con_SetInteger(name.toLatin1(), val.toInt());
+                Con_SetInteger(name, val.asInt());
                 break;
 
             case FloatCVar:
-                Con_SetFloat(name.toLatin1(), val.toFloat());
+                Con_SetFloat(name, float(val.asNumber()));
                 break;
 
             case StringCVar:
-                Con_SetString(name.toLatin1(), val.toString().toUtf8());
+                Con_SetString(name, val.asText());
                 break;
 
             case ConfigVariable:
-                if (!qstrcmp(val.typeName(), "QString"))
-                {
-                    Config::get(name).set(TextValue(val.toString()));
-                }
-                else
-                {
-                    Config::get(name).set(NumberValue(val.toDouble()));
-                }
+                Config::get(name).set(val);
                 break;
             }
         }
     };
 
-    typedef QMap<String, Setting> Settings;
+    typedef Map<String, Setting> Settings;
     Settings settings;
 
     struct Profile : public Profiles::AbstractProfile
     {
-        typedef QMap<String, QVariant> Values;
+        typedef Map<String, std::shared_ptr<Value>> Values;
         Values values;
 
         ConfigProfiles &owner()
@@ -120,36 +111,31 @@ DE_PIMPL(ConfigProfiles)
         {
             auto const &settings = owner().d->settings;
 
-            String info;
-            QTextStream os(&info);
-            os.setCodec("UTF-8");
-
-            DE_FOR_EACH_CONST(Values, val, values)
+            std::ostringstream os;
+            for (const auto &val : values)
             {
-                DE_ASSERT(settings.contains(val.key()));
+                DE_ASSERT(settings.contains(val.first));
 
-                Setting const &st = settings[val.key()];
+                Setting const &st = settings.find(val.first)->second;
 
-                String valueText;
-                switch (st.type)
-                {
-                case IntCVar:
-                case FloatCVar:
-                case StringCVar:
-                case ConfigVariable:
-                    // QVariant can handle this.
-                    valueText = val.value().toString();
-                    break;
-                }
+//                String valueText;
+//                switch (st.type)
+//                {
+//                case IntCVar:
+//                case FloatCVar:
+//                case StringCVar:
+//                case ConfigVariable:
+//                    valueText = val.second->asText();
+//                    break;
+//                }
 
-                if (!info.isEmpty()) os << "\n";
+                if (!os.str().empty()) os << "\n";
 
                 os << "setting \"" << st.name << "\" {\n"
-                   << "    value: " << valueText << "\n"
+                   << "    value: " << val.second->asText() << "\n"
                    << "}";
             }
-
-            return info;
+            return os.str();
         }
 
         void initializeFromInfoBlock(ConfigProfiles const &profs,
@@ -159,7 +145,7 @@ DE_PIMPL(ConfigProfiles)
             values = profs.d->defaults.values;
 
             // Read all the setting values from the profile block.
-            foreach (auto const *element, block.contentsInOrder())
+            for (auto const *element : block.contentsInOrder())
             {
                 if (!element->isBlock()) continue;
 
@@ -206,7 +192,8 @@ DE_PIMPL(ConfigProfiles)
         return self().find(current).as<Profile>();
     }
 
-    QVariant getDefaultFromConfig(String const &name)
+    /// Caller gets ownership of the returned Value.
+    Value *getDefaultFromConfig(String const &name)
     {
         try
         {
@@ -220,26 +207,13 @@ DE_PIMPL(ConfigProfiles)
 
             DE_ASSERT(confDefaults.has(name));
 
-            Variable const &var = confDefaults[name];
-            if (is<NumberValue>(var.value()))
-            {
-                return var.value().asNumber();
-            }
-            else if (is<TextValue>(var.value()))
-            {
-                return var.value().asText();
-            }
-            else
-            {
-                // Oops, we don't support this yet.
-                DE_ASSERT(false);
-            }
+            return confDefaults[name].value().duplicate();
         }
         catch (Error const &er)
         {
             LOG_WARNING("Failed to find default for \"%s\": %s") << name << er.asText();
         }
-        return QVariant();
+        return new NoneValue;
     }
 
     /**
@@ -250,38 +224,30 @@ DE_PIMPL(ConfigProfiles)
         Profile &prof = self().find(profileName).as<Profile>();
         if (prof.isReadOnly()) return;
 
-        foreach (Setting const &st, settings.values())
+        for (const auto &st : settings)
         {
-            QVariant val;
-
-            switch (st.type)
+            std::shared_ptr<Value> val;
+            switch (st.second.type)
             {
             case IntCVar:
-                val = Con_GetInteger(st.name.toLatin1());
+                val.reset(new NumberValue(Con_GetInteger(st.second.name)));
                 break;
 
             case FloatCVar:
-                val = Con_GetFloat(st.name.toLatin1());
+                val.reset(new NumberValue(Con_GetFloat(st.second.name)));
                 break;
 
             case StringCVar:
-                val = QString(Con_GetString(st.name.toLatin1()));
+                val.reset(new TextValue(st.second.name));
                 break;
 
             case ConfigVariable: {
-                Value const &cfgValue = Config::get(st.name).value();
-                if (is<NumberValue>(cfgValue))
-                {
-                    val = cfgValue.asNumber();
-                }
-                else
-                {
-                    val = cfgValue.asText();
-                }
+                val.reset(Config::get(st.second.name).value().duplicate());
                 break; }
             }
+            if (!val) val.reset(new NoneValue);
 
-            prof.values[st.name] = val;
+            prof.values[st.first] = val;
         }
     }
 
@@ -298,11 +264,9 @@ DE_PIMPL(ConfigProfiles)
     void apply(String const &profileName)
     {
         Profile &profile = self().find(profileName).as<Profile>();
-
-        foreach (Setting const &st, settings.values())
+        for (const auto &st : settings)
         {
-            QVariant const &val = profile.values[st.name];
-            st.setValue(val);
+            st.second.setValue(*profile.values[st.second.name]);
         }
     }
 
@@ -344,7 +308,7 @@ DE_PIMPL(ConfigProfiles)
         DE_ASSERT(settings.contains(settingName));
         DE_ASSERT(defaults.values.contains(settingName));
 
-        settings[settingName].setValue(defaults.values[settingName]);
+        settings.find[settingName].setValue(defaults.values[settingName]);
     }
 
     /**

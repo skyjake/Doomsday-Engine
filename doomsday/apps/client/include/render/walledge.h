@@ -20,14 +20,11 @@
 #ifndef RENDER_WALLEDGE
 #define RENDER_WALLEDGE
 
-#include <QVector>
-
 #include <de/Error>
 #include <de/Vector>
 
 #include "Line"
 #include "WallSpec"
-
 #include "TriangleStripBuilder"
 #include "IHPlane"
 
@@ -67,8 +64,6 @@ public:
     private:
         WallEdge *_owner;
     };
-
-    //typedef QVector<Event> Events;
 
 public:
     /**
@@ -127,7 +122,7 @@ private:
     struct Impl;
     Impl *d;
 
-    static QList<WallEdge::Impl *> recycledImpls;    
+    static de::List<WallEdge::Impl *> recycledImpls;
     static Impl *getRecycledImpl();
     static void recycleImpl(Impl *d);
 };

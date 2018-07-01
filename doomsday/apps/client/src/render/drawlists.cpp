@@ -23,16 +23,15 @@
 
 #include <de/Log>
 #include <de/memoryzone.h>
-#include <QMultiHash>
-#include <QtAlgorithms>
+#include <de/Hash>
 
 using namespace de;
 
-typedef QMultiHash<GLuint, DrawList *> DrawListHash;
+typedef std::unordered_multimap<GLuint, DrawList *> DrawListHash;
 
 DE_PIMPL(DrawLists)
 {
-    QScopedPointer<DrawList> skyMaskList;
+    std::unique_ptr<DrawList> skyMaskList;
     DrawListHash unlitHash;
     DrawListHash litHash;
     DrawListHash dynHash;
@@ -59,7 +58,7 @@ DE_PIMPL(DrawLists)
 
         case SkyMaskGeom: break; // n/a?
         }
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("Invalid geometry group type");
         return unlitHash;
     }
 };
@@ -69,11 +68,11 @@ DrawLists::DrawLists() : d(new Impl(this))
 
 static void clearAllLists(DrawListHash &hash)
 {
-    foreach(DrawList *list, hash)
+    for (const auto &list : hash)
     {
-        list->clear();
+        list.second->clear();
+        delete list.second;
     }
-    qDeleteAll(hash);
     hash.clear();
 }
 
@@ -105,9 +104,9 @@ static void resetList(DrawList &list)
 
 static void resetAllLists(DrawListHash &hash)
 {
-    foreach(DrawList *list, hash)
+    for (const auto &list : hash)
     {
-        resetList(*list);
+        resetList(*list.second);
     }
 }
 
@@ -155,40 +154,39 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
     DrawList *convertable = 0;
 
     // Find/create a list in the hash.
-    GLuint const key  = spec.unit(TU_PRIMARY).getTextureGLName();
+    GLuint const  key  = spec.unit(TU_PRIMARY).getTextureGLName();
     DrawListHash &hash = d->listHash(spec.group);
-    for(DrawListHash::const_iterator it = hash.find(key);
-        it != hash.end() && it.key() == key; ++it)
+    const auto    keys = hash.equal_range(key);
+    for (auto it = keys.first; it != keys.second; ++it)
     {
-        DrawList *list = it.value();
-        DrawListSpec const &listSpec = list->spec();
+        DrawList *          list     = it->second;
+        const DrawListSpec &listSpec = list->spec();
 
-        if((spec.group == ShineGeom &&
-            compareTexUnit(listSpec.unit(TU_PRIMARY), spec.unit(TU_PRIMARY))) ||
-           (spec.group != ShineGeom &&
-            compareTexUnit(listSpec.unit(TU_PRIMARY), spec.unit(TU_PRIMARY)) &&
-            compareTexUnit(listSpec.unit(TU_PRIMARY_DETAIL), spec.unit(TU_PRIMARY_DETAIL))))
+        if ((spec.group == ShineGeom &&
+             compareTexUnit(listSpec.unit(TU_PRIMARY), spec.unit(TU_PRIMARY))) ||
+            (spec.group != ShineGeom &&
+             compareTexUnit(listSpec.unit(TU_PRIMARY), spec.unit(TU_PRIMARY)) &&
+             compareTexUnit(listSpec.unit(TU_PRIMARY_DETAIL), spec.unit(TU_PRIMARY_DETAIL))))
         {
-            if(!listSpec.unit(TU_INTER).hasTexture() &&
-               !spec.unit(TU_INTER).hasTexture())
+            if (!listSpec.unit(TU_INTER).hasTexture() && !spec.unit(TU_INTER).hasTexture())
             {
                 // This will do great.
                 return *list;
             }
 
             // Is this eligible for conversion to a blended list?
-            if(list->isEmpty() && !convertable && spec.unit(TU_INTER).hasTexture())
+            if (list->isEmpty() && !convertable && spec.unit(TU_INTER).hasTexture())
             {
                 // If necessary, this empty list will be selected.
                 convertable = list;
             }
 
             // Possibly an exact match?
-            if((spec.group == ShineGeom &&
-                compareTexUnit(listSpec.unit(TU_INTER), spec.unit(TU_INTER))) ||
-               (spec.group != ShineGeom &&
-                compareTexUnit(listSpec.unit(TU_INTER), spec.unit(TU_INTER)) &&
-                compareTexUnit(listSpec.unit(TU_INTER_DETAIL), spec.unit(TU_INTER_DETAIL))))
+            if ((spec.group == ShineGeom &&
+                 compareTexUnit(listSpec.unit(TU_INTER), spec.unit(TU_INTER))) ||
+                (spec.group != ShineGeom &&
+                 compareTexUnit(listSpec.unit(TU_INTER), spec.unit(TU_INTER)) &&
+                 compareTexUnit(listSpec.unit(TU_INTER_DETAIL), spec.unit(TU_INTER_DETAIL))))
             {
                 return *list;
             }
@@ -213,7 +211,7 @@ DrawList &DrawLists::find(DrawListSpec const &spec)
     }
 
     // Create a new list.
-    return *hash.insert(key, new DrawList(spec)).value();
+    return *hash.insert(std::make_pair(key, new DrawList(spec)))->second;
 }
 
 int DrawLists::findAll(GeomGroup group, FoundLists &found)
@@ -223,20 +221,19 @@ int DrawLists::findAll(GeomGroup group, FoundLists &found)
     {
         if(!d->skyMaskList->isEmpty())
         {
-            found.append(d->skyMaskList.data());
+            found << d->skyMaskList.get();
         }
     }
     else
     {
         DrawListHash const &hash = d->listHash(group);
-        foreach(DrawList *list, hash)
+        for (const auto &list : hash)
         {
-            if(!list->isEmpty())
+            if (!list.second->isEmpty())
             {
-                found.append(list);
+                found << list.second;
             }
         }
     }
-
     return found.count();
 }

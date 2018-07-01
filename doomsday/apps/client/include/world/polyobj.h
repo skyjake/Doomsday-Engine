@@ -24,15 +24,15 @@
 
 #include "dd_share.h"  // SoundEmitter
 
-#include <QList>
+#include <de/List>
 #include <de/Error>
 #include <de/Vector>
 
 #include "Mesh"
 
 namespace world {
-class BspLeaf;
-class Map;
+    class BspLeaf;
+    class Map;
 }
 class Line;
 class PolyobjData;
@@ -145,7 +145,7 @@ public:
     /**
      * Provides access to the list of Lines for the polyobj.
      */
-    QList<Line *> const &lines() const;
+    de::List<Line *> const &lines() const;
 
     /**
      * Returns the total number of Lines for the polyobj.
@@ -164,7 +164,7 @@ public:
      *
      * @see buildUniqueVertex()
      */
-    QList<Vertex *> const &uniqueVertexes() const;
+    de::List<Vertex *> const &uniqueVertexes() const;
 
     /**
      * Returns the total number of unique Vertexes for the polyobj.
@@ -253,7 +253,7 @@ private:
     static void NotifyCollision(struct polyobj_s &pob, struct mobj_s *mob, Line *line);
 
     bool blocked() const;
-    
+
 } Polyobj;
 
 #endif  // DE_WORLD_POLYOBJ_H

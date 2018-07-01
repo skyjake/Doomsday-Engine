@@ -205,7 +205,7 @@ DE_PIMPL(VideoSettingsDialog)
             fpsMax->setValue(!max ? 35 : max);
         }
 
-        foreach (GuiWidget *child, self().area().childWidgets())
+        for (GuiWidget *child : self().area().childWidgets())
         {
             if (ICVarWidget *cw = maybeAs<ICVarWidget>(child))
                 cw->updateFromCVar();
@@ -298,7 +298,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             {
                 rates.insert(int(DisplayMode_ByIndex(i)->refreshRate * 10));
             }
-            foreach (int rate, rates)
+            for (int rate : rates)
             {
                 if (rate == 0)
                 {

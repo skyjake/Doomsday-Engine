@@ -23,7 +23,6 @@
 #define DE_WORLD_LINE_H
 
 #include <functional>
-#include <QFlags>
 #include <de/binangle.h>
 #include <de/Error>
 #include <de/Observers>
@@ -119,7 +118,7 @@ public:
 
             AllSectionFlags = MiddleFlag | BottomFlag | TopFlag
         };
-        Q_DECLARE_FLAGS(SectionFlags, SectionFlag)
+        using SectionFlags = de::Flags;
 
         /**
          * Side geometry segment on the XY plane.
@@ -833,7 +832,5 @@ private:
 
 typedef Line::Side LineSide;
 typedef Line::Side::Segment LineSideSegment;
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Line::Side::SectionFlags)
 
 #endif  // DE_WORLD_LINE_H

@@ -180,7 +180,7 @@ String PackagesColumnWidget::tabHeading() const
 
 String PackagesColumnWidget::tabShortcut() const
 {
-    return QStringLiteral("s");
+    return DE_STR("s");
 }
 
 void PackagesColumnWidget::setHighlighted(bool highlighted)

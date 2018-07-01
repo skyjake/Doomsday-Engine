@@ -50,7 +50,6 @@ public:
             /// @todo Does not belong here (is actually a source image analysis).
             Masked = 0x1
         };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
         /**
          * @param texture  Base Texture from which the draw-context variant is derived.
@@ -111,12 +110,12 @@ public:
         /**
          * Returns the flags for the variant.
          */
-        Flags flags() const;
+        de::Flags flags() const;
 
         /**
          * Returns @c true if the variant is flagged @a flagsToTest.
          */
-        inline bool isFlagged(Flags flagsToTest) const
+        inline bool isFlagged(de::Flags flagsToTest) const
         {
             return (flags() & flagsToTest) != 0;
         }
@@ -140,7 +139,7 @@ public:
     };
 
     /// A list of variants.
-    typedef QList<Variant *> Variants;
+    typedef de::List<Variant *> Variants;
 
     /**
      * Logics for selecting a texture variant instance from the candidates.
@@ -212,8 +211,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ClientTexture::Flags)
 
 typedef ClientTexture::Variant TextureVariant;
 

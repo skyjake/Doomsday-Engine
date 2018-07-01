@@ -81,7 +81,7 @@ DE_PIMPL(VariableGroupEditor)
 
     void foldAll(bool fold)
     {
-        foreach (GuiWidget *child, owner->containerWidget().childWidgets())
+        for (GuiWidget *child : owner->containerWidget().childWidgets())
         {
             if (auto *g = maybeAs<VariableGroupEditor>(child))
             {
@@ -302,7 +302,7 @@ void VariableGroupEditor::commit()
 
 void VariableGroupEditor::fetch()
 {
-    foreach (GuiWidget *child, d->content->childWidgets())
+    for (GuiWidget *child : d->content->childWidgets())
     {
         if (ICVarWidget *w = maybeAs<ICVarWidget>(child))
         {
@@ -313,7 +313,7 @@ void VariableGroupEditor::fetch()
 
 void VariableGroupEditor::resetToDefaults()
 {
-    foreach (GuiWidget *child, d->content->childWidgets())
+    for (GuiWidget *child : d->content->childWidgets())
     {
         if (ICVarWidget *w = maybeAs<ICVarWidget>(child))
         {

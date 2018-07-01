@@ -20,15 +20,13 @@
  * 02110-1301 USA</small>
  */
 
-#include <QNetworkAccessManager>
+//#include <QNetworkAccessManager>
 #include <de/Config>
 #include <de/LogBuffer>
 #include <de/shell/ServerInfo>
 #include <de/data/json.h>
 #include <de/memory.h>
 #include "de_platform.h"
-#include <vector>
-#include <list>
 #include "network/masterserver.h"
 #include "network/net_main.h"
 #include "network/protocol.h"
@@ -39,6 +37,8 @@
 #include "dd_main.h"
 
 #include <de/App>
+#include <vector>
+#include <list>
 
 using namespace de;
 
@@ -52,7 +52,7 @@ typedef struct job_s {
 
 dd_bool serverPublic = false; // cvar
 
-static QString masterUrl(char const *suffix = 0)
+static String masterUrl(char const *suffix = 0)
 {
     String u = App::apiUrl() + "master_server";
     if (suffix) u += suffix;
@@ -61,13 +61,13 @@ static QString masterUrl(char const *suffix = 0)
 
 DE_PIMPL_NOREF(MasterWorker)
 {
-    QNetworkAccessManager *network;
+//    QNetworkAccessManager *network;
 
     typedef std::list<job_t> Jobs;
     Jobs jobs;
     MasterWorker::Action currentAction;
 
-    typedef QVector<de::shell::ServerInfo> Servers;
+    typedef List<de::shell::ServerInfo> Servers;
     Servers servers;
 
     Impl() : network(0), currentAction(NONE) {}
@@ -142,9 +142,9 @@ void MasterWorker::nextJob()
         Block const msg = composeJSON(job.data);
 
         LOGDEV_NET_VERBOSE("POST request ") << req.url().toString();
-        foreach (QByteArray const &hdr, req.rawHeaderList())
+        for (QByteArray const &hdr : req.rawHeaderList())
         {
-            LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOGDEV_NET_VERBOSE("%s: %s") << String(hdr) << String(req.rawHeader(hdr));
         }
         LOGDEV_NET_VERBOSE("Request contents:\n%s") << msg.constData();
 
@@ -154,9 +154,9 @@ void MasterWorker::nextJob()
 #endif
     {
         LOGDEV_NET_VERBOSE("GET request ") << req.url().toString();
-        foreach (QByteArray const &hdr, req.rawHeaderList())
+        for (QByteArray const &hdr : req.rawHeaderList())
         {
-            LOGDEV_NET_VERBOSE("%s: %s") << QString(hdr) << QString(req.rawHeader(hdr));
+            LOGDEV_NET_VERBOSE("%s: %s") << String(hdr) << String(req.rawHeader(hdr));
         }
 
         d->network->get(req);
@@ -211,7 +211,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
         d->servers.clear();
 
         // The syntax of the response is a JSON array containing server objects.
-        foreach (QVariant entry, parseJSON(String::fromUtf8(response)).toList())
+        for (QVariant entry : parseJSON(String::fromUtf8(response)).toList())
         {
             try
             {

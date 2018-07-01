@@ -34,8 +34,6 @@
 #include <de/LogBuffer>
 #include <de/vector1.h>
 #include <de/Rectangle>
-#include <QList>
-#include <QtAlgorithms>
 
 using namespace de;
 using namespace world;
@@ -113,38 +111,38 @@ DE_PIMPL(Sector)
         }
     };
 
-    struct Planes : public QVector<Plane *>
+    struct Planes : public List<Plane *>
     {
         ~Planes() { clear(); }
 
         void clear() {
-            qDeleteAll(*this);
-            QVector<Plane *>::clear();
+            deleteAll(*this);
+            List<Plane *>::clear();
         }
     };
 
-    struct Subsectors : public QVector<Subsector *>
+    struct Subsectors : public List<Subsector *>
     {
         ~Subsectors() { clear(); }
 
         void clear() {
-            qDeleteAll(*this);
-            QVector<Subsector *>::clear();
+            deleteAll(*this);
+            List<Subsector *>::clear();
         }
     };
 
-    Planes planes;                   ///< Planes of the sector.
-    MapObjects mapObjects;           ///< All map-objects "in" one of the subsectors (not owned).
-    QVector<LineSide *> sides;       ///< All line sides referencing the sector (not owned).
-    Subsectors subsectors;           ///< Traversable subsectors of the sector.
-    ThinkerT<SoundEmitter> emitter;  ///< Head of the sound emitter chain.
+    Planes                 planes;     ///< Planes of the sector.
+    MapObjects             mapObjects; ///< All map-objects "in" one of the subsectors (not owned).
+    List<LineSide *>       sides;      ///< All line sides referencing the sector (not owned).
+    Subsectors             subsectors; ///< Traversable subsectors of the sector.
+    ThinkerT<SoundEmitter> emitter;    ///< Head of the sound emitter chain.
 
-    dfloat lightLevel = 0;           ///< Ambient light level.
-    Vec3f lightColor;             ///< Ambient light color.
+    dfloat lightLevel = 0; ///< Ambient light level.
+    Vec3f  lightColor;     ///< Ambient light color.
 
     std::unique_ptr<GeomData> gdata; ///< Additional geometry info/metrics (cache).
 
-    dint validCount = 0;             ///< Used by legacy algorithms to prevent repeated processing.
+    dint validCount = 0; ///< Used by legacy algorithms to prevent repeated processing.
 
     Impl(Public *i) : Base(i) {}
 
@@ -295,7 +293,7 @@ dint Sector::planeCount() const
     return d->planes.count();
 }
 
-LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func)
+LoopResult Sector::forAllPlanes(const std::function<LoopResult (Plane &)>& func)
 {
     for (Plane *plane : d->planes)
     {
@@ -304,7 +302,7 @@ LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane &)> func)
     return LoopContinue;
 }
 
-LoopResult Sector::forAllPlanes(std::function<LoopResult (Plane const &)> func) const
+LoopResult Sector::forAllPlanes(const std::function<LoopResult (Plane const &)>& func) const
 {
     for (Plane const *plane : d->planes)
     {
@@ -358,7 +356,7 @@ LoopResult Sector::forAllSubsectors(const std::function<LoopResult(Subsector &)>
     return LoopContinue;
 }
 
-Subsector *Sector::addSubsector(QVector<ConvexSubspace *> const &subspaces)
+Subsector *Sector::addSubsector(List<ConvexSubspace *> const &subspaces)
 {
     DE_ASSERT(subsectorConstructor);
     /// @todo Add/move debug logic for ensuring the set is valid here. -ds
@@ -373,7 +371,7 @@ dint Sector::sideCount() const
     return d->sides.count();
 }
 
-LoopResult Sector::forAllSides(std::function<LoopResult (LineSide &)> func) const
+LoopResult Sector::forAllSides(const std::function<LoopResult (LineSide &)>& func) const
 {
     for (LineSide *side : d->sides)
     {
@@ -690,6 +688,6 @@ void Sector::consoleRegister()  // static
 
 void Sector::setSubsectorConstructor(SubsectorConstructor func) // static
 {
-    subsectorConstructor = func;
+    subsectorConstructor = std::move(func);
 }
 

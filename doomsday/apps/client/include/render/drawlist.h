@@ -22,7 +22,6 @@
 #define CLIENT_RENDER_DRAWLIST_H
 
 #include <array>
-#include <QFlags>
 #include <de/GLBuffer>
 #include <de/Vector>
 #include "api_gl.h" // blendmode_e
@@ -122,7 +121,7 @@ public:
         }
     };
 
-    typedef QVector<de::duint> Indices;
+    typedef de::List<de::duint> Indices;
 
     struct PrimitiveParams
     {
@@ -134,7 +133,6 @@ public:
             OneLight   = 0x1000,
             ManyLights = 0x2000
         };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
         de::duint32  flags_blendMode;
         de::Vec2f texScale;
@@ -145,14 +143,14 @@ public:
         de::Vec3f modColor;      ///< Modulation color.
 
         PrimitiveParams(de::gl::Primitive type,
-                        de::Vec2f texScale        = de::Vec2f(1, 1),
-                        de::Vec2f texOffset       = de::Vec2f(0, 0),
-                        de::Vec2f detailTexScale  = de::Vec2f(1, 1),
-                        de::Vec2f detailTexOffset = de::Vec2f(0, 0),
-                        Flags        flags           = Unlit,
-                        blendmode_t  blendMode       = BM_NORMAL,
-                        DGLuint      modTexture      = 0,
-                        de::Vec3f modColor        = de::Vec3f());
+                        de::Vec2f         texScale        = de::Vec2f(1, 1),
+                        de::Vec2f         texOffset       = de::Vec2f(0, 0),
+                        de::Vec2f         detailTexScale  = de::Vec2f(1, 1),
+                        de::Vec2f         detailTexOffset = de::Vec2f(0, 0),
+                        de::Flags         flags           = Unlit,
+                        blendmode_t       blendMode       = BM_NORMAL,
+                        DGLuint           modTexture      = 0,
+                        de::Vec3f         modColor        = de::Vec3f());
     };
 
 public:
@@ -174,22 +172,22 @@ public:
      * @param primParams       GL primitive parameters.
      * @param indices          Indices for the vertex elements in @a buffer. A copy is made.
      */
-    DrawList &write(Store const &buffer,
-                    de::duint const *indices, int indexCount,
+    DrawList &write(Store const &          buffer,
+                    de::duint const *      indices,
+                    int                    indexCount,
                     PrimitiveParams const &primParms);
 
-    DrawList &write(Store const &buffer,
-                    de::duint const *indices, int indexCount,
+    DrawList &write(Store const &     buffer,
+                    de::duint const * indices,
+                    int               indexCount,
                     de::gl::Primitive primitiveType); // using default parameters
 
-    DrawList &write(Store const &buffer,
-                    Indices const &indices,
-                    PrimitiveParams const &primParms);
+    DrawList &write(Store const &buffer, Indices const &indices, PrimitiveParams const &primParms);
 
-    DrawList &write(Store const &buffer,
-                    Indices const &indices,
+    DrawList &write(Store const &     buffer,
+                    Indices const &   indices,
                     de::gl::Primitive primitiveType); // using default parameters
-    
+
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 
     /**
@@ -230,7 +228,5 @@ private:
 };
 
 typedef DrawList::Spec DrawListSpec;
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(DrawList::PrimitiveParams::Flags)
 
 #endif  // CLIENT_RENDER_DRAWLIST_H

@@ -27,21 +27,17 @@
  */
 class CVarLineEditWidget : public de::LineEditWidget, public ICVarWidget
 {
-    Q_OBJECT
-
 public:
     CVarLineEditWidget(char const *cvarPath);
 
     char const *cvarPath() const;
 
-public slots:
+public:
     void updateFromCVar();
     void endEditing();
 
-protected slots:
-    void setCVarValueFromWidget();
-
 protected:
+    void setCVarValueFromWidget();
     void contentChanged();
 
 private:

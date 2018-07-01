@@ -516,7 +516,7 @@ struct WallEdge::Impl : public IHPlane
     void printIntercepts() const
     {
         EventIndex index = 0;
-        foreach (Event const &icpt, events)
+        for (Event const &icpt : events)
         {
             LOGDEV_MAP_MSG(" %u: >%1.2f ") << (index++) << icpt.distance();
         }
@@ -529,7 +529,7 @@ struct WallEdge::Impl : public IHPlane
     void assertInterceptsInRange(ddouble low, ddouble hi) const
     {
 #ifdef DE_DEBUG
-        foreach (Event const &icpt, events)
+        for (Event const &icpt : events)
         {
             DE_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
         }

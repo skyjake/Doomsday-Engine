@@ -60,7 +60,7 @@ DE_GUI_PIMPL(ProfilePickerWidget)
     {
         self().items().clear();
 
-        foreach (String prof, settings.profiles())
+        for (String prof : settings.profiles())
         {
             self().items() << new ChoiceItem(prof.left(MAX_VISIBLE_PROFILE_NAME), prof);
         }

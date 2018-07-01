@@ -952,7 +952,7 @@ static GameProfile const *autoselectGameProfile()
         }
 
         // Packages from the command line.
-        foreach (String packageId, PackageLoader::get().loadedFromCommandLine())
+        for (String packageId : PackageLoader::get().loadedFromCommandLine())
         {
             StringList pkgs = automaticProfile.packages();
             pkgs << packageId;
@@ -960,7 +960,7 @@ static GameProfile const *autoselectGameProfile()
         }
 
         // Also append the packages specified as files on the command line.
-        foreach (File *f, DoomsdayApp::app().filesFromCommandLine())
+        for (File *f : DoomsdayApp::app().filesFromCommandLine())
         {
             String packageId;
             if (auto const *bundle = maybeAs<DataBundle>(f))
@@ -1130,7 +1130,7 @@ static void initializeWithWindowReady()
             else
             {
                 StringList ids;
-                foreach (GameProfile const *prof, playable) ids << prof->gameId();
+                for (GameProfile const *prof : playable) ids << prof->gameId();
                 msg += "The following games are playable: " + String::join(ids, ", ");
             }
             App_Error(msg.toLatin1());

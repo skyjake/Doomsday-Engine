@@ -1,4 +1,4 @@
-/** @file processcheckdialog.cpp Dialog for checking running processes on Windows. 
+/** @file processcheckdialog.cpp Dialog for checking running processes on Windows.
  * @ingroup updater
  *
  * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -34,7 +34,7 @@ static bool isProcessRunning(char const *name)
     if (!wmic.waitForFinished()) return false;
 
     QByteArray result = wmic.readAll();
-    foreach (QString p, QString(result).split("\n", QString::SkipEmptyParts))
+    for (QString p : QString(result).split("\n", QString::SkipEmptyParts))
     {
         if (!p.trimmed().compare(QLatin1String(name), Qt::CaseInsensitive))
             return true;

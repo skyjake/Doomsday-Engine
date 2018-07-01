@@ -512,7 +512,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
 
         // If the binding has conditions, they may prevent using it.
         bool skip = false;
-        ArrayValue const &conds = rec.geta(QStringLiteral("condition"));
+        ArrayValue const &conds = rec.geta(DE_STR("condition"));
         DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
         {
             if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>

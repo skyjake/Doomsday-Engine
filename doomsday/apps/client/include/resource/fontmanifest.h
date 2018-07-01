@@ -77,8 +77,8 @@ public:
      * The path component of the URI will contain the percent-encoded path
      * of the manifest.
      */
-    inline Uri composeUri(QChar sep = '/') const {
-        return Uri(schemeName(), path(sep));
+    inline res::Uri composeUri(Char sep = '/') const {
+        return res::Uri(schemeName(), path(sep));
     }
 
     /**
@@ -92,8 +92,8 @@ public:
      *
      * @see uniqueId(), setUniqueId()
      */
-    inline Uri composeUrn() const {
-        return Uri("urn", String("%1:%2").arg(schemeName()).arg(uniqueId(), 0, 10));
+    inline res::Uri composeUrn() const {
+        return res::Uri("urn", String::format("%s:%i", schemeName().c_str(), uniqueId()));
     }
 
     /**
@@ -101,7 +101,8 @@ public:
      *
      * @return Human-friendly description the manifest.
      */
-    String description(Uri::ComposeAsTextFlags uriCompositionFlags = Uri::DefaultComposeAsTextFlags) const;
+    String description(res::Uri::ComposeAsTextFlags uriCompositionFlags =
+                           res::Uri::DefaultComposeAsTextFlags) const;
 
     /**
      * Returns the scheme-unique identifier for the manifest.

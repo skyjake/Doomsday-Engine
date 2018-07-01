@@ -22,8 +22,8 @@
 #include <de/String>
 #include <de/Observers>
 #include <de/Profiles>
-#include <QVariant>
-#include <QList>
+#include <de/List>
+#include <de/NoneValue>
 
 /**
  * Collection of settings (cvars, Config variables) of which there can be
@@ -74,7 +74,7 @@ public:
      */
     ConfigProfiles &define(SettingType type,
                            de::String const &settingName,
-                           QVariant const &defaultValue = QVariant());
+                           const de::Value &value = de::NoneValue());
 
     de::String currentProfile() const;
 

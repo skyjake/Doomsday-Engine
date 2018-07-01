@@ -20,7 +20,7 @@
 #ifndef DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 #define DE_WORLD_BSP_CONVEXSUBSPACEPROXY_H
 
-#include <QList>
+#include <de/List>
 #include <de/Error>
 #include <de/Log>
 #include "world/bsp/linesegment.h"
@@ -59,7 +59,7 @@ struct OrderedSegment
     }
 #endif
 };
-typedef QList<OrderedSegment> OrderedSegments;
+typedef de::List<OrderedSegment> OrderedSegments;
 
 /**
  * Models a @em logical convex subspace in the partition plane, providing the
@@ -95,7 +95,7 @@ public:
      *                  is @em NOT given to the subspace. Note that duplicates
      *                  are pruned automatically.
      */
-    ConvexSubspaceProxy(QList<LineSegmentSide *> const &segments);
+    ConvexSubspaceProxy(de::List<LineSegmentSide *> const &segments);
 
     /**
      * Construct a convex subspace by duplicating @a other.
@@ -128,7 +128,7 @@ public:
      *
      * @see addOneSegment()
      */
-    void addSegments(QList<LineSegmentSide *> const &segments);
+    void addSegments(de::List<LineSegmentSide *> const &segments);
 
     /**
      * Add a single line segment to the subspace which is assumed to conform to,

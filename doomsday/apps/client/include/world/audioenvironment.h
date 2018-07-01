@@ -22,6 +22,8 @@
 #ifndef DE_CLIENT_WORLD_AUDIOENVIRONMENT_H_
 #define DE_CLIENT_WORLD_AUDIOENVIRONMENT_H_
 
+#include <de/types.h>
+
 namespace world {
 
 /**

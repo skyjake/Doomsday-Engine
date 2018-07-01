@@ -43,7 +43,7 @@ FontManifest &AbstractFont::manifest() const
     return _manifest;
 }
 
-AbstractFont::Flags AbstractFont::flags() const
+Flags AbstractFont::flags() const
 {
     return _flags;
 }

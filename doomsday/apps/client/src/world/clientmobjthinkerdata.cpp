@@ -93,7 +93,7 @@ DE_PIMPL(ClientMobjThinkerData)
 
     String modelId() const
     {
-        return QStringLiteral("model.thing.%1").arg(thingName().toLower());
+        return DE_STR("model.thing.%1").arg(thingName().toLower());
     }
 
     static ModelBank &modelBank()
@@ -126,7 +126,7 @@ DE_PIMPL(ClientMobjThinkerData)
                 model.audienceForDeletion() += this;
 
                 animator.reset(new render::StateAnimator(modelId(), model));
-                animator->setOwnerNamespace(self().objectNamespace(), QStringLiteral("__thing__"));
+                animator->setOwnerNamespace(self().objectNamespace(), DE_STR("__thing__"));
 
                 // Apply possible scaling operations on the model.
                 modelMatrix = model.transformation;

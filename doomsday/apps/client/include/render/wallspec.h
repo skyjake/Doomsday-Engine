@@ -20,8 +20,6 @@
 #ifndef DE_RENDER_WALLSPEC
 #define DE_RENDER_WALLSPEC
 
-#include <QFlags>
-
 #include "Line"
 
 /**
@@ -68,10 +66,9 @@ public:
 
         DefaultFlags = ForceOpaque | SkyClip
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /// Specification flags.
-    Flags flags;
+    de::Flags flags;
 
     /// Wall section identifier.
     int section;
@@ -79,7 +76,9 @@ public:
     /**
      * Construct a default wall geometry specification for the specifed @a section.
      */
-    WallSpec(int section = 0, Flags flags = DefaultFlags) : flags(flags), section(section)
+    WallSpec(int section = 0, de::Flags flags = DefaultFlags)
+        : flags(flags)
+        , section(section)
     {}
 
     /**
@@ -89,7 +88,5 @@ public:
      */
     static WallSpec fromMapSide(LineSide const &side, int section);
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(WallSpec::Flags)
 
 #endif // DE_RENDER_WALLSPEC

@@ -70,13 +70,13 @@ public:
     void glInit() const override;
     void glDeinit() const override;
 
-    de::Rectanglei const &glyphPosCoords(uchar ch) const override;
-    de::Rectanglei const &glyphTexCoords(uchar ch) const override;
+    de::Rectanglei const &glyphPosCoords(de::dbyte ch) const override;
+    de::Rectanglei const &glyphTexCoords(de::dbyte ch) const override;
 
-    patchid_t glyphPatch(uchar ch) const;
-    void glyphSetPatch(uchar ch, de::String encodedPatchName);
-    TextureVariant *glyphTexture(uchar ch) const;
-    uint glyphTextureBorder(uchar ch) const;
+    patchid_t       glyphPatch(de::dbyte ch) const;
+    void            glyphSetPatch(de::dbyte ch, de::String encodedPatchName);
+    TextureVariant *glyphTexture(de::dbyte ch) const;
+    uint            glyphTextureBorder(de::dbyte ch) const;
 
 private:
     DE_PRIVATE(d)

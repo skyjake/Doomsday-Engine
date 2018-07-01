@@ -307,7 +307,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         }
 
         // Add new items.
-        foreach (GameProfile *newProf, toAdd)
+        for (GameProfile *newProf : toAdd)
         {
             addItemForProfile(*newProf);
         }
@@ -801,7 +801,7 @@ String GameColumnWidget::tabHeading() const
 
 String GameColumnWidget::tabShortcut() const
 {
-    if (name() == "hexen-column") return QStringLiteral("x");
+    if (name() == "hexen-column") return DE_STR("x");
     return String();
 }
 

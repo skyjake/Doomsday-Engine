@@ -318,7 +318,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
             // Check which of the packages are locally available.
             StringList available;
             StringList missing;
-            foreach (String pkgId, serverInfo.packages())
+            for (String pkgId : serverInfo.packages())
             {
                 if (PackageLoader::get().select(pkgId))
                 {

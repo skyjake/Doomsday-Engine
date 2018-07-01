@@ -224,7 +224,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
     {
         if (!DoomsdayApp::isGameLoaded()) return;
 
-        foreach (GuiWidget *w, self().area().childWidgets() + devPopup->content().childWidgets())
+        for (GuiWidget *w : self().area().childWidgets() + devPopup->content().childWidgets())
         {
             if (ICVarWidget *cv = maybeAs<ICVarWidget>(w))
             {

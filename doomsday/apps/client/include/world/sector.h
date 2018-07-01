@@ -23,7 +23,7 @@
 #define DE_WORLD_SECTOR_H
 
 #include <functional>
-#include <QList>
+#include <de/List>
 #include <de/aabox.h>
 #include <de/Error>
 #include <de/Id>
@@ -184,8 +184,8 @@ public:
      *
      * @param callback  Function to call for each Plane.
      */
-    de::LoopResult forAllPlanes(std::function<de::LoopResult (Plane &)> func);
-    de::LoopResult forAllPlanes(std::function<de::LoopResult (Plane const &)> func) const;
+    de::LoopResult forAllPlanes(const std::function<de::LoopResult (Plane &)>& func);
+    de::LoopResult forAllPlanes(const std::function<de::LoopResult (Plane const &)>& func) const;
 
     /**
      * Add another Plane to the sector.
@@ -199,7 +199,7 @@ public:
 
 //- Subsectors --------------------------------------------------------------------------
 
-    typedef std::function<world::Subsector * (QVector<world::ConvexSubspace *> const &)> SubsectorConstructor;
+    typedef std::function<world::Subsector * (de::List<world::ConvexSubspace *> const &)> SubsectorConstructor;
 
     static void setSubsectorConstructor(SubsectorConstructor func);
 
@@ -245,7 +245,7 @@ public:
      *
      * @return  The newly constructed Subsector (ownership retained); otherwise @c nullptr
      */
-    world::Subsector *addSubsector(QVector<world::ConvexSubspace *> const &subspaces);
+    world::Subsector *addSubsector(de::List<world::ConvexSubspace *> const &subspaces);
 
 //- Sides -------------------------------------------------------------------------------
 
@@ -259,7 +259,7 @@ public:
      *
      * @param callback  Function to call for each Line::Side.
      */
-    de::LoopResult forAllSides(std::function<de::LoopResult (Line::Side &)> func) const;
+    de::LoopResult forAllSides(const std::function<de::LoopResult (Line::Side &)>& func) const;
 
     /**
      * (Re)Build the side list for the sector.

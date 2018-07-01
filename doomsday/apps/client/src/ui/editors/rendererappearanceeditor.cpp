@@ -400,7 +400,7 @@ public VariableGroupEditor::IOwner
     {
         bool const isReadOnly = settings.find(settings.currentProfile()).isReadOnly();
 
-        foreach (GuiWidget *child, self().containerWidget().childWidgets())
+        for (GuiWidget *child : self().containerWidget().childWidgets())
         {
             if (Group *g = maybeAs<Group>(child))
             {
@@ -409,7 +409,7 @@ public VariableGroupEditor::IOwner
                 g->resetButton().enable(!isReadOnly && g->isOpen());
 
                 // Enable or disable settings based on read-onlyness.
-                foreach (GuiWidget *st, g->content().childWidgets())
+                for (GuiWidget *st : g->content().childWidgets())
                 {
                     st->enable(!isReadOnly);
                 }
@@ -419,7 +419,7 @@ public VariableGroupEditor::IOwner
 
     void saveFoldState(PersistentState &toState)
     {
-        foreach (GuiWidget *child, self().containerWidget().childWidgets())
+        for (GuiWidget *child : self().containerWidget().childWidgets())
         {
             if (Group *g = maybeAs<Group>(child))
             {
@@ -433,7 +433,7 @@ public VariableGroupEditor::IOwner
     {
         bool gotState = false;
 
-        foreach (GuiWidget *child, self().containerWidget().childWidgets())
+        for (GuiWidget *child : self().containerWidget().childWidgets())
         {
             if (Group *g = maybeAs<Group>(child))
             {

@@ -74,10 +74,9 @@ struct Generator
             RandomYaw      = 0x800,
             RandomPitch    = 0x1000
         };
-        Q_DECLARE_FLAGS(Flags, Flag)
 
         de::dshort type;
-        Flags flags;
+        de::Flags flags;
         fixed_t resistance;
         fixed_t bounce;
         fixed_t radius;
@@ -104,24 +103,23 @@ struct Generator
         BlendInverseMultiply = 0x8000,  ///< Inverse multiplicative blending.
         StateChain           = 0x10000  ///< Chain after existing state gen(s).
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /// Unique identifier associated with each generator (1-based).
     typedef de::dshort Id;
 
-public: /// @todo make private:
-    thinker_t thinker;               ///< Func = P_PtcGenThinker
-    Plane *plane;                    ///< Flat-triggered.
-    ded_ptcgen_t const *def;         ///< The definition of this generator.
-    struct mobj_s *source;           ///< If mobj-triggered.
-    de::dint srcid;                  ///< Source mobj ID.
-    de::dint type;                   ///< Type-triggered; mobj type number (-1=none).
-    de::dint type2;                  ///< Type-triggered; alternate type.
-    fixed_t originAtSpawn[3];        ///< Used by untriggered/damage gens.
-    fixed_t vector[3];               ///< Converted from the definition.
-    de::dfloat spawnRateMultiplier;
-    de::dint count;                  ///< Number of particles generated thus far.
-    ParticleStage *stages;
+public:                                   /// @todo make private:
+    thinker_t           thinker;          ///< Func = P_PtcGenThinker
+    Plane *             plane;            ///< Flat-triggered.
+    ded_ptcgen_t const *def;              ///< The definition of this generator.
+    struct mobj_s *     source;           ///< If mobj-triggered.
+    de::dint            srcid;            ///< Source mobj ID.
+    de::dint            type;             ///< Type-triggered; mobj type number (-1=none).
+    de::dint            type2;            ///< Type-triggered; alternate type.
+    fixed_t             originAtSpawn[3]; ///< Used by untriggered/damage gens.
+    fixed_t             vector[3];        ///< Converted from the definition.
+    de::dfloat          spawnRateMultiplier;
+    de::dint            count; ///< Number of particles generated thus far.
+    ParticleStage *     stages;
 
 public:
     /**
@@ -239,17 +237,14 @@ public:
     static void consoleRegister();
 
 private:
-    Id _id;                  ///< Unique in the map.
-    Flags _flags;
-    de::dint _age;           ///< Time since spawn, in tics.
-    de::dfloat _spawnCount;
-    bool _untriggered;       ///< @c true= consider this as not yet triggered.
-    de::dint _spawnCP;       ///< Particle spawn cursor.
-    ParticleInfo *_pinfo;    ///< Info about each generated particle.
+    Id            _id; ///< Unique in the map.
+    de::Flags     _flags;
+    de::dint      _age; ///< Time since spawn, in tics.
+    de::dfloat    _spawnCount;
+    bool          _untriggered; ///< @c true= consider this as not yet triggered.
+    de::dint      _spawnCP;     ///< Particle spawn cursor.
+    ParticleInfo *_pinfo;       ///< Info about each generated particle.
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Generator::Flags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(Generator::ParticleStage::Flags)
 
 typedef Generator::ParticleStage GeneratorParticleStage;
 

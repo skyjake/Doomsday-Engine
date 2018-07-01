@@ -26,9 +26,8 @@
 #endif
 #include <de/Error>
 #include <de/String>
+#include <de/BitArray>
 #include <de/Vector>
-#include <QBitArray>
-#include <QList>
 
 /// Unique identifier associated with each model.
 typedef uint modelid_t;
@@ -60,7 +59,6 @@ public:
     enum Flag {
         NoTextureCompression = 0x1 ///< Do not compress skin textures.
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     /**
      * Animation key-frame.
@@ -72,7 +70,7 @@ public:
             de::Vec3f pos;
             de::Vec3f norm;
         };
-        typedef QVector<Vertex> VertexBuf;
+        typedef de::List<Vertex> VertexBuf;
         VertexBuf vertices;
         de::Vec3f min;
         de::Vec3f max;
@@ -86,7 +84,7 @@ public:
 
         float horizontalRange(float *top, float *bottom) const;
     };
-    typedef QList<Frame *> Frames;
+    typedef de::List<Frame *> Frames;
 
     /**
      * Texture => Skin assignment.
@@ -100,7 +98,7 @@ public:
             : name(name), texture(texture)
         {}
     };
-    typedef QList<Skin> Skins;
+    typedef de::List<Skin> Skins;
 
     /**
      * Prepared model geometry uses lists of primitives.
@@ -112,11 +110,11 @@ public:
             de::Vec2f texCoord;
             int index; ///< Index into the model's vertex mesh.
         };
-        typedef QVector<Element> Elements;
+        typedef de::List<Element> Elements;
         Elements elements;
         bool triFan; ///< @c true= triangle fan; otherwise triangle strip.
     };
-    typedef QList<Primitive> Primitives;
+    typedef de::List<Primitive> Primitives;
 
     /**
      * Level of detail information.
@@ -139,13 +137,13 @@ public:
          */
         bool hasVertex(int number) const;
     };
-    typedef QList<DetailLevel *> DetailLevels;
+    typedef de::List<DetailLevel *> DetailLevels;
 
 public:
     /**
      * Construct a new 3D model.
      */
-    FrameModel(Flags flags = 0);
+    FrameModel(de::Flags flags = 0);
 
     /**
      * Determines whether the specified @a file appears to be in a recognised
@@ -178,7 +176,7 @@ public:
     /**
      * Returns a copy of the current model flags.
      */
-    Flags flags() const;
+    de::Flags flags() const;
 
     /**
      * Change the model's flags.
@@ -186,7 +184,7 @@ public:
      * @param flagsToChange  Flags to change the value of.
      * @param operation      Logical operation to perform on the flags.
      */
-    void setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
+    void setFlags(de::Flags flagsToChange, de::FlagOp operation = de::SetFlags);
 
     /**
      * Lookup a model animation frame by @a name.
@@ -302,13 +300,11 @@ public:
     DetailLevels const &lods() const;
 
     /// @todo Refactor away.
-    QBitArray const &lodVertexUsage() const;
+    de::BitArray const &lodVertexUsage() const;
 
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(FrameModel::Flags)
 
 typedef FrameModel::DetailLevel FrameModelLOD;
 typedef FrameModel::Frame FrameModelFrame;

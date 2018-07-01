@@ -21,7 +21,6 @@
 #ifndef DE_UI_INFINE_FINALEANIMWIDGET_H
 #define DE_UI_INFINE_FINALEANIMWIDGET_H
 
-#include <QList>
 #include <doomsday/world/Material>
 #include "finalewidget.h"
 
@@ -62,7 +61,7 @@ public:
         Frame();
         ~Frame();
     };
-    typedef QList<Frame *> Frames;
+    typedef de::List<Frame *> Frames;
 
 public:
     FinaleAnimWidget(de::String const &name);

@@ -23,12 +23,11 @@
 
 #include "DrawList"
 #include <de/Vector>
-#include <QVarLengthArray>
 
 class DrawLists
 {
 public:
-    typedef QVarLengthArray<DrawList *, 1024> FoundLists;
+    typedef de::List<DrawList *> FoundLists;
 
 public:
     DrawLists();

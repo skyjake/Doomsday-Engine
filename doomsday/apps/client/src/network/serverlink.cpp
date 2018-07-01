@@ -302,7 +302,7 @@ DE_PIMPL(ServerLink)
         if (finder && mask.testFlag(LocalNetwork))
         {
             // Append the ones from the server finder.
-            foreach (Address const &sv, finder->foundServers())
+            for (Address const &sv : finder->foundServers())
             {
                 all.insert(sv, finder->messageFromServer(sv));
             }

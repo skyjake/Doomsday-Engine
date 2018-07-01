@@ -21,7 +21,6 @@
 
 #include "Face"
 #include "HEdge"
-
 #include "BspLeaf"
 #include "Contact"
 #include "ConvexSubspace"
@@ -29,7 +28,6 @@
 #include "Subsector"
 #include "Surface"
 #include "world/clientserverworld.h"  // validCount
-
 #include "render/rend_main.h"  // Rend_mapSurfaceMaterialSpec
 #include "MaterialAnimator"
 #include "WallEdge"
@@ -37,7 +35,6 @@
 #include "client/clientsubsector.h"
 
 #include <de/vector1.h>
-#include <QBitArray>
 
 using namespace de;
 
@@ -66,7 +63,7 @@ static ddouble pointOnHEdgeSide(HEdge const &hedge, Vec2d const &point)
 struct ContactSpreader
 {
     world::Blockmap const &_blockmap;
-    QBitArray *_spreadBlocks = nullptr;
+    BitArray *_spreadBlocks = nullptr;
 
     struct SpreadState
     {
@@ -75,7 +72,7 @@ struct ContactSpreader
     };
     SpreadState _spread;
 
-    ContactSpreader(world::Blockmap const &blockmap, QBitArray *spreadBlocks = nullptr)
+    ContactSpreader(world::Blockmap const &blockmap, BitArray *spreadBlocks = nullptr)
         : _blockmap(blockmap)
     {
         _spreadBlocks = spreadBlocks;
@@ -102,7 +99,7 @@ struct ContactSpreader
                     continue;
 
                 // Mark the cell as processed.
-                _spreadBlocks->setBit(cellIndex);
+                _spreadBlocks->setBit(cellIndex, true);
             }
 
             _blockmap.forAllInCell(cell, [this] (void *element)
@@ -269,8 +266,7 @@ private:
     }
 };
 
-void spreadContacts(Blockmap const &blockmap, AABoxd const &region,
-    QBitArray *spreadBlocks)
+void spreadContacts(Blockmap const &blockmap, AABoxd const &region, BitArray *spreadBlocks)
 {
     ContactSpreader(blockmap, spreadBlocks).spread(region);
 }

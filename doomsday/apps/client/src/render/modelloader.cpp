@@ -677,11 +677,11 @@ DE_PIMPL(ModelLoader)
 
         const ModelDrawable::MeshId mesh{duint(mid), materialIndex};
 
-        setupMaterialTexture(model, mesh, matDef, QStringLiteral("diffuseMap"),  ModelDrawable::Diffuse);
-        setupMaterialTexture(model, mesh, matDef, QStringLiteral("normalMap"),   ModelDrawable::Normals);
-        setupMaterialTexture(model, mesh, matDef, QStringLiteral("heightMap"),   ModelDrawable::Height);
-        setupMaterialTexture(model, mesh, matDef, QStringLiteral("specularMap"), ModelDrawable::Specular);
-        setupMaterialTexture(model, mesh, matDef, QStringLiteral("emissiveMap"), ModelDrawable::Emissive);
+        setupMaterialTexture(model, mesh, matDef, DE_STR("diffuseMap"),  ModelDrawable::Diffuse);
+        setupMaterialTexture(model, mesh, matDef, DE_STR("normalMap"),   ModelDrawable::Normals);
+        setupMaterialTexture(model, mesh, matDef, DE_STR("heightMap"),   ModelDrawable::Height);
+        setupMaterialTexture(model, mesh, matDef, DE_STR("specularMap"), ModelDrawable::Specular);
+        setupMaterialTexture(model, mesh, matDef, DE_STR("emissiveMap"), ModelDrawable::Emissive);
     }
 
     void setupMaterialTexture(ModelDrawable &model,

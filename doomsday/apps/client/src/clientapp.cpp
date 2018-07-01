@@ -20,13 +20,13 @@
 #include "de_platform.h"
 
 #include <cstdlib>
-#include <QAction>
-#include <QDebug>
-#include <QDesktopServices>
-#include <QFontDatabase>
-#include <QMenuBar>
-#include <QNetworkProxyFactory>
-#include <QSplashScreen>
+//#include <QAction>
+//#include <QDebug>
+//#include <QDesktopServices>
+//#include <QFontDatabase>
+//#include <QMenuBar>
+//#include <QNetworkProxyFactory>
+//#include <QSplashScreen>
 
 #include <de/c_wrapper.h>
 #include <de/ArrayValue>
@@ -134,7 +134,7 @@ static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const 
     }
     String name = DoomsdayApp::plugins().fileForPlugin(App_CurrentGame().pluginId())
             .name().fileNameWithoutExtension();
-    if (name.startsWith("lib")) name.remove(0, 3);
+    if (name.beginsWith("lib")) name.remove(0, 3);
     return new TextValue(name);
 }
 
@@ -155,7 +155,7 @@ DE_PIMPL(ClientApp)
 {
     Binder binder;
 #if defined (DE_HAVE_UPDATER)
-    QScopedPointer<Updater> updater;
+    std::unique_ptr<Updater> updater;
 #endif
 #if defined (DE_HAVE_BUSYRUNNER)
     BusyRunner busyRunner;
@@ -216,7 +216,7 @@ DE_PIMPL(ClientApp)
                     }
                 }
 
-                foreach (String msg, formatter.logEntryToTextLines(entry))
+                for (String msg : formatter.logEntryToTextLines(entry))
                 {
                     ClientApp::alert(msg, entry.level());
                 }
@@ -964,10 +964,10 @@ ClientServerWorld &ClientApp::world()
 
 void ClientApp::openHomepageInBrowser()
 {
-    openInBrowser(QUrl(DOOMSDAY_HOMEURL));
+    openInBrowser(DOOMSDAY_HOMEURL);
 }
 
-void ClientApp::openInBrowser(QUrl url)
+void ClientApp::openInBrowser(const String &url)
 {
 #if !defined (DE_MOBILE)
     // Get out of fullscreen mode.
@@ -978,10 +978,11 @@ void ClientApp::openInBrowser(QUrl url)
     ClientWindow::main().changeAttributes(windowed);
 #endif
 
-    QDesktopServices::openUrl(url);
+//    QDesktopServices::openUrl(url);
+    DE_ASSERT_FAIL("Open a browser");
 }
 
-void ClientApp::unloadGame(GameProfile const &upcomingGame)
+void ClientApp::unloadGame(const GameProfile &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 

@@ -61,7 +61,7 @@ DE_PIMPL(CompositeBitmapFont)
         self().glDeinit();
     }
 
-    Glyph &glyph(uchar ch)
+    Glyph &glyph(dbyte ch)
     {
         //if(ch >= MAX_CHARS) return missingGlyph;
         if(!glyphs[ch].haveSourceImage) return missingGlyph;
@@ -91,38 +91,38 @@ int CompositeBitmapFont::lineSpacing() const
     return d->leading;
 }
 
-Rectanglei const &CompositeBitmapFont::glyphPosCoords(uchar ch) const
+Rectanglei const &CompositeBitmapFont::glyphPosCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).geometry;
 }
 
-Rectanglei const &CompositeBitmapFont::glyphTexCoords(uchar /*ch*/) const
+Rectanglei const &CompositeBitmapFont::glyphTexCoords(dbyte /*ch*/) const
 {
     static Rectanglei coords(Vec2i(0, 0), Vec2i(1, 1));
     glInit();
     return coords;
 }
 
-uint CompositeBitmapFont::glyphTextureBorder(uchar ch) const
+uint CompositeBitmapFont::glyphTextureBorder(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).border;
 }
 
-TextureVariant *CompositeBitmapFont::glyphTexture(uchar ch) const
+TextureVariant *CompositeBitmapFont::glyphTexture(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).tex;
 }
 
-patchid_t CompositeBitmapFont::glyphPatch(uchar ch) const
+patchid_t CompositeBitmapFont::glyphPatch(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).patch;
 }
 
-void CompositeBitmapFont::glyphSetPatch(uchar ch, String encodedPatchName)
+void CompositeBitmapFont::glyphSetPatch(dbyte ch, String encodedPatchName)
 {
     //if(ch >= MAX_CHARS) return;
     d->glyphs[ch].patch = res::Textures::get().declarePatch(encodedPatchName);

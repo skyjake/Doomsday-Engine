@@ -23,9 +23,7 @@
 #include <de/ModelDrawable>
 #include <de/Timeline>
 #include <de/MultiAtlas>
-
-#include <QHash>
-#include <QFlags>
+#include <de/Map>
 
 namespace render {
 
@@ -56,7 +54,7 @@ struct Model : public de::ModelDrawable
         AnimSequence(de::String const &n, de::Record const &d);
     };
 
-    struct StateAnims : public QMap<de::String, QList<AnimSequence>>
+    struct StateAnims : public de::Map<de::String, de::List<AnimSequence>>
     {};
 
     enum Flag
@@ -64,7 +62,6 @@ struct Model : public de::ModelDrawable
         AutoscaleToThingHeight = 0x1,
         DefaultFlags = AutoscaleToThingHeight
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
 
     enum Alignment
     {
@@ -82,7 +79,7 @@ struct Model : public de::ModelDrawable
 
     std::unique_ptr<de::MultiAtlas::AllocGroup> textures;
 
-    Flags flags          = DefaultFlags;
+    de::Flags flags      = DefaultFlags;
     Alignment alignYaw   = NotAligned;
     Alignment alignPitch = NotAligned;
 
@@ -93,7 +90,7 @@ struct Model : public de::ModelDrawable
 
     de::gl::Face cull = de::gl::Back;
 
-    QHash<de::String, de::duint> materialIndexForName;
+    de::Hash<de::String, de::duint> materialIndexForName;
 
     /// Rendering passes. Will not change after init.
     Passes passes;
@@ -102,10 +99,8 @@ struct Model : public de::ModelDrawable
     StateAnims animations;
 
     /// Shared timelines (not sequence-specific). Owned.
-    QHash<de::String, de::Timeline *> timelines;
+    de::Hash<de::String, de::Timeline *> timelines;
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(Model::Flags)
 
 } // namespace render
 

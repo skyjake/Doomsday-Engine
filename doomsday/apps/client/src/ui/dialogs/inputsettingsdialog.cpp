@@ -75,7 +75,7 @@ DE_GUI_PIMPL(InputSettingsDialog)
         gamepad->items() << new ChoiceItem(tr("None"), "");
         QStringList ids = ClientApp::inputSystem().gameControllerPresets().ids();
         ids.sort(Qt::CaseInsensitive);
-        foreach (QString id, ids)
+        for (QString id : ids)
         {
             gamepad->items() << new ChoiceItem(id, id);
         }

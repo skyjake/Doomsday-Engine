@@ -28,25 +28,16 @@
 #include "world/surface.h"
 #include "client/clskyplane.h"
 #include "client/cledgeloop.h"
-
 #include "render/rend_main.h" // Rend_SkyLightColor(), useBias
-//#include "BiasIllum"
-//#include "BiasTracker"
 #include "LightDecoration"
 #include "MaterialAnimator"
-//#include "Shard"
 #include "WallEdge"
-
 #include "misc/face.h"
 #include "dd_main.h"  // verbose
 
 #include <de/LogBuffer>
-
-#include <QtAlgorithms>
-#include <QHash>
-#include <QMap>
-#include <QRect>
-#include <QSet>
+#include <de/Map>
+#include <de/Set>
 
 using namespace de;
 
@@ -62,8 +53,7 @@ enum SubsectorFlag
     PartSelfRef      = 0x10
 };
 
-Q_DECLARE_FLAGS(SubsectorFlags, SubsectorFlag)
-Q_DECLARE_OPERATORS_FOR_FLAGS(SubsectorFlags)
+using SubsectorFlags = Flags;
 
 #ifdef DE_DEBUG
 /**
@@ -77,17 +67,20 @@ static DotPath composeSurfacePath(Surface const &surface)
     switch (owner.type())
     {
     case DMU_PLANE:
-        return String("sector#%1.%2")
-                 .arg(owner.as<Plane>().sector().indexInMap())
-                 .arg(Sector::planeIdAsText(owner.as<Plane>().indexInSector()));
+        return String::format("sector#%i.%s",
+                              owner.as<Plane>().sector().indexInMap(),
+                              Sector::planeIdAsText(owner.as<Plane>().indexInSector()).c_str());
 
     case DMU_SIDE:
-        return String("line#%1.%2.%3")
-                 .arg(owner.as<LineSide>().line().indexInMap())
-                 .arg(Line::sideIdAsText(owner.as<LineSide>().sideId()))
-                 .arg(LineSide::sectionIdAsText(  &surface == &owner.as<LineSide>().middle() ? LineSide::Middle
-                                                : &surface == &owner.as<LineSide>().bottom() ? LineSide::Bottom
-                                                : LineSide::Top));
+        return String::format(
+            "line#%i.%s.%s",
+            owner.as<LineSide>().line().indexInMap(),
+            Line::sideIdAsText(owner.as<LineSide>().sideId()).c_str(),
+            LineSide::sectionIdAsText(
+                &surface == &owner.as<LineSide>().middle()
+                    ? LineSide::Middle
+                    : &surface == &owner.as<LineSide>().bottom() ? LineSide::Bottom : LineSide::Top)
+                .c_str());
 
     default: return "";
     }
@@ -118,14 +111,14 @@ DE_PIMPL(ClientSubsector)
 {
     struct BoundaryData
     {
-        struct EdgeLoops : public QList<ClEdgeLoop *>
+        struct EdgeLoops : public List<ClEdgeLoop *>
         {
             ~EdgeLoops() { clear(); }
 
             void clear()
             {
-                qDeleteAll(*this);
-                QList<ClEdgeLoop *>::clear();
+                deleteAll(*this);
+                List<ClEdgeLoop *>::clear();
             }
         };
 
@@ -166,24 +159,29 @@ DE_PIMPL(ClientSubsector)
         {}
     };
     /// @todo Avoid two-stage lookup.
-    typedef QMap<dint, GeometryData *> Shards;
-    struct GeometryGroups : public QMap<MapElement *, Shards>
+    typedef de::Map<dint, GeometryData *> Shards;
+    struct GeometryGroups : public de::Map<MapElement *, Shards>
     {
-        ~GeometryGroups() { DE_FOR_EACH(GeometryGroups, g, *this) qDeleteAll(*g); }
+        ~GeometryGroups()
+        {
+            for (auto &g : *this)
+    {
+                g.second.deleteAll();
+            }
+        }
     };
 
     struct DecoratedSurface : public Surface::IDecorationState
     {
-        QVector<Decoration *> decorations;
-        bool needUpdate = true;
+        List<Decoration *> decorations;
+        bool               needUpdate = true;
 
         DecoratedSurface() {}
 
-        ~DecoratedSurface() {
-            qDeleteAll(decorations);
-        }
+        ~DecoratedSurface() { deleteAll(decorations); }
 
-        void markForUpdate(bool yes = true) {
+        void markForUpdate(bool yes = true)
+        {
             if (::ddMapSetup) return;
             needUpdate = yes;
         }
@@ -192,20 +190,17 @@ DE_PIMPL(ClientSubsector)
     dint validFrame;
     bool hasWorldVolumeInValidFrame;
 
-    bool needClassify = true;  ///< @c true= (Re)classification is necessary.
-    SubsectorFlags flags = 0;
+    bool             needClassify     = true; ///< @c true= (Re)classification is necessary.
+    SubsectorFlags   flags            = 0;
     ClientSubsector *mappedVisFloor   = nullptr;
     ClientSubsector *mappedVisCeiling = nullptr;
 
     std::unique_ptr<BoundaryData> boundaryData;
 
     GeometryGroups geomGroups;
-#if 0
-    QHash<Shard *, GeometryData *> shardToGeomData; ///< Reverse lookup.
-#endif
 
     /// Subspaces in the neighborhood effecting environmental audio characteristics.
-    typedef QSet<ConvexSubspace *> ReverbSubspaces;
+    typedef Set<ConvexSubspace *> ReverbSubspaces;
     ReverbSubspaces reverbSubspaces;
 
     /// Environmental audio config.
@@ -213,8 +208,7 @@ DE_PIMPL(ClientSubsector)
     bool needReverbUpdate = true;
 
     // Per surface lists of light decoration info and state.
-    //QHash<Id::Type, DecoratedSurface> decorSurfaces;
-    QSet<Surface *> decorSurfaces;
+    Set<Surface *> decorSurfaces;
 
     Impl(Public *i) : Base(i)
     {}
@@ -476,7 +470,7 @@ DE_PIMPL(ClientSubsector)
         if (boundaryData) return;
 
         boundaryData.reset(new BoundaryData);
-        QList<HEdge *> neighbors = self().listUniqueBoundaryEdges();
+        List<HEdge *> neighbors = self().listUniqueBoundaryEdges();
         if (neighbors.count() == 1)
         {
             // Single neighbor => one implicit loop.
@@ -487,23 +481,23 @@ DE_PIMPL(ClientSubsector)
             // Multiple neighbors require testing of bounding boxes.
             DE_ASSERT(!neighbors.isEmpty());
 
-            QList<QRectF> boundaries;
+            List<Rectanglef> boundaries;
             for (HEdge *base : neighbors)
             {
-                QRectF bounds;
+                Rectanglef bounds;
                 SubsectorCirculator it(base);
                 do
                 {
-                    bounds |= QRectF(QPointF(it->origin().x, it->origin().y),
-                                     QPointF(it->twin().origin().x, it->twin().origin().y))
+                    bounds |= Rectanglef(Vec2f(it->origin().x, it->origin().y),
+                                         Vec2f(it->twin().origin().x, it->twin().origin().y))
                         .normalized();
                 } while (&it.next() != base);
 
                 boundaries << bounds;
             }
 
-            QRectF const *largest = nullptr;
-            for (QRectF const &boundary : boundaries)
+            Rectanglef const *largest = nullptr;
+            for (Rectanglef const &boundary : boundaries)
             {
                 if (!largest || boundary.contains(*largest))
                     largest = &boundary;
@@ -511,10 +505,11 @@ DE_PIMPL(ClientSubsector)
 
             for (dint i = 0; i < neighbors.count(); ++i)
             {
-                QRectF &boundary = boundaries[i];
-                HEdge *hedge     = neighbors[i];
+                Rectanglef &boundary = boundaries[i];
+                HEdge *     hedge    = neighbors[i];
 
-                boundaryData->addEdgeLoop(new ClEdgeLoop(self(), *hedge, !(&boundary == largest || (largest && boundary == *largest))));
+                boundaryData->addEdgeLoop(new ClEdgeLoop(
+                    self(), *hedge, !(&boundary == largest || (largest && boundary == *largest))));
             }
         }
     }
@@ -694,14 +689,14 @@ DE_PIMPL(ClientSubsector)
      */
     GeometryData *geomData(MapElement &mapElement, dint geomId, bool canAlloc = false)
     {
-        GeometryGroups::iterator foundGroup = geomGroups.find(&mapElement);
+        auto foundGroup = geomGroups.find(&mapElement);
         if (foundGroup != geomGroups.end())
         {
-            Shards &shards = *foundGroup;
-            Shards::iterator found = shards.find(geomId);
+            Shards &shards = foundGroup->second;
+            auto found = shards.find(geomId);
             if (found != shards.end())
             {
-                return *found;
+                return found->second;
             }
         }
 
@@ -712,7 +707,7 @@ DE_PIMPL(ClientSubsector)
             foundGroup = geomGroups.insert(&mapElement, Shards());
         }
 
-        return *foundGroup->insert(geomId, new GeometryData(&mapElement, geomId));
+        return foundGroup->second.insert(geomId, new GeometryData(&mapElement, geomId))->second;
     }
 
 #if 0
@@ -1027,10 +1022,10 @@ DE_PIMPL(ClientSubsector)
 
         ds.markForUpdate(false);
 
-        qDeleteAll(ds.decorations);
+        // Clear any existing decorations.
+        deleteAll(ds.decorations);
         ds.decorations.clear();
 
-        // Clear any existing decorations.
         if (surface.hasMaterial())
         {
             Vec2f materialOrigin;
@@ -1315,7 +1310,7 @@ DE_PIMPL(ClientSubsector)
         DecoratedSurface &ds = allocDecorationState(surface);
 
         // Clear any existing decorations (now invalid).
-        qDeleteAll(ds.decorations);
+        deleteAll(ds.decorations);
         ds.decorations.clear();
         ds.markForUpdate();
 
@@ -1353,7 +1348,7 @@ DE_PIMPL(ClientSubsector)
     }
 };
 
-ClientSubsector::ClientSubsector(QVector<ConvexSubspace *> const &subspaces)
+ClientSubsector::ClientSubsector(List<ConvexSubspace *> const &subspaces)
     : Subsector(subspaces)
     , d(new Impl(this))
 {
@@ -1410,22 +1405,22 @@ ClientSubsector::ClientSubsector(QVector<ConvexSubspace *> const &subspaces)
 
 String ClientSubsector::description() const
 {
-    auto desc = String(    _E(l) "%1: " _E(.) _E(i) "Sector %2%3" _E(.)
-                       " " _E(l) "%4: " _E(.) _E(i) "Sector %5%6" _E(.))
-                    .arg(Sector::planeIdAsText(Sector::Floor  ).upperFirstChar())
-                    .arg(visFloor  ().sector().indexInMap())
-                    .arg(&visFloor  () != &sector().floor  () ? " (mapped)" : "")
-                    .arg(Sector::planeIdAsText(Sector::Ceiling).upperFirstChar())
-                    .arg(visCeiling().sector().indexInMap())
-                    .arg(&visCeiling() != &sector().ceiling() ? " (mapped)" : "");
+    auto desc = String::format(_E(l) "%c: " _E(.) _E(i) "Sector %i%s" _E(.) " " _E(l) "%c: " _E(.)
+                                   _E(i) "Sector %i%s" _E(.),
+                               towupper(Sector::planeIdAsText(Sector::Floor).first()),
+                               visFloor().sector().indexInMap(),
+                               &visFloor() != &sector().floor() ? " (mapped)" : "",
+                               towupper(Sector::planeIdAsText(Sector::Ceiling).first()),
+                               visCeiling().sector().indexInMap(),
+                               &visCeiling() != &sector().ceiling() ? " (mapped)" : "");
 
     if (d->boundaryData)
     {
-        desc += String(_E(D) "\nEdge loops (%1):" _E(.)).arg(edgeLoopCount());
+        desc += String::format(_E(D) "\nEdge loops (%i):" _E(.), edgeLoopCount());
         dint index = 0;
         forAllEdgeLoops([&desc, &index] (ClEdgeLoop const &loop)
         {
-            desc += String("\n[%1]: ").arg(index) + _E(>) + loop.description() + _E(<);
+            desc += String::format("\n[%i]: ", index) + _E(>) + loop.description() + _E(<);
             index += 1;
             return LoopContinue;
         });
@@ -1440,14 +1435,14 @@ String ClientSubsector::description() const
             for (Decoration *decor : static_cast<Impl::DecoratedSurface *>
                                      (surface->decorationState())->decorations)
             {
-                desc += String("\n[%1]: ").arg(decorIndex) + _E(>) + decor->description() + _E(<);
+                desc += String::format("\n[%i]: ", decorIndex) + _E(>) + decor->description() + _E(<);
                 decorIndex += 1;
             }
         }
     }
 
     DE_DEBUG_ONLY(
-        desc.prepend(String(_E(b) "ClientSubsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+        desc.prepend(String::format(_E(b) "ClientSubsector " _E(.) "[%p]\n", this));
     )
     return Subsector::description() + "\n" + desc;
 }
@@ -1461,7 +1456,7 @@ String ClientSubsector::edgeLoopIdAsText(dint loopId) // static
 
     default:
         DE_ASSERT_FAIL("ClientSubsector::edgeLoopIdAsText: Invalid loopId");
-        throw Error("ClientSubsector::edgeLoopIdAsText", "Unknown loop ID " + QString::number(loopId));
+        throw Error("ClientSubsector::edgeLoopIdAsText", stringf("Unknown loop ID %i", loopId));
     }
 }
 
@@ -1474,7 +1469,7 @@ dint ClientSubsector::edgeLoopCount() const
 LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop &)> &func)
 {
     d->initBoundaryDataIfNeeded();
-    DE_ASSERT(bool(d->boundaryData->outerLoop));
+    DE_ASSERT(d->boundaryData->outerLoop);
     {
         if (auto result = func(*d->boundaryData->outerLoop))
             return result;
@@ -1490,7 +1485,7 @@ LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEd
 LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop const &)> &func) const
 {
     d->initBoundaryDataIfNeeded();
-    DE_ASSERT(bool(d->boundaryData->outerLoop));
+    DE_ASSERT(d->boundaryData->outerLoop);
     {
         if (auto result = func(*d->boundaryData->outerLoop))
             return result;
@@ -1561,7 +1556,7 @@ Plane const &ClientSubsector::visPlane(dint planeIndex) const
     return sector().plane(planeIndex);
 }
 
-LoopResult ClientSubsector::forAllVisPlanes(std::function<LoopResult (Plane &)> func)
+LoopResult ClientSubsector::forAllVisPlanes(const std::function<LoopResult (Plane &)>& func)
 {
     for (dint i = 0; i < visPlaneCount(); ++i)
     {
@@ -1571,7 +1566,7 @@ LoopResult ClientSubsector::forAllVisPlanes(std::function<LoopResult (Plane &)> 
     return LoopContinue;
 }
 
-LoopResult ClientSubsector::forAllVisPlanes(std::function<LoopResult (Plane const &)> func) const
+LoopResult ClientSubsector::forAllVisPlanes(const std::function<LoopResult (Plane const &)>& func) const
 {
     for (dint i = 0; i < visPlaneCount(); ++i)
     {
@@ -1847,15 +1842,8 @@ duint ClientSubsector::biasLastChangeOnFrame() const
 void ClientSubsector::decorate()
 {
     LOG_AS("ClientSubsector::decorate");
-    /*auto decorateFunc = [this] (Surface &surface)
 
     if (!hasDecorations()) return;
-
-//    auto decorateFunc = [this] (Surface &surface)
-//    {
-//        d->decorate(surface);
-//        return LoopContinue;
-//    };
 
     // Surfaces of the edge loops.
     forAllEdgeLoops([this](ClEdgeLoop const &loop)

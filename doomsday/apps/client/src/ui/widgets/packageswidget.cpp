@@ -223,7 +223,7 @@ DE_GUI_PIMPL(PackagesWidget)
 
         void destroyTagButtons()
         {
-            foreach (ButtonWidget *button, _tags)
+            for (ButtonWidget *button : _tags)
             {
                 GuiWidget::destroy(button);
             }
@@ -321,9 +321,10 @@ DE_GUI_PIMPL(PackagesWidget)
                 icon().setImageScale(.5f);
             }
 
-            String labelText =
-                String(_E(b) "%1\n" _E(l) _E(s) "%2").arg(_item->label()).arg(pkgIdVer.first);
-
+            String labelText = String(_E(b) "%1\n" _E(l) _E(s) "%2")
+                    .arg(_item->label())
+                    .arg(pkgIdVer.first);
+                
             if (!isFile && pkgIdVer.second.isValid())
             {
                 labelText += String(_E(C) " %1" _E(.)).arg(pkgIdVer.second.compactNumber());

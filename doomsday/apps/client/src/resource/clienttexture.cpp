@@ -83,7 +83,7 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
                                                      TextureVariantSpec const &spec,
                                                      bool canCreate)
 {
-    foreach (Variant *variant, d->variants)
+    for (Variant *variant : d->variants)
     {
         TextureVariantSpec const &cand = variant->spec();
         switch (method)
@@ -148,7 +148,7 @@ void ClientTexture::release(/*TextureVariantSpec *spec*/)
 {
     Texture::release();
 
-    foreach (TextureVariant *variant, d->variants)
+    for (TextureVariant *variant : d->variants)
     {
         //if (!spec || spec == &variant->spec())
         {

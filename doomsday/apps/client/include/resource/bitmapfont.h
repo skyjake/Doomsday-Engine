@@ -48,8 +48,8 @@ public:
     int descent() const override;
     int lineSpacing() const override;
 
-    de::Rectanglei const &glyphPosCoords(uchar ch) const override;
-    de::Rectanglei const &glyphTexCoords(uchar ch) const override;
+    de::Rectanglei const &glyphPosCoords(de::dbyte ch) const override;
+    de::Rectanglei const &glyphTexCoords(de::dbyte ch) const override;
 
     void glInit() const override;
     void glDeinit() const override;

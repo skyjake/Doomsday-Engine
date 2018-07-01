@@ -45,10 +45,10 @@
 #endif
 
 #if defined(UNIX) && defined(MACOSX)
-#  define GL_GLEXT_PROTOTYPES
+//#  define GL_GLEXT_PROTOTYPES
 #  include <de/graphics/opengl.h>
-#  include <OpenGL/glext.h>
-#  include <OpenGL/OpenGL.h>
+//#  include <OpenGL/glext.h>
+//#  include <OpenGL/OpenGL.h>
 #  define GL_CALL
 #endif
 

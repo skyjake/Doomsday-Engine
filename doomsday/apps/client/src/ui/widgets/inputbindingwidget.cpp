@@ -95,7 +95,7 @@ DE_GUI_PIMPL(InputBindingWidget)
         String text = _E(l) + tr("(not bound)");
 
         // Check all the contexts associated with this widget.
-        foreach (QString bcName, contexts)
+        for (QString bcName : contexts)
         {
             if (!InputSystem::get().hasContext(bcName)) continue;
             BindContext const &context = InputSystem::get().context(bcName);
@@ -124,7 +124,7 @@ DE_GUI_PIMPL(InputBindingWidget)
             return LoopContinue;
         });
 
-        foreach (QString bcName, contexts)
+        for (QString bcName : contexts)
         {
             String ev = String("%1:%2").arg(bcName, eventDesc);
             InputSystem::get().bindCommand(ev.toLatin1(), command.toLatin1());

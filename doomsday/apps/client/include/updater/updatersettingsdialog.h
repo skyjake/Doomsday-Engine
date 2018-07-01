@@ -30,13 +30,8 @@
  */
 class UpdaterSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    enum Mode {
-        Normal = 0,
-        WithApplyAndCheckButton = 1
-    };
+    enum Mode { Normal = 0, WithApplyAndCheckButton = 1 };
 
     UpdaterSettingsDialog(Mode mode = Normal, de::String const &name = "updatersettings");
 
@@ -45,7 +40,6 @@ public:
      */
     bool settingsHaveChanged() const;
 
-public slots:
     void apply();
     void applyAndCheckNow();
 

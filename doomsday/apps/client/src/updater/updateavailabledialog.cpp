@@ -28,16 +28,16 @@
 #include <de/Log>
 #include <de/ProgressWidget>
 #include <de/ToggleWidget>
-#include <de/SignalAction>
-#include <QUrl>
-#include <QDesktopServices>
+//#include <de/SignalAction>
+//#include <QUrl>
+//#include <QDesktopServices>
 
 using namespace de;
 
 static TimeSpan const SHOW_ANIM_SPAN = 0.3;
 
-DE_GUI_PIMPL(UpdateAvailableDialog),
-DE_OBSERVES(ToggleWidget, Toggle)
+DE_GUI_PIMPL(UpdateAvailableDialog)
+, DE_OBSERVES(ToggleWidget, Toggle)
 {
     ProgressWidget *checking;
     ToggleWidget *autoCheck;
@@ -58,13 +58,13 @@ DE_OBSERVES(ToggleWidget, Toggle)
     void initForChecking(void)
     {
         init();
-        showProgress(true, 0);
+        showProgress(true, 0.0);
     }
 
     void initForResult(Version const &latest)
     {
         init();
-        updateResult(latest, 0);
+        updateResult(latest, 0.0);
     }
 
     void showProgress(bool show, TimeSpan span)
@@ -83,7 +83,7 @@ DE_OBSERVES(ToggleWidget, Toggle)
     void init()
     {
         checking = new ProgressWidget;
-        checking->setText(tr("Checking for Updates..."));
+        checking->setText("Checking for Updates...");
 
         // The checking indicator is overlaid on the normal content.
         checking->rule().setRect(self().rule());
@@ -92,7 +92,7 @@ DE_OBSERVES(ToggleWidget, Toggle)
         autoCheck = new ToggleWidget;
         self().area().add(autoCheck);
         autoCheck->setAlignment(ui::AlignLeft);
-        autoCheck->setText(tr("Check for updates automatically"));
+        autoCheck->setText("Check for updates automatically");
         autoCheck->audienceForToggle() += this;
 
         // Include the toggle in the layout.
@@ -115,7 +115,7 @@ DE_OBSERVES(ToggleWidget, Toggle)
         Version const currentVersion = Version::currentBuild();
         String const channel = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" :
                                 UpdaterSettings().channel() == UpdaterSettings::Unstable? "unstable" : "RC/stable");
-        String const builtInType = String(DOOMSDAY_RELEASE_TYPE).toLower();
+        String const builtInType = CString(DOOMSDAY_RELEASE_TYPE).lower();
         bool askUpgrade    = false;
         bool askDowngrade  = false;
 
@@ -123,19 +123,22 @@ DE_OBSERVES(ToggleWidget, Toggle)
         {
             askUpgrade = true;
 
-            self().title().setText(tr("Update Available"));
+            self().title().setText("Update Available");
             self().title().setImage(style().images().image("updater"));
-            self().message().setText(tr("There is an update available. The latest %1 release is %2, while you are running %3.")
-                                   .arg(channel)
-                                   .arg(_E(b) + latestVersion.asHumanReadableText() + _E(.))
-                                   .arg(currentVersion.asHumanReadableText()));
+            self().message().setText(
+                String::format("There is an update available. The latest %s release is %s, while "
+                               "you are running %s.",
+                               channel.c_str(),
+                               (_E(b) + latestVersion.asHumanReadableText() + _E(.)).c_str(),
+                               currentVersion.asHumanReadableText().c_str()));
         }
         else if (isMatchingChannel(channel, builtInType)) // same release type
         {
-            self().title().setText(tr("Up to Date"));
-            self().message().setText(tr("The installed %1 is the latest available %2 build.")
-                                   .arg(currentVersion.asHumanReadableText())
-                                   .arg(_E(b) + channel + _E(.)));
+            self().title().setText("Up to Date");
+            self().message().setText(
+                String::format("The installed %1 is the latest available %2 build.",
+                               currentVersion.asHumanReadableText().c_str(),
+                               (_E(b) + channel + _E(.)).c_str()));
         }
         else if (latestVersion < currentVersion)
         {
@@ -210,7 +213,7 @@ void UpdateAvailableDialog::showResult(Version const &latestVersion, String chan
 
 void UpdateAvailableDialog::showWhatsNew()
 {
-    ClientApp::app().openInBrowser(QUrl(d->changeLog));
+    ClientApp::app().openInBrowser(d->changeLog);
 }
 
 void UpdateAvailableDialog::editSettings()

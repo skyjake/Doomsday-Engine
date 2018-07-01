@@ -18,13 +18,10 @@
  */
 
 #include "de_base.h"
-
 #include "Sector"
 #include "Surface"
 #include "world/p_players.h" // viewPlayer
-
 #include "render/rend_main.h"
-
 #include "render/walledge.h"
 
 using namespace de;

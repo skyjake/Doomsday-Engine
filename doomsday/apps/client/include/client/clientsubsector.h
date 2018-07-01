@@ -22,9 +22,6 @@
 #ifndef DE_WORLD_CLIENTSUBSECTOR_H
 #define DE_WORLD_CLIENTSUBSECTOR_H
 
-#include <functional>
-#include <QBitArray>
-#include <QList>
 #include "world/audioenvironment.h"
 #include "world/line.h"
 #include "world/plane.h"
@@ -33,7 +30,8 @@
 
 #include "render/ilightsource.h"
 
-//class Shard;
+#include <de/BitArray>
+#include <de/List>
 
 namespace world {
 
@@ -49,7 +47,7 @@ public:
      *
      * @param subspaces  Set of subspaces comprising the resulting subsector.
      */
-    ClientSubsector(QVector<ConvexSubspace *> const &subspaces);
+    ClientSubsector(de::List<ConvexSubspace *> const &subspaces);
 
     /**
      * Returns a human-friendly, textual description of the subsector.
@@ -190,20 +188,20 @@ public:
     /**
      * Returns the unique identifier of the light source.
      */
-    LightId lightSourceId() const;
+    LightId lightSourceId() const override;
 
     /**
      * Returns the final ambient light color for the source (which, may be affected by the
      * sky light color if one or more Plane Surfaces in the subsector are using a sky-masked
      * Material).
      */
-    de::Vec3f lightSourceColorf() const;
+    de::Vec3f lightSourceColorf() const override;
 
     /**
      * Returns the final ambient light intensity for the source.
      * @see lightSourceColorf()
      */
-    de::dfloat lightSourceIntensity(de::Vec3d const &viewPoint = de::Vec3d(0, 0, 0)) const;
+    de::dfloat lightSourceIntensity(de::Vec3d const &viewPoint = de::Vec3d(0, 0, 0)) const override;
 
     /**
      * Returns the final ambient light color and intensity for the source.
@@ -258,8 +256,8 @@ public:
      *
      * @param callback  Function to call for each plane.
      */
-    de::LoopResult forAllVisPlanes(std::function<de::LoopResult (Plane &)> func);
-    de::LoopResult forAllVisPlanes(std::function<de::LoopResult (Plane const &)> func) const;
+    de::LoopResult forAllVisPlanes(const std::function<de::LoopResult (Plane &)>& func);
+    de::LoopResult forAllVisPlanes(const std::function<de::LoopResult (Plane const &)>& func) const;
 
     /**
      * Returns the @em visual Plane of the subsector associated with @a planeIndex.

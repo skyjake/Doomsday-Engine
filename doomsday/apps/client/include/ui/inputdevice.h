@@ -21,7 +21,6 @@
 #define CLIENT_INPUTSYSTEM_INPUTDEVICE_H
 
 #include <functional>
-#include <QFlags>
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>
@@ -70,7 +69,7 @@ public:
 
             DefaultFlags = 0
         };
-        Q_DECLARE_FLAGS(BindContextAssociation, BindContextAssociationFlag)
+        using BindContextAssociation = de::Flags;
 
     public:
         explicit Control(InputDevice *device = nullptr);
@@ -347,8 +346,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(InputDevice::Control::BindContextAssociation)
 
 typedef InputDevice::Control InputControl;
 

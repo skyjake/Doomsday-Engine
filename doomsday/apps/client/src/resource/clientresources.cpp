@@ -21,10 +21,6 @@
 #include "de_platform.h"
 #include "resource/clientresources.h"
 
-#include <QHash>
-#include <QVector>
-#include <QtAlgorithms>
-
 #include <de/memory.h>
 #include <de/App>
 #include <de/ArrayValue>
@@ -32,6 +28,7 @@
 #include <de/ByteRefArray>
 #include <de/DirectoryFeed>
 #include <de/Function>
+#include <de/Hash>
 #include <de/LogBuffer>
 #include <de/Loop>
 #include <de/Module>
@@ -95,6 +92,7 @@
 #include "Surface"
 
 using namespace de;
+using namespace res;
 
 /// @c TST_DETAIL type specifications are stored separately into a set of
 /// buckets. Bucket selection is determined by their quantized contrast value.
@@ -116,12 +114,12 @@ DE_PIMPL(ClientResources)
 , DE_OBSERVES(res::ColorPalettes, Addition)
 , DE_OBSERVES(res::ColorPalette,  ColorTableChange)
 {
-    typedef QHash<lumpnum_t, rawtex_t *> RawTextureHash;
+    typedef Hash<lumpnum_t, rawtex_t *> RawTextureHash;
     RawTextureHash rawTexHash;
 
     /// System subspace schemes containing the manifests/resources.
     FontSchemes fontSchemes;
-    QList<FontScheme *> fontSchemeCreationOrder;
+    List<FontScheme *> fontSchemeCreationOrder;
 
     AllFonts fonts;                    ///< From all schemes.
     uint fontManifestCount;            ///< Total number of font manifests (in all schemes).
@@ -129,18 +127,18 @@ DE_PIMPL(ClientResources)
     uint fontManifestIdMapSize;
     FontManifest **fontManifestIdMap;  ///< Index with fontid_t-1
 
-    typedef QVector<FrameModelDef> ModelDefs;
+    typedef List<FrameModelDef> ModelDefs;
     ModelDefs modefs;
-    QVector<int> stateModefs;          ///< Index to the modefs array.
+    List<int> stateModefs;          ///< Index to the modefs array.
 
     typedef StringPool ModelRepository;
     ModelRepository *modelRepository;  ///< Owns FrameModel instances.
 
     /// A list of specifications for material variants.
-    typedef QList<MaterialVariantSpec *> MaterialSpecs;
+    typedef List<MaterialVariantSpec *> MaterialSpecs;
     MaterialSpecs materialSpecs;
 
-    typedef QList<TextureVariantSpec *> TextureSpecs;
+    typedef List<TextureVariantSpec *> TextureSpecs;
     TextureSpecs textureSpecs;
     TextureSpecs detailTextureSpecs[DETAILVARIANT_CONTRAST_HASHSIZE];
 
@@ -174,7 +172,7 @@ DE_PIMPL(ClientResources)
     /// A FIFO queue of material variant caching tasks.
     /// Implemented as a list because we may need to remove tasks from the queue if
     /// the material is destroyed in the mean time.
-    typedef QList<CacheTask *> CacheQueue;
+    typedef List<CacheTask *> CacheQueue;
     CacheQueue cacheQueue;
 
     Impl(Public *i)
@@ -214,7 +212,7 @@ DE_PIMPL(ClientResources)
 
     void clearFontManifests()
     {
-        qDeleteAll(fontSchemes);
+        fontSchemes.deleteAll();
         fontSchemes.clear();
         fontSchemeCreationOrder.clear();
 
@@ -227,13 +225,13 @@ DE_PIMPL(ClientResources)
         fontManifestCount = 0;
     }
 
-    void createFontScheme(String name)
+    void createFontScheme(const String& name)
     {
         DE_ASSERT(name.length() >= FontScheme::min_name_length);
 
         // Create a new scheme.
         FontScheme *newScheme = new FontScheme(name);
-        fontSchemes.insert(name.toLower(), newScheme);
+        fontSchemes.insert(name.lower(), newScheme);
         fontSchemeCreationOrder.append(newScheme);
 
         // We want notification when a new manifest is defined in this scheme.
@@ -256,14 +254,14 @@ DE_PIMPL(ClientResources)
 
     void clearMaterialSpecs()
     {
-        qDeleteAll(materialSpecs);
+        deleteAll(materialSpecs);
         materialSpecs.clear();
     }
 
     MaterialVariantSpec *findMaterialSpec(MaterialVariantSpec const &tpl,
         bool canCreate)
     {
-        foreach (MaterialVariantSpec *spec, materialSpecs)
+        for (MaterialVariantSpec *spec : materialSpecs)
         {
             if (spec->compare(tpl)) return spec;
         }
@@ -275,9 +273,19 @@ DE_PIMPL(ClientResources)
     }
 
     MaterialVariantSpec &getMaterialSpecForContext(MaterialContextId contextId,
-        int flags, byte border, int tClass, int tMap, int wrapS, int wrapT,
-        int minFilter, int magFilter, int anisoFilter,
-        bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
+                                                   int  flags,
+                                                   byte border,
+                                                   int  tClass,
+                                                   int  tMap,
+                                                   int  wrapS,
+                                                   int  wrapT,
+                                                   int  minFilter,
+                                                   int  magFilter,
+                                                   int  anisoFilter,
+                                                   bool mipmapped,
+                                                   bool gammaCorrection,
+                                                   bool noStretch,
+                                                   bool toAlpha)
     {
         static MaterialVariantSpec tpl;
 
@@ -291,7 +299,7 @@ DE_PIMPL(ClientResources)
         case PSpriteContext:    primaryContext = TC_PSPRITE_DIFFUSE;    break;
         case SkySphereContext:  primaryContext = TC_SKYSPHERE_DIFFUSE;  break;
 
-        default: DE_ASSERT(false);
+        default: DE_ASSERT_FAIL("Invalid material context ID");
         }
 
         TextureVariantSpec const &primarySpec =
@@ -312,10 +320,21 @@ DE_PIMPL(ClientResources)
         return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
     }
 
-    static variantspecification_t &configureTextureSpec(variantspecification_t &spec,
-        texturevariantusagecontext_t tc, int flags, byte border, int tClass, int tMap,
-        int wrapS, int wrapT, int minFilter, int magFilter, int anisoFilter,
-        dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha)
+    static variantspecification_t &configureTextureSpec(variantspecification_t & spec,
+                                                        texturevariantusagecontext_t tc,
+                                                        int     flags,
+                                                        byte    border,
+                                                        int     tClass,
+                                                        int     tMap,
+                                                        int     wrapS,
+                                                        int     wrapT,
+                                                        int     minFilter,
+                                                        int     magFilter,
+                                                        int     anisoFilter,
+                                                        dd_bool mipmapped,
+                                                        dd_bool gammaCorrection,
+                                                        dd_bool noStretch,
+                                                        dd_bool toAlpha)
     {
         DE_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
@@ -377,7 +396,7 @@ DE_PIMPL(ClientResources)
         switch (tpl.type)
         {
         case TST_GENERAL: {
-            foreach (TextureVariantSpec *varSpec, textureSpecs)
+            for (TextureVariantSpec *varSpec : textureSpecs)
             {
                 if (*varSpec == tpl)
                 {
@@ -388,7 +407,7 @@ DE_PIMPL(ClientResources)
 
         case TST_DETAIL: {
             int hash = hashDetailTextureSpec(tpl.detailVariant);
-            foreach (TextureVariantSpec *varSpec, detailTextureSpecs[hash])
+            for (TextureVariantSpec *varSpec : detailTextureSpecs[hash])
             {
                 if (*varSpec == tpl)
                 {
@@ -451,15 +470,18 @@ DE_PIMPL(ClientResources)
     int pruneUnusedTextureSpecs(TextureSpecs &list)
     {
         int numPruned = 0;
-        QMutableListIterator<TextureVariantSpec *> it(list);
-        while (it.hasNext())
+        for (auto i = list.begin(); i != list.end(); )
         {
-            TextureVariantSpec *spec = it.next();
+            TextureVariantSpec *spec = *i;
             if (!textureSpecInUse(*spec))
             {
-                it.remove();
+                i = list.erase(i);
                 delete spec;
                 numPruned += 1;
+            }
+            else
+            {
+                ++i;
             }
         }
         return numPruned;
@@ -483,12 +505,12 @@ DE_PIMPL(ClientResources)
 
     void clearAllTextureSpecs()
     {
-        qDeleteAll(textureSpecs);
+        deleteAll(textureSpecs);
         textureSpecs.clear();
 
         for (int i = 0; i < DETAILVARIANT_CONTRAST_HASHSIZE; ++i)
         {
-            qDeleteAll(detailTextureSpecs[i]);
+            deleteAll(detailTextureSpecs[i]);
             detailTextureSpecs[i].clear();
         }
     }
@@ -497,7 +519,7 @@ DE_PIMPL(ClientResources)
     {
         while (!cacheQueue.isEmpty())
         {
-            QScopedPointer<CacheTask> task(cacheQueue.takeFirst());
+            std::unique_ptr<CacheTask> task(cacheQueue.takeFirst());
             task->run();
         }
     }
@@ -508,7 +530,7 @@ DE_PIMPL(ClientResources)
     {
         // Already in the queue?
         bool alreadyQueued = false;
-        foreach (CacheTask *baseTask, cacheQueue)
+        for (CacheTask *baseTask : cacheQueue)
         {
             if (MaterialCacheTask *task = dynamic_cast<MaterialCacheTask *>(baseTask))
             {
@@ -531,7 +553,7 @@ DE_PIMPL(ClientResources)
         // for all other materials within the same group(s). Although we could
         // use a flag in the task and have it find the groups come prepare time,
         // this way we can be sure there are no overlapping tasks.
-        foreach (world::Materials::MaterialManifestGroup *group,
+        for (world::Materials::MaterialManifestGroup *group :
                  world::Materials::get().allMaterialGroups())
         {
             if (!group->contains(&material.manifest()))
@@ -539,7 +561,7 @@ DE_PIMPL(ClientResources)
                 continue;
             }
 
-            foreach (world::MaterialManifest *manifest, *group)
+            for (world::MaterialManifest *manifest : *group)
             {
                 if (!manifest->hasMaterial()) continue;
 
@@ -556,11 +578,11 @@ DE_PIMPL(ClientResources)
                                   MaterialVariantSpec const &contextSpec,
                                   bool cacheGroups = true)
     {
-        if (auto const *sprites = self().sprites().tryFindSpriteSet(id))
+        if (const auto *sprites = self().sprites().tryFindSpriteSet(id))
         {
-            for (Record const &sprite : *sprites)
+            for (const auto &sprite : *sprites)
             {
-                defn::Sprite const spriteDef(sprite);
+                defn::Sprite const spriteDef(sprite.second);
                 for (auto const &view : spriteDef.def().compiled().views)
                 {
                     //res::Uri const &viewMaterial = ; // spriteDef.viewMaterial(iter->first.value->asInt());
@@ -629,7 +651,7 @@ DE_PIMPL(ClientResources)
     /**
      * Create a new modeldef or find an existing one. This is for ID'd models.
      */
-    FrameModelDef *getModelDefWithId(String id)
+    FrameModelDef *getModelDefWithId(const String& id)
     {
         if (id.isEmpty()) return nullptr;
 
@@ -928,7 +950,7 @@ DE_PIMPL(ClientResources)
                 if (!mdl)
                 {
                     // Attempt to load it in now.
-                    QScopedPointer<FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
+                    std::unique_ptr<FileHandle> hndl(&fileSys().openFile(foundPath, "rb"));
 
                     mdl = FrameModel::loadFromFile(*hndl, modelAspectMod);
 
@@ -1160,7 +1182,8 @@ DE_PIMPL(ClientResources)
         {
             // Allocate more memory.
             fontManifestIdMapSize += 32;
-            fontManifestIdMap = (FontManifest **) M_Realloc(fontManifestIdMap, sizeof(*fontManifestIdMap) * fontManifestIdMapSize);
+            fontManifestIdMap = (FontManifest **) M_Realloc(
+                fontManifestIdMap, sizeof(*fontManifestIdMap) * fontManifestIdMapSize);
         }
         fontManifestIdMap[fontManifestCount - 1] = &manifest;
     }
@@ -1202,7 +1225,7 @@ DE_PIMPL(ClientResources)
     void colorPaletteColorTableChanged(res::ColorPalette &colorPalette)
     {
         // Release all GL-textures prepared using @a colorPalette.
-        foreach (res::Texture *texture, self().textures().allTextures())
+        for (res::Texture *texture : self().textures().allTextures())
         {
             colorpalette_analysis_t *cp = reinterpret_cast<colorpalette_analysis_t *>(texture->analysisDataPointer(res::Texture::ColorPaletteAnalysis));
             if (cp && cp->paletteId == colorpaletteid_t(colorPalette.id()))
@@ -1273,7 +1296,7 @@ void ClientResources::initSystemTextures()
 void ClientResources::reloadAllResources()
 {
     DE_ASSERT_IN_MAIN_THREAD();
-    DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     Resources::reloadAllResources();
     DD_UpdateEngineState();
@@ -1290,7 +1313,7 @@ rawtex_t *ClientResources::rawTexture(lumpnum_t lumpNum)
     }
 
     auto found = d->rawTexHash.find(lumpNum);
-    return (found != d->rawTexHash.end() ? found.value() : nullptr);
+    return (found != d->rawTexHash.end() ? found->second : nullptr);
 }
 
 rawtex_t *ClientResources::declareRawTexture(lumpnum_t lumpNum)
@@ -1315,14 +1338,15 @@ rawtex_t *ClientResources::declareRawTexture(lumpnum_t lumpNum)
     return raw;
 }
 
-QList<rawtex_t *> ClientResources::collectRawTextures() const
+List<rawtex_t *> ClientResources::collectRawTextures() const
 {
-    return d->rawTexHash.values();
+    return map<List<rawtex_t *>>(
+        d->rawTexHash, [](const Impl::RawTextureHash::value_type &v) { return v.second; });
 }
 
 void ClientResources::clearAllRawTextures()
 {
-    qDeleteAll(d->rawTexHash);
+    deleteAll(d->rawTexHash);
     d->rawTexHash.clear();
 }
 
@@ -1384,7 +1408,7 @@ void ClientResources::releaseAllGLTextures()
     releaseAllSystemGLTextures();
 }
 
-void ClientResources::releaseGLTexturesByScheme(String schemeName)
+void ClientResources::releaseGLTexturesByScheme(const String& schemeName)
 {
     if (schemeName.isEmpty()) return;
 
@@ -1443,23 +1467,23 @@ TextureVariantSpec &ClientResources::detailTextureSpec(dfloat contrast)
     return *d->detailTextureSpec(contrast);
 }
 
-FontScheme &ClientResources::fontScheme(String name) const
+FontScheme &ClientResources::fontScheme(const String& name) const
 {
     LOG_AS("ClientResources::fontScheme");
     if (!name.isEmpty())
     {
-        FontSchemes::iterator found = d->fontSchemes.find(name.toLower());
-        if (found != d->fontSchemes.end()) return **found;
+        FontSchemes::iterator found = d->fontSchemes.find(name.lower());
+        if (found != d->fontSchemes.end()) return *found->second;
     }
     /// @throw UnknownSchemeError An unknown scheme was referenced.
     throw UnknownSchemeError("ClientResources::fontScheme", "No scheme found matching '" + name + "'");
 }
 
-bool ClientResources::knownFontScheme(String name) const
+bool ClientResources::knownFontScheme(const String& name) const
 {
     if (!name.isEmpty())
     {
-        return d->fontSchemes.contains(name.toLower());
+        return d->fontSchemes.contains(name.lower());
     }
     return false;
 }
@@ -1894,7 +1918,7 @@ void ClientResources::setModelDefFrame(FrameModelDef &modef, dint frame)
 
 void ClientResources::purgeCacheQueue()
 {
-    qDeleteAll(d->cacheQueue);
+    deleteAll(d->cacheQueue);
     d->cacheQueue.clear();
 }
 
@@ -2056,7 +2080,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     }
     else // Consider resources in any scheme.
     {
-        foreach (FontScheme *scheme, App_Resources().allFontSchemes())
+        for (FontScheme *scheme : App_Resources().allFontSchemes())
         {
             scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
         }
@@ -2077,7 +2101,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<FontManifest>);
     int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
-    foreach (FontManifest *manifest, found)
+    for (FontManifest *manifest : found)
     {
         String info = String("%1: %2%3" _E(.))
                         .arg(idx, numFoundDigits)
@@ -2112,7 +2136,7 @@ static void printFontIndex(res::Uri const &search,
     else
     {
         // Collect and sort results in each scheme separately.
-        foreach (FontScheme *scheme, App_Resources().allFontSchemes())
+        for (FontScheme *scheme : App_Resources().allFontSchemes())
         {
             int numPrinted = printFontIndex2(scheme, search.path(), flags | res::Uri::OmitScheme);
             if (numPrinted)
@@ -2152,7 +2176,7 @@ D_CMD(PrintFontStats)
     DE_UNUSED(src, argc, argv);
 
     LOG_MSG(_E(b) "Font Statistics:");
-    foreach (FontScheme *scheme, App_Resources().allFontSchemes())
+    for (FontScheme *scheme : App_Resources().allFontSchemes())
     {
         FontScheme::Index const &index = scheme->index();
 

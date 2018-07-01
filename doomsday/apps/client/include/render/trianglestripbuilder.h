@@ -20,8 +20,6 @@
 #ifndef DE_RENDER_TRIANGLE_STRIP_BUILDER
 #define DE_RENDER_TRIANGLE_STRIP_BUILDER
 
-#include <QVarLengthArray> /// @todo Remove me
-
 #include <de/libcore.h>
 #include <de/Vector>
 
@@ -79,12 +77,9 @@ public:
     virtual ~AbstractEdge() {}
 
     virtual Event const &first() const = 0;
-
-    virtual Event const &last() const = 0;
-
-    virtual de::Vec2f materialOrigin() const { return de::Vec2f(); }
-
-    virtual de::Vec3f normal() const { return de::Vec3f(); }
+    virtual Event const &last() const  = 0;
+    virtual de::Vec2f    materialOrigin() const { return de::Vec2f(); }
+    virtual de::Vec3f    normal() const { return de::Vec3f(); }
 };
 
 /**
@@ -112,24 +107,20 @@ public:
      */
     de::Vec2d const &origin() const { return _origin; }
 
-    virtual Event const &first() const = 0;
-
-    virtual Event const &last() const = 0;
-
+    virtual Event const &first() const              = 0;
+    virtual Event const &last() const               = 0;
     virtual Event const &at(EventIndex index) const = 0;
 
-    virtual int divisionCount() const { return 0; }
-
+    virtual int        divisionCount() const { return 0; }
     virtual EventIndex firstDivision() const { return InvalidIndex; }
-
     virtual EventIndex lastDivision() const { return InvalidIndex; }
 
 private:
     de::Vec2d _origin;
 };
 
-typedef QVarLengthArray<de::Vec3f, 24> PositionBuffer;
-typedef QVarLengthArray<de::Vec2f, 24> TexCoordBuffer;
+typedef de::List<de::Vec3f> PositionBuffer;
+typedef de::List<de::Vec2f> TexCoordBuffer;
 
 /**
  * Abstract triangle strip geometry builder.

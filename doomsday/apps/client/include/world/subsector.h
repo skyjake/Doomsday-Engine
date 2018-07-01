@@ -22,9 +22,9 @@
 #define DE_WORLD_SUBSECTOR_H
 
 #include <functional>
-#include <QList>
 #include <de/aabox.h>
 #include <de/Id>
+#include <de/List>
 #include <de/Observers>
 #include <de/Vector>
 #include "HEdge"
@@ -56,7 +56,7 @@ public:
      *
      * @param subspaces  Set of subspaces comprising the resulting subsector.
      */
-    Subsector(QVector<ConvexSubspace *> const &subspaces);
+    Subsector(de::List<ConvexSubspace *> const &subspaces);
 
     virtual ~Subsector();
 
@@ -131,7 +131,7 @@ public:
      * Returns a list containing the first half-edge from each of the edge loops described
      * by the subspace geometry.
      */
-    QList<de::HEdge *> listUniqueBoundaryEdges() const;
+    de::List<de::HEdge *> listUniqueBoundaryEdges() const;
 
 private:
     DE_PRIVATE(d)

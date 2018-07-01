@@ -21,23 +21,18 @@
 
 #include "de_platform.h"
 #include "world/generator.h"
-
 #include "world/clientserverworld.h" // validCount
 #include "world/thinkers.h"
 #include "client/cl_mobj.h"
+#include "client/clientsubsector.h"
 #include "BspLeaf"
 #include "ConvexSubspace"
 #include "Surface"
-
+#include "Face"
 #include "render/rend_model.h"
 #include "render/rend_particle.h"
-
-#include "client/clientsubsector.h"
 #include "network/net_main.h"
-
 #include "api_sound.h"
-
-#include "Face"
 #include "dd_def.h"
 #include "clientapp.h"
 

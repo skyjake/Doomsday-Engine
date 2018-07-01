@@ -38,7 +38,7 @@ CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
     : d(new Impl)
 {
     setSignalOnEnter(true);
-    connect(this, SIGNAL(enterPressed(QString)), this, SLOT(endEditing()));
+    audienceForEnter() += [this](){ endEditing(); };
 
     d->cvar = cvarPath;
     updateFromCVar();
@@ -71,6 +71,6 @@ void CVarLineEditWidget::endEditing()
 
 void CVarLineEditWidget::setCVarValueFromWidget()
 {
-    CVar_SetString(d->var(), text().toUtf8());
+    CVar_SetString(d->var(), text());
 }
 

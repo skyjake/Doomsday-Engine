@@ -180,7 +180,7 @@ public:
         Stage &stage(int index) const;
 
     protected:
-        typedef QList<Stage *> Stages;
+        typedef de::List<Stage *> Stages;
         Stages _stages;
 
     private:

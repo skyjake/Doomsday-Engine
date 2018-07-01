@@ -21,9 +21,9 @@
 #ifndef DE_CLIENT_RESOURCES_H
 #define DE_CLIENT_RESOURCES_H
 
-#include <QList>
-#include <QMap>
-#include <QSet>
+#include <de/List>
+#include <de/Map>
+#include <de/Set>
 #include <de/Error>
 #include <de/Record>
 #include <de/String>
@@ -41,7 +41,6 @@
 #include <doomsday/res/TextureScheme>
 
 #include "resource/rawtexture.h"
-
 #include "AbstractFont"
 #include "BitmapFont"
 #include "CompositeBitmapFont"
@@ -93,8 +92,8 @@ public:
     /// The specified font id was invalid (out of range). @ingroup errors
     DE_ERROR(UnknownFontIdError);
 
-    typedef QMap<de::String, de::FontScheme *> FontSchemes;
-    typedef QList<AbstractFont *> AllFonts;
+    typedef de::Map<de::String, de::FontScheme *> FontSchemes;
+    typedef de::List<AbstractFont *> AllFonts;
 
     static ClientResources &get();
 
@@ -127,7 +126,7 @@ public:
     /**
      * Returns a list of pointers to all the raw textures in the collection.
      */
-    QList<rawtex_t *> collectRawTextures() const;
+    de::List<rawtex_t *> collectRawTextures() const;
 
     /**
      * Determines if a manifest exists for a resource on @a path.
@@ -179,12 +178,12 @@ public:
      *
      * @throws UnknownSchemeError If @a name is unknown.
      */
-    de::FontScheme &fontScheme(de::String name) const;
+    de::FontScheme &fontScheme(const de::String& name) const;
 
     /**
      * Returns @c true iff a Scheme exists with the symbolic @a name.
      */
-    bool knownFontScheme(de::String name) const;
+    bool knownFontScheme(const de::String& name) const;
 
     /**
      * Returns a list of all the schemes for efficient traversal.
@@ -194,7 +193,7 @@ public:
     /**
      * Returns the total number of manifest schemes in the collection.
      */
-    inline de::dint fontSchemeCount() const { return allFontSchemes().count(); }
+    inline de::dint fontSchemeCount() const { return allFontSchemes().size(); }
 
     /**
      * Clear all resources in all schemes.
@@ -202,8 +201,8 @@ public:
      * @see allFontSchemes(), FontScheme::clear().
      */
     inline void clearAllFontSchemes() {
-        foreach(de::FontScheme *scheme, allFontSchemes()) {
-            scheme->clear();
+        for (const auto &scheme : allFontSchemes()) {
+            scheme.second->clear();
         }
     }
 
@@ -310,7 +309,7 @@ public:
      *
      * @param schemeName  Symbolic name of the texture scheme to process.
      */
-    void releaseGLTexturesByScheme(de::String schemeName);
+    void releaseGLTexturesByScheme(const de::String& schemeName);
 
     /**
      * Prepare a material variant specification in accordance to the specified

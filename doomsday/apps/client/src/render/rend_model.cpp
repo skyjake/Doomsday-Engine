@@ -420,7 +420,7 @@ static void drawPrimitives(rendcmd_t mode,
     // begins with the same winding.
 
     DGL_Begin(DGL_TRIANGLE_STRIP);
-    foreach (FrameModel::Primitive const &prim, primitives)
+    for (FrameModel::Primitive const &prim : primitives)
     {
         DGLenum const primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
 
@@ -437,7 +437,7 @@ static void drawPrimitives(rendcmd_t mode,
         if (primType == DGL_TRIANGLE_STRIP)
         {
             lastLength = prim.elements.size();
-            foreach (FrameModel::Primitive::Element const &elem, prim.elements)
+            for (FrameModel::Primitive::Element const &elem : prim.elements)
             {
                 submitElement(elem);
                 if (joining)

@@ -319,7 +319,7 @@ DE_GUI_PIMPL(PackagesDialog)
                     {
                         // Only list here the game data files; Doomsday's PK3s are always
                         // there so listing them is not very helpful.
-                        if (Package::matchTags(*file, QStringLiteral("\\bgamedata\\b")))
+                    if (Package::matchTags(*file, DE_STR("\\bgamedata\\b")))
                         {
                             // Resolve indirection (symbolic links and interpretations) to
                             // describe the actual source file of the package.

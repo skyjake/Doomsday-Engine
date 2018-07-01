@@ -350,7 +350,7 @@ static render::StateAnimator &animatorInstance(Context &ctx)
 static Value *Function_StateAnimator_Thing(Context &ctx, Function::ArgumentValues const &)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
-    if (anim.ownerNamespaceName() == QStringLiteral("__thing__"))
+    if (anim.ownerNamespaceName() == DE_STR("__thing__"))
     {
         return anim[anim.ownerNamespaceName()].value().duplicate();
     }

@@ -207,7 +207,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
                     mapItems << new ui::Item(ui::Item::Separator);
 
                     String const wadName = Package::metadata(*pkgFile).gets(Package::VAR_TITLE);
-                    foreach (String mapId, maps)
+                    for (String mapId : maps)
                     {
                         // Only show each map identifier once; only the last lump can
                         // be loaded.

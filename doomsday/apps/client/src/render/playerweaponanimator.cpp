@@ -63,7 +63,7 @@ DE_PIMPL_NOREF(PlayerWeaponAnimator)
             auto &model = modelBank().model<Model>(identifier);
             model.audienceForDeletion() += this;
             animator.reset(new StateAnimator(identifier, model));
-            animator->setOwnerNamespace(player->info(), QStringLiteral("__player__"));
+            animator->setOwnerNamespace(player->info(), DE_STR("__player__"));
         }
         else
         {

@@ -20,8 +20,8 @@
  */
 
 #include "updater/updatersettings.h"
-#include <QDateTime>
-#include <QDesktopServices>
+//#include <QDateTime>
+//#include <QDesktopServices>
 #include <de/Record>
 #include <de/Config>
 #include <de/TextValue>
@@ -79,7 +79,7 @@ de::NativePath UpdaterSettings::pathToDeleteAtStartup() const
 {
     de::NativePath p = Config::get().gets(VAR_DELETE_PATH);
     de::String ext = p.toString().fileNameExtension();
-    if (p.fileName().startsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
+    if (p.fileName().beginsWith("doomsday") && (ext == ".exe" || ext == ".deb" || ext == ".dmg"))
     {
         return p;
     }

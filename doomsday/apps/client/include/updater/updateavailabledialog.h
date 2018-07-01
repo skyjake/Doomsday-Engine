@@ -28,8 +28,6 @@
 
 class UpdateAvailableDialog : public de::MessageDialog
 {
-    Q_OBJECT
-
 public:
     /// The dialog is initialized with the "Checking" page visible.
     UpdateAvailableDialog();
@@ -37,13 +35,12 @@ public:
     /// The dialog is initialized with the result page visible.
     UpdateAvailableDialog(de::Version const& latestVersion, de::String changeLogUri);
 
-public slots:
+public:
     void showResult(de::Version const &latestVersion, de::String changeLogUri);
     void showWhatsNew();
     void editSettings();
 
-signals:
-    void checkAgain();
+    DE_DEFINE_AUDIENCE2(Check, void userRequestedUpdateCheck())
 
 private:
     DE_PRIVATE(d)

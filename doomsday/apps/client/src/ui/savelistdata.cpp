@@ -73,7 +73,7 @@ DE_PIMPL(SaveListData)
 
     void addAllFromIndex()
     {
-        foreach (File *file, SaveGames::get().saveIndex().files())
+        for (File *file : SaveGames::get().saveIndex().files())
         {
             try
             {
