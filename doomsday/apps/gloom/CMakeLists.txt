@@ -92,6 +92,7 @@ set (SOURCES
     src/main.cpp
     src/mainwindow.cpp
     src/mainwindow.h
+    src/utils.h
 )
 
 # Deploy the FMOD library.

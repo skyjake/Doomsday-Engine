@@ -17,7 +17,8 @@
  */
 
 #include "editor.h"
-#include "../src/gloomapp.h"
+#include "utils.h"
+#include "gloomapp.h"
 #include "gloom/geo/geomath.h"
 #include "gloom/world/mapimport.h"
 
@@ -52,14 +53,14 @@ struct EntityType {
     Entity::Type type;
     QString label;
 };
-static const QMap<Entity::Type, String> entityMetadata {
-    std::make_pair(Entity::Light,        String("Light")),
-    std::make_pair(Entity::Spotlight,    String("Spotlight")),
-    std::make_pair(Entity::Tree1,        String("Tree1")),
-    std::make_pair(Entity::Tree2,        String("Tree2")),
-    std::make_pair(Entity::Tree3,        String("Tree3")),
-    std::make_pair(Entity::TestSphere,   String("Test Sphere")),
-    std::make_pair(Entity::Buggy,        String("Buggy"))
+static const QMap<Entity::Type, QString> entityMetadata {
+    std::make_pair(Entity::Light,        QString("Light")),
+    std::make_pair(Entity::Spotlight,    QString("Spotlight")),
+    std::make_pair(Entity::Tree1,        QString("Tree1")),
+    std::make_pair(Entity::Tree2,        QString("Tree2")),
+    std::make_pair(Entity::Tree3,        QString("Tree3")),
+    std::make_pair(Entity::TestSphere,   QString("Test Sphere")),
+    std::make_pair(Entity::Buggy,        QString("Buggy"))
 };
 
 enum Direction {
@@ -72,6 +73,8 @@ Q_DECLARE_OPERATORS_FOR_FLAGS(Directions)
 
 DE_PIMPL(Editor)
 {
+    using Map = gloom::Map;
+
     enum UserAction {
         None,
         TranslateView,
@@ -139,19 +142,19 @@ DE_PIMPL(Editor)
         // Save the editor state.
         {
             QSettings st;
-            st.setValue("mapId", mapId);
-            st.setValue("filePath", filePath);
+            st.setValue("mapId", convert(mapId));
+            st.setValue("filePath", convert(filePath));
             st.setValue("viewScale", viewScale);
             st.setValue("viewOrigin", geo::toQVector2D(viewOrigin));
         }
     }
 
-    String persistentMapPath() const
+    QString persistentMapPath() const
     {
         return QSettings().value("filePath", "").toString();
     }
 
-    String modeText() const
+    QString modeText() const
     {
         const char *modeStr[ModeCount] = {
             "Points",
@@ -164,7 +167,7 @@ DE_PIMPL(Editor)
         return modeStr[mode];
     }
 
-    String actionText() const
+    QString actionText() const
     {
         switch (userAction)
         {
@@ -180,14 +183,14 @@ DE_PIMPL(Editor)
         return "";
     }
 
-    String statusText() const
+    QString statusText() const
     {
-        String selText;
+        QString selText;
         if (selection.size())
         {
-            selText = String(":%1").arg(selection.size());
+            selText = QString(":%1").arg(selection.size());
         }
-        String text = String("%1 (%2%3) %4")
+        QString text = QString("%1 (%2%3) %4")
                 .arg(modeText())
                 .arg(mode == EditPoints   ? map.points()  .size()
                    : mode == EditLines    ? map.lines()   .size()
@@ -200,23 +203,23 @@ DE_PIMPL(Editor)
                 .arg(actionText());
         if (hoverPoint)
         {
-            text += String(" \u25aa%1").arg(hoverPoint, 0, 16);
+            text += QString(" \u25aa%1").arg(hoverPoint, 0, 16);
         }
         if (hoverLine)
         {
-            text += String(" \u2215%1").arg(hoverLine, 0, 16);
+            text += QString(" \u2215%1").arg(hoverLine, 0, 16);
         }
         if (hoverEntity)
         {
-            text += String(" \u25c9%1").arg(hoverEntity, 0, 16);
+            text += QString(" \u25c9%1").arg(hoverEntity, 0, 16);
         }
         if (hoverSector)
         {
-            text += String(" \u25b3%1").arg(hoverSector, 0, 16);
+            text += QString(" \u25b3%1").arg(hoverSector, 0, 16);
         }
         if (hoverPlane)
         {
-            text += String(" \u25b1%1").arg(hoverPlane, 0, 16);
+            text += QString(" \u25b1%1").arg(hoverPlane, 0, 16);
         }
         return text;
     }
@@ -280,26 +283,26 @@ DE_PIMPL(Editor)
             switch (mode)
             {
             case EditPoints:
-                for (auto i = map.points().begin(); i != map.points().end(); ++i)
+                for (const auto &i : map.points())
                 {
-                    const QPointF viewPos = viewPoint(i.key());
+                    const QPointF viewPos = viewPoint(i.first);
                     if (selectRect.contains(viewPos))
                     {
-                        selection.insert(i.key());
+                        selection.insert(i.first);
                     }
                 }
                 break;
 
             case EditLines:
             case EditSectors:
-                for (auto i = map.lines().begin(); i != map.lines().end(); ++i)
+                for (const auto &i : map.lines())
                 {
-                    const auto &line = i.value();
+                    const auto &line = i.second;
                     QPointF viewPos[2] = {worldToView(map.point(line.points[0])),
                                           worldToView(map.point(line.points[1]))};
                     if (selectRect.contains(viewPos[0]) && selectRect.contains(viewPos[1]))
                     {
-                        selection.insert(i.key());
+                        selection.insert(i.first);
                     }
                 }
                 if (mode == EditLines) emit self().lineSelectionChanged();
@@ -431,8 +434,8 @@ DE_PIMPL(Editor)
     {
         if (mode == EditPoints)
         {
-            const String pid = QInputDialog::getText(thisPublic, tr("Find Point"), tr("Point ID:"));
-            if (pid)
+            const QString pid = QInputDialog::getText(thisPublic, tr("Find Point"), tr("Point ID:"));
+            if (!pid.isEmpty())
             {
                 const ID number = pid.toUInt(nullptr, 16);
                 if (map.isPoint(number))
@@ -451,31 +454,31 @@ DE_PIMPL(Editor)
         switch (mode)
         {
         case EditPoints:
-            for (auto id : map.points().keys())
+            for (const auto &i : map.points())
             {
-                selection.insert(id);
+                selection.insert(i.first);
             }
             break;
 
         case EditLines:
-            for (auto id : map.lines().keys())
+            for (const auto &i : map.lines())
             {
-                selection.insert(id);
+                selection.insert(i.first);
             }
             emit self().lineSelectionChanged();
             break;
 
         case EditSectors:
-            for (auto id : map.sectors().keys())
+            for (const auto &i : map.sectors())
             {
-                selection.insert(id);
+                selection.insert(i.first);
             }
             break;
 
         case EditEntities:
-            for (auto id : map.entities().keys())
+            for (const auto &i : map.entities())
             {
-                selection.insert(id);
+                selection.insert(i.first);
             }
             break;
 
@@ -662,9 +665,9 @@ DE_PIMPL(Editor)
 
             if (map.line(hoverLine).surfaces[startRef.side].sector == 0)
             {
-                IDList      secPoints;
-                IDList      secWalls;
-                QList<Edge> secEdges;
+                IDList     secPoints;
+                IDList     secWalls;
+                List<Edge> secEdges;
 
                 if (map.buildSector(startRef, secPoints, secWalls, secEdges))
                 {
@@ -788,12 +791,12 @@ DE_PIMPL(Editor)
 
         ID id = 0;
         double dist = maxDistance;
-        for (auto i = map.points().begin(); i != map.points().end(); ++i)
+        for (const auto &i : map.points())
         {
-            double d = (QVector2D(viewPoint(i.key())) - QVector2D(viewPos)).length();
+            double d = (QVector2D(viewPoint(i.first)) - QVector2D(viewPos)).length();
             if (d < dist)
             {
-                id = i.key();
+                id = i.first;
                 dist = d;
             }
         }
@@ -806,14 +809,14 @@ DE_PIMPL(Editor)
 
         ID id = 0;
         double dist = maxDistance;
-        for (auto i = map.lines().begin(), end = map.lines().end(); i != end; ++i)
+        for (const auto &i : map.lines())
         {
-            const auto        line = viewLine(i.value());
+            const auto        line = viewLine(i.second);
             const geo::Line2d gLine{Vec2d(line.x1(), line.y1()), Vec2d(line.x2(), line.y2())};
             double            d = gLine.distanceTo(Vec2d(pos.x(), pos.y()));
             if (d < dist)
             {
-                id = i.key();
+                id = i.first;
                 dist = d;
             }
         }
@@ -822,13 +825,13 @@ DE_PIMPL(Editor)
 
     ID findSectorAt(const Point &pos) const
     {
-        for (ID id : map.sectors().keys())
+        for (const auto &i : map.sectors())
         {
-            foreach (const auto &poly, map.sectorPolygons(id))
+            foreach (const auto &poly, map.sectorPolygons(i.first))
             {
                 if (poly.isPointInside(pos.coord))
                 {
-                    return id;
+                    return i.first;
                 }
             }
         }
@@ -837,15 +840,15 @@ DE_PIMPL(Editor)
 
     ID findPlaneAtViewPos(const QPoint &pos) const
     {
-        for (ID secId : map.sectors().keys())
+        for (const auto &sec : map.sectors())
         {
-            const Sector &sector = map.sector(secId);
-            const auto secPolys = map.sectorPolygons(secId);
+            const Sector &sector = sec.second;
+            const auto secPolys = map.sectorPolygons(sec.first);
             for (ID volId : sector.volumes)
             {
                 for (ID plnId : map.volume(volId).planes)
                 {
-                    foreach (const auto &secPoly, secPolys)
+                    for (const auto &secPoly : secPolys)
                     {
                         QPolygonF poly;
                         for (auto pp : secPoly.points)
@@ -869,21 +872,21 @@ DE_PIMPL(Editor)
 
         ID id = 0;
         double dist = maxDistance;
-        for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
+        for (const auto &i : map.entities())
         {
-            const auto &ent = i.value();
+            const auto &ent = i.second;
             const QPoint delta = worldToView(ent->position()).toPoint() - viewPos;
             double d = Vec2f(delta.x(), delta.y()).length();
             if (d < dist)
             {
-                id   = i.key();
+                id   = i.first;
                 dist = d;
             }
         }
         return id;
     }
 
-    String entityLabel(const Entity &ent) const
+    QString entityLabel(const Entity &ent) const
     {
         return entityMetadata[ent.type()];
     }
@@ -1003,52 +1006,56 @@ DE_PIMPL(Editor)
         if (!askSaveFile()) return;
 
         QSettings st;
-        if (String openPath =
-                QFileDialog::getOpenFileName(thisPublic,
-                                             "Open File",
-                                             st.value("lastOpenPath", QDir::homePath()).toString(),
-                                             "Gloom Map (*.gloommap)"))
+        QString   openPath =
+            QFileDialog::getOpenFileName(thisPublic,
+                                         "Open File",
+                                         st.value("lastOpenPath", QDir::homePath()).toString(),
+                                         "Gloom Map (*.gloommap)");
+        if (!openPath.isEmpty())
         {
-            st.setValue("lastOpenPath", openPath.fileNamePath());
+            st.setValue("lastOpenPath", convert(convert(openPath).fileNamePath()));
             loadMap(openPath);
             self().update();
         }
     }
 
-    void loadMap(const String &path)
+    void loadMap(const QString &path)
     {
-        filePath = path;
+        filePath = convert(path);
         mapId.clear();
 
         QFile f(path);
         DE_ASSERT(f.exists());
         f.open(QFile::ReadOnly);
-        map.deserialize(f.readAll());
+        const QByteArray mapData = f.readAll();
+        map.deserialize(Block(mapData.constData(), mapData.size()));
         resetState();
-        setWindowTitle(filePath.fileName());
+        setWindowTitle(convert(filePath.fileName()));
     }
 
     void saveAsFile()
     {
-        if (String newPath = QFileDialog::getSaveFileName(
-                thisPublic, "Save As", filePath.fileNamePath(), "Gloom Map (*.gloommap)"))
+        QString newPath = QFileDialog::getSaveFileName(
+            thisPublic, "Save As", convert(filePath.fileNamePath()), "Gloom Map (*.gloommap)");
+        if (!newPath.isEmpty())
         {
-            filePath = newPath;
-            setWindowTitle(filePath.fileName());
+            filePath = convert(newPath);
+            setWindowTitle(convert(filePath.fileName()));
             saveFile();
         }
     }
 
     void saveFile()
     {
-        if (!filePath)
+        if (filePath.isEmpty())
         {
             saveAsFile();
             return;
         }
-        QFile f(filePath);
+        QFile f(convert(filePath));
         f.open(QFile::WriteOnly);
-        f.write(map.serialize());
+        const Block mapData = map.serialize();
+        f.write(mapData.c_str(), mapData.size());
         isModified = false;
     }
 
@@ -1057,13 +1064,13 @@ DE_PIMPL(Editor)
         askSaveFile();
 
         QSettings st;
-        if (String openPath = QFileDialog::getOpenFileName(
+        if (String openPath = convert(QFileDialog::getOpenFileName(
                 thisPublic,
                 "Import from WAD File",
                 st.value("lastImportPath", QDir::homePath()).toString(),
-                "WAD File (*.wad)"))
+                "WAD File (*.wad)")))
         {
-            st.setValue("lastImportPath", openPath.fileNamePath());
+            st.setValue("lastImportPath", convert(openPath.fileNamePath()));
 
             String path = FS::accessNativeLocation(openPath);
             if (const DataBundle *bundle = FS::tryLocate<const DataBundle>(path))
@@ -1097,7 +1104,7 @@ DE_PIMPL(Editor)
                         {
                             if (list->selectedItems().size())
                             {
-                                importMapId = list->selectedItems().front()->text();
+                                importMapId = convert(list->selectedItems().front()->text());
                             }
                         }
                     }
@@ -1126,7 +1133,7 @@ DE_PIMPL(Editor)
                             mapId = importer.mapId();
                             filePath.clear();
                             resetState();
-                            setWindowTitle(mapId);
+                            setWindowTitle(convert(mapId));
                         }
                     }
                 }
@@ -1135,12 +1142,11 @@ DE_PIMPL(Editor)
         }
     }
 
-    void setWindowTitle(const String &text)
+    void setWindowTitle(const QString &text)
     {
         if (self().parentWidget())
         {
-            self().parentWidget()->setWindowTitle(
-                text + String::format(" (%s)", mapId.toLatin1().constData()));
+            self().parentWidget()->setWindowTitle(QString("%1 (%2)").arg(text).arg(convert(mapId)));
         }
     }
 
@@ -1210,7 +1216,7 @@ String Editor::mapId() const
     return d->mapId;
 }
 
-Map &Editor::map()
+gloom::Map &Editor::map()
 {
     return d->map;
 }
@@ -1287,15 +1293,15 @@ void Editor::paintEvent(QPaintEvent *)
 
     // Sectors and planes.
     {
-        for (auto i = mapSectors.begin(), end = mapSectors.end(); i != end; ++i)
+        for (const auto &i : mapSectors)
         {
-            const ID    secId  = i.key();
-            const auto &sector = i.value();
+            const ID    secId  = i.first;
+            const auto &sector = i.second;
 
             const auto geoPolys = d->map.sectorPolygons(secId);
 
             // Determine corners.
-            foreach (const auto &geoPoly, geoPolys)
+            for (const auto &geoPoly : geoPolys)
             {
                 QVector<QLineF> cornerLines;
                 const Plane &ceiling = d->map.ceilingPlane(secId);
@@ -1387,7 +1393,8 @@ void Editor::paintEvent(QPaintEvent *)
                 }
                 if (d->selection.contains(secId))
                 {
-                    d->drawMetaLabel(ptr, poly.boundingRect().center(), String::format("%X", secId));
+                    d->drawMetaLabel(
+                        ptr, poly.boundingRect().center(), convert(String::format("%X", secId)));
                 }
             }
         }
@@ -1403,9 +1410,9 @@ void Editor::paintEvent(QPaintEvent *)
         QVector<QRectF>  selected;
         QVector<ID>      selectedIds;
 
-        for (auto i = mapPoints.begin(), end = mapPoints.end(); i != end; ++i)
+        for (const auto &i : mapPoints)
         {
-            const ID      id  = i.key();
+            const ID      id  = i.first;
             const QPointF pos = d->viewPoint(id);
 
             points << pos;
@@ -1433,7 +1440,7 @@ void Editor::paintEvent(QPaintEvent *)
             {
                 d->drawMetaLabel(ptr,
                                  selected[i].center() - QPointF(0, 2 * gap),
-                                 String::format("%X", selectedIds[i]));
+                                 convert(String::format("%X", selectedIds[i])));
             }
         }
     }
@@ -1447,15 +1454,15 @@ void Editor::paintEvent(QPaintEvent *)
         QVector<QLineF> selected;
         QVector<ID>     selectedIds;
 
-        for (auto i = mapLines.begin(); i != mapLines.end(); ++i)
+        for (const auto &i : mapLines)
         {
-            auto vline = d->viewLine(i.value());
+            auto vline = d->viewLine(i.second);
             lines << vline;
 
-            if (d->selection.contains(i.key()))
+            if (d->selection.contains(i.first))
             {
                 selected << vline;
-                selectedIds << i.key();
+                selectedIds << i.first;
             }
         }
         ptr.drawLines(&lines[0], lines.size());
@@ -1478,20 +1485,23 @@ void Editor::paintEvent(QPaintEvent *)
                 const auto normal = selected[i].normalVector();
                 QPointF delta{normal.dx(), normal.dy()};
 
-                d->drawMetaLabel(ptr, selected[i].center(), String::format("%X", selectedIds[i]));
+                d->drawMetaLabel(
+                    ptr, selected[i].center(), convert(String::format("%X", selectedIds[i])));
 
                 if (normal.length() > 80)
                 {
                     delta /= normal.length();
 
                     //if (line.sectors[0])
-                        d->drawMetaLabel(ptr,
-                                         selected[i].center() + delta * -20,
-                                         String::format("%X", line.surfaces[0].sector), false);
+                    d->drawMetaLabel(ptr,
+                                     selected[i].center() + delta * -20,
+                                     convert(String::format("%X", line.surfaces[0].sector)),
+                                     false);
                     if (line.surfaces[1].sector)
                         d->drawMetaLabel(ptr,
                                          selected[i].center() + delta * 20,
-                                         String::format("%X", line.surfaces[1].sector), false);
+                                         convert(String::format("%X", line.surfaces[1].sector)),
+                                         false);
                 }
             }
         }
@@ -1503,13 +1513,13 @@ void Editor::paintEvent(QPaintEvent *)
         ptr.setPen(Qt::black);
         ptr.setFont(d->metaFont);
 
-        for (auto i = mapEnts.begin(), end = mapEnts.end(); i != end; ++i)
+        for (const auto &i : mapEnts)
         {
-            const auto &  ent = i.value();
+            const auto &  ent = i.second;
             const QPointF pos = d->worldToView(ent->position());
 
             float radius = 0.5f * d->viewScale;
-            ptr.setBrush(d->selection.contains(i.key())? selectColor : QColor(Qt::white));
+            ptr.setBrush(d->selection.contains(i.first)? selectColor : QColor(Qt::white));
             ptr.drawEllipse(pos, radius, radius);
 
             ptr.drawText(pos + QPointF(radius + 5, metrics.ascent() / 2), d->entityLabel(*ent));
@@ -1538,7 +1548,7 @@ void Editor::paintEvent(QPaintEvent *)
         ptr.drawText(content.left(), y, d->statusText());
 
         const auto mouse = d->worldMousePoint();
-        const String viewText = String("[%1 %2] (%3 %4) z:%5")
+        const QString viewText = QString("[%1 %2] (%3 %4) z:%5")
                 .arg(mouse.coord.x,   0, 'f', 1)
                 .arg(mouse.coord.y,   0, 'f', 1)
                 .arg(d->viewOrigin.x, 0, 'f', 1)
@@ -1720,7 +1730,7 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 
             QMenu *eType = pop->addMenu("Type");
             const ID entityId = d->hoverEntity;
-            for (auto i = entityMetadata.begin(), end = entityMetadata.end(); i != end; ++i)
+            for (const auto &i : entityMetadata)
             {
                 /*QAction *a = */ eType->addAction(i.value(), [this, entityId, i] () {
                     d->map.entity(entityId).setType(i.key());

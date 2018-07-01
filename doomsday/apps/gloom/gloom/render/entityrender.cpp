@@ -131,9 +131,9 @@ DE_PIMPL(EntityRender)
         ents.setBounds(map.bounds());
 
         // Create entities for all objects defined in the map.
-        for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
+        for (const auto &i : map.entities())
         {
-            ents.insert(*i.value());
+            ents.insert(*i.second);
         }
     }
 
@@ -188,7 +188,7 @@ DE_PIMPL(EntityRender)
 
             if (!data.isEmpty())
             {
-                ibuf.setVertices(data, gl::Stream);
+                ibuf.setVertices(data, de::gl::Stream);
                 model.drawInstanced(ibuf);
             }
 

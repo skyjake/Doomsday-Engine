@@ -90,7 +90,7 @@ EditorWindow::EditorWindow()
                         if (map.isLine(id))
                         {
                             auto &line = map.line(id);
-                            line.surfaces[side].material[section] = cb->currentText();
+                            line.surfaces[side].material[section] = convert(cb->currentText());
                             d->editor->markAsChanged();
                         }
                     }
@@ -118,7 +118,7 @@ EditorWindow::EditorWindow()
                     for (int i = 0; i < 3; ++i)
                     {
                         lineMat[i]->setCurrentIndex(
-                            lineMat[i]->findText(line.surfaces[side].material[i]));
+                            lineMat[i]->findText(convert(line.surfaces[side].material[i])));
                     }
                     break;
                 }
@@ -164,7 +164,7 @@ EditorWindow::EditorWindow()
                         if (map.isPlane(id))
                         {
                             auto &plane = map.plane(id);
-                            plane.material[cb == planeMat[0]? 0 : 1] = cb->currentText();
+                            plane.material[cb == planeMat[0]? 0 : 1] = convert(cb->currentText());
                             d->editor->markAsChanged();
                         }
                     }
@@ -191,7 +191,7 @@ EditorWindow::EditorWindow()
                     for (int i = 0; i < 2; ++i)
                     {
                         planeMat[i]->setCurrentIndex(
-                            planeMat[i]->findText(plane.material[i]));
+                            planeMat[i]->findText(convert(plane.material[i])));
                     }
                     break;
                 }

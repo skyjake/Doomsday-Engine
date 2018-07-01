@@ -19,6 +19,7 @@
 #include "gloomapp.h"
 #include "editorwindow.h"
 #include "appwindowsystem.h"
+#include "utils.h"
 #include "../gloom/gloomworld.h"
 #include "../gloom/gloomwidget.h"
 #include "../gloom/world/user.h"
@@ -71,8 +72,9 @@ DE_PIMPL(GloomApp)
     }
 };
 
-GloomApp::GloomApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv), d(new Impl(this))
+GloomApp::GloomApp(const StringList &args)
+    : BaseGuiApp(args)
+    , d(new Impl(this))
 {
     setMetadata("Deng Team", "dengine.net", "Gloom Test", "1.0");
     setUnixHomeFolderName(".gloom");
@@ -80,6 +82,8 @@ GloomApp::GloomApp(int &argc, char **argv)
 
 void GloomApp::initialize()
 {
+    using gloom::Map;
+
     d->world.reset(new GloomWorld);
 
     // Set up the editor.
@@ -88,7 +92,7 @@ void GloomApp::initialize()
         d->editWin->show();
         d->editWin->raise();
 
-        connect(&d->editWin->editor(), &Editor::buildMapRequested, [this]() {
+        QObject::connect(&d->editWin->editor(), &Editor::buildMapRequested, [this]() {
             try
             {
                 AppWindowSystem::main().glActivate();
@@ -117,7 +121,7 @@ void GloomApp::initialize()
             }
             catch (const Error &er)
             {
-                qWarning() << "Map build error:" << er.asText();
+                warning("Map build error: %s", er.asPlainText().c_str());
             }
         });
     }
@@ -156,10 +160,10 @@ void GloomApp::initialize()
 QDir GloomApp::userDir() const
 {
     const QDir home = QDir::home();
-    const QDir dir = home.filePath(unixHomeFolderName());
+    const QDir dir = home.filePath(convert(unixHomeFolderName()));
     if (!dir.exists())
     {
-        home.mkdir(unixHomeFolderName());
+        home.mkdir(convert(unixHomeFolderName()));
     }
     return dir;
 }

@@ -31,7 +31,8 @@ class GloomWidget
     : public de::GuiWidget
     , public ICamera
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE(Change, void currentWorldChanged(const World *old, World *current))
 
 public:
     GloomWidget();
@@ -54,9 +55,7 @@ public:
     de::Mat4f cameraModelView() const;
     de::Mat4f cameraProjection() const;
 
-    DE_DEFINE_AUDIENCE(Change, void currentWorldChanged(const World *old, World *current))
-
-public slots:
+public:
     void setWorld(World *world);
 
 protected:

@@ -26,8 +26,7 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
-    GloomApp::setDefaultOpenGLFormat();
-    GloomApp app(argc, argv);
+    GloomApp app(makeList(argc, argv));
     try
     {
         app.initialize();

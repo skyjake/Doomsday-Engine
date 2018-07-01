@@ -1,6 +1,6 @@
-/** @file testapp.h  Test application.
+/** @file utils.h  Utilities.
  *
- * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,33 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_TEST_APP_H
-#define GLOOM_TEST_APP_H
+#ifndef GLOOMAPP_UTILS_H
+#define GLOOMAPP_UTILS_H
 
-#include <de/BaseGuiApp>
-#include <de/ImageBank>
-#include "gloom/audio/audiosystem.h"
-#include "appwindowsystem.h"
+#include <QString>
+#include <de/String>
 
-#include <QDir>
-
-class GloomApp : public de::BaseGuiApp
+inline de::String convert(const QString &qstr)
 {
-public:
-    GloomApp(const de::StringList &args);
+    return qstr.toStdWString();
+}
 
-    void initialize();
+inline QString convert(const de::String &str)
+{
+    return QString::fromUtf8(str);
+}
 
-    QDir userDir() const;
-
-    static GloomApp &          app();
-    static AppWindowSystem &   windowSystem();
-    static gloom::AudioSystem &audioSystem();
-    static MainWindow &        main();
-    static de::ImageBank &     images();
-
-private:
-    DE_PRIVATE(d)
-};
-
-#endif // GLOOM_TEST_APP_H
+#endif // GLOOMAPP_UTILS_H
