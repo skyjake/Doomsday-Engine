@@ -34,6 +34,7 @@
 #include <SDL2/SDL.h>
 #include <SDL2/SDL_video.h>
 #include <SDL2/SDL_events.h>
+#include <SDL2/SDL_mouse.h>
 
 namespace de {
 
@@ -43,6 +44,9 @@ DE_PIMPL(GuiApp)
     GuiLoop   loop;
     Thread *  renderThread;
     double    dpiFactor = 1.0;
+    SDL_Cursor *arrowCursor;
+    SDL_Cursor *vsizeCursor;
+    SDL_Cursor *hsizeCursor;
 
     Impl(Public *i) : Base(i)
     {
@@ -51,10 +55,17 @@ DE_PIMPL(GuiApp)
 
         // The default render thread is the main thread.
         renderThread = Thread::currentThread();
+
+        arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+        vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
+        hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     }
 
     ~Impl()
     {
+        SDL_FreeCursor(arrowCursor);
+        SDL_FreeCursor(vsizeCursor);
+        SDL_FreeCursor(hsizeCursor);
         DisplayMode_Shutdown();
         SDL_Quit();
     }
@@ -267,6 +278,19 @@ void GuiApp::quit(int code)
 GuiLoop &GuiApp::loop()
 {
     return d->loop;
+}
+
+void GuiApp::setMouseCursor(MouseCursor cursor)
+{
+    SDL_ShowCursor(cursor != None ? SDL_ENABLE : SDL_DISABLE);
+
+    switch (cursor)
+    {
+    case None:             break;
+    case Arrow:            SDL_SetCursor(d->arrowCursor); break;
+    case ResizeHorizontal: SDL_SetCursor(d->hsizeCursor); break;
+    case ResizeVertical:   SDL_SetCursor(d->vsizeCursor); break;
+    }
 }
 
 bool GuiApp::inRenderThread()

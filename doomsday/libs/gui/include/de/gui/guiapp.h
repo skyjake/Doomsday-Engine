@@ -54,6 +54,12 @@ class LIBGUI_PUBLIC GuiApp : public App
                            , DE_OBSERVES(Loop, Iteration)
 {
 public:
+    enum MouseCursor { None, Arrow, ResizeHorizontal, ResizeVertical };
+
+    /// Emitted when the display mode has changed.
+    DE_DEFINE_AUDIENCE2(DisplayModeChange, void displayModeChanged())
+
+public:
     GuiApp(const StringList &args);
 
     void initSubsystems(SubsystemInitFlags subsystemInitFlags = DefaultSubsystems) override;
@@ -68,6 +74,14 @@ public:
                      const String &appName,
                      const String &appVersion);
 
+    int exec(const std::function<void()> &startup = {});
+
+    void quit(int code = 0);
+
+    GuiLoop &loop();
+
+    void setMouseCursor(MouseCursor cursor);
+
     /**
      * Emits the displayModeChanged() signal.
      *
@@ -77,11 +91,7 @@ public:
      */
     void notifyDisplayModeChanged();
 
-    int  exec(const std::function<void ()> &startup = {});
-    void quit(int code = 0);
-
-    GuiLoop &loop();
-
+public:
     /**
      * Determines if the currently executing thread is the rendering thread.
      * This may be the same thread as the main thread.
@@ -89,9 +99,6 @@ public:
     static bool inRenderThread();
 
     static void setRenderThread(Thread *thread);
-
-    /// Emitted when the display mode has changed.
-    DE_DEFINE_AUDIENCE2(DisplayModeChange, void displayModeChanged())
 
 protected:
     NativePath appDataPath() const override;
