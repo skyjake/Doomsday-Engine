@@ -22,6 +22,7 @@
 #include "aboutdialog.h"
 #include "localserverdialog.h"
 #include "preferences.h"
+#include "utils.h"
 #include <de/shell/LocalServer>
 #include <de/shell/ServerFinder>
 #include <de/EscapeParser>
@@ -200,7 +201,7 @@ void GuiShellApp::connectToLocalServer()
     Address host = act->data().value<Address>();
 
     LinkWindow *win = newOrReusedConnectionWindow();
-    win->openConnection(host.asText());
+    win->openConnection(convert(host.asText()));
 }
 
 void GuiShellApp::disconnectFromServer()
@@ -236,23 +237,26 @@ void GuiShellApp::startLocalServer()
             QStringList opts = dlg.additionalOptions();
             if (!Preferences::iwadFolder().isEmpty())
             {
-                opts << "-iwad" << Preferences::iwadFolder().toString();
+                opts << "-iwad" << convert(Preferences::iwadFolder());
             }
 
             auto *sv = new LocalServer;
-            sv->setApplicationPath(QSettings().value("Preferences/appFolder").toString());
+            sv->setApplicationPath(convert(QSettings().value("Preferences/appFolder").toString()));
             if (!dlg.name().isEmpty())
             {
                 sv->setName(dlg.name());
             }
-            sv->start(dlg.port(), dlg.gameMode(), opts, dlg.runtimeFolder());
+            sv->start(dlg.port(),
+                      convert(dlg.gameMode()),
+                      {opts.begin(), opts.end()},
+                      dlg.runtimeFolder());
             d->localServers[dlg.port()] = sv;
 
             newOrReusedConnectionWindow()->waitForLocalConnection
-                    (dlg.port(), sv->errorLogPath(), dlg.name());
+                    (dlg.port(), sv->errorLogPath(), convert(dlg.name()));
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         EscapeParser esc;
         esc.parse(er.asText());

@@ -17,6 +17,7 @@
  */
 
 #include "optionspage.h"
+#include "utils.h"
 #include <de/shell/DoomsdayInfo>
 
 #include <QCheckBox>
@@ -38,7 +39,7 @@ DE_PIMPL(OptionsPage)
     QFormLayout *layout = nullptr;
     QVBoxLayout *vbox = nullptr;
     QDialogButtonBox *buttons = nullptr;
-    QList<GameOption> gameOptions;
+    List<GameOption> gameOptions;
     QHash<GameOption const *, QWidget *> widgets;
     Record gameState;
 
@@ -62,13 +63,13 @@ DE_PIMPL(OptionsPage)
         }
     }
 
-    void initForGame(QString gameId)
+    void initForGame(const QString& gameId)
     {
         if (game == gameId) return;
 
         clear();
         game = gameId;
-        gameOptions = shell::DoomsdayInfo::gameOptions(game);
+        gameOptions = shell::DoomsdayInfo::gameOptions(convert(game));
 
         base   = new QWidget; //(thisPublic);
         base->setMaximumWidth(320);
@@ -81,13 +82,13 @@ DE_PIMPL(OptionsPage)
 
         foreach (GameOption const &opt, gameOptions)
         {
-            QString label = opt.title + ":";
+            QString label = convert(opt.title + ":");
             QWidget *field;
 
             switch (opt.type)
             {
             case shell::DoomsdayInfo::Toggle: {
-                auto *check = new QCheckBox(opt.title);
+                auto *check = new QCheckBox(convert(opt.title));
                 field = check;
                 label = "";
                 QObject::connect(check, &QCheckBox::toggled,
@@ -99,7 +100,7 @@ DE_PIMPL(OptionsPage)
                 field = combo;
                 foreach (auto optValue, opt.allowedValues)
                 {
-                    combo->addItem(optValue.label, optValue.value);
+                    combo->addItem(convert(optValue.label), convert(optValue.value));
                 }
                 QObject::connect(combo, static_cast<void (QComboBox::*)(int)>
                                         (&QComboBox::currentIndexChanged),
@@ -137,7 +138,7 @@ DE_PIMPL(OptionsPage)
     GameOption::Value const *selectValue(GameOption const &opt) const
     {
         GameOption::Value const *selected = &opt.allowedValues.at(0);
-        for (int i = 1; i < opt.allowedValues.size(); ++i)
+        for (int i = 1; i < opt.allowedValues.sizei(); ++i)
         {
             auto const &val = opt.allowedValues.at(i);
             if (checkRuleKeyword(val.ruleSemantic))
@@ -152,7 +153,7 @@ DE_PIMPL(OptionsPage)
     GameOption::Value currentValueFromWidget(GameOption const &opt) const
     {
         QWidget const *widget = widgets[&opt];
-        String widgetValue;
+        QString widgetValue;
 
         switch (opt.type)
         {
@@ -162,11 +163,11 @@ DE_PIMPL(OptionsPage)
             break;
 
         case shell::DoomsdayInfo::Choice:
-            widgetValue = static_cast<QComboBox const *>(widget)->currentData().toString();
+            widgetValue = convert(static_cast<QComboBox const *>(widget)->currentData().toString());
             break;
 
         case shell::DoomsdayInfo::Text:
-            return GameOption::Value(static_cast<QLineEdit const *>(widget)->text());
+            return GameOption::Value(convert(static_cast<QLineEdit const *>(widget)->text()));
         }
 
         foreach (auto const &optValue, opt.allowedValues)
@@ -199,7 +200,7 @@ DE_PIMPL(OptionsPage)
             case shell::DoomsdayInfo::Choice: {
                 auto const *value = selectValue(opt);
                 QComboBox *combo = static_cast<QComboBox *>(widget);
-                for (int i = 0; i < opt.allowedValues.size(); ++i)
+                for (int i = 0; i < opt.allowedValues.sizei(); ++i)
                 {
                     if (value == &opt.allowedValues.at(i))
                     {
@@ -212,7 +213,7 @@ DE_PIMPL(OptionsPage)
                 QLineEdit *edit = static_cast<QLineEdit *>(widget);
                 if (!opt.defaultValue.ruleSemantic.isEmpty())
                 {
-                    edit->setText(gameState[opt.defaultValue.ruleSemantic]);
+                    edit->setText(convert(gameState[opt.defaultValue.ruleSemantic]));
                 }
                 break; }
             }
@@ -231,7 +232,7 @@ DE_PIMPL(OptionsPage)
             auto current = currentValueFromWidget(opt);
             if (!current.value.isEmpty())
             {
-                commands << opt.command.arg(current.value);
+                commands << convert(opt.command).arg(convert(current.value));
             }
         }
 
@@ -249,6 +250,6 @@ OptionsPage::OptionsPage(QWidget *parent)
 
 void OptionsPage::updateWithGameState(Record const &gameState)
 {
-    d->initForGame(gameState["mode"]);
+    d->initForGame(convert(gameState["mode"]));
     d->updateValues(gameState);
 }

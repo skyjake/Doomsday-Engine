@@ -17,28 +17,32 @@
  */
 
 #include "statuswidget.h"
+#include "utils.h"
 #include <de/libcore.h>
 #include <de/String>
 #include <de/shell/DoomsdayInfo>
 #include <QPainter>
 #include <QPicture>
 #include <QTimer>
+#include <QMap>
 
 using namespace de;
 
 DE_PIMPL(StatusWidget)
 {
-    QFont smallFont;
-    QFont largeFont;
-    QFont playerFont;
-    String gameMode;
-    String map;
-    QPicture mapOutline;
-    QRect mapBounds;
+    using Player  = shell::PlayerInfoPacket::Player;
+    using Players = shell::PlayerInfoPacket::Players;
+
     shell::Link *link;
 
-    typedef shell::PlayerInfoPacket::Player Player;
-    shell::PlayerInfoPacket::Players players;
+    QFont             smallFont;
+    QFont             largeFont;
+    QFont             playerFont;
+    QString           gameMode;
+    QString           map;
+    QPicture          mapOutline;
+    QRect             mapBounds;
+    Players           players;
     QMap<int, QPoint> oldPlayerPositions;
 
     Impl(Public &i) : Base(i), link(0)
@@ -67,7 +71,7 @@ StatusWidget::StatusWidget(QWidget *parent)
 
 void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
 {
-    d->gameMode = shell::DoomsdayInfo::titleForGame(mode);
+    d->gameMode = shell::DoomsdayInfo::titleForGame(convert(mode));
     if (!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
 
     d->map = mapTitle;
@@ -171,8 +175,10 @@ void StatusWidget::paintEvent(QPaintEvent *)
         // Draw player markers.
         float const factor = float(d->mapBounds.width()) / float(viewSize.width());
         QFontMetrics const metrics(d->playerFont);
-        foreach (Impl::Player const &plr, d->players.values())
+        for (const auto &iter : d->players)
         {
+            const auto &plr = iter.second;
+
             painter.save();
 
             QColor const color(plr.color.x, plr.color.y, plr.color.z);
@@ -214,7 +220,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
             markColor.setAlpha(160);
             painter.setBrush(markColor);
 
-            QString label = QString("%1: %2").arg(plr.number).arg(plr.name);
+            QString label = QString("%1: %2").arg(plr.number).arg(convert(plr.name));
             if (label.size() > 20) label = label.left(20);
 
             QRect textBounds = metrics.boundingRect(label);
