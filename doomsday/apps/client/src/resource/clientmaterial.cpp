@@ -19,25 +19,23 @@
  */
 
 #include "resource/clientmaterial.h"
+#include "dd_main.h"
+#include "MaterialAnimator"
 
-#include <QFlag>
-#include <QtAlgorithms>
-#include <de/Log>
 #include <doomsday/console/cmd.h>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
 #include <doomsday/world/MaterialManifest>
-
-#include "dd_main.h"
+#include <de/Log>
 #include "MaterialAnimator"
 
 using namespace de;
 
 DE_PIMPL_NOREF(ClientMaterial::Decoration)
 {
-    ClientMaterial *material = nullptr;  ///< Owning Material.
-    Vec2i patternSkip;          ///< Pattern skip intervals.
-    Vec2i patternOffset;        ///< Pattern skip interval offsets.
+    ClientMaterial *material = nullptr; ///< Owning Material.
+    Vec2i           patternSkip;        ///< Pattern skip intervals.
+    Vec2i           patternOffset;      ///< Pattern skip interval offsets.
 };
 
 ClientMaterial::Decoration::Decoration(Vec2i const &patternSkip, Vec2i const &patternOffset)
@@ -49,7 +47,7 @@ ClientMaterial::Decoration::Decoration(Vec2i const &patternSkip, Vec2i const &pa
 
 ClientMaterial::Decoration::~Decoration()
 {
-    qDeleteAll(_stages);
+    deleteAll(_stages);
 }
 
 ClientMaterial &ClientMaterial::Decoration::material()
@@ -101,11 +99,12 @@ String ClientMaterial::Decoration::describe() const
 
 String ClientMaterial::Decoration::description() const
 {
-    int const numStages = stageCount();
-    String str = _E(b) + describe() + _E(.) + " (" + String::asText(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
+    const int numStages = stageCount();
+    String    str       = _E(b) + describe() + _E(.) + " (" + String::asText(numStages) + " stage" +
+                          DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {
-        str += String("\n  [%1] ").arg(i, 2) + _E(>) + stage(i).description() + _E(<);
+        str += String::format("\n  [%2i] ", i) + _E(>) + stage(i).description() + _E(<);
     }
     return str;
 }
@@ -115,10 +114,10 @@ DE_PIMPL(ClientMaterial)
     AudioEnvironmentId audioEnvironment { AE_NONE };
 
     /// Decorations (owned), to be projected into the world (relative to a Surface).
-    QVector<Decoration *> decorations;
+    List<Decoration *> decorations;
 
     /// Set of draw-context animators (owned).
-    QVector<MaterialAnimator *> animators;
+    List<MaterialAnimator *> animators;
 
     Impl(Public *i) : Base(i) {}
 
@@ -130,11 +129,11 @@ DE_PIMPL(ClientMaterial)
 
     MaterialAnimator *findAnimator(MaterialVariantSpec const &spec, bool canCreate = false)
     {
-        for (auto iter = animators.constBegin(); iter != animators.constEnd(); ++iter)
+        for (auto *iter : animators)
         {
-            if ((*iter)->variantSpec().compare(spec))
+            if (iter->variantSpec().compare(spec))
             {
-                return const_cast<MaterialAnimator *>(*iter);  // This will do fine.
+                return const_cast<MaterialAnimator *>(iter);  // This will do fine.
             }
         }
 
@@ -204,7 +203,7 @@ void ClientMaterial::addDecoration(Decoration *decor)
 
 void ClientMaterial::clearAllDecorations()
 {
-    qDeleteAll(d->decorations); d->decorations.clear();
+    deleteAll(d->decorations); d->decorations.clear();
 
     // Animators refer to decorations.
     clearAllAnimators();
@@ -241,7 +240,7 @@ LoopResult ClientMaterial::forAllAnimators(const std::function<LoopResult (Mater
 
 void ClientMaterial::clearAllAnimators()
 {
-    qDeleteAll(d->animators);
+    deleteAll(d->animators);
     d->animators.clear();
 }
 
@@ -254,11 +253,12 @@ String ClientMaterial::description() const
 {
     String str = world::Material::description();
 
-    str += _E(b) " x" + String::asText(animatorCount()) + _E(.)
-         + _E(l) " EnvClass: \"" _E(.) + (audioEnvironment() == AE_NONE? "N/A" : S_AudioEnvironmentName(audioEnvironment())) + "\"";
+    str += _E(b) " x" + String::asText(animatorCount()) + _E(.) + _E(l) " EnvClass: \"" _E(.) +
+           (audioEnvironment() == AE_NONE ? "N/A" : S_AudioEnvironmentName(audioEnvironment())) +
+           "\"";
 
     // Add the decoration config:
-    for (Decoration const *decor : d->decorations)
+    for (const auto *decor : d->decorations)
     {
         str += "\n" + decor->description();
     }

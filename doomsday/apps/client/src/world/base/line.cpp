@@ -39,11 +39,10 @@
 
 #include <doomsday/console/cmd.h>
 #include <de/vector1.h>
-
-#include <QtAlgorithms>
-#include <QList>
-#include <QMap>
+#include <de/List>
+#include <de/Map>
 #include <array>
+#include <cwctype>
 
 #ifdef WIN32
 #  undef max
@@ -168,7 +167,7 @@ DE_PIMPL(Line::Side)
 
     dint flags = 0;                 ///< @ref sdefFlags
 
-    QList<Segment *> segments;      ///< On "this" side, sorted. Owned.
+    List<Segment *> segments;      ///< On "this" side, sorted. Owned.
     bool needSortSegments = false;  ///< set to @c true when the list needs sorting.
 
     dint shadowVisCount = 0;        ///< Framecount of last time shadows were drawn.
@@ -183,12 +182,12 @@ DE_PIMPL(Line::Side)
 
     ~Impl()
     {
-        qDeleteAll(segments);
+        deleteAll(segments);
     }
 
     void clearSegments()
     {
-        qDeleteAll(segments);
+        deleteAll(segments);
         segments.clear();
         needSortSegments = false;  // An empty list is sorted.
     }
@@ -223,13 +222,14 @@ DE_PIMPL(Line::Side)
         if (segments.count() < 2)
             return;
 
-        // We'll use a QMap for sorting the segments.
-        QMap<ddouble, Segment *> sortedSegs;
+        // We'll use a Map for sorting the segments.
+        Map<ddouble, Segment *> sortedSegs;
         for (Segment *seg : segments)
         {
             sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);
         }
-        segments = sortedSegs.values();
+        segments = de::map<decltype(segments)>(
+            sortedSegs, [](const std::pair<ddouble, Segment *> &v) { return v.second; });
     }
 
 #ifdef __CLIENT__
@@ -306,7 +306,7 @@ bool Line::Side::isFront() const
 
 String Line::Side::description() const
 {
-    QStringList flagNames;
+    StringList flagNames;
     if (flags() & SDF_BLENDTOPTOMID)    flagNames << "blendtoptomiddle";
     if (flags() & SDF_BLENDMIDTOTOP)    flagNames << "blendmiddletotop";
     if (flags() & SDF_BLENDMIDTOBOTTOM) flagNames << "blendmiddletobottom";
@@ -316,26 +316,26 @@ String Line::Side::description() const
     String flagsString;
     if (!flagNames.isEmpty())
     {
-        String const flagsAsText = flagNames.join("|");
-        flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
+        String const flagsAsText = String::join(flagNames, "|");
+        flagsString = String::format(_E(l) " Flags: " _E(.)_E(i) "%s" _E(.), flagsAsText.c_str());
     }
 
-    auto text = String(_E(D)_E(b) "%1:\n"  _E(.)_E(.)
-                       _E(l)  "Sector: "    _E(.)_E(i) "%2" _E(.)
-                       _E(l) " One Sided: " _E(.)_E(i) "%3" _E(.)
-                       "%4")
-                    .arg(Line::sideIdAsText(sideId()).upperFirstChar())
-                    .arg(hasSector() ? String::asText(sector().indexInMap()) : "None")
-                    .arg(DE_BOOL_YESNO(considerOneSided()))
-                    .arg(flagsString);
+    auto text = String::format(_E(D)_E(b) "%c:\n"  _E(.)_E(.)
+                       _E(l)  "Sector: "    _E(.)_E(i) "%s" _E(.)
+                       _E(l) " One Sided: " _E(.)_E(i) "%s" _E(.)
+                       "%s",
+                    towupper(Line::sideIdAsText(sideId()).first()),
+                    hasSector() ? String::asText(sector().indexInMap()).c_str() : "None",
+                    DE_BOOL_YESNO(considerOneSided()),
+                    flagsString.c_str());
 
-    forAllSurfaces([this, &text] (Surface &suf)
+    forAllSurfaces([this, &text] (Surface &surf)
     {
-        text += String("\n" _E(D) "%1:\n" _E(.))
-                  .arg(sectionIdAsText(  &suf == &top   () ? Side::Top
-                                       : &suf == &middle() ? Side::Middle
-                                       :                     Side::Bottom))
-              + suf.description();
+        text += String::format("\n" _E(D) "%s:\n%s" _E(.),
+                  sectionIdAsText(  &surf == &top   () ? Side::Top
+                                  : &surf == &middle() ? Side::Middle
+                                  :                      Side::Bottom).c_str(),
+                  surf.description().c_str());
         return LoopContinue;
     });
 
@@ -444,7 +444,7 @@ Surface const &Line::Side::top() const
     return surface(Top);
 }
 
-LoopResult Line::Side::forAllSurfaces(std::function<LoopResult(Surface &)> func) const
+LoopResult Line::Side::forAllSurfaces(const std::function<LoopResult(Surface &)>& func) const
 {
     if (hasSections())
     {
@@ -762,11 +762,10 @@ static inline bool sectorIsOpen(Sector const *sector)
     return (sector && sector->ceiling().height() > sector->floor().height());
 }
 
-struct edge_t
-{
-    Line *line;
-    Sector *sector;
-    dfloat length;
+struct edge_t {
+    Line *     line;
+    Sector *   sector;
+    dfloat     length;
     binangle_t diff;
 };
 
@@ -778,14 +777,14 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
 
     de::zap(edge);
 
-    ClockDirection const direction = (right ? Anticlockwise : Clockwise);
-    Sector const *startSector = side.sectorPtr();
-    ddouble const fFloor      = side.sector().floor  ().heightSmoothed();
-    ddouble const fCeil       = side.sector().ceiling().heightSmoothed();
+    ClockDirection const direction   = (right ? Anticlockwise : Clockwise);
+    Sector const *       startSector = side.sectorPtr();
+    ddouble const        fFloor      = side.sector().floor().heightSmoothed();
+    ddouble const        fCeil       = side.sector().ceiling().heightSmoothed();
 
     ddouble gap    = 0;
     LineOwner *own = side.line().vertexOwner(side.vertex(dint(right)));
-    forever
+    for (;;)
     {
         // Select the next line.
         binangle_t diff  = (direction == Clockwise ? own->angle() : own->prev()->angle());
@@ -1540,7 +1539,7 @@ D_CMD(InspectLine)
         return false;
     }
 
-    QStringList flagNames;
+    StringList flagNames;
     if (line->flags() & DDLF_BLOCKING)      flagNames << "blocking";
     if (line->flags() & DDLF_DONTPEGTOP)    flagNames << "nopegtop";
     if (line->flags() & DDLF_DONTPEGBOTTOM) flagNames << "nopegbottom";
@@ -1548,8 +1547,8 @@ D_CMD(InspectLine)
     String flagsString;
     if (!flagNames.isEmpty())
     {
-        String const flagsAsText = flagNames.join("|");
-        flagsString = String(_E(l) " Flags: " _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
+        flagsString = String::format(_E(l) " Flags: " _E(.) _E(i) "%s" _E(.),
+                                     String::join(flagNames, "|").c_str());
     }
 
     LOG_SCR_MSG(_E(b) "Line %i" _E(.) " [%p]")

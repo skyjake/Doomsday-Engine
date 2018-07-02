@@ -326,8 +326,8 @@ DE_PIMPL(ClientResources)
                                                         byte    border,
                                                         int     tClass,
                                                         int     tMap,
-                                                        int     wrapS,
-                                                        int     wrapT,
+                                                        GLenum  wrapS,
+                                                        GLenum  wrapT,
                                                         int     minFilter,
                                                         int     magFilter,
                                                         int     anisoFilter,
@@ -427,10 +427,20 @@ DE_PIMPL(ClientResources)
         return 0;
     }
 
-    TextureVariantSpec *textureSpec(texturevariantusagecontext_t tc, int flags,
-        byte border, int tClass, int tMap, int wrapS, int wrapT, int minFilter,
-        int magFilter, int anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
-        dd_bool noStretch, dd_bool toAlpha)
+    TextureVariantSpec *textureSpec(texturevariantusagecontext_t tc,
+                                    int     flags,
+                                    byte    border,
+                                    int     tClass,
+                                    int     tMap,
+                                    GLenum  wrapS,
+                                    GLenum  wrapT,
+                                    int     minFilter,
+                                    int     magFilter,
+                                    int     anisoFilter,
+                                    dd_bool mipmapped,
+                                    dd_bool gammaCorrection,
+                                    dd_bool noStretch,
+                                    dd_bool toAlpha)
     {
         static TextureVariantSpec tpl;
         tpl.type = TST_GENERAL;
@@ -1441,9 +1451,19 @@ void ClientResources::pruneUnusedTextureSpecs()
 }
 
 TextureVariantSpec const &ClientResources::textureSpec(texturevariantusagecontext_t tc,
-    dint flags, byte border, dint tClass, dint tMap, dint wrapS, dint wrapT, dint minFilter,
-    dint magFilter, dint anisoFilter, dd_bool mipmapped, dd_bool gammaCorrection,
-    dd_bool noStretch, dd_bool toAlpha)
+                                                       dint    flags,
+                                                       byte    border,
+                                                       dint    tClass,
+                                                       dint    tMap,
+                                                       GLenum  wrapS,
+                                                       GLenum  wrapT,
+                                                       dint    minFilter,
+                                                       dint    magFilter,
+                                                       dint    anisoFilter,
+                                                       dd_bool mipmapped,
+                                                       dd_bool gammaCorrection,
+                                                       dd_bool noStretch,
+                                                       dd_bool toAlpha)
 {
     TextureVariantSpec *tvs =
         d->textureSpec(tc, flags, border, tClass, tMap, wrapS, wrapT, minFilter,

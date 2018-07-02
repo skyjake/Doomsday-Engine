@@ -36,15 +36,8 @@
  */
 class AlertDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    enum Level
-    {
-        Minor  = -1,
-        Normal = 0,
-        Major  = 1
-    };
+    enum Level { Minor = -1, Normal = 0, Major = 1 };
 
 public:
     AlertDialog(de::String const &name = "alerts");
@@ -62,7 +55,7 @@ public:
 
     void update();
 
-public slots:
+public:
     void showListOfAlerts();
     void hideNotification();
     void autohideTimeChanged();

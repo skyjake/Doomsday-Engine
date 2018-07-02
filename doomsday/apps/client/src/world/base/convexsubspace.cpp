@@ -31,8 +31,7 @@
 #include "Subsector"
 #include "Surface"
 #include <de/Log>
-#include <QSet>
-#include <QtAlgorithms>
+#include <de/Set>
 
 using namespace de;
 
@@ -54,19 +53,19 @@ DE_PIMPL(ConvexSubspace)
 {
     Face *poly = nullptr;                  ///< Convex polygon geometry (not owned).
 
-    typedef QSet<de::Mesh *> Meshes;
+    typedef Set<de::Mesh *> Meshes;
     Meshes extraMeshes;                    ///< Additional meshes (owned).
 
-    typedef QSet<polyobj_s *> Polyobjs;
+    typedef Set<polyobj_s *> Polyobjs;
     Polyobjs polyobjs;                     ///< Linked polyobjs (not owned).
 
 #ifdef __CLIENT__
     Vec2d worldGridOffset;              ///< For aligning the materials to the map space grid.
 
-    typedef QSet<Lumobj *> Lumobjs;
+    typedef Set<Lumobj *> Lumobjs;
     Lumobjs lumobjs;                       ///< Linked lumobjs (not owned).
 
-    typedef QSet<LineSide *> ShadowLines;
+    typedef Set<LineSide *> ShadowLines;
     ShadowLines shadowLines;               ///< Linked map lines for fake radio shadowing.
 
     HEdge *fanBase = nullptr;              ///< Trifan base Half-edge (otherwise the center point is used).
@@ -79,8 +78,11 @@ DE_PIMPL(ConvexSubspace)
 
     dint validCount = 0;                   ///< Used to prevent repeated processing.
 
-    Impl(Public *i) : Base(i) {}
-    ~Impl() { qDeleteAll(extraMeshes); }
+    Impl(Public * i)
+        : Base(i)
+    {}
+
+    ~Impl() { deleteAll(extraMeshes); }
 
 #ifdef __CLIENT__
 
@@ -237,7 +239,7 @@ void ConvexSubspace::assignExtraMesh(Mesh &newMesh)
     }
 }
 
-LoopResult ConvexSubspace::forAllExtraMeshes(std::function<LoopResult (Mesh &)> func) const
+LoopResult ConvexSubspace::forAllExtraMeshes(const std::function<LoopResult (Mesh &)>& func) const
 {
     for(Mesh *mesh : d->extraMeshes)
     {
@@ -248,10 +250,10 @@ LoopResult ConvexSubspace::forAllExtraMeshes(std::function<LoopResult (Mesh &)> 
 
 dint ConvexSubspace::polyobjCount() const
 {
-    return d->polyobjs.count();
+    return d->polyobjs.size();
 }
 
-LoopResult ConvexSubspace::forAllPolyobjs(std::function<LoopResult (Polyobj &)> func) const
+LoopResult ConvexSubspace::forAllPolyobjs(const std::function<LoopResult (Polyobj &)>& func) const
 {
     for(Polyobj *pob : d->polyobjs)
     {

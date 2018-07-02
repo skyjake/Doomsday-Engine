@@ -21,7 +21,7 @@
 #include "resource/fontscheme.h"
 #include "dd_types.h"
 #include <de/Log>
-#include <QList>
+#include <de/List>
 
 using namespace de;
 
@@ -32,7 +32,7 @@ DE_OBSERVES(FontManifest, Deletion)
     String name; ///< Symbolic.
     Index index; ///< Mappings from paths to manifests.
 
-    QList<Manifest *> uniqueIdLut; ///< Index with uniqueId - uniqueIdBase.
+    List<Manifest *> uniqueIdLut; ///< Index with uniqueId - uniqueIdBase.
     bool uniqueIdLutDirty;
     int uniqueIdBase;
 
@@ -51,7 +51,7 @@ DE_OBSERVES(FontManifest, Deletion)
     bool inline uniqueIdInLutRange(int uniqueId) const
     {
         return uniqueId - uniqueIdBase >= 0 &&
-               (uniqueId - uniqueIdBase) < uniqueIdLut.size();
+               (uniqueId - uniqueIdBase) < uniqueIdLut.sizei();
     }
 
     void findUniqueIdRange(int *minId, int *maxId)
@@ -126,7 +126,7 @@ DE_OBSERVES(FontManifest, Deletion)
         uniqueIdLut.reserve(lutSize);
 #endif
         int i = 0;
-        for(; i < uniqueIdLut.size(); ++i)
+        for(; i < uniqueIdLut.sizei(); ++i)
         {
             uniqueIdLut[i] = 0;
         }
@@ -164,7 +164,7 @@ DE_OBSERVES(FontManifest, Deletion)
 
 FontScheme::FontScheme(String symbolicName) : d(new Impl(this))
 {
-    d->name = symbolicName;
+    d->name = std::move(symbolicName);
 }
 
 void FontScheme::clear()
@@ -243,7 +243,8 @@ FontScheme::Manifest const &FontScheme::findByUniqueId(int uniqueId) const
         if(manifest) return *manifest;
     }
     /// @throw NotFoundError  No manifest was found with a matching resource URI.
-    throw NotFoundError("FontScheme::findByUniqueId", "No manifest found with a unique ID matching \"" + QString("%1").arg(uniqueId) + "\"");
+    throw NotFoundError("FontScheme::findByUniqueId",
+                        stringf("No manifest found with a unique ID matching \"%i\"", uniqueId));
 }
 
 FontScheme::Manifest &FontScheme::findByUniqueId(int uniqueId)

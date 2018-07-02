@@ -102,9 +102,7 @@ Face *Mesh::newFace()
 
 void Mesh::removeVertex(Vertex &vertex)
 {
-    dint sizeBefore = d->vertexs.size();
-    d->vertexs.removeOne(&vertex);
-    if(sizeBefore != d->vertexs.size())
+    if (d->vertexs.removeOne(&vertex))
     {
         delete &vertex;
     }
@@ -112,9 +110,7 @@ void Mesh::removeVertex(Vertex &vertex)
 
 void Mesh::removeHEdge(HEdge &hedge)
 {
-    dint sizeBefore = d->hedges.size();
-    d->hedges.removeOne(&hedge);
-    if(sizeBefore != d->hedges.size())
+    if (d->hedges.removeOne(&hedge))
     {
         delete &hedge;
     }
@@ -122,9 +118,7 @@ void Mesh::removeHEdge(HEdge &hedge)
 
 void Mesh::removeFace(Face &face)
 {
-    dint sizeBefore = d->faces.size();
-    d->faces.removeOne(&face);
-    if(sizeBefore != d->faces.size())
+    if (d->faces.removeOne(&face))
     {
         delete &face;
     }

@@ -92,8 +92,7 @@ bool Face::isConvex() const
 
 String Face::description() const
 {
-    String text = String("Face [0x%1] comprises %2 half-edges")
-                      .arg(de::dintptr(this), 0, 16).arg(_hedgeCount);
+    String text = String::format("Face [%p] comprises %i half-edges", this, _hedgeCount);
 
     if (HEdge const *hedge = d->hedge)
     {
@@ -102,11 +101,11 @@ String Face::description() const
             Vec2d direction = hedge->origin() - d->center;
             coord_t angle      = M_DirectionToAngleXY(direction.x, direction.y);
 
-            text += String("\n  [0x%1]: Angle %2.6f %3 -> %4")
-                        .arg(de::dintptr(hedge), 0, 16)
-                        .arg(angle)
-                        .arg(hedge->origin().asText())
-                        .arg(hedge->twin().origin().asText());
+            text += String::format("\n  [%p]: Angle %3.6f %s -> %s",
+                                   hedge,
+                                   angle,
+                                   hedge->origin().asText().c_str(),
+                                   hedge->twin().origin().asText().c_str());
 
         } while ((hedge = &hedge->next()) != d->hedge);
     }

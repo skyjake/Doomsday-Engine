@@ -21,7 +21,7 @@
 #ifndef DE_UI_INFINE_FINALEPAGEWIDGET_H
 #define DE_UI_INFINE_FINALEPAGEWIDGET_H
 
-#include <QList>
+#include <de/List>
 #include <de/Error>
 #include "finalewidget.h"
 
@@ -41,7 +41,7 @@ public:
     /// An invalid font index was specified. @ingroup errors
     DE_ERROR(InvalidFontError);
 
-    typedef QList<FinaleWidget *> Children;
+    typedef de::List<FinaleWidget *> Children;
 
 public:
     FinalePageWidget();

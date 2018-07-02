@@ -71,9 +71,9 @@ void LineBlockmap::link(Line &line)
     }
 }
 
-void LineBlockmap::link(QList<Line *> const &lines)
+void LineBlockmap::link(const List<Line *> &lines)
 {
-    for(Line *line : lines) link(*line);
+    for (Line *line : lines) link(*line);
 }
 
 }  // namespace world

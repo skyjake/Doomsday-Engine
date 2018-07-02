@@ -70,18 +70,18 @@ DE_PIMPL_NOREF(MasterWorker)
     typedef List<de::shell::ServerInfo> Servers;
     Servers servers;
 
-    Impl() : network(0), currentAction(NONE) {}
+    Impl() : /*network(0), */currentAction(NONE) {}
 
     ~Impl()
     {
-        delete network;
+//        delete network;
     }
 };
 
 MasterWorker::MasterWorker() : d(new Impl)
 {
-    d->network = new QNetworkAccessManager(this);
-    connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestFinished(QNetworkReply*)));
+//    d->network = new QNetworkAccessManager(this);
+//    connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestFinished(QNetworkReply*)));
 }
 
 void MasterWorker::newJob(Action action, Record const &data)
@@ -129,6 +129,7 @@ void MasterWorker::nextJob()
     d->jobs.pop_front();
     d->currentAction = job.act;
 
+#if 0
     // Let's form an HTTP request.
     QNetworkRequest req(masterUrl(d->currentAction == REQUEST_SERVERS? "?op=list" : 0));
     req.setRawHeader("User-Agent", Net_UserAgent().toLatin1());
@@ -161,8 +162,10 @@ void MasterWorker::nextJob()
 
         d->network->get(req);
     }
+#endif
 }
 
+#if 0
 void MasterWorker::requestFinished(QNetworkReply* reply)
 {
     LOG_AS("MasterWorker");
@@ -238,6 +241,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
     LOG_NET_MSG("Received %i servers from master") << serverCount();
     return true;
 }
+#endif
 
 static MasterWorker *worker;
 

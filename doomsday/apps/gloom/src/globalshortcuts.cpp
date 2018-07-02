@@ -34,8 +34,8 @@ bool GlobalShortcuts::handleEvent(Event const &event)
 {
     if (event.isKeyDown())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
-        if (key.modifiers().testFlag(KeyEvent::Control) && key.qtKey() == Qt::Key_Q)
+        const auto &key = event.as<KeyEvent>();
+        if (key.modifiers().testFlag(KeyEvent::Control) && key.ddKey() == 'q')
         {
             GloomApp::app().quit();
             return true;

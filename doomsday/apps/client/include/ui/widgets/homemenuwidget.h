@@ -31,7 +31,9 @@ class ColumnWidget;
  */
 class HomeMenuWidget : public de::MenuWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Selection, void selectedIndexChanged(HomeMenuWidget &, de::ui::DataPos index))
+    DE_DEFINE_AUDIENCE2(Click,     void menuItemClicked(HomeMenuWidget &, de::ui::DataPos index))
 
 public:
     HomeMenuWidget(de::String const &name = de::String());
@@ -61,11 +63,7 @@ public:
 
     ColumnWidget *parentColumn() const;
 
-signals:
-    void selectedIndexChanged(int index);
-    void itemClicked(int index);
-
-protected slots:
+protected:
     void mouseActivityInItem();
     void itemSelectionChanged();
 

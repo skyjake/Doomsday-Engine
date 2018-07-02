@@ -20,7 +20,7 @@
 
 #include "render/angleclipper.h"
 
-#include <QVector>
+#include <de/List>
 #include <de/Error>
 #include <de/Log>
 #include <doomsday/console/var.h>
@@ -156,8 +156,8 @@ DE_PIMPL_NOREF(AngleClipper)
         Clipper *prev;
         Clipper *next;
     };
-    ElementPool clipNodes;         ///< The list of clipnodes.
-    Clipper *clipHead = nullptr;   ///< Head of the clipped-range list.
+    ElementPool clipNodes;          ///< The list of clipnodes.
+    Clipper *   clipHead = nullptr; ///< Head of the clipped-range list.
 
     /// Specialized AngleRange for half-space occlusion.
     struct Occluder : public ElementPool::Element, AngleRange
@@ -165,13 +165,13 @@ DE_PIMPL_NOREF(AngleClipper)
         Occluder *prev;
         Occluder *next;
 
-        bool topHalf;              ///< @c true= top, rather than bottom, half.
-        Vec3f normal;           ///< Of the occlusion plane.
+        bool  topHalf; ///< @c true= top, rather than bottom, half.
+        Vec3f normal;  ///< Of the occlusion plane.
     };
     ElementPool occNodes;          ///< The list of occlusion nodes.
-    Occluder *occHead = nullptr;   ///< Head of the occlusion-range list.
+    Occluder *  occHead = nullptr; ///< Head of the occlusion-range list.
 
-    QVector<binangle_t> angleBuf;  ///< Scratch buffer for sorting angles.
+    List<binangle_t> angleBuf;  ///< Scratch buffer for sorting angles.
 
     ~Impl()
     {
@@ -294,11 +294,9 @@ DE_PIMPL_NOREF(AngleClipper)
             }
 
 #ifdef DE_DEBUG
-            if(i == i->next)
-                throw Error("AngleClipper::addRange", String("loop1 0x%1 linked to itself: %2 => %3")
-                                                        .arg((quintptr)i, QT_POINTER_SIZE * 2, 16, QChar('0'))
-                                                        .arg(i->from, 0, 16)
-                                                        .arg(i->to,   0, 16));
+            if (i == i->next)
+                throw Error("AngleClipper::addRange",
+                            stringf("loop1 %p linked to itself: %x => %x", i, i->from, i->to));
 #endif
         }
 
@@ -743,23 +741,20 @@ DE_PIMPL_NOREF(AngleClipper)
 #ifdef DE_DEBUG
     void occlusionLister()
     {
-        for(Occluder *orange = occHead; orange; orange = orange->next)
+        for (Occluder *orange = occHead; orange; orange = orange->next)
         {
-            LOG_MSG(String("from: %1 to: %2 topHalf: %3")
-                        .arg(orange->from, 0, 16)
-                        .arg(orange->to,   0, 16)
-                        .arg(DE_BOOL_YESNO(orange->topHalf)));
+            LOG_MSG("from: %x to: %x topHalf: %b") << orange->from << orange->to << orange->topHalf;
         }
     }
 
     void occlusionRanger(int mark)
     {
-        for(Occluder *orange = occHead; orange; orange = orange->next)
+        for (Occluder *orange = occHead; orange; orange = orange->next)
         {
-            if(orange->prev && orange->prev->from > orange->from)
+            if (orange->prev && orange->prev->from > orange->from)
             {
                 occlusionLister();
-                throw Error("AngleClipper::occlusionRanger", String("Order %1 has failed").arg(mark));
+                throw Error("AngleClipper::occlusionRanger", stringf("Order %i has failed", mark));
             }
         }
     }

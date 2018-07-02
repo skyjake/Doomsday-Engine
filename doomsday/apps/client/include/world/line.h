@@ -359,7 +359,7 @@ public:
          *
          * @param func  Callback to make for each Surface.
          */
-        de::LoopResult forAllSurfaces(std::function<de::LoopResult(Surface &)> func) const;
+        de::LoopResult forAllSurfaces(const std::function<de::LoopResult(Surface &)>& func) const;
 
         /**
          * Update the tangent space normals of the side's surfaces according to the points

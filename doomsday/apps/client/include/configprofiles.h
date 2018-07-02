@@ -72,9 +72,9 @@ public:
      *
      * @return Reference to this instance.
      */
-    ConfigProfiles &define(SettingType type,
-                           de::String const &settingName,
-                           const de::Value &value = de::NoneValue());
+    ConfigProfiles &define(SettingType       type,
+                           const de::String &settingName,
+                           const de::Value & value = de::NoneValue());
 
     de::String currentProfile() const;
 

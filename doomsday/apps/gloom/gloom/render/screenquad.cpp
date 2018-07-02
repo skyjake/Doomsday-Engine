@@ -22,6 +22,8 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 static const int BUF_ID = 1;
 
 using VBuf = GLBufferT<Vertex2Tex>;

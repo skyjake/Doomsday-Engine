@@ -28,6 +28,8 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 DE_PIMPL(Tonemap)
 {
     ScreenQuad    quad;
@@ -116,18 +118,16 @@ void Tonemap::advanceTime(TimeSpan elapsed)
     if (d->brightnessTime < 0.25) return;
     d->brightnessTime = 0;
 
-    auto &GL = LIBGUI_GL;
-
     const auto &bs = d->brightnessSamples[d->brightnessSampleIndex];
-    QVector<Vec3f> sample(bs.size().area());
+    List<Vec3f> sample(bs.size().area());
     if (sample.isEmpty()) return;
 
     // Read the previous frame's brightness sample.
     {
-        GL.glBindFramebuffer(GL_READ_FRAMEBUFFER,
+        glBindFramebuffer(GL_READ_FRAMEBUFFER,
                              d->brightnessFramebuf[d->brightnessSampleIndex].glName());
-        GL.glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        GL.glReadPixels(0, 0, bs.size().x, bs.size().y, GL_RGB, GL_FLOAT, &sample[0]);
+        glPixelStorei(GL_PACK_ALIGNMENT, 4);
+        glReadPixels(0, 0, bs.size().x, bs.size().y, GL_RGB, GL_FLOAT, &sample[0]);
         GLState::current().target().glBind();
     }
 

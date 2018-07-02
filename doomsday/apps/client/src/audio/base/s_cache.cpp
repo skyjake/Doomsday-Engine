@@ -30,6 +30,7 @@
 #include <cstring>
 
 using namespace de;
+using namespace res;
 
 #ifdef __SERVER__
 #  define BEGIN_COP

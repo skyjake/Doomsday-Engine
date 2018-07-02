@@ -37,25 +37,28 @@
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/ScriptCommandWidget>
-#include <de/SignalAction>
 #include <de/ToggleWidget>
 #include <de/ui/SubwidgetItem>
 #include <de/ui/VariableToggleItem>
 #include <doomsday/doomsdayapp.h>
 
-#if !defined (DE_MOBILE)
-#  include <QApplication>
-#  include <QCursor>
-#  include <QClipboard>
-#endif
+#include <SDL2/SDL_clipboard.h>
+
+//#if !defined (DE_MOBILE)
+//#  include <QApplication>
+//#  include <QCursor>
+//#  include <QClipboard>
+//#endif
 
 using namespace de;
 
-static TimeSpan const LOG_OPEN_CLOSE_SPAN = 0.2;
+static const TimeSpan LOG_OPEN_CLOSE_SPAN = 0.2;
 
 DE_GUI_PIMPL(ConsoleWidget)
 , DE_OBSERVES(Variable, Change)
 , DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(LogWidget, ContentHeight)
+, DE_OBSERVES(CommandWidget, Command)
 {
     GuiWidget *buttons = nullptr;
     PopupButtonWidget *button = nullptr;
@@ -80,7 +83,7 @@ DE_GUI_PIMPL(ConsoleWidget)
     };
 
     GrabEdge grabHover = NotGrabbed;
-    GrabEdge grabbed = NotGrabbed;
+    GrabEdge grabbed   = NotGrabbed;
 
     Impl(Public *i) : Base(i)
     {
@@ -94,7 +97,7 @@ DE_GUI_PIMPL(ConsoleWidget)
         DoomsdayApp::app().audienceForGameChange() += this;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         //DoomsdayApp::app().audienceForGameChange() -= this;
         //App::config("console.script").audienceForChange() -= this;
@@ -104,7 +107,7 @@ DE_GUI_PIMPL(ConsoleWidget)
         releaseRef(height);
     }
 
-    void currentGameChanged(Game const &)
+    void currentGameChanged(Game const &) override
     {
         scriptCmd->updateCompletion();
     }
@@ -116,7 +119,7 @@ DE_GUI_PIMPL(ConsoleWidget)
 
         Animation::Style style = useOffsetAnimation? Animation::EaseOut : Animation::Linear;
 
-        if (height->animation().target() == 0)
+        if (fequal(height->animation().target(), 0))
         {
             // On the first expansion make sure the margins are taken into account.
             delta += log->margins().height().valuei();
@@ -160,9 +163,7 @@ DE_GUI_PIMPL(ConsoleWidget)
             if (grabHover != RightEdge)
             {
                 grabHover = RightEdge;
-#if !defined (DE_MOBILE)
-                self().root().window().setCursor(Qt::SizeHorCursor);
-#endif
+                DE_GUI_APP->setMouseCursor(GuiApp::ResizeHorizontal);
             }
         }
         else
@@ -175,24 +176,20 @@ DE_GUI_PIMPL(ConsoleWidget)
                 if (grabHover != TopEdge)
                 {
                     grabHover = TopEdge;
-#if !defined (DE_MOBILE)
-                    self().root().window().setCursor(Qt::SizeVerCursor);
-#endif
+                    DE_GUI_APP->setMouseCursor(GuiApp::ResizeVertical);
                 }
             }
             else if (grabHover != NotGrabbed)
             {
                 grabHover = NotGrabbed;
-#if !defined (DE_MOBILE)
-                self().root().window().setCursor(Qt::ArrowCursor);
-#endif
+                DE_GUI_APP->setMouseCursor(GuiApp::Arrow);
             }
         }
 
         return false;
     }
 
-    void variableValueChanged(Variable &, Value const &newValue)
+    void variableValueChanged(Variable &, Value const &newValue) override
     {
         // We are listening to the 'console.script' variable.
         setScriptMode(newValue.isTrue());
@@ -227,6 +224,11 @@ DE_GUI_PIMPL(ConsoleWidget)
         // Bottom of the console must follow the active command line height.
         self().rule().setInput(Rule::Bottom, next->rule().top() - rule(RuleBank::UNIT));
 
+        if (scriptMode == yes)
+        {
+            return; // No need to change anything else.
+        }
+
         scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
         cmdLine  ->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
 
@@ -243,8 +245,11 @@ DE_GUI_PIMPL(ConsoleWidget)
 
         if (scriptMode != yes)
         {
-            scriptMode = yes;
-            emit self().commandModeChanged();
+            scriptMode = yes;        
+            DE_FOR_PUBLIC_AUDIENCE2(CommandMode, i)
+            {
+                i->commandModeChanged();
+            }
         }
     }
 
@@ -272,6 +277,19 @@ DE_GUI_PIMPL(ConsoleWidget)
             return false;
         }
     };
+
+    void contentHeightIncreased(LogWidget &, int delta) override
+    {
+        expandLog(delta, true);
+    }
+
+    void commandEntered(const String &) override
+    {
+        if (App::config().getb("console.snap") && !log->isAtBottom())
+        {
+            log->scrollToBottom();
+        }
+    }
 };
 
 static PopupWidget *consoleShortcutPopup()
@@ -296,7 +314,9 @@ static PopupWidget *consoleShortcutPopup()
     return pop;
 }
 
-ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Impl(this))
+ConsoleWidget::ConsoleWidget()
+    : GuiWidget("console")
+    , d(new Impl(this))
 {
     d->buttons = new GuiWidget;
     add(d->buttons);
@@ -330,11 +350,11 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Impl(this))
                                              d->promptButton->rule().width());
 
     d->cmdLine = new ConsoleCommandWidget("commandline");
-    d->cmdLine->setEmptyContentHint(tr("Enter commands here") /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
+    d->cmdLine->setEmptyContentHint("Enter commands here" /*  " _E(r)_E(l)_E(t) "SHIFT-ESC" */);
     add(d->cmdLine);
 
     d->scriptCmd = new ScriptCommandWidget("script");
-    d->scriptCmd->setEmptyContentHint(tr("Enter scripts here"));
+    d->scriptCmd->setEmptyContentHint("Enter scripts here");
     add(d->scriptCmd);
 
     d->buttons->setOpacity(.75f);
@@ -365,23 +385,23 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Impl(this))
     d->logMenu = new PopupMenuWidget;
     d->button->setPopup(*d->logMenu);
     d->logMenu->items()
-            << new ui::ActionItem(tr("Show Full Log"), new SignalAction(this, SLOT(showFullLog())))
-            << new ui::ActionItem(tr("Close Log"), new SignalAction(this, SLOT(closeLogAndUnfocusCommandLine())))
-            << new ui::ActionItem(tr("Go to Latest"), new SignalAction(d->log, SLOT(scrollToBottom())))
-            << new ui::ActionItem(tr("Copy Path to Clipboard"),
-                                  new SignalAction(this, SLOT(copyLogPathToClipboard())))
+            << new ui::ActionItem("Show Full Log",          [this](){ showFullLog(); })
+            << new ui::ActionItem("Close Log",              [this](){ closeLogAndUnfocusCommandLine(); })
+            << new ui::ActionItem("Go to Latest",           [this](){ d->log->scrollToBottom(); })
+            << new ui::ActionItem("Copy Path to Clipboard", [this](){ copyLogPathToClipboard(); })
             << new ui::Item(ui::Item::Annotation,
-                            tr("Copies the location of the log output file to the OS clipboard."))
+                            "Copies the location of the log output file to the OS clipboard.")
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(style().images().image("close.ring"), tr("Clear Log"),
-                                  new CommandAction("clear"))
+            << new ui::ActionItem(style().images().image("close.ring"), "Clear Log", new CommandAction("clear"))
             << new ui::Item(ui::Item::Separator)
-            << new ui::VariableToggleItem(tr("Snap to Latest Entry"), App::config("console.snap"))
-            << new ui::Item(ui::Item::Annotation, tr("Running a command or script causes the log to scroll down to the latest entry."))
-            << new ui::VariableToggleItem(tr("Entry Metadata"), App::config("log.showMetadata"))
-            << new ui::Item(ui::Item::Annotation, tr("Time and subsystem of each new entry is printed."))
+            << new ui::VariableToggleItem("Snap to Latest Entry", App::config("console.snap"))
+            << new ui::Item(ui::Item::Annotation,
+                            "Running a command or script causes the log to scroll down "
+                            "to the latest entry.")
+            << new ui::VariableToggleItem("Entry Metadata", App::config("log.showMetadata"))
+            << new ui::Item(ui::Item::Annotation, "Time and subsystem of each new entry is printed.")
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(tr("Log Filter & Alerts"), ui::Right, makePopup<LogSettingsDialog>);
+            << new ui::SubwidgetItem("Log Filter & Alerts", ui::Right, makePopup<LogSettingsDialog>);
 
     add(d->logMenu);
 
@@ -389,26 +409,26 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Impl(this))
     d->promptMenu = new PopupMenuWidget;
     d->promptButton->setPopup(*d->promptMenu);
     d->promptMenu->items()
-            << new ui::SubwidgetItem(tr("Shortcut Key"), ui::Right, consoleShortcutPopup)
+            << new ui::SubwidgetItem("Shortcut Key", ui::Right, consoleShortcutPopup)
             << new ui::Item(ui::Item::Separator)
-            << new ui::VariableToggleItem(tr("Doomsday Script"), App::config("console.script"))
+            << new ui::VariableToggleItem("Doomsday Script", App::config("console.script"))
             << new ui::Item(ui::Item::Annotation,
-                            tr("The command prompt becomes an interactive script "
-                               "process with access to all the runtime DS modules."));
+                            "The command prompt becomes an interactive script "
+                            "process with access to all the runtime DS modules.");
     add(d->promptMenu);
 
     d->setScriptMode(App::config().getb("console.script"));
 
-    // Signals.
-    connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(logContentHeightIncreased(int)));
+    // Observers.
+    d->log->audienceForContentHeight() += d;
 
-    connect(d->cmdLine, SIGNAL(gotFocus()), this, SLOT(commandLineFocusGained()));
-    connect(d->cmdLine, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
-    connect(d->cmdLine, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
+    d->cmdLine->audienceForGotFocus()  += [this](){ commandLineFocusGained(); };
+    d->cmdLine->audienceForLostFocus() += [this](){ commandLineFocusLost(); };
+    d->cmdLine->audienceForCommand()   += d;
 
-    connect(d->scriptCmd, SIGNAL(gotFocus()), this, SLOT(commandLineFocusGained()));
-    connect(d->scriptCmd, SIGNAL(lostFocus()), this, SLOT(commandLineFocusLost()));
-    connect(d->scriptCmd, SIGNAL(commandEntered(de::String)), this, SLOT(commandWasEntered(de::String)));
+    d->scriptCmd->audienceForGotFocus()  += [this](){ commandLineFocusGained(); };
+    d->scriptCmd->audienceForLostFocus() += [this](){ commandLineFocusLost(); };
+    d->scriptCmd->audienceForCommand()   += d;
 }
 
 GuiWidget &ConsoleWidget::buttons()
@@ -515,15 +535,14 @@ bool ConsoleWidget::handleEvent(Event const &event)
     {
         KeyEvent const &key = event.as<KeyEvent>();
 
-        if (key.qtKey() == Qt::Key_PageUp ||
-           key.qtKey() == Qt::Key_PageDown)
+        if (key.ddKey() == DDKEY_PGUP || key.ddKey() == DDKEY_PGDN)
         {
             if (!isLogOpen()) openLog();
             showFullLog();
             return true;
         }
 
-        if (key.qtKey() == Qt::Key_F5) // Clear history.
+        if (key.ddKey() == DDKEY_F5) // Clear history.
         {
             clearLog();
             return true;
@@ -592,11 +611,6 @@ void ConsoleWidget::showFullLog()
     d->expandLog(rule().top().valuei(), false);
 }
 
-void ConsoleWidget::logContentHeightIncreased(int delta)
-{
-    d->expandLog(delta, true);
-}
-
 void ConsoleWidget::setFullyOpaque()
 {
     d->scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled);
@@ -612,7 +626,7 @@ void ConsoleWidget::commandLineFocusGained()
     setFullyOpaque();
     openLog();
 
-    emit commandLineGotFocus();
+    DE_FOR_AUDIENCE2(GotFocus, i) i->commandLineGotFocus();
 }
 
 void ConsoleWidget::commandLineFocusLost()
@@ -637,20 +651,10 @@ void ConsoleWidget::closeMenu()
     d->promptMenu->close();
 }
 
-void ConsoleWidget::commandWasEntered(String const &)
-{
-    if (App::config().getb("console.snap") && !d->log->isAtBottom())
-    {
-        d->log->scrollToBottom();
-    }
-}
-
-#if !defined (DE_MOBILE)
 void ConsoleWidget::copyLogPathToClipboard()
 {
     if (NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))
     {
-        qApp->clipboard()->setText(native->nativePath());
+        SDL_SetClipboardText(native->nativePath());
     }
 }
-#endif

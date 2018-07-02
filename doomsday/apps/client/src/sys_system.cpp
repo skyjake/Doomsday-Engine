@@ -34,7 +34,7 @@
 
 #include <de/concurrency.h>
 #include <de/timer.h>
-#include <de/App>
+#include <de/GuiApp>
 #include <de/PackageLoader>
 #include <de/Loop>
 #include <doomsday/doomsdayapp.h>
@@ -159,7 +159,7 @@ static int showCriticalMessage(char const *msg)
 #if defined (__CLIENT__)
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
 #else
-    qWarning() << msg;
+    warning("%s", msg);
 #endif
     return 0;
 }

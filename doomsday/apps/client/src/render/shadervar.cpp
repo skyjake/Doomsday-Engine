@@ -23,7 +23,7 @@
 
 using namespace de;
 
-static String const DEF_WRAP("wrap");
+DE_STATIC_STRING(DEF_WRAP, "wrap");
 
 /**
  * Animatable variable bound to a GL uniform. The value can have 1...4 float
@@ -89,7 +89,7 @@ void ShaderVar::updateValuePointers(Record &names, String const &varName)
     }
     else
     {
-        for (int i = 0; i < values.size(); ++i)
+        for (int i = 0; i < values.sizei(); ++i)
         {
             values[i].anim = &names[varName.concatenateMember(componentNames[i])]
                     .value<AnimationValue>();
@@ -114,10 +114,11 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
         switch (array->size())
         {
         default:
-            throw DefinitionError("StateAnimator::initVariables",
-                                  QString("%1: Invalid initial value size (%2) for render.variable")
-                                  .arg(ScriptedInfo::sourceLocation(valueDef))
-                                  .arg(array->size()));
+            throw DefinitionError(
+                "StateAnimator::initVariables",
+                stringf("%s: Invalid initial value size (%zu) for render.variable",
+                        ScriptedInfo::sourceLocation(valueDef).c_str(),
+                        array->size()));
 
         case 2:
             var->init(vectorFromValue<Vec2f>(*array));
@@ -136,7 +137,7 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
         }
 
         // Expose the components individually in the namespace for scripts.
-        for (int k = 0; k < var->values.size(); ++k)
+        for (duint k = 0; k < var->values.size(); ++k)
         {
             addBinding(bindingNames,
                        variableName.concatenateMember(componentNames[k]),
@@ -152,20 +153,20 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
     }
 
     // Optional range wrapping.
-    if (valueDef.hasSubrecord(DEF_WRAP))
+    if (valueDef.hasSubrecord(DEF_WRAP()))
     {
         for (int k = 0; k < 4; ++k)
         {
-            String const varName = QString("%1.%2").arg(DEF_WRAP).arg(componentNames[k]);
+            String const varName = DEF_WRAP() + "." + componentNames[k];
             if (valueDef.has(varName))
             {
                 var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));
             }
         }
     }
-    else if (valueDef.has(DEF_WRAP))
+    else if (valueDef.has(DEF_WRAP()))
     {
-        var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP));
+        var->values[0].wrap = rangeFromValue<Rangef>(valueDef.geta(DEF_WRAP()));
     }
 
     // Uniform to be passed to the shader.
@@ -173,12 +174,7 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
 
     // Compose a lookup for quickly finding the variables of each pass
     // (by pass name).
-    members[variableName] = var.release();
-}
-
-ShaderVars::~ShaderVars()
-{
-    qDeleteAll(members.values());
+    members[variableName] = std::move(var);
 }
 
 void ShaderVars::addBinding(Record &names, String const &varName, AnimationValue *anim)

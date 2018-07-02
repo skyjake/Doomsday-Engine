@@ -37,6 +37,8 @@
 
 #define NUM_LAYERS  2
 
+DE_STATIC_STRING(DEFAULT_SKY_SPHERE_MATERIAL, "Textures:SKY1")
+
 using namespace de;
 
 namespace world {
@@ -134,7 +136,7 @@ void Sky::Layer::setFadeoutLimit(dfloat newLimit)
 }
 
 #ifdef __CLIENT__
-static Vec3f const AmbientLightColorDefault(1, 1, 1); // Pure white.
+static const Vec3f AmbientLightColorDefault{1, 1, 1}; // Pure white.
 #endif
 
 DE_PIMPL(Sky)
@@ -144,14 +146,11 @@ DE_PIMPL(Sky)
 , DE_OBSERVES(Layer, MaskedChange)
 #endif
 {
-    struct Layers : public QList<Layer *>
-    {
-        ~Layers() { qDeleteAll(*this); }
-    };
+    using Layers = List<std::unique_ptr<Layer>>;
 
     Layers layers;
 
-    Record const *def    = nullptr; ///< Sky definition.
+    const Record *def    = nullptr; ///< Sky definition.
     dfloat height        = 1;
     dfloat horizonOffset = 0;
 
@@ -159,9 +158,9 @@ DE_PIMPL(Sky)
     {
         for(dint i = 0; i < NUM_LAYERS; ++i)
         {
-            layers.append(new Layer(self()));
+            layers.emplace_back(new Layer(self()));
 #ifdef __CLIENT__
-            Layer *layer = layers.last();
+            Layer *layer = layers.back().get();
             layer->audienceForActiveChange()   += this;
             layer->audienceForMaskedChange()   += this;
             layer->audienceForMaterialChange() += this;
@@ -340,9 +339,10 @@ void Sky::configure(defn::Sky const *def)
 
         lyr.setMasked(lyrDef? (lyrDef->geti("flags") & SLF_MASK) : false);
         lyr.setOffset(lyrDef? lyrDef->getf("offset") : DEFAULT_SKY_SPHERE_XOFFSET);
-        lyr.setFadeoutLimit(lyrDef? lyrDef->getf("colorLimit") : DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
+        lyr.setFadeoutLimit(lyrDef ? lyrDef->getf("colorLimit") : DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
 
-        res::Uri const matUri = lyrDef? res::makeUri(lyrDef->gets("material")) : res::makeUri(DEFAULT_SKY_SPHERE_MATERIAL);
+        res::Uri const matUri = lyrDef ? res::makeUri(lyrDef->gets("material"))
+                                       : res::makeUri(DEFAULT_SKY_SPHERE_MATERIAL());
         world::Material *mat = 0;
         try
         {
@@ -395,7 +395,7 @@ bool Sky::hasLayer(dint layerIndex) const
 
 Sky::Layer *Sky::layerPtr(dint layerIndex) const
 {
-    if (hasLayer(layerIndex)) return d->layers.at(layerIndex);
+    if (hasLayer(layerIndex)) return d->layers.at(layerIndex).get();
     return nullptr;
 }
 
@@ -403,28 +403,28 @@ Sky::Layer &Sky::layer(dint layerIndex)
 {
     if (Layer *layer = layerPtr(layerIndex)) return *layer;
     /// @throw MissingLayerError Unknown layerIndex specified,
-    throw MissingLayerError("Sky::layer", "Unknown layer #" + QString::number(layerIndex));
+    throw MissingLayerError("Sky::layer", stringf("Unknown layer #%i", layerIndex));
 }
 
 Sky::Layer const &Sky::layer(dint layerIndex) const
 {
     if (Layer *layer = layerPtr(layerIndex)) return *layer;
     /// @throw MissingLayerError Unknown layerIndex specified,
-    throw MissingLayerError("Sky::layer", "Unknown layer #" + QString::number(layerIndex));
+    throw MissingLayerError("Sky::layer", stringf("Unknown layer #%i", layerIndex));
 }
 
-LoopResult Sky::forAllLayers(std::function<LoopResult (Layer &)> func)
+LoopResult Sky::forAllLayers(const std::function<LoopResult (Layer &)>& func)
 {
-    for (Layer *layer : d->layers)
+    for (auto &layer : d->layers)
     {
         if (auto result = func(*layer)) return result;
     }
     return LoopContinue;
 }
 
-LoopResult Sky::forAllLayers(std::function<LoopResult (Layer const &)> func) const
+LoopResult Sky::forAllLayers(const std::function<LoopResult (Layer const &)>& func) const
 {
-    for (Layer const *layer : d->layers)
+    for (const auto &layer : d->layers)
     {
         if (auto result = func(*layer)) return result;
     }

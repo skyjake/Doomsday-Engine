@@ -26,14 +26,16 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 DE_PIMPL_NOREF(SkyBox)
 {
     typedef GLBufferT<Vertex3> VBuf;
 
-    GLTexture     envTex;
-    Drawable      skyBox;
-    GLUniform     uSkyMvpMatrix{"uSkyMvpMatrix", GLUniform::Mat4};
-    float         scale = 1.f;
+    GLTexture envTex;
+    Drawable  skyBox;
+    GLUniform uSkyMvpMatrix{"uSkyMvpMatrix", GLUniform::Mat4};
+    float     scale = 1.f;
 };
 
 SkyBox::SkyBox() : d(new Impl)

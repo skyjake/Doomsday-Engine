@@ -32,8 +32,6 @@
 #include <doomsday/world/Material>
 #include "resource/framemodeldef.h"
 
-#define DEFAULT_SKY_SPHERE_MATERIAL ( "Textures:SKY1" )
-
 namespace world {
 
 /**
@@ -234,8 +232,8 @@ public:
      *
      * @param callback  Function to call for each Layer.
      */
-    de::LoopResult forAllLayers(std::function<de::LoopResult (Layer &)> func);
-    de::LoopResult forAllLayers(std::function<de::LoopResult (Layer const &)> func) const;
+    de::LoopResult forAllLayers(const std::function<de::LoopResult (Layer &)>& func);
+    de::LoopResult forAllLayers(const std::function<de::LoopResult (Layer const &)>& func) const;
 
 #ifdef __CLIENT__
 // --------------------------------------------------------------------------------------

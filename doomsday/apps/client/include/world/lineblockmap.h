@@ -24,7 +24,8 @@
 
 #include "world/blockmap.h"
 #include "Line"
-#include <QList>
+
+#include <de/List>
 
 namespace world {
 
@@ -45,7 +46,7 @@ public:
     void link(Line &line);
 
     /// @note Assumes none of the specified @a lines are yet linked!
-    void link(QList<Line *> const &lines);
+    void link(const de::List<Line *> &lines);
 };
 
 }  // namespace world

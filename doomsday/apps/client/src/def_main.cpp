@@ -23,17 +23,23 @@
 
 #include "def_main.h"
 
-#include <cctype>
-#include <cstring>
-#include <QMap>
-#include <QTextStream>
-#include <de/findfile.h>
-#include <de/c_wrapper.h>
-#include <de/App>
-#include <de/PackageLoader>
-#include <de/ScriptSystem>
-#include <de/NativePath>
-#include <de/RecordValue>
+#include "dd_main.h"
+#include "dd_def.h"
+#include "api_def.h"
+#include "api_sound.h"
+
+#include "Generator"
+#ifdef __CLIENT__
+#  include "render/rend_particle.h"
+#endif
+
+#include <doomsday/world/detailtexturemateriallayer.h>
+#include <doomsday/world/shinetexturemateriallayer.h>
+#include <doomsday/world/texturemateriallayer.h>
+#ifdef __CLIENT__
+#  include "resource/lightmaterialdecoration.h"
+#endif
+
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/defs/decoration.h>
@@ -53,25 +59,20 @@
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/xg.h>
 
-#include "dd_main.h"
-#include "dd_def.h"
+#include <de/Map>
+#include <de/findfile.h>
+#include <de/c_wrapper.h>
+#include <de/App>
+#include <de/PackageLoader>
+#include <de/ScriptSystem>
+#include <de/NativePath>
+#include <de/RecordValue>
 
-#include "api_def.h"
-#include "api_sound.h"
-
-#include "Generator"
-#ifdef __CLIENT__
-#  include "render/rend_particle.h"
-#endif
-
-#include <doomsday/world/detailtexturemateriallayer.h>
-#include <doomsday/world/shinetexturemateriallayer.h>
-#include <doomsday/world/texturemateriallayer.h>
-#ifdef __CLIENT__
-#  include "resource/lightmaterialdecoration.h"
-#endif
+#include <cwctype>
+#include <cstring>
 
 using namespace de;
+using namespace res;
 
 #define LOOPi(n)    for (i = 0; i < (n); ++i)
 #define LOOPk(n)    for (k = 0; k < (n); ++k)
@@ -357,7 +358,7 @@ static String defCountMsg(dint count, String const &label)
     if (!::verbose && !count)
         return "";  // Don't print zeros if not verbose.
 
-    return String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label);
+    return String::format(_E(Ta) "  %i " _E(Tb) "%s\n", count, label.c_str());
 }
 
 /**
@@ -367,19 +368,19 @@ static void Def_ReadLumpDefs()
 {
     LOG_AS("Def_ReadLumpDefs");
 
-    LumpIndex const &lumpIndex = fileSys().nameIndex();
+    const LumpIndex &lumpIndex = fileSys().nameIndex();
     LumpIndex::FoundIndices foundDefns;
     lumpIndex.findAll("DD_DEFNS.lmp", foundDefns);
-    DE_FOR_EACH_CONST(LumpIndex::FoundIndices, i, foundDefns)
+    for (const auto i : foundDefns)
     {
-        if (!DED_ReadLump(DED_Definitions(), *i))
+        if (!DED_ReadLump(DED_Definitions(), i))
         {
-            QByteArray path = NativePath(lumpIndex[*i].container().composePath()).pretty().toUtf8();
-            App_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n", path.constData());
+            App_Error("Def_ReadLumpDefs: Parse error reading \"%s:DD_DEFNS\".\n",
+                      NativePath(lumpIndex[i].container().composePath()).pretty().c_str());
         }
     }
 
-    dint const numProcessedLumps = foundDefns.size();
+    const auto numProcessedLumps = foundDefns.size();
     if (::verbose && numProcessedLumps > 0)
     {
         LOG_RES_NOTE("Processed %i %s")
@@ -413,7 +414,7 @@ dint Def_StateForMobj(String const &state)
     return num;
 }
 
-static void readDefinitionFile(String path)
+static void readDefinitionFile(const String& path)
 {
     if (path.isEmpty()) return;
 
@@ -455,9 +456,9 @@ static void prependWorkPath(ddstring_t *dst, ddstring_t const *src)
 /**
  * Returns a URN list (in load order) for all lumps whose name matches the pattern "MAPINFO.lmp".
  */
-static QStringList allMapInfoUrns()
+static StringList allMapInfoUrns()
 {
-    QStringList foundPaths;
+    StringList foundPaths;
 
     // The game's main MAPINFO definitions should be processed first.
     bool ignoreNonCustom = false;
@@ -493,7 +494,7 @@ static QStringList allMapInfoUrns()
                 continue;
         }
 
-        foundPaths << String("LumpIndex:%1").arg(lumpNumber);
+        foundPaths << String::format("LumpIndex:%i", lumpNumber);
     }
 
     return foundPaths;
@@ -502,12 +503,12 @@ static QStringList allMapInfoUrns()
 /**
  * @param mapInfoUrns  MAPINFO definitions to translate, in load order.
  */
-static void translateMapInfos(QStringList const &mapInfoUrns, String &xlat, String &xlatCustom)
+static void translateMapInfos(const StringList &mapInfoUrns, String &xlat, String &xlatCustom)
 {
     xlat.clear();
     xlatCustom.clear();
 
-    String delimitedPaths = mapInfoUrns.join(";");
+    String delimitedPaths = String::join(mapInfoUrns, ";");
     if (delimitedPaths.isEmpty()) return;
 
     ddhook_mapinfo_convert_t parm;
@@ -543,7 +544,7 @@ static void readAllDefinitions()
         Game const &game = App_CurrentGame();
 
         // Some games use definitions that are translated to DED.
-        QStringList mapInfoUrns = allMapInfoUrns();
+        StringList mapInfoUrns = allMapInfoUrns();
         if (!mapInfoUrns.isEmpty())
         {
             String xlat, xlatCustom;
@@ -575,18 +576,18 @@ static void readAllDefinitions()
         // Now any startup definition files required by the game.
         Game::Manifests const &gameResources = game.manifests();
         dint packageIdx = 0;
-        for (Game::Manifests::const_iterator i = gameResources.find(RC_DEFINITION);
-            i != gameResources.end() && i.key() == RC_DEFINITION; ++i, ++packageIdx)
+        const auto foundRes = gameResources.equal_range(RC_DEFINITION);
+        for (auto i = foundRes.first; i != foundRes.second; ++i, ++packageIdx)
         {
-            ResourceManifest &record = **i;
+            ResourceManifest &record = *i->second;
             /// Try to locate this resource now.
             String const &path = record.resolvedPath(true/*try to locate*/);
             if (path.isEmpty())
             {
-                QByteArray names = record.names().join(";").toUtf8();
-                App_Error("readAllDefinitions: Error, failed to locate required game definition \"%s\".", names.constData());
+                App_Error(
+                    "readAllDefinitions: Error, failed to locate required game definition \"%s\".",
+                    String::join(record.names(), ";").c_str());
             }
-
             readDefinitionFile(path);
         }
 
@@ -634,7 +635,7 @@ static void readAllDefinitions()
             // any files from subfolders.
             defsFolder.forContents([] (String name, File &file)
             {
-                if (!name.fileNameExtension().compareWithoutCase(".ded"))
+                if (!name.fileNameExtension().compare(".ded", CaseInsensitive))
                 {
                     readDefinitionFile(file.path());
                 }
@@ -655,10 +656,10 @@ static void defineFlaremap(res::Uri const &resourceUri)
     if (resourceUri.isEmpty()) return;
 
     // Reference to none?
-    if (!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+    if (!resourceUri.path().toString().compareWithoutCase("-")) return;
 
     // Reference to a "built-in" flaremap?
-    String const &resourcePathStr = resourceUri.path().toStringRef();
+    const String resourcePathStr = resourceUri.path();
     if (resourcePathStr.length() == 1 &&
         resourcePathStr.first() >= '0' && resourcePathStr.first() <= '4')
         return;
@@ -671,7 +672,7 @@ static void defineLightmap(res::Uri const &resourceUri)
     if (resourceUri.isEmpty()) return;
 
     // Reference to none?
-    if (!resourceUri.path().toStringRef().compareWithoutCase("-")) return;
+    if (!resourceUri.path().toString().compareWithoutCase("-")) return;
 
     res::Textures::get().defineTexture("Lightmaps", resourceUri);
 }
@@ -823,7 +824,7 @@ static void redecorateMaterial(ClientMaterial &material, Record const &def)
         auto const &layer0               = material.layer(0).as<world::TextureMaterialLayer>();
 
         bool haveDecorations = false;
-        QVector<Record const *> stageDecorations(layer0.stageCount());
+        List<Record const *> stageDecorations(layer0.stageCount());
         for (dint i = 0; i < layer0.stageCount(); ++i)
         {
             world::TextureMaterialLayer::AnimationStage const &stage = layer0.stage(i);
@@ -1387,10 +1388,10 @@ void Def_Read()
         // Make sure duplicate defs overwrite the earliest.
         sfxinfo_t *si    = &::runtimeDefs.sounds[defs.getSoundNum(snd->id)];
 
-        qstrcpy(si->id, snd->id);
-        qstrcpy(si->lumpName, snd->lumpName);
+        strcpy(si->id, snd->id);
+        strcpy(si->lumpName, snd->lumpName);
         si->lumpNum     = (strlen(snd->lumpName) > 0? fileSys().lumpNumForName(snd->lumpName) : -1);
-        qstrcpy(si->name, snd->name);
+        strcpy(si->name, snd->name);
 
         dint const soundIdx = defs.getSoundNum(snd->link);
         si->link        = (soundIdx >= 0 ? &::runtimeDefs.sounds[soundIdx] : 0);
@@ -1454,8 +1455,9 @@ void Def_Read()
             if (iCmpStrCase(defs.text[i].id, defs.text[k].id)) continue; // ID mismatch.
 
             // Update the earlier string.
-            ::runtimeDefs.texts[i].text = (char *) M_Realloc(::runtimeDefs.texts[i].text, strlen(::runtimeDefs.texts[k].text) + 1);
-            qstrcpy(::runtimeDefs.texts[i].text, ::runtimeDefs.texts[k].text);
+            ::runtimeDefs.texts[i].text = (char *) M_Realloc(
+                ::runtimeDefs.texts[i].text, strlen(::runtimeDefs.texts[k].text) + 1);
+            strcpy(::runtimeDefs.texts[i].text, ::runtimeDefs.texts[k].text);
 
             // Free the later string, it isn't used (>NUMTEXT).
             M_Free(::runtimeDefs.texts[k].text);
@@ -1469,7 +1471,7 @@ void Def_Read()
         ded_ptcgen_t *pg = &defs.ptcGens[i];
         dint st = defs.getStateNum(pg->state);
 
-        if (!qstrcmp(pg->type, "*"))
+        if (!iCmpStr(pg->type, "*"))
             pg->typeNum = DED_PTCGEN_ANY_MOBJ_TYPE;
         else
             pg->typeNum = defs.getMobjNum(pg->type);
@@ -1532,15 +1534,14 @@ void Def_Read()
     // Log a summary of the definition database.
     LOG_RES_MSG(_E(b) "Definitions:");
     String str;
-    QTextStream os(&str);
-    os << defCountMsg(defs.episodes.size(),         "episodes");
-    os << defCountMsg(defs.groups.size(),           "animation groups");
-    os << defCountMsg(defs.compositeFonts.size(),   "composite fonts");
-    os << defCountMsg(defs.details.size(),          "detail textures");
-    os << defCountMsg(defs.finales.size(),          "finales");
-    os << defCountMsg(defs.lights.size(),           "lights");
-    os << defCountMsg(defs.lineTypes.size(),        "line types");
-    os << defCountMsg(defs.mapInfos.size(),         "map infos");
+    str += defCountMsg(defs.episodes.size(),         "episodes");
+    str += defCountMsg(defs.groups.size(),           "animation groups");
+    str += defCountMsg(defs.compositeFonts.size(),   "composite fonts");
+    str += defCountMsg(defs.details.size(),          "detail textures");
+    str += defCountMsg(defs.finales.size(),          "finales");
+    str += defCountMsg(defs.lights.size(),           "lights");
+    str += defCountMsg(defs.lineTypes.size(),        "line types");
+    str += defCountMsg(defs.mapInfos.size(),         "map infos");
 
     dint nonAutoGeneratedCount = 0;
     for (dint i = 0; i < defs.materials.size(); ++i)
@@ -1548,21 +1549,21 @@ void Def_Read()
         if (!defs.materials[i].getb("autoGenerated"))
             ++nonAutoGeneratedCount;
     }
-    os << defCountMsg(nonAutoGeneratedCount,        "materials");
+    str += defCountMsg(nonAutoGeneratedCount,        "materials");
 
-    os << defCountMsg(defs.models.size(),           "models");
-    os << defCountMsg(defs.ptcGens.size(),          "particle generators");
-    os << defCountMsg(defs.skies.size(),            "skies");
-    os << defCountMsg(defs.sectorTypes.size(),      "sector types");
-    os << defCountMsg(defs.musics.size(),           "songs");
-    os << defCountMsg(::runtimeDefs.sounds.size(),    "sound effects");
-    os << defCountMsg(defs.sprites.size(),          "sprite names");
-    os << defCountMsg(::runtimeDefs.states.size(),    "states");
-    os << defCountMsg(defs.decorations.size(),      "surface decorations");
-    os << defCountMsg(defs.reflections.size(),      "surface reflections");
-    os << defCountMsg(::runtimeDefs.texts.size(),     "text strings");
-    os << defCountMsg(defs.textureEnv.size(),       "texture environments");
-    os << defCountMsg(::runtimeDefs.mobjInfo.size(),  "things");
+    str += defCountMsg(defs.models.size(),           "models");
+    str += defCountMsg(defs.ptcGens.size(),          "particle generators");
+    str += defCountMsg(defs.skies.size(),            "skies");
+    str += defCountMsg(defs.sectorTypes.size(),      "sector types");
+    str += defCountMsg(defs.musics.size(),           "songs");
+    str += defCountMsg(::runtimeDefs.sounds.size(),  "sound effects");
+    str += defCountMsg(defs.sprites.size(),          "sprite names");
+    str += defCountMsg(::runtimeDefs.states.size(),  "states");
+    str += defCountMsg(defs.decorations.size(),      "surface decorations");
+    str += defCountMsg(defs.reflections.size(),      "surface reflections");
+    str += defCountMsg(::runtimeDefs.texts.size(),   "text strings");
+    str += defCountMsg(defs.textureEnv.size(),       "texture environments");
+    str += defCountMsg(::runtimeDefs.mobjInfo.size(),"things");
 
     LOG_RES_MSG("%s") << str.rightStrip();
 

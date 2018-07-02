@@ -26,7 +26,7 @@
 #ifndef DE_WORLD_BSP_LINESEGMENTBLOCK_H
 #define DE_WORLD_BSP_LINESEGMENTBLOCK_H
 
-#include <QList>
+#include <de/List>
 #include <de/aabox.h>
 #include <de/BinaryTree>
 #include "world/bsp/linesegment.h"
@@ -40,7 +40,7 @@ namespace bsp {
 class LineSegmentBlock
 {
 public:
-    typedef QList<LineSegmentSide *> All;
+    typedef de::List<LineSegmentSide *> All;
 
 public:
     LineSegmentBlock(AABox const &bounds);
@@ -86,9 +86,8 @@ private:
     DE_PRIVATE(d)
 };
 
-struct LineSegmentBlockTreeNode : public de::BinaryTree<LineSegmentBlock *>
-{
-    LineSegmentBlockTreeNode(LineSegmentBlock *lsb, // owned
+struct LineSegmentBlockTreeNode : public de::BinaryTree<LineSegmentBlock *> {
+    LineSegmentBlockTreeNode(LineSegmentBlock *        lsb, // owned
                              LineSegmentBlockTreeNode *parent = nullptr);
     ~LineSegmentBlockTreeNode();
 

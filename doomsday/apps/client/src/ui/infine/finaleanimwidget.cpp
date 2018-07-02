@@ -491,7 +491,7 @@ FinaleAnimWidget::Frames const &FinaleAnimWidget::allFrames() const
 
 FinaleAnimWidget &FinaleAnimWidget::clearAllFrames()
 {
-    qDeleteAll(d->frames); d->frames.clear();
+    deleteAll(d->frames); d->frames.clear();
     d->curFrame     = 0;
     d->animComplete = true;  // Nothing to animate.
     d->animLooping  = false; // Yeah?

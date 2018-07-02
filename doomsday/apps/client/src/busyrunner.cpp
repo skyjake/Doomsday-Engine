@@ -38,19 +38,19 @@
 #include <doomsday/doomsdayapp.h>
 #include <de/concurrency.h>
 #include <de/Config>
+#include <de/EventLoop>
 #include <de/GLInfo>
 #include <de/Log>
 #include <de/Loop>
 
-#include <QEventLoop>
 #include <atomic>
 
 using namespace de;
 
 static bool animatedTransitionActive(int busyMode)
 {
-    return (!novideo && !netGame && !(busyMode & BUSYF_STARTUP) &&
-            rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
+    return (!novideo && !netGame && !(busyMode & BUSYF_STARTUP) && rTransitionTics > 0 &&
+            (busyMode & BUSYF_TRANSITION));
 }
 
 static BusyMode &busy()
@@ -64,7 +64,7 @@ DE_PIMPL_NOREF(BusyRunner)
 , DE_OBSERVES(BusyMode, TaskWillStart)
 , DE_OBSERVES(BusyMode, Abort)
 {
-    QEventLoop *eventLoop = nullptr;
+    EventLoop *eventLoop = nullptr;
 
     thread_t    busyThread = nullptr;
     std::atomic_bool busyDone { false };
@@ -81,7 +81,7 @@ DE_PIMPL_NOREF(BusyRunner)
         busy().audienceForAbort()         += this;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         busy().setTaskRunner(nullptr);
     }
@@ -137,7 +137,7 @@ DE_PIMPL_NOREF(BusyRunner)
     {
         Loop::mainCall([this] ()
         {
-            qDebug() << "[BusyRunner] Killing the worker!";
+            debug("[BusyRunner] Killing the worker!");
             Thread_KillAbnormally(busyThread);
             exitEventLoop();
         });
@@ -158,11 +158,11 @@ DE_PIMPL_NOREF(BusyRunner)
         int result = Sys_WaitThread(busyThread, busy().endedWithError()? 100 : 5000, nullptr);
         busyThread = nullptr;
 
-        eventLoop->exit(result);
+        eventLoop->quit(result);
 
         if (fadeFromBlack)
         {
-            ClientWindow::main().fadeContent(ClientWindow::FadeFromBlack, 2);
+            ClientWindow::main().fadeContent(ClientWindow::FadeFromBlack, 2.0);
         }
     }
 
@@ -220,7 +220,7 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     // we're busy. This event loop is able to handle window and input events
     // just like the primary loop.
     d->busyDone = false;
-    d->eventLoop = new QEventLoop;
+    d->eventLoop = new EventLoop;
     Result result(true, d->eventLoop->exec());
     delete d->eventLoop;
     d->eventLoop = nullptr;

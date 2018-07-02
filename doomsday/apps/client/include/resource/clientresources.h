@@ -334,9 +334,19 @@ public:
      * @return  The interned copy of the rationalized specification.
      */
     de::MaterialVariantSpec const &materialSpec(MaterialContextId contextId,
-        de::dint flags, byte border, de::dint tClass, de::dint tMap, de::dint wrapS, de::dint wrapT,
-        de::dint minFilter, de::dint magFilter, de::dint anisoFilter, bool mipmapped,
-        bool gammaCorrection, bool noStretch, bool toAlpha);
+                                                de::dint          flags,
+                                                byte              border,
+                                                de::dint          tClass,
+                                                de::dint          tMap,
+                                                GLenum            wrapS,
+                                                GLenum            wrapT,
+                                                de::dint          minFilter,
+                                                de::dint          magFilter,
+                                                de::dint          anisoFilter,
+                                                bool              mipmapped,
+                                                bool              gammaCorrection,
+                                                bool              noStretch,
+                                                bool              toAlpha);
 
     /**
      * Prepare a TextureVariantSpecification according to usage context. If the
@@ -351,7 +361,7 @@ public:
      * @return  The interned copy of the rationalized specification.
      */
     TextureVariantSpec const &textureSpec(texturevariantusagecontext_t tc,
-        de::dint flags, byte border, de::dint tClass, de::dint tMap, de::dint wrapS, de::dint wrapT,
+        de::dint flags, byte border, de::dint tClass, de::dint tMap, GLenum wrapS, GLenum wrapT,
         de::dint minFilter, de::dint magFilter, de::dint anisoFilter,
         dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha);
 

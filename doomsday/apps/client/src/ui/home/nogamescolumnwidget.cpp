@@ -23,9 +23,9 @@
 
 #include <de/ButtonWidget>
 #include <de/Config>
-#include <de/SignalAction>
+//#include <de/SignalAction>
 #include <de/TextValue>
-#include <QFileDialog>
+//#include <QFileDialog>
 
 using namespace de;
 
@@ -35,8 +35,8 @@ NoGamesColumnWidget::NoGamesColumnWidget()
     header().hide();
 
     LabelWidget *notice = LabelWidget::newWithText(
-                _E(b) + tr("No playable games were found.\n") + _E(.) +
-                tr("Please select the folder where you have one or more game WAD files."),
+                _E(b) "No playable games were found.\n" _E(.)
+                "Please select the folder where you have one or more game WAD files.",
                 this);
     notice->setMaximumTextWidth(maximumContentWidth());
     notice->setTextColor("text");
@@ -46,24 +46,26 @@ NoGamesColumnWidget::NoGamesColumnWidget()
             .setInput(Rule::Bottom, rule().midY());
 
     ButtonWidget *chooseIwad = new ButtonWidget;
-    chooseIwad->setText(tr("Select WAD Folder..."));
+    chooseIwad->setText("Select WAD Folder...");
     chooseIwad->setSizePolicy(ui::Expand, ui::Expand);
     chooseIwad->rule()
             .setMidAnchorX(rule().midX())
             .setInput(Rule::Top, notice->rule().bottom());
-    chooseIwad->setAction(new SignalAction(this, SLOT(browseForDataFiles())));
+    chooseIwad->setActionFn([this](){ browseForDataFiles(); });
     add(chooseIwad);
 }
 
 String NoGamesColumnWidget::tabHeading() const
 {
-    return tr("Data Files?");
+    return "Data Files?";
 }
 
 void NoGamesColumnWidget::browseForDataFiles()
 {
     bool reload = false;
 
+    DE_ASSERT_FAIL("Need a file picker");
+#if 0
 #if !defined (DE_MOBILE)
     // Use a native dialog to select the IWAD folder.
     ClientApp::app().beginNativeUIMode();
@@ -101,6 +103,7 @@ void NoGamesColumnWidget::browseForDataFiles()
     }
 
     ClientApp::app().endNativeUIMode();
+#endif
 #endif
 
     // Reload packages and recheck for game availability.

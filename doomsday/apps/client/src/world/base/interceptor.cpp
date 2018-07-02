@@ -349,15 +349,15 @@ LineOpening const &Interceptor::opening() const
 bool Interceptor::adjustOpening(Line const *line)
 {
     DE_ASSERT(d->map != 0);
-    if(line)
+    if (line)
     {
-        if(d->map == &line->map())
+        if (d->map == &line->map())
         {
             d->opening = LineOpening(*line);
         }
         else
         {
-            qDebug() << "Ignoring alien line" << de::dintptr(line) << "in Interceptor::adjustOpening";
+            debug("Ignoring alien line %i in Interceptor::adjustOpening", line);
         }
     }
     return d->opening.range > 0;

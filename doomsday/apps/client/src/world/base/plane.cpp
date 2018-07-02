@@ -82,7 +82,7 @@ DE_PIMPL(Plane)
 #endif
     }
 
-    inline Map &map() const { return self().map(); }
+    inline world::Map &map() const { return self().map(); }
 
     void setHeight(ddouble newHeight)
     {
@@ -183,17 +183,17 @@ Plane::Plane(Sector &sector, Vec3f const &normal, ddouble height)
 
 String Plane::description() const
 {
-    auto desc = String(    _E(l) "Sector: "        _E(.)_E(i) "%1" _E(.)
-                       " " _E(l) "Height: "        _E(.)_E(i) "%2" _E(.)
-                       " " _E(l) "Height Target: " _E(.)_E(i) "%3" _E(.)
-                       " " _E(l) "Speed: "         _E(.)_E(i) "%4" _E(.))
-                  .arg(sector().indexInMap())
-                  .arg(height())
-                  .arg(heightTarget())
-                  .arg(speed());
+    auto desc = String::format(    _E(l) "Sector: "        _E(.)_E(i) "%i" _E(.)
+                               " " _E(l) "Height: "        _E(.)_E(i) "%f" _E(.)
+                               " " _E(l) "Height Target: " _E(.)_E(i) "%f" _E(.)
+                               " " _E(l) "Speed: "         _E(.)_E(i) "%f" _E(.),
+                  sector().indexInMap(),
+                  height(),
+                  heightTarget(),
+                  speed());
 
     DE_DEBUG_ONLY(
-        desc.prepend(String(_E(b) "Plane " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+        desc.prepend(String::format(_E(b) "Plane " _E(.) "[%p]\n", this));
     )
     return desc + "\n" + surface().description();
 }

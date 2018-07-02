@@ -48,11 +48,11 @@ DE_PIMPL(MaterialLib)
     };
     using TexIds = std::array<Id, TextureMapCount>;
 
-    filesys::AssetObserver        observer{"material\\..*"};
-    QHash<String, Properties>     materials;
-    mutable QHash<String, TexIds> loadedTextures; // name => atlas ID
-    Ids                           materialIds;
-    DataBuffer<Metrics>           textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
+    filesys::AssetObserver       observer{"material\\..*"};
+    Hash<String, Properties>     materials;
+    mutable Hash<String, TexIds> loadedTextures; // name => atlas ID
+    Ids                          materialIds;
+    DataBuffer<Metrics>          textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
 
     Impl(Public *i) : Base(i)
     {
@@ -102,15 +102,14 @@ DE_PIMPL(MaterialLib)
     {
         while (!loadedTextures.isEmpty())
         {
-            unloadTextures(loadedTextures.begin().key());
+            unloadTextures(loadedTextures.begin()->first);
         }
         textureMetrics.clear();
     }
 
     void addMaterial(const DotPath &name, const Package::Asset &asset)
     {
-        qDebug() << "Adding material:" << name;
-        qDebug() << asset.accessedRecord().asText().toLatin1().constData();
+        debug("Adding material: %s\n%s", name.c_str(), asset.accessedRecord().asText().c_str());
 
         const bool verticalAspect = ScriptedInfo::isTrue(asset, "verticalAspect", false);
 
@@ -194,9 +193,8 @@ DE_PIMPL(MaterialLib)
             Image gloss        = getImage(asset, "roughness").invertedColor(); // grayscale
             Image diffuse      = baseColor.multiplied(invMetallic);
 
-            QImage defaultSpecular(QSize(invMetallic.width(), invMetallic.height()),
-                                   QImage::Format_ARGB32);
-            defaultSpecular.fill(QColor(56, 56, 56, 255));
+            Image defaultSpecular(invMetallic.size(), Image::RGBA_8888);
+            defaultSpecular.fill(Image::Color(56, 56, 56, 255));
 
             Image specGloss = invMetallic.mixed(baseColor, defaultSpecular).withAlpha(gloss);
 
@@ -222,7 +220,7 @@ DE_PIMPL(MaterialLib)
         auto loaded = loadedTextures.find(materialId);
         if (loaded != loadedTextures.end())
         {
-            const auto &texIds = loaded.value();
+            const auto &texIds = loaded->second;
             for (int i = 0; i < TextureMapCount; ++i)
             {
                 if (texIds[i])
@@ -242,17 +240,17 @@ DE_PIMPL(MaterialLib)
         materialIds.clear();
         materialIds.insert(String(), InvalidIndex);
 
-        for (auto i = loadedTextures.begin(); i != loadedTextures.end(); ++i)
+        for (auto &i : loadedTextures)
         {
             Metrics metrics{};
 
             // Load up metrics in an array.
             for (int j = 0; j < 4; ++j)
             {
-                DE_ASSERT(materials.contains(i.key()));
+                DE_ASSERT(materials.contains(i.first));
 
-                const auto &props = materials[i.key()];
-                const Id    texId = i.value()[j];
+                const auto &props = materials[i.first];
+                const Id    texId = i.second[j];
                 Rectanglei rect;
                 Rectanglef rectf;
                 if (texId)
@@ -272,7 +270,7 @@ DE_PIMPL(MaterialLib)
             }
 
             const uint32_t matId = textureMetrics.append(metrics);
-            materialIds.insert(i.key(), matId);
+            materialIds.insert(i.first, matId);
         }
 
         textureMetrics.update();
@@ -302,13 +300,13 @@ void MaterialLib::loadMaterials(const StringList &materials) const
 {
     // Unload unnecessary materials.
     {
-        QMutableHashIterator<String, Impl::TexIds> iter(d->loadedTextures);
-        while (iter.hasNext())
+        for (auto i = d->loadedTextures.begin(), next = i; i != d->loadedTextures.end();
+             i = next)
         {
-            iter.next();
-            if (!materials.contains(iter.key()))
+            next++ = i;
+            if (!materials.contains(i->first))
             {
-                d->unloadTextures(iter.key());
+                d->unloadTextures(i->first);
             }
         }
     }
@@ -332,10 +330,10 @@ const MaterialLib::Ids &MaterialLib::materials() const
 
 bool MaterialLib::isTransparent(const String &matId) const
 {
-    auto found = d->materials.constFind(matId);
-    if (found != d->materials.constEnd())
+    auto found = d->materials.find(matId);
+    if (found != d->materials.end())
     {
-        return (found.value().flags & Transparent) != 0;
+        return (found->second.flags & Transparent) != 0;
     }
     return false;
 }

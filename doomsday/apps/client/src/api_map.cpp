@@ -26,16 +26,7 @@
 #include "de_base.h"
 #include "api_map.h"
 
-#include <cstring>
-#include <de/memoryzone.h>
-#include <doomsday/filesys/fs_main.h>
-#include <doomsday/resource/mapmanifests.h>
-#include <doomsday/world/MaterialManifest>
-#include <doomsday/world/Materials>
-#include <doomsday/EntityDatabase>
-
 #include "network/net_main.h"
-
 #include "world/blockmap.h"
 #include "world/linesighttest.h"
 #include "world/maputil.h"
@@ -47,16 +38,19 @@
 #include "Interceptor"
 #include "Surface"
 
-//#ifdef __CLIENT__
-//#  include "render/lightgrid.h"
-//#endif
+#include <de/memoryzone.h>
+#include <doomsday/filesys/fs_main.h>
+#include <doomsday/resource/mapmanifests.h>
+#include <doomsday/world/MaterialManifest>
+#include <doomsday/world/Materials>
+#include <doomsday/EntityDatabase>
 
 using namespace de;
 using namespace world;
 
 // Converting a public void* pointer to an internal world::MapElement.
 #define IN_ELEM(p)          reinterpret_cast<MapElement *>(p)
-#define IN_ELEM_CONST(p)    reinterpret_cast<MapElement const *>(p)
+#define IN_ELEM_CONST(p)    reinterpret_cast<const MapElement *>(p)
 
 /**
  * Additional data for all dummy elements.
@@ -77,7 +71,7 @@ public:
     DummyLine(Vertex &v1, Vertex &v2) : Line(v1, v2) {}
 };
 
-typedef QSet<MapElement *> Dummies;
+typedef Set<MapElement *> Dummies;
 
 static Dummies dummies;
 static Mesh dummyMesh;
@@ -109,7 +103,7 @@ int DMU_GetType(void const *ptr)
     return DMU_NONE;
 }
 
-void Map::initDummies() // static
+void world::Map::initDummies() // static
 {
     // TODO: free existing/old dummies here?
 
@@ -229,8 +223,7 @@ int P_ToIndex(void const *ptr)
         return elem->as<Material>().manifest().id(); // 1-based
 
     default:
-        /// @todo Throw exception.
-        DE_ASSERT(false); // Unknown/non-indexable DMU type.
+        DE_ASSERT_FAIL("Invalid DMU type"); // Unknown/non-indexable DMU type.
         return -1;
     }
 }
@@ -252,11 +245,10 @@ void *P_ToPtr(int type, int index)
     case DMU_SECTOR:
         return App_World().map().sectorPtr(index);
 
-    case DMU_PLANE: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_ToPtr: Cannot convert %1 to a ptr (sector is unknown).").arg(DMU_Str(type)).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable. */ }
+    case DMU_PLANE:
+        App_FatalError(String::format("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).",
+                                      DMU_Str(type)));
+        return 0; // Unreachable.
 
     case DMU_SUBSPACE:
         return App_World().map().subspacePtr(index);
@@ -271,11 +263,9 @@ void *P_ToPtr(int type, int index)
             return &world::Materials::get().toMaterialManifest(index).material();
         return 0;
 
-    default: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_ToPtr: unknown type %1.").arg(DMU_Str(type)).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable. */ }
+    default:
+        App_FatalError(String::format("P_ToPtr: unknown type %s.", DMU_Str(type)));
+        return 0; // Unreachable.
     }
 }
 
@@ -295,7 +285,7 @@ int P_Count(int type)
 
     default:
         /// @throw Invalid/unknown DMU element type.
-        throw Error("P_Count", String("Unknown type %1").arg(DMU_Str(type)));
+        throw Error("P_Count", stringf("Unknown type %s", DMU_Str(type)));
     }
 }
 
@@ -323,7 +313,7 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
             });
 
         default:
-            throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
+            throw Error("P_Iteratep", stringf("Property %s unknown/not vector", DMU_Str(prop)));
         }}
 
     case DMU_SUBSPACE:
@@ -359,11 +349,11 @@ int P_Iteratep(void *elPtr, uint prop, int (*callback) (void *p, void *ctx), voi
             return result; }
 
         default:
-            throw Error("P_Iteratep", QString("Property %1 unknown/not vector").arg(DMU_Str(prop)));
+            throw Error("P_Iteratep", stringf("Property %s unknown/not vector", DMU_Str(prop)));
         }
 
     default:
-        throw Error("P_Iteratep", QString("Type %1 unknown").arg(DMU_Str(elem->type())));
+        throw Error("P_Iteratep", stringf("Type %s unknown", DMU_Str(elem->type())));
     }
 
     return false;
@@ -409,11 +399,10 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
         }
         break;
 
-    case DMU_PLANE: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_Callback: %1 cannot be referenced by id alone (sector is unknown).").arg(DMU_Str(type)).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
+    case DMU_PLANE:
+        App_FatalError(String::format(
+            "P_Callback: %s cannot be referenced by id alone (sector is unknown).", DMU_Str(type)));
+        return 0; // Unreachable
 
     case DMU_SKY: {
         if(index == 0) // Only one sky per map presently.
@@ -430,17 +419,13 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
     case DMU_LINE_BY_TAG:
     case DMU_SECTOR_BY_TAG:
     case DMU_LINE_BY_ACT_TAG:
-    case DMU_SECTOR_BY_ACT_TAG: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_Callback: Type %1 not implemented yet.").arg(DMU_Str(type)).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
+    case DMU_SECTOR_BY_ACT_TAG:
+        App_FatalError(String::format("P_Callback: Type %s not implemented yet.", DMU_Str(type)));
+        return 0; /* Unreachable */
 
-    default: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_Callback: Type %1 unknown (index %2).").arg(DMU_Str(type)).arg(index).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
+    default:
+        App_FatalError(String::format("P_Callback: Type %s unknown (index %i).", DMU_Str(type), index));
+        return 0; /* Unreachable */
     }
 
     return false; // Continue iteration.
@@ -472,16 +457,14 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
         else
         {
             LOG_DEBUG("Type mismatch %s != %s\n") << DMU_Str(type) << DMU_Str(elem->type());
-            DE_ASSERT(false);
+            DE_ASSERT_FAIL("Type mismatch");
         }
 #endif
         break;
 
-    default: {
-        /// @todo Throw exception.
-        QByteArray msg = String("P_Callbackp: Type %1 unknown.").arg(DMU_Str(elem->type())).toUtf8();
-        App_FatalError(msg.constData());
-        return 0; /* Unreachable */ }
+    default:
+        App_FatalError(String::format("P_Callbackp: Type %s unknown.", DMU_Str(elem->type())));
+        return 0; /* Unreachable */
     }
     return false; // Continue iteration.
 }
@@ -1530,12 +1513,12 @@ DE_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
     {
-        Map const &map            = App_World().map();
-        int const localValidCount = validCount;
+        const auto &map            = App_World().map();
+        const int localValidCount = validCount;
 
         result = map.mobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
         {
-            mobj_t &mob = *(mobj_t *)object;
+            mobj_t &mob = *reinterpret_cast<mobj_t *>(object);
             if(mob.validCount != localValidCount) // not yet processed
             {
                 mob.validCount = localValidCount;
@@ -1556,12 +1539,12 @@ DE_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
     LoopResult result = LoopContinue;
     if(App_World().hasMap())
     {
-        Map const &map             = App_World().map();
-        dint const localValidCount = validCount;
+        const auto &map            = App_World().map();
+        const dint localValidCount = validCount;
 
         result = map.polyobjBlockmap().forAllInBox(*box, [&callback, &context, &localValidCount] (void *object)
         {
-            auto &pob = *(Polyobj *)object;
+            auto &pob = *reinterpret_cast<Polyobj *>(object);
             if(pob.validCount != localValidCount) // not yet processed
             {
                 pob.validCount = localValidCount;

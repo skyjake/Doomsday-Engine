@@ -127,6 +127,8 @@ public:
          */
         ButtonItem(RoleFlags flags, String const &label, const RefArg<de::Action>& action);
 
+        ButtonItem(RoleFlags flags, String const &label, const std::function<void ()>& action);
+
         ButtonItem(RoleFlags flags, Image const &image, const RefArg<de::Action>& action);
 
         ButtonItem(RoleFlags flags, Image const &image, String const &label,

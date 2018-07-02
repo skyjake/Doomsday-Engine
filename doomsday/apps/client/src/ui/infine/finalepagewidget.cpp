@@ -78,7 +78,7 @@ DE_PIMPL_NOREF(FinalePageWidget)
 
     ~Impl()
     {
-        qDeleteAll(children);
+        deleteAll(children);
         DE_ASSERT(children.isEmpty());
     }
 

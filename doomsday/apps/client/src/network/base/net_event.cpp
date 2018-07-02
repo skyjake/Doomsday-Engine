@@ -224,7 +224,7 @@ void N_Update()
         {
         case NE_CLIENT_ENTRY: {
             // Assign a console to the new player.
-            Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name().toUtf8());
+            Sv_PlayerArrives(nevent.id, App_ServerSystem().user(nevent.id).name());
 
             // Update the master.
             ::masterHeartbeat = MASTER_UPDATETIME;

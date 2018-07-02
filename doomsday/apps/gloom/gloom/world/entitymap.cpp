@@ -87,7 +87,7 @@ DE_PIMPL(EntityMap)
     const Block *blockAtCoord(const Vec2i &blockPos) const
     {
         const int idx = blockPos.x + blockPos.y * size.x;
-        if (idx < 0 || idx >= blocks.size()) return 0;
+        if (idx < 0 || idx >= blocks.sizei()) return 0;
         return blocks.at(idx);
     }
 

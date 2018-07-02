@@ -40,7 +40,7 @@ DE_PIMPL_NOREF(InFineSystem)
 {
     Finales finales;
 
-    ~Impl() { qDeleteAll(finales); }
+    ~Impl() { deleteAll(finales); }
 
     Finale *finaleForId(finaleid_t id)
     {

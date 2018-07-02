@@ -21,7 +21,7 @@
 
 #include "gloom/world/map.h"
 
-#include <QVector>
+#include <de/List>
 
 namespace gloom {
 
@@ -30,7 +30,7 @@ class SectorPolygonizer
 public:
     SectorPolygonizer(Map &map);
 
-    void polygonize(ID sector, const QVector<ID> &boundaryLines);
+    void polygonize(ID sector, const de::List<ID> &boundaryLines);
 
 private:
     DE_PRIVATE(d)

@@ -70,13 +70,11 @@ public:
 
 struct ShaderVars
 {
-    de::Hash<de::String, ShaderVar *> members;
+    de::Hash<de::String, std::unique_ptr<ShaderVar>> members;
 
     DE_ERROR(DefinitionError);
 
 public:
-    virtual ~ShaderVars();
-
     void initVariableFromDefinition(de::String const &variableName,
                                     de::Record const &valueDef,
                                     de::Record &bindingNames);

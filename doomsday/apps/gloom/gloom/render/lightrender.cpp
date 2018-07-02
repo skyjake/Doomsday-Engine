@@ -521,7 +521,7 @@ void LightRender::renderLighting()
 
         // Stencil pass: find out where light volumes intersect surfaces.
         {
-            LIBGUI_GL.glClearStencil(0);
+            glClearStencil(0);
             target.clear(GLFramebuffer::Stencil);
             d->stencilPassState.setTarget(target).setViewport(vp).apply();
             d->stencilPassProgram.beginUse();
@@ -553,9 +553,9 @@ void LightRender::createLights()
     d->activeLights.insert(d->skyLight.get());
 
     const auto &map = *context().map;
-    for (auto i = map.entities().begin(), end = map.entities().end(); i != end; ++i)
+    for (const auto &i : map.entities())
     {
-        const Entity *ent = i.value().get();
+        const Entity *ent = i.second.get();
         if (ent->type() == Entity::Light)
         {
             auto light = std::make_shared<Light>();
@@ -602,7 +602,7 @@ GLUniform &LightRender::uViewSpaceLightDir()
 const ICamera *LightRender::testCamera() const
 {
     if (d->lights.isEmpty()) return nullptr;
-    qDebug() << d->lights.begin().value()->entity()->id();
+    debug("%i", d->lights.begin()->entity()->id());
     return d->lights.begin().value().get();
 }
 

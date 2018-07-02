@@ -27,6 +27,8 @@ using namespace de;
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 internal::AttribSpec const MapVertex::_spec[10] =
 {
     { internal::AttribSpec::Position,  3, GL_FLOAT, false, sizeof(MapVertex),  0     },
@@ -82,9 +84,9 @@ DE_PIMPL_NOREF(MapBuild)
         const auto sectorPlaneVerts = map.worldSectorPlaneVerts();
 
         // Assign indices to planes.
-        for (const Sector &sector : map.sectors())
+        for (const auto &sector : map.sectors())
         {
-            for (const ID vol : sector.volumes)
+            for (const ID vol : sector.second.volumes)
             {
                 for (const ID plane : map.volume(vol).planes)
                 {
@@ -97,25 +99,22 @@ DE_PIMPL_NOREF(MapBuild)
         Buffer::Vertices verts[2];
         Buffer::Indices indices[2];
 
-        for (auto mapIter = map.sectors().constBegin(), iterEnd = map.sectors().constEnd();
-             mapIter != iterEnd;
-             ++mapIter)
+        for (auto mapIter : map.sectors())
         {
-            const ID      sectorId       = mapIter.key();
-            const Sector &sector         = mapIter.value();
+            const ID      sectorId       = mapIter.first;
+            const Sector &sector         = mapIter.second;
             const auto    sectorPolygons = map.sectorPolygons(sectorId);
 
             // Split the polygon to convex parts (for triangulation).
-            QHash<ID, Vec2d> expanders;
-            QList<geo::Polygon> convexParts;
-            foreach (const auto &sectorPolygon, sectorPolygons)
+            Hash<ID, Vec2d> expanders;
+            List<geo::Polygon> convexParts;
+            for (const auto &sectorPolygon : sectorPolygons)
             {
-                for (QHashIterator<ID, Vec2d> iter(sectorPolygon.expanders()); iter.hasNext(); )
+                for (const auto &iter : sectorPolygon.expanders())
                 {
-                    iter.next();
-                    expanders.insert(iter.key(), iter.value());
+                    expanders.insert(iter.first, iter.second);
                 }
-                foreach (const auto &part, sectorPolygon.splitConvexParts())
+                for (const auto &part : sectorPolygon.splitConvexParts())
                 {
                     convexParts << part;
                 }
@@ -153,7 +152,7 @@ DE_PIMPL_NOREF(MapBuild)
 
                     // Insert vertices of both planes to the buffer.
                     Buffer::Type f{};
-                    QHash<ID, Buffer::Index> pointIndices;
+                    Hash<ID, Buffer::Index> pointIndices;
 
                     f.material[0]  = matLib.materials()[plane.material[0]];
                     f.material[1]  = matLib.materials()[plane.material[1]];
@@ -174,11 +173,11 @@ DE_PIMPL_NOREF(MapBuild)
                         f.tangent = -f.tangent;
                     }
 
-                    for (auto cv = currentVerts.constBegin(); cv != currentVerts.constEnd(); ++cv)
+                    for (const auto &cv : currentVerts)
                     {
-                        const ID pointID = cv.key();
+                        const ID pointID = cv.first;
 
-                        f.pos      = cv.value() * map.metersPerUnit();
+                        f.pos      = cv.second * map.metersPerUnit();
                         f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
                         f.expander = expanders[pointID];
 
@@ -188,7 +187,7 @@ DE_PIMPL_NOREF(MapBuild)
                         verts[geomBuf] << f;
                     }
 
-                    foreach (const auto &convex, convexParts)
+                    for (const auto &convex : convexParts)
                     {
                         const ID baseID = convex.points[0].id;
 

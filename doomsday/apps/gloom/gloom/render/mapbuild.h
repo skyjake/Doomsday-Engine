@@ -24,6 +24,7 @@
 
 #include <de/GLBuffer>
 #include <de/Id>
+#include <de/Hash>
 
 namespace gloom {
 
@@ -76,7 +77,7 @@ public:
         struct Transparency {
             geo::Plane plane;
         };
-        QVector<Transparency> transparencies;
+        List<Transparency> transparencies;
         GLBuffer::DrawRanges transparentRanges; // for sorting
     };
 
@@ -86,18 +87,18 @@ public:
     Buffers build();
 
     /// Helper for mapping IDs to elements of a data buffer.
-    struct Mapper : public QHash<ID, uint32_t>
+    struct Mapper : public Hash<ID, duint32>
     {
-        uint32_t insert(ID id)
+        duint32 insert(ID id)
         {
-            const auto found = constFind(id);
-            if (found == constEnd())
+            const auto found = find(id);
+            if (found == end())
             {
-                const uint32_t mapped = size();
-                QHash<ID, uint32_t>::insert(id, mapped);
+                const duint32 mapped = duint32(size());
+                Hash<ID, duint32>::insert(id, mapped);
                 return mapped;
             }
-            return found.value();
+            return found->second;
         }
     };
 

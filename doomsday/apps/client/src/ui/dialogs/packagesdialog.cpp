@@ -40,7 +40,6 @@
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
 #include <de/ui/VariantActionItem>
 

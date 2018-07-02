@@ -114,7 +114,7 @@ DE_EXTERN_C colorpaletteid_t R_CreateColorPalette(char const *colorFormatDescrip
             return 0;
         }
 
-        QVector<Vec3ub> colors =
+        List<Vec3ub> colors =
             ColorTableReader::read(colorFormatDescriptor, colorCount, colorData);
 
         auto &palettes = Resources::get().colorPalettes();

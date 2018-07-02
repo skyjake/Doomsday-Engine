@@ -138,8 +138,8 @@ DE_PIMPL(ConfigProfiles)
             return os.str();
         }
 
-        void initializeFromInfoBlock(ConfigProfiles const &profs,
-                                     de::Info::BlockElement const &block)
+        void initializeFromInfoBlock(const ConfigProfiles &        profs,
+                                     const de::Info::BlockElement &block)
         {
             // Use the default settings for anything not defined in the file.
             values = profs.d->defaults.values;
@@ -153,11 +153,11 @@ DE_PIMPL(ConfigProfiles)
 
                 // Only process known settings.
                 if (setBlock.blockType() == "setting" &&
-                   profs.d->settings.contains(setBlock.name()))
+                    profs.d->settings.contains(setBlock.name()))
                 {
-                    values[setBlock.name()] =
+                    values[setBlock.name()].reset(
                             profs.d->textToSettingValue(setBlock.keyValue("value").text,
-                                                        setBlock.name());
+                                                        setBlock.name()));
                 }
             }
         }
@@ -303,12 +303,12 @@ DE_PIMPL(ConfigProfiles)
         }
     }
 
-    void resetSetting(String const &settingName) const
+    void resetSetting(const String &settingName) const
     {
         DE_ASSERT(settings.contains(settingName));
         DE_ASSERT(defaults.values.contains(settingName));
 
-        settings.find[settingName].setValue(defaults.values[settingName]);
+        settings[settingName].setValue(*defaults.values[settingName]);
     }
 
     /**
@@ -321,7 +321,7 @@ DE_PIMPL(ConfigProfiles)
         return self().persistentName().concatenateMember("profile");
     }
 
-    QVariant textToSettingValue(String const &text, String const &settingName) const
+    Value *textToSettingValue(String const &text, const String &settingName) const
     {
         DE_ASSERT(settings.contains(settingName));
 
@@ -330,20 +330,20 @@ DE_PIMPL(ConfigProfiles)
         switch (st.type)
         {
         case IntCVar:
-            return text.toInt();
+            return new NumberValue(text.toInt());
 
         case FloatCVar:
-            return text.toFloat();
+            return new NumberValue(text.toFloat());
 
         case StringCVar:
-            return text;
+            return new TextValue(text);
 
         case ConfigVariable:
-            return text.toDouble();
+            return new NumberValue(text.toDouble());
         }
 
-        DE_ASSERT(false);
-        return QVariant();
+        DE_ASSERT_FAIL("Invalid setting type");
+        return new NoneValue;
     }
 
     bool addCustomProfileIfMissing()
@@ -431,20 +431,20 @@ DE_PIMPL(ConfigProfiles)
 ConfigProfiles::ConfigProfiles() : d(new Impl(this))
 {}
 
-ConfigProfiles &ConfigProfiles::define(SettingType type,
-                                       String const &settingName,
-                                       QVariant const &defaultValue)
+ConfigProfiles &ConfigProfiles::define(SettingType   type,
+                                       const String &settingName,
+                                       const Value & defaultValue)
 {
     d->settings.insert(settingName, Impl::Setting(type, settingName));
 
-    QVariant def;
+    std::shared_ptr<Value> def;
     if (type == ConfigVariable)
     {
-        def = d->getDefaultFromConfig(settingName);
+        def.reset(d->getDefaultFromConfig(settingName));
     }
     else
     {
-        def = defaultValue;
+        def.reset(defaultValue.duplicate());
     }
     d->defaults.values[settingName] = def;
 

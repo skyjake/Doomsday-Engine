@@ -20,10 +20,7 @@
 
 #include "world/clientserverworld.h"
 
-#include <map>
-#include <utility>
-#include <QMap>
-#include <QtAlgorithms>
+#include <de/Map>
 #include <de/memoryzone.h>
 #include <de/timer.h>
 #include <de/Binder>
@@ -90,7 +87,11 @@
 #  include "ui/inputsystem.h"
 #endif
 
+#include <map>
+#include <utility>
+
 using namespace de;
+using namespace res;
 using namespace world;
 
 dint validCount = 1;  // Increment every time a check is made.
@@ -111,9 +112,9 @@ static inline RenderSystem &rendSys()
  * @todo Consolidate with the missing material reporting done elsewhere -ds
  */
 class MapConversionReporter
-: DE_OBSERVES(Map,     UnclosedSectorFound)
-, DE_OBSERVES(Map,     OneWayWindowFound)
-, DE_OBSERVES(BaseMap, Deletion)
+: DE_OBSERVES(world::Map, UnclosedSectorFound)
+, DE_OBSERVES(world::Map, OneWayWindowFound)
+, DE_OBSERVES(BaseMap,    Deletion)
 {
     /// Record "unclosed sectors".
     /// Sector index => world point relatively near to the problem area.
@@ -132,7 +133,7 @@ public:
      * Construct a new conversion reporter.
      * @param map
      */
-    MapConversionReporter(Map *map = nullptr)
+    MapConversionReporter(world::Map *map = nullptr)
     {
         setMap(map);
     }
@@ -146,7 +147,7 @@ public:
      * Change the map to be reported on. Note that any existing report data is
      * retained until explicitly cleared.
      */
-    void setMap(Map *newMap)
+    void setMap(world::Map *newMap)
     {
         if (_map != newMap)
         {
@@ -157,7 +158,7 @@ public:
     }
 
     /// @see setMap(), clearReport()
-    inline void setMapAndClearReport(Map *newMap)
+    inline void setMapAndClearReport(world::Map *newMap)
     {
         setMap(newMap);
         clearReport();
@@ -188,12 +189,12 @@ public:
             for (dint i = 0; i < numToLog; ++i, ++it)
             {
                 if (i != 0) str += "\n";
-                str += String("Sector #%1 is unclosed near %2")
-                           .arg(it->first).arg(it->second.asText());
+                str += String::format(
+                    "Sector #%1 is unclosed near %s", it->first, it->second.asText().c_str());
             }
 
             if (numToLog < unclosedSectorCount())
-                str += String("\n(%1 more like this)").arg(unclosedSectorCount() - numToLog);
+                str += String::format("\n(%i more like this)", unclosedSectorCount() - numToLog);
 
             LOGDEV_MAP_WARNING("%s") << str;
         }
@@ -206,12 +207,12 @@ public:
             for (dint i = 0; i < numToLog; ++i, ++it)
             {
                 if (i != 0) str += "\n";
-                str += String("Line #%1 seems to be a One-Way Window (back faces sector #%2).")
-                           .arg(it->first).arg(it->second);
+                str += String::format("Line #%i seems to be a One-Way Window (back faces sector #%i).",
+                           it->first, it->second);
             }
 
             if (numToLog < oneWayWindowCount())
-                str += String("\n(%1 more like this)").arg(oneWayWindowCount() - numToLog);
+                str += String::format("\n(%i more like this)", oneWayWindowCount() - numToLog);
 
             LOGDEV_MAP_MSG("%s") << str;
         }
@@ -269,7 +270,7 @@ private:
         }
     }
 
-    Map *_map = nullptr;  ///< Map currently being reported on, if any (not owned).
+    world::Map *      _map = nullptr; ///< Map currently being reported on, if any (not owned).
     UnclosedSectorMap _unclosedSectors;
     OneWayWindowMap   _oneWayWindows;
 };
@@ -287,14 +288,13 @@ static char const *mapCacheDir = "mapcache/";
 static String cacheIdForMap(String const &sourcePath)
 {
     DE_ASSERT(!sourcePath.isEmpty());
-
     dushort id = 0;
-    for (dint i = 0; i < sourcePath.size(); ++i)
+    int i = 0;
+    for (Char ch : sourcePath)
     {
-        id ^= sourcePath.at(i).unicode() << ((i * 3) % 11);
+        id ^= duint(ch) << ((i++ * 3) % 11);
     }
-
-    return String("%1").arg(id, 4, 16);
+    return String::format("%04x", id);
 }
 
 DE_PIMPL(ClientServerWorld)
@@ -325,14 +325,14 @@ DE_PIMPL(ClientServerWorld)
         world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new ClientMaterial(m);
         });
-        Sector::setSubsectorConstructor([] (QVector<world::ConvexSubspace *> const &sl) -> world::Subsector * {
+        Sector::setSubsectorConstructor([] (List<world::ConvexSubspace *> const &sl) -> world::Subsector * {
             return new ClientSubsector(sl);
         });
 #else
         world::MaterialManifest::setMaterialConstructor([] (world::MaterialManifest &m) -> world::Material * {
             return new world::Material(m);
         });
-        Sector::setSubsectorConstructor([] (QVector<world::ConvexSubspace *> const &sl) -> world::Subsector * {
+        Sector::setSubsectorConstructor([] (List<world::ConvexSubspace *> const &sl) -> world::Subsector * {
             return new Subsector(sl);
         });
 #endif
@@ -348,14 +348,14 @@ DE_PIMPL(ClientServerWorld)
      *
      * @return  The composed path.
      */
-    static Path cachePath(String sourcePath)
+    static Path cachePath(const String& sourcePath)
     {
         if (sourcePath.isEmpty()) return String();
 
         // Compose the final path.
         return mapCacheDir + App_CurrentGame().id()
                / sourcePath.fileNameWithoutExtension()
-               + '-' + cacheIdForMap(sourcePath);
+               + "-" + cacheIdForMap(sourcePath);
     }
 
     /**
@@ -367,7 +367,8 @@ DE_PIMPL(ClientServerWorld)
      *
      * @return  The newly converted map (if any).
      */
-    Map *convertMap(res::MapManifest const &mapManifest, MapConversionReporter *reporter = nullptr)
+    world::Map *convertMap(res::MapManifest const &mapManifest,
+                           MapConversionReporter * reporter = nullptr)
     {
         // We require a map converter for this.
         if (!Plug_CheckForHook(HOOK_MAP_CONVERT))
@@ -380,7 +381,7 @@ DE_PIMPL(ClientServerWorld)
         // Initiate the conversion process.
         MPE_Begin(nullptr/*dummy*/);
 
-        Map *newMap = MPE_Map();
+        auto *newMap = MPE_Map();
 
         // Associate the map with its corresponding manifest.
         newMap->setManifest(&const_cast<res::MapManifest &>(mapManifest));
@@ -443,7 +444,7 @@ DE_PIMPL(ClientServerWorld)
      *
      * @return  The loaded map if successful. Ownership given to the caller.
      */
-    Map *loadMap(res::MapManifest &mapManifest, MapConversionReporter *reporter = nullptr)
+    world::Map *loadMap(res::MapManifest & mapManifest, MapConversionReporter *reporter = nullptr)
     {
         LOG_AS("ClientServerWorld::loadMap");
 
@@ -457,7 +458,7 @@ DE_PIMPL(ClientServerWorld)
         }*/
 
         // Try a JIT conversion with the help of a plugin.
-        Map *map = convertMap(mapManifest, reporter);
+        auto *map = convertMap(mapManifest, reporter);
         if (!map)
         {
             LOG_WARNING("Failed conversion of \"%s\".") << mapManifest.composeUri().path();
@@ -469,7 +470,7 @@ DE_PIMPL(ClientServerWorld)
     /**
      * Replace the current map with @a map.
      */
-    void makeCurrent(Map *map)
+    void makeCurrent(world::Map *map)
     {
         // This is now the current map (if any).
         self().setMap(map);
@@ -671,10 +672,10 @@ DE_PIMPL(ClientServerWorld)
         // something useful.
         if (!mapUri.isEmpty())
         {
-            String cmd = String("init-") + mapUri.path();
+            String cmd = "init-" + mapUri.path();
             if (Con_IsValidCommand(cmd))
             {
-                Con_Executef(CMDS_SCRIPT, false, "%s", cmd);
+                Con_Executef(CMDS_SCRIPT, false, "%s", cmd.c_str());
             }
         }
 
@@ -705,7 +706,7 @@ DE_PIMPL(ClientServerWorld)
     /// @todo Split this into subtasks (load, make current, cache assets).
     bool changeMap(res::MapManifest *mapManifest = nullptr)
     {
-        Map *map = self().mapPtr();
+        auto *map = self().mapPtr();
 
         scheduler.clear();
 
@@ -742,7 +743,7 @@ DE_PIMPL(ClientServerWorld)
 
         // Attempt to load in the new map.
         MapConversionReporter reporter;
-        Map *newMap = loadMap(*mapManifest, &reporter);
+        auto *newMap = loadMap(*mapManifest, &reporter);
         if (newMap)
         {
             // The map may still be in an editable state -- switch to playable.
@@ -796,14 +797,14 @@ ClientServerWorld::ClientServerWorld()
     , d(new Impl(this))
 {}
 
-Map &ClientServerWorld::map() const
+world::Map &ClientServerWorld::map() const
 {
     if (!hasMap())
     {
         /// @throw MapError Attempted with no map loaded.
         throw MapError("ClientServerWorld::map", "No map is currently loaded");
     }
-    return World::map().as<Map>();
+    return World::map().as<world::Map>();
 }
 
 bool ClientServerWorld::changeMap(res::Uri const &mapUri)
@@ -981,7 +982,7 @@ void ClientServerWorld::consoleRegister()  // static
 #ifdef __CLIENT__
     //C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
 #endif
-    Map::consoleRegister();
+    world::Map::consoleRegister();
 }
 
 mobj_t &ClientServerWorld::contextMobj(const Context &ctx) // static

@@ -40,9 +40,8 @@
 
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
-#include <QList>
-#include <QMap>
-#include <QtAlgorithms>
+#include <de/List>
+#include <de/Map>
 
 using namespace de;
 
@@ -52,31 +51,32 @@ ClientPlayer *viewPlayer;
 int consolePlayer;
 int displayPlayer;
 
-typedef QMap<int, PlayerImpulse *> Impulses; // ID lookup.
+typedef Map<int, PlayerImpulse *> Impulses; // ID lookup.
 static Impulses impulses;
 
-typedef QMap<String, PlayerImpulse *> ImpulseNameMap; // Name lookup
+typedef Map<String, PlayerImpulse *, String::InsensitiveLessThan> ImpulseNameMap; // Name lookup
 static ImpulseNameMap impulsesByName;
 
-typedef QMap<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
+typedef Map<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
 static ImpulseAccumulators accumulators[DDMAXPLAYERS];
 
-static PlayerImpulse *addImpulse(int id, impulsetype_t type, String name, String bindContextName)
+static PlayerImpulse *addImpulse(int id, impulsetype_t type, const String &name, const String &bindContextName)
 {
     auto *imp = new PlayerImpulse;
 
-    imp->id   = id;
-    imp->type = type;
-    imp->name = name;
+    imp->id              = id;
+    imp->type            = type;
+    imp->name            = name;
     imp->bindContextName = bindContextName;
 
     impulses.insert(imp->id, imp);
-    impulsesByName.insert(imp->name.toLower(), imp);
+    impulsesByName.insert(imp->name.lower(), imp);
 
     // Generate impulse accumulators for each player.
     for(int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        ImpulseAccumulator::AccumulatorType accumType = (type == IT_BINARY? ImpulseAccumulator::Binary : ImpulseAccumulator::Analog);
+        ImpulseAccumulator::AccumulatorType accumType =
+            (type == IT_BINARY ? ImpulseAccumulator::Binary : ImpulseAccumulator::Analog);
         auto *accum = new ImpulseAccumulator(imp->id, accumType, type != IT_ANALOG);
         accum->setPlayerNum(i);
         accumulators[i].insert(accum->impulseId(), accum);
@@ -208,12 +208,12 @@ bool P_IsInVoid(player_t *player)
 
 void P_ClearPlayerImpulses()
 {
-    for(dint i = 0; i < DDMAXPLAYERS; ++i)
+    for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        qDeleteAll(accumulators[i]);
+        deleteAll(accumulators[i]);
         accumulators[i].clear();
     }
-    qDeleteAll(impulses);
+    deleteAll(impulses);
     impulses.clear();
     impulsesByName.clear();
 }
@@ -221,16 +221,16 @@ void P_ClearPlayerImpulses()
 PlayerImpulse *P_PlayerImpulsePtr(dint id)
 {
     auto found = impulses.find(id);
-    if(found != impulses.end()) return *found;
+    if (found != impulses.end()) return found->second;
     return nullptr;
 }
 
 PlayerImpulse *P_PlayerImpulseByName(String const &name)
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        auto found = impulsesByName.find(name.toLower());
-        if(found != impulsesByName.end()) return *found;
+        auto found = impulsesByName.find(name);
+        if (found != impulsesByName.end()) return found->second;
     }
     return nullptr;
 }
@@ -240,35 +240,33 @@ D_CMD(ListImpulses)
     DE_UNUSED(argv, argc, src);
 
     // Group the defined impulses by binding context.
-    typedef QList<PlayerImpulse *> ImpulseList;
-    QMap<String, ImpulseList> contextGroups;
-    for(PlayerImpulse *imp : impulsesByName)
+    Map<String, List<PlayerImpulse *>> contextGroups;
+    for (const auto &imp : impulsesByName)
     {
-        if(!contextGroups.contains(imp->bindContextName))
+        if (!contextGroups.contains(imp.second->bindContextName))
         {
-            contextGroups.insert(imp->bindContextName, ImpulseList());
+            contextGroups.insert(imp.second->bindContextName, {});
         }
-        contextGroups[imp->bindContextName].append(imp);
+        contextGroups[imp.second->bindContextName] << imp.second;
     }
 
     LOG_MSG(_E(b) "Player impulses");
     LOG_MSG("There are " _E(b) "%i" _E(.) " impulses, in " _E(b) "%i" _E(.) " contexts")
-            << impulses.count() << contextGroups.count();
+            << impulses.size() << contextGroups.size();
 
-    for(auto const &group : contextGroups)
+    for (auto const &group : contextGroups)
     {
-        if(group.isEmpty()) continue;
+        if (group.second.isEmpty()) continue;
 
-        LOG_MSG(_E(D)_E(b) "%s" _E(.) " context: " _E(l) "(%i)")
-                << group.first()->bindContextName
-                << group.count();
+        LOG_MSG(_E(D) _E(b) "%s" _E(.) " context: " _E(l) "(%i)")
+            << group.second.first()->bindContextName << group.second.size();
 
-        for(PlayerImpulse const *imp : group)
+        for (const auto *imp : group.second)
         {
             LOG_MSG("  [%4i] " _E(>) _E(b) "%s " _E(.) _E(2) "%s%s")
-                    << imp->id << imp->name
-                    << (imp->type == IT_BINARY? "binary" : "analog")
-                    << (IMPULSETYPE_IS_TRIGGERABLE(imp->type)? ", triggerable" : "");
+                << imp->id << imp->name
+                << (imp->type == IT_BINARY ? "binary" : "analog")
+                << (IMPULSETYPE_IS_TRIGGERABLE(imp->type) ? ", triggerable" : "");
         }
     }
     return true;
@@ -309,12 +307,13 @@ D_CMD(ClearImpulseAccumulation)
     });
 
     // For all players.
-    for(int i = 0; i < DDMAXPLAYERS; ++i)
-    for(ImpulseAccumulator *accum : accumulators[i])
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        accum->clearAll();
+        for (auto &accum : accumulators[i])
+        {
+            accum.second->clearAll();
+        }
     }
-
     return true;
 }
 #endif

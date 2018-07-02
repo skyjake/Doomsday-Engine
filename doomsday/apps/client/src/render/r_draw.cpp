@@ -154,8 +154,9 @@ void R_ShutdownViewWindow()
     initedDraw = false;
 }
 
-TextureVariantSpec const &Rend_PatchTextureSpec(int flags, gl::Wrapping wrapS,
-    gl::Wrapping wrapT)
+TextureVariantSpec const &Rend_PatchTextureSpec(int              flags,
+                                                de::gl::Wrapping wrapS,
+                                                de::gl::Wrapping wrapT)
 {
     return ClientApp::resources().textureSpec(TC_UI, flags, 0, 0, 0,
         GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);

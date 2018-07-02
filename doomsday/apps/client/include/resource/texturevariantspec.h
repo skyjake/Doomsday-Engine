@@ -70,7 +70,7 @@ struct variantspecification_t
     texturevariantusagecontext_t context;
     int flags; /// @ref textureVariantSpecificationFlags
     byte border; /// In pixels, added to all four edges of the texture.
-    int wrapS, wrapT;
+    GLenum wrapS, wrapT;
     dd_bool mipmapped, gammaCorrection, noStretch, toAlpha;
 
     /**
@@ -169,7 +169,7 @@ public:
     TextureVariantSpec(TextureVariantSpec const &other);
 
     bool operator == (TextureVariantSpec const &other) const;
-    
+
     inline bool operator != (TextureVariantSpec const &other) const {
         return !(*this == other);
     }

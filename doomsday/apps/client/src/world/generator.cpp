@@ -157,7 +157,7 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
         s->radius     = FLT2FIX(sdef->radius);
         s->gravity    = FLT2FIX(sdef->gravity);
         s->type       = sdef->type;
-        s->flags      = ParticleStage::Flags(sdef->flags);
+        s->flags      = sdef->flags;
     }
 
     // Init some data.

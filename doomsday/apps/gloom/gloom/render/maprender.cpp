@@ -92,11 +92,11 @@ DE_PIMPL(MapRender)
 
         // Initialize the plane buffer.
         {
-            qDebug() << "PlaneMapper has" << planeMapper.size() << "planes";
+            debug("PlaneMapper has %zu planes", planeMapper.size());
 
-            for (auto i = planeMapper.begin(), end = planeMapper.end(); i != end; ++i)
+            for (const auto &i : planeMapper)
             {
-                planes.setData(i.value(), float(map->plane(i.key()).point.y));
+                planes.setData(i.second, float(map->plane(i.first).point.y));
             }
         }
 

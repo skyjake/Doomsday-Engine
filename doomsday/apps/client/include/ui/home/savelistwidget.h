@@ -26,7 +26,16 @@ class GamePanelButtonWidget;
 
 class SaveListWidget : public de::MenuWidget
 {
-    Q_OBJECT
+public:
+    /**
+     * Emitted when the selected item changes.
+     *
+     * @param pos  Position of the selected item in the shared saved sessions
+     *             list data model.
+     */
+    DE_DEFINE_AUDIENCE2(Selection, void saveListSelectionChanged(de::ui::DataPos pos))
+
+    DE_DEFINE_AUDIENCE2(DoubleClick, void saveListDoubleClicked(de::ui::DataPos pos))
 
 public:
     SaveListWidget(GamePanelButtonWidget &owner);
@@ -34,17 +43,6 @@ public:
     de::ui::DataPos selectedPos() const;
     void setSelectedPos(de::ui::DataPos pos);
     void clearSelection();
-
-signals:
-    /**
-     * Emitted when the selected item changes.
-     *
-     * @param pos  Position of the selected item in the shared saved sessions
-     *             list data model.
-     */
-    void selectionChanged(de::ui::DataPos pos);
-
-    void doubleClicked(de::ui::DataPos pos);
 
 private:
     DE_PRIVATE(d)

@@ -666,7 +666,7 @@ bool MenuWidget::variantItemsEnabled() const
 
 ui::DataPos MenuWidget::findItem(GuiWidget const &widget) const
 {
-    if (auto const *item = organizer().findItemForWidget(widget))
+    if (const auto *item = organizer().findItemForWidget(widget))
     {
         return items().find(*item);
     }

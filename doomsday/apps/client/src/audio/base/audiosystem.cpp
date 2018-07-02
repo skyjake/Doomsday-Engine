@@ -529,7 +529,8 @@ DE_PIMPL(AudioSystem)
      * @param type  Type of interface to process.
      * @param func  Callback to make for each interface.
      */
-    LoopResult forAllInterfaces(audiointerfacetype_t type, std::function<LoopResult (void *)> func) const
+    LoopResult forAllInterfaces(audiointerfacetype_t                     type,
+                                const std::function<LoopResult(void *)> &func) const
     {
         if (type != AUDIO_INONE)
         {

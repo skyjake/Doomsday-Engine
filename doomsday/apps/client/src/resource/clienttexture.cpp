@@ -26,7 +26,6 @@
 #include <de/Error>
 #include <de/Log>
 #include <de/memory.h>
-#include <QMap>
 
 using namespace de;
 
@@ -163,15 +162,14 @@ void ClientTexture::release(/*TextureVariantSpec *spec*/)
 
 String ClientTexture::description() const
 {
-    String variantDesc;
-    QTextStream os(&variantDesc);
+    std::ostringstream os;
 
     if (variantCount())
     {
         // Print variant specs.
         os << "\n" << _E(R);
 
-        for (int variantIdx = 0; variantIdx < d->variants.size(); ++variantIdx)
+        for (int variantIdx = 0; variantIdx < d->variants.sizei(); ++variantIdx)
         {
             auto const *variant = d->variants.at(variantIdx);
 
@@ -193,7 +191,7 @@ String ClientTexture::description() const
     }
 
     return res::Texture::description() +
-           String(" x%1").arg(variantCount()) +
-           variantDesc;
+           String::format(" x%i", variantCount()) +
+           os.str();
 }
 

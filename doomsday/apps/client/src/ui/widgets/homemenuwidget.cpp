@@ -27,30 +27,71 @@ using namespace de;
 DE_GUI_PIMPL(HomeMenuWidget)
 , DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 , DE_OBSERVES(Asset, StateChange)
+, DE_OBSERVES(HomeItemWidget, Activity)
+, DE_OBSERVES(HomeItemWidget, Selection)
 {
-    ui::DataPos selectedIndex = ui::Data::InvalidPos;
-    ui::DataPos previousSelectedIndex = 0;
-    ui::Item const *interacted = nullptr;
-    ui::Item const *interactedAction = nullptr;
+    ui::DataPos     selectedIndex         = ui::Data::InvalidPos;
+    ui::DataPos     previousSelectedIndex = 0;
+    const ui::Item *interacted            = nullptr;
+    const ui::Item *interactedAction      = nullptr;
 
     Impl(Public *i) : Base(i)
     {
         self().organizer().audienceForWidgetCreation() += this;
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &)
+    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &) override
     {
-        if (is<HomeItemWidget>(widget))
+        if (auto *w = maybeAs<HomeItemWidget>(widget))
         {
-            QObject::connect(&widget, SIGNAL(mouseActivity()),
-                             thisPublic, SLOT(mouseActivityInItem()));
-
-            QObject::connect(&widget, SIGNAL(selected()),
-                             thisPublic, SLOT(itemSelectionChanged()));
+            w->audienceForActivity()  += this;
+            w->audienceForSelection() += this;
         }
     }
 
-    void assetStateChanged(Asset &asset)
+    void mouseActivity(HomeItemWidget &widget) override
+    {
+        if (auto *clickedWidget = maybeAs<HomeItemWidget>(widget))
+        {
+            DE_FOR_PUBLIC_AUDIENCE2(Click, i)
+            {
+                i->menuItemClicked(self(), self().findItem(*clickedWidget));
+            }
+        }
+        if (auto *column = self().parentColumn())
+        {
+            DE_FOR_EACH_OBSERVER(i, column->audienceForActivity())
+            {
+                i->mouseActivity(column);
+            }
+        }
+    }
+
+    void itemSelected(HomeItemWidget &widget) override
+    {
+        if (auto *clickedItem = maybeAs<HomeItemWidget>(widget))
+        {
+            const ui::DataPos newSelection = self().findItem(*clickedItem);
+
+            if (selectedIndex != newSelection)
+            {
+                // Deselect the previous selection.
+                if (auto *item = self().itemWidget<HomeItemWidget>(selectedIndex))
+                {
+                    item->setSelected(false);
+                }
+
+                selectedIndex = previousSelectedIndex = newSelection;
+
+                DE_FOR_PUBLIC_AUDIENCE2(Selection, i)
+                {
+                    i->selectedIndexChanged(self(), selectedIndex);
+                }
+            }
+        }
+    }
+
+    void assetStateChanged(Asset &asset) override
     {
         if (asset.state() == Asset::Ready)
         {
@@ -69,7 +110,11 @@ DE_GUI_PIMPL(HomeMenuWidget)
             }
         }
     }
+
+    DE_PIMPL_AUDIENCES(Selection, Click)
 };
+
+DE_AUDIENCE_METHODS(HomeMenuWidget, Selection, Click)
 
 HomeMenuWidget::HomeMenuWidget(String const &name)
     : MenuWidget(name)
@@ -179,37 +224,4 @@ ui::Item const *HomeMenuWidget::interactedItem() const
 ui::Item const *HomeMenuWidget::actionItem() const
 {
     return d->interactedAction;
-}
-
-void HomeMenuWidget::mouseActivityInItem()
-{
-    if (auto *clickedWidget = dynamic_cast<HomeItemWidget *>(sender()))
-    {
-        emit itemClicked(findItem(*clickedWidget));
-    }
-
-    if (auto *column = parentColumn())
-    {
-        emit column->mouseActivity(column);
-    }
-}
-
-void HomeMenuWidget::itemSelectionChanged()
-{
-    if (auto *clickedItem = dynamic_cast<HomeItemWidget *>(sender()))
-    {
-        ui::DataPos const newSelection = findItem(*clickedItem);
-        if (d->selectedIndex != newSelection)
-        {
-            // Deselect the previous selection.
-            if (auto *item = itemWidget<HomeItemWidget>(d->selectedIndex))
-            {
-                item->setSelected(false);
-            }
-
-            d->selectedIndex = d->previousSelectedIndex = newSelection;
-
-            emit selectedIndexChanged(d->selectedIndex);
-        }
-    }
 }

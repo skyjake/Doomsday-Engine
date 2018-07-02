@@ -807,8 +807,15 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
     , _role(flags)
 {}
 
+DialogWidget::ButtonItem::ButtonItem(RoleFlags                    flags,
+                                     const String &               label,
+                                     const std::function<void()> &action)
+    : ui::ActionItem(itemSemantics(flags), label, new CallbackAction(action))
+    , _role(flags)
+{}
+
 DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
-                                     Image const &             image,
+                                     const Image &             image,
                                      const RefArg<de::Action> &action)
     : ui::ActionItem(itemSemantics(flags), image, "", action)
     , _role(flags)

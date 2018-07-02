@@ -27,8 +27,6 @@
  */
 class PackagesDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     PackagesDialog(de::String const &titleText = "");
 

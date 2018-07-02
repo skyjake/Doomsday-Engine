@@ -26,12 +26,10 @@
  */
 class LogSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     LogSettingsDialog(de::String const &name = "logsettings");
 
-public slots:
+public:
     void resetToDefaults();
     void updateLogFilter();
 

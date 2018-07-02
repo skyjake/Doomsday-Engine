@@ -444,13 +444,13 @@ DE_PIMPL(LumpIndex)
         DE_ASSERT(flaggedLumps.size() == lumps.size());
 
         // Have we lumps to prune?
-        int const numFlaggedForPrune = flaggedLumps.count(true);
+        const dsize numFlaggedForPrune = flaggedLumps.count(true);
         if (numFlaggedForPrune)
         {
             // We'll need to rebuild the hash after this.
             lumpsByPath.reset();
 
-            int numRecords = lumps.size();
+            dsize numRecords = lumps.size();
             if (numRecords == numFlaggedForPrune)
             {
                 lumps.clear();
@@ -458,7 +458,7 @@ DE_PIMPL(LumpIndex)
             else
             {
                 // Do this one lump at a time, respecting the possibly-sorted order.
-                for (int i = 0, newIdx = 0; i < numRecords; ++i)
+                for (dsize i = 0, newIdx = 0; i < numRecords; ++i)
                 {
                     if (!flaggedLumps.testBit(i))
                     {
@@ -471,11 +471,11 @@ DE_PIMPL(LumpIndex)
                 }
 
                 // Erase the pruned lumps from the end of the list.
-                int firstPruned = lumps.size() - numFlaggedForPrune;
+                dsize firstPruned = lumps.size() - numFlaggedForPrune;
                 lumps.erase(lumps.begin() + firstPruned, lumps.end());
             }
         }
-        return numFlaggedForPrune;
+        return int(numFlaggedForPrune);
     }
 
     void pruneDuplicatesIfNeeded()
@@ -483,7 +483,7 @@ DE_PIMPL(LumpIndex)
         if (!needPruneDuplicateLumps) return;
         needPruneDuplicateLumps = false;
 
-        int const numRecords = lumps.size();
+        int const numRecords = lumps.sizei();
         if (numRecords <= 1) return;
 
         BitArray pruneFlags(numRecords);
@@ -529,19 +529,19 @@ LumpIndex::Lumps const &LumpIndex::allLumps() const
 int LumpIndex::size() const
 {
     d->pruneDuplicatesIfNeeded();
-    return d->lumps.size();
+    return d->lumps.sizei();
 }
 
 int LumpIndex::lastIndex() const
 {
-    return d->lumps.size() - 1;
+    return d->lumps.sizei() - 1;
 }
 
 int LumpIndex::pruneByFile(File1 &file)
 {
     if (d->lumps.empty()) return 0;
 
-    int const numRecords = d->lumps.size();
+    int const numRecords = d->lumps.sizei();
     BitArray pruneFlags(numRecords);
 
     // We may need to prune path-duplicate lumps. We'll fold those into this
@@ -625,7 +625,7 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
 
     // Perform the search.
     DE_ASSERT(d->lumpsByPath);
-    ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
+    auto hash = ushort(path.lastSegment().hash() % d->lumpsByPath->size());
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
@@ -677,9 +677,9 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
 
     // Perform the search.
     DE_ASSERT(d->lumpsByPath);
-    ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
+    auto hash = ushort(path.lastSegment().hash() % d->lumpsByPath->size());
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
-        idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
+         idx     = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
         File1 const &lump          = *d->lumps[idx];
         PathTree::Node const &node = lump.directoryNode();

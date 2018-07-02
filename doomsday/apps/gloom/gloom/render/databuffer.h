@@ -27,21 +27,21 @@
 
 namespace gloom {
 
+namespace gl = de::gl;
+
 using namespace de;
 
 template <typename Type>
 struct DataBuffer
 {
-    GLUniform var;
-    GLBuffer buf;
-    GLuint bufTex{0};
-    QVector<Type> data;
+    GLUniform     var;
+    GLBuffer      buf;
+    GLuint        bufTex{0};
+    List<Type>    data;
     Image::Format format;
-    gl::Usage usage;
+    gl::Usage     usage;
 
-    DataBuffer(const char *  uName,
-               Image::Format format,
-               gl::Usage     usage            = gl::Stream)
+    DataBuffer(const char *uName, Image::Format format, gl::Usage usage = gl::Stream)
         : var{uName, GLUniform::SamplerBuffer}
         , buf{GLBuffer::Texture}
         , format(format)
@@ -58,7 +58,7 @@ struct DataBuffer
     {
         if (bufTex)
         {
-            LIBGUI_GL.glDeleteTextures(1, &bufTex);
+            glDeleteTextures(1, &bufTex);
             bufTex = 0;
         }
         buf.clear();
@@ -84,18 +84,17 @@ struct DataBuffer
 
     void update()
     {
-        buf.setData(data.constData(), data.size() * sizeof(Type), usage);
+        buf.setData(data.data(), data.size() * sizeof(Type), usage);
 
-        auto &GL = LIBGUI_GL;
         if (!bufTex)
         {
-            GL.glGenTextures(1, &bufTex);
+            glGenTextures(1, &bufTex);
             var = bufTex;
         }
-        GL.glBindTexture(GL_TEXTURE_BUFFER, bufTex);
-        GL.glTexBuffer(GL_TEXTURE_BUFFER, Image::glFormat(format).internalFormat, buf.glName());
+        glBindTexture(GL_TEXTURE_BUFFER, bufTex);
+        glTexBuffer(GL_TEXTURE_BUFFER, Image::glFormat(format).internalFormat, buf.glName());
         LIBGUI_ASSERT_GL_OK();
-        GL.glBindTexture(GL_TEXTURE_BUFFER, 0);
+        glBindTexture(GL_TEXTURE_BUFFER, 0);
     }
 };
 

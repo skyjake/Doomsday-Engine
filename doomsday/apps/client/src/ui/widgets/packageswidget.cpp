@@ -39,16 +39,14 @@
 #include <de/PopupButtonWidget>
 #include <de/ProgressWidget>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
 #include <de/TaskPool>
+#include <de/Timer>
+#include <de/TextValue>
 #include <de/ui/FilteredData>
 #include <de/ui/VariantActionItem>
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/resource/bundles.h>
-
-#include <QTimer>
-#include <set>
 
 using namespace de;
 
@@ -87,6 +85,8 @@ DE_GUI_PIMPL(PackagesWidget)
         PackageItem(File const &packFile)
         {
             setFile(packFile);
+            setData(TextValue(Package::versionedIdentifierForFile(packFile)));
+            setLabel(info->gets(Package::VAR_TITLE));
         }
 
         void setFile(File const &packFile)
@@ -186,14 +186,14 @@ DE_GUI_PIMPL(PackagesWidget)
                                     label().rule().bottom() - label().margins().bottom(),
                                     ui::Right);
 
-            for (QString tag : Package::tags(*_item->file))
+            for (const String &tag : Package::tags(*_item->file))
             {
                 auto *btn = new ButtonWidget;
-                btn->setText(_E(l) + tag.toLower());
+                btn->setText(_E(l) + tagList);
                 btn->setActionFn([this, tag]() {
                     String terms = _owner.d->search->text();
                     if (!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
-                    terms += tag.toLower();
+                    terms += tagList;
                     _owner.d->search->setText(terms);
                 });
                 updateTagButtonStyle(btn, "accent");

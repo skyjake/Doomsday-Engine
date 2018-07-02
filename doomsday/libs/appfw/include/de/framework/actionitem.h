@@ -22,6 +22,7 @@
 #include "imageitem.h"
 
 #include <de/Action>
+#include <de/CallbackAction>
 #include <de/Image>
 
 namespace de {
@@ -35,10 +36,15 @@ namespace ui {
 class LIBAPPFW_PUBLIC ActionItem : public ImageItem
 {
 public:
-    ActionItem(String const &label   = "",
-               RefArg<Action> action = RefArg<Action>())
+    ActionItem(String const &label = "", RefArg<Action> action = RefArg<Action>())
         : ImageItem(ShownAsButton | ActivationClosesPopup, label)
-        , _action(action.holdRef()) {}
+        , _action(action.holdRef())
+    {}
+
+    ActionItem(const String &label,
+               const std::function<void ()> &actionFunc)
+        : ImageItem(ShownAsButton | ActivationClosesPopup, label)
+        , _action(new CallbackAction(actionFunc)) {}
 
     ActionItem(Semantics semantics,
                String const &label   = "",

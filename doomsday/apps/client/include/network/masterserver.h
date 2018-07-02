@@ -53,7 +53,7 @@ protected:
     void nextJob();
     bool parseResponse(const de::Block &response);
 
-    void requestFinished(QNetworkReply *reply);
+//    void requestFinished(QNetworkReply *reply);
 
 private:
     DE_PRIVATE(d)

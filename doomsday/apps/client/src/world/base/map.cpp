@@ -79,6 +79,7 @@
 
 #include <de/BitArray>
 #include <de/LogBuffer>
+#include <de/Hash>
 #include <de/Rectangle>
 
 #include <de/aabox.h>
@@ -96,10 +97,6 @@ using namespace de;
 static dint bspSplitFactor = 7;  ///< cvar
 
 #ifdef __CLIENT__
-#if 0
-static dint lgMXSample = 1;  ///< 5 samples per block.
-#endif
-
 /// Milliseconds it takes for Unpredictable and Hidden mobjs to be
 /// removed from the hash. Under normal circumstances, the special
 /// status should be removed fairly quickly.
@@ -110,16 +107,16 @@ namespace world {
 
 struct EditableElements
 {
-    QList<Line *> lines;
-    QList<Sector *> sectors;
-    QList<Polyobj *> polyobjs;
+    List<Line *> lines;
+    List<Sector *> sectors;
+    List<Polyobj *> polyobjs;
 
     ~EditableElements() { clearAll(); }
 
     void clearAll()
     {
-        qDeleteAll(lines); lines.clear();
-        qDeleteAll(sectors); sectors.clear();
+        deleteAll(lines); lines.clear();
+        deleteAll(sectors); sectors.clear();
 
         for (Polyobj *pob : polyobjs)
         {
@@ -220,7 +217,7 @@ DE_PIMPL(Map)
 
     struct ContactBlockmap : public Blockmap
     {
-        QBitArray spreadBlocks;  ///< Used to prevent repeat processing.
+        BitArray spreadBlocks;  ///< Used to prevent repeat processing.
 
         /**
          * Construct a new contact blockmap.
@@ -264,7 +261,7 @@ DE_PIMPL(Map)
     {
         duint currentTime = 0;        ///< The "current" frame in milliseconds.
         duint lastChangeOnFrame = 0;
-        QList<BiasSource *> sources;  ///< All bias light sources (owned).
+        List<BiasSource *> sources;  ///< All bias light sources (owned).
     };
 #endif
 
@@ -275,14 +272,14 @@ DE_PIMPL(Map)
 
     AABoxd bounds;              ///< Boundary points which encompass the entire map
 
-    Mesh mesh;                  ///< All map geometries.
-    QList<Sector *> sectors;
-    QList<Line *> lines;
-    QList<Polyobj *> polyobjs;
+    Mesh            mesh; ///< All map geometries.
+    List<Sector *>  sectors;
+    List<Line *>    lines;
+    List<Polyobj *> polyobjs;
 
     Bsp bsp;
-    QVector<ConvexSubspace *> subspaces;     ///< All player-traversable subspaces.
-    QHash<Id, Subsector *> subsectorsById; ///< Not owned.
+    List<ConvexSubspace *> subspaces;     ///< All player-traversable subspaces.
+    Hash<Id, Subsector *> subsectorsById; ///< Not owned.
 
     //
     // Map entities and element properties (things, line specials, etc...).
@@ -312,7 +309,7 @@ DE_PIMPL(Map)
     std::unique_ptr<LightGrid> lightGrid;
     BiasData bias;            ///< Map wide "global" data for Bias lighting.
 #endif
-    QList<Lumobj *> lumobjs;  ///< All lumobjs (owned).
+    List<Lumobj *> lumobjs;  ///< All lumobjs (owned).
 
     ClSkyPlane skyFloor;
     ClSkyPlane skyCeiling;
@@ -344,14 +341,14 @@ DE_PIMPL(Map)
         // in their private data destructors.
         thinkers.reset();
 
-        qDeleteAll(sectors);
-        qDeleteAll(subspaces);
+        deleteAll(sectors);
+        deleteAll(subspaces);
         for (Polyobj *polyobj : polyobjs)
         {
             polyobj->~Polyobj();
             M_Free(polyobj);
         }
-        qDeleteAll(lines);
+        deleteAll(lines);
 
         /// @todo fixme: Free all memory we have ownership of.
         // mobjNodes/lineNodes/lineLinks
@@ -587,7 +584,7 @@ DE_PIMPL(Map)
         dint nextVertexOrd = mesh.vertexCount();
 
         // Determine the set of lines for which we will build a BSP.
-        auto linesToBuildFor = QSet<Line *>::fromList(lines);
+        auto linesToBuildFor = compose<Set<Line *>>(lines.begin(), lines.end());
 
         // Polyobj lines should be excluded.
         for (Polyobj *pob : polyobjs)
@@ -724,8 +721,8 @@ DE_PIMPL(Map)
         // this by starting with a set per subspace and then keep merging the sets until
         // no two sets share a common edge ("clustering").
 
-        typedef QVector<ConvexSubspace *> Subspaces;
-        typedef QList<Subspaces> SubspaceSets;
+        typedef List<ConvexSubspace *> Subspaces;
+        typedef List<Subspaces> SubspaceSets;
         SubspaceSets subspaceSets;
 
         for (ConvexSubspace *subspace : subspaces)
@@ -1134,17 +1131,20 @@ DE_PIMPL(Map)
         // While the game is paused there is no need to smooth.
         else //if (!clientPaused)
         {
-            QMutableSetIterator<Plane *> iter(trackedPlanes);
-            while (iter.hasNext())
+            for (auto iter = trackedPlanes.begin(); iter != trackedPlanes.end(); )
             {
-                Plane *plane = iter.next();
+                Plane *plane = *iter;
 
                 plane->lerpSmoothedHeight();
 
                 // Has this plane reached its destination?
                 if (de::fequal(plane->heightSmoothed(), plane->height()))
                 {
-                    iter.remove();
+                    iter = trackedPlanes.erase(iter);
+                }
+                else
+                {
+                    ++iter;
                 }
             }
         }
@@ -1169,15 +1169,18 @@ DE_PIMPL(Map)
         // While the game is paused there is no need to smooth.
         else //if (!clientPaused)
         {
-            QMutableSetIterator<Surface *> iter(scrollingSurfaces);
-            while (iter.hasNext())
+            for (auto iter = scrollingSurfaces.begin(); iter != scrollingSurfaces.end(); )
             {
-                Surface *surface = iter.next();
+                Surface *surface = *iter;
                 surface->lerpSmoothedOrigin();
                 // Has this material reached its destination?
                 if (surface->originSmoothed() == surface->origin())
                 {
-                    iter.remove();
+                    iter = scrollingSurfaces.erase(iter);
+                }
+                else
+                {
+                    ++iter;
                 }
             }
         }
@@ -1196,7 +1199,7 @@ DE_PIMPL(Map)
 
         // Check which sources have changed and update the trackers for any
         // affected surfaces.
-        QBitArray allChanges(BiasTracker::MAX_CONTRIBUTORS);
+        BitArray allChanges(BiasTracker::MAX_CONTRIBUTORS);
         bool needUpdateSurfaces = false;
 
         for (dint i = 0; i < bias.sources.count(); ++i)
@@ -1607,8 +1610,8 @@ void Map::initLightGrid()
     // Determine how many subsector samples we'll make per block and
     // allocate the tempoary storage.
     dint const numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
-    QVector<Vec2d> samplePoints(numSamples);
-    QVector<dint>     sampleHits(numSamples);
+    List<Vec2d> samplePoints(numSamples);
+    List<dint>     sampleHits(numSamples);
 
     /// It would be possible to only allocate memory for the unique
     /// sample results. And then select the appropriate sample in the loop
@@ -1629,7 +1632,7 @@ void Map::initLightGrid()
     /// optimize this much further.
 
     // Allocate memory for all the sample results.
-    QVector<world::ClientSubsector *> ssamples((lg.dimensions().x * lg.dimensions().y) * numSamples);
+    List<world::ClientSubsector *> ssamples((lg.dimensions().x * lg.dimensions().y) * numSamples);
 
     // Determine the size^2 of the samplePoint array plus its center.
     dint size = 0, center = 0;
@@ -1735,7 +1738,7 @@ void Map::initLightGrid()
     }
 
     // Allocate memory used for the collection of the sample results.
-    QVector<world::ClientSubsector *> blkSampleSubsectors(numSamples);
+    List<world::ClientSubsector *> blkSampleSubsectors(numSamples);
 
     for (dint y = 0; y < lg.dimensions().y; ++y)
     for (dint x = 0; x < lg.dimensions().x; ++x)
@@ -1971,10 +1974,10 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
 {
     LOG_AS("Map::clMobjFor");
 
-    ClMobjHash::const_iterator found = d->clMobjHash.constFind(id);
-    if (found != d->clMobjHash.constEnd())
+    auto found = d->clMobjHash.find(id);
+    if (found != d->clMobjHash.end())
     {
-        return found.value();
+        return found->second;
     }
 
     if (!canCreate) return nullptr;
@@ -2004,16 +2007,14 @@ mobj_t *Map::clMobjFor(thid_t id, bool canCreate) const
 dint Map::clMobjIterator(dint (*callback)(mobj_t *, void *), void *context)
 {
     ClMobjHash::const_iterator next;
-    for (ClMobjHash::const_iterator i = d->clMobjHash.constBegin();
-         i != d->clMobjHash.constEnd(); i = next)
+    for (auto i = d->clMobjHash.cbegin(); i != d->clMobjHash.cend(); i = next)
     {
-        next = i;
-        next++;
+        next++ = i;
 
-        DE_ASSERT(THINKER_DATA(i.value()->thinker, ClientMobjThinkerData).hasRemoteSync());
+        DE_ASSERT(THINKER_DATA(i->second->thinker, ClientMobjThinkerData).hasRemoteSync());
 
         // Callback returns zero to continue.
-        if (dint result = callback(i.value(), context))
+        if (dint result = callback(i->second, context))
             return result;
     }
     return 0;
@@ -2079,7 +2080,7 @@ Vertex *Map::vertexPtr(dint index) const
     return nullptr;
 }
 
-LoopResult Map::forAllVertexs(std::function<LoopResult (Vertex &)> func) const
+LoopResult Map::forAllVertexs(const std::function<LoopResult (Vertex &)>& func) const
 {
     for (Vertex *vtx : d->mesh.vertexs())
     {
@@ -2109,7 +2110,7 @@ Line *Map::linePtr(dint index) const
     return nullptr;
 }
 
-LoopResult Map::forAllLines(std::function<LoopResult (Line &)> func) const
+LoopResult Map::forAllLines(const std::function<LoopResult (Line &)>& func) const
 {
     for (Line *li : d->lines)
     {
@@ -2157,7 +2158,7 @@ ConvexSubspace *Map::subspacePtr(dint index) const
     return nullptr;
 }
 
-LoopResult Map::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
+LoopResult Map::forAllSubspaces(const std::function<LoopResult (ConvexSubspace &)>& func) const
 {
     for (ConvexSubspace *sub : d->subspaces)
     {
@@ -2187,7 +2188,7 @@ Polyobj *Map::polyobjPtr(dint index) const
     return nullptr;
 }
 
-LoopResult Map::forAllPolyobjs(std::function<LoopResult (Polyobj &)> func) const
+LoopResult Map::forAllPolyobjs(const std::function<LoopResult (Polyobj &)>& func) const
 {
     for (Polyobj *pob : d->polyobjs)
     {
@@ -2221,7 +2222,7 @@ LineSide &Map::side(dint index) const
 {
     if (LineSide *side = sidePtr(index)) return *side;
     /// @throw MissingElementError  Invalid LineSide reference specified.
-    throw MissingElementError("Map::side", "Unknown LineSide index:" + String::asText(index));
+    throw MissingElementError("Map::side", stringf("Unknown LineSide index: %i", index));
 }
 
 LineSide *Map::sidePtr(dint index) const
@@ -2334,10 +2335,10 @@ Subsector &Map::subsector(de::Id id) const
 
 Subsector *Map::subsectorPtr(de::Id id) const
 {
-    auto found = d->subsectorsById.constFind(id);
-    if (found != d->subsectorsById.constEnd())
+    auto found = d->subsectorsById.find(id);
+    if (found != d->subsectorsById.end())
     {
-        return found.value();
+        return found->second;
     }
     return nullptr;
 }
@@ -2370,7 +2371,7 @@ Blockmap const &Map::subspaceBlockmap() const
     throw MissingBlockmapError("Map::subspaceBlockmap", "Convex subspace blockmap is not initialized");
 }
 
-LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, std::function<LoopResult (Line &)> func) const
+LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, const std::function<LoopResult (Line &)>& func) const
 {
     /// @todo Optimize: It should not be necessary to collate the objects first in
     /// in order to perform the iteration. This kind of "belt and braces" safety
@@ -2379,12 +2380,12 @@ LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, std::function<LoopResult (L
 
     if (&Mobj_Map(mob) == this && Mobj_IsLinked(mob) && mob.lineRoot)
     {
-        QVarLengthArray<Line *, 16> linkStore;
+        List<Line *> linkStore;
 
         linknode_t *tn = d->mobjNodes.nodes;
         for (nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
         {
-            linkStore.append((Line *)(tn[nix].ptr));
+            linkStore.append(reinterpret_cast<Line *>(tn[nix].ptr));
         }
 
         for (dint i = 0; i < linkStore.count(); ++i)
@@ -2396,7 +2397,7 @@ LoopResult Map::forAllLinesTouchingMobj(mobj_t &mob, std::function<LoopResult (L
     return LoopContinue;
 }
 
-LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult (Sector &)> func) const
+LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, const std::function<LoopResult (Sector &)>& func) const
 {
     /// @todo Optimize: It should not be necessary to collate the objects first in
     /// in order to perform the iteration. This kind of "belt and braces" safety
@@ -2405,12 +2406,12 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
 
     if (&Mobj_Map(mob) == this && Mobj_IsLinked(mob))
     {
-        QVarLengthArray<Sector *, 16> linkStore;
+        List<Sector *> linkStore;
 
         // Always process the mobj's own sector first.
         Sector &ownSec = *Mobj_BspLeafAtOrigin(mob).sectorPtr();
         ownSec.setValidCount(validCount);
-        linkStore.append(&ownSec);
+        linkStore << &ownSec;
 
         // Any good lines around here?
         if (mob.lineRoot)
@@ -2418,7 +2419,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
             linknode_t *tn = d->mobjNodes.nodes;
             for (nodeindex_t nix = tn[mob.lineRoot].next; nix != mob.lineRoot; nix = tn[nix].next)
             {
-                auto *ld = (Line *)(tn[nix].ptr);
+                auto *ld = reinterpret_cast<Line *>(tn[nix].ptr);
 
                 // All these lines have sectors on both sides.
                 // First, try the front.
@@ -2453,7 +2454,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
     return LoopContinue;
 }
 
-LoopResult Map::forAllMobjsTouchingLine(Line &line, std::function<LoopResult (mobj_t &)> func) const
+LoopResult Map::forAllMobjsTouchingLine(Line &line, const std::function<LoopResult (mobj_t &)>& func) const
 {
     /// @todo Optimize: It should not be necessary to collate the objects first in
     /// in order to perform the iteration. This kind of "belt and braces" safety
@@ -2462,17 +2463,17 @@ LoopResult Map::forAllMobjsTouchingLine(Line &line, std::function<LoopResult (mo
 
     if (&line.map() == this)
     {
-        QVarLengthArray<mobj_t *, 256> linkStore;
+        List<mobj_t *> linkStore;
 
         // Collate mobjs touching the given line in case these relationships change.
         linknode_t *ln   = d->lineNodes.nodes;
         nodeindex_t root = d->lineLinks[line.indexInMap()];
         for (nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
-            linkStore.append((mobj_t *)(ln[nix].ptr));
+            linkStore << reinterpret_cast<mobj_t *>(ln[nix].ptr));
         }
 
-        for (dint i = 0; i < linkStore.count(); ++i)
+        for (dint i = 0; i < linkStore.sizei(); ++i)
         {
             if (auto result = func(*linkStore[i]))
                 return result;
@@ -2481,7 +2482,7 @@ LoopResult Map::forAllMobjsTouchingLine(Line &line, std::function<LoopResult (mo
     return LoopContinue;
 }
 
-LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResult (mobj_t &)> func) const
+LoopResult Map::forAllMobjsTouchingSector(Sector &sector, const std::function<LoopResult (mobj_t &)>& func) const
 {
     /// @todo Optimize: It should not be necessary to collate the objects first in
     /// in order to perform the iteration. This kind of "belt and braces" safety
@@ -2490,7 +2491,7 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
 
     if (&sector.map() == this)
     {
-        QVarLengthArray<mobj_t *, 256> linkStore;
+        List<mobj_t *> linkStore;
 
         // Collate mobjs that obviously are in the sector.
         for (mobj_t *mob = sector.firstMobj(); mob; mob = mob->sNext)
@@ -2498,7 +2499,7 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
             if (mob->validCount != validCount)
             {
                 mob->validCount = validCount;
-                linkStore.append(mob);
+                linkStore << mob;
             }
         }
 
@@ -2509,7 +2510,7 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
             nodeindex_t root = d->lineLinks[side.line().indexInMap()];
             for (nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
             {
-                auto *mob = (mobj_t *)(ln[nix].ptr);
+                auto *mob = reinterpret_cast<mobj_t *>(ln[nix].ptr);
                 if (mob->validCount != validCount)
                 {
                     mob->validCount = validCount;
@@ -2520,7 +2521,7 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, std::function<LoopResu
         });
 
         // Process all collected mobjs.
-        for (dint i = 0; i < linkStore.count(); ++i)
+        for (dint i = 0; i < linkStore.sizei(); ++i)
         {
             if (auto result = func(*linkStore[i]))
                 return result;
@@ -2614,7 +2615,7 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<Lo
         dint const localValidCount = validCount;
         result = polyobjBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
         {
-            auto &pob = *(Polyobj *)object;
+            auto &pob = *reinterpret_cast<Polyobj *>(object);
             if (pob.validCount != localValidCount) // not yet processed
             {
                 pob.validCount = localValidCount;
@@ -2638,7 +2639,7 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<Lo
         dint const localValidCount = validCount;
         result = lineBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
         {
-            auto &line = *(Line *)object;
+            auto &line = *reinterpret_cast<Line *>(object);
             if (line.validCount() != localValidCount) // not yet processed
             {
                 line.setValidCount(localValidCount);
@@ -2885,7 +2886,7 @@ void Map::unlink(Generator &generator)
     }
 }
 
-LoopResult Map::forAllGenerators(std::function<LoopResult (Generator &)> func) const
+LoopResult Map::forAllGenerators(const std::function<LoopResult (Generator &)>& func) const
 {
     for (Generator *gen : d->getGenerators().activeGens)
     {
@@ -2897,7 +2898,7 @@ LoopResult Map::forAllGenerators(std::function<LoopResult (Generator &)> func) c
     return LoopContinue;
 }
 
-LoopResult Map::forAllGeneratorsInSector(Sector const &sector, std::function<LoopResult (Generator &)> func) const
+LoopResult Map::forAllGeneratorsInSector(Sector const &sector, const std::function<LoopResult (Generator &)>& func) const
 {
     if (sector.mapPtr() == this)  // Ignore 'alien' sectors.
     {
@@ -2947,7 +2948,7 @@ void Map::removeAllLumobjs()
     {
         subspace->unlinkAllLumobjs();
     }
-    qDeleteAll(d->lumobjs); d->lumobjs.clear();
+    deleteAll(d->lumobjs); d->lumobjs.clear();
 }
 
 Lumobj &Map::lumobj(dint index) const
@@ -2966,7 +2967,7 @@ Lumobj *Map::lumobjPtr(dint index) const
     return nullptr;
 }
 
-LoopResult Map::forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const
+LoopResult Map::forAllLumobjs(const std::function<LoopResult (Lumobj &)>& func) const
 {
     for (Lumobj *lob : d->lumobjs)
     {
@@ -3114,8 +3115,6 @@ void Map::update()
 String Map::objectsDescription() const
 {
     String str;
-    QTextStream os(&str);
-
     if (gx.MobjStateAsInfo)
     {
         // Print out a state description for each thinker.
@@ -3123,12 +3122,11 @@ String Map::objectsDescription() const
         {
             if (Thinker_IsMobj(th))
             {
-                os << gx.MobjStateAsInfo(reinterpret_cast<mobj_t const *>(th));
+                str += gx.MobjStateAsInfo(reinterpret_cast<mobj_t const *>(th));
             }
             return LoopContinue;
         });
     }
-
     return str;
 }
 
@@ -3142,7 +3140,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
     bool problemsDetected = false;
 
     // Look up all the mobjs.
-    QList<thinker_t const *> mobjs;
+    List<thinker_t const *> mobjs;
     thinkers().forAll(0x3, [&mobjs] (thinker_t *th) {
         if (Thinker_IsMobj(th)) mobjs << th;
         return LoopContinue;
@@ -3733,7 +3731,7 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
  * Generates the line owner rings for each vertex. Each ring includes all the lines which
  * the vertex belongs to sorted by angle, (the rings are arranged in clockwise order, east = 0).
  */
-void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &editableLines)
+void buildVertexLineOwnerRings(List<Vertex *> const &vertexs, List<Line *> &editableLines)
 {
     LOG_AS("buildVertexLineOwnerRings");
 
@@ -3846,7 +3844,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     // Step 1 - Find equivalent vertexes:
     //
     // Populate the vertex info.
-    QVector<VertexInfo> vertexInfo(mesh.vertexCount());
+    List<VertexInfo> vertexInfo(mesh.vertexCount());
     dint ord = 0;
     for (Vertex *vertex : mesh.vertexs())
     {
@@ -3855,7 +3853,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
 
     {
         // Sort a copy to place near vertexes adjacently.
-        QVector<VertexInfo> sortedInfo(vertexInfo);
+        List<VertexInfo> sortedInfo(vertexInfo);
         qSort(sortedInfo.begin(), sortedInfo.end());
 
         // Locate equivalent vertexes in the sorted info.

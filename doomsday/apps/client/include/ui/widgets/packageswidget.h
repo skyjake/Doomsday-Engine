@@ -34,8 +34,6 @@ class HomeMenuWidget;
  */
 class PackagesWidget : public de::GuiWidget, public de::IPersistent
 {
-    Q_OBJECT
-
 public:
     /// Specified manual package is not available. @ingroup errors
     DE_ERROR(UnavailableError);
@@ -49,6 +47,8 @@ public:
     };
 
     enum PopulateBehavior { PopulationDisabled, PopulationEnabled };
+
+    DE_DEFINE_AUDIENCE2(ItemCount, void itemCountChanged(unsigned int shownItems, unsigned int totalItems))
 
 public:
     PackagesWidget(PopulateBehavior popBehavior = PopulationEnabled,
@@ -112,6 +112,8 @@ public:
 
     de::LineEditWidget &searchTermsEditor();
 
+    void refreshPackages();
+
     // Events.
     void initialize();
     void update();
@@ -119,9 +121,6 @@ public:
     // Implements IPersistent.
     void operator>>(de::PersistentState &toState) const;
     void operator<<(de::PersistentState const &fromState);
-
-signals:
-    void itemCountChanged(unsigned int shownItems, unsigned int totalItems);
 
 private:
     DE_PRIVATE(d)

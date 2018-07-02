@@ -198,7 +198,7 @@ DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
         String const exec = DED_Definitions()->states[statenum].gets("execute");
         if (!exec.isEmpty())
         {
-            Con_Execute(CMDS_SCRIPT, exec.toUtf8(), true, false);
+            Con_Execute(CMDS_SCRIPT, exec, true, false);
         }
     }
 
@@ -758,7 +758,7 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, flo
                         FrameModelDef *mdit = App_Resources().modelDefForState(runtimeDefs.states.indexOf(it), mo.selector);
                         if (mdit && mdit->interNext)
                         {
-                            forever
+                            for (;;)
                             {
                                 mdit = mdit->interNext;
                                 if (mdit)
@@ -959,7 +959,7 @@ D_CMD(InspectMobj)
             << mobType << id << mob << Def_GetStateName(mob->state) << ::runtimeDefs.states.indexOf(mob->state);
     LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
             << DED_Definitions()->getMobjName(mob->type) << mob->type << mob->info
-            << (mob->info ? QString(" (%1)").arg(::runtimeDefs.mobjInfo.indexOf(mob->info)) : "");
+            << (mob->info ? String::format(" (%i)", runtimeDefs.mobjInfo.indexOf(mob->info)).c_str() : "");
     LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mob->tics << mob->ddFlags;
 #ifdef __CLIENT__
     if (info)

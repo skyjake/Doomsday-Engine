@@ -23,14 +23,12 @@
 
 class NoGamesColumnWidget : public ColumnWidget
 {
-    Q_OBJECT
-
 public:
     NoGamesColumnWidget();
 
     de::String tabHeading() const override;
 
-public slots:
+public:
     void browseForDataFiles();
 };
 

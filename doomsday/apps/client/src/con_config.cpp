@@ -146,8 +146,8 @@ static int writeAliasToFileWorker(knownword_t const *word, void *context)
     DE_ASSERT(cal != 0);
 
     out->writeText(String::format("alias \"%s\" \"%s\"\n",
-                                  String(cal->name).escaped(),
-                                  String(cal->command).escaped()));
+                                  String(cal->name).escaped().c_str(),
+                                  String(cal->command).escaped().c_str()));
 
     return 0; // Continue iteration.
 }
@@ -165,7 +165,7 @@ static bool writeConsoleState(Path const &filePath)
     String fileDir = filePath.toString().fileNamePath();
     if (!fileDir.isEmpty())
     {
-        F_MakePath(fileDir.toUtf8());
+        F_MakePath(fileDir);
     }
 
     try
@@ -202,7 +202,7 @@ static bool writeBindingsState(Path const &filePath)
     String fileDir = filePath.toString().fileNamePath();
     if (!fileDir.isEmpty())
     {
-        F_MakePath(fileDir.toUtf8());
+        F_MakePath(fileDir);
     }
 
     try
@@ -226,8 +226,8 @@ static bool writeBindingsState(Path const &filePath)
             {
                 CommandBinding bind(rec);
                 out.writeText(String::format("bindevent \"%s:%s\" \"",
-                                             context.name(),
-                                             bind.composeDescriptor()) +
+                                             context.name().c_str(),
+                                             bind.composeDescriptor().c_str()) +
                               bind.gets("command").escaped() + "\"\n");
                 return LoopContinue;
             });
@@ -241,8 +241,8 @@ static bool writeBindingsState(Path const &filePath)
 
                 out.writeText(String::format("bindcontrol local%i-%s \"%s\"\n",
                               bind.geti("localPlayer") + 1,
-                              impulse->name,
-                              bind.composeDescriptor()));
+                              impulse->name.c_str(),
+                              bind.composeDescriptor().c_str()));
                 return LoopContinue;
             });
 

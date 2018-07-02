@@ -29,11 +29,9 @@
 #include <de/FIFO>
 #include <de/NotificationAreaWidget>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
+#include <de/Timer>
 #include <de/ui/ActionItem>
 #include <de/ui/ListData>
-
-#include <QTimer>
 
 using namespace de;
 
@@ -88,7 +86,7 @@ DE_GUI_PIMPL(AlertDialog)
     MenuWidget *alerts;
     bool clearOnDismiss;
     TextStyling styling;
-    QTimer hideTimer; ///< Automatically hides the notification.
+    Timer hideTimer; ///< Automatically hides the notification.
     ChoiceWidget *autohideTimes;
     DialogContentStylist stylist;
 
@@ -126,7 +124,7 @@ DE_GUI_PIMPL(AlertDialog)
         alerts->organizer().audienceForWidgetUpdate() += this;
 
         // Set up the automatic hide timer.
-        QObject::connect(&hideTimer, SIGNAL(timeout()), thisPublic, SLOT(hideNotification()));
+        hideTimer += [this](){ self().hideNotification(); };
         hideTimer.setSingleShot(true);
         App::config(VAR_AUTOHIDE).audienceForChange() += this;
     }
@@ -136,22 +134,22 @@ DE_GUI_PIMPL(AlertDialog)
         return ClientWindow::main().notifications();
     }
 
-    int autoHideAfterSeconds() const
+    TimeSpan autoHideAfterSeconds() const
     {
-        return App::config().geti(VAR_AUTOHIDE, 3 * 60);
+        return App::config().getd(VAR_AUTOHIDE, 3 * 60);
     }
 
     void variableValueChanged(Variable &, Value const &)
     {
         // Update the auto-hide timer.
-        if (!autoHideAfterSeconds())
+        if (!fequal(autoHideAfterSeconds(), 0))
         {
             // Never autohide.
             hideTimer.stop();
         }
         else
         {
-            hideTimer.setInterval(autoHideAfterSeconds() * 1000);
+            hideTimer.setInterval(autoHideAfterSeconds());
             if (!hideTimer.isActive()) hideTimer.start();
         }
     }
@@ -248,7 +246,7 @@ DE_GUI_PIMPL(AlertDialog)
         notifs().showOrHide(*notification, true);
 
         // Restart the autohiding timer.
-        if (autoHideAfterSeconds() > 0)
+        if (autoHideAfterSeconds() > 0.0)
         {
             hideTimer.start(autoHideAfterSeconds() * 1000);
         }
@@ -276,15 +274,15 @@ DE_GUI_PIMPL(AlertDialog)
 
     void updateAutohideTimeSelection()
     {
-        int const time = autoHideAfterSeconds();
-        ui::DataPos pos = autohideTimes->items().findData(time);
+        const ddouble time = autoHideAfterSeconds();
+        ui::DataPos pos = autohideTimes->items().findData(NumberValue(time));
         if (pos != ui::Data::InvalidPos)
         {
             autohideTimes->setSelected(pos);
         }
         else
         {
-            autohideTimes->setSelected(autohideTimes->items().findData(0));
+            autohideTimes->setSelected(autohideTimes->items().findData(NumberValue(0)));
         }
     }
 };
@@ -297,7 +295,7 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
     d->notification->setPopup(*this, ui::Down);
 
     buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default,
-                                      tr("Clear All"))
+                                      "Clear All")
               << new DialogButtonItem(DialogWidget::ActionPopup | DialogWidget::Id1,
                                       style().images().image("gear"));
 
@@ -307,25 +305,25 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
     d->stylist.setContainer(*this);
     auto &gearButton = *popupButtonWidget(DialogWidget::Id1);
 
-    gearButton.setPopup([] (PopupButtonWidget const &) {
+    gearButton.setPopup([](PopupButtonWidget const &) {
         return new LogSettingsDialog;
     }, ui::Left);
     gearButton.setOpener([this] (PopupWidget *pop) {
         auto &dlg = pop->as<LogSettingsDialog>();
-        connect(this, SIGNAL(closed()), pop, SLOT(close()));
+        audienceForClose() += [pop](){ pop->close(); };
         dlg.orphan();
         dlg.exec(root());
     });
 
-    auto *lab = LabelWidget::newWithText(tr("Hide After:"), this);
+    auto *lab = LabelWidget::newWithText("Hide After:", this);
 
     add(d->autohideTimes = new ChoiceWidget);
     d->autohideTimes->items()
-            << new ChoiceItem(tr("1 min"),   60)
-            << new ChoiceItem(tr("3 mins"),  3 * 60)
-            << new ChoiceItem(tr("5 mins"),  5 * 60)
-            << new ChoiceItem(tr("10 mins"), 10 * 60)
-            << new ChoiceItem(tr("Never"),   0);
+            << new ChoiceItem("1 min",   NumberValue(60))
+            << new ChoiceItem("3 mins",  NumberValue(3 * 60))
+            << new ChoiceItem("5 mins",  NumberValue(5 * 60))
+            << new ChoiceItem("10 mins", NumberValue(10 * 60))
+            << new ChoiceItem("Never",   NumberValue(0));
     d->updateAutohideTimeSelection();
 
     lab->rule()

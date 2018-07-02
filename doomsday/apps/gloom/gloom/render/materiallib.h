@@ -34,20 +34,20 @@ using namespace de;
 class MaterialLib : public Render
 {
 public:
-    typedef QHash<String, uint32_t> Ids;
+    typedef Hash<String, uint32_t> Ids;
 
     enum MaterialFlag {
         Opaque      = 0x0,
         Transparent = 0x1, // refracts
         Reflective  = 0x2,
     };
-    Q_DECLARE_FLAGS(MaterialFlags, MaterialFlag)
+    using MaterialFlags = Flags;
 
     enum MetricsFlag {
         Metrics_AnimationMask  = 1,
         Metrics_VerticalAspect = 2,
     };
-    Q_DECLARE_FLAGS(MetricsFlags, MetricsFlag)
+    using MetricsFlags = Flags;
 
 public:
     MaterialLib();
@@ -75,9 +75,6 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialLib::MaterialFlags)
-Q_DECLARE_OPERATORS_FOR_FLAGS(MaterialLib::MetricsFlags)
 
 } // namespace gloom
 

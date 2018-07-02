@@ -18,6 +18,8 @@
 
 #include "gloom/world/sectorpolygonizer.h"
 
+#include <de/Set>
+
 using namespace de;
 
 namespace gloom {
@@ -28,10 +30,10 @@ DE_PIMPL(SectorPolygonizer)
 {
     struct Contour
     {
-        QVector<ID> lines;
-        QSet<ID>    hasPoints;
-        Polygon     polygon;
-        int         parent = -1;
+        List<ID> lines;
+        Set<ID>  hasPoints;
+        Polygon  polygon;
+        int      parent = -1;
 
         Contour(ID line = 0)
         {
@@ -78,7 +80,7 @@ DE_PIMPL(SectorPolygonizer)
         void makePolygon(const Map &map, ID currentSector)
         {
             polygon.clear();
-            foreach (ID id, lines)
+            for (ID id : lines)
             {
                 const auto &line    = map.line(id);
                 const ID    pointId = line.startPointForSector(currentSector);
@@ -94,7 +96,7 @@ DE_PIMPL(SectorPolygonizer)
 
         int findSharedPoint(const Contour &other) const
         {
-            for (int i = 0; i < polygon.points.size(); ++i)
+            for (int i = 0; i < polygon.points.sizei(); ++i)
             {
                 if (other.hasPoints.contains(polygon.points.at(i).id))
                 {
@@ -106,7 +108,7 @@ DE_PIMPL(SectorPolygonizer)
 
         int findPoint(ID id) const
         {
-            for (int i = 0; i < polygon.points.size(); ++i)
+            for (int i = 0; i < polygon.points.sizei(); ++i)
             {
                 if (polygon.points.at(i).id == id)
                 {
@@ -139,7 +141,7 @@ DE_PIMPL(SectorPolygonizer)
         void update()
         {
             hasPoints.clear();
-            foreach (const auto &pp, polygon.points)
+            for (const auto &pp : polygon.points)
             {
                 hasPoints.insert(pp.id);
             }
@@ -158,13 +160,13 @@ DE_PIMPL(SectorPolygonizer)
 
     Map &            map;
     ID               currentSector;
-    QVector<ID>      boundaryLines;
-    QVector<Contour> contours;
+    List<ID>      boundaryLines;
+    List<Contour> contours;
 
     Impl(Public *i, Map &map) : Base(i), map(map)
     {}
 
-    static bool intersectsAnyLine(const Line2d &line, const QVector<Contour> &contours)
+    static bool intersectsAnyLine(const Line2d &line, const List<Contour> &contours)
     {
         for (const Contour &cont : contours)
         {
@@ -216,7 +218,7 @@ DE_PIMPL(SectorPolygonizer)
     {
         using namespace std;
 
-        QVector<ID> remainingLines = boundaryLines;
+        List<ID> remainingLines = boundaryLines;
 
         // Initialize with one contour.
         contours = {Contour{remainingLines.takeLast()}};
@@ -224,21 +226,22 @@ DE_PIMPL(SectorPolygonizer)
         // Each line belongs to exactly one contour.
         while (!remainingLines.isEmpty())
         {
-            const int oldSize = remainingLines.size();
+            const auto oldSize = remainingLines.size();
 
             // Let's see if any of the lines fits on the existing contours.
-            QMutableVectorIterator<ID> iter(remainingLines);
-            while (iter.hasNext())
+            for (auto iter = remainingLines.begin(); iter != remainingLines.end(); )
             {
-                iter.next();
+                bool erased = false;
                 for (Contour &cont : contours)
                 {
-                    if (cont.tryExtend(iter.value(), map, currentSector))
+                    if (cont.tryExtend(*iter, map, currentSector))
                     {
-                        iter.remove();
+                        iter = remainingLines.erase(iter);
+                        erased = true;
                         break;
                     }
                 }
+                if (!erased) ++iter;
             }
 
             if (oldSize == remainingLines.size())
@@ -257,19 +260,19 @@ DE_PIMPL(SectorPolygonizer)
             }
             else
             {
-                qDebug("Ignoring contour %li (size: %i, closed: %i)",
-                       &cont - &contours.at(0),
-                       cont.lines.size(),
-                       cont.isClosed(map, currentSector));
+                debug("Ignoring contour %li (size: %zu, closed: %i)",
+                      &cont - &contours.at(0),
+                      cont.lines.size(),
+                      cont.isClosed(map, currentSector));
                 cont.clear();
             }
         }
 
         // Some contours may share points with other contours. Let's see if can get them
         // merged together.
-        for (int i = 0; i < contours.size(); ++i)
+        for (int i = 0; i < contours.sizei(); ++i)
         {
-            for (int j = 0; j < contours.size(); ++j)
+            for (int j = 0; j < contours.sizei(); ++j)
             {
                 if (i == j) continue;
 
@@ -290,24 +293,24 @@ DE_PIMPL(SectorPolygonizer)
                     }
                     joined += host.polygon.points.mid(hostIdx);
 
-                    qDebug("Contours %i and %i have a shared point %i/%i", i, j, hostIdx, graftIdx);
-                    qDebug() << "   Host:" << host.polygon.asText();
-                    qDebug() << "   Graft:" << graft.polygon.asText();
+                    debug("Contours %i and %i have a shared point %i/%i", i, j, hostIdx, graftIdx);
+                    debug("   Host: %s", host.polygon.asText().c_str());
+                    debug("   Graft: %s", graft.polygon.asText().c_str());
 
                     host.polygon.points = joined;
                     host.update();
                     graft.clear();
 
-                    qDebug() << "   Result:" << host.polygon.asText();
+                    debug("   Result: %s", host.polygon.asText().c_str());
                 }
             }
         }
 
         // Determine the containment hierarchy.
-        for (int i = 0; i < contours.size(); ++i)
+        for (int i = 0; i < contours.sizei(); ++i)
         {
             int parent = -1;
-            for (int j = 0; j < contours.size(); ++j)
+            for (int j = 0; j < contours.sizei(); ++j)
             {
                 if (i == j) continue;
                 if (contours[i].isInside(contours[j]))
@@ -329,18 +332,20 @@ DE_PIMPL(SectorPolygonizer)
             contours[i].parent = parent;
         }
 
-        for (int i = 0; i < contours.size(); ++i)
+        for (int i = 0; i < contours.sizei(); ++i)
         {
-            qDebug() << "- contour" << i << ":" << contours[i].polygon.asText()
-                     << "closed:" << contours[i].isClosed(map, currentSector)
-                     << "parent:" << contours[i].parent;
+            debug("- contour %i : %s : closed: %s parent: %i",
+                  i,
+                  contours[i].polygon.asText().c_str(),
+                  DE_BOOL_YESNO(contours[i].isClosed(map, currentSector)),
+                  contours[i].parent);
         }
 
-        for (int i = 0; i < contours.size(); ++i)
+        for (int i = 0; i < contours.sizei(); ++i)
         {
             if (contours[i].parent == -1 && !contours[i].polygon.isClockwiseWinding())
             {
-                qDebug("Ignoring top-level contour %i due to the wrong winding", i);
+                debug("Ignoring top-level contour %i due to the wrong winding", i);
                 contours[i].clear();
             }
         }
@@ -356,14 +361,14 @@ DE_PIMPL(SectorPolygonizer)
         }
 
         // Join outer and inner contours.
-        for (int outerIndex = 0; outerIndex < contours.size(); ++outerIndex)
+        for (int outerIndex = 0; outerIndex < contours.sizei(); ++outerIndex)
         {
             Contour &outer = contours[outerIndex];
 
-            const QVector<Contour> holes =
+            const List<Contour> holes =
                 filter(contours, [outerIndex](const Contour &c) { return c.parent == outerIndex; });
 
-            for (int innerIndex = 0; innerIndex < contours.size(); ++innerIndex)
+            for (int innerIndex = 0; innerIndex < contours.sizei(); ++innerIndex)
             {
                 Contour &inner = contours[innerIndex];
                 if (inner.parent == outerIndex && inner.polygon.size() > 0)
@@ -376,7 +381,7 @@ DE_PIMPL(SectorPolygonizer)
                         int inner, outer;
                         double len;
                     };
-                    QVector<ConnectorCandidate> candidates;
+                    List<ConnectorCandidate> candidates;
 
                     for (int k = 0; k < inner.polygon.size(); ++k)
                     {
@@ -385,7 +390,7 @@ DE_PIMPL(SectorPolygonizer)
                             const geo::Line2d connector{outer.polygon.at(j),
                                                         inner.polygon.at(k)};
 
-                            if (!intersectsAnyLine(connector, holes + QVector<Contour>({outer})))
+                            if (!intersectsAnyLine(connector, holes + List<Contour>({outer})))
                             {
                                 // This connector could work.
                                 candidates << ConnectorCandidate{k, j, connector.length()};
@@ -400,7 +405,7 @@ DE_PIMPL(SectorPolygonizer)
                               });
 
                     bool success = false;
-                    foreach (const auto &connector, candidates)
+                    for (const auto &connector : candidates)
                     {
                         geo::Polygon::Points joined =
                                 outer.polygon.points.mid(0, connector.outer + 1);
@@ -440,8 +445,8 @@ DE_PIMPL(SectorPolygonizer)
             // Find the gap.
             while (!cont.isClosed(map, currentSector))
             {
-                qDebug("Countour %li is not closed, finding the gap...", &cont - &contours[0]);
-                qDebug() << "   " << cont.asText();
+                debug("Countour %li is not closed, finding the gap...", &cont - &contours[0]);
+                debug("   %s", cont.asText().c_str());
 
                 bool modified = false;
                 for (int i = 0; i < cont.polygon.size(); ++i)
@@ -451,19 +456,19 @@ DE_PIMPL(SectorPolygonizer)
 
                     if (!cont.hasLineWithPoints(map, startPoint, endPoint))
                     {
-                        qDebug("  Line %i-%i (%x...%x) has no corresponding line",
-                               i,
-                               mod(i + 1, cont.polygon.size()),
-                               startPoint,
-                               endPoint);
+                        debug("  Line %i-%i (%x...%x) has no corresponding line",
+                              i,
+                              mod(i + 1, cont.polygon.size()),
+                              startPoint,
+                              endPoint);
 
                         for (int j = 0; j < cont.size(); ++j)
                         {
-                            qDebug("    point %i (%x) has %i contacts in sector %i",
-                                   j,
-                                   cont.polygon.points[j].id,
-                                   countLinesContactingPoint(cont.polygon.points[j].id),
-                                   currentSector);
+                            debug("    point %i (%x) has %i contacts in sector %i",
+                                  j,
+                                  cont.polygon.points[j].id,
+                                  countLinesContactingPoint(cont.polygon.points[j].id),
+                                  currentSector);
                         }
 
                         // This line does not actually exist, so let's get rid of it.
@@ -481,21 +486,21 @@ DE_PIMPL(SectorPolygonizer)
                         if (modified)
                         {
                             cont.update();
-                            qDebug() << "  Removed fringe point:" << cont.polygon.asText();
+                            debug("  Removed fringe point: %s", cont.polygon.asText().c_str());
                         }
                         break;
                     }
                 }
                 if (!modified && cont.polygon.size() > 0)
                 {
-                    qDebug("  Contour could not be closed!");
+                    debug("  Contour could not be closed!");
                     break; // Hmm.
                 }
             }
 
             if (cont.size() < 3)
             {
-                qDebug("  Removing contour with %i points", cont.size());
+                debug("  Removing contour with %i points", cont.size());
                 cont.clear();
             }
 
@@ -507,10 +512,11 @@ DE_PIMPL(SectorPolygonizer)
                 {
                     if (poly.points[i].id == poly.pointAt(i + 2).id)
                     {
-                        qDebug("  Removing zero-area loop %x..%x",
-                               poly.points[i].id,
-                               poly.pointAt(i + 1).id);
-                        poly.points.remove(i, 2);
+                        debug("  Removing zero-area loop %x..%x",
+                              poly.points[i].id,
+                              poly.pointAt(i + 1).id);
+                        poly.points.erase(poly.points.begin() + i,
+                                          poly.points.begin() + i + 2);
                         modified = true;
                         i = -1; // restart
                     }
@@ -526,7 +532,7 @@ DE_PIMPL(SectorPolygonizer)
         {
             const auto mapLine = map.line(sector.walls[i]);
             bool       inPoly  = false;
-            foreach (const Contour &cont, contours)
+            for (const Contour &cont : contours)
             {
                  if (cont.hasPoints.contains(mapLine.points[0]) &&
                      cont.hasPoints.contains(mapLine.points[1]))
@@ -543,16 +549,16 @@ DE_PIMPL(SectorPolygonizer)
             }
         }
 
-        for (int i = 0; i < contours.size(); ++i)
+        for (duint i = 0; i < contours.size(); ++i)
         {
-            qDebug() << "- contour" << i << ":" << contours[i].polygon.size();
-            foreach (const auto &pp, contours[i].polygon.points)
-                qDebug("    %f, %f : %i", pp.pos.x, pp.pos.y, pp.id);
+            debug("- contour %u : %i ", i, contours[i].polygon.size());
+            for (const auto &pp : contours[i].polygon.points)
+                debug("    %f, %f : %i", pp.pos.x, pp.pos.y, pp.id);
         }
 
         // The remaining contours are now disjoint and can be used for plane triangulation.
         IDList &points = map.sector(currentSector).points;
-        foreach (const auto &cont, contours)
+        for (const auto &cont : contours)
         {
             if (cont.polygon.size())
             {
@@ -572,7 +578,7 @@ SectorPolygonizer::SectorPolygonizer(Map &map)
     : d(new Impl(this, map))
 {}
 
-void SectorPolygonizer::polygonize(ID sector, const QVector<ID> &boundaryLines)
+void SectorPolygonizer::polygonize(ID sector, const List<ID> &boundaryLines)
 {
     d->currentSector = sector;
     d->boundaryLines = boundaryLines;

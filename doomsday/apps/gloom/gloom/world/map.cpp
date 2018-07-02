@@ -19,11 +19,8 @@
 #include "gloom/world/map.h"
 
 #include <de/Block>
-
-#include <QJsonArray>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QJsonValue>
+#include <de/Set>
+#include <nlohmann/json.hpp>
 
 using namespace de;
 
@@ -337,10 +334,10 @@ Rectangled Map::bounds() const
     Rectangled rect;
     if (!_d->points.isEmpty())
     {
-        rect = Rectangled(_d->points.begin().value().coord, _d->points.begin().value().coord);
+        rect = Rectangled(_d->points.begin()->second.coord, _d->points.begin()->second.coord);
         for (const auto &p : _d->points)
         {
-            rect.include(p.coord);
+            rect.include(p.second.coord);
         }
     }
     return rect;
@@ -349,10 +346,10 @@ Rectangled Map::bounds() const
 StringList Map::materials() const
 {
     const auto *_d = d.getConst();
-    QSet<String> mats;
+    Set<String> mats;
     for (const auto &line : _d->lines)
     {
-        for (const auto &surf : line.surfaces)
+        for (const auto &surf : line.second.surfaces)
         {
             for (const auto &name : surf.material)
             {
@@ -362,7 +359,7 @@ StringList Map::materials() const
     }
     for (const auto &plane : _d->planes)
     {
-        for (const auto &name : plane.material)
+        for (const auto &name : plane.second.material)
         {
             if (name) mats.insert(name);
         }

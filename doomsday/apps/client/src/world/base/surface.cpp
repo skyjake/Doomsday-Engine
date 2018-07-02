@@ -159,21 +159,22 @@ Surface::Surface(MapElement &owner, dfloat opacity, Vec3f const &color)
 
 String Surface::description() const
 {
-    auto desc = String(    _E(l) "Material: "        _E(.)_E(i) "%1" _E(.)
-                       " " _E(l) "Material Origin: " _E(.)_E(i) "%2" _E(.)
-                       " " _E(l) "Normal: "          _E(.)_E(i) "%3" _E(.)
-                       " " _E(l) "Opacity: "         _E(.)_E(i) "%4" _E(.)
-                       " " _E(l) "Blend Mode: "      _E(.)_E(i) "%5" _E(.)
-                       " " _E(l) "Tint Color: "      _E(.)_E(i) "%6" _E(.))
-                  .arg(hasMaterial() ? material().manifest().composeUri().asText() : "None")
-                  .arg(origin().asText())
-                  .arg(normal().asText())
-                  .arg(opacity())
-                  .arg(String(R_NameForBlendMode(blendMode())))
-                  .arg(color().asText());
+    auto desc = String::format(
+                           _E(l) "Material: "        _E(.)_E(i) "%s" _E(.)
+                       " " _E(l) "Material Origin: " _E(.)_E(i) "%s" _E(.)
+                       " " _E(l) "Normal: "          _E(.)_E(i) "%s" _E(.)
+                       " " _E(l) "Opacity: "         _E(.)_E(i) "%f" _E(.)
+                       " " _E(l) "Blend Mode: "      _E(.)_E(i) "%s" _E(.)
+                       " " _E(l) "Tint Color: "      _E(.)_E(i) "%s" _E(.),
+                  hasMaterial() ? material().manifest().composeUri().asText().c_str() : "None",
+                  origin().asText().c_str(),
+                  normal().asText().c_str(),
+                  opacity(),
+                  R_NameForBlendMode(blendMode()),
+                  color().asText().c_str());
 
 #ifdef DE_DEBUG
-    desc.prepend(String(_E(b) "Surface " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+    desc.prepend(String::format(_E(b) "Surface " _E(.) "[%p]\n", this));
 #endif
     return desc;
 }

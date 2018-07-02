@@ -39,8 +39,8 @@
 #include "dd_main.h"
 
 #include <de/vector1.h>
-#include <QSet>
-#include <QVector>
+#include <de/Set>
+#include <de/List>
 
 using namespace de;
 using namespace world;
@@ -177,7 +177,7 @@ void Polyobj::setCollisionCallback(void (*func) (mobj_t *mob, void *line, void *
     collisionCallback = func;
 }
 
-Map &Polyobj::map() const
+world::Map &Polyobj::map() const
 {
     /// @todo Do not assume the CURRENT map.
     return App_World().map();
@@ -267,27 +267,27 @@ SoundEmitter const &Polyobj::soundEmitter() const
     return const_cast<SoundEmitter const &>(const_cast<Polyobj &>(*this).soundEmitter());
 }
 
-QList<Line *> const &Polyobj::lines() const
+List<Line *> const &Polyobj::lines() const
 {
     return data().lines;
 }
 
-QList<Vertex *> const &Polyobj::uniqueVertexes() const
+List<Vertex *> const &Polyobj::uniqueVertexes() const
 {
     return data().uniqueVertexes;
 }
 
 void Polyobj::buildUniqueVertexes()
 {
-    QSet<Vertex *> vertexSet;
+    Set<Vertex *> vertexSet;
     for (Line *line : lines())
     {
         vertexSet.insert(&line->from());
         vertexSet.insert(&line->to());
     }
 
-    QList<Vertex *> &uniqueVertexes = data().uniqueVertexes;
-    uniqueVertexes = vertexSet.toList();
+    List<Vertex *> &uniqueVertexes = data().uniqueVertexes;
+    uniqueVertexes = compose<List<Vertex *>>(vertexSet.begin(), vertexSet.end());
 
     // Resize the coordinate vectors as they are implicitly linked to the unique vertexes.
     data().originalPts.resize(uniqueVertexes.count());
@@ -309,17 +309,14 @@ void Polyobj::updateBounds()
 {
     bounds.clear();
 
-    if (!lineCount()) return;
-
-    QListIterator<Line *> lineIt(lines());
-
-    Line *line = lineIt.next();
-    V2d_CopyBox(bounds.arvec2, line->bounds().arvec2);
-
-    while (lineIt.hasNext())
+    if (lineCount() > 0)
     {
-        line = lineIt.next();
-        V2d_UniteBox(bounds.arvec2, line->bounds().arvec2);
+        auto i = lines().begin();
+        V2d_CopyBox(bounds.arvec2, (*i)->bounds().arvec2);
+        while (i != lines().end())
+        {
+            V2d_UniteBox(bounds.arvec2, (*i)->bounds().arvec2);
+        }
     }
 }
 
@@ -368,7 +365,7 @@ bool Polyobj::move(Vec2d const &delta)
 
         unlink();
         {
-            PolyobjData::VertexCoords::const_iterator prevCoordsIt = data().prevPts.constBegin();
+            auto prevCoordsIt = data().prevPts.begin();
             for (Vertex *vertex : uniqueVertexes())
             {
                 vertex->setOrigin(*prevCoordsIt);
@@ -419,8 +416,9 @@ bool Polyobj::rotate(angle_t delta)
     {
         duint fineAngle = (angle + delta) >> ANGLETOFINESHIFT;
 
-        PolyobjData::VertexCoords::const_iterator origCoordsIt = data().originalPts.constBegin();
-        PolyobjData::VertexCoords::iterator prevCoordsIt = data().prevPts.begin();
+        auto origCoordsIt = data().originalPts.begin();
+        auto prevCoordsIt = data().prevPts.begin();
+
         for (Vertex *vertex : uniqueVertexes())
         {
             // Remember the previous coords in case we need to undo.
@@ -447,13 +445,12 @@ bool Polyobj::rotate(angle_t delta)
 
         unlink();
         {
-            PolyobjData::VertexCoords::const_iterator prevCoordsIt = data().prevPts.constBegin();
+            auto prevCoordsIt = data().prevPts.begin();
             for (Vertex *vertex : uniqueVertexes())
             {
                 vertex->setOrigin(*prevCoordsIt);
                 prevCoordsIt++;
             }
-
             updateBounds();
             angle -= delta;
         }

@@ -306,7 +306,7 @@ ConvexSubspaceProxy::ConvexSubspaceProxy(ConvexSubspaceProxy const &other)
     : d(new Impl(*other.d))
 {}
 
-ConvexSubspaceProxy &ConvexSubspaceProxy::operator = (ConvexSubspaceProxy const &other)
+ConvexSubspaceProxy &ConvexSubspaceProxy::operator=(ConvexSubspaceProxy const &other)
 {
     d.reset(new Impl(*other.d));
     return *this;

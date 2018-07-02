@@ -17,6 +17,7 @@
  */
 
 #include "editorwindow.h"
+#include "utils.h"
 
 #include <QCloseEvent>
 #include <QComboBox>
@@ -30,10 +31,9 @@ using namespace gloom;
 DE_PIMPL(EditorWindow)
 {
     Editor *editor;
-    bool stateBeingUpdated = false;
+    bool    stateBeingUpdated = false;
 
-    Impl(Public *i) : Base(i)
-    {}
+    Impl(Public *i) : Base(i) {}
 };
 
 EditorWindow::EditorWindow()
@@ -85,7 +85,7 @@ EditorWindow::EditorWindow()
                         (cb == lineMat[0] ? Line::Bottom : cb == lineMat[1] ? Line::Middle : Line::Top);
 
                     // Change line materials.
-                    for (ID id : d->editor->selection())
+                    foreach (ID id, d->editor->selection())
                     {
                         if (map.isLine(id))
                         {

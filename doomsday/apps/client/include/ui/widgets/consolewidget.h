@@ -13,13 +13,12 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef DE_CLIENT_CONSOLEWIDGET_H
 #define DE_CLIENT_CONSOLEWIDGET_H
 
-#include <QObject>
 #include <de/GuiWidget>
 #include <de/ButtonWidget>
 #include <de/LogWidget>
@@ -37,7 +36,9 @@
  */
 class ConsoleWidget : public de::GuiWidget, public de::IPersistent
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(CommandMode, void commandModeChanged())
+    DE_DEFINE_AUDIENCE2(GotFocus,    void commandLineGotFocus())
 
 public:
     ConsoleWidget();
@@ -66,14 +67,10 @@ public:
     bool handleEvent(de::Event const &event);
 
     // Implements IPersistent.
-    void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator>>(de::PersistentState &toState) const;
+    void operator<<(de::PersistentState const &fromState);
 
-signals:
-    void commandModeChanged();
-    void commandLineGotFocus();
-
-public slots:
+public:
     void openLog();
     void closeLog();
     void closeLogAndUnfocusCommandLine();
@@ -86,11 +83,9 @@ public slots:
     void focusOnCommandLine();
     void closeMenu();
     void commandWasEntered(de::String const &);
-#if !defined (DE_MOBILE)
     void copyLogPathToClipboard();
-#endif
 
-protected slots:
+protected:
     void logContentHeightIncreased(int delta);
 
 private:

@@ -20,12 +20,11 @@
 
 #include <de/App>
 #include <de/GLProgram>
+#include <de/Image>
 #include <de/LabelWidget>
 #include <de/Range>
 #include <de/StyleProceduralImage>
 #include <de/math.h>
-
-#include <QColor>
 
 using namespace de;
 
@@ -36,7 +35,7 @@ DE_GUI_PIMPL(ColumnWidget)
      */
     struct BackgroundImage : public StyleProceduralImage
     {
-        AnimationVector3 colorAnim { Animation::Linear };
+        AnimationVector3 colorAnim{Animation::Linear};
         bool needUpdate = false;
 
         BackgroundImage(DotPath const &styleImageId, ColumnWidget &owner)
@@ -90,13 +89,13 @@ DE_GUI_PIMPL(ColumnWidget)
         }
     };
 
-    bool highlighted = false;
-    LabelWidget *back;
+    bool              highlighted = false;
+    LabelWidget *     back;
     ScrollAreaWidget *scrollArea;
-    HeaderWidget *header;
-    Rule const *maxContentWidth = nullptr;
-    Vec4f backTintColor;
-    Animation backSaturation { 0.f, Animation::Linear };
+    HeaderWidget *    header;
+    Rule const *      maxContentWidth = nullptr;
+    Vec4f             backTintColor;
+    Animation         backSaturation{0.f, Animation::Linear};
 
     Impl(Public *i) : Base(i)
     {
@@ -120,7 +119,11 @@ DE_GUI_PIMPL(ColumnWidget)
     {
         releaseRef(maxContentWidth);
     }
+
+    DE_PIMPL_AUDIENCE(Activity)
 };
+
+DE_AUDIENCE_METHOD(ColumnWidget, Activity)
 
 ColumnWidget::ColumnWidget(String const &name)
     : GuiWidget(name)
@@ -226,7 +229,7 @@ bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(
         if ((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
             rule().recti().contains(mouse.pos()))
         {
-            emit mouseActivity(this);
+            DE_FOR_AUDIENCE2(Activity, i) i->mouseActivity(this);
         }
     }
 

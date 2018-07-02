@@ -41,12 +41,12 @@ using namespace de;
 using namespace world;
 
 #define ERROR_IF_NOT_INITIALIZED() { \
-if(!editMapInited) \
-    throw Error(QString("%s").arg(__FUNCTION__), "Not active, did you forget to call MPE_Begin()?"); \
-}
+    if (!editMapInited) \
+        throw Error(__FUNCTION__, "Not active, did you forget to call MPE_Begin()?"); \
+    }
 
-static Map *editMap;
-static bool editMapInited;
+static world::Map *editMap;
+static bool        editMapInited;
 
 /**
  * Material name references specified during map conversion are recorded in
@@ -164,15 +164,15 @@ static inline Material *findMaterialInDict(ddstring_t const *materialUriStr)
     return findMaterialInDict(Str_Text(materialUriStr));
 }
 
-Map *MPE_Map()
+world::Map *MPE_Map()
 {
     return editMapInited? editMap : 0;
 }
 
-Map *MPE_TakeMap()
+world::Map *MPE_TakeMap()
 {
     editMapInited = false;
-    Map *retMap = editMap; editMap = 0;
+    world::Map *retMap = editMap; editMap = 0;
     return retMap;
 }
 
@@ -182,7 +182,7 @@ dd_bool MPE_Begin(uri_s const * /*mapUri*/)
     if(!editMapInited)
     {
         delete editMap;
-        editMap = new Map;
+        editMap = new world::Map;
         editMapInited = true;
     }
     return true;
@@ -191,8 +191,7 @@ dd_bool MPE_Begin(uri_s const * /*mapUri*/)
 #undef MPE_End
 dd_bool MPE_End()
 {
-    if(!editMapInited)
-        return false;
+    if (!editMapInited) return false;
 
     /*
      * Log warnings about any issues we encountered during conversion of

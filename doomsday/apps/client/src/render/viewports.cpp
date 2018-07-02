@@ -20,10 +20,10 @@
 #include "de_platform.h"
 #include "render/viewports.h"
 
-#include <QBitArray>
 #include <de/concurrency.h>
 #include <de/timer.h>
 #include <de/vector1.h>
+#include <de/BitArray>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <doomsday/filesys/fs_util.h>
@@ -86,11 +86,11 @@ struct FrameLuminous
     coord_t distance;
     duint isClipped;
 };
-static QVector<FrameLuminous> frameLuminous;
+static List<FrameLuminous> frameLuminous;
 
-static QBitArray subspacesVisible;
+static BitArray subspacesVisible;
 
-static QBitArray generatorsVisible(Map::MAX_GENERATORS);
+static BitArray generatorsVisible(world::Map::MAX_GENERATORS);
 
 static dint frameCount;
 
@@ -156,10 +156,16 @@ void R_ViewWindowTicker(dint consoleNum, timespan_t ticLength)
     }
     else
     {
-        vd->window.moveTopLeft(Vec2i(de::roundf(de::lerp<dfloat>(vd->windowOld.topLeft.x, vd->windowTarget.topLeft.x, vd->windowInter)),
-                                        de::roundf(de::lerp<dfloat>(vd->windowOld.topLeft.y, vd->windowTarget.topLeft.y, vd->windowInter))));
-        vd->window.setSize(Vec2ui(de::roundf(de::lerp<dfloat>(vd->windowOld.width(),  vd->windowTarget.width(),  vd->windowInter)),
-                                     de::roundf(de::lerp<dfloat>(vd->windowOld.height(), vd->windowTarget.height(), vd->windowInter))));
+        vd->window.moveTopLeft(
+            Vec2i(de::roundf(de::lerp<dfloat>(
+                      vd->windowOld.topLeft.x, vd->windowTarget.topLeft.x, vd->windowInter)),
+                  de::roundf(de::lerp<dfloat>(
+                      vd->windowOld.topLeft.y, vd->windowTarget.topLeft.y, vd->windowInter))));
+        vd->window.setSize(
+            Vec2ui(de::roundf(de::lerp<dfloat>(
+                       vd->windowOld.width(), vd->windowTarget.width(), vd->windowInter)),
+                   de::roundf(de::lerp<dfloat>(
+                       vd->windowOld.height(), vd->windowTarget.height(), vd->windowInter))));
     }
 }
 
@@ -509,7 +515,7 @@ void R_NewSharpWorld()
 
     if(ClientApp::world().hasMap())
     {
-        Map &map = ClientApp::world().map();
+        auto &map = ClientApp::world().map();
         map.updateTrackedPlanes();
         map.updateScrollingSurfaces();
     }
@@ -1059,7 +1065,7 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
 #if defined (DE_OPENGL)
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 #endif
 
@@ -1082,7 +1088,7 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
 #if defined (DE_OPENGL)
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 #endif
 
@@ -1091,7 +1097,7 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
 #if defined (DE_OPENGL)
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 #endif
 
@@ -1118,7 +1124,7 @@ DE_EXTERN_C void R_RenderPlayerView(dint num)
     // Back from wireframe mode?
     if (renderWireframe)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 #endif
 
@@ -1280,7 +1286,7 @@ ddouble R_ViewerLumobjDistance(dint idx)
 
 bool R_ViewerLumobjIsClipped(dint idx)
 {
-    if (idx >= 0 && idx < frameLuminous.size())
+    if (idx >= 0 && idx < frameLuminous.sizei())
     {
         return CPP_BOOL(frameLuminous.at(idx).isClipped);
     }
@@ -1289,7 +1295,7 @@ bool R_ViewerLumobjIsClipped(dint idx)
 
 bool R_ViewerLumobjIsHidden(dint idx)
 {
-    if (idx >= 0 && idx < frameLuminous.size())
+    if (idx >= 0 && idx < frameLuminous.sizei())
     {
         return frameLuminous.at(idx).isClipped == 2;
     }
@@ -1300,15 +1306,15 @@ static void markLumobjClipped(Lumobj const &lob, bool yes = true)
 {
     dint const index = lob.indexInMap();
     DE_ASSERT(index >= 0 && index < lob.map().lumobjCount());
-    DE_ASSERT(index < frameLuminous.size());
+    DE_ASSERT(index < frameLuminous.sizei());
     frameLuminous[index].isClipped = yes? 1 : 0;
 }
 
 void R_BeginFrame()
 {
-    static QVector<int> frameLuminousOrder;
+    static List<int> frameLuminousOrder;
 
-    Map &map = ClientApp::world().map();
+    auto &map = ClientApp::world().map();
 
     subspacesVisible.resize(map.subspaceCount());
     subspacesVisible.fill(false);
@@ -1321,7 +1327,7 @@ void R_BeginFrame()
 
     // Resize the associated buffers used for per-frame stuff.
     //int maxLuminous = numLuminous;
-    if (frameLuminous.size() < numLuminous)
+    if (frameLuminous.sizei() < numLuminous)
     {
         frameLuminous.resize(numLuminous);
         frameLuminousOrder.resize(numLuminous);
@@ -1349,10 +1355,8 @@ void R_BeginFrame()
             frameLuminousOrder[i] = i;
             frameLuminous[i].isClipped = 2;
         }
-        qSort(frameLuminousOrder.begin(),
-              frameLuminousOrder.begin() + numLuminous,
-              [] (int a, int b)
-        {
+        std::sort(
+            frameLuminousOrder.begin(), frameLuminousOrder.begin() + numLuminous, [](int a, int b) {
             return frameLuminous[a].distance < frameLuminous[b].distance;
         });
 

@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "ui/infine/finaleinterpreter.h"
 
-#include <QList>
+#include <de/List>
 #include <de/memory.h>
 #include <de/timer.h>
 #include <de/LogBuffer>
@@ -65,6 +65,7 @@
 #define FRACSECS_TO_TICKS(sec)  (int(sec * TICSPERSEC + 0.5))
 
 using namespace de;
+using namespace res;
 
 enum fi_operand_type_t
 {
@@ -83,7 +84,7 @@ static fi_operand_type_t operandTypeForCharCode(char code)
     case 's': return FVT_STRING;
     case 'u': return FVT_URI;
 
-    default: throw Error("operandTypeForCharCode", String("Unknown char-code %1").arg(code));
+    default: throw Error("operandTypeForCharCode", stringf("Unknown char-code '%c'", code));
     }
 }
 
@@ -667,7 +668,7 @@ DE_PIMPL(FinaleInterpreter)
                     valueLen = defaultValueLen;
                 }
                 op->data.cstring = (char *)M_Malloc(valueLen + 1);
-                qstrcpy((char *)op->data.cstring, valueStr);
+                strcpy((char *)op->data.cstring, valueStr);
                 break; }
 
             case FVT_URI: {
@@ -722,7 +723,7 @@ DE_PIMPL(FinaleInterpreter)
         bool didSkip = false;
 
         // Semicolon terminates DO-blocks.
-        if (!qstrcmp(commandString, ";"))
+        if (!iCmpStr(commandString, ";"))
         {
             if (doLevel > 0)
             {
@@ -910,7 +911,7 @@ void FinaleInterpreter::loadScript(char const *script)
         if (!iCmpStrCase(d->token, "OnLoad"))
         {
             d->findBegin();
-            forever
+            for (;;)
             {
                 d->nextToken();
                 if (!iCmpStrCase(d->token, "}"))

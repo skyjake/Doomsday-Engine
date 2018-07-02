@@ -26,7 +26,7 @@
 #include "de_base.h"
 #include "network/net_msg.h"
 
-#include <QList>
+#include <de/List>
 #include "network/net_buf.h"
 
 using namespace de;
@@ -36,7 +36,7 @@ reader_s *msgReader;
 
 /// An ongoing writer is pushed here if a new one is started before the
 /// earlier one is finished.
-static QList<writer_s *> pendingWriters;
+static List<writer_s *> pendingWriters;
 
 void Msg_Begin(dint type)
 {

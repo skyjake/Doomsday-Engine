@@ -102,7 +102,7 @@ public:
      *
      * @param func  Callback to make for each Mesh.
      */
-    de::LoopResult forAllExtraMeshes(std::function<de::LoopResult (de::Mesh &)> func) const;
+    de::LoopResult forAllExtraMeshes(const std::function<de::LoopResult (de::Mesh &)>& func) const;
 
     /**
      * Returns @c true if a Subsector is attributed to the subspace. The only time that a
@@ -165,7 +165,7 @@ public:
      *
      * @param callback  Call to make for each.
      */
-    de::LoopResult forAllPolyobjs(std::function<de::LoopResult (struct polyobj_s &)> callback) const;
+    de::LoopResult forAllPolyobjs(const std::function<de::LoopResult (struct polyobj_s &)>& callback) const;
 
     /**
      * Remove the given @a polyobj from the set of those linked to the subspace.

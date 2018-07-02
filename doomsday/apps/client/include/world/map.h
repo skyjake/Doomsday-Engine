@@ -320,7 +320,7 @@ public:  //- Light sources -----------------------------------------------------
      *
      * @param callback  Function to call for each Lumobj.
      */
-    de::LoopResult forAllLumobjs(std::function<de::LoopResult (Lumobj &)> callback) const;
+    de::LoopResult forAllLumobjs(const std::function<de::LoopResult (Lumobj &)>& callback) const;
 
 #endif  // __CLIENT__
 
@@ -342,7 +342,7 @@ public:  //- Lines (and Sides) -------------------------------------------------
      *
      * @param callback  Function to call for each Line.
      */
-    de::LoopResult forAllLines(std::function<de::LoopResult (Line &)> callback) const;
+    de::LoopResult forAllLines(const std::function<de::LoopResult (Line &)>& callback) const;
 
     /**
      * Lines and Polyobj lines (note polyobj lines are iterated first).
@@ -374,7 +374,7 @@ public:  //- Lines (and Sides) -------------------------------------------------
      * @param callback  Function to call for each Line.
      */
     de::LoopResult forAllLinesTouchingMobj(struct mobj_s &mob,
-        std::function<de::LoopResult (Line &)> callback) const;
+        const std::function<de::LoopResult (Line &)>& callback) const;
 
     // ---
 
@@ -409,7 +409,7 @@ public:  //- Lines (and Sides) -------------------------------------------------
 
 public:  //- Map-objects ----------------------------------------------------------------
 
-    de::LoopResult forAllMobjsTouchingLine(Line &line, std::function<de::LoopResult (struct mobj_s &)> callback) const;
+    de::LoopResult forAllMobjsTouchingLine(Line &line, const std::function<de::LoopResult (struct mobj_s &)>& callback) const;
 
     /**
      * @important Increment validCount before calling this!
@@ -420,7 +420,7 @@ public:  //- Map-objects -------------------------------------------------------
      * @param sector    Sector requirement (only consider map-objects "touching" this).
      * @param callback  Function to call for each mobj_t.
      */
-    de::LoopResult forAllMobjsTouchingSector(Sector &sector, std::function<de::LoopResult (struct mobj_s &)> callback) const;
+    de::LoopResult forAllMobjsTouchingSector(Sector &sector, const std::function<de::LoopResult (struct mobj_s &)>& callback) const;
 
     /**
      * Links a mobj into both a block and a BSP leaf based on it's (x,y). Sets mobj->bspLeaf
@@ -460,7 +460,7 @@ public:  //- Particle generators -----------------------------------------------
      *
      * @param callback  Function to call for each Generator.
      */
-    de::LoopResult forAllGenerators(std::function<de::LoopResult (Generator &)> callback) const;
+    de::LoopResult forAllGenerators(const std::function<de::LoopResult (Generator &)>& callback) const;
 
     /**
      * Iterate Generators linked in the specified @a sector, making a function @a callback
@@ -469,7 +469,7 @@ public:  //- Particle generators -----------------------------------------------
      * @param sector    Sector requirement (only linked @em Generators will be processed).
      * @param callback  Function to call for each Generator.
      */
-    de::LoopResult forAllGeneratorsInSector(Sector const &sector, std::function<de::LoopResult (Generator &)> callback) const;
+    de::LoopResult forAllGeneratorsInSector(Sector const &sector, const std::function<de::LoopResult (Generator &)>& callback) const;
 
     void unlink(Generator &generator);
 
@@ -493,7 +493,7 @@ public:  //- Polyobjects -------------------------------------------------------
      *
      * @param callback  Function to call for each Polyobj.
      */
-    de::LoopResult forAllPolyobjs(std::function<de::LoopResult (Polyobj &)> callback) const;
+    de::LoopResult forAllPolyobjs(const std::function<de::LoopResult (Polyobj &)>& callback) const;
 
     /**
      * Link the specified @a polyobj in any internal data structures for bookkeeping purposes.
@@ -540,7 +540,7 @@ public:  //- Polyobjects -------------------------------------------------------
      * @param mob       Map-object to iterate the "touched" Sectors of.
      * @param callback  Function to call for each Sector.
      */
-    de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, std::function<de::LoopResult (Sector &)> callback) const;
+    de::LoopResult forAllSectorsTouchingMobj(struct mobj_s &mob, const std::function<de::LoopResult (Sector &)>& callback) const;
 
     /// Thrown when the referenced subsector is missing/unknown.
     DE_ERROR(MissingSubsectorError);
@@ -606,7 +606,7 @@ public:  //- Subspaces ---------------------------------------------------------
      *
      * @param callback  Function to call for each ConvexSubspace.
      */
-    de::LoopResult forAllSubspaces(std::function<de::LoopResult (ConvexSubspace &)> callback) const;
+    de::LoopResult forAllSubspaces(const std::function<de::LoopResult (ConvexSubspace &)>& callback) const;
 
 #ifdef __CLIENT__
     /**
@@ -633,7 +633,7 @@ public:  //- Vertexs -----------------------------------------------------------
      *
      * @param callback  Function to call for each Vertex.
      */
-    de::LoopResult forAllVertexs(std::function<de::LoopResult (Vertex &)> callback) const;
+    de::LoopResult forAllVertexs(const std::function<de::LoopResult (Vertex &)>& callback) const;
 
 public:  //- Data structures ------------------------------------------------------------
 

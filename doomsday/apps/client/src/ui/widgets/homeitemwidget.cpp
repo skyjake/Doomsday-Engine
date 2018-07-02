@@ -23,7 +23,7 @@
 #include <doomsday/LumpCatalog>
 #include <doomsday/Game>
 #include <de/SequentialLayout>
-#include <QTimer>
+#include <de/Timer>
 
 using namespace de;
 
@@ -95,7 +95,7 @@ DE_GUI_PIMPL(HomeItemWidget)
     LabelWidget *background;
     LabelWidget *icon { nullptr };
     LabelWidget *label;
-    QList<GuiWidget *> buttons;
+    List<GuiWidget *> buttons;
     AnimationRule *labelRightMargin;
     IndirectRule *labelMinRightMargin = new IndirectRule;
     Rule const *buttonsWidth = nullptr;
@@ -106,7 +106,7 @@ DE_GUI_PIMPL(HomeItemWidget)
     DotPath selectedBgColor   { "background" };
     DotPath textColor         { "text" };
     DotPath selectedTextColor { "text" };
-    QTimer buttonHideTimer;
+    Timer buttonHideTimer;
 
     Impl(Public *i, Flags flags) : Base(i), flags(flags)
     {
@@ -141,16 +141,16 @@ DE_GUI_PIMPL(HomeItemWidget)
         //background->setBehavior(Focusable);
 
         buttonHideTimer.setSingleShot(true);
-        QObject::connect(&buttonHideTimer, &QTimer::timeout, [this] ()
+        buttonHideTimer += [this] ()
         {
             for (auto *button : buttons)
             {
                 button->setAttribute(DontDrawContent);
             }
-        });
+        };
     }
 
-    ~Impl()
+    ~Impl() override
     {
         releaseRef(labelRightMargin);
         releaseRef(labelMinRightMargin);
@@ -209,7 +209,7 @@ DE_GUI_PIMPL(HomeItemWidget)
         else
         {
             labelRightMargin->set(-rule("halfunit"), SPAN);
-            buttonHideTimer.setInterval(SPAN.asMilliSeconds());
+            buttonHideTimer.setInterval(SPAN);
             buttonHideTimer.start();
         }
     }
@@ -217,9 +217,8 @@ DE_GUI_PIMPL(HomeItemWidget)
     void menuItemTriggered(ui::Item const &actionItem) override
     {
         // Let the parent menu know which of its items is being interacted with.
-        self().parentMenu()->setInteractedItem(self().parentMenu()->organizer()
-                                             .findItemForWidget(self()),
-                                             &actionItem);
+        self().parentMenu()->setInteractedItem(
+            self().parentMenu()->organizer().findItemForWidget(self()), &actionItem);
     }
 
     void updateColors()
@@ -247,7 +246,11 @@ DE_GUI_PIMPL(HomeItemWidget)
         }
         return false;
     }
+
+    DE_PIMPL_AUDIENCES(Activity, DoubleClick, ContextMenu, Selection)
 };
+
+DE_AUDIENCE_METHODS(HomeItemWidget, Activity, DoubleClick, ContextMenu, Selection)
 
 HomeItemWidget::HomeItemWidget(Flags flags, String const &name)
     : GuiWidget(name)
@@ -424,8 +427,8 @@ bool HomeItemWidget::handleEvent(Event const &event)
 void HomeItemWidget::focusGained()
 {
     setSelected(true);
-    emit selected();
-    emit mouseActivity();
+    DE_FOR_AUDIENCE2(Selection, i) i->itemSelected(*this);
+    DE_FOR_AUDIENCE2(Activity, i)  i->mouseActivity(*this);
 }
 
 void HomeItemWidget::focusLost()

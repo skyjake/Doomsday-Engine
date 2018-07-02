@@ -327,10 +327,13 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
         info.setMap(mapPath);
     }
 
+    DE_ASSERT_FAIL("TODO: Check local addresses")
+
     // The master server will use the public IP address where an announcement came from,
     // so we don't necessarily have to specify a valid address. The port is required, though.
     info.setAddress({"localhost", duint16(nptIPPort)});
 
+#if 0
     // This will only work if the server has a public IP address.
     QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
     foreach (QHostAddress hostAddr, host.addresses())
@@ -348,6 +351,7 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
         info.setDomainName(String::format(
             "%s:%i", publicDomain.c_str(), nptIPPort ? nptIPPort : shell::DEFAULT_PORT));
     }
+#endif
 
     // Let's compile a list of client names.
     for (dint i = 0; i < DDMAXPLAYERS; ++i)

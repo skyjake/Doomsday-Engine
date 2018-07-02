@@ -166,7 +166,11 @@ DE_GUI_PIMPL(SaveListWidget)
             }
         }
     }
+
+    DE_PIMPL_AUDIENCES(Selection, DoubleClick)
 };
+
+DE_AUDIENCE_METHODS(SaveListWidget, Selection, DoubleClick)
 
 SaveListWidget::SaveListWidget(GamePanelButtonWidget &owner)
     : d(new Impl(this, owner))
@@ -187,7 +191,7 @@ void SaveListWidget::setSelectedPos(ui::DataPos pos)
     {
         d->selected = pos;
         d->updateItemHighlights(&itemWidget<ButtonWidget>(items().at(pos)));
-        emit selectionChanged(d->selected);
+        DE_FOR_AUDIENCE2(Selection, i) { i->saveListSelectionChanged(d->selected); }
     }
 }
 
@@ -197,6 +201,6 @@ void SaveListWidget::clearSelection()
     {
         d->selected = ui::Data::InvalidPos;
         d->updateItemHighlights(nullptr);
-        emit selectionChanged(d->selected);
+        DE_FOR_AUDIENCE2(DoubleClick, i) { i->saveListDoubleClicked(d->selected); }
     }
 }

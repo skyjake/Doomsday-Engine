@@ -30,10 +30,11 @@
  */
 class ColumnWidget : public de::GuiWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Activity, void mouseActivity(const ColumnWidget *columnWidget))
 
 public:
-    ColumnWidget(de::String const &name = de::String());
+    ColumnWidget(de::String const &name = {});
 
     void setBackgroundImage(de::DotPath const &imageId);
 
@@ -53,12 +54,7 @@ public:
                        bool (de::Widget::*memberFunc)(de::Event const &)) override;
     void update() override;
 
-signals:
-    void mouseActivity(QObject const *columnWidget);
-
 protected:
-    //void glInit() override;
-    //void glDeinit() override;
     void updateStyle() override;
 
 private:

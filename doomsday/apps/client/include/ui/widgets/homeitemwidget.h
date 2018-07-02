@@ -32,19 +32,20 @@ class HomeMenuWidget;
  */
 class HomeItemWidget : public de::GuiWidget, public de::IAssetGroup
 {
-    Q_OBJECT
-
 public:
-    enum Flag
-    {
+    enum Flag {
         NonAnimatedHeight = 0,
         AnimatedHeight    = 0x1,
         WithoutIcon       = 0x2,
     };
-    Q_DECLARE_FLAGS(Flags, Flag)
+
+    DE_DEFINE_AUDIENCE2(Activity,    void mouseActivity(HomeItemWidget &))
+    DE_DEFINE_AUDIENCE2(DoubleClick, void itemCoubleClicked(HomeItemWidget &))
+    DE_DEFINE_AUDIENCE2(ContextMenu, void openItemContextMenu(HomeItemWidget &))
+    DE_DEFINE_AUDIENCE2(Selection,   void itemSelected(HomeItemWidget &))
 
 public:
-    HomeItemWidget(Flags flags = AnimatedHeight, de::String const &name = de::String());
+    HomeItemWidget(de::Flags flags = AnimatedHeight, de::String const &name = de::String());
 
     de::AssetGroup &assets() override;
 
@@ -80,17 +81,8 @@ public:
 protected:
     void updateButtonLayout();
 
-signals:
-    void mouseActivity();
-    void doubleClicked();
-    void openContextMenu();
-    void selected();
-    //void deselected();
-
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(HomeItemWidget::Flags)
 
 #endif // DE_CLIENT_UI_HOME_HOMEITEMWIDGET_H
