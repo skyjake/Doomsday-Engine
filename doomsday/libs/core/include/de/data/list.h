@@ -39,6 +39,15 @@ public:
     List(const List &other) : Base(other) {}
     List(List &&moved) : Base(moved) {}
 
+    template <typename Iterator>
+    List(const Iterator &start, const Iterator &end)
+    {
+        for (Iterator i = start; i != end; ++i)
+        {
+            Base::push_back(i);
+        }
+    }
+
     List(const std::initializer_list<T> &init)
     {
         for (const auto &i : init)

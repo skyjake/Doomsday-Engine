@@ -43,7 +43,7 @@ ArrayValue::ArrayValue(ArrayValue const &other) : Value(), _iteration(0)
 
 ArrayValue::ArrayValue(StringList const &strings)
 {
-    for (String str : strings)
+    for (const String &str : strings)
     {
         _elements.push_back(new TextValue(str));
     }
