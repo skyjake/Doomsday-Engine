@@ -86,11 +86,11 @@ DE_PIMPL(Editor)
         AddSector,
     };
 
-    Map        map;
-    String     mapId;
-    String     filePath;
-    bool       isModified = false;
-    QList<Map> undoStack;
+    Map       map;
+    String    mapId;
+    String    filePath;
+    bool      isModified = false;
+    List<Map> undoStack;
 
     Mode       mode       = EditPoints;
     UserAction userAction = None;

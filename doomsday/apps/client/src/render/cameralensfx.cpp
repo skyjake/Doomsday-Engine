@@ -56,7 +56,6 @@
 #include <de/Rectangle>
 #include <de/Drawable>
 #include <de/GLFramebuffer>
-#include <QList>
 
 using namespace de;
 

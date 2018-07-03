@@ -23,8 +23,7 @@
 #include "ui/axisinputcontrol.h"
 #include "ui/buttoninputcontrol.h"
 #include "ui/hatinputcontrol.h"
-#include <QList>
-#include <QtAlgorithms>
+#include <de/List>
 #include <de/Log>
 
 using namespace de;
@@ -35,17 +34,17 @@ DE_PIMPL(InputDevice)
     String title;         ///< Human-friendly title.
     String name;          ///< Symbolic name.
 
-    QList<  AxisInputControl *> axes;
-    QList<ButtonInputControl *> buttons;
-    QList<   HatInputControl *> hats;
+    List<  AxisInputControl *> axes;
+    List<ButtonInputControl *> buttons;
+    List<   HatInputControl *> hats;
 
     Impl(Public *i) : Base(i) {}
 
     ~Impl()
     {
-        qDeleteAll(hats);
-        qDeleteAll(buttons);
-        qDeleteAll(axes);
+        deleteAll(hats);
+        deleteAll(buttons);
+        deleteAll(axes);
     }
 
     DE_PIMPL_AUDIENCE(ActiveChange)
@@ -98,37 +97,41 @@ String InputDevice::description() const
     String desc;
     if (!d->title.isEmpty())
     {
-        desc += String(_E(D)_E(b) "%1" _E(.)_E(.) " - ").arg(d->title);
+        desc += String::format(_E(D)_E(b) "%s" _E(.)_E(.) " - ", d->title.c_str());
     }
-    desc += String(_E(b) "%1" _E(.)_E(l) " (%2)" _E(.)).arg(name()).arg(isActive()? "active" : "inactive");
+    desc += String::format(
+        _E(b) "%s" _E(.) _E(l) " (%s)" _E(.), name().c_str(), isActive() ? "active" : "inactive");
 
     if (int const count = axisCount())
     {
-        desc += String("\n  " _E(b) "%1 axes:" _E(.)).arg(count);
+        desc += String::format("\n  " _E(b) "%i axes:" _E(.), count);
         int idx = 0;
         for (Control const *axis : d->axes)
         {
-            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(axis->description());
+            desc += String::format("\n    [%3i] " _E(>) "%s" _E(<), idx++,
+                                   axis->description().c_str());
         }
     }
 
     if (int const count = buttonCount())
     {
-        desc += String("\n  " _E(b) "%1 buttons:" _E(.)).arg(count);
+        desc += String::format("\n  " _E(b) "%i buttons:" _E(.), count);
         int idx = 0;
         for (Control const *button : d->buttons)
         {
-            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(button->description());
+            desc += String::format("\n    [%03i] " _E(>) "%s" _E(<), idx++,
+                                   button->description().c_str());
         }
     }
 
     if (int const count = hatCount())
     {
-        desc += String("\n  " _E(b) "%1 hats:" _E(.)).arg(count);
+        desc += String::format("\n  " _E(b) "%i hats:" _E(.), count);
         int idx = 0;
         for (Control const *hat : d->hats)
         {
-            desc += String("\n    [%1] " _E(>) "%2" _E(<)).arg(idx++, 3).arg(hat->description());
+            desc += String::format("\n    [%3i] " _E(>) "%s" _E(<), idx++,
+                                   hat->description().c_str());
         }
     }
 
@@ -160,7 +163,7 @@ void InputDevice::reset()
     LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " controls reset") << title();
 }
 
-LoopResult InputDevice::forAllControls(std::function<de::LoopResult (Control &)> func)
+LoopResult InputDevice::forAllControls(const std::function<de::LoopResult (Control &)>& func)
 {
     for (Control *axis : d->axes)
     {
@@ -386,7 +389,7 @@ void InputDevice::Control::clearBindContextAssociation()
 void InputDevice::Control::expireBindContextAssociationIfChanged()
 {
     DE_GUARD(this);
-    
+
     // No change?
     if (d->bindContext == d->prevBindContext) return;
 

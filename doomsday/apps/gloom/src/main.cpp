@@ -18,6 +18,7 @@
 
 #include "gloomapp.h"
 #include "mainwindow.h"
+#include "utils.h"
 #include <de/EscapeParser>
 #include <QMessageBox>
 #include <QDebug>
@@ -30,14 +31,14 @@ int main(int argc, char **argv)
     try
     {
         app.initialize();
-        return app.execLoop();
+        return app.exec();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         EscapeParser esc;
         esc.parse(er.asText());
-        qWarning() << "App init failed:\n" << esc.plainText();
-        QMessageBox::critical(0, "test_gloom", "App init failed:\n" + esc.plainText());
+        warning( "App init failed: %s", esc.plainText().c_str());
+        QMessageBox::critical(0, "test_gloom", convert("App init failed:\n" + esc.plainText()));
         return -1;
     }
 

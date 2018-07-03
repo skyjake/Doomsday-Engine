@@ -602,7 +602,7 @@ GLUniform &LightRender::uViewSpaceLightDir()
 const ICamera *LightRender::testCamera() const
 {
     if (d->lights.isEmpty()) return nullptr;
-    debug("%i", d->lights.begin()->entity()->id());
+    debug("%i", d->lights.begin()->get()->entity()->id());
     return d->lights.begin().value().get();
 }
 

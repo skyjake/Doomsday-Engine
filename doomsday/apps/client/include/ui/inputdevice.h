@@ -244,7 +244,7 @@ public:
     /**
      * Iterate through all the controls of the device.
      */
-    de::LoopResult forAllControls(std::function<de::LoopResult (Control &)> func);
+    de::LoopResult forAllControls(const std::function<de::LoopResult (Control &)>& func);
 
     /**
      * Translate a symbolic axis @a name to the associated unique axis id.

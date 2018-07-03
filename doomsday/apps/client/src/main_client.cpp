@@ -45,10 +45,12 @@
 #include "dd_loop.h"
 #include "dd_version.h"
 
-#include <QDebug>
-#include <QMessageBox>
-#include <QTranslator>
+//#include <QDebug>
+//#include <QMessageBox>
+//#include <QTranslator>
 #include <de/EscapeParser>
+
+#include <SDL2/SDL_messagebox.h>
 
 #if defined (DE_STATIC_LINK)
 
@@ -81,6 +83,8 @@ DE_IMPORT_LIBRARY(doom)
 #  include "ui/clientwindow.h"
 #endif
 
+using namespace de;
+
 /**
  * Application entry point.
  */
@@ -88,10 +92,10 @@ int main(int argc, char **argv)
 {
     int exitCode = 0;
     {
-        ClientApp::setDefaultOpenGLFormat();
+//        ClientApp::setDefaultOpenGLFormat();
 
         ClientApp clientApp(argc, argv);
-        
+
         /**
          * @todo Translations are presently disabled because lupdate can't seem to
          * parse tr strings from inside private implementation classes. Workaround
@@ -107,7 +111,7 @@ int main(int argc, char **argv)
         try
         {
             clientApp.initialize();
-            
+
 #if defined (DE_MOBILE)
             // On mobile, Qt Quick is actually in charge of drawing the screen.
             // GLWindow is just an item that draws the UI background.
@@ -117,15 +121,16 @@ int main(int argc, char **argv)
             view.setSource(QUrl("qrc:///qml/main.qml"));
             view.show();
 #endif
-            
-            exitCode = clientApp.execLoop();
+
+            exitCode = clientApp.exec();
         }
-        catch(de::Error const &er)
+        catch (const de::Error &er)
         {
             de::EscapeParser msg;
             msg.parse(er.asText());
-            qWarning() << "App init failed:\n" << msg.plainText();
-            QMessageBox::critical(0, DOOMSDAY_NICENAME, "App init failed:\n" + msg.plainText());
+            de::warning("App init failed:\n%s", msg.plainText().c_str());
+            SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, DOOMSDAY_NICENAME,
+                                     "App init failed:\n" + msg.plainText(), nullptr);
             return -1;
         }
     }

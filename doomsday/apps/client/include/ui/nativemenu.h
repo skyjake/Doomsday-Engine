@@ -24,10 +24,8 @@
 /**
  * Native menu with application-level functions.
  */
-class NativeMenu : public QObject
+class NativeMenu
 {
-    Q_OBJECT
-
 public:
     NativeMenu();
 

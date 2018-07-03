@@ -1212,7 +1212,7 @@ bool InputSystem::convertEvent(Event const &from, ddevent_t &to) // static
         to.type         = E_TOGGLE;
         to.toggle.id    = kev.ddKey();
         to.toggle.state = (kev.state() == KeyEvent::Pressed? ETOG_DOWN : ETOG_UP);
-        qstrcpy(to.toggle.text, kev.text().toLatin1());
+        strcpy(to.toggle.text, kev.text().toLatin1());
         break; }
 
     default: break;

@@ -99,7 +99,7 @@ DE_PIMPL_NOREF(MapBuild)
         Buffer::Vertices verts[2];
         Buffer::Indices indices[2];
 
-        for (auto mapIter : map.sectors())
+        for (const auto &mapIter : map.sectors())
         {
             const ID      sectorId       = mapIter.first;
             const Sector &sector         = mapIter.second;

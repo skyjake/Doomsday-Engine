@@ -24,14 +24,6 @@
 
 #include "world/bsp/partitioner.h"
 
-#include <algorithm>
-#include <QHash>
-#include <QList>
-#include <QtAlgorithms>
-#include <de/vector1.h>
-#include <de/LogBuffer>
-#include <doomsday/BspNode>
-
 #include "BspLeaf"
 #include "Line"
 #include "Sector"
@@ -44,17 +36,23 @@
 #include "world/bsp/partitionevaluator.h"
 #include "world/bsp/superblockmap.h"
 
+#include <doomsday/BspNode>
+#include <de/Hash>
+#include <de/vector1.h>
+#include <de/LogBuffer>
+#include <algorithm>
+
 using namespace de;
 
 namespace world {
 
 using namespace bsp;
 
-typedef QList<Line *>              Lines;
-typedef QList<LineSegment *>       LineSegments;
-typedef QList<LineSegmentSide *>   LineSegmentSides;
-typedef QList<ConvexSubspaceProxy> SubspaceProxys;
-typedef QHash<Vertex *, EdgeTips>  EdgeTipSetMap;
+typedef List<Line *>              Lines;
+typedef List<LineSegment *>       LineSegments;
+typedef List<LineSegmentSide *>   LineSegmentSides;
+typedef List<ConvexSubspaceProxy> SubspaceProxys;
+typedef Hash<Vertex *, EdgeTips>  EdgeTipSetMap;
 
 DE_PIMPL(Partitioner)
 {
@@ -124,7 +122,7 @@ DE_PIMPL(Partitioner)
 
         lines.clear();
         mesh = nullptr;
-        qDeleteAll(lineSegments);
+        deleteAll(lineSegments);
         lineSegments.clear();
         subspaces.clear();
         edgeTipSets.clear();
@@ -259,7 +257,7 @@ DE_PIMPL(Partitioner)
             // Time to construct a new set.
             found = edgeTipSets.insert(const_cast<Vertex *>(&vertex), EdgeTips());
         }
-        return found.value();
+        return found->second;
     }
 
     /**
@@ -473,7 +471,8 @@ DE_PIMPL(Partitioner)
 
             // Ensure the new back left segment is inserted into the same block as
             // the old back right segment.
-            if(LineSegmentBlockTreeNode *backLeftBlock = (LineSegmentBlockTreeNode *)seg.back().blockTreeNodePtr())
+            if (LineSegmentBlockTreeNode *backLeftBlock =
+                    reinterpret_cast<LineSegmentBlockTreeNode *>(seg.back().blockTreeNodePtr()))
             {
                 linkLineSegmentInBlockTree(*backLeftBlock, newFrontRight.back());
             }
@@ -481,15 +480,15 @@ DE_PIMPL(Partitioner)
             interceptPartition(seg, LineSegment::To);
 
             // Direction determines which subset the line segments are added to.
-            if(fromDist < 0)
+            if (fromDist < 0)
             {
                 linkLineSegmentInBlockTree(rights, newFrontRight);
-                linkLineSegmentInBlockTree(lefts,  seg);
+                linkLineSegmentInBlockTree(lefts, seg);
             }
             else
             {
                 linkLineSegmentInBlockTree(rights, seg);
-                linkLineSegmentInBlockTree(lefts,  newFrontRight);
+                linkLineSegmentInBlockTree(lefts, newFrontRight);
             }
             break; }
         }
@@ -1124,19 +1123,16 @@ static AABox blockmapBounds(AABoxd const &mapBounds)
     return blockBounds;
 }
 
-static bool lineIndexLessThan(Line const *a, Line const *b)
-{
-     return a->indexInMap() < b->indexInMap();
-}
-
-BspTree *Partitioner::makeBspTree(QSet<Line *> const &lines, Mesh &mesh)
+BspTree *Partitioner::makeBspTree(const Set<Line *> &lines, Mesh &mesh)
 {
     d->clear();
 
     // Copy the set of lines and sort by index to ensure deterministically
     // predictable output.
-    d->lines = lines.toList();
-    qSort(d->lines.begin(), d->lines.end(), lineIndexLessThan);
+    d->lines = compose<List<Line *>>(lines.begin(), lines.end());
+    std::sort(d->lines.begin(), d->lines.end(), [](const Line *a, const Line *b) {
+        return a->indexInMap() < b->indexInMap();
+    });
 
     d->mesh = &mesh;
 

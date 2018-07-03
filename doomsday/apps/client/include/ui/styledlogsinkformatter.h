@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef DE_CLIENT_STYLEDLOGSINKFORMATTER_H
@@ -29,7 +29,7 @@ class StyledLogSinkFormatter : public de::LogSink::IFormatter
 {
 public:
     StyledLogSinkFormatter();
-    StyledLogSinkFormatter(de::LogEntry::Flags const &formatFlags);
+    StyledLogSinkFormatter(de::Flags const &formatFlags);
 
     Lines logEntryToTextLines(de::LogEntry const &entry);
 

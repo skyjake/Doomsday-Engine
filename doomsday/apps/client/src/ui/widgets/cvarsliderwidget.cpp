@@ -24,7 +24,7 @@ using namespace de::ui;
 
 DE_PIMPL_NOREF(CVarSliderWidget)
 {
-    char const *cvar;
+    const char  *cvar;
 
     cvar_t *var() const
     {
@@ -57,7 +57,7 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Impl)
 
     updateFromCVar();
 
-    connect(this, SIGNAL(valueChangedByUser(double)), this, SLOT(setCVarValueFromWidget()));
+    audienceForUserValue() += [this](){ setCVarValueFromWidget(); };
 }
 
 char const *CVarSliderWidget::cvarPath() const
@@ -83,7 +83,7 @@ void CVarSliderWidget::setCVarValueFromWidget()
     cvar_t *var = d->var();
     if (var->type == CVT_FLOAT)
     {
-        CVar_SetFloat(d->var(), value());
+        CVar_SetFloat(d->var(), float(value()));
     }
     else
     {

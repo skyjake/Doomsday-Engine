@@ -45,7 +45,7 @@ DE_GUI_PIMPL(DownloadDialog)
 
         self().buttons() << new DialogButtonItem(DialogWidget::Reject,
                                                  "Cancel Download",
-                                                 new CallbackAction([this] () { self().cancel(); }));
+                                                 [this](){ self().cancel(); });
         updateStyle();
     }
 

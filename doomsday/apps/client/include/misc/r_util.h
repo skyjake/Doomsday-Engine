@@ -47,7 +47,7 @@ struct LightRange
 
     /// Returns a textual representation of the lightlevels.
     de::String asText() const {
-        return de::String("(min: %1 max: %2)").arg(min, 0, 'f', 2).arg(max, 0, 'f', 2);
+        return de::String::format("(min: %.2f max: %.2f)", min, max);
     }
 };
 #endif

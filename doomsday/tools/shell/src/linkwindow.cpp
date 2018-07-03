@@ -26,26 +26,28 @@
 #include "preferences.h"
 #include "errorlogdialog.h"
 #include "utils.h"
+
 #include <de/LogBuffer>
 #include <de/shell/LogWidget>
 #include <de/shell/CommandLineWidget>
 #include <de/shell/Link>
 #include <de/Garbage>
-#include <QFile>
-#include <QToolBar>
-#include <QMenuBar>
-#include <QInputDialog>
-#include <QTimer>
+
 #include <QCloseEvent>
+#include <QDebug>
+#include <QFile>
+#include <QHBoxLayout>
+#include <QInputDialog>
+#include <QLabel>
+#include <QMenuBar>
 #include <QMessageBox>
 #include <QPushButton>
-#include <QToolButton>
-#include <QHBoxLayout>
+#include <QScrollBar>
 #include <QStackedWidget>
 #include <QStatusBar>
-#include <QScrollBar>
-#include <QLabel>
-#include <QCryptographicHash>
+#include <QTimer>
+#include <QToolBar>
+#include <QToolButton>
 
 #ifndef MACOSX
 #  define MENU_IN_LINK_WINDOW
@@ -72,7 +74,7 @@ DE_PIMPL(LinkWindow)
     duint16 waitingForLocalPort = 0;
     Time startedWaitingAt;
     QTimer waitTimeout;
-    String linkName;
+    QString linkName;
     NativePath errorLog;
     QToolBar *tools;
     QToolButton *statusButton;
@@ -438,7 +440,7 @@ void LinkWindow::closeEvent(QCloseEvent *event)
 
 void LinkWindow::waitForLocalConnection(duint16 localPort,
                                         NativePath const &errorLogPath,
-                                        QString name)
+                                        const QString& name)
 {
     closeConnection();
 
@@ -457,7 +459,7 @@ void LinkWindow::waitForLocalConnection(duint16 localPort,
     d->checkCurrentTab(true);
 }
 
-void LinkWindow::openConnection(Link *link, String name)
+void LinkWindow::openConnection(Link *link, const String& name)
 {
     closeConnection();
 
@@ -466,10 +468,10 @@ void LinkWindow::openConnection(Link *link, String name)
 
     d->link = link;
 
-    connect(d->link, SIGNAL(addressResolved()), this, SLOT(addressResolved()));
-    connect(d->link, SIGNAL(connected()), this, SLOT(connected()));
-    connect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-    connect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+    d->link->audienceForAddressResolved() += [this](){ addressResolved(); };
+    d->link->audienceForConnected()       += [this](){ connected(); };
+    d->link->audienceForPacketsReady()    += [this](){ handleIncomingPackets(); };
+    d->link->audienceForDisconnected()    += [this](){ disconnected(); };
 
     if (!name.isEmpty())
     {
@@ -485,12 +487,13 @@ void LinkWindow::openConnection(Link *link, String name)
     d->updateStyle();
 }
 
-void LinkWindow::openConnection(QString address)
+void LinkWindow::openConnection(const QString& address)
 {
     qDebug() << "Opening connection to" << address;
 
     // Keep trying to connect to 30 seconds.
-    openConnection(new Link(address, 30), address);
+    const String addr = convert(address);
+    openConnection(new Link(addr, 30.0), addr);
 }
 
 void LinkWindow::closeConnection()
@@ -500,11 +503,11 @@ void LinkWindow::closeConnection()
 
     if (d->link)
     {
-        qDebug() << "Closing existing connection to" << d->link->address().asText();
+        qDebug() << "Closing existing connection to" << d->link->address().asText().c_str();
 
         // Get rid of the old connection.
-        disconnect(d->link, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-        disconnect(d->link, SIGNAL(disconnected()), this, SLOT(disconnected()));
+        d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
+        d->link->audienceForDisconnected() += [this](){ disconnected(); };
 
         delete d->link;
         d->link = 0;
@@ -542,7 +545,7 @@ void LinkWindow::updateWhenConnected()
     if (d->link)
     {
         TimeSpan elapsed = d->link->connectedAt().since();
-        String time = String("%1:%2:%3")
+        QString time = QString("%1:%2:%3")
                 .arg(int(elapsed.asHours()))
                 .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
                 .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
@@ -654,7 +657,7 @@ void LinkWindow::connected()
     d->errorLog = "";
 
     if (d->linkName.isEmpty()) d->linkName = d->link->address().asText();
-    setTitle(convert(d->linkName));
+    setTitle(d->linkName);
     d->updateCurrentHost();
     d->console->root().setOverlaidMessage("");
     d->status->linkConnected(d->link);
@@ -700,7 +703,7 @@ void LinkWindow::askForPassword()
     {
         if (d->link)
         {
-            *d->link << d->link->protocol().passwordResponse(dlg.textValue());
+            *d->link << d->link->protocol().passwordResponse(convert(dlg.textValue()));
         }
         return;
     }

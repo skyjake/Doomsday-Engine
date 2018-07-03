@@ -27,14 +27,11 @@
  */
 class CVarSliderWidget : public de::SliderWidget, public ICVarWidget
 {
-    Q_OBJECT
-
 public:
     CVarSliderWidget(char const *cvarPath);
 
     char const *cvarPath() const;
 
-public slots:
     void updateFromCVar();
     void setCVarValueFromWidget();
 

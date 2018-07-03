@@ -113,6 +113,7 @@ public:
     }
     List &   operator=(const List &other) { Base::operator=(other); return *this; }
     List &   operator=(List &&other) { Base::operator=(other); return *this; }
+    void     fill(const T &value) { for (auto &i : *this) { i = value; } }
 
     inline List &operator<<(const T &value)
     {

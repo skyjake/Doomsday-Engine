@@ -35,17 +35,17 @@ static dd_bool __inline mustDefer(void)
 
 static void GL_CALL deng_glEnable(GLenum e)
 {
-    LIBGUI_GL.glEnable(e);
+    glEnable(e);
 }
 
 static void GL_CALL deng_glDisable(GLenum e)
 {
-    LIBGUI_GL.glDisable(e);
+    glDisable(e);
 }
 
 static void GL_CALL deng_glDeleteTextures(GLsizei num, GLuint const *names)
 {
-    LIBGUI_GL.glDeleteTextures(num, names);
+    glDeleteTextures(num, names);
 }
 
 #define GL_CALL1(form, func, x) \

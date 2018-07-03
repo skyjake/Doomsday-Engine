@@ -40,6 +40,14 @@ DE_PIMPL(SectorPolygonizer)
             if (line) lines << line;
         }
 
+        Contour(const Contour &other)
+        {
+            lines   = other.lines;
+            polygon = other.polygon;
+            parent  = other.parent;
+            for (auto id : other.hasPoints) hasPoints << id;
+        }
+
         int size() const
         {
             return polygon.size();

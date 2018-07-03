@@ -210,10 +210,10 @@ void P_ClearPlayerImpulses()
 {
     for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        deleteAll(accumulators[i]);
+        accumulators[i].deleteAll();
         accumulators[i].clear();
     }
-    deleteAll(impulses);
+    impulses.deleteAll();
     impulses.clear();
     impulsesByName.clear();
 }

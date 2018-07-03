@@ -18,7 +18,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <QFile>
 #include "de_platform.h"
 #include "updater/updatedownloaddialog.h"
 #include "updater/updatersettings.h"
@@ -28,13 +27,12 @@
 #include "network/net_main.h"
 
 #include <de/ProgressWidget>
-#include <de/SignalAction>
 #include <de/Log>
 #include <de/Version>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QDir>
-#include <QUrl>
+//#include <QNetworkAccessManager>
+//#include <QNetworkReply>
+//#include <QDir>
+//#include <QUrl>
 
 #ifdef WIN32
 #  undef open
@@ -55,33 +53,39 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
     };
     State state;
 
-    QNetworkAccessManager* network;
-    QUrl uri;
-    QUrl uri2;
+//    QNetworkAccessManager* network;
+    String uri;
+    String uri2;
     NativePath savedFilePath;
-    QNetworkReply *reply;
+//    QNetworkReply *reply;
     String redirected;
     dint64 receivedBytes;
     dint64 totalBytes;
     String location;
     String errorMessage;
 
-    Impl(Public *d, String downloadUri, String fallbackUri)
-        : Base(d), state(Connecting), uri(downloadUri), uri2(fallbackUri), reply(0),
-          receivedBytes(0), totalBytes(0)
+    Impl(Public * d, String downloadUri, String fallbackUri)
+        : Base(d)
+        , state(Connecting)
+        , uri(std::move(downloadUri))
+        , uri2(std::move(fallbackUri))
+//        , reply(0)
+        , receivedBytes(0)
+        , totalBytes(0)
     {
         updateLocation(uri);
         updateProgress();
 
-        network = new QNetworkAccessManager(thisPublic);
-        QObject::connect(network, SIGNAL(finished(QNetworkReply *)), thisPublic, SLOT(finished(QNetworkReply *)));
+//        network = new QNetworkAccessManager(thisPublic);
+//        QObject::connect(network, SIGNAL(finished(QNetworkReply *)), thisPublic, SLOT(finished(QNetworkReply *)));
 
         startDownload();
     }
 
-    void updateLocation(QUrl const &url)
+    void updateLocation(const String &url)
     {
-        location = url.host();
+        DE_ASSERT_FAIL("parse URI host");
+//        location = url.host();
         updateProgress();
     }
 
@@ -90,6 +94,7 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
         state = Connecting;
         redirected.clear();
 
+#if 0
         String path = uri.path();
         QDir::current().mkpath(UpdaterSettings().downloadPath()); // may not exist
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
@@ -102,7 +107,7 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
         QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), thisPublic, SLOT(progress(qint64,qint64)));
 
         LOG_NOTE("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
-
+#endif
         // Global state "flag".
         downloadInProgress = thisPublic;
     }
@@ -117,20 +122,22 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
         switch (state)
         {
         default:
-            msg = String(tr("Connecting to %1")).arg(_E(b) + location + _E(.));
+            msg = String::format("Connecting to " _E(b)"%s" _E(.), location.c_str());
             break;
 
         case Downloading:
-            msg = String(tr("Downloading %1 (%2 MB) from %3"))
-                    .arg(_E(b) + fn + _E(.)).arg(totalBytes / MB, 0, 'f', 1).arg(location);
+            msg = String::format("Downloading %s (%.1f MB) from %s",
+                                 (_E(b) + fn + _E(.)).c_str(),
+                                 totalBytes / MB,
+                                 location.c_str());
             break;
 
         case Finished:
-            msg = String(tr("Ready to install\n%1")).arg(_E(b) + fn + _E(.));
+            msg = String::format("Ready to install\n%s", (_E(b) + fn + _E(.)).c_str());
             break;
 
         case Error:
-            msg = String(tr("Failed to download:\n%1")).arg(_E(b) + errorMessage);
+            msg = String("Failed to download:\n%s", (_E(b) + errorMessage).c_str());
             break;
         }
 
@@ -140,7 +147,7 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
 
 UpdateDownloadDialog::UpdateDownloadDialog(String downloadUri, String fallbackUri)
     : DownloadDialog("download")
-    , d(new Impl(this, downloadUri, fallbackUri))
+    , d(new Impl(this, std::move(downloadUri), std::move(fallbackUri)))
 {}
 
 UpdateDownloadDialog::~UpdateDownloadDialog()
@@ -164,6 +171,7 @@ bool UpdateDownloadDialog::isFailed() const
     return d->state == Impl::Error;
 }
 
+#if 0
 void UpdateDownloadDialog::finished(QNetworkReply *reply)
 {
     LOG_AS("Download");
@@ -321,6 +329,7 @@ void UpdateDownloadDialog::replyMetaDataChanged()
         d->state = Impl::Downloading;
     }
 }
+#endif
 
 bool UpdateDownloadDialog::isDownloadInProgress()
 {

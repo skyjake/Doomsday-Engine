@@ -24,7 +24,7 @@ using namespace de::ui;
 
 DE_PIMPL_NOREF(CVarToggleWidget)
 {
-    char const *cvar;
+    const char *cvar;
 
     cvar_t *var() const
     {
@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(CVarToggleWidget)
     }
 };
 
-CVarToggleWidget::CVarToggleWidget(char const *cvarPath, String const &labelText)
+CVarToggleWidget::CVarToggleWidget(const char *cvarPath, String const &labelText)
     : d(new Impl)
 {
     setText(labelText);
@@ -42,8 +42,7 @@ CVarToggleWidget::CVarToggleWidget(char const *cvarPath, String const &labelText
     d->cvar = cvarPath;
     updateFromCVar();
 
-    connect(this, SIGNAL(stateChangedByUser(ToggleWidget::ToggleState)),
-            this, SLOT(setCVarValueFromWidget()));
+    audienceForUserToggle() += [this]() { CVar_SetInteger(d->var(), isActive() ? 1 : 0); };
 }
 
 char const *CVarToggleWidget::cvarPath() const
@@ -54,9 +53,4 @@ char const *CVarToggleWidget::cvarPath() const
 void CVarToggleWidget::updateFromCVar()
 {
     setActive(CVar_Integer(d->var()) != 0);
-}
-
-void CVarToggleWidget::setCVarValueFromWidget()
-{
-    CVar_SetInteger(d->var(), isActive()? 1 : 0);
 }

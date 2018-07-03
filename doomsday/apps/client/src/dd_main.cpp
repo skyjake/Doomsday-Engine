@@ -551,7 +551,7 @@ void App_Error(char const *error, ...)
         {
             // We should not continue to execute the worker any more.
             // The thread will be terminated imminently.
-            forever Thread_Sleep(10000);
+            for (;;) Thread_Sleep(10000);
         }
 #endif
     }
@@ -594,9 +594,11 @@ void App_AbnormalShutdown(char const *message)
         LogBuffer_Flush();
 
         /// @todo Get the actual output filename (might be a custom one).
-        Sys_MessageBoxWithDetailsFromFile(MBT_ERROR, DOOMSDAY_NICENAME, message,
+        Sys_MessageBoxWithDetailsFromFile(MBT_ERROR,
+                                          DOOMSDAY_NICENAME,
+                                          message,
                                           "See Details for complete message log contents.",
-                                          LogBuffer::get().outputFile().toUtf8());
+                                          LogBuffer::get().outputFile());
     }
 
     //Sys_Shutdown();
@@ -775,7 +777,7 @@ int DD_ActivateGameWorker(void *context)
             DE_ASSERT(App_CurrentGame().pluginId() != 0);
 
             plugins.setActivePluginId(App_CurrentGame().pluginId());
-            gx.PreInit(App_CurrentGame().id().toUtf8());
+            gx.PreInit(App_CurrentGame().id());
             plugins.setActivePluginId(0);
         }
     }
@@ -1133,7 +1135,7 @@ static void initializeWithWindowReady()
                 for (GameProfile const *prof : playable) ids << prof->gameId();
                 msg += "The following games are playable: " + String::join(ids, ", ");
             }
-            App_Error(msg.toLatin1());
+            App_Error("%s", msg.c_str());
         }
 #endif
     }
@@ -1176,7 +1178,7 @@ static void initializeWithWindowReady()
     {
         LOG_AS("-parse");
         Time begunAt;
-        forever
+        for (;;)
         {
             char const *arg = CommandLine_NextAsPath();
             if (!arg || arg[0] == '-') break;
@@ -1338,7 +1340,7 @@ static dint DD_StartupWorker(void * /*context*/)
         Time begunAt;
         LOG_AS("-cparse")
 
-        forever
+        for (;;)
         {
             char const *arg = CommandLine_NextAsPath();
             if (!arg || arg[0] == '-') break;
@@ -1457,8 +1459,8 @@ void DD_CheckTimeDemo()
         if (CommandLine_CheckWith("-timedemo", 1) || // Timedemo mode.
             CommandLine_CheckWith("-playdemo", 1))   // Play-once mode.
         {
-            Block cmd = String("playdemo %1").arg(CommandLine_Next()).toUtf8();
-            Con_Execute(CMDS_CMDLINE, cmd.constData(), false, false);
+            Con_Execute(
+                CMDS_CMDLINE, String::format("playdemo %s", CommandLine_Next()), false, false);
         }
     }
 }
@@ -1924,11 +1926,11 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str)
     catch (Resources::UnknownSchemeError const &)
     {}
 #endif
-    qDebug() << "Unknown font scheme:" << String(str) << ", returning 'FS_INVALID'";
+    debug("Unknown font scheme: \"%s\", returning 'FS_INVALID'", str);
     return FS_INVALID;
 }
 
-String DD_MaterialSchemeNameForTextureScheme(String textureSchemeName)
+String DD_MaterialSchemeNameForTextureScheme(const String &textureSchemeName)
 {
     if (!textureSchemeName.compareWithoutCase("Textures"))
     {
@@ -1957,8 +1959,8 @@ AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeNa
     }
     else
     {
-        QByteArray schemeNameUtf8 = DD_MaterialSchemeNameForTextureScheme(String(Str_Text(textureSchemeName))).toUtf8();
-        return AutoStr_FromTextStd(schemeNameUtf8.constData());
+        return AutoStr_FromTextStd(
+            DD_MaterialSchemeNameForTextureScheme(Str_Text(textureSchemeName)));
     }
 }
 
@@ -1970,7 +1972,7 @@ D_CMD(Load)
 
     for (int arg = 1; arg < argc; ++arg)
     {
-        String searchTerm = String(argv[arg]).trimmed();
+        String searchTerm = String(argv[arg]).strip();
         if (!searchTerm) continue;
 
         // Are we loading a game?
@@ -2093,13 +2095,13 @@ D_CMD(Unload)
             return app.changeGame(GameProfiles::null(), DD_ActivateGameWorker);
         }
 
-        auto &loader = PackageLoader::get();
-        auto const loadedPackages = loader.loadedPackages();
-        auto loadedBundles = DataBundle::loadedBundles();
+        auto &     loader         = PackageLoader::get();
+        const auto loadedPackages = loader.loadedPackages();
+        auto       loadedBundles  = DataBundle::loadedBundles();
 
         for (int arg = 1; arg < argc; ++arg)
         {
-            String searchTerm = String(argv[arg]).trimmed();
+            String searchTerm = String(argv[arg]).strip();
             if (!searchTerm) continue;
 
             if (app.isGameLoaded() && searchTerm == DoomsdayApp::game().id())

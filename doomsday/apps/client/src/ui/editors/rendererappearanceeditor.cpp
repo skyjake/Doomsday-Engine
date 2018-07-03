@@ -31,15 +31,14 @@
 #include <de/ScrollAreaWidget>
 #include <de/DialogContentStylist>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
 #include <de/VariableSliderWidget>
 
 using namespace de;
 using namespace de::ui;
 
-DE_GUI_PIMPL(RendererAppearanceEditor),
-DE_OBSERVES(ConfigProfiles, ProfileChange),
-public VariableGroupEditor::IOwner
+DE_GUI_PIMPL(RendererAppearanceEditor)
+, DE_OBSERVES(ConfigProfiles, ProfileChange)
+, public VariableGroupEditor::IOwner
 {
     using Group = VariableGroupEditor;
 
@@ -67,7 +66,7 @@ public VariableGroupEditor::IOwner
         GuiWidget *container = &self().containerWidget();
 
         // The contents of the editor will scroll.
-        container->add(profile = new ProfilePickerWidget(settings, tr("appearance")));
+        container->add(profile = new ProfilePickerWidget(settings, "appearance"));
         profile->useInvertedStyleForPopups();
 
         // Sky settings.

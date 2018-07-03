@@ -35,6 +35,8 @@ public:
     /// Specified server was not found. @ingroup errors
     DE_ERROR(NotFoundError);
 
+    DE_DEFINE_AUDIENCE2(Update, void foundServersUpdated())
+
 public:
     ServerFinder();
     ~ServerFinder();
@@ -58,12 +60,6 @@ public:
      * @return Server information.
      */
     ServerInfo messageFromServer(Address const &address) const;
-
-//protected slots:
-//    void found(de::Address address, de::Block info);
-//    void expire();
-
-    DE_DEFINE_AUDIENCE2(Update, void foundServersUpdated())
 
 private:
     DE_PRIVATE(d)

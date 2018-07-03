@@ -27,18 +27,12 @@
  */
 class CVarToggleWidget : public de::ToggleWidget, public ICVarWidget
 {
-    Q_OBJECT
-
 public:
     CVarToggleWidget(char const *cvarPath, de::String const &labelText = "");
 
     char const *cvarPath() const;
 
-public slots:
     void updateFromCVar();
-
-protected slots:
-    void setCVarValueFromWidget();
 
 private:
     DE_PRIVATE(d)

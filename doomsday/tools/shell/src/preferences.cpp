@@ -1,7 +1,9 @@
 #include "preferences.h"
 #include "folderselection.h"
+#include "utils.h"
 #include "guishellapp.h"
 #include <de/libcore.h>
+
 #include <QCheckBox>
 #include <QFormLayout>
 #include <QSettings>
@@ -81,7 +83,7 @@ DE_PIMPL(Preferences)
 #endif
             info->setWordWrap(true);
 
-            appFolder->setPath(st.value("Preferences/appFolder").toString());
+            appFolder->setPath(convert(st.value("Preferences/appFolder").toString()));
 
             QVBoxLayout *bl = new QVBoxLayout;
             bl->setSpacing(4);
@@ -101,7 +103,7 @@ DE_PIMPL(Preferences)
                                          "or command line options."));
 
             iwadFolder = new FolderSelection(tr("Select IWAD Folder"));
-            iwadFolder->setPath(st.value("Preferences/iwadFolder").toString());
+            iwadFolder->setPath(convert(st.value("Preferences/iwadFolder").toString()));
 
             QVBoxLayout *bl = new QVBoxLayout;
             bl->setSpacing(4);
@@ -173,7 +175,7 @@ de::NativePath Preferences::iwadFolder()
     QSettings st;
     if (st.value("Preferences/customIwad", false).toBool())
     {
-        return st.value("Preferences/iwadFolder").toString();
+        return convert(st.value("Preferences/iwadFolder").toString());
     }
     return "";
 }
@@ -189,9 +191,9 @@ QFont Preferences::consoleFont()
 void Preferences::saveState()
 {
     QSettings st;
-    st.setValue("Preferences/appFolder", d->appFolder->path().toString());
+    st.setValue("Preferences/appFolder", convert(d->appFolder->path()));
     st.setValue("Preferences/customIwad", d->useCustomIwad->isChecked());
-    st.setValue("Preferences/iwadFolder", d->iwadFolder->path().toString());
+    st.setValue("Preferences/iwadFolder", convert(d->iwadFolder->path()));
     st.setValue("Preferences/consoleFont", d->consoleFont.toString());
 
     emit consoleFontChanged();

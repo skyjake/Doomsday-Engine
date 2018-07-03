@@ -26,15 +26,12 @@
  */
 class InputSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     InputSettingsDialog(de::String const &name = "inputsettings");
 
-public slots:
     void resetToDefaults();
 
-protected slots:
+protected:
     void mouseTogglesChanged();
     void mouseSensitivityChanged(double value);
     void applyControllerPreset();

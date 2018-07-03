@@ -26,12 +26,10 @@
  */
 class NetworkSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     NetworkSettingsDialog(de::String const &name = "networksettings");
 
-public slots:
+public:
     void resetToDefaults();
 
 private:

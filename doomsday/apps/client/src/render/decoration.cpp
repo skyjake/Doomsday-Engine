@@ -45,15 +45,15 @@ Decoration::~Decoration()
 
 String Decoration::description() const
 {
-    auto desc = String(    _E(l) "Origin: "   _E(.)_E(i) "%1" _E(.)
-                       " " _E(l) "Material: " _E(.)_E(i) "%2" _E(.)
-                       " " _E(l) "Surface: "  _E(.)_E(i) "%3" _E(.))
-                  .arg(origin().asText())
-                  .arg(source().decor().material().manifest().composeUri().asText())
-                  .arg(String("[0x%1]").arg(de::dintptr(&surface()), 0, 16));
+    auto desc = String::format(    _E(l) "Origin: "   _E(.)_E(i) "%s" _E(.)
+                               " " _E(l) "Material: " _E(.)_E(i) "%s" _E(.)
+                               " " _E(l) "Surface: "  _E(.)_E(i) "[%p]" _E(.),
+                  origin().asText().c_str(),
+                  source().decor().material().manifest().composeUri().asText().c_str(),
+                  &surface());
 
 #ifdef DE_DEBUG
-    desc.prepend(String(_E(b) "Decoration " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+    desc.prepend(String::format(_E(b) "Decoration " _E(.) "[%p]\n", this));
 #endif
     return desc;
 }

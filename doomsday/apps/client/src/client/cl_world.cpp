@@ -20,26 +20,22 @@
 
 #include "de_base.h"
 #include "client/cl_world.h"
-
-#include <QVector>
-#include <de/stringarray.h>
-#include <doomsday/world/MaterialArchive>
-
 #include "client/cl_player.h"
-
 #include "api_map.h"
 #include "world/map.h"
 #include "Sector"
 #include "Surface"
-
 #include "network/net_msg.h"
 #include "network/protocol.h"
+
+#include <doomsday/world/MaterialArchive>
+#include <de/stringarray.h>
 
 using namespace de;
 
 static world::MaterialArchive *serverMaterials;
 
-typedef QVector<int> IndexTransTable;
+typedef List<int> IndexTransTable;
 static IndexTransTable xlatMobjType;
 static IndexTransTable xlatMobjState;
 
@@ -138,14 +134,14 @@ world::Material *Cl_LocalMaterial(materialarchive_serialid_t archId)
 
 int Cl_LocalMobjType(int serverMobjType)
 {
-    if (serverMobjType < 0 || serverMobjType >= xlatMobjType.size())
+    if (serverMobjType < 0 || serverMobjType >= xlatMobjType.sizei())
         return 0; // Invalid type.
     return xlatMobjType[serverMobjType];
 }
 
 int Cl_LocalMobjState(int serverMobjState)
 {
-    if (serverMobjState < 0 || serverMobjState >= xlatMobjState.size())
+    if (serverMobjState < 0 || serverMobjState >= xlatMobjState.sizei())
         return 0; // Invalid state.
     return xlatMobjState[serverMobjState];
 }

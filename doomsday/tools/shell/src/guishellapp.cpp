@@ -244,7 +244,7 @@ void GuiShellApp::startLocalServer()
             sv->setApplicationPath(convert(QSettings().value("Preferences/appFolder").toString()));
             if (!dlg.name().isEmpty())
             {
-                sv->setName(dlg.name());
+                sv->setName(convert(dlg.name()));
             }
             sv->start(dlg.port(),
                       convert(dlg.gameMode()),
@@ -253,7 +253,7 @@ void GuiShellApp::startLocalServer()
             d->localServers[dlg.port()] = sv;
 
             newOrReusedConnectionWindow()->waitForLocalConnection
-                    (dlg.port(), sv->errorLogPath(), convert(dlg.name()));
+                    (dlg.port(), sv->errorLogPath(), dlg.name());
         }
     }
     catch (const Error &er)
@@ -308,7 +308,7 @@ void GuiShellApp::showHelp()
     QDesktopServices::openUrl(QUrl(tr("http://wiki.dengine.net/w/Shell_Help")));
 }
 
-void GuiShellApp::openWebAddress(QString url)
+void GuiShellApp::openWebAddress(const QString& url)
 {
     QDesktopServices::openUrl(QUrl(url));
 }

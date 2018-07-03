@@ -27,12 +27,9 @@
  */
 class PrivilegedLogWidget : public de::GuiWidget
 {
-    Q_OBJECT
-
 public:
     PrivilegedLogWidget();
 
-public slots:
     void showLog();
     void hideLog();
 

@@ -48,9 +48,9 @@ signals:
     void closed(LinkWindow *window);
 
 public slots:
-    void openConnection(QString address);
-    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, QString name);
-    void openConnection(de::shell::Link *link, de::String name = "");
+    void openConnection(const QString& address);
+    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, const QString& name);
+    void openConnection(de::shell::Link *link, const de::String& name = "");
     void closeConnection();
     void sendCommandToServer(const de::String& command);
     void sendCommandsToServer(QStringList commands);

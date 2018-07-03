@@ -164,7 +164,7 @@ public:
      *
      * @param func  Callback to make for each SfxChannel.
      */
-    de::LoopResult forAll(std::function<de::LoopResult (SfxChannel &)> func) const;
+    de::LoopResult forAll(const std::function<de::LoopResult (SfxChannel &)>& func) const;
 
 private:
     DE_PRIVATE(d)

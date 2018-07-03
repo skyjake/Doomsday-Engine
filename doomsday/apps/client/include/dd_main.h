@@ -115,7 +115,7 @@ void DD_ReadGameHelp();
 AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
 
 /// @overload
-de::String DD_MaterialSchemeNameForTextureScheme(de::String textureSchemeName);
+de::String DD_MaterialSchemeNameForTextureScheme(const de::String& textureSchemeName);
 
 #ifdef __CLIENT__
 fontschemeid_t DD_ParseFontSchemeName(char const *str);

@@ -25,7 +25,6 @@
 
 #include <de/DialogContentStylist>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
 
 using namespace de;
 using namespace de::ui;
@@ -33,12 +32,12 @@ using namespace de::ui;
 DE_GUI_PIMPL(SidebarWidget)
 , DE_OBSERVES(DoomsdayApp, GameChange)
 {
-    DialogContentStylist stylist;
-    GuiWidget *container;
-    ScrollAreaWidget *sidebarContent;
-    IndirectRule *firstColumnWidth; ///< Shared by all groups.
-    LabelWidget *title;
-    ButtonWidget *close;
+    DialogContentStylist              stylist;
+    GuiWidget *                       container;
+    ScrollAreaWidget *                sidebarContent;
+    IndirectRule *                    firstColumnWidth; ///< Shared by all groups.
+    LabelWidget *                     title;
+    ButtonWidget *                    close;
     std::unique_ptr<SequentialLayout> layout;
 
     Impl(Public *i)
@@ -69,7 +68,7 @@ DE_GUI_PIMPL(SidebarWidget)
         close->setImage(style().images().image("close.ringless"));
         close->setImageColor(title->textColorf());
         close->setOverrideImageSize(title->font().height());
-        close->setAction(new SignalAction(thisPublic, SLOT(close())));
+        close->setActionFn([this](){ self().close(); });
         close->setSizePolicy(ui::Expand, ui::Expand);
     }
 

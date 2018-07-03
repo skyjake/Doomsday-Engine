@@ -28,17 +28,14 @@
  */
 class CVarChoiceWidget : public de::ChoiceWidget, public ICVarWidget
 {
-    Q_OBJECT
-
 public:
     CVarChoiceWidget(char const *cvarPath);
 
     char const *cvarPath() const;
 
-public slots:
     void updateFromCVar();
 
-protected slots:
+protected:
     void setCVarValueFromWidget();
 
 private:

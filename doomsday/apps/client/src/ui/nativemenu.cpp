@@ -24,38 +24,38 @@
 
 #include <doomsday/Games>
 #include <doomsday/console/exec.h>
-#include <QMenuBar>
-#include <QMenu>
+//#include <QMenuBar>
+//#include <QMenu>
 
 using namespace de;
 
 DE_PIMPL(NativeMenu)
 , DE_OBSERVES(Games, Readiness)
 {
-    QMenuBar *menuBar = nullptr;
-    QMenu *helpMenu = nullptr;
-    QMenu *gameMenu = nullptr;
+//    QMenuBar *menuBar = nullptr;
+//    QMenu *helpMenu = nullptr;
+//    QMenu *gameMenu = nullptr;
     LoopCallback mainCall;
 
     Impl(Public *i) : Base(i)
     {
-#ifdef MACOSX
-        menuBar = new QMenuBar;
+//#ifdef MACOSX
+//        menuBar = new QMenuBar;
 
-        gameMenu = menuBar->addMenu(QObject::tr("&Game"));
+//        gameMenu = menuBar->addMenu(QObject::tr("&Game"));
 
-        helpMenu = menuBar->addMenu(QObject::tr("&Help"));
-        helpMenu->addAction(tr("About Doomsday"),
-                            &ClientWindow::main().taskBar(),
-                            SLOT(showAbout()));
-        QAction *checkForUpdates = helpMenu->addAction(tr("Check For &Updates..."),
-                                                       &ClientApp::updater(),
-                                                       SLOT(checkNowShowingProgress()));
-        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
+//        helpMenu = menuBar->addMenu(QObject::tr("&Help"));
+//        helpMenu->addAction(tr("About Doomsday"),
+//                            &ClientWindow::main().taskBar(),
+//                            SLOT(showAbout()));
+//        QAction *checkForUpdates = helpMenu->addAction(tr("Check For &Updates..."),
+//                                                       &ClientApp::updater(),
+//                                                       SLOT(checkNowShowingProgress()));
+//        checkForUpdates->setMenuRole(QAction::ApplicationSpecificRole);
 
-        updateGameMenuItems();
-        DoomsdayApp::games().audienceForReadiness() += this;
-#endif
+//        updateGameMenuItems();
+//        DoomsdayApp::games().audienceForReadiness() += this;
+//#endif
     }
 
     void gameReadinessUpdated() override
@@ -68,29 +68,29 @@ DE_PIMPL(NativeMenu)
     void updateGameMenuItems()
     {
 #ifdef MACOSX
-        if (!gameMenu) return;
+//        if (!gameMenu) return;
 
-        gameMenu->clear();
+//        gameMenu->clear();
 
-        QList<Game *> allGames = DoomsdayApp::games().all();
-        qSort(allGames.begin(), allGames.end(), [] (Game const *a, Game const *b) {
-            return a->id().compare(b->id()) < 0;
-        });
+//        List<Game *> allGames = DoomsdayApp::games().all();
+//        std::sort(allGames.begin(), allGames.end(), [] (Game const *a, Game const *b) {
+//            return a->id().compare(b->id()) < 0;
+//        });
 
-        for (Game *game : allGames)
-        {
-            QAction *load = new QAction(tr("Load %1").arg(game->title()), thisPublic);
-            load->setData(game->id());
-            load->setEnabled(game->isPlayable());
-            connect(load, &QAction::triggered, [load] () {
-                auto &win = ClientWindow::main();
-                win.glActivate();
-                Con_Executef(CMDS_DDAY, false, "load %s",
-                             load->data().toString());
-                win.glDone();
-            });
-            gameMenu->addAction(load);
-        }
+//        for (Game *game : allGames)
+//        {
+//            QAction *load = new QAction(tr("Load %1").arg(game->title()), thisPublic);
+//            load->setData(game->id());
+//            load->setEnabled(game->isPlayable());
+//            connect(load, &QAction::triggered, [load] () {
+//                auto &win = ClientWindow::main();
+//                win.glActivate();
+//                Con_Executef(CMDS_DDAY, false, "load %s",
+//                             load->data().toString());
+//                win.glDone();
+//            });
+//            gameMenu->addAction(load);
+//        }
 #endif
     }
 };

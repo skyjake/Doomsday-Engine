@@ -100,6 +100,15 @@ public:
             }
             return found->second;
         }
+
+        Mapper &operator=(const Mapper &other)
+        {
+            for (const auto &v : other)
+            {
+                Hash<ID, duint32>::insert(v.first, v.second);
+            }
+            return *this;
+        }
     };
 
     const Mapper &planeMapper() const;

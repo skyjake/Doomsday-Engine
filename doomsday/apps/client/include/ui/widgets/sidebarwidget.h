@@ -30,10 +30,8 @@
  */
 class SidebarWidget : public de::PanelWidget
 {
-    Q_OBJECT
-
 public:
-    SidebarWidget(de::String const &title, de::String const &name = de::String());
+    SidebarWidget(de::String const &title, de::String const &name = {});
 
     de::SequentialLayout &layout();
     de::LabelWidget &     title();

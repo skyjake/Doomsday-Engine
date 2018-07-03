@@ -31,7 +31,9 @@
  */
 class ProfilePickerWidget : public de::ChoiceWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(ProfileChange, void profileChanged())
+    DE_DEFINE_AUDIENCE2(EditorRequest, void profileEditorRequested())
 
 public:
     /**
@@ -43,17 +45,13 @@ public:
      * @param name         Name for the widget.
      */
     ProfilePickerWidget(ConfigProfiles &settings, de::String const &description,
-                        de::String const &name = de::String());
+                        de::String const &name = {});
 
     ButtonWidget &button();
 
     void useInvertedStyleForPopups();
 
-signals:
-    void profileChanged();
-    void profileEditorRequested();
-
-public slots:
+public:
     void openMenu();
     void edit();
     void rename();

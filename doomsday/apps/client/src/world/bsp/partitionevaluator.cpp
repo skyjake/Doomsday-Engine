@@ -22,14 +22,13 @@
  */
 
 #include "world/bsp/partitionevaluator.h"
+#include "world/bsp/partitioner.h"
+#include "world/clientserverworld.h" // validCount
 
-#include <QList>
 #include <de/Log>
 #include <de/String>
 #include <de/Task>
 #include <de/TaskPool>
-#include "world/bsp/partitioner.h"
-#include "world/clientserverworld.h" // validCount
 
 using namespace de;
 
@@ -63,7 +62,7 @@ namespace internal
             return *this;
         }
 
-        PartitionCost &operator += (PartitionCost const &other)
+        PartitionCost &operator+=(PartitionCost const &other)
         {
             total     += other.total;
             splits    += other.splits;
@@ -76,7 +75,7 @@ namespace internal
             return *this;
         }
 
-        PartitionCost &operator = (PartitionCost const &other)
+        PartitionCost &operator=(PartitionCost const &other)
         {
             total     = other.total;
             splits    = other.splits;
@@ -89,18 +88,20 @@ namespace internal
             return *this;
         }
 
-        bool operator < (PartitionCost const &rhs) const
-        {
-            return total < rhs.total;
-        }
+        bool operator<(PartitionCost const &rhs) const { return total < rhs.total; }
 
         String asText() const
         {
-            return String("PartitionCost(Total= %1.%2; splits:%3, iffy:%4, near:%5, left:%6+%7, right:%8+%9)")
-                       .arg(total / 100).arg(total % 100, 2, QChar('0'))
-                       .arg(splits).arg(iffy).arg(nearMiss)
-                       .arg(mapLeft).arg(partLeft)
-                       .arg(mapRight).arg(partRight);
+            return String::format(
+                "PartitionCost(Total=%.2f; splits:%i, iffy:%i, near:%i, left:%i+%i, right:%i+%i)",
+                float(total) / 100.f,
+                splits,
+                iffy,
+                nearMiss,
+                mapLeft,
+                partLeft,
+                mapRight,
+                partRight);
         }
     };
 
@@ -187,13 +188,13 @@ DE_PIMPL_NOREF(PartitionEvaluator)
         PartitionCandidate(LineSegmentSide &partition) : line(&partition)
         {}
     };
-    typedef QList<PartitionCandidate *> Candidates;
+    typedef List<PartitionCandidate *> Candidates;
     Candidates candidates;
 
     PartitionCandidate *nextCandidate()
     {
         DE_ASSERT(costTaskPool.isDone());
-        if(candidates.isEmpty()) return nullptr;
+        if (candidates.isEmpty()) return nullptr;
         return candidates.takeFirst();
     }
 

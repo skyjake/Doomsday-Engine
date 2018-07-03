@@ -154,9 +154,7 @@ void *P_AllocDummy(int type, void *extraData)
         return ds; }
 
     default: {
-        /// @throw Throw exception.
-        QByteArray msg = String("P_AllocDummy: Dummies of type %1 not supported.").arg(DMU_Str(type)).toUtf8();
-        App_FatalError(msg.constData());
+        App_FatalError(String::format("P_AllocDummy: Dummies of type %s not supported.", DMU_Str(type)));
         break; }
     }
 

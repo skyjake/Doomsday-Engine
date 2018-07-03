@@ -24,19 +24,20 @@
 
 #include "ui/dialogs/downloaddialog.h"
 
-class QNetworkReply;
-
 /**
  * Dialog for downloading an update in the background and then starting
  * the (re)installation process.
  */
 class UpdateDownloadDialog : public DownloadDialog
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Progress, void downloadProgress(int percentage))
+    DE_DEFINE_AUDIENCE2(Failure,  void downloadFailed(const de::String &uri))
 
 public:
     UpdateDownloadDialog(de::String downloadUri, de::String fallbackUri);
-    ~UpdateDownloadDialog();
+
+    ~UpdateDownloadDialog() override;
 
     /**
      * Returns the path of the downloaded file.
@@ -54,14 +55,9 @@ public:
     static UpdateDownloadDialog &currentDownload();
     static void showCompletedDownload();
 
-signals:
-    void downloadProgress(int percentage);
-    void downloadFailed(QString uri);
-
-public slots:
-    void replyMetaDataChanged();
-    void progress(qint64 received, qint64 total);
-    void finished(QNetworkReply *);
+//    void replyMetaDataChanged();
+//    void progress(qint64 received, qint64 total);
+//    void finished(QNetworkReply *);
     void cancel() override;
 
 private:

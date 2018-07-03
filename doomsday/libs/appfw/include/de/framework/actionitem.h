@@ -65,6 +65,12 @@ public:
         : ImageItem(ShownAsButton | ActivationClosesPopup, img, label)
         , _action(action.holdRef()) {}
 
+    ActionItem(Image const &img,
+               String const &label,
+               const std::function<void ()> &actionFunc)
+        : ImageItem(ShownAsButton | ActivationClosesPopup, img, label)
+        , _action(new CallbackAction(actionFunc)) {}
+
     ActionItem(Semantics semantics,
                DotPath const &styleImageId,
                String const &label   = "",

@@ -66,24 +66,23 @@ static inline float qatan2(float y, float x)
     return ang;
 }
 
-enum rendcmd_t
-{
+enum rendcmd_t {
     RC_COMMAND_COORDS,
     RC_OTHER_COORDS,
-    RC_BOTH_COORDS
+    RC_BOTH_COORDS,
 };
 
-byte useModels         = true;
-int modelLight         = 4;
-int frameInter         = true;
-float modelAspectMod   = 1 / 1.2f; //.833334f;
-int mirrorHudModels;
+byte  useModels      = true;
+int   modelLight     = 4;
+int   frameInter     = true;
+float modelAspectMod = 1 / 1.2f; //.833334f;
+int   mirrorHudModels;
 //int modelShinyMultitex = true;
 float modelShinyFactor = 1.0f;
 float modelSpinSpeed   = 1;
-int maxModelDistance   = 1500;
+int   maxModelDistance = 1500;
 float rend_model_lod   = 256;
-byte precacheSkins     = true;
+byte  precacheSkins    = true;
 
 static bool inited;
 
@@ -348,8 +347,9 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
     if (subnumber >= int(modef.subCount()))
     {
         throw Error("Rend_DrawModel.visibleFrame",
-                    QString("Model has %1 submodels, but submodel #%2 was requested")
-                        .arg(modef.subCount()).arg(subnumber));
+                    stringf("Model has %i submodels, but submodel #%i was requested",
+                            modef.subCount(),
+                            subnumber));
     }
     SubmodelDef const &sub = modef.subModelDef(subnumber);
 
@@ -987,13 +987,12 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // If we mirror the model, triangles have a different orientation.
     if (zSign < 0)
     {
-        LIBGUI_GL.glFrontFace(GL_CCW);
+        glFrontFace(GL_CCW);
     }
 
     // Twosided models won't use backface culling.
     if (smf.testFlag(MFF_TWO_SIDED))
     {
-        //glDisable(GL_CULL_FACE);
         DGL_CullFace(DGL_NONE);
     }
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1089,7 +1088,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
     if (zSign < 0)
     {
-        LIBGUI_GL.glFrontFace(GL_CW);
+        glFrontFace(GL_CW);
     }
     //glDepthFunc(GL_LESS);
     DGL_DepthFunc(DGL_LESS);

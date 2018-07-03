@@ -24,26 +24,29 @@
 #  include <process.h>
 #endif
 
-#include <signal.h>
 //#ifdef MACOSX
 //#  include <QDir>
 //#endif
 //#ifdef WIN32
 //#  include <QSettings>
 //#endif
+#include <doomsday/doomsdayapp.h>
+#include <doomsday/console/exec.h>
 
 #include <de/concurrency.h>
 #include <de/timer.h>
-#include <de/GuiApp>
+#include <de/App>
 #include <de/PackageLoader>
 #include <de/Loop>
-#include <doomsday/doomsdayapp.h>
-#include <doomsday/console/exec.h>
 
 #ifdef __CLIENT__
 #  include "clientapp.h"
 #  include "ui/inputsystem.h"
 #  include "gl/gl_main.h"
+#endif
+
+#ifdef __SERVER__
+#  include <de/TextApp>
 #endif
 
 #include "dd_main.h"
@@ -52,6 +55,8 @@
 #include "network/net_buf.h"
 #include "ui/nativeui.h"
 #include "api_base.h"
+
+#include <signal.h>
 
 #if defined(WIN32) && !defined(_DEBUG)
 #  define DE_CATCH_SIGNALS
@@ -159,7 +164,7 @@ static int showCriticalMessage(char const *msg)
 #if defined (__CLIENT__)
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
 #else
-    warning("%s", msg);
+    de::warning("%s", msg);
 #endif
     return 0;
 }
@@ -171,17 +176,17 @@ int Sys_CriticalMessage(const char* msg)
 
 int Sys_CriticalMessagef(const char* format, ...)
 {
-    static const char* unknownMsg = "Unknown critical issue occured.";
-    const size_t BUF_SIZE = 655365;
-    const char* msg;
-    char* buf = 0;
-    va_list args;
-    int result;
+    static const char *unknownMsg = "Unknown critical issue occured.";
+    const size_t       BUF_SIZE   = 655365;
+    const char *       msg;
+    char *             buf = 0;
+    va_list            args;
+    int                result;
 
-    if(format && format[0])
+    if (format && format[0])
     {
         va_start(args, format);
-        buf = (char*) calloc(1, BUF_SIZE);
+        buf = reinterpret_cast<char *>(calloc(1, BUF_SIZE));
         dd_vsnprintf(buf, BUF_SIZE, format, args);
         msg = buf;
         va_end(args);
@@ -193,7 +198,7 @@ int Sys_CriticalMessagef(const char* format, ...)
 
     result = showCriticalMessage(msg);
 
-    if(buf) free(buf);
+    if (buf) free(buf);
     return result;
 }
 
@@ -272,7 +277,11 @@ DE_EXTERN_C void Sys_Quit(void)
     else
 #endif
     {
+#ifdef __CLIENT__
         // It's time to stop the main loop.
         DE_GUI_APP->quit(DD_GameLoopExitCode());
+#else
+        DE_TEXT_APP->quit(DD_GameLoopExitCode());
+#endif
     }
 }

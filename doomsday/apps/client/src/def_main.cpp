@@ -1634,7 +1634,8 @@ void Def_PostInit()
             st->model = -1;
             try
             {
-                FrameModelDef &modef = ClientResources::get().modelDef(String("Particle%1").arg(st->type - PTC_MODEL, 2, 10, QChar('0')));
+                FrameModelDef &modef = ClientResources::get().modelDef(
+                    String::format("Particle%02i", st->type - PTC_MODEL));
                 if (modef.subModelId(0) == NOMODELID)
                 {
                     continue;
@@ -1902,7 +1903,7 @@ dint Def_Get(dint type, char const *id, void *out)
         dint32 i = *((dint32 *) id);
         if (i < 0 || i >= ::runtimeDefs.sounds.size())
             return false;
-        qstrcpy((char *)out, ::runtimeDefs.sounds[i].lumpName);
+        strcpy((char *)out, ::runtimeDefs.sounds[i].lumpName);
         return true; }
 
     case DD_DEF_LINE_TYPE: {
@@ -1946,7 +1947,7 @@ dint Def_Set(dint type, dint index, dint value, void const *ptr)
         {
         case DD_LUMP:
             S_StopSound(index, 0);
-            qstrcpy(::runtimeDefs.sounds[index].lumpName, (char const *) ptr);
+            strcpy(::runtimeDefs.sounds[index].lumpName, (char const *) ptr);
             if (strlen(::runtimeDefs.sounds[index].lumpName))
             {
                 ::runtimeDefs.sounds[index].lumpNum = fileSys().lumpNumForName(::runtimeDefs.sounds[index].lumpName);

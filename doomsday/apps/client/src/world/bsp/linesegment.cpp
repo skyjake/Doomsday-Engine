@@ -197,7 +197,8 @@ LineSegment::Side &LineSegment::Side::neighbor(int edge) const
         return **neighborAdr;
     }
     /// @throw MissingNeighborError Attempted with no relevant neighbor attributed.
-    throw MissingNeighborError("LineSegment::Side::neighbor", QString("No %1 neighbor is attributed").arg(edge? "Right" : "Left"));
+    throw MissingNeighborError("LineSegment::Side::neighbor",
+                               stringf("No %s neighbor is attributed", edge ? "Right" : "Left"));
 }
 
 void LineSegment::Side::setNeighbor(int edge, LineSegment::Side *newNeighbor)

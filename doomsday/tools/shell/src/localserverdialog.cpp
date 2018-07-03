@@ -42,18 +42,19 @@ using namespace de;
 using namespace de::shell;
 
 DE_PIMPL(LocalServerDialog)
+, DE_OBSERVES(shell::ServerFinder, Update)
 {
-    QPushButton *yes;
-    QLineEdit *name;
-    QComboBox *games;
-    QLineEdit *port;
-    QLabel *portMsg;
-    QCheckBox *announce;
-    QLineEdit *password;
-    QLabel *passwordMsg;
-    QTextEdit *options;
+    QPushButton *    yes;
+    QLineEdit *      name;
+    QComboBox *      games;
+    QLineEdit *      port;
+    QLabel *         portMsg;
+    QCheckBox *      announce;
+    QLineEdit *      password;
+    QLabel *         passwordMsg;
+    QTextEdit *      options;
     FolderSelection *runtime;
-    bool portChanged;
+    bool             portChanged;
 
     Impl(Public &i) : Base(i), portChanged(false)
     {
@@ -193,6 +194,11 @@ DE_PIMPL(LocalServerDialog)
         }
         return false;
     }
+
+    void foundServersUpdated() override
+    {
+        self().validate();
+    }
 };
 
 LocalServerDialog::LocalServerDialog(QWidget *parent)
@@ -203,17 +209,17 @@ LocalServerDialog::LocalServerDialog(QWidget *parent)
     connect(d->password, SIGNAL(textEdited(QString)), this, SLOT(validate()));
     connect(d->port, SIGNAL(textEdited(QString)), this, SLOT(portChanged())); // causes port to be saved
     connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
-    connect(&GuiShellApp::app().serverFinder(), SIGNAL(updated()), this, SLOT(validate()));
+    GuiShellApp::app().serverFinder().audienceForUpdate() += d;
 
     validate();
 }
 
 quint16 LocalServerDialog::port() const
 {
-    return d->port->text().toInt();
+    return quint16(d->port->text().toInt());
 }
 
-String LocalServerDialog::name() const
+QString LocalServerDialog::name() const
 {
     return d->name->text();
 }
@@ -232,10 +238,10 @@ QStringList LocalServerDialog::additionalOptions() const
     // Parse the provided options using libcore so quotes and other special
     // behavior matches Doomsday.
     CommandLine cmdLine;
-    cmdLine.parse(d->options->toPlainText());
-    for (int i = 0; i < cmdLine.count(); ++i)
+    cmdLine.parse(convert(d->options->toPlainText()));
+    for (dsize i = 0; i < cmdLine.count(); ++i)
     {
-        opts << cmdLine.at(i);
+        opts << convert(cmdLine.at(i));
     }
     return opts;
 }
@@ -265,7 +271,7 @@ void LocalServerDialog::saveState()
     }
     st.setValue("LocalServer/announce", d->announce->isChecked());
     st.setValue("LocalServer/password", d->password->text());
-    st.setValue("LocalServer/runtime", d->runtime->path().toString());
+    st.setValue("LocalServer/runtime", convert(d->runtime->path().toString()));
     st.setValue("LocalServer/options", d->options->toPlainText());
 }
 

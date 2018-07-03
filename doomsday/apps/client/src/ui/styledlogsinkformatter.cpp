@@ -24,12 +24,12 @@
 
 using namespace de;
 
-static char const *VAR_METADATA = "log.showMetadata";
+static const char *VAR_METADATA = "log.showMetadata";
 
 DE_PIMPL(StyledLogSinkFormatter)
 , DE_OBSERVES(Variable, Change)
 {
-    LogEntry::Flags format;
+    Flags format;
     bool observe;
     bool omitSectionIfNonDev;
     bool showMetadata;
@@ -59,7 +59,7 @@ StyledLogSinkFormatter::StyledLogSinkFormatter()
     d->format = LogEntry::Styled | LogEntry::OmitLevel;
 }
 
-StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlags)
+StyledLogSinkFormatter::StyledLogSinkFormatter(Flags const &formatFlags)
     : d(new Impl(this, false /*don't observe*/))
 {
     d->format = formatFlags;
@@ -67,7 +67,7 @@ StyledLogSinkFormatter::StyledLogSinkFormatter(LogEntry::Flags const &formatFlag
 
 LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 {
-    LogEntry::Flags form = d->format;
+    Flags form = d->format;
 
     if (!d->showMetadata)
     {
@@ -84,7 +84,7 @@ LogSink::IFormatter::Lines StyledLogSinkFormatter::logEntryToTextLines(LogEntry 
 
     // This will form a single long line. The line wrapper will
     // then determine how to wrap it onto the available width.
-    return Lines() << entry.asText(form);
+    return {entry.asText(form)};
 }
 
 void StyledLogSinkFormatter::setOmitSectionIfNonDev(bool omit)

@@ -125,7 +125,7 @@ public:
      *
      * @param callback  Function to call for each ConvexSubspace.
      */
-    de::LoopResult forAllSubspaces(std::function<de::LoopResult (ConvexSubspace &)> func) const;
+    de::LoopResult forAllSubspaces(const std::function<de::LoopResult (ConvexSubspace &)>& func) const;
 
     /**
      * Returns a list containing the first half-edge from each of the edge loops described

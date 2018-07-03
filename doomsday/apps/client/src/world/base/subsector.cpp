@@ -39,7 +39,7 @@ namespace world {
 
 DE_PIMPL_NOREF(Subsector)
 {
-    QVector<ConvexSubspace *> subspaces;
+    List<ConvexSubspace *> subspaces;
     std::unique_ptr<AABoxd> bounds;
     Id id;
     Sector *sector = nullptr;
@@ -68,7 +68,7 @@ DE_PIMPL_NOREF(Subsector)
     }
 };
 
-Subsector::Subsector(QVector<ConvexSubspace *> const &subspaces) : d(new Impl)
+Subsector::Subsector(const List<ConvexSubspace *> &subspaces) : d(new Impl)
 {
     d->subspaces += subspaces;
     for (ConvexSubspace *subspace : subspaces)
@@ -85,15 +85,15 @@ Subsector::~Subsector()
 
 String Subsector::description() const
 {
-    auto desc = String(    _E(l) "Id: "     _E(.) _E(i) "%1" _E(.)
-                       " " _E(l) "Sector: " _E(.) _E(i) "%2" _E(.)
-                       " " _E(l) "Bounds: " _E(.) _E(i) "%3" _E(.))
-                    .arg(d->id.asText())
-                    .arg(sector().indexInMap())
-                    .arg(Rectangled(bounds().min, bounds().max).asText());
+    auto desc = String::format(    _E(l) "Id: "     _E(.) _E(i) "%s" _E(.)
+                               " " _E(l) "Sector: " _E(.) _E(i) "%i" _E(.)
+                               " " _E(l) "Bounds: " _E(.) _E(i) "%s" _E(.),
+                    d->id.asText().c_str(),
+                    sector().indexInMap(),
+                    Rectangled(bounds().min, bounds().max).asText().c_str());
 
     DE_DEBUG_ONLY(
-        desc.prepend(String(_E(b) "Subsector " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+        desc.prepend(String::format(_E(b) "Subsector " _E(.) "[%p]\n", this));
     )
     return desc;
 }
@@ -134,7 +134,7 @@ ConvexSubspace &Subsector::firstSubspace() const
     return *d.getConst()->subspaces.first();
 }
 
-LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &)> func) const
+LoopResult Subsector::forAllSubspaces(const std::function<LoopResult (ConvexSubspace &)>& func) const
 {
     for (ConvexSubspace *sub : d->subspaces)
     {
@@ -143,9 +143,9 @@ LoopResult Subsector::forAllSubspaces(std::function<LoopResult (ConvexSubspace &
     return LoopContinue;
 }
 
-QList<HEdge *> Subsector::listUniqueBoundaryEdges() const
+List<HEdge *> Subsector::listUniqueBoundaryEdges() const
 {
-    QList<HEdge *> list;
+    List<HEdge *> list;
     for (ConvexSubspace const *sub : d->subspaces)
     {
         HEdge *hedge = sub->poly().hedge();

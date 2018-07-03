@@ -41,8 +41,7 @@ CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath)
     d->cvar = cvarPath;
     updateFromCVar();
 
-    connect(this, SIGNAL(selectionChangedByUser(uint)),
-            this, SLOT(setCVarValueFromWidget()));
+    audienceForUserSelection() += [this](){ setCVarValueFromWidget(); };
 }
 
 char const *CVarChoiceWidget::cvarPath() const
@@ -52,10 +51,10 @@ char const *CVarChoiceWidget::cvarPath() const
 
 void CVarChoiceWidget::updateFromCVar()
 {
-    setSelected(items().findData(CVar_Integer(d->var())));
+    setSelected(items().findData(NumberValue(CVar_Integer(d->var()))));
 }
 
 void CVarChoiceWidget::setCVarValueFromWidget()
 {
-    CVar_SetInteger(d->var(), selectedItem().data().toInt());
+    CVar_SetInteger(d->var(), selectedItem().data().asInt());
 }

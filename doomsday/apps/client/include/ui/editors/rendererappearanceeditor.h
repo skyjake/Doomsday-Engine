@@ -32,8 +32,6 @@
 class RendererAppearanceEditor : public SidebarWidget
                                , public de::IPersistent
 {
-    Q_OBJECT
-
 public:
     RendererAppearanceEditor();
 

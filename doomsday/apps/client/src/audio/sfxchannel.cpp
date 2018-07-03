@@ -23,12 +23,6 @@
 #include "world/thinkers.h"
 #include "dd_main.h"     // remove me
 #include "def_main.h"    // ::defs
-#include <de/Log>
-#include <de/GLInfo>
-#include <de/timer.h>    // TICSPERSEC
-#include <de/vector1.h>  // remove me
-#include <QList>
-#include <QtAlgorithms>
 
 // Debug visual headers:
 #include "audio/s_cache.h"
@@ -36,7 +30,13 @@
 #include "api_fontrender.h"
 #include "render/rend_font.h"
 #include "ui/ui_main.h"
+
 #include <de/concurrency.h>
+#include <de/timer.h>    // TICSPERSEC
+#include <de/vector1.h>  // remove me
+#include <de/GLInfo>
+#include <de/List>
+#include <de/Log>
 
 using namespace de;
 
@@ -326,14 +326,14 @@ void SfxChannel::setStartTime(dint newStartTime)
 
 DE_PIMPL(SfxChannels)
 {
-    QList<SfxChannel *> all;
+    List<SfxChannel *> all;
 
     Impl(Public *i) : Base(i) {}
     ~Impl() { clearAll(); }
 
     void clearAll()
     {
-        qDeleteAll(all);
+        deleteAll(all);
     }
 
     /// @todo support dynamically resizing in both directions. -ds
@@ -424,7 +424,7 @@ void SfxChannels::refreshAll()
     });
 }
 
-LoopResult SfxChannels::forAll(std::function<LoopResult (SfxChannel &)> func) const
+LoopResult SfxChannels::forAll(const std::function<LoopResult (SfxChannel &)>& func) const
 {
     for (SfxChannel *ch : d->all)
     {

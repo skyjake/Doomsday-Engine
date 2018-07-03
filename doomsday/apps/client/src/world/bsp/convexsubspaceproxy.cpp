@@ -314,11 +314,14 @@ ConvexSubspaceProxy &ConvexSubspaceProxy::operator=(ConvexSubspaceProxy const &o
 
 void ConvexSubspaceProxy::addSegments(List<LineSegmentSide *> const &newSegments)
 {
-    int sizeBefore = d->segments.size();
+    const int sizeBefore = d->segments.size();
 
-    d->segments.unite(Set<LineSegmentSide *>::fromList(newSegments));
+    for (auto *lineSegSide : newSegments)
+    {
+        d->segments << lineSegSide;
+    }
 
-    if(d->segments.size() != sizeBefore)
+    if (d->segments.size() != sizeBefore)
     {
         // We'll need to rebuild the ordered segment list.
         d->needRebuildOrderedSegments = true;
@@ -326,7 +329,7 @@ void ConvexSubspaceProxy::addSegments(List<LineSegmentSide *> const &newSegments
 
 #ifdef DE_DEBUG
     int numSegmentsAdded = d->segments.size() - sizeBefore;
-    if(numSegmentsAdded < newSegments.size())
+    if (numSegmentsAdded < newSegments.sizei())
     {
         LOG_DEBUG("ConvexSubspaceProxy pruned %i duplicate segments")
                 << (newSegments.size() - numSegmentsAdded);
@@ -482,7 +485,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     }
 
     // Determine which sector to attribute the BSP leaf to.
-    qSort(continuities.begin(), continuities.end());
+    continuities.sort();
     leaf.setSector(continuities.first().sector);
 
 /*#ifdef DE_DEBUG
@@ -503,7 +506,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
         Face *face = mesh.newFace();
 
         // Iterate backwards so that the half-edges can be linked clockwise.
-        for(int i = d->orderedSegments.size(); i-- > 0; )
+        for(int i = d->orderedSegments.sizei(); i-- > 0; )
         {
             LineSegmentSide *lineSeg = d->orderedSegments[i].segment;
 
@@ -589,7 +592,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
 
 int ConvexSubspaceProxy::segmentCount() const
 {
-    return d->segments.count();
+    return d->segments.size();
 }
 
 OrderedSegments const &ConvexSubspaceProxy::segments() const

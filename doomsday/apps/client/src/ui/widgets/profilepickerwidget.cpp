@@ -19,22 +19,22 @@
 #include "ui/widgets/profilepickerwidget.h"
 #include "ui/clientwindow.h"
 
-#include <de/SignalAction>
 #include <de/PopupMenuWidget>
 #include <de/InputDialog>
+#include <de/TextValue>
 
 using namespace de;
 using namespace de::ui;
 
-static int const MAX_VISIBLE_PROFILE_NAME = 50;
-static int const MAX_PROFILE_NAME = 100;
+static const String::CharPos MAX_VISIBLE_PROFILE_NAME(50);
+static const String::CharPos MAX_PROFILE_NAME(100);
 
 DE_GUI_PIMPL(ProfilePickerWidget)
 {
-    ConfigProfiles &settings;
-    String description;
+    ConfigProfiles &   settings;
+    String             description;
     PopupButtonWidget *button;
-    bool invertedPopups = false;
+    bool               invertedPopups = false;
 
     Impl(Public *i, ConfigProfiles& reg)
         : Base(i)
@@ -60,20 +60,20 @@ DE_GUI_PIMPL(ProfilePickerWidget)
     {
         self().items().clear();
 
-        for (String prof : settings.profiles())
+        for (const String &prof : settings.profiles())
         {
-            self().items() << new ChoiceItem(prof.left(MAX_VISIBLE_PROFILE_NAME), prof);
+            self().items() << new ChoiceItem(prof.left(MAX_VISIBLE_PROFILE_NAME), TextValue(prof));
         }
 
         // The items are alphabetically ordered.
         self().items().sort();
 
-        self().setSelected(self().items().findData(settings.currentProfile()));
+        self().setSelected(self().items().findData(TextValue(settings.currentProfile())));
     }
 
     String currentProfile() const
     {
-        return self().selectedItem().data().toString();
+        return self().selectedItem().data().asText();
     }
 };
 
@@ -89,7 +89,7 @@ ProfilePickerWidget::ProfilePickerWidget(ConfigProfiles &settings, String const 
             .setInput(Rule::Left, rule().right())
             .setInput(Rule::Top,  rule().top());
 
-    connect(this, SIGNAL(selectionChangedByUser(uint)), this, SLOT(applySelectedProfile()));
+    audienceForUserSelection() += [this](){ applySelectedProfile(); };
 }
 
 ButtonWidget &ProfilePickerWidget::button()
@@ -120,20 +120,20 @@ void ProfilePickerWidget::openMenu()
     if (d->invertedPopups) menu->useInfoStyle();
     d->button->setPopup(*menu, ui::Down);
     menu->items()
-            << new ActionItem(tr("Edit"), new SignalAction(this, SLOT(edit())))
-            << new ActionItem(tr("Rename..."), new SignalAction(this, SLOT(rename())))
+            << new ActionItem("Edit", [this](){ edit(); })
+            << new ActionItem("Rename...", [this](){ rename(); })
             << new ui::Item(Item::Separator)
-            << new ActionItem(tr("Duplicate..."), new SignalAction(this, SLOT(duplicate())))
+            << new ActionItem("Duplicate...", [this](){ duplicate(); })
             << new ui::Item(Item::Separator)
-            << new ActionItem(tr("Reset to Defaults..."), new SignalAction(this, SLOT(reset())))
-            << new ActionItem(style().images().image("close.ring"), tr("Delete..."),
-                              new SignalAction(this, SLOT(remove())));
+            << new ActionItem("Reset to Defaults...", [this](){ reset(); })
+            << new ActionItem(style().images().image("close.ring"), "Delete...",
+                              [this](){ remove(); });
     add(menu);
 
     ChildWidgetOrganizer const &org = menu->menu().organizer();
 
     // Enable or disable buttons depending on the selected profile.
-    String selProf = selectedItem().data().toString();
+    String selProf = selectedItem().data().asText();
     if (reg.find(selProf).isReadOnly())
     {
         // Read-only profiles can only be duplicated.
@@ -158,33 +158,36 @@ void ProfilePickerWidget::openMenu()
 
 void ProfilePickerWidget::edit()
 {
-    emit profileEditorRequested();
+    DE_FOR_AUDIENCE2(EditorRequest, i)
+    {
+        i->profileEditorRequested();
+    }
 }
 
 void ProfilePickerWidget::rename()
 {
     InputDialog *dlg = new InputDialog;
     dlg->setDeleteAfterDismissed(true);
-    dlg->title().setText(tr("Renaming \"%1\"").arg(d->currentProfile()));
-    dlg->message().setText(tr("Enter a new name for the %1 profile:").arg(d->description));
-    dlg->defaultActionItem()->setLabel(tr("Rename Profile"));
+    dlg->title().setText(String::format("Renaming \"%s\"", d->currentProfile().c_str()));
+    dlg->message().setText(String::format("Enter a new name for the %s profile:", d->description.c_str()));
+    dlg->defaultActionItem()->setLabel("Rename Profile");
 
     dlg->editor().setText(d->currentProfile());
 
     if (dlg->exec(root()))
     {
-        String newName = dlg->editor().text().trimmed().left(MAX_PROFILE_NAME);
+        String newName = dlg->editor().text().strip().left(MAX_PROFILE_NAME);
         if (!newName.isEmpty() && d->currentProfile() != newName)
         {
             if (d->settings.rename(newName))
             {
                 ui::Item &item = items().at(selected());
                 item.setLabel(newName.left(MAX_VISIBLE_PROFILE_NAME));
-                item.setData(newName);
+                item.setData(TextValue(newName));
 
                 // Keep the list sorted.
                 items().sort();
-                setSelected(items().findData(newName));
+                setSelected(items().findData(TextValue(newName)));
             }
             else
             {
@@ -198,21 +201,23 @@ void ProfilePickerWidget::duplicate()
 {
     InputDialog *dlg = new InputDialog;
     dlg->setDeleteAfterDismissed(true);
-    dlg->title().setText(tr("Duplicating \"%1\"").arg(d->currentProfile()));
-    dlg->message().setText(tr("Enter a name for the new %1 profile:").arg(d->description));
-    dlg->defaultActionItem()->setLabel(tr("Duplicate Profile"));
+    dlg->title().setText(String::format("Duplicating \"%s\"", d->currentProfile().c_str()));
+    dlg->message().setText(String::format("Enter a name for the new %s profile:", d->description.c_str()));
+    dlg->defaultActionItem()->setLabel("Duplicate Profile");
 
     if (dlg->exec(root()))
     {
-        String newName = dlg->editor().text().trimmed().left(MAX_PROFILE_NAME);
+        String newName = dlg->editor().text().strip().left(MAX_PROFILE_NAME);
         if (!newName.isEmpty())
         {
             if (d->settings.saveAsProfile(newName))
             {
                 d->settings.setProfile(newName);
 
-                items().append(new ChoiceItem(newName.left(MAX_VISIBLE_PROFILE_NAME), newName)).sort();
-                setSelected(items().findData(newName));
+                items()
+                    .append(new ChoiceItem(newName.left(MAX_VISIBLE_PROFILE_NAME), TextValue(newName)))
+                    .sort();
+                setSelected(items().findData(TextValue(newName)));
 
                 applySelectedProfile();
             }
@@ -229,14 +234,15 @@ void ProfilePickerWidget::reset()
 {
     MessageDialog *dlg = new MessageDialog;
     dlg->setDeleteAfterDismissed(true);
-    dlg->title().setText(tr("Reset?"));
-    dlg->message().setText(tr("Are you sure you want to reset the %1 profile %2 to the default values?")
-                           .arg(d->description)
-                           .arg(_E(b) + d->currentProfile() + _E(.)));
+    dlg->title().setText("Reset?");
+    dlg->message().setText(
+        String::format("Are you sure you want to reset the %s profile %s to the default values?",
+                       d->description.c_str(),
+                       (_E(b) + d->currentProfile() + _E(.)).c_str()));
 
     dlg->buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
-            << new DialogButtonItem(DialogWidget::Accept, tr("Reset Profile"));
+            << new DialogButtonItem(DialogWidget::Accept, "Reset Profile");
 
     if (dlg->exec(root()))
     {
@@ -248,14 +254,14 @@ void ProfilePickerWidget::remove()
 {
     MessageDialog *dlg = new MessageDialog;
     dlg->setDeleteAfterDismissed(true);
-    dlg->title().setText(tr("Delete?"));
+    dlg->title().setText("Delete?");
     dlg->message().setText(
-                tr("Are you sure you want to delete the %1 profile %2? This cannot be undone.")
-                .arg(d->description)
-                .arg(_E(b) + d->currentProfile() + _E(.)));
+        String::format("Are you sure you want to delete the %s profile %s? This cannot be undone.",
+                       d->description.c_str(),
+                       (_E(b) + d->currentProfile() + _E(.)).c_str()));
     dlg->buttons()
                << new DialogButtonItem(DialogWidget::Default | DialogWidget::Reject)
-               << new DialogButtonItem(DialogWidget::Accept, tr("Delete Profile"));
+               << new DialogButtonItem(DialogWidget::Accept, "Delete Profile");
 
     if (!dlg->exec(root())) return;
 

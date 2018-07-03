@@ -57,8 +57,8 @@ PrivilegedLogWidget::PrivilegedLogWidget()
     auto const &gap = rule("gap");
 
     hide();
-    connect(d->log, SIGNAL(contentHeightIncreased(int)), this, SLOT(showLog()));
-    connect(d->closeButton, SIGNAL(pressed()), this, SLOT(hideLog()));
+    d->log->audienceForContentHeight() += [this](){ showLog(); };
+    d->closeButton->audienceForPress() += [this](){ hideLog(); };
 
     d->log->rule()
             .setInput(Rule::Left, rule().left() + gap)
