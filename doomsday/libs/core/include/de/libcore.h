@@ -671,6 +671,7 @@ inline OutContainer map(const InContainer &input, Func func) {
     return out;
 }
 
+/*
 template <typename OutContainer, typename InContainer>
 inline OutContainer map(const InContainer &input,
                          std::function<typename OutContainer::value_type (
@@ -678,6 +679,20 @@ inline OutContainer map(const InContainer &input,
     OutContainer out;
     for (auto i = input.begin(); i != input.end(); ++i) {
         out.push_back(func(*i));
+    }
+    return out;
+}
+*/
+
+template <typename OutContainer,
+          typename InContainer,
+          typename Func,
+          typename Inserter = std::back_insert_iterator<OutContainer>>
+inline OutContainer map(const InContainer &input, Func func) {
+    OutContainer out;
+    Inserter ins(out);
+    for (const auto &i : input) {
+        *ins++ = func(i);
     }
     return out;
 }
