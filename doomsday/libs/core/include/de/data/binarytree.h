@@ -507,9 +507,9 @@ public:
         String text = String::format("%i nodes, %i leafs", nodeCount(), leafCount());
         if (!isLeaf())
         {
-            text += stringf(" (balance is %zu:%zu)",
-                            hasRight() ? right().height() : 0,
-                            hasLeft() ? left().height() : 0);
+            text += String::format(" (balance is %zu:%zu)",
+                                   hasRight() ? right().height() : 0,
+                                   hasLeft()  ? left().height()  : 0);
         }
         return text;
     }

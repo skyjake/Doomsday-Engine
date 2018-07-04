@@ -26,6 +26,11 @@
 
 namespace de {
 
+const NumberValue NumberValue::zero(0.0);
+const NumberValue NumberValue::one(1.0);
+const NumberValue NumberValue::bTrue(true);
+const NumberValue NumberValue::bFalse(false);
+
 NumberValue::NumberValue(Number initialValue, SemanticHints semantic)
     : _value(initialValue), _semantic(semantic)
 {}

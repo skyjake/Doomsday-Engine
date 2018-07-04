@@ -99,7 +99,7 @@ public:
     inline bool isEmpty() const { return size() == 0; }
 
     Block &append(Byte b);
-    Block &append(const char *str, int len);
+    Block &append(const void *data, int len);
     Block &prepend(const Block &);
     void   remove(size_t pos, size_t len = 1);
     void   removeAll(Byte b);

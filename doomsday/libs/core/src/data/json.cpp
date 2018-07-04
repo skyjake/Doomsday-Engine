@@ -88,8 +88,8 @@ public:
     {
         String::BytePos offset = pos.pos();
         throw Error("JSONParser",
-                    stringf("Error at position %u (%s^%s): %s",
-                            offset,
+                    stringf("Error at position %zu (%s^%s): %s",
+                            offset.index,
                             source.substr(offset - 4, 4).c_str(),
                             source.substr(offset, 4).c_str(),
                             message.c_str()));

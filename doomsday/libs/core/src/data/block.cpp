@@ -142,9 +142,9 @@ Block &Block::append(Byte b)
     return *this;
 }
 
-Block &Block::append(const char *str, int len)
+Block &Block::append(const void *data, int len)
 {
-    appendData_Block(&_block, str, len);
+    appendData_Block(&_block, data, len);
     return *this;
 }
 

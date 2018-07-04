@@ -69,7 +69,7 @@ public:
     explicit NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic = UInt);
     explicit NumberValue(bool initialBoolean);
 
-    void setSemanticHints(SemanticHints hints);
+    void          setSemanticHints(SemanticHints hints);
     SemanticHints semanticHints() const;
 
     /**
@@ -94,6 +94,12 @@ public:
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
+
+public:
+    static const NumberValue zero;
+    static const NumberValue one;
+    static const NumberValue bTrue;
+    static const NumberValue bFalse;
 
 private:
     Number _value;

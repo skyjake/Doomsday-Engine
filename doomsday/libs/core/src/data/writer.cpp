@@ -186,7 +186,7 @@ Writer &Writer::operator << (const ddouble &value)
 
 Writer &Writer::operator << (const String &text)
 {
-    Block bytes = text.toUtf8();
+    Block bytes = text;
 
     // First write the length of the text.
     duint32 size = bytes.size();
