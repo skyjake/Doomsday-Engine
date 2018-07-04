@@ -48,7 +48,6 @@ public:
      */
     enum Format {
         Unknown           = -1,
-//        UseQImageFormat   = 0, ///< May not be GL friendly.
 
         Luminance_8       = 1,
         LuminanceAlpha_88 = 2,
@@ -80,6 +79,8 @@ public:
         RGB_32ui          = 28,
         RGBA_32ui         = 29,
     };
+
+    enum SerializationFormat { Png, Jpeg, Targa, Bmp };
 
     typedef Vec2ui Size;
     typedef Vec4ub Color;
@@ -245,7 +246,8 @@ public:
     Image rgbSwapped() const;
     Image flipped() const;
 
-    void save(const NativePath &path) const;
+    void  save(const NativePath &path) const;
+    Block serialize(SerializationFormat format) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

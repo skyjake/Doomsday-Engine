@@ -1021,6 +1021,36 @@ void Image::save(const NativePath &path) const
     }
 }
 
+static void dataWriter(void *context, void *data, int size)
+{
+    reinterpret_cast<Block *>(context)->append(data, size);
+}
+
+Block Image::serialize(SerializationFormat format) const
+{
+    Block data;
+    const int comp = bytesPerPixel() / 4;
+    switch (format)
+    {
+    case Png:
+        stbi_write_png_to_func(dataWriter, &data, width(), height(), comp, bits(), stride());
+        break;
+
+    case Jpeg:
+        stbi_write_jpg_to_func(dataWriter, &data, width(), height(), comp, bits(), 85);
+        break;
+
+    case Targa:
+        stbi_write_tga_to_func(dataWriter, &data, width(), height(), comp, bits());
+        break;
+
+    case Bmp:
+        stbi_write_bmp_to_func(dataWriter, &data, width(), height(), comp, bits());
+        break;
+    }
+    return data;
+}
+
 void Image::operator>>(Writer &to) const
 {
     to << duint8(d->format);
