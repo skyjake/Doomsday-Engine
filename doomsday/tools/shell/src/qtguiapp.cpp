@@ -58,7 +58,7 @@ bool QtGuiApp::notify(QObject *receiver, QEvent *event)
     }
     catch (Error const &er)
     {
-        QMessageBox::critical(NULL, "Uncaught Exception", er.asText());
+        QMessageBox::critical(nullptr, "Uncaught Exception", er.asText().c_str());
     }
     return false;
 }

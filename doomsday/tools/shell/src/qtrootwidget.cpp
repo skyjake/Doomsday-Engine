@@ -18,6 +18,7 @@
 
 #include "qtrootwidget.h"
 #include "qttextcanvas.h"
+#include "utils.h"
 #include <de/shell/KeyEvent>
 #include <de/AnimationVector>
 #include <de/Clock>
@@ -157,36 +158,86 @@ void QtRootWidget::keyPressEvent(QKeyEvent *ev)
              << "mods:" << ev->modifiers();
     */
 
-    if (!ev->text().isEmpty() && ev->text()[0].isPrint() &&
-            !ev->modifiers().testFlag(CONTROL_MOD))
+    if (!ev->text().isEmpty() && ev->text().at(0).isPrint() &&
+        !ev->modifiers().testFlag(CONTROL_MOD))
     {
-        eaten = d->root.processEvent(KeyEvent(ev->text()));
+        eaten = d->root.processEvent(KeyEvent(convert(ev->text())));
     }
     else
     {
-        int key = ev->key();
-        KeyEvent::Modifiers mods = ev->modifiers().testFlag(CONTROL_MOD)?
-                    KeyEvent::Control : KeyEvent::None;
+        shell::Key key = shell::Key::None;
+        switch (ev->key())
+        {
+        case Qt::Key_Escape:    key = shell::Key::Escape; break;
+        case Qt::Key_Up:        key = shell::Key::Up; break;
+        case Qt::Key_Down:      key = shell::Key::Down; break;
+        case Qt::Key_Left:      key = shell::Key::Left; break;
+        case Qt::Key_Right:     key = shell::Key::Right; break;
+        case Qt::Key_Home:      key = shell::Key::Home; break;
+        case Qt::Key_End:       key = shell::Key::End; break;
+        case Qt::Key_PageUp:    key = shell::Key::PageUp; break;
+        case Qt::Key_PageDown:  key = shell::Key::PageDown; break;
+        case Qt::Key_Insert:    key = shell::Key::Insert; break;
+        case Qt::Key_Delete:    key = shell::Key::Delete; break;
+        case Qt::Key_Enter:     key = shell::Key::Enter; break;
+        case Qt::Key_Return:    key = shell::Key::Enter; break;
+        case Qt::Key_Backspace: key = shell::Key::Backspace; break;
+        case Qt::Key_Tab:       key = shell::Key::Tab; break;
+        case Qt::Key_Backtab:   key = shell::Key::Backtab; break;
+        case Qt::Key_F1:        key = shell::Key::F1; break;
+        case Qt::Key_F2:        key = shell::Key::F2; break;
+        case Qt::Key_F3:        key = shell::Key::F3; break;
+        case Qt::Key_F4:        key = shell::Key::F4; break;
+        case Qt::Key_F5:        key = shell::Key::F5; break;
+        case Qt::Key_F6:        key = shell::Key::F6; break;
+        case Qt::Key_F7:        key = shell::Key::F7; break;
+        case Qt::Key_F8:        key = shell::Key::F8; break;
+        case Qt::Key_F9:        key = shell::Key::F9; break;
+        case Qt::Key_F10:       key = shell::Key::F10; break;
+        case Qt::Key_F11:       key = shell::Key::F11; break;
+        case Qt::Key_F12:       key = shell::Key::F12; break;
+        }
 
-        if (key == Qt::Key_Return) key = Qt::Key_Enter;
+        KeyEvent::Modifiers mods =
+            ev->modifiers().testFlag(CONTROL_MOD) ? KeyEvent::Control : KeyEvent::None;
 
         // Special control key mappings.
         if (mods & KeyEvent::Control)
         {
-            switch (key)
+            switch (ev->key())
             {
             case Qt::Key_A:
-                key = Qt::Key_Home;
+                key = shell::Key::Home;
                 mods = KeyEvent::None;
                 break;
 
             case Qt::Key_D:
-                key = Qt::Key_Delete;
+                key = shell::Key::Delete;
                 mods = KeyEvent::None;
                 break;
 
             case Qt::Key_E:
-                key = Qt::Key_End;
+                key = shell::Key::End;
+                mods = KeyEvent::None;
+                break;
+
+            case Qt::Key_C:
+                key = shell::Key::Break;
+                mods = KeyEvent::None;
+                break;
+
+            case Qt::Key_K:
+                key = shell::Key::Kill;
+                mods = KeyEvent::None;
+                break;
+
+            case Qt::Key_X:
+                key = shell::Key::Cancel;
+                mods = KeyEvent::None;
+                break;
+
+            case Qt::Key_Z:
+                key = shell::Key::Substitute;
                 mods = KeyEvent::None;
                 break;
 
@@ -250,11 +301,11 @@ void QtRootWidget::paintEvent(QPaintEvent *)
         QPoint pos = origin + QPoint(d->charSize.x * d->canvas->cursorPosition().x,
                                      d->charSize.y * d->canvas->cursorPosition().y);
 
-        TextCanvas::Char ch = d->canvas->at(d->canvas->cursorPosition());
+        TextCanvas::AttribChar ch = d->canvas->at(d->canvas->cursorPosition());
 
         painter.setPen(Qt::NoPen);
         painter.fillRect(QRect(pos, QSize(de::max(1, d->charSize.x / 5), d->charSize.y)),
-                         ch.attribs.testFlag(TextCanvas::Char::Reverse)?
+                         ch.attribs.testFlag(TextCanvas::AttribChar::Reverse)?
                              d->canvas->backgroundColor() : d->canvas->foregroundColor());
     }
 

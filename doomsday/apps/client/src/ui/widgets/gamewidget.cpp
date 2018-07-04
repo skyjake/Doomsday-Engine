@@ -54,10 +54,6 @@
 #include <de/LogBuffer>
 #include <de/VRConfig>
 
-#include <QPainter>
-#include <QImage>
-#include <QBuffer>
-
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning
  * of a frame. Note that non-uploaded textures will appear as pure white
@@ -216,8 +212,8 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
     // Notify the world that a new render frame has begun.
     App_World().beginFrame(CPP_BOOL(R_NextViewer()));
 
-    QImage composited(QSize(6 * size, size), QImage::Format_RGB32);
-    QPainter painter(&composited);
+    Image composited(Image::Size(6 * size, size), Image::RGB_888);
+//    QPainter painter(&composited);
 
     int const baseYaw = 180;
 
@@ -232,19 +228,17 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
             Rend_SetFixedView(player, baseYaw, i == 4? -90 : 90, 90, fbSize);
         }
         d->renderPlayerViewToFramebuffer(player, destFb);
-        painter.drawImage(i * size, 0, destFb.toImage());
+        composited.draw(i * size, 0, destFb.toImage());
     }
 
     App_World().endFrame();
 
     // Write the composited image to a file.
     {
-        QBuffer buf;
-        buf.open(QBuffer::WriteOnly);
-        composited.save(&buf, outputImagePath.fileNameExtension().mid(1).toLatin1());
+        const Block buf = composited.serialize(outputImagePath.fileNameExtension().toString());
 
         // Choose a unique name.
-        int counter = 0;
+        int    counter    = 0;
         String uniquePath = outputImagePath;
         while (FS::tryLocate<File const>(uniquePath))
         {
@@ -254,7 +248,7 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
         }
 
         File &outFile = FS::get().root().replaceFile(uniquePath);
-        outFile << Block(buf.data());
+        outFile << buf;
         outFile.flush();
 
         LOG_GL_MSG("Cube map saved to \"%s\"") << outFile.correspondingNativePath();
@@ -377,7 +371,7 @@ bool GameWidget::handleEvent(Event const &event)
         Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :
                         ev.state() == KeyEvent::Repeat?  IKE_REPEAT :
                                                          IKE_UP,
-                        ev.ddKey(), ev.nativeCode(), ev.text().toLatin1());
+                        ev.ddKey(), ev.scancode(), ev.text());
     }
 
     return false;

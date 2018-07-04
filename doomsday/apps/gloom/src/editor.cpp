@@ -199,8 +199,7 @@ DE_PIMPL(Editor)
                    : mode == EditPlanes   ? map.planes()  .size()
                    : mode == EditVolumes  ? map.volumes() .size()
                    : 0)
-                .arg(selText)
-                .arg(actionText());
+                .arg(selText, actionText());
         if (hoverPoint)
         {
             text += QString(" \u25aa%1").arg(hoverPoint, 0, 16);
@@ -1089,7 +1088,7 @@ DE_PIMPL(Editor)
                         dlg.setWindowTitle(tr("Import Map"));
                         QVBoxLayout *layout = new QVBoxLayout;
                         QListWidget *list = new QListWidget;
-                        list->addItems(compose<QStringList>(maps.begin(), maps.end()));
+                        list->addItems(de::map<QStringList>(maps, convertToQString));
                         layout->addWidget(list, 1);
                         connect(list, SIGNAL(itemDoubleClicked(QListWidgetItem*)), &dlg, SLOT(accept()));
                         QDialogButtonBox *box = new QDialogButtonBox;
@@ -1146,7 +1145,7 @@ DE_PIMPL(Editor)
     {
         if (self().parentWidget())
         {
-            self().parentWidget()->setWindowTitle(QString("%1 (%2)").arg(text).arg(convert(mapId)));
+            self().parentWidget()->setWindowTitle(QString("%1 (%2)").arg(text, convert(mapId)));
         }
     }
 
@@ -1730,10 +1729,10 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
 
             QMenu *eType = pop->addMenu("Type");
             const ID entityId = d->hoverEntity;
-            for (const auto &i : entityMetadata)
+            for (auto i = entityMetadata.begin(); i != entityMetadata.end(); ++i)
             {
-                /*QAction *a = */ eType->addAction(i.second, [this, entityId, i] () {
-                    d->map.entity(entityId).setType(i.first);
+                /*QAction *a = */ eType->addAction(i.value(), [this, entityId, i] () {
+                    d->map.entity(entityId).setType(i.key());
                 });
             }
             pop->popup(mapToGlobal(event->pos()));

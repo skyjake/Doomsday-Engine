@@ -19,7 +19,6 @@
 
 #include "de_platform.h"
 
-#include <cstdlib>
 //#include <QAction>
 //#include <QDebug>
 //#include <QDesktopServices>
@@ -27,29 +26,6 @@
 //#include <QMenuBar>
 //#include <QNetworkProxyFactory>
 //#include <QSplashScreen>
-
-#include <de/c_wrapper.h>
-#include <de/ArrayValue>
-#include <de/ByteArrayFile>
-#include <de/CallbackAction>
-#include <de/CommandLine>
-#include <de/Config>
-#include <de/DictionaryValue>
-#include <de/DisplayMode>
-#include <de/Error>
-#include <de/FileSystem>
-#include <de/Garbage>
-#include <de/Info>
-#include <de/Log>
-#include <de/LogSink>
-#include <de/NativeFont>
-#include <de/ScriptSystem>
-#include <de/TextValue>
-#include <de/VRConfig>
-
-#include <doomsday/console/exec.h>
-#include <doomsday/AbstractSession>
-#include <doomsday/GameStateFolder>
 
 #include "audio/audiosystem.h"
 #include "busyrunner.h"
@@ -97,15 +73,39 @@
 #  include "dd_uinit.h"
 #endif
 
-#include <de/timer.h>
+#include <doomsday/console/exec.h>
+#include <doomsday/AbstractSession>
+#include <doomsday/GameStateFolder>
 
-#include "ui/splash.xpm"
+#include <de/timer.h>
+#include <de/c_wrapper.h>
+#include <de/ArrayValue>
+#include <de/ByteArrayFile>
+#include <de/CallbackAction>
+#include <de/CommandLine>
+#include <de/Config>
+#include <de/DictionaryValue>
+#include <de/DisplayMode>
+#include <de/Error>
+#include <de/FileSystem>
+#include <de/Garbage>
+#include <de/Info>
+#include <de/Log>
+#include <de/LogSink>
+#include <de/NativeFont>
+#include <de/ScriptSystem>
+#include <de/TextValue>
+#include <de/VRConfig>
+
+#include <cstdlib>
+
+//#include "ui/splash.xpm"
 
 using namespace de;
 
 static ClientApp *clientAppSingleton = 0;
 
-static void handleLegacyCoreTerminate(char const *msg)
+DE_NORETURN static void handleLegacyCoreTerminate(char const *msg)
 {
     App_Error("Application terminated due to exception:\n%s\n", msg);
 }
@@ -134,7 +134,7 @@ static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const 
     }
     String name = DoomsdayApp::plugins().fileForPlugin(App_CurrentGame().pluginId())
             .name().fileNameWithoutExtension();
-    if (name.beginsWith("lib")) name.remove(0, 3);
+    if (name.beginsWith("lib")) name.remove(BytePos(0), 3);
     return new TextValue(name);
 }
 
@@ -216,7 +216,7 @@ DE_PIMPL(ClientApp)
                     }
                 }
 
-                for (String msg : formatter.logEntryToTextLines(entry))
+                for (const String &msg : formatter.logEntryToTextLines(entry))
                 {
                     ClientApp::alert(msg, entry.level());
                 }
@@ -269,7 +269,7 @@ DE_PIMPL(ClientApp)
         }
         catch (Error const &er)
         {
-            qWarning() << "Exception during ~ClientApp:" << er.asText();
+            warning("Exception during ~ClientApp: %s", er.asText().c_str());
             DE_ASSERT_FAIL("Unclean shutdown: exception in ~ClientApp");
         }
 
@@ -414,7 +414,7 @@ DE_PIMPL(ClientApp)
 
                 Con_Executef(CMDS_DDAY, false, "setdefaultskill %i; setmap %s",
                              prof->autoStartSkill(),
-                             prof->autoStartMap());
+                             prof->autoStartMap().c_str());
             }
         }
     }
@@ -447,9 +447,9 @@ DE_PIMPL(ClientApp)
         {
             String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
             logSettings
-                    .define(Prof::ConfigVariable, String("log.filter.%1.minLevel").arg(name))
-                    .define(Prof::ConfigVariable, String("log.filter.%1.allowDev").arg(name))
-                    .define(Prof::ConfigVariable, String("alert.%1").arg(name));
+                    .define(Prof::ConfigVariable, String::format("log.filter.%s.minLevel", name.c_str()))
+                    .define(Prof::ConfigVariable, String::format("log.filter.%s.allowDev", name.c_str()))
+                    .define(Prof::ConfigVariable, "alert." + name);
         }
 
         uiSettings
@@ -471,19 +471,19 @@ DE_PIMPL(ClientApp)
         networkSettings
                 .define(Prof::ConfigVariable, "apiUrl")
                 .define(Prof::ConfigVariable, "resource.localPackages")
-                .define(Prof::IntCVar,        "net-dev",             0);
+                .define(Prof::IntCVar,        "net-dev",             NumberValue::zero);
 
         audioSettings
-                .define(Prof::IntCVar,        "sound-volume",        255 * 2/3)
-                .define(Prof::IntCVar,        "music-volume",        255 * 2/3)
-                .define(Prof::FloatCVar,      "sound-reverb-volume", 0.5f)
-                .define(Prof::IntCVar,        "sound-info",          0)
+                .define(Prof::IntCVar,        "sound-volume",        NumberValue(255 * 2/3))
+                .define(Prof::IntCVar,        "music-volume",        NumberValue(255 * 2/3))
+                .define(Prof::FloatCVar,      "sound-reverb-volume", NumberValue(0.5f))
+                .define(Prof::IntCVar,        "sound-info",          NumberValue::zero)
                 //.define(Prof::IntCVar,        "sound-rate",          11025)
                 //.define(Prof::IntCVar,        "sound-16bit",         0)
-                .define(Prof::IntCVar,        "sound-3d",            0)
-                .define(Prof::IntCVar,        "sound-overlap-stop",  0)
-                .define(Prof::IntCVar,        "music-source",        AudioSystem::MUSP_EXT)
-                .define(Prof::StringCVar,     "music-soundfont",     "")
+                .define(Prof::IntCVar,        "sound-3d",            NumberValue::zero)
+                .define(Prof::IntCVar,        "sound-overlap-stop",  NumberValue::zero)
+                .define(Prof::IntCVar,        "music-source",        NumberValue(AudioSystem::MUSP_EXT))
+                .define(Prof::StringCVar,     "music-soundfont",     TextValue())
                 .define(Prof::ConfigVariable, "audio.soundPlugin")
                 .define(Prof::ConfigVariable, "audio.musicPlugin")
                 .define(Prof::ConfigVariable, "audio.cdPlugin")
@@ -493,13 +493,7 @@ DE_PIMPL(ClientApp)
     }
 
 #ifdef UNIX
-    void printVersionToStdOut()
-    {
-        printf("%s\n", String("%1 %2")
-               .arg(DOOMSDAY_NICENAME)
-               .arg(DOOMSDAY_VERSION_FULLTEXT)
-               .toLatin1().constData());
-    }
+    void printVersionToStdOut() { printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT); }
 
     void printHelpToStdOut()
     {
@@ -518,24 +512,24 @@ DE_PIMPL(ClientApp)
 
     String mapClientStatePath(String const &mapId) const
     {
-        return String("maps/%1ClientState").arg(mapId);
+        return String::format("maps/%sClientState", mapId.c_str());
     }
 
     String mapObjectStatePath(String const &mapId) const
     {
-        return String("maps/%1ObjectState").arg(mapId);
+        return String::format("maps/%sObjectState", mapId.c_str());
     }
 };
 
-ClientApp::ClientApp(int &argc, char **argv)
-    : BaseGuiApp(argc, argv)
+ClientApp::ClientApp(const StringList &args)
+    : BaseGuiApp(args)
     , DoomsdayApp([] () -> Player * { return new ClientPlayer; })
     , d(new Impl(this))
 {
     novideo = false;
 
     // Use the host system's proxy configuration.
-    QNetworkProxyFactory::setUseSystemConfiguration(true);
+//    QNetworkProxyFactory::setUseSystemConfiguration(true);
 
     // Metadata.
     setMetadata("Deng Team", "dengine.net", "Doomsday Engine", DOOMSDAY_VERSION_BASE);
@@ -551,7 +545,7 @@ ClientApp::ClientApp(int &argc, char **argv)
             << DE_FUNC_NOARG (App_GamePlugin, "gamePlugin")
             << DE_FUNC_NOARG (App_Quit,       "quit");
 
-#if !defined (DE_MOBILE)
+/*#if !defined (DE_MOBILE)
     /// @todo Remove the splash screen when file system indexing can be done as
     /// a background task and the main window can be opened instantly. -jk
     QPixmap const pixmap(doomsdaySplashXpm);
@@ -562,7 +556,7 @@ ClientApp::ClientApp(int &argc, char **argv)
                         QColor(90, 110, 95));
     processEvents();
     splash->deleteLater();
-#endif
+#endif*/
 }
 
 void ClientApp::initialize()
@@ -708,9 +702,9 @@ void ClientApp::postFrame()
     Garbage_Recycle();
 }
 
-void ClientApp::checkPackageCompatibility(StringList const &packageIds,
-                                          String const &userMessageIfIncompatible,
-                                          std::function<void ()> finalizeFunc)
+void ClientApp::checkPackageCompatibility(const StringList &packageIds,
+                                          const String &userMessageIfIncompatible,
+                                          const std::function<void ()>& finalizeFunc)
 {
     if (packageIds.isEmpty() || // Metadata did not specify packages.
         GameProfiles::arePackageListsCompatible(packageIds, loadedPackagesAffectingGameplay()))
@@ -859,7 +853,7 @@ ClientApp &ClientApp::app()
 #if defined (DE_HAVE_UPDATER)
 Updater &ClientApp::updater()
 {
-    DE_ASSERT(!app().d->updater.isNull());
+    DE_ASSERT(app().d->updater);
     return *app().d->updater;
 }
 #endif

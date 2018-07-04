@@ -94,7 +94,7 @@ int main(int argc, char **argv)
     {
 //        ClientApp::setDefaultOpenGLFormat();
 
-        ClientApp clientApp(argc, argv);
+        ClientApp clientApp(makeList(argc, argv));
 
         /**
          * @todo Translations are presently disabled because lupdate can't seem to

@@ -35,14 +35,12 @@
 class ServerLink : public de::shell::AbstractLink
 {
 public:
-    DE_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
-    DE_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeSpan))
-    DE_DEFINE_AUDIENCE2(MapOutline,      void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
+    DE_DEFINE_AUDIENCE2(Discovery,    void serversDiscovered(const ServerLink &link))
+    DE_DEFINE_AUDIENCE2(PingResponse, void pingResponse(de::Address const &, de::TimeSpan))
+    DE_DEFINE_AUDIENCE2(MapOutline,   void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
 
     DE_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
     DE_DEFINE_AUDIENCE2(Leave, void networkGameLeft())
-
-    DE_DEFINE_AUDIENCE2(Discovery, void serversDiscovered())
 
     enum Flag {
         DiscoverLocalServers = 0x1,

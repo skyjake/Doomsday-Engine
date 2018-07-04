@@ -36,25 +36,23 @@
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
 #include <de/ByteSubArray>
+#include <de/ElapsedTimer>
 #include <de/GuiApp>
 #include <de/Message>
 #include <de/MessageDialog>
 #include <de/PackageLoader>
 #include <de/RecordValue>
 #include <de/Socket>
+#include <de/Timer>
 #include <de/data/json.h>
 #include <de/memory.h>
 #include <de/shell/ServerFinder>
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
 
-#include <QElapsedTimer>
-#include <QTimer>
-
 using namespace de;
 
-enum LinkState
-{
+enum LinkState {
     None,
     Discovering,
     Pinging,
@@ -73,11 +71,11 @@ DE_PIMPL(ServerLink)
     std::unique_ptr<shell::ServerFinder> finder; ///< Finding local servers.
     LinkState state;
     bool fetching;
-    typedef QMap<Address, shell::ServerInfo> Servers;
+    typedef Map<Address, shell::ServerInfo> Servers;
     Servers discovered;
     Servers fromMaster;
-    QElapsedTimer pingTimer;
-    QList<TimeSpan> pings;
+    ElapsedTimer pingTimer;
+    List<TimeSpan> pings;
     int pingCounter;
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
@@ -98,8 +96,7 @@ DE_PIMPL(ServerLink)
 
     void notifyDiscoveryUpdate()
     {
-        DE_FOR_PUBLIC_AUDIENCE2(DiscoveryUpdate, i) i->linkDiscoveryUpdate(self());
-        emit self().serversDiscovered();
+        DE_FOR_PUBLIC_AUDIENCE2(Discovery, i) i->serversDiscovered(self());
     }
 
     bool handleInfoResponse(Block const &reply)
@@ -109,29 +106,29 @@ DE_PIMPL(ServerLink)
         // Address of the server where the info was received.
         Address svAddress = self().address();
 
-        // Local addresses are all represented as "localhost".
-        if (svAddress.isLocal()) svAddress.setHost(QHostAddress::LocalHost);
+//         Local addresses are all represented as "localhost".
+//        if (svAddress.isLocal()) svAddress.setHost(QHostAddress::LocalHost);
 
         // Close the connection; that was all the information we need.
         self().disconnect();
 
         // Did we receive what we expected to receive?
-        if (reply.size() >= 5 && reply.startsWith("Info\n"))
+        if (reply.size() >= 5 && reply.beginsWith("Info\n"))
         {
             try
             {
-                QVariant const response = parseJSON(String::fromUtf8(reply.mid(5)));
-                std::unique_ptr<Value> rec(Value::constructFrom(response.toMap()));
+                const Record response = parseJSON(reply.mid(5));
+                /*std::unique_ptr<Value> rec(Value::constructFrom(response.toMap()));
                 if (!is<RecordValue>(*rec))
                 {
                     throw Error("ServerLink::handleInfoResponse", "Failed to parse response contents");
-                }
-                shell::ServerInfo svInfo(*rec->as<RecordValue>().record());
+                }*/
+                shell::ServerInfo svInfo(response); //*rec->as<RecordValue>().record());
 
                 LOG_NET_VERBOSE("Discovered server at ") << svAddress;
 
                 // Update with the correct address.
-                svAddress = Address(svAddress.host(), svInfo.port());
+                svAddress = Address(svAddress.hostName(), svInfo.port());
                 svInfo.setAddress(svAddress);
                 svInfo.printToLog(0, true);
 
@@ -173,7 +170,7 @@ DE_PIMPL(ServerLink)
                 LOG_NET_WARNING("Info reply from %s was invalid: %s") << svAddress << er.asText();
             }
         }
-        else if (reply.size() >= 11 && reply.startsWith("MapOutline\n"))
+        else if (reply.size() >= 11 && reply.beginsWith("MapOutline\n"))
         {
             try
             {
@@ -705,8 +702,7 @@ void ServerLink::initiateCommunications()
         {
             pName = "Player";
         }
-        String req = String("Join %1 %2").arg(SV_VERSION, 4, 16, QChar('0')).arg(pName);
-        *this << req.toUtf8();
+        *this << String::format("Join %04x %s", SV_VERSION, pName.c_str());
 
         d->state = WaitingForJoinResponse;
 
@@ -714,7 +710,7 @@ void ServerLink::initiateCommunications()
         break; }
 
     default:
-        DE_ASSERT(false);
+        DE_ASSERT_FAIL("Initiate");
         break;
     }
 }
@@ -730,7 +726,7 @@ void ServerLink::handleIncomingPackets()
         return;
 
     LOG_AS("ServerLink");
-    forever
+    for (;;)
     {
         // Only BlockPackets received (see interpret()).
         QScopedPointer<BlockPacket> packet(static_cast<BlockPacket *>(nextPacket()));

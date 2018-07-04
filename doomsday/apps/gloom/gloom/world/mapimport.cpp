@@ -28,8 +28,8 @@
 #include <de/Folder>
 #include <de/Version>
 
-#include <QDebug>
-#include <QBuffer>
+#include <iomanip>
+#include <sstream>
 
 using namespace de;
 
@@ -58,7 +58,7 @@ DE_PIMPL_NOREF(MapImport)
     res::IdTech1TextureLib  textureLib;
     String                  mapId;
     Map                     map;
-    QSet<String>            textures;
+    Set<String>            textures;
     Vec3d                   metersPerUnit;
     double                  worldAspectRatio = 1.2;
 
@@ -167,19 +167,19 @@ DE_PIMPL_NOREF(MapImport)
         const int linedefsCount =
             (levelFormat == DoomFormat ? doomLinedefs.size() : hexenLinedefs.size());
 
-        QVector<ID> mappedVertex(idVertices.size());
+        List<ID> mappedVertex(idVertices.size());
 
         struct MappedSector {
-            ID          sector  = 0;
-            ID          floor   = 0;
-            ID          liquid  = 0;
-            ID          ceiling = 0;
-            QSet<ID>    points;
-            QVector<ID> boundaryLines;
+            ID       sector  = 0;
+            ID       floor   = 0;
+            ID       liquid  = 0;
+            ID       ceiling = 0;
+            Set<ID>  points;
+            List<ID> boundaryLines;
         };
-        QVector<MappedSector> mappedSectors(idSectors.size());
+        List<MappedSector> mappedSectors(idSectors.size());
 
-        QVector<ID> mappedLines(linedefsCount);
+        List<ID> mappedLines(linedefsCount);
 
         // -------- Create planes for all sectors: each gets a separate floor and ceiling --------
 
@@ -188,8 +188,8 @@ DE_PIMPL_NOREF(MapImport)
             const auto &sec = idSectors[i];
 
             // Plane materials.
-            String floorTexture   = "flat." + res::wad::nameString(sec.floorTexture).toLower();
-            String ceilingTexture = "flat." + res::wad::nameString(sec.ceilingTexture).toLower();
+            String floorTexture   = "flat." + res::wad::nameString(sec.floorTexture).lower();
+            String ceilingTexture = "flat." + res::wad::nameString(sec.ceilingTexture).lower();
 
             if (isSky(sec.floorTexture))
             {
@@ -273,9 +273,9 @@ DE_PIMPL_NOREF(MapImport)
                     sectors[p]              = le16u(sdef.sector);
                     line.surfaces[p].sector = (sectors[p] != invalidIndex? mappedSectors[sectors[p]].sector : 0);
 
-                    const auto midTex = res::wad::nameString(sdef.middleTexture).toLower();
-                    const auto upTex  = res::wad::nameString(sdef.upperTexture).toLower();
-                    const auto lowTex = res::wad::nameString(sdef.lowerTexture).toLower();
+                    const auto midTex = res::wad::nameString(sdef.middleTexture).lower();
+                    const auto upTex  = res::wad::nameString(sdef.upperTexture).lower();
+                    const auto lowTex = res::wad::nameString(sdef.lowerTexture).lower();
 
                     if (midTex != "-")
                     {
@@ -383,7 +383,7 @@ String MapImport::mapId() const
 
 StringList MapImport::materials() const
 {
-    return compose<StringList>(d->textures.constBegin(), d->textures.constEnd());
+    return compose<StringList>(d->textures.begin(), d->textures.end());
 }
 
 Image MapImport::materialImage(const String &name) const
@@ -457,22 +457,21 @@ void MapImport::exportPackage(const String &packageRootPath) const
 
     // Materials used in the map.
     {
-        Block dei;
-        QTextStream os(&dei);
-        os.setCodec("UTF-8");
+//        Block dei;
+        std::ostringstream os;
 
-        foreach (String name, materials())
+        for (const String &name : materials())
         {
-            qDebug() << "Exporting:" << name;
+            debug("Exporting: %s", name.c_str());
 
             const DotPath path{name};
-            const String  category  = path.segment(0);
+            const String  category  = path.segment(0).toString();
             const String  subfolder = (category == "texture" ? "textures" : "flats");
             const String  imgPath   = subfolder / path.segment(1) + "_diffuse.png";
 
             const double ppm = 1.0 / d->metersPerUnit.x;
 
-            os.setRealNumberPrecision(16);
+            os << std::setprecision(16);
             os << "asset material." << name << " {\n    ppm = " << ppm << "\n";
             os << "    verticalAspect = " << (category == "texture"? "True" : "False") << "\n";
             os << "    diffuse: " << imgPath << "\n}\n\n";
@@ -480,15 +479,16 @@ void MapImport::exportPackage(const String &packageRootPath) const
             const auto image = materialImage(name);
             DE_ASSERT(!image.isNull());
 
-            Block imgData;
-            {
-                QBuffer outBuf(&imgData);
-                outBuf.open(QIODevice::WriteOnly);
-                image.toQImage().rgbSwapped().save(&outBuf, "PNG", 1);
-            }
+//            const Block imgData = ;
+//            {
+//                QBuffer outBuf(&imgData);
+//                outBuf.open(QIODevice::WriteOnly);
+//                image.toQImage().rgbSwapped().save(&outBuf, "PNG", 1);
+
+//            }
 
             File &f = root.replaceFile(imgPath);
-            f << imgData;
+            f << image.serialize(Image::Png);
             f.reinterpret();
 
             // ".diffuse", ".specgloss", ".emissive", ".normaldisp"
@@ -497,10 +497,10 @@ void MapImport::exportPackage(const String &packageRootPath) const
             // - opaque/transparent
         }
 
-        os.flush();
+//        os.flush();
 
         File &f = root.replaceFile("materials.dei");
-        f << dei;
+        f << String(os.str());
         f.flush();
     }
 }

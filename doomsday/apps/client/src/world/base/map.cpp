@@ -3423,7 +3423,7 @@ String Map::objectSummaryAsStyledText() const
     String str;
 
 #define TABBED(count, label) String::format(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
-    if (thCount)           str += TABBED(thCount,            String::format("Thinkers (%i in stasis)", thCountInStasis));
+    if (thCount)           str += TABBED(thCount,            stringf("Thinkers (%i in stasis)", thCountInStasis).c_str());
 #ifdef __CLIENT__
     //if (biasSourceCount()) str += TABBED(biasSourceCount(),  "Bias Sources");
     if (generatorCount())  str += TABBED(generatorCount(),   "Generators");

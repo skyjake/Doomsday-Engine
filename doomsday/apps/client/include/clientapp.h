@@ -46,7 +46,7 @@ class BusyRunner;
 class ClientApp : public de::BaseGuiApp, public DoomsdayApp
 {
 public:
-    ClientApp(int &argc, char **argv);
+    ClientApp(const de::StringList &args);
 
     /**
      * Sets up all the subsystems of the application. Must be called before the
