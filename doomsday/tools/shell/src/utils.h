@@ -29,9 +29,19 @@ inline de::String convert(const QString &qstr)
     return qstr.toStdWString();
 }
 
+inline de::String convertToString(const QString &qstr)
+{
+    return convert(qstr);
+}
+
 inline QString convert(const de::String &str)
 {
     return QString::fromUtf8(str);
+}
+
+inline QString convertToQString(const de::String &str)
+{
+    return convert(str);
 }
 
 #endif // GUISHELLAPP_UTILS_H

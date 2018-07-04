@@ -124,7 +124,7 @@ DE_PIMPL(Editor)
     Impl(Public *i) : Base(i)
     {
         // Load the last map.
-        if (persistentMapPath())
+        if (!persistentMapPath().isEmpty())
         {
             loadMap(persistentMapPath());
         }
@@ -1732,12 +1732,12 @@ void Editor::mouseReleaseEvent(QMouseEvent *event)
             const ID entityId = d->hoverEntity;
             for (const auto &i : entityMetadata)
             {
-                /*QAction *a = */ eType->addAction(i.value(), [this, entityId, i] () {
-                    d->map.entity(entityId).setType(i.key());
+                /*QAction *a = */ eType->addAction(i.second, [this, entityId, i] () {
+                    d->map.entity(entityId).setType(i.first);
                 });
             }
             pop->popup(mapToGlobal(event->pos()));
-            connect(pop, &QMenu::aboutToHide, [pop] () { pop->deleteLater(); });
+            connect(pop, &QMenu::aboutToHide, [pop]() { pop->deleteLater(); });
         }
     }
 

@@ -42,10 +42,17 @@ DE_PIMPL(SectorPolygonizer)
 
         Contour(const Contour &other)
         {
+            *this = other;
+        }
+
+        Contour &operator=(const Contour &other)
+        {
             lines   = other.lines;
             polygon = other.polygon;
             parent  = other.parent;
+            hasPoints.clear();
             for (auto id : other.hasPoints) hasPoints << id;
+            return *this;
         }
 
         int size() const

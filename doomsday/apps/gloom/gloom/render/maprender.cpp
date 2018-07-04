@@ -216,12 +216,11 @@ void MapRender::advanceTime(TimeSpan elapsed)
     {
         const Vec3d metersPerUnit = context().map->metersPerUnit();
 
-        for (auto i = d->planeMapper.begin(), end = d->planeMapper.end(); i != end; ++i)
+        for (const auto &i : d->planeMapper)
         {
-            const double planeY = context().map->plane(i.key()).point.y; // +
+            const double planeY = context().map->plane(i.first).point.y; // +
                                  //std::sin(i.value() + now * .1f);
-
-            d->planes.setData(i.value(), float(planeY * metersPerUnit.y));
+            d->planes.setData(i.second, float(planeY * metersPerUnit.y));
         }
     }
 

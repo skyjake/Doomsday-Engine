@@ -248,7 +248,7 @@ void GuiShellApp::startLocalServer()
             }
             sv->start(dlg.port(),
                       convert(dlg.gameMode()),
-                      {opts.begin(), opts.end()},
+                      map<StringList>(opts, convertToString), //[](const QString &s) { return convert(s); }),
                       dlg.runtimeFolder());
             d->localServers[dlg.port()] = sv;
 

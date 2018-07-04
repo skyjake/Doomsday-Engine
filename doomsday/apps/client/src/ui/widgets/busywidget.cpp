@@ -64,7 +64,7 @@ DE_GUI_PIMPL(BusyWidget)
 
         VertexBuf::Builder verts;
         verts.makeQuad(Rectanglef(0, 0, 1, 1), Vec4f(1, 1, 1, 1), Rectanglef(0, 0, 1, 1));
-        buf->setVertices(gl::TriangleStrip, verts, gl::Static);
+        buf->setVertices(de::gl::TriangleStrip, verts, de::gl::Static);
 
         drawable.addBuffer(buf);
         shaders().build(drawable.program(), "generic.textured.color")

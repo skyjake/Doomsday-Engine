@@ -2470,7 +2470,7 @@ LoopResult Map::forAllMobjsTouchingLine(Line &line, const std::function<LoopResu
         nodeindex_t root = d->lineLinks[line.indexInMap()];
         for (nodeindex_t nix = ln[root].next; nix != root; nix = ln[nix].next)
         {
-            linkStore << reinterpret_cast<mobj_t *>(ln[nix].ptr));
+            linkStore << reinterpret_cast<mobj_t *>(ln[nix].ptr);
         }
 
         for (dint i = 0; i < linkStore.sizei(); ++i)
@@ -3403,42 +3403,35 @@ void Map::expireClMobjs()
 
 String Map::elementSummaryAsStyledText() const
 {
-#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
-
     String str;
-    QTextStream os(&str);
 
-    if (lineCount())    os << TABBED(lineCount(),    "Lines");
-    //if (sideCount())    os << TABBED(sideCount(),    "Sides");
-    if (sectorCount())  os << TABBED(sectorCount(),  "Sectors");
-    if (vertexCount())  os << TABBED(vertexCount(),  "Vertexes");
-    if (polyobjCount()) os << TABBED(polyobjCount(), "Polyobjs");
+#define TABBED(count, label) String::format(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
+    if (lineCount())    str += TABBED(lineCount(),    "Lines");
+    //if (sideCount())    str += TABBED(sideCount(),    "Sides");
+    if (sectorCount())  str += TABBED(sectorCount(),  "Sectors");
+    if (vertexCount())  str += TABBED(vertexCount(),  "Vertexes");
+    if (polyobjCount()) str += TABBED(polyobjCount(), "Polyobjs");
+#undef TABBED
 
     return str.rightStrip();
-
-#undef TABBED
 }
 
 String Map::objectSummaryAsStyledText() const
 {
-#define TABBED(count, label) String(_E(Ta) "  %1 " _E(Tb) "%2\n").arg(count).arg(label)
-
     dint thCountInStasis = 0;
     dint thCount = thinkers().count(&thCountInStasis);
-
     String str;
-    QTextStream os(&str);
 
-    if (thCount)           os << TABBED(thCount,            String("Thinkers (%1 in stasis)").arg(thCountInStasis));
+#define TABBED(count, label) String::format(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
+    if (thCount)           str += TABBED(thCount,            String::format("Thinkers (%i in stasis)", thCountInStasis));
 #ifdef __CLIENT__
-    //if (biasSourceCount()) os << TABBED(biasSourceCount(),  "Bias Sources");
-    if (generatorCount())  os << TABBED(generatorCount(),   "Generators");
-    if (lumobjCount())     os << TABBED(lumobjCount(),      "Lumobjs");
+    //if (biasSourceCount()) str += TABBED(biasSourceCount(),  "Bias Sources");
+    if (generatorCount())  str += TABBED(generatorCount(),   "Generators");
+    if (lumobjCount())     str += TABBED(lumobjCount(),      "Lumobjs");
 #endif
+#undef TABBED
 
     return str.rightStrip();
-
-#undef TABBED
 }
 
 D_CMD(InspectMap)
@@ -3854,7 +3847,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     {
         // Sort a copy to place near vertexes adjacently.
         List<VertexInfo> sortedInfo(vertexInfo);
-        qSort(sortedInfo.begin(), sortedInfo.end());
+        sortedInfo.sort();
 
         // Locate equivalent vertexes in the sorted info.
         for (dint i = 0; i < sortedInfo.count() - 1; ++i)
