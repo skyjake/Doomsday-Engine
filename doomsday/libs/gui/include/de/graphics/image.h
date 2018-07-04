@@ -248,6 +248,7 @@ public:
 
     void  save(const NativePath &path) const;
     Block serialize(SerializationFormat format) const;
+    Block serialize(const char *formatHint) const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

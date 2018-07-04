@@ -34,6 +34,8 @@
 
 namespace de {
 
+static constexpr int JPEG_QUALITY = 85;
+
 #define IMAGE_ASSERT_EDITABLE(d) DE_ASSERT(d->format == RGBA_8888)
 
 namespace internal {
@@ -1005,7 +1007,7 @@ void Image::save(const NativePath &path) const
     }
     else if (!ext.compareWithoutCase(".jpg"))
     {
-        stbi_write_jpg(path.c_str(), width(), height(), comp, bits(), 85);
+        stbi_write_jpg(path.c_str(), width(), height(), comp, bits(), JPEG_QUALITY);
     }
     else if (!ext.compareWithoutCase(".tga"))
     {
@@ -1037,7 +1039,7 @@ Block Image::serialize(SerializationFormat format) const
         break;
 
     case Jpeg:
-        stbi_write_jpg_to_func(dataWriter, &data, width(), height(), comp, bits(), 85);
+        stbi_write_jpg_to_func(dataWriter, &data, width(), height(), comp, bits(), JPEG_QUALITY);
         break;
 
     case Targa:
@@ -1049,6 +1051,30 @@ Block Image::serialize(SerializationFormat format) const
         break;
     }
     return data;
+}
+
+Block Image::serialize(const char *formatHint) const
+{
+    struct Hint {
+        const char *ext;
+        SerializationFormat sformat;
+    };
+    static const Hint hints[] = {
+        { ".png",  Png   },
+        { ".jpg",  Jpeg  },
+        { ".jpeg", Jpeg  },
+        { ".bmp",  Bmp   },
+        { ".tga",  Targa },
+    };
+
+    for (const auto &hint : hints)
+    {
+        if (!iCmpStrCase(formatHint, hint.ext))
+        {
+            return serialize(hint.sformat);
+        }
+    }
+    return serialize(Png);
 }
 
 void Image::operator>>(Writer &to) const
