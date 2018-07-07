@@ -382,8 +382,8 @@ DE_PIMPL(Textures)
 
             // Print a summary.
             LOG_RES_MSG("Loaded %s texture definitions from \"%s:%s\"")
-                << (newDefs.count() == archiveCount? String::format("all %i", newDefs.count())
-                                                   : String::format("%i of %i", newDefs.count(), archiveCount))
+                << (newDefs.count() == archiveCount? Stringf("all %i", newDefs.count())
+                                                   : Stringf("%i of %i", newDefs.count(), archiveCount))
                 << NativePath(file->container().composeUri().asText()).pretty()
                 << NativePath(file->composeUri().asText()).pretty();
         }
@@ -911,7 +911,7 @@ Texture *Textures::defineTexture(String const &schemeName,
         return nullptr;
     }
 
-    res::Uri uri(scheme.name(), Path(String::format("%08i", uniqueId)));
+    res::Uri uri(scheme.name(), Path(Stringf("%08i", uniqueId)));
     try
     {
         TextureManifest &manifest = declareTexture(uri, Texture::Custom, dimensions,

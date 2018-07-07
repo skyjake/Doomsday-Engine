@@ -283,7 +283,7 @@ DE_PIMPL(DoomsdayApp)
             {
                 auto &cmdLine = CommandLine::get();
                 cmdLine.makeAbsolutePath(pos);
-                Folder &argFolder = FS::get().makeFolder(String::format("/sys/cmdline/arg%03i", pos));
+                Folder &argFolder = FS::get().makeFolder(Stringf("/sys/cmdline/arg%03i", pos));
                 File const &argFile = DirectoryFeed::manuallyPopulateSingleFile
                         (cmdLine.at(pos), argFolder);
                 // For future reference, store the name of the actual intended file as

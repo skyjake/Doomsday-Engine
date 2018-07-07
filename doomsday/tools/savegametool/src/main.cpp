@@ -76,9 +76,9 @@ Path composeMapUriPath(duint32 episode, duint32 map)
 {
     if (episode > 0)
     {
-        return String::format("E%iM%i", episode, map > 0? map : 1);
+        return Stringf("E%iM%i", episode, map > 0? map : 1);
     }
-    return String::format("MAP%02i", map > 0? map : 1);
+    return Stringf("MAP%02i", map > 0? map : 1);
 }
 
 Folder &outputFolder()

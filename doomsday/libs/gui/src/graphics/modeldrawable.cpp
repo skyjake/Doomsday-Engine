@@ -1519,7 +1519,7 @@ String ModelDrawable::animationName(int id) const
     String const name = d->scene->mAnimations[id]->mName.C_Str();
     if (name.isEmpty())
     {
-        return String::format("@%d", id);
+        return Stringf("@%d", id);
     }
     return name;
 }
@@ -1558,7 +1558,7 @@ String ModelDrawable::meshName(int id) const
     String const name = d->scene->mMeshes[id]->mName.C_Str();
     if (name.isEmpty())
     {
-        return String::format("@%d", id);
+        return Stringf("@%d", id);
     }
     return name;
 }

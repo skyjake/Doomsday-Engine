@@ -120,7 +120,7 @@ DE_PIMPL(ServerFinder)
         {
             DE_FOR_PUBLIC_AUDIENCE2(Update, i) { i->foundServersUpdated(); }
         }
-        Loop::get().timer(1.0, [this]() { expire(); });
+        Loop::timer(1.0, [this]() { expire(); });
     }
 
     DE_PIMPL_AUDIENCE(Update)
@@ -133,7 +133,7 @@ ServerFinder::ServerFinder() : d(new Impl(this))
     try
     {
         d->beacon.audienceForDiscovery() += d;
-        Loop::get().timer(1.0, [this]() { d->expire(); });
+        Loop::timer(1.0, [this]() { d->expire(); });
 
         if (!App::appExists() || !App::commandLine().has("-nodiscovery"))
         {

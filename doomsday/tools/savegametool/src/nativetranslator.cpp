@@ -676,7 +676,7 @@ void NativeTranslator::convert(Path path)
             try
             {
                 d->openFile(path.toString().fileNamePath() / saveName.fileNameWithoutExtension()
-                            + String::format("%02i", i + 1)
+                            + Stringf("%02i", i + 1)
                             + saveName.fileNameExtension());
 
                 if (Block *xlatedData = d->bufferFile())

@@ -18,6 +18,8 @@
 
 #include "de/ChoiceWidget"
 #include "de/PopupMenuWidget"
+#include "de/TextValue"
+#include "de/NumberValue"
 
 namespace de {
 
@@ -303,6 +305,24 @@ void ChoiceWidget::useDefaultItems()
 {
     popup().menu().useDefaultItems();
     d->updateMaximumWidth();
+}
+
+ChoiceWidget::Item::Item(const String &label, const String &userText, const Image &image)
+    : ui::ActionItem(image, label)
+{
+    setData(TextValue(userText));
+}
+
+ChoiceWidget::Item::Item(const String &label, dint userNumber, const Image &image)
+    : ui::ActionItem(image, label)
+{
+    setData(NumberValue(userNumber));
+}
+
+ChoiceWidget::Item::Item(const String &label, ddouble userNumber, const Image &image)
+    : ui::ActionItem(image, label)
+{
+    setData(NumberValue(userNumber));
 }
 
 } // namespace de

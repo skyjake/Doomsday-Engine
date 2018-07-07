@@ -109,7 +109,7 @@ void StatusWidget::draw()
         buf.drawText(Vec2i(1, 0), msg);
 
         TimeSpan elapsed = d->link->connectedAt().since();
-        String time = String::format("| %d:%02d:%02d",
+        String time = Stringf("| %d:%02d:%02d",
                 int(elapsed.asHours()),
                 int(elapsed.asMinutes()) % 60,
                 int(elapsed) % 60);

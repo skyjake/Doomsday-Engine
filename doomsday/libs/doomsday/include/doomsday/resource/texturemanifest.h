@@ -107,7 +107,7 @@ public:
      */
     inline res::Uri composeUrn() const
     {
-        return res::Uri("urn", de::String::format("%s:%i", schemeName().c_str(), uniqueId()));
+        return res::Uri("urn", de::Stringf("%s:%i", schemeName().c_str(), uniqueId()));
     }
 
     /**

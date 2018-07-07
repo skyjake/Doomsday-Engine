@@ -291,7 +291,7 @@ String const &Game::statusAsText() const
 String Game::description() const
 {
     DENG2_GUARD(d);
-    return String::format(_E(b) "%s - %s\n" _E(.)
+    return Stringf(_E(b) "%s - %s\n" _E(.)
                   _E(l) "ID: " _E(.) "%s "
                   _E(l) "PluginId: "    _E(.) "%i\n"
                   _E(D)_E(b) "Packages:\n" _E(.)_E(.) "%s\n"
@@ -532,7 +532,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
                 }
 
                 // Format the resource name list.
-                text += String::format(_E(>) "%1%2",
+                text += Stringf(_E(>) "%1%2",
                         !resourceFound? _E(D) : "",
                         String::join(manifest.names(), _E(l) " or " _E(.)).c_str());
 
@@ -541,7 +541,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
                     text += String(": ") + _E(>) + (!resourceFound? _E(b) "missing " _E(.) : "");
                     if (resourceFound)
                     {
-                        text += String::format(
+                        text += Stringf(
                             _E(C) "\"%s\"" _E(.),
                             NativePath(manifest.resolvedPath(false /*don't try to locate*/))
                                 .expand()

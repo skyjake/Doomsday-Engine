@@ -829,6 +829,21 @@ DialogWidget::ButtonItem::ButtonItem(RoleFlags                 flags,
     , _role(flags)
 {}
 
+DialogWidget::ButtonItem::ButtonItem(RoleFlags                    flags,
+                                     const Image &                image,
+                                     const String &               label,
+                                     const std::function<void()> &action)
+    : ui::ActionItem(itemSemantics(flags), image, label, new CallbackAction(action))
+    , _role(flags)
+{}
+
+DialogWidget::ButtonItem::ButtonItem(RoleFlags                    flags,
+                                     const Image &                image,
+                                     const std::function<void()> &action)
+    : ui::ActionItem(itemSemantics(flags), image, "", new CallbackAction(action))
+    , _role(flags)
+{}
+
 ui::Item::Semantics DialogWidget::ButtonItem::itemSemantics(RoleFlags flags)
 {
     Semantics smt = ActivationClosesPopup | ShownAsButton;

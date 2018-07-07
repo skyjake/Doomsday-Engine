@@ -173,7 +173,7 @@ void ScriptCommandWidget::autoCompletionBegan(const String &prefix)
     if (compls)
     {
         showAutocompletionPopup(
-            String::format("Completions for %s:\n",
+            Stringf("Completions for %s:\n",
                            (_E(b) + prefix + _E(.)_E(m) + String::join(compls, "\n")).c_str()));
     }
 }

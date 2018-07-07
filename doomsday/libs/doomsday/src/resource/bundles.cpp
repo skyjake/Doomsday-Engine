@@ -177,7 +177,7 @@ DE_PIMPL(Bundles)
             {
                 int const ruleCount = block.size() - 1; // not counting "info"
                 block.add(new Info::KeyElement(VAR_REQUIRED_SCORE,
-                        String::format("%i", de::min(MATCH_MAXIMUM_SCORE, ruleCount))));
+                        Stringf("%i", de::min(MATCH_MAXIMUM_SCORE, ruleCount))));
             }
 
             formatEntries[bundleFormat].append(&block);

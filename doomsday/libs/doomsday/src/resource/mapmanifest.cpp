@@ -35,7 +35,7 @@ String MapManifest::description(res::Uri::ComposeAsTextFlags uriCompositionFlags
     // FIXME: Was used for alignment?
     if (_sourceFile)
     {
-        info += String::format(" " _E(C) "\"%s\"" _E(.),
+        info += Stringf(" " _E(C) "\"%s\"" _E(.),
                                NativePath(sourceFile()->composePath()).pretty().c_str());
     }
     return info;

@@ -136,7 +136,7 @@ void LocalServer::start(duint16 port,
     cmd.append("-game");
     cmd.append(gameMode);
     cmd.append("-cmd");
-    cmd.append(String::format("net-ip-port %d", port));
+    cmd.append(Stringf("net-ip-port %d", port));
 
     if (!d->name.isEmpty())
     {
@@ -175,7 +175,7 @@ bool LocalServer::isRunning() const
 Link *LocalServer::openLink()
 {
     if (!isRunning()) return nullptr;
-    return new Link(String::format("localhost:%d", d->port), 30.0);
+    return new Link(Stringf("localhost:%d", d->port), 30.0);
 }
 
 NativePath LocalServer::errorLogPath() const

@@ -25,7 +25,7 @@ using namespace de::shell;
 AboutDialog::AboutDialog()
 {
     LabelWidget *label = new LabelWidget;
-    label->setLabel(String::format("Doomsday Shell %s\nCopyright (c) %s\n\n"
+    label->setLabel(Stringf("Doomsday Shell %s\nCopyright (c) %s\n\n"
                        "The Shell is a utility for controlling and monitoring "
                                    "Doomsday servers using a text-based (curses) user interface.",
                                    SHELL_VERSION,

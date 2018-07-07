@@ -387,7 +387,7 @@ static dint printMapsIndex2(Path const &like, res::Uri::ComposeAsTextFlags compo
     dint idx = 0;
     for (res::MapManifest *mapManifest : found)
     {
-        String info = String::format(
+        String info = Stringf(
             "%3i: " _E(1) "%s" _E(.), idx, mapManifest->description(composeUriFlags).c_str());
 
         LOG_RES_MSG("  " _E(>)) << info;
@@ -437,7 +437,7 @@ static int printMaterialIndex2(world::MaterialScheme *scheme, Path const &like,
     int idx = 0;
     for (world::MaterialManifest *manifest : found)
     {
-        String info = String::format("%#i: %s%s" _E(.),
+        String info = Stringf("%#i: %s%s" _E(.),
                         idx,
                         manifest->hasMaterial()? _E(1) : _E(2),
                         manifest->description(composeUriFlags).c_str());
@@ -488,7 +488,7 @@ static int printTextureIndex2(res::TextureScheme *scheme, Path const &like,
     int idx = 0;
     for (res::TextureManifest *manifest : found)
     {
-        String info = String::format("%3i: %s%s",
+        String info = Stringf("%3i: %s%s",
                         idx,
                         manifest->hasTexture()? _E(0) : _E(2),
                         manifest->description(composeUriFlags).c_str());
@@ -579,12 +579,12 @@ static void printTextureIndex(res::Uri const &search,
     LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s") << printTotal << (printTotal == 1? "texture" : "textures in total");
 }
 
-static bool isKnownMaterialSchemeCallback(String name)
+static bool isKnownMaterialSchemeCallback(const String& name)
 {
     return world::Materials::get().isKnownMaterialScheme(name);
 }
 
-static bool isKnownTextureSchemeCallback(String name)
+static bool isKnownTextureSchemeCallback(const String& name)
 {
     return res::Textures::get().isKnownTextureScheme(name);
 }

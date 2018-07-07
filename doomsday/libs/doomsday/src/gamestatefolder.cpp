@@ -365,7 +365,7 @@ void GameStateFolder::Metadata::parse(String const &source)
 
 String GameStateFolder::Metadata::asStyledText() const
 {
-    String currentMapText = String::format(
+    String currentMapText = Stringf(
                 _E(Ta)_E(l) "  Episode: " _E(.)_E(Tb) "%s\n"
                 _E(Ta)_E(l) "  Uri: "     _E(.)_E(Tb) "%s",
             gets("episode").c_str(),
@@ -377,7 +377,7 @@ String GameStateFolder::Metadata::asStyledText() const
         int const hours   = time / 3600; time -= hours * 3600;
         int const minutes = time / 60;   time -= minutes * 60;
         int const seconds = time;
-        currentMapText += String::format(
+        currentMapText += Stringf(
             "\n" _E(Ta) _E(l) "  Time: " _E(.) _E(Tb) "%02d:%02d:%02d", hours, minutes, seconds);
     }
 
@@ -395,7 +395,7 @@ String GameStateFolder::Metadata::asStyledText() const
         pkgIds << Package::splitToHumanReadable(val->asText());
     }
 
-    return String::format(_E(1) "%s\n" _E(.)
+    return Stringf(_E(1) "%s\n" _E(.)
                   _E(Ta)_E(l) "  Game: "  _E(.)_E(Tb) "%s\n"
                   _E(Ta)_E(l) "  Session ID: "   _E(.)_E(Tb)_E(m) "0x%x" _E(.) "\n"
                   _E(T`)_E(D) "Current map:\n" _E(.) "%s\n"

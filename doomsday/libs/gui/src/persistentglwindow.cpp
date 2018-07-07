@@ -173,7 +173,7 @@ DE_PIMPL(PersistentGLWindow)
 
         String configName(String const &key) const
         {
-            return String::format("window.%s.%s", winId.c_str(), key.c_str());
+            return Stringf("window.%s.%s", winId.c_str(), key.c_str());
         }
 
         void saveToConfig()
@@ -698,7 +698,7 @@ DE_PIMPL(PersistentGLWindow)
         if (self().isVisible())
         {
             // Carry out queued operations after dropping back to the event loop.
-            Loop::get().timer(0.010, [this]() { performQueuedTasks(); });
+            Loop::timer(0.010, [this]() { performQueuedTasks(); });
         }
         else
         {
@@ -714,7 +714,7 @@ DE_PIMPL(PersistentGLWindow)
             Task &next = queue[0];
             if (next.delay > 0.0)
             {
-                Loop::get().timer(next.delay, [this](){ performQueuedTasks(); });
+                Loop::timer(next.delay, [this](){ performQueuedTasks(); });
                 next.delay = 0.0;
                 break;
             }

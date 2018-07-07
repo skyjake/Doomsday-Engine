@@ -305,7 +305,7 @@ StringList LumpDirectory::mapsInContiguousRangesAsText() const
         }
 
         auto mapNumberText = [] (int num, int fieldWidth) {
-            return String::format(fieldWidth == 2? "%02i" : "%i", num);
+            return Stringf(fieldWidth == 2? "%02i" : "%i", num);
         };
         int const numFieldWidth = (prefix == DE_STR("MAP")? 2 : 0);
 

@@ -182,9 +182,9 @@ static bool readCentralEnd(FileHandle &file, centralend_t &end)
 
 static String Zip_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 {
-    String msg = String::format("Invalid lump index %i", invalidIdx);
+    String msg = Stringf("Invalid lump index %i", invalidIdx);
     if (lastValidIdx < 0) msg += " (file is empty)";
-    else                  msg += String::format(", valid range: [0..%i)", lastValidIdx);
+    else                  msg += Stringf(", valid range: [0..%i)", lastValidIdx);
     return msg;
 }
 

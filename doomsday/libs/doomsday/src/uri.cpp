@@ -240,12 +240,12 @@ Uri::Uri(char const *nullTerminatedCStr) : d(new Impl)
     setUri(nullTerminatedCStr);
 }
 
-Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme)(String name))
+Uri Uri::fromUserInput(char **argv, int argc, bool (*knownScheme)(const String &name))
 {
     return fromUserInput(makeList(argc, argv), knownScheme);
 }
 
-Uri Uri::fromUserInput(const StringList &args, bool (*knownScheme)(String name))
+Uri Uri::fromUserInput(const StringList &args, bool (*knownScheme)(const String &name))
 {
     Uri output;
     if (args)

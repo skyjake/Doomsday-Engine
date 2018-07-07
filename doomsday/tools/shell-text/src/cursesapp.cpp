@@ -152,7 +152,7 @@ DE_PIMPL(CursesApp)
 
     void requestRefresh()
     {
-        Loop::get().timer(1.0 / 30.0, [this]() { refresh(); });
+        Loop::timer(1.0 / 30.0, [this]() { refresh(); });
     }
 
     void handleResize()

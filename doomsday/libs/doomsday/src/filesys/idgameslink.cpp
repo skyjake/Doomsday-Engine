@@ -75,7 +75,7 @@ DE_PIMPL(IdgamesLink)
                 path.segment(1) == CATEGORY_SOUNDS ||
                 path.segment(1) == CATEGORY_THEMES)
             {
-                return String::format("%s.%s.%s",
+                return Stringf("%s.%s.%s",
                         DOMAIN_IDGAMES.c_str(),
                         path.segment(1).toString().c_str(),
                         id.c_str());
@@ -85,14 +85,14 @@ DE_PIMPL(IdgamesLink)
                 String subset;
                 if      (path.segment(3) == DE_STR("deathmatch")) subset = DE_STR("deathmatch.");
                 else if (path.segment(3) == DE_STR("megawads"))   subset = DE_STR("megawads.");
-                return String::format("%s.%s.%s.%s%s",
+                return Stringf("%s.%s.%s.%s%s",
                         DOMAIN_IDGAMES.c_str(),
                         CATEGORY_LEVELS.c_str(),
                         path.segment(2).toString().c_str(),
                         subset.c_str(),
                         id.c_str());
             }
-            return String::format("%s.%s", DOMAIN_IDGAMES.c_str(), id.c_str());
+            return Stringf("%s.%s", DOMAIN_IDGAMES.c_str(), id.c_str());
         }
         else
         {

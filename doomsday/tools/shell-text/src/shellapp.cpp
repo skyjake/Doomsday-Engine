@@ -221,7 +221,7 @@ void ShellApp::askForPassword()
     }
     else
     {
-        Loop::get().timer(0.01, [this](){ closeConnection(); });
+        Loop::timer(0.01, [this](){ closeConnection(); });
     }
 
     rootWidget().setFocus(d->cli);
@@ -271,7 +271,7 @@ void ShellApp::updateMenuWithFoundServers()
     int pos = 2;
     for (const Address &sv : d->finder.foundServers())
     {
-        String label = sv.asText() + String::format(" (%s; %d/%d)",
+        String label = sv.asText() + Stringf(" (%s; %d/%d)",
                 d->finder.name(sv).left(String::CharPos(20)).c_str(),
                 d->finder.playerCount(sv),
                 d->finder.maxPlayers(sv));

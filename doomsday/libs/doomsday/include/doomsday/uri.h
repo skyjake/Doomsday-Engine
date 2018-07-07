@@ -207,9 +207,12 @@ public:
      *                     attempting to resolve ambiguous cases (only the one argument
      *                     is provided.
      */
-    static Uri fromUserInput(char **argv, int argc, bool (*knownScheme)(String name) = nullptr);
+    static Uri fromUserInput(char **argv,
+                             int    argc,
+                             bool (*knownScheme)(const String &name) = nullptr);
 
-    static Uri fromUserInput(const StringList &args, bool (*knownScheme)(String name) = nullptr);
+    static Uri fromUserInput(const StringList &args,
+                             bool (*knownScheme)(const String &name) = nullptr);
 
     /**
      * Convert this URI to a text string.

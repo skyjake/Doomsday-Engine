@@ -1183,7 +1183,7 @@ D_CMD(ListLumps)
         String containerPath  = NativePath(lump.container().composePath()).pretty();
         String lumpPath       = NativePath(lump.composePath()).pretty();
 
-        LOG_RES_MSG(String::format("%04s - \"%s:%s\" (size: %zu bytes%s)",
+        LOG_RES_MSG(Stringf("%04s - \"%s:%s\" (size: %zu bytes%s)",
                                    idx++,
                                    containerPath.c_str(),
                                    lumpPath.c_str(),
@@ -1228,7 +1228,7 @@ D_CMD(ListFiles)
                     << NativePath(file.composePath()).pretty()
                     << fileCount << (fileCount != 1 ? "files" : "file")
                     << (file.hasStartup()? ", startup" : "")
-                    << (crc? String::format(" [%x]", crc).c_str() : "");
+                    << (crc? Stringf(" [%x]", crc).c_str() : "");
 
             totalFiles += fileCount;
             ++totalPackages;

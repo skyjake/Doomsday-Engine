@@ -56,6 +56,10 @@ public:
         {
             setData(userData);
         }
+
+        Item(String const &label, const String &userText, Image const &image = Image());
+        Item(String const &label, dint userNumber, Image const &image = Image());
+        Item(String const &label, ddouble userNumber, Image const &image = Image());
     };
 
 public:

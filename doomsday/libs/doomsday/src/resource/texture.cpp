@@ -208,9 +208,9 @@ void Texture::setFlags(Flags flagsToChange, FlagOp operation)
 
 String Texture::description() const
 {
-    String str = String::format("Texture " _E(b) "%s" _E(.), manifest().composeUri().asText().c_str());
+    String str = Stringf("Texture " _E(b) "%s" _E(.), manifest().composeUri().asText().c_str());
 #ifdef DE_DEBUG
-    str += String::format(" [addr:%p]", this);
+    str += Stringf(" [addr:%p]", this);
 #endif
     str += _E(l) " Dimensions:" _E(.)
         +  (width() == 0 && height() == 0? String("unknown (not yet prepared)")

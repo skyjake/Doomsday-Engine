@@ -720,7 +720,7 @@ DE_PIMPL(DataBundle), public Lockable
                     Date const releaseDate = Date::fromText(match.captured(2).strip());
                     if (releaseDate.isValid())
                     {
-                        meta.set(VAR_VERSION(), String::format("%i.%i.%i",
+                        meta.set(VAR_VERSION(), Stringf("%i.%i.%i",
                                  releaseDate.year(),
                                  releaseDate.month(),
                                  releaseDate.dayOfMonth()));
@@ -817,7 +817,7 @@ DE_PIMPL(DataBundle), public Lockable
         int count = 0;
         for (auto const &tag : gameTags())
         {
-            const RegExp re(String::format("\\b%s\\b", tag.c_str()), CaseInsensitive);
+            const RegExp re(Stringf("\\b%s\\b", tag.c_str()), CaseInsensitive);
             RegExpMatch match;
             if (re.hasMatch(meta.gets(VAR_TAGS())))
             {
@@ -965,7 +965,7 @@ DE_PIMPL(DataBundle), public Lockable
             if (!version.isEmpty())
             {
                 DE_ASSERT(Version(version).isValid());
-                linkPath += String::format("_%s.pack", version.c_str());
+                linkPath += Stringf("_%s.pack", version.c_str());
             }
             else
             {
@@ -1432,7 +1432,7 @@ StringList DataBundle::gameTags()
 
 String DataBundle::anyGameTagPattern()
 {
-    return String::format("\\b(%1)\\b", String::join(gameTags(), "|").c_str());
+    return Stringf("\\b(%1)\\b", String::join(gameTags(), "|").c_str());
 }
 
 String DataBundle::cleanIdentifier(String const &text)

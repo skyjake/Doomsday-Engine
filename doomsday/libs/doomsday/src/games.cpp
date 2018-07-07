@@ -400,7 +400,7 @@ D_CMD(ListGames)
 
         if (!list.isEmpty()) list += "\n";
 
-        list += String::format(_E(0)
+        list += Stringf(_E(0)
                        _E(Ta) "%s%s "
                        _E(Tb) "%s "
                        _E(Tc) _E(2) "%s " _E(i) "(%s)",

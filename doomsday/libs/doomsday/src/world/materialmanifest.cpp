@@ -97,7 +97,7 @@ String MaterialManifest::description(res::Uri::ComposeAsTextFlags uriComposition
     String info =
         composeUri().compose(uriCompositionFlags | res::Uri::DecodePath) + " " + sourceDescription();
 #ifdef __CLIENT__
-    info += String::format("x%i", !hasMaterial()? 0 : material().animatorCount());
+    info += Stringf("x%i", !hasMaterial()? 0 : material().animatorCount());
 #endif
     return info;
 }

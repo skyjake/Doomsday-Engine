@@ -303,7 +303,7 @@ String ServerInfo::asStyledText() const
     const auto & playerNames = players();
     const String nameStr     = String::join(playerNames, " ");
 
-    return String::format(_E(b) "%s" _E(.) "\n%s\n" _E(T`) TABBED("Address:", "%s")
+    return Stringf(_E(b) "%s" _E(.) "\n%s\n" _E(T`) TABBED("Address:", "%s")
                           TABBED("Joinable:", "%s") TABBED("Players:", "%d / %d%s")
                           TABBED("Game:", "%s\n%s\n%s %s") TABBED("Packages:", "%s"),
                           name().c_str(),
