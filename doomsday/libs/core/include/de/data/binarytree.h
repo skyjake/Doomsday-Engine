@@ -504,10 +504,10 @@ public:
      */
     String summary() const
     {
-        String text = String::format("%i nodes, %i leafs", nodeCount(), leafCount());
+        String text = Stringf("%i nodes, %i leafs", nodeCount(), leafCount());
         if (!isLeaf())
         {
-            text += String::format(" (balance is %zu:%zu)",
+            text += Stringf(" (balance is %zu:%zu)",
                                    hasRight() ? right().height() : 0,
                                    hasLeft()  ? left().height()  : 0);
         }

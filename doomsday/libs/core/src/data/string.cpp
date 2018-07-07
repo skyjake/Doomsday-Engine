@@ -749,16 +749,13 @@ String String::format(const char *format, ...)
     for (;;)
     {
         va_start(args, format);
-        int count =
-            vsnprintf(buffer.size() == 0 ? nullptr : reinterpret_cast<char *>(buffer.data()),
-                      buffer.size(),
-                      format,
-                      args);
+        int count = vsnprintf(buffer ? buffer.writableCharPointer() : nullptr,
+                              buffer.size(), format, args);
         va_end(args);
 
         if (count < 0)
         {
-            warning("[String::format] Error: %s", errno, strerror(errno));
+            warning("[String::format] Error %i: %s", errno, strerror(errno));
             return buffer;
         }
         if (dsize(count) < buffer.size())
@@ -773,7 +770,7 @@ String String::format(const char *format, ...)
 
 String String::asText(dfloat value, int precision)
 {
-    return String::format(stringf("%%.%if", precision).c_str(), value);
+    return Stringf(stringf("%%.%if", precision).c_str(), value);
 }
 
 dint String::toInt(bool *ok, int base, duint flags) const
@@ -847,7 +844,7 @@ void String::get(Offset at, Byte *values, Size count) const
     {
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("String::get", "Out of range " +
-                          String::format("(%zu[+%zu] > %zu)", at, count, size()));
+                          Stringf("(%zu[+%zu] > %zu)", at, count, size()));
     }
     std::memcpy(values, constBegin_String(&_str) + at, count);
 }

@@ -90,7 +90,7 @@ inline String ScriptArgumentComposer::scriptArgumentAsText(const String &arg)
     }
     String quoted(arg);
     quoted.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");
-    return String::format("\"%s\"", quoted.c_str());
+    return Stringf("\"%s\"", quoted.c_str());
 }
 
 template <>

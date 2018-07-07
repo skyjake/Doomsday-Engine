@@ -138,7 +138,7 @@ String Folder::describe() const
     // As a special case, plain native directories should be described as such.
     if (auto const *direcFeed = primaryFeedMaybeAs<DirectoryFeed>())
     {
-        return String::format("directory \"%s\"", direcFeed->nativePath().pretty().c_str());
+        return Stringf("directory \"%s\"", direcFeed->nativePath().pretty().c_str());
     }
 
     String desc;
@@ -148,13 +148,13 @@ String Folder::describe() const
     }
     else
     {
-        desc = String::format("folder \"%s\"", name().c_str());
+        desc = Stringf("folder \"%s\"", name().c_str());
     }
 
     const String feedDesc = describeFeeds();
     if (!feedDesc.isEmpty())
     {
-        desc += String::format(" (%s)", feedDesc.c_str());
+        desc += Stringf(" (%s)", feedDesc.c_str());
     }
 
     return desc;
@@ -168,14 +168,14 @@ String Folder::describeFeeds() const
 
     if (d->feeds.size() == 1)
     {
-        desc += String::format("contains %zu file%s from %s",
+        desc += Stringf("contains %zu file%s from %s",
                                d->contents.size(),
                                DE_PLURAL_S(d->contents.size()),
                                d->feeds.front()->description().c_str());
     }
     else if (d->feeds.size() > 1)
     {
-        desc += String::format("contains %zu file%s from %zu feed%s",
+        desc += Stringf("contains %zu file%s from %zu feed%s",
                                d->contents.size(),
                                DE_PLURAL_S(d->contents.size()),
                                d->feeds.size(),
@@ -184,7 +184,7 @@ String Folder::describeFeeds() const
         int n = 0;
         for (auto *i : d->feeds)
         {
-            desc += String::format("; feed #%i is %s", n + 1, i->description().c_str());
+            desc += Stringf("; feed #%i is %s", n + 1, i->description().c_str());
             ++n;
         }
     }

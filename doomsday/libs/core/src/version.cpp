@@ -83,18 +83,18 @@ String Version::compactNumber() const
 {
     if (patch != 0)
     {
-        return String::format("%d.%d.%d", major, minor, patch);
+        return Stringf("%d.%d.%d", major, minor, patch);
     }
-    return String::format("%d.%d", major, minor);
+    return Stringf("%d.%d", major, minor);
 }
 
 String Version::fullNumber() const
 {
     if (build != 0)
     {
-        return String::format("%d.%d.%d.%d", major, minor, patch, build);
+        return Stringf("%d.%d.%d.%d", major, minor, patch, build);
     }
-    return String::format("%d.%d.%d", major, minor, patch);
+    return Stringf("%d.%d.%d", major, minor, patch);
 }
 
 String Version::asHumanReadableText() const
@@ -168,7 +168,7 @@ bool Version::operator > (Version const &other) const
 
 String Version::userAgent() const
 {
-    return String::format("Doomsday Engine %s (%s)", fullNumber().c_str(), operatingSystem().c_str());
+    return Stringf("Doomsday Engine %s (%s)", fullNumber().c_str(), operatingSystem().c_str());
 }
 
 String Version::operatingSystem()

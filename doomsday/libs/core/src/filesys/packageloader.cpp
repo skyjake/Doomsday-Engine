@@ -572,7 +572,7 @@ StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
         Version const pkgVersion(meta.gets("version"));
         if (idType == Versioned && pkgVersion.isValid()) // nonzero
         {
-            ids << String::format("%s_%s", meta.gets("ID").c_str(), pkgVersion.fullNumber().c_str());
+            ids << Stringf("%s_%s", meta.gets("ID").c_str(), pkgVersion.fullNumber().c_str());
         }
         else
         {

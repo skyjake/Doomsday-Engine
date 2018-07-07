@@ -83,7 +83,7 @@ Value::Text NumberValue::asText() const
     }
     else if (_semantic & Hex)
     {
-        s << String::format("0x%x", duint32(_value));
+        s << Stringf("0x%x", duint32(_value));
     }
     else if (_semantic & Int)
     {

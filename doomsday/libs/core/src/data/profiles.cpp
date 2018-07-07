@@ -105,7 +105,7 @@ DE_PIMPL(Profiles)
     String fileName() const
     {
         if (persistentName.isEmpty()) return "";
-        return String::format("/home/configs/%s.dei", persistentName.c_str());
+        return Stringf("/home/configs/%s.dei", persistentName.c_str());
     }
 
     void loadProfilesFromInfo(File const &file, bool markReadOnly)

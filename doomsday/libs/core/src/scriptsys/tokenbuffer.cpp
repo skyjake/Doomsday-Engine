@@ -65,7 +65,7 @@ void Token::appendChar(Char c)
 
 String Token::asText() const
 {
-    return String::format("%s '%s' (on line %u)", typeToText(_type), str().c_str(), _line);
+    return Stringf("%s '%s' (on line %u)", typeToText(_type), str().c_str(), _line);
 }
 
 String Token::str() const

@@ -94,6 +94,7 @@ public:
     const Byte *cdata() const;
     inline const Byte *constData() const { return cdata(); }
     inline const char *c_str() const { return reinterpret_cast<const char *>(data()); }
+    inline char *writableCharPointer() { return reinterpret_cast<char *>(data()); }
 
     inline bool empty() const { return size() == 0; }
     inline bool isEmpty() const { return size() == 0; }

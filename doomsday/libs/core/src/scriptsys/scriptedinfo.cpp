@@ -246,7 +246,7 @@ DE_PIMPL(ScriptedInfo)
         int counter = 0;
         for (;;)
         {
-            String name = String::format(VAR_SCRIPT, counter);
+            String name = Stringf(VAR_SCRIPT, counter);
             if (!where.has(name)) return name;
             counter++;
         }

@@ -104,7 +104,7 @@ void Block::get(Offset atPos, Byte *values, Size count) const
     {
         /// @throw OffsetError The accessed region of the block was out of range.
         throw OffsetError("Block::get", "Out of range " +
-                          String::format("(%zu[+%zu] > %zu)", atPos, count, size()));
+                          Stringf("(%zu[+%zu] > %zu)", atPos, count, size()));
     }
     std::memcpy(values, constData() + atPos, count);
 }

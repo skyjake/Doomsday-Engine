@@ -678,7 +678,7 @@ NativePath App::tempPath()
 #if defined (WIN32)
     DE_ASSERT_FAIL("tempPath not implemented");
 #else
-    return String::format("/tmp/doomsday-%i", pid_Process(nullptr));
+    return Stringf("/tmp/doomsday-%i", pid_Process(nullptr));
 #endif
 }
 
@@ -759,7 +759,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
         if (!homeFolder().has("persist.pack") || commandLine().has("-reset"))
         {
             ZipArchive arch;
-            arch.add("Info", String::format("# Package for %s's persistent state.\n", d->metadata.gets(APP_NAME).c_str()));
+            arch.add("Info", Stringf("# Package for %s's persistent state.\n", d->metadata.gets(APP_NAME).c_str()));
             File &persistPack = homeFolder().replaceFile("persist.pack");
             Writer(persistPack) << arch;
             persistPack.reinterpret()->as<ArchiveFolder>().populate();

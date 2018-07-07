@@ -163,7 +163,7 @@ public:
             }
             else if (c != ',')
             {
-                LOG_DEBUG(String::format("got '%lc' instead of ','", c));
+                LOG_DEBUG(Stringf("got '%lc' instead of ','", c));
                 error("key/value pairs must be separated by comma");
             }
         }

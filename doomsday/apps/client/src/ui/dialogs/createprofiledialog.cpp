@@ -29,11 +29,11 @@
 #include <de/AuxButtonWidget>
 #include <de/CallbackAction>
 #include <de/ChoiceWidget>
-#include <de/GridLayout>
 #include <de/DialogContentStylist>
+#include <de/GridLayout>
 #include <de/FoldPanelWidget>
 #include <de/PackageLoader>
-#include <de/PersistentState>
+#include <de/TextValue>
 #include <de/ScriptedInfo>
 #include <de/SliderWidget>
 #include <de/ToggleWidget>
@@ -152,7 +152,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
             valid = false;
         }
         if (gameChoice->isValidSelection() &&
-            gameChoice->selectedItem().data().toString().isEmpty())
+            gameChoice->selectedItem().data().asText().isEmpty()) 
         {
             valid = false;
         }
@@ -163,7 +163,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
     {
         if (gameChoice->isValidSelection())
         {
-            tempProfile->setGame(gameChoice->selectedItem().data().toString());
+            tempProfile->setGame(gameChoice->selectedItem().data().asText());
             // Used with the PackagesButtonWidget.
             updateMapList();
         }
@@ -176,11 +176,11 @@ DE_GUI_PIMPL(CreateProfileDialog)
         String oldChoice;
         if (!mapItems.isEmpty())
         {
-            oldChoice = autoStartMap->selectedItem().data().toString();
+            oldChoice = autoStartMap->selectedItem().data().asText();
         }
 
         mapItems.clear();
-        mapItems << new ChoiceItem(tr("Title screen"), "");
+        mapItems << new ChoiceItem("Title screen", TextValue());
 
         // Find out all the required and selected packages.
         StringList packageIds;
@@ -190,10 +190,9 @@ DE_GUI_PIMPL(CreateProfileDialog)
         }
 
         // Create menu items for the Start Map choice.
-        for (int i = packageIds.size() - 1; i >= 0; --i)
+        for (auto i = packageIds.rbegin(); i != packageIds.rend(); ++i)
         {
-            String const pkgId = packageIds.at(i);
-            if (File const *pkgFile = PackageLoader::get().select(pkgId))
+            if (File const *pkgFile = PackageLoader::get().select(*i))
             {
                 DataBundle const *bundle = maybeAs<DataBundle>(pkgFile->target());
                 if (!bundle || !bundle->lumpDirectory())
@@ -207,22 +206,24 @@ DE_GUI_PIMPL(CreateProfileDialog)
                     mapItems << new ui::Item(ui::Item::Separator);
 
                     String const wadName = Package::metadata(*pkgFile).gets(Package::VAR_TITLE);
-                    for (String mapId : maps)
+                    for (const String &mapId : maps)
                     {
                         // Only show each map identifier once; only the last lump can
                         // be loaded.
-                        if (mapItems.findData(mapId) == ui::Data::InvalidPos)
+                        if (mapItems.findData(TextValue(mapId)) == ui::Data::InvalidPos)
                         {
-                            mapItems << new ChoiceItem(String("%1  " _E(s)_E(C) "%2").arg(mapId).arg(wadName),
-                                                       mapId);
+                            mapItems << new ChoiceItem(String::format("%s  " _E(s) _E(C) "%s",
+                                                                      mapId.c_str(),
+                                                                      wadName.c_str()),
+                                                       TextValue(mapId));
                         }
                     }
                 }
             }
         }
 
-        auto const pos = mapItems.findData(oldChoice);
-        autoStartMap->setSelected(pos != ui::Data::InvalidPos ? pos : 0);
+        auto const pos = mapItems.findData(TextValue(oldChoice));
+        autoStartMap->setSelected(pos != ui::Data::InvalidPos? pos : 0);
     }
 
     void updateDataFile()
@@ -251,8 +252,8 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     : InputDialog("create-profile")
     , d(new Impl(this))
 {
-    title()  .setText(tr("New Profile"));
-    message().setText(tr("Enter a name for the new game profile."));
+    title()  .setText("New Profile");
+    message().setText("Enter a name for the new game profile.");
 
     // MessageDialog applies a layout on its area contents, so we'll have our own parent widget
     // for our widgets.
@@ -269,7 +270,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
             if (game.family() == gameFamily)
             {
                 const char *labelColor = (!game.isPlayable() ? _E(F) : "");
-                d->gameChoice->items() << new ChoiceItem(labelColor + game.title(), game.id());
+                d->gameChoice->items() << new ChoiceItem(labelColor + game.title(), TextValue(game.id()));
             }
             return LoopContinue;
         });
@@ -277,7 +278,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
 
         if (d->gameChoice->items().isEmpty())
         {
-            d->gameChoice->items() << new ChoiceItem(tr("No playable games"), "");
+        d->gameChoice->items() << new ChoiceItem("No playable games", TextValue());
         }
 
         // Custom data file selection.
@@ -333,7 +334,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
 
         // Packages selection.
         form->add(d->packages = new PackagesButtonWidget);
-        d->packages->setNoneLabel(tr("None"));
+        d->packages->setNoneLabel("None");
         d->tempProfile.reset(new GameProfile);
         d->packages->setGameProfile(*d->tempProfile);
 
@@ -362,16 +363,16 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         // Auto start map.
         form->add(d->autoStartMap = new ChoiceWidget);
         d->autoStartMap->popup().menu().enableIndicatorDraw(true);
-        d->autoStartMap->items() << new ChoiceItem(tr("Title screen"), "");
+        d->autoStartMap->items() << new ChoiceItem("Title screen", TextValue());
 
         // Auto start skill.
         form->add(d->autoStartSkill = new ChoiceWidget);
         d->autoStartSkill->items()
-                << new ChoiceItem(tr("Novice"),    1)
-                << new ChoiceItem(tr("Easy"),      2)
-                << new ChoiceItem(tr("Normal"),    3)
-                << new ChoiceItem(tr("Hard"),      4)
-                << new ChoiceItem(tr("Nightmare"), 5);
+            << new ChoiceItem("Novice",    NumberValue(1))
+            << new ChoiceItem("Easy",      NumberValue(2))
+            << new ChoiceItem("Normal",    NumberValue(3))
+            << new ChoiceItem("Hard",      NumberValue(4))
+            << new ChoiceItem("Nightmare", NumberValue(5));
         d->autoStartSkill->disable();
         d->autoStartSkill->setSelected(2);
 
@@ -381,9 +382,9 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         layout << *LabelWidget::newWithText(tr("Starts in:"), form) << *d->autoStartMap
                << *LabelWidget::newWithText(tr("Skill:"), form) << *d->autoStartSkill;
         form->rule().setSize(layout);
-    optionsLabel->setFont("separator.label");
-    optionsLabel->margins().setTop("gap");
-    layout.setCellAlignment(Vec2i(0, layout.gridSize().y), ui::AlignLeft);
+        optionsLabel->setFont("separator.label");
+        optionsLabel->margins().setTop("gap");
+        layout.setCellAlignment(Vec2i(0, layout.gridSize().y), ui::AlignLeft);
     }
 
     // Additional options defined by the game.
@@ -396,7 +397,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     }
 
     buttons().clear()
-            << new DialogButtonItem(Id1 | Default | Accept, tr("Create"))
+            << new DialogButtonItem(Id1 | Default | Accept, "Create")
             << new DialogButtonItem(Reject);
 
     // The Create button is enabled when a valid name is entered.
@@ -407,16 +408,13 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     d->gameChanged();
     d->populateOptions();
 
-    connect(d->gameChoice, &ChoiceWidget::selectionChanged, [this] () { d->gameChanged(); });
-    connect(d->packages, &PackagesButtonWidget::packageSelectionChanged,
-            [this] (QStringList) { d->updateMapList(); });
-    connect(d->autoStartMap, &ChoiceWidget::selectionChanged, [this] ()
-    {
+    d->gameChoice->audienceForSelection() += [this](){ d->gameChanged(); };
+    d->packages->audienceForSelection() += [this](){ d->updateMapList(); };
+    d->autoStartMap->audienceForSelection() += [this]() {
         d->autoStartSkill->disable(d->autoStartMap->items().isEmpty() ||
-                                   d->autoStartMap->selectedItem().data().toString().isEmpty());
-    });
-    connect(&editor(), &LineEditWidget::editorContentChanged,
-            [this] () { d->checkValidProfileName(); });
+                                   d->autoStartMap->selectedItem().data().asText().isEmpty());
+    };
+    editor().audienceForContentChange() += [this]() { d->checkValidProfileName(); };
 }
 
 GameProfile *CreateProfileDialog::makeProfile() const
@@ -434,12 +432,12 @@ GameProfile *CreateProfileDialog::makeProfile() const
 void CreateProfileDialog::fetchFrom(GameProfile const &profile)
 {
     editor().setText(profile.name());
-    d->gameChoice->setSelected(d->gameChoice->items().findData(profile.gameId()));
+    d->gameChoice->setSelected(d->gameChoice->items().findData(TextValue(profile.gameId())));
     d->tempProfile->setCustomDataFile(profile.customDataFile());
     d->packages->setPackages(profile.packages());
     d->updateDataFile();
-    d->autoStartMap->setSelected(d->autoStartMap->items().findData(profile.autoStartMap()));
-    d->autoStartSkill->setSelected(d->autoStartSkill->items().findData(profile.autoStartSkill()));
+    d->autoStartMap->setSelected(d->autoStartMap->items().findData(TextValue(profile.autoStartMap())));
+    d->autoStartSkill->setSelected(d->autoStartSkill->items().findData(NumberValue(profile.autoStartSkill())));
     d->tempProfile->setSaveLocationId(profile.saveLocationId());
     d->tempProfile->objectNamespace() = profile.objectNamespace();
     d->populateOptions();
@@ -450,13 +448,13 @@ void CreateProfileDialog::applyTo(GameProfile &profile) const
     profile.setName(profileName());
     if (d->gameChoice->isValidSelection())
     {
-        profile.setGame(d->gameChoice->selectedItem().data().toString());
+        profile.setGame(d->gameChoice->selectedItem().data().asText());
     }
     profile.setCustomDataFile(d->tempProfile->customDataFile());
     profile.setUseGameRequirements(true);
     profile.setPackages(d->packages->packages());
-    profile.setAutoStartMap(d->autoStartMap->selectedItem().data().toString());
-    profile.setAutoStartSkill(d->autoStartSkill->selectedItem().data().toInt());
+    profile.setAutoStartMap(d->autoStartMap->selectedItem().data().asText());
+    profile.setAutoStartSkill(d->autoStartSkill->selectedItem().data().asInt());
     profile.setSaveLocationId(profile.saveLocationId());
     profile.objectNamespace() = d->tempProfile->objectNamespace();
 }

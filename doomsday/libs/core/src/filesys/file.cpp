@@ -419,14 +419,14 @@ String File::fileListAsText(List<File const *> files)
         if (!txt.isEmpty()) txt += "\n";
 
         // Folder / Access flags / source flag / has origin feed.
-        String flags = String::format("%c%c%c%c%c",
+        String flags = Stringf("%c%c%c%c%c",
                                       is<Folder>(f)?                'd' : '-',
                                       f->mode().testFlag(Write)?    'w' : 'r',
                                       f->mode().testFlag(Truncate)? 't' : '-',
                                       f->source() != f?             'i' : '-',
                                       f->originFeed()?              'f' : '-');
 
-        txt += flags + String::format("%9zu %23s %s",
+        txt += flags + Stringf("%9zu %23s %s",
                                       f->size(),
                                       f->status().modifiedAt.asText().c_str(),
                                       f->name().c_str());
@@ -436,7 +436,7 @@ String File::fileListAsText(List<File const *> files)
         {
             if (!link->isBroken())
             {
-                txt += String::format(" -> %s", link->target().path().c_str());
+                txt += Stringf(" -> %s", link->target().path().c_str());
             }
             else
             {

@@ -75,7 +75,7 @@ Value *NativePointerValue::duplicate() const
 
 Value::Text NativePointerValue::asText() const
 {
-    return String::format("(native object %p)", d->object);
+    return Stringf("(native object %p)", d->object);
 }
 
 bool NativePointerValue::isTrue() const

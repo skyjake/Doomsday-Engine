@@ -239,14 +239,14 @@ String RemoteFile::describe() const
 {
     if (isReady())
     {
-        return String::format("\"%s\"", name().c_str());
+        return Stringf("\"%s\"", name().c_str());
     }
     String targetDesc;
     if (!isBroken())
     {
         targetDesc = " cached in " + target().description();
     }
-    return String::format("remote file \"%s\" (%s)%s",
+    return Stringf("remote file \"%s\" (%s)%s",
                           name().c_str(),
                           state() == NotReady   ? "not ready"
                         : state() == Recovering ? "downloading"

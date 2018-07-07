@@ -145,7 +145,7 @@ NativeFile::~NativeFile()
 String NativeFile::describe() const
 {
     DE_GUARD(this);
-    return String::format("\"%s\"", d->nativePath.pretty().c_str());
+    return Stringf("\"%s\"", d->nativePath.pretty().c_str());
 }
 
 Block NativeFile::metaId() const
@@ -213,7 +213,7 @@ void NativeFile::get(Offset at, Byte *values, Size count) const
         /// @throw IByteArray::OffsetError  The region specified for reading extends
         /// beyond the bounds of the file.
         throw OffsetError("NativeFile::get", description() + ": cannot read past end of file " +
-                          String::format("(%zu[+%zu] > %zu)", at, count, size()));
+                          Stringf("(%zu[+%zu] > %zu)", at, count, size()));
     }
     auto &in = input();
     if (in.tellg() != std::ifstream::pos_type(at)) in.seekg(at);

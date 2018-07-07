@@ -420,7 +420,7 @@ String ArrayValue::asInfo() const
     {
         String text = value->asText();
         text.replace("\"", "''"); // Double quote in Info syntax.
-        values << String::format("\"%s\"", text.c_str());
+        values << Stringf("\"%s\"", text.c_str());
     }
     return String("<") + String::join(values, ", ") + ">";
 }

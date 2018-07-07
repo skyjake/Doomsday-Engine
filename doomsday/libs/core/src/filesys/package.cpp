@@ -449,7 +449,7 @@ std::pair<String, Version> Package::split(String const &identifier_version)
 String Package::splitToHumanReadable(String const &identifier_version)
 {
     auto const id_ver = split(identifier_version);
-    return String::format("%s " _E(C) "(%s)" _E(.),
+    return Stringf("%s " _E(C) "(%s)" _E(.),
                           id_ver.first.c_str(),
                           id_ver.second.isValid()
                               ? stringf("version %s", id_ver.second.fullNumber().c_str()).c_str()
@@ -487,12 +487,12 @@ String Package::versionedIdentifierForFile(File const &file)
     auto const id_ver = split(file.name().fileNameWithoutExtension());
     if (id_ver.second.isValid())
     {
-        return String::format("%s_%s", id.c_str(), id_ver.second.fullNumber().c_str());
+        return Stringf("%s_%s", id.c_str(), id_ver.second.fullNumber().c_str());
     }
     // The version may be specified in metadata.
     if (auto const *pkgVer = file.objectNamespace().tryFind(PACKAGE_VERSION))
     {
-        return String::format("%s_%s", id.c_str(), Version(pkgVer->value().asText()).fullNumber().c_str());
+        return Stringf("%s_%s", id.c_str(), Version(pkgVer->value().asText()).fullNumber().c_str());
     }
     return id;
 }

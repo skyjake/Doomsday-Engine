@@ -54,7 +54,7 @@ DE_PIMPL_NOREF(Scheduler)
         if (publicName.isEmpty())
         {
             // Choose a name automatically.
-            return String::format("__TL%x__", counter++);
+            return Stringf("__TL%x__", counter++);
         }
         return publicName;
     }

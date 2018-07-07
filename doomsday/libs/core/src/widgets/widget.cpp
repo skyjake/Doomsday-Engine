@@ -292,7 +292,7 @@ DotPath Widget::path() const
         }
         else
         {
-            result = String::format("0x%x", w) + result;
+            result = Stringf("0x%x", w) + result;
         }
         w = w->parent();
     }
@@ -607,7 +607,7 @@ Widget *Widget::walkChildren(WalkDirection dir, const std::function<LoopResult (
 
 String Widget::uniqueName(String const &name) const
 {
-    return String::format("%s.%s", id().asText().c_str(), name.c_str());
+    return Stringf("%s.%s", id().asText().c_str(), name.c_str());
 }
 
 Widget::NotifyArgs Widget::notifyArgsForDraw() const

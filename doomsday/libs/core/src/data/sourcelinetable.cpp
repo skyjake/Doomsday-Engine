@@ -65,7 +65,7 @@ SourceLineTable::LineId SourceLineTable::lineId(String const &path, duint lineNu
 String SourceLineTable::sourceLocation(LineId sourceId) const
 {
     auto const location = sourcePathAndLineNumber(sourceId);
-    return String::format("%s:%u", location.first.c_str(), location.second);
+    return Stringf("%s:%u", location.first.c_str(), location.second);
 }
 
 SourceLineTable::PathAndLine SourceLineTable::sourcePathAndLineNumber(LineId sourceId) const

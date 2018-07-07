@@ -458,7 +458,7 @@ DE_PIMPL_NOREF(Socket)
         }
         DE_FOR_EACH_OBSERVER(i, self.audienceForError())
         {
-            i->error(self, String::format("Socket error %i: %s", error, msg));
+            i->error(self, Stringf("Socket error %i: %s", error, msg));
         }
     }
 

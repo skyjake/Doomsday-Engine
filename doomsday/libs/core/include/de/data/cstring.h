@@ -78,7 +78,7 @@ public:
     CString substr(size_t start, size_t count = npos) const;
     CString leftStrip() const;
     CString rightStrip() const;
-    inline CString strip() { return leftStrip().rightStrip(); }
+    inline CString strip() const { return leftStrip().rightStrip(); }
     CString left(BytePos pos) const { return {_range.start, _range.start + pos}; }
     inline mb_iterator begin() const { return _range.start; }
     inline mb_iterator end() const { updateEnd(); return {_range.end, _range.start}; }

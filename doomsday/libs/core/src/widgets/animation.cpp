@@ -343,7 +343,7 @@ void Animation::finish()
 
 String Animation::asText() const
 {
-    return String::format(
+    return Stringf(
         "Animation(%f -> %f, ETA:%lf s)", d->value, d->target, ddouble(remainingTime()));
 }
 

@@ -407,24 +407,24 @@ String Time::asText(Format format) const
             String prefix;
             if (format == BuildNumberAndSecondsSinceStart)
             {
-                prefix = String::format("#%-4d ", asBuildNumber());
+                prefix = Stringf("#%-4d ", asBuildNumber());
             }
             if (hours > 0)
             {
-                return String::format("%s%ih%7.3f", prefix.c_str(), hours, sec);
+                return Stringf("%s%ih%7.3f", prefix.c_str(), hours, sec);
             }
-            return String::format("%s%7.3f", prefix.c_str(), sec);
+            return Stringf("%s%7.3f", prefix.c_str(), sec);
         }
         else
         {
             auto ms = millisecondsSinceEpoch();
-            return String::format("#%-4d ", asBuildNumber()) + asText("%H:%M:%S") +
+            return Stringf("#%-4d ", asBuildNumber()) + asText("%H:%M:%S") +
                    stringf(".%03i", ms % 1000).c_str();
         }
     }
     if (d->flags.testFlag(Impl::HighPerformance))
     {
-        return String::format("+%.3f sec", ddouble(d->highPerfElapsed));
+        return Stringf("+%.3f sec", ddouble(d->highPerfElapsed));
     }
     return {};
 }

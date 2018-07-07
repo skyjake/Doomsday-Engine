@@ -62,7 +62,7 @@ Id::operator Value::Number () const
 
 String Id::asText() const
 {
-    return String::format("{%08x}", _id);
+    return Stringf("{%08x}", _id);
 }
 
 ddouble Id::asDouble() const

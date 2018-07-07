@@ -779,26 +779,26 @@ public:
      */
     static String format(const char *format, ...);
 
-    static String asText(dint8 value)   { return String::format("%d", value); }
-    static String asText(dint16 value)  { return String::format("%d", value); }
-    static String asText(dint32 value)  { return String::format("%d", value); }
-    static String asText(dint64 value)  { return String::format("%lld", value); }
-    static String asText(duint8 value)  { return String::format("%u", value); }
-    static String asText(duint16 value) { return String::format("%u", value); }
-    static String asText(duint32 value) { return String::format("%u", value); }
-    static String asText(duint64 value) { return String::format("%llu", value); }
-    static String asText(dsize value)   { return String::format("%zu", value); }
-    static String asText(dfloat value)  { return String::format("%f", value); }
+    static String asText(dint8 value)   { return format("%d", value); }
+    static String asText(dint16 value)  { return format("%d", value); }
+    static String asText(dint32 value)  { return format("%d", value); }
+    static String asText(dint64 value)  { return format("%lld", value); }
+    static String asText(duint8 value)  { return format("%u", value); }
+    static String asText(duint16 value) { return format("%u", value); }
+    static String asText(duint32 value) { return format("%u", value); }
+    static String asText(duint64 value) { return format("%llu", value); }
+    static String asText(dsize value)   { return format("%zu", value); }
+    static String asText(dfloat value)  { return format("%f", value); }
     static String asText(dfloat value, int precision);
-    static String asText(ddouble value) { return String::format("%f", value); }
-    static String asText(char value)    { return String::format("%c", value); }
+    static String asText(ddouble value) { return format("%f", value); }
+    static String asText(char value)    { return format("%c", value); }
     static String asText(Char value)
     {
         iMultibyteChar mb;
         init_MultibyteChar(&mb, value);
         return asText(mb.bytes);
     }
-    static String asText(const char *value) { return String::format("%s", value); }
+    static String asText(const char *value) { return format("%s", value); }
 
     /**
      * Formats data according to formatting instructions. Outputs a
@@ -879,6 +879,12 @@ inline std::ostream &operator<<(std::ostream &os, const String &str)
 {
     os.write(str, str.sizei());
     return os;
+}
+
+template <typename... Args>
+inline String Stringf(const char *format, Args... args)
+{
+    return String::format(format, args...);
 }
 
 } // namespace de
