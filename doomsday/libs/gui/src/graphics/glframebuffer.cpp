@@ -830,7 +830,7 @@ void GLFramebuffer::releaseAttachment(Flags attachment)
     d->deallocRenderBuffer(d->flagsToAttachmentId(attachment));
 }
 
-void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filtering) const
+void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gfx::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
@@ -875,7 +875,7 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filt
                       (common & ColorAny ? ClearBufferMask::GL_COLOR_BUFFER_BIT   : ClearBufferMask::GL_NONE_BIT) |
                       (common & Depth ?    ClearBufferMask::GL_DEPTH_BUFFER_BIT   : ClearBufferMask::GL_NONE_BIT) |
                       (common & Stencil ?  ClearBufferMask::GL_STENCIL_BUFFER_BIT : ClearBufferMask::GL_NONE_BIT),
-                      filtering == gl::Nearest ? GL_NEAREST : GL_LINEAR);
+                      filtering == gfx::Nearest ? GL_NEAREST : GL_LINEAR);
     LIBGUI_ASSERT_GL_OK();
 
     glBindFramebuffer(GL_READ_FRAMEBUFFER, 0);
@@ -896,7 +896,7 @@ void GLFramebuffer::blit(GLFramebuffer &dest, Flags attachments, gl::Filter filt
     if (oldTarget) oldTarget->glBind();
 }
 
-void GLFramebuffer::blit(gl::Filter filtering) const
+void GLFramebuffer::blit(gfx::Filter filtering) const
 {
     LIBGUI_ASSERT_GL_OK();
 
@@ -913,7 +913,7 @@ void GLFramebuffer::blit(gl::Filter filtering) const
                 0, 0, size().x, size().y,
                 0, 0, size().x, size().y,
                 GL_COLOR_BUFFER_BIT,
-                filtering == gl::Nearest? GL_NEAREST : GL_LINEAR);
+                filtering == gfx::Nearest? GL_NEAREST : GL_LINEAR);
 
     LIBGUI_ASSERT_GL_OK();
 

@@ -732,7 +732,7 @@ nextAttempt:
         // Draw the scroll indicator, too.
         //self().glMakeScrollIndicatorGeometry(verts);
 
-        buf->setVertices(gl::TriangleStrip, verts, gl::Dynamic);
+        buf->setVertices(gfx::TriangleStrip, verts, gfx::Dynamic);
 
         // Apply changes to content height that may have occurred as text becomes
         // available for drawing.
@@ -766,7 +766,7 @@ nextAttempt:
             // Update the background quad.
             VertexBuf::Builder bgVerts;
             self().glMakeGeometry(bgVerts);
-            bgBuf->setVertices(gl::TriangleStrip, bgVerts, gl::Static);
+            bgBuf->setVertices(gfx::TriangleStrip, bgVerts, gfx::Static);
         }
 
         background.draw();

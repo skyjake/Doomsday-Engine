@@ -292,7 +292,7 @@ DE_GUI_PIMPL(SliderWidget)
         }
 
         /*drawable.buffer<DefaultVertexBuf>()
-                .setVertices(gl::TriangleStrip, verts, animating? gl::Dynamic : gl::Static);*/
+                .setVertices(gfx::TriangleStrip, verts, animating? gfx::Dynamic : gfx::Static);*/
 
         self().requestGeometry(false);
     }

@@ -1066,8 +1066,8 @@ DE_PIMPL(ModelDrawable)
         }
 
         std::unique_ptr<VBuf> buf(new VBuf);
-        buf->setVertices(verts, gl::Static);
-        buf->setIndices(gl::Triangles, indx, gl::Static);
+        buf->setVertices(verts, gfx::Static);
+        buf->setIndices(gfx::Triangles, indx, gfx::Static);
         material.buffer = std::move(buf);
     }
 
@@ -1383,7 +1383,7 @@ DE_PIMPL(ModelDrawable)
                 GLState::push()
                         .setBlendFunc (pass.blendFunc)
                         .setBlendOp   (pass.blendOp)
-                        .setDepthTest (pass.depthFunc != gl::Always)
+                        .setDepthTest (pass.depthFunc != gfx::Always)
                         .setDepthFunc (pass.depthFunc)
                         .setDepthWrite(pass.depthWrite)
                         .apply();

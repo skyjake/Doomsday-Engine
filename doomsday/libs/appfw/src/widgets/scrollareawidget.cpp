@@ -703,7 +703,7 @@ void ScrollAreaWidget::drawContent()
 
         d->verts.clear(); //DefaultVertexBuf::Builder verts;
         glMakeScrollIndicatorGeometry(d->verts, rule().recti().topLeft + margins().toVector().xy());
-        //d->drawable.buffer<DefaultVertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Dynamic);
+        //d->drawable.buffer<DefaultVertexBuf>().setVertices(gfx::TriangleStrip, verts, gfx::Dynamic);
 
         if (d->verts)
         {

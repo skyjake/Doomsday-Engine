@@ -61,7 +61,7 @@ DE_PIMPL_NOREF(GLAtlasBuffer)
         }
     };
     List<HostBuffer *> hostBuffers;
-    gl::Usage usage = gl::Static;
+    gfx::Usage usage = gfx::Static;
     dsize elementSize = 0;
     duint16 maxElementCount = 0;
     internal::AttribSpecs format;
@@ -141,7 +141,7 @@ void GLAtlasBuffer::setMaxElementCount(dsize maxElementCount)
     d->maxElementCount = duint16(maxElementCount);
 }
 
-void GLAtlasBuffer::setUsage(gl::Usage usage)
+void GLAtlasBuffer::setUsage(gfx::Usage usage)
 {
     d->usage = usage;
 }

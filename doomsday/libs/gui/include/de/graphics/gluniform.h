@@ -49,8 +49,7 @@ class GLTexture;
 class LIBGUI_PUBLIC GLUniform
 {
 public:
-    enum Type
-    {
+    enum Type {
         Int,
         UInt,
         Float,

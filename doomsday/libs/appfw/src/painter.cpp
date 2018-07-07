@@ -40,7 +40,7 @@ DE_PIMPL(Painter), public Asset
         : Base(i)
         , vertexBuf(GuiVertex::formatSpec())
     {
-        vertexBuf.setUsage(gl::Dynamic);
+        vertexBuf.setUsage(gfx::Dynamic);
         vertexBuf.setMaxElementCount(2048);
     }
 

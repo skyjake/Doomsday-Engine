@@ -276,13 +276,13 @@ public:
      */
     void blit(GLFramebuffer &dest,
               Flags          attachments = Color0,
-              gl::Filter     filtering   = gl::Nearest) const;
+              gfx::Filter    filtering   = gfx::Nearest) const;
 
     /**
      * Blits this target's contents to the default framebuffer.
      * @param filtering  Blit filtering.
      */
-    void blit(gl::Filter filtering = gl::Nearest) const;
+    void blit(gfx::Filter filtering = gfx::Nearest) const;
 
     /**
      * Sets the subregion inside the render target where scissor and viewport

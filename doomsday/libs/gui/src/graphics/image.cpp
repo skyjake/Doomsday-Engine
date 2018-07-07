@@ -599,6 +599,26 @@ bool Image::isGLCompatible() const
     return d->format >= Luminance_8 && d->format <= RGBA_32ui;
 }
 
+bool Image::hasAlphaChannel() const
+{
+    switch (d->format)
+    {
+        case LuminanceAlpha_88:
+        case Alpha_8:
+        case RGBA_4444:
+        case RGBA_5551:
+        case RGBA_8888:
+        case RGBA_16f:
+        case RGBA_32f:
+        case RGBA_32i:
+        case RGBA_32ui:
+            return true;
+
+        default:
+            return false;
+    }
+}
+
 Image Image::convertToFormat(Format toFormat) const
 {
     if (d->format == toFormat)

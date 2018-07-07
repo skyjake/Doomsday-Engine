@@ -195,6 +195,8 @@ public:
      */
     bool isGLCompatible() const;
 
+    bool hasAlphaChannel() const;
+
 //    bool canConvertToQImage() const;
 
     Image convertToFormat(Format format) const;

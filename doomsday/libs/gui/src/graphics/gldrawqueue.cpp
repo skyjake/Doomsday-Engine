@@ -210,7 +210,7 @@ void GLDrawQueue::flush()
                  << "consisting of" << batchCount << "batches";*/
 
         GLBuffer &indexBuffer = d->nextIndexBuffer();
-        indexBuffer.setIndices(gl::TriangleStrip, d->indices, gl::Stream);
+        indexBuffer.setIndices(gfx::TriangleStrip, d->indices, gfx::Stream);
         d->indices.clear();
 
         if (d->uBatchColors)

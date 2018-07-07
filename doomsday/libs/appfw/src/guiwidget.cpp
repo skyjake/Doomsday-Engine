@@ -190,18 +190,18 @@ DE_PIMPL(GuiWidget)
             // Multisampling is disabled in the blurs for now.
             blur->fb[i].reset(new GLTextureFramebuffer(Image::RGB_888, blur->size, 1));
             blur->fb[i]->glInit();
-            blur->fb[i]->colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            blur->fb[i]->colorTexture().setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
         }
 
         // Set up the drawble.
         DefaultVertexBuf *buf = new DefaultVertexBuf;
         blur->drawable.addBuffer(buf);
-        buf->setVertices(gl::TriangleStrip,
+        buf->setVertices(gfx::TriangleStrip,
                          DefaultVertexBuf::Builder().makeQuad(
                              Rectanglef(0, 0, 1, 1),
                              Vec4f(1, 1, 1, 1),
                              Rectanglef(0, 0, 1, 1)),
-                         gl::Static);
+                         gfx::Static);
 
         blur->uBlurStep = Vec2f(1.f / float(blur->size.x),
                                    1.f / float(blur->size.y));

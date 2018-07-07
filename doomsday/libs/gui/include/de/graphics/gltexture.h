@@ -31,7 +31,7 @@
 
 namespace de {
 
-namespace gl {
+namespace gfx {
     enum Filter {
         Nearest,
         Linear,
@@ -59,7 +59,7 @@ namespace gl {
         CompareNone,
         CompareRefToTexture,
     };
-}
+} // namespace gfx
 
 /**
  * GL texture object.
@@ -79,7 +79,7 @@ class LIBGUI_PUBLIC GLTexture : public Asset
 {
 public:
     typedef Vec2ui Size;
-    typedef Vector2<gl::Wrapping> Wraps;
+    typedef Vector2<gfx::Wrapping> Wraps;
 
 public:
     /**
@@ -102,15 +102,15 @@ public:
      */
     void clear();
 
-    void setMagFilter(gl::Filter magFilter);
-    void setMinFilter(gl::Filter minFilter, gl::MipFilter mipFilter);
-    void setFilter(gl::Filter magFilter, gl::Filter minFilter, gl::MipFilter mipFilter) {
+    void setMagFilter(gfx::Filter magFilter);
+    void setMinFilter(gfx::Filter minFilter, gfx::MipFilter mipFilter);
+    void setFilter(gfx::Filter magFilter, gfx::Filter minFilter, gfx::MipFilter mipFilter) {
         setMagFilter(magFilter);
         setMinFilter(minFilter, mipFilter);
     }
-    void setWrapS(gl::Wrapping mode);
-    void setWrapT(gl::Wrapping mode);
-    inline void setWrap(gl::Wrapping s, gl::Wrapping t) {
+    void setWrapS(gfx::Wrapping mode);
+    void setWrapT(gfx::Wrapping mode);
+    inline void setWrap(gfx::Wrapping s, gfx::Wrapping t) {
         setWrapS(s);
         setWrapT(t);
     }
@@ -121,17 +121,17 @@ public:
     void setMaxAnisotropy(dfloat maxAnisotropy);
     void setMaxLevel(dfloat maxLevel);
     void setBorderColor(const Vec4f &color);
-    void setComparisonMode(gl::ComparisonMode mode, gl::Comparison func = gl::Always);
+    void setComparisonMode(gfx::ComparisonMode mode, gfx::Comparison func = gfx::Always);
 
-    gl::Filter minFilter() const;
-    gl::Filter magFilter() const;
-    gl::MipFilter mipFilter() const;
-    gl::Wrapping wrapS() const;
-    gl::Wrapping wrapT() const;
-    Wraps wrap() const;
-    dfloat maxAnisotropy() const;
-    dfloat maxLevel() const;
-    de::Vec4f borderColor() const;
+    gfx::Filter    minFilter() const;
+    gfx::Filter    magFilter() const;
+    gfx::MipFilter mipFilter() const;
+    gfx::Wrapping  wrapS() const;
+    gfx::Wrapping  wrapT() const;
+    Wraps          wrap() const;
+    dfloat         maxAnisotropy() const;
+    dfloat         maxLevel() const;
+    de::Vec4f      borderColor() const;
 
     bool isCubeMap() const;
 
@@ -164,11 +164,11 @@ public:
      *                Determines internal storage pixel format.
      * @param level   Mipmap level.
      */
-    void setUndefinedImage(gl::CubeFace face, Size const &size, Image::Format format, int level = 0);
+    void setUndefinedImage(gfx::CubeFace face, Size const &size, Image::Format format, int level = 0);
 
     void setUndefinedContent(Size const &size, GLPixelFormat const &glFormat, int level = 0);
 
-    void setUndefinedContent(gl::CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level = 0);
+    void setUndefinedContent(gfx::CubeFace face, Size const &size, GLPixelFormat const &glFormat, int level = 0);
 
     void setDepthStencilContent(Size const &size);
 
@@ -189,7 +189,7 @@ public:
      * @param image  Image to upload to a GL texture.
      * @param level  Level on which to store the image.
      */
-    void setImage(gl::CubeFace face, Image const &image, int level = 0);
+    void setImage(gfx::CubeFace face, Image const &image, int level = 0);
 
     /**
      * Replaces a portion of existing content. The image must be provided in
@@ -213,8 +213,8 @@ public:
      */
     void setSubImage(Image const &image, Rectanglei const &rect, int level = 0);
 
-    void setSubImage(gl::CubeFace face, Image const &image, Vec2i const &pos, int level = 0);
-    void setSubImage(gl::CubeFace face, Image const &image, Rectanglei const &rect, int level = 0);
+    void setSubImage(gfx::CubeFace face, Image const &image, Vec2i const &pos, int level = 0);
+    void setSubImage(gfx::CubeFace face, Image const &image, Rectanglei const &rect, int level = 0);
 
     /**
      * Generate a full set of mipmap levels based on the content on level 0.

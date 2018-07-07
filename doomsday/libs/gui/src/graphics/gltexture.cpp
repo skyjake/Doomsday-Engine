@@ -24,7 +24,7 @@ namespace de {
 
 namespace internal {
 
-GLenum glComp(gl::Comparison comp); // glstate.cpp
+GLenum glComp(gfx::Comparison comp); // glstate.cpp
 
 enum TextureFlag {
     AutoMips        = 0x1,
@@ -36,24 +36,24 @@ using TextureFlags = Flags;
 } // namespace internal
 
 using namespace internal;
-using namespace gl;
+using namespace gfx;
 
 DE_PIMPL(GLTexture)
 {
-    Size               size;
-    Image::Format      format    = Image::Unknown;
-    GLuint             name      = 0;
-    GLenum             texTarget = GL_TEXTURE_2D;
-    Filter             minFilter = Linear;
-    Filter             magFilter = Linear;
-    MipFilter          mipFilter = MipNone;
-    Wraps              wrap{Repeat, Repeat};
-    dfloat             maxAnisotropy = 1.0f;
-    dfloat             maxLevel      = 1000.f;
-    Vec4f              borderColor;
-    gl::ComparisonMode compareMode = gl::CompareNone;
-    gl::Comparison     compareFunc = gl::Always;
-    TextureFlags       flags       = ParamsChanged;
+    Size                size;
+    Image::Format       format    = Image::Unknown;
+    GLuint              name      = 0;
+    GLenum              texTarget = GL_TEXTURE_2D;
+    Filter              minFilter = Linear;
+    Filter              magFilter = Linear;
+    MipFilter           mipFilter = MipNone;
+    Wraps               wrap{Repeat, Repeat};
+    dfloat              maxAnisotropy = 1.0f;
+    dfloat              maxLevel      = 1000.f;
+    Vec4f               borderColor;
+    gfx::ComparisonMode compareMode = gfx::CompareNone;
+    gfx::Comparison     compareFunc = gfx::Always;
+    TextureFlags        flags       = ParamsChanged;
 
     Impl(Public *i) : Base(i)
     {}
@@ -94,7 +94,7 @@ DE_PIMPL(GLTexture)
         return texTarget == GL_TEXTURE_CUBE_MAP;
     }
 
-    static GLenum glCompareMode(gl::ComparisonMode mode)
+    static GLenum glCompareMode(gfx::ComparisonMode mode)
     {
        switch (mode)
        {
@@ -104,7 +104,7 @@ DE_PIMPL(GLTexture)
        return GL_NONE;
     }
 
-    static GLenum glWrap(gl::Wrapping w)
+    static GLenum glWrap(gfx::Wrapping w)
     {
         switch (w)
         {
@@ -116,7 +116,7 @@ DE_PIMPL(GLTexture)
         return GL_REPEAT;
     }
 
-    static GLenum glMinFilter(gl::Filter min, gl::MipFilter mip)
+    static GLenum glMinFilter(gfx::Filter min, gfx::MipFilter mip)
     {
         if (mip == MipNone)
         {
@@ -136,7 +136,7 @@ DE_PIMPL(GLTexture)
         return GL_NEAREST;
     }
 
-    static GLenum glFace(gl::CubeFace face)
+    static GLenum glFace(gfx::CubeFace face)
     {
         switch (face)
         {
@@ -306,7 +306,7 @@ void GLTexture::setBorderColor(Vec4f const &color)
     d->flags |= ParamsChanged;
 }
 
-void GLTexture::setComparisonMode(gl::ComparisonMode mode, gl::Comparison func)
+void GLTexture::setComparisonMode(gfx::ComparisonMode mode, gfx::Comparison func)
 {
     d->compareMode = mode;
     d->compareFunc = func;

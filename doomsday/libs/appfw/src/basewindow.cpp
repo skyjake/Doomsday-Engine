@@ -52,7 +52,7 @@ DE_PIMPL(BaseWindow)
         // The framework widgets expect basic alpha blending.
         GLState::current()
                 .setBlend(true)
-                .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+                .setBlendFunc(gfx::SrcAlpha, gfx::OneMinusSrcAlpha);
     }
 
     void keyEvent(KeyEvent const &ev)

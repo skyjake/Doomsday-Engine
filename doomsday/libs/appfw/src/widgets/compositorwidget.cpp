@@ -82,12 +82,12 @@ DE_GUI_PIMPL(CompositorWidget)
     void glInit()
     {
         DefaultVertexBuf *buf = new DefaultVertexBuf;
-        buf->setVertices(gl::TriangleStrip,
+        buf->setVertices(gfx::TriangleStrip,
                          DefaultVertexBuf::Builder()
                             .makeQuad(Rectanglef(0, 0, 1, 1),
                                       Vec4f  (1, 1, 1, 1),
                                       Rectanglef(0, 0, 1, -1)),
-                         gl::Static);
+                         gfx::Static);
 
         drawable.addBuffer(buf);
         root().shaders().build(drawable.program(), "generic.textured.color") //"debug.textured.alpha"
@@ -191,7 +191,7 @@ void CompositorWidget::drawComposite()
     GLState::push()
             .setAlphaTest(false)
             .setBlend(true)
-            .setBlendFunc(gl::One, gl::OneMinusSrcAlpha)
+            .setBlendFunc(gfx::One, gfx::OneMinusSrcAlpha)
             .setDepthTest(false);
 
     d->uTex = buf->texture;

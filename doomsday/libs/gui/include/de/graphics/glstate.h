@@ -33,7 +33,7 @@ namespace de {
 
 class GLFramebuffer;
 
-namespace gl /// OpenGL constants, flags, and other definitions.
+namespace gfx /// OpenGL constants, flags, and other definitions.
 {
     enum ColorMaskFlag {
         WriteNone  = 0,
@@ -90,16 +90,16 @@ namespace gl /// OpenGL constants, flags, and other definitions.
         Invert,
     };
     struct StencilOps {
-        gl::StencilOp stencilFail;
-        gl::StencilOp depthFail;
-        gl::StencilOp depthPass;
+        StencilOp stencilFail;
+        StencilOp depthFail;
+        StencilOp depthPass;
     };
     struct StencilFunc {
-        gl::Comparison func;
+        Comparison func;
         dint ref;
         duint mask;
     };
-} // namespace gl
+} // namespace gfx
 
 /**
  * GL state.
@@ -131,30 +131,30 @@ public:
     GLState &operator=(GLState const &other);
     bool operator==(const GLState &);
 
-    GLState &setCull(gl::Face cullFace);
+    GLState &setCull(gfx::Face cullFace);
     GLState &setDepthTest(bool enable);
-    GLState &setDepthFunc(gl::Comparison func);
+    GLState &setDepthFunc(gfx::Comparison func);
     GLState &setDepthWrite(bool enable);
     GLState &setAlphaTest(bool enable);
     GLState &setAlphaLimit(float greaterThanValue);
     GLState &setBlend(bool enable);
-    GLState &setBlendFunc(gl::Blend src, gl::Blend dest);
-    GLState &setBlendFunc(gl::BlendFunc func);
-    GLState &setBlendOp(gl::BlendOp op);
-    GLState &setColorMask(gl::ColorMask mask);
+    GLState &setBlendFunc(gfx::Blend src, gfx::Blend dest);
+    GLState &setBlendFunc(gfx::BlendFunc func);
+    GLState &setBlendOp(gfx::BlendOp op);
+    GLState &setColorMask(gfx::ColorMask mask);
     GLState &setStencilTest(bool enable);
-    GLState &setStencilFunc(gl::Comparison func,
-                            dint           ref,
-                            duint          mask,
-                            gl::Face       face = gl::FrontAndBack);
-    GLState &setStencilOp(gl::StencilOp stencilFail,
-                          gl::StencilOp depthFail,
-                          gl::StencilOp depthPass,
-                          gl::Face      face = gl::FrontAndBack);
-    GLState &setStencilMask(duint mask, gl::Face face = gl::FrontAndBack);
+    GLState &setStencilFunc(gfx::Comparison func,
+                            dint            ref,
+                            duint           mask,
+                            gfx::Face       face = gfx::FrontAndBack);
+    GLState &setStencilOp(gfx::StencilOp stencilFail,
+                          gfx::StencilOp depthFail,
+                          gfx::StencilOp depthPass,
+                          gfx::Face      face = gfx::FrontAndBack);
+    GLState &setStencilMask(duint mask, gfx::Face face = gfx::FrontAndBack);
     GLState &setTarget(GLFramebuffer &target);
     GLState &setDefaultTarget();
-    GLState &setViewport(Rectanglei  const &viewportRect);
+    GLState &setViewport(Rectanglei const &viewportRect);
     GLState &setViewport(Rectangleui const &viewportRect);
     inline GLState &setViewport(Vec2ui const &size) { return setViewport(Rectangleui::fromSize(size)); }
 
@@ -180,27 +180,27 @@ public:
 
     GLState &clearScissor();
 
-    gl::Face        cull() const;
-    bool            depthTest() const;
-    gl::Comparison  depthFunc() const;
-    bool            depthWrite() const;
-    bool            alphaTest() const;
-    float           alphaLimit() const;
-    bool            blend() const;
-    gl::Blend       srcBlendFunc() const;
-    gl::Blend       destBlendFunc() const;
-    gl::BlendFunc   blendFunc() const;
-    gl::BlendOp     blendOp() const;
-    gl::ColorMask   colorMask() const;
-    bool            stencilTest() const;
-    duint           stencilMask(gl::Face face = gl::Front) const;
-    gl::StencilOps  stencilOp(gl::Face face = gl::Front) const;
-    gl::StencilFunc stencilFunc(gl::Face face = gl::Front) const;
-    GLFramebuffer & target() const;
-    Rectangleui     viewport() const;
-    Rectanglef      normalizedViewport() const;
-    bool            scissor() const;
-    Rectangleui     scissorRect() const;
+    gfx::Face        cull() const;
+    bool             depthTest() const;
+    gfx::Comparison  depthFunc() const;
+    bool             depthWrite() const;
+    bool             alphaTest() const;
+    float            alphaLimit() const;
+    bool             blend() const;
+    gfx::Blend       srcBlendFunc() const;
+    gfx::Blend       destBlendFunc() const;
+    gfx::BlendFunc   blendFunc() const;
+    gfx::BlendOp     blendOp() const;
+    gfx::ColorMask   colorMask() const;
+    bool             stencilTest() const;
+    duint            stencilMask(gfx::Face face = gfx::Front) const;
+    gfx::StencilOps  stencilOp(gfx::Face face = gfx::Front) const;
+    gfx::StencilFunc stencilFunc(gfx::Face face = gfx::Front) const;
+    GLFramebuffer &  target() const;
+    Rectangleui      viewport() const;
+    Rectanglef       normalizedViewport() const;
+    bool             scissor() const;
+    Rectangleui      scissorRect() const;
 
     /**
      * Updates the OpenGL state to match this GLState. Until this is called no

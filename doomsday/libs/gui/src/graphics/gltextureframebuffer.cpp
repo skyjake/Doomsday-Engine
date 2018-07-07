@@ -104,15 +104,15 @@ DE_PIMPL(GLTextureFramebuffer)
         for (auto &colorBuf : color)
         {
             colorBuf.texture->setUndefinedImage(size, colorBuf.format);
-            colorBuf.texture->setWrap(gl::ClampToEdge, gl::ClampToEdge);
-            colorBuf.texture->setFilter(gl::Nearest, gl::Linear, gl::MipNone);
+            colorBuf.texture->setWrap(gfx::ClampToEdge, gfx::ClampToEdge);
+            colorBuf.texture->setFilter(gfx::Nearest, gfx::Linear, gfx::MipNone);
 
             DE_ASSERT(colorBuf.texture->isReady());
         }
 
         depthStencil.setDepthStencilContent(size);
-        depthStencil.setWrap(gl::ClampToEdge, gl::ClampToEdge);
-        depthStencil.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+        depthStencil.setWrap(gfx::ClampToEdge, gfx::ClampToEdge);
+        depthStencil.setFilter(gfx::Nearest, gfx::Nearest, gfx::MipNone);
 
         DE_ASSERT(depthStencil.isReady());
 

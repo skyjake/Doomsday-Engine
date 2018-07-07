@@ -293,7 +293,7 @@ struct LIBGUI_PUBLIC Vertex3NormalTangentTex
     LIBGUI_DECLARE_VERTEX_FORMAT(5)
 };
 
-namespace gl {
+namespace gfx {
 
 enum Usage {
     Static,      ///< modified once and used many times
@@ -309,7 +309,7 @@ enum Usage {
 
 enum Primitive { Points, LineStrip, LineLoop, Lines, TriangleStrip, TriangleFan, Triangles };
 
-} // namespace gl
+} // namespace gfx
 
 /**
  * GL vertex buffer.
@@ -366,19 +366,19 @@ public:
 
     void clear();
 
-    void setVertices(dsize count, void const *data, dsize dataSize, gl::Usage usage);
+    void setVertices(dsize count, void const *data, dsize dataSize, gfx::Usage usage);
 
-    void setVertices(gl::Primitive primitive, dsize count, void const *data, dsize dataSize, gl::Usage usage);
+    void setVertices(gfx::Primitive primitive, dsize count, void const *data, dsize dataSize, gfx::Usage usage);
 
-    void setIndices(gl::Primitive primitive, dsize count, Index const *indices, gl::Usage usage);
+    void setIndices(gfx::Primitive primitive, dsize count, Index const *indices, gfx::Usage usage);
 
-    void setIndices(gl::Primitive primitive, Indices const &indices, gl::Usage usage);
+    void setIndices(gfx::Primitive primitive, Indices const &indices, gfx::Usage usage);
 
-    void setData(void const *data, dsize dataSize, gl::Usage usage);
+    void setData(void const *data, dsize dataSize, gfx::Usage usage);
 
     void setData(dsize startOffset, void const *data, dsize dataSize);
 
-    void setUninitializedData(dsize dataSize, gl::Usage usage);
+    void setUninitializedData(dsize dataSize, gfx::Usage usage);
 
     /**
      * Draws the buffer.
@@ -391,7 +391,7 @@ public:
 
     void drawWithIndices(GLBuffer const &indexBuffer) const;
 
-    void drawWithIndices(gl::Primitive primitive, Index const *indices, dsize count) const;
+    void drawWithIndices(gfx::Primitive primitive, Index const *indices, dsize count) const;
 
     /**
      * Draws the buffer with instancing. One instance of the buffer is drawn per
@@ -438,19 +438,19 @@ public:
         setFormat(VertexType::formatSpec());
     }
 
-    void setVertices(VertexType const *vertices, dsize count, gl::Usage usage) {
+    void setVertices(VertexType const *vertices, dsize count, gfx::Usage usage) {
         GLBuffer::setVertices(count, vertices, sizeof(VertexType) * count, usage);
     }
 
-    void setVertices(Vertices const &vertices, gl::Usage usage) {
+    void setVertices(Vertices const &vertices, gfx::Usage usage) {
         GLBuffer::setVertices(vertices.size(), vertices.data(), sizeof(VertexType) * vertices.size(), usage);
     }
 
-    void setVertices(gl::Primitive primitive, VertexType const *vertices, dsize count, gl::Usage usage) {
+    void setVertices(gfx::Primitive primitive, VertexType const *vertices, dsize count, gfx::Usage usage) {
         GLBuffer::setVertices(primitive, count, vertices, sizeof(VertexType) * count, usage);
     }
 
-    void setVertices(gl::Primitive primitive, Vertices const &vertices, gl::Usage usage) {
+    void setVertices(gfx::Primitive primitive, Vertices const &vertices, gfx::Usage usage) {
         GLBuffer::setVertices(primitive, vertices.size(), vertices.data(), sizeof(VertexType) * vertices.size(), usage);
     }
 };

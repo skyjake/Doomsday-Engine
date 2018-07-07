@@ -198,7 +198,7 @@ DE_GUI_PIMPL(LineEditWidget)
         VertexBuf::Builder verts;
         self().glMakeGeometry(verts);
         drawable.buffer<VertexBuf>(ID_BUF_TEXT)
-                .setVertices(gl::TriangleStrip, verts, gl::Static);
+                .setVertices(gfx::TriangleStrip, verts, gfx::Static);
 
         // Cursor.
         Rectanglei const caret = self().cursorRect();
@@ -208,7 +208,7 @@ DE_GUI_PIMPL(LineEditWidget)
                        atlas().imageRectf(self().root().solidWhitePixel()).middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
-                .setVertices(gl::TriangleStrip, verts, gl::Static);
+                .setVertices(gfx::TriangleStrip, verts, gfx::Static);
     }
 
     void updateHover(Vec2i const &pos)

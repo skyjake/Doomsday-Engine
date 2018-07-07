@@ -29,7 +29,7 @@ extern int GLDrawQueue_queuedElems;
 #endif
 
 using namespace internal;
-using namespace gl;
+using namespace gfx;
 
 // Vertex Format Layout ------------------------------------------------------
 
@@ -437,7 +437,7 @@ void GLBuffer::setIndices(Primitive primitive, Indices const &indices, Usage usa
     setIndices(primitive, indices.size(), indices.data(), usage);
 }
 
-void GLBuffer::setData(void const *data, dsize dataSize, gl::Usage usage)
+void GLBuffer::setData(void const *data, dsize dataSize, gfx::Usage usage)
 {
     if (data && dataSize)
     {
@@ -465,7 +465,7 @@ void GLBuffer::setData(dsize startOffset, void const *data, dsize dataSize)
     }
 }
 
-void GLBuffer::setUninitializedData(dsize dataSize, gl::Usage usage)
+void GLBuffer::setUninitializedData(dsize dataSize, gfx::Usage usage)
 {
     d->count = 0;
     d->defaultRange = DrawRanges{{0}, {0}};
@@ -597,7 +597,7 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
     d->bindArray(false);
 }
 
-void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, dsize count) const
+void GLBuffer::drawWithIndices(gfx::Primitive primitive, Index const *indices, dsize count) const
 {
     if (!isReady() || !indices || !count || !GLProgram::programInUse()) return;
 

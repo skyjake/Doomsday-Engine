@@ -36,18 +36,18 @@ extern int GLDrawQueue_queuedElems;
 
 namespace internal {
 
-GLenum glComp(gl::Comparison comp)
+GLenum glComp(gfx::Comparison comp)
 {
     switch (comp)
     {
-    case gl::Never:          return GL_NEVER;
-    case gl::Always:         return GL_ALWAYS;
-    case gl::Equal:          return GL_EQUAL;
-    case gl::NotEqual:       return GL_NOTEQUAL;
-    case gl::Less:           return GL_LESS;
-    case gl::Greater:        return GL_GREATER;
-    case gl::LessOrEqual:    return GL_LEQUAL;
-    case gl::GreaterOrEqual: return GL_GEQUAL;
+    case gfx::Never:          return GL_NEVER;
+    case gfx::Always:         return GL_ALWAYS;
+    case gfx::Equal:          return GL_EQUAL;
+    case gfx::NotEqual:       return GL_NOTEQUAL;
+    case gfx::Less:           return GL_LESS;
+    case gfx::Greater:        return GL_GREATER;
+    case gfx::LessOrEqual:    return GL_LEQUAL;
+    case gfx::GreaterOrEqual: return GL_GEQUAL;
     }
     return GL_NEVER;
 }
@@ -191,69 +191,69 @@ DE_PIMPL(GLState)
         , target(other.target)
     {}
 
-    static GLenum glFace(gl::Face face)
+    static GLenum glFace(gfx::Face face)
     {
         switch (face)
         {
-        case gl::None:         return GL_NONE;
-        case gl::Front:        return GL_FRONT;
-        case gl::Back:         return GL_BACK;
-        case gl::FrontAndBack: return GL_FRONT_AND_BACK;
+        case gfx::None:         return GL_NONE;
+        case gfx::Front:        return GL_FRONT;
+        case gfx::Back:         return GL_BACK;
+        case gfx::FrontAndBack: return GL_FRONT_AND_BACK;
         }
         return GL_NONE;
     }
 
-    static GLenum glStencilOp(gl::StencilOp op)
+    static GLenum glStencilOp(gfx::StencilOp op)
     {
         switch (op)
         {
-        case gl::StencilOp::Keep:          return GL_KEEP;
-        case gl::StencilOp::Zero:          return GL_ZERO;
-        case gl::StencilOp::Replace:       return GL_REPLACE;
-        case gl::StencilOp::Increment:     return GL_INCR;
-        case gl::StencilOp::IncrementWrap: return GL_INCR_WRAP;
-        case gl::StencilOp::Decrement:     return GL_DECR;
-        case gl::StencilOp::DecrementWrap: return GL_DECR_WRAP;
-        case gl::StencilOp::Invert:        return GL_INVERT;
+        case gfx::StencilOp::Keep:          return GL_KEEP;
+        case gfx::StencilOp::Zero:          return GL_ZERO;
+        case gfx::StencilOp::Replace:       return GL_REPLACE;
+        case gfx::StencilOp::Increment:     return GL_INCR;
+        case gfx::StencilOp::IncrementWrap: return GL_INCR_WRAP;
+        case gfx::StencilOp::Decrement:     return GL_DECR;
+        case gfx::StencilOp::DecrementWrap: return GL_DECR_WRAP;
+        case gfx::StencilOp::Invert:        return GL_INVERT;
         }
         return GL_KEEP;
     }
 
-    static GLenum glBFunc(gl::Blend f)
+    static GLenum glBFunc(gfx::Blend f)
     {
         switch (f)
         {
-        case gl::Zero:              return GL_ZERO;
-        case gl::One:               return GL_ONE;
-        case gl::SrcColor:          return GL_SRC_COLOR;
-        case gl::OneMinusSrcColor:  return GL_ONE_MINUS_SRC_COLOR;
-        case gl::SrcAlpha:          return GL_SRC_ALPHA;
-        case gl::OneMinusSrcAlpha:  return GL_ONE_MINUS_SRC_ALPHA;
-        case gl::DestColor:         return GL_DST_COLOR;
-        case gl::OneMinusDestColor: return GL_ONE_MINUS_DST_COLOR;
-        case gl::DestAlpha:         return GL_DST_ALPHA;
-        case gl::OneMinusDestAlpha: return GL_ONE_MINUS_DST_ALPHA;
+        case gfx::Zero:              return GL_ZERO;
+        case gfx::One:               return GL_ONE;
+        case gfx::SrcColor:          return GL_SRC_COLOR;
+        case gfx::OneMinusSrcColor:  return GL_ONE_MINUS_SRC_COLOR;
+        case gfx::SrcAlpha:          return GL_SRC_ALPHA;
+        case gfx::OneMinusSrcAlpha:  return GL_ONE_MINUS_SRC_ALPHA;
+        case gfx::DestColor:         return GL_DST_COLOR;
+        case gfx::OneMinusDestColor: return GL_ONE_MINUS_DST_COLOR;
+        case gfx::DestAlpha:         return GL_DST_ALPHA;
+        case gfx::OneMinusDestAlpha: return GL_ONE_MINUS_DST_ALPHA;
         }
         return GL_ZERO;
     }
 
-    static gl::Blend fromGlBFunc(GLenum e)
+    static gfx::Blend fromGlBFunc(GLenum e)
     {
         switch (e)
         {
-        case GL_ZERO:                return gl::Zero;
-        case GL_ONE:                 return gl::One;
-        case GL_SRC_COLOR:           return gl::SrcColor;
-        case GL_ONE_MINUS_SRC_COLOR: return gl::OneMinusSrcColor;
-        case GL_SRC_ALPHA:           return gl::SrcAlpha;
-        case GL_ONE_MINUS_SRC_ALPHA: return gl::OneMinusSrcAlpha;
-        case GL_DST_COLOR:           return gl::DestColor;
-        case GL_ONE_MINUS_DST_COLOR: return gl::OneMinusDestColor;
-        case GL_DST_ALPHA:           return gl::DestAlpha;
-        case GL_ONE_MINUS_DST_ALPHA: return gl::OneMinusDestAlpha;
+        case GL_ZERO:                return gfx::Zero;
+        case GL_ONE:                 return gfx::One;
+        case GL_SRC_COLOR:           return gfx::SrcColor;
+        case GL_ONE_MINUS_SRC_COLOR: return gfx::OneMinusSrcColor;
+        case GL_SRC_ALPHA:           return gfx::SrcAlpha;
+        case GL_ONE_MINUS_SRC_ALPHA: return gfx::OneMinusSrcAlpha;
+        case GL_DST_COLOR:           return gfx::DestColor;
+        case GL_ONE_MINUS_DST_COLOR: return gfx::OneMinusDestColor;
+        case GL_DST_ALPHA:           return gfx::DestAlpha;
+        case GL_ONE_MINUS_DST_ALPHA: return gfx::OneMinusDestAlpha;
         default: break;
         }
-        return gl::Zero;
+        return gfx::Zero;
     }
 
     void glApply(internal::Property prop)
@@ -263,12 +263,12 @@ DE_PIMPL(GLState)
         case internal::CullFace:
             switch (self().cull())
             {
-            case gl::None:
+            case gfx::None:
                 glDisable(GL_CULL_FACE);
                 break;
-            case gl::Front:
-            case gl::Back:
-            case gl::FrontAndBack:
+            case gfx::Front:
+            case gfx::Back:
+            case gfx::FrontAndBack:
                 glEnable(GL_CULL_FACE);
                 glCullFace(glFace(self().cull()));
                 break;
@@ -327,13 +327,13 @@ DE_PIMPL(GLState)
         case internal::BlendOp:
             switch (self().blendOp())
             {
-            case gl::Add:
+            case gfx::Add:
                 glBlendEquation(GL_FUNC_ADD);
                 break;
-            case gl::Subtract:
+            case gfx::Subtract:
                 glBlendEquation(GL_FUNC_SUBTRACT);
                 break;
-            case gl::ReverseSubtract:
+            case gfx::ReverseSubtract:
                 glBlendEquation(GL_FUNC_REVERSE_SUBTRACT);
                 break;
             }
@@ -341,11 +341,11 @@ DE_PIMPL(GLState)
 
         case internal::ColorMask:
         {
-            gl::ColorMask const mask = self().colorMask();
-            glColorMask((mask & gl::WriteRed) != 0,
-                                  (mask & gl::WriteGreen) != 0,
-                           (mask & gl::WriteBlue) != 0,
-                                  (mask & gl::WriteAlpha) != 0);
+            gfx::ColorMask const mask = self().colorMask();
+            glColorMask((mask & gfx::WriteRed) != 0,
+                           (mask & gfx::WriteGreen) != 0,
+                           (mask & gfx::WriteBlue) != 0,
+                           (mask & gfx::WriteAlpha) != 0);
             break;
         }
 
@@ -359,7 +359,7 @@ DE_PIMPL(GLState)
         case internal::StencilFrontMask:
         case internal::StencilBackMask:
         {
-            const gl::Face face = (prop == internal::StencilFrontMask? gl::Front : gl::Back);
+            const gfx::Face face = (prop == internal::StencilFrontMask? gfx::Front : gfx::Back);
             glStencilMaskSeparate(glFace(face), self().stencilMask(face));
             break;
         }
@@ -367,7 +367,7 @@ DE_PIMPL(GLState)
         case internal::StencilFrontFunc:
         case internal::StencilBackFunc:
         {
-            const gl::Face face = (prop == internal::StencilFrontFunc? gl::Front : gl::Back);
+            const gfx::Face face = (prop == internal::StencilFrontFunc? gfx::Front : gfx::Back);
             const auto stf = self().stencilFunc(face);
             glStencilFuncSeparate(glFace(face), internal::glComp(stf.func), stf.ref, stf.mask);
             break;
@@ -376,7 +376,7 @@ DE_PIMPL(GLState)
         case internal::StencilFrontOp:
         case internal::StencilBackOp:
         {
-            const gl::Face face = (prop == internal::StencilFrontOp? gl::Front : gl::Back);
+            const gfx::Face face = (prop == internal::StencilFrontOp? gfx::Front : gfx::Back);
             const auto sop = self().stencilOp(face);
             glStencilOpSeparate(glFace(face),
                                    glStencilOp(sop.stencilFail),
@@ -463,20 +463,20 @@ DE_PIMPL(GLState)
 
 GLState::GLState() : d(new Impl(this))
 {
-    setCull       (gl::None);
+    setCull       (gfx::None);
     setDepthTest  (false);
-    setDepthFunc  (gl::Less);
+    setDepthFunc  (gfx::Less);
     setDepthWrite (true);
     setAlphaTest  (true);
     setAlphaLimit (0);
     setBlend      (true);
-    setBlendFunc  (gl::One, gl::Zero);
-    setBlendOp    (gl::Add);
-    setColorMask  (gl::WriteAll);
+    setBlendFunc  (gfx::One, gfx::Zero);
+    setBlendOp    (gfx::Add);
+    setColorMask  (gfx::WriteAll);
     setStencilTest(false);
     setStencilMask(255);
-    setStencilOp  (gl::StencilOp::Keep, gl::StencilOp::Keep, gl::StencilOp::Keep);
-    setStencilFunc(gl::Always, 0, 255);
+    setStencilOp  (gfx::StencilOp::Keep, gfx::StencilOp::Keep, gfx::StencilOp::Keep);
+    setStencilFunc(gfx::Always, 0, 255);
 
     setDefaultTarget();
 }
@@ -495,7 +495,7 @@ bool GLState::operator==(const GLState &other)
     return d->target == other.d->target && d->props == other.d->props;
 }
 
-GLState &GLState::setCull(gl::Face mode)
+GLState &GLState::setCull(gfx::Face mode)
 {
     d->props.set(internal::CullFace, duint(mode));
     return *this;
@@ -507,7 +507,7 @@ GLState &GLState::setDepthTest(bool enable)
     return *this;
 }
 
-GLState &GLState::setDepthFunc(gl::Comparison func)
+GLState &GLState::setDepthFunc(gfx::Comparison func)
 {
     d->props.set(internal::DepthFunc, duint(func));
     return *this;
@@ -537,27 +537,27 @@ GLState &GLState::setBlend(bool enable)
     return *this;
 }
 
-GLState &GLState::setBlendFunc(gl::Blend src, gl::Blend dest)
+GLState &GLState::setBlendFunc(gfx::Blend src, gfx::Blend dest)
 {
     d->props.set(internal::BlendFuncSrc,  duint(src));
     d->props.set(internal::BlendFuncDest, duint(dest));
     return *this;
 }
 
-GLState &GLState::setBlendFunc(gl::BlendFunc func)
+GLState &GLState::setBlendFunc(gfx::BlendFunc func)
 {
     d->props.set(internal::BlendFuncSrc,  duint(func.first));
     d->props.set(internal::BlendFuncDest, duint(func.second));
     return *this;
 }
 
-GLState &GLState::setBlendOp(gl::BlendOp op)
+GLState &GLState::setBlendOp(gfx::BlendOp op)
 {
     d->props.set(internal::BlendOp, duint(op));
     return *this;
 }
 
-GLState &GLState::setColorMask(gl::ColorMask mask)
+GLState &GLState::setColorMask(gfx::ColorMask mask)
 {
     d->props.set(internal::ColorMask, duint(mask));
     return *this;
@@ -569,46 +569,46 @@ GLState &de::GLState::setStencilTest(bool enable)
     return *this;
 }
 
-GLState &GLState::setStencilFunc(gl::Comparison func, dint ref, duint mask, gl::Face face)
+GLState &GLState::setStencilFunc(gfx::Comparison func, dint ref, duint mask, gfx::Face face)
 {
     const duint packed = duint(func) | ((duint(ref) & 255) << 3) | ((mask & 255) << 11);
 
-    if (face == gl::Front || face == gl::FrontAndBack)
+    if (face == gfx::Front || face == gfx::FrontAndBack)
     {
         d->props.set(internal::StencilFrontFunc, packed);
     }
-    if (face == gl::Back || face == gl::FrontAndBack)
+    if (face == gfx::Back || face == gfx::FrontAndBack)
     {
         d->props.set(internal::StencilBackFunc, packed);
     }
     return *this;
 }
 
-GLState &GLState::setStencilOp(gl::StencilOp stencilFail,
-                               gl::StencilOp depthFail,
-                               gl::StencilOp depthPass,
-                               gl::Face      face)
+GLState &GLState::setStencilOp(gfx::StencilOp stencilFail,
+                               gfx::StencilOp depthFail,
+                               gfx::StencilOp depthPass,
+                               gfx::Face      face)
 {
     const duint packed = duint(stencilFail) | (duint(depthFail) << 3) | (duint(depthPass) << 6);
 
-    if (face == gl::Front || face == gl::FrontAndBack)
+    if (face == gfx::Front || face == gfx::FrontAndBack)
     {
         d->props.set(internal::StencilFrontOp, packed);
     }
-    if (face == gl::Back || face == gl::FrontAndBack)
+    if (face == gfx::Back || face == gfx::FrontAndBack)
     {
         d->props.set(internal::StencilBackOp, packed);
     }
     return *this;
 }
 
-GLState &GLState::setStencilMask(duint mask, gl::Face face)
+GLState &GLState::setStencilMask(duint mask, gfx::Face face)
 {
-    if (face == gl::Front || face == gl::FrontAndBack)
+    if (face == gfx::Front || face == gfx::FrontAndBack)
     {
         d->props.set(internal::StencilFrontMask, mask);
     }
-    if (face == gl::Back || face == gl::FrontAndBack)
+    if (face == gfx::Back || face == gfx::FrontAndBack)
     {
         d->props.set(internal::StencilBackMask, mask);
     }
@@ -696,9 +696,9 @@ GLState &GLState::clearScissor()
     return *this;
 }
 
-gl::Face GLState::cull() const
+gfx::Face GLState::cull() const
 {
-    return d->props.valueAs<gl::Face>(internal::CullFace);
+    return d->props.valueAs<gfx::Face>(internal::CullFace);
 }
 
 bool GLState::depthTest() const
@@ -706,9 +706,9 @@ bool GLState::depthTest() const
     return d->props.asBool(internal::DepthTest);
 }
 
-gl::Comparison GLState::depthFunc() const
+gfx::Comparison GLState::depthFunc() const
 {
-    return d->props.valueAs<gl::Comparison>(internal::DepthFunc);
+    return d->props.valueAs<gfx::Comparison>(internal::DepthFunc);
 }
 
 bool GLState::depthWrite() const
@@ -731,29 +731,29 @@ bool GLState::blend() const
     return d->props.asBool(internal::Blend);
 }
 
-gl::Blend GLState::srcBlendFunc() const
+gfx::Blend GLState::srcBlendFunc() const
 {
-    return d->props.valueAs<gl::Blend>(internal::BlendFuncSrc);
+    return d->props.valueAs<gfx::Blend>(internal::BlendFuncSrc);
 }
 
-gl::Blend GLState::destBlendFunc() const
+gfx::Blend GLState::destBlendFunc() const
 {
-    return d->props.valueAs<gl::Blend>(internal::BlendFuncDest);
+    return d->props.valueAs<gfx::Blend>(internal::BlendFuncDest);
 }
 
-gl::BlendFunc GLState::blendFunc() const
+gfx::BlendFunc GLState::blendFunc() const
 {
-    return gl::BlendFunc(srcBlendFunc(), destBlendFunc());
+    return gfx::BlendFunc(srcBlendFunc(), destBlendFunc());
 }
 
-gl::BlendOp GLState::blendOp() const
+gfx::BlendOp GLState::blendOp() const
 {
-    return d->props.valueAs<gl::BlendOp>(internal::BlendOp);
+    return d->props.valueAs<gfx::BlendOp>(internal::BlendOp);
 }
 
-gl::ColorMask GLState::colorMask() const
+gfx::ColorMask GLState::colorMask() const
 {
-    return d->props.valueAs<gl::ColorMask>(internal::ColorMask);
+    return d->props.valueAs<gfx::ColorMask>(internal::ColorMask);
 }
 
 bool GLState::stencilTest() const
@@ -761,30 +761,30 @@ bool GLState::stencilTest() const
     return d->props.asBool(internal::StencilTest);
 }
 
-duint GLState::stencilMask(gl::Face face) const
+duint GLState::stencilMask(gfx::Face face) const
 {
-    return d->props.asUInt(face == gl::Back? internal::StencilBackMask : internal::StencilFrontMask);
+    return d->props.asUInt(face == gfx::Back? internal::StencilBackMask : internal::StencilFrontMask);
 }
 
-gl::StencilOps GLState::stencilOp(gl::Face face) const
+gfx::StencilOps GLState::stencilOp(gfx::Face face) const
 {
     const duint packed =
-        d->props.asUInt(face == gl::Back ? internal::StencilBackOp : internal::StencilFrontOp);
+        d->props.asUInt(face == gfx::Back ? internal::StencilBackOp : internal::StencilFrontOp);
     return {
-        gl::StencilOp( packed       & 7),
-        gl::StencilOp((packed >> 3) & 7),
-        gl::StencilOp((packed >> 6) & 7)
+        gfx::StencilOp( packed       & 7),
+        gfx::StencilOp((packed >> 3) & 7),
+        gfx::StencilOp((packed >> 6) & 7)
     };
 }
 
-gl::StencilFunc GLState::stencilFunc(gl::Face face) const
+gfx::StencilFunc GLState::stencilFunc(gfx::Face face) const
 {
     const duint packed =
-        d->props.asUInt(face == gl::Back ? internal::StencilBackFunc : internal::StencilFrontFunc);
+        d->props.asUInt(face == gfx::Back ? internal::StencilBackFunc : internal::StencilFrontFunc);
     return {
-        gl::Comparison(packed        & 7),
-        dint         ((packed >> 3)  & 255),
-        duint        ((packed >> 11) & 255)
+        gfx::Comparison(packed        & 7),
+        dint          ((packed >> 3)  & 255),
+        duint         ((packed >> 11) & 255)
     };
 }
 
@@ -923,9 +923,9 @@ void GLState::apply() const
 
         case internal::BlendOp:
             glGetIntegerv(GL_BLEND_EQUATION_RGB, &val);
-            val = (val == GL_FUNC_ADD? gl::Add :
-                   val == GL_FUNC_SUBTRACT? gl::Subtract :
-                   val == GL_FUNC_REVERSE_SUBTRACT? gl::ReverseSubtract : 0);
+            val = (val == GL_FUNC_ADD? gfx::Add :
+                   val == GL_FUNC_SUBTRACT? gfx::Subtract :
+                   val == GL_FUNC_REVERSE_SUBTRACT? gfx::ReverseSubtract : 0);
             DE_ASSERT(val == d->props.asUInt(elem.id));
             break;
         }

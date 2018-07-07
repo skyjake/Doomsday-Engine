@@ -34,7 +34,7 @@ public:
     GLAtlasBuffer(internal::AttribSpecs const &vertexFormat);
 
     void setMaxElementCount(dsize maxElementCount);
-    void setUsage(gl::Usage usage);
+    void setUsage(gfx::Usage usage);
 
     //void initialize();
     //void deinitialize();

@@ -182,7 +182,7 @@ DE_PIMPL(OculusRift)
         uint const w = framebuffer().size().x;
         uint const h = framebuffer().size().y;
 
-        framebuffer().colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        framebuffer().colorTexture().setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
         framebuffer().colorTexture().glApplyParameters();
 
         LOG_GL_VERBOSE("Framebuffer size: ") << framebuffer().size().asText();

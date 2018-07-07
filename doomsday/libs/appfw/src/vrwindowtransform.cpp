@@ -171,9 +171,9 @@ DE_PIMPL(VRWindowTransform)
                   "out_FragColor = ((int(gl_FragCoord.y) & 1) == 0 ? texture(uTex, vUV) :"
                   "texture(uTex2, vUV)); }"))
             << rowInterUniformTex << rowInterUniformTex2;
-         buf->setVertices(gl::TriangleStrip,
+         buf->setVertices(gfx::TriangleStrip,
                          VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),
-                         gl::Static);
+                         gfx::Static);
     }
 
     void draw()
@@ -254,11 +254,11 @@ DE_PIMPL(VRWindowTransform)
         case VRConfig::GreenMagenta:
             // Left eye view
             vrCfg.setCurrentEye(VRConfig::LeftEye);
-            GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha); // Left eye view green
+            GLState::push().setColorMask(gfx::WriteGreen | gfx::WriteAlpha); // Left eye view green
             drawContent();
             // Right eye view
             vrCfg.setCurrentEye(VRConfig::RightEye);
-            GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha); // Right eye view magenta
+            GLState::current().setColorMask(gfx::WriteRed | gfx::WriteBlue | gfx::WriteAlpha); // Right eye view magenta
             drawContent();
             GLState::pop();
             break;
@@ -266,11 +266,11 @@ DE_PIMPL(VRWindowTransform)
         case VRConfig::RedCyan:
             // Left eye view
             vrCfg.setCurrentEye(VRConfig::LeftEye);
-            GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha); // Left eye view red
+            GLState::push().setColorMask(gfx::WriteRed | gfx::WriteAlpha); // Left eye view red
             drawContent();
             // Right eye view
             vrCfg.setCurrentEye(VRConfig::RightEye);
-            GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha); // Right eye view cyan
+            GLState::current().setColorMask(gfx::WriteGreen | gfx::WriteBlue | gfx::WriteAlpha); // Right eye view cyan
             drawContent();
             GLState::pop();
             break;
@@ -284,12 +284,12 @@ DE_PIMPL(VRWindowTransform)
                 // Left eye view
                 vrCfg.setCurrentEye(VRConfig::LeftEye);
                 drawContent();
-                //canvas().framebuffer().swapBuffers(canvas(), gl::SwapStereoLeftBuffer);
+                //canvas().framebuffer().swapBuffers(canvas(), gfx::SwapStereoLeftBuffer);
 
                 // Right eye view
                 vrCfg.setCurrentEye(VRConfig::RightEye);
                 drawContent();
-                //canvas().framebuffer().swapBuffers(canvas(), gl::SwapStereoRightBuffer);
+                //canvas().framebuffer().swapBuffers(canvas(), gfx::SwapStereoRightBuffer);
             }
             else
 #endif
@@ -324,7 +324,7 @@ DE_PIMPL(VRWindowTransform)
             // Draw right the eye view.
             rowInterRightFB.glInit();
             rowInterRightFB.resize(GLFramebuffer::Size(width(), height()));
-            rowInterRightFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            rowInterRightFB.colorTexture().setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
             rowInterRightFB.colorTexture().glApplyParameters();
             GLState::push()
                     .setTarget(rowInterRightFB)
