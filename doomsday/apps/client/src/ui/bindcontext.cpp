@@ -19,19 +19,16 @@
 
 #include "ui/bindcontext.h"
 
-#include <QList>
-#include <QSet>
-#include <QtAlgorithms>
-#include <de/Log>
-#include <doomsday/console/exec.h>
 #include "clientapp.h"
-
 #include "world/p_players.h"
-
 #include "CommandBinding"
 #include "ImpulseBinding"
 #include "ui/inputdevice.h"
 #include "ui/inputsystem.h"
+
+#include <doomsday/console/exec.h>
+#include <de/Set>
+#include <de/Log>
 
 using namespace de;
 
@@ -48,14 +45,14 @@ DE_PIMPL(BindContext)
     String name;           ///< Symbolic.
 
     // Acquired device states, unless higher-priority contexts override.
-    typedef QSet<int> DeviceIds;
+    typedef Set<int> DeviceIds;
     DeviceIds acquireDevices;
     bool acquireAllDevices = false;  ///< @c true= will ignore @var acquireDevices.
 
-    typedef QList<Record *> CommandBindings;
+    typedef List<Record *> CommandBindings;
     CommandBindings commandBinds;
 
-    typedef QList<CompiledImpulseBindingRecord *> ImpulseBindings;
+    typedef List<CompiledImpulseBindingRecord *> ImpulseBindings;
     ImpulseBindings impulseBinds[DDMAXPLAYERS];  ///< Group bindings for each local player.
 
     DDFallbackResponderFunc ddFallbackResponder = nullptr;
@@ -237,12 +234,12 @@ void BindContext::activate(bool yes)
 void BindContext::acquire(int deviceId, bool yes)
 {
     DE_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
-    int const countBefore = d->acquireDevices.count();
+    int const countBefore = d->acquireDevices.size();
 
     if (yes) d->acquireDevices.insert(deviceId);
     else     d->acquireDevices.remove(deviceId);
 
-    if (countBefore != d->acquireDevices.count())
+    if (countBefore != d->acquireDevices.size())
     {
         // Notify interested parties.
         DE_FOR_AUDIENCE2(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
@@ -283,11 +280,11 @@ void BindContext::setFallbackResponder(FallbackResponderFunc newResponderFunc)
 void BindContext::clearAllBindings()
 {
     LOG_AS("BindContext");
-    qDeleteAll(d->commandBinds);
+    deleteAll(d->commandBinds);
     d->commandBinds.clear();
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        qDeleteAll(d->impulseBinds[i]);
+        deleteAll(d->impulseBinds[i]);
         d->impulseBinds[i].clear();
     }
     LOG_INPUT_VERBOSE(_E(b) "'%s'" _E(.) " cleared") << d->name;
@@ -296,7 +293,7 @@ void BindContext::clearAllBindings()
 void BindContext::clearBindingsForDevice(int deviceId)
 {
     // Collect all the bindings that should be deleted.
-    QSet<int> ids;
+    Set<int> ids;
     forAllCommandBindings([&ids, &deviceId] (Record const &bind)
     {
         if (bind.geti(VAR_DEVICE_ID) == deviceId)
@@ -493,7 +490,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
 }
 
 LoopResult BindContext::forAllCommandBindings(
-    std::function<de::LoopResult (Record &)> func) const
+    const std::function<de::LoopResult (Record &)>& func) const
 {
     for (Record *rec : d->commandBinds)
     {
@@ -503,7 +500,7 @@ LoopResult BindContext::forAllCommandBindings(
 }
 
 LoopResult BindContext::forAllImpulseBindings(int localPlayer,
-    std::function<de::LoopResult (CompiledImpulseBindingRecord &)> func) const
+    const std::function<de::LoopResult (CompiledImpulseBindingRecord &)>& func) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {

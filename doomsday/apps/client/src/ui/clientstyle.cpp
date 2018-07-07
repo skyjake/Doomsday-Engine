@@ -69,11 +69,8 @@ Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalo
             Image::Size const finalSize(    img.pixelSize().x        / sizeDiv,
                                         int(img.pixelSize().y * 1.2f / sizeDiv)); // VGA aspect
 
-            Image logoImage(
-                Image::fromRgbaData(img.pixelSize(), img.pixels())
-                    .toQImage()
-                    .scaled(
-                        finalSize.x, finalSize.y, Qt::IgnoreAspectRatio, Qt::SmoothTransformation));
+            Image logoImage = Image::fromRgbaData(img.pixelSize(), img.pixels());
+            logoImage.resize(finalSize);
 
             if (flags & ColorizedByFamily)
             {
@@ -97,8 +94,8 @@ Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalo
         return Image();
     }
     // Use a generic logo, some files are missing.
-    QImage img(64, 64, QImage::Format_ARGB32);
-    img.fill(Qt::black);
+    Image img(Image::Size(64, 64), Image::RGBA_8888);
+    img.fill(Image::Color(0, 0, 0, 255));
     return img;
 }
 

@@ -40,7 +40,7 @@ DE_PIMPL(SSAO)
 
     ScreenQuad        quad;
     GLUniform         uSamples{"uSamples", GLUniform::Vec3Array, SAMPLE_COUNT};
-    DataBuffer<Vec2f> noise{"uNoise", Image::RG_32f, gl::Static};
+    DataBuffer<Vec2f> noise{"uNoise", Image::RG_32f, gfx::Static};
     GLFramebuffer     ssaoFrameBuf[2];
     GLTexture         ssaoBuf[2];
     GLUniform         uNoisyFactors{"uNoisyFactors", GLUniform::Sampler2D};
@@ -60,7 +60,7 @@ DE_PIMPL(SSAO)
             {
                 ssaoFrameBuf[i].configure(GLFramebuffer::Color0, ssaoBuf[i]);
             }
-            ssaoBuf[Noisy].setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            ssaoBuf[Noisy].setWrap(gfx::ClampToEdge, gfx::ClampToEdge);
             uNoisyFactors = ssaoBuf[Noisy];
         }
         uSSAOBuf = ssaoBuf[Blurred]; // final result

@@ -29,8 +29,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 struct LightData {
     Vec3f lightOrigin;
     Vec3f lightIntensity;
@@ -120,28 +118,28 @@ DE_PIMPL(LightRender)
             .setBlend(false)
             .setDepthTest(true)
             .setDepthWrite(true)
-            .setColorMask(gl::WriteNone)
-            .setCull(gl::None);
+            .setColorMask(gfx::WriteNone)
+            .setCull(gfx::None);
 
         stencilPassState
-            .setColorMask(gl::WriteNone)
+            .setColorMask(gfx::WriteNone)
             .setBlend(false)
             .setDepthTest(true)
             .setDepthWrite(false)
-            .setCull(gl::None)
+            .setCull(gfx::None)
             .setStencilTest(true)
-            .setStencilFunc(gl::Always, 0, 0)
-            .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::IncrementWrap, gl::StencilOp::Keep, gl::Front)
-            .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::DecrementWrap, gl::StencilOp::Keep, gl::Back);
+            .setStencilFunc(gfx::Always, 0, 0)
+            .setStencilOp(gfx::StencilOp::Keep, gfx::StencilOp::IncrementWrap, gfx::StencilOp::Keep, gfx::Front)
+            .setStencilOp(gfx::StencilOp::Keep, gfx::StencilOp::DecrementWrap, gfx::StencilOp::Keep, gfx::Back);
 
         shadingState
             .setBlend(true)
-            .setBlendFunc(gl::One, gl::One)
+            .setBlendFunc(gfx::One, gfx::One)
             .setDepthTest(false)
             .setDepthWrite(false)
-            .setCull(gl::Front)
+            .setCull(gfx::Front)
             .setStencilTest(true)
-            .setStencilFunc(gl::NotEqual, 0, 0xff);
+            .setStencilFunc(gfx::NotEqual, 0, 0xff);
 
         skyLight.reset(new Light);
         skyLight->setType(Light::Directional);
@@ -233,8 +231,8 @@ DE_PIMPL(LightRender)
                 }
             }
 
-            sphere.setVertices(verts, gl::Static);
-            sphere.setIndices(gl::Triangles, inds, gl::Static);
+            sphere.setVertices(verts, gfx::Static);
+            sphere.setIndices(gfx::Triangles, inds, gfx::Static);
         }
     }
 
@@ -392,15 +390,15 @@ void LightRender::render()
 
             if (light->type() == Light::Omni)
             {
-                d->shadowState.setCull(gl::Front);
+                d->shadowState.setCull(gfx::Front);
                 for (int i = 0; i < 6; ++i)
                 {
-                    context().uLightCubeMatrices.set(i, light->lightMatrix(gl::CubeFace(i)));
+                    context().uLightCubeMatrices.set(i, light->lightMatrix(gfx::CubeFace(i)));
                 }
             }
             else
             {
-                d->shadowState.setCull(gl::None);
+                d->shadowState.setCull(gfx::None);
                 context().uLightMatrix        = light->lightMatrix();
                 context().uInverseLightMatrix = light->lightMatrix().inverse();
 
@@ -517,7 +515,7 @@ void LightRender::renderLighting()
     if (!lightData.isEmpty())
     {
         LightBuf ibuf;
-        ibuf.setVertices(lightData, gl::Stream);
+        ibuf.setVertices(lightData, gfx::Stream);
 
         // Stencil pass: find out where light volumes intersect surfaces.
         {

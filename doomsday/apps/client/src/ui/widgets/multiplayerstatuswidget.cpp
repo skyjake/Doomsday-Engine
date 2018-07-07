@@ -23,7 +23,7 @@
 
 #include <de/ui/ActionItem>
 #include <de/ui/SubwidgetItem>
-#include <QTimer>
+#include <de/Timer>
 
 using namespace de;
 
@@ -35,11 +35,11 @@ DE_GUI_PIMPL(MultiplayerStatusWidget)
 , DE_OBSERVES(ServerLink, Join)
 , DE_OBSERVES(ServerLink, Leave)
 {
-    QTimer timer;
+    Timer timer;
 
     Impl(Public *i) : Base(i)
     {
-        timer.setInterval(1000);
+        timer.setInterval(1);
 
         link().audienceForJoin() += this;
         link().audienceForLeave() += this;
@@ -66,10 +66,10 @@ DE_GUI_PIMPL(MultiplayerStatusWidget)
 MultiplayerStatusWidget::MultiplayerStatusWidget()
     : PopupMenuWidget("multiplayer-menu"), d(new Impl(this))
 {
-    connect(&d->timer, SIGNAL(timeout()), this, SLOT(updateElapsedTime()));
+    d->timer += [this](){ updateElapsedTime(); };
 
     items()
-            << new ui::ActionItem(tr("Disconnect"), new CommandAction("net disconnect"))
+            << new ui::ActionItem("Disconnect", new CommandAction("net disconnect"))
             //<< new ui::Item(ui::Item::Separator, tr("Connection:"))
             << new ui::Item(ui::Item::ShownAsLabel, ""); // sv address & time
 }
@@ -81,13 +81,14 @@ void MultiplayerStatusWidget::updateElapsedTime()
 
     TimeSpan const elapsed = d->link().connectedAt().since();
 
-    items().at(POS_STATUS).setLabel(
-                _E(s)_E(l) + tr("Server:") + _E(.) " " + d->link().address().asText() + "\n"
-                _E(l) + tr("Connected:") + _E(.) +
-                String(" %1:%2:%3")
-                .arg(int(elapsed.asHours()))
-                .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
-                .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0')));
+    items()
+        .at(POS_STATUS)
+        .setLabel(_E(s) _E(l) "Server:" _E(.) " " + d->link().address().asText() +
+                  "\n" _E(l) "Connected:" _E(.) +
+                  String::format(" %i:%02i:%02i",
+                                 int(elapsed.asHours()),
+                                 int(elapsed.asMinutes()) % 60,
+                                 int(elapsed) % 60));
 }
 
 void MultiplayerStatusWidget::preparePanelForOpening()

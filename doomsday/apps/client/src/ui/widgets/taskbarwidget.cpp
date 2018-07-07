@@ -261,7 +261,7 @@ DE_GUI_PIMPL(TaskBarWidget)
 
             verts.clear();
             self().glMakeGeometry(verts);
-            //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
+            //drawable.buffer<VertexBuf>().setVertices(gfx::TriangleStrip, verts, gfx::Static);
         }*/
     }
 

@@ -30,5 +30,5 @@ void CommandAction::trigger()
 {
     Action::trigger();
 
-    Con_Execute(_source, _command.toUtf8(), false /*silent*/, false /*net*/);
+    Con_Execute(_source, _command, false /*silent*/, false /*net*/);
 }

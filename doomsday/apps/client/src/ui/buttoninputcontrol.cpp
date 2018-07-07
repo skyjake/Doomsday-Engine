@@ -63,7 +63,7 @@ void ButtonInputControl::setDown(bool yes)
 
 String ButtonInputControl::description() const
 {
-    return String(_E(b) "%1 " _E(.) "(Button)").arg(fullName());
+    return String::format(_E(b) "%s " _E(.) "(Button)", fullName().c_str());
 }
 
 bool ButtonInputControl::inDefaultState() const

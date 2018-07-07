@@ -22,6 +22,7 @@
 #include "updater/updatersettings.h"
 //#include <QDateTime>
 //#include <QDesktopServices>
+#include <de/App>
 #include <de/Record>
 #include <de/Config>
 #include <de/TextValue>
@@ -153,11 +154,12 @@ void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 
 de::NativePath UpdaterSettings::defaultDownloadPath()
 {
-#ifdef DE_QT_5_0_OR_NEWER
-    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-#else
-    return QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
-#endif
+//#ifdef DE_QT_5_0_OR_NEWER
+//    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+//#else
+//    return QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
+//#endif
+    return App::cachePath();
 }
 
 de::String UpdaterSettings::lastCheckAgo() const
@@ -172,30 +174,26 @@ de::String UpdaterSettings::lastCheckAgo() const
     if (delta < 60.0)
     {
         t = delta.asMilliSeconds() / 1000;
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                          arg(t != 1? QObject::tr("seconds") : QObject::tr("second"));
+        return de::String::format("%i second%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asMinutes();
     if (t <= 60)
     {
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                arg(t != 1? QObject::tr("minutes") : QObject::tr("minute"));
+        return de::String::format("%i minute%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asHours();
     if (t <= 24)
     {
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                arg(t != 1? QObject::tr("hours") : QObject::tr("hour"));
+        return de::String::format("%i hour%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asDays();
     if (t <= 7)
     {
-        return de::String(QObject::tr("%1 %2 ago")).arg(t).
-                arg(t != 1? QObject::tr("days") : QObject::tr("day"));
+        return de::String::format("%i day%s ago", t, DE_PLURAL_S(t));
     }
 
-    return de::String("on " + when.asText(de::Time::FriendlyFormat));
+    return "on " + when.asText(de::Time::FriendlyFormat);
 }

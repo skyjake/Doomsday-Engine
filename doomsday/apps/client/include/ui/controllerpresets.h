@@ -20,7 +20,6 @@
 #define DE_CLIENT_UI_CONTROLLERPRESETS_H
 
 #include <de/String>
-#include <QStringList>
 
 /**
  * Game controller presets.
@@ -32,7 +31,7 @@ public:
 
     de::String currentPreset() const;
 
-    QStringList ids() const;
+    de::StringList ids() const;
 
     void applyPreset(de::String const &presetId);
 

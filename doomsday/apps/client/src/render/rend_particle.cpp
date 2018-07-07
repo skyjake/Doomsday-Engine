@@ -56,6 +56,7 @@
 
 using namespace de;
 using namespace world;
+using namespace res;
 
 // Point + custom textures.
 #define NUM_TEX_NAMES (MAX_PTC_TEXTURES)
@@ -134,7 +135,7 @@ static dbyte loadParticleTexture(duint particleTex)
     try
     {
         // First check if there is a texture asset for this particle.
-        String const assetId = DE_STR("texture.particle.%1").arg(particleTex, 2, 10, QChar('0'));
+        String const assetId = String::format("texture.particle.%02i", particleTex);
         if (App::assetExists(assetId))
         {
             auto asset = App::asset(assetId);
@@ -147,7 +148,7 @@ static dbyte loadParticleTexture(duint particleTex)
         else
         {
             // Fallback: look in the Textures scheme.
-            auto particleImageName = String("Particle%1").arg(particleTex, 2, 10, QChar('0'));
+            auto particleImageName = String::format("Particle%02i", particleTex);
             Path foundPath = tryFindImage(particleImageName);
             if (foundPath.isEmpty())
                 return 0;
@@ -211,13 +212,13 @@ void Rend_ParticleLoadSystemTextures()
 
 void Rend_ParticleLoadExtraTextures()
 {
-    if(novideo) return;
+    if (novideo) return;
 
     Rend_ParticleReleaseExtraTextures();
-    if(!App_GameLoaded()) return;
+    if (!App_GameLoaded()) return;
 
-    QList<dint> loaded;
-    for(dint i = 0; i < MAX_PTC_TEXTURES; ++i)
+    List<dint> loaded;
+    for (dint i = 0; i < MAX_PTC_TEXTURES; ++i)
     {
         if(loadParticleTexture(i))
         {
@@ -225,7 +226,7 @@ void Rend_ParticleLoadExtraTextures()
         }
     }
 
-    if(!loaded.isEmpty())
+    if (!loaded.isEmpty())
     {
         LOG_RES_NOTE("Loaded textures for particle IDs: %s") << Rangei::contiguousRangesAsText(loaded);
     }
@@ -553,7 +554,7 @@ static void drawParticles(dint rtype, bool withBlend)
         DGL_DepthFunc(DGL_LEQUAL);
         DGL_CullFace(DGL_NONE);
 
-        GL_BindTextureUnmanaged(tex, gl::ClampToEdge, gl::ClampToEdge);
+        GL_BindTextureUnmanaged(tex, gfx::ClampToEdge, gfx::ClampToEdge);
         DGL_Enable(DGL_TEXTURE_2D);
 
         DGL_Begin(primType = DGL_QUADS);

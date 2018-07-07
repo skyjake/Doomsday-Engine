@@ -150,12 +150,11 @@ DE_PIMPL_NOREF(ImpulseAccumulator)
                                impulse.name << (localPlayer + 1) << newState
                                << (nowTime - db.previousClickTime) << symbolicName);
 
-            Block symbolicNameUtf8 = symbolicName.toUtf8();
             ddevent_t ev; de::zap(ev);
             ev.device = uint(-1);
             ev.type   = E_SYMBOLIC;
             ev.symbolic.id   = playerNum;
-            ev.symbolic.name = symbolicNameUtf8.constData();
+            ev.symbolic.name = symbolicName;
 
             inputSys().postEvent(&ev); // makes a copy.
         }

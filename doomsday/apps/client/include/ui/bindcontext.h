@@ -135,7 +135,7 @@ public: // Binding management: -------------------------------------------------
     /**
      * Iterate through all the CommandBindings of the context.
      */
-    de::LoopResult forAllCommandBindings(std::function<de::LoopResult (de::Record &)> func) const;
+    de::LoopResult forAllCommandBindings(const std::function<de::LoopResult (de::Record &)>& func) const;
 
     /**
      * Returns the total number of command bindings in the context.
@@ -162,7 +162,7 @@ public: // Binding management: -------------------------------------------------
      * @param localPlayer  (@c < 0 || >= DDMAXPLAYERS) for all local players.
      */
     de::LoopResult forAllImpulseBindings(int localPlayer,
-            std::function<de::LoopResult (CompiledImpulseBindingRecord &)> func) const;
+            const std::function<de::LoopResult (CompiledImpulseBindingRecord &)>& func) const;
 
     inline de::LoopResult forAllImpulseBindings(
             std::function<de::LoopResult (CompiledImpulseBindingRecord &)> func) const {

@@ -231,8 +231,8 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 V3f_Set(dimensions, 320 /*rawTex->width*/, 200 /*rawTex->height*/, 0);
                 // Rotation occurs around the center of the screen.
                 V2f_Set(rotateCenter, 160, 100);
-                GL_BindTextureUnmanaged(glName, gl::ClampToEdge, gl::ClampToEdge,
-                                        (filterUI ? gl::Linear : gl::Nearest));
+                GL_BindTextureUnmanaged(glName, gfx::ClampToEdge, gfx::ClampToEdge,
+                                        (filterUI ? gfx::Linear : gfx::Nearest));
                 if (glName)
                 {
                     DGL_Enable(DGL_TEXTURE_2D);
@@ -245,8 +245,8 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
             V3f_Set(offset, 0, 0, 0);
             V3f_Set(dimensions, 1, 1, 0);
             V2f_Set(rotateCenter, .5f, .5f);
-            GL_BindTextureUnmanaged(f->texRef.tex, gl::ClampToEdge, gl::ClampToEdge,
-                                    (filterUI ? gl::Linear : gl::Nearest));
+            GL_BindTextureUnmanaged(f->texRef.tex, gfx::ClampToEdge, gfx::ClampToEdge,
+                                    (filterUI ? gfx::Linear : gfx::Nearest));
             if (f->texRef.tex)
             {
                 DGL_Enable(DGL_TEXTURE_2D);

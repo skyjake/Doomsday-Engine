@@ -21,10 +21,12 @@
 #include <de/Block>
 #include <de/Set>
 #include <nlohmann/json.hpp>
-
-using namespace de;
+#include <string>
 
 namespace gloom {
+
+using namespace de;
+using json = nlohmann::json;
 
 DE_PIMPL(Map)
 {
@@ -82,9 +84,10 @@ void Map::removeInvalid()
 
     // Lines.
     {
-        for (QMutableHashIterator<ID, Line> iter(d->lines); iter.hasNext(); )
+//        for (QMutableHashIterator<ID, Line> iter(d->lines); iter.hasNext(); )
+        for (auto iter = d->lines.begin(); iter != d->lines.end(); )
         {
-            auto &line = iter.next().value();
+            auto &line = iter->second; //iter.next().value();
             // Invalid sector references.
             for (auto &surface : line.surfaces)
             {
@@ -96,77 +99,91 @@ void Map::removeInvalid()
             // References to invalid points.
             if (!d->points.contains(line.points[0]) || !d->points.contains(line.points[1]))
             {
-                iter.remove();
+                //iter.remove();
+                iter = d->lines.erase(iter);
                 continue;
             }
             // Degenerate lines.
             if (line.points[0] == line.points[1])
             {
-                iter.remove();
+//                iter.remove();
+                iter = d->lines.erase(iter);
                 continue;
             }
             // Merge lines that share endpoints.
-            for (auto lineIter = d->lines.begin(), lineEnd = d->lines.end(); lineIter != lineEnd;
-                 ++lineIter)
+            bool erased = false;
+            for (const auto &lineIter : d->lines)
             {
-                const ID id = lineIter.key();
+                const ID id = lineIter.first; //.key();
+                if (id == iter->first) continue;
+
                 Line &other = Map::line(id);
                 if (line.isOneSided() && other.isOneSided() && other.points[1] == line.points[0] &&
                     other.points[0] == line.points[1])
                 {
                     other.surfaces[1].sector = line.surfaces[0].sector;
                     // Sectors referencing the line must be updated.
-                    for (Sector &sec : d->sectors)
+                    for (auto &sec : d->sectors)
                     {
-                        sec.replaceLine(iter.key(), id);
+                        sec.second.replaceLine(iter->first, id);
                     }
-                    iter.remove();
+                    iter = d->lines.erase(iter);
+                    erased = true;
                     break;
                 }
             }
+            if (erased) continue;
+
+            ++iter;
         }
     }
 
     // Sectors.
     {
-        for (QMutableHashIterator<ID, Sector> iter(d->sectors); iter.hasNext(); )
+//        for (QMutableHashIterator<ID, Sector> iter(d->sectors); iter.hasNext(); )
+        for (auto iter = d->sectors.begin(); iter != d->sectors.end(); )
         {
-            iter.next();
-            const ID secId = iter.key();
-            auto &sector = iter.value();
+            //            iter.next();
+            const ID secId  = iter->first;
+            auto &   sector = iter->second;
             // Remove missing points.
-            for (QMutableListIterator<ID> i(sector.points); i.hasNext(); )
+//            for (QMutableListIterator<ID> i(sector.points); i.hasNext(); )
+            for (auto i = sector.points.begin(); i != sector.points.end(); )
             {
-                i.next();
-                if (i.value() && !d->points.contains(i.value())) // zero is a separator
+//                i.next();
+                if (*i && !d->points.contains(*i)) // zero is a separator
                 {
-                    i.remove();
+                    i = sector.points.erase(i);
                 }
+                else ++i;
             }
             // Remove missing lines.
-            for (QMutableListIterator<ID> i(sector.walls); i.hasNext(); )
+            for (auto i = sector.walls.begin(); i != sector.walls.end(); )
             {
-                i.next();
-                if (!d->lines.contains(i.value()))
+                if (!d->lines.contains(*i))
                 {
-                    i.remove();
+                    i = sector.walls.erase(i);
+                    continue;
                 }
                 else
                 {
                     // Missing references?
-                    const Line &line = Map::line(i.value());
+                    const Line &line = Map::line(*i);
                     if (line.surfaces[0].sector != secId && line.surfaces[1].sector != secId)
                     {
-                        i.remove();
+                        i = sector.walls.erase(i);
+                        continue;
                     }
                 }
+                ++i;
             }
             // Remove empty sectors.
             if (sector.points.isEmpty() || sector.walls.isEmpty())
             {
-                iter.remove();
+                iter = d->sectors.erase(iter);
                 continue;
             }
+            ++iter;
         }
     }
 }
@@ -380,14 +397,14 @@ bool Map::isPlane(ID id) const
 void Map::forLinesAscendingDistance(const Point &pos, const std::function<bool (ID)> &func) const
 {
     using DistLine = std::pair<ID, double>;
-    QVector<DistLine> distLines;
+    List<DistLine> distLines;
 
     for (auto i = d->lines.begin(); i != d->lines.end(); ++i)
     {
-        distLines << DistLine{i.key(), geoLine(i.key()).distanceTo(pos.coord)};
+        distLines << DistLine{i->first, geoLine(i->first).distanceTo(pos.coord)};
     }
 
-    qSort(distLines.begin(), distLines.end(), [](const DistLine &a, const DistLine &b) {
+    std::sort(distLines.begin(), distLines.end(), [](const DistLine &a, const DistLine &b) {
         return a.second < b.second;
     });
 
@@ -402,9 +419,9 @@ IDList Map::findLines(ID pointId) const
     IDList ids;
     for (auto i = d->lines.begin(); i != d->lines.end(); ++i)
     {
-        if (i.value().points[0] == pointId || i.value().points[1] == pointId)
+        if (i->second.points[0] == pointId || i->second.points[1] == pointId)
         {
-            ids << i.key();
+            ids << i->first;
         }
     }
     return ids;
@@ -415,9 +432,9 @@ IDList Map::findLinesStartingFrom(ID pointId, Line::Side side) const
     IDList ids;
     for (auto i = d->lines.begin(); i != d->lines.end(); ++i)
     {
-        if (i.value().startPoint(side) == pointId)
+        if (i->second.startPoint(side) == pointId)
         {
-            ids << i.key();
+            ids << i->first;
         }
     }
     return ids;
@@ -518,23 +535,23 @@ Map::WorldPlaneVerts Map::worldSectorPlaneVerts(const Sector &sector) const
     return planeVerts;
 }
 
-QHash<ID, Map::WorldPlaneVerts> Map::worldSectorPlaneVerts() const
+Hash<ID, Map::WorldPlaneVerts> Map::worldSectorPlaneVerts() const
 {
-    QHash<ID, WorldPlaneVerts> sectorPlaneVerts;
-    for (auto i = d->sectors.constBegin(), end = d->sectors.constEnd(); i != end; ++i)
+    Hash<ID, WorldPlaneVerts> sectorPlaneVerts;
+    for (const auto &i : d->sectors)
     {
-        sectorPlaneVerts.insert(i.key(), worldSectorPlaneVerts(i.value()));
+        sectorPlaneVerts.insert(i.first, worldSectorPlaneVerts(i.second));
     }
     return sectorPlaneVerts;
 }
 
-bool Map::buildSector(Edge         startSide,
-                      IDList &     sectorPoints,
-                      IDList &     sectorWalls,
-                      QList<Edge> &sectorEdges)
+bool Map::buildSector(Edge        startSide,
+                      IDList &    sectorPoints,
+                      IDList &    sectorWalls,
+                      List<Edge> &sectorEdges)
 {
-    QSet<Edge> assigned; // these have already been assigned to the sector
-    QSet<ID>   assignedLines;
+    Set<Edge> assigned; // these have already been assigned to the sector
+    Set<ID>   assignedLines;
 
     sectorPoints.clear();
 
@@ -573,7 +590,7 @@ bool Map::buildSector(Edge         startSide,
             Edge line;
             double angle;
         };
-        QList<Candidate> candidates;
+        List<Candidate> candidates;
 
         // Find potential line to continue to.
         // This may be the other side of a line already assigned.
@@ -652,7 +669,7 @@ ID Map::splitLine(ID lineId, const Point &splitPoint)
 
     for (auto s = d->sectors.begin(), end = d->sectors.end(); s != end; ++s)
     {
-        Sector &sector = s.value();
+        Sector &sector = s->second;
 
         for (int i = 0; i < sector.walls.size(); ++i)
         {
@@ -660,7 +677,7 @@ ID Map::splitLine(ID lineId, const Point &splitPoint)
             {
                 sector.walls.insert(i + 1, newLine);
 
-                const int side = line(lineId).sectorSide(s.key());
+                const int side = line(lineId).sectorSide(s->first);
 
                 // Find the corresponding corner points.
                 for (int j = 0; j < sector.points.size(); ++j)
@@ -684,15 +701,15 @@ ID Map::splitLine(ID lineId, const Point &splitPoint)
 
 std::pair<ID, ID> Map::findSectorAndVolumeAt(const de::Vec3d &pos) const
 {
-    for (auto i = d->sectors.constBegin(), end = d->sectors.constEnd(); i != end; ++i)
+    for (const auto &i : d->sectors)
     {
-        const ID sectorId = i.key();
-        foreach (const auto &poly, sectorPolygons(sectorId))
+        const ID sectorId = i.first;
+        for (const auto &poly : sectorPolygons(sectorId))
         {
             if (poly.isPointInside(pos.xz()))
             {
                 // Which volume?
-                const Sector &sector = i.value();
+                const Sector &sector = i.second;
                 for (ID volumeId : sector.volumes)
                 {
                     const Plane &floor   = d->planes[d->volumes[volumeId].planes[0]];
@@ -711,24 +728,24 @@ std::pair<ID, ID> Map::findSectorAndVolumeAt(const de::Vec3d &pos) const
 
 namespace util {
 
-static QString idStr(ID id)
+static std::string idStr(ID id)
 {
-    return String::asText(id, 16);
+    return stringf("%x", id);
 }
 
-static ID idNum(const QVariant &str)
+static ID idNum(const std::string &str)
 {
-    return str.toString().toUInt(nullptr, 16);
+    return ID(std::stoul(str, nullptr, 16));
 }
 
-static QJsonArray idListToJsonArray(const IDList &list)
+static json idListToJsonArray(const IDList &list)
 {
-    QJsonArray array;
-    for (auto id : list) array << idStr(id);
+    json array = json::array();
+    for (auto id : list) array.push_back(idStr(id));
     return array;
 }
 
-static IDList variantListToIDList(const QList<QVariant> &list)
+static IDList jsonArrayToIDList(const json &list)
 {
     IDList ids;
     for (const auto &var : list) ids << idNum(var);
@@ -742,174 +759,168 @@ Block Map::serialize() const
     using namespace util;
 
     const Impl *_d = d;
-    QJsonObject obj;
+    json obj;
 
     // Metadata.
     {
-        obj.insert("metersPerUnit",
-                   QJsonArray({_d->metersPerUnit.x, _d->metersPerUnit.y, _d->metersPerUnit.z}));
+        obj["metersPerUnit"] = json::array({_d->metersPerUnit.x, _d->metersPerUnit.y, _d->metersPerUnit.z});
     }
 
     // Points.
     {
-        QJsonObject points;
+        json points;
         for (auto i = _d->points.begin(); i != _d->points.end(); ++i)
         {
-            points.insert(idStr(i.key()), QJsonArray{{i.value().coord.x, i.value().coord.y}});
+            points[idStr(i->first)] = json::array({i->second.coord.x, i->second.coord.y});
         }
-        obj.insert("points", points);
+        obj["points"] = points;
     }
 
     // Lines.
     {
-        QJsonObject lines;
+        json lines;
         for (auto i = _d->lines.begin(); i != _d->lines.end(); ++i)
         {
-            QJsonObject lineObj;
-            lineObj.insert("pt",
-                           QJsonArray({idStr(i.value().points[0]), idStr(i.value().points[1])}));
-            lineObj.insert("sec",
-                           QJsonArray({idStr(i.value().surfaces[0].sector),
-                                       idStr(i.value().surfaces[1].sector)}));
-            lineObj.insert("mtl",
-                           QJsonArray({
-                               i.value().surfaces[0].material[0],
-                               i.value().surfaces[0].material[1],
-                               i.value().surfaces[0].material[2],
-                               i.value().surfaces[1].material[0],
-                               i.value().surfaces[1].material[1],
-                               i.value().surfaces[1].material[2]}));
-            lines.insert(idStr(i.key()), lineObj);
+            json lineObj;
+            lineObj["pt"] = json::array({idStr(i->second.points[0]), idStr(i->second.points[1])});
+            lineObj["sec"] = json::array({idStr(i->second.surfaces[0].sector),
+                                          idStr(i->second.surfaces[1].sector)});
+            lineObj["mtl"] = json::array({
+                               i->second.surfaces[0].material[0],
+                               i->second.surfaces[0].material[1],
+                               i->second.surfaces[0].material[2],
+                               i->second.surfaces[1].material[0],
+                               i->second.surfaces[1].material[1],
+                               i->second.surfaces[1].material[2]});
+            lines[idStr(i->first)] = lineObj;
         }
-        obj.insert("lines", lines);
+        obj["lines"] = lines;
     }
 
     // Planes.
     {
-        QJsonObject planes;
+        json planes;
         for (auto i = _d->planes.begin(); i != _d->planes.end(); ++i)
         {
-            const Plane &plane = i.value();
-            planes.insert(idStr(i.key()),
-                          QJsonArray({plane.point.x,
-                                      plane.point.y,
-                                      plane.point.z,
-                                      plane.normal.x,
-                                      plane.normal.y,
-                                      plane.normal.z,
-                                      plane.material[0],
-                                      plane.material[1]}));
+            const Plane &plane = i->second;
+            planes[idStr(i->first)] =
+                          json::array({plane.point.x,
+                                       plane.point.y,
+                                       plane.point.z,
+                                       plane.normal.x,
+                                       plane.normal.y,
+                                       plane.normal.z,
+                                       plane.material[0],
+                                       plane.material[1]});
         }
-        obj.insert("planes", planes);
+        obj["planes"] = planes;
     }
 
     // Sectors.
     {
-        QJsonObject sectors;
+        json sectors;
         for (auto i = _d->sectors.begin(); i != _d->sectors.end(); ++i)
         {
-            QJsonObject secObj;
-            secObj.insert("pt", idListToJsonArray(i.value().points));
-            secObj.insert("wl", idListToJsonArray(i.value().walls));
-            secObj.insert("vol", idListToJsonArray(i.value().volumes));
-            sectors.insert(idStr(i.key()), secObj);
+            json secObj;
+            secObj["pt"]  = idListToJsonArray(i->second.points);
+            secObj["wl"]  = idListToJsonArray(i->second.walls);
+            secObj["vol"] = idListToJsonArray(i->second.volumes);
+            sectors[idStr(i->first)] = secObj;
         }
-        obj.insert("sectors", sectors);
+        obj["sectors"] = sectors;
     }
 
     // Volumes.
     {
-        QJsonObject volumes;
+        json volumes;
         for (auto i = _d->volumes.begin(); i != _d->volumes.end(); ++i)
         {
-            const Volume &vol = i.value();
-            QJsonObject volObj;
-            volObj.insert("pln", QJsonArray({idStr(vol.planes[0]), idStr(vol.planes[1])}));
-            volumes.insert(idStr(i.key()), volObj);
+            const Volume &vol = i->second;
+            json volObj;
+            volObj["pln"] = json::array({idStr(vol.planes[0]), idStr(vol.planes[1])});
+            volumes[idStr(i->first)] = volObj;
         }
-        obj.insert("volumes", volumes);
+        obj["volumes"] = volumes;
     }
 
     // Entities.
     {
-        QJsonObject ents;
+        json ents;
         for (auto i = _d->entities.begin(); i != _d->entities.end(); ++i)
         {
-            const auto &ent = i.value();
-            QJsonObject entObj;
-            entObj.insert("pos", QJsonArray({ent->position().x, ent->position().y, ent->position().z}));
-            entObj.insert("angle", ent->angle());
-            entObj.insert("type", int(ent->type()));
-            entObj.insert("scale", QJsonArray({ent->scale().x, ent->scale().y, ent->scale().z}));
-            ents.insert(idStr(i.key()), entObj);
+            const auto &ent = i->second;
+            json entObj;
+            entObj["pos"] = json::array({ent->position().x, ent->position().y, ent->position().z});
+            entObj["angle"] = ent->angle();
+            entObj["type"] = int(ent->type());
+            entObj["scale"] = json::array({ent->scale().x, ent->scale().y, ent->scale().z});
+            ents[idStr(i->first)] = entObj;
         }
-        obj.insert("entities", ents);
+        obj["entities"] = ents;
     }
 
-    return QJsonDocument(obj).toJson(QJsonDocument::Compact);
+    return obj.dump();
 }
 
 void Map::deserialize(const Block &data)
 {
     using namespace util;
 
-    const QJsonDocument document = QJsonDocument::fromJson(data);
-    const QJsonObject   json     = document.object();
-    const auto          map      = json.toVariantHash();
+    const json map = json::parse(data.c_str());
 
     clear();
 
-    auto getId = [this](QString idStr)
+    auto getId = [this](String idStr)
     {
         const ID id = idNum(idStr);
-        if (id == 0) qWarning() << "[Map] Deserialized data contains ID 0";
+        if (id == 0) warning("[Map] Deserialized data contains ID 0");
         d->idGen = de::max(d->idGen, id);
         return id;
     };
 
     // Metadata.
     {
-        if (map.contains("metersPerUnit"))
+        if (map.find("metersPerUnit") != map.end())
         {
-            const auto mpu = map["metersPerUnit"].toList();
-            d->metersPerUnit = {mpu[0].toDouble(), mpu[1].toDouble(), mpu[2].toDouble()};
+            const auto mpu = map["metersPerUnit"];
+            d->metersPerUnit = Vec3d{mpu[0], mpu[1], mpu[2]};
         }
     }
 
     // Points.
     {
-        const auto points = map["points"].toHash();
+        const auto &points = map["points"];
         for (auto i = points.begin(); i != points.end(); ++i)
         {
-            const auto pos = i.value().toList();
-            Point point{Vec2d{pos[0].toDouble(), pos[1].toDouble()}};
+            const auto &pos = i.value();
+            Point point{Vec2d{pos[0], pos[1]}};
             d->points.insert(getId(i.key()), point);
         }
     }
 
     // Line.
     {
-        const auto lines = map["lines"].toHash();
+        const json &lines = map["lines"];
         for (auto i = lines.begin(); i != lines.end(); ++i)
         {
-            const auto   obj       = i.value().toHash();
-            const auto   points    = obj["pt"].toList();
-            const auto   sectors   = obj["sec"].toList();
-            QVariantList materials = obj["mtl"].toList();
+            const auto &obj       = i.value();
+            const auto &points    = obj["pt"];
+            const auto &sectors   = obj["sec"];
+            json        materials = obj["mtl"];
 
-            if (materials.isEmpty())
+            if (materials.empty())
             {
-                materials = QVariantList({"", "", "", "", "", ""});
+                materials = json::array({"", "", "", "", "", ""});
             }
 
             Line::Surface frontSurface{idNum(sectors[0]),
-                                       {materials.at(0).toString(),
-                                        materials.at(1).toString(),
-                                        materials.at(2).toString()}};
+                                       {materials[0].get<std::string>(),
+                                        materials[1].get<std::string>(),
+                                        materials[2].get<std::string>()}};
             Line::Surface backSurface{idNum(sectors[1]),
-                                      {materials.at(3).toString(),
-                                       materials.at(4).toString(),
-                                       materials.at(5).toString()}};
+                                      {materials[3].get<std::string>(),
+                                       materials[4].get<std::string>(),
+                                       materials[5].get<std::string>()}};
             d->lines.insert(
                 getId(i.key()),
                 Line{{{idNum(points[0]), idNum(points[1])}}, {{frontSurface, backSurface}}});
@@ -918,17 +929,17 @@ void Map::deserialize(const Block &data)
 
     // Planes.
     {
-        const auto planes = map["planes"].toHash();
+        const auto &planes = map["planes"];
         for (auto i = planes.begin(); i != planes.end(); ++i)
         {
-            const auto obj = i.value().toList();
-            Vec3d point{obj[0].toDouble(), obj[1].toDouble(), obj[2].toDouble()};
-            Vec3f normal{obj[3].toFloat(), obj[4].toFloat(), obj[5].toFloat()};
+            const auto &obj = i.value();
+            Vec3d point{obj[0], obj[1], obj[2]};
+            Vec3f normal{obj[3], obj[4], obj[5]};
             String material[2];
             if (obj.size() >= 8)
             {
-                material[0] = obj[6].toString();
-                material[1] = obj[7].toString();
+                material[0] = obj[6].get<std::string>();
+                material[1] = obj[7].get<std::string>();
             }
             d->planes.insert(getId(i.key()), Plane{point, normal, {material[0], material[1]}});
         }
@@ -936,47 +947,47 @@ void Map::deserialize(const Block &data)
 
     // Sectors.
     {
-        const auto sectors = map["sectors"].toHash();
+        const auto &sectors = map["sectors"];
         for (auto i = sectors.begin(); i != sectors.end(); ++i)
         {
-            const auto obj     = i.value().toHash();
-            const auto points  = obj["pt"].toList();
-            const auto walls   = obj["wl"].toList();
-            const auto volumes = obj["vol"].toList();
+            const auto &obj     = i.value();
+            const auto &points  = obj["pt"];
+            const auto &walls   = obj["wl"];
+            const auto &volumes = obj["vol"];
             d->sectors.insert(getId(i.key()),
-                              Sector{variantListToIDList(points),
-                                     variantListToIDList(walls),
-                                     variantListToIDList(volumes)});
+                              Sector{jsonArrayToIDList(points),
+                                     jsonArrayToIDList(walls),
+                                     jsonArrayToIDList(volumes)});
         }
     }
 
     // Volumes.
     {
-        const auto volumes = map["volumes"].toHash();
+        const auto &volumes = map["volumes"];
         for (auto i = volumes.begin(); i != volumes.end(); ++i)
         {
-            const auto obj = i.value().toHash();
-            const IDList planes = variantListToIDList(obj["pln"].toList());
+            const auto &obj = i.value();
+            const IDList planes = jsonArrayToIDList(obj["pln"]);
             d->volumes.insert(getId(i.key()), Volume{{planes[0], planes[1]}});
         }
     }
 
     // Entities.
     {
-        const auto ents = map["entities"].toHash();
+        const auto &ents = map["entities"];
         for (auto i = ents.begin(); i != ents.end(); ++i)
         {
-            const auto ent = i.value().toHash();
-            const auto pos = ent["pos"].toList();
-            const auto sc  = ent["scale"].toList();
-            const ID   id  = getId(i.key());
+            const auto &ent = i.value();
+            const auto &pos = ent["pos"];
+            const auto &sc  = ent["scale"];
+            const ID   id   = getId(i.key());
 
             std::shared_ptr<Entity> entity(new Entity);
             entity->setId(id);
-            entity->setType(Entity::Type(ent["type"].toInt()));
-            entity->setPosition(Vec3d{pos[0].toDouble(), pos[1].toDouble(), pos[2].toDouble()});
-            entity->setAngle(ent["angle"].toFloat());
-            entity->setScale(Vec3f{sc[0].toFloat(), sc[1].toFloat(), sc[2].toFloat()});
+            entity->setType(Entity::Type(ent["type"]));
+            entity->setPosition(Vec3d{pos[0], pos[1], pos[2]});
+            entity->setAngle(ent["angle"]);
+            entity->setScale(Vec3f{sc[0], sc[1], sc[2]});
 
             d->entities.insert(id, entity);
         }
@@ -1034,11 +1045,6 @@ Edge Edge::flipped() const
 bool Edge::operator==(const Edge &other) const
 {
     return line == other.line && side == other.side;
-}
-
-uint qHash(const Edge &sideRef)
-{
-    return (sideRef.line << 1) | int(sideRef.side);
 }
 
 } // namespace gloom

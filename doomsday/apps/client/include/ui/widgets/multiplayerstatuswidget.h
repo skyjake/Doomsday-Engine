@@ -28,12 +28,9 @@
  */
 class MultiplayerStatusWidget : public de::PopupMenuWidget
 {
-    Q_OBJECT
-
 public:
     MultiplayerStatusWidget();
 
-public slots:
     void updateElapsedTime();
 
 protected:

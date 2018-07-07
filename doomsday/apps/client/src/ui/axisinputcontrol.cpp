@@ -305,36 +305,34 @@ String AxisInputControl::description() const
 {
     DE_GUARD(this);
 
-    QStringList flags;
+    StringList flags;
     if (!isActive()) flags << "disabled";
     if (isInverted()) flags << "inverted";
 
     String flagsString;
     if (!flags.isEmpty())
     {
-        String flagsAsText = flags.join("|");
-        flagsString = String(_E(l) " Flags :" _E(.)_E(i) "%1" _E(.)).arg(flagsAsText);
+        flagsString = String(_E(l) " Flags :" _E(.)_E(i) "%s" _E(.), String::join(flags, "|").c_str());
     }
 
-    return String(_E(b) "%1 " _E(.) "(%2)"
-                  _E(l) " Current value: " _E(.) "%3"
-                  _E(l) " Deadzone: " _E(.) "%4"
-                  _E(l) " Scale: "     _E(.) "%5"
-                  _E(l) " Offset: "     _E(.) "%6"
-                  "%7")
-               .arg(fullName())
-               .arg(d->type == Stick? "Stick" : "Pointer")
-               .arg(position())
-               .arg(d->deadZone)
-               .arg(d->scale)
-               .arg(d->offset)
-               .arg(flagsString);
+    return String::format(_E(b) "%s " _E(.) "(%s)"
+                          _E(l) " Current value: " _E(.) "%f"
+                          _E(l) " Deadzone: " _E(.) "%f"
+                          _E(l) " Scale: "     _E(.) "%f"
+                          _E(l) " Offset: "     _E(.) "%f%s",
+                          fullName().c_str(),
+                          d->type == Stick? "Stick" : "Pointer",
+                          position(),
+                          d->deadZone,
+                          d->scale,
+                          d->offset,
+                          flagsString.c_str());
 }
 
 bool AxisInputControl::inDefaultState() const
 {
     DE_GUARD(this);
-    return d->position == 0; // Centered?
+    return fequal(d->position, 0); // Centered?
 }
 
 void AxisInputControl::reset()
@@ -355,20 +353,20 @@ void AxisInputControl::consoleRegister()
     DE_GUARD(this);
 
     DE_ASSERT(hasDevice() && !name().isEmpty());
-    String controlName = String("input-%1-%2").arg(device().name()).arg(name());
+    String controlName = String::format("input-%s-%s", device().name().c_str(), name().c_str());
 
-    Block scale = (controlName + "-factor").toUtf8();
-    C_VAR_FLOAT(scale.constData(), &d->scale, CVF_NO_MAX, 0, 0);
+    String scale = controlName + "-factor";
+    C_VAR_FLOAT(scale, &d->scale, CVF_NO_MAX, 0, 0);
 
-    Block flags = (controlName + "-flags").toUtf8();
-    C_VAR_INT(flags.constData(), &d->flags, 0, 0, 7);
+    String flags = controlName + "-flags";
+    C_VAR_INT(flags, &d->flags, 0, 0, 7);
 
     if (d->type == Stick)
     {
-        Block deadzone = (controlName + "-deadzone").toUtf8();
-        C_VAR_FLOAT(deadzone.constData(), &d->deadZone, 0, 0, 1);
+        String deadzone = controlName + "-deadzone";
+        C_VAR_FLOAT(deadzone, &d->deadZone, 0, 0, 1);
 
-        Block offset = (controlName + "-offset").toUtf8();
-        C_VAR_FLOAT(offset.constData(), &d->offset, CVF_NO_MAX | CVF_NO_MIN, 0, 0);
+        String offset = controlName + "-offset";
+        C_VAR_FLOAT(offset, &d->offset, CVF_NO_MAX | CVF_NO_MIN, 0, 0);
     }
 }

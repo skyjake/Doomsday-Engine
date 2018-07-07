@@ -23,8 +23,6 @@
 
 class TutorialWidget : public de::GuiWidget
 {
-    Q_OBJECT
-
 public:
     TutorialWidget();
 
@@ -33,7 +31,6 @@ public:
     // Events.
     bool handleEvent(de::Event const &event);
 
-public slots:
     void continueToNextStep();
     void backToPreviousStep();
     void stop();

@@ -81,7 +81,7 @@ struct Hemisphere
     float height        = 0.49f;
     float horizonOffset = -0.105f;
 
-    typedef QVector<Vec3f> VBuf;
+    typedef List<Vec3f> VBuf;
     VBuf verts;
     bool needRebuild = true;
 
@@ -130,9 +130,10 @@ struct Hemisphere
             if (!avgColor)
             {
                 res::Uri const pTexUri = pTex.manifest().composeUri();
-                throw Error("Hemisphere::capColor", String("Texture \"%1\" has no Average%2ColorAnalysis")
-                                                        .arg(pTexUri)
-                                                        .arg(hemisphere == UpperHemisphere? "Top" : "Bottom"));
+                throw Error("Hemisphere::capColor",
+                            stringf("Texture \"%s\" has no Average%2ColorAnalysis",
+                                    pTexUri.pathCStr(),
+                                    hemisphere == UpperHemisphere ? "Top" : "Bottom"));
             }
 
             // Is the colored fadeout in use?
@@ -450,7 +451,7 @@ DE_PIMPL(SkyDrawable)
         //glDepthMask(GL_TRUE);
         DGL_Enable(DGL_DEPTH_TEST);
         DGL_Enable(DGL_DEPTH_WRITE);
-        LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
@@ -506,7 +507,7 @@ DE_PIMPL(SkyDrawable)
 
         // We don't want that anything in the world geometry interferes with what was
         // drawn in the sky.
-        LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
+        glClear(GL_DEPTH_BUFFER_BIT);
     }
 
     void setupModels(Record const *def)

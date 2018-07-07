@@ -28,6 +28,7 @@
 #include <de/Matrix>
 #include <de/Record>
 #include <de/Vector>
+#include <de/graphics/opengl.h>
 
 #include "def_main.h"
 #include "MaterialVariantSpec"
@@ -129,7 +130,7 @@ DE_EXTERN_C int mipmapping, filterUI, texQuality, filterSprites;
 DE_EXTERN_C int texMagMode, texAniso;
 DE_EXTERN_C int useSmartFilter;
 DE_EXTERN_C int texMagMode;
-DE_EXTERN_C int glmode[6];
+DE_EXTERN_C GLenum glmode[6];
 DE_EXTERN_C dd_bool fillOutlines;
 //DE_EXTERN_C dd_bool noHighResTex;
 //DE_EXTERN_C dd_bool noHighResPatches;
@@ -313,7 +314,7 @@ Lumobj *Rend_MakeLumobj(de::Record const &sprite);
 ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
 
 de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
-de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(int wrapS, int wrapT);
+de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(GLenum wrapS, GLenum wrapT);
 
 TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec();
 

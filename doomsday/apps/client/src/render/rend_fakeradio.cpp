@@ -751,7 +751,8 @@ static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, Wal
 
     DrawListSpec listSpec;
     listSpec.group = ShadowGeom;
-    listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(tp.texture), gl::ClampToEdge, gl::ClampToEdge);
+    listSpec.texunits[TU_PRIMARY] =
+        GLTextureUnit(GL_PrepareLSTexture(tp.texture), gfx::ClampToEdge, gfx::ClampToEdge);
     DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 
     static DrawList::Indices indices;
@@ -765,7 +766,7 @@ static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, Wal
         {
             duint const numVerts = 3 + rightEdge.divisionCount();
             duint const base     = buffer.allocateVertices(numVerts);
-            if (indices.size() < int(numVerts)) indices.resize(numVerts);
+            if (indices.size() < numVerts) indices.resize(numVerts);
             for(duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
@@ -798,7 +799,7 @@ static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, Wal
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, indices.constData(), numVerts, gl::TriangleFan);
+                shadowList.write(buffer, indices.data(), numVerts, gfx::TriangleFan);
             }
         }
         // Left fan.
@@ -838,7 +839,7 @@ static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, Wal
             // Write the geometry?
             if(::rendFakeRadio != 2)
             {
-                shadowList.write(buffer, indices.constData(), numVerts, gl::TriangleFan);
+                shadowList.write(buffer, indices.data(), numVerts, gfx::TriangleFan);
             }
         }
     }
@@ -864,7 +865,7 @@ static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, Wal
         // Write the geometry?
         if(::rendFakeRadio != 2)
         {
-            shadowList.write(buffer, indices.constData(), 4, gl::TriangleStrip);
+            shadowList.write(buffer, indices.data(), 4, gfx::TriangleStrip);
         }
     }
 }
@@ -957,8 +958,12 @@ static bool prepareFlatShadowEdges(ShadowEdge edges[2], HEdge const *hEdges[2], 
     return (edges[0].shadowStrength(shadowDark) >= .0001 && edges[1].shadowStrength(shadowDark) >= .0001);
 }
 
-static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl::Primitive &primitive,
-    ShadowEdge const edges[2], dfloat shadowDark, bool haveFloor)
+static uint makeFlatShadowGeometry(DrawList::Indices &indices,
+                                   Store &            verts,
+                                   gfx::Primitive &primitive,
+                                   ShadowEdge const   edges[2],
+                                   dfloat             shadowDark,
+                                   bool               haveFloor)
 {
     static duint const floorOrder[][4] = { { 0, 1, 2, 3 }, { 1, 2, 3, 0 } };
     static duint const ceilOrder [][4] = { { 0, 3, 2, 1 }, { 1, 0, 3, 2 } };
@@ -982,7 +987,7 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices, Store &verts, gl:
     //
     // Build the geometry.
     //
-    primitive = gl::TriangleFan;
+    primitive = gfx::TriangleFan;
     verts.posCoords[indices[order[0]]] = edges[0].outer();
     verts.posCoords[indices[order[1]]] = edges[1].outer();
     verts.posCoords[indices[order[2]]] = edges[1].inner();
@@ -1065,14 +1070,15 @@ void Rend_DrawFlatRadio(ConvexSubspace const &subspace)
 
                         // Build geometry.
                         Store &buffer = ClientApp::renderSystem().buffer();
-                        gl::Primitive primitive;
-                        uint vertCount = makeFlatShadowGeometry(indices, buffer, primitive, shadowEdges, shadowDark, haveFloor);
+                        gfx::Primitive primitive;
+                        uint              vertCount = makeFlatShadowGeometry(
+                            indices, buffer, primitive, shadowEdges, shadowDark, haveFloor);
 
                         // Skip drawing entirely?
                         if (::rendFakeRadio == 2) continue;
 
                         // Write the geometry.
-                        shadowList.write(buffer, indices.constData(), vertCount, primitive);
+                        shadowList.write(buffer, indices.data(), vertCount, primitive);
                     }
                 }
             }

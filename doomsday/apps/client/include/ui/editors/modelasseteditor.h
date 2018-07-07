@@ -26,14 +26,12 @@
  */
 class ModelAssetEditor : public SidebarWidget
 {
-    Q_OBJECT
-
 public:
     ModelAssetEditor();
 
-protected slots:
-    void setSelectedAsset(uint pos);
-    void setSelectedInstance(uint pos);
+protected:
+    void setSelectedAsset(de::ui::DataPos pos);
+    void setSelectedInstance(de::ui::DataPos pos);
     void playAnimation();
     void updateOffsetVector();
 

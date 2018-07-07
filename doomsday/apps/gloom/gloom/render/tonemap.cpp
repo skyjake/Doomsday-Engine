@@ -28,8 +28,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 DE_PIMPL(Tonemap)
 {
     ScreenQuad    quad;
@@ -69,7 +67,7 @@ void Tonemap::glInit(Context &context)
             auto &bs = d->brightnessSamples[i];
 
             bs.setAutoGenMips(false);
-            bs.setFilter(gl::Nearest, gl::Nearest, gl::MipNone);
+            bs.setFilter(gfx::Nearest, gfx::Nearest, gfx::MipNone);
             bs.setUndefinedContent(Vec2ui(4, 4), GLPixelFormat(GL_RGB16F, GL_RGB, GL_FLOAT));
 
             d->brightnessFramebuf[i].configure(GLFramebuffer::Color0, bs);

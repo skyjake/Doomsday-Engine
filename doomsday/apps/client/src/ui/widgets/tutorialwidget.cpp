@@ -32,8 +32,7 @@
 #include <de/ProgressWidget>
 #include <de/NotificationAreaWidget>
 #include <de/StyleProceduralImage>
-
-#include <QTimer>
+#include <de/Timer>
 
 using namespace de;
 

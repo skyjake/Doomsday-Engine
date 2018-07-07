@@ -35,13 +35,19 @@ void R_ShutdownViewWindow();
  */
 void R_DrawViewBorder();
 
-TextureVariantSpec const &Rend_PatchTextureSpec(int flags = 0,
-    de::gl::Wrapping wrapS = de::gl::ClampToEdge, de::gl::Wrapping wrapT = de::gl::ClampToEdge);
+TextureVariantSpec const &Rend_PatchTextureSpec(int               flags = 0,
+                                                de::gfx::Wrapping wrapS = de::gfx::ClampToEdge,
+                                                de::gfx::Wrapping wrapT = de::gfx::ClampToEdge);
 
 void R_DrawPatch(ClientTexture &texture, int x, int y);
 void R_DrawPatch(ClientTexture &texture, int x, int y, int w, int h, bool useOffsets = true);
 
-void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
-    de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
+void R_DrawPatchTiled(ClientTexture &   texture,
+                      int               x,
+                      int               y,
+                      int               w,
+                      int               h,
+                      de::gfx::Wrapping wrapS,
+                      de::gfx::Wrapping wrapT);
 
 #endif // DE_CLIENT_RENDER_MISC_H

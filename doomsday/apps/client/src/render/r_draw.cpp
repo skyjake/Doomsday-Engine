@@ -155,8 +155,8 @@ void R_ShutdownViewWindow()
 }
 
 TextureVariantSpec const &Rend_PatchTextureSpec(int              flags,
-                                                de::gl::Wrapping wrapS,
-                                                de::gl::Wrapping wrapT)
+                                                gfx::Wrapping wrapS,
+                                                gfx::Wrapping wrapT)
 {
     return ClientApp::resources().textureSpec(TC_UI, flags, 0, 0, 0,
         GL_Wrap(wrapS), GL_Wrap(wrapT), 0, -3, 0, false, false, false, false);
@@ -190,8 +190,13 @@ void R_DrawPatch(ClientTexture &tex, int x, int y)
     R_DrawPatch(tex, x, y, tex.width(), tex.height());
 }
 
-void R_DrawPatchTiled(ClientTexture &texture, int x, int y, int w, int h,
-    gl::Wrapping wrapS, gl::Wrapping wrapT)
+void R_DrawPatchTiled(ClientTexture &  texture,
+                      int              x,
+                      int              y,
+                      int              w,
+                      int              h,
+                      gfx::Wrapping wrapS,
+                      gfx::Wrapping wrapT)
 {
     TextureVariantSpec const &spec =
         Rend_PatchTextureSpec(0 | (texture.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
@@ -272,10 +277,10 @@ void R_DrawViewBorder()
 
     if(border)
     {
-        R_DrawPatchTiled(borderTexture(BG_TOP),    origin.x + vd->window.topLeft.x,          origin.y + vd->window.topLeft.y - border, vd->window.width(), border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(borderTexture(BG_BOTTOM), origin.x + vd->window.topLeft.x,          origin.y + vd->window.bottomRight.y, vd->window.width(), border, gl::Repeat, gl::ClampToEdge);
-        R_DrawPatchTiled(borderTexture(BG_LEFT),   origin.x + vd->window.topLeft.x - border, origin.y + vd->window.topLeft.y, border, vd->window.height(), gl::ClampToEdge, gl::Repeat);
-        R_DrawPatchTiled(borderTexture(BG_RIGHT),  origin.x + vd->window.topRight().x,       origin.y + vd->window.topRight().y, border, vd->window.height(), gl::ClampToEdge, gl::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_TOP),    origin.x + vd->window.topLeft.x,          origin.y + vd->window.topLeft.y - border, vd->window.width(), border, gfx::Repeat, gfx::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_BOTTOM), origin.x + vd->window.topLeft.x,          origin.y + vd->window.bottomRight.y, vd->window.width(), border, gfx::Repeat, gfx::ClampToEdge);
+        R_DrawPatchTiled(borderTexture(BG_LEFT),   origin.x + vd->window.topLeft.x - border, origin.y + vd->window.topLeft.y, border, vd->window.height(), gfx::ClampToEdge, gfx::Repeat);
+        R_DrawPatchTiled(borderTexture(BG_RIGHT),  origin.x + vd->window.topRight().x,       origin.y + vd->window.topRight().y, border, vd->window.height(), gfx::ClampToEdge, gfx::Repeat);
     }
 
     DGL_MatrixMode(DGL_TEXTURE);

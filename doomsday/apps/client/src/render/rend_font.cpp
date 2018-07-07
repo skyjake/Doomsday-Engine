@@ -98,7 +98,7 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
-static void drawChar(uchar ch, float posX, float posY, const AbstractFont &font, int alignFlags); //, short textFlags);
+static void drawChar(dbyte ch, float posX, float posY, const AbstractFont &font, int alignFlags); //, short textFlags);
 static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
 
 static int initedFont = false;
@@ -422,7 +422,7 @@ void FR_SetCaseScale(dd_bool value)
 }
 
 #undef FR_CharSize
-void FR_CharSize(Size2Raw *size, uchar ch)
+void FR_CharSize(Size2Raw *size, dbyte ch)
 {
     errorIfNotInited("FR_CharSize");
     if (size)
@@ -434,7 +434,7 @@ void FR_CharSize(Size2Raw *size, uchar ch)
 }
 
 #undef FR_CharWidth
-int FR_CharWidth(uchar ch)
+int FR_CharWidth(dbyte ch)
 {
     errorIfNotInited("FR_CharWidth");
     if (fr.fontNum != 0)
@@ -443,7 +443,7 @@ int FR_CharWidth(uchar ch)
 }
 
 #undef FR_CharHeight
-int FR_CharHeight(uchar ch)
+int FR_CharHeight(dbyte ch)
 {
     errorIfNotInited("FR_CharHeight");
     if (fr.fontNum != 0)
@@ -460,7 +460,7 @@ int FR_SingleLineHeight(char const *text)
     int ascent = font.ascent();
     if (ascent != 0)
         return ascent;
-    return font.glyphPosCoords((uchar)text[0]).height();
+    return font.glyphPosCoords((dbyte)text[0]).height();
 }
 
 int FR_GlyphTopToAscent(char const *text)
@@ -508,7 +508,7 @@ struct TextFragment
             // Just add them together.
             int i = 0;
             char const *ch = text;
-            uchar c;
+            dbyte c;
             while (i++ < length && (c = *ch++) != 0 && c != '\n')
             {
                 width += FR_CharWidth(c);
@@ -531,7 +531,7 @@ struct TextFragment
             // Find the greatest height.
             int i = 0;
             char const *ch = text;
-            uchar c;
+            dbyte c;
             while (i++ < length && (c = *ch++) != 0 && c != '\n')
             {
                 height = de::max(height, FR_CharHeight(c));
@@ -620,8 +620,10 @@ static void drawTextFragment(const TextFragment &fragment)
     {
         if (bmapFont->textureGLName())
         {
-            GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
+            GL_BindTextureUnmanaged(bmapFont->textureGLName(),
+                                    gfx::ClampToEdge,
                                     gl::ClampToEdge, filterUI ? gl::Linear : gl::Nearest);
+                                    filterUI ? gfx::Linear : gfx::Nearest);
 
             DGL_MatrixMode(DGL_TEXTURE);
             DGL_PushMatrix();
@@ -808,6 +810,13 @@ static void drawTextFragment(const TextFragment &fragment)
             DGL_PopMatrix();
         }
     }
+#if defined (DE_OPENGL)
+    if (renderWireframe > 1)
+    {
+        /// @todo do not assume previous state.
+        DGL_Enable(DGL_TEXTURE_2D);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+    }
 }
 
 static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int alignFlags)
@@ -841,8 +850,8 @@ static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int a
     {
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
-        GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
-                                gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
+        GL_BindTextureUnmanaged(bmapFont->textureGLName(), gfx::ClampToEdge,
+                                gfx::ClampToEdge, filterUI? gfx::Linear : gfx::Nearest);
 
         geometry = geometry.expanded(bmapFont->textureMargin().toVec2i());
     }
@@ -884,7 +893,7 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
     h = (int) fh;
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
-                            gl::ClampToEdge, gl::ClampToEdge);
+                            gfx::ClampToEdge, gfx::ClampToEdge);
 
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0, 0);

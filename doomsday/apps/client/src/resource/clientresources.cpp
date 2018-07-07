@@ -273,19 +273,19 @@ DE_PIMPL(ClientResources)
     }
 
     MaterialVariantSpec &getMaterialSpecForContext(MaterialContextId contextId,
-                                                   int  flags,
-                                                   byte border,
-                                                   int  tClass,
-                                                   int  tMap,
-                                                   int  wrapS,
-                                                   int  wrapT,
-                                                   int  minFilter,
-                                                   int  magFilter,
-                                                   int  anisoFilter,
-                                                   bool mipmapped,
-                                                   bool gammaCorrection,
-                                                   bool noStretch,
-                                                   bool toAlpha)
+                                                   int               flags,
+                                                   byte              border,
+                                                   int               tClass,
+                                                   int               tMap,
+                                                   GLenum            wrapS,
+                                                   GLenum            wrapT,
+                                                   int               minFilter,
+                                                   int               magFilter,
+                                                   int               anisoFilter,
+                                                   bool              mipmapped,
+                                                   bool              gammaCorrection,
+                                                   bool              noStretch,
+                                                   bool              toAlpha)
     {
         static MaterialVariantSpec tpl;
 

@@ -64,11 +64,11 @@ DE_PIMPL(Bloom)
     {
         // Geometry for drawing with: a single quad.
         VBuf *buf = new VBuf;
-        buf->setVertices(gl::TriangleStrip,
+        buf->setVertices(gfx::TriangleStrip,
                          VBuf::Builder().makeQuad(
                              Rectanglef(0, 0, 1, 1),
                              Rectanglef(0, 0, 1, 1)),
-                         gl::Static);
+                         gfx::Static);
         bloom.addBuffer(buf);
 
         // The work buffer does not need alpha because the result will be additively
@@ -117,7 +117,7 @@ DE_PIMPL(Bloom)
         // Update the size of the work buffer if needed. Also ensure linear filtering
         // is used for better-quality blurring.
         workFB.resize(blurSize);
-        workFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+        workFB.colorTexture().setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
 
         GLState::push()
                 .setDepthWrite(false) // don't mess with depth information
@@ -153,11 +153,11 @@ DE_PIMPL(Bloom)
      *                     cause more blurring/less quality as the work resolution
      *                     reduces.
      * @param weight       Weight factor for intensity.
-     * @param targetOp     Blending factor (should be gl::One unless debugging).
+     * @param targetOp     Blending factor (should be gfx::One unless debugging).
      */
     void drawBloomPass(//Rectanglef const &rectf, //Vec2ui const &/*targetSize*/,
                        GLTexture &colorTarget, float bloomSize, float weight,
-                       gl::Blend targetOp = gl::One)
+                       gfx::Blend targetOp = gfx::One)
     {
         uThreshold = bloomThreshold * (1 + bloomSize) / 2.f;
         uIntensity = bloomIntensity * weight;
@@ -207,7 +207,7 @@ DE_PIMPL(Bloom)
          */
         GLState::push()
                 .setBlend(true)
-                .setBlendFunc(gl::One, targetOp);
+                .setBlendFunc(gfx::One, targetOp);
 
         // Use the work buffer's texture as the source.
         uTex    = workFB.colorTexture();

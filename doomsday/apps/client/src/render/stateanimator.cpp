@@ -32,8 +32,7 @@
 #include <de/NoneValue>
 #include <de/NativePointerValue>
 #include <de/GLUniform>
-
-#include <QSet>
+#include <de/Set>
 
 using namespace de;
 
@@ -168,7 +167,7 @@ DE_PIMPL(StateAnimator)
         static Sequence *make() { return new Sequence; }
     };
 
-    QHash<String, Sequence> pendingAnimForNode;
+    Hash<String, Sequence> pendingAnimForNode;
     String currentStateName;
     Record names; ///< Local context for scripts, i.e., per-object model state.
     String ownerNamespaceVarName;
@@ -176,9 +175,9 @@ DE_PIMPL(StateAnimator)
     ModelDrawable::Appearance appearance;
 
     // Lookups used when drawing or updating state:
-    QHash<String, int> indexForPassName;
-    QHash<Variable *, int> passForMaterialVariable;
-    QHash<String, ShaderVars *> passVars;
+    Hash<String, int> indexForPassName;
+    Hash<Variable *, int> passForMaterialVariable;
+    Hash<String, ShaderVars *> passVars;
 
     struct AnimVar
     {
@@ -188,7 +187,7 @@ DE_PIMPL(StateAnimator)
         SafePtr<AnimationValue> speed; // not owned
         Vec3f axis;
     };
-    typedef QHash<String, AnimVar *> AnimVars;
+    typedef Hash<String, AnimVar *> AnimVars;
     AnimVars animVars;
 
     /// Optional script callback for chosen states.
@@ -302,7 +301,7 @@ DE_PIMPL(StateAnimator)
             // Each rendering pass is represented by a subrecord, named
             // according the to the pass names.
             auto passes = ScriptedInfo::subrecordsOfType(ModelLoader::DEF_PASS, renderBlock);
-            for (String passName : ScriptedInfo::sortRecordsBySource(passes))
+            for (const String &passName : ScriptedInfo::sortRecordsBySource(passes))
             {
                 Record const &passDef = *passes[passName];
 
@@ -320,14 +319,14 @@ DE_PIMPL(StateAnimator)
         if (def.has(ModelLoader::DEF_ANIMATION))
         {
             auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord(ModelLoader::DEF_ANIMATION));
-            for (String varName : varDefs.keys())
+            for (const auto &def : varDefs)
             {
-                initAnimationVariable(varName, *varDefs[varName]);
+                initAnimationVariable(def.first, *def.second);
             }
         }
 
         DE_ASSERT(passIndex == passCount);
-        DE_ASSERT(indexForPassName.size() == passCount);
+        DE_ASSERT(indexForPassName.sizei() == passCount);
 
         updatePassMask();
         updatePassMaterials();
@@ -354,11 +353,10 @@ DE_PIMPL(StateAnimator)
 
         // Create the animated variables to be used with the shader based
         // on the pass definitions.
-        auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block);
-        for (auto i = varDefs.constBegin(); i != varDefs.constEnd(); ++i)
+        for (auto &i : ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block))
         {
             vars->initVariableFromDefinition(
-                        i.key(), *i.value(),
+                        i.first, *i.second,
                         names.addSubrecord(passName, Record::KeepExisting));
         }
     }
@@ -403,11 +401,11 @@ DE_PIMPL(StateAnimator)
         appearance.passMaterial.clear();
 
         // Shader variables.
-        qDeleteAll(passVars.values());
+        passVars.deleteAll();
         passVars.clear();
 
         // Animator variables.
-        qDeleteAll(animVars.values());
+        animVars.deleteAll();
         animVars.clear();
     }
 
@@ -427,7 +425,7 @@ DE_PIMPL(StateAnimator)
 
     void updatePassMaterials()
     {
-        for (int i = 0; i < appearance.passMaterial.size(); ++i)
+        for (dsize i = 0; i < appearance.passMaterial.size(); ++i)
         {
             appearance.passMaterial[i] = materialForUserProvidedName(
                         materialVariableForPass(i).value().asText());
@@ -469,10 +467,10 @@ DE_PIMPL(StateAnimator)
     duint materialForUserProvidedName(String const &materialName) const
     {
        auto const &model = self().model();
-       auto const matIndex = model.materialIndexForName.constFind(materialName);
-       if (matIndex != model.materialIndexForName.constEnd())
+       auto const matIndex = model.materialIndexForName.find(materialName);
+       if (matIndex != model.materialIndexForName.end())
        {
-           return matIndex.value();
+           return matIndex->second;
        }
        LOG_RES_WARNING("Asset \"%s\" does not have a material called '%s'")
                << names.gets(VAR_ID) << materialName;
@@ -486,27 +484,28 @@ DE_PIMPL(StateAnimator)
         });
 
         appearance.passMask.fill(false);
-        for (String name : enabledPasses.keys())
+        for (const auto &ep : enabledPasses)
         {
-            DE_ASSERT(indexForPassName.contains(name));
-            appearance.passMask.setBit(indexForPassName[name], true);
+            DE_ASSERT(indexForPassName.contains(ep.first));
+            appearance.passMask.setBit(indexForPassName[ep.first], true);
         }
     }
 
     void updateAnimationValuePointers()
     {
-        for (String passName : passVars.keys())
+        for (const auto &pass : passVars)
         {
-            ShaderVars *vars = passVars[passName];
-            for (String name : vars->members.keys())
+            ShaderVars *vars = passVars[pass.first];
+            for (const auto &var : vars->members)
             {
-                vars->members[name]->updateValuePointers(names, passName.concatenateMember(name));
+                vars->members[var.first]->updateValuePointers(
+                    names, pass.first.concatenateMember(var.first));
             }
         }
 
-        for (String name : animVars.keys())
+        for (const auto &i : animVars)
         {
-            AnimVar &animVar = *animVars[name];
+            AnimVar &animVar = *i.second;
             animVar.angle = &names[animVar.variableName.concatenateMember(DEF_ANGLE)].value<AnimationValue>();
             animVar.speed = &names[animVar.variableName.concatenateMember(DEF_SPEED)].value<AnimationValue>();
         }
@@ -549,23 +548,22 @@ DE_PIMPL(StateAnimator)
     {
         auto const &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
 
-        auto const vars = passVars.constFind(passName);
-        if (vars != passVars.constEnd())
+        auto const vars = passVars.find(passName);
+        if (vars != passVars.end())
         {
-            for (auto i : vars.value()->members)
+            for (auto &i : vars->second->members)
             {
-                if (!hasDeclaredVariable(modelLoader.shaderDefinition(program),
-                                         *i->uniform))
+                if (!hasDeclaredVariable(modelLoader.shaderDefinition(program), *i.second->uniform))
                     continue;
 
                 if (operation == Bind)
                 {
-                    i->updateUniform();
-                    program.bind(*i->uniform);
+                    i.second->updateUniform();
+                    program.bind(*i.second->uniform);
                 }
                 else
                 {
-                    program.unbind(*i->uniform);
+                    program.unbind(*i.second->uniform);
                 }
             }
         }
@@ -652,15 +650,15 @@ void StateAnimator::triggerByState(String const &stateName)
     auto const *stateAnims = &model().animations;
     if (!stateAnims) return;
 
-    auto found = stateAnims->constFind(stateName);
-    if (found == stateAnims->constEnd()) return;
+    auto found = stateAnims->find(stateName);
+    if (found == stateAnims->end()) return;
 
     LOG_AS("StateAnimator");
     //LOGDEV_GL_XVERBOSE("triggerByState: ") << stateName;
 
     d->currentStateName = stateName;
 
-    for (Model::AnimSequence const &seq : found.value())
+    for (Model::AnimSequence const &seq : found->second)
     {
         try
         {
@@ -697,10 +695,10 @@ void StateAnimator::triggerByState(String const &stateName)
             Timeline *timeline = seq.timeline;
             if (!seq.sharedTimeline.isEmpty())
             {
-                auto tl = model().timelines.constFind(seq.sharedTimeline);
-                if (tl != model().timelines.constEnd())
+                auto tl = model().timelines.find(seq.sharedTimeline);
+                if (tl != model().timelines.end())
                 {
-                    timeline = tl.value();
+                    timeline = tl->second;
                 }
             }
 
@@ -802,8 +800,9 @@ void StateAnimator::advanceTime(TimeSpan const &elapsed)
     bool retrigger = false;
 
     // Update animation variables values.
-    for (auto *var : d->animVars.values())
+    for (auto &i : d->animVars)
     {
+        auto *var = i.second;
         if (!var->angle || !var->speed) continue;
 
         var->angle->animation().shift(var->speed->animation() * elapsed);
@@ -896,10 +895,10 @@ ddouble StateAnimator::currentTime(int index) const
 
 Vec4f StateAnimator::extraRotationForNode(String const &nodeName) const
 {
-    auto found = d->animVars.constFind(nodeName);
-    if (found != d->animVars.constEnd())
+    auto found = d->animVars.find(nodeName);
+    if (found != d->animVars.end())
     {
-        Impl::AnimVar const &var = *found.value();
+        Impl::AnimVar const &var = *found->second;
         if (var.angle)
         {
             return Vec4f(var.axis, var.angle->animation());

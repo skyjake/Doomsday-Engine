@@ -27,8 +27,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 DE_PIMPL(Bloom)
 {
     ScreenQuad quad;
@@ -63,8 +61,8 @@ DE_PIMPL(Bloom)
         for (auto &buf : workBufs)
         {
             buf.texture.setAutoGenMips(false);
-            buf.texture.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-            buf.texture.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            buf.texture.setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
+            buf.texture.setWrap(gfx::ClampToEdge, gfx::ClampToEdge);
         }
     }
 

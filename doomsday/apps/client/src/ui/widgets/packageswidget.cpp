@@ -38,6 +38,7 @@
 #include <de/PackageLoader>
 #include <de/PopupButtonWidget>
 #include <de/ProgressWidget>
+#include <de/RegExp>
 #include <de/SequentialLayout>
 #include <de/TaskPool>
 #include <de/Timer>
@@ -156,7 +157,7 @@ DE_GUI_PIMPL(PackagesWidget)
             _actions->organizer().audienceForWidgetUpdate() += this;
             _actions->setGridSize(0, ui::Expand, 1, ui::Expand);
             _actions->setItems(*owner.d->actionItems);
-            connect(this, &HomeItemWidget::doubleClicked, [this]() { triggerAction(); });
+            audienceForDoubleClick() += [this](){ triggerAction(); };
             addButton(_actions);
             setKeepButtonsVisible(!_owner.d->actionOnlyForSelection);
 
@@ -189,11 +190,11 @@ DE_GUI_PIMPL(PackagesWidget)
             for (const String &tag : Package::tags(*_item->file))
             {
                 auto *btn = new ButtonWidget;
-                btn->setText(_E(l) + tagList);
+                btn->setText(_E(l) + tag);
                 btn->setActionFn([this, tag]() {
                     String terms = _owner.d->search->text();
-                    if (!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
-                    terms += tagList;
+                    if (!terms.isEmpty() && !iswspace(terms.last())) terms += " ";
+                    terms += tag;
                     _owner.d->search->setText(terms);
                 });
                 updateTagButtonStyle(btn, "accent");
@@ -300,7 +301,7 @@ DE_GUI_PIMPL(PackagesWidget)
             bool isFile   = false;
             auto pkgIdVer = Package::split(packageId());
 
-            if (pkgIdVer.first.startsWith("file."))
+            if (pkgIdVer.first.beginsWith("file."))
             {
                 isFile = true;
                 if (!_iconId)
@@ -321,13 +322,13 @@ DE_GUI_PIMPL(PackagesWidget)
                 icon().setImageScale(.5f);
             }
 
-            String labelText = String(_E(b) "%1\n" _E(l) _E(s) "%2")
-                    .arg(_item->label())
-                    .arg(pkgIdVer.first);
+            String labelText = String::format(_E(b) "%s\n" _E(l) _E(s) "%s",
+                                              _item->label().c_str(),
+                                              pkgIdVer.first.c_str());
                 
             if (!isFile && pkgIdVer.second.isValid())
             {
-                labelText += String(_E(C) " %1" _E(.)).arg(pkgIdVer.second.compactNumber());
+                labelText += String::format(_E(C) " %s" _E(.), pkgIdVer.second.compactNumber().c_str());
             }
             label().setText(labelText);
 
@@ -379,7 +380,10 @@ DE_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        String packageId() const { return _item->data().toString(); }
+        String packageId() const
+        {
+            return _item->data().asText();
+        }
 
         PopupWidget *makeInfoPopup() const
         {
@@ -445,12 +449,12 @@ DE_GUI_PIMPL(PackagesWidget)
         }
 
     private:
-        PackagesWidget &      _owner;
-        PackageItem const *   _item;
-        Path                  _packagePath;
-        QList<ButtonWidget *> _tags;
-        MenuWidget *          _actions = nullptr;
-        Id                    _iconId;
+        PackagesWidget &_owner;
+        const PackageItem *_item;
+        Path _packagePath;
+        List<ButtonWidget *> _tags;
+        MenuWidget *_actions = nullptr;
+        Id _iconId;
     };
 
     //---------------------------------------------------------------------------------------
@@ -462,12 +466,12 @@ DE_GUI_PIMPL(PackagesWidget)
 
     // Search filter:
     LineEditWidget *search;
-    Rule const *    searchMinY = nullptr;
-    ButtonWidget *  clearSearch;
-    Animation       searchBackgroundOpacity{0.f, Animation::Linear};
-    QStringList     filterTerms;
+    Rule const *searchMinY = nullptr;
+    ButtonWidget *clearSearch;
+    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
+    StringList filterTerms;
     Strings         hiddenTagsInEffect;
-    QTimer          refilterTimer;
+    Timer refilterTimer;
 
     ProgressWidget *refreshProgress;
 
@@ -502,12 +506,14 @@ DE_GUI_PIMPL(PackagesWidget)
         : Base(i)
         , hiddenTags({"hidden", "core", "gamedata"})
     {
+        defaultActionItems << new ui::VariantActionItem("Load", "Unload", new CallbackAction([this] ()
+    {
         defaultActionItems << new ui::VariantActionItem(
             tr("Load"), tr("Unload"), new CallbackAction([this]() {
             DE_ASSERT(menu->interactedItem());
 
                 String const packageId =
-                    menu->interactedItem()->as<PackageItem>().data().toString();
+                    menu->interactedItem()->as<PackageItem>().data().asText();
 
                 auto &loader = App::packageLoader();
                 if (loader.isLoaded(packageId))
@@ -613,14 +619,12 @@ DE_GUI_PIMPL(PackagesWidget)
                 int(style().fonts().font("default").height().value() * 3));
         menu->organizer().setRecyclingEnabled(true); // homogeneous widgets
 
-        QObject::connect(
-            search, &LineEditWidget::editorContentChanged, [this]() { updateFilterTerms(); });
-        QObject::connect(
-            search, &LineEditWidget::enterPressed, [this]() { focusFirstListedPackage(); });
+        search->audienceForContentChange() += [this](){ updateFilterTerms(); };
+        search->audienceForEnter()         += [this](){ focusFirstListedPackage(); };
 
         refilterTimer.setSingleShot(true);
-        refilterTimer.setInterval(int(REFILTER_DELAY.asMilliSeconds()));
-        QObject::connect(&refilterTimer, &QTimer::timeout, [this]() { updateFilterTerms(true); });
+        refilterTimer.setInterval(REFILTER_DELAY);
+        refilterTimer += [this] () { updateFilterTerms(true); };
 
         // Refresh progress indicator.
         refreshProgress = new ProgressWidget;
@@ -668,7 +672,7 @@ DE_GUI_PIMPL(PackagesWidget)
         auto &loader = PackageLoader::get();
 
         manualPackagePaths.clear();
-        for (String id : ids)
+        for (const String &id : ids)
         {
             if (File const *file = loader.select(id))
             {
@@ -697,7 +701,7 @@ DE_GUI_PIMPL(PackagesWidget)
         for (ui::DataPos i = 0; i < allPackages.size(); ++i)
         {
             auto &pkgItem = allPackages.at(i);
-            if (!pkgItem.info || !packages.contains(pkgItem.data().toString()))
+            if (!pkgItem.info || !packages.contains(pkgItem.data().asText()))
             {
                 allPackages.remove(i--);
             }
@@ -709,7 +713,7 @@ DE_GUI_PIMPL(PackagesWidget)
             const File &pack = App::rootFolder().locate<File>(path);
 
             // Is this already in the list?
-            const ui::DataPos pos = allPackages.findData(Package::versionedIdentifierForFile(pack));
+            const ui::DataPos pos = allPackages.findData(TextValue(Package::versionedIdentifierForFile(pack)));
             if (pos != ui::Data::InvalidPos)
             {
                 allPackages.at(pos).setFile(pack);
@@ -722,7 +726,10 @@ DE_GUI_PIMPL(PackagesWidget)
 
         allPackages.sort();
 
-        emit self().itemCountChanged(filteredPackages.size(), allPackages.size());
+        DE_FOR_PUBLIC_AUDIENCE2(ItemCount, i)
+        {
+            i->itemCountChanged(filteredPackages.size(), allPackages.size());
+        }
     }
 
     void updateItems()
@@ -751,15 +758,14 @@ DE_GUI_PIMPL(PackagesWidget)
             // event handling is not a great idea.
             mainCall.enqueue([this]() {
                 /// @todo Parse quoted terms. -jk
-                setFilterTerms(
-                    search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
+                setFilterTerms(search->text().strip().split(RegExp::WHITESPACE));
 
                 menu->setOpacity(1.f, REFILTER_DELAY);
             });
         }
     }
 
-    void setFilterTerms(QStringList terms)
+    void setFilterTerms(const StringList& terms)
     {
         filterTerms = terms;
         hiddenTagsInEffect.clear();
@@ -778,7 +784,10 @@ DE_GUI_PIMPL(PackagesWidget)
 
         filteredPackages.refilter();
 
-        emit self().itemCountChanged(filteredPackages.size(), allPackages.size());
+        DE_FOR_PUBLIC_AUDIENCE2(ItemCount, i)
+        {
+            i->itemCountChanged(filteredPackages.size(), allPackages.size());
+        }
     }
 
     void focusFirstListedPackage()
@@ -821,12 +830,12 @@ DE_GUI_PIMPL(PackagesWidget)
      */
     bool checkTerms(StringList texts) const
     {
-        for (QString const &filterTerm : filterTerms)
+        for (const auto &filterTerm : filterTerms)
         {
             bool found = false;
-            for (String const &text : texts)
+            for (const auto &text : texts)
             {
-                if (text.contains(filterTerm, Qt::CaseInsensitive))
+                if (text.contains(filterTerm, CaseInsensitive))
                 {
                     found = true;
                     break;
@@ -867,7 +876,7 @@ PackagesWidget::PackagesWidget(StringList manualPackageIds, String const &name)
     , d(new Impl(this))
 {
     margins().set(ConstantRule::zero());
-    setManualPackageIds(manualPackageIds);
+    setManualPackageIds(std::move(manualPackageIds));
 }
 
 HomeMenuWidget &PackagesWidget::menu()
@@ -882,7 +891,7 @@ ProgressWidget &PackagesWidget::progress()
 
 void PackagesWidget::setManualPackageIds(StringList manualPackageIds)
 {
-    d->setManualPackages(manualPackageIds);
+    d->setManualPackages(std::move(manualPackageIds));
     populate();
 }
 
@@ -899,7 +908,7 @@ void PackagesWidget::setRightClickToOpenContextMenu(bool enable)
 
 void PackagesWidget::setHiddenTags(StringList hiddenTags)
 {
-    d->hiddenTags = hiddenTags;
+    d->hiddenTags = std::move(hiddenTags);
     populate();
 }
 
@@ -983,7 +992,7 @@ dsize PackagesWidget::itemCount() const
 
 ui::Item const *PackagesWidget::itemForPackage(String const &packageId) const
 {
-    ui::DataPos found = d->filteredPackages.findData(packageId);
+    ui::DataPos found = d->filteredPackages.findData(TextValue(packageId));
     if (found != ui::Data::InvalidPos)
     {
         return &d->filteredPackages.at(found);
@@ -995,7 +1004,7 @@ String PackagesWidget::actionPackage() const
 {
     if (d->menu->interactedItem())
     {
-        return d->menu->interactedItem()->as<Impl::PackageItem>().data().toString();
+        return d->menu->interactedItem()->as<Impl::PackageItem>().data().asText();
     }
     return String();
 }

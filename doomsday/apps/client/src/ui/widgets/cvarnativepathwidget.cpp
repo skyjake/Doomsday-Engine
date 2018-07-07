@@ -22,8 +22,6 @@
 
 #include <doomsday/console/var.h>
 #include <de/PopupMenuWidget>
-#include <de/SignalAction>
-#include <QFileDialog>
 
 using namespace de;
 
@@ -69,5 +67,5 @@ void CVarNativePathWidget::updateFromCVar()
 
 void CVarNativePathWidget::setCVarValueFromWidget()
 {
-    CVar_SetString(d->var(), path().toString().toUtf8());
+    CVar_SetString(d->var(), path());
 }

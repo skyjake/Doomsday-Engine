@@ -275,8 +275,7 @@ void CommandBinding::configure(char const *eventDesc, char const *command, bool 
 static void substituteInCommand(String const &command, ddevent_t const &event, ddstring_t *out)
 {
     DE_ASSERT(out);
-    Block const str = command.toUtf8();
-    for (char const *ptr = str.constData(); *ptr; ptr++)
+    for (auto ptr = command.begin(); ptr != command.end(); ++ptr)
     {
         if (*ptr == '%')
         {
@@ -311,12 +310,14 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
             }
             else if (*ptr == '%')
             {
-                Str_AppendChar(out, *ptr);
+                Str_AppendChar(out, char(*ptr));
             }
             continue;
         }
 
-        Str_AppendChar(out, *ptr);
+        iMultibyteChar mb;
+        init_MultibyteChar(&mb, *ptr);
+        Str_Append(out, mb.bytes);
     }
 }
 

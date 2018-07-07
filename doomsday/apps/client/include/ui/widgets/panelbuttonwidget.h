@@ -28,10 +28,8 @@
  */
 class PanelButtonWidget : public HomeItemWidget
 {
-    Q_OBJECT
-
 public:
-    PanelButtonWidget(Flags flags = AnimatedHeight, de::String const &name = de::String());
+    PanelButtonWidget(de::Flags flags = AnimatedHeight, de::String const &name = {});
 
     de::PanelWidget &panel();
 

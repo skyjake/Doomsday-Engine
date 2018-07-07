@@ -22,8 +22,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 DE_PIMPL(Light)
 {
     const Entity *entity = nullptr;
@@ -147,29 +145,29 @@ Mat4f Light::cameraModelView() const
     return Mat4f::lookAt(cameraPosition() + cameraFront(), cameraPosition(), cameraUp());
 }
 
-Mat4f Light::lightMatrix(de::gl::CubeFace face) const
+Mat4f Light::lightMatrix(gfx::CubeFace face) const
 {
     const Mat4f proj = Mat4f::perspective(90.0f, 1.0f, .05f, falloffDistance());
     const auto pos = origin();
 
     switch (face)
     {
-    case gl::PositiveX:
+    case gfx::PositiveX:
         return proj * Mat4f::lookAt(pos + Vec3f(-1, 0, 0), pos, Vec3f(0, 1, 0));
 
-    case gl::NegativeX:
+    case gfx::NegativeX:
         return proj * Mat4f::lookAt(pos + Vec3f(1, 0, 0), pos, Vec3f(0, 1, 0));
 
-    case gl::PositiveY:
+    case gfx::PositiveY:
         return proj * Mat4f::lookAt(pos + Vec3f(0, -1, 0), pos, Vec3f(0, 0, -1));
 
-    case gl::NegativeY:
+    case gfx::NegativeY:
         return proj * Mat4f::lookAt(pos + Vec3f(0, 1, 0), pos, Vec3f(0, 0, 1));
 
-    case gl::PositiveZ:
+    case gfx::PositiveZ:
         return proj * Mat4f::lookAt(pos + Vec3f(0, 0, -1),  pos, Vec3f(0, 1, 0));
 
-    case gl::NegativeZ:
+    case gfx::NegativeZ:
         return proj * Mat4f::lookAt(pos + Vec3f(0, 0, 1), pos, Vec3f(0, 1, 0));
     }
 }

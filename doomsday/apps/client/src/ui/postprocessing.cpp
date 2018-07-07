@@ -28,8 +28,6 @@
 #include <de/GLTextureFramebuffer>
 #include <de/LogBuffer>
 
-#include <QList>
-
 using namespace de;
 
 D_CMD(PostFx);
@@ -54,7 +52,7 @@ DE_PIMPL(PostProcessing)
         QueueEntry(String const &name, float f, TimeSpan const &s)
             : shaderName(name), fade(f), span(s) {}
     };
-    typedef QList<QueueEntry> Queue;
+    typedef List<QueueEntry> Queue;
     Queue queue;
 
     typedef GLBufferT<Vertex2Tex> VBuf;
@@ -104,10 +102,10 @@ DE_PIMPL(PostProcessing)
 
         // Drawable for drawing stuff back to the original target.
         VBuf *buf = new VBuf;
-        buf->setVertices(gl::TriangleStrip,
+        buf->setVertices(gfx::TriangleStrip,
                          VBuf::Builder().makeQuad(Rectanglef(0, 0, 1, 1),
                                                   Rectanglef(0, 1, 1, -1)),
-                         gl::Static);
+                         gfx::Static);
         frame.addBuffer(buf);
 
         // The default program is a pass-through shader.

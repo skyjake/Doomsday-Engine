@@ -39,13 +39,8 @@
 #include <de/PackageLoader>
 #include <de/PopupMenuWidget>
 #include <de/ProgressWidget>
+#include <de/RegExp>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
-
-#include <QDesktopServices>
-#include <QRegularExpression>
-
-#include <sstream>
 
 using namespace de;
 
@@ -81,7 +76,8 @@ DE_GUI_PIMPL(PackageInfoDialog)
 
         // The Close button is always available. Other actions are shown depending
         // on what kind of package is being displayed.
-        self().buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
+        self().buttons()
+                << new DialogButtonItem(Default | Accept, "Close");
 
         createWidgets();
     }
@@ -279,7 +275,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
         }
         else
         {
-            format = tr("Doomsday 2 Package");
+            format = "Doomsday 2 Package";
             useIconFile(file->path());
         }
 
@@ -290,7 +286,9 @@ DE_GUI_PIMPL(PackageInfoDialog)
         }
 
         title->setText(meta.gets(Package::VAR_TITLE));
-        path->setText(String(_E(b) "%1" _E(.) "\n%2").arg(format).arg(fileDesc.upperFirstChar()));
+        path->setText(String::format(_E(b) "%s" _E(.) "\n%s",
+                                     format.c_str(),
+                                     fileDesc.upperFirstChar().c_str()));
 
         // Metadata.
         String metaMsg =

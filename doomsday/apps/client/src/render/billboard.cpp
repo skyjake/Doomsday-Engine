@@ -114,7 +114,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 0 : 1);
         /// @todo modTex may be the name of a "managed" texture.
         GL_BindTextureUnmanaged(renderTextures ? parms.modTex : 0,
-                                gl::ClampToEdge, gl::ClampToEdge);
+                                gfx::ClampToEdge, gfx::ClampToEdge);
 
         DGL_SetModulationColor(parms.modColor);
 

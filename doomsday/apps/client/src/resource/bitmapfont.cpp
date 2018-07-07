@@ -31,6 +31,7 @@
 #include <doomsday/filesys/fs_main.h>
 
 using namespace de;
+using namespace res;
 
 static byte inByte(FileHandle *file)
 {
@@ -86,7 +87,7 @@ DE_PIMPL(BitmapFont)
      * Lookup the glyph for the specified character @a ch. If no glyph is defined
      * for this character then the special "missing glyph" is returned instead.
      */
-    Glyph &glyph(uchar ch)
+    Glyph &glyph(dbyte ch)
     {
         //if(ch >= MAX_CHARS) return missingGlyph;
         return glyphs[ch];
@@ -144,7 +145,9 @@ DE_PIMPL(BitmapFont)
         if(bitmapFormat > 0)
         {
             res::Uri uri = self().manifest().composeUri();
-            throw Error("BitmapFont::readFormat0", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
+            throw Error(
+                "BitmapFont::readFormat0",
+                stringf("Font \"%s\" uses unknown format '%i'", uri.pathCStr(), bitmapFormat));
         }
 
         // Read the glyph atlas texture.
@@ -178,7 +181,9 @@ DE_PIMPL(BitmapFont)
         if(bitmapFormat != 1 && bitmapFormat != 0) // Luminance + Alpha.
         {
             res::Uri uri = self().manifest().composeUri();
-            throw Error("BitmapFont::readFormat2", QString("Font \"%1\" uses unknown format '%2'").arg(uri).arg(bitmapFormat));
+            throw Error(
+                "BitmapFont::readFormat2",
+                stringf("Font \"%s\" uses unknown format '%i'", uri.pathCStr(), bitmapFormat));
         }
 
         // Load in the data.
@@ -274,13 +279,13 @@ int BitmapFont::lineSpacing() const
     return d->leading;
 }
 
-Rectanglei const &BitmapFont::glyphPosCoords(uchar ch) const
+Rectanglei const &BitmapFont::glyphPosCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).posCoords;
 }
 
-Rectanglei const &BitmapFont::glyphTexCoords(uchar ch) const
+Rectanglei const &BitmapFont::glyphTexCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).texCoords;

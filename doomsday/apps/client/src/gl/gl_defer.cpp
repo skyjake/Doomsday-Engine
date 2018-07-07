@@ -221,7 +221,7 @@ static void processTask(deferredtask_t *task)
     case DTT_UPLOAD_TEXTURECONTENT:
         DE_ASSERT(task->data);
         GL_UploadTextureContent(*reinterpret_cast<texturecontent_t *>(task->data),
-                                gl::Immediate);
+                                gfx::Immediate);
         break;
 
     case DTT_SET_VSYNC:
@@ -342,7 +342,7 @@ void GL_ReserveNames(void)
         DE_ASSERT_IN_MAIN_THREAD();
         DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-        LIBGUI_GL.glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
+        glGenTextures(NUM_RESERVED_TEXTURENAMES - reservedCount,
             (GLuint*) &reservedTextureNames[reservedCount]);
         reservedCount = NUM_RESERVED_TEXTURENAMES;
     }
@@ -358,7 +358,7 @@ void GL_ReleaseReservedNames(void)
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     Sys_Lock(deferredMutex);
-    LIBGUI_GL.glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
+    glDeleteTextures(reservedCount, (const GLuint*) reservedTextureNames);
     memset(reservedTextureNames, 0, sizeof(reservedTextureNames));
     reservedCount = 0;
     Sys_Unlock(deferredMutex);
@@ -450,17 +450,17 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     GL_ReserveNames();
 }
 
-gl::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content)
+gfx::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content)
 {
     DE_ASSERT(content != 0);
 
     // Must the operation be carried out immediately?
     if((content->flags & TXCF_NEVER_DEFER) || !DoomsdayApp::busyMode().isActive())
     {
-        return gl::Immediate;
+        return gfx::Immediate;
     }
     // We can defer.
-    return gl::Deferred;
+    return gfx::Deferred;
 }
 
 void GL_DeferTextureUpload(struct texturecontent_s const *content)

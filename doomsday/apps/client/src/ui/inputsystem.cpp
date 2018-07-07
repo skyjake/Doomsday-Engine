@@ -22,8 +22,6 @@
 #include "de_platform.h" // strdup macro
 #include "ui/inputsystem.h"
 
-#include <QList>
-#include <QtAlgorithms>
 #include <de/timer.h> // SECONDSPERTIC
 #include <de/Record>
 #include <de/LogBuffer>

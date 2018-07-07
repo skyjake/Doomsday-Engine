@@ -26,8 +26,6 @@
  */
 class PackageInfoDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     enum Mode { EnableActions, InformationOnly };
 
@@ -35,14 +33,13 @@ public:
     PackageInfoDialog(de::String const &packageId, Mode mode);
     PackageInfoDialog(de::File const *packageFile, Mode mode);
 
-protected:
-    void prepare() override;
-
-public slots:
     void playInGame();
     void addToProfile();
     void configure();
     void showFile();
+
+protected:
+    void prepare() override;
 
 private:
     DE_PRIVATE(d)

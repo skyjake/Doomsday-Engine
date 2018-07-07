@@ -64,7 +64,7 @@ public:
      * @param info  Server to join. This should be one of the servers that have
      *              previously been found via discovery.
      */
-    void connectToServerAndChangeGameAsync(de::shell::ServerInfo info);
+    void connectToServerAndChangeGameAsync(const de::shell::ServerInfo& info);
 
     /**
      * Acquire a game profile that describes the game on a multiplayer server.
@@ -81,7 +81,7 @@ public:
      *                       event loop).
      */
     void acquireServerProfileAsync(de::Address const &address,
-                                   std::function<void (GameProfile const *)> resultHandler);
+                                   const std::function<void (GameProfile const *)>& resultHandler);
 
     void acquireServerProfileAsync(de::String const &domain,
                                    std::function<void (de::Address, GameProfile const *)> resultHandler);

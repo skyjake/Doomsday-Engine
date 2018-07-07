@@ -188,7 +188,7 @@ DE_PIMPL(EntityRender)
 
             if (!data.isEmpty())
             {
-                ibuf.setVertices(data, de::gl::Stream);
+                ibuf.setVertices(data, gfx::Stream);
                 model.drawInstanced(ibuf);
             }
 

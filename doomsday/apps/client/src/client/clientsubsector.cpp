@@ -1405,12 +1405,12 @@ ClientSubsector::ClientSubsector(List<ConvexSubspace *> const &subspaces)
 
 String ClientSubsector::description() const
 {
-    auto desc = String::format(_E(l) "%c: " _E(.) _E(i) "Sector %i%s" _E(.) " " _E(l) "%c: " _E(.)
+    auto desc = String::format(_E(l) "%s: " _E(.) _E(i) "Sector %i%s" _E(.) " " _E(l) "%s: " _E(.)
                                    _E(i) "Sector %i%s" _E(.),
-                               towupper(Sector::planeIdAsText(Sector::Floor).first()),
+                               Sector::planeIdAsText(Sector::Floor).upperFirstChar().c_str(),
                                visFloor().sector().indexInMap(),
                                &visFloor() != &sector().floor() ? " (mapped)" : "",
-                               towupper(Sector::planeIdAsText(Sector::Ceiling).first()),
+                               Sector::planeIdAsText(Sector::Ceiling).upperFirstChar().c_str(),
                                visCeiling().sector().indexInMap(),
                                &visCeiling() != &sector().ceiling() ? " (mapped)" : "");
 

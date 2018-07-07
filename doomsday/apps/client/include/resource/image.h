@@ -139,7 +139,7 @@ void Image_ConvertToAlpha(image_t &image, bool makeWhite = false);
 void Image_ConvertToLuminance(image_t &image, bool retainAlpha = true);
 
 /// @todo Move into image_t
-uint8_t *GL_LoadImage(image_t &image, de::String nativePath);
+uint8_t *GL_LoadImage(image_t &image, const de::String& nativePath);
 
 /// @todo Move into image_t
 res::Source GL_LoadExtImage(image_t &image, char const *searchPath, gfxmode_t mode);

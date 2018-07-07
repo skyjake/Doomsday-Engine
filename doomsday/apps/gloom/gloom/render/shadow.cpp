@@ -25,8 +25,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 DE_PIMPL_NOREF(Shadow)
 {
     Light::Type   lightType;
@@ -36,12 +34,12 @@ DE_PIMPL_NOREF(Shadow)
     void init()
     {
         map.setAutoGenMips(false);
-        map.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-        map.setComparisonMode(gl::CompareRefToTexture, gl::LessOrEqual);
+        map.setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
+        map.setComparisonMode(gfx::CompareRefToTexture, gfx::LessOrEqual);
 
         if (lightType == Light::Directional)
         {
-            map.setWrap(gl::ClampToBorder, gl::ClampToBorder);
+            map.setWrap(gfx::ClampToBorder, gfx::ClampToBorder);
             map.setBorderColor(Vec4f(1, 1, 1, 1));
             map.setUndefinedContent(
                 GLTexture::Size(2048, 2048),
@@ -49,10 +47,10 @@ DE_PIMPL_NOREF(Shadow)
         }
         else if (lightType == Light::Omni)
         {
-            map.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            map.setWrap(gfx::ClampToEdge, gfx::ClampToEdge);
             for (int i = 0; i < 6; ++i)
             {
-                map.setUndefinedContent(gl::CubeFace(i), GLTexture::Size(512, 512),
+                map.setUndefinedContent(gfx::CubeFace(i), GLTexture::Size(512, 512),
                                                 GLPixelFormat(GL_DEPTH_COMPONENT16,
                                                               GL_DEPTH_COMPONENT, GL_FLOAT));
             }

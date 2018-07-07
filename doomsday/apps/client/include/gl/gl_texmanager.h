@@ -81,7 +81,7 @@ void GL_ReleaseTexturesForRawImages();
 /**
  * Change the GL minification filter for all prepared "raw" textures.
  */
-void GL_SetRawTexturesMinFilter(int minFilter);
+void GL_SetRawTexturesMinFilter(GLenum minFilter);
 
 
 #endif // DE_CLIENT_GL_TEXMANAGER_H

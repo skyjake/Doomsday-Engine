@@ -166,8 +166,8 @@ void Con_DrawTransition(void)
 
     GLuint const texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
 
-    GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    GL_BindTextureUnmanaged(texScreenshot, gfx::ClampToEdge, gfx::ClampToEdge);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
     DGL_PushState();
     DGL_Disable(DGL_ALPHA_TEST);
     DGL_Enable(DGL_TEXTURE_2D);

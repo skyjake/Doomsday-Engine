@@ -52,7 +52,7 @@ DE_PIMPL(MaterialLib)
     Hash<String, Properties>     materials;
     mutable Hash<String, TexIds> loadedTextures; // name => atlas ID
     Ids                          materialIds;
-    DataBuffer<Metrics>          textureMetrics{"uTextureMetrics", Image::RGBA_32f, gl::Static};
+    DataBuffer<Metrics>          textureMetrics{"uTextureMetrics", Image::RGBA_32f, gfx::Static};
 
     Impl(Public *i) : Base(i)
     {

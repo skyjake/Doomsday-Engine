@@ -59,7 +59,7 @@ void Cl_InitID()
     if (auto arg = CommandLine::get().check("-id", 1))
     {
         bool ok;
-        auto newId = arg.params.at(0).toUInt(&ok, 0);
+        auto newId = arg.params.at(0).toUInt32(&ok, 0);
         if (ok)
         {
             clientID = newId;
@@ -77,7 +77,7 @@ void Cl_InitID()
 
     if (config.has(VAR_NETWORK_ID))
     {
-        clientID = config.gets(VAR_NETWORK_ID).toUInt(nullptr, 16);
+        clientID = config.gets(VAR_NETWORK_ID).toUInt32(nullptr, 16);
         return;
     }
 

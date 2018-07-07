@@ -162,7 +162,7 @@ DE_PIMPL(ViewCompositor)
 
             VBuf::Builder verts;
             verts.makeQuad(Rectanglef(0, 0, 1, 1), Rectanglef(0, 1, 1, -1));
-            vbuf->setVertices(gl::TriangleStrip, verts, gl::Static);
+            vbuf->setVertices(gfx::TriangleStrip, verts, gfx::Static);
         }*/
     }
 

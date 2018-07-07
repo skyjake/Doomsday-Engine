@@ -26,10 +26,11 @@
 #include <doomsday/res/TextureManifest>
 #include <doomsday/filesys/file.h>
 #include <de/Range>
+#include <de/BitArray>
 #include <de/memory.h>
-#include <QtAlgorithms>
 
 using namespace de;
+using namespace res;
 
 bool FrameModel::DetailLevel::hasVertex(int number) const
 {
@@ -142,13 +143,13 @@ static float avertexnormals[NUMVERTEXNORMALS][3] = {
  */
 DE_PIMPL(FrameModel)
 {
-    Flags flags;
-    Skins skins;
+    Flags  flags;
+    Skins  skins;
     Frames frames;
-    int numVertices;
+    int    numVertices;
 
     DetailLevels lods;
-    QBitArray lodVertexUsage;
+    BitArray     lodVertexUsage;
 
     uint modelId; ///< In the repository.
 
@@ -701,26 +702,25 @@ void FrameModel::setModelId(uint newModelId)
     d->modelId = newModelId;
 }
 
-FrameModel::Flags FrameModel::flags() const
+Flags FrameModel::flags() const
 {
     return d->flags;
 }
 
-void FrameModel::setFlags(FrameModel::Flags flagsToChange, FlagOp operation)
+void FrameModel::setFlags(Flags flagsToChange, FlagOp operation)
 {
     LOG_AS("FrameModel");
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-int FrameModel::frameNumber(String name) const
+int FrameModel::frameNumber(const String& name) const
 {
-    if(!name.isEmpty())
+    if (!name.isEmpty())
     {
-        for(int i = 0; i < d->frames.count(); ++i)
+        for (int i = 0; i < d->frames.count(); ++i)
         {
             Frame *frame = d->frames.at(i);
-            if(!frame->name.compareWithoutCase(name))
-                return i;
+            if (!frame->name.compareWithoutCase(name)) return i;
         }
     }
     return -1; // Not found.
@@ -744,11 +744,11 @@ FrameModel::Frames const &FrameModel::frames() const
 void FrameModel::clearAllFrames()
 {
     LOG_AS("FrameModel");
-    qDeleteAll(d->frames);
+    deleteAll(d->frames);
     d->frames.clear();
 }
 
-int FrameModel::skinNumber(String name) const
+int FrameModel::skinNumber(const String& name) const
 {
     if(!name.isEmpty())
     {
@@ -818,7 +818,7 @@ int FrameModel::vertexCount() const
     return d->numVertices;
 }
 
-QBitArray const &FrameModel::lodVertexUsage() const
+const BitArray &FrameModel::lodVertexUsage() const
 {
     return d->lodVertexUsage;
 }

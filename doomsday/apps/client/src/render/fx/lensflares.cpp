@@ -33,8 +33,8 @@
 #include <de/LogBuffer>
 #include <de/Range>
 #include <de/Shared>
+#include <de/Hash>
 
-#include <QHash>
 #include <cmath>
 
 //#define FX_TEST_LIGHT // draw a test light (positioned for Doom E1M1)
@@ -235,7 +235,7 @@ DE_PIMPL(LensFlares)
         {}
     };
 
-    typedef QHash<IPointLightSource::LightId, PVLight *> PVSet;
+    typedef Hash<IPointLightSource::LightId, PVLight *> PVSet;
     PVSet pvs;
 
     Vec3f eyeFront;
@@ -294,7 +294,7 @@ DE_PIMPL(LensFlares)
 
     void clearPvs()
     {
-        qDeleteAll(pvs);
+        pvs.deleteAll();
         pvs.clear();
     }
 
@@ -306,7 +306,7 @@ DE_PIMPL(LensFlares)
             found = pvs.insert(light->lightSourceId(), new PVLight);
         }
 
-        PVLight *pvl = found.value();
+        PVLight *pvl = found->second;
         pvl->light = light;
         pvl->seenFrame = R_FrameCount();
     }
@@ -357,9 +357,9 @@ DE_PIMPL(LensFlares)
         VBuf::Indices idx;
         VBuf::Type vtx;
 
-        for (PVSet::const_iterator i = pvs.constBegin(); i != pvs.constEnd(); ++i)
+        for (PVSet::const_iterator i = pvs.begin(); i != pvs.end(); ++i)
         {
-            PVLight const *pvl = i.value();
+            PVLight const *pvl = i->second;
 
             // Skip lights that are not visible right now.
             /// @todo If so, it might be time to purge it from the PVS.
@@ -454,8 +454,8 @@ DE_PIMPL(LensFlares)
             */
         }
 
-        buffer->setVertices(verts, gl::Dynamic);
-        buffer->setIndices(gl::Triangles, idx, gl::Dynamic);
+        buffer->setVertices(verts, gfx::Dynamic);
+        buffer->setIndices(gfx::Triangles, idx, gfx::Dynamic);
     }
 };
 
@@ -523,7 +523,7 @@ void LensFlares::draw()
     //DE_ASSERT(viewPlayer - ddPlayers == displayPlayer);
     if (DoomsdayApp::players().indexOf(viewPlayer) != displayPlayer)
     {
-        qDebug() << "LensFrames::draw: viewPlayer != displayPlayer";
+        debug("[LensFrames::draw] viewPlayer != displayPlayer");
         return;
     }
 
@@ -542,11 +542,11 @@ void LensFlares::draw()
     d->uActiveRect = active;
 
     GLState::push()
-            .setCull(gl::None)
+            .setCull(gfx::None)
             .setDepthTest(false)
             .setDepthWrite(false)
             .setBlend(true)
-            .setBlendFunc(gl::SrcAlpha, gl::One);
+            .setBlendFunc(gfx::SrcAlpha, gfx::One);
 
     d->drawable.draw();
 

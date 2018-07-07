@@ -34,8 +34,6 @@
 
 #include "Face"
 
-#include <QtAlgorithms>
-
 using namespace de;
 using namespace world;
 
@@ -94,7 +92,7 @@ static inline coord_t lineSideOffset(LineSideSegment &seg, dint edge)
     return seg.lineSideOffset() + (edge? seg.length() : 0);
 }
 
-QList<WallEdge::Impl *> WallEdge::recycledImpls;
+List<WallEdge::Impl *> WallEdge::recycledImpls;
 
 struct WallEdge::Impl : public IHPlane
 {
@@ -119,12 +117,12 @@ struct WallEdge::Impl : public IHPlane
 
     /**
      * Special-purpose array whose memory is never freed while the array exists.
-     * `WallEdge::Impl`s are recycled, so it would be a waste of time to keep 
+     * `WallEdge::Impl`s are recycled, so it would be a waste of time to keep
      * allocating and freeing the event arrays.
      */
-    struct EventArray : private QVector<Event>
+    struct EventArray : private List<Event>
     {
-        using Base = QVector<Event>;
+        using Base = List<Event>;
 
         int size = 0;
 
@@ -148,7 +146,7 @@ struct WallEdge::Impl : public IHPlane
 
         void append(Event const &event)
         {
-            if (size < Base::size())
+            if (size < Base::sizei())
             {
                 (*this)[size++] = event;
             }
@@ -478,7 +476,7 @@ struct WallEdge::Impl : public IHPlane
     {
         if (needSortEvents)
         {
-            qSort(events.begin(), events.end(), [] (WorldEdge::Event const &a, WorldEdge::Event const &b) {
+            std::sort(events.begin(), events.end(), [] (WorldEdge::Event const &a, WorldEdge::Event const &b) {
                 return a < b;
             });
             needSortEvents = false;
@@ -502,8 +500,11 @@ struct WallEdge::Impl : public IHPlane
             return events.at(index);
         }
         /// @throw UnknownInterceptError The specified intercept index is not valid.
-        throw UnknownInterceptError("WallEdge::at", String("Index '%1' does not map to a known intercept (count: %2)")
-                                                        .arg(index).arg(interceptCount()));
+        throw UnknownInterceptError(
+            "WallEdge::at",
+            stringf("Index '%i' does not map to a known intercept (count: %i)",
+                    index,
+                    interceptCount()));
     }
 
     // Implements IHPlane

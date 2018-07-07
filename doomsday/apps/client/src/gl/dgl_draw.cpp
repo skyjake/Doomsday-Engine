@@ -532,7 +532,7 @@ struct DGLDrawState
 
         // Upload the vertex data.
         GLData::DrawBuffer &buf = nextBuffer();
-        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
+        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gfx::Dynamic);
 
 #if defined (DE_HAVE_VAOS)
         GL.glBindVertexArray(buf.vertexArray);
@@ -643,25 +643,23 @@ struct DGLDrawState
         }
         DGL_FogParams(gl->uFogRange, gl->uFogColor);
 
-        auto &GL = LIBGUI_GL;
-
         glState.apply();
 
         glBindArrays();
         gl->shader.beginUse();
         DENG2_ASSERT(gl->shader.validate());
-        GL.glDrawArrays(glPrimitive(batchPrimType), 0, numVertices()); ++s_drawCallCount;
+        glDrawArrays(glPrimitive(batchPrimType), 0, numVertices()); ++s_drawCallCount;
         gl->shader.endUse();
         LIBGUI_ASSERT_GL_OK();
         glUnbindArrays();
 
         // Restore the previously bound OpenGL textures.
         {
-            GL.glActiveTexture(GL_TEXTURE0);
-            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[0]));
-            GL.glActiveTexture(GL_TEXTURE1);
-            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[1]));
-            GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+            glActiveTexture(GL_TEXTURE0);
+            glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[0]));
+            glActiveTexture(GL_TEXTURE1);
+            glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[1]));
+            glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
         }
     }
 };

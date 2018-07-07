@@ -1,3 +1,7 @@
+#include <utility>
+
+#include <utility>
+
 /** @file packagesbuttonwidget.cpp
  *
  * @authors Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -25,11 +29,11 @@ using namespace de;
 
 DE_GUI_PIMPL(PackagesButtonWidget)
 {
-    StringList packages;
-    String dialogTitle;
-    DotPath dialogIcon { "package.icon" };
-    String labelPrefix;
-    String noneLabel;
+    StringList         packages;
+    String             dialogTitle;
+    DotPath            dialogIcon{"package.icon"};
+    String             labelPrefix;
+    String             noneLabel;
     GameProfile const *profile = nullptr;
     std::function<void (PackagesDialog &)> setupFunc;
     String overrideLabel;
@@ -81,16 +85,20 @@ DE_GUI_PIMPL(PackagesButtonWidget)
             packages = dlg->selectedPackages();
             updateLabel();
 
-            // Notify.
-            QStringList ids;
-            for (auto const &p : packages) ids << p;
-            emit self().packageSelectionChanged(ids);
+            DE_FOR_PUBLIC_AUDIENCE2(Selection, i)
+            {
+                i->packageSelectionChanged(packages);
+            }
         }));
         root().addOnTop(dlg);
         if (setupFunc) setupFunc(*dlg);
         dlg->open();
     }
+
+    DE_PIMPL_AUDIENCE(Selection)
 };
+
+DE_AUDIENCE_METHOD(PackagesButtonWidget, Selection)
 
 PackagesButtonWidget::PackagesButtonWidget()
     : d(new Impl(this))
@@ -98,7 +106,7 @@ PackagesButtonWidget::PackagesButtonWidget()
     setOverrideImageSize(style().fonts().font("default").height());
     setSizePolicy(ui::Expand, ui::Expand);
     setTextAlignment(ui::AlignLeft);
-    connect(this, &ButtonWidget::pressed, [this] () { d->pressed(); });
+    audienceForPress() += [this](){ d->pressed(); };
 
     d->updateLabel();
 }
@@ -110,7 +118,7 @@ void PackagesButtonWidget::setGameProfile(GameProfile const &profile)
 
 void PackagesButtonWidget::setSetupCallback(std::function<void (PackagesDialog &)> func)
 {
-    d->setupFunc = func;
+    d->setupFunc = std::move(func);
 }
 
 void PackagesButtonWidget::setLabelPrefix(String const &labelPrefix)
@@ -143,7 +151,7 @@ void PackagesButtonWidget::setDialogIcon(DotPath const &imageId)
 
 void PackagesButtonWidget::setPackages(StringList packageIds)
 {
-    d->packages = packageIds;
+    d->packages = std::move(packageIds);
     d->updateLabel();
 }
 

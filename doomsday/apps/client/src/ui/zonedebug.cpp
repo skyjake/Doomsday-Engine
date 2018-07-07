@@ -144,8 +144,6 @@ void Z_DebugDrawer(void)
     DE_ASSERT_IN_MAIN_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    //glDisable(GL_CULL_FACE);
-    //glDisable(GL_DEPTH_TEST);
     DGL_PushState();
     DGL_CullFace(DGL_NONE);
     DGL_Disable(DGL_DEPTH_TEST);

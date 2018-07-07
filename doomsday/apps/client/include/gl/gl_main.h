@@ -146,12 +146,12 @@ void GL_BlendMode(blendmode_t mode);
 /**
  * Utility for translating to a GL texture filter identifier.
  */
-GLenum GL_Filter(de::gl::Filter f);
+GLenum GL_Filter(de::gfx::Filter f);
 
 /**
  * Utility for translating to a GL texture wrapping identifier.
  */
-GLenum GL_Wrap(de::gl::Wrapping w);
+GLenum GL_Wrap(de::gfx::Wrapping w);
 
 /**
  * Initializes the graphics library for refresh. Also called at update.
@@ -195,12 +195,12 @@ void GL_CallList(DGLuint list);
 
 void GL_DeleteLists(DGLuint list, int range);
 
-void GL_SetMaterialUI2(world::Material *mat, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
+void GL_SetMaterialUI2(world::Material *mat, de::gfx::Wrapping wrapS, de::gfx::Wrapping wrapT);
 void GL_SetMaterialUI(world::Material *mat);
 
 void GL_SetPSprite(world::Material *mat, int tclass, int tmap);
 
-void GL_SetRawImage(lumpnum_t lumpNum, de::gl::Wrapping wrapS, de::gl::Wrapping wrapT);
+void GL_SetRawImage(lumpnum_t lumpNum, de::gfx::Wrapping wrapS, de::gfx::Wrapping wrapT);
 
 /**
  * Bind this texture to the currently active texture unit.
@@ -211,8 +211,10 @@ void GL_SetRawImage(lumpnum_t lumpNum, de::gl::Wrapping wrapS, de::gl::Wrapping 
  */
 void GL_BindTexture(ClientTexture::Variant *tex);
 
-void GL_BindTextureUnmanaged(GLuint texname, de::gl::Wrapping wrapS = de::gl::Repeat,
-    de::gl::Wrapping wrapT = de::gl::Repeat, de::gl::Filter = de::gl::Linear);
+void GL_BindTextureUnmanaged(GLuint            texname,
+                             de::gfx::Wrapping wrapS = de::gfx::Repeat,
+                             de::gfx::Wrapping wrapT = de::gfx::Repeat,
+                             de::gfx::Filter         = de::gfx::Linear);
 
 /**
  * Bind the associated texture and apply the texture unit configuration to
@@ -253,8 +255,12 @@ int GL_NumMipmapLevels(int width, int height);
  * @param isMipMapped  If @c true, we will require mipmaps (this has an effect
  *     on the optimal size).
  */
-dd_bool GL_OptimalTextureSize(int width, int height, dd_bool noStretch, dd_bool isMipMapped,
-    int *optWidth, int *optHeight);
+dd_bool GL_OptimalTextureSize(int     width,
+                              int     height,
+                              dd_bool noStretch,
+                              dd_bool isMipMapped,
+                              int *   optWidth,
+                              int *   optHeight);
 
 /**
  * @param width  Width of the image in pixels.
@@ -317,18 +323,18 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
 
 // DGL internal API ---------------------------------------------------------------------
 
-void            DGL_Shutdown();
+void      DGL_Shutdown();
 unsigned int    DGL_BatchMaxSize();
-void            DGL_BeginFrame();
+void      DGL_BeginFrame();
 void            DGL_Flush();
-void            DGL_AssertNotInPrimitive(void);
-de::Mat4f    DGL_Matrix(DGLenum matrixMode);
-void            DGL_CurrentColor(DGLubyte *rgba);
-void            DGL_CurrentColor(float *rgba);
-void            DGL_ModulateTexture(int mode);
-void            DGL_SetModulationColor(de::Vec4f const &modColor);
-de::Vec4f    DGL_ModulationColor();
-void            DGL_FogParams(de::GLUniform &fogRange, de::GLUniform &fogColor);
+void      DGL_AssertNotInPrimitive(void);
+de::Mat4f DGL_Matrix(DGLenum matrixMode);
+void      DGL_CurrentColor(DGLubyte *rgba);
+void      DGL_CurrentColor(float *rgba);
+void      DGL_ModulateTexture(int mode);
+void      DGL_SetModulationColor(de::Vec4f const &modColor);
+de::Vec4f DGL_ModulationColor();
+void      DGL_FogParams(de::GLUniform &fogRange, de::GLUniform &fogColor);
 void            DGL_DepthFunc(DGLenum depthFunc);
 void            DGL_CullFace(DGLenum cull);
 

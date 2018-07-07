@@ -20,30 +20,25 @@
 
 #include "de_platform.h"
 #include "resource/image.h"
+#include "dd_main.h"
+#include "gl/gl_tex.h"
+#include "render/rend_main.h" // misc global vars awaiting new home
 
 #include <doomsday/resource/patch.h>
 #include <doomsday/resource/colorpalettes.h>
-
-#include <de/memory.h>
-#include <de/LogBuffer>
-#include <QByteArray>
-#include <QImage>
-#include <de/NativePath>
 #include <doomsday/filesys/fs_main.h>
-
-#include "dd_main.h"
-
 #include <doomsday/res/Composite>
 #include <doomsday/resource/pcx.h>
 #include <doomsday/resource/tga.h>
 
-#include "gl/gl_tex.h"
+#include <de/memory.h>
+#include <de/LogBuffer>
+#include <de/Image>
+#include <de/NativePath>
 
-#include "render/rend_main.h" // misc global vars awaiting new home
-
-#ifndef DE_QT_4_7_OR_NEWER // older than 4.7?
-#  define constBits bits
-#endif
+//#ifndef DE_QT_4_7_OR_NEWER // older than 4.7?
+//#  define constBits bits
+//#endif
 
 using namespace de;
 using namespace res;
@@ -142,7 +137,7 @@ static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
 /// @return  @c true if the file name in @a path ends with the "color key" suffix.
 static inline bool isColorKeyed(String path)
 {
-    return path.fileNameWithoutExtension().endsWith("-ck", String::CaseInsensitive);
+    return path.fileNameWithoutExtension().endsWith("-ck", CaseInsensitive);
 }
 
 void Image_Init(image_t &img)
@@ -176,11 +171,11 @@ image_t::Size Image_Size(image_t const &img)
 
 String Image_Description(image_t const &img)
 {
-    return String("Dimensions:%1 Flags:%2 %3:%4")
-               .arg(img.size.asText())
-               .arg(img.flags)
-               .arg(0 != img.paletteId? "ColorPalette" : "PixelSize")
-               .arg(0 != img.paletteId? img.paletteId : img.pixelSize);
+    return String::format("Dimensions:%s Flags:%x %s:%i",
+                          img.size.asText().c_str(),
+                          img.flags,
+                          0 != img.paletteId ? "ColorPalette" : "PixelSize",
+                          0 != img.paletteId ? img.paletteId : img.pixelSize);
 }
 
 void Image_ConvertToLuminance(image_t &img, bool retainAlpha)
@@ -333,11 +328,11 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     Image_Init(img);
 
     // Load the file contents to a memory buffer.
-    QByteArray data;
+    Block data;
     data.resize(hndl.length() - initPos);
     hndl.read(reinterpret_cast<uint8_t*>(data.data()), data.size());
 
-    QImage image = QImage::fromData(data, format);
+    Image image = Image::fromData(data, format);
     if (image.isNull())
     {
         // Back to the original file position.
@@ -348,15 +343,15 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     //LOG_TRACE("Loading \"%s\"...") << NativePath(hndl->file().composePath()).pretty();
 
     // Convert paletted images to RGB.
-    if (image.colorCount())
+    /*if (image.colorCount())
     {
         image = image.convertToFormat(QImage::Format_ARGB32);
         DE_ASSERT(!image.colorCount());
         DE_ASSERT(image.depth() == 32);
-    }
+    }*/
 
     // Swap the red and blue channels for GL.
-    image = image.rgbSwapped();
+//    image = image.rgbSwapped();
 
     img.size      = Vec2ui(image.width(), image.height());
     img.pixelSize = image.depth() / 8;
@@ -365,7 +360,7 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
             << img.size.asText() << img.pixelSize
             << image.hasAlphaChannel() << image.byteCount();
 
-    img.pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.constBits(), image.byteCount()));
+    img.pixels = reinterpret_cast<uint8_t *>(M_MemDup(image.bits(), image.byteCount()));
 
     // Back to the original file position.
     hndl.seek(initPos, SeekSet);
@@ -379,7 +374,7 @@ bool Image_Save(image_t const &img, char const *filePath)
     if (fullPath.isEmpty())
     {
         static int n = 0;
-        fullPath = String("image%1x%2-%3").arg(img.size.x).arg(img.size.y).arg(n++, 3);
+        fullPath = String::format("image%ux%u-%03i", img.size.x, img.size.y, n++);
     }
 
     if (fullPath.fileNameExtension().isEmpty())
@@ -388,13 +383,14 @@ bool Image_Save(image_t const &img, char const *filePath)
     }
 
     // Swap red and blue channels then save.
-    QImage image = QImage(img.pixels, img.size.x, img.size.y, QImage::Format_ARGB32);
-    image = image.rgbSwapped();
+    Image image = Image(img.size, Image::RGBA_8888, ByteRefArray(img.pixels, img.size.area() * 4));
+//    image = image.rgbSwapped();
 
-    return image.save(NativePath(fullPath));
+    image.save(NativePath(fullPath));
+    return true;
 }
 
-uint8_t *GL_LoadImage(image_t &image, String nativePath)
+uint8_t *GL_LoadImage(image_t &image, const String& nativePath)
 {
     try
     {
@@ -650,7 +646,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
         {
             try
             {
-                Patch::Flags loadFlags;
+                Flags loadFlags;
                 if (maskZero) loadFlags |= Patch::MaskZero;
 
                 PatchMetadata info;
@@ -797,7 +793,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
             if (source == None)
             {
                 // How about the old-fashioned "flat-name" in the textures scheme?
-                source = loadExternalTexture(image, "Textures:flat-" + uri.path().toStringRef(), "-ck");
+                source = loadExternalTexture(image, "Textures:flat-" + uri.path(), "-ck");
             }
         }
 
@@ -885,7 +881,10 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
             }
             else if (tclass || tmap)
             {
-                source = loadExternalTexture(image, "Patches:" + uri.path() + String("-table%1%2").arg(tclass).arg(tmap), "-ck");
+                source = loadExternalTexture(image,
+                                             "Patches:" + uri.path() +
+                                                 String::format("-table%i%i", tclass, tmap),
+                                             "-ck");
             }
 
             if (!source)

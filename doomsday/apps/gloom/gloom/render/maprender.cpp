@@ -154,8 +154,8 @@ DE_PIMPL(MapRender)
         lights.createLights();
 
         opaqueFrameTex.setAutoGenMips(false);
-        opaqueFrameTex.setFilter(gl::Linear, gl::Linear, gl::MipNone);
-        opaqueFrameTex.setWrap(gl::RepeatMirrored, gl::RepeatMirrored);
+        opaqueFrameTex.setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
+        opaqueFrameTex.setWrap(gfx::RepeatMirrored, gfx::RepeatMirrored);
         opaqueFrameTex.setUndefinedImage(GLTexture::Size(128, 128), Image::RGB_16f);
         opaqueFrame.configure(GLFramebuffer::Color0, opaqueFrameTex);
         uRefractedFrame = opaqueFrameTex;
@@ -283,7 +283,7 @@ void MapRender::renderTransparent()
         {
             d->opaqueFrameTex.setUndefinedImage(frameSize, Image::RGB_16f);
         }
-        ctx.framebuf->blit(d->opaqueFrame, GLFramebuffer::Color0, gl::Nearest);
+        ctx.framebuf->blit(d->opaqueFrame, GLFramebuffer::Color0, gfx::Nearest);
     }
 
     d->transparentState.setTarget(*ctx.framebuf).setViewport(frameSize);

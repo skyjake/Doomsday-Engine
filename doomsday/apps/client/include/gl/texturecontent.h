@@ -94,6 +94,6 @@ void GL_PrepareTextureContent(texturecontent_t &c,
  * the generation of mipmaps.
  */
 void GL_UploadTextureContent(texturecontent_t const &content,
-                             de::gl::UploadMethod method = de::gl::Deferred);
+                             de::gfx::UploadMethod method = de::gfx::Deferred);
 
 #endif // DE_CLIENT_GL_TEXTURECONTENT_H

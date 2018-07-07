@@ -310,7 +310,7 @@ Vec2d const &ConvexSubspace::worldGridOffset() const
 
 dint ConvexSubspace::shadowLineCount() const
 {
-    return d->shadowLines.count();
+    return d->shadowLines.size();
 }
 
 void ConvexSubspace::clearShadowLines()
@@ -323,7 +323,7 @@ void ConvexSubspace::addShadowLine(LineSide &side)
     d->shadowLines.insert(&side);
 }
 
-LoopResult ConvexSubspace::forAllShadowLines(std::function<LoopResult (LineSide &)> func) const
+LoopResult ConvexSubspace::forAllShadowLines(const std::function<LoopResult (LineSide &)>& func) const
 {
     for(LineSide *side : d->shadowLines)
     {
@@ -334,10 +334,10 @@ LoopResult ConvexSubspace::forAllShadowLines(std::function<LoopResult (LineSide 
 
 dint ConvexSubspace::lumobjCount() const
 {
-    return d->lumobjs.count();
+    return d->lumobjs.size();
 }
 
-LoopResult ConvexSubspace::forAllLumobjs(std::function<LoopResult (Lumobj &)> func) const
+LoopResult ConvexSubspace::forAllLumobjs(const std::function<LoopResult (Lumobj &)>& func) const
 {
     for(Lumobj *lob : d->lumobjs)
     {

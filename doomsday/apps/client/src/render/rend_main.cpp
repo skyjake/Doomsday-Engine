@@ -100,8 +100,6 @@
 #include <de/vector1.h>
 #include <de/GLInfo>
 #include <de/GLState>
-#include <QtAlgorithms>
-#include <QBitArray>
 #include <cmath>
 #include <cstdio>
 #include <cstdlib>
@@ -215,8 +213,7 @@ dbyte loadExtAlways;  ///< Always check for extres (cvar)
 
 dfloat texGamma;
 
-dint glmode[6] = // Indexed by 'mipmapping'.
-{
+GLenum glmode[6] = { // Extern; indexed by 'mipmapping'.
     GL_NEAREST,
     GL_LINEAR,
     GL_NEAREST_MIPMAP_NEAREST,
@@ -312,16 +309,16 @@ dbyte devLightGrid;              ///< @c 1= Draw lightgrid debug visual.
 dfloat devLightGridSize = 1.5f;  ///< Lightgrid debug visual size factor.
 #endif
 
-//static void drawBiasEditingVisuals(Map &map);
-//static void drawFakeRadioShadowPoints(Map &map);
-static void drawGenerators(Map &map);
-static void drawLumobjs(Map &map);
-static void drawMobjBoundingBoxes(Map &map);
-static void drawSectors(Map &map);
-static void drawSoundEmitters(Map &map);
-static void drawSurfaceTangentVectors(Map &map);
-static void drawThinkers(Map &map);
-static void drawVertexes(Map &map);
+//static void drawBiasEditingVisuals(world::Map &map);
+//static void drawFakeRadioShadowPoints(world::Map &map);
+static void drawGenerators(world::Map &map);
+static void drawLumobjs(world::Map &map);
+static void drawMobjBoundingBoxes(world::Map &map);
+static void drawSectors(world::Map &map);
+static void drawSoundEmitters(world::Map &map);
+static void drawSurfaceTangentVectors(world::Map &map);
+static void drawThinkers(world::Map &map);
+static void drawVertexes(world::Map &map);
 
 // Draw state:
 static Vec3d eyeOrigin;            ///< Viewer origin.
@@ -332,7 +329,7 @@ static bool firstSubspace;            ///< No range checking for the first one.
 
 // State lookup (for speed):
 static MaterialVariantSpec const *lookupMapSurfaceMaterialSpec = nullptr;
-static QHash<Record const *, MaterialAnimator *> lookupSpriteMaterialAnimators;
+static Hash<Record const *, MaterialAnimator *> lookupSpriteMaterialAnimators;
 
 void Rend_ResetLookups()
 {
@@ -792,7 +789,7 @@ void Rend_AddMaskedPoly(Vec3f const *rvertices, Vec4f const *rcolors,
         VS_WALL(vis)->texCoord[1][1] = VS_WALL(vis)->texCoord[0][1] +
                 (rvertices[3].z - rvertices[0].z) / matDimensions.y;
 
-        dint wrapS = GL_REPEAT, wrapT = GL_REPEAT;
+        GLenum wrapS = GL_REPEAT, wrapT = GL_REPEAT;
         if (!matAnimator->isOpaque())
         {
             if (!(VS_WALL(vis)->texCoord[0][0] < 0 || VS_WALL(vis)->texCoord[0][0] > 1 ||
@@ -1474,7 +1471,8 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                 // Light texture determines the list to write to.
                 DrawListSpec listSpec;
                 listSpec.group = LightGeom;
-                listSpec.texunits[TU_PRIMARY] = GLTextureUnit(tp.texture, gl::ClampToEdge, gl::ClampToEdge);
+                listSpec.texunits[TU_PRIMARY] =
+                    GLTextureUnit(tp.texture, gfx::ClampToEdge, gfx::ClampToEdge);
                 DrawList &lightList = ClientApp::renderSystem().drawLists().find(listSpec);
 
                 // Make geometry.
@@ -1516,7 +1514,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                             buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVec4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                         }
-                        lightList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
+                        lightList.write(buffer, indices.data(), numRightVerts, gfx::TriangleFan);
                     }
                     {
                         duint base = buffer.allocateVertices(numLeftVerts);
@@ -1528,7 +1526,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                             buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                             buffer.texCoords[0][indices[i]] = verts.tex[i];
                         }
-                        lightList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
+                        lightList.write(buffer, indices.data(), numLeftVerts, gfx::TriangleFan);
                     }
                 }
                 else
@@ -1543,7 +1541,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
-                    lightList.write(buffer, indices.constData(), numVertices, p.isWall? gl::TriangleStrip : gl::TriangleFan);
+                    lightList.write(buffer, indices.data(), numVertices, p.isWall? gfx::TriangleStrip : gfx::TriangleFan);
                 }
 
                 // We're done with the geometry.
@@ -1563,8 +1561,9 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
         // Write projected shadows.
         // All shadows use the same texture (so use the same list).
         DrawListSpec listSpec;
-        listSpec.group = ShadowGeom;
-        listSpec.texunits[TU_PRIMARY] = GLTextureUnit(GL_PrepareLSTexture(LST_DYNAMIC), gl::ClampToEdge, gl::ClampToEdge);
+        listSpec.group                = ShadowGeom;
+        listSpec.texunits[TU_PRIMARY] = GLTextureUnit(
+            GL_PrepareLSTexture(LST_DYNAMIC), gfx::ClampToEdge, gfx::ClampToEdge);
         DrawList &shadowList = ClientApp::renderSystem().drawLists().find(listSpec);
 
         ClientApp::renderSystem().forAllSurfaceProjections(p.shadowListIdx,
@@ -1610,7 +1609,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[numLeftVerts + i] * 255).toVec4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[numLeftVerts + i];
                     }
-                    shadowList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
+                    shadowList.write(buffer, indices.data(), numRightVerts, gfx::TriangleFan);
                 }
                 {
                     duint base = buffer.allocateVertices(numLeftVerts);
@@ -1622,7 +1621,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                         buffer.texCoords[0][indices[i]] = verts.tex[i];
                     }
-                    shadowList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
+                    shadowList.write(buffer, indices.data(), numLeftVerts, gfx::TriangleFan);
                 }
             }
             else
@@ -1637,7 +1636,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     buffer.colorCoords [indices[i]] = (verts.color[i] * 255).toVec4ub();
                     buffer.texCoords[0][indices[i]] = verts.tex[i];
                 }
-                shadowList.write(buffer, indices.constData(), numVerts, p.isWall ? gl::TriangleStrip : gl::TriangleFan);
+                shadowList.write(buffer, indices.data(), numVerts, p.isWall ? gfx::TriangleStrip : gfx::TriangleFan);
             }
 
             // We're done with the geometry.
@@ -1697,7 +1696,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[numLeftVerts + i];
                 }
-                skyMaskList.write(buffer, indices.constData(), numRightVerts, gl::TriangleFan);
+                skyMaskList.write(buffer, indices.data(), numRightVerts, gfx::TriangleFan);
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
@@ -1707,7 +1706,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     indices[i] = base + i;
                     buffer.posCoords[indices[i]] = verts.pos[i];
                 }
-                skyMaskList.write(buffer, indices.constData(), numLeftVerts, gl::TriangleFan);
+                skyMaskList.write(buffer, indices.data(), numLeftVerts, gfx::TriangleFan);
             }
         }
         else
@@ -1757,7 +1756,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
             }
             DrawList &drawList = ClientApp::renderSystem().drawLists().find(listSpec);
             // Is the geometry lit?
-            Parm::Flags primFlags;
+            Flags primFlags;
             //bool oneLight   = false;
             //bool manyLights = false;
             if (mod.texture && !hasDynlights)
@@ -1801,8 +1800,8 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         buffer.modCoords[indices[i]] = modTexCoords[numLeftVerts + i];
                     }
                 }
-                drawList.write(buffer, indices.constData(), numRightVerts,
-                               Parm(gl::TriangleFan,
+                drawList.write(buffer, indices.data(), numRightVerts,
+                               Parm(gfx::TriangleFan,
                                     listSpec.unit(TU_PRIMARY       ).scale,
                                     listSpec.unit(TU_PRIMARY       ).offset,
                                     listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1840,8 +1839,8 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         buffer.modCoords[indices[i]] = modTexCoords[i];
                     }
                 }
-                drawList.write(buffer, indices.constData(), numLeftVerts,
-                               Parm(gl::TriangleFan,
+                drawList.write(buffer, indices.data(), numLeftVerts,
+                               Parm(gfx::TriangleFan,
                                     listSpec.unit(TU_PRIMARY       ).scale,
                                     listSpec.unit(TU_PRIMARY       ).offset,
                                     listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -1865,7 +1864,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
             }
             ClientApp::renderSystem()
                 .drawLists().find(DrawListSpec(SkyMaskGeom))
-                    .write(buffer, indices.constData(), numVerts, p.isWall? gl::TriangleStrip : gl::TriangleFan);
+                    .write(buffer, indices.data(), numVerts, p.isWall?  gfx::TriangleStrip :  gfx::TriangleFan);
         }
         else
         {
@@ -1914,7 +1913,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
             }
 
             // Is the geometry lit?
-            Parm::Flags primFlags;
+            Flags primFlags;
             //bool oneLight   = false;
             //bool manyLights = false;
             if (mod.texture && !hasDynlights)
@@ -1958,8 +1957,8 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
             }
             ClientApp::renderSystem()
                 .drawLists().find(listSpec)
-                    .write(buffer, indices.constData(), numVertices,
-                           Parm(p.isWall? gl::TriangleStrip  : gl::TriangleFan,
+                    .write(buffer, indices.data(), numVertices,
+                           Parm(p.isWall?  gfx::TriangleStrip  :  gfx::TriangleFan,
                                 listSpec.unit(TU_PRIMARY       ).scale,
                                 listSpec.unit(TU_PRIMARY       ).offset,
                                 listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -2014,7 +2013,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
         }
         DrawList &shineList = ClientApp::renderSystem().drawLists().find(listSpec);
 
-        Parm shineParams(gl::TriangleFan,
+        Parm shineParams(gfx::TriangleFan,
                          listSpec.unit(TU_INTER).scale,
                          listSpec.unit(TU_INTER).offset,
                          Vec2f(1, 1),
@@ -2053,7 +2052,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         buffer.texCoords[1][indices[i]] = verts.tex[numLeftVerts + i];
                     }
                 }
-                shineList.write(buffer, indices.constData(), numRightVerts, shineParams);
+                shineList.write(buffer, indices.data(), numRightVerts, shineParams);
             }
             {
                 duint base = buffer.allocateVertices(numLeftVerts);
@@ -2069,7 +2068,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                         buffer.texCoords[1][indices[i]] = verts.tex[i];
                     }
                 }
-                shineList.write(buffer, indices.constData(), numLeftVerts, shineParams);
+                shineList.write(buffer, indices.data(), numLeftVerts, shineParams);
             }
         }
         else
@@ -2088,8 +2087,8 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
                     buffer.texCoords[1][indices[i]] = verts.tex[i];
                 }
             }
-            shineParams.type = p.isWall? gl::TriangleStrip : gl::TriangleFan;
-            shineList.write(buffer, indices.constData(), numVertices, shineParams);
+            shineParams.type = p.isWall?  gfx::TriangleStrip :  gfx::TriangleFan;
+            shineList.write(buffer, indices.data(), numVertices, shineParams);
         }
 
         // We're done with the shine geometry.
@@ -2975,7 +2974,7 @@ static void writeSkyMaskStrip(dint vertCount, Vec3f const *posCoords, Vec2f cons
             buffer.posCoords[indices[i]] = posCoords[i];
         }
         ClientApp::renderSystem().drawLists().find(DrawListSpec(SkyMaskGeom))
-                      .write(buffer, indices.constData(), vertCount, gl::TriangleStrip);
+                      .write(buffer, indices.data(), vertCount, gfx::TriangleStrip);
     }
     else
     {
@@ -3010,8 +3009,8 @@ static void writeSkyMaskStrip(dint vertCount, Vec3f const *posCoords, Vec2f cons
         }
 
         ClientApp::renderSystem().drawLists().find(listSpec)
-                      .write(buffer, indices.constData(), vertCount,
-                             DrawList::PrimitiveParams(gl::TriangleStrip,
+                      .write(buffer, indices.data(), vertCount,
+                             DrawList::PrimitiveParams(gfx::TriangleStrip,
                                                        listSpec.unit(TU_PRIMARY       ).scale,
                                                        listSpec.unit(TU_PRIMARY       ).offset,
                                                        listSpec.unit(TU_PRIMARY_DETAIL).scale,
@@ -3042,7 +3041,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
     // Begin generating geometry.
     HEdge *base  = curSubspace->poly().hedge();
     HEdge *hedge = base;
-    forever
+    for (;;)
     {
         // Are we monitoring material changes?
         Material *skyMaterial = nullptr;
@@ -3127,8 +3126,8 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
                 dint const numVerts = stripBuilder.take(&positions, &texcoords);
 
                 // Write the strip geometry to the render lists.
-                writeSkyMaskStrip(numVerts, positions->constData(),
-                                  (texcoords ? texcoords->constData() : nullptr),
+                writeSkyMaskStrip(numVerts, positions->data(),
+                                  (texcoords ? texcoords->data() : nullptr),
                                   scanMaterial);
 
                 delete positions;
@@ -3156,7 +3155,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 #define SKYCAP_UPPER        0x2
 ///@}
 
-static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts, gl::Primitive &primitive,
+static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts,  gfx::Primitive &primitive,
     ConvexSubspace const &subspace, coord_t worldZPosition = 0, ClockDirection direction = Clockwise)
 {
     Face const &poly = subspace.poly();
@@ -3174,7 +3173,7 @@ static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts, gl
     //
     // Build geometry.
     //
-    primitive = gl::TriangleFan;
+    primitive =  gfx::TriangleFan;
     duint n = 0;
     if (!fanBase)
     {
@@ -3223,11 +3222,11 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 
             // Make geometry.
             Store &verts = ClientApp::renderSystem().buffer();
-            gl::Primitive primitive;
+             gfx::Primitive primitive;
             uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, Clockwise);
 
             // Write geometry.
-            dlist.write(verts, indices.constData(), vertCount, primitive);
+            dlist.write(verts, indices.data(), vertCount, primitive);
         }
     }
 
@@ -3246,11 +3245,11 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 
             // Make geometry.
             Store &verts = ClientApp::renderSystem().buffer();
-            gl::Primitive primitive;
+             gfx::Primitive primitive;
             uint vertCount = makeFlatSkyMaskGeometry(indices, verts, primitive, *curSubspace, height, Anticlockwise);
 
             // Write geometry.
-            dlist.write(verts, indices.constData(), vertCount, primitive);
+            dlist.write(verts, indices.data(), vertCount, primitive);
         }
     }
 }
@@ -3816,7 +3815,7 @@ static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
 /**
  * Project all the non-clipped decorations. They become regular vissprites.
  */
-static void generateDecorationFlares(Map &map)
+static void generateDecorationFlares(world::Map &map)
 {
     Vec3d const viewPos = Rend_EyeOrigin().xzy();
     map.forAllLumobjs([&viewPos] (Lumobj &lob)
@@ -3833,10 +3832,10 @@ MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
     MaterialAnimator *matAnimator = nullptr;
 
     // Check the cache first.
-    auto found = lookupSpriteMaterialAnimators.constFind(&spriteDef);
-    if (found != lookupSpriteMaterialAnimators.constEnd())
+    auto found = lookupSpriteMaterialAnimators.find(&spriteDef);
+    if (found != lookupSpriteMaterialAnimators.end())
     {
-        matAnimator = found.value();
+        matAnimator = found->second;
     }
     else
     {
@@ -4198,8 +4197,7 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_BLENDED:
         GL_SelectTexUnits(1);
-
-        // Intentional fall-through.
+        DE_FALLTHROUGH;
     case DM_ALL:
         DGL_Enable(DGL_ALPHA_TEST);
         DGL_Disable(DGL_DEPTH_TEST);
@@ -4360,13 +4358,12 @@ static void drawSky()
         return;
     }
 
-    auto &GL = LIBGUI_GL;
-
     // We do not want to update color and/or depth.
     DGL_PushState();        
     DGL_Disable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_DEPTH_WRITE);
-    GLState::current().setColorMask(gl::WriteNone)
+    GLState::current()
+            .setColorMask(gl::WriteNone)
             .setStencilOp(gl::StencilOp::Replace, gl::StencilOp::Replace, gl::StencilOp::Replace)
             .setStencilFunc(gl::Always, 1, 0xff)
             .setStencilTest(true);
@@ -4378,8 +4375,8 @@ static void drawSky()
     }
     else
     {
-        GL.glClearStencil(1);
-        GL.glClear(GL_STENCIL_BUFFER_BIT);
+        glClearStencil(1);
+        glClear(GL_STENCIL_BUFFER_BIT);
     }
 
     // Restore previous GL state.
@@ -4388,14 +4385,14 @@ static void drawSky()
     // Now, only render where the stencil is set to 1.
     GLState::push()
             .setStencilTest(true)
-            .setStencilFunc(gl::Equal, 1, 0xff)
-            .setStencilOp(gl::StencilOp::Keep, gl::StencilOp::Keep, gl::StencilOp::Keep);
+            .setStencilFunc(gfx::Equal, 1, 0xff)
+            .setStencilOp(gfx::StencilOp::Keep,  gfx::StencilOp::Keep,  gfx::StencilOp::Keep);
     
     ClientApp::renderSystem().sky().draw(&ClientApp::world().map().skyAnimator());
 
     if (!devRendSkyAlways)
     {
-        GL.glClearStencil(0);
+        glClearStencil(0);
     }
 
     // Return GL state to normal.
@@ -4514,7 +4511,7 @@ static void drawMasked()
  * dynamic lights. Details take precedence (they always cover entire primitives
  * and usually *all* of the surfaces in a scene).
  */
-static void drawAllLists(Map &map)
+static void drawAllLists(world::Map &map)
 {
     DE_ASSERT(!Sys_GLCheckError());
     DE_ASSERT_IN_RENDER_THREAD();
@@ -4717,7 +4714,7 @@ static void drawAllLists(Map &map)
     DE_ASSERT(!Sys_GLCheckError());
 }
 
-void Rend_RenderMap(Map &map)
+void Rend_RenderMap(world::Map &map)
 {
     //GL_SetMultisample(true);
 
@@ -5134,7 +5131,7 @@ static void drawMobjBBox(mobj_t &mob)
  * Depth test is disabled to show all mobjs that are being rendered, regardless
  * if they are actually vissible (hidden by previously drawn map geometry).
  */
-static void drawMobjBoundingBoxes(Map &map)
+static void drawMobjBoundingBoxes(world::Map &map)
 {
     //static dfloat const red   [] = { 1,    0.2f, 0.2f };  // non-solid objects
     static dfloat const green [] = { 0.2f, 1,    0.2f };  // solid objects
@@ -5381,11 +5378,10 @@ static void drawSurfaceTangentVectors(Subsector &subsec)
 /**
  * Draw the surface tangent space vectors, primarily for debug.
  */
-static void drawSurfaceTangentVectors(Map &map)
+static void drawSurfaceTangentVectors(world::Map &map)
 {
     if (!::devSurfaceVectors) return;
 
-    //glDisable(GL_CULL_FACE);
     DGL_CullFace(DGL_NONE);
 
     map.forAllSectors([] (Sector &sec)
@@ -5401,14 +5397,13 @@ static void drawSurfaceTangentVectors(Map &map)
     DGL_PopState();
 }
 
-static void drawLumobjs(Map &map)
+static void drawLumobjs(world::Map &map)
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
     if (!devDrawLums) return;
 
     DGL_Disable(DGL_DEPTH_TEST);
-    //glDisable(GL_CULL_FACE);
     DGL_CullFace(DGL_NONE);
 
     map.forAllLumobjs([] (Lumobj &lob)
@@ -5459,28 +5454,28 @@ static void drawLumobjs(Map &map)
 
 static String labelForLineSideSection(LineSide &side, dint sectionId)
 {
-    return String("Line #%1 (%2, %3)")
-               .arg(side.line().indexInMap())
-               .arg(Line::sideIdAsText(side.sideId()).upperFirstChar())
-               .arg(LineSide::sectionIdAsText(sectionId));
+    return String::format("Line #%i (%s, %s)",
+                          side.line().indexInMap(),
+                          Line::sideIdAsText(side.sideId()).upperFirstChar().c_str(),
+                          LineSide::sectionIdAsText(sectionId).c_str());
 }
 
 static String labelForSector(Sector &sector)
 {
-    return String("Sector #%1").arg(sector.indexInMap());
+    return String::format("Sector #%i", sector.indexInMap());
 }
 
 static String labelForSectorPlane(Plane &plane)
 {
-    return String("Sector #%1 (%2)")
-               .arg(plane.sector().indexInMap())
-               .arg(Sector::planeIdAsText(plane.indexInSector()).upperFirstChar());
+    return String::format("Sector #%i (%s)",
+                          plane.sector().indexInMap(),
+                          Sector::planeIdAsText(plane.indexInSector()).upperFirstChar().c_str());
 }
 
 /**
  * Debugging aid for visualizing sound origins.
  */
-static void drawSoundEmitters(Map &map)
+static void drawSoundEmitters(world::Map &map)
 {
     static ddouble const MAX_DISTANCE = 384;
 
@@ -5559,7 +5554,7 @@ void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
 
 static String labelForGenerator(Generator const &gen)
 {
-    return String("%1").arg(gen.id());
+    return String::asText(gen.id());
 }
 
 static void drawGenerator(Generator const &gen)
@@ -5581,7 +5576,7 @@ static void drawGenerator(Generator const &gen)
 /**
  * Debugging aid; Draw all active generators.
  */
-static void drawGenerators(Map &map)
+static void drawGenerators(world::Map &map)
 {
     if (!devDrawGenerators) return;
 
@@ -5624,7 +5619,7 @@ static void drawBar(Vec3d const &origin, coord_t height, dfloat opacity)
 static String labelForVertex(Vertex const *vtx)
 {
     DE_ASSERT(vtx);
-    return String("%1").arg(vtx->indexInMap());
+    return String::asText(vtx->indexInMap());
 }
 
 struct drawvertexvisual_parameters_t
@@ -5633,7 +5628,7 @@ struct drawvertexvisual_parameters_t
     bool drawOrigin;
     bool drawBar;
     bool drawLabel;
-    QBitArray *drawnVerts;
+    BitArray *drawnVerts;
 };
 
 static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble maxHeight,
@@ -5651,7 +5646,7 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
     {
         if (parms.drawnVerts->testBit(vertex.indexInArchive()))
             return;
-        parms.drawnVerts->setBit(vertex.indexInArchive());
+        parms.drawnVerts->setBit(vertex.indexInArchive(), true);
     }
 
     // Distance in 2D determines visibility/opacity.
@@ -5774,7 +5769,7 @@ static void drawSubspaceVertexs(ConvexSubspace &sub, drawvertexvisual_parameters
 /**
  * Draw the various vertex debug aids.
  */
-static void drawVertexes(Map &map)
+static void drawVertexes(world::Map &map)
 {
 #define MAX_DISTANCE            1280  ///< From the viewer.
 
@@ -5786,7 +5781,7 @@ static void drawVertexes(Map &map)
     AABoxd box(eyeOrigin.x - MAX_DISTANCE, eyeOrigin.y - MAX_DISTANCE,
                eyeOrigin.x + MAX_DISTANCE, eyeOrigin.y + MAX_DISTANCE);
 
-    QBitArray drawnVerts(map.vertexCount());
+    BitArray drawnVerts(map.vertexCount());
     drawvertexvisual_parameters_t parms;
     parms.maxDistance = MAX_DISTANCE;
     parms.drawnVerts  = &drawnVerts;
@@ -5801,7 +5796,7 @@ static void drawVertexes(Map &map)
         DGL_Disable(DGL_DEPTH_TEST);
 
 #if defined (DE_OPENGL)
-        LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
+        glEnable(GL_LINE_SMOOTH);
 #endif
         oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
         DGL_SetFloat(DGL_LINE_WIDTH, 2);
@@ -5830,9 +5825,9 @@ static void drawVertexes(Map &map)
     // Draw the vertex origins.
     dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
-#if defined (DE_OPENGL)
-    LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
-#endif
+//#if defined (DE_OPENGL)
+//    glEnable(GL_POINT_SMOOTH);
+//#endif
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
     DGL_Disable(DGL_DEPTH_TEST);
@@ -5885,13 +5880,13 @@ static void drawVertexes(Map &map)
     {
         DGL_SetFloat(DGL_LINE_WIDTH, oldLineWidth);
 #if defined (DE_OPENGL)
-        LIBGUI_GL.glDisable(GL_LINE_SMOOTH);
+        glDisable(GL_LINE_SMOOTH);
 #endif
     }
     DGL_SetFloat(DGL_POINT_SIZE, oldPointSize);
-#if defined (DE_OPENGL)
-    LIBGUI_GL.glDisable(GL_POINT_SMOOTH);
-#endif
+//#if defined (DE_OPENGL)
+//    glDisable(GL_POINT_SMOOTH);
+//#endif
 
 #undef MAX_VERTEX_POINT_DIST
 }
@@ -5904,7 +5899,7 @@ static String labelForSubsector(Subsector const &subsec)
 /**
  * Draw the sector debugging aids.
  */
-static void drawSectors(Map &map)
+static void drawSectors(world::Map &map)
 {
     static ddouble const MAX_LABEL_DIST = 1280;
 
@@ -5941,13 +5936,13 @@ static void drawSectors(Map &map)
 static String labelForThinker(thinker_t *thinker)
 {
     DE_ASSERT(thinker);
-    return String("%1").arg(thinker->id);
+    return String::asText(thinker->id);
 }
 
 /**
  * Debugging aid for visualizing thinker IDs.
  */
-static void drawThinkers(Map &map)
+static void drawThinkers(world::Map &map)
 {
     static ddouble const MAX_THINKER_DIST = 2048;
 
@@ -6027,7 +6022,7 @@ void Rend_LightGridVisual(LightGrid &lg)
 
             if (!color) continue;
 
-            LIBGUI_GL.glColor3f(color->x, color->y, color->z);
+            glColor3f(color->x, color->y, color->z);
 
             DGL_Vertex2f(x * devLightGridSize, y * devLightGridSize);
             DGL_Vertex2f(x * devLightGridSize + devLightGridSize, y * devLightGridSize);
@@ -6043,10 +6038,10 @@ void Rend_LightGridVisual(LightGrid &lg)
 }
 #endif
 
-MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(dint wrapS, dint wrapT)
+MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(GLenum wrapS, GLenum wrapT)
 {
-    return ClientApp::resources().materialSpec(MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT,
-                                               -1, -1, -1, true, true, false, false);
+    return ClientApp::resources().materialSpec(
+        MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT, -1, -1, -1, true, true, false, false);
 }
 
 MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()

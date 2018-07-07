@@ -26,8 +26,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 DE_PIMPL_NOREF(SkyBox)
 {
     typedef GLBufferT<Vertex3> VBuf;
@@ -57,13 +55,13 @@ void SkyBox::glInit(Context &context)
         const Image img = context.images->image("sky.morning");
         const Image::Size size{img.width() / 6, img.height()};
 
-        d->envTex.setFilter(gl::Linear, gl::Linear, gl::MipLinear);
-        d->envTex.setImage(gl::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
-        d->envTex.setImage(gl::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
-        d->envTex.setImage(gl::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
-        d->envTex.setImage(gl::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
-        d->envTex.setImage(gl::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
-        d->envTex.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
+        d->envTex.setFilter(gfx::Linear, gfx::Linear, gfx::MipLinear);
+        d->envTex.setImage(gfx::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
+        d->envTex.setImage(gfx::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
+        d->envTex.setImage(gfx::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
+        d->envTex.setImage(gfx::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
+        d->envTex.setImage(gfx::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
+        d->envTex.setImage(gfx::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
         d->envTex.generateMipmap();
     }
 
@@ -89,8 +87,8 @@ void SkyBox::glInit(Context &context)
     };
 
     VBuf *buf = new VBuf;
-    buf->setVertices(verts, sizeof(verts)/sizeof(verts[0]), gl::Static);
-    buf->setIndices(gl::Triangles, sizeof(inds)/sizeof(inds[0]), inds, gl::Static);
+    buf->setVertices(verts, sizeof(verts)/sizeof(verts[0]), gfx::Static);
+    buf->setIndices(gfx::Triangles, sizeof(inds)/sizeof(inds[0]), inds, gfx::Static);
     d->skyBox.addBuffer(buf);
 
     context.shaders->build(d->skyBox.program(), "gloom.sky")

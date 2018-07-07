@@ -60,7 +60,7 @@ static byte devRendKeyState;
 static byte devRendMouseState;
 
 #define MAX_KEYMAPPINGS  256
-static uchar shiftKeyMappings[MAX_KEYMAPPINGS];
+static dbyte shiftKeyMappings[MAX_KEYMAPPINGS];
 
 // Initialize key mapping table.
 static void initKeyMappingsOnce()
@@ -68,7 +68,7 @@ static void initKeyMappingsOnce()
     // Already been here?
     if (shiftKeyMappings[1] == 1) return;
 
-    uchar defaultShiftTable[96] = // Contains characters 32 to 127.
+    dbyte defaultShiftTable[96] = // Contains characters 32 to 127.
     {
     /* 32 */    ' ', 0, 0, 0, 0, 0, 0, '"',
     /* 40 */    0, 0, 0, 0, '<', '_', '>', '?', ')', '!',
@@ -120,7 +120,7 @@ static void endDrawStateForVisual(Point2Raw const *origin)
 /**
  * Apply all active modifiers to the key.
  */
-static uchar modKey(int ddkey)
+static dbyte modKey(int ddkey)
 {
     extern bool shiftDown;
 
@@ -134,7 +134,7 @@ static uchar modKey(int ddkey)
 
     if (ddkey >= DDKEY_NUMPAD7 && ddkey <= DDKEY_NUMPAD0)
     {
-        static uchar const numPadKeys[10] = { '7', '8', '9', '4', '5', '6', '1', '2', '3', '0' };
+        static dbyte const numPadKeys[10] = { '7', '8', '9', '4', '5', '6', '1', '2', '3', '0' };
         return numPadKeys[ddkey - DDKEY_NUMPAD7];
     }
     else if (ddkey == DDKEY_DIVIDE)
@@ -158,7 +158,7 @@ static uchar modKey(int ddkey)
         return '*';
     }
 
-    return uchar(ddkey);
+    return dbyte(ddkey);
 }
 
 void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw const *_origin,
@@ -194,10 +194,10 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
     {
         // Perhaps a printable ASCII character?
         // Apply all active modifiers to the key.
-        uchar asciiCode = modKey(buttonID);
+        dbyte asciiCode = modKey(buttonID);
         if (asciiCode > 32 && asciiCode < 127)
         {
-            label = String("%1").arg(QChar(asciiCode));
+            label = String::asText(asciiCode);
         }
 
         // Is there symbolic name in the bindings system?
@@ -209,7 +209,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 
     if (label.isEmpty())
     {
-        label = String("#%1").arg(buttonID, 3, 10, QChar('0'));
+        label = String::format("#%03i", buttonID);
     }
 
     initDrawStateForVisual(&origin);

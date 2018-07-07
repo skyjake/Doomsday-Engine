@@ -47,7 +47,7 @@ Model::~Model()
     // The commit group will be deleted now.
     unsetAtlas();
 
-    qDeleteAll(timelines.values());
+    timelines.deleteAll();
 }
 
 } // namespace render

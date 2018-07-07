@@ -40,7 +40,7 @@ DE_PIMPL_NOREF(QtTextCanvas)
     Vec2i cursorPos;
     bool blinkVisible;
 
-    typedef QMap<Char, QImage> Cache;
+    typedef QMap<AttribChar, QImage> Cache;
     Cache cache;
 
     Impl() : blinkVisible(true)
@@ -62,11 +62,11 @@ DE_PIMPL_NOREF(QtTextCanvas)
         cache.clear();
     }
 
-    QImage glyph(Char const &originalChar)
+    QImage glyph(AttribChar const &originalChar)
     {
         // Ignore some attributes.
-        Char ch = originalChar;
-        ch.attribs &= ~(Char::Blink | Char::Underline);
+        auto ch = originalChar;
+        ch.attribs &= ~(AttribChar::Blink | AttribChar::Underline);
 
         Cache::const_iterator found = cache.constFind(ch);
         if (found != cache.constEnd())
@@ -81,7 +81,7 @@ DE_PIMPL_NOREF(QtTextCanvas)
         painter.setPen(Qt::NoPen);
         QColor fg;
         QColor bg;
-        if (!ch.attribs.testFlag(Char::Reverse))
+        if (!ch.attribs.testFlag(AttribChar::Reverse))
         {
             fg = foreground;
             bg = background;
@@ -95,13 +95,13 @@ DE_PIMPL_NOREF(QtTextCanvas)
         // Draw background.
         painter.fillRect(rect, bg);
 
-        painter.setFont(ch.attribs.testFlag(Char::Bold)? boldFont : font);
+        painter.setFont(ch.attribs.testFlag(AttribChar::Bold)? boldFont : font);
         QFontMetrics metrics(painter.font());
 
         // Draw the character.
         painter.setPen(fg);
         painter.setBrush(Qt::NoBrush);
-        painter.drawText(0, metrics.ascent(), ch.ch);
+        painter.drawText(0, metrics.ascent(), QString::fromStdWString(std::wstring(1, ch.ch)));
 
         cache.insert(ch, img);
         return img;
@@ -200,26 +200,26 @@ void QtTextCanvas::setBlinkVisible(bool visible)
 void QtTextCanvas::show()
 {
     QPainter painter(&d->backBuffer);
-    QFontMetrics metrics(d->font);   
+    QFontMetrics metrics(d->font);
 
     for (int y = 0; y < height(); ++y)
     {
         for (int x = 0; x < width(); ++x)
         {
             Coord const pos(x, y);
-            Char const &ch = at(pos);
+            AttribChar const &ch = at(pos);
 
-            if (!ch.isDirty() && !ch.attribs.testFlag(Char::Blink))
+            if (!ch.isDirty() && !ch.attribs.testFlag(AttribChar::Blink))
                 continue;
 
             QRect const rect(QPoint(x * d->charSizePx.x,
                                     y * d->charSizePx.y) * d->dpiFactor,
                              QSize(d->charSizePx.x, d->charSizePx.y) * d->dpiFactor);
 
-            if (ch.attribs.testFlag(Char::Blink) && !d->blinkVisible)
+            if (ch.attribs.testFlag(AttribChar::Blink) && !d->blinkVisible)
             {
                 // Blinked out.
-                painter.drawImage(rect.topLeft(), d->glyph(Char(' ', ch.attribs)));
+                painter.drawImage(rect.topLeft(), d->glyph(AttribChar(' ', ch.attribs)));
             }
             else
             {
@@ -227,10 +227,10 @@ void QtTextCanvas::show()
             }
 
             // Select attributes.
-            if (ch.attribs.testFlag(Char::Underline))
+            if (ch.attribs.testFlag(AttribChar::Underline))
             {
                 int baseline = rect.top() + metrics.ascent();
-                QColor col = ch.attribs.testFlag(Char::Reverse)? d->background : d->foreground;
+                QColor col = ch.attribs.testFlag(AttribChar::Reverse)? d->background : d->foreground;
                 col.setAlpha(160);
                 painter.setPen(col);
                 painter.drawLine(QPoint(rect.left(),  baseline + metrics.underlinePos()),

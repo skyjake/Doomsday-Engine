@@ -48,8 +48,8 @@ variantspecification_t::variantspecification_t()
     , gammaCorrection(true)
     , noStretch(false)
     , toAlpha(false)
-    , minFilter(GL_LINEAR)
-    , magFilter(GL_LINEAR)
+    , minFilter(1) // linear
+    , magFilter(1) // linear
     , anisoFilter(0)
     , tClass(0)
     , tMap(0)
@@ -94,9 +94,9 @@ bool variantspecification_t::operator == (variantspecification_t const &other) c
     return 1; // Equal.
 }
 
-int variantspecification_t::glMinFilter() const
+GLenum variantspecification_t::glMinFilter() const
 {
-    if(minFilter >= 0) // Constant logical value.
+    if (minFilter >= 0) // Constant logical value.
     {
         return (mipmapped? GL_NEAREST_MIPMAP_NEAREST : GL_NEAREST) + minFilter;
     }
@@ -104,7 +104,7 @@ int variantspecification_t::glMinFilter() const
     return mipmapped? glmode[mipmapping] : GL_LINEAR;
 }
 
-int variantspecification_t::glMagFilter() const
+GLenum variantspecification_t::glMagFilter() const
 {
     if(magFilter >= 0) // Constant logical value.
     {
@@ -565,12 +565,12 @@ uint ClientTexture::Variant::prepare()
     }
 
     // Submit the content for uploading (possibly deferred).
-    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&c);
+    gfx::UploadMethod uploadMethod = GL_ChooseUploadMethod(&c);
     GL_UploadTextureContent(c, uploadMethod);
 
     LOGDEV_RES_XVERBOSE("Prepared \"%s\" variant (glName:%u)%s",
                         d->texture.manifest().composeUri() << uint(d->glTexName) <<
-                        (uploadMethod == gl::Immediate? " while not busy!" : ""));
+                        (uploadMethod == gfx::Immediate? " while not busy!" : ""));
     LOGDEV_RES_XVERBOSE("  Content: %s", Image_Description(image));
     LOGDEV_RES_XVERBOSE("  Specification %p: %s", &d->spec << d->spec.asText());
 

@@ -34,24 +34,27 @@
 #include <de/AnimationValue>
 #include <de/FS>
 #include <de/DialogContentStylist>
+#include <de/NativePointerValue>
 #include <de/NumberValue>
 #include <de/PackageLoader>
+#include <de/RegExp>
 #include <de/ScriptedInfo>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
 #include <de/TextValue>
 
 using namespace de;
 using namespace de::ui;
 
-struct PlayData
+struct PlayData : public Deletable
 {
     int mobjId;
     int animationId;
 
-    PlayData(int mobj = 0, int seq = 0) : mobjId(mobj), animationId(seq) {}
+    PlayData(int mobj = 0, int seq = 0)
+        : mobjId(mobj)
+        , animationId(seq)
+    {}
 };
-Q_DECLARE_METATYPE(PlayData)
 
 DE_GUI_PIMPL(ModelAssetEditor)
 , DE_OBSERVES(PackageLoader, Activity)
@@ -67,7 +70,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
     LabelWidget *info;
     LabelWidget *instLabel;
     ChoiceWidget *instChoice;
-    QList<Group *> groups; ///< Generated based on asset subrecords.
+    List<Group *> groups; ///< Generated based on asset subrecords.
     SafeWidgetPtr<ChoiceWidget> animChoice;
     SafeWidgetPtr<SliderWidget> offsetX;
     SafeWidgetPtr<SliderWidget> offsetY;
@@ -85,10 +88,10 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
         container->add(info = new LabelWidget);
         container->add(instChoice = new ChoiceWidget);
-        instChoice->setNoSelectionHint(_E(l) + tr("Click to select"));
+        instChoice->setNoSelectionHint(_E(l) "Click to select");
         instChoice->popup().useInfoStyle();
         instChoice->popup().audienceForAboutToOpen() += this;
-        instLabel = LabelWidget::newWithText(tr("Instance:"), container);
+        instLabel = LabelWidget::newWithText("Instance:", container);
 
         instChoice->rule()
                 .setInput(Rule::Left, instLabel->rule().right())
@@ -113,14 +116,14 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     bool isWeaponAsset() const
     {
-        return assetId.startsWith("model.weapon.");
+        return assetId.beginsWith("model.weapon.");
     }
 
     /**
      * Sets the currently active model asset.
      * @param id  Asset identifier.
      */
-    void setAsset(String id)
+    void setAsset(const String& id)
     {
         assetId = id;
         asset = App::asset(id);
@@ -129,22 +132,22 @@ DE_GUI_PIMPL(ModelAssetEditor)
         render::Model const &model = ClientApp::renderSystem().modelRenderer()
                 .bank().model<render::Model>(id);
 
-        QStringList animNames;
+        StringList animNames;
         for (int i = 0; i < model.animationCount(); ++i)
         {
             animNames << model.animationName(i);
         }
 
-        QStringList meshNames;
+        StringList meshNames;
         for (int i = 0; i < model.meshCount(); ++i)
         {
             meshNames << model.meshName(i);
         }
 
-        QStringList materialNames;
-        for (String n : model.materialIndexForName.keys())
+        StringList materialNames;
+        for (const auto &i : model.materialIndexForName)
         {
-            materialNames << n;
+            materialNames << i.first;
         }
 
         setInfoLabelParams(*info);
@@ -154,19 +157,19 @@ DE_GUI_PIMPL(ModelAssetEditor)
                 .arg(asset.absolutePath("path"))
                 .arg(model.meshCount())
                 .arg(pluralSuffix(model.meshCount(), "es"))
-                .arg(meshNames.join(", "))
+                .arg(String::join(meshNames, ", "))
                 .arg(materialNames.size())
                 .arg(pluralSuffix(materialNames.size()))
-                .arg(materialNames.join(", "));
+                .arg(String::join(materialNames, ", "));
         if (!animNames.isEmpty())
         {
             msg += QString(_E(Ta)_E(l) "\n%1 Animation%2: " _E(.)_E(Tb) "%3")
                     .arg(model.animationCount())
                     .arg(pluralSuffix(model.animationCount()))
-                    .arg(animNames.join(", "));
+                    .arg(String::join(animNames, ", "));
         }
-        msg += QString(_E(Ta)_E(l) "\nAutoscale: " _E(.)_E(Tb) "%1")
-                .arg(asset.gets("autoscale", "False"));
+        msg += String::format(_E(Ta)_E(l) "\nAutoscale: " _E(.)_E(Tb) "%s",
+                              asset.gets("autoscale", "False").c_str());
         info->setText(msg);
 
         instChoice->items().clear();
@@ -197,6 +200,13 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     void clearGroups()
     {
+        for (dsize i = 0; i < animChoice->items().size(); ++i)
+        {
+            auto &item = animChoice->items().at(i);
+            DE_ASSERT(is<NativePointerValue>(item.data()));
+            delete item.data().as<NativePointerValue>().nativeObject<PlayData>();
+        }
+
         for (Group *g : groups)
         {
             // Ownership of the optional title and reset button was given
@@ -209,7 +219,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     int idNumber()
     {
-        return instChoice->selectedItem().data().toInt();
+        return instChoice->selectedItem().data().asInt();
     }
 
     render::StateAnimator *assetAnimator()
@@ -248,24 +258,24 @@ DE_GUI_PIMPL(ModelAssetEditor)
             Record &ns = anim->objectNamespace();
 
             // Manual animation controls.
-            Group *g = new Group(this, "", tr("Animations"));
+            Group *g = new Group(this, "", "Animations");
             groups << g;
-            g->addLabel(tr("Play:"));
+            g->addLabel("Play:");
             animChoice.reset(new ChoiceWidget);
             render::Model const &model = anim->model();
             for (int i = 0; i < model.animationCount(); ++i)
             {
-                QVariant var;
-                var.setValue(PlayData(idNumber(), i));
-                animChoice->items() << new ChoiceItem(model.animationName(i), var);
+                // NOTE: PlayData objects allocated here; must be deleted manually later.
+                // NativePointerValue does not take ownership.
+                animChoice->items() << new ChoiceItem(
+                    model.animationName(i), NativePointerValue(new PlayData(idNumber(), i)));
             }
             g->addWidget(animChoice);
-            QObject::connect(animChoice.get(), SIGNAL(selectionChangedByUser(uint)),
-                             thisPublic, SLOT(playAnimation()));
+            animChoice->audienceForUserSelection() += [this](){ self().playAnimation(); };
             g->commit();
 
             // Positioning.
-            g = new Group(this, "", tr("Position"));
+            g = new Group(this, "", "Position");
             groups << g;
             {
                 // Sliders for the offset vector.
@@ -290,30 +300,27 @@ DE_GUI_PIMPL(ModelAssetEditor)
                 offsetY->setValue(anim->model().offset.y);
                 offsetZ->setValue(anim->model().offset.z);
 
-                QObject::connect(offsetX.get(), SIGNAL(valueChangedByUser(double)),
-                                 thisPublic, SLOT(updateOffsetVector()));
-                QObject::connect(offsetY.get(), SIGNAL(valueChangedByUser(double)),
-                                 thisPublic, SLOT(updateOffsetVector()));
-                QObject::connect(offsetZ.get(), SIGNAL(valueChangedByUser(double)),
-                                 thisPublic, SLOT(updateOffsetVector()));
+                offsetX->audienceForUserValue() += [this](){ self().updateOffsetVector(); };
+                offsetY->audienceForUserValue() += [this](){ self().updateOffsetVector(); };
+                offsetZ->audienceForUserValue() += [this](){ self().updateOffsetVector(); };
             }
             g->commit();
 
             // Animator variables.
-            g = makeGroup(*anim, ns, tr("Variables"));
+            g = makeGroup(*anim, ns, "Variables");
             g->open();
             groups << g;
 
             // Make a variable group for each subrecord.
-            QMap<String, Group *> orderedGroups;
+            Map<String, Group *> orderedGroups;
             ns.forSubrecords([this, anim, &orderedGroups] (String const &name, Record &rec)
             {
                 orderedGroups.insert(name, makeGroup(*anim, rec, name, true));
                 return LoopContinue;
             });
-            for (auto *g : orderedGroups.values())
+            for (const auto &g : orderedGroups)
             {
-                groups << g;
+                groups << g.second;
             }
         }
     }
@@ -325,8 +332,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     static String mobjItemLabel(thid_t id)
     {
-        return QString("ID %1 " _E(l) "(dist:%2)")
-                .arg(id).arg(int(distanceToMobj(id)));
+        return String::format("ID %u " _E(l) "(dist:%i)", id, int(distanceToMobj(id)));
     }
 
     static coord_t distanceToMobj(thid_t id)
@@ -341,12 +347,13 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     void populateGroup(Group *g, Record &rec, bool descend, String const &namePrefix = "")
     {
-        StringList names = rec.members().keys();
-        qSort(names);
+        auto names = map<StringList>(
+            rec.members(), [](const Record::Members::value_type &v) { return v.first; });
+        names.sort();
 
         for (String const &name : names)
         {
-            if (name.startsWith("__") || name == "ID" || name == "uMapTime")
+            if (name.beginsWith("__") || name == "ID" || name == "uMapTime")
                 continue;
 
             Variable &var = rec[name];
@@ -417,7 +424,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         int passIndex = animator.model().passes.findName(titleText);
         if (passIndex >= 0)
         {
-            titleText = QString("Render Pass \"%1\"").arg(titleText);
+            titleText = String::format("Render Pass \"%s\"", titleText.c_str());
 
             // Look up the shader.
             auto const &pass = animator.model().passes.at(passIndex);
@@ -426,10 +433,11 @@ DE_GUI_PIMPL(ModelAssetEditor)
             Record const &shaderDef = modelLoader.shaderDefinition(*pass.program);
 
             // Check the variable declarations.
-            auto vars = ScriptedInfo::subrecordsOfType(DE_STR("variable"),
-                                                       shaderDef).keys();
-            qSort(vars);
-            QStringList names;
+            auto vars =
+                map<StringList>(ScriptedInfo::subrecordsOfType(DE_STR("variable"), shaderDef),
+                                [](const Record::Subrecords::value_type &v) { return v.first; });
+            vars.sort();
+            StringList names;
             for (String const &n : vars)
             {
                 // Used variables are shown in bold.
@@ -438,10 +446,10 @@ DE_GUI_PIMPL(ModelAssetEditor)
                 else
                     names << n;
             }
-            String msg = QString(_E(Ta)_E(l) "Shader: " _E(.)_E(Tb) "%1\n"
-                                 _E(Ta)_E(l) "Variables: " _E(.)_E(Tb) "%2")
-                    .arg(shaderName)
-                    .arg(names.join(", "));
+            String msg = String::format(_E(Ta) _E(l) "Shader: "    _E(.) _E(Tb) "%s\n"
+                                        _E(Ta) _E(l) "Variables: " _E(.) _E(Tb) "%s",
+                                        shaderName.c_str(),
+                                        String::join(names, ", ").c_str());
 
             info = new LabelWidget;
             info->setText(msg);
@@ -489,7 +497,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
                     if (anim.animator()["ID"] == assetId)
                     {
                         instChoice->items()
-                                << new ChoiceItem(QString("Player %1").arg(idx), idx);
+                                << new ChoiceItem(String::format("Player %i", idx), NumberValue(idx));
                     }
                 }
             }
@@ -505,7 +513,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
                     if (anim && (*anim)["ID"] == assetId)
                     {
-                        instChoice->items() << new ChoiceItem(mobjItemLabel(th->id), th->id);
+                        instChoice->items() << new ChoiceItem(mobjItemLabel(th->id), NumberValue(th->id));
                     }
                 }
                 return LoopContinue;
@@ -520,22 +528,22 @@ DE_GUI_PIMPL(ModelAssetEditor)
             return;
 
         int selId = (instChoice->isValidSelection()?
-                     instChoice->selectedItem().data().toInt() : 0);
+                     instChoice->selectedItem().data().asInt() : 0);
 
         // Update the distances.
         instChoice->items().forAll([] (Item &a)
         {
-            a.as<ChoiceItem>().setLabel(mobjItemLabel(a.data().toInt()));
+            a.as<ChoiceItem>().setLabel(mobjItemLabel(a.data().asInt()));
             return LoopContinue;
         });
         instChoice->items().sort([] (Item const &a, Item const &b)
         {
-            return distanceToMobj(a.data().toInt()) < distanceToMobj(b.data().toInt());
+            return distanceToMobj(a.data().asInt()) < distanceToMobj(b.data().asInt());
         });
 
         if (rememberSelection && selId > 0)
         {
-            instChoice->setSelected(instChoice->items().findData(selId));
+            instChoice->setSelected(instChoice->items().findData(NumberValue(selId)));
         }
     }
 
@@ -550,10 +558,11 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
         FS::locate<Folder const>("/packs").forContents([this] (String name, File &)
         {
-            QRegExp regex("asset\\.(model\\.((thing|weapon)\\..*))");
-            if (regex.exactMatch(name))
+            static const RegExp regex("asset\\.(model\\.((thing|weapon)\\..*))");
+            RegExpMatch m;
+            if (regex.exactMatch(name, m))
             {
-                assetChoice->items() << new ChoiceItem(regex.cap(2), regex.cap(1));
+                assetChoice->items() << new ChoiceItem(m.captured(2), TextValue(m.captured(1)));
             }
             return LoopContinue;
         });
@@ -564,7 +573,8 @@ DE_GUI_PIMPL(ModelAssetEditor)
         if (!animChoice || !animChoice->isValidSelection())
             return;
 
-        PlayData const data = animChoice->selectedItem().data().value<PlayData>();
+        const PlayData &data =
+            *animChoice->selectedItem().data().as<NativePointerValue>().nativeObject<PlayData>();
         render::StateAnimator *animator = nullptr;
 
         if (isWeaponAsset())
@@ -601,24 +611,26 @@ DE_GUI_PIMPL(ModelAssetEditor)
 };
 
 ModelAssetEditor::ModelAssetEditor()
-    : SidebarWidget(tr("Edit 3D Model"), "modelasseteditor")
+    : SidebarWidget("Edit 3D Model", "modelasseteditor")
     , d(new Impl(this))
 {
-    d->assetLabel = LabelWidget::newWithText(tr("Asset:"), &containerWidget());
+    d->assetLabel = LabelWidget::newWithText("Asset:", &containerWidget());
 
     d->redoLayout();
     d->updateAssetsList();
 
-    connect(d->assetChoice, SIGNAL(selectionChangedByUser(uint)), this, SLOT(setSelectedAsset(uint)));
-    connect(d->instChoice,  SIGNAL(selectionChangedByUser(uint)), this, SLOT(setSelectedInstance(uint)));
+    d->assetChoice->audienceForUserSelection() +=
+        [this]() { setSelectedAsset(d->assetChoice->selected()); };
+    d->instChoice->audienceForUserSelection() +=
+        [this]() { setSelectedInstance(d->instChoice->selected()); };
 }
 
-void ModelAssetEditor::setSelectedAsset(uint pos)
+void ModelAssetEditor::setSelectedAsset(ui::DataPos pos)
 {
-    d->setAsset(d->assetChoice->items().at(pos).data().toString());
+    d->setAsset(d->assetChoice->items().at(pos).data().asText());
 }
 
-void ModelAssetEditor::setSelectedInstance(uint /*pos*/)
+void ModelAssetEditor::setSelectedInstance(ui::DataPos /*pos*/)
 {
     d->makeGroups();
     d->redoLayout();

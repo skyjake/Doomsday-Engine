@@ -271,7 +271,7 @@ SkyFixEdge::Event const &SkyFixEdge::at(EventIndex index) const
         return index == 0? d->bottom : d->top;
     }
     /// @throw InvalidIndexError The specified event index is not valid.
-    throw Error("SkyFixEdge::at", QString("Index '%1' does not map to a known event (count: 2)").arg(index));
+    throw Error("SkyFixEdge::at", stringf("Index '%i' does not map to a known event (count: 2)", index));
 }
 
 } // namespace de

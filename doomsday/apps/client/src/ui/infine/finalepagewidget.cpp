@@ -154,13 +154,13 @@ void FinalePageWidget::draw() const
 
     //GL_SetMultisample(true);
 
-    // Clear Z buffer (prevent the objects being clipped by nearby polygons).
-    LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
+    // Prevent objects from being clipped by nearby polygons.
+    glClear(GL_DEPTH_BUFFER_BIT);
 
 #if defined (DE_OPENGL)
     if (renderWireframe > 1)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     }
 #endif
 
@@ -183,7 +183,7 @@ void FinalePageWidget::draw() const
     // Back from wireframe mode?
     if (renderWireframe > 1)
     {
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
     }
 #endif
 

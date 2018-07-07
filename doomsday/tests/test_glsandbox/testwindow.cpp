@@ -37,8 +37,6 @@
 
 using namespace de;
 
-namespace dgl = de::gl;
-
 DE_PIMPL(TestWindow)
 , DE_OBSERVES(GLWindow, Init)
 , DE_OBSERVES(GLWindow, Resize)
@@ -99,7 +97,7 @@ DE_PIMPL(TestWindow)
         uColor = Vec4f(.5f, .75f, .5f, 1);
         atlas->setTotalSize(Vec2ui(256, 256));
         atlas->setBorderSize(2);
-        atlas->setMagFilter(dgl::Nearest);
+        atlas->setMagFilter(gfx::Nearest);
 
         imageBank.add("rtt.cube", "/packs/net.dengine.test.glsandbox/testpic.png");
         //imageBank.loadAll();
@@ -146,8 +144,8 @@ DE_PIMPL(TestWindow)
         // Set up the default state.
         GLState &st = GLState::current();
         st.setBlend(true);
-        st.setBlendFunc(dgl::SrcAlpha, dgl::OneMinusSrcAlpha);
-        //st.setCull(dgl::Back);
+        st.setBlendFunc(gfx::SrcAlpha, gfx::OneMinusSrcAlpha);
+        //st.setCull(gfx::Back);
         st.setDepthTest(true);
 
         // Textures.
@@ -155,8 +153,8 @@ DE_PIMPL(TestWindow)
         imageBank.load("rtt.cube");
         //testpic.setImage(imageBank.image("rtt/cube"));
         //testpic.setImage(QImage(":/images/testpic.png"));
-        testpic.setWrapT(dgl::RepeatMirrored);
-        testpic.setMinFilter(dgl::Linear, dgl::MipLinear);
+        testpic.setWrapT(gfx::RepeatMirrored);
+        testpic.setMinFilter(gfx::Linear, gfx::MipLinear);
         uTex = testpic;
 
         // Prepare the custom target.
@@ -178,7 +176,7 @@ DE_PIMPL(TestWindow)
             { Vec3f(-1,  1,  1), Vec2f(1, 0), Vec4f(0, 0, 1, 1) }
         };
 
-        buf->setVertices(verts, 8, dgl::Static);
+        buf->setVertices(verts, 8, gfx::Static);
 
         GLBuffer::Indices idx;
         idx << 0 << 4 << 3 << 7 << 2 << 6 << 1 << 5 << 0 << 4
@@ -186,7 +184,7 @@ DE_PIMPL(TestWindow)
             << 0 << 3 << 1 << 2
             << 2 << 7
             << 7 << 4 << 6 << 5;
-        buf->setIndices(dgl::TriangleStrip, idx, dgl::Static);
+        buf->setIndices(gfx::TriangleStrip, idx, gfx::Static);
 
         ob.program().build(
                     ByteRefArray::fromCStr(
@@ -233,7 +231,7 @@ DE_PIMPL(TestWindow)
             { Vec2f(100, 100), Vec2f(1, 1) },
             { Vec2f(0,   100), Vec2f(0, 1) }
         };
-        buf2->setVertices(dgl::TriangleFan, verts2, 4, dgl::Static);
+        buf2->setVertices(gfx::TriangleFan, verts2, 4, gfx::Static);
         atlasOb.addBuffer(buf2);
 
         atlasOb.program().build(

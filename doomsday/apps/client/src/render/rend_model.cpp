@@ -1082,7 +1082,6 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     // Normally culling is always enabled.
     if (smf.testFlag(MFF_TWO_SIDED))
     {
-        //glEnable(GL_CULL_FACE);
         DGL_CullFace(DGL_BACK);
     }
 
@@ -1090,7 +1089,6 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     {
         glFrontFace(GL_CW);
     }
-    //glDepthFunc(GL_LESS);
     DGL_DepthFunc(DGL_LESS);
 
     GL_BlendMode(BM_NORMAL);
@@ -1133,8 +1131,6 @@ void Rend_DrawModel(vissprite_t const &spr)
     if (devMobjVLights && spr.light.vLightListIdx)
     {
         // Draw the vlight vectors, for debug.
-        //glDisable(GL_DEPTH_TEST);
-        //glDisable(GL_CULL_FACE);
         DGL_PushState();
         DGL_Disable(DGL_DEPTH_TEST);
         DGL_CullFace(DGL_NONE);

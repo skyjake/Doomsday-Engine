@@ -27,34 +27,36 @@
 
 namespace render {
 
+using namespace de;
+
 /**
  * Drawable model with client-specific extra information, e.g., animation
  * sequences.
  *
  * @todo Refactor: This could look more like a proper class, yes? -jk
  */
-struct Model : public de::ModelDrawable
+struct Model : public ModelDrawable
 {
-    static de::String const DEF_TIMELINE;
+    static String const DEF_TIMELINE;
 
 //---------------------------------------------------------------------------------------
 
-    de::String identifier;
+    String identifier;
 
     /**
      * Animation sequence definition.
      */
     struct AnimSequence
     {
-        de::String name;        ///< Name of the sequence.
-        de::Record const *def;  ///< Record describing the sequence (in asset metadata).
-        de::Timeline *timeline = nullptr; ///< Script timeline (owned).
-        de::String sharedTimeline; ///< Name of shared timeline (if specified).
+        String name;        ///< Name of the sequence.
+        Record const *def;  ///< Record describing the sequence (in asset metadata).
+        Timeline *timeline = nullptr; ///< Script timeline (owned).
+        String sharedTimeline; ///< Name of shared timeline (if specified).
 
-        AnimSequence(de::String const &n, de::Record const &d);
+        AnimSequence(String const &n, Record const &d);
     };
 
-    struct StateAnims : public de::Map<de::String, de::List<AnimSequence>>
+    struct StateAnims : public Map<String, List<AnimSequence>>
     {};
 
     enum Flag
@@ -77,20 +79,20 @@ struct Model : public de::ModelDrawable
 
 //---------------------------------------------------------------------------------------
 
-    std::unique_ptr<de::MultiAtlas::AllocGroup> textures;
+    std::unique_ptr<MultiAtlas::AllocGroup> textures;
 
-    de::Flags flags      = DefaultFlags;
+    Flags     flags      = DefaultFlags;
     Alignment alignYaw   = NotAligned;
     Alignment alignPitch = NotAligned;
 
     /// Combined scaling and rotation of the model.
-    de::Mat4f transformation;
+    Mat4f transformation;
 
-    de::Vec3f offset;
+    Vec3f offset;
 
-    de::gl::Face cull = de::gl::Back;
+    gfx::Face cull = gfx::Back;
 
-    de::Hash<de::String, de::duint> materialIndexForName;
+    Hash<String, duint> materialIndexForName;
 
     /// Rendering passes. Will not change after init.
     Passes passes;
@@ -99,7 +101,7 @@ struct Model : public de::ModelDrawable
     StateAnims animations;
 
     /// Shared timelines (not sequence-specific). Owned.
-    de::Hash<de::String, de::Timeline *> timelines;
+    Hash<String, Timeline *> timelines;
 };
 
 } // namespace render

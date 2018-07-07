@@ -32,6 +32,9 @@
 #include "dd_main.h"
 #include "clientapp.h"
 
+#include <doomsday/DoomsdayApp>
+#include <doomsday/Games>
+
 #include <de/Async>
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
@@ -47,8 +50,6 @@
 #include <de/data/json.h>
 #include <de/memory.h>
 #include <de/shell/ServerFinder>
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
 
 using namespace de;
 
@@ -307,16 +308,16 @@ DE_PIMPL(ServerLink)
         if (mask.testFlag(MasterServer))
         {
             // Append from master (if available).
-            for (auto i = fromMaster.constBegin(); i != fromMaster.constEnd(); ++i)
+            for (auto i = fromMaster.begin(); i != fromMaster.end(); ++i)
             {
-                all.insert(i.key(), i.value());
+                all.insert(i->first, i->second);
             }
         }
         if (mask.testFlag(Direct))
         {
-            for (auto i = discovered.constBegin(); i != discovered.constEnd(); ++i)
+            for (auto i = discovered.begin(); i != discovered.end(); ++i)
             {
-                all.insert(i.key(), i.value());
+                all.insert(i->first, i->second);
             }
         }
         return all;
@@ -327,34 +328,26 @@ DE_PIMPL(ServerLink)
         // Show the error message in a dialog box.
         MessageDialog *dlg = new MessageDialog;
         dlg->setDeleteAfterDismissed(true);
-        dlg->title().setText(tr("Cannot Join Game"));
+        dlg->title().setText("Cannot Join Game");
         dlg->message().setText(msg);
         dlg->buttons() << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept);
         ClientWindow::main().root().addOnTop(dlg);
         dlg->open(MessageDialog::Modal);
     }
 
-    DE_PIMPL_AUDIENCE(DiscoveryUpdate)
-    DE_PIMPL_AUDIENCE(PingResponse)
-    DE_PIMPL_AUDIENCE(MapOutline)
-    DE_PIMPL_AUDIENCE(Join)
-    DE_PIMPL_AUDIENCE(Leave)
+    DE_PIMPL_AUDIENCES(Discovery, PingResponse, MapOutline, Join, Leave)
 };
 
-DE_AUDIENCE_METHOD(ServerLink, DiscoveryUpdate)
-DE_AUDIENCE_METHOD(ServerLink, PingResponse)
-DE_AUDIENCE_METHOD(ServerLink, MapOutline)
-DE_AUDIENCE_METHOD(ServerLink, Join)
-DE_AUDIENCE_METHOD(ServerLink, Leave)
+DE_AUDIENCE_METHODS(ServerLink, Discovery, PingResponse, MapOutline, Join, Leave)
 
 ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
 {
     if (d->finder)
     {
-        connect(d->finder.get(), SIGNAL(updated()), this, SLOT(localServersFound()));
+        d->finder->audienceForUpdate() += [this](){ localServersFound(); };
     }
-    connect(this, SIGNAL(packetsReady()), this, SLOT(handleIncomingPackets()));
-    connect(this, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
+    audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
+    audienceForDisconnected() += [this](){ linkDisconnected(); };
 }
 
 shell::PackageDownloader &ServerLink::packageDownloader()
@@ -368,7 +361,7 @@ void ServerLink::clear()
     // TODO: clear all found servers
 }
 
-void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
+void ServerLink::connectToServerAndChangeGameAsync(const shell::ServerInfo& info)
 {
     // Automatically leave the current MP game.
     if (netGame && isClient)
@@ -389,8 +382,8 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
         if (!serverProfile)
         {
             // Hmm, oopsie?
-            String const errorMsg = QString("Not enough information known about server %1")
-                    .arg(info.address().asText());
+            String const errorMsg =
+                "Not enough information known about server " + info.address().asText();
             LOG_NET_ERROR("Failed to join: ") << errorMsg;
             d->reportError(errorMsg);
             return;
@@ -411,9 +404,10 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
             {
                 if (!PackageLoader::get().select(pkg))
                 {
-                    String const errorMsg = tr("The configured local multiplayer "
-                                               "package %1 is unavailable.")
-                            .arg(Package::splitToHumanReadable(pkg));
+                    String const errorMsg =
+                        String::format("The configured local multiplayer "
+                                       "package %s is unavailable.",
+                                       Package::splitToHumanReadable(pkg).c_str());
                     LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
                     d->reportError(errorMsg);
                     return;
@@ -460,11 +454,13 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
 
                 if (!joinProfile->isPlayable())
                 {
-                    String const errorMsg = tr("Server's game \"%1\" is not playable on this system. "
-                                               "The following packages are unavailable:\n\n%2")
-                            .arg(info.gameId())
-                            .arg(String::join(de::map(joinProfile->unavailablePackages(),
-                                                      Package::splitToHumanReadable), "\n"));
+                    String const errorMsg =
+                        String::format("Server's game \"%s\" is not playable on this system. "
+                                       "The following packages are unavailable:\n\n",
+                                       info.gameId().c_str()) +
+                        String::join(de::map(joinProfile->unavailablePackages(),
+                                             Package::splitToHumanReadable),
+                                     "\n");
                     LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
                     d->downloader.unmountServerRepository();
                     d->reportError(errorMsg);
@@ -489,7 +485,7 @@ void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
 }
 
 void ServerLink::acquireServerProfileAsync(Address const &address,
-                                           std::function<void (GameProfile const *)> resultHandler)
+                                           const std::function<void (GameProfile const *)>& resultHandler)
 {
     if (d->prepareServerProfile(address))
     {
@@ -512,7 +508,7 @@ void ServerLink::acquireServerProfileAsync(Address const &address,
 void ServerLink::acquireServerProfileAsync(String const &domain,
                                            std::function<void (Address, GameProfile const *)> resultHandler)
 {
-    d->profileResultCallbackWithAddress = resultHandler;
+    d->profileResultCallbackWithAddress = std::move(resultHandler);
     discover(domain);
     LOG_NET_MSG("Querying server %s for full status") << domain;
 }
@@ -599,7 +595,7 @@ void ServerLink::disconnect()
 
 void ServerLink::discover(String const &domain)
 {
-    AbstractLink::connectDomain(domain, 5 /*timeout*/);
+    AbstractLink::connectDomain(domain, 5.0 /*timeout*/);
 
     d->discovered.clear();
     d->state = Discovering;
@@ -619,12 +615,13 @@ bool ServerLink::isDiscovering() const
 
 int ServerLink::foundServerCount(FoundMask mask) const
 {
-    return d->allFound(mask).size();
+    return d->allFound(mask).sizei();
 }
 
-QList<Address> ServerLink::foundServers(FoundMask mask) const
+List<Address> ServerLink::foundServers(FoundMask mask) const
 {
-    return d->allFound(mask).keys();
+    return map<List<Address>>(d->allFound(mask),
+                              [](const Impl::Servers::value_type &v) { return v.first; });
 }
 
 bool ServerLink::isFound(Address const &host, FoundMask mask) const
@@ -635,9 +632,10 @@ bool ServerLink::isFound(Address const &host, FoundMask mask) const
 
 bool ServerLink::foundServerInfo(int index, shell::ServerInfo &info, FoundMask mask) const
 {
-    Impl::Servers const all = d->allFound(mask);
-    QList<Address> const listed = all.keys();
-    if (index < 0 || index >= listed.size()) return false;
+    const Impl::Servers all = d->allFound(mask);
+    const auto          listed =
+        map<List<Address>>(all, [](const Impl::Servers::value_type &v) { return v.first; });
+    if (index < 0 || index >= listed.sizei()) return false;
     info = all[listed[index]];
     return true;
 }
@@ -729,8 +727,8 @@ void ServerLink::handleIncomingPackets()
     for (;;)
     {
         // Only BlockPackets received (see interpret()).
-        QScopedPointer<BlockPacket> packet(static_cast<BlockPacket *>(nextPacket()));
-        if (packet.isNull()) break;
+        std::unique_ptr<BlockPacket> packet(static_cast<BlockPacket *>(nextPacket()));
+        if (!packet) break;
 
         Block const &packetData = packet->block();
 
@@ -748,7 +746,7 @@ void ServerLink::handleIncomingPackets()
             if (packetData.size() == 4 && packetData == "Pong" &&
                 d->pingCounter-- > 0)
             {
-                d->pings.append(TimeSpan::fromMilliSeconds(d->pingTimer.elapsed()));
+                d->pings << TimeSpan(d->pingTimer.elapsedSeconds());
                 *this << ByteRefArray("Ping?", 5);
                 d->pingTimer.restart();
             }
@@ -761,8 +759,8 @@ void ServerLink::handleIncomingPackets()
                 // Notify about the average ping time.
                 if (d->pings.count())
                 {
-                    TimeSpan average = 0;
-                    for (TimeSpan i : d->pings) average += i;
+                    TimeSpan average;
+                    for (const TimeSpan &i : d->pings) average += i;
                     average /= d->pings.count();
 
                     DE_FOR_AUDIENCE2(PingResponse, i)

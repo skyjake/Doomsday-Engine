@@ -27,8 +27,6 @@
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 using namespace de;
 
 template <typename Type>
@@ -39,9 +37,9 @@ struct DataBuffer
     GLuint        bufTex{0};
     List<Type>    data;
     Image::Format format;
-    gl::Usage     usage;
+    gfx::Usage     usage;
 
-    DataBuffer(const char *uName, Image::Format format, gl::Usage usage = gl::Stream)
+    DataBuffer(const char *uName, Image::Format format, gfx::Usage usage = gfx::Stream)
         : var{uName, GLUniform::SamplerBuffer}
         , buf{GLBuffer::Texture}
         , format(format)

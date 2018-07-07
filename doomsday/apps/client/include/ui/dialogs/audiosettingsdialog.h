@@ -26,12 +26,9 @@
  */
 class AudioSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     AudioSettingsDialog(de::String const &name = "audiosettings");
 
-public slots:
     void resetToDefaults();
 
 protected:

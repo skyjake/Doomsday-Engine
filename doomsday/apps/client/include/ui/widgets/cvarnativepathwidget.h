@@ -27,16 +27,13 @@
  */
 class CVarNativePathWidget : public NativePathWidget, public ICVarWidget
 {
-    Q_OBJECT
-
 public:
     CVarNativePathWidget(char const *cvarPath);
     char const *cvarPath() const;
 
-public slots:
     void updateFromCVar();
 
-protected slots:
+protected:
     void setCVarValueFromWidget();
 
 private:

@@ -19,11 +19,9 @@
  */
 
 #include "client/cledgeloop.h"
-
 #include "world/maputil.h"
 #include "world/surface.h"
 #include "world/convexsubspace.h"
-
 #include "misc/face.h"
 
 #include <doomsday/world/Material>
@@ -197,12 +195,12 @@ ClientSubsector &ClEdgeLoop::owner() const
 
 String ClEdgeLoop::description() const
 {
-    auto desc = String(    _E(l) "Loop: "       _E(.)_E(i) "%1" _E(.)
-                       " " _E(l) "Half-edge: "  _E(.)_E(i) "%2" _E(.))
-                  .arg(ClientSubsector::edgeLoopIdAsText(loopId()).upperFirstChar())
-                  .arg(String("[0x%1]").arg(de::dintptr(d->firstHEdge), 0, 16));
+    auto desc = String::format(    _E(l) "Loop: "       _E(.)_E(i) "%s" _E(.)
+                               " " _E(l) "Half-edge: "  _E(.)_E(i) "[%p]" _E(.),
+                  ClientSubsector::edgeLoopIdAsText(loopId()).upperFirstChar().c_str(),
+                  d->firstHEdge);
     DE_DEBUG_ONLY(
-        desc.prepend(String(_E(b) "ClEdgeLoop " _E(.) "[0x%1]\n").arg(de::dintptr(this), 0, 16));
+        desc.prepend(String::format(_E(b) "ClEdgeLoop " _E(.) "[%p]\n", this));
     )
     return desc;
 }

@@ -62,7 +62,7 @@ public:
     float falloffDistance() const;
 
     Mat4f lightMatrix() const;
-    Mat4f lightMatrix(de::gl::CubeFace) const;
+    Mat4f lightMatrix(gfx::CubeFace) const;
 
     Vec3f cameraPosition() const;
     Vec3f cameraFront() const;

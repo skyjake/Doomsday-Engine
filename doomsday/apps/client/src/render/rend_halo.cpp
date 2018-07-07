@@ -315,7 +315,7 @@ bool H_RenderHalo(Vec3d const &origin, float size, DGLuint tex,
             pos += mirror * fl->offset;
         }
 
-        GL_BindTextureUnmanaged(renderTextures? tex : 0, gl::ClampToEdge, gl::ClampToEdge);
+        GL_BindTextureUnmanaged(renderTextures? tex : 0, gfx::ClampToEdge, gfx::ClampToEdge);
         DGL_Enable(DGL_TEXTURE_2D);
 
         float const radX = radius * fl->size;

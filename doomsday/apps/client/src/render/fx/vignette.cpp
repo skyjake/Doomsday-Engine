@@ -75,8 +75,8 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
         alpha *= fov/100.f;
     }
 
-    GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gl::Repeat,
-                            gl::ClampToEdge);
+    GL_BindTextureUnmanaged(
+        GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gfx::Repeat, gfx::ClampToEdge);
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_Begin(DGL_TRIANGLE_STRIP);

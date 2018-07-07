@@ -27,8 +27,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 internal::AttribSpec const MapVertex::_spec[10] =
 {
     { internal::AttribSpec::Position,  3, GL_FLOAT, false, sizeof(MapVertex),  0     },
@@ -378,8 +376,8 @@ DE_PIMPL_NOREF(MapBuild)
 
         for (int i = 0; i < BufferCount; ++i)
         {
-            bufs.geom[i]->setVertices(verts[i], gl::Static);
-            bufs.geom[i]->setIndices(gl::Triangles, indices[i], gl::Static);
+            bufs.geom[i]->setVertices(verts[i], gfx::Static);
+            bufs.geom[i]->setIndices(gfx::Triangles, indices[i], gfx::Static);
         }
 
         DE_ASSERT(indices[0].size() % 3 == 0);

@@ -31,8 +31,6 @@
 
 using namespace de;
 
-namespace dgl = de::gl;
-
 /**
  * Drawing condition flags.
  *
@@ -66,7 +64,7 @@ using DrawConditions = Flags;
 
 static duint32 const BLEND_MODE_MASK = 0xf;
 
-DrawList::PrimitiveParams::PrimitiveParams(dgl::Primitive type,
+DrawList::PrimitiveParams::PrimitiveParams(gfx::Primitive type,
                                            de::Vec2f      texScale,
                                            de::Vec2f      texOffset,
                                            de::Vec2f      detailTexScale,
@@ -124,7 +122,7 @@ DE_PIMPL(DrawList)
                     // Use the correct texture and color for the light.
                     DGL_SetInteger(DGL_ACTIVE_TEXTURE, (conditions & SetLightEnv0)? 0 : 1);
                     GL_BindTextureUnmanaged(!renderTextures? 0 : primitive.modTexture,
-                                            dgl::ClampToEdge, dgl::ClampToEdge);
+                                            gfx::ClampToEdge, gfx::ClampToEdge);
 
                     DGL_SetModulationColor(Vec4f(primitive.modColor, 0.f));
                 }
@@ -187,7 +185,7 @@ DE_PIMPL(DrawList)
                     GL_BlendMode(blendmode_t(primitive.flags_blendMode & BLEND_MODE_MASK));
                 }
 
-                DGL_Begin(primitive.type == dgl::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
+                DGL_Begin(primitive.type == gfx::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
                 for (duint i = 0; i < numIndices; ++i)
                 {
                     duint const index = indices[i];
@@ -754,7 +752,7 @@ DrawList &DrawList::write(Store const &            buffer,
     return write(buffer, indices.data(), indices.size(), params);
 }
 
-DrawList &DrawList::write(Store const &buffer, Indices const &indices, dgl::Primitive primitiveType)
+DrawList &DrawList::write(Store const &buffer, Indices const &indices, gfx::Primitive primitiveType)
 {
     return write(buffer, indices.data(), indices.size(), primitiveType);
 }
@@ -762,9 +760,9 @@ DrawList &DrawList::write(Store const &buffer, Indices const &indices, dgl::Prim
 DrawList &DrawList::write(Store const & buffer,
                           duint const * indices,
                           int           indexCount,
-                          dgl::Primitive primitiveType)
+                          gfx::Primitive primitiveType)
 {
-    static PrimitiveParams defaultParams(dgl::TriangleFan); // NOTE: rendering is single-threaded atm
+    static PrimitiveParams defaultParams(gfx::TriangleFan); // NOTE: rendering is single-threaded atm
 
     defaultParams.type = primitiveType;
     return write(buffer, indices, indexCount, defaultParams);

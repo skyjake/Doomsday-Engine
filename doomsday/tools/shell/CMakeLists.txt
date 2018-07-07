@@ -10,12 +10,15 @@ project (DE_SHELL)
 include (../../cmake/Config.cmake)
 include (QtConfig)
 
+set (CMAKE_AUTOMOC ON)
+set (CMAKE_AUTORCC ON)
+
 add_definitions (
     -DSHELL_VERSION="${DE_VERSION}"
 )
 
 file (GLOB SOURCES src/*.cpp src/*.h res/shell.qrc)
-set (MAC_RES 
+set (MAC_RES
     res/macx/shell.icns,Resources
     res/macx/English.lproj,Resources
 )

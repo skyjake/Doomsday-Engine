@@ -72,9 +72,9 @@ LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
     {
         // Select a system flare by numeric identifier?
         if(haloTextureUri.path().length() == 1 &&
-           haloTextureUri.path().toStringRef().first().isDigit())
+           iswdigit(haloTextureUri.path().toString().first()))
         {
-            haloTextureIndex = haloTextureUri.path().toStringRef().first().digitValue();
+            haloTextureIndex = haloTextureUri.path().toString().first() - '0';
         }
         else
         {
@@ -93,13 +93,13 @@ LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
 
 String LightMaterialDecoration::AnimationStage::description() const
 {
-    return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? String("%1 (~%2)").arg(tics).arg(variance, 0, 'g', 2) : "-1")
+    return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? String::format("%i (~%.2f)", tics, variance) : "-1")
                 + _E(l) " Origin: "      _E(.) + origin.asText()
-                + _E(l) " Elevation: "   _E(.) + String::asText(elevation, 'f', 2)
+                + _E(l) " Elevation: "   _E(.) + String::asText(elevation, 2)
                 + _E(l) " LightLevels: " _E(.) + lightLevels.asText()
                 + _E(l) "\nColor: "      _E(.) + color.asText()
-                + _E(l) " Radius: "      _E(.) + String::asText(radius, 'f', 2)
-                + _E(l) " HaloRadius: "  _E(.) + String::asText(haloRadius, 'f', 2);
+                + _E(l) " Radius: "      _E(.) + String::asText(radius, 2)
+                + _E(l) " HaloRadius: "  _E(.) + String::asText(haloRadius, 2);
 }
 
 // ------------------------------------------------------------------------------------

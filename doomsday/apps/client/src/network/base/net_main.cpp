@@ -1088,7 +1088,7 @@ dint Net_StartConnection(char const *address, dint port)
     LOG_NET_MSG("Connecting to %s (port %i)...") << address << port;
 
     // Start searching at the specified location.
-    Net_ServerLink().connectDomain(String("%1:%2").arg(address).arg(port), 7 /*timeout*/);
+    Net_ServerLink().connectDomain(String::format("%s:%i", address, port), 7.0 /*timeout*/);
     return true;
 }
 
@@ -1234,7 +1234,7 @@ D_CMD(Net)
             {
                 info.printToLog(index);
                 //ServerInfo_Print(&info, index);
-                Net_ServerLink().connectDomain(info.address().asText(), 5);
+                Net_ServerLink().connectDomain(info.address().asText(), 5.0);
             }
         }
         else if(!stricmp(argv[1], "mconnect"))
@@ -1244,7 +1244,7 @@ D_CMD(Net)
             {
                 // Connect using TCP/IP.
                 return Con_Executef(CMDS_CONSOLE, false, "connect %s",
-                                    info.address().asText());
+                                    info.address().asText().c_str());
             }
             else return false;
         }

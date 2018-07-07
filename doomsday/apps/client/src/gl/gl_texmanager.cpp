@@ -383,7 +383,7 @@ GLuint GL_PrepareRawTexture(rawtex_t &raw)
     return raw.tex;
 }
 
-void GL_SetRawTexturesMinFilter(int newMinFilter)
+void GL_SetRawTexturesMinFilter(GLenum newMinFilter)
 {
     for (rawtex_t *raw : App_Resources().collectRawTextures())
     {

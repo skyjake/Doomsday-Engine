@@ -726,9 +726,9 @@ static dd_bool uploadTextureGrayMipmap(int glFormat, int loadFormat, const uint8
 }
 
 /// @note Texture parameters will NOT be set here!
-void GL_UploadTextureContent(texturecontent_t const &content, gl::UploadMethod method)
+void GL_UploadTextureContent(texturecontent_t const &content, gfx::UploadMethod method)
 {
-    if (method == gl::Deferred)
+    if (method == gfx::Deferred)
     {
         GL_DeferTextureUpload(&content);
         return;

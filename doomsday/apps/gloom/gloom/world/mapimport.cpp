@@ -344,11 +344,11 @@ DE_PIMPL_NOREF(MapImport)
 
         SectorPolygonizer builder(map);
 
-        for (int secIndex = 0; secIndex < mappedSectors.size(); ++secIndex)
+        for (dsize secIndex = 0; secIndex < mappedSectors.size(); ++secIndex)
         {
             const auto &ms = mappedSectors[secIndex];
 
-            qDebug("Sector %i: boundary lines %i, points %i",
+            debug("Sector %i: boundary lines %zu, points %zu",
                    secIndex,
                    ms.boundaryLines.size(),
                    ms.points.size());
@@ -413,7 +413,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
 {
     Folder &root = FS::get().makeFolder(packageRootPath); // or use existing folder...
 
-    qDebug() << root.correspondingNativePath();
+    debug("Export package: %s", root.correspondingNativePath().c_str());
 
     // Organize using subfolders.
     /*Folder &textures =*/ FS::get().makeFolder(packageRootPath / "textures");

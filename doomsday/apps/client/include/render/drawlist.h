@@ -125,7 +125,7 @@ public:
 
     struct PrimitiveParams
     {
-        de::gl::Primitive type;
+        de::gfx::Primitive type;
 
         // GL state and flags.
         enum Flag {
@@ -134,23 +134,23 @@ public:
             ManyLights = 0x2000
         };
 
-        de::duint32  flags_blendMode;
-        de::Vec2f texScale;
-        de::Vec2f texOffset;
-        de::Vec2f detailTexScale;
-        de::Vec2f detailTexOffset;
-        DGLuint      modTexture;    ///< GL-name of the modulation texture; otherwise @c 0.
-        de::Vec3f modColor;      ///< Modulation color.
+        de::duint32 flags_blendMode;
+        de::Vec2f   texScale;
+        de::Vec2f   texOffset;
+        de::Vec2f   detailTexScale;
+        de::Vec2f   detailTexOffset;
+        DGLuint     modTexture; ///< GL-name of the modulation texture; otherwise @c 0.
+        de::Vec3f   modColor;   ///< Modulation color.
 
-        PrimitiveParams(de::gl::Primitive type,
-                        de::Vec2f         texScale        = de::Vec2f(1, 1),
-                        de::Vec2f         texOffset       = de::Vec2f(0, 0),
-                        de::Vec2f         detailTexScale  = de::Vec2f(1, 1),
-                        de::Vec2f         detailTexOffset = de::Vec2f(0, 0),
-                        de::Flags         flags           = Unlit,
-                        blendmode_t       blendMode       = BM_NORMAL,
-                        DGLuint           modTexture      = 0,
-                        de::Vec3f         modColor        = de::Vec3f());
+        PrimitiveParams(de::gfx::Primitive type,
+                        de::Vec2f          texScale        = de::Vec2f(1, 1),
+                        de::Vec2f          texOffset       = de::Vec2f(0, 0),
+                        de::Vec2f          detailTexScale  = de::Vec2f(1, 1),
+                        de::Vec2f          detailTexOffset = de::Vec2f(0, 0),
+                        de::Flags          flags           = Unlit,
+                        blendmode_t        blendMode       = BM_NORMAL,
+                        DGLuint            modTexture      = 0,
+                        de::Vec3f          modColor        = de::Vec3f());
     };
 
 public:
@@ -177,16 +177,16 @@ public:
                     int                    indexCount,
                     PrimitiveParams const &primParms);
 
-    DrawList &write(Store const &     buffer,
-                    de::duint const * indices,
-                    int               indexCount,
-                    de::gl::Primitive primitiveType); // using default parameters
+    DrawList &write(Store const &      buffer,
+                    de::duint const *  indices,
+                    int                indexCount,
+                    de::gfx::Primitive primitiveType); // using default parameters
 
     DrawList &write(Store const &buffer, Indices const &indices, PrimitiveParams const &primParms);
 
-    DrawList &write(Store const &     buffer,
-                    Indices const &   indices,
-                    de::gl::Primitive primitiveType); // using default parameters
+    DrawList &write(Store const &      buffer,
+                    Indices const &    indices,
+                    de::gfx::Primitive primitiveType); // using default parameters
 
     void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
 

@@ -66,7 +66,7 @@ public:
 
 public:
     static int identifierFromText(de::String const &text,
-                                  std::function<int (de::String const &)> resolver);
+                                  const std::function<int (de::String const &)>& resolver);
 
     static de::String const DEF_ANIMATION;
     static de::String const DEF_MATERIAL;

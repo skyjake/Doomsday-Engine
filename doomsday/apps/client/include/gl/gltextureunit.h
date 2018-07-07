@@ -46,14 +46,14 @@ public:
     /// Unmanged GL textures have an independent state.
     struct Unmanaged {
         GLuint glName;
-        gl::Wrapping wrapS;
-        gl::Wrapping wrapT;
-        gl::Filter filter;
+        gfx::Wrapping wrapS;
+        gfx::Wrapping wrapT;
+        gfx::Filter filter;
 
         Unmanaged(GLuint glName       = 0,
-                  gl::Wrapping wrapS  = gl::Repeat,
-                  gl::Wrapping wrapT  = gl::Repeat,
-                  gl::Filter   filter = gl::Linear)
+                  gfx::Wrapping wrapS  = gfx::Repeat,
+                  gfx::Wrapping wrapT  = gfx::Repeat,
+                  gfx::Filter   filter = gfx::Linear)
             : glName(glName)
             , wrapS(wrapS)
             , wrapT(wrapT)
@@ -106,8 +106,8 @@ public:
         , scale(scale)
         , offset(offset)
     {}
-    GLTextureUnit(GLuint textureGLName, gl::Wrapping textureGLWrapS = gl::Repeat,
-        gl::Wrapping textureGLWrapT = gl::Repeat)
+    GLTextureUnit(GLuint textureGLName, gfx::Wrapping textureGLWrapS = gfx::Repeat,
+        gfx::Wrapping textureGLWrapT = gfx::Repeat)
         : texture(0)
         , unmanaged(textureGLName, textureGLWrapS, textureGLWrapT)
         , opacity(1)

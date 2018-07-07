@@ -26,7 +26,7 @@ namespace res {
 
 using namespace de;
 
-class IdTech1FlatLib
+class LIBDOOMSDAY_PUBLIC IdTech1FlatLib
 {
 public:
     IdTech1FlatLib(const LumpCatalog &catalog);

@@ -211,7 +211,7 @@ void GL_FinishFrame()
 #if !defined (DE_MOBILE)
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
-    LIBGUI_GL.glFlush();
+    glFlush();
     DD_WaitForOptimalUpdateTime();
 #endif
 }
@@ -320,7 +320,7 @@ void GL_Shutdown()
         dint i = 0;
         do
         {
-            LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
+            glClear(GL_COLOR_BUFFER_BIT);
             GL_FinishFrame();
         } while(++i < 3);
     }*/
@@ -348,7 +348,7 @@ void GL_Init2DState()
     DE_ASSERT_IN_MAIN_THREAD();
 
     //DGL_SetInteger(DGL_FLUSH_BACKTRACE, true);
-
+    
     // Here we configure the OpenGL state and set the projection matrix.
     DGL_CullFace(DGL_NONE);
     DGL_Disable(DGL_DEPTH_TEST);
@@ -553,24 +553,24 @@ void GL_BlendMode(blendmode_t mode)
     }
 }
 
-GLenum GL_Filter(gl::Filter f)
+GLenum GL_Filter(gfx::Filter f)
 {
     switch(f)
     {
-    case gl::Nearest: return GL_NEAREST;
-    case gl::Linear:  return GL_LINEAR;
+    case gfx::Nearest: return GL_NEAREST;
+    case gfx::Linear:  return GL_LINEAR;
     }
     return GL_REPEAT;
 }
 
-GLenum GL_Wrap(gl::Wrapping w)
+GLenum GL_Wrap(gfx::Wrapping w)
 {
     switch(w)
     {
-    case gl::Repeat:         return GL_REPEAT;
-    case gl::RepeatMirrored: return GL_MIRRORED_REPEAT;
-    case gl::ClampToEdge:    return GL_CLAMP_TO_EDGE;
-    case gl::ClampToBorder: return GL_CLAMP_TO_BORDER;
+    case gfx::Repeat:         return GL_REPEAT;
+    case gfx::RepeatMirrored: return GL_MIRRORED_REPEAT;
+    case gfx::ClampToEdge:    return GL_CLAMP_TO_EDGE;
+    case gfx::ClampToBorder:  return GL_CLAMP_TO_BORDER;
     }
     return GL_REPEAT;
 }
@@ -694,8 +694,8 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
     LOG_AS("uploadContentUnmanaged");
     if(novideo) return;
 
-    gl::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
-    if(uploadMethod == gl::Immediate)
+    gfx::UploadMethod uploadMethod = GL_ChooseUploadMethod(&content);
+    if(uploadMethod == gfx::Immediate)
     {
         LOGDEV_GL_XVERBOSE("Uploading texture (%i:%ix%i) while not busy! "
                            "Should have been precached in busy mode?",
@@ -744,7 +744,7 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
     return c.name;
 }
 
-static inline MaterialVariantSpec const &uiMaterialSpec(gl::Wrapping wrapS, gl::Wrapping wrapT)
+static inline MaterialVariantSpec const &uiMaterialSpec(gfx::Wrapping wrapS, gfx::Wrapping wrapT)
 {
     return resSys().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS), GL_Wrap(wrapT),
                                  0, 1, 0, false, false, false, false);
@@ -756,7 +756,7 @@ static inline MaterialVariantSpec const &pspriteMaterialSpec(dint tClass, dint t
                                  0, -2, 0, false, true, true, false);
 }
 
-void GL_SetMaterialUI2(world::Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
+void GL_SetMaterialUI2(world::Material *material, gfx::Wrapping wrapS, gfx::Wrapping wrapT)
 {
     if(!material) return; // @todo we need a "NULL material".
 
@@ -770,7 +770,7 @@ void GL_SetMaterialUI2(world::Material *material, gl::Wrapping wrapS, gl::Wrappi
 
 void GL_SetMaterialUI(world::Material *mat)
 {
-    GL_SetMaterialUI2(mat, gl::ClampToEdge, gl::ClampToEdge);
+    GL_SetMaterialUI2(mat, gfx::ClampToEdge, gfx::ClampToEdge);
 }
 
 void GL_SetPSprite(world::Material *material, dint tClass, dint tMap)
@@ -785,12 +785,12 @@ void GL_SetPSprite(world::Material *material, dint tClass, dint tMap)
     GL_BindTexture(matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture);
 }
 
-void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
+void GL_SetRawImage(lumpnum_t lumpNum, gfx::Wrapping wrapS, gfx::Wrapping wrapT)
 {
     if(rawtex_t *rawTex = ClientResources::get().declareRawTexture(lumpNum))
     {
         GL_BindTextureUnmanaged(GL_PrepareRawTexture(*rawTex), wrapS, wrapT,
-                                (filterUI ? gl::Linear : gl::Nearest));
+                                (filterUI ? gfx::Linear : gfx::Nearest));
     }
 }
 
@@ -811,28 +811,28 @@ void GL_BindTexture(TextureVariant *vtexture)
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
+    glBindTexture(GL_TEXTURE_2D, glTexName);
     LIBGUI_ASSERT_GL_OK();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
     TextureVariantSpec const &spec = vtexture->spec();
     if(spec.type == TST_GENERAL)
     {
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, spec.variant.wrapT);
 
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
         if(GL_state.features.texFilterAniso)
         {
-            LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
         LIBGUI_ASSERT_GL_OK();
     }
 }
 
-void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
-    gl::Filter filter)
+void GL_BindTextureUnmanaged(GLuint glName, gfx::Wrapping wrapS, gfx::Wrapping wrapT,
+    gfx::Filter filter)
 {
 #if defined (DE_HAVE_BUSYRUNNER)
     if (ClientApp::busyRunner().inWorkerThread()) return;
@@ -849,15 +849,16 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
+    glBindTexture(GL_TEXTURE_2D, glName);
     LIBGUI_ASSERT_GL_OK();
 
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
-    LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_Filter(filter));
     if(GL_state.features.texFilterAniso)
     {
-        LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
+        glTexParameteri(
+            GL_TEXTURE_2D, gl33ext::GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
     }
     LIBGUI_ASSERT_GL_OK();
 }
@@ -904,7 +905,7 @@ void GL_SetNoTexture()
 
     /// @todo Don't actually change the current binding. Instead we should disable
     ///       all currently enabled texture types.
-    LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, 0);
+    glBindTexture(GL_TEXTURE_2D, 0);
 }
 
 dint GL_ChooseSmartFilter(dint width, dint height, dint /*flags*/)

@@ -110,7 +110,7 @@ DE_PIMPL(GloomWorld), public Asset
             atlas->setMaxLevel(4);
             atlas->setBorderSize(16); // room for 4 miplevels
             atlas->setAutoGenMips(true);
-            atlas->setFilter(de::gl::Linear, de::gl::Linear, de::gl::MipNearest);
+            atlas->setFilter(gfx::Linear, gfx::Linear, gfx::MipNearest);
 #endif
         }
 
@@ -280,7 +280,7 @@ void GloomWorld::render(const ICamera &camera)
 
     d->framebuf.resize(frameSize);
     d->framebuf.attachedTexture(GLFramebuffer::Color0)
-        ->setFilter(de::gl::Nearest, de::gl::Nearest, de::gl::MipNearest);
+        ->setFilter(gfx::Nearest, gfx::Nearest, gfx::MipNearest);
     d->framebuf.clear(GLFramebuffer::Color0);
 
     d->gbuffer.resize(frameSize);
@@ -293,7 +293,7 @@ void GloomWorld::render(const ICamera &camera)
     // Render the G-buffer contents: material, UV, normals, depth.
     GLState::push()
             .setTarget(d->gbuffer.framebuf())
-            .setCull(de::gl::Back)
+            .setCull(gfx::Back)
             .setDepthTest(true)
             .setBlend(false);
 

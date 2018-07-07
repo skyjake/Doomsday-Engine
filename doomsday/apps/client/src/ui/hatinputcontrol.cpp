@@ -55,10 +55,8 @@ duint HatInputControl::time() const
 
 String HatInputControl::description() const
 {
-    return String(_E(b) "%1 " _E(.) "(Hat) "
-                  _E(l) "Position: " _E(.) "%2")
-            .arg(fullName())
-            .arg(_pos);
+    return String::format(
+        _E(b) "%s " _E(.) "(Hat) " _E(l) "Position: " _E(.) "%i", fullName().c_str(), _pos);
 }
 
 bool HatInputControl::inDefaultState() const

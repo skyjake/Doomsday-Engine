@@ -536,10 +536,10 @@ void R_ProjectSprite(mobj_t &mob)
             vis->data.flare.mul = 1;
             vis->data.flare.tex = 0;
 
-            if(def && def->flare)
+            if (def && def->flare)
             {
                 res::Uri const &flaremapResourceUri = *def->flare;
-                if(flaremapResourceUri.path().toStringRef().compareWithoutCase("-"))
+                if (flaremapResourceUri.path().toString().compareWithoutCase("-"))
                 {
                     vis->data.flare.tex = GL_PrepareFlaremap(flaremapResourceUri);
                 }

@@ -65,7 +65,10 @@ DE_GUI_PIMPL(HomeItemWidget)
 
                         case MouseClickFinished:
                             owner.itemRightClicked();
-                            emit owner.openContextMenu();
+                            DE_FOR_EACH_OBSERVER(i, owner.audienceForContextMenu())
+                            {
+                                i->openItemContextMenu(owner);
+                            }
                             return true;
 
                         default:
@@ -81,7 +84,10 @@ DE_GUI_PIMPL(HomeItemWidget)
                     if (mouse.state()  == MouseEvent::DoubleClick &&
                         mouse.button() == MouseEvent::Left)
                     {
-                        emit owner.doubleClicked();
+                        DE_FOR_EACH_OBSERVER(i, owner.audienceForDoubleClick())
+                        {
+                            i->itemCoubleClicked(owner);
+                        }
                         return true;
                     }
                 }
@@ -90,23 +96,23 @@ DE_GUI_PIMPL(HomeItemWidget)
         }
     };
 
-    Flags flags;
-    AssetGroup assets;
-    LabelWidget *background;
-    LabelWidget *icon { nullptr };
-    LabelWidget *label;
+    Flags             flags;
+    AssetGroup        assets;
+    LabelWidget *     background;
+    LabelWidget *     icon{nullptr};
+    LabelWidget *     label;
     List<GuiWidget *> buttons;
-    AnimationRule *labelRightMargin;
-    IndirectRule *labelMinRightMargin = new IndirectRule;
-    Rule const *buttonsWidth = nullptr;
-    bool selected = false;
-    bool keepButtonsVisible = false;
-    bool buttonsShown = false;
-    DotPath bgColor           { "transparent" };
-    DotPath selectedBgColor   { "background" };
-    DotPath textColor         { "text" };
-    DotPath selectedTextColor { "text" };
-    Timer buttonHideTimer;
+    AnimationRule *   labelRightMargin;
+    IndirectRule *    labelMinRightMargin = new IndirectRule;
+    Rule const *      buttonsWidth        = nullptr;
+    bool              selected            = false;
+    bool              keepButtonsVisible  = false;
+    bool              buttonsShown        = false;
+    DotPath           bgColor{"transparent"};
+    DotPath           selectedBgColor{"background"};
+    DotPath           textColor{"text"};
+    DotPath           selectedTextColor{"text"};
+    Timer             buttonHideTimer;
 
     Impl(Public *i, Flags flags) : Base(i), flags(flags)
     {

@@ -4,6 +4,9 @@ project (GLOOM)
 include (../../cmake/Config.cmake)
 include (QtConfig)
 
+set (CMAKE_AUTOMOC ON)
+set (CMAKE_AUTORCC ON)
+
 find_package (Qt5 COMPONENTS Gui Widgets)
 find_package (FMOD)
 find_package (Json)

@@ -582,7 +582,7 @@ void ClMobj_ReadNullDelta()
     LOG_AS("ClMobj_ReadNullDelta");
 
     /// @todo Do not assume the CURRENT map.
-    Map &map = App_World().map();
+    auto &map = App_World().map();
 
     // The delta only contains an ID.
     thid_t id = Reader_ReadUInt16(msgReader);

@@ -320,11 +320,11 @@ String Line::Side::description() const
         flagsString = String::format(_E(l) " Flags: " _E(.)_E(i) "%s" _E(.), flagsAsText.c_str());
     }
 
-    auto text = String::format(_E(D)_E(b) "%c:\n"  _E(.)_E(.)
+    auto text = String::format(_E(D)_E(b) "%s:\n"  _E(.)_E(.)
                        _E(l)  "Sector: "    _E(.)_E(i) "%s" _E(.)
                        _E(l) " One Sided: " _E(.)_E(i) "%s" _E(.)
                        "%s",
-                    towupper(Line::sideIdAsText(sideId()).first()),
+                    Line::sideIdAsText(sideId()).upperFirstChar().c_str(),
                     hasSector() ? String::asText(sector().indexInMap()).c_str() : "None",
                     DE_BOOL_YESNO(considerOneSided()),
                     flagsString.c_str());

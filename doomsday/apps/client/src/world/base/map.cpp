@@ -3118,8 +3118,7 @@ String Map::objectsDescription() const
     if (gx.MobjStateAsInfo)
     {
         // Print out a state description for each thinker.
-        thinkers().forAll(0x3, [&os] (thinker_t *th)
-        {
+        thinkers().forAll(0x3, [&str](thinker_t *th) {
             if (Thinker_IsMobj(th))
             {
                 str += gx.MobjStateAsInfo(reinterpret_cast<mobj_t const *>(th));
@@ -3179,16 +3178,16 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
                     Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
                             .first()->as<Info::BlockElement>();
                     DE_ASSERT(currentState.name() == state.name());
-                    for (String const &key : state.contents().keys())
+                for (const auto &i : state.contents())
                     {
-                        if (state.keyValue(key).text != currentState.keyValue(key).text)
+                    if (state.keyValue(i.first).text != currentState.keyValue(i.first).text)
                         {
                             problemsDetected = true;
-                            const String msg = String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
-                                    .arg(privateId)
-                                    .arg(key)
-                                    .arg(currentState.keyValue(key).text)
-                                    .arg(state.keyValue(key).text);
+                            const String msg = Stringf("Object %u has mismatching '%s' (current:%s != arch:%s)",
+                                    privateId,
+                                    i.first.c_str(),
+                                    currentState.keyValue(i.first).text.c_str(),
+                                    state.keyValue(i.first).text.c_str()));
                             LOGDEV_MAP_WARNING("%s") << msg;
                         }
                     }
@@ -3251,7 +3250,7 @@ void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerM
     try
     {
         // Internal state of thinkers.
-        forever
+        for (;;)
         {
             Id id { Id::None };
             from >> id;

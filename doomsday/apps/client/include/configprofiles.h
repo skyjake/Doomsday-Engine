@@ -24,6 +24,8 @@
 #include <de/Profiles>
 #include <de/List>
 #include <de/NoneValue>
+#include <de/NumberValue>
+#include <de/TextValue>
 
 /**
  * Collection of settings (cvars, Config variables) of which there can be
@@ -75,6 +77,15 @@ public:
     ConfigProfiles &define(SettingType       type,
                            const de::String &settingName,
                            const de::Value & value = de::NoneValue());
+
+    inline ConfigProfiles &define(SettingType type, const de::String &settingName, de::dint value)
+    {
+        return define(type, settingName, de::NumberValue(value));
+    }
+    inline ConfigProfiles &define(SettingType type, const de::String &settingName, de::dfloat value)
+    {
+        return define(type, settingName, de::NumberValue(value));
+    }
 
     de::String currentProfile() const;
 

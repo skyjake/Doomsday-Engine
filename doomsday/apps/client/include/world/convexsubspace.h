@@ -246,7 +246,7 @@ public:
      *
      * @param func  Callback to make for each LineSide.
      */
-    de::LoopResult forAllShadowLines(std::function<de::LoopResult (LineSide &)> func) const;
+    de::LoopResult forAllShadowLines(const std::function<de::LoopResult (LineSide &)>& func) const;
 
     /**
      * Add the specified line @a side to the set of fake radio shadow lines for the
@@ -268,7 +268,7 @@ public:
      *
      * @param callback  Call to make for each.
      */
-    de::LoopResult forAllLumobjs(std::function<de::LoopResult (Lumobj &)> callback) const;
+    de::LoopResult forAllLumobjs(const std::function<de::LoopResult (Lumobj &)>& callback) const;
 
     /**
      * Clear @em all linked Lumobj in the subspace.

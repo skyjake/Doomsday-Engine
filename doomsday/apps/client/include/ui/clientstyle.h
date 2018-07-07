@@ -38,7 +38,7 @@ public:
 
         DefaultLogoFlags     = ColorizedByFamily | Downscale50Percent,
     };
-    Q_DECLARE_FLAGS(LogoFlags, LogoFlag)
+    using LogoFlags = de::Flags;
 
 public:
     ClientStyle();
@@ -64,7 +64,5 @@ public:
 private:
     DE_PRIVATE(d)
 };
-
-Q_DECLARE_OPERATORS_FOR_FLAGS(ClientStyle::LogoFlags)
 
 #endif // DE_CLIENT_UI_CLIENTSTYLE_H

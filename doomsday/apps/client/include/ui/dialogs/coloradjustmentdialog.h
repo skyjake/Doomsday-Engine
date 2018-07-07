@@ -26,16 +26,13 @@
  */
 class ColorAdjustmentDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     ColorAdjustmentDialog(de::String const &name = "coloradjustment");
 
+    void resetToDefaults();
+
 protected:
     void prepare();
-
-public slots:
-    void resetToDefaults();
 
 private:
     DE_PRIVATE(d)

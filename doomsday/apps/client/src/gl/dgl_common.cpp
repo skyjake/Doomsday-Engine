@@ -21,29 +21,30 @@
 
 #include "de_base.h"
 #include "gl/gl_main.h"
+#include "gl/gl_texmanager.h"
+#include "gl/gl_draw.h"
+#include "render/r_draw.h"
 
-#include <cmath>
-#include <cstdlib>
+#include <doomsday/res/Textures>
+
 #include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <de/GLUniform>
 #include <de/Matrix>
-#include <doomsday/res/Textures>
+
+#include <cmath>
+#include <cstdlib>
 
 #include "api_gl.h"
 #include "gl/gl_defer.h"
-#include "gl/gl_draw.h"
-#include "gl/gl_texmanager.h"
-
-#include "render/r_draw.h"
 
 using namespace de;
 
 struct DGLState
 {
     int matrixMode = 0;
-    QVector<Mat4f> matrixStacks[4];
+    List<Mat4f> matrixStacks[4];
 
     int activeTexture = 0;
     bool enableTexture[2] { true, false };
@@ -209,45 +210,45 @@ static void envAddColoredAlpha(int activate, GLenum addFactor)
 
     if(activate)
     {
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE,
                   GLInfo::extensions().NV_texture_env_combine4? GL_COMBINE4_NV : GL_COMBINE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
 
         // Combine: texAlpha * constRGB + 1 * prevRGB.
         if(GLInfo::extensions().NV_texture_env_combine4)
         {
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_ZERO);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_ONE_MINUS_SRC_COLOR);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_RGB_NV, GL_PREVIOUS);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_RGB_NV, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_ZERO);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_ONE_MINUS_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_RGB_NV, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_RGB_NV, GL_SRC_COLOR);
         }
         else if(GLInfo::extensions().ATI_texture_env_combine3)
         {   // MODULATE_ADD_ATI: Arg0 * Arg2 + Arg1.
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE_ADD_ATI);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_COLOR);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE_ADD_ATI);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
         }
         else
         {   // This doesn't look right.
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_ADD);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, addFactor);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
         }
     }
     else
     {
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
     }
 }
 
@@ -262,11 +263,11 @@ static void envModMultiTex(int activate)
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup TU 2: The modulated texture.
-    LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
-    LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+    glActiveTexture(GL_TEXTURE1);
+    glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
 
     // Setup TU 1: The dynamic light.
-    LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
+    glActiveTexture(GL_TEXTURE0);
     envAddColoredAlpha(activate, GL_SRC_ALPHA);
 
     // This is a single-pass mode. The alpha should remain unmodified
@@ -274,9 +275,9 @@ static void envModMultiTex(int activate)
     if(activate)
     {
         // Replace: primAlpha.
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
     }
 }
 #endif
@@ -288,7 +289,7 @@ void DGL_ModulateTexture(int mode)
     switch (mode)
     {
     default:
-        qDebug() << "DGL_ModulateTexture: texture modulation mode" << mode << "not implemented";
+        DE_ASSERT_FAIL("DGL_ModulateTexture: texture modulation mode not implemented");
         break;
 
     case 0:
@@ -313,68 +314,68 @@ void DGL_ModulateTexture(int mode)
     {
     case 0:
         // No modulation: just replace with texture.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+        glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         break;
 
     case 1:
         // Normal texture modulation with primary color.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         break;
 
     case 12:
         // Normal texture modulation on both stages. TU 1 modulates with
         // primary color, TU 2 with TU 1.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         break;
 
     case 2:
     case 3:
         // Texture modulation and interpolation.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
         if(mode == 2)
         {   // Used with surfaces that have a color.
             // TU 2: Modulate previous with primary color.
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PRIMARY_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
 
         }
         else
         {   // Mode 3: Used with surfaces with no primary color.
             // TU 2: Pass through.
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
         }
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
         // TU 1: Interpolate between texture 1 and 2, using the constant
         // alpha as the factor.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_INTERPOLATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_RGB, GL_CONSTANT);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_RGB, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
 
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
         break;
 
     case 4:
@@ -385,75 +386,75 @@ void DGL_ModulateTexture(int mode)
     case 5:
     case 10:
         // Sector light * texture + dynamic light.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
+        glActiveTexture(GL_TEXTURE1);
         envAddColoredAlpha(true, mode == 5 ? GL_SRC_ALPHA : GL_SRC_COLOR);
 
         // Alpha remains unchanged.
         if(GLInfo::extensions().NV_texture_env_combine4)
         {
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PREVIOUS);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_ZERO);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA, GL_SRC_ALPHA);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_ALPHA_NV, GL_ZERO);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_ALPHA_NV, GL_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_ADD);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_ZERO);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE2_ALPHA, GL_ZERO);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND2_ALPHA, GL_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE3_ALPHA_NV, GL_ZERO);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND3_ALPHA_NV, GL_SRC_ALPHA);
         }
         else
         {
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+            glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+            glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
         }
 
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+        glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         break;
 
     case 6:
         // Simple dynlight addition (add to primary color).
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         envAddColoredAlpha(true, GL_SRC_ALPHA);
         break;
 
     case 7:
         // Dynlight addition without primary color.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_TEXTURE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_CONSTANT);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
         break;
 
     case 8:
     case 9:
         // Texture and Detail.
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 2);
+        glActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 2);
 
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
+        glActiveTexture(GL_TEXTURE0);
         if(mode == 8)
         {
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_MODULATE);
         }
         else
         {   // Mode 9: Ignore primary color.
-            LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
+            glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
         }
         break;
 
@@ -461,29 +462,29 @@ void DGL_ModulateTexture(int mode)
         // Normal modulation, alpha of 2nd stage.
         // Tex0: texture
         // Tex1: shiny texture
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        glActiveTexture(GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
 
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE0);
-        LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
+        glActiveTexture(GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_COMBINE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_RGB_SCALE, 1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_RGB, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_RGB, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_RGB, GL_TEXTURE1);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_RGB, GL_SRC_COLOR);
+        glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_MODULATE);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
+        glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE1_ALPHA, GL_TEXTURE0);
+        glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND1_ALPHA, GL_SRC_ALPHA);
         break;
 
     default:
@@ -500,7 +501,7 @@ void DGL_ModulateTexture(int mode)
     DE_ASSERT_IN_MAIN_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glBlendEquationEXT(op);
+    glBlendEquationEXT(op);
 }*/
 
 void GL_SetVSync(dd_bool on)
@@ -654,7 +655,7 @@ dd_bool DGL_SetInteger(int name, int value)
         DE_ASSERT(value >= 0);
         DE_ASSERT(value < MAX_TEX_UNITS);
         dgl.activeTexture = value;
-        LIBGUI_GL.glActiveTexture(GLenum(GL_TEXTURE0 + value));
+        glActiveTexture(GLenum(GL_TEXTURE0 + value));
         break;
 
     case DGL_MODULATE_TEXTURE:
@@ -764,7 +765,7 @@ dd_bool DGL_SetFloat(int name, float value)
         GL_state.currentPointSize = value;
 #if defined (DE_OPENGL)
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-        LIBGUI_GL.glPointSize(value);
+        glPointSize(value);
 #endif
         break;
 
@@ -944,8 +945,8 @@ void DGL_Disable(int cap)
             break;
 
         case DGL_POINT_SMOOTH:
-#if defined(DE_OPENGL)
-            Deferred_glDisable(GL_POINT_SMOOTH);
+#if defined (DE_OPENGL)
+//        Deferred_glDisable(GL_POINT_SMOOTH);
 #endif
             break;
 
@@ -960,9 +961,9 @@ void DGL_Disable(int cap)
 #undef DGL_BlendOp
 void DGL_BlendOp(int op)
 {
-    const auto glop = op == DGL_SUBTRACT ? gl::Subtract :
-                                           op == DGL_REVERSE_SUBTRACT ? gl::ReverseSubtract :
-                                                                        gl::Add;
+    const auto glop = op == DGL_SUBTRACT.        ? gfx::Subtract :
+                      op == DGL_REVERSE_SUBTRACT ? gfx::ReverseSubtract :
+                                                   gfx::Add;
     if (GLState::current().blendOp() != glop)
     {
         DGL_Flush();
@@ -977,24 +978,24 @@ void DGL_BlendFunc(int param1, int param2)
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     const auto src = param1 == DGL_ZERO ? gl::Zero :
-                                          param1 == DGL_ONE                 ? gl::One  :
-                                          param1 == DGL_DST_COLOR           ? gl::DestColor :
-                                          param1 == DGL_ONE_MINUS_DST_COLOR ? gl::OneMinusDestColor :
-                                          param1 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
-                                          param1 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
-                                          param1 == DGL_DST_ALPHA           ? gl::DestAlpha :
-                                          param1 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
-                                                                              gl::Zero;
+                                          param1 == DGL_ONE                 ? gfx::One  :
+                                          param1 == DGL_DST_COLOR           ? gfx::DestColor :
+                                          param1 == DGL_ONE_MINUS_DST_COLOR ? gfx::OneMinusDestColor :
+                                          param1 == DGL_SRC_ALPHA           ? gfx::SrcAlpha :
+                                          param1 == DGL_ONE_MINUS_SRC_ALPHA ? gfx::OneMinusSrcAlpha :
+                                          param1 == DGL_DST_ALPHA           ? gfx::DestAlpha :
+                                          param1 == DGL_ONE_MINUS_DST_ALPHA ? gfx::OneMinusDestAlpha :
+                                                                              gfx::Zero;
 
     const auto dst = param2 == DGL_ZERO ? gl::Zero :
-                                          param2 == DGL_ONE                 ? gl::One :
-                                          param2 == DGL_SRC_COLOR           ? gl::SrcColor :
-                                          param2 == DGL_ONE_MINUS_SRC_COLOR ? gl::OneMinusSrcColor :
-                                          param2 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
-                                          param2 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
-                                          param2 == DGL_DST_ALPHA           ? gl::DestAlpha :
-                                          param2 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
-                                                                              gl::Zero;
+                                          param2 == DGL_ONE                 ? gfx::One :
+                                          param2 == DGL_SRC_COLOR           ? gfx::SrcColor :
+                                          param2 == DGL_ONE_MINUS_SRC_COLOR ? gfx::OneMinusSrcColor :
+                                          param2 == DGL_SRC_ALPHA           ? gfx::SrcAlpha :
+                                          param2 == DGL_ONE_MINUS_SRC_ALPHA ? gfx::OneMinusSrcAlpha :
+                                          param2 == DGL_DST_ALPHA           ? gfx::DestAlpha :
+                                          param2 == DGL_ONE_MINUS_DST_ALPHA ? gfx::OneMinusDestAlpha :
+                                                                              gfx::Zero;
 
     auto &st = GLState::current();
     if (st.blendFunc() != gl::BlendFunc(src, dst))
@@ -1016,22 +1017,22 @@ void DGL_SetNoMaterial(void)
     GL_SetNoTexture();
 }
 
-static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
+static gfx::Wrapping DGL_ToGLWrapCap(DGLint cap)
 {
     switch(cap)
     {
     case DGL_CLAMP:
     case DGL_CLAMP_TO_EDGE:
-        return gl::ClampToEdge;
+        return gfx::ClampToEdge;
 
     case DGL_REPEAT:
-        return gl::Repeat;
+        return gfx::Repeat;
 
     default:
         DE_ASSERT_FAIL("DGL_ToGLWrapCap: Unknown cap value");
         break;
     }
-    return gl::ClampToEdge;
+    return gfx::ClampToEdge;
 }
 
 #undef DGL_SetMaterialUI

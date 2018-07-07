@@ -50,7 +50,7 @@ DE_PIMPL(Environment)
         Path interior;
         Path exterior;
     };
-    QHash<String, EnvMaps> maps;
+    Hash<String, EnvMaps> maps;
 
     /// Currently loaded reflection textures.
     GLTexture reflectionTextures[2];
@@ -63,8 +63,8 @@ DE_PIMPL(Environment)
         // Reflection cube maps use mipmapping for blurred reflections.
         for (auto &tex : reflectionTextures)
         {
-            tex.setMinFilter(gl::Linear, gl::MipLinear);
-            tex.setWrap(gl::ClampToEdge, gl::ClampToEdge);
+            tex.setMinFilter(gfx::Linear, gfx::MipLinear);
+            tex.setWrap(gfx::ClampToEdge, gfx::ClampToEdge);
         }
     }
 
@@ -81,7 +81,7 @@ DE_PIMPL(Environment)
             << (event == filesys::AssetObserver::Added ? "available" : "unavailable");
 
         // Register available reflection maps.
-        String const mapId = identifier.substr(16).toLower();
+        String const mapId = identifier.substr(BytePos(16)).lower();
         switch (event)
         {
         case filesys::AssetObserver::Added:
@@ -133,12 +133,12 @@ DE_PIMPL(Environment)
 
             Image img = imgFile.image();
             Image::Size const size(img.width() / 6, img.height());
-            tex.setImage(gl::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
-            tex.setImage(gl::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
-            tex.setImage(gl::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
-            tex.setImage(gl::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
-            tex.setImage(gl::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
-            tex.setImage(gl::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
+            tex.setImage(gfx::NegativeX, img.subImage(Rectanglei(0*size.x, 0, size.x, size.y)));
+            tex.setImage(gfx::PositiveZ, img.subImage(Rectanglei(1*size.x, 0, size.x, size.y)));
+            tex.setImage(gfx::PositiveX, img.subImage(Rectanglei(2*size.x, 0, size.x, size.y)));
+            tex.setImage(gfx::NegativeZ, img.subImage(Rectanglei(3*size.x, 0, size.x, size.y)));
+            tex.setImage(gfx::NegativeY, img.subImage(Rectanglei(4*size.x, 0, size.x, size.y)));
+            tex.setImage(gfx::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
             tex.generateMipmap();
         }
         catch (Error const &er)
@@ -159,21 +159,21 @@ DE_PIMPL(Environment)
 
         release();
 
-        String const mapId = ClientApp::world().map().id().toLower();
+        String const mapId = ClientApp::world().map().id().lower();
 
         // Check which reflection maps are available for the new map.
-        auto found = maps.constFind(mapId);
-        if (found != maps.constEnd())
+        auto found = maps.find(mapId);
+        if (found != maps.end())
         {
-            loadEnvMaps(found.value());
+            loadEnvMaps(found->second);
         }
         else
         {
             // Maybe the default maps, then?
-            found = maps.constFind(ID_DEFAULT);
-            if (found != maps.constEnd())
+            found = maps.find(ID_DEFAULT);
+            if (found != maps.end())
             {
-                loadEnvMaps(found.value());
+                loadEnvMaps(found->second);
             }
         }
     }

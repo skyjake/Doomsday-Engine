@@ -24,13 +24,13 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <SDL.h>
-#include <SDL_mixer.h>
+#include <SDL2/SDL.h>
+#include <SDL2/SDL_mixer.h>
 #undef main
 
 #include <de/timer.h>
 #include <de/Log>
-#include <QVector>
+#include <de/BitArray>
 
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
@@ -103,7 +103,7 @@ audiointerface_music_t audiod_sdlmixer_music = { {
 
 // PRIVATE DATA DEFINITIONS ------------------------------------------------
 
-static QVector<bool> usedChannels;
+static de::BitArray usedChannels;
 
 static Mix_Music* lastMusic;
 //static dd_bool playingMusic = false;
@@ -122,9 +122,9 @@ static void musicPlaybackFinished(void)
 
 static int getFreeChannel(void)
 {
-    for (int i = 0; i < usedChannels.size(); ++i)
+    for (int i = 0; i < usedChannels.sizei(); ++i)
     {
-        if (!usedChannels[i])
+        if (!usedChannels.at(i))
             return i;
     }
     return -1;
@@ -245,11 +245,11 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
     int const freeChannelIndex = getFreeChannel();
     if (freeChannelIndex >= 0)
     {
-        usedChannels[buf->cursor = freeChannelIndex] = true;
+        usedChannels.setBit(buf->cursor = freeChannelIndex, true);
     }
     else
     {
-        buf->cursor = usedChannels.size();
+        buf->cursor = usedChannels.sizei();
         usedChannels << true;
 
         // Make sure we have enough channels allocated.
@@ -264,7 +264,7 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
 void DS_SDLMixer_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     Mix_HaltChannel(buf->cursor);
-    usedChannels[buf->cursor] = false;
+    usedChannels.setBit(buf->cursor, false);
 
     if (buf)
         Z_Free(buf);

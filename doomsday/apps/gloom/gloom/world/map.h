@@ -113,8 +113,6 @@ struct Edge
     bool operator==(const Edge &other) const;
 };
 
-//uint qHash(const Edge &edge);
-
 typedef Hash<ID, Point>  Points;
 typedef Hash<ID, Line>   Lines;
 typedef Hash<ID, Plane>  Planes;
@@ -220,5 +218,15 @@ private:
 };
 
 } // namespace gloom
+
+namespace std {
+
+template <> struct hash<gloom::Edge> {
+    size_t operator()(const gloom::Edge &key) const {
+        return hash<unsigned>()((key.line << 1) | key.side);
+    }
+};
+
+} // std
 
 #endif // GLOOM_MAP_H

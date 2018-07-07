@@ -21,15 +21,18 @@
 #include "updater/processcheckdialog.h"
 #include "ui/clientwindow.h"
 
-#include <QProcess>
-#include <de/MessageDialog>
+//#include <QProcess>
+#include <de/CommandLine>
+#include <SDL2/SDL_messagebox.h>
 
-#ifdef WIN32
+using namespace de;
+
+#if defined (WIN32)
 
 static bool isProcessRunning(char const *name)
 {
-    QProcess wmic;
-    wmic.start("wmic.exe", QStringList() << "PROCESS" << "get" << "Caption");
+    CommandLine wmic;
+    wmic << "wmic.exe" << "PROCESS" << "get" << "Caption";
     if (!wmic.waitForStarted()) return false;
     if (!wmic.waitForFinished()) return false;
 
@@ -44,16 +47,14 @@ static bool isProcessRunning(char const *name)
 
 dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
 {
-    using namespace de;
-
     while (isProcessRunning(processName))
     {
         MessageDialog *msg = new MessageDialog;
         msg->setDeleteAfterDismissed(true);
-        msg->title().setText(QObject::tr("Files In Use"));
-        msg->message().setText(QString(message) + "\n\n" _E(2) +
-                               QObject::tr("There is a running process called %1.")
-                               .arg(_E(b) + QString(processName) + _E(.)));
+        msg->title().setText("Files In Use");
+        msg->message().setText(String(message) + "\n\n" _E(2) +
+                               String::format("There is a running process called " _E(b)"%s." _E(.),
+                                    processName));
 
         msg->buttons()
                 << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, QObject::tr("Retry"))

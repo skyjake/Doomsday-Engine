@@ -19,7 +19,6 @@
 #include "ui/editors/variablegroupeditor.h"
 
 #include <de/PopupMenuWidget>
-#include <de/SignalAction>
 #include <de/SequentialLayout>
 
 using namespace de;
@@ -44,8 +43,8 @@ struct RightClickHandler : public GuiWidget::IEventHandler
             editor.add(pop);
             pop->setAnchorAndOpeningDirection(widget.rule(), ui::Left);
             pop->items()
-                    << new ui::ActionItem(QObject::tr("Fold All"),   new SignalAction(&editor, SLOT(foldAll())))
-                    << new ui::ActionItem(QObject::tr("Unfold All"), new SignalAction(&editor, SLOT(unfoldAll())));
+                    << new ui::ActionItem("Fold All",   [this](){ editor.foldAll(); })
+                    << new ui::ActionItem("Unfold All", [this](){ editor.unfoldAll(); });
             pop->open();
             return true; }
 
@@ -86,7 +85,7 @@ DE_PIMPL(VariableGroupEditor)
             if (auto *g = maybeAs<VariableGroupEditor>(child))
             {
                 if (fold)
-                    g->close(0);
+                    g->close(0.0);
                 else
                     g->open();
             }
@@ -134,8 +133,8 @@ VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name,
 
     // Button for reseting this content to defaults.
     d->resetButton.reset(new ButtonWidget);
-    d->resetButton->setText(tr("Reset"));
-    d->resetButton->setAction(new SignalAction(this, SLOT(resetToDefaults())));
+    d->resetButton->setText("Reset");
+    d->resetButton->setActionFn([this](){ resetToDefaults(); });
     d->resetButton->rule()
             .setInput(Rule::Right,   d->owner->containerWidget().contentRule().right())
             .setInput(Rule::AnchorY, title().rule().top() + title().rule().height() / 2)

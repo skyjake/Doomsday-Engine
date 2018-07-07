@@ -116,9 +116,10 @@ void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
 
 void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
 {
-    foreach (Impl::Player const &plr, d->players)
+    for (const auto &plr : d->players)
     {
-        d->oldPlayerPositions[plr.number] = QPoint(plr.position.x, -plr.position.y);
+        d->oldPlayerPositions[plr.second.number] =
+            QPoint(plr.second.position.x, -plr.second.position.y);
     }
 
     d->players = plrInfo.players();

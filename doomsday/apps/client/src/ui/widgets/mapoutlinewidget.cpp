@@ -105,7 +105,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
 //        vtx.pos = mapBounds.topLeft; verts << vtx;
 //        vtx.pos = mapBounds.bottomRight; verts << vtx;
 
-        vbuf->setVertices(gl::Lines, verts, gl::Static);
+        vbuf->setVertices(gfx::Lines, verts, gfx::Static);
 
         root().window().glDone();
     }

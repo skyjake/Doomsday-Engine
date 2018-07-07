@@ -19,7 +19,6 @@
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/widgets/cvarsliderwidget.h"
 #include <de/GridLayout>
-#include <de/SignalAction>
 #include "api_console.h"
 
 using namespace de;
@@ -35,9 +34,9 @@ DE_GUI_PIMPL(ColorAdjustmentDialog)
     {
         ScrollAreaWidget &area = self().area();
 
-        LabelWidget *gammaLabel      = LabelWidget::newWithText(tr("Gamma:"), &area);
-        LabelWidget *contrastLabel   = LabelWidget::newWithText(tr("Contrast:"), &area);
-        LabelWidget *brightnessLabel = LabelWidget::newWithText(tr("Brightness:"), &area);
+        LabelWidget *gammaLabel      = LabelWidget::newWithText("Gamma:", &area);
+        LabelWidget *contrastLabel   = LabelWidget::newWithText("Contrast:", &area);
+        LabelWidget *brightnessLabel = LabelWidget::newWithText("Brightness:", &area);
 
         area.add(gamma = new CVarSliderWidget("vid-gamma"));
         area.add(contrast = new CVarSliderWidget("vid-contrast"));
@@ -68,11 +67,11 @@ DE_GUI_PIMPL(ColorAdjustmentDialog)
 ColorAdjustmentDialog::ColorAdjustmentDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
-    heading().setText(tr("Color Adjustments"));
+    heading().setText("Color Adjustments");
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, "Close")
+            << new DialogButtonItem(DialogWidget::Action, "Reset to Defaults",
+                                    [this](){ resetToDefaults(); });
 }
 
 void ColorAdjustmentDialog::prepare()

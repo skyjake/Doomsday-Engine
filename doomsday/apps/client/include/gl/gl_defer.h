@@ -31,7 +31,7 @@
 
 namespace de
 {
-    namespace gl
+    namespace gfx
     {
         enum UploadMethod  {
             Immediate, ///< Upload the data immediately.
@@ -79,7 +79,7 @@ void GL_ReleaseReservedNames();
 /**
  * Returns the chosen method for uploading the given texture @a content.
  */
-de::gl::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content);
+de::gfx::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content);
 
 /**
  * Adds a new deferred texture upload task to the queue.

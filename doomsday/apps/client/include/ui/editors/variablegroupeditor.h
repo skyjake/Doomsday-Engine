@@ -40,8 +40,6 @@
  */
 class VariableGroupEditor : public de::FoldPanelWidget
 {
-    Q_OBJECT
-
 public:
     class IOwner
     {
@@ -49,6 +47,8 @@ public:
         virtual de::Rule const &firstColumnWidthRule() const = 0;
         virtual de::ScrollAreaWidget &containerWidget() = 0;
         virtual void resetToDefaults(de::String const &name) = 0;
+
+        virtual ~IOwner() {}
     };
 
 public:
@@ -103,7 +103,6 @@ public:
     void preparePanelForOpening();
     void panelClosing();
 
-public slots:
     virtual void resetToDefaults();
     virtual void foldAll();
     virtual void unfoldAll();

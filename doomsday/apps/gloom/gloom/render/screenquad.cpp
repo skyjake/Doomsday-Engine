@@ -22,8 +22,6 @@ using namespace de;
 
 namespace gloom {
 
-namespace gl = de::gl;
-
 static const int BUF_ID = 1;
 
 using VBuf = GLBufferT<Vertex2Tex>;
@@ -37,7 +35,7 @@ DE_PIMPL_NOREF(ScreenQuad)
     Impl()
     {
         state.setBlend(false);
-        state.setCull(gl::None);
+        state.setCull(gfx::None);
         state.setDepthTest(false);
         state.setDepthWrite(false);
     }
@@ -55,9 +53,9 @@ void ScreenQuad::glInit(Context &context)
     {
         s_vertexBuffer.reset(new VBuf);
         s_vertexBuffer->setVertices(
-            gl::TriangleStrip,
+            gfx::TriangleStrip,
             VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),
-            gl::Static);
+            gfx::Static);
     }
     d->drawable.addBuffer(BUF_ID, s_vertexBuffer);
     d->drawable.setState(BUF_ID, d->state);

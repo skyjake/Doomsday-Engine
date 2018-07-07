@@ -23,14 +23,14 @@
 
 #include <doomsday/GameProfiles>
 #include <de/ButtonWidget>
-#include <QStringList>
 
 /**
  * Button for selecting packages.
  */
 class PackagesButtonWidget : public de::ButtonWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Selection, void packageSelectionChanged(const de::StringList &packageIds))
 
 public:
     PackagesButtonWidget();
@@ -45,9 +45,6 @@ public:
     void setPackages(de::StringList packageIds);
 
     de::StringList packages() const;
-
-signals:
-    void packageSelectionChanged(QStringList packageIds);
 
 private:
     DE_PRIVATE(d)
