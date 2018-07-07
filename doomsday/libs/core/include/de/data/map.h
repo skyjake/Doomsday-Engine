@@ -44,6 +44,7 @@ public:
     using const_reverse_iterator = typename Base::const_reverse_iterator;
 
     inline bool isEmpty() const { return Base::empty(); }
+    inline int  sizei() const { return int(Base::size()); }
 
     iterator insert(const Key &key, const Value &value)
     {

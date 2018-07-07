@@ -62,7 +62,7 @@ public:
          *
          * @param seconds  Length of the time span.
          */
-        Span(ddouble seconds = 0.0)
+        constexpr Span(ddouble seconds = 0.0)
             : _seconds(seconds)
         {}
 

@@ -39,11 +39,15 @@ public:
     dsize       size() const;
     dsize       count(bool bit) const;
 
+    inline int sizei() const { return int(_bits.size()); }
+    void clear();
     void resize(dsize count);
     void fill(bool bit);
-    void setBit(dsize pos, bool bit);
+    void setBit(dsize pos, bool bit = true);
 
     BitArray &operator=(const BitArray &);
+
+    BitArray &operator<<(bool bit);
 
 private:
     std::vector<char> _bits;

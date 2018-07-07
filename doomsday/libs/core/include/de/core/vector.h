@@ -107,7 +107,7 @@ public:
     typedef Type value_type;
 
 public:
-    Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
+    constexpr Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
     Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
     Vector2(Value const &value) { *this = vectorFromValue<Vector2<Type>>(value); }
     Vector2(Vector2 const &other) = default;
@@ -323,7 +323,7 @@ template <typename Type>
 class Vector3 : public Vector2<Type>
 {
 public:
-    Vector3(Type a = 0, Type b = 0, Type c = 0) : Vector2<Type>(a, b), z(c) {}
+    constexpr Vector3(Type a = 0, Type b = 0, Type c = 0) : Vector2<Type>(a, b), z(c) {}
     Vector3(Vector2<Type> const &v2, Type c = 0) : Vector2<Type>(v2), z(c) {}
     Vector3(Type const *abc) : Vector2<Type>(abc), z(abc[2]) {}
     Vector3(Value const &value) { *this = vectorFromValue< Vector3<Type> >(value); }
@@ -552,7 +552,7 @@ template <typename Type>
 class Vector4 : public Vector3<Type>
 {
 public:
-    Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
+    constexpr Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
     Vector4(Vector3<Type> const &v3, Type d = 0) : Vector3<Type>(v3), w(d) {}
     Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
     Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}

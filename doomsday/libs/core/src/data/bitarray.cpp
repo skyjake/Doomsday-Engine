@@ -51,6 +51,11 @@ dsize BitArray::count(bool bit) const
     return num;
 }
 
+void BitArray::clear()
+{
+    _bits.clear();
+}
+
 void BitArray::resize(dsize count)
 {
     return _bits.resize(count);
@@ -73,6 +78,12 @@ void BitArray::setBit(dsize pos, bool bit)
 BitArray &BitArray::operator=(const BitArray &other)
 {
     _bits = other._bits;
+    return *this;
+}
+
+BitArray &BitArray::operator<<(bool bit)
+{
+    _bits.push_back(bit ? 1 : 0);
     return *this;
 }
 

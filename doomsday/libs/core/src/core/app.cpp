@@ -682,6 +682,12 @@ NativePath App::tempPath()
 #endif
 }
 
+NativePath App::cachePath()
+{
+    DE_ASSERT_FAIL("App::cachePath() not implemented");
+    return NativePath();
+}
+
 bool App::setCurrentWorkPath(NativePath const &cwd)
 {
     return NativePath::setWorkPath(cwd);

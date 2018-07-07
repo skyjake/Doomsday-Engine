@@ -143,14 +143,14 @@ public:
      *
      * @param v  New value. Variable gets ownership. Cannot be NULL.
      */
-    Variable &operator = (Value *v);
+    Variable &operator=(Value *v);
 
     /**
      * Sets the value of the variable.
      *
      * @param textValue  Text string. A new TextValue is created.
      */
-    Variable &operator = (String const &textValue);
+    Variable &operator=(String const &textValue);
 
     /**
      * Sets the value of the variable.
@@ -171,6 +171,8 @@ public:
 
     Value *valuePtr();
     Value const *valuePtr() const;
+
+    bool operator==(const String &text) const;
 
     /**
      * Returns the value of the variable.

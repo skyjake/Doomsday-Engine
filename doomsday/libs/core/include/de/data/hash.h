@@ -54,6 +54,7 @@ public:
     using Base::find;
 
     bool isEmpty() const { return empty(); }
+    inline int sizei() const { return int(Base::size()); }
 
     iterator     insert(const Key &key, const Value &value) { return Base::insert(std::make_pair(key, value)).first; }
     void         remove(const Key &key) { Base::erase(key); }

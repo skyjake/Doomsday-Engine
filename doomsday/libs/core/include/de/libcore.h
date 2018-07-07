@@ -143,6 +143,12 @@
 #  undef DE_UNUSED
 #endif
 
+#if defined (__clang__)
+#  define DE_FALLTHROUGH    [[clang::fallthrough]]
+#else
+#  define DE_FALLTHROUGH
+#endif
+
 #ifndef NDEBUG
 #  define DE_DEBUG
    DE_EXTERN_C DE_PUBLIC void LogBuffer_Flush(void);

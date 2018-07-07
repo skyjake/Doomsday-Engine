@@ -192,9 +192,9 @@ bool String::contains(Char c) const
     return contains(mb.bytes);
 }
 
-bool String::contains(const char *cStr) const
+bool String::contains(const char *cStr, Sensitivity cs) const
 {
-    return indexOfCStr_String(&_str, cStr) != iInvalidPos;
+    return indexOfCStrSc_String(&_str, cStr, cs) != iInvalidPos;
 }
 
 int String::count(char ch) const

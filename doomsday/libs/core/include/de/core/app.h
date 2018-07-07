@@ -284,6 +284,11 @@ public:
     static NativePath tempPath();
 
     /**
+     * Returns a native directory for caching non-user-specific (native) files.
+     */
+    static NativePath cachePath();
+
+    /**
      * Changes the application's current native working directory.
      *
      * @param cwd  New working directory for the application.

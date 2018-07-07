@@ -178,6 +178,11 @@ Value const *Variable::valuePtr() const
     return d->value;
 }
 
+bool Variable::operator==(const String &text) const
+{
+    return d->value && d->value->compare(TextValue(text)) == 0;
+}
+
 Record &Variable::valueAsRecord()
 {
     return value<RecordValue>().dereference();

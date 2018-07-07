@@ -318,7 +318,7 @@ public:
 
     bool contains(char c) const;
     bool contains(Char c) const;
-    bool contains(const char *cStr) const;
+    bool contains(const char *cStr, Sensitivity cs = CaseSensitive) const;
     int count(char ch) const;
 
     bool beginsWith(const String &s, Sensitivity cs = CaseSensitive) const
