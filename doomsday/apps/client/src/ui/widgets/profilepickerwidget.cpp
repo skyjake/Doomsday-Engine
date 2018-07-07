@@ -75,7 +75,11 @@ DE_GUI_PIMPL(ProfilePickerWidget)
     {
         return self().selectedItem().data().asText();
     }
+
+    DE_PIMPL_AUDIENCES(ProfileChange, EditorRequest)
 };
+
+DE_AUDIENCE_METHODS(ProfilePickerWidget, ProfileChange, EditorRequest)
 
 ProfilePickerWidget::ProfilePickerWidget(ConfigProfiles &settings, String const &description, String const &name)
     : ChoiceWidget(name), d(new Impl(this, settings))

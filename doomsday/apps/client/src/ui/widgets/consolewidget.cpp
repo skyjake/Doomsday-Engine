@@ -290,7 +290,11 @@ DE_GUI_PIMPL(ConsoleWidget)
             log->scrollToBottom();
         }
     }
+
+    DE_PIMPL_AUDIENCES(CommandMode, GotFocus)
 };
+
+DE_AUDIENCE_METHODS(ConsoleWidget, CommandMode, GotFocus)
 
 static PopupWidget *consoleShortcutPopup()
 {

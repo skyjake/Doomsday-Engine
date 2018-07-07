@@ -860,7 +860,11 @@ DE_GUI_PIMPL(PackagesWidget)
         DENG2_ASSERT_IN_MAIN_THREAD();
         w.updateContents();
     }
+
+    DE_PIMPL_AUDIENCE(ItemCount)
 };
+
+DE_AUDIENCE_METHOD(PackagesWidget, ItemCount)
 
 PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, String const &name)
     : GuiWidget(name)

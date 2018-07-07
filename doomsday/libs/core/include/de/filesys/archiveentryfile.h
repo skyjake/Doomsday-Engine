@@ -32,7 +32,7 @@ class ArchiveFolder;
  *
  * @ingroup fs
  */
-class ArchiveEntryFile : public ByteArrayFile
+class DE_PUBLIC ArchiveEntryFile : public ByteArrayFile
 {
 public:
     /**

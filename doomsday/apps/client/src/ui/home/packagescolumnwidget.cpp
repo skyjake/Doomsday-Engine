@@ -140,7 +140,11 @@ DE_GUI_PIMPL(PackagesColumnWidget)
         dlg->setDeleteAfterDismissed(true);
         dlg->exec(root());
     }
+
+    DE_PIMPL_AUDIENCE(AvailableCount)
 };
+
+DE_AUDIENCE_METHOD(PackagesColumnWidget, AvailableCount)
 
 PackagesColumnWidget::PackagesColumnWidget()
     : ColumnWidget("packages-column")

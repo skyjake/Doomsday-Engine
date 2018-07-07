@@ -271,25 +271,6 @@ void UpdateDownloadDialog::finished(QNetworkReply *reply)
     LOG_DEBUG("Request finished");
 }
 
-void UpdateDownloadDialog::cancel()
-{
-    LOG_NOTE("Download cancelled due to user request");
-
-    d->state = Impl::Error;
-    progressIndicator().setRotationSpeed(0);
-
-    if (d->reply)
-    {
-        d->reply->abort();
-        buttons().clear()
-                << new DialogButtonItem(DialogWidget::Reject, tr("Close"));
-    }
-    else
-    {
-        reject();
-    }
-}
-
 void UpdateDownloadDialog::progress(qint64 received, qint64 total)
 {
     LOG_AS("Download");
@@ -330,6 +311,24 @@ void UpdateDownloadDialog::replyMetaDataChanged()
     }
 }
 #endif
+
+void UpdateDownloadDialog::cancel()
+{
+    LOG_NOTE("Download cancelled due to user request");
+
+    d->state = Impl::Error;
+    progressIndicator().setRotationSpeed(0);
+
+//    if (d->reply)
+//    {
+//        d->reply->abort();
+//        buttons().clear() << new DialogButtonItem(DialogWidget::Reject, "Close");
+//    }
+//    else
+//    {
+//        reject();
+//    }
+}
 
 bool UpdateDownloadDialog::isDownloadInProgress()
 {

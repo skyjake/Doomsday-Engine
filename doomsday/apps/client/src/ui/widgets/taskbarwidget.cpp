@@ -343,7 +343,11 @@ DE_GUI_PIMPL(TaskBarWidget)
             mainMenu->items().at(POS_HOME).setLabel("Show Home");
         }
     }
+
+    DE_PIMPL_AUDIENCES(Open, Close)
 };
+
+DE_AUDIENCE_METHODS(TaskBarWidget, Open, Close)
 
 #if defined (DE_HAVE_UPDATER)
 static PopupWidget *makeUpdaterSettings()

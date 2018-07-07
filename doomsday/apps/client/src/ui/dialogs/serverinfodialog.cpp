@@ -442,7 +442,11 @@ DE_GUI_PIMPL(ServerInfoDialog)
         updateContent();
         self().buttonWidget(ID_PING)->enable();
     }
+
+    DE_PIMPL_AUDIENCE(JoinGame)
 };
+
+DE_AUDIENCE_METHOD(ServerInfoDialog, JoinGame)
 
 ServerInfoDialog::ServerInfoDialog(shell::ServerInfo const &serverInfo)
     : d(new Impl(this, serverInfo))
