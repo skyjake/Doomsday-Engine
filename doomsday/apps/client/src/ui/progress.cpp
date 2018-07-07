@@ -37,7 +37,7 @@ static ProgressWidget &progress()
 void Con_InitProgress2(int maxProgress, float start, float end)
 {
     progress().setRange(Rangei(0, maxProgress), Rangef(start, end));
-    progress().setProgress(0, 0);
+    progress().setProgress(0, 0.0);
 }
 
 void Con_InitProgress(int maxProgress)

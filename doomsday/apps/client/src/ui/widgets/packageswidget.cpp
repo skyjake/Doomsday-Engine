@@ -322,13 +322,13 @@ DE_GUI_PIMPL(PackagesWidget)
                 icon().setImageScale(.5f);
             }
 
-            String labelText = String::format(_E(b) "%s\n" _E(l) _E(s) "%s",
+            String labelText = Stringf(_E(b) "%s\n" _E(l) _E(s) "%s",
                                               _item->label().c_str(),
                                               pkgIdVer.first.c_str());
                 
             if (!isFile && pkgIdVer.second.isValid())
             {
-                labelText += String::format(_E(C) " %s" _E(.), pkgIdVer.second.compactNumber().c_str());
+                labelText += Stringf(_E(C) " %s" _E(.), pkgIdVer.second.compactNumber().c_str());
             }
             label().setText(labelText);
 

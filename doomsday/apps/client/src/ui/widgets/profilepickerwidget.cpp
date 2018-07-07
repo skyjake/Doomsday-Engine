@@ -168,8 +168,8 @@ void ProfilePickerWidget::rename()
 {
     InputDialog *dlg = new InputDialog;
     dlg->setDeleteAfterDismissed(true);
-    dlg->title().setText(String::format("Renaming \"%s\"", d->currentProfile().c_str()));
-    dlg->message().setText(String::format("Enter a new name for the %s profile:", d->description.c_str()));
+    dlg->title().setText(Stringf("Renaming \"%s\"", d->currentProfile().c_str()));
+    dlg->message().setText(Stringf("Enter a new name for the %s profile:", d->description.c_str()));
     dlg->defaultActionItem()->setLabel("Rename Profile");
 
     dlg->editor().setText(d->currentProfile());
@@ -201,8 +201,8 @@ void ProfilePickerWidget::duplicate()
 {
     InputDialog *dlg = new InputDialog;
     dlg->setDeleteAfterDismissed(true);
-    dlg->title().setText(String::format("Duplicating \"%s\"", d->currentProfile().c_str()));
-    dlg->message().setText(String::format("Enter a name for the new %s profile:", d->description.c_str()));
+    dlg->title().setText(Stringf("Duplicating \"%s\"", d->currentProfile().c_str()));
+    dlg->message().setText(Stringf("Enter a name for the new %s profile:", d->description.c_str()));
     dlg->defaultActionItem()->setLabel("Duplicate Profile");
 
     if (dlg->exec(root()))
@@ -236,7 +236,7 @@ void ProfilePickerWidget::reset()
     dlg->setDeleteAfterDismissed(true);
     dlg->title().setText("Reset?");
     dlg->message().setText(
-        String::format("Are you sure you want to reset the %s profile %s to the default values?",
+        Stringf("Are you sure you want to reset the %s profile %s to the default values?",
                        d->description.c_str(),
                        (_E(b) + d->currentProfile() + _E(.)).c_str()));
 
@@ -256,7 +256,7 @@ void ProfilePickerWidget::remove()
     dlg->setDeleteAfterDismissed(true);
     dlg->title().setText("Delete?");
     dlg->message().setText(
-        String::format("Are you sure you want to delete the %s profile %s? This cannot be undone.",
+        Stringf("Are you sure you want to delete the %s profile %s? This cannot be undone.",
                        d->description.c_str(),
                        (_E(b) + d->currentProfile() + _E(.)).c_str()));
     dlg->buttons()

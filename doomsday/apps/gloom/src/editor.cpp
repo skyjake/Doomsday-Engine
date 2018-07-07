@@ -1393,7 +1393,7 @@ void Editor::paintEvent(QPaintEvent *)
                 if (d->selection.contains(secId))
                 {
                     d->drawMetaLabel(
-                        ptr, poly.boundingRect().center(), convert(String::format("%X", secId)));
+                        ptr, poly.boundingRect().center(), convert(Stringf("%X", secId)));
                 }
             }
         }
@@ -1439,7 +1439,7 @@ void Editor::paintEvent(QPaintEvent *)
             {
                 d->drawMetaLabel(ptr,
                                  selected[i].center() - QPointF(0, 2 * gap),
-                                 convert(String::format("%X", selectedIds[i])));
+                                 convert(Stringf("%X", selectedIds[i])));
             }
         }
     }
@@ -1485,7 +1485,7 @@ void Editor::paintEvent(QPaintEvent *)
                 QPointF delta{normal.dx(), normal.dy()};
 
                 d->drawMetaLabel(
-                    ptr, selected[i].center(), convert(String::format("%X", selectedIds[i])));
+                    ptr, selected[i].center(), convert(Stringf("%X", selectedIds[i])));
 
                 if (normal.length() > 80)
                 {
@@ -1494,12 +1494,12 @@ void Editor::paintEvent(QPaintEvent *)
                     //if (line.sectors[0])
                     d->drawMetaLabel(ptr,
                                      selected[i].center() + delta * -20,
-                                     convert(String::format("%X", line.surfaces[0].sector)),
+                                     convert(Stringf("%X", line.surfaces[0].sector)),
                                      false);
                     if (line.surfaces[1].sector)
                         d->drawMetaLabel(ptr,
                                          selected[i].center() + delta * 20,
-                                         convert(String::format("%X", line.surfaces[1].sector)),
+                                         convert(Stringf("%X", line.surfaces[1].sector)),
                                          false);
                 }
             }

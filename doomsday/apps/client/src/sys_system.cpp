@@ -272,7 +272,7 @@ DE_EXTERN_C void Sys_Quit(void)
     if (ClientWindow::mainExists())
     {
         ClientWindow::main().fadeContent(ClientWindow::FadeToBlack, 0.1);
-        de::Loop::get().timer(0.1, []() { DE_GUI_APP->quit(DD_GameLoopExitCode()); });
+        de::Loop::timer(0.1, []() { DE_GUI_APP->quit(DD_GameLoopExitCode()); });
     }
     else
 #endif

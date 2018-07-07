@@ -37,14 +37,14 @@ DE_GUI_PIMPL(KeyGrabberWidget)
     {
         root().setFocus(thisPublic);
         self().set(Background(Background::GradientFrame, style().colors().colorf("accent"), 6));
-        self().setText(tr("Waiting for a key..."));
+        self().setText("Waiting for a key...");
     }
 
     void unfocus()
     {
         root().setFocus(0);
         self().set(Background());
-        self().setText(tr("Click to focus"));
+        self().setText("Click to focus");
     }
 };
 
@@ -53,7 +53,7 @@ KeyGrabberWidget::KeyGrabberWidget(String const &name)
 {
     setBehavior(Focusable);
     setTextLineAlignment(AlignLeft);
-    setText(tr("Click to focus"));
+    setText("Click to focus");
 }
 
 bool KeyGrabberWidget::handleEvent(Event const &event)
@@ -83,11 +83,11 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             ddevent_t ev;
             InputSystem::convertEvent(event, ev);
 
-            String info = String("DD:%1 Qt:0x%2 Native:0x%3\n" _E(m) "%4")
-                              .arg(key->ddKey())
-                              .arg(key->qtKey(), 0, 16)
-                              .arg(key->nativeCode(), 0, 16)
-                              .arg(B_EventToString(ev));
+            String info = Stringf("DD:%i SDL:0x%x Native:0x%x\n" _E(m) "%s",
+                              key->ddKey(),
+                              key->sdlKey(),
+                              key->scancode(),
+                              B_EventToString(ev).c_str());
             setText(info);
 
             return true;

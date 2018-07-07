@@ -180,9 +180,17 @@ uint8_t* GL_ScaleBuffer(const uint8_t* in, int width, int height, int comps,
     }
 }
 
-static void* packImage(int components, const float* tempOut, GLint typeOut,
-    int widthOut, int heightOut, int sizeOut, int bpp, int packRowLength,
-    int packAlignment, int packSkipRows, int packSkipPixels)
+static void *packImage(int          components,
+                       const float *tempOut,
+                       GLenum       typeOut,
+                       int          widthOut,
+                       int          heightOut,
+                       int          sizeOut,
+                       int          bpp,
+                       int          packRowLength,
+                       int          packAlignment,
+                       int          packSkipRows,
+                       int          packSkipPixels)
 {
     int rowStride, rowLen;
     void* dataOut;
@@ -207,7 +215,7 @@ static void* packImage(int components, const float* tempOut, GLint typeOut,
             * CEILING(components * rowLen * sizeOut, packAlignment);
     }
 
-    switch(typeOut)
+    switch (typeOut)
     {
     case GL_UNSIGNED_BYTE: {
         int i, j, k = 0;
@@ -325,14 +333,16 @@ void* GL_ScaleBufferEx(const void* dataIn, int widthIn, int heightIn, int bpp,
     int unpackSkipPixels, int widthOut, int heightOut, /*GLint typeOut, */
     int packRowLength, int packAlignment, int packSkipRows, int packSkipPixels)
 {
-    const GLint typeIn = GL_UNSIGNED_BYTE, typeOut = GL_UNSIGNED_BYTE;
-    int i, j, k, sizeIn, sizeOut, rowStride, rowLen;
-    float* tempIn, *tempOut;
-    float sx, sy;
-    void* dataOut;
+    const GLenum typeIn  = GL_UNSIGNED_BYTE;
+    const GLenum typeOut = GL_UNSIGNED_BYTE;
+
+    int    i, j, k, sizeIn, sizeOut, rowStride, rowLen;
+    float *tempIn, *tempOut;
+    float  sx, sy;
+    void * dataOut;
 
     // Determine bytes per input datum.
-    switch(typeIn)
+    switch (typeIn)
     {
     case GL_UNSIGNED_BYTE:
         sizeIn = sizeof(GLubyte);

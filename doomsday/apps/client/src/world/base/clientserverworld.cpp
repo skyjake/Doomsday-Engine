@@ -189,12 +189,12 @@ public:
             for (dint i = 0; i < numToLog; ++i, ++it)
             {
                 if (i != 0) str += "\n";
-                str += String::format(
+                str += Stringf(
                     "Sector #%1 is unclosed near %s", it->first, it->second.asText().c_str());
             }
 
             if (numToLog < unclosedSectorCount())
-                str += String::format("\n(%i more like this)", unclosedSectorCount() - numToLog);
+                str += Stringf("\n(%i more like this)", unclosedSectorCount() - numToLog);
 
             LOGDEV_MAP_WARNING("%s") << str;
         }
@@ -207,12 +207,12 @@ public:
             for (dint i = 0; i < numToLog; ++i, ++it)
             {
                 if (i != 0) str += "\n";
-                str += String::format("Line #%i seems to be a One-Way Window (back faces sector #%i).",
+                str += Stringf("Line #%i seems to be a One-Way Window (back faces sector #%i).",
                            it->first, it->second);
             }
 
             if (numToLog < oneWayWindowCount())
-                str += String::format("\n(%i more like this)", oneWayWindowCount() - numToLog);
+                str += Stringf("\n(%i more like this)", oneWayWindowCount() - numToLog);
 
             LOGDEV_MAP_MSG("%s") << str;
         }
@@ -294,7 +294,7 @@ static String cacheIdForMap(String const &sourcePath)
     {
         id ^= duint(ch) << ((i++ * 3) % 11);
     }
-    return String::format("%04x", id);
+    return Stringf("%04x", id);
 }
 
 DE_PIMPL(ClientServerWorld)

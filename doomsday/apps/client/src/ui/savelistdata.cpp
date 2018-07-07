@@ -23,6 +23,7 @@
 #include <doomsday/AbstractSession>
 #include <doomsday/SaveGames>
 #include <de/Loop>
+#include <de/TextValue>
 
 using namespace de;
 
@@ -108,7 +109,7 @@ SaveListData::SaveItem::SaveItem(GameStateFolder const &saveFolder)
 {
     saveFolder.audienceForDeletion() += this;
 
-    setData(savePath()); // for looking it up later
+    setData(TextValue(savePath())); // for looking it up later
     setLabel(title());
 
     Games &games = DoomsdayApp::games();

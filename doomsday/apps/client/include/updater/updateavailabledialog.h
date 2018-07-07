@@ -29,6 +29,9 @@
 class UpdateAvailableDialog : public de::MessageDialog
 {
 public:
+    DE_DEFINE_AUDIENCE2(Recheck, void userRequestedSoftwareUpdateCheck())
+
+public:
     /// The dialog is initialized with the "Checking" page visible.
     UpdateAvailableDialog();
 
@@ -39,8 +42,6 @@ public:
     void showResult(de::Version const &latestVersion, de::String changeLogUri);
     void showWhatsNew();
     void editSettings();
-
-    DE_DEFINE_AUDIENCE2(Check, void userRequestedUpdateCheck())
 
 private:
     DE_PRIVATE(d)

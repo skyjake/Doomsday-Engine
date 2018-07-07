@@ -24,6 +24,10 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 
+#include <doomsday/DoomsdayApp>
+#include <doomsday/Games>
+#include <doomsday/resource/databundle.h>
+
 #include <de/CallbackAction>
 #include <de/Config>
 #include <de/DirectoryListDialog>
@@ -34,27 +38,24 @@
 #include <de/ui/ActionItem>
 #include <de/ui/SubwidgetItem>
 
-#include <doomsday/DoomsdayApp>
-#include <doomsday/Games>
-#include <doomsday/resource/databundle.h>
-
 using namespace de;
 
 DE_GUI_PIMPL(PackagesColumnWidget)
 , DE_OBSERVES(DoomsdayApp, GameChange)
+, DE_OBSERVES(PackagesWidget, ItemCount)
 {
     PackagesWidget *packages;
-    LabelWidget *countLabel;
-    ButtonWidget *folderOptionsButton;
-    ui::ListData actions;
-    LoopCallback mainCall;
-    int totalPackageCount = 0;
+    LabelWidget *   countLabel;
+    ButtonWidget *  folderOptionsButton;
+    ui::ListData    actions;
+    LoopCallback    mainCall;
+    int             totalPackageCount = 0;
 
     Impl(Public *i) : Base(i)
     {
         DoomsdayApp::app().audienceForGameChange() += this;
 
-        actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this]() -> PopupWidget * {
+        actions << new ui::SubwidgetItem("...", ui::Left, [this]() -> PopupWidget * {
             return new PackageInfoDialog(packages->actionPackage(),
                                          PackageInfoDialog::EnableActions);
         });
@@ -71,24 +72,11 @@ DE_GUI_PIMPL(PackagesColumnWidget)
                 .setInput(Rule::Top,   self().header().rule().bottom() + rule("gap"))
                 .setInput(Rule::Left,  area.contentRule().left());
 
-        QObject::connect(packages, &PackagesWidget::itemCountChanged,
-                         [this] (duint shown, duint total)
-        {
-            if (shown == total)
-            {
-                countLabel->setText(tr("%1 available").arg(total));
-            }
-            else
-            {
-                countLabel->setText(tr("%1 shown out of %2 available").arg(shown).arg(total));
-            }
-            totalPackageCount = total;
-            emit self().availablePackageCountChanged(total);
-        });
+        packages->audienceForItemCount() += this;
 
         area.add(folderOptionsButton = new ButtonWidget);
         folderOptionsButton->setStyleImage("gear", "default");
-        folderOptionsButton->setText(tr("Configure Data Files"));
+        folderOptionsButton->setText("Configure Data Files");
         folderOptionsButton->setTextAlignment(ui::AlignRight);
         folderOptionsButton->setSizePolicy(ui::Fixed, ui::Expand);
         folderOptionsButton->rule()
@@ -110,8 +98,8 @@ DE_GUI_PIMPL(PackagesColumnWidget)
             menu->items()
                     << new ui::SubwidgetItem(style().images().image("gear"),
                                              ui::Item::ShownAsButton | ui::Item::ClosesParentPopup,
-                                             tr("Settings"), ui::Left, makePopup<DataFileSettingsDialog>)
-//                    << new ui::ActionItem(tr("Install Mods..." _E(l)_E(s)_E(D) " BETA"),
+                                             "Settings", ui::Left, makePopup<DataFileSettingsDialog>)
+//                    << new ui::ActionItem("Install Mods..." _E(l)_E(s)_E(D) " BETA",
 //                                          new CallbackAction([this]() { openRepositoryBrowser(); }))
                     << new ui::Item(ui::Item::Separator)
                     << new ui::ActionItem("Show Recognized IWADs",
@@ -125,6 +113,20 @@ DE_GUI_PIMPL(PackagesColumnWidget)
                                           new CallbackAction([]() { FS::get().refreshAsync(); }));
                 return menu;
         }, ui::Down);
+    }
+
+    void itemCountChanged(duint shown, duint total) override
+    {
+        if (shown == total)
+        {
+            countLabel->setText(Stringf("%u available", total));
+    }
+        else
+        {
+            countLabel->setText(Stringf("%u shown out of %u available", shown, total));
+        }
+        totalPackageCount = total;
+        DE_FOR_PUBLIC_AUDIENCE2(AvailableCount, i) i->availablePackageCountChanged(total);
     }
 
     void currentGameChanged(Game const &game) override
@@ -144,9 +146,9 @@ PackagesColumnWidget::PackagesColumnWidget()
     : ColumnWidget("packages-column")
     , d(new Impl(this))
 {
-    header().title().setText(_E(s) "\n" _E(.) + tr("Mods"));
-    header().info().setText(tr("Browse available mods/add-ons and install new ones."));
-    header().infoPanel().close(0);
+    header().title().setText(_E(s) "\n" _E(.) "Mods");
+    header().info().setText("Browse available mods/add-ons and install new ones.");
+    header().infoPanel().close(0.0);
 
     // Total number of packages listed.
     d->countLabel->setFont("small");
@@ -175,7 +177,7 @@ int PackagesColumnWidget::availablePackageCount() const
 
 String PackagesColumnWidget::tabHeading() const
 {
-    return tr("Mods");
+    return "Mods";
 }
 
 String PackagesColumnWidget::tabShortcut() const

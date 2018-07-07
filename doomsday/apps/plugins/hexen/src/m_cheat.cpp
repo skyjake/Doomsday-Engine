@@ -815,7 +815,7 @@ D_CMD(CheatRunScript)
                 if(acscriptSys().script(scriptNum).start(acs::Script::Args()/*default args*/,
                                                          plr->plr->mo, nullptr, 0))
                 {
-                    de::String msg = de::String::format("Running script %i", scriptNum);
+                    de::String msg = de::Stringf("Running script %i", scriptNum);
                     P_SetMessageWithFlags(plr, msg, LMF_NO_HIDE);
                 }
             }

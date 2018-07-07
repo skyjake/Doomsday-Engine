@@ -42,7 +42,7 @@ public:
     void moveOffscreen(de::TimeSpan span = 1.5);
 
     void tabChanged();
-    void mouseActivityInColumn(const de::GuiWidget *);
+    //void mouseActivityInColumn(const de::GuiWidget *);
 
     // Events.
     void update() override;

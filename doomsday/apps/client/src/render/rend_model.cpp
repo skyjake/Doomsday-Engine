@@ -450,7 +450,7 @@ static void drawPrimitives(rendcmd_t mode,
         else
         {
             lastLength = 2; // just make it even, so it doesn't affect winding (see above)
-            for (int i = 1; i < prim.elements.size(); ++i)
+            for (duint i = 1; i < prim.elements.size(); ++i)
             {
                 submitElement(prim.elements.at(0));
                 if (joining)

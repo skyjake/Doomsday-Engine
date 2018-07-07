@@ -1,4 +1,4 @@
-/** @file sys_input.cpp  Keyboard and mouse input pre-processing. 
+/** @file sys_input.cpp  Keyboard and mouse input pre-processing.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2015 Daniel Swanson <danij@dengine.net>
@@ -39,7 +39,7 @@
 
 static dd_bool initOk;
 static byte useMouse;  ///< Input enabled from mouse?
-static mouseinterface_t *iMouse; ///< Current mouse interface.
+//static mouseinterface_t *iMouse; ///< Current mouse interface.
 
 static keyevent_t keyEvents[EVBUFSIZE];
 static int evHead, evTail;
@@ -81,8 +81,8 @@ static void Mouse_Init(void)
 
     LOG_AS("Mouse_Init");
 
-    DE_ASSERT(iMouse);
-    iMouse->init();
+//    DE_ASSERT(iMouse);
+//    iMouse->init();
 
     // Init was successful.
     useMouse = true;
@@ -96,9 +96,9 @@ dd_bool I_InitInterfaces(void)
 #ifdef __CLIENT__
 
     // Select drivers.
-    iMouse = &qtMouse;
+//    iMouse = &qtMouse;
 #ifdef WIN32
-    iMouse = &win32Mouse;
+//    iMouse = &win32Mouse;
     DirectInput_Init();
 #endif
 
@@ -117,7 +117,7 @@ void I_ShutdownInterfaces()
         return; // Not initialized.
 
 #ifdef __CLIENT__
-    if (useMouse) iMouse->shutdown();
+//    if (useMouse) iMouse->shutdown();
     useMouse = false;
 
     Joystick_Shutdown();
@@ -173,7 +173,7 @@ void Mouse_Poll(void)
 {
     if (useMouse)
     {
-        iMouse->poll();
+//        iMouse->poll();
     }
 }
 
@@ -181,7 +181,7 @@ void Mouse_GetState(mousestate_t *state)
 {
     if (useMouse)
     {
-        iMouse->getState(state);
+//        iMouse->getState(state);
     }
 }
 
@@ -189,6 +189,6 @@ void Mouse_Trap(dd_bool enabled)
 {
     if (useMouse)
     {
-        iMouse->trap(enabled);
+//        iMouse->trap(enabled);
     }
 }

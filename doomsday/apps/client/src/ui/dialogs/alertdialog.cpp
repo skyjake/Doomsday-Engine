@@ -35,7 +35,7 @@
 
 using namespace de;
 
-static String const VAR_AUTOHIDE = "alert.autoHide";
+DE_STATIC_STRING(VAR_AUTOHIDE, "alert.autoHide");
 
 DE_GUI_PIMPL(AlertDialog)
 , DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
@@ -126,7 +126,7 @@ DE_GUI_PIMPL(AlertDialog)
         // Set up the automatic hide timer.
         hideTimer += [this](){ self().hideNotification(); };
         hideTimer.setSingleShot(true);
-        App::config(VAR_AUTOHIDE).audienceForChange() += this;
+        App::config(VAR_AUTOHIDE()).audienceForChange() += this;
     }
 
     NotificationAreaWidget &notifs()
@@ -136,7 +136,7 @@ DE_GUI_PIMPL(AlertDialog)
 
     TimeSpan autoHideAfterSeconds() const
     {
-        return App::config().getd(VAR_AUTOHIDE, 3 * 60);
+        return App::config().getd(VAR_AUTOHIDE(), 3 * 60);
     }
 
     void variableValueChanged(Variable &, Value const &)
@@ -340,7 +340,7 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
                            lab->rule().width() +
                            d->autohideTimes->rule().width());
 
-    connect(d->autohideTimes, SIGNAL(selectionChangedByUser(uint)), this, SLOT(autohideTimeChanged()));
+    d->autohideTimes->audienceForUserSelection() += [this]() { autohideTimeChanged(); };
 }
 
 void AlertDialog::newAlert(String const &message, Level level)
@@ -365,7 +365,7 @@ void AlertDialog::showListOfAlerts()
     // Restore the normal color.
     d->notification->setImageColor(style().colors().colorf("text"));
 
-    area().scrollToTop(0);
+    area().scrollToTop(0.0);
     open();
 }
 
@@ -376,7 +376,7 @@ void AlertDialog::hideNotification()
 
 void AlertDialog::autohideTimeChanged()
 {
-    App::config().set(VAR_AUTOHIDE, d->autohideTimes->selectedItem().data().toInt());
+    App::config().set(VAR_AUTOHIDE(), d->autohideTimes->selectedItem().data().asInt());
 }
 
 void AlertDialog::finish(int result)

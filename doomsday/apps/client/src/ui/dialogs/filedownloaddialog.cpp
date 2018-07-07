@@ -27,7 +27,7 @@ DE_GUI_PIMPL(FileDownloadDialog)
 , DE_OBSERVES(shell::PackageDownloader, Status)
 {
     shell::PackageDownloader &downloader;
-    String message = tr("Downloading data files...");
+    String message = "Downloading data files...";
 
     Impl(Public *i, shell::PackageDownloader &downloader)
         : Base(i)
@@ -35,11 +35,8 @@ DE_GUI_PIMPL(FileDownloadDialog)
     {
         downloader.audienceForStatus() += this;
 
-        self().progressIndicator().setText(tr("%1\n" _E(l)_E(F) "%2"
-                                              DE_CHAR_MDASH " files / "
-                                              DE_CHAR_MDASH " MB")
-                                           .arg(message)
-                                           .arg(_E(l)));
+        self().progressIndicator().setText(message + "\n" _E(l) _E(F) _E(l) DE_CHAR_MDASH
+                                           " files / " DE_CHAR_MDASH " MB");
     }
 
     void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files)
@@ -49,11 +46,11 @@ DE_GUI_PIMPL(FileDownloadDialog)
         auto &indicator = self().progressIndicator();
         indicator.setProgress(round<int>(100.0 * double(bytes.size())/double(bytes.end)));
 
-        indicator.setText(tr("%1\n" _E(l)_E(F) "%2 file%3 / %4 MB")
-                          .arg(message)
-                          .arg(files.start)
-                          .arg(DE_PLURAL_S(files.start))
-                          .arg(bytes.start/1.0e6, 0, 'f', 1));
+        indicator.setText(Stringf("%s\n" _E(l) _E(F) "%i file%s / %.1f MB",
+                                  message.c_str(),
+                                  files.start,
+                                  DE_PLURAL_S(files.start),
+                                  bytes.start / 1.0e6));
     }
 };
 

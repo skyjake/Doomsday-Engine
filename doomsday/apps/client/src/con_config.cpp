@@ -67,7 +67,7 @@ static void writeHeaderComment(de::Writer &out)
     }
     else
     {
-        out.writeText(String::format("# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
+        out.writeText(Stringf("# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
                 (char const *) gx.GetPointer(DD_PLUGIN_NAME),
                 (char const *) gx.GetPointer(DD_PLUGIN_VERSION_SHORT)));
     }
@@ -97,14 +97,14 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
         out->writeText(String(str).addLinePrefix(STR_COMMENT) + "\n");
     }
 
-    out->writeText(String::format("%s %s", Str_Text(path),
+    out->writeText(Stringf("%s %s", Str_Text(path),
                                   var->flags & CVF_PROTECTED? "force " : ""));
 
     switch (var->type)
     {
-    case CVT_BYTE:  out->writeText(String::format("%d", *(byte *) var->ptr)); break;
-    case CVT_INT:   out->writeText(String::format("%d", *(int *) var->ptr)); break;
-    case CVT_FLOAT: out->writeText(String::format("%s", M_TrimmedFloat(*(float *) var->ptr))); break;
+    case CVT_BYTE:  out->writeText(Stringf("%d", *(byte *) var->ptr)); break;
+    case CVT_INT:   out->writeText(Stringf("%d", *(int *) var->ptr)); break;
+    case CVT_FLOAT: out->writeText(Stringf("%s", M_TrimmedFloat(*(float *) var->ptr))); break;
 
     case CVT_CHARPTR:
         out->writeText("\"");
@@ -145,7 +145,7 @@ static int writeAliasToFileWorker(knownword_t const *word, void *context)
     calias_t *cal = (calias_t *) word->data;
     DE_ASSERT(cal != 0);
 
-    out->writeText(String::format("alias \"%s\" \"%s\"\n",
+    out->writeText(Stringf("alias \"%s\" \"%s\"\n",
                                   String(cal->name).escaped().c_str(),
                                   String(cal->command).escaped().c_str()));
 
@@ -225,7 +225,7 @@ static bool writeBindingsState(Path const &filePath)
             context.forAllCommandBindings([&out, &context] (Record &rec)
             {
                 CommandBinding bind(rec);
-                out.writeText(String::format("bindevent \"%s:%s\" \"",
+                out.writeText(Stringf("bindevent \"%s:%s\" \"",
                                              context.name().c_str(),
                                              bind.composeDescriptor().c_str()) +
                               bind.gets("command").escaped() + "\"\n");
@@ -239,7 +239,7 @@ static bool writeBindingsState(Path const &filePath)
                 PlayerImpulse const *impulse = P_PlayerImpulsePtr(rec.compiled().impulseId);
                 DE_ASSERT(impulse);
 
-                out.writeText(String::format("bindcontrol local%i-%s \"%s\"\n",
+                out.writeText(Stringf("bindcontrol local%i-%s \"%s\"\n",
                               bind.geti("localPlayer") + 1,
                               impulse->name.c_str(),
                               bind.composeDescriptor().c_str()));

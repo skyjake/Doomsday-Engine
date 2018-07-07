@@ -116,7 +116,7 @@ DE_GUI_PIMPL(SaveListWidget)
 
         button.setActionFn([this, &button] () {
             toggleSelectedItem(button);
-            emit owner.mouseActivity();
+            DE_FOR_EACH_OBSERVER(i, owner.audienceForActivity()) i->mouseActivity(owner);
         });
         button.addEventHandler(new ClickHandler(this));
 
@@ -141,7 +141,7 @@ DE_GUI_PIMPL(SaveListWidget)
             updateItemHighlights(&button);
         }
 
-        emit self().selectionChanged(selected);
+        DE_FOR_PUBLIC_AUDIENCE2(Selection, i) i->saveListSelectionChanged(selected);
 
         // Keep focus on the clicked button.
         self().root().setFocus(&self());

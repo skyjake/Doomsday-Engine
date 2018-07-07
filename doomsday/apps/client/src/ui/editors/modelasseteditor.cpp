@@ -109,7 +109,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
     void resetToDefaults(String const &/*settingName*/)
     {}
 
-    static char const *pluralSuffix(int count, char const *suffix = "s")
+    static const char *pluralSuffix(int count, const char *suffix = "s")
     {
         return count != 1? suffix : "";
     }
@@ -151,24 +151,24 @@ DE_GUI_PIMPL(ModelAssetEditor)
         }
 
         setInfoLabelParams(*info);
-        String msg = QString(_E(Ta)_E(l) "Path: " _E(.)_E(Tb) "%1\n"
-                             _E(Ta)_E(l) "%2 Mesh%3: " _E(.)_E(Tb) "%4\n"
-                             _E(Ta)_E(l) "%5 Material%6: " _E(.)_E(Tb) "%7")
-                .arg(asset.absolutePath("path"))
-                .arg(model.meshCount())
-                .arg(pluralSuffix(model.meshCount(), "es"))
-                .arg(String::join(meshNames, ", "))
-                .arg(materialNames.size())
-                .arg(pluralSuffix(materialNames.size()))
-                .arg(String::join(materialNames, ", "));
+        String msg = Stringf(_E(Ta)_E(l) "Path: " _E(.)_E(Tb) "%s\n"
+                             _E(Ta)_E(l) "%i Mesh%s: " _E(.)_E(Tb) "%s\n"
+                             _E(Ta)_E(l) "%i Material%s: " _E(.)_E(Tb) "%s",
+                asset.absolutePath("path").c_str(),
+                model.meshCount(),
+                pluralSuffix(model.meshCount(), "es"),
+                String::join(meshNames, ", ").c_str(),
+                materialNames.size(),
+                pluralSuffix(materialNames.size()),
+                String::join(materialNames, ", ").c_str());
         if (!animNames.isEmpty())
         {
-            msg += QString(_E(Ta)_E(l) "\n%1 Animation%2: " _E(.)_E(Tb) "%3")
-                    .arg(model.animationCount())
-                    .arg(pluralSuffix(model.animationCount()))
-                    .arg(String::join(animNames, ", "));
+            msg += Stringf(
+                _E(Ta) _E(l) "\n%i Animation%s: " _E(.) _E(Tb) "%s",
+                model.animationCount(),
+                pluralSuffix(model.animationCount(), String::join(animNames, ", ").c_str()));
         }
-        msg += String::format(_E(Ta)_E(l) "\nAutoscale: " _E(.)_E(Tb) "%s",
+        msg += Stringf(_E(Ta)_E(l) "\nAutoscale: " _E(.)_E(Tb) "%s",
                               asset.gets("autoscale", "False").c_str());
         info->setText(msg);
 
@@ -332,7 +332,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     static String mobjItemLabel(thid_t id)
     {
-        return String::format("ID %u " _E(l) "(dist:%i)", id, int(distanceToMobj(id)));
+        return Stringf("ID %u " _E(l) "(dist:%i)", id, int(distanceToMobj(id)));
     }
 
     static coord_t distanceToMobj(thid_t id)
@@ -424,7 +424,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         int passIndex = animator.model().passes.findName(titleText);
         if (passIndex >= 0)
         {
-            titleText = String::format("Render Pass \"%s\"", titleText.c_str());
+            titleText = Stringf("Render Pass \"%s\"", titleText.c_str());
 
             // Look up the shader.
             auto const &pass = animator.model().passes.at(passIndex);
@@ -446,7 +446,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
                 else
                     names << n;
             }
-            String msg = String::format(_E(Ta) _E(l) "Shader: "    _E(.) _E(Tb) "%s\n"
+            String msg = Stringf(_E(Ta) _E(l) "Shader: "    _E(.) _E(Tb) "%s\n"
                                         _E(Ta) _E(l) "Variables: " _E(.) _E(Tb) "%s",
                                         shaderName.c_str(),
                                         String::join(names, ", ").c_str());
@@ -497,7 +497,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
                     if (anim.animator()["ID"] == assetId)
                     {
                         instChoice->items()
-                                << new ChoiceItem(String::format("Player %i", idx), NumberValue(idx));
+                                << new ChoiceItem(Stringf("Player %i", idx), NumberValue(idx));
                     }
                 }
             }

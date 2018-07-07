@@ -80,9 +80,9 @@ void guidata_worldtime_t::draw(Vec2i const &offset) const
 
     if(!ST_AutomapIsOpen(player())) return;
 
-    auto const secondsAsText = String::format("%02i", d->seconds);
-    auto const minutesAsText = String::format("%02i", d->minutes);
-    auto const hoursAsText   = String::format("%02i", d->hours);
+    auto const secondsAsText = Stringf("%02i", d->seconds);
+    auto const minutesAsText = Stringf("%02i", d->minutes);
+    auto const hoursAsText   = Stringf("%02i", d->hours);
 
     FR_SetFont(font());
     FR_SetTracking(0);
@@ -119,7 +119,7 @@ void guidata_worldtime_t::draw(Vec2i const &offset) const
 
     if(d->days)
     {
-        auto const daysAsText = String::format("%02i", d->days) + " day" + DE_PLURAL_S(d->days);
+        auto const daysAsText = Stringf("%02i", d->days) + " day" + DE_PLURAL_S(d->days);
 
         y += lineHeight * LEADING;  // Extra padding.
 

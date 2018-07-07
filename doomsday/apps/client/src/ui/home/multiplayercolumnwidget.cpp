@@ -28,7 +28,6 @@
 #include <de/CallbackAction>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
-#include <de/SignalAction>
 #include <de/ui/SubwidgetItem>
 
 using namespace de;
@@ -49,11 +48,10 @@ DE_GUI_PIMPL(MultiplayerColumnWidget)
         self().header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
-                    << new ui::ActionItem(tr("Connect to Server..."),
-                                          new SignalAction(&ClientWindow::main().taskBar(),
-                                                           SLOT(connectToServerManually())))
-                    << new ui::ActionItem(tr("Refresh List"), new CallbackAction([] () {
-                            ServerLink::get().discoverUsingMaster(); }));
+                    << new ui::ActionItem("Connect to Server...",
+                                          [](){ ClientWindow::main().taskBar().connectToServerManually(); })
+                    << new ui::ActionItem("Refresh List", [] () {
+                            ServerLink::get().discoverUsingMaster(); });
             return menu;
         }, ui::Down);
 
@@ -64,7 +62,7 @@ DE_GUI_PIMPL(MultiplayerColumnWidget)
 
         // Empty content label.
         noServers = new LabelWidget;
-        noServers->setText(tr("No Servers Found"));
+        noServers->setText("No Servers Found");
         style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*noServers);
         noServers->rule().setRect(self().rule());
         self().add(noServers);
@@ -96,19 +94,19 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
                                 rule("gap") +
                                 d->menu->rule().height());
 
-    header().title().setText(_E(s)_E(C) "dengine.net\n" _E(.)_E(.)_E(w) + tr("Multiplayer Games"));
-    header().info().setText(tr("Multiplayer servers are discovered via the dengine.net "
-                               "master server and by broadcasting on the local network."));
+    header().title().setText(_E(s)_E(C) "dengine.net\n" _E(.)_E(.)_E(w) "Multiplayer Games");
+    header().info().setText("Multiplayer servers are discovered via the dengine.net "
+                            "master server and by broadcasting on the local network.");
 }
 
 String MultiplayerColumnWidget::tabHeading() const
 {
-    return tr("Multiplayer");
+    return DE_STR("Multiplayer");
 }
 
 String MultiplayerColumnWidget::configVariableName() const
 {
-    return "home.columns.multiplayer";
+    return DE_STR("home.columns.multiplayer");
 }
 
 void MultiplayerColumnWidget::setHighlighted(bool highlighted)

@@ -159,7 +159,7 @@ Surface::Surface(MapElement &owner, dfloat opacity, Vec3f const &color)
 
 String Surface::description() const
 {
-    auto desc = String::format(
+    auto desc = Stringf(
                            _E(l) "Material: "        _E(.)_E(i) "%s" _E(.)
                        " " _E(l) "Material Origin: " _E(.)_E(i) "%s" _E(.)
                        " " _E(l) "Normal: "          _E(.)_E(i) "%s" _E(.)
@@ -174,7 +174,7 @@ String Surface::description() const
                   color().asText().c_str());
 
 #ifdef DE_DEBUG
-    desc.prepend(String::format(_E(b) "Surface " _E(.) "[%p]\n", this));
+    desc.prepend(Stringf(_E(b) "Surface " _E(.) "[%p]\n", this));
 #endif
     return desc;
 }

@@ -153,7 +153,7 @@ static String backgroundPatchForEpisode(String const &episodeId)
     int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
     if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
     {
-        return String::format("MAPE%d", oldEpisodeNum + 1);
+        return Stringf("MAPE%d", oldEpisodeNum + 1);
     }
     return ""; // None.
 }

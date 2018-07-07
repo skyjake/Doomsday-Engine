@@ -13,7 +13,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General
  * Public License for more details. You should have received a copy of the GNU
  * General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef DE_CLIENT_VIDEOSETTINGSDIALOG_H
@@ -26,17 +26,15 @@
  */
 class VideoSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     VideoSettingsDialog(de::String const &name = "videosettings");
 
-protected slots:
+protected:
     void resetToDefaults();
 #if !defined (DE_MOBILE)
-    void changeMode(uint selected);
-    void changeColorDepth(uint selected);
-    void changeRefreshRate(uint selected);
+    void changeMode(de::ui::DataPos selected);
+    void changeColorDepth(de::ui::DataPos selected);
+    void changeRefreshRate(de::ui::DataPos selected);
     void showColorAdjustments();
     void showWindowMenu();
     void applyModeToWindow();

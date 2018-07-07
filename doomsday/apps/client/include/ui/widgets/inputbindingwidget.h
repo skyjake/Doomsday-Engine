@@ -43,11 +43,9 @@ public:
      */
     void enableModifiers(bool mods);
 
-    void setContext(QString const &bindingContext) {
-        setContexts(QStringList() << bindingContext);
-    }
+    inline void setContext(const de::String &bindingContext) { setContexts({bindingContext}); }
 
-    void setContexts(QStringList const &contexts);
+    void setContexts(const de::StringList &contexts);
 
     // Events.
     void focusGained() override;

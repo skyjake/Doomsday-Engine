@@ -36,7 +36,6 @@
 #include <de/MenuWidget>
 #include <de/PersistentState>
 #include <de/PopupMenuWidget>
-#include <de/SignalAction>
 #include <de/VariableChoiceWidget>
 #include <de/VariableToggleWidget>
 
@@ -132,7 +131,7 @@ DE_GUI_PIMPL(GameColumnWidget)
 
         area.add(newProfileButton = new ButtonWidget);
         newProfileButton->audienceForStateChange() += this;
-        newProfileButton->setText(tr("New Profile..."));
+        newProfileButton->setText("New Profile...");
         newProfileButton->setStyleImage("create");
         newProfileButton->setOverrideImageSize(style().fonts().font("default").height() * 1.5f);
         newProfileButton->set(Background());
@@ -254,7 +253,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         if (subheadingVisible && !gotSubheading)
         {
             gotSubheading = true;
-            menu->items() << new ui::Item(ui::Item::Separator, tr("Custom Profiles"));
+            menu->items() << new ui::Item(ui::Item::Separator, "Custom Profiles");
         }
         else if (!subheadingVisible && gotSubheading)
         {
@@ -275,13 +274,12 @@ DE_GUI_PIMPL(GameColumnWidget)
      */
     void populateItems()
     {
-        QSet<GameProfile *> profiles;
-        foreach (GameProfile *prof,
-                 DoomsdayApp::gameProfiles().profilesInFamily(gameFamily))
+        Set<GameProfile *> profiles;
+        for (GameProfile *prof : DoomsdayApp::gameProfiles().profilesInFamily(gameFamily))
         {
             profiles.insert(prof);
         }
-        QSet<GameProfile *> toAdd = profiles;
+        Set<GameProfile *> toAdd = profiles;
 
         // Update or remove profiles as needed.
         for (ui::DataPos i = 0; i < menu->items().size(); ++i)
@@ -464,7 +462,7 @@ DE_GUI_PIMPL(GameColumnWidget)
     {
         if (item.semantics().testFlag(ui::Item::Separator))
         {
-            auto *heading = LabelWidget::newWithText(tr("Custom Profiles"));
+            auto *heading = LabelWidget::newWithText("Custom Profiles");
             heading->setSizePolicy(ui::Filled, ui::Expand);
             heading->setFont("heading");
             //heading->setTextColor("accent");
@@ -478,7 +476,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         auto *button = new GamePanelButtonWidget(*profileItem->profile, savedItems);
 
         // Right-clicking on game items shows additional functions.
-        QObject::connect(button, &HomeItemWidget::openContextMenu, [this, button, profileItem] ()
+        button->audienceForContextMenu() += [this, button, profileItem]()
         {
             auto *popup = new PopupMenuWidget;
             button->add(popup);
@@ -490,7 +488,7 @@ DE_GUI_PIMPL(GameColumnWidget)
             if (isUserProfile)
             {
                 popup->items()
-                    << new ui::ActionItem(tr("Edit..."), new CallbackAction([this, button, profileItem] ()
+                    << new ui::ActionItem("Edit...", [this, button, profileItem]()
                     {
                         auto *dlg = CreateProfileDialog::editProfile(gameFamily, *profileItem->profile);
                         dlg->setAnchorAndOpeningDirection(button->label().rule(), ui::Up);
@@ -501,22 +499,20 @@ DE_GUI_PIMPL(GameColumnWidget)
                             dlg->applyTo(*profileItem->profile);
                             profileItem->update();
                         }
-                    }));
+                    });
             }
             else
             {
-                popup->items() << new ui::ActionItem(tr("Mods..."), new SignalAction(button, SLOT(selectPackages())));
+                popup->items() << new ui::ActionItem("Mods...", [button]() { button->selectPackages(); });
             }
 
             // Items suitable for all types of profiles.
             popup->items()
-                << new ui::ActionItem(tr("Select Mods..."),
+                << new ui::ActionItem("Select Mods...",
                                       new SignalAction(button, SLOT(selectPackages())))
-                << new ui::ActionItem(tr("Clear Mods"), new CallbackAction([this, button]() {
-                                          button->clearPackages();
-                                      }))
+                << new ui::ActionItem("Clear Mods", [button]() { button->clearPackages(); })
                 << new ui::ActionItem(
-                       tr("Duplicate"), new CallbackAction([profileItem]() {
+                       "Duplicate", new CallbackAction([profileItem]() {
                            GameProfile *dup = new GameProfile(*profileItem->profile);
                            dup->setUserCreated(true);
                            dup->createSaveLocation();
@@ -573,9 +569,9 @@ DE_GUI_PIMPL(GameColumnWidget)
             if (isUserProfile)
             {
                 auto *deleteSub = new ui::SubmenuItem(style().images().image("close.ring"),
-                                                      tr("Delete"), ui::Left);
+                                                      "Delete", ui::Left);
                 deleteSub->items()
-                    << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
+                    << new ui::Item(ui::Item::Separator, "Are you sure?")
                     << new ui::ActionItem(
                            tr("Delete Profile"),
                            new CallbackAction([this, button, profileItem, popup]() {
@@ -630,14 +626,14 @@ DE_GUI_PIMPL(GameColumnWidget)
                                Loop::get().timer(SPAN,
                                                  [profileItem]() { delete profileItem->profile; });
                            }))
-                    << new ui::ActionItem(tr("Cancel"), new Action);
+                    << new ui::ActionItem("Cancel", new Action);
 
                 popup->items()
                     << new ui::Item(ui::Item::Separator)
                     << deleteSub;
             }
             popup->open();
-        });
+        };
 
         return button;
     }
@@ -694,8 +690,8 @@ DE_GUI_PIMPL(GameColumnWidget)
 GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                    SaveListData const &savedItems)
     : ColumnWidget(gameFamily.isEmpty()? "other-column"
-                                       : (gameFamily.toLower() + "-column"))
-    , d(new Impl(this, gameFamily.toLower(), savedItems))
+                                       : (gameFamily.lower() + "-column"))
+    , d(new Impl(this, gameFamily.lower(), savedItems))
 {
     scrollArea().setContentSize(maximumContentWidth(),
                                 header().rule().height() +
@@ -703,14 +699,12 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 d->menu->rule().height() +
                                 d->newProfileButton->rule().height());
 
-    header().title().setText(String(_E(s)_E(C) "%1\n" _E(.)_E(.)_E(w) "%2")
-                             .arg( gameFamily == "DOOM"? "id Software" :
-                                  !gameFamily.isEmpty()? "Raven Software" : "")
-                             .arg(!gameFamily.isEmpty()? QString(gameFamily)
-                                                       : tr("Other Games")));
-    if (!gameFamily.isEmpty())
+    header().title().setText(Stringf(_E(s)_E(C) "%s\n" _E(.)_E(.)_E(w) "%s",
+                              gameFamily == "DOOM"? "id Software" : gameFamily ? "Raven Software" : "",
+                              gameFamily ? gameFamily.c_str() : "Other Games"));
+    if (gameFamily)
     {
-        header().setLogoImage("logo.game." + gameFamily.toLower());
+        header().setLogoImage("logo.game." + gameFamily.lower());
         header().setLogoBackground("home.background." + d->gameFamily);
         setBackgroundImage("home.background." + d->gameFamily);
     }
@@ -795,8 +789,8 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
 
 String GameColumnWidget::tabHeading() const
 {
-    if (d->gameFamily.isEmpty()) return tr("Other");
-    return d->gameFamily.at(0).toUpper() + d->gameFamily.mid(1);
+    if (d->gameFamily.isEmpty()) return "Other";
+    return d->gameFamily.upperFirstChar();
 }
 
 String GameColumnWidget::tabShortcut() const
@@ -808,7 +802,7 @@ String GameColumnWidget::tabShortcut() const
 String GameColumnWidget::configVariableName() const
 {
     return "home.columns." + (!d->gameFamily.isEmpty()? d->gameFamily
-                                                      : String("otherGames"));
+                                                      : DE_STR("otherGames"));
 }
 
 void GameColumnWidget::setHighlighted(bool highlighted)

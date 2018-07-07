@@ -30,7 +30,7 @@ public:
     PackageCompatibilityDialog(de::String const &name = "");
 
     void setMessage(de::String const &msg);
-    void setWantedPackages(de::StringList packages);
+    void setWantedPackages(const de::StringList& packages);
 
     bool isCompatible() const;
 

@@ -409,21 +409,21 @@ void guidata_chain_t::prepareAssets()
     ::pGem[PCLASS_FIGHTER][0] = R_DeclarePatch("LIFEGEM");
     for(dint i = 1; i < NUMTEAMS; ++i)
     {
-        ::pGem[PCLASS_FIGHTER][i] = R_DeclarePatch(String::format("LIFEGMF%i", i + 1));
+        ::pGem[PCLASS_FIGHTER][i] = R_DeclarePatch(Stringf("LIFEGMF%i", i + 1));
     }
 
     // Cleric:
     ::pChain[PCLASS_CLERIC] = R_DeclarePatch("CHAIN2");
     for(dint i = 0; i < NUMTEAMS; ++i)
     {
-        ::pGem[PCLASS_CLERIC][i] = R_DeclarePatch(String::format("LIFEGMC%i", i + 1));
+        ::pGem[PCLASS_CLERIC][i] = R_DeclarePatch(Stringf("LIFEGMC%i", i + 1));
     }
 
     // Mage:
     ::pChain[PCLASS_MAGE] = R_DeclarePatch("CHAIN3");
     for(dint i = 0; i < NUMTEAMS; ++i)
     {
-        ::pGem[PCLASS_MAGE][i] = R_DeclarePatch(String::format("LIFEGMM%i", i + 1));
+        ::pGem[PCLASS_MAGE][i] = R_DeclarePatch(Stringf("LIFEGMM%i", i + 1));
     }
 #endif
 }

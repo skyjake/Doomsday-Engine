@@ -93,7 +93,7 @@ public:
      * @see uniqueId(), setUniqueId()
      */
     inline res::Uri composeUrn() const {
-        return res::Uri("urn", String::format("%s:%i", schemeName().c_str(), uniqueId()));
+        return res::Uri("urn", Stringf("%s:%i", schemeName().c_str(), uniqueId()));
     }
 
     /**

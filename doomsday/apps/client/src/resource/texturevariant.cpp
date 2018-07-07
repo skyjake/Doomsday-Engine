@@ -153,23 +153,23 @@ bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
     case TST_GENERAL: return variant       == other.variant;
     case TST_DETAIL:  return detailVariant == other.detailVariant;
     }
-    DE_ASSERT(false);
+    DE_ASSERT_FAIL("Invalid texture variant specification type");
     return false;
 }
 
-static String nameForGLTextureWrapMode(int mode)
+static String nameForGLTextureWrapMode(GLenum mode)
 {
     if(mode == GL_REPEAT) return "repeat";
-#if defined (DE_OPENGL)
-    if(mode == GL_CLAMP) return "clamp";
-#endif
+//#if defined (DE_OPENGL)
+//    if(mode == GL_CLAMP) return "clamp";
+//#endif
     if(mode == GL_CLAMP_TO_EDGE) return "clamp_edge";
     return "(unknown)";
 }
 
 String TextureVariantSpec::asText() const
 {
-    static String const textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
+    static const char *textureUsageContextNames[1 + TEXTUREVARIANTUSAGECONTEXT_COUNT] = {
         /* TC_UNKNOWN */                    "unknown",
         /* TC_UI */                         "ui",
         /* TC_MAPSURFACE_DIFFUSE */         "mapsurface_diffuse",
@@ -183,17 +183,17 @@ String TextureVariantSpec::asText() const
         /* TC_PSPRITE_DIFFUSE */            "psprite_diffuse",
         /* TC_SKYSPHERE_DIFFUSE */          "skysphere_diffuse"
     };
-    static String const textureSpecificationTypeNames[2] = {
+    static const char *textureSpecificationTypeNames[2] = {
         /* TST_GENERAL */   "general",
         /* TST_DETAIL */    "detail"
     };
-    static String const filterModeNames[] = { "ui", "sprite", "noclass", "const" };
-    static String const glFilterNames[] = {
+    static const char *filterModeNames[] = { "ui", "sprite", "noclass", "const" };
+    static const char *glFilterNames[] = {
         "nearest", "linear", "nearest_mipmap_nearest", "linear_mipmap_nearest",
         "nearest_mipmap_linear", "linear_mipmap_linear"
     };
 
-    String text = String("Type:%1").arg(textureSpecificationTypeNames[type]);
+    String text = Stringf("Type:%s", textureSpecificationTypeNames[type]);
 
     switch(type)
     {
@@ -238,7 +238,7 @@ String TextureVariantSpec::asText() const
             }
         }
 
-        text += " Context:" + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
+        text += DE_STR(" Context:") + textureUsageContextNames[tc-TEXTUREVARIANTUSAGECONTEXT_FIRST + 1]
               + " Flags:" + String::asText(spec.flags & ~TSF_INTERNAL_MASK)
               + " Border:" + String::asText(spec.border)
               + " MinFilter:" + filterModeNames[3 + de::clamp(-1, spec.minFilter, 0)]
@@ -621,7 +621,7 @@ String ClientTexture::Variant::sourceDescription() const
     return "none";
 }
 
-ClientTexture::Variant::Flags ClientTexture::Variant::flags() const
+Flags ClientTexture::Variant::flags() const
 {
     return d->flags;
 }

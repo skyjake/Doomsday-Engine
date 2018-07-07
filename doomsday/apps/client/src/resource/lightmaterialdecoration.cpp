@@ -93,7 +93,7 @@ LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
 
 String LightMaterialDecoration::AnimationStage::description() const
 {
-    return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? String::format("%i (~%.2f)", tics, variance) : "-1")
+    return String(_E(l) "Tics: ")      + _E(.) + (tics > 0? Stringf("%i (~%.2f)", tics, variance) : "-1")
                 + _E(l) " Origin: "      _E(.) + origin.asText()
                 + _E(l) " Elevation: "   _E(.) + String::asText(elevation, 2)
                 + _E(l) " LightLevels: " _E(.) + lightLevels.asText()

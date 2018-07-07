@@ -1356,7 +1356,7 @@ List<rawtex_t *> ClientResources::collectRawTextures() const
 
 void ClientResources::clearAllRawTextures()
 {
-    deleteAll(d->rawTexHash);
+    d->rawTexHash.deleteAll();
     d->rawTexHash.clear();
 }
 
@@ -1533,12 +1533,12 @@ FontManifest &ClientResources::fontManifest(res::Uri const &uri) const
     // Is this a URN? (of the form "urn:schemename:uniqueid")
     if (!uri.scheme().compareWithoutCase("urn"))
     {
-        String const &pathStr = uri.path().toStringRef();
-        dint uIdPos = pathStr.indexOf(':');
+        const String pathStr = uri.path();
+        auto uIdPos = pathStr.indexOf(':');
         if (uIdPos > 0)
         {
             String schemeName = pathStr.left(uIdPos);
-            dint uniqueId     = pathStr.mid(uIdPos + 1 /*skip delimiter*/).toInt();
+            dint uniqueId     = pathStr.substr(uIdPos + 1 /*skip delimiter*/).toInt();
 
             try
             {
@@ -1595,7 +1595,9 @@ FontManifest &ClientResources::toFontManifest(fontid_t id) const
     }
 
     /// @throw UnknownIdError The specified manifest id is invalid.
-    throw UnknownFontIdError("ClientResources::toFontManifest", QString("Invalid font ID %1, valid range [1..%2)").arg(id).arg(d->fontManifestCount + 1));
+    throw UnknownFontIdError(
+        "ClientResources::toFontManifest",
+        stringf("Invalid font ID %u, valid range [1..%u)", id, d->fontManifestCount + 1));
 }
 
 ClientResources::AllFonts const &ClientResources::allFonts() const
@@ -1658,7 +1660,7 @@ AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
     return nullptr;
 }
 
-AbstractFont *ClientResources::newFontFromFile(res::Uri const &uri, String filePath)
+AbstractFont *ClientResources::newFontFromFile(res::Uri const &uri, const String& filePath)
 {
     LOG_AS("ClientResources::newFontFromFile");
 
@@ -1965,7 +1967,7 @@ void ClientResources::cache(FrameModelDef *modelDef)
 }
 
 MaterialVariantSpec const &ClientResources::materialSpec(MaterialContextId contextId,
-    dint flags, byte border, dint tClass, dint tMap, dint wrapS, dint wrapT,
+    dint flags, byte border, dint tClass, dint tMap, GLenum wrapS, GLenum wrapT,
     dint minFilter, dint magFilter, dint anisoFilter,
     bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
 {
@@ -2100,9 +2102,9 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     }
     else // Consider resources in any scheme.
     {
-        for (FontScheme *scheme : App_Resources().allFontSchemes())
+        for (const auto &scheme : App_Resources().allFontSchemes())
         {
-            scheme->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
+            scheme.second->index().findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
         }
     }
     if (found.isEmpty()) return 0;
@@ -2114,19 +2116,19 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     if (!printSchemeName && scheme)
         heading += " in scheme '" + scheme->name() + "'";
     if (!like.isEmpty())
-        heading += " like \"" _E(b) + like.toStringRef() + _E(.) "\"";
+        heading += " like \"" _E(b) + like.toString() + _E(.) "\"";
     LOG_RES_MSG(_E(D) "%s:" _E(.)) << heading;
 
     // Print the result index.
-    qSort(found.begin(), found.end(), comparePathTreeNodePathsAscending<FontManifest>);
-    int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+    std::sort(found.begin(), found.end(), comparePathTreeNodePathsAscending<FontManifest>);
+    //int numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     int idx = 0;
     for (FontManifest *manifest : found)
     {
-        String info = String("%1: %2%3" _E(.))
-                        .arg(idx, numFoundDigits)
-                        .arg(manifest->hasResource()? _E(1) : _E(2))
-                        .arg(manifest->description(composeUriFlags));
+        String info = Stringf("%31: %s%s" _E(.),
+                                     idx,
+                                     manifest->hasResource() ? _E(1) : _E(2),
+                                     manifest->description(composeUriFlags).c_str());
 
         LOG_RES_MSG("  " _E(>)) << info;
         idx++;
@@ -2156,9 +2158,9 @@ static void printFontIndex(res::Uri const &search,
     else
     {
         // Collect and sort results in each scheme separately.
-        for (FontScheme *scheme : App_Resources().allFontSchemes())
+        for (const auto &scheme : App_Resources().allFontSchemes())
         {
-            int numPrinted = printFontIndex2(scheme, search.path(), flags | res::Uri::OmitScheme);
+            int numPrinted = printFontIndex2(scheme.second, search.path(), flags | res::Uri::OmitScheme);
             if (numPrinted)
             {
                 LOG_MSG(_E(R));
@@ -2166,10 +2168,11 @@ static void printFontIndex(res::Uri const &search,
             }
         }
     }
-    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.") << printTotal << (printTotal == 1? "font" : "fonts in total");
+    LOG_RES_MSG("Found " _E(b) "%i" _E(.) " %s.")
+        << printTotal << (printTotal == 1 ? "font" : "fonts in total");
 }
 
-static bool isKnownFontSchemeCallback(String name)
+static bool isKnownFontSchemeCallback(const String& name)
 {
     return App_Resources().knownFontScheme(name);
 }
@@ -2196,13 +2199,13 @@ D_CMD(PrintFontStats)
     DE_UNUSED(src, argc, argv);
 
     LOG_MSG(_E(b) "Font Statistics:");
-    for (FontScheme *scheme : App_Resources().allFontSchemes())
+    for (const auto &scheme : App_Resources().allFontSchemes())
     {
-        FontScheme::Index const &index = scheme->index();
+        FontScheme::Index const &index = scheme.second->index();
 
         uint const count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
-            << scheme->name() << count << (count == 1? "font" : "fonts");
+            << scheme.second->name() << count << (count == 1? "font" : "fonts");
         index.debugPrintHashDistribution();
         index.debugPrint();
     }

@@ -126,7 +126,7 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
             self().title().setText("Update Available");
             self().title().setImage(style().images().image("updater"));
             self().message().setText(
-                String::format("There is an update available. The latest %s release is %s, while "
+                Stringf("There is an update available. The latest %s release is %s, while "
                                "you are running %s.",
                                channel.c_str(),
                                (_E(b) + latestVersion.asHumanReadableText() + _E(.)).c_str(),
@@ -136,7 +136,7 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
         {
             self().title().setText("Up to Date");
             self().message().setText(
-                String::format("The installed %1 is the latest available %2 build.",
+                Stringf("The installed %1 is the latest available %2 build.",
                                currentVersion.asHumanReadableText().c_str(),
                                (_E(b) + channel + _E(.)).c_str()));
         }
@@ -144,10 +144,11 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
         {
             askDowngrade = true;
 
-            self().title().setText(tr("Up to Date"));
-            self().message().setText(tr("The installed %1 is newer than the latest available %2 build.")
-                                   .arg(currentVersion.asHumanReadableText())
-                                   .arg(_E(b) + channel + _E(.)));
+            self().title().setText("Up to Date");
+            self().message().setText(
+                Stringf("The installed %s is newer than the latest available %s build.",
+                        currentVersion.asHumanReadableText().c_str(),
+                        (_E(b) + channel + _E(.)).c_str()));
         }
 
         autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
@@ -157,32 +158,32 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
         if (askDowngrade)
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Accept, tr("Downgrade to Older"))
-                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
+                    << new DialogButtonItem(DialogWidget::Accept, "Downgrade to Older")
+                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, "Close");
         }
         else if (askUpgrade)
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Upgrade"))
-                    << new DialogButtonItem(DialogWidget::Reject, tr("Not Now"));
+                    << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, "Upgrade")
+                    << new DialogButtonItem(DialogWidget::Reject, "Not Now");
         }
         else
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Accept, tr("Reinstall"))
-                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, tr("Close"));
+                    << new DialogButtonItem(DialogWidget::Accept, "Reinstall")
+                    << new DialogButtonItem(DialogWidget::Reject | DialogWidget::Default, "Close");
         }
 
         self().buttons()
                 << new DialogButtonItem(DialogWidget::Action | DialogWidget::Id1,
                                         style().images().image("gear"),
-                                        new SignalAction(thisPublic, SLOT(editSettings())));
+                                        [this]() { self().editSettings(); });
 
         if (askUpgrade)
         {
             self().buttons()
-                    << new DialogButtonItem(DialogWidget::Action, tr("What's New?"),
-                                            new SignalAction(thisPublic, SLOT(showWhatsNew())));
+                    << new DialogButtonItem(DialogWidget::Action, "What's New?",
+                                            [this]() { self().showWhatsNew(); });
         }
     }
 
@@ -193,7 +194,11 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
 
         LOG_DEBUG("Never check for updates: %b") << set;
     }
+
+    DE_PIMPL_AUDIENCE(Recheck)
 };
+
+DE_AUDIENCE_METHOD(UpdateAvailableDialog, Recheck)
 
 UpdateAvailableDialog::UpdateAvailableDialog()
     : MessageDialog("updateavailable"), d(new Impl(this))
@@ -230,7 +235,7 @@ void UpdateAvailableDialog::editSettings()
         {
             d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
             d->showProgress(true, SHOW_ANIM_SPAN);
-            emit checkAgain();
+            DE_FOR_AUDIENCE2(Recheck, i) i->userRequestedSoftwareUpdateCheck();
         }
     }
 }

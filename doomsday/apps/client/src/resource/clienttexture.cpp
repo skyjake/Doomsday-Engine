@@ -191,7 +191,7 @@ String ClientTexture::description() const
     }
 
     return res::Texture::description() +
-           String::format(" x%i", variantCount()) +
+           Stringf(" x%i", variantCount()) +
            os.str();
 }
 

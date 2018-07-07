@@ -212,7 +212,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
                         // be loaded.
                         if (mapItems.findData(TextValue(mapId)) == ui::Data::InvalidPos)
                         {
-                            mapItems << new ChoiceItem(String::format("%s  " _E(s) _E(C) "%s",
+                            mapItems << new ChoiceItem(Stringf("%s  " _E(s) _E(C) "%s",
                                                                       mapId.c_str(),
                                                                       wadName.c_str()),
                                                        TextValue(mapId));

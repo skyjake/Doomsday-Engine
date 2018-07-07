@@ -45,7 +45,7 @@ Decoration::~Decoration()
 
 String Decoration::description() const
 {
-    auto desc = String::format(    _E(l) "Origin: "   _E(.)_E(i) "%s" _E(.)
+    auto desc = Stringf(    _E(l) "Origin: "   _E(.)_E(i) "%s" _E(.)
                                " " _E(l) "Material: " _E(.)_E(i) "%s" _E(.)
                                " " _E(l) "Surface: "  _E(.)_E(i) "[%p]" _E(.),
                   origin().asText().c_str(),
@@ -53,7 +53,7 @@ String Decoration::description() const
                   &surface());
 
 #ifdef DE_DEBUG
-    desc.prepend(String::format(_E(b) "Decoration " _E(.) "[%p]\n", this));
+    desc.prepend(Stringf(_E(b) "Decoration " _E(.) "[%p]\n", this));
 #endif
     return desc;
 }

@@ -53,7 +53,7 @@ dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
         msg->setDeleteAfterDismissed(true);
         msg->title().setText("Files In Use");
         msg->message().setText(String(message) + "\n\n" _E(2) +
-                               String::format("There is a running process called " _E(b)"%s." _E(.),
+                               Stringf("There is a running process called " _E(b)"%s." _E(.),
                                     processName));
 
         msg->buttons()

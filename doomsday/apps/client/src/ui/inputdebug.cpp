@@ -209,7 +209,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 
     if (label.isEmpty())
     {
-        label = String::format("#%03i", buttonID);
+        label = Stringf("#%03i", buttonID);
     }
 
     initDrawStateForVisual(&origin);
@@ -425,11 +425,10 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
         Size2Raw size;
 
         DGL_Enable(DGL_TEXTURE_2D);
-        Block const fullName(device.title().toUtf8());
-        FR_DrawText(fullName.constData(), nullptr/*no offset*/);
+        FR_DrawText(device.title(), nullptr/*no offset*/);
         DGL_Disable(DGL_TEXTURE_2D);
 
-        FR_TextSize(&size, fullName.constData());
+        FR_TextSize(&size, device.title());
         visualGeom = Rect_NewWithOriginSize2(offset.x, offset.y, size.width, size.height);
 
         offset.y += size.height + SPACING;

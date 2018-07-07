@@ -43,7 +43,7 @@ DE_GUI_PIMPL(PackagesSidebarWidget)
         browser->actionItems().insert(
             0,
             new ui::ActionItem(
-                tr("..."), new CallbackAction([this]() {
+                "...", new CallbackAction([this]() {
                     auto *pop = new PackageInfoDialog(browser->actionPackage(),
                                                       PackageInfoDialog::EnableActions);
                     root().addOnTop(pop);
@@ -52,7 +52,7 @@ DE_GUI_PIMPL(PackagesSidebarWidget)
                         browser->actionWidget()->as<HomeItemWidget>().buttonWidget(0).rule(),
                         ui::Up);
                     pop->open();
-                })));
+        }));
     }
 };
 

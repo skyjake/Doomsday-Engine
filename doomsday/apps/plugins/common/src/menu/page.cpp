@@ -411,7 +411,7 @@ void Page::setOnActiveCallback(const OnActiveCallback &newCallback)
 static inline String subpageText(int page = 0, int totalPages = 0)
 {
     if(totalPages <= 0) return "";
-    return String::format("Page %i/%i", page, totalPages);
+    return Stringf("Page %i/%i", page, totalPages);
 }
 #endif
 

@@ -315,7 +315,7 @@ String AxisInputControl::description() const
         flagsString = String(_E(l) " Flags :" _E(.)_E(i) "%s" _E(.), String::join(flags, "|").c_str());
     }
 
-    return String::format(_E(b) "%s " _E(.) "(%s)"
+    return Stringf(_E(b) "%s " _E(.) "(%s)"
                           _E(l) " Current value: " _E(.) "%f"
                           _E(l) " Deadzone: " _E(.) "%f"
                           _E(l) " Scale: "     _E(.) "%f"
@@ -353,7 +353,7 @@ void AxisInputControl::consoleRegister()
     DE_GUARD(this);
 
     DE_ASSERT(hasDevice() && !name().isEmpty());
-    String controlName = String::format("input-%s-%s", device().name().c_str(), name().c_str());
+    String controlName = Stringf("input-%s-%s", device().name().c_str(), name().c_str());
 
     String scale = controlName + "-factor";
     C_VAR_FLOAT(scale, &d->scale, CVF_NO_MAX, 0, 0);

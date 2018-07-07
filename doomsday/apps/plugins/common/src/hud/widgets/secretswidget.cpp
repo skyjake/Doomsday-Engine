@@ -67,11 +67,11 @@ void guidata_secrets_t::draw(Vec2i const &offset) const
     String valueAsText("Secret");
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS)
     {
-        valueAsText += String::format(" %i/%i", _value, totalSecret);
+        valueAsText += Stringf(" %i/%i", _value, totalSecret);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
-        valueAsText += String::format(" %s%i%%%s",
+        valueAsText += Stringf(" %s%i%%%s",
                                       (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? "(" : "",
                                       totalSecret ? _value * 100 / totalSecret : 100,
                                       (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? ")" : "");
@@ -120,11 +120,11 @@ void guidata_secrets_t::updateGeometry()
     String valueAsText("Secret");
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS)
     {
-        valueAsText += String::format(" %i/%i", _value, totalSecret);
+        valueAsText += Stringf(" %i/%i", _value, totalSecret);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_SECRETS_PRCNT)
     {
-        valueAsText += String::format(" %s%i%%%s",
+        valueAsText += Stringf(" %s%i%%%s",
                                       (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? "(" : "",
                                       totalSecret ? _value * 100 / totalSecret : 100,
                                       (cfg.common.hudShownCheatCounters & CCH_SECRETS) ? ")" : "");

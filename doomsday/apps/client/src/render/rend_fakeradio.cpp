@@ -806,8 +806,8 @@ static void drawWallShadow(Vec3f const *posCoords, WallEdge const &leftEdge, Wal
         {
             duint const numVerts = 3 + leftEdge .divisionCount();
             duint const base     = buffer.allocateVertices(numVerts);
-            if (indices.size() < int(numVerts)) indices.resize(numVerts);
-            for(duint i = 0; i < numVerts; ++i)
+            if (indices.size() < numVerts) indices.resize(numVerts);
+            for (duint i = 0; i < numVerts; ++i)
             {
                 indices[i] = base + i;
             }

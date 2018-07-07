@@ -33,16 +33,15 @@
 #include <de/DictionaryValue>
 #include <de/PackageLoader>
 #include <de/SequentialLayout>
-#include <de/ui/SubwidgetItem>
 #include <de/ProgressWidget>
-
-#include <QTimer>
+#include <de/Timer>
+#include <de/ui/SubwidgetItem>
 
 using namespace de;
 
-static DialogWidget::RoleFlags const ID_SV_PACKAGES = DialogWidget::Id1;
-static DialogWidget::RoleFlags const ID_JOIN        = DialogWidget::Id2;
-static DialogWidget::RoleFlags const ID_PING        = DialogWidget::Id3;
+static const DialogWidget::RoleFlags ID_SV_PACKAGES = DialogWidget::Id1;
+static const DialogWidget::RoleFlags ID_JOIN        = DialogWidget::Id2;
+static const DialogWidget::RoleFlags ID_PING        = DialogWidget::Id3;
 
 DE_GUI_PIMPL(ServerInfoDialog)
 , DE_OBSERVES(ServerLink, MapOutline)
@@ -54,13 +53,12 @@ DE_GUI_PIMPL(ServerInfoDialog)
     String domainName;
     GameProfile profile;
     shell::ServerInfo serverInfo;
-    TimeSpan ping = -1;
+    TimeSpan ping = -1.0;
 
     // Network queries.
     ServerLink link; // querying details from the server
-    QTimer queryTimer; // allow the dialog to open nicely before starting network queries
-    enum Query
-    {
+    Timer queryTimer; // allow the dialog to open nicely before starting network queries
+    enum Query {
         QueryNone,
         QueryStatus,
         QueryPing,
@@ -86,27 +84,26 @@ DE_GUI_PIMPL(ServerInfoDialog)
     {
         link.audienceForMapOutline()   += this;
         link.audienceForPingResponse() += this;
-        connect(&queryTimer, &QTimer::timeout, [this] () { beginPendingQuery(); });
+        queryTimer += [this]() { beginPendingQuery(); };
 
         self().useInfoStyle();
 
         // The Close button is always available. Other actions are shown depending
         // on what kind of package is being displayed.
         self().buttons()
-                << new DialogButtonItem(Default | Accept, tr("Close"))
-                << new DialogButtonItem(Action | ID_JOIN, tr("Join Game"), new CallbackAction([this] () {
+                << new DialogButtonItem(Default | Accept, "Close")
+                << new DialogButtonItem(Action | ID_JOIN, "Join Game", [this] () {
                     self().accept();
-                    emit self().joinGame();
-                }))
+                    DE_FOR_PUBLIC_AUDIENCE2(JoinGame, i) i->joinGame(serverInfo);
+                })
                 << new DialogButtonItem(Action | ID_PING,
-                                        style().images().image("refresh"), tr("Ping"),
-                                        new CallbackAction([this] () {
-                    ping = -1;
+                                        style().images().image("refresh"), "Ping", [this] () {
+                    ping = -1.0;
                     updateContent();
                     startQuery(QueryPing);
-                }))
+                })
                 << new DialogButtonItem(ActionPopup | ID_SV_PACKAGES,
-                                        style().images().image("package.icon"), tr("Server"));
+                                        style().images().image("package.icon"), "Server");
 
         createWidgets();
         self().buttonWidget(ID_JOIN)->disable();
@@ -167,7 +164,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
                   .setInput(Rule::Bottom, gameState->rule().bottom());
 
         serverPackageActions << new ui::SubwidgetItem(
-            tr("..."), ui::Right, [this]() -> PopupWidget * {
+            "...", ui::Right, [this]() -> PopupWidget * {
                 return new PackageInfoDialog(serverPackages->actionPackage(),
                                              PackageInfoDialog::EnableActions);
             });
@@ -182,7 +179,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
         serverPackages->setActionItems(serverPackageActions);
         serverPackages->setActionsAlwaysShown(true);
         serverPackages->setPackageStatus(*this);
-        serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Mods"));
+        serverPackages->searchTermsEditor().setEmptyContentHint("Filter Server Mods");
         serverPackages->rule().setInput(Rule::Width, rule("dialog.serverinfo.popup.width"));
         serverPopup->setContent(serverPackages);
 
@@ -190,24 +187,22 @@ DE_GUI_PIMPL(ServerInfoDialog)
 
         auto *svBut = self().popupButtonWidget(ID_SV_PACKAGES);
         svBut->setPopup(*serverPopup);
-        svBut->setText(tr("Server"));
+        svBut->setText("Server");
         svBut->setTextAlignment(ui::AlignLeft);
         svBut->disable();
 
         localPackages = new PackagesButtonWidget;
         localPackages->setColorTheme(Inverted);
-        localPackages->setLabelPrefix(tr("Local: "));
-        localPackages->setNoneLabel(tr("Local Mods..."));
+        localPackages->setLabelPrefix("Local: ");
+        localPackages->setNoneLabel("Local Mods...");
         localPackages->setGameProfile(profile);
         localPackages->disable();
         localPackages->rule().setLeftTop(svBut->rule().right(), svBut->rule().top());
         self().add(localPackages);
 
-        QObject::connect(localPackages, &PackagesButtonWidget::packageSelectionChanged,
-                         [this] (QStringList packages)
-        {
-            Game::setLocalMultiplayerPackages(profile.gameId(), toStringList(packages));
-        });
+        localPackages->audienceForSelection() += [this](){
+            Game::setLocalMultiplayerPackages(profile.gameId(), localPackages->packages());
+        };
 
         updateLayout();
     }
@@ -247,7 +242,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
             StringList lines;
             if (!domainName.isEmpty())
             {
-                lines << _E(b) + domainName + _E(.) + String(" (%1)").arg(host.asText());
+                lines << _E(b) + domainName + _E(.) + Stringf(" (%s)", host.asText().c_str());
             }
             else
             {
@@ -270,19 +265,20 @@ DE_GUI_PIMPL(ServerInfoDialog)
             }
             else
             {
-                plrDesc = String("%1 " DE_CHAR_MDASH " %2")
-                        .arg(players.count())
-                        .arg(String::join(players, ", "));
+                plrDesc = Stringf("%i " DE_CHAR_MDASH " %s",
+                        players.count(),
+                        String::join(players, ", ").c_str());
             }
-            String msg = String(_E(Ta)_E(l) "%1:" _E(.)_E(Tb) " %2\n"
-                                _E(Ta)_E(l) "%3:" _E(.)_E(Tb) " %4\n"
-                                _E(Ta)_E(l) "%5:" _E(.)_E(Tb) " %6\n"
-                                _E(Ta)_E(l) "%7:" _E(.)_E(Tb) " %8")
-                    .arg(tr("Rules"))  .arg(serverInfo.gameConfig())
-                    .arg(tr("Players")).arg(plrDesc)
-                    .arg(tr("Version")).arg(serverInfo.version().asHumanReadableText())
-                    .arg(tr("Ping"))   .arg(ping < 0.0? String(DE_CHAR_MDASH)
-                                                      : String("%1 ms").arg(ping.asMilliSeconds()));
+            String msg = Stringf(
+                _E(Ta) _E(l) "Rules:" _E(.) _E(Tb) " %s\n"
+                _E(Ta) _E(l) "Players:" _E(.) _E(Tb) " %s\n"
+                _E(Ta) _E(l) "Version:" _E(.) _E(Tb) " %s\n"
+                _E(Ta) _E(l) "Ping:" _E(.) _E(Tb) " %s",
+                serverInfo.gameConfig().c_str(),
+                plrDesc.c_str(),
+                serverInfo.version().asHumanReadableText().c_str(),
+                ping < 0.0 ? DE_CHAR_MDASH
+                           : Stringf("%i ms", ping.asMilliSeconds()).c_str());
             description->setText(msg);
         }
 
@@ -295,11 +291,11 @@ DE_GUI_PIMPL(ServerInfoDialog)
 
         // Game state.
         {
-            String msg = String(_E(b) "%1" _E(.)_E(s) "\n%2 " DE_CHAR_MDASH " %3")
-                        .arg(serverInfo.map())
-                        .arg(serverInfo.gameConfig().containsWord("coop")? tr("Co-op")
-                                                                         : tr("Deathmatch"))
-                        .arg(gameTitle);
+            String msg = Stringf(_E(b) "%s" _E(.) _E(s) "\n%s " DE_CHAR_MDASH " %s",
+                                        serverInfo.map().c_str(),
+                                        serverInfo.gameConfig().containsWord("coop") ? "Co-op"
+                                                                                     : "Deathmatch",
+                                        gameTitle.c_str());
             gameState->setText(msg);
         }
 
@@ -308,7 +304,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
 
         // Local packages.
         {
-            localPackages->setDialogTitle(tr("Local Mods for %1 Multiplayer").arg(gameTitle));
+            localPackages->setDialogTitle(Stringf("Local Mods for %s Multiplayer", gameTitle.c_str()));
             localPackages->setGameProfile(profile);
             localPackages->setPackages(Game::localMultiplayerPackages(gameId));
         }
@@ -335,8 +331,9 @@ DE_GUI_PIMPL(ServerInfoDialog)
                         if (auto *pkgFile = PackageLoader::get().select(id_ver.first))
                         {
                             localVersion = Package::versionForFile(*pkgFile);
-                            missing << String("%1 " _E(s) "(you have: %2)" _E(.))
-                                       .arg(pkgId).arg(localVersion.fullNumber());
+                            missing << Stringf("%1 " _E(s) "(you have: %s)" _E(.),
+                                                      pkgId.c_str(),
+                                                      localVersion.fullNumber().c_str());
                             continue;
                         }
                     }
@@ -355,7 +352,9 @@ DE_GUI_PIMPL(ServerInfoDialog)
             serverPackages->setManualPackageIds(available);
 
             self().buttonWidget(ID_SV_PACKAGES)->enable();
-            self().buttonWidget(ID_SV_PACKAGES)->setText(tr("Server: %1").arg(serverInfo.packages().size()));
+            self()
+                .buttonWidget(ID_SV_PACKAGES)
+                ->setText(Stringf("Server: %zu", serverInfo.packages().size()));
         }
     }
 
@@ -371,7 +370,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
         pendingQuery = query;
 
         queryTimer.stop();
-        queryTimer.setInterval(500);
+        queryTimer.setInterval(0.5);
         queryTimer.setSingleShot(true);
         queryTimer.start();
     }

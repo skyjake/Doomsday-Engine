@@ -235,7 +235,7 @@ DE_GUI_PIMPL(TaskBarWidget)
             else
             {
                 text = _E(b) + currentVersion.compactNumber() + " " +
-                       _E(l) + String("#%1").arg(currentVersion.build);
+                       _E(l) + Stringf("#%i", currentVersion.build);
             }
         }
         else
@@ -328,7 +328,7 @@ DE_GUI_PIMPL(TaskBarWidget)
         }
         else
         {
-            status->setText(tr("No game loaded"));
+            status->setText("No game loaded");
         }
     }
 
@@ -336,11 +336,11 @@ DE_GUI_PIMPL(TaskBarWidget)
     {
         if (self().root().window().as<ClientWindow>().isGameMinimized())
         {
-            mainMenu->items().at(POS_HOME).setLabel(tr("Hide Home"));
+            mainMenu->items().at(POS_HOME).setLabel("Hide Home");
         }
         else
         {
-            mainMenu->items().at(POS_HOME).setLabel(tr("Show Home"));
+            mainMenu->items().at(POS_HOME).setLabel("Show Home");
         }
     }
 };
@@ -421,7 +421,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     d->multi->hide(); // hidden when not connected
     d->multi->setImage(style().images().image("network"));
     d->multi->setTextAlignment(ui::AlignRight);
-    d->multi->setText(tr("MP"));
+    d->multi->setText("MP");
     d->multi->setSizePolicy(ui::Expand, ui::Filled);
     d->multi->rule().setInput(Rule::Height, rule().height());
     add(d->multi);
@@ -444,62 +444,62 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 
     // Game unloading confirmation submenu.
     auto *unloadMenu = new ui::SubmenuItem(style().images().image("close.ring"),
-                                           tr("Unload Game"), ui::Left);
+                                           "Unload Game", ui::Left);
     unloadMenu->items()
-            << new ui::Item(ui::Item::Separator, tr("Really unload the game?"))
-            << new ui::ActionItem(tr("Unload") + " " _E(b) + tr("(discard progress)"), new SignalAction(this, SLOT(unloadGame())))
-            << new ui::ActionItem(tr("Cancel"), new SignalAction(&d->mainMenu->menu(), SLOT(dismissPopups())));
+            << new ui::Item(ui::Item::Separator, "Really unload the game?")
+            << new ui::ActionItem("Unload " _E(b) "(discard progress)", [this]() { unloadGame(); })
+            << new ui::ActionItem("Cancel", [this]() { d->mainMenu->menu().dismissPopups(); });
 
     /*
      * Set up items for the config and DE menus. Some of these are shown/hidden
      * depending on whether a game is loaded.
      */
     d->configMenu->items()
-            << new ui::SubwidgetItem(style().images().image("renderer"),  tr("Renderer"),       ui::Left, makePopup<RendererSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("vr"),        tr("3D & VR"),        ui::Left, makePopup<VRSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("renderer"),  "Renderer",       ui::Left, makePopup<RendererSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("vr"),        "3D & VR",        ui::Left, makePopup<VRSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(style().images().image("display"),   tr("Video"),          ui::Left, makePopup<VideoSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("audio"),     tr("Audio"),          ui::Left, makePopup<AudioSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("input"),     tr("Input"),          ui::Left, makePopup<InputSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("network"),   tr("Network"),        ui::Left, makePopup<NetworkSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("display"),   "Video",          ui::Left, makePopup<VideoSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("audio"),     "Audio",          ui::Left, makePopup<AudioSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("input"),     "Input",          ui::Left, makePopup<InputSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("network"),   "Network",        ui::Left, makePopup<NetworkSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
-            << new ui::SubwidgetItem(style().images().image("package.icon"), tr("Data Files"),     ui::Left, makePopup<DataFileSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>);
+            << new ui::SubwidgetItem(style().images().image("package.icon"), "Data Files",     ui::Left, makePopup<DataFileSettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("home.icon"), "User Interface", ui::Left, makePopup<UISettingsDialog>);
 #if defined (DE_HAVE_UPDATER)
     d->configMenu->items()
-            << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings);
+            << new ui::SubwidgetItem(style().images().image("updater"),   "Updater",        ui::Left, makeUpdaterSettings);
 #endif
 
-    auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
+    auto *helpMenu = new ui::SubmenuItem("Help", ui::Left);
     helpMenu->items()
-            << new ui::ActionItem(tr("Show Tutorial"), new SignalAction(this, SLOT(showTutorial())));
-            //<< new ui::VariableToggleItem(tr("Menu Annotations"), App::config("ui.showAnnotations"))
+            << new ui::ActionItem("Show Tutorial", [this]() { showTutorial(); });
+            //<< new ui::VariableToggleItem("Menu Annotations", App::config("ui.showAnnotations"))
 
     d->mainMenu->items()
-            << new ui::Item(ui::Item::Separator, tr("Games"))
+            << new ui::Item(ui::Item::Separator, "Games")
             << new ui::ActionItem(style().images().image("home.icon"), "",
-                                  new SignalAction(this, SLOT(showOrHideHome())))
-            << new ui::ActionItem(tr("Connect to Server..."), new SignalAction(this, SLOT(connectToServerManually())))
+                                  [this]() { showOrHideHome(); })
+            << new ui::ActionItem("Connect to Server...", [this]() { connectToServerManually(); })
             << new ui::Item(ui::Item::Separator)
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Resources"))
-            << new ui::ActionItem(tr("Browse Mods..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            << new ui::Item(ui::Item::Separator, "Resources")
+            << new ui::ActionItem("Browse Mods...", [this]() { openPackagesSidebar(); })
             << new ui::Item(ui::Item::Annotation,
-                            tr("Load/unload data files and view package information."))
-            << new ui::ActionItem(tr("Clear Cache"), new CallbackAction([] () { DoomsdayApp::app().clearCache(); }))
+                            "Load/unload data files and view package information.")
+            << new ui::ActionItem("Clear Cache", []() { DoomsdayApp::app().clearCache(); })
             << new ui::Item(ui::Item::Annotation,
-                            tr("Forces a refresh of resource file metadata."))
+                            "Forces a refresh of resource file metadata.")
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Doomsday"))
+            << new ui::Item(ui::Item::Separator, "Doomsday")
 #if defined (DE_HAVE_UPDATER)
-            << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
+            << new ui::ActionItem("Check for Updates", new CommandAction("updateandnotify"))
 #endif
-            << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
+            << new ui::ActionItem("About Doomsday", [this]() { showAbout(); })
             << helpMenu
 #if !defined (DE_MOBILE)
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"))
+            << new ui::ActionItem("Quit Doomsday", new CommandAction("quit!"))
 #endif
             ;
 
@@ -508,9 +508,8 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
     // Set the initial command line layout.
     updateCommandLineLayout();
 
-    connect(d->console, SIGNAL(commandModeChanged()), this, SLOT(updateCommandLineLayout()));
-    connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeMainMenu()));
-    connect(d->console, SIGNAL(commandLineGotFocus()), this, SLOT(closeConfigMenu()));
+    d->console->audienceForCommandMode() += [this]() { updateCommandLineLayout(); };
+    d->console->audienceForGotFocus() += [this]() { closeMainMenu(); closeConfigMenu(); };
 
     // Initially closed.
     close();
@@ -674,7 +673,7 @@ void TaskBarWidget::open()
         d->vertShift->set(0, OPEN_CLOSE_SPAN);
         setOpacity(1, OPEN_CLOSE_SPAN);
 
-        emit opened();
+        DE_FOR_AUDIENCE2(Open, i) i->taskBarOpened();
     }
 
     // Untrap the mouse if it is trapped.
@@ -722,7 +721,7 @@ void TaskBarWidget::close()
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
         if (hasRoot()) root().setFocus(0);
 
-        emit closed();
+        DE_FOR_AUDIENCE2(Close, i) i->taskBarClosed();
 
         // Retrap the mouse if it was trapped when opening.
         if (hasRoot())
@@ -741,7 +740,7 @@ void TaskBarWidget::close()
 
 void TaskBarWidget::openConfigMenu()
 {
-    d->mainMenu->close(0);
+    d->mainMenu->close(0.0);
     d->configMenu->open();
 }
 
@@ -752,7 +751,7 @@ void TaskBarWidget::closeConfigMenu()
 
 void TaskBarWidget::openMainMenu()
 {
-    d->configMenu->close(0);
+    d->configMenu->close(0.0);
     d->mainMenu->open();
 }
 

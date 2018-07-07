@@ -1294,7 +1294,7 @@ void DD_FinishInitializationAfterWindowReady()
     {
         initializeWithWindowReady();
         // Let everyone know we're up and running (via another timer callback).
-        Loop::get().timer(0.1, [] () { App::app().notifyStartupComplete(); });
+        Loop::timer(0.1, [] () { App::app().notifyStartupComplete(); });
         return;
     }
     catch (Error const &er)
@@ -1460,7 +1460,7 @@ void DD_CheckTimeDemo()
             CommandLine_CheckWith("-playdemo", 1))   // Play-once mode.
         {
             Con_Execute(
-                CMDS_CMDLINE, String::format("playdemo %s", CommandLine_Next()), false, false);
+                CMDS_CMDLINE, Stringf("playdemo %s", CommandLine_Next()), false, false);
         }
     }
 }

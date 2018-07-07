@@ -67,12 +67,12 @@ static DotPath composeSurfacePath(Surface const &surface)
     switch (owner.type())
     {
     case DMU_PLANE:
-        return String::format("sector#%i.%s",
+        return Stringf("sector#%i.%s",
                               owner.as<Plane>().sector().indexInMap(),
                               Sector::planeIdAsText(owner.as<Plane>().indexInSector()).c_str());
 
     case DMU_SIDE:
-        return String::format(
+        return Stringf(
             "line#%i.%s.%s",
             owner.as<LineSide>().line().indexInMap(),
             Line::sideIdAsText(owner.as<LineSide>().sideId()).c_str(),
@@ -1405,7 +1405,7 @@ ClientSubsector::ClientSubsector(List<ConvexSubspace *> const &subspaces)
 
 String ClientSubsector::description() const
 {
-    auto desc = String::format(_E(l) "%s: " _E(.) _E(i) "Sector %i%s" _E(.) " " _E(l) "%s: " _E(.)
+    auto desc = Stringf(_E(l) "%s: " _E(.) _E(i) "Sector %i%s" _E(.) " " _E(l) "%s: " _E(.)
                                    _E(i) "Sector %i%s" _E(.),
                                Sector::planeIdAsText(Sector::Floor).upperFirstChar().c_str(),
                                visFloor().sector().indexInMap(),
@@ -1416,11 +1416,11 @@ String ClientSubsector::description() const
 
     if (d->boundaryData)
     {
-        desc += String::format(_E(D) "\nEdge loops (%i):" _E(.), edgeLoopCount());
+        desc += Stringf(_E(D) "\nEdge loops (%i):" _E(.), edgeLoopCount());
         dint index = 0;
         forAllEdgeLoops([&desc, &index] (ClEdgeLoop const &loop)
         {
-            desc += String::format("\n[%i]: ", index) + _E(>) + loop.description() + _E(<);
+            desc += Stringf("\n[%i]: ", index) + _E(>) + loop.description() + _E(<);
             index += 1;
             return LoopContinue;
         });
@@ -1435,14 +1435,14 @@ String ClientSubsector::description() const
             for (Decoration *decor : static_cast<Impl::DecoratedSurface *>
                                      (surface->decorationState())->decorations)
             {
-                desc += String::format("\n[%i]: ", decorIndex) + _E(>) + decor->description() + _E(<);
+                desc += Stringf("\n[%i]: ", decorIndex) + _E(>) + decor->description() + _E(<);
                 decorIndex += 1;
             }
         }
     }
 
     DE_DEBUG_ONLY(
-        desc.prepend(String::format(_E(b) "ClientSubsector " _E(.) "[%p]\n", this));
+        desc.prepend(Stringf(_E(b) "ClientSubsector " _E(.) "[%p]\n", this));
     )
     return Subsector::description() + "\n" + desc;
 }

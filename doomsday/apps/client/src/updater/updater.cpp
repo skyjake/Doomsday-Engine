@@ -28,7 +28,7 @@
  */
 
 //#include <QDateTime>
-//#include <QStringList>
+//#include <StringList>
 //#include <QDesktopServices>
 //#include <QNetworkAccessManager>
 //#include <QTextStream>
@@ -185,7 +185,7 @@ DE_PIMPL(Updater)
     String composeCheckUri()
     {
         UpdaterSettings st;
-        String uri = String::format("%sbuilds?latest_for=%s&type=%s",
+        String uri = Stringf("%sbuilds?latest_for=%s&type=%s",
                 App::apiUrl().c_str(),
                 DE_PLATFORM_ID,
                 st.channel() == UpdaterSettings::Stable   ? "stable" :
@@ -260,7 +260,7 @@ DE_PIMPL(Updater)
     void showCheckingNotification()
     {
         status->setRange(Rangei(0, 1));
-        status->setProgress(0, 0);
+        status->setProgress(0, 0.0);
         status->showIcon("text");
         showNotification(true);
     }
@@ -301,7 +301,7 @@ DE_PIMPL(Updater)
             return;
         }
 
-        QVariant result = de::parseJSON(QString::fromUtf8(reply->readAll()));
+        QVariant result = de::parseJSON(String::fromUtf8(reply->readAll()));
         if (!result.isValid()) return;
 
         QVariantMap const map = result.toMap();
@@ -386,7 +386,7 @@ DE_PIMPL(Updater)
         DE_ASSERT(availableDlg != 0);
 
         availableDlg->setDeleteAfterDismissed(true);
-        QObject::connect(availableDlg, SIGNAL(checkAgain()), thisPublic, SLOT(recheck()));
+        availableDlg->audienceForRecheck() += [this]() { self().recheck(); };
 
         if (availableDlg->exec(ClientWindow::main().root()))
         {
@@ -407,10 +407,11 @@ DE_PIMPL(Updater)
 
         download = new UpdateDownloadDialog(latestPackageUri, latestPackageUri2);
         status->popupButton().setPopup(*download, ui::Down);
-        QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
-        QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
-        QObject::connect(download, SIGNAL(downloadFailed(QString)), thisPublic, SLOT(downloadFailed(QString)));
-        QObject::connect(download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
+//        download->audienceForClose() += [this]() { self().downloadDialogClosed(); }
+//        download->audienceForAccept() += [this]() { self().downloadCompleted(1); };
+        //, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
+//        download, SIGNAL(downloadFailed(String)), thisPublic, SLOT(downloadFailed(String)));
+//        download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
 
         ClientWindow::main().root().addOnTop(download);
     }
@@ -421,16 +422,18 @@ DE_PIMPL(Updater)
      *
      * @param distribPackagePath  File path of the distribution package.
      */
-    void startInstall(de::String distribPackagePath)
+    void startInstall(const String &distribPackagePath)
     {
 #ifdef MACOSX
-        de::String volName = "Doomsday Engine " + latestVersion.compactNumber();
+        String volName = "Doomsday Engine " + latestVersion.compactNumber();
 
-#ifdef DE_QT_5_0_OR_NEWER
-        QString scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-#else
-        QString scriptPath = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
-#endif
+//#ifdef DE_QT_5_0_OR_NEWER
+//        String scriptPath = QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
+//#else
+//        String scriptPath = QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
+//#endif
+#if 0
+        String scriptPath = App::cachePath();
         QDir::current().mkpath(scriptPath); // may not exist
         scriptPath = QDir(scriptPath).filePath(INSTALL_SCRIPT_NAME);
         QFile file(scriptPath);
@@ -473,6 +476,7 @@ DE_PIMPL(Updater)
         installerCommand->append("osascript");
         installerCommand->append(scriptPath);
         atexit(runInstallerCommand);
+#endif
 
 #elif defined(WIN32)
         /**
@@ -519,7 +523,7 @@ DE_PIMPL(Updater)
 
 Updater::Updater() : d(new Impl(this))
 {
-    connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
+//    connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
 
     // Do a silent auto-update check when starting.
     App::app().audienceForStartupComplete() += d;
@@ -584,7 +588,7 @@ void Updater::downloadCompleted(int)
     d->savingSuggested = false;
 }
 
-void Updater::downloadFailed(QString message)
+void Updater::downloadFailed(String message)
 {
     LOG_NOTE("Update cancelled: ") << message;
 }

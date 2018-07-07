@@ -281,14 +281,14 @@ DE_PIMPL(MaterialAnimator)
         short tics    = 0;   ///< Remaining (sharp) tics in the current stage.
         float inter   = 0.f; ///< Intermark from the current stage to the next [0..1].
 
-        QVector<ClientTexture *> stageTextures;
+        List<ClientTexture *> stageTextures;
 
         String synopsis() const {
-            return String("stage: %1 tics: %2 inter: %3").arg(stage).arg(tics).arg(inter);
+            return Stringf("stage: %i tics: %i inter: %f", stage, tics, inter);
         }
     };
     /// Layer animation states.
-    QList<LayerState *> layers;
+    List<LayerState *> layers;
 
     /**
      * Cached animation state snapshot.
@@ -331,7 +331,7 @@ DE_PIMPL(MaterialAnimator)
     int lastSnapshotUpdate = -1;  ///< Frame count of last snapshot update.
 
     /// Animated material decorations.
-    QList<Decoration *> decorations;
+    List<Decoration *> decorations;
 
     Impl(Public *i) : Base(i) {}
     ~Impl()
@@ -342,7 +342,7 @@ DE_PIMPL(MaterialAnimator)
 
     void clearLayers()
     {
-        qDeleteAll(layers); layers.clear();
+        deleteAll(layers); layers.clear();
     }
 
     void initLayers()
@@ -357,7 +357,7 @@ DE_PIMPL(MaterialAnimator)
 
     void fetchStageTextures()
     {
-        for (int i = 0; i < layers.size(); ++i)
+        for (duint i = 0; i < layers.size(); ++i)
         {
             layers[i]->stageTextures.clear();
 
@@ -373,7 +373,7 @@ DE_PIMPL(MaterialAnimator)
 
     void clearDecorations()
     {
-        qDeleteAll(decorations); decorations.clear();
+        deleteAll(decorations); decorations.clear();
     }
 
     void initDecorations()

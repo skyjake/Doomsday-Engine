@@ -317,10 +317,10 @@ String Line::Side::description() const
     if (!flagNames.isEmpty())
     {
         String const flagsAsText = String::join(flagNames, "|");
-        flagsString = String::format(_E(l) " Flags: " _E(.)_E(i) "%s" _E(.), flagsAsText.c_str());
+        flagsString = Stringf(_E(l) " Flags: " _E(.)_E(i) "%s" _E(.), flagsAsText.c_str());
     }
 
-    auto text = String::format(_E(D)_E(b) "%s:\n"  _E(.)_E(.)
+    auto text = Stringf(_E(D)_E(b) "%s:\n"  _E(.)_E(.)
                        _E(l)  "Sector: "    _E(.)_E(i) "%s" _E(.)
                        _E(l) " One Sided: " _E(.)_E(i) "%s" _E(.)
                        "%s",
@@ -331,7 +331,7 @@ String Line::Side::description() const
 
     forAllSurfaces([this, &text] (Surface &surf)
     {
-        text += String::format("\n" _E(D) "%s:\n%s" _E(.),
+        text += Stringf("\n" _E(D) "%s:\n%s" _E(.),
                   sectionIdAsText(  &surf == &top   () ? Side::Top
                                   : &surf == &middle() ? Side::Middle
                                   :                      Side::Bottom).c_str(),
@@ -1547,7 +1547,7 @@ D_CMD(InspectLine)
     String flagsString;
     if (!flagNames.isEmpty())
     {
-        flagsString = String::format(_E(l) " Flags: " _E(.) _E(i) "%s" _E(.),
+        flagsString = Stringf(_E(l) " Flags: " _E(.) _E(i) "%s" _E(.),
                                      String::join(flagNames, "|").c_str());
     }
 

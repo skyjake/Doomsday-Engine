@@ -195,12 +195,12 @@ ClientSubsector &ClEdgeLoop::owner() const
 
 String ClEdgeLoop::description() const
 {
-    auto desc = String::format(    _E(l) "Loop: "       _E(.)_E(i) "%s" _E(.)
+    auto desc = Stringf(    _E(l) "Loop: "       _E(.)_E(i) "%s" _E(.)
                                " " _E(l) "Half-edge: "  _E(.)_E(i) "[%p]" _E(.),
                   ClientSubsector::edgeLoopIdAsText(loopId()).upperFirstChar().c_str(),
                   d->firstHEdge);
     DE_DEBUG_ONLY(
-        desc.prepend(String::format(_E(b) "ClEdgeLoop " _E(.) "[%p]\n", this));
+        desc.prepend(Stringf(_E(b) "ClEdgeLoop " _E(.) "[%p]\n", this));
     )
     return desc;
 }

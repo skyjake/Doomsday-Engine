@@ -667,7 +667,7 @@ DE_PIMPL(MapImporter)
         MaterialId toMaterialId(dint uniqueId, MaterialGroup group)
         {
             // Prepare the encoded URI for insertion into the dictionary.
-            res::Uri textureUrn(String::format("urn:%s:%i", group == PlaneMaterials? "Flats" : "Textures", uniqueId), RC_NULL);
+            res::Uri textureUrn(Stringf("urn:%s:%i", group == PlaneMaterials? "Flats" : "Textures", uniqueId), RC_NULL);
             uri_s *uri = Materials_ComposeUri(P_ToIndex(DD_MaterialForTextureUri(reinterpret_cast<uri_s *>(&textureUrn))));
             String uriComposedAsString = Str_Text(Uri_Compose(uri));
             Uri_Delete(uri);

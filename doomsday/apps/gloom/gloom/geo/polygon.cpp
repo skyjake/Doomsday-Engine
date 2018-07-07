@@ -88,7 +88,7 @@ String Polygon::asText() const
     os << "Polygon: [" << points.size() << "]";
     for (int i = 0; i < points.sizei(); ++i)
     {
-        os << String::format(" %x", points[i].id);
+        os << Stringf(" %x", points[i].id);
     }
     return os.str();
 }

@@ -174,25 +174,25 @@ de::String UpdaterSettings::lastCheckAgo() const
     if (delta < 60.0)
     {
         t = delta.asMilliSeconds() / 1000;
-        return de::String::format("%i second%s ago", t, DE_PLURAL_S(t));
+        return de::Stringf("%i second%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asMinutes();
     if (t <= 60)
     {
-        return de::String::format("%i minute%s ago", t, DE_PLURAL_S(t));
+        return de::Stringf("%i minute%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asHours();
     if (t <= 24)
     {
-        return de::String::format("%i hour%s ago", t, DE_PLURAL_S(t));
+        return de::Stringf("%i hour%s ago", t, DE_PLURAL_S(t));
     }
 
     t = delta.asDays();
     if (t <= 7)
     {
-        return de::String::format("%i day%s ago", t, DE_PLURAL_S(t));
+        return de::Stringf("%i day%s ago", t, DE_PLURAL_S(t));
     }
 
     return "on " + when.asText(de::Time::FriendlyFormat);

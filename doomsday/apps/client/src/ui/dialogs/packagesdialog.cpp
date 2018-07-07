@@ -1,3 +1,5 @@
+#include <utility>
+
 /** @file packagesdialog.cpp
  *
  * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -40,6 +42,7 @@
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
+#include <de/TextValue>
 #include <de/ui/SubwidgetItem>
 #include <de/ui/VariantActionItem>
 
@@ -49,6 +52,7 @@ DE_GUI_PIMPL(PackagesDialog)
 , public ChildWidgetOrganizer::IWidgetFactory
 , public PackagesWidget::IPackageStatus
 , DE_OBSERVES(Widget, ChildAddition)
+, DE_OBSERVES(HomeMenuWidget, Click)
 {
     StringList selectedPackages;
     LabelWidget *nothingSelected;
@@ -71,7 +75,7 @@ DE_GUI_PIMPL(PackagesDialog)
     public:
         SelectedPackageItem(String const &packageId)
         {
-            setData(packageId);
+            setData(TextValue(packageId));
             updatePackageInfo();
             DoomsdayApp::bundles().audienceForIdentify() += this;
         }
@@ -90,7 +94,7 @@ DE_GUI_PIMPL(PackagesDialog)
 
         String packageId() const
         {
-            return data().toString();
+            return data().asText();
         }
 
         Record const *info() const
@@ -188,7 +192,7 @@ DE_GUI_PIMPL(PackagesDialog)
         // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
 
-        nothingSelected->setText(tr("No Mods Selected"));
+        nothingSelected->setText("No Mods Selected");
         style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*nothingSelected);
         nothingSelected->rule()
                 .setRect(self().leftArea().rule())
@@ -221,14 +225,7 @@ DE_GUI_PIMPL(PackagesDialog)
         menu->audienceForChildAddition() += this;
         self().leftArea().enableIndicatorDraw(true);
 
-        QObject::connect(menu, &HomeMenuWidget::itemClicked, [this] (int index)
-        {
-            if (index >= 0)
-            {
-                browser->scrollToPackage(menu->items().at(index)
-                                         .as<SelectedPackageItem>().packageId());
-            }
-        });
+        menu->audienceForClick() += this;
 
         // Package browser.
         self().rightArea().add(browser = new PackagesWidget(PackagesWidget::PopulationDisabled,
@@ -238,7 +235,7 @@ DE_GUI_PIMPL(PackagesDialog)
         browser->setPackageStatus(*this);
 
         // Action for showing information about the package.
-        actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
+        actions << new ui::SubwidgetItem("...", ui::Up, [this] () -> PopupWidget *
         {
             String const id = browser->actionPackage();
             return new PackageInfoDialog(id, PackageInfoDialog::EnableActions);
@@ -276,12 +273,20 @@ DE_GUI_PIMPL(PackagesDialog)
         browser->setFilterEditorMinimumY(self().rightArea().rule().top());
     }
 
+    void menuItemClicked(HomeMenuWidget &, ui::DataPos index) override
+    {
+        if (index != ui::Data::InvalidPos)
+        {
+            browser->scrollToPackage(menu->items().at(index).as<SelectedPackageItem>().packageId());
+        }
+    }
+
     void populate()
     {
         menu->items().clear();
 
         // Remove from the list those packages that are no longer listed.
-        for (String packageId : selectedPackages)
+        for (const String &packageId : selectedPackages)
         {
             menu->items() << new SelectedPackageItem(packageId);
         }
@@ -329,12 +334,12 @@ DE_GUI_PIMPL(PackagesDialog)
 //            }
             if (!dataFiles.isEmpty())
             {
-                gameDataFiles->setText(_E(l) + String::format("Game data file%s: ", dataFiles.size() != 1? "s" : "") +
+                gameDataFiles->setText(_E(l) + Stringf("Game data file%s: ", dataFiles.size() != 1? "s" : "") +
                                        _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
             }
             else
             {
-                gameDataFiles->setText(_E(D) + tr("Locate data file in Data Files settings"));
+                gameDataFiles->setText(_E(D) "Locate data file in Data Files settings");
             }
         }
     }
@@ -357,7 +362,7 @@ DE_GUI_PIMPL(PackagesDialog)
     void removePackage(String const &packageId)
     {
         selectedPackages.removeOne(packageId);
-        auto pos = menu->items().findData(packageId);
+        auto pos = menu->items().findData(TextValue(packageId));
         DE_ASSERT(pos != ui::Data::InvalidPos);
         menu->items().remove(pos);
         updateNothingIndicator();
@@ -370,7 +375,7 @@ DE_GUI_PIMPL(PackagesDialog)
         // We use a delay here because ScrollAreaWidget does scrolling based on
         // the current geometry of the widget and HomeItemWidget uses an animation
         // for its height.
-        Loop::get().timer(0.3, [this, pos] ()
+        Loop::timer(0.3, [this, pos] ()
         {
             menu->setSelectedIndex(pos);
         });
@@ -383,7 +388,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
 {
     if (titleText.isEmpty())
     {
-        heading().setText(tr("Mods"));
+        heading().setText("Mods");
     }
     else
     {
@@ -391,10 +396,10 @@ PackagesDialog::PackagesDialog(String const &titleText)
     }
     heading().setStyleImage("package.icon");
     buttons()
-            << new DialogButtonItem(Default | Accept, tr("OK"))
-            << new DialogButtonItem(Reject, tr("Cancel"))
+            << new DialogButtonItem(Default | Accept, "OK")
+            << new DialogButtonItem(Reject, "Cancel")
             << new DialogButtonItem(Action, style().images().image("refresh"),
-                                    new CallbackAction([]() { FS::get().refreshAsync(); }))
+                                    [this]() { FS::get().refreshAsync(); });
             << new DialogButtonItem(Action | Id1, style().images().image("gear"),
                                     "Data Files",
                                     new CallbackAction([this]() {
@@ -430,7 +435,7 @@ void PackagesDialog::setProfile(const GameProfile &profile)
 
 void PackagesDialog::setSelectedPackages(StringList packages)
 {
-    d->selectedPackages = packages;
+    d->selectedPackages = std::move(packages);
     d->browser->populate();
     d->updateGameTitle();
 }

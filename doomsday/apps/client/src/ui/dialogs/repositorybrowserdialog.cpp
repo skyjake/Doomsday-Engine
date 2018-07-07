@@ -36,8 +36,8 @@
 
 using namespace de;
 
-static String const VAR_RESOURCE_BROWSER_REPOSITORY("resource.browserRepository");
-static String const ALL_CATEGORIES(QObject::tr("All Categories"));
+DE_STATIC_STRING(VAR_RESOURCE_BROWSER_REPOSITORY, "resource.browserRepository");
+DE_STATIC_STRING(ALL_CATEGORIES, "All Categories");
 
 DE_GUI_PIMPL(RepositoryBrowserDialog)
 , DE_OBSERVES(filesys::RemoteFeedRelay, Status)
@@ -61,7 +61,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
     DocumentWidget *description;
     String connectedRepository;
     String mountPath;
-    QSet<String> filterTerms;
+    Set<String> filterTerms;
 
     Impl(Public *i) : Base(i)
     {
@@ -78,7 +78,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         refreshProgress->setOpacity(0);
         refreshProgress->setColor("altaccent");
         refreshProgress->setTextColor("altaccent");
-        refreshProgress->setText(tr("Loading..."));
+        refreshProgress->setText("Loading...");
         refreshProgress->setTextAlignment(ui::AlignLeft);
         refreshProgress->setSizePolicy(ui::Expand, ui::Expand);
 
@@ -101,7 +101,8 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
                 repo->items()
                         << new ChoiceItem(i->first.value->asText(), i->second->asText());
             }
-            repo->setSelected(repo->items().findLabel(App::config().gets(VAR_RESOURCE_BROWSER_REPOSITORY, "")));
+            repo->setSelected(
+                repo->items().findLabel(App::config().gets(VAR_RESOURCE_BROWSER_REPOSITORY(), "")));
         }
         catch (Error const &er)
         {
@@ -124,20 +125,14 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         nameList->layout().setRowPadding(Const(0));
         nameList->setBehavior(ChildVisibilityClipping);
 
-        QObject::connect(repo, &ChoiceWidget::selectionChangedByUser, [this] (uint)
-        {
-            updateSelectedRepository();
-        });
-        QObject::connect(search, &LineEditWidget::editorContentChanged, [this] ()
-        {
-            updateFilter();
-        });
+        repo->audienceForUserSelection() += [this]() { updateSelectedRepository(); };
+        search->audienceForContentChange() += [this]() { updateFilter(); };
         RFRelay::get().audienceForStatus() += this;
 
         updateSelectedRepository();
     }
 
-    ~Impl()
+    ~Impl() override
     {
         if (populating) populating->waitForFinished();
         disconnect();
@@ -153,7 +148,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
             bool matched = false;
             for (int i = 0; i < path.segmentCount(); ++i)
             {
-                if (path.segment(i).toStringRef().contains(term))
+                if (path.segment(i).toString().contains(term))
                 {
                     matched = true;
                     break;
@@ -168,11 +163,11 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
     {
         const auto oldTerms = filterTerms;
         filterTerms.clear();
-        for (String term : search->text().split(' '))
+        for (const auto &term : search->text().splitRef(' '))
         {
             if (auto cleaned = term.strip())
             {
-                filterTerms.insert(cleaned.toLower());
+                filterTerms.insert(cleaned.lower());
             }
         }
         if (oldTerms != filterTerms && shownData)
@@ -191,12 +186,10 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         if (parent == category)
         {
             auto *toggle = new ToggleWidget(ToggleWidget::WithoutIndicator);
-            QObject::connect(toggle, &ToggleWidget::stateChanged,
-                             [toggle] (ToggleWidget::ToggleState state)
-            {
-                toggle->setColorTheme(state == ToggleWidget::Active? Inverted : Normal);
-            });
-            if (item.label() == ALL_CATEGORIES)
+            toggle->audienceForStateChange() += [toggle]() {
+                toggle->setColorTheme(toggle->isActive() ? Inverted : Normal);
+            };
+            if (item.label() == ALL_CATEGORIES())
             {
                 toggle->setToggleState(ToggleWidget::Active);
             }
@@ -232,12 +225,12 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         if (repo->isValidSelection())
         {
             auto const &selItem = repo->selectedItem();
-            App::config().set(VAR_RESOURCE_BROWSER_REPOSITORY, selItem.label());
-            connect(selItem.data().toString());
+            App::config().set(VAR_RESOURCE_BROWSER_REPOSITORY(), selItem.label());
+            connect(selItem.data().asText());
         }
     }
 
-    void connect(String address)
+    void connect(const String& address)
     {
         refreshProgress->setOpacity(1, 0.5);
         repo->disable();
@@ -249,11 +242,11 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
             disconnect();
             return 0;
         },
-        [this, address] (int)
+        [this, address](int)
         {
-            QUrl const url(address);
-            RFRelay::get().addRepository(address, "/remote" / url.host());
-            connectedRepository = address;
+            DE_ASSERT_FAIL("Parse hostname from URL");
+//            RFRelay::get().addRepository(address, "/remote" / url.host());
+//            connectedRepository = address;
         });
     }
 
@@ -317,7 +310,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         });
     }
 
-    void setData(std::shared_ptr<ui::ListData> newData)
+    void setData(const std::shared_ptr<ui::ListData>& newData)
     {
         DE_ASSERT_IN_MAIN_THREAD();
         //qDebug() << "got new data with" << newData->size() << "items";
@@ -330,10 +323,10 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         nameList->setItems(*shownData);
 
         categoryData.clear();
-        categoryData.append(new ui::Item(ui::Item::ShownAsButton, ALL_CATEGORIES));
+        categoryData.append(new ui::Item(ui::Item::ShownAsButton, ALL_CATEGORIES()));
         StringList tags = link().categoryTags();
-        qSort(tags);
-        for (String category : tags)
+        tags.sort();
+        for (const String &category : tags)
         {
             categoryData.append(new ui::Item(ui::Item::ShownAsButton, category));
         }
@@ -346,7 +339,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
 
     void updateStatusText()
     {
-        statusText->setText(tr("showing %1 out of %2 mods").arg(shownData->size()).arg(data->size()));
+        statusText->setText(Stringf("showing %zu out of %zu mods", shownData->size(), data->size()));
     }
 };
 
@@ -354,7 +347,7 @@ RepositoryBrowserDialog::RepositoryBrowserDialog()
     : DialogWidget("repository-browser", WithHeading)
     , d(new Impl(this))
 {
-    heading().setText(tr("Install Mods"));
+    heading().setText("Install Mods");
     heading().setStyleImage("package.icon", heading().fontId());
 
     AutoRef<Rule> nameListWidth(new ConstantRule(2*175));
@@ -363,8 +356,8 @@ RepositoryBrowserDialog::RepositoryBrowserDialog()
 
     auto &acRule = area().contentRule();
 
-    auto *searchLabel = LabelWidget::newWithText(tr("Search:"), &area());
-    auto *repoLabel   = LabelWidget::newWithText(tr("Repository:"), &area());
+    auto *searchLabel = LabelWidget::newWithText("Search:", &area());
+    auto *repoLabel   = LabelWidget::newWithText("Repository:", &area());
 
     {
         SequentialLayout layout(acRule.left(),
@@ -406,9 +399,9 @@ RepositoryBrowserDialog::RepositoryBrowserDialog()
             .setInput(Rule::Right, rule().right() - area().margins().right())
             .setInput(Rule::Top,   rule().top() + area().margins().top());
 
-    buttons() << new DialogButtonItem(Default | Accept, tr("Close"))
-              << new DialogButtonItem(Action  | Id1,    tr("Download & Install"))
-              << new DialogButtonItem(Action  | Id2,    tr("Try in..."));
+    buttons() << new DialogButtonItem(Default | Accept, "Close")
+              << new DialogButtonItem(Action  | Id1,    "Download & Install")
+              << new DialogButtonItem(Action  | Id2,    "Try in...");
 
     // Actions are unavaiable until something is selected.
     buttonWidget(Id1)->disable();

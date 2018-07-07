@@ -5454,7 +5454,7 @@ static void drawLumobjs(world::Map &map)
 
 static String labelForLineSideSection(LineSide &side, dint sectionId)
 {
-    return String::format("Line #%i (%s, %s)",
+    return Stringf("Line #%i (%s, %s)",
                           side.line().indexInMap(),
                           Line::sideIdAsText(side.sideId()).upperFirstChar().c_str(),
                           LineSide::sectionIdAsText(sectionId).c_str());
@@ -5462,12 +5462,12 @@ static String labelForLineSideSection(LineSide &side, dint sectionId)
 
 static String labelForSector(Sector &sector)
 {
-    return String::format("Sector #%i", sector.indexInMap());
+    return Stringf("Sector #%i", sector.indexInMap());
 }
 
 static String labelForSectorPlane(Plane &plane)
 {
-    return String::format("Sector #%i (%s)",
+    return Stringf("Sector #%i (%s)",
                           plane.sector().indexInMap(),
                           Sector::planeIdAsText(plane.indexInSector()).upperFirstChar().c_str());
 }

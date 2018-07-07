@@ -25,8 +25,6 @@
 
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
-    Q_OBJECT
-
 public:
     DE_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
 
@@ -40,7 +38,6 @@ public:
 
     void updateContent(de::shell::ServerInfo const &info);
 
-public slots:
     void joinGame();
 
 private:

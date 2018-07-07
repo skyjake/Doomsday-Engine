@@ -30,8 +30,6 @@ class SaveListData;
  */
 class GamePanelButtonWidget : public PanelButtonWidget
 {
-    Q_OBJECT
-
 public:
     GamePanelButtonWidget(GameProfile &game,
                           SaveListData const &savedItems);
@@ -46,12 +44,11 @@ public:
     // Events.
     bool handleEvent(de::Event const &event) override;
 
-public slots:
     void play();
     void selectPackages();
     void clearPackages();
 
-protected slots:
+protected:
     void saveSelected(de::ui::DataPos savePos);
     void saveDoubleClicked(de::ui::DataPos savePos);
 

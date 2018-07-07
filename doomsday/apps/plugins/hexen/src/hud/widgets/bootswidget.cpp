@@ -111,6 +111,6 @@ void guidata_boots_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pBootsIcon[i] = R_DeclarePatch(String::format("SPBOOT%i", i));
+        ::pBootsIcon[i] = R_DeclarePatch(Stringf("SPBOOT%i", i));
     }
 }

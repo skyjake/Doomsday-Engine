@@ -126,7 +126,7 @@ DE_PIMPL(LogSettingsDialog)
 
         // Minimum level for log entries.
         parent->add(wgt.level = new VariableChoiceWidget(
-                        Config::get(String::format("log.filter.%s.minLevel", dom.name))));
+                        Config::get(Stringf("log.filter.%s.minLevel", dom.name))));
                         VariableChoiceWidget::Number));
         wgt.level->setItems(levels);
         wgt.level->updateFromVariable();
@@ -135,7 +135,7 @@ DE_PIMPL(LogSettingsDialog)
         // Developer messages?
         parent->add(
             wgt.dev = new VariableToggleWidget(
-                "Dev", Config::get(String::format("log.filter.%s.allowDev", dom.name))));
+                "Dev", Config::get(Stringf("log.filter.%s.allowDev", dom.name))));
         wgt.dev->audienceForUserToggle() += [this](){ self().updateLogFilter(); };
 
         // Raise alerts?

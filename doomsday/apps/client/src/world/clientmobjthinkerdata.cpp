@@ -28,29 +28,25 @@
 
 #include <de/RecordValue>
 #include <de/Process>
-#include <QFlags>
 
 using namespace de;
 using namespace world;
 
-namespace internal
-{
-    enum Flag
-    {
-        Initialized = 0x1,      ///< Thinker data has been initialized.
-        StateChanged = 0x2      ///< State has changed during the current tick.
-    };
-    Q_DECLARE_FLAGS(Flags, Flag)
-    Q_DECLARE_OPERATORS_FOR_FLAGS(Flags)
-}
+namespace internal {
+
+enum Flag {
+    Initialized  = 0x1, ///< Thinker data has been initialized.
+    StateChanged = 0x2  ///< State has changed during the current tick.
+};
+
+} // namespace internal
 
 using namespace ::internal;
 
 DE_PIMPL(ClientMobjThinkerData)
 , DE_OBSERVES(Asset, Deletion)
 {
-    enum SerialFlagUInt16
-    {
+    enum SerialFlagUInt16 {
         HasAnimator = 0x0001,
     };
 
@@ -93,7 +89,7 @@ DE_PIMPL(ClientMobjThinkerData)
 
     String modelId() const
     {
-        return DE_STR("model.thing.%1").arg(thingName().toLower());
+        return "model.thing." + thingName().lower();
     }
 
     static ModelBank &modelBank()

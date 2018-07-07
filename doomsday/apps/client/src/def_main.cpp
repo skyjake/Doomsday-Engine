@@ -358,7 +358,7 @@ static String defCountMsg(dint count, String const &label)
     if (!::verbose && !count)
         return "";  // Don't print zeros if not verbose.
 
-    return String::format(_E(Ta) "  %i " _E(Tb) "%s\n", count, label.c_str());
+    return Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label.c_str());
 }
 
 /**
@@ -494,7 +494,7 @@ static StringList allMapInfoUrns()
                 continue;
         }
 
-        foundPaths << String::format("LumpIndex:%i", lumpNumber);
+        foundPaths << Stringf("LumpIndex:%i", lumpNumber);
     }
 
     return foundPaths;
@@ -1635,7 +1635,7 @@ void Def_PostInit()
             try
             {
                 FrameModelDef &modef = ClientResources::get().modelDef(
-                    String::format("Particle%02i", st->type - PTC_MODEL));
+                    Stringf("Particle%02i", st->type - PTC_MODEL));
                 if (modef.subModelId(0) == NOMODELID)
                 {
                     continue;

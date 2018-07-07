@@ -104,7 +104,7 @@ String ClientMaterial::Decoration::description() const
                           DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {
-        str += String::format("\n  [%2i] ", i) + _E(>) + stage(i).description() + _E(<);
+        str += Stringf("\n  [%2i] ", i) + _E(>) + stage(i).description() + _E(<);
     }
     return str;
 }

@@ -183,7 +183,7 @@ Plane::Plane(Sector &sector, Vec3f const &normal, ddouble height)
 
 String Plane::description() const
 {
-    auto desc = String::format(    _E(l) "Sector: "        _E(.)_E(i) "%i" _E(.)
+    auto desc = Stringf(    _E(l) "Sector: "        _E(.)_E(i) "%i" _E(.)
                                " " _E(l) "Height: "        _E(.)_E(i) "%f" _E(.)
                                " " _E(l) "Height Target: " _E(.)_E(i) "%f" _E(.)
                                " " _E(l) "Speed: "         _E(.)_E(i) "%f" _E(.),
@@ -193,7 +193,7 @@ String Plane::description() const
                   speed());
 
     DE_DEBUG_ONLY(
-        desc.prepend(String::format(_E(b) "Plane " _E(.) "[%p]\n", this));
+        desc.prepend(Stringf(_E(b) "Plane " _E(.) "[%p]\n", this));
     )
     return desc + "\n" + surface().description();
 }

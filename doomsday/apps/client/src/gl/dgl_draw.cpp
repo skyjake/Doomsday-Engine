@@ -37,8 +37,8 @@
 
 using namespace de;
 
-constexpr uint MAX_TEX_COORDS = 2;
-constexpr int  MAX_BATCH      = 16;
+static constexpr uint MAX_TEX_COORDS = 2;
+static constexpr int  MAX_BATCH      = 16;
 
 static unsigned s_drawCallCount = 0;
 static unsigned s_primSwitchCount = 0;
@@ -65,7 +65,7 @@ struct DGLDrawState
         VAA_TEXCOORD1,
         VAA_FRAG_OFFSET,
         VAA_BATCH_INDEX,
-        NUM_VERTEX_ATTRIB_ARRAYS
+        NUM_VERTEX_ATTRIB_ARRAYS,
     };
 
     dglprimtype_t   primType      = DGL_NO_PRIMITIVE;
@@ -81,7 +81,7 @@ struct DGLDrawState
         {0.f, 0.f},
         0.f};
     Vertex          primVertices[4];
-    QVector<Vertex> vertices;
+    List<Vertex>  vertices;
 
     struct GLData
     {
@@ -119,7 +119,7 @@ struct DGLDrawState
             void release()
             {
 #if defined (DE_HAVE_VAOS)
-                LIBGUI_GL.glDeleteVertexArrays(1, &vertexArray);
+                glDeleteVertexArrays(1, &vertexArray);
 #endif
                 arrayData.clear();
             }
@@ -138,8 +138,8 @@ struct DGLDrawState
             , uFogColor     { "uFogColor",     GLUniform::Vec4 }
         {}
 
-        QVector<DrawBuffer *> buffers;
-        int bufferPos = 0;
+        List<DrawBuffer *> buffers;
+        dsize bufferPos = 0;
     };
     std::unique_ptr<GLData> gl;
 
@@ -465,8 +465,6 @@ struct DGLDrawState
                     << gl->uFogRange
                     << gl->uFogColor;
 
-            auto &GL = LIBGUI_GL;
-
             // Sampler uniforms.
             {
                 int samplers[2][MAX_BATCH];
@@ -477,10 +475,10 @@ struct DGLDrawState
                 }
 
                 auto prog = gl->shader.glName();
-                GL.glUseProgram(prog);
-                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex0[0]"), GLsizei(batchMaxSize), samplers[0]);
+                glUseProgram(prog);
+                glUniform1iv(GL.glGetUniformLocation(prog, "uTex0[0]"), GLsizei(batchMaxSize), samplers[0]);
                 LIBGUI_ASSERT_GL_OK();
-                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex1[0]"), GLsizei(batchMaxSize), samplers[1]);
+                glUniform1iv(GL.glGetUniformLocation(prog, "uTex1[0]"), GLsizei(batchMaxSize), samplers[1]);
                 LIBGUI_ASSERT_GL_OK();
                 GL.glUseProgram(0);
             }
@@ -509,14 +507,13 @@ struct DGLDrawState
             // Vertex array object.
 #if defined (DE_HAVE_VAOS)
             {
-                auto &GL = LIBGUI_GL;
-                GL.glGenVertexArrays(1, &dbuf->vertexArray);
-                GL.glBindVertexArray(dbuf->vertexArray);
+                glGenVertexArrays(1, &dbuf->vertexArray);
+                glBindVertexArray(dbuf->vertexArray);
                 for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
                 {
-                    GL.glEnableVertexAttribArray(i);
+                    glEnableVertexAttribArray(i);
                 }
-                GL.glBindVertexArray(0);
+                glBindVertexArray(0);
             }
 #endif
 
@@ -528,23 +525,22 @@ struct DGLDrawState
     void glBindArrays()
     {
         const uint stride = sizeof(Vertex);
-        auto &GL = LIBGUI_GL;
 
         // Upload the vertex data.
         GLData::DrawBuffer &buf = nextBuffer();
         buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gfx::Dynamic);
 
 #if defined (DE_HAVE_VAOS)
-        GL.glBindVertexArray(buf.vertexArray);
+        glBindVertexArray(buf.vertexArray);
 #else
         for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
         {
-            GL.glEnableVertexAttribArray(i);
+            glEnableVertexAttribArray(i);
         }
 #endif
         LIBGUI_ASSERT_GL_OK();
 
-        GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
+        glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
         LIBGUI_ASSERT_GL_OK();
 
         // Updated pointers.
@@ -556,19 +552,17 @@ struct DGLDrawState
         GL.glVertexAttribPointer(VAA_BATCH_INDEX, 1, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, batchIndex));
         LIBGUI_ASSERT_GL_OK();
 
-        GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+        glBindBuffer(GL_ARRAY_BUFFER, 0);
     }
 
     void glUnbindArrays()
     {
-        auto &GL = LIBGUI_GL;
-
 #if defined (DE_HAVE_VAOS)
-        GL.glBindVertexArray(0);
+        glBindVertexArray(0);
 #else
         for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
         {
-            GL.glDisableVertexAttribArray(i);
+            glDisableVertexAttribArray(i);
             LIBGUI_ASSERT_GL_OK();
         }
 #endif

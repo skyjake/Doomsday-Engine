@@ -75,11 +75,11 @@ void guidata_items_t::draw(Vec2i const &offset) const
     String valueAsText("Items:");
     if(cfg.common.hudShownCheatCounters & CCH_ITEMS)
     {
-        valueAsText += String::format(" %i/%i", _value, totalItems);
+        valueAsText += Stringf(" %i/%i", _value, totalItems);
     }
     if(cfg.common.hudShownCheatCounters & CCH_ITEMS_PRCNT)
     {
-        valueAsText += String::format(" %s%i%%%s",
+        valueAsText += Stringf(" %s%i%%%s",
                            (::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? "(" : "",
                            totalItems ? _value * 100 / totalItems : 100,
                            (::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? ")" : "");
@@ -120,11 +120,11 @@ void guidata_items_t::updateGeometry()
     String valueAsText("Items:");
     if(cfg.common.hudShownCheatCounters & CCH_ITEMS)
     {
-        valueAsText += String::format(" %i/%i", _value, totalItems);
+        valueAsText += Stringf(" %i/%i", _value, totalItems);
     }
     if(cfg.common.hudShownCheatCounters & CCH_ITEMS_PRCNT)
     {
-        valueAsText += String::format(" %s%i%%%s",
+        valueAsText += Stringf(" %s%i%%%s",
                                       (::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? "(" : "",
                                       totalItems ? _value * 100 / totalItems : 100,
                                       (::cfg.common.hudShownCheatCounters & CCH_ITEMS) ? ")" : "");

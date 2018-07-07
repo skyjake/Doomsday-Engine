@@ -171,7 +171,7 @@ namespace internal
             {
                 drawText(String::asText(minutes), origin, ALIGN_TOPRIGHT);
             }
-            drawText(String::format("%02i", seconds), origin + Vec2i(FR_CharWidth(':'), 0));
+            drawText(Stringf("%02i", seconds), origin + Vec2i(FR_CharWidth(':'), 0));
 
             return;
         }
@@ -271,7 +271,7 @@ static String backgroundPatchForEpisode(String const &episodeId)
         int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
         if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
         {
-            return String::format("WIMAP%i", oldEpisodeNum);
+            return Stringf("WIMAP%i", oldEpisodeNum);
         }
     }
     return "INTERPIC";

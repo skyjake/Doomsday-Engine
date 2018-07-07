@@ -18,14 +18,15 @@
 
 #include "ui/widgets/inputbindingwidget.h"
 
-#include <de/charsymbols.h>
-#include <de/AuxButtonWidget>
 #include "clientapp.h"
 #include "BindContext"
 #include "CommandBinding"
 // #include "ImpulseBinding"
 #include "ui/inputsystem.h"
 #include "ui/b_util.h"
+
+#include <de/charsymbols.h>
+#include <de/AuxButtonWidget>
 
 using namespace de;
 
@@ -40,17 +41,17 @@ using namespace de;
 DE_GUI_PIMPL(InputBindingWidget)
 , DE_OBSERVES(ButtonWidget, Press)
 {
-    String defaultEvent;
-    String command;
-    QStringList contexts;
-    int device = IDEV_KEYBOARD;
-    bool useModifiers = false;
+    String     defaultEvent;
+    String     command;
+    StringList contexts;
+    int        device       = IDEV_KEYBOARD;
+    bool       useModifiers = false;
 
     Impl(Public *i) : Base(i)
     {
         self().setSizePolicy(ui::Fixed, ui::Expand);
 
-        self().auxiliary().setText(_E(l) + tr("Reset"));
+        self().auxiliary().setText(_E(l) "Reset");
 
         //self().audienceForPress() += this;
         self().auxiliary().audienceForPress() += this;
@@ -58,20 +59,20 @@ DE_GUI_PIMPL(InputBindingWidget)
 
     String prettyKey(String const &eventDesc)
     {
-        if (!eventDesc.startsWith("key-"))
+        if (!eventDesc.beginsWith("key-"))
         {
             // Doesn't look like a key.
             return eventDesc;
         }
 
-        String name = eventDesc.substr(Rangei(4, eventDesc.indexOf("-", 4)));
-        name = name.left(1).toUpper() + name.mid(1).toLower();
+        String name = eventDesc.substr({BytePos(4), eventDesc.indexOf("-", BytePos(4))});
+        name = name.upperFirstChar(); //name.left(BytePos(1)).upper() + name.substr(BytePos(1)).lower();
 
         // Any modifiers?
-        int idx = eventDesc.indexOf("+");
+        auto idx = eventDesc.indexOf("+");
         if (idx > 0)
         {
-            String const conds = eventDesc.mid(idx + 1);
+            String const conds = eventDesc.substr(idx + 1);
             if (conds.contains("key-alt-down"))
             {
                 name = String(DE_CHAR_ALT_KEY) + name;
@@ -92,15 +93,15 @@ DE_GUI_PIMPL(InputBindingWidget)
     /// is bound.
     void updateLabel()
     {
-        String text = _E(l) + tr("(not bound)");
+        String text = _E(l) "(not bound)";
 
         // Check all the contexts associated with this widget.
-        for (QString bcName : contexts)
+        for (const auto &bcName : contexts)
         {
             if (!InputSystem::get().hasContext(bcName)) continue;
             BindContext const &context = InputSystem::get().context(bcName);
 
-            if (Record const *rec = context.findCommandBinding(command.toLatin1(), device))
+            if (Record const *rec = context.findCommandBinding(command, device))
             {
                 // This'll do.
                 CommandBinding bind(*rec);
@@ -114,20 +115,18 @@ DE_GUI_PIMPL(InputBindingWidget)
 
     void bindCommand(String const &eventDesc)
     {
-        Block const cmd = command.toLatin1();
-        InputSystem::get().forAllContexts([&cmd] (BindContext &context)
+        InputSystem::get().forAllContexts([this] (BindContext &context)
         {
-            while (Record *bind = context.findCommandBinding(cmd.constData()))
+            while (Record *bind = context.findCommandBinding(command))
             {
                 context.deleteBinding(bind->geti("id"));
             }
             return LoopContinue;
         });
-
-        for (QString bcName : contexts)
+        for (const auto &bcName : contexts)
         {
-            String ev = String("%1:%2").arg(bcName, eventDesc);
-            InputSystem::get().bindCommand(ev.toLatin1(), command.toLatin1());
+            String ev = Stringf("%s:%s", bcName.c_str(), eventDesc.c_str());
+            InputSystem::get().bindCommand(ev, command);
         }
     }
 
@@ -176,7 +175,7 @@ void InputBindingWidget::enableModifiers(bool mods)
     d->useModifiers = mods;
 }
 
-void InputBindingWidget::setContexts(QStringList const &contexts)
+void InputBindingWidget::setContexts(const StringList &contexts)
 {
     d->contexts = contexts;
     d->updateLabel();
@@ -279,6 +278,6 @@ InputBindingWidget *InputBindingWidget::newTaskBarShortcut()
     bind->setCommand("taskbar");
     bind->setDefaultBinding("key-tilde-down + key-shift-up");
     bind->enableModifiers(true);
-    bind->setContexts(QStringList() << "global" << "console");
+    bind->setContexts({"global", "console"});
     return bind;
 }

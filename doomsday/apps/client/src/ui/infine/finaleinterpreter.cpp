@@ -425,7 +425,7 @@ DE_PIMPL(FinaleInterpreter)
         }
     };
 
-    typedef QList<EventHandler> EventHandlers;
+    typedef List<EventHandler> EventHandlers;
     EventHandlers eventHandlers;
 #endif // __CLIENT__
 

@@ -186,6 +186,6 @@ void guidata_tomeofpower_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pIcons[i] = R_DeclarePatch(String::format("SPINBK%i", i));
+        ::pIcons[i] = R_DeclarePatch(Stringf("SPINBK%i", i));
     }
 }

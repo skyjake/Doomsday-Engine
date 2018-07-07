@@ -443,7 +443,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
     String cmd;
     if (binds->command)
     {
-        cmd = String::format("bindevent {%s:%s%s} {%s}",
+        cmd = Stringf("bindevent {%s:%s%s} {%s}",
                              context.c_str(),
                              symbol.c_str(),
                              binds->flags & CCF_MULTIPLAYER ? " + multiplayer" : "",
@@ -452,7 +452,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
         // Check for repeats.
         if ((binds->flags & CCF_REPEAT) && symbol.endsWith("-down"))
         {
-            cmd += String::format("; bindevent {%s:%s-repeat} {%s}",
+            cmd += Stringf("; bindevent {%s:%s-repeat} {%s}",
                                   context.c_str(),
                                   symbol.left(symbol.sizeb() - 5).c_str(),
                                   binds->command);
@@ -493,7 +493,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
             stateFlags += "-inverse";
         }
 
-        cmd = String::format("bindcontrol {%1} {%2%3%4}",
+        cmd = Stringf("bindcontrol {%1} {%2%3%4}",
                              binds->controlName,
                              name.c_str(),
                              stateFlags.c_str(),
@@ -501,7 +501,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
 
         if(binds->flags & CCF_SIDESTEP_MODIFIER)
         {
-            cmd += String::format("; bindcontrol sidestep {%s%s + modifier-1-down}",
+            cmd += Stringf("; bindcontrol sidestep {%s%s + modifier-1-down}",
                                   name.c_str(),
                                   stateFlags.c_str());
         }

@@ -26,19 +26,15 @@
  */
 class RendererSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     RendererSettingsDialog(de::String const &name = "renderersettings");
 
-public slots:
     void resetToDefaults();
 
-protected slots:
+protected:
     void showDeveloperPopup();
     void editProfile();
 
-protected:
     void finish(int result) override;
 
 private:

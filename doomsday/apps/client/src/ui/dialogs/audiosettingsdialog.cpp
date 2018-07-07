@@ -85,11 +85,10 @@ DE_GUI_PIMPL(AudioSettingsDialog)
             area.add(musicSource    = new CVarChoiceWidget    ("music-source"));
             area.add(musicSoundfont = new CVarNativePathWidget("music-soundfont"));
 
-            musicSoundfont->setBlankText(tr("GeneralUser GS"));
-            musicSoundfont->setFilters(StringList()
-                                       << "SF2 soundfonts (*.sf2)"
-                                       << "DLS soundfonts (*.dls)"
-                                       << "All files (*)");
+            musicSoundfont->setBlankText("GeneralUser GS");
+            musicSoundfont->setFilters({"SF2 soundfonts (*.sf2)",
+                                        "DLS soundfonts (*.dls)",
+                                        "All files (*)"});
 
             area.add(pauseOnFocus = new VariableToggleWidget("Pause on Focus Lost",
                                                              App::config("audio.pauseOnFocus"),
@@ -103,7 +102,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
 
             // Developer options.
             self().add(devPopup = new GridPopupWidget);
-            soundInfo = new CVarToggleWidget("sound-info", tr("Sound Channel Status"));
+            soundInfo = new CVarToggleWidget("sound-info", "Sound Channel Status");
             *devPopup << soundInfo;
             devPopup->commit();
         }
@@ -154,26 +153,26 @@ DE_GUI_PIMPL(AudioSettingsDialog)
          */
 
         soundPlugin->items()
-                << new ChoiceItem(tr("FMOD"), "fmod")
+                << new ChoiceItem("FMOD", "fmod")
            #if !defined (DE_DISABLE_SDLMIXER)
-                << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")
+                << new ChoiceItem("SDL_mixer", "sdlmixer")
            #endif
-                << new ChoiceItem(tr("OpenAL"), "openal")
+                << new ChoiceItem("OpenAL", "openal")
            #if defined (WIN32)
                 << new ChoiceItem(tr("DirectSound"), "dsound")
            #endif
-                << new ChoiceItem(tr("Disabled"), "dummy");
+                << new ChoiceItem("Disabled", "dummy");
 
         musicPlugin->items()
-                << new ChoiceItem(tr("Fluidsynth"), "fluidsynth")
-                << new ChoiceItem(tr("FMOD"), "fmod")
+                << new ChoiceItem("Fluidsynth", "fluidsynth")
+                << new ChoiceItem("FMOD", "fmod")
            #if !defined (DE_DISABLE_SDLMIXER)
-                << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")
+                << new ChoiceItem("SDL_mixer", "sdlmixer")
            #endif
            #if defined (WIN32)
-                << new ChoiceItem(tr("Windows Multimedia"), "winmm")
+                << new ChoiceItem("Windows Multimedia", "winmm")
            #endif
-                << new ChoiceItem(tr("Disabled"), "dummy");
+                << new ChoiceItem("Disabled", "dummy");
 
 #if defined (WIN32)
         cdPlugin->items()
@@ -192,11 +191,11 @@ DE_GUI_PIMPL(AudioSettingsDialog)
             needAudioReinit = true;
             self().buttonWidget(Id2)->setText(_E(b) "Apply");
         };
-        QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
-        QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
-//        QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
+        soundPlugin->audienceForUserSelection() += changeFunc;
+        musicPlugin->audienceForUserSelection() += changeFunc;
+        fmodSpeakerMode->audienceForUserSelection() += changeFunc;
 #if defined (WIN32)
-        QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
+        cdPlugin->audienceForUserSelection() += changeFunc;
 #endif
         QObject::connect(sfxChannels, &SliderWidget::valueChangedByUser, changeFunc);
     }
@@ -240,7 +239,7 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 {
     bool const gameLoaded = DoomsdayApp::isGameLoaded();
 
-    heading().setText(tr("Audio Settings"));
+    heading().setText("Audio Settings");
     heading().setImage(style().images().image("audio"));
 
     GridLayout layout(area().contentRule().left(), area().contentRule().top());
@@ -249,12 +248,12 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 
     if (gameLoaded)
     {
-        auto *sfxVolLabel   = LabelWidget::newWithText(tr("SFX Volume:"     ), &area());
-        auto *musicVolLabel = LabelWidget::newWithText(tr("Music Volume:"   ), &area());
-        auto *rvbVolLabel   = LabelWidget::newWithText(tr("Reverb Strength:"), &area());
+        auto *sfxVolLabel   = LabelWidget::newWithText("SFX Volume:"     , &area());
+        auto *musicVolLabel = LabelWidget::newWithText("Music Volume:"   , &area());
+        auto *rvbVolLabel   = LabelWidget::newWithText("Reverb Strength:", &area());
 
-        d->sound3D    ->setText(tr("3D Effects & Reverb"  ));
-        d->overlapStop->setText(tr("One Sound per Emitter"));
+        d->sound3D    ->setText("3D Effects & Reverb"  );
+        d->overlapStop->setText("One Sound per Emitter");
         //d->sound16bit ->setText(tr("16-bit Resampling"    ));
 
         /*auto *rateLabel = LabelWidget::newWithText(tr("Resampling:"), &area());
@@ -264,14 +263,14 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
                 << new ChoiceItem(tr("2x @ 22050 Hz"), 22050)
                 << new ChoiceItem(tr("4x @ 44100 Hz"), 44100);*/
 
-        auto *musSrcLabel = LabelWidget::newWithText(tr("Preferred Music:"), &area());
+        auto *musSrcLabel = LabelWidget::newWithText("Preferred Music:", &area());
 
         d->musicSource->items()
-                << new ChoiceItem(tr("MUS lumps"),      AudioSystem::MUSP_MUS)
-                << new ChoiceItem(tr("External files"), AudioSystem::MUSP_EXT)
-                << new ChoiceItem(tr("CD"),             AudioSystem::MUSP_CD);
+                << new ChoiceItem("MUS lumps",      NumberValue(AudioSystem::MUSP_MUS))
+                << new ChoiceItem("External files", NumberValue(AudioSystem::MUSP_EXT))
+                << new ChoiceItem("CD",             NumberValue(AudioSystem::MUSP_CD));
 
-        auto *sfLabel = LabelWidget::newWithText(tr("MIDI Sound Font:"), &area());
+        auto *sfLabel = LabelWidget::newWithText("MIDI Sound Font:", &area());
 
         // Layout.
         LabelWidget::appendSeparatorWithText("Sound Effects", &area(), &layout);
@@ -305,9 +304,9 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     d->backendFold->title().rule().setInput(Rule::Width, area().contentRule().width());
 
     buttons()
-            << new DialogButtonItem(Default | Accept | Id2, tr("Close"))
-            << new DialogButtonItem(Action, tr("Reset to Defaults"),
-                                    new SignalAction(this, SLOT(resetToDefaults())));
+            << new DialogButtonItem(Default | Accept | Id2, "Close")
+            << new DialogButtonItem(Action, "Reset to Defaults",
+                                    [this]() { resetToDefaults(); });
     if (gameLoaded)
     {
         buttons() << new DialogButtonItem(ActionPopup | Id1,

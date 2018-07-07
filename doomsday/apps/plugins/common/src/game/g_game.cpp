@@ -218,7 +218,7 @@ bool G_SetGameActionLoadSession(String slotId)
         {
             DoomsdayApp::app().checkPackageCompatibility(
                 meta.getStringList("packages"),
-                String::format(
+                Stringf(
                     "The savegame " _E(b) "%s" _E(.) " was created with "
                     "mods that are different than the ones currently in use.",
                     meta.gets("userDescription").c_str()),
@@ -302,7 +302,7 @@ static void initSaveSlots()
     };
     for (int i = 0; i < NUMSAVESLOTS; ++i)
     {
-        sslots->add(String::asText(i), true, String::format(SAVEGAMENAME"%i", i),
+        sslots->add(String::asText(i), true, Stringf(SAVEGAMENAME"%i", i),
                     int(gameMenuSaveSlotWidgetIds[i]));
     }
 }
@@ -466,7 +466,7 @@ void R_LoadColorPalettes()
         {
             if (i == numPerClass) break; // Not present.
 
-            String lumpName = String::format("TRANTBL%X", xlatNum);
+            String lumpName = Stringf("TRANTBL%X", xlatNum);
             xlatNum++;
 
             LOG_AS("R_LoadColorPalettes")
@@ -1503,7 +1503,7 @@ static void runGameAction()
             const auto numPos = fileName.sizeb();
             for (int i = 0; i < 1e6; ++i) // Stop eventually...
             {
-                fileName += String::format("%03i.png", i);
+                fileName += Stringf("%03i.png", i);
                 if (!M_ScreenShot(fileName, DD_SCREENSHOT_CHECK_EXISTS)) break; // Check only.
                 fileName.truncate(numPos);
             }
@@ -2007,7 +2007,7 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
     int const hours   = time / 3600; time -= hours * 3600;
     int const minutes = time / 60;   time -= minutes * 60;
     int const seconds = time;
-    description += String::format(" %02i:%02i:%02i", hours, minutes, seconds);
+    description += Stringf(" %02i:%02i:%02i", hours, minutes, seconds);
 
     return description;
 }
@@ -2064,17 +2064,17 @@ res::Uri G_ComposeMapUri(uint episode, uint map)
 {
     String mapId;
 #if __JDOOM64__
-    mapId = String::format("map%02i", map + 1);
+    mapId = Stringf("map%02i", map + 1);
     DE_UNUSED(episode);
 #elif __JDOOM__
     if (gameModeBits & GM_ANY_DOOM2)
-        mapId = String::format("map%02i", map + 1);
+        mapId = Stringf("map%02i", map + 1);
     else
-        mapId = String::format("e%im%i", episode + 1, map + 1);
+        mapId = Stringf("e%im%i", episode + 1, map + 1);
 #elif  __JHERETIC__
-    mapId = String::format("e%im%i", episode + 1, map + 1);
+    mapId = Stringf("e%im%i", episode + 1, map + 1);
 #else
-    mapId = String::format("map%02i", map + 1);
+    mapId = Stringf("map%02i", map + 1);
     DE_UNUSED(episode);
 #endif
     return res::Uri("Maps", mapId);
@@ -2774,8 +2774,8 @@ D_CMD(WarpMap)
     if (!P_MapExists(mapUri.compose()))
     {
         String msg("Unknown map");
-        if (argc >= 3) msg += String::format(" \"%s %s\"", argv[1], argv[2]);
-        else           msg += String::format(" \"%s\"", argv[1]);
+        if (argc >= 3) msg += Stringf(" \"%s %s\"", argv[1], argv[2]);
+        else           msg += Stringf(" \"%s\"", argv[1]);
 
         P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg, LMF_NO_HIDE);
         return false;
@@ -3039,7 +3039,7 @@ static void registerGameStatusCVars()
     // Fourth-weapon pieces:
     for (int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
     {
-        C_VAR_INT(String::format("player-weapon-piece%i", i + 1), &gsvWPieces[i], READONLYCVAR, 0, 1);
+        C_VAR_INT(Stringf("player-weapon-piece%i", i + 1), &gsvWPieces[i], READONLYCVAR, 0, 1);
     }
     C_VAR_INT("player-weapon-allpieces", &gsvWPieces[WEAPON_FOURTH_PIECE_COUNT], READONLYCVAR, 0, 1);
 #endif

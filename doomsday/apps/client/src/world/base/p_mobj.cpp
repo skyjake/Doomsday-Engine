@@ -959,7 +959,7 @@ D_CMD(InspectMobj)
             << mobType << id << mob << Def_GetStateName(mob->state) << ::runtimeDefs.states.indexOf(mob->state);
     LOG_MAP_MSG("Type:%s (%i) Info:[%p] %s")
             << DED_Definitions()->getMobjName(mob->type) << mob->type << mob->info
-            << (mob->info ? String::format(" (%i)", runtimeDefs.mobjInfo.indexOf(mob->info)).c_str() : "");
+            << (mob->info ? Stringf(" (%i)", runtimeDefs.mobjInfo.indexOf(mob->info)).c_str() : "");
     LOG_MAP_MSG("Tics:%i ddFlags:%08x") << mob->tics << mob->ddFlags;
 #ifdef __CLIENT__
     if (info)

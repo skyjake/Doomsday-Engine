@@ -108,28 +108,24 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
 
         packagesButton = new PackagesButtonWidget;
         packagesButton->setGameProfile(gameProfile);
-        packagesButton->setDialogTitle(tr("Mods for %1").arg(profile.name()));
-        packagesButton->setSetupCallback([this] (PackagesDialog &dialog)
-        {
+        packagesButton->setDialogTitle(Stringf("Mods for %s", profile.name().c_str()));
+        packagesButton->setSetupCallback([this](PackagesDialog &dialog) {
             // Add a button for starting the game.
             dialog.buttons()
                     << new DialogButtonItem(DialogWidget::Action,
                                             style().images().image("play"),
-                                            tr("Play"),
-                                            new CallbackAction([this, &dialog] () {
+                                            "Play",
+                                            [this, &dialog]() {
                                                 dialog.accept();
                                                 playButtonPressed();
-                                            }));
+                                            });
         });
         self().addButton(packagesButton);
 
-        QObject::connect(packagesButton,
-                         &PackagesButtonWidget::packageSelectionChanged,
-                         [this] (QStringList ids)
-        {
-            gameProfile.setPackages(toStringList(ids));
+        packagesButton->audienceForSelection() += [this]() {
+            gameProfile.setPackages(packagesButton->packages());
             self().updateContent();
-        });
+        };
 
         playButton = new ButtonWidget;
         playButton->useInfoStyle();
@@ -192,8 +188,8 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
 
     void updatePackagesIndicator()
     {
-        int const  count = gameProfile.packages().size();
-        bool const shown = !isMissingPackages() && count > 0 && !self().isSelected();
+        const int  count = gameProfile.packages().sizei();
+        const bool shown = !isMissingPackages() && count > 0 && !self().isSelected();
 
         packagesCounter->setText(String::asText(count));
         packagesCounter->show(shown);
@@ -231,7 +227,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
             {
                 // Load a saved game.
                 auto const &saveItem = savedItems.at(saves->selectedPos());
-                Con_Execute(CMDS_DDAY, ("loadgame " + saveItem.name() + " confirm").toLatin1(),
+                Con_Execute(CMDS_DDAY, "loadgame " + saveItem.name() + " confirm",
                             false, false);
             }
         }
@@ -245,19 +241,18 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
         PopupMenuWidget *pop = new PopupMenuWidget;
         pop->setDeleteAfterDismissed(true);
         pop->setAnchorAndOpeningDirection(deleteSaveButton->rule(), ui::Down);
-        pop->items()
-                << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
-                << new ui::ActionItem(tr("Delete Savegame"),
-                                      new CallbackAction([this, pop] ()
-                {
+        pop->items() << new ui::Item(ui::Item::Separator, "Are you sure?")
+                     << new ui::ActionItem("Delete Savegame",
+                                           [this, pop]() {
                     pop->detachAnchor();
                     // Delete the savegame file; the UI will be automatically updated.
-                    String const path = savedItems.at(saves->selectedPos()).savePath();
+                                               String const path =
+                                                   savedItems.at(saves->selectedPos()).savePath();
                     self().unselectSave();
                     App::rootFolder().destroyFile(path);
                     FS::get().refreshAsync();
-                }))
-                << new ui::ActionItem(tr("Cancel"), new Action /* nop */);
+                                           })
+                     << new ui::ActionItem("Cancel", new Action /* nop */);
         self().add(pop);
         pop->open();
     }
@@ -309,9 +304,10 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
 GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData const &savedItems)
     : d(new Impl(this, game, savedItems))
 {
-    connect(d->saves, SIGNAL(selectionChanged(de::ui::DataPos)), this, SLOT(saveSelected(de::ui::DataPos)));
-    connect(d->saves, SIGNAL(doubleClicked(de::ui::DataPos)), this, SLOT(saveDoubleClicked(de::ui::DataPos)));
-    connect(this, SIGNAL(doubleClicked()), this, SLOT(play()));
+    d->saves->audienceForSelection()   += [this](){ saveSelected(d->saves->selectedPos()); };
+    d->saves->audienceForDoubleClick() += [this](){ saveDoubleClicked(d->saves->selectedPos()); };
+
+    audienceForDoubleClick() += [this](){ play(); };
 
     game.audienceForChange() += d;
 }
@@ -366,7 +362,7 @@ void GamePanelButtonWidget::updateContent()
     {
         if (!isGamePlayable)
         {
-            meta = _E(D) + tr("Missing data files") + _E(.);
+            meta = _E(D) "Missing data files" _E(.);
         }
     }
 
@@ -374,11 +370,11 @@ void GamePanelButtonWidget::updateContent()
     {
         if (d->saves->selectedPos() != ui::Data::InvalidPos)
         {
-            meta = tr("Restore saved game");
+            meta = "Restore saved game";
         }
         else
         {
-            meta = tr("Start game");
+            meta = "Start game";
         }
     }
 
@@ -394,9 +390,8 @@ void GamePanelButtonWidget::updateContent()
         setKeepButtonsVisible(false);
     }
 
-    label().setText(String(_E(b) "%1\n" _E(l) "%2")
-                    .arg(d->gameProfile.name())
-                    .arg(meta));
+    label().setText(
+        Stringf(_E(b) "%1\n" _E(l) "%2", d->gameProfile.name().c_str(), meta.c_str()));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
     d->updatePackagesIndicator();

@@ -1216,10 +1216,7 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     uint8_t const *pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)
 {
-#if defined (DE_OPENGL_ES)
-#  define GL_CLAMP GL_CLAMP_TO_EDGE
-#endif
-    return GL_NewTextureWithParams(format, width, height, (uint8_t *)pixels, flags, 0,
+    return GL_NewTextureWithParams(format, width, height, pixels, flags, 0,
                                     (minFilter == DGL_LINEAR                 ? GL_LINEAR :
                                      minFilter == DGL_NEAREST                ? GL_NEAREST :
                                      minFilter == DGL_NEAREST_MIPMAP_NEAREST ? GL_NEAREST_MIPMAP_NEAREST :
@@ -1228,13 +1225,10 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
                                                                                GL_LINEAR_MIPMAP_LINEAR),
                                     (magFilter == DGL_LINEAR                 ? GL_LINEAR : GL_NEAREST),
                                     anisoFilter,
-                                    (wrapS == DGL_CLAMP         ? GL_CLAMP :
+                                    (wrapS == DGL_CLAMP         ? GL_CLAMP_TO_EDGE :
                                      wrapS == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT),
-                                    (wrapT == DGL_CLAMP         ? GL_CLAMP :
+                                    (wrapT == DGL_CLAMP         ? GL_CLAMP_TO_EDGE :
                                      wrapT == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT));
-#if defined (DE_OPENGL_ES)
-#  undef GL_CLAMP
-#endif
 }
 
 // dgl_draw.cpp

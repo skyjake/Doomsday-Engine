@@ -88,7 +88,7 @@ void Cl_InitID()
                        ((rand() & 0xff) << 24));
 
     // Write it to the file.
-    config.set(VAR_NETWORK_ID, String::format("%x", clientID));
+    config.set(VAR_NETWORK_ID, Stringf("%x", clientID));
 }
 
 int Cl_GameReady()

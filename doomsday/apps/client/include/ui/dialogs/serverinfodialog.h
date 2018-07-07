@@ -27,13 +27,11 @@
  */
 class ServerInfoDialog : public de::DialogWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(JoinGame, void joinGame(const de::shell::ServerInfo &serverInfo))
 
 public:
-    ServerInfoDialog(de::shell::ServerInfo const &serverInfo);
-
-signals:
-    void joinGame();
+    ServerInfoDialog(const de::shell::ServerInfo &serverInfo);
 
 private:
     DE_PRIVATE(d)

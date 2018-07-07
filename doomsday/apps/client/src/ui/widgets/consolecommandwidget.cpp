@@ -107,13 +107,13 @@ void ConsoleCommandWidget::executeCommand(String const &text)
     LOG_SCR_NOTE(_E(1) "> ") << text;
 
     // Execute the command right away.
-    Con_Execute(CMDS_CONSOLE, text.toUtf8(), false, false);
+    Con_Execute(CMDS_CONSOLE, text, false, false);
 }
 
 void ConsoleCommandWidget::autoCompletionBegan(String const &)
 {
     // Prepare a list of annotated completions to show in the popup.
-    QStringList const compls = suggestedCompletions();
+    const auto compls = suggestedCompletions();
     if (compls.size() > 1)
     {
         showAutocompletionPopup(Con_AnnotatedConsoleTerms(compls));

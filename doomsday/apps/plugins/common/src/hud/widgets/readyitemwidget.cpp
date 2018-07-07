@@ -436,6 +436,6 @@ void guidata_readyitem_t::prepareAssets()  // static
     ::pBackground = R_DeclarePatch("ARTIBOX");
     for(dint i = 0; i < FLASH_FRAME_COUNT; ++i)
     {
-        ::pIcons[i] = R_DeclarePatch(String::format("USEARTI%c", char('A' + i)));
+        ::pIcons[i] = R_DeclarePatch(Stringf("USEARTI%c", char('A' + i)));
     }
 }

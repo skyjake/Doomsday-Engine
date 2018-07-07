@@ -99,15 +99,17 @@ int Sys_MessageBox3(messageboxtype_t type,
     {
         for (int i = 0; buttons[i]; ++i)
         {
-            buttonData.emplace_back(  i == 0 ? SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT
-                                    : i == 1 ? SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT : 0,
-                                    i,
-                                    buttons[i]);
+            buttonData.push_back(SDL_MessageBoxButtonData{
+                Uint32(i == 0 ? SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT
+                     : i == 1 ? SDL_MESSAGEBOX_BUTTON_ESCAPEKEY_DEFAULT : 0),
+                i,
+                buttons[i]});
         }
     }
     else
     {
-        buttonData.emplace_back(SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "OK");
+        buttonData.push_back(
+            SDL_MessageBoxButtonData{SDL_MESSAGEBOX_BUTTON_RETURNKEY_DEFAULT, 0, "OK"});
     }
     int rc;
     SDL_ShowMessageBox(&box, &rc);

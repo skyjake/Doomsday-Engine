@@ -405,7 +405,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const shell::ServerInfo& info
                 if (!PackageLoader::get().select(pkg))
                 {
                     String const errorMsg =
-                        String::format("The configured local multiplayer "
+                        Stringf("The configured local multiplayer "
                                        "package %s is unavailable.",
                                        Package::splitToHumanReadable(pkg).c_str());
                     LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
@@ -455,7 +455,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const shell::ServerInfo& info
                 if (!joinProfile->isPlayable())
                 {
                     String const errorMsg =
-                        String::format("Server's game \"%s\" is not playable on this system. "
+                        Stringf("Server's game \"%s\" is not playable on this system. "
                                        "The following packages are unavailable:\n\n",
                                        info.gameId().c_str()) +
                         String::join(de::map(joinProfile->unavailablePackages(),
@@ -700,7 +700,7 @@ void ServerLink::initiateCommunications()
         {
             pName = "Player";
         }
-        *this << String::format("Join %04x %s", SV_VERSION, pName.c_str());
+        *this << Stringf("Join %04x %s", SV_VERSION, pName.c_str());
 
         d->state = WaitingForJoinResponse;
 

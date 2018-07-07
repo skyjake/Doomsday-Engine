@@ -150,7 +150,7 @@ void guidata_flight_t::prepareAssets()  // static
 #if __JHERETIC__ || __JHEXEN__
     for(dint i = 0; i < 16; ++i)
     {
-        ::pIcon[i] = R_DeclarePatch(String::format("SPFLY%i", i));
+        ::pIcon[i] = R_DeclarePatch(Stringf("SPFLY%i", i));
     }
 #endif
 }

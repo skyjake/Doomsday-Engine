@@ -92,7 +92,7 @@ namespace internal
 
         String asText() const
         {
-            return String::format(
+            return Stringf(
                 "PartitionCost(Total=%.2f; splits:%i, iffy:%i, near:%i, left:%i+%i, right:%i+%i)",
                 float(total) / 100.f,
                 splits,

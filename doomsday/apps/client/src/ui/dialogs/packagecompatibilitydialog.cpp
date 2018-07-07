@@ -52,7 +52,7 @@ DE_PIMPL(PackageCompatibilityDialog)
         self().area().enableIndicatorDraw(true);
         updating->setSizePolicy(ui::Expand, ui::Expand);
         updating->useMiniStyle("altaccent");
-        updating->setText(tr("Updating..."));
+        updating->setText("Updating...");
         updating->setTextAlignment(ui::AlignLeft);
         updating->setMode(ProgressWidget::Indefinite);
         updating->setOpacity(0);
@@ -67,13 +67,13 @@ DE_PIMPL(PackageCompatibilityDialog)
         if (!list) return "";
         if (ignoreCheck)
         {
-            return _E(b)_E(D) + tr("Ignore and Continue");
+            return _E(b)_E(D) "Ignore and Continue";
         }
         if (list->itemCount() > 0)
         {
-            return _E(b) + tr("Load Mods");
+            return _E(b) "Load Mods";
         }
-        return _E(b) + tr("Unload Mods");
+        return _E(b) "Unload Mods";
     }
 
     void enableIgnore(bool yes)
@@ -111,8 +111,8 @@ DE_PIMPL(PackageCompatibilityDialog)
         try
         {
             // The only action on the packages is to view information.
-            actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this]() -> PopupWidget * {
-                return new PackageInfoDialog(list->actionPackage(),
+            actions << new ui::SubwidgetItem("...", ui::Up, [this] () -> PopupWidget * {
+                 return new PackageInfoDialog(list->actionPackage(),
                                              PackageInfoDialog::InformationOnly);
             });
 
@@ -231,7 +231,7 @@ DE_PIMPL(PackageCompatibilityDialog)
                     if (list->itemCount() > 0)
                     {
                         self().message().setText(message + "\n\n" + unavailNote +
-                                                 tr("All the mods listed below should be loaded."));
+                                                 "All the mods listed below should be loaded.");
                         self().buttons()
                                 << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                         new CallbackAction([this] () { resolvePackages(); }));
@@ -239,14 +239,13 @@ DE_PIMPL(PackageCompatibilityDialog)
                     else
                     {
                         self().message().setText(message + "\n\n" + unavailNote +
-                                                 tr("All additional mods should be unloaded."));
+                                                 "All additional mods should be unloaded.");
                         self().buttons()
                                    << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                            new CallbackAction([this] () { resolvePackages(); }));
                     }
                 }
-                self().buttons()
-                        << new DialogButtonItem(Reject, tr("Cancel"));
+                self().buttons() << new DialogButtonItem(Reject, "Cancel");
             }
         }
         catch (PackagesWidget::UnavailableError const &er)
@@ -287,7 +286,7 @@ DE_PIMPL(PackageCompatibilityDialog)
         int goodUntil = -1;
 
         // Check if all the loaded packages match the wanted ones.
-        for (int i = 0; i < loaded.size() && i < wanted.size(); ++i)
+        for (int i = 0; i < loaded.sizei() && i < wanted.sizei(); ++i)
         {
             if (Package::equals(loaded.at(i), wanted.at(i)))
             {
@@ -302,7 +301,7 @@ DE_PIMPL(PackageCompatibilityDialog)
         LOG_RES_MSG("Good until %s") << goodUntil;
 
         // Unload excess.
-        for (int i = loaded.size() - 1; i > goodUntil; --i)
+        for (int i = loaded.sizei() - 1; i > goodUntil; --i)
         {
             LOG_RES_MSG("Unloading excess ") << loaded.at(i);
 
@@ -311,7 +310,7 @@ DE_PIMPL(PackageCompatibilityDialog)
         }
 
         // Load the remaining wanted packages.
-        for (int i = goodUntil + 1; i < wanted.size(); ++i)
+        for (int i = goodUntil + 1; i < wanted.sizei(); ++i)
         {
             const auto &pkgId = wanted.at(i);
 
@@ -342,7 +341,7 @@ PackageCompatibilityDialog::PackageCompatibilityDialog(String const &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
-    title().setText(tr("Incompatible Mods"));
+    title().setText("Incompatible Mods");
 }
 
 void PackageCompatibilityDialog::setMessage(String const &msg)
@@ -350,7 +349,7 @@ void PackageCompatibilityDialog::setMessage(String const &msg)
     d->message = msg;
 }
 
-void PackageCompatibilityDialog::setWantedPackages(StringList packages)
+void PackageCompatibilityDialog::setWantedPackages(const StringList& packages)
 {
     DE_ASSERT(!packages.isEmpty());
 

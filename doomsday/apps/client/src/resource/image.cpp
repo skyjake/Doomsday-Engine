@@ -171,7 +171,7 @@ image_t::Size Image_Size(image_t const &img)
 
 String Image_Description(image_t const &img)
 {
-    return String::format("Dimensions:%s Flags:%x %s:%i",
+    return Stringf("Dimensions:%s Flags:%x %s:%i",
                           img.size.asText().c_str(),
                           img.flags,
                           0 != img.paletteId ? "ColorPalette" : "PixelSize",
@@ -374,7 +374,7 @@ bool Image_Save(image_t const &img, char const *filePath)
     if (fullPath.isEmpty())
     {
         static int n = 0;
-        fullPath = String::format("image%ux%u-%03i", img.size.x, img.size.y, n++);
+        fullPath = Stringf("image%ux%u-%03i", img.size.x, img.size.y, n++);
     }
 
     if (fullPath.fileNameExtension().isEmpty())
@@ -883,7 +883,7 @@ Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
             {
                 source = loadExternalTexture(image,
                                              "Patches:" + uri.path() +
-                                                 String::format("-table%i%i", tclass, tmap),
+                                                 Stringf("-table%i%i", tclass, tmap),
                                              "-ck");
             }
 

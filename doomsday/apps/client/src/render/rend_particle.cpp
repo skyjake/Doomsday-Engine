@@ -135,7 +135,7 @@ static dbyte loadParticleTexture(duint particleTex)
     try
     {
         // First check if there is a texture asset for this particle.
-        String const assetId = String::format("texture.particle.%02i", particleTex);
+        String const assetId = Stringf("texture.particle.%02i", particleTex);
         if (App::assetExists(assetId))
         {
             auto asset = App::asset(assetId);
@@ -148,7 +148,7 @@ static dbyte loadParticleTexture(duint particleTex)
         else
         {
             // Fallback: look in the Textures scheme.
-            auto particleImageName = String::format("Particle%02i", particleTex);
+            auto particleImageName = Stringf("Particle%02i", particleTex);
             Path foundPath = tryFindImage(particleImageName);
             if (foundPath.isEmpty())
                 return 0;

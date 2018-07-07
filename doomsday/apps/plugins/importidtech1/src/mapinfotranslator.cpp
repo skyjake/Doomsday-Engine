@@ -223,9 +223,9 @@ namespace internal {
         String const gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic"))
         {
-            return res::makeUri(String::format("Maps:E%iM%i", episode+1, map+1));
+            return res::makeUri(Stringf("Maps:E%iM%i", episode+1, map+1));
         }
-        return res::makeUri(String::format("Maps:MAP%02i", map+1));
+        return res::makeUri(Stringf("Maps:MAP%02i", map+1));
     }
 
     static uint mapWarpNumberFor(res::Uri const &mapUri)
@@ -609,7 +609,7 @@ namespace internal {
             }
             else
             {
-                mapInfo.set((isSecret? "secretNextMap" : "nextMap"), String::format("@wt:%i", mapNumber));
+                mapInfo.set((isSecret? "secretNextMap" : "nextMap"), Stringf("@wt:%i", mapNumber));
             }
         }
 
@@ -1318,7 +1318,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
         for(int i = 0; i < translatedFiles.sizei(); ++i)
         {
             String sourceFile = translatedFiles[i];
-            os << "\n# " + String::format("%i: %s", i, NativePath(sourceFile).pretty().c_str());
+            os << "\n# " + Stringf("%i: %s", i, NativePath(sourceFile).pretty().c_str());
         }
 
         // Output the header block.

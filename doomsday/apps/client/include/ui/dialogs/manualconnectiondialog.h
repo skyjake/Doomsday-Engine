@@ -30,7 +30,8 @@
  */
 class ManualConnectionDialog : public de::InputDialog, public de::IPersistent
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(Selection, void manualConnectionSelected(de::ui::Item const *))
 
 public:
     ManualConnectionDialog(de::String const &name = "manualconnection");
@@ -43,18 +44,13 @@ public:
      */
     void enableJoinWhenSelected(bool joinWhenSelected);
 
-    // Implements IPersistent.
-    void operator>>(de::PersistentState &toState) const;
-    void operator<<(de::PersistentState const &fromState);
-
-signals:
-    void selected(de::ui::Item const *);
-
-public slots:
     void queryOrConnect();
     void contentChanged();
     void validate();
-    //void serverSelected(de::ui::Item const *);
+
+    // Implements IPersistent.
+    void operator >> (de::PersistentState &toState) const;
+    void operator << (de::PersistentState const &fromState);
 
 protected:
     void finish(int result);

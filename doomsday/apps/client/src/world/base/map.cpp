@@ -3404,7 +3404,7 @@ String Map::elementSummaryAsStyledText() const
 {
     String str;
 
-#define TABBED(count, label) String::format(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
+#define TABBED(count, label) Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
     if (lineCount())    str += TABBED(lineCount(),    "Lines");
     //if (sideCount())    str += TABBED(sideCount(),    "Sides");
     if (sectorCount())  str += TABBED(sectorCount(),  "Sectors");
@@ -3421,7 +3421,7 @@ String Map::objectSummaryAsStyledText() const
     dint thCount = thinkers().count(&thCountInStasis);
     String str;
 
-#define TABBED(count, label) String::format(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
+#define TABBED(count, label) Stringf(_E(Ta) "  %i " _E(Tb) "%s\n", count, label)
     if (thCount)           str += TABBED(thCount,            stringf("Thinkers (%i in stasis)", thCountInStasis).c_str());
 #ifdef __CLIENT__
     //if (biasSourceCount()) str += TABBED(biasSourceCount(),  "Bias Sources");

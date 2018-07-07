@@ -82,7 +82,7 @@ void FragsWidget_Draw(guidata_frags_t *frags, Point2Raw const *offset)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String::format("Frags: %i", frags->_value);
+    auto const valueAsText = Stringf("Frags: %i", frags->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -124,7 +124,7 @@ void FragsWidget_UpdateGeometry(guidata_frags_t *frags)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String::format("Frags: %i", frags->_value);
+    auto const valueAsText = Stringf("Frags: %i", frags->_value);
 
     FR_SetFont(frags->font());
     FR_SetTracking(TRACKING);

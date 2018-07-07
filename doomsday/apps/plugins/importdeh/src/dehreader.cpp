@@ -240,7 +240,7 @@ public:
 
     void parse()
     {
-        LOG_AS_STRING(stackDepth == 1? "DehReader" : String::format("[%i]", stackDepth - 1));
+        LOG_AS_STRING(stackDepth == 1? "DehReader" : Stringf("[%i]", stackDepth - 1));
 
         skipToNextLine();
 
@@ -1305,12 +1305,12 @@ public:
             if(!var.compareWithoutCase("Max ammo"))
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String::format("Player|Max ammo|%s", theAmmo), String::asText(value));
+                if(!ignore) createValueDef(Stringf("Player|Max ammo|%s", theAmmo), String::asText(value));
             }
             else if(!var.compareWithoutCase("Per ammo"))
             {
                 int per = expr.toInt(0, 10, String::AllowSuffix);
-                if(!ignore) createValueDef(String::format("Player|Clip ammo|%s", theAmmo), String::asText(per));
+                if(!ignore) createValueDef(Stringf("Player|Clip ammo|%s", theAmmo), String::asText(per));
             }
             else
             {
@@ -1355,7 +1355,7 @@ public:
 
                             Record const &state = ded->states[value];
                             createValueDef(
-                                String::format("Weapon Info|%i|%s", weapNum, weapon->name.c_str()),
+                                Stringf("Weapon Info|%i|%s", weapNum, weapon->name.c_str()),
                                 state.gets("id"));
                         }
                     }
@@ -1374,7 +1374,7 @@ public:
                     else
                     {
                         createValueDef(
-                            String::format("Weapon Info|%i|Type", weapNum), ammotypes[value]);
+                            Stringf("Weapon Info|%i|Type", weapNum), ammotypes[value]);
                     }
                 }
             }
@@ -1382,7 +1382,7 @@ public:
             {
                 int const value = expr.toInt(0, 10, String::AllowSuffix);
                 if (!ignore)
-                    createValueDef(String::format("Weapon Info|%i|Per shot", weapNum),
+                    createValueDef(Stringf("Weapon Info|%i|Per shot", weapNum),
                                    String::asText(value));
             }
             else

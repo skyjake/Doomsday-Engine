@@ -1,3 +1,4 @@
+#if 0
 /** @file mouse_qt.cpp
  *
  * Mouse driver that gets mouse input from the Qt based canvas widget.
@@ -235,3 +236,5 @@ mouseinterface_t qtMouse = {
     Mouse_Qt_GetState,
     Mouse_Qt_Trap
 };
+#endif
+

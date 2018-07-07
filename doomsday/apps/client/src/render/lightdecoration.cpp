@@ -47,7 +47,7 @@ String LightDecoration::description() const
 {
     String desc;
 #ifdef DE_DEBUG
-    desc.prepend(String::format(_E(b) "LightDecoration " _E(.) "[%p]\n", this));
+    desc.prepend(Stringf(_E(b) "LightDecoration " _E(.) "[%p]\n", this));
 #endif
     return Decoration::description() + "\n" + desc;
 }

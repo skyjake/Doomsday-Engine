@@ -243,7 +243,7 @@ void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
         while (FS::tryLocate<File const>(uniquePath))
         {
             uniquePath = outputImagePath.fileNameAndPathWithoutExtension() +
-                    String::format("-%03i", counter++) +
+                    Stringf("-%03i", counter++) +
                     outputImagePath.fileNameExtension();
         }
 

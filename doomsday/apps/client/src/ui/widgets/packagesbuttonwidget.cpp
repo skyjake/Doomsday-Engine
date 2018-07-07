@@ -61,7 +61,7 @@ DE_GUI_PIMPL(PackagesButtonWidget)
             }
             else
             {
-                self().setText(labelPrefix + String::format("%i", packages.count()));
+            self().setText(labelPrefix + Stringf("%i", packages.count()));
                 self().setTextColor(self().colorTheme() == Normal? "accent" : "inverted.accent");
             }
             self().setImageColor(self().textColorf());

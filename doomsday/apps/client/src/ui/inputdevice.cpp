@@ -97,40 +97,40 @@ String InputDevice::description() const
     String desc;
     if (!d->title.isEmpty())
     {
-        desc += String::format(_E(D)_E(b) "%s" _E(.)_E(.) " - ", d->title.c_str());
+        desc += Stringf(_E(D)_E(b) "%s" _E(.)_E(.) " - ", d->title.c_str());
     }
-    desc += String::format(
+    desc += Stringf(
         _E(b) "%s" _E(.) _E(l) " (%s)" _E(.), name().c_str(), isActive() ? "active" : "inactive");
 
     if (int const count = axisCount())
     {
-        desc += String::format("\n  " _E(b) "%i axes:" _E(.), count);
+        desc += Stringf("\n  " _E(b) "%i axes:" _E(.), count);
         int idx = 0;
         for (Control const *axis : d->axes)
         {
-            desc += String::format("\n    [%3i] " _E(>) "%s" _E(<), idx++,
+            desc += Stringf("\n    [%3i] " _E(>) "%s" _E(<), idx++,
                                    axis->description().c_str());
         }
     }
 
     if (int const count = buttonCount())
     {
-        desc += String::format("\n  " _E(b) "%i buttons:" _E(.), count);
+        desc += Stringf("\n  " _E(b) "%i buttons:" _E(.), count);
         int idx = 0;
         for (Control const *button : d->buttons)
         {
-            desc += String::format("\n    [%03i] " _E(>) "%s" _E(<), idx++,
+            desc += Stringf("\n    [%03i] " _E(>) "%s" _E(<), idx++,
                                    button->description().c_str());
         }
     }
 
     if (int const count = hatCount())
     {
-        desc += String::format("\n  " _E(b) "%i hats:" _E(.), count);
+        desc += Stringf("\n  " _E(b) "%i hats:" _E(.), count);
         int idx = 0;
         for (Control const *hat : d->hats)
         {
-            desc += String::format("\n    [%3i] " _E(>) "%s" _E(<), idx++,
+            desc += Stringf("\n    [%3i] " _E(>) "%s" _E(<), idx++,
                                    hat->description().c_str());
         }
     }

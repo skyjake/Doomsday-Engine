@@ -681,7 +681,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
             }
             else
             {
-                str += String::format("code%03i", id);
+                str += Stringf("code%03i", id);
             }
         }
         else
@@ -724,10 +724,10 @@ String B_AxisPositionToString(Binding::ControlTest test, float pos)
 {
     switch (test)
     {
-    case Binding::AxisPositionWithin:         return String::format("-within%f", pos);
-    case Binding::AxisPositionBeyond:         return String::format("-beyond%f", pos);
-    case Binding::AxisPositionBeyondPositive: return String::format("-pos%f",    pos);
-    case Binding::AxisPositionBeyondNegative: return String::format("-neg%f",    -pos);
+    case Binding::AxisPositionWithin:         return Stringf("-within%f", pos);
+    case Binding::AxisPositionBeyond:         return Stringf("-beyond%f", pos);
+    case Binding::AxisPositionBeyondPositive: return Stringf("-pos%f",    pos);
+    case Binding::AxisPositionBeyondNegative: return Stringf("-neg%f",    -pos);
 
     default:
         DE_ASSERT_FAIL("B_AxisPositionToString: Unknown test");

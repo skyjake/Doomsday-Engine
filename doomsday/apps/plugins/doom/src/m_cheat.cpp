@@ -161,7 +161,7 @@ CHEAT_FUNC(MyPos)
 
     mobj_t const *mob = players[CONSOLEPLAYER].plr->mo;
     String const  text =
-        String::format("angle:0x%x position:%s", mob->angle, Vec3d(mob->origin).asText().c_str());
+        Stringf("angle:0x%x position:%s", mob->angle, Vec3d(mob->origin).asText().c_str());
     P_SetMessageWithFlags(&players[player], text, LMF_NO_HIDE);
     return true;
 }
@@ -577,7 +577,7 @@ D_CMD(CheatWhere)
     mobj_t *plrMo = plr->plr->mo;
     if(!plrMo) return true;
 
-    String const text = String::format("Map:%1 position:%2",
+    String const text = Stringf("Map:%1 position:%2",
                                        gfw_Session()->mapUri().asText().c_str(),
                                        Vec3d(plrMo->origin).asText().c_str());
     P_SetMessageWithFlags(plr, text, LMF_NO_HIDE);

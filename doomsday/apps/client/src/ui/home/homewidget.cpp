@@ -48,12 +48,14 @@ static TimeSpan const SCROLL_SPAN = .5;
 static TimeSpan const DISMISS_SPAN = 1.5;
 
 DE_GUI_PIMPL(HomeWidget)
-, DE_OBSERVES(App,          StartupComplete)
-, DE_OBSERVES(Games,        Readiness)
-, DE_OBSERVES(DoomsdayApp,  GameLoad)
-, DE_OBSERVES(DoomsdayApp,  GameChange)
-, DE_OBSERVES(Variable,     Change)
-, DE_OBSERVES(ButtonWidget, StateChange)
+, DE_OBSERVES(App,                  StartupComplete)
+, DE_OBSERVES(Games,                Readiness)
+, DE_OBSERVES(DoomsdayApp,          GameLoad)
+, DE_OBSERVES(DoomsdayApp,          GameChange)
+, DE_OBSERVES(Variable,             Change)
+, DE_OBSERVES(ButtonWidget,         StateChange)
+, DE_OBSERVES(ColumnWidget,         Activity)
+, DE_OBSERVES(PackagesColumnWidget, AvailableCount)
 {
     struct Column {
         ColumnWidget *widget;
@@ -113,8 +115,8 @@ DE_GUI_PIMPL(HomeWidget)
         moveRight = new ButtonWidget;
         //moveLeft ->setImage(new StyleProceduralImage("fold", *moveLeft, 90));
         //moveRight->setImage(new StyleProceduralImage("fold", *moveLeft, -90));
-        moveLeft ->setActionFn([this] () { tabs->setCurrent(visibleTabRange().start - 1); });
-        moveRight->setActionFn([this] () { tabs->setCurrent(visibleTabRange().end); });
+        moveLeft ->setActionFn([this]() { tabs->setCurrent(visibleTabRange().start - 1); });
+        moveRight->setActionFn([this]() { tabs->setCurrent(visibleTabRange().end); });
         configureEdgeNavigationButton(*moveLeft);
         configureEdgeNavigationButton(*moveRight);
 
@@ -123,7 +125,7 @@ DE_GUI_PIMPL(HomeWidget)
         taskBarHintButton->setBackgroundColor("");
         taskBarHintButton->setSizePolicy(ui::Expand, ui::Expand);
         taskBarHintButton->margins().set("dialog.gap");
-        taskBarHintButton->setText(_E(b) "ESC" _E(.) + tr(" Task Bar"));
+        taskBarHintButton->setText(_E(b) "ESC" _E(.) + " Task Bar");
 //        taskBarHintButton->setTextColor("text");
         taskBarHintButton->setFont("small");
         taskBarHintButton->setOpacity(.66f);
@@ -134,30 +136,26 @@ DE_GUI_PIMPL(HomeWidget)
             ClientWindow::main().taskBar().open();
         });
 
-        // The task bar is created later, so defer the signal connects.
-        mainCall.enqueue([this] ()
-        {
-            ClientWindow::main().taskBar() += [this] ()
-            {
+        // The task bar is created later.
+        mainCall.enqueue([this]() {
+            ClientWindow::main().taskBar().audienceForOpen() += [this]() {
                 taskBarHintButton->disable();
                 taskBarHintButton->setOpacity(0, 0.25);
             };
-            ClientWindow::main().taskBar(), &TaskBarWidget::closed, [this] ()
-            {
+            ClientWindow::main().taskBar().audienceForClose() += [this]() {
                 taskBarHintButton->enable();
                 taskBarHintButton->setOpacity(.66f, 0.5);
+            };
             });
-        });
 
         // The navigation buttons should be hidden with a delay or otherwise the user
         // may inadvertely click on them right after they're gone.
         moveShowTimer.setSingleShot(true);
-        moveShowTimer.setInterval(SCROLL_SPAN.asMilliSeconds());
-        moveShowTimer += [this] ()
-        {
+        moveShowTimer.setInterval(SCROLL_SPAN);
+        moveShowTimer += [this]() {
             moveLeft ->show(tabs->current() != 0);
             moveRight->show(tabs->current() < tabs->items().size() - 1);
-        });
+        };
     }
 
     ~Impl()
@@ -203,7 +201,7 @@ DE_GUI_PIMPL(HomeWidget)
 
         // Show columns depending on whether there are playable games.
         allColumns.at(0).widget->show(!gotGames);
-        for (int i = 1; i < allColumns.size(); ++i)
+        for (int i = 1; i < allColumns.sizei(); ++i)
         {
             Column const &col = allColumns.at(i);
             if (col.configVar)
@@ -218,12 +216,12 @@ DE_GUI_PIMPL(HomeWidget)
 
         // Tab headings for visible columns.
         struct TabSpec {
-            Column const *col;
-            int visibleIndex;
+            const Column *col;
+            int           visibleIndex;
         };
-        QList<TabSpec> specs;
+        List<TabSpec> specs;
         int visibleIndex = 0;
-        for (int index = 0; index < allColumns.size(); ++index)
+        for (int index = 0; index < allColumns.sizei(); ++index)
         {
             Column const &col = allColumns.at(index);
             if (!col.widget->behavior().testFlag(Widget::Hidden))
@@ -242,7 +240,7 @@ DE_GUI_PIMPL(HomeWidget)
             {
                 auto const &item = tabs->items().at(pos);
                 if (item.label() != specs.at(pos).col->widget->tabHeading() ||
-                    item.data().toInt() != specs.at(pos).visibleIndex)
+                    item.data().asInt() != specs.at(pos).visibleIndex)
                 {
                     differenceFound = true;
                     break;
@@ -252,9 +250,9 @@ DE_GUI_PIMPL(HomeWidget)
         }
         // Create new items.
         tabs->clearItems();
-        for (TabSpec const &ts : specs)
+        for (const TabSpec &ts : specs)
         {
-            auto *tabItem = new TabItem(ts.col->widget->tabHeading(), ts.visibleIndex);
+            auto *tabItem = new TabItem(ts.col->widget->tabHeading(), NumberValue(ts.visibleIndex));
             tabItem->setShortcutKey(ts.col->widget->tabShortcut());
             tabs->items() << tabItem;
         }
@@ -366,8 +364,7 @@ DE_GUI_PIMPL(HomeWidget)
 
     void addColumn(ColumnWidget *col)
     {
-        QObject::connect(col, SIGNAL(mouseActivity(QObject const *)),
-                         thisPublic, SLOT(mouseActivityInColumn(QObject const *)));
+        col->audienceForActivity() += this;
 
         col->scrollArea().margins().setTop(tabsBackground->rule().height());
         col->rule()
@@ -419,7 +416,7 @@ DE_GUI_PIMPL(HomeWidget)
             currentOffsetTab = int(tabs->current());
             setScrollOffset(currentOffsetTab, 0.0);
         }
-        if (visibleTabRange().end >= columns.size())
+        if (visibleTabRange().end >= columns.sizei())
         {
             currentOffsetTab = columns.size() - int(visibleColumnCount);
             setScrollOffset(currentOffsetTab, 0.0);
@@ -457,13 +454,13 @@ DE_GUI_PIMPL(HomeWidget)
      */
     void scrollToTab(int pos, TimeSpan span)
     {
-        pos = de::clamp(0, pos, columns.size() - 1);
+        pos = de::clamp(0, pos, columns.sizei() - 1);
 
-        if (currentOffsetTab + int(visibleColumnCount) > columns.size())
+        if (currentOffsetTab + int(visibleColumnCount) > columns.sizei())
         {
             // Don't let the visible range extend outside the view.
             currentOffsetTab = columns.size() - visibleColumnCount;
-            span = 0;
+            span = 0.0;
         }
         else if (visibleTabRange().contains(pos))
         {
@@ -498,8 +495,8 @@ DE_GUI_PIMPL(HomeWidget)
         }
 
         // Remove the highlight.
-        const int newHighlightPos = tabs->currentItem().data().toInt();
-        for (int pos = 0; pos < columns.size(); ++pos)
+        const int newHighlightPos = tabs->currentItem().data().asInt();
+        for (int pos = 0; pos < columns.sizei(); ++pos)
         {
             if (pos != newHighlightPos && columns[pos]->isHighlighted())
             {
@@ -514,7 +511,7 @@ DE_GUI_PIMPL(HomeWidget)
 
     int highlightedTab() const
     {
-        for (int pos = 0; pos < columns.size(); ++pos)
+        for (int pos = 0; pos < columns.sizei(); ++pos)
         {
             if (columns[pos]->isHighlighted())
             {
@@ -522,6 +519,24 @@ DE_GUI_PIMPL(HomeWidget)
             }
         }
         return -1;
+    }
+
+    void mouseActivity(const ColumnWidget *columnWidget) override
+    {
+        for (dsize i = 0; i < columns.size(); ++i)
+        {
+            if (columns.at(i) == columnWidget)
+            {
+                tabs->setCurrent(i);
+                break;
+            }
+        }
+    }
+
+    void availablePackageCountChanged(int count) override
+    {
+        havePackages = count > 0;
+        updateVisibleTabsAndLayout();
     }
 };
 
@@ -555,13 +570,7 @@ HomeWidget::HomeWidget()
     {
         auto *packagesColumn = new PackagesColumnWidget;
         d->addColumn(packagesColumn);
-        connect(packagesColumn,
-                &PackagesColumnWidget::availablePackageCountChanged,
-                [this] (int count)
-        {
-            d->havePackages = count > 0;
-            d->updateVisibleTabsAndLayout();
-        });
+        packagesColumn->audienceForAvailableCount() += d;
     }
 
     d->updateVisibleColumnsAndTabHeadings();
@@ -600,7 +609,7 @@ HomeWidget::HomeWidget()
     d->updateLayout();
 
     // Connections.
-    connect(d->tabs, SIGNAL(currentTabChanged()), this, SLOT(tabChanged()));
+    d->tabs->audienceForTab() += [this]() { tabChanged(); };
 }
 
 void HomeWidget::viewResized()
@@ -613,24 +622,25 @@ bool HomeWidget::handleEvent(Event const &event)
 {
     if (event.isKeyDown())
     {
+        const auto &key = event.as<KeyEvent>();
+
         // Keyboard navigation between tabs.
-        KeyEvent const &key = event.as<KeyEvent>();
-        if (key.qtKey() == Qt::Key_Left)
+        if (key.ddKey() == DDKEY_LEFTARROW)
         {
             d->switchTab(-1);
             return true;
         }
-        else if (key.qtKey() == Qt::Key_Right)
+        else if (key.ddKey() == DDKEY_RIGHTARROW)
         {
             d->switchTab(+1);
             return true;
         }
-        else if (key.qtKey() == Qt::Key_Home)
+        else if (key.ddKey() == DDKEY_HOME)
         {
             d->tabs->setCurrent(0);
             return true;
         }
-        else if (key.qtKey() == Qt::Key_End)
+        else if (key.ddKey() == DDKEY_END)
         {
             d->tabs->setCurrent(d->tabs->items().size() - 1);
             return true;
@@ -663,16 +673,16 @@ PopupWidget *HomeWidget::makeSettingsPopup()
 {
     PopupMenuWidget *menu = new PopupMenuWidget;
     menu->items()
-            << new ui::Item(ui::Item::Separator, tr("Library"))
-            << new ui::VariableToggleItem(tr("Show Descriptions"), App::config("home.showColumnDescription"))
-            << new ui::VariableToggleItem(tr("Show Unplayable"),   App::config("home.showUnplayableGames"))
+            << new ui::Item(ui::Item::Separator, "Library")
+            << new ui::VariableToggleItem("Show Descriptions", App::config("home.showColumnDescription"))
+            << new ui::VariableToggleItem("Show Unplayable",   App::config("home.showUnplayableGames"))
             << new ui::Item(ui::Item::Separator)
-            << new ui::Item(ui::Item::Separator, tr("Columns"))
-            << new ui::VariableToggleItem(tr("Doom"),            App::config("home.columns.doom"))
-            << new ui::VariableToggleItem(tr("Heretic"),         App::config("home.columns.heretic"))
-            << new ui::VariableToggleItem(tr("Hexen"),           App::config("home.columns.hexen"))
-            << new ui::VariableToggleItem(tr("Other Games"),     App::config("home.columns.otherGames"))
-            << new ui::VariableToggleItem(tr("Multiplayer"),     App::config("home.columns.multiplayer"));
+            << new ui::Item(ui::Item::Separator, "Columns")
+            << new ui::VariableToggleItem("Doom",            App::config("home.columns.doom"))
+            << new ui::VariableToggleItem("Heretic",         App::config("home.columns.heretic"))
+            << new ui::VariableToggleItem("Hexen",           App::config("home.columns.hexen"))
+            << new ui::VariableToggleItem("Other Games",     App::config("home.columns.otherGames"))
+            << new ui::VariableToggleItem("Multiplayer",     App::config("home.columns.multiplayer"));
     return menu;
 }
 
@@ -700,19 +710,8 @@ bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(co
 
 void HomeWidget::tabChanged()
 {
-    d->scrollToTab(d->tabs->currentItem().data().toInt(), SCROLL_SPAN);
+    d->scrollToTab(d->tabs->currentItem().data().asInt(), SCROLL_SPAN);
     d->updateHighlightedTab();
-}
-
-void HomeWidget::mouseActivityInColumn(QObject const *columnWidget)
-{
-    for (int i = 0; i < d->columns.size(); ++i)
-    {
-        if (d->columns.at(i) == columnWidget)
-        {
-            d->tabs->setCurrent(i);
-        }
-    }
 }
 
 void HomeWidget::updateStyle()

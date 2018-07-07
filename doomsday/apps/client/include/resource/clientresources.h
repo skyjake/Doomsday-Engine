@@ -374,7 +374,7 @@ public:
     TextureVariantSpec &detailTextureSpec(de::dfloat contrast);
 
     AbstractFont *newFontFromDef(ded_compositefont_t const &def);
-    AbstractFont *newFontFromFile(res::Uri const &uri, de::String filePath);
+    AbstractFont *newFontFromFile(res::Uri const &uri, const de::String& filePath);
 
     /**
      * Release all GL-textures for fonts in the identified scheme.

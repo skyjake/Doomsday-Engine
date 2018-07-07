@@ -122,18 +122,18 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
         switch (state)
         {
         default:
-            msg = String::format("Connecting to " _E(b)"%s" _E(.), location.c_str());
+            msg = Stringf("Connecting to " _E(b)"%s" _E(.), location.c_str());
             break;
 
         case Downloading:
-            msg = String::format("Downloading %s (%.1f MB) from %s",
+            msg = Stringf("Downloading %s (%.1f MB) from %s",
                                  (_E(b) + fn + _E(.)).c_str(),
                                  totalBytes / MB,
                                  location.c_str());
             break;
 
         case Finished:
-            msg = String::format("Ready to install\n%s", (_E(b) + fn + _E(.)).c_str());
+            msg = Stringf("Ready to install\n%s", (_E(b) + fn + _E(.)).c_str());
             break;
 
         case Error:

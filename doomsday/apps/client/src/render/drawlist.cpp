@@ -911,5 +911,5 @@ void DrawList::rewind()
 
 void DrawList::reserveSpace(DrawList::Indices &indices, uint count) // static
 {
-    if (indices.size() < int(count)) indices.resize(int(count));
+    if (indices.size() < count) indices.resize(count);
 }

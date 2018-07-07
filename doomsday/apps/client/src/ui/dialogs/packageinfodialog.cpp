@@ -19,6 +19,7 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packagecontentoptionswidget.h"
 #include "ui/clientstyle.h"
+#include "clientapp.h"
 #include "dd_main.h"
 
 #include <doomsday/DataBundle>
@@ -270,7 +271,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
             }
             else if (bundle->format() == DataBundle::Iwad || bundle->format() == DataBundle::Pwad)
             {
-                lumpDirCrc32 = String::format("%08x", bundle->lumpDirectory()->crc32());
+                lumpDirCrc32 = Stringf("%08x", bundle->lumpDirectory()->crc32());
             }
         }
         else
@@ -286,26 +287,24 @@ DE_GUI_PIMPL(PackageInfoDialog)
         }
 
         title->setText(meta.gets(Package::VAR_TITLE));
-        path->setText(String::format(_E(b) "%s" _E(.) "\n%s",
+        path->setText(Stringf(_E(b) "%s" _E(.) "\n%s",
                                      format.c_str(),
                                      fileDesc.upperFirstChar().c_str()));
 
         // Metadata.
-        String metaMsg =
-            String(_E(Ta) _E(l) "Version: " _E(.) _E(Tb) "%1\n" _E(Ta) _E(l) "Tags: " _E(.)
-                       _E(Tb) "%2\n" _E(Ta) _E(l) "License: " _E(.) _E(Tb) "%3")
-                .arg(meta.gets("version"))
-                .arg(meta.gets("tags"))
-                .arg(meta.gets("license"));
+        String metaMsg = Stringf(_E(Ta)_E(l) "Version: " _E(.)_E(Tb) "%s\n"
+                                 _E(Ta)_E(l) "Tags: "    _E(.)_E(Tb) "%s\n"
+                                 _E(Ta)_E(l) "License: " _E(.)_E(Tb) "%s",
+                    meta.gets("version").c_str(),
+                    meta.gets("tags").c_str(),
+                    meta.gets("license").c_str());
         if (meta.has("author"))
         {
-            metaMsg +=
-                String("\n" _E(Ta) _E(l) "Author: " _E(.) _E(Tb) "%1").arg(meta.gets("author"));
+            metaMsg += "\n" _E(Ta) _E(l) "Author: " _E(.) _E(Tb) + meta.gets("author");
         }
         if (meta.has("contact"))
         {
-            metaMsg +=
-                String("\n" _E(Ta) _E(l) "Contact: " _E(.) _E(Tb) "%1").arg(meta.gets("contact"));
+            metaMsg += "\n" _E(Ta) _E(l) "Contact: " _E(.) _E(Tb) + meta.gets("contact");
         }
         metaInfo->setText(metaMsg);
 
@@ -315,16 +314,16 @@ DE_GUI_PIMPL(PackageInfoDialog)
         // Start with a generic description of the package format.
         if (compatibleGame.isEmpty())
         {
-            QRegularExpression reg(DataBundle::anyGameTagPattern());
-            if (!reg.match(meta.gets("tags")).hasMatch())
+            const RegExp reg(DataBundle::anyGameTagPattern());
+            if (!reg.hasMatch(meta.gets("tags")))
             {
                 msg += "Not enough information to determine which game this package is for.";
             }
         }
         else
         {
-            msg += String("This package is likely meant for " _E(b) "%1" _E(.) ".")
-                       .arg(compatibleGame);
+            msg = Stringf("This package is likely meant for " _E(b) "%s" _E(.) ".",
+                          compatibleGame.c_str());
         }
 
         String moreMsg;
@@ -333,10 +332,10 @@ DE_GUI_PIMPL(PackageInfoDialog)
                 bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
             {
                 int const mapCount = bundle->lumpDirectory()->findMaps().count();
-                moreMsg +=
-                    QString("Contains %1 map%2: ").arg(mapCount).arg(DENG2_PLURAL_S(mapCount)) +
-                    .arg(DE_PLURAL_S(mapCount)) +
-                    String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+                msg += Stringf("\n\nContains %i map%s: ",
+                    mapCount,
+                    DE_PLURAL_S(mapCount),
+                    String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ").c_str());
                 moreMsg += "\n";
             }
 
@@ -376,7 +375,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
             }
         }
 
-        description->setText(msg.trimmed());
+        description->setText(msg.strip());
 
         // Show applicable package actions.
         if (mode == EnableActions)
@@ -384,32 +383,32 @@ DE_GUI_PIMPL(PackageInfoDialog)
             self().buttons()
                 << new DialogButtonItem(Action | Id2,
                                         style().images().image("play"),
-                                        tr("Play in..."),
-                                        new SignalAction(thisPublic, SLOT(playInGame())))
+                                        "Play in...",
+                                        [this]() { self().playInGame(); })
                 << new DialogButtonItem(Action | Id3,
                                         style().images().image("create"),
-                                        tr("Add to..."),
-                                        new SignalAction(thisPublic, SLOT(addToProfile())));
-        }
+                                        "Add to...",
+                                        [this]() { self().addToProfile(); });
+
         if (!nativePath.isEmpty())
         {
             self().buttons() << new DialogButtonItem(
-                Action, tr("Show File"), new SignalAction(thisPublic, SLOT(showFile())));
+                Action, "Show File", [this]() { self().showFile(); });
         }
         if (mode == EnableActions && Package::hasOptionalContent(*file))
         {
             self().buttons() << new DialogButtonItem(
                 Action | Id1,
                 style().images().image("gear"),
-                tr("Options"),
-                new SignalAction(thisPublic, SLOT(configure())));
+                                            "Options",
+                                            [this]() { self().configure(); });
         }
         return true;
     }
 
     static String visibleFamily(String const &family)
     {
-        if (family.isEmpty()) return tr("Other");
+        if (family.isEmpty()) return "Other";
         return family.upperFirstChar();
     }
 
@@ -428,7 +427,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
         profileMenu->setDeleteAfterDismissed(true);
         profileMenu->setAnchorAndOpeningDirection(anchor, ui::Left);
 
-        QList<GameProfile *> profs = DoomsdayApp::gameProfiles().profilesSortedByFamily();
+        List<GameProfile *> profs = DoomsdayApp::gameProfiles().profilesSortedByFamily();
 
         auto & items = profileMenu->items();
         String lastFamily;
@@ -452,7 +451,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
             if (prof->packages().contains(packageId))
             {
                 color = _E(C);
-                label += " " _E(s) _E(b) _E(D) + tr("ADDED");
+                label += " " _E(s)_E(b)_E(D) "ADDED";
             }
             if (!compatibleGame.isEmpty() && prof->gameId() == compatibleGame)
             {
@@ -604,7 +603,6 @@ void PackageInfoDialog::showFile()
 {
     if (!d->nativePath.isEmpty())
     {
-        QDesktopServices::openUrl(QUrl::fromLocalFile(
-            d->nativePath.isDirectory() ? d->nativePath : d->nativePath.fileNamePath()));
+        ClientApp::app().showLocalFile(d->nativePath);
     }
 }

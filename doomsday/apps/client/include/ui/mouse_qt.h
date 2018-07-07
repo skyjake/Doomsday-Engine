@@ -1,3 +1,4 @@
+#if 0
 #ifndef MOUSE_QT_H
 #define MOUSE_QT_H
 
@@ -40,3 +41,5 @@ void Mouse_Qt_SubmitWindowPosition(int x, int y);
 #endif
 
 #endif // MOUSE_QT_H
+#endif
+

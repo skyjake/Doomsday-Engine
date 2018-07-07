@@ -45,18 +45,18 @@
  * immediately or in deferred mode (when busy).
  */
 typedef struct texturecontent_s {
-    dgltexformat_t format;
-    GLuint name;
-    uint8_t const *pixels;
+    dgltexformat_t   format;
+    GLuint           name;
+    uint8_t const *  pixels;
     colorpaletteid_t paletteId;
-    int width;
-    int height;
-    int minFilter;
-    int magFilter;
-    int anisoFilter;
-    int wrap[2];
-    int grayMipmap;
-    int flags; /// @ref textureContentFlags
+    int              width;
+    int              height;
+    GLenum           minFilter;
+    GLenum           magFilter;
+    int              anisoFilter;
+    GLenum           wrap[2];
+    int              grayMipmap;
+    int              flags; /// @ref textureContentFlags
 } texturecontent_t;
 
 /**

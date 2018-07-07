@@ -264,7 +264,7 @@ DE_PIMPL(ClientWindow)
         // Quit shortcut.
         quitButton = new ButtonWidget;
         quitButton->setBehavior(Widget::Focusable, false);
-        quitButton->setText(_E(b)_E(D) + tr("QUIT"));
+        quitButton->setText(_E(b)_E(D) "QUIT");
         quitButton->setFont("small");
         quitButton->setSizePolicy(ui::Expand, ui::Fixed);
         quitButton->setStyleImage("close.ringless", "default");
@@ -387,7 +387,7 @@ DE_PIMPL(ClientWindow)
         {
             App::config().set("tutorial.shown", true);
             LOG_NOTE("Starting tutorial (not shown before)");
-            QTimer::singleShot(500, taskBar, SLOT(showTutorial()));
+            Loop::timer(0.500, [this]() { taskBar->showTutorial(); });
         }
         else
         {
@@ -395,7 +395,7 @@ DE_PIMPL(ClientWindow)
         }
 
         FS::get().audienceForBusy() += this;
-        Loop::get().timer(1.0, [this] () { showOrHideQuitButton(); });
+        Loop::timer(1.0, [this] () { showOrHideQuitButton(); });
     }
 
     void currentGameChanged(Game const &newGame) override
@@ -405,7 +405,7 @@ DE_PIMPL(ClientWindow)
 
         if (!newGame.isNull())
         {
-            nowPlaying->setText(_E(l) + tr("Now playing") + "\n" + _E(b) +
+            nowPlaying->setText(_E(l) "Now playing\n" _E(b) +
                                 DoomsdayApp::currentGameProfile()->name());
 
             root.clearFocusStack();
@@ -453,7 +453,7 @@ DE_PIMPL(ClientWindow)
             game->hide();
             game->disable();
             taskBar->disable();
-            quitButton->setOpacity(0, 1);
+            quitButton->setOpacity(0, 1.0);
 
             busy->show();
             busy->enable();
@@ -470,7 +470,7 @@ DE_PIMPL(ClientWindow)
             game->show();
             game->enable();
             taskBar->enable();
-            quitButton->setOpacity(1, 1);
+            quitButton->setOpacity(1, 1.0);
             break;
         }
 
@@ -484,11 +484,6 @@ DE_PIMPL(ClientWindow)
 
         // Update the capability flags.
         LOGDEV_GL_MSG("GL feature: Multisampling: %b") << (GLTextureFramebuffer::defaultMultisampling() > 1);
-
-        if (vrCfg().needsStereoGLFormat() && !self().format().stereo())
-        {
-            LOG_GL_WARNING("Current VR mode needs a stereo buffer, but it isn't supported");
-        }
 
         // Now that the window is ready for drawing we can enable the GameWidget.
         game->enable();
@@ -504,7 +499,7 @@ DE_PIMPL(ClientWindow)
 
 #if !defined (DE_MOBILE)
             self().raise();
-            self().requestActivate();
+//            self().requestActivate();
 #endif
             self().eventHandler().audienceForFocusChange() += this;
 
@@ -563,7 +558,9 @@ DE_PIMPL(ClientWindow)
 
     void mouseStateChanged(MouseEventSource::State state) override
     {
-        Mouse_Trap(state == MouseEventSource::Trapped);
+//        Mouse_Trap(state == MouseEventSource::Trapped);
+
+        DE_ASSERT_FAIL("Change mouse state with SDL?");
     }
 
     /**
@@ -581,26 +578,26 @@ DE_PIMPL(ClientWindow)
             case Event::MouseButton:
                 if (game->hitTest(ev))
                 {
-                    Mouse_Qt_SubmitButton(
-                                mouse->button() == MouseEvent::Left?     IMB_LEFT   :
-                                mouse->button() == MouseEvent::Middle?   IMB_MIDDLE :
-                                mouse->button() == MouseEvent::Right?    IMB_RIGHT  :
-                                mouse->button() == MouseEvent::XButton1? IMB_EXTRA1 :
-                                mouse->button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
-                                mouse->state() == MouseEvent::Pressed);
+//                    Mouse_Qt_SubmitButton(
+//                                mouse->button() == MouseEvent::Left?     IMB_LEFT   :
+//                                mouse->button() == MouseEvent::Middle?   IMB_MIDDLE :
+//                                mouse->button() == MouseEvent::Right?    IMB_RIGHT  :
+//                                mouse->button() == MouseEvent::XButton1? IMB_EXTRA1 :
+//                                mouse->button() == MouseEvent::XButton2? IMB_EXTRA2 : IMB_MAXBUTTONS,
+//                                mouse->state() == MouseEvent::Pressed);
                     return true;
                 }
                 break;
 
             case Event::MouseMotion:
-                Mouse_Qt_SubmitMotion(IMA_POINTER, mouse->pos().x, mouse->pos().y);
+//                Mouse_Qt_SubmitMotion(IMA_POINTER, mouse->pos().x, mouse->pos().y);
                 return true;
 
             case Event::MouseWheel:
                 if (game->hitTest(ev) && mouse->wheelMotion() == MouseEvent::Step)
                 {
                     // The old input system can only do wheel step events.
-                    Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->wheel().x, mouse->wheel().y);
+//                    Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->wheel().x, mouse->wheel().y);
                     return true;
                 }
                 break;
@@ -654,7 +651,7 @@ DE_PIMPL(ClientWindow)
 
         if (!fequal(oldFps, fps))
         {
-            fpsCounter->setText(QString("%1 " _E(l) + tr("FPS")).arg(fps, 0, 'f', 1));
+            fpsCounter->setText(Stringf("%.1f " _E(l) "FPS", fps));
             oldFps = fps;
         }
     }
@@ -776,7 +773,8 @@ DE_PIMPL(ClientWindow)
         {
             if (!cursorHasBeenHidden)
             {
-                qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+//                qApp->setOverrideCursor(QCursor(Qt::BlankCursor));
+                DE_GUI_APP->setMouseCursor(GuiApp::None);
                 cursorHasBeenHidden = true;
             }
 
@@ -788,7 +786,8 @@ DE_PIMPL(ClientWindow)
         {
             if (cursorHasBeenHidden)
             {
-                qApp->restoreOverrideCursor();
+//                qApp->restoreOverrideCursor();
+                DE_GUI_APP->setMouseCursor(GuiApp::Arrow);
             }
             cursorHasBeenHidden = false;
         }
@@ -991,6 +990,7 @@ bool ClientWindow::setDefaultGLFormat() // static
 {
     LOG_AS("DefaultGLFormat");
 
+#if 0
     QSurfaceFormat fmt = QSurfaceFormat::defaultFormat();
 
     if (CommandLine_Exists("-novsync") || !App::config().getb("window.main.vsync"))
@@ -1016,21 +1016,25 @@ bool ClientWindow::setDefaultGLFormat() // static
         LOG_GL_XVERBOSE("New format is the same as before", "");
         return false;
     }
+#endif
+    return false;
 }
 
 void ClientWindow::grab(image_t &img, bool halfSized) const
 {
+    /// @todo This method should be removed, just use grabImage() directly.
+
     DE_ASSERT_IN_MAIN_THREAD();
 
-    QSize outputSize = (halfSized? QSize(pixelWidth()/2, pixelHeight()/2) : QSize());
-    QImage grabbed = grabImage(outputSize);
+    Vec2ui outputSize = (halfSized? Vec2ui(pixelWidth()/2, pixelHeight()/2) : Vec2ui());
+    const Image grabbed = grabImage(outputSize);
 
     Image_Init(img);
     img.size      = Vec2ui(grabbed.width(), grabbed.height());
     img.pixelSize = grabbed.depth()/8;
 
-    img.pixels = (uint8_t *) malloc(grabbed.byteCount());
-    std::memcpy(img.pixels, grabbed.constBits(), grabbed.byteCount());
+    img.pixels = reinterpret_cast<uint8_t *>(malloc(grabbed.byteCount()));
+    std::memcpy(img.pixels, grabbed.bits(), grabbed.byteCount());
 
     LOGDEV_GL_MSG("Grabbed Canvas contents %i x %i, byteCount:%i depth:%i format:%i")
             << grabbed.width() << grabbed.height()
@@ -1049,7 +1053,7 @@ void ClientWindow::fadeInTaskBarBlur(TimeSpan span)
 void ClientWindow::fadeOutTaskBarBlur(TimeSpan span)
 {
     d->taskBarBlur->setOpacity(0, span);
-    QTimer::singleShot(span.asMilliSeconds(), this, SLOT(hideTaskBarBlur()));
+    Loop::timer(span, [this](){ hideTaskBarBlur(); });
 }
 
 void ClientWindow::hideTaskBarBlur()
@@ -1155,5 +1159,6 @@ DE_EXTERN_C int M_ScreenShot(char const *name, int flags)
         return (shotPath.exists() ? 1 : 0);
     }
 
-    return ClientWindow::main().grabToFile(shotPath)? 1 : 0;
+    ClientWindow::main().grabToFile(shotPath);
+    return 1;
 }

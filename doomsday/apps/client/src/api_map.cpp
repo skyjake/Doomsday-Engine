@@ -154,7 +154,7 @@ void *P_AllocDummy(int type, void *extraData)
         return ds; }
 
     default: {
-        App_FatalError(String::format("P_AllocDummy: Dummies of type %s not supported.", DMU_Str(type)));
+        App_FatalError(Stringf("P_AllocDummy: Dummies of type %s not supported.", DMU_Str(type)));
         break; }
     }
 
@@ -244,7 +244,7 @@ void *P_ToPtr(int type, int index)
         return App_World().map().sectorPtr(index);
 
     case DMU_PLANE:
-        App_FatalError(String::format("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).",
+        App_FatalError(Stringf("P_ToPtr: Cannot convert %s to a ptr (sector is unknown).",
                                       DMU_Str(type)));
         return 0; // Unreachable.
 
@@ -262,7 +262,7 @@ void *P_ToPtr(int type, int index)
         return 0;
 
     default:
-        App_FatalError(String::format("P_ToPtr: unknown type %s.", DMU_Str(type)));
+        App_FatalError(Stringf("P_ToPtr: unknown type %s.", DMU_Str(type)));
         return 0; // Unreachable.
     }
 }
@@ -398,7 +398,7 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
         break;
 
     case DMU_PLANE:
-        App_FatalError(String::format(
+        App_FatalError(Stringf(
             "P_Callback: %s cannot be referenced by id alone (sector is unknown).", DMU_Str(type)));
         return 0; // Unreachable
 
@@ -418,11 +418,11 @@ int P_Callback(int type, int index, int (*callback)(void *p, void *ctx), void *c
     case DMU_SECTOR_BY_TAG:
     case DMU_LINE_BY_ACT_TAG:
     case DMU_SECTOR_BY_ACT_TAG:
-        App_FatalError(String::format("P_Callback: Type %s not implemented yet.", DMU_Str(type)));
+        App_FatalError(Stringf("P_Callback: Type %s not implemented yet.", DMU_Str(type)));
         return 0; /* Unreachable */
 
     default:
-        App_FatalError(String::format("P_Callback: Type %s unknown (index %i).", DMU_Str(type), index));
+        App_FatalError(Stringf("P_Callback: Type %s unknown (index %i).", DMU_Str(type), index));
         return 0; /* Unreachable */
     }
 
@@ -461,7 +461,7 @@ int P_Callbackp(int type, void *elPtr, int (*callback)(void *p, void *ctx), void
         break;
 
     default:
-        App_FatalError(String::format("P_Callbackp: Type %s unknown.", DMU_Str(elem->type())));
+        App_FatalError(Stringf("P_Callbackp: Type %s unknown.", DMU_Str(elem->type())));
         return 0; /* Unreachable */
     }
     return false; // Continue iteration.

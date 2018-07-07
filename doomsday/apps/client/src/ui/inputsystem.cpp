@@ -81,7 +81,7 @@ static InputDevice *makeKeyboard(String const &name, String const &title = "")
         String keyName(shortName? shortName : "");
         if (keyName.isEmpty())
         {
-            keyName = String::format("unbindable%03i", i);
+            keyName = Stringf("unbindable%03i", i);
         }
         keyboard->addButton(new ButtonInputControl(keyName));
     }
@@ -131,7 +131,7 @@ static InputDevice *makeJoystick(String const &name, String const &title = "")
 
     for (int i = 0; i < IJOY_MAXBUTTONS; ++i)
     {
-        joy->addButton(new ButtonInputControl(String::format("button%i", i + 1)));
+        joy->addButton(new ButtonInputControl(Stringf("button%i", i + 1)));
     }
 
     for (int i = 0; i < IJOY_MAXAXES; ++i)
@@ -153,7 +153,7 @@ static InputDevice *makeJoystick(String const &name, String const &title = "")
 
     for (int i = 0; i < IJOY_MAXHATS; ++i)
     {
-        joy->addHat(new HatInputControl(String::format("hat%i", i + 1)));
+        joy->addHat(new HatInputControl(Stringf("hat%i", i + 1)));
     }
 
     return joy;
@@ -183,7 +183,7 @@ static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();
 
-    if (ClientApp::inputSystem().bindCommand(eventDesc.toLatin1(), command.toUtf8()))
+    if (ClientApp::inputSystem().bindCommand(eventDesc, command))
     {
         // Success.
         return new NumberValue(true);
@@ -198,7 +198,7 @@ static Value *Function_InputSystem_BindControl(Context &, Function::ArgumentValu
     String control = args[0]->asText();
     String impulse = args[1]->asText();
 
-    if (ClientApp::inputSystem().bindImpulse(control.toLatin1(), impulse.toLatin1()))
+    if (ClientApp::inputSystem().bindImpulse(control, impulse))
     {
         return new NumberValue(true);
     }
@@ -312,7 +312,7 @@ static void postToQueue(eventqueue_t *q, ddevent_t *ev)
 static eventqueue_t queue;
 static eventqueue_t sharpQueue;
 
-static byte useSharpInputEvents = true; ///< cvar
+static dbyte useSharpInputEvents = true; ///< cvar
 
 DE_PIMPL(InputSystem)
 , DE_OBSERVES(BindContext, ActiveChange)
@@ -324,10 +324,10 @@ DE_PIMPL(InputSystem)
     ConfigProfiles settings;
     Binder binder;
 
-    typedef QList<InputDevice *> Devices;
+    typedef List<InputDevice *> Devices;
     Devices devices;
 
-    typedef QList<BindContext *> BindContexts;
+    typedef List<BindContext *> BindContexts;
     BindContexts contexts;  ///< Ordered from highest to lowest priority.
 
     std::unique_ptr<ControllerPresets> gameControllerPresets;
@@ -370,7 +370,7 @@ DE_PIMPL(InputSystem)
 
     void clearAllDevices()
     {
-        qDeleteAll(devices);
+        deleteAll(devices);
         devices.clear();
     }
 
@@ -428,10 +428,10 @@ DE_PIMPL(InputSystem)
 
         const Block nameUtf8 = name.toUtf8();
         ddevent_t echo{};
-        echo.device        = -1;
+        echo.device        = uint(-1);
         echo.type          = E_SYMBOLIC;
         echo.symbolic.id   = 0;
-        echo.symbolic.name = nameUtf8.constData();
+        echo.symbolic.name = name;
 
         LOG_INPUT_XVERBOSE("Symbolic echo: %s", name);
         self().postEvent(&echo);
@@ -1210,7 +1210,7 @@ bool InputSystem::convertEvent(Event const &from, ddevent_t &to) // static
         to.type         = E_TOGGLE;
         to.toggle.id    = kev.ddKey();
         to.toggle.state = (kev.state() == KeyEvent::Pressed? ETOG_DOWN : ETOG_UP);
-        strcpy(to.toggle.text, kev.text().toLatin1());
+        strcpy(to.toggle.text, kev.text());
         break; }
 
     default: break;
@@ -1336,7 +1336,7 @@ void InputSystem::clearAllContexts()
 {
     if (d->contexts.isEmpty()) return;
 
-    qDeleteAll(d->contexts);
+    deleteAll(d->contexts);
     d->contexts.clear();
 
     // We can restart the id counter, all the old bindings were removed.
@@ -1839,7 +1839,7 @@ DE_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, s
 
     // Copy the result to the return buffer.
     std::memset(outBuf, 0, outBufSize);
-    qstrncpy(outBuf, out, outBufSize - 1);
+    strncpy(outBuf, out, outBufSize - 1);
 
     return numFound;
 }
@@ -1891,7 +1891,7 @@ DE_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCSt
 
     // Copy the result to the return buffer.
     std::memset(outBuf, 0, outBufSize);
-    qstrncpy(outBuf, out, outBufSize - 1);
+    strncpy(outBuf, out, outBufSize - 1);
 
     return numFound;
 }

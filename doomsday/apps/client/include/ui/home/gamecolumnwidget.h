@@ -27,8 +27,6 @@ class SaveListData;
 
 class GameColumnWidget : public ColumnWidget, public de::IPersistent
 {
-    Q_OBJECT
-
 public:
     GameColumnWidget(de::String const &gameFamily,
                      SaveListData const &savedItems);

@@ -64,6 +64,7 @@ public:
 
     void openInBrowser(const de::String &url);
     void openHomepageInBrowser();
+    void showLocalFile(const de::NativePath &path);
 
 public:
     /**

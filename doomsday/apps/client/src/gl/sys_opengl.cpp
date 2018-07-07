@@ -37,6 +37,8 @@
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
 #endif
 
+using namespace de;
+
 gl_state_t GL_state;
 
 static dd_bool doneEarlyInit = false;
@@ -71,14 +73,14 @@ static void initialize(void)
 #endif
 }
 
-#define TABBED(A, B)  _E(Ta) "  " _E(l) + de::String(A) + _E(.) " " _E(Tb) + de::String(B) + "\n"
+#define TABBED(A, B)  _E(Ta) "  " _E(l) + String(A) + _E(.) " " _E(Tb) + String(B) + "\n"
 
-de::String Sys_GLDescription()
+String Sys_GLDescription()
 {
     DE_ASSERT_IN_MAIN_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    de::String str;
+    String str;
 
     str += _E(b) "OpenGL information:\n" _E(.);
 
@@ -97,29 +99,29 @@ de::String Sys_GLDescription()
     {
         glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
         LIBGUI_ASSERT_GL_OK();
-        str += TABBED("Compressed texture formats:", de::String::asText(iVal));
+        str += TABBED("Compressed texture formats:", String::asText(iVal));
     }
 #endif
 
     str += TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
 
-    str += TABBED("Available texture units:", de::String::asText(de::GLInfo::limits().maxTexUnits));
+    str += TABBED("Available texture units:", String::asText(de::GLInfo::limits().maxTexUnits));
 
     if (de::GLInfo::extensions().EXT_texture_filter_anisotropic)
     {
-        str += TABBED("Maximum texture anisotropy:", de::String::asText(de::GLInfo::limits().maxTexFilterAniso));
+        str += TABBED("Maximum texture anisotropy:", String::asText(de::GLInfo::limits().maxTexFilterAniso));
     }
     else
     {
         str += _E(Ta) "  Variable texture anisotropy unavailable.";
     }
 
-    str += TABBED("Maximum texture size:", de::String::asText(de::GLInfo::limits().maxTexSize));
+    str += TABBED("Maximum texture size:", String::asText(de::GLInfo::limits().maxTexSize));
 
-    str += TABBED("Line width granularity:", de::String::asText(de::GLInfo::limits().smoothLineWidthGranularity));
+    str += TABBED("Line width granularity:", String::asText(de::GLInfo::limits().smoothLineWidthGranularity));
 
     str += TABBED("Line width range:",
-                  de::String::format("%.2f...%.2f",
+                  Stringf("%.2f...%.2f",
                                      de::GLInfo::limits().smoothLineWidth.start,
                                      de::GLInfo::limits().smoothLineWidth.end));
 
@@ -294,19 +296,19 @@ void Sys_GLConfigureDefaultState(void)
     DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
-static de::String omitGLPrefix(const de::String &str)
+static String omitGLPrefix(const String &str)
 {
-    if(str.beginsWith("GL_")) return str.substr(de::BytePos(3));
+    if (str.beginsWith("GL_")) return str.substr(de::BytePos(3));
     return str;
 }
 
-static void printExtensions(de::StringList extensions)
+static void printExtensions(StringList extensions)
 {
     extensions.sort();
 
     // Find all the prefixes.
-    de::Set<de::String> prefixes;
-    for (de::String ext : extensions)
+    de::Set<String> prefixes;
+    for (String ext : extensions)
     {
         ext = omitGLPrefix(ext);
         auto pos = ext.indexOf("_");
@@ -316,16 +318,16 @@ static void printExtensions(de::StringList extensions)
         }
     }
 
-    auto sortedPrefixes = de::compose<de::StringList>(prefixes.begin(), prefixes.end());
+    auto sortedPrefixes = de::compose<StringList>(prefixes.begin(), prefixes.end());
     sortedPrefixes.sort();
-    for (const de::String &prefix : sortedPrefixes)
+    for (const String &prefix : sortedPrefixes)
     {
-        de::String str;
+        String str;
 
         str += "    " + prefix + " extensions:\n        " _E(>) _E(2);
 
         bool first = true;
-        for (de::String ext : extensions)
+        for (String ext : extensions)
         {
             ext = omitGLPrefix(ext);
             if (ext.beginsWith(prefix + "_"))

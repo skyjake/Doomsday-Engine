@@ -298,7 +298,7 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     // Let's figure out what we want to tell about ourselves.
     info.setServerId(ServerApp::app().d->serverId);
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
-    info.setPluginDescription(String::format("%s %s",
+    info.setPluginDescription(Stringf("%s %s",
                                              reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
                                              reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
 
@@ -348,7 +348,7 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     String const publicDomain = nptIPAddress;
     if (publicDomain)
     {
-        info.setDomainName(String::format(
+        info.setDomainName(Stringf(
             "%s:%i", publicDomain.c_str(), nptIPPort ? nptIPPort : shell::DEFAULT_PORT));
     }
 #endif

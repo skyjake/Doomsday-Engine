@@ -78,7 +78,7 @@ DE_PIMPL(ChatWidget)
             }
             else
             {
-                DD_Execute(false, String::format("chat %s", msg.escaped().c_str()));
+                DD_Execute(false, Stringf("chat %s", msg.escaped().c_str()));
             }
         }
         else
@@ -96,7 +96,7 @@ DE_PIMPL(ChatWidget)
                 }
                 else
                 {
-                    DD_Execute(false, String::format("chatnum %i %s", i, msg.escaped().c_str()));
+                    DD_Execute(false, Stringf("chatnum %i %s", i, msg.escaped().c_str()));
                 }
             }
         }
@@ -314,6 +314,6 @@ void ChatWidget::consoleRegister()
     // User-configurable macros.
     for(dint i = 0; i < 10; ++i)
     {
-        C_VAR_CHARPTR(String::format("chat-macro%i", i), &cfg.common.chatMacros[i], 0, 0, 0);
+        C_VAR_CHARPTR(Stringf("chat-macro%i", i), &cfg.common.chatMacros[i], 0, 0, 0);
     }
 }

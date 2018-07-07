@@ -309,7 +309,7 @@ DE_PIMPL(User)
     void playRandomStepSound()
     {
         AudioSystem::get()
-            .newSound(String::format("user.step%i", 1 + qrand() % 5))
+            .newSound(Stringf("user.step%i", 1 + qrand() % 5))
             .setVolume(.4f + .2f * frand())
             .setFrequency(.6f + frand() * .8f)
             .play();

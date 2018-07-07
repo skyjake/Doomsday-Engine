@@ -54,7 +54,7 @@ static void notifyAllowCheatsChange()
     if(IS_NETGAME && IS_NETWORK_SERVER && G_GameState() != GS_STARTUP)
     {
         NetSv_SendMessage(DDSP_ALL_PLAYERS,
-                          String::format("--- CHEATS NOW %s ON THIS SERVER ---",
+                          Stringf("--- CHEATS NOW %s ON THIS SERVER ---",
                                          netSvAllowCheats ? "ENABLED" : "DISABLED"));
     }
 }

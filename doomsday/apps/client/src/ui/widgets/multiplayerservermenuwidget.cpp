@@ -25,13 +25,14 @@
 #include <doomsday/Games>
 #include <de/MenuWidget>
 #include <de/Address>
+#include <de/TextValue>
 
 using namespace de;
 
 DE_PIMPL(MultiplayerServerMenuWidget)
 , DE_OBSERVES(DoomsdayApp, GameChange)
 , DE_OBSERVES(Games, Readiness)
-, DE_OBSERVES(ServerLink, DiscoveryUpdate)
+, DE_OBSERVES(ServerLink, Discovery)
 , DE_OBSERVES(MultiplayerPanelButtonWidget, AboutToJoin)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
@@ -55,7 +56,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         ServerListItem(shell::ServerInfo const &serverInfo, bool isLocal)
             : _lan(isLocal)
         {
-            setData(hostId(serverInfo));
+            setData(TextValue(hostId(serverInfo)));
             _info = serverInfo;
         }
 
@@ -102,16 +103,16 @@ DE_PIMPL(MultiplayerServerMenuWidget)
     {
         DoomsdayApp::app().audienceForGameChange()  += this;
         DoomsdayApp::games().audienceForReadiness() += this;
-        link().audienceForDiscoveryUpdate() += this;
+        link().audienceForDiscovery() += this;
 
         self().organizer().setWidgetFactory(*this);
     }
 
-    void linkDiscoveryUpdate(ServerLink const &link) override
+    void serversDiscovered(ServerLink const &link) override
     {
         ui::Data &items = self().items();
 
-        QSet<String> foundHosts;
+        Set<String> foundHosts;
         for (Address const &host : link.foundServers(mask))
         {
             shell::ServerInfo info;
@@ -124,7 +125,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         // Remove obsolete entries.
         for (ui::Data::Pos idx = 0; idx < items.size(); ++idx)
         {
-            String const id = items.at(idx).data().toString();
+            String const id = items.at(idx).data().asText();
             if (!foundHosts.contains(id))
             {
                 items.remove(idx--);
@@ -137,7 +138,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
             shell::ServerInfo info;
             if (!link.foundServerInfo(host, info, mask)) continue;
 
-            ui::Data::Pos found   = items.findData(hostId(info));
+            ui::Data::Pos found   = items.findData(TextValue(hostId(info)));
             const bool    isLocal = link.isServerOnLocalNetwork(info.address());
 
             if (found == ui::Data::InvalidPos)

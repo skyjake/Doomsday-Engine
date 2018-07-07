@@ -27,11 +27,11 @@ res::Uri composeMapUri(int episode, int map)
 {
     if(episode > 0) // ExMy format.
     {
-        return res::Uri("Maps", String::format("E%dM%d", episode, map));
+        return res::Uri("Maps", Stringf("E%dM%d", episode, map));
     }
     else // MAPxx format.
     {
-        return res::Uri("Maps", String::format("MAP%02d", map % 100));
+        return res::Uri("Maps", Stringf("MAP%02d", map % 100));
     }
 }
 

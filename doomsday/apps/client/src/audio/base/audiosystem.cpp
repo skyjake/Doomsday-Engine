@@ -1523,7 +1523,7 @@ String AudioSystem::description() const
                          ifs.type == AUDIO_ISFX?   "SFX" : "CD");
         if (++ifCounts[ifs.type] > 1)
         {
-            ifName += String::format(" %i", ifCounts[ifs.type]);
+            ifName += Stringf(" %i", ifCounts[ifs.type]);
         }
 
         os << _E(Ta) _E(l) "  " << ifName << ": " << _E(.) _E(Tb)

@@ -1974,7 +1974,7 @@ void Player_UpdateStatusCVars(player_t const *player)
 #if __JHEXEN__
     for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
     {
-        const Path varPath{String::format("player-weapon-piece%i", i + 1), CVAR_DELIM};
+        const Path varPath{Stringf("player-weapon-piece%i", i + 1), CVAR_DELIM};
         Con_SetVariable(varPath, (player->pieces & (1 << i))? 1 : 0, SVF_WRITE_OVERRIDE);
     }
     static Path const var_player_weapon_allpieces("player-weapon-allpieces", CVAR_DELIM);

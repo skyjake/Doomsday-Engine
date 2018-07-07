@@ -125,7 +125,7 @@ namespace internal
                 drawText(String::asText(minutes), origin, ALIGN_TOPRIGHT);
             }
 
-            drawText(String::format("%02i", seconds), origin + Vec2i(FR_CharWidth(':'), 0));
+            drawText(Stringf("%02i", seconds), origin + Vec2i(FR_CharWidth(':'), 0));
 
             return;
         }

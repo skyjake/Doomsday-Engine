@@ -108,7 +108,7 @@ DE_GUI_PIMPL(InputSettingsDialog)
         enableOrDisable();
 
         gamepad->setSelected(gamepad->items().findData(
-                                 ClientApp::inputSystem().gameControllerPresets().currentPreset()));
+            TextValue(ClientApp::inputSystem().gameControllerPresets().currentPreset())));
     }
 
     void enableOrDisable()
@@ -231,7 +231,7 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
 
     buttons()
             << new DialogButtonItem(Default | Accept, "Close")
-            << new DialogButtonItem(Action, tr("Reset to Defaults"),
+            << new DialogButtonItem(Action, "Reset to Defaults",
                                     [this]() { resetToDefaults(); })
             << new DialogButtonItem(ActionPopup | Id1,
                                     style().images().image("gauge"));
@@ -255,6 +255,6 @@ void InputSettingsDialog::mouseTogglesChanged()
 
 void InputSettingsDialog::applyControllerPreset()
 {
-    String const presetId = d->gamepad->selectedItem().data().toString();
+    String const presetId = d->gamepad->selectedItem().data().asText();
     ClientApp::inputSystem().gameControllerPresets().applyPreset(presetId);
 }

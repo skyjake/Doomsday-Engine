@@ -37,8 +37,7 @@
 #include <de/MessageDialog>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
-
-#include <QRegExp>
+#include <de/RegExp>
 
 using namespace de;
 
@@ -46,13 +45,13 @@ DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
 , DE_OBSERVES(Games, Readiness)
 , public AsyncScope
 {
-    shell::ServerInfo serverInfo;
-    ButtonWidget *joinButton;
-    String gameConfig;
-    LabelWidget *info;
+    shell::ServerInfo  serverInfo;
+    ButtonWidget *     joinButton;
+    String             gameConfig;
+    LabelWidget *      info;
     PopupButtonWidget *extra;
-    PopupMenuWidget *extraMenu;
-    res::LumpCatalog catalog;
+    PopupMenuWidget *  extraMenu;
+    res::LumpCatalog   catalog;
 
     Impl(Public *i) : Base(i)
     {
@@ -61,7 +60,7 @@ DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
         joinButton = new ButtonWidget;
         joinButton->setAttribute(AutomaticOpacity);
         joinButton->disable();
-        joinButton->setText(tr("Join"));
+        joinButton->setText("Join");
         joinButton->useInfoStyle();
         joinButton->setSizePolicy(ui::Expand, ui::Expand);
         joinButton->setActionFn([this] () { joinButtonPressed(); });
@@ -91,7 +90,7 @@ DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
 
         extra->setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *dlg = new ServerInfoDialog(serverInfo);
-            QObject::connect(dlg, SIGNAL(joinGame()), thisPublic, SLOT(joinGame()));
+            dlg->audienceForJoinGame() += [this](){ self().joinGame(); };
             return dlg;
         }, ui::Right);
     }
@@ -156,23 +155,19 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     int const playerCount = info.playerCount();
     if (playerCount > 0)
     {
-        meta = String("%1 player%2 " DIM_MDASH " ")
-                .arg(playerCount)
-                .arg(DE_PLURAL_S(playerCount));
+        meta = Stringf("%i player%s " DIM_MDASH " ", playerCount, DE_PLURAL_S(playerCount));
     }
 
-    meta += String("%1").arg(tr(d->hasConfig("coop")? "Co-op" :
-                                d->hasConfig("dm2")?  "Deathmatch II" :
-                                                      "Deathmatch"));
+    meta += d->hasConfig("coop")? "Co-op" :
+            d->hasConfig("dm2")?  "Deathmatch II" :
+                                  "Deathmatch";
 
     if (ClientApp::serverLink().isServerOnLocalNetwork(info.address()))
     {
         meta = "LAN " DIM_MDASH " " + meta;
     }
 
-    label().setText(String(_E(b) "%1\n" _E(l) "%2")
-                    .arg(info.name())
-                    .arg(meta));
+    label().setText(Stringf(_E(b) "%s\n" _E(l) "%s", info.name().c_str(), meta.c_str()));
 
     // Additional information.
     String infoText = String(info.map()) + " " DIM_MDASH " ";
@@ -191,7 +186,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     }
     else
     {
-        infoText += tr("Unknown game");
+        infoText += "Unknown game";
         d->joinButton->disable();
 
         icon().setImage(nullptr);
@@ -200,13 +195,13 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
     {
         d->joinButton->disable();
     }
-    infoText += "\n" _E(C) + String(info.description()) + _E(.);
+    infoText += "\n" _E(C) + info.description() + _E(.);
 
-    int const localCount = Game::localMultiplayerPackages(info.gameId()).size();
+    int const localCount = Game::localMultiplayerPackages(info.gameId()).sizei();
     if (localCount)
     {
-        infoText += "\n" _E(D)_E(b) + String("%1 local package%2").arg(localCount)
-                .arg(DE_PLURAL_S(localCount));
+        infoText += "\n" _E(D) _E(b) +
+                    Stringf("%i local package%s", localCount, DE_PLURAL_S(localCount));
     }
 
     d->info->setFont("small");

@@ -47,7 +47,7 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
             : selectedByDefault(selectedByDefault)
             , containerPackageId(containerPackageId)
         {
-            setData(packageId);
+            setData(TextValue(packageId));
 
             if (File const *file = PackageLoader::get().select(packageId))
             {
@@ -68,7 +68,7 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
 
         String packageId() const
         {
-            return data().toString();
+            return data().asText();
         }
 
         DictionaryValue &conf()
@@ -129,26 +129,26 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
         summary->setTextColor("altaccent");
         summary->setAlignment(ui::AlignLeft);
 
-        auto *label = LabelWidget::newWithText(tr("Select:"), thisPublic);
+        auto *label = LabelWidget::newWithText("Select:", thisPublic);
         label->setSizePolicy(ui::Expand, ui::Expand);
         label->setFont("small");
         label->setAlignment(ui::AlignLeft);
 
         auto *allButton = new ButtonWidget;
         allButton->setSizePolicy(ui::Expand, ui::Expand);
-        allButton->setText(tr("All"));
+        allButton->setText("All");
         allButton->setFont("small");
         self().add(allButton);
 
         auto *noneButton = new ButtonWidget;
         noneButton->setSizePolicy(ui::Expand, ui::Expand);
-        noneButton->setText(tr("None"));
+        noneButton->setText("None");
         noneButton->setFont("small");
         self().add(noneButton);
 
         auto *defaultsButton = new ButtonWidget;
         defaultsButton->setSizePolicy(ui::Expand, ui::Expand);
-        defaultsButton->setText(tr("Defaults"));
+        defaultsButton->setText("Defaults");
         defaultsButton->setFont("small");
         self().add(defaultsButton);
 
@@ -221,30 +221,28 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
 
         Record const &meta = file->objectNamespace().subrecord(Package::VAR_PACKAGE);
 
-        ArrayValue const &requires   = meta.geta("requires");
-        ArrayValue const &recommends = meta.geta("recommends");
-        ArrayValue const &extras     = meta.geta("extras");
+        const ArrayValue &requires   = meta.geta("requires");
+        const ArrayValue &recommends = meta.geta("recommends");
+        const ArrayValue &extras     = meta.geta("extras");
 
-        auto const totalCount    = requires.size() + recommends.size() + extras.size();
-        auto const optionalCount = recommends.size() + extras.size();
+        const auto totalCount    = requires.size() + recommends.size() + extras.size();
+        const auto optionalCount = recommends.size() + extras.size();
 
-        summary->setText(tr("%1 package%2 (%3 optional)")
-                         .arg(totalCount)
-                         .arg(DE_PLURAL_S(totalCount))
-                         .arg(optionalCount));
+        summary->setText(Stringf(
+            "%u package%s (%u optional)", totalCount, DE_PLURAL_S(totalCount), optionalCount));
 
         makeItems(recommends, true);
         makeItems(extras,     false);
 
         // Create category headings.
-        QSet<QString> categories;
-        contents->items().forAll([&categories] (ui::Item const &i)
+        Set<String> categories;
+        contents->items().forAll([&categories](ui::Item const &i)
         {
             String const cat = i.as<Item>().category;
             if (!cat.isEmpty()) categories.insert(cat);
             return LoopContinue;
         });
-        for (QString cat : categories)
+        for (const auto &cat : categories)
         {
             contents->items() << new ui::Item(ui::Item::Separator, cat);
         }
@@ -308,12 +306,9 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
         toggle->setAlignment(ui::AlignLeft);
         toggle->set(Background());
         toggle->margins().setTopBottom(RuleBank::UNIT);
-        QObject::connect(toggle, &ToggleWidget::stateChangedByUser,
-                         [&item] (ToggleWidget::ToggleState active)
-        {
-            const_cast<ui::Item &>(item).as<Item>()
-                    .setSelected(active == ToggleWidget::Active);
-        });
+        toggle->audienceForUserToggle() += [&item, toggle]() {
+            const_cast<ui::Item &>(item).as<Item>().setSelected(toggle->isActive());
+        };
         return toggle;
     }
 

@@ -201,7 +201,7 @@ void SaveSlots::Slot::setGameStateFolder(GameStateFolder *newSession)
         String statusText;
         if (d->session)
         {
-            statusText = String::format("associated with \"%s\"", d->session->path().c_str());
+            statusText = Stringf("associated with \"%s\"", d->session->path().c_str());
         }
         else
         {

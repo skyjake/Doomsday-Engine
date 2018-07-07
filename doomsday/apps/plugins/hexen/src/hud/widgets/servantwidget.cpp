@@ -110,6 +110,6 @@ void guidata_servant_t::prepareAssets()  // static
 {
     for(dint i = 0; i < FRAME_COUNT; ++i)
     {
-        ::pServantIcon[i] = R_DeclarePatch(String::format("SPMINO%i", i));
+        ::pServantIcon[i] = R_DeclarePatch(Stringf("SPMINO%i", i));
     }
 }

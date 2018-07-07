@@ -75,11 +75,11 @@ void guidata_kills_t::draw(Vec2i const &offset) const
     String valueAsText("Kills:");
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS)
     {
-        valueAsText += String::format(" %i/%i", _value, totalKills);
+        valueAsText += Stringf(" %i/%i", _value, totalKills);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
-        valueAsText += String::format(" %s%i%%%s",
+        valueAsText += Stringf(" %s%i%%%s",
                                       (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? "(" : "",
                                       totalKills ? _value * 100 / totalKills : 100,
                                       (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? ")" : "");
@@ -120,11 +120,11 @@ void guidata_kills_t::updateGeometry()
     String valueAsText("Kills:");
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS)
     {
-        valueAsText += String::format(" %i/%i", _value, totalKills);
+        valueAsText += Stringf(" %i/%i", _value, totalKills);
     }
     if(::cfg.common.hudShownCheatCounters & CCH_KILLS_PRCNT)
     {
-        valueAsText += String::format(" %s%i%%%s",
+        valueAsText += Stringf(" %s%i%%%s",
                                       (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? "(" : "",
                                       totalKills ? _value * 100 / totalKills : 100,
                                       (::cfg.common.hudShownCheatCounters & CCH_KILLS) ? ")" : "");

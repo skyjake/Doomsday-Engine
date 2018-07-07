@@ -73,6 +73,7 @@
 #include "ui/clientwindowsystem.h"
 
 using namespace de;
+using namespace res;
 
 extern dint maxnumnodes;
 extern dd_bool fillOutlines;
@@ -721,12 +722,21 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
     return c.name;
 }
 
-GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
-    uint8_t const *pixels, dint flags, dint grayMipmap, dint minFilter, dint magFilter,
-    dint anisoFilter, dint wrapS, dint wrapT)
+GLuint GL_NewTextureWithParams(dgltexformat_t format,
+                               dint           width,
+                               dint           height,
+                               uint8_t const *pixels,
+                               dint           flags,
+                               dint           grayMipmap,
+                               GLenum         minFilter,
+                               GLenum         magFilter,
+                               dint           anisoFilter,
+                               GLenum         wrapS,
+                               GLenum         wrapT)
 {
     texturecontent_t c;
     GL_InitTextureContent(&c);
+
     c.name        = GL_GetReservedTextureName();
     c.format      = format;
     c.width       = width;
@@ -824,7 +834,7 @@ void GL_BindTexture(TextureVariant *vtexture)
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, spec.variant.glMagFilter());
         if(GL_state.features.texFilterAniso)
         {
-            glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
+            glTexParameteri(GL_TEXTURE_2D, gl33ext::GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
         LIBGUI_ASSERT_GL_OK();
@@ -1339,29 +1349,28 @@ D_CMD(DisplayModeInfo)
 
     DisplayMode const *mode = DisplayMode_Current();
 
-    String str = String("Current display mode:%1 depth:%2 (%3:%4")
-                     .arg(Vec2i(mode->width, mode->height).asText())
-                     .arg(mode->depth)
-                     .arg(mode->ratioX)
-                     .arg(mode->ratioY);
+    String str = Stringf("Current display mode:%ix%i depth:%i (%i:%i",
+                     mode->width, mode->height,
+                     mode->depth,
+                     mode->ratioX, mode->ratioY);
     if(mode->refreshRate > 0)
     {
-        str += String(", refresh: %1 Hz").arg(mode->refreshRate, 0, 'f', 1);
+        str += Stringf(", refresh: %.1f Hz", mode->refreshRate);
     }
-    str += String(")\nMain window:\n  current origin:%1 size:%2"
-                  "\n  windowed origin:%3 size:%4"
-                  "\n  fullscreen size:%5")
-               .arg(win->pos().asText())
-               .arg(win->pointSize().asText())
-               .arg(win->windowRect().topLeft.asText())
-               .arg(win->windowRect().size().asText())
-               .arg(win->fullscreenSize().asText());
+    str += Stringf(")\nMain window:\n  current origin:%s size:%s"
+                  "\n  windowed origin:%s size:%s"
+                  "\n  fullscreen size:%s",
+               win->pos().asText().c_str(),
+               win->pointSize().asText().c_str(),
+               win->windowRect().topLeft.asText().c_str(),
+               win->windowRect().size().asText().c_str(),
+               win->fullscreenSize().asText().c_str());
 
 #if !defined (DE_MOBILE)
-    str += String("\n  fullscreen:%1 centered:%2 maximized:%3")
-               .arg(DE_BOOL_YESNO( win->isFullScreen() ))
-               .arg(DE_BOOL_YESNO( win->isCentered()   ))
-               .arg(DE_BOOL_YESNO( win->isMaximized()  ));
+    str += Stringf("\n  fullscreen:%s centered:%s maximized:%s",
+                   DE_BOOL_YESNO(win->isFullScreen()),
+                   DE_BOOL_YESNO(win->isCentered()),
+                   DE_BOOL_YESNO(win->isMaximized()));
 #endif
 
     LOG_GL_MSG("%s") << str;

@@ -26,12 +26,9 @@
  */
 class VRSettingsDialog : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
     VRSettingsDialog(de::String const &name = "vrsettings");
 
-public slots:
     void resetToDefaults();
     void autoConfigForOculusRift();
     void autoConfigForDesktop();

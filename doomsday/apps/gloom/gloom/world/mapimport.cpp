@@ -441,7 +441,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
         String dei = "asset " + mapId() + " {\n"
                      "    path = \"maps/" + d->mapId + ".gloommap\"\n"
                      "    metersPerUnit " +
-                     String::format(
+                     Stringf(
                          "<%.16f, %.16f, %.16f>", d->metersPerUnit.x, d->metersPerUnit.y, d->metersPerUnit.z) +
                      "\n}\n";
         f << dei.toUtf8();

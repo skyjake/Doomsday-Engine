@@ -39,7 +39,7 @@ DE_GUI_PIMPL(MultiplayerStatusWidget)
 
     Impl(Public *i) : Base(i)
     {
-        timer.setInterval(1);
+        timer.setInterval(1.0);
 
         link().audienceForJoin() += this;
         link().audienceForLeave() += this;
@@ -85,7 +85,7 @@ void MultiplayerStatusWidget::updateElapsedTime()
         .at(POS_STATUS)
         .setLabel(_E(s) _E(l) "Server:" _E(.) " " + d->link().address().asText() +
                   "\n" _E(l) "Connected:" _E(.) +
-                  String::format(" %i:%02i:%02i",
+                  Stringf(" %i:%02i:%02i",
                                  int(elapsed.asHours()),
                                  int(elapsed.asMinutes()) % 60,
                                  int(elapsed) % 60));

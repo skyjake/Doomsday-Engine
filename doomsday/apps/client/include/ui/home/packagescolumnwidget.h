@@ -23,7 +23,8 @@
 
 class PackagesColumnWidget : public ColumnWidget
 {
-    Q_OBJECT
+public:
+    DE_DEFINE_AUDIENCE2(AvailableCount, void availablePackageCountChanged(int count))
 
 public:
     PackagesColumnWidget();
@@ -33,9 +34,6 @@ public:
     de::String tabHeading() const override;
     de::String tabShortcut() const override;
     void setHighlighted(bool highlighted) override;
-
-signals:
-    void availablePackageCountChanged(int count);
 
 private:
     DE_PRIVATE(d)

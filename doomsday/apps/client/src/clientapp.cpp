@@ -447,8 +447,8 @@ DE_PIMPL(ClientApp)
         {
             String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
             logSettings
-                    .define(Prof::ConfigVariable, String::format("log.filter.%s.minLevel", name.c_str()))
-                    .define(Prof::ConfigVariable, String::format("log.filter.%s.allowDev", name.c_str()))
+                    .define(Prof::ConfigVariable, Stringf("log.filter.%s.minLevel", name.c_str()))
+                    .define(Prof::ConfigVariable, Stringf("log.filter.%s.allowDev", name.c_str()))
                     .define(Prof::ConfigVariable, "alert." + name);
         }
 
@@ -512,12 +512,12 @@ DE_PIMPL(ClientApp)
 
     String mapClientStatePath(String const &mapId) const
     {
-        return String::format("maps/%sClientState", mapId.c_str());
+        return Stringf("maps/%sClientState", mapId.c_str());
     }
 
     String mapObjectStatePath(String const &mapId) const
     {
-        return String::format("maps/%sObjectState", mapId.c_str());
+        return Stringf("maps/%sObjectState", mapId.c_str());
     }
 };
 
@@ -959,6 +959,11 @@ ClientServerWorld &ClientApp::world()
 void ClientApp::openHomepageInBrowser()
 {
     openInBrowser(DOOMSDAY_HOMEURL);
+}
+
+void ClientApp::showLocalFile(const NativePath &path)
+{
+    DE_ASSERT_FAIL("Show local file in Explorer/Finder");
 }
 
 void ClientApp::openInBrowser(const String &url)
