@@ -25,6 +25,7 @@
 #include "appwindowsystem.h"
 
 #include <QDir>
+#include <QApplication>
 
 class GloomApp : public de::BaseGuiApp
 {

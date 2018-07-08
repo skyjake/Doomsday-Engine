@@ -20,6 +20,7 @@
 #include "mainwindow.h"
 #include "utils.h"
 #include <de/EscapeParser>
+#include <QApplication>
 #include <QMessageBox>
 #include <QDebug>
 
@@ -27,6 +28,7 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    QApplication qtApp(argc, argv);
     GloomApp app(makeList(argc, argv));
     try
     {
@@ -38,7 +40,7 @@ int main(int argc, char **argv)
         EscapeParser esc;
         esc.parse(er.asText());
         warning( "App init failed: %s", esc.plainText().c_str());
-        QMessageBox::critical(0, "test_gloom", convert("App init failed:\n" + esc.plainText()));
+        QMessageBox::critical(0, "Gloom", convert("App init failed:\n" + esc.plainText()));
         return -1;
     }
 

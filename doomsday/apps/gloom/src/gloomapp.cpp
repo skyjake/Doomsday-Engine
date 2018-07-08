@@ -30,6 +30,8 @@
 #include <de/ScriptSystem>
 #include <doomsday/DataBundle>
 
+#include <QApplication>
+
 using namespace de;
 using namespace gloom;
 
@@ -52,8 +54,11 @@ DE_PIMPL(GloomApp)
     {
         // Windows will be closed; OpenGL context will be gone.
         // Deinitalize everything.
-        winSys->main().glActivate();
-        world->glDeinit();
+        if (winSys->mainExists())
+        {
+            winSys->main().glActivate();
+            world->glDeinit();
+        }
         world.reset();
 
         self().glDeinit();
@@ -78,6 +83,12 @@ GloomApp::GloomApp(const StringList &args)
 {
     setMetadata("Deng Team", "dengine.net", "Gloom Test", "1.0");
     setUnixHomeFolderName(".gloom");
+
+    const auto &amd = metadata();
+    qApp->setApplicationName   (convert(amd.gets(APP_NAME)));
+    qApp->setApplicationVersion(convert(amd.gets(APP_VERSION)));
+    qApp->setOrganizationName  (convert(amd.gets(ORG_NAME)));
+    qApp->setOrganizationDomain(convert(amd.gets(ORG_DOMAIN)));
 }
 
 void GloomApp::initialize()
@@ -126,7 +137,6 @@ void GloomApp::initialize()
         });
     }
 
-    DisplayMode_Init();
     addInitPackage("net.dengine.gloom");
     initSubsystems(App::DisablePlugins);
 
@@ -155,6 +165,8 @@ void GloomApp::initialize()
 
     scriptSystem().importModule("bootstrap");
     win->show();
+
+    Loop::get().audienceForIteration() += [this]() { qApp->processEvents(); };
 }
 
 QDir GloomApp::userDir() const
