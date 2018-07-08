@@ -32,7 +32,7 @@
 
 namespace de {
 
-static String processIncludes(String source, String const &sourceFolderPath)
+static String processIncludes(String source, const String &sourceFolderPath)
 {
     static const RegExp includeRegex("#include\\s+['\"]([^\"']+)['\"]");
 
@@ -45,9 +45,9 @@ static String processIncludes(String source, String const &sourceFolderPath)
         String incSource   = String::fromUtf8(FS::locate<File const>(incFilePath));
         incSource          = processIncludes(incSource, incFilePath.fileNamePath());
 
-        source = CString{source.begin(), capStr.begin()}
+        source = CString{source.begin(), found.begin()}
                + incSource
-               + CString{capStr.end(), source.end()};
+               + CString{found.end(), source.end()};
     }
     return source;
 }
