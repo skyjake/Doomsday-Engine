@@ -120,7 +120,14 @@ if (APPLE)
         MACOSX_BUNDLE_INFO_PLIST ${DE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
      )
     deng_install_bundle_deps (gloom
-        Deng::libcore Deng::libgui Deng::libappfw Deng::libshell Deng::liblegacy Deng::libdoomsday
+        Deng::libcore
+        Deng::libgui
+        Deng::libappfw
+        Deng::libshell
+        Deng::liblegacy
+        Deng::libdoomsday
+        CPlus::cplus
+        fmodex
     )
     deng_install_deployqt (gloom)
 endif ()
