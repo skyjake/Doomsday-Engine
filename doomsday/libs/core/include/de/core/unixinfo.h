@@ -16,7 +16,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBCORE_UNIXINFO_H
@@ -39,8 +39,8 @@ namespace de {
  * instantiated normally but no input files are parsed. There are equivalent
  * mechanisms on these platforms (on Windows, the closest is the registry; on
  * macOS, ~/Library/Preferences/) but these are not directly used by
- * Doomsday. Instead of these, one should use Config (or QSettings) for
- * platform-independent persistent configuration.
+ * Doomsday. Instead of these, one should use de::Config for platform
+ * independent persistent configuration.
  *
  * @ingroup core
  */
