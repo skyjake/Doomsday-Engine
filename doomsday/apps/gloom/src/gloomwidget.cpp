@@ -40,7 +40,6 @@ DE_GUI_PIMPL(GloomWidget)
     User             user;
     User::InputState inputs;
     bool             mouseLook = false;
-    Vec2i            lastMousePos;
 
     Impl(Public *i) : Base(i)
     {}
@@ -211,32 +210,27 @@ bool GloomWidget::handleEvent(Event const &event)
 
         if (mouse.type() == Event::MouseWheel)
         {
-            d->user.turn(Vec2f(mouse.wheel()) / 10.f);
+            d->user.turn(Vec2f(mouse.wheel()) / 1.f);
             return true;
         }
-
-        if (d->mouseLook)
+        if (mouse.type() == Event::MouseMotion && d->mouseLook)
         {
-            const Vec2i delta = mouse.pos() - d->lastMousePos;
-            d->lastMousePos = mouse.pos();
-
-            d->user.turn(Vec2f(delta) / 7.f);
+            d->user.turn(Vec2f(mouse.pos()) / 7.f);
+            return true;
         }
-
-        switch (handleMouseClick(event, MouseEvent::Left))
+        if (mouse.type() == Event::MouseButton)
         {
-            case MouseClickStarted:
-                d->lastMousePos = mouse.pos();
-                d->mouseLook = true;
-                break;
+            switch (handleMouseClick(event, MouseEvent::Left))
+            {
+                case MouseClickFinished:
+                    d->mouseLook = !d->mouseLook;
+                    root().window().eventHandler().trapMouse(d->mouseLook);
+                    break;
 
-            default:
-                d->mouseLook = false;
-                break;
-
-            case MouseClickUnrelated:
-                break;
-
+                default:
+                    break;
+            }
+            return true;
         }
     }
 

@@ -135,7 +135,6 @@ DE_PIMPL(MainWindow)
     {
         auto &loop = Loop::get();
         loop.setRate(hasFocus ? 60 : 1);
-        self().eventHandler().trapMouse(hasFocus);
     }
 };
 

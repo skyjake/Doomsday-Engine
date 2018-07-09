@@ -148,7 +148,7 @@ void GloomApp::initialize()
 
     // Load resource banks.
     {
-        const Package &base = App::packageLoader().package("net.dengine.gloom.test");
+        const Package &base = packageLoader().package("net.dengine.gloom.test");
         d->images  .addFromInfo(base.root().locate<File>("images.dei"));
         waveforms().addFromInfo(base.root().locate<File>("audio.dei"));
     }

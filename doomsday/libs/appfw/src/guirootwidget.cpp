@@ -347,8 +347,6 @@ bool GuiRootWidget::processEvent(Event const &event)
 {
     window().glActivate();
 
-    debug("GuiRootWidget ev:%i", event.type());
-
     if ((event.type() == Event::MouseButton &&
          event.as<MouseEvent>().state() != MouseEvent::Released) ||
         event.type() == Event::MouseWheel)
