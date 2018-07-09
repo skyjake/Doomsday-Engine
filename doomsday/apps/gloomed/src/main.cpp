@@ -17,9 +17,35 @@
  */
 
 #include "editorwindow.h"
+#include "utils.h"
+#include <de/CommandLine>
 #include <QApplication>
+#include <QMessageBox>
 
 using namespace de;
+
+static iProcess *gloomProc = nullptr;
+
+static bool launchGloom()
+{
+    if (gloomProc)
+    {
+        // Is it still running?
+        if (isRunning_Process(gloomProc))
+        {
+            return true;
+        }
+        iRelease(gloomProc);
+        gloomProc = nullptr;
+    }
+
+    CommandLine cmd;
+#if defined (MACOSX)
+    cmd << convert(qApp->applicationDirPath() + "/../../../Gloom.app/Contents/MacOS/Gloom");
+#endif
+    gloomProc = cmd.executeProcess();
+    return gloomProc != nullptr;
+}
 
 int main(int argc, char **argv)
 {
@@ -31,6 +57,28 @@ int main(int argc, char **argv)
     app.setOrganizationDomain("dengine.net");
 
     EditorWindow win;
+
+    QObject::connect(&win.editor(), &Editor::buildMapRequested, [&app, &win]() {
+        try
+        {
+            // Export/update the map package.
+
+            // Launch the Gloom app.
+            if (!launchGloom())
+            {
+                QMessageBox::critical(&win, app.applicationName(), "Failed to launch Gloom.");
+                return;
+            }
+
+            // Wait for the process to start listening and tell it to load the map.
+
+        }
+        catch (const Error &er)
+        {
+            warning("Map build error: %s", er.asPlainText().c_str());
+        }
+    });
+
     win.showNormal();
     return app.exec();
 }
