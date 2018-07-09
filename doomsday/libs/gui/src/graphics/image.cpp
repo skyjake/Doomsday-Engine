@@ -730,13 +730,12 @@ void Image::setPointRatio(float pointsPerPixel)
 
 Image Image::subImage(Rectanglei const &subArea) const
 {
+    const int  bpp    = bytesPerPixel();
     const auto bounds = d->rect() & subArea;
     Image sub(bounds.size(), d->format);
     for (duint y = 0; y < bounds.height(); ++y)
     {
-        memcpy(sub.row(y),
-               row(bounds.top() + y) + bounds.left() * bytesPerPixel(),
-               bounds.width() * bytesPerPixel());
+        memcpy(sub.row(y), row(bounds.top() + y) + bounds.left() * bpp, bounds.width() * bpp);
     }
     return sub;
 }

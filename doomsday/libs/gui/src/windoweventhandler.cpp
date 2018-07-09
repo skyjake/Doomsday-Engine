@@ -198,8 +198,6 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
-        debug("wheel %i %i", ev.x, ev.y);
-
         DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
         {
             if (ev.x)
