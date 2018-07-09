@@ -54,13 +54,8 @@ DE_PIMPL(WindowEventHandler)
         if (!mouseGrabbed)
         {
             LOG_INPUT_VERBOSE("Grabbing mouse") << mouseGrabbed;
-
             mouseGrabbed = true;
-
-            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
-            {
-                i->mouseStateChanged(Trapped);
-            }
+            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i) { i->mouseStateChanged(Trapped); }
         }
     }
 
@@ -71,14 +66,8 @@ DE_PIMPL(WindowEventHandler)
         if (mouseGrabbed)
         {
             LOG_INPUT_VERBOSE("Ungrabbing mouse");
-
-            // Tell the mouse driver that the mouse is untrapped.
             mouseGrabbed = false;
-
-            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i)
-            {
-                i->mouseStateChanged(Untrapped);
-            }
+            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i) { i->mouseStateChanged(Untrapped); }
         }
     }
 
@@ -135,15 +124,126 @@ DE_PIMPL(WindowEventHandler)
         }
     }
 
-#if 0
-    template <typename QtEventType>
-    Vec2i translatePosition(QtEventType const *ev) const
+    void handleFocus(bool focusGained)
     {
-        double devicePixelRatio = 1.0;
-        /// @todo Find out the actual pixel ratio.
-        return Vec2i(ev->pos().x(), ev->pos().y()) * devicePixelRatio;
+        //debug("focus: %i", focusGained);
+        DE_FOR_PUBLIC_AUDIENCE2(FocusChange, i)
+        {
+            i->windowFocusChanged(*window, focusGained);
+        }
     }
-#endif
+
+    static MouseEvent::Button translateButton(Uint8 sdlButton)
+    {
+        switch (sdlButton)
+        {
+        case SDL_BUTTON_LEFT:   return MouseEvent::Left;
+        case SDL_BUTTON_MIDDLE: return MouseEvent::Middle;
+        case SDL_BUTTON_RIGHT:  return MouseEvent::Right;
+        case SDL_BUTTON_X1:     return MouseEvent::XButton1;
+        case SDL_BUTTON_X2:     return MouseEvent::XButton2;
+        default:                return MouseEvent::Unknown;
+        }
+    }
+
+    void handleMouseButtonEvent(const SDL_MouseButtonEvent &ev)
+    {
+        const auto pos = Vec2i(ev.x, ev.y) * DE_GUI_APP->dpiFactor();
+
+        if (ev.type == SDL_MOUSEBUTTONDOWN)
+        {
+            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            {
+                i->mouseEvent(MouseEvent(translateButton(ev.which), MouseEvent::Pressed, pos));
+            }
+            if (ev.clicks == 2)
+            {
+                DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+                {
+                    i->mouseEvent(
+                        MouseEvent(translateButton(ev.which), MouseEvent::DoubleClick, pos));
+                }
+            }
+        }
+        else
+        {
+            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            {
+                i->mouseEvent(MouseEvent(translateButton(ev.which), MouseEvent::Released, pos));
+            }
+        }
+    }
+
+    void handleMouseMoveEvent(const SDL_MouseMotionEvent &ev)
+    {
+        // Absolute events are only emitted when the mouse is untrapped.
+        if (!mouseGrabbed)
+        {
+            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::Absolute,
+                                         Vec2i(ev.x, ev.y) * DE_GUI_APP->dpiFactor()));
+            }
+        }
+        else
+        {
+            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::Relative, Vec2i(ev.xrel, ev.yrel)));
+            }
+        }
+    }
+
+    void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
+    {
+        debug("wheel %i %i", ev.x, ev.y);
+
+        /*
+        float const devicePixels = d->window->devicePixelRatio();
+
+        QPoint numPixels = ev->pixelDelta();
+        QPoint numDegrees = ev->angleDelta() / 8;
+        d->wheelAngleAccum += numDegrees;
+
+        if (!numPixels.isNull())
+        {
+            DE_FOR_AUDIENCE2(MouseEvent, i)
+            {
+                if (numPixels.x())
+                {
+                    i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(devicePixels * numPixels.x(), 0),
+                                             d->translatePosition(ev)));
+                }
+                if (numPixels.y())
+                {
+                    i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(0, devicePixels * numPixels.y()),
+                                             d->translatePosition(ev)));
+                }
+            }
+        }
+
+        QPoint const steps = d->wheelAngleAccum / 15;
+        if (!steps.isNull())
+        {
+            DE_FOR_AUDIENCE2(MouseEvent, i)
+            {
+                if (steps.x())
+                {
+                    i->mouseEvent(MouseEvent(MouseEvent::Step, Vec2i(steps.x(), 0),
+                                             !d->mouseGrabbed? d->translatePosition(ev) : Vec2i()));
+                }
+                if (steps.y())
+                {
+                    i->mouseEvent(MouseEvent(MouseEvent::Step, Vec2i(0, steps.y()),
+                                             !d->mouseGrabbed? d->translatePosition(ev) : Vec2i()));
+                }
+            }
+            d->wheelAngleAccum -= steps * 15;
+        }
+
+        d->prevWheelAt.start();
+        */
+    }
 
     DE_PIMPL_AUDIENCE(FocusChange)
 };
@@ -202,6 +302,19 @@ void WindowEventHandler::handleSDLEvent(const void *ptr)
     const SDL_Event *event = reinterpret_cast<const SDL_Event *>(ptr);
     switch (event->type)
     {
+    case SDL_MOUSEMOTION:
+        d->handleMouseMoveEvent(event->motion);
+        break;
+
+    case SDL_MOUSEBUTTONDOWN:
+    case SDL_MOUSEBUTTONUP:
+        d->handleMouseButtonEvent(event->button);
+        break;
+
+    case SDL_MOUSEWHEEL:
+        d->handleMouseWheelEvent(event->wheel);
+        break;
+
     case SDL_KEYDOWN:
     case SDL_KEYUP:
         d->handleKeyEvent(event->key);
@@ -209,6 +322,16 @@ void WindowEventHandler::handleSDLEvent(const void *ptr)
 
     case SDL_TEXTINPUT:
         d->handleTextInput(event->text);
+        break;
+
+    case SDL_WINDOWEVENT:
+        switch (event->window.event)
+        {
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+            d->handleFocus(event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED);
+            break;
+        }
         break;
     }
 }

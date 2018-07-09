@@ -20,7 +20,7 @@
 #include "gloomapp.h"
 #include "approotwidget.h"
 #include "globalshortcuts.h"
-#include "../gloom/gloomwidget.h"
+#include "gloomwidget.h"
 
 #include <de/CommandLine>
 #include <de/GLState>
@@ -134,7 +134,8 @@ DE_PIMPL(MainWindow)
     void windowFocusChanged(GLWindow &, bool hasFocus)
     {
         auto &loop = Loop::get();
-        loop.setRate(hasFocus? 60 : 1);
+        loop.setRate(hasFocus ? 60 : 1);
+        self().eventHandler().trapMouse(hasFocus);
     }
 };
 

@@ -1,6 +1,6 @@
-/** @file appwindowsystem.cpp  Application window system.
+/** @file world.cpp
  *
- * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,36 +16,48 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "appwindowsystem.h"
-#include <de/App>
-#include <de/PackageLoader>
+#include "gloom/world/world.h"
 
 using namespace de;
 
-DE_PIMPL(AppWindowSystem)
-{
-    Impl(Public *i) : Base(i)
-    {
-        self().style().load(App::packageLoader().load("net.dengine.gloom.test.defaultstyle"));
-    }
-};
+namespace gloom {
 
-AppWindowSystem::AppWindowSystem() : d(new Impl(this))
+World::World()
+{}
+
+World::~World()
+{}
+
+void World::glInit()
+{}
+
+void World::glDeinit()
+{}
+
+void World::update(TimeSpan const &)
+{}
+
+void World::render(ICamera const &)
+{}
+
+World::POI World::initialViewPosition() const
 {
-    setAppWindowSystem(*this);
+    return Vec3f();
 }
 
-MainWindow &AppWindowSystem::main()
+List<World::POI> World::pointsOfInterest() const
 {
-    return WindowSystem::main().as<MainWindow>();
+    return List<POI>();
 }
 
-bool AppWindowSystem::rootProcessEvent(const Event &event)
+double World::groundSurfaceHeight(const Vec3d &) const
 {
-    return main().root().processEvent(event);
+    return 0.0;
 }
 
-void AppWindowSystem::rootUpdate()
+double World::ceilingHeight(const Vec3d &) const
 {
-    main().root().update();
+    return 1000.0;
 }
+
+} // namespace gloom

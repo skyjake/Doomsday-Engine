@@ -18,17 +18,13 @@
 
 #include "gloomapp.h"
 #include "mainwindow.h"
-#include "utils.h"
 #include <de/EscapeParser>
-#include <QApplication>
-#include <QMessageBox>
-#include <QDebug>
+#include <SDL2/SDL_messagebox.h>
 
 using namespace de;
 
 int main(int argc, char **argv)
 {
-    QApplication qtApp(argc, argv);
     GloomApp app(makeList(argc, argv));
     try
     {
@@ -39,8 +35,9 @@ int main(int argc, char **argv)
     {
         EscapeParser esc;
         esc.parse(er.asText());
-        warning( "App init failed: %s", esc.plainText().c_str());
-        QMessageBox::critical(0, "Gloom", convert("App init failed:\n" + esc.plainText()));
+        warning("App init failed: %s", esc.plainText().c_str());
+        SDL_ShowSimpleMessageBox(
+            SDL_MESSAGEBOX_ERROR, "Gloom", "App init failed:\n" + esc.plainText(), nullptr);
         return -1;
     }
 

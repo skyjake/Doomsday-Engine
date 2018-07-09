@@ -1,6 +1,6 @@
-/** @file appwindowsystem.cpp  Application window system.
+/** @file utils.h  Utilities.
  *
- * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,36 +16,41 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "appwindowsystem.h"
-#include <de/App>
-#include <de/PackageLoader>
+#ifndef GLOOMAPP_UTILS_H
+#define GLOOMAPP_UTILS_H
 
-using namespace de;
+#include <QVector2D>
+#include <QString>
+#include <de/String>
 
-DE_PIMPL(AppWindowSystem)
+inline de::Vec2d toVec2d(const QVector2D &vec)
 {
-    Impl(Public *i) : Base(i)
-    {
-        self().style().load(App::packageLoader().load("net.dengine.gloom.test.defaultstyle"));
-    }
-};
-
-AppWindowSystem::AppWindowSystem() : d(new Impl(this))
-{
-    setAppWindowSystem(*this);
+    return de::Vec2d(vec.x(), vec.y());
 }
 
-MainWindow &AppWindowSystem::main()
+inline QVector2D toQVector2D(const de::Vec2d &vec)
 {
-    return WindowSystem::main().as<MainWindow>();
+    return QVector2D(float(vec.x), float(vec.y));
 }
 
-bool AppWindowSystem::rootProcessEvent(const Event &event)
+inline de::String convert(const QString &qstr)
 {
-    return main().root().processEvent(event);
+    return qstr.toStdWString();
 }
 
-void AppWindowSystem::rootUpdate()
+inline de::String convertToString(const QString &qstr)
 {
-    main().root().update();
+    return convert(qstr);
 }
+
+inline QString convert(const de::String &str)
+{
+    return QString::fromUtf8(str);
+}
+
+inline QString convertToQString(const de::String &str)
+{
+    return convert(str);
+}
+
+#endif // GLOOMAPP_UTILS_H

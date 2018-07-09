@@ -1,6 +1,6 @@
-/** @file appwindowsystem.cpp  Application window system.
+/** @file icamera.h
  *
- * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,36 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "appwindowsystem.h"
-#include <de/App>
-#include <de/PackageLoader>
+#ifndef ICAMERA_H
+#define ICAMERA_H
 
-using namespace de;
+#include <de/Matrix>
+#include "../libgloom.h"
 
-DE_PIMPL(AppWindowSystem)
+namespace gloom {
+
+class LIBGLOOM_PUBLIC ICamera
 {
-    Impl(Public *i) : Base(i)
-    {
-        self().style().load(App::packageLoader().load("net.dengine.gloom.test.defaultstyle"));
+public:
+    virtual ~ICamera() {}
+
+    /**
+     * Returns the position of the camera in world space.
+     */
+    virtual de::Vec3f cameraPosition() const = 0;
+
+    virtual de::Vec3f cameraFront() const = 0;
+
+    virtual de::Vec3f cameraUp() const = 0;
+
+    virtual de::Mat4f cameraProjection() const = 0;
+
+    virtual de::Mat4f cameraModelView() const = 0;
+
+    virtual de::Mat4f cameraModelViewProjection() const {
+        return cameraProjection() * cameraModelView();
     }
 };
 
-AppWindowSystem::AppWindowSystem() : d(new Impl(this))
-{
-    setAppWindowSystem(*this);
-}
+} // namespace gloom
 
-MainWindow &AppWindowSystem::main()
-{
-    return WindowSystem::main().as<MainWindow>();
-}
-
-bool AppWindowSystem::rootProcessEvent(const Event &event)
-{
-    return main().root().processEvent(event);
-}
-
-void AppWindowSystem::rootUpdate()
-{
-    main().root().update();
-}
+#endif // ICAMERA_H

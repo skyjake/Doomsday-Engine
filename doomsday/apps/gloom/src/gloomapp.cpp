@@ -17,20 +17,18 @@
  */
 
 #include "gloomapp.h"
-#include "editorwindow.h"
 #include "appwindowsystem.h"
-#include "utils.h"
-#include "../gloom/gloomworld.h"
-#include "../gloom/gloomwidget.h"
-#include "../gloom/world/user.h"
+#include "gloomwidget.h"
+
+#include <gloom/gloomworld.h>
+#include <gloom/world/user.h>
+
+#include <doomsday/DataBundle>
 
 #include <de/DisplayMode>
 #include <de/FileSystem>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
-#include <doomsday/DataBundle>
-
-#include <QApplication>
 
 using namespace de;
 using namespace gloom;
@@ -38,7 +36,7 @@ using namespace gloom;
 DE_PIMPL(GloomApp)
 {
     ImageBank                        images;
-    std::unique_ptr<EditorWindow>    editWin;
+//    std::unique_ptr<EditorWindow>    editWin;
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
     std::unique_ptr<GloomWorld>      world;
@@ -83,20 +81,15 @@ GloomApp::GloomApp(const StringList &args)
 {
     setMetadata("Deng Team", "dengine.net", "Gloom Test", "1.0");
     setUnixHomeFolderName(".gloom");
-
-    const auto &amd = metadata();
-    qApp->setApplicationName   (convert(amd.gets(APP_NAME)));
-    qApp->setApplicationVersion(convert(amd.gets(APP_VERSION)));
-    qApp->setOrganizationName  (convert(amd.gets(ORG_NAME)));
-    qApp->setOrganizationDomain(convert(amd.gets(ORG_DOMAIN)));
 }
 
 void GloomApp::initialize()
 {
     using gloom::Map;
 
-    d->world.reset(new GloomWorld);
+    d->world.reset(new GloomWorld(shaders(), images()));
 
+#if 0
     // Set up the editor.
     {
         d->editWin.reset(new EditorWindow);
@@ -136,8 +129,10 @@ void GloomApp::initialize()
             }
         });
     }
+#endif
 
     addInitPackage("net.dengine.gloom");
+    addInitPackage("net.dengine.gloom.test");
     initSubsystems(App::DisablePlugins);
 
     // Create subsystems.
@@ -153,7 +148,7 @@ void GloomApp::initialize()
 
     // Load resource banks.
     {
-        const Package &base = App::packageLoader().package("net.dengine.gloom");
+        const Package &base = App::packageLoader().package("net.dengine.gloom.test");
         d->images  .addFromInfo(base.root().locate<File>("images.dei"));
         waveforms().addFromInfo(base.root().locate<File>("audio.dei"));
     }
@@ -165,17 +160,14 @@ void GloomApp::initialize()
 
     scriptSystem().importModule("bootstrap");
     win->show();
-
-    Loop::get().audienceForIteration() += [this]() { qApp->processEvents(); };
 }
 
-QDir GloomApp::userDir() const
+NativePath GloomApp::userDir() const
 {
-    const QDir home = QDir::home();
-    const QDir dir = home.filePath(convert(unixHomeFolderName()));
+    const auto dir = NativePath::homePath() / unixHomeFolderName();
     if (!dir.exists())
     {
-        home.mkdir(convert(unixHomeFolderName()));
+        NativePath::createDirectory(dir);
     }
     return dir;
 }

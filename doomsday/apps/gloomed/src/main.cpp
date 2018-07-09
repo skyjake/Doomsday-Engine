@@ -1,6 +1,6 @@
-/** @file appwindowsystem.cpp  Application window system.
+/** @file main.cpp
  *
- * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,36 +16,21 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "appwindowsystem.h"
-#include <de/App>
-#include <de/PackageLoader>
+#include "editorwindow.h"
+#include <QApplication>
 
 using namespace de;
 
-DE_PIMPL(AppWindowSystem)
+int main(int argc, char **argv)
 {
-    Impl(Public *i) : Base(i)
-    {
-        self().style().load(App::packageLoader().load("net.dengine.gloom.test.defaultstyle"));
-    }
-};
+    QApplication app(argc, argv);
 
-AppWindowSystem::AppWindowSystem() : d(new Impl(this))
-{
-    setAppWindowSystem(*this);
-}
+    app.setApplicationName   ("GloomEd");
+    app.setApplicationVersion("1.0");
+    app.setOrganizationName  ("Deng Team");
+    app.setOrganizationDomain("dengine.net");
 
-MainWindow &AppWindowSystem::main()
-{
-    return WindowSystem::main().as<MainWindow>();
-}
-
-bool AppWindowSystem::rootProcessEvent(const Event &event)
-{
-    return main().root().processEvent(event);
-}
-
-void AppWindowSystem::rootUpdate()
-{
-    main().root().update();
+    EditorWindow win;
+    win.showNormal();
+    return app.exec();
 }

@@ -1,6 +1,6 @@
-/** @file gloomapp.h  Gloom test application.
+/** @file ident.h
  *
- * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,31 +16,17 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_TEST_APP_H
-#define GLOOM_TEST_APP_H
+#ifndef GLOOM_IDENT_H
+#define GLOOM_IDENT_H
 
-#include <de/BaseGuiApp>
-#include <de/ImageBank>
-#include <gloom/audio/audiosystem.h>
-#include "appwindowsystem.h"
+#include <de/List>
+#include "libgloom.h"
 
-class GloomApp : public de::BaseGuiApp
-{
-public:
-    GloomApp(const de::StringList &args);
+namespace gloom {
 
-    void initialize();
+typedef uint32_t     ID;
+typedef de::List<ID> IDList;
 
-    de::NativePath userDir() const;
+} // namespace gloom
 
-    static GloomApp &          app();
-    static AppWindowSystem &   windowSystem();
-    static gloom::AudioSystem &audioSystem();
-    static MainWindow &        main();
-    static de::ImageBank &     images();
-
-private:
-    DE_PRIVATE(d)
-};
-
-#endif // GLOOM_TEST_APP_H
+#endif // GLOOM_IDENT_H

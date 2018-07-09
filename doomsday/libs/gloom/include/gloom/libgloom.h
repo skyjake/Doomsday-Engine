@@ -1,6 +1,6 @@
-/** @file gloomapp.h  Gloom test application.
+/** @file libgloom.h  Gloom.
  *
- * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -16,31 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOM_TEST_APP_H
-#define GLOOM_TEST_APP_H
+#ifndef LIBGLOOM_MAIN_H
+#define LIBGLOOM_MAIN_H
 
-#include <de/BaseGuiApp>
-#include <de/ImageBank>
-#include <gloom/audio/audiosystem.h>
-#include "appwindowsystem.h"
+#include <de/libcore.h>
 
-class GloomApp : public de::BaseGuiApp
-{
-public:
-    GloomApp(const de::StringList &args);
+/*
+ * The LIBGLOOM_PUBLIC macro is used for declaring exported symbols. It must be
+ * applied in all exported classes and functions. DEF files are not used for
+ * exporting symbols out of libgloom.
+ */
+#if defined(_WIN32) && defined(_MSC_VER)
+#  ifdef __LIBGLOOM__
+     // This is defined when compiling the library.
+#    define LIBGLOOM_PUBLIC __declspec(dllexport)
+#  else
+#    define LIBGLOOM_PUBLIC __declspec(dllimport)
+#  endif
+#else
+#  define LIBGLOOM_PUBLIC   DE_PUBLIC
+#endif
 
-    void initialize();
-
-    de::NativePath userDir() const;
-
-    static GloomApp &          app();
-    static AppWindowSystem &   windowSystem();
-    static gloom::AudioSystem &audioSystem();
-    static MainWindow &        main();
-    static de::ImageBank &     images();
-
-private:
-    DE_PRIVATE(d)
-};
-
-#endif // GLOOM_TEST_APP_H
+#endif // LIBGLOOM_MAIN_H

@@ -234,9 +234,9 @@ GLWindow::GLWindow()
 //    setFlags(flags() | Qt::WindowFullscreenButtonHint);
 //#endif
 
-#if defined (DE_MOBILE)
-    setFocusPolicy(Qt::StrongFocus);
-#endif
+//#if defined (DE_MOBILE)
+//    setFocusPolicy(Qt::StrongFocus);
+//#endif
 
 //    connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
 
@@ -310,6 +310,11 @@ void GLWindow::hide()
 void GLWindow::raise()
 {
     SDL_RaiseWindow(d->window);
+}
+
+void GLWindow::grabInput(bool enable)
+{
+    SDL_SetWindowGrab(d->window, enable ? SDL_TRUE : SDL_FALSE);
 }
 
 void GLWindow::setGeometry(const Rectanglei &rect)
@@ -598,7 +603,9 @@ void GLWindow::handleSDLEvent(const void *ptr)
         case SDL_WINDOWEVENT_CLOSE: break;
 
         case SDL_WINDOWEVENT_FOCUS_GAINED:
-        case SDL_WINDOWEVENT_FOCUS_LOST: break;
+        case SDL_WINDOWEVENT_FOCUS_LOST:
+            d->handler->handleSDLEvent(ptr);
+            break;
 
         case SDL_WINDOWEVENT_MAXIMIZED:
         case SDL_WINDOWEVENT_MINIMIZED:

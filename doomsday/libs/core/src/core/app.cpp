@@ -115,7 +115,6 @@ DE_PIMPL(App)
 
     /// Path of the application executable.
     NativePath appPath;
-//    String unixHomeFolder;
 
     NativePath cachedBasePath;
     NativePath cachedPluginBinaryPath;
@@ -144,7 +143,6 @@ DE_PIMPL(App)
     filesys::RemoteFeedRelay remoteFeedRelay;
 
     /// The configuration.
-//    Path configPath;
     Config *config;
 
     StringList packagesToLoadAtInit;
@@ -157,11 +155,8 @@ DE_PIMPL(App)
 
     Impl(Public *a, const StringList &args)
         : Base(a)
-        //, appName("Doomsday Engine")
         , cmdLine(args)
-//        , unixHomeFolder()
         , persistentData(nullptr)
-//        , configPath("/packs/net.dengine.stdlib/modules/Config.ds")
         , config(nullptr)
         , terminateFunc(nullptr)
     {
@@ -178,9 +173,6 @@ DE_PIMPL(App)
             setlocale(LC_NUMERIC, "C");
         }
         #endif
-
-        // Override the system number formatting.
-        //QLocale::setDefault(QLocale("en_US.UTF-8"));
 
         packagesToLoadAtInit << "net.dengine.stdlib";
 

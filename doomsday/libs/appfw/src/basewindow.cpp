@@ -31,6 +31,7 @@ DE_PIMPL(BaseWindow)
 , DE_OBSERVES(GLWindow,         Init)
 , DE_OBSERVES(KeyEventSource,   KeyEvent)
 , DE_OBSERVES(MouseEventSource, MouseEvent)
+//, DE_OBSERVES(MouseEventSource, MouseStateChange)
 {
     WindowTransform defaultXf; ///< Used by default (doesn't apply any transformation).
     WindowTransform *xf;
@@ -43,11 +44,12 @@ DE_PIMPL(BaseWindow)
         self().audienceForInit() += this;
 
         // Listen to input.
-        self().eventHandler().audienceForKeyEvent()   += this;
-        self().eventHandler().audienceForMouseEvent() += this;
+        self().eventHandler().audienceForKeyEvent()         += this;
+        self().eventHandler().audienceForMouseEvent()       += this;
+//        self().eventHandler().audienceForMouseStateChange() += this;
     }
 
-    void windowInit(GLWindow &)
+    void windowInit(GLWindow &) override
     {
         // The framework widgets expect basic alpha blending.
         GLState::current()
@@ -55,10 +57,12 @@ DE_PIMPL(BaseWindow)
                 .setBlendFunc(gfx::SrcAlpha, gfx::OneMinusSrcAlpha);
     }
 
-    void keyEvent(KeyEvent const &ev)
+    void keyEvent(KeyEvent const &ev) override
     {
         /// @todo Input drivers should observe the notification instead, input
         /// subsystem passes it to window system. -jk
+
+        debug("keyEvent ev:%i", ev.type());
 
         // Pass the event onto the window system.
         if (!WindowSystem::get().processEvent(ev))
@@ -68,7 +72,7 @@ DE_PIMPL(BaseWindow)
         }
     }
 
-    void mouseEvent(MouseEvent const &event)
+    void mouseEvent(MouseEvent const &event) override
     {
         MouseEvent ev = event;
 
@@ -86,6 +90,11 @@ DE_PIMPL(BaseWindow)
             self().handleFallbackEvent(ev);
         }
     }
+
+//    void mouseStateChanged(MouseEventSource::State state) override
+//    {
+//        self().grabInput(state == MouseEventSource::Trapped);
+//    }
 };
 
 BaseWindow::BaseWindow(String const &id)
