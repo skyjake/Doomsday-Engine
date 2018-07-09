@@ -99,7 +99,6 @@ public:
     void showFullScreen();
     void hide();
     void raise();
-    void grabInput(bool enable);
 
     bool isGLReady() const;
     bool isFullScreen() const;

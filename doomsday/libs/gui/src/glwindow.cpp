@@ -245,6 +245,12 @@ GLWindow::GLWindow()
     
     d->pixelRatio = devicePixelRatio();
 
+    d->handler->audienceForMouseStateChange() += [this]() {
+        const bool trap = d->handler->isMouseTrapped();
+        SDL_SetWindowGrab(d->window, trap ? SDL_TRUE : SDL_FALSE);
+        SDL_SetRelativeMouseMode(trap ? SDL_TRUE : SDL_FALSE);
+    };
+
     connect(this, &QWindow::screenChanged, [this](QScreen *scr) {
         //qDebug() << "window screen changed:" << scr << scr->devicePixelRatio();
         if (!fequal(d->pixelRatio, scr->devicePixelRatio()))
@@ -310,11 +316,6 @@ void GLWindow::hide()
 void GLWindow::raise()
 {
     SDL_RaiseWindow(d->window);
-}
-
-void GLWindow::grabInput(bool enable)
-{
-    SDL_SetWindowGrab(d->window, enable ? SDL_TRUE : SDL_FALSE);
 }
 
 void GLWindow::setGeometry(const Rectanglei &rect)

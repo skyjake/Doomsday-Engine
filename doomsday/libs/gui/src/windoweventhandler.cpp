@@ -36,6 +36,7 @@ DE_PIMPL(WindowEventHandler)
     Time         prevWheelAt;
     Vec2i        wheelAngleAccum;
     int          wheelDir[2];
+    Vec2i        currentMousePos;
     //#if defined (WIN32)
     //    bool      altIsDown = false;
     //#endif
@@ -49,7 +50,7 @@ DE_PIMPL(WindowEventHandler)
 
     void grabMouse()
     {
-        if (!window->isVisible()) return;
+//        if (!window->isVisible()) return;
 
         if (!mouseGrabbed)
         {
@@ -61,7 +62,7 @@ DE_PIMPL(WindowEventHandler)
 
     void ungrabMouse()
     {
-        if (!window->isVisible()) return;
+//        if (!window->isVisible()) return;
 
         if (mouseGrabbed)
         {
@@ -154,14 +155,14 @@ DE_PIMPL(WindowEventHandler)
         {
             DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
             {
-                i->mouseEvent(MouseEvent(translateButton(ev.which), MouseEvent::Pressed, pos));
+                i->mouseEvent(MouseEvent(translateButton(ev.button), MouseEvent::Pressed, pos));
             }
             if (ev.clicks == 2)
             {
                 DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
                 {
                     i->mouseEvent(
-                        MouseEvent(translateButton(ev.which), MouseEvent::DoubleClick, pos));
+                        MouseEvent(translateButton(ev.button), MouseEvent::DoubleClick, pos));
                 }
             }
         }
@@ -169,20 +170,21 @@ DE_PIMPL(WindowEventHandler)
         {
             DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
             {
-                i->mouseEvent(MouseEvent(translateButton(ev.which), MouseEvent::Released, pos));
+                i->mouseEvent(MouseEvent(translateButton(ev.button), MouseEvent::Released, pos));
             }
         }
     }
 
     void handleMouseMoveEvent(const SDL_MouseMotionEvent &ev)
     {
+        currentMousePos = Vec2i(ev.x, ev.y) * DE_GUI_APP->dpiFactor();
+
         // Absolute events are only emitted when the mouse is untrapped.
         if (!mouseGrabbed)
         {
             DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
             {
-                i->mouseEvent(MouseEvent(MouseEvent::Absolute,
-                                         Vec2i(ev.x, ev.y) * DE_GUI_APP->dpiFactor()));
+                i->mouseEvent(MouseEvent(MouseEvent::Absolute, currentMousePos));
             }
         }
         else
@@ -197,6 +199,20 @@ DE_PIMPL(WindowEventHandler)
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
         debug("wheel %i %i", ev.x, ev.y);
+
+        DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+        {
+            if (ev.x)
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(ev.x, 0),
+                                         currentMousePos));
+            }
+            if (ev.y)
+            {
+                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(0, ev.y),
+                                         currentMousePos));
+            }
+        }
 
         /*
         float const devicePixels = d->window->devicePixelRatio();

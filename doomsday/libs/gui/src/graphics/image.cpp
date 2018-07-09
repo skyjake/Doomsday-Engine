@@ -734,7 +734,9 @@ Image Image::subImage(Rectanglei const &subArea) const
     Image sub(bounds.size(), d->format);
     for (duint y = 0; y < bounds.height(); ++y)
     {
-        memcpy(sub.row(y), row(bounds.top() + y), bounds.width() * bytesPerPixel());
+        memcpy(sub.row(y),
+               row(bounds.top() + y) + bounds.left() * bytesPerPixel(),
+               bounds.width() * bytesPerPixel());
     }
     return sub;
 }
