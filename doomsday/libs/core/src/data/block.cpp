@@ -90,7 +90,10 @@ Block::Block(const IByteArray &other, Offset at, Size count) : IByteArray()
 
 Block::~Block()
 {
-    deinit_Block(&_block);
+    if (_block.i)
+    {
+        deinit_Block(&_block);
+    }
 }
 
 Block::Size Block::size() const
@@ -252,7 +255,7 @@ Block Block::take(iBlock *b)
 {
     Block block(b);
     delete_Block(b);
-    return b;
+    return block;
 }
 
 Block &Block::operator+=(const Block &other)
