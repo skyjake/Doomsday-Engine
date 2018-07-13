@@ -17,15 +17,17 @@
  */
 
 #include "de/Beacon"
-#include "de/Reader"
-#include "de/Writer"
+
+#include "de/Garbage"
 #include "de/LogBuffer"
+#include "de/Loop"
 #include "de/Map"
+#include "de/Reader"
 #include "de/Timer"
-//#include <QUdpSocket>
-//#include <QHostInfo>
-//#include <QTimer>
-//#include <QMap>
+#include "de/Writer"
+
+#include <c_plus/address.h>
+#include <c_plus/datagram.h>
 
 namespace de {
 
@@ -33,7 +35,9 @@ namespace de {
  * Maximum number of Beacon UDP ports in simultaneous use at one machine, i.e.,
  * maximum number of servers on one machine.
  */
-static duint16 const MAX_LISTEN_RANGE = 16;
+static const duint16 MAX_LISTEN_RANGE = 16;
+
+static const duint16 MIN_PORT = 49152; // start of IANA private range
 
 // 1.0: Initial version.
 // 1.1: Advertised message is compressed with zlib (deflate).
@@ -43,123 +47,100 @@ DE_PIMPL(Beacon)
 {
     duint16 port;
     duint16 servicePort;
-//    QUdpSocket *socket;
     Block message;
+    cplus::ref<iDatagram> socket;
     std::unique_ptr<Timer> timer;
     Time discoveryEndsAt;
     Map<Address, Block> found;
 
     Impl(Public *i) : Base(i) {}
 
-#if 0
-    Impl() : socket(0), timer(0)
-    {}
-
-    ~Impl()
-    {
-        delete socket;
-        delete timer;
-    }
-#endif
-
     void continueDiscovery()
     {
         DE_ASSERT(timer);
-#if 0
         DE_ASSERT(socket);
 
         // Time to stop discovering?
-        if (d->discoveryEndsAt.isValid() && Time() > d->discoveryEndsAt)
+        if (discoveryEndsAt.isValid() && Time() > discoveryEndsAt)
         {
-            d->timer->stop();
+            timer->stop();
 
-            emit finished();
+            DE_FOR_PUBLIC_AUDIENCE2(Finished, i) { i->beaconFinished(); }
 
-            d->socket->deleteLater();
-            d->socket = 0;
-
-            d->timer->deleteLater();
-            d->timer = 0;
+            socket.reset();
+            trash(timer.release());
             return;
         }
 
         Block block(discoveryMessage);
 
-        LOG_NET_XVERBOSE("Broadcasting %i bytes", block.size());
+        LOG_NET_XVERBOSE("Broadcasting %u bytes", block.size());
 
         // Send a new broadcast to the whole listening range of the beacons.
-        for (duint16 range = 0; range < MAX_LISTEN_RANGE; ++range)
+        for (duint16 i = 0; i < MAX_LISTEN_RANGE; ++i)
         {
-            d->socket->writeDatagram(block,
-                                     QHostAddress::Broadcast,
-                                     d->port + range);
+            send_Datagram(socket, block, cplus::ref<iAddress>{newBroadcast_Address(port + i)});
         }
-#endif
     }
 
-#if 0
-void Beacon::readIncoming()
+    static void readIncoming(iAny *, iDatagram *sock)
 {
+        Loop::mainCall([sock]() {
     LOG_AS("Beacon");
-
-    if (!d->socket) return;
-
-    while (d->socket->hasPendingDatagrams())
+            auto *d = reinterpret_cast<Beacon::Impl *>(userData_Object(sock));
+            iAddress *from;
+            while (const Block block = Block::take(receive_Datagram(sock, &from)))
     {
-        QHostAddress from;
-        duint16 port = 0;
-        Block block(d->socket->pendingDatagramSize());
-        d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
-                                block.size(), &from, &port);
-
-        LOG_NET_XVERBOSE("Received %i bytes from %s port %i", block.size() << from.toString() << port);
-
+                LOG_NET_XVERBOSE("Received %i bytes from %s",
+                                 block.size() << String::take(toString_Address(from)));
         if (block == discoveryMessage)
         {
             // Send a reply.
-            d->socket->writeDatagram(d->message, from, port);
+                    send_Datagram(sock, d->message, from);
         }
+                iRelease(from);
     }
+        });
 }
 
-void Beacon::readDiscoveryReply()
+    static void readDiscoveryReply(iAny *, iDatagram *sock)
 {
+        Loop::mainCall([sock]() {
     LOG_AS("Beacon");
+            auto *d = reinterpret_cast<Beacon::Impl *>(userData_Object(sock));
 
-    if (!d->socket) return;
-
-    while (d->socket->hasPendingDatagrams())
+            iAddress *from;
+            while (Block block = Block::take(receive_Datagram(sock, &from)))
     {
-        QHostAddress from;
-        quint16 port = 0;
-        Block block(d->socket->pendingDatagramSize());
-        d->socket->readDatagram(reinterpret_cast<char *>(block.data()),
-                                block.size(), &from, &port);
-
-        if (block == discoveryMessage)
-            continue;
-
         try
         {
+                    if (block != discoveryMessage)
+                    {
             // Remove the service listening port from the beginning.
             duint16 listenPort = 0;
             Reader(block) >> listenPort;
             block.remove(0, 2);
             block = block.decompressed();
-
-            Address const host(from, listenPort);
+                        if (block)
+                        {
+                            const Address host(cstr_String(hostName_Address(from)), listenPort);
             d->found.insert(host, block);
 
-            emit found(host, block);
+                            DE_FOR_EACH_OBSERVER(i, d->self().audienceForDiscovery())
+                            {
+                                i->beaconFoundHost(host, block);
+                            }
+                        }
+                    }
         }
-        catch (Error const &)
+                catch (const Error &)
         {
             // Bogus reply message, ignore.
         }
+                iRelease(from);
     }
+        });
 }
-
-#endif
 
     DE_PIMPL_AUDIENCES(Discovery, Finished)
 };
@@ -178,17 +159,18 @@ duint16 Beacon::port() const
 
 void Beacon::start(duint16 serviceListenPort)
 {
-#if 0
     DE_ASSERT(!d->socket);
 
     d->servicePort = serviceListenPort;
 
-    d->socket = new QUdpSocket;
-    connect(d->socket, SIGNAL(readyRead()), this, SLOT(readIncoming()));
+    d->socket.reset(new_Datagram());
+    setUserData_Object(d->socket, d);
+    iConnect(Datagram, d->socket, message, d->socket, Impl::readIncoming);
 
     for (duint16 attempt = 0; attempt < MAX_LISTEN_RANGE; ++attempt)
     {
-        if (d->socket->bind(d->port + attempt, QUdpSocket::DontShareAddress))
+        if (open_Datagram(d->socket,
+                          d->port ? d->port + attempt : duint16(Rangeui{MIN_PORT, 65536}.random())))
         {
             d->port = d->port + attempt;
             return;
@@ -197,7 +179,6 @@ void Beacon::start(duint16 serviceListenPort)
 
     /// @throws PortError Could not open the UDP port.
     throw PortError("Beacon::start", "Could not bind to UDP port " + String::asText(d->port));
-#endif
 }
 
 void Beacon::setMessage(IByteArray const &advertisedMessage)
@@ -214,27 +195,26 @@ void Beacon::setMessage(IByteArray const &advertisedMessage)
 
 void Beacon::stop()
 {
-#if 0
-    delete d->socket;
-    d->socket = 0;
-#endif
+    d->socket.reset();
 }
 
-void Beacon::discover(TimeSpan timeOut, TimeSpan interval)
+void Beacon::discover(const TimeSpan& timeOut, const TimeSpan& interval)
 {
-#if 0
     if (d->timer) return; // Already discovering.
 
     DE_ASSERT(!d->socket);
 
-    d->socket = new QUdpSocket;
-    connect(d->socket, SIGNAL(readyRead()), this, SLOT(readDiscoveryReply()));
+    d->socket.reset(new_Datagram());
+    setUserData_Object(d->socket, d);
+    iConnect(Datagram, d->socket, message, d->socket, Impl::readDiscoveryReply);
+
+    Rangeui ports{max(d->port, MIN_PORT), 65536};
 
     // Choose a semi-random port for listening to replies from servers' beacons.
     int tries = 10;
     for (;;)
     {
-        if (d->socket->bind(d->port + Rangeui16(1, 0x4000).random(), QUdpSocket::DontShareAddress))
+        if (open_Datagram(d->socket, duint16(ports.random())))
         {
             // Got a port open successfully.
             break;
@@ -258,11 +238,10 @@ void Beacon::discover(TimeSpan timeOut, TimeSpan interval)
         d->discoveryEndsAt = Time::invalidTime();
     }
     d->timer.reset(new Timer);
-    d->timer->audienceForTrigger() += [this](){ d->continueDiscovery(); };
+    *d->timer += [this](){ d->continueDiscovery(); };
     d->timer->start(interval);
 
     d->continueDiscovery();
-#endif
 }
 
 List<Address> Beacon::foundHosts() const

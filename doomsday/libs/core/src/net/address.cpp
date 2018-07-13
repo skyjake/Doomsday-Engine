@@ -50,7 +50,7 @@ Address::Address(char const *address, duint16 port) : d(new Impl)
 {
     d->addr.reset(new_Address());
     d->port = port;
-    lookupHostCStr_Address(d->addr, address, port);
+    lookupTcpCStr_Address(d->addr, address, port);
 }
 
 Address::Address(const iAddress *address) : d(new Impl)

@@ -28,6 +28,11 @@ namespace de {
 
 /**
  * UDP-based peer discovery mechanism.
+ *
+ * Beacon can work either in advertising or discovery mode. In advertising mode, one must
+ * specify the port number when the Beacon is constructed. Beacon will attempt to communicate
+ * using the specified port only. In discovery mode, a port is selected at random.
+ *
  * @ingroup net
  */
 class DE_PUBLIC Beacon
@@ -40,7 +45,11 @@ public:
     DE_DEFINE_AUDIENCE2(Finished,  void beaconFinished())
 
 public:
-    Beacon(duint16 port);
+    /**
+     * @param port  Port that the beacon uses for communications. If zero, a random port is
+     *              selected for discovery.
+     */
+    Beacon(duint16 port = 0);
 
     /**
      * Port the beacon uses for listening.
@@ -62,7 +71,7 @@ public:
      *
      * @param advertisedMessage  Message to send to requesters.
      */
-    void setMessage(IByteArray const &advertisedMessage);
+    void setMessage(const IByteArray &advertisedMessage);
 
     /**
      * Stops the beacon.
@@ -76,7 +85,7 @@ public:
      *                  is zero or negative, discovery will not end.
      * @param interval  Interval between query broadcasts.
      */
-    void discover(TimeSpan timeOut, TimeSpan interval = 1.0);
+    void discover(const TimeSpan& timeOut, const TimeSpan& interval = 1.0);
 
     List<Address> foundHosts() const;
     Block messageFromHost(Address const &host) const;

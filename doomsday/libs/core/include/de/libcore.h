@@ -230,7 +230,7 @@
  */
 #define DE_STR(cStringLiteral) \
     ([]() -> de::String { \
-        const size_t len = std::strlen(cStringLiteral); /* likely compile time */ \
+        const size_t len = std::strlen(cStringLiteral); /* likely will be constexpr */ \
         static iBlockData blockData = { \
            2, const_cast<char *>(cStringLiteral), len, len + 1}; \
         static iBlock block = { &blockData }; \

@@ -620,7 +620,7 @@ void Socket::open(const String &domainNameWithOptionalPort,
     iAddress *addr = new_Address();
     setUserData_Object(addr, this);
     iConnect(Address, addr, lookupFinished, addr, Impl::handleAddressLookedUp);
-    lookupHostCStr_Address(addr, host, port);
+    lookupTcpCStr_Address(addr, host, port);
     d->peer = Address::take(addr);
 
 
