@@ -18,34 +18,93 @@
 
 #include "editorwindow.h"
 #include "utils.h"
+#include <de/App>
+#include <de/Beacon>
 #include <de/CommandLine>
+#include <de/EventLoop>
+#include <de/Loop>
+#include <de/Info>
 #include <QApplication>
 #include <QMessageBox>
+#include <QTimer>
 
 using namespace de;
 
-static iProcess *gloomProc = nullptr;
+static const duint16 COMMAND_PORT = 14666;
+
+struct GloomCommander : DE_OBSERVES(Beacon, Discovery)
+{
+    cplus::ref<iProcess> proc;
+    Beacon               beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
+    Address              address;
+
+    GloomCommander()
+    {
+        beacon.audienceForDiscovery() += this;
+    }
+
+    void beaconFoundHost(const Address &host, const Block &message) override
+    {
+        qDebug("GloomEd beacon found:%s [%s]", host.asText().c_str(), message.c_str());
+        if (message.beginsWith(DE_STR("GloomApp:")))
+        {
+            const Info msg(message.mid(9));
+            const duint16 commandPort = duint16(msg.root().keyValue("port").text.toInt());
+            qDebug("Viewer command port: %u", commandPort);
+
+            beacon.stop();
+            address = host;
+        }
+    }
+};
+static GloomCommander *gloomCommander;
 
 static bool launchGloom()
 {
-    if (gloomProc)
+    if (gloomCommander)
     {
-        // Is it still running?
-        if (isRunning_Process(gloomProc))
+        if (gloomCommander->proc && isRunning_Process(gloomCommander->proc))
         {
             return true;
         }
-        iRelease(gloomProc);
-        gloomProc = nullptr;
     }
+    else
+    {
+        gloomCommander = new GloomCommander;
+    }
+
+    gloomCommander->beacon.discover(0.0, 0.5);
 
     CommandLine cmd;
 #if defined (MACOSX)
     cmd << convert(qApp->applicationDirPath() + "/../../../Gloom.app/Contents/MacOS/Gloom");
 #endif
-    gloomProc = cmd.executeProcess();
-    return gloomProc != nullptr;
+    gloomCommander->proc.reset(cmd.executeProcess());
+    return bool(gloomCommander->proc);
 }
+
+struct EmbeddedApp : public App
+{
+    EventLoop deEventLoop{EventLoop::Manual};
+    Loop      deLoop;
+
+    EmbeddedApp(const StringList &args) : App(args)
+    {}
+
+    NativePath appDataPath() const
+    {
+        return NativePath::homePath() / unixHomeFolderName();
+    }
+
+    void processEvents()
+    {
+        // Manually handle events and loop iteration callbacks.
+        deLoop.iterate();
+        deEventLoop.processQueuedEvents();
+        fflush(stdout);
+        fflush(stderr);
+    }
+};
 
 int main(int argc, char **argv)
 {
@@ -58,7 +117,7 @@ int main(int argc, char **argv)
 
     EditorWindow win;
 
-    QObject::connect(&win.editor(), &Editor::buildMapRequested, [&app, &win]() {
+    QObject::connect(&win.editor(), &Editor::buildMapRequested, &win, [&win, &app]() {
         try
         {
             // Export/update the map package.
@@ -80,5 +139,18 @@ int main(int argc, char **argv)
     });
 
     win.showNormal();
-    return app.exec();
+
+    /* We are not running a de::App, but some classes assume that the Loop/EventLoop are
+     * available and active. Use a QTimer to continually check for events and perform
+     * loop iteration.
+     */
+    EmbeddedApp deApp(makeList(argc, argv));
+    deApp.initSubsystems(App::DisablePersistentData | App::DisablePlugins);
+    QTimer deTimer;
+    QObject::connect(&deTimer, &QTimer::timeout, [&deApp]() { deApp.processEvents(); });
+    deTimer.start(100);
+
+    int rc = app.exec();
+    delete gloomCommander;
+    return rc;
 }

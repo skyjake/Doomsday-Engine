@@ -25,18 +25,24 @@
 
 #include <doomsday/DataBundle>
 
+#include <de/Beacon>
 #include <de/DisplayMode>
 #include <de/FileSystem>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
 
+#include <c_plus/datagram.h>
+
 using namespace de;
 using namespace gloom;
+
+static const duint16 COMMAND_PORT = 14666;
 
 DE_PIMPL(GloomApp)
 {
     ImageBank                        images;
-//    std::unique_ptr<EditorWindow>    editWin;
+    cplus::ref<iDatagram>            commandSocket;
+    Beacon                           beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
     std::unique_ptr<GloomWorld>      world;
@@ -46,12 +52,30 @@ DE_PIMPL(GloomApp)
         // We will be accessing data bundles (WADs).
         static DataBundle::Interpreter intrpDataBundle;
         FileSystem::get().addInterpreter(intrpDataBundle);
+
+        // GloomEd will tell us what to do via the command socket.
+        commandSocket.reset(new_Datagram());
+        for (int attempt = 0; attempt < 12; ++attempt)
+        {
+            if (open_Datagram(commandSocket, duint16(COMMAND_PORT + 4 + attempt)))
+            {
+                LOG_NET_NOTE("Listening to commands on port %u") << port_Datagram(commandSocket);
+                break;
+            }
+        }
+        if (!isOpen_Datagram(commandSocket))
+        {
+            throw Error("GloomApp::GloomApp",
+                        "Failed to open socket for listening to commands from GloomEd");
+        }
+
+        beacon.setMessage(Stringf("GloomApp: port=%u", port_Datagram(commandSocket)));
+        beacon.start();
     }
 
     ~Impl()
     {
-        // Windows will be closed; OpenGL context will be gone.
-        // Deinitalize everything.
+        // Windows will be closed; OpenGL context will be gone. Deinitialize everything.
         if (winSys->mainExists())
         {
             winSys->main().glActivate();
