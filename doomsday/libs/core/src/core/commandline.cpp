@@ -522,7 +522,7 @@ iProcess *CommandLine::executeProcess() const
     iProcess *proc = d->execute();
     if (proc)
     {
-        LOG_DEBUG("Started process %i \"%s\"") << pid_Process(proc) << at(0);
+        LOG_MSG("Started process %i \"%s\"") << pid_Process(proc) << at(0);
     }
     return proc;
 }

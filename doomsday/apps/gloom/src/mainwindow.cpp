@@ -134,7 +134,7 @@ DE_PIMPL(MainWindow)
     void windowFocusChanged(GLWindow &, bool hasFocus)
     {
         auto &loop = Loop::get();
-        loop.setRate(hasFocus ? 60 : 1);
+        loop.setRate(hasFocus ? 60 : 2);
     }
 };
 
@@ -142,7 +142,7 @@ MainWindow::MainWindow(String const &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
-    setTitle("test_gloom");
+    setTitle("Gloom");
     d->setupUI();
 }
 

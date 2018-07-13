@@ -54,7 +54,7 @@ namespace de {
 namespace shell {
 
 // Default TCP/UDP port for servers to listen on.
-static duint16 const DEFAULT_PORT = 13209;
+static constexpr duint16 DEFAULT_PORT = 13209;
 
 inline Address checkPort(Address const &address)
 {
