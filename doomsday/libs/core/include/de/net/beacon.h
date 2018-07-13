@@ -46,25 +46,18 @@ public:
 
 public:
     /**
-     * @param port  Port that the beacon uses for communications. If zero, a random port is
-     *              selected for discovery.
+     * @param udpPorts  Range of ports that the Beacon will use for communications. The lowest
+     *                  available port in this range is used. Having a larger range of ports
+     *                  means that multiple Beacons can coexist (e.g., multiple servers on the
+     *                  local computer). Note that discovery messages are broadcasted to the
+     *                  entire range so it should not be overly large.
      */
-    Beacon(duint16 port = 0);
+    Beacon(const Rangeui16 &udpPorts);
 
     /**
-     * Port the beacon uses for listening.
-     * @return  Port.
+     * Returns the port the beacon has chosen for communications.
      */
     duint16 port() const;
-
-    /**
-     * Starts the beacon with a message to give out.
-     *
-     * @param serviceListenPort
-     *      TCP port that the advertised service listens on. Recipients will
-     *      pair this with the IP address to form a full address.
-     */
-    void start(duint16 serviceListenPort);
 
     /**
      * Changes the message to advertise.
@@ -72,6 +65,11 @@ public:
      * @param advertisedMessage  Message to send to requesters.
      */
     void setMessage(const IByteArray &advertisedMessage);
+
+    /**
+     * Starts the beacon with a message to give out.
+     */
+    void start();
 
     /**
      * Stops the beacon.

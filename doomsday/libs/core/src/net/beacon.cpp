@@ -31,27 +31,25 @@
 
 namespace de {
 
-/**
- * Maximum number of Beacon UDP ports in simultaneous use at one machine, i.e.,
- * maximum number of servers on one machine.
+/*
+ * Revisions:
+ *
+ * 1.0: Initial version.
+ * 1.1: Advertised message is compressed with zlib (deflate).
+ * 1.2: No port number prefixed.
  */
-static const duint16 MAX_LISTEN_RANGE = 16;
-
-static const duint16 MIN_PORT = 49152; // start of IANA private range
-
-// 1.0: Initial version.
-// 1.1: Advertised message is compressed with zlib (deflate).
-static const char *discoveryMessage = "Doomsday Beacon 1.1";
+static const char *discoveryMessage = "Doomsday Beacon 1.2";
 
 DE_PIMPL(Beacon)
 {
-    duint16 port;
-    duint16 servicePort;
-    Block message;
-    cplus::ref<iDatagram> socket;
+    Rangeui16              udpPorts;
+    duint16                listenPort;
+    Block                  message;
+    cplus::ref<iDatagram>  socket;
     std::unique_ptr<Timer> timer;
-    Time discoveryEndsAt;
-    Map<Address, Block> found;
+    Time                   discoveryEndsAt;
+    Map<Address, Block>    found;
+    List<cplus::ref<iAddress>> broadcastAddresses;
 
     Impl(Public *i) : Base(i) {}
 
@@ -69,37 +67,38 @@ DE_PIMPL(Beacon)
 
             socket.reset();
             trash(timer.release());
+            listenPort = 0;
             return;
         }
 
-        Block block(discoveryMessage);
+        const Block block(discoveryMessage);
 
         LOG_NET_XVERBOSE("Broadcasting %u bytes", block.size());
 
         // Send a new broadcast to the whole listening range of the beacons.
-        for (duint16 i = 0; i < MAX_LISTEN_RANGE; ++i)
+        for (const auto &addr : broadcastAddresses)
         {
-            send_Datagram(socket, block, cplus::ref<iAddress>{newBroadcast_Address(port + i)});
+            send_Datagram(socket, block, addr);
         }
     }
 
     static void readIncoming(iAny *, iDatagram *sock)
 {
         Loop::mainCall([sock]() {
-    LOG_AS("Beacon");
+            LOG_AS("Beacon");
             auto *d = reinterpret_cast<Beacon::Impl *>(userData_Object(sock));
             iAddress *from;
             while (const Block block = Block::take(receive_Datagram(sock, &from)))
-    {
+            {
                 LOG_NET_XVERBOSE("Received %i bytes from %s",
                                  block.size() << String::take(toString_Address(from)));
-        if (block == discoveryMessage)
-        {
-            // Send a reply.
+                if (block == discoveryMessage)
+                {
+                    // Send a reply.
                     send_Datagram(sock, d->message, from);
-        }
+                }
                 iRelease(from);
-    }
+            }     
         });
 }
 
@@ -108,7 +107,6 @@ DE_PIMPL(Beacon)
         Loop::mainCall([sock]() {
     LOG_AS("Beacon");
             auto *d = reinterpret_cast<Beacon::Impl *>(userData_Object(sock));
-
             iAddress *from;
             while (Block block = Block::take(receive_Datagram(sock, &from)))
     {
@@ -116,16 +114,15 @@ DE_PIMPL(Beacon)
         {
                     if (block != discoveryMessage)
                     {
-            // Remove the service listening port from the beginning.
-            duint16 listenPort = 0;
-            Reader(block) >> listenPort;
-            block.remove(0, 2);
-            block = block.decompressed();
+                        // Remove the service listening port from the beginning.
+//                        duint16 listenPort = 0;
+//                        Reader(block) >> listenPort;
+//                        block.remove(0, 2);
+                        block = block.decompressed();
                         if (block)
                         {
-                            const Address host(cstr_String(hostName_Address(from)), listenPort);
-            d->found.insert(host, block);
-
+                            const Address host(from);
+                            d->found.insert(host, block);
                             DE_FOR_EACH_OBSERVER(i, d->self().audienceForDiscovery())
                             {
                                 i->beaconFoundHost(host, block);
@@ -147,55 +144,50 @@ DE_PIMPL(Beacon)
 
 DE_AUDIENCE_METHODS(Beacon, Discovery, Finished)
 
-Beacon::Beacon(duint16 port) : d(new Impl(this))
+Beacon::Beacon(const Rangeui16 &udpPorts) : d(new Impl(this))
 {
-    d->port = port;
+    d->udpPorts = udpPorts;
+    d->listenPort = 0;
 }
 
 duint16 Beacon::port() const
 {
-    return d->port;
+    return d->listenPort;
 }
 
-void Beacon::start(duint16 serviceListenPort)
+void Beacon::start()
 {
     DE_ASSERT(!d->socket);
-
-    d->servicePort = serviceListenPort;
 
     d->socket.reset(new_Datagram());
     setUserData_Object(d->socket, d);
     iConnect(Datagram, d->socket, message, d->socket, Impl::readIncoming);
 
-    for (duint16 attempt = 0; attempt < MAX_LISTEN_RANGE; ++attempt)
+    for (duint p = d->udpPorts.start; p < d->udpPorts.end; ++p)
     {
-        if (open_Datagram(d->socket,
-                          d->port ? d->port + attempt : duint16(Rangeui{MIN_PORT, 65536}.random())))
+        if (open_Datagram(d->socket, duint16(p)))
         {
-            d->port = d->port + attempt;
+            d->listenPort = duint16(p);
             return;
         }
     }
 
     /// @throws PortError Could not open the UDP port.
-    throw PortError("Beacon::start", "Could not bind to UDP port " + String::asText(d->port));
+    throw PortError(
+        "Beacon::start",
+        stringf("Could not bind to UDP ports %u...%u", d->udpPorts.start, d->udpPorts.end));
 }
 
 void Beacon::setMessage(IByteArray const &advertisedMessage)
 {
-    d->message.clear();
-
-    // Begin with the service listening port.
-    Writer(d->message) << d->servicePort;
-
-    d->message += Block(advertisedMessage).compressed();
-
-    //qDebug() << "Beacon message:" << advertisedMessage.size() << d->message.size();
+    d->message = Block(advertisedMessage).compressed();
 }
 
 void Beacon::stop()
 {
     d->socket.reset();
+    if (d->timer) d->timer->stop();
+    d->listenPort = 0;
 }
 
 void Beacon::discover(const TimeSpan& timeOut, const TimeSpan& interval)
@@ -208,25 +200,31 @@ void Beacon::discover(const TimeSpan& timeOut, const TimeSpan& interval)
     setUserData_Object(d->socket, d);
     iConnect(Datagram, d->socket, message, d->socket, Impl::readDiscoveryReply);
 
-    Rangeui ports{max(d->port, MIN_PORT), 65536};
-
-    // Choose a semi-random port for listening to replies from servers' beacons.
-    int tries = 10;
-    for (;;)
+    for (duint p = d->udpPorts.start; p < d->udpPorts.end; ++p)
     {
-        if (open_Datagram(d->socket, duint16(ports.random())))
+        if (open_Datagram(d->socket, duint16(p)))
         {
             // Got a port open successfully.
+            d->listenPort = duint16(p);
             break;
         }
-        if (!--tries)
+        }
+    if (!isOpen_Datagram(d->socket))
         {
             /// @throws PortError Could not open the UDP port.
-            throw PortError("Beacon::start", "Could not bind to UDP port " + String::asText(d->port));
-        }
+        throw PortError(
+            "Beacon::discover",
+            stringf("Could not bind to UDP ports %u...%u", d->udpPorts.start, d->udpPorts.end));
     }
 
     d->found.clear();
+
+    // Set up the broadcast range in advance.
+    d->broadcastAddresses.clear();
+    for (duint p = d->udpPorts.start; p < d->udpPorts.end; ++p)
+    {
+        d->broadcastAddresses << cplus::ref<iAddress>{newBroadcast_Address(duint16(p))};
+    }
 
     // Time-out timer.
     if (timeOut > 0.0)
@@ -235,12 +233,11 @@ void Beacon::discover(const TimeSpan& timeOut, const TimeSpan& interval)
     }
     else
     {
-        d->discoveryEndsAt = Time::invalidTime();
+        d->discoveryEndsAt = Time::invalidTime(); // continues indefinitely
     }
     d->timer.reset(new Timer);
-    *d->timer += [this](){ d->continueDiscovery(); };
+    *d->timer += [this]() { d->continueDiscovery(); };
     d->timer->start(interval);
-
     d->continueDiscovery();
 }
 

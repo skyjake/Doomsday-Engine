@@ -65,7 +65,7 @@ DE_PIMPL(ServerSystem)
     bool inited = false;
 
     /// Beacon for informing clients that a server is present.
-    Beacon beacon = { DEFAULT_UDP_PORT };
+    Beacon beacon{{DEFAULT_UDP_PORT, DEFAULT_UDP_PORT + 16}};
     Time lastBeaconUpdateAt;
 
     ListenSocket *serverSock = nullptr;
@@ -98,7 +98,7 @@ DE_PIMPL(ServerSystem)
         serverSock->audienceForIncoming() += [this](){ self().handleIncomingConnection(); };
 
         // Update the beacon with the new port.
-        beacon.start(port);
+        beacon.start();
 
         App_World().audienceForMapChange() += shellUsers;
 

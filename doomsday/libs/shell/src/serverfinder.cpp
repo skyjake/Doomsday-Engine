@@ -29,24 +29,22 @@
 
 namespace de { namespace shell {
 
-static TimeSpan MSG_EXPIRATION_SECS = 4.0;
+static const TimeSpan MSG_EXPIRATION_SECS = 4.0;
 
 DE_PIMPL(ServerFinder)
 , DE_OBSERVES(Beacon, Discovery)
 {
-    Beacon beacon;
-    struct Found
-    {
+    struct Found {
         shell::ServerInfo message;
         Time at;
-
-        Found() : at(Time()) {}
     };
+
+    Beacon beacon;
     Map<Address, Found> servers;
 
     Impl(Public * i)
         : Base(i)
-        , beacon(DEFAULT_PORT)
+        , beacon({DEFAULT_PORT, DEFAULT_PORT + 16})
     {}
 
     void beaconFoundHost(const Address &host, const Block &block) override
@@ -61,9 +59,11 @@ DE_PIMPL(ServerFinder)
 
             shell::ServerInfo receivedInfo;
             Reader(block).withHeader() >> receivedInfo;
-            receivedInfo.setAddress(host);
 
-            Address const from = receivedInfo.address(); // port validated
+            // We don't need to know the sender's Beacon UDP port.
+            receivedInfo.setAddress(Address(host.hostName(), receivedInfo.port()));
+
+            const Address from = receivedInfo.address(); // port validated
 
             // Replace or insert the information for this host.
             Impl::Found found;
