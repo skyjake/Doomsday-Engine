@@ -49,14 +49,18 @@ public:
     /// Returns nullptr if no event loop is currently running.
     static EventLoop *get();
 
+    enum RunMode { Automatic, Manual };
+
 public:
-    EventLoop();
+    EventLoop(RunMode runMode = Automatic);
 
     virtual ~EventLoop();
 
     int exec(const std::function<void ()> &postExec = {});
 
     void quit(int exitCode);
+
+    void processQueuedEvents();
 
     /**
      * Determines if this the currently running event loop. Note that if an event loop is

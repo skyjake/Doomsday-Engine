@@ -39,19 +39,36 @@ struct StackPusher {
 
 DE_PIMPL_NOREF(EventLoop)
 {
+    RunMode runMode;
     WaitableFIFO<Event> queue;
     DE_PIMPL_AUDIENCE(Event)
 };
 DE_AUDIENCE_METHOD(EventLoop, Event)
 
-EventLoop::EventLoop() : d(new Impl)
-{}
+EventLoop::EventLoop(RunMode runMode) : d(new Impl)
+{
+    d->runMode = runMode;
+    if (d->runMode == Manual)
+    {
+        using namespace internal;
+        DE_GUARD(loopStack);
+        loopStack.value.push_back(this);
+    }
+}
 
 EventLoop::~EventLoop()
-{}
+{
+    if (d->runMode == Manual)
+    {
+        using namespace internal;
+        DE_GUARD(loopStack);
+        loopStack.value.pop_back();
+    }
+}
 
 int EventLoop::exec(const std::function<void ()> &postExec)
 {
+    DE_ASSERT(d->runMode == Automatic);
     try
     {
         internal::StackPusher sp(this);
@@ -87,6 +104,31 @@ int EventLoop::exec(const std::function<void ()> &postExec)
 void EventLoop::quit(int exitCode)
 {
     postEvent(new CoreEvent(Event::Quit, NumberValue(exitCode)));
+}
+
+void EventLoop::processQueuedEvents()
+{
+    try
+    {
+        while (!d->queue.isEmpty())
+        {
+            std::unique_ptr<Event> event{d->queue.tryTake(0.001)};
+            if (event->type() == Event::Quit)
+            {
+                // We can't handle this.
+                d->queue.put(event.release());
+                break;
+            }
+            processEvent(*event);
+        }
+        Garbage_Recycle();
+    }
+    catch (const Error &er)
+    {
+        warning("[EventLoop] Event loop caught unhandled error");
+        er.warnPlainText();
+        LOG_WARNING("Event loop caught error: %s") << er.asText();
+    }
 }
 
 bool EventLoop::isRunning() const

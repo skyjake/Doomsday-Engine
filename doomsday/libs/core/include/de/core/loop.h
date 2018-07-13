@@ -76,6 +76,11 @@ public:
     void resume();
 
     /**
+     * Manually perform one iteration of the loop. Usually it is unnecessary to call this.
+     */
+    void iterate();
+
+    /**
      * Calls a function in the main thread. If the current thread is the main thread,
      * the function is called immediately. Otherwise a loop callback is enqueued.
      */

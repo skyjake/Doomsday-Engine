@@ -98,6 +98,11 @@ void Loop::resume()
     d->timer.start();
 }
 
+void Loop::iterate()
+{
+    DE_FOR_AUDIENCE2(Iteration, i) i->loopIteration();
+}
+
 void Loop::timer(const TimeSpan &delay, const std::function<void ()> &func)
 {
     // The timer will delete itself after it's triggered.
