@@ -463,7 +463,7 @@ Time Time::parse(const String &text, const char *format) // static
     const CString fmt{format};
     const char *pos = fmt.begin();
     const char *end = fmt.end();
-    std::istringstream is(text.strip());
+    std::istringstream is(text.strip().c_str());
     while (pos != end)
     {
         if (!iCmpStrN(pos, "yyyy", 4))

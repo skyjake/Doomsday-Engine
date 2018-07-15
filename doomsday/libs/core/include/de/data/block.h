@@ -239,6 +239,11 @@ Block md5Hash(Args... args)
     return data.md5Hash();
 }
 
+inline bool operator!(const Block &block)
+{
+    return block.isEmpty();
+}
+
 } // namespace de
 
 namespace std

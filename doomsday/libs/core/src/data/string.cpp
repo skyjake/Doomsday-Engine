@@ -86,7 +86,7 @@ String::String(const char *nullTerminatedCStr)
     initCStr_String(&_str, nullTerminatedCStr);
 }
 
-String::String(const Char *nullTerminatedWideStr)
+String::String(const wchar_t *nullTerminatedWideStr)
 {
     initWide_String(&_str, nullTerminatedWideStr);
 }
@@ -122,7 +122,7 @@ String::String(const CString &cstr)
     initCStrN_String(&_str, cstr.begin(), cstr.size());
 }
 
-String::String(dsize length, iChar ch)
+String::String(dsize length, Char ch)
 {
     init_String(&_str);
 
@@ -178,11 +178,12 @@ void String::clear()
 
 bool String::contains(char c) const
 {
-    for (const char *i = constBegin_String(&_str), *end = constEnd_String(&_str); i != end; ++i)
-    {
-        if (*i == c) return true;
-    }
-    return false;
+    return strchr(c_str(), c) != nullptr;
+//    for (const char *i = constBegin_String(&_str), *end = constEnd_String(&_str); i != end; ++i)
+//    {
+//        if (*i == c) return true;
+//    }
+//    return false;
 }
 
 bool String::contains(Char c) const
@@ -296,6 +297,11 @@ List<CString> String::splitRef(Char ch) const
     return splitRef(mb.bytes);
 }
 
+String String::operator+(char *cStr) const
+{
+    return *this + const_cast<const char *>(cStr);
+}
+
 List<String> String::split(Char ch) const
 {
     iMultibyteChar mb;
@@ -342,7 +348,7 @@ String &String::operator+=(char ch)
     return *this;
 }
 
-String &String::operator+=(iChar ch)
+String &String::operator+=(Char ch)
 {
     appendChar_String(&_str, ch);
     return*this;
@@ -405,8 +411,8 @@ String &String::replace(const CString &before, const CString &after)
     while ((found = CString(remaining).indexOf(oldTerm)) != npos)
     {
         const iRangecc prefix{remaining.start, remaining.start + found};
-        appendRange_String(result, &prefix);
-        appendRange_String(result, &newTerm);
+        appendRange_String(result.i_str(), &prefix);
+        appendRange_String(result.i_str(), &newTerm);
         remaining.start += found + before.size();
     }
     if (size_Range(&remaining) == size())
@@ -414,7 +420,7 @@ String &String::replace(const CString &before, const CString &after)
         // No changes were applied.
         return *this;
     }
-    appendRange_String(result, &remaining);
+    appendRange_String(result.i_str(), &remaining);
     return *this = result;
 }
 
@@ -427,22 +433,22 @@ String &String::replace(const RegExp &before, const CString &after)
     while (before.match(*this, found))
     {
         const iRangecc prefix{remaining.start, found.begin()};
-        appendRange_String(result, &prefix);
-        appendRange_String(result, &newTerm);
+        appendRange_String(result.i_str(), &prefix);
+        appendRange_String(result.i_str(), &newTerm);
         remaining.start = found.end();
     }
-    appendRange_String(result, &remaining);
+    appendRange_String(result.i_str(), &remaining);
     return *this = result;
 }
 
-iChar String::first() const
+Char String::first() const
 {
-    return empty() ? 0 : *begin();
+    return empty() ? Char() : *begin();
 }
 
-iChar String::last() const
+Char String::last() const
 {
-    return empty() ? 0 : *rbegin();
+    return empty() ? Char() : *rbegin();
 }
 
 String String::operator/(const String &path) const
@@ -510,7 +516,7 @@ String String::operator%(const PatternArgs &args) const
     return result;
 }
 
-String String::concatenatePath(const String &other, iChar dirChar) const
+String String::concatenatePath(const String &other, Char dirChar) const
 {
     if ((dirChar == '/' || dirChar == '\\') && isAbsolute_Path(&other._str))
     {
@@ -1119,7 +1125,7 @@ Char mb_iterator::operator*() const
 
 Char mb_iterator::decode() const
 {
-    Char ch;
+    wchar_t ch;
     const char *end = i;
     for (int j = 0; *end && j < MB_CUR_MAX; ++j, ++end) {}
     curCharLen = std::mbrtowc(&ch, i, end - i, &mb);

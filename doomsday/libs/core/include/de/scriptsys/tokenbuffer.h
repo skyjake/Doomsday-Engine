@@ -91,7 +91,7 @@ public:
     /// Determines the length of the token.
     /// @return Length of the token as number of bytes.
     size_t size() const {
-        if (!_token) return 0;
+        if (!_token.start) return 0;
         return _token.size();
     }
 

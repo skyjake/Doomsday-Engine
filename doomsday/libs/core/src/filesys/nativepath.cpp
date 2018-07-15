@@ -62,7 +62,7 @@ static String toNative(String const &s)
     // This will resolve parent references (".."), multiple separators
     // (hello//world), and self-references (".").
     String cleaned(s);
-    clean_Path(cleaned);
+    clean_Path(cleaned.i_str());
     return Path::normalizeString(cleaned, DIR_SEPARATOR);
 }
 

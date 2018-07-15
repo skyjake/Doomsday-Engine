@@ -75,6 +75,7 @@ public:
     bool endsWith(const CString &suffix, Sensitivity cs = CaseSensitive) const;
     dsize indexOf(char ch, size_t from = 0) const;
     dsize indexOf(const char *cStr, size_t from = 0) const;
+    dsize indexOf(const String &str, size_t from = 0) const;
     CString substr(size_t start, size_t count = npos) const;
     CString leftStrip() const;
     CString rightStrip() const;
@@ -90,6 +91,7 @@ public:
     inline bool operator==(const String &other) const { return compare(CString(other)) == 0; }
     inline String operator/(const CString &other) const { return String(*this) / other; }
     inline String operator/(const String &other) const { return String(*this) / other; }
+    inline String operator+(const String &other) const { return String(*this) + other; }
     Char first() const { return *begin(); }
     String lower() const;
     String upper() const;

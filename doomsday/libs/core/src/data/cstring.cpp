@@ -65,6 +65,11 @@ dsize CString::indexOf(const char *cStr, size_t from) const
     return pos ? (pos - _range.start) : npos;
 }
 
+dsize CString::indexOf(const String &str, size_t from) const
+{
+    return indexOf(str.c_str(), from);
+}
+
 CString CString::substr(size_t start, size_t count) const
 {
     if (start > size()) return CString();

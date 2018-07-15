@@ -225,6 +225,8 @@ public:
          */
         Value keyValue(String const &name, String const &defaultValue = String()) const;
 
+        String operator[](const String &name) const;
+
         /**
          * Looks for an element based on a path where a colon ':' is used to
          * separate element names. Whitespace before and after a separator is
@@ -251,9 +253,9 @@ public:
         Record asRecord() const;
 
     private:
-        Info &_info;
-        String _blockType;
-        Contents _contents; // indexed in lower case
+        Info &          _info;
+        String          _blockType;
+        Contents        _contents; // indexed in lower case
         ContentsInOrder _contentsInOrder;
     };
 
@@ -400,6 +402,15 @@ public:
      * false, the key was not found and @a value is not changed.
      */
     bool findValueForKey(String const &key, String &value) const;
+
+    /**
+     * Finds the value of a key.
+     *
+     * @param keyPath  Path of the key (':' as separator).
+     *
+     * @return Value text or an empty string if the key is not found.
+     */
+    String operator[](const String &keyPath) const;
 
     bool isEmpty() const;
 

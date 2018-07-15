@@ -92,7 +92,7 @@ Char Lex::peekComment() const
             }
             p += 2; // skip the ending
             _nextPos = p + 1;
-            return (p.pos() < inputSize? *p : 0);
+            return (p.pos() < inputSize? *p : Char(0));
         }
     }
 

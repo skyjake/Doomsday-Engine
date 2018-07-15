@@ -55,8 +55,7 @@ DE_PIMPL(Beacon)
 
     void continueDiscovery()
     {
-        DE_ASSERT(timer);
-        DE_ASSERT(socket);
+        if (!timer || !socket) return;
 
         // Time to stop discovering?
         if (discoveryEndsAt.isValid() && Time() > discoveryEndsAt)

@@ -780,6 +780,11 @@ Info::Element::Value Info::BlockElement::keyValue(String const &name,
     return e->as<KeyElement>().value();
 }
 
+String Info::BlockElement::operator[](const String &name) const
+{
+    return keyValue(name).text;
+}
+
 Info::Element *Info::BlockElement::findByPath(String const &path) const
 {
     String name;
@@ -955,6 +960,13 @@ bool Info::findValueForKey(String const &key, String &value) const
         return true;
     }
     return false;
+}
+
+String Info::operator[](const String &keyPath) const
+{
+    String value;
+    findValueForKey(keyPath, value);
+    return value;
 }
 
 bool Info::isEmpty() const

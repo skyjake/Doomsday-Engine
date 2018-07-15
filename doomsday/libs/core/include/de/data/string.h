@@ -298,7 +298,7 @@ public:
 
     inline operator const char *() const { return c_str(); }
     inline operator const iString *() const { return &_str; }
-    inline operator iString *() { return &_str; }
+    inline iString *i_str() { return &_str; }
     inline operator std::string() const { return toStdString(); }
 
     inline std::string toStdString() const
@@ -319,6 +319,10 @@ public:
     bool contains(char c) const;
     bool contains(Char c) const;
     bool contains(const char *cStr, Sensitivity cs = CaseSensitive) const;
+    inline bool contains(const String &str, Sensitivity cs = CaseSensitive) const
+    {
+        return contains(str.c_str(), cs);
+    }
     int count(char ch) const;
 
     bool beginsWith(const String &s, Sensitivity cs = CaseSensitive) const
@@ -341,6 +345,10 @@ public:
     bool endsWith(const char *cstr, Sensitivity cs = CaseSensitive) const
     {
         return endsWithSc_String(&_str, cstr, cs);
+    }
+    inline bool endsWith(const String &str, Sensitivity cs = CaseSensitive) const
+    {
+        return endsWith(str.c_str(), cs);
     }
 
     inline char operator[](BytePos pos) const { return c_str()[pos.index]; }
@@ -371,6 +379,7 @@ public:
     List<CString> splitRef(const char *separator) const;
     List<CString> splitRef(Char ch) const;
 
+    String        operator+(char *) const;
     String        operator+(const char *) const;
     String        operator+(const CString &) const;
     String        operator+(const std::string &s) const;
@@ -500,6 +509,7 @@ public:
     BytePos indexOf(const char *cstr) const { return BytePos{indexOfCStr_String(&_str, cstr)}; }
     BytePos indexOf(const char *cstr, BytePos from) const { return BytePos{indexOfCStrFrom_String(&_str, cstr, from.index)}; }
     BytePos indexOf(const char *cstr, Sensitivity s) const { return BytePos(indexOfCStrFromSc_String(&_str, cstr, 0, s)); }
+    inline BytePos indexOf(const String &str) const { return indexOf(str.c_str()); }
     BytePos lastIndexOf(char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
     BytePos lastIndexOf(Char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
     BytePos lastIndexOf(const char *cstr) const { return BytePos{lastIndexOfCStr_String(&_str, cstr)}; }
@@ -885,6 +895,11 @@ template <typename... Args>
 inline String Stringf(const char *format, Args... args)
 {
     return String::format(format, args...);
+}
+
+inline bool operator!(const String &str)
+{
+    return str.empty();
 }
 
 } // namespace de

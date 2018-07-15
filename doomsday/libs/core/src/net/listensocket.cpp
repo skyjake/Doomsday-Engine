@@ -68,8 +68,7 @@ ListenSocket::ListenSocket(duint16 port) : d(new Impl(this))
     if (!open_Service(d->service))
     {
         /// @throw OpenError Opening the socket failed.
-        throw OpenError("ListenSocket", "Port " + String::asText(d->port) + ": " +
-                        strerror(errno));
+        throw OpenError("ListenSocket", stringf("Port %u: %s", d->port, strerror(errno)));
     }
 
     iConnect(Service, d->service, incomingAccepted, d->service, Impl::acceptNewConnection);

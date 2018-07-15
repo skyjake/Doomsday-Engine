@@ -114,6 +114,11 @@ public:
     NoneId(Id const &other) : Id(other) {}
 };
 
+inline bool operator!(const Id &id)
+{
+    return Id::Type(id) == Id::None;
+}
+
 } // namespace de
 
 namespace std
