@@ -848,7 +848,23 @@ typedef size_t   dsize;      // Likely unsigned long.
 typedef ssize_t  dsigsize;
 typedef long     dlong;
 
-typedef wchar_t  Char;
+class DE_PUBLIC Char
+{
+public:
+    inline constexpr Char(wchar_t wc = 0) : _ch(wc) {}
+    inline Char(const Char &other) = default;
+    inline Char(Char &&moved)      = default;
+
+    inline explicit operator bool() const { return _ch != 0; }
+    inline operator wchar_t() const { return _ch; }
+    inline wchar_t unicode() const { return _ch; }
+
+    Char &operator=(const Char &) = default;
+    Char &operator=(Char &&) = default;
+
+private:
+    wchar_t _ch;
+};
 
 class DE_PUBLIC Flags
 {
