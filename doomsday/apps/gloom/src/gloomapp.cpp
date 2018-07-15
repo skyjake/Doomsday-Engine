@@ -54,23 +54,24 @@ DE_PIMPL(GloomApp)
         FileSystem::get().addInterpreter(intrpDataBundle);
 
         // GloomEd will tell us what to do via the command socket.
-        commandSocket.reset(new_Datagram());
-        for (int attempt = 0; attempt < 12; ++attempt)
         {
-            if (open_Datagram(commandSocket, duint16(COMMAND_PORT + 4 + attempt)))
+            commandSocket.reset(new_Datagram());
+            for (int attempt = 0; attempt < 12; ++attempt)
             {
-                LOG_NET_NOTE("Listening to commands on port %u") << port_Datagram(commandSocket);
-                break;
+                if (open_Datagram(commandSocket, duint16(COMMAND_PORT + 4 + attempt)))
+                {
+                    LOG_NET_NOTE("Listening to commands on port %u") << port_Datagram(commandSocket);
+                    break;
+                }
             }
+            if (!isOpen_Datagram(commandSocket))
+            {
+                throw Error("GloomApp::GloomApp",
+                            "Failed to open socket for listening to commands from GloomEd");
+            }
+            beacon.setMessage(Stringf("GloomApp: port=%u", port_Datagram(commandSocket)));
+            beacon.start();
         }
-        if (!isOpen_Datagram(commandSocket))
-        {
-            throw Error("GloomApp::GloomApp",
-                        "Failed to open socket for listening to commands from GloomEd");
-        }
-
-        beacon.setMessage(Stringf("GloomApp: port=%u", port_Datagram(commandSocket)));
-        beacon.start();
     }
 
     ~Impl()
