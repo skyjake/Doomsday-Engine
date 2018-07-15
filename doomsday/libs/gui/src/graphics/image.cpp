@@ -574,7 +574,7 @@ duint32 *Image::rowEnd32(duint y)
 
 bool Image::isNull() const
 {
-    return size() == Size(0, 0);
+    return size().area() == 0;
 }
 
 bool Image::isGLCompatible() const
@@ -626,10 +626,23 @@ Image Image::convertToFormat(Format toFormat) const
         // No conversion necessary.
         return *this;
     }
+    const int inStep = bytesPerPixel();
+    Image conv(size(), toFormat);
+    if (d->format == Luminance_8 && toFormat == RGBA_8888)
+    {
+        for (duint y = 0; y < height(); ++y)
+        {
+            const duint8 *in = row(y);
+            for (duint32 *out = conv.row32(y), *outEnd = conv.rowEnd32(y);
+                 out != outEnd; ++out, ++in)
+            {
+                *out = packColor(Color(*in, *in, *in, 255));
+            }
+        }
+        return conv;
+    }
     if (d->format == RGB_888 && toFormat == RGBA_8888)
     {
-        const int inStep = bytesPerPixel();
-        Image conv(size(), toFormat);
         for (duint y = 0; y < height(); ++y)
         {
             const duint8 *in = row(y);
@@ -641,7 +654,8 @@ Image Image::convertToFormat(Format toFormat) const
         }
         return conv;
     }
-    DE_ASSERT_FAIL("Image::convertToFormat not implemented");
+    DE_ASSERT_FAIL("Image::convertToFormat not implemented for the given input/output formats");
+    return conv;
 }
 
 //bool Image::canConvertToQImage() const
@@ -1052,7 +1066,7 @@ static void dataWriter(void *context, void *data, int size)
 Block Image::serialize(SerializationFormat format) const
 {
     Block data;
-    const int comp = bytesPerPixel() / 4;
+    const int comp = bytesPerPixel();
     switch (format)
     {
     case Png:
@@ -1318,10 +1332,11 @@ Image Image::fromData(Block const &data, String const &formatHint)
 
 Image Image::fromRgbaData(const Size &size, const IByteArray &rgba)
 {
+    const int rowLen = size.x * 4;
     Image img(size, Image::RGBA_8888);
     for (duint y = 0; y < size.y; ++y)
     {
-        rgba.get(size.x * y * 4, img.row(y), size.x * 4);
+        rgba.get(rowLen * y, img.row(y), rowLen);
     }
     return img;
 }

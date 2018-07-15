@@ -137,8 +137,17 @@ DE_PIMPL(Atlas)
      * @param image  Image.
      * @param rect   Rectangle for the image determined by an IAllocator.
      */
-    void submitImage(Image const &image, Rectanglei const &rect)
+    void submitImage(const Image &submittedImage, Rectanglei const &rect)
     {
+        Image image = submittedImage.convertToFormat(hasBacking() ? backing.format()
+                                                                  : submittedImage.format());
+        /*{
+            static int count = 0;
+            NativePath p = NativePath::workPath() / Stringf("submitted-%04i.png", count++);
+            debug("writing %s", p.c_str());
+            image.save(p);
+        }*/
+
         Rectanglei const noBorders  = rect.shrunk(border);
         Rectanglei const withMargin = rect.expanded(margin);
 
@@ -169,7 +178,7 @@ DE_PIMPL(Atlas)
             }
             backing.draw(image, noBorders.topLeft);
 
-            //backing.toQImage().save(QString("backing-%1.png").arg(uint64_t(this)));
+            //backing.save(Stringf("backing-%p.png", this));
 
             markAsChanged(rect);
         }
@@ -381,7 +390,8 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
     if (image.isNull())
     {
         LOG_AS("Atlas");
-        LOGDEV_GL_WARNING("Cannot allocate a zero-size image");
+        LOGDEV_GL_WARNING("Cannot allocate an empty image (%ix%i)") << image.width()
+                                                                    << image.height();
         return Id::None;
     }
 

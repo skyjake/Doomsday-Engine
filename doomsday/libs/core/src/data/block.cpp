@@ -82,7 +82,7 @@ Block::Block(const IIStream &stream)
     stream >> *this;
 }
 
-Block::Block(const IByteArray &other, Offset at, Size count) : IByteArray()
+Block::Block(const IByteArray &other, Offset at, Size count)
 {
     init_Block(&_block, 0);
     copyFrom(other, at, count);
