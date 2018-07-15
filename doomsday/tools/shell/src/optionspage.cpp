@@ -158,12 +158,12 @@ DE_PIMPL(OptionsPage)
         switch (opt.type)
         {
         case shell::DoomsdayInfo::Toggle:
-            widgetValue = opt.allowedValues.at
-                    (static_cast<QCheckBox const *>(widget)->isChecked()? 1 : 0).value;
+            widgetValue = convert(opt.allowedValues.at
+                    (static_cast<QCheckBox const *>(widget)->isChecked()? 1 : 0).value);
             break;
 
         case shell::DoomsdayInfo::Choice:
-            widgetValue = convert(static_cast<QComboBox const *>(widget)->currentData().toString());
+            widgetValue = static_cast<QComboBox const *>(widget)->currentData().toString();
             break;
 
         case shell::DoomsdayInfo::Text:

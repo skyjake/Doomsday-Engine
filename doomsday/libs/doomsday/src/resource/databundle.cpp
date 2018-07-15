@@ -1412,7 +1412,7 @@ List<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrParti
             NativePath const bundlePath = b->asFile().correspondingNativePath().fileNamePath();
             if (bundlePath.isEmpty()) return false;
             //qDebug() << "bundle:" << path.asText() << "searchTerm:" << searchPath.fileNamePath();
-            if (bundlePath.toString().endsWith(searchPath.fileNamePath(),
+            if (bundlePath.toString().endsWith(searchPath.fileNamePath().toString(),
                                                CaseInsensitive))
             {
                 return true;

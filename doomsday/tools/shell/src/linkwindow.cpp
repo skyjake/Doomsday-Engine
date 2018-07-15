@@ -468,14 +468,14 @@ void LinkWindow::openConnection(Link *link, const String& name)
 
     d->link = link;
 
-    d->link->audienceForAddressResolved() += [this](){ addressResolved(); };
-    d->link->audienceForConnected()       += [this](){ connected(); };
-    d->link->audienceForPacketsReady()    += [this](){ handleIncomingPackets(); };
-    d->link->audienceForDisconnected()    += [this](){ disconnected(); };
+    d->link->audienceForAddressResolved() += [this]() { addressResolved(); };
+    d->link->audienceForConnected()       += [this]() { connected(); };
+    d->link->audienceForPacketsReady()    += [this]() { handleIncomingPackets(); };
+    d->link->audienceForDisconnected()    += [this]() { disconnected(); };
 
     if (!name.isEmpty())
     {
-        d->linkName = name;
+        d->linkName = convert(name);
         setTitle(d->linkName);
     }
     d->console->root().setOverlaidMessage(tr("Looking up host..."));
@@ -656,7 +656,7 @@ void LinkWindow::connected()
     // Once successfully connected, we don't want to show error log any more.
     d->errorLog = "";
 
-    if (d->linkName.isEmpty()) d->linkName = d->link->address().asText();
+    if (d->linkName.isEmpty()) d->linkName = convert(d->link->address().asText());
     setTitle(d->linkName);
     d->updateCurrentHost();
     d->console->root().setOverlaidMessage("");

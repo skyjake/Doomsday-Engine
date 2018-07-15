@@ -71,7 +71,7 @@ StatusWidget::StatusWidget(QWidget *parent)
 
 void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
 {
-    d->gameMode = shell::DoomsdayInfo::titleForGame(convert(mode));
+    d->gameMode = convert(shell::DoomsdayInfo::titleForGame(convert(mode)));
     if (!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
 
     d->map = mapTitle;
