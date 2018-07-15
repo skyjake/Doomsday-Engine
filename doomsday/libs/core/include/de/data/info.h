@@ -388,9 +388,9 @@ public:
      *
      * @param path  Path of element (case insensitive).
      *
-     * @return Element, or @c NULL.
+     * @return Element, or @c nullptr.
      */
-    Element const *findByPath(String const &path) const;
+    const Element *findByPath(String const &path) const;
 
     /**
      * Finds the value of a key.
