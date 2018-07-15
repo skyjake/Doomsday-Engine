@@ -378,7 +378,7 @@ Map &MapImport::map()
 
 String MapImport::mapId() const
 {
-    return "map." + d->mapId;
+    return d->mapId;
 }
 
 StringList MapImport::materials() const
@@ -438,7 +438,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
     // Maps included in the pacakge.
     {
         File & f   = root.replaceFile("maps.dei");
-        String dei = "asset " + mapId() + " {\n"
+        String dei = "asset map." + mapId() + " {\n"
                      "    path = \"maps/" + d->mapId + ".gloommap\"\n"
                      "    metersPerUnit " +
                      Stringf(

@@ -1184,7 +1184,7 @@ DE_PIMPL(Editor)
     {
         if (!mapId)
         {
-            mapId = convert(QInputDialog::getText(nullptr, "Export Package", "Map ID:"));
+            mapId = convert(QInputDialog::getText(nullptr, "Export Package", "Map ID:")).lower();
             if (!mapId) return;
         }
         if (!packageName)
@@ -1209,12 +1209,33 @@ DE_PIMPL(Editor)
         }
 
         // Check that the maps.dei includes this map.
-        if (const auto *mapsInfoFile = root.tryLocate<const File>("maps.dei"))
         {
-            Info mapsInfo(*mapsInfoFile);
-            if (mapsInfo.root().contains(mapId))
+            const auto *mapsInfoFile = root.tryLocate<File>("maps.dei");
+            if (!mapsInfoFile)
             {
+                mapsInfoFile = &root.createFile("maps.dei");
+            }
 
+            Info mapsInfo(*mapsInfoFile);
+            if (!mapsInfo.root().contains(DE_STR("map.") + mapId))
+            {
+                const auto mpu = map.metersPerUnit();
+
+                // Append a new map asset.
+                String maps;
+                *mapsInfoFile >> maps;
+                maps += Stringf("asset map.%s {\n"
+                                "    path = \"maps/%s.gloommap\"\n"
+                                "    metersPerUnit <%.16f, %.16f, %.16f>\n"
+                                "}\n",
+                                mapId.c_str(),
+                                mapId.c_str(),
+                                mpu.x,
+                                mpu.y,
+                                mpu.z);
+                File &updated = root.replaceFile("maps.dei");
+                updated << maps;
+                updated.flush();
             }
         }
     }

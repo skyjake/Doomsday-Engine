@@ -22,10 +22,12 @@
 
 #include <gloom/gloomworld.h>
 #include <gloom/world/user.h>
+#include <gloom/world/map.h>
 
 #include <doomsday/DataBundle>
 
 #include <de/Beacon>
+#include <de/DirectoryFeed>
 #include <de/DisplayMode>
 #include <de/FileSystem>
 #include <de/Info>
@@ -47,6 +49,7 @@ DE_PIMPL(GloomApp)
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
     std::unique_ptr<GloomWorld>      world;
+    String                           currentMap;
 
     Impl(Public *i) : Base(i)
     {
@@ -92,9 +95,10 @@ DE_PIMPL(GloomApp)
 
     static void receivedRemoteCommand(iAny *, iDatagram *socket)
     {
-        while (String msgData = Block::take(receive_Datagram(socket, nullptr)))
+        auto *d = reinterpret_cast<Impl *>(userData_Object(socket));
+        while (auto msgData = Block::take(receive_Datagram(socket, nullptr)))
         {
-            Loop::mainCall([msgData]() {
+            Loop::mainCall([d, msgData]() {
                 const Info msg(msgData);
                 for (const auto *elem : msg.root().contentsInOrder())
                 {
@@ -105,7 +109,7 @@ DE_PIMPL(GloomApp)
                         {
                             if (block.name() == "loadmap")
                             {
-                                debug("load map: '%s'", block["package"].c_str());
+                                d->loadMapPackage(block["map"], block["package"], block["nativePath"]);
                             }
                         }
                     }
@@ -124,6 +128,39 @@ DE_PIMPL(GloomApp)
             LOG_MSG("Loading shader definitions from %s") << (*i)->description();
             self().shaders().addFromInfo(**i);
         }
+    }
+
+    void loadMapPackage(const String &mapId, const String &packageId, const NativePath &location)
+    {
+        debug("load map '%s' from package '%s' in '%s'",
+              mapId.c_str(),
+              packageId.c_str(),
+              location.c_str());
+
+        if (!mapId || !packageId || location.isEmpty() || !location.exists()) return;
+
+        auto &pld = PackageLoader::get();
+
+        if (currentMap)
+        {
+            pld.unload(currentMap);
+            pld.refresh();
+            currentMap.clear();
+        }
+
+        FS::get().makeFolderWithFeed("/remote/gloom", new DirectoryFeed(location));
+
+        pld.load(packageId);
+        pld.refresh();
+        currentMap = packageId;
+
+        // Load the map.
+        gloom::Map loadedMap;
+        {
+            const auto &asset = App::asset(DE_STR("map.") + mapId);
+            loadedMap.deserialize(FS::locate<const File>(asset.absolutePath("path")));
+        }
+        world->setMap(loadedMap);
     }
 };
 

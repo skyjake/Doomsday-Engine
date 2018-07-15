@@ -26,6 +26,7 @@
 #include <de/Beacon>
 #include <de/CommandLine>
 #include <de/EmbeddedApp>
+#include <de/FileSystem>
 #include <de/EventLoop>
 #include <de/Loop>
 #include <de/Info>
@@ -191,7 +192,10 @@ int main(int argc, char **argv)
             async(
                 [&editor]() {
                     gloomCommander->sendCommand(
-                        Stringf("command loadmap{package=\"%s\"}", editor.packageName().c_str()));
+                        Stringf("command loadmap{map:%s\npackage:%s\nnativePath:%s\n}",
+                                editor.mapId().c_str(),
+                                editor.packageName().c_str(),
+                                FS::locate<const Folder>("/home").correspondingNativePath().c_str()));
                     return 0;
                 },
                 [](int) {
