@@ -18,20 +18,31 @@
 
 #include "editorwindow.h"
 #include "utils.h"
+
+#include <doomsday/DoomsdayApp>
+
 #include <de/App>
 #include <de/Beacon>
 #include <de/CommandLine>
+#include <de/EmbeddedApp>
 #include <de/EventLoop>
 #include <de/Loop>
 #include <de/Info>
+
 #include <QApplication>
 #include <QMessageBox>
 #include <QTimer>
 
 using namespace de;
 
-static const duint16 COMMAND_PORT = 14666;
+struct GloomCommander;
 
+static GloomCommander *gloomCommander;
+static const duint16   COMMAND_PORT = 14666;
+
+/**
+ * Sends commands to the Gloom viewer app and listens to beacon messages.
+ */
 struct GloomCommander : DE_OBSERVES(Beacon, Discovery)
 {
     cplus::ref<iProcess> proc;
@@ -45,6 +56,8 @@ struct GloomCommander : DE_OBSERVES(Beacon, Discovery)
 
     void beaconFoundHost(const Address &host, const Block &message) override
     {
+        if (!address.isNull()) return; // Ignore additional replies.
+
         qDebug("GloomEd beacon found:%s [%s]", host.asText().c_str(), message.c_str());
         if (message.beginsWith(DE_STR("GloomApp:")))
         {
@@ -57,8 +70,10 @@ struct GloomCommander : DE_OBSERVES(Beacon, Discovery)
         }
     }
 };
-static GloomCommander *gloomCommander;
 
+/**
+ * Launch the Gloom viewer, if one is not already running.
+ */
 static bool launchGloom()
 {
     if (gloomCommander)
@@ -83,26 +98,27 @@ static bool launchGloom()
     return bool(gloomCommander->proc);
 }
 
-struct EmbeddedApp : public App
+struct EditorApp : public EmbeddedApp, public DoomsdayApp
 {
-    EventLoop deEventLoop{EventLoop::Manual};
-    Loop      deLoop;
-
-    EmbeddedApp(const StringList &args) : App(args)
+    EditorApp(const StringList &args)
+        : EmbeddedApp(args)
+        , DoomsdayApp(nullptr,
+                      DoomsdayApp::DisableGameProfiles |
+                      DoomsdayApp::DisablePersistentConfig |
+                      DoomsdayApp::DisableSaveGames)
     {}
 
-    NativePath appDataPath() const
+    void initialize()
     {
-        return NativePath::homePath() / unixHomeFolderName();
+        initSubsystems(DisablePersistentData | DisablePlugins);
+        DoomsdayApp::initialize();
     }
 
-    void processEvents()
+    void checkPackageCompatibility(const de::StringList &,
+                                   const de::String &,
+                                   const std::function<void()> &finalizeFunc)
     {
-        // Manually handle events and loop iteration callbacks.
-        deLoop.iterate();
-        deEventLoop.processQueuedEvents();
-        fflush(stdout);
-        fflush(stderr);
+        finalizeFunc();
     }
 };
 
@@ -134,7 +150,7 @@ int main(int argc, char **argv)
         }
         catch (const Error &er)
         {
-            warning("Map build error: %s", er.asPlainText().c_str());
+            qWarning("Map build error: %s", er.asPlainText().c_str());
         }
     });
 
@@ -144,8 +160,16 @@ int main(int argc, char **argv)
      * available and active. Use a QTimer to continually check for events and perform
      * loop iteration.
      */
-    EmbeddedApp deApp(makeList(argc, argv));
-    deApp.initSubsystems(App::DisablePersistentData | App::DisablePlugins);
+    EditorApp deApp(makeList(argc, argv));
+    {
+        auto &amd = deApp.metadata();
+        amd.set(App::APP_NAME,    convert(app.applicationName()));
+        amd.set(App::APP_VERSION, convert(app.applicationVersion()));
+        amd.set(App::ORG_NAME,    convert(app.organizationName()));
+        amd.set(App::ORG_DOMAIN,  convert(app.organizationDomain()));
+        amd.set(App::UNIX_HOME,   ".gloomed");
+    }
+    deApp.initialize();
     QTimer deTimer;
     QObject::connect(&deTimer, &QTimer::timeout, [&deApp]() { deApp.processEvents(); });
     deTimer.start(100);

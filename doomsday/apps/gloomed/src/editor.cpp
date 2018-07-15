@@ -53,13 +53,13 @@ struct EntityType {
     QString label;
 };
 static const QMap<Entity::Type, QString> entityMetadata {
-    std::make_pair(Entity::Light,        QString("Light")),
-    std::make_pair(Entity::Spotlight,    QString("Spotlight")),
-    std::make_pair(Entity::Tree1,        QString("Tree1")),
-    std::make_pair(Entity::Tree2,        QString("Tree2")),
-    std::make_pair(Entity::Tree3,        QString("Tree3")),
-    std::make_pair(Entity::TestSphere,   QString("Test Sphere")),
-    std::make_pair(Entity::Buggy,        QString("Buggy"))
+    {Entity::Light,        QString("Light")},
+    {Entity::Spotlight,    QString("Spotlight")},
+    {Entity::Tree1,        QString("Tree1")},
+    {Entity::Tree2,        QString("Tree2")},
+    {Entity::Tree3,        QString("Tree3")},
+    {Entity::TestSphere,   QString("Test Sphere")},
+    {Entity::Buggy,        QString("Buggy")}
 };
 
 enum Direction {
