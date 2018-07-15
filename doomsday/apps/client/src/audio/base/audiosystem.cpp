@@ -1895,7 +1895,7 @@ void AudioSystem::updateMusicMidiFont()
         // client's package so it can be loaded by FluidSynth.
         path = App::app().nativeHomePath()/"cache/default.sf2";
     }
-    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString());
+    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().c_str());
 }
 
 bool AudioSystem::sfxIsAvailable() const

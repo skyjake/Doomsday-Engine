@@ -590,7 +590,7 @@ void Hu_MenuInitSkillPage()
     {
 #if !__JHEXEN__
         String const labelText = GET_TXT(skillButtonTexts[i]);
-        int const shortcut     = iswalnum(labelText.first())? labelText.first() : 0;
+        int const shortcut     = iswalnum(labelText.first())? labelText.first().unicode() : 0;
 #endif
 
         page->addWidget(new ButtonWidget)
@@ -2197,7 +2197,7 @@ void Hu_MenuInitPlayerClassPage()
 
     // Random class button.
     String const labelText = GET_TXT(TXT_RANDOMPLAYERCLASS);
-    int const shortcut     = iswalnum(labelText.first())? labelText.first() : 0;
+    int const shortcut     = iswalnum(labelText.first())? labelText.first().unicode() : 0;
     page->addWidget(new ButtonWidget(labelText))
             .setFixedY(y)
             .setShortcut(shortcut)
