@@ -92,7 +92,7 @@ bool RegExp::match(const String &subject, RegExpMatch &match) const
 
 bool RegExp::hasMatch(const String &subject) const
 {
-    iRegExpMatch match;
+    iRegExpMatch match{};
     return matchString_RegExp(_d, subject, &match);
 }
 
