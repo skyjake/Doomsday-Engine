@@ -532,7 +532,7 @@ String Game::filesAsText(int rflags, bool withStatus) const
                 }
 
                 // Format the resource name list.
-                text += Stringf(_E(>) "%1%2",
+                text += Stringf(_E(>) "%s%s",
                         !resourceFound? _E(D) : "",
                         String::join(manifest.names(), _E(l) " or " _E(.)).c_str());
 

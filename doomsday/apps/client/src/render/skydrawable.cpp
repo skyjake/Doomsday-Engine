@@ -131,7 +131,7 @@ struct Hemisphere
             {
                 res::Uri const pTexUri = pTex.manifest().composeUri();
                 throw Error("Hemisphere::capColor",
-                            stringf("Texture \"%s\" has no Average%2ColorAnalysis",
+                            stringf("Texture \"%s\" has no Average%sColorAnalysis",
                                     pTexUri.pathCStr(),
                                     hemisphere == UpperHemisphere ? "Top" : "Bottom"));
             }

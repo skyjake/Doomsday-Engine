@@ -675,7 +675,7 @@ static Value *Function_Console_Set(Context &, Function::ArgumentValues const &ar
     if (!var)
     {
         throw Error("Function_Console_Set",
-                    stringf("Unknown console variable: %1", name.c_str()));
+                    stringf("Unknown console variable: %s", name.c_str()));
     }
 
     Value const &value = *args.at(1);

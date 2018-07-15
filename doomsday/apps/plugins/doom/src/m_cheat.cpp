@@ -577,7 +577,7 @@ D_CMD(CheatWhere)
     mobj_t *plrMo = plr->plr->mo;
     if(!plrMo) return true;
 
-    String const text = Stringf("Map:%1 position:%2",
+    String const text = Stringf("Map:%s position:%s",
                                        gfw_Session()->mapUri().asText().c_str(),
                                        Vec3d(plrMo->origin).asText().c_str());
     P_SetMessageWithFlags(plr, text, LMF_NO_HIDE);

@@ -493,7 +493,7 @@ int InputBindingWidget::handleEvent_Privileged(event_t const &event)
             stateFlags += "-inverse";
         }
 
-        cmd = Stringf("bindcontrol {%1} {%2%3%4}",
+        cmd = Stringf("bindcontrol {%s} {%s%s%s}",
                              binds->controlName,
                              name.c_str(),
                              stateFlags.c_str(),

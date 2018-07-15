@@ -432,6 +432,7 @@ String &String::replace(const RegExp &before, const CString &after)
     RegExpMatch found;
     while (before.match(*this, found))
     {
+        DE_ASSERT(found.end() > found.begin());
         const iRangecc prefix{remaining.start, found.begin()};
         appendRange_String(result.i_str(), &prefix);
         appendRange_String(result.i_str(), &newTerm);

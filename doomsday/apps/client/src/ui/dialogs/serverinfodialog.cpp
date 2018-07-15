@@ -331,7 +331,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
                         if (auto *pkgFile = PackageLoader::get().select(id_ver.first))
                         {
                             localVersion = Package::versionForFile(*pkgFile);
-                            missing << Stringf("%1 " _E(s) "(you have: %s)" _E(.),
+                            missing << Stringf("%s " _E(s) "(you have: %s)" _E(.),
                                                       pkgId.c_str(),
                                                       localVersion.fullNumber().c_str());
                             continue;

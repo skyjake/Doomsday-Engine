@@ -136,7 +136,7 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
         {
             self().title().setText("Up to Date");
             self().message().setText(
-                Stringf("The installed %1 is the latest available %2 build.",
+                Stringf("The installed %s is the latest available %s build.",
                                currentVersion.asHumanReadableText().c_str(),
                                (_E(b) + channel + _E(.)).c_str()));
         }

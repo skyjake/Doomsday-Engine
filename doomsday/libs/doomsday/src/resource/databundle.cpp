@@ -1432,7 +1432,7 @@ StringList DataBundle::gameTags()
 
 String DataBundle::anyGameTagPattern()
 {
-    return Stringf("\\b(%1)\\b", String::join(gameTags(), "|").c_str());
+    return Stringf("\\b(%s)\\b", String::join(gameTags(), "|").c_str());
 }
 
 String DataBundle::cleanIdentifier(String const &text)
