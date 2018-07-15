@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_DATA_POINT_H
-#define DE_DATA_POINT_H
+#ifndef LIBLEGACY_POINT_H
+#define LIBLEGACY_POINT_H
 
 #include "liblegacy.h"
 
@@ -248,4 +248,4 @@ DE_PUBLIC dd_bool Point3f_Equality(Point3f const *point, Point3f const *other);
 } // extern "C"
 #endif
 
-#endif /* DE_DATA_POINT_H */
+#endif /* LIBLEGACY_POINT_H */

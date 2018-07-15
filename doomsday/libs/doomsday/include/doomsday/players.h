@@ -46,13 +46,13 @@ public:
      *
      * @param playerConstructor  Function for creating new player instances.
      */
-    Players(Constructor playerConstructor);
+    Players(const Constructor& playerConstructor);
 
     Player &at(int index) const;
 
     int count() const;
 
-    de::LoopResult forAll(std::function<de::LoopResult (Player &)> func) const;
+    de::LoopResult forAll(const std::function<de::LoopResult (Player &)>& func) const;
 
     /**
      * Finds the index number of a player.

@@ -40,12 +40,15 @@ DE_PIMPL_NOREF(Players)
     }
 };
 
-Players::Players(Constructor playerConstructor) : d(new Impl)
+Players::Players(const Constructor& playerConstructor) : d(new Impl)
 {
-    for (auto &plr : d->players)
+    if (playerConstructor)
     {
-        plr = playerConstructor();
-        DE_ASSERT(is<Player>(plr));
+        for (auto &plr : d->players)
+        {
+            plr = playerConstructor();
+            DE_ASSERT(is<Player>(plr));
+        }
     }
 }
 
@@ -61,7 +64,7 @@ int Players::count() const
     return DDMAXPLAYERS;
 }
 
-LoopResult Players::forAll(std::function<LoopResult (Player &)> func) const
+LoopResult Players::forAll(const std::function<LoopResult (Player &)>& func) const
 {
     for (auto &plr : d->players)
     {

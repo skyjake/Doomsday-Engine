@@ -1,6 +1,6 @@
 /** @file doomsdayapp.cpp  Common application-level state and components.
  *
- * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2015-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -59,11 +59,6 @@
 #include <de/memoryzone.h>
 #include <de/memory.h>
 
-//#include <QSettings>
-//#include <QStandardPaths>
-//#include <QCoreApplication>
-//#include <QTimer>
-
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
@@ -74,8 +69,8 @@
 
 using namespace de;
 
-static String const PATH_LOCAL_WADS ("/local/wads");
-static String const PATH_LOCAL_PACKS("/local/packs");
+DE_STATIC_STRING(PATH_LOCAL_WADS,  "/local/wads");
+DE_STATIC_STRING(PATH_LOCAL_PACKS, "/local/packs");
 
 static DoomsdayApp *theDoomsdayApp = nullptr;
 
@@ -84,6 +79,7 @@ DE_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
+    Flags                    appFlags;
     Binder                   binder;
     bool                     initialized      = false;
     bool                     gameBeingChanged = false;
@@ -124,8 +120,9 @@ DE_PIMPL(DoomsdayApp)
 
     GameChangeScriptAudience scriptAudienceForGameChange;
 
-    Impl(Public *i, const Players::Constructor &playerConstructor)
+    Impl(Public *i, const Players::Constructor &playerConstructor, Flags flags)
         : Base(i)
+        , appFlags(flags)
         , players(playerConstructor)
     {
         // Script bindings.
@@ -144,6 +141,8 @@ DE_PIMPL(DoomsdayApp)
 
         audienceForFolderPopulation += this;
 
+        if (~appFlags & DisablePersistentConfig)
+        {
         // Periodically save the configuration files (after they've been changed).
         configSaveTimer.setInterval(1.0);
         configSaveTimer.setSingleShot(false);
@@ -158,6 +157,7 @@ DE_PIMPL(DoomsdayApp)
             }
         };
         configSaveTimer.start();
+        }
 
         // File system extensions.
         filesys::RemoteFeedRelay::get().defineLink(IdgamesLink::construct);
@@ -165,7 +165,7 @@ DE_PIMPL(DoomsdayApp)
 
     ~Impl() override
     {
-        if (initialized)
+        if (initialized && (~appFlags & DisableGameProfiles))
         {
             // Save any changes to the game profiles.
             gameProfiles.serialize();
@@ -309,7 +309,7 @@ DE_PIMPL(DoomsdayApp)
     void initWadFolders()
     {
         // "/local" is for various files on the local computer.
-        Folder &wads = FileSystem::get().makeFolder(PATH_LOCAL_WADS, FS::DontInheritFeeds);
+        Folder &wads = FileSystem::get().makeFolder(PATH_LOCAL_WADS(), FS::DontInheritFeeds);
         wads.clear();
         wads.clearFeeds();
 
@@ -401,7 +401,7 @@ DE_PIMPL(DoomsdayApp)
         }
 
         // Configured via GUI.
-        for (String path : App::config().getStringList("resource.iwadFolder"))
+        for (const String &path : App::config().getStringList("resource.iwadFolder"))
         {
             attachWadFeed("user-selected", path, directoryPopulationMode(path));
         }
@@ -411,7 +411,7 @@ DE_PIMPL(DoomsdayApp)
 
     void initPackageFolders()
     {
-        Folder &packs = FS::get().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
+        Folder &packs = FS::get().makeFolder(PATH_LOCAL_PACKS(), FS::DontInheritFeeds);
         packs.clear();
         packs.clearFeeds();
 
@@ -441,7 +441,7 @@ DE_PIMPL(DoomsdayApp)
         }
 
         // Configured via GUI.
-        for (String path : App::config().getStringList("resource.packageFolder"))
+        for (const String &path : App::config().getStringList("resource.packageFolder"))
         {
             attachPacksFeed("user-selected", path, directoryPopulationMode(path));
         }
@@ -451,6 +451,7 @@ DE_PIMPL(DoomsdayApp)
 
     void initRemoteRepositories()
     {
+        /// @todo Initialize repositories based on Config.
 #if 0
         filesys::RemoteFeedRelay::get().addRepository("https://www.quaddicted.com/files/idgames/",
                                                       "/remote/www.quaddicted.com");
@@ -503,21 +504,19 @@ DE_PIMPL(DoomsdayApp)
     }
 #endif // WIN32
 
-    DE_PIMPL_AUDIENCE(GameLoad)
-    DE_PIMPL_AUDIENCE(GameUnload)
-    DE_PIMPL_AUDIENCE(GameChange)
-    DE_PIMPL_AUDIENCE(ConsoleRegistration)
-    DE_PIMPL_AUDIENCE(PeriodicAutosave)
+    DE_PIMPL_AUDIENCES(
+        GameLoad, GameUnload, GameChange, ConsoleRegistration, FileRefresh, PeriodicAutosave)
 };
 
-DE_AUDIENCE_METHOD(DoomsdayApp, GameLoad)
-DE_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
-DE_AUDIENCE_METHOD(DoomsdayApp, GameChange)
-DE_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
-DE_AUDIENCE_METHOD(DoomsdayApp, PeriodicAutosave)
+DE_AUDIENCE_METHODS(DoomsdayApp,
+                    GameLoad,
+                    GameUnload,
+                    GameChange,
+                    ConsoleRegistration,
+                    PeriodicAutosave)
 
-DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
-    : d(new Impl(this, playerConstructor))
+DoomsdayApp::DoomsdayApp(const Players::Constructor &playerConstructor, Flags flags)
+    : d(new Impl(this, playerConstructor, flags))
 {
     DE_ASSERT(!theDoomsdayApp);
     theDoomsdayApp = this;
@@ -546,7 +545,10 @@ void DoomsdayApp::initialize()
                                        DirectoryFeed::OnlyThisFolder));
     tmpFolder.populate(Folder::PopulateOnlyThisFolder);
 
+    if (~d->appFlags & DisableSaveGames)
+    {
     d->saveGames.initialize();
+    }
 
     // "/sys/bundles" has package-like symlinks to files that are not in
     // Doomsday 2 format but can be loaded as packages.
@@ -561,7 +563,11 @@ void DoomsdayApp::initialize()
     Folder::waitForPopulation(Folder::BlockingMainThread);
 
     d->dataBundles.identify();
+
+    if (~d->appFlags & DisableGameProfiles)
+    {
     d->gameProfiles.deserialize();
+    }
 
     // Register some remote repositories.
     d->initRemoteRepositories();

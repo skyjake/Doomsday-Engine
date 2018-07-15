@@ -64,14 +64,20 @@ public:
 
     DE_DEFINE_AUDIENCE2(PeriodicAutosave, void periodicAutosave())
 
-    struct GameChangeParameters
-    {
+    struct GameChangeParameters {
         /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.
         bool initiatedBusyMode;
     };
 
+    enum Flag {
+        DisableSaveGames        = 0x1,
+        DisableGameProfiles     = 0x2,
+        DisablePersistentConfig = 0x4,
+        DefaultFlags            = 0
+    };
+
 public:
-    DoomsdayApp(Players::Constructor playerConstructor);
+    DoomsdayApp(const Players::Constructor &playerConstructor, de::Flags flags = DefaultFlags);
 
     virtual ~DoomsdayApp();
 
@@ -135,8 +141,8 @@ public:
     void *moduleHandle() const;
 #endif
 
-    void setDoomsdayBasePath(de::NativePath const &path);
-    std::string const &doomsdayBasePath() const;
+    void setDoomsdayBasePath(const de::NativePath &path);
+    const std::string &doomsdayBasePath() const;
 
     GameProfile &adhocProfile();
 
@@ -167,7 +173,7 @@ public:
      * @param session   Game session that is being saved.
      * @param toFolder  Folder where the game state is being written.
      */
-    virtual void gameSessionWasSaved(AbstractSession const &session,
+    virtual void gameSessionWasSaved(const AbstractSession &session,
                                      GameStateFolder &toFolder);
 
     /**
@@ -179,8 +185,8 @@ public:
      * @param session     Game session that is being loaded.
      * @param fromFolder  Folder where the game state is being read.
      */
-    virtual void gameSessionWasLoaded(AbstractSession const &session,
-                                      GameStateFolder const &fromFolder);
+    virtual void gameSessionWasLoaded(const AbstractSession &session,
+                                      const GameStateFolder &fromFolder);
 
 public:
     static DoomsdayApp &                 app();

@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#ifndef DE_DATA_RECT_H
-#define DE_DATA_RECT_H
+#ifndef LIBLEGACY_RECT_H
+#define LIBLEGACY_RECT_H
 
 #include "point.h"
 #include "size.h"
@@ -176,4 +176,4 @@ DE_PUBLIC RectRawf *Rectf_United(Rectf const *rect, Rectf const *other, RectRawf
 } // extern "C"
 #endif
 
-#endif /* DE_DATA_RECT_H */
+#endif /* LIBLEGACY_RECT_H */

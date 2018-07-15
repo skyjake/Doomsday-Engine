@@ -31,18 +31,18 @@
 
 using namespace de;
 
-static String const VAR_GAME            ("game");
-static String const VAR_PACKAGES        ("packages");
-static String const VAR_CUSTOM_DATA_FILE("customDataFile");
-static String const VAR_USER_CREATED    ("userCreated");
-static String const VAR_USE_GAME_REQUIREMENTS("useGameRequirements");
-static String const VAR_AUTO_START_MAP  ("autoStartMap");
-static String const VAR_AUTO_START_SKILL("autoStartSkill");
+DE_STATIC_STRING(VAR_GAME,                  "game");
+DE_STATIC_STRING(VAR_PACKAGES,              "packages");
+DE_STATIC_STRING(VAR_CUSTOM_DATA_FILE,      "customDataFile");
+DE_STATIC_STRING(VAR_USER_CREATED,          "userCreated");
+DE_STATIC_STRING(VAR_USE_GAME_REQUIREMENTS, "useGameRequirements");
+DE_STATIC_STRING(VAR_AUTO_START_MAP,        "autoStartMap");
+DE_STATIC_STRING(VAR_AUTO_START_SKILL,      "autoStartSkill");
 static String const VAR_LAST_PLAYED     ("lastPlayed");
 static String const VAR_SAVE_LOCATION_ID("saveLocationId");
 static String const VAR_VALUES          ("values");
 
-static int const DEFAULT_SKILL = 3; // Normal skill level (1-5)
+static constexpr int DEFAULT_SKILL = 3; // Normal skill level (1-5)
 
 static GameProfile nullGameProfile;
 
@@ -164,9 +164,9 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
 {
     std::unique_ptr<Profile> prof(new Profile);
 
-    prof->setGame(block.keyValue(VAR_GAME).text);
+    prof->setGame(block.keyValue(VAR_GAME()).text);
 
-    if (Info::ListElement const *pkgs = block.findAs<Info::ListElement>(VAR_PACKAGES))
+    if (Info::ListElement const *pkgs = block.findAs<Info::ListElement>(VAR_PACKAGES()))
     {
         StringList ids;
         for (auto const &val : pkgs->values())
@@ -176,23 +176,23 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
         prof->setPackages(ids);
     }
 
-    prof->setUserCreated(!block.keyValue(VAR_USER_CREATED).text.compareWithoutCase("True"));
-    if (block.contains(VAR_CUSTOM_DATA_FILE))
+    prof->setUserCreated(!block.keyValue(VAR_USER_CREATED()).text.compareWithoutCase("True"));
+    if (block.contains(VAR_CUSTOM_DATA_FILE()))
     {
         prof->setCustomDataFile(block.keyValue(VAR_CUSTOM_DATA_FILE).text);
     }
-    if (block.contains(VAR_USE_GAME_REQUIREMENTS))
+    if (block.contains(VAR_USE_GAME_REQUIREMENTS()))
     {
-        prof->setUseGameRequirements(!block.keyValue(VAR_USE_GAME_REQUIREMENTS)
+        prof->setUseGameRequirements(!block.keyValue(VAR_USE_GAME_REQUIREMENTS())
                                      .text.compareWithoutCase("True"));
     }
-    if (block.contains(VAR_AUTO_START_MAP))
+    if (block.contains(VAR_AUTO_START_MAP()))
     {
-        prof->setAutoStartMap(block.keyValue(VAR_AUTO_START_MAP).text);
+        prof->setAutoStartMap(block.keyValue(VAR_AUTO_START_MAP()).text);
     }
-    if (block.contains(VAR_AUTO_START_SKILL))
+    if (block.contains(VAR_AUTO_START_SKILL()))
     {
-        prof->setAutoStartSkill(block.keyValue(VAR_AUTO_START_SKILL).text.toInt());
+        prof->setAutoStartSkill(block.keyValue(VAR_AUTO_START_SKILL()).text.toInt());
     }
     if (block.contains(VAR_SAVE_LOCATION_ID))
     {
@@ -591,16 +591,16 @@ String GameProfiles::Profile::toInfoSource() const
 {
     std::ostringstream os;
 
-    os << VAR_GAME                  << ": " << d->gameId << "\n"
-       << VAR_PACKAGES              << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
-       << VAR_USER_CREATED          << ": " << (d->userCreated? "True" : "False") << "\n"
+    os << VAR_GAME()                  << ": " << d->gameId << "\n"
+       << VAR_PACKAGES()              << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
+       << VAR_USER_CREATED()          << ": " << (d->userCreated? "True" : "False") << "\n"
        << VAR_CUSTOM_DATA_FILE      << ": " << d->customDataFile << "\n"
-       << VAR_USE_GAME_REQUIREMENTS << ": " << (d->useGameRequirements? "True" : "False");
+       << VAR_USE_GAME_REQUIREMENTS() << ": " << (d->useGameRequirements? "True" : "False");
     if (d->autoStartMap)
     {
-        os << "\n" << VAR_AUTO_START_MAP << ": " << d->autoStartMap;
+        os << "\n" << VAR_AUTO_START_MAP() << ": " << d->autoStartMap;
     }
-    os << "\n" << VAR_AUTO_START_SKILL << ": " << d->autoStartSkill;
+    os << "\n" << VAR_AUTO_START_SKILL() << ": " << d->autoStartSkill;
     if (d->lastPlayedAt.isValid())
     {
         os << "\n" << VAR_LAST_PLAYED << ": " << d->lastPlayedAt.asText();
