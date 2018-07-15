@@ -28,6 +28,7 @@
 #include <de/Beacon>
 #include <de/DisplayMode>
 #include <de/FileSystem>
+#include <de/Info>
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
 
@@ -56,6 +57,8 @@ DE_PIMPL(GloomApp)
         // GloomEd will tell us what to do via the command socket.
         {
             commandSocket.reset(new_Datagram());
+            setUserData_Object(commandSocket, this);
+            iConnect(Datagram, commandSocket, message, commandSocket, receivedRemoteCommand);
             for (int attempt = 0; attempt < 12; ++attempt)
             {
                 if (open_Datagram(commandSocket, duint16(COMMAND_PORT + 4 + attempt)))
@@ -85,6 +88,30 @@ DE_PIMPL(GloomApp)
         world.reset();
 
         self().glDeinit();
+    }
+
+    static void receivedRemoteCommand(iAny *, iDatagram *socket)
+    {
+        while (String msgData = Block::take(receive_Datagram(socket, nullptr)))
+        {
+            Loop::mainCall([msgData]() {
+                const Info msg(msgData);
+                for (const auto *elem : msg.root().contentsInOrder())
+                {
+                    if (elem->isBlock())
+                    {
+                        const auto &block = elem->as<Info::BlockElement>();
+                        if (block.blockType() == "command")
+                        {
+                            if (block.name() == "loadmap")
+                            {
+                                debug("load map: '%s'", block["package"].c_str());
+                            }
+                        }
+                    }
+                }
+            });
+        }
     }
 
     void loadAllShaders()

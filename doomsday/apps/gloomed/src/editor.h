@@ -42,7 +42,10 @@ public:
 
     de::String mapId() const;
     gloom::Map &map();
+    de::String packageName() const;
 
+    void exportPackage() const;
+    void updateWindowTitle() const;
     bool maybeClose();
     QSet<gloom::ID> selection() const;
     void markAsChanged();

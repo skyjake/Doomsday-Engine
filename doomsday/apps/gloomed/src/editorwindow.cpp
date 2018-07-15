@@ -41,6 +41,7 @@ EditorWindow::EditorWindow()
 {
     d->editor = new Editor;
     setCentralWidget(d->editor);
+    d->editor->updateWindowTitle();
 
     const QStringList allMaterials({"",
                                     "world.stone",
@@ -56,7 +57,7 @@ EditorWindow::EditorWindow()
         QToolBar *matr = new QToolBar(tr("Line Material"));
         addToolBar(Qt::BottomToolBarArea, matr);
 
-        connect(d->editor, &Editor::modeChanged, [matr] (int mode) {
+        connect(d->editor, &Editor::modeChanged, matr, [matr] (int mode) {
             matr->setVisible(mode == Editor::EditLines);
         });
 
@@ -138,7 +139,7 @@ EditorWindow::EditorWindow()
         QToolBar *matr = new QToolBar(tr("Plane Material"));
         addToolBar(Qt::BottomToolBarArea, matr);
 
-        connect(d->editor, &Editor::modeChanged, [matr] (int mode) {
+        connect(d->editor, &Editor::modeChanged, matr, [matr] (int mode) {
             matr->setVisible(mode == Editor::EditPlanes);
         });
 
@@ -159,7 +160,7 @@ EditorWindow::EditorWindow()
                     Map &map = d->editor->map();
 
                     // Change line materials.
-                    for (ID id : d->editor->selection())
+                    foreach (ID id, d->editor->selection())
                     {
                         if (map.isPlane(id))
                         {

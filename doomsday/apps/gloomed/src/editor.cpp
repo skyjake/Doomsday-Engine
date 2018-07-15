@@ -24,7 +24,9 @@
 #include <doomsday/DataBundle>
 #include <doomsday/LumpCatalog>
 #include <de/FS>
+#include <de/Info>
 #include <de/Matrix>
+#include <de/charsymbols.h>
 
 #include <QAction>
 #include <QCloseEvent>
@@ -88,6 +90,7 @@ DE_PIMPL(Editor)
     Map       map;
     String    mapId;
     String    filePath;
+    String    packageName;
     bool      isModified = false;
     List<Map> undoStack;
 
@@ -128,11 +131,14 @@ DE_PIMPL(Editor)
             loadMap(persistentMapPath());
         }
 
-        // Check for previous state.
+        // Check for previous editor state.
         {
             QSettings st;
-            viewScale  = st.value("viewScale", 10).toFloat();
-            viewOrigin = toVec2d(st.value("viewOrigin").value<QVector2D>());
+
+            viewScale   = st.value("viewScale", 10).toFloat();
+            viewOrigin  = toVec2d(st.value("viewOrigin").value<QVector2D>());
+            mapId       = convert(st.value("mapId").toString());
+            packageName = convert(st.value("packageName", "user.editorproject").toString());
         }
     }
 
@@ -142,10 +148,39 @@ DE_PIMPL(Editor)
         {
             QSettings st;
             st.setValue("mapId", convert(mapId));
+            st.setValue("packageName", convert(packageName));
             st.setValue("filePath", convert(filePath));
             st.setValue("viewScale", viewScale);
             st.setValue("viewOrigin", toQVector2D(viewOrigin));
         }
+    }
+
+    void updateWindowTitle()
+    {
+        if (self().parentWidget())
+        {
+            const String path = filePath ? filePath : "(unsaved)";
+            const String id   = mapId ? mapId : "(unnamed)";
+            const String pkg  = packageName ? packageName : "(no package)";
+
+            self().parentWidget()->setWindowTitle(
+                convert(Stringf("%s (%s) " DE_CHAR_MDASH " %s " DE_CHAR_MDASH " GloomEd",
+                    path.c_str(), id.c_str(), pkg.c_str())));
+        }
+    }
+
+    void resetState()
+    {
+        undoStack.clear();
+        isModified = false;
+        floorPoints.clear();
+        selection.clear();
+        hoverPoint  = 0;
+        hoverLine   = 0;
+        hoverSector = 0;
+        hoverEntity = 0;
+        hoverPlane  = 0;
+        self().update();
     }
 
     QString persistentMapPath() const
@@ -995,7 +1030,7 @@ DE_PIMPL(Editor)
         map = Map();
         mapId.clear();
         filePath.clear();
-        setWindowTitle("(unnamed)");
+        updateWindowTitle();
         resetState();
     }
 
@@ -1028,7 +1063,7 @@ DE_PIMPL(Editor)
         const QByteArray mapData = f.readAll();
         map.deserialize(Block(mapData.constData(), mapData.size()));
         resetState();
-        setWindowTitle(convert(filePath.fileName()));
+        updateWindowTitle();
     }
 
     void saveAsFile()
@@ -1038,7 +1073,7 @@ DE_PIMPL(Editor)
         if (!newPath.isEmpty())
         {
             filePath = convert(newPath);
-            setWindowTitle(convert(filePath.fileName()));
+            updateWindowTitle();
             saveFile();
         }
     }
@@ -1123,7 +1158,7 @@ DE_PIMPL(Editor)
                                     qDebug() << "Texture:" << n << img.size().asText();
                                     img.toQImage().save(n + ".png");
                                 }*/
-                                importer.exportPackage("/home/user.editorproject.pack");
+                                importer.exportPackage(packageRootPath());
                             }
 
                             // Update the editor's map.
@@ -1131,7 +1166,7 @@ DE_PIMPL(Editor)
                             mapId = importer.mapId();
                             filePath.clear();
                             resetState();
-                            setWindowTitle(convert(mapId));
+                            updateWindowTitle();
                         }
                     }
                 }
@@ -1140,26 +1175,48 @@ DE_PIMPL(Editor)
         }
     }
 
-    void setWindowTitle(const QString &text)
+    String packageRootPath() const
     {
-        if (self().parentWidget())
-        {
-            self().parentWidget()->setWindowTitle(QString("%1 (%2)").arg(text, convert(mapId)));
-        }
+        return "/home/" + packageName + ".pack";
     }
 
-    void resetState()
+    void exportPackage()
     {
-        undoStack.clear();
-        isModified = false;
-        floorPoints.clear();
-        selection.clear();
-        hoverPoint  = 0;
-        hoverLine   = 0;
-        hoverSector = 0;
-        hoverEntity = 0;
-        hoverPlane  = 0;
-        self().update();
+        if (!mapId)
+        {
+            mapId = convert(QInputDialog::getText(nullptr, "Export Package", "Map ID:"));
+            if (!mapId) return;
+        }
+        if (!packageName)
+        {
+            packageName = convert(QInputDialog::getText(nullptr, "Export Package", "Package ID:"));
+            if (!packageName) return;
+        }
+
+        updateWindowTitle();
+
+        DE_ASSERT(mapId);
+        DE_ASSERT(packageName);
+
+        Folder &root = FS::get().makeFolder(packageRootPath()); // or use existing folder...
+
+        // Rewrite the .gloommap file.
+        {
+            const auto mapData = map.serialize();
+            File &mapFile = root.replaceFile("maps" / mapId + ".gloommap");
+            mapFile << mapData;
+            mapFile.flush();
+        }
+
+        // Check that the maps.dei includes this map.
+        if (const auto *mapsInfoFile = root.tryLocate<const File>("maps.dei"))
+        {
+            Info mapsInfo(*mapsInfoFile);
+            if (mapsInfo.root().contains(mapId))
+            {
+
+            }
+        }
     }
 };
 
@@ -1217,6 +1274,21 @@ String Editor::mapId() const
 gloom::Map &Editor::map()
 {
     return d->map;
+}
+
+String Editor::packageName() const
+{
+    return d->packageName;
+}
+
+void Editor::exportPackage() const
+{
+    d->exportPackage();
+}
+
+void Editor::updateWindowTitle() const
+{
+    d->updateWindowTitle();
 }
 
 bool Editor::maybeClose()
