@@ -1,10 +1,9 @@
 Language:        Cpp
-# BasedOnStyle:  Mozilla
 AccessModifierOffset: -4
 AlignAfterOpenBracket: Align
 AlignConsecutiveAssignments: true
 AlignConsecutiveDeclarations: true
-AlignEscapedNewlines: Right
+AlignEscapedNewlines: Left
 AlignOperands:   true
 AlignTrailingComments: true
 AllowAllParametersOfDeclarationOnNextLine: false
@@ -22,11 +21,11 @@ BinPackParameters: false
 BraceWrapping:
   AfterClass:      true
   AfterControlStatement: true
-  AfterEnum:       true
+  AfterEnum:       false
   AfterFunction:   true
   AfterNamespace:  false
   AfterObjCDeclaration: false
-  AfterStruct:     true
+  AfterStruct:     false
   AfterUnion:      true
   BeforeCatch:     true
   BeforeElse:      true
@@ -66,8 +65,8 @@ IncludeCategories:
   - Regex:           '.*'
     Priority:        1
 IncludeIsMainRegex: '(Test)?$'
-IndentCaseLabels: true
-#IndentPPDirectives: AfterHash
+IndentCaseLabels: false
+IndentPPDirectives: AfterHash
 IndentWidth:     4
 IndentWrappedFunctionNames: false
 JavaScriptQuotes: Leave
@@ -88,8 +87,8 @@ PenaltyBreakString: 1000
 PenaltyExcessCharacter: 1000000
 PenaltyReturnTypeOnItsOwnLine: 200
 PointerAlignment: Right
-ReflowComments:  true
-SortIncludes:    true
+ReflowComments:  false
+SortIncludes:    false
 SortUsingDeclarations: true
 SpaceAfterCStyleCast: true
 SpaceAfterTemplateKeyword: true
