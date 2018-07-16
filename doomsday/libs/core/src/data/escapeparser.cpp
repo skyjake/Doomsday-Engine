@@ -59,6 +59,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             const CString plain{pos, end};
             if (plain.size() > 0)
             {
+                DE_ASSERT(!plain.contains(escape));
                 DE_FOR_AUDIENCE2(PlainText, i) { i->handlePlainText(plain); }
                 d->plain += plain;
             }
@@ -106,6 +107,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             const CString plain{pos, origEnd};
             if (plain.size() > 0)
             {
+                DE_ASSERT(!plain.contains(escape));
                 DE_FOR_AUDIENCE2(PlainText, i) { i->handlePlainText(plain); }
                 d->plain += plain;
             }

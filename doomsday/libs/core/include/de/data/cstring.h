@@ -43,7 +43,7 @@ public:
 
     inline void updateEnd() const
     {
-        if (!_range.end) _range.end = _range.start + strlen(_range.start);
+        if (!_range.end && _range.start) _range.end = _range.start + strlen(_range.start);
     }
 
     inline explicit operator bool() const { return _range.start != nullptr; }
