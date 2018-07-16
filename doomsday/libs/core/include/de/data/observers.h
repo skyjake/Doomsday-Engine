@@ -41,7 +41,7 @@
 #define DE_DECLARE_AUDIENCE(Name, Method) \
     class DE_AUDIENCE_INTERFACE(Name) : public de::ObserverBase { \
     public: \
-        virtual ~DE_AUDIENCE_INTERFACE(Name)() {} \
+        virtual ~DE_AUDIENCE_INTERFACE(Name)() = default; \
         virtual Method = 0; \
     };
 

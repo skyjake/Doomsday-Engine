@@ -54,7 +54,6 @@ DE_PIMPL(ChildWidgetOrganizer)
     IWidgetFactory *factory;
 
     typedef Map<ui::Item const *, GuiWidget *> Mapping;
-    //typedef QMutableMapIterator<ui::Item const *, GuiWidget *> MutableMappingIterator;
     Mapping mapping; ///< Maps items to corresponding widgets.
 
     bool virtualEnabled = false;

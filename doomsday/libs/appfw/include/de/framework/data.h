@@ -67,7 +67,7 @@ public:
 public:
     Data();
 
-    virtual ~Data() {}
+    virtual ~Data() = default;
 
     virtual Data &clear() = 0;
 

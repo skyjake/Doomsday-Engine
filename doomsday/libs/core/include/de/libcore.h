@@ -388,6 +388,8 @@ class DE_PUBLIC Error : public std::runtime_error
 {
 public:
     Error(const std::string &where, const std::string &message);
+    Error(const Error &) = default;
+    virtual ~Error() = default;
 
     std::string name() const;
     virtual std::string asText() const;
@@ -505,7 +507,7 @@ inline X_ const &expectedAs(T_ const *ptr) {
  * to assert whether the pointed object really is derived from IPrivate.
  */
 struct IPrivate {
-    virtual ~IPrivate() {}
+    virtual ~IPrivate() = default;
 #ifdef DE_DEBUG
 #  define DE_IPRIVATE_VERIFICATION 0xdeadbeef
     unsigned int _privateImplVerification = DE_IPRIVATE_VERIFICATION;

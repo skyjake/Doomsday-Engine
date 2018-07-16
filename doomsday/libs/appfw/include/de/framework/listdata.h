@@ -35,7 +35,7 @@ namespace ui {
 class LIBAPPFW_PUBLIC ListData : public Data
 {
 public:
-    ListData() {}
+    ListData() = default;
     ~ListData() override;
 
     dsize       size() const override;
