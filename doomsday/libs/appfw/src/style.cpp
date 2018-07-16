@@ -48,6 +48,8 @@ DE_PIMPL(Style)
         : Base(i)
         , rules(DENG2_BASE_GUI_APP->pixelRatio())
     {
+        defaultTranslucency = new NumberValue(true);
+
         // The Style is available as a native module.
         App::scriptSystem().addNativeModule("Style", module);
         pixelRatio.audienceForChange() += this;
@@ -243,7 +245,12 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
 
 bool Style::isBlurringAllowed() const
 {
-    return d->uiTranslucency.value().isTrue();
+    if (!d->uiTranslucency)
+    {
+        d->uiTranslucency = Config::get().has("ui.translucency") ? &Config::get("ui.translucency")
+                                                                 : &d->defaultTranslucency;
+    }
+    return d->uiTranslucency->value().isTrue();
 }
 
 GuiWidget *Style::sharedBlurWidget() const
