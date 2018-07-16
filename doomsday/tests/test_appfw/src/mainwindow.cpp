@@ -83,7 +83,7 @@ DE_PIMPL(MainWindow)
         root.add(compositor);
 
         test = new LabelWidget;
-        test->setText("Doomsday " _E(b)"Application" _E(.)_E(i)" Framework " _E(.)"Test");
+        test->setText(_E(b) "Doomsday" _E(.)" Application" _E(i)" Framework " _E(.)"Test");
         test->setImage(TestApp::images().image("logo"));
         test->setTextAlignment(ui::AlignBottom);
         test->rule().setRect(root.viewRule());

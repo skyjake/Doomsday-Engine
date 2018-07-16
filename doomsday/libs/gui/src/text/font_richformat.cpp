@@ -264,23 +264,25 @@ void Font::RichFormat::initFromStyledText(String const &styledText)
     d->esc.parse(styledText);
 
 #if 0
-    qDebug() << "Styled text:" << styledText;
-    qDebug() << "plain:" << d->esc.plainText();
-    foreach (Impl::FormatRange const &r, d->ranges)
+    debug("[Font::RichFormat] Styled text: [%s]", styledText.c_str());
+    debug("  plain:[%s]", d->esc.plainText().c_str());
+    for (const Impl::FormatRange &r : d->ranges)
     {
-        qDebug() << r.range.asText()
-                 << d->esc.plainText().substr(r.range)
-                 << "size:" << r.format.sizeFactor
-                 << "weight:" << r.format.weight
-                 << "style:" << r.format.style
-                 << "color:" << r.format.colorIndex
-                 << "tab:" << r.format.tabStop
-                 << "indent (m/r):" << r.format.markIndent << r.format.resetIndent;
+        debug("    [%s](%zu) size:%.1f weight:%i style:%i color:%i tab:%i indent:mark=%s,reset=%s",
+              r.range.toString().c_str(),
+              r.range.size(),
+              r.format.sizeFactor,
+              r.format.weight,
+              r.format.style,
+              r.format.colorIndex,
+              r.format.tabStop,
+              DE_BOOL_YESNO(r.format.markIndent),
+              DE_BOOL_YESNO(r.format.resetIndent));
     }
-    qDebug() << "Tabs:" << d->tabs.size();
-    foreach (int i, d->tabs)
+    debug("  tabs:%i", d->tabs.size());
+    for (int i : d->tabs)
     {
-        qDebug() << i;
+        debug("    %i", i);
     }
 #endif
 

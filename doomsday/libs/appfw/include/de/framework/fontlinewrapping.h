@@ -116,7 +116,7 @@ public:
             int       tabStop;
             WrapWidth width;
 
-            Segment(const CString &r = CString(), int tab = 0)
+            Segment(const CString &r = CString(), int tab = -1)
                 : range(r)
                 , tabStop(tab)
                 , width(0)

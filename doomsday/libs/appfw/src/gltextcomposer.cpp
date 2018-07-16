@@ -118,7 +118,7 @@ DE_PIMPL(GLTextComposer)
     {
         if (info.segs.size() != lines[lineIndex].segs.size())
         {
-            //qDebug() << "line" << lineIndex << "number of segs changed";
+//            debug("line %i number of segs changed", lineIndex);
             return false;
         }
         for (int i = 0; i < info.segs.sizei(); ++i)
@@ -126,20 +126,20 @@ DE_PIMPL(GLTextComposer)
             if (lines[lineIndex].segs[i].text != info.segs[i].range)
             {
                 // Range has changed.
-                //qDebug() << "line" << lineIndex << "seg" << i << "range change";
+//                debug("line %i seg %i range change", lineIndex, i);
                 return false;
             }
             if (lines[lineIndex].segs[i].text != segmentText(i, info))
             {
                 // Text has changed.
-                //qDebug() << "line" << lineIndex << "seg" << i << "text change";
+//                debug("line %i seg %i text change", lineIndex, i);
                 return false;
             }
             if (lines[lineIndex].segs[i].id.isNone() && info.segs[i].range.size() > 0)
             {
                 // This segment has previously failed allocation.
-                //qDebug() << "line" << lineIndex << "seg" << i << "not alloced before, len" <<
-                //            info.segs[i].range.size();
+//                debug("line %i seg %i not alloced before, len %i [%s]", lineIndex, i,
+//                      info.segs[i].range.size(), info.segs[i].range.toString().c_str());
                 return false;
             }
         }

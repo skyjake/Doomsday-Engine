@@ -39,7 +39,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
     struct Line
     {
         shell::WrappedLine line;
-        LineInfo    info;
+        LineInfo           info;
 
         Line(shell::WrappedLine const &ln = {CString(), 0}, int leftIndent = 0)
             : line(ln)
@@ -72,7 +72,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
     Font::RichFormat format;
     int              indent = 0; ///< Current left indentation (in pixels).
     List<int>        prevIndents;
-    int              tabStop = 0;
+    int              tabStop = -1;
     std::atomic_bool cancelled{false};
 
     DE_ERROR(CancelError);
@@ -307,7 +307,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
         const bool isTabbed       = (subsequentMaxWidth > 0);
 
         indent    = initialIndent;
-        tabStop   = 0;
+        tabStop   = (isTabbed ? 0 : -1);
 
         mb_iterator begin = rangeToWrap.begin();
 
@@ -541,7 +541,7 @@ void FontLineWrapping::reset()
     d->clearLines();
     d->indent = 0;
     d->prevIndents.clear();
-    d->tabStop = 0;
+    d->tabStop = -1;
     d->cancelled = false;
 }
 
@@ -622,15 +622,21 @@ void FontLineWrapping::wrapTextToWidth(const String &text, const Font::RichForma
     d->lines.last()->line.isFinal = true;
 
 #if 0
-    qDebug() << "Wrapped:" << d->text;
-    foreach (Impl::Line const *ln, d->lines)
+    debug("Wrapped: %s", d->text.c_str());
+    for (Impl::Line const *ln : d->lines)
     {
-        qDebug() << ln->line.range.asText() << d->text.substr(ln->line.range)
-                 << "indent:" << ln->info.indent << "segments:" << ln->info.segs.size();
-        foreach (LineInfo::Segment const &s, ln->info.segs)
+        debug("  range:[%s](%zu) indent:%i #segments:%i",
+              ln->line.range.toString().c_str(),
+              ln->line.range.size(),
+              ln->info.indent,
+              ln->info.segs.size());
+        for (LineInfo::Segment const &s : ln->info.segs)
         {
-            qDebug() << "- seg" << s.range.asText() << d->text.substr(s.range)
-                     << "tab:" << s.tabStop << "w:" << s.width;
+            debug("  - seg [%s](%zu) tab:%i width:%i",
+                  s.range.toString().c_str(),
+                  s.range.size(),
+                  s.tabStop,
+                  s.width);
         }
     }
 #endif
