@@ -1,4 +1,4 @@
-/** @file utils.h  Utilities.
+/** @file commander.h  Controller for the Gloom viewer app.
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,42 +16,26 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMAPP_UTILS_H
-#define GLOOMAPP_UTILS_H
+#ifndef GLOOMED_COMMANDER_H
+#define GLOOMED_COMMANDER_H
 
-#include <QVector2D>
-#include <QString>
 #include <de/String>
-#include <de/Vector>
 
-inline de::Vec2d toVec2d(const QVector2D &vec)
+/**
+ * Sends commands to the Gloom viewer app and listens to beacon messages.
+ */
+class Commander
 {
-    return de::Vec2d(vec.x(), vec.y());
-}
+    DE_PRIVATE(d)
 
-inline QVector2D toQVector2D(const de::Vec2d &vec)
-{
-    return QVector2D(float(vec.x), float(vec.y));
-}
+public:
+    Commander();
 
-inline de::String convert(const QString &qstr)
-{
-    return qstr.toStdWString();
-}
+    bool launch();
+    void sendCommand(const de::String &command);
 
-inline de::String convertToString(const QString &qstr)
-{
-    return convert(qstr);
-}
+    bool isLaunched() const;
+    bool isConnected() const;
+};
 
-inline QString convert(const de::String &str)
-{
-    return QString::fromUtf8(str);
-}
-
-inline QString convertToQString(const de::String &str)
-{
-    return convert(str);
-}
-
-#endif // GLOOMAPP_UTILS_H
+#endif // GLOOMED_COMMANDER_H

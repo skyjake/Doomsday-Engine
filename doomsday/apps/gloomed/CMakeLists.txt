@@ -10,8 +10,12 @@ set (CMAKE_AUTORCC ON)
 find_package (Qt5 COMPONENTS Gui Widgets)
 
 set (SOURCES
+    src/commander.cpp
+    src/commander.h
     src/editor.cpp
     src/editor.h
+    src/editorapp.cpp
+    src/editorapp.h
     src/editorwindow.cpp
     src/editorwindow.h
     src/main.cpp

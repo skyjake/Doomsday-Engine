@@ -1,4 +1,4 @@
-/** @file utils.h  Utilities.
+/** @file editorapp.h  GloomEd application.
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,42 +16,30 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef GLOOMAPP_UTILS_H
-#define GLOOMAPP_UTILS_H
+#ifndef GLOOMED_EDITORAPP_H
+#define GLOOMED_EDITORAPP_H
 
-#include <QVector2D>
-#include <QString>
-#include <de/String>
-#include <de/Vector>
+#include <doomsday/DoomsdayApp>
+#include <de/EmbeddedApp>
+#include <QApplication>
 
-inline de::Vec2d toVec2d(const QVector2D &vec)
+class Editor;
+
+class EditorApp : public QApplication, public de::EmbeddedApp, public DoomsdayApp
 {
-    return de::Vec2d(vec.x(), vec.y());
-}
+public:
+    EditorApp(int &argc, char **argv);
 
-inline QVector2D toQVector2D(const de::Vec2d &vec)
-{
-    return QVector2D(float(vec.x), float(vec.y));
-}
+    void initialize();
+    bool launchViewer();
+    void loadEditorMapInViewer(Editor &editor);
 
-inline de::String convert(const QString &qstr)
-{
-    return qstr.toStdWString();
-}
+    void checkPackageCompatibility(const de::StringList &,
+                                   const de::String &,
+                                   const std::function<void()> &finalizeFunc);
 
-inline de::String convertToString(const QString &qstr)
-{
-    return convert(qstr);
-}
+private:
+    DE_PRIVATE(d)
+};
 
-inline QString convert(const de::String &str)
-{
-    return QString::fromUtf8(str);
-}
-
-inline QString convertToQString(const de::String &str)
-{
-    return convert(str);
-}
-
-#endif // GLOOMAPP_UTILS_H
+#endif // GLOOMED_EDITORAPP_H
