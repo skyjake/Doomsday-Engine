@@ -33,10 +33,8 @@ public:
     void glInit(Context &) override;
     void glDeinit() override;
     void render() override;
-    void advanceTime(TimeSpan) override;
 
-    GLTexture &brightnessSample(int index) const;
-    GLUniform &uExposure() const;
+    GLUniform &uBrightnessSamples() const;
 
 private:
     DE_PRIVATE(d)

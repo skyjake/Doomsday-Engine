@@ -30,15 +30,12 @@ namespace gloom {
 
 DE_PIMPL(Tonemap)
 {
-    ScreenQuad    quad;
-    GLUniform     uFramebuf{"uFramebuf", GLUniform::Sampler2D};
-    GLUniform     uExposure{"uExposure", GLUniform::Float};
-    GLFramebuffer brightnessFramebuf[2];
-    GLTexture     brightnessSamples[2];
-    int           brightnessSampleIndex = 0;
+    ScreenQuad    tonemapQuad;
+    GLUniform     uFramebuf{"uFramebuf", GLUniform::Sampler2D}; // read framebuffer contents
+    GLFramebuffer brightnessFramebuf;                           // blending sample values
+    GLTexture     brightnessSamples;                            // store averaged sample values
+    GLUniform     uBrightnessSamples{"uBrightnessSamples", GLUniform::Sampler2D};
     ScreenQuad    brightnessQuad;
-    double        brightnessTime = 0;
-    Animation     exposure{.25f, Animation::Linear};
 
     Impl(Public *i) : Base(i)
     {}
@@ -52,37 +49,44 @@ void Tonemap::glInit(Context &context)
 {
     Render::glInit(context);
 
-    d->quad.glInit(context);
-    context.shaders->build(d->quad.program(), "gloom.tonemap.exposure")
-            << d->uFramebuf
-            << context.bloom->uBloomFramebuf()
-            << d->uExposure
-            << context.uDebugMode
-            << context.uDebugTex;
-
     // Brightness analysis.
     {
-        for (int i = 0; i < 2; ++i)
+        // Small buffer for storing averaged brightness values.
         {
-            auto &bs = d->brightnessSamples[i];
-
+            auto &bs = d->brightnessSamples;
             bs.setAutoGenMips(false);
             bs.setFilter(gfx::Nearest, gfx::Nearest, gfx::MipNone);
             bs.setUndefinedContent(Vec2ui(4, 4), GLPixelFormat(GL_RGB16F, GL_RGB, GL_FLOAT));
-
-            d->brightnessFramebuf[i].configure(GLFramebuffer::Color0, bs);
+            d->brightnessFramebuf.configure(GLFramebuffer::Color0, bs);
+            d->brightnessFramebuf.clear(GLFramebuffer::Color0);
+            d->uBrightnessSamples = bs;
         }
         d->brightnessQuad.glInit(context);
         context.shaders->build(d->brightnessQuad.program(), "gloom.tonemap.sample")
-            << d->uFramebuf;
+            << d->uFramebuf
+            << context.uCurrentFrameRate;
+
+        // Samples are blended for smooth exposure changes.
+        d->brightnessQuad.state()
+            .setBlend(true)
+            .setBlendFunc(gfx::SrcAlpha, gfx::OneMinusSrcAlpha);
     }
+
+    d->tonemapQuad.glInit(context);
+    context.shaders->build(d->tonemapQuad.program(), "gloom.tonemap.exposure")
+            << d->uFramebuf
+            << context.bloom->uBloomFramebuf()
+            << d->uBrightnessSamples
+            << context.uDebugMode
+            << context.uDebugTex;
 }
 
 void Tonemap::glDeinit()
 {
-    d->quad.glDeinit();
+    d->tonemapQuad.glDeinit();
     d->brightnessQuad.glDeinit();
-    for (auto &bf : d->brightnessFramebuf) bf.configure();
+    d->brightnessFramebuf.configure();
+    d->brightnessSamples.clear();
 
     Render::glDeinit();
 }
@@ -90,70 +94,26 @@ void Tonemap::glDeinit()
 void Tonemap::render()
 {
     d->uFramebuf = context().framebuf->attachedTexture(GLFramebuffer::Color0);
-    d->uExposure = d->exposure;
 
     // Brightness sampling.
     {
-        auto &idx = d->brightnessSampleIndex;
-        idx = (idx + 1) % 2;
         GLState::push()
-                .setTarget(d->brightnessFramebuf[idx])
-                .setViewport(Rectangleui::fromSize(d->brightnessSamples[0].size()));
-        d->brightnessQuad.state().setTarget(d->brightnessFramebuf[idx]);
+                .setTarget(d->brightnessFramebuf)
+                .setViewport(Rectangleui::fromSize(d->brightnessSamples.size()));
+        d->brightnessQuad.state().setTarget(d->brightnessFramebuf);
         d->brightnessQuad.render();
         GLState::pop();
     }
 
-    // Perform the tone mapping with exposure adjustment.
+    // Tone map the frame (with exposure adjustment based on sampled values).
     {
-        d->quad.render();
+        d->tonemapQuad.render();
     }
 }
 
-void Tonemap::advanceTime(TimeSpan elapsed)
+GLUniform &Tonemap::uBrightnessSamples() const
 {
-    d->brightnessTime += elapsed;
-    if (d->brightnessTime < 0.25) return;
-    d->brightnessTime = 0;
-
-    const auto &bs = d->brightnessSamples[d->brightnessSampleIndex];
-    List<Vec3f> sample(bs.size().area());
-    if (sample.isEmpty()) return;
-
-    // Read the previous frame's brightness sample.
-    {
-        glBindFramebuffer(GL_READ_FRAMEBUFFER,
-                             d->brightnessFramebuf[d->brightnessSampleIndex].glName());
-        glPixelStorei(GL_PACK_ALIGNMENT, 4);
-        glReadPixels(0, 0, bs.size().x, bs.size().y, GL_RGB, GL_FLOAT, &sample[0]);
-        GLState::current().target().glBind();
-    }
-
-    // TODO: try using the median brightness instead of max
-
-    //const Vec3f grayscale{0.2126f, 0.7152f, 0.0722f};
-    const Vec3f grayscale{.333f, .333f, .333f};
-
-    float brightest = 0;
-    for (const auto &s : sample)
-    {
-        brightest = de::max(float(s.dot(grayscale)), brightest);
-//        brightest = de::max(s.max(), brightest);
-    }
-
-    // The adjustment is kept below 1.0 to avoid overbrightening dark scenes.
-    d->exposure.setValue(de::min(1.0f, 1.75f / brightest), 1.0);
-//    d->exposure.setValue(de::min(1.0f, 1.0f / brightest), 1.0);
-}
-
-GLTexture &Tonemap::brightnessSample(int index) const
-{
-    return d->brightnessSamples[index];
-}
-
-GLUniform &Tonemap::uExposure() const
-{
-    return d->uExposure;
+    return d->uBrightnessSamples;
 }
 
 } // namespace gloom

@@ -91,7 +91,9 @@ DE_PIMPL(GloomWorld), public Asset
     Tonemap              tonemap;
     ScreenQuad           debugQuad;
 
-    Id timerId[PerfTimerCount];
+    Id   timerId[PerfTimerCount];
+    int  frameCount = 0;
+    Time frameCountStartedAt;
 
     float  visibleDistance;
     double currentTime = 0.0;
@@ -133,7 +135,7 @@ DE_PIMPL(GloomWorld), public Asset
         environ.setWorld(thisPublic);
     }
 
-    ~Impl()
+    ~Impl() override
     {
         for (auto &a : textureAtlas) delete a;
     }
@@ -150,6 +152,8 @@ DE_PIMPL(GloomWorld), public Asset
         glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
 
         sky.setSize(visibleDistance);
+
+        renderContext.uCurrentFrameRate = 60.f; // Will be updated when frames are rendered.
 
         framebuf .glInit();
         gbuffer  .glInit(renderContext);
@@ -169,7 +173,8 @@ DE_PIMPL(GloomWorld), public Asset
                     << renderContext.lights->uShadowMap()
                     << renderContext.view.uInverseProjMatrix
                     << ssao.uSSAOBuf()
-                    << bloom.uBloomFramebuf();
+                    << bloom.uBloomFramebuf()
+                    << tonemap.uBrightnessSamples();
             renderContext.bindGBuffer(debugQuad.program());
         }
 
@@ -221,7 +226,7 @@ DE_PIMPL(GloomWorld), public Asset
         return Vec3f(-.45f, .5f, -.89f).normalize();
     }
 
-    void userWarped(const User &)
+    void userWarped(const User &) override
     {}
 
     void update(const TimeSpan &elapsed)
@@ -277,6 +282,18 @@ void GloomWorld::render(const ICamera &camera)
     if (!d->isReady()) return;
 
     const auto frameSize = GLState::current().target().size();
+
+    // Estimate current frame rate.
+    {
+        d->frameCount++;
+        const auto elapsed = d->frameCountStartedAt.since();
+        if (elapsed > 1.0)
+        {
+            d->renderContext.uCurrentFrameRate = d->frameCount / elapsed;
+            d->frameCount = 0;
+            d->frameCountStartedAt = Time();
+        }
+    }
 
     d->renderContext.uDiffuseAtlas     = d->textureAtlas[gloom::Diffuse];
     d->renderContext.uEmissiveAtlas    = d->textureAtlas[gloom::Emissive];
@@ -374,7 +391,7 @@ User *GloomWorld::localUser() const
 
 World::POI GloomWorld::initialViewPosition() const
 {
-    return POI(Vec3f(0, 0, 0), 90);
+    return {Vec3f(0, 0, 0), 90};
 }
 
 List<World::POI> GloomWorld::pointsOfInterest() const

@@ -1,12 +1,12 @@
 #version 330 core
 
 #include "common/defs.glsl"
+#include "common/exposure.glsl"
 
 uniform int       uBloomMode;
 uniform float     uMinValue;
 uniform sampler2D uInputTex;
 uniform int       uInputLevel;
-uniform float     uExposure;
 
 const int   KERNEL_SIZE = 10;
 const float BLOOM_GAIN  = 1.0;
@@ -30,8 +30,8 @@ float brightness(vec3 color) {
     return dot(color, vec3(0.2126, 0.7152, 0.0722));
 }
 
-vec3 brightColor(vec2 texCoord) {
-    vec3 color = uExposure * textureLod(uInputTex, texCoord, uInputLevel).rgb;
+vec3 brightColor(vec2 texCoord, float exposure) {
+    vec3 color = exposure * textureLod(uInputTex, texCoord, uInputLevel).rgb;
     float bf = brightness(color) / uMinValue;
     if (bf > 1.0) {
         color = max(color * BLOOM_GAIN * min(1.0, bf - 1.0), 0.0);
@@ -61,10 +61,11 @@ void main(void) {
         }
     }
     else {
-        out_FragColor.rgb += weights[0] * brightColor(vUV);
+        float exposure = Gloom_Exposure();
+        out_FragColor.rgb += weights[0] * brightColor(vUV, exposure);
         for (int i = 1; i < KERNEL_SIZE; ++i) {
-            out_FragColor.rgb += weights[i] * brightColor(vUV + texel * i);
-            out_FragColor.rgb += weights[i] * brightColor(vUV - texel * i);
+            out_FragColor.rgb += weights[i] * brightColor(vUV + texel * i, exposure);
+            out_FragColor.rgb += weights[i] * brightColor(vUV - texel * i, exposure);
         }
     }
 }

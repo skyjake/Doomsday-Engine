@@ -57,7 +57,8 @@ DE_PIMPL(Bloom)
                 << uInputLevel
                 << uBloomMode
                 << uMinValue
-                << context.tonemap->uExposure();
+                << context.tonemap->uBrightnessSamples();
+//                << context.tonemap->uExposure();
         for (auto &buf : workBufs)
         {
             buf.texture.setAutoGenMips(false);

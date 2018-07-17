@@ -1,8 +1,9 @@
 #version 330 core
 
+#include "common/exposure.glsl"
+
 uniform sampler2D uFramebuf;
 uniform sampler2D uBloomFramebuf;
-uniform float     uExposure;
 
 in vec2 vUV;
 
@@ -13,8 +14,10 @@ void main(void) {
     // const float gamma = 0.5;
     // vec3 mapped = hdr * uExposure;
 
+    float exposure = Gloom_Exposure();
+
     const float gamma = 0.5; //1.4;
-    vec3 mapped = 1.0 - exp(-hdr * uExposure);
+    vec3 mapped = 1.0 - exp(-hdr * exposure);
 
     mapped = pow(mapped, 1.0 / vec3(gamma));
 

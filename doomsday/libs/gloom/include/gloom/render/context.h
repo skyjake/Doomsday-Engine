@@ -53,23 +53,24 @@ struct Context {
     LightRender *         lights;
     Tonemap *             tonemap;
 
-    GLUniform uCurrentTime      {"uCurrentTime",      GLUniform::Float};
+    GLUniform uCurrentTime          {"uCurrentTime",      GLUniform::Float};
+    GLUniform uCurrentFrameRate     {"uCurrentFrameRate", GLUniform::Float};
 
-    GLUniform uDiffuseAtlas     {"uTextureAtlas[0]",  GLUniform::Sampler2D};
-    GLUniform uSpecGlossAtlas   {"uTextureAtlas[1]",  GLUniform::Sampler2D};
-    GLUniform uEmissiveAtlas    {"uTextureAtlas[2]",  GLUniform::Sampler2D};
-    GLUniform uNormalDisplAtlas {"uTextureAtlas[3]",  GLUniform::Sampler2D};
-    GLUniform uEnvMap           {"uEnvMap",           GLUniform::SamplerCube};
-    GLUniform uEnvIntensity     {"uEnvIntensity",     GLUniform::Vec3};
+    GLUniform uDiffuseAtlas         {"uTextureAtlas[0]",  GLUniform::Sampler2D};
+    GLUniform uSpecGlossAtlas       {"uTextureAtlas[1]",  GLUniform::Sampler2D};
+    GLUniform uEmissiveAtlas        {"uTextureAtlas[2]",  GLUniform::Sampler2D};
+    GLUniform uNormalDisplAtlas     {"uTextureAtlas[3]",  GLUniform::Sampler2D};
+    GLUniform uEnvMap               {"uEnvMap",           GLUniform::SamplerCube};
+    GLUniform uEnvIntensity         {"uEnvIntensity",     GLUniform::Vec3};
 
-    GLUniform uLightMatrix      {"uLightMatrix",      GLUniform::Mat4};
-    GLUniform uInverseLightMatrix {"uInverseLightMatrix", GLUniform::Mat4};
-    GLUniform uLightOrigin      {"uLightOrigin",      GLUniform::Vec3};
-    GLUniform uLightFarPlane    {"uFarPlane",         GLUniform::Float};
-    GLUniform uLightCubeMatrices{"uCubeFaceMatrices", GLUniform::Mat4Array, 6};
+    GLUniform uLightMatrix          {"uLightMatrix",      GLUniform::Mat4};
+    GLUniform uInverseLightMatrix   {"uInverseLightMatrix", GLUniform::Mat4};
+    GLUniform uLightOrigin          {"uLightOrigin",      GLUniform::Vec3};
+    GLUniform uLightFarPlane        {"uFarPlane",         GLUniform::Float};
+    GLUniform uLightCubeMatrices    {"uCubeFaceMatrices", GLUniform::Mat4Array, 6};
 
-    GLUniform uDebugTex         {"uDebugTex",         GLUniform::Sampler2D};
-    GLUniform uDebugMode        {"uDebugMode",        GLUniform::Int};
+    GLUniform uDebugTex             {"uDebugTex",         GLUniform::Sampler2D};
+    GLUniform uDebugMode            {"uDebugMode",        GLUniform::Int};
 
     Context &bindCamera(GLProgram &);
     Context &bindGBuffer(GLProgram &);
