@@ -53,7 +53,7 @@ public:
         typedef StringList Lines;
 
         virtual Lines logEntryToTextLines(const LogEntry &entry) = 0;
-        virtual ~IFormatter() {}
+        virtual ~IFormatter() = default;
     };
 
 public:

@@ -44,7 +44,7 @@ public:
     class LIBGUI_PUBLIC IUserData
     {
     public:
-        virtual ~IUserData() {}
+        virtual ~IUserData() = default;
         DE_CAST_METHODS()
     };
 

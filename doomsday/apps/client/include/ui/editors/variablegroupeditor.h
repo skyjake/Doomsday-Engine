@@ -48,7 +48,7 @@ public:
         virtual de::ScrollAreaWidget &containerWidget() = 0;
         virtual void resetToDefaults(de::String const &name) = 0;
 
-        virtual ~IOwner() {}
+        virtual ~IOwner() = default;
     };
 
 public:

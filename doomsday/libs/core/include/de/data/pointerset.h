@@ -48,7 +48,7 @@ public:
     class DE_PUBLIC IIterationObserver
     {
     public:
-        virtual ~IIterationObserver() {}
+        virtual ~IIterationObserver() = default;
         virtual void pointerSetIteratorsWereInvalidated(Pointer const *oldBase, Pointer const *newBase) = 0;
     };
 

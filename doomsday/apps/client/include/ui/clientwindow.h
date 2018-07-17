@@ -32,15 +32,15 @@
 
 #undef main
 
-#define DE_GAMEVIEW_X         ClientWindow::main().game().rule().left().valuei()
-#define DE_GAMEVIEW_Y         ClientWindow::main().game().rule().top().valuei()
-#define DE_GAMEVIEW_WIDTH     ClientWindow::main().game().rule().width().valuei()
-#define DE_GAMEVIEW_HEIGHT    ClientWindow::main().game().rule().height().valuei()
+#define DE_GAMEVIEW_X           ClientWindow::main().game().rule().left().valuei()
+#define DE_GAMEVIEW_Y           ClientWindow::main().game().rule().top().valuei()
+#define DE_GAMEVIEW_WIDTH       ClientWindow::main().game().rule().width().valuei()
+#define DE_GAMEVIEW_HEIGHT      ClientWindow::main().game().rule().height().valuei()
 
 /**
  * A helpful macro that changes the origin of the window space coordinate system.
  */
-#define FLIP(y)             (ClientWindow::main().height() - ((y)+1))
+#define FLIP(y)                 (ClientWindow::main().height() - ((y) + 1))
 
 class ConsoleWidget;
 class TaskBarWidget;

@@ -56,7 +56,7 @@ public:
     {
     public:
         virtual void taskFinishedRunning(Task &) = 0;
-        virtual ~IPool() {}
+        virtual ~IPool() = default;
     };
 
     typedef std::function<void ()> TaskFunction;

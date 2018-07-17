@@ -59,7 +59,7 @@ public:
     class LIBDOOMSDAY_PUBLIC ITaskRunner
     {
     public:
-        virtual ~ITaskRunner() {}
+        virtual ~ITaskRunner() = default;
 
         struct LIBDOOMSDAY_PUBLIC Result {
             bool wasRun;

@@ -46,7 +46,7 @@ public:
     class IWidgetFactory
     {
     public:
-        virtual ~IWidgetFactory() {}
+        virtual ~IWidgetFactory() = default;
 
         /**
          * Called when the organizer needs a widget for a context item. This allows

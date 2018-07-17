@@ -27,7 +27,7 @@ namespace gloom {
 class LIBGLOOM_PUBLIC ICamera
 {
 public:
-    virtual ~ICamera() {}
+    virtual ~ICamera() = default;
 
     /**
      * Returns the position of the camera in world space.

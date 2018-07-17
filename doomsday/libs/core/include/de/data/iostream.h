@@ -36,7 +36,7 @@ public:
     DE_ERROR(OutputError);
 
 public:
-    virtual ~IOStream() {}
+    virtual ~IOStream() = default;
 
     /**
      * Writes an array of bytes to the stream.

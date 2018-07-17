@@ -36,7 +36,7 @@ namespace filesys {
 class IInterpreter
 {
 public:
-    virtual ~IInterpreter() {}
+    virtual ~IInterpreter() = default;
 
     /**
      * Attempts to interpret a file.

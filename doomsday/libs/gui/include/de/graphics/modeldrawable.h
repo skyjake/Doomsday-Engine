@@ -271,7 +271,7 @@ public:
     class LIBGUI_PUBLIC IImageLoader
     {
     public:
-        virtual ~IImageLoader() {}
+        virtual ~IImageLoader() = default;
 
         /**
          * Loads an image. If the image can't be loaded, the loader must throw an

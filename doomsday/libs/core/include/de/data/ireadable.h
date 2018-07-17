@@ -14,9 +14,9 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
- 
+
 #ifndef LIBCORE_IREADABLE_H
 #define LIBCORE_IREADABLE_H
 
@@ -37,7 +37,7 @@ class Reader;
 class DE_PUBLIC IReadable
 {
 public:
-    virtual ~IReadable() {}
+    virtual ~IReadable() = default;
 
     /**
      * Restore the object from the provided Reader.

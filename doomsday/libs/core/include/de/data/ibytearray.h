@@ -48,7 +48,7 @@ public:
     typedef dbyte Byte;
 
 public:
-    virtual ~IByteArray() {}
+    virtual ~IByteArray() = default;
 
     /// Returns the length of the array.
     virtual Size size() const = 0;

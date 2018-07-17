@@ -29,7 +29,7 @@ class DE_PUBLIC IRunnable
 {
 public:
     virtual void run() = 0;
-    virtual ~IRunnable() {}
+    virtual ~IRunnable() = default;
 };
 
 /**

@@ -30,7 +30,7 @@ namespace de {
 class DE_PUBLIC ISizeRule
 {
 public:
-    virtual ~ISizeRule() {}
+    virtual ~ISizeRule() = default;
 
     virtual Rule const &width() const = 0;
     virtual Rule const &height() const = 0;

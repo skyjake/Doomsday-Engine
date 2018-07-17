@@ -44,7 +44,7 @@ class Id1MapElement
 public:
     Id1MapElement(MapImporter &map) : _map(&map) {}
     Id1MapElement(Id1MapElement const &other) : _map(other._map) {}
-    virtual ~Id1MapElement() {}
+    virtual ~Id1MapElement() = default;
 
     MapImporter &map() const {
         DE_ASSERT(_map != 0);

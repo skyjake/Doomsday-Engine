@@ -155,7 +155,7 @@ public:
     class IEventHandler
     {
     public:
-        virtual ~IEventHandler() {}
+        virtual ~IEventHandler() = default;
 
         /**
          * Handle an event.

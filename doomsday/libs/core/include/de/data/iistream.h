@@ -43,7 +43,7 @@ public:
     DE_ERROR(InputError);
 
 public:
-    virtual ~IIStream() {}
+    virtual ~IIStream() = default;
 
     /**
      * Reads all the available bytes into the array @a bytes. If there is

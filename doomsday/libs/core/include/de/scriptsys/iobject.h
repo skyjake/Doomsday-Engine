@@ -39,7 +39,7 @@ class Variable;
 class DE_PUBLIC IObject
 {
 public:
-    virtual ~IObject() {}
+    virtual ~IObject() = default;
 
     /**
      * Returns the Record that contains the instance namespace of the object.

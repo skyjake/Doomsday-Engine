@@ -46,7 +46,7 @@ public:
     class DE_PUBLIC IPredicate
     {
     public:
-        virtual ~IPredicate() {}
+        virtual ~IPredicate() = default;
 
         /**
          * Determines if a file should be included in the index.

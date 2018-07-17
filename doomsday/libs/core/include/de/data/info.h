@@ -265,7 +265,7 @@ public:
     class DE_PUBLIC IIncludeFinder
     {
     public:
-        virtual ~IIncludeFinder() {}
+        virtual ~IIncludeFinder() = default;
 
         /**
          * Finds an Info document.

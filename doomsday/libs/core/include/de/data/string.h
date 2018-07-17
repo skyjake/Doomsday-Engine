@@ -163,7 +163,7 @@ public:
         DE_ERROR(TypeError);
 
     public:
-        virtual ~IPatternArg() {}
+        virtual ~IPatternArg() = default;
 
         /// Returns the value of the argument as a text string.
         virtual String asText() const = 0;

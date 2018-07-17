@@ -112,7 +112,7 @@ public:
     class IMapStateReaderFactory
     {
     public:
-        virtual ~IMapStateReaderFactory() {}
+        virtual ~IMapStateReaderFactory() = default;
 
         /**
          * Called while loading a saved session to acquire a MapStateReader for the

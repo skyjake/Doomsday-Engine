@@ -144,7 +144,7 @@ public:
     class ISource
     {
     public:
-        virtual ~ISource() {}
+        virtual ~ISource() = default;
 
         /**
          * Returns the timestamp of the source data, which determines when the
@@ -166,7 +166,7 @@ public:
     class IData
     {
     public:
-        virtual ~IData() {}
+        virtual ~IData() = default;
 
         /// Serialization should be done?
         virtual bool shouldBeSerialized() const { return true; }

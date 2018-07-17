@@ -31,7 +31,7 @@ namespace de { namespace shell {
 class ITextEditor
 {
 public:
-    virtual ~ITextEditor() {}
+    virtual ~ITextEditor() = default;
 
     virtual void setText(String const &text) = 0;
     virtual void setCursor(BytePos bytePos)  = 0;

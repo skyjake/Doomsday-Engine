@@ -122,7 +122,7 @@ public:
     class LIBDOOMSDAY_PUBLIC IData
     {
     public:
-        virtual ~IData() {}
+        virtual ~IData() = default;
         virtual void setThinker(thinker_s *thinker) = 0;
         virtual void think() = 0;
         virtual IData *duplicate() const = 0;

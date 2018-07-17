@@ -140,7 +140,7 @@ public:
         public:
             typedef Vec4ub Color;
 
-            virtual ~IStyle() {}
+            virtual ~IStyle() = default;
 
             /**
              * Returns a color from the style's palette.

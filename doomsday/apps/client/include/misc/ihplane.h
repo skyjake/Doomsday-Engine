@@ -44,7 +44,7 @@ public:
     public:
         IIntercept(ddouble distance) : _distance(distance) {}
 
-        virtual ~IIntercept() {}
+        virtual ~IIntercept() = default;
 
         /**
          * Determines the distance between "this" and the @a other intercept
@@ -75,7 +75,7 @@ public:
     };
 
 public:
-    virtual ~IHPlane() {}
+    virtual ~IHPlane() = default;
 
     /**
      * Reconfigure the half-plane according to the given Partition line.

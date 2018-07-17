@@ -46,7 +46,7 @@ public:
     typedef de::Vec3f Colorf;
 
 public:
-    virtual ~ILightSource() {}
+    virtual ~ILightSource() = default;
 
     virtual LightId lightSourceId() const = 0;
 
@@ -78,7 +78,7 @@ public:
     typedef de::Vec3d Origin;
 
 public:
-    virtual ~IPointLightSource() {}
+    virtual ~IPointLightSource() = default;
 
     /**
      * Returns the position of the light source, in map units.

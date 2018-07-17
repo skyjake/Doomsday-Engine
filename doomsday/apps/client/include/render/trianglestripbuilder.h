@@ -35,7 +35,7 @@ public:
     class IEvent
     {
     public:
-        virtual ~IEvent() {}
+        virtual ~IEvent() = default;
 
         virtual bool operator < (IEvent const &other) const {
             return distance() < other.distance();
@@ -45,7 +45,7 @@ public:
     };
 
 public:
-    virtual ~IEdge() {}
+    virtual ~IEdge() = default;
 
     virtual bool isValid() const = 0;
 

@@ -104,7 +104,7 @@ public:
     class LIBGUI_PUBLIC IAtlasFactory
     {
     public:
-        virtual ~IAtlasFactory() {}
+        virtual ~IAtlasFactory() = default;
 
         /**
          * Creates a new Atlas for @a owner. Atlases used with MultiAtlas

@@ -31,7 +31,7 @@
 class ISequenceCompleteHandler
 {
 public:
-    virtual ~ISequenceCompleteHandler() {}
+    virtual ~ISequenceCompleteHandler() = default;
     virtual void invoke(int player, EventSequenceArg* args, int numArgs) = 0;
 };
 

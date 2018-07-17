@@ -30,7 +30,7 @@ namespace de {
 class DE_PUBLIC IDownloadable
 {
 public:
-    virtual ~IDownloadable() {}
+    virtual ~IDownloadable() = default;
 
     virtual Asset &asset() = 0;
 

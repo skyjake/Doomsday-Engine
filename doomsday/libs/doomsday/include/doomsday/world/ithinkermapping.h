@@ -32,7 +32,7 @@ namespace world {
 class LIBDOOMSDAY_PUBLIC IThinkerMapping
 {
 public:
-    virtual ~IThinkerMapping() {}
+    virtual ~IThinkerMapping() = default;
 
     /**
      * Retrieves the thinker corresponding a private identifier.

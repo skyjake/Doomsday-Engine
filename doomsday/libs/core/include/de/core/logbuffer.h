@@ -51,7 +51,7 @@ public:
     class IFilter
     {
     public:
-        virtual ~IFilter() {}
+        virtual ~IFilter() = default;
 
         /**
          * Determines if a log entry should be allowed into the log buffer

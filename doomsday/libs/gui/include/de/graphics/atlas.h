@@ -41,7 +41,7 @@ class LIBGUI_PUBLIC IAtlas
 public:
     DE_ERROR(OutOfSpaceError);
 
-    virtual ~IAtlas() {}
+    virtual ~IAtlas() = default;
 
     virtual Id alloc(Image const &image, Id const &chosenId = Id::None) = 0;
     virtual void release(Id const &id) = 0;
@@ -115,7 +115,7 @@ public:
         typedef Hash<Id, Rectanglei> Allocations;
 
     public:
-        virtual ~IAllocator() {}
+        virtual ~IAllocator() = default;
 
         /**
          * Define the metrics for the atlas.

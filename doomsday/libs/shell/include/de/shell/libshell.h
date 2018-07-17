@@ -83,7 +83,7 @@ struct LIBSHELL_PUBLIC WrappedLine
 class LIBSHELL_PUBLIC ILineWrapping
 {
 public:
-    virtual ~ILineWrapping() {}
+    virtual ~ILineWrapping() = default;
 
     virtual bool        isEmpty() const                                         = 0;
     virtual void        clear()                                                 = 0;

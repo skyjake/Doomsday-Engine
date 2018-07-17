@@ -36,7 +36,7 @@ class PersistentState;
 class LIBAPPFW_PUBLIC IPersistent
 {
 public:
-    virtual ~IPersistent() {}
+    virtual ~IPersistent() = default;
 
     virtual void operator >> (PersistentState &toState) const = 0;
     virtual void operator << (PersistentState const &fromState) = 0;

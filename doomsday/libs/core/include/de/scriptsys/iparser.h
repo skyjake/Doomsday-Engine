@@ -39,7 +39,7 @@ class Script;
 class IParser
 {
 public:
-    virtual ~IParser() {}
+    virtual ~IParser() = default;
 
     /**
      * Reads an input script in text format, and according to the
