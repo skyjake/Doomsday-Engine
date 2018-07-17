@@ -95,7 +95,7 @@ DE_PIMPL(GLWindow)
 
         if (thisPublic == mainWindow)
         {
-            GuiLoop::get().setWindow(nullptr);
+            GuiLoop::get().setWindow(nullptr); // triggers GuiLoop iterations
             mainWindow = nullptr;
         }
     }
@@ -217,9 +217,109 @@ DE_PIMPL(GLWindow)
 
     void frameWasSwapped()
     {
-        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-        DE_FOR_PUBLIC_AUDIENCE2(Swap, i) i->windowSwapped(self());
         updateFrameRateStatistics();
+
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
+        DE_FOR_PUBLIC_AUDIENCE2(Swap, i) { i->windowSwapped(self()); }
+
+        // As soon as convenient (after pending input/timers), check new events and redraw.
+        EventLoop::post(new CoreEvent([this]() {
+            handleEvents();
+            self().update();
+        }));
+    }
+
+    /**
+     * Get events from SDL and route them to the appropriate place for handling.
+     */
+    void handleEvents()
+    {
+        try
+        {
+            SDL_Event event;
+            while (SDL_PollEvent(&event))
+            {
+                switch (event.type)
+                {
+                case SDL_QUIT:
+                    DE_GUI_APP->quit(0);
+                    break;
+
+                case SDL_WINDOWEVENT:
+                case SDL_MOUSEMOTION:
+                case SDL_MOUSEBUTTONDOWN:
+                case SDL_MOUSEBUTTONUP:
+                case SDL_MOUSEWHEEL:
+                case SDL_KEYDOWN:
+                case SDL_KEYUP:
+                case SDL_TEXTINPUT:
+                    handleSDLEvent(event);
+                    break;
+                }
+            }
+        }
+        catch (const Error &er)
+        {
+            LOG_WARNING("Uncaught error during event processing: %s") << er.asText();
+        }
+    }
+
+    void handleSDLEvent(const SDL_Event &event)
+    {
+        switch (event.type)
+        {
+        case SDL_KEYDOWN:
+        case SDL_KEYUP:
+        case SDL_TEXTINPUT:
+        case SDL_MOUSEMOTION:
+        case SDL_MOUSEBUTTONDOWN:
+        case SDL_MOUSEBUTTONUP:
+        case SDL_MOUSEWHEEL:
+            handler->handleSDLEvent(&event);
+            break;
+
+        case SDL_WINDOWEVENT:
+            switch (event.window.event)
+            {
+            case SDL_WINDOWEVENT_EXPOSED:
+                if (!initialized)
+                {
+                    self().initializeGL();
+                    self().update();
+                }
+                break;
+
+            case SDL_WINDOWEVENT_MOVED:
+                DE_FOR_PUBLIC_AUDIENCE2(Move, i)
+                {
+                    i->windowMoved(self(), Vec2i(event.window.data1, event.window.data2));
+                }
+                break;
+
+            case SDL_WINDOWEVENT_RESIZED: resizeEvent(event.window); break;
+
+            case SDL_WINDOWEVENT_CLOSE: break;
+
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
+            case SDL_WINDOWEVENT_FOCUS_LOST:
+                handler->handleSDLEvent(&event);
+                break;
+
+            case SDL_WINDOWEVENT_MAXIMIZED:
+            case SDL_WINDOWEVENT_MINIMIZED:
+            case SDL_WINDOWEVENT_RESTORED:
+            case SDL_WINDOWEVENT_HIDDEN: break;
+
+            case SDL_WINDOWEVENT_SHOWN:
+                self().update();
+                break;
+
+            default: break;
+            }
+            break;
+
+        default: break;
+        }
     }
 
     DE_PIMPL_AUDIENCES(Init, Resize, PixelRatio, Swap, Move, Visibility)
@@ -458,70 +558,10 @@ bool GLWindow::ownsEventHandler(WindowEventHandler *handler) const
     return d->handler == handler;
 }
 
-#if 0
-void GLWindow::focusInEvent(QFocusEvent *ev)
+void GLWindow::checkNativeEvents()
 {
-    d->handler->focusInEvent(ev);
+    d->handleEvents();
 }
-
-void GLWindow::focusOutEvent(QFocusEvent *ev)
-{
-    d->handler->focusOutEvent(ev);
-}
-
-void GLWindow::keyPressEvent(QKeyEvent *ev)
-{
-    d->handler->keyPressEvent(ev);
-}
-
-void GLWindow::keyReleaseEvent(QKeyEvent *ev)
-{
-    d->handler->keyReleaseEvent(ev);
-}
-
-void GLWindow::mousePressEvent(QMouseEvent *ev)
-{
-    d->handler->mousePressEvent(ev);
-}
-
-void GLWindow::mouseReleaseEvent(QMouseEvent *ev)
-{
-    d->handler->mouseReleaseEvent(ev);
-}
-
-void GLWindow::mouseDoubleClickEvent(QMouseEvent *ev)
-{
-    d->handler->mouseDoubleClickEvent(ev);
-}
-
-void GLWindow::mouseMoveEvent(QMouseEvent *ev)
-{
-    d->handler->mouseMoveEvent(ev);
-}
-
-void GLWindow::wheelEvent(QWheelEvent *ev)
-{
-    d->handler->wheelEvent(ev);
-}
-
-bool GLWindow::event(QEvent *ev)
-{
-/*#ifdef WIN32
-    if (ev->type() == QEvent::ActivationChange)
-    {
-        //LOG_DEBUG("GLWindow: Forwarding QEvent::KeyRelease, Qt::Key_Alt");
-        QKeyEvent keyEvent = QKeyEvent(QEvent::KeyRelease, Qt::Key_Alt, Qt::NoModifier);
-        return QApplication::sendEvent(&canvas(), &keyEvent);
-    }
-#endif*/
-
-    if (ev->type() == QEvent::Close)
-    {
-        windowAboutToClose();
-    }
-    return QOpenGLWindow::event(ev);
-}
-#endif
 
 void GLWindow::grabToFile(NativePath const &path) const
 {
@@ -565,69 +605,13 @@ void GLWindow::glDone()
     doneCurrent();
 }
 
-void GLWindow::handleSDLEvent(const void *ptr)
-{
-    DE_ASSERT(ptr);
-    const SDL_Event *event = reinterpret_cast<const SDL_Event *>(ptr);
-    switch (event->type)
-    {
-    case SDL_KEYDOWN:
-    case SDL_KEYUP:
-    case SDL_TEXTINPUT:
-    case SDL_MOUSEMOTION:
-    case SDL_MOUSEBUTTONDOWN:
-    case SDL_MOUSEBUTTONUP:
-    case SDL_MOUSEWHEEL:
-        d->handler->handleSDLEvent(ptr);
-        break;
-
-    case SDL_WINDOWEVENT:
-        switch (event->window.event)
-        {
-        case SDL_WINDOWEVENT_EXPOSED:
-            if (!d->initialized)
-        {
-                initializeGL();
-                paintGL();
-            }
-            break;
-
-        case SDL_WINDOWEVENT_MOVED:
-            DE_FOR_AUDIENCE2(Move, i)
-            {
-                i->windowMoved(*this, Vec2i(event->window.data1, event->window.data2));
-            }
-            break;
-
-        case SDL_WINDOWEVENT_RESIZED: d->resizeEvent(event->window); break;
-
-        case SDL_WINDOWEVENT_CLOSE: break;
-
-        case SDL_WINDOWEVENT_FOCUS_GAINED:
-        case SDL_WINDOWEVENT_FOCUS_LOST:
-            d->handler->handleSDLEvent(ptr);
-            break;
-
-        case SDL_WINDOWEVENT_MAXIMIZED:
-        case SDL_WINDOWEVENT_MINIMIZED:
-        case SDL_WINDOWEVENT_RESTORED:
-        case SDL_WINDOWEVENT_SHOWN:
-        case SDL_WINDOWEVENT_HIDDEN: break;
-
-        default: break;
-        }
-    break;
-
-    default: break;
-    }
-}
-
 void GLWindow::update()
 {
     if (!d->paintPending)
     {
         d->paintPending = true;
-        EventLoop::get()->postEvent(new CoreEvent(Event::Callback, [this]() {
+        EventLoop::post(new CoreEvent([this]() {
+            d->paintPending = false;
             makeCurrent();
             paintGL();
             doneCurrent();
@@ -655,7 +639,6 @@ void GLWindow::initializeGL()
 
 void GLWindow::paintGL()
 {
-    d->paintPending = false;
     GLFramebuffer::setDefaultFramebuffer(0);
 
     // Do not proceed with painting until after the application has completed
@@ -683,11 +666,22 @@ void GLWindow::paintGL()
     // Make sure any changes to the state stack are in effect.
     GLState::current().target().glBind();
 
+    // This will be the current time for the frame.
+    {
+        Time::updateCurrentHighPerformanceTime();
+        Clock::get().setTime(Time::currentHighPerformanceTime());
+        LIBGUI_ASSERT_GL_OK();
+    }
+
+    makeCurrent(); // Clock observers may have deactivated the context.
+
     draw();
 
     LIBGUI_ASSERT_GL_OK();
 
+    // Show the final frame contents.
     SDL_GL_SwapWindow(d->window);
+
     d->frameWasSwapped();
 }
 

@@ -18,21 +18,38 @@
 
 #include "de/GuiLoop"
 #include "de/GLWindow"
+#include "de/EventLoop"
+#include "de/CoreEvent"
 
 namespace de {
 
-DE_PIMPL_NOREF(GuiLoop)
+DE_PIMPL(GuiLoop)
+, DE_OBSERVES(GLWindow, Swap)
 {
     GLWindow *window = nullptr;
+
+    Impl(Public *i) : Base(i)
+    {}
+
+    void windowSwapped(GLWindow &) override
+    {
+        // Always do a loop iteration after a frame is complete.
+        EventLoop::post(new CoreEvent([this]() { self().nextLoopIteration(); }));
+    }
 };
 
 GuiLoop::GuiLoop()
-    : d(new Impl)
-{}
+    : d(new Impl(this))
+{
+    // Make sure some events get triggered even though the window refresh is not (yet) running.
+    setRate(10);
+}
 
 void GuiLoop::setWindow(GLWindow *window)
 {
+    if (d->window) d->window->audienceForSwap() -= d;
     d->window = window;
+    if (d->window) d->window->audienceForSwap() += d;
 }
 
 GuiLoop &GuiLoop::get() // static
@@ -44,6 +61,7 @@ void GuiLoop::nextLoopIteration()
 {
     if (d->window)
     {
+        d->window->checkNativeEvents();
         d->window->glActivate();
     }
 

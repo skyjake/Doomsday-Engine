@@ -51,7 +51,6 @@ class Thread;
  * @ingroup gui
  */
 class LIBGUI_PUBLIC GuiApp : public App
-                           , DE_OBSERVES(Loop, Iteration)
 {
 public:
     enum MouseCursor { None, Arrow, ResizeHorizontal, ResizeVertical };
@@ -102,9 +101,6 @@ public:
 
 protected:
     NativePath appDataPath() const override;
-
-    // Observes Loop iteration.
-    void loopIteration() override;
 
 private:
     DE_PRIVATE(d)

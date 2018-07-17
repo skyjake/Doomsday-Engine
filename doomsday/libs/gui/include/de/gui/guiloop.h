@@ -26,7 +26,7 @@ namespace de {
 class GLWindow;
 
 /**
- * Continually triggered loop that activates a window when triggering iterations.
+ * Loop that gets triggered after each time GLWindow contents have been refreshed.
  */
 class GuiLoop : public Loop
 {

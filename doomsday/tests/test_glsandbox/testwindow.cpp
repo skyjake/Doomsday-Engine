@@ -480,7 +480,6 @@ DE_PIMPL(TestWindow)
         }
 
         self().glDone();
-        self().update();
     }
 
     void nextAtlasAlloc()

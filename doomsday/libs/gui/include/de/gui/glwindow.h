@@ -157,6 +157,8 @@ public:
      */
     bool ownsEventHandler(WindowEventHandler *handler) const;
 
+    void checkNativeEvents();
+
     enum GrabMode { GrabNormal, GrabHalfSized };
 
     /**
@@ -209,8 +211,6 @@ public:
 //    void *nativeHandle() const;
 
     virtual void draw() = 0;
-
-    void handleSDLEvent(const void *);
 
 public:
     static bool mainExists();

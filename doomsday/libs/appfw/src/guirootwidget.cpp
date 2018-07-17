@@ -437,7 +437,7 @@ void GuiRootWidget::update()
     }
 
     // Request a window draw so that the updated content becomes visible.
-    window().as<BaseWindow>().requestDraw();
+//    window().as<BaseWindow>().requestDraw();
 }
 
 void GuiRootWidget::draw()

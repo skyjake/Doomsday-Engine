@@ -40,19 +40,16 @@ namespace de {
 
 DE_PIMPL(GuiApp)
 {
-    EventLoop eventLoop;
-    GuiLoop   loop;
-    Thread *  renderThread;
-    double    dpiFactor = 1.0;
+    EventLoop   eventLoop;
+    GuiLoop     loop;
+    Thread *    renderThread;
+    double      dpiFactor = 1.0;
     SDL_Cursor *arrowCursor;
     SDL_Cursor *vsizeCursor;
     SDL_Cursor *hsizeCursor;
 
     Impl(Public *i) : Base(i)
     {
-        loop.setRate(120);
-        loop.audienceForIteration() += self();
-
         // The default render thread is the main thread.
         renderThread = Thread::currentThread();
 
@@ -103,7 +100,7 @@ DE_PIMPL(GuiApp)
 #endif
     }
 
-    void matchLoopRateToDisplayMode()
+    /*void matchLoopRateToDisplayMode()
     {
         SDL_DisplayMode mode;
         if (SDL_GetCurrentDisplayMode(0, &mode) == 0)
@@ -111,37 +108,7 @@ DE_PIMPL(GuiApp)
             LOG_GL_MSG("Current display mode refresh rate: %d Hz") << mode.refresh_rate;
             self().loop().setRate(mode.refresh_rate ? mode.refresh_rate : 60.0);
         }
-    }
-
-    /**
-     * Get events from SDL and route them to the appropriate place for handling.
-     */
-    void postEvents()
-    {
-        GLWindow *window = GLWindow::mainExists() ? &GLWindow::main() : nullptr;
-
-        SDL_Event event;
-        while (SDL_PollEvent(&event))
-        {
-            switch (event.type)
-            {
-            case SDL_QUIT:
-                eventLoop.quit(0);
-                break;
-
-            case SDL_WINDOWEVENT:
-            case SDL_MOUSEMOTION:
-            case SDL_MOUSEBUTTONDOWN:
-            case SDL_MOUSEBUTTONUP:
-            case SDL_MOUSEWHEEL:
-            case SDL_KEYDOWN:
-            case SDL_KEYUP:
-            case SDL_TEXTINPUT:
-                if (window) window->handleSDLEvent(&event);
-                break;
-            }
-        }
-    }
+    }*/
 
     DE_PIMPL_AUDIENCE(DisplayModeChange)
 };
@@ -181,7 +148,7 @@ GuiApp::GuiApp(const StringList &args)
         throw Error("GuiApp::GuiApp", "No video displays available");
     }
 
-    d->matchLoopRateToDisplayMode();
+//    d->matchLoopRateToDisplayMode();
     d->determineDevicePixelRatio();
 
     static ImageFile::Interpreter intrpImageFile;
@@ -231,28 +198,6 @@ void GuiApp::notifyDisplayModeChanged()
         i->displayModeChanged();
     }
 }
-
-//bool GuiApp::notify(QObject *receiver, QEvent *event)
-//{
-//    try
-//    {
-//        return LIBGUI_GUIAPP_BASECLASS::notify(receiver, event);
-//    }
-//    catch (std::exception const &error)
-//    {
-//        handleUncaughtException(error.what());
-//    }
-//    catch (...)
-//    {
-//        handleUncaughtException("de::GuiApp caught exception of unknown type.");
-//    }
-//    return false;
-//}
-
-//void GuiApp::notifyDisplayModeChanged()
-//{
-//    emit displayModeChanged();
-//}
 
 int GuiApp::exec(const std::function<void ()> &startup)
 {
@@ -305,16 +250,6 @@ bool GuiApp::inRenderThread()
 void GuiApp::setRenderThread(Thread *thread)
 {
     DE_GUI_APP->d->renderThread = thread;
-}
-
-void GuiApp::loopIteration()
-{
-    d->postEvents();
-
-    // Update the clock time. de::App listens to this clock and will inform
-    // subsystems in the order they've been added.
-    Time::updateCurrentHighPerformanceTime();
-    Clock::get().setTime(Time::currentHighPerformanceTime());
 }
 
 NativePath GuiApp::appDataPath() const

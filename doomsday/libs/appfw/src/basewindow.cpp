@@ -122,6 +122,7 @@ WindowTransform &BaseWindow::transform()
     return *d->xf;
 }
 
+#if 0
 bool BaseWindow::prepareForDraw()
 {
     if (isGLReady())
@@ -144,23 +145,8 @@ void BaseWindow::requestDraw()
         // Not right now, please.
         return;
     }
-
-    // Initialize Oculus Rift if needed.
-    auto &vr = DE_BASE_GUI_APP->vr();
-    if (vr.mode() == VRConfig::OculusRift)
-    {
-        if (isGLReady())
-        {
-            makeCurrent();
-            vr.oculusRift().init();
-        }
-    }
-    else
-    {
-        makeCurrent();
-        vr.oculusRift().deinit();
-    }
 }
+#endif
 
 void BaseWindow::draw()
 {
@@ -172,9 +158,21 @@ void BaseWindow::draw()
 void BaseWindow::preDraw()
 {
     auto &vr = DE_BASE_GUI_APP->vr();
+
+    // Initialize Oculus Rift if needed.
     if (vr.mode() == VRConfig::OculusRift)
     {
-        vr.oculusRift().beginFrame();
+        if (isGLReady())
+        {
+            makeCurrent();
+            vr.oculusRift().init();
+            vr.oculusRift().beginFrame();
+        }
+    }
+    else
+    {
+        makeCurrent();
+        vr.oculusRift().deinit();
     }
 }
 
