@@ -35,6 +35,11 @@ CoreEvent::CoreEvent(int type, const std::function<void()> &callback)
     , _callback(callback)
 {}
 
+CoreEvent::CoreEvent(const std::function<void()> &callback)
+    : Event(Callback)
+    , _callback(callback)
+{}
+
 const Value &CoreEvent::value() const
 {
     if (!_value)

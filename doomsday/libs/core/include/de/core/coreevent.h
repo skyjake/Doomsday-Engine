@@ -34,6 +34,7 @@ public:
     CoreEvent(int type);
     CoreEvent(int type, const Value &value);
     CoreEvent(int type, const std::function<void()> &callback);
+    CoreEvent(const std::function<void()> &callback);
 
     const Value &value() const;
     inline int   valuei() const { return value().asInt(); }

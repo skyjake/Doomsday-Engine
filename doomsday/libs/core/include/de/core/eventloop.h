@@ -78,6 +78,9 @@ public:
 
     virtual void processEvent(const Event &event);
 
+public:
+    static void post(Event *event);
+
 private:
     DE_PRIVATE(d)
 };

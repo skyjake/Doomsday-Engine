@@ -157,6 +157,19 @@ void EventLoop::processEvent(const Event &event)
     }
 }
 
+void EventLoop::post(Event *event)
+{
+    if (auto *evloop = get())
+    {
+        evloop->postEvent(event);
+    }
+    else
+    {
+        delete event;
+        warning("[EventLoop] Posted event was discarded because no event loop is running");
+    }
+}
+
 EventLoop *EventLoop::get()
 {
     using namespace internal;
