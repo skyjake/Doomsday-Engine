@@ -31,6 +31,7 @@ if (APPLE)
         MACOSX_BUNDLE_INFO_PLIST ${DE_SOURCE_DIR}/cmake/MacOSXBundleInfo.plist.in
      )
     deng_install_bundle_deps (gloomed
+        fmodex
         CPlus::cplus
         Deng::libcore
         Deng::libgui
