@@ -5,7 +5,7 @@ uniform sampler2D uBrightnessSamples;
 
 float Gloom_Exposure(void) {
     ivec2 sampleSize = textureSize(uBrightnessSamples, 0);
-    vec3 channelWeights = vec3(1.0 / 3.0);
+    vec3 channelWeights = vec3(0.2125, 0.7154, 0.0721);
     float brightest = 0.0;
     for (int x = 0; x < sampleSize.x; ++x) {
         for (int y = 0; y < sampleSize.y; ++y) {
