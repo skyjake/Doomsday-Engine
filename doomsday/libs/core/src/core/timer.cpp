@@ -31,7 +31,9 @@ namespace internal {
 
 using TimePoint = sc::system_clock::time_point;
 
-/// Thread that posts timer events when it is time to trigger scheduled timers.
+/**
+ * Thread that posts timer events when it is time to trigger scheduled timers.
+ */
 struct TimerScheduler : public Thread, public Lockable
 {
     struct Pending {
@@ -70,25 +72,14 @@ struct TimerScheduler : public Thread, public Lockable
 
                         // We'll have the event loop notify the timer's audience. This way the
                         // timer scheduling thread won't be blocked by slow trigger handlers.
-                        if (auto *loop = EventLoop::get())
-                        {
-                            Timer *timer = pt.timer;
-                            loop->postEvent(
-                                new CoreEvent(Event::Timer, [timer]() { timer->trigger(); }));
-                        }
-                        else
-                        {
-                            warning("[TimerScheduler] Pending timer %p triggered with no "
-                                    "event loop running (event not posted)",
-                                    pt.timer);
-                        }
+                        pt.timer->post();
 
                         // Schedule the next trigger.
                         if (pt.repeatDuration > 0.0)
                         {
                             TimePoint nextAt = pt.nextAt + sc::microseconds(dint64(pt.repeatDuration * 1.0e6));
 #if defined (DE_DEBUG)
-                            // Debugger may halt the process, don't bother spamming with timer events.
+                            // Debugger may halt the process, don't bother retrying to post.
                             nextAt = de::max(nextAt, sc::system_clock::now());
 #endif
                             pending.push(Pending{nextAt, pt.timer, pt.repeatDuration});
@@ -153,6 +144,7 @@ DE_PIMPL_NOREF(Timer)
     TimeSpan interval     = 1.0;
     bool     isSingleShot = false;
     bool     isActive     = false;
+    bool     isPending    = false; // posted but not executed yet
 
     ~Impl()
     {
@@ -223,6 +215,26 @@ void Timer::trigger()
     if (d->isSingleShot)
     {
         d->isActive = false;
+    }
+}
+
+void Timer::post()
+{
+    if (!d->isPending)
+    {
+        if (auto *loop = EventLoop::get())
+        {
+            d->isPending = true; // not reposted before triggered
+            loop->postEvent(new CoreEvent(Event::Timer, [this]() {
+                d->isPending = false;
+                trigger();
+            }));
+        }
+        else
+        {
+            warning("[TimerScheduler] Pending timer %p triggered with no event loop running (event "
+                    "not posted)", this);
+        }
     }
 }
 

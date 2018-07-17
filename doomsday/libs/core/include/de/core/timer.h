@@ -44,11 +44,12 @@ public:
         start();
     }
 
-    bool isActive() const;
-    bool isSingleShot() const;
+    bool     isActive() const;
+    bool     isSingleShot() const;
     TimeSpan interval() const;
 
     void trigger();
+    void post();
 
     /**
      * Adds a new trigger callback. This is the same as adding the callback to the Trigger
