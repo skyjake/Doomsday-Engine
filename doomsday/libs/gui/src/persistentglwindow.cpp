@@ -228,8 +228,8 @@ DE_PIMPL(PersistentGLWindow)
             setFlag(Centered,   config.getb(configName("center")));
             setFlag(Maximized,  config.getb(configName("maximize")));
             setFlag(Fullscreen, config.getb(configName("fullscreen")));
-            setFlag(FSAA,       config.getb(configName("fsaa")));
-            setFlag(VSync,      config.getb(configName("vsync")));
+            setFlag(FSAA,       config.getb(configName("fsaa"), false));
+            setFlag(VSync,      config.getb(configName("vsync"), true));
         }
 
         /**
