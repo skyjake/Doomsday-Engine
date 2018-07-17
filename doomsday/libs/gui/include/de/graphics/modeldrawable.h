@@ -118,22 +118,16 @@ public:
         class LIBGUI_PUBLIC OngoingSequence : public ISerializable
         {
         public:
-            enum Flag
-            {
-                ClampToDuration = 0x1,
-                Defaults = 0
-            };
+            enum Flag { ClampToDuration = 0x1, Defaults = 0 };
 
         public:
-            int animId;         ///< Which animation to use in a ModelDrawable.
-            ddouble time;       ///< Animation time.
-            ddouble duration;   ///< Animation duration.
-            String node;        ///< Target node.
-            Flags flags;
+            int     animId;   ///< Which animation to use in a ModelDrawable.
+            ddouble time;     ///< Animation time.
+            ddouble duration; ///< Animation duration.
+            String  node;     ///< Target node.
+            Flags   flags;
 
         public:
-            virtual ~OngoingSequence() {}
-
             /**
              * Called after the basic parameters of the animation have been set for
              * a newly constructed sequence.
@@ -165,8 +159,7 @@ public:
         /// Referenced node or animation was not found in the model. @ingroup errors
         DE_ERROR(InvalidError);
 
-        enum Flag
-        {
+        enum Flag {
             /**
              * Node transformations always done, even when there are no
              * animation sequences.
@@ -180,8 +173,6 @@ public:
         Animator(Constructor sequenceConstructor = OngoingSequence::make);
         Animator(ModelDrawable const &model,
                  Constructor sequenceConstructor = OngoingSequence::make);
-
-        virtual ~Animator() {}
 
         void setModel(ModelDrawable const &model);
 

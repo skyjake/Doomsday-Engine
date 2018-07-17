@@ -304,7 +304,7 @@ DE_PIMPL(ModelDrawable)
     Asset            modelAsset;
     String           sourcePath;
     ImpIOSystem *    importerIoSystem; // not owned
-    Assimp::Importer importer;
+    std::unique_ptr<Assimp::Importer> importer;
     aiScene const *  scene{nullptr};
 
     Vec3f minPoint; ///< Bounds in default pose.
@@ -639,9 +639,6 @@ DE_PIMPL(ModelDrawable)
 
     Impl(Public *i) : Base(i)
     {
-        // Use FS2 for file access.
-        importer.SetIOHandler(importerIoSystem = new ImpIOSystem);
-
         // Get most kinds of log output.
         ImpLogger::registerLogger();
     }
@@ -651,32 +648,37 @@ DE_PIMPL(ModelDrawable)
         glDeinit();
     }
 
-    void import(File const &file)
+    void import(const File &file)
     {
         LOG_GL_MSG("Loading model from %s") << file.description();
 
+        // Use FS2 for file access.
+        importer.reset(new Assimp::Importer);
+        importer->SetIOHandler(importerIoSystem = new ImpIOSystem);
+
 #if defined (DE_HAVE_CUSTOMIZED_ASSIMP)
         {
-        /*
-         * MD5: Multiple animation sequences are supported via multiple .md5anim files.
-         * Autodetect if these exist and make a list of their names.
-         */
-        String anims;
-        if (file.extension() == ".md5mesh")
-        {
-            String const baseName = file.name().fileNameWithoutExtension() + "_";
-            file.parent()->forContents([&anims, &baseName] (String fileName, File &)
+            /*
+             * MD5: Multiple animation sequences are supported via multiple .md5anim files.
+             * Autodetect if these exist and make a list of their names.
+             */
+            String anims;
+            if (file.extension() == ".md5mesh")
             {
-                if (fileName.beginsWith(baseName) &&
-                    fileName.fileNameExtension() == ".md5anim")
+                String const baseName = file.name().fileNameWithoutExtension() + "_";
+                file.parent()->forContents([&anims, &baseName] (String fileName, File &)
                 {
-                    if (!anims.isEmpty()) anims += ";";
-                    anims += fileName.substr(baseName.sizeb()).fileNameWithoutExtension();
-                }
-                return LoopContinue;
-            });
-        }
-        importer.SetPropertyString(AI_CONFIG_IMPORT_MD5_ANIM_SEQUENCE_NAMES, anims.toStdString());
+                    if (fileName.beginsWith(baseName) &&
+                        fileName.fileNameExtension() == ".md5anim")
+                    {
+                        if (!anims.isEmpty()) anims += ";";
+                        anims += fileName.substr(baseName.sizeb()).fileNameWithoutExtension();
+                    }
+                    return LoopContinue;
+                });
+            }
+            importer->SetPropertyString(AI_CONFIG_IMPORT_MD5_ANIM_SEQUENCE_NAMES,
+                                        anims.toStdString());
         }
 #endif
 
@@ -685,22 +687,22 @@ DE_PIMPL(ModelDrawable)
         importerIoSystem->referencePath = sourcePath.fileNamePath();
 
         // Read the model file and apply suitable postprocessing to clean up the data.
-        if (!importer.ReadFile(sourcePath.c_str(),
-                               aiProcess_CalcTangentSpace |
-                               aiProcess_GenSmoothNormals |
-                               aiProcess_JoinIdenticalVertices |
-                               aiProcess_Triangulate |
-                               aiProcess_GenUVCoords |
-                               aiProcess_FlipUVs |
-                               aiProcess_SortByPType))
+        if (!importer->ReadFile(sourcePath.c_str(),
+                                aiProcess_CalcTangentSpace |
+                                aiProcess_GenSmoothNormals |
+                                aiProcess_JoinIdenticalVertices |
+                                aiProcess_Triangulate |
+                                aiProcess_GenUVCoords |
+                                aiProcess_FlipUVs |
+                                aiProcess_SortByPType))
         {
             throw LoadError("ModelDrawable::import",
                             stringf("Failed to load model from %s: %s",
                                     file.description().c_str(),
-                                    importer.GetErrorString()));
+                                    importer->GetErrorString()));
         }
 
-        scene = glData.scene = importer.GetScene();
+        scene = glData.scene = importer->GetScene();
 
         initBones();
 
@@ -777,7 +779,13 @@ DE_PIMPL(ModelDrawable)
 
         sourcePath.clear();
         defaultPasses.clear();
-        importer.FreeScene();
+        vertexBones.clear();
+        boneNameToIndex.clear();
+        nodeNameToPtr.clear();
+        bones.clear();
+        animNameToIndex.clear();
+        meshIndexRanges.clear();
+        importer.reset();
         scene = glData.scene = nullptr;
     }
 
@@ -1739,10 +1747,10 @@ namespace de {
 DE_PIMPL_NOREF(ModelDrawable::Animator)
 , DE_OBSERVES(Asset, Deletion)
 {
-    Constructor constructor;
-    ModelDrawable const *model = nullptr;
+    Constructor             constructor;
+    const ModelDrawable *   model = nullptr;
     List<OngoingSequence *> anims;
-    Flags flags = DefaultFlags;
+    Flags                   flags = DefaultFlags;
 
     Impl(const Constructor &ctr, ModelDrawable const *mdl = nullptr)
         : constructor(ctr)
