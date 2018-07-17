@@ -47,8 +47,8 @@ DE_PIMPL_NOREF(Config)
     /// Previous installed version (__version__ in the read persistent Config).
     Version oldVersion;
 
-    Impl(Path const &path)
-        : configPath(path)
+    Impl(Path path)
+        : configPath(std::move(path))
         , refuge("modules/Config")
         , config(&refuge.objectNamespace())
     {}
@@ -57,7 +57,7 @@ DE_PIMPL_NOREF(Config)
     {
         try
         {
-            ArrayValue const &vers = old.as<ArrayValue>();
+            auto const &vers = old.as<ArrayValue>();
             oldVersion.major = int(vers.at(0).asNumber());
             oldVersion.minor = int(vers.at(1).asNumber());
             oldVersion.patch = int(vers.at(2).asNumber());
@@ -97,7 +97,7 @@ Config::ReadStatus Config::read()
              << NumberValue(verInfo.patch)
              << NumberValue(verInfo.build);
 
-    File &scriptFile = App::rootFolder().locate<File>(d->configPath);
+    auto &scriptFile = App::rootFolder().locate<File>(d->configPath);
     bool shouldRunScript = App::commandLine().has("-reconfig");
 
     try

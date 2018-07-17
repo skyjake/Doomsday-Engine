@@ -1,3 +1,5 @@
+#include <memory>
+
 /** @file screenquad.cpp
  *
  * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -51,7 +53,7 @@ void ScreenQuad::glInit(Context &context)
 
     if (!s_vertexBuffer)
     {
-        s_vertexBuffer.reset(new VBuf);
+        s_vertexBuffer = std::make_shared<VBuf>();
         s_vertexBuffer->setVertices(
             gfx::TriangleStrip,
             VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),

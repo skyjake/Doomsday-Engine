@@ -78,8 +78,8 @@ namespace gfx {
 class LIBGUI_PUBLIC GLTexture : public Asset
 {
 public:
-    typedef Vec2ui Size;
-    typedef Vector2<gfx::Wrapping> Wraps;
+    using Size  = Vec2ui;
+    using Wraps = Vector2<gfx::Wrapping>;
 
 public:
     /**
@@ -246,7 +246,7 @@ public:
 
     GLuint glName() const;
 
-    void glBindToUnit(int unit) const;
+    void glBindToUnit(duint unit) const;
 
     /**
      * Applies any cached parameter changes to the GL texture object. The texture is

@@ -58,7 +58,7 @@ DE_PIMPL(GLTexture)
     Impl(Public *i) : Base(i)
     {}
 
-    ~Impl()
+    ~Impl() override
     {
         release();
     }
@@ -564,7 +564,7 @@ GLuint GLTexture::glName() const
     return d->name;
 }
 
-void GLTexture::glBindToUnit(int unit) const
+void GLTexture::glBindToUnit(duint unit) const
 {
     glActiveTexture(GL_TEXTURE0 + unit);
 
