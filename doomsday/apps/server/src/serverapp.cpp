@@ -49,17 +49,17 @@
 #include "world/map.h"
 #include "world/p_players.h"
 
-#if WIN32
+#if defined (WIN32)
 #  include "dd_winit.h"
-#elif UNIX
+#elif defined (UNIX)
 #  include "dd_uinit.h"
 #endif
 
 using namespace de;
 
-static ServerApp *serverAppSingleton = 0;
+static ServerApp *serverAppSingleton = nullptr;
 
-static String const PATH_SERVER_FILES = "/sys/server/public";
+DE_STATIC_STRING(PATH_SERVER_FILES, "/sys/server/public");
 
 static void handleAppTerminate(char const *msg)
 {
@@ -76,10 +76,10 @@ DE_PIMPL(ServerApp)
 , DE_OBSERVES(PackageLoader, Activity)
 {
     std::unique_ptr<ServerSystem> serverSystem;
-    std::unique_ptr<Resources> resources;
-    std::unique_ptr<AudioSystem> audioSys;
-    ClientServerWorld world;
-    InFineSystem infineSys;
+    std::unique_ptr<Resources>    resources;
+    std::unique_ptr<AudioSystem>  audioSys;
+    ClientServerWorld             world;
+    InFineSystem                  infineSys;
     duint32 serverId;
 
     Impl(Public *i)
@@ -142,19 +142,17 @@ DE_PIMPL(ServerApp)
         // Packages available to clients via RemoteFeed use versioned identifiers because
         // a client may already have a different version of the package.
 
-        Folder &files = self().fileSystem().makeFolder(PATH_SERVER_FILES);
+        Folder &files = self().fileSystem().makeFolder(PATH_SERVER_FILES());
         auto *feed = new PackageFeed(PackageLoader::get(),
                                      PackageFeed::LinkVersionedIdentifier);
-        feed->setFilter([] (Package const &pkg)
-        {
-            return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b");
-        });
+        feed->setFilter(
+            [](Package const &pkg) { return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b"); });
         files.attach(feed);
     }
 
     void setOfLoadedPackagesChanged() override
     {
-        if (Folder *files = FS::tryLocate<Folder>(PATH_SERVER_FILES))
+        if (auto *files = FS::tryLocate<Folder>(PATH_SERVER_FILES()))
         {
             files->populate();
         }
@@ -163,9 +161,7 @@ DE_PIMPL(ServerApp)
 #ifdef UNIX
     void printVersionToStdOut()
     {
-        printf("%s %s\n",
-               DOOMSDAY_NICENAME,
-               DOOMSDAY_VERSION_FULLTEXT);
+        printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT);
     }
 
     void printHelpToStdOut()
@@ -218,7 +214,7 @@ ServerApp::~ServerApp()
     d.reset();
 
     // Now that everything is shut down we can forget about the singleton instance.
-    serverAppSingleton = 0;
+    serverAppSingleton = nullptr;
 }
 
 duint32 ServerApp::instanceId() const
@@ -260,12 +256,12 @@ void ServerApp::initialize()
     d->initServerFiles();
 
     // Initialize.
-#if WIN32
+#if defined (WIN32)
     if (!DD_Win32_Init())
     {
         throw Error("ServerApp::initialize", "DD_Win32_Init failed");
     }
-#elif UNIX
+#elif defined (UNIX)
     if (!DD_Unix_Init())
     {
         throw Error("ServerApp::initialize", "DD_Unix_Init failed");
@@ -298,7 +294,8 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     // Let's figure out what we want to tell about ourselves.
     info.setServerId(ServerApp::app().d->serverId);
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
-    info.setPluginDescription(Stringf("%s %s",
+    info.setPluginDescription(
+        Stringf("%s %s",
                                              reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
                                              reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
 
@@ -327,31 +324,14 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
         info.setMap(mapPath);
     }
 
-    DE_ASSERT_FAIL("TODO: Check local addresses")
+    // Check the IP address of the server.
+    info.setAddress(Address::localNetworkInterface(duint16(nptIPPort)));
 
-    // The master server will use the public IP address where an announcement came from,
-    // so we don't necessarily have to specify a valid address. The port is required, though.
-    info.setAddress({"localhost", duint16(nptIPPort)});
-
-#if 0
-    // This will only work if the server has a public IP address.
-    QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
-    foreach (QHostAddress hostAddr, host.addresses())
-    {
-        if (!hostAddr.isLoopback())
-        {
-            info.setAddress(Address(hostAddr, duint16(nptIPPort)));
-            break;
-        }
-    }
-
-    String const publicDomain = nptIPAddress;
-    if (publicDomain)
+    if (const String publicHostName = nptIPAddress)
     {
         info.setDomainName(Stringf(
-            "%s:%i", publicDomain.c_str(), nptIPPort ? nptIPPort : shell::DEFAULT_PORT));
+            "%s:%i", publicHostName.c_str(), nptIPPort ? nptIPPort : shell::DEFAULT_PORT));
     }
-#endif
 
     // Let's compile a list of client names.
     for (dint i = 0; i < DDMAXPLAYERS; ++i)
@@ -382,7 +362,7 @@ void ServerApp::unloadGame(GameProfile const &upcomingGame)
 
 ServerApp &ServerApp::app()
 {
-    DE_ASSERT(serverAppSingleton != 0);
+    DE_ASSERT(serverAppSingleton != nullptr);
     return *serverAppSingleton;
 }
 

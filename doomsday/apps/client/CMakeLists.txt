@@ -93,6 +93,11 @@ endif ()
 
 deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
+list (APPEND DE_REQUIRED_PACKAGES
+    net.dengine.stdlib
+    net.dengine.stdlib.gui
+    net.dengine.base
+)
 deng_add_package (net.dengine.client)
 
 if (IOS)
@@ -263,7 +268,7 @@ endif ()
 
 if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
-        Deng::libcore Deng::libshell Deng::libgui Deng::libappfw
+        CPlus::cplus Deng::libcore Deng::libshell Deng::libgui Deng::libappfw
         Deng::liblegacy Deng::libdoomsday Deng::libgamefw
         SDL2 SDL2_mixer
     )
