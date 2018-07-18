@@ -131,10 +131,10 @@ DE_PIMPL(MainWindow)
         updateRootSize();
     }
 
-    void windowFocusChanged(GLWindow &, bool hasFocus)
+    void windowFocusChanged(GLWindow &, bool /*hasFocus*/)
     {
-        auto &loop = Loop::get();
-        loop.setRate(hasFocus ? 60 : 2);
+//        auto &loop = Loop::get();
+//        loop.setRate(hasFocus ? 60 : 2);
     }
 };
 
