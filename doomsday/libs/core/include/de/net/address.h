@@ -74,31 +74,22 @@ public:
 
     bool isNull() const;
 
+    bool isLoopback() const;
+
     /**
-     * Determines if the address is on the local host.
+     * Determines if the address is one of the network interfaces of the local computer.
      */
     bool isLocal() const;
 
     duint16 port() const;
 
-//    void setPort(duint16 p);
-
-    /**
-     * Checks if two IP address match. Port numbers are ignored.
-     *
-     * @param other  Address to check against.
-     * @param mask   Net mask. Use to check if subnets match. The default
-     *               checks if two IP addresses match.
-     */
-//    bool matches(Address const &other, duint32 mask = 0xffffffff);
-
     /**
      * Converts the address to text.
      */
-    String asText() const;
+    String asText() const override;
 
     // Implements LogEntry::Arg::Base.
-    LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
+    LogEntry::Arg::Type logEntryArgType() const override { return LogEntry::Arg::StringArgument; }
 
 public:
     static Address take(iAddress *);
@@ -109,6 +100,13 @@ public:
      * Determines whether a host address refers to the local host.
      */
     static bool isHostLocal(const Address &host);
+
+    static List<Address> localAddresses();
+
+    /**
+     * Returns one of the network interface addresses that are not loopback addresses.
+     */
+    static Address localNetworkInterface(duint16 port = 0);
 
 private:
     DE_PRIVATE(d)

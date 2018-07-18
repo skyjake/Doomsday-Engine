@@ -30,8 +30,8 @@ namespace de {
 DE_PIMPL_NOREF(Address)
 {
     cplus::ref<iAddress> addr;
-    duint16 port = 0;
-    String  textRepr;
+    duint16              port = 0;
+    String               textRepr;
 
     enum Special { Undefined, LocalHost, RemoteHost };
     Special special = Undefined;
@@ -108,9 +108,13 @@ String Address::hostName() const
     return String(hostName_Address(d->addr));
 }
 
-bool Address::isNull() const
+bool Address::isLoopback() const
 {
-    return !d->addr;
+    const String host = hostName();
+    return (host == "localhost" ||
+            host == "localhost.localdomain" ||
+            host == "127.0.0.1" ||
+            host == "::1");
 }
 
 bool Address::isLocal() const
@@ -187,6 +191,27 @@ bool Address::isHostLocal(const Address &host) // static
         if (addr == host) return true;
     }
     return false;
+}
+
+List<Address> Address::localAddresses() // static
+{
+    return internal::NetworkInterfaces::get().allAddresses();
+}
+
+Address Address::localNetworkInterface(duint16 port) // static
+{
+    Address found;
+    const auto addresses = internal::NetworkInterfaces::get().allAddresses();
+    for (const Address &a : addresses)
+    {
+        if (!a.isLoopback())
+        {
+            found = a;
+            break;
+        }
+    }
+    if (!port) return found;
+    return Address(found.hostName(), port);
 }
 
 } // namespace de

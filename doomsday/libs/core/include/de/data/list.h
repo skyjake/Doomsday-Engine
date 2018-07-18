@@ -34,7 +34,7 @@ class List : public std::vector<T>
     using Base = std::vector<T>;
 
 public:
-    List() {}
+    List() = default;
     List(size_t count, const T &initValue = T()) : Base(count, initValue) {}
     List(const List &other) : Base(other) {}
     List(List &&moved) : Base(moved) {}

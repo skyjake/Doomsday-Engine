@@ -68,7 +68,7 @@ DE_PIMPL(Record)
     duint32 oldUniqueId;
     Flags flags = DefaultFlags;
 
-    using RegMap = Hash<duint32, Record *>;
+    using RefMap = Hash<duint32, Record *>;
 
     Impl(Public &r)
         : Base(r)
