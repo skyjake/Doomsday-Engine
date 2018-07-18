@@ -40,7 +40,7 @@ DE_PIMPL(InfoBank)
         info.audienceForNamedBlock() += this;
     }
 
-    void parsedNamedBlock(String const &, Record &block)
+    void parsedNamedBlock(String const &, Record &block) override
     {
         if (block.gets(ScriptedInfo::VAR_BLOCK_TYPE) != ScriptedInfo::BLOCK_GROUP)
         {
@@ -159,9 +159,9 @@ void InfoBank::removeAllWithRootPath(String const &rootPath)
 void InfoBank::removeAllFromPackage(String const &packageId)
 {
     LOG_AS(nameForLog());
-    d->removeFromGroup(d->names, [&packageId] (String const &, Record const &rec) {
-        auto const loc = ScriptedInfo::sourcePathAndLine(rec);
-        File const &file = App::rootFolder().locate<File const>(loc.first);
+    d->removeFromGroup(d->names, [&packageId](const String &, const Record &rec) {
+        const auto  loc  = ScriptedInfo::sourcePathAndLine(rec);
+        const auto &file = App::rootFolder().locate<const File>(loc.first);
         return Package::identifierForContainerOfFile(file) == packageId;
     });
 }

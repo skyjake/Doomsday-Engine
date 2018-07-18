@@ -45,8 +45,9 @@ class File;
 class DE_PUBLIC InfoBank : public Bank, public IObject
 {
 public:
-    InfoBank(char const *nameForLog = "InfoBank", Flags const &flags = Bank::DefaultFlags,
-             String const &hotStorageLocation = "/home/cache");
+    InfoBank(const char *  nameForLog         = "InfoBank",
+             const Flags & flags              = Bank::DefaultFlags,
+             const String &hotStorageLocation = "/home/cache");
 
     /**
      * Parses definitions directly from Info source. This will erase the
@@ -67,7 +68,7 @@ public:
     void parse(File const &infoFile);
 
     ScriptedInfo &      info();
-    ScriptedInfo const &info() const;
+    const ScriptedInfo &info() const;
 
     void addFromInfoBlocks(String const &blockType);
 
@@ -106,8 +107,8 @@ public:
     String absolutePathInContext(Record const &context, String const &relativePath) const;
 
     // Implements IObject.
-    Record &      objectNamespace();
-    Record const &objectNamespace() const;
+    Record &      objectNamespace() override;
+    const Record &objectNamespace() const override;
 
 protected:
     virtual ISource *newSourceFromInfo(String const &id) = 0;

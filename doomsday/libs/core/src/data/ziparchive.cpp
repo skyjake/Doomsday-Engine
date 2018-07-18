@@ -134,7 +134,7 @@ struct LocalFileHeader : public ISerializable {
     Uint16 fileNameSize;
     Uint16 extraFieldSize;
 
-    void operator >> (Writer &to) const {
+    void operator >> (Writer &to) const override {
         to  << signature
             << requiredVersion
             << flags
@@ -147,7 +147,7 @@ struct LocalFileHeader : public ISerializable {
             << fileNameSize
             << extraFieldSize;
     }
-    void operator << (Reader &from) {
+    void operator << (Reader &from) override {
         from >> signature
              >> requiredVersion
              >> flags
@@ -188,7 +188,7 @@ struct CentralFileHeader : public ISerializable {
      * file comment (variable size)
      */
 
-    void operator >> (Writer &to) const {
+    void operator >> (Writer &to) const override {
         to  << signature
             << version
             << requiredVersion
@@ -207,7 +207,7 @@ struct CentralFileHeader : public ISerializable {
             << externalAttrib
             << relOffset;
     }
-    void operator << (Reader &from) {
+    void operator << (Reader &from) override {
         from >> signature
              >> version
              >> requiredVersion
@@ -237,7 +237,7 @@ struct CentralEnd : public ISerializable {
     Uint32 offset;
     Uint16 commentSize;
 
-    void operator >> (Writer &to) const {
+    void operator >> (Writer &to) const override {
         to  << disk
             << centralStartDisk
             << diskEntryCount
@@ -246,7 +246,7 @@ struct CentralEnd : public ISerializable {
             << offset
             << commentSize;
     }
-    void operator << (Reader &from) {
+    void operator << (Reader &from) override {
         from >> disk
              >> centralStartDisk
              >> diskEntryCount
@@ -261,7 +261,7 @@ struct CentralEnd : public ISerializable {
 
 using namespace internal;
 
-static String ZIPARCHIVE_META_CATEGORY = "ZipArchive";
+DE_STATIC_STRING(ZIPARCHIVE_META_CATEGORY, "ZipArchive");
 
 DE_PIMPL(ZipArchive)
 {
@@ -305,7 +305,7 @@ DE_PIMPL(ZipArchive)
      *                    Ignored if @a updateFromLocalHeaders is true.
      */
     void readCentralDirectory(Reader &reader, bool readingFromOriginal,
-                              IByteArray::Offset localHeaderStartOffset = IByteArray::Offset(-1))
+                              IByteArray::Offset localHeaderStartOffset = std::numeric_limits<dsize>::max())
     {
         reader >> zipSummary;
 
@@ -485,7 +485,7 @@ DE_PIMPL(ZipArchive)
             Block meta;
             Writer writer(meta);
             writeCachedCentralDirectory(writer);
-            MetadataBank::get().setMetadata(ZIPARCHIVE_META_CATEGORY, directoryCacheId, meta);
+            MetadataBank::get().setMetadata(ZIPARCHIVE_META_CATEGORY(), directoryCacheId, meta);
         }
     }
 
@@ -497,7 +497,7 @@ DE_PIMPL(ZipArchive)
 
         try
         {
-            if (Block const meta = bank.check(ZIPARCHIVE_META_CATEGORY, directoryCacheId))
+            if (Block const meta = bank.check(ZIPARCHIVE_META_CATEGORY(), directoryCacheId))
             {
                 Reader reader(meta);
                 if (!seekToCentralEnd(reader))

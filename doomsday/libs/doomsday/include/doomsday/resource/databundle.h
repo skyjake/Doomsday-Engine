@@ -59,7 +59,7 @@ public:
 
 public:
     DataBundle(Format format, de::File &source);
-    ~DataBundle();
+    ~DataBundle() override = default;
 
     Format format() const;
     de::String formatAsText() const;
@@ -145,13 +145,13 @@ public:
     void checkAuxiliaryNotes(de::Record &packageMetadata);
 
     // Implements IByteArray.
-    Size size() const;
-    void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, Byte const *values, Size count);
+    Size size() const override;
+    void get(Offset at, Byte *values, Size count) const override;
+    void set(Offset at, Byte const *values, Size count) override;
 
     // Implements IObject.
-    virtual de::Record &objectNamespace();
-    virtual de::Record const &objectNamespace() const;
+    de::Record &objectNamespace() override;
+    const de::Record &objectNamespace() const override;
 
     /**
      * Checks the data bundle format of a package, if the package represents a bundle.

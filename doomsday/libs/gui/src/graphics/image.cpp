@@ -153,41 +153,38 @@ namespace tga {
 
 struct Header : public IReadable
 {
-    enum Flag
-    {
+    enum Flag {
         NoFlags           = 0,
         ScreenOriginUpper = 0x1,
         InterleaveTwoWay  = 0x2,
         InterleaveFourWay = 0x4
     };
 
-    enum ColorMapType
-    {
+    enum ColorMapType {
         ColorMapNone = 0,
         ColorMap256  = 1 // not supported
     };
 
-    enum ImageType
-    {
+    enum ImageType {
         RGB    = 2, ///< Uncompressed RGB.
         RleRGB = 10 ///< Run length encoded RGB.
     };
 
     Block identification;
-    Zeroed<duint8> colorMapType;
-    Zeroed<duint8> imageType;
+    Uint8 colorMapType;
+    Uint8 imageType;
 
     // Color map.
-    Zeroed<dint16> mapIndex;
-    Zeroed<dint16> mapCount;        ///< Number of color map entries.
-    Zeroed<duint8> mapEntrySize;    ///< Bits in a color map entry.
+    Int16 mapIndex;
+    Int16 mapCount;        ///< Number of color map entries.
+    Uint8 mapEntrySize;    ///< Bits in a color map entry.
 
     // Image specification.
     Flags flags;
     Vector2<dint16> origin;
     Vector2<dint16> size;
-    Zeroed<duint8> depth;
-    Zeroed<duint8> attrib;
+    Uint8 depth;
+    Uint8 attrib;
 
     void operator << (Reader &from)
     {

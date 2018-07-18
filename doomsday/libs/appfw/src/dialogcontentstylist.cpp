@@ -22,7 +22,6 @@
 #include "de/LabelWidget"
 #include "de/LineEditWidget"
 #include "de/AuxButtonWidget"
-#include <de/Zeroed>
 
 namespace de {
 
@@ -103,13 +102,13 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
     }
 
     // All label-based widgets should expand on their own.
-    if (LabelWidget *lab = maybeAs<LabelWidget>(w))
+    if (auto *lab = maybeAs<LabelWidget>(w))
     {
         lab->setSizePolicy(ui::Expand, ui::Expand);
     }
 
     // Button background override?
-    if (ButtonWidget *but = maybeAs<ButtonWidget>(w))
+    if (auto *but = maybeAs<ButtonWidget>(w))
     {
         if (d->useInfoStyle)
         {
@@ -118,12 +117,12 @@ void DialogContentStylist::applyStyle(GuiWidget &w)
     }
 
     // Toggles should have no background.
-    if (ToggleWidget *tog = maybeAs<ToggleWidget>(w))
+    if (auto *tog = maybeAs<ToggleWidget>(w))
     {
         tog->set(GuiWidget::Background());
     }
 
-    if (LineEditWidget *ed = maybeAs<LineEditWidget>(w))
+    if (auto *ed = maybeAs<LineEditWidget>(w))
     {
         ed->rule().setInput(Rule::Width, d->containers.first()->rule("editor.width"));
     }

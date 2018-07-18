@@ -41,6 +41,8 @@ public:
 
 /**
  * Perl-compatible regular expression.
+ *
+ * @ingroup data
  */
 class DE_PUBLIC RegExp
 {

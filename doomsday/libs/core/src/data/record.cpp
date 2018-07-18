@@ -68,7 +68,7 @@ DE_PIMPL(Record)
     duint32 oldUniqueId;
     Flags flags = DefaultFlags;
 
-    typedef Hash<duint32, Record *> RefMap;
+    using RegMap = Hash<duint32, Record *>;
 
     Impl(Public &r)
         : Base(r)
@@ -231,7 +231,7 @@ DE_PIMPL(Record)
 
     static bool isRecord(Variable const &var)
     {
-        RecordValue const *value = maybeAs<RecordValue>(var.value());
+        const auto *value = maybeAs<RecordValue>(var.value());
         return value && value->record();
     }
 
@@ -239,7 +239,7 @@ DE_PIMPL(Record)
     {
         // Subrecords are owned by this record.
         // Note: Non-owned Records are likely imports from other modules.
-        RecordValue const *value = maybeAs<RecordValue>(var.value());
+        const auto *value = maybeAs<RecordValue>(var.value());
         return value && value->record() && value->hasOwnership();
     }
 

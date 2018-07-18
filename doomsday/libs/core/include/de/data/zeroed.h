@@ -53,14 +53,14 @@ public:
     Type value;
 };
 
-typedef Zeroed<dint8> Int8;
-typedef Zeroed<dint16> Int16;
-typedef Zeroed<dint32> Int32;
-typedef Zeroed<dint64> Int64;
-typedef Zeroed<duint8> Uint8;
-typedef Zeroed<duint16> Uint16;
-typedef Zeroed<duint32> Uint32;
-typedef Zeroed<duint64> Uint64;
+using Int8   = Zeroed<dint8>;
+using Int16  = Zeroed<dint16>;
+using Int32  = Zeroed<dint32>;
+using Int64  = Zeroed<dint64>;
+using Uint8  = Zeroed<duint8>;
+using Uint16 = Zeroed<duint16>;
+using Uint32 = Zeroed<duint32>;
+using Uint64 = Zeroed<duint64>;
 
 } // namespace de
 

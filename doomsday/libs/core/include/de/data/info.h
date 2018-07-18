@@ -1,3 +1,5 @@
+#include <utility>
+
 /*
  * The Doomsday Engine Project -- libcore
  *
@@ -48,44 +50,42 @@ class File;
 class DE_PUBLIC Info
 {
 public:
+    /// The parser encountered a syntax error in the source file. @ingroup errors
+    DE_ERROR(SyntaxError);
+
     class BlockElement;
 
     /**
      * Base class for all elements.
      */
-    class DE_PUBLIC Element {
+    class DE_PUBLIC Element
+    {
     public:
-        enum Type {
-            None,
-            Key,
-            List,
-            Block
-        };
+        enum Type { None, Key, List, Block };
 
         /// Value of a key/list element.
         struct Value {
             enum Flag {
-                Script = 0x1,           ///< Assigned with $= (to be parsed as script).
-                StringLiteral = 0x2,    ///< Quoted string literal (otherwise a plain token).
-                DefaultFlags = 0
+                Script        = 0x1, ///< Assigned with $= (to be parsed as script).
+                StringLiteral = 0x2, ///< Quoted string literal (otherwise a plain token).
+                DefaultFlags  = 0
             };
-
             String text;
             Flags flags;
 
-            Value(String const &txt = "", Flags f = DefaultFlags)
-                : text(txt), flags(f) {}
+            Value(String txt = "", Flags f = DefaultFlags)
+                : text(std::move(txt)), flags(f) {}
 
             operator String const & () const { return text; }
         };
-        typedef de::List<Value> ValueList;
+        using ValueList = de::List<Value>;
 
         /**
          * @param type  Type of the element.
          * @param name  Case-independent name of the element.
          */
         Element(Type type = None, String const &name = String());
-        virtual ~Element();
+        virtual ~Element() = default;
 
         void setParent(BlockElement *parent);
         BlockElement *parent() const;
@@ -98,7 +98,7 @@ public:
         bool isKey() const { return type() == Key; }
         bool isList() const { return type() == List; }
         bool isBlock() const { return type() == Block; }
-        String const &name() const;
+        const String &name() const;
 
         void setName(String const &name);
 
@@ -118,25 +118,23 @@ public:
     /**
      * Element that contains a single string value.
      */
-    class DE_PUBLIC KeyElement : public Element {
+    class DE_PUBLIC KeyElement : public Element
+    {
     public:
-        enum Flag {
-            Attribute = 0x1,
-            DefaultFlags = 0
-        };
+        enum Flag { Attribute = 0x1, DefaultFlags = 0 };
 
     public:
-        KeyElement(String const &name, Value const &value, Flags f = DefaultFlags)
-            : Element(Key, name), _value(value), _flags(f) {}
-
-        void setValue(Value const &v) { _value = v; }
-        Value const &value() const { return _value; }
+        KeyElement(String const &name, Value value, Flags f = DefaultFlags)
+            : Element(Key, name)
+            , _value(std::move(value))
+            , _flags(f)
+        {}
 
         Flags flags() const { return _flags; }
 
-        ValueList values() const {
-            return ValueList() << _value;
-        }
+        void         setValue(Value const &v) { _value = v; }
+        const Value &value() const { return _value; }
+        ValueList    values() const override { return ValueList() << _value; }
 
     private:
         Value _value;
@@ -146,11 +144,12 @@ public:
     /**
      * Element that contains a list of string values.
      */
-    class DE_PUBLIC ListElement : public Element {
+    class DE_PUBLIC ListElement : public Element
+    {
     public:
         ListElement(String const &name) : Element(List, name) {}
         void add(Value const &v) { _values << v; }
-        ValueList values() const { return _values; }
+        ValueList values() const override { return _values; }
 
     private:
         ValueList _values;
@@ -161,19 +160,21 @@ public:
      * each block may have a "block type", which is a lower case identifier (always
      * forced to lower case).
      */
-    class DE_PUBLIC BlockElement : public Element {
+    class DE_PUBLIC BlockElement : public Element
+    {
     public:
         DE_ERROR(ValuesError);
 
-        typedef Hash<String, Element *> Contents;
-        typedef de::List<Element *> ContentsInOrder;
+        using Contents        = Hash<String, Element *>;
+        using ContentsInOrder = de::List<Element *>;
 
     public:
         BlockElement(String const &bType, String const &name, Info &document)
-            : Element(Block, name), _info(document) {
+            : Element(Block, name), _info(document)
+        {
             setBlockType(bType);
         }
-        ~BlockElement();
+        ~BlockElement() override;
 
         /**
          * The root block is the only one that does not have a block type.
@@ -190,7 +191,7 @@ public:
 
         Contents const &contents() const { return _contents; }
 
-        ValueList values() const {
+        ValueList values() const override {
             throw ValuesError("Info::BlockElement::values",
                               "Block elements do not contain text values (only other elements)");
         }
@@ -285,10 +286,6 @@ public:
         /// The included document could not be found. @ingroup errors
         DE_ERROR(NotFoundError);
     };
-
-public:
-    /// The parser encountered a syntax error in the source file. @ingroup errors
-    DE_ERROR(SyntaxError);
 
 public:
     Info();
@@ -414,10 +411,10 @@ public:
 
     bool isEmpty() const;
 
+public:
     static String quoteString(String const &text);
-
     static String sourceLocation(duint32 lineId);
-    static SourceLineTable const &sourceLineTable();
+    static const SourceLineTable &sourceLineTable();
 
 private:
     DE_PRIVATE(d)

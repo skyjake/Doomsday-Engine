@@ -50,7 +50,7 @@ public:
     SafePtr(SafePtr const &other) {
         reset(other._ptr);
     }
-    ~SafePtr() {
+    ~SafePtr() override {
         reset(nullptr);
     }
     void reset(Type *ptr = nullptr) {
@@ -84,7 +84,7 @@ public:
         DE_GUARD(_ptr);
         return _ptr.value != nullptr;
     }
-    void objectWasDeleted(Deletable *obj) {
+    void objectWasDeleted(Deletable *obj) override {
         DE_GUARD(_ptr);
         if (obj == _ptr.value) {
             _ptr.value = nullptr;

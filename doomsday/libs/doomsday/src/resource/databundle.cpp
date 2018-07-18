@@ -76,18 +76,18 @@ namespace internal
 
 DE_PIMPL(DataBundle), public Lockable
 {
-    bool ignored = false;
-    SafePtr<File> source;
-    Format format;
-    String packageId; // linked under /sys/bundles/
-    String versionedPackageId;
+    SafePtr<File>                       source;
+    Format                              format;
+    bool                                ignored = false;
+    String                              packageId; // linked under /sys/bundles/
+    String                              versionedPackageId;
     std::unique_ptr<res::LumpDirectory> lumpDir;
-    SafePtr<LinkFile> pkgLink;
+    SafePtr<LinkFile>                   pkgLink;
 
     Impl(Public *i, Format fmt) : Base(i), format(fmt)
     {}
 
-    ~Impl()
+    ~Impl() override
     {
         DE_GUARD(this);
         delete pkgLink.get();
@@ -434,7 +434,7 @@ DE_PIMPL(DataBundle), public Lockable
             // There may be Snowberry metadata available:
             // - Info entry inside root folder
             // - .manifest companion
-            File const *sbInfo = root.tryLocate<File const>(
+            const auto *sbInfo = root.tryLocate<File const>(
                         dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() +
                         ".manifest");
             if (!sbInfo)
@@ -528,7 +528,7 @@ DE_PIMPL(DataBundle), public Lockable
         if (format == Pwad || format == Iwad)
         {
             String const dataFilePath = self().asFile().path();
-            if (File const *wadTxt = FS::tryLocate<File const>(
+            if (const auto *wadTxt = FS::tryLocate<File const>(
                         dataFilePath.fileNameAndPathWithoutExtension() + ".txt"))
             {
                 Block txt;
@@ -691,11 +691,11 @@ DE_PIMPL(DataBundle), public Lockable
      */
     void parseNotesForMetadata(Record &meta)
     {
-        static RegExp const reTitle      ("^[\\s\x1Bm]*Title\\s*:\\s*(.*)", CaseInsensitive);
-        static RegExp const reVersion    ("^\\s*Version\\s*:\\s*(.*)", CaseInsensitive);
-        static RegExp const reReleaseDate("^\\s*Release( date)?\\s*:\\s*(.*)", CaseInsensitive);
-        static RegExp const reAuthor     ("^\\s*Author(s)?\\s*:\\s*(.*)", CaseInsensitive);
-        static RegExp const reContact    ("^\\s*Email address\\s*:\\s*(.*)", CaseInsensitive);
+        static const RegExp reTitle      ("^[\\s\x1Bm]*Title\\s*:\\s*(.*)", CaseInsensitive);
+        static const RegExp reVersion    (R"(^\s*Version\s*:\s*(.*))", CaseInsensitive);
+        static const RegExp reReleaseDate(R"(^\s*Release( date)?\s*:\s*(.*))", CaseInsensitive);
+        static const RegExp reAuthor     (R"(^\s*Author(s)?\s*:\s*(.*))", CaseInsensitive);
+        static const RegExp reContact    (R"(^\s*Email address\s*:\s*(.*))", CaseInsensitive);
 
         bool foundVersion = false;
         bool foundTitle   = false;
@@ -906,15 +906,18 @@ DE_PIMPL(DataBundle), public Lockable
     struct PathAndVersion {
         String path;
         String version;
-        PathAndVersion(String const &path = String(), String const &version = String())
-            : path(path), version(version) {}
+
+        PathAndVersion(String path = {}, String version = {})
+            : path(std::move(path))
+            , version(std::move(version))
+        {}
         operator bool() { return !path.isEmpty(); }
     };
 
-    PathAndVersion chooseUniqueLinkPathAndVersion(File const &dataFile,
-                                                  String const &packageId,
-                                                  Version const &packageVersion,
-                                                  dint bundleScore)
+    PathAndVersion chooseUniqueLinkPathAndVersion(const File &   dataFile,
+                                                  const String & packageId,
+                                                  const Version &packageVersion,
+                                                  dint           bundleScore)
     {
         for (int attempt = 0; attempt < 3; ++attempt)
         {
@@ -983,7 +986,7 @@ DE_PIMPL(DataBundle), public Lockable
             {
                 auto const &file = bundleFolder().locate<File const>(linkPath);
 
-                if (LinkFile const *linkFile = maybeAs<LinkFile>(file))
+                if (const auto *linkFile = maybeAs<LinkFile>(file))
                 {
                     if (linkFile->isBroken())
                     {
@@ -1080,9 +1083,6 @@ DataBundle::DataBundle(Format format, File &source)
 {
     d->source.reset(&source);
 }
-
-DataBundle::~DataBundle()
-{}
 
 DataBundle::Format DataBundle::format() const
 {
@@ -1200,12 +1200,12 @@ DataBundle const *DataBundle::bundleForPackage(String const &packageId) // stati
 
 DataBundle const *DataBundle::tryLocateDataFile(Package const &package, String const &dataFilePath)
 {
-    if (DataBundle const *bundle = package.root().tryLocate<DataBundle const>(dataFilePath))
+    if (const auto *bundle = package.root().tryLocate<const DataBundle>(dataFilePath))
     {
         return bundle;
     }
     // The package may itself be a link to a data bundle.
-    if (DataBundle const *bundle = maybeAs<DataBundle>(package.sourceFile().target()))
+    if (const auto *bundle = maybeAs<DataBundle>(package.sourceFile().target()))
     {
         return bundle;
     }
@@ -1297,7 +1297,7 @@ String DataBundle::guessCompatibleGame() const
 File *DataBundle::Interpreter::interpretFile(File *sourceData) const
 {
     // Broken links cannot be interpreted.
-    if (LinkFile *link = maybeAs<LinkFile>(sourceData))
+    if (auto *link = maybeAs<LinkFile>(sourceData))
     {
         if (link->isBroken()) return nullptr;
     }

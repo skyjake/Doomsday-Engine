@@ -322,7 +322,6 @@ public:
         {
             error("unknown keyword");
         }
-        return new NoneValue;
     }
 };
 

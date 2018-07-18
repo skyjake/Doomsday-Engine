@@ -182,7 +182,7 @@ DE_PIMPL(GLState)
     Impl(Public *i)
         : Base(i)
         , props(internal::glStateProperties)
-        , target(0)
+        , target(nullptr)
     {}
 
     Impl(Public *i, Impl const &other)
@@ -623,7 +623,7 @@ GLState &GLState::setTarget(GLFramebuffer &target)
 
 GLState &GLState::setDefaultTarget()
 {
-    d->target = 0;
+    d->target = nullptr;
     return *this;
 }
 
@@ -645,9 +645,9 @@ GLState &GLState::setNormalizedViewport(Rectanglef const &normViewportRect)
 {
     GLFramebuffer::Size const size = target().size();
     Rectangleui vp(Vec2ui(normViewportRect.left() * size.x,
-                             normViewportRect.top()  * size.y),
-                   Vec2ui(std::ceil(normViewportRect.right()  * size.x),
-                             std::ceil(normViewportRect.bottom() * size.y)));
+                          normViewportRect.top() * size.y),
+                   Vec2ui(std::ceil(normViewportRect.right() * size.x),
+                          std::ceil(normViewportRect.bottom() * size.y)));
     return setViewport(vp);
 }
 
@@ -680,9 +680,9 @@ GLState &GLState::setNormalizedScissor(Rectanglef const &normScissorRect)
 {
     Rectangleui vp = viewport();
     Rectanglei scis(Vec2i(normScissorRect.left()   * vp.width(),
-                             normScissorRect.top()    * vp.height()),
+                          normScissorRect.top()    * vp.height()),
                     Vec2i(std::ceil(normScissorRect.right()  * vp.width()),
-                             std::ceil(normScissorRect.bottom() * vp.height())));
+                          std::ceil(normScissorRect.bottom() * vp.height())));
     return setScissor(scis.moved(vp.topLeft.toVec2i()));
 }
 
@@ -844,7 +844,7 @@ void GLState::apply() const
 
     // Update the render target.
     GLFramebuffer *newTarget = &target();
-    DE_ASSERT(newTarget != 0);
+    DE_ASSERT(newTarget != nullptr);
 
     if (internal::currentTarget != newTarget)
     {

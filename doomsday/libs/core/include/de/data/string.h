@@ -172,7 +172,7 @@ public:
         virtual ddouble asNumber() const = 0;
     };
 
-    typedef List<const IPatternArg *> PatternArgs;
+    using PatternArgs = List<const IPatternArg *>;
 
     /**
      * Comparator for case-insensitive container keys.
@@ -252,7 +252,7 @@ public:
         }
     }
 
-    ~String();
+    ~String() override;
 
     inline String &operator=(const String &other)
     {

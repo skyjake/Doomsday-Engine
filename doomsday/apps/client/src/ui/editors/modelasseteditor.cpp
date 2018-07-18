@@ -98,15 +98,15 @@ DE_GUI_PIMPL(ModelAssetEditor)
                 .setInput(Rule::Top,  instLabel->rule().top());
     }
 
-    void setOfLoadedPackagesChanged()
+    void setOfLoadedPackagesChanged() override
     {
         updateAssetsList();
     }
 
-    Rule const &firstColumnWidthRule() const { return self().firstColumnWidth(); }
-    ScrollAreaWidget &containerWidget() { return self().containerWidget(); }
+    const Rule &firstColumnWidthRule() const override { return self().firstColumnWidth(); }
+    ScrollAreaWidget &containerWidget() override { return self().containerWidget(); }
 
-    void resetToDefaults(String const &/*settingName*/)
+    void resetToDefaults(String const &/*settingName*/) override
     {}
 
     static const char *pluralSuffix(int count, const char *suffix = "s")
@@ -547,7 +547,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         }
     }
 
-    void panelAboutToOpen(PanelWidget &)
+    void panelAboutToOpen(PanelWidget &) override
     {
         sortInstancesByDistance(true);
     }
@@ -558,7 +558,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
         FS::locate<Folder const>("/packs").forContents([this] (String name, File &)
         {
-            static const RegExp regex("asset\\.(model\\.((thing|weapon)\\..*))");
+            static const RegExp regex(R"(asset\.(model\.((thing|weapon)\..*)))");
             RegExpMatch m;
             if (regex.exactMatch(name, m))
             {
@@ -604,7 +604,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         if (!offsetX) return;
         if (render::StateAnimator *anim = assetAnimator())
         {
-            render::Model *model = const_cast<render::Model *>(&anim->model());
+            auto *model = const_cast<render::Model *>(&anim->model());
             model->offset = Vec3f(offsetX->value(), offsetY->value(), offsetZ->value());
         }
     }

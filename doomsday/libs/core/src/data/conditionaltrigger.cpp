@@ -70,9 +70,6 @@ ConditionalTrigger::ConditionalTrigger()
     : d(new Impl(this))
 {}
 
-ConditionalTrigger::~ConditionalTrigger()
-{}
-
 bool ConditionalTrigger::isValid() const
 {
     return d->condition;

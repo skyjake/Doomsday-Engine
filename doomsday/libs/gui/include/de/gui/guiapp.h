@@ -30,14 +30,6 @@
 
 #define DE_ASSERT_IN_RENDER_THREAD()   DE_ASSERT(de::GuiApp::inRenderThread())
 
-//#if defined (DE_MOBILE)
-//#include <QGuiApplication>
-//#  define LIBGUI_GUIAPP_BASECLASS  QGuiApplication
-//#else
-//#include <QApplication>
-//#  define LIBGUI_GUIAPP_BASECLASS  QApplication
-//#endif
-
 namespace de {
 
 class Thread;

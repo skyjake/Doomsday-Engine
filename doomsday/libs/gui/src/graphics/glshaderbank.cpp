@@ -34,7 +34,7 @@ namespace de {
 
 static String processIncludes(String source, const String &sourceFolderPath)
 {
-    static const RegExp includeRegex("#include\\s+['\"]([^\"']+)['\"]");
+    static const RegExp includeRegex(R"(#include\s+['"]([^"']+)['"])");
 
     RegExpMatch found;
     while (includeRegex.match(source, found))

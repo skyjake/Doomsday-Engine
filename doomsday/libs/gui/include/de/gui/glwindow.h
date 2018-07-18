@@ -48,7 +48,7 @@ class GLTimer;
 class LIBGUI_PUBLIC GLWindow : public Asset
 {
 public:
-    typedef Vec2ui Size;
+    using Size = Vec2ui;
 
     /**
      * Notified when the window's GL state needs to be initialized. The OpenGL
@@ -213,31 +213,15 @@ public:
     virtual void draw() = 0;
 
 public:
-    static bool mainExists();
+    static bool      mainExists();
     static GLWindow &main();
-    static void glActiveMain();
-    static void setMain(GLWindow *window);
+    static void      glActiveMain();
+    static void      setMain(GLWindow *window);
 
 protected:
     virtual void initializeGL();
     virtual void paintGL();
     virtual void windowAboutToClose();
-
-    // Native events.
-//    void resizeEvent            (QResizeEvent *ev) override;
-//    void focusInEvent           (QFocusEvent  *ev) override;
-//    void focusOutEvent          (QFocusEvent  *ev) override;
-//    void keyPressEvent          (QKeyEvent    *ev) override;
-//    void keyReleaseEvent        (QKeyEvent    *ev) override;
-//    void mousePressEvent        (QMouseEvent  *ev) override;
-//    void mouseReleaseEvent      (QMouseEvent  *ev) override;
-//    void mouseDoubleClickEvent  (QMouseEvent  *ev) override;
-//    void mouseMoveEvent         (QMouseEvent  *ev) override;
-//    void wheelEvent             (QWheelEvent  *ev) override;
-
-//    bool event(QEvent *) override;
-
-    DE_DEFINE_AUDIENCE2(FrameSwapped, void frameWasSwapped())
 
 private:
     DE_PRIVATE(d)

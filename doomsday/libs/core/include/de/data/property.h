@@ -35,7 +35,7 @@ template <typename ValueType>
 class BaseProperty
 {
 public:
-    BaseProperty() {}
+    BaseProperty() = default;
     BaseProperty(ValueType const &value) : _value(value) {}
 
     inline ValueType value() const { return _value; }

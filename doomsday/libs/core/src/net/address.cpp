@@ -158,7 +158,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
 
     // Let's see if there is a port number included (address is inside brackets).
     static const RegExp ipPortRegex
-            ("^\\[(localhost|::1|(::ffff:)?[0-9]+\\.[0-9]+\\.[0-9]+\\.[0-9]+|[:A-Fa-f0-9]+[A-Fa-f0-9])\\]:([0-9]+)$");
+            (R"(^\[(localhost|::1|(::ffff:)?[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+|[:A-Fa-f0-9]+[A-Fa-f0-9])\]:([0-9]+)$)");
     //qDebug() << "matching:" << addressWithOptionalPort;
     RegExpMatch match;
     if (ipPortRegex.match(addressWithOptionalPort, match))

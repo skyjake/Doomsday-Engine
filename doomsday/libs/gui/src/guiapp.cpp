@@ -58,7 +58,7 @@ DE_PIMPL(GuiApp)
         hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
     }
 
-    ~Impl()
+    ~Impl() override
     {
         SDL_FreeCursor(arrowCursor);
         SDL_FreeCursor(vsizeCursor);
@@ -169,7 +169,7 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
     }
 
     // Apply the overall UI scale factor.
-    d->dpiFactor *= config().getf("ui.scaleFactor", 1.f);
+    d->dpiFactor *= config().getd("ui.scaleFactor", 1.0);
 
     DisplayMode_Init();
     scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);

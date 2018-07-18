@@ -33,9 +33,9 @@ using namespace de;
 
 namespace res {
 
-static int const MATCH_MAXIMUM_SCORE = 4; // in case 5 specified, allow 1 to not match for flexibility
+static const int MATCH_MAXIMUM_SCORE = 4; // in case 5 specified, allow 1 to not match for flexibility
 
-static String const VAR_REQUIRED_SCORE = "requiredScore";
+DE_STATIC_STRING(VAR_REQUIRED_SCORE, "requiredScore");
 
 DE_PIMPL(Bundles)
 , DE_OBSERVES(FileIndex, Addition)
@@ -49,9 +49,9 @@ DE_PIMPL(Bundles)
     Hash<int /*DataBundle::Format*/, BlockElements> formatEntries;
     TaskPool tasks;
 
-    Impl(Public * i, String const &bundleDefPath)
+    Impl(Public * i, String bundleDefPath)
         : Base(i)
-        , defPath(bundleDefPath)
+        , defPath(std::move(bundleDefPath))
     {
         // Observe new data files.
         App::fileSystem().indexFor(DE_TYPE_NAME(DataFile))  .audienceForAddition() += this;
@@ -60,7 +60,7 @@ DE_PIMPL(Bundles)
         App::fileSystem().indexFor(DE_TYPE_NAME(DataFolder)).audienceForRemoval()  += this;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         // Ongoing identification tasks should first finish.
         {
@@ -70,7 +70,7 @@ DE_PIMPL(Bundles)
         tasks.waitForDone();
     }
 
-    void fileAdded(File const &dataFile, FileIndex const &)
+    void fileAdded(File const &dataFile, FileIndex const &) override
     {
         DE_ASSERT(is<DataBundle>(dataFile));
         {
@@ -84,7 +84,7 @@ DE_PIMPL(Bundles)
         }
     }
 
-    void fileRemoved(File const &dataFile, FileIndex const &)
+    void fileRemoved(File const &dataFile, FileIndex const &) override
     {
         DE_ASSERT(is<DataBundle>(dataFile));
 
@@ -148,7 +148,7 @@ DE_PIMPL(Bundles)
                 continue;
             }
 
-            Info::BlockElement &block = elem->as<Info::BlockElement>();
+            auto &block = elem->as<Info::BlockElement>();
             if (block.blockType() != DE_STR("package"))
             {
                 // Not sure what this is...
@@ -173,11 +173,11 @@ DE_PIMPL(Bundles)
             }
 
             // How many rules required?
-            if (!block.contains(VAR_REQUIRED_SCORE))
+            if (!block.contains(VAR_REQUIRED_SCORE()))
             {
                 int const ruleCount = block.size() - 1; // not counting "info"
-                block.add(new Info::KeyElement(VAR_REQUIRED_SCORE,
-                        Stringf("%i", de::min(MATCH_MAXIMUM_SCORE, ruleCount))));
+                block.add(new Info::KeyElement(
+                    VAR_REQUIRED_SCORE(), Stringf("%i", de::min(MATCH_MAXIMUM_SCORE, ruleCount))));
             }
 
             formatEntries[bundleFormat].append(&block);
@@ -345,7 +345,7 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
             }
         }
 
-        if (score < def->keyValue(VAR_REQUIRED_SCORE).text.toInt())
+        if (score < def->keyValue(VAR_REQUIRED_SCORE()).text.toInt())
         {
             score = 0;
         }

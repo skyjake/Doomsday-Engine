@@ -31,7 +31,7 @@ class DE_PUBLIC ConditionalTrigger
 public:
     ConditionalTrigger();
 
-    virtual ~ConditionalTrigger();
+    virtual ~ConditionalTrigger() = default;
 
     bool isValid() const;
 

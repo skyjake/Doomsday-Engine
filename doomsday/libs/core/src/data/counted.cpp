@@ -22,7 +22,7 @@
 namespace de {
 
 #ifdef DE_DEBUG
-std::atomic_int Counted::totalCount { 0 }; ///< Should return back to zero when program ends.
+std::atomic_int Counted::totalCount{0}; ///< Should return back to zero when program ends.
 # ifdef DE_USE_COUNTED_TRACING
 static QHash<void *, QByteArray> countedAllocs;
 void Counted::printAllocs()

@@ -31,7 +31,6 @@
 
 namespace de {
 
-//static const char *WHITESPACE            = " \t\r\n";
 static const char *WHITESPACE_OR_COMMENT = " \t\r\n#";
 static const char *TOKEN_BREAKING_CHARS  = "#:=$(){}<>,;\" \t\r\n";
 static const char *INCLUDE_TOKEN         = "@include";
@@ -48,7 +47,7 @@ DE_PIMPL(Info)
     struct DefaultIncludeFinder : public IIncludeFinder
     {
         String findIncludedInfoSource(String const &includeName, Info const &info,
-                                      String *sourcePath) const
+                                      String *sourcePath) const override
         {
             String path = info.sourcePath().fileNamePath() / includeName;
             if (sourcePath) *sourcePath = path;
@@ -69,7 +68,7 @@ DE_PIMPL(Info)
     String currentToken;
     BlockElement rootBlock;
     DefaultIncludeFinder defaultFinder;
-    IIncludeFinder const *finder = &defaultFinder;
+    const IIncludeFinder *finder = &defaultFinder;
 
     using InfoValue = Info::Element::Value;
 
@@ -262,11 +261,11 @@ DE_PIMPL(Info)
         catch (EndOfFile const &)
         {
             // The file ended.
-            return 0;
+            return nullptr;
         }
 
         int const elementLine = currentLine;
-        Element *result = 0;
+        Element *result = nullptr;
 
         if (next == ":" || next == "=" || next == "$")
         {
@@ -282,7 +281,7 @@ DE_PIMPL(Info)
             result = parseBlockElement(key);
         }
 
-        DE_ASSERT(result != 0);
+        DE_ASSERT(result);
 
         result->setSourceLocation(sourcePath, elementLine);
         return result;
@@ -623,7 +622,7 @@ DE_PIMPL(Info)
     {
         try
         {
-            DE_ASSERT(finder != 0);
+            DE_ASSERT(finder != nullptr);
 
             String includePath;
             String content = finder->findIncludedInfoSource(includeName, self(), &includePath);
@@ -695,9 +694,6 @@ Info::Element::Element(Type type, String const &name)
     setName(name);
 }
 
-Info::Element::~Element()
-{}
-
 void Info::Element::setParent(BlockElement *parent)
 {
     d->parent = parent;
@@ -708,7 +704,7 @@ Info::BlockElement *Info::Element::parent() const
     return d->parent;
 }
 
-void Info::Element::setSourceLocation(String const &sourcePath, int line)
+void Info::Element::setSourceLocation(const String &sourcePath, int line)
 {
     d->sourceLine = de::sourceLineTable.lineId(sourcePath, line);
 }
@@ -745,9 +741,9 @@ Info::BlockElement::~BlockElement()
 
 void Info::BlockElement::clear()
 {
-    for (ContentsInOrder::iterator i = _contentsInOrder.begin(); i != _contentsInOrder.end(); ++i)
+    for (auto *i : _contentsInOrder)
     {
-        delete *i;
+        delete i;
     }
     _contents.clear();
     _contentsInOrder.clear();
@@ -755,7 +751,7 @@ void Info::BlockElement::clear()
 
 void Info::BlockElement::add(Info::Element *elem)
 {
-    DE_ASSERT(elem != 0);
+    DE_ASSERT(elem);
 
     elem->setParent(this);
     _contentsInOrder.append(elem); // owned
@@ -767,8 +763,8 @@ void Info::BlockElement::add(Info::Element *elem)
 
 Info::Element *Info::BlockElement::find(String const &name) const
 {
-    Contents::const_iterator found = _contents.find(name.lower());
-    if (found == _contents.end()) return 0;
+    auto found = _contents.find(name.lower());
+    if (found == _contents.end()) return nullptr;
     return found->second;
 }
 
@@ -802,7 +798,7 @@ Info::Element *Info::BlockElement::findByPath(String const &path) const
 
     // Does this element exist?
     Element *e = find(name);
-    if (!e) return 0;
+    if (!e) return nullptr;
 
     if (e->isBlock())
     {

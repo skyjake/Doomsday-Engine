@@ -49,8 +49,6 @@ public:
         AbstractProfile();
         AbstractProfile(AbstractProfile const &profile);
 
-        virtual ~AbstractProfile();
-
         /**
          * Assigns another profile's data to this one. The owner pointer is not copied.
          * @param other  Other profile.
@@ -118,7 +116,7 @@ public:
 public:
     Profiles();
 
-    virtual ~Profiles();
+    virtual ~Profiles() = default;
 
     /**
      * Sets the name this register will use for storing profiles persistently.

@@ -27,14 +27,15 @@ namespace de {
 DE_PIMPL(Profiles)
 , DE_OBSERVES(Deletable, Deletion)
 {
-    typedef Map<String, AbstractProfile *, String::InsensitiveLessThan> Profiles;
+    using Profiles = Map<String, AbstractProfile *, String::InsensitiveLessThan>;
+
     Profiles profiles;
-    String persistentName;
+    String   persistentName;
 
     Impl(Public *i) : Base(i)
     {}
 
-    ~Impl()
+    ~Impl() override
     {
         clear();
     }
@@ -74,7 +75,7 @@ DE_PIMPL(Profiles)
         profiles.insert(newName, const_cast<AbstractProfile *>(&profile));
     }
 
-    void objectWasDeleted(Deletable *obj)
+    void objectWasDeleted(Deletable *obj) override
     {
         // At this point the AbstractProfile itself is already deleted.
         for (auto i = profiles.begin(); i != profiles.end(); ++i)
@@ -125,7 +126,7 @@ DE_PIMPL(Profiles)
                 if (!elem->isBlock()) continue;
 
                 // There may be multiple profiles in the file.
-                de::Info::BlockElement const &profBlock = elem->as<de::Info::BlockElement>();
+                const auto &profBlock = elem->as<de::Info::BlockElement>();
                 if (profBlock.blockType() == "group" &&
                     profBlock.name()      == "profile")
                 {
@@ -158,9 +159,6 @@ Profiles::Profiles()
     : d(new Impl(this))
 {}
 
-Profiles::~Profiles()
-{}
-
 StringList Profiles::profiles() const
 {
     StringList names;
@@ -170,7 +168,7 @@ StringList Profiles::profiles() const
 
 int Profiles::count() const
 {
-    return d->profiles.size();
+    return d->profiles.sizei();
 }
 
 Profiles::AbstractProfile *Profiles::tryFind(String const &name) const
@@ -293,13 +291,12 @@ void Profiles::deserialize()
     // Read all fixed profiles from */profiles/(persistentName)/
     FS::FoundFiles folders;
     App::fileSystem().findAll("profiles" / d->persistentName, folders);
-    DE_FOR_EACH(FS::FoundFiles, i, folders)
+    for (auto *i : folders)
     {
         if (auto const *folder = maybeAs<Folder>(*i))
         {
             // Let's see if it contains any .dei files.
-            folder->forContents([this] (String name, File &file)
-            {
+            folder->forContents([this](String name, File &file) {
                 if (name.fileNameExtension() == ".dei")
                 {
                     // Load this profile.
@@ -311,7 +308,7 @@ void Profiles::deserialize()
     }
 
     // Read /home/configs/(persistentName).dei
-    if (File const *file = App::rootFolder().tryLocate<File const>(d->fileName()))
+    if (const auto *file = App::rootFolder().tryLocate<File const>(d->fileName()))
     {
         d->loadProfilesFromInfo(*file, false /* modifiable */);
     }
@@ -322,12 +319,12 @@ void Profiles::deserialize()
 DE_PIMPL(Profiles::AbstractProfile)
 {
     Profiles *owner = nullptr;
-    String name;
-    bool readOnly = false;
+    String    name;
+    bool      readOnly = false;
 
     Impl(Public *i) : Base(i) {}
 
-    ~Impl()
+    ~Impl() override
     {
         if (owner)
         {
@@ -350,9 +347,6 @@ Profiles::AbstractProfile::AbstractProfile(AbstractProfile const &profile)
     d->name     = profile.name();
     d->readOnly = profile.isReadOnly();
 }
-
-Profiles::AbstractProfile::~AbstractProfile()
-{}
 
 Profiles::AbstractProfile &Profiles::AbstractProfile::operator = (AbstractProfile const &other)
 {

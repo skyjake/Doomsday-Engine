@@ -161,7 +161,7 @@ DE_PIMPL(GLWindow)
     {
         static Time lastFpsTime;
 
-        Time const nowTime = Clock::appTime();
+        const Time nowTime = Clock::appTime();
 
         // Increment the (local) frame counter.
         frameCount++;
@@ -337,8 +337,6 @@ GLWindow::GLWindow()
 //#if defined (DE_MOBILE)
 //    setFocusPolicy(Qt::StrongFocus);
 //#endif
-
-//    connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
 
     d->handler = new WindowEventHandler(this);
     d->handler->setKeyboardMode(WindowEventHandler::RawKeys);

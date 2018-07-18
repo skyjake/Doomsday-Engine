@@ -25,6 +25,8 @@
 
 namespace res {
 
+using namespace de;
+
 /**
  * Index for data bundles.
  *
@@ -38,7 +40,7 @@ namespace res {
 class LIBDOOMSDAY_PUBLIC Bundles
 {
 public:
-    typedef de::List<de::Info::BlockElement const *> BlockElements;
+    using BlockElements = List<const Info::BlockElement *>;
 
     /// Notified when a data bundle refresh/identification has been completed.
     DE_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified())
@@ -47,26 +49,26 @@ public:
 
     struct LIBDOOMSDAY_PUBLIC MatchResult
     {
-        de::Info::BlockElement const *bestMatch = nullptr;
-        de::dint bestScore = 0;
-        de::String packageId;
-        de::Version packageVersion = de::Version("");
+        const Info::BlockElement *bestMatch = nullptr;
+        dint                      bestScore = 0;
+        String                    packageId;
+        Version                   packageVersion{""};
 
         operator bool() const { return bestMatch != nullptr; }
     };
 
 public:
-    Bundles(const de::String &bundleDefPath = "/packs/net.dengine.base/databundles.dei");
+    Bundles(const String &bundleDefPath = "/packs/net.dengine.base/databundles.dei");
 
     /**
      * Returns the collection of information for identifying known data files.
      * @return Info document.
      */
-    de::Info const &identityRegistry() const;
+    Info const &identityRegistry() const;
 
     BlockElements formatEntries(DataBundle::Format format) const;
 
-    /**
+    /*
      * Defines a known pacakge. When identifying the specified path, it will be
      * recognized as @a packageId. This is used for overriding the normal data bundle
      * registry programmatically. The known file is given a maximum match score.
@@ -74,9 +76,9 @@ public:
      * @param path       Path of a data bundle.
      * @param packageId  Package identifier.
      */
-//    void defineKnownPackage(de::Path const &path, de::String const &packageId);
+//    void defineKnownPackage(Path const &path, String const &packageId);
 
-//    void undefineKnownPackage(de::Path const &path);
+//    void undefineKnownPackage(Path const &path);
 
     /**
      * Tries to identify of the data files that have been indexed since the
