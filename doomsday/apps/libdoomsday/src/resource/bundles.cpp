@@ -130,7 +130,7 @@ DENG2_PIMPL(Bundles)
 
     void parseRegistry()
     {
-        using Info = de::Info;
+        DENG2_GUARD(this);
 
         if (!identityRegistry.isEmpty()) return;
 
@@ -141,7 +141,13 @@ DENG2_PIMPL(Bundles)
 
         for (auto *elem : identityRegistry.root().contentsInOrder())
         {
-            if (!elem->isBlock()) continue;
+            using Info = de::Info;
+
+            if (!elem->isBlock())
+            {
+                // Looking for "package" blocks.
+                continue;
+            }
 
             Info::BlockElement &block = elem->as<Info::BlockElement>();
             if (block.blockType() != QStringLiteral("package"))
