@@ -521,7 +521,7 @@ String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) cons
         else
         {
             // If the section is very long, it's clearer to break the line here.
-            char const *separator = (sect.size() > LINE_BREAKING_SECTION_LENGTH? "\n    " : " ");
+            char const *separator = (sect.size() > LINE_BREAKING_SECTION_LENGTH? "\n     " : " ");
             output << "[" << sect << "]" << separator;
         }
     }
@@ -710,10 +710,10 @@ LogEntry &Log::enter(duint32 metadata, String const &format, LogEntry::Args argu
     }
 
     // Collect the sections.
-    String context;
-    String latest;
-    int depth = 0;
-    for (char const *i : d->sectionStack)
+    String  context;
+    CString latest;
+    int     depth = 0;
+    for (const CString i : d->sectionStack)
     {
         if (i == latest)
         {
