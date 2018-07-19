@@ -1135,7 +1135,9 @@ static void initializeWithWindowReady()
                 for (GameProfile const *prof : playable) ids << prof->gameId();
                 msg += "The following games are playable: " + String::join(ids, ", ");
             }
-            App_Error("%s", msg.c_str());
+            EscapeParser esc;
+            esc.parse(msg);
+            App_Error("%s", esc.plainText().c_str());
         }
 #endif
     }
