@@ -51,8 +51,7 @@ Block::Block(const Block &other)
 
 Block::Block(Block &&moved)
 {
-    _block = moved._block;
-    iZap(moved._block);
+    set_Block(&_block, &moved._block);
 }
 
 Block::Block(const char *nullTerminatedCStr)
@@ -274,10 +273,16 @@ Block &Block::operator+=(const IByteArray &byteArray)
 
 Block &Block::operator=(const Block &other)
 {
-    set_Block(&_block, other);
+    set_Block(&_block, &other._block);
     return *this;
 }
 
+Block &Block::operator=(Block &&moved)
+{
+    set_Block(&_block, &moved._block);
+    return *this;
+}
+    
 Block &Block::operator=(const IByteArray &byteArray)
 {
     copyFrom(byteArray, 0, byteArray.size());

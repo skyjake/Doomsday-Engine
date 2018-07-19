@@ -262,12 +262,7 @@ public:
 
     inline String &operator=(String &&moved)
     {
-        if (_str.chars.i)
-        {
-            deinit_String(&_str);
-        }
-        _str = moved._str;
-        zap(moved._str);
+        set_String(&_str, &moved._str);
         return *this;
     }
 

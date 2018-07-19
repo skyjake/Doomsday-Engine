@@ -127,6 +127,7 @@ public:
     Block &operator+=(const IByteArray &byteArray);
 
     Block &operator=(const Block &other);
+    Block &operator=(Block &&moved);
     Block &operator=(const IByteArray &byteArray);
 
     Block  compressed(int level = -1) const;

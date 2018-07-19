@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2004-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2004-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -46,8 +46,7 @@ String::String(const String &other)
 
 String::String(String &&moved)
 {
-    _str = moved._str;
-    iZap(moved._str);
+    initCopy_String(&_str, &moved._str);
 }
 
 String::String(const Block &bytes)
