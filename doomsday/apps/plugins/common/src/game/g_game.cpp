@@ -2039,15 +2039,15 @@ uint G_MapNumberFor(res::Uri const &mapUri)
         if (gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if (towlower(path.first()) == 'e' && towlower(path.at(String::CharPos(2))) == 'm')
+            if (towlower(path.first()) == 'e' && towlower(path.at(CharPos(2))) == 'm')
             {
-                return path.substr(String::CharPos(3)).toInt() - 1;
+                return path.substr(CharPos(3)).toInt() - 1;
             }
         }
 #endif
         if (path.beginsWith("map", CaseInsensitive))
         {
-            return path.substr(String::CharPos(3)).toInt() - 1;
+            return path.substr(BytePos(3)).toInt() - 1;
         }
     }
     return 0;

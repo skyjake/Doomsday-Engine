@@ -600,8 +600,8 @@ Time Time::fromText(const String &text, Time::Format format)
             if (parts[2].contains(":"))
             {
                 year   = Date::currentDate().year();
-                hour   = parts[2].left(String::BytePos(2)).toInt();
-                minute = parts[2].right(String::BytePos(2)).toInt();
+                hour   = parts[2].left(BytePos(2)).toInt();
+                minute = parts[2].right(BytePos(2)).toInt();
                 return Time(year, month, day, hour, minute, 0);
             }
             else

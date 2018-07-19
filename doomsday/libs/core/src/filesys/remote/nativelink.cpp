@@ -118,7 +118,7 @@ NativeLink::NativeLink(String const &address)
     d->socket.audienceForMessage() += d;
 
     DE_ASSERT(address.beginsWith(URL_SCHEME));
-    d->socket.open(address.substr(String::BytePos(strlen(URL_SCHEME))));
+    d->socket.open(address.substr(BytePos(strlen(URL_SCHEME))));
 }
 
 Link *NativeLink::construct(String const &address)

@@ -90,7 +90,7 @@ bool TextValue::contains(Value const &value) const
 
 Value *TextValue::duplicateElement(const Value &charPos) const
 {
-    return new TextValue(_value.substr(String::CharPos(charPos.asInt()), 1));
+    return new TextValue(_value.substr(CharPos(charPos.asInt()), 1));
 }
 
 Value *TextValue::next()
@@ -162,7 +162,7 @@ void TextValue::multiply(Value const &value)
         }
         // The remainder.
         dint remain = dint(std::floor((factor + 1) * _value.size() + .5));
-        str += _value.left(String::CharPos(remain));
+        str += _value.left(CharPos(remain));
         _value = str;
     }
 }

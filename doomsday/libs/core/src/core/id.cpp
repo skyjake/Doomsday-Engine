@@ -43,7 +43,7 @@ Id::Id(String const &text) : _id(None)
 {
     if (text.beginsWith("{") && text.endsWith("}"))
     {
-        _id = std::strtoul(text.substr(String::BytePos{1}, text.sizeu() - 2), nullptr, 16);
+        _id = std::strtoul(text.substr(BytePos{1}, text.sizeu() - 2), nullptr, 16);
     }
 }
 

@@ -26,8 +26,8 @@
 using namespace de;
 using namespace de::ui;
 
-static const String::CharPos MAX_VISIBLE_PROFILE_NAME(50);
-static const String::CharPos MAX_PROFILE_NAME(100);
+static constexpr CharPos MAX_VISIBLE_PROFILE_NAME{50};
+static constexpr CharPos MAX_PROFILE_NAME{100};
 
 DE_GUI_PIMPL(ProfilePickerWidget)
 {

@@ -170,7 +170,7 @@ NativePath NativePath::expand(bool *didExpand) const
     if (first() == '>' || first() == '}')
     {
         if (didExpand) *didExpand = true;
-        return App::app().nativeBasePath() / toString().substr(String::BytePos(1));
+        return App::app().nativeBasePath() / toString().substr(BytePos(1));
     }
 #ifdef UNIX
     else if (first() == '~')
@@ -182,7 +182,7 @@ NativePath NativePath::expand(bool *didExpand) const
         if (firstSlash > 1)
         {
             // Parse the user's home directory (from passwd).
-            String userName = path.substr(String::BytePos(1), (firstSlash - 1).index);
+            String userName = path.substr(BytePos(1), (firstSlash - 1).index);
             struct passwd *pw = getpwnam(userName);
             if (!pw)
             {
@@ -195,7 +195,7 @@ NativePath NativePath::expand(bool *didExpand) const
         else
         {
             // Replace with the HOME path.
-            return NativePath::homePath() / path.substr(String::BytePos(2));
+            return NativePath::homePath() / path.substr(BytePos(2));
         }
     }
 #endif
@@ -214,7 +214,7 @@ String NativePath::pretty() const
     // Replace relative directives like '}' (used in FS1 only) with a full symbol.
     if (result.size() > 1 && (result.first() == '}' || result.first() == '>'))
     {
-        return CString(NATIVE_BASE_SYMBOLIC) + DIR_SEPARATOR + result.substr(String::BytePos(1));
+        return CString(NATIVE_BASE_SYMBOLIC) + DIR_SEPARATOR + result.substr(BytePos(1));
     }
 
     // If within one of the known native directories, cut out the known path,

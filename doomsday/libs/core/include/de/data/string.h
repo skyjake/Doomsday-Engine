@@ -57,44 +57,61 @@ struct DE_PUBLIC Sensitivity
     }
 };
 
-struct DE_PUBLIC BytePos
+enum PositionType { ByteOffset, CharacterOffset };
+    
+template <PositionType PosType>
+struct StronglyTypedPosition
 {
     dsize index;
 
-    static constexpr dsize npos = std::numeric_limits<dsize>::max();
+    using Pos = StronglyTypedPosition<PosType>;
+    
+    static constexpr PositionType type = PosType;
+    static constexpr dsize        npos = std::numeric_limits<dsize>::max();
 
-    explicit BytePos(dsize i = npos)
+    explicit constexpr StronglyTypedPosition(dsize i = npos)
         : index(i)
     {}
+    
     explicit operator bool() const { return index != npos; }
 
-    bool     operator==(dsize i) const   { return index == i; }
-    bool     operator!=(dsize i) const   { return index != i; }
-    bool     operator<(dsize i) const    { return index < i; }
-    bool     operator>(dsize i) const    { return index > i; }
-    bool     operator<=(dsize i) const   { return index <= i; }
-    bool     operator>=(dsize i) const   { return index >= i; }
+    inline bool operator==(dsize i) const   { return index == i; }
+    inline bool operator!=(dsize i) const   { return index != i; }
+    inline bool operator<(dsize i) const    { if (index == npos || i == npos) return false; return index < i; }
+    inline bool operator>(dsize i) const    { if (index == npos || i == npos) return false; return index > i; }
+    inline bool operator<=(dsize i) const   { if (index == npos || i == npos) return false; return index <= i; }
+    inline bool operator>=(dsize i) const   { if (index == npos || i == npos) return false; return index >= i; }
 
-    bool     operator==(BytePos p) const { return index == p.index; }
-    bool     operator!=(BytePos p) const { return index != p.index; }
-    bool     operator<(BytePos p) const  { return index < p.index; }
-    bool     operator>(BytePos p) const  { return index > p.index; }
-    bool     operator>=(BytePos p) const { return index >= p.index; }
-    bool     operator<=(BytePos p) const { return index <= p.index; }
+    inline bool operator==(Pos i) const { return index == i.index; }
+    inline bool operator!=(Pos i) const { return index != i.index; }
+    inline bool operator<(Pos i) const  { if (index == npos || i.index == npos) return false; return index < i.index; }
+    inline bool operator>(Pos i) const  { if (index == npos || i.index == npos) return false; return index > i.index; }
+    inline bool operator<=(Pos i) const { if (index == npos || i.index == npos) return false; return index <= i.index; }
+    inline bool operator>=(Pos i) const { if (index == npos || i.index == npos) return false; return index >= i.index; }
 
-    BytePos  operator-(long sub) const { return BytePos{index - sub}; }
-    BytePos  operator+(long sub) const { return BytePos{index + sub}; }
-    BytePos  &operator+=(long sub) { index += sub; return *this; }
-    BytePos  &operator-=(long sub) { index -= sub; return *this; }
+    Pos  operator-(long sub) const { return Pos{index != npos ? index - sub : npos}; }
+    Pos  operator+(long sub) const { return Pos{index != npos ? index + sub : npos}; }
+    Pos &operator+=(long sub)      { if (index != npos) { index += sub; } return *this; }
+    Pos &operator-=(long sub)      { if (index != npos) { index -= sub; } return *this; }
 
-    BytePos  operator+(const BytePos &p) const { return BytePos{index + p.index}; }
-    BytePos  operator++(int) { BytePos p = *this; index++; return p; }
-    BytePos &operator++() { index++; return *this; }
-    BytePos  operator--(int) { BytePos p = *this; index--; return p; }
-    BytePos &operator--() { index--; return *this; }
-    BytePos  operator-(BytePos p) const { return BytePos(index - p.index); }
+    Pos  operator+(const Pos &p) const { return Pos{index != npos ? index + p.index : npos}; }
+    Pos  operator-(Pos p) const        { return Pos(index != npos ? index - p.index : npos); }
+    Pos  operator++(int) { Pos p = *this; if (index != npos) index++; return p; }
+    Pos  operator--(int) { Pos p = *this; if (index != npos) index--; return p; }
+    Pos &operator++() { if (index != npos) index++; return *this; }
+    Pos &operator--() { if (index != npos) index--; return *this; }
 };
+    
+using BytePos = StronglyTypedPosition<ByteOffset>;
 
+/**
+ * Character index. A single character may be composed of multiple bytes.
+ */
+using CharPos = StronglyTypedPosition<CharacterOffset>;
+    
+/**
+ * Multibyte character iterator.
+ */
 struct DE_PUBLIC mb_iterator
 {
     const char *i;
@@ -186,41 +203,12 @@ public:
     };
 
 public:
-    using SingleChar = char[2];
     using size_type  = dsize;
+    using SingleChar = char[2];
+    using ByteRange  = Range<BytePos>;
+    using CharRange  = Range<CharPos>;
 
     static size_type const npos;
-
-    using BytePos = de::BytePos;
-    using ByteRange = Range<BytePos>;
-
-    /**
-     * Character index. A single character may be composed of multiple bytes.
-     */
-    struct CharPos {
-        dsize index;
-
-        explicit CharPos(dsize i = npos)
-            : index(i)
-        {}
-        explicit operator bool() const { return index != npos; }
-        bool     operator==(dsize i) const { return index == i; }
-        bool     operator!=(dsize i) const { return index != i; }
-        bool     operator<(dsize i) const { return index < i; }
-        bool     operator<(CharPos i) const { return index < i.index; }
-        bool     operator>(dsize i) const { return index > i; }
-        bool     operator>(CharPos i) const { return index > i.index; }
-        bool     operator<=(dsize i) const { return index <= i; }
-        bool     operator>=(dsize i) const { return index >= i; }
-        CharPos  operator-(int sub) const { return CharPos{index - sub}; }
-        CharPos  operator+(int sub) const { return CharPos{index + sub}; }
-        CharPos  operator++(int) { CharPos p = *this; index++; return p; }
-        CharPos &operator++() { index++; return *this; }
-        CharPos  operator--(int) { CharPos p = *this; index--; return p; }
-        CharPos &operator--() { index--; return *this; }
-        CharPos  operator-(CharPos p) const { return CharPos(index - p.index); }
-    };
-    using CharRange = Range<CharPos>;
 
 public:
     String();
@@ -850,12 +838,12 @@ inline StringList makeList(int count, const char * const *strings)
     return list;
 }
 
-inline bool operator>=(int a, const String::BytePos &b)
+inline bool operator>=(int a, const BytePos &b)
 {
     return a >= int(b.index);
 }
 
-inline bool operator<=(int a, const String::BytePos &b)
+inline bool operator<=(int a, const BytePos &b)
 {
     return a <= int(b.index);
 }
@@ -870,7 +858,7 @@ inline String operator+(const char *left, const String &right)
     return String(left) + right;
 }
 
-inline const char *operator+(const char *cStr, const String::BytePos &offset)
+inline const char *operator+(const char *cStr, const BytePos &offset)
 {
     return cStr + offset.index;
 }

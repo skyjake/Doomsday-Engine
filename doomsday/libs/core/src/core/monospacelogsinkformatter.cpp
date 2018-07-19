@@ -94,7 +94,7 @@ struct TabFiller
         for (const String &ln : lines)
         {
             int stop = 0;
-            for (auto i = String::BytePos(0); i < ln.size(); ++i)
+            for (auto i = BytePos(0); i < ln.size(); ++i)
             {
                 if (ln.at(i) == '\t')
                 {
@@ -122,7 +122,7 @@ struct TabFiller
     bool fillTabs(StringList &fills, int maxStop, int minIndent) const
     {
         // The T` escape marks the place where tab stops are completely reset.
-        struct { int fillIndex; String::BytePos pos; } resetAt;
+        struct { int fillIndex; BytePos pos; } resetAt;
 
         for (int stop = 0; stop <= maxStop; ++stop)
         {
@@ -166,7 +166,7 @@ replaceTabs:
             {
                 String &ln = fills[idx];
                 int w = (idx > 0? minIndent : 0);
-                for (auto i = String::BytePos(0); i < ln.size(); ++i)
+                for (auto i = BytePos(0); i < ln.size(); ++i)
                 {
                     if (ln.at(i) == '\t')
                     {
@@ -265,7 +265,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
         }
         else
         {
-            String::CharPos prefix = section.commonPrefixLength(_sectionOfPreviousLine);
+            CharPos prefix = section.commonPrefixLength(_sectionOfPreviousLine);
             if (prefix > 5)
             {
                 // Some commonality with previous section, we can abbreviate

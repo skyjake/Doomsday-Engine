@@ -86,7 +86,7 @@ inline String ScriptArgumentComposer::scriptArgumentAsText(const String &arg)
 {
     if (arg.beginsWith("$")) // Verbatim?
     {
-        return arg.substr(String::BytePos(1));
+        return arg.substr(BytePos(1));
     }
     String quoted(arg);
     quoted.replace("\\", "\\\\").replace("\"", "\\\"").replace("\n", "\\n");

@@ -47,7 +47,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
     String cacheFolderPath() const
     {
         String const hex = dataFile->metaId().asHexadecimalText();
-        return RemoteFile::CACHE_PATH / hex.right(String::CharPos(1)) / hex;
+        return RemoteFile::CACHE_PATH / hex.right(CharPos(1)) / hex;
     }
 
     void assetStateChanged(Asset &)

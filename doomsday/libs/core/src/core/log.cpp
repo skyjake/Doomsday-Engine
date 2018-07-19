@@ -493,7 +493,7 @@ String LogEntry::asText(Flags const &formattingFlags, dsize shortenSection) cons
                 parts.removeFirst();
             }
             // Append the remainer as-is.
-            sect += _section.substr(String::BytePos(len));
+            sect += _section.substr(BytePos(len));
         }
         else
         {

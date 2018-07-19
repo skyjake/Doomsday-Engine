@@ -260,7 +260,7 @@ void String::remove(BytePos start, dsize count)
     remove_Block(&_str.chars, start.index, count);
 }
 
-void String::truncate(String::BytePos pos)
+void String::truncate(BytePos pos)
 {
     truncate_Block(&_str.chars, pos.index);
 }
@@ -693,7 +693,7 @@ dint String::compareWithoutCase(const String &other, int n) const
     return cmpNSc_String(&_str, other, n, &iCaseInsensitive);
 }
 
-String::CharPos String::commonPrefixLength(const String &str, Sensitivity sensitivity) const
+CharPos String::commonPrefixLength(const String &str, Sensitivity sensitivity) const
 {
     CharPos count{0};
     for (const_iterator a = begin(), b = str.begin(), aEnd = end(), bEnd = str.end();
@@ -1092,7 +1092,7 @@ String String::fromPercentEncoding(const Block &percentEncoded) // static
 }
 
 //------------------------------------------------------------------------------------------------
-
+    
 String::const_reverse_iterator::const_reverse_iterator(const Range<const char *> &range)
     : iter(range.end, range.start)
 {

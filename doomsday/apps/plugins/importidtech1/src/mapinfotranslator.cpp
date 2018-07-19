@@ -233,13 +233,13 @@ namespace internal {
         String path = mapUri.path();
         if(!path.isEmpty())
         {
-            if(towlower(path.first()) == 'e' && towlower(path.at(String::CharPos(2))) == 'm')
+            if(towlower(path.first()) == 'e' && towlower(path.at(CharPos(2))) == 'm')
             {
-                return de::max(path.substr(String::CharPos(3)).toInt(0, 10, String::AllowSuffix), 1);
+                return de::max(path.substr(CharPos(3)).toInt(0, 10, String::AllowSuffix), 1);
             }
             if(path.beginsWith("map", CaseInsensitive))
             {
-                return de::max(path.substr(String::CharPos(3)).toInt(0, 10, String::AllowSuffix), 1);
+                return de::max(path.substr(BytePos(3)).toInt(0, 10, String::AllowSuffix), 1);
             }
         }
         return 0;

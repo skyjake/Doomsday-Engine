@@ -86,7 +86,7 @@ public:
 
     DE_NORETURN void error(const String &message)
     {
-        String::BytePos offset = pos.pos();
+        BytePos offset = pos.pos();
         throw Error("JSONParser",
                     stringf("Error at position %zu (%s^%s): %s",
                             offset.index,

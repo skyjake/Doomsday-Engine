@@ -185,8 +185,8 @@ LineEditWidget &LineEditWidget::setMaxLength(int newMaxLength)
     {
         if(newMaxLength < d->maxLength)
         {
-            d->text.truncate(String::CharPos(newMaxLength));
-            d->oldText.truncate(String::CharPos(newMaxLength));
+            d->text.truncate(CharPos(newMaxLength));
+            d->oldText.truncate(CharPos(newMaxLength));
         }
         d->maxLength = newMaxLength;
     }
@@ -201,7 +201,7 @@ String LineEditWidget::text() const
 LineEditWidget &LineEditWidget::setText(String const &newText, int flags)
 {
     d->text = newText;
-    if(d->maxLength) d->text.truncate(String::CharPos(d->maxLength));
+    if(d->maxLength) d->text.truncate(CharPos(d->maxLength));
 
     if(flags & MNEDIT_STF_REPLACEOLD)
     {
@@ -247,7 +247,7 @@ int LineEditWidget::handleEvent(event_t const &ev)
     {
         if(!d->text.isEmpty())
         {
-            d->text.truncate(String::CharPos(d->text.length() - 1));
+            d->text.truncate(CharPos(d->text.length() - 1));
             execAction(Modified);
         }
         return true;

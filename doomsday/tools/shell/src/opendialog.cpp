@@ -181,7 +181,7 @@ void OpenDialog::updateLocalList(bool autoselect)
         foreach (Address const &sv, finder.foundServers())
         {
             QString label = convert(sv.asText()) + QString(" (%1; %2/%3)")
-                    .arg(convert(finder.name(sv).left(String::CharPos(20))))
+                    .arg(convert(finder.name(sv).left(CharPos(20))))
                     .arg(finder.playerCount(sv))
                     .arg(finder.maxPlayers(sv));
 

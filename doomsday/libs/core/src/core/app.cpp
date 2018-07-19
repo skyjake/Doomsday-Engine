@@ -496,7 +496,7 @@ String App::unixEtcFolderName() const
     String unixHome = d->metadata.gets(UNIX_HOME);
     if (unixHome.beginsWith("."))
     {
-        return unixHome.substr(String::BytePos(1));
+        return unixHome.substr(BytePos(1));
     }
     return unixHome;
 }

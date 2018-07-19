@@ -473,7 +473,7 @@ dsize Path::size() const
     return length();
 }
 
-String::BytePos Path::sizeb() const
+BytePos Path::sizeb() const
 {
     return d->path.sizeb();
 }

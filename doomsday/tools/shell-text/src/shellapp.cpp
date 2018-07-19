@@ -272,7 +272,7 @@ void ShellApp::updateMenuWithFoundServers()
     for (const Address &sv : d->finder.foundServers())
     {
         String label = sv.asText() + Stringf(" (%s; %d/%d)",
-                d->finder.name(sv).left(String::CharPos(20)).c_str(),
+                d->finder.name(sv).left(CharPos(20)).c_str(),
                 d->finder.playerCount(sv),
                 d->finder.maxPlayers(sv));
 

@@ -169,14 +169,14 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
         String const desc       = String::fromPercentEncoding(texManifest.path().toString());
 
         // Find/create a new sprite frame set.
-        String const spriteName = desc.left(String::CharPos(NAME_LENGTH)).lower();
+        String const spriteName = desc.left(CharPos(NAME_LENGTH)).lower();
         SpriteFrameDefs *frames = &frameSets[spriteName];
 
         // The descriptor may define either one or two frames.
         bool const haveMirror = desc.length() >= 8;
         for (dint i = 0; i < (haveMirror ? 2 : 1); ++i)
         {
-            const String nums = desc.mid(String::CharPos(NAME_LENGTH + i * 2), 2);
+            const String nums = desc.mid(CharPos(NAME_LENGTH + i * 2), 2);
             dint const frameNumber = towupper(nums.first()) - Char('A');
             dint const angleNumber = Sprites::toSpriteAngle(nums.last());
 
@@ -340,10 +340,10 @@ bool Sprites::isValidSpriteName(const String& name) // static
     if (name.length() < 6) return false;
 
     // Character at position 5 is a view (angle) index.
-    if (toSpriteAngle(name.at(String::CharPos(5))) < 0) return false;
+    if (toSpriteAngle(name.at(CharPos(5))) < 0) return false;
 
     // If defined, the character at position 7 is also a rotation number.
-    return (name.length() <= 7 || toSpriteAngle(name.at(String::CharPos(7))) >= 0);
+    return (name.length() <= 7 || toSpriteAngle(name.at(CharPos(7))) >= 0);
 }
 
 Sprites &Sprites::get() // static

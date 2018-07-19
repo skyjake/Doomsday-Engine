@@ -294,7 +294,7 @@ public:
     /// Returns the length of the path.
     dsize size() const;
 
-    String::BytePos sizeb() const;
+    BytePos sizeb() const;
 
     /// Returns the first character of the path.
     Char first() const;

@@ -54,7 +54,7 @@ DE_PIMPL(RemoteFile)
     String cachePath() const
     {
         String const hex = remoteMetaId.asHexadecimalText();
-        String path = CACHE_PATH / hex.right(String::CharPos(1));
+        String path = CACHE_PATH / hex.right(CharPos(1));
         String original = self().objectNamespace().gets("package.path", remotePath);
         return path / hex + "_" + original.fileName();
     }

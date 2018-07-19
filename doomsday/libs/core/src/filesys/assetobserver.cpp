@@ -41,7 +41,7 @@ DE_PIMPL(AssetObserver)
 
     static String assetIdentifier(File const &link) {
         DE_ASSERT(link.name().beginsWith(PREFIX_DOT));
-        return link.name().substr(String::BytePos(6));
+        return link.name().substr(BytePos(6));
     }
 
     Impl(Public *i, String const &regex)

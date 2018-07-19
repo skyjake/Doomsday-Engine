@@ -179,7 +179,7 @@ dint ChatWidget::handleEvent(event_t const &ev)
 
     if(ev.data1 == DDKEY_BACKSPACE)
     {
-        d->text.truncate(String::CharPos(d->text.length() - 1));
+        d->text.truncate(CharPos(d->text.length() - 1));
         return true;
     }
 
@@ -215,7 +215,7 @@ dint ChatWidget::handleMenuCommand(menucommand_e cmd)
         return true;
 
     case MCMD_DELETE:
-        d->text.truncate(String::CharPos(d->text.length() - 1));
+        d->text.truncate(CharPos(d->text.length() - 1));
         return true;
 
     default: return false;

@@ -406,7 +406,7 @@ namespace internal {
         TextSliceTarget() : SliceTarget(new TextValue) {}
         TextValue &text() { return *static_cast<TextValue *>(value); }
         void append(Value const &src, dint index) {
-            text().sum(TextValue(src.asText().mid(String::CharPos(index), 1))); ///@todo Performance??
+            text().sum(TextValue(src.asText().mid(CharPos(index), 1))); ///@todo Performance??
         }
     };
 }
