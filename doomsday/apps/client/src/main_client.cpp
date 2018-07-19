@@ -50,7 +50,7 @@
 //#include <QTranslator>
 #include <de/EscapeParser>
 
-#include <SDL2/SDL_messagebox.h>
+#include <SDL_messagebox.h>
 
 #if defined (DE_STATIC_LINK)
 

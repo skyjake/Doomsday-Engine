@@ -23,7 +23,7 @@
 
 //#include <QProcess>
 #include <de/CommandLine>
-#include <SDL2/SDL_messagebox.h>
+#include <SDL_messagebox.h>
 
 using namespace de;
 

@@ -29,22 +29,20 @@ namespace gloom {
 
 DE_PIMPL(Bloom)
 {
-    ScreenQuad quad;
     struct WorkBuf {
         GLFramebuffer framebuf;
         GLTexture     texture;
-
-        Rectangleui viewport() const
-        {
-            return Rectangleui::fromSize(framebuf.size());
-        }
+        
+        Rectangleui viewport() const { return Rectangleui::fromSize(framebuf.size()); }
     };
-    WorkBuf workBufs[2];
-    GLUniform uInputTex     {"uInputTex",      GLUniform::Sampler2D};
-    GLUniform uInputLevel   {"uInputLevel",    GLUniform::Int};
-    GLUniform uBloomMode    {"uBloomMode",     GLUniform::Int};
-    GLUniform uMinValue     {"uMinValue",      GLUniform::Float};
-    GLUniform uBloomFramebuf{"uBloomFramebuf", GLUniform::Sampler2D}; // output
+
+    ScreenQuad quad;
+    WorkBuf    workBufs[2];
+    GLUniform  uInputTex     {"uInputTex",      GLUniform::Sampler2D};
+    GLUniform  uInputLevel   {"uInputLevel",    GLUniform::Int};
+    GLUniform  uBloomMode    {"uBloomMode",     GLUniform::Int};
+    GLUniform  uMinValue     {"uMinValue",      GLUniform::Float};
+    GLUniform  uBloomFramebuf{"uBloomFramebuf", GLUniform::Sampler2D}; // output
 
     Impl(Public *i) : Base(i)
     {}
@@ -58,7 +56,6 @@ DE_PIMPL(Bloom)
                 << uBloomMode
                 << uMinValue
                 << context.tonemap->uBrightnessSamples();
-//                << context.tonemap->uExposure();
         for (auto &buf : workBufs)
         {
             buf.texture.setAutoGenMips(false);

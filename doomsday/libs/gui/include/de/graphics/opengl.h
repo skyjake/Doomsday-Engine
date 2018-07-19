@@ -21,7 +21,7 @@
 #ifndef LIBGUI_GRAPHICS_OPENGL_H
 #define LIBGUI_GRAPHICS_OPENGL_H
 
-#include <SDL2/SDL_video.h>
+#include <SDL_video.h>
 
 /*
  * OpenGL API selection

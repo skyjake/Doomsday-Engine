@@ -26,7 +26,7 @@
 #include "de/KeyEvent"
 #include <de/Log>
 
-#include <SDL2/SDL_keycode.h>
+#include <SDL_keycode.h>
 
 namespace de {
 

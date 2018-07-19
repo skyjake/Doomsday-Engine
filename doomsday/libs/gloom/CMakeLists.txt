@@ -36,7 +36,7 @@ deng_merge_sources (world    src/world/*.cpp)
 deng_add_library (libgloom ${SOURCES} ${HEADERS})
 
 deng_link_libraries (libgloom PUBLIC DengAppfw DengDoomsday)
-target_link_libraries (libgloom PRIVATE fmodex json)
+target_link_libraries (libgloom PRIVATE SDL2 fmodex json)
 deng_deploy_library (libgloom DengGloom)
 
 # if (APPLE)

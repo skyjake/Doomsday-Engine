@@ -19,7 +19,7 @@
 #include "gloomapp.h"
 #include "mainwindow.h"
 #include <de/EscapeParser>
-#include <SDL2/SDL_messagebox.h>
+#include <SDL_messagebox.h>
 
 using namespace de;
 

@@ -22,7 +22,7 @@ set (SOURCES
 )
 
 deng_add_application (gloomed ${SOURCES} ${HEADERS})
-deng_link_libraries (gloomed PRIVATE DengGloom)
+deng_link_libraries (gloomed PRIVATE DengGloom SDL2)
 deng_target_link_qt (gloomed PRIVATE Widgets)
 
 if (APPLE)

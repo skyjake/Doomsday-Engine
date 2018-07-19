@@ -31,12 +31,13 @@
 
 namespace de {
 
-typedef Map<String, Function::NativeEntryPoint> RegisteredEntryPoints;
+using RegisteredEntryPoints = Map<String, Function::NativeEntryPoint>;
 
 static RegisteredEntryPoints &entryPoints()
 {
-    static RegisteredEntryPoints eps;
-    return eps;
+    static RegisteredEntryPoints *eps = nullptr;
+    if (!eps) eps = new RegisteredEntryPoints;
+    return *eps;
 }
 
 DE_PIMPL_NOREF(Function)

@@ -24,8 +24,8 @@
 
 #include <cstdlib>
 #include <cstring>
-#include <SDL2/SDL.h>
-#include <SDL2/SDL_mixer.h>
+#include <SDL.h>
+#include <SDL_mixer.h>
 #undef main
 
 #include <de/timer.h>

@@ -21,7 +21,7 @@
 
 #include <de/GuiApp>
 #include <de/LogBuffer>
-#include <SDL2/SDL_main.h>
+#include <SDL_main.h>
 
 using namespace de;
 

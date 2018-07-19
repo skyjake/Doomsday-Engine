@@ -32,7 +32,7 @@
 #include <de/Log>
 #include <de/c_wrapper.h>
 
-#include <SDL2/SDL_events.h>
+#include <SDL_events.h>
 
 namespace de {
 
