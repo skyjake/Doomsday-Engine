@@ -1,7 +1,7 @@
 /*
  * The Doomsday Engine Project -- libcore
  *
- * Copyright © 2009-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * Copyright © 2009-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -23,18 +23,14 @@
 #include "de/Log"
 #include "de/App"
 
-//#include <QFile>
-//#include <QDir>
-//#include <QDebug>
+#include <c_plus/fileinfo.h>
+#include <c_plus/stringlist.h>
+#include <c_plus/process.h>
 
 #include <fstream>
 #include <sstream>
 #include <cctype>
 #include <string.h>
-
-#include <c_plus/fileinfo.h>
-#include <c_plus/stringlist.h>
-#include <c_plus/process.h>
 
 namespace de {
 
