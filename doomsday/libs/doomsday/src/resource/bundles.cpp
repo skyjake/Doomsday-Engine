@@ -131,7 +131,7 @@ DE_PIMPL(Bundles)
 
     void parseRegistry()
     {
-        DENG2_GUARD(this);
+        DE_GUARD(this);
 
         if (!identityRegistry.isEmpty()) return;
 
