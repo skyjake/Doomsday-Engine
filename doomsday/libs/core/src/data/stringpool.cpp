@@ -28,7 +28,8 @@
 #include <set>
 #include <algorithm>
 #ifdef DE_DEBUG
-#  include <stdio.h>  /// @todo should use C++
+#  include <iostream>
+#  include <iomanip>
 #endif
 
 /// Macro used for converting internal ids to externally visible Ids.
@@ -538,17 +539,15 @@ void StringPool::operator<<(Reader &from)
 #ifdef DE_DEBUG
 void StringPool::print() const
 {
-    static dint const padding = 2 + 5/*numDigits*/;
-
-    fprintf(stderr, "StringPool [%p]\n    idx    id string\n", this);
+    using namespace std;
+    
+    cerr << "StringPool [" << this << "]" << endl << "    idx    id string" << endl;
     duint count = 0;
-    forAll([this, &count] (Id id)
-    {
-        fprintf(stderr, "%*u %5u %s\n", padding, count++, id, string(id).c_str());
+    forAll([&count](Id id) {
+        cerr << setw(5) << count++ << " " << setw(5) << id << " " << id << endl;
         return LoopContinue;
     });
-    fprintf(stderr, "  There is %zu %s in the pool.\n", size(),
-            size() == 1 ? "string" : "strings");
+    cerr << "  There are " << size() << " string" << DE_PLURAL_S(size()) << " in the pool." << endl;
 }
 #endif
 
