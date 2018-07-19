@@ -633,11 +633,11 @@ CString String::fileNameExtension() const
 {
     auto pos      = lastIndexOf('.');
     auto slashPos = lastIndexOf('/');
-    if (pos > 0)
+    if (pos)
     {
         // If there is a directory included, make sure there it at least
         // one character's worth of file name before the period.
-        if (!slashPos || pos > slashPos + 1)
+        if (pos > 0 && (!slashPos || pos > slashPos + 1))
         {
             return {data() + pos.index, data() + size()};
         }
