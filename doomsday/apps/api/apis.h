@@ -186,7 +186,7 @@ typedef struct de_api_s {
 #define DE_USING_API(Name)    DE_EXTERN_C DE_DECLARE_API(Name)
 
 #define DE_API_EXCHANGE(APIs) \
-    DE_EXTERN_C void deng_API(int id, void *api) { \
+    DE_ENTRYPOINT void deng_API(int id, void *api) { \
         switch(id) { APIs \
         default: break; } }
 #define DE_GET_API(Ident, Name) \
@@ -197,7 +197,7 @@ typedef struct de_api_s {
 
 #if defined (DE_STATIC_LINK)
 #define DE_SYMBOL_PTR(var, symbolName) \
-    if (!qstrcmp(var, #symbolName)) { \
+    if (!strcmp(var, #symbolName)) { \
         return reinterpret_cast<void *>(symbolName); \
     }
 #endif

@@ -94,21 +94,23 @@ DE_PIMPL_NOREF(Plugins)
         return nullptr;  // none available.
     }
 
-    int loadPlugin(LibraryFile &lib)
+    bool loadPlugin(LibraryFile &lib)
     {
         typedef void (*PluginInitializer)(void);
 
 #if !defined (DE_STATIC_LINK)
         // We are only interested in native files.
         if (!is<NativeFile>(lib.source()))
-            return 0;  // Continue iteration.
+        {
+            return false;
+        }
 #endif
 
         DE_ASSERT(!lib.path().isEmpty());
         if (lib.path().beginsWith("/bin/audio_", CaseInsensitive))
         {
             // Do not touch audio plugins at this point.
-            return true;
+            return false;
         }
 
         ::Library *plugin = Library_New(lib.path());
@@ -119,18 +121,18 @@ DE_PIMPL_NOREF(Plugins)
             if (fn.contains("libfmod") || fn.contains("libassimp"))
             {
                 // No need to warn about these shared libs.
-                return 0;
+                return false;
             }
 #endif
             LOG_RES_WARNING("Failed to load \"%s\": %s") << lib.path() << Library_LastError();
-            return 0;  // Continue iteration.
+            return false;
         }
 
-        if (!strcmp(Library_Type(plugin), "deng-plugin/audio"))
+        if (!iCmpStr(Library_Type(plugin), "deng-plugin/audio"))
         {
             // Audio plugins will be loaded later, on demand.
             Library_Delete(plugin);
-            return 0;
+            return false;
         }
 
         PluginInitializer initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
@@ -141,7 +143,7 @@ DE_PIMPL_NOREF(Plugins)
 
             // Clearly not a Doomsday plugin.
             Library_Delete(plugin);
-            return 0;  // Continue iteration.
+            return false;
         }
 
         // Assign a handle and ID to the plugin.
@@ -153,7 +155,7 @@ DE_PIMPL_NOREF(Plugins)
                     << lib.path();
 
             Library_Delete(plugin);
-            return 0;  // Continue iteration.
+            return false;
         }
 
         // This seems to be a Doomsday plugin.
@@ -165,8 +167,7 @@ DE_PIMPL_NOREF(Plugins)
         setActivePluginId(plugId);
         initializer();
         setActivePluginId(0);
-
-        return 0;  // Continue iteration.
+        return true;
     }
 
     bool unloadPlugin(PluginHandle *handle)
@@ -217,9 +218,9 @@ void Plugins::loadAll()
 {
     LOG_RES_VERBOSE("Initializing plugins...");
 
-    Library_ForAll([this] (LibraryFile &lib)
-    {
-        return d->loadPlugin(lib);
+    Library_ForAll([this](LibraryFile &lib) {
+        d->loadPlugin(lib);
+        return LoopContinue;
     });
 }
 

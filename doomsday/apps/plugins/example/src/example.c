@@ -55,7 +55,7 @@ static int ExampleHook(int hookType, int parm, void *data)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * during plugin loading, before DP_Initialize().
  */
-DE_EXTERN_C DE_VISIBLE_SYMBOL char const *deng_LibraryType(void)
+DE_ENTRYPOINT char const *deng_LibraryType(void)
 {
     return "deng-plugin/generic";
 }
@@ -64,7 +64,7 @@ DE_EXTERN_C DE_VISIBLE_SYMBOL char const *deng_LibraryType(void)
  * This function is called automatically when the plugin is loaded. We let the
  * engine know what we'd like to do.
  */
-DE_EXTERN_C DE_VISIBLE_SYMBOL void DP_Initialize(void)
+DE_ENTRYPOINT void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, ExampleHook);
 }

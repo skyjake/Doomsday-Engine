@@ -87,7 +87,7 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
  * This function is called automatically when the plugin is loaded. We let the engine know
  * what we'd like to do.
  */
-void DP_Initialize()
+DE_ENTRYPOINT void DP_Initialize()
 {
     Plug_AddHook(HOOK_SAVEGAME_CONVERT, SavegameConvertHook);
 }
@@ -96,7 +96,7 @@ void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called automatically
  * when the plugin is loaded.
  */
-extern "C" char const *deng_LibraryType()
+DE_ENTRYPOINT char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }

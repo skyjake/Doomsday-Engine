@@ -79,16 +79,10 @@
 
 #endif // !defined (DE_PUBLIC)
 
-#if defined (DE_IOS)
-#  define DE_VISIBLE_SYMBOL __attribute__((visibility("default")))
-#else
-#  define DE_VISIBLE_SYMBOL
-#endif
-
 #if defined (DE_STATIC_LINK)
 #  define DE_ENTRYPOINT static
 #else
-#  define DE_ENTRYPOINT DE_EXTERN_C
+#  define DE_ENTRYPOINT DE_EXTERN_C DE_PUBLIC
 #endif
 
 #if !defined(_MSC_VER)

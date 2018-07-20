@@ -191,15 +191,17 @@ GameProfile const *Games::firstPlayable() const
 
 Game &Games::operator[](String const &id) const
 {
-    if (id.isEmpty()) return *d->nullGame;
-
+    if (id.isEmpty())
+    {
+        return *d->nullGame;
+    }
     if (auto *game = d->findById(id))
     {
         return *game;
     }
-
-    /// @throw NotFoundError  The specified @a identityKey string is not associated with a game in the collection.
-    throw NotFoundError("Games::operator []", "No game exists with ID '" + id + "'");
+    /// @throw NotFoundError  The specified @a identityKey string is not associated with
+    ///                       a game in the collection.
+    throw NotFoundError("Games::operator[]", "No game exists with ID '" + id + "'");
 }
 
 bool Games::contains(String const &id) const
