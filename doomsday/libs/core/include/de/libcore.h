@@ -127,12 +127,6 @@
 #  define DE_NORETURN   __attribute__((__noreturn__))
 #endif
 
-#if defined (DE_IOS)
-#  define DE_VISIBLE_SYMBOL __attribute__((visibility("default")))
-#else
-#  define DE_VISIBLE_SYMBOL
-#endif
-
 #if defined (DE_ASSERT)
 #  undef DE_ASSERT
 #endif

@@ -51,7 +51,7 @@ Block::Block(const Block &other)
 
 Block::Block(Block &&moved)
 {
-    set_Block(&_block, &moved._block);
+    initCopy_Block(&_block, &moved._block);
 }
 
 Block::Block(const char *nullTerminatedCStr)
