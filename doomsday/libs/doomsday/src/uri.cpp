@@ -31,6 +31,7 @@
 #include <de/unittest.h>
 #include <de/NativePath>
 #include <de/Reader>
+#include <de/RegExp>
 #include <de/Writer>
 #include <de/App>
 
@@ -154,11 +155,12 @@ DE_PIMPL_NOREF(Uri)
 
         // Keep scanning the path for embedded expressions.
         String expression;
-        BytePos expEnd{0}, expBegin;
-        while ((expBegin = strPath.indexOf("$", expEnd)) != BytePos::npos)
+        //BytePos expEnd{0}, expBegin;
+        //mb_iterator expEnd, i;
+        /*while ((expBegin = strPath.indexOf("$", expEnd)) != BytePos::npos)
         {
             // Is the next char the start-of-expression character?
-            if (strPath.at(expBegin + 1) == '(')
+            if (*(i + 1) == '(')
             {
                 // Copy everything up to the '$'.
                 result += strPath.substr(expEnd, expBegin - expEnd);
@@ -190,10 +192,22 @@ DE_PIMPL_NOREF(Uri)
             }
 
             ++expEnd;
+        }*/
+        
+        static const RegExp reExpr(R"(\$\(([A-Za-z.]+)\))");
+        
+        const char *pos = strPath.begin();
+        RegExpMatch match;
+        while (reExpr.match(strPath, match))
+        {
+            result += CString(pos, match.begin());
+            result += parseExpression(match.captured(1));
+            pos = match.end();
         }
+        result += CString(pos, strPath.end());
 
         // Copy anything remaining.
-        result += strPath.substr(expEnd);
+        //result += strPath.substr(expEnd);
 
         return result;
     }
