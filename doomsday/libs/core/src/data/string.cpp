@@ -1125,7 +1125,7 @@ Char mb_iterator::operator*() const
 
 Char mb_iterator::decode() const
 {
-    wchar_t ch;
+    wchar_t ch = 0;
     const char *end = i;
     for (int j = 0; *end && j < MB_CUR_MAX; ++j, ++end) {}
     curCharLen = std::mbrtowc(&ch, i, end - i, &mb);
