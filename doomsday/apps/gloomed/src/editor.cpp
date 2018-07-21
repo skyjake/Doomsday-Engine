@@ -600,10 +600,15 @@ DE_PIMPL(Editor)
             break;
 
         case EditEntities:
-            pushUndo();
-            std::shared_ptr<Entity> ent(new Entity);
-            ent->setPosition(worldMouseCoord());
-            ent->setId(map.append(map.entities(), ent));
+            {
+                pushUndo();
+                std::shared_ptr<Entity> ent(new Entity);
+                ent->setPosition(worldMouseCoord());
+                ent->setId(map.append(map.entities(), ent));
+            }
+            break;
+                
+        case EditPlanes:
             break;
         }
         self().update();
@@ -995,6 +1000,9 @@ DE_PIMPL(Editor)
             {
                 selectOrUnselect(hoverEntity);
             }
+            break;
+                
+        case EditVolumes:
             break;
         }
     }
