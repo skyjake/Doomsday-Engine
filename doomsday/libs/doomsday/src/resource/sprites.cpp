@@ -307,6 +307,7 @@ dint Sprites::toSpriteAngle(Char angleCode) // static
     static dint const MAX_ANGLES = 16;
 
     dint angle = -1; // Unknown.
+    
     if (iswdigit(angleCode))
     {
         angle = angleCode - '0';
@@ -319,10 +320,11 @@ dint Sprites::toSpriteAngle(Char angleCode) // static
             angle = charCodeLatin1 - 'A' + 10;
         }
     }
-
+    
     if (angle < 0 || angle > MAX_ANGLES)
+    {
         return -1;
-
+    }
     if (angle == 0) return 0;
 
     if (angle <= MAX_ANGLES / 2)
@@ -337,13 +339,15 @@ dint Sprites::toSpriteAngle(Char angleCode) // static
 
 bool Sprites::isValidSpriteName(const String& name) // static
 {
-    if (name.length() < 6) return false;
+    const auto len = name.length();
+    
+    if (len < 6) return false;
 
     // Character at position 5 is a view (angle) index.
     if (toSpriteAngle(name.at(CharPos(5))) < 0) return false;
 
     // If defined, the character at position 7 is also a rotation number.
-    return (name.length() <= 7 || toSpriteAngle(name.at(CharPos(7))) >= 0);
+    return (len <= 7 || toSpriteAngle(name.at(CharPos(7))) >= 0);
 }
 
 Sprites &Sprites::get() // static

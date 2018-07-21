@@ -48,28 +48,28 @@ namespace world {
 
 using namespace bsp;
 
-typedef List<Line *>              Lines;
-typedef List<LineSegment *>       LineSegments;
-typedef List<LineSegmentSide *>   LineSegmentSides;
-typedef List<ConvexSubspaceProxy> SubspaceProxys;
-typedef Hash<Vertex *, EdgeTips>  EdgeTipSetMap;
+using Lines            = List<Line *>;
+using LineSegments     = List<LineSegment *>;
+using LineSegmentSides = List<LineSegmentSide *>;
+using SubspaceProxys   = std::list<ConvexSubspaceProxy>;
+using EdgeTipSetMap    = Hash<Vertex *, EdgeTips>;
 
 DE_PIMPL(Partitioner)
 {
-    int splitCostFactor = 7;     ///< Cost of splitting a line segment.
-
-    Lines lines;                 ///< Set of map lines to build from (in index order, not owned).
-    Mesh *mesh = nullptr;        ///< Provider of map geometries (cf. Factory).
-
-    int segmentCount = 0;        ///< Running total of segments built.
-    int vertexCount  = 0;        ///< Running total of vertexes built.
-
-    LineSegments lineSegments;   ///< Line segments in the plane.
+    int splitCostFactor = 7; ///< Cost of splitting a line segment.
+    
+    Lines lines;          ///< Set of map lines to build from (in index order, not owned).
+    Mesh *mesh = nullptr; ///< Provider of map geometries (cf. Factory).
+    
+    int segmentCount = 0; ///< Running total of segments built.
+    int vertexCount  = 0; ///< Running total of vertexes built.
+    
+    LineSegments   lineSegments; ///< Line segments in the plane.
     SubspaceProxys subspaces;    ///< Proxy subspaces in the plane.
-    EdgeTipSetMap edgeTipSets;   ///< One set for each vertex.
-
-    BspTree *bspRoot = nullptr;  ///< The BSP tree under construction.
-    HPlane hplane;               ///< Current space half-plane (partitioner state).
+    EdgeTipSetMap  edgeTipSets;  ///< One set for each vertex.
+    
+    BspTree *bspRoot = nullptr; ///< The BSP tree under construction.
+    HPlane   hplane;            ///< Current space half-plane (partitioner state).
 
     struct LineSegmentBlockTree
     {
@@ -927,8 +927,8 @@ DE_PIMPL(Partitioner)
             LineSegmentSides segments = collectAllSegments(node);
             node.clear();
 
-            subspaces.append(ConvexSubspaceProxy());
-            ConvexSubspaceProxy &convexSet = subspaces.last();
+            subspaces.emplace_back();
+            ConvexSubspaceProxy &convexSet = subspaces.back();
 
             convexSet.addSegments(segments);
 
@@ -969,7 +969,7 @@ DE_PIMPL(Partitioner)
      */
     void splitOverlappingSegments()
     {
-        for(ConvexSubspaceProxy const &subspace : subspaces)
+        for (const auto &subspace : subspaces)
         {
             /*
              * The subspace provides a specially ordered list of the segments to
@@ -1025,7 +1025,7 @@ DE_PIMPL(Partitioner)
 
     void buildSubspaceGeometries()
     {
-        for(ConvexSubspaceProxy const &subspace : subspaces)
+        for (const auto &subspace : subspaces)
         {
             /// @todo Move BSP leaf construction here?
             BspLeaf &bspLeaf = *subspace.bspLeaf();
@@ -1048,19 +1048,21 @@ DE_PIMPL(Partitioner)
          * Finalize the built geometry by adding a twin half-edge for any
          * which don't yet have one.
          */
-        for(ConvexSubspaceProxy const &convexSet : subspaces)
-        for(OrderedSegment const &oseg : convexSet.segments())
+        for (const auto &convexSet : subspaces)
         {
-            LineSegmentSide *seg = oseg.segment;
-
-            if(seg->hasHEdge() && !seg->back().hasHEdge())
+            for (OrderedSegment const &oseg : convexSet.segments())
             {
-                HEdge *hedge = &seg->hedge();
-                DE_ASSERT(!hedge->hasTwin());
+                LineSegmentSide *seg = oseg.segment;
 
-                // Allocate the twin from the same mesh.
-                hedge->setTwin(hedge->mesh().newHEdge(seg->back().from()));
-                hedge->twin().setTwin(hedge);
+                if(seg->hasHEdge() && !seg->back().hasHEdge())
+                {
+                    HEdge *hedge = &seg->hedge();
+                    DE_ASSERT(!hedge->hasTwin());
+
+                    // Allocate the twin from the same mesh.
+                    hedge->setTwin(hedge->mesh().newHEdge(seg->back().from()));
+                    hedge->twin().setTwin(hedge);
+                }
             }
         }
     }

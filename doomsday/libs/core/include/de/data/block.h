@@ -108,17 +108,22 @@ public:
     operator const iBlock *() const { return &_block; }
     inline explicit operator bool() const { return !isEmpty_Block(&_block); }
 
-    Byte &operator[](size_t pos);
+    Byte &      operator[](size_t pos);
     inline Byte operator[](size_t pos) const { return at(pos); }
     inline Byte at(size_t pos) const { return at_Block(&_block, pos); }
 
     bool beginsWith(const char *cstr) const;
+    int  compare(const Block &other) const;
 
     Block mid(size_t pos, size_t len = iInvalidSize) const;
     Block left(size_t len) const;
 
-    bool operator==(const Block &other) const;
+    bool        operator==(const Block &other) const;
     inline bool operator!=(const Block &other) const { return !(*this == other); }
+    inline bool operator<(const Block &other) const  { return compare(other) < 0; }
+    inline bool operator>(const Block &other) const  { return compare(other) > 0; }
+    inline bool operator<=(const Block &other) const { return compare(other) <= 0; }
+    inline bool operator>=(const Block &other) const { return compare(other) >= 0; }
 
     Block operator+(const Block &other) const;
 

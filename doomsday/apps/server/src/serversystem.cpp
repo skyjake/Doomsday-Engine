@@ -55,7 +55,9 @@ using namespace de;
 char *nptIPAddress = (char *) ""; ///< Public domain for clients to connect to (cvar).
 int   nptIPPort    = 0; ///< Server TCP port (cvar).
 
-static de::duint16 Server_ListenPort()
+static const TimeSpan BEACON_UPDATE_INTERVAL(2.0);
+
+static duint16 Server_ListenPort()
 {
     return (!nptIPPort ? DEFAULT_TCP_PORT : nptIPPort);
 }
@@ -141,7 +143,7 @@ DE_PIMPL(ServerSystem)
 
     void updateBeacon(Clock const &clock)
     {
-        if (lastBeaconUpdateAt.since() > 0.5)
+        if (lastBeaconUpdateAt.since() > BEACON_UPDATE_INTERVAL)
         {
             lastBeaconUpdateAt = clock.time();
 

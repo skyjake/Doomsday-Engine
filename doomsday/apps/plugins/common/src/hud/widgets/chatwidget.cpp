@@ -312,8 +312,9 @@ void ChatWidget::consoleRegister()
 {
     C_VAR_BYTE("chat-beep", &cfg.common.chatBeep, 0, 0, 1);
     // User-configurable macros.
-    for(dint i = 0; i < 10; ++i)
+    for (dint i = 0; i < 10; ++i)
     {
-        C_VAR_CHARPTR(Stringf("chat-macro%i", i), &cfg.common.chatMacros[i], 0, 0, 0);
+        const String name = Stringf("chat-macro%i", i);
+        C_VAR_CHARPTR(name, &cfg.common.chatMacros[i], 0, 0, 0);
     }
 }

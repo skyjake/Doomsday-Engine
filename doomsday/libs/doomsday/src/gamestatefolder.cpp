@@ -381,10 +381,11 @@ String GameStateFolder::Metadata::asStyledText() const
             "\n" _E(Ta) _E(l) "  Time: " _E(.) _E(Tb) "%02d:%02d:%02d", hours, minutes, seconds);
     }
 
-    StringList rules = gets("gameRules", "None").split(RegExp::WHITESPACE);
+    StringList rules = gets("gameRules", "None").split("\n");
     for (auto &r : rules)
     {
-        r.replace(RegExp("\\s*(.*)\\s*:\\s*([^ ].*)\\s*"), _E(l) "\\1: " _E(.) "\\2");
+        static const RegExp reKeyValue(R"(\s*(.*)\s*:\s*([^ ].*)\s*)");
+        r.replace(reKeyValue, _E(l) "\\1: " _E(.) "\\2");
     }
     String gameRulesText = String::join(rules, "\n - ");
 

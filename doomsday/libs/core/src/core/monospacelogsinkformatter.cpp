@@ -122,7 +122,7 @@ struct TabFiller
     bool fillTabs(StringList &fills, int maxStop, int minIndent) const
     {
         // The T` escape marks the place where tab stops are completely reset.
-        struct { int fillIndex; BytePos pos; } resetAt;
+        struct { int fillIndex; BytePos pos; } resetAt = {-1, BytePos{}};
 
         for (int stop = 0; stop <= maxStop; ++stop)
         {

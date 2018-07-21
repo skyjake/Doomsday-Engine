@@ -211,9 +211,14 @@ Block Block::left(size_t len) const
     return trunc;
 }
 
+int Block::compare(const Block &other) const
+{
+    return cmp_Block(*this, other);
+}
+    
 bool Block::operator==(const Block &other) const
 {
-    return size() == other.size() && cmp_Block(*this, other) == 0;
+    return size() == other.size() && compare(other) == 0;
 }
 
 Block Block::operator+(const Block &other) const

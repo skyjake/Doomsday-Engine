@@ -216,10 +216,11 @@ bool String::beginsWith(Char ch, Sensitivity cs) const
 
 Char String::at(CharPos pos) const
 {
+    // Multibyte string; we don't know the address matching this character position.
     dsize index = 0;
     for (Char ch : *this)
     {
-        if (pos == index) return ch;
+        if (pos == index++) return ch;
     }
     return 0;
 }
@@ -425,6 +426,9 @@ String &String::replace(const CString &before, const CString &after)
 
 String &String::replace(const RegExp &before, const CString &after)
 {
+    static const char *capSubs[8] = {
+        "\\1", "\\2", "\\3", "\\4", "\\5", "\\6", "\\7", "\\8",
+    };
     const iRangecc newTerm = after;
     iRangecc remaining(*this);
     String result;
@@ -434,7 +438,12 @@ String &String::replace(const RegExp &before, const CString &after)
         DE_ASSERT(found.end() > found.begin());
         const iRangecc prefix{remaining.start, found.begin()};
         appendRange_String(result.i_str(), &prefix);
-        appendRange_String(result.i_str(), &newTerm);
+        String replaced{newTerm};
+        for (int cap = 0; cap < 8; ++cap)
+        {
+            replaced.replace(capSubs[cap], found.capturedCStr(cap + 1));
+        }
+        append_String(result.i_str(), replaced);
         remaining.start = found.end();
     }
     appendRange_String(result.i_str(), &remaining);

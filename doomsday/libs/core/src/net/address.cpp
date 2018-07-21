@@ -114,7 +114,9 @@ bool Address::isLoopback() const
     return (host == "localhost" ||
             host == "localhost.localdomain" ||
             host == "127.0.0.1" ||
-            host == "::1");
+            host == "::1" ||
+            host == "fe80::1" ||
+            host.beginsWith("fe80::1%"));
 }
 
 bool Address::isLocal() const
@@ -204,7 +206,8 @@ Address Address::localNetworkInterface(duint16 port) // static
     const auto addresses = internal::NetworkInterfaces::get().allAddresses();
     for (const Address &a : addresses)
     {
-        if (!a.isLoopback())
+        // Exclude all loopback and link-local addresses.
+        if (!a.isLoopback() && !a.hostName().beginsWith("fe80::"))
         {
             found = a;
             break;

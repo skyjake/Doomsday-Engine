@@ -126,8 +126,8 @@ static bool applyPathMapping(ddstring_t *path, PathMapping const &vdm);
  */
 static bool matchFileName(String const &string, String const &pattern)
 {
-    static const Char ASTERISK('*');
-    static const Char QUESTION_MARK('?');
+    static constexpr Char ASTERISK('*');
+    static constexpr Char QUESTION_MARK('?');
 
     mb_iterator in = string.begin();
     mb_iterator st = pattern.begin();

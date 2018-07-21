@@ -65,31 +65,27 @@ void EscapeParser::parse(String const &textWithEscapes)
             }
 
             // Check the escape sequences.
-            //int escLen = 2;
             auto escStart = ++end;
-            Char ch = *end++;
+            Char ch = *end++; // First character of the escape sequence.
             switch (ch)
             {
             case '(':
             case '[':
             case '{': {
                 // Find the matching end.
-                //auto end = d->original.indexOf(ch == '('? ')' : ch == '['? ']' : '}', range.end + 1);
                 const char closing = (ch == '('? ')' : ch == '['? ']' : '}');
                 while (*end != closing && end != d->original.end())
                 {
                     end++;
                 }
-                //if (end < 0) end = d->original.size() - 1;
-//                escLen = escEnd - end;
                 break; }
 
             case 'T':
-                end += 2;//escLen = 3;
+                // One character for the tab stop.
+                end++;
                 break;
 
             default:
-//                end++;
                 break;
             }
 

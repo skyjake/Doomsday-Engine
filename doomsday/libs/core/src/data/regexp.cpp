@@ -60,13 +60,8 @@ const RegExp RegExp::WHITESPACE{"\\s+"};
 
 RegExp::RegExp(const String &expression, Sensitivity cs)
 {
-    _d = new_RegExp(expression, cs == CaseSensitive? caseSensitive_RegExpOption
-                                                   : caseInsensitive_RegExpOption);
-}
-
-RegExp::~RegExp()
-{
-    iRelease(_d);
+    _d.reset(new_RegExp(expression, cs == CaseSensitive ? caseSensitive_RegExpOption
+                                                        : caseInsensitive_RegExpOption));
 }
 
 bool RegExp::exactMatch(const String &subject) const

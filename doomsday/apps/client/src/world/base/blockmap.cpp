@@ -31,104 +31,104 @@
 #include <de/memoryzone.h>
 #include <de/vector1.h>
 #include <cmath>
+#include <list>
 
 using namespace de;
 
 namespace world {
 
-struct RingNode
-{
-    void *elem;
+struct RingNode {
+    void *    elem;
     RingNode *prev;
     RingNode *next;
 };
 
-struct CellData
-{
+struct CellData {
     RingNode *ringNodes;
-    dint elemCount; ///< Total number of linked elements.
-
+    dint      elemCount; ///< Total number of linked elements.
+    
     bool unlink(void *elem)
     {
-        if(RingNode *node = findNode(elem))
+        if (RingNode *node = findNode(elem))
         {
             clearElement(*node);
             return true;
         }
         return false;
     }
-
+    
     void unlinkAll()
     {
-        for(RingNode *node = ringNodes; node; node = node->next)
+        for (RingNode *node = ringNodes; node; node = node->next)
         {
             clearElement(*node);
         }
     }
-
+    
     bool link(void *elem)
     {
         addElement(newNode(), elem);
         return true;
     }
-
+    
 private:
     RingNode &newNode()
     {
         RingNode *node = nullptr;
-
-        if(!ringNodes)
+        
+        if (!ringNodes)
         {
             // Create a new root node.
-            node = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, nullptr);
+            node       = reinterpret_cast<RingNode *>(Z_Malloc(sizeof(*node), PU_MAP, nullptr));
             node->next = nullptr;
             node->prev = nullptr;
             node->elem = nullptr;
-
+            
             ringNodes = node;
-
+            
             return *node;
         }
-
+        
         // Is there an available node in the ring we can reuse?
-        for(node = ringNodes; node->next && node->elem; node = node->next)
-        {}
-
-        if(!node->elem)
+        for (node = ringNodes; node->next && node->elem; node = node->next)
+        {
+        }
+        
+        if (!node->elem)
         {
             // This will do nicely.
             return *node;
         }
-
+        
         // Add a new node to the ring.
-        node->next = (RingNode *) Z_Malloc(sizeof(*node), PU_MAP, nullptr);
+        node->next       = reinterpret_cast<RingNode *>(Z_Malloc(sizeof(*node), PU_MAP, nullptr));
         node->next->next = nullptr;
         node->next->prev = node;
         node->next->elem = nullptr;
-
+        
         return *node->next;
     }
-
+    
     RingNode *findNode(void *elem)
     {
-        if(elem)
+        if (elem)
         {
-            for(RingNode *found = ringNodes; found; found = found->next)
+            for (RingNode *found = ringNodes; found; found = found->next)
             {
-                if(found->elem == elem) return found;
+                if (found->elem == elem) return found;
             }
         }
         return nullptr;
     }
-
+    
     void clearElement(RingNode &node)
     {
-        if(!node.elem) return;
-
+        if (!node.elem) return;
+        
         node.elem = nullptr;
         elemCount--;
     }
-
+    
     void addElement(RingNode &node, void *elem)
     {
         DE_ASSERT(node.elem == nullptr);
@@ -200,7 +200,7 @@ DE_PIMPL(Blockmap)
             }
         }
     };
-    typedef List<Node> Nodes;
+    typedef std::list<Node> Nodes;
 
     AABoxd bounds;    ///< Map space units.
     duint cellSize;   ///< Map space units.
@@ -213,7 +213,7 @@ DE_PIMPL(Blockmap)
         , bounds    (bounds)
         , cellSize  (cellSize)
         , dimensions(Vec2ui(de::ceil((bounds.maxX - bounds.minX) / cellSize),
-                               de::ceil((bounds.maxY - bounds.minY) / cellSize)))
+                            de::ceil((bounds.maxY - bounds.minY) / cellSize)))
     {
         // Quadtree must subdivide the space equally into 1x1 unit cells.
         newNode(Cell(0, 0), ceilPow2(de::max(dimensions.x, dimensions.y)));
@@ -310,8 +310,8 @@ DE_PIMPL(Blockmap)
 
     Node *newNode(Cell const &at, duint size)
     {
-        nodes.append(Node(at, size));
-        return &nodes.last();
+        nodes.emplace_back(at, size);
+        return &nodes.back();
     }
 
     Node *findLeaf(Node *node, Cell const &at, bool canSubdivide)
@@ -353,7 +353,7 @@ DE_PIMPL(Blockmap)
 
     inline Node *findLeaf(Cell const &at, bool canCreate = false)
     {
-        return findLeaf(&nodes.first(), at, canCreate);
+        return findLeaf(&nodes.front(), at, canCreate);
     }
 
     /**
@@ -516,12 +516,12 @@ bool Blockmap::unlink(AABoxd const &region, void *elem)
 
 void Blockmap::unlinkAll()
 {
-    for(Impl::Node const &node : d->nodes)
+    for (const auto &node : d->nodes)
     {
         // Only leafs with user data.
-        if(!node.isLeaf()) continue;
+        if (!node.isLeaf()) continue;
 
-        if(auto *cellData = node.leafData)
+        if (auto *cellData = node.leafData)
         {
             cellData->unlinkAll();
         }
@@ -735,7 +735,7 @@ void Blockmap::drawDebugVisual() const
     /*
      * Draw the Quadtree.
      */
-    DGL_Color4f(1.f, 1.f, 1.f, 1.f / d->nodes.first().size);
+    DGL_Color4f(1.f, 1.f, 1.f, 1.f / d->nodes.front().size);
     for (Impl::Node const &node : d->nodes)
     {
         // Only leafs with user data.

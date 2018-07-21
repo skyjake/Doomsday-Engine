@@ -20,6 +20,7 @@
 #define LIBCORE_REGEXP_H
 
 #include "../CString"
+#include <c_plus/object.h>
 #include <c_plus/regexp.h>
 
 namespace de {
@@ -48,7 +49,6 @@ class DE_PUBLIC RegExp
 {
 public:
     RegExp(const String &expression = {}, Sensitivity cs = CaseSensitive);
-    ~RegExp();
 
     bool match(const String &subject, RegExpMatch &match) const;
     bool hasMatch(const String &subject) const;
@@ -58,7 +58,7 @@ public:
     static const RegExp WHITESPACE;
 
 private:
-    iRegExp *_d;
+    cplus::ref<iRegExp> _d;
 };
 
 } // namespace de

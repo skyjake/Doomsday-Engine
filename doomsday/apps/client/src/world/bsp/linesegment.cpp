@@ -69,10 +69,10 @@ DE_PIMPL_NOREF(LineSegment::Side)
     Sector *sector = nullptr;
 
     // Precomputed data for faster calculations.
-    coord_t pLength = 0;
-    coord_t pAngle  = 0;
-    coord_t pPara   = 0;
-    coord_t pPerp   = 0;
+    coord_t     pLength    = 0;
+    coord_t     pAngle     = 0;
+    coord_t     pPara      = 0;
+    coord_t     pPerp      = 0;
     slopetype_t pSlopeType = ST_VERTICAL;
 
     /// Half-edge produced from this map line segment (if any, not owned).

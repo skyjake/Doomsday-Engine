@@ -172,14 +172,14 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
 {
     typedef Set<LineSegmentSide *> Segments;
 
-    Segments segments;                ///< All line segments.
-    OrderedSegments orderedSegments;  ///< All line segments in clockwise order, with angle info.
-    bool needRebuildOrderedSegments;  ///< @c true= the ordered segment list needs to be rebuilt.
-    BspLeaf *bspLeaf;                 ///< BSP leaf attributed to the subspace (if any).
+    Segments        segments;            ///< All line segments.
+    OrderedSegments orderedSegments;     ///< All line segments in clockwise order, with angle info.
+    bool     needRebuildOrderedSegments; ///< @c true= the ordered segment list needs to be rebuilt.
+    BspLeaf *bspLeaf;                    ///< BSP leaf attributed to the subspace (if any).
 
     Impl()
         : needRebuildOrderedSegments(false)
-        , bspLeaf                   (nullptr)
+        , bspLeaf(nullptr)
     {}
 
     Impl(Impl const &other)
@@ -359,10 +359,10 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     LOG_AS("ConvexSubspaceProxy::buildGeometry");
 
     // Sanity check.
-    if(segmentCount() >= 3 && !d->haveMapLineSegment())
+    if (segmentCount() >= 3 && !d->haveMapLineSegment())
         throw Error("ConvexSubspaceProxy::buildGeometry", "No map line segment");
 
-    if(d->needRebuildOrderedSegments)
+    if (d->needRebuildOrderedSegments)
     {
         d->buildOrderedSegments(d->findCenter());
     }
@@ -370,23 +370,20 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     /*
      * Build the line segment -> sector continuity map.
      */
-    typedef List<Continuity> Continuities;
-    Continuities continuities;
-
-    typedef Hash<Sector *, Continuity *> SectorContinuityMap;
-    SectorContinuityMap scMap;
-
-    for(OrderedSegment const &oseg : d->orderedSegments)
+    List<Continuity>             continuities;
+    Hash<Sector *, Continuity *> scMap; // sector continuity map
+    
+    for (const auto &oseg : d->orderedSegments)
     {
         Sector *frontSector = oseg.segment->sectorPtr();
-
+        
         auto found = scMap.find(frontSector);
-        if(found == scMap.end())
+        if (found == scMap.end())
         {
-            continuities.append(Continuity(frontSector));
+            continuities.emplace_back(frontSector);
             found = scMap.insert(frontSector, &continuities.last());
         }
-
+        
         Continuity *conty = found->second;
         conty->addOneSegment(oseg);
     }
@@ -394,33 +391,34 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     List<Mesh *> extraMeshes;
 
     int extraMeshSegments = 0;
-    for(int i = 0; i < continuities.count(); ++i)
+//    for (int i = 0; i < continuities.count(); ++i)
+    for (auto &conty : continuities)
     {
-        Continuity &conty = continuities[i];
-
+//        Continuity &conty = continuities[i];
+        
         conty.evaluate();
-
-        if(!conty.discordSegs.isEmpty())
+        
+        if (!conty.discordSegs.isEmpty())
         {
             Mesh *extraMesh = nullptr;
             Face *face      = nullptr;
-
-            for(OrderedSegment const *oseg : conty.discordSegs)
+            
+            for (OrderedSegment const *oseg : conty.discordSegs)
             {
                 LineSegmentSide *lineSeg = oseg->segment;
-                LineSide *mapSide        = lineSeg->mapSidePtr();
-                if(!mapSide) continue;
-
-                if(!extraMesh)
+                LineSide *       mapSide = lineSeg->mapSidePtr();
+                if (!mapSide) continue;
+                
+                if (!extraMesh)
                 {
                     // Construct a new mesh and set of half-edges.
                     extraMesh = new Mesh;
-                    face = extraMesh->newFace();
+                    face      = extraMesh->newFace();
                 }
-
-                HEdge *hedge = extraMesh->newHEdge(lineSeg->from());
-                LineSideSegment *seg = mapSide->addSegment(*hedge);
-
+                
+                HEdge *          hedge = extraMesh->newHEdge(lineSeg->from());
+                LineSideSegment *seg   = mapSide->addSegment(*hedge);
+                
                 extraMeshSegments += 1;
 
 #ifdef __CLIENT__
@@ -437,7 +435,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 face->setHEdge(hedge);
 
                 // Is there a half-edge on the back side we need to twin with?
-                if(lineSeg->back().hasHEdge())
+                if (lineSeg->back().hasHEdge())
                 {
                     lineSeg->back().hedge().setTwin(hedge);
                     hedge->setTwin(lineSeg->back().hedgePtr());
@@ -447,7 +445,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 lineSeg->setHEdge(hedge);
             }
 
-            if(extraMesh)
+            if (extraMesh)
             {
                 // Link the half-edges anticlockwise and close the ring.
                 HEdge *hedge = face->hedge();
@@ -460,7 +458,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                     // Attribute the half-edge to the Face.
                     hedge->setFace(face);
 
-                    if(hedge->hasNext())
+                    if (hedge->hasNext())
                     {
                         // Link anticlockwise.
                         hedge->next().setPrev(hedge);
@@ -500,23 +498,22 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
     }
 #endif*/
 
-    if(segmentCount() - extraMeshSegments >= 3)
+    if (segmentCount() - extraMeshSegments >= 3)
     {
         // Construct a new face and a ring of half-edges.
         Face *face = mesh.newFace();
 
         // Iterate backwards so that the half-edges can be linked clockwise.
-        for(int i = d->orderedSegments.sizei(); i-- > 0; )
+        for (auto i = d->orderedSegments.rbegin(); i != d->orderedSegments.rend(); ++i)
         {
-            LineSegmentSide *lineSeg = d->orderedSegments[i].segment;
-
+            LineSegmentSide *lineSeg = i->segment;
+            
             // Already added this to an extra mesh?
-            if(lineSeg->hasHEdge())
-                continue;
-
+            if (lineSeg->hasHEdge()) continue;
+            
             HEdge *hedge = mesh.newHEdge(lineSeg->from());
-
-            if(LineSide *mapSide = lineSeg->mapSidePtr())
+            
+            if (LineSide *mapSide = lineSeg->mapSidePtr())
             {
                 LineSideSegment *seg = mapSide->addSegment(*hedge);
 #ifdef __CLIENT__
@@ -527,19 +524,19 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
                 DE_UNUSED(seg);
 #endif
             }
-
+            
             // Link the new half-edge for this line segment to the head of
             // the list in the new Face geometry.
             hedge->setNext(face->hedge());
             face->setHEdge(hedge);
-
+            
             // Is there a half-edge on the back side we need to twin with?
-            if(lineSeg->back().hasHEdge())
+            if (lineSeg->back().hasHEdge())
             {
                 lineSeg->back().hedge().setTwin(hedge);
                 hedge->setTwin(lineSeg->back().hedgePtr());
             }
-
+            
             // Link the new half-edge with the line segment.
             lineSeg->setHEdge(hedge);
         }

@@ -127,7 +127,7 @@ Address ServerInfo::address() const
 {
     if (d->info->has(VAR_HOST))
     {
-        return Address::parse(d->info->gets(VAR_HOST));
+        return Address::parse(d->info->gets(VAR_HOST), port());
     }
     return Address();
 }
@@ -140,9 +140,9 @@ String ServerInfo::domainName() const
 ServerInfo &ServerInfo::setAddress(Address const &address)
 {
     d->detach();
-    d->info->set(VAR_HOST, address.asText());
-    d->info->set(VAR_PORT, address.port() ? address.port() : shell::DEFAULT_PORT);
-    d->checkValid();
+    set(VAR_HOST, address.hostName());
+    set(VAR_PORT, address.port() ? address.port() : shell::DEFAULT_PORT);
+    checkValid(*this);
     return *this;
 }
 
