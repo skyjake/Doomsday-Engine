@@ -520,6 +520,9 @@ DE_PIMPL(Editor)
         case EditPlanes:
             emit self().planeSelectionChanged();
             break;
+                
+        case EditVolumes:
+            break;
         }
         self().update();
     }
@@ -646,6 +649,10 @@ DE_PIMPL(Editor)
                 map.entities().remove(hoverEntity);
                 hoverEntity = 0;
             }
+            break;
+                
+        case EditPlanes:
+        case EditVolumes:
             break;
         }
         selection.clear();
