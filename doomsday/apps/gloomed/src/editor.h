@@ -34,9 +34,8 @@ public:
         EditPlanes,
         EditVolumes,
         EditEntities,
-
-        ModeCount,
     };
+    enum { ModeCount = 6 };
 
     Editor();
 

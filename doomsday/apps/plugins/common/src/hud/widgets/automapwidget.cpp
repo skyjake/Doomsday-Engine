@@ -1351,8 +1351,6 @@ AutomapStyle *AutomapWidget::style() const
 
 void AutomapWidget::draw(Vec2i const &offset) const
 {
-    static int updateWait = 0;  /// @todo should be an instance var of AutomapWidget
-
     float const alpha = uiRendState->pageAlpha;
     player_t *plr = &players[player()];
 
@@ -1365,6 +1363,7 @@ void AutomapWidget::draw(Vec2i const &offset) const
     RectRaw geom; Rect_Raw(&geometry(), &geom);
 
     // Freeze the lists if the map is fading out from being open, or for debug.
+//    static int updateWait = 0;  /// @todo should be an instance var of AutomapWidget
 //    if ((++updateWait % 10) && d->needBuildLists && !freezeMapRLs && isOpen())
 //    {
 //        // Its time to rebuild the automap object display lists.

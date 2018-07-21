@@ -74,9 +74,9 @@ DE_PUBLIC char *strlwr(char *string);
 
 // String Utilities
 
-DE_PUBLIC char *M_SkipWhite(const char *str);
+DE_PUBLIC const char *M_SkipWhite(const char *str);
 
-DE_PUBLIC char *M_FindWhite(const char *str);
+DE_PUBLIC const char *M_FindWhite(const char *str);
 
 DE_PUBLIC void M_StripLeft(char* str);
 

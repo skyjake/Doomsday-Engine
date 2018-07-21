@@ -360,27 +360,26 @@ D_CMD(ListACScripts)
 {
     DE_UNUSED(src, argc, argv);
     System &scriptSys = gfw_Session()->acsSystem();
-
-    if(scriptSys.scriptCount())
+    
+    if (scriptSys.scriptCount())
     {
         LOG_SCR_MSG("Available ACScripts:");
-        scriptSys.forAllScripts([&scriptSys] (Script const &script)
-        {
+        scriptSys.forAllScripts([](Script const &script) {
             LOG_SCR_MSG("  %s") << script.describe();
             return LoopContinue;
         });
-
+        
 #ifdef DE_DEBUG
         LOG_SCR_MSG("World variables:");
         dint idx = 0;
-        for(dint const &var : scriptSys.worldVars)
+        for (dint const &var : scriptSys.worldVars)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }
-
+        
         LOG_SCR_MSG("Map variables:");
         idx = 0;
-        for(dint const &var : scriptSys.mapVars)
+        for (dint const &var : scriptSys.mapVars)
         {
             LOG_SCR_MSG("  #%i: %i") << (idx++) << var;
         }

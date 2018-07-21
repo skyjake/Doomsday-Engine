@@ -87,18 +87,18 @@ char* strlwr(char* string)
 }
 #endif // UNIX
 
-char *M_SkipWhite(const char *str)
+const char *M_SkipWhite(const char *str)
 {
     while (*str && DE_ISSPACE(*str))
         str++;
-    return (char *) str;
+    return str;
 }
 
-char *M_FindWhite(const char *str)
+const char *M_FindWhite(const char *str)
 {
     while (*str && !DE_ISSPACE(*str))
         str++;
-    return (char *) str;
+    return str;
 }
 
 void M_StripLeft(char* str)

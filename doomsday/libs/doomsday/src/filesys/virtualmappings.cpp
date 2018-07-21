@@ -80,7 +80,7 @@ static bool parsePathLumpMapping(char lumpName[9/*LUMPNAME_T_MAXLEN*/], ddstring
     if (!*ptr || *ptr == '\n') return false;
 
     // Find the end of the lump name.
-    char const *end = (char const *)M_FindWhite((char *)ptr);
+    char const *end = M_FindWhite(ptr);
     if (!*end || *end == '\n') return false;
 
     size_t len = end - ptr;

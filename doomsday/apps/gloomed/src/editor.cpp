@@ -342,6 +342,8 @@ DE_PIMPL(Editor)
                 break;
 
             case EditEntities:
+            case EditPlanes:
+            case EditVolumes:
                 break;
             }
             break;

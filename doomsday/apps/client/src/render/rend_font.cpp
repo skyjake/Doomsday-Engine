@@ -513,15 +513,6 @@ struct TextFragment
             {
                 width += FR_CharWidth(c);
             }
-
-            if (length > 0)
-{
-    DE_ASSERT(fragment != 0);
-
-    if (fr.fontNum == 0)
-            {
-                width += currentAttribs()->tracking * (length - 1);
-            }
         }
 
         // Height.
@@ -974,7 +965,7 @@ static void parseParamaterBlock(const char **strPtr, drawtextstate_t* state, int
     (*strPtr)++;
     while (*(*strPtr) && *(*strPtr) != '}')
     {
-        (*strPtr) = M_SkipWhite((*strPtr));
+        (*strPtr) = M_SkipWhite(*strPtr);
 
         // What do we have here?
         if (!strnicmp((*strPtr), "flash", 5))

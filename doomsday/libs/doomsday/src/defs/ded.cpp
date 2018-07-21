@@ -418,9 +418,9 @@ dint ded_s::evalFlags(char const *ptr) const
 
     while (*ptr)
     {
-        ptr = M_SkipWhite(const_cast<char *>(ptr));
+        ptr = M_SkipWhite(ptr);
 
-        dsize flagNameLength = M_FindWhite(const_cast<char *>(ptr)) - ptr;
+        dsize flagNameLength = M_FindWhite(ptr) - ptr;
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
