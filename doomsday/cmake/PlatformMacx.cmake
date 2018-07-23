@@ -46,6 +46,8 @@ endif ()
 if (CLANG_VERSION_STRING VERSION_EQUAL 7.0 OR
     CLANG_VERSION_STRING VERSION_GREATER 7.0)
     append_unique (CMAKE_CXX_FLAGS "-Wno-inconsistent-missing-override") # too many warnings from Qt
+    append_unique (CMAKE_CXX_FLAGS "-Wno-gnu-anonymous-struct")
+    append_unique (CMAKE_CXX_FLAGS "-Wno-nested-anon-types")
 endif ()
 
 append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")
