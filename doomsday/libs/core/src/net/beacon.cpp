@@ -51,7 +51,17 @@ DE_PIMPL(Beacon)
     Map<Address, Block>    found;
     List<cplus::ref<iAddress>> broadcastAddresses;
 
-    Impl(Public *i) : Base(i) {}
+    Impl(Public *i) : Base(i)
+    {}
+    
+    ~Impl()
+    {
+        if (socket)
+        {
+            iDisconnect(Datagram, socket, message, socket, readIncoming);
+            iDisconnect(Datagram, socket, message, socket, readDiscoveryReply);
+        }
+    }
 
     void continueDiscovery()
     {

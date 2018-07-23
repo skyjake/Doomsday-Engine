@@ -39,10 +39,16 @@ DE_PIMPL(AbstractLink)
     std::unique_ptr<Socket> socket;
 
     Impl(Public *i)
-        : Base(i),
-          status(Disconnected),
-          connectedAt(Time::invalidTime()) {}
-
+        : Base(i)
+        , status(Disconnected)
+        , connectedAt(Time::invalidTime())
+    {}
+    
+    ~Impl()
+    {
+        if (socket) socket->audienceForStateChange() -= this;
+    }
+    
     void socketStateChanged(Socket &, Socket::SocketState state) override
     {
         switch (state)
@@ -71,7 +77,7 @@ DE_PIMPL(AbstractLink)
 
         self().initiateCommunications();
 
-        status = Connected;
+        status      = Connected;
         connectedAt = Time();
         peerAddress = socket->peerAddress();
 
@@ -137,9 +143,9 @@ void AbstractLink::connectDomain(String const &domain, TimeSpan const &timeout)
     d->socket->setQuiet(true); // we'll be retrying a few times
     d->socket->open(d->tryingToConnectToHost, DEFAULT_PORT);
 
-    d->status = Connecting;
+    d->status          = Connecting;
     d->startedTryingAt = Time();
-    d->timeout = timeout;
+    d->timeout         = timeout;
 }
 
 void AbstractLink::connectHost(Address const &address)
@@ -161,9 +167,9 @@ void AbstractLink::connectHost(Address const &address)
     }
     d->socket->open(d->peerAddress);
 
-    d->status = Connecting;
+    d->status          = Connecting;
     d->startedTryingAt = Time();
-    d->timeout = 0.0;
+    d->timeout         = 0.0;
 }
 
 void AbstractLink::takeOver(Socket *openSocket)
@@ -179,7 +185,7 @@ void AbstractLink::takeOver(Socket *openSocket)
         DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();
     };
 
-    d->status = Connected;
+    d->status      = Connected;
     d->connectedAt = Time();
 }
 

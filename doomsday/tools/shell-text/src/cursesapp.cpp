@@ -150,10 +150,10 @@ DE_PIMPL(CursesApp)
         refresh();
     }
 
-    void requestRefresh()
-    {
-        Loop::timer(1.0 / 30.0, [this]() { refresh(); });
-    }
+//    void requestRefresh()
+//    {
+//        Loop::timer(1.0 / 30.0, [this]() { refresh(); });
+//    }
 
     void handleResize()
     {
@@ -175,9 +175,6 @@ DE_PIMPL(CursesApp)
     void refresh()
     {
         if (!rootWin) return;
-
-        // Schedule the next refresh.
-        requestRefresh();
 
         // Update time.
         clock.setTime(Time());
@@ -400,19 +397,6 @@ CursesApp::CursesApp(int &argc, char **argv)
     , d(new Impl(*this))
 {}
 
-//bool CursesApp::notify(QObject *receiver, QEvent *event)
-//{
-//    try
-//    {
-//        return QCoreApplication::notify(receiver, event);
-//    }
-//    catch (Error const &er)
-//    {
-//        qDebug() << "Caught exception:" << er.asText().toLatin1().constData();
-//    }
-//    return false;
-//}
-
 TextRootWidget &CursesApp::rootWidget()
 {
     return *d->rootWidget;
@@ -420,10 +404,9 @@ TextRootWidget &CursesApp::rootWidget()
 
 int CursesApp::exec()
 {
-    return TextApp::exec([this]() {
-        // Begin by requesting the first UI refresh.
-        d->requestRefresh();
-    });
+    loop().setRate(30.0);
+    loop().audienceForIteration() += [this]() { refresh(); };
+    return TextApp::exec();
 }
 
 void CursesApp::refresh()

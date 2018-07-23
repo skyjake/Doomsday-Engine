@@ -285,8 +285,7 @@ DE_PIMPL_NOREF(Socket)
         }
     }
 
-    void sendMessage(MessageHeader const &header,
-                     Block const &payload)
+    void sendMessage(const MessageHeader &header, const Block &payload)
     {
         DE_ASSERT(socket);
 
@@ -430,90 +429,91 @@ DE_PIMPL_NOREF(Socket)
 
     static void handleAddressLookedUp(iAny *, const iAddress *addr)
     {
-        Socket &self = *static_cast<Socket *>(userData_Object(addr));
-        try
-        {
-            DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+        Loop::mainCall([addr]() {
+            Socket &self = *static_cast<Socket *>(userData_Object(addr));
+            try
             {
-                i->socketStateChanged(self, AddressResolved);
+                DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+                {
+                    i->socketStateChanged(self, AddressResolved);
+                }
+                // Proceed with opening the connection.
+                self.open(Address(addr));
             }
-            // Proceed with opening the connection.
-            self.open(Address(addr));
-        }
-        catch (const Error &er)
-        {
-            DE_FOR_EACH_OBSERVER(i, self.audienceForError())
+            catch (const Error &er)
             {
-                i->error(self, "Failed to look up address: " + er.asText());
+                DE_FOR_EACH_OBSERVER(i, self.audienceForError())
+                {
+                    i->error(self, "Failed to look up address: " + er.asText());
+                }
             }
-        }
+        });
     }
 
     static void handleError(iAny *, iSocket *sock, int error, const char *msg)
     {
-        Socket &self = *static_cast<Socket *>(userData_Object(sock));
-        if (!self.d->quiet)
-        {
-            LOG_NET_WARNING("%s") << msg;
-        }
-        DE_FOR_EACH_OBSERVER(i, self.audienceForError())
-        {
-            i->error(self, Stringf("Socket error %i: %s", error, msg));
-        }
+        Loop::mainCall([=]() {
+            Socket &self = *static_cast<Socket *>(userData_Object(sock));
+            if (!self.d->quiet)
+            {
+                LOG_NET_WARNING("%s") << msg;
+            }
+            DE_FOR_EACH_OBSERVER(i, self.audienceForError())
+            {
+                i->error(self, Stringf("Socket error %i: %s", error, msg));
+            }
+        });
     }
 
     static void handleConnected(iAny *, iSocket *sock)
     {
-        Socket &self = *static_cast<Socket *>(userData_Object(sock));
-        self.d->connecting.post();
-        DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
-        {
-            i->socketStateChanged(self, Connected);
-        }
+        Loop::mainCall([sock]() {
+            Socket &self = *static_cast<Socket *>(userData_Object(sock));
+            self.d->connecting.post();
+            DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+            {
+                i->socketStateChanged(self, Connected);
+            }
+        });
     }
 
     static void handleDisconnected(iAny *, iSocket *sock)
     {
-        Socket &self = *static_cast<Socket *>(userData_Object(sock));
-        DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
-        {
-            i->socketStateChanged(self, Disconnected);
-        }
+        Loop::mainCall([sock]() {
+            Socket &self = *static_cast<Socket *>(userData_Object(sock));
+            DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+            {
+                i->socketStateChanged(self, Disconnected);
+            }
+        });
     }
 
     static void handleReadyRead(iAny *, iSocket *sock)
     {
-        Socket &self = *static_cast<Socket *>(userData_Object(sock));
-        Impl *d = self.d;
-
-        d->receivedBytes += Block::take(readAll_Socket(sock));
-
-//        auto available = d->socket->bytesAvailable();
-//        if (available > 0)
-//        {
-//            d->receivedBytes += d->socket->read(d->socket->bytesAvailable());
-//        }
-
-        d->deserializeMessages();
-
-        // Notification about available messages.
-        if (d->receivedMessages)
-        {
-            //emit messagesReady();
-            DE_FOR_EACH_OBSERVER(i, self.audienceForMessage())
+        Loop::mainCall([sock]() {
+            Socket &self = *static_cast<Socket *>(userData_Object(sock));
+            Impl *d = self.d;
+            d->receivedBytes += Block::take(readAll_Socket(sock));
+            d->deserializeMessages();
+            if (d->receivedMessages)
             {
-                i->messagesIncoming(self);
+                DE_FOR_EACH_OBSERVER(i, self.audienceForMessage())
+                {
+                    i->messagesIncoming(self);
+                }
             }
-        }
+        });
     }
 
     static void handleWriteFinished(iAny *, iSocket *sock)
     {
-        Socket &self = *static_cast<Socket *>(userData_Object(sock));
-        DE_FOR_EACH_OBSERVER(i, self.audienceForAllSent())
-        {
-            i->allSent(self);
-        }
+        Loop::mainCall([sock]() {
+            Socket *self = static_cast<Socket *>(userData_Object(sock));
+            DE_FOR_EACH_OBSERVER(i, self->audienceForAllSent())
+            {
+                i->allSent(*self);
+            }
+        });
     }
 
     DE_PIMPL_AUDIENCE(StateChange)
@@ -527,13 +527,15 @@ DE_AUDIENCE_METHOD(Socket, Message)
 DE_AUDIENCE_METHOD(Socket, AllSent)
 DE_AUDIENCE_METHOD(Socket, Error)
 
-Socket::Socket() : d(new Impl)
+Socket::Socket()
+    : d(new Impl)
 {
 //    initialize();
 //    /QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, const TimeSpan &timeOut) : d(new Impl)
+Socket::Socket(Address const &address, const TimeSpan &timeOut)
+    : d(new Impl)
 {
     LOG_AS("Socket");
     try
@@ -562,7 +564,7 @@ Socket::Socket(Address const &address, const TimeSpan &timeOut) : d(new Impl)
 
 void Socket::open(Address const &address) // non-blocking
 {
-    DE_ASSERT(d->socket);
+//    DE_ASSERT(d->socket);
 //    DE_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
 
     LOG_AS("Socket");
@@ -814,27 +816,30 @@ Message *Socket::peek()
 
 void Socket::flush()
 {
-    if (!d->socket) return;
-
-    // Wait until data has been written.
-    flush_Socket(d->socket);
-//    d->socket->flush();
-//    d->socket->waitForBytesWritten();
+    if (d->socket)
+    {
+        // Wait until data has been written.
+        flush_Socket(d->socket);
+    }
 }
 
 Address Socket::peerAddress() const
 {
-    if (isOpen() && status_Socket(d->socket) == connected_SocketStatus) // d->socket->state() == QTcpSocket::ConnectedState)
+    if (isOpen() && d->socket && status_Socket(d->socket) == connected_SocketStatus)
     {
-        return Address(address_Socket(d->socket)); //d->socket->peerAddress(), d->socket->peerPort());
+        return Address(address_Socket(d->socket));
     }
     return d->peer;
 }
 
 bool Socket::isOpen() const
 {
+    if (!d->socket)
+    {
+        return !d->peer.isNull();
+    }
     const auto st = status_Socket(d->socket);
-    return d->socket && (st == connecting_SocketStatus || st == connected_SocketStatus); //d->socket->state() != QTcpSocket::UnconnectedState;
+    return d->socket && (st == connecting_SocketStatus || st == connected_SocketStatus);
 }
 
 bool Socket::isLocal() const

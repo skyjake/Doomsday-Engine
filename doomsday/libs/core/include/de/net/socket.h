@@ -49,6 +49,13 @@ class Message;
 class DE_PUBLIC Socket : public Transmitter
 {
 public:
+    enum SocketState { AddressResolved, Disconnected, Connected };
+
+    DE_DEFINE_AUDIENCE2(StateChange, void socketStateChanged(Socket &, SocketState state))
+    DE_DEFINE_AUDIENCE2(Message,     void messagesIncoming(Socket &))
+    DE_DEFINE_AUDIENCE2(AllSent,     void allSent(Socket &))
+    DE_DEFINE_AUDIENCE2(Error,       void error(Socket &, const String &errorMessage))
+    
     /// Creating the TCP/IP connection failed. @ingroup errors
     DE_ERROR(ConnectionError);
 
@@ -219,24 +226,6 @@ public:
     static duint64 sentUncompressedBytes();
     static duint64 sentBytes();
     static double  outputBytesPerSecond();
-
-    enum SocketState { AddressResolved, Disconnected, Connected };
-
-    DE_DEFINE_AUDIENCE2(StateChange, void socketStateChanged(Socket &, SocketState state))
-    DE_DEFINE_AUDIENCE2(Message,     void messagesIncoming(Socket &))
-    DE_DEFINE_AUDIENCE2(AllSent,     void allSent(Socket &))
-    DE_DEFINE_AUDIENCE2(Error,       void error(Socket &, const String &errorMessage))
-
-//public slots:
-//    void socketDisconnected();
-//    void socketError(QAbstractSocket::SocketError socketError);
-//    void readIncomingBytes();
-//    void reconnect();
-
-//private slots:
-//    void hostResolved(QHostInfo const &);
-//    void bytesWereWritten(qint64 bytes);
-//    void socketDestroyed();
 
 protected:
     /// Create a Socket object for a previously opened socket.

@@ -37,37 +37,46 @@ using namespace de;
 enum RemoteUserState { Disconnected, Unjoined, Joined };
 
 DE_PIMPL(RemoteUser)
+, DE_OBSERVES(Socket, StateChange)
+, DE_OBSERVES(Socket, Message)
 {
-    Id id;
-    Socket *socket;
-    int protocolVersion;
-    Address address;
-    bool isFromLocal;
+    Id              id;
+    Socket *        socket;
+    int             protocolVersion;
+    Address         address;
+    bool            isFromLocal;
     RemoteUserState state;
-    String name;
-
+    String          name;
+    
     Impl(Public *i, Socket *sock)
-        : Base(i),
-          socket(sock),
-          state(Unjoined)
+        : Base(i)
+        , socket(sock)
+        , state(Unjoined)
     {
-        DE_ASSERT(socket != 0);
-
-        socket->audienceForStateChange() += [this]() {
-            if (!socket->isOpen()) self().socketDisconnected();
-        };
-        socket->audienceForMessage() += [this](){ self().handleIncomingPackets(); };
-
-        address = socket->peerAddress();
+        DE_ASSERT(socket != nullptr);
+        
+        socket->audienceForStateChange() += this;
+        socket->audienceForMessage() += this;
+        
+        address     = socket->peerAddress();
         isFromLocal = socket->isLocal();
-
-        LOG_NET_MSG("New remote user %s from socket %s (local:%b)")
-                << id << address << isFromLocal;
+        
+        LOG_NET_MSG("New remote user %s from socket %s (local:%b)") << id << address << isFromLocal;
     }
-
+    
     ~Impl()
     {
         delete socket;
+    }
+    
+    void socketStateChanged(Socket &, Socket::SocketState state) override
+    {
+        if (state == Socket::Disconnected) self().socketDisconnected();
+    }
+    
+    void messagesIncoming(Socket &) override
+    {
+        self().handleIncomingPackets();
     }
 
     void notifyClientExit()
@@ -113,8 +122,6 @@ DE_PIMPL(RemoteUser)
     bool handleRequest(Block const &command)
     {
         LOG_AS("handleRequest");
-
-        //ddstring_t msg;
 
         auto const length = command.size();
 
@@ -253,12 +260,10 @@ String RemoteUser::name() const
 Socket *RemoteUser::takeSocket()
 {
     Socket *sock = d->socket;
-    sock->audienceForMessage() += [this](){ handleIncomingPackets(); };
-    sock->audienceForStateChange() += [this, sock](){
-        if (!sock->isOpen()) socketDisconnected();
-    };
-    d->socket = 0;
-    d->state = Disconnected; // not signaled
+    sock->audienceForMessage()     -= d;
+    sock->audienceForStateChange() -= d;
+    d->socket = nullptr;
+    d->state  = Disconnected; // not signaled
     return sock;
 }
 

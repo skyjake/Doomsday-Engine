@@ -100,7 +100,7 @@ bool Address::operator<(Address const &other) const
 bool Address::operator==(Address const &other) const
 {
     if (d->port != other.d->port) return false;
-    return asText() == other.asText();
+    return equal_Address(d->addr, other.d->addr);
 }
 
 String Address::hostName() const
@@ -120,6 +120,7 @@ bool Address::isLoopback() const
 }
 
 bool Address::isLocal() const
+    return !isNull() && isHostLocal(*this);
 {
     if (d->special == Impl::Undefined)
     {
@@ -188,6 +189,7 @@ std::ostream &operator<<(std::ostream &os, Address const &address)
 
 bool Address::isHostLocal(const Address &host) // static
 {
+    DE_ASSERT(!host.isNull());
     for (const Address &addr : internal::NetworkInterfaces::get().allAddresses())
     {
         if (addr == host) return true;

@@ -214,7 +214,7 @@ void Timer::trigger()
 
     if (d->isSingleShot)
     {
-        d->isActive = false;
+        stop();
     }
 }
 

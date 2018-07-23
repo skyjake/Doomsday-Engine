@@ -808,7 +808,8 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
         }
 
         // Unload all packages that weren't loaded before the game was loaded.
-        for (const auto &i : PackageLoader::get().loadedPackages())
+        auto packagesToUnload = PackageLoader::get().loadedPackages();
+        for (const auto &i : packagesToUnload)
         {
             if (!d->preGamePackages.contains(i.first))
             {
