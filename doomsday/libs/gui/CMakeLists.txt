@@ -153,27 +153,27 @@ elseif (APPLE)
     link_framework (libgui PRIVATE OpenGL)
 endif ()
 
-if (DE_X11)
-    target_include_directories (libgui PRIVATE ${X11_INCLUDE_DIR})
-    target_link_libraries (libgui PRIVATE ${X11_LIBRARIES})
-    deng_target_link_qt (libgui PRIVATE X11Extras)
-    if (DE_ENABLE_DISPLAYMODE)
-        if (NOT X11_Xrandr_FOUND)
-            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
-        endif ()
-        if (NOT X11_xf86vmode_FOUND)
-            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
-        endif ()
-        target_include_directories (libgui PRIVATE
-            ${X11_Xrandr_INCLUDE_PATH}
-            ${X11_xf86vmode_INCLUDE_PATH}
-        )
-        target_link_libraries (libgui PRIVATE
-            ${X11_Xrandr_LIB}
-            ${X11_Xxf86vm_LIB}
-        )
-    endif ()
-endif ()
+#if (DE_X11)
+#    target_include_directories (libgui PRIVATE ${X11_INCLUDE_DIR})
+#    target_link_libraries (libgui PRIVATE ${X11_LIBRARIES})
+#    deng_target_link_qt (libgui PRIVATE X11Extras)
+#    if (DE_ENABLE_DISPLAYMODE)
+#        if (NOT X11_Xrandr_FOUND)
+#            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
+#        endif ()
+#        if (NOT X11_xf86vmode_FOUND)
+#            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
+#        endif ()
+#        target_include_directories (libgui PRIVATE
+#            ${X11_Xrandr_INCLUDE_PATH}
+#            ${X11_xf86vmode_INCLUDE_PATH}
+#        )
+#        target_link_libraries (libgui PRIVATE
+#            ${X11_Xrandr_LIB}
+#            ${X11_Xxf86vm_LIB}
+#        )
+#    endif ()
+#endif ()
 
 deng_deploy_library (libgui DengGui)
 
