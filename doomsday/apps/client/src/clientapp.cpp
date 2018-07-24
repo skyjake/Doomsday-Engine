@@ -580,10 +580,6 @@ void ClientApp::initialize()
 
     d->svLink = new ServerLink;
 
-    // Config needs DisplayMode, so let's initialize it before the libcore
-    // subsystems and Config.
-    DisplayMode_Init();
-
     // Initialize definitions before the files are indexed.
     Def_Init();
 
