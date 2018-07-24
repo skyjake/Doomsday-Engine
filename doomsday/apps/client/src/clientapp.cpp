@@ -191,13 +191,14 @@ DE_PIMPL(ClientApp)
             setMode(OnlyWarningEntries);
         }
 
-        LogSink &operator << (LogEntry const &entry)
+        LogSink &operator<<(LogEntry const &entry)
         {
             if (alertMask.shouldRaiseAlert(entry.metadata()))
             {
                 // Don't raise alerts if the console history is open; the
                 // warning/error will be shown there.
                 if (ClientWindow::mainExists() &&
+                    ClientWindow::main().isUICreated() &&
                     ClientWindow::main().taskBar().isOpen() &&
                     ClientWindow::main().taskBar().console().isLogOpen())
                 {
@@ -206,10 +207,9 @@ DE_PIMPL(ClientApp)
 
                 // We don't want to raise alerts about problems in id/Raven WADs,
                 // since these just have to be accepted by the user.
-                if ((entry.metadata() & LogEntry::Map) &&
-                   ClientApp::world().hasMap())
+                if ((entry.metadata() & LogEntry::Map) && ClientApp::world().hasMap())
                 {
-                    world::Map const &map = ClientApp::world().map();
+                    const auto &map = ClientApp::world().map();
                     if (map.hasManifest() && !map.manifest().sourceFile()->hasCustom())
                     {
                         return *this;
@@ -224,7 +224,7 @@ DE_PIMPL(ClientApp)
             return *this;
         }
 
-        LogSink &operator << (String const &plainText)
+        LogSink &operator<<(String const &plainText)
         {
             ClientApp::alert(plainText);
             return *this;
@@ -829,10 +829,14 @@ void ClientApp::alert(String const &msg, LogEntry::Level level)
 {
     if (ClientWindow::mainExists())
     {
-        ClientWindow::main().alerts()
-                .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
-                               level == LogEntry::Warning? AlertDialog::Normal :
-                                                           AlertDialog::Minor);
+        auto &win = ClientWindow::main();
+        if (win.isUICreated())
+        {
+            win.alerts()
+                    .newAlert(msg, level >= LogEntry::Error?   AlertDialog::Major  :
+                                   level == LogEntry::Warning? AlertDialog::Normal :
+                                                               AlertDialog::Minor);
+        }
     }
     /**
      * @todo If there is no window, the alert could be stored until the window becomes

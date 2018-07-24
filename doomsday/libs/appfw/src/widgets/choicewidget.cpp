@@ -90,9 +90,6 @@ DE_GUI_PIMPL(ChoiceWidget)
                 root().setFocus(w);
             }
         };
-
-        updateButtonWithSelection();
-        updateStyle();
     }
 
     ~Impl()
@@ -242,6 +239,8 @@ DE_AUDIENCE_METHODS(ChoiceWidget, Selection, UserSelection)
 ChoiceWidget::ChoiceWidget(String const &name)
     : PopupButtonWidget(name), d(new Impl(this))
 {
+    d->updateButtonWithSelection();
+    d->updateStyle();
     setOpeningDirection(ui::Right);
     d->choices->setAllowDirectionFlip(false);
 }

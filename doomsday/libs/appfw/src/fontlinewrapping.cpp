@@ -564,6 +564,7 @@ void FontLineWrapping::wrapTextToWidth(const String &text, const Font::RichForma
     d->format   = format;
 
 #if defined (DE_DEBUG)
+    if (text)
     {
         // Ensure the format refers to the correct string.
         Font::RichFormat::Iterator iter(format);

@@ -61,6 +61,8 @@ public:
 public:
     ClientWindow(de::String const &id = "main");
 
+    bool isUICreated() const;
+    
     ClientRootWidget &root();
     TaskBarWidget &   taskBar();
     de::GuiWidget &   taskBarBlur();

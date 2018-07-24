@@ -86,11 +86,11 @@ DE_PIMPL(ClientWindow)
 , DE_OBSERVES(PersistentGLWindow, AttributeChange)
 #endif
 {
-    bool needMainInit            = true;
-    bool needRootSizeUpdate      = false;
-
-    Mode mode = Normal;
-
+    bool uiSetupDone        = false;
+    bool needMainInit       = true;
+    bool needRootSizeUpdate = false;
+    Mode mode               = Normal;
+    
     /// Root of the nomal UI widgets of this window.
     ClientRootWidget root;
     GameWidget *game = nullptr;
@@ -371,6 +371,8 @@ DE_PIMPL(ClientWindow)
 #if !defined (DE_MOBILE)
         self().audienceForAttributeChange() += this;
 #endif
+        
+        uiSetupDone = true;
     }
 
     void fileSystemBusyStatusChanged(FS::BusyStatus bs) override
@@ -851,6 +853,11 @@ ClientWindow::ClientWindow(String const &id)
                                       0.3);
     });
 #endif
+}
+
+bool ClientWindow::isUICreated() const
+{
+    return d->uiSetupDone;
 }
 
 ClientRootWidget &ClientWindow::root()
