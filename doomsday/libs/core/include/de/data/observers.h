@@ -61,16 +61,16 @@
     DE_PUBLIC extern Name##Audience audienceFor##Name;
 
 #define DE_DECLARE_AUDIENCE_METHOD(Name) \
-    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    using Name##Audience = de::Observers<DE_AUDIENCE_INTERFACE(Name)>; \
     Name##Audience &audienceFor##Name(); \
-    Name##Audience const &audienceFor##Name() const;
+    const Name##Audience &audienceFor##Name() const;
 
 #define DE_AUDIENCE_METHOD(ClassName, Name) \
     ClassName::Name##Audience &ClassName::audienceFor##Name() { return d->audienceFor##Name; } \
-    ClassName::Name##Audience const &ClassName::audienceFor##Name() const { return d->audienceFor##Name; }
+    const ClassName::Name##Audience &ClassName::audienceFor##Name() const { return d->audienceFor##Name; }
 
 #define DE_AUDIENCE_METHOD_INLINE(Name) \
-    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    using Name##Audience = de::Observers<DE_AUDIENCE_INTERFACE(Name)>; \
     Name##Audience _audienceFor##Name; \
     Name##Audience &audienceFor##Name() { return _audienceFor##Name; } \
     Name##Audience const &audienceFor##Name() const { return _audienceFor##Name; }

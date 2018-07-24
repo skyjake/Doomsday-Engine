@@ -242,7 +242,7 @@ void MapRender::advanceTime(TimeSpan elapsed)
     {
         d->visibleTransparents.clear();
 
-        const Vec3d eye = context().view.camera->cameraPosition();
+//        const Vec3d eye = context().view.camera->cameraPosition();
 
         d->visibleTransparents = d->builtMap.transparentRanges;
     }
