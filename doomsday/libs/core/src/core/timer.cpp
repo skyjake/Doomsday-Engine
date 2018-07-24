@@ -232,8 +232,8 @@ void Timer::post()
         }
         else
         {
-            warning("[TimerScheduler] Pending timer %p triggered with no event loop running (event "
-                    "not posted)", this);
+//            warning("[TimerScheduler] Pending timer %p triggered with no event loop running (event "
+//                    "not posted)", this);
         }
     }
 }

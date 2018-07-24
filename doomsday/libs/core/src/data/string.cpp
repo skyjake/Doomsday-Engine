@@ -1044,7 +1044,7 @@ Block String::toLatin1() const
 {
     // Non-8-bit characters are simply filtered out.
     Block latin;
-    for (iChar ch : *this)
+    for (Char ch : *this)
 {
         if (ch < 256) latin.append(Block::Byte(ch));
 }
@@ -1106,8 +1106,8 @@ String::const_reverse_iterator::const_reverse_iterator(const Range<const char *>
     : iter(range.end, range.start)
 {
     --iter;
-
 }
+
 String::const_reverse_iterator::const_reverse_iterator(const CString &cstr)
     : iter(cstr.end(), cstr.begin())
 {
@@ -1135,16 +1135,21 @@ Char mb_iterator::operator*() const
 Char mb_iterator::decode() const
 {
     wchar_t ch = 0;
-    const char *end = i;
-    for (int j = 0; *end && j < MB_CUR_MAX; ++j, ++end) {}
-    curCharLen = std::mbrtowc(&ch, i, end - i, &mb);
+    curCharLen = std::mbrtowc(&ch, i, MB_CUR_MAX, &mb);
+    if (curCharLen < 0)
+    {
+        // Multibyte decoding failed. Let's return something valid, though, so the iterator
+        // doesn't hang due to never reaching the end of the string.
+        ch = '?';
+        curCharLen = 1;
+    }
     return ch;
 }
 
 mb_iterator &mb_iterator::operator++()
 {
-    if (!curCharLen) decode();
-    i += de::max(curCharLen, dsize(1));
+    if (curCharLen == 0) decode();
+    i += curCharLen;
     curCharLen = 0;
     return *this;
 }
@@ -1201,8 +1206,8 @@ mb_iterator &mb_iterator::operator+=(int offset)
     while (offset-- > 0) ++(*this);
     }
     return *this;
-
 }
+
 mb_iterator mb_iterator::operator-(int offset) const
 {
     mb_iterator i = *this;

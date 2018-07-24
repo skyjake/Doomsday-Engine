@@ -31,6 +31,10 @@ int main(int argc, char **argv)
         // Iterators.
         {
             const String str = u8"H★llo Wörld";
+            for (Char ch : str)
+            {
+                debug("Char: %x %lc", unsigned(ch), ch);
+            }
             for (auto i = str.begin(); i != str.end(); ++i)
             {
                 debug("Char %u: %x %lc", i.pos().index, unsigned(*i), *i);
