@@ -43,7 +43,8 @@ DE_PIMPL(Style)
 
     const Variable &pixelRatio     = ScriptSystem::get()["DisplayMode"]["PIXEL_RATIO"];
     const Variable &uiTranslucency = Config::get("ui.translucency");
-
+    Variable        defaultTranslucency;    
+    
     Impl(Public *i)
         : Base(i)
         , rules(DENG2_BASE_GUI_APP->pixelRatio())

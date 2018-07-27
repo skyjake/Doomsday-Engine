@@ -391,7 +391,7 @@ void GamePanelButtonWidget::updateContent()
     }
 
     label().setText(
-        Stringf(_E(b) "%1\n" _E(l) "%2", d->gameProfile.name().c_str(), meta.c_str()));
+        Stringf(_E(b) "%s\n" _E(l) "%s", d->gameProfile.name().c_str(), meta.c_str()));
 
     d->packagesButton->setPackages(d->gameProfile.packages());
     d->updatePackagesIndicator();

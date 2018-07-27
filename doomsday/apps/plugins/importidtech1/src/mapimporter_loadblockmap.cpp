@@ -120,15 +120,17 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
             long idx;
             uint count;
 
-#if _DEBUG
+#if defined (DE_DEBUG)
             if(DD_SHORT(blockmapLump[offset]) != 0)
             {
-                throw de::Error("IdTech1Converter::loadBlockmap",
-                                QString("Offset (%1) for block %2 [%3, %4] does not index the beginning of a line list!")
-                                    .arg(offset)
-                                    .arg(blockIdx)
-                                    .arg(x)
-                                    .arg(y)));
+                throw de::Error(
+                                "IdTech1Converter::loadBlockmap",
+                                stringf("Offset (%ld) for block %ld [%u, %u] does not index the "
+                                        "beginning of a line list!",
+                                        offset,
+                                        blockIdx,
+                                        x,
+                                        y));
             }
 #endif
 
@@ -151,11 +153,11 @@ bool LoadBlockmap(MapLumpInfo* lumpInfo)
                 count = 0;
                 while((idx = DD_SHORT(blockmapLump[offset + 1 + count])) != -1)
                 {
-#if _DEBUG
+#if defined (DE_DEBUG)
                     if(idx < 0 || idx >= (long) map->numLines)
                     {
                         throw de::Error("IdTech1Converter::loadBlockmap",
-                                        QString("Invalid linedef index #%1.").arg(idx)));
+                                        stringf("Invalid linedef index #%ld.", idx));
                     }
 #endif
                     *ptr++ = &map->lines[idx];

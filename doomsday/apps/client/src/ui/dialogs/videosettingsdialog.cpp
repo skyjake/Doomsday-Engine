@@ -300,7 +300,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
                 else
                 {
                     d->refreshRates->items()
-                        << new ChoiceItem("%1 Hz".arg(float(rate) / 10.f, 0, 'f', 1), rate);
+                        << new ChoiceItem(Stringf("%.1f Hz", float(rate)), rate);
                 }
             }
             d->refreshRates->items().sort([] (ui::Item const &a, ui::Item const &b) {

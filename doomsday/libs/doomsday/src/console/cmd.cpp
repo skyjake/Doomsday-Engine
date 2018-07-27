@@ -397,7 +397,7 @@ String Con_CmdAsStyledText(ccmd_t *cmd)
     char const *str;
     if ((str = DH_GetString(DH_Find(cmd->name), HST_DESCRIPTION)))
     {
-        return Stringf(_E(b) "%1 " _E(.) _E(>) _E(2) "%2" _E(.) _E(<), cmd->name, str);
+        return Stringf(_E(b) "%s " _E(.) _E(>) _E(2) "%s" _E(.) _E(<), cmd->name, str);
     }
     else
     {

@@ -41,6 +41,7 @@ DE_PIMPL(GLShader)
 
     void alloc()
     {
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         if (!name)
         {
             name = glCreateShader(type == Vertex   ? GL_VERTEX_SHADER

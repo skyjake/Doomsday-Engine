@@ -190,7 +190,7 @@ public:
             {
                 if (i != 0) str += "\n";
                 str += Stringf(
-                    "Sector #%1 is unclosed near %s", it->first, it->second.asText().c_str());
+                    "Sector #%d is unclosed near %s", it->first, it->second.asText().c_str());
             }
 
             if (numToLog < unclosedSectorCount())

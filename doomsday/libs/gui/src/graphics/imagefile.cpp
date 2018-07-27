@@ -119,7 +119,7 @@ ImageFile::~ImageFile()
 String ImageFile::describe() const
 {
     String desc = Stringf(
-        "image \"%1\"", d->filter == NoFilter ? name().c_str() : d->filterSource().name().c_str());
+        "image \"%s\"", d->filter == NoFilter ? name().c_str() : d->filterSource().name().c_str());
     switch (d->filter)
     {
     case HeightMapToNormals:
