@@ -40,7 +40,7 @@ struct StackPusher {
 DE_PIMPL_NOREF(EventLoop)
 {
     RunMode runMode;
-    WaitableFIFO<Event> queue;
+    std::shared_ptr<WaitableFIFO<Event>> queue;
     DE_PIMPL_AUDIENCE(Event)
 };
 DE_AUDIENCE_METHOD(EventLoop, Event)
@@ -48,11 +48,22 @@ DE_AUDIENCE_METHOD(EventLoop, Event)
 EventLoop::EventLoop(RunMode runMode) : d(new Impl)
 {
     d->runMode = runMode;
-    if (d->runMode == Manual)
+    // Share the event queue with other EventLoops.
     {
         using namespace internal;
         DE_GUARD(loopStack);
-        loopStack.value.push_back(this);
+        if (loopStack.value.isEmpty())
+        {
+            d->queue.reset(new WaitableFIFO<Event>());
+        }
+        else
+        {
+            d->queue = loopStack.value.back()->d->queue;
+        }
+        if (d->runMode == Manual)
+        {
+            loopStack.value.push_back(this);
+        }
     }
 }
 
@@ -76,7 +87,7 @@ int EventLoop::exec(const std::function<void ()> &postExec)
         for (;;)
         {
             // Wait until an event is posted.
-            std::unique_ptr<Event> event(d->queue.take());
+            std::unique_ptr<Event> event(d->queue->take());
 
             // Notify observers and/or the subclass.
             processEvent(*event);
@@ -85,7 +96,7 @@ int EventLoop::exec(const std::function<void ()> &postExec)
             {
                 return event->as<CoreEvent>().valuei();
             }
-            if (d->queue.isEmpty())
+            if (d->queue->isEmpty())
             {
                 // Nothing to do immediately, so take out the trash.
                 Garbage_Recycle();
@@ -110,13 +121,13 @@ void EventLoop::processQueuedEvents()
 {
     try
     {
-        while (!d->queue.isEmpty())
+        while (!d->queue->isEmpty())
         {
-            std::unique_ptr<Event> event{d->queue.tryTake(0.001)};
+            std::unique_ptr<Event> event{d->queue->tryTake(0.001)};
             if (event->type() == Event::Quit)
             {
                 // We can't handle this.
-                d->queue.put(event.release());
+                d->queue->put(event.release());
                 break;
             }
             processEvent(*event);
@@ -140,7 +151,7 @@ bool EventLoop::isRunning() const
 
 void EventLoop::postEvent(Event *event)
 {
-    d->queue.put(event);
+    d->queue->put(event);
 }
 
 void EventLoop::processEvent(const Event &event)
