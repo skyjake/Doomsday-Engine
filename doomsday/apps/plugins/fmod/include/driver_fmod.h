@@ -56,14 +56,10 @@
 #include <de/Log>
 #include "api_console.h"
 
-extern "C" {
-
-int     DS_Init(void);
-void    DS_Shutdown(void);
-void    DS_Event(int type);
-int     DS_Set(int prop, const void* ptr);
-
-}
+DE_ENTRYPOINT int  DS_Init(void);
+DE_ENTRYPOINT void DS_Shutdown(void);
+DE_ENTRYPOINT void DS_Event(int type);
+DE_ENTRYPOINT int  DS_Set(int prop, const void* ptr);
 
 #define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FMOD] ", args)
 

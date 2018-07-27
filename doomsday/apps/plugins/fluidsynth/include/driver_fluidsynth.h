@@ -35,18 +35,14 @@
 #include "api_console.h"
 #include "api_audiod_sfx.h"
 
-extern "C" {
+DE_ENTRYPOINT   int     DS_Init(void);
+DE_ENTRYPOINT   void    DS_Shutdown(void);
+DE_ENTRYPOINT   void    DS_Event(int type);
+DE_ENTRYPOINT   int     DS_Set(int prop, const void* ptr);
 
-int     DS_Init(void);
-void    DS_Shutdown(void);
-void    DS_Event(int type);
-int     DS_Set(int prop, const void* ptr);
-
-}
-
-fluid_synth_t* DMFluid_Synth();
-fluid_audio_driver_t* DMFluid_Driver();
-audiointerface_sfx_generic_t* DMFluid_Sfx();
+fluid_synth_t *                 DMFluid_Synth();
+fluid_audio_driver_t *          DMFluid_Driver();
+audiointerface_sfx_generic_t *  DMFluid_Sfx();
 
 #define MAX_SYNTH_GAIN      0.4f
 
