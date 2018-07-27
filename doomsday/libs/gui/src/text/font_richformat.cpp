@@ -44,7 +44,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
         CString range;
         Format  format;
 
-        FormatRange(const CString &r = CString(), const Format &frm = Format())
+        FormatRange(const CString &r = {}, const Format &frm = {})
             : range(r)
             , format(frm)
         {}
@@ -83,6 +83,8 @@ DE_PIMPL_NOREF(Font::RichFormat)
 
     void handlePlainText(const CString &range)
     {
+        DE_ASSERT(range.ptr());
+        
         // Append a formatted range using the stack's current format.
         ranges.emplace_back(range, stack.last());
 
@@ -124,14 +126,14 @@ DE_PIMPL_NOREF(Font::RichFormat)
 
         case '>':
             stack.last().markIndent = true;
-            handlePlainText(CString());
+            // Insert an empty range for marking the indent.
+            handlePlainText(CString(iter, iter));
             break;
 
         case '<':
             stack.last().resetIndent = true;
-
             // Insert an empty range for reseting the indent.
-            handlePlainText(CString());
+            handlePlainText(CString(iter, iter));
             break;
 
         case '\t':
@@ -249,7 +251,7 @@ Font::RichFormat::IStyle const &Font::RichFormat::style() const
 Font::RichFormat Font::RichFormat::fromPlainText(String const &plainText)
 {
     Impl::FormatRange all;
-    all.range = plainText; //Rangei(0, plainText.sizei());
+    all.range = plainText;
     RichFormat form;
     form.d->ranges << all;
     return form;
@@ -320,11 +322,14 @@ int Font::RichFormat::tabStopXWidth(int stop) const
 
 Font::RichFormat::Ref::Ref(const Ref &ref)
     : _ref(ref.format()), _span(ref._span), _indices(ref._indices)
-{}
+{
+    DE_ASSERT(_span.ptr());
+}
 
 Font::RichFormat::Ref::Ref(const Ref &ref, const CString &subSpan)
     : _ref(ref.format()), _span(subSpan)
 {
+    DE_ASSERT(_span.ptr());
     updateIndices();
 }
 
@@ -332,11 +337,14 @@ Font::RichFormat::Ref::Ref(const RichFormat &richFormat)
     : _ref(richFormat)
     , _span(richFormat.d->fullRange())
     , _indices(0, richFormat.d->ranges.sizei())
-{}
+{
+    DE_ASSERT(_span.ptr());
+}
 
 Font::RichFormat::Ref::Ref(RichFormat const &richFormat, const CString &subSpan)
     : _ref(richFormat), _span(subSpan)
 {
+    DE_ASSERT(_span.ptr());
     updateIndices();
 }
 
@@ -352,24 +360,33 @@ int Font::RichFormat::Ref::rangeCount() const
 
 CString Font::RichFormat::Ref::range(int index) const
 {
-    CString r = _ref.d->ranges.at(_indices.start + index).range;
-
+    DE_ASSERT(_span.ptr() <= _span.endPtr());
+    
+    const CString &r = _ref.d->ranges.at(_indices.start + index).range;
+    const char *start = r.ptr();
+    const char *end   = r.endPtr();
     if (index == 0)
     {
         // Clip the beginning.
-        r.setStart(de::max(r.ptr(), _span.ptr()));
+        //r.setStart(de::max(r.ptr(), _span.ptr()));
+        start = de::max(start, _span.ptr());
+        end   = de::max(end,   _span.ptr());
     }
     if (index == rangeCount() - 1)
     {
         // Clip the end in the last range.
-        r.setEnd(de::min(r.endPtr(), _span.endPtr()));
+        //r.setEnd(de::max(r.ptr(), de::min(r.endPtr(), _span.endPtr())));
+        start = de::min(start, _span.endPtr());
+        end   = de::min(end, _span.endPtr());
     }
 
-    DE_ASSERT(r.ptr() >= _span.ptr());
-    DE_ASSERT(r.endPtr() <= _span.endPtr());
-    DE_ASSERT(r.ptr() <= r.endPtr());
+    DE_ASSERT(start);
+    DE_ASSERT(end);
+    DE_ASSERT(start >= _span.ptr());
+    DE_ASSERT(end <= _span.endPtr());
+    DE_ASSERT(start <= end);
 
-    return r; //r - _span.start;
+    return {start, end};
 }
 
 Font::RichFormat::Ref Font::RichFormat::Ref::subRef(const CString &subSpan) const
