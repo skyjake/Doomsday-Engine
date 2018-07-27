@@ -499,6 +499,17 @@ String App::unixEtcFolderName() const
     return unixHome;
 }
 
+String App::reverseDomainIdentifier() const
+{
+    const DotPath domain(metadata().gets(ORG_DOMAIN));
+    String rdi;
+    for (int i = 0; i < domain.segmentCount(); ++i)
+    {
+        rdi = rdi.concatenateMember(domain.reverseSegment(i).toString());
+    }
+    return rdi.concatenateMember(unixEtcFolderName());
+}
+    
 void App::setTerminateFunc(void (*func)(char const *))
 {
     d->terminateFunc = func;
@@ -665,17 +676,38 @@ NativePath App::currentWorkPath()
 
 NativePath App::tempPath()
 {
-#if defined (WIN32)
-    DE_ASSERT_FAIL("tempPath not implemented");
-#else
-    return Stringf("/tmp/doomsday-%i", pid_Process(nullptr));
-#endif
+    #if defined (WIN32)
+    {
+        DE_ASSERT_FAIL("tempPath not implemented");
+    }
+    #else
+    {
+        return Stringf("/tmp/%s-%i", app().reverseDomainIdentifier().c_str(), pid_Process(nullptr));
+    }
+    #endif
 }
 
 NativePath App::cachePath()
 {
-    DE_ASSERT_FAIL("App::cachePath() not implemented");
-    return NativePath();
+    NativePath dir;
+    
+    #if defined (MACOSX)
+    {
+        dir = NativePath::homePath() / "Library/Caches" / app().reverseDomainIdentifier();
+    }
+    #else
+    {
+        DE_ASSERT_FAIL("App::cachePath() not implemented");
+        return NativePath();
+    }
+    #endif
+    
+    // Make sure the directory actually exists.
+    if (!dir.exists())
+    {
+        NativePath::createDirectory(dir);
+    }
+    return dir;
 }
 
 bool App::setCurrentWorkPath(NativePath const &cwd)
@@ -749,7 +781,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
         if (!homeFolder().has("persist.pack") || commandLine().has("-reset"))
         {
             ZipArchive arch;
-            arch.add("Info", Stringf("# Package for %s's persistent state.\n", d->metadata.gets(APP_NAME).c_str()));
+            arch.add("Info", Stringf("# Package for %s's persistent state.\n",
+                                     d->metadata.gets(APP_NAME).c_str()));
             File &persistPack = homeFolder().replaceFile("persist.pack");
             Writer(persistPack) << arch;
             persistPack.reinterpret()->as<ArchiveFolder>().populate();

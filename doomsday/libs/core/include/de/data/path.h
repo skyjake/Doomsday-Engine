@@ -273,6 +273,8 @@ public:
      * Convert this path to a text string.
      */
     String toString() const;
+    
+    inline std::string toStdString() const { return toString().toStdString(); }
 
     const char *c_str() const;
 

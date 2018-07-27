@@ -156,11 +156,17 @@ public:
     void setUnixHomeFolderName(String const &name);
 
     String unixHomeFolderName() const;
-
+    
     /**
      * Returns the home folder name without the possible dot in the beginning.
      */
     String unixEtcFolderName() const;
+    
+    /**
+     * Returns the reverse domain name of the application. This is based on the
+     * ORG_DOMAIN metadata and the Unix home folder name.
+     */
+    String reverseDomainIdentifier() const;
 
     /**
      * Sets a callback to be called when an uncaught exception occurs.
