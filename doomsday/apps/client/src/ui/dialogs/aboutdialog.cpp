@@ -73,7 +73,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     LabelWidget *info = new LabelWidget;
 
     String txt = Stringf(
-        _E(b) DOOMSDAY_RELEASE_TYPE " %s #%s" _E(.) "\n" __DATE__ " " __TIME__ "%s\n\n%s %i-bit%s",
+        _E(b) DOOMSDAY_RELEASE_TYPE " %s #%d" _E(.) "\n" __DATE__ " " __TIME__ "%s\n\n%s %d-bit%s",
         version.compactNumber().c_str(),
         version.build,
         version.gitDescription.isEmpty()
@@ -83,7 +83,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
             : version.operatingSystem() == "macx"    ? "macOS"
             : version.operatingSystem() == "ios"     ? "iOS" : "Unix",
         version.cpuBits(),
-        version.isDebugBuild() ? " Debug" : "");
+        version.isDebugBuild() ? " (Debug)" : "");
 
     info->setText(txt);
     info->setSizePolicy(ui::Fixed, ui::Expand);

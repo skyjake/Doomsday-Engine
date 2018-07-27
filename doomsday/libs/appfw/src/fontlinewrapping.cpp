@@ -572,7 +572,7 @@ void FontLineWrapping::wrapTextToWidth(const String &text, const Font::RichForma
         {
             iter.next();
             DE_ASSERT(iter.range().ptr() >= text.data());
-            DE_ASSERT(iter.range().ptr() < text.data() + text.size());
+            DE_ASSERT(iter.range().ptr() <= text.data() + text.size());
             DE_ASSERT(iter.range().endPtr() >= text.data());
             DE_ASSERT(iter.range().endPtr() <= text.data() + text.size());
         }

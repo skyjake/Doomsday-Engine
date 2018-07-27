@@ -347,7 +347,7 @@ Image CoreTextNativeFont::nativeFontRasterize(const String &text,
 #endif
 
     // Text color.
-    Vec4d const fg = foreground.zyxw().toVec4f() / 255.f;
+    const Vec4d fg = foreground.toVec4f() / 255.f;
     CGFloat fgValues[4] = { fg.x, fg.y, fg.z, fg.w };
     CGColorRef fgColor = CGColorCreate(fontCache.colorspace(), fgValues);
 
