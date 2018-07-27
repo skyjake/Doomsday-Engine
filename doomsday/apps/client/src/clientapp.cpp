@@ -160,20 +160,20 @@ DE_PIMPL(ClientApp)
 #if defined (DE_HAVE_BUSYRUNNER)
     BusyRunner busyRunner;
 #endif
-    ConfigProfiles audioSettings;
-    ConfigProfiles networkSettings;
-    ConfigProfiles logSettings;
-    ConfigProfiles uiSettings;
+    ConfigProfiles              audioSettings;
+    ConfigProfiles              networkSettings;
+    ConfigProfiles              logSettings;
+    ConfigProfiles              uiSettings;
     std::unique_ptr<NativeMenu> nativeAppMenu;
-    InputSystem *inputSys = nullptr;
-    AudioSystem *audioSys = nullptr;
-    RenderSystem *rendSys = nullptr;
-    ClientResources *resources = nullptr;
-    ClientWindowSystem *winSys = nullptr;
-    InFineSystem infineSys; // instantiated at construction time
-    ServerLink *svLink = nullptr;
-    ClientServerWorld *world = nullptr;
-
+    InputSystem *               inputSys  = nullptr;
+    AudioSystem *               audioSys  = nullptr;
+    RenderSystem *              rendSys   = nullptr;
+    ClientResources *           resources = nullptr;
+    ClientWindowSystem *        winSys    = nullptr;
+    InFineSystem                infineSys; // instantiated at construction time
+    ServerLink *                svLink = nullptr;
+    ClientServerWorld *         world  = nullptr;
+    
     /**
      * Log entry sink that passes warning messages to the main window's alert
      * notification dialog.
@@ -257,8 +257,7 @@ DE_PIMPL(ClientApp)
 
             LogBuffer::get().removeSink(logAlarm);
 
-            self().players().forAll([] (Player &p)
-            {
+            self().players().forAll([](Player &p) {
                 p.as<ClientPlayer>().viewCompositor().glDeinit();
                 return LoopContinue;
             });
@@ -433,9 +432,11 @@ DE_PIMPL(ClientApp)
      */
     void setupAppMenu()
     {
-#if defined (MACOSX)
-        nativeAppMenu.reset(new NativeMenu);
-#endif
+        #if defined (MACOSX)
+        {
+            nativeAppMenu.reset(new NativeMenu);
+        }
+        #endif
     }
 
     void initSettings()
@@ -492,7 +493,7 @@ DE_PIMPL(ClientApp)
                 .define(Prof::ConfigVariable, "audio.output");
     }
 
-#ifdef UNIX
+#if defined (UNIX)
     void printVersionToStdOut() { printf("%s %s\n", DOOMSDAY_NICENAME, DOOMSDAY_VERSION_FULLTEXT); }
 
     void printHelpToStdOut()
@@ -564,19 +565,21 @@ void ClientApp::initialize()
     Libdeng_Init();
     DD_InitCommandLine();
 
-#ifdef UNIX
-    // Some common Unix command line options.
-    if (commandLine().has("--version") || commandLine().has("-version"))
+    #if defined (UNIX)
     {
-        d->printVersionToStdOut();
-        ::exit(0);
+        // Some common Unix command line options.
+        if (commandLine().has("--version") || commandLine().has("-version"))
+        {
+            d->printVersionToStdOut();
+            ::exit(0);
+        }
+        if (commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
+        {
+            d->printHelpToStdOut();
+            ::exit(0);
+        }
     }
-    if (commandLine().has("--help") || commandLine().has("-h") || commandLine().has("-?"))
-    {
-        d->printHelpToStdOut();
-        ::exit(0);
-    }
-#endif
+    #endif
 
     d->svLink = new ServerLink;
 
@@ -602,17 +605,21 @@ void ClientApp::initialize()
     d->initSettings();
 
     // Initialize.
-#if WIN32
-    if (!DD_Win32_Init())
+    #if defined (WIN32)
     {
-        throw Error("ClientApp::initialize", "DD_Win32_Init failed");
+        if (!DD_Win32_Init())
+        {
+            throw Error("ClientApp::initialize", "DD_Win32_Init failed");
+        }
     }
-#elif UNIX
-    if (!DD_Unix_Init())
+    #elif defined (UNIX)
     {
-        throw Error("ClientApp::initialize", "DD_Unix_Init failed");
+        if (!DD_Unix_Init())
+        {
+            throw Error("ClientApp::initialize", "DD_Unix_Init failed");
+        }
     }
-#endif
+    #endif
 
     // Create the world system.
     d->world = new ClientServerWorld;
@@ -963,7 +970,7 @@ void ClientApp::openHomepageInBrowser()
 
 void ClientApp::showLocalFile(const NativePath &path)
 {
-    DE_ASSERT_FAIL("Show local file in Explorer/Finder");
+    revealFile(path);
 }
 
 void ClientApp::openInBrowser(const String &url)

@@ -189,7 +189,7 @@ ServerApp::ServerApp(const StringList &args)
 
     // Metadata.
     setMetadata("Deng Team", "dengine.net", "Doomsday Server", DOOMSDAY_VERSION_BASE);
-    setUnixHomeFolderName(".doomsday");
+    setUnixHomeFolderName(".doomsday-server");
 
     setTerminateFunc(handleAppTerminate);
 
