@@ -39,7 +39,7 @@ DE_PIMPL(ToggleWidget)
             , _pos(0, Animation::EaseBoth)
             , _animating(false)
         {
-            const Image &img = style().images().image("toggle.onoff");
+            const Image &img = style().images().image(DE_STR("widget.toggle.onoff"));
             setPointSize(img.size() * img.pointRatio());
             updateStyle();
         }
@@ -80,7 +80,7 @@ DE_PIMPL(ToggleWidget)
             verts.makeQuad(recti, (_accentColor * p + _textColor * (1-p)) * Vec4f(c, c, c, 1),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
 
-            Id onOff = _owner.root().styleTexture("toggle.onoff");
+            Id onOff = _owner.root().styleTexture(DE_STR("widget.toggle.onoff"));
 
             // The on/off graphic.
             verts.makeQuad(recti, _accentColor * p + _textColor * (1-p) * .8f, atlas().imageRectf(onOff));

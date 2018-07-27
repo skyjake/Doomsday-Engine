@@ -37,7 +37,7 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
     Id gearTex;
     DotPath colorId       { "progress.light.wheel" };
     DotPath shadowColorId { "progress.light.shadow" };
-    DotPath gearId        { "progress.gear" };
+    DotPath gearId        { DE_STR("widget.progress.gear") };
     Time updateAt         { Time::invalidTime() };
 
     int framesWhileAnimDone = 0; ///< # of frames drawn while animation was already done.
@@ -173,7 +173,7 @@ ProgressWidget::ProgressWidget(String const &name)
     setSizePolicy(ui::Filled, ui::Filled);
 
     // Set up the static progress ring image.
-    setStyleImage("progress.wheel");
+    setStyleImage(DE_STR("widget.progress.wheel"));
     setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
     setImageScale(.6f);
 
@@ -186,7 +186,7 @@ void ProgressWidget::useMiniStyle(DotPath const &colorId)
 {
     d->mini = true;
     d->colorId = colorId;
-    d->gearId = "progress.mini";
+    d->gearId = DE_STR("widget.progress.mini");
     setTextColor(colorId);
     setRotationSpeed(40);
     setImageScale(1);
