@@ -349,8 +349,14 @@ void Sys_GLPrintExtensions(void)
 
     LOG_GL_MSG(_E(b) "OpenGL Extensions:");
 
-    const String allExts = reinterpret_cast<const char *>(glGetString(GL_EXTENSIONS));
-    printExtensions(allExts.split(RegExp::WHITESPACE));
+    int count = 0;
+    glGetIntegerv(GL_NUM_EXTENSIONS, &count);
+    StringList allExts;
+    for (int i = 0; i < count; ++i)
+    {
+        allExts << reinterpret_cast<const char *>(glGetStringi(GL_EXTENSIONS, i));
+    }
+    printExtensions(allExts);
 
     /*
 #if WIN32
