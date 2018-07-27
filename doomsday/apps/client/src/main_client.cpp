@@ -101,18 +101,17 @@ int main(int argc, char **argv)
          * parse tr strings from inside private implementation classes. Workaround
          * or fix is needed?
          */
-#if 0
+/*#if 0
         // Load the current locale's translation.
         QTranslator translator;
         translator.load(QString("client_") + QLocale::system().name());
         clientApp.installTranslator(&translator);
-#endif
+#endif*/
 
         try
         {
-            clientApp.initialize();
-
-#if defined (DE_MOBILE)
+/*
+ #if defined (DE_MOBILE)
             // On mobile, Qt Quick is actually in charge of drawing the screen.
             // GLWindow is just an item that draws the UI background.
             qmlRegisterType<de::GLQuickItemT<ClientWindow>>("Doomsday", 1, 0, "ClientWindow");
@@ -121,8 +120,8 @@ int main(int argc, char **argv)
             view.setSource(QUrl("qrc:///qml/main.qml"));
             view.show();
 #endif
-
-            exitCode = clientApp.exec();
+*/
+            exitCode = clientApp.exec([&]() { clientApp.initialize(); });
         }
         catch (const de::Error &er)
         {

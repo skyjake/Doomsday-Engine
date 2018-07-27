@@ -577,6 +577,7 @@ DE_PIMPL(InputSystem)
      */
     void readMouse()
     {
+#if 0
         if (!Mouse_IsPresent())
             return;
 
@@ -675,6 +676,7 @@ DE_PIMPL(InputSystem)
                 }
             }
         }
+#endif
     }
 
     /**

@@ -56,6 +56,7 @@
 #ifdef __CLIENT__
 #  include <de/texgamma.h>
 #  include <de/DisplayMode>
+#  include <de/GLWindow>
 #endif
 #include <doomsday/AbstractSession>
 #include <doomsday/console/alias.h>
@@ -1055,6 +1056,7 @@ static void initializeWithWindowReady()
     static char const *AUTOEXEC_NAME = "autoexec.cfg";
 
 #ifdef __CLIENT__
+    GLWindow::main().glActivate();
     GL_EarlyInit();
 #endif
 
@@ -1292,22 +1294,30 @@ void DD_FinishInitializationAfterWindowReady()
 #endif // __CLIENT__
 
     // Initialize engine subsystems and initial state.
-    try
-    {
-        initializeWithWindowReady();
-        // Let everyone know we're up and running (via another timer callback).
-        Loop::timer(0.1, [] () { App::app().notifyStartupComplete(); });
-        return;
-    }
-    catch (Error const &er)
-    {
-        EscapeParser esc;
-        esc.parse(er.asText());
-        Sys_CriticalMessage(esc.plainText());
-    }
-    catch (...)
-    {}
-    exit(2);  // Cannot continue...
+    Loop::timer(0.01, []() {
+        try
+        {
+            // The rest of the initialization assumes that the main window exists.
+            initializeWithWindowReady();
+            // Let everyone know we're up and running.
+            /*Loop::timer(0.1, []() {*/ App::app().notifyStartupComplete(); //});
+            return;
+        }
+        catch (Error const &er)
+        {
+            EscapeParser esc;
+            esc.parse(er.asText());
+            Sys_CriticalMessage(esc.plainText());
+        }
+        catch (...)
+        {}
+        // Shut down the application.
+#if defined (__CLIENT__)
+        DE_GUI_APP->quit(2);
+#else
+        DE_TEXT_APP->quit(2);
+#endif
+    });
 }
 
 static dint DD_StartupWorker(void * /*context*/)

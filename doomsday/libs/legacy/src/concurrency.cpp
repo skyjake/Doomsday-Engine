@@ -25,6 +25,7 @@
 #include <de/App>
 #include <de/Time>
 #include <de/Log>
+#include <de/Loop>
 #include <de/Garbage>
 #include <assert.h>
 
@@ -58,10 +59,10 @@ CallbackThread::~CallbackThread()
     }
 }
 
-//void CallbackThread::deleteNow()
 void CallbackThread::threadFinished(Thread &)
 {
-    de::trash(this); //delete this;
+    using namespace de;
+    Loop::mainCall([this]() { trash(this); });
 }
 
 void CallbackThread::run()
