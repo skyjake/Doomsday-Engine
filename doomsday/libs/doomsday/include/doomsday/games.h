@@ -118,7 +118,7 @@ public:
     /**
      * Returns a list of all the Game instances in the collection.
      */
-    All const &all() const;
+    All all() const;
 
     de::LoopResult forAll(const std::function<de::LoopResult (Game &)>& callback) const;
 

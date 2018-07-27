@@ -40,6 +40,7 @@ using namespace de;
 
 DE_PIMPL(Games)
 , DE_OBSERVES(res::Bundles, Identify)
+, public Lockable
 {
     /// The actual collection.
     All games;
@@ -156,6 +157,7 @@ Game &Games::nullGame() // static
 
 int Games::numPlayable() const
 {
+    DE_GUARD(d);
     int count = 0;
     for (Game *game : d->games)
     {
@@ -169,6 +171,7 @@ int Games::numPlayable() const
 
 int Games::numPlayable(String const &family) const
 {
+    DE_GUARD(d);
     int count = 0;
     for (Game *game : d->games)
     {
@@ -182,6 +185,7 @@ int Games::numPlayable(String const &family) const
 
 GameProfile const *Games::firstPlayable() const
 {
+    DE_GUARD(d);
     for (Game *game : d->games)
     {
         if (game->profile().isPlayable()) return &game->profile();
@@ -191,6 +195,7 @@ GameProfile const *Games::firstPlayable() const
 
 Game &Games::operator[](String const &id) const
 {
+    DE_GUARD(d);
     if (id.isEmpty())
     {
         return *d->nullGame;
@@ -206,11 +211,13 @@ Game &Games::operator[](String const &id) const
 
 bool Games::contains(String const &id) const
 {
+    DE_GUARD(d);
     return d->findById(id) != nullptr;
 }
 
 Game &Games::byIndex(int idx) const
 {
+    DE_GUARD(d);
     if (idx < 0 || idx > d->games.sizei())
     {
         /// @throw NotFoundError  No game is associated with index @a idx.
@@ -221,16 +228,19 @@ Game &Games::byIndex(int idx) const
 
 void Games::clear()
 {
+    DE_GUARD(d);
     d->clear();
 }
 
-Games::All const &Games::all() const
+Games::All Games::all() const
 {
+    DE_GUARD(d);
     return d->games;
 }
 
 int Games::collectAll(GameList &collected)
 {
+    DE_GUARD(d);
     int numFoundSoFar = collected.sizei();
     for (Game *game : d->games)
     {
@@ -241,6 +251,7 @@ int Games::collectAll(GameList &collected)
 
 Game &Games::defineGame(String const &id, Record const &parameters)
 {
+    DE_GUARD(d);
     LOG_AS("Games");
 
     // Game IDs must be unique. Ensure that is the case.
@@ -338,6 +349,7 @@ void Games::checkReadiness()
         return LoopContinue;
     });
 */
+    DE_GUARD(d);
 
     Set<Game const *> playable;
     forAll([&playable] (Game &game)
