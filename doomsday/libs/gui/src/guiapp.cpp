@@ -33,6 +33,8 @@
 
 #include <SDL.h>
 
+#include <fstream>
+
 namespace de {
 
 DE_PIMPL(GuiApp)
@@ -252,13 +254,49 @@ void GuiApp::setRenderThread(Thread *thread)
 NativePath GuiApp::appDataPath() const
 {
     const auto &amd = metadata();
-#if defined (WIN32)
-    return NativePath::homePath() / "AppData/Local" / amd.gets(ORG_NAME) / amd.gets(APP_NAME);
-#elif defined (MACOSX)
-    return NativePath::homePath() / "Library/Application Support" / amd.gets(APP_NAME);
-#else
-    return NativePath::homePath() / amd.gets(UNIX_HOME);
-#endif
+    #if defined (WIN32)
+    {
+        return NativePath::homePath() / "AppData/Local" / amd.gets(ORG_NAME) / amd.gets(APP_NAME);
+    }
+    #elif defined (MACOSX)
+    {
+        return NativePath::homePath() / "Library/Application Support" / amd.gets(APP_NAME);
+    }
+    #else
+    {
+        return NativePath::homePath() / amd.gets(UNIX_HOME);
+    }
+    #endif
+}
+
+void GuiApp::revealFile(const NativePath &fileOrFolder) // static
+{
+    #if defined (MACOSX)
+    {
+        using namespace std;
+        
+        const NativePath scriptPath = cachePath() / "reveal_path.scpt";
+        if (ofstream f{scriptPath.toStdString()})
+        {
+            // Apple Script to select a specific file.
+            f << "on run argv" << endl
+              << "  tell application \"Finder\"" << endl
+              << "    activate" << endl
+              << "    reveal POSIX file (item 1 of argv) as text" << endl
+              << "  end tell" << endl
+              << "end run" << endl;
+            f.close();
+            
+            CommandLine cmd;
+            cmd << "/usr/bin/osascript" << scriptPath << fileOrFolder;
+            cmd.execute();
+        }
+    }
+    #else
+    {
+        DE_ASSERT_FAIL("File revealing not implemented on this platform");
+    }
+    #endif
 }
 
 } // namespace de

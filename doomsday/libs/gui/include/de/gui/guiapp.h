@@ -32,6 +32,7 @@
 
 namespace de {
 
+class NativePath;
 class Thread;
 
 /**
@@ -90,7 +91,13 @@ public:
     static bool inRenderThread();
 
     static void setRenderThread(Thread *thread);
-
+    
+    /**
+     * Shows a native file or folder in the operating system's file manager (macOS Finder
+     * or Explorer in Windows).
+     */
+    static void revealFile(const NativePath &fileOrFolder);
+    
 protected:
     NativePath appDataPath() const override;
 
