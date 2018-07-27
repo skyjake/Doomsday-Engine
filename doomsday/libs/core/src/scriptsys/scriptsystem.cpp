@@ -121,6 +121,11 @@ DE_PIMPL(ScriptSystem)
     void addNativeModule(String const &name, Record &module)
     {
         DE_GUARD(nativeModules);
+        auto existing = nativeModules.value.find(name);
+        if (existing != nativeModules.value.end())
+        {
+            existing->second->audienceForDeletion() -= this;
+        }
         nativeModules.value.insert(name, &module); // not owned
         module.audienceForDeletion() += this;
     }

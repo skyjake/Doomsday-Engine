@@ -56,12 +56,31 @@ public:
     bool isEmpty() const { return empty(); }
     inline int sizei() const { return int(Base::size()); }
 
-    iterator     insert(const Key &key, const Value &value) { return Base::insert(std::make_pair(key, value)).first; }
+    iterator insert(const Key &key, const Value &value)
+    {
+        auto found = find(key);
+        if (found != end())
+        {
+            found->second = value;
+            return found;
+        }
+        return Base::insert(std::make_pair(key, value)).first;
+    }
+    iterator insert(const Key &key, Value &&value)
+    {
+        auto found = find(key);
+        if (found != end())
+        {
+            found->second = value;
+            return found;
+        }
+        return Base::insert(std::make_pair(key, value)).first;
+    }
     void         remove(const Key &key) { Base::erase(key); }
     bool         contains(const Key &key) const { return Base::find(key) != Base::end(); }
     Value &      operator[](const Key &key) { return Base::operator[](key); }
     const Value &operator[](const Key &key) const { return Base::find(key)->second; }
-    Hash &       operator=(const Hash &&copied) { Base::operator=(copied); return *this; }
+    Hash &       operator=(const Hash &copied) { Base::operator=(copied); return *this; }
     Hash &       operator=(Hash &&moved) { Base::operator=(moved); return *this; }
 
     Value take(const Key &key)

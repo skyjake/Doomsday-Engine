@@ -357,7 +357,7 @@ Path PathTree::Node::path(Char sep) const
 
 #ifdef DE_STACK_MONITOR
     LOG_AS("pathConstructor");
-    LOG_DEV_NOTE("Max stack depth: %1 bytes") << maxStackDepth;
+    LOG_DEV_NOTE("Max stack depth: %i bytes") << maxStackDepth;
 #endif
 
     return Path(args.composedPath, sep);

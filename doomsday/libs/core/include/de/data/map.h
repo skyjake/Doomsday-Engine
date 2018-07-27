@@ -48,6 +48,12 @@ public:
 
     iterator insert(const Key &key, const Value &value)
     {
+        auto found = Base::find(key);
+        if (found != Base::end())
+        {
+            found->second = value;
+            return found;
+        }
         return Base::insert(typename Base::value_type(key, value)).first;
     }
     void           remove(const Key &key) { Base::erase(key); }

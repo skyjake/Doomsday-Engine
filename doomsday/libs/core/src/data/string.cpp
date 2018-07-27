@@ -82,16 +82,19 @@ String::String(const std::wstring &text)
 
 String::String(const char *nullTerminatedCStr)
 {
+    DE_ASSERT(nullTerminatedCStr != nullptr);
     initCStr_String(&_str, nullTerminatedCStr);
 }
 
 String::String(const wchar_t *nullTerminatedWideStr)
 {
+    DE_ASSERT(nullTerminatedWideStr != nullptr);
     initWide_String(&_str, nullTerminatedWideStr);
 }
 
 String::String(char const *cStr, int length)
 {
+    DE_ASSERT(cStr != nullptr);
     initCStrN_String(&_str, cStr, length);
 }
 
@@ -1172,7 +1175,7 @@ mb_iterator &mb_iterator::operator--()
     for (int j = 1; j < MB_CUR_MAX; ++j)
     {
         mb_iterator prec = i - j;
-        if (prec.decode() != 0 && prec.curCharLen == dsize(j))
+        if (prec.decode() != 0 && prec.curCharLen == j)
         {
             prec.start = start;
             *this = prec;
