@@ -527,6 +527,7 @@ Time Time::parse(const String &text, const char *format) // static
             char ch = 0;
             is >> ch;
             if (*pos != ch) return Time::invalidTime();
+            pos++;
         }
         if (is.fail()) return Time::invalidTime();
     }
