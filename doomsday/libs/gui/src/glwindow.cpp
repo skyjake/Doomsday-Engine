@@ -145,6 +145,8 @@ DE_PIMPL(GLWindow)
 
         LIBGUI_ASSERT_GL_OK();
 
+        debug("Window pixel size at notifyReady: %s", currentSize.asText().c_str());
+        
         // Everybody can perform GL init now.
         DE_FOR_PUBLIC_AUDIENCE2(Init, i)   i->windowInit(self());
         DE_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
@@ -420,6 +422,15 @@ void GLWindow::setGeometry(const Rectanglei &rect)
 {
     SDL_SetWindowPosition(d->window, rect.left(),  rect.top());
     SDL_SetWindowSize    (d->window, rect.width(), rect.height());
+    
+    // Update the current size immediately.
+    Vec2i pixels;
+    SDL_GL_GetDrawableSize(d->window, &pixels.x, &pixels.y);
+    if (d->currentSize != pixels.toVec2ui())
+    {
+        d->currentSize = pixels.toVec2ui();
+        DE_FOR_AUDIENCE2(Resize, i) { i->windowResized(*this); }
+    }
 }
 
 #if defined (DE_MOBILE)

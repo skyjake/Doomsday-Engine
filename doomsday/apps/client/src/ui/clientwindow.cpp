@@ -517,7 +517,7 @@ DE_PIMPL(ClientWindow)
         LOG_AS("ClientWindow");
 
         Size size = self().pixelSize();
-        LOG_TRACE("Window resized to %s pixels", size.asText());
+        LOG_VERBOSE("Window resized to %s pixels") << size.asText();
 
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
@@ -849,8 +849,7 @@ ClientWindow::ClientWindow(String const &id)
     // Stay out from under the virtual keyboard.
     connect(this, &GLWindow::rootDimensionsChanged, [this] (QRect rect)
     {
-        d->root.rootOffset().setValue(Vec2f(0, int(rect.height()) - int(pixelSize().y)),
-                                      0.3);
+        d->root.rootOffset().setValue(Vec2f(0, int(rect.height()) - int(pixelSize().y)), 0.3);
     });
 #endif
 }
