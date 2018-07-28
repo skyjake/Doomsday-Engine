@@ -49,6 +49,7 @@ CallbackThread::~CallbackThread()
 {
     if (isRunning())
     {
+        DE_ASSERT(!isCurrentThread());
         de::debug("CallbackThread %p being forcibly stopped before deletion", this);
         terminate();
 //        wait(1000);
@@ -62,7 +63,10 @@ CallbackThread::~CallbackThread()
 void CallbackThread::threadFinished(Thread &)
 {
     using namespace de;
-    Loop::mainCall([this]() { trash(this); });
+    Loop::mainCall([this]() {
+        DE_ASSERT(!isCurrentThread());
+        trash(this);
+    });
 }
 
 void CallbackThread::run()
@@ -169,7 +173,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
     }
 
     CallbackThread *t = reinterpret_cast<CallbackThread *>(handle);
-    DE_ASSERT(static_cast<de::Thread *>(t) != de::Thread::currentThread());
+    DE_ASSERT(!t->isCurrentThread());
     t->wait(de::TimeSpan::fromMilliSeconds(timeoutMs));
     if (!t->isFinished())
     {
@@ -180,8 +184,6 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
     {
         if (exitStatus) *exitStatus = t->exitStatus();
     }
-    //t->deleteLater(); // get rid of it
-    de::trash(t);
     return t->exitValue();
 }
 
