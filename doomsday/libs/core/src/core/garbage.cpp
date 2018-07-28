@@ -176,6 +176,7 @@ void Garbage_TrashInstance(void *ptr, GarbageDestructor destructor)
     if (ptr)
     {
         Garbage *g = garbageForThread(current_Thread());
+        DE_ASSERT(!Garbage_IsTrashed(ptr));
         g->allocs[ptr] = destructor;
     }
 }

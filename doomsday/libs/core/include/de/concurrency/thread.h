@@ -43,6 +43,7 @@ public:
     void terminate();
     bool isRunning() const;
     bool isFinished() const;
+    bool isCurrentThread() const;
 
     virtual void run() = 0;
 

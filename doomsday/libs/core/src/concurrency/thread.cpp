@@ -115,6 +115,15 @@ bool Thread::isFinished() const
     return isFinished_Thread(d->thread);
 }
 
+bool Thread::isCurrentThread() const
+{
+    if (d->thread)
+    {
+        return thrd_current() == id_Thread(d->thread);
+    }
+    return false;
+}
+    
 void Thread::sleep(const TimeSpan &span) // static
 {
     sleep_Thread(span);

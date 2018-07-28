@@ -103,7 +103,7 @@ static Value *Function_App_Locate(Context &, Function::ArgumentValues const &arg
 DE_PIMPL(App)
 , DE_OBSERVES(PackageLoader, Activity)
 {
-    iThread *mainThread = nullptr;
+    thrd_t mainThread = nullptr;
 
     /// Metadata about the application.
     Record metadata;
@@ -175,7 +175,7 @@ DE_PIMPL(App)
         packagesToLoadAtInit << "net.dengine.stdlib";
 
         singletonApp = a;
-        mainThread = current_Thread();
+        mainThread = thrd_current();
 
         logBuffer.setEntryFilter(&logFilter);
 
@@ -556,7 +556,7 @@ bool App::inMainThread()
         // No app even created yet, must be main thread.
         return true;
     }
-    return DE_APP->d->mainThread == current_Thread();
+    return DE_APP->d->mainThread == thrd_current();
 }
 
 #if !defined (DE_STATIC_LINK)
