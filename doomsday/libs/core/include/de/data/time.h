@@ -149,12 +149,12 @@ public:
         SecondsSinceStart,
         BuildNumberAndSecondsSinceStart,
         FriendlyFormat,
-        ISODateOnly, // yyyy-MM-dd
+        ISODateOnly,      // yyyy-MM-dd
         CompilerDateTime, // Oct  7 2013 03:18:36 (__DATE__ __TIME__)
-        HumanDate, ///< human-entered date (only with Time::fromText)
+        HumanDate,        ///< human-entered date (only with Time::fromText)
         UnixLsStyleDateTime,
     };
-
+    
     using TimePoint = std::chrono::system_clock::time_point;
 
 public:

@@ -531,7 +531,7 @@ Time Time::parse(const String &text, const char *format) // static
         }
         if (is.fail()) return Time::invalidTime();
     }
-
+    
     // Assume missing date values.
     if (year == 0)
     {
@@ -545,6 +545,10 @@ Time Time::parse(const String &text, const char *format) // static
     {
         day = 1;
     }
+
+    // In the valid range?
+    if (month < 1 || month > 12) return Time::invalidTime();
+    if (day   < 1 || day   > 31) return Time::invalidTime();
 
     return Time(year, month, day, hour, minute, 0);
 }
