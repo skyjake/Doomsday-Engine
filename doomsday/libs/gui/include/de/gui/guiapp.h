@@ -90,7 +90,10 @@ public:
      */
     static bool inRenderThread();
 
-    static void setRenderThread(Thread *thread);
+    /**
+     * Marks the current thread as the rendering thread.
+     */
+    static void setRenderThread();
     
     /**
      * Shows a native file or folder in the operating system's file manager (macOS Finder

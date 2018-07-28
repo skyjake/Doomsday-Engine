@@ -34,6 +34,7 @@
 #include <SDL.h>
 
 #include <fstream>
+#include <c_plus/thread.h>
 
 namespace de {
 
@@ -41,7 +42,7 @@ DE_PIMPL(GuiApp)
 {
     EventLoop   eventLoop;
     GuiLoop     loop;
-    Thread *    renderThread;
+    thrd_t      renderThread = nullptr;
     double      dpiFactor = 1.0;
     SDL_Cursor *arrowCursor;
     SDL_Cursor *vsizeCursor;
@@ -50,7 +51,7 @@ DE_PIMPL(GuiApp)
     Impl(Public *i) : Base(i)
     {
         // The default render thread is the main thread.
-        renderThread = Thread::currentThread();
+        renderThread = thrd_current();
 
         arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
         vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
@@ -243,12 +244,12 @@ bool GuiApp::inRenderThread()
     {
         return false;
     }
-    return DE_GUI_APP->d->renderThread == Thread::currentThread();
+    return thrd_current() == DE_GUI_APP->d->renderThread;
 }
 
-void GuiApp::setRenderThread(Thread *thread)
+void GuiApp::setRenderThread()
 {
-    DE_GUI_APP->d->renderThread = thread;
+    DE_GUI_APP->d->renderThread = thrd_current();
 }
 
 NativePath GuiApp::appDataPath() const
@@ -287,9 +288,7 @@ void GuiApp::revealFile(const NativePath &fileOrFolder) // static
               << "end run" << endl;
             f.close();
             
-            CommandLine cmd;
-            cmd << "/usr/bin/osascript" << scriptPath << fileOrFolder;
-            cmd.execute();
+            CommandLine{{"/usr/bin/osascript", scriptPath, fileOrFolder}}.execute();
         }
     }
     #else
