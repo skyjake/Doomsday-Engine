@@ -42,23 +42,23 @@
 using namespace de;
 using namespace res;
 
-static String const VAR_RESOURCE_LOCAL_PACKAGES("resource.localPackages");
-static String const VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME("resource.localPackagesForGame");
+const static String VAR_RESOURCE_LOCAL_PACKAGES("resource.localPackages");
+const static String VAR_RESOURCE_LOCAL_PACKAGES_FOR_GAME("resource.localPackagesForGame");
 
-static String const DEF_ID("ID");
+const static String DEF_ID("ID");
 
-String const Game::DEF_VARIANT_OF("variantOf");
-String const Game::DEF_FAMILY("family");
-String const Game::DEF_CONFIG_DIR("configDir");
-String const Game::DEF_CONFIG_MAIN_PATH("mainConfig");
-String const Game::DEF_CONFIG_BINDINGS_PATH("bindingsConfig");
-String const Game::DEF_TITLE("title");
-String const Game::DEF_AUTHOR("author");
-String const Game::DEF_RELEASE_DATE("releaseDate");
-String const Game::DEF_TAGS("tags");
-String const Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
-String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
-String const Game::DEF_MAPINFO_PATH("mapInfoPath");
+const String Game::DEF_VARIANT_OF("variantOf");
+const String Game::DEF_FAMILY("family");
+const String Game::DEF_CONFIG_DIR("configDir");
+const String Game::DEF_CONFIG_MAIN_PATH("mainConfig");
+const String Game::DEF_CONFIG_BINDINGS_PATH("bindingsConfig");
+const String Game::DEF_TITLE("title");
+const String Game::DEF_AUTHOR("author");
+const String Game::DEF_RELEASE_DATE("releaseDate");
+const String Game::DEF_TAGS("tags");
+const String Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
+const String Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
+const String Game::DEF_MAPINFO_PATH("mapInfoPath");
 String const Game::DEF_OPTIONS("options");
 
 DE_PIMPL(Game), public Lockable
