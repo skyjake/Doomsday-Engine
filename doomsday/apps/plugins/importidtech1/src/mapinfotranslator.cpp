@@ -1430,8 +1430,6 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                 }
             }
             os << "\n} # Episode '" << episodeId << "'";
-
-            output = os.str();
         }
 
         GameInfo gameInfo;
@@ -1542,6 +1540,8 @@ DE_PIMPL_NOREF(MapInfoTranslator)
                << "\n  CD Track = " + String::asText(music.geti("cdTrack")) + ";"
                << "\n}";
         }
+
+        output = os.str();
     }
 };
 
@@ -1589,6 +1589,8 @@ void MapInfoTranslator::translate(String &translated, String &translatedCustom)
     d->preprocess();
     d->translate(translated, false/*not custom*/);
     d->translate(translatedCustom, true/*custom*/);
+    
+    debug("translated:%s", translated.c_str());
 
     reset(); // The definition database was modified.
 }
