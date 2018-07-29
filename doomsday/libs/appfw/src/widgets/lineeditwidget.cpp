@@ -392,7 +392,9 @@ void LineEditWidget::focusGained()
         d->hint->setOpacity(0);
     }
 
-#if defined (DE_MOBILE)
+    root().window().eventHandler().setKeyboardMode(WindowEventHandler::TextInput);
+    
+/*#if defined (DE_MOBILE)
     {
         auto &win = root().window();
         emit win.textEntryRequest();
@@ -401,19 +403,21 @@ void LineEditWidget::focusGained()
         connect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
         connect(&win, &GLWindow::userFinishedTextEntry, this, &LineEditWidget::userFinishedTextEntry);
     }
-#endif
+#endif*/
 }
 
 void LineEditWidget::focusLost()
 {
-#if defined (DE_MOBILE)
+    root().window().eventHandler().setKeyboardMode(WindowEventHandler::RawKeys);
+
+/*#if defined (DE_MOBILE)
     {
         auto &win = root().window();
         disconnect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
         disconnect(&win, &GLWindow::userFinishedTextEntry, this, &LineEditWidget::userFinishedTextEntry);
         emit win.textEntryDismiss();
     }
-#endif
+#endif*/
 
     d->contentChanged(false /* don't notify */);
 
@@ -423,7 +427,7 @@ void LineEditWidget::focusLost()
     }
 }
 
-#if defined (DE_MOBILE)
+/*#if defined (DE_MOBILE)
 void LineEditWidget::userEnteredText(QString text)
 {
     setText(text);
@@ -433,7 +437,7 @@ void LineEditWidget::userFinishedTextEntry()
 {
     root().popFocus();
 }
-#endif
+#endif*/
 
 void LineEditWidget::update()
 {

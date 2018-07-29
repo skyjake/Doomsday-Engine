@@ -290,12 +290,12 @@ void WindowEventHandler::setKeyboardMode(KeyboardMode kbMode)
         d->keyboardMode = kbMode;
         if (kbMode == TextInput)
         {
-            LOG_INPUT_MSG("Begin text input mode");
+            LOG_INPUT_MSG("Keyboard mode changed to text input");
             SDL_StartTextInput();
         }
         else
         {
-            LOG_INPUT_MSG("End text input mode");
+            LOG_INPUT_MSG("Keyboard mode changed to raw key events");
             SDL_StopTextInput();
         }
     }

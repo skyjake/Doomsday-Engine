@@ -94,7 +94,7 @@ DE_GUI_PIMPL(PopupWidget)
         self().setOpeningDirection(openDir);
     }
 
-    typedef Vector2<Rule const *> Vector2R;
+    using Vector2R = Vector2<Rule const *>;
 
     Vector2R anchorRule() const
     {
