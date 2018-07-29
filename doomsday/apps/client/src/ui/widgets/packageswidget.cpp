@@ -51,13 +51,13 @@
 
 using namespace de;
 
-static String const VAR_TITLE("title");
-static String const VAR_TAGS("tags");
-static String const TAG_HIDDEN("hidden");
-static String const TAG_LOADED("loaded");
-static String const TAG_CACHED("cached");
+static const String VAR_TITLE  ("title");
+static const String VAR_TAGS   ("tags");
+static const String TAG_HIDDEN ("hidden");
+static const String TAG_LOADED ("loaded");
+static const String TAG_CACHED ("cached");
 
-static TimeSpan const REFILTER_DELAY(0.2);
+static constexpr double REFILTER_DELAY = 0.2;
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus {
     bool isPackageHighlighted(String const &packageId) const
