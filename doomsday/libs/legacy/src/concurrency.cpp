@@ -42,7 +42,7 @@ CallbackThread::CallbackThread(systhreadfunc_t func, void *param)
     setTerminationEnabled(true);
 
     // Cleanup at app exit time for threads whose exit value hasn't been checked.
-    audienceForFinished() += this;
+//    audienceForFinished() += this;
 }
 
 CallbackThread::~CallbackThread()
@@ -60,14 +60,14 @@ CallbackThread::~CallbackThread()
     }
 }
 
-void CallbackThread::threadFinished(Thread &)
-{
-    using namespace de;
-    Loop::mainCall([this]() {
-        DE_ASSERT(!isCurrentThread());
-        trash(this);
-    });
-}
+//void CallbackThread::threadFinished(Thread &)
+//{
+//    using namespace de;
+//    Loop::mainCall([this]() {
+//        DE_ASSERT(!isCurrentThread());
+//        trash(this);
+//    });
+//}
 
 void CallbackThread::run()
 {
@@ -95,9 +95,6 @@ void CallbackThread::run()
     }
 
     Garbage_ClearForThread();
-
-    // No more log output from this thread.
-    //de::Log::disposeThreadLog();
 }
 
 int CallbackThread::exitValue() const
@@ -133,7 +130,7 @@ void Thread_Sleep(int milliseconds)
 
 thread_t Sys_StartThread(systhreadfunc_t startpos, void *parm, void (*terminationFunc)(systhreadexitstatus_t))
 {
-    CallbackThread *t = new CallbackThread(std::move(startpos), parm);
+    auto *t = new CallbackThread(std::move(startpos), parm);
     t->setTerminationFunc(terminationFunc);
     t->start();
     return t;
@@ -146,18 +143,19 @@ thread_t Sys_StartThread(int (*startpos)(void *), void *parm, void (*termination
 
 void Thread_KillAbnormally(thread_t handle)
 {
-    de::Thread *t = reinterpret_cast<de::Thread *>(handle);
+    auto *t = reinterpret_cast<de::Thread *>(handle);
     if (!handle)
     {
         t = de::Thread::currentThread();
     }
     DE_ASSERT(t);
     t->terminate();
+    de::trash(t);
 }
 
 void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitstatus_t))
 {
-    CallbackThread *t = reinterpret_cast<CallbackThread *>(thread);
+    auto *t = reinterpret_cast<CallbackThread *>(thread);
     DE_ASSERT(t);
     if (!t) return;
 
@@ -172,7 +170,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
         return 0;
     }
 
-    CallbackThread *t = reinterpret_cast<CallbackThread *>(handle);
+    auto *t = reinterpret_cast<CallbackThread *>(handle);
     DE_ASSERT(!t->isCurrentThread());
     t->wait(de::TimeSpan::fromMilliSeconds(timeoutMs));
     if (!t->isFinished())
@@ -184,6 +182,7 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
     {
         if (exitStatus) *exitStatus = t->exitStatus();
     }
+    de::trash(t);
     return t->exitValue();
 }
 

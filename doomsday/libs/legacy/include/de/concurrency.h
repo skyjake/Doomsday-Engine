@@ -52,7 +52,7 @@ typedef std::function<int (void *)> systhreadfunc_t;
  */
 class CallbackThread
     : public de::Thread
-    , DE_OBSERVES(de::Thread, Finished)
+//    , DE_OBSERVES(de::Thread, Finished)
 {
 public:
     CallbackThread(systhreadfunc_t func, void *parm = 0);
@@ -63,7 +63,7 @@ public:
     systhreadexitstatus_t exitStatus() const;
     void                  setTerminationFunc(void (*func)(systhreadexitstatus_t));
 
-    void threadFinished(Thread &) override;
+//    void threadFinished(Thread &) override;
 
 private:
     systhreadfunc_t       _callback;
