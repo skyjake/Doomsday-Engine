@@ -562,7 +562,7 @@ DE_PIMPL(ClientWindow)
     {
 //        Mouse_Trap(state == MouseEventSource::Trapped);
 
-        DE_ASSERT_FAIL("Change mouse state with SDL?");
+//        DE_ASSERT_FAIL("Change mouse state with SDL?");
     }
 
     /**

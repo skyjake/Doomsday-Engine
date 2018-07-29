@@ -236,12 +236,12 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
      * event loop used during busy mode. Toggling the swap interval off and
      * back on appears to be a valid workaround.
      */
-    Loop::timer(0.1, [] () {
+    Loop::timer(0.1, []() {
         ClientWindow::main().glActivate();
         GLInfo::setSwapInterval(0);
         ClientWindow::main().glDone();
     });
-    Loop::timer(0.5, [] () {
+    Loop::timer(0.5, []() {
         ClientWindow::main().glActivate();
         if (Config::get().getb("window.main.vsync")) {
             GLInfo::setSwapInterval(1);

@@ -19,6 +19,7 @@
  */
 
 #include <de/Map>
+#include <de/NoneValue>
 #include "common.h"
 #include "menu/widgets/widget.h"
 #include "menu/page.h"
@@ -289,6 +290,7 @@ Widget &Widget::setUserValue(const Value &newValue)
 
 const Value &Widget::userValue() const
 {
+    if (!d->userValue) d->userValue.reset(new NoneValue);
     return *d->userValue;
 }
 
@@ -300,6 +302,7 @@ Widget &Widget::setUserValue2(const Value &newValue)
 
 const Value &Widget::userValue2() const
 {
+    if (!d->userValue2) d->userValue2.reset(new NoneValue);
     return *d->userValue2;
 }
 
