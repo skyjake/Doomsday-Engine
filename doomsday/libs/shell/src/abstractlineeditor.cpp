@@ -144,11 +144,12 @@ DE_PIMPL(AbstractLineEditor)
         DE_ASSERT(lineOff == 1 || lineOff == -1);
 
         const LineBytePos linePos = lineCursorPos();
-        const auto destWidth = wraps->rangeWidth({lineSpan(linePos.line).range.begin(), cursorPtr()});
 
         // Check for no room.
         if (!linePos.line && lineOff < 0) return false;
         if (linePos.line == wraps->height() - 1 && lineOff > 0) return false;
+
+        const auto destWidth = wraps->rangeWidth({lineSpan(linePos.line).range.begin(), cursorPtr()});
 
         // Move cursor onto the adjacent line.
         WrappedLine span = lineSpan(linePos.line + lineOff);

@@ -82,14 +82,12 @@ String::String(const std::wstring &text)
 
 String::String(const char *nullTerminatedCStr)
 {
-    DE_ASSERT(nullTerminatedCStr != nullptr);
-    initCStr_String(&_str, nullTerminatedCStr);
+    initCStr_String(&_str, nullTerminatedCStr ? nullTerminatedCStr : "");
 }
 
 String::String(const wchar_t *nullTerminatedWideStr)
 {
-    DE_ASSERT(nullTerminatedWideStr != nullptr);
-    initWide_String(&_str, nullTerminatedWideStr);
+    initWide_String(&_str, nullTerminatedWideStr ? nullTerminatedWideStr : L"");
 }
 
 String::String(char const *cStr, int length)

@@ -233,7 +233,8 @@ void Joystick_GetState(joystate_t *state)
 de::String Joystick_Name()
 {
 #ifndef DE_NO_SDL
-    return SDL_JoystickName(joy);
+    const char *joyName = SDL_JoystickName(joy);
+    return joyName ? joyName : "";
 #else
     return "";
 #endif
