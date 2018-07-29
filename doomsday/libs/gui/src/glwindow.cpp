@@ -223,12 +223,6 @@ DE_PIMPL(GLWindow)
 
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         DE_FOR_PUBLIC_AUDIENCE2(Swap, i) { i->windowSwapped(self()); }
-
-        // As soon as convenient (after pending input/timers), check new events and redraw.
-        EventLoop::post(new CoreEvent([this]() {
-            handleEvents();
-            self().update();
-        }));
     }
 
     /**
@@ -650,10 +644,19 @@ void GLWindow::paintGL()
 {
     GLFramebuffer::setDefaultFramebuffer(0);
 
-    // Do not proceed with painting until after the application has completed
-    // GL initialization. This is done via timer callback because we don't
-    // want to perform a long-running operation during a paint event.
+    // Repainting of the window should continue in an indefinite loop.
+    // Before doing anything else, submit a new event to repaint the window.
+    // If changing the current UI/frame/world time causes side effects
+    // such as another event loop running busy mode, we'll still get uninterrupted
+    // window content refresh.
+    EventLoop::post(new CoreEvent([this]() {
+        update();
+        d->handleEvents(); // process new input/window events
+    }));
 
+    // Do not proceed with painting the window contents until after the application
+    // has completed GL initialization. This is done via timer callback because we
+    // don't want to perform a long-running operation during a paint event.
     if (!d->readyNotified)
     {
         if (!d->readyPending)
@@ -663,6 +666,7 @@ void GLWindow::paintGL()
         }
         glClear(GL_COLOR_BUFFER_BIT);
         SDL_GL_SwapWindow(d->window);
+        d->frameWasSwapped();
         return;
     }
 
@@ -680,12 +684,13 @@ void GLWindow::paintGL()
         Time::updateCurrentHighPerformanceTime();
         Clock::get().setTime(Time::currentHighPerformanceTime());
         LIBGUI_ASSERT_GL_OK();
+        // Clock observers may have deactivated the GL context.
+        makeCurrent();
     }
 
-    makeCurrent(); // Clock observers may have deactivated the context.
-
+    // Subclass-implemented drawing method.
     draw();
-
+    
     LIBGUI_ASSERT_GL_OK();
 
     // Show the final frame contents.

@@ -433,7 +433,7 @@ void GuiRootWidget::update()
     {
         // Allow GL operations.
         window().glActivate();
-
+        
         RootWidget::update();
         d->focusIndicator->update();
     }
