@@ -615,6 +615,7 @@ function (add_pkgconfig_interface_library target)
     list (REMOVE_DUPLICATES libs)
     add_library (${target} INTERFACE)
     target_compile_options (${target} INTERFACE ${cflags})
+    target_include_directories (${target} INTERFACE ${${prefix}_INCLUDE_DIRS})
     target_link_libraries (${target} INTERFACE ${libs})
 endfunction (add_pkgconfig_interface_library)
 

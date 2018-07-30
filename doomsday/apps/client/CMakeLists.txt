@@ -10,7 +10,7 @@ include (../../cmake/Config.cmake)
 # Dependencies --------------------------------------------------------------------------
 
 find_package (Amethyst QUIET)
-find_package (SDL2)
+find_package (SDL2Libs)
 if (WIN32)
     find_package (DirectX)
 endif ()
