@@ -9,7 +9,7 @@
  * replaced with the engine's own (scriptable) UI widgets (once they are
  * available).
  *
- * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2013 Daniel Swanson <danij@dengine.net>
  *
  * @par License
@@ -27,13 +27,6 @@
  * 02110-1301 USA</small>
  */
 
-//#include <QDateTime>
-//#include <StringList>
-//#include <QDesktopServices>
-//#include <QNetworkAccessManager>
-//#include <QTextStream>
-//#include <QDir>
-
 #include "de_platform.h"
 
 #ifdef WIN32
@@ -46,6 +39,7 @@
 #include "dd_def.h"
 #include "dd_types.h"
 #include "dd_main.h"
+#include "network/net_main.h"
 #include "clientapp.h"
 #include "ui/nativeui.h"
 #include "ui/clientwindowsystem.h"
@@ -63,8 +57,8 @@
 #include <de/Date>
 #include <de/LogBuffer>
 #include <de/NotificationAreaWidget>
-//#include <de/SignalAction>
 #include <de/Time>
+#include <de/WebRequest>
 #include <de/data/json.h>
 #include <doomsday/console/exec.h>
 
@@ -83,11 +77,11 @@ static CommandLine* installerCommand;
  */
 static void runInstallerCommand(void)
 {
-    DE_ASSERT(installerCommand != 0);
+    DE_ASSERT(installerCommand != nullptr);
 
     installerCommand->execute();
     delete installerCommand;
-    installerCommand = 0;
+    installerCommand = nullptr;
 }
 
 /**
@@ -120,6 +114,8 @@ public:
         add(_clickable);
     }
 
+    virtual ~UpdaterStatusWidget() = default;
+
     void showIcon(DotPath const &path)
     {
         _icon->setImageColor(ClientApp::windowSystem().style().colors().colorf(path));
@@ -142,8 +138,10 @@ private:
 
 DE_PIMPL(Updater)
 , DE_OBSERVES(App, StartupComplete)
+, DE_OBSERVES(WebRequest, Progress)
+, DE_OBSERVES(WebRequest, Finished)
 {
-//    QNetworkAccessManager *network = nullptr;
+    WebRequest web;
     UpdateDownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
     UniqueWidgetPtr<UpdaterStatusWidget> status;
     UpdateAvailableDialog *availableDlg = nullptr; ///< If currently open (not owned).
@@ -157,7 +155,9 @@ DE_PIMPL(Updater)
 
     Impl(Public *i) : Base(i)
     {
-//        network = new QNetworkAccessManager(thisPublic);
+        web.setUserAgent(Net_UserAgent());
+        web.audienceForProgress() += this;
+        web.audienceForFinished() += this;
 
         // Delete a package installed earlier?
         UpdaterSettings st;
@@ -175,6 +175,18 @@ DE_PIMPL(Updater)
             }
         }
         st.setPathToDeleteAtStartup("");
+    }
+
+    void webRequestProgress(WebRequest &, dsize current, dsize total) override
+    {
+        DE_ASSERT(status);
+        status->setRange(Rangei(0, 100));
+        if (total) status->setProgress(current / total);
+    }
+
+    void webRequestFinished(WebRequest &) override
+    {
+
     }
 
     void setupUI()
@@ -241,7 +253,7 @@ DE_PIMPL(Updater)
         return false;
     }
 
-    void appStartupCompleted()
+    void appStartupCompleted() override
     {
         LOG_AS("Updater")
         LOG_DEBUG("App startup was completed");
@@ -383,7 +395,7 @@ DE_PIMPL(Updater)
 
     void execAvailableDialog()
     {
-        DE_ASSERT(availableDlg != 0);
+        DE_ASSERT(availableDlg != nullptr);
 
         availableDlg->setDeleteAfterDismissed(true);
         availableDlg->audienceForRecheck() += [this]() { self().recheck(); };
@@ -393,7 +405,7 @@ DE_PIMPL(Updater)
             startDownload();
             download->open();
         }
-        availableDlg = 0;
+        availableDlg = nullptr;
     }
 
     void startDownload()
@@ -406,6 +418,17 @@ DE_PIMPL(Updater)
         LOG_MSG("Download and install update");
 
         download = new UpdateDownloadDialog(latestPackageUri, latestPackageUri2);
+        download->audienceForClose() += [this]() {
+            if (!download || download->isFailed())
+            {
+                if (download)
+                {
+                    download->setDeleteAfterDismissed(true);
+                    download = nullptr;
+                }
+                showNotification(false);
+            }
+        };
         status->popupButton().setPopup(*download, ui::Down);
 //        download->audienceForClose() += [this]() { self().downloadDialogClosed(); }
 //        download->audienceForAccept() += [this]() { self().downloadCompleted(1); };
@@ -415,6 +438,22 @@ DE_PIMPL(Updater)
 
         ClientWindow::main().root().addOnTop(download);
     }
+
+#if 0
+    void downloadDialogClosed()
+//    void panelBeingClosed(PanelWidget &)
+    {
+        if (!d->download || d->download->isFailed())
+        {
+            if (d->download)
+            {
+                d->download->setDeleteAfterDismissed(true);
+                d->download = 0;
+            }
+            d->showNotification(false);
+        }
+    }
+#endif
 
     /**
      * Starts the installation process using the provided distribution package.
@@ -655,18 +694,3 @@ void Updater::printLastUpdated(void)
         LOG_MSG("Latest update check was made %s") << ago;
     }
 }
-
-#if 0
-void Updater::downloadDialogClosed()
-{
-    if (!d->download || d->download->isFailed())
-    {
-        if (d->download)
-        {
-            d->download->setDeleteAfterDismissed(true);
-            d->download = 0;
-        }
-        d->showNotification(false);
-    }
-}
-#endif

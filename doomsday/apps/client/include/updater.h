@@ -58,11 +58,6 @@ public:
 
     de::ProgressWidget &progress();
 
-//    void gotReply(QNetworkReply *);
-//    void downloadProgressed(int percentage);
-//    void downloadCompleted(int result);
-//    void downloadFailed(QString);
-
     void recheck();
 
     /**
@@ -87,9 +82,6 @@ public:
      * Print in the console when the latest update check was made.
      */
     void printLastUpdated();
-
-//protected slots:
-//    void downloadDialogClosed();
 
 private:
     DE_PRIVATE(d)

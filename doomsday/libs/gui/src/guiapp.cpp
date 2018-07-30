@@ -275,8 +275,8 @@ void GuiApp::revealFile(const NativePath &fileOrFolder) // static
     #if defined (MACOSX)
     {
         using namespace std;
-        
-        const NativePath scriptPath = cachePath() / "reveal_path.scpt";
+
+        const NativePath scriptPath = cachePath() / "reveal-path.scpt";
         if (ofstream f{scriptPath.toStdString()})
         {
             // Apple Script to select a specific file.
@@ -287,7 +287,7 @@ void GuiApp::revealFile(const NativePath &fileOrFolder) // static
               << "  end tell" << endl
               << "end run" << endl;
             f.close();
-            
+
             CommandLine{{"/usr/bin/osascript", scriptPath, fileOrFolder}}.execute();
         }
     }
