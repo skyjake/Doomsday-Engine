@@ -277,6 +277,12 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
                 QObject::connect(logger, &QOpenGLDebugLogger::messageLogged,
                                  [] (QOpenGLDebugMessage const &debugMessage)
                 {
+                    if (debugMessage.severity() == QOpenGLDebugMessage::NotificationSeverity)
+                    {
+                        // Too verbose.
+                        return;
+                    }
+
                     char const *mType = "--";
                     char const *mSeverity = "--";
 
