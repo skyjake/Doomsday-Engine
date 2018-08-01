@@ -648,7 +648,7 @@ void mobj_s::write(MapStateWriter *msw) const
         break;
     }
 
-    Writer_WriteInt32(writer, PTR2INT(mo->lastEnemy));
+    Writer_WriteInt32(writer, 0); //PTR2INT(mo->lastEnemy));
 #elif __JHERETIC__
     Writer_WriteInt16(writer, msw->serialIdFor(mo->generator));
 #endif
@@ -887,12 +887,16 @@ int mobj_s::read(MapStateReader *msr)
 #if __JHEXEN__
     if(ver >= 4)
     {
-        tracer    = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        // This value has not been mangled properly.
+        /*tracer = */INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        tracer = nullptr;
     }
 
     if(ver >= 4)
     {
-        lastEnemy = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        // This value has not been mangled properly.
+        /*lastEnemy =*/ INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        lastEnemy = nullptr;
     }
 #else
     if(ver >= 5)

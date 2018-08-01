@@ -3135,8 +3135,11 @@ String Map::objectsDescription() const
 void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMapping) const
 {
     /// @todo Generalize from mobjs to all thinkers?
+    LOG_AS("Map::restoreObjects");
 
     if (!gx.MobjStateAsInfo || !gx.MobjRestoreState) return;
+
+    bool problemsDetected = false;
 
     // Look up all the mobjs.
     QList<thinker_t const *> mobjs;
@@ -3148,10 +3151,9 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
     // Check that all objects are found in the state description.
     if (objState.root().contents().size() != mobjs.size())
     {
-        throw Error("Map::restoreObjects",
-                    String::format("Incorrect number of objects: %i in map, %i in description",
-                                   mobjs.size(),
-                                   objState.root().contents().size()));
+        LOGDEV_MAP_WARNING("Different number of objects: %i in map, but got %i in restore data")
+                        << mobjs.size()
+                        << objState.root().contents().size();
     }
 
     // Check the cross-references.
@@ -3172,9 +3174,8 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
             // Restore the state according to the serialized info.
             gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
 
-            #if defined (DENG2_DEBUG)
+            // Verify that the state is now correct.
             {
-                // Verify that the state is now correct.
                 Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
                 Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
                         .first()->as<Info::BlockElement>();
@@ -3183,25 +3184,32 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
                 {
                     if (state.keyValue(key).text != currentState.keyValue(key).text)
                     {
-                        throw Error("Map::restoreObjects",
-                                    String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
-                                    .arg(privateId)
-                                    .arg(key)
-                                    .arg(currentState.keyValue(key).text)
-                                    .arg(state.keyValue(key).text));
+                        problemsDetected = true;
+                        const String msg = String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
+                                .arg(privateId)
+                                .arg(key)
+                                .arg(currentState.keyValue(key).text)
+                                .arg(state.keyValue(key).text);
+                        LOGDEV_MAP_WARNING("%s") << msg;
                     }
                 }
             }
-            #endif
         }
         else
         {
-            throw Error("Map::restoreObjects",
-                        String::format("Failed to find thinker matching ID 0x%x", privateId));
+            LOGDEV_MAP_ERROR("Failed to find thinker matching ID 0x%x") << privateId;
         }
     }
 
-    LOGDEV_MSG("State of map objects has been restored");
+    if (problemsDetected)
+    {
+        LOG_MAP_WARNING("Map objects were not fully restored " DENG2_CHAR_MDASH
+                        " gameplay may be affected (enable Developer log entries for details)");
+    }
+    else
+    {
+        LOGDEV_MAP_MSG("State of map objects has been restored");
+    }
 }
 
 void Map::serializeInternalState(Writer &to) const
