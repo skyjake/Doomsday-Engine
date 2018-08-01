@@ -114,6 +114,8 @@ public:
 
     virtual ~Record();
 
+    bool isEmpty() const;
+
     Record &setFlags(Flags flags, FlagOpArg op = SetFlags);
 
     Flags flags() const;

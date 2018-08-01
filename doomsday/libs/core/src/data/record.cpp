@@ -431,6 +431,12 @@ Record::~Record()
     }
 }
 
+bool Record::isEmpty() const
+{
+    DE_GUARD(d);
+    return d->members.size() == 0;
+}
+
 Record &Record::setFlags(Flags flags, FlagOpArg op)
 {
     applyFlagOperation(d->flags, flags, op);
@@ -445,7 +451,6 @@ Flags Record::flags() const
 void Record::clear(Behavior behavior)
 {
     DE_GUARD(d);
-
     d->clear(Impl::ExcludeByBehavior(behavior));
 }
 
