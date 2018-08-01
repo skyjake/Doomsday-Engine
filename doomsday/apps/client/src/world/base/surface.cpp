@@ -253,8 +253,8 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
                             : this == &side.bottom() ? LineSide::Bottom
                             :                          LineSide::Top);
 
-            LOG_MAP_WARNING(  "%s of Line #%d is missing a material for the %s section."
-                            "\n  %s was chosen to complete the definition.")
+            LOGDEV_MAP_WARNING("%s of Line #%d is missing a material for the %s section."
+                               "\n  %s was chosen to complete the definition.")
                 << Line::sideIdAsText(side.sideId()).upperFirstChar()
                 << side.line().indexInMap()
                 << LineSide::sectionIdAsText(section)

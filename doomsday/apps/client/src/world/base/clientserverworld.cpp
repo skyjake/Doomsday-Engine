@@ -194,7 +194,7 @@ public:
             if (numToLog < unclosedSectorCount())
                 str += String("\n(%1 more like this)").arg(unclosedSectorCount() - numToLog);
 
-            LOG_MAP_WARNING("%s") << str;
+            LOGDEV_MAP_WARNING("%s") << str;
         }
 
         if (dint numToLog = maxWarnings(oneWayWindowCount()))
@@ -212,7 +212,7 @@ public:
             if (numToLog < oneWayWindowCount())
                 str += String("\n(%1 more like this)").arg(oneWayWindowCount() - numToLog);
 
-            LOG_MAP_VERBOSE("%s") << str;
+            LOGDEV_MAP_MSG("%s") << str;
         }
     }
 

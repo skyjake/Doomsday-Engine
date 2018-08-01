@@ -638,7 +638,7 @@ DENG2_PIMPL(Map)
                             auto &leaf = cur->userData()->as<BspLeaf>();
                             if (!leaf.sectorPtr())
                             {
-                                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
+                                LOGDEV_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
                                     << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
                             }
 
@@ -662,8 +662,8 @@ DENG2_PIMPL(Map)
 
                                 if (discontinuities)
                                 {
-                                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
-                                                    "is not contiguous (%i gaps/overlaps).\n%s")
+                                    LOGDEV_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                                                       "is not contiguous (%i gaps/overlaps).\n%s")
                                         << &leaf << subspace.poly().center().asText()
                                         << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
                                         << discontinuities
