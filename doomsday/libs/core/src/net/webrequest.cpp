@@ -17,6 +17,7 @@
  */
 
 #include "de/WebRequest"
+#include "de/RegExp"
 #include "de/Async"
 
 #include <c_plus/webrequest.h>
@@ -140,6 +141,49 @@ Block WebRequest::result() const
 {
     DE_GUARD(d);
     return result_WebRequest(d->web);
+}
+
+bool WebRequest::splitUriComponents(const String &uri,
+                                    String *      scheme,
+                                    String *      authority,
+                                    String *      path,
+                                    String *      query,
+                                    String *      fragment)
+{
+    static const RegExp reComps(R"(^(([A-Za-z0-9.-]+):)?(//([^/\?#]*))?([^\?#]*)(\?([^#]*))?(#(.*))?)");
+    RegExpMatch m;
+    if (reComps.match(uri, m))
+    {
+        if (scheme)    *scheme    = m.captured(2);
+        if (authority) *authority = m.captured(4);
+        if (path)      *path      = m.captured(5);
+        if (query)     *query     = m.captured(7);
+        if (fragment)  *fragment  = m.captured(9);
+        return true;
+    }
+    return false;
+}
+
+String WebRequest::hostNameFromUri(const String &uri)
+{
+    String authority;
+    if (splitUriComponents(uri, nullptr, &authority))
+    {
+        static const RegExp reAuth(R"(([^@:]+@)?(\[[0-9A-Za-z:#]+\]|[^:]+)(:([0-9]+))?)");
+        RegExpMatch m;
+        if (reAuth.match(authority, m))
+        {
+            return m.captured(2);
+        }
+    }
+    return {};
+}
+
+String WebRequest::pathFromUri(const String &uri)
+{
+    String path;
+    splitUriComponents(uri, nullptr, nullptr, &path);
+    return path;
 }
 
 } // namespace de

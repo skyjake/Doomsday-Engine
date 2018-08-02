@@ -55,6 +55,17 @@ public:
 
     Block result() const;
 
+public:
+    static bool splitUriComponents(const String &uri,
+                                   String *      scheme    = nullptr,
+                                   String *      authority = nullptr,
+                                   String *      path      = nullptr,
+                                   String *      query     = nullptr,
+                                   String *      fragment  = nullptr);
+
+    static String hostNameFromUri(const String &uri);
+    static String pathFromUri(const String &uri);
+
 private:
     DE_PRIVATE(d)
 };
