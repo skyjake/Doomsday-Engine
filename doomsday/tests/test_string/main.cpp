@@ -19,6 +19,7 @@
 
 #include <de/TextApp>
 #include <de/math.h>
+#include <de/WebRequest>
 
 using namespace de;
 
@@ -27,25 +28,35 @@ int main(int argc, char **argv)
     try
     {
         TextApp app(makeList(argc, argv));
+        app.initSubsystems(App::DisablePlugins);
 
         // Iterators.
         {
             const String str = u8"H★llo Wörld";
             for (Char ch : str)
             {
-                debug("Char: %x %lc", unsigned(ch), ch);
+                debug("Char: %x %lc", unsigned(ch), ch.unicode());
             }
             for (auto i = str.begin(); i != str.end(); ++i)
             {
-                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), *i);
+                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), (*i).unicode());
             }
             for (auto i = str.rbegin(); i != str.rend(); ++i)
             {
-                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), *i);
+                debug("Char %u: %x %lc", i.pos().index, unsigned(*i), (*i).unicode());
             }
         }
 
-        app.initSubsystems(App::DisablePlugins);
+        // URI splitting.
+        {
+            const String uri = "https://dengine.net:8080/some/page.php?query&arg#first-section";
+            String c[5];
+            WebRequest::splitUriComponents(uri, &c[0], &c[1], &c[2], &c[3], &c[4]);
+            for (const auto &i : c)
+            {
+                LOG_MSG("URI component: %s") << i;
+            }
+        }
 
         LOG_MSG("Escaped %%: arg %i") << 1;
         LOG_MSG("Escaped %%: arg %%%i%%") << 1;
