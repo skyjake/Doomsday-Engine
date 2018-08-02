@@ -58,21 +58,21 @@ struct DE_PUBLIC Sensitivity
 };
 
 enum PositionType { ByteOffset, CharacterOffset };
-    
+
 template <PositionType PosType>
 struct StronglyTypedPosition
 {
     dsize index;
 
     using Pos = StronglyTypedPosition<PosType>;
-    
+
     static constexpr PositionType type = PosType;
     static constexpr dsize        npos = std::numeric_limits<dsize>::max();
 
     explicit constexpr StronglyTypedPosition(dsize i = npos)
         : index(i)
     {}
-    
+
     explicit operator bool() const { return index != npos; }
 
     inline bool operator==(dsize i) const   { return index == i; }
@@ -101,14 +101,14 @@ struct StronglyTypedPosition
     Pos &operator++() { if (index != npos) index++; return *this; }
     Pos &operator--() { if (index != npos) index--; return *this; }
 };
-    
+
 using BytePos = StronglyTypedPosition<ByteOffset>;
 
 /**
  * Character index. A single character may be composed of multiple bytes.
  */
 using CharPos = StronglyTypedPosition<CharacterOffset>;
-    
+
 /**
  * Multibyte character iterator.
  */
@@ -144,7 +144,7 @@ struct DE_PUBLIC mb_iterator
     BytePos pos(const char *reference) const { return BytePos(i - reference); }
     BytePos pos(const String &reference) const;
 
-    Char decode() const;
+    Char decode(bool *ok = nullptr) const;
 };
 
 /**

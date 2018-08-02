@@ -1102,7 +1102,7 @@ String String::fromPercentEncoding(const Block &percentEncoded) // static
 }
 
 //------------------------------------------------------------------------------------------------
-    
+
 String::const_reverse_iterator::const_reverse_iterator(const Range<const char *> &range)
     : iter(range.end, range.start)
 {
@@ -1133,7 +1133,7 @@ Char mb_iterator::operator*() const
     return decode();
 }
 
-Char mb_iterator::decode() const
+Char mb_iterator::decode(bool *ok) const
 {
     wchar_t ch = 0;
     curCharLen = std::mbrtowc(&ch, i, MB_CUR_MAX, &mb);
@@ -1143,6 +1143,11 @@ Char mb_iterator::decode() const
         // doesn't hang due to never reaching the end of the string.
         ch = '?';
         curCharLen = 1;
+        if (ok) *ok = false;
+    }
+    else
+    {
+        if (ok) *ok = true;
     }
     return ch;
 }
@@ -1173,7 +1178,9 @@ mb_iterator &mb_iterator::operator--()
     for (int j = 1; j < MB_CUR_MAX; ++j)
     {
         mb_iterator prec = i - j;
-        if (prec.decode() != 0 && prec.curCharLen == j)
+        bool ok;
+        prec.decode(&ok);
+        if (ok) // && prec.curCharLen == j)
         {
             prec.start = start;
             *this = prec;
