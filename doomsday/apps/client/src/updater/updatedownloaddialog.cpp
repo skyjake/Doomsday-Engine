@@ -29,10 +29,9 @@
 #include <de/ProgressWidget>
 #include <de/Log>
 #include <de/Version>
-//#include <QNetworkAccessManager>
-//#include <QNetworkReply>
-//#include <QDir>
-//#include <QUrl>
+#include <de/WebRequest>
+
+#include <fstream>
 
 #ifdef WIN32
 #  undef open
@@ -43,49 +42,45 @@ using namespace de;
 static UpdateDownloadDialog *downloadInProgress;
 
 DE_GUI_PIMPL(UpdateDownloadDialog)
+, DE_OBSERVES(WebRequest, Progress)
+, DE_OBSERVES(WebRequest, Finished)
 {
-    enum State {
-        Connecting,
-        MaybeRedirected,
-        Downloading,
-        Finished,
-        Error
-    };
-    State state;
+    enum State { Connecting, MaybeRedirected, Downloading, Finished, Error };
 
-//    QNetworkAccessManager* network;
-    String uri;
-    String uri2;
+    std::unique_ptr<WebRequest> web;
+
+    State      state;
+    String     uri;
+    String     uri2;
     NativePath savedFilePath;
-//    QNetworkReply *reply;
-    String redirected;
-    dint64 receivedBytes;
-    dint64 totalBytes;
-    String location;
-    String errorMessage;
+    String     redirected;
+    dint64     receivedBytes;
+    dint64     totalBytes;
+    String     location;
+    String     errorMessage;
 
-    Impl(Public * d, String downloadUri, String fallbackUri)
+    Impl(Public *d, String downloadUri, String fallbackUri)
         : Base(d)
         , state(Connecting)
         , uri(std::move(downloadUri))
         , uri2(std::move(fallbackUri))
-//        , reply(0)
         , receivedBytes(0)
         , totalBytes(0)
     {
         updateLocation(uri);
         updateProgress();
 
-//        network = new QNetworkAccessManager(thisPublic);
-//        QObject::connect(network, SIGNAL(finished(QNetworkReply *)), thisPublic, SLOT(finished(QNetworkReply *)));
+        web.reset(new WebRequest);
+        web->setUserAgent(Version::currentBuild().userAgent());
+        web->audienceForProgress() += this;
+        web->audienceForFinished() += this;
 
         startDownload();
     }
 
     void updateLocation(const String &url)
     {
-        DE_ASSERT_FAIL("parse URI host");
-//        location = url.host();
+        location = WebRequest::hostNameFromUri(url);
         updateProgress();
     }
 
@@ -94,27 +89,27 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
         state = Connecting;
         redirected.clear();
 
-#if 0
-        String path = uri.path();
-        QDir::current().mkpath(UpdaterSettings().downloadPath()); // may not exist
-        savedFilePath = UpdaterSettings().downloadPath() / path.fileName();
+        const String path = WebRequest::pathFromUri(uri);
+        NativePath::createDirectory(NativePath::workPath() / UpdaterSettings().downloadPath()); // may not exist
+        savedFilePath = UpdaterSettings().downloadPath() / path.fileName().toString();
 
-        QNetworkRequest request(uri);
-        request.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
-        reply = network->get(request);
+        //web.reset(new WebRequQNetworkRequest request(uri);
+        //request.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
+        //reply = network->get(request);
+        web->get(uri);
 
-        QObject::connect(reply, SIGNAL(metaDataChanged()), thisPublic, SLOT(replyMetaDataChanged()));
-        QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), thisPublic, SLOT(progress(qint64,qint64)));
+//        QObject::connect(reply, SIGNAL(metaDataChanged()), thisPublic, SLOT(replyMetaDataChanged()));
+//        QObject::connect(reply, SIGNAL(downloadProgress(qint64,qint64)), thisPublic, SLOT(progress(qint64,qint64)));
 
-        LOG_NOTE("Downloading %s, saving as: %s") << uri.toString() << savedFilePath;
-#endif
+        LOG_NOTE("Downloading %s, saving as: %s") << uri << savedFilePath;
+
         // Global state "flag".
         downloadInProgress = thisPublic;
     }
 
     void updateProgress()
     {
-        String fn = savedFilePath.fileName();
+        const auto fn = savedFilePath.fileName();
         String msg;
 
         const double MB = 1.0e6; // MiB would be 2^20
@@ -143,7 +138,131 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
 
         self().progressIndicator().setText(msg);
     }
+
+    void webRequestProgress(WebRequest &, dsize received, dsize total) override
+    {
+        LOG_AS("Download");
+
+        if (state == Downloading && total > 0)
+        {
+            totalBytes = total;
+            receivedBytes = received;
+            updateProgress();
+
+            const auto percent = std::lround(received * 100 / total);
+            self().progressIndicator().setProgress(int(percent));
+
+            DE_FOR_PUBLIC_AUDIENCE2(Progress, i)
+            {
+                i->downloadProgress(int(percent));
+            }
+        }
+    }
+
+    void webRequestFinished(WebRequest &) override
+    {
+        LOG_AS("Download");
+
+//        reply->deleteLater();
+//        d->reply = 0;
+
+        if (web->isFailed())
+        {
+            LOG_WARNING("Failed: ") << web->errorMessage();
+
+            state = Impl::Error;
+            errorMessage = web->errorMessage();
+            updateProgress();
+            downloadInProgress = nullptr;
+            return;
+        }
+
+#if 0
+        if (!redirected.isEmpty())
+        {
+            LOG_NOTE("Redirected to: %s") << redirected;
+            uri = QUrl(d->redirected);
+            d->redirected.clear();
+            d->startDownload();
+            return;
+        }
+
+        if (d->state == Impl::MaybeRedirected)
+        {
+            // This does not look like a binary file... Let's see if we can parse the page.
+            QString html = QString::fromUtf8(reply->readAll());
+
+            /// @todo Use a regular expression for parsing the redirection.
+
+            int start = html.indexOf("<meta http-equiv=\"refresh\"", 0, Qt::CaseInsensitive);
+            if (start < 0)
+            {
+                LOG_WARNING("Received an HTML page instead of a binary file");
+
+                // Do we have a fallback option?
+                if (!d->uri2.isEmpty() && d->uri2 != d->uri)
+                {
+                    d->uri = d->uri2;
+                    d->updateLocation(d->uri);
+                    d->startDownload();
+                    return;
+                }
+
+                emit downloadFailed(d->uri.toString());
+                return;
+            }
+            start = html.indexOf("url=\"", start, Qt::CaseInsensitive);
+            if (start < 0)
+            {
+                emit downloadFailed(d->uri.toString());
+                return;
+            }
+            start += 5; // skip: url="
+            QString equivRefresh = html.mid(start, html.indexOf("\"", start) - start);
+            equivRefresh.replace("&amp;", "&");
+
+            // This is what we should actually be downloading.
+            d->uri = QUrl::fromEncoded(equivRefresh.toLatin1());
+
+            LOG_NOTE("Redirected to: %s") << d->uri.toString();
+
+            d->startDownload();
+            return;
+        }
+#endif
+
+        using namespace std;
+
+        // Save the received data.
+        if (ofstream file{savedFilePath, ios::binary | ios::trunc})
+        {
+            file.write(web->result().c_str(), web->result().size());
+            file.close();
+        }
+        else
+        {
+            LOG_WARNING("Failed to write to: %s") << savedFilePath;
+            DE_FOR_PUBLIC_AUDIENCE2(Failure, i) { i->downloadFailed(uri); }
+        }
+
+        self().buttons().clear()
+                << new DialogButtonItem(DialogWidget::Reject, "Delete", [this]() { self().cancel(); })
+                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, "Install Update");
+
+        state = Finished;
+        self().progressIndicator().setRotationSpeed(0);
+        updateProgress();
+
+        // Make sure the finished download is noticed by the user.
+        showCompletedDownload();
+
+        LOG_DEBUG("Request finished");
+    }
+
+    DE_PIMPL_AUDIENCES(Progress, Failure)
 };
+
+DE_AUDIENCE_METHODS(UpdateDownloadDialog, Progress, Failure)
 
 UpdateDownloadDialog::UpdateDownloadDialog(String downloadUri, String fallbackUri)
     : DownloadDialog("download")
@@ -152,7 +271,7 @@ UpdateDownloadDialog::UpdateDownloadDialog(String downloadUri, String fallbackUr
 
 UpdateDownloadDialog::~UpdateDownloadDialog()
 {
-    downloadInProgress = 0;
+    downloadInProgress = nullptr;
 }
 
 String UpdateDownloadDialog::downloadedFilePath() const
@@ -172,121 +291,6 @@ bool UpdateDownloadDialog::isFailed() const
 }
 
 #if 0
-void UpdateDownloadDialog::finished(QNetworkReply *reply)
-{
-    LOG_AS("Download");
-
-    reply->deleteLater();
-    d->reply = 0;
-
-    if (reply->error() != QNetworkReply::NoError)
-    {
-        LOG_WARNING("Failed: ") << reply->errorString();
-
-        d->state = Impl::Error;
-        d->errorMessage = reply->errorString();
-        d->updateProgress();
-        downloadInProgress = 0;
-        return;
-    }
-
-    /// @todo If/when we include WebKit, this can be done more intelligently using QWebPage. -jk
-
-    if (!d->redirected.isEmpty())
-    {
-        LOG_NOTE("Redirected to: %s") << d->redirected;
-        d->uri = QUrl(d->redirected);
-        d->redirected.clear();
-        d->startDownload();
-        return;
-    }
-
-    if (d->state == Impl::MaybeRedirected)
-    {
-        // This does not look like a binary file... Let's see if we can parse the page.
-        QString html = QString::fromUtf8(reply->readAll());
-
-        /// @todo Use a regular expression for parsing the redirection.
-
-        int start = html.indexOf("<meta http-equiv=\"refresh\"", 0, Qt::CaseInsensitive);
-        if (start < 0)
-        {
-            LOG_WARNING("Received an HTML page instead of a binary file");
-
-            // Do we have a fallback option?
-            if (!d->uri2.isEmpty() && d->uri2 != d->uri)
-            {
-                d->uri = d->uri2;
-                d->updateLocation(d->uri);
-                d->startDownload();
-                return;
-            }
-
-            emit downloadFailed(d->uri.toString());
-            return;
-        }
-        start = html.indexOf("url=\"", start, Qt::CaseInsensitive);
-        if (start < 0)
-        {
-            emit downloadFailed(d->uri.toString());
-            return;
-        }
-        start += 5; // skip: url="
-        QString equivRefresh = html.mid(start, html.indexOf("\"", start) - start);
-        equivRefresh.replace("&amp;", "&");
-
-        // This is what we should actually be downloading.
-        d->uri = QUrl::fromEncoded(equivRefresh.toLatin1());
-
-        LOG_NOTE("Redirected to: %s") << d->uri.toString();
-
-        d->startDownload();
-        return;
-    }
-
-    // Save the received data.
-    QFile file(d->savedFilePath);
-    if (file.open(QFile::WriteOnly | QFile::Truncate))
-    {
-        file.write(reply->readAll());
-    }
-    else
-    {
-        LOG_WARNING("Failed to write to: %s") << d->savedFilePath;
-        emit downloadFailed(d->uri.toString());
-    }
-
-    buttons().clear()
-            << new DialogButtonItem(DialogWidget::Reject, tr("Delete"),
-                                    new SignalAction(this, SLOT(cancel())))
-            << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Install Update"));
-
-    d->state = Impl::Finished;
-    progressIndicator().setRotationSpeed(0);
-    d->updateProgress();
-
-    // Make sure the finished download is noticed by the user.
-    showCompletedDownload();
-
-    LOG_DEBUG("Request finished");
-}
-
-void UpdateDownloadDialog::progress(qint64 received, qint64 total)
-{
-    LOG_AS("Download");
-
-    if (d->state == Impl::Downloading && total > 0)
-    {
-        d->totalBytes = total;
-        d->receivedBytes = received;
-        d->updateProgress();
-
-        int const percent = int(received * 100 / total);
-        progressIndicator().setProgress(percent);
-
-        emit downloadProgress(percent);
-    }
-}
 
 void UpdateDownloadDialog::replyMetaDataChanged()
 {
@@ -319,20 +323,20 @@ void UpdateDownloadDialog::cancel()
     d->state = Impl::Error;
     progressIndicator().setRotationSpeed(0);
 
-//    if (d->reply)
-//    {
-//        d->reply->abort();
-//        buttons().clear() << new DialogButtonItem(DialogWidget::Reject, "Close");
-//    }
-//    else
-//    {
-//        reject();
-//    }
+    if (d->web->isPending())
+    {
+        d->web.reset();
+        buttons().clear() << new DialogButtonItem(DialogWidget::Reject, "Close");
+    }
+    else
+    {
+        reject();
+    }
 }
 
 bool UpdateDownloadDialog::isDownloadInProgress()
 {
-    return downloadInProgress != 0;
+    return downloadInProgress != nullptr;
 }
 
 UpdateDownloadDialog &UpdateDownloadDialog::currentDownload()

@@ -20,8 +20,6 @@
  */
 
 #include "updater/updatersettings.h"
-//#include <QDateTime>
-//#include <QDesktopServices>
 #include <de/App>
 #include <de/Record>
 #include <de/Config>
@@ -154,11 +152,6 @@ void UpdaterSettings::setPathToDeleteAtStartup(de::NativePath deletePath)
 
 de::NativePath UpdaterSettings::defaultDownloadPath()
 {
-//#ifdef DE_QT_5_0_OR_NEWER
-//    return QStandardPaths::writableLocation(QStandardPaths::CacheLocation);
-//#else
-//    return QDesktopServices::storageLocation(QDesktopServices::CacheLocation);
-//#endif
     return App::cachePath();
 }
 

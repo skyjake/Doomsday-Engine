@@ -138,7 +138,9 @@ private:
 
 DE_PIMPL(Updater)
 , DE_OBSERVES(App, StartupComplete)
-, DE_OBSERVES(WebRequest, Progress)
+, DE_OBSERVES(DialogWidget, Accept)
+, DE_OBSERVES(UpdateDownloadDialog, Failure)
+, DE_OBSERVES(UpdateDownloadDialog, Progress)
 , DE_OBSERVES(WebRequest, Finished)
 {
     WebRequest web;
@@ -156,7 +158,6 @@ DE_PIMPL(Updater)
     Impl(Public *i) : Base(i)
     {
         web.setUserAgent(Net_UserAgent());
-        web.audienceForProgress() += this;
         web.audienceForFinished() += this;
 
         // Delete a package installed earlier?
@@ -177,16 +178,17 @@ DE_PIMPL(Updater)
         st.setPathToDeleteAtStartup("");
     }
 
-    void webRequestProgress(WebRequest &, dsize current, dsize total) override
-    {
-        DE_ASSERT(status);
-        status->setRange(Rangei(0, 100));
-        if (total) status->setProgress(current / total);
-    }
-
     void webRequestFinished(WebRequest &) override
     {
-
+        LOG_AS("Updater")
+        try
+        {
+            handleReply();
+        }
+        catch (const Error &er)
+        {
+            LOG_WARNING("Error when reading update check reply: %s") << er.asText();
+        }
     }
 
     void setupUI()
@@ -292,49 +294,50 @@ DE_PIMPL(Updater)
 
     void queryLatestVersion(bool notifyAlways)
     {
-        showCheckingNotification();
+        if (!web.isPending())
+        {
+            showCheckingNotification();
 
-        UpdaterSettings().setLastCheckTime(de::Time());
-        alwaysShowNotification = notifyAlways;
-//        network->get(QNetworkRequest(composeCheckUri()));
+            UpdaterSettings().setLastCheckTime(de::Time());
+            alwaysShowNotification = notifyAlways;
+            web.get(composeCheckUri());
+        }
     }
 
-#if 0
-    void handleReply(QNetworkReply *reply)
+    void handleReply()
     {
-        reply->deleteLater(); // make sure it gets deleted
-
         DE_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT(web.isFinished());
+
         showNotification(false);
 
-        if (reply->error() != QNetworkReply::NoError)
+        if (web.isFailed())
         {
-            LOG_WARNING("Network request failed: %s") << reply->url().toString();
+            LOG_WARNING("Network request failed: %s") << web.errorMessage();
             return;
         }
 
-        QVariant result = de::parseJSON(String::fromUtf8(reply->readAll()));
-        if (!result.isValid()) return;
-
-        QVariantMap const map = result.toMap();
-        if (!map.contains("direct_download_uri")) return;
-
-        latestPackageUri = map["direct_download_uri"].toString();
-        latestLogUri     = map["release_changeloguri"].toString();
+        const Record result = de::parseJSON(String::fromUtf8(web.result()));
+        if (!result.has("direct_download_uri"))
+        {
+            return;
+        }
+        latestPackageUri = result["direct_download_uri"];
+        latestLogUri     = result["release_changeloguri"];
 
         // Check if a fallback location is specified for the download.
-        if (map.contains("direct_download_fallback_uri"))
+        if (result.has("direct_download_fallback_uri"))
         {
-            latestPackageUri2 = map["direct_download_fallback_uri"].toString();
+            latestPackageUri2 = result["direct_download_fallback_uri"];
         }
         else
         {
             latestPackageUri2 = "";
         }
 
-        latestVersion = Version(map["version"].toString(), map["build_uniqueid"].toInt());
+        latestVersion = Version(result["version"], result.geti("build_uniqueid"));
 
-        Version const currentVersion = Version::currentBuild();
+        const Version currentVersion = Version::currentBuild();
 
         LOG_MSG(_E(b) "Received version information:\n" _E(.)
                 " - installed version: " _E(>) "%s ") << currentVersion.asHumanReadableText();
@@ -349,7 +352,7 @@ DE_PIMPL(Updater)
             return;
         }
 
-        bool const gotUpdate = latestVersion > currentVersion;
+        const bool gotUpdate = (latestVersion > currentVersion);
 
         // Is this newer than what we're running?
         if (gotUpdate)
@@ -380,7 +383,6 @@ DE_PIMPL(Updater)
             showAvailableDialogAndPause();
         }
     }
-#endif
 
     void showAvailableDialogAndPause()
     {
@@ -429,31 +431,62 @@ DE_PIMPL(Updater)
                 showNotification(false);
             }
         };
+        download->audienceForAccept() += this;
+        download->audienceForFailure() += this;
+        download->audienceForProgress() += this;
         status->popupButton().setPopup(*download, ui::Down);
-//        download->audienceForClose() += [this]() { self().downloadDialogClosed(); }
-//        download->audienceForAccept() += [this]() { self().downloadCompleted(1); };
-        //, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));
-//        download, SIGNAL(downloadFailed(String)), thisPublic, SLOT(downloadFailed(String)));
-//        download, SIGNAL(accepted(int)), thisPublic, SLOT(downloadCompleted(int)));
 
         ClientWindow::main().root().addOnTop(download);
     }
 
-#if 0
-    void downloadDialogClosed()
-//    void panelBeingClosed(PanelWidget &)
+    void downloadProgress(int progress) override
     {
-        if (!d->download || d->download->isFailed())
-        {
-            if (d->download)
-            {
-                d->download->setDeleteAfterDismissed(true);
-                d->download = 0;
-            }
-            d->showNotification(false);
-        }
+        DE_ASSERT(status);
+        status->setRange(Rangei(0, 100));
+        status->setProgress(progress);
     }
-#endif
+
+    void downloadFailed(const String &message) override
+    {
+        LOG_NOTE("Update cancelled: ") << message;
+    }
+
+    void dialogAccepted(DialogWidget &, int) override
+    {
+        // Autosave the game.
+        // Well, we can't do that yet so just remind the user about saving.
+        if (App_GameLoaded() && !savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
+        {
+            savingSuggested = true;
+
+            MessageDialog *msg = new MessageDialog;
+            msg->setDeleteAfterDismissed(true);
+            msg->title().setText("Save Game?");
+            msg->message().setText(_E(b) "Installing the update will discard unsaved progress in the game.\n\n"
+                                   _E(.) "Doomsday will be shut down before the installation can start. "
+                                   "The game is not saved automatically, so you will have to "
+                                   "save the game before installing the update.");
+            msg->buttons()
+                    << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, "I'll Save First")
+                    << new DialogButtonItem(DialogWidget::Reject, "Discard Progress & Install");
+
+            if (msg->exec(ClientWindow::main().root()))
+            {
+                Con_Execute(CMDS_DDAY, "savegame", false, false);
+                return;
+            }
+        }
+
+        /// @todo Check the signature of the downloaded file.
+
+        // Everything is ready to begin the installation!
+        startInstall(download->downloadedFilePath());
+
+        // The download dialog can be dismissed now.
+        download->guiDeleteLater();
+        download = nullptr;
+        savingSuggested = false;
+    }
 
     /**
      * Starts the installation process using the provided distribution package.
@@ -562,7 +595,7 @@ DE_PIMPL(Updater)
 
 Updater::Updater() : d(new Impl(this))
 {
-//    connect(d->network, SIGNAL(finished(QNetworkReply *)), this, SLOT(gotReply(QNetworkReply *)));
+    d->web.audienceForFinished() += d;
 
     // Do a silent auto-update check when starting.
     App::app().audienceForStartupComplete() += d;
@@ -577,61 +610,6 @@ ProgressWidget &Updater::progress()
 {
     return *d->status;
 }
-
-#if 0
-void Updater::gotReply(QNetworkReply *reply)
-{
-    d->handleReply(reply);
-}
-
-void Updater::downloadProgressed(int percentage)
-{
-    d->status->setRange(Rangei(0, 100));
-    d->status->setProgress(percentage);
-}
-
-void Updater::downloadCompleted(int)
-{
-    // Autosave the game.
-    // Well, we can't do that yet so just remind the user about saving.
-    if (App_GameLoaded() && !d->savingSuggested && gx.GetInteger(DD_GAME_RECOMMENDS_SAVING))
-    {
-        d->savingSuggested = true;
-
-        MessageDialog *msg = new MessageDialog;
-        msg->setDeleteAfterDismissed(true);
-        msg->title().setText(tr("Save Game?"));
-        msg->message().setText(tr(_E(b) "Installing the update will discard unsaved progress in the game.\n\n"
-                                  _E(.) "Doomsday will be shut down before the installation can start. "
-                                  "The game is not saved automatically, so you will have to "
-                                  "save the game before installing the update."));
-        msg->buttons()
-                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("I'll Save First"))
-                << new DialogButtonItem(DialogWidget::Reject, tr("Discard Progress & Install"));
-
-        if (msg->exec(ClientWindow::main().root()))
-        {
-            Con_Execute(CMDS_DDAY, "savegame", false, false);
-            return;
-        }
-    }
-
-    /// @todo Check the signature of the downloaded file.
-
-    // Everything is ready to begin the installation!
-    d->startInstall(d->download->downloadedFilePath());
-
-    // The download dialog can be dismissed now.
-    d->download->guiDeleteLater();
-    d->download = 0;
-    d->savingSuggested = false;
-}
-
-void Updater::downloadFailed(String message)
-{
-    LOG_NOTE("Update cancelled: ") << message;
-}
-#endif
 
 void Updater::recheck()
 {
