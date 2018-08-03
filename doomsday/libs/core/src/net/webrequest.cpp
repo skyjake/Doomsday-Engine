@@ -169,7 +169,7 @@ String WebRequest::hostNameFromUri(const String &uri)
     String authority;
     if (splitUriComponents(uri, nullptr, &authority))
     {
-        static const RegExp reAuth(R"(([^@:]+@)?(\[[0-9A-Za-z:#]+\]|[^:]+)(:([0-9]+))?)");
+        static const RegExp reAuth(R"(([^@:]+@)?(\[[0-9A-Za-z:%]+\]|[^:]+)(:([0-9]+))?)");
         RegExpMatch m;
         if (reAuth.match(authority, m))
         {

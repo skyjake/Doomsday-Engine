@@ -56,6 +56,7 @@ int main(int argc, char **argv)
             {
                 LOG_MSG("URI component: %s") << i;
             }
+            LOG_MSG("Host name: %s") << WebRequest::hostNameFromUri(uri);
         }
 
         LOG_MSG("Escaped %%: arg %i") << 1;
