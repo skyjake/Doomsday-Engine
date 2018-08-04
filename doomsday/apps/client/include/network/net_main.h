@@ -191,6 +191,4 @@ dd_bool Net_IsLocalPlayer(int pNum);
 } // extern "C"
 #endif
 
-de::String Net_UserAgent();
-
 #endif /* DE_NETWORK_H */

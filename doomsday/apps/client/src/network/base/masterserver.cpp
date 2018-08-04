@@ -1,7 +1,7 @@
 /** @file masterserver.cpp Communication with the Master Server.
  * @ingroup network
  *
- * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2003-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2006-2013 Daniel Swanson <danij@dengine.net>
  * @authors Copyright © 2006-2007 Jamie Jones <jamie_jones_au@yahoo.com.au>
  *
@@ -20,23 +20,24 @@
  * 02110-1301 USA</small>
  */
 
-//#include <QNetworkAccessManager>
-#include <de/Config>
-#include <de/LogBuffer>
-#include <de/shell/ServerInfo>
-#include <de/data/json.h>
-#include <de/memory.h>
 #include "de_platform.h"
 #include "network/masterserver.h"
 #include "network/net_main.h"
 #include "network/protocol.h"
-#ifdef __SERVER__
+#include "dd_main.h"
+
+#if defined (__SERVER__)
 #  include "serverapp.h"
 #  include "server/sv_def.h"
 #endif
-#include "dd_main.h"
 
 #include <de/App>
+#include <de/Config>
+#include <de/LogBuffer>
+#include <de/WebRequest>
+#include <de/shell/ServerInfo>
+#include <de/data/json.h>
+#include <de/memory.h>
 #include <vector>
 #include <list>
 
@@ -52,36 +53,141 @@ typedef struct job_s {
 
 dd_bool serverPublic = false; // cvar
 
-static String masterUrl(char const *suffix = 0)
+static String masterUrl(const char *suffix = nullptr)
 {
     String u = App::apiUrl() + "master_server";
     if (suffix) u += suffix;
     return std::move(u);
 }
 
-DE_PIMPL_NOREF(MasterWorker)
+DE_PIMPL(MasterWorker)
+, DE_OBSERVES(WebRequest, Finished)
 {
-//    QNetworkAccessManager *network;
+    using Jobs    = std::list<job_t>;
+    using Servers = List<de::shell::ServerInfo>;
 
-    typedef std::list<job_t> Jobs;
-    Jobs jobs;
-    MasterWorker::Action currentAction;
+    Action     currentAction = NONE;
+    Jobs       jobs;
+    Servers    servers;
+    WebRequest web;
 
-    typedef List<de::shell::ServerInfo> Servers;
-    Servers servers;
-
-    Impl() : /*network(0), */currentAction(NONE) {}
-
-    ~Impl()
+    Impl(Public *i) : Base(i)
     {
-//        delete network;
+        web.setUserAgent(Version::currentBuild().userAgent());
+    }
+
+    void nextJob()
+    {
+        if (self().isOngoing() || self().isAllDone()) return; // Not a good time, or nothing to do.
+
+        // Get the next job from the queue.
+        job_t job = jobs.front();
+        jobs.pop_front();
+        currentAction = job.act;
+
+        // Let's form an HTTP request.
+        String uri = masterUrl(currentAction == REQUEST_SERVERS? "?op=list" : nullptr);
+
+#if defined (__SERVER__)
+        if (currentAction == ANNOUNCE)
+        {
+            // Include the server info.
+            const Block msg = composeJSON(job.data);
+
+            LOGDEV_NET_VERBOSE("POST request ") << uri;
+            LOGDEV_NET_VERBOSE("Request contents:\n%s") << String::fromUtf8(msg);
+
+            web.post(uri, msg, "application/x-deng-announce");
+        }
+        else
+#endif
+        {
+            LOGDEV_NET_VERBOSE("GET request ") << uri;
+
+            web.get(uri);
+        }
+    }
+
+    void webRequestFinished(WebRequest &)
+    {
+        LOG_AS("MasterWorker");
+
+        if (!web.isFailed())
+        {
+            LOG_NET_XVERBOSE("Got reply", "");
+
+            if (currentAction == REQUEST_SERVERS)
+            {
+                parseResponse(web.result());
+            }
+            else
+            {
+                const String replyText = String::fromUtf8(web.result()).strip();
+                if (replyText)
+                {
+                    LOGDEV_NET_VERBOSE("Reply contents:\n") << replyText;
+                }
+            }
+        }
+        else
+        {
+            LOG_NET_WARNING(web.errorMessage());
+        }
+
+        // Continue with the next job.
+        currentAction = NONE;
+        nextJob();
+    }
+
+    /**
+     * Attempts to parse a list of servers from the given text string.
+     *
+     * @param response  The string to be parsed.
+     *
+     * @return @c true, if successful.
+     */
+    bool parseResponse(const Block &response)
+    {
+        try
+        {
+            servers.clear();
+
+            // The syntax of the response is a JSON array containing server objects.
+            std::unique_ptr<Value> results(parseJSONValue(response));
+            if (auto *list = maybeAs<ArrayValue>(results.get()))
+            {
+                for (const auto *entry : list->elements())
+                {
+                    try
+                    {
+                        if (!is<RecordValue>(entry))
+                        {
+                            LOG_NET_WARNING("Server information was in unexpected format");
+                            continue;
+                        }
+                        servers.push_back(entry->as<RecordValue>().dereference());
+                    }
+                    catch (Error const &er)
+                    {
+                        LOG_NET_WARNING("Server information in master server response has "
+                                        "an error: %s") << er.asText();
+                    }
+                }
+            }
+        }
+        catch (Error const &er)
+        {
+            LOG_NET_WARNING("Failed to parse master server response: %s") << er.asText();
+        }
+
+        LOG_NET_MSG("Received %i servers from master") << self().serverCount();
+        return true;
     }
 };
 
-MasterWorker::MasterWorker() : d(new Impl)
+MasterWorker::MasterWorker() : d(new Impl(this))
 {
-//    d->network = new QNetworkAccessManager(this);
-//    connect(d->network, SIGNAL(finished(QNetworkReply*)), this, SLOT(requestFinished(QNetworkReply*)));
+    d->web.audienceForFinished() += d;
 }
 
 void MasterWorker::newJob(Action action, Record const &data)
@@ -96,7 +202,7 @@ void MasterWorker::newJob(Action action, Record const &data)
     d->jobs.push_back(job);
 
     // Let's get to it!
-    nextJob();
+    d->nextJob();
 }
 
 bool MasterWorker::isAllDone() const
@@ -111,7 +217,7 @@ bool MasterWorker::isOngoing() const
 
 int MasterWorker::serverCount() const
 {
-    return d->servers.size();
+    return d->servers.sizei();
 }
 
 shell::ServerInfo MasterWorker::server(int index) const
@@ -119,129 +225,6 @@ shell::ServerInfo MasterWorker::server(int index) const
     assert(index >= 0 && index < serverCount());
     return d->servers[index];
 }
-
-void MasterWorker::nextJob()
-{
-    if (isOngoing() || isAllDone()) return; // Not a good time, or nothing to do.
-
-    // Get the next job from the queue.
-    job_t job = d->jobs.front();
-    d->jobs.pop_front();
-    d->currentAction = job.act;
-
-#if 0
-    // Let's form an HTTP request.
-    QNetworkRequest req(masterUrl(d->currentAction == REQUEST_SERVERS? "?op=list" : 0));
-    req.setRawHeader("User-Agent", Net_UserAgent().toLatin1());
-
-#ifdef __SERVER__
-    if (d->currentAction == ANNOUNCE)
-    {
-        req.setHeader(QNetworkRequest::ContentTypeHeader, "application/x-deng-announce");
-
-        // Include the server info.
-        Block const msg = composeJSON(job.data);
-
-        LOGDEV_NET_VERBOSE("POST request ") << req.url().toString();
-        for (QByteArray const &hdr : req.rawHeaderList())
-        {
-            LOGDEV_NET_VERBOSE("%s: %s") << String(hdr) << String(req.rawHeader(hdr));
-        }
-        LOGDEV_NET_VERBOSE("Request contents:\n%s") << msg.constData();
-
-        d->network->post(req, msg);
-    }
-    else
-#endif
-    {
-        LOGDEV_NET_VERBOSE("GET request ") << req.url().toString();
-        for (QByteArray const &hdr : req.rawHeaderList())
-        {
-            LOGDEV_NET_VERBOSE("%s: %s") << String(hdr) << String(req.rawHeader(hdr));
-        }
-
-        d->network->get(req);
-    }
-#endif
-}
-
-#if 0
-void MasterWorker::requestFinished(QNetworkReply* reply)
-{
-    LOG_AS("MasterWorker");
-
-    // Make sure the reply gets deleted afterwards.
-    reply->deleteLater();
-
-    if (reply->error() == QNetworkReply::NoError)
-    {
-        LOG_NET_XVERBOSE("Got reply", "");
-
-        if (d->currentAction == REQUEST_SERVERS)
-        {
-            parseResponse(reply->readAll());
-        }
-        else
-        {
-            String replyText = String::fromUtf8(reply->readAll()).strip();
-            if (!replyText.isEmpty())
-            {
-                LOGDEV_NET_VERBOSE("Reply contents:\n") << replyText;
-            }
-        }
-    }
-    else
-    {
-        LOG_NET_WARNING(reply->errorString());
-    }
-
-    // Continue with the next job.
-    d->currentAction = NONE;
-    nextJob();
-}
-
-/**
- * Attempts to parse a list of servers from the given text string.
- *
- * @param response  The string to be parsed.
- *
- * @return @c true, if successful.
- */
-bool MasterWorker::parseResponse(QByteArray const &response)
-{
-    try
-    {
-        d->servers.clear();
-
-        // The syntax of the response is a JSON array containing server objects.
-        for (QVariant entry : parseJSON(String::fromUtf8(response)).toList())
-        {
-            try
-            {
-                std::unique_ptr<Value> entryValue(Value::constructFrom(entry));
-                if (!is<RecordValue>(*entryValue))
-                {
-                    LOG_NET_WARNING("Server information was in unexpected format");
-                    continue;
-                }
-                d->servers.append(*entryValue->as<RecordValue>().record());
-            }
-            catch (Error const &er)
-            {
-                LOG_NET_WARNING("Server information in master server response has "
-                                "an error: %s") << er.asText();
-            }
-        }
-    }
-    catch (Error const &er)
-    {
-        LOG_NET_WARNING("Failed to parse master server response: %s") << er.asText();
-    }
-
-    LOG_NET_MSG("Received %i servers from master") << serverCount();
-    return true;
-}
-#endif
 
 static MasterWorker *worker;
 

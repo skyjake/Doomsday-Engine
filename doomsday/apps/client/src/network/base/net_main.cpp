@@ -834,11 +834,6 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
 }
 #endif
 
-String Net_UserAgent()
-{
-    return Version::currentBuild().userAgent();
-}
-
 /**
  * Composes a PKT_CHAT network message.
  */

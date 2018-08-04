@@ -157,7 +157,7 @@ DE_PIMPL(Updater)
 
     Impl(Public *i) : Base(i)
     {
-        web.setUserAgent(Net_UserAgent());
+        web.setUserAgent(Version::currentBuild().userAgent());
         web.audienceForFinished() += this;
 
         // Delete a package installed earlier?

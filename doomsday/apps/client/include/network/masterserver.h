@@ -46,14 +46,9 @@ public:
 
     bool isAllDone() const;
     bool isOngoing() const;
-    int serverCount() const;
+    int  serverCount() const;
+
     de::shell::ServerInfo server(int index) const;
-
-protected:
-    void nextJob();
-    bool parseResponse(const de::Block &response);
-
-//    void requestFinished(QNetworkReply *reply);
 
 private:
     DE_PRIVATE(d)
