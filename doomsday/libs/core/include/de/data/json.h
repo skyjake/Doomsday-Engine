@@ -28,15 +28,26 @@ namespace de {
 
 class Block;
 class Record;
+class Value;
 
 /**
- * Parses text as JSON and returns the data structured in a Block.
+ * Parses text as JSON and returns the data as a Record. This will work if the JSON root
+ * object is a dictionary.
  *
  * @param jsonText  Text to parse.
  *
- * @return Parsed data, or an invalid variant if an error occurred.
+ * @return Parsed data, or an empty Record if an error occurred.
  */
-DE_PUBLIC Record parseJSON(String const &jsonText);
+DE_PUBLIC Record parseJSON(const String &jsonText);
+
+/**
+ * Parses text as JSON and returns the parsed value.
+ *
+ * @param jsonText  Text to parse.
+ *
+ * @return Parsed value. Caller gets ownership.
+ */
+DE_PUBLIC Value *parseJSONValue(const String &jsonText);
 
 /**
  * Composes a JSON representation of a Record.

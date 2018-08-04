@@ -392,7 +392,7 @@ static String valueToJSON(Value const &value)
 static String recordToJSON(Record const &rec)
 {
     String out = "{\n\t\"__obj__\": \"Record\"";
-    rec.forMembers([&out] (String const &name, Variable const &var)
+    rec.forMembers([&out] (const String &name, const Variable &var)
     {
         out += ",\n\t\"" + name + "\": " + valueToJSONWithTabNewlines(var.value());
         return LoopContinue;
@@ -402,11 +402,16 @@ static String recordToJSON(Record const &rec)
 
 } // internal
 
+Value *parseJSONValue(const String &jsonText)
+{
+    return internal::JSONParser(jsonText).parse();
+}
+
 Record parseJSON(const String &jsonText)
 {
     try
     {
-        std::unique_ptr<Value> parsed(internal::JSONParser(jsonText).parse());
+        std::unique_ptr<Value> parsed(parseJSONValue(jsonText));
         // The returned object needs to be a record.
         if (is<DictionaryValue>(parsed.get()))
         {
