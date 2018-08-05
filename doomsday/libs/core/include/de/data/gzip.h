@@ -24,7 +24,7 @@
 
 namespace de {
 
-DE_PUBLIC Block gDecompress(Block const &gzData);
+DE_PUBLIC Block gDecompress(const Block &gzData);
 
 } // namespace de
 

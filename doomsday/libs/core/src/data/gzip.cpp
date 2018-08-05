@@ -22,7 +22,7 @@
 
 namespace de {
 
-Block gDecompress(Block const &gzData)
+Block gDecompress(const Block &gzData)
 {
     Block result(16384);
 
@@ -34,7 +34,7 @@ Block gDecompress(Block const &gzData)
 
     if (inflateInit2(&stream, 16 + MAX_WBITS) != Z_OK)
     {
-        return Block();
+        return {};
     }
 
     int res = 0;
@@ -47,7 +47,7 @@ Block gDecompress(Block const &gzData)
             // Allocate more output space, if needed.
             if (stream.avail_out == 0)
             {
-                auto const oldSize = result.size();
+                const auto oldSize = result.size();
                 result.resize(result.size() * 2);
                 stream.next_out = result.data() + oldSize;
                 stream.avail_out = uint(result.size() - oldSize);
@@ -60,7 +60,7 @@ Block gDecompress(Block const &gzData)
         default:
             warning("Error decompressing gzip data: result=%i (%s)", res, stream.msg);
             inflateEnd(&stream);
-            return Block();
+            return {};
         }
     }
     while (res != Z_STREAM_END);
