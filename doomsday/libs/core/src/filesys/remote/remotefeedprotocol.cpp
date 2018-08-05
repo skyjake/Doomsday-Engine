@@ -26,7 +26,7 @@ namespace de {
 
 // RemoteFeedQueryPacket ----------------------------------------------------------------
 
-static Packet::Type const QUERY_PACKET_TYPE = Packet::typeFromString("RFQu");
+static const Packet::Type QUERY_PACKET_TYPE = Packet::typeFromString("RFQu");
 
 RemoteFeedQueryPacket::RemoteFeedQueryPacket()
     : IdentifiedPacket(QUERY_PACKET_TYPE)
@@ -71,7 +71,7 @@ Packet *RemoteFeedQueryPacket::fromBlock(Block const &block)
 
 // RemoteFeedMetadataPacket -------------------------------------------------------------
 
-static Packet::Type const METADATA_PACKET_TYPE = Packet::typeFromString("RFMt");
+static const Packet::Type METADATA_PACKET_TYPE = Packet::typeFromString("RFMt");
 
 RemoteFeedMetadataPacket::RemoteFeedMetadataPacket()
     : IdentifiedPacket(METADATA_PACKET_TYPE)
@@ -148,7 +148,7 @@ Packet *RemoteFeedMetadataPacket::fromBlock(Block const &block)
 
 // RemoteFeedFileContentsPacket ---------------------------------------------------------
 
-static Packet::Type const FILE_CONTENTS_PACKET_TYPE = Packet::typeFromString("RFCo");
+static const Packet::Type FILE_CONTENTS_PACKET_TYPE = Packet::typeFromString("RFCo");
 
 RemoteFeedFileContentsPacket::RemoteFeedFileContentsPacket()
     : IdentifiedPacket(FILE_CONTENTS_PACKET_TYPE)

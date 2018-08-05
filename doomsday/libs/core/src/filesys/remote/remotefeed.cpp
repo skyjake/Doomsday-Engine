@@ -32,7 +32,7 @@
 
 namespace de {
 
-static TimeSpan const POPULATE_TIMEOUT = 15.0;
+static constexpr ddouble POPULATE_TIMEOUT = 15.0;
 
 DE_PIMPL(RemoteFeed)
 , DE_OBSERVES(filesys::RemoteFeedRelay, Status)
@@ -48,17 +48,16 @@ DE_PIMPL(RemoteFeed)
     PopulatedFiles populate()
     {
         PopulatedFiles populated;
-        for (auto i : fileMetadata->elements())
+        for (const auto &i : fileMetadata->elements())
         {
             String const path = remotePath / i.first.value->asText();
 
             if (RecordValue const *meta = maybeAs<RecordValue>(i.second))
             {
-                Record const &md = *meta->record();
-
-                File::Type const fileType = RemoteFeedMetadataPacket::toFileType(md.geti("type", 0));
-                dsize      const fileSize = md.getui("size", 0);
-                Time       const modTime  = md.getAs<TimeValue>("modifiedAt").time();
+                const Record &   md       = *meta->record();
+                const File::Type fileType = RemoteFeedMetadataPacket::toFileType(md.geti("type", 0));
+                const dsize      fileSize = md.getui("size", 0);
+                const Time       modTime  = md.getAs<TimeValue>("modifiedAt").time();
 
                 File *file = nullptr;
                 if (fileType == File::Type::File)
@@ -136,19 +135,11 @@ Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
         relay.audienceForStatus() += d;
         return files;
     }
-    auto request = relay.fetchFileList
-            (d->repository,
-             d->remotePath,
-             [this, &files]
-             (DictionaryValue const &fileMetadata)
-    {
-        //qDebug() << "Received file listing of" << d->remotePath;
-        //qDebug() << fileList.asText();
-
-        // Make a copy of the listed metadata.
-        d->fileMetadata.reset(static_cast<DictionaryValue *>(fileMetadata.duplicate()));
-        files = d->populate();
-    });
+    auto request = relay.fetchFileList(
+        d->repository, d->remotePath, [this, &files](const DictionaryValue &fileMetadata) {
+            d->fileMetadata.reset(static_cast<DictionaryValue *>(fileMetadata.duplicate()));
+            files = d->populate();
+        });
     request->wait(POPULATE_TIMEOUT);
     return files;
 }

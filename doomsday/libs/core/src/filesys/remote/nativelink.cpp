@@ -26,8 +26,7 @@
 #include "de/RemoteFeedProtocol"
 #include "de/Socket"
 
-namespace de {
-namespace filesys {
+namespace de { namespace filesys {
 
 const char *NativeLink::URL_SCHEME = "doomsday:";
 
@@ -157,14 +156,14 @@ PackagePaths NativeLink::locatePackages(const StringList &packageIds) const
 
 LoopResult filesys::NativeLink::forPackageIds(std::function<LoopResult (String const &)> func) const
 {
-    return FS::locate<Folder>(DE_STR("/remote/server")).forContents([&func] (String name, File &) -> LoopResult
-    {
-        if (auto result = func(name))
-        {
-            return result;
-        }
-        return LoopContinue;
-    });
+    return FS::locate<Folder>(DE_STR("/remote/server"))
+        .forContents([&func](String name, File &) -> LoopResult {
+            if (auto result = func(name))
+            {
+                return result;
+            }
+            return LoopContinue;
+        });
 }
 
 void NativeLink::wasConnected()
@@ -191,5 +190,4 @@ void NativeLink::transmit(Query const &query)
     d->socket.sendPacket(packet);
 }
 
-} // namespace filesys
-} // namespace de
+}} // namespace de::filesys

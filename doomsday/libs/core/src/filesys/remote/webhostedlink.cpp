@@ -24,34 +24,28 @@
 #include "de/RecordValue"
 #include "de/RemoteFeedRelay"
 #include "de/TextValue"
-
-//#include <QNetworkRequest>
-//#include <QNetworkReply>
-//#include <QNetworkDiskCache>
+#include "de/WebRequest"
 
 namespace de {
 namespace filesys {
 
-DE_PIMPL(WebHostedLink), public Lockable
+DE_PIMPL(WebHostedLink)
+, public Lockable
 {
-//    Set<QNetworkReply *> pendingRequests;
+    Set<WebRequest *>         pendingRequests;
     std::shared_ptr<FileTree> fileTree;
 
     Impl(Public *i) : Base(i)
     {}
 
-    ~Impl()
-    {}
-
-    Block metaIdForFileEntry(FileEntry const &entry) const
+    Block metaIdForFileEntry(const FileEntry &entry) const
     {
-        if (entry.isBranch()) return Block(); // not applicable
+        if (entry.isBranch()) return {}; // not applicable
         return md5Hash(self().address(), entry.path(), entry.size, entry.modTime);
     }
 
     void handleFileListQueryAsync(Query query)
     {
-#if 0
         QueryId const id = query.id;
         String const queryPath = query.path;
         self().scope() += async([this, queryPath] () -> std::shared_ptr<DictionaryValue>
@@ -67,9 +61,7 @@ DE_PIMPL(WebHostedLink), public Lockable
                 static const String VAR_SIZE       ("size");
                 static const String VAR_META_ID    ("metaId");
 
-                auto addMeta = [this]
-                        (DictionaryValue &list, const PathTree::Nodes &nodes)
-                {
+                auto addMeta = [this](DictionaryValue &list, const PathTree::Nodes &nodes) {
                     for (const auto &i : nodes)
                     {
                         auto const &entry = i.second->as<FileEntry>();
@@ -86,40 +78,42 @@ DE_PIMPL(WebHostedLink), public Lockable
 
                 addMeta(*list.get(), dir->children().branches);
                 addMeta(*list.get(), dir->children().leaves);
-
                 return list;
             }
             return nullptr;
         },
-        [this, id] (std::shared_ptr<DictionaryValue> list)
-        {
+        [this, id](std::shared_ptr<DictionaryValue> list) {
             self().metadataReceived(id, list? *list : DictionaryValue());
         });
     }
 
-    void receiveFileContents(QueryId id, QNetworkReply *reply)
+    void receiveFileContents(QueryId id, WebRequest &web)
     {
-        if (reply->error() == QNetworkReply::NoError)
+        if (web.isFailed())
         {
-            //qDebug() << "Content-Length:" << reply->header(QNetworkRequest::ContentLengthHeader);
-            dsize const contentLength = reply->header(QNetworkRequest::ContentLengthHeader).toULongLong();
-
-            //qDebug() << "pos:" << pos << contentLength << reply->url();
-
-            // Ths is the complete downloaded file.
-            QByteArray const data = reply->readAll();
-
-            Query const *query = self().findQuery(id);
-            self().chunkReceived(id, query->receivedBytes, data,
-                                 contentLength? contentLength : dsize(data.size()));
-        }
-        else
-        {
-            LOG_NET_WARNING(reply->errorString());
-
+            LOG_NET_WARNING(web.errorMessage());
             /// @todo Abort query with error.
+            return;
         }
-#endif
+//        if (web.isPending())
+//        {
+//            return;
+//        }
+//        if (web.isSucceeded())
+//        {
+        //qDebug() << "Content-Length:" << reply->header(QNetworkRequest::ContentLengthHeader);
+        const dsize contentLength = web.contentLength(); //reply->header(QNetworkRequest::ContentLengthHeader).toULongLong();
+
+        //qDebug() << "pos:" << pos << contentLength << reply->url();
+
+        // Ths is the complete downloaded file.
+        //            QByteArray const data = reply->readAll();
+        const Block data = web.readAll();
+
+        Query const *query = self().findQuery(id);
+        self().chunkReceived(id, query->receivedBytes, data,
+                             contentLength ? contentLength : dsize(data.size()));
+        //        }
     }
 };
 
@@ -127,28 +121,30 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
     : Link(address)
     , d(new Impl(this))
 {
-#if 0
     // Fetch the repository index.
     {
-        QNetworkRequest req(QUrl(address / indexPath));
-        req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
-
-        QNetworkReply *reply = filesys::RemoteFeedRelay::get().network().get(req);
-        QObject::connect(reply, &QNetworkReply::finished, [this, reply] ()
-        {
-            reply->deleteLater();
-            if (reply->error() == QNetworkReply::NoError)
+        WebRequest *req = new WebRequest;
+        req->setUserAgent(Version::currentBuild().userAgent());
+        req->audienceForFinished() += [this, req]() {
+            trash(req);
+            if (req->isSucceeded())
             {
-                parseRepositoryIndex(reply->readAll());
+                parseRepositoryIndex(req->result());
             }
             else
             {
-                handleError(reply->errorString());
+                handleError(req->errorMessage());
                 wasDisconnected();
             }
-        });
+        };
+        req->get(address / indexPath);
+
+
+//        QNetworkReply *reply = filesys::RemoteFeedRelay::get().network().get(req);
+//        QObject::connect(reply, &QNetworkReply::finished, [this, reply] ()
+//        {
+//        });
     }
-#endif
 }
 
 void WebHostedLink::setFileTree(FileTree *tree)
@@ -176,7 +172,7 @@ filesys::PackagePaths WebHostedLink::locatePackages(StringList const &packageIds
         if (String remotePath = findPackagePath(packageId))
         {
             remotePaths.insert(packageId,
-                               RepositoryPath(*this, localRoot().path()/packageId, remotePath));
+                               RepositoryPath(*this, localRoot().path() / packageId, remotePath));
         }
     }
     return remotePaths;
@@ -193,26 +189,27 @@ void WebHostedLink::transmit(Query const &query)
     }
 
     DE_ASSERT(query.fileContents);
-#if 0
-    String url = address();
-    QNetworkRequest req(url.concatenateRelativePath(query.path));
-    qDebug() << req.url().toString();
-    req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
 
-    QNetworkReply *reply = RemoteFeedRelay::get().network().get(req);
-    d->pendingRequests.insert(reply);
+    String uri = address().concatenateRelativePath(query.path);
+    //QNetworkRequest req(url);
+    //qDebug() << req.url().toString();
+    debug("[WebHostedLink] Get URL: %s", uri.c_str());
+    //req.setRawHeader("User-Agent", Version::currentBuild().userAgent().toLatin1());
+    WebRequest *web = new WebRequest;
+    web->setUserAgent(Version::currentBuild().userAgent());
 
-    auto const id = query.id;
-    QObject::connect(reply, &QNetworkReply::readyRead, [this, id, reply] ()
-    {
-        d->receiveFileContents(id, reply);
-    });
-    QObject::connect(reply, &QNetworkReply::finished, [this, reply] ()
-    {
-        d->pendingRequests.remove(reply);
-        reply->deleteLater();
-    });
-#endif
+    //QNetworkReply *reply = RemoteFeedRelay::get().network().get(req);
+    d->pendingRequests.insert(web);
+
+    const auto id = query.id;
+    web->audienceForProgress() += [this, id, web]() {
+        d->receiveFileContents(id, *web);
+    };
+    web->audienceForFinished() += [this, web]() {
+        d->pendingRequests.remove(web);
+        trash(web);
+    };
+    web->get(uri);
 }
 
 Block WebHostedLink::FileEntry::metaId(Link const &link) const

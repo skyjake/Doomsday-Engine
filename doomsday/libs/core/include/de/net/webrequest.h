@@ -32,8 +32,9 @@ namespace de {
 class DE_PUBLIC WebRequest
 {
 public:
-    DE_DEFINE_AUDIENCE2(Progress, void webRequestProgress(WebRequest &, dsize currentSize, dsize totalSize))
-    DE_DEFINE_AUDIENCE2(Finished, void webRequestFinished(WebRequest &))
+    DE_DEFINE_AUDIENCE2(Progress,  void webRequestProgress(WebRequest &, dsize currentSize, dsize totalSize))
+    DE_DEFINE_AUDIENCE2(ReadyRead, void webRequestReadyRead(WebRequest &))
+    DE_DEFINE_AUDIENCE2(Finished,  void webRequestFinished(WebRequest &))
 
     /// The WebRequest object is busy pending the results of a started request. @ingroup errors
     DE_ERROR(PendingError);
@@ -48,12 +49,23 @@ public:
               const Block & content,
               const char *  httpContentType = "application/octet-stream");
 
-    bool isPending() const;
-    bool isFinished() const;
-    bool isFailed() const;
+    bool   isPending() const;
+    bool   isFinished() const;
+    bool   isSucceeded() const;
+    bool   isFailed() const;
     String errorMessage() const;
 
+    dsize contentLength() const;
     Block result() const;
+
+    /**
+     * Reads all data received so far and removes it from the result buffer.
+     * This is useful if the data should be processed as it is received (e.g., streaming).
+     * Note that called result() will not return anything after called readAll().
+     *
+     * @return Received bytes.
+     */
+    Block readAll();
 
 public:
     static bool splitUriComponents(const String &uri,

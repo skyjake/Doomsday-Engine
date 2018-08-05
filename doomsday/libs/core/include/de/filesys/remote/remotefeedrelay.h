@@ -26,8 +26,7 @@
 #include "../Query"
 #include "../Link"
 
-namespace de {
-namespace filesys {
+namespace de { namespace filesys {
 
 /**
  * Connects to one or more remote file repositories and provides metadata and file
@@ -54,13 +53,10 @@ public:
      */
     void defineLink(const Link::Constructor &linkConstructor);
 
-    void addRepository(String const &address, String const &localRootPath);
-
-    void removeRepository(String const &address);
-
-    Link *repository(String const &address) const;
-
-    StringList repositories() const;
+    void       addRepository    (String const &address, String const &localRootPath);
+    void       removeRepository (String const &address);
+    Link *     repository       (String const &address) const;
+    StringList repositories     () const;
 
     bool isConnected(String const &address) const;
 
@@ -74,21 +70,18 @@ public:
      */
     PackagePaths locatePackages(StringList const &packageIds) const;
 
-    Request<FileMetadata> fetchFileList(String const &repository,
-                                        String folderPath,
-                                        FileMetadata metadataReceived);
+    Request<FileMetadata> fetchFileList(const String &repository,
+                                        String        folderPath,
+                                        FileMetadata  metadataReceived);
 
-    Request<FileContents> fetchFileContents(String const &repository,
-                                            String filePath,
-                                            FileContents contentsReceived);
-
-//    QNetworkAccessManager &network();
+    Request<FileContents> fetchFileContents(const String &repository,
+                                            String        filePath,
+                                            FileContents  contentsReceived);
 
 private:
     DE_PRIVATE(d)
 };
 
-} // namespace filesys
-} // namespace de
+}} // namespace de::filesys
 
 #endif // LIBCORE_REMOTEFEEDRELAY_H

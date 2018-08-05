@@ -21,8 +21,7 @@
 
 #include "link.h"
 
-namespace de {
-namespace filesys {
+namespace de { namespace filesys {
 
 /**
  * Link to a native Doomsday remote repository (see RemoteFeedUser on server).
@@ -48,7 +47,6 @@ private:
     DE_PRIVATE(d)
 };
 
-} // namespace filesys
-} // namespace de
+}} // namespace de::filesys
 
 #endif // DE_FILESYS_NATIVELINK_H

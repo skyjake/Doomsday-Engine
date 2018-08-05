@@ -33,23 +33,22 @@ using QueryId = IdentifiedPacket::Id;
 
 struct DE_PUBLIC RepositoryPath
 {
-    Link const *link = nullptr;
-    String localPath;
-    String remotePath;
+    const Link *link = nullptr;
+    String      localPath;
+    String      remotePath;
 
     RepositoryPath() = default;
 
-    RepositoryPath(Link const &link, String const &localPath, String const &remotePath)
+    RepositoryPath(const Link &link, const String &localPath, const String &remotePath)
         : link(&link)
         , localPath(localPath)
         , remotePath(remotePath)
     {}
 };
 
-typedef Hash<String, RepositoryPath> PackagePaths;
-
-typedef std::function<void (DictionaryValue const &)> FileMetadata;
-typedef std::function<void (duint64 startOffset, Block const &, duint64 remainingBytes)> FileContents;
+using PackagePaths = Hash<String, RepositoryPath>;
+using FileMetadata = std::function<void(DictionaryValue const &)>;
+using FileContents = std::function<void(duint64 startOffset, Block const &, duint64 remainingBytes)>;
 
 template <typename Callback>
 using Request = std::shared_ptr<AsyncCallback<Callback>>;
@@ -61,8 +60,8 @@ using Request = std::shared_ptr<AsyncCallback<Callback>>;
 struct DE_PUBLIC Query
 {
     // Query parameters:
-    QueryId id;
-    String path;
+    QueryId    id;
+    String     path;
     StringList packageIds;
 
     // Callbacks:
@@ -71,7 +70,7 @@ struct DE_PUBLIC Query
 
     // Internal status:
     duint64 receivedBytes = 0;
-    duint64 fileSize = 0;
+    duint64 fileSize      = 0;
 
 public:
     Query(Request<FileMetadata> req, String path);

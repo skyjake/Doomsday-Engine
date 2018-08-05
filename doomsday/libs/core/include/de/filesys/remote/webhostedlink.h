@@ -22,8 +22,7 @@
 #include "../Link"
 #include "../../PathTree"
 
-namespace de {
-namespace filesys {
+namespace de { namespace filesys {
 
 /**
  * Repository of files hosted on a web server as a file tree. Assumed to come
@@ -32,14 +31,12 @@ namespace filesys {
 class DE_PUBLIC WebHostedLink : public Link
 {
 public:
-    struct DE_PUBLIC FileEntry : public PathTree::Node
-    {
+    struct DE_PUBLIC FileEntry : public PathTree::Node {
         duint64 size = 0;
-        Time modTime;
+        Time    modTime;
 
         FileEntry(PathTree::NodeArgs const &args) : Node(args) {}
         FileEntry() = delete;
-
         Block metaId(Link const &link) const;
     };
 
@@ -67,7 +64,6 @@ private:
     DE_PRIVATE(d)
 };
 
-} // namespace filesys
-} // namespace de
+}} // namespace de::filesys
 
 #endif // DE_FILESYS_WEBHOSTEDLINK_H

@@ -27,35 +27,20 @@
 #include "de/Loop"
 #include "de/Message"
 #include "de/RemoteFeedProtocol"
+#include "de/RegExp"
 #include "de/Version"
 #include "de/charsymbols.h"
-
-//#include <QNetworkAccessManager>
-//#include <QNetworkDiskCache>
-//#include <QNetworkReply>
-//#include <QRegularExpression>
-//#include <QStandardPaths>
-//#include <QFile>
 
 namespace de {
 namespace filesys {
 
 DE_PIMPL(RemoteFeedRelay)
 {
-//    std::unique_ptr<QNetworkAccessManager> network;
-    List<Link::Constructor> linkConstructors;
+    List<Link::Constructor>       linkConstructors;
     Hash<String, filesys::Link *> repositories; // owned
 
     Impl(Public *i) : Base(i)
-    {
-//        network.reset(new QNetworkAccessManager);
-
-//        auto *cache = new QNetworkDiskCache;
-//        String const dir = NativePath(QStandardPaths::writableLocation(QStandardPaths::CacheLocation))
-//                / "RemoteFiles";
-//        cache->setCacheDirectory(dir);
-//        network->setCache(cache);
-    }
+    {}
 
     ~Impl()
     {
@@ -163,8 +148,7 @@ RemoteFeedRelay::fetchFileList(String const &repository, String folderPath, File
 
     Waitable done;
     Request<FileMetadata> request;
-    Loop::mainCall([&] ()
-    {
+    Loop::mainCall([&]() {
         // The repository sockets are handled in the main thread.
         auto *repo = d->repositories[repository];
         request.reset(new Request<FileMetadata>::element_type(metadataReceived));
@@ -182,8 +166,7 @@ RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, Fi
 
     Waitable done;
     Request<FileContents> request;
-    Loop::mainCall([&] ()
-    {
+    Loop::mainCall([&]() {
         // The repository sockets are handled in the main thread.
         auto *repo = d->repositories[repository];
         request.reset(new Request<FileContents>::element_type(contentsReceived));
@@ -193,11 +176,6 @@ RemoteFeedRelay::fetchFileContents(String const &repository, String filePath, Fi
     done.wait();
     return request;
 }
-
-////QNetworkAccessManager &RemoteFeedRelay::network()
-////{
-////    return *d->network;
-//}
 
 } // namespace filesys
 } // namespace de

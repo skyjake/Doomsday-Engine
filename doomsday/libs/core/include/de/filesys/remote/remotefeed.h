@@ -33,11 +33,10 @@ class DE_PUBLIC RemoteFeed : public Feed
 public:
     RemoteFeed(String const &repository, String const &remotePath = String("/"));
 
-    String repository() const;
-
-    String description() const;
+    String         repository() const;
+    String         description() const;
     PopulatedFiles populate(Folder const &folder);
-    bool prune(File &file) const;
+    bool           prune(File &file) const;
 
 protected:
     RemoteFeed(RemoteFeed const &parentFeed, String const &remotePath);

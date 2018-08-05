@@ -42,15 +42,28 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
     {
         web.reset(new_WebRequest());
         setUserData_Object(web, this);
-        iConnect(WebRequest, web, progress, web, notifyProgress);
+        iConnect(WebRequest, web, progress,  web, notifyProgress);
+        iConnect(WebRequest, web, readyRead, web, notifyReadyRead);
     }
 
-    static void notifyProgress(iAny *, iWebRequest *web, size_t current, size_t total) {
+    static void notifyProgress(iAny *, iWebRequest *web, size_t current, size_t total)
+    {
         Loop::mainCall([web, current, total]() {
             auto *d = reinterpret_cast<Impl *>(userData_Object(web));
             DE_FOR_EACH_OBSERVER(i, d->audienceForProgress)
             {
                 i->webRequestProgress(d->self(), current, total);
+            }
+        });
+    }
+
+    static void notifyReadyRead(iAny *, iWebRequest *web)
+    {
+        Loop::mainCall([web]() {
+            auto *d = reinterpret_cast<Impl *>(userData_Object(web));
+            DE_FOR_EACH_OBSERVER(i, d->audienceForReadyRead)
+            {
+                i->webRequestReadyRead(d->self());
             }
         });
     }
@@ -81,10 +94,10 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
         });
     }
 
-    DE_PIMPL_AUDIENCES(Progress, Finished)
+    DE_PIMPL_AUDIENCES(Progress, ReadyRead, Finished)
 };
 
-DE_AUDIENCE_METHODS(WebRequest, Progress, Finished)
+DE_AUDIENCE_METHODS(WebRequest, Progress, ReadyRead, Finished)
 
 WebRequest::WebRequest()
     : d(new Impl(this))
@@ -125,6 +138,12 @@ bool WebRequest::isFinished() const
     return d->status == Impl::Success || d->status == Impl::Failure;
 }
 
+bool WebRequest::isSucceeded() const
+{
+    DE_GUARD(d);
+    return d->status == Impl::Success;
+}
+
 bool WebRequest::isFailed() const
 {
     DE_GUARD(d);
@@ -137,10 +156,22 @@ String WebRequest::errorMessage() const
     return errorMessage_WebRequest(d->web);
 }
 
+dsize WebRequest::contentLength() const
+{
+    DE_GUARD(d);
+    return contentLength_WebRequest(d->web);
+}
+
 Block WebRequest::result() const
 {
     DE_GUARD(d);
     return result_WebRequest(d->web);
+}
+
+Block WebRequest::readAll()
+{
+    DE_GUARD(d);
+    return Block::take(read_WebRequest(d->web));
 }
 
 bool WebRequest::splitUriComponents(const String &uri,

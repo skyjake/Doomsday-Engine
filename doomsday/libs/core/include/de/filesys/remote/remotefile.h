@@ -40,11 +40,16 @@ public:
     static String const CACHE_PATH;
 
 public:
-    RemoteFile(String const &name, String const &remotePath, Block const &remoteMetaId,
-               String const &repositoryAddress = String());
+    RemoteFile(const String &name,
+               const String &remotePath,
+               const Block & remoteMetaId,
+               const String &repositoryAddress = {});
 
-    String describe() const override;
-    Block  metaId()   const override;
+    String       describe() const override;
+    Block        metaId() const override;
+    Asset &      asset() override;
+    const Asset &asset() const override;
+    dsize        downloadSize() const override;
 
     /**
      * Initiates downloading of the file contents from the remote backend.
@@ -52,13 +57,6 @@ public:
     void download() override;
 
     void cancelDownload() override;
-
-    Asset &asset() override;
-
-    Asset const &asset() const override;
-
-    dsize downloadSize() const override;
-
     void deleteCache();
 
     // File streaming.

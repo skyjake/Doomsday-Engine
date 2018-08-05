@@ -25,16 +25,16 @@
 #include <de/Garbage>
 #include <de/charsymbols.h>
 
-namespace de {
-namespace filesys {
+namespace de { namespace filesys {
 
 DE_PIMPL(Link), public AsyncScope
 {
     String localRootPath;
-    State state = Initializing;
     String address;
-    QueryId nextQueryId = 1;
-    List<Query> deferredQueries;
+    State  state = Initializing;
+
+    QueryId              nextQueryId = 1;
+    List<Query>          deferredQueries;
     Hash<QueryId, Query> pendingQueries;
 
     Impl(Public *i) : Base(i)
@@ -250,18 +250,6 @@ File *Link::populateRemotePath(String const &, RepositoryPath const &path) const
     return FS::tryLocate<File>(path.localPath);
 }
 
-//void Link::packagePathsReceived(QueryId id, PackagePaths const &remotePaths)
-//{
-//    if (auto *query = findQuery(id))
-//    {
-//        if (query->remotePaths)
-//        {
-//            query->remotePaths->call(id, remotePaths);
-//        }
-//        d->pendingQueries.remove(id);
-//    }
-//}
-
 void Link::metadataReceived(QueryId id, DictionaryValue const &metadata)
 {
     if (auto *query = findQuery(id))
@@ -274,7 +262,7 @@ void Link::metadataReceived(QueryId id, DictionaryValue const &metadata)
     }
 }
 
-void Link::chunkReceived(QueryId id, duint64 startOffset, Block const &chunk, duint64 fileSize)
+void Link::chunkReceived(QueryId id, duint64 startOffset, const Block &chunk, duint64 fileSize)
 {
     if (auto *query = findQuery(id))
     {
@@ -295,8 +283,7 @@ void Link::chunkReceived(QueryId id, duint64 startOffset, Block const &chunk, du
         query->receivedBytes += chunk.size();
 
         // Notify about progress and provide the data chunk to the requestor.
-        query->fileContents->call(startOffset, chunk,
-                                  fileSize - query->receivedBytes);
+        query->fileContents->call(startOffset, chunk, fileSize - query->receivedBytes);
 
         if (fileSize == query->receivedBytes)
         {
@@ -306,5 +293,4 @@ void Link::chunkReceived(QueryId id, duint64 startOffset, Block const &chunk, du
     }
 }
 
-} // namespace filesys
-} // namespace de
+}} // namespace de::filesys

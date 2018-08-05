@@ -42,12 +42,9 @@ namespace filesys {
 class DE_PUBLIC Link
 {
 public:
-    enum State
-    {
-        Deinitialized, Initializing, Ready
-    };
+    enum State { Deinitialized, Initializing, Ready };
 
-    typedef std::function<Link * (String const &address)> Constructor;
+    using Constructor = std::function<Link * (String const &address)>;
 
 public:
     virtual ~Link();
@@ -55,10 +52,8 @@ public:
     virtual void setLocalRoot(String const &rootPath);
 
     Folder &localRoot() const;
-
-    String address() const;
-
-    State state() const;
+    String  address() const;
+    State   state() const;
 
     /**
      * Uses locally available indexes to determine which remote paths for a set of
@@ -99,10 +94,8 @@ protected:
     void cancelAllQueries();
     void cleanupQueries();
 
-    //void packagePathsReceived(QueryId id, PackagePaths const &remotePaths);
-
     void metadataReceived(QueryId id, DictionaryValue const &metadata);
-    void chunkReceived(QueryId id, duint64 startOffset, Block const &chunk, duint64 fileSize);
+    void chunkReceived(QueryId id, duint64 startOffset, const Block &chunk, duint64 fileSize);
 
     virtual void wasConnected();
     virtual void wasDisconnected();
