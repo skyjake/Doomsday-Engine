@@ -23,6 +23,7 @@
 #include <de/Async>
 #include <de/FileSystem>
 #include <de/RemoteFile>
+#include <de/WebRequest>
 #include <de/data/gzip.h>
 
 #include <de/RegExp>
@@ -56,8 +57,7 @@ DE_PIMPL(IdgamesLink)
 
     Impl(Public *i) : Base(i)
     {
-        //localRootPath = "/remote/" + QUrl(self().address()).host();
-        DE_ASSERT_FAIL("Need to use Uri to parse host");
+        localRootPath = "/remote/" + WebRequest::hostNameFromUri(self().address());
     }
 
     String packageIdentifierForFileEntry(FileEntry const &entry) const

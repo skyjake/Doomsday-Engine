@@ -33,6 +33,7 @@
 #include <de/SequentialLayout>
 #include <de/ToggleWidget>
 #include <de/ui/FilteredData>
+#include <de/WebRequest>
 
 using namespace de;
 
@@ -237,16 +238,13 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
 
         // Disconnecting may involve waiting for an operation to finish first, so
         // we'll do it async.
-        *this += async([this] ()
-        {
+        *this += async([this]() {
             disconnect();
             return 0;
         },
-        [this, address](int)
-        {
-            DE_ASSERT_FAIL("Parse hostname from URL");
-//            RFRelay::get().addRepository(address, "/remote" / url.host());
-//            connectedRepository = address;
+        [this, address](int) {
+            RFRelay::get().addRepository(address, "/remote" / WebRequest::hostNameFromUri(address));
+            connectedRepository = address;
         });
     }
 
