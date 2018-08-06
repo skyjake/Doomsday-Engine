@@ -3167,37 +3167,44 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
 
         if (thinker_t *th = thinkerMapping.thinkerForPrivateId(privateId))
         {
-            ThinkerData *found = ThinkerData::find(privateId);
-            DENG2_ASSERT(found != nullptr);
-            DENG2_ASSERT(&found->thinker() == th);
-
-            // Restore the state according to the serialized info.
-            gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
-
-            // Verify that the state is now correct.
+            if (ThinkerData *found = ThinkerData::find(privateId))
             {
-                Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
-                Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
-                        .first()->as<Info::BlockElement>();
-                DENG2_ASSERT(currentState.name() == state.name());
-                foreach (String const &key, state.contents().keys())
+                DENG2_ASSERT(&found->thinker() == th);
+
+                // Restore the state according to the serialized info.
+                gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
+
+                // Verify that the state is now correct.
                 {
-                    if (state.keyValue(key).text != currentState.keyValue(key).text)
+                    Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
+                    Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
+                            .first()->as<Info::BlockElement>();
+                    DENG2_ASSERT(currentState.name() == state.name());
+                    foreach (String const &key, state.contents().keys())
                     {
-                        problemsDetected = true;
-                        const String msg = String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
-                                .arg(privateId)
-                                .arg(key)
-                                .arg(currentState.keyValue(key).text)
-                                .arg(state.keyValue(key).text);
-                        LOGDEV_MAP_WARNING("%s") << msg;
+                        if (state.keyValue(key).text != currentState.keyValue(key).text)
+                        {
+                            problemsDetected = true;
+                            const String msg = String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
+                                    .arg(privateId)
+                                    .arg(key)
+                                    .arg(currentState.keyValue(key).text)
+                                    .arg(state.keyValue(key).text);
+                            LOGDEV_MAP_WARNING("%s") << msg;
+                        }
                     }
                 }
+            }
+            else
+            {
+                LOGDEV_MAP_ERROR("Map does not have a thinker matching ID 0x%x")
+                        << privateId;
             }
         }
         else
         {
-            LOGDEV_MAP_ERROR("Failed to find thinker matching ID 0x%x") << privateId;
+            LOGDEV_MAP_ERROR("Thinker mapping does not have a thinker matching ID 0x%x")
+                    << privateId;
         }
     }
 
