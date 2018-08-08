@@ -32,8 +32,8 @@ public:
     int availablePackageCount() const;
 
     de::String tabHeading() const override;
-    de::String tabShortcut() const override;
-    void setHighlighted(bool highlighted) override;
+    int        tabShortcut() const override;
+    void       setHighlighted(bool highlighted) override;
 
 private:
     DE_PRIVATE(d)

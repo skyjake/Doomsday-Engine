@@ -39,8 +39,6 @@
 #include <de/VariableChoiceWidget>
 #include <de/VariableToggleWidget>
 
-#include <QDesktopServices>
-
 using namespace de;
 
 const String GameColumnWidget::SORT_GAME_ID("game");
@@ -58,7 +56,7 @@ DE_GUI_PIMPL(GameColumnWidget)
 , DE_OBSERVES(Profiles, Addition)
 , DE_OBSERVES(Variable, Change)
 , DE_OBSERVES(ButtonWidget, StateChange)
-, DENG2_OBSERVES(Profiles::AbstractProfile, Change)
+, DE_OBSERVES(Profiles::AbstractProfile, Change)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
@@ -783,8 +781,6 @@ GameColumnWidget::GameColumnWidget(String const &gameFamily,
                                 "projects.");
     }
     }
-
-    //d->populateItems();
 }
 
 String GameColumnWidget::tabHeading() const
@@ -793,15 +789,17 @@ String GameColumnWidget::tabHeading() const
     return d->gameFamily.upperFirstChar();
 }
 
-String GameColumnWidget::tabShortcut() const
+int GameColumnWidget::tabShortcut() const
 {
-    if (name() == "hexen-column") return DE_STR("x");
-    return String();
+    if (name() == "doom-column")    return 'd';
+    if (name() == "heretic-column") return 'h';
+    if (name() == "hexen-column")   return 'x';
+    return 'o';
 }
 
 String GameColumnWidget::configVariableName() const
 {
-    return "home.columns." + (!d->gameFamily.isEmpty()? d->gameFamily
+    return "home.columns." + (!d->gameFamily.isEmpty() ? d->gameFamily
                                                       : DE_STR("otherGames"));
 }
 

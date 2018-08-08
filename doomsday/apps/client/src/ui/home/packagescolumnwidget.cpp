@@ -184,9 +184,9 @@ String PackagesColumnWidget::tabHeading() const
     return "Mods";
 }
 
-String PackagesColumnWidget::tabShortcut() const
+int PackagesColumnWidget::tabShortcut() const
 {
-    return DE_STR("s");
+    return 's';
 }
 
 void PackagesColumnWidget::setHighlighted(bool highlighted)

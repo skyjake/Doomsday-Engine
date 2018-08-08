@@ -27,8 +27,9 @@ public:
     MultiplayerColumnWidget();
 
     de::String tabHeading() const override;
+    int        tabShortcut() const override;
     de::String configVariableName() const override;
-    void setHighlighted(bool highlighted) override;
+    void       setHighlighted(bool highlighted) override;
 
 private:
     DE_PRIVATE(d)

@@ -182,9 +182,9 @@ Variable *ColumnWidget::configVariable() const
     return &App::config(name);
 }
 
-String ColumnWidget::tabShortcut() const
+int ColumnWidget::tabShortcut() const
 {
-    return String();
+    return 0;
 }
 
 void ColumnWidget::setHighlighted(bool highlighted)

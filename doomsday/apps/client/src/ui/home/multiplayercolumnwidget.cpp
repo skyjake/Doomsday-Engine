@@ -49,8 +49,8 @@ DE_GUI_PIMPL(MultiplayerColumnWidget)
             auto *menu = new PopupMenuWidget;
             menu->items()
                     << new ui::ActionItem("Connect to Server...",
-                                          [](){ ClientWindow::main().taskBar().connectToServerManually(); })
-                    << new ui::ActionItem("Refresh List", [] () {
+                                          []() { ClientWindow::main().taskBar().connectToServerManually(); })
+                    << new ui::ActionItem("Refresh List", []() {
                             ServerLink::get().discoverUsingMaster(); });
             return menu;
         }, ui::Down);
@@ -102,6 +102,11 @@ MultiplayerColumnWidget::MultiplayerColumnWidget()
 String MultiplayerColumnWidget::tabHeading() const
 {
     return DE_STR("Multiplayer");
+}
+
+int MultiplayerColumnWidget::tabShortcut() const
+{
+    return 'm';
 }
 
 String MultiplayerColumnWidget::configVariableName() const
