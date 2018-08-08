@@ -574,7 +574,7 @@ String Con_VarAsStyledText(cvar_t *var, char const *prefix)
 
     switch (var->type)
     {
-    case CVT_BYTE:      os << CV_BYTE(var); break;
+    case CVT_BYTE:      os << int(CV_BYTE(var)); break;
     case CVT_INT:       os << CV_INT(var); break;
     case CVT_FLOAT:     os << CV_FLOAT(var); break;
     case CVT_CHARPTR:   os << "\"" << CV_CHARPTR(var) << "\""; break;

@@ -212,7 +212,7 @@ int Con_IterateKnownWords(KnownWordMatchMode matchMode,
     knownwordtype_t matchType = (VALID_KNOWNWORDTYPE(type)? type : WT_ANY);
     size_t patternLength = (pattern? strlen(pattern) : 0);
     int result = 0;
-    RegExp const regex(matchMode == KnownWordRegex? pattern : "", CaseInsensitive);
+    const RegExp regex(matchMode == KnownWordRegex? pattern : "", CaseInsensitive);
 
     updateKnownWords();
 
