@@ -108,6 +108,7 @@ public:
                          ui::Alignment const &alignment = ui::AlignCenter);
 
     String text() const;
+    String plainText() const;
 
     /**
      * Returns the actual size of the text in pixels.

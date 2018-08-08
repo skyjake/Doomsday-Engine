@@ -656,6 +656,13 @@ String LabelWidget::text() const
     return d->glText.text();
 }
 
+String LabelWidget::plainText() const
+{
+    EscapeParser esc;
+    esc.parse(text());
+    return esc.plainText();
+}
+
 Vec2ui LabelWidget::textSize() const
 {
     return d->textSize();

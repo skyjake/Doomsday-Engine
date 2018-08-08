@@ -103,11 +103,11 @@ public:
     Action const *action() const;
 
     State state() const;
-    void setState(State state);
+    void  setState(State state);
 
-    String shortcutKey() const;
-    void setShortcutKey(String const &key);
-    bool handleShortcut(KeyEvent const &keyEvent);
+    int  shortcutKey() const;
+    void setShortcutKey(int ddkey);
+    bool handleShortcut(const KeyEvent &keyEvent);
 
     // Events.
     void update() override;

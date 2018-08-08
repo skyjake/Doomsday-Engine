@@ -51,17 +51,17 @@ public:
         TabItem(Image const &img, String const &label)
             : ImageItem(ShownAsButton, img, label)
         {}
-        void setShortcutKey(String const &key)
+        void setShortcutKey(int ddKey)
         {
-            _shortcutKey = key;
+            _shortcutKey = ddKey;
             notifyChange();
         }
-        String shortcutKey() const
+        int shortcutKey() const
         {
             return _shortcutKey;
         }
     private:
-        String _shortcutKey;
+        int _shortcutKey; // DDKEY
     };
 
 public:

@@ -44,7 +44,7 @@ DE_GUI_PIMPL(ButtonWidget)
     DotPath          hoverTextColor;
     DotPath          originalTextColor;
     Vec4f            originalTextModColor;
-    String           shortcut;
+    int              shortcutDDKey = 0;
 
     Impl(Public *i) : Base(i)
     {
@@ -322,27 +322,26 @@ void ButtonWidget::setState(State state)
     d->setState(state);
 }
 
-void ButtonWidget::setShortcutKey(String const &key)
+void ButtonWidget::setShortcutKey(int key)
 {
-    d->shortcut = key;
+    d->shortcutDDKey = key;
 }
 
-String ButtonWidget::shortcutKey() const
+int ButtonWidget::shortcutKey() const
 {
-    return d->shortcut;
+    return d->shortcutDDKey;
 }
 
-bool ButtonWidget::handleShortcut(KeyEvent const &keyEvent)
+bool ButtonWidget::handleShortcut(const KeyEvent &keyEvent)
 {
-    if (keyEvent.text().isEmpty())
+    if (!keyEvent.text() &&
+        root().window().eventHandler().keyboardMode() == WindowEventHandler::RawKeys)
     {
-        return false;
-    }
-    if ((!d->shortcut.isEmpty() && d->shortcut.beginsWith(keyEvent.text(), CaseInsensitive)) ||
-        text().beginsWith(keyEvent.text(), CaseInsensitive))
-    {
-        trigger();
-        return true;
+        if (d->shortcutDDKey == keyEvent.ddKey())
+        {
+            trigger();
+            return true;
+        }
     }
     return false;
 }
