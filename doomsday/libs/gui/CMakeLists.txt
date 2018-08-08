@@ -101,6 +101,8 @@ deng_merge_sources (graphics src/graphics/*.cpp)
 deng_merge_sources (input    src/input/*.cpp)
 deng_merge_sources (text     src/text/*.cpp)
 
+list (APPEND SOURCES src/filedialog_${DE_PLATFORM_SUFFIX})
+
 # Choose which DisplayMode sources to use.
 list_remove_matches (SOURCES ".*/displaymode_.*")
 if (NOT DE_ENABLE_DISPLAYMODE)
