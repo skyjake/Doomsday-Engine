@@ -87,7 +87,7 @@ DE_PIMPL(WebHostedLink)
         });
     }
 
-    void receiveFileContents(QueryId id, WebRequest &web)
+    void receiveFileContentStream(QueryId id, WebRequest &web)
     {
         if (web.isFailed())
         {
@@ -95,25 +95,20 @@ DE_PIMPL(WebHostedLink)
             /// @todo Abort query with error.
             return;
         }
-//        if (web.isPending())
-//        {
-//            return;
-//        }
-//        if (web.isSucceeded())
-//        {
-        //qDebug() << "Content-Length:" << reply->header(QNetworkRequest::ContentLengthHeader);
-        const dsize contentLength = web.contentLength(); //reply->header(QNetworkRequest::ContentLengthHeader).toULongLong();
 
-        //qDebug() << "pos:" << pos << contentLength << reply->url();
+        // Total length of the content.
+        const dsize contentLength = web.contentLength();
 
-        // Ths is the complete downloaded file.
-        //            QByteArray const data = reply->readAll();
-        const Block data = web.readAll();
+        const Query *query = self().findQuery(id);
+        const Block  chunk = web.readAll();
+        debug("pos: %zu clen: %zu chunk: %zu [q%llu]",
+              query->receivedBytes,
+              contentLength,
+              chunk.size(),
+              id);
 
-        Query const *query = self().findQuery(id);
-        self().chunkReceived(id, query->receivedBytes, data,
-                             contentLength ? contentLength : dsize(data.size()));
-        //        }
+        self().chunkReceived(
+            id, query->receivedBytes, chunk, contentLength ? contentLength : dsize(chunk.size()));
     }
 };
 
@@ -138,7 +133,6 @@ WebHostedLink::WebHostedLink(String const &address, String const &indexPath)
             }
         };
         req->get(address / indexPath);
-
 
 //        QNetworkReply *reply = filesys::RemoteFeedRelay::get().network().get(req);
 //        QObject::connect(reply, &QNetworkReply::finished, [this, reply] ()
@@ -202,10 +196,11 @@ void WebHostedLink::transmit(Query const &query)
     d->pendingRequests.insert(web);
 
     const auto id = query.id;
-    web->audienceForProgress() += [this, id, web]() {
-        d->receiveFileContents(id, *web);
+    web->audienceForReadyRead() += [this, id, web]() {
+        d->receiveFileContentStream(id, *web);
     };
-    web->audienceForFinished() += [this, web]() {
+    web->audienceForFinished() += [this, id, web]() {
+        d->receiveFileContentStream(id, *web);
         d->pendingRequests.remove(web);
         trash(web);
     };

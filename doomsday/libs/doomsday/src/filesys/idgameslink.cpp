@@ -163,8 +163,8 @@ void IdgamesLink::parseRepositoryIndex(const Block &data)
         const RegExp reDir("^\\.?(.*):$");
         const RegExp reTotal("^total\\s+\\d+$");
         const RegExp reFile("^(-|d)[-rwxs]+\\s+\\d+\\s+\\w+\\s+\\w+\\s+"
-                                        "(\\d+)\\s+(\\w+\\s+\\d+\\s+[0-9:]+)\\s+(.*)$",
-                                        CaseInsensitive);
+                            "(\\d+)\\s+(\\w+\\s+\\d+\\s+[0-9:]+)\\s+(.*)$",
+                            CaseInsensitive);
         String currentPath;
         bool ignore = false;
         const RegExp reIncludedPaths("^/(levels|music|sounds|themes)");
