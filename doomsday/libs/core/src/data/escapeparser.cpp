@@ -38,20 +38,36 @@ EscapeParser::EscapeParser() : d(new Impl)
 
 void EscapeParser::parse(String const &textWithEscapes)
 {
+#if defined (DE_DEBUG)
+    {
+        const char *nullp = strchr(textWithEscapes, 0);
+        if (nullp != textWithEscapes.end())
+        {
+            debug("string size: %zu\nfound zero at: %zu",
+                  textWithEscapes.size(),
+                  nullp - textWithEscapes.c_str());
+            debug("[%s] ^ [%s]",
+                  String(nullp - 20, nullp).c_str(),
+                  String(nullp + 1, nullp + 20).c_str());
+        }
+    }
+#endif
+
     d->original = textWithEscapes;
     d->plain.clear();
 
-    const String::const_iterator origEnd = d->original.end();
-    String::const_iterator       pos     = d->original.begin();
-    String::const_iterator       end     = pos;
+//    const char *           origEnd = d->original.end();
+    String::const_iterator pos     = d->original.begin();
+    String::const_iterator end     = pos;
 
     const char escape = '\x1b';
 
     for (;;)
     {
-        while (*end != escape && end != origEnd)
+        while (*end != escape && *end) // != origEnd)
         {
             ++end;
+//            DE_ASSERT(*end || end == origEnd);
         }
 
         if (*end == escape)
@@ -74,7 +90,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             case '{': {
                 // Find the matching end.
                 const char closing = (ch == '('? ')' : ch == '['? ']' : '}');
-                while (*end != closing && end != d->original.end())
+                while (*end != closing && *end/* != d->original.end()*/)
                 {
                     end++;
                 }
@@ -100,7 +116,7 @@ void EscapeParser::parse(String const &textWithEscapes)
         else
         {
             // Final plain text range.
-            const CString plain{pos, origEnd};
+            const CString plain{pos, end};
             if (plain.size() > 0)
             {
                 DE_ASSERT(!plain.contains(escape));

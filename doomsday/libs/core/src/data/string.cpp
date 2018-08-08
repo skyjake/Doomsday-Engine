@@ -42,31 +42,37 @@ String::String()
 String::String(const String &other)
 {
     initCopy_String(&_str, &other._str);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(String &&moved)
 {
     initCopy_String(&_str, &moved._str);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const Block &bytes)
 {
     initCopy_Block(&_str.chars, bytes);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const iBlock *bytes)
 {
     initCopy_Block(&_str.chars, bytes);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const iString *other)
 {
     initCopy_String(&_str, other);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const std::string &text)
 {
     initCStrN_String(&_str, text.data(), text.size());
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const std::wstring &text)
@@ -78,6 +84,7 @@ String::String(const std::wstring &text)
         init_MultibyteChar(&mb, ch);
         appendCStr_String(&_str, mb.bytes);
     }
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const char *nullTerminatedCStr)
@@ -94,11 +101,13 @@ String::String(char const *cStr, int length)
 {
     DE_ASSERT(cStr != nullptr);
     initCStrN_String(&_str, cStr, length);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(char const *cStr, dsize length)
 {
     initCStrN_String(&_str, cStr, length);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(dsize length, char ch)
@@ -110,16 +119,19 @@ String::String(dsize length, char ch)
 String::String(const char *start, const char *end)
 {
     initCStrN_String(&_str, start, end - start);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const Range<const char *> &range)
 {
     initCStrN_String(&_str, range.start, range.end - range.start);
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const CString &cstr)
 {
     initCStrN_String(&_str, cstr.begin(), cstr.size());
+    DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(dsize length, Char ch)
@@ -260,6 +272,14 @@ String String::right(CharPos count) const
 void String::remove(BytePos start, dsize count)
 {
     remove_Block(&_str.chars, start.index, count);
+}
+
+void String::remove(BytePos start, CharPos charCount)
+{
+    // Need to know which bytes to remove.
+    mb_iterator i = data() + start;
+    while (charCount-- > 0 && i != end()) { ++i; }
+    remove(start, i.pos());
 }
 
 void String::truncate(BytePos pos)

@@ -351,8 +351,9 @@ public:
     String        right(CharPos count) const;
     String        remove(BytePos count) const { return substr(count); }
     String        remove(CharPos count) const { return substr(count); }
-    void          remove(BytePos start, dsize count);
+    void          remove(BytePos start, dsize byteCount);
     inline void   remove(BytePos start, BytePos count) { remove(start, count.index); }
+    void          remove(BytePos start, CharPos charCount);
     void          truncate(BytePos pos);
     inline void   truncate(CharPos pos) { *this = substr(CharPos(0), pos.index); }
     List<String>  split(const char *separator) const;
