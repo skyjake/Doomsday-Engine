@@ -184,7 +184,7 @@ DE_PIMPL(AbstractLineEditor)
         if (text && cursor > 0)
         {
             cursor = (iterator(cursor) - 1).pos();
-            text.remove(cursor, 1);
+            text.remove(cursor, CharPos(1));
             rewrapNow();
         }
     }
@@ -383,7 +383,7 @@ DE_PIMPL(AbstractLineEditor)
                 {
                     // Insert the common prefix.
                     completion.ordinal = -1;
-                    commonPrefix.remove(base.sizeb());
+                    commonPrefix.remove(BytePos(0), base.sizeb());
                     completion.pos = cursor;
                     completion.size = commonPrefix.size();
                     text.insert(cursor, commonPrefix);
@@ -437,7 +437,7 @@ DE_PIMPL(AbstractLineEditor)
             }
 
             String comp = suggestions[completion.ordinal];
-            comp.remove(/*BytePos(0), */base.sizeb());
+            comp.remove(BytePos(0), base.sizeb());
 
             text.remove(completion.pos, completion.size);
             text.insert(completion.pos, comp);
