@@ -23,9 +23,7 @@
 
 #include <de/ButtonWidget>
 #include <de/Config>
-//#include <de/SignalAction>
-#include <de/TextValue>
-//#include <QFileDialog>
+#include <de/FileDialog>
 
 using namespace de;
 
@@ -64,27 +62,24 @@ void NoGamesColumnWidget::browseForDataFiles()
 {
     bool reload = false;
 
-    DE_ASSERT_FAIL("Need a file picker");
-#if 0
-#if !defined (DE_MOBILE)
     // Use a native dialog to select the IWAD folder.
     ClientApp::app().beginNativeUIMode();
+    auto &cfg = Config::get();
 
-    const auto folders = Config::get().getStringList("resource.packageFolder");
+    FileDialog dlg;
     String lastDir;
     if (!folders.isEmpty())
     {
         lastDir = folders.back();
     }
-    QFileDialog dlg(nullptr, "Select IWAD Folder", lastDir);
-    dlg.setFileMode(QFileDialog::Directory);
-    dlg.setReadOnly(true);
-    //dlg.setNameFilter("*.wad");
-    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
+    dlg.setTitle("Select IWAD Folder");
+    dlg.setInitialLocation(cfg.gets("resource.iwadFolder", ""));
+    dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
+    dlg.setPrompt("Select");
     if (dlg.exec())
     {
-        Variable &      var = Config::get("resource.packageFolder");
-        const TextValue selDir{dlg.selectedFiles().at(0)};
+        Variable &var = Config::get("resource.packageFolder");
+        const TextValue selDir{dlg.selectedPath().toString()};
         if (is<ArrayValue>(var.value()))
         {
             auto &array = var.value<ArrayValue>();
@@ -103,8 +98,6 @@ void NoGamesColumnWidget::browseForDataFiles()
     }
 
     ClientApp::app().endNativeUIMode();
-#endif
-#endif
 
     // Reload packages and recheck for game availability.
     if (reload)

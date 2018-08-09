@@ -24,6 +24,7 @@
 #include <de/Garbage>
 #include <de/NativePath>
 #include <de/TextValue>
+#include <de/FileDialog>
 #include <de/ToggleWidget>
 
 namespace de {
@@ -40,26 +41,22 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
     addButton().setText("Add Folder...");
     addButton().setActionFn([this] ()
     {
-        // Use a native dialog to select the IWAD folder.
         DE_BASE_GUI_APP->beginNativeUIMode();
 
-        DE_ASSERT_FAIL("Need a file picker");
-
-#if 0
-        QFileDialog dlg(nullptr, tr("Select Folder"),
-                        Config::get().gets(CFG_LAST_FOLDER, "."), "");
-        dlg.setFileMode(QFileDialog::Directory);
-        dlg.setReadOnly(true);
-        //dlg.setNameFilter("*.wad");
-        dlg.setLabelText(QFileDialog::Accept, tr("Select"));
+        auto &cfg = Config::get();
+        FileDialog dlg;
+        dlg.setTitle("Select Folder");
+        dlg.setInitialLocation(cfg.gets(CFG_LAST_FOLDER, NativePath::homePath()));
+        dlg.setPrompt("Select");
+        dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
+        dlg.setFileTypes({"wad"});
         if (dlg.exec())
         {
-            String dir = dlg.selectedFiles().at(0);
-            Config::get().set(CFG_LAST_FOLDER, dir.fileNamePath());
+            NativePath dir = dlg.selectedPath();
+            cfg.set(CFG_LAST_FOLDER, dir.endOmitted().toString());
             elementsMenu().items() << makeItem(TextValue(dir));
             setVariableFromWidget();
         }
-#endif
 
         DE_BASE_GUI_APP->endNativeUIMode();
     });

@@ -189,7 +189,6 @@ VRConfig &BaseGuiApp::vr()
 
 void BaseGuiApp::beginNativeUIMode()
 {
-#if !defined (DE_MOBILE)
     // Switch temporarily to windowed mode. Not needed on macOS because the display mode
     // is never changed on that platform.
     #if !defined (MACOSX)
@@ -203,18 +202,17 @@ void BaseGuiApp::beginNativeUIMode()
         win.changeAttributes(windowedMode);
     }
     #endif
-#endif
 }
 
 void BaseGuiApp::endNativeUIMode()
 {
-#if !defined (DE_MOBILE)
+    auto &win = static_cast<BaseWindow &>(GLWindow::main());
 #   if !defined (MACOSX)
     {
-        static_cast<BaseWindow &>(GLWindow::main()).restoreState();
+        win.restoreState();
     }
 #   endif
-#endif
+    win.raise();
 }
 
 } // namespace de
