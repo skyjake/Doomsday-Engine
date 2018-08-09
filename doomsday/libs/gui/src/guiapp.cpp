@@ -147,6 +147,7 @@ GuiApp::GuiApp(const StringList &args)
     {
         throw Error("GuiApp::GuiApp", "No video displays available");
     }
+    DisplayMode_Init();
 
 //    d->matchLoopRateToDisplayMode();
     d->determineDevicePixelRatio();
@@ -171,7 +172,6 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
     // Apply the overall UI scale factor.
     d->dpiFactor *= config().getd("ui.scaleFactor", 1.0);
 
-    DisplayMode_Init();
     scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
 }
 

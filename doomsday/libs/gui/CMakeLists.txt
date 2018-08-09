@@ -108,7 +108,7 @@ list_remove_matches (SOURCES ".*/displaymode_.*")
 if (NOT DE_ENABLE_DISPLAYMODE)
     list (APPEND SOURCES src/displaymode_dummy.cpp)
 else ()
-    list (APPEND SOURCES src/displaymode_${DE_PLATFORM_SUFFIX})
+    list (APPEND SOURCES src/displaymode_sdl.cpp)
 endif ()
 
 # Ignore mobile-only sources.
