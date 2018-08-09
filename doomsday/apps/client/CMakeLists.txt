@@ -268,9 +268,16 @@ endif ()
 
 if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
-        CPlus::cplus Deng::libcore Deng::libshell Deng::libgui Deng::libappfw
-        Deng::liblegacy Deng::libdoomsday Deng::libgamefw
-        SDL2 SDL2_mixer
+        CPlus::cplus
+        Deng::libcore
+        Deng::libshell
+        Deng::libgui
+        Deng::libappfw
+        Deng::liblegacy
+        Deng::libdoomsday
+        Deng::libgamefw
+        SDL2
+        SDL2_mixer
     )
 
     # Plugins are bundled inside the client app. We'll run macdeployqt on the

@@ -161,7 +161,7 @@ GuiApp::GuiApp(const StringList &args)
 
 void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
 {
-    App::initSubsystems(subsystemInitFlags);
+    App::initSubsystems(subsystemInitFlags); // reads Config
 
     // The "-dpi" option overrides the detected DPI factor.
     if (auto dpi = commandLine().check("-dpi", 1))
@@ -180,8 +180,10 @@ double GuiApp::dpiFactor() const
     return d->dpiFactor;
 }
 
-void GuiApp::setMetadata(String const &orgName, String const &orgDomain,
-                         String const &appName, String const &appVersion)
+void GuiApp::setMetadata(const String &orgName,
+                         const String &orgDomain,
+                         const String &appName,
+                         const String &appVersion)
 {
     Record &amd = metadata();
 
