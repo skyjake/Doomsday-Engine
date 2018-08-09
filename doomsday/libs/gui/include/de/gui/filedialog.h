@@ -20,6 +20,8 @@
 #define LIBGUI_FILEDIALOG_H
 
 #include "libgui.h"
+#include <de/NativePath>
+#include <de/List>
 
 namespace de {
 
@@ -29,7 +31,26 @@ namespace de {
 class LIBGUI_PUBLIC FileDialog
 {
 public:
+    enum Behavior {
+        AcceptFiles       = 0x1,
+        AcceptDirectories = 0x2,
+        MultipleSelection = 0x4,
+    };
+    using Behaviors = Flags;
+
+public:
     FileDialog();
+
+    void setTitle(const String &title);
+    void setPrompt(const String &prompt);
+    void setBehavior(Behaviors behaviors, FlagOp flagOp = SetFlags);
+    void setInitialLocation(const NativePath &initialLocation);
+    void setFileTypes(const StringList &fileExtensions);
+
+    bool exec();
+
+    NativePath       selectedPath() const;
+    List<NativePath> selectedPaths() const;
 
 private:
     DE_PRIVATE(d)

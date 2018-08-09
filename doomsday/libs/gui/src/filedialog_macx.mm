@@ -22,15 +22,92 @@
 
 namespace de {
 
-DE_PIMPL(FileDialog)
+DE_PIMPL_NOREF(FileDialog)
 {
-    Impl(Public *i) : Base(i)
-    {}
+    String     title    = "Select File";
+    String     prompt   = "OK";
+    Behaviors  behavior = AcceptFiles;
+    List<NativePath> selection;
+    NativePath initialLocation;
+    StringList fileTypes; // empty list: eveything allowed
 };
 
-FileDialog::FileDialog() : d(new Impl(this))
-{
+FileDialog::FileDialog() : d(new Impl)
+{}
 
+void FileDialog::setTitle(const String &title)
+{
+    d->title = title;
+}
+
+void FileDialog::setPrompt(const String &prompt)
+{
+    d->prompt = prompt;
+}
+
+void FileDialog::setBehavior(Behaviors behaviors, FlagOp flagOp)
+{
+    applyFlagOperation(d->behavior, behaviors, flagOp);
+}
+
+void FileDialog::setInitialLocation(const NativePath &initialLocation)
+{
+    d->initialLocation = initialLocation;
+}
+
+void FileDialog::setFileTypes(const StringList &fileExtensions)
+{
+    d->fileTypes = fileExtensions;
+}
+
+NativePath FileDialog::selectedPath() const
+{
+    return d->selection ? d->selection.front() : NativePath();
+}
+
+List<NativePath> FileDialog::selectedPaths() const
+{
+    return d->selection;
+}
+
+bool FileDialog::exec()
+{
+    d->selection.clear();
+
+    NSOpenPanel* openDlg = [NSOpenPanel openPanel];
+    [openDlg setCanChooseFiles:(d->behavior.testFlag(AcceptFiles) ? YES : NO)];
+    [openDlg setCanChooseDirectories:(d->behavior.testFlag(AcceptDirectories) ? YES : NO)];
+    [openDlg setAllowsMultipleSelection:(d->behavior.testFlag(MultipleSelection) ? YES : NO)];
+    [openDlg setDirectoryURL:
+        [NSURL fileURLWithPath:(NSString * _Nonnull)
+                               [NSString stringWithUTF8String:d->initialLocation.c_str()]]];
+    [openDlg setMessage:[NSString stringWithUTF8String:d->title.c_str()]];
+    [openDlg setPrompt:[NSString stringWithUTF8String:d->prompt.c_str()]];
+
+    // The allowed file types.
+    {
+        NSMutableArray<NSString *> *types = nil;
+        if (d->fileTypes)
+        {
+            types = [NSMutableArray<NSString *> array];
+            for (const auto &type : d->fileTypes)
+            {
+                [types addObject:(NSString * _Nonnull)[NSString stringWithUTF8String:type.c_str()]];
+            }
+        }
+        [openDlg setAllowedFileTypes:types];
+    }
+
+    if ([openDlg runModal] == NSModalResponseOK)
+    {
+        // Check the selected paths.
+        for (NSURL *url in [openDlg URLs])
+        {
+            d->selection << [url.path UTF8String];
+        }
+        return true;
+    }
+    return false;
 }
 
 } // namespace de
