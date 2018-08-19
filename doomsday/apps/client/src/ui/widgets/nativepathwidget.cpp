@@ -115,23 +115,25 @@ void NativePathWidget::setPath(const NativePath &path)
 void NativePathWidget::chooseUsingNativeFileDialog()
 {
     ClientApp::app().beginNativeUIMode();
-
+    
     // Use a native dialog to pick the path.
-    QDir dir(d->path);
-    if (d->path.isEmpty()) dir = QDir::home();
-    QFileDialog dlg(nullptr, d->prompt, dir.absolutePath());
+    NativePath dir = d->path;
+    if (d->path.isEmpty()) dir = NativePath::homePath();
+    FileDialog dlg;
+    dlg.setTitle(Stringf("Select File for \"%s\"", d->cvar));
+    dlg.setInitialLocation(NativePath::workPath() / dir);
     if (!d->filters.isEmpty())
     {
-        dlg.setNameFilters(d->filters);
+        dlg.setFileTypes(d->filters);
     }
-    dlg.setFileMode(QFileDialog::ExistingFile);
-    dlg.setOption(QFileDialog::ReadOnly, true);
-    dlg.setLabelText(QFileDialog::Accept, tr("Select"));
+    dlg.setPrompt("Select");
     if (dlg.exec())
     {
-        setPath(dlg.selectedFiles().at(0));
+        d->path = dlg.selectedPath();
+        setCVarValueFromWidget();
+        setText(d->labelText());
     }
-
+    
     ClientApp::app().endNativeUIMode();
 }
 

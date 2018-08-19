@@ -22,6 +22,7 @@
 
 #include <doomsday/console/var.h>
 #include <de/PopupMenuWidget>
+#include <de/FileDialog>
 
 using namespace de;
 

@@ -173,7 +173,7 @@ DE_PIMPL(ClientApp)
     InFineSystem                infineSys; // instantiated at construction time
     ServerLink *                svLink = nullptr;
     ClientServerWorld *         world  = nullptr;
-    
+
     /**
      * Log entry sink that passes warning messages to the main window's alert
      * notification dialog.
@@ -984,8 +984,11 @@ void ClientApp::openInBrowser(const String &url)
     ClientWindow::main().changeAttributes(windowed);
 #endif
 
-//    QDesktopServices::openUrl(url);
+#if defined (MACOSX)
+    CommandLine({"/usr/bin/open", url}).execute();
+#else
     DE_ASSERT_FAIL("Open a browser");
+#endif
 }
 
 void ClientApp::unloadGame(const GameProfile &upcomingGame)
