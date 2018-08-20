@@ -63,7 +63,10 @@ public:
 
     using Base::begin;
     using Base::end;
+    using Base::cbegin;
+    using Base::cend;
     using Base::push_back;
+    using Base::emplace_back;
     using Base::size;
     void pop_front() { removeFirst(); } // slow...
     void push_front(const T &v) { prepend(v); } // slow...
@@ -105,6 +108,7 @@ public:
     void     removeLast()  { Base::erase(Base::begin() + size() - 1); }
     void     removeAt(size_t pos) { Base::erase(Base::begin() + pos); }
     void     removeAll(const T &v) { Base::erase(std::remove(begin(), end(), v), end()); }
+    void     remove(size_t pos, size_t count) { Base::erase(cbegin() + pos, cbegin() + pos + count); }
     bool     removeOne(const T &v)
     {
         auto found = std::find(begin(), end(), v);

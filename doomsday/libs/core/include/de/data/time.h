@@ -154,7 +154,7 @@ public:
         HumanDate,        ///< human-entered date (only with Time::fromText)
         UnixLsStyleDateTime,
     };
-    
+
     using TimePoint = std::chrono::system_clock::time_point;
 
 public:
@@ -302,6 +302,8 @@ public:
     static Time currentHighPerformanceTime();
 
     static void updateCurrentHighPerformanceTime();
+
+    static Span currentHighPerformanceDelta();
 
     /**
      * Parses a text string into a Time.

@@ -531,7 +531,7 @@ Time Time::parse(const String &text, const char *format) // static
         }
         if (is.fail()) return Time::invalidTime();
     }
-    
+
     // Assume missing date values.
     if (year == 0)
     {
@@ -744,6 +744,11 @@ Time Time::currentHighPerformanceTime() // static
 void Time::updateCurrentHighPerformanceTime() // static
 {
     currentHighPerfDelta = highPerfTimer().elapsed();
+}
+
+Time::Span Time::currentHighPerformanceDelta()
+{
+    return currentHighPerfDelta;
 }
 
 std::ostream &operator<<(std::ostream &os, Time const &t)
