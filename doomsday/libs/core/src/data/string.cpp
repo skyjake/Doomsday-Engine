@@ -54,12 +54,18 @@ String::String(String &&moved)
 String::String(const Block &bytes)
 {
     initCopy_Block(&_str.chars, bytes);
+    // Blocks are not guaranteed to be well-formed strings, so null characters
+    // may appear within.
+    truncate_Block(&_str.chars, strlen(bytes.c_str()));
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
 String::String(const iBlock *bytes)
 {
     initCopy_Block(&_str.chars, bytes);
+    // Blocks are not guaranteed to be well-formed strings, so null characters
+    // may appear within.
+    truncate_Block(&_str.chars, strlen(constBegin_Block(bytes)));
     DE_ASSERT(strchr(cstr_String(&_str), 0) == constEnd_String(&_str));
 }
 
