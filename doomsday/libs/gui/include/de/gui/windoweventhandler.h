@@ -21,6 +21,7 @@
 
 #include <de/Observers>
 #include <de/libcore.h>
+#include <de/Time>
 #include <de/Vector>
 
 #include "../KeyEventSource"

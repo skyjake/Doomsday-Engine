@@ -49,7 +49,7 @@ public:
         DoubleClick
     };
 
-    enum WheelMotion { FineAngle, Step };
+    enum WheelMotion { Pixels, Steps };
 
 public:
     MouseEvent();

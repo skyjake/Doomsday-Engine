@@ -475,15 +475,15 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
         {
             MouseEvent const &mouse = event.as<MouseEvent>();
 #ifdef MACOSX
-            if (mouse.wheelMotion() == MouseEvent::FineAngle)
+            if (mouse.wheelMotion() == MouseEvent::Pixels)
             {
                 d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                    pointsToPixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
+                                    pointsToPixels(mouse.wheel().y * (d->origin == Top? -1 : 1)),
                                     d->maxY->valuei()), .05f);
                 d->restartScrollOpacityFade();
             }
 #else
-            if (mouse.wheelMotion() == MouseEvent::Step)
+            if (mouse.wheelMotion() == MouseEvent::Steps)
             {
                 unsigned int lineCount = 1;
 #ifdef WIN32

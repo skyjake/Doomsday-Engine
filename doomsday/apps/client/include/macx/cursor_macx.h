@@ -24,8 +24,7 @@
 
 /**
  * Show or hide the mouse cursor.
- *
- * @param show  @c true to show, @c false to hide.
+ * @param show  @c true to show the cursor, @c false to hide it.
  */
 void Cursor_Show(bool show);
 

@@ -146,7 +146,7 @@ DE_PIMPL(GLWindow)
         LIBGUI_ASSERT_GL_OK();
 
         debug("Window pixel size at notifyReady: %s", currentSize.asText().c_str());
-        
+
         // Everybody can perform GL init now.
         DE_FOR_PUBLIC_AUDIENCE2(Init, i)   i->windowInit(self());
         DE_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
@@ -249,6 +249,9 @@ DE_PIMPL(GLWindow)
                 case SDL_KEYDOWN:
                 case SDL_KEYUP:
                 case SDL_TEXTINPUT:
+                case SDL_MULTIGESTURE:
+                case SDL_FINGERUP:
+                case SDL_FINGERDOWN:
                     handleSDLEvent(event);
                     break;
                 }
@@ -271,6 +274,9 @@ DE_PIMPL(GLWindow)
         case SDL_MOUSEBUTTONDOWN:
         case SDL_MOUSEBUTTONUP:
         case SDL_MOUSEWHEEL:
+        case SDL_FINGERUP:
+        case SDL_FINGERDOWN:
+        case SDL_MULTIGESTURE:
             handler->handleSDLEvent(&event);
             break;
 
@@ -387,12 +393,14 @@ void GLWindow::show()
 void GLWindow::showNormal()
 {
     SDL_ShowWindow(d->window);
+    SDL_SetWindowFullscreen(d->window, 0);
     SDL_RestoreWindow(d->window);
 }
 
 void GLWindow::showMaximized()
 {
     SDL_ShowWindow(d->window);
+    SDL_SetWindowFullscreen(d->window, 0);
     SDL_MaximizeWindow(d->window);
 }
 
@@ -416,7 +424,7 @@ void GLWindow::setGeometry(const Rectanglei &rect)
 {
     SDL_SetWindowPosition(d->window, rect.left(),  rect.top());
     SDL_SetWindowSize    (d->window, rect.width(), rect.height());
-    
+
     // Update the current size immediately.
     Vec2i pixels;
     SDL_GL_GetDrawableSize(d->window, &pixels.x, &pixels.y);
@@ -690,7 +698,7 @@ void GLWindow::paintGL()
 
     // Subclass-implemented drawing method.
     draw();
-    
+
     LIBGUI_ASSERT_GL_OK();
 
     // Show the final frame contents.

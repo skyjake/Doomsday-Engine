@@ -695,7 +695,7 @@ bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(co
 #if 0
             MouseEvent const &mouse = event.as<MouseEvent>();
             if (event.type() == Event::MouseWheel &&
-               mouse.wheelMotion() == MouseEvent::Step)
+               mouse.wheelMotion() == MouseEvent::Steps)
             {
                 if (abs(mouse.wheel().x) > abs(mouse.wheel().y))
                 {

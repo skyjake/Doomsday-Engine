@@ -22,7 +22,7 @@ namespace de {
 
 MouseEvent::MouseEvent()
     : Event(MouseButton)
-    , _wheelMotion(FineAngle)
+    , _wheelMotion(Pixels)
     , _button(Unknown)
     , _state(Released)
 {}
@@ -30,7 +30,7 @@ MouseEvent::MouseEvent()
 MouseEvent::MouseEvent(MotionType motion, Vec2i const &pos)
     : Event(motion == Absolute ? MousePosition : motion == Relative ? MouseMotion : MouseWheel)
     , _pos(pos)
-    , _wheelMotion(FineAngle)
+    , _wheelMotion(Pixels)
     , _button(Unknown)
     , _state(Released)
 {

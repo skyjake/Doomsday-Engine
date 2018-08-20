@@ -27,31 +27,140 @@
 
 namespace de {
 
+static constexpr ddouble GESTURE_MOMENTUM_EVAL_TIME_MS = 70;
+
+/**
+ * Simulates momentum along a single axis for scrolling.
+ */
+struct Flywheel
+{
+    struct Sample {
+        float pos;
+        float delta;
+        uint32_t at;
+
+        Sample(float p = 0, float dt = 0, uint32_t t = 0)
+            : pos(p)
+            , delta(dt)
+            , at(t)
+        {}
+    };
+
+    float        pos        = 0;
+    float        friction   = 1;
+    float        momentum   = 0;
+    bool         isReleased = true;
+    List<Sample> samples;
+
+    void applyMove(float delta, uint32_t timestamp)
+    {
+        pos += delta;
+        samples.emplace_back(pos, delta, timestamp);
+        isReleased = false;
+    }
+
+    void updateMomentum(uint32_t currentTime)
+    {
+        int      includedSamples = 0;
+        uint32_t startTime       = 0;
+
+        momentum = 0;
+
+        int sampleIndex = samples.sizei() - 1;
+        for (; sampleIndex >= 0; --sampleIndex)
+        {
+            const auto &sample = samples[sampleIndex];
+            if (currentTime - sample.at > GESTURE_MOMENTUM_EVAL_TIME_MS)
+            {
+                break;
+            }
+            includedSamples++;
+            momentum += sample.delta;
+            startTime = sample.at;
+        }
+
+        if (includedSamples > 0)
+        {
+            double span = double(currentTime - startTime) / 1000.0;
+            momentum /= span;
+//            debug("span: %f seconds (%d smp), mom: %f u/s", span, includedSamples, momentum);
+        }
+
+        // Cull obsolete samples.
+        if (sampleIndex > 0)
+        {
+            samples.remove(0, sampleIndex);
+        }
+    }
+
+    void release(uint32_t timestamp)
+    {
+        if (!isReleased)
+        {
+            isReleased = true;
+            updateMomentum(timestamp);
+            /*
+            debug("[%p] released with mom %f (%d samples)", this, momentum, samples.sizei());
+            for (int i = 0; i < samples.sizei(); ++i)
+            {
+                debug("  %d: pos %f delta %f time %u",
+                      i,
+                      samples[i].pos,
+                      samples[i].delta,
+                      samples[i].at);
+            }
+            */
+            samples.clear();
+        }
+    }
+
+    float advanceTime(const TimeSpan &elapsed)
+    {
+        if (isReleased)
+        {
+            const auto F = float(friction * elapsed);
+
+            if (std::abs(momentum) <= F) momentum = 0;
+            else if (momentum > 0) momentum -= F;
+            else if (momentum < 0) momentum += F;
+
+            return float(momentum * elapsed);
+        }
+        return 0.f;
+    }
+};
+
 DE_PIMPL(WindowEventHandler)
+, DE_OBSERVES(Clock, TimeChange)
 {
     GLWindow *   window;
     bool         mouseGrabbed = false;
     KeyboardMode keyboardMode = TextInput;
     Vec2i        prevMousePos;
-    Time         prevWheelAt;
     Vec2i        wheelAngleAccum;
     int          wheelDir[2];
     Vec2i        currentMousePos;
-    //#if defined (WIN32)
-    //    bool      altIsDown = false;
-    //#endif
+    Time         prevUpdateAt;
+
+    struct InertiaScrollState {
+        bool     active      = false;
+        float    sensitivity = 1000;
+        Flywheel pos[2];
+        Vec2f    prevGesturePos;
+    };
+    InertiaScrollState inertiaScroll;
 
     Impl(Public *i, GLWindow *parentWindow)
         : Base(i)
         , window(parentWindow)
     {
         wheelDir[0] = wheelDir[1] = 0;
+
+        Clock::get().audienceForTimeChange() += this;
     }
 
     void grabMouse()
     {
-//        if (!window->isVisible()) return;
-
         if (!mouseGrabbed)
         {
             LOG_INPUT_VERBOSE("Grabbing mouse") << mouseGrabbed;
@@ -62,8 +171,6 @@ DE_PIMPL(WindowEventHandler)
 
     void ungrabMouse()
     {
-//        if (!window->isVisible()) return;
-
         if (mouseGrabbed)
         {
             LOG_INPUT_VERBOSE("Ungrabbing mouse");
@@ -71,17 +178,6 @@ DE_PIMPL(WindowEventHandler)
             DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i) { i->mouseStateChanged(Untrapped); }
         }
     }
-
-#if 0
-    static int nativeCode(QKeyEvent const *ev)
-    {
-#if defined(UNIX) && !defined(MACOSX)
-        return ev->nativeScanCode();
-#else
-        return ev->nativeVirtualKey();
-#endif
-    }
-#endif
 
     void handleTextInput(const SDL_TextInputEvent &ev)
     {
@@ -202,12 +298,12 @@ DE_PIMPL(WindowEventHandler)
         {
             if (ev.x)
             {
-                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(ev.x, 0),
+                i->mouseEvent(MouseEvent(MouseEvent::Steps, Vec2i(ev.x, 0),
                                          currentMousePos));
             }
             if (ev.y)
             {
-                i->mouseEvent(MouseEvent(MouseEvent::FineAngle, Vec2i(0, ev.y),
+                i->mouseEvent(MouseEvent(MouseEvent::Steps, Vec2i(0, ev.y),
                                          currentMousePos));
             }
         }
@@ -259,6 +355,88 @@ DE_PIMPL(WindowEventHandler)
         */
     }
 
+    void handleGestureEvent(const SDL_MultiGestureEvent &ev)
+    {
+        if (ev.numFingers == 2)
+        {
+            auto &scr = inertiaScroll;
+
+            const Vec2f currentPos{ev.x, ev.y};
+
+            if (scr.active)
+            {
+                const Vec2f delta = currentPos - scr.prevGesturePos;
+
+                scr.pos[0].applyMove(delta.x, ev.timestamp);
+                scr.pos[1].applyMove(delta.y, ev.timestamp);
+
+                for (int axis = 0; axis < 2; ++axis)
+                {
+                    const auto units = int(std::lround(delta[axis] * scr.sensitivity));
+                    if (units)
+                    {
+                        DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+                        {
+                            i->mouseEvent(MouseEvent(MouseEvent::Pixels,
+                                                     axis == 0 ? Vec2i(units, 0) : Vec2i(0, units),
+                                                     currentMousePos));
+                        }
+                    }
+                }
+            }
+            scr.active         = true;
+            scr.prevGesturePos = currentPos;
+        }
+    }
+
+    void handleFingerEvent(const SDL_TouchFingerEvent &ev)
+    {
+        if (ev.type == SDL_FINGERUP)
+        {
+            inertiaScroll.pos[0].release(ev.timestamp);
+            inertiaScroll.pos[1].release(ev.timestamp);
+        }
+        else if (ev.type == SDL_FINGERDOWN)
+        {
+            // Stop scrolling.
+            inertiaScroll.active = false;
+        }
+    }
+
+    /**
+     * Perform actions that occur over time, e.g., inertia scrolling.
+     */
+    void timeChanged(const Clock &) override
+    {
+        if (!prevUpdateAt.isValid()) return;
+
+        const TimeSpan elapsed = prevUpdateAt.since();
+        prevUpdateAt = Time::currentHighPerformanceTime();
+
+        auto &scr = inertiaScroll;
+
+        // Inertia scroll events.
+        if (scr.active)
+        {
+            // Handle the axes separately.
+            for (int axis = 0; axis < 2; ++axis)
+            {
+                const int units = round<int>(scr.pos[axis].advanceTime(elapsed) * scr.sensitivity);
+
+                // Generate a scroll event.
+                if (units)
+                {
+                    DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+                    {
+                        i->mouseEvent(MouseEvent(MouseEvent::Pixels,
+                                                 axis == 0 ? Vec2i(units, 0) : Vec2i(0, units),
+                                                 currentMousePos));
+                    }
+                }
+            }
+        }
+    }
+
     DE_PIMPL_AUDIENCE(FocusChange)
 };
 
@@ -266,10 +444,7 @@ DE_AUDIENCE_METHOD(WindowEventHandler, FocusChange)
 
 WindowEventHandler::WindowEventHandler(GLWindow *window)
     : d(new Impl(this, window))
-{
-    //setMouseTracking(true);
-    //setFocusPolicy(Qt::StrongFocus);
-}
+{}
 
 void WindowEventHandler::trapMouse(bool trap)
 {
@@ -329,6 +504,15 @@ void WindowEventHandler::handleSDLEvent(const void *ptr)
         d->handleMouseWheelEvent(event->wheel);
         break;
 
+    case SDL_FINGERDOWN:
+    case SDL_FINGERUP:
+        d->handleFingerEvent(event->tfinger);
+        break;
+
+    case SDL_MULTIGESTURE:
+        d->handleGestureEvent(event->mgesture);
+        break;
+
     case SDL_KEYDOWN:
     case SDL_KEYUP:
         d->handleKeyEvent(event->key);
@@ -351,67 +535,6 @@ void WindowEventHandler::handleSDLEvent(const void *ptr)
 }
 
 #if 0
-void WindowEventHandler::focusInEvent(QFocusEvent*)
-{
-    LOG_AS("Canvas");
-    LOG_INPUT_VERBOSE("Gained focus");
-
-    DE_FOR_AUDIENCE2(FocusChange, i) i->windowFocusChanged(*d->window, true);
-}
-
-void WindowEventHandler::focusOutEvent(QFocusEvent*)
-{
-    LOG_AS("Canvas");
-    LOG_INPUT_VERBOSE("Lost focus");
-
-    // Automatically ungrab the mouse if focus is lost.
-    d->ungrabMouse();
-
-    DE_FOR_AUDIENCE2(FocusChange, i) i->windowFocusChanged(*d->window, false);
-}
-
-void WindowEventHandler::keyPressEvent(QKeyEvent *ev)
-{
-    d->handleKeyEvent(ev);
-}
-
-void WindowEventHandler::keyReleaseEvent(QKeyEvent *ev)
-{
-    d->handleKeyEvent(ev);
-}
-
-static MouseEvent::Button translateButton(Qt::MouseButton btn)
-{
-    if (btn == Qt::LeftButton)   return MouseEvent::Left;
-    if (btn == Qt::MiddleButton) return MouseEvent::Middle;
-    if (btn == Qt::RightButton)  return MouseEvent::Right;
-    if (btn == Qt::XButton1)     return MouseEvent::XButton1;
-    if (btn == Qt::XButton2)     return MouseEvent::XButton2;
-
-    return MouseEvent::Unknown;
-}
-
-void WindowEventHandler::mousePressEvent(QMouseEvent *ev)
-{
-    ev->accept();
-
-    DE_FOR_AUDIENCE2(MouseEvent, i)
-    {
-        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Pressed,
-                                 d->translatePosition(ev)));
-    }
-}
-
-void WindowEventHandler::mouseReleaseEvent(QMouseEvent* ev)
-{
-    ev->accept();
-
-    DE_FOR_AUDIENCE2(MouseEvent, i)
-    {
-        i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::Released,
-                                 d->translatePosition(ev)));
-    }
-}
 
 void WindowEventHandler::mouseDoubleClickEvent(QMouseEvent *ev)
 {
@@ -421,21 +544,6 @@ void WindowEventHandler::mouseDoubleClickEvent(QMouseEvent *ev)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::DoubleClick,
                                  d->translatePosition(ev)));
-    }
-}
-
-void WindowEventHandler::mouseMoveEvent(QMouseEvent *ev)
-{
-    ev->accept();
-
-    // Absolute events are only emitted when the mouse is untrapped.
-    if (!d->mouseGrabbed)
-    {
-        DE_FOR_AUDIENCE2(MouseEvent, i)
-        {
-            i->mouseEvent(MouseEvent(MouseEvent::Absolute,
-                                     d->translatePosition(ev)));
-        }
     }
 }
 
@@ -487,6 +595,7 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
 
     d->prevWheelAt.start();
 }
+
 #endif
 
 } // namespace de

@@ -90,7 +90,7 @@ DE_PIMPL(ClientWindow)
     bool needMainInit       = true;
     bool needRootSizeUpdate = false;
     Mode mode               = Normal;
-    
+
     /// Root of the nomal UI widgets of this window.
     ClientRootWidget root;
     GameWidget *game = nullptr;
@@ -371,7 +371,7 @@ DE_PIMPL(ClientWindow)
 #if !defined (DE_MOBILE)
         self().audienceForAttributeChange() += this;
 #endif
-        
+
         uiSetupDone = true;
     }
 
@@ -596,7 +596,7 @@ DE_PIMPL(ClientWindow)
                 return true;
 
             case Event::MouseWheel:
-                if (game->hitTest(ev) && mouse->wheelMotion() == MouseEvent::Step)
+                if (game->hitTest(ev) && mouse->wheelMotion() == MouseEvent::Steps)
                 {
                     // The old input system can only do wheel step events.
 //                    Mouse_Qt_SubmitMotion(IMA_WHEEL, mouse->wheel().x, mouse->wheel().y);
