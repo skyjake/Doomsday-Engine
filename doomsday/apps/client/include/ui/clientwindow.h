@@ -62,7 +62,7 @@ public:
     ClientWindow(de::String const &id = "main");
 
     bool isUICreated() const;
-    
+
     ClientRootWidget &root();
     TaskBarWidget &   taskBar();
     de::GuiWidget &   taskBarBlur();
@@ -157,7 +157,7 @@ public:
     void drawWindowContent() override;
     void preDraw() override;
     void postDraw() override;
-    bool handleFallbackEvent(de::Event const &event) override;
+//    bool handleFallbackEvent(de::Event const &event) override;
 
     static ClientWindow &main();
     static bool mainExists();

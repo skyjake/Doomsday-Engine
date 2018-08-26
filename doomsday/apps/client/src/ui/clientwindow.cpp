@@ -1133,10 +1133,10 @@ GuiWidget &ClientWindow::sidebar(SidebarLocation location) const
     return *d->sidebar;
 }
 
-bool ClientWindow::handleFallbackEvent(Event const &event)
-{
-    return d->handleFallbackEvent(event);
-}
+//bool ClientWindow::handleFallbackEvent(Event const &event)
+//{
+//    return d->handleFallbackEvent(event);
+//}
 
 void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeSpan const &duration)
 {

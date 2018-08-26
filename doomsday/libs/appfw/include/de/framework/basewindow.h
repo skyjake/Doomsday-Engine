@@ -105,7 +105,7 @@ protected:
     virtual void preDraw();
     virtual void postDraw();
 
-    virtual bool handleFallbackEvent(Event const &event) = 0;
+//    virtual bool handleFallbackEvent(Event const &event) = 0;
 
 private:
     DE_PRIVATE(d)

@@ -38,7 +38,7 @@ public:
     void postDraw() override;
 
 protected:
-    bool handleFallbackEvent(de::Event const &event) override;
+//    bool handleFallbackEvent(de::Event const &event) override;
 
 private:
     DE_PRIVATE(d)

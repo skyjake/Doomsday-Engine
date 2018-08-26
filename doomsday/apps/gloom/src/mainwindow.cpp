@@ -181,8 +181,8 @@ void MainWindow::postDraw()
     Garbage_Recycle();
 }
 
-bool MainWindow::handleFallbackEvent(Event const &)
-{
-    // Handle event at a global level, if appropriate.
-    return false;
-}
+//bool MainWindow::handleFallbackEvent(Event const &)
+//{
+//    // Handle event at a global level, if appropriate.
+//    return false;
+//}

@@ -268,8 +268,8 @@ void MainWindow::addOnTop(de::GuiWidget *widget)
     d->compositor->moveChildToLast(*d->cursor);
 }
 
-bool MainWindow::handleFallbackEvent(Event const &)
-{
-    // Handle event at a global level, if appropriate.
-    return false;
-}
+//bool MainWindow::handleFallbackEvent(Event const &)
+//{
+//    // Handle event at a global level, if appropriate.
+//    return false;
+//}

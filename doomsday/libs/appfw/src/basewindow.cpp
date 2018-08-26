@@ -65,11 +65,13 @@ DE_PIMPL(BaseWindow)
         debug("keyEvent ev:%i", ev.type());
 
         // Pass the event onto the window system.
-        if (!WindowSystem::get().processEvent(ev))
-        {
-            // Maybe the fallback handler has use for this.
-            self().handleFallbackEvent(ev);
-        }
+//        if (!
+        WindowSystem::get().processEvent(ev);
+//                )
+//        {
+//            // Maybe the fallback handler has use for this.
+//            self().handleFallbackEvent(ev);
+//        }
     }
 
     void mouseEvent(MouseEvent const &event) override
@@ -84,11 +86,12 @@ DE_PIMPL(BaseWindow)
             ev.setPos(xf->windowToLogicalCoords(event.pos()).toVec2i());
         }
 
-        if (!WindowSystem::get().processEvent(ev))
-        {
-            // Maybe the fallback handler has use for this.
-            self().handleFallbackEvent(ev);
-        }
+//        if (!
+        WindowSystem::get().processEvent(ev);
+//        {
+//            // Maybe the fallback handler has use for this.
+//            self().handleFallbackEvent(ev);
+//        }
     }
 
 //    void mouseStateChanged(MouseEventSource::State state) override
