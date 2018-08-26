@@ -23,11 +23,13 @@
 #include "ui/inputsystem.h"
 
 #include <de/timer.h> // SECONDSPERTIC
-#include <de/Record>
-#include <de/LogBuffer>
-#include <de/NumberValue>
-#include <de/Function>
 #include <de/Context>
+#include <de/Function>
+#include <de/KeyEvent>
+#include <de/LogBuffer>
+#include <de/MouseEvent>
+#include <de/NumberValue>
+#include <de/Record>
 #include <de/ScriptSystem>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
@@ -39,7 +41,6 @@
 #include "dd_loop.h" // DD_IsFrameTimeAdvancing()
 
 #include "render/vr.h"
-
 #include "world/p_players.h"
 
 #include "BindContext"
@@ -66,7 +67,7 @@ using namespace de;
 
 #define MAX_AXIS_FILTER  40
 
-static char *joyControllerPreset = (char *) "";
+static char *joyControllerPreset = const_cast<char *>("");
 
 static InputDevice *makeKeyboard(String const &name, String const &title = "")
 {
@@ -263,54 +264,49 @@ static void clearEventStrings()
     }
 }
 
-struct eventqueue_t
+struct EventQueue
 {
-    ddevent_t events[MAXEVENTS];
-    int head;
-    int tail;
-};
+    ddevent_t events[MAXEVENTS]{};
+    int head = 0;
+    int tail = 0;
 
-/**
- * Gets the next event from an input event queue.
- * @param q  Event queue.
- * @return @c NULL if no more events are available.
- */
-static ddevent_t *nextFromQueue(eventqueue_t *q)
-{
-    DE_ASSERT(q);
-
-    if (q->head == q->tail)
-        return nullptr;
-
-    ddevent_t *ev = &q->events[q->tail];
-    q->tail = (q->tail + 1) & (MAXEVENTS - 1);
-
-    return ev;
-}
-
-static void clearQueue(eventqueue_t *q)
-{
-    DE_ASSERT(q);
-    q->head = q->tail;
-}
-
-static void postToQueue(eventqueue_t *q, ddevent_t *ev)
-{
-    DE_ASSERT(q && ev);
-    q->events[q->head] = *ev;
-
-    if (ev->type == E_SYMBOLIC)
+    void clear()
     {
-        // Allocate a throw-away string from our buffer.
-        q->events[q->head].symbolic.name = allocEventString(ev->symbolic.name);
+        head = tail;
     }
 
-    q->head++;
-    q->head &= MAXEVENTS - 1;
-}
+    /**
+     * Gets the next event from an input event queue.
+     * @return @c nullptr if no more events are available. Caller does not get ownership.
+     */
+    ddevent_t *getNext()
+    {
+        if (head == tail)
+        {
+            return nullptr;
+        }
+        ddevent_t *ev = &events[tail];
+        tail = (tail + 1) & (MAXEVENTS - 1);
+        return ev;
+    }
 
-static eventqueue_t queue;
-static eventqueue_t sharpQueue;
+    void post(const ddevent_t &ev)
+    {
+        events[head] = ev;
+
+        if (ev.type == E_SYMBOLIC)
+        {
+            // Allocate a throw-away string from our buffer.
+            events[head].symbolic.name = allocEventString(ev.symbolic.name);
+        }
+
+        head++;
+        head &= MAXEVENTS - 1;
+    }
+};
+
+static EventQueue queue;
+static EventQueue sharpQueue;
 
 static dbyte useSharpInputEvents = true; ///< cvar
 
@@ -320,20 +316,25 @@ DE_PIMPL(InputSystem)
 , DE_OBSERVES(BindContext, BindingAddition)
 {
     bool ignoreInput = false;
+    bool enableMouse = true;
 
-    ConfigProfiles settings;
-    Binder binder;
-
-    typedef List<InputDevice *> Devices;
-    Devices devices;
-
-    typedef List<BindContext *> BindContexts;
-    BindContexts contexts;  ///< Ordered from highest to lowest priority.
+    ConfigProfiles      settings;
+    Binder              binder;
+    List<InputDevice *> devices;
+    List<BindContext *> contexts;  ///< Ordered from highest to lowest priority.
 
     std::unique_ptr<ControllerPresets> gameControllerPresets;
 
     Impl(Public *i) : Base(i)
     {
+        // Enabled devices.
+        {
+            if (CommandLine_Check("-nomouse") || novideo)
+            {
+                enableMouse = false;
+            }
+        }
+
         // Initialize settings.
         settings.define(ConfigProfiles::ConfigVariable, "input.mouse.syncSensitivity")
                 .define(ConfigProfiles::FloatCVar,      "input-mouse-x-scale", 1.f/1000.f)
@@ -434,18 +435,18 @@ DE_PIMPL(InputSystem)
         echo.symbolic.name = name;
 
         LOG_INPUT_XVERBOSE("Symbolic echo: %s", name);
-        self().postEvent(&echo);
+        self().postEvent(echo);
     }
 
     /**
      * Send all the events of the given timestamp down the responder chain.
      */
-    void dispatchEvents(eventqueue_t *q, timespan_t ticLength, bool updateAxes = true)
+    void dispatchEvents(EventQueue *q, timespan_t ticLength, bool updateAxes = true)
     {
         bool const callGameResponders = App_GameLoaded();
 
         ddevent_t *ddev;
-        while ((ddev = nextFromQueue(q)))
+        while ((ddev = q->getNext()))
         {
             // Update the state of the input device tracking table.
             self().trackEvent(*ddev);
@@ -515,12 +516,13 @@ DE_PIMPL(InputSystem)
      */
     void postEventsForAllDevices()
     {
-        readKeyboard();
+//        readKeyboard();
         readMouse();
         readJoystick();
         readHeadTracker();
     }
 
+#if 0
     /**
      * Check the current keyboard state, generate input events based on pressed/held
      * keys and poss them.
@@ -568,6 +570,7 @@ DE_PIMPL(InputSystem)
             self().postEvent(&ev);
         }
     }
+#endif
 
     /**
      * Check the current mouse state (axis, buttons and wheel).
@@ -695,7 +698,7 @@ DE_PIMPL(InputSystem)
         Joystick_GetState(&state);
 
         // Joystick buttons.
-        ddevent_t ev; de::zap(ev);
+        ddevent_t ev{};
         ev.device = IDEV_JOY1;
         ev.type   = E_TOGGLE;
 
@@ -707,13 +710,13 @@ DE_PIMPL(InputSystem)
                 if (state.buttonDowns[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_DOWN;
-                    self().postEvent(&ev);
+                    self().postEvent(ev);
                     LOG_INPUT_XVERBOSE("Joy button %i down", i);
                 }
                 if (state.buttonUps[i]-- > 0)
                 {
                     ev.toggle.state = ETOG_UP;
-                    self().postEvent(&ev);
+                    self().postEvent(ev);
                     LOG_INPUT_XVERBOSE("Joy button %i up", i);
                 }
             }
@@ -740,7 +743,7 @@ DE_PIMPL(InputSystem)
                     }
                     LOG_INPUT_XVERBOSE("Joy hat %i angle %f", i << ev.angle.pos);
 
-                    self().postEvent(&ev);
+                    self().postEvent(ev);
 
                     oldPOV[i] = state.hatAngle[i];
                 }
@@ -755,7 +758,7 @@ DE_PIMPL(InputSystem)
             ev.axis.id   = i;
             ev.axis.pos  = state.axis[i];
             ev.axis.type = EAXIS_ABSOLUTE;
-            self().postEvent(&ev);
+            self().postEvent(ev);
         }
     }
 
@@ -778,7 +781,7 @@ DE_PIMPL(InputSystem)
         //vrCfg().oculusRift().allowUpdate();
         //vrCfg().oculusRift().update();
 
-        ddevent_t ev; de::zap(ev);
+        ddevent_t ev{};
         ev.device    = IDEV_HEAD_TRACKER;
         ev.type      = E_AXIS;
         ev.axis.type = EAXIS_ABSOLUTE;
@@ -788,16 +791,16 @@ DE_PIMPL(InputSystem)
         // Yaw (1.0 means 180 degrees).
         ev.axis.id  = 0; // Yaw.
         ev.axis.pos = de::radianToDegree(pry[2]) * 1.0 / 180.0;
-        self().postEvent(&ev);
+        self().postEvent(ev);
 
         ev.axis.id  = 1; // Pitch (1.0 means 85 degrees).
         ev.axis.pos = de::radianToDegree(pry[0]) * 1.0 / 85.0;
-        self().postEvent(&ev);
+        self().postEvent(ev);
 
         // So I'll assume that if roll ever gets used, 1.0 will mean 180 degrees there too.
         ev.axis.id  = 2; // Roll.
         ev.axis.pos = de::radianToDegree(pry[1]) * 1.0 / 180.0;
-        self().postEvent(&ev);
+        self().postEvent(ev);
     }
 
     /**
@@ -1027,7 +1030,7 @@ void InputSystem::initAllDevices()
     // Initialize devices.
     d->addDevice(makeKeyboard("key", "Keyboard"))->activate(); // A keyboard is assumed to always be present.
 
-    d->addDevice(makeMouse("mouse", "Mouse"))->activate(Mouse_IsPresent()); // A mouse may not be present.
+    d->addDevice(makeMouse("mouse", "Mouse"))->activate(d->enableMouse); // A mouse may not be present.
 
     d->addDevice(makeJoystick("joy", "Controller"))->activate(Joystick_IsPresent()); // A joystick may not be present.
 
@@ -1064,30 +1067,177 @@ bool InputSystem::ignoreEvents(bool yes)
 
 void InputSystem::clearEvents()
 {
-    clearQueue(&queue);
-    clearQueue(&sharpQueue);
+    queue.clear();
+    sharpQueue.clear();
     clearEventStrings();
 }
 
-/// @note Called by the I/O functions when input is detected.
-void InputSystem::postEvent(ddevent_t *ev)
+void InputSystem::postKeyboardEvent(const KeyEvent &event)
 {
-    DE_ASSERT(ev);// && ev->device < NUM_INPUT_DEVICES);
+    ddevent_t ev{};
+    ev.device = IDEV_KEYBOARD;
+//    ev.type         = E_TOGGLE;
+//    ev.toggle.state = ETOG_REPEAT;
 
-    eventqueue_t *q = &queue;
-    if (useSharpInputEvents &&
-       (ev->type == E_TOGGLE || ev->type == E_AXIS || ev->type == E_ANGLE))
+    // Read the new keyboard events, convert to ddevents and post them.
+//    int const QUEUESIZE = 32;
+//    keyevent_t keyevs[QUEUESIZE];
+//    size_t const numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
+//    for (size_t n = 0; n < numkeyevs; ++n)
+    {
+//        keyevent_t *ke = &keyevs[n];
+
+        // Check the type of the event.
+        switch (event.type())
+        {
+        case Event::KeyPress:   ev.toggle.state = ETOG_DOWN;   break;
+        case Event::KeyRepeat:  ev.toggle.state = ETOG_REPEAT; break;
+        case Event::KeyRelease: ev.toggle.state = ETOG_UP;     break;
+
+        default: break;
+        }
+
+        ev.toggle.id = event.ddKey(); //ke->ddkey;
+
+        // Text content to insert?
+//        DE_ASSERT(sizeof(ev.toggle.text) == sizeof(ke->text));
+        //std::memcpy(ev.toggle.text, ke->text, sizeof(ev.toggle.text));
+        DE_ASSERT(event.text().size() < sizeof(ev.toggle.text));
+        strcpy(ev.toggle.text, event.text().c_str());
+
+        LOG_INPUT_XVERBOSE("toggle.id: %i/%c [%s:%u] (state:%i)",
+                   ev.toggle.id << char(ev.toggle.id)
+                << ev.toggle.text << strlen(ev.toggle.text)
+                << ev.toggle.state);
+
+        postEvent(ev);
+    }
+}
+
+void InputSystem::postMouseEvent(const MouseEvent &event)
+{
+    if (!d->enableMouse) return; // Ignored completely.
+
+    ddevent_t ev{};
+    ev.device = IDEV_MOUSE;
+
+    switch (event.type())
+    {
+        case Event::MouseMotion:
+        {
+            ev.type      = E_AXIS;
+            ev.axis.type = EAXIS_RELATIVE;
+
+            // Post an event per axis.
+            if (event.pos().x)
+            {
+                ev.axis.id  = 0;
+                ev.axis.pos = event.pos().x;
+                postEvent(ev);
+            }
+            if (event.pos().y)
+            {
+                ev.axis.id  = 1;
+                ev.axis.pos = -event.pos().y;
+                postEvent(ev);
+            }
+            break;
+        }
+
+        case Event::MouseWheel:
+        {
+            break;
+        }
+
+        case Event::MouseButton:
+        {
+            ev.type = E_TOGGLE;
+
+            if (event.state() == MouseEvent::DoubleClick)
+                break;
+
+            const auto btn = event.button();
+
+            ev.toggle.id = (btn == MouseEvent::Left     ? IMB_LEFT   :
+                            btn == MouseEvent::Middle   ? IMB_MIDDLE :
+                            btn == MouseEvent::Right    ? IMB_RIGHT  :
+                            btn == MouseEvent::XButton1 ? IMB_EXTRA1 :
+                            btn == MouseEvent::XButton2 ? IMB_EXTRA2 : -1);
+
+            if (ev.toggle.id < 0) break;
+
+            ev.toggle.state = (event.state() == MouseEvent::Pressed ? ETOG_DOWN : ETOG_UP);
+
+            postEvent(ev);
+
+                //while (mouse.buttonDowns[i] > 0 || mouse.buttonUps[i] > 0)
+//                {
+//                    if (mouse.buttonDowns[i]-- > 0)
+//                    {
+//                        ev.toggle.state = ETOG_DOWN;
+//                        LOG_INPUT_XVERBOSE("Mouse button %i down", i);
+//                        self().postEvent(&ev);
+//                    }
+//                    if (mouse.buttonUps[i]-- > 0)
+//                    {
+//                        ev.toggle.state = ETOG_UP;
+//                        LOG_INPUT_XVERBOSE("Mouse button %i up", i);
+//                        self().postEvent(&ev);
+//                    }
+//                }
+//            }
+            break;
+        }
+    }
+
+//    {
+//        ev.axis.type = EAXIS_RELATIVE;
+//        ypos = -ypos;
+//    }
+
+
+/*    // Some very verbose output about mouse buttons.
+    int i = 0;
+    for (; i < IMB_MAXBUTTONS; ++i)
+    {
+        if (mouse.buttonDowns[i] || mouse.buttonUps[i])
+            break;
+    }
+    if (i < IMB_MAXBUTTONS)
+    {
+        for (i = 0; i < IMB_MAXBUTTONS; ++i)
+        {
+            LOGDEV_INPUT_XVERBOSE("[%02i] %i/%i", i << mouse.buttonDowns[i] << mouse.buttonUps[i]);
+        }
+    }*/
+
+}
+
+/// @note Called by the I/O functions when input is detected.
+void InputSystem::postEvent(const ddevent_t &ev)
+{
+    EventQueue *q;
+
+    if (useSharpInputEvents && (ev.type == E_TOGGLE || ev.type == E_AXIS || ev.type == E_ANGLE))
     {
         q = &sharpQueue;
     }
-
-    // Cleanup: make sure only keyboard toggles can have a text insert.
-    if (ev->type == E_TOGGLE && ev->device != IDEV_KEYBOARD)
+    else
     {
-        std::memset(ev->toggle.text, 0, sizeof(ev->toggle.text));
+        q = &queue;
     }
 
-    postToQueue(q, ev);
+    // Cleanup: make sure only keyboard toggles can have a text insert.
+    if (ev.type == E_TOGGLE && ev.device != IDEV_KEYBOARD)
+    {
+        ddevent_t cleaned = ev;
+        zap(cleaned.toggle.text);
+        q->post(cleaned);
+    }
+    else
+    {
+        q->post(ev);
+    }
 }
 
 void InputSystem::processEvents(timespan_t ticLength)

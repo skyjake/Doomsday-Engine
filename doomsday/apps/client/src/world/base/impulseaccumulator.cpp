@@ -63,24 +63,18 @@ DE_PIMPL_NOREF(ImpulseAccumulator)
         return *impulse;
     }
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__)
     /**
      * Double-"clicks" actually mean double activations that occur within the
      * double-click threshold. This is to allow double-clicks also from the
      * analog impulses.
      */
-    struct DoubleClick
-    {
-        enum State
-        {
-            None,
-            Positive,
-            Negative
-        };
+    struct DoubleClick {
+        enum State { None, Positive, Negative };
 
-        bool triggered = false;           //< True if double-click has been detected.
-        uint previousClickTime = 0;       //< Previous time an activation occurred.
-        State lastState = None;           //< State at the previous time the check was made.
+        bool  triggered          = false; //< True if double-click has been detected.
+        uint  previousClickTime  = 0;     //< Previous time an activation occurred.
+        State lastState          = None;  //< State at the previous time the check was made.
         State previousClickState = None;  /** Previous click state. When duplicated, triggers
                                               the double click. */
     } db;
@@ -150,13 +144,13 @@ DE_PIMPL_NOREF(ImpulseAccumulator)
                                impulse.name << (localPlayer + 1) << newState
                                << (nowTime - db.previousClickTime) << symbolicName);
 
-            ddevent_t ev; de::zap(ev);
+            ddevent_t ev{};
             ev.device = uint(-1);
             ev.type   = E_SYMBOLIC;
             ev.symbolic.id   = playerNum;
             ev.symbolic.name = symbolicName;
 
-            inputSys().postEvent(&ev); // makes a copy.
+            inputSys().postEvent(ev); // makes a copy.
         }
 
         db.previousClickTime  = nowTime;

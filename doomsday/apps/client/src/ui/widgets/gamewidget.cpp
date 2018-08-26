@@ -27,6 +27,7 @@
 #include "ui/sys_input.h"
 #include "ui/busyvisual.h"
 #include "ui/clientwindowsystem.h"
+#include "ui/inputsystem.h"
 #include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/busywidget.h"
@@ -353,8 +354,8 @@ bool GameWidget::handleEvent(Event const &event)
             // Click completed on the widget, trap the mouse.
             window.eventHandler().trapMouse();
             window.taskBar().close();
-            root().setFocus(0);         // Allow input to reach here.
-            root().clearFocusStack();   // Ensure no popups steal focus away.
+            root().setFocus(this);         // Allow input to reach here.
+//            root().clearFocusStack();   // Ensure no popups steal focus away.
             break;
 
         default:
@@ -363,15 +364,28 @@ bool GameWidget::handleEvent(Event const &event)
         }
     }
 
-    if (event.type() == Event::KeyPress ||
-        event.type() == Event::KeyRepeat ||
-        event.type() == Event::KeyRelease)
+//    if (hasFocus())
     {
-        KeyEvent const &ev = event.as<KeyEvent>();
-        Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :
-                        ev.state() == KeyEvent::Repeat?  IKE_REPEAT :
-                                                         IKE_UP,
-                        ev.ddKey(), ev.scancode(), ev.text());
+        switch (event.type())
+        {
+        case Event::KeyPress:
+        case Event::KeyRepeat:
+        case Event::KeyRelease:
+            InputSystem::get().postKeyboardEvent(event.as<KeyEvent>());
+            return true;
+
+        case Event::MouseButton:
+        case Event::MouseMotion:
+        case Event::MouseWheel:
+            InputSystem::get().postMouseEvent(event.as<MouseEvent>());
+            return true;
+
+//            const auto &ev = event.as<KeyEvent>();
+//            Keyboard_Submit(ev.state() == KeyEvent::Pressed? IKE_DOWN :
+//                            ev.state() == KeyEvent::Repeat?  IKE_REPEAT :
+//                                                             IKE_UP,
+//                            ev.ddKey(), ev.scancode(), ev.text());
+        }
     }
 
     return false;

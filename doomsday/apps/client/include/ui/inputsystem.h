@@ -20,16 +20,21 @@
 #ifndef CLIENT_INPUTSYSTEM_H
 #define CLIENT_INPUTSYSTEM_H
 
-#include <functional>
 #include <de/Error>
 #include <de/Record>
 #include <de/System>
+
 #include "ddevent.h"
 #include "ConfigProfiles"
 
 class BindContext;
 class InputDevice;
 class ControllerPresets;
+
+namespace de {
+class KeyEvent;
+class MouseEvent;
+} // namespace de
 
 #define DEFAULT_BINDING_CONTEXT_NAME    "game"
 #define CONSOLE_BINDING_CONTEXT_NAME    "console"
@@ -63,6 +68,7 @@ class InputSystem : public de::System
 public:
     static InputSystem &get();
 
+public:
     InputSystem();
 
     ConfigProfiles &settings();
@@ -119,10 +125,14 @@ public: // Event processing --------------------------------------------------
 
     bool ignoreEvents(bool yes = true);
 
+    void postKeyboardEvent(const de::KeyEvent &ev);
+
+    void postMouseEvent(const de::MouseEvent &ev);
+
     /**
      * @param ev  A copy is made.
      */
-    void postEvent(ddevent_t *ev);
+    void postEvent(const ddevent_t &ev);
 
     /**
      * Process all incoming input for the given timestamp.

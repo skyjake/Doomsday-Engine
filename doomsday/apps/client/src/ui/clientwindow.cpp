@@ -565,14 +565,15 @@ DE_PIMPL(ClientWindow)
 //        DE_ASSERT_FAIL("Change mouse state with SDL?");
     }
 
+#if 0
     /**
-     * Handles an event that BaseWindow (and thus WindowSystem) didn't have use for.
+     * Handles an event that was not eaten by any widget.
      *
      * @param event  Event to handle.
      */
     bool handleFallbackEvent(Event const &ev)
     {
-        if (MouseEvent const *mouse = maybeAs<MouseEvent>(ev))
+        if (const MouseEvent *mouse = maybeAs<MouseEvent>(ev))
         {
             // Fall back to legacy handling.
             switch (ev.type())
@@ -610,6 +611,7 @@ DE_PIMPL(ClientWindow)
         }
         return false;
     }
+#endif
 
     void windowFocusChanged(GLWindow &, bool hasFocus) override
     {
@@ -639,12 +641,12 @@ DE_PIMPL(ClientWindow)
         }
 
         // Generate an event about this.
-        ddevent_t ev; de::zap(ev);
+        ddevent_t ev{};
         ev.device         = -1;
         ev.type           = E_FOCUS;
         ev.focus.gained   = hasFocus;
         ev.focus.inWindow = 1;         /// @todo Ask WindowSystem for an identifier number.
-        InputSystem::get().postEvent(&ev);
+        InputSystem::get().postEvent(ev);
     }
 
     void updateFpsNotification(float fps)

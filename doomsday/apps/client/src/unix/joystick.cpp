@@ -21,9 +21,7 @@
  */
 
 #include <stdlib.h>
-#ifndef DE_NO_SDL
-#  include <SDL.h>
-#endif
+#include <SDL.h>
 
 #include "de_base.h"
 #include "ui/joystick.h"
@@ -36,12 +34,10 @@ int     joydevice = 0;          // Joystick index to use (cvar)
 byte    useJoystickCvar = true; // Joystick input enabled? (cvar)
 
 static dd_bool joyInited;
-static byte joyAvailable; // Input enabled from a source?
+static byte    joyAvailable; // Input enabled from a source?
 static dd_bool joyButtonWasDown[IJOY_MAXBUTTONS];
 
-#ifndef DE_NO_SDL
 static SDL_Joystick *joy;
-#endif
 
 void Joystick_Register(void)
 {
