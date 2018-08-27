@@ -1123,94 +1123,56 @@ void InputSystem::postMouseEvent(const MouseEvent &event)
 
     switch (event.type())
     {
-        case Event::MouseMotion:
+    case Event::MouseMotion:
+    {
+        ev.type      = E_AXIS;
+        ev.axis.type = EAXIS_RELATIVE;
+
+        // Post an event per axis.
+        if (event.pos().x)
         {
-            ev.type      = E_AXIS;
-            ev.axis.type = EAXIS_RELATIVE;
-
-            // Post an event per axis.
-            if (event.pos().x)
-            {
-                ev.axis.id  = 0;
-                ev.axis.pos = event.pos().x;
-                postEvent(ev);
-            }
-            if (event.pos().y)
-            {
-                ev.axis.id  = 1;
-                ev.axis.pos = -event.pos().y;
-                postEvent(ev);
-            }
-            break;
-        }
-
-        case Event::MouseWheel:
-        {
-            break;
-        }
-
-        case Event::MouseButton:
-        {
-            ev.type = E_TOGGLE;
-
-            if (event.state() == MouseEvent::DoubleClick)
-                break;
-
-            const auto btn = event.button();
-
-            ev.toggle.id = (btn == MouseEvent::Left     ? IMB_LEFT   :
-                            btn == MouseEvent::Middle   ? IMB_MIDDLE :
-                            btn == MouseEvent::Right    ? IMB_RIGHT  :
-                            btn == MouseEvent::XButton1 ? IMB_EXTRA1 :
-                            btn == MouseEvent::XButton2 ? IMB_EXTRA2 : -1);
-
-            if (ev.toggle.id < 0) break;
-
-            ev.toggle.state = (event.state() == MouseEvent::Pressed ? ETOG_DOWN : ETOG_UP);
-
+            ev.axis.id  = 0;
+            ev.axis.pos = event.pos().x;
             postEvent(ev);
-
-                //while (mouse.buttonDowns[i] > 0 || mouse.buttonUps[i] > 0)
-//                {
-//                    if (mouse.buttonDowns[i]-- > 0)
-//                    {
-//                        ev.toggle.state = ETOG_DOWN;
-//                        LOG_INPUT_XVERBOSE("Mouse button %i down", i);
-//                        self().postEvent(&ev);
-//                    }
-//                    if (mouse.buttonUps[i]-- > 0)
-//                    {
-//                        ev.toggle.state = ETOG_UP;
-//                        LOG_INPUT_XVERBOSE("Mouse button %i up", i);
-//                        self().postEvent(&ev);
-//                    }
-//                }
-//            }
-            break;
         }
-    }
-
-//    {
-//        ev.axis.type = EAXIS_RELATIVE;
-//        ypos = -ypos;
-//    }
-
-
-/*    // Some very verbose output about mouse buttons.
-    int i = 0;
-    for (; i < IMB_MAXBUTTONS; ++i)
-    {
-        if (mouse.buttonDowns[i] || mouse.buttonUps[i])
-            break;
-    }
-    if (i < IMB_MAXBUTTONS)
-    {
-        for (i = 0; i < IMB_MAXBUTTONS; ++i)
+        if (event.pos().y)
         {
-            LOGDEV_INPUT_XVERBOSE("[%02i] %i/%i", i << mouse.buttonDowns[i] << mouse.buttonUps[i]);
+            ev.axis.id  = 1;
+            ev.axis.pos = -event.pos().y;
+            postEvent(ev);
         }
-    }*/
+        break;
+    }
 
+    case Event::MouseWheel:
+    {
+        break;
+    }
+
+    case Event::MouseButton:
+    {
+        ev.type = E_TOGGLE;
+
+        if (event.state() == MouseEvent::DoubleClick)
+            break;
+
+        const auto btn = event.button();
+
+        ev.toggle.id = (btn == MouseEvent::Left     ? IMB_LEFT   :
+                        btn == MouseEvent::Middle   ? IMB_MIDDLE :
+                        btn == MouseEvent::Right    ? IMB_RIGHT  :
+                        btn == MouseEvent::XButton1 ? IMB_EXTRA1 :
+                        btn == MouseEvent::XButton2 ? IMB_EXTRA2 : -1);
+
+        if (ev.toggle.id < 0) break;
+
+        ev.toggle.state = (event.state() == MouseEvent::Pressed ? ETOG_DOWN : ETOG_UP);
+
+        postEvent(ev);
+
+        break;
+    }
+    } // switch
 }
 
 /// @note Called by the I/O functions when input is detected.
