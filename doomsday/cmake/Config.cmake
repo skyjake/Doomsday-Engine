@@ -30,7 +30,7 @@ if (NOT DE_SDK_DIR STREQUAL "")
     list (APPEND CMAKE_PREFIX_PATH "${DE_SDK_DIR}/${DE_INSTALL_LIB_DIR}")
 endif ()
 
-find_package (CPlus REQUIRED)
+find_package (the_Foundation REQUIRED)
 
 # Platform-Specific Configuration --------------------------------------------
 

@@ -51,7 +51,7 @@ deng_deploy_library (libgloom DengGloom)
 #         Deng::libshell
 #         Deng::liblegacy
 #         Deng::libdoomsday
-#         CPlus::cplus
+#         the_Foundation::the_Foundation
 #         fmodex
 #     )
 #     deng_install_deployqt (gloom)

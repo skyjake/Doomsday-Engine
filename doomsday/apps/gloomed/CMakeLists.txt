@@ -32,7 +32,7 @@ if (APPLE)
      )
     deng_install_bundle_deps (gloomed
         fmodex
-        CPlus::cplus
+        the_Foundation::the_Foundation
         Deng::libcore
         Deng::libgui
         Deng::libappfw

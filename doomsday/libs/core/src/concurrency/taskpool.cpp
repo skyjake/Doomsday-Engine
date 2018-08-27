@@ -25,7 +25,7 @@
 #include <de/Loop>
 #include <de/Waitable>
 
-#include <c_plus/threadpool.h>
+#include <the_Foundation/threadpool.h>
 
 namespace de {
 namespace internal {

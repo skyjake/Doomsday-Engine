@@ -56,7 +56,7 @@
 #  include <locale.h>
 #endif
 
-#include <c_plus/thread.h>
+#include <the_Foundation/thread.h>
 
 namespace de {
 
@@ -412,7 +412,7 @@ DE_AUDIENCE_METHOD(App, StartupComplete)
 App::App(const StringList &args)
     : d(new Impl(this, args))
 {
-    init_CPlus();
+    init_Foundation();
 
     d->unixInfo.reset(new UnixInfo);
 
@@ -509,7 +509,7 @@ String App::reverseDomainIdentifier() const
     }
     return rdi.concatenateMember(unixEtcFolderName());
 }
-    
+
 void App::setTerminateFunc(void (*func)(char const *))
 {
     d->terminateFunc = func;
@@ -690,7 +690,7 @@ NativePath App::tempPath()
 NativePath App::cachePath()
 {
     NativePath dir;
-    
+
     #if defined (MACOSX)
     {
         dir = NativePath::homePath() / "Library/Caches" / app().reverseDomainIdentifier();
@@ -701,7 +701,7 @@ NativePath App::cachePath()
         return NativePath();
     }
     #endif
-    
+
     // Make sure the directory actually exists.
     if (!dir.exists())
     {

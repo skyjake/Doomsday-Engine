@@ -34,7 +34,7 @@
 #include <SDL.h>
 
 #include <fstream>
-#include <c_plus/thread.h>
+#include <the_Foundation/thread.h>
 
 namespace de {
 

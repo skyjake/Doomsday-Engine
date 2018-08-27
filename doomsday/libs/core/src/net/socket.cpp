@@ -73,7 +73,7 @@
 #include "de/Reader"
 #include "de/data/huffman.h"
 
-#include <c_plus/object.h>
+#include <the_Foundation/object.h>
 
 namespace de {
 
@@ -212,7 +212,7 @@ DE_PIMPL_NOREF(Socket)
     duint activeChannel = 0;
 
     /// Pointer to the internal socket data.
-    cplus::ref<iSocket> socket;
+    tF::ref<iSocket> socket;
 
     /// Buffer for incoming received messages.
     List<Message *> receivedMessages;

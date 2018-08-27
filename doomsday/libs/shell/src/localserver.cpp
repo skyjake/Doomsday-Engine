@@ -37,7 +37,7 @@ DE_PIMPL_NOREF(LocalServer)
     String     name;
     NativePath userDir;
 
-    cplus::ref<iProcess> proc;
+    tF::ref<iProcess> proc;
 };
 
 LocalServer::LocalServer() : d(new Impl)

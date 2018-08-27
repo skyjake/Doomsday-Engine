@@ -21,8 +21,8 @@
 #include "de/TaskPool"
 #include "de/Address"
 
-#include <c_plus/object.h>
-#include <c_plus/objectlist.h>
+#include <the_Foundation/object.h>
+#include <the_Foundation/objectlist.h>
 
 namespace de {
 namespace internal {
@@ -82,7 +82,7 @@ DE_PIMPL_NOREF(NetworkInterfaces), public Lockable
     void update()
     {
         interfaces.clear();
-        cplus::ref<iObjectList> infs(networkInterfaces_Address());
+        tF::ref<iObjectList> infs(networkInterfaces_Address());
         iConstForEach(ObjectList, i, infs)
         {
             interfaces << Address(reinterpret_cast<const iAddress *>(i.object));

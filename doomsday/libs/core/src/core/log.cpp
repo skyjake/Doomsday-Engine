@@ -28,7 +28,7 @@
 #include "../src/core/logtextstyle.h"
 
 #include <array>
-#include <c_plus/stdthreads.h>
+#include <the_Foundation/stdthreads.h>
 
 namespace de {
 

@@ -21,7 +21,7 @@
 
 #include "../Range"
 #include "../String"
-#include <c_plus/string.h>
+#include <the_Foundation/string.h>
 #include <string>
 
 namespace de {

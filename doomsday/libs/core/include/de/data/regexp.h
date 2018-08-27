@@ -20,8 +20,8 @@
 #define LIBCORE_REGEXP_H
 
 #include "../CString"
-#include <c_plus/object.h>
-#include <c_plus/regexp.h>
+#include <the_Foundation/object.h>
+#include <the_Foundation/regexp.h>
 
 namespace de {
 
@@ -58,7 +58,7 @@ public:
     static const RegExp WHITESPACE;
 
 private:
-    cplus::ref<iRegExp> _d;
+    tF::ref<iRegExp> _d;
 };
 
 } // namespace de

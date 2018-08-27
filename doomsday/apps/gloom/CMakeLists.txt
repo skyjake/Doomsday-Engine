@@ -50,7 +50,7 @@ if (APPLE)
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Gloom")
     deng_install_bundle_deps (gloom
         fmodex
-        CPlus::cplus
+        the_Foundation::the_Foundation
         Deng::libcore
         Deng::libgui
         Deng::libappfw

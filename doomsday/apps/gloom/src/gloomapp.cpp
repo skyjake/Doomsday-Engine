@@ -34,7 +34,7 @@
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
 
-#include <c_plus/datagram.h>
+#include <the_Foundation/datagram.h>
 
 using namespace de;
 using namespace gloom;
@@ -44,7 +44,7 @@ static const duint16 COMMAND_PORT = 14666;
 DE_PIMPL(GloomApp)
 {
     ImageBank                        images;
-    cplus::ref<iDatagram>            commandSocket;
+    tF::ref<iDatagram>            commandSocket;
     Beacon                           beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;

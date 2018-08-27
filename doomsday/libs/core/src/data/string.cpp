@@ -24,7 +24,7 @@
 #include "de/Path"
 #include "de/charsymbols.h"
 
-#include <c_plus/path.h>
+#include <the_Foundation/path.h>
 #include <cstdio>
 #include <cstdarg>
 #include <cerrno>

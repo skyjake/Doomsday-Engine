@@ -22,8 +22,8 @@
 #include "de/NativePath"
 #include "de/App"
 
-#include <c_plus/fileinfo.h>
-#include <c_plus/path.h>
+#include <the_Foundation/fileinfo.h>
+#include <the_Foundation/path.h>
 #include <cstdio>
 
 /**
@@ -161,7 +161,7 @@ bool NativePath::isRelative() const
 
 bool NativePath::isDirectory() const
 {
-    cplus::ref<iFileInfo> i(new_FileInfo(toString()));
+    tF::ref<iFileInfo> i(new_FileInfo(toString()));
     return exists_FileInfo(i) && isDirectory_FileInfo(i);
 }
 

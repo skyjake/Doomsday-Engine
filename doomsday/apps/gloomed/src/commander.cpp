@@ -24,8 +24,8 @@
 #include <de/CommandLine>
 #include <de/Info>
 #include <de/Waitable>
-#include <c_plus/datagram.h>
-#include <c_plus/process.h>
+#include <the_Foundation/datagram.h>
+#include <the_Foundation/process.h>
 
 #include <QApplication>
 #include <QDebug>
@@ -38,10 +38,10 @@ DE_PIMPL(Commander)
 , DE_OBSERVES(Beacon, Discovery)
 , public Waitable
 {
-    cplus::ref<iProcess>  proc;
+    tF::ref<iProcess>  proc;
     Beacon                beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
     Address               address;
-    cplus::ref<iDatagram> commandSocket;
+    tF::ref<iDatagram> commandSocket;
 
     Impl(Public *i) : Base(i)
     {

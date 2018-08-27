@@ -268,7 +268,7 @@ endif ()
 
 if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
-        CPlus::cplus
+        the_Foundation::the_Foundation
         Deng::libcore
         Deng::libshell
         Deng::libgui

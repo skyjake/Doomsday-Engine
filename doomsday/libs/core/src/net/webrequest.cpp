@@ -20,7 +20,7 @@
 #include "de/RegExp"
 #include "de/Async"
 
-#include <c_plus/webrequest.h>
+#include <the_Foundation/webrequest.h>
 
 namespace de {
 
@@ -36,7 +36,7 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
 
     String userAgent;
     Status status = Initialized;
-    cplus::ref<iWebRequest> web;
+    tF::ref<iWebRequest> web;
 
     Impl(Public *i) : Base(i)
     {
