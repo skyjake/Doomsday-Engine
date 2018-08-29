@@ -36,7 +36,8 @@
 #define BONUSADD            (6)
 
 // Maximum number of rounds for each ammo type.
-int maxAmmo[NUM_AMMO_TYPES]      = { 100, 50, 200, 200, 20, 150 };
+// (initialized in initAmmoInfo())
+int maxAmmo[NUM_AMMO_TYPES];
 
 // Numer of rounds to give with a backpack for each ammo type.
 int backpackAmmo[NUM_AMMO_TYPES] = { 10, 5, 10, 20, 1, 0 };

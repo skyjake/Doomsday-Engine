@@ -322,6 +322,34 @@ void H_PreInit()
     G_CommonPreInit();
 }
 
+static void initAmmoInfo()
+{
+    static const int defaultMaxAmmo[NUM_AMMO_TYPES] = {100, 50, 200, 200, 20, 150};
+
+    static const char *ammoName[NUM_AMMO_TYPES] = {
+        "Crystal",
+        "Arrow",
+        "Orb",
+        "Rune",
+        "FireOrb",
+        "MSphere",
+    };
+
+    for (int i = AT_FIRST; i < NUM_AMMO_TYPES; ++i)
+    {
+        const String name = ammoName[i];
+        if (const ded_value_t *value = Defs().getValueById("Player|Max ammo|" + name))
+        {
+            // Note: `maxAmmo` is a global variable from p_inter.c
+            maxAmmo[i] = String(value->text).toInt();
+        }
+        else
+        {
+            maxAmmo[i] = defaultMaxAmmo[i];
+        }
+    }
+}
+
 void H_PostInit()
 {
     CommandLine &cmdLine = DENG2_APP->commandLine();
@@ -332,6 +360,7 @@ void H_PostInit()
 
     G_CommonPostInit();
 
+    initAmmoInfo();
     P_InitWeaponInfo();
     IN_Init();
 
