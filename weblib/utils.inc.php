@@ -60,7 +60,7 @@ function user_download_platform()
     switch (detect_user_platform()) {
         case 'windows': $dl_plat = 'win-x64';         break;
         case 'macx':    $dl_plat = 'mac10_10-x86_64'; break;
-        case 'linux':   $dl_plat = 'ubuntu16-x86_64'; break;
+        case 'linux':   $dl_plat = 'ubuntu18-x86_64'; break;
         default:        $dl_plat = 'source';          break;
     }
     return $dl_plat;

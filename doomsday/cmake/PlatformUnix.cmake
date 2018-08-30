@@ -33,7 +33,7 @@ else ()
 endif ()
 
 if (CPACK_GENERATOR STREQUAL DEB)
-    add_definitions (-DDENG_PLATFORM_ID="ubuntu16-${DENG_ARCH}")
+    add_definitions (-DDENG_PLATFORM_ID="ubuntu18-${DENG_ARCH}")
 elseif (CPACK_GENERATOR STREQUAL RPM)
     add_definitions (-DDENG_PLATFORM_ID="fedora23-${DENG_ARCH}")
 else ()

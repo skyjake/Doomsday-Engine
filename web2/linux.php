@@ -26,7 +26,7 @@ generate_page_header($page_title);
         <h1>Unstable</h1>
         <p>Unstable builds are made automatically every day when changes are committed to the <a href="source">source repository</a>. They contain work-in-progress code and sometimes may crash on you. Change logs can be found in the <a href="/builds">Autobuilder</a>.</p>
         <?php 
-        generate_badges('ubuntu16-x86_64', BT_UNSTABLE);
+        generate_badges('ubuntu18-x86_64', BT_UNSTABLE);
         generate_badges('fedora23-x86_64', BT_UNSTABLE);
         ?>
     </article>
