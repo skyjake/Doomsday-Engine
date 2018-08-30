@@ -113,6 +113,7 @@ function generate_sitemap()
         Assets from the original games remain under their original copyright. 
         Doomsday logo created by Daniel Swanson.
         <a href='$site_root'>dengine.net</a> website design by Jaakko Ker&auml;nen &copy; 2017. 
+        <p><a href='http://dengine.net/donate'>Donate to support the project</a></p>
     </div>
 </div>");
 }

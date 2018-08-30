@@ -90,3 +90,6 @@
     color: #ddd;
     text-decoration: underline;
 }
+#credits p {
+    text-align: center;
+}
