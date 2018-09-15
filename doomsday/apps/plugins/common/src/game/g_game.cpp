@@ -2919,6 +2919,9 @@ static void registerGameStatusCVars()
         {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
         {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
         {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_NINETH], 0, 0, 0},
+    #if __JDOOM64__
+        {"player-weapon-unmaker", READONLYCVAR, CVT_INT, &gsvWeapons[WT_TENTH], 0, 0, 0},
+    #endif
         // Keys
         {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUECARD], 0, 0, 0},
         {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWCARD], 0, 0, 0},

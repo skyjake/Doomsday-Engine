@@ -1949,6 +1949,9 @@ void Player_UpdateStatusCVars(player_t const *player)
         /* WT_SEVENTH */ { "player-weapon-bfg", CVAR_DELIM },
         /* WT_EIGHTH */  { "player-weapon-chainsaw", CVAR_DELIM },
         /* WT_NINETH */  { "player-weapon-sshotgun", CVAR_DELIM },
+    #if __JDOOM64__
+        /* WT_TENTH */   { "player-weapon-unmaker", CVAR_DELIM },
+    #endif
 #elif __JHERETIC__
         /* WT_FIRST */   { "player-weapon-staff", CVAR_DELIM },
         /* WT_SECOND */  { "player-weapon-goldwand", CVAR_DELIM },
