@@ -123,7 +123,7 @@ public:
 #endif
 
     static void setSwapInterval(int interval);
-    static void setLineWidth(float lineWidth);
+//    static void setLineWidth(float lineWidth);
 
     static void checkError(char const *file, int line);
 

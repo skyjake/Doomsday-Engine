@@ -21,7 +21,9 @@
 DENG_LAYOUT_LOC(0) DENG_ATTRIB vec4 aVertex;
 DENG_LAYOUT_LOC(1) DENG_ATTRIB vec4 aColor;
 DENG_LAYOUT_LOC(2) DENG_ATTRIB vec2 aTexCoord[2];
+DENG_LAYOUT_LOC(4) DENG_ATTRIB vec2 aFragOffset;
 
+uniform vec2 uFragmentSize; // used for line width
 uniform mat4 uMvpMatrix;
 uniform mat4 uTexMatrix0;
 uniform mat4 uTexMatrix1;
@@ -29,7 +31,7 @@ uniform mat4 uTexMatrix1;
 DENG_VAR vec4 vColor;
 DENG_VAR vec2 vTexCoord[2];
 
-vec2 transformTexCoord(const mat4 matrix, const vec2 tc) 
+vec2 transformTexCoord(const mat4 matrix, const vec2 tc)
 {
     vec4 coord = vec4(tc.s, tc.t, 0.0, 1.0);
     return (matrix * coord).xy;
@@ -38,7 +40,14 @@ vec2 transformTexCoord(const mat4 matrix, const vec2 tc)
 void main()
 {
     gl_Position = uMvpMatrix * aVertex;
-    vColor = aColor;    
+
+    if (uFragmentSize != vec2(0.0))
+    {
+        gl_Position.xy += normalize(mat2(uMvpMatrix) * aFragOffset) *
+                          uFragmentSize * gl_Position.w;
+    }
+
+    vColor = aColor;
     vTexCoord[0] = transformTexCoord(uTexMatrix0, aTexCoord[0]);
     vTexCoord[1] = transformTexCoord(uTexMatrix1, aTexCoord[1]);
 }

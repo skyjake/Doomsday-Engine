@@ -46,15 +46,16 @@ struct DGLDrawState
         Vector3f  vertex;
         Vector4ub color { 255, 255, 255, 255 };
         Vector2f  texCoord[MAX_TEX_COORDS];
+        float     fragOffset[2] { 0, 0 }; // Multiplied by uFragmentOffset
 
         Vertex() {}
 
-        Vertex(Vertex const &other)
+        Vertex(const Vertex &other)
         {
             std::memcpy(this, &other, sizeof(Vertex));
         }
 
-        Vertex &operator = (Vertex const &other)
+        Vertex &operator=(const Vertex &other)
         {
             std::memcpy(this, &other, sizeof(Vertex));
             return *this;
@@ -68,16 +69,20 @@ struct DGLDrawState
         VAA_COLOR,
         VAA_TEXCOORD0,
         VAA_TEXCOORD1,
+        VAA_FRAG_OFFSET,
         NUM_VERTEX_ATTRIB_ARRAYS
     };
 
-    dglprimtype_t primType = DGL_NO_PRIMITIVE;
-    int primIndex = 0;
+    dglprimtype_t   primType  = DGL_NO_PRIMITIVE;
+    int             primIndex = 0;
+    Vertex          currentVertex;
+    Vertex          primVertices[4];
     QVector<Vertex> vertices;
 
     struct GLData
     {
         GLProgram shader;
+        GLUniform uFragmentSize { "uFragmentSize", GLUniform::Vec2  };
         GLUniform uMvpMatrix    { "uMvpMatrix",    GLUniform::Mat4  };
         GLUniform uTexMatrix0   { "uTexMatrix0",   GLUniform::Mat4  };
         GLUniform uTexMatrix1   { "uTexMatrix1",   GLUniform::Mat4  };
@@ -87,9 +92,10 @@ struct DGLDrawState
         GLUniform uAlphaLimit   { "uAlphaLimit",   GLUniform::Float };
         GLUniform uFogRange     { "uFogRange",     GLUniform::Vec4  };
         GLUniform uFogColor     { "uFogColor",     GLUniform::Vec4  };
+
         struct DrawBuffer
         {
-            GLuint vertexArray = 0;
+            GLuint   vertexArray = 0;
             GLBuffer arrayData;
 
             void release()
@@ -100,6 +106,7 @@ struct DGLDrawState
                 arrayData.clear();
             }
         };
+
         QVector<DrawBuffer *> buffers;
         int bufferPos = 0;
     };
@@ -110,12 +117,154 @@ struct DGLDrawState
         clearVertices();
     }
 
+    void commitLine(Vertex start, Vertex end)
+    {
+        const Vector2f lineDir = (end.vertex - start.vertex).normalize();
+        const Vector2f lineNormal{-lineDir.y, lineDir.x};
+
+        const bool disjoint = !vertices.empty();
+        if (disjoint)
+        {
+            vertices.push_back(vertices.back());
+        }
+
+        // Start cap.
+        {
+            start.fragOffset[0] = -lineNormal.x;
+            start.fragOffset[1] = -lineNormal.y;
+            vertices.push_back(start);
+            if (disjoint)
+            {
+                vertices.push_back(start);
+            }
+            start.fragOffset[0] = lineNormal.x;
+            start.fragOffset[1] = lineNormal.y;
+            vertices.push_back(start);
+        }
+
+        // End cap.
+        {
+            end.fragOffset[0] = -lineNormal.x;
+            end.fragOffset[1] = -lineNormal.y;
+            vertices.push_back(end);
+            end.fragOffset[0] = lineNormal.x;
+            end.fragOffset[1] = lineNormal.y;
+            vertices.push_back(end);
+        }
+    }
+
     void commitVertex()
     {
-        vertices.append(vertices.last());
         ++primIndex;
 
-        if (primType == DGL_QUADS)
+        switch (primType)
+        {
+            case DGL_QUADS:
+                primVertices[primIndex - 1] = currentVertex;
+                if (primIndex == 4)
+                {
+                    // 4 vertices become 6.
+                    //
+                    // 0--1     0--1   5
+                    // |  |      \ |   |\
+                    // |  |  =>   \|   | \
+                    // 3--2        2   4--3
+
+                    /*vertices.push_back(vertices.last());
+                    vertices.push_back(vertices.last());
+
+                    // 0 1 2  3 3 3  X
+                    int const N = vertices.size();
+                    vertices[N - 4] = vertices[N - 5];
+                    vertices[N - 2] = vertices[N - 7];*/
+
+                    vertices.push_back(primVertices[0]);
+                    vertices.push_back(primVertices[1]);
+                    vertices.push_back(primVertices[2]);
+
+                    vertices.push_back(primVertices[0]);
+                    vertices.push_back(primVertices[2]);
+                    vertices.push_back(primVertices[3]);
+
+                    primIndex = 0;
+                }
+                break;
+
+            case DGL_LINES:
+                primVertices[primIndex - 1] = currentVertex;
+                if (primIndex == 2)
+                {
+                    commitLine(primVertices[0], primVertices[1]);
+                    primIndex = 0;
+                }
+                break;
+
+            case DGL_LINE_LOOP:
+            case DGL_LINE_STRIP:
+                // Compose a triangle strip.
+                if (primIndex == 1)
+                {
+                    // Remember the first one for a loop.
+                    primVertices[0] = currentVertex;
+                }
+                if (primIndex > 1)
+                {
+                    commitLine(primVertices[1], currentVertex);
+                }
+                primVertices[1] = currentVertex;
+                break;
+
+            default:
+                vertices.push_back(currentVertex);
+                break;
+        }
+/*
+        if (primType == DGL_LINES)
+        {
+            if (primType == 1)
+            {
+                // Replace the last two vertices with a disjoint triangle strip.
+
+                Vertex end   = vertices.takeLast();
+                Vertex start = vertices.takeLast();
+
+                const Vector2f lineDir = (end.vertex - start.vertex).normalize();
+                const Vector2f lineNormal{-lineDir.y, lineDir.x};
+
+                const bool disjoint = !vertices.empty();
+                if (disjoint)
+                {
+                    vertices.push_back(vertices.back());
+                }
+
+                // Start cap.
+                start.fragOffset[0] = -lineNormal.x;
+                start.fragOffset[1] = -lineNormal.y;
+                vertices.push_back(start);
+                if (disjoint)
+                {
+                    vertices.push_back(start);
+                }
+                start.fragOffset[0] = lineNormal.x;
+                start.fragOffset[1] = lineNormal.y;
+                vertices.push_back(start);
+
+                // End cap.
+                end.fragOffset[0] = -lineNormal.x;
+                end.fragOffset[1] = -lineNormal.y;
+                vertices.push_back(end);
+                end.fragOffset[0] = lineNormal.x;
+                end.fragOffset[1] = lineNormal.y;
+                vertices.push_back(end);
+
+                primIndex = 0;
+            }
+        }
+        else if (primType == DGL_LINE_STRIP || primType == DGL_LINE_LOOP)
+        {
+
+        }
+        else if (primType == DGL_QUADS)
         {
             if (primIndex == 4)
             {
@@ -136,30 +285,23 @@ struct DGLDrawState
 
                 primIndex = 0;
             }
-        }
+        }*/
     }
 
     void clearVertices()
     {
-        Vertex const last = (vertices.isEmpty()? Vertex() : vertices.last());
+        // currentVertex is unaffected.
         vertices.clear();
-        vertices.append(last);
         primIndex = 0;
         primType  = DGL_NO_PRIMITIVE;
     }
 
-    int numVertices() const
+    inline int numVertices() const
     {
-        // The last one is always the incomplete one.
-        return vertices.size() - 1;
+        return vertices.size();
     }
 
-    Vertex &vertex()
-    {
-        return vertices.last();
-    }
-
-    static Vector4ub colorFromFloat(Vector4f const &color)
+    static Vector4ub colorFromFloat(const Vector4f &color)
     {
         Vector4i rgba = (color * 255 + Vector4f(0.5f, 0.5f, 0.5f, 0.5f))
                 .toVector4i()
@@ -178,8 +320,13 @@ struct DGLDrawState
 
     void endPrimitive()
     {
-        if (primType != DGL_NO_PRIMITIVE)
+        if (primType != DGL_NO_PRIMITIVE && !vertices.empty())
         {
+            if (primType == DGL_LINE_LOOP)
+            {
+                // Close the loop.
+                commitLine(currentVertex, primVertices[0]);
+            }
             drawPrimitives();
         }
         clearVertices();
@@ -195,6 +342,7 @@ struct DGLDrawState
 
             // Set up the shader.
             ClientApp::shaders().build(gl->shader, "dgl.draw")
+                    << gl->uFragmentSize
                     << gl->uMvpMatrix
                     << gl->uTexMatrix0
                     << gl->uTexMatrix1
@@ -258,7 +406,7 @@ struct DGLDrawState
 
     void glBindArrays()
     {
-        uint const stride = sizeof(Vertex);
+        const uint stride = sizeof(Vertex);
         auto &GL = LIBGUI_GL;
 
         // Upload the vertex data.
@@ -278,13 +426,14 @@ struct DGLDrawState
         GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
         LIBGUI_ASSERT_GL_OK();
 
-        Vertex const *basePtr = nullptr;
+        const Vertex *basePtr = nullptr;
 
         // Updated pointers.
-        GL.glVertexAttribPointer(VAA_VERTEX,    3, GL_FLOAT,         GL_FALSE, stride, &basePtr->vertex);
-        GL.glVertexAttribPointer(VAA_COLOR,     4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, &basePtr->color);
-        GL.glVertexAttribPointer(VAA_TEXCOORD0, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[0]);
-        GL.glVertexAttribPointer(VAA_TEXCOORD1, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[1]);
+        GL.glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, &basePtr->vertex);
+        GL.glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, &basePtr->color);
+        GL.glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[0]);
+        GL.glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[1]);
+        GL.glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->fragOffset[0]);
         LIBGUI_ASSERT_GL_OK();
 
         GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -310,9 +459,9 @@ struct DGLDrawState
         switch (primType)
         {
         case DGL_POINTS:            return GL_POINTS;
-        case DGL_LINES:             return GL_LINES;
-        case DGL_LINE_LOOP:         return GL_LINE_LOOP;
-        case DGL_LINE_STRIP:        return GL_LINE_STRIP;
+        case DGL_LINES:             return GL_TRIANGLE_STRIP;
+        case DGL_LINE_LOOP:         return GL_TRIANGLE_STRIP;
+        case DGL_LINE_STRIP:        return GL_TRIANGLE_STRIP;
         case DGL_TRIANGLES:         return GL_TRIANGLES;
         case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_FAN;
         case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
@@ -330,7 +479,7 @@ struct DGLDrawState
     {
         glInit();
 
-        GLState const &glState = GLState::current();
+        const GLState &glState = GLState::current();
 
         // Update uniforms.
         gl->uMvpMatrix    = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
@@ -341,6 +490,15 @@ struct DGLDrawState
         gl->uTexMode      = DGL_GetInteger(DGL_MODULATE_TEXTURE);
         gl->uTexModeColor = DGL_ModulationColor();
         gl->uAlphaLimit   = (glState.alphaTest()? glState.alphaLimit() : -1.f);
+        if (primType == DGL_LINES || primType == DGL_LINE_STRIP || primType == DGL_LINE_LOOP)
+        {
+            gl->uFragmentSize = Vector2f(GL_state.currentLineWidth, GL_state.currentLineWidth) /
+                                glState.target().size();
+        }
+        else
+        {
+            gl->uFragmentSize = Vector2f();
+        }
         DGL_FogParams(gl->uFogRange, gl->uFogColor);
 
         glState.apply();
@@ -374,12 +532,12 @@ void DGL_BeginFrame()
 
 void DGL_CurrentColor(DGLubyte *rgba)
 {
-    std::memcpy(rgba, dglDraw.vertex().color.constPtr(), 4);
+    std::memcpy(rgba, dglDraw.currentVertex.color.constPtr(), 4);
 }
 
 void DGL_CurrentColor(float *rgba)
 {
-    Vector4f colorf = Vector4ub(dglDraw.vertex().color).toVector4f() / 255.0;
+    Vector4f colorf = Vector4ub(dglDraw.currentVertex.color).toVector4f() / 255.0;
     std::memcpy(rgba, colorf.constPtr(), sizeof(float) * 4);
 }
 
@@ -388,7 +546,7 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = Vector4ub(r, g, b, 255);
+    dglDraw.currentVertex.color = Vector4ub(r, g, b, 255);
 }
 
 #undef DGL_Color3ubv
@@ -396,7 +554,7 @@ DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = Vector4ub(Vector3ub(vec), 255);
+    dglDraw.currentVertex.color = Vector4ub(Vector3ub(vec), 255);
 }
 
 #undef DGL_Color4ub
@@ -404,7 +562,7 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = Vector4ub(r, g, b, a);
+    dglDraw.currentVertex.color = Vector4ub(r, g, b, a);
 }
 
 #undef DGL_Color4ubv
@@ -412,7 +570,7 @@ DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = Vector4ub(vec);
+    dglDraw.currentVertex.color = Vector4ub(vec);
 }
 
 #undef DGL_Color3f
@@ -420,7 +578,7 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, 1.f));
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, 1.f));
 }
 
 #undef DGL_Color3fv
@@ -428,7 +586,7 @@ DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(Vector3f(vec), 1.f));
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(Vector3f(vec), 1.f));
 }
 
 #undef DGL_Color4f
@@ -436,7 +594,7 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, a));
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, a));
 }
 
 #undef DGL_Color4fv
@@ -444,7 +602,7 @@ DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().color = DGLDrawState::colorFromFloat(Vector4f(vec));
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(vec));
 }
 
 #undef DGL_TexCoord2f
@@ -455,7 +613,7 @@ DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 
     if (target < MAX_TEX_COORDS)
     {
-        dglDraw.vertex().texCoord[target] = Vector2f(s, t);
+        dglDraw.currentVertex.texCoord[target] = Vector2f(s, t);
     }
 }
 
@@ -467,7 +625,7 @@ DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 
     if (target < MAX_TEX_COORDS)
     {
-        dglDraw.vertex().texCoord[target] = Vector2f(vec);
+        dglDraw.currentVertex.texCoord[target] = Vector2f(vec);
     }
 }
 
@@ -476,7 +634,7 @@ DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().vertex = Vector3f(x, y, 0.f);
+    dglDraw.currentVertex.vertex = Vector3f(x, y, 0.f);
     dglDraw.commitVertex();
 }
 
@@ -487,7 +645,7 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 
     if (vec)
     {
-        dglDraw.vertex().vertex = Vector3f(vec[0], vec[1], 0.f);
+        dglDraw.currentVertex.vertex = Vector3f(vec[0], vec[1], 0.f);
     }
     dglDraw.commitVertex();
 }
@@ -497,7 +655,7 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.vertex().vertex = Vector3f(x, y, z);
+    dglDraw.currentVertex.vertex = Vector3f(x, y, z);
 
     dglDraw.commitVertex();
 }
@@ -509,7 +667,7 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 
     if (vec)
     {
-        dglDraw.vertex().vertex = Vector3f(vec);
+        dglDraw.currentVertex.vertex = Vector3f(vec);
     }
     dglDraw.commitVertex();
 }

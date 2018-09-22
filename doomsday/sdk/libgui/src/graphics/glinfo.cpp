@@ -539,6 +539,7 @@ void GLInfo::setSwapInterval(int interval)
     #endif
 }
 
+#if 0
 void GLInfo::setLineWidth(float lineWidth)
 {
     #if defined (DENG_OPENGL)
@@ -554,6 +555,7 @@ void GLInfo::setLineWidth(float lineWidth)
     }
     #endif
 }
+#endif
 
 GLInfo::Extensions const &GLInfo::extensions()
 {

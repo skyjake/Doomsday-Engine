@@ -702,7 +702,7 @@ dd_bool DGL_SetFloat(int name, float value)
     {
     case DGL_LINE_WIDTH:
         GL_state.currentLineWidth = value;
-        GLInfo::setLineWidth(value);
+//        GLInfo::setLineWidth(value);
         break;
 
     case DGL_POINT_SIZE:

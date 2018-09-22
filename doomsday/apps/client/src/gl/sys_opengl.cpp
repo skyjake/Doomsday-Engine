@@ -268,7 +268,7 @@ void Sys_GLConfigureDefaultState(void)
     DGL_MatrixMode(DGL_TEXTURE);
     DGL_LoadIdentity();
 
-    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
+//    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
 
 #if defined (DENG_OPENGL)
     // Setup for antialiased lines/points.

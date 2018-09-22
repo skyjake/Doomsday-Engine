@@ -89,7 +89,7 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
     GL_DrawRect(rect);
 
     // Outline.
-    GLInfo::setLineWidth(1);
+//    GLInfo::setLineWidth(1);
     DGL_Color4f(1, 1, 1, opacity/2);
     LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
     GL_DrawRect(rect);
@@ -125,7 +125,7 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
 
     if (pd->isVolumeTooFull(volume))
     {
-        GLInfo::setLineWidth(2);
+//        GLInfo::setLineWidth(2);
         DGL_Color4f(1, 0, 0, 1);
         LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
         GL_DrawRect(rect);
