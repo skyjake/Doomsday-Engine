@@ -122,7 +122,7 @@ public:
     /**
      * Returns the current view space scaling factor.
      */
-    dfloat scale() const;
+    de::dfloat scale() const;
     void setScale(de::dfloat newScale);
 
     /**

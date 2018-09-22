@@ -245,7 +245,7 @@ void X_PreInit()
     cfg.common.automapBack[2] = 1.0f;
     cfg.common.automapOpacity = 1.0f;
     cfg.common.automapLineAlpha = 1.0f;
-    cfg.common.automapLineWidth = 1.1f;
+    cfg.common.automapLineWidth = 3.0f;
     cfg.common.automapShowDoors = true;
     cfg.common.automapDoorGlow = 8;
     cfg.common.automapHudDisplay = 2;

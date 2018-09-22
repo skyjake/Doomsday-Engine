@@ -437,8 +437,8 @@ void ST_InitAutomapStyle()
 
 void AM_GetMapColor(float *rgb, float const *uColor, int palidx, dd_bool customPal)
 {
-    if((!customPal && !cfg.common.automapCustomColors) ||
-       (customPal && cfg.common.automapCustomColors != 2))
+    if ((!customPal && !cfg.common.automapCustomColors) ||
+        (customPal && cfg.common.automapCustomColors != 2))
     {
         R_GetColorPaletteRGBf(0, palidx, rgb, false);
         return;

@@ -1535,7 +1535,7 @@ void Hu_MenuInitAutomapOptionsPage()
             .setShortcut('l');
 
     page->addWidget(new LabelWidget("Line Width"));
-    page->addWidget(new CVarSliderWidget("map-line-width", 0.1f, 2.f));
+    page->addWidget(new CVarSliderWidget("map-line-width", 0.5f, 8.f));
 
     page->addWidget(new LabelWidget("HUD Display"));
 

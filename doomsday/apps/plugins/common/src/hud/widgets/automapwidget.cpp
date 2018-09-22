@@ -24,6 +24,7 @@
 #include <QList>
 #include <QtAlgorithms>
 #include <de/LogBuffer>
+#include <de/ScriptSystem>
 #include <de/Vector>
 
 #include "dmu_lib.h"
@@ -61,8 +62,7 @@ struct uiautomap_rendstate_t
     dd_bool glowOnly;
     dglprimtype_t primType;
 };
-uiautomap_rendstate_t rs;
-
+static uiautomap_rendstate_t rs;
 static dbyte freezeMapRLs;
 
 // if -1 no background image will be drawn.
@@ -213,6 +213,8 @@ DENG2_PIMPL(AutomapWidget)
 {
     AutomapStyle *style = nullptr;
 
+    float dpiFactor; // DisplayMode.DPI_FACTOR
+
     //DGLuint lists[NUM_MAP_OBJECTLISTS];  ///< Each list contains one or more of given type of automap wi.
     bool needBuildLists = false;         ///< @c true= force a rebuild of all lists.
 
@@ -240,7 +242,7 @@ DENG2_PIMPL(AutomapWidget)
     dfloat viewTimer = 0;
 
     coord_t maxViewPositionDelta = 128;
-    Vector2d viewPL;  // For the parallax layer.
+//    Vector2d viewPL;  // For the parallax layer.
 
     // View frame scale:
     dfloat viewScale = 0, targetViewScale = 0, oldViewScale = 1;
@@ -270,6 +272,8 @@ DENG2_PIMPL(AutomapWidget)
         //de::zap(lists);
         de::zap(bounds);
         de::zap(viewAABB);
+
+        dpiFactor = de::ScriptSystem::get().nativeModule("DisplayMode").getf("DPI_FACTOR");
     }
 
     ~Impl()
@@ -1076,7 +1080,7 @@ DENG2_PIMPL(AutomapWidget)
      */
     void setupGLStateForMap() const
     {
-        dfloat const alpha = uiRendState->pageAlpha;
+        const dfloat alpha = uiRendState->pageAlpha;
 
         // Store the old scissor state (to clip the map lines and stuff).
         DGL_PushState();
@@ -1086,13 +1090,14 @@ DENG2_PIMPL(AutomapWidget)
 
         dfloat bgColor[3];
 #if __JHERETIC__ || __JHEXEN__
-        if (!CentralLumpIndex().contains("AUTOPAGE.lmp"))
+        if (CentralLumpIndex().contains("AUTOPAGE.lmp"))
         {
-            bgColor[0] = .55f; bgColor[1] = .45f; bgColor[2] = .35f;
+            bgColor[0] = bgColor[1] = bgColor[2] = 1.f; // use lump colors as-is
         }
         else
         {
-            AM_GetMapColor(bgColor, cfg.common.automapBack, WHITE, customPal);
+            // Automap background lump is missing.
+            bgColor[0] = .55f; bgColor[1] = .45f; bgColor[2] = .35f;
         }
 #else
         AM_GetMapColor(bgColor, cfg.common.automapBack, BACKGROUND, customPal);
@@ -1100,11 +1105,20 @@ DENG2_PIMPL(AutomapWidget)
 
         RectRaw geom; Rect_Raw(&self().geometry(), &geom);
 
-        // Do we want a background texture?
+        // Draw the AUTOPAGE background image (if available).
         if (autopageLumpNum != -1)
         {
-            // Apply the background texture onto a parallaxing layer which
-            // follows the map view target (not player).
+            const float autopageWidth       = 320; /// @todo Could be external with different size.
+            const float autopageHeight      = 200;
+            const float autopageAspectRatio = autopageWidth / autopageHeight;
+
+            const float texScale    = 1.f / 3000.f;
+            const float bgScale     = texScale / scaleMTOF;
+            const float offsetScale = texScale * autopageAspectRatio;
+
+            // The autopage texture is transformed in texture coordinate space. It is drawn as
+            // a single quad covering the entire widget.
+
             DGL_Enable(DGL_TEXTURE_2D);
 
             DGL_MatrixMode(DGL_TEXTURE);
@@ -1114,6 +1128,7 @@ DENG2_PIMPL(AutomapWidget)
             DGL_SetRawImage(autopageLumpNum, DGL_REPEAT, DGL_REPEAT);
             DGL_Color4f(bgColor[0], bgColor[1], bgColor[2], cfg.common.automapOpacity * alpha);
 
+#if 0
             DGL_Translatef(geom.origin.x, geom.origin.y, 0);
 
             // Apply the parallax scrolling, map rotation and counteract the
@@ -1122,10 +1137,15 @@ DENG2_PIMPL(AutomapWidget)
                            self().mapToFrame(viewPL.y) + .5f, 0);
             DGL_Scalef(1, 1.2f/*aspect correct*/, 1);
             DGL_Rotatef(360 - self().cameraAngle(), 0, 0, 1);
-            DGL_Scalef(1, (dfloat)geom.size.height / geom.size.width, 1);
             DGL_Translatef(-(.5f), -(.5f), 0);
+#endif
 
-            DGL_DrawRectf2(0, 0, geom.size.width, geom.size.height);
+            DGL_Translatef(offsetScale * view.x, -offsetScale * view.y, 1.f);
+            DGL_Scalef(autopageAspectRatio, autopageAspectRatio, 1.f);
+            DGL_Rotatef(360.f - self().cameraAngle(), 0, 0, 1);
+            DGL_Scalef(bgScale * float(geom.size.width), bgScale * float(geom.size.height), 1.f);
+            DGL_Translatef(-.5f, -.5f, 0); // center
+            DGL_DrawRectf2(geom.origin.x, geom.origin.y, geom.size.width, geom.size.height);
 
             DGL_MatrixMode(DGL_TEXTURE);
             DGL_PopMatrix();
@@ -1331,7 +1351,7 @@ void AutomapWidget::draw(Vector2i const &offset) const
 
     // Configure render state:
     rs.plr = plr;
-    Vector2d const viewPoint = cameraOrigin();
+    const Vector2d viewPoint = cameraOrigin();
     float angle = cameraAngle();
     RectRaw geom; Rect_Raw(&geometry(), &geom);
 
@@ -1349,16 +1369,16 @@ void AutomapWidget::draw(Vector2i const &offset) const
     // objects using their world-space coordinates directly.
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(offset.x, offset.y, 0);
-    DGL_Translatef(geom.size.width  / 2, geom.size.height / 2, 0);
+    DGL_Translatef(geom.size.width / 2, geom.size.height / 2, 0);
     DGL_Rotatef(angle, 0, 0, 1);
     DGL_Scalef(1, -1, 1); // In the world coordinate space Y+ is up.
     DGL_Scalef(d->scaleMTOF, d->scaleMTOF, 1);
     DGL_Translatef(-viewPoint.x, -viewPoint.y, 0);
 
-    float const oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, de::clamp(.5f, cfg.common.automapLineWidth * aspectScale, 3.f));
+    const float oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
+    DGL_SetFloat(DGL_LINE_WIDTH, d->dpiFactor * de::clamp(.5f, cfg.common.automapLineWidth, 8.f));
 
-/*#if _DEBUG
+    /*#if _DEBUG
     // Draw the rectangle described by the visible bounds.
     {
         coord_t topLeft[2], bottomRight[2], topRight[2], bottomLeft[2];
@@ -1513,18 +1533,33 @@ void AutomapWidget::tick(timespan_t elapsed)
     if (G_GameState() != GS_MAP) return;
 
     // Move towards the target alpha level for the automap.
-    d->opacityTimer += (cfg.common.automapOpenSeconds == 0? 1 : 1 / cfg.common.automapOpenSeconds * elapsed);
-    if (d->opacityTimer >= 1)
-        d->opacity = d->targetOpacity;
+    if (cfg.common.automapOpenSeconds >= .001f)
+    {
+        d->opacityTimer += 1.f / cfg.common.automapOpenSeconds * elapsed;
+    }
     else
+    {
+        d->opacityTimer = 1.f; // Instant.
+    }
+
+    if (d->opacityTimer >= 1)
+    {
+        d->opacity = d->targetOpacity;
+    }
+    else
+    {
         d->opacity = de::lerp(d->oldOpacity, d->targetOpacity, d->opacityTimer);
+    }
 
     // Unless open we do nothing further.
     if (!isOpen()) return;
 
     // Map view zoom contol.
     dfloat zoomSpeed = 1 + (2 * cfg.common.automapZoomSpeed) * elapsed * TICRATE;
-    if (players[plrNum].brain.speed) zoomSpeed *= 1.5f;
+    if (players[plrNum].brain.speed)
+    {
+        zoomSpeed *= 1.5f;
+    }
 
     dfloat zoomVel;
     P_GetControlState(plrNum, CTL_MAP_ZOOM, &zoomVel, nullptr); // ignores rel offset -jk
@@ -1544,18 +1579,21 @@ void AutomapWidget::tick(timespan_t elapsed)
 
         // DOOM.EXE pans the automap at 140 fixed pixels per second (VGA: 200 pixels tall).
         /// @todo This needs resolution-independent units. (The "frame" units are screen pixels.)
-        panUnitsPerSecond = frameToMap(140 * Rect_Height(&geometry()) / 200.f) * (2 * cfg.common.automapPanSpeed);
-        if (panUnitsPerSecond < 8) panUnitsPerSecond = 8;
+        panUnitsPerSecond = de::max(8.f,
+                                    frameToMap(140 * Rect_Height(&geometry()) / 200.f) *
+                                        (2 * cfg.common.automapPanSpeed));
 
         /// @todo Fix sensitivity for relative axes.
-        Vector2d const delta = rotate(Vector2d(panX[0], panY[0]) * panUnitsPerSecond * elapsed + Vector2d(panX[1], panY[1]),
+        Vector2d const delta = rotate(Vector2d(panX[0], panY[0]) * panUnitsPerSecond * elapsed +
+                                          Vector2d(panX[1], panY[1]),
                                       degreeToRadian(d->angle));
         moveCameraOrigin(delta, true /*instant move*/);
     }
     else
     {
         // Camera follow mode.
-        dfloat const angle = (d->rotate ? (followMob->angle - ANGLE_90) / (dfloat) ANGLE_MAX * 360 : 0); /* $unifiedangles */
+        dfloat const angle = (d->rotate ? (followMob->angle - ANGLE_90) / (dfloat) ANGLE_MAX * 360
+                                        : 0); /* $unifiedangles */
         coord_t origin[3]; Mobj_OriginSmoothed(followMob, origin);
         setCameraOrigin(Vector2d(origin));
         setCameraAngle(angle);
@@ -1574,8 +1612,9 @@ void AutomapWidget::tick(timespan_t elapsed)
     {
         d->view = de::lerp(d->oldView, d->targetView, d->viewTimer);
     }
+
     // Move the parallax layer.
-    d->viewPL = d->view / 4000;
+//    d->viewPL = d->view / 4000;
 
     // Map view scale (zoom).
     d->viewScaleTimer += dfloat(.4 * elapsed * TICRATE);
@@ -1672,12 +1711,13 @@ void AutomapWidget::updateGeometry()
 {
     // Determine whether the available space has changed and thus whether
     // the position and/or size of the automap must therefore change too.
-    RectRaw newGeom; R_ViewWindowGeometry(player(), &newGeom);
+    RectRaw newGeom;
+    R_ViewWindowGeometry(player(), &newGeom);
 
     if (newGeom.origin.x != Rect_X(&geometry()) ||
-       newGeom.origin.y != Rect_Y(&geometry()) ||
-       newGeom.size.width != Rect_Width(&geometry()) ||
-       newGeom.size.height != Rect_Height(&geometry()))
+        newGeom.origin.y != Rect_Y(&geometry()) ||
+        newGeom.size.width != Rect_Width(&geometry()) ||
+        newGeom.size.height != Rect_Height(&geometry()))
     {
         Rect_SetXY(&geometry(), newGeom.origin.x, newGeom.origin.y);
         Rect_SetWidthHeight(&geometry(), newGeom.size.width, newGeom.size.height);
@@ -1958,7 +1998,7 @@ void AutomapWidget::consoleRegister()  // static
     C_VAR_FLOAT("map-background-b",         &cfg.common.automapBack[2],        0, 0, 1);
     C_VAR_INT  ("map-customcolors",         &cfg.common.automapCustomColors,   0, 0, 1);
     C_VAR_FLOAT( "map-line-opacity",        &cfg.common.automapLineAlpha,      0, 0, 1);
-    C_VAR_FLOAT("map-line-width",           &cfg.common.automapLineWidth,      0, .1f, 2);
+    C_VAR_FLOAT("map-line-width",           &cfg.common.automapLineWidth,      0, .5f, 8);
     C_VAR_FLOAT("map-mobj-r",               &cfg.common.automapMobj[0],        0, 0, 1);
     C_VAR_FLOAT("map-mobj-g",               &cfg.common.automapMobj[1],        0, 0, 1);
     C_VAR_FLOAT("map-mobj-b",               &cfg.common.automapMobj[2],        0, 0, 1);
