@@ -676,7 +676,6 @@ void ST_Start(int localPlayer)
     // If the automap was left open; close it.
     automap.open(false, true /*instantly*/);
     initAutomapForCurrentMap(automap);
-    automap.setCameraFollowMode(CPP_BOOL(cfg.common.automapRotate));
 
     hud->stopped = false;
 }

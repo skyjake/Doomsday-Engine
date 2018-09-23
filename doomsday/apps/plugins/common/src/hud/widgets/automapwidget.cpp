@@ -227,9 +227,9 @@ DENG2_PIMPL(AutomapWidget)
     bool forceMaxScale = false;  ///< If the map is currently in forced max zoom mode.
     dfloat priorToMaxScale = 0;  ///< Viewer scale before entering maxScale mode.
 
-    dfloat minScale  = 0;
-    dfloat scaleMTOF = 0;        ///< Used by MTOF to scale from map-to-frame-buffer coords.
-    dfloat scaleFTOM = 0;        ///< Used by FTOM to scale from frame-buffer-to-map coords (=1/scaleMTOF).
+    dfloat minScale  = 1.f;
+    dfloat scaleMTOF = 1.f;      ///< Used by MTOF to scale from map-to-frame-buffer coords.
+    dfloat scaleFTOM = 1.f;      ///< Used by FTOM to scale from frame-buffer-to-map coords (=1/scaleMTOF).
 
     coord_t bounds[4];           ///< Map space bounds:
 
@@ -245,7 +245,7 @@ DENG2_PIMPL(AutomapWidget)
 //    Vector2d viewPL;  // For the parallax layer.
 
     // View frame scale:
-    dfloat viewScale = 0, targetViewScale = 0, oldViewScale = 1;
+    dfloat viewScale = 1, targetViewScale = 1, oldViewScale = 1;
     dfloat viewScaleTimer = 0;
 
     bool needViewScaleUpdate = false;
@@ -1140,6 +1140,8 @@ DENG2_PIMPL(AutomapWidget)
             DGL_Translatef(-(.5f), -(.5f), 0);
 #endif
 
+            DENG_ASSERT(!std::isnan(view.x));
+
             DGL_Translatef(offsetScale * view.x, -offsetScale * view.y, 1.f);
             DGL_Scalef(autopageAspectRatio, autopageAspectRatio, 1.f);
             DGL_Rotatef(360.f - self().cameraAngle(), 0, 0, 1);
@@ -1299,8 +1301,9 @@ void AutomapWidget::prepareAssets()  // static
     LumpIndex const &lumpIndex = CentralLumpIndex();
 
     if (autopageLumpNum >= 0)
+    {
         autopageLumpNum = lumpIndex.findLast("autopage.lmp");
-
+    }
     if (!amMaskTexture)
     {
         lumpnum_t lumpNum = lumpIndex.findLast("mapmask.lmp");
@@ -1328,6 +1331,7 @@ void AutomapWidget::releaseAssets()  // static
 void AutomapWidget::reset()
 {
     d->needBuildLists = true;
+    d->rotate         = cfg.common.automapRotate;
 }
 
 void AutomapWidget::lineAutomapVisibilityChanged(Line const &)
@@ -1485,7 +1489,7 @@ void AutomapWidget::open(bool yes, bool instantly)
         if (mobj_t *mob = followMobj())
         {
             // The map's target player is available.
-            if (!(!d->follow && !cfg.common.automapPanResetOnOpen))
+            if (d->follow || cfg.common.automapPanResetOnOpen)
             {
                 coord_t origin[3]; Mobj_OriginSmoothed(mob, origin);
                 setCameraOrigin(Vector2d(origin));
