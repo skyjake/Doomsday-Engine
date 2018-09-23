@@ -69,6 +69,7 @@ void LabelWidget::draw() const
     const Vector4f color = selectionFlashColor(textColor);
 
     const float fadeout = scrollingFadeout();
+    if (fadeout < .001f) return;
 
     DGL_Color4f(1, 1, 1, color.w * fadeout);
     FR_SetFont(fontId);

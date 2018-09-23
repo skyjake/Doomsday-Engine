@@ -229,6 +229,7 @@ void Hu_MenuActivateBindingsGrab(Widget &, Widget::Action)
 void Hu_MenuInitControlsPage()
 {
     Page *page = Hu_MenuAddPage(new Page("ControlOptions", Vector2i(32, 40), 0, Hu_MenuDrawControlsPage));
+    page->setLeftColumnWidth(.4f);
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -240,12 +241,12 @@ void Hu_MenuInitControlsPage()
         controlconfig_t *binds = &controlConfig[i];
 
         char const *labelText = binds->text;
-        if(labelText && (PTR2INT(labelText) > 0 && PTR2INT(labelText) < NUMTEXT))
+        if (labelText && (PTR2INT(labelText) > 0 && PTR2INT(labelText) < NUMTEXT))
         {
             labelText = GET_TXT(PTR2INT(labelText));
         }
 
-        if(!binds->command && !binds->controlName)
+        if (!binds->command && !binds->controlName)
         {
             // Inert.
             page->addWidget(new LabelWidget(labelText))
@@ -255,10 +256,12 @@ void Hu_MenuInitControlsPage()
         else
         {
             page->addWidget(new LabelWidget(labelText))
+                    .setLeft()
                     .setGroup(group);
 
             InputBindingWidget *binding = new InputBindingWidget;
             binding->binds = binds;
+            binding->setRight();
             binding->setGroup(group);
             binding->setAction(Widget::Activated,   Hu_MenuActivateBindingsGrab);
             binding->setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);

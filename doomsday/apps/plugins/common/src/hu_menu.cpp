@@ -737,7 +737,7 @@ void Hu_MenuInitPlayerSetupPage()
 void Hu_MenuInitSaveOptionsPage()
 {
     Page *page = Hu_MenuAddPage(new Page("SaveOptions", Vector2i(60, 50)));
-    page->setTitle("Save Options");
+    page->setTitle("Savegame Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
@@ -910,6 +910,14 @@ void Hu_MenuInitOptionsPage()
             .setAction(Widget::Deactivated, Hu_MenuSelectEndGame)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
+    page->addWidget(new ButtonWidget("Player Setup"))
+            .setShortcut('p')
+            .setGroup(1)
+            .setFont(MENU_FONT1)
+            .setUserValue(String("PlayerSetup"))
+            .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
+            .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
+
     page->addWidget(new ButtonWidget("Show Taskbar"))
             .setShortcut('t')
             .setFont(MENU_FONT1)
@@ -917,10 +925,10 @@ void Hu_MenuInitOptionsPage()
             .setAction(Widget::Deactivated, Hu_MenuSelectControlPanelLink)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
-    page->addWidget(new ButtonWidget("Multiplayer"))
-            .setShortcut('m')
+    page->addWidget(new ButtonWidget("Sound"))
+            .setShortcut('s')
             .setFont(MENU_FONT1)
-            .setUserValue(String("PlayerSetup"))
+            .setUserValue(String("SoundOptions"))
             .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
@@ -937,13 +945,6 @@ void Hu_MenuInitOptionsPage()
             .setUserValue(String("GameplayOptions"))
             .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
-
-    page->addWidget(new ButtonWidget("Game saves"))
-            .setShortcut('s')
-            .setFont(MENU_FONT1)
-            .setUserValue(String("SaveOptions"))
-            .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
-            .setAction(Widget::FocusGained,     Hu_MenuDefaultFocusAction);
 
     page->addWidget(new ButtonWidget("HUD"))
             .setShortcut('h')
@@ -975,12 +976,12 @@ void Hu_MenuInitOptionsPage()
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 #endif
 
-    page->addWidget(new ButtonWidget("Sound"))
+    page->addWidget(new ButtonWidget("Savegame"))
             .setShortcut('s')
             .setFont(MENU_FONT1)
-            .setUserValue(String("SoundOptions"))
+            .setUserValue(String("SaveOptions"))
             .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
-            .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
+            .setAction(Widget::FocusGained,     Hu_MenuDefaultFocusAction);
 }
 
 void Hu_MenuInitGameplayOptionsPage()
@@ -1338,8 +1339,8 @@ void Hu_MenuInitHUDOptionsPage()
             .setGroup(4);
 
 #if __JDOOM__
-    page->addWidget(new LabelWidget("Single Key Display")).setLeft();
-    page->addWidget(new CVarToggleWidget("hud-keys-combine")).setRight();
+    page->addWidget(new LabelWidget("Single Key Display")).setLeft().setGroup(4);
+    page->addWidget(new CVarToggleWidget("hud-keys-combine")).setRight().setGroup(4);
 #endif
 
     page->addWidget(new LabelWidget("AutoHide Status"))

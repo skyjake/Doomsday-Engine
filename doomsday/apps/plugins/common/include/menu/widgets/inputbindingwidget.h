@@ -49,6 +49,9 @@ public:
 
     char const *controlName() const;
     de::String bindContext() const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace menu

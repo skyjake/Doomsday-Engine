@@ -147,6 +147,9 @@ void SliderWidget::draw() const
     if(!R_GetPatchInfo(pSliderLeft, &leftInfo)) return;
     if(WIDTH <= 0 || HEIGHT <= 0) return;
 
+    const float fadeout = scrollingFadeout();
+    if (fadeout < .001f) return;
+
     Vector2f origin = geometry().topLeft;
     origin += Vector2f(MNDATA_SLIDER_OFFSET_X + leftInfo.geometry.size.width, MNDATA_SLIDER_OFFSET_Y) * MNDATA_SLIDER_SCALE;
 
@@ -163,8 +166,6 @@ void SliderWidget::draw() const
         float const to[]   = { float(MNDATA_SLIDER_SLOTS * WIDTH - 2), float(1 + HEIGHT / 2) };
         M_DrawGlowBar(from, to, HEIGHT * 1.1f, true, true, true, 0, 0, 0, mnRendState->pageAlpha * mnRendState->textShadow);
     }
-
-    const float fadeout = scrollingFadeout();
 
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha * fadeout);
 

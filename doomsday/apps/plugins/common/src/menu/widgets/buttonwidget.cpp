@@ -68,6 +68,7 @@ void ButtonWidget::draw() const
 //    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
 
     const float fadeout = scrollingFadeout();
+    if (fadeout < .001f) return;
 
     FR_SetFont(fontId);
     FR_SetColorAndAlpha(color.x, color.y, color.z, color.w * fadeout);
