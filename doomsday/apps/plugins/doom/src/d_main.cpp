@@ -243,7 +243,7 @@ void D_PreInit()
                                                     sizeof(cfg.common.hudColor)));
     cfg.common.hudColor[CA] = 1;
 
-    cfg.common.hudFog = 1;
+    cfg.common.hudFog = 5;
     cfg.common.hudIconAlpha = 1;
     cfg.common.xhairAngle = 0;
     cfg.common.xhairSize = .5f;

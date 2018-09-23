@@ -265,7 +265,7 @@ void InputBindingWidget::draw() const
     bindingdrawerdata_t draw;
     draw.origin.x = geometry().topLeft.x;
     draw.origin.y = geometry().topLeft.y;
-    draw.alpha = mnRendState->pageAlpha;
+    draw.alpha = mnRendState->pageAlpha * scrollingFadeout();
     iterateBindings(binds, buf, MIBF_IGNORE_REPEATS, &draw, drawBinding);
 }
 

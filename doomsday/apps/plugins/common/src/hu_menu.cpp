@@ -653,7 +653,7 @@ void Hu_MenuInitPlayerSetupPage()
     Vector2i const origin(70, 54);
 #endif
 
-    Page *page = Hu_MenuAddPage(new Page("PlayerSetup", origin, 0, Hu_MenuDrawPlayerSetupPage));
+    Page *page = Hu_MenuAddPage(new Page("PlayerSetup", origin, Page::NoScroll, Hu_MenuDrawPlayerSetupPage));
     page->setOnActiveCallback(Hu_MenuActivatePlayerSetup);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
@@ -741,12 +741,16 @@ void Hu_MenuInitSaveOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->addWidget(new LabelWidget("Confirm quick load/save"));
+    page->addWidget(new LabelWidget("Confirm quick load/save"))
+            .setLeft();
     page->addWidget(new CVarToggleWidget("game-save-confirm"))
+            .setRight()
             .setShortcut('q');
 
-    page->addWidget(new LabelWidget("Confirm reborn load"));
+    page->addWidget(new LabelWidget("Confirm reborn load"))
+            .setLeft();
     page->addWidget(new CVarToggleWidget("game-save-confirm-loadonreborn"))
+            .setRight()
             .setShortcut('r');
 
     page->addWidget(new LabelWidget("Reborn preferences"))
@@ -754,8 +758,10 @@ void Hu_MenuInitSaveOptionsPage()
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Load last save"))
+            .setLeft()
             .setGroup(1);
     page->addWidget(new CVarToggleWidget("game-save-last-loadonreborn"))
+            .setRight()
             .setGroup(1)
             .setShortcut('a');
 }
@@ -888,24 +894,26 @@ void Hu_MenuInitLoadGameAndSaveGamePages()
 void Hu_MenuInitOptionsPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Vector2i const origin(110, 63);
+    Vector2i const origin(110, 45);
 #else
     Vector2i const origin(110, 63);
 #endif
 
-    Page *page = Hu_MenuAddPage(new Page("Options", origin, 0, Hu_MenuDrawOptionsPage));
+    Page *page = Hu_MenuAddPage(new Page("Options", origin, Page::NoScroll, Hu_MenuDrawOptionsPage));
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
 
     page->addWidget(new ButtonWidget("End Game"))
             .setShortcut('e')
             .setFont(MENU_FONT1)
+            .setGroup(1)
             .setAction(Widget::Deactivated, Hu_MenuSelectEndGame)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
     page->addWidget(new ButtonWidget("Show Taskbar"))
             .setShortcut('t')
             .setFont(MENU_FONT1)
+            .setGroup(1)
             .setAction(Widget::Deactivated, Hu_MenuSelectControlPanelLink)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
@@ -986,164 +994,182 @@ void Hu_MenuInitGameplayOptionsPage()
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("GameplayOptions", origin));
+    page->setLeftColumnWidth(.75f);
     page->setTitle("Gameplay Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->addWidget(new LabelWidget("Always Run"));
-    page->addWidget(new CVarToggleWidget("ctl-run"))
+    page->addWidget(new LabelWidget("Always Run")).setLeft();
+    page->addWidget(new CVarToggleWidget("ctl-run")).setRight()
             .setShortcut('r');
 
-    page->addWidget(new LabelWidget("Use LookSpring"));
-    page->addWidget(new CVarToggleWidget("ctl-look-spring"))
+    page->addWidget(new LabelWidget("Use LookSpring")).setLeft();
+    page->addWidget(new CVarToggleWidget("ctl-look-spring")).setRight()
             .setShortcut('l');
 
-    page->addWidget(new LabelWidget("Disable AutoAim"));
-    page->addWidget(new CVarToggleWidget("ctl-aim-noauto"))
+    page->addWidget(new LabelWidget("Disable AutoAim")).setLeft();
+    page->addWidget(new CVarToggleWidget("ctl-aim-noauto")).setRight()
             .setShortcut('a');
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    page->addWidget(new LabelWidget("Allow Jumping"));
-    page->addWidget(new CVarToggleWidget("player-jump"))
+    page->addWidget(new LabelWidget("Allow Jumping")).setLeft();
+    page->addWidget(new CVarToggleWidget("player-jump")).setRight()
             .setShortcut('j');
 #endif
 
 #if __JDOOM__
-    page->addWidget(new LabelWidget("Fast Monsters"));
-    page->addWidget(new CVarToggleWidget("game-monsters-fast"))
+    page->addWidget(new LabelWidget("Fast Monsters")).setLeft();
+    page->addWidget(new CVarToggleWidget("game-monsters-fast")).setRight()
             .setShortcut('f');
 #endif
 
 #if __JDOOM64__
-    page->addWidget(new LabelWidget("Weapon Recoil"));
-    page->addWidget(new CVarToggleWidget("player-weapon-recoil"));
+    page->addWidget(new LabelWidget("Weapon Recoil")).setLeft();
+    page->addWidget(new CVarToggleWidget("player-weapon-recoil")).setRight();
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     page->addWidget(new LabelWidget("Compatibility"))
+            .setLeft()
             .setGroup(1)
             .setColor(MENU_COLOR2);
 
 # if __JDOOM__ || __JDOOM64__
-    page->addWidget(new LabelWidget("Any Boss Trigger 666"))
+    page->addWidget(new LabelWidget("Any Boss Trigger 666")).setLeft()
             .setGroup(1);
-    page->addWidget(new CVarToggleWidget("game-anybossdeath666"))
+    page->addWidget(new CVarToggleWidget("game-anybossdeath666")).setRight()
             .setGroup(1)
             .setShortcut('b');
 
 #  if !__JDOOM64__
     page->addWidget(new LabelWidget("Av Resurrects Ghosts"))
+            .setLeft()
             .setGroup(1);
     page->addWidget(new CVarToggleWidget("game-raiseghosts"))
+            .setRight()
             .setGroup(1)
             .setShortcut('g');
 # if __JDOOM__
     page->addWidget(new LabelWidget("VileChase uses Av radius"))
+            .setLeft()
             .setGroup(1);
     page->addWidget(new CVarToggleWidget("game-vilechase-usevileradius"))
+            .setRight()
             .setGroup(1)
             .setShortcut('g');
 # endif
 #  endif // !__JDOOM64__
 
     page->addWidget(new LabelWidget("PE Limited To 21 Lost Souls"))
+            .setLeft()
             .setGroup(1);
     page->addWidget(new CVarToggleWidget("game-maxskulls"))
+            .setRight()
             .setGroup(1)
             .setShortcut('p');
 
     page->addWidget(new LabelWidget("LS Can Get Stuck Inside Walls"))
+            .setLeft()
             .setGroup(1);
 
     page->addWidget(new CVarToggleWidget("game-skullsinwalls"))
+            .setRight()
             .setGroup(1);
 # endif // __JDOOM__ || __JDOOM64__
 
     page->addWidget(new LabelWidget("Monsters Fly Over Obstacles"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("game-monsters-floatoverblocking"))
+            .setRight()
             .setGroup(1);
 
-    page->addWidget(new LabelWidget("Monsters Can Get Stuck In Doors"))
+    page->addWidget(new LabelWidget("Monsters Can Get Stuck\n   In Doors"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("game-monsters-stuckindoors"))
+            .setRight()
             .setGroup(1)
             .setShortcut('d');
 
-    page->addWidget(new LabelWidget("Some Objects Never Hang Over Ledges"))
+    page->addWidget(new LabelWidget("Some Objects Never Hang\n   Over Ledges"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("game-objects-neverhangoverledges"))
+            .setRight()
             .setGroup(1)
             .setShortcut('h');
 
     page->addWidget(new LabelWidget("Objects Fall Under Own Weight"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("game-objects-falloff"))
+            .setRight()
             .setGroup(1)
             .setShortcut('f');
 
 #if __JDOOM__ || __JDOOM64__
-    page->addWidget(new LabelWidget("All Crushed Objects Become A Pile Of Gibs"))
+    page->addWidget(new LabelWidget("All Crushed Objects\n   Become A Pile Of Gibs"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("game-objects-gibcrushednonbleeders"))
+            .setRight()
             .setGroup(1)
             .setShortcut('g');
 #endif
 
     page->addWidget(new LabelWidget("Corpses Slide Down Stairs"))
+            .setLeft()
             .setGroup(1);
 
     page->addWidget(new CVarToggleWidget("game-corpse-sliding"))
+            .setRight()
             .setGroup(1)
             .setShortcut('s');
 
-    page->addWidget(new LabelWidget("Use Exactly Doom's Clipping Code"))
+    page->addWidget(new LabelWidget("Use Doom's Clipping\n   Code Exactly"))
+            .setLeft()
             .setGroup(1);
 
     page->addWidget(new CVarToggleWidget("game-objects-clipping"))
+            .setRight()
             .setGroup(1)
             .setShortcut('c');
 
     page->addWidget(new LabelWidget("  ^If Not NorthOnly WallRunning"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("game-player-wallrun-northonly"))
+            .setRight()
             .setGroup(1)
             .setShortcut('w');
 
 # if __JDOOM__ || __JDOOM64__
 
-    page->addWidget(new LabelWidget("Zombie Players Can Exit Maps"))
+    page->addWidget(new LabelWidget("Zombie Players Can\n   Exit Maps")).setLeft()
             .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("game-zombiescanexit"))
+    page->addWidget(new CVarToggleWidget("game-zombiescanexit")).setRight()
             .setGroup(1)
             .setShortcut('e');
 
-    page->addWidget(new LabelWidget("Fix Ouch Face"))
+    page->addWidget(new LabelWidget("Fix Ouch Face")).setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("hud-face-ouchfix")).setRight()
             .setGroup(1);
 
-    page->addWidget(new CVarToggleWidget("hud-face-ouchfix"))
+    page->addWidget(new LabelWidget("Fix Weapon Slot Display")).setLeft()
             .setGroup(1);
-
-    page->addWidget(new LabelWidget("Fix Weapon Slot Display"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-status-weaponslots-ownedfix"))
+    page->addWidget(new CVarToggleWidget("hud-status-weaponslots-ownedfix")).setRight()
             .setGroup(1);
 
 # endif // __JDOOM__ || __JDOOM64__
 #endif // __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
-    page->addWidget(new LabelWidget("Vanilla Switch Sound Positioning"))
+    page->addWidget(new LabelWidget("Vanilla Switch Sound\n   Positioning"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("sound-switch-origin"))
+            .setRight()
             .setGroup(1)
             .setShortcut('v');
 }
@@ -1158,10 +1184,11 @@ void Hu_MenuInitHUDOptionsPage()
 
     Page *page = Hu_MenuAddPage(new Page("HudOptions", origin));
     page->setTitle("HUD Options");
+    page->setLeftColumnWidth(.45f);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->addWidget(new LabelWidget("View Size"));
+    page->addWidget(new LabelWidget("View Size")).setLeft();
 
     page->addWidget(new CVarSliderWidget("view-size"))
 #if __JDOOM64__
@@ -1169,108 +1196,43 @@ void Hu_MenuInitHUDOptionsPage()
 #else
             .setRange(3, 13, 1)
 #endif
-            .setFloatMode(false);
-
-#if __JDOOM__
-    page->addWidget(new LabelWidget("Single Key Display"));
-    page->addWidget(new CVarToggleWidget("hud-keys-combine"));
-#endif
-
-    page->addWidget(new LabelWidget("AutoHide"));
-    page->addWidget(new CVarTextualSliderWidget("hud-timer", 0, 60, 1))
-            .setEmptyText("Disabled")
-            .setOnethSuffix(" second")
-            .setNthSuffix(" seconds");
-
-    page->addWidget(new LabelWidget("UnHide Events"))
-            .setGroup(1)
-            .setColor(MENU_COLOR2);
-
-    page->addWidget(new LabelWidget("Receive Damage"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-damage"))
-            .setGroup(1);
-
-    page->addWidget(new LabelWidget("Pickup Health"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-health"))
-            .setGroup(1);
-
-    page->addWidget(new LabelWidget("Pickup Armor"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-armor"))
-            .setGroup(1);
-
-    page->addWidget(new LabelWidget("Pickup Powerup"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-powerup"))
-            .setGroup(1);
-
-    page->addWidget(new LabelWidget("Pickup Weapon"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-weapon"))
-            .setGroup(1);
-
-    page->addWidget(new LabelWidget)
-#if __JHEXEN__
-            .setText("Pickup Mana")
-#else
-            .setText("Pickup Ammo")
-#endif
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-ammo"))
-            .setGroup(1);
-
-    page->addWidget(new LabelWidget("Pickup Key"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-key"))
-            .setGroup(1);
-
-#if __JHERETIC__ || __JHEXEN__
-    page->addWidget(new LabelWidget("Pickup Item"))
-            .setGroup(1);
-
-    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-invitem"))
-            .setGroup(1);
-#endif // __JHERETIC__ || __JHEXEN__
+            .setFloatMode(false)
+            .setRight();
 
     page->addWidget(new LabelWidget("Messages"))
             .setGroup(2)
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Shown"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarToggleWidget("msg-show"))
+            .setRight()
             .setGroup(2)
             .setShortcut('m');
 
     page->addWidget(new LabelWidget("Uptime"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarTextualSliderWidget("msg-uptime", 0, 60, 1))
             .setEmptyText("Disabled")
             .setOnethSuffix(" second")
             .setNthSuffix(" seconds")
+            .setRight()
             .setGroup(2);
 
     page->addWidget(new LabelWidget("Size"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarSliderWidget("msg-scale"))
+            .setRight()
             .setGroup(2);
 
     page->addWidget(new LabelWidget("Color"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarColorEditWidget("msg-color-r", "msg-color-g", "msg-color-b"))
+            .setRight()
             .setGroup(2)
             .setAction(Widget::Deactivated, CVarColorEditWidget_UpdateCVar)
             .setAction(Widget::Activated,   Hu_MenuActivateColorWidget);
@@ -1281,8 +1243,8 @@ void Hu_MenuInitHUDOptionsPage()
 
     page->addWidget(new LabelWidget("Symbol"))
             .setGroup(3)
+            .setLeft()
             .setShortcut('c');
-
     page->addWidget(new CVarInlineListWidget("view-cross-type"))
             .addItems(ListWidget::Items() << new ListWidgetItem("None",        0)
                                           << new ListWidgetItem("Cross",       1)
@@ -1290,61 +1252,71 @@ void Hu_MenuInitHUDOptionsPage()
                                           << new ListWidgetItem("Square",      3)
                                           << new ListWidgetItem("Open Square", 4)
                                           << new ListWidgetItem("Angle",       5))
-            .setGroup(3);
+            .setGroup(3)
+            .setRight();
 
     page->addWidget(new LabelWidget("Size"))
+            .setLeft()
             .setGroup(3);
-
     page->addWidget(new CVarSliderWidget("view-cross-size"))
+            .setRight()
             .setGroup(3);
 
     page->addWidget(new LabelWidget("Thickness"))
+            .setLeft()
             .setGroup(3);
-
-    page->addWidget(new CVarSliderWidget("view-cross-weight"))
+    page->addWidget(new CVarSliderWidget("view-cross-width", .5f, 5, .25f))
+            .setRight()
             .setGroup(3);
 
     page->addWidget(new LabelWidget("Angle"))
+            .setLeft()
             .setGroup(3);
-
     page->addWidget(new CVarSliderWidget("view-cross-angle", 0.0f, 1.0f, 0.0625f))
+            .setRight()
             .setGroup(3);
 
     page->addWidget(new LabelWidget("Opacity"))
+            .setLeft()
             .setGroup(3);
-
     page->addWidget(new CVarSliderWidget("view-cross-a"))
+            .setRight()
             .setGroup(3);
-
-    page->addWidget(new LabelWidget("Vitality Color"))
-            .setGroup(3);
-
-    page->addWidget(new CVarToggleWidget("view-cross-vitality"))
-            .setGroup(3);
-
-    page->addWidget(new LabelWidget("Vitality Colour (Dead)"))
-            .setGroup(3);
-
-    page->addWidget(new CVarColorEditWidget("view-cross-dead-r", "view-cross-dead-g", "view-cross-dead-b"))
-            .setGroup(3)
-            .setAction(Widget::Deactivated,     CVarColorEditWidget_UpdateCVar)
-            .setAction(Widget::Activated,       Hu_MenuActivateColorWidget);
-
-    page->addWidget(new LabelWidget("Vitality Colour (Full Health)"))
-            .setGroup(3);
-
-    page->addWidget(new CVarColorEditWidget("view-cross-live-r", "view-cross-live-g", "view-cross-live-b"))
-            .setGroup(3)
-            .setAction(Widget::Deactivated,     CVarColorEditWidget_UpdateCVar)
-            .setAction(Widget::Activated,       Hu_MenuActivateColorWidget);
 
     page->addWidget(new LabelWidget("Color"))
+            .setLeft()
             .setGroup(3);
-
     page->addWidget(new CVarColorEditWidget("view-cross-r", "view-cross-g", "view-cross-b"))
+            .setRight()
             .setGroup(3)
             .setAction(Widget::Deactivated, CVarColorEditWidget_UpdateCVar)
             .setAction(Widget::Activated,   Hu_MenuActivateColorWidget);
+
+    page->addWidget(new LabelWidget("Vitality Color"))
+            .setLeft()
+            .setGroup(3);
+    page->addWidget(new CVarToggleWidget("view-cross-vitality"))
+            .setRight()
+            .setGroup(3);
+
+    page->addWidget(new LabelWidget("   When Dead"))
+            .setLeft()
+            .setGroup(3);
+    page->addWidget(new CVarColorEditWidget("view-cross-dead-r", "view-cross-dead-g", "view-cross-dead-b"))
+            .setRight()
+            .setGroup(3)
+            .setAction(Widget::Deactivated,     CVarColorEditWidget_UpdateCVar)
+            .setAction(Widget::Activated,       Hu_MenuActivateColorWidget);
+
+    page->addWidget(new LabelWidget("   Full Health"))
+            .setLeft()
+            .setGroup(3);
+
+    page->addWidget(new CVarColorEditWidget("view-cross-live-r", "view-cross-live-g", "view-cross-live-b"))
+            .setRight()
+            .setGroup(3)
+            .setAction(Widget::Deactivated,     CVarColorEditWidget_UpdateCVar)
+            .setAction(Widget::Activated,       Hu_MenuActivateColorWidget);
 
 #if __JDOOM__ || __JHERETIC__ || __JHEXEN__
     page->addWidget(new LabelWidget("Statusbar"))
@@ -1352,16 +1324,101 @@ void Hu_MenuInitHUDOptionsPage()
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Size"))
+            .setLeft()
             .setGroup(4);
-
     page->addWidget(new CVarSliderWidget("hud-status-size"))
+            .setRight()
             .setGroup(4);
 
     page->addWidget(new LabelWidget("Opacity"))
+            .setLeft()
+            .setGroup(4);
+    page->addWidget(new CVarSliderWidget("hud-status-alpha"))
+            .setRight()
             .setGroup(4);
 
-    page->addWidget(new CVarSliderWidget("hud-status-alpha"))
+#if __JDOOM__
+    page->addWidget(new LabelWidget("Single Key Display")).setLeft();
+    page->addWidget(new CVarToggleWidget("hud-keys-combine")).setRight();
+#endif
+
+    page->addWidget(new LabelWidget("AutoHide Status"))
+            .setLeft()
             .setGroup(4);
+    page->addWidget(new CVarTextualSliderWidget("hud-timer", 0, 60, 1))
+            .setEmptyText("Disabled")
+            .setOnethSuffix(" second")
+            .setNthSuffix(" seconds")
+            .setRight()
+            .setGroup(4);
+
+    page->addWidget(new LabelWidget("Status UnHide Events"))
+            .setGroup(1)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Receive Damage"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("hud-unhide-damage"))
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Health"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-health"))
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Armor"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-armor"))
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Powerup"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-powerup"))
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Weapon"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-weapon"))
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget)
+#if __JHEXEN__
+            .setText("Pickup Mana")
+#else
+            .setText("Pickup Ammo")
+#endif
+            .setGroup(1)
+            .setLeft();
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-ammo"))
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Pickup Key"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-key"))
+            .setRight()
+            .setGroup(1);
+
+#if __JHERETIC__ || __JHEXEN__
+    page->addWidget(new LabelWidget("Pickup Item"))
+            .setLeft()
+            .setGroup(1);
+
+    page->addWidget(new CVarToggleWidget("hud-unhide-pickup-invitem"))
+            .setRight()
+            .setGroup(1);
+#endif // __JHERETIC__ || __JHEXEN__
 
 #endif // __JDOOM__ || __JHERETIC__ || __JHEXEN__
 
@@ -1371,17 +1428,19 @@ void Hu_MenuInitHUDOptionsPage()
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Items"))
+            .setLeft()
             .setGroup(5);
-
     page->addWidget(new CVarInlineListWidget("hud-cheat-counter", CCH_ITEMS | CCH_ITEMS_PRCNT))
             .addItems(ListWidget::Items() << new ListWidgetItem("Hidden",        0)
                                           << new ListWidgetItem("Count",         CCH_ITEMS)
                                           << new ListWidgetItem("Percent",       CCH_ITEMS_PRCNT)
                                           << new ListWidgetItem("Count+Percent", CCH_ITEMS | CCH_ITEMS_PRCNT))
+            .setRight()
             .setGroup(5)
             .setShortcut('i');
 
     page->addWidget(new LabelWidget("Kills"))
+            .setLeft()
             .setGroup(5);
 
     page->addWidget(new CVarInlineListWidget("hud-cheat-counter", CCH_KILLS | CCH_KILLS_PRCNT))
@@ -1389,30 +1448,34 @@ void Hu_MenuInitHUDOptionsPage()
                                           << new ListWidgetItem("Count",         CCH_KILLS)
                                           << new ListWidgetItem("Percent",       CCH_KILLS_PRCNT)
                                           << new ListWidgetItem("Count+Percent", CCH_KILLS | CCH_KILLS_PRCNT))
+            .setRight()
             .setGroup(5)
             .setShortcut('k');
 
     page->addWidget(new LabelWidget("Secrets"))
+            .setLeft()
             .setGroup(5);
-
     page->addWidget(new CVarInlineListWidget("hud-cheat-counter", CCH_SECRETS | CCH_SECRETS_PRCNT))
             .addItems(ListWidget::Items() << new ListWidgetItem("Hidden",        0)
                                           << new ListWidgetItem("Count",         CCH_SECRETS)
                                           << new ListWidgetItem("Percent",       CCH_SECRETS_PRCNT)
                                           << new ListWidgetItem("Count+Percent", CCH_SECRETS | CCH_SECRETS_PRCNT))
             .setGroup(5)
+            .setRight()
             .setShortcut('s');
 
     page->addWidget(new LabelWidget("Automap Only"))
+            .setLeft()
             .setGroup(5);
-
     page->addWidget(new CVarToggleWidget("hud-cheat-counter-show-mapopen"))
+            .setRight()
             .setGroup(5);
 
     page->addWidget(new LabelWidget("Size"))
+            .setLeft()
             .setGroup(5);
-
     page->addWidget(new CVarSliderWidget("hud-cheat-counter-scale"))
+            .setRight()
             .setGroup(5);
 
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -1422,15 +1485,17 @@ void Hu_MenuInitHUDOptionsPage()
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Size"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarSliderWidget("hud-scale"))
+            .setRight()
             .setGroup(6);
 
     page->addWidget(new LabelWidget("Text Color"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarColorEditWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a", Vector4f(), true))
+            .setRight()
             .setGroup(6)
             .setAction(Widget::Deactivated, CVarColorEditWidget_UpdateCVar)
             .setAction(Widget::Activated,   Hu_MenuActivateColorWidget);
@@ -1438,9 +1503,11 @@ void Hu_MenuInitHUDOptionsPage()
 #if __JHEXEN__
 
     page->addWidget(new LabelWidget("Show Mana"))
+            .setLeft()
             .setGroup(6);
 
     page->addWidget(new CVarToggleWidget("hud-mana"))
+            .setRight()
             .setGroup(6);
 
 #endif // __JHEXEN__
@@ -1448,16 +1515,18 @@ void Hu_MenuInitHUDOptionsPage()
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
     page->addWidget(new LabelWidget("Show Ammo"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarToggleWidget("hud-ammo"))
+            .setRight()
             .setGroup(6)
             .setShortcut('a');
 
     page->addWidget(new LabelWidget("Show Armor"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarToggleWidget("hud-armor"))
+            .setRight()
             .setGroup(6)
             .setShortcut('r');
 
@@ -1466,9 +1535,10 @@ void Hu_MenuInitHUDOptionsPage()
 #if __JDOOM64__
 
     page->addWidget(new LabelWidget("Show PowerKeys"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarToggleWidget("hud-power"))
+            .setRight()
             .setGroup(6)
             .setShortcut('p');
 
@@ -1477,27 +1547,30 @@ void Hu_MenuInitHUDOptionsPage()
 #if __JDOOM__
 
     page->addWidget(new LabelWidget("Show Status"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarToggleWidget("hud-face"))
+            .setRight()
             .setGroup(6)
             .setShortcut('f');
 
 #endif // __JDOOM__
 
     page->addWidget(new LabelWidget("Show Health"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarToggleWidget("hud-health"))
+            .setRight()
             .setGroup(6)
             .setShortcut('h');
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
 
     page->addWidget(new LabelWidget("Show Keys"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarToggleWidget("hud-keys"))
+            .setRight()
             .setGroup(6);
 
 #endif // __JDOOM__ || __JDOOM64__ || __JHERETIC__
@@ -1505,9 +1578,10 @@ void Hu_MenuInitHUDOptionsPage()
 #if __JHERETIC__ || __JHEXEN__
 
     page->addWidget(new LabelWidget("Show Ready-Item"))
+            .setLeft()
             .setGroup(6);
-
     page->addWidget(new CVarToggleWidget("hud-currentitem"))
+            .setRight()
             .setGroup(6);
 
 #endif // __JHERETIC__ || __JHEXEN__
@@ -1516,19 +1590,22 @@ void Hu_MenuInitHUDOptionsPage()
 void Hu_MenuInitAutomapOptionsPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Vector2i const origin(64, 28);
+    const Vector2i origin(32, 28);
 #else
-    Vector2i const origin(70, 40);
+    const Vector2i origin(70, 40);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("AutomapOptions", origin));
+    page->setLeftColumnWidth(.55f);
     page->setTitle("Automap Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->addWidget(new LabelWidget("Rotate"));
+    page->addWidget(new LabelWidget("Rotation"))
+            .setLeft();
     {
         auto *tgl = new CVarToggleWidget("map-rotate");
+        tgl->setRight();
         tgl->setShortcut('r');
         tgl->setStateChangeCallback([](CVarToggleWidget::State state) {
             G_SetAutomapRotateMode(state == CVarToggleWidget::Down);
@@ -1536,66 +1613,120 @@ void Hu_MenuInitAutomapOptionsPage()
         page->addWidget(tgl);
     }
 
-    page->addWidget(new LabelWidget("Background Opacity"));
-    page->addWidget(new CVarSliderWidget("map-opacity"))
-            .setShortcut('o');
-
-    page->addWidget(new LabelWidget("Line Opacity"));
-    page->addWidget(new CVarSliderWidget("map-line-opacity"))
-            .setShortcut('l');
-
-    page->addWidget(new LabelWidget("Line Width"));
-    page->addWidget(new CVarSliderWidget("map-line-width", 0.5f, 8.f));
-
-#if !__JDOOM64__
-    page->addWidget(new LabelWidget("HUD Display"));
+#if !defined (__JDOOM64__)
+    page->addWidget(new LabelWidget("HUD Display"))
+            .setLeft();
     page->addWidget(new CVarInlineListWidget("map-huddisplay"))
             .addItems(ListWidget::Items() << new ListWidgetItem("None",      0)
                                           << new ListWidgetItem("Current",   1)
                                           << new ListWidgetItem("Statusbar", 2))
+            .setRight()
             .setShortcut('h');
 #endif
 
-    page->addWidget(new LabelWidget("Door Colors"));
+    page->addWidget(new LabelWidget("Appearance"))
+            .setGroup(1)
+            .setColor(MENU_COLOR2);
+
+    page->addWidget(new LabelWidget("Background Opacity"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarSliderWidget("map-opacity"))
+            .setShortcut('o')
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Line Opacity"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarSliderWidget("map-line-opacity"))
+            .setShortcut('l')
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Line Width"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarSliderWidget("map-line-width", 0.5f, 8.f))
+            .setRight()
+            .setGroup(1);
+
+    page->addWidget(new LabelWidget("Colored Doors"))
+            .setLeft()
+            .setGroup(1);
     page->addWidget(new CVarToggleWidget("map-door-colors"))
-            .setShortcut('d');
+            .setRight()
+            .setShortcut('d')
+            .setGroup(1);
 
-    page->addWidget(new LabelWidget("Door Glow"));
+    page->addWidget(new LabelWidget("Door Glow"))
+            .setLeft()
+            .setGroup(1);
     page->addWidget(new CVarSliderWidget("map-door-glow", 0, 200, 5))
-            .setShortcut('g');
+            .setRight()
+            .setShortcut('g')
+            .setGroup(1);
 
-    page->addWidget(new LabelWidget("Use Custom Colors"));
+    page->addWidget(new LabelWidget("Use Custom Colors"))
+            .setLeft()
+            .setGroup(2);
     page->addWidget(new CVarInlineListWidget("map-customcolors"))
             .addItems(ListWidget::Items() << new ListWidgetItem("Never",  0)
                                           << new ListWidgetItem("Auto",   1)
-                                          << new ListWidgetItem("Always", 2));
+                                          << new ListWidgetItem("Always", 2))
+            .setRight()
+            .setGroup(2);
 
-    page->addWidget(new LabelWidget("Wall"));
+    page->addWidget(new LabelWidget("Wall"))
+            .setLeft()
+            .setGroup(2);
     page->addWidget(new CVarColorEditWidget("map-wall-r", "map-wall-g", "map-wall-b"))
+            .setRight()
             .setShortcut('w')
+            .setGroup(2)
             .setAction(Widget::Activated, Hu_MenuActivateColorWidget);
 
-    page->addWidget(new LabelWidget("Floor Height Change"));
+    page->addWidget(new LabelWidget("Floor Height Change"))
+            .setLeft()
+            .setGroup(2);
     page->addWidget(new CVarColorEditWidget("map-wall-floorchange-r", "map-wall-floorchange-g", "map-wall-floorchange-b"))
+            .setRight()
             .setShortcut('f')
+            .setGroup(2)
             .setAction(Widget::Activated, Hu_MenuActivateColorWidget);
 
-    page->addWidget(new LabelWidget("Ceiling Height Change"));
+    page->addWidget(new LabelWidget("Ceiling Height Change"))
+            .setLeft()
+            .setGroup(2);
     page->addWidget(new CVarColorEditWidget("map-wall-ceilingchange-r", "map-wall-ceilingchange-g", "map-wall-ceilingchange-b"))
+            .setRight()
+            .setGroup(2)
             .setAction(Widget::Activated, Hu_MenuActivateColorWidget);
 
-    page->addWidget(new LabelWidget("Unseen"));
+    page->addWidget(new LabelWidget("Unseen"))
+            .setLeft()
+            .setGroup(2);
     page->addWidget(new CVarColorEditWidget("map-wall-unseen-r", "map-wall-unseen-g", "map-wall-unseen-b"))
+            .setRight()
+            .setGroup(2)
             .setShortcut('u')
             .setAction(Widget::Activated, Hu_MenuActivateColorWidget);
 
-    page->addWidget(new LabelWidget("Thing"));
+    page->addWidget(new LabelWidget("Thing"))
+            .setLeft()
+            .setGroup(2);
     page->addWidget(new CVarColorEditWidget("map-mobj-r", "map-mobj-g", "map-mobj-b"))
+            .setRight()
+            .setGroup(2)
             .setShortcut('t')
             .setAction(Widget::Activated, Hu_MenuActivateColorWidget);
 
-    page->addWidget(new LabelWidget("Background"));
+    page->addWidget(new LabelWidget("Background"))
+            .setLeft()
+            .setGroup(2);
     page->addWidget(new CVarColorEditWidget("map-background-r", "map-background-g", "map-background-b"))
+            .setRight()
+            .setGroup(2)
             .setShortcut('b')
             .setAction(Widget::Activated, Hu_MenuActivateColorWidget);
 }
@@ -1605,11 +1736,11 @@ static bool compareWeaponPriority(ListWidgetItem const *a, ListWidgetItem const 
     int i = 0, aIndex = -1, bIndex = -1;
     do
     {
-        if(cfg.common.weaponOrder[i] == a->userValue())
+        if (cfg.common.weaponOrder[i] == a->userValue())
         {
             aIndex = i;
         }
-        if(cfg.common.weaponOrder[i] == b->userValue())
+        if (cfg.common.weaponOrder[i] == b->userValue())
         {
             bIndex = i;
         }
@@ -1665,6 +1796,7 @@ void Hu_MenuInitWeaponsPage()
     };
 
     Page *page = Hu_MenuAddPage(new Page("WeaponOptions", origin));
+    page->setLeftColumnWidth(.5f);
     page->setTitle("Weapons Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -1673,7 +1805,7 @@ void Hu_MenuInitWeaponsPage()
             .setColor(MENU_COLOR2);
 
     ListWidget::Items weapItems;
-    for(int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
+    for (int i = 0; weaponOrder[i].data < NUM_WEAPON_TYPES; ++i)
     {
         char const *itemText = weaponOrder[i].text;
         if(itemText && (PTR2INT(itemText) > 0 && PTR2INT(itemText) < NUMTEXT))
@@ -1685,6 +1817,7 @@ void Hu_MenuInitWeaponsPage()
     qSort(weapItems.begin(), weapItems.end(), compareWeaponPriority);
     page->addWidget(new ListWidget)
             .addItems(weapItems)
+            .setReorderingEnabled(true)
             .setHelpInfo("Use left/right to move weapon up/down")
             .setShortcut('p')
             .setColor(MENU_COLOR3)
@@ -1696,16 +1829,18 @@ void Hu_MenuInitWeaponsPage()
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Use Priority Order"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("player-weapon-nextmode"))
+            .setRight()
             .setGroup(1)
             .setShortcut('o');
 
     page->addWidget(new LabelWidget("Sequential"))
+            .setLeft()
             .setGroup(1);
-
     page->addWidget(new CVarToggleWidget("player-weapon-cycle-sequential"))
+            .setRight()
             .setGroup(1)
             .setShortcut('s');
 
@@ -1714,38 +1849,42 @@ void Hu_MenuInitWeaponsPage()
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Pickup Weapon"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarInlineListWidget("player-autoswitch"))
             .addItems(ListWidget::Items() << new ListWidgetItem("Never",     0)
                                           << new ListWidgetItem("If Better", 1)
                                           << new ListWidgetItem("Always",    2))
             .setGroup(2)
+            .setRight()
             .setShortcut('w');
 
     page->addWidget(new LabelWidget("   If Not Firing"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarToggleWidget("player-autoswitch-notfiring"))
+            .setRight()
             .setGroup(2)
             .setShortcut('f');
 
     page->addWidget(new LabelWidget("Pickup Ammo"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarInlineListWidget("player-autoswitch-ammo"))
             .addItems(ListWidget::Items() << new ListWidgetItem("Never",     0)
                                           << new ListWidgetItem("If Better", 1)
                                           << new ListWidgetItem("Always",    2))
             .setGroup(2)
+            .setRight()
             .setShortcut('a');
 
 #if __JDOOM__ || __JDOOM64__
 
     page->addWidget(new LabelWidget("Pickup Beserk"))
+            .setLeft()
             .setGroup(2);
-
     page->addWidget(new CVarToggleWidget("player-autoswitch-berserk"))
+            .setRight()
             .setGroup(2)
             .setShortcut('b');
 
@@ -1756,50 +1895,65 @@ void Hu_MenuInitWeaponsPage()
 void Hu_MenuInitInventoryOptionsPage()
 {
     Page *page = Hu_MenuAddPage(new Page("InventoryOptions", Vector2i(78, 48)));
+    page->setLeftColumnWidth(.65f);
     page->setTitle("Inventory Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->addWidget(new LabelWidget("Select Mode"));
+    page->addWidget(new LabelWidget("Select Mode"))
+            .setLeft();
     page->addWidget(new CVarToggleWidget("ctl-inventory-mode", 0, "Scroll", "Cursor"))
+            .setRight()
             .setShortcut('s');
 
-    page->addWidget(new LabelWidget("Wrap Around"));
+    page->addWidget(new LabelWidget("Wrap Around"))
+            .setLeft();
     page->addWidget(new CVarToggleWidget("ctl-inventory-wrap"))
+            .setRight()
             .setShortcut('w');
 
-    page->addWidget(new LabelWidget("Choose And Use"));
+    page->addWidget(new LabelWidget("Choose And Use"))
+            .setLeft();
     page->addWidget(new CVarToggleWidget("ctl-inventory-use-immediate"))
+            .setRight()
             .setShortcut('c');
 
-    page->addWidget(new LabelWidget("Select Next If Use Failed"));
+    page->addWidget(new LabelWidget("Select Next If Use Failed"))
+            .setLeft();
     page->addWidget(new CVarToggleWidget("ctl-inventory-use-next"))
+            .setRight()
             .setShortcut('n');
 
-    page->addWidget(new LabelWidget("AutoHide"));
+    page->addWidget(new LabelWidget("AutoHide"))
+            .setLeft();
     page->addWidget(new CVarTextualSliderWidget("hud-inventory-timer", 0, 30, 1.f))
             .setEmptyText("Disabled")
             .setOnethSuffix(" second")
             .setNthSuffix(" seconds")
-            .setShortcut('h');
+            .setShortcut('h')
+            .setRight();
 
     page->addWidget(new LabelWidget("Fullscreen HUD"))
             .setGroup(1)
             .setColor(MENU_COLOR2);
 
     page->addWidget(new LabelWidget("Max Visible Slots"))
+            .setLeft()
             .setGroup(1);
 
     page->addWidget(new CVarTextualSliderWidget("hud-inventory-slot-max", 0, 16, 1, false))
             .setEmptyText("Automatic")
+            .setRight()
             .setGroup(1)
             .setShortcut('v');
 
     page->addWidget(new LabelWidget("Show Empty Slots"))
-            .setGroup(1);
+            .setGroup(1)
+            .setLeft();
 
     page->addWidget(new CVarToggleWidget("hud-inventory-slot-showempty"))
             .setGroup(1)
+            .setRight()
             .setShortcut('e');
 }
 #endif
@@ -1815,16 +1969,21 @@ void Hu_MenuInitSoundOptionsPage()
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("SoundOptions", origin));
+    page->setLeftColumnWidth(.4f);
     page->setTitle("Sound Options");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
-    page->addWidget(new LabelWidget("SFX Volume"));
-    page->addWidget(new CVarSliderWidget("sound-volume", 0, 255, 5, false))
+    page->addWidget(new LabelWidget("SFX Volume"))
+            .setLeft();
+    page->addWidget(new CVarSliderWidget("sound-volume", 0, 255, 16, false))
+            .setRight()
             .setShortcut('s');
 
-    page->addWidget(new LabelWidget("Music Volume"));
-    page->addWidget(new CVarSliderWidget("music-volume", 0, 255, 5, false))
+    page->addWidget(new LabelWidget("Music Volume"))
+            .setLeft();
+    page->addWidget(new CVarSliderWidget("music-volume", 0, 255, 16, false))
+            .setRight()
             .setShortcut('m');
 }
 
@@ -2122,7 +2281,7 @@ void Hu_MenuTicker(timespan_t ticLength)
         {
             cursor.angle += float( 5 * ticLength * TICRATE );
         }
-        else if(cursor.angle != 0)
+        else if (!fequal(cursor.angle, 0))
         {
             float rewind = float( MENU_CURSOR_REWIND_SPEED * ticLength * TICRATE );
             if(cursor.angle <= rewind || cursor.angle >= 360 - rewind)
@@ -2215,14 +2374,14 @@ short Hu_MenuMergeEffectWithDrawTextFlags(short f)
     return ((~cfg.common.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void Hu_MenuDrawFocusCursor(Vector2i const &origin, int focusObjectHeight, float alpha)
+void Hu_MenuDrawFocusCursor(Vector2i const &origin, int /*focusObjectHeight*/, float alpha)
 {
 #if __JDOOM__ || __JDOOM64__
 # define OFFSET_X         (-22)
 # define OFFSET_Y         (-2)
 #elif __JHERETIC__ || __JHEXEN__
 # define OFFSET_X         (-16)
-# define OFFSET_Y         (3)
+# define OFFSET_Y         (1)
 #endif
 
     float const angle   = cursor.angle;
@@ -2233,9 +2392,9 @@ void Hu_MenuDrawFocusCursor(Vector2i const &origin, int focusObjectHeight, float
     if(!R_GetPatchInfo(pCursor, &info))
         return;
 
-    float const scale = de::min((focusObjectHeight * 1.267f) / info.geometry.size.height, 1.f);
+    float const scale = /*de::min((focusObjectHeight * 1.267f) /*/ 1; //info.geometry.size.height; //, 1.f);
     Vector2i pos = origin + Vector2i(OFFSET_X, OFFSET_Y) * scale;
-    pos.y += focusObjectHeight / 2;
+//    pos.y -= info.geometry.size.height / 2;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -2966,7 +3125,7 @@ void Hu_MenuSelectHelp(Widget & /*wi*/, Widget::Action action)
 void Hu_MenuDrawOptionsPage(Page const & /*page*/, Vector2i const &origin)
 {
 #if __JHERETIC__ || __JHEXEN__
-    Hu_MenuDrawPageTitle("Options", Vector2i(origin.x + 42, origin.y - 38));
+    Hu_MenuDrawPageTitle("Options", Vector2i(origin.x + 42, origin.y - 30));
 #else
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
@@ -3016,30 +3175,16 @@ void Hu_MenuUpdateColorWidgetColor(Widget &wi, Widget::Action action)
     }
 }
 
-void Hu_MenuChangeWeaponPriority(Widget & /*wi*/, Widget::Action action)
+void Hu_MenuChangeWeaponPriority(Widget &wi, Widget::Action action)
 {
-    if(action != Widget::Modified) return;
-
-    /*int choice = option >> NUM_WEAPON_TYPES;
-
-    if(option & RIGHT_DIR)
+    if (action == Widget::Modified)
     {
-        if(choice < NUM_WEAPON_TYPES-1)
+        auto &list = wi.as<ListWidget>();
+        for (int i = 0; i < list.itemCount(); ++i)
         {
-            int temp = cfg.common.weaponOrder[choice+1];
-            cfg.common.weaponOrder[choice+1] = cfg.common.weaponOrder[choice];
-            cfg.common.weaponOrder[choice] = temp;
+            cfg.common.weaponOrder[i] = list.itemData(i);
         }
     }
-    else
-    {
-        if(choice > 0)
-        {
-            int temp = cfg.common.weaponOrder[choice];
-            cfg.common.weaponOrder[choice] = cfg.common.weaponOrder[choice-1];
-            cfg.common.weaponOrder[choice-1] = temp;
-        }
-    }*/
 }
 
 void Hu_MenuSelectSingleplayer(Widget & /*wi*/, Widget::Action action)

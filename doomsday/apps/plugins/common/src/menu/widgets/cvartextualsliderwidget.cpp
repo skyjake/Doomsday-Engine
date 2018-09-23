@@ -145,7 +145,7 @@ void CVarTextualSliderWidget::draw() const
     DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(mnRendState->textFonts[font()]);
-    FR_SetColorAndAlpha(textColor.x, textColor.y, textColor.z, textColor.w);
+    FR_SetColorAndAlpha(textColor.x, textColor.y, textColor.z, textColor.w * scrollingFadeout());
     FR_DrawTextXY3(valueAsText.toUtf8().constData(), 0, 0, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);

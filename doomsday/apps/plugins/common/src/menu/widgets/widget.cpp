@@ -21,6 +21,7 @@
 #include <QMap>
 #include "common.h"
 #include "menu/widgets/widget.h"
+#include "menu/page.h"
 
 #include "hu_menu.h" // menu sounds
 
@@ -255,13 +256,11 @@ int Widget::handleCommand(menucommand_e cmd)
 
 bool Widget::hasAction(Action id) const
 {
-    DENG2_ASSERT(id >= Modified && id <= FocusGained);
     return d->actions.contains(id);
 }
 
 Widget &Widget::setAction(Action id, ActionCallback callback)
 {
-    DENG2_ASSERT(id >= Modified && id <= FocusGained);
     if(callback)
     {
         d->actions.insert(id, callback);
@@ -301,6 +300,44 @@ Widget &Widget::setUserValue2(QVariant const &newValue)
 QVariant const &Widget::userValue2() const
 {
     return d->userValue2;
+}
+
+float Widget::scrollingFadeout() const
+{
+    const auto geom = geometry();
+    return scrollingFadeout(geom.topLeft.y, geom.bottomRight.y);
+}
+
+float Widget::scrollingFadeout(int yTop, int yBottom) const
+{
+    if (page().flags() & Page::NoScroll)
+    {
+        return 1.f;
+    }
+
+    const float FADEOUT_LEN = 20;
+    const auto  viewRegion  = page().viewRegion();
+
+    if (yBottom < viewRegion.topLeft.y)
+    {
+        return de::max(0.f, 1.f - (viewRegion.topLeft.y - yBottom) / FADEOUT_LEN);
+    }
+    if (yTop > viewRegion.bottomRight.y)
+    {
+        return de::max(0.f, 1.f - (yTop - viewRegion.bottomRight.y) / FADEOUT_LEN);
+    }
+    return 1.f;
+}
+
+Vector4f Widget::selectionFlashColor(const Vector4f &noFlashColor) const
+{
+    if (isFocused() && cfg.common.menuTextFlashSpeed > 0)
+    {
+        const float speed = cfg.common.menuTextFlashSpeed / 2.f;
+        const float t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        return lerp(noFlashColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), 1.f), t);
+    }
+    return noFlashColor;
 }
 
 } // namespace menu

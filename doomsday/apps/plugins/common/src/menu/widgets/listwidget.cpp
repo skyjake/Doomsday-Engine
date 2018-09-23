@@ -59,9 +59,10 @@ int ListWidget::Item::userValue() const
 DENG2_PIMPL_NOREF(ListWidget)
 {
     Items items;
-    int selection = 0;  ///< Selected item (-1 if none).
-    int first     = 0;  ///< First visible item.
-    int numvis    = 0;
+    int   selection      = 0; ///< Selected item (-1 if none).
+    int   first          = 0; ///< First visible item.
+    int   numvis         = 0;
+    bool  reorderEnabled = false;
 
     ~Impl() { qDeleteAll(items); }
 };
@@ -124,13 +125,19 @@ void ListWidget::draw() const
     Vector4f const &textColor = mnRendState->textColors[color()];
     float t = flashSelection? 1 : 0;
 
-    if(flashSelection && cfg.common.menuTextFlashSpeed > 0)
+    Vector4f flashColor = textColor;
+
+    if (flashSelection) /* && cfg.common.menuTextFlashSpeed > 0)
     {
         float const speed = cfg.common.menuTextFlashSpeed / 2.f;
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+    }*/
+    {
+        flashColor = selectionFlashColor(flashColor);
     }
 
-    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
+
+//    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
     Vector4f const dimColor   = Vector4f(Vector3f(textColor) * MNDATA_LIST_NONSELECTION_LIGHT, textColor.w);
 
     if(d->first < d->items.count() && d->numvis > 0)
@@ -142,13 +149,21 @@ void ListWidget::draw() const
         int itemIdx = d->first;
         do
         {
-            Item const *item      = d->items[itemIdx];
-            Vector4f const &color = d->selection == itemIdx? (flashSelection? flashColor : textColor) : dimColor;
+            const Item *item = d->items[itemIdx];
 
-            FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
+            const Vector4f &color =
+                d->selection == itemIdx ? (flashSelection ? flashColor : textColor) : dimColor;
+
+            const int itemHeight =
+                FR_TextHeight(item->text().toUtf8().constData()) * (1 + MNDATA_LIST_LEADING);
+
+            FR_SetColorAndAlpha(color.x,
+                                color.y,
+                                color.z,
+                                color.w * scrollingFadeout(origin.y, origin.y + itemHeight));
             FR_DrawTextXY3(item->text().toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
-            origin.y += FR_TextHeight(item->text().toUtf8().constData()) * (1 + MNDATA_LIST_LEADING);
-        } while(++itemIdx < d->items.count() && itemIdx < d->first + d->numvis);
+            origin.y += itemHeight;
+        } while (++itemIdx < d->items.count() && itemIdx < d->first + d->numvis);
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
@@ -156,11 +171,11 @@ void ListWidget::draw() const
 
 int ListWidget::handleCommand(menucommand_e cmd)
 {
-    switch(cmd)
+    switch (cmd)
     {
     case MCMD_NAV_DOWN:
     case MCMD_NAV_UP:
-        if(isActive())
+        if (isActive())
         {
             int oldSelection = d->selection;
             if(MCMD_NAV_DOWN == cmd)
@@ -184,7 +199,7 @@ int ListWidget::handleCommand(menucommand_e cmd)
         return false; // Not eaten.
 
     case MCMD_NAV_OUT:
-        if(isActive())
+        if (isActive())
         {
             S_LocalSound(SFX_MENU_CANCEL, NULL);
             setFlags(Active, UnsetFlags);
@@ -194,7 +209,7 @@ int ListWidget::handleCommand(menucommand_e cmd)
         return false; // Not eaten.
 
     case MCMD_SELECT:
-        if(!isActive())
+        if (!isActive())
         {
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             setFlags(Active);
@@ -205,6 +220,18 @@ int ListWidget::handleCommand(menucommand_e cmd)
             S_LocalSound(SFX_MENU_ACCEPT, NULL);
             setFlags(Active, UnsetFlags);
             execAction(Deactivated);
+        }
+        return true;
+
+    case MCMD_NAV_LEFT:
+    case MCMD_NAV_RIGHT:
+        if (d->reorderEnabled && isActive())
+        {
+            if (reorder(selection(), cmd == MCMD_NAV_LEFT ? -1 : +1))
+            {
+                S_LocalSound(SFX_MENU_SLIDER_MOVE, NULL);
+                execAction(Modified);
+            }
         }
         return true;
 
@@ -241,7 +268,7 @@ void ListWidget::updateVisibleSelection()
 
 int ListWidget::itemData(int index) const
 {
-    if(index >= 0 && index < itemCount())
+    if (index >= 0 && index < itemCount())
     {
         return d->items[index]->userValue();
     }
@@ -281,6 +308,39 @@ bool ListWidget::selectItem(int itemIndex, int flags)
 bool ListWidget::selectItemByValue(int userValue, int flags)
 {
     return selectItem(findItem(userValue), flags);
+}
+
+bool ListWidget::reorder(int itemIndex, int indexOffset)
+{
+    if (itemIndex + indexOffset < 0 || itemIndex + indexOffset >= d->items.size())
+    {
+        return false; // Would go out of bounds.
+    }
+
+    if (d->selection == itemIndex)
+    {
+        d->selection += indexOffset;
+    }
+
+    while (indexOffset < 0)
+    {
+        std::swap(d->items[itemIndex - 1], d->items[itemIndex]);
+        --itemIndex;
+        ++indexOffset;
+    }
+    while (indexOffset > 0)
+    {
+        std::swap(d->items[itemIndex + 1], d->items[itemIndex]);
+        ++itemIndex;
+        --indexOffset;
+    }
+    return true;
+}
+
+ListWidget &ListWidget::setReorderingEnabled(bool reorderEnabled)
+{
+    d->reorderEnabled = reorderEnabled;
+    return *this;
 }
 
 } // namespace menu

@@ -58,6 +58,9 @@ public:
         PositionFixed = 0x100,  ///< XY position is fixed and predefined; automatic layout does not apply.
         LayoutOffset  = 0x200,  ///< Predefined XY position is applied to the dynamic layout origin.
 
+        LeftColumn    = 0x400,  ///< Widget is laid out to the page's left column.
+        RightColumn   = 0x800,  ///< Widget is laid out to the page's right column.
+
         /// @todo We need a new dynamic id mechanism.
         Id7           = 0x1000000,
         Id6           = 0x2000000,
@@ -83,7 +86,7 @@ public:
         Activated,    ///< Becomes "active".
         Closed,       ///< Normally means changed-state to be discarded.
         FocusLost,    ///< Loses selection "focus".
-        FocusGained   ///< Gains selection "focus".
+        FocusGained,  ///< Gains selection "focus".
     };
 
     typedef void (*ActionCallback)  (Widget &, Action);
@@ -162,6 +165,9 @@ public:
     Widget &setFlags(Flags flagsToChange, de::FlagOp operation = de::SetFlags);
     Flags flags() const;
 
+    Widget &setLeft() { return setFlags(LeftColumn); }
+    Widget &setRight() { return setFlags(RightColumn); }
+
     inline bool isActive()   const { return flags() & Active;   }
     inline bool isFocused()  const { return flags() & Focused;  }
     inline bool isHidden()   const { return flags() & Hidden;   }
@@ -224,6 +230,10 @@ public:
 
     Widget &setUserValue2(QVariant const &newValue);
     QVariant const &userValue2() const;
+
+    float scrollingFadeout() const;
+    float scrollingFadeout(int yTop, int yBottom) const;
+    de::Vector4f selectionFlashColor(const de::Vector4f &noFlashColor) const;
 
 private:
     DENG2_PRIVATE(d)

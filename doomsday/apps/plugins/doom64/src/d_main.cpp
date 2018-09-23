@@ -167,7 +167,7 @@ void D_PreInit()
     cfg.common.hudColor[0] = 1;
     cfg.common.hudColor[1] = cfg.common.hudColor[2] = 0;
     cfg.common.hudColor[3] = 0.75f;
-    cfg.common.hudFog = 1;
+    cfg.common.hudFog = 5;
     cfg.common.hudIconAlpha = 0.5f;
     cfg.common.xhairAngle = 0;
     cfg.common.xhairSize = .5f;

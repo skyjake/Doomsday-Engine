@@ -99,8 +99,13 @@ public:
     void setOrigin(de::Vector2i const &newOrigin);
     de::Vector2i origin() const;
 
+    Flags flags() const;
+    de::Rectanglei viewRegion() const;
+
     void setX(int x);
     void setY(int y);
+
+    void setLeftColumnWidth(float columnWidthPercentage = 0.6f);
 
     void setPreviousPage(Page *newPreviousPage);
     Page *previousPage() const;

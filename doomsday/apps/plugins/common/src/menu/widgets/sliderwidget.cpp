@@ -164,7 +164,9 @@ void SliderWidget::draw() const
         M_DrawGlowBar(from, to, HEIGHT * 1.1f, true, true, true, 0, 0, 0, mnRendState->pageAlpha * mnRendState->textShadow);
     }
 
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+    const float fadeout = scrollingFadeout();
+
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha * fadeout);
 
     GL_DrawPatch(pSliderLeft,  Vector2i(0, 0), ALIGN_TOPRIGHT, DPF_NO_OFFSETX);
     GL_DrawPatch(pSliderRight, Vector2i(MNDATA_SLIDER_SLOTS * WIDTH, 0));
@@ -172,7 +174,7 @@ void SliderWidget::draw() const
     DGL_SetPatch(pSliderMiddle, DGL_REPEAT, DGL_REPEAT);
     DGL_DrawRectf2Tiled(0, middleInfo.geometry.origin.y, MNDATA_SLIDER_SLOTS * WIDTH, HEIGHT, middleInfo.geometry.size.width, middleInfo.geometry.size.height);
 
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha * fadeout);
     GL_DrawPatch(pSliderHandle, Vector2i(d->thumbPos(), 1), ALIGN_TOP, DPF_NO_OFFSET);
 
     DGL_Disable(DGL_TEXTURE_2D);

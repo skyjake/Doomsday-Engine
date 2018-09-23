@@ -700,7 +700,10 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                     {
                         // The character itself.
                         DGL_Color4fv(sat->rgba);
-                        drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+                        if (sat->rgba[CA] > 0.001f)
+                        {
+                            drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+                        }
                     }
 
                     if (!noGlitter && glitter > 0)

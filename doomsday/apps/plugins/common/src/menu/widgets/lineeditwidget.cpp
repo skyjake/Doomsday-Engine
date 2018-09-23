@@ -131,28 +131,34 @@ void LineEditWidget::draw() const
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(fontId);
 
+    const float fadeout = scrollingFadeout();
+
     //int const numVisCharacters = de::clamp(0, useText.isNull()? 0 : useText.length(), d->maxVisibleChars);
 
     drawEditBackground(origin + Vector2i(MNDATA_EDIT_BACKGROUND_OFFSET_X, MNDATA_EDIT_BACKGROUND_OFFSET_Y),
-                       geometry().width(), mnRendState->pageAlpha);
+                       geometry().width(), mnRendState->pageAlpha * fadeout);
 
     //if(string)
     {
-        float t = 0;
+//        float t = 0;
+        Vector4f color = Vector4f(Vector3f(cfg.common.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), 1.f);
 
         // Flash if focused?
-        if(!isActive() && isFocused() && cfg.common.menuTextFlashSpeed > 0)
+        if (!isActive()) /* && isFocused() && cfg.common.menuTextFlashSpeed > 0)
         {
             float const speed = cfg.common.menuTextFlashSpeed / 2.f;
             t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+        }*/
+        {
+            color = selectionFlashColor(color);
         }
 
-        Vector4f color = de::lerp(Vector3f(cfg.common.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), Vector3f(cfg.common.menuTextFlashColor), t);
+//        Vector4f color = de::lerp(Vector3f(cfg.common.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), Vector3f(cfg.common.menuTextFlashColor), t);
         color *= light;
         color.w = textOpacity;
 
         // Draw the text:
-        FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
+        FR_SetColorAndAlpha(color.x, color.y, color.z, color.w * fadeout);
         FR_DrawTextXY3(useText.toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
