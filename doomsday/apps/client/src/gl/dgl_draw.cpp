@@ -170,14 +170,6 @@ struct DGLDrawState
                     // |  |  =>   \|   | \
                     // 3--2        2   4--3
 
-                    /*vertices.push_back(vertices.last());
-                    vertices.push_back(vertices.last());
-
-                    // 0 1 2  3 3 3  X
-                    int const N = vertices.size();
-                    vertices[N - 4] = vertices[N - 5];
-                    vertices[N - 2] = vertices[N - 7];*/
-
                     vertices.push_back(primVertices[0]);
                     vertices.push_back(primVertices[1]);
                     vertices.push_back(primVertices[2]);
@@ -201,7 +193,6 @@ struct DGLDrawState
 
             case DGL_LINE_LOOP:
             case DGL_LINE_STRIP:
-                // Compose a triangle strip.
                 if (primIndex == 1)
                 {
                     // Remember the first one for a loop.
@@ -209,6 +200,7 @@ struct DGLDrawState
                 }
                 if (primIndex > 1)
                 {
+                    // Continue from the previous vertex.
                     commitLine(primVertices[1], currentVertex);
                 }
                 primVertices[1] = currentVertex;
@@ -218,74 +210,6 @@ struct DGLDrawState
                 vertices.push_back(currentVertex);
                 break;
         }
-/*
-        if (primType == DGL_LINES)
-        {
-            if (primType == 1)
-            {
-                // Replace the last two vertices with a disjoint triangle strip.
-
-                Vertex end   = vertices.takeLast();
-                Vertex start = vertices.takeLast();
-
-                const Vector2f lineDir = (end.vertex - start.vertex).normalize();
-                const Vector2f lineNormal{-lineDir.y, lineDir.x};
-
-                const bool disjoint = !vertices.empty();
-                if (disjoint)
-                {
-                    vertices.push_back(vertices.back());
-                }
-
-                // Start cap.
-                start.fragOffset[0] = -lineNormal.x;
-                start.fragOffset[1] = -lineNormal.y;
-                vertices.push_back(start);
-                if (disjoint)
-                {
-                    vertices.push_back(start);
-                }
-                start.fragOffset[0] = lineNormal.x;
-                start.fragOffset[1] = lineNormal.y;
-                vertices.push_back(start);
-
-                // End cap.
-                end.fragOffset[0] = -lineNormal.x;
-                end.fragOffset[1] = -lineNormal.y;
-                vertices.push_back(end);
-                end.fragOffset[0] = lineNormal.x;
-                end.fragOffset[1] = lineNormal.y;
-                vertices.push_back(end);
-
-                primIndex = 0;
-            }
-        }
-        else if (primType == DGL_LINE_STRIP || primType == DGL_LINE_LOOP)
-        {
-
-        }
-        else if (primType == DGL_QUADS)
-        {
-            if (primIndex == 4)
-            {
-                // 4 vertices become 6.
-                //
-                // 0--1     0--1   5
-                // |  |      \ |   |\
-                // |  |  =>   \|   | \
-                // 3--2        2   4--3
-
-                vertices.append(vertices.last());
-                vertices.append(vertices.last());
-
-                // 0 1 2  3 3 3  X
-                int const N = vertices.size();
-                vertices[N - 4] = vertices[N - 5];
-                vertices[N - 2] = vertices[N - 7];
-
-                primIndex = 0;
-            }
-        }*/
     }
 
     void clearVertices()
