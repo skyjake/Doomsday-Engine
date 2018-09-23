@@ -1204,9 +1204,9 @@ float ST_AutomapOpacity(int localPlayer)
 
 void ST_SetAutomapCameraRotation(int localPlayer, dd_bool yes)
 {
-    if(auto *autmap = ST_TryFindAutomapWidget(localPlayer))
+    if(auto *automap = ST_TryFindAutomapWidget(localPlayer))
     {
-        autmap->setCameraRotationMode(CPP_BOOL(yes));
+        automap->setCameraRotationMode(CPP_BOOL(yes));
     }
 }
 

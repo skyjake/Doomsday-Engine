@@ -1334,28 +1334,24 @@ void P_PlayerThinkHUD(player_t* player)
         ST_LogRefresh(playerIdx);
 }
 
-void P_PlayerThinkMap(player_t* player)
+void P_PlayerThinkMap(player_t *player)
 {
-    uint playerIdx = player - players;
-    playerbrain_t* brain = &player->brain;
+    uint           playerIdx = player - players;
+    playerbrain_t *brain     = &player->brain;
 
-    if(brain->mapToggle)
+    if (brain->mapToggle)
         ST_AutomapOpen(playerIdx, !ST_AutomapIsOpen(playerIdx), false);
 
-    if(brain->mapFollow)
+    if (brain->mapFollow)
         ST_AutomapFollowMode(playerIdx);
 
-    if(brain->mapRotate)
-    {
-        cfg.common.automapRotate = !cfg.common.automapRotate;
-        ST_SetAutomapCameraRotation(playerIdx, cfg.common.automapRotate);
-        P_SetMessageWithFlags(player, (cfg.common.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), LMF_NO_HIDE);
-    }
+    if (brain->mapRotate)
+        G_SetAutomapRotateMode(!cfg.common.automapRotate); // changes cvar as well
 
-    if(brain->mapZoomMax)
+    if (brain->mapZoomMax)
         ST_AutomapZoomMode(playerIdx);
 
-    if(brain->mapMarkAdd)
+    if (brain->mapMarkAdd)
     {
         mobj_t *pmo = player->plr->mo;
         ST_AutomapAddPoint(playerIdx, pmo->origin[VX], pmo->origin[VY], pmo->origin[VZ]);

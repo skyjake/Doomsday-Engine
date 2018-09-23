@@ -30,11 +30,13 @@ namespace menu {
 
 DENG2_PIMPL_NOREF(CVarToggleWidget)
 {
-    State state          = Up;
-    char const *cvarPath = nullptr;
-    int cvarValueMask    = 0;
-    String downText;
-    String upText;
+    State       state         = Up;
+    const char *cvarPath      = nullptr;
+    int         cvarValueMask = 0;
+    String      downText;
+    String      upText;
+
+    std::function<void(State)> stateChangeCallback;
 };
 
 CVarToggleWidget::CVarToggleWidget(char const *cvarPath, int cvarValueMask,
@@ -126,7 +128,15 @@ void CVarToggleWidget_UpdateCVar(Widget &wi, Widget::Action action)
 
 void CVarToggleWidget::setState(State newState)
 {
-    d->state = newState;
+    if (newState != d->state)
+    {
+        d->state = newState;
+
+        if (d->stateChangeCallback)
+        {
+            d->stateChangeCallback(newState);
+        }
+    }
 }
 
 CVarToggleWidget::State CVarToggleWidget::state() const
@@ -162,6 +172,11 @@ void CVarToggleWidget::setUpText(String const &newUpText)
 String CVarToggleWidget::upText() const
 {
     return d->upText;
+}
+
+void CVarToggleWidget::setStateChangeCallback(const std::function<void (State)> &stateChanged)
+{
+    d->stateChangeCallback = stateChanged;
 }
 
 } // namespace menu

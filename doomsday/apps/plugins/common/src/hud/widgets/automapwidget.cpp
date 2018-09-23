@@ -2028,3 +2028,19 @@ void AutomapWidget::consoleRegister()  // static
     // Aliases for old names:
     C_VAR_FLOAT("map-alpha-lines",          &cfg.common.automapLineAlpha,      0, 0, 1);
 }
+
+void G_SetAutomapRotateMode(byte enableRotate)
+{
+    cfg.common.automapRotate = enableRotate; // Note: this sets the global default.
+
+    for (int i = 0; i < DDMAXPLAYERS; ++i)
+    {
+        ST_SetAutomapCameraRotation(i, cfg.common.automapRotate);
+        if (players[i].plr->inGame)
+        {
+            P_SetMessageWithFlags(&players[i],
+                                  (cfg.common.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF),
+                                  LMF_NO_HIDE);
+        }
+    }
+}

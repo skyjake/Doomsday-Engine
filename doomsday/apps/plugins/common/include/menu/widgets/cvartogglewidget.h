@@ -22,6 +22,7 @@
 #define LIBCOMMON_UI_CVARTOGGLEWIDGET
 
 #include "buttonwidget.h"
+#include <functional>
 
 namespace common {
 namespace menu {
@@ -59,6 +60,8 @@ public:
 
     void setUpText(de::String const &newUpText);
     de::String upText() const;
+
+    void setStateChangeCallback(const std::function<void(State)> &stateChanged);
 
 private:
     DENG2_PRIVATE(d)

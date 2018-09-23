@@ -219,6 +219,14 @@ void GameRules_UpdateDefaultsFromCVars();
 /// @todo remove me
 void G_SetGameActionMapCompletedAndSetNextMap(void);
 
+/**
+ * Changes the automap rotation mode for all players. Also sets the cvar value so the mode
+ * will persist.
+ *
+ * @param enableRotate  Enable or disable the rotation mode.
+ */
+void G_SetAutomapRotateMode(byte enableRotate);
+
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );
 D_CMD( CCmdSetViewLock );

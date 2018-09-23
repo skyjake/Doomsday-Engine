@@ -693,7 +693,7 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 }
 #endif
 
-void P_SetMessageWithFlags(player_t *pl, char const *msg, int flags)
+void P_SetMessageWithFlags(const player_t *pl, char const *msg, int flags)
 {
     DENG2_ASSERT(pl);
 
@@ -710,7 +710,7 @@ void P_SetMessageWithFlags(player_t *pl, char const *msg, int flags)
     NetSv_SendMessage(pl - players, msg);
 }
 
-void P_SetMessage(player_t *plr, char const *msg)
+void P_SetMessage(const player_t *plr, char const *msg)
 {
     P_SetMessageWithFlags(plr, msg, 0);
 }

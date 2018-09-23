@@ -1526,6 +1526,16 @@ void Hu_MenuInitAutomapOptionsPage()
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
+    page->addWidget(new LabelWidget("Rotate"));
+    {
+        auto *tgl = new CVarToggleWidget("map-rotate");
+        tgl->setShortcut('r');
+        tgl->setStateChangeCallback([](CVarToggleWidget::State state) {
+            G_SetAutomapRotateMode(state == CVarToggleWidget::Down);
+        });
+        page->addWidget(tgl);
+    }
+
     page->addWidget(new LabelWidget("Background Opacity"));
     page->addWidget(new CVarSliderWidget("map-opacity"))
             .setShortcut('o');
@@ -1537,9 +1547,8 @@ void Hu_MenuInitAutomapOptionsPage()
     page->addWidget(new LabelWidget("Line Width"));
     page->addWidget(new CVarSliderWidget("map-line-width", 0.5f, 8.f));
 
-    page->addWidget(new LabelWidget("HUD Display"));
-
 #if !__JDOOM64__
+    page->addWidget(new LabelWidget("HUD Display"));
     page->addWidget(new CVarInlineListWidget("map-huddisplay"))
             .addItems(ListWidget::Items() << new ListWidgetItem("None",      0)
                                           << new ListWidgetItem("Current",   1)
