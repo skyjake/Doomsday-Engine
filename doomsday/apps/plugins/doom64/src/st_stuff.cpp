@@ -370,7 +370,7 @@ static void initAutomapForCurrentMap(AutomapWidget& map)
 
         if (followTarget)
         {
-            map.setCameraOrigin(Vector2d(followTarget->origin));
+            map.setCameraOrigin(Vector2d(followTarget->origin), true);
         }
     }
 

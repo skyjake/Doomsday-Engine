@@ -750,7 +750,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     // Are we re-centering on a followed mobj?
     if(mobj_t *mob = automap.followMobj())
     {
-        automap.setCameraOrigin(Vector2d(mob->origin));
+        automap.setCameraOrigin(Vector2d(mob->origin), true);
     }
 
     if(IS_NETGAME)

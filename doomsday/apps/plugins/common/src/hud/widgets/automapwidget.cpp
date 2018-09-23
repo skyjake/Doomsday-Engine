@@ -2033,7 +2033,7 @@ void G_SetAutomapRotateMode(byte enableRotate)
 {
     cfg.common.automapRotate = enableRotate; // Note: this sets the global default.
 
-    for (int i = 0; i < DDMAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_SetAutomapCameraRotation(i, cfg.common.automapRotate);
         if (players[i].plr->inGame)
