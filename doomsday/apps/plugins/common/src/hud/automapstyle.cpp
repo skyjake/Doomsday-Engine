@@ -279,7 +279,7 @@ void AutomapStyle::applyDefaults()
     setObjectSvg(AMO_THINGPLAYER, VG_ARROW);
 
     float rgb[3];
-    AM_GetMapColor(rgb, cfg.common.automapL0, GRAYS+3, customPal);
+    AM_GetMapColor(rgb, cfg.common.automapL0, UNWALLCOLORS, customPal);
     setObjectColorAndOpacity(AMO_UNSEENLINE, rgb[0], rgb[1], rgb[2], 1);
 
     AM_GetMapColor(rgb, cfg.common.automapL1, WALLCOLORS, customPal);
