@@ -340,5 +340,8 @@ Vector4f Widget::selectionFlashColor(const Vector4f &noFlashColor) const
     return noFlashColor;
 }
 
+void Widget::pageActivated()
+{}
+
 } // namespace menu
 } // namespace common

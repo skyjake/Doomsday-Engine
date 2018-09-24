@@ -123,6 +123,8 @@ public:
 
     void updateVisibleSelection();
 
+    void pageActivated() override;
+
 private:
     DENG2_PRIVATE(d)
 };

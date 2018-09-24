@@ -266,6 +266,14 @@ void ListWidget::updateVisibleSelection()
     }
 }
 
+void ListWidget::pageActivated()
+{
+    Widget::pageActivated();
+
+    // Determine number of potentially visible items.
+    updateVisibleSelection();
+}
+
 int ListWidget::itemData(int index) const
 {
     if (index >= 0 && index < itemCount())

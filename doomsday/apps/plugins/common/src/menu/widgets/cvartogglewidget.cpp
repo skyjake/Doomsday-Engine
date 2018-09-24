@@ -179,5 +179,11 @@ void CVarToggleWidget::setStateChangeCallback(const std::function<void (State)> 
     d->stateChangeCallback = stateChanged;
 }
 
+void CVarToggleWidget::pageActivated()
+{
+    ButtonWidget::pageActivated();
+    setFlags(Active, isDown()? SetFlags : UnsetFlags);
+}
+
 } // namespace menu
 } // namespace common

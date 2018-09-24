@@ -235,6 +235,8 @@ public:
     float scrollingFadeout(int yTop, int yBottom) const;
     de::Vector4f selectionFlashColor(const de::Vector4f &noFlashColor) const;
 
+    virtual void pageActivated();
+
 private:
     DENG2_PRIVATE(d)
 };

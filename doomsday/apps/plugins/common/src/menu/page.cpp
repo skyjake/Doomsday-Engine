@@ -714,21 +714,15 @@ void Page::activate()
     // Reset page timer.
     d->timer = 0;
 
-    if(d->children.isEmpty())
-        return; // Presumably the widgets will be added later...
-
-    // (Re)init widgets.
-    for(Widget *wi : d->children)
+    if (d->children.empty())
     {
-        if(CVarToggleWidget *tog = maybeAs<CVarToggleWidget>(wi))
-        {
-            tog->setFlags(Widget::Active, tog->isDown()? SetFlags : UnsetFlags);
-        }
-        if(ListWidget *list = maybeAs<ListWidget>(wi))
-        {
-            // Determine number of potentially visible items.
-            list->updateVisibleSelection();
-        }
+        return; // Presumably the widgets will be added later...
+    }
+
+    // Notify widgets on the page.
+    for (Widget *wi : d->children)
+    {
+        wi->pageActivated();
     }
 
     d->refocus();
@@ -742,11 +736,10 @@ void Page::activate()
 void Page::tick()
 {
     // Call the ticker of each child widget.
-    for(Widget *wi : d->children)
+    for (Widget *wi : d->children)
     {
         wi->tick();
     }
-
     d->timer++;
 }
 

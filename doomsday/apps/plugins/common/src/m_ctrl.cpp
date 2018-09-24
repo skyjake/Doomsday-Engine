@@ -104,13 +104,13 @@ static controlconfig_t controlConfig[] =
 #endif
 
 #ifdef __JHERETIC__
-    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability", 0 },
+    { /* (char const *) TXT_TXT_INV_INVULNERABILITY */ "Invincibility", 0, 0, "impulse invulnerability", 0 },
     { (char const *) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility", 0 },
     { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
     { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth", 0 },
     { (char const *) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome", 0 },
     { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
-    { (char const *) TXT_TXT_INV_FIREBOMB, 0, 0, "impulse firebomb", 0 },
+    { /* (char const *) TXT_TXT_INV_FIREBOMB */ "Time Bomb", 0, 0, "impulse firebomb", 0 },
     { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
     { (char const *) TXT_TXT_INV_FLY, 0, 0, "impulse fly", 0 },
     { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
@@ -182,7 +182,7 @@ static controlconfig_t controlConfig[] =
     { "Smaller View", 0, 0, "sub view-size 1", CCF_REPEAT },
     { "Larger View", 0, 0, "add view-size 1", CCF_REPEAT },
 
-    { "Message Refresh", 0, 0, "impulse msgrefresh", 0 },
+    { "Msg Refresh", 0, 0, "impulse msgrefresh", 0 },
 
     { "Shortcuts", 0, 0, 0, 0 },
     { "Pause Game", 0, 0, "pause", 0 },
@@ -196,7 +196,7 @@ static controlconfig_t controlConfig[] =
     { "Quick Load", "shortcut", 0, "quickload", 0 },
     { "Sound Options", "shortcut", 0, "menu soundoptions", 0 },
     { "Toggle Messages", "shortcut", 0, "toggle msg-show", 0 },
-    { "Gamma Correction", "shortcut", 0, "togglegamma", 0 },
+    { "Gamma Adjust", "shortcut", 0, "togglegamma", 0 },
     { "Screenshot", "shortcut", 0, "screenshot", 0 },
     { "Quit", "shortcut", 0, "quit", 0 },
 
