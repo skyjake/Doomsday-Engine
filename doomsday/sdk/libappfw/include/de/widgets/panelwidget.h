@@ -49,7 +49,7 @@ public:
      */
     DENG2_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
 
-    enum AnimationStyle { Bouncy, Smooth };
+    enum AnimationStyle { Bouncy, EasedOut, Smooth };
 
 public:
     PanelWidget(String const &name = String());

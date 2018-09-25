@@ -31,6 +31,7 @@
 namespace de {
 
 static TimeSpan const OPENING_ANIM_SPAN = 0.4;
+static TimeSpan const OPENING_ANIM_SPAN_EASED_OUT = 0.25;
 static TimeSpan const CLOSING_ANIM_SPAN = 0.3;
 
 DENG_GUI_PIMPL(PanelWidget)
@@ -43,7 +44,7 @@ DENG_GUI_PIMPL(PanelWidget)
     ui::SizePolicy secondaryPolicy = ui::Expand;
     GuiWidget *content = nullptr;
     AnimationRule *openingRule;
-    AnimationStyle openingStyle = Bouncy;
+    AnimationStyle openingStyle = EasedOut;
     QTimer dismissTimer;
     std::unique_ptr<AssetGroup> pendingShow;
 
@@ -64,9 +65,7 @@ DENG_GUI_PIMPL(PanelWidget)
         releaseRef(openingRule);
     }
 
-    void glInit()
-    {
-    }
+    void glInit() {}
 
     void glDeinit()
     {
@@ -125,12 +124,9 @@ DENG_GUI_PIMPL(PanelWidget)
 
         switch (openingStyle)
         {
-        case Bouncy:
-            openingRule->setStyle(Animation::Bounce, 12);
-            break;
-        case Smooth:
-            openingRule->setStyle(Animation::EaseBoth);
-            break;
+        case Bouncy:   openingRule->setStyle(Animation::Bounce, 12); break;
+        case EasedOut: openingRule->setStyle(Animation::EaseOutSofter); break;
+        case Smooth:   openingRule->setStyle(Animation::EaseBoth); break;
         }
     }
 
@@ -147,6 +143,7 @@ DENG_GUI_PIMPL(PanelWidget)
         switch (openingStyle)
         {
         case Bouncy:
+        case EasedOut:
             openingRule->setStyle(Animation::EaseIn);
             break;
         case Smooth:
@@ -354,7 +351,8 @@ void PanelWidget::open()
     preparePanelForOpening();
 
     // Start the opening animation.
-    d->startOpeningAnimation(OPENING_ANIM_SPAN);
+    d->startOpeningAnimation(d->openingStyle == EasedOut ? OPENING_ANIM_SPAN_EASED_OUT
+                                                         : OPENING_ANIM_SPAN);
 
     d->opened = true;
 
