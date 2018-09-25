@@ -34,6 +34,12 @@ static inline float easeOut(TimeSpan t)
     return t * (2 - t);
 }
 
+static inline float easeOutSofter(TimeSpan t)
+{
+    const float a = -std::pow(t - 1.0, 4) + 1;
+    return (easeOut(t) + a) / 2.0f;
+}
+
 static inline float easeIn(TimeSpan t)
 {
     return t * t;
@@ -134,6 +140,9 @@ DENG2_PIMPL_NOREF(Animation)
             {
             case EaseOut:
                 return value + easeOut(t) * delta;
+
+            case EaseOutSofter:
+                return value + easeOutSofter(t) * delta;
 
             case EaseIn:
                 return value + easeIn(t) * delta;
@@ -385,7 +394,7 @@ void Animation::operator << (Reader &from)
 
     from >> d->spring;
 }
-    
+
 void Animation::setClock(Clock const *clock)
 {
     if (_clock) _clock->audienceForPriorityTimeChange -= theTime;

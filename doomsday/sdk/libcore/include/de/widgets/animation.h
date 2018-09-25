@@ -42,6 +42,7 @@ public:
     enum Style {
         Linear,
         EaseOut,
+        EaseOutSofter,
         EaseIn,
         EaseBoth,
         Bounce,
@@ -57,11 +58,9 @@ public:
     Animation &operator = (Animation const &other);
 
     void setStyle(Style s);
-
     void setStyle(Style style, float bounce);
 
     Style style() const;
-
     float bounce() const;
 
     /**
