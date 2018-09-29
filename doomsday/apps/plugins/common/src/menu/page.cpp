@@ -578,7 +578,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     drawTitle(d->title);
 
     // The page has its own drawer.
-    if(d->drawer)
+    if (d->drawer)
     {
         FR_PushAttrib();
         d->drawer(*this, d->origin);
@@ -586,9 +586,9 @@ void Page::draw(float alpha, bool showFocusCursor)
     }
 
     // How about some additional help/information for the focused item?
-    if(focused && !focused->helpInfo().isEmpty())
+    if (focused && !focused->helpInfo().isEmpty())
     {
-        Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
+        Vector2i helpOrigin(SCREENWIDTH / 2, SCREENHEIGHT - 5 / cfg.common.menuScale);
         Hu_MenuDrawPageHelp(focused->helpInfo(), helpOrigin);
     }
 }

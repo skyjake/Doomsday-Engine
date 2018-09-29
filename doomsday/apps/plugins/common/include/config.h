@@ -141,6 +141,7 @@ typedef struct libcommon_config_s {
     float           automapL3[3];
     float           automapBack[3];
     float           automapOpacity;
+    byte            automapNeverObscure;
     float           automapLineAlpha;
     float           automapLineWidth; ///< In fixed 320x200 pixels.
     byte            automapRotate;

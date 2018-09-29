@@ -325,7 +325,7 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
         if (IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             return;
 
-        if (Con_GetInteger("rend-vr-mode") == 9) // Oculus Rift mode
+        if (cfg.common.automapNeverObscure || Con_GetInteger("rend-vr-mode") == 9) // Oculus Rift mode
         {
             // Automap will not cover the full view.
             isAutomapObscuring = false;

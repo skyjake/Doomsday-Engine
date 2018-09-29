@@ -1994,6 +1994,7 @@ void AutomapWidget::setMapBounds(coord_t lowX, coord_t hiX, coord_t lowY, coord_
 void AutomapWidget::consoleRegister()  // static
 {
     C_VAR_FLOAT("map-opacity",              &cfg.common.automapOpacity,        0, 0, 1);
+    C_VAR_BYTE ("map-neverobscure",         &cfg.common.automapNeverObscure,   0, 0, 1);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     C_VAR_BYTE ("map-babykeys",             &cfg.common.automapBabyKeys,       0, 0, 1);
 #endif

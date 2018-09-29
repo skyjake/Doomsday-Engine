@@ -36,3 +36,4 @@ precompiled.h.cpp
 *.xcuserstate
 *.xcuserdatad
 *.xcscmblueprint
+.vscode

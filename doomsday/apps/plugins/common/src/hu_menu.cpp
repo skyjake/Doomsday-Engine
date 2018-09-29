@@ -648,19 +648,20 @@ void Hu_MenuInitMultiplayerPage()
 void Hu_MenuInitPlayerSetupPage()
 {
 #if __JHERETIC__ || __JHEXEN__
-    Vector2i const origin(70, 44);
+    Vector2i const origin(70, 34);
 #else
     Vector2i const origin(70, 54);
 #endif
 
     Page *page = Hu_MenuAddPage(new Page("PlayerSetup", origin, Page::NoScroll, Hu_MenuDrawPlayerSetupPage));
+    page->setLeftColumnWidth(.5f);
     page->setOnActiveCallback(Hu_MenuActivatePlayerSetup);
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPredefinedFont(MENU_FONT2, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     page->addWidget(new MobjPreviewWidget)
-            .setFixedOrigin(Vector2i(SCREENWIDTH / 2 - origin.x, 60))
+            .setFixedOrigin(Vector2i(SCREENWIDTH / 2 - 40, 60))
             .setFlags(Widget::Id0 | Widget::PositionFixed);
 
     page->addWidget(new CVarLineEditWidget("net-name"))
@@ -670,6 +671,7 @@ void Hu_MenuInitPlayerSetupPage()
 
 #if __JHEXEN__
     page->addWidget(new LabelWidget("Class"))
+            .setLeft()
             .setFlags(Widget::LayoutOffset)
             .setFixedY(5);
 
@@ -679,12 +681,14 @@ void Hu_MenuInitPlayerSetupPage()
                                           << new ListWidgetItem(GET_TXT(TXT_PLAYERCLASS3), PCLASS_MAGE))
             .setFlags(Widget::Id2)
             .setShortcut('c')
+            .setRight()
             .setColor(MENU_COLOR3)
             .setAction(Widget::Modified,    Hu_MenuSelectPlayerSetupPlayerClass)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 #endif
 
     auto &label = page->addWidget(new LabelWidget("Color"));
+    label.setLeft();
 #ifdef __JHERETIC__
     label.setFlags(Widget::LayoutOffset);
     label.setFixedY(5);
@@ -725,6 +729,7 @@ void Hu_MenuInitPlayerSetupPage()
             .addItems(items)
             .setFlags(Widget::Id3)
             .setColor(MENU_COLOR3)
+            .setRight()
             .setAction(Widget::Modified,    Hu_MenuSelectPlayerColor)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 
@@ -1614,6 +1619,13 @@ void Hu_MenuInitAutomapOptionsPage()
         page->addWidget(tgl);
     }
 
+    page->addWidget(new LabelWidget("Always Update Map"))
+            .setLeft();
+    page->addWidget(new CVarToggleWidget("map-neverobscure"))
+            .setRight()
+            .setShortcut('a')
+            .setHelpInfo("Update map even when background is opaque");
+
 #if !defined (__JDOOM64__)
     page->addWidget(new LabelWidget("HUD Display"))
             .setLeft();
@@ -2436,6 +2448,13 @@ void Hu_MenuDrawPageHelp(String helpText, Vector2i const &origin)
 {
     if(helpText.isEmpty()) return;
 
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PushMatrix();
+
+    DGL_Translatef(SCREENWIDTH / 2, SCREENHEIGHT, 0);
+    DGL_Scalef(.666666f, .666666f, 1.f);
+    DGL_Translatef(-SCREENWIDTH / 2, -SCREENHEIGHT, 0);
+
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTA));
     FR_SetColorv(cfg.common.menuTextColors[1]);
@@ -2444,6 +2463,9 @@ void Hu_MenuDrawPageHelp(String helpText, Vector2i const &origin)
     FR_DrawTextXY3(helpText.toUtf8().constData(), origin.x, origin.y, ALIGN_BOTTOM, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
+
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_PopMatrix();
 }
 
 static void drawOverlayBackground(float darken)
