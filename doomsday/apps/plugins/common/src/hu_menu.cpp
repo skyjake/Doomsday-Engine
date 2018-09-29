@@ -1996,8 +1996,8 @@ void Hu_MenuInitSoundOptionsPage()
     page->addWidget(new LabelWidget("Music Volume"))
             .setLeft();
     page->addWidget(new CVarSliderWidget("music-volume", 0, 255, 16, false))
-            .setRight()
-            .setShortcut('m');
+        .setRight()
+        .setShortcut('m');
 }
 
 /**
@@ -2013,33 +2013,47 @@ void Hu_MenuInitEpisodePage()
     Vector2i const origin(48, 63);
 #endif
 
-    Page *page = Hu_MenuAddPage(new Page("Episode", origin, Page::FixedLayout, Hu_MenuDrawEpisodePage));
+    Page *page =
+        Hu_MenuAddPage(new Page("Episode", origin, Page::FixedLayout, Hu_MenuDrawEpisodePage));
+
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTB));
     page->setPreviousPage(Hu_MenuPagePtr("Main"));
+    page->setOnActiveCallback([](Page &page) {
+        const auto &items = page.children();
+        if (items.size() == 1)
+        {
+            // If there is only one episode, select it automatically.
+            auto &ep = items.front()->as<ButtonWidget>();
+            ep.setSilent(true);
+            ep.handleCommand(MCMD_SELECT);
+            ep.setSilent(false);
+        }
+    });
 
-    DictionaryValue::Elements const &episodesById = Defs().episodes.lookup("id").elements();
-    if(!episodesById.size())
+    const DictionaryValue::Elements &episodesById = Defs().episodes.lookup("id").elements();
+    if (!episodesById.size())
     {
-        LOG_WARNING("No episodes are defined. It will not be possible to start a new game from the menu");
+        LOG_WARNING(
+            "No episodes are defined. It will not be possible to start a new game from the menu");
         return;
     }
 
     int y = 0;
     int n = 0;
-    for(auto const &pair : episodesById)
+    for (auto const &pair : episodesById)
     {
         Record const &episodeDef = *pair.second->as<RecordValue>().record();
-        String const episodeId   = episodeDef.gets("id");
+        String const  episodeId  = episodeDef.gets("id");
 
         auto *btn = new ButtonWidget(G_EpisodeTitle(episodeId));
         btn->setFixedY(y);
 
         // Has a menu image been specified?
         de::Uri image(episodeDef.gets("menuImage"), RC_NULL);
-        if(!image.path().isEmpty())
+        if (!image.path().isEmpty())
         {
             // Presently only patches are supported.
-            if(!image.scheme().compareWithoutCase("Patches"))
+            if (!image.scheme().compareWithoutCase("Patches"))
             {
                 btn->setPatch(R_DeclarePatch(image.path().toUtf8().constData()));
             }
@@ -2048,20 +2062,20 @@ void Hu_MenuInitEpisodePage()
         // Has a menu shortcut/hotkey been specified?
         /// @todo Validate symbolic dday key names.
         String const shortcut = episodeDef.gets("menuShortcut");
-        if(!shortcut.isEmpty() && shortcut.first().isLetterOrNumber())
+        if (!shortcut.isEmpty() && shortcut.first().isLetterOrNumber())
         {
             btn->setShortcut(shortcut.first().toLower().toLatin1());
         }
 
         // Has a menu help/info text been specified?
         String const helpInfo = episodeDef.gets("menuHelpInfo");
-        if(!helpInfo.isEmpty())
+        if (!helpInfo.isEmpty())
         {
             btn->setHelpInfo(helpInfo);
         }
 
         de::Uri startMap(episodeDef.gets("startMap"), RC_NULL);
-        if(P_MapExists(startMap.compose().toUtf8().constData()))
+        if (P_MapExists(startMap.compose().toUtf8().constData()))
         {
             btn->setAction(Widget::Deactivated, Hu_MenuSelectEpisode);
             btn->setUserValue(episodeId);
@@ -2070,13 +2084,13 @@ void Hu_MenuInitEpisodePage()
         {
 #if __JDOOM__ || __JHERETIC__
             // In shareware display a prompt to buy the full game.
-            if(
-#if __JHERETIC__
-               gameMode == heretic_shareware
-#else // __JDOOM__
-               gameMode == doom_shareware
-#endif
-               && startMap.path() != "E1M1")
+            if (
+#    if __JHERETIC__
+                gameMode == heretic_shareware
+#    else // __JDOOM__
+                gameMode == doom_shareware
+#    endif
+                && startMap.path() != "E1M1")
             {
                 btn->setAction(Widget::Deactivated, Hu_MenuActivateNotSharewareEpisode);
             }
@@ -2087,7 +2101,7 @@ void Hu_MenuInitEpisodePage()
                 btn->setFlags(Widget::Disabled);
                 LOG_RES_WARNING("Failed to locate the starting map \"%s\" for episode '%s'."
                                 " This episode will not be selectable from the menu")
-                        << startMap << episodeId;
+                    << startMap << episodeId;
             }
         }
 
@@ -2387,11 +2401,11 @@ short Hu_MenuMergeEffectWithDrawTextFlags(short f)
     return ((~cfg.common.menuEffectFlags & DTF_NO_EFFECTS) | (f & ~DTF_NO_EFFECTS));
 }
 
-void Hu_MenuDrawFocusCursor(Vector2i const &origin, int /*focusObjectHeight*/, float alpha)
+void Hu_MenuDrawFocusCursor(Vector2i const &origin, float scale, float alpha)
 {
 #if __JDOOM__ || __JDOOM64__
 # define OFFSET_X         (-22)
-# define OFFSET_Y         (-2)
+# define OFFSET_Y         (-1)
 #elif __JHERETIC__ || __JHEXEN__
 # define OFFSET_X         (-16)
 # define OFFSET_Y         (1)
@@ -2405,7 +2419,7 @@ void Hu_MenuDrawFocusCursor(Vector2i const &origin, int /*focusObjectHeight*/, f
     if(!R_GetPatchInfo(pCursor, &info))
         return;
 
-    float const scale = /*de::min((focusObjectHeight * 1.267f) /*/ 1; //info.geometry.size.height; //, 1.f);
+//    float const scale = /*de::min((focusObjectHeight * 1.267f) /*/ 1; //info.geometry.size.height; //, 1.f);
     Vector2i pos = origin + Vector2i(OFFSET_X, OFFSET_Y) * scale;
 //    pos.y -= info.geometry.size.height / 2;
 

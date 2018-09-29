@@ -32,9 +32,10 @@ namespace menu {
 
 DENG2_PIMPL_NOREF(ButtonWidget)
 {
-    String text;              ///< Label text.
-    patchid_t patch = -1;     ///< Used when drawing this instead of text, if set.
-    bool noAltText  = false;
+    String    text;           ///< Label text.
+    patchid_t patch     = -1; ///< Used when drawing this instead of text, if set.
+    bool      noAltText = false;
+    bool      silent    = false;
 };
 
 ButtonWidget::ButtonWidget(String const &text, patchid_t patch)
@@ -102,23 +103,28 @@ void ButtonWidget::draw() const
 
 int ButtonWidget::handleCommand(menucommand_e cmd)
 {
-    if(cmd == MCMD_SELECT)
+    if (cmd == MCMD_SELECT)
     {
-        if(!isActive())
+        if (!isActive())
         {
             setFlags(Active);
             execAction(Activated);
         }
-
-        // We are not going to receive an "up event" so action that now.
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        // We are not going to receive a separate "up event".
+        if (!d->silent)
+        {
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        }
         setFlags(Active, UnsetFlags);
         execAction(Deactivated);
-
         return true;
     }
-
     return false; // Not eaten.
+}
+
+void ButtonWidget::setSilent(bool silent)
+{
+    d->silent = silent;
 }
 
 void ButtonWidget::updateGeometry()

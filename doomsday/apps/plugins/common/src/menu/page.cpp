@@ -67,9 +67,9 @@ DENG2_PIMPL(Page)
     fontid_t fonts[MENU_FONT_COUNT]; ///< Predefined. Used by all widgets.
     uint     colors[MENU_COLOR_COUNT]; ///< Predefined. Used by all widgets.
 
-    OnActiveCallback onActiveCallback = nullptr;
-    OnDrawCallback drawer             = nullptr;
-    CommandResponder cmdResponder     = nullptr;
+    OnActiveCallback onActiveCallback;
+    OnDrawCallback   drawer;
+    CommandResponder cmdResponder;
 
     // User data values.
     QVariant userValue;
@@ -364,8 +364,11 @@ DENG2_PIMPL(Page)
 #endif
 };
 
-Page::Page(String name, Vector2i const &origin, Flags const &flags,
-    OnDrawCallback drawer, CommandResponder cmdResponder)
+Page::Page(String                  name,
+           Vector2i const &        origin,
+           Flags const &           flags,
+           const OnDrawCallback &  drawer,
+           const CommandResponder &cmdResponder)
     : d(new Impl(this))
 {
     d->origin       = origin;
@@ -399,7 +402,7 @@ Page::Children const &Page::children() const
     return d->children;
 }
 
-void Page::setOnActiveCallback(Page::OnActiveCallback newCallback)
+void Page::setOnActiveCallback(const OnActiveCallback &newCallback)
 {
     d->onActiveCallback = newCallback;
 }
@@ -567,9 +570,14 @@ void Page::draw(float alpha, bool showFocusCursor)
 
     // How about a focus cursor?
     /// @todo cursor should be drawn on top of the page drawer.
-    if(showFocusCursor && focused)
+    if (showFocusCursor && focused)
     {
-        Hu_MenuDrawFocusCursor(cursorOrigin, 0, alpha);
+#if defined (__JDOOM__) || defined (__JDOOM64__)
+        const float cursorScale = .75f;
+#else
+        const float cursorScale = 1.f;
+#endif
+        Hu_MenuDrawFocusCursor(cursorOrigin, cursorScale, alpha);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -727,7 +735,7 @@ void Page::activate()
 
     d->refocus();
 
-    if(d->onActiveCallback)
+    if (d->onActiveCallback)
     {
         d->onActiveCallback(*this);
     }

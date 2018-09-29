@@ -39,6 +39,8 @@ public:
     void updateGeometry();
     int handleCommand(menucommand_e command);
 
+    void setSilent(bool silent);
+
     ButtonWidget &setText(de::String const &newText);
     de::String text() const;
 

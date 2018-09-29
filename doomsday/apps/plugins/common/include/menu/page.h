@@ -63,12 +63,11 @@ public:
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
-    typedef WidgetList Children;
+    using Children = WidgetList;
 
-    typedef void (*OnActiveCallback) (Page &);
-    typedef void (*OnDrawCallback)   (Page const &, de::Vector2i const &);
-
-    typedef int (*CommandResponder)  (Page &, menucommand_e);
+    using OnActiveCallback = std::function<void(Page &)>;
+    using OnDrawCallback   = std::function<void(Page const &, de::Vector2i const &)>;
+    using CommandResponder = std::function<int(Page &, menucommand_e)>;
 
 public:
     /**
@@ -77,14 +76,14 @@ public:
      * @param name    Symbolic name/identifier for the page.
      * @param origin  Origin of the page in fixed 320x200 space.
      * @param flags   Page flags.
-     * ---
      * @param drawer
      * @param cmdResponder
      */
-    explicit Page(de::String name, de::Vector2i const &origin = de::Vector2i(),
-                  Flags const &flags = DefaultFlags,
-                  OnDrawCallback drawer = 0,
-                  CommandResponder cmdResponder = 0);
+    explicit Page(de::String              name,
+                  de::Vector2i const &    origin       = de::Vector2i(),
+                  Flags const &           flags        = DefaultFlags,
+                  const OnDrawCallback &  drawer       = {},
+                  const CommandResponder &cmdResponder = {});
 
     virtual ~Page();
 
@@ -193,7 +192,7 @@ public:
      *
      * @param newCallback  Function to callback on page activation. Use @c 0 to clear.
      */
-    void setOnActiveCallback(OnActiveCallback newCallback);
+    void setOnActiveCallback(const OnActiveCallback &newCallback);
 
     /**
      * Retrieve a predefined color triplet associated with this page by it's logical
