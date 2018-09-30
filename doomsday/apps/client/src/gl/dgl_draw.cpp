@@ -163,12 +163,12 @@ struct DGLDrawState
                 primVertices[primIndex - 1] = currentVertex;
                 if (primIndex == 4)
                 {
-                    // 4 vertices become 6.
-                    //
-                    // 0--1     0--1   5
-                    // |  |      \ |   |\
-                    // |  |  =>   \|   | \
-                    // 3--2        2   4--3
+                    /* 4 vertices become 6:
+
+                       0--1     0--1   5
+                       |  |      \ |   |\
+                       |  |  =>   \|   | \
+                       3--2        2   4--3  */
 
                     vertices.push_back(primVertices[0]);
                     vertices.push_back(primVertices[1]);
