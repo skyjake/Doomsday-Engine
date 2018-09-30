@@ -1973,13 +1973,13 @@ void Hu_MenuInitInventoryOptionsPage()
 
 void Hu_MenuInitSoundOptionsPage()
 {
-#if __JHEXEN__
-    Vector2i const origin(97, 25);
-#elif __JHERETIC__
-    Vector2i const origin(97, 30);
-#elif __JDOOM__ || __JDOOM64__
+//#if __JHEXEN__
+//    Vector2i const origin(97, 25);
+//#elif __JHERETIC__
+//    Vector2i const origin(97, 30);
+//#elif __JDOOM__ || __JDOOM64__
     Vector2i const origin(97, 40);
-#endif
+//#endif
 
     Page *page = Hu_MenuAddPage(new Page("SoundOptions", origin));
     page->setLeftColumnWidth(.4f);

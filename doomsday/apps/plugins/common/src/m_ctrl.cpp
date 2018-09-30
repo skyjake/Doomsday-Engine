@@ -214,8 +214,8 @@ static controlconfig_t controlConfig[] =
     { "Answer No", "message", 0, "messageno", 0 },
     { "Cancel", "message", 0, "messagecancel", 0 },
 
-    { "Virtual Reality", 0, 0, 0, 0 },
-    { "Reset Tracking", 0, 0, "resetriftpose", 0 }
+//    { "Virtual Reality", 0, 0, 0, 0 },
+//    { "Reset Tracking", 0, 0, "resetriftpose", 0 }
 };
 
 static void Hu_MenuDrawControlsPage(Page const &page, Vector2i const &offset);
