@@ -213,7 +213,7 @@ DENG2_PIMPL(AutomapWidget)
 {
     AutomapStyle *style = nullptr;
 
-    float dpiFactor; // DisplayMode.DPI_FACTOR
+    float dpiFactor = 1.f; // DisplayMode.DPI_FACTOR
 
     //DGLuint lists[NUM_MAP_OBJECTLISTS];  ///< Each list contains one or more of given type of automap wi.
     bool needBuildLists = false;         ///< @c true= force a rebuild of all lists.
@@ -269,11 +269,17 @@ DENG2_PIMPL(AutomapWidget)
 
     Impl(Public *i) : Base(i)
     {
-        //de::zap(lists);
-        de::zap(bounds);
-        de::zap(viewAABB);
+        using namespace de;
 
-        dpiFactor = de::ScriptSystem::get().nativeModule("DisplayMode").getf("DPI_FACTOR");
+        zap(bounds);
+        zap(viewAABB);
+
+        auto &ds = ScriptSystem::get();
+
+        if (ds.nativeModuleExists("DisplayMode"))
+        {
+            dpiFactor = ds.nativeModule("DisplayMode").getf("DPI_FACTOR");
+        }
     }
 
     ~Impl()
