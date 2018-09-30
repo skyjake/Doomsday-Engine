@@ -456,6 +456,7 @@ Thing {
   Mass = 100;
   Flags = "mf_solid mf_noblood mf_shootable mf_dropoff mf_viewalign";
   Flags2 = "mf2_windthrust mf2_pushable mf2_slide mf2_passmobj mf2_telestomp";
+  Flags3 = "mf3_nomorph";
 }
 
 Thing {
@@ -2503,6 +2504,7 @@ Thing {
   Mass = 40;
   Flags = "mf_solid mf_shootable mf_countkill mf_dropoff";
   Flags2 = "mf2_windthrust mf2_footclip mf2_passmobj";
+  Flags3 = "mf3_nomorph";
 }
 
 Thing {
@@ -2930,6 +2932,7 @@ Thing {
   Mass = 325;
   Flags = "mf_solid mf_shootable mf_countkill mf_noblood";
   Flags2 = "mf2_passmobj";
+  Flags3 = "mf3_nomorph";
 }
 
 Thing {
@@ -3383,7 +3386,7 @@ Thing {
   Mass = 800;
   Flags = "mf_solid mf_shootable mf_countkill";
   Flags2 = "mf2_footclip mf2_passmobj mf2_boss";
-  Flags3 = "mf3_noinfight";
+  Flags3 = "mf3_noinfight mf3_nomorph";
 }
 
 Thing {
@@ -3438,7 +3441,7 @@ Thing {
   Mass = 300;
   Flags = "mf_solid mf_shootable mf_countkill mf_dropoff";
   Flags2 = "mf2_footclip mf2_passmobj mf2_boss";
-  Flags3 = "mf3_noinfight";
+  Flags3 = "mf3_noinfight mf3_nomorph";
 }
 
 Thing {
@@ -3570,7 +3573,7 @@ Thing {
   Damage = 7;
   Flags = "mf_solid mf_shootable mf_countkill mf_dropoff";
   Flags2 = "mf2_footclip mf2_passmobj mf2_boss";
-  Flags3 = "mf3_noinfight";
+  Flags3 = "mf3_noinfight mf3_nomorph";
 }
 
 Thing {

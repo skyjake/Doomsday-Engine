@@ -1127,43 +1127,32 @@ dd_bool P_MorphPlayer(player_t *player)
 
 static dd_bool morphMonster(mobj_t *actor)
 {
-    mobj_t *fog, *chicken, *target;
+    mobj_t *   fog, *chicken, *target;
     mobjtype_t moType;
-    coord_t pos[3];
-    angle_t angle;
-    int ghost;
+    coord_t    pos[3];
+    angle_t    angle;
+    int        ghost;
 
     DENG_ASSERT(actor != 0);
 
-    if(actor->player)
-        return false;
+    if (actor->player) return false;
+
+    // Originally hardcoded to specific mobj types.
+    if (actor->flags3 & MF3_NOMORPH) return false;
 
     moType = actor->type;
-    switch(moType)
-    {
-    case MT_POD:
-    case MT_CHICKEN:
-    case MT_HEAD:
-    case MT_MINOTAUR:
-    case MT_SORCERER1:
-    case MT_SORCERER2:
-        return false;
-
-    default:
-        break;
-    }
 
     memcpy(pos, actor->origin, sizeof(pos));
-    angle = actor->angle;
-    ghost = actor->flags & MF_SHADOW;
+    angle  = actor->angle;
+    ghost  = actor->flags & MF_SHADOW;
     target = actor->target;
 
-    if((chicken = P_SpawnMobj(MT_CHICKEN, pos, angle, 0)))
+    if ((chicken = P_SpawnMobj(MT_CHICKEN, pos, angle, 0)))
     {
         P_MobjChangeState(actor, S_FREETARGMOBJ);
 
-        if((fog = P_SpawnMobjXYZ(MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT,
-                                angle + ANG180, 0)))
+        if ((fog = P_SpawnMobjXYZ(
+                 MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT, angle + ANG180, 0)))
             S_StartSound(SFX_TELEPT, fog);
 
         chicken->special2 = moType;

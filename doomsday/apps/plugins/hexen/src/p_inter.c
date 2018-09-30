@@ -1784,68 +1784,56 @@ dd_bool P_MorphPlayer(player_t* player)
     return true;
 }
 
-dd_bool P_MorphMonster(mobj_t* actor)
+dd_bool P_MorphMonster(mobj_t *actor)
 {
-    mobj_t* master, *monster, *fog;
+    mobj_t *   master, *monster, *fog;
     mobjtype_t moType;
-    coord_t pos[3];
-    mobj_t oldMonster;
-    angle_t oldAngle;
+    coord_t    pos[3];
+    mobj_t     oldMonster;
+    angle_t    oldAngle;
 
-    if(actor->player)
-        return (false);
-    if(!(actor->flags & MF_COUNTKILL))
-        return false;
-    if(actor->flags2 & MF2_BOSS)
-        return false;
+    if (actor->player) return (false);
+    if (!(actor->flags & MF_COUNTKILL)) return false;
+    if (actor->flags2 & MF2_BOSS) return false;
+
+    // Originally hardcoded to specific mobj types.
+    if (actor->flags3 & MF3_NOMORPH) return false;
 
     moType = actor->type;
-    switch(moType)
-    {
-    case MT_PIG:
-    case MT_FIGHTER_BOSS:
-    case MT_CLERIC_BOSS:
-    case MT_MAGE_BOSS:
-        return false;
-
-    default:
-        break;
-    }
 
     /// @todo Do this properly!
     oldMonster = *actor;
 
-    pos[VX] = actor->origin[VX];
-    pos[VY] = actor->origin[VY];
-    pos[VZ] = actor->origin[VZ];
+    pos[VX]  = actor->origin[VX];
+    pos[VY]  = actor->origin[VY];
+    pos[VZ]  = actor->origin[VZ];
     oldAngle = actor->angle;
 
-    if(!(monster = P_SpawnMobj(MT_PIG, pos, oldMonster.angle, 0)))
-        return false;
+    if (!(monster = P_SpawnMobj(MT_PIG, pos, oldMonster.angle, 0))) return false;
 
     P_MobjRemoveFromTIDList(actor);
     P_MobjChangeState(actor, S_FREETARGMOBJ);
 
-    if((fog = P_SpawnMobjXYZ(MT_TFOG, pos[VX], pos[VY],
-                            pos[VZ] + TELEFOGHEIGHT, oldAngle + ANG180, 0)))
+    if ((fog = P_SpawnMobjXYZ(
+             MT_TFOG, pos[VX], pos[VY], pos[VZ] + TELEFOGHEIGHT, oldAngle + ANG180, 0)))
         S_StartSound(SFX_TELEPORT, fog);
 
     monster->special2 = moType;
     monster->special1 = MORPHTICS + P_Random();
     monster->flags |= (oldMonster.flags & MF_SHADOW);
-    monster->target = oldMonster.target;
-    monster->tid = oldMonster.tid;
+    monster->target  = oldMonster.target;
+    monster->tid     = oldMonster.tid;
     monster->special = oldMonster.special;
     P_MobjInsertIntoTIDList(monster, oldMonster.tid);
     memcpy(monster->args, oldMonster.args, 5);
 
     // Check for turning off minotaur power for active icon.
-    if(moType == MT_MINOTAUR)
+    if (moType == MT_MINOTAUR)
     {
         master = oldMonster.tracer;
-        if(master && master->health > 0)
+        if (master && master->health > 0)
         {
-            if(!ActiveMinotaur(master->player))
+            if (!ActiveMinotaur(master->player))
             {
                 master->player->powers[PT_MINOTAUR] = 0;
             }
