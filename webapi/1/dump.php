@@ -25,6 +25,7 @@ $dl_platforms = [
     'win-x64',
     'win-x86',
     'mac10_10-x86_64',
+    'ubuntu16-x86_64',
     'ubuntu18-x86_64',
     'fedora23-x86_64',
     'source'
