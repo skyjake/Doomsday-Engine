@@ -315,6 +315,10 @@ shell::ServerInfo ServerApp::currentServerInfo()
         info.setMap(mapPath);
     }
 
+    // The master server will use the public IP address where an announcement came from,
+    // so we don't necessarily have to specify a valid address. The port is required, though.
+    info.setAddress({"localhost", duint16(nptIPPort)});
+
     // This will only work if the server has a public IP address.
     QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());
     foreach (QHostAddress hostAddr, host.addresses())
