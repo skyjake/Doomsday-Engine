@@ -68,6 +68,8 @@ public:
 
     void removeNativeModule(String const &name);
 
+    bool nativeModuleExists(const String &name) const;
+
     Record &nativeModule(String const &name);
 
     /**

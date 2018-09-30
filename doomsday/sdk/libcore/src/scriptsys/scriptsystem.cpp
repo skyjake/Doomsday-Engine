@@ -216,6 +216,12 @@ Record &ScriptSystem::nativeModule(String const &name)
     return *foundNative.value();
 }
 
+bool ScriptSystem::nativeModuleExists(const String &name) const
+{
+    DENG2_GUARD_FOR(d->nativeModules, G);
+    return d->nativeModules.value.contains(name);
+}
+
 StringList ScriptSystem::nativeModules() const
 {
     DENG2_GUARD_FOR(d->nativeModules, G);
