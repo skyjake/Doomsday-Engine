@@ -18,7 +18,7 @@ set (DENG_LIBRARY_DIR "" CACHE STRING "Plugin directory path (defaults to {prefi
 
 add_definitions (
     -DDENG_X11
-    -D__USE_BSD 
+    -D__USE_BSD
     -D_GNU_SOURCE=1
 )
 if (DENG_BASE_DIR)
@@ -26,7 +26,7 @@ if (DENG_BASE_DIR)
 else ()
     add_definitions (-DDENG_BASE_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_DATA_DIR}")
 endif ()
-if (DENG_LIBRARY_DIR)
+if (NOT DENG_LIBRARY_DIR STREQUAL "")
     add_definitions (-DDENG_LIBRARY_DIR="${DENG_LIBRARY_DIR}")
 else ()
     add_definitions (-DDENG_LIBRARY_DIR="${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}")
