@@ -66,7 +66,7 @@ void LabelWidget::draw() const
 
 //    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
 
-    const Vector4f color = selectionFlashColor(textColor);
+    const Vec4f color = selectionFlashColor(textColor);
 
     const float fadeout = scrollingFadeout();
     if (fadeout < .001f) return;

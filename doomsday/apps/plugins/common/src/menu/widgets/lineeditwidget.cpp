@@ -39,8 +39,8 @@ DE_PIMPL_NOREF(LineEditWidget)
     String text;
     String oldText;    ///< For restoring a canceled edit.
     String emptyText;  ///< Used when value is empty.
-    int maxLength       = 0;
-    int maxVisibleChars = 0;
+    dsize  maxLength       = 0;
+    int    maxVisibleChars = 0;
 };
 
 LineEditWidget::LineEditWidget()
@@ -141,7 +141,7 @@ void LineEditWidget::draw() const
     //if(string)
     {
 //        float t = 0;
-        Vector4f color = Vector4f(Vector3f(cfg.common.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), 1.f);
+        Vec4f color = Vec4f(Vec3f(cfg.common.menuTextColors[MNDATA_EDIT_TEXT_COLORIDX]), 1.f);
 
         // Flash if focused?
         if (!isActive()) /* && isFocused() && cfg.common.menuTextFlashSpeed > 0)
@@ -162,8 +162,8 @@ void LineEditWidget::draw() const
         FR_DrawTextXY3(useText, origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
         // Are we drawing a cursor?
-        if(isActive() && isFocused() && (menuTime & 8) &&
-           (!d->maxLength || d->text.length() < d->maxLength))
+        if (isActive() && isFocused() && (menuTime & 8) &&
+            (!d->maxLength || d->text.length() < d->maxLength))
         {
             origin.x += FR_TextWidth(useText);
             FR_DrawCharXY3('_', origin.x, origin.y, ALIGN_TOPLEFT,  Hu_MenuMergeEffectWithDrawTextFlags(0));
@@ -175,15 +175,15 @@ void LineEditWidget::draw() const
 
 int LineEditWidget::maxLength() const
 {
-    return d->maxLength;
+    return int(d->maxLength);
 }
 
 LineEditWidget &LineEditWidget::setMaxLength(int newMaxLength)
 {
     newMaxLength = de::max(newMaxLength, 0);
-    if(d->maxLength != newMaxLength)
+    if (d->maxLength != dsize(newMaxLength))
     {
-        if(newMaxLength < d->maxLength)
+        if (dsize(newMaxLength) < d->maxLength)
         {
             d->text.truncate(CharPos(newMaxLength));
             d->oldText.truncate(CharPos(newMaxLength));

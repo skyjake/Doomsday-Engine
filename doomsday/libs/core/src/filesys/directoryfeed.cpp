@@ -122,7 +122,7 @@ void DirectoryFeed::populateSubFolder(Folder const &folder, String const &entryN
 {
     LOG_AS("DirectoryFeed::populateSubFolder");
 
-    if (entryName != "." && entryName != "..")
+    if (!entryName.beginsWith(".")) // Accounts for "." and "..", but also Unix hidden dirs.
     {
         Folder *subFolder = nullptr;
         if (!folder.has(entryName))

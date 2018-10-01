@@ -1,5 +1,3 @@
-#include <utility>
-
 /** @file panelwidget.cpp
  *
  * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
@@ -31,9 +29,9 @@
 
 namespace de {
 
-constexpr double OPENING_ANIM_SPAN           = 0.3;
-constexpr double OPENING_ANIM_SPAN_EASED_OUT = 0.18;
-constexpr double CLOSING_ANIM_SPAN           = 0.22;
+static constexpr double OPENING_ANIM_SPAN           = 0.3;
+static constexpr double OPENING_ANIM_SPAN_EASED_OUT = 0.18;
+static constexpr double CLOSING_ANIM_SPAN           = 0.22;
 
 DE_GUI_PIMPL(PanelWidget)
 , DE_OBSERVES(Asset, StateChange)

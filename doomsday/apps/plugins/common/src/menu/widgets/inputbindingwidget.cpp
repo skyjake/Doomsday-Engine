@@ -81,7 +81,7 @@ static void drawSmallText(char const *string, int x, int y, float alpha)
     DGL_PopMatrix();
 }
 
-DENG2_PIMPL(InputBindingWidget)
+DE_PIMPL(InputBindingWidget)
 {
     bool needGeometry = true; ///< Recalculate geometry based on bindings.
     const int maxWidth = SCREENWIDTH * 55 / 100;
@@ -99,7 +99,7 @@ DENG2_PIMPL(InputBindingWidget)
         std::map<bindingitertype_t, std::list<std::tuple<int, std::string, bool>>> bindings;
 
         const controlconfig_t *binds = self().binds;
-        DENG2_ASSERT(binds != nullptr);
+        DE_ASSERT(binds != nullptr);
 
         char bindingsBuf[1024];
         if (binds->controlName)
@@ -229,11 +229,11 @@ DENG2_PIMPL(InputBindingWidget)
         const auto widgetTopLeft = self().geometry().topLeft;
 
         struct {
-            bool     drawing;
-            float    alpha;
-            Vector2i widgetTopLeft;
-            Vector2i origin;
-            Vector2i size;
+            bool  drawing;
+            float alpha;
+            Vec2i widgetTopLeft;
+            Vec2i origin;
+            Vec2i size;
         } ctx = {drawing,
                  mnRendState->pageAlpha * self().scrollingFadeout(),
                  widgetTopLeft,
@@ -325,7 +325,7 @@ DENG2_PIMPL(InputBindingWidget)
                 ctx.size = ctx.size.max({ctx.origin.x, ctx.origin.y + lineHeight});
             });
 
-        return (ctx.size).toVector2ui();
+        return (ctx.size).toVec2ui();
     }
 };
 

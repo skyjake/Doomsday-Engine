@@ -753,8 +753,7 @@ Image Image::subImage(Rectanglei const &subArea) const
 
 void Image::resize(Size const &size)
 {
-    IMAGE_ASSERT_EDITABLE(d);
-//    DE_ASSERT(d->image.format() != QImage::Format_Invalid);
+    DE_ASSERT(d->format == RGB_888 || d->format == RGBA_8888);
 
     Image resized{size, d->format};
     stbir_resize_uint8(bits(),

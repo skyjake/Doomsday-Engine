@@ -230,9 +230,9 @@ public:
     Widget &setUserValue2(const de::Value &newValue);
     const de::Value &userValue2() const;
 
-    float scrollingFadeout() const;
-    float scrollingFadeout(int yTop, int yBottom) const;
-    de::Vector4f selectionFlashColor(const de::Vector4f &noFlashColor) const;
+    float     scrollingFadeout() const;
+    float     scrollingFadeout(int yTop, int yBottom) const;
+    de::Vec4f selectionFlashColor(const de::Vec4f &noFlashColor) const;
 
     virtual void pageActivated();
 

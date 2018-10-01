@@ -29,17 +29,20 @@ RegExpMatch::RegExpMatch()
 
 const char *RegExpMatch::begin() const
 {
+    DE_ASSERT(match.subject == subject.c_str());
     return match.subject + match.range.start;
 }
 
 const char *RegExpMatch::end() const
 {
+    DE_ASSERT(match.subject == subject.c_str());
     return match.subject + match.range.end;
 }
 
 void RegExpMatch::clear()
 {
     zap(match);
+    subject.clear();
 }
 
 String RegExpMatch::captured(int index) const
@@ -67,13 +70,15 @@ RegExp::RegExp(const String &expression, Sensitivity cs)
 bool RegExp::exactMatch(const String &subject) const
 {
     RegExpMatch m;
-    return exactMatch(subject, m);
+    m.subject = subject;
+    return exactMatch(m.subject, m);
 }
 
 bool RegExp::exactMatch(const String &subject, RegExpMatch &match) const
 {
+    match.subject = subject;
     auto &m = match.match;
-    if (matchString_RegExp(_d, subject, &m))
+    if (matchString_RegExp(_d, match.subject, &m))
     {
         return m.range.start == 0 && m.range.end == subject.sizei();
     }
@@ -82,12 +87,13 @@ bool RegExp::exactMatch(const String &subject, RegExpMatch &match) const
 
 bool RegExp::match(const String &subject, RegExpMatch &match) const
 {
-    return matchString_RegExp(_d, subject, &match.match);
+    match.subject = subject;
+    return matchString_RegExp(_d, match.subject, &match.match);
 }
 
 bool RegExp::hasMatch(const String &subject) const
 {
-    iRegExpMatch match{};
+    iRegExpMatch match{}; // not kept
     return matchString_RegExp(_d, subject, &match);
 }
 

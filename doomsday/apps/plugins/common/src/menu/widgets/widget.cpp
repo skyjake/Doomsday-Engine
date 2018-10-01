@@ -333,13 +333,13 @@ float Widget::scrollingFadeout(int yTop, int yBottom) const
     return 1.f;
 }
 
-Vector4f Widget::selectionFlashColor(const Vector4f &noFlashColor) const
+Vec4f Widget::selectionFlashColor(const Vec4f &noFlashColor) const
 {
     if (isFocused() && cfg.common.menuTextFlashSpeed > 0)
     {
         const float speed = cfg.common.menuTextFlashSpeed / 2.f;
         const float t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
-        return lerp(noFlashColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), 1.f), t);
+        return lerp(noFlashColor, Vec4f(Vec3f(cfg.common.menuTextFlashColor), 1.f), t);
     }
     return noFlashColor;
 }

@@ -201,19 +201,19 @@ DE_PIMPL(Page)
             if (wi->flags() & Widget::RightColumn)
             {
                 // Move widget to the right side.
-                wi->geometry().move(Vector2i(leftColumnWidth, 0));
+                wi->geometry().move(Vec2i(leftColumnWidth, 0));
 
                 if (prevWidget && prevWidget->flags() & Widget::LeftColumn)
                 {
                     // Align the shorter widget vertically.
                     if (prevWidget->geometry().height() < wi->geometry().height())
                     {
-                        prevWidget->geometry().move(Vector2i(
+                        prevWidget->geometry().move(Vec2i(
                             0, (wi->geometry().height() - prevWidget->geometry().height()) / 2));
                     }
                     else
                     {
-                        wi->geometry().move(Vector2i(
+                        wi->geometry().move(Vec2i(
                             0, (prevWidget->geometry().height() - wi->geometry().height()) / 2));
                     }
                 }

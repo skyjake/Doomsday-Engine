@@ -3209,7 +3209,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
 
     if (problemsDetected)
     {
-        LOG_MAP_WARNING("Map objects were not fully restored " DENG2_CHAR_MDASH
+        LOG_MAP_WARNING("Map objects were not fully restored " DE_CHAR_MDASH
                         " gameplay may be affected (enable Developer log entries for details)");
     }
     else

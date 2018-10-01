@@ -80,11 +80,10 @@ struct DGLDrawState
         {{0.f, 0.f}, {0.f, 0.f}},
         {0.f, 0.f},
         0.f};
-    Vertex          primVertices[4];
+    Vertex        primVertices[4];
     List<Vertex>  vertices;
 
-    struct GLData
-    {
+    struct GLData {
         GLProgram shader;
 
         GLState  batchState;
@@ -111,14 +110,13 @@ struct DGLDrawState
         GLUniform uFogRange;
         GLUniform uFogColor;
 
-        struct DrawBuffer
-        {
+        struct DrawBuffer {
             GLuint   vertexArray = 0;
             GLBuffer arrayData;
 
             void release()
             {
-#if defined (DE_HAVE_VAOS)
+#if defined(DE_HAVE_VAOS)
                 glDeleteVertexArrays(1, &vertexArray);
 #endif
                 arrayData.clear();
@@ -544,12 +542,12 @@ struct DGLDrawState
         LIBGUI_ASSERT_GL_OK();
 
         // Updated pointers.
-        GL.glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, vertex));
-        GL.glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, DENG2_OFFSET_PTR(Vertex, color));
-        GL.glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[0]));
-        GL.glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[1]));
-        GL.glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, fragOffset[0]));
-        GL.glVertexAttribPointer(VAA_BATCH_INDEX, 1, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, batchIndex));
+        glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, vertex));
+        glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, DENG2_OFFSET_PTR(Vertex, color));
+        glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[0]));
+        glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[1]));
+        glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, fragOffset[0]));
+        glVertexAttribPointer(VAA_BATCH_INDEX, 1, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, batchIndex));
         LIBGUI_ASSERT_GL_OK();
 
         glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -629,11 +627,11 @@ struct DGLDrawState
         {
             // We can't draw a line thinner than one pixel.
             const float lineWidth = std::max(.5f, GL_state.currentLineWidth);
-            gl->uFragmentSize     = Vector2f(lineWidth, lineWidth) / glState.target().size();
+            gl->uFragmentSize     = Vec2f(lineWidth, lineWidth) / glState.target().size();
         }
         else
         {
-            gl->uFragmentSize = Vector2f();
+            gl->uFragmentSize = Vec2f();
         }
         DGL_FogParams(gl->uFogRange, gl->uFogColor);
 

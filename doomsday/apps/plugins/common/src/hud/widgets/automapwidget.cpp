@@ -1145,7 +1145,7 @@ DE_PIMPL(AutomapWidget)
             DGL_Translatef(-(.5f), -(.5f), 0);
 #endif
 
-            DENG_ASSERT(!std::isnan(view.x));
+            DE_ASSERT(!std::isnan(view.x));
 
             DGL_Translatef(offsetScale * view.x, -offsetScale * view.y, 1.f);
             DGL_Scalef(autopageAspectRatio, autopageAspectRatio, 1.f);
@@ -1745,7 +1745,7 @@ void AutomapWidget::setCameraAngle(dfloat newAngle)
 {
     // Already at this target?
     newAngle = de::clamp(0.f, newAngle, 359.9999f);
-    if (newAngle == d->targetAngle) return;
+    if (fequal(newAngle, d->targetAngle)) return;
 
     // Begin animating toward the new target.
     d->oldAngle    = d->angle;
@@ -1800,7 +1800,7 @@ void AutomapWidget::setScale(dfloat newScale)
     newScale = de::clamp(d->minScaleMTOF, newScale, d->maxScaleMTOF);
 
     // Already at this target?
-    if (newScale == d->targetViewScale)
+    if (fequal(newScale, d->targetViewScale))
         return;
 
     // Begin animating toward the new target.
@@ -1959,7 +1959,7 @@ dfloat AutomapWidget::opacityEX() const
 void AutomapWidget::setOpacityEX(dfloat newOpacity)
 {
     newOpacity = de::clamp(0.f, newOpacity, 1.f);
-    if (newOpacity != d->targetOpacity)
+    if (!fequal(newOpacity, d->targetOpacity))
     {
         // Start animating toward the new target.
         d->oldOpacity    = d->opacity;

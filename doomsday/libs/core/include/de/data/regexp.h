@@ -28,7 +28,8 @@ namespace de {
 class DE_PUBLIC RegExpMatch
 {
 public:
-    iRegExpMatch match;
+    iRegExpMatch match;   ///< Match results.
+    String       subject; // ensures a persistent copy exists
 
     RegExpMatch();
 

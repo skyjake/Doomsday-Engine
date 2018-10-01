@@ -937,8 +937,8 @@ DE_PIMPL(DataBundle), public Lockable
                     Path const filePath(dataFile.path());
                     if (filePath.segmentCount() >= 2)
                     {
-                        auto const &parentName = filePath.reverseSegment(1)
-                                .toString().fileNameWithoutExtension();
+                        const String parentName =
+                            filePath.reverseSegment(1).toString().fileNameWithoutExtension();
                         //if (attempt == 1)
                         {
                             Version parsed("");

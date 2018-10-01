@@ -920,7 +920,7 @@ void Hu_MenuInitOptionsPage()
             .setShortcut('p')
             .setGroup(1)
             .setFont(MENU_FONT1)
-            .setUserValue(String("PlayerSetup"))
+            .setUserValue(TextValue("PlayerSetup"))
             .setAction(Widget::Deactivated, Hu_MenuActionSetActivePage)
             .setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);
 

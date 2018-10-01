@@ -81,7 +81,7 @@ public:
      * @param cmdResponder
      */
     explicit Page(de::String              name,
-                  de::Vec2i const &       origin       = {},
+                  const de::Vec2i &       origin       = {},
                   Flags const &           flags        = DefaultFlags,
                   const OnDrawCallback &  drawer       = {},
                   const CommandResponder &cmdResponder = {});

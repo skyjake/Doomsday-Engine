@@ -59,7 +59,7 @@ void ButtonWidget::draw() const
     Vec4f const &textColor = mnRendState->textColors[color()];
     float t = (isFocused()? 1 : 0);
 
-    const Vector4f color = selectionFlashColor(textColor);
+    const Vec4f color = selectionFlashColor(textColor);
 
 //    // Flash if focused.
 //    if (isFocused() && cfg.common.menuTextFlashSpeed > 0)

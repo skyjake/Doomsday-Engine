@@ -126,7 +126,7 @@ void ListWidget::draw() const
     Vec4f const &textColor = mnRendState->textColors[color()];
     float t = flashSelection? 1 : 0;
 
-    Vector4f flashColor = textColor;
+    Vec4f flashColor = textColor;
 
     if (flashSelection) /* && cfg.common.menuTextFlashSpeed > 0)
     {
@@ -322,7 +322,7 @@ bool ListWidget::selectItemByValue(int userValue, int flags)
 
 bool ListWidget::reorder(int itemIndex, int indexOffset)
 {
-    if (itemIndex + indexOffset < 0 || itemIndex + indexOffset >= d->items.size())
+    if (itemIndex + indexOffset < 0 || itemIndex + indexOffset >= d->items.sizei())
     {
         return false; // Would go out of bounds.
     }

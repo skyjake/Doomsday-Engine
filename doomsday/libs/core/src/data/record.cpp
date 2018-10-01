@@ -1042,7 +1042,7 @@ String Record::asText(String const &prefix, List *lines) const
             int numberOfLines = subContent.count('\n');
             if (numberOfLines > SUBRECORD_CONTENT_EXCERPT_THRESHOLD)
             {
-                subContent = String("(%i lines)", numberOfLines);
+                subContent = Stringf("(%i lines)", numberOfLines);
             }
 
             KeyValue kv(prefix + i->first + separator, subContent);
