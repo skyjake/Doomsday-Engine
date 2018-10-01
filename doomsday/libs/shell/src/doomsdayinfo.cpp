@@ -87,36 +87,43 @@ List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
     List<GameOption> opts;
 
     // Common options.
-    opts << GameOption(Choice, "Game type", "server-game-deathmatch %1",
+    opts << GameOption(Choice,
+                       "Game type",
+                       "server-game-deathmatch %1",
                        GOValue(),
-                       List<GOValue>({ GOValue("0", "Co-op", "coop"),
-                                        GOValue("1", "Deathmatch", "dm"),
-                                        GOValue("2", "Deathmatch II", "dm2") }));
+                       List<GOValue>({GOValue("0", "Co-op", "coop"),
+                                      GOValue("1", "Deathmatch", "dm"),
+                                      GOValue("2", "Deathmatch II", "dm2")}));
 
-    opts << GameOption(Choice, "Skill level", "server-game-skill %1",
+    opts << GameOption(Choice,
+                       "Skill level",
+                       "server-game-skill %1",
                        GOValue(),
-                       List<GOValue>({ GOValue("0", "Novice", "skill1"),
-                                        GOValue("1", "Easy", "skill2"),
-                                        GOValue("2", "Normal", "skill3"),
-                                        GOValue("3", "Hard", "skill4"),
-                                        GOValue("4", "Nightmare", "skill5") }));
+                       List<GOValue>({GOValue("0", "Novice", "skill1"),
+                                      GOValue("1", "Easy", "skill2"),
+                                      GOValue("2", "Normal", "skill3"),
+                                      GOValue("3", "Hard", "skill4"),
+                                      GOValue("4", "Nightmare", "skill5")}));
 
-    opts << GameOption(Toggle, "Players can jump", "server-game-jump %1",
+    opts << GameOption(Toggle,
+                       "Players can jump",
+                       "server-game-jump %1",
                        GOValue(),
-                       List<GOValue>({ GOValue("0"),
-                                        GOValue("1", "", "jump") }));
+                       List<GOValue>({GOValue("0"), GOValue("1", "", "jump")}));
 
-    opts << GameOption(Toggle, "Monsters disabled", "server-game-nomonsters %1",
+    opts << GameOption(Toggle,
+                       "Monsters disabled",
+                       "server-game-nomonsters %1",
                        GOValue(),
-                       List<GOValue>({ GOValue("0"),
-                                        GOValue("1", "", "nomonst") }));
+                       List<GOValue>({GOValue("0"), GOValue("1", "", "nomonst")}));
 
     if (!gameId.beginsWith("hexen"))
     {
-        opts << GameOption(Toggle, "Respawn monsters", "server-game-respawn %1",
+        opts << GameOption(Toggle,
+                           "Respawn monsters",
+                           "server-game-respawn %1",
                            GOValue(),
-                           List<GOValue>({ GOValue("0"),
-                                            GOValue("1", "", "respawn") }));
+                           List<GOValue>({GOValue("0"), GOValue("1", "", "respawn")}));
     }
 
     if (gameId.beginsWith("doom1"))

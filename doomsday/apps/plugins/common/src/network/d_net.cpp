@@ -95,8 +95,8 @@ void D_NetConsoleRegister()
         C_VAR_URIPTR ("server-game-map",        &cfg.common.netMap,        0, 0, 0);
 
         // Use the first playable map as the default.
-        String episodeId = D_NetDefaultEpisode();
-        res::Uri map      = D_NetDefaultMap();
+        String   episodeId = D_NetDefaultEpisode();
+        res::Uri map       = D_NetDefaultMap();
 
         Con_SetString("server-game-episode", episodeId);
         Con_SetUri   ("server-game-map",     reinterpret_cast<uri_s *>(&map));
