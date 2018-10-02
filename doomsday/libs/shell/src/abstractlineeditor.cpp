@@ -146,8 +146,9 @@ DE_PIMPL(AbstractLineEditor)
         const LineBytePos linePos = lineCursorPos();
 
         // Check for no room.
-        if (!linePos.line && lineOff < 0) return false;
-        if (linePos.line == wraps->height() - 1 && lineOff > 0) return false;
+        if (text.empty()) return false;
+        if (linePos.line <= 0 && lineOff < 0) return false;
+        if (linePos.line >= wraps->height() - 1 && lineOff > 0) return false;
 
         const auto destWidth = wraps->rangeWidth({lineSpan(linePos.line).range.begin(), cursorPtr()});
 
