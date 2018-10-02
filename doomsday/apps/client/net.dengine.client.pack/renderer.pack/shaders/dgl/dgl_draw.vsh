@@ -21,15 +21,15 @@
 DE_LAYOUT_LOC(0) DE_ATTRIB vec4 aVertex;
 DE_LAYOUT_LOC(1) DE_ATTRIB vec4 aColor;
 DE_LAYOUT_LOC(2) DE_ATTRIB vec2 aTexCoord[2];
-DE_LAYOUT_LOC(4) DENG_ATTRIB vec2 aFragOffset;
-DE_LAYOUT_LOC(5) DENG_ATTRIB float aBatchIndex;
+DE_LAYOUT_LOC(4) DE_ATTRIB vec2 aFragOffset;
+DE_LAYOUT_LOC(5) DE_ATTRIB float aBatchIndex;
 
 uniform vec2 uFragmentSize; // used for line width
 uniform mat4 uMvpMatrix[DGL_BATCH_MAX];
 uniform mat4 uTexMatrix0[DGL_BATCH_MAX];
 uniform mat4 uTexMatrix1[DGL_BATCH_MAX];
 
-flat DENG_VAR int vBatchIndex;
+flat DE_VAR int vBatchIndex;
 DE_VAR vec4 vColor;
 DE_VAR vec2 vTexCoord[2];
 
