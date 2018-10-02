@@ -22,26 +22,19 @@
 #ifndef __DSFLUIDSYNTH_MUS_H__
 #define __DSFLUIDSYNTH_MUS_H__
 
+#include <de/libcore.h>
 #include "api_audiod_mus.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int     DM_Music_Init(void);
-void    DM_Music_Shutdown(void);
-void    DM_Music_Set(int prop, float value);
-int     DM_Music_Get(int prop, void* ptr);
-void    DM_Music_Update(void);
+DE_ENTRYPOINT   int     DM_Music_Init(void);
+DE_ENTRYPOINT   void    DM_Music_Shutdown(void);
+DE_ENTRYPOINT   void    DM_Music_Set(int prop, float value);
+DE_ENTRYPOINT   int     DM_Music_Get(int prop, void* ptr);
+DE_ENTRYPOINT   void    DM_Music_Update(void);
 //void*   DM_Music_SongBuffer(unsigned int length); // buffered play supported
 //int     DM_Music_Play(int looped);
-void    DM_Music_Stop(void);
-void    DM_Music_Pause(int setPause);
-int     DM_Music_PlayFile(const char *filename, int looped);
-
-#ifdef __cplusplus
-}
-#endif
+DE_ENTRYPOINT   void    DM_Music_Stop(void);
+DE_ENTRYPOINT   void    DM_Music_Pause(int setPause);
+DE_ENTRYPOINT   int     DM_Music_PlayFile(const char *filename, int looped);
 
 // Internal:
 void    DMFluid_Update();
