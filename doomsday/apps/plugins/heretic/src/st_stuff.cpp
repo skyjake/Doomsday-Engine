@@ -165,7 +165,10 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.common.statusbarScale, cfg.common.statusbarScale, 1);
 
-    if(!(iconOpacity < 1))
+    const bool godEyes = ((P_GetPlayerCheats(&players[wi->player()]) & CF_GODMODE) ||
+                          players[wi->player()].powers[PT_INVULNERABILITY]);
+
+    if (!(iconOpacity < 1))
     {
         // We can just render the full thing as normal.
         // Top bits.
@@ -178,7 +181,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         // Faces.
         GL_DrawPatch(pStatusbar, Vector2i(ORIGINX, ORIGINY));
 
-        if(P_GetPlayerCheats(&players[wi->player()]) & CF_GODMODE)
+        if (godEyes)
         {
             GL_DrawPatch(pGodLeft,  Vector2i(ORIGINX + 16 , ORIGINY + 9));
             GL_DrawPatch(pGodRight, Vector2i(ORIGINX + 287, ORIGINY + 9));
@@ -209,7 +212,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         DGL_DrawCutRectf2Tiled(ORIGINX+34, ORIGINY+33, 248, 9, 320, 42, 34, 33, ORIGINX, ORIGINY+191, 16, 8);
 
         // Faces.
-        if(P_GetPlayerCheats(&players[wi->player()]) & CF_GODMODE)
+        if (godEyes)
         {
             // If GOD mode we need to cut windows
             DGL_DrawCutRectf2Tiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
