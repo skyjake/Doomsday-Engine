@@ -466,6 +466,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     bool populateEnabled = true;
     bool showHidden = false;
     bool showOnlyLoaded = false;
+    bool dontFilterHidden = false;
     bool actionOnlyForSelection = true;
     bool rightClickToOpenContextMenu = false;
 
@@ -521,7 +522,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 .setInput(Rule::Left,  self().rule().left()  + self().margins().left())
                 .setInput(Rule::Right, self().rule().right() - self().margins().right())
                 .setInput(Rule::Top,   self().rule().top()   + self().margins().top());
-        search->setEmptyContentHint(tr("Search packages"));
+        search->setEmptyContentHint(tr("Search mods"));
         search->setSignalOnEnter(true);
         search->margins().setRight(style().fonts().font("default").height() + rule("gap"));
 
@@ -556,10 +557,13 @@ DENG_GUI_PIMPL(PackagesWidget)
                 return false;
             }
 
-            bool const isHidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
-            if (showHidden ^ isHidden)
+            if (!dontFilterHidden)
             {
-                return false;
+                const bool isHidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
+                if (showHidden ^ isHidden)
+                {
+                    return false;
+                }
             }
 
             return filterTerms.isEmpty() ||
@@ -711,8 +715,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     void updateItems()
     {
-        filteredPackages.forAll([this] (ui::Item &item)
-        {
+        filteredPackages.forAll([this](ui::Item &item) {
             item.as<PackageItem>().notifyChange();
             return LoopContinue;
         });
@@ -750,7 +753,11 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             filterTerms.removeAll(TAG_LOADED);
         }
-        if ((showHidden = filterTerms.contains(TAG_HIDDEN)) != false)
+        if (dontFilterHidden)
+        {
+            showHidden = true;
+        }
+        else if ((showHidden = filterTerms.contains(TAG_HIDDEN)) != false)
         {
             filterTerms.removeAll(TAG_HIDDEN);
         }
@@ -873,6 +880,15 @@ void PackagesWidget::setHiddenTags(StringList hiddenTags)
 {
     d->hiddenTags = hiddenTags;
     populate();
+}
+
+void PackagesWidget::setDontFilterHidden(bool enable)
+{
+    if (d->dontFilterHidden != enable)
+    {
+        d->dontFilterHidden = enable;
+        d->updateFilterTerms(true);
+    }
 }
 
 void PackagesWidget::setPopulationEnabled(bool enable)

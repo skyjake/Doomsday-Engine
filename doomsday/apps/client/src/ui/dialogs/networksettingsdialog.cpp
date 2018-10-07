@@ -44,7 +44,8 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self().area();
 
-        area.add(localPackages = new VariableToggleWidget(tr("Local Multiplayer Mods"), App::config("resource.localPackages")));
+        area.add(localPackages = new VariableToggleWidget(tr("Local Multiplayer Mods"),
+                                                          App::config("resource.localPackages")));
 
         // Developer options.
         self().add(devPopup = new GridPopupWidget);

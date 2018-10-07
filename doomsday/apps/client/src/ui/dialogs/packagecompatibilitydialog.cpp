@@ -26,6 +26,7 @@
 #include <de/Package>
 #include <de/PackageLoader>
 #include <de/ui/SubwidgetItem>
+#include <de/ToggleWidget>
 #include <de/Loop>
 
 #include "dd_main.h"
@@ -34,18 +35,21 @@ using namespace de;
 
 DENG2_PIMPL(PackageCompatibilityDialog)
 {
-    String message;
-    StringList wanted;
-    bool conflicted = false;
-    PackagesWidget *list = nullptr;
-    ui::ListData actions;
+    String          message;
+    StringList      wanted;
+    bool            conflicted    = false;
+    PackagesWidget *list          = nullptr;
+    ToggleWidget *  ignoreToggle  = nullptr;
+    LabelWidget *   ignoreWarning = nullptr;
+    ui::ListData    actions;
     ProgressWidget *updating;
-    bool ignoreCheck = false;
-    LoopCallback mainCall;
+    bool            ignoreCheck = false;
+    LoopCallback    mainCall;
 
     Impl(Public *i) : Base(i)
     {
         self().add(updating = new ProgressWidget);
+        self().area().enableIndicatorDraw(true);
         updating->setSizePolicy(ui::Expand, ui::Expand);
         updating->useMiniStyle("altaccent");
         updating->setText(tr("Updating..."));
@@ -88,31 +92,56 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             delete list;
             list = nullptr;
         }
+        if (ignoreWarning)
+        {
+            delete ignoreWarning;
+            ignoreWarning = nullptr;
+        }
+        if (ignoreToggle)
+        {
+            delete ignoreToggle;
+            ignoreToggle = nullptr;
+        }
         self().buttons().clear();
 
         try
         {
             // The only action on the packages is to view information.
-            actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
-            {
-                 return new PackageInfoDialog(list->actionPackage());
+            actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this]() -> PopupWidget * {
+                return new PackageInfoDialog(list->actionPackage());
             });
 
+            self().area().add(ignoreToggle = new ToggleWidget);
+            ignoreToggle->setText("Ignore Incompatibilities");
+            ignoreToggle->setAlignment(ui::AlignLeft);
+            ignoreToggle->setActionFn([this]() {
+                enableIgnore(ignoreToggle->isActive());
+            });
+
+            self().area().add(ignoreWarning = new LabelWidget);
+            ignoreWarning->setText(_E(b) "Caution: " _E(.) "Playing without the right resources "
+                                                           "may cause a crash.");
+            ignoreWarning->setFont("separator.annotation");
+            ignoreWarning->setTextColor("altaccent");
+            ignoreWarning->setAlignment(ui::AlignLeft);
+            ignoreWarning->setTextLineAlignment(ui::AlignLeft);
+            ignoreWarning->margins().setTop(ConstantRule::zero());
+
             self().area().add(list = new PackagesWidget(wanted));
+            list->setDontFilterHidden(true);
             list->setActionItems(actions);
             list->setActionsAlwaysShown(true);
             list->setFilterEditorMinimumY(self().area().rule().top());
 
-            StringList const loaded = DoomsdayApp::loadedPackagesAffectingGameplay();
-            //qDebug() << "Currently loaded:" << loaded;
+            const StringList loaded = DoomsdayApp::loadedPackagesAffectingGameplay();
 
             if (!GameProfiles::arePackageListsCompatible(loaded, wanted))
             {
                 conflicted = true;
                 if (list->itemCount() > 0)
                 {
-                    self().message().setText(message + "\n\n" + tr("The packages listed below "
-                                                                 "should be loaded."));
+                    self().message().setText(message + "\n\n" +
+                                             tr("All the mods listed below should be loaded."));
                     self().buttons()
                             << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                     new CallbackAction([this] () { resolvePackages(); }));
@@ -120,8 +149,8 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                 else
                 {
                     list->hide();
-                    self().message().setText(message + "\n\n" + tr("All additional packages "
-                                                                 "should be unloaded."));
+                    self().message().setText(message + "\n\n" +
+                                             tr("All additional mods should be unloaded."));
                     self().buttons()
                                << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
                                                        new CallbackAction([this] () { resolvePackages(); }));
@@ -153,12 +182,12 @@ DENG2_PIMPL(PackageCompatibilityDialog)
     {
         if (ignoreCheck)
         {
-            LOG_RES_NOTE("Ignoring package compatibility check due to user request");
+            LOG_RES_NOTE("Ignoring package compatibility check due to user request!");
             self().accept();
             return;
         }
 
-        qDebug() << "resolving...";
+        LOG_RES_MSG("Resolving packages...");
 
         auto &pkgLoader = PackageLoader::get();
 
@@ -180,12 +209,12 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             }
         }
 
-        qDebug() << "Good until:" << goodUntil;
+        LOG_RES_MSG("Good until %s") << goodUntil;
 
         // Unload excess.
         for (int i = loaded.size() - 1; i > goodUntil; --i)
         {
-            qDebug() << "unloading excess" << loaded.at(i);
+            LOG_RES_MSG("Unloading excess ") << loaded.at(i);
 
             pkgLoader.unload(loaded.at(i));
             loaded.removeAt(i);
@@ -194,12 +223,13 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         // Load the remaining wanted packages.
         for (int i = goodUntil + 1; i < wanted.size(); ++i)
         {
-            qDebug() << "loading wanted" << wanted.at(i);
+            LOG_RES_MSG("Loading wanted ") << wanted.at(i);
 
             pkgLoader.load(wanted.at(i));
         }
 
-        qDebug() << DoomsdayApp::loadedPackagesAffectingGameplay();
+        LOG_RES_MSG("Packages affecting gameplay:\n")
+            << String::join(DoomsdayApp::loadedPackagesAffectingGameplay(), "\n");
 
         self().buttonsMenu().disable();
         updating->setOpacity(1, 0.3);
@@ -212,7 +242,7 @@ PackageCompatibilityDialog::PackageCompatibilityDialog(String const &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
-    title().setText(tr("Incompatible Add-ons"));
+    title().setText(tr("Incompatible Mods"));
 }
 
 void PackageCompatibilityDialog::setMessage(String const &msg)
