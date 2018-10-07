@@ -243,14 +243,13 @@ DENG2_PIMPL(DataBundle), public Lockable
                 container->packageMetadata().insertToSortedArray(subset, new TextValue(versionedPackageId));
 
                 /*
-                qDebug() << container->d->versionedPackageId
-                         << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"
-                         << "requires"
+                LOGDEV_RES_VERBOSE("%s ") << container->d->versionedPackageId
+                         << "(" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << ") "
+                         << subset << " "
                          << versionedPackageId
-                         << "[" << metadata.gets("tags", "") << "]"
-                         << "from" << dataFilePath;
-                         */
-
+                         << " (" << metadata.gets("tags", "") << ") from "
+                         << self().asFile().path();
+                */
                 //Package::addRequiredPackage(containerFile, versionedPackageId);
             }
             return true;
@@ -310,8 +309,8 @@ DENG2_PIMPL(DataBundle), public Lockable
 
     Record buildMetadata()
     {
-        String const dataFilePath = self().asFile().path();
-        auto const *container = self().containerBundle();
+        const String dataFilePath = self().asFile().path();
+        const auto * container    = self().containerBundle();
 
         // Search for known data files in the bundle registry.
         res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self());
@@ -378,10 +377,19 @@ DENG2_PIMPL(DataBundle), public Lockable
             };
 
             // Containers become part of the identifier.
-            for (const DataBundle *i = container; i; i = i->containerBundle())
+            for (const DataBundle *c = container; c; c = c->containerBundle())
             {
-                packageId = cleanIdentifier(stripVersion(i->sourceFile().name().fileNameWithoutExtension()))
-                        .concatenateMember(packageId);
+                String containedId = cleanIdentifier(
+                    stripVersion(c->sourceFile().name().fileNameWithoutExtension()));
+
+                // Additionally include the parent subfolder within the container into the ID.
+                if (c == container && dataFilePath.fileNamePath() != c->asFile().path())
+                {
+                    containedId = containedId.concatenateMember(cleanIdentifier(
+                        stripVersion(dataFilePath.fileNamePath().fileNameWithoutExtension())));
+                }
+
+                packageId = containedId.concatenateMember(packageId);
             }
 
             // The file name may contain a version number.
