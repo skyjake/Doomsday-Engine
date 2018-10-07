@@ -2,17 +2,19 @@ fx {
     # Post-processing shaders need to have uFadeInOut (0..1) for
     # fading the effect in/out.
     post {
-        shader monochrome {
-            vertex = "
-                uniform mat4 uMvpMatrix;
-                in vec4 aVertex;
-                in vec2 aUV;
-                out vec2 vUV;
+        commonVertex = "
+            uniform mat4 uMvpMatrix;
+            in vec4 aVertex;
+            in vec2 aUV;
+            out vec2 vUV;    
+            void main(void) {
+                gl_Position = uMvpMatrix * aVertex;
+                vUV = aUV;
+            }
+        "
         
-                void main(void) {
-                    gl_Position = uMvpMatrix * aVertex;
-                    vUV = aUV;
-                }"
+        shader monochrome {
+            vertex $= fx.post.commonVertex
             fragment = "
                 uniform sampler2D uTex;
                 uniform float uFadeInOut;                
@@ -28,20 +30,12 @@ fx {
                     if (uFadeInOut < 1.0) {
                         out_FragColor = mix(original, out_FragColor, uFadeInOut);
                     }
-                }"        
+                }
+            "        
         }
         
         shader monochrome.inverted {
-            vertex = "
-                uniform mat4 uMvpMatrix;
-                in vec4 aVertex;
-                in vec2 aUV;
-                out vec2 vUV;
-        
-                void main(void) {
-                    gl_Position = uMvpMatrix * aVertex;
-                    vUV = aUV;
-                }"
+            vertex $= fx.post.commonVertex
             fragment = "
                 uniform sampler2D uTex;
                 uniform float uFadeInOut;                
@@ -52,13 +46,37 @@ fx {
                     float intens = 
                         (0.2125 * original.r) + 
                         (0.7154 * original.g) + 
-                        (0.0721 * original.b);
-                        
+                        (0.0721 * original.b);                        
                     out_FragColor = vec4(vec3(1.0 - intens), 1.0);
                     if (uFadeInOut < 1.0) {
                         out_FragColor = mix(original, out_FragColor, uFadeInOut);
                     }
-                }"        
+                }
+            "                
         }        
+            
+        shader colorize.gold {
+            vertex $= fx.post.commonVertex
+            fragment = "
+                #include '../include/hsv.glsl'                               
+                uniform sampler2D uTex;
+                uniform float uFadeInOut;                
+                in vec2 vUV;
+
+                void main(void) {
+                    vec4 original = texture(uTex, vUV);
+                    vec4 colorized = rgbToHsv(original);
+                    colorized.x = 40.0; // Fix hue to gold.
+                    colorized.y = 1.0; // Full saturation.
+                    colorized = hsvToRgb(colorized);
+                    if (uFadeInOut < 1.0) {
+                        out_FragColor = mix(original, colorized, uFadeInOut);
+                    }
+                    else {
+                        out_FragColor = colorized;
+                    }
+                }
+            "
+        }
     }
 }
