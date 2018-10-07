@@ -423,6 +423,7 @@ void ScrollAreaWidget::enablePageKeys(bool enabled)
 void ScrollAreaWidget::enableIndicatorDraw(bool enabled)
 {
     d->indicatorDrawEnabled = enabled;
+    d->restartScrollOpacityFade();
 }
 
 bool ScrollAreaWidget::handleEvent(Event const &event)
