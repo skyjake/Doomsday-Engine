@@ -378,7 +378,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             };
 
             // Containers become part of the identifier.
-            for (DataBundle const *i = container; i; i = i->containerBundle())
+            for (const DataBundle *i = container; i; i = i->containerBundle())
             {
                 packageId = cleanIdentifier(stripVersion(i->sourceFile().name().fileNameWithoutExtension()))
                         .concatenateMember(packageId);
