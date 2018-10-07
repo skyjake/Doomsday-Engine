@@ -63,12 +63,8 @@ public:
 
     void glInit();
     void glDeinit();
-
     void update();
-
-    //void beginFrame();
     void draw(de::Matrix4f const &mvpMatrix, de::GLTexture const &frame);
-    //void endFrame();
 
 public:
     static void consoleRegister();
