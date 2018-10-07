@@ -92,13 +92,13 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             devPopup->commit();
         }
 
-        area.add(soundPlugin    = new VariableChoiceWidget(App::config("audio.soundPlugin")));
-        area.add(musicPlugin    = new VariableChoiceWidget(App::config("audio.musicPlugin")));
+        area.add(soundPlugin    = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
+        area.add(musicPlugin    = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
 #if defined (WIN32)
-        area.add(cdPlugin       = new VariableChoiceWidget(App::config("audio.cdPlugin")));
+        area.add(cdPlugin       = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
 #endif
 
-        area.add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode")));
+        area.add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
         fmodSpeakerMode->items()
                 << new ChoiceItem(tr("Stereo"), "")
                 << new ChoiceItem(tr("5.1"), "5.1")
@@ -140,7 +140,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         fmodSpeakerMode->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
-        auto changeFunc = [this] (uint) { audioPluginsChanged = true; };
+        auto changeFunc = [this](uint) { audioPluginsChanged = true; };
         QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);

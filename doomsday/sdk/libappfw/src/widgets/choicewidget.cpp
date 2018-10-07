@@ -235,12 +235,9 @@ PopupMenuWidget &ChoiceWidget::popup()
 
 void ChoiceWidget::setSelected(Data::Pos pos)
 {
-    if (d->selected != pos)
-    {
-        d->selected = pos;
-        d->updateButtonWithSelection();
-        d->updateItemHighlight();
-    }
+    d->selected = pos;
+    d->updateButtonWithSelection();
+    d->updateItemHighlight();
 }
 
 bool ChoiceWidget::isValidSelection() const

@@ -45,7 +45,7 @@ DENG2_PIMPL(UISettingsDialog)
     {
         auto &area = self().area();
 
-        area.add(uiScale               = new VariableChoiceWidget(App::config("ui.scaleFactor")));
+        area.add(uiScale               = new VariableChoiceWidget(App::config("ui.scaleFactor"), VariableChoiceWidget::Number));
         area.add(uiTranslucency        = new VariableToggleWidget(tr("Background Translucency"), App::config("ui.translucency")));
         area.add(showAnnotations       = new VariableToggleWidget(tr("Menu Annotations"),  App::config("ui.showAnnotations")));
         area.add(showColumnDescription = new VariableToggleWidget(tr("Game Descriptions"), App::config("home.showColumnDescription")));
