@@ -52,7 +52,7 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
 };
 
 PackagesSidebarWidget::PackagesSidebarWidget()
-    : SidebarWidget("Packages", "packages-sidebar")
+    : SidebarWidget("Mods", "packages-sidebar")
     , d(new Impl(this))
 {
     // Button for refreshing the available packages.
