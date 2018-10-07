@@ -745,16 +745,21 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->config = new Config(d->configPath);
     d->scriptSys.addNativeModule("Config", d->config->objectNamespace());
 
-    d->config->read();
-
-    // Immediately after upgrading, OLD_VERSION is also present in the Version module.
-    Version oldVer = d->config->upgradedFromVersion();
-    if (oldVer != Version::currentBuild())
+    // Whenever the version changes, reset the cached metadata so any updates will be applied.
+    if (d->config->read() == Config::DifferentVersion)
     {
-        ArrayValue *old = new ArrayValue;
-        *old << NumberValue(oldVer.major) << NumberValue(oldVer.minor)
-             << NumberValue(oldVer.patch) << NumberValue(oldVer.build);
-        d->scriptSys.nativeModule("Version").addArray("OLD_VERSION", old).setReadOnly();
+        LOG_RES_NOTE("Clearing cached metadata due to version change");
+        d->metaBank->clear();
+
+        // Immediately after upgrading, OLD_VERSION is also present in the Version module.
+        Version oldVer = d->config->upgradedFromVersion();
+        if (oldVer != Version::currentBuild())
+        {
+            ArrayValue *old = new ArrayValue;
+            *old << NumberValue(oldVer.major) << NumberValue(oldVer.minor)
+                 << NumberValue(oldVer.patch) << NumberValue(oldVer.build);
+            d->scriptSys.nativeModule("Version").addArray("OLD_VERSION", old).setReadOnly();
+        }
     }
 
     // Set up the log buffer.
