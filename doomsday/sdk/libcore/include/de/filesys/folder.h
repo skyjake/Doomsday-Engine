@@ -363,6 +363,8 @@ public:
     Node const *tryGetChild(String const &name) const;
 
 public:
+    static Folder &root();
+
     enum WaitBehavior {
         OnlyInBackground,
         BlockingMainThread,

@@ -526,6 +526,11 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
     return nullptr;
 }
 
+Folder &Folder::root()
+{
+    return FS::get().root();
+}
+
 void Folder::waitForPopulation(WaitBehavior waitBehavior)
 {
     if (waitBehavior == OnlyInBackground && App::inMainThread())
