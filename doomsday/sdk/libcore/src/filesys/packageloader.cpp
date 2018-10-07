@@ -324,16 +324,25 @@ DENG2_PIMPL(PackageLoader)
         DictionaryValue const &selPkgs = Config::get("fs.selectedPackages")
                                          .value<DictionaryValue>();
 
-        Record const &meta = Package::metadata(packageFile);
+        const Record &meta = Package::metadata(packageFile);
+        const String idVer = Package::versionedIdentifierForFile(packageFile);
 
-        // Helper function to determine if a particular pacakge is marked for loading.
-        auto isPackageSelected = [meta, &selPkgs] (TextValue const &id, bool byDefault) -> bool {
-            TextValue const key(meta.gets("ID"));
+        // Helper function to determine if a particular package is marked for loading.
+        auto isPackageSelected = [&idVer, &selPkgs] (TextValue const &id, bool byDefault) -> bool {
+            TextValue const key(idVer);
             if (selPkgs.contains(key)) {
                 auto const &sels = selPkgs.element(key).as<DictionaryValue>();
                 if (sels.contains(id)) {
                     return sels.element(id).isTrue();
                 }
+                else
+                {
+                    //LOG_MSG("'%s' not in selectedPackages of '%s'") << id << idVer;
+                }
+            }
+            else
+            {
+                //LOG_MSG("'%s' not in fs.selectedPackages") << idVer;
             }
             return byDefault;
         };
