@@ -448,13 +448,44 @@ DENG2_PIMPL(DataBundle), public Lockable
             meta.appendUniqueWord(VAR_TAGS, "hidden");
         }
 
-        // Check for special tags.
+        // Check for built-in tags.
         {
             // Cached copies of remote files.
             if (dataFilePath.startsWith("/home/cache/remote/"))
             {
                 meta.appendUniqueWord(VAR_TAGS, "hidden");
                 meta.appendUniqueWord(VAR_TAGS, "cached");
+            }
+
+            // Master Levels of Doom.
+            {
+                static const struct {
+                    uint32_t    crc32;
+                    const char *filename;
+                } masterLevels[] = {{0xaa78f088, "attack.wad"},   {0x56bf62c2, "blacktwr.wad"},
+                                    {0xa54aee5b, "bloodsea.wad"}, {0x5a8fb0f5, "canyon.wad"},
+                                    {0x20954e50, "catwalk.wad"},  {0xb237de09, "combine.wad"},
+                                    {0x9f051374, "fistula.wad"},  {0x86491354, "garrison.wad"},
+                                    {0x60cc2385, "geryon.wad"},   {0x9755324e, "manor.wad"},
+                                    {0xcfe7d641, "mephisto.wad"}, {0xc400cf65, "minos.wad"},
+                                    {0x89386748, "nessus.wad"},   {0xac8808e9, "paradox.wad"},
+                                    {0x8a84cc17, "subspace.wad"}, {0x9ffd4024, "subterra.wad"},
+                                    {0x96919f5e, "teeth.wad"},    {0xd8d46a55, "ttrap.wad"},
+                                    {0x1726dbb7, "vesperas.wad"}, {0xd421fe9d, "virgil.wad"}};
+                if (format == Pwad)
+                {
+                    for (const auto &spec : masterLevels)
+                    {
+                        if (lumpDir->crc32() == spec.crc32 &&
+                            self().asFile().name().compareWithoutCase(spec.filename) == 0)
+                        {
+                            removeGameTags(meta);
+                            meta.appendUniqueWord(VAR_TAGS, "doom2");
+                            meta.appendUniqueWord(VAR_TAGS, "masterlevels");
+                            break;
+                        }
+                    }
+                }
             }
         }
 
