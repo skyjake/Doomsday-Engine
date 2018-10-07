@@ -218,7 +218,7 @@ bool G_SetGameActionLoadSession(String slotId)
             DoomsdayApp::app().checkPackageCompatibility(
                 meta.getStringList("packages"),
                 String::format("The savegame " _E(b) "%s" _E(.) " was created with "
-                               "add-ons that are different than the ones currently in use.",
+                               "mods that are different than the ones currently in use.",
                                meta.gets("userDescription").toUtf8().constData()),
                 scheduleLoad);
         }
