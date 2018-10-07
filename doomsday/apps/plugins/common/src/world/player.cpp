@@ -41,6 +41,7 @@
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_start.h"
+#include "r_special.h"
 
 using namespace de;
 
@@ -1274,9 +1275,7 @@ void Player_LeaveMap(player_t *player, dd_bool newHub)
     player->update |= PSF_POWERS;
     de::zap(player->powers);
 
-#if __JDOOM__
-    G_UpdateSpecialFilterWithTimeDelta(plrNum, 0 /* instantly */);
-#endif
+    R_UpdateSpecialFilterWithTimeDelta(plrNum, 0 /* instantly */);
 
 #if __JHEXEN__
     if(!newHub && !gfw_Rule(deathmatch))

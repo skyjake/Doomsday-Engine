@@ -47,6 +47,7 @@
 #include "p_actor.h"
 #include "player.h"
 #include "r_common.h"
+#include "r_special.h"
 #include "x_hair.h"
 
 Size2Rawf viewScale = { 1, 1 };
@@ -337,7 +338,7 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
             if (!isAutomapObscuring)
             {
                 G_RendPlayerView(player);
-#if !defined(__JDOOM__) && !defined(__JHEXEN__)
+#if defined(__JDOOM64__)
                 G_RendSpecialFilter(player, windowGeometry);
 #endif
             }
@@ -372,7 +373,5 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
 void G_ResetViewEffects()
 {
     GL_ResetViewEffects();
-#if __JDOOM__
-    G_InitSpecialFilter();
-#endif
+    R_InitSpecialFilter();
 }

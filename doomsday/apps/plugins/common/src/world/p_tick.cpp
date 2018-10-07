@@ -31,6 +31,7 @@
 #include "p_user.h"
 #include "player.h"
 #include "r_common.h"
+#include "r_special.h"
 
 using namespace common;
 
@@ -98,9 +99,7 @@ void P_DoTick()
         R_UpdateConsoleView(i);
     }
 
-#ifdef __JDOOM__
-    G_UpdateSpecialFilter(DISPLAYPLAYER);
-#endif
+    R_UpdateSpecialFilter(DISPLAYPLAYER);
 
     // For par times, among other things.
     mapTime++;

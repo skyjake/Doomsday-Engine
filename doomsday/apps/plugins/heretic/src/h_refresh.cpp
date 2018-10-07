@@ -38,6 +38,7 @@
 
 float quitDarkenOpacity = 0;
 
+#if 0
 void G_RendSpecialFilter(int player, RectRaw const *region)
 {
     player_t *plr = players + player;
@@ -64,6 +65,7 @@ void G_RendSpecialFilter(int player, RectRaw const *region)
     // Restore the normal rendering state.
     DGL_BlendMode(BM_NORMAL);
 }
+#endif
 
 dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {

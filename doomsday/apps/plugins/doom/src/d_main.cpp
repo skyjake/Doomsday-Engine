@@ -34,6 +34,7 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "saveslots.h"
+#include "r_common.h"
 
 using namespace de;
 using namespace common;
@@ -384,8 +385,6 @@ void D_PreInit()
 
     // Do the common pre init routine;
     G_CommonPreInit();
-
-    G_InitSpecialFilter();
 }
 
 void D_PostInit()

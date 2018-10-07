@@ -71,6 +71,7 @@
 #include "p_user.h"
 #include "player.h"
 #include "r_common.h"
+#include "r_special.h"
 #include "saveslots.h"
 #include "x_hair.h"
 
@@ -358,6 +359,7 @@ void G_CommonPreInit()
     IN_ConsoleRegister();         // For the interlude/intermission.
     X_Register();                 // For the crosshair.
     FI_StackRegister();           // For the InFine lib.
+    R_InitSpecialFilter();
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_Register();
 #endif
