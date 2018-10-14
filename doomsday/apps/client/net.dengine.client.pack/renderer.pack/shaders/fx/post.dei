@@ -53,7 +53,7 @@ fx {
                     }
                 }
             "                
-        }        
+        }
             
         shader colorize.gold {
             vertex $= fx.post.commonVertex
@@ -68,6 +68,31 @@ fx {
                     vec4 colorized = rgbToHsv(original);
                     colorized.x = 40.0; // Fix hue to gold.
                     colorized.y = 1.0; // Full saturation.
+                    colorized = hsvToRgb(colorized);
+                    if (uFadeInOut < 1.0) {
+                        out_FragColor = mix(original, colorized, uFadeInOut);
+                    }
+                    else {
+                        out_FragColor = colorized;
+                    }
+                }
+            "
+        }
+
+        shader colorize.inverted.gold {
+            vertex $= fx.post.commonVertex
+            fragment = "
+                #include '../include/hsv.glsl'                               
+                uniform sampler2D uTex;
+                uniform float uFadeInOut;                
+                in vec2 vUV;
+
+                void main(void) {
+                    vec4 original = texture(uTex, vUV);
+                    vec4 colorized = rgbToHsv(original);
+                    colorized.x = 40.0; // Fix hue to gold.
+                    colorized.y = 1.0; // Full saturation.
+                    colorized.z = 1.0 - colorized.z; // Invert value.
                     colorized = hsvToRgb(colorized);
                     if (uFadeInOut < 1.0) {
                         out_FragColor = mix(original, colorized, uFadeInOut);

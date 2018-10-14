@@ -21,6 +21,18 @@
 
 static float appliedFilter[MAXPLAYERS];
 
+#if defined(__JHERETIC__)
+static byte ringShader = 0;
+#endif
+
+void R_SpecialFilterRegister()
+{
+#if defined(__JHERETIC__)
+    C_VAR_BYTE("rend-ring-effect", &ringShader, 0, 0, 1);
+#endif
+    R_InitSpecialFilter();
+}
+
 void R_InitSpecialFilter()
 {
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -68,7 +80,7 @@ void R_UpdateSpecialFilterWithTimeDelta(int player, float delta)
 #if defined(__JHERETIC__)
     {
         delta  = 0; // not animated
-        fxName = "colorize.gold";
+        fxName = (ringShader == 0 ? "colorize.gold" : "colorize.inverted.gold");
 
         const int filter = plr->powers[PT_INVULNERABILITY];
         if (!filter)

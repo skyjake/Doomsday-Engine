@@ -21,6 +21,8 @@
 
 #include <de/libcore.h>
 
+DENG2_EXTERN_C void R_SpecialFilterRegister(void);
+
 DENG2_EXTERN_C void R_InitSpecialFilter(void);
 
 /**

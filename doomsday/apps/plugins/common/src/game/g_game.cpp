@@ -359,7 +359,7 @@ void G_CommonPreInit()
     IN_ConsoleRegister();         // For the interlude/intermission.
     X_Register();                 // For the crosshair.
     FI_StackRegister();           // For the InFine lib.
-    R_InitSpecialFilter();
+    R_SpecialFilterRegister();
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_Register();
 #endif
