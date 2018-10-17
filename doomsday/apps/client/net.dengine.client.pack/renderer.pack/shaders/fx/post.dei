@@ -68,6 +68,7 @@ fx {
                     vec4 colorized = rgbToHsv(original);
                     colorized.x = 40.0; // Fix hue to gold.
                     colorized.y = 1.0; // Full saturation.
+                    colorized.z = pow(colorized.z, 1.75); // Darker curve.
                     colorized = hsvToRgb(colorized);
                     if (uFadeInOut < 1.0) {
                         out_FragColor = mix(original, colorized, uFadeInOut);
