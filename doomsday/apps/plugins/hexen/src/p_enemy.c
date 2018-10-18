@@ -4100,7 +4100,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
     mobj_t* pmo;
     int i;
 
-    if(!FEQUAL(mo->mom[MX], 0) || !FEQUAL(mo->mom[MY], 0) || !FEQUAL(mo->mom[MZ], 0))
+    if(NON_ZERO(mo->mom[MX]) || NON_ZERO(mo->mom[MY]) || NON_ZERO(mo->mom[MZ]))
     {
         mo->tics = 105;
         return;

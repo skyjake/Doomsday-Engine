@@ -426,7 +426,7 @@ static dd_bool shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
     VALIDCOUNT++;
     Mobj_TouchedLinesIterator(mobj, PIT_AvoidDropoff, &parm);
 
-    if(FEQUAL(parm.direction[VX], 0) && FEQUAL(parm.direction[VY], 0))
+    if(IS_ZERO(parm.direction[VX]) && IS_ZERO(parm.direction[VY]))
         return false;
 
     // The mobj should attempt to move away from the drop off.

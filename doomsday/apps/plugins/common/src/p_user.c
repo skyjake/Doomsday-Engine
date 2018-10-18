@@ -393,12 +393,12 @@ void P_MovePlayer(player_t *player)
     if(IS_NETWORK_SERVER)
     {
         // Server starts the walking animation for remote players.
-        if((!FEQUAL(dp->forwardMove, 0) || !FEQUAL(dp->sideMove, 0)) &&
+        if((NON_ZERO(dp->forwardMove) || NON_ZERO(dp->sideMove)) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
             P_MobjChangeState(plrmo, pClassInfo->runState);
         }
-        else if(P_PlayerInWalkState(player) && FEQUAL(dp->forwardMove, 0) && FEQUAL(dp->sideMove, 0))
+        else if(P_PlayerInWalkState(player) && IS_ZERO(dp->forwardMove) && IS_ZERO(dp->sideMove))
         {
             // If in a walking frame, stop moving.
             P_MobjChangeState(plrmo, pClassInfo->normalState);
@@ -472,17 +472,17 @@ void P_MovePlayer(player_t *player)
             sideMove = 0;
         }
 
-        if(!FEQUAL(forwardMove, 0) && movemul)
+        if(NON_ZERO(forwardMove) && movemul)
         {
             P_Thrust(player, plrmo->angle, forwardMove * movemul);
         }
 
-        if(!FEQUAL(sideMove, 0) && movemul)
+        if(NON_ZERO(sideMove) && movemul)
         {
             P_Thrust(player, plrmo->angle - ANG90, sideMove * movemul);
         }
 
-        if((!FEQUAL(forwardMove, 0) || !FEQUAL(sideMove, 0)) &&
+        if((NON_ZERO(forwardMove) || NON_ZERO(sideMove)) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
             P_MobjChangeState(plrmo, pClassInfo->runState);
@@ -702,7 +702,7 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(FEQUAL(pmo->mom[MX], 0) && FEQUAL(pmo->mom[MY], 0) && P_Random() < 64)
+    if(IS_ZERO(pmo->mom[MX]) && IS_ZERO(pmo->mom[MY]) && P_Random() < 64)
     {   // Snout sniff
         P_SetPspriteNF(player, ps_weapon, S_SNOUTATK2);
         S_StartSound(SFX_PIG_ACTIVE1, pmo); // snort
@@ -737,7 +737,7 @@ void P_MorphThink(player_t *player)
 
     if(!IS_NETGAME || IS_CLIENT)
     {
-        if(FEQUAL(pmo->mom[MX], 0) && FEQUAL(pmo->mom[MY], 0) && P_Random() < 160)
+        if(IS_ZERO(pmo->mom[MX]) && IS_ZERO(pmo->mom[MY]) && P_Random() < 160)
         {   // Twitch view angle
             pmo->angle += (P_Random() - P_Random()) << 19;
         }
@@ -1032,7 +1032,7 @@ void P_PlayerThinkFly(player_t *player)
         plrmo->flags2 &= ~MF2_FLY;
         plrmo->flags &= ~MF_NOGRAVITY;
     }
-    else if(!FEQUAL(player->brain.upMove, 0) && player->powers[PT_FLIGHT])
+    else if(NON_ZERO(player->brain.upMove) && player->powers[PT_FLIGHT])
     {
         player->flyHeight = player->brain.upMove * 10;
         if(!(plrmo->flags2 & MF2_FLY))
@@ -1598,7 +1598,7 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if(!FEQUAL(vel, 0) ^ (cfg.common.alwaysRun != 0))
+    if(NON_ZERO(vel) ^ (cfg.common.alwaysRun != 0))
     {
         // Hurry, good man!
         turnSpeedPerTic = pClassInfo->turnSpeed[1];
@@ -1708,11 +1708,11 @@ void P_PlayerThinkUpdateControls(player_t *player)
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
-    brain->speed = (!FEQUAL(vel, 0));
+    brain->speed = (NON_ZERO(vel));
 
     // Check for strafe.
     //P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
-    //strafe = (!FEQUAL(vel, 0));
+    //strafe = (NON_ZERO(vel));
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);

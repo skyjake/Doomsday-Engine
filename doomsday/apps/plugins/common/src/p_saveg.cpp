@@ -250,7 +250,7 @@ void SV_WriteSector(Sector *sec, MapStateWriter *msw)
         type = sc_xg1;
     else
 #endif
-        if(!FEQUAL(flooroffx, 0) || !FEQUAL(flooroffy, 0) || !FEQUAL(ceiloffx, 0) || !FEQUAL(ceiloffy, 0))
+        if(NON_ZERO(flooroffx) || NON_ZERO(flooroffy) || NON_ZERO(ceiloffx) || NON_ZERO(ceiloffy))
         type = sc_ploff;
     else
         type = sc_normal;

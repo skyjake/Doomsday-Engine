@@ -352,7 +352,7 @@ DENG_EXTERN_C dd_bool R_GetPatchInfo(patchid_t id, patchinfo_t *info)
         info->flags.isCustom = tex.isFlagged(res::Texture::Custom);
 
         averagealpha_analysis_t *aa = reinterpret_cast<averagealpha_analysis_t *>(tex.analysisDataPointer(res::Texture::AverageAlphaAnalysis));
-        info->flags.isEmpty = aa && FEQUAL(aa->alpha, 0);
+        info->flags.isEmpty = aa && IS_ZERO(aa->alpha);
 
         info->geometry.size.width  = tex.width();
         info->geometry.size.height = tex.height();

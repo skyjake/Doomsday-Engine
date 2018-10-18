@@ -154,6 +154,10 @@
 
 #define FEQUAL(x, y)        (INRANGE_OF(x, y, FLOATEPSILON))
 
+#define IS_ZERO(x)          FEQUAL(x, 0)
+
+#define NON_ZERO(x)         (!IS_ZERO(x))
+
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 
 #ifdef ABS

@@ -182,8 +182,8 @@ void Mobj_XYMoveStopping(mobj_t *mo)
     {
         belowStandSpeed = (INRANGE_OF(mo->mom[MX], 0, STANDSPEED) &&
                            INRANGE_OF(mo->mom[MY], 0, STANDSPEED));
-        isMovingPlayer = (!FEQUAL(player->plr->forwardMove, 0) ||
-                        !FEQUAL(player->plr->sideMove, 0));
+        isMovingPlayer = (NON_ZERO(player->plr->forwardMove) ||
+                        NON_ZERO(player->plr->sideMove));
     }
 
     // Stop player walking animation (only real players).

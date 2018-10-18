@@ -433,14 +433,14 @@ void P_MobjMoveZ(mobj_t* mo)
             // Update gravity's effect on momentum.
             if(mo->flags2 & MF2_LOGRAV)
             {
-                if(FEQUAL(mo->mom[MZ], 0))
+                if(IS_ZERO(mo->mom[MZ]))
                     mo->mom[MZ] = -(gravity / 8) * 2;
                 else
                     mo->mom[MZ] -= (gravity / 8);
             }
             else if(!(mo->flags & MF_NOGRAVITY))
             {
-                if(FEQUAL(mo->mom[MZ], 0))
+                if(IS_ZERO(mo->mom[MZ]))
                     mo->mom[MZ] = -gravity * 2;
                 else
                     mo->mom[MZ] -= gravity;

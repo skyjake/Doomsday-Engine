@@ -1864,7 +1864,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
                 divisor *= 2;
 
                 // Can we get any closer?
-                if(FEQUAL(d[VZ] / divisor, 0))
+                if(IS_ZERO(d[VZ] / divisor))
                 {
                     break; // No.
                 }
@@ -3029,7 +3029,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
         {
             mo->mom[MZ] = -(P_GetGravity() / 32) * 2;
         }
@@ -3040,7 +3040,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
         {
             mo->mom[MZ] = -P_GetGravity() * 2;
         }
