@@ -113,17 +113,13 @@ endmacro (deng_cotire)
 macro (deng_target_rpath target)
     if (APPLE)
         set (_extraRPath)
-        if (NOT DE_ENABLE_DEPLOYQT)
-            # Not deployed; include the local Qt library path in @rpath.
-            set (_extraRPath "${QT_LIBS}")
-        endif ()
         set_target_properties (${target} PROPERTIES
             INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../${DE_INSTALL_LIB_DIR};${_extraRPath}"
         )
         if (${target} MATCHES "test_.*")
             # These won't be deployed, so we can use the full path.
             set_property (TARGET ${target} APPEND PROPERTY
-                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_PLUGIN_DIR};${QT_LIBS}"
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DE_INSTALL_PLUGIN_DIR}"
             )
         endif ()
         set (_extraRPath)
@@ -163,29 +159,6 @@ macro (deng_target_defaults target)
     strict_warnings (${target})
     #cotire (${target})
 endmacro (deng_target_defaults)
-
-# Links Qt components to the target.
-function (deng_target_link_qt target linkType)
-    sublist (comps 2 -1 ${ARGV})
-    if (QT_MODULE STREQUAL Qt4)
-        list (REMOVE_ITEM comps X11Extras)
-    list (FIND comps Widgets idx)
-    if (idx GREATER -1)
-        list (REMOVE_AT comps ${idx})
-        list (APPEND comps Gui)
-    endif ()
-    endif ()
-    list (REMOVE_DUPLICATES comps)
-    if (QT_MODULE STREQUAL Qt5)
-    find_package (${QT_MODULE} COMPONENTS ${comps} REQUIRED)
-    set (_prefix)
-    else ()
-    set (_prefix Qt)
-    endif ()
-    foreach (comp ${comps})
-    target_link_libraries (${target} ${linkType} ${QT_MODULE}::${_prefix}${comp})
-    endforeach (comp)
-endfunction (deng_target_link_qt)
 
 # Checks all the files in the arguments and removes the ones that
 # are not applicable to the current platform.
@@ -440,14 +413,6 @@ macro (deng_add_library target)
     deng_target_defaults (${target})
     if (APPLE AND NOT IOS)
         set_property (TARGET ${target} PROPERTY BUILD_WITH_INSTALL_RPATH ON)
-        add_custom_command (TARGET ${target} POST_BUILD
-            COMMAND ${CMAKE_COMMAND}
-                "-DDE_SOURCE_DIR=${DE_SOURCE_DIR}"
-                "-DCMAKE_INSTALL_NAME_TOOL=${CMAKE_INSTALL_NAME_TOOL}"
-                "-DBINARY_FILE=$<TARGET_FILE:${target}>"
-                -P "${DE_SOURCE_DIR}/cmake/QtInstallNames.cmake"
-            COMMENT "Fixing Qt install names..."
-        )
     endif ()
     target_include_directories (${target} PUBLIC
         $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include/>
@@ -468,8 +433,6 @@ macro (deng_deploy_library target name)
             NAMESPACE Deng::
             COMPONENT sdk
         )
-#        install (FILES ${DE_CMAKE_DIR}/config/${name}Config.cmake
-#            DESTINATION ${DE_INSTALL_CMAKE_DIR}/${name} COMPONENT sdk)
         if (EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/include/de)
             install (DIRECTORY include/de DESTINATION include COMPONENT sdk)
         endif ()
@@ -726,51 +689,7 @@ function (deng_install_bundle_deps target)
     endif ()
 endfunction (deng_install_bundle_deps)
 
-# Run the Qt deploy utility on the target, resolving any local system
-# dependencies.
-function (deng_install_deployqt target)
-    if (NOT DE_ENABLE_DEPLOYQT)
-        return ()
-    endif ()
-    if (UNIX_LINUX)
-        return () # No need to deploy Qt.
-    endif ()
-    get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
-    if (NOT _outName)
-        set (_outName ${target})
-    endif ()
-    if (APPLE)
-        if (NOT MACDEPLOYQT_COMMAND)
-            message (FATAL_ERROR "macdeployqt not available")
-        endif ()
-        install (CODE "
-            message (STATUS \"Running macdeployqt on ${_outName}.app...\")
-            if (\"\${CMAKE_INSTALL_CONFIG_NAME}\" MATCHES \"([Dd][Ee][Bb])\")
-                set (deployQtOptions -no-strip)
-            endif ()
-            execute_process (COMMAND ${MACDEPLOYQT_COMMAND}
-                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\" \${deployQtOptions}
-                OUTPUT_QUIET ERROR_QUIET)
-            ")
-    elseif (WIN32)
-        if (NOT WINDEPLOYQT_COMMAND)
-            message (FATAL_ERROR "windeployqt not available")
-        endif ()
-        set (script "${CMAKE_CURRENT_BINARY_DIR}/deploy-${target}.bat")
-        string (REPLACE "/" "\\" qtPath ${QT_PREFIX_DIR})
-        file (WRITE ${script} "
-            set PATH=${qtPath}\\bin
-            windeployqt --no-translations %1
-        ")
-        install (CODE "message (STATUS \"Running windeployqt on ${_outName}.exe...\")
-            execute_process (COMMAND ${script} \"\${CMAKE_INSTALL_PREFIX}\\\\bin\\\\${_outName}.exe\"
-                OUTPUT_QUIET ERROR_QUIET)")
-    endif ()
-endfunction (deng_install_deployqt)
-
 # Installs a tool executable into the approprite place(s).
-# macOS: Also fix the Qt framework install names that wouldn't be touched by
-# the qt deploy utility because they aren't the app bundle binary.
 function (deng_install_tool target)
     # macOS: Also install to the client application bundle.
     if (APPLE)
@@ -780,14 +699,6 @@ function (deng_install_tool target)
             set (name ${target})
         endif()
         install (TARGETS ${target} DESTINATION ${dest})
-        install (CODE "
-            include (${DE_SOURCE_DIR}/cmake/Macros.cmake)
-            set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
-            fix_bundled_install_names (\"\${CMAKE_INSTALL_PREFIX}/${dest}/${name}\"
-                QtCore.framework/Versions/5/QtCore
-                QtNetwork.framework/Versions/5/QtNetwork
-                VERBATIM)
-            ")
         if (DE_CODESIGN_APP_CERT)
             install (CODE "
                 execute_process (COMMAND ${CODESIGN_COMMAND}
@@ -897,26 +808,29 @@ function (deng_link_libraries target visibility)
         if (name STREQUAL DengCore)
             set (libTarget Deng::libcore)
         endif ()
-        if (name STREQUAL DengLegacy)
-            set (libTarget Deng::liblegacy)
-        endif ()
-        if (name STREQUAL DengShell)
-            set (libTarget Deng::libshell)
-        endif ()
         if (name STREQUAL DengGui)
             set (libTarget Deng::libgui)
         endif ()
-        if (name STREQUAL DengAppfw)
-            set (libTarget Deng::libappfw)
+        if (name STREQUAL DengComms)
+            set (libTarget Deng::libcomms)
         endif ()
         if (name STREQUAL DengDoomsday)
             set (libTarget Deng::libdoomsday)
         endif ()
-        if (name STREQUAL DengGamefw)
-            set (libTarget Deng::libgamefw)
+        if (name STREQUAL DengGameKit)
+            set (libTarget Deng::libgamekit)
         endif ()
         if (name STREQUAL DengGloom)
             set (libTarget Deng::libgloom)
+        endif ()
+        if (name STREQUAL DengLegacy)
+            message (FATAL_ERROR "DengLegacy has been removed")
+        endif ()
+        if (name STREQUAL DengShell)
+            message (FATAL_ERROR "DengShell has been renamed")
+        endif ()
+        if (name STREQUAL DengAppfw)
+            message (FATAL_ERROR "DengAppfw has been removed")
         endif ()
         if (libTarget)
             list (APPEND libTargets ${libTarget})

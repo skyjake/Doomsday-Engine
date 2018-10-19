@@ -33,9 +33,10 @@ deng_merge_sources (world    src/world/*.cpp)
 #     deng_find_resources (${fmodLibPath},Frameworks)
 # endif ()
 
+# TODO: This should be a static library.
 deng_add_library (libgloom ${SOURCES} ${HEADERS})
 
-deng_link_libraries (libgloom PUBLIC DengAppfw DengDoomsday)
+deng_link_libraries (libgloom PUBLIC DengGui DengDoomsday)
 target_link_libraries (libgloom PRIVATE SDL2 fmodex json)
 deng_deploy_library (libgloom DengGloom)
 

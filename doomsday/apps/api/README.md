@@ -1,12 +1,10 @@
 
-DOOMSDAY EXECUTABLE PUBLIC API
+# Doomsday 2 Public API
 
 This folder contains header files for the Doomsday Client and Server
 executables' public APIs: all the functionality made available by the
 executables at runtime. Plugins need to use these APIs for registering hooks
 and accessing the engine's runtime functionality.
 
-Note that in the future, more and more of this functionality will be moving
-into the shared libraries.
-
-See also: libcore, liblegacy
+**NOTE:** This is all deprecated and will be removed in Doomsday 3.
+Equivalent functionality is available via GameKit and DS.

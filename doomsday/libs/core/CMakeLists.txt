@@ -9,9 +9,20 @@ find_package (the_Foundation REQUIRED)
 include (ZLIB)
 find_package (Git QUIET)
 
+# Options.
+option (DE_LIBLEGACY_WRITER_TYPE_CHECK
+    "Type-check Writer1/Reader1 behavior (incompatible with no type checking)"
+    OFF
+)
+if (DE_LIBLEGACY_WRITER_TYPE_CHECK)
+    add_definitions (-DDE_WRITER_TYPECHECK=1)
+endif ()
+
 # Definitions.
 add_definitions (
     -D__LIBCORE__=1
+    -D__DE__=1 
+    -D__DOOMSDAY__=1
     -DLIBCORE_MAJOR_VERSION=${DE_VERSION_MAJOR}
     -DLIBCORE_MINOR_VERSION=${DE_VERSION_MINOR}
     -DLIBCORE_PATCHLEVEL=${DE_VERSION_PATCH}
@@ -60,6 +71,10 @@ deng_add_package (net.dengine.stdlib)
 deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation::the_Foundation)
+if (WIN32)
+    # Really needed?
+    #target_link_libraries (liblegacy PRIVATE winmm)
+endif ()
 deng_deploy_library (libcore DengCore)
 
 deng_cotire (libcore src/precompiled.h)

@@ -111,10 +111,6 @@ else ()
     list (APPEND SOURCES src/displaymode_sdl.cpp)
 endif ()
 
-# Ignore mobile-only sources.
-list_remove_matches (HEADERS ".*_qml.*")
-list_remove_matches (SOURCES ".*_qml.*")
-
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 if (DE_OPENGL_API STREQUAL "3.3")
@@ -192,6 +188,7 @@ deng_cotire (libgui src/precompiled.h)
 if (DE_ENABLE_TESTS)
     set (guiTests
         test_glsandbox
+        test_appfw
     )
     foreach (test ${guiTests})
         add_subdirectory (../../tests/${test} ${CMAKE_CURRENT_BINARY_DIR}/${test})
