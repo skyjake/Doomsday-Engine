@@ -1473,7 +1473,7 @@ String DataBundle::stripRedundantParts(String const &id)
         String seg = path.segment(i);
         for (int k = 1; k <= i; ++k) // Check all previous segments.
         {
-            if (seg.beginsWith(path.segment(i - 1) + "-"))
+            if (seg.beginsWith(path.segment(i - k) + "-"))
             {
                 seg = seg.substr(BytePos(CString(path.segment(i - k)).size()) + 1);
                 break;
