@@ -164,7 +164,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
 
     bool useGameTitlePicture()
     {
-        DENG_ASSERT(bundle != nullptr);
+        DE_ASSERT(bundle != nullptr);
         auto *lumpDir = bundle->lumpDirectory();
         if (!lumpDir || (!lumpDir->has("TITLEPIC") && !lumpDir->has("TITLE")))
         {

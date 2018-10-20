@@ -734,8 +734,6 @@ DE_GUI_PIMPL(PackagesWidget)
 
     void updateItems()
     {
-        filteredPackages.forAll([] (ui::Item &item)
-    {
         filteredPackages.forAll([](ui::Item &item) {
             item.as<PackageItem>().notifyChange();
             return LoopContinue;
@@ -828,7 +826,7 @@ DE_GUI_PIMPL(PackagesWidget)
      *
      * @return @c true, if all filter terms found.
      */
-    bool checkTerms(StringList texts) const
+    bool checkTerms(const StringList &texts) const
     {
         for (const auto &filterTerm : filterTerms)
         {

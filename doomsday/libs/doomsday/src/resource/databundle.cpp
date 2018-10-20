@@ -401,8 +401,8 @@ DE_PIMPL(DataBundle), public Lockable
                 // Additionally include the parent subfolder within the container into the ID.
                 if (c == container && dataFilePath.fileNamePath() != c->asFile().path())
                 {
-                    containedId = containedId.concatenateMember(cleanIdentifier(
-                        stripVersion(dataFilePath.fileNamePath().fileNameWithoutExtension())));
+                    containedId = containedId.concatenateMember(cleanIdentifier(stripVersion(
+                        dataFilePath.fileNamePath().toString().fileNameWithoutExtension())));
                 }
 
                 packageId = containedId.concatenateMember(packageId);
@@ -503,8 +503,8 @@ DE_PIMPL(DataBundle), public Lockable
                             self().asFile().name().compareWithoutCase(spec.filename) == 0)
                         {
                             removeGameTags(meta);
-                            meta.appendUniqueWord(VAR_TAGS, "doom2");
-                            meta.appendUniqueWord(VAR_TAGS, "masterlevels");
+                            meta.appendUniqueWord(VAR_TAGS(), "doom2");
+                            meta.appendUniqueWord(VAR_TAGS(), "masterlevels");
                             break;
                         }
                     }

@@ -126,7 +126,7 @@ DE_PIMPL(LogSettingsDialog)
 
         // Minimum level for log entries.
         parent->add(wgt.level = new VariableChoiceWidget(
-                        Config::get(Stringf("log.filter.%s.minLevel", dom.name))));
+                        Config::get(Stringf("log.filter.%s.minLevel", dom.name)),
                         VariableChoiceWidget::Number));
         wgt.level->setItems(levels);
         wgt.level->updateFromVariable();
