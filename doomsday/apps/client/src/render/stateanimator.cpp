@@ -202,24 +202,27 @@ DENG2_PIMPL(StateAnimator)
 
     Impl(Public *i, DotPath const &assetId) : Base(i)
     {
-        initVariables(assetId);
+        if (!assetId.isEmpty())
+        {
+            initVariables(assetId);
 
-        // Set up the model drawing parameters.
-        if (!self().model().passes.isEmpty())
-        {
-            appearance.drawPasses = &self().model().passes;
+            // Set up the model drawing parameters.
+            if (!self().model().passes.isEmpty())
+            {
+                appearance.drawPasses = &self().model().passes;
+            }
+            appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
+            {
+                bindUniforms(program,
+                    binding == ModelDrawable::AboutToBind? Bind : Unbind);
+            };
+            appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
+            {
+                bindPassUniforms(*self().model().currentProgram(),
+                    pass.name,
+                    state == ModelDrawable::PassBegun? Bind : Unbind);
+            };
         }
-        appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
-        {
-            bindUniforms(program,
-                binding == ModelDrawable::AboutToBind? Bind : Unbind);
-        };
-        appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
-        {
-            bindPassUniforms(*self().model().currentProgram(),
-                pass.name,
-                state == ModelDrawable::PassBegun? Bind : Unbind);
-        };
     }
 
     ~Impl()
@@ -574,6 +577,11 @@ DENG2_PIMPL(StateAnimator)
         return anim;
     }
 };
+
+StateAnimator::StateAnimator()
+    : ModelDrawable::Animator(Impl::Sequence::make)
+    , d(new Impl(this, {}))
+{}
 
 StateAnimator::StateAnimator(DotPath const &id, Model const &model)
     : ModelDrawable::Animator(model, Impl::Sequence::make)

@@ -49,6 +49,7 @@ public:
     DENG2_ERROR(DefinitionError);
 
 public:
+    StateAnimator();
     StateAnimator(de::DotPath const &id, Model const &model);
 
     Model const &model() const;

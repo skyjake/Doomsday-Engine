@@ -333,7 +333,15 @@ void ClientMobjThinkerData::operator << (Reader &from)
     if (flags & Impl::HasAnimator) // Animator
     {
         d->initOnce();
-        from >> *d->animator;
+        if (d->animator)
+        {
+            from >> *d->animator;
+        }
+        else
+        {
+            render::StateAnimator temp;
+            from >> temp; // Not used.
+        }
     }
 }
 
