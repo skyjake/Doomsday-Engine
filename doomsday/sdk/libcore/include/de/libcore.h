@@ -630,6 +630,19 @@ inline ContainerType map(ContainerType const &c,
     return out;
 }
 
+template <typename OutContainer,
+          typename InContainer,
+          typename Func,
+          typename Inserter = std::back_insert_iterator<OutContainer>>
+inline OutContainer map(const InContainer &input, Func func) {
+    OutContainer out;
+    Inserter ins(out);
+    for (const auto &i : input) {
+        *ins++ = func(i);
+    }
+    return out;
+}
+
 template <typename ContainerType>
 inline ContainerType filter(ContainerType const &c,
                             std::function<bool (typename ContainerType::value_type const &)> func) {
