@@ -1448,9 +1448,13 @@ String DataBundle::stripRedundantParts(String const &id)
     for (int i = 1; i < path.segmentCount(); ++i)
     {
         String seg = path.segment(i);
-        if (seg.startsWith(path.segment(i - 1) + "-"))
+        for (int k = 1; k <= i; ++k) // Check all previous segments.
         {
-            seg = seg.mid(path.segment(i - 1).size() + 1);
+            if (seg.startsWith(path.segment(i - k) + "-"))
+            {
+                seg = seg.mid(path.segment(i - k).size() + 1);
+                break;
+            }
         }
         stripped = stripped.concatenateMember(seg);
     }
