@@ -313,36 +313,41 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         String msg;
 
         // Start with a generic description of the package format.
-
-
         if (compatibleGame.isEmpty())
         {
             QRegularExpression reg(DataBundle::anyGameTagPattern());
             if (!reg.match(meta.gets("tags")).hasMatch())
             {
-                msg = "Not enough information to determine which game this package is for.";
+                msg += "Not enough information to determine which game this package is for.";
             }
         }
         else
         {
-            msg = String("This package is likely meant for " _E(b) "%1" _E(.) ".")
-                    .arg(compatibleGame);
+            msg += String("This package is likely meant for " _E(b) "%1" _E(.) ".")
+                       .arg(compatibleGame);
         }
 
-        if (bundle && bundle->lumpDirectory() &&
-            bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
+        String moreMsg;
         {
-            int const mapCount = bundle->lumpDirectory()->findMaps().count();
-            msg += QString("\n\nContains %1 map%2: ")
-                    .arg(mapCount)
-                    .arg(DENG2_PLURAL_S(mapCount)) +
-                    String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+            if (bundle && bundle->lumpDirectory() &&
+                bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
+            {
+                int const mapCount = bundle->lumpDirectory()->findMaps().count();
+                moreMsg += QString("Contains %1 map%2: ")
+                        .arg(mapCount)
+                        .arg(DENG2_PLURAL_S(mapCount)) +
+                        String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+                moreMsg += "\n";
+            }
+
+            if (lumpDirCrc32)
+            {
+                moreMsg += "WAD directory CRC32: " _E(m) + lumpDirCrc32 + _E(.) "\n";
+            }
+            moreMsg += "Package ID: " _E(>) + meta.gets(Package::VAR_ID) + _E(<) "\n";
         }
 
-        if (lumpDirCrc32)
-        {
-            msg += "\nWAD directory CRC32: " _E(m) + lumpDirCrc32 + _E(.);
-        }
+        msg += "\n\n" + moreMsg.strip();
 
         if (meta.has("notes"))
         {
