@@ -21,7 +21,7 @@
 #ifndef CLIENT_RENDER_SHADOWEDGE_H
 #define CLIENT_RENDER_SHADOWEDGE_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 #include <de/Vector>
 
 namespace de {

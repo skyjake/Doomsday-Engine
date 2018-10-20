@@ -77,7 +77,7 @@
 #include <doomsday/AbstractSession>
 #include <doomsday/GameStateFolder>
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/c_wrapper.h>
 #include <de/ArrayValue>
 #include <de/ByteArrayFile>

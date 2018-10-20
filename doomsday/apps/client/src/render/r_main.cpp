@@ -20,7 +20,7 @@
 
 #include "de_platform.h"
 
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <de/GLFramebuffer>

@@ -27,8 +27,8 @@
 
 #include "../libdoomsday.h"
 #include "valuetype.h"
-#include <de/types.h>
-#include <de/fixedpoint.h>
+#include <de/legacy/types.h>
+#include <de/legacy/fixedpoint.h>
 
 class LIBDOOMSDAY_PUBLIC PropertyValue
 {

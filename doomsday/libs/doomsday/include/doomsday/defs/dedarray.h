@@ -22,7 +22,7 @@
 
 #include "../libdoomsday.h"
 #include <de/Vector>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <cstring>
 
 struct LIBDOOMSDAY_PUBLIC ded_count_s

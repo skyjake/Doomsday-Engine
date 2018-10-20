@@ -26,7 +26,7 @@
 #include "render/r_main.h"
 #include "render/rendersystem.h"
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/Garbage>
 #include <de/AnimationVector>
 

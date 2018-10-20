@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC VariableChoiceWidget : public ChoiceWidget
+class LIBGUI_PUBLIC VariableChoiceWidget : public ChoiceWidget
 {
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors

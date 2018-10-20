@@ -20,7 +20,7 @@
 #include "de_platform.h"
 #include "world/contact.h"
 
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 #include <de/Error>
 #include "world/map.h"
 #include "world/p_object.h"

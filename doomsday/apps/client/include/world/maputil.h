@@ -22,7 +22,7 @@
 #define WORLD_MAPUTIL_H
 
 #include <de/libcore.h>
-#include <de/binangle.h>
+#include <de/legacy/binangle.h>
 #include "Line"
 
 class Sector;

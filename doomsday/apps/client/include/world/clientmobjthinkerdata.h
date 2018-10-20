@@ -20,7 +20,7 @@
 #define DE_WORLD_CLIENTMOBJTHINKERDATA_H
 
 #include <doomsday/world/mobjthinkerdata.h>
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/ModelDrawable>
 #include <de/GLState>
 

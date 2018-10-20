@@ -22,7 +22,7 @@
 #define DE_BAMS_MATH_H
 
 #include <de/liblegacy.h>
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 #ifdef __cplusplus
 extern "C" {

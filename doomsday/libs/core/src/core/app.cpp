@@ -117,7 +117,6 @@ DE_PIMPL(App)
     NativePath appPath;
 
     NativePath cachedBasePath;
-    NativePath cachedPluginBinaryPath;
     NativePath cachedHomePath;
 
     /// Primary (wall) clock.
@@ -237,7 +236,7 @@ DE_PIMPL(App)
         #endif
     }
 
-    void initFileSystem(bool allowPlugins)
+    void initFileSystem()
     {
         Folder::checkDefaultSettings();
 
@@ -286,15 +285,6 @@ DE_PIMPL(App)
             {
                 fs.makeFolder("/modules").attach(new DirectoryFeed(defaultNativeModulePath()));
             }
-        }
-
-        if (allowPlugins)
-        {
-#if !defined (DE_STATIC_LINK)
-            binFolder.attach(new DirectoryFeed(self().nativePluginBinaryPath()));
-#else
-            binFolder.attach(new StaticLibraryFeed);
-#endif
         }
 
         // User's home folder.
@@ -559,6 +549,7 @@ bool App::inMainThread()
     return DE_APP->d->mainThread == thrd_current();
 }
 
+#if 0
 #if !defined (DE_STATIC_LINK)
 NativePath App::nativePluginBinaryPath()
 {
@@ -600,6 +591,7 @@ NativePath App::nativePluginBinaryPath()
     }
     #endif
 }
+#endif
 #endif
 
 NativePath App::nativeHomePath()
@@ -765,9 +757,9 @@ NativePath App::nativeBasePath()
 
 void App::initSubsystems(SubsystemInitFlags flags)
 {
-    bool allowPlugins = !(flags & DisablePlugins);
+//    bool allowPlugins = !(flags & DisablePlugins);
 
-    d->initFileSystem(allowPlugins);
+    d->initFileSystem(); //allowPlugins);
 
     // Load the init packages.
     for (const String &pkg : d->packagesToLoadAtInit)
@@ -867,14 +859,6 @@ void App::initSubsystems(SubsystemInitFlags flags)
 
     // Now we can start observing progress of time.
     d->clock.audienceForTimeChange() += this;
-
-    if (allowPlugins)
-    {
-#if 0 // not yet handled by libcore
-        // Load the basic plugins.
-        loadPlugins();
-#endif
-    }
 
     LOG_VERBOSE("%s %s subsystems initialized")
         << metadata().gets(APP_NAME) << Version::currentBuild().asHumanReadableText();

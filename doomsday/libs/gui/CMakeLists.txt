@@ -97,18 +97,21 @@ file (GLOB_RECURSE HEADERS include/de/*)
 file (GLOB SOURCES src/stb_impl.c src/*.cpp src/*.h src/input/*.c)
 
 deng_merge_sources (audio    src/audio/*.cpp)
+deng_merge_sources (dialogs  src/dialogs/*.cpp)
 deng_merge_sources (graphics src/graphics/*.cpp)
 deng_merge_sources (input    src/input/*.cpp)
 deng_merge_sources (text     src/text/*.cpp)
+deng_merge_sources (vr       src/vr/*.cpp)
+deng_merge_sources (widgets  src/widgets/*.cpp)
 
-list (APPEND SOURCES src/filedialog_${DE_PLATFORM_SUFFIX})
+list (APPEND SOURCES src/dialogs/filedialog_${DE_PLATFORM_SUFFIX})
 
 # Choose which DisplayMode sources to use.
 list_remove_matches (SOURCES ".*/displaymode_.*")
 if (NOT DE_ENABLE_DISPLAYMODE)
-    list (APPEND SOURCES src/displaymode_dummy.cpp)
+    list (APPEND SOURCES src/graphics/displaymode_dummy.cpp)
 else ()
-    list (APPEND SOURCES src/displaymode_sdl.cpp)
+    list (APPEND SOURCES src/graphics/displaymode_sdl.cpp)
 endif ()
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
@@ -126,7 +129,7 @@ else ()
     message (FATAL_ERROR "Invalid value for OpenGL API: ${DE_OPENGL_API}")
 endif ()
 
-deng_link_libraries (libgui PUBLIC DengCore)
+deng_link_libraries (libgui PUBLIC DengComms)
 target_link_libraries (libgui
     PUBLIC  glbinding::glbinding
     PRIVATE SDL2 SDL2_ttf stb libassimp

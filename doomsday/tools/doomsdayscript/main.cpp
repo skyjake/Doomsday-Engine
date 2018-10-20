@@ -41,7 +41,7 @@ int main(int argc, char **argv)
             amd.set(App::CONFIG_PATH, "");
         }
         LogBuffer::get().enableStandardOutput();
-        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
+        app.initSubsystems(App::DisablePersistentData);
 
         app.commandLine().makeAbsolutePath(1);
         NativePath inputFn = app.commandLine().at(1);

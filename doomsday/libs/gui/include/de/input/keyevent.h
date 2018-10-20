@@ -19,7 +19,7 @@
 #ifndef LIBGUI_KEYEVENT_H
 #define LIBGUI_KEYEVENT_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "ddkey.h"
 #include <de/Event>
 #include <de/String>

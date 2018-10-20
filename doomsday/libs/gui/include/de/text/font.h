@@ -27,7 +27,7 @@
 #include <de/Range>
 #include <de/EscapeParser>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "../Image"
 #include "../NativeFont"
 

@@ -36,8 +36,8 @@
 #include <doomsday/console/var.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/world/Materials>
-#include <de/concurrency.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
 #include <de/Log>
 #include <de/GLInfo>
 #include <cmath>

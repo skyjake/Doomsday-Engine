@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_PERSISTENTSTATE_H
 #define LIBAPPFW_PERSISTENTSTATE_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/Refuge>
 #include <de/Widget>
 
@@ -32,7 +32,7 @@ class IPersistent;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC PersistentState : public Refuge
+class LIBGUI_PUBLIC PersistentState : public Refuge
 {
 public:
     PersistentState(String const &name);

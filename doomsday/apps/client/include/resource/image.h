@@ -29,10 +29,10 @@
 
 #include "dd_share.h" // gfxmode_t
 #include <doomsday/filesys/filehandle.h>
+#include <de/legacy/size.h>
 #include <de/Image>
 #include <de/String>
 #include <de/Vector>
-#include <de/size.h>
 
 /// @todo Should not depend on texture-level stuff here.
 class TextureVariantSpec;

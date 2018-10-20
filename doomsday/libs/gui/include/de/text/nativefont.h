@@ -19,7 +19,7 @@
 #ifndef LIBGUI_NATIVEFONT_H
 #define LIBGUI_NATIVEFONT_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 
 #include <de/String>
 #include <de/Asset>

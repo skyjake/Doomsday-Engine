@@ -20,8 +20,8 @@
 #include "doomsday/world/thinker.h"
 
 #include <de/math.h>
-#include <de/memory.h>
-#include <de/memoryzone.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
 
 using namespace de;
 

@@ -29,8 +29,8 @@
 
 #include "dd_main.h"  // App_World()
 
-#include <de/aabox.h>
-#include <de/vector1.h>
+#include <de/legacy/aabox.h>
+#include <de/legacy/vector1.h>
 #include <de/Rectangle>
 
 using namespace de;

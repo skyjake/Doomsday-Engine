@@ -22,7 +22,7 @@
 #ifndef DE_CLIENT_WORLD_CONTACTSPREADER_H
 #define DE_CLIENT_WORLD_CONTACTSPREADER_H
 
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <de/BitArray>
 #include "world/blockmap.h"
 

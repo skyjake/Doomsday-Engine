@@ -29,7 +29,7 @@
 #include "network/protocol.h"
 
 #include <doomsday/world/MaterialArchive>
-#include <de/stringarray.h>
+#include <de/legacy/stringarray.h>
 
 using namespace de;
 

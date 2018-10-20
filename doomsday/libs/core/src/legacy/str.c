@@ -32,10 +32,10 @@
 # include <strings.h>
 #endif
 
-#include "de/str.h"
-#include "de/memory.h"
-#include "de/memoryzone.h"
-#include "de/strutil.h"
+#include "de/legacy/str.h"
+#include "de/legacy/memory.h"
+#include "de/legacy/memoryzone.h"
+#include "de/legacy/strutil.h"
 #include <de/c_wrapper.h>
 #include <de/Garbage>
 

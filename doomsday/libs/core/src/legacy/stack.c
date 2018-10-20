@@ -17,8 +17,8 @@
  */
 
 #include "de/liblegacy.h"
-#include "de/memory.h"
-#include "de/stack.h"
+#include "de/legacy/memory.h"
+#include "de/legacy/stack.h"
 #include <de/c_wrapper.h>
 
 struct ddstack_s {

@@ -33,7 +33,7 @@ namespace ui {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC Margins
+class LIBGUI_PUBLIC Margins
 {
 public:
     DE_DEFINE_AUDIENCE2(Change, void marginsChanged())

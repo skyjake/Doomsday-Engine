@@ -27,9 +27,9 @@
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/DoomsdayApp"
 
-#include <de/mathutil.h>
-#include <de/types.h>
-#include <de/stack.h>
+#include <de/legacy/mathutil.h>
+#include <de/legacy/types.h>
+#include <de/legacy/stack.h>
 
 using namespace de;
 

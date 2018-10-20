@@ -60,7 +60,7 @@
 #include <doomsday/world/xg.h>
 
 #include <de/Map>
-#include <de/findfile.h>
+#include <de/legacy/findfile.h>
 #include <de/c_wrapper.h>
 #include <de/App>
 #include <de/PackageLoader>

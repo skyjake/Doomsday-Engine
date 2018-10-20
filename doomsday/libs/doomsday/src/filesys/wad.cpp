@@ -27,7 +27,7 @@
 #include <de/ByteOrder>
 #include <de/NativePath>
 #include <de/LogBuffer>
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 #include <cstring> // memcpy
 
 namespace res {

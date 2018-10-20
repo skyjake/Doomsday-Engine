@@ -20,8 +20,8 @@
 #ifndef LIBDOOMSDAY_PLUGINS_H
 #define LIBDOOMSDAY_PLUGINS_H
 
-#include <de/str.h>
-#include <de/rect.h>
+#include <de/legacy/str.h>
+#include <de/legacy/rect.h>
 #include "world/valuetype.h"
 
 /**

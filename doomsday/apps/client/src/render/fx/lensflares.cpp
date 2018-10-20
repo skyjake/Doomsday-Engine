@@ -25,7 +25,7 @@
 #include "gl/gl_main.h"
 #include "clientapp.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <doomsday/console/cmd.h>
 #include <de/Drawable>
 #include <de/FileSystem>

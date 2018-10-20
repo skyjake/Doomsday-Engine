@@ -21,7 +21,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/concurrency.h"
+#include "de/legacy/concurrency.h"
 #include <de/App>
 #include <de/Time>
 #include <de/Log>

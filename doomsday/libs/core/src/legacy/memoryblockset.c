@@ -20,8 +20,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/memoryblockset.h"
-#include "de/memory.h"
+#include "de/legacy/memoryblockset.h"
+#include "de/legacy/memory.h"
 
 typedef struct blockset_block_s {
     size_t count;   ///< Number of used elements.

@@ -25,7 +25,7 @@
 #ifndef DE_CLIENT_PROCESSCHECKDIALOG_H
 #define DE_CLIENT_PROCESSCHECKDIALOG_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 // This is only for Windows.
 #ifdef WIN32

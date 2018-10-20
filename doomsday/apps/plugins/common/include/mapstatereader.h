@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_MAPSTATEREADER_H
 #define LIBCOMMON_MAPSTATEREADER_H
 
-#include <de/reader.h>
+#include <de/legacy/reader.h>
 #include <de/String>
 #include <doomsday/GameStateFolder>
 #include "common.h"

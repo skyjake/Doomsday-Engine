@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC VariableSliderWidget : public SliderWidget
+class LIBGUI_PUBLIC VariableSliderWidget : public SliderWidget
 {
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors

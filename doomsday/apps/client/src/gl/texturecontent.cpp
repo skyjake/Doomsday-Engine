@@ -19,22 +19,20 @@
  */
 
 #include "de_platform.h"
-#include "gl/texturecontent.h"
-
-#include <cstring>
-#include <doomsday/resource/colorpalettes.h>
-#include <de/concurrency.h>
-#include <de/memory.h>
-#include <de/GLInfo>
-#include <de/texgamma.h>
 #include "dd_def.h"  // texGamma
 #include "dd_main.h"  // App_Resources()
 #include "sys_system.h"
-
 #include "gl/gl_main.h"
 #include "gl/gl_tex.h"
-
+#include "gl/texturecontent.h"
 #include "render/rend_main.h"  // misc global vars awaiting new home
+
+#include <doomsday/resource/colorpalettes.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/texgamma.h>
+#include <de/GLInfo>
+#include <cstring>
 
 using namespace de;
 
@@ -51,10 +49,11 @@ static int BytesPerPixelFmt(dgltexformat_t format)
     case DGL_RGB:                   return 3;
 
     case DGL_RGBA:                  return 4;
+
     default:
         App_Error("BytesPerPixelFmt: Unknown format %i, don't know pixel size.\n", format);
-        return 0; // Unreachable.
     }
+    return 0; // Unreachable.
 }
 
 #if 0

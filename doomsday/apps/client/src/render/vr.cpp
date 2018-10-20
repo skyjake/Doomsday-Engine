@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "render/vr.h"
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/BaseGuiApp>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>

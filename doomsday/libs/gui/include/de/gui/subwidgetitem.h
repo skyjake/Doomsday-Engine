@@ -36,7 +36,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC SubwidgetItem : public ImageItem
+class LIBGUI_PUBLIC SubwidgetItem : public ImageItem
 {
 public:
     typedef std::function<PopupWidget * ()> WidgetConstructor;

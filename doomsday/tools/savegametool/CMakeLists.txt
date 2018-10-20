@@ -11,7 +11,7 @@ file (GLOB SOURCES src/*.cpp src/*.h)
 
 add_executable (savegametool ${SOURCES})
 set_property (TARGET savegametool PROPERTY FOLDER Tools)
-deng_link_libraries (savegametool PRIVATE DengCore DengLegacy DengDoomsday)
+deng_link_libraries (savegametool PRIVATE DengCore DengDoomsday)
 target_link_libraries (savegametool PRIVATE lzss)
 deng_target_defaults (savegametool)
 

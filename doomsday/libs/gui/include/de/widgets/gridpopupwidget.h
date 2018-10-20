@@ -36,7 +36,7 @@ class GridLayout;
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC GridPopupWidget : public PopupWidget
+class LIBGUI_PUBLIC GridPopupWidget : public PopupWidget
 {
 public:
     GridPopupWidget(String const &name = String());

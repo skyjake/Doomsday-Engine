@@ -21,7 +21,7 @@
 
 #include "../widgets/panelbuttonwidget.h"
 #include <de/ButtonWidget>
-#include <de/shell/ServerInfo>
+#include <de/comms/ServerInfo>
 
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {

@@ -20,7 +20,7 @@
 #ifndef DE_MATHUTIL_H
 #define DE_MATHUTIL_H
 
-#include "liblegacy.h"
+#include "../liblegacy.h"
 
 /**
  * Used to replace /255 as *reciprocal255 is less expensive with CPU cycles.

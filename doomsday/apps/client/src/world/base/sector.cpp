@@ -32,7 +32,7 @@
 
 #include <doomsday/console/cmd.h>
 #include <de/LogBuffer>
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <de/Rectangle>
 
 using namespace de;

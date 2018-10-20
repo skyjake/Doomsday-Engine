@@ -38,7 +38,7 @@
 
 #include "dd_main.h"
 
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <de/Set>
 #include <de/List>
 

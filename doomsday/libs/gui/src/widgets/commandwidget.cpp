@@ -21,7 +21,7 @@
 #include "de/PersistentState"
 #include "de/Style"
 
-#include <de/shell/EditorHistory>
+#include <de/comms/EditorHistory>
 #include <de/KeyEvent>
 
 namespace de {

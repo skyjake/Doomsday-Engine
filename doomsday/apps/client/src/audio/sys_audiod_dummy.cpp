@@ -23,7 +23,7 @@
 #include "de_base.h"
 #include "audio/audiodriver.h"
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
 

@@ -1,1 +1,1 @@
-#include "framework/proceduralimage.h"
+#include "graphics/proceduralimage.h"

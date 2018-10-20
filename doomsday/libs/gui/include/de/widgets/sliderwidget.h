@@ -32,7 +32,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC SliderWidget : public GuiWidget
+class LIBGUI_PUBLIC SliderWidget : public GuiWidget
 {
 public:
     DE_DEFINE_AUDIENCE2(Value,     void sliderValueChanged(SliderWidget &, double value))

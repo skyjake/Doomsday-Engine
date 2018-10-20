@@ -31,9 +31,9 @@
 #include "render/rend_font.h"
 #include "ui/ui_main.h"
 
-#include <de/concurrency.h>
-#include <de/timer.h>    // TICSPERSEC
-#include <de/vector1.h>  // remove me
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>    // TICSPERSEC
+#include <de/legacy/vector1.h>  // remove me
 #include <de/GLInfo>
 #include <de/List>
 #include <de/Log>

@@ -55,9 +55,9 @@
 #include <de/TextValue>
 #include <de/Timer>
 #include <de/c_wrapper.h>
-#include <de/strutil.h>
-#include <de/memoryzone.h>
-#include <de/memory.h>
+#include <de/legacy/strutil.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/memory.h>
 
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN

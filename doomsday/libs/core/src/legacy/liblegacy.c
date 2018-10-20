@@ -20,10 +20,10 @@
  */
 
 #include "de/liblegacy.h"
-#include "de/binangle.h"
-#include "de/concurrency.h"
-#include "de/timer.h"
-#include "de/texgamma.h"
+#include "de/legacy/binangle.h"
+#include "de/legacy/concurrency.h"
+#include "de/legacy/timer.h"
+#include "de/legacy/texgamma.h"
 #include "memoryzone_private.h"
 
 #include <stdlib.h>

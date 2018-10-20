@@ -41,7 +41,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC ScrollAreaWidget : public GuiWidget
+class LIBGUI_PUBLIC ScrollAreaWidget : public GuiWidget
 {
 public:
     enum Origin {

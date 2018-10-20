@@ -22,7 +22,7 @@
 #include "de_base.h"
 #include "network/net_main.h"
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include "network/net_buf.h"
 #include "world/p_players.h"
 

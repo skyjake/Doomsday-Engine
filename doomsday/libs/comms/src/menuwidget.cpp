@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/MenuWidget"
-#include "de/shell/TextRootWidget"
+#include "de/comms/MenuWidget"
+#include "de/comms/TextRootWidget"
 #include <de/ConstantRule>
 
 namespace de { namespace shell {

@@ -19,7 +19,7 @@
 #ifndef LIBGUI_GLPIXELFORMAT_H
 #define LIBGUI_GLPIXELFORMAT_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "opengl.h"
 
 namespace de {

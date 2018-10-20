@@ -22,9 +22,9 @@
 #include "world/linesighttest.h"
 
 #include <cmath>
-#include <de/aabox.h>
-#include <de/fixedpoint.h>
-#include <de/vector1.h>
+#include <de/legacy/aabox.h>
+#include <de/legacy/fixedpoint.h>
+#include <de/legacy/vector1.h>
 #include <doomsday/BspNode>
 
 #include "Face"

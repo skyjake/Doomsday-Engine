@@ -20,7 +20,7 @@
 #include "doomsday/resource/tga.h"
 #include "dd_share.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>

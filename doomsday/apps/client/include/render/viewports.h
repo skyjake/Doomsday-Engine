@@ -26,7 +26,7 @@
 
 #include <de/Rectangle>
 #include <de/Matrix>
-#include <de/rect.h>
+#include <de/legacy/rect.h>
 
 namespace world {
 class ConvexSubspace;

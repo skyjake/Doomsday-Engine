@@ -20,9 +20,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LabelWidget"
-#include "de/shell/TextRootWidget"
-#include "de/shell/MonospaceLineWrapping"
+#include "de/comms/LabelWidget"
+#include "de/comms/TextRootWidget"
+#include "de/comms/MonospaceLineWrapping"
 #include <de/ConstantRule>
 
 namespace de { namespace shell {

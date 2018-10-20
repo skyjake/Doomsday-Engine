@@ -27,7 +27,7 @@
 
 #include <doomsday/res/Textures>
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <de/GLUniform>

@@ -22,7 +22,7 @@
 #include <QMainWindow>
 #include <de/String>
 #include <de/NativePath>
-#include <de/shell/Link>
+#include <de/comms/Link>
 
 /**
  * Window for a server link.

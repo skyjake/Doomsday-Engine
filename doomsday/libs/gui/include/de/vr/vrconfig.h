@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup vr
  */
-class LIBAPPFW_PUBLIC VRConfig
+class LIBGUI_PUBLIC VRConfig
 {
 public:
     /**

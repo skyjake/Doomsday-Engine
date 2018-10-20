@@ -22,7 +22,7 @@
 #define LIBDOOMSDAY_MISC_DECOMPRESS64_H
 
 #include "../libdoomsday.h"
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 #ifdef __cplusplus
 extern "C" {

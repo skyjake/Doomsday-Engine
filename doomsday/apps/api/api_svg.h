@@ -22,7 +22,7 @@
 #ifndef DOOMSDAY_API_VECTORGRAPHIC_H
 #define DOOMSDAY_API_VECTORGRAPHIC_H
 
-#include <de/point.h>
+#include <de/legacy/point.h>
 #include "apis.h"
 
 typedef uint32_t svgid_t;

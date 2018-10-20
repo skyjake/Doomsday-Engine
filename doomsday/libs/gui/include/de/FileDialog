@@ -1,1 +1,1 @@
-#include "gui/filedialog.h"
+#include "dialogs/filedialog.h"

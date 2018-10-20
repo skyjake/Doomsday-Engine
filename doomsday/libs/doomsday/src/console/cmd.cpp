@@ -20,8 +20,8 @@
 #include "doomsday/console/alias.h"
 #include "doomsday/console/knownword.h"
 #include "doomsday/help.h"
-#include <de/memoryblockset.h>
-#include <de/memoryzone.h>
+#include <de/legacy/memoryblockset.h>
+#include <de/legacy/memoryzone.h>
 #include <de/c_wrapper.h>
 #include <de/App>
 #include <de/Log>

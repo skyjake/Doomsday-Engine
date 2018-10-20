@@ -20,7 +20,7 @@
 #include "de_base.h"
 #include "client/cl_infine.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include "network/net_main.h"
 #include "network/net_msg.h"
 #include "ui/infine/finaleinterpreter.h"

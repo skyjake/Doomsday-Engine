@@ -21,7 +21,7 @@
 #define SERVER_SHELLUSER_H
 
 #include <de/Socket>
-#include <de/shell/Link>
+#include <de/comms/Link>
 #include "users.h"
 
 /**

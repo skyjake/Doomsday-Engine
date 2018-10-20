@@ -36,7 +36,7 @@
 #include "world/map.h"
 #include "world/p_object.h"
 
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 #include <de/List>
 
 using namespace de;

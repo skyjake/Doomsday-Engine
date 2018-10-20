@@ -21,7 +21,7 @@
 #define SERVERAPP_H
 
 #include <de/TextApp>
-#include <de/shell/ServerInfo>
+#include <de/comms/ServerInfo>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Games>
 #include <doomsday/resource/resources.h>

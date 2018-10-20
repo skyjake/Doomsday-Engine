@@ -34,7 +34,7 @@
 #include <doomsday/resource/colorpalettes.h>
 #include <doomsday/res/Texture>
 #include <de/LogBuffer>
-#include <de/mathutil.h> // M_CeilPow
+#include <de/legacy/mathutil.h> // M_CeilPow
 
 using namespace de;
 

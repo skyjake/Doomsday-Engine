@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC BlurWidget : public GuiWidget
+class LIBGUI_PUBLIC BlurWidget : public GuiWidget
 {
 public:
     BlurWidget(String const &name = String());

@@ -43,7 +43,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC WindowSystem : public System
+class LIBGUI_PUBLIC WindowSystem : public System
 {
 public:
     /// Required/referenced Window instance is missing. @ingroup errors

@@ -25,7 +25,7 @@
 #include "world/p_object.h"
 
 #include <cmath>
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <de/Error>
 #include <de/LogBuffer>
 #include <doomsday/console/cmd.h>

@@ -43,7 +43,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC NotificationAreaWidget : public GuiWidget
+class LIBGUI_PUBLIC NotificationAreaWidget : public GuiWidget
 {
 public:
     NotificationAreaWidget(String const &name = {});

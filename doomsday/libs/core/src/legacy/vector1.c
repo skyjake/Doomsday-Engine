@@ -21,7 +21,7 @@
 #include <math.h>
 #include <float.h>
 
-#include "de/vector1.h"
+#include "de/legacy/vector1.h"
 
 void V2x_Set(fixed_t vec[], fixed_t x, fixed_t y)
 {

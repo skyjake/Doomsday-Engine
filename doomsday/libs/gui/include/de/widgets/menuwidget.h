@@ -50,7 +50,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC MenuWidget : public ScrollAreaWidget, public IAssetGroup
+class LIBGUI_PUBLIC MenuWidget : public ScrollAreaWidget, public IAssetGroup
 {
 public:
     /**

@@ -25,7 +25,7 @@
 #include <doomsday/res/TextureManifest>
 #include <de/Error>
 #include <de/Log>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
 

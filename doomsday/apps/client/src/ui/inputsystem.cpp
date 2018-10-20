@@ -22,7 +22,7 @@
 #include "de_platform.h" // strdup macro
 #include "ui/inputsystem.h"
 
-#include <de/timer.h> // SECONDSPERTIC
+#include <de/legacy/timer.h> // SECONDSPERTIC
 #include <de/Context>
 #include <de/Function>
 #include <de/KeyEvent>

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/ServerInfo"
+#include "de/comms/ServerInfo"
 #include <de/TextValue>
 #include <de/Version>
 #include <de/Log>

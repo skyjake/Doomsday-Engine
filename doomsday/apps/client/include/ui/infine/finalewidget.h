@@ -21,7 +21,7 @@
 #ifndef DE_UI_INFINE_FINALEWIDGET_H
 #define DE_UI_INFINE_FINALEWIDGET_H
 
-#include <de/animator.h>
+#include <de/legacy/animator.h>
 #include <de/Id>
 #include <de/Observers>
 #include <de/String>

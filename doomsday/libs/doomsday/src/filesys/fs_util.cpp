@@ -50,7 +50,7 @@
 #include <de/Folder>
 #include <de/Log>
 #include <de/NativeFile>
-#include <de/findfile.h>
+#include <de/legacy/findfile.h>
 
 using namespace de;
 using namespace res;

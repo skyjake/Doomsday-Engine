@@ -29,7 +29,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC VariantActionItem : public ActionItem
+class LIBGUI_PUBLIC VariantActionItem : public ActionItem
 {
 public:
     VariantActionItem(String const &label   = "",

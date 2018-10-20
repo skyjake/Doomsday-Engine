@@ -28,8 +28,8 @@
 #include <ctime>
 #include <sys/stat.h>
 
-#include <de/memory.h>
-#include <de/memoryblockset.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryblockset.h>
 #include <de/LogBuffer>
 #include <de/NativePath>
 

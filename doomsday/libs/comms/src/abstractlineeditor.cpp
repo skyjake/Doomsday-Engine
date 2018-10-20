@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/AbstractLineEditor"
-#include "de/shell/Lexicon"
+#include "de/comms/AbstractLineEditor"
+#include "de/comms/Lexicon"
 #include <de/ConstantRule>
 
 namespace de { namespace shell {

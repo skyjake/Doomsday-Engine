@@ -22,7 +22,7 @@
 
 #define NP_ROOT_NODE ((void*) -1)
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 /**
  * Linknodes are used when linking mobjs to lines. Each mobj has a ring

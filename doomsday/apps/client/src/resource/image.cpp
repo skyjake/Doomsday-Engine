@@ -31,7 +31,7 @@
 #include <doomsday/resource/pcx.h>
 #include <doomsday/resource/tga.h>
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/LogBuffer>
 #include <de/Image>
 #include <de/NativePath>

@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC PopupWidget : public PanelWidget
+class LIBGUI_PUBLIC PopupWidget : public PanelWidget
 {
 public:
     PopupWidget(String const &name = {});

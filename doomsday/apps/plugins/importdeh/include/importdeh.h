@@ -31,7 +31,7 @@ struct font_s;
 #include <doomsday.h>
 
 #include <de/libcore.h>
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 // Internal:
 extern ded_t *ded; // @todo Remove me.

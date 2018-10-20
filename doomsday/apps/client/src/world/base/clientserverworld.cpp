@@ -21,8 +21,8 @@
 #include "world/clientserverworld.h"
 
 #include <de/Map>
-#include <de/memoryzone.h>
-#include <de/timer.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/timer.h>
 #include <de/Binder>
 #include <de/Context>
 #include <de/Error>

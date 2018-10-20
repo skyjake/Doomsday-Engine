@@ -94,10 +94,10 @@
 #include <doomsday/res/TextureManifest>
 #include <doomsday/world/Materials>
 #include <doomsday/BspNode>
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/texgamma.h>
-#include <de/vector1.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
+#include <de/legacy/texgamma.h>
+#include <de/legacy/vector1.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <cmath>

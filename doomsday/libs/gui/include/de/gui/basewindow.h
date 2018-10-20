@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_BASEWINDOW_H
 #define LIBAPPFW_BASEWINDOW_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/Vector>
 
 #if !defined (DE_MOBILE)
@@ -44,7 +44,7 @@ class WindowTransform;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC BaseWindow : public LIBAPPFW_BASEWINDOW_SUPER
+class LIBGUI_PUBLIC BaseWindow : public LIBAPPFW_BASEWINDOW_SUPER
 {
 public:
     BaseWindow(String const &id);

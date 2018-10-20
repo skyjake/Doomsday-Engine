@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC LogWidget : public ScrollAreaWidget
+class LIBGUI_PUBLIC LogWidget : public ScrollAreaWidget
 {
 public:
     DE_DEFINE_AUDIENCE2(ContentHeight, void contentHeightIncreased(LogWidget &, int delta))

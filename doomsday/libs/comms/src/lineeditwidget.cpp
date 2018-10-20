@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LineEditWidget"
-#include "de/shell/TextRootWidget"
-#include "de/shell/KeyEvent"
-#include "de/shell/Lexicon"
-#include "de/shell/MonospaceLineWrapping"
+#include "de/comms/LineEditWidget"
+#include "de/comms/TextRootWidget"
+#include "de/comms/KeyEvent"
+#include "de/comms/Lexicon"
+#include "de/comms/MonospaceLineWrapping"
 #include <de/Rule>
 #include <de/RuleRectangle>
 #include <de/String>

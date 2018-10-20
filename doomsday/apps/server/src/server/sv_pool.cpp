@@ -25,9 +25,9 @@
 #include "server/sv_pool.h"
 
 #include <cmath>
-#include <de/mathutil.h>
-#include <de/timer.h>
-#include <de/vector1.h>
+#include <de/legacy/mathutil.h>
+#include <de/legacy/timer.h>
+#include <de/legacy/vector1.h>
 #include <de/LogBuffer>
 #include "def_main.h"  // Def_SameStateSequence
 

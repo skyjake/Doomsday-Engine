@@ -23,7 +23,7 @@
 #include "ui/inputsystem.h"
 
 #include <de/KeyEvent>
-#include <de/ddstring.h>
+#include <de/legacy/ddstring.h>
 
 using namespace de;
 using namespace de::ui;

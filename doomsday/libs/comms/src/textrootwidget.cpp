@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/TextRootWidget"
-#include "de/shell/Widget"
+#include "de/comms/TextRootWidget"
+#include "de/comms/Widget"
 
 namespace de { namespace shell {
 

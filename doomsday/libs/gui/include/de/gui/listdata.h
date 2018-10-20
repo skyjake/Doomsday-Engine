@@ -32,7 +32,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC ListData : public Data
+class LIBGUI_PUBLIC ListData : public Data
 {
 public:
     ListData() = default;

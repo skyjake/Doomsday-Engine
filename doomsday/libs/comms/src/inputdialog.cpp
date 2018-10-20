@@ -16,11 +16,11 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/InputDialogWidget"
-#include "de/shell/LabelWidget"
-#include "de/shell/LineEditWidget"
-#include "de/shell/MenuWidget"
-#include "de/shell/TextRootWidget"
+#include "de/comms/InputDialogWidget"
+#include "de/comms/LabelWidget"
+#include "de/comms/LineEditWidget"
+#include "de/comms/MenuWidget"
+#include "de/comms/TextRootWidget"
 
 namespace de { namespace shell {
 

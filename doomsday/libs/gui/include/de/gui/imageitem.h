@@ -31,7 +31,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC ImageItem : public Item
+class LIBGUI_PUBLIC ImageItem : public Item
 {
 public:
     ImageItem(Semantics semantics, String const &label = "")

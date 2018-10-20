@@ -19,7 +19,7 @@
 #ifndef LIBGUI_KEYEVENTSOURCE_H
 #define LIBGUI_KEYEVENTSOURCE_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "keyevent.h"
 #include <de/Observers>
 #include <de/String>

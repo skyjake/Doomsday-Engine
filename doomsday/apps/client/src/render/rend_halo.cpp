@@ -26,7 +26,7 @@
 #include "gl/gl_texmanager.h"
 #include "world/p_players.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/GLState>
 #include <de/GLInfo>
 #include <doomsday/console/var.h>

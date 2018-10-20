@@ -26,10 +26,10 @@
 #include "world/map.h"
 
 #include <de/data/json.h>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/Message>
 #include <de/ByteRefArray>
-#include <de/shell/Protocol>
+#include <de/comms/Protocol>
 #include <de/Garbage>
 
 using namespace de;

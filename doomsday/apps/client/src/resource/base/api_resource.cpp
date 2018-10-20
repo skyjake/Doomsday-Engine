@@ -30,7 +30,7 @@
 #include <doomsday/resource/colorpalettes.h>
 #include <doomsday/resource/resources.h>
 #include <doomsday/res/Textures>
-#include <de/texgamma.h>
+#include <de/legacy/texgamma.h>
 
 using namespace de;
 

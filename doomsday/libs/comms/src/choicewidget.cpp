@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/ChoiceWidget"
-#include "de/shell/MenuWidget"
-#include "de/shell/TextRootWidget"
+#include "de/comms/ChoiceWidget"
+#include "de/comms/MenuWidget"
+#include "de/comms/TextRootWidget"
 
 namespace de { namespace shell {
 

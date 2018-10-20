@@ -26,7 +26,7 @@
 #include "render/r_main.h"
 #include "sys_system.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/Drawable>
 #include <de/GLTextureFramebuffer>
 #include <de/GuiRootWidget>

@@ -34,7 +34,7 @@ class ButtonWidget;
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC VariableArrayWidget : public GuiWidget
+class LIBGUI_PUBLIC VariableArrayWidget : public GuiWidget
 {
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors

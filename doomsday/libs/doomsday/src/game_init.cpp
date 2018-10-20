@@ -35,8 +35,8 @@
 #include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/PackageLoader>
-#include <de/findfile.h>
-#include <de/memory.h>
+#include <de/legacy/findfile.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
 using namespace res;

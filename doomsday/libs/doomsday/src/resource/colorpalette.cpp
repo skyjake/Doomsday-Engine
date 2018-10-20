@@ -23,8 +23,8 @@
 #include <de/Log>
 #include <de/Range>
 #include <de/Map>
-#include <de/reader.h>
-#include <de/mathutil.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/mathutil.h>
 
 using namespace de;
 

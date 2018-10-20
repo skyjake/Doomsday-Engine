@@ -27,7 +27,7 @@
 
 #include <cmath>
 #include <map>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/Error>
 #include <de/Log>
 #include <de/String>

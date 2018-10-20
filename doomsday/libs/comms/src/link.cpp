@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/Link"
-#include "de/shell/Protocol"
+#include "de/comms/Link"
+#include "de/comms/Protocol"
 #include <de/Message>
 #include <de/Socket>
 #include <de/Time>

@@ -35,9 +35,9 @@
 #include <de/Config>
 #include <de/LogBuffer>
 #include <de/WebRequest>
-#include <de/shell/ServerInfo>
+#include <de/comms/ServerInfo>
 #include <de/data/json.h>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <vector>
 #include <list>
 

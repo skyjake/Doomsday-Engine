@@ -23,7 +23,7 @@
 
 #include "de_platform.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/GLInfo>
 #include <de/GuiApp>
 #include "gl/gl_defer.h"

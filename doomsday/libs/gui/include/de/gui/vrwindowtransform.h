@@ -20,7 +20,7 @@
 #ifndef LIBAPPFW_VRWINDOWTRANSFORM_H
 #define LIBAPPFW_VRWINDOWTRANSFORM_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include "../WindowTransform"
 
 namespace de {
@@ -32,7 +32,7 @@ class GLTextureFramebuffer;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC VRWindowTransform : public WindowTransform
+class LIBGUI_PUBLIC VRWindowTransform : public WindowTransform
 {
 public:
     VRWindowTransform(BaseWindow &window);

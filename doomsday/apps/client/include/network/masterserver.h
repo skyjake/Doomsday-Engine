@@ -27,7 +27,7 @@
 #include "dd_share.h"
 
 #include <de/libcore.h>
-#include <de/shell/ServerInfo>
+#include <de/comms/ServerInfo>
 
 /**
  * Network request worker for communicating with the master server.

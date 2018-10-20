@@ -36,7 +36,7 @@ deng_add_package (net.dengine.base)
 
 deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 relaxed_warnings (libdoomsday)
-deng_link_libraries (libdoomsday PUBLIC DengCore DengLegacy DengShell)
+deng_link_libraries (libdoomsday PUBLIC DengCore DengComms)
 target_link_libraries (libdoomsday PRIVATE lzss)
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 

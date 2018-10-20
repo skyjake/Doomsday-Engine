@@ -29,7 +29,7 @@ namespace de {
  *
  * @ingroup dialogs
  */
-class LIBAPPFW_PUBLIC InputDialog : public MessageDialog
+class LIBGUI_PUBLIC InputDialog : public MessageDialog
 {
 public:
     InputDialog(String const &name = String());

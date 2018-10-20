@@ -33,7 +33,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC ActionItem : public ImageItem
+class LIBGUI_PUBLIC ActionItem : public ImageItem
 {
 public:
     ActionItem(String const &label = "", RefArg<Action> action = RefArg<Action>())

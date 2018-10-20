@@ -16,10 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/CommandLineWidget"
-#include "de/shell/TextRootWidget"
-#include "de/shell/KeyEvent"
-#include "de/shell/EditorHistory"
+#include "de/comms/CommandLineWidget"
+#include "de/comms/TextRootWidget"
+#include "de/comms/KeyEvent"
+#include "de/comms/EditorHistory"
 
 #include <de/String>
 

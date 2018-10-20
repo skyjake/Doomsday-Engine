@@ -21,8 +21,8 @@
 #ifndef LIBDOOMSDAY_GAME_API_H
 #define LIBDOOMSDAY_GAME_API_H
 
-#include <de/types.h>
-#include <de/rect.h>
+#include <de/legacy/types.h>
+#include <de/legacy/rect.h>
 #include "world/valuetype.h"
 
 #ifdef __cplusplus

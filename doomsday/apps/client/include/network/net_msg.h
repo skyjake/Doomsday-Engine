@@ -24,8 +24,8 @@
 #ifndef __DOOMSDAY_NETMESSAGE_H__
 #define __DOOMSDAY_NETMESSAGE_H__
 
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 
 DE_EXTERN_C Writer1 *msgWriter;
 DE_EXTERN_C Reader1 *msgReader;

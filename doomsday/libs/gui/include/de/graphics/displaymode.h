@@ -27,7 +27,7 @@
 #ifndef LIBGUI_DISPLAYMODE_H
 #define LIBGUI_DISPLAYMODE_H
 
-#include "libgui.h"
+#include "../libgui.h"
 #include "de/libcore.h"
 
 #ifdef __cplusplus

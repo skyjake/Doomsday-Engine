@@ -19,7 +19,7 @@
 #include "render/store.h"
 
 #include <de/libcore.h>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
 

@@ -19,7 +19,7 @@
 #ifndef LIBGUI_FILEDIALOG_H
 #define LIBGUI_FILEDIALOG_H
 
-#include "libgui.h"
+#include "../libgui.h"
 #include <de/NativePath>
 #include <de/List>
 

@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LocalServer"
-#include "de/shell/Link"
-#include "de/shell/DoomsdayInfo"
+#include "de/comms/LocalServer"
+#include "de/comms/Link"
+#include "de/comms/DoomsdayInfo"
 #include <de/CommandLine>
 #include <de/NativePath>
 #include <de/App>

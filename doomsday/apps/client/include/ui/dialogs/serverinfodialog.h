@@ -20,7 +20,7 @@
 #define DE_CLIENT_UI_SERVERINFODIALOG_H
 
 #include <de/DialogWidget>
-#include <de/shell/ServerInfo>
+#include <de/comms/ServerInfo>
 
 /**
  * Multiplayer server information and a mini-Shell connection.

@@ -22,8 +22,8 @@
 #include <cstdio>
 #include <cstdlib>
 #include <cstring>
-#include <de/memory.h>
-#include <de/strutil.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/strutil.h>
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/RecordValue>

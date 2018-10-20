@@ -22,7 +22,7 @@
 #include "render/drawlists.h"
 
 #include <de/Log>
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 #include <de/Hash>
 
 using namespace de;

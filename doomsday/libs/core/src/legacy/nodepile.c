@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/nodepile.h"
-#include "de/memoryzone.h"
+#include "de/legacy/nodepile.h"
+#include "de/legacy/memoryzone.h"
 
 #include <string.h>
 

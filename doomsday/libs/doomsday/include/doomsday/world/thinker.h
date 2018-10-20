@@ -22,7 +22,7 @@
 
 #include "../libdoomsday.h"
 #include <de/libcore.h>
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 struct thinker_s;
 

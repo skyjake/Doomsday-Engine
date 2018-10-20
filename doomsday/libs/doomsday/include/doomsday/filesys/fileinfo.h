@@ -32,7 +32,7 @@
 
 #include "../libdoomsday.h"
 #include <algorithm>
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 namespace res {
 

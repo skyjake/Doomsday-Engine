@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/DialogWidget"
-#include "de/shell/TextRootWidget"
-#include "de/shell/KeyEvent"
+#include "de/comms/DialogWidget"
+#include "de/comms/TextRootWidget"
+#include "de/comms/KeyEvent"
 
 #include <de/EventLoop>
 

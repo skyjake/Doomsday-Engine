@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "gl/svg.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/liblegacy.h>
 #include <de/GLInfo>
 #include "sys_system.h"

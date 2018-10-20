@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/AbstractLink"
+#include "de/comms/AbstractLink"
 #include <de/App>
 #include <de/Log>
 #include <de/Message>

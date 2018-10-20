@@ -28,8 +28,8 @@
 #endif
 
 #include <de/Vector>
-#include <de/memoryzone.h>
-#include <de/vector1.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/vector1.h>
 #include <cmath>
 #include <list>
 

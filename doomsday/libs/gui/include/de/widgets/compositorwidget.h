@@ -36,7 +36,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC CompositorWidget : public GuiWidget
+class LIBGUI_PUBLIC CompositorWidget : public GuiWidget
 {
 public:
     CompositorWidget(String const &name = String());

@@ -31,7 +31,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC VariableToggleItem : public Item
+class LIBGUI_PUBLIC VariableToggleItem : public Item
 {
 public:
     VariableToggleItem(String const &label, Variable &variable)

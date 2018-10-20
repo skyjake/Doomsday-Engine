@@ -25,7 +25,7 @@
 #include <de/Vector>
 #include <de/Rectangle>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "opengl.h"
 #include "../GLTexture"
 

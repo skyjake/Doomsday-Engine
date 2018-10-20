@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/mathutil.h"
-#include "de/vector1.h"
+#include "de/legacy/mathutil.h"
+#include "de/legacy/vector1.h"
 #include <math.h>
 
 static int finesine[10240] =

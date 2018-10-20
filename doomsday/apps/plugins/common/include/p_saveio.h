@@ -24,8 +24,8 @@
 #include <de/File>
 #include <de/Reader>
 #include <de/Writer>
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 
 /*
  * File management

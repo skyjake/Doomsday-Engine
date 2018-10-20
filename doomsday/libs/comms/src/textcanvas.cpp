@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/TextCanvas"
+#include "de/comms/TextCanvas"
 
 namespace de { namespace shell {
 

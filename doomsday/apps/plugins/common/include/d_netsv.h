@@ -21,7 +21,7 @@
 #ifndef LIBCOMMON_NETSV_H
 #define LIBCOMMON_NETSV_H
 
-#include <de/reader.h>
+#include <de/legacy/reader.h>
 #include "common.h"
 
 DE_EXTERN_C char cyclingMaps, mapCycleNoExit;

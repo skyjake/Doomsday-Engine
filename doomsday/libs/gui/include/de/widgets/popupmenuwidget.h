@@ -29,7 +29,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC PopupMenuWidget : public PopupWidget
+class LIBGUI_PUBLIC PopupMenuWidget : public PopupWidget
 {
 public:
     PopupMenuWidget(String const &name = String());

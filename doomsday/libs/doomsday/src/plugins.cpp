@@ -23,8 +23,8 @@
 #include "doomsday/doomsdayapp.h"
 
 #include <de/NativeFile>
-#include <de/findfile.h>
-#include <de/strutil.h>
+#include <de/legacy/findfile.h>
+#include <de/legacy/strutil.h>
 #include <de/List>
 #include <de/ThreadLocal>
 

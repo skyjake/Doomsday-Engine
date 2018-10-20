@@ -30,7 +30,7 @@
 #include <cstdio>
 #include <cstdlib>
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/charsymbols.h>
 #include <de/App>
 #include <de/Binder>

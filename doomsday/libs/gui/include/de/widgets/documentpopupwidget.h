@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC DocumentPopupWidget : public PopupWidget
+class LIBGUI_PUBLIC DocumentPopupWidget : public PopupWidget
 {
 public:
     DocumentPopupWidget(String const &name = {});

@@ -26,7 +26,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstdlib>
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/GLState>
 #include <de/GLInfo>
 

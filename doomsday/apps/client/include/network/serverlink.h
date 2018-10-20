@@ -22,10 +22,10 @@
 #include <de/Transmitter>
 #include <de/Address>
 #include <de/Observers>
-#include <de/shell/AbstractLink>
-#include <de/shell/Protocol>
-#include <de/shell/ServerInfo>
-#include <de/shell/PackageDownloader>
+#include <de/comms/AbstractLink>
+#include <de/comms/Protocol>
+#include <de/comms/ServerInfo>
+#include <de/comms/PackageDownloader>
 #include "network/net_main.h"
 
 /**

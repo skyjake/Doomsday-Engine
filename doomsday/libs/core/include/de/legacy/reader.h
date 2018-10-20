@@ -35,7 +35,7 @@
 #ifndef DE_READER_H
 #define DE_READER_H
 
-#include "liblegacy.h"
+#include "../liblegacy.h"
 #include "types.h"
 
 #ifdef __cplusplus

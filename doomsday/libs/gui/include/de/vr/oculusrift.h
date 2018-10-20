@@ -20,7 +20,7 @@
 #ifndef LIBAPPFW_OCULUSRIFT_H
 #define LIBAPPFW_OCULUSRIFT_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/Vector>
 #include <de/Matrix>
 
@@ -31,7 +31,7 @@ namespace de {
  *
  * @ingroup vr
  */
-class LIBAPPFW_PUBLIC OculusRift
+class LIBGUI_PUBLIC OculusRift
 {
 public:
     enum Eye { LeftEye, RightEye };

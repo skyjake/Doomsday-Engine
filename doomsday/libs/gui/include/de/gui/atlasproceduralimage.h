@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_ATLASPROCEDURALIMAGE_H
 #define LIBAPPFW_ATLASPROCEDURALIMAGE_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include "../ProceduralImage"
 #include "../GuiWidget"
 #include "../GuiRootWidget"
@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC AtlasProceduralImage : public ProceduralImage
+class LIBGUI_PUBLIC AtlasProceduralImage : public ProceduralImage
 {
 public:
     AtlasProceduralImage(GuiWidget &owner)

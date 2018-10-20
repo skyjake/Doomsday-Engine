@@ -169,7 +169,7 @@ int main(int argc, char **argv)
     {
         TextApp app(makeList(argc, argv));
         app.setMetadata("Deng Team", "dengine.net", "Savegame Tool", "1.0.1");
-        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
+        app.initSubsystems(App::DisablePersistentData);
 
         // Name the log output file appropriately.
         LogBuffer::get().setOutputFile(app.homeFolder().path() / "savegametool.out",

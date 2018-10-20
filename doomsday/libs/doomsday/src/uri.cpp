@@ -25,10 +25,10 @@
 #include "doomsday/game.h"
 #include "doomsday/doomsdayapp.h"
 
-#include <de/str.h>
-#include <de/reader.h>
-#include <de/writer.h>
-#include <de/unittest.h>
+#include <de/legacy/str.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
+#include <de/legacy/unittest.h>
 #include <de/NativePath>
 #include <de/Reader>
 #include <de/RegExp>
@@ -193,9 +193,9 @@ DE_PIMPL_NOREF(Uri)
 
             ++expEnd;
         }*/
-        
+
         static const RegExp reExpr(R"(\$\(([A-Za-z.]+)\))");
-        
+
         const char *pos = strPath.begin();
         RegExpMatch match;
         while (reExpr.match(strPath, match))

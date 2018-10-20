@@ -19,7 +19,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/types.h> // FINEANGLES
+#include <de/legacy/types.h> // FINEANGLES
 #include "dd_def.h"
 
 int finetangent[4096] =

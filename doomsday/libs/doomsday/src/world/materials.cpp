@@ -22,7 +22,7 @@
 #include "doomsday/world/world.h"
 #include "doomsday/resource/resources.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/Map>
 #include <de/List>
 #include <unordered_set>

@@ -23,8 +23,8 @@
 
 #include "dd_share.h"
 #include "api_mapedit.h"
-#include <de/binangle.h>
-#include <de/vector1.h>
+#include <de/legacy/binangle.h>
+#include <de/legacy/vector1.h>
 
 struct mapentitydef_s;
 

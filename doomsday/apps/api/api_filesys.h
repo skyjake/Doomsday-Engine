@@ -22,7 +22,7 @@
 #ifndef DOOMSDAY_API_FILE_H
 #define DOOMSDAY_API_FILE_H
 
-#include <de/str.h>
+#include <de/legacy/str.h>
 #include "api_base.h"
 
 DE_API_TYPEDEF(F)

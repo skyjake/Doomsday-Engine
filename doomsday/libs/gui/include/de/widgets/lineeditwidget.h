@@ -20,7 +20,7 @@
 #define LIBAPPFW_LINEEDITWIDGET_H
 
 #include "../GuiWidget"
-#include <de/shell/AbstractLineEditor>
+#include <de/comms/AbstractLineEditor>
 #include <de/KeyEvent>
 
 namespace de {
@@ -33,7 +33,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC LineEditWidget : public GuiWidget, public shell::AbstractLineEditor
+class LIBGUI_PUBLIC LineEditWidget : public GuiWidget, public shell::AbstractLineEditor
 {
 public:
     DE_DEFINE_AUDIENCE2(Enter,         void enterPressed(const String &text))

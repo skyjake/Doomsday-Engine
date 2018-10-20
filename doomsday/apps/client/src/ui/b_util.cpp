@@ -18,7 +18,7 @@
  */
 
 #include "ui/b_util.h"
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/input/ddkey.h>
 #include <de/RecordValue>
 #include "clientapp.h"

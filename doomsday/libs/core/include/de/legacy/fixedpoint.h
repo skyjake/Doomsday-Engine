@@ -23,7 +23,7 @@
 #ifndef DE_FIXED_POINT_MATH_H
 #define DE_FIXED_POINT_MATH_H
 
-#include "liblegacy.h"
+#include "../liblegacy.h"
 
 /// @addtogroup legacyMath
 /// @{

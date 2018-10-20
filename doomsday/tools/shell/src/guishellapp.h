@@ -20,7 +20,7 @@
 #define GUISHELLAPP_H
 
 #include "qtguiapp.h"
-#include <de/shell/ServerFinder>
+#include <de/comms/ServerFinder>
 #include <QMenu>
 
 class LinkWindow;

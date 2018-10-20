@@ -20,7 +20,7 @@
 #define LIBGUI_GLTIMER_H
 
 #include <de/Id>
-#include "de/gui/libgui.h"
+#include "de/libgui.h"
 
 namespace de {
 

@@ -26,8 +26,6 @@
 #include <de/Matrix>
 #include <de/GLWindow>
 
-#include "../libappfw.h"
-
 namespace de {
 
 class AnimationVector2;
@@ -40,7 +38,7 @@ class Painter;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC GuiRootWidget : public RootWidget
+class LIBGUI_PUBLIC GuiRootWidget : public RootWidget
 {
 public:
     GuiRootWidget(GLWindow *window = nullptr);

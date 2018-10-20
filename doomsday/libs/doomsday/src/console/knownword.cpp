@@ -28,9 +28,9 @@
 #include "doomsday/console/cmd.h"
 #include "doomsday/help.h"
 #include "doomsday/game.h"
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/c_wrapper.h>
-#include <de/strutil.h>
+#include <de/legacy/strutil.h>
 #include <de/List>
 #include <de/RegExp>
 

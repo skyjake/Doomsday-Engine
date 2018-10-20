@@ -20,7 +20,7 @@
 #include "serversystem.h"
 
 #include <de/c_wrapper.h>
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/Address>
 #include <de/Beacon>
 #include <de/ByteRefArray>

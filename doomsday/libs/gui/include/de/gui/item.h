@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_UI_DATAITEM_H
 #define LIBAPPFW_UI_DATAITEM_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/Observers>
 #include <de/String>
 #include <de/Value>
@@ -41,7 +41,7 @@ class Data;
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC Item
+class LIBGUI_PUBLIC Item
 {
 public:
     /**

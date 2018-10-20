@@ -26,7 +26,7 @@
 #include <de/Block>
 #include <de/IByteArray>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "opengl.h"
 
 namespace de {

@@ -33,7 +33,7 @@
 
 #include <de/Error>
 #include <de/PathTree>
-#include <de/str.h>
+#include <de/legacy/str.h>
 #include "dd_share.h"
 
 class DataBundle;

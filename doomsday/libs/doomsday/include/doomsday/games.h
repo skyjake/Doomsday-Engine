@@ -23,8 +23,8 @@
 
 #include "game.h"
 
-#include <de/types.h>
-#include <de/str.h>
+#include <de/legacy/types.h>
+#include <de/legacy/str.h>
 #include <de/Observers>
 #include <de/List>
 

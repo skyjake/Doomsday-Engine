@@ -21,8 +21,8 @@
 #ifndef DOOMSDAY_API_MAP_EDIT_H
 #define DOOMSDAY_API_MAP_EDIT_H
 
-#include <de/str.h>
-#include <de/types.h>
+#include <de/legacy/str.h>
+#include <de/legacy/types.h>
 #include <doomsday/world/valuetype.h>
 #include "api_base.h"
 

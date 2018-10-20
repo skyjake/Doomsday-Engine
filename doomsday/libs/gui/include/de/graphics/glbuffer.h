@@ -25,7 +25,7 @@
 #include <de/Asset>
 #include <utility>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "opengl.h"
 #include "../VertexBuilder"
 

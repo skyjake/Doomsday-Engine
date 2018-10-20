@@ -19,8 +19,8 @@
  */
 
 #include "ui/axisinputcontrol.h"
-#include <de/smoother.h>
-#include <de/timer.h> // SECONDSPERTIC
+#include <de/legacy/smoother.h>
+#include <de/legacy/timer.h> // SECONDSPERTIC
 #include <de/Block>
 #include <doomsday/console/var.h>
 #include "ui/joystick.h"

@@ -64,7 +64,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-#include <de/findfile.h>
+#include <de/legacy/findfile.h>
 #include "lzss.h"
 
 // MACROS ------------------------------------------------------------------

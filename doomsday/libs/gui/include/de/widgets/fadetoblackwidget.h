@@ -29,7 +29,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC FadeToBlackWidget : public LabelWidget
+class LIBGUI_PUBLIC FadeToBlackWidget : public LabelWidget
 {
 public:
     FadeToBlackWidget();

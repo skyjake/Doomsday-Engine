@@ -22,7 +22,7 @@
 #define DOOMSDAY_API_SOUND_H
 
 #include "apis.h"
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 struct mobj_s;
 

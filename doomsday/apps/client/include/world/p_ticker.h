@@ -20,7 +20,7 @@
 #ifndef DE_WORLD_P_TICKER_H
 #define DE_WORLD_P_TICKER_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 /**
  * Doomsday's own play-ticker.

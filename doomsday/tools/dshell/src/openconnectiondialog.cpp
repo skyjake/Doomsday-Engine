@@ -17,7 +17,7 @@
  */
 
 #include "openconnectiondialog.h"
-#include <de/shell/LineEditWidget>
+#include <de/comms/LineEditWidget>
 #include <de/Config>
 
 using namespace de;

@@ -19,7 +19,7 @@
 #ifndef LIBGUI_MOUSEEVENTSOURCE_H
 #define LIBGUI_MOUSEEVENTSOURCE_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "mouseevent.h"
 #include <de/Vector>
 #include <de/Observers>

@@ -22,7 +22,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/animator.h"
+#include "de/legacy/animator.h"
 
 void Animator_Init(animator_t *v, float val)
 {

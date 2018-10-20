@@ -23,9 +23,9 @@
 #define DE_API_URI_H
 
 #include "api_base.h"
-#include <de/str.h>
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/str.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 
 /// Schemes must be at least this many characters.
 #define URI_MINSCHEMELENGTH 2

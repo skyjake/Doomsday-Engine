@@ -23,7 +23,7 @@
 #include <de/GLBuffer>
 #include <de/Painter>
 
-#include "../libappfw.h"
+#include "../libgui.h"
 
 namespace de {
 
@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC ProceduralImage
+class LIBGUI_PUBLIC ProceduralImage
 {
 public:
     typedef Vec2f Size;

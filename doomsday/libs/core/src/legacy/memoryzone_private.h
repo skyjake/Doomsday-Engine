@@ -32,7 +32,7 @@
 #define DE_MEMORY_ZONE_PRIVATE_H
 
 #include <de/liblegacy.h>
-#include <de/memoryzone.h> // public API
+#include <de/legacy/memoryzone.h> // public API
 
 #ifdef __cplusplus
 extern "C" {

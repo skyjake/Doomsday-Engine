@@ -211,7 +211,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "BSD")
     target_link_libraries (client PUBLIC execinfo) 
 endif()
 
-deng_link_libraries (client PUBLIC DengAppfw DengDoomsday)
+deng_link_libraries (client PUBLIC DengGui DengDoomsday)
 
 # Deployment ----------------------------------------------------------------------------
 
@@ -270,12 +270,10 @@ if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
         the_Foundation::the_Foundation
         Deng::libcore
-        Deng::libshell
+        Deng::libcomms
         Deng::libgui
-        Deng::libappfw
-        Deng::liblegacy
         Deng::libdoomsday
-        Deng::libgamefw
+        Deng::libgamekit
         SDL2
         SDL2_mixer
     )
@@ -292,11 +290,11 @@ if (APPLE AND NOT IOS)
     endif ()
     install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
         \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
-    deng_install_deployqt (client)
+    #deng_install_deployqt (client)
     install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
         \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
 else ()
-    deng_install_deployqt (client)
+    #deng_install_deployqt (client)
 endif ()
 
 if (VC_REDIST_LIBS_DEBUG)
@@ -315,24 +313,24 @@ if (VC_REDIST_LIBS)
     )
 endif ()
 
-if (MSVC)
-    # Bless the build products folder for running the executables.
-    # We have to write a batch file that adds the correct Qt to the path,
-    # or otherwise windeployqt cannot find the correct libraries to deploy.
-    get_filename_component (QT_BINS ${WINDEPLOYQT_COMMAND} DIRECTORY)
-    file (TO_NATIVE_PATH ${QT_BINS} qtBins)
-    file (TO_NATIVE_PATH ${WINDEPLOYQT_COMMAND} winDepCmd)
-    set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
-    file (WRITE ${fn}
-        "set PATH=\"${qtBins}\";%PATH%
-        \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DE_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
-    )
-    set (_intDir ${CMAKE_CFG_INTDIR})
-    if (_intDir STREQUAL ".")
-        set (_intDir ${CMAKE_BUILD_TYPE})
-    endif ()
-    add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${_intDir})
-endif ()
+# if (MSVC)
+#     # Bless the build products folder for running the executables.
+#     # We have to write a batch file that adds the correct Qt to the path,
+#     # or otherwise windeployqt cannot find the correct libraries to deploy.
+#     get_filename_component (QT_BINS ${WINDEPLOYQT_COMMAND} DIRECTORY)
+#     file (TO_NATIVE_PATH ${QT_BINS} qtBins)
+#     file (TO_NATIVE_PATH ${WINDEPLOYQT_COMMAND} winDepCmd)
+#     set (fn ${CMAKE_BINARY_DIR}/deployqt.bat)
+#     file (WRITE ${fn}
+#         "set PATH=\"${qtBins}\";%PATH%
+#         \"${winDepCmd}\" -opengl --no-compiler-runtime --no-translations \"${DE_VS_STAGING_DIR}/%1/bin/doomsday.exe\""
+#     )
+#     set (_intDir ${CMAKE_CFG_INTDIR})
+#     if (_intDir STREQUAL ".")
+#         set (_intDir ${CMAKE_BUILD_TYPE})
+#     endif ()
+#     add_custom_command (TARGET client POST_BUILD COMMAND ${fn} ${_intDir})
+# endif ()
 
 deng_codesign (client)
 deng_cotire (client include/precompiled.h)

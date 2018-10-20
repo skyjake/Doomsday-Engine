@@ -20,7 +20,7 @@
 #include "de/PopupWidget"
 
 #include <de/charsymbols.h>
-#include <de/shell/Lexicon>
+#include <de/comms/Lexicon>
 #include <de/App>
 #include <de/Script>
 #include <de/ScriptLex>

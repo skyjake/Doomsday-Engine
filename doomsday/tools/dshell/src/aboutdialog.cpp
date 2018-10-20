@@ -17,7 +17,7 @@
  */
 
 #include "aboutdialog.h"
-#include <de/shell/LabelWidget>
+#include <de/comms/LabelWidget>
 
 using namespace de;
 using namespace de::shell;

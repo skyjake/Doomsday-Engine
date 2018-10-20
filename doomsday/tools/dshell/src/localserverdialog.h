@@ -1,4 +1,4 @@
-/** @file aboutdialog.h  Dialog for information about the program.
+/** @file localserverdialog.h  Dialog for starting a local server.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,20 +16,27 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef ABOUTDIALOG_H
-#define ABOUTDIALOG_H
+#ifndef LOCALSERVERDIALOG_H
+#define LOCALSERVERDIALOG_H
 
-#include <de/shell/DialogWidget>
+#include <de/libcore.h>
+#include <de/comms/InputDialogWidget>
 
-/**
- * Dialog for information about the program.
- */
-class AboutDialog : public de::shell::DialogWidget
+class LocalServerDialog : public de::shell::InputDialogWidget
 {
 public:
-    AboutDialog();
+    LocalServerDialog();
 
-    bool handleEvent(de::Event const &event);
+    de::duint16 port() const;
+
+    de::String gameMode() const;
+
+protected:
+    void prepare();
+    void finish(int result);
+
+private:
+    DE_PRIVATE(d)
 };
 
-#endif // ABOUTDIALOG_H
+#endif // LOCALSERVERDIALOG_H

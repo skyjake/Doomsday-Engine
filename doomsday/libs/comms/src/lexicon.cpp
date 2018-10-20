@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/Lexicon"
+#include "de/comms/Lexicon"
 
 namespace de { namespace shell {
 

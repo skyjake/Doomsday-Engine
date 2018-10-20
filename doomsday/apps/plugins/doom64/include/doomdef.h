@@ -43,7 +43,7 @@
 #endif
 
 #include <de/c_wrapper.h>
-#include <de/fixedpoint.h>
+#include <de/legacy/fixedpoint.h>
 #include <de/input/ddkey.h>
 #include <gamefw/libgamefw.h>
 #include "doomsday.h"

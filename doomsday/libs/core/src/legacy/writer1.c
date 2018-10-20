@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/writer.h"
-#include "de/memory.h"
+#include "de/legacy/writer.h"
+#include "de/legacy/memory.h"
 #include <string.h>
 #include <de/c_wrapper.h>
 

@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/ServerFinder"
+#include "de/comms/ServerFinder"
 #include <de/App>
 #include <de/Beacon>
 #include <de/CommandLine>

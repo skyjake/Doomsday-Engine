@@ -5,8 +5,8 @@
 #include <QScrollBar>
 #include <QWheelEvent>
 #include "qtrootwidget.h"
-#include <de/shell/LogWidget>
-#include <de/shell/CommandLineWidget>
+#include <de/comms/LogWidget>
+#include <de/comms/CommandLineWidget>
 
 class ConsolePage
     : public QWidget

@@ -21,8 +21,8 @@
 #include "de_base.h"
 #include "render/blockmapvisual.h"
 
-#include <de/aabox.h>
-#include <de/concurrency.h>
+#include <de/legacy/aabox.h>
+#include <de/legacy/concurrency.h>
 #include <de/GLInfo>
 #include <de/Vector>
 

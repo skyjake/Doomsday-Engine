@@ -1,1 +1,1 @@
-#include "framework/guiwidget.h"
+#include "gui/guiwidget.h"

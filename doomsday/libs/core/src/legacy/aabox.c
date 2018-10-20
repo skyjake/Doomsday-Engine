@@ -17,9 +17,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/aabox.h"
-#include "de/vector1.h"
-#include "de/mathutil.h"
+#include "de/legacy/aabox.h"
+#include "de/legacy/vector1.h"
+#include "de/legacy/mathutil.h"
 
 int M_BoxOnLineSide(const AABoxd* box, double const linePoint[], double const lineDirection[])
 {

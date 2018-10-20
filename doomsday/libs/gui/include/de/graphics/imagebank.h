@@ -19,7 +19,7 @@
 #ifndef LIBGUI_IMAGEBANK_H
 #define LIBGUI_IMAGEBANK_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "../Image"
 
 #include <de/InfoBank>

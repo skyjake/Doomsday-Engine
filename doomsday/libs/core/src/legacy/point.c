@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/point.h"
-#include "de/memory.h"
+#include "de/legacy/point.h"
+#include "de/legacy/memory.h"
 
 struct point2_s {
     /// Use a "raw" Point natively so that we can simply copy when called upon.

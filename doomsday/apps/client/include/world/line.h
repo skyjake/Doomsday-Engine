@@ -23,7 +23,7 @@
 #define DE_WORLD_LINE_H
 
 #include <functional>
-#include <de/binangle.h>
+#include <de/legacy/binangle.h>
 #include <de/Error>
 #include <de/Observers>
 #include <de/String>

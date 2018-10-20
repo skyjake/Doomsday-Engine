@@ -54,8 +54,8 @@
 #include <stdlib.h>
 #include <string.h>
 #include <de/Garbage>
-#include "de/memory.h"
-#include "de/concurrency.h"
+#include "de/legacy/memory.h"
+#include "de/legacy/concurrency.h"
 #include "de/c_wrapper.h"
 #include "memoryzone_private.h"
 

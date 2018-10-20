@@ -28,7 +28,7 @@
 #include <de/Binder>
 #include <de/NativePath>
 #include <de/Info>
-#include <de/shell/PackageDownloader>
+#include <de/comms/PackageDownloader>
 
 #include <string>
 

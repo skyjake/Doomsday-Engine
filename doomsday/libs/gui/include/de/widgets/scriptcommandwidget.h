@@ -38,7 +38,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC ScriptCommandWidget : public CommandWidget
+class LIBGUI_PUBLIC ScriptCommandWidget : public CommandWidget
 {
 public:
     ScriptCommandWidget(String const &name = String());

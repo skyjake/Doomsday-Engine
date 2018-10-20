@@ -26,7 +26,7 @@
 #ifndef ENGINE_TYPES_H
 #define ENGINE_TYPES_H
 
-#include <de/types.h> // libdeng types
+#include <de/legacy/types.h> // libdeng types
 
 /** In Win32 TCHAR and related macros change size depending on if they are
  using wide characters (unicode utf-16le) or ansi for functions and strings.
@@ -55,9 +55,9 @@ typedef unsigned int nodeid_t;
 /// @todo Should be a public typedef of a type defined by de::LumpIndex.
 typedef int32_t lumpnum_t;
 
-#include <de/str.h>
-#include <de/strutil.h>
-#include <de/fixedpoint.h>
+#include <de/legacy/str.h>
+#include <de/legacy/strutil.h>
+#include <de/legacy/fixedpoint.h>
 #include "api_uri.h"
 
 #endif /* ENGINE_TYPES_H */

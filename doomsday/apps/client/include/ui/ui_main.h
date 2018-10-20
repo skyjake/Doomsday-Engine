@@ -22,7 +22,7 @@
 #ifndef DE_UI_MAIN_H
 #define DE_UI_MAIN_H
 
-#include <de/rect.h>
+#include <de/legacy/rect.h>
 #include "ddevent.h"
 #ifdef __CLIENT__
 #  include "MaterialVariantSpec"

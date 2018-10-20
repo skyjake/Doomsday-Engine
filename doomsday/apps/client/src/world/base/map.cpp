@@ -82,11 +82,11 @@
 #include <de/Hash>
 #include <de/Rectangle>
 
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
+#include <de/legacy/nodepile.h>
+#include <de/legacy/vector1.h>
+#include <de/legacy/timer.h>
 #include <de/charsymbols.h>
-#include <de/nodepile.h>
-#include <de/vector1.h>
-#include <de/timer.h>
 
 #include <array>
 #include <map>

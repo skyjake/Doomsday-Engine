@@ -41,7 +41,7 @@
 #include <doomsday/world/MaterialManifest>
 #include <doomsday/world/Material>
 #include <de/Log>
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 
 using namespace de;
 using namespace world;

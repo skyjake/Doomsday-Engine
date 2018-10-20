@@ -43,7 +43,7 @@ class ProgressWidget;
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC DocumentWidget : public ScrollAreaWidget
+class LIBGUI_PUBLIC DocumentWidget : public ScrollAreaWidget
 {
 public:
     DocumentWidget(String const &name = String());

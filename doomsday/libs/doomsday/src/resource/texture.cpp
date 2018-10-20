@@ -27,7 +27,7 @@
 
 #include <de/Error>
 #include <de/Log>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/Map>
 
 using namespace de;

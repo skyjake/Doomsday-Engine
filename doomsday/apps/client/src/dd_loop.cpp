@@ -20,7 +20,7 @@
 #include "de_base.h"
 #include "dd_loop.h"
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/App>
 #include <de/LogBuffer>
 #ifdef __SERVER__

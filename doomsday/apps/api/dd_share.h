@@ -39,7 +39,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <doomsday/players.h>
 #include <doomsday/player.h>
 #include <doomsday/console/var.h>

@@ -24,7 +24,7 @@
 #include <de/ByteRefArray>
 #include <de/ISerializable>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "../GLPixelFormat"
 
 #include <utility>

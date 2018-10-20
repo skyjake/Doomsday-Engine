@@ -69,7 +69,7 @@ class Image;
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC LabelWidget : public GuiWidget, public IAssetGroup
+class LIBGUI_PUBLIC LabelWidget : public GuiWidget, public IAssetGroup
 {
 public:
     LabelWidget(String const &name = String());

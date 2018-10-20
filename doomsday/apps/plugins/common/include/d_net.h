@@ -24,8 +24,8 @@
 #define LIBCOMMON_NETWORK_DEF_H
 
 #include "doomsday.h"
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 #ifdef __cplusplus
 #  include <de/String>
 #  include <doomsday/uri.h>

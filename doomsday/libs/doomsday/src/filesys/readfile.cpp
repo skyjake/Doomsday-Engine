@@ -41,8 +41,8 @@
 #include "lzss.h"
 
 #include <de/App>
-#include <de/str.h>
-#include <de/memoryzone.h>
+#include <de/legacy/str.h>
+#include <de/legacy/memoryzone.h>
 #include <cstdlib>
 #include <cctype>
 

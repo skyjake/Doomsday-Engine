@@ -18,7 +18,7 @@
 
 #include "doomsday/console/alias.h"
 #include "doomsday/console/knownword.h"
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
 

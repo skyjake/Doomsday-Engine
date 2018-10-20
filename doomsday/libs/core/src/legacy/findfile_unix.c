@@ -24,8 +24,8 @@
 #include <glob.h>
 #include <sys/stat.h>
 
-#include "de/findfile.h"
-#include "de/memory.h"
+#include "de/legacy/findfile.h"
+#include "de/legacy/memory.h"
 
 #define DIR_SEP_CHAR    '/'
 #define DIR_SEP_STR     "/"

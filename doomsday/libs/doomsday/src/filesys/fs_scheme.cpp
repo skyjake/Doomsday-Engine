@@ -23,7 +23,7 @@
 #include <de/Log>
 #include <de/NativePath>
 #include <de/PathTree>
-#include <de/findfile.h>
+#include <de/legacy/findfile.h>
 
 #include "doomsday/filesys/fs_main.h"
 #include "doomsday/filesys/searchpath.h"

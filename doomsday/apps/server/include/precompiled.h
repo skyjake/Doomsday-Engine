@@ -75,7 +75,7 @@
 #include <de/App>
 #include <de/Error>
 #include <de/Log>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/NativePath>
 #include <de/Observers>
 #include <de/PathTree>

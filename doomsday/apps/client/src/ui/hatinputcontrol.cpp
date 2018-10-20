@@ -19,7 +19,7 @@
  */
 
 #include "ui/hatinputcontrol.h"
-#include <de/timer.h> // Timer_RealMilliseconds()
+#include <de/legacy/timer.h> // Timer_RealMilliseconds()
 
 using namespace de;
 

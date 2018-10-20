@@ -1,1 +1,1 @@
-#include "framework/dialogcontentstylist.h"
+#include "gui/dialogcontentstylist.h"

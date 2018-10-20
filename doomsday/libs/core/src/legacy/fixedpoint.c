@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/fixedpoint.h"
+#include "de/legacy/fixedpoint.h"
 #include <stdlib.h> // abs
 #include <string.h> // memcpy
 

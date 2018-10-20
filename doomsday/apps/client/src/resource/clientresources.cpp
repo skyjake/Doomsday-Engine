@@ -21,7 +21,7 @@
 #include "de_platform.h"
 #include "resource/clientresources.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/App>
 #include <de/ArrayValue>
 #include <de/ByteOrder>

@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC VariableToggleWidget : public ToggleWidget
+class LIBGUI_PUBLIC VariableToggleWidget : public ToggleWidget
 {
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors

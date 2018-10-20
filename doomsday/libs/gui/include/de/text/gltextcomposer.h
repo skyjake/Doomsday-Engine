@@ -38,7 +38,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC GLTextComposer : public Asset
+class LIBGUI_PUBLIC GLTextComposer : public Asset
 {
 public:
     GLTextComposer();

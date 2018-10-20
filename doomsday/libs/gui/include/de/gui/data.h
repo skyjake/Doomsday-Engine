@@ -43,7 +43,7 @@ class Item;
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC Data
+class LIBGUI_PUBLIC Data
 {
 public:
     typedef dsize Pos;

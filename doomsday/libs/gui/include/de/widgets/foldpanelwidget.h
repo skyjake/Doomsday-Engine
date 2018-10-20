@@ -41,7 +41,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC FoldPanelWidget : public PanelWidget
+class LIBGUI_PUBLIC FoldPanelWidget : public PanelWidget
 {
 public:
     FoldPanelWidget(String const &name = {});

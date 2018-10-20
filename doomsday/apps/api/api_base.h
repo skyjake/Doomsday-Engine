@@ -21,7 +21,7 @@
 #ifndef DOOMSDAY_API_BASE_H
 #define DOOMSDAY_API_BASE_H
 
-#include <de/str.h>
+#include <de/legacy/str.h>
 #include <doomsday/resource/resourceclass.h>
 #include <doomsday/game.h>
 #include "apis.h"

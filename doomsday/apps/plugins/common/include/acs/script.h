@@ -24,8 +24,8 @@
 
 #include "common.h"
 #include <array>
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 #include <de/String>
 #include "acs/module.h"
 

@@ -29,7 +29,7 @@ namespace de {
  * GuiRootWidget owns an instance of FocusWidget to show where the input focus
  * is currently.
  */
-class LIBAPPFW_PUBLIC FocusWidget : public LabelWidget
+class LIBGUI_PUBLIC FocusWidget : public LabelWidget
 {
 public:
     FocusWidget(de::String const &name = "focus");

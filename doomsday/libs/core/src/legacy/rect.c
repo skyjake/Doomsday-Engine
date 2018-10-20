@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/rect.h"
-#include "de/memory.h"
+#include "de/legacy/rect.h"
+#include "de/legacy/memory.h"
 
 struct rect_s {
     Point2 *origin;

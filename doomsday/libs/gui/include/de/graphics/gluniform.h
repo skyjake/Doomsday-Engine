@@ -24,7 +24,7 @@
 #include <de/Matrix>
 #include <de/Observers>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 
 namespace de {
 

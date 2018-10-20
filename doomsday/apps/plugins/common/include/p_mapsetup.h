@@ -23,7 +23,7 @@
 #ifndef LIBCOMMON_PLAYSIM_MAPSETUP_H
 #define LIBCOMMON_PLAYSIM_MAPSETUP_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 #include <doomsday/uri.h>
 #include "api_uri.h"
 #include "api_map.h"

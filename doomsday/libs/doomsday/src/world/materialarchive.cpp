@@ -25,8 +25,8 @@
 #include "doomsday/uri.h"
 
 #include <de/StringPool>
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 
 /// For identifying the archived format version. Written to disk.
 #define MATERIALARCHIVE_VERSION     4

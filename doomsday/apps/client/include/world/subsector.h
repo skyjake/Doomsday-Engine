@@ -22,7 +22,7 @@
 #define DE_WORLD_SUBSECTOR_H
 
 #include <functional>
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <de/Id>
 #include <de/List>
 #include <de/Observers>

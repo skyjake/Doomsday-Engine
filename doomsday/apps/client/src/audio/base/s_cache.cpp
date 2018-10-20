@@ -26,7 +26,7 @@
 
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/wav.h>
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <cstring>
 
 using namespace de;

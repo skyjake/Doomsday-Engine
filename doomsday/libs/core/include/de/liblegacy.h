@@ -42,10 +42,6 @@
  * @ingroup legacy
  */
 
-#if defined(__cplusplus) && !defined(DE_NO_QT)
-#  define DE_USE_QT
-#endif
-
 #if defined(__x86_64__) || defined(__x86_64) || defined(_LP64)
 #  ifndef __64BIT__
 #    define __64BIT__
@@ -55,37 +51,12 @@
 #include <assert.h>
 #include <stddef.h>
 
-#if !defined (DE_PUBLIC)
-/*
- * The DE_PUBLIC macro is used for declaring exported symbols. It must be
- * applied in all exported classes and functions. DEF files are not used for
- * exporting symbols out of liblegacy.
- */
-#if defined(_WIN32) && defined(_MSC_VER)
-#  ifdef __DE__
-// This is defined when compiling the library.
-#    define DE_PUBLIC   __declspec(dllexport)
-#  else
-#    define DE_PUBLIC   __declspec(dllimport)
-#  endif
-#  define DE_NORETURN   __declspec(noreturn)
-#elif defined (MACOSX)
-#  define DE_PUBLIC     __attribute__((visibility("default")))
-#  define DE_NORETURN   __attribute__((__noreturn__))
-#else
-#  define DE_PUBLIC
-#  define DE_NORETURN   __attribute__((__noreturn__))
-#endif
-
-#endif // !defined (DE_PUBLIC)
+#include <de/libcore.h>
 
 #if defined (DE_STATIC_LINK)
 #  define DE_ENTRYPOINT static
 #else
 #  define DE_ENTRYPOINT DE_EXTERN_C DE_PUBLIC
-#endif
-
-#if !defined(_MSC_VER)
 #endif
 
 #ifdef __cplusplus
@@ -177,7 +148,7 @@
 #define DE_ISSPACE(c)     ((c) == 0 || (c) == ' ' || (c) == '\t' || (c) == '\n' || (c) == '\r')
 
 // Automatically define the basic types for convenience.
-#include <de/types.h>
+#include "legacy/types.h"
 
 /*
  * Main interface.

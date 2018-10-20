@@ -17,12 +17,12 @@
  */
 
 #include "localserverdialog.h"
-#include <de/shell/TextRootWidget>
-#include <de/shell/LabelWidget>
-#include <de/shell/MenuWidget>
-#include <de/shell/ChoiceWidget>
-#include <de/shell/LineEditWidget>
-#include <de/shell/DoomsdayInfo>
+#include <de/comms/TextRootWidget>
+#include <de/comms/LabelWidget>
+#include <de/comms/MenuWidget>
+#include <de/comms/ChoiceWidget>
+#include <de/comms/LineEditWidget>
+#include <de/comms/DoomsdayInfo>
 #include <de/Config>
 
 using namespace de;

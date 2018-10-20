@@ -42,7 +42,7 @@
 #ifndef DE_API_STRING_H
 #define DE_API_STRING_H
 
-#include "liblegacy.h"
+#include "de/liblegacy.h"
 #include "types.h"
 #include "reader.h"
 #include "writer.h"

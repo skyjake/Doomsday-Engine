@@ -24,8 +24,8 @@
 
 #include <doomsday/uri.h>
 #include <doomsday/dualstring.h>
-#include <de/writer.h>
-#include <de/reader.h>
+#include <de/legacy/writer.h>
+#include <de/legacy/reader.h>
 
 #define TOINTERNAL(inst)        reinterpret_cast<res::Uri*>(inst)
 #define TOINTERNAL_CONST(inst)  reinterpret_cast<res::Uri const*>(inst)

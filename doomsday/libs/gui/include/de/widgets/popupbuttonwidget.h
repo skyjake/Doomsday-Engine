@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC PopupButtonWidget : public ButtonWidget
+class LIBGUI_PUBLIC PopupButtonWidget : public ButtonWidget
 {
 public:
     typedef std::function<PopupWidget * (PopupButtonWidget const &)> Constructor;

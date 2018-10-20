@@ -24,8 +24,8 @@
 #include <de/Socket>
 #include <de/Time>
 #include <de/Transmitter>
-#include <de/shell/AbstractLink>
-#include <de/shell/Protocol>
+#include <de/comms/AbstractLink>
+#include <de/comms/Protocol>
 
 namespace de { namespace shell {
 

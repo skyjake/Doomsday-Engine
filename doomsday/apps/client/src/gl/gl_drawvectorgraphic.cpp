@@ -24,7 +24,7 @@
 
 #include <string.h>
 #include <assert.h>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/Log>
 
 #define DEFAULT_SCALE               (1)

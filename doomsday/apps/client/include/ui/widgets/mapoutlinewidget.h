@@ -20,7 +20,7 @@
 #define DE_CLIENT_UI_MAPOUTLINEWIDGET_H
 
 #include <de/GuiWidget>
-#include <de/shell/Protocol>
+#include <de/comms/Protocol>
 
 /**
  * Map outline visualizing information from a shell::MapOutlinePacket.

@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC SequentialLayout : public ISizeRule
+class LIBGUI_PUBLIC SequentialLayout : public ISizeRule
 {
 public:
     SequentialLayout(Rule const &startX,

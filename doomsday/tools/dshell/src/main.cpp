@@ -1,4 +1,4 @@
-/** @file cursesapp.h Application based on curses for input and output.
+/** @file main.cpp Application startup and shutdown.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,25 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESAPP_H
-#define CURSESAPP_H
+#include <de/libcore.h>
+#include <de/Counted>
+#include "shellapp.h"
 
-#include <de/TextApp>
-#include <de/shell/TextRootWidget>
-
-class CursesApp : public de::TextApp
+int main(int argc, char *argv[])
 {
-public:
-    CursesApp(int &argc, char **argv);
-
-    de::shell::TextRootWidget &rootWidget();
-
-    int  exec();
-    void refresh();
-    void quit();
-
-private:
-    DE_PRIVATE(d)
-};
-
-#endif // CURSESAPP_H
+    int result;
+    {
+        ShellApp a(argc, argv);
+        a.initSubsystems();
+        result = a.exec();
+    }
+#ifdef DE_DEBUG
+    DE_ASSERT(de::Counted::totalCount == 0);
+#endif
+    return result;
+}

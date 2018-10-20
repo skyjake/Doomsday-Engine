@@ -21,10 +21,10 @@
 #include "doomsday/busymode.h"
 #include "doomsday/doomsdayapp.h"
 
-#include <de/types.h>
-#include <de/concurrency.h>
-#include <de/memory.h>
-#include <de/timer.h>
+#include <de/legacy/types.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/timer.h>
 #include <de/Lockable>
 #include <de/Log>
 

@@ -22,7 +22,7 @@
 #include <de/InfoBank>
 #include <de/File>
 #include "../Font"
-#include "../gui/libgui.h"
+#include "../libgui.h"
 
 namespace de {
 

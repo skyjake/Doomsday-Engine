@@ -34,7 +34,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC GridLayout : public ISizeRule
+class LIBGUI_PUBLIC GridLayout : public ISizeRule
 {
 public:
     enum Mode {

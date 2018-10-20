@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_UNTRAPPER_H
 #define LIBAPPFW_UNTRAPPER_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/GLWindow>
 
 namespace de {
@@ -31,7 +31,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC Untrapper
+class LIBGUI_PUBLIC Untrapper
 {
 public:
     /**

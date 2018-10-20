@@ -28,7 +28,7 @@
 #include "../Style"
 #include "../ui/defs.h"
 #include "../ui/Margins"
-#include "../framework/guiwidgetprivate.h"
+#include "../gui/guiwidgetprivate.h"
 
 namespace de {
 
@@ -84,7 +84,7 @@ class PopupWidget;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC GuiWidget : public Widget
+class LIBGUI_PUBLIC GuiWidget : public Widget
 {
 public:
     /**

@@ -36,7 +36,7 @@
 #include "clientapp.h"
 
 #include <doomsday/doomsdayapp.h>
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/Config>
 #include <de/EventLoop>
 #include <de/GLInfo>

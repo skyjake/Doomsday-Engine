@@ -19,7 +19,7 @@
 #ifndef OPENCONNECTIONDIALOG_H
 #define OPENCONNECTIONDIALOG_H
 
-#include <de/shell/InputDialogWidget>
+#include <de/comms/InputDialogWidget>
 
 /**
  * Dialog for specifying address for opening a connection.

@@ -19,7 +19,7 @@
 #ifndef LIBGUI_COLORBANK_H
 #define LIBGUI_COLORBANK_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include <de/InfoBank>
 #include <de/File>
 #include <de/Vector>

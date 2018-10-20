@@ -19,7 +19,7 @@
 
 #include "world/impulseaccumulator.h"
 
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/LogBuffer>
 #include <doomsday/console/var.h>
 #ifdef __CLIENT__

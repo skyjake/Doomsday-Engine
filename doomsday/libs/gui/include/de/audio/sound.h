@@ -23,7 +23,7 @@
 #include <de/Observers>
 #include <de/Vector>
 
-#include "de/gui/libgui.h"
+#include "de/libgui.h"
 
 namespace de {
 

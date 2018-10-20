@@ -1,1 +1,1 @@
-#include "framework/sequentiallayout.h"
+#include "gui/sequentiallayout.h"

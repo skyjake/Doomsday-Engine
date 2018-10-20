@@ -47,8 +47,8 @@
 
 #include <doomsday/console/var.h>
 #include <doomsday/filesys/fs_main.h>
-#include <de/concurrency.h>
-#include <de/vector1.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/vector1.h>
 #include <de/Folder>
 #include <de/GLInfo>
 #include <de/ImageFile>

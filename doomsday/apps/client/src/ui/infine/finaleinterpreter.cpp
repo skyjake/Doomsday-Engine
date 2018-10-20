@@ -22,8 +22,8 @@
 #include "ui/infine/finaleinterpreter.h"
 
 #include <de/List>
-#include <de/memory.h>
-#include <de/timer.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/timer.h>
 #include <de/LogBuffer>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>

@@ -30,7 +30,7 @@
 #include <doomsday/world/map.h>
 #include <doomsday/world/ithinkermapping.h>
 #include <doomsday/uri.h>
-#include <de/shell/Protocol>
+#include <de/comms/Protocol>
 #include <de/BinaryTree>
 #include <de/Id>
 #include <de/Observers>

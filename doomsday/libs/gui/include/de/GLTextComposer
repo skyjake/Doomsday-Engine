@@ -1,1 +1,1 @@
-#include "framework/gltextcomposer.h"
+#include "text/gltextcomposer.h"

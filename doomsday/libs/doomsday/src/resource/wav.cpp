@@ -26,8 +26,8 @@
 
 #include <de/LogBuffer>
 #include <de/NativePath>
-#include <de/memory.h>
-#include <de/memoryzone.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
 #include "dd_share.h"
 
 #ifdef __GNUC__

@@ -25,7 +25,7 @@
 #ifndef DE_ANIMATOR_H
 #define DE_ANIMATOR_H
 
-#include "liblegacy.h"
+#include "../liblegacy.h"
 
 /// @addtogroup legacyMath
 /// @{

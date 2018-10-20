@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_DIALOGCONTENTSTYLIST_H
 #define LIBAPPFW_DIALOGCONTENTSTYLIST_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include "../ui/Stylist"
 
 #include <de/GuiWidget>
@@ -33,7 +33,7 @@ class DialogWidget;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC DialogContentStylist
+class LIBGUI_PUBLIC DialogContentStylist
     : public ui::Stylist
     , DE_OBSERVES(Widget, ChildAddition)
 {

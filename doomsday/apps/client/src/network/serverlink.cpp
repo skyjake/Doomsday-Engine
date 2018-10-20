@@ -48,8 +48,8 @@
 #include <de/Socket>
 #include <de/Timer>
 #include <de/data/json.h>
-#include <de/memory.h>
-#include <de/shell/ServerFinder>
+#include <de/legacy/memory.h>
+#include <de/comms/ServerFinder>
 
 using namespace de;
 

@@ -21,7 +21,7 @@
 
 #include "../libdoomsday.h"
 #include "var.h"
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 #ifdef __cplusplus
 #  include <de/String>

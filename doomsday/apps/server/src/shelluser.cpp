@@ -19,8 +19,8 @@
 
 #include "shelluser.h"
 
-#include <de/shell/Protocol>
-#include <de/shell/Lexicon>
+#include <de/comms/Protocol>
+#include <de/comms/Lexicon>
 #include <de/Log>
 #include <de/LogBuffer>
 #include <de/LogSink>

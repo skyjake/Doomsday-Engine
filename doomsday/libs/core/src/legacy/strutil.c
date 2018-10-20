@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/strutil.h"
+#include "de/legacy/strutil.h"
 
 #include <stdio.h>
 #include <stdlib.h>

@@ -25,7 +25,7 @@
 #include "doomsday/filesys/virtualmappings.h"
 #include "doomsday/doomsdayapp.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/c_wrapper.h>
 
 #ifdef WIN32

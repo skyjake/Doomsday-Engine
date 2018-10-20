@@ -19,7 +19,7 @@
 #ifndef QTTEXTCANVAS_H
 #define QTTEXTCANVAS_H
 
-#include <de/shell/TextCanvas>
+#include <de/comms/TextCanvas>
 #include <QImage>
 #include <QFont>
 #include <QColor>

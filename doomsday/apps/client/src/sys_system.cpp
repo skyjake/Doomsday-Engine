@@ -33,8 +33,8 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 
-#include <de/concurrency.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
 #include <de/App>
 #include <de/PackageLoader>
 #include <de/Loop>

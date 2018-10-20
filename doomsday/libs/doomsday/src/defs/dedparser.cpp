@@ -45,8 +45,8 @@
 #include <cctype>
 
 #include <de/c_wrapper.h>
-#include <de/memory.h>
-#include <de/vector1.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/vector1.h>
 #include <de/App>
 #include <de/ArrayValue>
 #include <de/NativePath>

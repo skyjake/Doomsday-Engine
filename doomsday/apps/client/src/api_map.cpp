@@ -38,7 +38,7 @@
 #include "Interceptor"
 #include "Surface"
 
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 #include <doomsday/filesys/fs_main.h>
 #include <doomsday/resource/mapmanifests.h>
 #include <doomsday/world/MaterialManifest>

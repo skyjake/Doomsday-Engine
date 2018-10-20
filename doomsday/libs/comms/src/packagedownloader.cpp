@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/PackageDownloader"
+#include "de/comms/PackageDownloader"
 
 #include <de/App>
 #include <de/FileSystem>

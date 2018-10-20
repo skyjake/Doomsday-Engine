@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_WINDOWTRANSFORM_H
 #define LIBAPPFW_WINDOWTRANSFORM_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/Rectangle>
 #include <de/Vector>
 
@@ -32,7 +32,7 @@ class BaseWindow;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC WindowTransform
+class LIBGUI_PUBLIC WindowTransform
 {
 public:
     WindowTransform(BaseWindow &window);

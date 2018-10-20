@@ -19,7 +19,7 @@
 
 #include "ui/commandbinding.h"
 
-#include <de/str.hh>
+#include <de/legacy/str.hh>
 #include <de/Block>
 #include <de/Log>
 #include <de/RecordValue>
@@ -412,7 +412,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
             return nullptr; // Shadowed by a more important active class.
 
         // Is the position as required?
-        if (event.angle.pos != getf("pos"))
+        if (!fequal(event.angle.pos, getf("pos")))
             return nullptr;
         break;
 

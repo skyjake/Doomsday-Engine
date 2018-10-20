@@ -25,8 +25,8 @@
 
 #include "world/bsp/linesegment.h"
 
-#include <de/vector1.h> /// @todo remove me
-#include <de/aabox.h> // M_BoxOnLineSide2
+#include <de/legacy/vector1.h> /// @todo remove me
+#include <de/legacy/aabox.h> // M_BoxOnLineSide2
 #include <de/Observers>
 #include <de/Vector>
 #include "world/bsp/convexsubspaceproxy.h"

@@ -21,8 +21,8 @@
 
 #include <QWidget>
 #include <de/String>
-#include <de/shell/Link>
-#include <de/shell/Protocol>
+#include <de/comms/Link>
+#include <de/comms/Protocol>
 
 /**
  * Widget for showing server's status.

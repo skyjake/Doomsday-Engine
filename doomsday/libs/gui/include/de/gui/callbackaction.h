@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_CALLBACKACTION_H
 #define LIBAPPFW_CALLBACKACTION_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/Action>
 #include <functional>
 
@@ -28,7 +28,7 @@ namespace de {
 /**
  * Action that calls a callback function when triggered.
  */
-class LIBAPPFW_PUBLIC CallbackAction : public Action
+class LIBGUI_PUBLIC CallbackAction : public Action
 {
 public:
     typedef std::function<void ()> Callback;

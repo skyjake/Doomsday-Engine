@@ -1,2 +1,2 @@
-#include "gui/displaymode.h"
-#include "gui/displaymode_native.h"
+#include "graphics/displaymode.h"
+#include "graphics/displaymode_native.h"

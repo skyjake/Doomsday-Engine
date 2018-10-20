@@ -23,7 +23,7 @@
 
 #include "../libdoomsday.h"
 #include "../defs/sprite.h"
-#include <de/types.h>
+#include <de/legacy/types.h>
 #include <de/Record>
 #include <de/Hash>
 

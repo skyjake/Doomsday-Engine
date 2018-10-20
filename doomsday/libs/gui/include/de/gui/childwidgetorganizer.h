@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_CHILDWIDGETORGANIZER_H
 #define LIBAPPFW_CHILDWIDGETORGANIZER_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include "../ui/Data"
 #include "../GuiWidget"
 
@@ -37,7 +37,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC ChildWidgetOrganizer
+class LIBGUI_PUBLIC ChildWidgetOrganizer
 {
 public:
     /**

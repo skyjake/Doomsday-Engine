@@ -27,7 +27,7 @@
 
 #include <de/Rectangle>
 #include <de/Vector>
-#include <de/rect.h>
+#include <de/legacy/rect.h>
 
 #ifdef __cplusplus
 extern "C" {

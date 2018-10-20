@@ -34,7 +34,7 @@
 
 #include "client/clientsubsector.h"
 
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 
 using namespace de;
 

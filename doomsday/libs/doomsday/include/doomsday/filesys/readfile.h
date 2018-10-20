@@ -20,7 +20,7 @@
 #ifndef LIBDOOMSDAY_FILESYS_READFILE_H
 #define LIBDOOMSDAY_FILESYS_READFILE_H
 
-#include <de/str.h>
+#include <de/legacy/str.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -24,7 +24,7 @@
 #include "doomsday/defs/ded.h"
 #include "doomsday/defs/sprite.h"
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 namespace res {
 

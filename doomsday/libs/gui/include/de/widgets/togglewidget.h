@@ -29,7 +29,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC ToggleWidget : public ButtonWidget
+class LIBGUI_PUBLIC ToggleWidget : public ButtonWidget
 {
 public:
     enum Flag {

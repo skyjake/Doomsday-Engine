@@ -1,1 +1,1 @@
-#include "../framework/variabletoggleitem.h"
+#include "../gui/variabletoggleitem.h"

@@ -22,7 +22,7 @@
 #include <de/Event>
 #include <de/Vector>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 
 namespace de {
 

@@ -23,7 +23,7 @@
 #define LIBCOMMON_D_NETCL_H
 
 #include "common.h"
-#include <de/reader.h>
+#include <de/legacy/reader.h>
 
 #ifdef __cplusplus
 extern "C" {

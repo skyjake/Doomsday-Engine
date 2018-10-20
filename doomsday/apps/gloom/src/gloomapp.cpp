@@ -222,7 +222,7 @@ void GloomApp::initialize()
 
     addInitPackage("net.dengine.gloom");
     addInitPackage("net.dengine.gloom.test");
-    initSubsystems(App::DisablePlugins);
+    initSubsystems();
 
     // Create subsystems.
     {

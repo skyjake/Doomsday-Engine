@@ -38,7 +38,7 @@
 #include <doomsday/filesys/fs_main.h>
 #include <de/CommandLine>
 #include <de/Config>
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <cstdio>
 #include <cstdlib>
 #include <ctime>

@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <doomsday/res/Textures>
 #include "ui/infine/finaleanimwidget.h"
 

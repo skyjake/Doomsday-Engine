@@ -21,7 +21,7 @@
 #ifndef CLIENT_RENDER_ANGLECLIPPER
 #define CLIENT_RENDER_ANGLECLIPPER
 
-#include <de/binangle.h>
+#include <de/legacy/binangle.h>
 #include <de/Vector>
 #include "Face"
 

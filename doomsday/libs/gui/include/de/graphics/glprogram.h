@@ -25,7 +25,7 @@
 #include <de/Asset>
 #include <de/Observers>
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "glbuffer.h"
 #include "opengl.h"
 

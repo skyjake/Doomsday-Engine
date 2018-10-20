@@ -20,7 +20,7 @@
 #include "dd_share.h" // DDMAXPLAYERS
 #include "ui/impulsebinding.h"
 
-#include <de/str.hh>
+#include <de/legacy/str.hh>
 #include <de/Log>
 #include <de/RecordValue>
 #include "ui/b_util.h"

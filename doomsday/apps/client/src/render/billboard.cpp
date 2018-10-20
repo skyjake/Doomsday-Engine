@@ -31,8 +31,8 @@
 #include "render/vissprite.h"
 #include "world/p_players.h"  // viewPlayer, ddPlayers
 
-#include <de/vector1.h>
-#include <de/concurrency.h>
+#include <de/legacy/vector1.h>
+#include <de/legacy/concurrency.h>
 #include <de/GLInfo>
 #include <doomsday/console/var.h>
 #include <doomsday/world/Materials>

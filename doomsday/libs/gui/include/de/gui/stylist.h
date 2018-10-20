@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_UI_STYLIST_H
 #define LIBAPPFW_UI_STYLIST_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 
 namespace de {
 
@@ -32,7 +32,7 @@ namespace ui {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC Stylist
+class LIBGUI_PUBLIC Stylist
 {
 public:
     virtual ~Stylist() {}

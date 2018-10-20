@@ -38,7 +38,7 @@
 #include "dd_main.h"  // App_World()
 
 #include <doomsday/console/cmd.h>
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <de/List>
 #include <de/Map>
 #include <array>

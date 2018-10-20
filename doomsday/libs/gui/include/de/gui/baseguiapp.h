@@ -19,7 +19,6 @@
 #ifndef LIBAPPFW_BASEGUIAPP_H
 #define LIBAPPFW_BASEGUIAPP_H
 
-#include "../libappfw.h"
 #include "../PersistentState"
 
 #include <de/GuiApp>
@@ -43,7 +42,7 @@ class VRConfig;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC BaseGuiApp : public GuiApp
+class LIBGUI_PUBLIC BaseGuiApp : public GuiApp
 {
 public:
     BaseGuiApp(const StringList &args);

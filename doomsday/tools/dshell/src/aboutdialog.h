@@ -1,4 +1,4 @@
-/** @file cursestextcanvas.h Text-based drawing surface for curses.
+/** @file aboutdialog.h  Dialog for information about the program.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,23 +16,20 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef CURSESTEXTCANVAS_H
-#define CURSESTEXTCANVAS_H
+#ifndef ABOUTDIALOG_H
+#define ABOUTDIALOG_H
 
-#include <curses.h>
-#include <de/shell/TextCanvas>
+#include <de/comms/DialogWidget>
 
-class CursesTextCanvas : public de::shell::TextCanvas
+/**
+ * Dialog for information about the program.
+ */
+class AboutDialog : public de::shell::DialogWidget
 {
 public:
-    CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow = Coord(0, 0));
+    AboutDialog();
 
-    void setCursorPosition(de::Vec2i const &pos);
-
-    void show();
-
-private:
-    DE_PRIVATE(d)
+    bool handleEvent(de::Event const &event);
 };
 
-#endif // CURSESTEXTCANVAS_H
+#endif // ABOUTDIALOG_H

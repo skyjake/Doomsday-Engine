@@ -27,7 +27,7 @@
 #include "world/clientserverworld.h"
 
 #include <de/GLInfo>
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <doomsday/console/var.h>
 #include <cmath>
 

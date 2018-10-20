@@ -21,7 +21,7 @@
 #include "de_base.h"
 #include "gl/sys_opengl.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <de/Set>

@@ -21,8 +21,8 @@
 #include "misc/r_util.h"
 
 #include <cmath>
-#include <de/binangle.h>
-#include <de/vector1.h>
+#include <de/legacy/binangle.h>
+#include <de/legacy/vector1.h>
 
 #ifdef __CLIENT__
 #  include "world/p_players.h"

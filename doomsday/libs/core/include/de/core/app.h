@@ -72,7 +72,7 @@ class DE_PUBLIC App : DE_OBSERVES(Clock, TimeChange)
 public:
     enum SubsystemInitFlag {
         DefaultSubsystems     = 0x0,
-        DisablePlugins        = 0x1,
+        //DisablePlugins        = 0x1,
         DisablePersistentData = 0x2
     };
     using SubsystemInitFlags = Flags;
@@ -156,12 +156,12 @@ public:
     void setUnixHomeFolderName(String const &name);
 
     String unixHomeFolderName() const;
-    
+
     /**
      * Returns the home folder name without the possible dot in the beginning.
      */
     String unixEtcFolderName() const;
-    
+
     /**
      * Returns the reverse domain name of the application. This is based on the
      * ORG_DOMAIN metadata and the Unix home folder name.
@@ -242,12 +242,14 @@ public:
      */
     NativePath nativeBasePath();
 
+#if 0
 #if !defined (DE_STATIC_LINK)
     /**
      * Returns the native path of where to load binaries (plugins). This
      * is where "/bin" points to.
      */
     NativePath nativePluginBinaryPath();
+#endif
 #endif
 
     /**

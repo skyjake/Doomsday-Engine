@@ -19,7 +19,7 @@
 #ifndef LIBSHELL_LOGTEDGET_H
 #define LIBSHELL_LOGTEDGET_H
 
-#include <de/shell/Widget>
+#include <de/comms/Widget>
 #include <de/LogSink>
 
 namespace de { namespace shell {

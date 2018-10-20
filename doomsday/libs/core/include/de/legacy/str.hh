@@ -22,7 +22,7 @@
 #ifndef LIBLEGACY_DDSTRING_CPP_WRAPPER_HH
 #define LIBLEGACY_DDSTRING_CPP_WRAPPER_HH
 
-#include "liblegacy.h"
+#include "../liblegacy.h"
 #include "str.h"
 
 #include <de/String>

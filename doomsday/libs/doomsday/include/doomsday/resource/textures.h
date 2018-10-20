@@ -24,7 +24,7 @@
 #include "texture.h"
 #include "composite.h"
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 #include <de/Map>
 #include <de/Set>

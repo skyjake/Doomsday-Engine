@@ -23,7 +23,7 @@
 #ifndef DOOMSDAY_GL_H
 #define DOOMSDAY_GL_H
 
-#include <de/rect.h>
+#include <de/legacy/rect.h>
 #include "api_map.h"
 #include "dd_types.h"
 

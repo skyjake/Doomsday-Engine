@@ -23,7 +23,7 @@
 #include <vector>
 #include <de/libcore.h>
 #include <de/Vector>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include "../uri.h"
 
 #include "dd_share.h"

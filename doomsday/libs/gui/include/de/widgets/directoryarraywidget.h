@@ -28,7 +28,7 @@ namespace de {
  *
  * @group guiWidgets
  */
-class LIBAPPFW_PUBLIC DirectoryArrayWidget : public VariableArrayWidget
+class LIBGUI_PUBLIC DirectoryArrayWidget : public VariableArrayWidget
 {
 public:
     DirectoryArrayWidget(Variable &variable, String const &name = String());

@@ -24,7 +24,7 @@
 
 #include <functional>
 #include <de/List>
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <de/Error>
 #include <de/Id>
 #include <de/Observers>

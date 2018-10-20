@@ -19,9 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/reader.h"
-#include "de/memory.h"
-#include <string.h>
+#include "de/legacy/reader.h"
+#include "de/legacy/memory.h"
 #include <de/c_wrapper.h>
 
 #ifdef DE_WRITER_TYPECHECK
@@ -30,6 +29,8 @@
 #else
 #  define Reader_TypeCheck(r, code)
 #endif
+
+#include <string.h>
 
 #define Reader_16(reader)        ( (uint16_t) (Reader_8(reader,  0) | Reader_8(reader,  8)) )
 #define Reader_32(reader)        ( Reader_8(reader,  0) | Reader_8(reader,  8) | \

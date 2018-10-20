@@ -24,7 +24,7 @@
 #define LIBDOOMSDAY_RESOURCE_WAV_H
 
 #include "../libdoomsday.h"
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 /**
  * Verifies that the data in the buffer @a data looks like WAV.

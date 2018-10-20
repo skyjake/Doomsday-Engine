@@ -19,15 +19,14 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/stringarray.h"
-#include "de/str.hh"
+#include "de/legacy/stringarray.h"
+#include "de/legacy/str.hh"
 #include <assert.h>
 #include <vector>
 #include <string.h>
 
 struct stringarray_s {
-    typedef std::vector<de::Str *> Strings;
-    Strings array;
+    std::vector<de::Str *> array;
 
     inline void assertValidIndex(int DE_DEBUG_ONLY(i)) const {
         assert(i >= 0);
@@ -75,7 +74,7 @@ void StringArray_Delete(StringArray *ar)
 void StringArray_Clear(StringArray *ar)
 {
     assert(ar);
-    for (StringArray::Strings::iterator i = ar->array.begin(); i != ar->array.end(); ++i)
+    for (auto i = ar->array.begin(); i != ar->array.end(); ++i)
     {
         delete *i;
     }
@@ -99,7 +98,7 @@ void StringArray_AppendArray(StringArray *ar, StringArray const *other)
     assert(ar);
     assert(other);
     assert(ar != other);
-    for (StringArray::Strings::const_iterator i = other->array.begin(); i != other->array.end(); ++i)
+    for (auto i = other->array.begin(); i != other->array.end(); ++i)
     {
         StringArray_Append(ar, Str_Text(**i));
     }
@@ -172,7 +171,7 @@ void StringArray_Write(const StringArray *ar, Writer1 *writer)
     assert(ar);
     Writer_WriteUInt32(writer, ar->array.size());
     // Write each of the strings.
-    for (StringArray::Strings::const_iterator i = ar->array.begin(); i != ar->array.end(); ++i)
+    for (auto i = ar->array.begin(); i != ar->array.end(); ++i)
     {
         Str_Write(**i, writer);
     }

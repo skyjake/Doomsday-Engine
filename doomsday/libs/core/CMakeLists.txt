@@ -21,7 +21,7 @@ endif ()
 # Definitions.
 add_definitions (
     -D__LIBCORE__=1
-    -D__DE__=1 
+    -D__DE__=1
     -D__DOOMSDAY__=1
     -DLIBCORE_MAJOR_VERSION=${DE_VERSION_MAJOR}
     -DLIBCORE_MINOR_VERSION=${DE_VERSION_MINOR}
@@ -54,6 +54,7 @@ deng_merge_sources (core           src/core/*.cpp)
 deng_merge_sources (data           src/data/*.cpp)
 deng_merge_sources (filesys        src/filesys/*.cpp)
 deng_merge_sources (filesys_remote src/filesys/remote/*.cpp)
+deng_merge_sources (legacy         src/legacy/*.c*)
 deng_merge_sources (net            src/net/*.cpp)
 deng_merge_sources (scriptsys      src/scriptsys/*.cpp)
 deng_merge_sources (widgets        src/widgets/*.cpp)

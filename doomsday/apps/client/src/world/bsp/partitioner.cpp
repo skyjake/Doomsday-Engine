@@ -38,7 +38,7 @@
 
 #include <doomsday/BspNode>
 #include <de/Hash>
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <de/LogBuffer>
 #include <algorithm>
 

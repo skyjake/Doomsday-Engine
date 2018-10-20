@@ -39,10 +39,10 @@
 #include <doomsday/console/var.h>
 #include <de/String>
 #include <de/Time>
-#include <de/fixedpoint.h>
-#include <de/memoryzone.h>
-#include <de/timer.h>
-#include <de/vector1.h>
+#include <de/legacy/fixedpoint.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/timer.h>
+#include <de/legacy/vector1.h>
 #include <cmath>
 
 using namespace de;

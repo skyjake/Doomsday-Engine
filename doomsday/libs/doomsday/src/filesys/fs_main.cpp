@@ -37,8 +37,8 @@
 #include <de/Log>
 #include <de/NativePath>
 #include <de/LogBuffer>
-#include <de/memory.h>
-#include <de/findfile.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/findfile.h>
 #include <de/FileSystem>
 
 extern uint F_GetLastModified(char const *path);

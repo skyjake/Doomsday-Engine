@@ -22,14 +22,14 @@
 #include "localserverdialog.h"
 #include "aboutdialog.h"
 
-#include <de/shell/LabelWidget>
-#include <de/shell/MenuWidget>
-#include <de/shell/CommandLineWidget>
-#include <de/shell/LogWidget>
-#include <de/shell/Action>
-#include <de/shell/Link>
-#include <de/shell/LocalServer>
-#include <de/shell/ServerFinder>
+#include <de/comms/LabelWidget>
+#include <de/comms/MenuWidget>
+#include <de/comms/CommandLineWidget>
+#include <de/comms/LogWidget>
+#include <de/comms/Action>
+#include <de/comms/Link>
+#include <de/comms/LocalServer>
+#include <de/comms/ServerFinder>
 
 #include <de/CommandLine>
 #include <de/Config>

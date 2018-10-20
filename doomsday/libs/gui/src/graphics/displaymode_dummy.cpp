@@ -18,7 +18,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/gui/displaymode_native.h"
+#include "de/graphics/displaymode_native.h"
 #include <de/libcore.h>
 #include <QGuiApplication>
 #include <QScreen>

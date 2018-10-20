@@ -31,7 +31,7 @@ namespace ui {
  *
  * @ingroup uidata
  */
-class LIBAPPFW_PUBLIC SubmenuItem : public ImageItem
+class LIBGUI_PUBLIC SubmenuItem : public ImageItem
 {
 public:
     SubmenuItem(String const &label, ui::Direction openingDirection)

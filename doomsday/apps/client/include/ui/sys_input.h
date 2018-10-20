@@ -30,7 +30,7 @@
 #  error "Input requires __CLIENT__"
 #endif
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 #include "joystick.h"
 
 #ifdef __cplusplus

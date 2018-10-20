@@ -18,7 +18,7 @@
  * 02110-1301 USA</small>
  */
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
 #include <de/GLInfo>

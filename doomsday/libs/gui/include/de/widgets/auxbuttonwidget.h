@@ -28,7 +28,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC AuxButtonWidget : public ButtonWidget
+class LIBGUI_PUBLIC AuxButtonWidget : public ButtonWidget
 {
 public:
     AuxButtonWidget(String const &name = String());

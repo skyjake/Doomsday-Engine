@@ -19,7 +19,7 @@
 #ifndef LIBGAMEFW_H
 #define LIBGAMEFW_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 /*
  * The LIBGAMEFW_PUBLIC macro is used for declaring exported symbols. It must be

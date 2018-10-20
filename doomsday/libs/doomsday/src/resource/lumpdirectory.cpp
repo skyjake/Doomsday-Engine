@@ -18,9 +18,9 @@
 
 #include "doomsday/resource/lumpdirectory.h"
 
+#include <de/legacy/mathutil.h>
 #include <de/MetadataBank>
 #include <de/Reader>
-#include <de/mathutil.h>
 #include <de/RegExp>
 
 using namespace de;

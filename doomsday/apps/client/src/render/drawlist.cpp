@@ -21,8 +21,8 @@
 #include "de_base.h"
 #include "render/drawlist.h"
 
-#include <de/concurrency.h>
-#include <de/memoryzone.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memoryzone.h>
 #include <de/GLInfo>
 #include "clientapp.h"
 #include "gl/gl_main.h"

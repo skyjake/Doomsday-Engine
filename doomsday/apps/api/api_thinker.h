@@ -23,8 +23,8 @@
 #define DE_THINKER_H
 
 #include "api_base.h"
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 #include <doomsday/world/thinker.h>
 
 #ifdef __DOOMSDAY__

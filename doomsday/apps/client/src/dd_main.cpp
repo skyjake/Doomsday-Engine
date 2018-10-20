@@ -37,11 +37,11 @@
 #endif
 
 #include <de/charsymbols.h>
-#include <de/concurrency.h>
-#include <de/findfile.h>
-#include <de/memoryzone.h>
-#include <de/memory.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/findfile.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/timer.h>
 #include <de/ArrayValue>
 #include <de/CommandLine>
 #include <de/Garbage>
@@ -54,7 +54,7 @@
 #include <de/EscapeParser>
 #include <de/NativePath>
 #ifdef __CLIENT__
-#  include <de/texgamma.h>
+#  include <de/legacy/texgamma.h>
 #  include <de/DisplayMode>
 #  include <de/GLWindow>
 #endif

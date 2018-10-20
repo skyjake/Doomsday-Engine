@@ -1,7 +1,7 @@
-# Doomsday Engine -- libgamefw: Game base framework and common routines
+# Doomsday Engine -- GameKit: base framework and common routines
 
 cmake_minimum_required (VERSION 3.1)
-project (DE_LIBGAMEFW)
+project (DE_LIBGAMEKIT)
 include (../../cmake/Config.cmake)
 
 # Definitions.
@@ -15,10 +15,10 @@ include_directories (${DE_API_DIR})
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/gamefw/*)
 
-deng_merge_sources (libgamefw src/*.cpp)
+deng_merge_sources (libgamekit src/*.cpp)
 
-deng_add_library (libgamefw ${SOURCES} ${HEADERS})
-deng_link_libraries (libgamefw PUBLIC DengCore DengLegacy)
+deng_add_library (libgamekit ${SOURCES} ${HEADERS})
+deng_link_libraries (libgamekit PUBLIC DengCore)
 
 if (DE_ENABLE_SDK)
     install (DIRECTORY include/gamefw
@@ -26,4 +26,4 @@ if (DE_ENABLE_SDK)
         COMPONENT sdk
     )
 endif ()
-deng_deploy_library (libgamefw DengGamefw)
+deng_deploy_library (libgamekit DengGameKit)

@@ -21,7 +21,7 @@
 #include "de_platform.h"
 #include "render/lumobj.h"
 
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <doomsday/console/var.h>
 
 #include "render/rend_halo.h"

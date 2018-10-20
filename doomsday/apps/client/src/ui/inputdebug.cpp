@@ -22,10 +22,10 @@
 
 #ifdef DE_DEBUG
 
-#include <de/concurrency.h>
-#include <de/ddstring.h>
-#include <de/point.h>
-#include <de/timer.h> // SECONDSPERTIC
+#include <de/legacy/concurrency.h>
+#include <de/legacy/ddstring.h>
+#include <de/legacy/point.h>
+#include <de/legacy/timer.h> // SECONDSPERTIC
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/KeyEvent>
@@ -362,7 +362,6 @@ static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t
 
         default:
             App_Error("drawControlGroup: Unknown inputdev_controltype_t: %i.", (int)ctrl->type);
-            exit(1); // Unreachable.
         }
 
         if (ctrlGeom.size.width > 0 && ctrlGeom.size.height > 0)

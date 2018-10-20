@@ -1,4 +1,4 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file cursestextcanvas.h Text-based drawing surface for curses.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,20 +16,23 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include <de/libcore.h>
-#include <de/Counted>
-#include "shellapp.h"
+#ifndef CURSESTEXTCANVAS_H
+#define CURSESTEXTCANVAS_H
 
-int main(int argc, char *argv[])
+#include <curses.h>
+#include <de/comms/TextCanvas>
+
+class CursesTextCanvas : public de::shell::TextCanvas
 {
-    int result;
-    {
-        ShellApp a(argc, argv);
-        a.initSubsystems(ShellApp::DisablePlugins);
-        result = a.exec();
-    }
-#ifdef DE_DEBUG
-    DE_ASSERT(de::Counted::totalCount == 0);
-#endif
-    return result;
-}
+public:
+    CursesTextCanvas(Size const &size, WINDOW *window, Coord const &originInWindow = Coord(0, 0));
+
+    void setCursorPosition(de::Vec2i const &pos);
+
+    void show();
+
+private:
+    DE_PRIVATE(d)
+};
+
+#endif // CURSESTEXTCANVAS_H

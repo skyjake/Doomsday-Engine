@@ -23,9 +23,9 @@
 #include "gl/gl_texmanager.h"
 
 #include <cstring>
-#include <de/concurrency.h>
-#include <de/memory.h>
-#include <de/memoryzone.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
 #include <de/GLInfo>
 #include <doomsday/res/Textures>
 #include <doomsday/filesys/fs_main.h>

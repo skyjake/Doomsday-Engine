@@ -33,7 +33,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "de/smoother.h"
+#include "de/legacy/smoother.h"
 #include <de/Log>
 
 /**
@@ -121,7 +121,7 @@ void Smoother_AddPos(Smoother *sm, float time, coord_t x, coord_t y, coord_t z, 
 
     // Is it the same point?
     last = &sm->points[SM_NUM_POINTS - 1];
-    if (last->time == time)
+    if (FEQUAL(last->time, time))
     {
         if (last->xyz[VX] == x && last->xyz[VY] == y && last->xyz[VZ] == z)
         {

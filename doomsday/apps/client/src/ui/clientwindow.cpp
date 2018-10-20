@@ -48,7 +48,7 @@
 #include <de/NumberValue>
 //#include <de/SignalAction>
 #include <de/VRWindowTransform>
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <doomsday/console/exec.h>
 #include "api_console.h"
 

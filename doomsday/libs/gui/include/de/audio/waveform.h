@@ -19,7 +19,7 @@
 #ifndef LIBGUI_WAVEFORM_H
 #define LIBGUI_WAVEFORM_H
 
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include <de/Time>
 #include <de/File>
 

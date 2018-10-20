@@ -19,13 +19,13 @@
 #ifndef LIBAPPFW_FONTLINEWRAPPING_H
 #define LIBAPPFW_FONTLINEWRAPPING_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 
 #include <de/String>
 #include <de/Font>
 #include <de/Image>
 #include <de/Lockable>
-#include <de/shell/ILineWrapping>
+#include <de/comms/ILineWrapping>
 
 namespace de {
 
@@ -43,7 +43,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC FontLineWrapping : public Lockable, public shell::ILineWrapping
+class LIBGUI_PUBLIC FontLineWrapping : public Lockable, public shell::ILineWrapping
 {
 public:
     FontLineWrapping();

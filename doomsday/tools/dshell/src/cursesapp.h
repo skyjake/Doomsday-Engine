@@ -1,4 +1,4 @@
-/** @file statuswidget.h  Widget for status information.
+/** @file cursesapp.h Application based on curses for input and output.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,30 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef STATUSWIDGET_H
-#define STATUSWIDGET_H
+#ifndef CURSESAPP_H
+#define CURSESAPP_H
 
-#include <de/shell/Widget>
-#include <de/shell/Link>
+#include <de/TextApp>
+#include <de/comms/TextRootWidget>
 
-class StatusWidget : public de::shell::Widget
+class CursesApp : public de::TextApp
 {
 public:
-    StatusWidget(de::String const &name = de::String());
+    CursesApp(int &argc, char **argv);
 
-    /**
-     * Sets the shell Link whose status is to be shown on screen.
-     *
-     * @param link  Shell connection.
-     */
-    void setShellLink(de::shell::Link *link);
+    de::shell::TextRootWidget &rootWidget();
 
-    void setGameState(de::String const &mode, de::String const &rules, de::String const &mapId);
-
-    void draw();
+    int  exec();
+    void refresh();
+    void quit();
 
 private:
     DE_PRIVATE(d)
 };
 
-#endif // STATUSWIDGET_H
+#endif // CURSESAPP_H

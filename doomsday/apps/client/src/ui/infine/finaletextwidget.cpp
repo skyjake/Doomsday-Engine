@@ -22,9 +22,9 @@
 #include "ui/infine/finaletextwidget.h"
 
 #include <cstring> // memcpy, memmove
-#include <de/concurrency.h>
-#include <de/memoryzone.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/timer.h>
 #include "api_fontrender.h"
 #include "ui/infine/finalepagewidget.h"
 

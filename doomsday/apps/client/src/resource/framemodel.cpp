@@ -27,7 +27,7 @@
 #include <doomsday/filesys/file.h>
 #include <de/Range>
 #include <de/BitArray>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
 using namespace res;

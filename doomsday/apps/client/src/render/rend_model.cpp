@@ -47,9 +47,9 @@
 #include <de/Log>
 #include <de/ArrayValue>
 #include <de/GLInfo>
-#include <de/binangle.h>
-#include <de/memory.h>
-#include <de/concurrency.h>
+#include <de/legacy/binangle.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/concurrency.h>
 #include <cstdlib>
 #include <cmath>
 #include <cstring>

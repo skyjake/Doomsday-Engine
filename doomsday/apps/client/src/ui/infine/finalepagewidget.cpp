@@ -21,7 +21,7 @@
 #include "ui/infine/finalepagewidget.h"
 
 #include <doomsday/world/Material>
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include "dd_main.h" // App_Resources()
 
 #ifdef __CLIENT__

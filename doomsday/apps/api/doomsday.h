@@ -56,15 +56,15 @@
 #include <doomsday/players.h>
 #include <doomsday/player.h>
 
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 #include <de/point.h>
-#include <de/reader.h>
-#include <de/rect.h>
-#include <de/size.h>
-#include <de/smoother.h>
-#include <de/mathutil.h>
-#include <de/vector1.h>
-#include <de/writer.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/rect.h>
+#include <de/legacy/size.h>
+#include <de/legacy/smoother.h>
+#include <de/legacy/mathutil.h>
+#include <de/legacy/vector1.h>
+#include <de/legacy/writer.h>
 
 /**
  * @defgroup base Base

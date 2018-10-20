@@ -30,7 +30,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC VariableLineEditWidget : public LineEditWidget
+class LIBGUI_PUBLIC VariableLineEditWidget : public LineEditWidget
 {
 public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors

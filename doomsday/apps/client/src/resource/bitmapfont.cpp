@@ -25,8 +25,8 @@
 #include "FontManifest"
 #include <doomsday/uri.h>
 #include <de/LogBuffer>
-#include <de/mathutil.h> // M_CeilPow2()
-#include <de/memory.h>
+#include <de/legacy/mathutil.h> // M_CeilPow2()
+#include <de/legacy/memory.h>
 #include <doomsday/busymode.h>
 #include <doomsday/filesys/fs_main.h>
 

@@ -42,7 +42,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC ProgressWidget : public LabelWidget
+class LIBGUI_PUBLIC ProgressWidget : public LabelWidget
 {
 public:
     enum Mode {

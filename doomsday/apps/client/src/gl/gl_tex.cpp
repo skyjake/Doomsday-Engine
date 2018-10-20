@@ -27,10 +27,10 @@
 #include "gl/sys_opengl.h"
 
 #include <doomsday/resource/colorpalette.h>
-#include <de/memory.h>
-#include <de/memoryzone.h>
-#include <de/vector1.h>
-#include <de/texgamma.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/vector1.h>
+#include <de/legacy/texgamma.h>
 #include <cstdlib>
 #include <cmath>
 #include <cctype>

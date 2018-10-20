@@ -22,7 +22,7 @@
 #define DE_CLIENT_WORLD_CONTACT_H
 
 #include <functional>
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <de/Vector>
 
 #include "world/map.h"

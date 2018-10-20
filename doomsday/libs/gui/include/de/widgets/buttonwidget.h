@@ -32,7 +32,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC ButtonWidget : public LabelWidget
+class LIBGUI_PUBLIC ButtonWidget : public LabelWidget
 {
 public:
     enum State { Up, Hover, Down };

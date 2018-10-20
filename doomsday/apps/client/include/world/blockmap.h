@@ -23,7 +23,7 @@
 #define DE_WORLD_BLOCKMAP_H
 
 #include <functional>
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <de/Vector>
 
 #ifdef WIN32

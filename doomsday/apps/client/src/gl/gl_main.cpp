@@ -30,7 +30,7 @@
 #include "gl/gl_main.h"
 #include "api_gl.h"
 
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/App>
 #include <de/Config>
 #include <de/DisplayMode>

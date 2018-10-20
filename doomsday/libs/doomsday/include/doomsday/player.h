@@ -21,8 +21,8 @@
 
 #include "libdoomsday.h"
 #include "network/pinger.h"
-#include <de/types.h>
-#include <de/smoother.h>
+#include <de/legacy/types.h>
+#include <de/legacy/smoother.h>
 
 /// Maximum length of a player name.
 #define PLAYERNAMELEN       81

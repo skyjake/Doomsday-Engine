@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/gui/displaymode.h"
-#include "de/gui/displaymode_native.h"
+#include "de/graphics/displaymode.h"
+#include "de/graphics/displaymode_native.h"
 
 #include <de/App>
 #include <de/ArrayValue>

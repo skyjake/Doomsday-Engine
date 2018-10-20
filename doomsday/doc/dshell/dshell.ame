@@ -1,5 +1,5 @@
-$ Man page for doomsday-shell-text
-@macro{TITLE}{ doomsday-shell-text }
+$ Man page for dshell
+@macro{TITLE}{ dshell }
 @macro{ONELINER}{ Utility for controlling and monitoring Doomsday servers }
 @macro{VERSION}{ Version 2.2 }
 @macro{AUTHOR}{ Deng Team }
@@ -18,12 +18,11 @@ $ Extra formatting macros.
 
 @chapter{ Synopsis }
 
-@strong{doomsday-shell-text}
+@strong{dshell}
 
 @chapter{ Options }
 
-This version of @bin{doomsday-shell-text} does not support any command line
-options.
+This version of @bin{dshell} does not support any command line options.
 
 $*
 @deflist/thin{

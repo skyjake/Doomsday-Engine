@@ -20,8 +20,8 @@
 #define LIBDOOMSDAY_CONSOLE_VAR_H
 
 #include "../libdoomsday.h"
-#include <de/types.h>
-#include <de/str.h>
+#include <de/legacy/types.h>
+#include <de/legacy/str.h>
 #include "../uri.h"
 
 #ifdef __cplusplus

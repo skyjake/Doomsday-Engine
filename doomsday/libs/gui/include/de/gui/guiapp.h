@@ -19,7 +19,7 @@
 #ifndef LIBGUI_GUIAPP_H
 #define LIBGUI_GUIAPP_H
 
-#include "libgui.h"
+#include "de/libgui.h"
 #include <de/App>
 #include <de/GuiLoop>
 
@@ -94,13 +94,13 @@ public:
      * Marks the current thread as the rendering thread.
      */
     static void setRenderThread();
-    
+
     /**
      * Shows a native file or folder in the operating system's file manager (macOS Finder
      * or Explorer in Windows).
      */
     static void revealFile(const NativePath &fileOrFolder);
-    
+
 protected:
     NativePath appDataPath() const override;
 

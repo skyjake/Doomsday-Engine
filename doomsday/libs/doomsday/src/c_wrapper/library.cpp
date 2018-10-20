@@ -29,7 +29,7 @@
 #include <de/List>
 #include <de/LogBuffer>
 #include <de/NativeFile>
-#include <de/str.h>
+#include <de/legacy/str.h>
 
 struct library_s  // typedef Library
 {

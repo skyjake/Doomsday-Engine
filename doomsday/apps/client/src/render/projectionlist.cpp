@@ -18,7 +18,7 @@
 
 #include "render/projectionlist.h"
 
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 
 using namespace de;
 

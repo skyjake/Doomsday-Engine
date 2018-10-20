@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/EditorHistory"
+#include "de/comms/EditorHistory"
 #include <de/math.h>
 
 namespace de { namespace shell {

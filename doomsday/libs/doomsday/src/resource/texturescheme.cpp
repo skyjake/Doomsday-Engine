@@ -20,7 +20,7 @@
 #include "doomsday/resource/texturescheme.h"
 #include "doomsday/resource/texturemanifest.h"
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 using namespace de;
 

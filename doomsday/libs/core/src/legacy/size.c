@@ -19,8 +19,8 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/size.h"
-#include "de/memory.h"
+#include "de/legacy/size.h"
+#include "de/legacy/memory.h"
 
 struct size2_s {
     /// Use a "raw" Size natively so that we can simply copy when called upon.

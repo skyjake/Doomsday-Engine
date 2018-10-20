@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_IPERSISTENT_H
 #define LIBAPPFW_IPERSISTENT_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 
 namespace de {
 
@@ -33,7 +33,7 @@ class PersistentState;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC IPersistent
+class LIBGUI_PUBLIC IPersistent
 {
 public:
     virtual ~IPersistent() = default;

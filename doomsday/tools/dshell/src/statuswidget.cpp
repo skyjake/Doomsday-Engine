@@ -18,7 +18,7 @@
 
 #include "statuswidget.h"
 #include <de/Timer>
-#include <de/shell/TextRootWidget>
+#include <de/comms/TextRootWidget>
 
 using namespace de;
 using namespace de::shell;

@@ -19,8 +19,8 @@
 #ifndef DE_TEXGAMMA_H
 #define DE_TEXGAMMA_H
 
-#include "liblegacy.h"
-#include <de/types.h>
+#include "../liblegacy.h"
+#include <de/legacy/types.h>
 
 #ifdef __cplusplus
 extern "C" {

@@ -28,7 +28,7 @@ namespace de {
  *
  * @ingroup dialogs
  */
-class LIBAPPFW_PUBLIC MessageDialog : public DialogWidget
+class LIBGUI_PUBLIC MessageDialog : public DialogWidget
 {
 public:
     MessageDialog(String const &name = String());

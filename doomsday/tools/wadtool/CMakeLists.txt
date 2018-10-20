@@ -8,7 +8,7 @@ include (../../cmake/Config.cmake)
 
 add_executable (wadtool wadtool.c wadtool.h)
 set_property (TARGET wadtool PROPERTY FOLDER Tools)
-deng_link_libraries (wadtool PRIVATE DengLegacy)
+deng_link_libraries (wadtool PRIVATE DengCore)
 
 deng_target_rpath (wadtool)
 deng_install_tool (wadtool)

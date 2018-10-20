@@ -25,7 +25,7 @@
 #  error Attempted to include internal Doomsday p_object.h from a game
 #endif
 
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 #include <de/Record>
 #include <de/Vector>
 #include <doomsday/defs/ded.h>

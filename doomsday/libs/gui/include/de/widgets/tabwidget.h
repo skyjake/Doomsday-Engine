@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC TabWidget : public GuiWidget
+class LIBGUI_PUBLIC TabWidget : public GuiWidget
 {
 public:
     DE_DEFINE_AUDIENCE2(Tab, void currentTabChanged(TabWidget &))

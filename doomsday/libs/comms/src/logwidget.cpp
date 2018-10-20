@@ -16,9 +16,9 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/LogWidget"
-#include "de/shell/KeyEvent"
-#include "de/shell/TextRootWidget"
+#include "de/comms/LogWidget"
+#include "de/comms/KeyEvent"
+#include "de/comms/TextRootWidget"
 #include <de/MonospaceLogSinkFormatter>
 #include <de/MemoryLogSink>
 #include <de/LogBuffer>

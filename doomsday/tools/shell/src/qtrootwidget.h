@@ -20,7 +20,7 @@
 #define QTROOTWIDGET_H
 
 #include <QWidget>
-#include <de/shell/TextRootWidget>
+#include <de/comms/TextRootWidget>
 
 class QtTextCanvas;
 

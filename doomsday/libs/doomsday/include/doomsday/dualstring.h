@@ -29,7 +29,7 @@
 
 #include "libdoomsday.h"
 #include <de/String>
-#include <de/str.h>
+#include <de/legacy/str.h>
 
 /**
  * Maintains a secondary, read-only C-style string (Str instance) side-by-side

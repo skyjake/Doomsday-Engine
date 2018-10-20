@@ -20,9 +20,9 @@
 #include "de_platform.h"
 #include "render/viewports.h"
 
-#include <de/concurrency.h>
-#include <de/timer.h>
-#include <de/vector1.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
+#include <de/legacy/vector1.h>
 #include <de/BitArray>
 #include <de/GLInfo>
 #include <de/GLState>

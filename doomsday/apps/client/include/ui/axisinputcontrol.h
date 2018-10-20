@@ -20,7 +20,7 @@
 #ifndef CLIENT_UI_AXISINPUTCONTROL_H
 #define CLIENT_UI_AXISINPUTCONTROL_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 #include <de/String>
 #include "inputdevice.h"
 

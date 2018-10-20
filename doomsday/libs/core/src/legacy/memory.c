@@ -20,7 +20,7 @@
  * 02110-1301 USA</small>
  */
 
-#include "de/memory.h"
+#include "de/legacy/memory.h"
 #include <stdlib.h>
 #include <string.h>
 

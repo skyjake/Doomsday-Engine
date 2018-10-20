@@ -22,8 +22,8 @@
 #ifndef LIBCOMMON_GAME_INCLUDES
 #define LIBCOMMON_GAME_INCLUDES
 
-#include <de/mathutil.h>
-#include <de/timer.h>
+#include <de/legacy/mathutil.h>
+#include <de/legacy/timer.h>
 
 #ifdef UNIX
 #  include <strings.h>

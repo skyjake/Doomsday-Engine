@@ -21,7 +21,7 @@
 #ifndef DE_CLIENT_RENDER_LUMOBJ_H
 #define DE_CLIENT_RENDER_LUMOBJ_H
 
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 
 #include <de/Vector>
 

@@ -57,10 +57,10 @@
 #include <de/LogBuffer>
 #include <de/NativeFile>
 #include <de/ScriptSystem>
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <de/c_wrapper.h>
-#include <de/concurrency.h>
-#include <de/memory.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/memory.h>
 
 #include <de/Hash>
 

@@ -27,9 +27,9 @@
 #define DOOMSDAY_API_MAP_H
 
 #include "apis.h"
-#include <de/aabox.h>
-#include <de/mathutil.h>
-#include <de/str.h>
+#include <de/legacy/aabox.h>
+#include <de/legacy/mathutil.h>
+#include <de/legacy/str.h>
 #include <doomsday/world/thinker.h>
 #include <doomsday/world/valuetype.h>
 

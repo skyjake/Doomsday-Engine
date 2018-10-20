@@ -23,8 +23,8 @@
 #include "de_base.h"
 #include "network/net_main.h"
 
-#include <de/concurrency.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
 #include <de/charsymbols.h>
 #include <de/Value>
 #include <de/Version>

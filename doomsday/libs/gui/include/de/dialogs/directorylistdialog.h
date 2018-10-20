@@ -28,7 +28,7 @@ namespace de {
 /**
  * Dialog for editing a list of directories.
  */
-class LIBAPPFW_PUBLIC DirectoryListDialog : public MessageDialog
+class LIBGUI_PUBLIC DirectoryListDialog : public MessageDialog
 {
 public:
     DE_DEFINE_AUDIENCE2(Change, void directoryListChanged())

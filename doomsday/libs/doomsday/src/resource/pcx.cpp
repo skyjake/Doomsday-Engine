@@ -21,7 +21,7 @@
 #include "doomsday/resource/pcx.h"
 #include "dd_share.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 
 using namespace de;
 using namespace res;

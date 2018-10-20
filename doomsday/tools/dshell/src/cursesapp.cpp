@@ -25,9 +25,9 @@
 #include <de/Rule>
 #include <de/Vector>
 #include <de/LogBuffer>
-#include <de/shell/TextRootWidget>
-#include <de/shell/Widget>
-#include <de/shell/KeyEvent>
+#include <de/comms/TextRootWidget>
+#include <de/comms/Widget>
+#include <de/comms/KeyEvent>
 #include <curses.h>
 #include <stdio.h>
 #include <sstream>

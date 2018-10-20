@@ -21,7 +21,7 @@
 #ifndef DE_WORLD_LINEOWNER_H
 #define DE_WORLD_LINEOWNER_H
 
-#include <de/binangle.h>
+#include <de/legacy/binangle.h>
 
 #include <de/Vector>
 

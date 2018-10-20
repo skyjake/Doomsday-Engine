@@ -19,7 +19,6 @@
 #ifndef LIBAPPFW_PAINTER_H
 #define LIBAPPFW_PAINTER_H
 
-#include "../libappfw.h"
 #include <de/GLAtlasBuffer>
 #include <de/GLSubBuffer>
 #include <de/GLDrawQueue>
@@ -28,7 +27,7 @@
 
 namespace de {
 
-struct LIBAPPFW_PUBLIC GuiVertex
+struct LIBGUI_PUBLIC GuiVertex
 {
     Vec2f pos;
     Vec2f texCoord;
@@ -43,7 +42,7 @@ typedef VertexBuilder<GuiVertex>::Vertices GuiVertexBuilder;
 /**
  * GUI painter.
  */
-class LIBAPPFW_PUBLIC Painter
+class LIBGUI_PUBLIC Painter
 {
 public:
     Painter();

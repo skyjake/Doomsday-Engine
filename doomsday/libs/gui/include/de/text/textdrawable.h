@@ -50,7 +50,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC TextDrawable : public GLTextComposer
+class LIBGUI_PUBLIC TextDrawable : public GLTextComposer
 {
 public:
     TextDrawable();

@@ -22,7 +22,7 @@
 #ifndef LIBLEGACY_SIZE_H
 #define LIBLEGACY_SIZE_H
 
-#include "liblegacy.h"
+#include "../liblegacy.h"
 
 #ifdef __cplusplus
 extern "C" {

@@ -22,7 +22,7 @@
 #include <de/libcore.h>
 #include <de/GuiApp> // checking for render thread
 #include <de/Range>
-#include "../gui/libgui.h"
+#include "../libgui.h"
 #include "de/graphics/opengl.h"
 
 //#define LIBGUI_GL  de::GLInfo::api()

@@ -23,8 +23,8 @@
 #include "server/sv_def.h"
 
 #include <cmath>
-#include <de/stringarray.h>
-#include <de/timer.h>
+#include <de/legacy/stringarray.h>
+#include <de/legacy/timer.h>
 #include <de/ArrayValue>
 #include <de/NumberValue>
 #include <de/LogBuffer>

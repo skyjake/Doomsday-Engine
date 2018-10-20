@@ -25,10 +25,10 @@
 
 #include "de_platform.h"
 
-#include <de/memory.h>
-#include <de/memoryzone.h>
-#include <de/reader.h>
-#include <de/writer.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/reader.h>
+#include <de/legacy/writer.h>
 #include <de/c_wrapper.h>
 #include <de/Garbage>
 

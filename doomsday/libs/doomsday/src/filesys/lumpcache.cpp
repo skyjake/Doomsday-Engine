@@ -18,8 +18,8 @@
  */
 
 #include "doomsday/filesys/lumpcache.h"
-#include <de/memory.h>
-#include <de/memoryzone.h>
+#include <de/legacy/memory.h>
+#include <de/legacy/memoryzone.h>
 #include <de/Error>
 #include <de/Log>
 

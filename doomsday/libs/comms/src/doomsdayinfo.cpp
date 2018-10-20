@@ -24,7 +24,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/DoomsdayInfo"
+#include "de/comms/DoomsdayInfo"
 #include <de/NativePath>
 
 namespace de { namespace shell {

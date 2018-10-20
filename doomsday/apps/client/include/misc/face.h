@@ -20,7 +20,7 @@
 #ifndef DE_DATA_MESH_FACE_H
 #define DE_DATA_MESH_FACE_H
 
-#include <de/aabox.h>
+#include <de/legacy/aabox.h>
 
 #include <de/Vector>
 

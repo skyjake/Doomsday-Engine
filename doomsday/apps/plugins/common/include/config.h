@@ -19,7 +19,7 @@
 #ifndef LIBCOMMON_CONFIG_H
 #define LIBCOMMON_CONFIG_H
 
-#include <de/types.h>
+#include <de/legacy/types.h>
 
 #if __JHEXEN__
 #  include "h2def.h"

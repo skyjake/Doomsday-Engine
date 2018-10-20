@@ -22,7 +22,7 @@
 #ifndef LIBLEGACY_POINT_H
 #define LIBLEGACY_POINT_H
 
-#include "liblegacy.h"
+#include "../liblegacy.h"
 
 #ifdef __cplusplus
 extern "C" {

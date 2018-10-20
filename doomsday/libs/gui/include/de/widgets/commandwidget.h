@@ -32,7 +32,7 @@ class PopupWidget;
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC CommandWidget : public LineEditWidget, public IPersistent
+class LIBGUI_PUBLIC CommandWidget : public LineEditWidget, public IPersistent
 {
 public:
     DE_DEFINE_AUDIENCE2(GotFocus,  void gotFocus(CommandWidget &))

@@ -23,8 +23,8 @@
 #include "de_platform.h"
 #include "gl/gl_defer.h"
 
-#include <de/concurrency.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
 #include <doomsday/doomsdayapp.h>
 #include <de/GLInfo>
 #include "dd_main.h"

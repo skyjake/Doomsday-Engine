@@ -35,7 +35,7 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBAPPFW_PUBLIC ChoiceWidget : public PopupButtonWidget
+class LIBGUI_PUBLIC ChoiceWidget : public PopupButtonWidget
 {
 public:
     DE_DEFINE_AUDIENCE2(Selection,     void selectionChanged(ChoiceWidget &, ui::DataPos pos))

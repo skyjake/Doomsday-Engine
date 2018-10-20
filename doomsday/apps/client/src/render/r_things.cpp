@@ -23,7 +23,7 @@
 #include "de_platform.h"
 #include "render/r_things.h"
 
-#include <de/vector1.h>
+#include <de/legacy/vector1.h>
 #include <de/ModelDrawable>
 #include <doomsday/defs/sprite.h>
 #include <doomsday/world/Materials>

@@ -18,7 +18,7 @@
 
 #include "render/vectorlightlist.h"
 
-#include <de/memoryzone.h>
+#include <de/legacy/memoryzone.h>
 
 VectorLightList::Node *VectorLightList::firstNode  = nullptr;
 VectorLightList::Node *VectorLightList::cursorNode = nullptr;

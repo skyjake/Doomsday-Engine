@@ -23,8 +23,8 @@
 #include "ui/busyvisual.h"
 
 #include <cmath>
-#include <de/concurrency.h>
-#include <de/timer.h>
+#include <de/legacy/concurrency.h>
+#include <de/legacy/timer.h>
 #include <de/GLState>
 #include <de/GLInfo>
 #include <doomsday/doomsdayapp.h>

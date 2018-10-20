@@ -19,7 +19,7 @@
 #ifndef LIBAPPFW_STYLE_H
 #define LIBAPPFW_STYLE_H
 
-#include "../libappfw.h"
+#include "../libgui.h"
 #include <de/RuleBank>
 #include <de/FontBank>
 #include <de/ColorBank>
@@ -35,7 +35,7 @@ class Package;
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC Style
+class LIBGUI_PUBLIC Style
 {
 public:
     DENG2_DEFINE_AUDIENCE2(Change, void styleChanged(Style &))

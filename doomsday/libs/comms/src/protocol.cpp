@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/shell/Protocol"
+#include "de/comms/Protocol"
 #include <de/LogBuffer>
 #include <de/ArrayValue>
 #include <de/TextValue>

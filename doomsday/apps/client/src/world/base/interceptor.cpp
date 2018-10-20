@@ -21,8 +21,8 @@
 
 #include "world/interceptor.h"
 
-#include <de/memoryzone.h>
-#include <de/vector1.h>
+#include <de/legacy/memoryzone.h>
+#include <de/legacy/vector1.h>
 #include "world/blockmap.h"
 #include "world/lineblockmap.h"
 #include "world/p_object.h"
