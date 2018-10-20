@@ -83,6 +83,10 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         {
             button->setText(defaultButtonLabel());
         }
+        if (auto *button = self().buttonWidget(Id2))
+        {
+            button->enable(ignoreCheck);
+        }
     }
 
     void update()
@@ -112,7 +116,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             });
 
             self().area().add(ignoreToggle = new ToggleWidget);
-            ignoreToggle->setText("Ignore Incompatibilities");
+            ignoreToggle->setText("Ignore incompatible/missing mods");
             ignoreToggle->setAlignment(ui::AlignLeft);
             ignoreToggle->setActionFn([this]() {
                 enableIgnore(ignoreToggle->isActive());
@@ -127,7 +131,66 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             ignoreWarning->setTextLineAlignment(ui::AlignLeft);
             ignoreWarning->margins().setTop(ConstantRule::zero());
 
-            self().area().add(list = new PackagesWidget(wanted));
+            // Check which of the wanted packages are actually available.
+            StringList wantedUnavailable;
+            StringList wantedAvailable;
+            QList<std::pair<String, Version>> wantedDifferentVersionAvailable;
+            {
+                auto &pkgLoader = PackageLoader::get();
+
+                for (const auto &id : wanted)
+                {
+                    if (pkgLoader.isAvailable(id))
+                    {
+                        wantedAvailable << id;
+                    }
+                    else
+                    {
+                        auto id_ver = Package::split(id);
+                        if (const auto *p = pkgLoader.select(id_ver.first))
+                        {
+                            wantedDifferentVersionAvailable.push_back(
+                                {Package::versionedIdentifierForFile(*p), id_ver.second});
+                        }
+                        else
+                        {
+                            wantedUnavailable << id;
+                        }
+                    }
+                }
+            }
+
+            // Detail the problem to the user.
+            String unavailNote;
+            if (!wantedDifferentVersionAvailable.empty())
+            {
+                unavailNote +=
+                    _E(b)_E(D) "Caution:" _E(.)_E(.) " There is a different version of "
+                                                     "the following mods available:\n";
+                for (const auto &avail_expected : wantedDifferentVersionAvailable)
+                {
+                    unavailNote +=
+                        " - " _E(>) + Package::splitToHumanReadable(avail_expected.first) +
+                        " " _E(l)_E(F) "\n(expected " +
+                        avail_expected.second.asHumanReadableText() + _E(<) ")\n" _E(w)_E(A);
+                }
+                unavailNote += "\n";
+            }
+            if (!wantedUnavailable.empty())
+            {
+                unavailNote += "The following mods are missing:\n";
+                for (const auto &id : wantedUnavailable)
+                {
+                    unavailNote += " - " + Package::splitToHumanReadable(id) + "\n";
+                }
+                unavailNote += "\n";
+            }
+
+            StringList wantedDifferent =
+                map<StringList>(wantedDifferentVersionAvailable,
+                                [](const std::pair<String, Version> &sv) { return sv.first; });
+
+            self().area().add(list = new PackagesWidget(wantedAvailable + wantedDifferent));
             list->setDontFilterHidden(true);
             list->setActionItems(actions);
             list->setActionsAlwaysShown(true);
@@ -137,23 +200,48 @@ DENG2_PIMPL(PackageCompatibilityDialog)
 
             if (!GameProfiles::arePackageListsCompatible(loaded, wanted))
             {
+                // Packages needs loading and/or unloading.
                 conflicted = true;
-                if (list->itemCount() > 0)
+
+                if (list->itemCount() == 0)
                 {
-                    self().message().setText(message + "\n\n" +
-                                             tr("All the mods listed below should be loaded."));
-                    self().buttons()
-                            << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
-                                                    new CallbackAction([this] () { resolvePackages(); }));
+                    list->hide();
+                }
+                if (!wantedUnavailable.empty())
+                {
+                    self().message().setText(message + "\n\n" + unavailNote +
+                                             "Please locate the missing mods before continuing. "
+                                             "You may need to add more folders in your Data Files "
+                                             "settings so the mods can be found.");
+                    if (list->itemCount() > 0)
+                    {
+                        self().message().setText(
+                            self().message().text() +
+                            "\n\nThe mods listed below are required and available, "
+                            "and should be loaded now (the highlighted ones are already loaded).");
+                    }
+                    self().buttons() << new DialogButtonItem(Default | Accept | Id2,
+                                                             _E(b) _E(D) "Ignore and Continue");
+                    self().buttonWidget(Id2)->disable();
                 }
                 else
                 {
-                    list->hide();
-                    self().message().setText(message + "\n\n" +
-                                             tr("All additional mods should be unloaded."));
-                    self().buttons()
-                               << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
-                                                       new CallbackAction([this] () { resolvePackages(); }));
+                    if (list->itemCount() > 0)
+                    {
+                        self().message().setText(message + "\n\n" + unavailNote +
+                                                 tr("All the mods listed below should be loaded."));
+                        self().buttons()
+                                << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
+                                                        new CallbackAction([this] () { resolvePackages(); }));
+                    }
+                    else
+                    {
+                        self().message().setText(message + "\n\n" + unavailNote +
+                                                 tr("All additional mods should be unloaded."));
+                        self().buttons()
+                                   << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
+                                                           new CallbackAction([this] () { resolvePackages(); }));
+                    }
                 }
                 self().buttons()
                         << new DialogButtonItem(Reject, tr("Cancel"));
