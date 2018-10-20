@@ -32,26 +32,36 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
     String noneLabel;
     GameProfile const *profile = nullptr;
     std::function<void (PackagesDialog &)> setupFunc;
+    String overrideLabel;
 
     Impl(Public *i) : Base(i)
     {}
-    
+
     void updateLabel()
     {
-        self().setStyleImage("package.icon");
-
-        if (packages.isEmpty())
+        if (overrideLabel)
         {
-            self().setText(noneLabel);
-            self().setTextColor(self().colorTheme() == Normal? "text" : "inverted.text");
-            if (!noneLabel.isEmpty()) self().setImage(nullptr);
+            self().setImage(nullptr);
+            self().setText(overrideLabel);
+            self().setTextColor(self().colorTheme() == Normal? "accent" : "inverted.accent");
         }
         else
         {
-            self().setText(labelPrefix + String::format("%i", packages.count()));
-            self().setTextColor(self().colorTheme() == Normal? "accent" : "inverted.accent");
+            self().setStyleImage("package.icon");
+
+            if (packages.isEmpty())
+            {
+                self().setText(noneLabel);
+                self().setTextColor(self().colorTheme() == Normal? "text" : "inverted.text");
+                if (!noneLabel.isEmpty()) self().setImage(nullptr);
+            }
+            else
+            {
+                self().setText(labelPrefix + String::format("%i", packages.count()));
+                self().setTextColor(self().colorTheme() == Normal? "accent" : "inverted.accent");
+            }
+            self().setImageColor(self().textColorf());
         }
-        self().setImageColor(self().textColorf());
     }
 
     void pressed()
@@ -112,6 +122,12 @@ void PackagesButtonWidget::setLabelPrefix(String const &labelPrefix)
 void PackagesButtonWidget::setNoneLabel(String const &noneLabel)
 {
     d->noneLabel = noneLabel;
+    d->updateLabel();
+}
+
+void PackagesButtonWidget::setOverrideLabel(const String &overrideLabel)
+{
+    d->overrideLabel = overrideLabel;
     d->updateLabel();
 }
 

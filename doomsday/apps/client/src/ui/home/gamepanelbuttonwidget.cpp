@@ -177,7 +177,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     void updatePackagesIndicator()
     {
         int const  count = gameProfile.packages().size();
-        bool const shown = count > 0 && !self().isSelected();
+        bool const shown = !isMissingPackages() && count > 0 && !self().isSelected();
 
         packagesCounter->setText(String::number(count));
         packagesCounter->show(shown);
@@ -256,6 +256,11 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             self().updateContent();
         });
     }
+
+    bool isMissingPackages() const
+    {
+        return !gameProfile.isPlayable() && game().isPlayableWithDefaultPackages();
+    }
 };
 
 GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData const &savedItems)
@@ -315,9 +320,16 @@ void GamePanelButtonWidget::updateContent()
         }
     }
 
-    if (!isPlayable && isGamePlayable)
+    if (d->isMissingPackages())
     {
-        meta = _E(D) + tr("Selected mods missing") + _E(.);
+        meta = _E(D) "Missing mods" _E(.);
+        d->packagesButton->setOverrideLabel("Fix...");
+        setKeepButtonsVisible(true);
+    }
+    else
+    {
+        d->packagesButton->setOverrideLabel("");
+        setKeepButtonsVisible(false);
     }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")

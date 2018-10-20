@@ -21,6 +21,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/dialogs/packageinfodialog.h"
+#include "ui/dialogs/datafilesettingsdialog.h"
 #include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
 #include "ui/clientstyle.h"
@@ -365,7 +366,17 @@ PackagesDialog::PackagesDialog(String const &titleText)
             << new DialogButtonItem(Default | Accept, tr("OK"))
             << new DialogButtonItem(Reject, tr("Cancel"))
             << new DialogButtonItem(Action, style().images().image("refresh"),
-                                    new SignalAction(this, SLOT(refreshPackages())));
+                                    new SignalAction(this, SLOT(refreshPackages())))
+            << new DialogButtonItem(Action | Id1, style().images().image("gear"),
+                                    "Data Files",
+                                    new CallbackAction([this]() {
+        // Open a Data Files dialog.
+        auto *dfsDlg = new DataFileSettingsDialog;
+        dfsDlg->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
+        dfsDlg->setDeleteAfterDismissed(true);
+        add(dfsDlg);
+        dfsDlg->open();
+    }));
 
     // The individual menus will be scrolling independently.
     leftArea() .setContentSize(d->menu->rule().width(),
