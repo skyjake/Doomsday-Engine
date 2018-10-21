@@ -166,7 +166,7 @@ bool DirectoryFeed::prune(File &file) const
     /// Rules for pruning:
     /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard
     ///   drive version (size, time of last modification).
-    if (NativeFile *nativeFile = maybeAs<NativeFile>(file))
+    if (NativeFile *nativeFile = maybeAs<NativeFile>(file.source()))
     {
         try
         {
