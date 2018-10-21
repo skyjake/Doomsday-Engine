@@ -1091,5 +1091,5 @@ void PackagesWidget::operator<<(PersistentState const &fromState)
 void PackagesWidget::refreshPackages()
 {
     d->showProgressIndicator(true);
-    App::fileSystem().refreshAsync();
+    FS::get().refreshAsync();
 }

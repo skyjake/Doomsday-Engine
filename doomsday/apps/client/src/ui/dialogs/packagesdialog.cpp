@@ -29,7 +29,9 @@
 
 #include <doomsday/Games>
 #include <doomsday/LumpCatalog>
+#include <doomsday/res/Bundles>
 
+#include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/DocumentPopupWidget>
@@ -65,17 +67,27 @@ DENG_GUI_PIMPL(PackagesDialog)
      * Information about a selected package. If the package file is not found, only
      * the ID is known.
      */
-    class SelectedPackageItem : public ui::Item
+    class SelectedPackageItem
+        : public ui::Item
+        , DENG2_OBSERVES(res::Bundles, Identify)
     {
     public:
         SelectedPackageItem(String const &packageId)
         {
             setData(packageId);
+            updatePackageInfo();
+            DoomsdayApp::bundles().audienceForIdentify() += this;
+        }
 
-            _file = App::packageLoader().select(packageId);
-            if (_file)
+        void updatePackageInfo()
+        {
+            if ((_file = App::packageLoader().select(packageId())) != nullptr)
             {
                 _info = &_file->objectNamespace().subrecord(Package::VAR_PACKAGE);
+            }
+            else
+            {
+                _info = nullptr;
             }
         }
 
@@ -92,6 +104,14 @@ DENG_GUI_PIMPL(PackagesDialog)
         File const *packageFile() const
         {
             return _file;
+        }
+
+        void dataBundlesIdentified() override
+        {
+            Loop::mainCall([this]() {
+                updatePackageInfo();
+                notifyChange();
+            });
         }
 
     private:
@@ -142,7 +162,8 @@ DENG_GUI_PIMPL(PackagesDialog)
             }
             else
             {
-                label().setText(_item->packageId());
+                label().setText(Package::splitToHumanReadable(_item->packageId()) +
+                                " " _E(D) DENG2_CHAR_MDASH " Missing");
             }
         }
 
