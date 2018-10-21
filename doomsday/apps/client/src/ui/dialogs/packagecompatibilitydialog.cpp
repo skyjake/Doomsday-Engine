@@ -172,7 +172,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                     unavailNote +=
                         " - " _E(>) + Package::splitToHumanReadable(avail_expected.first) +
                         " " _E(l)_E(F) "\n(expected " +
-                        avail_expected.second.asHumanReadableText() + _E(<) ")\n" _E(w)_E(A);
+                        avail_expected.second.fullNumber() + _E(<) ")\n" _E(w)_E(A);
                 }
                 unavailNote += "\n";
             }
@@ -311,9 +311,19 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         // Load the remaining wanted packages.
         for (int i = goodUntil + 1; i < wanted.size(); ++i)
         {
-            LOG_RES_MSG("Loading wanted ") << wanted.at(i);
+            const auto &pkgId = wanted.at(i);
 
-            pkgLoader.load(wanted.at(i));
+            if (pkgLoader.isAvailable(pkgId))
+            {
+                LOG_RES_MSG("Loading wanted ") << wanted.at(i);
+                pkgLoader.load(wanted.at(i));
+            }
+            else
+            {
+                auto id_ver = Package::split(pkgId);
+                LOG_RES_MSG("Loading latest version of wanted ") << id_ver.first;
+                pkgLoader.load(id_ver.first);
+            }
         }
 
         LOG_RES_MSG("Packages affecting gameplay:\n")
