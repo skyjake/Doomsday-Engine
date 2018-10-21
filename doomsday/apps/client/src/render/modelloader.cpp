@@ -206,7 +206,7 @@ DENG2_PIMPL(ModelLoader)
     }
 
     /**
-     * Initializes one or more uninitializes models for rendering.
+     * Initializes one or more uninitialized models for rendering.
      * Must be called from the main thread.
      *
      * @param maxCount  Maximum number of models to initialize.
