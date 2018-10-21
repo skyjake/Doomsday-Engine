@@ -1101,7 +1101,12 @@ static int PIT_CheckLine(Line *ld, void * /*context*/)
 
 dd_bool P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 {
-#if !__JHEXEN__
+#if defined(__JHERETIC__)
+    if (thing->type != MT_POD) // vanilla onMobj behavior for pods
+    {
+        thing->onMobj = nullptr;
+    }
+#elif !__JHEXEN__
     thing->onMobj  = 0;
 #endif
     thing->wallHit = false;

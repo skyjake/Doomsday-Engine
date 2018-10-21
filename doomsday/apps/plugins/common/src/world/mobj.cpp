@@ -149,7 +149,7 @@ void Mobj_XYMoveStopping(mobj_t *mo)
         return;
     }
 
-    if(mo->origin[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
+    if (mo->origin[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
     {
         // No friction when falling.
         return;

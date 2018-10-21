@@ -383,9 +383,11 @@ void P_MobjMoveZ(mobj_t *mo)
     // Adjust height.
     mo->origin[VZ] += mo->mom[MZ];
 
-    if((mo->flags2 & MF2_FLY) &&
-       mo->onMobj && mo->origin[VZ] > mo->onMobj->origin[VZ] + mo->onMobj->height)
+    if ((mo->flags2 & MF2_FLY) && mo->onMobj &&
+        mo->origin[VZ] > mo->onMobj->origin[VZ] + mo->onMobj->height)
+    {
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
+    }
 
     if((mo->flags & MF_FLOAT) && mo->target && !P_MobjIsCamera(mo->target))
     {
@@ -447,17 +449,16 @@ void P_MobjMoveZ(mobj_t *mo)
     }
 
     // Do some fly-bobbing.
-    if(mo->player && mo->player->plr->mo == mo &&
-       (mo->flags2 & MF2_FLY) && mo->origin[VZ] > mo->floorZ &&
-       !mo->onMobj && (mapTime & 2))
+    if (mo->player && mo->player->plr->mo == mo && (mo->flags2 & MF2_FLY) &&
+        mo->origin[VZ] > mo->floorZ && !mo->onMobj && (mapTime & 2))
     {
         mo->origin[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
     }
 
     // Clip movement. Another thing?
-    if(mo->onMobj && mo->origin[VZ] <= mo->onMobj->origin[VZ] + mo->onMobj->height)
+    if (mo->onMobj && mo->origin[VZ] <= mo->onMobj->origin[VZ] + mo->onMobj->height)
     {
-        if(mo->mom[MZ] < 0)
+        if (mo->mom[MZ] < 0)
         {
             if(mo->player && mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
@@ -471,8 +472,10 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = 0;
         }
 
-        if(IS_ZERO(mo->mom[MZ]))
+        if (IS_ZERO(mo->mom[MZ]))
+        {
             mo->origin[VZ] = mo->onMobj->origin[VZ] + mo->onMobj->height;
+        }
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
@@ -483,7 +486,8 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // The floor.
     if(mo->origin[VZ] <= mo->floorZ)
-    {   // Hit the floor.
+    {
+        // Hit the floor.
         dd_bool             movingDown;
 
         // Note (id):
@@ -666,6 +670,202 @@ void P_NightmareRespawn(mobj_t* mobj)
     P_MobjRemove(mobj, true);
 }
 
+// Fake the zmovement so that we can check if a move is legal
+// (from vanilla Heretic)
+static void P_FakeZMovement(mobj_t *mo)
+{
+    coord_t dist  = 0;
+    coord_t delta = 0;
+    //
+    // adjust height
+    //
+    mo->origin[VZ] += mo->mom[VZ];
+    if (mo->flags & MF_FLOAT && mo->target)
+    {
+        // float down towards target if too close
+        if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
+        {
+            dist  = M_ApproxDistance(mo->origin[VX] - mo->target->origin[VX],
+                                     mo->origin[VY] - mo->target->origin[VY]);
+            delta = (mo->target->origin[VZ] + (mo->height / 2)) - mo->origin[VZ];
+            if (delta < 0 && dist < -(delta * 3))
+                mo->origin[VZ] -= FLOATSPEED;
+            else if (delta > 0 && dist < (delta * 3))
+                mo->origin[VZ] += FLOATSPEED;
+        }
+    }
+    if (mo->player && mo->flags2 & MF2_FLY && !(mo->origin[VZ] <= mo->floorZ) && (mapTime & 2))
+    {
+        mo->origin[VZ] += finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK];
+    }
+
+    //
+    // clip movement
+    //
+    if (mo->origin[VZ] <= mo->floorZ)
+    {
+        // Hit the floor
+        mo->origin[VZ] = mo->floorZ;
+        if (mo->mom[VZ] < 0)
+        {
+            mo->mom[VZ] = 0;
+        }
+        if (mo->flags & MF_SKULLFLY)
+        {
+            // The skull slammed into something
+            mo->mom[VZ] = -mo->mom[VZ];
+        }
+        if (MOBJINFO[mo->type].states[SN_CRASH] && (mo->flags & MF_CORPSE))
+        {
+            return;
+        }
+    }
+    else if (mo->flags2 & MF2_LOGRAV)
+    {
+        coord_t GRAVITY = XS_Gravity(Mobj_Sector(mo));
+
+        if (FEQUAL(mo->mom[VZ], 0))
+            mo->mom[VZ] = -(GRAVITY / 8) * 2;
+        else
+            mo->mom[VZ] -= GRAVITY / 8;
+    }
+    else if (!(mo->flags & MF_NOGRAVITY))
+    {
+        coord_t GRAVITY = XS_Gravity(Mobj_Sector(mo));
+
+        if (FEQUAL(mo->mom[VZ], 0))
+            mo->mom[VZ] = -GRAVITY * 2;
+        else
+            mo->mom[VZ] -= GRAVITY;
+    }
+
+    if (mo->origin[VZ] + mo->height > mo->ceilingZ)
+    {
+        // hit the ceiling
+        if (mo->mom[VZ] > 0) mo->mom[VZ] = 0;
+        mo->origin[VZ] = mo->ceilingZ - mo->height;
+        if (mo->flags & MF_SKULLFLY)
+        {
+            // the skull slammed into something
+            mo->mom[VZ] = -mo->mom[VZ];
+        }
+    }
+}
+
+struct checkonmobjz_s
+{
+    mobj_t *checkThing;
+    mobj_t *onMobj;
+};
+
+static int PIT_CheckOnmobjZ(mobj_t *thing, void *dataPtr)
+{
+    struct checkonmobjz_s *data    = dataPtr;
+    const mobj_t *         tmthing = data->checkThing;
+    coord_t                blockdist;
+
+    if (thing == tmthing)
+    {
+        // Don't clip against self
+        return false;
+    }
+    if (!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)))
+    {
+        // Can't hit thing
+        return false;
+    }
+    blockdist = thing->radius + tmthing->radius;
+    if (fabs(thing->origin[VX] - tmthing->origin[VX]) >= blockdist ||
+        fabs(thing->origin[VY] - tmthing->origin[VY]) >= blockdist)
+    {
+        // Didn't hit thing
+        return false;
+    }
+    if (tmthing->origin[VZ] > thing->origin[VZ] + thing->height)
+    {
+        return false;
+    }
+    else if (tmthing->origin[VZ] + tmthing->height < thing->origin[VZ])
+    {
+        // under thing
+        return false;
+    }
+    if (thing->flags & MF_SOLID)
+    {
+        data->onMobj = thing;
+    }
+    return (thing->flags & MF_SOLID) != 0;
+}
+
+// Checks if the new Z position is legal
+// (from vanilla Heretic)
+static mobj_t *P_CheckOnmobj(mobj_t *thing)
+{
+#if 0
+    int			xl,xh,yl,yh,bx,by;
+    subsector_t		*newsubsec;
+    fixed_t x;
+    fixed_t y;
+    mobj_t oldmo;
+
+    x = thing->x;
+    y = thing->y;
+    tmthing = thing;
+    tmflags = thing->flags;
+    oldmo = *thing; // save the old mobj before the fake zmovement
+    P_FakeZMovement(tmthing);
+#endif
+
+    coord_t oldOrigin[3];
+    coord_t oldMom[3];
+    AABoxd  bounds;
+
+    struct checkonmobjz_s data = {thing, NULL};
+
+    memcpy(oldOrigin, thing->origin, sizeof(oldOrigin));
+    memcpy(oldMom, thing->mom, sizeof(oldMom));
+
+    P_FakeZMovement(thing);
+
+//    tmx = x;
+//    tmy = y;
+
+//    tmbbox[BOXTOP] = y + tmthing->radius;
+//    tmbbox[BOXBOTTOM] = y - tmthing->radius;
+//    tmbbox[BOXRIGHT] = x + tmthing->radius;
+//    tmbbox[BOXLEFT] = x - tmthing->radius;
+
+//    newsubsec = R_PointInSubsector (x,y);
+//    ceilingline = NULL;
+
+////
+//// the base floor / ceiling is from the subsector that contains the
+//// point.  Any contacted lines the step closer together will adjust them
+////
+//    tmfloorz = tmdropoffz = newsubsec->sector->floorheight;
+//    tmceilingz = newsubsec->sector->ceilingheight;
+
+//    validcount++;
+//    numspechit = 0;
+
+    if (!(thing->flags & MF_NOCLIP))
+    {
+        bounds.minX = thing->origin[VX] - thing->radius;
+        bounds.minY = thing->origin[VY] - thing->radius;
+        bounds.maxX = thing->origin[VX] + thing->radius;
+        bounds.maxY = thing->origin[VY] + thing->radius;
+
+        VALIDCOUNT++;
+        Mobj_BoxIterator(&bounds, PIT_CheckOnmobjZ, &data);
+    }
+
+    // Restore state.
+    memcpy(thing->origin, oldOrigin, sizeof(oldOrigin));
+    memcpy(thing->mom, oldMom, sizeof(oldMom));
+
+    return data.onMobj;
+}
+
 void P_MobjThinker(void *thinkerPtr)
 {
     mobj_t *mobj = thinkerPtr;
@@ -787,43 +987,46 @@ void P_MobjThinker(void *thinkerPtr)
     {
         coord_t oldZ = mobj->origin[VZ];
 
-        // TODO: add missing logic below
-#if 0
-        if(mobj->flags2&MF2_PASSMOBJ)
+        if (mobj->type == MT_POD)
         {
-            if(!(onmo = P_CheckOnmobj(mobj)))
+            // Use vanilla behavior for gas pods. The newer routines do not produce the
+            // correct behavior when pods interact with each other.
+            if ((mobj->onMobj = P_CheckOnmobj(mobj)) == NULL)
             {
                 P_MobjMoveZ(mobj);
             }
             else
             {
-                if(mobj->player && mobj->momz < 0)
+                // Stop pod's downward momentum when landing on something.
+                if (/*mobj->player &&*/ mobj->mom[VZ] < 0)
                 {
-                    mobj->flags2 |= MF2_ONMOBJ;
-                    mobj->momz = 0;
+                    mobj->mom[VZ] = 0;
                 }
-                if(mobj->player && (onmo->player || onmo->type == MT_POD))
+                // This is exclusive to pods, so the code below is not relevant.
+                /*
+                if (mobj->player && (onmo->player || onmo->type == MT_POD))
                 {
-                    mobj->momx = onmo->momx;
-                    mobj->momy = onmo->momy;
-                    if(onmo->z < onmo->floorz)
+                    mobj->mom[VX] = onmo->mom[VX];
+                    mobj->mom[VY] = onmo->mom[VY];
+                    if (onmo->origin[VZ] < onmo->floorZ)
                     {
-                        mobj->z += onmo->floorz-onmo->z;
-                        if(onmo->player)
+                        mobj->origin[VZ] += onmo->floorZ - onmo->origin[VZ];
+                        if (onmo->player)
                         {
-                            onmo->player->viewheight -= onmo->floorz-onmo->z;
-                            onmo->player->deltaviewheight = (VIEWHEIGHT-
-                                onmo->player->viewheight)>>3;
+                            onmo->player->viewHeight -= onmo->floorZ - onmo->origin[VZ];
+                            onmo->player->viewHeightDelta =
+                                (VIEWHEIGHT - onmo->player->viewHeight) / 8;
                         }
-                        onmo->z = onmo->floorz;
+                        onmo->origin[VZ] = onmo->floorZ;
                     }
                 }
+                */
             }
         }
         else
-#endif
-
-        P_MobjMoveZ(mobj);
+        {
+            P_MobjMoveZ(mobj);
+        }
 
         if (mobj->thinker.function != (thinkfunc_t) P_MobjThinker) return; // mobj was removed
 
