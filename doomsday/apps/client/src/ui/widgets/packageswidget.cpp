@@ -51,16 +51,17 @@
 
 using namespace de;
 
-static String const VAR_TITLE  ("title");
-static String const VAR_TAGS   ("tags");
-static String const TAG_HIDDEN ("hidden");
-static String const TAG_LOADED ("loaded");
-static String const TAG_CACHED ("cached");
+static String const VAR_TITLE("title");
+static String const VAR_TAGS("tags");
+static String const TAG_HIDDEN("hidden");
+static String const TAG_LOADED("loaded");
+static String const TAG_CACHED("cached");
 
 static TimeSpan const REFILTER_DELAY(0.2);
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus {
-    bool isPackageHighlighted(String const &packageId) const {
+    bool isPackageHighlighted(String const &packageId) const
+    {
         return App::packageLoader().isLoaded(packageId);
     }
 };
@@ -69,15 +70,15 @@ static PackageLoadStatus isPackageLoaded;
 PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
-, DENG2_OBSERVES(res::Bundles, Identify)
-, public ChildWidgetOrganizer::IWidgetFactory
+, DENG2_OBSERVES(res::Bundles, Identify), public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
      * Information about an available package.
      */
-    struct PackageItem : public ui::Item, DENG2_OBSERVES(File, Deletion)
-    {
-        File const *file;
+    struct PackageItem
+        : public ui::Item
+        , DENG2_OBSERVES(File, Deletion) {
+        File const *  file;
         Record const *info;
 
         PackageItem(File const &packFile)
@@ -111,16 +112,17 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     };
 
-//---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------
 
     /**
      * Widget showing information about a package and containing buttons for manipulating
      * the package.
      */
-    class PackageListItemWidget : public HomeItemWidget
-                                , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation) // actions
-                                , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)   // actions
-                                , DENG2_OBSERVES(Bank, Load) // package icons
+    class PackageListItemWidget
+        : public HomeItemWidget
+        , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetCreation) // actions
+        , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)   // actions
+        , DENG2_OBSERVES(Bank, Load)                           // package icons
     {
     public:
         PackageListItemWidget(PackageItem const &item, PackagesWidget &owner)
@@ -130,17 +132,17 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             icon().setImageFit(ui::FitToWidth | ui::OriginalAspectRatio);
             icon().margins().set("gap").setRight("");
-            icon().rule().setInput(Rule::Width, style().fonts().font("default").height()*3);
+            icon().rule().setInput(Rule::Width, style().fonts().font("default").height() * 3);
 
             _actions = new MenuWidget;
             _actions->enablePageKeys(false);
             _actions->enableScrolling(false);
             _actions->margins().setZero();
             _actions->organizer().audienceForWidgetCreation() += this;
-            _actions->organizer().audienceForWidgetUpdate()   += this;
+            _actions->organizer().audienceForWidgetUpdate() += this;
             _actions->setGridSize(0, ui::Expand, 1, ui::Expand);
             _actions->setItems(*owner.d->actionItems);
-            connect(this, &HomeItemWidget::doubleClicked, [this] () { triggerAction(); });
+            connect(this, &HomeItemWidget::doubleClicked, [this]() { triggerAction(); });
             addButton(_actions);
             setKeepButtonsVisible(!_owner.d->actionOnlyForSelection);
 
@@ -166,7 +168,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             if (!_item->file) return;
 
-            SequentialLayout layout(label().rule().left()   + label().margins().left(),
+            SequentialLayout layout(label().rule().left() + label().margins().left(),
                                     label().rule().bottom() - label().margins().bottom(),
                                     ui::Right);
 
@@ -174,8 +176,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 auto *btn = new ButtonWidget;
                 btn->setText(_E(l) + tag.toLower());
-                btn->setActionFn([this, tag] ()
-                {
+                btn->setActionFn([this, tag]() {
                     String terms = _owner.d->search->text();
                     if (!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
                     terms += tag.toLower();
@@ -184,8 +185,10 @@ DENG_GUI_PIMPL(PackagesWidget)
                 updateTagButtonStyle(btn, "accent");
                 btn->setSizePolicy(ui::Expand, ui::Expand);
                 btn->margins()
-                        .setTop(RuleBank::UNIT).setBottom(RuleBank::UNIT)
-                        .setLeft("gap").setRight("gap");
+                    .setTop(RuleBank::UNIT)
+                    .setBottom(RuleBank::UNIT)
+                    .setLeft("gap")
+                    .setRight("gap");
                 add(btn);
 
                 layout << *btn;
@@ -195,9 +198,8 @@ DENG_GUI_PIMPL(PackagesWidget)
             if (!_tags.isEmpty())
             {
                 //rule().setInput(Rule::Height, label().rule().height());
-                label().margins().setBottom(rule(RuleBank::UNIT)*2 +
-                                            style().fonts().font("small").height() +
-                                            rule("gap"));
+                label().margins().setBottom(rule(RuleBank::UNIT) * 2 +
+                                            style().fonts().font("small").height() + rule("gap"));
             }
             else
             {
@@ -259,7 +261,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if (ui::VariantActionItem const *varItem = maybeAs<ui::VariantActionItem>(item))
             {
-                label.setText      (varItem->label       (_actions->variantItemsEnabled()));
+                label.setText(varItem->label(_actions->variantItemsEnabled()));
                 label.setStyleImage(varItem->styleImageId(_actions->variantItemsEnabled()),
                                     label.fontId());
             }
@@ -282,7 +284,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         void updateContents()
         {
-            bool isFile = false;
+            bool isFile   = false;
             auto pkgIdVer = Package::split(packageId());
 
             if (pkgIdVer.first.startsWith("file."))
@@ -306,9 +308,8 @@ DENG_GUI_PIMPL(PackagesWidget)
                 icon().setImageScale(.5f);
             }
 
-            String labelText = String(_E(b) "%1\n" _E(l)_E(s) "%2")
-                    .arg(_item->label())
-                    .arg(pkgIdVer.first);
+            String labelText =
+                String(_E(b) "%1\n" _E(l) _E(s) "%2").arg(_item->label()).arg(pkgIdVer.first);
 
             if (!isFile && pkgIdVer.second.isValid())
             {
@@ -323,9 +324,10 @@ DENG_GUI_PIMPL(PackagesWidget)
             {
                 if (ButtonWidget *button = maybeAs<ButtonWidget>(w))
                 {
-                    button->setImageColor(style().colors().colorf(highlight? "text" : "inverted.text"));
-                    button->setColorTheme(highlight? invertColorTheme(_owner.d->selectedItemHilit)
-                                                   : invertColorTheme(_owner.d->selectedItem));
+                    button->setImageColor(
+                        style().colors().colorf(highlight ? "text" : "inverted.text"));
+                    button->setColorTheme(highlight ? invertColorTheme(_owner.d->selectedItemHilit)
+                                                    : invertColorTheme(_owner.d->selectedItem));
                 }
             }
 
@@ -363,20 +365,17 @@ DENG_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        String packageId() const
-        {
-            return _item->data().toString();
-        }
+        String packageId() const { return _item->data().toString(); }
 
         PopupWidget *makeInfoPopup() const
         {
-            return new PackageInfoDialog(_item->file);
+            return new PackageInfoDialog(_item->file, _owner.d->packageInfoMode);
         }
 
         float estimatedHeight() const override
         {
             float const fontHeight = style().fonts().font("default").height().value();
-            float estimate = fontHeight * 2 + label().margins().height().value();
+            float       estimate   = fontHeight * 2 + label().margins().height().value();
             return estimate;
         }
 
@@ -385,8 +384,8 @@ DENG_GUI_PIMPL(PackagesWidget)
             // Click the default action button (the last one).
             if (!_actions->items().isEmpty())
             {
-                auto *w = (defaultAction? _actions->childWidgets().last()
-                                        : _actions->childWidgets().first());
+                auto *w = (defaultAction ? _actions->childWidgets().last()
+                                         : _actions->childWidgets().first());
                 if (auto *button = maybeAs<ButtonWidget>(w))
                 {
                     button->trigger();
@@ -432,43 +431,44 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
 
     private:
-        PackagesWidget &_owner;
-        PackageItem const *_item;
-        Path _packagePath;
+        PackagesWidget &      _owner;
+        PackageItem const *   _item;
+        Path                  _packagePath;
         QList<ButtonWidget *> _tags;
-        MenuWidget *_actions = nullptr;
-        Id _iconId;
+        MenuWidget *          _actions = nullptr;
+        Id                    _iconId;
     };
 
-//---------------------------------------------------------------------------------------
+    //---------------------------------------------------------------------------------------
 
     LoopCallback mainCall;
     LoopCallback mainCallForIdentify;
 
     // Search filter:
     LineEditWidget *search;
-    Rule const *searchMinY = nullptr;
-    ButtonWidget *clearSearch;
-    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
-    QStringList filterTerms;
-    QTimer refilterTimer;
+    Rule const *    searchMinY = nullptr;
+    ButtonWidget *  clearSearch;
+    Animation       searchBackgroundOpacity{0.f, Animation::Linear};
+    QStringList     filterTerms;
+    QTimer          refilterTimer;
 
     ProgressWidget *refreshProgress;
 
     // Packages list:
-    StringList hiddenTags;
-    StringList manualPackagePaths; // if empty, all available packages used
-    HomeMenuWidget *menu;
+    StringList                 hiddenTags;
+    StringList                 manualPackagePaths; // if empty, all available packages used
+    HomeMenuWidget *           menu;
     ui::ListDataT<PackageItem> allPackages;
-    ui::FilteredData filteredPackages { allPackages };
-    ui::ListData defaultActionItems;
-    ui::Data const *actionItems = &defaultActionItems;
-    bool populateEnabled = true;
-    bool showHidden = false;
-    bool showOnlyLoaded = false;
-    bool dontFilterHidden = false;
-    bool actionOnlyForSelection = true;
-    bool rightClickToOpenContextMenu = false;
+    ui::FilteredData           filteredPackages{allPackages};
+    ui::ListData               defaultActionItems;
+    ui::Data const *           actionItems                 = &defaultActionItems;
+    bool                       populateEnabled             = true;
+    bool                       showHidden                  = false;
+    bool                       showOnlyLoaded              = false;
+    bool                       dontFilterHidden            = false;
+    bool                       actionOnlyForSelection      = true;
+    bool                       rightClickToOpenContextMenu = false;
+    PackageInfoDialog::Mode    packageInfoMode             = PackageInfoDialog::EnableActions;
 
     IPackageStatus const *packageStatus = &isPackageLoaded;
 
@@ -477,41 +477,42 @@ DENG_GUI_PIMPL(PackagesWidget)
     GuiWidget::ColorTheme unselectedItemHilit = GuiWidget::Inverted;
     GuiWidget::ColorTheme selectedItemHilit   = GuiWidget::Inverted;
 
-//- PackagesWidget::Pimpl Methods -------------------------------------------------------
+    //- PackagesWidget::Pimpl Methods -------------------------------------------------------
 
     /**
      * Initializes the PackagesWidget private implementation.
      * @param i  Public instance.
      */
-    Impl(Public *i)
+    Impl(Public * i)
         : Base(i)
-        , hiddenTags({ "core", "gamedata" })
+        , hiddenTags({"core", "gamedata"})
     {
-        defaultActionItems << new ui::VariantActionItem(tr("Load"), tr("Unload"), new CallbackAction([this] ()
-        {
-            DENG2_ASSERT(menu->interactedItem());
+        defaultActionItems << new ui::VariantActionItem(
+            tr("Load"), tr("Unload"), new CallbackAction([this]() {
+                DENG2_ASSERT(menu->interactedItem());
 
-            String const packageId = menu->interactedItem()->as<PackageItem>().data().toString();
+                String const packageId =
+                    menu->interactedItem()->as<PackageItem>().data().toString();
 
-            auto &loader = App::packageLoader();
-            if (loader.isLoaded(packageId))
-            {
-                loader.unload(packageId);
-            }
-            else
-            {
-                try
+                auto &loader = App::packageLoader();
+                if (loader.isLoaded(packageId))
                 {
-                    loader.load(packageId);
+                    loader.unload(packageId);
                 }
-                catch (Error const &er)
+                else
                 {
-                    LOG_RES_ERROR("Package \"" + packageId + "\" could not be loaded: " +
-                                  er.asText());
+                    try
+                    {
+                        loader.load(packageId);
+                    }
+                    catch (Error const &er)
+                    {
+                        LOG_RES_ERROR("Package \"" + packageId +
+                                      "\" could not be loaded: " + er.asText());
+                    }
                 }
-            }
-            menu->interactedItem()->notifyChange();
-        }));
+                menu->interactedItem()->notifyChange();
+            }));
 
         self().add(menu = new HomeMenuWidget);
         self().add(search = new LineEditWidget);
@@ -519,9 +520,9 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         // Search/filter terms.
         search->rule()
-                .setInput(Rule::Left,  self().rule().left()  + self().margins().left())
-                .setInput(Rule::Right, self().rule().right() - self().margins().right())
-                .setInput(Rule::Top,   self().rule().top()   + self().margins().top());
+            .setInput(Rule::Left, self().rule().left() + self().margins().left())
+            .setInput(Rule::Right, self().rule().right() - self().margins().right())
+            .setInput(Rule::Top, self().rule().top() + self().margins().top());
         search->setEmptyContentHint(tr("Search mods"));
         search->setSignalOnEnter(true);
         search->margins().setRight(style().fonts().font("default").height() + rule("gap"));
@@ -531,18 +532,17 @@ DENG_GUI_PIMPL(PackagesWidget)
         clearSearch->setSizePolicy(ui::Filled, ui::Filled);
         clearSearch->margins().set("");
         clearSearch->rule()
-                .setInput(Rule::Right,  search->rule().right() - rule("gap"))
-                .setInput(Rule::Height, search->font().lineSpacing())
-                .setInput(Rule::Width,  search->font().lineSpacing())
-                .setMidAnchorY(search->rule().midY());
-        clearSearch->setActionFn([this] () {
+            .setInput(Rule::Right, search->rule().right() - rule("gap"))
+            .setInput(Rule::Height, search->font().lineSpacing())
+            .setInput(Rule::Width, search->font().lineSpacing())
+            .setMidAnchorY(search->rule().midY());
+        clearSearch->setActionFn([this]() {
             search->setText("");
             root().setFocus(search);
         });
 
         // Filtered list of packages.
-        filteredPackages.setFilter([this] (ui::Item const &it)
-        {
+        filteredPackages.setFilter([this](ui::Item const &it) {
             auto &item = it.as<PackageItem>();
 
             // The terms are looked in:
@@ -559,18 +559,18 @@ DENG_GUI_PIMPL(PackagesWidget)
 
             if (!dontFilterHidden)
             {
-                const bool isHidden = Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
+                const bool isHidden =
+                    Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
                 if (showHidden ^ isHidden)
                 {
                     return false;
                 }
             }
 
-            return filterTerms.isEmpty() ||
-                   checkTerms({ item.data().toString(), // ID
-                                item.file->source()->name(), // file name
-                                item.info->gets(VAR_TITLE),
-                                item.info->gets(VAR_TAGS) });
+            return filterTerms.isEmpty() || checkTerms({item.data().toString(),      // ID
+                                                        item.file->source()->name(), // file name
+                                                        item.info->gets(VAR_TITLE),
+                                                        item.info->gets(VAR_TAGS)});
         });
         menu->setItems(filteredPackages);
         menu->setBehavior(ChildVisibilityClipping);
@@ -580,20 +580,25 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
         menu->layout().setRowPadding(Const(0));
         menu->rule()
-                .setInput(Rule::Left,  self().rule().left()  + self().margins().left())
-                .setInput(Rule::Right, self().rule().right() - self().margins().right())
-                .setInput(Rule::Top,   self().rule().top() + self().margins().top() + search->rule().height());
+            .setInput(Rule::Left, self().rule().left() + self().margins().left())
+            .setInput(Rule::Right, self().rule().right() - self().margins().right())
+            .setInput(Rule::Top,
+                      self().rule().top() + self().margins().top() + search->rule().height());
         menu->organizer().setWidgetFactory(*this);
-        menu->setVirtualizationEnabled(true, rule("gap").valuei()*2 + rule(RuleBank::UNIT).valuei() +
-                                       int(style().fonts().font("default").height().value()*3));
+        menu->setVirtualizationEnabled(
+            true,
+            rule("gap").valuei() * 2 + rule(RuleBank::UNIT).valuei() +
+                int(style().fonts().font("default").height().value() * 3));
         menu->organizer().setRecyclingEnabled(true); // homogeneous widgets
 
-        QObject::connect(search, &LineEditWidget::editorContentChanged, [this] () { updateFilterTerms(); });
-        QObject::connect(search, &LineEditWidget::enterPressed,         [this] () { focusFirstListedPackage(); });
+        QObject::connect(
+            search, &LineEditWidget::editorContentChanged, [this]() { updateFilterTerms(); });
+        QObject::connect(
+            search, &LineEditWidget::enterPressed, [this]() { focusFirstListedPackage(); });
 
         refilterTimer.setSingleShot(true);
         refilterTimer.setInterval(int(REFILTER_DELAY.asMilliSeconds()));
-        QObject::connect(&refilterTimer, &QTimer::timeout, [this] () { updateFilterTerms(true); });
+        QObject::connect(&refilterTimer, &QTimer::timeout, [this]() { updateFilterTerms(true); });
 
         // Refresh progress indicator.
         refreshProgress = new ProgressWidget;
@@ -604,8 +609,9 @@ DENG_GUI_PIMPL(PackagesWidget)
         // By default, only the progress indicator is shown.
         showProgressIndicator(true);
 
-        self().rule().setInput(Rule::Height, search->rule().height() + menu->rule().height() +
-                               self().margins().height());
+        self().rule().setInput(Rule::Height,
+                               search->rule().height() + menu->rule().height() +
+                                   self().margins().height());
     }
 
     ~Impl()
@@ -662,9 +668,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
         showProgressIndicator(false);
 
-        StringList packages =
-                (manualPackagePaths.isEmpty()? App::packageLoader().findAllPackages()
-                                             : manualPackagePaths);
+        StringList packages = (manualPackagePaths.isEmpty() ? App::packageLoader().findAllPackages()
+                                                            : manualPackagePaths);
 
         // Remove from the list those packages that are no longer listed.
         for (ui::DataPos i = 0; i < allPackages.size(); ++i)
@@ -735,10 +740,10 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             // Refiltering will potentially alter the widget tree, so doing it during
             // event handling is not a great idea.
-            mainCall.enqueue([this] ()
-            {
+            mainCall.enqueue([this]() {
                 /// @todo Parse quoted terms. -jk
-                setFilterTerms(search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
+                setFilterTerms(
+                    search->text().strip().split(QRegExp("\\s"), QString::SkipEmptyParts));
 
                 menu->setOpacity(1.f, REFILTER_DELAY);
             });
@@ -781,8 +786,7 @@ DENG_GUI_PIMPL(PackagesWidget)
         // After bundles have been refreshed, make sure the list items are up to date.
         if (!mainCallForIdentify)
         {
-            mainCallForIdentify.enqueue([this] ()
-            {
+            mainCallForIdentify.enqueue([this]() {
                 root().window().glActivate();
                 populateEnabled = true;
                 self().populate();
@@ -817,14 +821,14 @@ DENG_GUI_PIMPL(PackagesWidget)
         return true;
     }
 
-//- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
+    //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
     GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
     {
         return new PackageListItemWidget(item.as<PackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget & widget, ui::Item const &item) override
     {
         auto &w = widget.as<PackageListItemWidget>();
         w.setItem(item.as<PackageItem>());
@@ -871,6 +875,12 @@ void PackagesWidget::setManualPackageIds(StringList manualPackageIds)
     populate();
 }
 
+void PackagesWidget::setAllowPackageInfoActions(bool allowActions)
+{
+    d->packageInfoMode =
+        allowActions ? PackageInfoDialog::EnableActions : PackageInfoDialog::InformationOnly;
+}
+
 void PackagesWidget::setRightClickToOpenContextMenu(bool enable)
 {
     d->rightClickToOpenContextMenu = enable;
@@ -898,7 +908,8 @@ void PackagesWidget::setPopulationEnabled(bool enable)
 
 void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
 {
-    d->search->rule().setInput(Rule::Top, OperatorRule::maximum(minY, rule().top() + margins().top()));
+    d->search->rule().setInput(Rule::Top,
+                               OperatorRule::maximum(minY, rule().top() + margins().top()));
     changeRef(d->searchMinY, minY);
 }
 
@@ -1018,7 +1029,8 @@ void PackagesWidget::scrollToPackage(String const &packageId) const
 
             // Estimate the position.
             scrollArea.scrollY(pos * d->menu->organizer().averageChildHeight() -
-                               scrollArea.rule().height().value() / 2, 0.3);
+                                   scrollArea.rule().height().value() / 2,
+                               0.3);
         }
     }
 }
@@ -1059,7 +1071,7 @@ void PackagesWidget::update()
     }
 }
 
-void PackagesWidget::operator >> (PersistentState &toState) const
+void PackagesWidget::operator>>(PersistentState &toState) const
 {
     if (name().isEmpty()) return;
 
@@ -1067,7 +1079,7 @@ void PackagesWidget::operator >> (PersistentState &toState) const
     rec.set(name().concatenateMember("search"), d->search->text());
 }
 
-void PackagesWidget::operator << (PersistentState const &fromState)
+void PackagesWidget::operator<<(PersistentState const &fromState)
 {
     if (name().isEmpty()) return;
 

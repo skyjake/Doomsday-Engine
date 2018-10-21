@@ -153,7 +153,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         PopupWidget *makeInfoPopup() const
         {
-            return new PackageInfoDialog(_item->packageFile());
+            return new PackageInfoDialog(_item->packageFile(), PackageInfoDialog::EnableActions);
         }
 
     private:
@@ -224,7 +224,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
         {
             String const id = browser->actionPackage();
-            return new PackageInfoDialog(id);
+            return new PackageInfoDialog(id, PackageInfoDialog::EnableActions);
         });
 
         // Action for (de)selecting the package.

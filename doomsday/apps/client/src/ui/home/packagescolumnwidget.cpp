@@ -54,9 +54,9 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     {
         DoomsdayApp::app().audienceForGameChange() += this;
 
-        actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this] () -> PopupWidget *
-        {
-            return new PackageInfoDialog(packages->actionPackage());
+        actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this]() -> PopupWidget * {
+            return new PackageInfoDialog(packages->actionPackage(),
+                                         PackageInfoDialog::EnableActions);
         });
 
         countLabel = new LabelWidget;

@@ -51,24 +51,27 @@ using namespace de;
 
 DENG_GUI_PIMPL(PackageInfoDialog)
 {
-    LabelWidget *title;
-    LabelWidget *path;
-    DocumentWidget *description;
-    LabelWidget *icon;
-    LabelWidget *metaInfo;
-    IndirectRule *targetHeight;
-    IndirectRule *descriptionWidth;
-    IndirectRule *minContentHeight;
-    String packageId;
-    String compatibleGame; // guessed
-    NativePath nativePath;
-    const DataBundle *bundle = nullptr;
-    SafeWidgetPtr<PopupWidget> configurePopup;
+    Mode                           mode;
+    LabelWidget *                  title;
+    LabelWidget *                  path;
+    DocumentWidget *               description;
+    LabelWidget *                  icon;
+    LabelWidget *                  metaInfo;
+    IndirectRule *                 targetHeight;
+    IndirectRule *                 descriptionWidth;
+    IndirectRule *                 minContentHeight;
+    String                         packageId;
+    String                         compatibleGame; // guessed
+    NativePath                     nativePath;
+    const DataBundle *             bundle = nullptr;
+    SafeWidgetPtr<PopupWidget>     configurePopup;
     SafeWidgetPtr<PopupMenuWidget> profileMenu;
     enum MenuMode { AddToProfile, PlayInProfile };
     MenuMode menuMode;
 
-    Impl(Public *i) : Base(i)
+    Impl(Public * i, Mode mode)
+        : Base(i)
+        , mode(mode)
     {
         targetHeight     = new IndirectRule;
         descriptionWidth = new IndirectRule;
@@ -78,8 +81,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         // The Close button is always available. Other actions are shown depending
         // on what kind of package is being displayed.
-        self().buttons()
-                << new DialogButtonItem(Default | Accept, tr("Close"));
+        self().buttons() << new DialogButtonItem(Default | Accept, tr("Close"));
 
         createWidgets();
     }
@@ -115,26 +117,22 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         description->setFont("small");
 
         // Light-on-dark document.
-        description->setStyleColor(Font::RichFormat::NormalColor,    "label.dimmed");
+        description->setStyleColor(Font::RichFormat::NormalColor, "label.dimmed");
         description->setStyleColor(Font::RichFormat::HighlightColor, "label.highlight");
-        description->setStyleColor(Font::RichFormat::DimmedColor,    "label.dimmed");
-        description->setStyleColor(Font::RichFormat::AccentColor,    "label.accent");
+        description->setStyleColor(Font::RichFormat::DimmedColor, "label.dimmed");
+        description->setStyleColor(Font::RichFormat::AccentColor, "label.accent");
         description->setStyleColor(Font::RichFormat::DimAccentColor, "label.dimaccent");
-        description->progress().setColor      ("progress.light.wheel");
+        description->progress().setColor("progress.light.wheel");
         description->progress().setShadowColor("progress.light.shadow");
 
         description->setWidthPolicy(ui::Fixed);
-        description->rule().setInput(Rule::Height, contentHeight - title->rule().height()
-                                     - path->rule().height());
+        description->rule().setInput(
+            Rule::Height, contentHeight - title->rule().height() - path->rule().height());
         area.add(description);
 
-        SequentialLayout layout(area.contentRule().left(),
-                                area.contentRule().top(),
-                                ui::Down);
+        SequentialLayout layout(area.contentRule().left(), area.contentRule().top(), ui::Down);
         layout.setOverrideWidth(*descriptionWidth);
-        layout << *title
-               << *path
-               << *description;
+        layout << *title << *path << *description;
 
         // Right column.
         icon = LabelWidget::newWithText("", &area);
@@ -152,8 +150,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         SequentialLayout rightLayout(title->rule().right(), title->rule().top(), ui::Down);
         rightLayout.setOverrideWidth(rule("dialog.packageinfo.metadata.width"));
-        rightLayout << *icon
-                    << *metaInfo;
+        rightLayout << *icon << *metaInfo;
 
         targetHeight->setSource(rightLayout.height());
         area.setContentSize(layout.width() + rightLayout.width(), contentHeight);
@@ -180,11 +177,9 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         Game const &game = Games::get()[compatibleGame];
 
         res::LumpCatalog catalog;
-        catalog.setPackages(game.requiredPackages() + StringList({ packageId }));
-        Image img = IdTech1Image::makeGameLogo(game,
-                                               catalog,
-                                               IdTech1Image::NullImageIfFails |
-                                               IdTech1Image::UnmodifiedAppearance);
+        catalog.setPackages(game.requiredPackages() + StringList({packageId}));
+        Image img = IdTech1Image::makeGameLogo(
+            game, catalog, IdTech1Image::NullImageIfFails | IdTech1Image::UnmodifiedAppearance);
         if (!img.isNull())
         {
             setPackageIcon(img);
@@ -207,7 +202,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
     {
         try
         {
-            static StringList const imageExts({ ".jpg", ".jpeg", ".png" });
+            static StringList const imageExts({".jpg", ".jpeg", ".png"});
             foreach (String ext, imageExts)
             {
                 String const imgPath = packagePath / "icon" + ext;
@@ -217,7 +212,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                     if (iconImage.width() > 512 || iconImage.height() > 512)
                     {
                         throw Error("PackageInfoDialog::useIconFile",
-                                    "Icon file " + img->description() + " is too large (max 512x512)");
+                                    "Icon file " + img->description() +
+                                        " is too large (max 512x512)");
                     }
                     setPackageIcon(iconImage);
                     return;
@@ -245,8 +241,8 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         }
         Record const &meta = names.subrecord(Package::VAR_PACKAGE);
 
-        packageId = Package::versionedIdentifierForFile(*file);
-        nativePath = file->correspondingNativePath();
+        packageId       = Package::versionedIdentifierForFile(*file);
+        nativePath      = file->correspondingNativePath();
         String fileDesc = file->source()->description();
 
         String lumpDirCrc32;
@@ -266,8 +262,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             {
                 fileDesc = file->target().description();
             }
-            else if (bundle->format() == DataBundle::Iwad ||
-                     bundle->format() == DataBundle::Pwad)
+            else if (bundle->format() == DataBundle::Iwad || bundle->format() == DataBundle::Pwad)
             {
                 lumpDirCrc32 = String::format("%08x", bundle->lumpDirectory()->crc32());
             }
@@ -285,27 +280,24 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         }
 
         title->setText(meta.gets(Package::VAR_TITLE));
-        path->setText(String(_E(b) "%1" _E(.) "\n%2")
-                      .arg(format)
-                      .arg(fileDesc.upperFirstChar()));
+        path->setText(String(_E(b) "%1" _E(.) "\n%2").arg(format).arg(fileDesc.upperFirstChar()));
 
         // Metadata.
-        String metaMsg = String(_E(Ta)_E(l) "Version: " _E(.)_E(Tb) "%1\n"
-                                _E(Ta)_E(l) "Tags: "    _E(.)_E(Tb) "%2\n"
-                                _E(Ta)_E(l) "License: " _E(.)_E(Tb) "%3")
-                    .arg(meta.gets("version"))
-                    .arg(meta.gets("tags"))
-                    .arg(meta.gets("license"));
+        String metaMsg =
+            String(_E(Ta) _E(l) "Version: " _E(.) _E(Tb) "%1\n" _E(Ta) _E(l) "Tags: " _E(.)
+                       _E(Tb) "%2\n" _E(Ta) _E(l) "License: " _E(.) _E(Tb) "%3")
+                .arg(meta.gets("version"))
+                .arg(meta.gets("tags"))
+                .arg(meta.gets("license"));
         if (meta.has("author"))
         {
-            metaMsg += String("\n" _E(Ta)_E(l) "Author: "
-                              _E(.)_E(Tb) "%1").arg(meta.gets("author"));
-
+            metaMsg +=
+                String("\n" _E(Ta) _E(l) "Author: " _E(.) _E(Tb) "%1").arg(meta.gets("author"));
         }
         if (meta.has("contact"))
         {
-            metaMsg += String("\n" _E(Ta)_E(l) "Contact: "
-                              _E(.)_E(Tb) "%1").arg(meta.gets("contact"));
+            metaMsg +=
+                String("\n" _E(Ta) _E(l) "Contact: " _E(.) _E(Tb) "%1").arg(meta.gets("contact"));
         }
         metaInfo->setText(metaMsg);
 
@@ -333,10 +325,9 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                 bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
             {
                 int const mapCount = bundle->lumpDirectory()->findMaps().count();
-                moreMsg += QString("Contains %1 map%2: ")
-                        .arg(mapCount)
-                        .arg(DENG2_PLURAL_S(mapCount)) +
-                        String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
+                moreMsg +=
+                    QString("Contains %1 map%2: ").arg(mapCount).arg(DENG2_PLURAL_S(mapCount)) +
+                    String::join(bundle->lumpDirectory()->mapsInContiguousRangesAsText(), ", ");
                 moreMsg += "\n";
             }
 
@@ -379,7 +370,9 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         description->setText(msg.trimmed());
 
         // Show applicable package actions.
-        self().buttons()
+        if (mode == EnableActions)
+        {
+            self().buttons()
                 << new DialogButtonItem(Action | Id2,
                                         style().images().image("play"),
                                         tr("Play in..."),
@@ -388,21 +381,19 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                                         style().images().image("create"),
                                         tr("Add to..."),
                                         new SignalAction(thisPublic, SLOT(addToProfile())));
-
+        }
         if (!nativePath.isEmpty())
         {
-            self().buttons()
-                    << new DialogButtonItem(Action,
-                                            tr("Show File"),
-                                            new SignalAction(thisPublic, SLOT(showFile())));
+            self().buttons() << new DialogButtonItem(
+                Action, tr("Show File"), new SignalAction(thisPublic, SLOT(showFile())));
         }
-        if (Package::hasOptionalContent(*file))
+        if (mode == EnableActions && Package::hasOptionalContent(*file))
         {
-            self().buttons()
-                    << new DialogButtonItem(Action | Id1,
-                                            style().images().image("gear"),
-                                            tr("Options"),
-                                            new SignalAction(thisPublic, SLOT(configure())));
+            self().buttons() << new DialogButtonItem(
+                Action | Id1,
+                style().images().image("gear"),
+                tr("Options"),
+                new SignalAction(thisPublic, SLOT(configure())));
         }
         return true;
     }
@@ -430,7 +421,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
 
         QList<GameProfile *> profs = DoomsdayApp::gameProfiles().profilesSortedByFamily();
 
-        auto &items = profileMenu->items();
+        auto & items = profileMenu->items();
         String lastFamily;
         for (GameProfile *prof : profs)
         {
@@ -452,7 +443,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             if (prof->packages().contains(packageId))
             {
                 color = _E(C);
-                label += " " _E(s)_E(b)_E(D) + tr("ADDED");
+                label += " " _E(s) _E(b) _E(D) + tr("ADDED");
             }
             if (!compatibleGame.isEmpty() && prof->gameId() == compatibleGame)
             {
@@ -464,73 +455,80 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             }
             label = color + label;
 
-            items << new ui::ActionItem(label, new CallbackAction([this, prof] ()
-            {
-                profileSelectedFromMenu(*prof);
-            }));
+            items << new ui::ActionItem(
+                label, new CallbackAction([this, prof]() { profileSelectedFromMenu(*prof); }));
         }
 
         self().add(profileMenu);
         profileMenu->open();
     }
 
-    void profileSelectedFromMenu(GameProfile &profile)
+    void profileSelectedFromMenu(GameProfile & profile)
     {
         switch (menuMode)
         {
-        case AddToProfile:
-            profile.appendPackage(packageId);
-            break;
+            case AddToProfile: profile.appendPackage(packageId); break;
 
-        case PlayInProfile: {
-            auto &prof = DoomsdayApp::app().adhocProfile();
-            prof = profile;
-            prof.appendPackage(packageId);
-
-            // Generate an Episode definition if the package contains a single map.
-            if (bundle && bundle->format() == DataBundle::Pwad)
+            case PlayInProfile:
             {
-                const auto mapIds = bundle->lumpDirectory()->findMapLumpNames();
-                if (mapIds.size() == 1)
+                auto &prof = DoomsdayApp::app().adhocProfile();
+                prof       = profile;
+                prof.appendPackage(packageId);
+
+                // Generate an Episode definition if the package contains a single map.
+                if (bundle && bundle->format() == DataBundle::Pwad)
                 {
-                    using namespace std;
+                    const auto mapIds = bundle->lumpDirectory()->findMapLumpNames();
+                    if (mapIds.size() == 1)
+                    {
+                        using namespace std;
 
-                    ostringstream os;
-                    os << "# Episode definition for Ad-hoc profile (autogenerated)\n"
-                          "Episode {\n"
-                          "  ID = \"adhoc_play_in\"\n"
-                          "  Title = \"" << bundle->packageMetadata().gets(Package::VAR_TITLE).escaped().toStdString() << "\"\n"
-                          "  Start Map = \"" << mapIds.front().toStdString() << "\"\n"
-                          "  Map {\n"
-                          "    ID = \"" << mapIds.front().toStdString() << "\"\n"
-                          "    Warp Number = 1\n"
-                          "  }\n"
-                          "}\n";
+                        ostringstream os;
+                        os << "# Episode definition for Ad-hoc profile (autogenerated)\n"
+                              "Episode {\n"
+                              "  ID = \"adhoc_play_in\"\n"
+                              "  Title = \""
+                           << bundle->packageMetadata()
+                                  .gets(Package::VAR_TITLE)
+                                  .escaped()
+                                  .toStdString()
+                           << "\"\n"
+                              "  Start Map = \""
+                           << mapIds.front().toStdString()
+                           << "\"\n"
+                              "  Map {\n"
+                              "    ID = \""
+                           << mapIds.front().toStdString()
+                           << "\"\n"
+                              "    Warp Number = 1\n"
+                              "  }\n"
+                              "}\n";
 
-                    File &f = App::homeFolder().replaceFile("AdhocPlayInEpisode_1.0.ded");
-                    f << Block(os.str().c_str());
-                    f.reinterpret();
-                    App::homeFolder().populate();
-                    prof.appendPackage("file.ded.adhocplayinepisode_1.0.0");
+                        File &f = App::homeFolder().replaceFile("AdhocPlayInEpisode_1.0.ded");
+                        f << Block(os.str().c_str());
+                        f.reinterpret();
+                        App::homeFolder().populate();
+                        prof.appendPackage("file.ded.adhocplayinepisode_1.0.0");
+                    }
                 }
-            }
 
-            Loop::timer(0.1, [] {
-                // Switch the game.
-                GLWindow::main().glActivate();
-                BusyMode_FreezeGameForBusyMode();
-                DoomsdayApp::app().changeGame(DoomsdayApp::app().adhocProfile(),
-                                              DD_ActivateGameWorker);
-            });
-            self().accept();
-            break; }
+                Loop::timer(0.1, [] {
+                    // Switch the game.
+                    GLWindow::main().glActivate();
+                    BusyMode_FreezeGameForBusyMode();
+                    DoomsdayApp::app().changeGame(DoomsdayApp::app().adhocProfile(),
+                                                  DD_ActivateGameWorker);
+                });
+                self().accept();
+                break;
+            }
         }
     }
 };
 
-PackageInfoDialog::PackageInfoDialog(String const &packageId)
+PackageInfoDialog::PackageInfoDialog(String const &packageId, Mode mode)
     : DialogWidget("packagepopup")
-    , d(new Impl(this))
+    , d(new Impl(this, mode))
 {
     if (!d->setup(App::packageLoader().select(packageId)))
     {
@@ -538,9 +536,9 @@ PackageInfoDialog::PackageInfoDialog(String const &packageId)
     }
 }
 
-PackageInfoDialog::PackageInfoDialog(File const *packageFile)
+PackageInfoDialog::PackageInfoDialog(File const *packageFile, Mode mode)
     : DialogWidget("packagepopup")
-    , d(new Impl(this))
+    , d(new Impl(this, mode))
 {
     if (!d->setup(packageFile))
     {
@@ -559,14 +557,12 @@ void PackageInfoDialog::prepare()
 
     // Update the width of the dialog. Don't let it get wider than the window.
     d->descriptionWidth->setSource(OperatorRule::minimum(
-                                       useWideLayout?
-                                           rule("dialog.packageinfo.description.wide")
-                                         : rule("dialog.packageinfo.description.normal"),
-                                       root().viewWidth() - margins().width() -
-                                       d->metaInfo->rule().width()));
+        useWideLayout ? rule("dialog.packageinfo.description.wide")
+                      : rule("dialog.packageinfo.description.normal"),
+        root().viewWidth() - margins().width() - d->metaInfo->rule().width()));
 
-    d->minContentHeight->setSource(useWideLayout? rule("dialog.packageinfo.content.minheight")
-                                                : ConstantRule::zero());
+    d->minContentHeight->setSource(useWideLayout ? rule("dialog.packageinfo.content.minheight")
+                                                 : ConstantRule::zero());
 }
 
 void PackageInfoDialog::playInGame()
@@ -586,13 +582,10 @@ void PackageInfoDialog::configure()
     if (d->configurePopup) return; // Let it close itself.
 
     PopupWidget *pop = PackageContentOptionsWidget::makePopup(
-                d->packageId, rule("dialog.packages.left.width"), root().viewHeight());
+        d->packageId, rule("dialog.packages.left.width"), root().viewHeight());
     d->configurePopup.reset(pop);
     pop->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Left);
-    pop->closeButton().setActionFn([pop] ()
-    {
-        pop->close();
-    });
+    pop->closeButton().setActionFn([pop]() { pop->close(); });
 
     add(pop);
     pop->open();
@@ -603,6 +596,6 @@ void PackageInfoDialog::showFile()
     if (!d->nativePath.isEmpty())
     {
         QDesktopServices::openUrl(QUrl::fromLocalFile(
-                d->nativePath.isDirectory()? d->nativePath : d->nativePath.fileNamePath()));
+            d->nativePath.isDirectory() ? d->nativePath : d->nativePath.fileNamePath()));
     }
 }

@@ -61,6 +61,7 @@ public:
     de::ProgressWidget &progress();
 
     void setManualPackageIds(de::StringList manualPackageIds);
+    void setAllowPackageInfoActions(bool allowActions);
     void setRightClickToOpenContextMenu(bool enable);
     void setHiddenTags(de::StringList hiddenTags);
     void setDontFilterHidden(bool enable);

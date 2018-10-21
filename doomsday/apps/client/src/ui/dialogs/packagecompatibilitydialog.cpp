@@ -112,7 +112,8 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         {
             // The only action on the packages is to view information.
             actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this]() -> PopupWidget * {
-                return new PackageInfoDialog(list->actionPackage());
+                return new PackageInfoDialog(list->actionPackage(),
+                                             PackageInfoDialog::InformationOnly);
             });
 
             self().area().add(ignoreToggle = new ToggleWidget);
@@ -191,6 +192,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
                                 [](const std::pair<String, Version> &sv) { return sv.first; });
 
             self().area().add(list = new PackagesWidget(wantedAvailable + wantedDifferent));
+            list->setAllowPackageInfoActions(false);
             list->setDontFilterHidden(true);
             list->setActionItems(actions);
             list->setActionsAlwaysShown(true);

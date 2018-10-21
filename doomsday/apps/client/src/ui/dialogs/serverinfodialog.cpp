@@ -166,10 +166,11 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         bg->rule().setRect(mapOutline->rule())
                   .setInput(Rule::Bottom, gameState->rule().bottom());
 
-        serverPackageActions << new ui::SubwidgetItem(tr("..."), ui::Right, [this] () -> PopupWidget *
-        {
-             return new PackageInfoDialog(serverPackages->actionPackage());
-        });
+        serverPackageActions << new ui::SubwidgetItem(
+            tr("..."), ui::Right, [this]() -> PopupWidget * {
+                return new PackageInfoDialog(serverPackages->actionPackage(),
+                                             PackageInfoDialog::EnableActions);
+            });
 
         // Popups.
 

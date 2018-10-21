@@ -39,15 +39,19 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
         browser->rule().setInput(Rule::Width, rule("sidebar.width"));
 
         // Action for showing information about the package.
-        browser->actionItems().insert(0, new ui::ActionItem(tr("..."), new CallbackAction([this] ()
-        {
-            auto *pop = new PackageInfoDialog(browser->actionPackage());
-            root().addOnTop(pop);
-            pop->setDeleteAfterDismissed(true);
-            pop->setAnchorAndOpeningDirection(browser->actionWidget()->as<HomeItemWidget>()
-                                              .buttonWidget(0).rule(), ui::Up);
-            pop->open();
-        })));
+        browser->actionItems().insert(
+            0,
+            new ui::ActionItem(
+                tr("..."), new CallbackAction([this]() {
+                    auto *pop = new PackageInfoDialog(browser->actionPackage(),
+                                                      PackageInfoDialog::EnableActions);
+                    root().addOnTop(pop);
+                    pop->setDeleteAfterDismissed(true);
+                    pop->setAnchorAndOpeningDirection(
+                        browser->actionWidget()->as<HomeItemWidget>().buttonWidget(0).rule(),
+                        ui::Up);
+                    pop->open();
+                })));
     }
 };
 
