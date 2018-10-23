@@ -74,6 +74,7 @@ void P_DoTick()
         return;
 
     Thinker_Run();
+
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Extended lines and sectors.
     XG_Ticker();

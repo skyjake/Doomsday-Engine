@@ -39,6 +39,26 @@ MobjThinkerData::MobjThinkerData(MobjThinkerData const &other)
     , d(new Impl)
 {}
 
+void MobjThinkerData::think()
+{
+    auto &mo = *mobj();
+
+    coord_t lastOrigin[3];
+    memcpy(lastOrigin, mo.origin, sizeof(lastOrigin));
+    mo.ddFlags &= ~DDMF_MOVEBLOCKED;
+
+    ThinkerData::think();
+
+    // Flag the mobj if it didn't change position (per axis).
+    for (int axis = 0; axis < 3; ++axis)
+    {
+        if (fequal(lastOrigin[axis], mo.origin[axis]))
+        {
+            mo.ddFlags |= DDMF_MOVEBLOCKEDX << axis;
+        }
+    }
+}
+
 Thinker::IData *MobjThinkerData::duplicate() const
 {
     return new MobjThinkerData(*this);
