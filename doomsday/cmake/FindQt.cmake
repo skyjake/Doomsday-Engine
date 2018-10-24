@@ -1,6 +1,6 @@
 # Qmake is used to find out the Qt install location.
 if (NOT QMAKE)
-    find_program (QMAKE NAMES qmake-qt5 qt5-qmake qmake qmake-qt4 qt4-qmake
+    find_program (QMAKE NAMES qmake-qt5 qt5-qmake qmake qmake-qt4 qt4-qmake ${QT_QMAKE_EXECUTABLE}
         PATHS ENV PATH
         HINTS ${QT_QMAKE_EXECUTABLE} ENV DENG_DEPEND_PATH
         DOC "Path of the qmake executable to use"
@@ -49,7 +49,7 @@ if (NOT DEFINED QT_MODULE OR
     qmake_query (_qtLibs "QT_INSTALL_LIBS")
     set (QT_LIBS ${_qtLibs} CACHE PATH "Qt library directory")
     mark_as_advanced (QT_LIBS)
-    
+
     qmake_query (_qtPlugins "QT_INSTALL_PLUGINS")
     set (QT_PLUGINS ${_qtPlugins} CACHE PATH "Qt plugins directory")
     mark_as_advanced (QT_PLUGINS)
