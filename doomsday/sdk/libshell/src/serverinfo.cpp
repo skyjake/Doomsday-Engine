@@ -72,7 +72,7 @@ ServerInfo::ServerInfo(Record const &rec)
 }
 
 ServerInfo::ServerInfo(ServerInfo &&moved)
-    : Record(moved)
+    : Record(std::move(moved))
 {
     checkValid(*this);
 }
@@ -302,10 +302,10 @@ Block ServerInfo::asJSON() const
 Record ServerInfo::strippedForBroadcast() const
 {
     Record stripped(*this);
-    if (stripped.has(VAR_HOST))     stripped.remove(VAR_HOST);     // address in network msg
-    if (stripped.has(VAR_PLUGIN))   stripped.remove(VAR_PLUGIN);   // gameId+version is enough
-    if (stripped.has(VAR_PLAYERS))  stripped.remove(VAR_PLAYERS);  // count is enough
-    if (stripped.has(VAR_PACKAGES)) stripped.remove(VAR_PACKAGES); // queried before connecting
+    delete stripped.tryRemove(VAR_HOST);     // address in network msg
+    delete stripped.tryRemove(VAR_PLUGIN);   // gameId+version is enough
+    delete stripped.tryRemove(VAR_PLAYERS);  // count is enough
+    delete stripped.tryRemove(VAR_PACKAGES); // queried before connecting
     return stripped;
 }
 
