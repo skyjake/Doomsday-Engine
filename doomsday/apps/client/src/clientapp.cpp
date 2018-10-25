@@ -374,6 +374,9 @@ DENG2_PIMPL(ClientApp)
         }
 
         infineSys.deinitBindingContext();
+
+        // Disallow further saving of bindings until another game is loaded.
+        Con_SetAllowed(0);
     }
 
     void currentGameChanged(Game const &newGame)

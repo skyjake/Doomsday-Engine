@@ -797,7 +797,7 @@ int DD_ActivateGameWorker(void *context)
         }
         else
         {
-            configFile = App::rootFolder().tryLocate<File const>(App_CurrentGame().mainConfig());
+            configFile = FS::tryLocate<const File>(App_CurrentGame().mainConfig());
             Con_SetDefaultPath(App_CurrentGame().mainConfig());
 
             // This will be missing on the first launch.
@@ -814,7 +814,7 @@ int DD_ActivateGameWorker(void *context)
         ClientApp::inputSystem().bindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        if ((configFile = App::rootFolder().tryLocate<File const>(App_CurrentGame().bindingConfig()))
+        if ((configFile = FS::tryLocate<const File>(App_CurrentGame().bindingConfig()))
                 != nullptr)
         {
             Con_ParseCommands(*configFile);

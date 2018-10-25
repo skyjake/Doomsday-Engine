@@ -281,7 +281,14 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
 
 void Con_SetAllowed(int flags)
 {
-    flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
+    if (flags != 0)
+    {
+        flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
+    }
+    else
+    {
+        flagsAllow = 0;
+    }
 }
 
 bool Con_ParseCommands(File const &file, int flags)
