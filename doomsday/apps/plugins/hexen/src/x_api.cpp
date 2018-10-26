@@ -87,7 +87,7 @@ static int G_RegisterGames(int, int, void *)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen-dk.mapinfo"));
-    deathkings.addRequiredPackage("com.ravensoftware.hexen");
+    deathkings.addRequiredPackage("com.ravensoftware.hexen com.ravensoftware.hexen.mac");
     deathkings.addRequiredPackage("com.ravensoftware.hexen.deathkings");
     setCommonParameters(deathkings);
     //deathkings.addResource(RC_PACKAGE, FF_STARTUP, "hexdd.wad", "MAP59;MAP60");
@@ -104,7 +104,7 @@ static int G_RegisterGames(int, int, void *)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
-    hxn.addRequiredPackage("com.ravensoftware.hexen_1.1");
+    hxn.addRequiredPackage("com.ravensoftware.hexen_1.1 com.ravensoftware.hexen.mac_1.1");
     setCommonParameters(hxn);
     //hxn.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     hxn.addResource(RC_DEFINITION, 0, "hexen.ded", 0);

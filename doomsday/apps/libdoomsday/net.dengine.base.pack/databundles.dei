@@ -615,6 +615,20 @@ package "com.ravensoftware.hexen_1.1" {
     }
 }
 
+package "com.ravensoftware.hexen.mac_1.1" {
+    format: IWAD 
+    fileName: hexen.wad
+    fileSize: 21078584 
+    lumps <MAP08, MAP22, TINTTAB, FOGMAP, TRANTBLA, DARTA1, ARTIPORK, SKYFOG, TALLYTOP, GROVER>
+    lumpDirCRC32: 6340baf
+    info {
+        title: Hexen (Macintosh)
+        author: Raven Software
+        license: All rights reserved
+        tags: gamedata hexen vanilla mac
+    }
+}
+
 package "com.ravensoftware.hexen.beta" {
     format: IWAD 
     fileName <hexen.wad, hexenbeta.wad>
