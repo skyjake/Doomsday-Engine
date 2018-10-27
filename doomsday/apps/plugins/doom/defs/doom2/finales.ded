@@ -59,7 +59,7 @@ InFine
     ;
     Set back "TITLEPIC"
     MARKER pic_set2
-    Music "dm2ttl"
+    MusicOnce "dm2ttl"
     Wait 13 # Original was 11.
       
     # Step 6.

@@ -41,7 +41,7 @@ InFine
     
     # Step 5.
     Set back "TITLEPIC"
-    Music "dm2ttl"
+    MusicOnce "dm2ttl"
     Wait 13 # Original was 11.
 
     # Step 6.
