@@ -461,31 +461,41 @@ DENG2_PIMPL(ModelLoader)
         model.materialIndexForName.insert(MATERIAL_DEFAULT, 0);
         if (asset.has(DEF_MATERIAL))
         {
-            asset.subrecord(DEF_MATERIAL).forSubrecords(
-                [this, &model] (String const &blockName, Record const &block)
-            {
-                if (ScriptedInfo::blockType(block) == DEF_VARIANT)
-                {
-                    String const materialName = blockName;
-                    if (!model.materialIndexForName.contains(materialName))
+            asset.subrecord(DEF_MATERIAL)
+                .forSubrecords([this, &model](String const &blockName, Record const &block) {
+                    try
                     {
-                        // Add a new material.
-                        model.materialIndexForName.insert(materialName, model.addMaterial());
+                        if (ScriptedInfo::blockType(block) == DEF_VARIANT)
+                        {
+                            String const materialName = blockName;
+                            if (!model.materialIndexForName.contains(materialName))
+                            {
+                                // Add a new material.
+                                model.materialIndexForName.insert(materialName,
+                                                                  model.addMaterial());
+                            }
+                            block.forSubrecords([this, &model, &materialName](
+                                                    String const &matName, Record const &matDef) {
+                                setupMaterial(model,
+                                              matName,
+                                              model.materialIndexForName[materialName],
+                                              matDef);
+                                return LoopContinue;
+                            });
+                        }
+                        else
+                        {
+                            // The default material.
+                            setupMaterial(model, blockName, 0, block);
+                        }
                     }
-                    block.forSubrecords([this, &model, &materialName]
-                                        (String const &matName, Record const &matDef)
+                    catch (const Error &er)
                     {
-                        setupMaterial(model, matName, model.materialIndexForName[materialName], matDef);
-                        return LoopContinue;
-                    });
-                }
-                else
-                {
-                    // The default material.
-                    setupMaterial(model, blockName, 0, block);
-                }
-                return LoopContinue;
-            });
+                        LOG_GL_ERROR("Material variant \"%s\" is invalid: %s")
+                            << blockName << er.asText();
+                    }
+                    return LoopContinue;
+                });
         }
 
         // Set up the animation sequences for states.
@@ -551,6 +561,12 @@ DENG2_PIMPL(ModelLoader)
                         int meshId = identifierFromText(value->asText(), [&model] (String const &text) {
                             return model.meshId(text);
                         });
+                        if (meshId < 0 || meshId >= model.meshCount())
+                        {
+                            throw DefinitionError("ModelLoader::bankLoaded",
+                                                  "Unknown mesh \"" + value->asText() + "\" in " +
+                                                      ScriptedInfo::sourceLocation(def));
+                        }
                         pass.meshes.setBit(meshId, true);
                     }
 
@@ -651,11 +667,16 @@ DENG2_PIMPL(ModelLoader)
                        duint materialIndex,
                        Record const &matDef)
     {
-        ModelDrawable::MeshId const mesh {
-            duint(identifierFromText(meshName, [&model] (String const &text) {
-                return model.meshId(text); })),
-            materialIndex
-        };
+        int mid = identifierFromText(meshName,
+                                     [&model](const String &text) { return model.meshId(text); });
+        if (mid < 0 || mid >= model.meshCount())
+        {
+            throw DefinitionError("ModelLoader::setupMaterial",
+                                  "Mesh \"" + meshName + "\" not found in " +
+                                      ScriptedInfo::sourceLocation(matDef));
+        }
+
+        const ModelDrawable::MeshId mesh{duint(mid), materialIndex};
 
         setupMaterialTexture(model, mesh, matDef, QStringLiteral("diffuseMap"),  ModelDrawable::Diffuse);
         setupMaterialTexture(model, mesh, matDef, QStringLiteral("normalMap"),   ModelDrawable::Normals);

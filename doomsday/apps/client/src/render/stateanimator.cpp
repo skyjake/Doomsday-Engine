@@ -657,6 +657,13 @@ void StateAnimator::triggerByState(String const &stateName)
             String const node = seq.def->gets(DEF_NODE, "");
             int animId = d->animationId(seq.name);
 
+            if (animId < 0)
+            {
+                LOG_GL_ERROR("%s: animation sequence \"%s\" not found")
+                    << ScriptedInfo::sourceLocation(*seq.def) << seq.name;
+                break;
+            }
+
             bool const alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
             if (!alwaysTrigger)
             {
@@ -711,7 +718,7 @@ void StateAnimator::triggerByState(String const &stateName)
         }
         catch (ModelDrawable::Animator::InvalidError const &er)
         {
-            LOGDEV_GL_WARNING("Failed to start animation \"%s\": %s")
+            LOG_GL_WARNING("Failed to start animation \"%s\": %s")
                     << seq.name << er.asText();
             continue;
         }
@@ -748,9 +755,16 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
 
 void StateAnimator::startAnimation(int animationId, int priority, bool looping, String const &node)
 {
-    using Seq = Impl::Sequence;
-    d->start(Seq(animationId, node, looping? Seq::Looping : Seq::NotLooping,
-                 priority));
+    LOG_AS("StateAnimator::startAnimation");
+    try
+    {
+        using Seq = Impl::Sequence;
+        d->start(Seq(animationId, node, looping ? Seq::Looping : Seq::NotLooping, priority));
+    }
+    catch (const Error &er)
+    {
+        LOG_GL_ERROR("%s: %s") << d->names.gets(VAR_ID) << er.asText();
+    }
 }
 
 int StateAnimator::animationId(String const &name) const

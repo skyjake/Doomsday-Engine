@@ -374,6 +374,12 @@ static Value *Function_StateAnimator_StartSequence(Context &ctx, Function::Argum
 
         anim.startAnimation(animId, priority, looping, node);
     }
+    else
+    {
+        LOG_SCR_ERROR("%s has no animation \"%s\"")
+                << anim.objectNamespace().gets("ID")
+                << args.at(0)->asText();
+    }
     return nullptr;
 }
 
@@ -388,6 +394,11 @@ static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::Argum
                                &anim.objectNamespace(),
                                timelineName);
         return new TextValue(timelineName);
+    }
+    else
+    {
+        LOG_SCR_ERROR("%s has no timeline \"%s\"")
+            << anim.objectNamespace().gets("ID") << timelineName;
     }
     return nullptr;
 }
