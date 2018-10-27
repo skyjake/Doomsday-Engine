@@ -176,9 +176,21 @@ DENG2_PIMPL(PackageLoader)
         }
 
         // Each must have a version specified.
-        DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
         {
-            checkPackage(**i);
+            FS::FoundFiles checked;
+            DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
+            {
+                try
+                {
+                    checkPackage(**i);
+                    checked.push_back(*i);
+                }
+                catch (const Error &)
+                {
+                    // Packages with errors cannot be selected.
+                }
+            }
+            found = std::move(checked);
         }
 
         // If the identifier includes a version, only accept that specific version.
@@ -298,6 +310,10 @@ DENG2_PIMPL(PackageLoader)
                     // Not a loadable package.
                     LOG_RES_WARNING("\"%s\": Package has a syntax error: %s")
                             << fileName << er.asText();
+                }
+                catch (const Error &er)
+                {
+                    LOG_RES_WARNING("\"%s\": %s") << fileName << er.asText();
                 }
 
                 /// @todo Store the errors so that the UI can show a list of
