@@ -18,6 +18,7 @@
 
 #include "doomsday/DoomsdayApp"
 
+#include <de/Folder>
 #include <de/ScriptSystem>
 
 using namespace de;
@@ -36,8 +37,21 @@ static Value *Function_App_Download(Context &, Function::ArgumentValues const &a
     return nullptr;
 }
 
+static Value *Function_FS_RefreshPackageFolders(Context &, const Function::ArgumentValues &)
+{
+    LOG_SCR_MSG("Initializing package folders...");
+    Folder::afterPopulation([]() {
+        DoomsdayApp::app().initWadFolders();
+        DoomsdayApp::app().initPackageFolders();
+    });
+    return nullptr;
+}
+
 void DoomsdayApp::initBindings(Binder &binder)
 {
     binder.init(ScriptSystem::get().nativeModule("App"))
             << DENG2_FUNC(App_Download, "download", "packageId");
+
+    binder.init(ScriptSystem::get().nativeModule("FS"))
+            << DENG2_FUNC_NOARG(FS_RefreshPackageFolders, "refreshPackageFolders");
 }

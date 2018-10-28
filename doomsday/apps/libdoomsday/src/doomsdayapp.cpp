@@ -551,11 +551,13 @@ void DoomsdayApp::initialize()
 
 void DoomsdayApp::initWadFolders()
 {
+    d->dataBundles.waitForEverythingIdentified();
     d->initWadFolders();
 }
 
 void DoomsdayApp::initPackageFolders()
 {
+    d->dataBundles.waitForEverythingIdentified();
     DENG2_FOR_AUDIENCE2(FileRefresh, i) i->aboutToRefreshFiles();
     d->initPackageFolders();
 }
