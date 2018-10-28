@@ -58,6 +58,11 @@ DENG_GUI_PIMPL(MessageDialog)
         updateLayout();
     }
 
+    ~Impl() override
+    {
+        releaseRef(layoutWidth);
+    }
+
     void updateLayout(LayoutBehavior behavior = ExcludeHidden)
     {
         ScrollAreaWidget &area = self().area();

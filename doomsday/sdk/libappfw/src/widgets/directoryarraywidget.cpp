@@ -103,7 +103,7 @@ struct RecurseToggler
 
     TextValue key() const
     {
-        return {item->label()};
+        return {item->data().toString()};
     }
 
     void fetch()
@@ -117,6 +117,7 @@ struct RecurseToggler
     void toggleStateChanged(ToggleWidget &toggle) override
     {
         recursed().value().setElement(key(), new NumberValue(toggle.isActive()));
+        emit owner->arrayChanged();
     }
 
     void widgetBeingDeleted(Widget &) override
