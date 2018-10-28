@@ -162,7 +162,7 @@ DENG2_PIMPL(DoomsdayApp)
         filesys::RemoteFeedRelay::get().defineLink(IdgamesLink::construct);
     }
 
-    ~Impl()
+    ~Impl() override
     {
         if (initialized)
         {
@@ -173,13 +173,36 @@ DENG2_PIMPL(DoomsdayApp)
         Garbage_Recycle();
     }
 
-    void attachWadFeed(String const &description, NativePath const &path)
+    DirectoryFeed::Flags directoryPopulationMode(const NativePath &path) const
+    {
+        const TextValue dir{path.toString()};
+        if (Config::get().has("resource.recursedFolders"))
+        {
+            const auto &elems = Config::get().getdt("resource.recursedFolders").elements();
+            auto        i     = elems.find(&dir);
+            if (i != elems.end())
+            {
+                return i->second->isTrue() ? DirectoryFeed::PopulateNativeSubfolders
+                                           : DirectoryFeed::OnlyThisFolder;
+            }
+        }
+        return DirectoryFeed::PopulateNativeSubfolders;
+    }
+
+    void attachWadFeed(const String &       description,
+                       const NativePath &   path,
+                       DirectoryFeed::Flags populationMode = DirectoryFeed::OnlyThisFolder)
     {
         if (!path.isEmpty())
         {
             if (path.exists())
             {
-                LOG_RES_NOTE("Using %s WAD folder: %s") << description << path.pretty();
+                LOG_RES_NOTE("Using %s WAD folder%s: %s")
+                    << description
+                    << (populationMode == DirectoryFeed::OnlyThisFolder ? ""
+                                                                        : " (including subfolders)")
+                    << path.pretty();
+
                 Path folderPathBase = PATH_LOCAL_WADS;
                 if (path.segmentCount() >= 2)
                 {
@@ -188,14 +211,14 @@ DENG2_PIMPL(DoomsdayApp)
                 // Choose a unique folder name.
                 Path folderPath = folderPathBase;
                 int counter = 0;
-                while (FS::get().tryLocate<Folder>(folderPath))
+                while (FS::tryLocate<Folder>(folderPath))
                 {
                     folderPath = Path(String("%1-%2")
                             .arg(folderPathBase.toString())
                             .arg(++counter, 3, 10, QChar('0')));
                 }
                 FS::get().makeFolder(folderPath)
-                        .attach(new DirectoryFeed(path, DirectoryFeed::OnlyThisFolder));
+                        .attach(new DirectoryFeed(path, populationMode));
             }
             else
             {
@@ -205,15 +228,21 @@ DENG2_PIMPL(DoomsdayApp)
         }
     }
 
-    void attachPacksFeed(String const &description, NativePath const &path)
+    void attachPacksFeed(String const &description, NativePath const &path,
+                         DirectoryFeed::Flags populationMode)
     {
         if (!path.isEmpty())
         {
             if (path.exists())
             {
-                LOG_RES_NOTE("Using %s package folder (including subfolders): %s")
-                        << description << path.pretty();
-                App::rootFolder().locate<Folder>(PATH_LOCAL_PACKS).attach(new DirectoryFeed(path));
+                LOG_RES_NOTE("Using %s package folder%s: %s")
+                    << description
+                    << (populationMode == DirectoryFeed::OnlyThisFolder ? ""
+                                                                        : " (including subfolders)")
+                    << path.pretty();
+                App::rootFolder()
+                    .locate<Folder>(PATH_LOCAL_PACKS)
+                    .attach(new DirectoryFeed(path, populationMode));
             }
             else
             {
@@ -350,7 +379,7 @@ DENG2_PIMPL(DoomsdayApp)
         // Configured via GUI.
         for (String path : App::config().getStringList("resource.iwadFolder"))
         {
-            attachWadFeed("user-selected", path);
+            attachWadFeed("user-selected", path, directoryPopulationMode(path));
         }
 
         wads.populate(Folder::PopulateAsyncFullTree);
@@ -369,7 +398,8 @@ DENG2_PIMPL(DoomsdayApp)
         if (char *fn = UnixInfo_GetConfigValue("paths", "packsdir"))
         {
             attachPacksFeed("UnixInfo " _E(i) "paths.packsdir" _E(.),
-                            cmdLine.startupPath() / fn);
+                            cmdLine.startupPath() / fn,
+                            DirectoryFeed::DefaultFlags);
             free(fn);
         }
 #endif
@@ -382,14 +412,14 @@ DENG2_PIMPL(DoomsdayApp)
                 if (cmdLine.isOption(p)) break;
 
                 cmdLine.makeAbsolutePath(p);
-                attachPacksFeed("command-line", cmdLine.at(p));
+                attachPacksFeed("command-line", cmdLine.at(p), DirectoryFeed::DefaultFlags);
             }
         }
 
         // Configured via GUI.
         for (String path : App::config().getStringList("resource.packageFolder"))
         {
-            attachPacksFeed("user-selected", path);
+            attachPacksFeed("user-selected", path, directoryPopulationMode(path));
         }
 
         packs.populate(Folder::PopulateAsyncFullTree);

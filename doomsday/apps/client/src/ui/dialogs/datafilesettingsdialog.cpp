@@ -28,10 +28,10 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(DataFileSettingsDialog)
 {
-    Variable &iwadFolders = Config::get("resource.iwadFolder");
+//    Variable &iwadFolders = Config::get("resource.iwadFolder");
     Variable &pkgFolders  = Config::get("resource.packageFolder");
-    Id iwadGroup;
-    Id pkgGroup;
+//    Id iwadGroup;
+    Id searchGroup;
     bool modified = false;
 };
 
@@ -39,8 +39,10 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
     : DirectoryListDialog(name)
     , d(new Impl)
 {
-    buttons().clear()
-            << new DialogButtonItem(Default | Accept, tr("Close"));
+    buttons().remove(1);
+    /*buttons()
+            << new DialogButtonItem(Default | Accept, tr("Close"));*/
+    buttons().at(0).setLabel("Apply");
 
     title().setFont("heading");
     title().setText(tr("Data Files"));
@@ -55,15 +57,17 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
     //dlg->title().setText(QObject::tr("IWAD Folders"));
     //dlg->message().setText(QObject::tr("The following folders are searched for game data files:"));
 
-    d->iwadGroup = addGroup(tr("IWAD Folders"),
-                            tr("The following folders are searched for game IWAD files. "
-                               "Only these folders are checked, not their subfolders."));
-    setValue(d->iwadGroup, d->iwadFolders.value());
+    d->searchGroup = addGroup(
+        tr("Search Folders"),
+        tr("The following folders are searched for game IWAD files and mods like PWADs, PK3s, and "
+           "Doomsday packages. Toggle the " _E(b) "Subdirs" _E(.)
+           " option to include all subfolders as well."));
+    //setValue(d->iwadGroup, d->iwadFolders.value());
 
-    d->pkgGroup = addGroup(tr("Mod / Add-on Folders"),
-                           tr("The following folders and all their subfolders are searched "
-                              "for mods, resource packs, and other add-ons."));
-    setValue(d->pkgGroup, d->pkgFolders.value());
+//    d->pkgGroup = addGroup(tr("Mod / Add-on Folders"),
+//                           tr("The following folders and all their subfolders are searched "
+//                              "for mods, resource packs, and other add-ons."));
+    setValue(d->searchGroup, d->pkgFolders.value());
 
     connect(this, &DirectoryListDialog::arrayChanged, [this] ()
     {
@@ -77,14 +81,14 @@ void DataFileSettingsDialog::finish(int result)
 
     if (d->modified)
     {
-        d->iwadFolders.set(value(d->iwadGroup));
-        d->pkgFolders .set(value(d->pkgGroup));
+        //d->iwadFolders.set(value(d->iwadGroup));
+        d->pkgFolders.set(value(d->searchGroup));
 
         // Reload packages and recheck for game availability.
         auto &win = ClientWindow::main();
         win.console().closeLogAndUnfocusCommandLine();
         win.root().find("home-packages")->as<PackagesWidget>().showProgressIndicator();
-        DoomsdayApp::app().initWadFolders();
+//        DoomsdayApp::app().initWadFolders();
         DoomsdayApp::app().initPackageFolders();
     }
 }
