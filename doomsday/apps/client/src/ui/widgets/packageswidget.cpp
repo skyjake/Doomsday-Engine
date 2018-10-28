@@ -297,6 +297,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                 }
 
                 // Local files should not be indicated to be packages.
+                DENG2_ASSERT(!Folder::isPopulatingAsync());
                 if (NativeFile const *native = maybeAs<NativeFile>(_item->file->source()))
                 {
                     pkgIdVer.first = native->nativePath().pretty();
