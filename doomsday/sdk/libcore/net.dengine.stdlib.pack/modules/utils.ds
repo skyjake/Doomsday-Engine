@@ -16,22 +16,12 @@
 # along with this program; if not, see <http://www.gnu.org/licenses/>.
 
 #----------------------------------------------------------------------------
-# Utility routines for manipulating Records
+# Miscellaneous utility routines
 
-def copyMissingMembers(src, dest)
-    # Checks through 'src' to see if there are any variables or
-    # records not present in 'dest', and if those are found, inserts
-    # the missing members to 'dest'. Private keys in 'src' are ignored.
-    # - src:  Source record.
-    # - dest: Destination record.    
-    if typeof(dest) != 'Record': return  # Hmm?
-    srcSub = subrecords(src)    
-    for name in dir(src)        
-        if name[:2] == "__": continue  # Private members should be ignored.
-        if not name in dest
-            if name in srcSub: dest[name] = Record()
-            else: dest[name] = src[name]
-        end
-        if name in srcSub: copyMissingMembers(src[name], dest[name])
-    end
+def makeArray(value)
+    # Converts the 'value' to an Array, unless it already is an array.
+    # Note that if 'value' is an empty string, an empty array is returned.
+    if typeof(value) == 'Array': return value
+    if typeof(value) == 'Text' and value == '': return []
+    return [value]
 end

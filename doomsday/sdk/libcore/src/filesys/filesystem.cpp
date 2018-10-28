@@ -28,6 +28,7 @@
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/NativePath"
+#include "de/ScriptSystem"
 #include "de/ZipArchive"
 
 #include <QHash>
@@ -38,6 +39,7 @@ static FileIndex const emptyIndex; // never contains any files
 
 DENG2_PIMPL_NOREF(FileSystem)
 {
+    Record fsModule;
     QList<filesys::IInterpreter const *> interpreters;
 
     /// The main index to all files in the file system.
@@ -56,6 +58,8 @@ DENG2_PIMPL_NOREF(FileSystem)
     Impl()
     {
         root.reset(new Folder);
+
+        ScriptSystem::get().addNativeModule("FS", fsModule);
     }
 
     ~Impl()
