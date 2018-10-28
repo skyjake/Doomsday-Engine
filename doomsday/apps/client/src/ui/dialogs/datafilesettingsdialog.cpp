@@ -39,9 +39,7 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
     : DirectoryListDialog(name)
     , d(new Impl)
 {
-    buttons().remove(1);
-    /*buttons()
-            << new DialogButtonItem(Default | Accept, tr("Close"));*/
+    buttons().remove(1); // remove the Cancel
     buttons().at(0).setLabel("Apply");
 
     title().setFont("heading");

@@ -7,6 +7,7 @@
 # Config has already been loaded from persistent storage.
 
 import Version, App, Config, Input, SavedSession
+import utils
 
 def bindDefaultConsoleTildeKey()
     Input.bindEvent("global:key-tilde-down+key-shift-up", "taskbar")
@@ -44,6 +45,32 @@ def addOnLoadHookForAllGames(function)
     end    
 end
 
+def cleanPackageFolders()
+    # Config.resource.iwadFolder was used previously for IWADs
+    # (non-recursive), but now everything can be put in 
+    # Config.resource.packageFolder and recursing is specified
+    # separately.
+    try
+        res = Config.resource
+        if res.iwadFolder
+            res.packageFolder = utils.makeArray(res.packageFolder)
+            folders = utils.makeArray(res.iwadFolder)
+            print 'Cleaning up IWAD folders:', folders
+            for folder in folders
+                res.recursedFolders[folder] = False
+                if not folder in res.packageFolder
+                    res.packageFolder = [folder] + res.packageFolder
+                end
+            end
+            res.iwadFolder = ''
+            import FS
+            FS.refreshPackageFolders()
+        end
+    catch Error, er
+        print "Problem in cleanPackageFolders:", er
+    end
+end
+
 def upgradeMaintenance()
     if not 'OLD_VERSION' in Version: return
     
@@ -62,6 +89,8 @@ def upgradeMaintenance()
     if isUpgradedToBuild(1479)
         addOnLoadHookForAllGames(bindWindowsMenuKey)
     end
+    
+    cleanPackageFolders()
 end
 
 def cacheDataFiles()
