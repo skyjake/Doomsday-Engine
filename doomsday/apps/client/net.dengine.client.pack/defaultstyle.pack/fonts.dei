@@ -152,14 +152,14 @@ separator {
         size $: gui.scale(self.size, 0.5)
     }
     font label inherits default {
-        condition: Version.OS == 'macx' or Version.OS == 'ios'
+        #condition: Version.OS == 'macx' or Version.OS == 'ios'
         size $: gui.scale(self.size, 0.7)
         transform: uppercase
     }
-    font label inherits small {
-        condition: Version.OS != 'macx' and Version.OS != 'ios'
-        weight: bold
-    }
+    #font label inherits small {
+    #    condition: Version.OS != 'macx' and Version.OS != 'ios'
+    #    weight: bold
+    #}
     font annotation inherits small {}
 }
 
