@@ -61,13 +61,14 @@ DENG_GUI_PIMPL(VariableArrayWidget)
         menu->organizer().audienceForWidgetCreation() += this;
         menu->organizer().audienceForWidgetUpdate()   += this;
         menu->setGridSize(1, ui::Expand, 0, ui::Expand);
+        menu->layout().setRowPadding(2 * rule("unit"));
 
         updateFromVariable();
         var.audienceForDeletion() += this;
         var.audienceForChange()   += this;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         releaseRef(maxWidth);
     }
@@ -80,13 +81,16 @@ DENG_GUI_PIMPL(VariableArrayWidget)
         deleteButton->rule().setMidAnchorY(widget.rule().midY());
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &) override
+    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item) override
     {
         auto &label = widget.as<LabelWidget>();
         label.setSizePolicy(ui::Expand, ui::Expand);
         label.setMaximumTextWidth(*maxWidth);
-        widget.margins().setLeftRight("").setTopBottom(RuleBank::UNIT);
+        widget.margins().setRight("").setTopBottom("");
+        widget.margins().setLeft("");//deleteButton->rule().width());
         widget.addEventHandler(new HoverHandler(self()));
+
+        self().elementCreated(label, item);
     }
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item) override
@@ -173,8 +177,9 @@ VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
     d->menu->enableScrolling(false);
     d->menu->enablePageKeys(false);
     d->menu->rule()
-            .setLeftTop(margins().left() + rule().left(),
-                        margins().top()  + rule().top());
+            .setLeftTop(/*margins().left() + */rule().left(),
+                        margins().top()  + rule().top())
+            .setInput(Rule::Right, rule().right() - 2 * rule("gap"));
 
     d->addButton->setFont("small");
     d->addButton->setStyleImage("create", d->addButton->fontId());
@@ -219,6 +224,11 @@ MenuWidget &VariableArrayWidget::elementsMenu()
 String VariableArrayWidget::labelForElement(Value const &value) const
 {
     return value.asText();
+}
+
+void VariableArrayWidget::elementCreated(LabelWidget &, const ui::Item &)
+{
+    // Derived class may customize the label.
 }
 
 ButtonWidget &VariableArrayWidget::addButton()

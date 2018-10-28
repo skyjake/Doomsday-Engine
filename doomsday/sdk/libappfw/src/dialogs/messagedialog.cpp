@@ -29,6 +29,7 @@ DENG_GUI_PIMPL(MessageDialog)
     LabelWidget *        title;
     LabelWidget *        message;
     DialogContentStylist buttonStylist;
+    const Rule *         layoutWidth = nullptr;
 
     Impl(Public *i) : Base(i)
     {
@@ -52,6 +53,8 @@ DENG_GUI_PIMPL(MessageDialog)
         message->setAlignment(ui::AlignLeft);
         message->setTextLineAlignment(ui::AlignLeft);
 
+        layoutWidth = holdRef(rule("dialog.message.width"));
+
         updateLayout();
     }
 
@@ -62,7 +65,7 @@ DENG_GUI_PIMPL(MessageDialog)
         // Simple vertical layout.
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top());
-        layout.setOverrideWidth(rule("dialog.message.width"));
+        layout.setOverrideWidth(*layoutWidth);
 
         // Put all the widgets into the layout.
         foreach (GuiWidget *w, area.childWidgets())
@@ -104,6 +107,11 @@ LabelWidget &MessageDialog::title()
 LabelWidget &MessageDialog::message()
 {
     return *d->message;
+}
+
+void MessageDialog::setLayoutWidth(const Rule &layoutWidth)
+{
+    changeRef(d->layoutWidth, layoutWidth);
 }
 
 void MessageDialog::updateLayout(LayoutBehavior behavior)

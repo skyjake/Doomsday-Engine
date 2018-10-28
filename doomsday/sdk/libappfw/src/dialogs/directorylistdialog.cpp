@@ -19,7 +19,7 @@
 #include "de/DirectoryListDialog"
 #include "de/DirectoryArrayWidget"
 
-#include <de/SignalAction>
+#include <de/CallbackAction>
 
 namespace de {
 
@@ -71,8 +71,8 @@ DENG2_PIMPL(DirectoryListDialog)
         group->array.set(new ArrayValue);
         group->list = new DirectoryArrayWidget(group->array);
         group->list->margins().setZero();
-        //self().add(group->list->detachAddButton(self().area().rule().width()));
-        //group->list->addButton().hide();
+        self().add(group->list->detachAddButton(self().area().rule().width()));
+        group->list->addButton().hide();
         self().area().add(group->list);
 
         QObject::connect(group->list, SIGNAL(arrayChanged()),
@@ -87,11 +87,14 @@ DirectoryListDialog::DirectoryListDialog(String const &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
+    area().enableIndicatorDraw(true);
     buttons() << new DialogButtonItem(Default | Accept)
-              << new DialogButtonItem(Reject);
-              /*<< new DialogButtonItem(Action, style().images().image("create"),
+              << new DialogButtonItem(Reject)
+              << new DialogButtonItem(Action, style().images().image("create"),
                                       tr("Add Folder"),
-                                      new SignalAction(&d->list->addButton(), SLOT(trigger())));*/
+                                      new CallbackAction([this]() {
+        (*d->groups.begin())->list->addButton().trigger();
+    }));
 }
 
 Id DirectoryListDialog::addGroup(String const &title, String const &description)

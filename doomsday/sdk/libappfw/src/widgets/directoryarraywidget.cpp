@@ -21,8 +21,10 @@
 #include "de/BaseWindow"
 
 #include <de/Config>
+#include <de/Garbage>
 #include <de/NativePath>
 #include <de/TextValue>
+#include <de/ToggleWidget>
 #include <QFileDialog>
 
 namespace de {
@@ -65,6 +67,99 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
 String DirectoryArrayWidget::labelForElement(Value const &value) const
 {
     return NativePath(value.asText()).pretty();
+}
+
+static const String RECURSE_TOGGLE_NAME("recurse-toggle");
+
+/**
+ * Controller that syncs state between Config.resource.recurseFolders and the toggles
+ * in the DirectoryArrayWidget items. Destroys itself after the item widget is deleted.
+ */
+struct RecurseToggler
+    : DENG2_OBSERVES(ToggleWidget, Toggle)
+    , DENG2_OBSERVES(Widget, Deletion)
+    , DENG2_OBSERVES(ui::Item, Change)
+    , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+{
+    DirectoryArrayWidget *owner;
+    ToggleWidget *        tog;
+    const ui::Item *      item;
+
+    RecurseToggler(DirectoryArrayWidget *owner, LabelWidget &element, const ui::Item &item)
+        : owner(owner)
+        , item(&item)
+    {
+        tog = &element.guiFind(RECURSE_TOGGLE_NAME)->as<ToggleWidget>();
+        item.audienceForChange() += this;
+        element.audienceForDeletion() += this;
+        tog->audienceForToggle() += this;
+        owner->elementsMenu().organizer().audienceForWidgetUpdate() += this;
+    }
+
+    static Variable &recursed()
+    {
+        return Config::get("resource.recursedFolders");
+    }
+
+    TextValue key() const
+    {
+        return {item->label()};
+    }
+
+    void fetch()
+    {
+        if (recursed().value().contains(key()))
+        {
+            tog->setActive(recursed().value().element(key()).isTrue());
+        }
+    }
+
+    void toggleStateChanged(ToggleWidget &toggle) override
+    {
+        recursed().value().setElement(key(), new NumberValue(toggle.isActive()));
+    }
+
+    void widgetBeingDeleted(Widget &) override
+    {
+        item->audienceForChange() -= this;
+        // tog is already gone
+        trash(this);
+    }
+
+    void itemChanged(const ui::Item &) override
+    {
+        fetch();
+    }
+
+    void widgetUpdatedForItem(GuiWidget &, const ui::Item &) override
+    {
+        fetch();
+    }
+};
+
+void DirectoryArrayWidget::elementCreated(LabelWidget &element, const ui::Item &item)
+{
+    element.setSizePolicy(ui::Fixed, ui::Expand);
+    element.setAlignment(ui::AlignLeft);
+    element.setTextLineAlignment(ui::AlignLeft);
+    element.setMaximumTextWidth(rule().width());
+    element.rule().setInput(Rule::Width, rule().width() - margins().width());
+
+    // Add a toggle for configuration recurse mode.
+    auto *tog = new ToggleWidget(ToggleWidget::DefaultFlags, RECURSE_TOGGLE_NAME);
+    element.add(tog);
+    tog->setText("Subdirs");
+    tog->setActive(true); // recurse is on by default
+    tog->set(Background());
+    tog->setFont("small");
+    tog->margins().setLeft("unit").setRight("gap").setTop("unit").setBottom("unit");
+    tog->setSizePolicy(ui::Expand, ui::Expand);
+    tog->rule()
+            .setInput(Rule::Right, element.rule().right() - rule("gap"))
+            .setMidAnchorY(element.rule().midY());
+    element.margins().setRight(tog->rule().width() + rule("gap"));
+
+    new RecurseToggler(this, element, item); // deletes itself
 }
 
 } // namespace de

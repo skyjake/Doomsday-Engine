@@ -38,6 +38,8 @@ public:
     LabelWidget &title();
     LabelWidget &message();
 
+    void setLayoutWidth(const Rule &);
+
     enum LayoutBehavior { ExcludeHidden, IncludeHidden };
 
     /**

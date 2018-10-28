@@ -1,6 +1,6 @@
 # The Doomsday Engine Project -- Doomsday Base Library
 #
-# Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+# Copyright (c) 2013-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,12 @@ def setDefaults(d)
     record d.resource()
         iwadFolder = ''
         packageFolder = ''
+
+        # Dictionary of folders that should be fully recursed. Affects the 
+        # folders listed in resource.packageFolder (native path -> bool).
+        recursedFolders = {}
+        
+        # Online package repositories.
         repositories = {
             'idgames archive (gamers.org)': 'http://www.gamers.org/pub/idgames/',
             'idgames mirror (Idaho, USA)': 'http://mirrors.syringanetworks.net/idgames/',

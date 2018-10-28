@@ -70,6 +70,7 @@ signals:
 
 protected:
     virtual String labelForElement(Value const &value) const;
+    virtual void   elementCreated(LabelWidget &, const ui::Item &);
 
 public slots:
     void updateFromVariable();

@@ -35,6 +35,7 @@ public:
 
 protected:
     String labelForElement(Value const &value) const override;
+    void elementCreated(LabelWidget &, const ui::Item &) override;
 
 private:
     DENG2_PRIVATE(d)
