@@ -211,6 +211,8 @@ void Folder::clear()
 
 void Folder::populate(PopulationBehaviors behavior)
 {
+    fileSystem().changeBusyLevel(+1);
+
     LOG_AS("Folder");
     {
         DENG2_GUARD(this);
@@ -266,8 +268,7 @@ void Folder::populate(PopulationBehaviors behavior)
         }
     }
 
-    auto populationTask = [this, behavior] ()
-    {
+    auto populationTask = [this, behavior]() {
         Feed::PopulatedFiles newFiles;
 
         // Populate with new/updated ones.
@@ -302,6 +303,8 @@ void Folder::populate(PopulationBehaviors behavior)
                 folder->populate(behavior | PopulateCalledRecursively);
             }
         }
+
+        fileSystem().changeBusyLevel(-1);
     };
 
     if (internal::enableBackgroundPopulation)
@@ -538,6 +541,7 @@ void Folder::waitForPopulation(WaitBehavior waitBehavior)
         DENG2_ASSERT(!App::inMainThread());
         throw Error("Folder::waitForPopulation", "Not allowed to block the main thread");
     }
+    LOG_MSG("Waiting until folders have been populated");
     internal::populateTasks.waitForDone();
 }
 

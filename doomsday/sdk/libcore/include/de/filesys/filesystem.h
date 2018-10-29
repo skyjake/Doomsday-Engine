@@ -50,6 +50,11 @@
  * drive, one must call de::FileSystem::refresh() for the changes to be reflected
  * in the de::FileSystem index and tree.
  *
+ * Refreshing the file system can be done either synchronously or asynchrously.
+ * If the async mode is used, the user must be careful because files may
+ * disappear during pruning and population of folders. de::FileSystem provides
+ * a busy level that allows monitoring whether asynchronous tasks are ongoing.
+ *
  * ZIP (PK3) archives are visible in the libcore file system as Folder and
  * File instances just like regular native files are. This allows one to deploy
  * a large collection of resources as an archive and treat it at runtime just
@@ -115,6 +120,12 @@ public:
     typedef FileIndex::FoundFiles FoundFiles;
 
     static FileSystem &get();
+
+    enum BusyStatus { Idle, Busy };
+
+    /// File system busy level has become idle or is no longer idle.
+    /// Always called in the main thread.
+    DENG2_DEFINE_AUDIENCE2(Busy, void fileSystemBusyStatusChanged(BusyStatus))
 
 public:
     /**
@@ -326,6 +337,10 @@ public:
     void deindex(File &file);
 
     void timeChanged(Clock const &);
+
+    void changeBusyLevel(int increment);
+
+    void waitForIdle();
 
 public:
     template <typename T>
