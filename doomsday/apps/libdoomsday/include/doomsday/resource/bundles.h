@@ -93,7 +93,7 @@ public:
 
     bool isEverythingIdentified() const;
 
-    void waitForEverythingIdentified();
+//    void waitForEverythingIdentified();
 
     /**
      * Finds a matching entry in the registry for a given data bundle.

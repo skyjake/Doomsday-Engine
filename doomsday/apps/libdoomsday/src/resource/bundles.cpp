@@ -110,7 +110,7 @@ DENG2_PIMPL(Bundles)
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
         bool wasIdentified = false;
-        int count = 0;
+        int  count         = 0;
         Time startedAt;
 
         while (auto const *bundle = nextToIdentify())
@@ -208,10 +208,10 @@ Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) const
 
 void Bundles::identify()
 {
+    FS::get().changeBusyLevel(+1);
     d->tasks.start([this] ()
     {
         d->identifyAddedDataBundles();
-
         if (isEverythingIdentified())
         {
             DENG2_FOR_AUDIENCE2(Identify, i)
@@ -219,6 +219,7 @@ void Bundles::identify()
                 i->dataBundlesIdentified();
             }
         }
+        FS::get().changeBusyLevel(-1);
     });
 }
 
@@ -228,11 +229,11 @@ bool Bundles::isEverythingIdentified() const
     return d->bundlesToIdentify.isEmpty();
 }
 
-void Bundles::waitForEverythingIdentified()
+/*void Bundles::waitForEverythingIdentified()
 {
     identify();
     d->tasks.waitForDone();
-}
+}*/
 
 Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 {

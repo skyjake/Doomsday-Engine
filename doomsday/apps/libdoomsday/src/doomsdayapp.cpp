@@ -483,7 +483,6 @@ DENG2_PIMPL(DoomsdayApp)
     DENG2_PIMPL_AUDIENCE(GameUnload)
     DENG2_PIMPL_AUDIENCE(GameChange)
     DENG2_PIMPL_AUDIENCE(ConsoleRegistration)
-    DENG2_PIMPL_AUDIENCE(FileRefresh)
     DENG2_PIMPL_AUDIENCE(PeriodicAutosave)
 };
 
@@ -491,7 +490,6 @@ DENG2_AUDIENCE_METHOD(DoomsdayApp, GameLoad)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
-DENG2_AUDIENCE_METHOD(DoomsdayApp, FileRefresh)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, PeriodicAutosave)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
@@ -551,14 +549,13 @@ void DoomsdayApp::initialize()
 
 void DoomsdayApp::initWadFolders()
 {
-    d->dataBundles.waitForEverythingIdentified();
+    FS::get().waitForIdle();
     d->initWadFolders();
 }
 
 void DoomsdayApp::initPackageFolders()
 {
-    d->dataBundles.waitForEverythingIdentified();
-    DENG2_FOR_AUDIENCE2(FileRefresh, i) i->aboutToRefreshFiles();
+    FS::get().waitForIdle();
     d->initPackageFolders();
 }
 
