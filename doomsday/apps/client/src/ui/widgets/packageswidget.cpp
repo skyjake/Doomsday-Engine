@@ -78,35 +78,47 @@ DENG_GUI_PIMPL(PackagesWidget)
     struct PackageItem
         : public ui::Item
         , DENG2_OBSERVES(File, Deletion) {
-        File const *  file;
-        Record const *info;
+        SafePtr<const File> file;
+        const Record *      info = nullptr;
+        NativePath          nativePath;
 
         PackageItem(File const &packFile)
-            : file(&packFile)
-            , info(&file->objectNamespace().subrecord(Package::VAR_PACKAGE))
         {
-            file->audienceForDeletion() += this;
-            setData(Package::versionedIdentifierForFile(packFile));
-            setLabel(info->gets(Package::VAR_TITLE));
+            setFile(packFile);
         }
 
         void setFile(File const &packFile)
         {
+            if (file)
+            {
+                file->audienceForDeletion() -= this;
+            }
+            DENG2_GUARD(packFile);
             packFile.audienceForDeletion() += this;
-            file = &packFile;
+            file.reset(&packFile);
+            if (const auto *nat = maybeAs<NativeFile>(packFile.source()))
+            {
+                nativePath = nat->nativePath();
+            }
+            else
+            {
+                nativePath.clear();
+            }
             info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
+            setData(Package::versionedIdentifierForFile(packFile));
             setLabel(info->gets(Package::VAR_TITLE));
             notifyChange();
         }
 
         void fileBeingDeleted(File const &)
         {
-            file = nullptr;
             info = nullptr;
+            nativePath.clear();
         }
 
         bool isLoaded() const
         {
+            DENG2_GUARD(file);
             if (!file) return false;
             return PackageLoader::get().isLoaded(*file);
         }
@@ -297,10 +309,9 @@ DENG_GUI_PIMPL(PackagesWidget)
                 }
 
                 // Local files should not be indicated to be packages.
-                DENG2_ASSERT(!Folder::isPopulatingAsync());
-                if (NativeFile const *native = maybeAs<NativeFile>(_item->file->source()))
+                if (!_item->nativePath.isEmpty())
                 {
-                    pkgIdVer.first = native->nativePath().pretty();
+                    pkgIdVer.first = _item->nativePath.pretty();
                 }
             }
             else if (!_iconId)
