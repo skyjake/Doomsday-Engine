@@ -157,7 +157,7 @@ DENG2_PIMPL(RemoteFeedUser)
         try
         {
             // Make sure the file system is ready for use.
-            Folder::waitForPopulation();
+            FS::get().waitForIdle();
 
             std::unique_ptr<RemoteFeedMetadataPacket> response;
 

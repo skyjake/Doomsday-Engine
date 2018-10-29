@@ -541,8 +541,15 @@ void Folder::waitForPopulation(WaitBehavior waitBehavior)
         DENG2_ASSERT(!App::inMainThread());
         throw Error("Folder::waitForPopulation", "Not allowed to block the main thread");
     }
-    LOG_MSG("Waiting until folders have been populated");
-    internal::populateTasks.waitForDone();
+    Time startedAt;
+    {
+        internal::populateTasks.waitForDone();
+    }
+    const auto elapsed = startedAt.since();
+    if (elapsed > .01)
+    {
+        LOG_MSG("Waited for %.3f seconds for file system to be ready") << elapsed;
+    }
 }
 
 AsyncTask *Folder::afterPopulation(std::function<void ()> func)
