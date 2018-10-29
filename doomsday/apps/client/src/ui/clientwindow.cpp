@@ -39,6 +39,7 @@
 #include <de/DisplayMode>
 #include <de/Drawable>
 #include <de/FadeToBlackWidget>
+#include <de/FileSystem>
 #include <de/GLTextureFramebuffer>
 #include <de/GLState>
 #include <de/GLInfo>
@@ -80,6 +81,7 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(GLWindow, Resize)
 , DENG2_OBSERVES(GLWindow, Swap)
 , DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(FileSystem, Busy)
 #if !defined (DENG_MOBILE)
 , DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
 #endif
@@ -118,6 +120,9 @@ DENG2_PIMPL(ClientWindow)
     UniqueWidgetPtr<LabelWidget> fpsCounter;
     float oldFps = 0;
 
+    // File system notification.
+    UniqueWidgetPtr<ProgressWidget> fsBusy;
+
     /// @todo Switch dynamically between VR and plain.
     VRWindowTransform contentXf;
 
@@ -149,7 +154,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    ~Impl()
+    ~Impl() override
     {
         releaseRef(cursorX);
         releaseRef(cursorY);
@@ -263,7 +268,7 @@ DENG2_PIMPL(ClientWindow)
         quitButton->setImageColor(style.colors().colorf("accent"));
         quitButton->setTextAlignment(ui::AlignLeft);
         quitButton->set(GuiWidget::Background(style.colors().colorf("background")));
-        quitButton->setActionFn([this] () { Con_Execute(CMDS_DDAY, "quit!", false, false); });
+        quitButton->setActionFn([]() { Con_Execute(CMDS_DDAY, "quit!", false, false); });
         quitButton->rule()
                 .setInput(Rule::Top,    root.viewTop() + style.rules().rule("gap"))
                 .setInput(Rule::Left,   root.viewRight() + *quitX)
@@ -280,6 +285,15 @@ DENG2_PIMPL(ClientWindow)
         fpsCounter.reset(new LabelWidget);
         fpsCounter->setSizePolicy(ui::Expand, ui::Expand);
         fpsCounter->setAlignment(ui::AlignRight);
+
+        // File system busy indicator.
+        fsBusy.reset(new ProgressWidget);
+        fsBusy->setSizePolicy(ui::Expand, ui::Expand);
+        fsBusy->setMode(ProgressWidget::Indefinite);
+        fsBusy->useMiniStyle();
+        fsBusy->setText("Files");
+        fsBusy->setTextAlignment(ui::AlignRight);
+        FS::get().audienceForBusy() += this;
 
         // Everything behind the task bar can be blurred with this widget.
         taskBarBlur = new LabelWidget("taskbar-blur");
@@ -358,7 +372,12 @@ DENG2_PIMPL(ClientWindow)
 #endif
     }
 
-    void appStartupCompleted()
+    void fileSystemBusyStatusChanged(FS::BusyStatus bs) override
+    {
+        notifications->showOrHide(*fsBusy, bs == FS::Busy);
+    }
+
+    void appStartupCompleted() override
     {
         taskBar->show();
 
@@ -377,7 +396,7 @@ DENG2_PIMPL(ClientWindow)
         Loop::get().timer(1.0, [this] () { showOrHideQuitButton(); });
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(Game const &newGame) override
     {
         minimizeGame(false);
         showOrHideQuitButton();
@@ -540,7 +559,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void mouseStateChanged(MouseEventSource::State state)
+    void mouseStateChanged(MouseEventSource::State state) override
     {
         Mouse_Trap(state == MouseEventSource::Trapped);
     }
@@ -591,7 +610,7 @@ DENG2_PIMPL(ClientWindow)
         return false;
     }
 
-    void windowFocusChanged(GLWindow &, bool hasFocus)
+    void windowFocusChanged(GLWindow &, bool hasFocus) override
     {
         LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
                 << hasFocus << self().isFullScreen() << self().isHidden() << self().isMinimized();
@@ -633,7 +652,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void variableValueChanged(Variable &variable, Value const &newValue)
+    void variableValueChanged(Variable &variable, Value const &newValue) override
     {
         if (variable.name() == "fsaa")
         {
@@ -806,7 +825,7 @@ ClientWindow::ClientWindow(String const &id)
     setMain(this);
     WindowSystem::get().addWindow("main", this);
 #endif
-    
+
     audienceForInit()   += d;
     audienceForResize() += d;
     audienceForSwap()   += d;
@@ -817,7 +836,7 @@ ClientWindow::ClientWindow(String const &id)
 #endif
 
     d->setupUI();
-    
+
 #if defined (DENG_MOBILE)
     // Stay out from under the virtual keyboard.
     connect(this, &GLWindow::rootDimensionsChanged, [this] (QRect rect)
@@ -936,10 +955,10 @@ void ClientWindow::drawWindowContent()
 {
 #if defined (DENG_MOBILE)
     {
-        
+
     }
 #endif
-    
+
     DENG2_ASSERT_IN_RENDER_THREAD();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
