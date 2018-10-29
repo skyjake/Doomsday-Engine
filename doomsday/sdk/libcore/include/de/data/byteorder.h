@@ -40,7 +40,7 @@ public:
      * @param networkValue  Value in network byte order.
      * @param hostValue     Value in the host's host byte order.
      */
-    virtual void networkToHost(duint16 const &networkValue, duint16 &hostValue) const = 0;
+    virtual void networkToHost(duint16 networkValue, duint16 &hostValue) const = 0;
 
     /**
      * Converts a 32-bit unsigned integer from network byte order to the host order.
@@ -48,7 +48,7 @@ public:
      * @param networkValue  Value in network byte order.
      * @param hostValue     Value in the host's host byte order.
      */
-    virtual void networkToHost(duint32 const &networkValue, duint32 &hostValue) const = 0;
+    virtual void networkToHost(duint32 networkValue, duint32 &hostValue) const = 0;
 
     /**
      * Converts a 64-bit unsigned integer from network byte order to the host order.
@@ -56,7 +56,7 @@ public:
      * @param networkValue  Value in network byte order.
      * @param hostValue     Value in the host's host byte order.
      */
-    virtual void networkToHost(duint64 const &networkValue, duint64 &hostValue) const = 0;
+    virtual void networkToHost(duint64 networkValue, duint64 &hostValue) const = 0;
 
     /**
      * Converts a 16-bit unsigned integer from host byte order to the network order.
@@ -64,7 +64,7 @@ public:
      * @param hostValue     Value in the host's host byte order.
      * @param networkValue  Value in network byte order is written here.
      */
-    virtual void hostToNetwork(duint16 const &hostValue, duint16 &networkValue) const = 0;
+    virtual void hostToNetwork(duint16 hostValue, duint16 &networkValue) const = 0;
 
     /**
      * Converts a 32-bit unsigned integer from host byte order to the network order.
@@ -72,7 +72,7 @@ public:
      * @param hostValue     Value in the host's host byte order.
      * @param networkValue  Value in network byte order is written here.
      */
-    virtual void hostToNetwork(duint32 const &hostValue, duint32 &networkValue) const = 0;
+    virtual void hostToNetwork(duint32 hostValue, duint32 &networkValue) const = 0;
 
     /**
      * Converts a 64-bit unsigned integer from host byte order to the network order.
@@ -80,32 +80,32 @@ public:
      * @param hostValue     Value in the host's host byte order.
      * @param networkValue  Value in network byte order is written here.
      */
-    virtual void hostToNetwork(duint64 const &hostValue, duint64 &networkValue) const = 0;
+    virtual void hostToNetwork(duint64 hostValue, duint64 &networkValue) const = 0;
 
     // The signed variants.
-    void hostToNetwork(dint16 const &hostValue, dint16 &networkValue) const;
-    void hostToNetwork(dint32 const &hostValue, dint32 &networkValue) const;
-    void hostToNetwork(dint64 const &hostValue, dint64 &networkValue) const;
-    void networkToHost(dint16 const &networkValue, dint16 &hostValue) const;
-    void networkToHost(dint32 const &networkValue, dint32 &hostValue) const;
-    void networkToHost(dint64 const &networkValue, dint64 &hostValue) const;
+    void hostToNetwork(dint16 hostValue, dint16 &networkValue) const;
+    void hostToNetwork(dint32 hostValue, dint32 &networkValue) const;
+    void hostToNetwork(dint64 hostValue, dint64 &networkValue) const;
+    void networkToHost(dint16 networkValue, dint16 &hostValue) const;
+    void networkToHost(dint32 networkValue, dint32 &hostValue) const;
+    void networkToHost(dint64 networkValue, dint64 &hostValue) const;
 
     // Floating point.
-    void hostToNetwork(dfloat const &hostValue, dfloat &networkValue) const;
-    void hostToNetwork(ddouble const &hostValue, ddouble &networkValue) const;
-    void networkToHost(dfloat const &networkValue, dfloat &hostValue) const;
-    void networkToHost(ddouble const &networkValue, ddouble &hostValue) const;
+    void hostToNetwork(dfloat hostValue, dfloat &networkValue) const;
+    void hostToNetwork(ddouble hostValue, ddouble &networkValue) const;
+    void networkToHost(dfloat networkValue, dfloat &hostValue) const;
+    void networkToHost(ddouble networkValue, ddouble &hostValue) const;
 
     // Convenience.
     template <typename T>
-    T toNetwork(T const &hostValue) const {
+    T toNetwork(T hostValue) const {
         T networkValue;
         hostToNetwork(hostValue, networkValue);
         return networkValue;
     }
 
     template <typename T>
-    T toHost(T const &networkValue) const {
+    T toHost(T networkValue) const {
         T hostValue;
         networkToHost(networkValue, hostValue);
         return hostValue;
@@ -123,12 +123,12 @@ public:
     using ByteOrder::networkToHost;
     using ByteOrder::hostToNetwork;
 
-    void networkToHost(duint16 const &networkValue, duint16 &hostValue) const;
-    void networkToHost(duint32 const &networkValue, duint32 &hostValue) const;
-    void networkToHost(duint64 const &networkValue, duint64 &hostValue) const;
-    void hostToNetwork(duint16 const &hostValue, duint16 &networkValue) const;
-    void hostToNetwork(duint32 const &hostValue, duint32 &networkValue) const;
-    void hostToNetwork(duint64 const &hostValue, duint64 &networkValue) const;
+    void networkToHost(duint16 networkValue, duint16 &hostValue) const;
+    void networkToHost(duint32 networkValue, duint32 &hostValue) const;
+    void networkToHost(duint64 networkValue, duint64 &hostValue) const;
+    void hostToNetwork(duint16 hostValue, duint16 &networkValue) const;
+    void hostToNetwork(duint32 hostValue, duint32 &networkValue) const;
+    void hostToNetwork(duint64 hostValue, duint64 &networkValue) const;
 };
 
 /// Network byte order is big endian.
@@ -145,21 +145,21 @@ public:
     using ByteOrder::networkToHost;
     using ByteOrder::hostToNetwork;
 
-    void networkToHost(duint16 const &networkValue, duint16 &hostValue) const;
-    void networkToHost(duint32 const &networkValue, duint32 &hostValue) const;
-    void networkToHost(duint64 const &networkValue, duint64 &hostValue) const;
-    void hostToNetwork(duint16 const &hostValue, duint16 &networkValue) const;
-    void hostToNetwork(duint32 const &hostValue, duint32 &networkValue) const;
-    void hostToNetwork(duint64 const &hostValue, duint64 &networkValue) const;
+    void networkToHost(duint16 networkValue, duint16 &hostValue) const;
+    void networkToHost(duint32 networkValue, duint32 &hostValue) const;
+    void networkToHost(duint64 networkValue, duint64 &hostValue) const;
+    void hostToNetwork(duint16 hostValue, duint16 &networkValue) const;
+    void hostToNetwork(duint32 hostValue, duint32 &networkValue) const;
+    void hostToNetwork(duint64 hostValue, duint64 &networkValue) const;
 };
 
 // Swaps the bytes of a 16-bit unsigned integer.
-inline duint16 swap16(duint16 const &n) {
+inline duint16 swap16(duint16 n) {
     return duint16((n & 0xff) << 8) | duint16((n & 0xff00) >> 8);
 }
 
 /// Swaps the bytes of a 32-bit unsigned integer.
-inline duint32 swap32(duint32 const &n) {
+inline duint32 swap32(duint32 n) {
     return ( ((n & 0xff)     << 24) | ((n & 0xff00)     << 8)
            | ((n & 0xff0000) >> 8)  | ((n & 0xff000000) >> 24));
 }
