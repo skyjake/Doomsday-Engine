@@ -61,7 +61,12 @@ Value::Number Value::asSafeNumber(Number const &defaultValue) const
 
 int Value::asInt() const
 {
-    return round<int>(asNumber());
+    const double num = asNumber();
+    if (num > std::numeric_limits<int>::max())
+    {
+        return std::numeric_limits<int>::max();
+    }
+    return round<int>(num);
 }
 
 StringList Value::asStringList() const

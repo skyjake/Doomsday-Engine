@@ -179,6 +179,10 @@ DENG2_PIMPL(ClientWindow)
     {
         Style &style = ClientApp::windowSystem().style();
 
+        // This is a shared widget so it may be accessed during initialization of other widgets;
+        // create it first.
+        taskBarBlur = new LabelWidget("taskbar-blur");
+
         gameWidth ->set(root.viewWidth());
         gameHeight->set(root.viewHeight());
 
@@ -293,10 +297,8 @@ DENG2_PIMPL(ClientWindow)
         fsBusy->useMiniStyle();
         fsBusy->setText("Files");
         fsBusy->setTextAlignment(ui::AlignRight);
-        FS::get().audienceForBusy() += this;
 
         // Everything behind the task bar can be blurred with this widget.
-        taskBarBlur = new LabelWidget("taskbar-blur");
         if (style.isBlurringAllowed())
         {
             taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
@@ -393,6 +395,7 @@ DENG2_PIMPL(ClientWindow)
             taskBar->close();
         }
 
+        FS::get().audienceForBusy() += this;
         Loop::get().timer(1.0, [this] () { showOrHideQuitButton(); });
     }
 

@@ -41,6 +41,7 @@ DENG2_PIMPL(GuiApp)
 
     Impl(Public *i) : Base(i)
     {
+        loop.setRate(120);
         loop.audienceForIteration() += self();
 
         // The default render thread is the main thread.

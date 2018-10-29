@@ -28,8 +28,8 @@
 
 namespace de {
 
-File1::File1(FileHandle &hndl, String _path, FileInfo const &_info, File1 *_container)
-    : handle_(&hndl)
+File1::File1(FileHandle *hndl, String _path, FileInfo const &_info, File1 *_container)
+    : handle_(hndl)
     , info_(_info)
     , container_(_container)
     , flags(DefaultFlags)

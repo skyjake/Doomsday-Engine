@@ -269,7 +269,7 @@ static bool applyGamePathMappings(String &path)
 
 using namespace internal;
 
-Zip::LumpFile::LumpFile(Entry &entry, FileHandle &hndl, String path,
+Zip::LumpFile::LumpFile(Entry &entry, FileHandle *hndl, String path,
     FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
     , entry(entry)
@@ -361,7 +361,7 @@ DENG2_PIMPL(Zip)
 };
 
 Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
-    : File1(hndl, path, info, container)
+    : File1(&hndl, path, info, container)
     , LumpIndex(true/*paths are unique*/)
     , d(new Impl(this))
 {
@@ -510,8 +510,7 @@ Zip::Zip(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
             entry.size           = DD_ULONG(header->size);
             entry.compressedSize = compressedSize;
 
-            FileHandle *dummy = 0; /// @todo Fixme!
-            LumpFile *lumpFile = new LumpFile(entry, *dummy, entry.path(),
+            LumpFile *lumpFile = new LumpFile(entry, nullptr, entry.path(),
                                               FileInfo(lastModified(), // Inherited from the file (note recursion).
                                               lumpIdx, entry.offset, entry.size, entry.compressedSize),
                                               this);
