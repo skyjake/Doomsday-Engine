@@ -143,12 +143,17 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         Vector2i const viewSize = self().viewportSize();
         if (viewSize == Vector2i()) return RectanglefPair();
 
-        auto const &margins = self().margins();
-
-        int const indHeight = de::clamp(
+        const auto &margins = self().margins();
+        const float contentHeight = float(contentRule.height().value());
+        int indHeight = 0;
+        
+        if (contentHeight > 0)
+        {
+            indHeight = de::clamp(
                     margins.height().valuei(),
-                    int(float(viewSize.y * viewSize.y) / float(contentRule.height().value())),
+                    int(float(viewSize.y * viewSize.y) / contentHeight),
                     viewSize.y / 2);
+        }
 
         float indPos = self().scrollPositionY().value() / self().maximumScrollY().value();
         if (origin == Top) indPos = 1 - indPos;

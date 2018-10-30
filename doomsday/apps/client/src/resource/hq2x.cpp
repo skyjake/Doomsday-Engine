@@ -253,9 +253,9 @@ void GL_InitSmartFilterHQ2x(void)
                 r = i << 3;
                 g = j << 2;
                 b = k << 3;
-                y = (uint32_t)( 0.299*r + 0.587*g + 0.114*b);
-                u = (uint32_t)(-0.169*r - 0.331*g + 0.5  *b) + 128;
-                v = (uint32_t)( 0.5  *r - 0.419*g - 0.081*b) + 128;
+                y = (uint32_t) de::clamp(0.0, ( 0.299*r + 0.587*g + 0.114*b),       255.0);
+                u = (uint32_t) de::clamp(0.0, (-0.169*r - 0.331*g + 0.5  *b) + 128, 255.0);
+                v = (uint32_t) de::clamp(0.0, ( 0.5  *r - 0.419*g - 0.081*b) + 128, 255.0);
                 lutBGR888toYUV888[BGR565_PACK(k, j, i)] = YUV888_PACK(y, u, v);
             }
 }
