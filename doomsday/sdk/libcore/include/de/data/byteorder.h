@@ -165,7 +165,7 @@ inline duint32 swap32(duint32 n) {
 }
 
 /// Swaps the bytes in a 64-bit unsigned integer.
-duint64 swap64(duint64 const &n);
+duint64 swap64(duint64 n);
 
 /// Globally available big-endian byte order converter.
 DENG2_PUBLIC extern BigEndianByteOrder bigEndianByteOrder;

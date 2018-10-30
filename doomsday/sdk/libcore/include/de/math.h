@@ -39,14 +39,14 @@ namespace de {
  */
 
 //#undef PI
-ddouble const PI = 3.1415926535897932384626433832795028841971693993751;
-dfloat const PIf = dfloat(PI);
-ddouble const EPSILON = 1.0e-7;
-dfloat const FLOAT_EPSILON = 1.0e-5f;
+const ddouble PI            = 3.1415926535897932384626433832795028841971693993751;
+const dfloat  PIf           = dfloat(PI);
+const ddouble EPSILON       = 1.0e-7;
+const dfloat  FLOAT_EPSILON = 1.0e-5f;
 
 /// Absolute value.
 template <typename Type>
-inline Type abs(Type const &a) {
+inline Type abs(Type a) {
     if (a < Type(0)) {
         return -a;
     }
@@ -54,54 +54,54 @@ inline Type abs(Type const &a) {
 }
 
 // Special case, this is never negative.
-inline duint abs(duint const &a) {
+inline duint abs(duint a) {
     return a;
 }
 
 template <typename Type>
-inline Type sign(Type const &a) {
+inline Type sign(Type a) {
     if (a < 0) return Type(-1); else return Type(1);
 }
 
 /// Minimum of two values.
 template <typename Type>
-inline Type const &min(Type const &a, Type const &b) {
+inline Type min(Type a, Type b) {
     return (a < b? a : b);
 }
 
 /// Minimum of three values.
 template <typename Type>
-inline Type const &min(Type const &a, Type const &b, Type const &c) {
+inline Type min(Type a, Type b, Type c) {
     return min(a, min(b, c));
 }
 
 /// Maximum of two values.
 template <typename Type>
-inline Type const &max(Type const &a, Type const &b) {
+inline Type max(Type a, Type b) {
     return (a > b? a : b);
 }
 
 /// Maximum of three values.
 template <typename Type>
-inline Type const &max(Type const &a, Type const &b, Type const &c) {
+inline Type max(Type a, Type b, Type c) {
     return max(a, max(b, c));
 }
 
 /// Clamp value within range.
 template <typename Type>
-inline Type clamp(Type const &low, Type const &value, Type const &high) {
+inline Type clamp(Type low, Type value, Type high) {
     return min(max(value, low), high);
 }
 
 /// Clamp value within @a lowHighLimit and @a -lowHighLimit.
 template <typename Type>
-inline Type clamp(Type const &value, Type const &lowHighLimit) {
+inline Type clamp(Type value, Type lowHighLimit) {
     return clamp(-lowHighLimit, value, lowHighLimit);
 }
 
 /// Wrap value within range [low, high).
 template <typename Type>
-Type wrap(Type value, Type const &low, Type const &high) {
+Type wrap(Type value, Type low, Type high) {
     DENG2_ASSERT(high > low);
     Type const range = high - low;
     while (value < low) value += range;
@@ -110,44 +110,44 @@ Type wrap(Type value, Type const &low, Type const &high) {
 }
 
 template <typename Type>
-inline Type squared(Type const &value) { return value * value; }
+inline Type squared(Type value) { return value * value; }
 
 template <typename Type>
-inline Type cubed(Type const &value) { return value * value * value; }
+inline Type cubed(Type value) { return value * value * value; }
 
 template <typename Type>
-inline Type round(dfloat const &value) {
+inline Type round(dfloat value) {
     return Type(std::floor(value + 0.5f));
 }
 
-inline dint   roundi(dfloat const &value) { return round<int>(value);   }
-inline dfloat roundf(dfloat const &value) { return round<float>(value); }
+inline dint   roundi(dfloat value) { return round<int>(value);   }
+inline dfloat roundf(dfloat value) { return round<float>(value); }
 
 template <typename Type>
-inline Type round(ddouble const &value) {
+inline Type round(ddouble value) {
     return Type(std::floor(value + 0.5));
 }
 
-inline dint64 roundi(ddouble const &value) { return round<dint64>(value); }
+inline dint64 roundi(ddouble value) { return round<dint64>(value); }
 
-inline dint32 floor(dfloat const &value) {
+inline dint32 floor(dfloat value) {
     return dint32(std::floor(value));
 }
 
-inline dint64 floor(ddouble const &value) {
+inline dint64 floor(ddouble value) {
     return dint64(std::floor(value));
 }
 
-inline dint32 ceil(dfloat const &value) {
+inline dint32 ceil(dfloat value) {
     return dint32(std::ceil(value));
 }
 
-inline dint64 ceil(ddouble const &value) {
+inline dint64 ceil(ddouble value) {
     return dint64(std::ceil(value));
 }
 
 template <typename Type>
-inline Type fract(Type const &value) {
+inline Type fract(Type value) {
     return value - std::floor(value);
 }
 
@@ -176,25 +176,25 @@ inline bool fequal(ddouble a, ddouble b, ddouble precision) {
 }
 
 template <typename Type>
-inline Type degreeToRadian(Type const &degree) {
+inline Type degreeToRadian(Type degree) {
     return degree / Type(180) * PI;
 }
 
 template <typename Type>
-inline Type radianToDegree(Type const &radian) {
+inline Type radianToDegree(Type radian) {
     return radian / PI * Type(180);
 }
 
 /// General comparison function.
 template <typename Type>
-inline dint cmp(Type const &a, Type const &b) {
+inline dint cmp(const Type &a, const Type &b) {
     if (a < b) return -1;
     if (a > b) return 1;
     return 0;
 }
 
 template <typename IntType>
-IntType ceilPow2(IntType const &num) {
+IntType ceilPow2(IntType num) {
     IntType cumul;
     for (cumul = 1; num > cumul; cumul <<= 1) {}
     return cumul;
@@ -208,7 +208,7 @@ IntType ceilPow2(IntType const &num) {
  * @param pos    Normalized interpolation point [0..1].
  */
 template <typename Type>
-inline Type lerp(Type const &start, Type const &end, float pos) {
+inline Type lerp(Type start, Type end, float pos) {
     return end * pos + (start * (1.f - pos));
 }
 
@@ -222,7 +222,7 @@ inline float frand() { return float(qrand()) / float(RAND_MAX); }
 /**
  * Calculates the CRC32 checksum of the contents of byte array @a bytes.
  */
-DENG2_PUBLIC duint32 crc32(IByteArray const &bytes);
+DENG2_PUBLIC duint32 crc32(const IByteArray &bytes);
 
 } // namespace de
 
