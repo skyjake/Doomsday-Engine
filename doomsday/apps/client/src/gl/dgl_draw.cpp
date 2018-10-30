@@ -350,14 +350,12 @@ struct DGLDrawState
         GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
         LIBGUI_ASSERT_GL_OK();
 
-        const Vertex *basePtr = nullptr;
-
         // Updated pointers.
-        GL.glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, &basePtr->vertex);
-        GL.glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, &basePtr->color);
-        GL.glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[0]);
-        GL.glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, &basePtr->texCoord[1]);
-        GL.glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, &basePtr->fragOffset[0]);
+        GL.glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, vertex));
+        GL.glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, DENG2_OFFSET_PTR(Vertex, color));
+        GL.glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[0]));
+        GL.glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[1]));
+        GL.glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, fragOffset[0]));
         LIBGUI_ASSERT_GL_OK();
 
         GL.glBindBuffer(GL_ARRAY_BUFFER, 0);

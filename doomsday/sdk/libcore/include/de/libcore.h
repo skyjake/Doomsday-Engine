@@ -239,6 +239,9 @@
 #define DENG2_ESC(StringLiteral) "\x1b" StringLiteral
 #define _E(Code) DENG2_ESC(#Code)
 
+#define DENG2_OFFSET_PTR(type, member) \
+    reinterpret_cast<const void *>(offsetof(type, member))
+
 /**
  * Macro for defining an opaque type in the C wrapper API.
  */
