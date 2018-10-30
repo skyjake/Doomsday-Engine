@@ -21,18 +21,18 @@
 #include "de/FileSystem"
 #include "de/LinkFile"
 #include "de/Loop"
-#include <QRegExp>
+#include <regex>
 
 namespace de {
 namespace filesys {
-
-static QString const PREFIX = "asset";
+        
+static const std::string PREFIX = "asset";
 
 DENG2_PIMPL(AssetObserver)
 , DENG2_OBSERVES(FileIndex, Addition)
 , DENG2_OBSERVES(FileIndex, Removal)
 {
-    QRegExp pattern;
+    const std::regex pattern;
     LoopCallback mainCall;
 
     static FileIndex const &linkIndex() {
@@ -46,7 +46,7 @@ DENG2_PIMPL(AssetObserver)
 
     Impl(Public *i, String const &regex)
         : Base(i)
-        , pattern(PREFIX + "\\." + regex, Qt::CaseInsensitive)
+        , pattern(PREFIX + "\\." + regex.toStdString(), std::regex::icase)
     {
         // We will observe available model assets.
         linkIndex().audienceForAddition() += this;
@@ -56,7 +56,7 @@ DENG2_PIMPL(AssetObserver)
     void fileAdded(File const &link, FileIndex const &)
     {
         // Only matching assets cause notifications.
-        if (!pattern.exactMatch(link.name())) return;
+        if (!std::regex_match(link.name().toStdString(), pattern)) return;
 
         String const ident = assetIdentifier(link);
         mainCall.enqueue([this, ident] ()
@@ -71,7 +71,7 @@ DENG2_PIMPL(AssetObserver)
     void fileRemoved(File const &link, FileIndex const &)
     {
         // Only matching assets cause notifications.
-        if (!pattern.exactMatch(link.name())) return;
+        if (!std::regex_match(link.name().toStdString(), pattern)) return;
 
         DENG2_FOR_PUBLIC_AUDIENCE2(Availability, i)
         {
