@@ -940,7 +940,7 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
     {
         // Use a generic file.
         File1 *container = (hndl.hasFile() && hndl.file().isContained())? &hndl.file().container() : 0;
-        interpretedFile = new File1(hndl, filePath, info, container);
+        interpretedFile = new File1(&hndl, filePath, info, container);
     }
 
     DENG2_ASSERT(interpretedFile);
