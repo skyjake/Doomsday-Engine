@@ -130,8 +130,6 @@ def setDefaults(d)
             cdPlugin = 'winmm'
         elsif Version.OS == 'ios'
             musicPlugin = 'fmod'
-        else
-            musicPlugin = 'fmod'
         end
         record fmod
         fmod.speakerMode = '' # defaults to stereo
