@@ -40,7 +40,7 @@ DENG2_PIMPL(AssetObserver)
     }
 
     static String assetIdentifier(File const &link) {
-        DENG2_ASSERT(link.name().beginsWith(PREFIX + "."));
+        DENG2_ASSERT(link.name().beginsWith(String::fromStdString(PREFIX + ".")));
         return link.name().mid(6);
     }
 

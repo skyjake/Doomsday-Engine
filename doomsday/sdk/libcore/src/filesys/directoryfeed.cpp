@@ -242,7 +242,7 @@ Feed *DirectoryFeed::newSubFeed(String const &name)
     {
         return new DirectoryFeed(subPath, _mode);
     }
-    return 0;
+    return nullptr;
 }
 
 void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
