@@ -33,6 +33,7 @@
 #include "de/ZipArchive"
 
 #include <QHash>
+#include <condition_variable>
 
 namespace de {
 
