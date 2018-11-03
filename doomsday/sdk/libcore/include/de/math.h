@@ -187,7 +187,7 @@ inline Type radianToDegree(Type radian) {
 
 /// General comparison function.
 template <typename Type>
-inline dint cmp(const Type &a, const Type &b) {
+inline dint cmp(Type a, Type b) {
     if (a < b) return -1;
     if (a > b) return 1;
     return 0;
