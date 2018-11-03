@@ -372,6 +372,12 @@ void FileSystem::changeBusyLevel(int increment)
     }
 }
 
+int FileSystem::busyLevel() const
+{
+    std::lock_guard<std::mutex> lk(d->busyMutex);
+    return d->busyLevel;
+}
+
 void FileSystem::waitForIdle()
 {
     using namespace std;

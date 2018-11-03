@@ -339,7 +339,7 @@ public:
     void timeChanged(Clock const &);
 
     void changeBusyLevel(int increment);
-
+    int  busyLevel() const;
     void waitForIdle();
 
 public:
