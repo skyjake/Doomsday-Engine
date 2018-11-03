@@ -669,30 +669,35 @@ DENG2_PIMPL(DataBundle), public Lockable
     void parseNotesForMetadata(Record &meta)
     {
         static QRegularExpression const reTitle
-                ("^\\s*Title\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+                ("^[\\s\x1Bm]*Title\\s*:?\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reVersion
                 ("^\\s*Version\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reReleaseDate
                 ("^\\s*Release( date)?\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reAuthor
-                ("^\\s*Author(s)?\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+                ("^\\s*Author(s)?\\s*:?\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reContact
-                ("^\\s*Email address\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+                ("^\\s*Email address\\s*:?\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
 
         bool foundVersion = false;
+        bool foundTitle   = false;
 
         foreach (String line, meta.gets(VAR_NOTES, "").split('\n'))
         {
-            auto match = reTitle.match(line);
-            if (match.hasMatch())
+            if (!foundTitle)
             {
-                meta.set(VAR_TITLE, match.captured(1).trimmed());
-                continue;
+                auto match = reTitle.match(line);
+                if (match.hasMatch())
+                {
+                    meta.set(VAR_TITLE, match.captured(1).trimmed());
+                    foundTitle = true;
+                    continue;
+                }
             }
 
             if (!foundVersion)
             {
-                match = reReleaseDate.match(line);
+                auto match = reReleaseDate.match(line);
                 if (match.hasMatch())
                 {
                     Date const releaseDate = Date::fromText(match.captured(2).trimmed());
@@ -707,7 +712,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 }
             }
 
-            match = reVersion.match(line);
+            auto match = reVersion.match(line);
             if (match.hasMatch())
             {
                 Version parsed(match.captured(1).trimmed());
