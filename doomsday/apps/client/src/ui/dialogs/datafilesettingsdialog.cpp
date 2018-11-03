@@ -20,6 +20,7 @@
 #include "ui/clientwindow.h"
 #include "ui/widgets/consolewidget.h"
 #include "ui/widgets/packageswidget.h"
+#include "ui/widgets/taskbarwidget.h"
 
 #include <doomsday/DoomsdayApp>
 #include <de/Config>
@@ -84,8 +85,9 @@ void DataFileSettingsDialog::finish(int result)
 
         // Reload packages and recheck for game availability.
         auto &win = ClientWindow::main();
-        win.console().closeLogAndUnfocusCommandLine();
-        win.root().find("home-packages")->as<PackagesWidget>().showProgressIndicator();
+        //win.console().closeLogAndUnfocusCommandLine();
+        win.taskBar().close();
+        //win.root().find("home-packages")->as<PackagesWidget>().showProgressIndicator();
 //        DoomsdayApp::app().initWadFolders();
         DoomsdayApp::app().initPackageFolders();
     }
