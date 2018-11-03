@@ -203,6 +203,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             // TODO: Emit a signal that hides the Home and closes the taskbar.
 
             // Switch the game.
+            gameProfile.setLastPlayedAt();
             DoomsdayApp::app().changeGame(gameProfile, DD_ActivateGameWorker);
 
             if (saves->selectedPos() != ui::Data::InvalidPos)

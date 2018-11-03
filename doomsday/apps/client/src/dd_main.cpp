@@ -941,12 +941,14 @@ static GameProfile const *autoselectGameProfile()
         // The argument can be a game ID or a profile name.
         if (games.contains(param))
         {
-            Game &game = games[param];
-            automaticProfile = DoomsdayApp::gameProfiles().find(game.title()).as<GameProfile>();
+            auto &prof = DoomsdayApp::gameProfiles().find(games[param].title()).as<GameProfile>();
+            prof.setLastPlayedAt();
+            automaticProfile = prof;
         }
-        else if (auto const *prof = DoomsdayApp::gameProfiles().tryFind(param))
+        else if (auto *prof = maybeAs<GameProfile>(DoomsdayApp::gameProfiles().tryFind(param)))
         {
-            automaticProfile = prof->as<GameProfile>();
+            prof->setLastPlayedAt();
+            automaticProfile = *prof;
         }
 
         // Packages from the command line.
@@ -1975,28 +1977,30 @@ D_CMD(Load)
                         << String::join(game.profile().unavailablePackages(), ", ");
                 return true;
             }
-            if (!DoomsdayApp::app().changeGame(game.profile(), DD_ActivateGameWorker))
+            if (DoomsdayApp::app().changeGame(game.profile(), DD_ActivateGameWorker))
             {
-                return false;
+                game.profile().setLastPlayedAt();
+                continue;
             }
-            continue;
+            return false;
         }
 
         // It could also be a game profile.
-        if (auto const *profile = DoomsdayApp::gameProfiles().tryFind(searchTerm))
+        if (auto *profile = DoomsdayApp::gameProfiles().tryFind(searchTerm))
         {
-            auto const &gameProf = profile->as<GameProfile>();
+            auto &gameProf = profile->as<GameProfile>();
             if (!gameProf.isPlayable())
             {
                 LOG_SCR_ERROR("Profile \"%s\" is missing one or more required packages: ")
                         << String::join(gameProf.unavailablePackages(), ", ");
                 return true;
             }
-            if (!DoomsdayApp::app().changeGame(gameProf, DD_ActivateGameWorker))
+            if (DoomsdayApp::app().changeGame(gameProf, DD_ActivateGameWorker))
             {
-                return false;
+                gameProf.setLastPlayedAt();
+                continue;
             }
-            continue;
+            return false;
         }
 
         try
