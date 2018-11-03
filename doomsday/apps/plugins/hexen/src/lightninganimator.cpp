@@ -21,6 +21,7 @@
 
 #include "jhexen.h"
 #include "lightninganimator.h"
+#include "g_common.h"
 
 #include <QVector>
 #include "dmu_lib.h"
@@ -216,17 +217,17 @@ bool LightningAnimator::initForMap()
     d->nextFlash = 0;
     d->sectorLightLevels.clear();
 
-    if(gfw_Session()->mapInfo().geti("flags") & MIF_LIGHTNING)
+    if (gfw_MapInfoFlags() & MIF_LIGHTNING)
     {
         int numLightningSectors = 0;
-        for(int i = 0; i < numsectors; ++i)
+        for (int i = 0; i < numsectors; ++i)
         {
-            if(isLightningSector((Sector *)P_ToPtr(DMU_SECTOR, i)))
+            if (isLightningSector(static_cast<Sector *>(P_ToPtr(DMU_SECTOR, i))))
             {
                 numLightningSectors++;
             }
         }
-        if(numLightningSectors > 0)
+        if (numLightningSectors > 0)
         {
             d->sectorLightLevels.resize(numLightningSectors);
 

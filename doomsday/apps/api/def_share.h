@@ -113,10 +113,11 @@ typedef struct {
  * @ingroup defs apiFlags
  */
 ///@{
-#define MIF_FOG             0x1  ///< Fog is used in the map.
-#define MIF_DRAW_SPHERE     0x2  ///< Always draw the sky sphere.
-#define MIF_NO_INTERMISSION 0x4  ///< Skip any intermission between maps.
-#define MIF_LIGHTNING       0x8  ///< Lightning is used in the map.
+#define MIF_FOG                 0x1  ///< Fog is used in the map.
+#define MIF_DRAW_SPHERE         0x2  ///< Always draw the sky sphere.
+#define MIF_NO_INTERMISSION     0x4  ///< Skip any intermission between maps.
+#define MIF_LIGHTNING           0x8  ///< Lightning is used in the map.
+#define MIF_SPAWN_ALL_FIREMACES 0x10 ///< Heretic: Spawn all firemaces (disable randomness).
 ///@}
 
 #define DDLT_MAX_APARAMS    10

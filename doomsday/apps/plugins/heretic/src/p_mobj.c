@@ -1288,6 +1288,12 @@ void P_RepositionMace(mobj_t *mo)
     mapspot_t const *mapSpot;
     Sector *sector;
 
+    if (gfw_MapInfoFlags() & MIF_SPAWN_ALL_FIREMACES)
+    {
+        // Randomized Firemace spawning is disabled.
+        return;
+    }
+
     DENG_ASSERT(mo && mo->type == MT_WMACE);
     App_Log(DE2_DEV_MAP_MSG, "P_RepositionMace: Repositioning mobj [%p], thinkerId:%i", mo, mo->thinker.id);
 

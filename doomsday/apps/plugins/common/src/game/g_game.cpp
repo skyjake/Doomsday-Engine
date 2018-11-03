@@ -1227,7 +1227,7 @@ static sfxenum_t randomQuitSound()
 static bool intermissionEnabled()
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if (gfw_Session()->mapInfo().geti("flags") & MIF_NO_INTERMISSION)
+    if (gfw_MapInfoFlags() & MIF_NO_INTERMISSION)
     {
         return false;
     }

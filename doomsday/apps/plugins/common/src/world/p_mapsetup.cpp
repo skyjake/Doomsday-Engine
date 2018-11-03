@@ -635,18 +635,36 @@ static void spawnMapObjects()
 #if __JHERETIC__
     // Spawn a Firemace?
     App_Log(DE2_DEV_MAP_VERBOSE, "spawnMapObjects: %i Firemace spot(s)", maceSpotCount);
-    if(!IS_CLIENT && maceSpotCount)
+    if (gfw_MapInfoFlags() & MIF_SPAWN_ALL_FIREMACES)
     {
-        // Sometimes the Firemace doesn't show up if not in deathmatch.
-        if(gfw_Rule(deathmatch) || M_Random() >= 64)
+        for (uint i = 0; i < maceSpotCount; ++i)
         {
-            if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
+            const mapspot_t *spot = &mapSpots[maceSpots[i]];
+            if (checkMapSpotSpawnFlags(spot))
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "spawnMapObjects: Spawning Firemace at (%g, %g, %g)",
-                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
+                P_SpawnMobjXYZ(
+                    MT_WMACE, spot->origin[VX], spot->origin[VY], 0, spot->angle, MSF_Z_FLOOR);
+            }
+        }
+    }
+    else
+    {
+        if (!IS_CLIENT && maceSpotCount)
+        {
+            // Sometimes the Firemace doesn't show up if not in deathmatch.
+            if (gfw_Rule(deathmatch) || M_Random() >= 64)
+            {
+                if (mapspot_t const *spot = P_ChooseRandomMaceSpot())
+                {
+                    App_Log(DE2_DEV_MAP_VERBOSE,
+                            "spawnMapObjects: Spawning Firemace at (%g, %g, %g)",
+                            spot->origin[VX],
+                            spot->origin[VY],
+                            spot->origin[VZ]);
 
-                P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
-                               spot->angle, MSF_Z_FLOOR);
+                    P_SpawnMobjXYZ(
+                        MT_WMACE, spot->origin[VX], spot->origin[VY], 0, spot->angle, MSF_Z_FLOOR);
+                }
             }
         }
     }

@@ -1423,4 +1423,9 @@ void GameSession::consoleRegister()  // static
 #undef READONLYCVAR
 }
 
+DENG_EXTERN_C unsigned int gfw_MapInfoFlags(void)
+{
+    return gfw_Session()->mapInfo().getui(QStringLiteral("flags"));
+}
+
 }  // namespace common

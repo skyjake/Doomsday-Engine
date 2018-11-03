@@ -167,7 +167,13 @@ de::String G_DefaultGameStateFolderUserDescription(de::String const &saveName, b
 SaveSlots &G_SaveSlots();
 
 extern "C" {
-#endif
+#endif // __cplusplus
+
+/**
+ * Returns the Map Info flags of the current map in the current game session.
+ * @return MIF flags.
+ */
+unsigned int gfw_MapInfoFlags(void);
 
 /**
  * Returns @c true, if the game is currently quiting.
