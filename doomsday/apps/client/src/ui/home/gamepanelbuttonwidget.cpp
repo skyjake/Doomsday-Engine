@@ -33,6 +33,7 @@
 #include <doomsday/res/Bundles>
 
 #include <de/App>
+#include <de/Async>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/FileSystem>
@@ -45,6 +46,7 @@ using namespace de;
 DENG_GUI_PIMPL(GamePanelButtonWidget)
 , DENG2_OBSERVES(Profiles::AbstractProfile, Change)
 , DENG2_OBSERVES(res::Bundles, Identify)
+, public AsyncScope
 {
     GameProfile &gameProfile;
     ui::FilteredDataT<SaveListData::SaveItem> savedItems;
@@ -240,7 +242,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        self().icon().setImage(IdTech1Image::makeGameLogo(game(), catalog));
+        *this += async([this]() { return IdTech1Image::makeGameLogo(game(), catalog); },
+                       [this](const Image &gameLogo) { self().icon().setImage(gameLogo); });
     }
 
     void profileChanged(Profiles::AbstractProfile &) override

@@ -854,7 +854,6 @@ DENG_GUI_PIMPL(PackagesWidget)
         auto &w = widget.as<PackageListItemWidget>();
         w.setItem(item.as<PackageItem>());
         DENG2_ASSERT_IN_MAIN_THREAD();
-        DENG2_ASSERT(FS::get().busyLevel() == 0);
         w.updateContents();
     }
 };
