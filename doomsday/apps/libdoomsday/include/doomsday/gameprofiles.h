@@ -50,6 +50,7 @@ public:
         void setUseGameRequirements(bool useGameRequirements);
         void setAutoStartMap(de::String const &map);
         void setAutoStartSkill(int level);
+        void setLastPlayedAt(const de::Time &at = de::Time());
 
         bool appendPackage(de::String const &id);
 
@@ -60,6 +61,7 @@ public:
         bool isUsingGameRequirements() const;
         de::String autoStartMap() const;
         int autoStartSkill() const;
+        de::Time lastPlayedAt() const;
 
         /**
          * Returns a list of the game's packages in addition to the profile's

@@ -89,18 +89,18 @@ DENG2_PIMPL(Game)
         qDeleteAll(manifests);
     }
 
-    GameProfile const *profile() const
+    GameProfile *profile() const
     {
         return maybeAs<GameProfile>(DoomsdayApp::gameProfiles().tryFind(self().title()));
     }
 
     StringList packagesFromProfile() const
     {
-        if (auto const *prof = profile())
+        if (const auto *prof = profile())
         {
             return prof->packages();
         }
-        return StringList();
+        return {};
     }
 };
 
@@ -444,7 +444,7 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     }
 }
 
-GameProfile const &Game::profile() const
+GameProfile &Game::profile() const
 {
     DENG2_ASSERT(d->profile()); // all games have a matching built-in profile
     return *d->profile();

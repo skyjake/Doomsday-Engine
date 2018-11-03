@@ -248,7 +248,7 @@ public:
     /**
      * Returns the built-in profile of the game.
      */
-    GameProfile const &profile() const;
+    GameProfile &profile() const;
 
     // IObject.
     de::Record const &objectNamespace() const;

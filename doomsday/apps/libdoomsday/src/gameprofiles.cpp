@@ -35,6 +35,7 @@ static String const VAR_USER_CREATED    ("userCreated");
 static String const VAR_USE_GAME_REQUIREMENTS("useGameRequirements");
 static String const VAR_AUTO_START_MAP  ("autoStartMap");
 static String const VAR_AUTO_START_SKILL("autoStartSkill");
+static String const VAR_LAST_PLAYED     ("lastPlayed");
 
 static int const DEFAULT_SKILL = 3; // Normal skill level (1-5)
 
@@ -181,11 +182,15 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
     {
         prof->setAutoStartSkill(block.keyValue(VAR_AUTO_START_SKILL).text.toInt());
     }
+    if (block.contains(VAR_LAST_PLAYED))
+    {
+        prof->setLastPlayedAt(Time::fromText(block.keyValue(VAR_LAST_PLAYED).text));
+    }
 
     return prof.release();
 }
 
-//---------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 
 DENG2_PIMPL_NOREF(GameProfiles::Profile)
 {
@@ -195,6 +200,7 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
     bool useGameRequirements = true;
     String autoStartMap;
     int autoStartSkill = DEFAULT_SKILL;
+    Time lastPlayedAt = Time::invalidTime();
 
     Impl() {}
 
@@ -221,13 +227,14 @@ GameProfiles::Profile::Profile(Profile const &other)
 
 GameProfiles::Profile &GameProfiles::Profile::operator = (Profile const &other)
 {
-    AbstractProfile::operator = (other);
-    d->gameId = other.d->gameId;
-    d->packages = other.d->packages;
-    d->userCreated = other.d->userCreated;
-    d->useGameRequirements = other.d->useGameRequirements;
-    d->autoStartMap = other.d->autoStartMap;
-    d->autoStartSkill = other.d->autoStartSkill;
+    AbstractProfile::operator=(other);
+    d->gameId                = other.d->gameId;
+    d->packages              = other.d->packages;
+    d->userCreated           = other.d->userCreated;
+    d->useGameRequirements   = other.d->useGameRequirements;
+    d->autoStartMap          = other.d->autoStartMap;
+    d->autoStartSkill        = other.d->autoStartSkill;
+    d->lastPlayedAt          = other.d->lastPlayedAt;
     return *this;
 }
 
@@ -287,6 +294,15 @@ void GameProfiles::Profile::setAutoStartSkill(int level)
     }
 }
 
+void GameProfiles::Profile::setLastPlayedAt(const Time &at)
+{
+    if (d->lastPlayedAt != at)
+    {
+        d->lastPlayedAt = at;
+        notifyChange();
+    }
+}
+
 bool GameProfiles::Profile::appendPackage(String const &id)
 {
     if (!d->packages.contains(id))
@@ -336,6 +352,11 @@ String GameProfiles::Profile::autoStartMap() const
 int GameProfiles::Profile::autoStartSkill() const
 {
     return d->autoStartSkill;
+}
+
+Time GameProfiles::Profile::lastPlayedAt() const
+{
+    return d->lastPlayedAt;
 }
 
 StringList GameProfiles::Profile::allRequiredPackages() const
@@ -424,6 +445,10 @@ String GameProfiles::Profile::toInfoSource() const
         os << "\n" << VAR_AUTO_START_MAP << ": " << d->autoStartMap;
     }
     os << "\n" << VAR_AUTO_START_SKILL << ": " << d->autoStartSkill;
+    if (d->lastPlayedAt.isValid())
+    {
+        os << "\n" << VAR_LAST_PLAYED << ": " << d->lastPlayedAt.asText();
+    }
 
     return info;
 }
