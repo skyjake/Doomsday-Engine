@@ -121,8 +121,8 @@ public:
     void operator >> (de::PersistentState &toState) const;
     void operator << (de::PersistentState const &fromState);
 
-public slots:
-    void refreshPackages();
+//public slots:
+//    void refreshPackages();
 
 signals:
     void itemCountChanged(unsigned int shownItems, unsigned int totalItems);

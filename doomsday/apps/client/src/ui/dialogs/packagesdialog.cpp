@@ -34,6 +34,7 @@
 #include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
+#include <de/FileSystem>
 #include <de/DocumentPopupWidget>
 #include <de/MenuWidget>
 #include <de/NativeFile>
@@ -387,7 +388,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
             << new DialogButtonItem(Default | Accept, tr("OK"))
             << new DialogButtonItem(Reject, tr("Cancel"))
             << new DialogButtonItem(Action, style().images().image("refresh"),
-                                    new SignalAction(this, SLOT(refreshPackages())))
+                                    new CallbackAction([]() { FS::get().refreshAsync(); }))
             << new DialogButtonItem(Action | Id1, style().images().image("gear"),
                                     "Data Files",
                                     new CallbackAction([this]() {
@@ -410,8 +411,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
     setMaximumContentHeight(rule().width());
 
     // Setup has been completed, so contents can be updated.
-    //d->browser->setPopulationEnabled(true);
-    refreshPackages();
+    d->browser->setPopulationEnabled(true);
 }
 
 void PackagesDialog::setGame(String const &gameId)
@@ -433,10 +433,10 @@ StringList PackagesDialog::selectedPackages() const
     return d->selectedPackages;
 }
 
-void PackagesDialog::refreshPackages()
-{
-    d->browser->refreshPackages();
-}
+//void PackagesDialog::refreshPackages()
+//{
+//    d->browser->refreshPackages();
+//}
 
 void PackagesDialog::preparePanelForOpening()
 {

@@ -70,7 +70,9 @@ static PackageLoadStatus isPackageLoaded;
 PackagesWidget::IPackageStatus::~IPackageStatus() {}
 
 DENG_GUI_PIMPL(PackagesWidget)
-, DENG2_OBSERVES(res::Bundles, Identify), public ChildWidgetOrganizer::IWidgetFactory
+//, DENG2_OBSERVES(res::Bundles, Identify)
+, DENG2_OBSERVES(FileSystem, Busy)
+, public ChildWidgetOrganizer::IWidgetFactory
 {
     /**
      * Information about an available package.
@@ -626,7 +628,7 @@ DENG_GUI_PIMPL(PackagesWidget)
                                    self().margins().height());
     }
 
-    ~Impl()
+    ~Impl() override
     {
         //releaseRef(maxPanelHeight);
         releaseRef(searchMinY);
@@ -732,7 +734,7 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     void updateItems()
     {
-        filteredPackages.forAll([this](ui::Item &item) {
+        filteredPackages.forAll([](ui::Item &item) {
             item.as<PackageItem>().notifyChange();
             return LoopContinue;
         });
@@ -793,16 +795,23 @@ DENG_GUI_PIMPL(PackagesWidget)
         }
     }
 
-    void dataBundlesIdentified() override
+    void fileSystemBusyStatusChanged(FS::BusyStatus bs) override
     {
-        // After bundles have been refreshed, make sure the list items are up to date.
-        if (!mainCallForIdentify)
+        if (bs == FS::Busy)
         {
-            mainCallForIdentify.enqueue([this]() {
-                root().window().glActivate();
-                populateEnabled = true;
-                self().populate();
-            });
+            showProgressIndicator(true);
+        }
+        else if (DoomsdayApp::bundles().isEverythingIdentified())
+        {
+            // After bundles have been refreshed, make sure the list items are up to date.
+            if (!mainCallForIdentify)
+            {
+                mainCallForIdentify.enqueue([this]() {
+                    root().window().glActivate();
+                    populateEnabled = true;
+                    self().populate();
+                });
+            }
         }
     }
 
@@ -844,6 +853,8 @@ DENG_GUI_PIMPL(PackagesWidget)
     {
         auto &w = widget.as<PackageListItemWidget>();
         w.setItem(item.as<PackageItem>());
+        DENG2_ASSERT_IN_MAIN_THREAD();
+        DENG2_ASSERT(FS::get().busyLevel() == 0);
         w.updateContents();
     }
 };
@@ -852,15 +863,17 @@ PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, String const &name
     : GuiWidget(name)
     , d(new Impl(this))
 {
-    auto &bundles = DoomsdayApp::bundles();
-    bundles.audienceForIdentify() += d;
+//    auto &bundles = DoomsdayApp::bundles();
+    //bundles.audienceForIdentify() += d;
 
     d->populateEnabled = (initBehavior == PopulationEnabled);
 
-    if (bundles.isEverythingIdentified())
-    {
+    FS::get().audienceForBusy() += d;
+
+    //if (bundles.isEverythingIdentified())
+    //{
         populate();
-    }
+    //}
 }
 
 PackagesWidget::PackagesWidget(StringList manualPackageIds, String const &name)
@@ -1100,8 +1113,8 @@ void PackagesWidget::operator<<(PersistentState const &fromState)
     d->updateFilterTerms(true);
 }
 
-void PackagesWidget::refreshPackages()
+/*void PackagesWidget::refreshPackages()
 {
     d->showProgressIndicator(true);
     FS::get().refreshAsync();
-}
+}*/

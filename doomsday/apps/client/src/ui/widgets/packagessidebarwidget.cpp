@@ -22,6 +22,7 @@
 #include "ui/widgets/homeitemwidget.h"
 
 #include <de/CallbackAction>
+#include <de/FileSystem>
 #include <de/ui/ActionItem>
 
 using namespace de;
@@ -68,10 +69,7 @@ PackagesSidebarWidget::PackagesSidebarWidget()
             .setInput(Rule::Top,    closeButton().rule().top())
             .setInput(Rule::Height, closeButton().rule().height());
     refreshButton->setStyleImage("refresh", "default");
-    refreshButton->setActionFn([this] ()
-    {
-        d->browser->refreshPackages();
-    });
+    refreshButton->setActionFn([]() { FS::get().refreshAsync(); });
 
     d->browser->setFilterEditorMinimumY(closeButton().rule().bottom());
 

@@ -35,8 +35,8 @@ public:
     void setSelectedPackages(de::StringList packages);
     de::StringList selectedPackages() const;
 
-public slots:
-    void refreshPackages();
+//public slots:
+//    void refreshPackages();
 
 protected:
     void preparePanelForOpening() override;
