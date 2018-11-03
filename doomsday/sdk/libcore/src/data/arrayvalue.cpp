@@ -297,6 +297,18 @@ void ArrayValue::remove(dint index)
     _elements.erase(elem);
 }
 
+dint ArrayValue::indexOf(const Value &value) const
+{
+    for (int i = 0; i < _elements.size(); ++i)
+    {
+        if (!value.compare(*_elements[i]))
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 ArrayValue &ArrayValue::operator << (Value *value)
 {
     add(value);

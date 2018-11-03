@@ -79,7 +79,7 @@ public:
     /**
      * Adds a new TextValue to the elements of the array. The value is
      * added to the end of the list of elements.
-     * param text Text to add to the array.
+     * @param text Text to add to the array.
      */
     void add(String const &text);
 
@@ -89,14 +89,12 @@ public:
 
     /**
      * Pops the last element and gives its ownership to the caller.
-     *
      * @return Last element of the array. Ownership transferred.
      */
     Value *popLast();
 
     /**
      * Pops the first element and gives its ownership to the caller.
-     *
      * @return First element of the array. Ownership transferred.
      */
     Value *popFirst();
@@ -112,7 +110,6 @@ public:
     /**
      * Replaces an existing Value in the array. The previous value
      * at the index will be destroyed.
-     *
      * @param index  Index of the Value.
      * @param value  New value. The array takes ownership of the object.
      */
@@ -125,28 +122,29 @@ public:
     void remove(dint index);
 
     /**
+     * Finds the element maching @a value and returns its index.
+     * @param value  Value to find.
+     * @return Index of the element, or -1 if not found.
+     */
+    dint indexOf(const Value &value) const;
+
+    /**
      * Adds a value to the array.
-     *
      * @param value  Value to add. Array gets ownership.
-     *
      * @return Reference to the array.
      */
     ArrayValue &operator << (Value *value);
 
     /**
      * Adds a value to the array.
-     *
      * @param value  Value to add. A duplicate of this value is added to the array.
-     *
      * @return Reference to the array.
      */
     ArrayValue &operator << (Value const &value);
 
     /**
      * Returns a reference to a value in the array.
-     *
      * @param index  Index of the element.
-     *
      * @return  Element at the index.
      */
     Value const &at(dint index) const;
