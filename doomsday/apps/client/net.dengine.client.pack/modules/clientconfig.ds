@@ -54,6 +54,9 @@ def setDefaults(d)
     record d.home()
         showUnplayableGames = True
         showColumnDescription = True
+        sortBy = 'release'
+        sortAscending = True
+        sortCustomSeparately = True
         record columns()
             doom = True
             heretic = True

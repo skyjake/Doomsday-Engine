@@ -113,6 +113,15 @@ ui::DataPos HomeMenuWidget::selectedIndex() const
     return d->selectedIndex;
 }
 
+const ui::Item *HomeMenuWidget::selectedItem() const
+{
+    if (selectedIndex() != ui::Data::InvalidPos)
+    {
+        return &items().at(selectedIndex());
+    }
+    return nullptr;
+}
+
 void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
 {
     DENG2_ASSERT(hasRoot());
