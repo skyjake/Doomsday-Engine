@@ -72,9 +72,9 @@ class AsyncTaskThread : public AsyncTask
     }
 
 public:
-    AsyncTaskThread(Task const &task, Completion const &completion)
-        : task(task)
-        , completion(completion)
+    AsyncTaskThread(Task task, Completion completion)
+        : task(std::move(task))
+        , completion(std::move(completion))
         , valid(true)
     {}
 
@@ -119,10 +119,10 @@ public:
  * callback has been called. You can pass this to AsyncScope for keeping track of.
  */
 template <typename Task, typename Completion>
-AsyncTask *async(Task const &task, Completion const &completion)
+AsyncTask *async(Task task, Completion completion)
 {
     DENG2_ASSERT_IN_MAIN_THREAD();
-    auto *t = new internal::AsyncTaskThread<Task, Completion>(task, completion);
+    auto *t = new internal::AsyncTaskThread<Task, Completion>(std::move(task), std::move(completion));
     t->start();
     // Note: The thread will delete itself when finished.
     return t;
