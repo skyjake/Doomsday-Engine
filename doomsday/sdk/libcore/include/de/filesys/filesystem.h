@@ -151,9 +151,20 @@ public:
 
     void printIndex();
 
+    /**
+     * Returns the root folder of the file system.
+     */
     Folder &root();
 
-    Folder const &root() const;
+    /**
+     * Returns the root folder of the file system.
+     */
+    const Folder &root() const;
+
+    /**
+     * Returns the root folder of the file system.
+     */
+    static Folder &rootFolder();
 
     /**
      * Refresh the file system asynchronously. Populates all folders with files from

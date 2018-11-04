@@ -455,6 +455,11 @@ Folder const &FileSystem::root() const
     return *d->root;
 }
 
+Folder &FileSystem::rootFolder() // static
+{
+    return get().root();
+}
+
 FileSystem &FileSystem::get() // static
 {
     return App::fileSystem();
