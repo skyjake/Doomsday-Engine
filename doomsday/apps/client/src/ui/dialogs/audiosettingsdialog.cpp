@@ -226,10 +226,10 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
     layout.append(*pluginLabel, 2);
 
-    layout  << *LabelWidget::newWithText(tr("SFX Plugin:"  ), &area()) << *d->soundPlugin
+    layout << *LabelWidget::newWithText(tr("SFX Plugin:"  ), &area()) << *d->soundPlugin
            << *LabelWidget::newWithText(tr("Music Plugin:"), &area()) << *d->musicPlugin;
 #if defined (WIN32)
-    layout << LabelWidget::newWithText(tr("CD Plugin:"   ), &area())  << *d->cdPlugin;
+    layout << *LabelWidget::newWithText(tr("CD Plugin:"   ), &area()) << *d->cdPlugin;
 #endif
 
     auto *padding = new GuiWidget;
