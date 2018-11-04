@@ -19,44 +19,22 @@
 #ifndef DENG_CLIENT_CVARNATIVEPATHWIDGET_H
 #define DENG_CLIENT_CVARNATIVEPATHWIDGET_H
 
-#include <de/AuxButtonWidget>
+#include "nativepathwidget.h"
 #include "icvarwidget.h"
 
 /**
  * Console variable that contains a native path.
  */
-class CVarNativePathWidget : public de::AuxButtonWidget, public ICVarWidget
+class CVarNativePathWidget : public NativePathWidget, public ICVarWidget
 {
     Q_OBJECT
 
 public:
     CVarNativePathWidget(char const *cvarPath);
-
-    /**
-     * Sets all the file types that can be selected using the widget. Each entry in
-     * the list should be formatted as "Description (*.ext *.ext2)".
-     *
-     * The default is "All files (*)".
-     *
-     * @param filters  Allowed file types.
-     */
-    void setFilters(de::StringList const &filters);
-
-    /**
-     * Sets the text that is shown as the current selection when nothing has been
-     * selected.
-     *
-     * @param text  Blank text placeholder.
-     */
-    void setBlankText(de::String const &text);
-
     char const *cvarPath() const;
 
 public slots:
     void updateFromCVar();
-    void chooseUsingNativeFileDialog();
-    void clearPath();
-    void showActionsPopup();
 
 protected slots:
     void setCVarValueFromWidget();

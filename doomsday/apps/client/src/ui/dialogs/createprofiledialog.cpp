@@ -18,6 +18,7 @@
 
 #include "ui/dialogs/createprofiledialog.h"
 #include "ui/widgets/packagesbuttonwidget.h"
+#include "ui/widgets/nativepathwidget.h"
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
@@ -32,11 +33,13 @@
 using namespace de;
 
 DENG_GUI_PIMPL(CreateProfileDialog)
+, DENG2_OBSERVES(NativePathWidget, UserChange)
 {
     ChoiceWidget *gameChoice;
     PackagesButtonWidget *packages;
     ChoiceWidget *autoStartMap;
     ChoiceWidget *autoStartSkill;
+    NativePathWidget *customDataFile;
     DialogContentStylist stylist;
     bool editing = false;
     String oldName;
@@ -58,7 +61,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
             else
             {
                 // Must be a new, unique name.
-                valid = DoomsdayApp::gameProfiles().forAll([this, &entry] (GameProfile &prof) {
+                valid = DoomsdayApp::gameProfiles().forAll([&entry] (const GameProfile &prof) {
                     if (!entry.compareWithoutCase(prof.name())) {
                         return LoopAbort;
                     }
@@ -68,11 +71,15 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         }
 
         // A game must be selected, too.
-        if (!gameChoice->isValidSelection()) valid = false;
-
+        if (!gameChoice->isValidSelection())
+        {
+            valid = false;
+        }
         if (gameChoice->isValidSelection() &&
-            gameChoice->selectedItem().data().toString().isEmpty()) valid = false;
-
+            gameChoice->selectedItem().data().toString().isEmpty())
+        {
+            valid = false;
+        }
         self().buttonWidget(Id1)->enable(valid);
     }
 
@@ -142,6 +149,11 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         auto const pos = mapItems.findData(oldChoice);
         autoStartMap->setSelected(pos != ui::Data::InvalidPos? pos : 0);
     }
+
+    void pathChangedByUser(NativePathWidget &) override
+    {
+
+    }
 };
 
 CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
@@ -149,7 +161,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     , d(new Impl(this))
 {
     title()  .setText(tr("New Profile"));
-    message().setText(tr("Enter a name for the new game profile. Only unique names are allowed."));
+    message().setText(tr("Enter a name for the new game profile."));
 
     auto *form = new GuiWidget;
     d->stylist.setContainer(*form);
@@ -171,6 +183,11 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     {
         d->gameChoice->items() << new ChoiceItem(tr("No playable games"), "");
     }
+
+    // Custom data file.
+    form->add(d->customDataFile = new NativePathWidget);
+    d->customDataFile->setBlankText("Default game data");
+    d->customDataFile->audienceForUserChange() += d;
 
     // Packages selection.
     form->add(d->packages = new PackagesButtonWidget);
@@ -199,6 +216,8 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     layout.setColumnAlignment(0, ui::AlignRight);
     layout << *LabelWidget::newWithText(tr("Game:"), form)
            << *d->gameChoice
+           << *LabelWidget::newWithText("Data File:", form)
+           << *d->customDataFile
            << *LabelWidget::newWithText(tr("Mods:"), form)
            << *d->packages;
 
