@@ -64,6 +64,7 @@ public:
         ColorizedByFamily    = 0x1,
         Downscale50Percent   = 0x2,
         NullImageIfFails     = 0x4, // by default returns a small fallback image
+        AlwaysTryLoad        = 0x8,
 
         DefaultLogoFlags     = ColorizedByFamily | Downscale50Percent,
     };

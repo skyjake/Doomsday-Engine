@@ -31,6 +31,7 @@ using namespace de;
 
 static String const VAR_GAME            ("game");
 static String const VAR_PACKAGES        ("packages");
+static String const VAR_CUSTOM_DATA_FILE("customDataFile");
 static String const VAR_USER_CREATED    ("userCreated");
 static String const VAR_USE_GAME_REQUIREMENTS("useGameRequirements");
 static String const VAR_AUTO_START_MAP  ("autoStartMap");
@@ -169,6 +170,10 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
     }
 
     prof->setUserCreated(!block.keyValue(VAR_USER_CREATED).text.compareWithoutCase("True"));
+    if (block.contains(VAR_CUSTOM_DATA_FILE))
+    {
+        prof->setCustomDataFile(block.keyValue(VAR_CUSTOM_DATA_FILE).text);
+    }
     if (block.contains(VAR_USE_GAME_REQUIREMENTS))
     {
         prof->setUseGameRequirements(!block.keyValue(VAR_USE_GAME_REQUIREMENTS)
@@ -194,23 +199,26 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
 
 DENG2_PIMPL_NOREF(GameProfiles::Profile)
 {
-    String gameId;
+    String     gameId;
+    String     customDataFile;
     StringList packages;
-    bool userCreated = false;
-    bool useGameRequirements = true;
-    String autoStartMap;
-    int autoStartSkill = DEFAULT_SKILL;
-    Time lastPlayedAt = Time::invalidTime();
+    bool       userCreated         = false;
+    bool       useGameRequirements = true;
+    String     autoStartMap;
+    int        autoStartSkill = DEFAULT_SKILL;
+    Time       lastPlayedAt   = Time::invalidTime();
 
     Impl() {}
 
     Impl(Impl const &other)
         : gameId             (other.gameId)
+        , customDataFile     (other.customDataFile)
         , packages           (other.packages)
         , userCreated        (other.userCreated)
         , useGameRequirements(other.useGameRequirements)
         , autoStartMap       (other.autoStartMap)
         , autoStartSkill     (other.autoStartSkill)
+        , lastPlayedAt       (other.lastPlayedAt)
     {}
 };
 
@@ -225,10 +233,11 @@ GameProfiles::Profile::Profile(Profile const &other)
     , d(new Impl(*other.d))
 {}
 
-GameProfiles::Profile &GameProfiles::Profile::operator = (Profile const &other)
+GameProfiles::Profile &GameProfiles::Profile::operator=(const Profile &other)
 {
     AbstractProfile::operator=(other);
     d->gameId                = other.d->gameId;
+    d->customDataFile        = other.d->customDataFile;
     d->packages              = other.d->packages;
     d->userCreated           = other.d->userCreated;
     d->useGameRequirements   = other.d->useGameRequirements;
@@ -243,6 +252,15 @@ void GameProfiles::Profile::setGame(String const &id)
     if (d->gameId != id)
     {
         d->gameId = id;
+        notifyChange();
+    }
+}
+
+void GameProfiles::Profile::setCustomDataFile(const String &id)
+{
+    if (d->customDataFile != id)
+    {
+        d->customDataFile = id;
         notifyChange();
     }
 }
@@ -324,6 +342,11 @@ Game &GameProfiles::Profile::game() const
     return Games::nullGame();
 }
 
+String GameProfiles::Profile::customDataFile() const
+{
+    return d->customDataFile;
+}
+
 String GameProfiles::Profile::gameId() const
 {
     return d->gameId;
@@ -365,6 +388,10 @@ StringList GameProfiles::Profile::allRequiredPackages() const
     if (d->useGameRequirements)
     {
         list = DoomsdayApp::games()[d->gameId].requiredPackages();
+    }
+    if (d->customDataFile)
+    {
+        list += d->customDataFile;
     }
     return list + d->packages;
 }
@@ -439,6 +466,7 @@ String GameProfiles::Profile::toInfoSource() const
     os << VAR_GAME                  << ": " << d->gameId << "\n"
        << VAR_PACKAGES              << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
        << VAR_USER_CREATED          << ": " << (d->userCreated? "True" : "False") << "\n"
+       << VAR_CUSTOM_DATA_FILE      << ": " << d->customDataFile << "\n"
        << VAR_USE_GAME_REQUIREMENTS << ": " << (d->useGameRequirements? "True" : "False");
     if (d->autoStartMap)
     {

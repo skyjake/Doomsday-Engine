@@ -30,7 +30,6 @@
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
-#include "ui/dialogs/packagesdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/dialogs/uisettingsdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"

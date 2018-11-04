@@ -18,13 +18,17 @@
 
 #include "ui/dialogs/createprofiledialog.h"
 #include "ui/widgets/packagesbuttonwidget.h"
-#include "ui/widgets/nativepathwidget.h"
+#include "ui/widgets/packageswidget.h"
+#include "ui/dialogs/datafilesettingsdialog.h"
+//#include "ui/widgets/nativepathwidget.h"
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
 #include <doomsday/GameProfiles>
 #include <doomsday/DataBundle>
 
+#include <de/AuxButtonWidget>
+#include <de/CallbackAction>
 #include <de/ChoiceWidget>
 #include <de/GridLayout>
 #include <de/DialogContentStylist>
@@ -33,17 +37,21 @@
 using namespace de;
 
 DENG_GUI_PIMPL(CreateProfileDialog)
-, DENG2_OBSERVES(NativePathWidget, UserChange)
+//, DENG2_OBSERVES(NativePathWidget, UserChange)
 {
     ChoiceWidget *gameChoice;
     PackagesButtonWidget *packages;
     ChoiceWidget *autoStartMap;
     ChoiceWidget *autoStartSkill;
-    NativePathWidget *customDataFile;
+    //NativePathWidget *customDataFile;
+    //String customDataFile;
+    AuxButtonWidget *customDataFileName;
+    ui::ListData customDataFileActions;
+    SafeWidgetPtr<PackagesWidget> customPicker;
     DialogContentStylist stylist;
     bool editing = false;
     String oldName;
-    std::unique_ptr<GameProfile> tempProfile;
+    std::unique_ptr<GameProfile> tempProfile; // Used only internally.
 
     Impl(Public *i) : Base(i) {}
 
@@ -110,9 +118,8 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         StringList packageIds;
         if (gameChoice->isValidSelection())
         {
-            packageIds += tempProfile->game().requiredPackages();
+            packageIds += tempProfile->allRequiredPackages();
         }
-        packageIds += packages->packages();
 
         // Create menu items for the Start Map choice.
         for (int i = packageIds.size() - 1; i >= 0; --i)
@@ -147,12 +154,39 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         }
 
         auto const pos = mapItems.findData(oldChoice);
-        autoStartMap->setSelected(pos != ui::Data::InvalidPos? pos : 0);
+        autoStartMap->setSelected(pos != ui::Data::InvalidPos ? pos : 0);
     }
 
-    void pathChangedByUser(NativePathWidget &) override
-    {
+//    void pathChangedByUser(NativePathWidget &) override
+//    {
+//        setCustomDataFile(customDataFile->path());
+//    }
 
+//    void setCustomDataFile(const NativePath &path)
+//    {
+//        tempProfile->setUseGameRequirements(path.isEmpty());
+//        tempProfile->setCustomDataFile(path.toString());
+//    }
+
+    void updateDataFile()
+    {
+        if (tempProfile->customDataFile().isEmpty())
+        {
+            customDataFileName->setText(_E(l) "Default game data");
+        }
+        else
+        {
+            if (const auto *pkgFile = PackageLoader::get().select(tempProfile->customDataFile()))
+            {
+                const auto path = pkgFile->correspondingNativePath();
+                customDataFileName->setText(path.pretty());
+            }
+            else
+            {
+                customDataFileName->setText(_E(b) "Not found");
+            }
+        }
+        updateMapList();
     }
 };
 
@@ -184,10 +218,54 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         d->gameChoice->items() << new ChoiceItem(tr("No playable games"), "");
     }
 
-    // Custom data file.
-    form->add(d->customDataFile = new NativePathWidget);
-    d->customDataFile->setBlankText("Default game data");
-    d->customDataFile->audienceForUserChange() += d;
+    // Custom data file selection.
+    {
+        form->add(d->customDataFileName = new AuxButtonWidget);
+        d->customDataFileName->setMaximumTextWidth(
+            rule().right() - d->customDataFileName->rule().left() -
+                    d->customDataFileName->margins().width());
+        d->customDataFileName->setTextLineAlignment(ui::AlignLeft);
+        d->customDataFileName->auxiliary().setText("Reset");
+        d->customDataFileActions
+                << new ui::ActionItem("Select", new CallbackAction([this]() {
+            if (d->customPicker)
+            {
+                d->tempProfile->setCustomDataFile(d->customPicker->actionPackage());
+                d->customPicker->ancestorOfType<MessageDialog>()->accept();
+                d->updateDataFile();
+            }
+        }));
+        d->customDataFileName->setActionFn([this]() {
+            auto *dlg = new MessageDialog;
+            dlg->buttons() << new DialogButtonItem(Reject, "Cancel")
+                           << new DialogButtonItem(Action | Id1, style().images().image("gear"),
+                                                   "Data Files", new CallbackAction([dlg]() {
+                auto *dfsDlg = new DataFileSettingsDialog;
+                dfsDlg->setAnchorAndOpeningDirection(dlg->buttonWidget(Id1)->rule(), ui::Up);
+                dfsDlg->setDeleteAfterDismissed(true);
+                dlg->add(dfsDlg);
+                dfsDlg->open();
+            }));
+            dlg->setDeleteAfterDismissed(true);
+            dlg->title().setText("Game Data File");
+            dlg->message().setText("Select the main data file. The default data files "
+                                   "of the game will not be automatically loaded.");
+            dlg->area().enableIndicatorDraw(true);
+            d->customPicker.reset(new PackagesWidget);
+            dlg->area().add(d->customPicker);
+            d->customPicker->setHiddenTags({"core"});
+            d->customPicker->setAllowPackageInfoActions(false);
+            d->customPicker->setActionItems(d->customDataFileActions);
+            dlg->setAnchorAndOpeningDirection(d->customDataFileName->rule(), ui::Right);
+            dlg->updateLayout();
+            root().addOnTop(dlg);
+            dlg->open(Modal);
+        });
+        d->customDataFileName->auxiliary().setActionFn([this]() {
+            d->tempProfile->setCustomDataFile("");
+            d->updateDataFile();
+        });
+    }
 
     // Packages selection.
     form->add(d->packages = new PackagesButtonWidget);
@@ -217,7 +295,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     layout << *LabelWidget::newWithText(tr("Game:"), form)
            << *d->gameChoice
            << *LabelWidget::newWithText("Data File:", form)
-           << *d->customDataFile
+           << *d->customDataFileName
            << *LabelWidget::newWithText(tr("Mods:"), form)
            << *d->packages;
 
@@ -242,8 +320,9 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     buttonWidget(Id1)->disable();
 
     updateLayout();
-
+    d->updateDataFile();
     d->gameChanged();
+
     connect(d->gameChoice, &ChoiceWidget::selectionChanged, [this] () { d->gameChanged(); });
     connect(d->packages, &PackagesButtonWidget::packageSelectionChanged,
             [this] (QStringList) { d->updateMapList(); });
@@ -268,8 +347,10 @@ void CreateProfileDialog::fetchFrom(GameProfile const &profile)
 {
     editor().setText(profile.name());
     d->gameChoice->setSelected(d->gameChoice->items().findData(profile.gameId()));
+    d->tempProfile->setCustomDataFile(profile.customDataFile());
+    d->tempProfile->setUseGameRequirements(profile.customDataFile().isEmpty());
     d->packages->setPackages(profile.packages());
-    d->updateMapList();
+    d->updateDataFile();
     d->autoStartMap->setSelected(d->autoStartMap->items().findData(profile.autoStartMap()));
     d->autoStartSkill->setSelected(d->autoStartSkill->items().findData(profile.autoStartSkill()));
 }
@@ -281,6 +362,8 @@ void CreateProfileDialog::applyTo(GameProfile &profile) const
     {
         profile.setGame(d->gameChoice->selectedItem().data().toString());
     }
+    profile.setCustomDataFile(d->tempProfile->customDataFile());
+    profile.setUseGameRequirements(d->tempProfile->customDataFile().isEmpty());
     profile.setPackages(d->packages->packages());
     profile.setAutoStartMap(d->autoStartMap->selectedItem().data().toString());
     profile.setAutoStartSkill(d->autoStartSkill->selectedItem().data().toInt());

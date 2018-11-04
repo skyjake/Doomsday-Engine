@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
         dlg->heading().setStyleImage(dialogIcon);
         if (profile)
         {
-            dlg->setGame(profile->gameId());
+            dlg->setProfile(*profile);
         }
         dlg->setDeleteAfterDismissed(true);
         dlg->setSelectedPackages(packages);

@@ -45,6 +45,7 @@ public:
         Profile &operator = (Profile const &other);
 
         void setGame(de::String const &id);
+        void setCustomDataFile(const de::String &id);
         void setPackages(de::StringList packagesInOrder);
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
@@ -56,6 +57,7 @@ public:
 
         de::String gameId() const;
         Game &game() const;
+        de::String customDataFile() const;
         de::StringList packages() const;
         bool isUserCreated() const;
         bool isUsingGameRequirements() const;

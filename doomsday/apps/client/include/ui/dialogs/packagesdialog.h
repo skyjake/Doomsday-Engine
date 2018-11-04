@@ -20,6 +20,7 @@
 #define DENG_CLIENT_PACKAGESDIALOG_H
 
 #include <de/DialogWidget>
+#include <doomsday/GameProfiles>
 
 /**
  * Package selection UI.
@@ -31,12 +32,10 @@ class PackagesDialog : public de::DialogWidget
 public:
     PackagesDialog(de::String const &titleText = "");
 
-    void setGame(de::String const &gameId);
+//    void setGame(de::String const &gameId);
+    void setProfile(const GameProfile &profile);
     void setSelectedPackages(de::StringList packages);
     de::StringList selectedPackages() const;
-
-//public slots:
-//    void refreshPackages();
 
 protected:
     void preparePanelForOpening() override;

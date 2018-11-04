@@ -53,7 +53,6 @@ DENG_GUI_PIMPL(PackagesDialog)
 , public PackagesWidget::IPackageStatus
 , DENG2_OBSERVES(Widget, ChildAddition)
 {
-    StringList requiredPackages; // loaded first, cannot be changed
     StringList selectedPackages;
     LabelWidget *nothingSelected;
     ui::ListData actions;
@@ -61,7 +60,7 @@ DENG_GUI_PIMPL(PackagesDialog)
     PackagesWidget *browser;
     LabelWidget *gameTitle;
     LabelWidget *gameDataFiles;
-    Game const *game = nullptr;
+    const GameProfile *gameProfile = nullptr;
     res::LumpCatalog catalog;
 
     /**
@@ -301,23 +300,34 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     void updateGameTitle()
     {
-        if (game && catalog.setPackages(requiredPackages + selectedPackages))
+        if (gameProfile && catalog.setPackages(gameProfile->allRequiredPackages() + selectedPackages))
         {
-            gameTitle->setImage(IdTech1Image::makeGameLogo(*game, catalog,
-                                                           IdTech1Image::UnmodifiedAppearance));
+            gameTitle->setImage(IdTech1Image::makeGameLogo(gameProfile->game(), catalog,
+                                                           IdTech1Image::UnmodifiedAppearance |
+                                                           IdTech1Image::AlwaysTryLoad));
             // List of the native required files.
             StringList dataFiles;
-            for (String packageId : requiredPackages)
+            if (gameProfile->customDataFile())
             {
-                if (File const *file = App::packageLoader().select(packageId))
+                if (const auto *file = PackageLoader::get().select(gameProfile->customDataFile()))
                 {
-                    // Only list here the game data files; Doomsday's PK3s are always
-                    // there so listing them is not very helpful.
-                    if (Package::matchTags(*file, QStringLiteral("\\bgamedata\\b")))
+                    dataFiles << file->source()->description(0);
+                }
+            }
+            else
+            {
+                for (String packageId : gameProfile->allRequiredPackages())
+                {
+                    if (const File *file = PackageLoader::get().select(packageId))
                     {
-                        // Resolve indirection (symbolic links and interpretations) to
-                        // describe the actual source file of the package.
-                        dataFiles << file->source()->description(0);
+                        // Only list here the game data files; Doomsday's PK3s are always
+                        // there so listing them is not very helpful.
+                        if (Package::matchTags(*file, QStringLiteral("\\bgamedata\\b")))
+                        {
+                            // Resolve indirection (symbolic links and interpretations) to
+                            // describe the actual source file of the package.
+                            dataFiles << file->source()->description(0);
+                        }
                     }
                 }
             }
@@ -333,12 +343,12 @@ DENG_GUI_PIMPL(PackagesDialog)
         }
     }
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
+    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
     {
         return new SelectedPackageWidget(item.as<SelectedPackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &)
+    void updateItemWidget(GuiWidget &widget, ui::Item const &) override
     {
         widget.as<SelectedPackageWidget>().updateContents();
     }
@@ -358,7 +368,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         updateGameTitle();
     }
 
-    void widgetChildAdded(Widget &child)
+    void widgetChildAdded(Widget &child) override
     {
         ui::DataPos pos = menu->findItem(child.as<GuiWidget>());
         // We use a delay here because ScrollAreaWidget does scrolling based on
@@ -414,10 +424,10 @@ PackagesDialog::PackagesDialog(String const &titleText)
     d->browser->setPopulationEnabled(true);
 }
 
-void PackagesDialog::setGame(String const &gameId)
+void PackagesDialog::setProfile(const GameProfile &profile)
 {
-    d->game = &DoomsdayApp::games()[gameId];
-    d->requiredPackages = d->game->requiredPackages();
+    d->gameProfile = &profile;
+    //d->requiredPackages = d->game->requiredPackages();
     d->updateGameTitle();
 }
 
