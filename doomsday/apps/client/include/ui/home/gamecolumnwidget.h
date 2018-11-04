@@ -39,8 +39,15 @@ public:
     void setHighlighted(bool highlighted) override;
 
     // Implements IPersistent.
-    void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator>>(de::PersistentState &toState) const override;
+    void operator<<(de::PersistentState const &fromState) override;
+
+public:
+    static const de::String SORT_GAME_ID;
+    static const de::String SORT_MODS;
+    static const de::String SORT_RECENTLY_PLAYED;
+    static const de::String SORT_RELEASE_DATE;
+    static const de::String SORT_TITLE;
 
 private:
     DENG2_PRIVATE(d)

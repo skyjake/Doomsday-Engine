@@ -19,6 +19,7 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/home/savelistwidget.h"
+#include "ui/home/gamecolumnwidget.h"
 #include "ui/savelistdata.h"
 #include "ui/dialogs/packagesdialog.h"
 #include "ui/widgets/packagesbuttonwidget.h"
@@ -36,6 +37,7 @@
 #include <de/Async>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
+#include <de/Config>
 #include <de/FileSystem>
 #include <de/Loop>
 #include <de/PopupMenuWidget>
@@ -46,6 +48,7 @@ using namespace de;
 DENG_GUI_PIMPL(GamePanelButtonWidget)
 , DENG2_OBSERVES(Profiles::AbstractProfile, Change)
 , DENG2_OBSERVES(res::Bundles, Identify)
+, DENG2_OBSERVES(Variable, Change)
 , public AsyncScope
 {
     GameProfile &gameProfile;
@@ -169,6 +172,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         self().panel().open();
 
         DoomsdayApp::bundles().audienceForIdentify() += this;
+        Config::get("home.sortBy").audienceForChange() += this;
     }
 
     Game const &game() const
@@ -252,6 +256,11 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         self().updateContent();
     }
 
+    void variableValueChanged(Variable &, Value const &) override
+    {
+        self().updateContent();
+    }
+
     void dataBundlesIdentified() override
     {
         Loop::get().mainCall([this] ()
@@ -264,6 +273,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     bool isMissingPackages() const
     {
         return !gameProfile.isPlayable() && game().isPlayableWithDefaultPackages();
+    }
+
+    String defaultSubtitle() const
+    {
+        return gameProfile.isUserCreated() ? game().title()
+                                           : String::number(game().releaseDate().year());
     }
 };
 
@@ -305,8 +320,24 @@ void GamePanelButtonWidget::updateContent()
     d->problemIcon->show(!isGamePlayable);
     d->updatePackagesIndicator();
 
-    String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
-                                                 : d->game().title();
+    const String sortBy = Config::get("home.sortBy");
+
+    String meta;
+    if (sortBy == GameColumnWidget::SORT_RECENTLY_PLAYED)
+    {
+        meta = d->gameProfile.lastPlayedAt().isValid()
+                   ? "Last played " + d->gameProfile.lastPlayedAt().asText(Time::FriendlyFormat)
+                   : "";
+    }
+    else if (sortBy == GameColumnWidget::SORT_GAME_ID)
+    {
+        meta = d->game().id();
+    }
+
+    if (meta.isEmpty())
+    {
+        meta = d->defaultSubtitle();
+    }
 
     if (isSelected())
     {

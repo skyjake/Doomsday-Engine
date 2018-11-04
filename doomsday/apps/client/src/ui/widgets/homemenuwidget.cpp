@@ -115,7 +115,7 @@ ui::DataPos HomeMenuWidget::selectedIndex() const
 
 const ui::Item *HomeMenuWidget::selectedItem() const
 {
-    if (selectedIndex() != ui::Data::InvalidPos)
+    if (selectedIndex() < items().size())
     {
         return &items().at(selectedIndex());
     }

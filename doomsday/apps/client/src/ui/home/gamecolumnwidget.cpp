@@ -41,11 +41,11 @@
 
 using namespace de;
 
-static const String SORT_RECENTLY_PLAYED("recent");
-static const String SORT_RELEASE_DATE("release");
-static const String SORT_TITLE("title");
-static const String SORT_MODS("mods");
-static const String SORT_GAME_ID("game");
+const String GameColumnWidget::SORT_GAME_ID("game");
+const String GameColumnWidget::SORT_MODS("mods");
+const String GameColumnWidget::SORT_RECENTLY_PLAYED("recent");
+const String GameColumnWidget::SORT_RELEASE_DATE("release");
+const String GameColumnWidget::SORT_TITLE("title");
 
 static const String VAR_SORT_BY("home.sortBy");
 static const String VAR_SORT_ASCENDING("home.sortAscending");
@@ -500,36 +500,35 @@ DENG_GUI_PIMPL(GameColumnWidget)
                         }
                     }));
             }
-            else
-            {
-                popup->items() << new ui::ActionItem(tr("Mods..."), new SignalAction(button, SLOT(selectPackages())));
-            }
 
             // Items suitable for all types of profiles.
             popup->items()
-                << new ui::ActionItem(tr("Clear Mods"), new CallbackAction([this, button] ()
-                {
-                    button->clearPackages();
-                }))
-                << new ui::ActionItem(tr("Duplicate"), new CallbackAction([this, profileItem] ()
-                {
-                    GameProfile *dup = new GameProfile(*profileItem->profile);
-                    dup->setUserCreated(true);
+                << new ui::ActionItem(tr("Select Mods..."),
+                                      new SignalAction(button, SLOT(selectPackages())))
+                << new ui::ActionItem(tr("Clear Mods"), new CallbackAction([this, button]() {
+                                          button->clearPackages();
+                                      }))
+                << new ui::ActionItem(
+                       tr("Duplicate"), new CallbackAction([this, profileItem]() {
+                           GameProfile *dup = new GameProfile(*profileItem->profile);
+                           dup->setUserCreated(true);
 
-                    // Generate a unique name.
-                    for (int attempt = 1; ; ++attempt)
-                    {
-                        String newName;
-                        if (attempt > 1) newName = String("%1 (Copy %2)").arg(dup->name()).arg(attempt);
-                                   else newName = String("%1 (Copy)").arg(dup->name());
-                        if (!DoomsdayApp::gameProfiles().tryFind(newName))
-                        {
-                            dup->setName(newName);
-                            DoomsdayApp::gameProfiles().add(dup);
-                            break;
-                        }
-                    }
-                }));
+                           // Generate a unique name.
+                           for (int attempt = 1;; ++attempt)
+                           {
+                               String newName;
+                               if (attempt > 1)
+                                   newName = String("%1 (Copy %2)").arg(dup->name()).arg(attempt);
+                               else
+                                   newName = String("%1 (Copy)").arg(dup->name());
+                               if (!DoomsdayApp::gameProfiles().tryFind(newName))
+                               {
+                                   dup->setName(newName);
+                                   DoomsdayApp::gameProfiles().add(dup);
+                                   break;
+                               }
+                           }
+                       }));
 
             if (isUserProfile)
             {
