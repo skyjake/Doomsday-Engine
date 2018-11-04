@@ -239,9 +239,18 @@ public:
     Children children() const;
     dsize childCount() const;
     Widget *parent() const;
-    inline Widget *parentWidget() const { return parent(); }
+    inline Widget *parentWidget() const { return parent(); }    
     bool isFirstChild() const;
     bool isLastChild() const;
+
+    template <typename Type>
+    Type *ancestorOfType() const {
+        for (Widget *w = parent(); w; w = w->parent())
+        {
+            if (auto *t = maybeAs<Type>(w)) return t;
+        }
+        return nullptr;
+    }
 
     /**
      * Calls the given callback on each widget of the tree, starting from this widget.
