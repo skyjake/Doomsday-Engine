@@ -32,6 +32,7 @@
 #include <de/SignalAction>
 #include <de/GridPopupWidget>
 #include <de/VariableChoiceWidget>
+#include <de/VariableSliderWidget>
 
 using namespace de;
 using namespace de::ui;
@@ -52,10 +53,11 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
+    VariableSliderWidget *sfxChannels;
 #if defined (WIN32)
     VariableChoiceWidget *cdPlugin;
 #endif
-    bool audioPluginsChanged = false;
+    bool needAudioReinit = false;
 
     Impl(Public *i) : Base(i)
     {
@@ -92,10 +94,11 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             devPopup->commit();
         }
 
-        area.add(soundPlugin    = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
-        area.add(musicPlugin    = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
+        area.add(sfxChannels = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
+        area.add(soundPlugin = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
+        area.add(musicPlugin = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
 #if defined (WIN32)
-        area.add(cdPlugin       = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
+        area.add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
 #endif
 
         area.add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
@@ -140,13 +143,17 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         fmodSpeakerMode->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
-        auto changeFunc = [this](uint) { audioPluginsChanged = true; };
+        auto changeFunc = [this](uint) {
+            needAudioReinit = true;
+            self().buttonWidget(Id2)->setText(_E(b) "Apply");
+        };
         QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
 #if defined (WIN32)
         QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
 #endif
+        QObject::connect(sfxChannels, &SliderWidget::valueChangedByUser, changeFunc);
     }
 
     void fetch()
@@ -213,22 +220,16 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
                << *sfLabel          << *d->musicSoundfont;
     }
 
-    auto *soundPluginLabel = LabelWidget::newWithText(tr("SFX Plugin:"  ), &area());
-    auto *musicPluginLabel = LabelWidget::newWithText(tr("Music Plugin:"), &area());
-#if defined (WIN32)
-    auto *cdPluginLabel    = LabelWidget::newWithText(tr("CD Plugin:"   ), &area());
-#endif
-
     LabelWidget *pluginLabel = LabelWidget::newWithText(_E(D) + tr("Audio Backend"), &area());
     pluginLabel->setFont("separator.label");
     pluginLabel->margins().setTop("gap");
     layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
     layout.append(*pluginLabel, 2);
 
-    layout << *soundPluginLabel << *d->soundPlugin
-           << *musicPluginLabel << *d->musicPlugin;
+    layout  << *LabelWidget::newWithText(tr("SFX Plugin:"  ), &area()) << *d->soundPlugin
+           << *LabelWidget::newWithText(tr("Music Plugin:"), &area()) << *d->musicPlugin;
 #if defined (WIN32)
-    layout << *cdPluginLabel    << *d->cdPlugin;
+    layout << LabelWidget::newWithText(tr("CD Plugin:"   ), &area())  << *d->cdPlugin;
 #endif
 
     auto *padding = new GuiWidget;
@@ -236,18 +237,18 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
     padding->rule().setInput(Rule::Height, rule("dialog.gap"));
     layout.append(*padding, 2);
 
-    auto *speakerLabel = LabelWidget::newWithText(tr("FMOD Speaker Mode:"), &area());
-    layout << *speakerLabel << *d->fmodSpeakerMode;
+    layout << *LabelWidget::newWithText("SFX Channels:", &area())          << *d->sfxChannels
+           << *LabelWidget::newWithText(tr("FMOD Speaker Mode:"), &area()) << *d->fmodSpeakerMode;
 
     area().setContentSize(layout);
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
+            << new DialogButtonItem(Default | Accept | Id2, tr("Close"))
+            << new DialogButtonItem(Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
     if (gameLoaded)
     {
-        buttons() << new DialogButtonItem(DialogWidget::ActionPopup | Id1,
+        buttons() << new DialogButtonItem(ActionPopup | Id1,
                                           style().images().image("gauge"));
         popupButtonWidget(Id1)->setPopup(*d->devPopup);
     }
@@ -258,8 +259,8 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 void AudioSettingsDialog::resetToDefaults()
 {
     ClientApp::audioSettings().resetToDefaults();
-
     d->fetch();
+    d->needAudioReinit = true;
 }
 
 void AudioSettingsDialog::finish(int result)
@@ -267,7 +268,7 @@ void AudioSettingsDialog::finish(int result)
     DialogWidget::finish(result);
     if (result)
     {
-        if (d->audioPluginsChanged)
+        if (d->needAudioReinit)
         {
             AudioSystem::get().reinitialize();
         }

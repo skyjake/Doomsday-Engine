@@ -169,7 +169,9 @@ int DS_Init(void)
 #endif
 
     // Initialize FMOD.
-    if ((result = fmodSystem->init(50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_CHANNEL_LOWPASS, 0)) != FMOD_OK)
+    if ((result = fmodSystem->init(
+             50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_CHANNEL_LOWPASS, 0)) !=
+        FMOD_OK)
     {
         LOGDEV_AUDIO_ERROR("FMOD init failed: (%d) %s") << result << FMOD_ErrorString(result);
         fmodSystem->release();

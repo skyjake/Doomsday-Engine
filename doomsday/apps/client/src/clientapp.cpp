@@ -461,7 +461,10 @@ DENG2_PIMPL(ClientApp)
                 .define(Prof::ConfigVariable, "home.columns.heretic")
                 .define(Prof::ConfigVariable, "home.columns.hexen")
                 .define(Prof::ConfigVariable, "home.columns.otherGames")
-                .define(Prof::ConfigVariable, "home.columns.multiplayer");
+                .define(Prof::ConfigVariable, "home.columns.multiplayer")
+                .define(Prof::ConfigVariable, "home.sortBy")
+                .define(Prof::ConfigVariable, "home.sortAscending")
+                .define(Prof::ConfigVariable, "home.sortCustomSeparately");
 
         /// @todo These belong in their respective subsystems.
 
@@ -483,7 +486,8 @@ DENG2_PIMPL(ClientApp)
                 .define(Prof::StringCVar,     "music-soundfont",     "")
                 .define(Prof::ConfigVariable, "audio.soundPlugin")
                 .define(Prof::ConfigVariable, "audio.musicPlugin")
-                .define(Prof::ConfigVariable, "audio.cdPlugin");
+                .define(Prof::ConfigVariable, "audio.cdPlugin")
+                .define(Prof::ConfigVariable, "audio.channels");
     }
 
 #ifdef UNIX
