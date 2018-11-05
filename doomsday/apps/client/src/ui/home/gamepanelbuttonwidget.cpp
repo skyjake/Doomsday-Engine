@@ -277,8 +277,15 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     String defaultSubtitle() const
     {
-        return gameProfile.isUserCreated() ? game().title()
-                                           : String::number(game().releaseDate().year());
+        if (gameProfile.isUserCreated())
+        {
+            return game().title();
+        }
+        if (Config::get("home.sortBy") != GameColumnWidget::SORT_RECENTLY_PLAYED)
+        {
+            return String::number(game().releaseDate().year());
+        }
+        return {};
     }
 };
 
@@ -333,7 +340,6 @@ void GamePanelButtonWidget::updateContent()
     {
         meta = d->game().id();
     }
-
     if (meta.isEmpty())
     {
         meta = d->defaultSubtitle();
