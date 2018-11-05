@@ -307,15 +307,15 @@ DENG_GUI_PIMPL(PackagesDialog)
                                                            IdTech1Image::AlwaysTryLoad));
             // List of the native required files.
             StringList dataFiles;
-            if (gameProfile->customDataFile())
-            {
-                if (const auto *file = PackageLoader::get().select(gameProfile->customDataFile()))
-                {
-                    dataFiles << file->source()->description(0);
-                }
-            }
-            else
-            {
+//            if (gameProfile->customDataFile())
+//            {
+//                if (const auto *file = PackageLoader::get().select(gameProfile->customDataFile()))
+//                {
+//                    dataFiles << file->source()->description(0);
+//                }
+//            }
+//            else
+//            {
                 for (String packageId : gameProfile->allRequiredPackages())
                 {
                     if (const File *file = PackageLoader::get().select(packageId))
@@ -330,7 +330,7 @@ DENG_GUI_PIMPL(PackagesDialog)
                         }
                     }
                 }
-            }
+//            }
             if (!dataFiles.isEmpty())
             {
                 gameDataFiles->setText(_E(l) + String::format("Game data file%s: ", dataFiles.size() != 1? "s" : "") +

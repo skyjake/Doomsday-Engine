@@ -385,13 +385,28 @@ Time GameProfiles::Profile::lastPlayedAt() const
 StringList GameProfiles::Profile::allRequiredPackages() const
 {
     StringList list;
-    if (d->useGameRequirements)
-    {
-        list = DoomsdayApp::games()[d->gameId].requiredPackages();
-    }
     if (d->customDataFile)
     {
         list += d->customDataFile;
+    }
+    if (d->useGameRequirements)
+    {
+        StringList reqs = DoomsdayApp::games()[d->gameId].requiredPackages();
+        if (d->customDataFile)
+        {
+            // Remove any normally required gamedata-tagged packages.
+            reqs = filter(reqs, [](const String &id) {
+                if (const auto *f = PackageLoader::get().select(id))
+                {
+                    if (Package::matchTags(*f, QStringLiteral("\\bgamedata\\b")))
+                    {
+                        return false;
+                    }
+                }
+                return true;
+            });
+        }
+        list += reqs;
     }
     return list + d->packages;
 }

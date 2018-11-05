@@ -205,9 +205,10 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     form->add(d->gameChoice = new ChoiceWidget);
     DoomsdayApp::games().forAll([this, &gameFamily] (Game &game)
     {
-        if (game.isPlayable() && game.family() == gameFamily)
+        if (game.family() == gameFamily)
         {
-            d->gameChoice->items() << new ChoiceItem(game.title(), game.id());
+            const char *labelColor = (!game.isPlayable() ? _E(F) : "");
+            d->gameChoice->items() << new ChoiceItem(labelColor + game.title(), game.id());
         }
         return LoopContinue;
     });
@@ -348,7 +349,6 @@ void CreateProfileDialog::fetchFrom(GameProfile const &profile)
     editor().setText(profile.name());
     d->gameChoice->setSelected(d->gameChoice->items().findData(profile.gameId()));
     d->tempProfile->setCustomDataFile(profile.customDataFile());
-    d->tempProfile->setUseGameRequirements(profile.customDataFile().isEmpty());
     d->packages->setPackages(profile.packages());
     d->updateDataFile();
     d->autoStartMap->setSelected(d->autoStartMap->items().findData(profile.autoStartMap()));
@@ -363,7 +363,7 @@ void CreateProfileDialog::applyTo(GameProfile &profile) const
         profile.setGame(d->gameChoice->selectedItem().data().toString());
     }
     profile.setCustomDataFile(d->tempProfile->customDataFile());
-    profile.setUseGameRequirements(d->tempProfile->customDataFile().isEmpty());
+    profile.setUseGameRequirements(true);
     profile.setPackages(d->packages->packages());
     profile.setAutoStartMap(d->autoStartMap->selectedItem().data().toString());
     profile.setAutoStartSkill(d->autoStartSkill->selectedItem().data().toInt());

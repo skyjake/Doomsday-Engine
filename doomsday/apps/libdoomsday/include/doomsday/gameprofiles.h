@@ -35,6 +35,10 @@ public:
     /**
      * Game profile. Identifies a specific Game and a set of packages to be loaded.
      * Profiles are serialized as plain text in "/home/configs/game.dei".
+     *
+     * When a custom data file is set, any normally required packages with the "gamedata"
+     * tag are ignored. The assumption is that the custom data file provides everything
+     * that is provided by those default gamedata packages.
      */
     class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile
     {
