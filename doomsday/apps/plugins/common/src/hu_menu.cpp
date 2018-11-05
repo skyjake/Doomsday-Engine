@@ -3734,10 +3734,6 @@ void Hu_MenuConsoleRegister()
 #endif
     C_VAR_BYTE ("menu-save-suggestname",    &cfg.common.menuGameSaveSuggestDescription, 0, 0, 1);
 
-    // Aliases for obsolete cvars:
-    C_VAR_BYTE ("menu-turningskull",        &cfg.common.menuCursorRotate,       0, 0, 1);
-
-
     C_CMD("menu",           "s",    MenuOpen);
     C_CMD("menu",           "",     MenuOpen);
     C_CMD("menuup",         "",     MenuCommand);
