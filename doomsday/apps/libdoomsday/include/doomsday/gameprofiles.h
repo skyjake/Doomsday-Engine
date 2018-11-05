@@ -21,6 +21,7 @@
 
 #include "libdoomsday.h"
 
+#include <de/IObject>
 #include <de/Profiles>
 
 class Game;
@@ -40,7 +41,7 @@ public:
      * tag are ignored. The assumption is that the custom data file provides everything
      * that is provided by those default gamedata packages.
      */
-    class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile
+    class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile, public de::IObject
     {
     public:
         Profile(de::String const &name = de::String());
@@ -87,8 +88,12 @@ public:
 
         void unloadPackages() const;
 
-        virtual bool resetToDefaults() override;
+        virtual bool       resetToDefaults() override;
         virtual de::String toInfoSource() const override;
+
+        // Implements IObject.
+        de::Record &      objectNamespace() override;
+        const de::Record &objectNamespace() const override;
 
     private:
         DENG2_PRIVATE(d)

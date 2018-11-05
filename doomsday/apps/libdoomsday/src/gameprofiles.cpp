@@ -37,6 +37,7 @@ static String const VAR_USE_GAME_REQUIREMENTS("useGameRequirements");
 static String const VAR_AUTO_START_MAP  ("autoStartMap");
 static String const VAR_AUTO_START_SKILL("autoStartSkill");
 static String const VAR_LAST_PLAYED     ("lastPlayed");
+static String const VAR_VALUES          ("values");
 
 static int const DEFAULT_SKILL = 3; // Normal skill level (1-5)
 
@@ -165,7 +166,10 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
     if (Info::ListElement const *pkgs = block.findAs<Info::ListElement>(VAR_PACKAGES))
     {
         StringList ids;
-        for (auto const &val : pkgs->values()) ids << val.text;
+        for (auto const &val : pkgs->values())
+        {
+            ids << val.text;
+        }
         prof->setPackages(ids);
     }
 
@@ -191,6 +195,10 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
     {
         prof->setLastPlayedAt(Time::fromText(block.keyValue(VAR_LAST_PLAYED).text));
     }
+    if (const auto *values = block.findAs<Info::BlockElement>(VAR_VALUES))
+    {
+        prof->objectNamespace() = values->asRecord();
+    }
 
     return prof.release();
 }
@@ -207,6 +215,7 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
     String     autoStartMap;
     int        autoStartSkill = DEFAULT_SKILL;
     Time       lastPlayedAt   = Time::invalidTime();
+    Record     values;
 
     Impl() {}
 
@@ -219,6 +228,7 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
         , autoStartMap       (other.autoStartMap)
         , autoStartSkill     (other.autoStartSkill)
         , lastPlayedAt       (other.lastPlayedAt)
+        , values             (other.values)
     {}
 };
 
@@ -244,6 +254,7 @@ GameProfiles::Profile &GameProfiles::Profile::operator=(const Profile &other)
     d->autoStartMap          = other.d->autoStartMap;
     d->autoStartSkill        = other.d->autoStartSkill;
     d->lastPlayedAt          = other.d->lastPlayedAt;
+    d->values                = other.d->values;
     return *this;
 }
 
@@ -492,8 +503,24 @@ String GameProfiles::Profile::toInfoSource() const
     {
         os << "\n" << VAR_LAST_PLAYED << ": " << d->lastPlayedAt.asText();
     }
-
+    // Additional configuration values (e.g., config for the game to use).
+    if (!d->values.isEmpty())
+    {
+        String indented = d->values.asInfo();
+        indented.replace("\n", "\n    ");
+        os << "\n" << VAR_VALUES << " {\n    " << indented << "\n}";
+    }
     return info;
+}
+
+Record &GameProfiles::Profile::objectNamespace()
+{
+    return d->values;
+}
+
+const Record &GameProfiles::Profile::objectNamespace() const
+{
+    return d->values;
 }
 
 bool GameProfiles::arePackageListsCompatible(StringList const &list1, StringList const &list2) // static
