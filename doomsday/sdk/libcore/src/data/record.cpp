@@ -891,6 +891,11 @@ Record const &Record::subrecord(String const &name) const
     throw NotFoundError("Record::subrecord", "Subrecord '" + name + "' not found");
 }
 
+dsize Record::size() const
+{
+    return dsize(d->members.size());
+}
+
 Record::Members const &Record::members() const
 {
     return d->members;

@@ -502,6 +502,10 @@ public:
      */
     Record const &subrecord(String const &name) const;
 
+    dsize size() const;
+
+    inline bool isEmpty() const { return size() == 0; }
+
     /**
      * Returns a non-modifiable map of the members.
      */
