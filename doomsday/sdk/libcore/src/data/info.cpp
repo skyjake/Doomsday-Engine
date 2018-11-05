@@ -22,8 +22,10 @@
 #include "de/Folder"
 #include "de/Log"
 #include "de/LogBuffer"
+#include "de/RecordValue"
 #include "de/ScriptLex"
 #include "de/SourceLineTable"
+#include <de/TextValue>
 
 #include <QFile>
 
@@ -804,6 +806,35 @@ void Info::BlockElement::moveContents(BlockElement &destination)
     }
     _contentsInOrder.clear();
     _contents.clear();
+}
+
+Record Info::BlockElement::asRecord() const
+{
+    Record rec;
+    for (auto i = _contents.begin(); i != _contents.end(); ++i)
+    {
+        std::unique_ptr<Variable> var(new Variable(i.key()));
+        const Element *elem = i.value();
+        if (elem->isBlock())
+        {
+            var->set(RecordValue::takeRecord(elem->as<BlockElement>().asRecord()));
+        }
+        else if (elem->isList())
+        {
+            std::unique_ptr<ArrayValue> array(new ArrayValue);
+            for (const auto &value : elem->values())
+            {
+                array->add(new TextValue(value.text));
+            }
+            var->set(array.release());
+        }
+        else
+        {
+            var->set(new TextValue(elem->as<KeyElement>().value().text));
+        }
+        rec.add(var.release());
+    }
+    return rec;
 }
 
 //---------------------------------------------------------------------------------------

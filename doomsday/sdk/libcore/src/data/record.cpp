@@ -1155,7 +1155,7 @@ String Record::asInfo() const
     os.setCodec("UTF-8");
     for (auto i = d->members.constBegin(); i != d->members.constEnd(); ++i)
     {
-        Variable const &var = *i.value();
+        const Variable &var = *i.value();
         String src = i.key();
 
         if (is<RecordValue>(var.value()))
