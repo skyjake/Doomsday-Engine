@@ -127,7 +127,7 @@ DENG_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
 {
     return App_Resources().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                             0, 1, -1, false, true, true, false);
+                                             0, -2, -1, false, true, true, false);
 }
 
 #undef R_GetSpriteInfo

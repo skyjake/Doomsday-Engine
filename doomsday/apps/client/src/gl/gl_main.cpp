@@ -754,7 +754,7 @@ static inline MaterialVariantSpec const &uiMaterialSpec(gl::Wrapping wrapS, gl::
 static inline MaterialVariantSpec const &pspriteMaterialSpec(dint tClass, dint tMap)
 {
     return resSys().materialSpec(PSpriteContext, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 0, 1, 0, false, true, true, false);
+                                 0, -2, 0, false, true, true, false);
 }
 
 void GL_SetMaterialUI2(world::Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
