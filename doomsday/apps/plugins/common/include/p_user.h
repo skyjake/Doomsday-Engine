@@ -25,11 +25,11 @@
 
 #include "dd_types.h"
 
-#define PLAYER_REBORN_TICS      (1*TICSPERSEC)
+#define PLAYER_REBORN_TICS (1 * TICSPERSEC)
 
 DENG_EXTERN_C dd_bool onground;
-
-DENG_EXTERN_C int maxHealth;
+DENG_EXTERN_C float   turboMul; // Multiplier for running speed.
+DENG_EXTERN_C int     maxHealth;
 
 #if __JDOOM__ || __JDOOM64__
 DENG_EXTERN_C int healthLimit;

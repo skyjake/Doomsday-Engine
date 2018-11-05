@@ -57,6 +57,7 @@
 #define ANG5                (ANG90/18)
 
 dd_bool onground;
+float   turboMul = 1.0f; // Multiplier for running speed.
 
 int maxHealth; // 100
 #if __JDOOM__ || __JDOOM64__

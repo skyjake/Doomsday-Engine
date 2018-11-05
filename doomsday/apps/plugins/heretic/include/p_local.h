@@ -94,7 +94,6 @@
 #define USE_MACE_AMMO_2 5
 
 DENG_EXTERN_C mobj_t *missileMobj;
-DENG_EXTERN_C float turboMul;
 
 #ifdef __cplusplus
 extern "C" {

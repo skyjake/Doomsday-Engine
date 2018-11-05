@@ -40,8 +40,6 @@
 using namespace de;
 using namespace common;
 
-float turboMul; // Multiplier for turbo.
-
 gamemode_t gameMode;
 int gameModeBits;
 
@@ -382,21 +380,6 @@ void H_PostInit()
     // Apply these game rules.
     gfw_SetDefaultRule(noMonsters,      cmdLine.check("-nomonsters")? true : false);
     gfw_SetDefaultRule(respawnMonsters, cmdLine.check("-respawn")   ? true : false);
-
-    // Change the turbo multiplier?
-    ::turboMul = 1.0f;
-    if (int arg = cmdLine.check("-turbo"))
-    {
-        int scale = 200;
-        if (arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
-        {
-            scale = cmdLine.at(arg + 1).toInt();
-        }
-        scale = de::clamp(10, scale, 400);
-
-        LOG_NOTE("Turbo scale: %i%%") << scale;
-        ::turboMul = scale / 100.f;
-    }
 
     // Load a saved game?
     if (auto arg = cmdLine.check("-loadgame", 1))

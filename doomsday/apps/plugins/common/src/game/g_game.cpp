@@ -801,6 +801,25 @@ void G_CommonPostInit()
     G_RegisterCheats();
 #endif
 
+    // Change the turbo multiplier.
+    {
+        auto &cmdLine = CommandLine::get();
+
+        turboMul = 1.0f;
+        if (int arg = cmdLine.check("-turbo"))
+        {
+            int scale = 200; // Default to 2x without a numeric value.
+
+            if (arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
+            {
+                scale = cmdLine.at(arg + 1).toInt();
+            }
+            scale = de::clamp(10, scale, 400);
+            turboMul = scale / 100.f;
+            LOG_NOTE("Turbo speed: %i%%") << scale;
+        }
+    }
+
     // From this point on, the shortcuts are always active.
     DD_Execute(true, "activatebcontext shortcut");
 

@@ -39,8 +39,6 @@
 using namespace de;
 using namespace common;
 
-float turboMul; // Multiplier for turbo.
-
 gamemode_t gameMode;
 int gameModeBits;
 
@@ -439,21 +437,6 @@ void D_PostInit()
                         << mins << (mins == 1? "minute" : "minutes");
             }
         }
-    }
-
-    // Change the turbo multiplier?
-    ::turboMul = 1.0f;
-    if (int arg = cmdLine.check("-turbo"))
-    {
-        int scale = 200;
-        if (arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
-        {
-            scale = cmdLine.at(arg + 1).toInt();
-        }
-        scale = de::clamp(10, scale, 400);
-
-        LOG_NOTE("Turbo scale: %i%%") << scale;
-        ::turboMul = scale / 100.f;
     }
 
     // Load a saved game?
