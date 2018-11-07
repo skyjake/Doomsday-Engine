@@ -367,16 +367,6 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
 
     if (status.type() == File::Type::File)
     {
-//        auto *source = new NativeFile(nativePath.fileName(), nativePath);
-//        source->setStatus(status);
-//        File *file = source;
-//        if (existing)
-//        {
-//            file = FileSystem::get().interpret(source);
-//        }
-//        parent->add(file);
-//        FileSystem::get().index(*file);
-
         parent->clear();
         parent->clearFeeds();
 
@@ -400,21 +390,6 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
                                             Folder::PopulateFullTree,
                                             FS::DontInheritFeeds | FS::PopulateNewFolder);
     }
-
-//        parent->attach(feed);
-//        if (!existing)
-//        {
-//            parent->createFile(nativePath.fileName());
-//        }
-//        else
-//        {
-//            parent->populate();
-//        }
-//        return FS::locate<File>(newFilePath);
-//    }
-//    else
-//    {
-    //    }
 }
 
 } // namespace de
