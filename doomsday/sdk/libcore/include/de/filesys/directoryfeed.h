@@ -71,7 +71,13 @@ public:
      */
     DirectoryFeed(NativePath const &nativePath, Flags const &mode = DefaultFlags);
 
-    virtual ~DirectoryFeed();
+    /**
+     * Sets the file name pattern that determines which files are populated by the feed.
+     * By default, the pattern includes all files.
+     *
+     * @param namePattern  File name pattern.
+     */
+    void setNamePattern(const String &namePattern);
 
     String description() const;
 
@@ -108,11 +114,16 @@ public:
     static void setFileModifiedTime(NativePath const &nativePath, Time const &modifiedAt);
 
     /**
-     * Creates and interprets a single native file and adds it to a folder. The created
-     * file is not governed by any feed and will not be pruned during folder pruning.
+     * Creates and interprets a single native file and adds it to a folder.
+     *
+     * The intended use of this method is to provide access to specific single native files
+     * anywhere in the native file system. The caller must prepare an empty or reusable folder
+     * where the new file object will be placed. A new DirectoryFeed will populate and prune
+     * the file.
      *
      * @param nativePath    Native path of the source file.
-     * @param parentFolder  Folder where to place the interpreted file.
+     * @param parentFolder  Folder where to place the interpreted file. The existing contents
+     *                      (both files and feeds) of this folder will be cleared beforehand.
      *
      * @return Reference to the interpreted file.
      */
@@ -123,8 +134,7 @@ protected:
     void populateFile(Folder const &folder, String const &entryName, PopulatedFiles &populated);
 
 private:
-    NativePath const _nativePath;
-    Flags _mode;
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(DirectoryFeed::Flags)

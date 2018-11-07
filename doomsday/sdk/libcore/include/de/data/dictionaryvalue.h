@@ -98,6 +98,9 @@ public:
      */
     ArrayValue *contentsAsArray(ContentSelection selection) const;
 
+    inline const Value &operator[](const Value &index) const { return element(index); }
+    inline Value &      operator[](const Value &index) { return element(index); }
+
     // Implementations of pure virtual methods.
     Text typeId() const;
     Value *duplicate() const;

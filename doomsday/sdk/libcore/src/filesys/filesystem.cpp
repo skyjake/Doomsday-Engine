@@ -23,6 +23,7 @@
 #include "de/ArchiveFeed"
 #include "de/ArchiveFolder"
 #include "de/DirectoryFeed"
+#include "de/DictionaryValue"
 #include "de/Guard"
 #include "de/LibraryFile"
 #include "de/Log"
@@ -30,6 +31,7 @@
 #include "de/Loop"
 #include "de/NativePath"
 #include "de/ScriptSystem"
+#include "de/TextValue"
 #include "de/ZipArchive"
 
 #include <QHash>
@@ -426,12 +428,40 @@ void FileSystem::printIndex()
 
 String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags) // static
 {
-    static String const folders = "/sys/folders";
+    static const String SYS_NATIVE = "/sys/native";
+    static const String VAR_MAPPING = "accessNames";
+
     auto &fs = get();
 
-    fs.makeFolder(folders);
+    Folder &sysNative = fs.makeFolder(SYS_NATIVE);
+    if (!sysNative.objectNamespace().hasMember(VAR_MAPPING))
+    {
+        sysNative.objectNamespace().addDictionary(VAR_MAPPING);
+    }
 
-    String const path = folders / nativePath.fileNamePath().fileName();
+//    String accessPath = SYS_NATIVE;
+
+    // The accessed paths are kept in a dictionary so we'll know when the same path is
+    // reaccessed and needs to be replaced.
+    DictionaryValue &mapping = sysNative[VAR_MAPPING].value<DictionaryValue>();
+    const TextValue key(nativePath);
+    if (!mapping.contains(key))
+    {
+        // Generate a unique access path.
+        String name;
+        do
+        {
+            name = String("%1").arg(Rangei(0, 65536).random(), 4, 16, QChar('0'));
+        } while (sysNative.has(name));
+        mapping.setElement(key, new TextValue(name));
+    }
+
+    File &f = DirectoryFeed::manuallyPopulateSingleFile(
+        nativePath, fs.makeFolder(sysNative.path() / mapping[key].asText()));
+    f.setMode(flags);
+    return f.path();
+
+    /*    String const path = folders / nativePath.fileNamePath().fileName();
     if (!fs.root().has(path))
     {
         DirectoryFeed::Flags feedFlags = DirectoryFeed::OnlyThisFolder;
@@ -441,8 +471,8 @@ String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flag
                               Folder::PopulateOnlyThisFolder,
                               FS::DontInheritFeeds | FS::PopulateNewFolder)
                 .setMode(flags);
-    }
-    return path / nativePath.fileName();
+    }*/
+    //return path / nativePath.fileName();
 }
 
 Folder &FileSystem::root()
