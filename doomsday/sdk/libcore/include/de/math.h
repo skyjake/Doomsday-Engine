@@ -213,9 +213,9 @@ inline Type lerp(Type start, Type end, float pos) {
 }
 
 /**
- * @return Random floating-point value in the range [0, 1].
+ * @return Random floating-point value in the range [0, 1).
  */
-inline float frand() { return float(qrand()) / float(RAND_MAX); }
+DENG2_PUBLIC float frand();
 
 /** @} */
 
