@@ -24,10 +24,12 @@
 #include <de/Log>
 #include <de/Writer>
 #include <doomsday/uri.h>
+#include <doomsday/DoomsdayApp>
+#include <doomsday/GameProfiles>
 
 using namespace de;
 
-static AbstractSession::Profile currentProfile;
+//static AbstractSession::Profile currentProfile;
 
 DENG2_PIMPL_NOREF(AbstractSession)
 {
@@ -48,11 +50,11 @@ void AbstractSession::setInProgress(bool inProgress)
     d->inProgress = inProgress;
 }
 
-AbstractSession::Profile &AbstractSession::profile() //static
-{
-    /// @todo None current profiles should be stored persistently when the game changes.
-    return currentProfile;
-}
+//AbstractSession::Profile &AbstractSession::profile() //static
+//{
+//    /// @todo None current profiles should be stored persistently when the game changes.
+//    return currentProfile;
+//}
 
 bool AbstractSession::hasBegun() const
 {
@@ -73,6 +75,13 @@ void AbstractSession::setThinkerMapping(world::IThinkerMapping *mapping)
 {
     d->thinkerMapping = mapping;
 }
+
+//String AbstractSession::gameId() const
+//{
+//    const auto *gameProfile = DoomsdayApp::currentGameProfile();
+//    DENG_ASSERT(gameProfile != nullptr);
+//    return gameProfile->gameId();
+//}
 
 void AbstractSession::setMapUri(de::Uri const &uri)
 {

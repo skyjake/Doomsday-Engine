@@ -54,6 +54,7 @@ public:
     bool convertLegacySavegames(de::String const &gameId, de::String const &sourcePath = "");
 
     static void consoleRegister();
+    static de::String savePath();
 
 private:
     DENG2_PRIVATE(d)

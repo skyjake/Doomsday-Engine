@@ -69,6 +69,7 @@ public:
         de::String autoStartMap() const;
         int autoStartSkill() const;
         de::Time lastPlayedAt() const;
+        de::String savePath() const;
 
         /**
          * Returns a list of the game's packages in addition to the profile's

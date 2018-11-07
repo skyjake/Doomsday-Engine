@@ -250,16 +250,15 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     M_Free(buffer);
 }
 
-static dint addListFiles(QStringList list, FileType const &ftype)
+static dint addListFiles(const StringList &list, FileType const &ftype)
 {
     dint numAdded = 0;
-    foreach (QString const &path, list)
+    for (const auto &path : list)
     {
         if (&ftype != &DD_GuessFileTypeFromFileName(path))
         {
             continue;
         }
-
         if (tryLoadFile(de::makeUri(path)))
         {
             numAdded += 1;
@@ -423,7 +422,8 @@ int loadAddonResourcesBusyWorker(void *context)
         /**
          * Phase 3: Add real files from the Auto directory.
          */
-        auto &prof = AbstractSession::profile();
+        //auto &prof = AbstractSession::profile();
+        StringList resourceFiles;
 
         FS1::PathList found;
         findAllGameDataPaths(found);
@@ -433,14 +433,14 @@ int loadAddonResourcesBusyWorker(void *context)
             if (i->attrib & A_SUBDIR) continue;
 
             /// @todo Is expansion of symbolics still necessary here?
-            prof.resourceFiles << NativePath(i->path).expand().withSeparators('/');
+            resourceFiles << NativePath(i->path).expand().withSeparators('/');
         }
 
-        if (!prof.resourceFiles.isEmpty())
+        if (!resourceFiles.isEmpty())
         {
             // First ZIPs then WADs (they may contain WAD files).
-            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_ZIP"));
-            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_WAD"));
+            addListFiles(resourceFiles, DD_FileTypeByName("FT_ZIP"));
+            addListFiles(resourceFiles, DD_FileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.

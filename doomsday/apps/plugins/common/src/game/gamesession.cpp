@@ -118,8 +118,10 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
     Impl(Public *i) : Base(i)
     {}
 
-    inline String userSavePath(String const &fileName) {
-        return AbstractSession::savePath() / fileName + ".save";
+    inline String userSavePath(String const &fileName)
+    {
+        DENG_ASSERT(DoomsdayApp::currentGameProfile());
+        return DoomsdayApp::currentGameProfile()->savePath() / fileName + ".save";
     }
 
     void cleanupInternalSave()
@@ -189,7 +191,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         GameStateMetadata meta;
 
         meta.set("sessionId",       duint(Timer_RealMilliseconds() + (mapTime << 24)) & DDMAXINT);
-        meta.set("gameIdentityKey", AbstractSession::gameId());
+        meta.set("gameIdentityKey", gfw_GameId());
         meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
         meta.set("mapUri",          self().mapUri().compose());
@@ -1423,9 +1425,18 @@ void GameSession::consoleRegister()  // static
 #undef READONLYCVAR
 }
 
+} // namespace common
+
 DENG_EXTERN_C unsigned int gfw_MapInfoFlags(void)
 {
     return gfw_Session()->mapInfo().getui(QStringLiteral("flags"));
 }
 
-}  // namespace common
+String gfw_GameId()
+{
+    if (auto *gp = DoomsdayApp::currentGameProfile())
+    {
+        return gp->gameId();
+    }
+    return {};
+}

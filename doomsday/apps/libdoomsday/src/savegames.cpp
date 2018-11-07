@@ -268,19 +268,22 @@ SaveGames &SaveGames::get() // static
 D_CMD(InspectSavegame)
 {
     DENG2_UNUSED2(src, argc);
+
     String savePath = argv[1];
+
     // Append a .save extension if none exists.
     if (savePath.fileNameExtension().isEmpty())
     {
         savePath += ".save";
     }
+
     // If a game is loaded assume the user is referring to those savegames if not specified.
-    if (savePath.fileNamePath().isEmpty() && App_GameLoaded())
+    if (savePath.fileNamePath().isEmpty() && DoomsdayApp::currentGameProfile())
     {
-        savePath = AbstractSession::savePath() / savePath;
+        savePath = DoomsdayApp::currentGameProfile()->savePath() / savePath;
     }
 
-    if (GameStateFolder const *saved = FileSystem::tryLocate<GameStateFolder>(savePath))
+    if (const GameStateFolder *saved = FileSystem::tryLocate<GameStateFolder>(savePath))
     {
         LOG_SCR_MSG("%s") << saved->metadata().asStyledText();
         LOG_SCR_MSG(_E(D) "Resource: " _E(.)_E(i) "\"%s\"") << saved->path();
@@ -294,5 +297,14 @@ D_CMD(InspectSavegame)
 void SaveGames::consoleRegister() // static
 {
     C_CMD("inspectsavegame", "s",   InspectSavegame)
+}
+
+String SaveGames::savePath()
+{
+    if (auto *gp = DoomsdayApp::currentGameProfile())
+    {
+        return gp->savePath();
+    }
+    return {};
 }
 

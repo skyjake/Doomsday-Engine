@@ -67,7 +67,7 @@ DENG2_PIMPL_NOREF(SaveSlots::Slot)
         {
             status = Incompatible;
             // Game identity key missmatch?
-            if (!session->metadata().gets("gameIdentityKey", "").compareWithoutCase(gfw_Session()->gameId()))
+            if (!session->metadata().gets("gameIdentityKey", "").compareWithoutCase(gfw_GameId()))
             {
                 /// @todo Validate loaded add-ons and checksum the definition database.
                 status = Loadable; // It's good!
@@ -129,7 +129,7 @@ SaveSlots::Slot::Slot(String id, bool userWritable, String saveName, int menuWid
     d->id           = id;
     d->userWritable = userWritable;
     d->menuWidgetId = menuWidgetId;
-    d->savePath     = GameSession::savePath() / saveName;
+    d->savePath     = SaveGames::savePath() / saveName;
     if (d->savePath.fileNameExtension().isEmpty())
     {
         d->savePath += ".save";
@@ -161,7 +161,7 @@ String const &SaveSlots::Slot::savePath() const
 
 void SaveSlots::Slot::bindSaveName(String newName)
 {
-    String newPath = GameSession::savePath() / newName;
+    String newPath = SaveGames::savePath() / newName;
     if (newPath.fileNameExtension().isEmpty())
     {
         newPath += ".save";
@@ -340,7 +340,7 @@ SaveSlots::Slot &SaveSlots::slot(String const &id) const
 
 SaveSlots::Slot *SaveSlots::slotBySaveName(String const &name) const
 {
-    return d->slotBySavePath(GameSession::savePath() / name);
+    return d->slotBySavePath(SaveGames::savePath() / name);
 }
 
 SaveSlots::Slot *SaveSlots::slotBySavedUserDescription(String const &description) const

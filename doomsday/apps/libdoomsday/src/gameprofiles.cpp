@@ -393,6 +393,13 @@ Time GameProfiles::Profile::lastPlayedAt() const
     return d->lastPlayedAt;
 }
 
+String GameProfiles::Profile::savePath() const
+{
+    /// @todo If the profile has a custom save path, use that instead!
+
+    return "/home/savegames" / gameId();
+}
+
 StringList GameProfiles::Profile::allRequiredPackages() const
 {
     StringList list;

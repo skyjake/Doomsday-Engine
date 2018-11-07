@@ -790,7 +790,7 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
         Resources::get().clear();
 
         // We do not want to load session resources specified on the command line again.
-        AbstractSession::profile().resourceFiles.clear();
+//        AbstractSession::profile().resourceFiles.clear();
 
         // The current game is now the special "null-game".
         setGame(games().nullGame());
@@ -889,7 +889,7 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     // This is now the current game.
     setGame(newGame);
     d->currentProfile = &profile;
-    AbstractSession::profile().gameId = newGame.id();
+    //AbstractSession::profile().gameId = newGame.id();
 
     if (!newGame.isNull())
     {

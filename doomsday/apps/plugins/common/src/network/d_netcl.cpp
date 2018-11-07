@@ -97,10 +97,10 @@ void NetCl_UpdateGameState(reader_s *msg)
     /// @todo  Automatically load the server's game if it is available.
     /// However, note that this can only occur if the server changes its game
     /// while a netgame is running (which currently will end the netgame).
-    if(gfw_Session()->gameId().compare(Str_Text(gsGameId)))
+    if (gfw_GameId().compare(Str_Text(gsGameId)))
     {
         LOG_NET_ERROR("Game mismatch: server's identity key (%s) is different to yours (%s)")
-                << gsGameId << gfw_Session()->gameId();
+                << gsGameId << gfw_GameId();
         DD_Execute(false, "net disconnect");
         Uri_Delete(gsMapUri);
         return;

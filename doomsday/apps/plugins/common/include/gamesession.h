@@ -240,4 +240,9 @@ private:
  */
 #define gfw_Session()    (&common::GameSession::gameSession())
 
+/**
+ * Returns the currently loaded game's ID.
+ */
+de::String gfw_GameId();
+
 #endif // LIBCOMMON_GAMESESSION_H

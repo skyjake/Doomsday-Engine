@@ -1506,7 +1506,7 @@ static void runGameAction()
 
         case GA_SCREENSHOT: {
             // Find an unused screenshot file name.
-            String fileName = gfw_Session()->gameId() + "-";
+            String fileName = gfw_GameId() + "-";
             int const numPos = fileName.length();
             for (int i = 0; i < 1e6; ++i) // Stop eventually...
             {

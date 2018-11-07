@@ -661,7 +661,7 @@ void NetSv_SendGameState(int flags, int to)
 {
     if(!IS_NETWORK_SERVER) return;
 
-    AutoStr *gameId    = AutoStr_FromTextStd(gfw_Session()->gameId().toLatin1().constData());
+    AutoStr *gameId    = AutoStr_FromTextStd(gfw_GameId().toLatin1().constData());
     AutoStr *episodeId = AutoStr_FromTextStd(gfw_Session()->episodeId().toLatin1().constData());
     de::Uri mapUri     = gfw_Session()->mapUri();
 
