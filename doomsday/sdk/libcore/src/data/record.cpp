@@ -964,7 +964,7 @@ bool Record::anyMembersChanged() const
         }
     }
 
-    return d->forSubrecords([this] (String const &, Record &rec)
+    return d->forSubrecords([](const String &, Record &rec)
     {
         if (rec.anyMembersChanged())
         {

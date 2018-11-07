@@ -140,7 +140,7 @@ Feed::PopulatedFiles RemoteFeed::populate(Folder const &folder)
     auto request = relay.fetchFileList
             (d->repository,
              d->remotePath,
-             [this, &folder, &files]
+             [this, /*&folder,*/ &files]
              (DictionaryValue const &fileMetadata)
     {
         //qDebug() << "Received file listing of" << d->remotePath;
