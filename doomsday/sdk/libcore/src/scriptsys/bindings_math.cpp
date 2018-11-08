@@ -25,7 +25,7 @@ namespace de {
 
 static Value *Function_Math_Random(Context &, Function::ArgumentValues const &)
 {
-    return new NumberValue(frand());
+    return new NumberValue(randf());
 }
 
 static Value *Function_Math_RandInt(Context &, Function::ArgumentValues const &args)

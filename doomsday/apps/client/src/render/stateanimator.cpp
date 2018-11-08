@@ -650,7 +650,7 @@ void StateAnimator::triggerByState(String const &stateName)
         {
             // Test for the probability of this animation.
             float chance = seq.def->getf(DEF_PROBABILITY, 1.f);
-            if (frand() > chance) continue;
+            if (randf() > chance) continue;
 
             // Start the animation on the specified node (defaults to root),
             // unless it is already running.

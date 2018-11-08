@@ -215,7 +215,12 @@ inline Type lerp(Type start, Type end, float pos) {
 /**
  * @return Random floating-point value in the range [0, 1).
  */
-DENG2_PUBLIC float frand();
+DENG2_PUBLIC float randf();
+
+/**
+ * @return Random unsigned integer in the range [0, 4294967295].
+ */
+DENG2_PUBLIC duint32 randui32();
 
 /** @} */
 
