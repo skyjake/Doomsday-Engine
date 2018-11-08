@@ -31,6 +31,7 @@
 #include <de/ZipArchive>
 #include <doomsday/DoomsdayApp>
 #include <doomsday/GameStateFolder>
+#include <doomsday/SaveGames>
 #include <doomsday/defs/episode.h>
 #include "acs/system.h"
 #include "api_gl.h"
@@ -121,7 +122,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
     inline String userSavePath(String const &fileName)
     {
         DENG_ASSERT(DoomsdayApp::currentGameProfile());
-        return DoomsdayApp::currentGameProfile()->savePath() / fileName + ".save";
+        return SaveGames::savePath() / fileName + ".save";
     }
 
     void cleanupInternalSave()

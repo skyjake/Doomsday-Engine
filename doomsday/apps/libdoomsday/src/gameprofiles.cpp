@@ -22,6 +22,7 @@
 #include "doomsday/GameStateFolder"
 
 #include <de/App>
+#include <de/Folder>
 #include <de/PackageLoader>
 #include <de/Record>
 
@@ -37,6 +38,7 @@ static String const VAR_USE_GAME_REQUIREMENTS("useGameRequirements");
 static String const VAR_AUTO_START_MAP  ("autoStartMap");
 static String const VAR_AUTO_START_SKILL("autoStartSkill");
 static String const VAR_LAST_PLAYED     ("lastPlayed");
+static String const VAR_SAVE_LOCATION_ID("saveLocationId");
 static String const VAR_VALUES          ("values");
 
 static int const DEFAULT_SKILL = 3; // Normal skill level (1-5)
@@ -191,6 +193,10 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
     {
         prof->setAutoStartSkill(block.keyValue(VAR_AUTO_START_SKILL).text.toInt());
     }
+    if (block.contains(VAR_SAVE_LOCATION_ID))
+    {
+        prof->setSaveLocationId(block.keyValue(VAR_SAVE_LOCATION_ID).text.toUInt32(nullptr, 16));
+    }
     if (block.contains(VAR_LAST_PLAYED))
     {
         prof->setLastPlayedAt(Time::fromText(block.keyValue(VAR_LAST_PLAYED).text));
@@ -215,6 +221,7 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
     String     autoStartMap;
     int        autoStartSkill = DEFAULT_SKILL;
     Time       lastPlayedAt   = Time::invalidTime();
+    duint32    saveLocationId = 0;
     Record     values;
 
     Impl() {}
@@ -228,6 +235,7 @@ DENG2_PIMPL_NOREF(GameProfiles::Profile)
         , autoStartMap       (other.autoStartMap)
         , autoStartSkill     (other.autoStartSkill)
         , lastPlayedAt       (other.lastPlayedAt)
+        , saveLocationId     (other.saveLocationId)
         , values             (other.values)
     {}
 };
@@ -254,6 +262,7 @@ GameProfiles::Profile &GameProfiles::Profile::operator=(const Profile &other)
     d->autoStartMap          = other.d->autoStartMap;
     d->autoStartSkill        = other.d->autoStartSkill;
     d->lastPlayedAt          = other.d->lastPlayedAt;
+    d->saveLocationId        = other.d->saveLocationId;
     d->values                = other.d->values;
     return *this;
 }
@@ -332,6 +341,15 @@ void GameProfiles::Profile::setLastPlayedAt(const Time &at)
     }
 }
 
+void GameProfiles::Profile::setSaveLocationId(const duint32 saveLocationId)
+{
+    if (d->saveLocationId != saveLocationId)
+    {
+        d->saveLocationId = saveLocationId;
+        notifyChange();
+    }
+}
+
 bool GameProfiles::Profile::appendPackage(String const &id)
 {
     if (!d->packages.contains(id))
@@ -393,11 +411,69 @@ Time GameProfiles::Profile::lastPlayedAt() const
     return d->lastPlayedAt;
 }
 
+duint32 GameProfiles::Profile::saveLocationId() const
+{
+    return d->saveLocationId;
+}
+
+static const String PATH_SAVEGAMES = "/home/savegames";
+
 String GameProfiles::Profile::savePath() const
 {
-    /// @todo If the profile has a custom save path, use that instead!
+    /// If the profile has a custom save location, use that instead.
+    if (d->saveLocationId)
+    {
+        return PATH_SAVEGAMES / String::format("profile-%08x", d->saveLocationId);
+    }
 
-    return "/home/savegames" / gameId();
+    return PATH_SAVEGAMES / gameId();
+}
+
+
+bool GameProfiles::Profile::isSaveLocationEmpty() const
+{
+    FS::waitForIdle();
+    if (const auto *loc = FS::tryLocate<const Folder>(savePath()))
+    {
+        return loc->contents().size() == 0;
+    }
+    return true;
+}
+
+void GameProfiles::Profile::createSaveLocation()
+{
+    FS::waitForIdle();
+    do
+    {
+        d->saveLocationId = randui32();
+    } while (FS::exists(savePath()));
+    Folder &loc = FS::get().makeFolder(savePath());
+    LOG_MSG("Created save location %s") << loc.description();
+}
+
+void GameProfiles::Profile::destroySaveLocation()
+{
+    if (d->saveLocationId)
+    {
+        FS::waitForIdle();
+        if (auto *loc = FS::tryLocate<Folder>(savePath()))
+        {
+            LOG_NOTE("Destroying save location %s") << loc->description();
+            loc->destroyAllFiles();
+            loc->correspondingNativePath().destroy();
+            loc->parent()->populate();
+        }
+        d->saveLocationId = 0;
+    }
+}
+
+void GameProfiles::Profile::checkSaveLocation() const
+{
+    if (d->saveLocationId && !FS::exists(savePath()))
+    {
+        Folder &loc = FS::get().makeFolder(savePath());
+        LOG_MSG("Created missing save location %s") << loc.description();
+    }
 }
 
 StringList GameProfiles::Profile::allRequiredPackages() const
@@ -509,6 +585,10 @@ String GameProfiles::Profile::toInfoSource() const
     if (d->lastPlayedAt.isValid())
     {
         os << "\n" << VAR_LAST_PLAYED << ": " << d->lastPlayedAt.asText();
+    }
+    if (d->saveLocationId)
+    {
+        os << "\n" << VAR_SAVE_LOCATION_ID << ": " << String::format("%08x", d->saveLocationId);
     }
     // Additional configuration values (e.g., config for the game to use).
     if (!d->values.isEmpty())

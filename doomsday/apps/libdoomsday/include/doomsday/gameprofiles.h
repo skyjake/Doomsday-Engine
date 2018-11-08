@@ -57,6 +57,7 @@ public:
         void setAutoStartMap(de::String const &map);
         void setAutoStartSkill(int level);
         void setLastPlayedAt(const de::Time &at = de::Time());
+        void setSaveLocationId(de::duint32 saveLocationId);
 
         bool appendPackage(de::String const &id);
 
@@ -69,7 +70,13 @@ public:
         de::String autoStartMap() const;
         int autoStartSkill() const;
         de::Time lastPlayedAt() const;
+        de::duint32 saveLocationId() const;
         de::String savePath() const;
+
+        void createSaveLocation();
+        void destroySaveLocation();
+        void checkSaveLocation() const;
+        bool isSaveLocationEmpty() const;
 
         /**
          * Returns a list of the game's packages in addition to the profile's

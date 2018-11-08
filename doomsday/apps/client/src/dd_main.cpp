@@ -1360,7 +1360,7 @@ static dint DD_StartupWorker(void * /*context*/)
             #endif
                 );
     DoomsdayApp::bundles().waitForEverythingIdentified();*/
-    FS::get().waitForIdle();
+    FS::waitForIdle();
 
     /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));

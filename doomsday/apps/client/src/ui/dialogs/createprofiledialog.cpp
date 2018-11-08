@@ -20,7 +20,6 @@
 #include "ui/widgets/packagesbuttonwidget.h"
 #include "ui/widgets/packageswidget.h"
 #include "ui/dialogs/datafilesettingsdialog.h"
-//#include "ui/widgets/nativepathwidget.h"
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
@@ -37,14 +36,11 @@
 using namespace de;
 
 DENG_GUI_PIMPL(CreateProfileDialog)
-//, DENG2_OBSERVES(NativePathWidget, UserChange)
 {
     ChoiceWidget *gameChoice;
     PackagesButtonWidget *packages;
     ChoiceWidget *autoStartMap;
     ChoiceWidget *autoStartSkill;
-    //NativePathWidget *customDataFile;
-    //String customDataFile;
     AuxButtonWidget *customDataFileName;
     ui::ListData customDataFileActions;
     SafeWidgetPtr<PackagesWidget> customPicker;
@@ -156,17 +152,6 @@ DENG_GUI_PIMPL(CreateProfileDialog)
         auto const pos = mapItems.findData(oldChoice);
         autoStartMap->setSelected(pos != ui::Data::InvalidPos ? pos : 0);
     }
-
-//    void pathChangedByUser(NativePathWidget &) override
-//    {
-//        setCustomDataFile(customDataFile->path());
-//    }
-
-//    void setCustomDataFile(const NativePath &path)
-//    {
-//        tempProfile->setUseGameRequirements(path.isEmpty());
-//        tempProfile->setCustomDataFile(path.toString());
-//    }
 
     void updateDataFile()
     {
@@ -341,6 +326,10 @@ GameProfile *CreateProfileDialog::makeProfile() const
     auto *prof = new GameProfile(profileName());
     prof->setUserCreated(true);
     applyTo(*prof);
+    if (!prof->saveLocationId())
+    {
+        prof->createSaveLocation();
+    }
     return prof;
 }
 
@@ -353,6 +342,7 @@ void CreateProfileDialog::fetchFrom(GameProfile const &profile)
     d->updateDataFile();
     d->autoStartMap->setSelected(d->autoStartMap->items().findData(profile.autoStartMap()));
     d->autoStartSkill->setSelected(d->autoStartSkill->items().findData(profile.autoStartSkill()));
+    d->tempProfile->setSaveLocationId(profile.saveLocationId());
 }
 
 void CreateProfileDialog::applyTo(GameProfile &profile) const
@@ -367,6 +357,7 @@ void CreateProfileDialog::applyTo(GameProfile &profile) const
     profile.setPackages(d->packages->packages());
     profile.setAutoStartMap(d->autoStartMap->selectedItem().data().toString());
     profile.setAutoStartSkill(d->autoStartSkill->selectedItem().data().toInt());
+    profile.setSaveLocationId(profile.saveLocationId());
 }
 
 String CreateProfileDialog::profileName() const

@@ -107,7 +107,7 @@ DENG2_PIMPL(IdgamesPackageInfoFile)
                     }
                     return LoopContinue;
                 });
-                FS::get().waitForIdle();
+                FS::waitForIdle();
 
                 StringList components;
                 foreach (String path, dataFiles)

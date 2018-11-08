@@ -30,6 +30,7 @@
 #include <de/ChildWidgetOrganizer>
 #include <de/Config>
 #include <de/DirectoryListDialog>
+#include <de/FileSystem>
 #include <de/GridPopupWidget>
 #include <de/Loop>
 #include <de/MenuWidget>
@@ -38,6 +39,8 @@
 #include <de/SignalAction>
 #include <de/VariableChoiceWidget>
 #include <de/VariableToggleWidget>
+
+#include <QDesktopServices>
 
 using namespace de;
 
@@ -147,7 +150,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
             if (dlg->exec(root()))
             {
                 // Adding the profile has the side effect that a widget is
-                // created for it.
+                // created for it in the menu.
                 auto *added = dlg->makeProfile();
                 DoomsdayApp::gameProfiles().add(added);
             }
@@ -380,7 +383,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
                 {
                     cmp = -1;
                 }
-                else
+                else if (prof2.lastPlayedAt().isValid())
                 {
                     cmp = +1;
                 }
@@ -509,9 +512,10 @@ DENG_GUI_PIMPL(GameColumnWidget)
                                           button->clearPackages();
                                       }))
                 << new ui::ActionItem(
-                       tr("Duplicate"), new CallbackAction([this, profileItem]() {
+                       tr("Duplicate"), new CallbackAction([profileItem]() {
                            GameProfile *dup = new GameProfile(*profileItem->profile);
                            dup->setUserCreated(true);
+                           dup->createSaveLocation();
 
                            // Generate a unique name.
                            for (int attempt = 1;; ++attempt)
@@ -530,24 +534,76 @@ DENG_GUI_PIMPL(GameColumnWidget)
                            }
                        }));
 
+            if (const auto *loc = FS::tryLocate<const Folder>(profileItem->profile->savePath()))
+            {
+                popup->items() << new ui::Item(ui::Item::Separator)
+                               << new ui::ActionItem(
+                                      "Show Save Folder", new CallbackAction([loc]() {
+                                          QDesktopServices::openUrl(
+                                              QUrl::fromLocalFile(loc->correspondingNativePath()));
+                                      }));
+            }
+
             if (isUserProfile)
             {
                 auto *deleteSub = new ui::SubmenuItem(style().images().image("close.ring"),
                                                       tr("Delete"), ui::Left);
                 deleteSub->items()
                     << new ui::Item(ui::Item::Separator, tr("Are you sure?"))
-                    << new ui::ActionItem(tr("Delete Profile"),
-                                          new CallbackAction([this, button, profileItem, popup] ()
-                    {
-                        popup->detachAnchor();
-                        // Animate the widget to fade it away.
-                        TimeSpan const SPAN = 0.2;
-                        button->setOpacity(0, SPAN);
-                        Loop::get().timer(SPAN, [profileItem] ()
-                        {
-                            delete profileItem->profile;
-                        });
-                    }))
+                    << new ui::ActionItem(
+                           tr("Delete Profile"),
+                           new CallbackAction([this, button, profileItem, popup]() {
+                               if (profileItem->profile->saveLocationId())
+                               {
+                                   const Folder *saveFolder =
+                                       FS::tryLocate<const Folder>(profileItem->profile->savePath());
+
+                                   if (saveFolder && !profileItem->profile->isSaveLocationEmpty())
+                                   {
+                                       // What to do with the savegames?
+                                       auto *question = new MessageDialog;
+                                       question->setDeleteAfterDismissed(true);
+                                       question->title().setText("Delete Saved Games?");
+                                       question->title().setStyleImage("alert");
+                                       question->message().setText(
+                                           "The profile " _E(b) + profileItem->profile->name() +
+                                           _E(.) " that is being deleted has saved games. "
+                                                 "Do you wish to delete the save files as well?");
+                                       const NativePath savePath =
+                                           saveFolder->correspondingNativePath();
+                                       question->buttons()
+                                           << new DialogButtonItem(DialogWidget::Accept,
+                                                                   "Delete All")
+                                           << new DialogButtonItem(DialogWidget::Reject |
+                                                                       DialogWidget::Default,
+                                                                   "Cancel")
+                                           << new DialogButtonItem(
+                                                  DialogWidget::Action,
+                                                  "Show Folder",
+                                                  new CallbackAction([savePath]() {
+                                                      QDesktopServices::openUrl(
+                                                          QUrl::fromLocalFile(savePath));
+                                                  }));
+                                       if (!question->exec(root()))
+                                       {
+                                           // Cancelled.
+                                           return;
+                                       }
+                                   }
+                                   if (saveFolder)
+                                   {
+                                       profileItem->profile->destroySaveLocation();
+                                   }
+                               }
+
+                               // Animate the widget to fade it away.
+                               const TimeSpan SPAN = 0.2;
+                               button->setOpacity(0, SPAN);
+                               popup->detachAnchor();
+                               popup->close();
+                               Loop::get().timer(SPAN,
+                                                 [profileItem]() { delete profileItem->profile; });
+                           }))
                     << new ui::ActionItem(tr("Cancel"), new Action);
 
                 popup->items()

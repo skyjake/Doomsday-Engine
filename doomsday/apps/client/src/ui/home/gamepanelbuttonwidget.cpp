@@ -78,6 +78,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
             if (!gameProfile.isPlayable()) return false;
 
+            // The file must be in the right save folder.
+            if (item.savePath().fileNamePath().compareWithoutCase(gameProfile.savePath()))
+            {
+                return false;
+            }
+
             StringList const savePacks = item.loadedPackages();
 
             // Fallback for older saves without package metadata.

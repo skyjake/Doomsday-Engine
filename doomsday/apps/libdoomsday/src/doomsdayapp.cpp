@@ -549,13 +549,13 @@ void DoomsdayApp::initialize()
 
 void DoomsdayApp::initWadFolders()
 {
-    FS::get().waitForIdle();
+    FS::waitForIdle();
     d->initWadFolders();
 }
 
 void DoomsdayApp::initPackageFolders()
 {
-    FS::get().waitForIdle();
+    FS::waitForIdle();
     d->initPackageFolders();
 }
 
@@ -864,9 +864,9 @@ void DoomsdayApp::setGame(Game const &game)
     app().d->currentGame = const_cast<Game *>(&game);
 }
 
-void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
+void DoomsdayApp::makeGameCurrent(const GameProfile &profile)
 {
-    auto const &newGame = profile.game();
+    const auto &newGame = profile.game();
 
     if (!newGame.isNull())
     {
@@ -889,7 +889,8 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     // This is now the current game.
     setGame(newGame);
     d->currentProfile = &profile;
-    //AbstractSession::profile().gameId = newGame.id();
+
+    profile.checkSaveLocation(); // in case it's gone missing
 
     if (!newGame.isNull())
     {
@@ -921,9 +922,9 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
                              std::function<int (void *)> gameActivationFunc,
                              Behaviors behaviors)
 {
-    auto const &newGame = profile.game();
+    const auto &newGame = profile.game();
 
-    bool const arePackagesDifferent =
+    const bool arePackagesDifferent =
             !GameProfiles::arePackageListsCompatible(DoomsdayApp::app().loadedPackagesAffectingGameplay(),
                                                      profile.packagesAffectingGameplay());
 
