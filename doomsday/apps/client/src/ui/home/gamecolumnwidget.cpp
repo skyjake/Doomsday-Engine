@@ -544,6 +544,28 @@ DENG_GUI_PIMPL(GameColumnWidget)
                                       }));
             }
 
+            if (isUserProfile && !profileItem->profile->saveLocationId())
+            {
+                // Old profiles don't have their own save locations. Offer to create one here.
+                popup->items()
+                    << new ui::ActionItem(
+                           "Create New Save Folder", new CallbackAction([this, profileItem]() {
+                               profileItem->profile->createSaveLocation();
+                               // Inform the user.
+                               auto *msg = new MessageDialog;
+                               msg->setDeleteAfterDismissed(true);
+                               msg->title().setText("Save Folder Created");
+                               msg->message().setText(
+                                   "Save files of the profile " _E(b) +
+                                   profileItem->profile->name() + _E(.) " will be written to " +
+                                   FS::locate<const Folder>(profileItem->profile->savePath())
+                                       .description() + ".");
+                               msg->buttons() << new DialogButtonItem(DialogWidget::Accept |
+                                                                      DialogWidget::Default);
+                               msg->exec(root());
+                           }));
+            }
+
             if (isUserProfile)
             {
                 auto *deleteSub = new ui::SubmenuItem(style().images().image("close.ring"),

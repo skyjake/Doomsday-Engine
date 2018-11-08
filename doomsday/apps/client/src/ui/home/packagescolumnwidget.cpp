@@ -63,7 +63,6 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
 
         ScrollAreaWidget &area = self().scrollArea();
         area.add(packages = new PackagesWidget(PackagesWidget::PopulationEnabled, "home-packages"));
-        packages->searchTermsEditor().setEmptyContentHint(tr("Search mods"));
         packages->setActionItems(actions);
         packages->setRightClickToOpenContextMenu(true);
         packages->margins().setLeft("").setRight("");

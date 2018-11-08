@@ -537,7 +537,7 @@ DENG_GUI_PIMPL(PackagesWidget)
             .setInput(Rule::Left, self().rule().left() + self().margins().left())
             .setInput(Rule::Right, self().rule().right() - self().margins().right())
             .setInput(Rule::Top, self().rule().top() + self().margins().top());
-        search->setEmptyContentHint(tr("Search mods"));
+        search->setEmptyContentHint("Enter search terms");
         search->setSignalOnEnter(true);
         search->margins().setRight(style().fonts().font("default").height() + rule("gap"));
 

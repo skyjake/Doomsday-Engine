@@ -234,8 +234,9 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
             }));
             dlg->setDeleteAfterDismissed(true);
             dlg->title().setText("Game Data File");
-            dlg->message().setText("Select the main data file. The default data files "
-                                   "of the game will not be automatically loaded.");
+            dlg->message().setText(
+                "Select the main data file for this profile. When using a manually chosen main "
+                "data file, the default data files of the game will not be automatically loaded.");
             dlg->area().enableIndicatorDraw(true);
             d->customPicker.reset(new PackagesWidget);
             dlg->area().add(d->customPicker);
