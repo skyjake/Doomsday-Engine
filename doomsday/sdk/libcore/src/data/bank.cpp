@@ -570,7 +570,7 @@ DENG2_PIMPL(Bank)
     {
         DENG2_ASSERT(serialCache);
 
-        FS::get().waitForIdle();
+        FS::waitForIdle();
         if (Folder *folder = serialCache->folder())
         {
             folder->destroyAllFilesRecursively();

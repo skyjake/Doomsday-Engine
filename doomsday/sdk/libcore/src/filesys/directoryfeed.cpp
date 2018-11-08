@@ -217,9 +217,9 @@ bool DirectoryFeed::prune(File &file) const
         if (subFolder->feeds().size() == 1)
         {
             DirectoryFeed *dirFeed = maybeAs<DirectoryFeed>(subFolder->feeds().front());
-            if (dirFeed && !NativePath::exists(dirFeed->d->nativePath))
+            if (dirFeed && !dirFeed->d->nativePath.exists())
             {
-                LOG_RES_NOTE("Pruning \"%s\": no longer exists") << d->nativePath;
+                LOG_RES_NOTE("Pruning %s: no longer exists") << dirFeed->description(); //d->nativePath;
                 return true;
             }
         }
@@ -247,13 +247,12 @@ void DirectoryFeed::destroyFile(String const &name)
 {
     NativePath path = d->nativePath / name;
 
-    if (!NativePath::exists(path))
+    if (!path.exists())
     {
         // The file doesn't exist in the native file system, we can ignore this.
         return;
     }
-
-    if (!QDir::current().remove(path))
+    if (!path.destroy())
     {
         /// @throw RemoveError  The file @a name exists but could not be removed.
         throw RemoveError("DirectoryFeed::destroyFile", "Cannot remove \"" + name +

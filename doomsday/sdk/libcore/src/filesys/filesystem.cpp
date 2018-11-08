@@ -381,15 +381,16 @@ int FileSystem::busyLevel() const
     return d->busyLevel;
 }
 
-void FileSystem::waitForIdle()
+void FileSystem::waitForIdle() // static
 {
     using namespace std;
 
-    unique_lock<mutex> lk(d->busyMutex);
-    if (d->busyLevel > 0)
+    auto &fs = get();
+    unique_lock<mutex> lk(fs.d->busyMutex);
+    if (fs.d->busyLevel > 0)
     {
         LOG_MSG("Waiting until file system is ready");
-        d->busyFinished.wait(lk);
+        fs.d->busyFinished.wait(lk);
     }
 }
 

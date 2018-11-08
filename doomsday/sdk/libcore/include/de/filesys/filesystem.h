@@ -351,17 +351,22 @@ public:
 
     void changeBusyLevel(int increment);
     int  busyLevel() const;
-    void waitForIdle();
 
 public:
+    static void waitForIdle();
+
     template <typename T>
     static T &locate(String const &path) {
-        return FileSystem::get().root().locate<T>(path);
+        return get().root().locate<T>(path);
     }
 
     template <typename T>
     static T *tryLocate(String const &path) {
-        return FileSystem::get().root().tryLocate<T>(path);
+        return get().root().tryLocate<T>(path);
+    }
+
+    static inline bool exists(const String &path) {
+        return get().root().tryLocate<const File>(path) != nullptr;
     }
 
     enum CopyBehavior

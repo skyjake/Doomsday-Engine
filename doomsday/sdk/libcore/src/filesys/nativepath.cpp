@@ -295,16 +295,32 @@ void NativePath::createPath(NativePath const &nativePath)
     NativePath parentPath = nativePath.fileNamePath();
     if (!parentPath.isEmpty() && !exists(parentPath))
     {
-        createPath(parentPath);
+        parentPath.create();
     }
 
     QDir::current().mkdir(nativePath);
 
-    if (!exists(nativePath))
+    if (!nativePath.exists())
     {
         /// @throw CreateDirError Failed to create directory @a nativePath.
         throw CreateDirError("NativePath::createPath", "Could not create: " + nativePath);
     }
+}
+
+bool NativePath::destroyPath(const NativePath &nativePath)
+{
+    if (!nativePath.isEmpty())
+    {
+        if (nativePath.isDirectory())
+        {
+            return QDir::current().rmdir(nativePath);
+        }
+        else
+        {
+            return QDir::current().remove(nativePath);
+        }
+    }
+    return true;
 }
 
 QChar NativePath::separator()

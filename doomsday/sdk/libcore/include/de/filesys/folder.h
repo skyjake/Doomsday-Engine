@@ -179,7 +179,7 @@ public:
     bool tryDestroyFile(String const &name);
 
     /**
-     * Removes all files in the folder. The files will be delted. If the files
+     * Removes all files in the folder. The files will be deleted. If the files
      * have origin feeds, the feed will be asked to remove the files as well.
      * The folder remains locked during the entire operation.
      */
