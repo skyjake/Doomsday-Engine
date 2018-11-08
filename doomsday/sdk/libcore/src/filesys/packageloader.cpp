@@ -32,7 +32,7 @@
 #include "de/Version"
 
 #include <QMap>
-#include <QRegExp>
+#include <QRegularExpression>
 
 namespace de {
 
@@ -664,7 +664,7 @@ PackageLoader &PackageLoader::get()
 
 PackageLoader::IdentifierList::IdentifierList(String const &spaceSeparatedIds)
 {
-    static QRegExp anySpace("\\s");
+    static const QRegularExpression anySpace("\\s");
     for (auto const &qs : spaceSeparatedIds.split(anySpace, String::SkipEmptyParts))
     {
         ids.append(qs);
