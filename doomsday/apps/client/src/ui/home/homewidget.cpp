@@ -498,16 +498,16 @@ DENG_GUI_PIMPL(HomeWidget)
         }
 
         // Remove the highlight.
+        const int newHighlightPos = tabs->currentItem().data().toInt();
         for (int pos = 0; pos < columns.size(); ++pos)
         {
-            if (columns[pos]->isHighlighted())
+            if (pos != newHighlightPos && columns[pos]->isHighlighted())
             {
                 columns[pos]->setHighlighted(false);
             }
         }
-
         // Set new highlight.
-        columns[tabs->currentItem().data().toInt()]->setHighlighted(true);
+        columns[newHighlightPos]->setHighlighted(true);
 
         moveShowTimer.start();
     }
