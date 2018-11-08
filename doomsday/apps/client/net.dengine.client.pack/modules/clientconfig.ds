@@ -137,5 +137,6 @@ def setDefaults(d)
         end
         record fmod
         fmod.speakerMode = '' # defaults to stereo
+        pauseOnFocus = True
     end
 end

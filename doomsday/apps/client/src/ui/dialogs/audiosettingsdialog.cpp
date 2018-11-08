@@ -33,6 +33,7 @@
 #include <de/GridPopupWidget>
 #include <de/VariableChoiceWidget>
 #include <de/VariableSliderWidget>
+#include <de/VariableToggleWidget>
 
 using namespace de;
 using namespace de::ui;
@@ -51,9 +52,10 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     CVarToggleWidget     *soundInfo;
     GridPopupWidget      *devPopup;
     VariableChoiceWidget *fmodSpeakerMode;
+    VariableSliderWidget *sfxChannels;
+    VariableToggleWidget *pauseOnFocus;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
-    VariableSliderWidget *sfxChannels;
 #if defined (WIN32)
     VariableChoiceWidget *cdPlugin;
 #endif
@@ -62,6 +64,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self().area();
+        area.enableIndicatorDraw(true);
 
         if (DoomsdayApp::isGameLoaded())
         {
@@ -94,9 +97,10 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             devPopup->commit();
         }
 
-        area.add(sfxChannels = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
-        area.add(soundPlugin = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
-        area.add(musicPlugin = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
+        area.add(sfxChannels  = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
+        area.add(pauseOnFocus = new VariableToggleWidget("Pause on Focus Lost", App::config("audio.pauseOnFocus")));
+        area.add(soundPlugin  = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
+        area.add(musicPlugin  = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
 #if defined (WIN32)
         area.add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
 #endif
@@ -209,22 +213,20 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
         auto *sfLabel = LabelWidget::newWithText(tr("MIDI Sound Font:"), &area());
 
         // Layout.
-        layout << *sfxVolLabel      << *d->sfxVolume
-               << *musicVolLabel    << *d->musicVolume
-               << Const(0)          << *d->sound3D
-               << *rvbVolLabel      << *d->reverbVolume
+        LabelWidget::appendSeparatorWithText("Sound Effects", &area(), &layout);
+        layout << *sfxVolLabel      << *d->sfxVolume                  
                << Const(0)          << *d->overlapStop
-               //<< *rateLabel        << *d->sampleRate
-               //<< Const(0)          << *d->sound16bit
+               << Const(0)          << *d->sound3D
+               << *rvbVolLabel      << *d->reverbVolume;
+
+        LabelWidget::appendSeparatorWithText("Music", &area(), &layout);
+        layout << *musicVolLabel    << *d->musicVolume
                << *musSrcLabel      << *d->musicSource
-               << *sfLabel          << *d->musicSoundfont;
+               << *sfLabel          << *d->musicSoundfont
+               << Const(0)          << *d->pauseOnFocus;
     }
 
-    LabelWidget *pluginLabel = LabelWidget::newWithText(_E(D) + tr("Audio Backend"), &area());
-    pluginLabel->setFont("separator.label");
-    pluginLabel->margins().setTop("gap");
-    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
-    layout.append(*pluginLabel, 2);
+    LabelWidget::appendSeparatorWithText("Audio Backend", &area(), &layout);
 
     layout << *LabelWidget::newWithText(tr("SFX Plugin:"  ), &area()) << *d->soundPlugin
            << *LabelWidget::newWithText(tr("Music Plugin:"), &area()) << *d->musicPlugin;

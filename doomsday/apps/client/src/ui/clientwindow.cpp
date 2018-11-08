@@ -635,6 +635,11 @@ DENG2_PIMPL(ClientWindow)
             self().eventHandler().trapMouse();
         }
 
+        if (Config::get().getb("audio.pauseOnFocus", true))
+        {
+            AudioSystem::get().pauseMusic(!hasFocus);
+        }
+
         // Generate an event about this.
         ddevent_t ev; de::zap(ev);
         ev.device         = -1;
