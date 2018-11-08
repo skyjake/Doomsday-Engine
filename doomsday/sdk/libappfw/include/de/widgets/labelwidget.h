@@ -27,6 +27,7 @@
 namespace de {
 
 class GLUniform;
+class GridLayout;
 class Image;
 
 /**
@@ -265,7 +266,9 @@ public:
     void contentLayout(ContentLayout &layout);
 
 public:
-    static LabelWidget *newWithText(String const &label, GuiWidget *parent = 0);
+    static LabelWidget *newWithText(const String &text, GuiWidget *parent = nullptr);
+    static LabelWidget *appendSeparatorWithText(const String &text, GuiWidget *parent = nullptr,
+                                                GridLayout *appendToGrid = nullptr);
 
 protected:
     void glInit() override;

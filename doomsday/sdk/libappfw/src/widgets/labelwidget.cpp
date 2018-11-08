@@ -21,9 +21,10 @@
 #include "de/AtlasProceduralImage"
 #include "de/StyleProceduralImage"
 
-#include <de/Drawable>
 #include <de/AtlasTexture>
 #include <de/ConstantRule>
+#include <de/Drawable>
+#include <de/GridLayout>
 
 namespace de {
 
@@ -915,15 +916,30 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeSpan co
     }
 }
 
-LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
+LabelWidget *LabelWidget::newWithText(const String &text, GuiWidget *parent)
 {
     LabelWidget *w = new LabelWidget;
-    w->setText(label);
+    w->setText(text);
     if (parent)
     {
         parent->add(w);
     }
     return w;
+}
+
+LabelWidget *LabelWidget::appendSeparatorWithText(const String &text, GuiWidget *parent,
+                                                  GridLayout *appendToGrid)
+{
+    std::unique_ptr<LabelWidget> w(newWithText(text, parent));
+    w->setTextColor("accent");
+    w->setFont("separator.label");
+    w->margins().setTop("gap");
+    if (appendToGrid)
+    {
+        appendToGrid->setCellAlignment(Vector2i(0, appendToGrid->gridSize().y), ui::AlignLeft);
+        appendToGrid->append(*w, 2);
+    }
+    return w.release();
 }
 
 } // namespace de

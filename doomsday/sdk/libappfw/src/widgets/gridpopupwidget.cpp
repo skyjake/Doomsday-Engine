@@ -55,22 +55,22 @@ GridLayout &GridPopupWidget::layout()
 
 LabelWidget &GridPopupWidget::addSeparatorLabel(String const &labelText)
 {
-    auto *label = LabelWidget::newWithText(_E(D) + labelText, d->container);
-    label->setFont("separator.label");
-    label->margins().setTop("gap");
-    d->layout.setCellAlignment(Vector2i(0, d->layout.gridSize().y), ui::AlignLeft);
-    d->layout.append(*label, 2);
-    return *label;
+//    auto *label = LabelWidget::newWithText(_E(D) + labelText, d->container);
+//    label->setFont("separator.label");
+//    label->margins().setTop("gap");
+//    d->layout.setCellAlignment(Vector2i(0, d->layout.gridSize().y), ui::AlignLeft);
+//    d->layout.append(*label, 2);
+    return *LabelWidget::appendSeparatorWithText(labelText, d->container, &d->layout);
 }
 
-GridPopupWidget &GridPopupWidget::operator << (GuiWidget *widget)
+GridPopupWidget &GridPopupWidget::operator<<(GuiWidget *widget)
 {
     d->container->add(widget);
     d->layout << *widget;
     return *this;
 }
 
-GridPopupWidget &GridPopupWidget::operator << (Rule const &rule)
+GridPopupWidget &GridPopupWidget::operator<<(Rule const &rule)
 {
     d->layout << rule;
     return *this;
