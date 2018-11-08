@@ -377,11 +377,13 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     if (d->inludeAspect)
     {
         // Aspect ratio options.
-        auto *aspectLabel = LabelWidget::newWithText(_E(D) + tr("Aspect Ratios"), &area());
-        aspectLabel->setFont("separator.label");
-        aspectLabel->margins().setTop("gap");
-        modeLayout.setCellAlignment(Vector2i(0, modeLayout.gridSize().y), ui::AlignLeft);
-        modeLayout.append(*aspectLabel, 2)
+//        auto *aspectLabel = LabelWidget::newWithText(_E(D) + tr("Aspect Ratios"), &area());
+//        aspectLabel->setFont("separator.label");
+//        aspectLabel->margins().setTop("gap");
+//        modeLayout.setCellAlignment(Vector2i(0, modeLayout.gridSize().y), ui::AlignLeft);
+//        modeLayout.append(*aspectLabel, 2);
+        LabelWidget::appendSeparatorWithText("Aspect Ratios", &area(), &modeLayout);
+        modeLayout
                 << *LabelWidget::newWithText(tr("Player Weapons:"), &area()) << *d->hudAspect
                 << *LabelWidget::newWithText(tr("Intermissions:"), &area()) << *d->inludeAspect
                 << *LabelWidget::newWithText(tr("Finales:"), &area()) << *d->finaleAspect

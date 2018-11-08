@@ -78,8 +78,8 @@ UISettingsDialog::UISettingsDialog(String const &name)
     heading().setText(tr("UI Settings"));
     heading().setImage(style().images().image("home.icon"));
 
-    auto *library = LabelWidget::newWithText(_E(D) + tr("Game Library"), &area());
-    library->setFont("separator.label");
+//    auto *library = LabelWidget::appendSeparatorWithText(_E(D) + tr("Game Library"), &area());
+//    library->setFont("separator.label");
 
     auto *restartNotice = LabelWidget::newWithText(tr("Changes take effect only after restarting."), &area());
     restartNotice->margins().setTop("");
@@ -102,8 +102,9 @@ UISettingsDialog::UISettingsDialog(String const &name)
            << Const(0) << *restartNotice
            << Const(0) << *d->showAnnotations
            << Const(0) << *annots;
-    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
-    layout.append(*library, 2);
+//    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+//    layout.append(*library, 2);
+    auto *library = LabelWidget::appendSeparatorWithText("Game Library", &area(), &layout);
 
     auto *showLabel = LabelWidget::newWithText(tr("Enabled Tabs:"), &area());
     showLabel->rule().setLeftTop(library->rule().left(), library->rule().bottom());

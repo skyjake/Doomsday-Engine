@@ -146,13 +146,13 @@ InputSettingsDialog::InputSettingsDialog(String const &name)
     d->applyGamepad->setText(tr("Apply"));
     connect(d->applyGamepad, SIGNAL(pressed()), this, SLOT(applyControllerPreset()));
 
-    LabelWidget *mouseXLabel = LabelWidget::newWithText(_E(D) + tr("Mouse: Horizontal"), &area());
-    LabelWidget *mouseYLabel = LabelWidget::newWithText(_E(D) + tr("Mouse: Vertical"), &area());
-    mouseXLabel->setFont("separator.label");
-    mouseYLabel->setFont("separator.label");
+    LabelWidget *mouseXLabel = LabelWidget::appendSeparatorWithText("Mouse: Horizontal", &area());
+    LabelWidget *mouseYLabel = LabelWidget::appendSeparatorWithText("Mouse: Vertical", &area());
+    //mouseXLabel->setFont("separator.label");
+//    mouseYLabel->setFont("separator.label");
 
-    mouseXLabel->margins().setTop("gap");
-    mouseYLabel->margins().setTop("gap");
+//    mouseXLabel->margins().setTop("gap");
+//    mouseYLabel->margins().setTop("gap");
 
     LabelWidget *applyNote = LabelWidget::newWithText(tr("Clicking " _E(b) "Apply" _E(.) " will remove all "
                                                          "existing game controller bindings and apply "

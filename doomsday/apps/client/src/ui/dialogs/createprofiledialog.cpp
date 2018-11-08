@@ -286,11 +286,12 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
            << *LabelWidget::newWithText(tr("Mods:"), form)
            << *d->packages;
 
-    LabelWidget *optionsLabel = LabelWidget::newWithText(_E(D) + tr("Game Options"), form);
-    optionsLabel->setFont("separator.label");
-    optionsLabel->margins().setTop("gap");
-    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
-    layout.append(*optionsLabel, 2);
+    //LabelWidget *optionsLabel = LabelWidget::newWithText(_E(D) + tr("Game Options"), form);
+    //optionsLabel->setFont("separator.label");
+    //optionsLabel->margins().setTop("gap");
+    //layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+    //layout.append(*optionsLabel, 2);
+    LabelWidget::appendSeparatorWithText("Game Options", form, &layout);
 
     layout << *LabelWidget::newWithText(tr("Starts in:"), form)
            << *d->autoStartMap
