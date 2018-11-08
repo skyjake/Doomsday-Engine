@@ -1879,16 +1879,16 @@ void Map::initRadio()
 
             Vertex const &vtx0   = line->vertex(i);
             Vertex const &vtx1   = line->vertex(i ^ 1);
-            LineOwner const &vo0 = line->vertexOwner(i)->next();
-            LineOwner const &vo1 = line->vertexOwner(i ^ 1)->prev();
+            LineOwner const *vo0 = line->vertexOwner(i)->next();
+            LineOwner const *vo1 = line->vertexOwner(i ^ 1)->prev();
 
             AABoxd bounds = line->bounds();
 
             // Use the extended points, they are wider than inoffsets.
-            Vector2d const sv0 = vtx0.origin() + vo0.extendedShadowOffset();
+            Vector2d const sv0 = vtx0.origin() + vo0->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv0.x, sv0.y);
 
-            Vector2d const sv1 = vtx1.origin() + vo1.extendedShadowOffset();
+            Vector2d const sv1 = vtx1.origin() + vo1->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv1.x, sv1.y);
 
             // Link the shadowing line to all the subspaces whose axis-aligned bounding box
@@ -3605,14 +3605,14 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
             np->_link[Clockwise] = left;
             np = left;
 
-            left = left->nextPtr();
+            left = left->next();
         }
         else
         {
             np->_link[Clockwise] = right;
             np = right;
 
-            right = right->nextPtr();
+            right = right->next();
         }
     }
 
@@ -3630,7 +3630,7 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
     if (!tmp.hasNext())
         return nullptr;
 
-    return tmp.nextPtr();
+    return tmp.next();
 }
 
 static LineOwner *splitLineOwners(LineOwner *list)
@@ -3644,11 +3644,11 @@ static LineOwner *splitLineOwners(LineOwner *list)
     do
     {
         listc = listb;
-        listb = listb->nextPtr();
-        lista = lista->nextPtr();
+        listb = listb->next();
+        lista = lista->next();
         if (lista)
         {
-            lista = lista->nextPtr();
+            lista = lista->next();
         }
     } while (lista);
 
@@ -3662,7 +3662,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
 static LineOwner *sortLineOwners(LineOwner *list,
     dint (*compare) (void const *a, void const *b))
 {
-    if (list && list->nextPtr())
+    if (list && list->next())
     {
         LineOwner *p = splitLineOwners(list);
 
@@ -3684,7 +3684,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
         if (&own->line() == lineptr)
             return;  // Yes, we can exit.
 
-        own = &own->next();
+        own = own->next();
     }
 
     // Add a new owner.
@@ -3719,10 +3719,10 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
     LineOwner const *cur = base;
     do
     {
-        if (&cur->prev().next() != cur) return false;
-        if (&cur->next().prev() != cur) return false;
+        if (cur->prev()->next() != cur) return false;
+        if (cur->next()->prev() != cur) return false;
 
-    } while ((cur = &cur->next()) != base);
+    } while ((cur = cur->next()) != base);
     return true;
 }
 #endif
@@ -3764,7 +3764,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
         // and circularly linked.
         binangle_t firstAngle = v->_lineOwners->angle();
         LineOwner *last = v->_lineOwners;
-        LineOwner *p = last->nextPtr();
+        LineOwner *p = last->next();
         while (p)
         {
             p->_link[Anticlockwise] = last;
@@ -3773,7 +3773,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
             last->_angle = last->angle() - p->angle();
 
             last = p;
-            p = p->nextPtr();
+            p = p->next();
         }
         last->_link[Clockwise] = v->_lineOwners;
         v->_lineOwners->_link[Anticlockwise] = last;

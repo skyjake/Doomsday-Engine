@@ -788,15 +788,15 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
     forever
     {
         // Select the next line.
-        binangle_t diff  = (direction == Clockwise ? own->angle() : own->prev().angle());
-        Line const *iter = &own->navigate(direction).line();
+        binangle_t diff  = (direction == Clockwise ? own->angle() : own->prev()->angle());
+        Line const *iter = &own->navigate(direction)->line();
         dint scanSecSide = (iter->front().hasSector() && iter->front().sectorPtr() == startSector ? Line::Back : Line::Front);
         // Step selfreferencing lines.
         while ((!iter->front().hasSector() && !iter->back().hasSector()) || iter->isSelfReferencing())
         {
-            own         = &own->navigate(direction);
-            diff       += (direction == Clockwise ? own->angle() : own->prev().angle());
-            iter        = &own->navigate(direction).line();
+            own         = own->navigate(direction);
+            diff       += (direction == Clockwise ? own->angle() : own->prev()->angle());
+            iter        = &own->navigate(direction)->line();
             scanSecSide = (iter->front().sectorPtr() == startSector);
         }
 
@@ -890,11 +890,11 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         }
 
         // Swap to the iter line's owner node (i.e., around the corner)?
-        if (&own->navigate(direction) == iter->v2Owner())
+        if (own->navigate(direction) == iter->v2Owner())
         {
             own = iter->v1Owner();
         }
-        else if (&own->navigate(direction) == iter->v1Owner())
+        else if (own->navigate(direction) == iter->v1Owner())
         {
             own = iter->v2Owner();
         }
@@ -913,7 +913,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
             if (backNeighbor && backNeighbor != iter)
             {
                 // Into the back neighbor sector.
-                own = &own->navigate(direction);
+                own = own->navigate(direction);
                 startSector = scanSector;
             }
         }
@@ -1420,7 +1420,7 @@ bool Line::isShadowCaster() const
     if (isSelfReferencing()) return false;
 
     // Lines with no other neighbor do not qualify as shadow casters.
-    if (&v1Owner()->next().line() == this || &v2Owner()->next().line() == this)
+    if (&v1Owner()->next()->line() == this || &v2Owner()->next()->line() == this)
        return false;
 
     return true;
