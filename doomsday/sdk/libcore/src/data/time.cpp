@@ -327,7 +327,19 @@ String Time::asText(Format format) const
         }
         else if (format == FriendlyFormat)
         {
-            return d->dateTime.toString(Qt::TextDate);
+            // Is it today?
+            if (d->dateTime.date() == QDateTime::currentDateTime().date())
+            {
+                return d->dateTime.toString("HH:mm");
+            }
+            else if (d->dateTime.date().year() == QDateTime::currentDateTime().date().year())
+            {
+                return d->dateTime.toString("MMM dd HH:mm");
+            }
+            else
+            {
+                return d->dateTime.toString("YYYY MMM dd");
+            }
         }
         else if (format == BuildNumberAndSecondsSinceStart ||
                  format == SecondsSinceStart)
