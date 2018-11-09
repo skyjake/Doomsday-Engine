@@ -115,6 +115,12 @@ DENG2_PIMPL(Games)
 
     Game *findById(String id) const
     {
+        if (id.beginsWith("doom-"))
+        {
+            // Originally, Freedoom and BFG variants used an inconsistently named ID.
+            id = "doom1-" + id.substr(5);
+        }
+
         auto found = idLookup.constFind(id.toLower());
         if (found != idLookup.constEnd())
         {
@@ -188,7 +194,7 @@ GameProfile const *Games::firstPlayable() const
     return nullptr;
 }
 
-Game &Games::operator [] (String const &id) const
+Game &Games::operator[](String const &id) const
 {
     if (id.isEmpty()) return *d->nullGame;
 

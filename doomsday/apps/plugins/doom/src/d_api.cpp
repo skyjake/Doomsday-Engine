@@ -66,8 +66,8 @@ static char const *gameIds[NUM_GAME_MODES] =
     "hacx",
     "doom2-freedm",
     "doom2-freedoom",
-    "doom-freedoom",
-    "doom-bfg",
+    "doom1-freedoom",
+    "doom1-bfg",
     "doom2-bfg",
     "doom2-nerve",
 };
