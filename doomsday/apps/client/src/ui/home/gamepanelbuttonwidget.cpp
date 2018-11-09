@@ -49,6 +49,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 , DENG2_OBSERVES(Profiles::AbstractProfile, Change)
 , DENG2_OBSERVES(res::Bundles, Identify)
 , DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(ButtonWidget, StateChange)
 , public AsyncScope
 {
     GameProfile &gameProfile;
@@ -60,6 +61,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *problemIcon;
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
+    bool playHovering = false;
 
     Impl(Public *i, GameProfile &profile, SaveListData const &allSavedItems)
         : Base(i)
@@ -134,6 +136,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         playButton->setStyleImage("play", "default");
         playButton->setImageColor(style().colors().colorf("inverted.text"));
         playButton->setActionFn([this] () { playButtonPressed(); });
+        playButton->audienceForStateChange() += this;
         self().addButton(playButton);
 
         // List of saved games.
@@ -202,6 +205,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         {
             self().setLabelMinimumRightMargin(Const(0));
         }
+    }
+
+    void buttonStateChanged(ButtonWidget &/*playButton*/, ButtonWidget::State state) override
+    {
+        playHovering = (state != ButtonWidget::Up);
+        self().updateContent();
     }
 
     void playButtonPressed()
@@ -358,13 +367,17 @@ void GamePanelButtonWidget::updateContent()
         {
             meta = _E(D) + tr("Missing data files") + _E(.);
         }
-        else if (d->saves->selectedPos() != ui::Data::InvalidPos)
+    }
+
+    if (d->playHovering)
+    {
+        if (d->saves->selectedPos() != ui::Data::InvalidPos)
         {
             meta = tr("Restore saved game");
         }
-        else if (!d->gameProfile.isUserCreated())
+        else
         {
-            meta = tr("Start new session");
+            meta = tr("Start game");
         }
     }
 
