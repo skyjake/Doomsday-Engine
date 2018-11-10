@@ -121,6 +121,21 @@ package "com.idsoftware.doom.bfg_2012.10.16" {
     }
 }
 
+package "com.idsoftware.doom.bfg.decensor_1.0" {
+    format: IWAD 
+    fileName <udoomcen.wad, doom.wad>
+    fileSize: 12487826 
+    lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
+    lumpDirCRC32: e51d82df
+    info {
+        title: Ultimate DOOM (BFG Edition + decensor)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg mod uncensored
+        notes: Variant of Ultimate DOOM (BFG Edition) generated using the "bfgdecens" tool.
+    }
+}
+
 package "com.idsoftware.doom2_1.6.66" {
     format: IWAD 
     fileName: doom2.wad
@@ -184,6 +199,21 @@ package "com.idsoftware.doom2.bfg_2012.10.16" {
         author: id Software
         license: All rights reserved
         tags: gamedata doom bfg
+    }
+}
+
+package "com.idsoftware.doom2.bfg.decensor_1.0" {
+    format: IWAD
+    fileName <doom2cen.wad, doom2.wad>
+    fileSize: 14692182 
+    lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
+    lumpDirCRC32: 376c997e
+    info {
+        title: DOOM 2: Hell on Earth (BFG Edition + decensor)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg mod uncensored
+        notes: Variant of DOOM II (BFG Edition) generated using the "bfgdecens" tool.
     }
 }
 
