@@ -5,7 +5,7 @@ set (_oldPath ${FMOD_FMOD_H})
 find_file (FMOD_FMOD_H api/lowlevel/inc/fmod.h
     PATHS "${FMOD_DIR}"
     HINTS ENV DENG_DEPEND_PATH
-    PATH_SUFFIXES "FMOD" "FMOD Programmers API"
+    PATH_SUFFIXES "FMOD" "FMOD Programmers API" "FMOD Studio API Windows"
     NO_DEFAULT_PATH
     NO_CMAKE_FIND_ROOT_PATH
 )
