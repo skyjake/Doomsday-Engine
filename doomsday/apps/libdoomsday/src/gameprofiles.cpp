@@ -23,6 +23,7 @@
 
 #include <de/App>
 #include <de/Folder>
+#include <de/NoneValue>
 #include <de/PackageLoader>
 #include <de/Record>
 
@@ -350,6 +351,16 @@ void GameProfiles::Profile::setSaveLocationId(const duint32 saveLocationId)
     }
 }
 
+void GameProfiles::Profile::setOptionValue(const String &option, const Value &value)
+{
+    const String key = "option." + option;
+    if (!d->values.has(key) || d->values[key].value().compare(value))
+    {
+        d->values.set(key, value.duplicate());
+        notifyChange();
+    }
+}
+
 bool GameProfiles::Profile::appendPackage(String const &id)
 {
     if (!d->packages.contains(id))
@@ -425,10 +436,17 @@ String GameProfiles::Profile::savePath() const
     {
         return PATH_SAVEGAMES / String::format("profile-%08x", d->saveLocationId);
     }
-
     return PATH_SAVEGAMES / gameId();
 }
 
+const Value &GameProfiles::Profile::optionValue(const String &option) const
+{
+    if (const auto *var = d->values.tryFind("option." + option))
+    {
+        return var->value();
+    }
+    return game()[Game::DEF_OPTIONS.concatenateMember(option + ".default")].value();
+}
 
 bool GameProfiles::Profile::isSaveLocationEmpty() const
 {

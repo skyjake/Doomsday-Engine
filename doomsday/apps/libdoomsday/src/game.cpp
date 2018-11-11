@@ -58,6 +58,7 @@ String const Game::DEF_TAGS("tags");
 String const Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
 String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
 String const Game::DEF_MAPINFO_PATH("mapInfoPath");
+String const Game::DEF_OPTIONS("options");
 
 DENG2_PIMPL(Game), public Lockable
 {
@@ -79,6 +80,10 @@ DENG2_PIMPL(Game), public Lockable
         if (!params.has(DEF_CONFIG_BINDINGS_PATH))
         {
             params.set(DEF_CONFIG_BINDINGS_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
+        }
+        if (!params.has(DEF_OPTIONS))
+        {
+            params.set(DEF_OPTIONS, RecordValue::takeRecord(Record()));
         }
 
         params.set(DEF_CONFIG_DIR, NativePath(params.gets(DEF_CONFIG_DIR)).expand().withSeparators('/'));

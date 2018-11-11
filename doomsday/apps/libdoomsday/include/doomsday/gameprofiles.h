@@ -58,6 +58,7 @@ public:
         void setAutoStartSkill(int level);
         void setLastPlayedAt(const de::Time &at = de::Time());
         void setSaveLocationId(de::duint32 saveLocationId);
+        void setOptionValue(const de::String &option, const de::Value &value);
 
         bool appendPackage(de::String const &id);
 
@@ -72,6 +73,7 @@ public:
         de::Time lastPlayedAt() const;
         de::duint32 saveLocationId() const;
         de::String savePath() const;
+        const de::Value &optionValue(const de::String &option) const;
 
         void createSaveLocation();
         void destroySaveLocation();
