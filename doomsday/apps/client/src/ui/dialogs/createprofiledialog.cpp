@@ -241,6 +241,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
             d->customPicker.reset(new PackagesWidget);
             dlg->area().add(d->customPicker);
             d->customPicker->setHiddenTags({"hidden", "core"});
+            d->customPicker->searchTermsEditor().setText("gamedata");
             d->customPicker->setAllowPackageInfoActions(false);
             d->customPicker->setActionItems(d->customDataFileActions);
             dlg->setAnchorAndOpeningDirection(d->customDataFileName->rule(), ui::Right);
