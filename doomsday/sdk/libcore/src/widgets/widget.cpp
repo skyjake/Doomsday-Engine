@@ -29,6 +29,7 @@ DENG2_PIMPL(Widget)
     Id id;
     String name;
     Widget *parent = nullptr;
+    std::unique_ptr<Record> names; // IObject
     RootWidget *manualRoot = nullptr;
     Behaviors behavior;
     String focusNext;
@@ -799,6 +800,20 @@ bool Widget::handleEvent(Event const &)
 {
     // Event is not handled.
     return false;
+}
+
+Record &Widget::objectNamespace()
+{
+    if (!d->names)
+    {
+        d->names.reset(new Record);
+    }
+    return *d->names;
+}
+
+const Record &Widget::objectNamespace() const
+{
+    return const_cast<Widget *>(this)->objectNamespace();
 }
 
 void Widget::setFocusCycle(WidgetList const &order)

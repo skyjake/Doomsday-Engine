@@ -25,6 +25,7 @@
 #include "../String"
 #include "../Event"
 #include "../Id"
+#include "../IObject"
 #include "../Observers"
 #include "../DotPath"
 
@@ -42,7 +43,7 @@ typedef QList<Widget *> WidgetList;
  * Base class for widgets.
  * @ingroup widgets
  */
-class DENG2_PUBLIC Widget
+class DENG2_PUBLIC Widget : public IObject
 {
 public:
     /// Widget that was expected to exist was not found. @ingroup errors
@@ -332,6 +333,10 @@ public:
     virtual void preDrawChildren();
     virtual void postDrawChildren();
     virtual bool handleEvent(Event const &event);
+
+    // Implements IObject.
+    Record &      objectNamespace() override;
+    const Record &objectNamespace() const override;
 
 public:
     static void setFocusCycle(WidgetList const &order);

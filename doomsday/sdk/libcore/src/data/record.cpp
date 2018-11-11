@@ -761,6 +761,20 @@ Variable &Record::set(String const &name, Block const &value)
     return var;
 }
 
+Variable &Record::set(const String &name, const Record &value)
+{
+    DENG2_GUARD(d);
+
+    std::unique_ptr<Record> dup(new Record(value));
+    if (hasMember(name))
+    {
+        return (*this)[name].set(RecordValue::takeRecord(dup.release()));
+    }
+    Variable &var = add(name);
+    var.set(RecordValue::takeRecord(dup.release()));
+    return var;
+}
+
 Variable &Record::set(String const &name, ArrayValue *value)
 {
     DENG2_GUARD(d);
@@ -770,6 +784,17 @@ Variable &Record::set(String const &name, ArrayValue *value)
         return (*this)[name].set(value);
     }
     return addArray(name, value);
+}
+
+Variable &Record::set(const String &name, Value *value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(value);
+    }
+    return add(name).set(value);
 }
 
 Variable &Record::appendWord(String const &name, String const &word, String const &separator)
@@ -1160,6 +1185,8 @@ String Record::asInfo() const
     os.setCodec("UTF-8");
     for (auto i = d->members.constBegin(); i != d->members.constEnd(); ++i)
     {
+        if (out) os << "\n";
+
         const Variable &var = *i.value();
         String src = i.key();
 
@@ -1185,7 +1212,7 @@ String Record::asInfo() const
                 src += ": " + valueText;
             }
         }
-        os << src << "\n";
+        os << src;
     }
     return out;
 }

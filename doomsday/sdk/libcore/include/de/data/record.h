@@ -417,6 +417,8 @@ public:
     /// @copydoc set()
     Variable &set(String const &name, Block const &value);
 
+    Variable &set(const String &name, const Record &value);
+
     /**
      * Sets the value of a variable, creating the variable if it doesn't exist.
      *
