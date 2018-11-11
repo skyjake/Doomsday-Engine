@@ -399,9 +399,15 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         if (!IS_NETGAME)
         {
 #if !__JHEXEN__
-            GameRules_Set(rules, deathmatch,      0);
-            GameRules_Set(rules, respawnMonsters, CPP_BOOL(App::commandLine().has("-respawn")));
-            GameRules_Set(rules, noMonsters,      CPP_BOOL(App::commandLine().has("-nomonsters")));
+            GameRules_Set(rules, deathmatch, 0);
+            GameRules_Set(rules,
+                          respawnMonsters,
+                          CommandLine::get().has("-respawn") ||
+                              gfw_GameProfile()->optionValue("respawn").isTrue());
+            GameRules_Set(rules,
+                          noMonsters,
+                          CommandLine::get().has("-nomonsters") ||
+                              gfw_GameProfile()->optionValue("noMonsters").isTrue());
 #endif
 #if __JDOOM__ || __JHERETIC__
             // Is respawning enabled at all in nightmare skill?
@@ -1440,4 +1446,9 @@ String gfw_GameId()
         return gp->gameId();
     }
     return {};
+}
+
+const GameProfile *gfw_GameProfile()
+{
+    return DoomsdayApp::currentGameProfile();
 }

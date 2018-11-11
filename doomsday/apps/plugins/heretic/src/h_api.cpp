@@ -57,6 +57,16 @@ static char const *gameIds[NUM_GAME_MODES] =
     "heretic-ext",
 };
 
+static void setCommonParameters(Game &game)
+{
+    Record gameplayOptions;
+    gameplayOptions.set("fast", Record::withMembers("label", "Fast Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("respawn", Record::withMembers("label", "Respawn Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("noMonsters", Record::withMembers("label", "No Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("turbo", Record::withMembers("label", "Move Speed", "type", "number", "default", 1.0, "min", 0.1, "max", 4.0, "step", 0.1));
+    game.objectNamespace().set(Game::DEF_OPTIONS, gameplayOptions);
+}
+
 /**
  * Register the game modes supported by this plugin.
  */
@@ -86,6 +96,7 @@ static int G_RegisterGames(int hookType, int param, void* data)
     extended.addResource(RC_DEFINITION, 0, "heretic-ext.ded", 0);
     extended.setRequiredPackages(StringList() << "com.ravensoftware.heretic.extended"
                                               << "net.dengine.legacy.heretic_2");
+    setCommonParameters(extended);
 
     /* Heretic */
     Game &htc = games.defineGame(gameIds[heretic],
@@ -102,6 +113,7 @@ static int G_RegisterGames(int hookType, int param, void* data)
     htc.addResource(RC_DEFINITION, 0, "heretic.ded", 0);
     htc.setRequiredPackages(StringList() << "com.ravensoftware.heretic"
                                          << "net.dengine.legacy.heretic_2");
+    setCommonParameters(htc);
 
     /* Heretic (Shareware) */
     Game &shareware = games.defineGame(gameIds[heretic_shareware],
@@ -118,6 +130,7 @@ static int G_RegisterGames(int hookType, int param, void* data)
     shareware.addResource(RC_DEFINITION, 0, "heretic-share.ded", 0);
     shareware.setRequiredPackages(StringList() << "com.ravensoftware.heretic.shareware"
                                                << "net.dengine.legacy.heretic_2");
+    setCommonParameters(shareware);
     return true;
 
 #undef STARTUPPK3

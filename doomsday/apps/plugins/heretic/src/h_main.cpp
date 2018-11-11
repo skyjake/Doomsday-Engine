@@ -378,8 +378,12 @@ void H_PostInit()
     }
 
     // Apply these game rules.
-    gfw_SetDefaultRule(noMonsters,      cmdLine.check("-nomonsters")? true : false);
-    gfw_SetDefaultRule(respawnMonsters, cmdLine.check("-respawn")   ? true : false);
+    gfw_SetDefaultRule(noMonsters,
+                       cmdLine.check("-nomonsters") ||
+                           gfw_GameProfile()->optionValue("noMonsters").isTrue());
+    gfw_SetDefaultRule(respawnMonsters,
+                       cmdLine.check("-respawn") ||
+                           gfw_GameProfile()->optionValue("respawn").isTrue());
 
     // Load a saved game?
     if (auto arg = cmdLine.check("-loadgame", 1))

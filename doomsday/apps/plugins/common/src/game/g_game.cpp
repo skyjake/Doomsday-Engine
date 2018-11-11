@@ -804,8 +804,7 @@ void G_CommonPostInit()
     // Change the turbo multiplier.
     {
         auto &cmdLine = CommandLine::get();
-
-        turboMul = 1.0f;
+        turboMul = float(gfw_GameProfile()->optionValue("turbo").asNumber());
         if (int arg = cmdLine.check("-turbo"))
         {
             int scale = 200; // Default to 2x without a numeric value.

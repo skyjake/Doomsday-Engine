@@ -79,6 +79,13 @@ static char const *gameIds[NUM_GAME_MODES] =
 static void setCommonParameters(Game &game)
 {
     game.addRequiredPackage("net.dengine.legacy.doom_2");
+
+    Record gameplayOptions;
+    gameplayOptions.set("fast", Record::withMembers("label", "Fast Monsters/Missiles", "type", "boolean", "default", false));
+    gameplayOptions.set("respawn", Record::withMembers("label", "Respawn Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("noMonsters", Record::withMembers("label", "No Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("turbo", Record::withMembers("label", "Move Speed", "type", "number", "default", 1.0, "min", 0.1, "max", 4.0, "step", 0.1));
+    game.objectNamespace().set(Game::DEF_OPTIONS, gameplayOptions);
 }
 
 /**

@@ -343,9 +343,9 @@ void D_PostInit()
     }
 
     // Apply these rules.
-    gfw_SetDefaultRule(noMonsters     , cmdLine.check("-nomonsters")? true : false);
-    gfw_SetDefaultRule(respawnMonsters, cmdLine.check("-respawn")   ? true : false);
-    gfw_SetDefaultRule(fast           , cmdLine.check("-fast")      ? true : false);
+    gfw_SetDefaultRule(noMonsters     , cmdLine.has("-nomonsters"));
+    gfw_SetDefaultRule(respawnMonsters, cmdLine.has("-respawn")   );
+    gfw_SetDefaultRule(fast           , cmdLine.has("-fast")      );
 
     if (gfw_DefaultRule(deathmatch))
     {

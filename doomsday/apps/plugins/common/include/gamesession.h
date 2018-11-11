@@ -22,6 +22,7 @@
 
 #include <de/String>
 #include <doomsday/AbstractSession>
+#include <doomsday/GameProfiles>
 #include <doomsday/uri.h>
 
 //#include "doomsday.h"
@@ -244,5 +245,10 @@ private:
  * Returns the currently loaded game's ID.
  */
 de::String gfw_GameId();
+
+/**
+ * Returns the current game profile, or nullptr.
+ */
+const GameProfile *gfw_GameProfile();
 
 #endif // LIBCOMMON_GAMESESSION_H

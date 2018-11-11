@@ -68,6 +68,11 @@ static void setCommonParameters(Game &game)
 {
     //game.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     game.addRequiredPackage("net.dengine.legacy.hexen_2");
+
+    Record gameplayOptions;
+    gameplayOptions.set("noMonsters", Record::withMembers("label", "No Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("turbo", Record::withMembers("label", "Move Speed", "type", "number", "default", 1.0, "min", 0.1, "max", 4.0, "step", 0.1));
+    game.objectNamespace().set(Game::DEF_OPTIONS, gameplayOptions);
 }
 
 /**

@@ -310,10 +310,12 @@ void X_PostInit()
     // Defaults for skill, episode and map.
     gfw_SetDefaultRule(skill, /*startSkill =*/ SM_MEDIUM);
 
-    ::cfg.common.netDeathmatch = cmdLine.check("-deathmatch")? true : false;
+    ::cfg.common.netDeathmatch = cmdLine.check("-deathmatch") ? true : false;
 
-    gfw_SetDefaultRule(noMonsters,    cmdLine.check("-nomonsters")? true : false);
-    gfw_SetDefaultRule(randomClasses, cmdLine.check("-randclass") ? true : false);
+    gfw_SetDefaultRule(noMonsters,
+                       cmdLine.has("-nomonsters") ||
+                           gfw_GameProfile()->optionValue("noMonsters").isTrue());
+    gfw_SetDefaultRule(randomClasses, cmdLine.has("-randclass"));
 
     // Process sound definitions.
     SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));

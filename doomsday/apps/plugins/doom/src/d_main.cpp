@@ -421,9 +421,14 @@ void D_PostInit()
     gfw_SetDefaultRule(fast, cfg.common.defaultRuleFastMonsters);
 
     // Apply these rules.
-    gfw_SetDefaultRule(noMonsters     , cmdLine.check("-nomonsters")? true : false);
-    gfw_SetDefaultRule(respawnMonsters, cmdLine.check("-respawn")   ? true : false);
-    gfw_SetDefaultRule(fast           , cmdLine.check("-fast")      ? true : false);
+    gfw_SetDefaultRule(noMonsters,
+                       cmdLine.has("-nomonsters") ||
+                           gfw_GameProfile()->optionValue("noMonsters").isTrue());
+    gfw_SetDefaultRule(respawnMonsters,
+                       cmdLine.has("-respawn") ||
+                           gfw_GameProfile()->optionValue("respawn").isTrue());
+    gfw_SetDefaultRule(fast,
+                       cmdLine.has("-fast") || gfw_GameProfile()->optionValue("fast").isTrue());
 
     if (gfw_DefaultRule(deathmatch))
     {
