@@ -32,15 +32,13 @@ void IndirectRule::setSource(Rule const &rule)
 {
     unsetSource();
     dependsOn(_source = &rule);
-
     invalidate();
 }
 
 void IndirectRule::unsetSource()
 {
     independentOf(_source);
-    _source = 0;
-
+    _source = nullptr;
     invalidate();
 }
 
@@ -51,7 +49,7 @@ void IndirectRule::update()
 
 Rule const &IndirectRule::source() const
 {
-    DENG2_ASSERT(_source != 0);
+    DENG2_ASSERT(_source);
     return *_source;
 }
 

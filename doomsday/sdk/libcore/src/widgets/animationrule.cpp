@@ -48,9 +48,7 @@ void AnimationRule::set(float target, TimeSpan transition, TimeSpan delay)
 {
     independentOf(_targetRule);
     _targetRule = 0;
-
     _animation.clock().audienceForPriorityTimeChange += this;
-
     _animation.setValue(target, transition, delay);
     invalidate();
 }
@@ -107,6 +105,8 @@ void AnimationRule::resume()
 
 String AnimationRule::description() const
 {
+    DENG2_ASSERT(!isValid() || fequal(value(), _animation));
+    
     String desc = "Scalar(" + _animation.asText();
     if (_targetRule)
     {
@@ -141,16 +141,16 @@ void AnimationRule::update()
     }
 
     setValue(_animation);
+
+    if (_animation.done())
+    {
+        _animation.clock().audienceForPriorityTimeChange -= this;
+    }
 }
 
 void AnimationRule::timeChanged(Clock const &clock)
 {
     invalidate();
-
-    if (_animation.done())
-    {
-        clock.audienceForPriorityTimeChange -= this;
-    }
 }
 
 } // namespace de

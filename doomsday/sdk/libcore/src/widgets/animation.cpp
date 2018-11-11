@@ -87,9 +87,9 @@ DENG2_PIMPL_NOREF(Animation)
     float value;
     float target;
     TimeSpan startDelay;
-    Time setTime;
-    Time targetTime;
-    Time pauseTime;
+    TimeSpan setTime;
+    TimeSpan targetTime;
+    TimeSpan pauseTime;
     Style style;
     float spring;
     mutable AnimationFlags flags;
@@ -98,8 +98,8 @@ DENG2_PIMPL_NOREF(Animation)
         : value(val)
         , target(val)
         , startDelay(0)
-        , setTime   (Animation::currentTime())
-        , targetTime(Animation::currentTime())
+        , setTime   (theTime.now)
+        , targetTime(theTime.now)
         , style(s)
         , spring(DEFAULT_SPRING)
     {}
@@ -125,7 +125,7 @@ DENG2_PIMPL_NOREF(Animation)
             peak2 = 2.f/3;
         }
 
-        if (now >= targetTime.highPerformanceTime() || span <= 0)
+        if (now >= targetTime || span <= 0)
         {
             flags |= Finished;
             return target;
@@ -133,7 +133,7 @@ DENG2_PIMPL_NOREF(Animation)
         else
         {
             span -= startDelay;
-            TimeSpan const elapsed = now - setTime.highPerformanceTime() - startDelay;
+            TimeSpan const elapsed = now - setTime - startDelay;
             TimeSpan const t = clamp(0.0, elapsed/span, 1.0);
             float const delta = target - value;
             switch (style)
@@ -182,16 +182,16 @@ DENG2_PIMPL_NOREF(Animation)
 
     void checkDone()
     {
-        if (!(flags & Finished) && theTime.now >= targetTime.highPerformanceTime())
+        if (!(flags & Finished) && currentTime() >= targetTime)
         {
             flags |= Finished;
         }
     }
 
-    Time currentTime() const
+    double currentTime() const
     {
         if (flags & Paused) return pauseTime;
-        return Animation::currentTime();
+        return theTime.now; //Animation::currentTime();
     }
 };
 
@@ -238,7 +238,7 @@ void Animation::setValue(float v, TimeSpan transitionSpan, TimeSpan startDelay)
 {
     resume();
 
-    Time const now = d->currentTime();
+    TimeSpan const now = d->currentTime();
 
     if (transitionSpan <= 0)
     {
@@ -248,7 +248,7 @@ void Animation::setValue(float v, TimeSpan transitionSpan, TimeSpan startDelay)
     }
     else
     {
-        d->value = d->valueAt(now.highPerformanceTime());
+        d->value = d->valueAt(now);
         d->target = v;
         d->setTime = now;
         d->targetTime = d->setTime + transitionSpan;
@@ -272,7 +272,7 @@ float Animation::value() const
 {
     if (d->flags & Paused)
     {
-        return d->valueAt(d->pauseTime.highPerformanceTime());
+        return d->valueAt(d->pauseTime);
     }
     if (d->flags & Finished)
     {
@@ -285,10 +285,6 @@ bool Animation::done() const
 {
     d->checkDone();
     if (d->flags & Finished) return true;
-    if (d->flags & Paused)
-    {
-        return d->pauseTime >= d->targetTime;
-    }
     return false;
 }
 
@@ -304,7 +300,7 @@ void Animation::adjustTarget(float newTarget)
 
 TimeSpan Animation::remainingTime() const
 {
-    Time const now = d->currentTime();
+    TimeSpan const now = d->currentTime();
     if (now >= d->targetTime)
     {
         return 0;
@@ -349,7 +345,7 @@ void Animation::finish()
 
 String Animation::asText() const
 {
-    return String("Animation(%1 -> %2, ETA:%3 s)").arg(d->value).arg(d->target).arg(remainingTime());
+    return String("Animation(%1 -> %2, ETA:%3 s; curr: %4)").arg(d->value).arg(d->target).arg(remainingTime()).arg(value());
 }
 
 Clock const &Animation::clock()
@@ -364,7 +360,7 @@ Clock const &Animation::clock()
 
 void Animation::operator >> (Writer &to) const
 {
-    Time const now = currentTime();
+    TimeSpan const now = currentTime();
 
     to << d->value << d->target;
     // Write times relative to current frame time.
@@ -375,7 +371,7 @@ void Animation::operator >> (Writer &to) const
 
 void Animation::operator << (Reader &from)
 {
-    Time const now = currentTime();
+    TimeSpan const now = currentTime();
 
     from >> d->value >> d->target;
 
@@ -401,15 +397,15 @@ void Animation::setClock(Clock const *clock)
     _clock = clock;
     if (clock) clock->audienceForPriorityTimeChange += theTime;
 }
-
-Time Animation::currentTime() // static
+   
+TimeSpan Animation::currentTime() // static
 {
     DENG2_ASSERT(_clock != 0);
     if (!_clock)
     {
         throw ClockMissingError("Animation::clock", "Animation has no clock");
     }
-    return Time(theTime.now);
+    return TimeSpan(theTime.now);
 }
 
 Animation Animation::range(Style style, float from, float to, TimeSpan span, TimeSpan delay)
