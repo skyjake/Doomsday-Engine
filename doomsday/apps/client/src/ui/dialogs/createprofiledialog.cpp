@@ -31,11 +31,17 @@
 #include <de/ChoiceWidget>
 #include <de/GridLayout>
 #include <de/DialogContentStylist>
+#include <de/FoldPanelWidget>
 #include <de/PackageLoader>
+#include <de/ScriptedInfo>
+#include <de/SliderWidget>
+#include <de/ToggleWidget>
 
 using namespace de;
 
 DENG_GUI_PIMPL(CreateProfileDialog)
+, DENG2_OBSERVES(ToggleWidget, Toggle)
+, DENG2_OBSERVES(SliderWidget, Change)
 {
     ChoiceWidget *gameChoice;
     PackagesButtonWidget *packages;
@@ -44,12 +50,75 @@ DENG_GUI_PIMPL(CreateProfileDialog)
     AuxButtonWidget *customDataFileName;
     ui::ListData customDataFileActions;
     SafeWidgetPtr<PackagesWidget> customPicker;
+    FoldPanelWidget *optionsFold;
+    GuiWidget *optionsBase;
     DialogContentStylist stylist;
     bool editing = false;
     String oldName;
     std::unique_ptr<GameProfile> tempProfile; // Used only internally.
 
     Impl(Public *i) : Base(i) {}
+
+    void populateOptions()
+    {
+        optionsBase->clearTree();
+
+        DialogContentStylist stylist(*optionsBase);
+        GridLayout layout(optionsBase->rule().left(), optionsBase->rule().top());
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight);
+        const auto &opts = tempProfile->game()[Game::DEF_OPTIONS].valueAsRecord().members();
+        if (opts.isEmpty())
+        {
+            return;
+        }
+        StringList keys = opts.keys();
+        std::sort(keys.begin(), keys.end(), [&opts](const String &k1, const String &k2) {
+            return opts[k1]->valueAsRecord().gets("label").compareWithoutCase(
+                       opts[k2]->valueAsRecord().gets("label")) < 0;
+        });
+        for (const auto &key : keys)
+        {
+            const Record &optDef   = opts[key]->valueAsRecord();
+            const String  optType  = optDef["type"];
+            const String  optLabel = optDef["label"];
+            if (optType == "boolean")
+            {
+                auto *tog = new ToggleWidget;
+                optionsBase->add(tog);
+                tog->setText(optLabel);
+                tog->setActive(ScriptedInfo::isTrue(tempProfile->optionValue(key)));
+                tog->objectNamespace().set("option", key);
+                tog->audienceForToggle() += this;
+                layout << Const(0) << *tog;
+            }
+            else if (optType == "number")
+            {
+                auto *slider = new SliderWidget;
+                optionsBase->add(slider);
+                slider->setRange(Ranged(optDef.getd("min"), optDef.getd("max")));
+                const double step = optDef.getd("step", 1.0);
+                slider->setStep(step);
+                slider->setValue(tempProfile->optionValue(key).asNumber());
+                slider->setPrecision(step < 1 ? 1 : 0);
+                slider->objectNamespace().set("option", key);
+                slider->audienceForChange() += this;
+                layout << *LabelWidget::newWithText(optLabel + ":", optionsBase)
+                       << *slider;
+            }
+            optionsBase->rule().setSize(layout);
+        }
+    }
+
+    void toggleStateChanged(ToggleWidget &widget) override
+    {
+        tempProfile->setOptionValue(widget["option"], NumberValue(widget.isActive()));
+    }
+
+    void sliderValueChanged(SliderWidget &widget) override
+    {
+        tempProfile->setOptionValue(widget["option"], NumberValue(widget.value()));
+    }
 
     void checkValidProfileName()
     {
@@ -191,6 +260,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     DoomsdayApp::games().forAll([this, &gameFamily] (Game &game)
     {
         if (game.family() == gameFamily)
+
         {
             const char *labelColor = (!game.isPlayable() ? _E(F) : "");
             d->gameChoice->items() << new ChoiceItem(labelColor + game.title(), game.id());
@@ -287,19 +357,37 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
            << *LabelWidget::newWithText(tr("Mods:"), form)
            << *d->packages;
 
-    //LabelWidget *optionsLabel = LabelWidget::newWithText(_E(D) + tr("Game Options"), form);
-    //optionsLabel->setFont("separator.label");
-    //optionsLabel->margins().setTop("gap");
-    //layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
-    //layout.append(*optionsLabel, 2);
-    LabelWidget::appendSeparatorWithText("Game Options", form, &layout);
+    //LabelWidget::appendSeparatorWithText("Launch Options", form, &layout);
+    {
+        auto *launchOptions =
+            FoldPanelWidget::makeOptionsGroup("profile-launch-opts", "Launch Options", form);
 
-    layout << *LabelWidget::newWithText(tr("Starts in:"), form)
-           << *d->autoStartMap
-           << *LabelWidget::newWithText(tr("Skill:"), form)
-           << *d->autoStartSkill;
+        auto *base = new GuiWidget;
+        launchOptions->setContent(base);
+        GridLayout launchLayout(base->rule().left(), base->rule().top());
+        launchLayout.setGridSize(2, 0);
+        launchLayout.setColumnAlignment(0, ui::AlignRight);
+        launchLayout << *LabelWidget::newWithText(tr("Starts in:"), base) << *d->autoStartMap
+                     << *LabelWidget::newWithText(tr("Skill:"), base) << *d->autoStartSkill;
+        base->rule().setSize(launchLayout);
 
-    form->rule().setSize(layout.width(), layout.height());
+        layout.append(launchOptions->title(), 2);
+        layout.append(*launchOptions, 2);
+    }
+
+    // Additional options defined by the game.
+    {
+        d->optionsFold =
+            FoldPanelWidget::makeOptionsGroup("profile-gameplay-opts", "Gameplay Options", form);
+        d->optionsBase = new GuiWidget;
+        d->optionsFold->setContent(d->optionsBase);
+
+        layout.append(d->optionsFold->title(), 2);
+        layout.setCellAlignment({0, layout.gridSize().y}, ui::AlignLeft);
+        layout.append(*d->optionsFold, 2);
+    }
+
+    form->rule().setSize(layout);
 
     buttons().clear()
             << new DialogButtonItem(Id1 | Default | Accept, tr("Create"))
@@ -311,6 +399,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     updateLayout();
     d->updateDataFile();
     d->gameChanged();
+    d->populateOptions();
 
     connect(d->gameChoice, &ChoiceWidget::selectionChanged, [this] () { d->gameChanged(); });
     connect(d->packages, &PackagesButtonWidget::packageSelectionChanged,
@@ -346,6 +435,8 @@ void CreateProfileDialog::fetchFrom(GameProfile const &profile)
     d->autoStartMap->setSelected(d->autoStartMap->items().findData(profile.autoStartMap()));
     d->autoStartSkill->setSelected(d->autoStartSkill->items().findData(profile.autoStartSkill()));
     d->tempProfile->setSaveLocationId(profile.saveLocationId());
+    d->tempProfile->objectNamespace() = profile.objectNamespace();
+    d->populateOptions();
 }
 
 void CreateProfileDialog::applyTo(GameProfile &profile) const
@@ -361,6 +452,7 @@ void CreateProfileDialog::applyTo(GameProfile &profile) const
     profile.setAutoStartMap(d->autoStartMap->selectedItem().data().toString());
     profile.setAutoStartSkill(d->autoStartSkill->selectedItem().data().toInt());
     profile.setSaveLocationId(profile.saveLocationId());
+    profile.objectNamespace() = d->tempProfile->objectNamespace();
 }
 
 String CreateProfileDialog::profileName() const

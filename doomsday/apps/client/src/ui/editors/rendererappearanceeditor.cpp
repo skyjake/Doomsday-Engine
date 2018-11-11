@@ -29,7 +29,6 @@
 
 #include <de/ButtonWidget>
 #include <de/ScrollAreaWidget>
-#include <de/FoldPanelWidget>
 #include <de/DialogContentStylist>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
