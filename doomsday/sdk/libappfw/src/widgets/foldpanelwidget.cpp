@@ -164,6 +164,23 @@ GuiWidget &FoldPanelWidget::content() const
     return PanelWidget::content();
 }
 
+FoldPanelWidget *FoldPanelWidget::makeOptionsGroup(const String &name, const String &heading,
+                                                   GuiWidget *parent)
+{
+    auto *fold = new FoldPanelWidget(name);
+    parent->add(fold->makeTitle(heading));
+    parent->add(fold);
+    fold->title().setFont("separator.label");
+    fold->title().margins().setTop("gap");
+    fold->title().set(Background(Vector4f(1, 0, 1, .5f)));
+    fold->title().setImageAlignment(ui::AlignRight);
+    fold->title()
+        .rule()
+        .setInput(Rule::Left, fold->rule().left())
+        .setInput(Rule::Right, fold->rule().right());
+    return fold;
+}
+
 void FoldPanelWidget::toggleFold()
 {
     if (!isOpen())

@@ -64,6 +64,10 @@ public:
 
     GuiWidget &content() const;
 
+public:
+    static FoldPanelWidget *makeOptionsGroup(const String &name, const String &heading,
+                                             GuiWidget *parent);
+
 public slots:
     void toggleFold();
 

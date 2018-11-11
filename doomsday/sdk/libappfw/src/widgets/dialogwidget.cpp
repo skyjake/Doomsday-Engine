@@ -466,6 +466,7 @@ DialogWidget::DialogWidget(String const &name, Flags const &flags)
     d->stylist.setContainer(area());
     setOpeningDirection(ui::NoDirection);
     d->updateBackground();
+    area().enableIndicatorDraw(true);
 }
 
 DialogWidget::Modality DialogWidget::modality() const

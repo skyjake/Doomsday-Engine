@@ -379,6 +379,8 @@ DENG_GUI_PIMPL(SliderWidget)
             self().requestGeometry();
 
             emit self().valueChanged(v);
+
+            DENG2_FOR_PUBLIC_AUDIENCE2(Change, i) i->sliderValueChanged(self());
         }
     }
 
@@ -451,7 +453,11 @@ DENG_GUI_PIMPL(SliderWidget)
             }
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Change)
 };
+
+DENG2_AUDIENCE_METHOD(SliderWidget, Change)
 
 SliderWidget::SliderWidget(String const &name)
     : GuiWidget(name), d(new Impl(this))
