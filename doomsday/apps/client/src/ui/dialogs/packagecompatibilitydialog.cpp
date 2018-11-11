@@ -193,7 +193,7 @@ DENG2_PIMPL(PackageCompatibilityDialog)
 
             self().area().add(list = new PackagesWidget(wantedAvailable + wantedDifferent));
             list->setAllowPackageInfoActions(false);
-            list->setDontFilterHidden(true);
+            list->setHiddenTags({"core", "gamedata"});
             list->setActionItems(actions);
             list->setActionsAlwaysShown(true);
             list->setFilterEditorMinimumY(self().area().rule().top());

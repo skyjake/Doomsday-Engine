@@ -178,7 +178,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         self().add(serverPopup);
         serverPackages = new PackagesWidget(PackagesWidget::PopulationDisabled);
         serverPackages->margins().set("gap");
-        serverPackages->setHiddenTags(StringList()); // show everything
+        serverPackages->setHiddenTags({"hidden"}); // show everything (top level)
         serverPackages->setActionItems(serverPackageActions);
         serverPackages->setActionsAlwaysShown(true);
         serverPackages->setPackageStatus(*this);

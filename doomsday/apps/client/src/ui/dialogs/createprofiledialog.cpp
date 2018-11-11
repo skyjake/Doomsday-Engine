@@ -240,7 +240,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
             dlg->area().enableIndicatorDraw(true);
             d->customPicker.reset(new PackagesWidget);
             dlg->area().add(d->customPicker);
-            d->customPicker->setHiddenTags({"core"});
+            d->customPicker->setHiddenTags({"hidden", "core"});
             d->customPicker->setAllowPackageInfoActions(false);
             d->customPicker->setActionItems(d->customDataFileActions);
             dlg->setAnchorAndOpeningDirection(d->customDataFileName->rule(), ui::Right);

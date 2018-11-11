@@ -64,7 +64,6 @@ public:
     void setAllowPackageInfoActions(bool allowActions);
     void setRightClickToOpenContextMenu(bool enable);
     void setHiddenTags(de::StringList hiddenTags);
-    void setDontFilterHidden(bool enable);
     void setPopulationEnabled(bool enable);
     void setFilterEditorMinimumY(de::Rule const &minY);
     void setPackageStatus(IPackageStatus const &packageStatus);

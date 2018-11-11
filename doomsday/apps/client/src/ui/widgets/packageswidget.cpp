@@ -48,6 +48,7 @@
 #include <doomsday/resource/bundles.h>
 
 #include <QTimer>
+#include <set>
 
 using namespace de;
 
@@ -455,6 +456,8 @@ DENG_GUI_PIMPL(PackagesWidget)
 
     //---------------------------------------------------------------------------------------
 
+    using Strings = std::set<String>;
+
     LoopCallback mainCall;
     LoopCallback mainCallForIdentify;
 
@@ -464,12 +467,13 @@ DENG_GUI_PIMPL(PackagesWidget)
     ButtonWidget *  clearSearch;
     Animation       searchBackgroundOpacity{0.f, Animation::Linear};
     QStringList     filterTerms;
+    Strings         hiddenTagsInEffect;
     QTimer          refilterTimer;
 
     ProgressWidget *refreshProgress;
 
     // Packages list:
-    StringList                 hiddenTags;
+    StringList                 hiddenTags; // Packages with these not shown unless filterTerms has the tag.
     StringList                 manualPackagePaths; // if empty, all available packages used
     HomeMenuWidget *           menu;
     ui::ListDataT<PackageItem> allPackages;
@@ -477,9 +481,7 @@ DENG_GUI_PIMPL(PackagesWidget)
     ui::ListData               defaultActionItems;
     ui::Data const *           actionItems                 = &defaultActionItems;
     bool                       populateEnabled             = true;
-    bool                       showHidden                  = false;
     bool                       showOnlyLoaded              = false;
-    bool                       dontFilterHidden            = false;
     bool                       actionOnlyForSelection      = true;
     bool                       rightClickToOpenContextMenu = false;
     PackageInfoDialog::Mode    packageInfoMode             = PackageInfoDialog::EnableActions;
@@ -499,7 +501,7 @@ DENG_GUI_PIMPL(PackagesWidget)
      */
     Impl(Public * i)
         : Base(i)
-        , hiddenTags({"core", "gamedata"})
+        , hiddenTags({"hidden", "core", "gamedata"})
     {
         defaultActionItems << new ui::VariantActionItem(
             tr("Load"), tr("Unload"), new CallbackAction([this]() {
@@ -564,23 +566,30 @@ DENG_GUI_PIMPL(PackagesWidget)
             // - identifier
             // - tags
 
-            if (!item.info) return false;
-
+            if (!item.info)
+            {
+                // Don't know what this is (probably deleted), can't show it.
+                return false;
+            }
             if (showOnlyLoaded && !item.isLoaded())
             {
                 return false;
             }
-
-            if (!dontFilterHidden)
             {
-                const bool isHidden =
-                    Package::matchTags(*item.file, QStringLiteral("\\bhidden\\b"));
-                if (showHidden ^ isHidden)
+                bool isHidden = false;
+                for (const auto &h : hiddenTagsInEffect)
+                {
+                    if (Package::matchTags(*item.file, h))
+                    {
+                        isHidden = true;
+                        break;
+                    }
+                }
+                if (isHidden)
                 {
                     return false;
                 }
             }
-
             return filterTerms.isEmpty() || checkTerms({item.data().toString(),      // ID
                                                         item.file->source()->name(), // file name
                                                         item.info->gets(VAR_TITLE),
@@ -698,25 +707,10 @@ DENG_GUI_PIMPL(PackagesWidget)
         // Add/update the listed packages.
         for (String const &path : packages)
         {
-            File const &pack = App::rootFolder().locate<File>(path);
-
-            // Check for tags that should never be shown.
-            auto const tags = Package::tags(pack);
-            {
-                bool disregard = false;
-                for (String const &hiddenTag : hiddenTags)
-                {
-                    if (tags.contains(hiddenTag))
-                    {
-                        disregard = true;
-                        break;
-                    }
-                }
-                if (disregard) continue;
-            }
+            const File &pack = App::rootFolder().locate<File>(path);
 
             // Is this already in the list?
-            ui::DataPos pos = allPackages.findData(Package::versionedIdentifierForFile(pack));
+            const ui::DataPos pos = allPackages.findData(Package::versionedIdentifierForFile(pack));
             if (pos != ui::Data::InvalidPos)
             {
                 allPackages.at(pos).setFile(pack);
@@ -767,18 +761,18 @@ DENG_GUI_PIMPL(PackagesWidget)
     void setFilterTerms(QStringList terms)
     {
         filterTerms = terms;
+        hiddenTagsInEffect.clear();
+        for (const auto &t : hiddenTags)
+        {
+            if (!terms.contains(t))
+            {
+                hiddenTagsInEffect.insert("\\b" + t + "\\b"); // tag regexp
+            }
+        }
         clearSearch->show(!terms.isEmpty());
         if ((showOnlyLoaded = filterTerms.contains(TAG_LOADED)) != false)
         {
             filterTerms.removeAll(TAG_LOADED);
-        }
-        if (dontFilterHidden)
-        {
-            showHidden = true;
-        }
-        else if ((showHidden = filterTerms.contains(TAG_HIDDEN)) != false)
-        {
-            filterTerms.removeAll(TAG_HIDDEN);
         }
 
         filteredPackages.refilter();
@@ -862,17 +856,9 @@ PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, String const &name
     : GuiWidget(name)
     , d(new Impl(this))
 {
-//    auto &bundles = DoomsdayApp::bundles();
-    //bundles.audienceForIdentify() += d;
-
     d->populateEnabled = (initBehavior == PopulationEnabled);
-
     FS::get().audienceForBusy() += d;
-
-    //if (bundles.isEverythingIdentified())
-    //{
-        populate();
-    //}
+    populate();
 }
 
 PackagesWidget::PackagesWidget(StringList manualPackageIds, String const &name)
@@ -914,15 +900,6 @@ void PackagesWidget::setHiddenTags(StringList hiddenTags)
 {
     d->hiddenTags = hiddenTags;
     populate();
-}
-
-void PackagesWidget::setDontFilterHidden(bool enable)
-{
-    if (d->dontFilterHidden != enable)
-    {
-        d->dontFilterHidden = enable;
-        d->updateFilterTerms(true);
-    }
 }
 
 void PackagesWidget::setPopulationEnabled(bool enable)
@@ -1111,9 +1088,3 @@ void PackagesWidget::operator<<(PersistentState const &fromState)
     d->search->setText(rec.gets(name().concatenateMember("search"), ""));
     d->updateFilterTerms(true);
 }
-
-/*void PackagesWidget::refreshPackages()
-{
-    d->showProgressIndicator(true);
-    FS::get().refreshAsync();
-}*/
