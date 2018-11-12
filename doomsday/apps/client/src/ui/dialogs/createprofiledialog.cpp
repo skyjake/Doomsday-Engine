@@ -33,6 +33,7 @@
 #include <de/DialogContentStylist>
 #include <de/FoldPanelWidget>
 #include <de/PackageLoader>
+#include <de/PersistentState>
 #include <de/ScriptedInfo>
 #include <de/SliderWidget>
 #include <de/ToggleWidget>
@@ -266,7 +267,6 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         DoomsdayApp::games().forAll([this, &gameFamily] (Game &game)
         {
             if (game.family() == gameFamily)
-
             {
                 const char *labelColor = (!game.isPlayable() ? _E(F) : "");
                 d->gameChoice->items() << new ChoiceItem(labelColor + game.title(), game.id());
@@ -354,6 +354,8 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         auto *launchOptions =
             FoldPanelWidget::makeOptionsGroup("launch-options", "Launch Options", &area());
 
+        launchOptions->title().margins().setTop(rule("gap") + d->form->margins().bottom());
+
         auto *form = new GuiWidget;
         launchOptions->setContent(form);
 
@@ -388,12 +390,6 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
 
         d->optionsBase = new GuiWidget;
         d->optionsFold->setContent(d->optionsBase);
-
-//        GridLayout layout(d->optionsBase->rule().left(), d->optionsBase->rule().top());
-//        layout.setGridSize(2, 0);
-//        layout.setColumnAlignment(0, ui::AlignRight);
-        //layout.setCellAlignment({0, layout.gridSize().y}, ui::AlignLeft);
-        //layout.append(*d->optionsFold, 2);
     }
 
     buttons().clear()
@@ -403,7 +399,7 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     // The Create button is enabled when a valid name is entered.
     buttonWidget(Id1)->disable();
 
-    updateLayout();
+    updateLayout(IncludeHidden);
     d->updateDataFile();
     d->gameChanged();
     d->populateOptions();
@@ -467,6 +463,37 @@ String CreateProfileDialog::profileName() const
     return editor().text().strip();
 }
 
+void CreateProfileDialog::operator>>(PersistentState &toState) const
+{
+    auto &ps = toState.objectNamespace();
+    auto &launch = find("launch-options")->as<FoldPanelWidget>();
+    ps.set(name().concatenateMember(launch.name()) + ".open", launch.isOpen());
+    ps.set(name().concatenateMember(d->optionsFold->name()) + ".open",
+           d->optionsFold->isOpen());
+}
+
+void CreateProfileDialog::operator<<(const PersistentState &fromState)
+{
+    auto &ps = fromState.objectNamespace();
+    auto &launch = find("launch-options")->as<FoldPanelWidget>();
+    if (ps.getb(name().concatenateMember(launch.name()) + ".open", true))
+    {
+        launch.open();
+    }
+    else
+    {
+        launch.close(0.0);
+    }
+    if (ps.getb(name().concatenateMember(d->optionsFold->name()) + ".open", false))
+    {
+        d->optionsFold->open();
+    }
+    else
+    {
+        d->optionsFold->close(0.0);
+    }
+}
+
 CreateProfileDialog *CreateProfileDialog::editProfile(String const &gameFamily,
                                                       GameProfile &profile)
 {
@@ -474,9 +501,9 @@ CreateProfileDialog *CreateProfileDialog::editProfile(String const &gameFamily,
     dlg->d->editing = true;
     dlg->d->oldName = profile.name();
     dlg->title().setText(tr("Edit Profile"));
-    dlg->message().hide();
+    delete &dlg->message();
     dlg->buttonWidget(Id1)->setText(_E(b) + tr("OK"));
     dlg->fetchFrom(profile);
-    dlg->updateLayout();
+    dlg->updateLayout(IncludeHidden);
     return dlg;
 }

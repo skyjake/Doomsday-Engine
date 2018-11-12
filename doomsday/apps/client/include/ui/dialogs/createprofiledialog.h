@@ -21,11 +21,14 @@
 
 #include <doomsday/GameProfiles>
 #include <de/InputDialog>
+#include <de/IPersistent>
 
 /**
  * Dialog for creating a game profile.
  */
-class CreateProfileDialog : public de::InputDialog
+class CreateProfileDialog
+    : public de::InputDialog
+    , public de::IPersistent
 {
 public:
     CreateProfileDialog(de::String const &gameFamily);
@@ -42,6 +45,11 @@ public:
 
     de::String profileName() const;
 
+    // Implements IPersistent.
+    void operator>>(de::PersistentState &toState) const;
+    void operator<<(de::PersistentState const &fromState);
+
+public:
     static CreateProfileDialog *editProfile(de::String const &gameFamily,
                                             GameProfile &profile);
 
