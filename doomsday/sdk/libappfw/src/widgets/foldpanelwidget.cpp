@@ -197,7 +197,7 @@ void FoldPanelWidget::preparePanelForOpening()
     {
         // Insert the content back into the panel.
         PanelWidget::setContent(d->container);
-        d->container = 0;
+        d->container = nullptr;
     }
 
     if (d->title)

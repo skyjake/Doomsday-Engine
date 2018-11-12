@@ -117,11 +117,8 @@ public:
     void update();
 
     // Implements IPersistent.
-    void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
-
-//public slots:
-//    void refreshPackages();
+    void operator>>(de::PersistentState &toState) const;
+    void operator<<(de::PersistentState const &fromState);
 
 signals:
     void itemCountChanged(unsigned int shownItems, unsigned int totalItems);

@@ -44,8 +44,8 @@ public:
     void enableJoinWhenSelected(bool joinWhenSelected);
 
     // Implements IPersistent.
-    void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator>>(de::PersistentState &toState) const;
+    void operator<<(de::PersistentState const &fromState);
 
 signals:
     void selected(de::ui::Item const *);

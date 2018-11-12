@@ -145,12 +145,12 @@ void ManualConnectionDialog::enableJoinWhenSelected(bool joinWhenSelected)
     d->autoJoin = joinWhenSelected;
 }
 
-void ManualConnectionDialog::operator >> (PersistentState &toState) const
+void ManualConnectionDialog::operator>>(PersistentState &toState) const
 {
     toState.objectNamespace().set(name() + ".address", d->usedAddress);
 }
 
-void ManualConnectionDialog::operator << (PersistentState const &fromState)
+void ManualConnectionDialog::operator<<(PersistentState const &fromState)
 {
     d->usedAddress = fromState[name() + ".address"];
     editor().setText(d->usedAddress);
