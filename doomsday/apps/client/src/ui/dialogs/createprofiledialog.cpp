@@ -43,6 +43,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
 , DENG2_OBSERVES(ToggleWidget, Toggle)
 , DENG2_OBSERVES(SliderWidget, Change)
 {
+    GuiWidget *form;
     ChoiceWidget *gameChoice;
     PackagesButtonWidget *packages;
     ChoiceWidget *autoStartMap;
@@ -63,7 +64,6 @@ DENG_GUI_PIMPL(CreateProfileDialog)
     {
         optionsBase->clearTree();
 
-        DialogContentStylist stylist(*optionsBase);
         GridLayout layout(optionsBase->rule().left(), optionsBase->rule().top());
         layout.setGridSize(2, 0);
         layout.setColumnAlignment(0, ui::AlignRight);
@@ -73,6 +73,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
             return;
         }
         StringList keys = opts.keys();
+        // Alphabetic order based on the label.
         std::sort(keys.begin(), keys.end(), [&opts](const String &k1, const String &k2) {
             return opts[k1]->valueAsRecord().gets("label").compareWithoutCase(
                        opts[k2]->valueAsRecord().gets("label")) < 0;
@@ -82,6 +83,7 @@ DENG_GUI_PIMPL(CreateProfileDialog)
             const Record &optDef   = opts[key]->valueAsRecord();
             const String  optType  = optDef["type"];
             const String  optLabel = optDef["label"];
+
             if (optType == "boolean")
             {
                 auto *tog = new ToggleWidget;
@@ -106,8 +108,8 @@ DENG_GUI_PIMPL(CreateProfileDialog)
                 layout << *LabelWidget::newWithText(optLabel + ":", optionsBase)
                        << *slider;
             }
-            optionsBase->rule().setSize(layout);
         }
+        optionsBase->rule().setSize(layout);
     }
 
     void toggleStateChanged(ToggleWidget &widget) override
@@ -251,143 +253,148 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
     title()  .setText(tr("New Profile"));
     message().setText(tr("Enter a name for the new game profile."));
 
-    auto *form = new GuiWidget;
-    d->stylist.setContainer(*form);
-    area().add(form);
-
-    // Populate games list.
-    form->add(d->gameChoice = new ChoiceWidget);
-    DoomsdayApp::games().forAll([this, &gameFamily] (Game &game)
+    // MessageDialog applies a layout on its area contents, so we'll have our own parent widget
+    // for our widgets.
     {
-        if (game.family() == gameFamily)
+        auto *form = new GuiWidget;
+        d->form = form;
+        d->stylist.setContainer(*form);
+        area().add(form);
 
+        // Populate games list.
+        form->add(d->gameChoice = new ChoiceWidget);
+        DoomsdayApp::games().forAll([this, &gameFamily] (Game &game)
         {
-            const char *labelColor = (!game.isPlayable() ? _E(F) : "");
-            d->gameChoice->items() << new ChoiceItem(labelColor + game.title(), game.id());
-        }
-        return LoopContinue;
-    });
-    d->gameChoice->items().sort();
+            if (game.family() == gameFamily)
 
-    if (d->gameChoice->items().isEmpty())
-    {
-        d->gameChoice->items() << new ChoiceItem(tr("No playable games"), "");
-    }
-
-    // Custom data file selection.
-    {
-        form->add(d->customDataFileName = new AuxButtonWidget);
-        d->customDataFileName->setMaximumTextWidth(
-            rule().right() - d->customDataFileName->rule().left() -
-                    d->customDataFileName->margins().width());
-        d->customDataFileName->setTextLineAlignment(ui::AlignLeft);
-        d->customDataFileName->auxiliary().setText("Reset");
-        d->customDataFileActions
-                << new ui::ActionItem("Select", new CallbackAction([this]() {
-            if (d->customPicker)
             {
-                d->tempProfile->setCustomDataFile(d->customPicker->actionPackage());
-                d->customPicker->ancestorOfType<MessageDialog>()->accept();
-                d->updateDataFile();
+                const char *labelColor = (!game.isPlayable() ? _E(F) : "");
+                d->gameChoice->items() << new ChoiceItem(labelColor + game.title(), game.id());
             }
-        }));
-        d->customDataFileName->setActionFn([this]() {
-            auto *dlg = new MessageDialog;
-            dlg->buttons() << new DialogButtonItem(Reject, "Cancel")
-                           << new DialogButtonItem(Action | Id1, style().images().image("gear"),
-                                                   "Data Files", new CallbackAction([dlg]() {
-                auto *dfsDlg = new DataFileSettingsDialog;
-                dfsDlg->setAnchorAndOpeningDirection(dlg->buttonWidget(Id1)->rule(), ui::Up);
-                dfsDlg->setDeleteAfterDismissed(true);
-                dlg->add(dfsDlg);
-                dfsDlg->open();
+            return LoopContinue;
+        });
+        d->gameChoice->items().sort();
+
+        if (d->gameChoice->items().isEmpty())
+        {
+            d->gameChoice->items() << new ChoiceItem(tr("No playable games"), "");
+        }
+
+        // Custom data file selection.
+        {
+            form->add(d->customDataFileName = new AuxButtonWidget);
+            d->customDataFileName->setMaximumTextWidth(
+                rule().right() - d->customDataFileName->rule().left() -
+                        d->customDataFileName->margins().width());
+            d->customDataFileName->setTextLineAlignment(ui::AlignLeft);
+            d->customDataFileName->auxiliary().setText("Reset");
+            d->customDataFileActions
+                    << new ui::ActionItem("Select", new CallbackAction([this]() {
+                if (d->customPicker)
+                {
+                    d->tempProfile->setCustomDataFile(d->customPicker->actionPackage());
+                    d->customPicker->ancestorOfType<MessageDialog>()->accept();
+                    d->updateDataFile();
+                }
             }));
-            dlg->setDeleteAfterDismissed(true);
-            dlg->title().setText("Game Data File");
-            dlg->message().setText(
-                "Select the main data file for this profile. When using a manually chosen main "
-                "data file, the default data files of the game will not be automatically loaded.");
-            dlg->area().enableIndicatorDraw(true);
-            d->customPicker.reset(new PackagesWidget);
-            dlg->area().add(d->customPicker);
-            d->customPicker->setHiddenTags({"hidden", "core"});
-            d->customPicker->searchTermsEditor().setText("gamedata");
-            d->customPicker->setAllowPackageInfoActions(false);
-            d->customPicker->setActionItems(d->customDataFileActions);
-            dlg->setAnchorAndOpeningDirection(d->customDataFileName->rule(), ui::Right);
-            dlg->updateLayout();
-            root().addOnTop(dlg);
-            dlg->open(Modal);
-        });
-        d->customDataFileName->auxiliary().setActionFn([this]() {
-            d->tempProfile->setCustomDataFile("");
-            d->updateDataFile();
-        });
+            d->customDataFileName->setActionFn([this]() {
+                auto *dlg = new MessageDialog;
+                dlg->buttons() << new DialogButtonItem(Reject, "Cancel")
+                               << new DialogButtonItem(Action | Id1, style().images().image("gear"),
+                                                       "Data Files", new CallbackAction([dlg]() {
+                    auto *dfsDlg = new DataFileSettingsDialog;
+                    dfsDlg->setAnchorAndOpeningDirection(dlg->buttonWidget(Id1)->rule(), ui::Up);
+                    dfsDlg->setDeleteAfterDismissed(true);
+                    dlg->add(dfsDlg);
+                    dfsDlg->open();
+                }));
+                dlg->setDeleteAfterDismissed(true);
+                dlg->title().setText("Game Data File");
+                dlg->message().setText(
+                    "Select the main data file for this profile. When using a manually chosen main "
+                    "data file, the default data files of the game will not be automatically loaded.");
+                dlg->area().enableIndicatorDraw(true);
+                d->customPicker.reset(new PackagesWidget);
+                dlg->area().add(d->customPicker);
+                d->customPicker->setHiddenTags({"hidden", "core"});
+                d->customPicker->searchTermsEditor().setText("gamedata");
+                d->customPicker->setAllowPackageInfoActions(false);
+                d->customPicker->setActionItems(d->customDataFileActions);
+                dlg->setAnchorAndOpeningDirection(d->customDataFileName->rule(), ui::Right);
+                dlg->updateLayout();
+                root().addOnTop(dlg);
+                dlg->open(Modal);
+            });
+            d->customDataFileName->auxiliary().setActionFn([this]() {
+                d->tempProfile->setCustomDataFile("");
+                d->updateDataFile();
+            });
+        }
+
+        // Packages selection.
+        form->add(d->packages = new PackagesButtonWidget);
+        d->packages->setNoneLabel(tr("None"));
+        d->tempProfile.reset(new GameProfile);
+        d->packages->setGameProfile(*d->tempProfile);
+
+        GridLayout layout(form->rule().left(), form->rule().top() + rule("dialog.gap"));
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight);
+        layout << *LabelWidget::newWithText(tr("Game:"), form)
+               << *d->gameChoice
+               << *LabelWidget::newWithText("Data File:", form)
+               << *d->customDataFileName
+               << *LabelWidget::newWithText(tr("Mods:"), form)
+               << *d->packages;
+        form->rule().setSize(layout);
     }
 
-    // Packages selection.
-    form->add(d->packages = new PackagesButtonWidget);
-    d->packages->setNoneLabel(tr("None"));
-    d->tempProfile.reset(new GameProfile);
-    d->packages->setGameProfile(*d->tempProfile);
-
-    // Auto start map.
-    form->add(d->autoStartMap = new ChoiceWidget);
-    d->autoStartMap->popup().menu().enableIndicatorDraw(true);
-    d->autoStartMap->items() << new ChoiceItem(tr("Title screen"), "");
-
-    // Auto start skill.
-    form->add(d->autoStartSkill = new ChoiceWidget);
-    d->autoStartSkill->items()
-            << new ChoiceItem(tr("Novice"),    1)
-            << new ChoiceItem(tr("Easy"),      2)
-            << new ChoiceItem(tr("Normal"),    3)
-            << new ChoiceItem(tr("Hard"),      4)
-            << new ChoiceItem(tr("Nightmare"), 5);
-    d->autoStartSkill->disable();
-    d->autoStartSkill->setSelected(2);
-
-    GridLayout layout(form->rule().left(), form->rule().top() + rule("dialog.gap"));
-    layout.setGridSize(2, 0);
-    layout.setColumnAlignment(0, ui::AlignRight);
-    layout << *LabelWidget::newWithText(tr("Game:"), form)
-           << *d->gameChoice
-           << *LabelWidget::newWithText("Data File:", form)
-           << *d->customDataFileName
-           << *LabelWidget::newWithText(tr("Mods:"), form)
-           << *d->packages;
-
-    //LabelWidget::appendSeparatorWithText("Launch Options", form, &layout);
+    // Foldable panel for the Launch Options.
     {
         auto *launchOptions =
-            FoldPanelWidget::makeOptionsGroup("profile-launch-opts", "Launch Options", form);
+            FoldPanelWidget::makeOptionsGroup("launch-options", "Launch Options", &area());
 
-        auto *base = new GuiWidget;
-        launchOptions->setContent(base);
-        GridLayout launchLayout(base->rule().left(), base->rule().top());
-        launchLayout.setGridSize(2, 0);
-        launchLayout.setColumnAlignment(0, ui::AlignRight);
-        launchLayout << *LabelWidget::newWithText(tr("Starts in:"), base) << *d->autoStartMap
-                     << *LabelWidget::newWithText(tr("Skill:"), base) << *d->autoStartSkill;
-        base->rule().setSize(launchLayout);
+        auto *form = new GuiWidget;
+        launchOptions->setContent(form);
 
-        layout.append(launchOptions->title(), 2);
-        layout.append(*launchOptions, 2);
+        // Auto start map.
+        form->add(d->autoStartMap = new ChoiceWidget);
+        d->autoStartMap->popup().menu().enableIndicatorDraw(true);
+        d->autoStartMap->items() << new ChoiceItem(tr("Title screen"), "");
+
+        // Auto start skill.
+        form->add(d->autoStartSkill = new ChoiceWidget);
+        d->autoStartSkill->items()
+                << new ChoiceItem(tr("Novice"),    1)
+                << new ChoiceItem(tr("Easy"),      2)
+                << new ChoiceItem(tr("Normal"),    3)
+                << new ChoiceItem(tr("Hard"),      4)
+                << new ChoiceItem(tr("Nightmare"), 5);
+        d->autoStartSkill->disable();
+        d->autoStartSkill->setSelected(2);
+
+        GridLayout layout(form->rule().left(), form->rule().top());
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight);
+        layout << *LabelWidget::newWithText(tr("Starts in:"), form) << *d->autoStartMap
+               << *LabelWidget::newWithText(tr("Skill:"), form) << *d->autoStartSkill;
+        form->rule().setSize(layout);
     }
 
     // Additional options defined by the game.
     {
         d->optionsFold =
-            FoldPanelWidget::makeOptionsGroup("profile-gameplay-opts", "Gameplay Options", form);
+            FoldPanelWidget::makeOptionsGroup("gameplay-options", "Gameplay Options", &area());
+
         d->optionsBase = new GuiWidget;
         d->optionsFold->setContent(d->optionsBase);
 
-        layout.append(d->optionsFold->title(), 2);
-        layout.setCellAlignment({0, layout.gridSize().y}, ui::AlignLeft);
-        layout.append(*d->optionsFold, 2);
+//        GridLayout layout(d->optionsBase->rule().left(), d->optionsBase->rule().top());
+//        layout.setGridSize(2, 0);
+//        layout.setColumnAlignment(0, ui::AlignRight);
+        //layout.setCellAlignment({0, layout.gridSize().y}, ui::AlignLeft);
+        //layout.append(*d->optionsFold, 2);
     }
-
-    form->rule().setSize(layout);
 
     buttons().clear()
             << new DialogButtonItem(Id1 | Default | Accept, tr("Create"))

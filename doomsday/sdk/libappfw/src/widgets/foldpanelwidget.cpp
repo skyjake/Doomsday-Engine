@@ -25,7 +25,7 @@ namespace de {
 
 using namespace ui;
 
-static TimeSpan const INDICATOR_ANIM_SPAN = 0.6;
+static TimeSpan const INDICATOR_ANIM_SPAN = 0.4;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {
@@ -170,14 +170,12 @@ FoldPanelWidget *FoldPanelWidget::makeOptionsGroup(const String &name, const Str
     auto *fold = new FoldPanelWidget(name);
     parent->add(fold->makeTitle(heading));
     parent->add(fold);
+    fold->title().setSizePolicy(ui::Fixed, ui::Expand);
     fold->title().setFont("separator.label");
     fold->title().margins().setTop("gap");
-    fold->title().set(Background(Vector4f(1, 0, 1, .5f)));
+//    fold->title().set(Background(Vector4f(1, 0, 1, .5f)));
     fold->title().setImageAlignment(ui::AlignRight);
-    fold->title()
-        .rule()
-        .setInput(Rule::Left, fold->rule().left())
-        .setInput(Rule::Right, fold->rule().right());
+//    fold->title().rule().setInput(Rule::Width, fold->rule().width());
     return fold;
 }
 
