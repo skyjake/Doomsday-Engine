@@ -178,6 +178,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                                       self().label().margins().height());
 
         self().panel().setContent(saves);
+        saves->updateLayout();
         self().panel().open();
 
         DoomsdayApp::bundles().audienceForIdentify() += this;

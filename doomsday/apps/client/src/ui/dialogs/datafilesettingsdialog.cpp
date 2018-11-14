@@ -29,9 +29,7 @@ using namespace de;
 
 DENG2_PIMPL_NOREF(DataFileSettingsDialog)
 {
-//    Variable &iwadFolders = Config::get("resource.iwadFolder");
     Variable &pkgFolders  = Config::get("resource.packageFolder");
-//    Id iwadGroup;
     Id searchGroup;
     bool modified = false;
 };
@@ -49,29 +47,19 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
 
     message().hide();
 
-    //dlg->title().setFont("heading");
-    //dlg->title().setStyleImage("package.icon");
-    //dlg->title().setOverrideImageSize(Style::get().fonts().font("heading").ascent().value());
-    //dlg->title().setTextGap("dialog.gap");
-    //dlg->title().setText(QObject::tr("IWAD Folders"));
-    //dlg->message().setText(QObject::tr("The following folders are searched for game data files:"));
-
     d->searchGroup = addGroup(
         tr("Search Folders"),
         tr("The following folders are searched for game IWAD files and mods like PWADs, PK3s, and "
            "Doomsday packages. Toggle the " _E(b) "Subdirs" _E(.)
            " option to include all subfolders as well."));
-    //setValue(d->iwadGroup, d->iwadFolders.value());
-
-//    d->pkgGroup = addGroup(tr("Mod / Add-on Folders"),
-//                           tr("The following folders and all their subfolders are searched "
-//                              "for mods, resource packs, and other add-ons."));
     setValue(d->searchGroup, d->pkgFolders.value());
 
     connect(this, &DirectoryListDialog::arrayChanged, [this] ()
     {
         d->modified = true;
     });
+    
+    updateLayout();
 }
 
 void DataFileSettingsDialog::finish(int result)
@@ -80,15 +68,10 @@ void DataFileSettingsDialog::finish(int result)
 
     if (d->modified)
     {
-        //d->iwadFolders.set(value(d->iwadGroup));
         d->pkgFolders.set(value(d->searchGroup));
 
         // Reload packages and recheck for game availability.
-        auto &win = ClientWindow::main();
-        //win.console().closeLogAndUnfocusCommandLine();
-        win.taskBar().close();
-        //win.root().find("home-packages")->as<PackagesWidget>().showProgressIndicator();
-//        DoomsdayApp::app().initWadFolders();
+        ClientWindow::main().taskBar().close();
         DoomsdayApp::app().initPackageFolders();
     }
 }

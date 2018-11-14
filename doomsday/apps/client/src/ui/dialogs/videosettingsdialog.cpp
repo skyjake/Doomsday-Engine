@@ -58,8 +58,8 @@ DENG2_PIMPL(VideoSettingsDialog)
     VariableToggleWidget *vsync;
     ToggleWidget *fpsLimiter = nullptr;
     SliderWidget *fpsMax = nullptr;
-    ChoiceWidget *modes;
-    ButtonWidget *windowButton;
+    ChoiceWidget *modes = nullptr;
+    ButtonWidget *windowButton = nullptr;
 #ifdef USE_REFRESH_RATE_CHOICE
     ChoiceWidget *refreshRates;
 #endif
@@ -84,13 +84,16 @@ DENG2_PIMPL(VideoSettingsDialog)
         area.add(centered     = new ToggleWidget);
         area.add(fsaa         = new VariableToggleWidget(App::config("window.main.fsaa")));
         area.add(vsync        = new VariableToggleWidget(App::config("window.main.vsync")));
-        area.add(modes        = new ChoiceWidget);
-        area.add(windowButton = new ButtonWidget);
+        if (gotDisplayMode())
+        {
+            area.add(modes        = new ChoiceWidget("modes"));
+            area.add(windowButton = new ButtonWidget);
+        }
 #ifdef USE_REFRESH_RATE_CHOICE
-        area.add(refreshRates = new ChoiceWidget);
+        area.add(refreshRates = new ChoiceWidget("refresh-rate"));
 #endif
 #ifdef USE_COLOR_DEPTH_CHOICE
-        area.add(depths       = new ChoiceWidget);
+        area.add(depths       = new ChoiceWidget("depths"));
 #endif
 #if !defined (DENG_MOBILE)
         win.audienceForAttributeChange() += this;
@@ -154,27 +157,33 @@ DENG2_PIMPL(VideoSettingsDialog)
         maximized->setActive(win.isMaximized());
         centered->setActive(win.isCentered());
 
-        windowButton->enable(!win.isFullScreen() && !win.isMaximized());
-
-        // Select the current resolution/size in the mode list.
-        GLWindow::Size current = win.fullscreenSize();
-
-        // Update selected display mode.
-        ui::Data::Pos closest = ui::Data::InvalidPos;
-        int delta = 0;
-        for (ui::Data::Pos i = 0; i < modes->items().size(); ++i)
+        if (windowButton)
         {
-            QPoint const res = modes->items().at(i).data().toPoint();
-            int dx = res.x() - current.x;
-            int dy = res.y() - current.y;
-            int d = dx*dx + dy*dy;
-            if (closest == ui::Data::InvalidPos || d < delta)
-            {
-                closest = i;
-                delta = d;
-            }
+            windowButton->enable(!win.isFullScreen() && !win.isMaximized());
         }
-        modes->setSelected(closest);
+
+        if (gotDisplayMode())
+        {
+            // Select the current resolution/size in the mode list.
+            GLWindow::Size current = win.fullscreenSize();
+
+            // Update selected display mode.
+            ui::Data::Pos closest = ui::Data::InvalidPos;
+            int delta = 0;
+            for (ui::Data::Pos i = 0; i < modes->items().size(); ++i)
+            {
+                QPoint const res = modes->items().at(i).data().toPoint();
+                int dx = res.x() - current.x;
+                int dy = res.y() - current.y;
+                int d = dx*dx + dy*dy;
+                if (closest == ui::Data::InvalidPos || d < delta)
+                {
+                    closest = i;
+                    delta = d;
+                }
+            }
+            modes->setSelected(closest);
+        }
 
 #ifdef USE_REFRESH_RATE_CHOICE
         refreshRates->setSelected(refreshRates->items().findData(int(win.refreshRate() * 10)));
@@ -218,13 +227,16 @@ DENG2_PIMPL(VideoSettingsDialog)
                             fpsLimiter->isActive()? int(fpsMax->value()) : 0);
         }
     }
+    
+    bool gotDisplayMode() const
+    {
+        return DisplayMode_Count() > 0;
+    }
 };
 
 VideoSettingsDialog::VideoSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
-    bool const gotDisplayMode = DisplayMode_Count() > 0;
-
     heading().setText(tr("Video Settings"));
     heading().setImage(style().images().image("display"));
 
@@ -250,7 +262,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #ifdef USE_COLOR_DEPTH_CHOICE
     LabelWidget *colorLabel = nullptr;
 #endif
-    if (gotDisplayMode)
+    if (d->gotDisplayMode())
     {
         // Choice of display modes + 16/32-bit color depth.
         d->modes->setOpeningDirection(ui::Up);
@@ -324,9 +336,12 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
 
-    d->windowButton->setImage(style().images().image("window.icon"));
-    d->windowButton->setOverrideImageSize(style().fonts().font("default").height().valuei());
-    d->windowButton->setAction(new SignalAction(this, SLOT(showWindowMenu())));
+    if (d->windowButton)
+    {
+        d->windowButton->setImage(style().images().image("window.icon"));
+        d->windowButton->setOverrideImageSize(style().fonts().font("default").height().valuei());
+        d->windowButton->setAction(new SignalAction(this, SLOT(showWindowMenu())));
+    }
 
     // Layout all widgets.
     Rule const &gap = rule("dialog.gap");
@@ -349,7 +364,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     modeLayout.setGridSize(2, 0);
     modeLayout.setColumnAlignment(0, ui::AlignRight);
 
-    if (gotDisplayMode)
+    if (d->gotDisplayMode())
     {
         modeLayout << *LabelWidget::newWithText(tr("Resolution:"), &area());
 
@@ -395,7 +410,10 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->fetch();
 
-    connect(d->modes,  SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeMode(uint)));
+    if (d->gotDisplayMode())
+    {
+        connect(d->modes, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeMode(uint)));
+    }
 
 #ifdef USE_REFRESH_RATE_CHOICE
     connect(d->refreshRates, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeRefreshRate(uint)));
@@ -416,6 +434,8 @@ void VideoSettingsDialog::resetToDefaults()
 
 void VideoSettingsDialog::changeMode(uint selected)
 {
+    DENG2_ASSERT(d->modes);
+    
     QPoint const res = d->modes->items().at(selected).data().toPoint();
 
     int const attribs[] = {
@@ -459,6 +479,8 @@ void VideoSettingsDialog::showColorAdjustments()
 
 void VideoSettingsDialog::showWindowMenu()
 {
+    DENG2_ASSERT(d->windowButton);
+    
     PopupMenuWidget *menu = new PopupMenuWidget;
     menu->setDeleteAfterDismissed(true);
     add(menu);

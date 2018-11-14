@@ -29,8 +29,10 @@
 #include "clientapp.h"
 #include "ConfigProfiles"
 
-#include <de/SignalAction>
+#include <de/FoldPanelWidget>
 #include <de/GridPopupWidget>
+#include <de/SequentialLayout>
+#include <de/SignalAction>
 #include <de/VariableChoiceWidget>
 #include <de/VariableSliderWidget>
 #include <de/VariableToggleWidget>
@@ -49,11 +51,13 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     //CVarChoiceWidget *sampleRate;
     CVarChoiceWidget *musicSource;
     CVarNativePathWidget *musicSoundfont;
+    VariableToggleWidget *pauseOnFocus;
     CVarToggleWidget     *soundInfo;
     GridPopupWidget      *devPopup;
-    VariableChoiceWidget *fmodSpeakerMode;
+    FoldPanelWidget      *backendFold;
+    GuiWidget            *backendBase;
     VariableSliderWidget *sfxChannels;
-    VariableToggleWidget *pauseOnFocus;
+    VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
 #if defined (WIN32)
@@ -84,6 +88,10 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
                                        << "DLS soundfonts (*.dls)"
                                        << "All files (*)");
 
+            area.add(pauseOnFocus = new VariableToggleWidget("Pause on Focus Lost",
+                                                             App::config("audio.pauseOnFocus"),
+                                                             "pause-on-focus"));
+
             // Display volumes on a 0...100 scale.
             sfxVolume  ->setDisplayFactor(100.0 / 255.0);
             musicVolume->setDisplayFactor(100.0 / 255.0);
@@ -97,15 +105,37 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             devPopup->commit();
         }
 
-        area.add(sfxChannels  = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
-        area.add(pauseOnFocus = new VariableToggleWidget("Pause on Focus Lost", App::config("audio.pauseOnFocus")));
-        area.add(soundPlugin  = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
-        area.add(musicPlugin  = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
-#if defined (WIN32)
-        area.add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
-#endif
+        backendFold = FoldPanelWidget::makeOptionsGroup("audio-backend", "Audio Backend", &area);
+        backendBase = new GuiWidget("fold-base");
+        backendFold->setContent(backendBase);
 
-        area.add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
+        backendBase->add(sfxChannels  = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
+        backendBase->add(soundPlugin  = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
+        backendBase->add(musicPlugin  = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
+#if defined (WIN32)
+        backendBase->add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
+#endif
+        backendBase->add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
+
+        // Backend layout.
+        {
+            GridLayout layout(backendBase->rule().left(), backendBase->rule().top());
+            layout.setGridSize(2, 0);
+            layout.setColumnAlignment(0, ui::AlignRight);
+
+            layout << *LabelWidget::newWithText("SFX Channels:", backendBase) << *sfxChannels
+                   << *LabelWidget::newWithText("SFX Plugin:", backendBase) << *soundPlugin
+                   << *LabelWidget::newWithText("Music Plugin:", backendBase) << *musicPlugin;
+#if defined (WIN32)
+            layout << *LabelWidget::newWithText(tr("CD Plugin:"   ), backendBase) << *d->cdPlugin;
+#endif
+            layout << *LabelWidget::newWithText("FMOD Output:", backendBase) << Const(0)
+                   << *LabelWidget::newWithText("FMOD Speakers:", backendBase)
+                   << *fmodSpeakerMode;
+
+            backendBase->rule().setSize(layout);
+        }
+
         fmodSpeakerMode->items()
                 << new ChoiceItem(tr("Stereo"), "")
                 << new ChoiceItem(tr("5.1"), "5.1")
@@ -175,7 +205,8 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 };
 
 AudioSettingsDialog::AudioSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Impl(this))
+    : DialogWidget(name, WithHeading)
+    , d(new Impl(this))
 {
     bool const gameLoaded = DoomsdayApp::isGameLoaded();
 
@@ -225,24 +256,23 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
                << *sfLabel          << *d->musicSoundfont
                << Const(0)          << *d->pauseOnFocus;
     }
+    else
+    {
+        d->backendFold->open();
+    }
+    
+    SequentialLayout layout2(area().contentRule().left(),
+                             area().contentRule().top() + layout.height());
+    layout2.setOverrideWidth(d->backendBase->rule().width());
+    
+    layout2 << d->backendFold->title()
+            << *d->backendFold;
+    
+    area().setContentSize(OperatorRule::maximum(layout.width(), layout2.width()),
+                          layout.height() + layout2.height());
 
-    LabelWidget::appendSeparatorWithText("Audio Backend", &area(), &layout);
-
-    layout << *LabelWidget::newWithText(tr("SFX Plugin:"  ), &area()) << *d->soundPlugin
-           << *LabelWidget::newWithText(tr("Music Plugin:"), &area()) << *d->musicPlugin;
-#if defined (WIN32)
-    layout << *LabelWidget::newWithText(tr("CD Plugin:"   ), &area()) << *d->cdPlugin;
-#endif
-
-    auto *padding = new GuiWidget;
-    area().add(padding);
-    padding->rule().setInput(Rule::Height, rule("dialog.gap"));
-    layout.append(*padding, 2);
-
-    layout << *LabelWidget::newWithText("SFX Channels:", &area())          << *d->sfxChannels
-           << *LabelWidget::newWithText(tr("FMOD Speaker Mode:"), &area()) << *d->fmodSpeakerMode;
-
-    area().setContentSize(layout);
+    // The subheading should extend all the way.
+    d->backendFold->title().rule().setInput(Rule::Width, area().contentRule().width());
 
     buttons()
             << new DialogButtonItem(Default | Accept | Id2, tr("Close"))
