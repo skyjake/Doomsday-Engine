@@ -150,6 +150,8 @@ public:
 
     void setDebugName(String const &name);
 
+    bool isFullyDefined() const;
+
     String description() const;
 
 private:

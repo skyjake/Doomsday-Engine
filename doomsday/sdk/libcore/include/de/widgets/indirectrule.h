@@ -49,6 +49,8 @@ public:
 
     void unsetSource();
 
+    bool hasSource() const;
+
     void update();
 
     Rule const &source() const;

@@ -20,7 +20,7 @@
 
 namespace de {
 
-IndirectRule::IndirectRule() : _source(0)
+IndirectRule::IndirectRule() : _source(nullptr)
 {}
 
 IndirectRule::~IndirectRule()
@@ -42,9 +42,14 @@ void IndirectRule::unsetSource()
     invalidate();
 }
 
+bool IndirectRule::hasSource() const
+{
+    return _source != nullptr;
+}
+
 void IndirectRule::update()
 {
-    setValue(_source? _source->value() : 0);
+    setValue(_source ? _source->value() : 0.f);
 }
 
 Rule const &IndirectRule::source() const
@@ -61,7 +66,7 @@ String IndirectRule::description() const
     }
     else
     {
-        return String("(null)");
+        return String("[0]");
     }
 }
 

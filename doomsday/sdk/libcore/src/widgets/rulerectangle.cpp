@@ -409,13 +409,25 @@ void RuleRectangle::setDebugName(String const &name)
     d->debugName = name;
 }
 
+bool RuleRectangle::isFullyDefined() const
+{
+    for (const auto *out : d->outputRules)
+    {
+        if (!out->hasSource())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 String RuleRectangle::description() const
 {
     String desc = QString("RuleRectangle '%1'").arg(d->debugName);
 
     for (int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
     {
-        desc += String("\n - ") +
+        desc += String("\n    INPUT ") +
                 (i == Rule::Left? "Left" :
                  i == Rule::Top? "Top" :
                  i == Rule::Right? "Right" :
@@ -430,8 +442,19 @@ String RuleRectangle::description() const
         }
         else
         {
-            desc += "(null)";
+            desc += "(not set)";
         }
+    }
+    for (int i = 0; i < Impl::MAX_OUTPUT_RULES; ++i)
+    {
+        desc += String::format("\n    OUTPUT %s: ",
+                                 i == Impl::OutLeft ? "Left"
+                               : i == Impl::OutTop ? "Top"
+                               : i == Impl::OutRight ? "Right"
+                               : i == Impl::OutBottom ? "Bottom"
+                               : i == Impl::OutWidth ? "Width"
+                               : "Height");
+        desc += d->outputRules[i]->description();
     }
     return desc;
 }
