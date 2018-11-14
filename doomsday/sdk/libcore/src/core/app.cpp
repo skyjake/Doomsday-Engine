@@ -436,7 +436,7 @@ App::App(NativePath const &appFilePath, QStringList args)
     d->appPath = appFilePath;
 
     LOG_NOTE("Application path: ") << d->appPath;
-    LOG_NOTE("Build: ") << Version::currentBuild().asHumanReadableText();
+    LOG_NOTE("Version: ") << Version::currentBuild().asHumanReadableText();
 
     #if defined (MACOSX)
     {
@@ -825,7 +825,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
     }
 
-    LOG_VERBOSE("libcore::App %s subsystems initialized") << Version::currentBuild().asHumanReadableText();
+    LOG_VERBOSE("Subsystems initialized");
 }
 
 void App::addSystem(System &system)

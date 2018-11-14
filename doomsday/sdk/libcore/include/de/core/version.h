@@ -82,12 +82,6 @@ public:
     bool isValid() const;
 
     /**
-     * Returns a version string in the form "x.y.z". If a release
-     * label is defined, it will be included, too: "x.y.z-label".
-     */
-    String base() const;
-
-    /**
      * Returns a version string in the form "x.y.z".
      */
     String compactNumber() const;

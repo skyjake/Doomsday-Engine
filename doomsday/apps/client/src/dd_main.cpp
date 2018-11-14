@@ -2328,7 +2328,7 @@ D_CMD(Help)
 #endif
 */
 
-    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " %s Console") << Version::currentBuild().asHumanReadableText();
+    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " %s Console") << Version::currentBuild().compactNumber();
 
 #define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
 
