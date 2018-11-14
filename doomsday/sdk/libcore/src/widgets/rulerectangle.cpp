@@ -438,6 +438,7 @@ String RuleRectangle::description() const
 
         if (d->inputRules[i])
         {
+            desc += String::format("(%g) ", d->inputRules[i]->value());
             desc += d->inputRules[i]->description();
         }
         else
@@ -454,6 +455,7 @@ String RuleRectangle::description() const
                                : i == Impl::OutBottom ? "Bottom"
                                : i == Impl::OutWidth ? "Width"
                                : "Height");
+        desc += String::format("(%g) ", d->outputRules[i]->value());
         desc += d->outputRules[i]->description();
     }
     return desc;

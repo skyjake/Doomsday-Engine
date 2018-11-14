@@ -107,12 +107,12 @@ String AnimationRule::description() const
 {
     DENG2_ASSERT(!isValid() || fequal(value(), _animation));
     
-    String desc = "Scalar(" + _animation.asText();
+    String desc = _animation.asText();
     if (_targetRule)
     {
-        desc += "; target: " + _targetRule->description();
+        desc += "=>" + _targetRule->description();
     }
-    return desc + ")";
+    return desc;
 }
 
 void AnimationRule::update()
