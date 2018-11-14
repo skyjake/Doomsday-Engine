@@ -169,6 +169,12 @@ DENG2_PIMPL(DoomsdayApp)
             // Save any changes to the game profiles.
             gameProfiles.serialize();
         }
+        // Delete the temporary folder from the system disk.
+        if (Folder *tmp = FS::tryLocate<Folder>("/tmp"))
+        {
+            tmp->destroyAllFilesRecursively();
+            tmp->correspondingNativePath().destroy();
+        }
         theDoomsdayApp = nullptr;
         Garbage_Recycle();
     }
