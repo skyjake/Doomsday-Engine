@@ -131,11 +131,11 @@ public:  // Music playback: ----------------------------------------------------
     /**
      * Start playing a song. The chosen interface depends on what's available and what
      * kind of resources have been associated with the song. Any previously playing song
-     * is stopped.
+     * is stopped. If the song is already playing, no changes are applied.
      *
      * @param definition  Music definition describing which associated music file to play.
      *
-     * @return  Non-zero if the song is successfully played.
+     * @return  Non-zero if the song is successfully played (or already playing).
      */
     int playMusic(de::Record const &definition, bool looped = false);
 

@@ -1759,7 +1759,10 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
 
     // We will not restart the currently playing song.
     if (definition.gets("id") == d->musCurrentSong && musicIsPlaying())
-        return false;
+    {
+        // This is not a failure, though, since the right music is played.
+        return true;
+    }
 
     // Stop the currently playing song.
     stopMusic();
