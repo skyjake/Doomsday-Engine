@@ -127,7 +127,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
                    << *LabelWidget::newWithText("SFX Plugin:", backendBase) << *soundPlugin
                    << *LabelWidget::newWithText("Music Plugin:", backendBase) << *musicPlugin;
 #if defined (WIN32)
-            layout << *LabelWidget::newWithText(tr("CD Plugin:"   ), backendBase) << *d->cdPlugin;
+            layout << *LabelWidget::newWithText(tr("CD Plugin:"   ), backendBase) << *cdPlugin;
 #endif
             layout << *LabelWidget::newWithText("FMOD Output:", backendBase) << Const(0)
                    << *LabelWidget::newWithText("FMOD Speakers:", backendBase)
