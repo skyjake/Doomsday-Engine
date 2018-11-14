@@ -30,9 +30,9 @@
 
 namespace de {
 
-static TimeSpan const OPENING_ANIM_SPAN = 0.4;
-static TimeSpan const OPENING_ANIM_SPAN_EASED_OUT = 0.25;
-static TimeSpan const CLOSING_ANIM_SPAN = 0.3;
+constexpr double OPENING_ANIM_SPAN           = 0.3;
+constexpr double OPENING_ANIM_SPAN_EASED_OUT = 0.18;
+constexpr double CLOSING_ANIM_SPAN           = 0.22;
 
 DENG_GUI_PIMPL(PanelWidget)
 , DENG2_OBSERVES(Asset, StateChange)
@@ -79,15 +79,13 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void updateLayout()
     {
-        DENG2_ASSERT(content != 0);
-
         // Widget's size depends on the opening animation.
         if (isVerticalAnimation())
         {
             self().rule().setInput(Rule::Height, *openingRule);
             if (secondaryPolicy == ui::Expand)
             {
-                self().rule().setInput(Rule::Width, content->rule().width());
+                self().rule().setInput(Rule::Width, content ? content->rule().width() : Const(0));
             }
         }
         else
@@ -95,7 +93,7 @@ DENG_GUI_PIMPL(PanelWidget)
             self().rule().setInput(Rule::Width, *openingRule);
             if (secondaryPolicy == ui::Expand)
             {
-                self().rule().setInput(Rule::Height, content->rule().height());
+                self().rule().setInput(Rule::Height, content ? content->rule().height() : Const(0));
             }
         }
     }
@@ -161,7 +159,7 @@ DENG_GUI_PIMPL(PanelWidget)
         emit self().closed();
 
         dismissTimer.start();
-        dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());
+        dismissTimer.setInterval(TimeSpan(CLOSING_ANIM_SPAN + delay).asMilliSeconds());
     }
 
     void waitForAssetsInContent()
@@ -176,7 +174,7 @@ DENG_GUI_PIMPL(PanelWidget)
         DENG2_ASSERT(content);
         GuiWidget::collectNotReadyAssets(*pendingShow, *content);
 
-        if (pendingShow->isEmpty())
+        if (/* DISABLES CODE */ (true) || pendingShow->isEmpty())
         {
             // Nothing to wait for, actually.
             pendingShow.reset();
@@ -218,6 +216,7 @@ PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Impl(this)
 {
     setBehavior(ChildHitClipping);
     setBehavior(ChildVisibilityClipping);
+    d->updateLayout(); // initial, empty layout
     hide();
 }
 

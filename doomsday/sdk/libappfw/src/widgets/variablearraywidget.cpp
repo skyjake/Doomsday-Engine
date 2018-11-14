@@ -209,6 +209,8 @@ VariableArrayWidget::VariableArrayWidget(Variable &variable, String const &name)
     add(d->menu);
     add(d->deleteButton);
     add(d->addButton);
+    
+    d->menu->updateLayout();
 }
 
 Variable &VariableArrayWidget::variable() const

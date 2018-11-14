@@ -36,8 +36,8 @@ DENG_GUI_PIMPL(MessageDialog)
         ScrollAreaWidget &area = self().area();
 
         // Create widgets.
-        area.add(title   = new LabelWidget);
-        area.add(message = new LabelWidget);
+        area.add(title   = new LabelWidget("title"));
+        area.add(message = new LabelWidget("message"));
 
         // Configure style.
         title->setFont("title");

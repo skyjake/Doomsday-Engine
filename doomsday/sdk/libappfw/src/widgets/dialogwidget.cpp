@@ -130,7 +130,7 @@ DENG_GUI_PIMPL(DialogWidget)
         buttons->setItems(mainButtonItems);
         buttons->organizer().audienceForWidgetCreation() += this;
         buttons->organizer().audienceForWidgetUpdate() += this;
-
+        
         extraButtons = new MenuWidget("extra");
         extraButtons->margins().setTop("");
         extraButtons->setItems(extraButtonItems);
@@ -167,13 +167,13 @@ DENG_GUI_PIMPL(DialogWidget)
         // Will a title be included?
         if (flags & WithHeading)
         {
-            heading = new LabelWidget;
+            heading = new LabelWidget("heading");
             heading->setFont("heading");
             heading->margins()
                     .setBottom("")
                     .setTop (rule("gap") + rule("dialog.gap"))
                     .setLeft(rule("gap") + rule("dialog.gap"));
-            heading->setSizePolicy(ui::Filled, ui::Expand);
+            heading->setSizePolicy(ui::Expand, ui::Expand);
             heading->setTextColor("accent");
             heading->setImageColor(style().colors().colorf("accent"));
             heading->setOverrideImageSize(heading->font().ascent().valuei());
@@ -184,9 +184,8 @@ DENG_GUI_PIMPL(DialogWidget)
             container->add(heading);
 
             heading->rule()
-                    .setInput(Rule::Top,   self().rule().top())
-                    .setInput(Rule::Left,  self().rule().left())
-                    .setInput(Rule::Right, area->rule().right());
+                    .setInput(Rule::Top,  self().rule().top())
+                    .setInput(Rule::Left, self().rule().left());
 
             area->rule().setInput(Rule::Top, heading->rule().bottom());
         }

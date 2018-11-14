@@ -1309,6 +1309,20 @@ void GuiWidget::postDrawChildren()
 
 void GuiWidget::collectNotReadyAssets(AssetGroup &collected, Widget &widget)
 {
+    if (widget.behavior().testFlag(Hidden)) return; // Won't be visible right now.
+    
+#if defined (DENG2_DEBUG)
+    if (auto *gw = maybeAs<GuiWidget>(widget))
+    {
+        if (!gw->rule().isFullyDefined())
+        {
+            qDebug() << gw->path() << "rule rectangle not fully defined";
+            qDebug("%s", gw->rule().description().toLatin1().constData());
+            qDebug("Widget layout will be undefined");
+        }
+    }
+#endif
+
     if (auto *assetGroup = maybeAs<IAssetGroup>(widget))
     {
         if (!assetGroup->assets().isReady())

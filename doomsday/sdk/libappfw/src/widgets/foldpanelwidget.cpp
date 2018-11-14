@@ -112,7 +112,7 @@ FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new 
 
 ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 {
-    d->title.reset(new ButtonWidget);
+    d->title.reset(new ButtonWidget("fold-title"));
 
     d->title->setSizePolicy(Expand, Expand);
     d->title->setText(text);
@@ -175,7 +175,10 @@ FoldPanelWidget *FoldPanelWidget::makeOptionsGroup(const String &name, const Str
     fold->title().margins().setTop("gap");
 //    fold->title().set(Background(Vector4f(1, 0, 1, .5f)));
     fold->title().setImageAlignment(ui::AlignRight);
-//    fold->title().rule().setInput(Rule::Width, fold->rule().width());
+    fold->title().rule()
+        .setInput(Rule::Left, fold->rule().left())
+        .setInput(Rule::Bottom, fold->rule().top())
+        .setInput(Rule::Width, fold->rule().width());
     return fold;
 }
 
