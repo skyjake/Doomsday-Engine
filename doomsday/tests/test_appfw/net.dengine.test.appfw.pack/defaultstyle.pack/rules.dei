@@ -36,6 +36,10 @@ group slider {
     rule editor { constant $= UNIT * 20 }
 }
 
+group choice {
+    rule item.width.max { constant $= UNIT * 100 }
+}
+
 group dialog {
     rule gap { constant $= UNIT * 2 }
 

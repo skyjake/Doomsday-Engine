@@ -44,6 +44,10 @@ slider {
     rule editor { constant $= UNIT * 20 }
 }
 
+choice {
+    rule item.width.max { constant $= UNIT * 100 }
+}
+
 list {
     rule width { constant $= UNIT * 120 }
 }

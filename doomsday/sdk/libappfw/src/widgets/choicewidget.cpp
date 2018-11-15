@@ -64,6 +64,8 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
     {
         maxWidth = new IndirectRule;
 
+        self().setMaximumTextWidth(rule("choice.item.width.max"));
+        self().setTextLineAlignment(ui::AlignLeft);
         self().setFont("choice.selected");
 
         choices = new PopupMenuWidget;
@@ -102,7 +104,11 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 
     void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
     {
-        if (ButtonWidget *but = maybeAs<ButtonWidget>(widget))
+        if (auto *label = maybeAs<LabelWidget>(widget))
+        {
+            label->setMaximumTextWidth(rule("choice.item.width.max"));
+        }
+        if (auto *but = maybeAs<ButtonWidget>(widget))
         {
             // Make sure the created buttons have an action that updates the
             // selected item.
@@ -131,7 +137,8 @@ DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
             esc.parse(items().at(i).label());
             widest = de::max(widest, font.advanceWidth(esc.plainText()));
         }
-        maxWidth->setSource(Const(widest) + self().margins().width());
+        maxWidth->setSource(OperatorRule::minimum(rule("choice.item.width.max"),
+                                                  Const(widest) + self().margins().width()));
     }
 
     Data const &items() const
