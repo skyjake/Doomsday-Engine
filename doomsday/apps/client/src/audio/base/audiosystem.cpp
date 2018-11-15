@@ -346,6 +346,8 @@ DENG2_PIMPL(AudioSystem)
             drivers[i].deinitialize();
         }
 
+        module.set("outputs", new DictionaryValue);
+
         // Unload the plugins after everything has been shut down.
         for (AudioDriver &driver : drivers)
         {
