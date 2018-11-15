@@ -276,10 +276,10 @@ DENG2_PIMPL(MaterialAnimator)
     /// Current state of a layer animation.
     struct LayerState
     {
-        int stage;    ///< Animation stage else @c -1 => layer not in use.
-        int nextStage;
-        short tics;   ///< Remaining (sharp) tics in the current stage.
-        float inter;  ///< Intermark from the current stage to the next [0..1].
+        int stage     = 0;   ///< Animation stage else @c -1 => layer not in use.
+        int nextStage = 0;
+        short tics    = 0;   ///< Remaining (sharp) tics in the current stage.
+        float inter   = 0.f; ///< Intermark from the current stage to the next [0..1].
 
         QVector<ClientTexture *> stageTextures;
 
