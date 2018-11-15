@@ -49,8 +49,12 @@
 
 #include "doomsday.h"
 #include <de/c_wrapper.h>
+#include <de/ArrayValue>
 #include <de/Config>
+#include <de/DictionaryValue>
 #include <de/LogBuffer>
+#include <de/ScriptSystem>
+#include <de/TextValue>
 
 FMOD::System *fmodSystem = 0;
 
@@ -64,7 +68,7 @@ struct Driver
 };
 static QVector<Driver> fmodDrivers;
 
-static char const *speakerModeText(FMOD_SPEAKERMODE mode)
+static const char *speakerModeText(FMOD_SPEAKERMODE mode)
 {
     switch (mode)
     {
@@ -86,6 +90,8 @@ static char const *speakerModeText(FMOD_SPEAKERMODE mode)
  */
 int DS_Init(void)
 {
+    using namespace de;
+
     if (fmodSystem)
     {
         return true; // Already initialized.
@@ -108,15 +114,17 @@ int DS_Init(void)
         int numDrivers = 0;
         fmodSystem->getNumDrivers(&numDrivers);
         fmodDrivers.resize(numDrivers);
+        std::unique_ptr<de::ArrayValue> names(new de::ArrayValue);
         for (int i = 0; i < numDrivers; ++i)
         {
             auto &drv = fmodDrivers[i];
             char nameBuf[512];
-            de::zap(nameBuf);
+            zap(nameBuf);
             fmodSystem->getDriverInfo(i, nameBuf, sizeof(nameBuf),
                                       &drv.guid, &drv.systemRate,
                                       &drv.speakerMode, &drv.speakerModeChannels);
-            drv.name = de::String(nameBuf);
+            drv.name = String::format("%s (%s)", nameBuf, speakerModeText(drv.speakerMode));
+            names->add(TextValue(drv.name));
 
             LOG_AUDIO_MSG("FMOD driver %i: \"%s\" Rate:%iHz Mode:%s Channels:%i")
                     << i << drv.name
@@ -124,6 +132,22 @@ int DS_Init(void)
                     << speakerModeText(drv.speakerMode)
                     << drv.speakerModeChannels;
         }
+        ScriptSystem::get().nativeModule("Audio")["outputs"].value<DictionaryValue>()
+                .add(new TextValue("fmod"), names.release());
+    }
+
+    // Select the configured driver.
+    {
+        int configuredDriverIndex = Config::get().geti("audio.output", 0);
+        if (configuredDriverIndex < fmodDrivers.size())
+        {
+            result = fmodSystem->setDriver(configuredDriverIndex);
+            if (result != FMOD_OK)
+            {
+                LOG_AUDIO_ERROR("Failed to select FMOD audio driver: %s")
+                        << fmodDrivers[configuredDriverIndex].name;
+            }
+        }        
     }
 
 #if 0

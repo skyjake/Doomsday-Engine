@@ -126,6 +126,7 @@ def setDefaults(d)
 
     # Audio settings.
     record d.audio()
+        output = 0
         channels = 16
         soundPlugin = 'fmod'
         musicPlugin = 'fluidsynth'

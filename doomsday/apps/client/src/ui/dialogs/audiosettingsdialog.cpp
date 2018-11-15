@@ -31,8 +31,10 @@
 
 #include <de/FoldPanelWidget>
 #include <de/GridPopupWidget>
+#include <de/ScriptSystem>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
+#include <de/TextValue>
 #include <de/VariableChoiceWidget>
 #include <de/VariableSliderWidget>
 #include <de/VariableToggleWidget>
@@ -57,7 +59,8 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     FoldPanelWidget      *backendFold;
     GuiWidget            *backendBase;
     VariableSliderWidget *sfxChannels;
-    VariableChoiceWidget *fmodSpeakerMode;
+    VariableChoiceWidget *audioOutput;
+//    VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
 #if defined (WIN32)
@@ -109,13 +112,14 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         backendBase = new GuiWidget("fold-base");
         backendFold->setContent(backendBase);
 
+        backendBase->add(audioOutput  = new VariableChoiceWidget(App::config("audio.output"), VariableChoiceWidget::Number));
         backendBase->add(sfxChannels  = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
         backendBase->add(soundPlugin  = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
         backendBase->add(musicPlugin  = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
 #if defined (WIN32)
         backendBase->add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
 #endif
-        backendBase->add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
+//        backendBase->add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
 
         // Backend layout.
         {
@@ -123,24 +127,31 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             layout.setGridSize(2, 0);
             layout.setColumnAlignment(0, ui::AlignRight);
 
-            layout << *LabelWidget::newWithText("SFX Channels:", backendBase) << *sfxChannels
-                   << *LabelWidget::newWithText("SFX Plugin:", backendBase) << *soundPlugin
-                   << *LabelWidget::newWithText("Music Plugin:", backendBase) << *musicPlugin;
+            layout << *LabelWidget::newWithText("SFX Plugin:", backendBase) << *soundPlugin
+                   << *LabelWidget::newWithText("Music Plugin:", backendBase) << *musicPlugin
 #if defined (WIN32)
-            layout << *LabelWidget::newWithText(tr("CD Plugin:"   ), backendBase) << *cdPlugin;
+                   << *LabelWidget::newWithText("CD Plugin:", backendBase) << *cdPlugin
 #endif
-            layout << *LabelWidget::newWithText("FMOD Output:", backendBase) << Const(0)
-                   << *LabelWidget::newWithText("FMOD Speakers:", backendBase)
-                   << *fmodSpeakerMode;
+                   << *LabelWidget::newWithText("Output:", backendBase) << *audioOutput
+//                   << *LabelWidget::newWithText("Speaker Mode:", backendBase) << *fmodSpeakerMode
+                   << *LabelWidget::newWithText("SFX Channels:", backendBase) << *sfxChannels;
 
             backendBase->rule().setSize(layout);
         }
 
+        // Check currently available outputs.
+        enumerateAudioOutputs();
+
+        /*
         fmodSpeakerMode->items()
-                << new ChoiceItem(tr("Stereo"), "")
-                << new ChoiceItem(tr("5.1"), "5.1")
-                << new ChoiceItem(tr("7.1"), "7.1")
-                << new ChoiceItem(tr("SRS 5.1/Prologic"), "prologic");
+                << new ChoiceItem("Mono", "mono")
+                << new ChoiceItem("Stereo", "")
+                << new ChoiceItem("Quad", "quad")
+                << new ChoiceItem("Surround", "surround")
+                << new ChoiceItem("5.1", "5.1")
+                << new ChoiceItem("7.1", "7.1")
+                << new ChoiceItem("Raw", "raw");
+         */
 
         soundPlugin->items()
                 << new ChoiceItem(tr("FMOD"), "fmod")
@@ -174,7 +185,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 
         soundPlugin    ->updateFromVariable();
         musicPlugin    ->updateFromVariable();
-        fmodSpeakerMode->updateFromVariable();
+//        fmodSpeakerMode->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
         auto changeFunc = [this](uint) {
@@ -183,11 +194,30 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         };
         QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
-        QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
+//        QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
 #if defined (WIN32)
         QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
 #endif
         QObject::connect(sfxChannels, &SliderWidget::valueChangedByUser, changeFunc);
+    }
+
+    void enumerateAudioOutputs()
+    {
+        audioOutput->items().clear();
+
+        const auto &outputs =
+            ScriptSystem::get().nativeModule("Audio")["outputs"].value<DictionaryValue>();
+
+        /// @todo Currently only FMOD has outputs.
+        const TextValue key("fmod");
+        if (outputs.contains(key))
+        {
+            const auto &names = outputs.element(key).as<ArrayValue>();
+            for (unsigned i = 0; i < names.size(); ++i)
+            {
+                audioOutput->items() << new ChoiceItem(names.at(i).asText(), i);
+            }
+        }
     }
 
     void fetch()

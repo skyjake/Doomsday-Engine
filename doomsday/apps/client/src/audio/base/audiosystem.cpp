@@ -56,6 +56,7 @@
 #include <de/FileSystem>
 #include <de/LogBuffer>
 #include <de/NativeFile>
+#include <de/ScriptSystem>
 #include <de/timer.h>
 #include <de/c_wrapper.h>
 #include <de/concurrency.h>
@@ -191,6 +192,8 @@ DENG2_PIMPL(AudioSystem)
 , DENG2_OBSERVES(audio::SfxSampleCache, SampleRemove)
 #endif
 {
+    Record module;
+
 #ifdef __CLIENT__
     AudioDriver drivers[AUDIODRIVER_COUNT];
 
@@ -310,6 +313,9 @@ DENG2_PIMPL(AudioSystem)
     bool loadDrivers()
     {
         activeInterfaces.clear();
+
+        // The audio drivers may use Audio.outputs to declare which outputs are available.
+        module.set("outputs", new DictionaryValue);
 
         if (CommandLine::get().has("-nosound"))
             return false;
@@ -640,6 +646,8 @@ DENG2_PIMPL(AudioSystem)
     Impl(Public *i) : Base(i)
     {
         theAudioSystem = thisPublic;
+
+        ScriptSystem::get().addNativeModule("Audio", module);
 
 #ifdef __CLIENT__
         DoomsdayApp::app().audienceForGameUnload() += this;

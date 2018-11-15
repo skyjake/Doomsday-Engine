@@ -488,7 +488,8 @@ DENG2_PIMPL(ClientApp)
                 .define(Prof::ConfigVariable, "audio.musicPlugin")
                 .define(Prof::ConfigVariable, "audio.cdPlugin")
                 .define(Prof::ConfigVariable, "audio.channels")
-                .define(Prof::ConfigVariable, "audio.pauseOnFocus");
+                .define(Prof::ConfigVariable, "audio.pauseOnFocus")
+                .define(Prof::ConfigVariable, "audio.output");
     }
 
 #ifdef UNIX
