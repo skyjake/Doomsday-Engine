@@ -31,7 +31,6 @@ public:
     de::GuiWidget *sharedBlurWidget() const override;
     de::ui::Stylist &emptyMenuLabelStylist() const;
 
-protected:
     void performUpdate() override;
 
 private:

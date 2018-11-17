@@ -79,7 +79,6 @@ public:
 
     virtual GuiWidget *sharedBlurWidget() const;
 
-protected:
     virtual void performUpdate();
 
 public:
