@@ -92,6 +92,7 @@ public:
 
     Size pointSize() const;
     Size pixelSize() const;
+    double pixelRatio() const;
 
     int pointWidth() const;
     int pointHeight() const;

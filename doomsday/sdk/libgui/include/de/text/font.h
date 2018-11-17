@@ -276,6 +276,8 @@ public:
 
     //QFont toQFont() const;
 
+    void initialize(const QFont &font);
+
     /**
      * Determines the size of the given line of text, i.e., how large an area
      * is covered by the glyphs. (0,0) is at the baseline, left edge of the

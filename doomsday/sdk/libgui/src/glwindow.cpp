@@ -24,6 +24,7 @@
 #include <QElapsedTimer>
 #include <QImage>
 #include <QOpenGLTimerQuery>
+#include <QScreen>
 #include <QSurfaceFormat>
 #include <QTimer>
 
@@ -46,6 +47,7 @@ DENG2_PIMPL(GLWindow)
     bool                readyNotified = false;
     Size                currentSize;
     Size                pendingSize;
+    double              pixelRatio = 0.0;
 
     uint  frameCount = 0;
     float fps        = 0;
@@ -184,7 +186,7 @@ DENG2_PIMPL(GLWindow)
         TimeSpan elapsed = nowTime - lastFpsTime;
         if (elapsed > 2.5)
         {
-            fps = frameCount / elapsed;
+            fps = float(frameCount / elapsed);
             lastFpsTime = nowTime;
             frameCount = 0;
         }
@@ -214,6 +216,20 @@ GLWindow::GLWindow()
 
     // Create the drawing canvas for this window.
     d->handler = new WindowEventHandler(this);
+
+    d->pixelRatio = devicePixelRatio();
+
+    connect(this, &QWindow::screenChanged, [this](QScreen *scr) {
+        qDebug() << "window screen changed:" << scr << scr->devicePixelRatio();
+        if (!fequal(d->pixelRatio, scr->devicePixelRatio()))
+        {
+            d->pixelRatio = scr->devicePixelRatio();
+            DENG2_FOR_AUDIENCE2(Resize, i)
+            {
+                i->windowResized(*this);
+            }
+        }
+    });
 }
 
 #if defined (DENG_MOBILE)
@@ -288,6 +304,11 @@ GLWindow::Size GLWindow::pointSize() const
 GLWindow::Size GLWindow::pixelSize() const
 {
     return d->currentSize;
+}
+
+double GLWindow::pixelRatio() const
+{
+    return d->pixelRatio;
 }
 
 int GLWindow::pointWidth() const
@@ -392,7 +413,7 @@ bool GLWindow::grabToFile(NativePath const &path) const
 
 QImage GLWindow::grabImage(QSize const &outputSize) const
 {
-    return grabImage(QRect(QPoint(0, 0), geometry().size() * qApp->devicePixelRatio()), outputSize);
+    return grabImage(QRect(QPoint(0, 0), QSize(pixelWidth(), pixelHeight())), outputSize);
 }
 
 QImage GLWindow::grabImage(QRect const &area, QSize const &outputSize) const
@@ -449,7 +470,7 @@ void GLWindow::paintGL()
         if (!d->readyPending)
         {
             d->readyPending = true;
-            d->mainCall.enqueue([this] () { d->notifyReady(); });
+            d->mainCall.enqueue([this]() { d->notifyReady(); });
         }
         LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
         return;
@@ -503,7 +524,10 @@ void GLWindow::windowAboutToClose()
 
 void GLWindow::resizeEvent(QResizeEvent *ev)
 {
-    d->pendingSize = Size(ev->size().width(), ev->size().height()) * qApp->devicePixelRatio();
+    d->pendingSize = Size(ev->size().width(), ev->size().height()) * devicePixelRatio();
+
+    qDebug() << "resize event:" << d->pendingSize.asText();
+    qDebug() << "pixel ratio:" << devicePixelRatio();
 
     // Only react if this is actually a resize.
     if (d->currentSize != d->pendingSize)
