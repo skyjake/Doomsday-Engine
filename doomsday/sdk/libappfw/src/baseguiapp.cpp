@@ -114,7 +114,7 @@ DENG2_PIMPL(BaseGuiApp)
             FLOAT dpiX = 96;
             FLOAT dpiY = 96;
             d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-            initialDpiFactor = dpiX / 96.0;
+            systemDpiFactor = dpiX / 96.0;
             d2dFactory->Release();
             d2dFactory = nullptr;
         }
