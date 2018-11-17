@@ -289,7 +289,7 @@ ExpressionStatement *Parser::parseImportStatement()
     dint startAt = 1;
     Expression::Flags flags =
             Expression::Import     |
-            Expression::NotInScope |
+            //Expression::NotInScope |
             Expression::LocalOnly;
     if (_statementRange.size() >= 3 && _statementRange.token(1).equals(ScriptLex::RECORD))
     {
