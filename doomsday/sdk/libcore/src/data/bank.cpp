@@ -822,7 +822,7 @@ void Bank::add(DotPath const &path, ISource *source)
 {
     LOG_AS(d->nameForLog);
 
-    QScopedPointer<ISource> src(source);
+    std::unique_ptr<ISource> src(source);
 
     // Paths are unique.
     if (d->items.has(path, PathTree::MatchFull | PathTree::NoBranch))
@@ -836,7 +836,7 @@ void Bank::add(DotPath const &path, ISource *source)
     DENG2_GUARD(item);
 
     item.bank = this;
-    item.source.reset(src.take());
+    item.source.reset(src.release());
 
     d->putInBestCache(item);
 }
@@ -849,6 +849,11 @@ void Bank::remove(DotPath const &path)
 bool Bank::has(DotPath const &path) const
 {
     return d->items.has(path);
+}
+
+Bank::ISource &Bank::source(const DotPath &path) const
+{
+    return *d->items.find(path, PathTree::MatchFull | PathTree::NoBranch).source.get();
 }
 
 dint Bank::allItems(Names &names) const

@@ -287,6 +287,15 @@ public:
     bool has(DotPath const &path) const;
 
     /**
+     * Returns the source of an item.
+     *
+     * @param path  Identifier of a data item.
+     *
+     * @return Source.
+     */
+    ISource &source(const DotPath &path) const;
+
+    /**
      * Iterates through the entire contents of the bank.
      *
      * @param func  Function that gets called with the path of each item.

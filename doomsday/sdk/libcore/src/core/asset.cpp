@@ -17,6 +17,7 @@
  */
 
 #include "de/Asset"
+#include "de/Waitable"
 
 namespace de {
 
@@ -68,6 +69,32 @@ Asset::State Asset::state() const
 bool Asset::isReady() const
 {
     return d->state == Ready;
+}
+
+void Asset::waitForState(State s) const
+{
+    struct Waiter
+        : public Waitable
+        , DENG2_OBSERVES(Asset, StateChange) {
+        State waitingFor;
+        Waiter(State wf)
+            : waitingFor(wf)
+        {}
+        void assetStateChanged(Asset &asset) override
+        {
+            if (asset.state() == waitingFor)
+            {
+                post();
+            }
+        }
+    };
+
+    Waiter w(s);
+    audienceForStateChange() += w;
+    if (d->state != s)
+    {
+        w.wait();
+    }
 }
 
 //----------------------------------------------------------------------------

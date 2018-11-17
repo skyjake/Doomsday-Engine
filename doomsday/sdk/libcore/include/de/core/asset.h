@@ -72,6 +72,8 @@ public:
      */
     virtual bool isReady() const;
 
+    void waitForState(State s) const;
+
 private:
     DENG2_PRIVATE(d)
 };

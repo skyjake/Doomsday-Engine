@@ -18,40 +18,52 @@
 
 #include "de/RuleBank"
 #include <de/ConstantRule>
+#include <de/OperatorRule>
 #include <de/ScriptedInfo>
 
 namespace de {
 
-DotPath const RuleBank::UNIT("unit");
+const DotPath RuleBank::UNIT("unit");
 
 DENG2_PIMPL_NOREF(RuleBank)
 {
+    const Rule *dpiRule = nullptr;
+
     struct RuleSource : public ISource
     {
-        InfoBank &bank;
+        RuleBank &bank;
         String id;
 
-        RuleSource(InfoBank &b, String const &ruleId) : bank(b), id(ruleId) {}
+        RuleSource(RuleBank &b, String const &ruleId) : bank(b), id(ruleId) {}
         Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
-        Rule *load() const
+        const Rule &load() const
         {
             Record const &def = bank[id];
-            return refless(new ConstantRule(def["constant"].value().asNumber()));
+            return *bank.d->dpiRule * float(def["constant"].value().asNumber());
         }
     };
 
     struct RuleData : public IData
     {
-        Rule *rule;
+        const Rule *rule;
 
-        RuleData(Rule *r) : rule(holdRef(r)) {}
+        RuleData(const Rule &r) : rule(holdRef(r)) {}
         ~RuleData() { releaseRef(rule); }
     };
+
+    ~Impl()
+    {
+        releaseRef(dpiRule);
+    }
 };
 
-RuleBank::RuleBank() : InfoBank("RuleBank", DisableHotStorage), d(new Impl)
-{}
+RuleBank::RuleBank(const Rule &dpiRule)
+    : InfoBank("RuleBank", DisableHotStorage)
+    , d(new Impl)
+{
+    d->dpiRule = holdRef(dpiRule);
+}
 
 void RuleBank::addFromInfo(File const &file)
 {
@@ -64,6 +76,11 @@ Rule const &RuleBank::rule(DotPath const &path) const
 {
     if (path.isEmpty()) return ConstantRule::zero();
     return *static_cast<Impl::RuleData &>(data(path)).rule;
+}
+
+const Rule &RuleBank::dpiRule() const
+{
+    return *d->dpiRule;
 }
 
 Bank::ISource *RuleBank::newSourceFromInfo(String const &id)

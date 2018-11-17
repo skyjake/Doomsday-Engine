@@ -19,6 +19,8 @@
 
 #include "de/Widget"
 #include "de/RootWidget"
+#include "de/Asset"
+#include "de/LogBuffer"
 #include <QList>
 #include <QMap>
 
@@ -754,6 +756,39 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
 
     // Not eaten by anyone.
     return false;
+}
+
+void Widget::waitForAssetsReady()
+{
+    AssetGroup assets;
+    collectNotReadyAssets(assets, CollectMode::OnlyVisible);
+    if (!assets.isEmpty())
+    {
+        assets.waitForState(Asset::Ready);
+    }
+}
+
+void Widget::collectNotReadyAssets(AssetGroup &collected, CollectMode collectMode)
+{
+    if (collectMode == CollectMode::OnlyVisible && behavior().testFlag(Hidden))
+    {
+        return;
+    }
+    if (auto *assetGroup = maybeAs<IAssetGroup>(this))
+    {
+        if (!assetGroup->assets().isReady())
+        {
+            collected += *assetGroup;
+            LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)", path() << this);
+        }
+    }
+    else
+    {
+        foreach (Widget *child, children())
+        {
+            child->collectNotReadyAssets(collected, collectMode);
+        }
+    }
 }
 
 Widget::Children Widget::children() const

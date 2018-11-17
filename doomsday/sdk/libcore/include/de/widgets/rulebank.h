@@ -34,7 +34,7 @@ class Record;
 class DENG2_PUBLIC RuleBank : public InfoBank
 {
 public:
-    RuleBank();
+    RuleBank(const Rule &dpiRule);
 
     /**
      * Creates a number of rules based on information in an Info document.
@@ -52,6 +52,8 @@ public:
      * @return  Rule instance.
      */
     Rule const &rule(DotPath const &path) const;
+
+    const Rule &dpiRule() const;
 
     static DotPath const UNIT;
 

@@ -22,18 +22,19 @@
 /** @defgroup widgets  Widget Framework
  * @ingroup core */
 
-#include "../String"
-#include "../Event"
-#include "../Id"
-#include "../IObject"
-#include "../Observers"
 #include "../DotPath"
+#include "../Event"
+#include "../IObject"
+#include "../Id"
+#include "../Observers"
+#include "../String"
 
 #include <QList>
 #include <functional>
 
 namespace de {
 
+class AssetGroup;
 class Widget;
 class RootWidget;
 
@@ -320,6 +321,11 @@ public:
     NotifyArgs::Result notifySelfAndTree(NotifyArgs const &args);
     void notifyTreeReversed(NotifyArgs const &args);
     virtual bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
+
+    enum class CollectMode { OnlyVisible, All };
+    virtual void collectNotReadyAssets(AssetGroup &collected,
+                                       CollectMode collectMode = CollectMode::OnlyVisible);
+    void waitForAssetsReady();
 
     // Events.
     virtual void initialize();
