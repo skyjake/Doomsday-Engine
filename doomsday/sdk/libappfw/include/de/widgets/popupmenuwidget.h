@@ -52,6 +52,7 @@ protected:
     void glMakeGeometry(GuiVertexBuilder &verts) override;
     void preparePanelForOpening() override;
     void panelClosing() override;
+    void updateStyle() override;
 
 private:
     DENG2_PRIVATE(d)

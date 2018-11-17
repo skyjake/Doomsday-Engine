@@ -334,7 +334,6 @@ void TextDrawable::setText(String const &styledText)
     if (d->styledText != styledText)
     {
         d->styledText = styledText;
-
         d->beginWrapTask();
     }
 }

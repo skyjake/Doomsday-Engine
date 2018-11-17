@@ -17,8 +17,9 @@
  */
 
 #include "de/Style"
+#include "de/BaseGuiApp"
+#include "de/GuiRootWidget"
 
-#include <de/App>
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/Folder>
@@ -31,20 +32,25 @@
 namespace de {
 
 DENG2_PIMPL(Style)
+, DENG2_OBSERVES(Variable, Change)
 {
     Record    module;
     RuleBank  rules;
     FontBank  fonts;
     ColorBank colors;
     ImageBank images;
+    const Package *loadedPack;
 
-    // Options:
-    Variable const &uiTranslucency = Config::get("ui.translucency");
+    const Variable &dpiFactor      = ScriptSystem::get().nativeModule("DisplayMode")["DPI_FACTOR"];
+    const Variable &uiTranslucency = Config::get("ui.translucency");
 
-    Impl(Public *i) : Base(i)
+    Impl(Public *i)
+        : Base(i)
+        , rules(DENG2_BASE_GUI_APP->dpiFactor())
     {
         // The Style is available as a native module.
         App::scriptSystem().addNativeModule("Style", module);
+        dpiFactor.audienceForChange() += this;
     }
 
     void clear()
@@ -55,10 +61,14 @@ DENG2_PIMPL(Style)
         images.clear();
 
         module.clear();
+
+        loadedPack = nullptr;
     }
 
     void load(Package const &pack)
     {
+        loadedPack = &pack;
+
         if (CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
         {
             fonts.setFontSizeFactor(arg.params.at(0).toFloat());
@@ -75,7 +85,20 @@ DENG2_PIMPL(Style)
         module.add(new Variable("colors", new RecordValue(colors), Variable::AllowRecord));
         module.add(new Variable("images", new RecordValue(images), Variable::AllowRecord));
     }
+
+    void variableValueChanged(Variable &, const Value &) override
+    {
+        if (loadedPack)
+        {
+            LOG_MSG("UI style being updated due to DPI factor change");
+            self().performUpdate();
+        }
+    }
+
+    DENG2_PIMPL_AUDIENCE(Change)
 };
+
+DENG2_AUDIENCE_METHOD(Style, Change)
 
 Style::Style() : d(new Impl(this))
 {}
@@ -209,6 +232,16 @@ bool Style::isBlurringAllowed() const
 GuiWidget *Style::sharedBlurWidget() const
 {
     return nullptr;
+}
+
+void Style::performUpdate()
+{
+    d->fonts.reload();
+
+    DENG2_FOR_AUDIENCE2(Change, i)
+    {
+        i->styleChanged(*this);
+    }
 }
 
 static Style *theAppStyle = nullptr;

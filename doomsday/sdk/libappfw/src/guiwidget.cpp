@@ -39,6 +39,7 @@ namespace de {
 DENG2_PIMPL(GuiWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
 , DENG2_OBSERVES(ui::Margins, Change)
+, DENG2_OBSERVES(Style, Change)
 #ifdef DENG2_DEBUG
 , DENG2_OBSERVES(Widget, ParentChange)
 #endif
@@ -98,13 +99,15 @@ DENG2_PIMPL(GuiWidget)
         self().audienceForChildAddition() += this;
         margins.audienceForChange() += this;
 
+        Style::get().audienceForChange() += this;
+
 #ifdef DENG2_DEBUG
         self().audienceForParentChange() += this;
         rule.setDebugName(self().path());
 #endif
     }
 
-    ~Impl()
+    ~Impl() override
     {
         qDeleteAll(eventHandlers);
 
@@ -125,19 +128,19 @@ DENG2_PIMPL(GuiWidget)
 #endif
     }
 
-    void marginsChanged()
+    void marginsChanged() override
     {
         flags |= StyleChanged;
     }
 
 #ifdef DENG2_DEBUG
-    void widgetParentChanged(Widget &, Widget *, Widget *)
+    void widgetParentChanged(Widget &, Widget *, Widget *) override
     {
         rule.setDebugName(self().path());
     }
 #endif
 
-    void widgetChildAdded(Widget &child)
+    void widgetChildAdded(Widget &child) override
     {
         if (self().hasRoot())
         {
@@ -238,15 +241,6 @@ DENG2_PIMPL(GuiWidget)
         blur.reset();
     }
 
-    void reinitBlur()
-    {
-        if (blur)
-        {
-            deinitBlur();
-            initBlur();
-        }
-    }
-
     void updateBlurredBackground()
     {
         if (blur)
@@ -345,9 +339,9 @@ DENG2_PIMPL(GuiWidget)
     void updateOpacityForDisabledWidgets()
     {
         float const opac = (self().isDisabled()? .3f : 1.f);
-        if (opacityWhenDisabled.target() != opac)
+        if (!fequal(opacityWhenDisabled.target(), opac))
         {
-            opacityWhenDisabled.setValue(opac, .3f);
+            opacityWhenDisabled.setValue(opac, 0.3);
         }
         if ((flags & FirstUpdateAfterCreation) ||
             !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
@@ -554,9 +548,17 @@ DENG2_PIMPL(GuiWidget)
         return bestWidget? bestWidget : thisPublic;
     }
 
+    void styleChanged(Style &) override
+    {
+        qDebug() << thisPublic << self().path() << "observes style change";
+        deinitBlur();
+        flags |= StyleChanged;
+        // updateStyle() will be called during the next update().
+    }
+
     static float toDevicePixels(double logicalPixels)
     {
-        return float(logicalPixels * DENG2_BASE_GUI_APP->dpiFactor());
+        return float(logicalPixels * DENG2_BASE_GUI_APP->dpiFactor().value());
     }
 };
 
@@ -1307,39 +1309,17 @@ void GuiWidget::postDrawChildren()
     }
 }
 
-void GuiWidget::collectNotReadyAssets(AssetGroup &collected, Widget &widget)
+void GuiWidget::collectNotReadyAssets(AssetGroup &collected, CollectMode collectMode)
 {
-    if (widget.behavior().testFlag(Hidden)) return; // Won't be visible right now.
-    
 #if defined (DENG2_DEBUG)
-    if (auto *gw = maybeAs<GuiWidget>(widget))
+    if (!rule().isFullyDefined())
     {
-        if (!gw->rule().isFullyDefined())
-        {
-            qDebug() << gw->path() << "rule rectangle not fully defined";
-            qDebug("%s", gw->rule().description().toLatin1().constData());
-            qDebug("Widget layout will be undefined");
-        }
+        qDebug() << path() << "rule rectangle not fully defined";
+        qDebug("%s", rule().description().toLatin1().constData());
+        qDebug("Widget layout will be undefined");
     }
 #endif
-
-    if (auto *assetGroup = maybeAs<IAssetGroup>(widget))
-    {
-        if (!assetGroup->assets().isReady())
-        {
-            collected += *assetGroup;
-
-            LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)",
-                            widget.path() << &widget);
-        }
-    }
-    else
-    {
-        foreach (Widget *child, widget.children())
-        {
-            collectNotReadyAssets(collected, *child);
-        }
-    }
+    Widget::collectNotReadyAssets(collected, collectMode);
 }
 
 } // namespace de

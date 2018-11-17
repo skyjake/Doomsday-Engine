@@ -22,6 +22,7 @@
 #include <de/ArrayValue>
 #include <de/CommandLine>
 #include <de/Config>
+#include <de/ConstantRule>
 #include <de/DictionaryValue>
 #include <de/FileSystem>
 #include <de/Function>
@@ -91,18 +92,20 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     return 0;
 }
 
-DENG2_PIMPL_NOREF(BaseGuiApp)
+DENG2_PIMPL(BaseGuiApp)
+, DENG2_OBSERVES(Variable, Change)
 {
     Binder binder;
     QScopedPointer<PersistentState> uiState;
     GLShaderBank shaders;
     WaveformBank waveforms;
     VRConfig vr;
-    double dpiFactor = 1.0;
+    float systemDpiFactor = 1.0f; ///< Without user's Config.ui.scaleConfig
+    ConstantRule *dpiFactor = new ConstantRule;
 
-#ifdef WIN32
-    Impl()
+    Impl(Public *i) : Base(i)
     {
+#if defined(WIN32)
         // Use the Direct2D API to find out the desktop DPI factor.
         ID2D1Factory *d2dFactory = nullptr;
         HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
@@ -111,16 +114,26 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
             FLOAT dpiX = 96;
             FLOAT dpiY = 96;
             d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-            dpiFactor = dpiX / 96.0;
+            initialDpiFactor = dpiX / 96.0;
             d2dFactory->Release();
             d2dFactory = nullptr;
         }
-    }
 #endif
+    }
+
+    ~Impl() override
+    {
+        releaseRef(dpiFactor);
+    }
+
+    void variableValueChanged(Variable &, const Value &) override
+    {
+        self().setDpiFactor(systemDpiFactor);
+    }
 };
 
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Impl)
+    : GuiApp(argc, argv), d(new Impl(this))
 {
     d->binder.init(scriptSystem().nativeModule("App"))
             << DENG2_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
@@ -135,35 +148,42 @@ void BaseGuiApp::glDeinit()
     d->shaders.clear();
 }
 
-double BaseGuiApp::dpiFactor() const
-{
-    return d->dpiFactor;
-}
-
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
 
-#ifndef WIN32
-#  ifdef DENG2_QT_5_0_OR_NEWER
-    d->dpiFactor = devicePixelRatio();
-#  else
-    d->dpiFactor = 1.0;
-#  endif
+#if !defined(WIN32)
+    d->systemDpiFactor = float(devicePixelRatio());
 #endif
-
     // The "-dpi" option overrides the detected DPI factor.
     if (auto dpi = commandLine().check("-dpi", 1))
     {
-        d->dpiFactor = dpi.params.at(0).toDouble();
+        d->systemDpiFactor = dpi.params.at(0).toFloat();
     }
+    setDpiFactor(d->systemDpiFactor);
 
-    // Apply the overall UI scale factor.
-    d->dpiFactor *= config().getf("ui.scaleFactor", 1.f);
-
-    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
+    Config::get("ui.scaleFactor").audienceForChange() += d;
 
     d->uiState.reset(new PersistentState("UIState"));
+}
+
+const Rule &BaseGuiApp::dpiFactor() const
+{
+    return *d->dpiFactor;
+}
+
+void BaseGuiApp::setDpiFactor(float dpiFactor)
+{
+    d->systemDpiFactor = dpiFactor;
+
+    // Apply the overall UI scale factor.
+    dpiFactor *= config().getf("ui.scaleFactor", 1.0f);
+
+    if (!fequal(d->dpiFactor->value(), dpiFactor))
+    {
+        d->dpiFactor->set(dpiFactor);
+        scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", Value::Number(dpiFactor));
+    }
 }
 
 BaseGuiApp &BaseGuiApp::app()

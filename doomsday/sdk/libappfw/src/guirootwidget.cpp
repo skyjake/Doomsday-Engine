@@ -43,7 +43,7 @@ static DotPath const ID_BOLD_ROUND_CORNERS  = "GuiRootWidget.frame.bold";
 static DotPath const ID_DOT                 = "GuiRootWidget.dot";
 
 #ifdef DENG2_QT_5_0_OR_NEWER
-#  define DPI_SCALED(x)       ((x) * DENG2_BASE_GUI_APP->dpiFactor())
+#  define DPI_SCALED(x)       ((x) * DENG2_BASE_GUI_APP->dpiFactor().value())
 #else
 #  define DPI_SCALED(x)       (x)
 #endif

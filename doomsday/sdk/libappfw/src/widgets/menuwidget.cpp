@@ -720,4 +720,10 @@ void MenuWidget::dismissPopups()
     }
 }
 
+void MenuWidget::updateStyle()
+{
+    ScrollAreaWidget::updateStyle();
+    updateLayout();
+}
+
 } // namespace de

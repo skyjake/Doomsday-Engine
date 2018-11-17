@@ -36,7 +36,7 @@ DENG_GUI_PIMPL(CommandWidget)
     {
         // Popup for autocompletions.
         popup = new DocumentPopupWidget;
-        popup->document().setMaximumLineWidth(640);
+        popup->document().setMaximumLineWidth(rule("editor.completion.linewidth"));
         popup->document().setScrollBarColor("inverted.accent");
 
         // Height for the content: depends on the document height (plus margins), but at

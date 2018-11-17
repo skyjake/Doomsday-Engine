@@ -172,7 +172,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
         LOGDEV_XVERBOSE("Checking for assets that need waiting for...", "");
         DENG2_ASSERT(content);
-        GuiWidget::collectNotReadyAssets(*pendingShow, *content);
+        content->collectNotReadyAssets(*pendingShow);
 
         if (/* DISABLES CODE */ (true) || pendingShow->isEmpty())
         {

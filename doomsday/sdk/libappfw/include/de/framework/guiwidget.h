@@ -461,6 +461,14 @@ public:
      */
     PopupWidget *findParentPopup() const;
 
+    void collectNotReadyAssets(AssetGroup &collected,
+                               CollectMode = CollectMode::OnlyVisible) override;
+
+    /**
+     * Blocks until all assets in the widget tree are Ready.
+     */
+    void waitForAssetsReady();
+
 public slots:
     /**
      * Puts the widget in garbage to be deleted at the next recycling.
@@ -503,8 +511,6 @@ public:
      * before recycling occurs.
      */
     static void recycleTrashedWidgets();
-
-    static void collectNotReadyAssets(AssetGroup &collected, Widget &widget);
 
 protected:
     /**

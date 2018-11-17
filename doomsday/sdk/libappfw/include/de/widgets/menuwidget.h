@@ -188,6 +188,9 @@ signals:
      */
     void subWidgetOpened(de::PanelWidget *panel);
 
+protected:
+    void updateStyle() override;
+
 private:
     DENG2_PRIVATE(d)
 };

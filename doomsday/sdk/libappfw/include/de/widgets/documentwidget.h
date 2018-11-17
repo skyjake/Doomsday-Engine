@@ -76,7 +76,7 @@ public:
      *
      * @param maxWidth  Maximum width of a text line.
      */
-    void setMaximumLineWidth(int maxWidth);
+    void setMaximumLineWidth(const Rule &maxWidth);
 
     /**
      * Set one of the style colors.

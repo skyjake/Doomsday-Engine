@@ -24,6 +24,7 @@
 
 #include <de/GuiApp>
 #include <de/GLShaderBank>
+#include <de/Rule>
 #include <de/WaveformBank>
 
 /**
@@ -50,7 +51,15 @@ public:
     virtual void glDeinit();
 
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
-    double dpiFactor() const;
+
+    const Rule &dpiFactor() const;
+
+    /**
+     * Sets a new DPI factor. This replaces the initial automatically detected system DPI factor.
+     *
+     * @param dpi  DPI factor.
+     */
+    void setDpiFactor(float dpiFactor);
     
     /**
      * Enters the "native UI" mode that temporarily switches the main window to a

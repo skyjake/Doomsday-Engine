@@ -75,7 +75,6 @@ public Font::RichFormat::IStyle
     String styledText;
     TextDrawable glText;
     mutable Vector2ui latestTextSize;
-    //bool wasVisible;
 
     std::unique_ptr<ProceduralImage> image;
     std::unique_ptr<ProceduralImage> overlayImage;
@@ -101,7 +100,6 @@ public Font::RichFormat::IStyle
         , gapId       ("label.gap")
         , shaderId    ("generic.textured.color_ucolor")
         , richStyle   (0)
-        //, wasVisible  (true)
     {
         width     = new ConstantRule(0);
         height    = new ConstantRule(0);
@@ -126,7 +124,7 @@ public Font::RichFormat::IStyle
 
     void updateStyle()
     {
-        Style const &st = self().style();
+        const Style &st = style();
 
         gap = rule(gapId).valuei();
 

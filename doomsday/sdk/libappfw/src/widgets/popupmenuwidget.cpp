@@ -155,13 +155,6 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
             setButtonColors(*b);
             b->setSizePolicy(ui::Expand, ui::Expand);
-
-            if (!is<ToggleWidget>(b))
-            {
-                b->setTextGap("dialog.gap");
-                b->setOverrideImageSize(style().fonts().font("default").height().valuei());
-            }
-
             b->audienceForStateChange() += this;
 
             // Triggered actions close the menu.
@@ -174,6 +167,15 @@ DENG_GUI_PIMPL(PopupMenuWidget)
 
     void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
     {
+        if (ButtonWidget *b = maybeAs<ButtonWidget>(widget))
+        {
+            if (!is<ToggleWidget>(b))
+            {
+                b->setTextGap("dialog.gap");
+                b->setOverrideImageSize(style().fonts().font("default").height().valuei());
+            }
+        }
+
         if (item.semantics().testFlag(ui::Item::Annotation))
         {
             if (!App::config().getb(VAR_SHOW_ANNOTATIONS))
@@ -411,6 +413,19 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             }
         }
     }
+
+    void updateLayout()
+    {
+        auto &menu = self().menu();
+
+        menu.updateLayout();
+        menu.rule().setInput(
+            Rule::Height,
+            OperatorRule::minimum(menu.rule().inputRule(Rule::Height),
+                                  root().viewHeight() - self().margins().height()));
+        updateItemHitRules();
+        updateItemMargins();
+    }
 };
 
 PopupMenuWidget::PopupMenuWidget(String const &name)
@@ -480,14 +495,7 @@ void PopupMenuWidget::glMakeGeometry(GuiVertexBuilder &verts)
 
 void PopupMenuWidget::preparePanelForOpening()
 {
-    // Redo the layout.
-    menu().updateLayout();
-    menu().rule().setInput(Rule::Height,
-                           OperatorRule::minimum(menu().rule().inputRule(Rule::Height),
-                                                 root().viewHeight() - margins().height()));
-    d->updateItemHitRules();
-    d->updateItemMargins();
-
+    d->updateLayout();
     PopupWidget::preparePanelForOpening();
 }
 
@@ -507,6 +515,17 @@ void PopupMenuWidget::panelClosing()
     }
 
     menu().dismissPopups();
+}
+
+void PopupMenuWidget::updateStyle()
+{
+    PopupWidget::updateStyle();
+    for (ui::DataPos i = 0; i < menu().items().size(); ++i)
+    {
+        // Force update of the item widgets.
+        menu().items().at(i).notifyChange();
+    }
+    d->updateLayout();
 }
 
 } // namespace de

@@ -39,7 +39,7 @@ public Font::RichFormat::IStyle
 
     // State.
     ui::SizePolicy widthPolicy = ui::Expand;
-    int maxLineWidth;
+    const Rule *maxLineWidth = nullptr;
     ConstantRule *contentMaxWidth = new ConstantRule(0);
     int oldScrollY = 0;
     String styledText;
@@ -61,6 +61,8 @@ public Font::RichFormat::IStyle
 
         updateStyle();
 
+        maxLineWidth = holdRef(rule("document.line.width"));
+
         // Widget to show while lines are being wrapped.
         progress = new ProgressWidget("progress-indicator");
         progress->setColor("progress.dark.wheel");
@@ -68,13 +70,12 @@ public Font::RichFormat::IStyle
         progress->rule().setRect(self().rule());
         progress->hide();
         self().add(progress);
-
-        maxLineWidth = GuiWidget::toDevicePixels(1000);
     }
 
     ~Impl()
     {
         releaseRef(contentMaxWidth);
+        releaseRef(maxLineWidth);
     }
 
     void updateStyle()
@@ -174,7 +175,7 @@ public Font::RichFormat::IStyle
         int wrapWidth;
         if (widthPolicy == ui::Expand)
         {
-            wrapWidth = maxLineWidth;
+            wrapWidth = maxLineWidth->valuei();
         }
         else
         {
@@ -315,9 +316,9 @@ void DocumentWidget::setWidthPolicy(ui::SizePolicy policy)
     requestGeometry();
 }
 
-void DocumentWidget::setMaximumLineWidth(int maxWidth)
+void DocumentWidget::setMaximumLineWidth(const Rule &maxWidth)
 {
-    d->maxLineWidth = maxWidth;
+    changeRef(d->maxLineWidth, maxWidth);
     d->contentMaxWidth->set(0);
     requestGeometry();
 }
