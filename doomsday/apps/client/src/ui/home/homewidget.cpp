@@ -124,7 +124,7 @@ DENG_GUI_PIMPL(HomeWidget)
         taskBarHintButton->setSizePolicy(ui::Expand, ui::Expand);
         taskBarHintButton->margins().set("dialog.gap");
         taskBarHintButton->setText(_E(b) "ESC" _E(.) + tr(" Task Bar"));
-        taskBarHintButton->setTextColor("altaccent");
+//        taskBarHintButton->setTextColor("text");
         taskBarHintButton->setFont("small");
         taskBarHintButton->setOpacity(.66f);
         taskBarHintButton->rule()
