@@ -38,7 +38,6 @@ public:
     PopupWidget *parentPopup() const;
 
     MenuWidget &menu() const;
-
     ui::Data &items() { return menu().items(); }
 
     void useInfoStyle(bool yes = true);

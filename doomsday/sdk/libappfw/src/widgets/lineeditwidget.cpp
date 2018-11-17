@@ -105,6 +105,7 @@ DENG_GUI_PIMPL(LineEditWidget)
         wraps.setFont(*font);
         wraps.clear();
         composer.setWrapping(wraps);
+        composer.forceUpdate();
 
         contentChanged(false);
     }
