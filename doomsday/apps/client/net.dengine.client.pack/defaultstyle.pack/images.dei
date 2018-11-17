@@ -15,7 +15,7 @@ logo {
 
     # With HiDPI displays use the 2x versions of the logo.
     group {    
-        condition: DisplayMode.DPI_FACTOR == 2
+        condition: DisplayMode.DPI_FACTOR >= 2
         image px128 { path = "graphics/deng-logo-256.png" }
         image px256 { path = "graphics/deng-logo-512.png" }
     }

@@ -56,6 +56,9 @@ public slots:
     void tabChanged();
     void mouseActivityInColumn(QObject const *);
 
+protected:
+    void updateStyle() override;
+
 private:
     DENG2_PRIVATE(d)
 };

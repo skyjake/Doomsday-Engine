@@ -227,11 +227,6 @@ DENG_GUI_PIMPL(ConsoleWidget)
         // Bottom of the console must follow the active command line height.
         self().rule().setInput(Rule::Bottom, next->rule().top() - rule(RuleBank::UNIT));
 
-        if (scriptMode == yes)
-        {
-            return; // No need to change anything else.
-        }
-
         scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
         cmdLine  ->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
 
@@ -246,9 +241,11 @@ DENG_GUI_PIMPL(ConsoleWidget)
             root().setFocus(next);
         }
 
-        scriptMode = yes;
-
-        emit self().commandModeChanged();
+        if (scriptMode != yes)
+        {
+            scriptMode = yes;
+            emit self().commandModeChanged();
+        }
     }
 
     struct RightClick : public GuiWidget::IEventHandler

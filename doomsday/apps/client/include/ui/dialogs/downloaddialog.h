@@ -39,6 +39,9 @@ public:
 
     virtual void cancel() = 0;
 
+protected:
+    void updateStyle() override;
+
 private:
     DENG2_PRIVATE(d)
 };

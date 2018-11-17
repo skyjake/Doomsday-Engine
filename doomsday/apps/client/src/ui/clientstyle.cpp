@@ -19,6 +19,8 @@
 #include "ui/clientstyle.h"
 #include "ui/clientwindow.h"
 
+#include <de/Async>
+
 using namespace de;
 
 DENG2_PIMPL_NOREF(ClientStyle)
@@ -49,3 +51,17 @@ ui::Stylist &ClientStyle::emptyMenuLabelStylist() const
     return d->emptyMenuLabelStylist;
 }
 
+void ClientStyle::performUpdate()
+{
+    async([]() {
+        // Wait until all UI assets are finished, and thus we can sure that no background
+        // operations are accessing style assets.
+        LOG_MSG("Waiting for UI assets to be ready...");
+        ClientWindow::main().root().waitForAssetsReady();
+        return 0;
+    },
+    [this](int) {
+        LOG_MSG("Updating the UI style");
+        Style::performUpdate();
+    });
+}

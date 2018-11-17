@@ -715,6 +715,12 @@ void HomeWidget::mouseActivityInColumn(QObject const *columnWidget)
     }
 }
 
+void HomeWidget::updateStyle()
+{
+    GuiWidget::updateStyle();
+    viewResized();
+}
+
 void HomeWidget::operator >> (PersistentState &toState) const
 {
     Record &rec = toState.objectNamespace();

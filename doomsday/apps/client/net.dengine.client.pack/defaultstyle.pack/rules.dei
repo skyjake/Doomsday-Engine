@@ -1,8 +1,7 @@
 # Length rules for the default UI style
 
 script {
-    import DisplayMode
-    UNIT = 4.0 * DisplayMode.DPI_FACTOR
+    UNIT = 4.0
 }
 
 rule unit     { constant $= UNIT }
@@ -26,12 +25,16 @@ popup {
 
 document {
     rule progress    { constant $= UNIT * 30 }
+    rule line.width  { constant $= UNIT * 250 }
     rule popup.width { constant $= UNIT * 120 }
 }
 
 editor {
     rule width { constant $= UNIT * 60 }
-    rule completion.height { constant $= UNIT * 100 }
+    completion {
+        rule height    { constant $= UNIT * 100 }
+        rule linewidth { constant $= UNIT * 80 }
+    }
 }
 
 progress {
@@ -99,10 +102,13 @@ console {
 }
 
 home {
-    rule column.width { constant $= UNIT * 125 } 
-    rule popup.width  { constant $= UNIT * 175 }
-    rule popup.height { constant $= UNIT * 120 }
-    rule progress     { constant $= UNIT * 60 }
+    rule header.logo.width    { constant $= UNIT * 40 }
+    rule header.logo.height   { constant $= UNIT * 30 }
+    rule column.width         { constant $= UNIT * 125 } 
+    rule column.content.width { constant $= UNIT * 100 }
+    rule popup.width          { constant $= UNIT * 175 }
+    rule popup.height         { constant $= UNIT * 120 }
+    rule progress             { constant $= UNIT * 60 }
 }
 
 gameselection {

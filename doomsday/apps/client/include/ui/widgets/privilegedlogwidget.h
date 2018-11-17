@@ -36,6 +36,9 @@ public slots:
     void showLog();
     void hideLog();
 
+protected:
+    void updateStyle() override;
+
 private:
     DENG2_PRIVATE(d)
 };

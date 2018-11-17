@@ -34,7 +34,6 @@ DENG_GUI_PIMPL(DownloadDialog)
 
         progress = new ProgressWidget;
         area.add(progress);
-        progress->setImageScale(toDevicePixels(.4f));
         progress->setAlignment(ui::AlignLeft);
         progress->setSizePolicy(ui::Fixed, ui::Expand);
         progress->setRange(Rangei(0, 100));
@@ -45,8 +44,14 @@ DENG_GUI_PIMPL(DownloadDialog)
         area.setContentSize(progress->rule());
 
         self().buttons() << new DialogButtonItem(DialogWidget::Reject,
-                                                 tr("Cancel Download"),
+                                                 "Cancel Download",
                                                  new CallbackAction([this] () { self().cancel(); }));
+        updateStyle();
+    }
+
+    void updateStyle()
+    {
+        progress->setImageScale(toDevicePixels(.4f));
     }
 };
 
@@ -61,4 +66,10 @@ DownloadDialog::~DownloadDialog()
 ProgressWidget &DownloadDialog::progressIndicator()
 {
     return *d->progress;
+}
+
+void DownloadDialog::updateStyle()
+{
+    DialogWidget::updateStyle();
+    d->updateStyle();
 }
