@@ -472,7 +472,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
             if (mouse.wheelMotion() == MouseEvent::FineAngle)
             {
                 d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                    toDevicePixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
+                                    pointsToPixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
                                     d->maxY->valuei()), .05f);
                 d->restartScrollOpacityFade();
             }
@@ -500,7 +500,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
         {
             if (event.type() == Event::MousePosition)
             {
-                bool const hovering = (d->scrollBarVisRect.expanded(toDevicePixels(1))
+                bool const hovering = (d->scrollBarVisRect.expanded(pointsToPixels(1))
                                        .contains(event.as<MouseEvent>().pos()));
                 d->setScrollBarHovering(hovering);
             }
@@ -643,7 +643,7 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
 
     Vector4f const barOpacity { 1, 1, 1, d->scrollOpacity };
 
-    verts.makeQuad(d->scrollBarVisRect.expanded((d->scrollBarHover? toDevicePixels(1) : 0)),
+    verts.makeQuad(d->scrollBarVisRect.expanded((d->scrollBarHover ? pointsToPixels(1) : 0)),
                    barOpacity * d->scrollBarColor,
                    d->indicatorUv);
 

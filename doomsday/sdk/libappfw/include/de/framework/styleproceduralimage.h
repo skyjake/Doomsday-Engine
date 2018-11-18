@@ -34,7 +34,10 @@ class StyleProceduralImage : public ProceduralImage
 {
 public:
     StyleProceduralImage(DotPath const &styleImageId, GuiWidget &owner, float angle = 0)
-        : _owner(owner), _imageId(styleImageId), _id(Id::None), _angle(angle)
+        : _owner(owner)
+        , _imageId(styleImageId)
+        , _id(Id::None)
+        , _angle(angle)
     {
         if (_owner.hasRoot())
         {
@@ -60,8 +63,9 @@ public:
 
     void alloc()
     {
+        const Image &img = Style::get().images().image(_imageId);
+        setPointSize(img.size() * img.pointRatio());
         _id = root().styleTexture(_imageId);
-        setSize(root().atlas().imageRect(_id).size());
     }
 
     Id const &allocId() const

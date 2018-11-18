@@ -192,7 +192,7 @@ void ProgressWidget::useMiniStyle(DotPath const &colorId)
     setImageScale(1);
 
     // Resize to the height of the default font.
-    setOverrideImageSize(style().fonts().font("default").height().value());
+    setOverrideImageSize(style().fonts().font("default").height());
 
     d->updateStyle();
 }

@@ -62,7 +62,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
         void alloc()
         {
             _id = root().solidWhitePixel();
-            setSize(Vector2f(1, 1));
+            setPointSize({1, 1});
         }
 
         void glInit() override
@@ -172,7 +172,7 @@ DENG_GUI_PIMPL(PopupMenuWidget)
             if (!is<ToggleWidget>(b))
             {
                 b->setTextGap("dialog.gap");
-                b->setOverrideImageSize(style().fonts().font("default").height().valuei());
+                b->setOverrideImageSize(style().fonts().font("default").height());
             }
         }
 

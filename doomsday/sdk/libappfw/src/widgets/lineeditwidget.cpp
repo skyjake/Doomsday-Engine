@@ -299,8 +299,8 @@ Rectanglei LineEditWidget::cursorRect() const
     Vector2i const cp = d->wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
             contentRect().topLeft;
 
-    return Rectanglei(cp + toDevicePixels(Vector2i(-1, 0)),
-                      cp + Vector2i(toDevicePixels(1), d->font->height().valuei()));
+    return Rectanglei(cp + pointsToPixels(Vector2i(-1, 0)),
+                      cp + Vector2i(pointsToPixels(1), d->font->height().valuei()));
 }
 
 void LineEditWidget::setColorTheme(ColorTheme theme)
@@ -347,7 +347,7 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
         Vector2i const startPos = linePos(comp.start);
         Vector2i const endPos   = linePos(comp.end);
 
-        Vector2i const offset = contentRect.topLeft + Vector2i(0, d->font->ascent().valuei() + toDevicePixels(2));
+        Vector2i const offset = contentRect.topLeft + Vector2i(0, d->font->ascent().valuei() + pointsToPixels(2));
 
         // It may span multiple lines.
         for (int i = startPos.y; i <= endPos.y; ++i)
@@ -356,7 +356,7 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
             Vector2i start = d->wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
             Vector2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
 
-            verts.makeQuad(Rectanglef(start, end + toDevicePixels(Vector2i(0, 1))),
+            verts.makeQuad(Rectanglef(start, end + pointsToPixels(Vector2i(0, 1))),
                            Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
         }
     }

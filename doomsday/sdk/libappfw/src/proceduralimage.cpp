@@ -20,16 +20,16 @@
 
 namespace de {
 
-ProceduralImage::ProceduralImage(Size const &size)
-    : _size(size), _color(1, 1, 1, 1)
+ProceduralImage::ProceduralImage(Size const &pointSize)
+    : _pointSize(pointSize), _color(1, 1, 1, 1)
 {}
 
 ProceduralImage::~ProceduralImage()
 {}
 
-ProceduralImage::Size ProceduralImage::size() const
+ProceduralImage::Size ProceduralImage::pointSize() const
 {
-    return _size;
+    return _pointSize;
 }
 
 ProceduralImage::Color ProceduralImage::color() const
@@ -37,9 +37,9 @@ ProceduralImage::Color ProceduralImage::color() const
     return _color;
 }
 
-void ProceduralImage::setSize(Size const &size)
+void ProceduralImage::setPointSize(Size const &pointSize)
 {
-    _size = size;
+    _pointSize = pointSize;
 }
 
 void ProceduralImage::setColor(Color const &color)

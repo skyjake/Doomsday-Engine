@@ -72,13 +72,13 @@ DENG2_PIMPL(VRWindowTransform)
 #if defined (DENG_MOBILE)
         return 1.0f;
 #else
-        if (GuiWidget::toDevicePixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
+        if (GuiWidget::pointsToPixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
 
         // Since the UI style doesn't yet support scaling at runtime based on
         // display resolution (or any other factor).
         return 1.f / Rangef(.5f, 1.0f)
                          .clamp((width()) /
-                                GuiWidget::toDevicePixels(640.f));
+                                GuiWidget::pointsToPixels(640.f));
 #endif
     }
 
@@ -378,7 +378,7 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalWindowSize
         // Adjust effective UI size for stereoscopic rendering.
         size.x = size.y * d->vrCfg.oculusRift().aspect();
         //size.y *= d->vrCfg.oculusRift().aspect();
-        size *= GuiWidget::toDevicePixels(1) * .75f;
+        size *= GuiWidget::pointsToPixels(1) * .75f;
         break;
 
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them

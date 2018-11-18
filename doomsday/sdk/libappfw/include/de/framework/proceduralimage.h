@@ -42,13 +42,13 @@ public:
     typedef Vector4f Color;
 
 public:
-    ProceduralImage(Size const &size = Size());
+    ProceduralImage(Size const &pointSize = Size());
     virtual ~ProceduralImage();
 
-    Size size() const;
+    Size pointSize() const; // in points
     Color color() const;
 
-    void setSize(Size const &size);
+    void setPointSize(Size const &pointSize);
     void setColor(Color const &color);
 
     /**
@@ -66,7 +66,7 @@ public:
     DENG2_CAST_METHODS()
 
 private:
-    Size _size;
+    Size _pointSize;
     Color _color;
 };
 

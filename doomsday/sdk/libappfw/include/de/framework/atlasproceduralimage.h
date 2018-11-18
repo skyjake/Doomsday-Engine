@@ -83,17 +83,17 @@ public:
         _image = image;
         _needUpdate = true;
         _imageOwned = true;
-        setSize(image.size());
+        setPointSize(image.size() * image.pointRatio());
     }
 
-    void setPreallocatedImage(Id const &id)
+    void setPreallocatedImage(Id const &id, float pointRatio = 1.f)
     {
         _image = Image();
         _needUpdate = false;
         _imageOwned = false;
         _id = id;
         _atlas = &ownerAtlas();
-        setSize(_atlas->imageRect(id).size());
+        setPointSize(_atlas->imageRect(id).size() * pointRatio);
     }
 
     bool update()

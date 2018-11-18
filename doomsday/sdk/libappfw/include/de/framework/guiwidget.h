@@ -487,20 +487,27 @@ public:
     static Rectanglef normalizedRect(Rectanglei const &rect,
                                      Rectanglei const &containerRect);
 
-    static float toDevicePixels(float logicalPixels);
+    static float pointsToPixels(float points);
+    static float pixelsToPoints(float pixels);
 
-    inline static int toDevicePixels(int logicalPixels) {
-        return int(toDevicePixels(float(logicalPixels)));
+    inline static int pointsToPixels(int points) {
+        return int(pointsToPixels(float(points)));
     }
 
-    inline static duint toDevicePixels(duint logicalPixels) {
-        return duint(toDevicePixels(float(logicalPixels)));
+    inline static duint pointsToPixels(duint points) {
+        return duint(pointsToPixels(float(points)));
     }
 
     template <typename Vector2>
-    static Vector2 toDevicePixels(Vector2 const &type) {
-        return Vector2(typename Vector2::ValueType(toDevicePixels(type.x)),
-                       typename Vector2::ValueType(toDevicePixels(type.y)));
+    static Vector2 pointsToPixels(Vector2 const &type) {
+        return Vector2(typename Vector2::ValueType(pointsToPixels(type.x)),
+                       typename Vector2::ValueType(pointsToPixels(type.y)));
+    }
+
+    template <typename Vector2>
+    static Vector2 pixelsToPoints(Vector2 const &type) {
+        return Vector2(typename Vector2::ValueType(pixelsToPoints(type.x)),
+                       typename Vector2::ValueType(pixelsToPoints(type.y)));
     }
 
     static ColorTheme invertColorTheme(ColorTheme theme);

@@ -176,7 +176,7 @@ DENG_GUI_PIMPL(DialogWidget)
             heading->setSizePolicy(ui::Expand, ui::Expand);
             heading->setTextColor("accent");
             heading->setImageColor(style().colors().colorf("accent"));
-            heading->setOverrideImageSize(heading->font().ascent().valuei());
+            heading->setOverrideImageSize(heading->font().ascent());
             heading->setTextGap("dialog.gap");
             heading->setTextAlignment(ui::AlignRight);
             heading->setTextLineAlignment(ui::AlignLeft);
@@ -345,7 +345,7 @@ DENG_GUI_PIMPL(DialogWidget)
             ButtonWidget &but = widget.as<ButtonWidget>();
 
             // Button images must be a certain size.
-            but.setOverrideImageSize(style().fonts().font("default").height().valuei());
+            but.setOverrideImageSize(style().fonts().font("default").height());
 
             // Set default label?
             if (item.label().isEmpty())

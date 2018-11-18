@@ -53,7 +53,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             bool changed = animating;
 
             float target = (fold.isOpen()? 0 : 90);
-            if (target != angle.target())
+            if (!fequal(target, angle.target()))
             {
                 angle.setValue(target, INDICATOR_ANIM_SPAN);
                 animating = true;
@@ -65,8 +65,8 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
                 needSize = false;
                 changed = true;
 
-                float h = fold.title().font().height().value();
-                setSize(Vector2f(h, h));
+                const float h = pixelsToPoints(fold.title().font().height().value());
+                setPointSize({h, h});
             }
 
             // Stop animating?

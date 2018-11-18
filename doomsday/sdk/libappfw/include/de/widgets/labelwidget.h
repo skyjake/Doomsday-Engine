@@ -200,11 +200,19 @@ public:
      * The image's actual size will be overridden by this size.
      * @param size  Image size.
      */
-    void setOverrideImageSize(Vector2f const &size);
+    void setOverrideImageSize(const Rule &width, const Rule &height);
 
-    Vector2f overrideImageSize() const;
+    void setOverrideImageSize(const ISizeRule &size)
+    {
+        setOverrideImageSize(size.width(), size.height());
+    }
 
-    void setOverrideImageSize(float widthAndHeight);
+    void setOverrideImageSize(const Rule &widthAndHeight)
+    {
+        setOverrideImageSize(widthAndHeight, widthAndHeight);
+    }
+
+    RulePair overrideImageSize() const;
 
     void setImageScale(float scaleFactor);
 

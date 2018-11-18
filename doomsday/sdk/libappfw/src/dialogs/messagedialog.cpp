@@ -45,7 +45,7 @@ DENG_GUI_PIMPL(MessageDialog)
         title->setSizePolicy(ui::Fixed, ui::Expand);
         title->setAlignment(ui::AlignLeft);
         title->setTextAlignment(ui::AlignRight);
-        title->setOverrideImageSize(title->font().ascent().valuei());
+        title->setOverrideImageSize(title->font().ascent());
         title->setImageColor(style().colors().colorf("accent"));
         title->setTextGap("gap");
         title->setTextLineAlignment(ui::AlignLeft);
