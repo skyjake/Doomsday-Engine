@@ -412,12 +412,13 @@ PackagesDialog::PackagesDialog(String const &titleText)
     // The individual menus will be scrolling independently.
     leftArea() .setContentSize(d->menu->rule().width(),
                                OperatorRule::maximum(d->menu->rule().height(),
-                                                     d->nothingSelected->rule().height()) +
+                                                     d->nothingSelected->rule().height(),
+                                                     rule("dialog.packages.left.minheight")) +
                                d->gameTitle->rule().height());
     rightArea().setContentSize(d->browser->rule());
     d->browser->progress().rule().setRect(rightArea().rule());
 
-    setMaximumContentHeight(rule().width());
+    setMaximumContentHeight(rule().width() * 0.9f);
 
     // Setup has been completed, so contents can be updated.
     d->browser->setPopulationEnabled(true);

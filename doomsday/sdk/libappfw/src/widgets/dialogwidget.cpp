@@ -178,6 +178,7 @@ DENG_GUI_PIMPL(DialogWidget)
             heading->setImageColor(style().colors().colorf("accent"));
             heading->setOverrideImageSize(heading->font().ascent());
             heading->setTextGap("dialog.gap");
+            heading->setAlignment(ui::AlignLeft);
             heading->setTextAlignment(ui::AlignRight);
             heading->setTextLineAlignment(ui::AlignLeft);
             heading->setFillMode(LabelWidget::FillWithText);

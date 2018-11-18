@@ -65,8 +65,9 @@ dialog {
     rule multiplayer.width { constant $= UNIT * 80 }
     
     packages {
-        rule left.width  { constant $= UNIT * 100 }
-        rule right.width { constant $= UNIT * 115 }
+        rule left.minheight { constant $= UNIT * 40 }
+        rule left.width     { constant $= UNIT * 100 }
+        rule right.width    { constant $= UNIT * 115 }
     }
     packageinfo {
         rule content.minheight  { constant $= UNIT * 100 }

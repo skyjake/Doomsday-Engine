@@ -496,7 +496,7 @@ void PopupWidget::glMakeGeometry(GuiVertexBuilder &verts)
         tri << v; // discontinued
 
         Rectanglei const rect = rule().recti();
-        int const ow = GuiWidget::pointsToPixels(1);
+        int const ow = GuiWidget::pointsToPixels(2);
         int const halfOw = ow/2;
         int const midOw = ow + halfOw;
 

@@ -193,8 +193,8 @@ DENG2_PIMPL(GLWindow)
 
     void submitResize(const Size &pixelSize)
     {
-        qDebug() << "resize event:" << pixelSize.asText();
-        qDebug() << "pixel ratio:" << pixelRatio;
+        //qDebug() << "resize event:" << pixelSize.asText();
+        //qDebug() << "pixel ratio:" << pixelRatio;
 
         // Only react if this is actually a resize.
         if (currentSize != pixelSize)
@@ -245,7 +245,7 @@ GLWindow::GLWindow()
     d->pixelRatio = devicePixelRatio();
 
     connect(this, &QWindow::screenChanged, [this](QScreen *scr) {
-        qDebug() << "window screen changed:" << scr << scr->devicePixelRatio();
+        //qDebug() << "window screen changed:" << scr << scr->devicePixelRatio();
         if (!fequal(d->pixelRatio, scr->devicePixelRatio()))
         {
             d->pixelRatio = scr->devicePixelRatio();

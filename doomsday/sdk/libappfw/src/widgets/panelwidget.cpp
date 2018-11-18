@@ -174,7 +174,7 @@ DENG_GUI_PIMPL(PanelWidget)
         DENG2_ASSERT(content);
         content->collectNotReadyAssets(*pendingShow);
 
-        if (/* DISABLES CODE */ (true) || pendingShow->isEmpty())
+        if (pendingShow->isEmpty())
         {
             // Nothing to wait for, actually.
             pendingShow.reset();
