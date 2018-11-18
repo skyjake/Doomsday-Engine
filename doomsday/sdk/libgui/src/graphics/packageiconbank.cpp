@@ -68,6 +68,7 @@ DENG2_PIMPL_NOREF(PackageIconBank)
                     img.resize(_displaySize);
                 }
             }
+            img.setPointRatio(1.f);
             return img;
         }
 

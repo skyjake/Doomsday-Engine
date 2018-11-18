@@ -40,7 +40,7 @@ DENG2_PIMPL(ImageFile)
 
     ~Impl()
     {
-        qDeleteAll(filtered.values());
+        qDeleteAll(filtered);
     }
 
     ImageFile *makeOrGetFiltered(BuiltInFilter filter)
@@ -169,7 +169,12 @@ Image ImageFile::image() const
     }
     else
     {
-        return Image::fromData(*source(), extension());
+        Image img = Image::fromData(*source(), extension());
+        if (source()->name().contains("@2x.", Qt::CaseInsensitive))
+        {
+            img.setPointRatio(.5f);
+        }
+        return img;
     }
 }
 

@@ -143,6 +143,16 @@ public:
 
     GLPixelFormat glFormat() const;
 
+    /**
+     * Returns the ratio of how many points there are for each image pixel.
+     * This can be used to scale the image appropriately for the UI.
+     *
+     * @return Points per image pixel.
+     */
+    float pointRatio() const;
+
+    void setPointRatio(float pointsPerPixel);
+
     // Drawing/editing methods.
     Image subImage(Rectanglei const &subArea) const;
     void resize(Size const &size);

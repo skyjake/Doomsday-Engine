@@ -338,6 +338,7 @@ DENG2_PIMPL(Image)
     QImage image;
     Block pixels;
     ByteRefArray refPixels;
+    float pointRatio = 1.f;
 
     Impl(Public *i, QImage const &img = QImage())
         : Base(i), format(UseQImageFormat), image(img)
@@ -345,13 +346,14 @@ DENG2_PIMPL(Image)
         size = Size(img.width(), img.height());
     }
 
-    Impl(Public *i, Impl const &other)
-        : Base     (i),
-          format   (other.format),
-          size     (other.size),
-          image    (other.image),
-          pixels   (other.pixels),
-          refPixels(other.refPixels)
+    Impl(Public * i, Impl const &other)
+        : Base(i)
+        , format(other.format)
+        , size(other.size)
+        , image(other.image)
+        , pixels(other.pixels)
+        , refPixels(other.refPixels)
+        , pointRatio(other.pointRatio)
     {}
 
     Impl(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
@@ -367,7 +369,7 @@ Image::Image() : d(new Impl(this))
 {}
 
 Image::Image(Image const &other)
-    : de::ISerializable(), d(new Impl(this, *other.d))
+    : d(new Impl(this, *other.d))
 {}
 
 Image::Image(QImage const &image) : d(new Impl(this, image))
@@ -381,7 +383,7 @@ Image::Image(Size const &size, Format format, ByteRefArray const &refPixels)
     : d(new Impl(this, size, format, refPixels))
 {}
 
-Image &Image::operator = (Image const &other)
+Image &Image::operator=(Image const &other)
 {
     d.reset(new Impl(this, *other.d));
     return *this;
@@ -452,7 +454,7 @@ int Image::stride() const
     {
         return d->image.bytesPerLine();
     }
-    return depth()/8 * d->size.x;
+    return depth() / 8 * d->size.x;
 }
 
 int Image::byteCount() const
@@ -465,7 +467,7 @@ int Image::byteCount() const
     {
         return d->pixels.size();
     }
-    return depth()/8 * d->size.x * d->size.y;
+    return depth() / 8 * d->size.x * d->size.y;
 }
 
 void const *Image::bits() const
@@ -585,6 +587,16 @@ GLPixelFormat Image::glFormat() const
         return glFormat(d->image.format());
     }
     return glFormat(d->format);
+}
+
+float Image::pointRatio() const
+{
+    return d->pointRatio;
+}
+
+void Image::setPointRatio(float pointsPerPixel)
+{
+    d->pointRatio = pointsPerPixel;
 }
 
 Image Image::subImage(Rectanglei const &subArea) const
