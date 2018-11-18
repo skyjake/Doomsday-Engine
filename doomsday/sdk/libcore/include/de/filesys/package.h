@@ -110,6 +110,8 @@ public:
      */
     File const &sourceFile() const;
 
+    bool sourceFileExists() const;
+
     /**
      * Returns the package's root folder.
      */

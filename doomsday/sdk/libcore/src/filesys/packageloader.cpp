@@ -39,6 +39,7 @@ namespace de {
 static String const VAR_PACKAGE_VERSION("package.version");
 
 DENG2_PIMPL(PackageLoader)
+, DENG2_OBSERVES(File, Deletion) // loaded package source file is deleted?
 {
     LoadedPackages loaded; ///< Identifiers are unversioned; only one version can be loaded at a time.
     int loadCounter;
@@ -251,6 +252,7 @@ DENG2_PIMPL(PackageLoader)
         loaded.insert(packageId, pkg);
         pkg->setOrder(loadCounter++);
         pkg->didLoad();
+        source.audienceForDeletion() += this;
 
         return *pkg;
     }
@@ -262,10 +264,21 @@ DENG2_PIMPL(PackageLoader)
 
         Package *pkg = found.value();
         pkg->aboutToUnload();
+        if (pkg->sourceFileExists())
+        {
+            pkg->sourceFile().audienceForDeletion() -= this;
+        }
         delete pkg;
-
         loaded.remove(identifier);
         return true;
+    }
+
+    void fileBeingDeleted(const File &file) override
+    {
+        const String pkgId = Package::identifierForFile(file);
+        LOG_RES_WARNING("Unloading package \"%s\": source file has been modified or deleted")
+            << pkgId;
+        unload(pkgId);
     }
 
     void listPackagesInIndex(FileIndex const &index, StringList &list)

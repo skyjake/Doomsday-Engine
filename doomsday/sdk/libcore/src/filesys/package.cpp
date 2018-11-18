@@ -70,9 +70,8 @@ String Package::Asset::absolutePath(String const &name) const
 }
 
 DENG2_PIMPL(Package)
-, DENG2_OBSERVES(File, Deletion)
 {
-    File const *file;
+    SafePtr<const File> file;
     Version version; // version of the loaded package
 
     Impl(Public *i, File const *f)
@@ -81,8 +80,6 @@ DENG2_PIMPL(Package)
     {
         if (file)
         {
-            file->audienceForDeletion() += this;
-
             // Check the file name first, then metadata.
             version = split(versionedIdentifierForFile(*file)).second;
             if (!version.isValid())
@@ -90,11 +87,6 @@ DENG2_PIMPL(Package)
                 version = Version(metadata(*file).gets(VAR_VERSION, String()));
             }
         }
-    }
-
-    void fileBeingDeleted(File const &)
-    {
-        file = 0;
     }
 
     void verifyFile() const
@@ -145,13 +137,18 @@ File const &Package::file() const
 
 File const &Package::sourceFile() const
 {
-    return App::rootFolder().locate<File const>(objectNamespace().gets(PACKAGE_PATH));
+    return FS::locate<const File>(objectNamespace().gets(PACKAGE_PATH));
+}
+
+bool Package::sourceFileExists() const
+{
+    return d->file && FS::tryLocate<const File>(objectNamespace().gets(PACKAGE_PATH));
 }
 
 Folder const &Package::root() const
 {
     d->verifyFile();
-    if (Folder const *f = maybeAs<Folder>(&d->file->target()))
+    if (const Folder *f = maybeAs<Folder>(&d->file->target()))
     {
         return *f;
     }
@@ -161,7 +158,7 @@ Folder const &Package::root() const
 Record &Package::objectNamespace()
 {
     d->verifyFile();
-    return const_cast<File *>(d->file)->objectNamespace();
+    return const_cast<File *>(d->file.get())->objectNamespace();
 }
 
 Record const &Package::objectNamespace() const
