@@ -550,7 +550,6 @@ DENG2_PIMPL(GuiWidget)
 
     void styleChanged(Style &) override
     {
-        qDebug() << thisPublic << self().path() << "observes style change";
         deinitBlur();
         flags |= StyleChanged;
         // updateStyle() will be called during the next update().
@@ -558,7 +557,7 @@ DENG2_PIMPL(GuiWidget)
 
     static float toDevicePixels(double logicalPixels)
     {
-        return float(logicalPixels * DENG2_BASE_GUI_APP->dpiFactor().value());
+        return float(logicalPixels) * DENG2_BASE_GUI_APP->pixelRatio().value();
     }
 };
 

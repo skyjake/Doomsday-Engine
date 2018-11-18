@@ -41,16 +41,16 @@ DENG2_PIMPL(Style)
     ImageBank images;
     const Package *loadedPack;
 
-    const Variable &dpiFactor      = ScriptSystem::get().nativeModule("DisplayMode")["DPI_FACTOR"];
+    const Variable &pixelRatio     = ScriptSystem::get()["DisplayMode"]["PIXEL_RATIO"];
     const Variable &uiTranslucency = Config::get("ui.translucency");
 
     Impl(Public *i)
         : Base(i)
-        , rules(DENG2_BASE_GUI_APP->dpiFactor())
+        , rules(DENG2_BASE_GUI_APP->pixelRatio())
     {
         // The Style is available as a native module.
         App::scriptSystem().addNativeModule("Style", module);
-        dpiFactor.audienceForChange() += this;
+        pixelRatio.audienceForChange() += this;
     }
 
     void clear()
@@ -90,7 +90,7 @@ DENG2_PIMPL(Style)
     {
         if (loadedPack)
         {
-            LOG_MSG("UI style being updated due to DPI factor change");
+            LOG_MSG("UI style being updated due to pixel ratio change");
             self().performUpdate();
         }
     }

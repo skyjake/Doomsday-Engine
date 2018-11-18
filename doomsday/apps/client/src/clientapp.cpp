@@ -547,7 +547,7 @@ ClientApp::ClientApp(int &argc, char **argv)
     // We must presently set the current game manually (the collection is global).
     setGame(games().nullGame());
 
-    d->binder.init(scriptSystem().nativeModule("App"))
+    d->binder.init(scriptSystem()["App"])
             << DENG2_FUNC_NOARG (App_GamePlugin, "gamePlugin")
             << DENG2_FUNC_NOARG (App_Quit,       "quit");
 

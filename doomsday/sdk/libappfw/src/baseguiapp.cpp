@@ -100,13 +100,13 @@ DENG2_PIMPL(BaseGuiApp)
     GLShaderBank shaders;
     WaveformBank waveforms;
     VRConfig vr;
-    float systemDpiFactor = 1.0f; ///< Without user's Config.ui.scaleConfig
-    ConstantRule *dpiFactor = new ConstantRule;
+    float windowPixelRatio = 1.0f; ///< Without user's Config.ui.scaleConfig
+    ConstantRule *pixelRatio = new ConstantRule;
 
     Impl(Public *i) : Base(i)
     {
 #if defined(WIN32)
-        // Use the Direct2D API to find out the desktop DPI factor.
+        // Use the Direct2D API to find out the desktop pixel ratio.
         ID2D1Factory *d2dFactory = nullptr;
         HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
         if (SUCCEEDED(hr))
@@ -114,7 +114,7 @@ DENG2_PIMPL(BaseGuiApp)
             FLOAT dpiX = 96;
             FLOAT dpiY = 96;
             d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-            systemDpiFactor = dpiX / 96.0;
+            windowPixelRatio = dpiX / 96.0;
             d2dFactory->Release();
             d2dFactory = nullptr;
         }
@@ -123,19 +123,19 @@ DENG2_PIMPL(BaseGuiApp)
 
     ~Impl() override
     {
-        releaseRef(dpiFactor);
+        releaseRef(pixelRatio);
     }
 
     void variableValueChanged(Variable &, const Value &) override
     {
-        self().setDpiFactor(systemDpiFactor);
+        self().setPixelRatio(windowPixelRatio);
     }
 };
 
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
     : GuiApp(argc, argv), d(new Impl(this))
 {
-    d->binder.init(scriptSystem().nativeModule("App"))
+    d->binder.init(scriptSystem()["App"])
             << DENG2_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
             << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");
 }
@@ -153,36 +153,38 @@ void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
     GuiApp::initSubsystems(flags);
 
 #if !defined(WIN32)
-    d->systemDpiFactor = float(devicePixelRatio());
+    d->windowPixelRatio = float(devicePixelRatio());
 #endif
-    // The "-dpi" option overrides the detected DPI factor.
+    // The "-dpi" option overrides the detected pixel ratio.
     if (auto dpi = commandLine().check("-dpi", 1))
     {
-        d->systemDpiFactor = dpi.params.at(0).toFloat();
+        d->windowPixelRatio = dpi.params.at(0).toFloat();
     }
-    setDpiFactor(d->systemDpiFactor);
+    setPixelRatio(d->windowPixelRatio);
 
     Config::get("ui.scaleFactor").audienceForChange() += d;
 
     d->uiState.reset(new PersistentState("UIState"));
 }
 
-const Rule &BaseGuiApp::dpiFactor() const
+const Rule &BaseGuiApp::pixelRatio() const
 {
-    return *d->dpiFactor;
+    return *d->pixelRatio;
 }
 
-void BaseGuiApp::setDpiFactor(float dpiFactor)
+void BaseGuiApp::setPixelRatio(float pixelRatio)
 {
-    d->systemDpiFactor = dpiFactor;
+    d->windowPixelRatio = pixelRatio;
 
     // Apply the overall UI scale factor.
-    dpiFactor *= config().getf("ui.scaleFactor", 1.0f);
+    pixelRatio *= config().getf("ui.scaleFactor", 1.0f);
 
-    if (!fequal(d->dpiFactor->value(), dpiFactor))
+    if (!fequal(d->pixelRatio->value(), pixelRatio))
     {
-        d->dpiFactor->set(dpiFactor);
-        scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", Value::Number(dpiFactor));
+        LOG_VERBOSE("Pixel ratio changed to %.1f") << pixelRatio;
+
+        d->pixelRatio->set(pixelRatio);
+        scriptSystem()["DisplayMode"].set("PIXEL_RATIO", Value::Number(pixelRatio));
     }
 }
 

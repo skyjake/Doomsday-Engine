@@ -1,4 +1,4 @@
-/** @file persistentcanvaswindow.h  Canvas window with persistent state.
+/** @file persistentglwindow.h  Canvas window with persistent state.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_PERSISTENTCANVASWINDOW_H
-#define LIBGUI_PERSISTENTCANVASWINDOW_H
+#ifndef LIBGUI_PERSISTENTGLWINDOW_H
+#define LIBGUI_PERSISTENTGLWINDOW_H
 
 #if !defined (DENG_MOBILE)
 
@@ -191,4 +191,4 @@ private:
 
 #endif
 
-#endif // LIBGUI_PERSISTENTCANVASWINDOW_H
+#endif // LIBGUI_PERSISTENTGLWINDOW_H

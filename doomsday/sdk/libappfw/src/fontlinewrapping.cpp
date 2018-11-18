@@ -316,7 +316,7 @@ DENG2_PIMPL_NOREF(FontLineWrapping)
     Lines wrapRange(Rangei const &rangeToWrap, int maxWidth, int subsequentMaxWidth = 0,
                     int initialIndent = 0)
     {
-        int const MIN_LINE_WIDTH = roundi(150.f * DENG2_BASE_GUI_APP->dpiFactor().value());
+        int const MIN_LINE_WIDTH = roundi(150.f * DENG2_BASE_GUI_APP->pixelRatio().value());
         bool const isTabbed = (subsequentMaxWidth > 0);
 
         indent    = initialIndent;

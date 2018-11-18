@@ -52,14 +52,17 @@ public:
 
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
 
-    const Rule &dpiFactor() const;
+    /**
+     * The ratio of pixels per point. For example, this is 2.0 if there are two pixels per point.
+     */
+    const Rule &pixelRatio() const;
 
     /**
-     * Sets a new DPI factor. This replaces the initial automatically detected system DPI factor.
+     * Sets a new pixel ratio. This replaces the initial automatically detected pixel ratio.
      *
-     * @param dpi  DPI factor.
+     * @param pixelRatio  Pixel ratio.
      */
-    void setDpiFactor(float dpiFactor);
+    void setPixelRatio(float pixelRatio);
     
     /**
      * Enters the "native UI" mode that temporarily switches the main window to a

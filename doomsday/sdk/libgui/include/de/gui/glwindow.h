@@ -53,7 +53,7 @@ public:
     typedef Vector2ui Size;
 
     /**
-     * Notified when the canvas's GL state needs to be initialized. The OpenGL
+     * Notified when the window's GL state needs to be initialized. The OpenGL
      * context and drawing surface are not ready before this occurs. This gets
      * called immediately before drawing the contents of the WindowEventHandler for the
      * first time (during a paint event).
@@ -61,12 +61,17 @@ public:
     DENG2_DEFINE_AUDIENCE2(Init, void windowInit(GLWindow &))
 
     /**
-     * Notified when a canvas's size has changed.
+     * Notified when a window size has changed.
      */
     DENG2_DEFINE_AUDIENCE2(Resize, void windowResized(GLWindow &))
 
     /**
-     * Notified when the contents of the canvas have been swapped to the window front
+     * Notified when the window pixel ratio has changed.
+     */
+    DENG2_DEFINE_AUDIENCE2(PixelRatio, void windowPixelRatioChanged(GLWindow &))
+
+    /**
+     * Notified when the contents of the window have been swapped to the window front
      * buffer and are thus visible to the user.
      */
     DENG2_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
@@ -103,7 +108,7 @@ public:
     int height() const = delete;
 
     /**
-     * Returns a render target that renders to this canvas.
+     * Returns a render target that renders to this window.
      *
      * @return GL render target.
      */
@@ -138,7 +143,7 @@ public:
     bool grabToFile(NativePath const &path) const;
 
     /**
-     * Grabs the contents of the canvas framebuffer.
+     * Grabs the contents of the window framebuffer.
      *
      * @param outputSize  If specified, the contents will be scaled to this size before
      *                    the image is returned.
@@ -148,7 +153,7 @@ public:
     QImage grabImage(QSize const &outputSize = QSize()) const;
 
     /**
-     * Grabs a portion of the contents of the canvas framebuffer.
+     * Grabs a portion of the contents of the window framebuffer.
      *
      * @param area        Portion to grab.
      * @param outputSize  If specified, the contents will be scaled to this size before

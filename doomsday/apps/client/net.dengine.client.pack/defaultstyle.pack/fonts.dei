@@ -15,7 +15,7 @@ script {
         fontDir = __file__.fileNamePath() / "fonts"
         fontStyles = ['Regular', 'Bold', 'Italic', 'BoldItalic']
         # Light fonts are a bit too thin for low-res displays.
-        if DisplayMode.DPI_FACTOR > 1
+        if DisplayMode.PIXEL_RATIO > 1
             fontStyles += ['Light', 'LightItalic']
         end
         for style in fontStyles
@@ -81,14 +81,14 @@ group {
 
     font default {
         family: SF UI Text
-        size $: gui.scale('16pt', DisplayMode.DPI_FACTOR)
+        size $: gui.scale('16pt', DisplayMode.PIXEL_RATIO)
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
         family: Menlo
-        size $: gui.scale('12pt', DisplayMode.DPI_FACTOR)
+        size $: gui.scale('12pt', DisplayMode.PIXEL_RATIO)
     }
 }
 
@@ -97,14 +97,14 @@ group {
 
     font default {
         family: Liberation Sans
-        size $: gui.scale("13pt", DisplayMode.DPI_FACTOR)
+        size $: gui.scale("13pt", DisplayMode.PIXEL_RATIO)
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
         family: FreeMono
-        size $: gui.scale("9pt", DisplayMode.DPI_FACTOR)
+        size $: gui.scale("9pt", DisplayMode.PIXEL_RATIO)
     }
 }
 

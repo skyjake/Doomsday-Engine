@@ -213,7 +213,7 @@ DENG2_PIMPL(AutomapWidget)
 {
     AutomapStyle *style = nullptr;
 
-    float dpiFactor = 1.f; // DisplayMode.DPI_FACTOR
+    float pixelRatio = 1.f; // DisplayMode.PIXEL_RATIO
 
     //DGLuint lists[NUM_MAP_OBJECTLISTS];  ///< Each list contains one or more of given type of automap wi.
     bool needBuildLists = false;         ///< @c true= force a rebuild of all lists.
@@ -278,7 +278,7 @@ DENG2_PIMPL(AutomapWidget)
 
         if (ds.nativeModuleExists("DisplayMode"))
         {
-            dpiFactor = ds.nativeModule("DisplayMode").getf("DPI_FACTOR");
+            pixelRatio = ds["DisplayMode"].getf("PIXEL_RATIO");
         }
     }
 
@@ -1386,7 +1386,7 @@ void AutomapWidget::draw(Vector2i const &offset) const
     DGL_Translatef(-viewPoint.x, -viewPoint.y, 0);
 
     const float oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, d->dpiFactor * de::clamp(.5f, cfg.common.automapLineWidth, 8.f));
+    DGL_SetFloat(DGL_LINE_WIDTH, d->pixelRatio * de::clamp(.5f, cfg.common.automapLineWidth, 8.f));
 
     /*#if _DEBUG
     // Draw the rectangle described by the visible bounds.

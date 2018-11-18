@@ -46,7 +46,6 @@ DENG2_PIMPL(GLWindow)
     bool                readyPending  = false;
     bool                readyNotified = false;
     Size                currentSize;
-    Size                pendingSize;
     double              pixelRatio = 0.0;
 
     uint  frameCount = 0;
@@ -192,13 +191,39 @@ DENG2_PIMPL(GLWindow)
         }
     }
 
+    void submitResize(const Size &pixelSize)
+    {
+        qDebug() << "resize event:" << pixelSize.asText();
+        qDebug() << "pixel ratio:" << pixelRatio;
+
+        // Only react if this is actually a resize.
+        if (currentSize != pixelSize)
+        {
+            currentSize = pixelSize;
+
+            if (readyNotified)
+            {
+                self().makeCurrent();
+            }
+
+            DENG2_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
+
+            if (readyNotified)
+            {
+                self().doneCurrent();
+            }
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(Init)
     DENG2_PIMPL_AUDIENCE(Resize)
+    DENG2_PIMPL_AUDIENCE(PixelRatio)
     DENG2_PIMPL_AUDIENCE(Swap)
 };
 
 DENG2_AUDIENCE_METHOD(GLWindow, Init)
 DENG2_AUDIENCE_METHOD(GLWindow, Resize)
+DENG2_AUDIENCE_METHOD(GLWindow, PixelRatio)
 DENG2_AUDIENCE_METHOD(GLWindow, Swap)
 
 GLWindow::GLWindow()
@@ -224,9 +249,10 @@ GLWindow::GLWindow()
         if (!fequal(d->pixelRatio, scr->devicePixelRatio()))
         {
             d->pixelRatio = scr->devicePixelRatio();
-            DENG2_FOR_AUDIENCE2(Resize, i)
+            d->submitResize(pointSize() * d->pixelRatio);
+            DENG2_FOR_AUDIENCE2(PixelRatio, i)
             {
-                i->windowResized(*this);
+                i->windowPixelRatioChanged(*this);
             }
         }
     });
@@ -524,28 +550,7 @@ void GLWindow::windowAboutToClose()
 
 void GLWindow::resizeEvent(QResizeEvent *ev)
 {
-    d->pendingSize = Size(ev->size().width(), ev->size().height()) * devicePixelRatio();
-
-    qDebug() << "resize event:" << d->pendingSize.asText();
-    qDebug() << "pixel ratio:" << devicePixelRatio();
-
-    // Only react if this is actually a resize.
-    if (d->currentSize != d->pendingSize)
-    {
-        d->currentSize = d->pendingSize;
-
-        if (d->readyNotified)
-        {
-            makeCurrent();
-        }
-
-        DENG2_FOR_AUDIENCE2(Resize, i) i->windowResized(*this);
-
-        if (d->readyNotified)
-        {
-            doneCurrent();
-        }
-    }
+    d->submitResize(Size(ev->size().width(), ev->size().height()) * devicePixelRatio());
 }
 
 void GLWindow::frameWasSwapped()
