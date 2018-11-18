@@ -436,20 +436,6 @@ dfloat Rend_FieldOfView()
     }
     else
     {
-        auto const viewRect = R_Console3DViewRect(displayPlayer);
-
-        // Correction is applied for wide screens so that when the FOV is kept
-        // at a certain value (e.g., the default FOV), a 16:9 view has a wider angle
-        // than a 4:3, but not just scaled linearly since that would go too far
-        // into the fish eye territory.
-        dfloat widescreenCorrection = dfloat(viewRect.width()) / dfloat(viewRect.height()) / (4.f / 3.f);
-        if (widescreenCorrection < 1.5f)  // up to ~16:9
-        {
-            widescreenCorrection = (1 + 2 * widescreenCorrection) / 3;
-            return de::clamp(1.f, widescreenCorrection * fieldOfView, 179.f);
-        }
-        // This is an unusually wide (perhaps multimonitor) setup, so just use the
-        // configured FOV as is.
         return de::clamp(1.f, fieldOfView, 179.f);
     }
 }
@@ -569,7 +555,8 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_LoadMatrix(Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
+    DGL_LoadMatrix(
+        Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
 }
 
 Matrix4f Rend_GetProjectionMatrix()
@@ -579,12 +566,11 @@ Matrix4f Rend_GetProjectionMatrix()
         return fixedView->projectionMatrix;
     }
 
-    dfloat const fov = Rend_FieldOfView();
-    //Vector2f const size(viewpw, viewph);
-    Vector2f const size = R_Console3DViewRect(displayPlayer).size();
+    const dfloat fov = Rend_FieldOfView();
+    const Vector2f size = R_Console3DViewRect(displayPlayer).size();
     yfov = vrCfg().verticalFieldOfView(fov, size);
-    Rangef const clip = GL_DepthClipRange();
-    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, clip.start, clip.end) *
+    const Rangef clip = GL_DepthClipRange();
+    return vrCfg().projectionMatrix(fov, size, clip.start, clip.end) *
            Matrix4f::scale(Vector3f(1, 1, -1));
 }
 
