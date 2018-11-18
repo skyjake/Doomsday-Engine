@@ -36,9 +36,11 @@ DENG2_PIMPL(VRWindowTransform)
     GLTextureFramebuffer unwarpedFB;
 
     // Row-interleaved drawing:
+    GLTextureFramebuffer rowInterLeftFB;
     GLTextureFramebuffer rowInterRightFB;
     Drawable             rowInterDrawable;
     GLUniform            rowInterUniformTex { "uTex", GLUniform::Sampler2D };
+    GLUniform            rowInterUniformTex2 { "uTex2", GLUniform::Sampler2D };
     bool                 rowInterNeedRelease = true;
 
     Impl(Public *i)
@@ -49,6 +51,7 @@ DENG2_PIMPL(VRWindowTransform)
     ~Impl()
     {
         vrCfg.oculusRift().deinit();
+        rowInterLeftFB.glDeinit();
         rowInterRightFB.glDeinit();
     }
 
@@ -151,21 +154,24 @@ DENG2_PIMPL(VRWindowTransform)
         typedef GLBufferT<Vertex2Tex> VBuf;
         VBuf *buf = new VBuf;
         rowInterDrawable.addBuffer(buf);
-        rowInterDrawable.program().build(// Vertex shader:
-                                          Block("attribute highp vec4 aVertex; "
-                                                "attribute highp vec2 aUV; "
-                                                "varying highp vec2 vUV; "
-                                                "void main(void) {"
-                                                "gl_Position = aVertex; "
-                                                "vUV = aUV; }"),
-                                          // Fragment shader:
-                                          Block("uniform sampler2D uTex; "
-                                                "varying highp vec2 vUV; "
-                                                "void main(void) { "
-                                                "if(int(mod(gl_FragCoord.y - 1023.5, 2.0)) != 1) { discard; }\n"
-                                                "gl_FragColor = texture2D(uTex, vUV); }"))
-                << rowInterUniformTex;
-        buf->setVertices(gl::TriangleStrip,
+        rowInterDrawable.program().build( // Vertex shader:
+            Block("in highp vec4 aVertex; "
+                  "in highp vec2 aUV; "
+                  "out highp vec2 vUV; "
+                  "void main(void) {"
+                  "gl_Position = aVertex; "
+                  "vUV = aUV; }"),
+            // Fragment shader:
+            Block("uniform sampler2D uTex; "
+                  "uniform sampler2D uTex2; "
+                  "in highp vec2 vUV; "
+                  "void main(void) { "
+                  //"if (int(mod(gl_FragCoord.y - 1023.5, 2.0)) != 1) { discard; }\n"
+                  //"if ((int(gl_FragCoord.y) & 1) == 0) { discard; }"
+                  "out_FragColor = ((int(gl_FragCoord.y) & 1) == 0 ? texture(uTex, vUV) :"
+                  "texture(uTex2, vUV)); }"))
+            << rowInterUniformTex << rowInterUniformTex2;
+         buf->setVertices(gl::TriangleStrip,
                          VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),
                          gl::Static);
     }
@@ -299,12 +305,21 @@ DENG2_PIMPL(VRWindowTransform)
             ulCorner = self().window().mapToGlobal(ulCorner); // widget to screen coordinates
             bool const rowParityIsEven = ((int(ulCorner.y()) % 2) == 0);
 
-            // Draw left eye view directly to the screen
+            rowInterNeedRelease = false;
+
+            // Draw the left eye view.
+            rowInterLeftFB.glInit();
+            rowInterLeftFB.resize(GLFramebuffer::Size(width(), height()));
+            rowInterLeftFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            rowInterLeftFB.colorTexture().glApplyParameters();
+            GLState::push()
+                    .setTarget(rowInterLeftFB)
+                    .setViewport(Rectangleui::fromSize(rowInterLeftFB.size()));
             vrCfg.setCurrentEye(rowParityIsEven? VRConfig::LeftEye : VRConfig::RightEye);
             drawContent();
+            GLState::pop();
 
-            // Draw right eye view to FBO
-            rowInterNeedRelease = false;
+            // Draw right the eye view.
             rowInterRightFB.glInit();
             rowInterRightFB.resize(GLFramebuffer::Size(width(), height()));
             rowInterRightFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
@@ -318,7 +333,8 @@ DENG2_PIMPL(VRWindowTransform)
 
             // Draw right eye view to the screen from FBO color texture
             vrInitRowInterleaved();
-            rowInterUniformTex = rowInterRightFB.colorTexture();
+            rowInterUniformTex  = rowInterLeftFB.colorTexture();
+            rowInterUniformTex2 = rowInterRightFB.colorTexture();
             rowInterDrawable.draw();
 #endif
             break;
