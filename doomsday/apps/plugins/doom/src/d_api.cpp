@@ -223,7 +223,7 @@ static int G_RegisterGames(int hookType, int param, void *data)
                                 Game::DEF_TAGS, "doom2 bfg",
                                 Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                                 Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
-                                Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2.mapinfo"));
+                                Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/doom2-bfg.mapinfo"));
         d2Bfg.addRequiredPackage("com.idsoftware.doom2.bfg");
         setCommonParameters(d2Bfg);
         d2Bfg.addResource(RC_DEFINITION, 0, "doom2.ded", 0);
