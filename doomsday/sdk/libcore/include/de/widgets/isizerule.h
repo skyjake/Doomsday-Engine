@@ -36,6 +36,27 @@ public:
     virtual Rule const &height() const = 0;
 };
 
+/**
+ * Pair of rules that implements the ISizeRule interface.
+ * @ingroup widgets
+ */
+struct DENG2_PUBLIC RulePair
+    : public std::pair<const Rule &, const Rule &>
+    , public ISizeRule {
+    RulePair(const Rule &a, const Rule &b)
+        : std::pair<const Rule &, const Rule &>(a, b)
+    {}
+    // Implements ISizeRule.
+    const Rule &width() const override
+    {
+        return first;
+    }
+    const Rule &height() const override
+    {
+        return second;
+    }
+};
+
 } // namespace de
 
 #endif // LIBDENG2_ISIZERULE_H

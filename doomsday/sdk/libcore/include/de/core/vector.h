@@ -157,7 +157,13 @@ public:
     Vector2 operator - () const {
         return Vector2(-x, -y);
     }
-    Vector2 operator * (ddouble scalar) const {
+    Vector2 operator * (int scalar) const {
+        return Vector2(Type(x * scalar), Type(y * scalar));
+    }
+    Vector2 operator * (float scalar) const {
+        return Vector2(Type(x * scalar), Type(y * scalar));
+    }
+    Vector2 operator * (double scalar) const {
         return Vector2(Type(x * scalar), Type(y * scalar));
     }
     Vector2 operator * (Vector2 const &other) const {
