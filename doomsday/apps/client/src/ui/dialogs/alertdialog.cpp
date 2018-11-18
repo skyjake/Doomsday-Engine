@@ -105,7 +105,7 @@ DENG_GUI_PIMPL(AlertDialog)
         notification->setBehavior(Focusable, false);
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
-        notification->setOverrideImageSize(style().fonts().font("default").height().value());
+        notification->setOverrideImageSize(style().fonts().font("default").height());
         notification->setOpener([this] (PopupWidget *) {
             self().showListOfAlerts();
         });
@@ -208,7 +208,7 @@ DENG_GUI_PIMPL(AlertDialog)
         label.setAppearanceAnimation(LabelWidget::AppearGrowVertically, 0.5);
         label.setAlignment(ui::AlignBottom);
         label.setImage(style().images().image("alert"));
-        label.setOverrideImageSize(style().fonts().font("default").height().value());
+        label.setOverrideImageSize(style().fonts().font("default").height());
         label.setImageAlignment(ui::AlignTop);
         label.setTextAlignment(ui::AlignRight);
         label.margins()

@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         exampleAlert.reset(new LabelWidget);
         exampleAlert->setSizePolicy(ui::Expand, ui::Expand);
         exampleAlert->setImage(style().images().image("alert"));
-        exampleAlert->setOverrideImageSize(style().fonts().font("default").height().value());
+        exampleAlert->setOverrideImageSize(style().fonts().font("default").height());
         exampleAlert->setImageColor(style().colors().colorf("accent"));
 
         // Highlight rectangle.

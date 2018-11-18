@@ -339,7 +339,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     if (d->windowButton)
     {
         d->windowButton->setImage(style().images().image("window.icon"));
-        d->windowButton->setOverrideImageSize(style().fonts().font("default").height().valuei());
+        d->windowButton->setOverrideImageSize(style().fonts().font("default").height());
         d->windowButton->setAction(new SignalAction(this, SLOT(showWindowMenu())));
     }
 

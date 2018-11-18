@@ -33,7 +33,7 @@ ClientRootWidget::ClientRootWidget(GLWindow *window)
     : GuiRootWidget(window)
     , d(new Impl)
 {
-    d->packageIconBank.setDisplaySize(GuiWidget::toDevicePixels(PackageIconBank::Size(32, 32)));
+    d->packageIconBank.setDisplaySize(GuiWidget::pointsToPixels(PackageIconBank::Size(32, 32)));
 }
 
 ClientWindow &ClientRootWidget::window()

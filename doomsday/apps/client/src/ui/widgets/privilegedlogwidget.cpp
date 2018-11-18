@@ -45,7 +45,7 @@ DENG_GUI_PIMPL(PrivilegedLogWidget)
 
     void updateStyle()
     {
-        closeButton->setImageScale(toDevicePixels(.25f));
+        closeButton->setImageScale(.25f);
         closeButton->setImage(style().images().image("close.ringless"));
         closeButton->setImageColor(style().colors().colorf("altaccent"));
     }

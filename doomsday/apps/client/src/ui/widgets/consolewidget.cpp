@@ -305,7 +305,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Impl(this))
     d->button = new PopupButtonWidget;
     d->button->setSizePolicy(ui::Expand, ui::Expand);
     d->button->setImage(style().images().image("log"));
-    d->button->setOverrideImageSize(style().fonts().font("default").height().valuei());
+    d->button->setOverrideImageSize(style().fonts().font("default").height());
     d->buttons->add(d->button);
 
     d->button->rule()

@@ -99,7 +99,7 @@ DENG2_PIMPL(MainWindow)
                 .setInput(Rule::Right,  root.viewRule().midX())
                 .setInput(Rule::Top,    root.viewRule().top())
                 .setInput(Rule::Width,  root.viewRule().width()/3)
-                .setInput(Rule::Height, Const(label->toDevicePixels(300)));
+                .setInput(Rule::Height, Const(GuiWidget::pointsToPixels(300)));
         compositor->add(label);
 
         LabelWidget *label2 = new LabelWidget;

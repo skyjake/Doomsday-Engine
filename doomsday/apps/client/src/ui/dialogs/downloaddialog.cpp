@@ -51,7 +51,7 @@ DENG_GUI_PIMPL(DownloadDialog)
 
     void updateStyle()
     {
-        progress->setImageScale(toDevicePixels(.4f));
+        progress->setImageScale(.4f); //pointsToPixels(.4f));
     }
 };
 

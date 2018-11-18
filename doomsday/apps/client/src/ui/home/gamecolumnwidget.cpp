@@ -134,7 +134,7 @@ DENG_GUI_PIMPL(GameColumnWidget)
         newProfileButton->audienceForStateChange() += this;
         newProfileButton->setText(tr("New Profile..."));
         newProfileButton->setStyleImage("create");
-        newProfileButton->setOverrideImageSize(style().fonts().font("default").height().value() * 1.5f);
+        newProfileButton->setOverrideImageSize(style().fonts().font("default").height() * 1.5f);
         newProfileButton->set(Background());
         newProfileButton->setSizePolicy(ui::Filled, ui::Expand);
         newProfileButton->setTextAlignment(ui::AlignRight);

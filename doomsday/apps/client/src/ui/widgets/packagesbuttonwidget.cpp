@@ -95,7 +95,7 @@ DENG_GUI_PIMPL(PackagesButtonWidget)
 PackagesButtonWidget::PackagesButtonWidget()
     : d(new Impl(this))
 {
-    setOverrideImageSize(style().fonts().font("default").height().value());
+    setOverrideImageSize(style().fonts().font("default").height());
     setSizePolicy(ui::Expand, ui::Expand);
     setTextAlignment(ui::AlignLeft);
     connect(this, &ButtonWidget::pressed, [this] () { d->pressed(); });

@@ -52,10 +52,10 @@ DENG_GUI_PIMPL(ColumnWidget)
         bool update() override
         {
             StyleProceduralImage::update();
-            Size const newSize = owner().rule().size();
-            if (newSize != size())
+            const Size newPtSize = GuiWidget::pixelsToPoints(owner().rule().size());
+            if (newPtSize != pointSize())
             {
-                setSize(newSize);
+                setPointSize(newPtSize);
                 return true;
             }
             bool update = !colorAnim.done() || needUpdate;
@@ -78,7 +78,7 @@ DENG_GUI_PIMPL(ColumnWidget)
                                Rectanglef(uv.topLeft + norm.topLeft     * uv.size(),
                                           uv.topLeft + norm.bottomRight * uv.size()));
 
-                int const edgeWidth = GuiWidget::toDevicePixels(1);
+                int const edgeWidth = GuiWidget::pointsToPixels(1);
                 auto const edgeUv = owner().root().atlas().imageRectf(owner().root().solidWhitePixel());
                 verts.makeQuad(Rectanglef(rect.left(), rect.top(),
                                           edgeWidth, rect.height()),
