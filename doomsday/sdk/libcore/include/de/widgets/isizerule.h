@@ -41,19 +41,21 @@ public:
  * @ingroup widgets
  */
 struct DENG2_PUBLIC RulePair
-    : public std::pair<const Rule &, const Rule &>
+    : public std::pair<const Rule *, const Rule *>
     , public ISizeRule {
     RulePair(const Rule &a, const Rule &b)
-        : std::pair<const Rule &, const Rule &>(a, b)
+        : std::pair<const Rule *, const Rule *>(&a, &b)
     {}
     // Implements ISizeRule.
     const Rule &width() const override
     {
-        return first;
+        DENG2_ASSERT(first);
+        return *first;
     }
     const Rule &height() const override
     {
-        return second;
+        DENG2_ASSERT(second);
+        return *second;
     }
 };
 
