@@ -758,7 +758,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
             ArrayValue *old = new ArrayValue;
             *old << NumberValue(oldVer.major) << NumberValue(oldVer.minor)
                  << NumberValue(oldVer.patch) << NumberValue(oldVer.build);
-            d->scriptSys.nativeModule("Version").addArray("OLD_VERSION", old).setReadOnly();
+            d->scriptSys["Version"].addArray("OLD_VERSION", old).setReadOnly();
         }
     }
 

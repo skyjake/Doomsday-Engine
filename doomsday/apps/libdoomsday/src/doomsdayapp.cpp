@@ -116,7 +116,7 @@ DENG2_PIMPL(DoomsdayApp)
         {
             ArrayValue args;
             args << DictionaryValue() << TextValue(newGame.id());
-            App::scriptSystem().nativeModule("App")["audienceForGameChange"]
+            App::scriptSystem()["App"]["audienceForGameChange"]
                     .array().callElements(args);
         }
     };
@@ -128,7 +128,7 @@ DENG2_PIMPL(DoomsdayApp)
         , players(playerConstructor)
     {
         // Script bindings.
-        Record &appModule = App::scriptSystem().nativeModule("App");
+        Record &appModule = App::scriptSystem()["App"];
         appModule.addArray("audienceForGameChange"); // game change observers
         audienceForGameChange += scriptAudienceForGameChange;
 

@@ -132,7 +132,7 @@ int DS_Init(void)
                     << speakerModeText(drv.speakerMode)
                     << drv.speakerModeChannels;
         }
-        ScriptSystem::get().nativeModule("Audio")["outputs"].value<DictionaryValue>()
+        ScriptSystem::get()["Audio"]["outputs"].value<DictionaryValue>()
                 .add(new TextValue("fmod"), names.release());
     }
 

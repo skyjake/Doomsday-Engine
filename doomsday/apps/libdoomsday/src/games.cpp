@@ -62,7 +62,7 @@ DENG2_PIMPL(Games)
         {
             ArrayValue args;
             args << DictionaryValue() << TextValue(game.id());
-            App::scriptSystem().nativeModule("App")["audienceForGameAddition"]
+            App::scriptSystem()["App"]["audienceForGameAddition"]
                     .array().callElements(args);
         }
     };
@@ -78,7 +78,7 @@ DENG2_PIMPL(Games)
         nullGame = new NullGame;
 
         // Extend the native App module with a script audience for observing game addition.
-        App::scriptSystem().nativeModule("App").addArray("audienceForGameAddition");
+        App::scriptSystem()["App"].addArray("audienceForGameAddition");
 
         audienceForAddition += scriptAudienceForGameAddition;
     }

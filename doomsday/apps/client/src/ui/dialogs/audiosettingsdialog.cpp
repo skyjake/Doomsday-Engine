@@ -206,7 +206,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
         audioOutput->items().clear();
 
         const auto &outputs =
-            ScriptSystem::get().nativeModule("Audio")["outputs"].value<DictionaryValue>();
+            ScriptSystem::get()["Audio"]["outputs"].value<DictionaryValue>();
 
         /// @todo Currently only FMOD has outputs.
         const TextValue key("fmod");

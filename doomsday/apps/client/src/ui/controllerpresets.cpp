@@ -44,7 +44,7 @@ DENG2_PIMPL_NOREF(ControllerPresets)
     int deviceId = 0;
 
     Impl()
-        : inputModule(App::scriptSystem().nativeModule("Input"))
+        : inputModule(App::scriptSystem()["Input"])
     {
         inputModule.addDictionary(VAR_CONTROLLER_PRESETS);
         DoomsdayApp::app().audienceForGameChange() += this;
