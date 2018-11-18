@@ -358,8 +358,8 @@ public:
         Type const halfHeight = halfWidth / aspectRatio;
         Type const depth      = farDistance - nearDistance;
         Matrix4 m(Zero);
-        m.at(0, 0) = Type(1) / halfWidth;
-        m.at(1, 1) = Type(1) / halfHeight;
+        m.at(0, 0) = Type(2 * nearDistance) / halfWidth;
+        m.at(1, 1) = Type(2 * nearDistance) / halfHeight;
         m.at(2, 2) = -(farDistance + nearDistance) / depth;
         m.at(2, 3) = -Type(1);
         m.at(3, 2) = -Type(2) * farDistance * nearDistance / depth;

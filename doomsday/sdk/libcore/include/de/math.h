@@ -177,12 +177,12 @@ inline bool fequal(ddouble a, ddouble b, ddouble precision) {
 
 template <typename Type>
 inline Type degreeToRadian(Type degree) {
-    return degree / Type(180) * PI;
+    return degree * PI / Type(180);
 }
 
 template <typename Type>
 inline Type radianToDegree(Type radian) {
-    return radian / PI * Type(180);
+    return radian * Type(180) / PI;
 }
 
 /// General comparison function.
