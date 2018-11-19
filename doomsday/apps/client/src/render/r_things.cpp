@@ -191,6 +191,7 @@ void R_ProjectSprite(mobj_t &mob)
         mf = Mobj_ModelDef(mob, &nextmf, &interp);
         if(mf)
         {
+            DENG2_ASSERT(mf->select == (mob.selector & DDMOBJ_SELECTOR_MASK))
             // Use a sprite if the object is beyond the maximum model distance.
             if(maxModelDistance && !(mf->flags & MFF_NO_DISTANCE_CHECK)
                && distFromEye > maxModelDistance)
