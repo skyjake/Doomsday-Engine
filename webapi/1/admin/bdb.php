@@ -93,6 +93,24 @@ function remove_file($db, $file_id)
     db_query($db, "DELETE FROM ".DB_TABLE_FILES." WHERE id=$file_id");
 }
 
+function remove_build($build)
+{
+    $db = db_open();
+    $file_paths = [];
+    foreach (db_build_list_files($db, $build) as $file_id) {
+        $file_paths[] = db_file_path($db, $file_id);
+    }
+    db_query($db, "DELETE FROM ".DB_TABLE_BUILDS." WHERE build=$build");
+    db_query($db, "DELETE FROM ".DB_TABLE_FILES ." WHERE build=$build");
+    $db->close();
+
+    // Remove the build files.
+    foreach ($file_paths as $path) {
+        echo("Deleting: $path\n");
+        unlink($path);
+    }
+}
+
 function purge_old_builds()
 {
     $expire_ts = time() - 4 * 7 * 24 * 60 * 60;
@@ -212,6 +230,10 @@ else if ($op == 'init')
 else if ($op == 'add_build')
 {
     add_build(file_get_contents("php://stdin"));
+}
+else if ($op == 'remove_build')
+{
+    remove_build((int) $argv[2]);
 }
 else if ($op == 'add_file')
 {
