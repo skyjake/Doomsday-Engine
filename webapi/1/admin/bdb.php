@@ -95,7 +95,7 @@ function remove_file($db, $file_id)
 
 function purge_old_builds()
 {
-    $expire_ts = time() - 60 * 24 * 60 * 60;
+    $expire_ts = time() - 4 * 7 * 24 * 60 * 60;
 
     // If there is a small number of recent builds, don't purge at all.
     $db = db_open();        
