@@ -77,3 +77,4 @@ Music { ID = "map29"; Lump = "D_SHAWN3"; }
 Music { ID = "map30"; Lump = "D_OPENIN"; }
 Music { ID = "map31"; Lump = "D_EVIL";   }
 Music { ID = "map32"; Lump = "D_ULTIMA"; }
+Music { ID = "map33"; Lump = "D_READ_M"; }
