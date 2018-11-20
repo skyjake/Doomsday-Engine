@@ -706,21 +706,6 @@ Text {
 }
 
 Text {
-ID = "HUSTR_31B";
-Text = "Map 31: IDKFA";
-}
-
-Text {
-ID = "HUSTR_32B";
-Text = "Map 32: Keen";
-}
-
-Text {
-ID = "HUSTR_33";
-Text = "Map 33: Betray";
-}
-
-Text {
   ID = "PHUSTR_1";
   Text = "Map 1: Congo";
 }
@@ -2046,4 +2031,19 @@ Text {
 Text {
   ID = "REBORNLOAD_CONFIRM";
   Text = "Load save game\n\n'%s'?";
+}
+
+Text {
+  ID = "HUSTR_31B";
+  Text = "Map 31: IDKFA";
+}
+
+Text {
+  ID = "HUSTR_32B";
+  Text = "Map 32: Keen";
+}
+
+Text {
+  ID = "HUSTR_33";
+  Text = "Map 33: Betray";
 }
