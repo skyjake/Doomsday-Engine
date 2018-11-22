@@ -28,10 +28,18 @@ namespace de {
 
 DENG2_PIMPL_NOREF(Address)
 {
-    QHostAddress host;
-    duint16 port;
+    std::shared_ptr<QHostAddress> host;
+    duint16                       port = 0;
+    String                        textRepr;
 
-    Impl() : port(0) {}
+    enum Special { Undefined, LocalHost, RemoteHost };
+    Special special = Undefined;
+
+    void clearCached()
+    {
+        textRepr.clear();
+        special = Impl::Undefined;
+    }
 };
 
 Address::Address() : d(new Impl)
@@ -43,62 +51,69 @@ Address::Address(char const *address, duint16 port) : d(new Impl)
 
     if (QLatin1String(address) == "localhost") // special case
     {
-        d->host = QHostAddress(QHostAddress::LocalHostIPv6);
+        d->host.reset(new QHostAddress(QHostAddress::LocalHostIPv6));
+        d->special = Impl::LocalHost;
     }
     else
     {
-        d->host = QHostAddress(QHostAddress(address).toIPv6Address());
+        d->host.reset(new QHostAddress(QHostAddress(address).toIPv6Address()));
     }
 }
 
 Address::Address(QHostAddress const &host, duint16 port) : d(new Impl)
 {
-    d->host = QHostAddress(host.toIPv6Address());
+    d->host.reset(new QHostAddress(host.toIPv6Address()));
     d->port = port;
 }
 
-Address::Address(Address const &other) : LogEntry::Arg::Base(), d(new Impl)
-{
-    d->host = other.d->host;
-    d->port = other.d->port;
-}
+Address::Address(Address const &other)
+    : d(new Impl(*other.d))
+{}
 
-Address &Address::operator = (Address const &other)
+Address &Address::operator=(Address const &other)
 {
-    d->host = other.d->host;
-    d->port = other.d->port;
+    d->host     = other.d->host;
+    d->port     = other.d->port;
+    d->textRepr = other.d->textRepr;
+    d->special  = other.d->special;
     return *this;
 }
 
-bool Address::operator < (Address const &other) const
+bool Address::operator<(Address const &other) const
 {
     return asText() < other.asText();
 }
 
-bool Address::operator == (Address const &other) const
+bool Address::operator==(Address const &other) const
 {
-    if (d->port != other.d->port) return false;
-    return (isLocal() && other.isLocal()) || (d->host == other.d->host);
+//    if (d->port != other.d->port) return false;
+//    return (isLocal() && other.isLocal()) || (d->host == other.d->host);
+    return asText() == other.asText();
 }
 
 bool Address::isNull() const
 {
-    return d->host.isNull();
+    return d->host->isNull();
 }
 
 QHostAddress const &Address::host() const
 {
-    return d->host;
+    return *d->host;
 }
 
 void Address::setHost(QHostAddress const &host)
 {
-    d->host = QHostAddress(host.toIPv6Address());
+    d->clearCached();
+    d->host.reset(new QHostAddress(host.toIPv6Address()));
 }
 
 bool Address::isLocal() const
 {
-    return isHostLocal(d->host);
+    if (d->special == Impl::Undefined)
+    {
+        d->special = isHostLocal(*d->host) ? Impl::LocalHost : Impl::RemoteHost;
+    }
+    return (d->special == Impl::LocalHost);
 }
 
 duint16 Address::port() const
@@ -108,22 +123,26 @@ duint16 Address::port() const
 
 void Address::setPort(duint16 p)
 {
+    d->clearCached();
     d->port = p;
 }
 
 bool Address::matches(Address const &other, duint32 mask)
 {
-    return (d->host.toIPv4Address() & mask) == (other.d->host.toIPv4Address() & mask);
+    return (d->host->toIPv4Address() & mask) == (other.d->host->toIPv4Address() & mask);
 }
 
 String Address::asText() const
 {
-    String result = (isLocal()? String("localhost") : d->host.toString());
-    if (d->port)
+    if (!d->textRepr)
     {
-        result += ":" + QString::number(d->port);
+        d->textRepr = (isLocal()? String("localhost") : d->host->toString());
+        if (d->port)
+        {
+            d->textRepr += ":" + QString::number(d->port);
+        }
     }
-    return result;
+    return d->textRepr;
 }
 
 Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPort) // static
@@ -160,7 +179,7 @@ Address Address::parse(String const &addressWithOptionalPort, duint16 defaultPor
     return Address(str.toLatin1(), port);
 }
 
-QTextStream &operator << (QTextStream &os, Address const &address)
+QTextStream &operator<<(QTextStream &os, Address const &address)
 {
     os << address.asText();
     return os;

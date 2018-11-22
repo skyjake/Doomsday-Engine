@@ -41,140 +41,152 @@ static String const VAR_PLAYER_COUNT            ("pnum");
 static String const VAR_MAX_PLAYERS             ("pmax");
 static String const VAR_FLAGS                   ("flags");
 
-void checkValid(ServerInfo &info)
+DENG2_PIMPL(ServerInfo)
 {
-    if (!info.has(VAR_PLAYERS)) info.addArray(VAR_PLAYERS);
-    if (info.has(VAR_HOST))
+    std::shared_ptr<Record> info;
+
+    Impl(Public *i) : Base(i)
+    {}
+
+    void detach()
     {
-        if (info.address().port() != info.port())
+        if (info.use_count() > 1)
         {
-            info.setAddress(Address(info.address().host(), info.port()));
+            // Duplicate our own copy of it.
+            info.reset(new Record(*info));
+            DENG2_ASSERT(info.use_count() == 1);
         }
     }
-}
+
+    void checkValid()
+    {
+        if (!info->has(VAR_PLAYERS)) info->addArray(VAR_PLAYERS);
+        if (info->has(VAR_HOST))
+        {
+            if (self().address().port() != self().port())
+            {
+                self().setAddress(Address(self().address().host(), self().port()));
+            }
+        }
+    }
+};
 
 ServerInfo::ServerInfo()
+    : d(new Impl(this))
 {
-    set(VAR_VERSION, Version::currentBuild().fullNumber());
-    addArray(VAR_PLAYERS);
+    d->info.reset(new Record);
+    d->info->set(VAR_VERSION, Version::currentBuild().fullNumber());
+    d->info->addArray(VAR_PLAYERS);
 }
 
 ServerInfo::ServerInfo(ServerInfo const &other)
-    : Record(other)
+    : d(new Impl(this))
 {
-    checkValid(*this);
+    d->info = other.d->info;
 }
 
 ServerInfo::ServerInfo(Record const &rec)
-    : Record(rec)
+    : d(new Impl(this))
 {
-    checkValid(*this);
+    d->info.reset(new Record(rec));
+    d->checkValid();
 }
 
-ServerInfo::ServerInfo(ServerInfo &&moved)
-    : Record(std::move(moved))
+ServerInfo &ServerInfo::operator=(ServerInfo const &other)
 {
-    checkValid(*this);
-}
-
-ServerInfo &ServerInfo::operator = (ServerInfo const &other)
-{
-    Record::operator = (other);
-    checkValid(*this);
-    return *this;
-}
-
-ServerInfo &ServerInfo::operator = (ServerInfo &&moved)
-{
-    Record::operator = (moved);
-    checkValid(*this);
+    d->info = other.d->info;
     return *this;
 }
 
 Version ServerInfo::version() const
 {
-    return Version(gets(VAR_VERSION));
+    return Version(d->info->gets(VAR_VERSION));
 }
 
 int ServerInfo::compatibilityVersion() const
 {
-    return geti(VAR_COMPATIBILITY_VERSION);
+    return d->info->geti(VAR_COMPATIBILITY_VERSION);
 }
 
 ServerInfo &ServerInfo::setCompatibilityVersion(int compatVersion)
 {
-    set(VAR_COMPATIBILITY_VERSION, compatVersion);
+    d->info->set(VAR_COMPATIBILITY_VERSION, compatVersion);
     return *this;
 }
 
 Address ServerInfo::address() const
 {
-    if (has(VAR_HOST))
+    if (d->info->has(VAR_HOST))
     {
-        return Address::parse(gets(VAR_HOST));
+        return Address::parse(d->info->gets(VAR_HOST));
     }
     return Address();
 }
 
 String ServerInfo::domainName() const
 {
-    return gets(VAR_DOMAIN, "");
+    return d->info->gets(VAR_DOMAIN, "");
 }
 
 ServerInfo &ServerInfo::setAddress(Address const &address)
 {
-    set(VAR_HOST, address.asText());
-    set(VAR_PORT, address.port()? address.port() : shell::DEFAULT_PORT);
-    checkValid(*this);
+    d->detach();
+    d->info->set(VAR_HOST, address.asText());
+    d->info->set(VAR_PORT, address.port() ? address.port() : shell::DEFAULT_PORT);
+    d->checkValid();
     return *this;
 }
 
 duint16 ServerInfo::port() const
 {
-    return duint16(geti(VAR_PORT, shell::DEFAULT_PORT));
+    return duint16(d->info->geti(VAR_PORT, shell::DEFAULT_PORT));
 }
 
 String ServerInfo::name() const
 {
-    return gets(VAR_NAME, "");
+    return d->info->gets(VAR_NAME, "");
 }
 
 ServerInfo &ServerInfo::setName(String const &name)
 {
-    set(VAR_NAME, name);
+    d->detach();
+    d->info->set(VAR_NAME, name);
     return *this;
 }
 
 String ServerInfo::description() const
 {
-    return gets(VAR_DESCRIPTION, "");
+    return d->info->gets(VAR_DESCRIPTION, "");
 }
 
 ServerInfo &ServerInfo::setDescription(const String &description)
 {
-    set(VAR_DESCRIPTION, description);
+    d->detach();
+    d->info->set(VAR_DESCRIPTION, description);
     return *this;
 }
 
 String ServerInfo::pluginDescription() const
 {
-    return gets(VAR_PLUGIN, "");
+    return d->info->gets(VAR_PLUGIN, "");
 }
 
 ServerInfo &ServerInfo::setPluginDescription(String const &pluginDescription)
 {
-    set(VAR_PLUGIN, pluginDescription);
+    d->detach();
+    d->info->set(VAR_PLUGIN, pluginDescription);
     return *this;
 }
 
 StringList ServerInfo::packages() const
 {
-    return getStringList(VAR_PACKAGES);
+    return d->info->getStringList(VAR_PACKAGES);
 }
 
 ServerInfo &ServerInfo::setPackages(StringList packages)
 {
-    ArrayValue &pkgs = addArray(VAR_PACKAGES).value<ArrayValue>();
+    d->detach();
+    ArrayValue &pkgs = d->info->addArray(VAR_PACKAGES).value<ArrayValue>();
     for (String const &p : packages)
     {
         pkgs << TextValue(p);
@@ -184,64 +196,69 @@ ServerInfo &ServerInfo::setPackages(StringList packages)
 
 String ServerInfo::gameId() const
 {
-    return gets(VAR_GAME_ID, "");
+    return d->info->gets(VAR_GAME_ID, "");
 }
 
 ServerInfo &ServerInfo::setGameId(String const &gameId)
 {
-    set(VAR_GAME_ID, gameId);
+    d->detach();
+    d->info->set(VAR_GAME_ID, gameId);
     return *this;
 }
 
 String ServerInfo::gameConfig() const
 {
-    return gets(VAR_GAME_CONFIG, "");
+    return d->info->gets(VAR_GAME_CONFIG, "");
 }
 
 ServerInfo &ServerInfo::setGameConfig(String const &gameConfig)
 {
-    set(VAR_GAME_CONFIG, gameConfig);
+    d->detach();
+    d->info->set(VAR_GAME_CONFIG, gameConfig);
     return *this;
 }
 
 String ServerInfo::map() const
 {
-    return gets(VAR_MAP, "");
+    return d->info->gets(VAR_MAP, "");
 }
 
 ServerInfo &ServerInfo::setMap(String const &map)
 {
-    set(VAR_MAP, map);
+    d->detach();
+    d->info->set(VAR_MAP, map);
     return *this;
 }
 
 StringList ServerInfo::players() const
 {
-    return getStringList(VAR_PLAYERS);
+    return d->info->getStringList(VAR_PLAYERS);
 }
 
 int ServerInfo::playerCount() const
 {
-    return geti(VAR_PLAYER_COUNT, 0);
+    return d->info->geti(VAR_PLAYER_COUNT, 0);
 }
 
 ServerInfo &ServerInfo::addPlayer(String const &playerName)
 {
-    ArrayValue &players = member(VAR_PLAYERS).value<ArrayValue>();
+    d->detach();
+    ArrayValue &players = d->info->member(VAR_PLAYERS).value<ArrayValue>();
     players.add(playerName);
-    set(VAR_PLAYER_COUNT, players.size());
+    d->info->set(VAR_PLAYER_COUNT, players.size());
     return *this;
 }
 
 ServerInfo &ServerInfo::removePlayer(String const &playerName)
 {
-    ArrayValue &players = member(VAR_PLAYERS).value<ArrayValue>();
+    d->detach();
+    ArrayValue &players = d->info->member(VAR_PLAYERS).value<ArrayValue>();
     for (int i = 0; i < int(players.size()); ++i)
     {
         if (players.at(i).asText() == playerName)
         {
             players.remove(i);
-            set(VAR_PLAYER_COUNT, players.size());
+            d->info->set(VAR_PLAYER_COUNT, players.size());
             break;
         }
     }
@@ -250,18 +267,19 @@ ServerInfo &ServerInfo::removePlayer(String const &playerName)
 
 int ServerInfo::maxPlayers() const
 {
-    return geti(VAR_MAX_PLAYERS);
+    return d->info->geti(VAR_MAX_PLAYERS);
 }
 
 ServerInfo &ServerInfo::setMaxPlayers(int count)
 {
-    set(VAR_MAX_PLAYERS, count);
+    d->detach();
+    d->info->set(VAR_MAX_PLAYERS, count);
     return *this;
 }
 
 ServerInfo::Flags ServerInfo::flags() const
 {
-    return Flags(geti(VAR_FLAGS, DefaultFlags));
+    return Flags(d->info->geti(VAR_FLAGS, DefaultFlags));
 }
 
 String ServerInfo::asStyledText() const
@@ -296,12 +314,17 @@ String ServerInfo::asStyledText() const
 
 Block ServerInfo::asJSON() const
 {
-    return composeJSON(*this);
+    return composeJSON(*d->info);
+}
+
+const Record &ServerInfo::asRecord() const
+{
+    return *d->info;
 }
 
 Record ServerInfo::strippedForBroadcast() const
 {
-    Record stripped(*this);
+    Record stripped(*d->info);
     delete stripped.tryRemove(VAR_HOST);     // address in network msg
     delete stripped.tryRemove(VAR_PLUGIN);   // gameId+version is enough
     delete stripped.tryRemove(VAR_PLAYERS);  // count is enough
@@ -311,13 +334,15 @@ Record ServerInfo::strippedForBroadcast() const
 
 ServerInfo &ServerInfo::setDomainName(String const &domain)
 {
-    set(VAR_DOMAIN, domain);
+    d->detach();
+    d->info->set(VAR_DOMAIN, domain);
     return *this;
 }
 
 ServerInfo &ServerInfo::setFlags(Flags const &flags)
 {
-    set(VAR_FLAGS, duint32(flags));
+    d->detach();
+    d->info->set(VAR_FLAGS, duint32(flags));
     return *this;
 }
 

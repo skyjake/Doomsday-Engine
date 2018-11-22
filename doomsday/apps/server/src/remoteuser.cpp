@@ -132,7 +132,7 @@ DENG2_PIMPL(RemoteUser)
         if (command == "Info?")
         {
             shell::ServerInfo const info = ServerApp::currentServerInfo();
-            Block const msg = "Info\n" + composeJSON(info);
+            Block const msg = "Info\n" + composeJSON(info.asRecord());
             LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg);
             self() << msg;
         }

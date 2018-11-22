@@ -53,9 +53,9 @@ public:
 
     Address(Address const &other);
 
-    Address &operator = (Address const &other);
+    Address &operator=(Address const &other);
 
-    bool operator < (Address const &other) const;
+    bool operator<(Address const &other) const;
 
     /**
      * Checks two addresses for equality.
@@ -64,7 +64,7 @@ public:
      *
      * @return @c true if the addresses are equal.
      */
-    bool operator == (Address const &other) const;
+    bool operator==(Address const &other) const;
 
     bool isNull() const;
 

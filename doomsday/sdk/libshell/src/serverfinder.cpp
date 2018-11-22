@@ -37,28 +37,14 @@ DENG2_PIMPL_NOREF(ServerFinder)
     Beacon beacon;
     struct Found
     {
-        shell::ServerInfo *message;
+        shell::ServerInfo message;
         Time at;
 
-        Found() : message(0), at(Time()) {}
+        Found() : at(Time()) {}
     };
     QMap<Address, Found> servers;
 
     Impl() : beacon(DEFAULT_PORT) {}
-
-    ~Impl()
-    {
-        clearServers();
-    }
-
-    void clearServers()
-    {
-        foreach (Found const &found, servers.values())
-        {
-            delete found.message;
-        }
-        servers.clear();
-    }
 
     bool removeExpired()
     {
@@ -70,7 +56,6 @@ DENG2_PIMPL_NOREF(ServerFinder)
             Found &found = iter.next().value();
             if (found.at.since() > MSG_EXPIRATION_SECS)
             {
-                delete found.message;
                 iter.remove();
                 changed = true;
             }
@@ -105,7 +90,7 @@ ServerFinder::~ServerFinder()
 
 void ServerFinder::clear()
 {
-    d->clearServers();
+    d->servers.clear();
 }
 
 QList<Address> ServerFinder::foundServers() const
@@ -137,7 +122,7 @@ ServerInfo ServerFinder::messageFromServer(Address const &address) const
         throw NotFoundError("ServerFinder::messageFromServer",
                             "No message from server " + addr.asText());
     }
-    return *d->servers[addr].message;
+    return d->servers[addr].message;
 }
 
 void ServerFinder::found(Address host, Block block)
@@ -150,8 +135,10 @@ void ServerFinder::found(Address host, Block block)
         LOG_TRACE("Received a server message from %s with %i bytes",
                   host << block.size());
 
-        shell::ServerInfo receivedInfo;
-        Reader(block).withHeader() >> receivedInfo;
+        Record info;
+        Reader(block).withHeader() >> info;
+
+        ServerInfo receivedInfo(info);
         receivedInfo.setAddress(host);
 
         Address const from = receivedInfo.address(); // port validated
@@ -160,12 +147,12 @@ void ServerFinder::found(Address host, Block block)
         Impl::Found found;
         if (d->servers.contains(from))
         {
-            *d->servers[from].message = receivedInfo;
+            d->servers[from].message = receivedInfo;
             d->servers[from].at = Time();
         }
         else
         {
-            found.message = new shell::ServerInfo(receivedInfo);
+            found.message = receivedInfo;
             d->servers.insert(from, found);
         }
 
@@ -178,7 +165,6 @@ void ServerFinder::found(Address host, Block block)
         // Remove the message that failed to deserialize.
         if (d->servers.contains(host))
         {
-            delete d->servers[host].message;
             d->servers.remove(host);
         }
     }

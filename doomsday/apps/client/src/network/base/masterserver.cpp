@@ -280,7 +280,7 @@ void N_MasterAnnounceServer(bool isOpen)
     }
 
     DENG2_ASSERT(worker);
-    worker->newJob(MasterWorker::ANNOUNCE, info);
+    worker->newJob(MasterWorker::ANNOUNCE, info.asRecord());
 #else
     DENG_UNUSED(isOpen);
 #endif

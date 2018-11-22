@@ -29,7 +29,7 @@ namespace de { namespace shell {
 /**
  * Information about a multiplayer server. @ingroup network
  */
-class LIBSHELL_PUBLIC ServerInfo : public Record
+class LIBSHELL_PUBLIC ServerInfo
 {
 public:
     enum Flag { AllowJoin = 0x1, DefaultFlags = AllowJoin };
@@ -37,10 +37,8 @@ public:
 
     ServerInfo();
     ServerInfo(ServerInfo const &other);
-    ServerInfo(ServerInfo &&moved);
     ServerInfo(Record const &rec);
     ServerInfo &operator=(ServerInfo const &other);
-    ServerInfo &operator=(ServerInfo &&moved);
 
     Version version() const;
     int     compatibilityVersion() const;
@@ -60,9 +58,10 @@ public:
     int        maxPlayers() const;
     Flags      flags() const;
 
-    String asStyledText() const;
-    Block  asJSON() const;
-    Record strippedForBroadcast() const;
+    String        asStyledText() const;
+    Block         asJSON() const;
+    const Record &asRecord() const;
+    Record        strippedForBroadcast() const;
 
     ServerInfo &setCompatibilityVersion(int compatVersion);
     ServerInfo &setAddress(Address const &address);
@@ -84,6 +83,9 @@ public:
      * printed if 'info' is NULL.
      */
     void printToLog(int indexNumber, bool includeHeader = false) const;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(ServerInfo::Flags)
