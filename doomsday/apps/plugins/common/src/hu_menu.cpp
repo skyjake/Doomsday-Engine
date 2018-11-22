@@ -2042,10 +2042,17 @@ void Hu_MenuInitEpisodePage()
     int n = 0;
     for (auto const &pair : episodesById)
     {
-        Record const &episodeDef = *pair.second->as<RecordValue>().record();
-        String const  episodeId  = episodeDef.gets("id");
+        const Record &episodeDef   = *pair.second->as<RecordValue>().record();
+        const String  episodeId    = episodeDef.gets("id");
+        const String  episodeTitle = G_EpisodeTitle(episodeId);
 
-        auto *btn = new ButtonWidget(G_EpisodeTitle(episodeId));
+        if (episodeTitle.empty())
+        {
+            // Hidden/untitled episode.
+            continue;
+        }
+
+        auto *btn = new ButtonWidget(episodeTitle);
         btn->setFixedY(y);
 
         // Has a menu image been specified?
