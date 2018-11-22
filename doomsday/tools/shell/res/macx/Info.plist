@@ -24,5 +24,7 @@
 	<string>True</string>
 	<key>NSPrincipalClass</key>
 	<string>NSApplication</string>
+	<key>NSRequiresAquaSystemAppearance</key>
+	<string>YES</string>
 </dict>
 </plist>
