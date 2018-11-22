@@ -128,10 +128,13 @@ Link::~Link()
 {
     d->cancelAllQueries();
 
-    // Normally, the local folder will be deleted when the link is disconnected.
-    if (auto *folder = FS::tryLocate<Folder>(d->localRootPath))
+    if (d->state != Deinitialized)
     {
-        delete folder;
+        // Normally, the local folder will be deleted when the link is disconnected.
+        if (auto *folder = FS::tryLocate<Folder>(d->localRootPath))
+        {
+            delete folder;
+        }
     }
 }
 

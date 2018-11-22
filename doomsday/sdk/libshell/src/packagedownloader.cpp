@@ -296,13 +296,14 @@ void PackageDownloader::unmountServerRepository()
 {
     d->clearDownloads();
     d->unlinkRemotePackages();
+    filesys::RemoteFeedRelay::get().removeRepository(d->fileRepository);
+    d->fileRepository.clear();
+    d->isCancelled = false;
+    
     if (Folder *remoteFiles = FS::tryLocate<Folder>(PATH_REMOTE_SERVER))
     {
         trash(remoteFiles);
     }
-    filesys::RemoteFeedRelay::get().removeRepository(d->fileRepository);
-    d->fileRepository.clear();
-    d->isCancelled = false;
 }
 
 void PackageDownloader::download(StringList packageIds, std::function<void ()> callback)
