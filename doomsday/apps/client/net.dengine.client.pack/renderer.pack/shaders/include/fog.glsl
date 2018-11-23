@@ -24,14 +24,15 @@ uniform vec4 uFogColor; // set alpha to zero to disable fog
 void applyFog()
 {
     if (uFogColor.a > 0.0) {
-        float near = uFogRange.z;
-        float far  = uFogRange.w;
-        
+        float pNear  = uFogRange.z;
+        float pFar   = uFogRange.w;
+        float pDepth = pFar - pNear;
+
         // First convert the fragment Z back to view space.
-        float zNorm = gl_FragCoord.z * 2.0 - 1.0;
-        float zEye = -2.0 * far * near / (zNorm * (far - near) - (far + near));
-        
-        float fogAmount = clamp((zEye - uFogRange.x) / uFogRange.y, 0.0, 1.0);
+        float zNorm = 2.0 * gl_FragCoord.z - 1.0;
+        float zEye  = 2.0 * pNear * pFar / (pFar + pNear - zNorm * pDepth);
+
+        float fogAmount = clamp((zEye - uFogRange.x) / uFogRange.y, 0.0, 1.0);            
         out_FragColor.rgb = mix(out_FragColor.rgb, uFogColor.rgb, fogAmount);
     }    
 }

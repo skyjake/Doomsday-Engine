@@ -354,15 +354,16 @@ public:
         return m;
     }
     static Matrix4 perspective(Type fov, Type aspectRatio, Type nearDistance = 1.f, Type farDistance = 1000.f) {
-        Type const halfWidth  = std::tan(Type(.5) * degreeToRadian(fov));
-        Type const halfHeight = halfWidth / aspectRatio;
-        Type const depth      = farDistance - nearDistance;
+        const Type fovx = degreeToRadian(fov);
+        const Type f = Type(1.0) / Type(std::tan(Type(0.5) * fovx));
+        const Type A = farDistance + nearDistance;
+        const Type B = nearDistance - farDistance;
         Matrix4 m(Zero);
-        m.at(0, 0) = Type(2 * nearDistance) / halfWidth;
-        m.at(1, 1) = Type(2 * nearDistance) / halfHeight;
-        m.at(2, 2) = -(farDistance + nearDistance) / depth;
-        m.at(2, 3) = -Type(1);
-        m.at(3, 2) = -Type(2) * farDistance * nearDistance / depth;
+        m.at(0, 0) = f;
+        m.at(1, 1) = f * aspectRatio;
+        m.at(2, 2) = A / B;
+        m.at(3, 2) = Type(-1.0);
+        m.at(2, 3) = (Type(2.0) * farDistance * nearDistance) / B;
         return m;
     }
     static Matrix4 perspectiveZoom(Type width, Type height, Type nearDist = 1.f, Type farDist = 1000.f, Type zoom = 1.f) {
