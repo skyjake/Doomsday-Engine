@@ -115,10 +115,19 @@ void SndInfoParser(ddstring_s const *path)
 
                 if(mapNumber > 0)
                 {
-                    Record const &mapInfo = G_MapInfoForMapUri(G_ComposeMapUri(0, mapNumber - 1));
-                    if(Record *music = Defs().musics.tryFind("id", mapInfo.gets("music")))
+                    Record &mapInfo = G_MapInfoForMapUri(G_ComposeMapUri(0, mapNumber - 1));
+                    if (const Record *music = Defs().musics.tryFind("id", Str_Text(lumpName)))
                     {
-                        music->set("lumpName", Str_Text(lumpName));
+                        // There is a music definition with this ID, let's use that.
+                        mapInfo.set("music", Str_Text(lumpName));
+                    }
+                    else
+                    {
+                        // Modify the map's currently used music to override the music lump.
+                        if (Record *music = Defs().musics.tryFind("id", mapInfo.gets("music")))
+                        {
+                            music->set("lumpName", Str_Text(lumpName));
+                        }
                     }
                 }
                 continue;

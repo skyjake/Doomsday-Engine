@@ -2088,15 +2088,15 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-Record const &G_MapInfoForMapUri(de::Uri const &mapUri)
+Record &G_MapInfoForMapUri(de::Uri const &mapUri)
 {
     // Is there a MapInfo definition for the given URI?
-    if (Record const *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    if (Record *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if (Record const *def = Defs().mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    if (Record *def = Defs().mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }

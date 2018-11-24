@@ -1415,35 +1415,47 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
         for(auto const pair : defs.mapInfos)
         {
             MapInfo const &info = pair.second;
-            if(custom != info.getb("custom")) continue;
+
+            const bool isCustomMapInfo = info.getb("custom");
+
+            if(custom != isCustomMapInfo) continue;
 
             de::Uri mapUri(info.gets("id"), RC_NULL);
-            if(mapUri.path().isEmpty()) continue;
+            if (mapUri.path().isEmpty()) continue;
 
-            String const mapId = toMapId(mapUri);
+            const String mapId         = toMapId(mapUri);
+            const String musicLumpName = info.gets("music");
+            bool         addedMusicDef = false;
 
-            String const musicId = mapId + "_music";
-            os << "\n\nMusic {"
-               << "\n  ID = \"" + musicId + "\";";
-            String const musicLumpName = info.gets("music");
-            if(!musicLumpName.isEmpty())
+            if (isCustomMapInfo && (!musicLumpName.isEmpty() || info.geti("cdTrack")))
             {
-               os << "\n  Lump = \"" + musicLumpName + "\";";
-            }
-            os << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
-               << "\n}";
+                addedMusicDef = true;
 
-            bool const doubleSky = info.getb("doubleSky");
+                // Add a music def for this custom music.
+                os << "\n\nMusic {"
+                   << "\n  ID = \"" + mapId + "\";"; // music ID == map ID
+                if (!musicLumpName.isEmpty())
+                {
+                   os << "\n  Lump = \"" + musicLumpName + "\";";
+                }
+                os << "\n  CD Track = " << info.geti("cdTrack") << ";"
+                   << "\n}";
+            }
+
+            const bool doubleSky = info.getb("doubleSky");
 
             os << "\n\nMap Info {"
                << "\n  ID = \"" + mapId + "\";"
                << "\n  Title = \"" + info.gets("title") + "\";";
-            if(!info.getb("custom"))
+            if (!isCustomMapInfo)
             {
                os << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";";
             }
-            os << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";"
-               << "\n  Music = \"" + musicId + "\";";
+            os << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
+            if (addedMusicDef)
+            {
+                os << "\n  Music = \"" + mapId + "\";";
+            }
             de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
             if(!titleImageUri.path().isEmpty())
             {

@@ -96,7 +96,7 @@ de::String G_EpisodeTitle(de::String episodeId);
  *
  * @todo: Should use WorldSystem::mapInfoForMapUri() instead.
  */
-de::Record const &G_MapInfoForMapUri(de::Uri const &mapUri);
+de::Record &G_MapInfoForMapUri(de::Uri const &mapUri);
 
 /**
  * @param mapUri  Identifier of the map to lookup the author of.
