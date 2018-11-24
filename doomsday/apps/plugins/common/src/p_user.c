@@ -1226,10 +1226,10 @@ void P_PlayerThinkWeapons(player_t *player)
     }
     else
     // Check for weapon change.
-#if __JHERETIC__ || __JHEXEN__
-    if(brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+    if (brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
 #else
-    if(brain->changeWeapon != WT_NOCHANGE)
+    if (brain->changeWeapon != WT_NOCHANGE)
 #endif
     {
         // Direct slot selection.
@@ -1256,7 +1256,11 @@ void P_PlayerThinkWeapons(player_t *player)
                (cand = P_WeaponSlotCycle(cand, brain->cycleWeapon < 0)) !=
                 first);
     }
-    else if(brain->cycleWeapon)
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+    if (brain->cycleWeapon && player->morphTics == 0)
+#else
+    if (brain->cycleWeapon)
+#endif
     {
         // Linear cycle.
         newweapon = P_PlayerFindWeapon(player, brain->cycleWeapon < 0);
