@@ -2769,7 +2769,7 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 
     if (musicId >= 0 && musicId < DED_Definitions()->musics.size())
     {
-        Record const &def = DED_Definitions()->musics[musicId];
+        const Record &def = DED_Definitions()->musics[musicId];
         return Mus_Start(def, looped);
     }
     return false;
