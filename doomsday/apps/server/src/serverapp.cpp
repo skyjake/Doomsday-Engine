@@ -79,6 +79,7 @@ DENG2_PIMPL(ServerApp)
     QScopedPointer<AudioSystem> audioSys;
     ClientServerWorld world;
     InFineSystem infineSys;
+    duint32 serverId;
 
     Impl(Public *i)
         : Base(i)
@@ -90,6 +91,11 @@ DENG2_PIMPL(ServerApp)
         self().audienceForConsoleRegistration() += this;
         self().audienceForPeriodicAutosave() += this;
         PackageLoader::get().audienceForActivity() += this;
+
+        // Each running server instance is given a random identifier.
+        serverId = randui32() & 0x7fffffff;
+
+        LOG_NET_NOTE("Server instance ID: %08x") << serverId;
     }
 
     ~Impl()
@@ -215,6 +221,11 @@ ServerApp::~ServerApp()
     serverAppSingleton = 0;
 }
 
+duint32 ServerApp::instanceId() const
+{
+    return d->serverId;
+}
+
 void ServerApp::initialize()
 {
     Libdeng_Init();
@@ -280,11 +291,12 @@ void ServerApp::checkPackageCompatibility(StringList const &packageIds,
     }
 }
 
-shell::ServerInfo ServerApp::currentServerInfo()
+shell::ServerInfo ServerApp::currentServerInfo() // static
 {
     shell::ServerInfo info;
 
     // Let's figure out what we want to tell about ourselves.
+    info.setServerId(ServerApp::app().d->serverId);
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
     info.setPluginDescription(String::format("%s %s",
                                              reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),

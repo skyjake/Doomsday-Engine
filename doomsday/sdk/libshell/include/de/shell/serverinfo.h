@@ -46,6 +46,7 @@ public:
     Address    address() const;
     String     domainName() const;
     duint16    port() const;
+    duint32    serverId() const;
     String     name() const;
     String     description() const;
     String     pluginDescription() const;
@@ -64,6 +65,7 @@ public:
     Record        strippedForBroadcast() const;
 
     ServerInfo &setCompatibilityVersion(int compatVersion);
+    ServerInfo &setServerId(duint32 sid);
     ServerInfo &setAddress(Address const &address);
     ServerInfo &setDomainName(String const &domain);
     ServerInfo &setName(String const &name);

@@ -39,6 +39,8 @@ public:
     ServerApp(int &argc, char **argv);
     ~ServerApp();
 
+    de::duint32 instanceId() const;
+
     /**
      * Sets up all the subsystems of the application. Must be called before the
      * event loop is started.

@@ -24,6 +24,7 @@
 
 namespace de { namespace shell {
 
+static String const VAR_SERVER_ID               ("sid");
 static String const VAR_VERSION                 ("ver");
 static String const VAR_COMPATIBILITY_VERSION   ("cver");
 static String const VAR_HOST                    ("host");
@@ -110,7 +111,15 @@ int ServerInfo::compatibilityVersion() const
 
 ServerInfo &ServerInfo::setCompatibilityVersion(int compatVersion)
 {
+    d->detach();
     d->info->set(VAR_COMPATIBILITY_VERSION, compatVersion);
+    return *this;
+}
+
+ServerInfo &ServerInfo::setServerId(duint32 sid)
+{
+    d->detach();
+    d->info->set(VAR_SERVER_ID, sid);
     return *this;
 }
 
@@ -140,6 +149,11 @@ ServerInfo &ServerInfo::setAddress(Address const &address)
 duint16 ServerInfo::port() const
 {
     return duint16(d->info->geti(VAR_PORT, shell::DEFAULT_PORT));
+}
+
+duint32 ServerInfo::serverId() const
+{
+    return d->info->getui(VAR_SERVER_ID, 0);
 }
 
 String ServerInfo::name() const
@@ -368,6 +382,8 @@ void ServerInfo::printToLog(int indexNumber, bool includeHeader) const
             << address().asText();
     LOG_NET_MSG("    %s %-40s") << map() << description();
     LOG_NET_MSG("    %s %s") << gameId() << gameConfig();
+
+    LOG_NET_MSG("    Instance ID: %08x") << serverId();
 
     // Optional: PWADs in use.
     LOG_NET_MSG("    Packages: " _E(>) "%s") << String::join(packages(), "\n");

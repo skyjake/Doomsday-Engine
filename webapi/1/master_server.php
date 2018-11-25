@@ -46,6 +46,7 @@ function db_init()
          . "address INT UNSIGNED NOT NULL, "
          . "port SMALLINT UNSIGNED NOT NULL, "
          . "domain VARCHAR(100), "
+         . "server_id INT UNSIGNED, "
          . "name VARCHAR(100) NOT NULL, "
          . "description VARCHAR(500), "
          . "version VARCHAR(30) NOT NULL, "
@@ -90,6 +91,12 @@ function parse_announcement($json_data)
     else {
         $domain = '';
     }
+    if (property_exists($server_info, 'sid')) {
+        $sid = (int) $server_info->sid;
+    }
+    else {
+        $sid = 0;
+    }
     $port         = (int) $server_info->port;
     $name         = urlencode($server_info->name);
     $description  = urlencode($server_info->desc);
@@ -110,8 +117,8 @@ function parse_announcement($json_data)
     $db = db_open();
     $table = DB_TABLE;
     db_query($db, "DELETE FROM $table WHERE address = $address AND port = $port");
-    db_query($db, "INSERT INTO $table (address, port, domain, name, description, version, compat, plugin, packages, game_id, game_config, map, player_count, player_max, player_names, flags) "
-        . "VALUES ($address, $port, '$domain', '$name', '$description', '$version', $compat, '$plugin', '$packages', '$game_id', '$game_config', '$map', $player_count, $player_max, '$player_names', $flags)");
+    db_query($db, "INSERT INTO $table (address, port, domain, server_id, name, description, version, compat, plugin, packages, game_id, game_config, map, player_count, player_max, player_names, flags) "
+        . "VALUES ($address, $port, '$domain', $sid, '$name', '$description', '$version', $compat, '$plugin', '$packages', '$game_id', '$game_config', '$map', $player_count, $player_max, '$player_names', $flags)");
     $db->close();
 }
 
@@ -134,6 +141,7 @@ function fetch_servers()
             "host"    => long2ip($row['address']),
             "port"    => (int) $row['port'],
             "dom"     => urldecode($row['domain']),
+            "sid"     => (int) $row['server_id'],
             "name"    => urldecode($row['name']),
             "desc"    => urldecode($row['description']),
             "ver"     => urldecode($row['version']),
