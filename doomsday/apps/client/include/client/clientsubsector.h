@@ -92,8 +92,8 @@ public:
      *
      * @param callback  Function to call for each edge loop.
      */
-    de::LoopResult forAllEdgeLoops(std::function<de::LoopResult (ClEdgeLoop       &)> func);
-    de::LoopResult forAllEdgeLoops(std::function<de::LoopResult (ClEdgeLoop const &)> func) const;
+    de::LoopResult forAllEdgeLoops(const std::function<de::LoopResult (ClEdgeLoop       &)> &func);
+    de::LoopResult forAllEdgeLoops(const std::function<de::LoopResult (ClEdgeLoop const &)> &func) const;
 
 //- Audio environment -------------------------------------------------------------------
 

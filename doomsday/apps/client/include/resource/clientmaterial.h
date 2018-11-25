@@ -45,7 +45,9 @@ public:
      */
     ClientMaterial(world::MaterialManifest &manifest);
 
-    ~ClientMaterial();
+    ~ClientMaterial() override;
+
+    bool isAnimated() const override;
 
     /**
      * Returns a human-friendly, textual description of the full material configuration.
@@ -200,7 +202,7 @@ public:
      *
      * @param func  Callback to make for each Decoration.
      */
-    de::LoopResult forAllDecorations(std::function<de::LoopResult (Decoration &)> func) const;
+    de::LoopResult forAllDecorations(const std::function<de::LoopResult (Decoration &)> &func) const;
 
     /**
      * Add a new (light) decoration to the material.
@@ -242,7 +244,7 @@ public:
      *
      * @param func  Callback to make for each Animator.
      */
-    de::LoopResult forAllAnimators(std::function<de::LoopResult (MaterialAnimator &)> func) const;
+    de::LoopResult forAllAnimators(const std::function<de::LoopResult (MaterialAnimator &)> &func) const;
 
     /**
      * Destroy all the MaterialAnimators for the material.

@@ -349,7 +349,7 @@ dint Sector::subsectorCount() const
     return d->subsectors.count();
 }
 
-LoopResult Sector::forAllSubsectors(std::function<LoopResult(Subsector &)> callback) const
+LoopResult Sector::forAllSubsectors(const std::function<LoopResult(Subsector &)> &callback) const
 {
     for (Subsector *subsec : d->subsectors)
     {

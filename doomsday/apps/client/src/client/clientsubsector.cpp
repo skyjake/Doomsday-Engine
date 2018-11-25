@@ -1027,10 +1027,10 @@ DENG2_PIMPL(ClientSubsector)
 
         ds.markForUpdate(false);
 
-        // Clear any existing decorations.
         qDeleteAll(ds.decorations);
         ds.decorations.clear();
 
+        // Clear any existing decorations.
         if (surface.hasMaterial())
         {
             Vector2f materialOrigin;
@@ -1471,7 +1471,7 @@ dint ClientSubsector::edgeLoopCount() const
     return (bool(d->boundaryData->outerLoop) ? 1 : 0) + d->boundaryData->innerLoops.count();
 }
 
-LoopResult ClientSubsector::forAllEdgeLoops(std::function<LoopResult (ClEdgeLoop &)> func)
+LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop &)> &func)
 {
     d->initBoundaryDataIfNeeded();
     DENG2_ASSERT(bool(d->boundaryData->outerLoop));
@@ -1487,7 +1487,7 @@ LoopResult ClientSubsector::forAllEdgeLoops(std::function<LoopResult (ClEdgeLoop
     return LoopContinue;
 }
 
-LoopResult ClientSubsector::forAllEdgeLoops(std::function<LoopResult (ClEdgeLoop const &)> func) const
+LoopResult ClientSubsector::forAllEdgeLoops(const std::function<LoopResult (ClEdgeLoop const &)> &func) const
 {
     d->initBoundaryDataIfNeeded();
     DENG2_ASSERT(bool(d->boundaryData->outerLoop));
@@ -1848,14 +1848,16 @@ void ClientSubsector::decorate()
 {
     LOG_AS("ClientSubsector::decorate");
 
-    auto decorateFunc = [this] (Surface &surface)
-    {
-        d->decorate(surface);
-        return LoopContinue;
-    };
+    if (!hasDecorations()) return;
+
+//    auto decorateFunc = [this] (Surface &surface)
+//    {
+//        d->decorate(surface);
+//        return LoopContinue;
+//    };
 
     // Surfaces of the edge loops.
-    forAllEdgeLoops([this, &decorateFunc] (ClEdgeLoop const &loop)
+    forAllEdgeLoops([this/*, &decorateFunc*/] (ClEdgeLoop const &loop)
     {
         SubsectorCirculator it(&loop.first());
         do

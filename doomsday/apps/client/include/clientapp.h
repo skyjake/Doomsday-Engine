@@ -79,7 +79,7 @@ public:
     static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
 
     static ClientPlayer &player(int console);
-    static de::LoopResult forLocalPlayers(std::function<de::LoopResult (ClientPlayer &)> func);
+    static de::LoopResult forLocalPlayers(const std::function<de::LoopResult (ClientPlayer &)> &func);
 
     static ClientApp &          app();
     static ConfigProfiles &     logSettings();

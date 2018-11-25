@@ -153,6 +153,22 @@ ClientMaterial::ClientMaterial(world::MaterialManifest &manifest)
 ClientMaterial::~ClientMaterial()
 {}
 
+bool ClientMaterial::isAnimated() const
+{
+    if (Material::isAnimated())
+    {
+        return true;
+    }
+    for (const auto &decor : d->decorations)
+    {
+        if (decor->isAnimated())
+        {
+            return true;
+        }
+    }
+    return false;
+}
+
 AudioEnvironmentId ClientMaterial::audioEnvironment() const
 {
     return (isDrawable()? d->audioEnvironment : AE_NONE);
@@ -168,7 +184,7 @@ int ClientMaterial::decorationCount() const
     return d->decorations.count();
 }
 
-LoopResult ClientMaterial::forAllDecorations(std::function<LoopResult (Decoration &)> func) const
+LoopResult ClientMaterial::forAllDecorations(const std::function<LoopResult (Decoration &)> &func) const
 {
     for (Decoration *decor : d.getConst()->decorations)
     {
@@ -214,7 +230,7 @@ MaterialAnimator &ClientMaterial::getAnimator(MaterialVariantSpec const &spec)
     return *d->findAnimator(spec, true/*create*/);
 }
 
-LoopResult ClientMaterial::forAllAnimators(std::function<LoopResult (MaterialAnimator &)> func) const
+LoopResult ClientMaterial::forAllAnimators(const std::function<LoopResult (MaterialAnimator &)> &func) const
 {
     for (MaterialAnimator *animator : d.getConst()->animators)
     {

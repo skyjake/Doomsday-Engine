@@ -644,7 +644,8 @@ DENG2_PIMPL(ClientServerWorld)
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
-        world::Materials::get().forAllMaterials([] (world::Material &material)
+        world::Materials::get().updateLookup();
+        world::Materials::get().forAnimatedMaterials([] (world::Material &material)
         {
             return material.as<ClientMaterial>().forAllAnimators([] (MaterialAnimator &animator)
             {

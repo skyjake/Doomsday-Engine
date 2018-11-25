@@ -817,7 +817,7 @@ ClientPlayer &ClientApp::player(int console) // static
     return DoomsdayApp::players().at(console).as<ClientPlayer>();
 }
 
-LoopResult ClientApp::forLocalPlayers(std::function<LoopResult (ClientPlayer &)> func) // static
+LoopResult ClientApp::forLocalPlayers(const std::function<LoopResult (ClientPlayer &)> &func) // static
 {
     auto const &players = DoomsdayApp::players();
     for (int i = 0; i < players.count(); ++i)

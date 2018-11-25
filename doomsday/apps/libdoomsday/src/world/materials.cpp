@@ -23,6 +23,7 @@
 #include "doomsday/resource/resources.h"
 
 #include <de/memory.h>
+#include <unordered_set>
 
 using namespace de;
 
@@ -55,6 +56,8 @@ DENG2_PIMPL(Materials)
 
     QList<Material *> materials;       ///< From all schemes.
     int materialManifestCount = 0;     ///< Total number of material manifests (in all schemes).
+
+    std::unordered_set<Material *> animatedMaterialsSubset; ///< Subset of materials (not owned) that need to animate.
 
     MaterialManifestGroups materialGroups;
 
@@ -158,7 +161,9 @@ DENG2_PIMPL(Materials)
     /// Observes Material Deletion.
     void materialBeingDeleted(Material const &material)
     {
-        materials.removeOne(const_cast<Material *>(&material));
+        Material *pMat = const_cast<Material *>(&material);
+        materials.removeOne(pMat);
+        animatedMaterialsSubset.erase(pMat);
     }
 };
 
@@ -269,7 +274,7 @@ dint Materials::materialCount() const
     return d->materials.count();
 }
 
-LoopResult Materials::forAllMaterials(std::function<LoopResult (Material &)> func) const
+LoopResult Materials::forAllMaterials(const std::function<LoopResult (Material &)> &func) const
 {
     for (Material *mat : d.getConst()->materials)
     {
@@ -279,6 +284,30 @@ LoopResult Materials::forAllMaterials(std::function<LoopResult (Material &)> fun
         }
     }
     return LoopContinue;
+}
+
+LoopResult Materials::forAnimatedMaterials(const std::function<LoopResult (Material &)> &func) const
+{
+    for (Material *mat : d.getConst()->animatedMaterialsSubset)
+    {
+        if (auto result = func(*mat))
+        {
+            return result;
+        }
+    }
+    return LoopContinue;
+}
+
+void Materials::updateLookup()
+{
+    d->animatedMaterialsSubset.clear();
+    for (auto *mat : d->materials)
+    {
+        if (mat->isAnimated())
+        {
+            d->animatedMaterialsSubset.insert(mat);
+        }
+    }
 }
 
 Materials::MaterialManifestGroup &Materials::newMaterialGroup()

@@ -39,6 +39,8 @@ using namespace de;
 
 uint constexpr MAX_TEX_COORDS = 2;
 
+static unsigned s_drawCallCount = 0;
+
 struct DGLDrawState
 {
     struct Vertex
@@ -335,7 +337,7 @@ struct DGLDrawState
 
         // Upload the vertex data.
         GLData::DrawBuffer &buf = nextBuffer();
-        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Stream);
+        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
 
 #if defined (DENG_HAVE_VAOS)
         GL.glBindVertexArray(buf.vertexArray);
@@ -428,7 +430,7 @@ struct DGLDrawState
         gl->shader.beginUse();
         {
             glBindArrays();
-            LIBGUI_GL.glDrawArrays(glPrimitive(), 0, numVertices());
+            LIBGUI_GL.glDrawArrays(glPrimitive(), 0, numVertices()); ++s_drawCallCount;
             LIBGUI_ASSERT_GL_OK();
             glUnbindArrays();
         }
@@ -445,6 +447,9 @@ void DGL_Shutdown()
 
 void DGL_BeginFrame()
 {
+    qDebug() << "draw calls:" << s_drawCallCount;
+    s_drawCallCount = 0;
+
     if (dglDraw.gl)
     {
         // Reuse buffers every frame.
