@@ -203,7 +203,7 @@ DENG2_PIMPL(ClientWindow)
 
         auto *miniGameControls = new LabelWidget;
         {
-            miniGameControls->set(GuiWidget::Background(style.colors().colorf("inverted.background")));
+            miniGameControls->set(GuiWidget::Background(style.colors().colorf("background")));
             miniGameControls->rule()
                     .setInput(Rule::Width,  root.viewWidth()/2 -   style.rules().rule(RuleBank::UNIT))
                     .setInput(Rule::Left,   game->rule().right() + style.rules().rule(RuleBank::UNIT))
@@ -213,13 +213,14 @@ DENG2_PIMPL(ClientWindow)
             backToGame->setText("Back to Game");
             backToGame->setSizePolicy(ui::Expand, ui::Expand);
             backToGame->setActionFn([this] () { home->moveOffscreen(1.0); });
+            backToGame->setColorTheme(GuiWidget::Inverted);
 
             nowPlaying = new LabelWidget;
             nowPlaying->setSizePolicy(ui::Expand, ui::Expand);
-            nowPlaying->margins().setLeftRight("").setBottom("dialog.gap");
+            nowPlaying->margins()/*.setLeftRight("")*/.setBottom("dialog.gap");
             nowPlaying->setMaximumTextWidth(miniGameControls->rule().width());
             nowPlaying->setTextLineAlignment(ui::AlignLeft);
-            nowPlaying->setTextColor("inverted.text");
+            nowPlaying->setTextColor("text");
             nowPlaying->setFont("heading");
 
             AutoRef<Rule> combined = nowPlaying->rule().height() + backToGame->rule().height();
