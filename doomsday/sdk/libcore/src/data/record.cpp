@@ -566,77 +566,58 @@ Variable *Record::tryRemove(String const &variableName)
     return nullptr;
 }
 
-Variable &Record::add(String const &name)
+Variable &Record::add(String const &name, Variable::Flags variableFlags)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name)));
+            .add(new Variable(Impl::memberNameFromPath(name), nullptr, variableFlags));
 }
 
-Variable &Record::addNumber(String const &name, Value::Number const &number)
+Variable &Record::addNumber(String const &name, Value::Number number)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new NumberValue(number), Variable::AllowNumber));
+    return add(name, Variable::AllowNumber).set(NumberValue(number));
 }
 
 Variable &Record::addBoolean(String const &name, bool booleanValue)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new NumberValue(booleanValue, NumberValue::Boolean),
-                              Variable::AllowNumber));
+    return add(name, Variable::AllowNumber).set(NumberValue(booleanValue, NumberValue::Boolean));
 }
 
 Variable &Record::addText(String const &name, Value::Text const &text)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new TextValue(text), Variable::AllowText));
+    return add(name, Variable::AllowText).set(TextValue(text));
 }
 
 Variable &Record::addTime(String const &name, Time const &time)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new TimeValue(time), Variable::AllowTime));
+    return add(name, Variable::AllowTime).set(TimeValue(time));
 }
 
 Variable &Record::addArray(String const &name, ArrayValue *array)
 {
     // Automatically create an empty array if one is not provided.
     if (!array) array = new ArrayValue;
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              array, Variable::AllowArray));
+    return add(name, Variable::AllowArray).set(array);
 }
 
 Variable &Record::addDictionary(String const &name)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new DictionaryValue, Variable::AllowDictionary));
+    return add(name, Variable::AllowDictionary).set(new DictionaryValue);
 }
 
 Variable &Record::addBlock(String const &name)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new BlockValue, Variable::AllowBlock));
+    return add(name, Variable::AllowBlock).set(new BlockValue);
 }
 
 Variable &Record::addFunction(const String &name, Function *func)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new FunctionValue(func), Variable::AllowFunction));
+    return add(name, Variable::AllowFunction).set(new FunctionValue(func));
 }
 
 Record &Record::add(String const &name, Record *subrecord)
 {
     std::unique_ptr<Record> sub(subrecord);
-    d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              RecordValue::takeRecord(sub.release())));
+    add(name).set(RecordValue::takeRecord(sub.release()));
     return *subrecord;
 }
 
@@ -701,40 +682,45 @@ Variable &Record::set(String const &name, Value::Text const &value)
     return addText(name, value);
 }
 
-Variable &Record::set(String const &name, Value::Number const &value)
+Variable &Record::set(String const &name, Value::Number value)
+{
+    return set(name, NumberValue(value));
+}
+
+Variable &Record::set(const String &name, const NumberValue &value)
 {
     DENG2_GUARD(d);
 
     if (hasMember(name))
     {
-        return (*this)[name].set(NumberValue(value));
+        return (*this)[name].set(value);
     }
-    return addNumber(name, value);
+    return add(name, Variable::AllowNumber).set(value);
 }
 
 Variable &Record::set(String const &name, dint32 value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, duint32 value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, dint64 value)
 {
-  return set(name, Value::Number(value));
+  return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, duint64 value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, unsigned long value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, Time const &value)
@@ -787,6 +773,17 @@ Variable &Record::set(String const &name, ArrayValue *value)
 }
 
 Variable &Record::set(const String &name, Value *value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(value);
+    }
+    return add(name).set(value);
+}
+
+Variable &Record::set(const String &name, const Value &value)
 {
     DENG2_GUARD(d);
 

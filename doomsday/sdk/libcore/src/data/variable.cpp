@@ -78,7 +78,10 @@ Variable::Variable(String const &name, Value *initial, Flags const &m)
         v.reset(new NoneValue);
     }
     verifyName(d->name);
-    verifyValid(*v);
+    if (initial)
+    {
+        verifyValid(*v);
+    }
     d->value = v.release();
 }
 
@@ -239,13 +242,13 @@ Variable &Variable::setReadOnly()
 bool Variable::isValid(Value const &v) const
 {
     /// @todo  Make sure this actually works and add func, record, ref.
-    if ((dynamic_cast<NoneValue const *>(&v)       && !d->flags.testFlag(AllowNone)) ||
-        (dynamic_cast<NumberValue const *>(&v)     && !d->flags.testFlag(AllowNumber)) ||
-        (dynamic_cast<TextValue const *>(&v)       && !d->flags.testFlag(AllowText)) ||
-        (dynamic_cast<ArrayValue const *>(&v)      && !d->flags.testFlag(AllowArray)) ||
-        (dynamic_cast<DictionaryValue const *>(&v) && !d->flags.testFlag(AllowDictionary)) ||
-        (dynamic_cast<BlockValue const *>(&v)      && !d->flags.testFlag(AllowBlock)) ||
-        (dynamic_cast<TimeValue const *>(&v)       && !d->flags.testFlag(AllowTime)))
+    if ((!d->flags.testFlag(AllowNone)       && dynamic_cast<NoneValue const *>(&v)      ) ||
+        (!d->flags.testFlag(AllowNumber)     && dynamic_cast<NumberValue const *>(&v)    ) ||
+        (!d->flags.testFlag(AllowText)       && dynamic_cast<TextValue const *>(&v)      ) ||
+        (!d->flags.testFlag(AllowArray)      && dynamic_cast<ArrayValue const *>(&v)     ) ||
+        (!d->flags.testFlag(AllowDictionary) && dynamic_cast<DictionaryValue const *>(&v)) ||
+        (!d->flags.testFlag(AllowBlock)      && dynamic_cast<BlockValue const *>(&v)     ) ||
+        (!d->flags.testFlag(AllowTime)       && dynamic_cast<TimeValue const *>(&v)      )  )
     {
         return false;
     }

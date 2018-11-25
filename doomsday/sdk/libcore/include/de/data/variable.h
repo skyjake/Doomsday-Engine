@@ -116,7 +116,7 @@ public:
      *      a NoneValue will be created for the variable.
      * @param varMode  Mode flags.
      */
-    Variable(String const &name = String(), Value *initial = 0,
+    Variable(String const &name = String(), Value *initial = nullptr,
              Flags const &varMode = DefaultMode);
 
     /**

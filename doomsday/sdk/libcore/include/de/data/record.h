@@ -254,7 +254,7 @@ public:
      *
      * @return  The new variable.
      */
-    Variable &add(String const &variableName);
+    Variable &add(String const &variableName, Variable::Flags variableFlag = Variable::DefaultMode);
 
     /**
      * Adds a number variable to the record. The variable is set up to only accept
@@ -265,7 +265,7 @@ public:
      *
      * @return  The number variable.
      */
-    Variable &addNumber(String const &variableName, Value::Number const &number);
+    Variable &addNumber(String const &variableName, Value::Number number);
 
     /**
      * Adds a number variable to the record with a Boolean semantic hint. The variable is
@@ -394,7 +394,10 @@ public:
     Variable &set(String const &name, Value::Text const &value);
 
     /// @copydoc set()
-    Variable &set(String const &name, Value::Number const &value);
+    Variable &set(String const &name, Value::Number value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, const NumberValue &value);
 
     /// @copydoc set()
     Variable &set(String const &name, dint32 value);
@@ -417,6 +420,7 @@ public:
     /// @copydoc set()
     Variable &set(String const &name, Block const &value);
 
+    /// @copydoc set()
     Variable &set(const String &name, const Record &value);
 
     /**
@@ -428,6 +432,8 @@ public:
     Variable &set(String const &name, ArrayValue *value);
 
     Variable &set(String const &name, Value *value);
+
+    Variable &set(String const &name, const Value &value);
 
     /**
      * Appends a word to the value of the variable.

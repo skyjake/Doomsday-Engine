@@ -54,9 +54,11 @@ public:
     };
 
     enum SemanticHint {
-        Boolean = 0x1,      ///< The number is intended to be a boolean value.
-        Hex = 0x2,          ///< The number is intended to be a hexadecimal value.
-        Generic = 0         ///< Generic number.
+        Boolean = 0x1, ///< The number is intended to be a boolean value.
+        Hex     = 0x2, ///< The number is intended to be a hexadecimal value.
+        Int     = 0x4,
+        UInt    = 0x8,
+        Generic = 0 ///< Generic number.
     };
     Q_DECLARE_FLAGS(SemanticHints, SemanticHint)
 
@@ -64,9 +66,9 @@ public:
     explicit NumberValue(Number initialValue = 0, SemanticHints semantic = Generic);
     explicit NumberValue(dint64 initialInteger);
     explicit NumberValue(duint64 initialUnsignedInteger);
-    explicit NumberValue(dint32 initialInteger, SemanticHints semantic = Generic);
-    explicit NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic = Generic);
-    explicit NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic = Generic);
+    explicit NumberValue(dint32 initialInteger, SemanticHints semantic = Int);
+    explicit NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic = UInt);
+    explicit NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic = UInt);
     explicit NumberValue(bool initialBoolean);
 
     void setSemanticHints(SemanticHints hints);

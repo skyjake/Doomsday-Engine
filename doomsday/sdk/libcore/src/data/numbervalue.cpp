@@ -31,11 +31,11 @@ NumberValue::NumberValue(Number initialValue, SemanticHints semantic)
 {}
 
 NumberValue::NumberValue(dint64 initialInteger)
-    : _value(initialInteger), _semantic(Generic)
+    : _value(initialInteger), _semantic(Int)
 {}
 
 NumberValue::NumberValue(duint64 initialUnsignedInteger)
-    : _value(initialUnsignedInteger), _semantic(Generic)
+    : _value(initialUnsignedInteger), _semantic(UInt)
 {}
 
 NumberValue::NumberValue(dint32 initialInteger, SemanticHints semantic)
@@ -73,13 +73,21 @@ Value::Text NumberValue::asText() const
 {
     Text result;
     QTextStream s(&result);
-    if (_semantic.testFlag(Boolean) && (_value == True || _value == False))
+    if (_semantic.testFlag(Boolean) && (roundi(_value) == True || roundi(_value) == False))
     {
         s << (isTrue()? "True" : "False");
     }
     else if (_semantic.testFlag(Hex))
     {
         s << "0x" << QString::number(duint32(_value), 16);
+    }
+    else if (_semantic.testFlag(Int))
+    {
+        s << QString::number(roundi(_value));
+    }
+    else if (_semantic.testFlag(UInt))
+    {
+        s << QString::number(round<duint64>(_value));
     }
     else
     {
@@ -90,7 +98,7 @@ Value::Text NumberValue::asText() const
 
 bool NumberValue::isTrue() const
 {
-    return (_value != 0);
+    return roundi(_value) != 0;
 }
 
 dint NumberValue::compare(Value const &value) const
@@ -171,11 +179,15 @@ void NumberValue::modulo(Value const &divisor)
 // Flags for serialization:
 static duint8 const SEMANTIC_BOOLEAN = 0x01;
 static duint8 const SEMANTIC_HEX     = 0x02;
+static duint8 const SEMANTIC_INT     = 0x04;
+static duint8 const SEMANTIC_UINT    = 0x08;
 
 void NumberValue::operator >> (Writer &to) const
 {
     duint8 flags = (_semantic.testFlag(Boolean)? SEMANTIC_BOOLEAN : 0) |
-                   (_semantic.testFlag(Hex)?     SEMANTIC_HEX     : 0);
+                   (_semantic.testFlag(Hex)?     SEMANTIC_HEX     : 0) |
+                   (_semantic.testFlag(Int)?     SEMANTIC_INT     : 0) |
+                   (_semantic.testFlag(UInt)?    SEMANTIC_UINT    : 0);
 
     to << SerialId(NUMBER) << flags << _value;
 }
@@ -194,7 +206,9 @@ void NumberValue::operator << (Reader &from)
     from >> flags >> _value;
 
     _semantic = SemanticHints((flags & SEMANTIC_BOOLEAN? Boolean : 0) |
-                              (flags & SEMANTIC_HEX?     Hex : 0));
+                              (flags & SEMANTIC_HEX?     Hex : 0) |
+                              (flags & SEMANTIC_INT?     Int : 0) |
+                              (flags & SEMANTIC_UINT?    UInt : 0));
 }
 
 Value::Text NumberValue::typeId() const
