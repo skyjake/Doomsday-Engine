@@ -36,9 +36,13 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
-    static String hostId(shell::ServerInfo const &sv) {
-        //auto const domain = sv.domainName();
-        //return domain.isEmpty()? sv.address().asText() : domain;
+
+    static String hostId(shell::ServerInfo const &sv)
+    {
+        if (sv.serverId())
+        {
+            return String::format("%x", sv.serverId());
+        }
         return sv.address().asText();
     }
 
@@ -58,6 +62,11 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         bool isLocal() const
         {
             return _lan;
+        }
+
+        void setLocal(bool isLocal)
+        {
+            _lan = isLocal;
         }
 
         shell::ServerInfo const &info() const
@@ -86,8 +95,8 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
         bool _lan;
     };
 
-    DiscoveryMode         mode = NoDiscovery;
-    ServerLink::FoundMask mask = ServerLink::Any;
+    DiscoveryMode                mode = NoDiscovery;
+    ServerLink::FoundMask        mask = ServerLink::Any;
 
     Impl(Public *i) : Base(i)
     {
@@ -128,17 +137,25 @@ DENG2_PIMPL(MultiplayerServerMenuWidget)
             shell::ServerInfo info;
             if (!link.foundServerInfo(host, info, mask)) continue;
 
-            ui::Data::Pos found = items.findData(hostId(info));
+            ui::Data::Pos found   = items.findData(hostId(info));
+            const bool    isLocal = link.isServerOnLocalNetwork(info.address());
+
             if (found == ui::Data::InvalidPos)
             {
                 // Needs to be added.
-                items.append(new ServerListItem(info,
-                        link.isServerOnLocalNetwork(info.address())));
+                items.append(new ServerListItem(info, isLocal));
             }
             else
             {
-                // Update the info.
-                items.at(found).as<ServerListItem>().setInfo(info);
+                // Update the info of an existing item.
+                auto &it = items.at(found).as<ServerListItem>();
+
+                // Prefer the info received via LAN, if the server is the same instance.
+                if (!it.isLocal() || isLocal)
+                {
+                    it.setInfo(info);
+                    it.setLocal(isLocal);
+                }
             }
         }
 
