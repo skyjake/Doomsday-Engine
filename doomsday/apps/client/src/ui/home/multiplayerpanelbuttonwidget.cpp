@@ -184,7 +184,8 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 
         if (d->catalog.setPackages(game.requiredPackages()))
         {
-            *d += async([this, &game]() { return IdTech1Image::makeGameLogo(game, d->catalog); },
+            res::LumpCatalog catalog{d->catalog};
+            *d += async([&game, catalog]() { return IdTech1Image::makeGameLogo(game, catalog); },
                         [this](const Image &logo) { icon().setImage(logo); });
         }
     }

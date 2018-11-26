@@ -111,8 +111,9 @@ Image IdTech1Image::makeGameLogo(Game const &game,
     {
         if (flags & NullImageIfFails) return Image();
 
-        LOG_RES_WARNING("Failed to load title picture for game \"%s\": %s")
+        LOG_RES_WARNING("Failed to load title picture for game \"%s\" using {%s}: %s")
                 << game.title()
+                << String::join(catalog.packages(), " ")
                 << er.asText();
     }
     if (flags & NullImageIfFails)

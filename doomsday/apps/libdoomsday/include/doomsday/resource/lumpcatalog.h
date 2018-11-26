@@ -36,6 +36,8 @@ class LIBDOOMSDAY_PUBLIC LumpCatalog
 {
 public:
     LumpCatalog();
+    
+    LumpCatalog(const LumpCatalog &);
 
     void clear();
 
@@ -49,6 +51,8 @@ public:
      * @return @c true, if the list of packages is different than the one set previously.
      */
     bool setPackages(de::StringList packageIds);
+    
+    de::StringList packages() const;
 
     de::Block read(de::String const &lumpName) const;
 
