@@ -74,9 +74,9 @@ DENG_PUBLIC char *strlwr(char *string);
 
 // String Utilities
 
-DENG_PUBLIC char* M_SkipWhite(char* str);
+DENG_PUBLIC char *M_SkipWhite(const char *str);
 
-DENG_PUBLIC char* M_FindWhite(char* str);
+DENG_PUBLIC char *M_FindWhite(const char *str);
 
 DENG_PUBLIC void M_StripLeft(char* str);
 
