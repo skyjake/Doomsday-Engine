@@ -161,7 +161,7 @@ struct DGLDrawState
         if (resetPrimitive)
         {
             DENG2_ASSERT(!vertices.empty());
-            DENG2_ASSERT(glPrimitive() == GL_TRIANGLE_STRIP);
+            DENG2_ASSERT(glPrimitive(batchPrimType) == GL_TRIANGLE_STRIP);
 
             // When committing multiple triangle strips, add a disconnection
             // between batches.
@@ -322,7 +322,7 @@ struct DGLDrawState
 
         DENG2_ASSERT(primType == DGL_NO_PRIMITIVE);
 
-        if (batchPrimType != primitive)
+        if (glPrimitive(batchPrimType) != glPrimitive(primitive))
         {
             ++s_primSwitchCount;
             flushBatches();
@@ -578,9 +578,9 @@ struct DGLDrawState
         }
     }
 
-    GLenum glPrimitive() const
+    GLenum glPrimitive(DGLenum primitive) const
     {
-        switch (batchPrimType)
+        switch (primitive)
         {
         case DGL_POINTS:            return GL_POINTS;
         case DGL_LINES:             return GL_TRIANGLE_STRIP;
@@ -642,7 +642,7 @@ struct DGLDrawState
         glBindArrays();
         gl->shader.beginUse();
         DENG2_ASSERT(gl->shader.validate());
-        GL.glDrawArrays(glPrimitive(), 0, numVertices()); ++s_drawCallCount;
+        GL.glDrawArrays(glPrimitive(batchPrimType), 0, numVertices()); ++s_drawCallCount;
         gl->shader.endUse();
         LIBGUI_ASSERT_GL_OK();
         glUnbindArrays();
