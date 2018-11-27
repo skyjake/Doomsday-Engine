@@ -65,14 +65,21 @@ DENG2_PIMPL(Style)
         loadedPack = nullptr;
     }
 
+    void updateFontSizeFactor()
+    {
+        float fontSize = 1.f;
+        if (CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
+        {
+            fontSize = arg.params.at(0).toFloat();
+        }
+        fonts.setFontSizeFactor(fontSize);
+    }
+
     void load(Package const &pack)
     {
         loadedPack = &pack;
 
-        if (CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
-        {
-            fonts.setFontSizeFactor(arg.params.at(0).toFloat());
-        }
+        updateFontSizeFactor();
 
         rules .addFromInfo(pack.root().locate<File>("rules.dei"));
         fonts .addFromInfo(pack.root().locate<File>("fonts.dei"));
@@ -91,6 +98,16 @@ DENG2_PIMPL(Style)
         if (loadedPack)
         {
             LOG_MSG("UI style being updated due to pixel ratio change");
+
+#if defined (WIN32)
+            /*
+             * KLUDGE: The operating system provides fonts scaled according to the desktop
+             * scaling factor. The user's scaling factor affects the sizing of the fonts
+             * on Windows via this value; on other platforms, the font definitions use
+             * DisplayMode.PIXEL_RATIO directly. (Should do that on Windows, too?)
+             */
+            updateFontSizeFactor();
+#endif
             self().performUpdate();
         }
     }
