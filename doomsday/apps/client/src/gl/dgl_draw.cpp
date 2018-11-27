@@ -322,7 +322,7 @@ struct DGLDrawState
 
         DENG2_ASSERT(primType == DGL_NO_PRIMITIVE);
 
-        if (glPrimitive(batchPrimType) != glPrimitive(primitive))
+        if (batchPrimType != DGL_NO_PRIMITIVE && !isCompatible(batchPrimType, primitive))
         {
             ++s_primSwitchCount;
             flushBatches();
@@ -365,6 +365,22 @@ struct DGLDrawState
         GL.glActiveTexture(GL_TEXTURE1);
         GL.glGetIntegerv(GL_TEXTURE_BINDING_2D, &id1);
         GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+    }
+
+    static inline bool isLinePrimitive(DGLenum p)
+    {
+        return p == DGL_LINES || p == DGL_LINE_STRIP || p == DGL_LINE_LOOP;
+    }
+
+    static inline bool isCompatible(DGLenum p1, DGLenum p2)
+    {
+        // Lines are not considered separate because they need the uFragmentSize uniform
+        // for calculating thickness offsets.
+        if (isLinePrimitive(p1) != isLinePrimitive(p2))
+        {
+            return false;
+        }
+        return glPrimitive(p1) == glPrimitive(p2);
     }
 
     void beginBatch()
@@ -578,7 +594,7 @@ struct DGLDrawState
         }
     }
 
-    GLenum glPrimitive(DGLenum primitive) const
+    static GLenum glPrimitive(DGLenum primitive)
     {
         switch (primitive)
         {
@@ -591,7 +607,7 @@ struct DGLDrawState
         case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
         case DGL_QUADS:             return GL_TRIANGLES;
 
-        case DGL_NO_PRIMITIVE:      DENG2_ASSERT(!"No primitive type specified"); break;
+        case DGL_NO_PRIMITIVE:      /*DENG2_ASSERT(!"No primitive type specified");*/ break;
         }
         return GL_NONE;
     }
@@ -624,7 +640,7 @@ struct DGLDrawState
         const GLState &glState = gl->batchState;
 
         // Non-batched uniforms.
-        if (primType == DGL_LINES || primType == DGL_LINE_STRIP || primType == DGL_LINE_LOOP)
+        if (isLinePrimitive(batchPrimType))
         {
             gl->uFragmentSize = Vector2f(GL_state.currentLineWidth, GL_state.currentLineWidth) /
                                 glState.target().size();

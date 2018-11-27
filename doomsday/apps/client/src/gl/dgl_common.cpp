@@ -534,6 +534,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
                                                            rect->size.width, rect->size.height),
                                                 Rectanglei::fromSize(game.rule().recti().size()));
 
+    DGL_Flush();
     GLState::current().setNormalizedScissor(norm);
 }
 
