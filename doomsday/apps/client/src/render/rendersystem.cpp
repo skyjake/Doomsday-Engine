@@ -27,6 +27,7 @@
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
 #include <de/ScriptedInfo>
+#include <de/TextValue>
 #include "clientapp.h"
 #include "render/environ.h"
 #include "render/rend_main.h"
@@ -360,23 +361,23 @@ DENG2_PIMPL(RenderSystem)
         ClientApp::shaders().removeAllFromPackage(packageId);
     }
 
-    /**
+    /*
      * Reads all shader definitions and sets up a Bank where the actual
      * compiled shaders are stored once they're needed.
      *
      * @todo This should be reworked to support unloading packages, and
      * loading of new shaders from any newly loaded packages. -jk
      */
-    void loadAllShaders()
-    {
-        // Load all the shader program definitions.
-        FS::FoundFiles found;
-        App::findInPackages("shaders.dei", found);
-        DENG2_FOR_EACH(FS::FoundFiles, i, found)
-        {
-            loadShaders(**i);
-        }
-    }
+//    void loadAllShaders()
+//    {
+//        // Load all the shader program definitions.
+//        FS::FoundFiles found;
+//        App::findInPackages("shaders.dei", found);
+//        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+//        {
+//            loadShaders(**i);
+//        }
+//    }
 
     void loadShaders(File const &defs)
     {
@@ -400,6 +401,14 @@ RenderSystem::RenderSystem() : d(new Impl(this))
 
 void RenderSystem::glInit()
 {
+    // Shader defines.
+    {
+        DictionaryValue defines;
+        defines.add(new TextValue("DGL_BATCH_MAX"),
+                    new NumberValue(DGL_BatchMaxSize()));
+        shaders().setPreprocessorDefines(defines);
+    }
+
     d->models.glInit();
 }
 

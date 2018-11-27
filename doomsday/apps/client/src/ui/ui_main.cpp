@@ -31,6 +31,7 @@
 
 #include "api_fontrender.h"
 #include "gl/gl_main.h"
+#include "gl/gl_draw.h"
 //#include "gl/texturecontent.h"
 //#include "resource/image.h"
 #include "render/rend_main.h"
@@ -152,49 +153,20 @@ void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, 
 
 void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
 {
-    /*
-    ui_color_t const *dark  = UI_Color(UIC_BG_DARK);
-    ui_color_t const *light = UI_Color(UIC_BG_LIGHT);
-    float const mul = 1.5f;
+    //DGL_Disable(DGL_TEXTURE_2D);
+    DGL_PushState();
 
-    // Background gradient picture.
-    MaterialSnapshot const &ms =
-        ClientResources::get().material(de::Uri("System", Path("ui/background")))
-            .prepare(UI_MaterialSpec(TSF_MONOCHROME));
-    GL_BindTexture(&ms.texture(MTU_PRIMARY));
-    */
-
-    GLState::push();
-
-    DGL_Disable(DGL_TEXTURE_2D);
     if (alpha < 1.0f)
     {
         GL_BlendMode(BM_NORMAL);
     }
     else
     {
-        //glDisable(GL_BLEND);
-        GLState::current().setBlend(false);
+        DGL_Disable(DGL_BLEND);
     }
 
     DGL_Color4f(0, 0, 0, alpha);
-    DGL_Begin(DGL_QUADS);
-        // Top color.
-        //glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-        //glTexCoord2f(0, 0);
-        DGL_Vertex2f(origin.x, origin.y);
-        //glTexCoord2f(1, 0);
-        DGL_Vertex2f(origin.x + dimensions.width, origin.y);
+    GL_DrawRect2(origin.x, origin.y, dimensions.width, dimensions.height);
 
-        // Bottom color.
-        //glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-        //glTexCoord2f(1, 1);
-        DGL_Vertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
-        //glTexCoord2f(0, 1);
-        DGL_Vertex2f(0, origin.y + dimensions.height);
-    DGL_End();
-
-    //glEnable(GL_BLEND);
-    GLState::pop();
-    DGL_Disable(DGL_TEXTURE_2D);
+    DGL_PopState();
 }

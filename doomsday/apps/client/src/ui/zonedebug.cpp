@@ -146,9 +146,9 @@ void Z_DebugDrawer(void)
 
     //glDisable(GL_CULL_FACE);
     //glDisable(GL_DEPTH_TEST);
-    GLState::push()
-            .setCull(gl::None)
-            .setDepthTest(false);
+    DGL_PushState();
+    DGL_CullFace(DGL_NONE);
+    DGL_Disable(DGL_DEPTH_TEST);
 
     // Go into screen projection mode.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -185,7 +185,7 @@ void Z_DebugDrawer(void)
 
     pd.unlock();
 
-    GLState::pop();
+    DGL_PopState();
 
     // Cleanup.
     DGL_MatrixMode(DGL_MODELVIEW);

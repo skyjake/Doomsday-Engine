@@ -243,13 +243,11 @@ void Sys_GLConfigureDefaultState(void)
     LIBGUI_GL.glFrontFace(GL_CW);
     LIBGUI_ASSERT_GL_OK();
 
-    de::GLState::current()
-            .setCull(de::gl::None)
-            .setDepthTest(false)
-            .setDepthFunc(de::gl::Less);
+    DGL_CullFace(DGL_NONE);
+    DGL_Disable(DGL_DEPTH_TEST);
+    DGL_DepthFunc(DGL_LESS);
 
     DGL_Disable(DGL_TEXTURE_2D);
-    //LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
 #if defined (DENG_OPENGL)
     LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
@@ -294,8 +292,7 @@ void Sys_GLConfigureDefaultState(void)
     LIBGUI_ASSERT_GL_OK();
 
     // Configure the default GLState (bottom of the stack).
-    de::GLState::current()
-            .setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha);
+    DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
 static de::String omitGLPrefix(de::String str)

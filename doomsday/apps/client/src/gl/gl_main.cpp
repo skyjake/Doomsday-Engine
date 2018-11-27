@@ -347,14 +347,12 @@ void GL_Init2DState()
 
     DENG_ASSERT_IN_MAIN_THREAD();
 
-    // Here we configure the OpenGL state and set the projection matrix.
-    GLState::current()
-            .setCull(gl::None)
-            .setDepthTest(false);
+    //DGL_SetInteger(DGL_FLUSH_BACKTRACE, true);
 
-    //glDisable(GL_TEXTURE_1D);
+    // Here we configure the OpenGL state and set the projection matrix.
+    DGL_CullFace(DGL_NONE);
+    DGL_Disable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_TEXTURE_2D);
-    //LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
 
     // The projection matrix.
     DGL_MatrixMode(DGL_PROJECTION);
@@ -362,17 +360,19 @@ void GL_Init2DState()
     DGL_Ortho(0, 0, 320, 200, -1, 1);
 
     // Default state for the white fog is off.
-    fogParams.usingFog = false;
+    {
+        fogParams.usingFog    = false;
+        fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
+        fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
+        fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
+        fogParams.fogColor[3] = 1.f;
+    }
     DGL_Disable(DGL_FOG);
     DGL_Fogi(DGL_FOG_MODE, (fogModeDefault == 0 ? DGL_LINEAR :
                             fogModeDefault == 1 ? DGL_EXP    : DGL_EXP2));
     DGL_Fogf(DGL_FOG_START,   DEFAULT_FOG_START);
     DGL_Fogf(DGL_FOG_END,     DEFAULT_FOG_END);
     DGL_Fogf(DGL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
-    fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
-    fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
-    fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
-    fogParams.fogColor[3] = 1.f;
     DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
 
     LIBGUI_ASSERT_GL_OK();
@@ -504,53 +504,53 @@ void GL_BlendMode(blendmode_t mode)
     switch(mode)
     {
     case BM_ZEROALPHA:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::One, gl::Zero);
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ONE, DGL_ZERO);
         break;
 
     case BM_ADD:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::SrcAlpha, gl::One);
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE);
         break;
 
     case BM_DARK:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha);
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_DST_COLOR, DGL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case BM_SUBTRACT:
-        GLState::current().setBlendOp(gl::Subtract)
-                          .setBlendFunc(gl::One, gl::SrcAlpha);
+        DGL_BlendOp(DGL_SUBTRACT);
+        DGL_BlendFunc(DGL_ONE, DGL_SRC_ALPHA);
         break;
 
     case BM_ALPHA_SUBTRACT:
-        GLState::current().setBlendOp(gl::Subtract)
-                          .setBlendFunc(gl::SrcAlpha, gl::One);
+        DGL_BlendOp(DGL_SUBTRACT);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE);
         break;
 
     case BM_REVERSE_SUBTRACT:
-        GLState::current().setBlendOp(gl::ReverseSubtract)
-                          .setBlendFunc(gl::SrcAlpha, gl::One);
+        DGL_BlendOp(DGL_REVERSE_SUBTRACT);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE);
         break;
 
     case BM_MUL:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::Zero, gl::SrcColor);
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ZERO, DGL_SRC_COLOR);
         break;
 
     case BM_INVERSE:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor);
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ONE_MINUS_DST_COLOR, DGL_ONE_MINUS_SRC_COLOR);
         break;
 
     case BM_INVERSE_MUL:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::Zero, gl::OneMinusSrcColor);
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
         break;
 
     default:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         break;
     }
 }

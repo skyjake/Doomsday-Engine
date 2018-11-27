@@ -31,6 +31,7 @@
 #include "api_render.h"
 #include "clientapp.h"
 #include "dd_main.h"
+#include "gl/gl_main.h"
 
 #include <de/Config>
 #include <de/CommandLine>
@@ -222,11 +223,11 @@ void ViewCompositor::drawCompositedLayers()
 
     R_UseViewPort(d->playerNum);
 
-    GLState::push()
-            .setAlphaTest(false)
-            .setBlend    (false)
-            .setDepthTest(false)
-            .setCull     (gl::None);
+    DGL_PushState();
+    DGL_Disable(DGL_ALPHA_TEST);
+    DGL_Disable(DGL_BLEND);
+    DGL_Disable(DGL_DEPTH_TEST);
+    DGL_CullFace(DGL_NONE);
 
     // 3D world view (using the previously rendered texture).
     d->postProcessing.update();
@@ -258,7 +259,7 @@ void ViewCompositor::drawCompositedLayers()
 
         if (gx.DrawViewPort)
         {
-            GLState::current().setBlend(true);
+            DGL_Enable(DGL_BLEND);
 
             gx.DrawViewPort(P_ConsoleToLocal(d->playerNum),
                             &vpGeometry,
@@ -283,7 +284,8 @@ void ViewCompositor::drawCompositedLayers()
     Rectanglef const vp { normRect.topLeft     * targetSize,
                           normRect.bottomRight * targetSize };
 
-    GLState::push().setViewport(vp.toRectangleui());
+    DGL_PushState();
+    GLState::current().setViewport(vp.toRectangleui());
 
     // Finale.
     {
@@ -315,7 +317,7 @@ void ViewCompositor::drawCompositedLayers()
         }
     }
 
-    GLState::pop();
+    DGL_PopState();
 
     // Legacy engine/debug UIs (stuff from the old Net_Drawer).
     {
@@ -338,7 +340,7 @@ void ViewCompositor::drawCompositedLayers()
     displayPlayer = oldDisplayPlayer;
 
     GLState::considerNativeStateUndefined();
-    GLState::pop();
+    DGL_PopState();
 }
 
 PostProcessing &ViewCompositor::postProcessing()

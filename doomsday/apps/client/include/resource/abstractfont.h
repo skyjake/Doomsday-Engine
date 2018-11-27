@@ -51,7 +51,7 @@ public:
 
     enum Flag {
         Colorize  = 0x1, ///< Can be colored.
-        Shadowed  = 0x2  ///< A shaodw is embedded in the font.
+        Shadowed  = 0x2  ///< A shadow is embedded in the font.
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 
@@ -76,15 +76,14 @@ public:
     /// @return  Returns a copy of the font's flags.
     Flags flags() const;
 
-    virtual int ascent();
-    virtual int descent();
-    virtual int lineSpacing();
+    virtual int ascent() const;
+    virtual int descent() const;
+    virtual int lineSpacing() const;
+    virtual de::Rectanglei const &glyphPosCoords(uchar ch) const = 0;
+    virtual de::Rectanglei const &glyphTexCoords(uchar ch) const = 0;
 
-    virtual void glInit();
-    virtual void glDeinit();
-
-    virtual de::Rectanglei const &glyphPosCoords(uchar ch) = 0;
-    virtual de::Rectanglei const &glyphTexCoords(uchar ch) = 0;
+    virtual void glInit() const;
+    virtual void glDeinit() const;
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractFont::Flags)

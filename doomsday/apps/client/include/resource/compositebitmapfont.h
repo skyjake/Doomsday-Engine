@@ -63,20 +63,20 @@ public:
      */
     void rebuildFromDef(struct ded_compositefont_s const &def);
 
-    int ascent();
-    int descent();
-    int lineSpacing();
+    int ascent() const override;
+    int descent() const override;
+    int lineSpacing() const override;
 
-    void glInit();
-    void glDeinit();
+    void glInit() const override;
+    void glDeinit() const override;
 
-    de::Rectanglei const &glyphPosCoords(uchar ch);
-    de::Rectanglei const &glyphTexCoords(uchar ch);
+    de::Rectanglei const &glyphPosCoords(uchar ch) const override;
+    de::Rectanglei const &glyphTexCoords(uchar ch) const override;
 
-    patchid_t glyphPatch(uchar ch);
+    patchid_t glyphPatch(uchar ch) const;
     void glyphSetPatch(uchar ch, de::String encodedPatchName);
-    TextureVariant *glyphTexture(uchar ch);
-    uint glyphTextureBorder(uchar ch);
+    TextureVariant *glyphTexture(uchar ch) const;
+    uint glyphTextureBorder(uchar ch) const;
 
 private:
     DENG2_PRIVATE(d)

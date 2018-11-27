@@ -308,7 +308,9 @@ void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
 // DGL internal API ---------------------------------------------------------------------
 
 void            DGL_Shutdown();
+unsigned int    DGL_BatchMaxSize();
 void            DGL_BeginFrame();
+void            DGL_Flush();
 void            DGL_AssertNotInPrimitive(void);
 de::Matrix4f    DGL_Matrix(DGLenum matrixMode);
 void            DGL_CurrentColor(DGLubyte *rgba);
@@ -317,6 +319,8 @@ void            DGL_ModulateTexture(int mode);
 void            DGL_SetModulationColor(de::Vector4f const &modColor);
 de::Vector4f    DGL_ModulationColor();
 void            DGL_FogParams(de::GLUniform &fogRange, de::GLUniform &fogColor);
+void            DGL_DepthFunc(DGLenum depthFunc);
+void            DGL_CullFace(DGLenum cull);
 
 // Console commands ---------------------------------------------------------------------
 

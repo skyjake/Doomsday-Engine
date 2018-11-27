@@ -32,10 +32,10 @@ AbstractFont::~AbstractFont()
     DENG2_FOR_AUDIENCE(Deletion, i) i->fontBeingDeleted(*this);
 }
 
-void AbstractFont::glInit()
+void AbstractFont::glInit() const
 {}
 
-void AbstractFont::glDeinit()
+void AbstractFont::glDeinit() const
 {}
 
 FontManifest &AbstractFont::manifest() const
@@ -48,17 +48,17 @@ AbstractFont::Flags AbstractFont::flags() const
     return _flags;
 }
 
-int AbstractFont::ascent()
+int AbstractFont::ascent() const
 {
     return 0;
 }
 
-int AbstractFont::descent()
+int AbstractFont::descent() const
 {
     return 0;
 }
 
-int AbstractFont::lineSpacing()
+int AbstractFont::lineSpacing() const
 {
     return 0;
 }

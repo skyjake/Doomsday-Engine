@@ -346,7 +346,7 @@ DENG_EXTERN_C void GL_BeginBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
 
-    GLState::push();
+    DGL_PushState();
 
     if (bp->isPillarBoxed)
     {
@@ -387,7 +387,7 @@ DENG_EXTERN_C void GL_EndBorderedProjection(dgl_borderedprojectionstate_t* bp)
     DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLState::pop();
+    DGL_PopState();
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();

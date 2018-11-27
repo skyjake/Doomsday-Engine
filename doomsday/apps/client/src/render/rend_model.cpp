@@ -994,7 +994,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if (smf.testFlag(MFF_TWO_SIDED))
     {
         //glDisable(GL_CULL_FACE);
-        GLState::current().setCull(gl::None);
+        DGL_CullFace(DGL_NONE);
     }
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -1018,8 +1018,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
 
         if (shininess > 0)
         {
-            //glDepthFunc(GL_LEQUAL);
-            GLState::current().setDepthFunc(gl::LessOrEqual);
+            DGL_DepthFunc(DGL_LEQUAL);
 
             // Set blending mode, two choices: reflected and specular.
             if (smf.testFlag(MFF_SHINY_SPECULAR))
@@ -1085,7 +1084,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if (smf.testFlag(MFF_TWO_SIDED))
     {
         //glEnable(GL_CULL_FACE);
-        GLState::current().setCull(gl::Back);
+        DGL_CullFace(DGL_BACK);
     }
 
     if (zSign < 0)
@@ -1093,7 +1092,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         LIBGUI_GL.glFrontFace(GL_CW);
     }
     //glDepthFunc(GL_LESS);
-    GLState::current().setDepthFunc(gl::Less);
+    DGL_DepthFunc(DGL_LESS);
 
     GL_BlendMode(BM_NORMAL);
 }
@@ -1120,16 +1119,14 @@ void Rend_DrawModel(vissprite_t const &spr)
 
             if (disableZ)
             {
-                //glDepthMask(GL_FALSE);
-                GLState::current().setDepthWrite(false);
+                DGL_Disable(DGL_DEPTH_WRITE);
             }
 
             drawSubmodel(i, spr);
 
             if (disableZ)
             {
-                //glDepthMask(GL_TRUE);
-                GLState::current().setDepthWrite(true);
+                DGL_Enable(DGL_DEPTH_WRITE);
             }
         }
     }
@@ -1139,9 +1136,9 @@ void Rend_DrawModel(vissprite_t const &spr)
         // Draw the vlight vectors, for debug.
         //glDisable(GL_DEPTH_TEST);
         //glDisable(GL_CULL_FACE);
-        GLState::push()
-                .setDepthTest(false)
-                .setCull(gl::None);
+        DGL_PushState();
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_CullFace(DGL_NONE);
 
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PushMatrix();
@@ -1161,9 +1158,7 @@ void Rend_DrawModel(vissprite_t const &spr)
         DGL_MatrixMode(DGL_MODELVIEW);
         DGL_PopMatrix();
 
-        //glEnable(GL_CULL_FACE);
-        //glEnable(GL_DEPTH_TEST);
-        GLState::pop();
+        DGL_PopState();
     }
 }
 

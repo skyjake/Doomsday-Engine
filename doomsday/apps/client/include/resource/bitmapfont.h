@@ -44,15 +44,15 @@ public:
     de::Vector2i const &textureDimensions() const;
     de::Vector2ui const &textureMargin() const;
 
-    int ascent();
-    int descent();
-    int lineSpacing();
+    int ascent() const override;
+    int descent() const override;
+    int lineSpacing() const override;
 
-    void glInit();
-    void glDeinit();
+    de::Rectanglei const &glyphPosCoords(uchar ch) const override;
+    de::Rectanglei const &glyphTexCoords(uchar ch) const override;
 
-    de::Rectanglei const &glyphPosCoords(uchar ch);
-    de::Rectanglei const &glyphTexCoords(uchar ch);
+    void glInit() const override;
+    void glDeinit() const override;
 
 private:
     DENG2_PRIVATE(d)

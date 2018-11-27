@@ -100,17 +100,15 @@ void H_SetupState(bool dosetup)
 
     if(dosetup)
     {
-        GLState::current()
-                .setDepthWrite(false)
-                .setDepthTest(false);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Disable(DGL_DEPTH_TEST);
         GL_BlendMode(BM_ADD);
     }
     else
     {
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
         GL_BlendMode(BM_NORMAL);
-        GLState::current()
-                .setDepthWrite(true)
-                .setDepthTest(true);
     }
 }
 

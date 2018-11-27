@@ -98,7 +98,7 @@ typedef struct {
     } caseMod[2]; // 1=upper, 0=lower
 } drawtextstate_t;
 
-static void drawChar(uchar ch, float posX, float posY, AbstractFont *font, int alignFlags, short textFlags);
+static void drawChar(uchar ch, float posX, float posY, const AbstractFont &font, int alignFlags); //, short textFlags);
 static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
 
 static int initedFont = false;
@@ -117,12 +117,12 @@ static void errorIfNotInited(const char* callerName)
     exit(1);
 }
 
-static int topToAscent(AbstractFont *font)
+static int topToAscent(const AbstractFont &font)
 {
-    int lineHeight = font->lineSpacing();
+    int lineHeight = font.lineSpacing();
     if (lineHeight == 0)
         return 0;
-    return lineHeight - font->ascent();
+    return lineHeight - font.ascent();
 }
 
 static inline fr_state_attributes_t *currentAttribs(void)
@@ -475,116 +475,146 @@ int FR_GlyphTopToAscent(char const *text)
     return lineHeight - font.ascent();
 }
 
-static int textFragmentWidth(char const *fragment)
+enum class TextFragmentPass
 {
-    DENG2_ASSERT(fragment != 0);
+    Shadow,
+    Character,
+    Glitter,
+};
 
-    if (fr.fontNum == 0)
+struct TextFragment
+{
+    TextFragmentPass pass;
+    const AbstractFont &font;
+    const char *text;
+    int x;
+    int y;
+    int alignFlags;
+    uint16_t textFlags;
+    int initialCount;
+
+    int length;
+    int width;
+    int height;
+
+    void updateDimensions()
     {
-        App_Error("textFragmentHeight: Cannot determine height without a current font.");
-        exit(1);
+        length = int(strlen(text));
+
+        // Width.
+        {
+            width = 0;
+
+            // Just add them together.
+            int i = 0;
+            char const *ch = text;
+            uchar c;
+            while (i++ < length && (c = *ch++) != 0 && c != '\n')
+            {
+                width += FR_CharWidth(c);
+            }
+
+            if (length > 0)
+            {
+                width += currentAttribs()->tracking * (length - 1);
+            }
+        }
+
+        // Height.
+        {
+            height = 0;
+
+            // Find the greatest height.
+            int i = 0;
+            char const *ch = text;
+            uchar c;
+            while (i++ < length && (c = *ch++) != 0 && c != '\n')
+            {
+                height = de::max(height, FR_CharHeight(c));
+            }
+
+            height += topToAscent(font);
+        }
     }
 
-    int width = 0;
-
-    // Just add them together.
-    size_t len = strlen(fragment);
-    size_t i = 0;
-    char const *ch = fragment;
-    uchar c;
-    while (i++ < len && (c = *ch++) != 0 && c != '\n')
+    void applyBlendMode() const
     {
-        width += FR_CharWidth(c);
+        switch (pass)
+        {
+        case TextFragmentPass::Shadow:
+            DGL_BlendFunc(DGL_ZERO, DGL_ONE_MINUS_SRC_ALPHA);
+            break;
+
+        case TextFragmentPass::Character:
+            DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
+            break;
+
+        case TextFragmentPass::Glitter:
+            DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE);
+            break;
+        }
     }
+};
 
-    return int( width + currentAttribs()->tracking * (len-1) );
-}
-
-static int textFragmentHeight(char const *fragment)
+static void drawTextFragment(const TextFragment &fragment)
 {
-    DENG2_ASSERT(fragment != 0);
-
-    if (fr.fontNum == 0)
-    {
-        App_Error("textFragmentHeight: Cannot determine height without a current font.");
-        exit(1);
-    }
-
-    int height = 0;
-
-    // Find the greatest height.
-    uint i = 0;
-    size_t len = strlen(fragment);
-    char const *ch = fragment;
-    uchar c;
-    while (i++ < len && (c = *ch++) != 0 && c != '\n')
-    {
-        height = de::max(height, FR_CharHeight(c));
-    }
-
-    return topToAscent(&App_Resources().font(fr.fontNum)) + height;
-}
-
-/*
-static void textFragmentSize(int* width, int* height, const char* fragment)
-{
-    if (width)  *width  = textFragmentWidth(fragment);
-    if (height) *height = textFragmentHeight(fragment);
-}
-*/
-
-static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlags,
-    short textFlags, int initialCount)
-{
-    DENG2_ASSERT(fragment != 0 && fragment[0]);
-
-    AbstractFont *font = &App_Resources().font(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
-    dd_bool noTypein = (textFlags & DTF_NO_TYPEIN) != 0;
-    dd_bool noGlitter = (sat->glitterStrength <= 0 || (textFlags & DTF_NO_GLITTER) != 0);
-    dd_bool noShadow  = (sat->shadowStrength  <= 0 || (textFlags & DTF_NO_SHADOW)  != 0 ||
-                         font->flags().testFlag(AbstractFont::Shadowed));
-    dd_bool noCharacter = (textFlags & DTF_NO_CHARACTER) != 0;
-    float glitter = (noGlitter? 0 : sat->glitterStrength), glitterMul;
-    float shadow  = (noShadow ? 0 : sat->shadowStrength), shadowMul;
+    bool noTypein = (fragment.textFlags & DTF_NO_TYPEIN) != 0;
+
+    float glitterMul;
+    float shadowMul;
     float flashColor[3] = { 0, 0, 0 };
+    int x = fragment.x;
+    int y = fragment.y;
     int w, h, cx, cy, count, yoff;
     unsigned char c;
     const char* ch;
 
-    if (alignFlags & ALIGN_RIGHT)
-        x -= textFragmentWidth(fragment);
-    else if (!(alignFlags & ALIGN_LEFT))
-        x -= textFragmentWidth(fragment)/2;
+    // We may be able to skip a fragment completely.
+    {
+        if (fragment.pass == TextFragmentPass::Shadow &&
+            (sat->shadowStrength <= 0 || fragment.font.flags().testFlag(AbstractFont::Shadowed)))
+        {
+            return;
+        }
 
-    if (alignFlags & ALIGN_BOTTOM)
-        y -= textFragmentHeight(fragment);
-    else if (!(alignFlags & ALIGN_TOP))
-        y -= textFragmentHeight(fragment)/2;
+        if (fragment.pass == TextFragmentPass::Glitter && sat->glitterStrength <= 0)
+        {
+            return;
+        }
+    }
 
-    if (!(noTypein && noGlitter))
+    if (fragment.pass == TextFragmentPass::Glitter)
     {
         flashColor[CR] = (1 + 2 * sat->rgba[CR]) / 3;
         flashColor[CG] = (1 + 2 * sat->rgba[CG]) / 3;
         flashColor[CB] = (1 + 2 * sat->rgba[CB]) / 3;
     }
 
-#if defined (DENG_OPENGL)
-    if (renderWireframe > 1)
+    if (fragment.alignFlags & ALIGN_RIGHT)
     {
-        DENG2_ASSERT_IN_RENDER_THREAD();
-        DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
-        DGL_Disable(DGL_TEXTURE_2D);
+        x -= fragment.width;
     }
-#endif
-    if (BitmapFont *bmapFont = maybeAs<BitmapFont>(font))
+    else if (!(fragment.alignFlags & ALIGN_LEFT))
+    {
+        x -= fragment.width / 2;
+    }
+
+    if (fragment.alignFlags & ALIGN_BOTTOM)
+    {
+        y -= fragment.height;
+    }
+    else if (!(fragment.alignFlags & ALIGN_TOP))
+    {
+        y -= fragment.height / 2;
+    }
+
+    if (const BitmapFont *bmapFont = maybeAs<BitmapFont>(fragment.font))
     {
         if (bmapFont->textureGLName())
         {
             GL_BindTextureUnmanaged(bmapFont->textureGLName(), gl::ClampToEdge,
-                                    gl::ClampToEdge, filterUI? gl::Linear : gl::Nearest);
+                                    gl::ClampToEdge, filterUI ? gl::Linear : gl::Nearest);
 
             DGL_MatrixMode(DGL_TEXTURE);
             DGL_PushMatrix();
@@ -594,32 +624,55 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
         }
     }
 
-    for (int pass = (noShadow? 1 : 0); pass < (noCharacter && noGlitter? 1 : 2); ++pass)
+    bool isBlendModeSet = false;
+
+    //for (int pass = (noShadow? 1 : 0); pass < (noCharacter && noGlitter? 1 : 2); ++pass)
     {
-        count = initialCount;
-        ch = fragment;
-        cx = x + (pass == 0? sat->shadowOffsetX : 0);
-        cy = y + (pass == 0? sat->shadowOffsetY : 0);
+        count = fragment.initialCount;
+        ch = fragment.text;
+        cx = x + (fragment.pass == TextFragmentPass::Shadow? sat->shadowOffsetX : 0);
+        cy = y + (fragment.pass == TextFragmentPass::Shadow? sat->shadowOffsetY : 0);
 
         for (;;)
         {
             c = *ch++;
             yoff = 0;
 
-            glitter    = (noGlitter? 0 : sat->glitterStrength);
             glitterMul = 0;
-
-            shadow    = (noShadow? 0 : sat->shadowStrength);
-            shadowMul = (noShadow? 0 : sat->rgba[CA]);
+            shadowMul = sat->rgba[CA];
 
             // Do the type-in effect?
-            if (!noTypein && (pass || (!noShadow && !pass)))
+            if (!noTypein) // && (pass || (!noShadow && !pass)))
             {
                 int maxCount = (typeInTime > 0? typeInTime * 2 : 0);
 
-                if (pass)
+                if (fragment.pass == TextFragmentPass::Shadow)
                 {
-                    if (!noGlitter)
+                    if (count == maxCount)
+                    {
+                        shadowMul = 0;
+                    }
+                    else if (count + 1 == maxCount)
+                    {
+                        shadowMul *= .25f;
+                    }
+                    else if (count + 2 == maxCount)
+                    {
+                        shadowMul *= .5f;
+                    }
+                    else if (count + 3 == maxCount)
+                    {
+                        shadowMul *= .75f;
+                    }
+                    else if (count > maxCount)
+                    {
+                        break;
+                    }
+                }
+                else
+                {
+                    //if (!noGlitter)
+                    if (fragment.pass == TextFragmentPass::Glitter)
                     {
                         if (count == maxCount)
                         {
@@ -659,29 +712,6 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
                         break;
                     }
                 }
-                else
-                {
-                    if (count == maxCount)
-                    {
-                        shadowMul = 0;
-                    }
-                    else if (count + 1 == maxCount)
-                    {
-                        shadowMul *= .25f;
-                    }
-                    else if (count + 2 == maxCount)
-                    {
-                        shadowMul *= .5f;
-                    }
-                    else if (count + 3 == maxCount)
-                    {
-                        shadowMul *= .75f;
-                    }
-                    else if (count > maxCount)
-                    {
-                        break;
-                    }
-                }
             }
             count++;
 
@@ -694,41 +724,67 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             if (c != ' ')
             {
                 // A non-white-space character we have a glyph for.
-                if (pass)
+                switch (fragment.pass)
                 {
-                    if (!noCharacter)
-                    {
+                    case TextFragmentPass::Character:
                         // The character itself.
-                        DGL_Color4fv(sat->rgba);
                         if (sat->rgba[CA] > 0.001f)
                         {
-                            drawChar(c, cx, cy + yoff, font, ALIGN_TOPLEFT, DTF_NO_EFFECTS);
+                            DGL_Color4fv(sat->rgba);
+                            if (!isBlendModeSet)
+                            {
+                                fragment.applyBlendMode();
+                                isBlendModeSet = true;
+                            }
+                            drawChar(c, cx, cy + yoff, fragment.font, ALIGN_TOPLEFT);
                         }
-                    }
+                        break;
 
-                    if (!noGlitter && glitter > 0)
+                    case TextFragmentPass::Glitter:
+                        if (/*!noGlitter &&*/ sat->glitterStrength > 0)
+                        {
+                            // Do something flashy.
+                            Point2Raw origin;
+                            Size2Raw  size;
+                            origin.x    = cx;
+                            origin.y    = cy + yoff;
+                            size.width  = w;
+                            size.height = h;
+                            const float alpha = sat->glitterStrength * glitterMul;
+                            if (alpha > 0)
+                            {
+                                if (!isBlendModeSet)
+                                {
+                                    fragment.applyBlendMode();
+                                    isBlendModeSet = true;
+                                }
+                                DGL_Color4f(flashColor[CR], flashColor[CG], flashColor[CB], alpha);
+                                drawFlash(&origin, &size, true);
+                            }
+                        }
+                        break;
+
+                    case TextFragmentPass::Shadow:
                     {
-                        // Do something flashy.
                         Point2Raw origin;
-                        Size2Raw size;
-                        origin.x = cx;
-                        origin.y = cy + yoff;
+                        Size2Raw  size;
+                        origin.x    = cx;
+                        origin.y    = cy + yoff;
                         size.width  = w;
                         size.height = h;
-                        DGL_Color4f(flashColor[CR], flashColor[CG], flashColor[CB], glitter * glitterMul);
-                        drawFlash(&origin, &size, true);
+                        const float alpha = sat->shadowStrength * shadowMul;
+                        if (alpha > 0)
+                        {
+                            if (!isBlendModeSet)
+                            {
+                                fragment.applyBlendMode();
+                                isBlendModeSet = true;
+                            }
+                            DGL_Color4f(1, 1, 1, alpha);
+                            drawFlash(&origin, &size, false);
+                        }
+                        break;
                     }
-                }
-                else if (!noShadow)
-                {
-                    Point2Raw origin;
-                    Size2Raw size;
-                    origin.x = cx;
-                    origin.y = cy + yoff;
-                    size.width  = w;
-                    size.height = h;
-                    DGL_Color4f(1, 1, 1, shadow * shadowMul);
-                    drawFlash(&origin, &size, false);
                 }
             }
 
@@ -737,7 +793,7 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
     }
 
     // Restore previous GL-state.
-    if (BitmapFont *bmapFont = maybeAs<BitmapFont>(font))
+    if (const BitmapFont *bmapFont = maybeAs<BitmapFont>(fragment.font))
     {
         if (bmapFont->textureGLName())
         {
@@ -745,30 +801,21 @@ static void textFragmentDrawer(const char* fragment, int x, int y, int alignFlag
             DGL_PopMatrix();
         }
     }
-#if defined (DENG_OPENGL)
-    if (renderWireframe > 1)
-    {
-        /// @todo do not assume previous state.
-        DGL_Enable(DGL_TEXTURE_2D);
-        LIBGUI_GL.glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
-#endif
 }
 
-static void drawChar(uchar ch, float x, float y, AbstractFont *font,
-    int alignFlags, short /*textFlags*/)
+static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int alignFlags)
 {
     if (alignFlags & ALIGN_RIGHT)
     {
-        x -= font->glyphPosCoords(ch).width();
+        x -= font.glyphPosCoords(ch).width();
     }
     else if (!(alignFlags & ALIGN_LEFT))
     {
-        x -= font->glyphPosCoords(ch).width() / 2;
+        x -= font.glyphPosCoords(ch).width() / 2;
     }
 
-    int const ascent = font->ascent();
-    int const lineHeight = ascent? ascent : font->glyphPosCoords(ch).height();
+    int const ascent = font.ascent();
+    int const lineHeight = ascent ? ascent : font.glyphPosCoords(ch).height();
     if (alignFlags & ALIGN_BOTTOM)
     {
         y -= topToAscent(font) + lineHeight;
@@ -781,9 +828,9 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(x, y, 0);
 
-    Rectanglei geometry = font->glyphPosCoords(ch);
+    Rectanglei geometry = font.glyphPosCoords(ch);
 
-    if (BitmapFont *bmapFont = maybeAs<BitmapFont>(font))
+    if (const BitmapFont *bmapFont = maybeAs<BitmapFont>(font))
     {
         /// @todo Filtering should be determined at a higher level.
         /// @todo We should not need to re-bind this texture here.
@@ -792,16 +839,16 @@ static void drawChar(uchar ch, float x, float y, AbstractFont *font,
 
         geometry = geometry.expanded(bmapFont->textureMargin().toVector2i());
     }
-    else if (CompositeBitmapFont *compFont = maybeAs<CompositeBitmapFont>(font))
+    else if (const CompositeBitmapFont *compFont = maybeAs<CompositeBitmapFont>(font))
     {
         GL_BindTexture(compFont->glyphTexture(ch));
         geometry = geometry.expanded(compFont->glyphTextureBorder(ch));
     }
 
-    Vector2i coords[4] = { font->glyphTexCoords(ch).topLeft,
-                           font->glyphTexCoords(ch).topRight(),
-                           font->glyphTexCoords(ch).bottomRight,
-                           font->glyphTexCoords(ch).bottomLeft() };
+    Vector2i coords[4] = { font.glyphTexCoords(ch).topLeft,
+                           font.glyphTexCoords(ch).topRight(),
+                           font.glyphTexCoords(ch).bottomRight,
+                           font.glyphTexCoords(ch).bottomLeft() };
 
     GL_DrawRectWithCoords(geometry, coords);
 
@@ -832,9 +879,6 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC),
                             gl::ClampToEdge, gl::ClampToEdge);
 
-    GLState::current().setBlendFunc(bright? gl::SrcAlpha : gl::Zero,
-                                    bright? gl::One      : gl::OneMinusSrcAlpha);
-
     DGL_Begin(DGL_QUADS);
         DGL_TexCoord2f(0, 0, 0);
         DGL_Vertex2f(x, y);
@@ -845,8 +889,6 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
         DGL_TexCoord2f(0, 0, 1);
         DGL_Vertex2f(x, y + h);
     DGL_End();
-
-    GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
 }
 
 /**
@@ -855,10 +897,10 @@ static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright
  *     "<whitespace> = <whitespace> <float>"
  * </pre>
  */
-static float parseFloat(char** str)
+static float parseFloat(const char **str)
 {
     float value;
-    char* end;
+    char *end;
 
     *str = M_SkipWhite(*str);
     if (**str != '=') return 0; // Now I'm confused!
@@ -875,10 +917,10 @@ static float parseFloat(char** str)
  *      "<whitespace> = <whitespace> [|"]<string>[|"]"
  * </pre>
  */
- static dd_bool parseString(char** str, char* buf, size_t bufLen)
+ static dd_bool parseString(const char **str, char* buf, size_t bufLen)
 {
     size_t len;
-    char* end;
+    const char* end;
 
     if (!buf || bufLen == 0) return false;
 
@@ -909,7 +951,7 @@ static float parseFloat(char** str)
     return true;
 }
 
-static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numBreaks)
+static void parseParamaterBlock(const char **strPtr, drawtextstate_t* state, int *numBreaks)
 {
     LOG_AS("parseParamaterBlock");
 
@@ -1065,7 +1107,7 @@ static void parseParamaterBlock(char** strPtr, drawtextstate_t* state, int* numB
         (*strPtr)++;
 }
 
-static void initDrawTextState(drawtextstate_t* state, short textFlags)
+static void initDrawTextState(drawtextstate_t* state, uint16_t textFlags)
 {
     fr_state_attributes_t* sat = currentAttribs();
 
@@ -1243,18 +1285,18 @@ void FR_TextSize(Size2Raw* size, const char* text)
 }
 
 #undef FR_DrawText3
-void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags)
+void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, uint16_t textFlags)
 {
     fontid_t origFont = FR_Font();
     float cx, cy, extraScale;
     drawtextstate_t state;
     const char* fragment;
-    int pass, curCase;
+    int curCase;
     Point2Raw origin;
     Size2Raw textSize;
-    size_t charCount;
+    int charCount;
     float origColor[4];
-    char* str, *end;
+    const char *str, *end;
     dd_bool escaped = false;
 
     errorIfNotInited("FR_DrawText");
@@ -1264,11 +1306,13 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     origin.x = _origin? _origin->x : 0;
     origin.y = _origin? _origin->y : 0;
 
-    _textFlags &= ~(DTF_INTERNAL_MASK);
+    textFlags &= ~(DTF_INTERNAL_MASK);
 
     // If we aren't aligning to top-left we need to know the dimensions.
     if (alignFlags & ALIGN_RIGHT)
+    {
         FR_TextSize(&textSize, text);
+    }
 
     DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
@@ -1276,27 +1320,34 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
     // We need to change the current color, so remember for restore.
     DGL_CurrentColor(origColor);
 
-    for (pass = ((_textFlags & DTF_NO_SHADOW)  != 0? 1 : 0);
-         pass < ((_textFlags & DTF_NO_GLITTER) != 0? 2 : 3); ++pass)
+    for (TextFragmentPass pass :
+         {TextFragmentPass::Shadow, TextFragmentPass::Character, TextFragmentPass::Glitter})
     {
-        short textFlags = 0;
+        switch (pass)
+        {
+            case TextFragmentPass::Shadow:
+                if (textFlags & DTF_NO_SHADOW) continue;
+                break;
+
+            case TextFragmentPass::Character:
+                if (textFlags & DTF_NO_CHARACTER) continue;
+                break;
+
+            case TextFragmentPass::Glitter:
+                if (textFlags & DTF_NO_GLITTER) continue;
+                break;
+        }
 
         // Configure the next pass.
         cx = (float) origin.x;
         cy = (float) origin.y;
         curCase = -1;
         charCount = 0;
-        switch (pass)
-        {
-        case 0: textFlags = _textFlags | (DTF_NO_GLITTER|DTF_NO_CHARACTER); break;
-        case 1: textFlags = _textFlags | (DTF_NO_SHADOW |DTF_NO_GLITTER);   break;
-        case 2: textFlags = _textFlags | (DTF_NO_SHADOW |DTF_NO_CHARACTER); break;
-        }
 
         // Apply defaults.
         initDrawTextState(&state, textFlags);
 
-        str = (char*)text;
+        str = text;
         while (*str)
         {
             if (*str == FR_FORMAT_ESCAPE_CHAR)
@@ -1415,7 +1466,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 DGL_PushMatrix();
 
                 // Rotate.
-                if (state.angle != 0)
+                if (!fequal(state.angle, 0))
                 {
                     // The origin is the specified (x,y) for the patch.
                     // We'll undo the aspect ratio (otherwise the result would be skewed).
@@ -1433,24 +1484,39 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
                 DGL_Scalef(state.scaleX, state.scaleY * extraScale, 1);
 
                 // Draw it.
-                if (fr.fontNum)
-                {
-                    textFragmentDrawer(fragment, 0, 0, fragmentAlignFlags, textFlags, state.typeIn ? (int) charCount : DEFAULT_INITIALCOUNT);
-                }
-                charCount += strlen(fragment);
+                DENG2_ASSERT(fr.fontNum);
+
+                TextFragment frag{pass,
+                                  App_Resources().font(fr.fontNum),
+                                  fragment,
+                                  0,
+                                  0,
+                                  fragmentAlignFlags,
+                                  textFlags,
+                                  state.typeIn ? charCount : DEFAULT_INITIALCOUNT,
+                                  0,
+                                  0,
+                                  0};
+                frag.updateDimensions();
+
+                drawTextFragment(frag);
+
+                charCount += frag.length;
 
                 // Advance the current position?
                 if (newlines == 0)
                 {
-                    cx += ((float) textFragmentWidth(fragment) + currentAttribs()->tracking) * state.scaleX;
+                    cx += (float(frag.width) + currentAttribs()->tracking) * state.scaleX;
                 }
                 else
                 {
-                    if (strlen(fragment) > 0)
-                        state.lastLineHeight = textFragmentHeight(fragment);
+                    if (frag.length > 0)
+                    {
+                        state.lastLineHeight = frag.height;
+                    }
 
                     cx = (float) origin.x;
-                    cy += newlines * (float) state.lastLineHeight * (1+FR_Leading());
+                    cy += newlines * state.lastLineHeight * (1.f + FR_Leading());
                 }
 
                 DGL_MatrixMode(DGL_MODELVIEW);
@@ -1465,6 +1531,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, sh
 
     FR_SetFont(origFont);
     DGL_Color4fv(origColor);
+    DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
 #undef FR_DrawText2

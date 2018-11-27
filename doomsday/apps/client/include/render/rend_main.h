@@ -185,7 +185,7 @@ de::Vector3d Rend_EyeOrigin();
  */
 de::Matrix4f Rend_GetProjectionMatrix();
 
-#define Rend_PointDist2D(c) (fabs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
+#define Rend_PointDist2D(c) (abs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 
 void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, de::Vector2f viewportSize);
 void Rend_UnsetFixedView();

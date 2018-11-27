@@ -37,9 +37,14 @@
 
 using namespace de;
 
-uint constexpr MAX_TEX_COORDS = 2;
+constexpr uint MAX_TEX_COORDS = 2;
+constexpr int  MAX_BATCH      = 16;
 
 static unsigned s_drawCallCount = 0;
+static unsigned s_primSwitchCount = 0;
+static unsigned s_minBatchLength = 0;
+static unsigned s_maxBatchLength = 0;
+static unsigned s_totalBatchCount = 0;
 
 struct DGLDrawState
 {
@@ -49,6 +54,7 @@ struct DGLDrawState
         Vector4ub color { 255, 255, 255, 255 };
         Vector2f  texCoord[MAX_TEX_COORDS];
         float     fragOffset[2] { 0, 0 }; // Multiplied by uFragmentOffset
+        float     batchIndex;
 
         Vertex() {}
 
@@ -65,18 +71,22 @@ struct DGLDrawState
     };
 
     // Indices for vertex attribute arrays.
-    enum
-    {
+    enum {
         VAA_VERTEX,
         VAA_COLOR,
         VAA_TEXCOORD0,
         VAA_TEXCOORD1,
         VAA_FRAG_OFFSET,
+        VAA_BATCH_INDEX,
         NUM_VERTEX_ATTRIB_ARRAYS
     };
 
-    dglprimtype_t   primType  = DGL_NO_PRIMITIVE;
-    int             primIndex = 0;
+    dglprimtype_t   primType      = DGL_NO_PRIMITIVE;
+    dglprimtype_t   batchPrimType = DGL_NO_PRIMITIVE;
+    int             primIndex     = 0;
+    duint           batchMaxSize;
+    duint           currentBatchIndex;
+    bool            resetPrimitive = false;
     Vertex          currentVertex;
     Vertex          primVertices[4];
     QVector<Vertex> vertices;
@@ -84,16 +94,30 @@ struct DGLDrawState
     struct GLData
     {
         GLProgram shader;
-        GLUniform uFragmentSize { "uFragmentSize", GLUniform::Vec2  };
-        GLUniform uMvpMatrix    { "uMvpMatrix",    GLUniform::Mat4  };
-        GLUniform uTexMatrix0   { "uTexMatrix0",   GLUniform::Mat4  };
-        GLUniform uTexMatrix1   { "uTexMatrix1",   GLUniform::Mat4  };
-        GLUniform uTexEnabled   { "uTexEnabled",   GLUniform::Int   };
-        GLUniform uTexMode      { "uTexMode",      GLUniform::Int   };
-        GLUniform uTexModeColor { "uTexModeColor", GLUniform::Vec4  };
-        GLUniform uAlphaLimit   { "uAlphaLimit",   GLUniform::Float };
-        GLUniform uFogRange     { "uFogRange",     GLUniform::Vec4  };
-        GLUniform uFogColor     { "uFogColor",     GLUniform::Vec4  };
+
+        GLState  batchState;
+        Matrix4f batchMvpMatrix[MAX_BATCH];
+        Matrix4f batchTexMatrix0[MAX_BATCH];
+        Matrix4f batchTexMatrix1[MAX_BATCH];
+        int      batchTexEnabled[MAX_BATCH];
+        int      batchTexMode[MAX_BATCH];
+        Vector4f batchTexModeColor[MAX_BATCH];
+        float    batchAlphaLimit[MAX_BATCH];
+        int      batchTexture0[MAX_BATCH];
+        int      batchTexture1[MAX_BATCH];
+
+        // Batched uniforms:
+        GLUniform uMvpMatrix;
+        GLUniform uTexMatrix0;
+        GLUniform uTexMatrix1;
+        GLUniform uTexEnabled;
+        GLUniform uTexMode;
+        GLUniform uTexModeColor;
+        GLUniform uAlphaLimit;
+
+        GLUniform uFragmentSize;
+        GLUniform uFogRange;
+        GLUniform uFogColor;
 
         struct DrawBuffer
         {
@@ -109,6 +133,19 @@ struct DGLDrawState
             }
         };
 
+        GLData(duint batchSize)
+            : uMvpMatrix    { "uMvpMatrix",    GLUniform::Mat4Array , batchSize }
+            , uTexMatrix0   { "uTexMatrix0",   GLUniform::Mat4Array , batchSize }
+            , uTexMatrix1   { "uTexMatrix1",   GLUniform::Mat4Array , batchSize }
+            , uTexEnabled   { "uTexEnabled",   GLUniform::IntArray  , batchSize }
+            , uTexMode      { "uTexMode",      GLUniform::IntArray  , batchSize }
+            , uTexModeColor { "uTexModeColor", GLUniform::Vec4Array , batchSize }
+            , uAlphaLimit   { "uAlphaLimit",   GLUniform::FloatArray, batchSize }
+            , uFragmentSize { "uFragmentSize", GLUniform::Vec2 }
+            , uFogRange     { "uFogRange",     GLUniform::Vec4 }
+            , uFogColor     { "uFogColor",     GLUniform::Vec4 }
+        {}
+
         QVector<DrawBuffer *> buffers;
         int bufferPos = 0;
     };
@@ -117,6 +154,21 @@ struct DGLDrawState
     DGLDrawState()
     {
         clearVertices();
+    }
+
+    void checkPrimitiveReset()
+    {
+        if (resetPrimitive)
+        {
+            DENG2_ASSERT(!vertices.empty());
+            DENG2_ASSERT(glPrimitive() == GL_TRIANGLE_STRIP);
+
+            // When committing multiple triangle strips, add a disconnection
+            // between batches.
+            vertices.push_back(vertices.back());
+            vertices.push_back(currentVertex);
+            resetPrimitive = false;
+        }
     }
 
     void commitLine(Vertex start, Vertex end)
@@ -157,6 +209,7 @@ struct DGLDrawState
 
     void commitVertex()
     {
+        currentVertex.batchIndex = float(currentBatchIndex);
         ++primIndex;
 
         switch (primType)
@@ -208,18 +261,45 @@ struct DGLDrawState
                 primVertices[1] = currentVertex;
                 break;
 
+            case DGL_TRIANGLE_FAN:
+                if (primIndex == 1)
+                {
+                    if (!vertices.empty())
+                    {
+                        resetPrimitive = true;
+                    }
+                    checkPrimitiveReset();
+
+                    // Fan origin.
+                    primVertices[0] = currentVertex;
+                }
+                else if (primIndex > 2)
+                {
+                    vertices.push_back(primVertices[0]);
+                }
+                vertices.push_back(currentVertex);
+                break;
+
             default:
+                checkPrimitiveReset();
                 vertices.push_back(currentVertex);
                 break;
         }
+    }
+
+    void clearPrimitive()
+    {
+        primIndex = 0;
+        primType  = DGL_NO_PRIMITIVE;
     }
 
     void clearVertices()
     {
         // currentVertex is unaffected.
         vertices.clear();
-        primIndex = 0;
-        primType  = DGL_NO_PRIMITIVE;
+        clearPrimitive();
+        currentBatchIndex = 0;
+        resetPrimitive    = false;
     }
 
     inline int numVertices() const
@@ -238,10 +318,27 @@ struct DGLDrawState
 
     void beginPrimitive(dglprimtype_t primitive)
     {
+        glInit();
+
         DENG2_ASSERT(primType == DGL_NO_PRIMITIVE);
 
+        if (batchPrimType != primitive)
+        {
+            ++s_primSwitchCount;
+            flushBatches();
+        }
+        else
+        {
+            if (currentBatchIndex == MAX_BATCH - 1)
+            {
+                flushBatches();
+            }
+        }
+
         // We enter a Begin/End section.
-        primType = primitive;
+        batchPrimType = primType = primitive;
+
+        beginBatch();
     }
 
     void endPrimitive()
@@ -253,7 +350,86 @@ struct DGLDrawState
                 // Close the loop.
                 commitLine(currentVertex, primVertices[0]);
             }
-            drawPrimitives();
+            resetPrimitive = true;
+            DENG2_ASSERT(!vertices.empty());
+            endBatch();
+        }
+        clearPrimitive();
+    }
+
+    void getBoundTextures(int &id0, int &id1)
+    {
+        auto &GL = LIBGUI_GL;
+        GL.glActiveTexture(GL_TEXTURE0);
+        GL.glGetIntegerv(GL_TEXTURE_BINDING_2D, &id0);
+        GL.glActiveTexture(GL_TEXTURE1);
+        GL.glGetIntegerv(GL_TEXTURE_BINDING_2D, &id1);
+        GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+    }
+
+    void beginBatch()
+    {
+        const duint idx = currentBatchIndex;
+
+        auto &dynamicState = GLState::current();
+
+        if (idx == 0)
+        {
+            gl->batchState = dynamicState;
+            zap(gl->batchTexture0);
+            zap(gl->batchTexture1);
+        }
+        else
+        {
+#if defined (DENG2_DEBUG)
+            // GLState must not change while batches are begin collected.
+            // (Apart from the dynamic properties.)
+            GLState bat = gl->batchState;
+            GLState cur = dynamicState;
+            for (auto *st : {&bat, &cur})
+            {
+                st->setAlphaLimit(0.f);
+                st->setAlphaTest(false);
+            }
+            DENG2_ASSERT(bat == cur);
+#endif
+        }
+
+        gl->batchMvpMatrix[idx]  = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
+        gl->batchTexMatrix0[idx] = DGL_Matrix(DGL_TEXTURE0);
+        gl->batchTexMatrix1[idx] = DGL_Matrix(DGL_TEXTURE1);
+        gl->batchTexEnabled[idx] =
+            (DGL_GetInteger(DGL_TEXTURE0) ? 0x1 : 0) | (DGL_GetInteger(DGL_TEXTURE1) ? 0x2 : 0);
+        gl->batchTexMode[idx]      = DGL_GetInteger(DGL_MODULATE_TEXTURE);
+        gl->batchTexModeColor[idx] = DGL_ModulationColor();
+        gl->batchAlphaLimit[idx]   = (dynamicState.alphaTest() ? dynamicState.alphaLimit() : -1.f);
+
+        // TODO: There is no need to use OpenGL to remember the bound textures.
+        // However, all DGL textures must be bound via DGL_Bind and not directly via OpenGL.
+
+        getBoundTextures(gl->batchTexture0[idx], gl->batchTexture1[idx]);
+    }
+
+    void endBatch()
+    {
+        currentBatchIndex++;
+        if (currentBatchIndex == batchMaxSize)
+        {
+            flushBatches();
+        }
+    }
+
+    void flushBatches()
+    {
+#if defined (DENG2_DEBUG)
+        if (DGL_GetInteger(DGL_FLUSH_BACKTRACE))
+        {
+            DENG2_PRINT_BACKTRACE();
+        }
+#endif
+        if (currentBatchIndex > 0)
+        {
+            drawBatches();
         }
         clearVertices();
     }
@@ -264,7 +440,9 @@ struct DGLDrawState
 
         if (!gl)
         {
-            gl.reset(new GLData);
+            batchMaxSize = DGL_BatchMaxSize();
+
+            gl.reset(new GLData(batchMaxSize));
 
             // Set up the shader.
             ClientApp::shaders().build(gl->shader, "dgl.draw")
@@ -283,10 +461,19 @@ struct DGLDrawState
 
             // Sampler uniforms.
             {
+                int samplers[2][MAX_BATCH];
+                for (int i = 0; i < batchMaxSize; ++i)
+                {
+                    samplers[0][i] = i;
+                    samplers[1][i] = batchMaxSize + i;
+                }
+
                 auto prog = gl->shader.glName();
                 GL.glUseProgram(prog);
-                GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex0"), 0);
-                GL.glUniform1i(GL.glGetUniformLocation(prog, "uTex1"), 1);
+                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex0[0]"), GLsizei(batchMaxSize), samplers[0]);
+                LIBGUI_ASSERT_GL_OK();
+                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex1[0]"), GLsizei(batchMaxSize), samplers[1]);
+                LIBGUI_ASSERT_GL_OK();
                 GL.glUseProgram(0);
             }
         }
@@ -358,6 +545,7 @@ struct DGLDrawState
         GL.glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[0]));
         GL.glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[1]));
         GL.glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, fragOffset[0]));
+        GL.glVertexAttribPointer(VAA_BATCH_INDEX, 1, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, batchIndex));
         LIBGUI_ASSERT_GL_OK();
 
         GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
@@ -378,18 +566,30 @@ struct DGLDrawState
 #endif
     }
 
+    void glBindBatchTextures(duint count)
+    {
+        auto &GL = LIBGUI_GL;
+        for (duint i = 0; i < count; ++i)
+        {
+            GL.glActiveTexture(GLenum(GL_TEXTURE0 + i));
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture0[i]));
+            GL.glActiveTexture(GLenum(GL_TEXTURE0 + batchMaxSize + i));
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture1[i]));
+        }
+    }
+
     GLenum glPrimitive() const
     {
-        switch (primType)
+        switch (batchPrimType)
         {
         case DGL_POINTS:            return GL_POINTS;
         case DGL_LINES:             return GL_TRIANGLE_STRIP;
         case DGL_LINE_LOOP:         return GL_TRIANGLE_STRIP;
         case DGL_LINE_STRIP:        return GL_TRIANGLE_STRIP;
         case DGL_TRIANGLES:         return GL_TRIANGLES;
-        case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_FAN;
+        case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_STRIP;
         case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
-        case DGL_QUADS:             return GL_TRIANGLES; // converted
+        case DGL_QUADS:             return GL_TRIANGLES;
 
         case DGL_NO_PRIMITIVE:      DENG2_ASSERT(!"No primitive type specified"); break;
         }
@@ -399,21 +599,31 @@ struct DGLDrawState
     /**
      * Draws all the primitives currently stored in the vertex array.
      */
-    void drawPrimitives()
+    void drawBatches()
     {
-        glInit();
+        const auto batchLength = duint(currentBatchIndex);
 
-        const GLState &glState = GLState::current();
+        s_minBatchLength = de::min(s_minBatchLength, batchLength);
+        s_maxBatchLength = de::max(s_maxBatchLength, batchLength);
+        s_totalBatchCount += batchLength;
 
-        // Update uniforms.
-        gl->uMvpMatrix    = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
-        gl->uTexMatrix0   = DGL_Matrix(DGL_TEXTURE0);
-        gl->uTexMatrix1   = DGL_Matrix(DGL_TEXTURE1);
-        gl->uTexEnabled   = (DGL_GetInteger(DGL_TEXTURE0)? 0x1 : 0) |
-                            (DGL_GetInteger(DGL_TEXTURE1)? 0x2 : 0);
-        gl->uTexMode      = DGL_GetInteger(DGL_MODULATE_TEXTURE);
-        gl->uTexModeColor = DGL_ModulationColor();
-        gl->uAlphaLimit   = (glState.alphaTest()? glState.alphaLimit() : -1.f);
+        int oldTex[2];
+        getBoundTextures(oldTex[0], oldTex[1]);
+
+        glBindBatchTextures(batchLength);
+
+        // Batched uniforms.
+        gl->uMvpMatrix.set(gl->batchMvpMatrix, batchLength);
+        gl->uTexMatrix0.set(gl->batchTexMatrix0, batchLength);
+        gl->uTexMatrix1.set(gl->batchTexMatrix1, batchLength);
+        gl->uTexEnabled.set(gl->batchTexEnabled, batchLength);
+        gl->uTexMode.set(gl->batchTexMode, batchLength);
+        gl->uTexModeColor.set(gl->batchTexModeColor, batchLength);
+        gl->uAlphaLimit.set(gl->batchAlphaLimit, batchLength);
+
+        const GLState &glState = gl->batchState;
+
+        // Non-batched uniforms.
         if (primType == DGL_LINES || primType == DGL_LINE_STRIP || primType == DGL_LINE_LOOP)
         {
             gl->uFragmentSize = Vector2f(GL_state.currentLineWidth, GL_state.currentLineWidth) /
@@ -425,20 +635,41 @@ struct DGLDrawState
         }
         DGL_FogParams(gl->uFogRange, gl->uFogColor);
 
+        auto &GL = LIBGUI_GL;
+
         glState.apply();
 
+        glBindArrays();
         gl->shader.beginUse();
-        {
-            glBindArrays();
-            LIBGUI_GL.glDrawArrays(glPrimitive(), 0, numVertices()); ++s_drawCallCount;
-            LIBGUI_ASSERT_GL_OK();
-            glUnbindArrays();
-        }
+        DENG2_ASSERT(gl->shader.validate());
+        GL.glDrawArrays(glPrimitive(), 0, numVertices()); ++s_drawCallCount;
         gl->shader.endUse();
+        LIBGUI_ASSERT_GL_OK();
+        glUnbindArrays();
+
+        // Restore the previously bound OpenGL textures.
+        {
+            GL.glActiveTexture(GL_TEXTURE0);
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[0]));
+            GL.glActiveTexture(GL_TEXTURE1);
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[1]));
+            GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+        }
     }
 };
 
 static DGLDrawState dglDraw;
+
+unsigned int DGL_BatchMaxSize()
+{
+    auto &GL = LIBGUI_GL;
+
+    // This determines how long DGL batch draws can be.
+    int maxFragSamplers;
+    GL.glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxFragSamplers);
+
+    return duint(de::min(MAX_BATCH, de::max(8, maxFragSamplers / 2))); // DGL needs two per draw.
+}
 
 void DGL_Shutdown()
 {
@@ -447,14 +678,27 @@ void DGL_Shutdown()
 
 void DGL_BeginFrame()
 {
-    qDebug() << "draw calls:" << s_drawCallCount;
-    s_drawCallCount = 0;
+//    qDebug() << "draw calls:" << s_drawCallCount << "prim switch:" << s_primSwitchCount
+//             << "batch min/max/avg:" << s_minBatchLength << s_maxBatchLength
+//             << (s_drawCallCount ? float(s_totalBatchCount) / float(s_drawCallCount) : 0.f);
+
+    s_drawCallCount   = 0;
+    s_totalBatchCount = 0;
+    s_primSwitchCount = 0;
+    s_maxBatchLength  = 0;
+    s_minBatchLength  = std::numeric_limits<decltype(s_minBatchLength)>::max();
 
     if (dglDraw.gl)
     {
         // Reuse buffers every frame.
         dglDraw.gl->bufferPos = 0;
     }
+}
+
+void DGL_Flush()
+{
+    // Finish all batched draws.
+    dglDraw.flushBatches();
 }
 
 void DGL_CurrentColor(DGLubyte *rgba)

@@ -53,6 +53,10 @@ enum {
     DGL_FOG_DENSITY,
     DGL_FOG_COLOR,
 
+    DGL_LINE_WIDTH,
+    DGL_POINT_SIZE,
+    DGL_ALPHA_LIMIT,
+
     // Matrices
     DGL_MODELVIEW = 0x4000,
     DGL_PROJECTION,
@@ -65,6 +69,10 @@ enum {
     DGL_MODULATE_TEXTURE,
     DGL_LINE_SMOOTH,
     DGL_POINT_SMOOTH,
+    DGL_BLEND,
+    DGL_DEPTH_TEST,
+    DGL_DEPTH_WRITE,
+    DGL_ALPHA_TEST,
 
     DGL_TEXTURE0 = 0x5100,
     DGL_TEXTURE1,
@@ -84,6 +92,16 @@ enum {
     DGL_SUBTRACT,
     DGL_REVERSE_SUBTRACT,
 
+    // Comparison functions
+    DGL_NEVER = 0x7000,
+    DGL_ALWAYS,
+    DGL_EQUAL,
+    DGL_NOT_EQUAL,
+    DGL_LESS,
+    DGL_GREATER,
+    DGL_LEQUAL,
+    DGL_GEQUAL,
+
     // Miscellaneous
     DGL_MIN_FILTER = 0xF000,
     DGL_MAG_FILTER,
@@ -97,10 +115,12 @@ enum {
     DGL_CLAMP,
     DGL_CLAMP_TO_EDGE,
     DGL_REPEAT,
-    DGL_LINE_WIDTH,
-    DGL_POINT_SIZE,
     DGL_EXP,
     DGL_EXP2,
+    DGL_NONE,
+    DGL_BACK,
+    DGL_FRONT,
+    DGL_FLUSH_BACKTRACE,
 };
 
 // Types.

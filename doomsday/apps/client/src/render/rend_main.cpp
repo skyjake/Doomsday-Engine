@@ -3901,10 +3901,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     {
     case DM_SKYMASK:
         GL_SelectTexUnits(0);
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(true);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::Less);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LESS);
         break;
 
     case DM_BLENDED:
@@ -3916,18 +3916,18 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // The first texture unit is used for the main texture.
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(true);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::Less);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LESS);
 
         // Fog is allowed during this pass.
         if (fogParams.usingFog)
         {
             DGL_Enable(DGL_FOG);
         }
-        // All of the surfaces are opaque.
-        GLState::current().setBlend(false);
+        // All of the surfaces are opaque.        
+        DGL_Disable(DGL_BLEND);
         break;
 
     case DM_LIGHT_MOD_TEXTURE:
@@ -3946,10 +3946,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             texUnitMap[1] = AttributeSpec::ModTexCoord;
             DGL_ModulateTexture(5);  // Texture + light.
         }
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(true);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::Less);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LESS);
 
         // Fog is allowed during this pass.
         if (fogParams.usingFog)
@@ -3957,7 +3957,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             DGL_Enable(DGL_FOG);
         }
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false);
+        DGL_Disable(DGL_BLEND);
         break;
 
     case DM_FIRST_LIGHT:
@@ -3965,12 +3965,12 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
         DGL_ModulateTexture(6);
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(true);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::Less);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LESS);
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false);
+        DGL_Disable(DGL_BLEND);
         break;
 
     case DM_BLENDED_FIRST_LIGHT:
@@ -3978,36 +3978,36 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::ModTexCoord;
         DGL_ModulateTexture(7);  // Add light, no color.
-        GLState::current().setAlphaTest(true);
-        GLState::current().setAlphaLimit(1 / 255.0f);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_SetFloat(DGL_ALPHA_LIMIT, 1 / 255.0f);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true);
-        GLState::current().setBlendFunc(gl::One, gl::One);
+        DGL_Enable(DGL_BLEND);
+        DGL_BlendFunc(DGL_ONE, DGL_ONE);
         break;
 
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(0);
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(true);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::Less);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LESS);
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false);
+        DGL_Disable(DGL_BLEND);
         break;
 
     case DM_LIGHTS:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setAlphaLimit(1 / 255.0f);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_SetFloat(DGL_ALPHA_LIMIT, 1 / 255.0f);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
 
         if (fogParams.usingFog)
         {
@@ -4015,7 +4015,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             DGL_Fogfv(DGL_FOG_COLOR, black);
         }
 
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_BLEND);
         GL_BlendMode(BM_ADD);
         break;
 
@@ -4025,27 +4025,26 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         // The first texture unit is used for the main texture.
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true);
-        //glBlendFunc(GL_DST_COLOR, GL_ZERO);
-        GLState::current().setBlendFunc(gl::DestColor, gl::Zero);
+        DGL_Enable(DGL_BLEND);
+        DGL_BlendFunc(DGL_DST_COLOR, DGL_ZERO);
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord0;
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(true);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::Less);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LESS);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(false);
+        DGL_Disable(DGL_BLEND);
         // Fog is allowed.
         if (fogParams.usingFog)
         {
@@ -4056,28 +4055,28 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord0;
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true);
-        GLState::current().setBlendFunc(gl::DestColor, gl::Zero);
+        DGL_Enable(DGL_BLEND);
+        DGL_BlendFunc(DGL_DST_COLOR, DGL_ZERO);
         break;
 
     case DM_ALL_DETAILS:
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         DGL_ModulateTexture(0);
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true);
-        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor);
+        DGL_Enable(DGL_BLEND);
+        DGL_BlendFunc(DGL_DST_COLOR, DGL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
         if (fogParams.usingFog)
         {
@@ -4092,14 +4091,14 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;
         DGL_ModulateTexture(3);
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
 
         // All of the surfaces are opaque.
-        GLState::current().setBlend(true);
-        GLState::current().setBlendFunc(gl::DestColor, gl::SrcColor);
+        DGL_Enable(DGL_BLEND);
+        DGL_BlendFunc(DGL_DST_COLOR, DGL_SRC_COLOR);
         // Use fog to fade the details, if fog is enabled.
         if (fogParams.usingFog)
         {
@@ -4114,18 +4113,18 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setAlphaLimit(1 / 255.0f);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_SetFloat(DGL_ALPHA_LIMIT, 1 / 255.0f);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
         // Set normal fog, if it's enabled.
         if (fogParams.usingFog)
         {
             DGL_Enable(DGL_FOG);
             DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
         }
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_BLEND);
         GL_BlendMode(BM_NORMAL);
         break;
 
@@ -4133,10 +4132,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         GL_SelectTexUnits(1);
         texUnitMap[0] = AttributeSpec::TexCoord0;
         DGL_ModulateTexture(1);  // 8 for multitexture
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
 
         if (fogParams.usingFog)
         {
@@ -4144,7 +4143,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             DGL_Enable(DGL_FOG);
             DGL_Fogfv(DGL_FOG_COLOR, black);
         }
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_BLEND);
         GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
@@ -4153,10 +4152,10 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
         texUnitMap[0] = AttributeSpec::TexCoord0;
         texUnitMap[1] = AttributeSpec::TexCoord1;  // the mask
         DGL_ModulateTexture(8);  // same as with details
-        GLState::current().setAlphaTest(false);
-        GLState::current().setDepthWrite(false);
-        GLState::current().setDepthTest(true);
-        GLState::current().setDepthFunc(gl::LessOrEqual);
+        DGL_Disable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_DepthFunc(DGL_LEQUAL);
 
         if (fogParams.usingFog)
         {
@@ -4164,7 +4163,7 @@ static void pushGLStateForPass(DrawMode mode, TexUnitMap &texUnitMap)
             DGL_Enable(DGL_FOG);
             DGL_Fogfv(DGL_FOG_COLOR, black);
         }
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_BLEND);
         GL_BlendMode(BM_ADD);  // Purely additive.
         break;
 
@@ -4180,8 +4179,8 @@ static void popGLStateForPass(DrawMode mode)
 
     case DM_SKYMASK:
         GL_SelectTexUnits(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
         break;
 
     case DM_BLENDED:
@@ -4189,51 +4188,51 @@ static void popGLStateForPass(DrawMode mode)
 
         // Intentional fall-through.
     case DM_ALL:
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
         }
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_BLEND);
         break;
 
     case DM_LIGHT_MOD_TEXTURE:
     case DM_TEXTURE_PLUS_LIGHT:
         GL_SelectTexUnits(1);
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
         }
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_BLEND);
         break;
 
     case DM_FIRST_LIGHT:
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_Enable(DGL_BLEND);
         break;
 
     case DM_BLENDED_FIRST_LIGHT:
         DGL_ModulateTexture(1);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case DM_WITHOUT_TEXTURE:
         GL_SelectTexUnits(1);
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_Enable(DGL_BLEND);
         break;
 
     case DM_LIGHTS:
-        GLState::current().setDepthTest(false);
+        DGL_Disable(DGL_DEPTH_TEST);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
@@ -4244,15 +4243,15 @@ static void popGLStateForPass(DrawMode mode)
     case DM_MOD_TEXTURE:
     case DM_MOD_TEXTURE_MANY_LIGHTS:
     case DM_BLENDED_MOD_TEXTURE:
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case DM_UNBLENDED_TEXTURE_AND_DETAIL:
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlend(true);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_Enable(DGL_BLEND);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
@@ -4260,16 +4259,16 @@ static void popGLStateForPass(DrawMode mode)
         break;
 
     case DM_UNBLENDED_MOD_TEXTURE_AND_DETAIL:
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case DM_ALL_DETAILS:
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
@@ -4279,9 +4278,9 @@ static void popGLStateForPass(DrawMode mode)
     case DM_BLENDED_DETAILS:
         GL_SelectTexUnits(1);
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
-        GLState::current().setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
@@ -4289,7 +4288,7 @@ static void popGLStateForPass(DrawMode mode)
         break;
 
     case DM_SHADOW:
-        GLState::current().setDepthTest(false);
+        DGL_Disable(DGL_DEPTH_TEST);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
@@ -4297,8 +4296,8 @@ static void popGLStateForPass(DrawMode mode)
         break;
 
     case DM_SHINY:
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
@@ -4309,8 +4308,8 @@ static void popGLStateForPass(DrawMode mode)
     case DM_MASKED_SHINY:
         GL_SelectTexUnits(1);
         DGL_ModulateTexture(1);
-        GLState::current().setAlphaTest(true);
-        GLState::current().setDepthTest(false);
+        DGL_Enable(DGL_ALPHA_TEST);
+        DGL_Disable(DGL_DEPTH_TEST);
         if (fogParams.usingFog)
         {
             DGL_Disable(DGL_FOG);
@@ -4349,10 +4348,11 @@ static void drawSky()
     }
 
     // We do not want to update color and/or depth.
-    GLState::push()
-            .setDepthTest(false)
-            .setDepthWrite(false)
-            .setColorMask(gl::WriteNone);
+    DGL_PushState();
+    DGL_Disable(DGL_DEPTH_TEST);
+    DGL_Disable(DGL_DEPTH_WRITE);
+
+    GLState::current().setColorMask(gl::WriteNone);
 
     // Mask out stencil buffer, setting the drawn areas to 1.
     LIBGUI_GL.glEnable(GL_STENCIL_TEST);
@@ -4370,7 +4370,7 @@ static void drawSky()
     }
 
     // Restore previous GL state.
-    GLState::pop();
+    DGL_PopState();
     LIBGUI_GL.glDisable(GL_STENCIL_TEST);
 
     // Now, only render where the stencil is set to 1.
@@ -4678,12 +4678,12 @@ static void drawAllLists(Map &map)
     DGL_Disable(DGL_TEXTURE_2D);
 
     // The draw lists do not modify these states -ds
-    GLState::current().setBlend(true);
-    GLState::current().setDepthWrite(true);
-    GLState::current().setDepthTest(true);
-    GLState::current().setDepthFunc(gl::Less);
-    GLState::current().setAlphaTest(true);
-    GLState::current().setAlphaLimit(0);
+    DGL_Enable(DGL_BLEND);
+    DGL_Enable(DGL_DEPTH_WRITE);
+    DGL_Enable(DGL_DEPTH_TEST);
+    DGL_DepthFunc(DGL_LESS);
+    DGL_Enable(DGL_ALPHA_TEST);
+    DGL_SetFloat(DGL_ALPHA_LIMIT, 0);
     if (fogParams.usingFog)
     {
         DGL_Enable(DGL_FOG);
@@ -4764,6 +4764,8 @@ void Rend_RenderMap(Map &map)
     //drawBiasEditingVisuals(map);
 
     //GL_SetMultisample(false);
+
+    DGL_Flush();
 }
 
 #if 0
@@ -4823,195 +4825,6 @@ static void drawLabel(String const &label, Vector3d const &origin, ddouble maxDi
         drawLabel(label, origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), 1 - distToEye / maxDistance);
     }
 }
-
-/*
- * Visuals for Shadow Bias editing:
- */
-
-#if 0
-static String labelForSource(BiasSource *s)
-{
-    if (!s || !editShowIndices) return String();
-    /// @todo Don't assume the current map.
-    return String::number(App_World().map().indexOf(*s));
-}
-
-static void drawSource(BiasSource *s)
-{
-    if (!s) return;
-
-    ddouble distToEye = (s->origin() - eyeOrigin).length();
-
-    drawStar(s->origin(), 25 + s->evaluateIntensity() / 20,
-             Vector4f(s->color(), 1.0f / de::max(float((distToEye - 100) / 1000), 1.f)));
-
-    GLState::current().setDepthTest(false);
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    drawLabel(labelForSource(s), s->origin());
-
-    GLState::current().setDepthTest(true);
-    DGL_Disable(DGL_TEXTURE_2D);
-}
-
-static void drawLock(Vector3d const &origin, ddouble unit, ddouble t)
-{
-    DGL_Color4f(1, 1, 1, 1);
-
-    DGL_MatrixMode(DGL_MODELVIEW);
-    DGL_PushMatrix();
-
-    DGL_Translatef(origin.x, origin.z, origin.y);
-
-    DGL_Rotatef(t / 2,  0, 0, 1);
-    DGL_Rotatef(t,      1, 0, 0);
-    DGL_Rotatef(t * 15, 0, 1, 0);
-
-    DGL_Begin(DGL_LINES);
-        DGL_Vertex3f(-unit, 0, -unit);
-        DGL_Vertex3f(+unit, 0, -unit);
-
-        DGL_Vertex3f(+unit, 0, -unit);
-        DGL_Vertex3f(+unit, 0, +unit);
-
-        DGL_Vertex3f(+unit, 0, +unit);
-        DGL_Vertex3f(-unit, 0, +unit);
-
-        DGL_Vertex3f(-unit, 0, +unit);
-        DGL_Vertex3f(-unit, 0, -unit);
-    DGL_End();
-
-    DGL_PopMatrix();
-}
-
-static void drawBiasEditingVisuals(Map &map)
-{
-    if (freezeRLs) return;
-    if (!SBE_Active() || editHidden) return;
-
-    if (!map.biasSourceCount())
-        return;
-
-    ddouble const t = Timer_RealMilliseconds() / 100.0f;
-
-    if (HueCircle *hueCircle = SBE_HueCircle())
-    {
-        viewdata_t const *viewData = &viewPlayer->viewport();
-
-        GLState::current().setDepthTest(false);
-        //glDisable(GL_CULL_FACE);
-        GLState::push().setCull(gl::None);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PushMatrix();
-
-        DGL_Translatef(Rend_EyeOrigin().x, Rend_EyeOrigin().y, Rend_EyeOrigin().z);
-        DGL_Scalef(1, 1.0f/1.2f, 1);
-        DGL_Translatef(-Rend_EyeOrigin().x, -Rend_EyeOrigin().y, -Rend_EyeOrigin().z);
-
-        HueCircleVisual::draw(*hueCircle, Rend_EyeOrigin(), viewData->frontVec);
-
-        DGL_MatrixMode(DGL_MODELVIEW);
-        DGL_PopMatrix();
-
-        GLState::current().setDepthTest(true);
-        //glEnable(GL_CULL_FACE);
-        GLState::pop();
-    }
-
-    coord_t handDistance;
-    Hand &hand = App_World().hand(&handDistance);
-
-    // Grabbed sources blink yellow.
-    Vector4f grabbedColor;
-    if (!editBlink || map.biasCurrentTime() & 0x80)
-        grabbedColor = Vector4f(1, 1, .8f, .5f);
-    else
-        grabbedColor = Vector4f(.7f, .7f, .5f, .4f);
-
-    BiasSource *nearSource = map.biasSourceNear(hand.origin());
-    DENG2_ASSERT(nearSource);
-
-    if ((hand.origin() - nearSource->origin()).length() > 2 * handDistance)
-    {
-        // Show where it is.
-        GLState::current().setDepthTest(false);
-    }
-
-    // The nearest cursor phases blue.
-    drawStar(nearSource->origin(), 10000,
-             nearSource->isGrabbed()? grabbedColor :
-             Vector4f(.0f + sin(t) * .2f,
-                      .2f + sin(t) * .15f,
-                      .9f + sin(t) * .3f,
-                      .8f - sin(t) * .2f));
-
-    FR_SetFont(fontFixed);
-    FR_LoadDefaultAttrib();
-    FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
-    FR_SetShadowStrength(UI_SHADOW_STRENGTH);
-
-    GLState::current().setDepthTest(false);
-    DGL_Enable(DGL_TEXTURE_2D);
-
-    drawLabel(labelForSource(nearSource), nearSource->origin());
-
-    GLState::current().setDepthTest(true);
-    DGL_Disable(DGL_TEXTURE_2D);
-
-    if (nearSource->isLocked())
-        drawLock(nearSource->origin(), 2 + (nearSource->origin() - eyeOrigin).length() / 100, t);
-
-    for (Grabbable *grabbable : hand.grabbed())
-    {
-        if (world::internal::cannotCastGrabbableTo<BiasSource>(grabbable)) continue;
-        BiasSource *s = &grabbable->as<BiasSource>();
-
-        if (s == nearSource)
-            continue;
-
-        drawStar(s->origin(), 10000, grabbedColor);
-
-        GLState::current().setDepthTest(false);
-        DGL_Enable(DGL_TEXTURE_2D);
-
-        drawLabel(labelForSource(s), s->origin());
-
-        GLState::current().setDepthTest(true);
-        DGL_Disable(DGL_TEXTURE_2D);
-
-        if (s->isLocked())
-            drawLock(s->origin(), 2 + (s->origin() - eyeOrigin).length() / 100, t);
-    }
-
-    /*BiasSource *s = hand.nearestBiasSource();
-    if (s && !hand.hasGrabbed(*s))
-    {
-        GLState::current().setDepthTest(false);
-        glEnable(GL_TEXTURE_2D);
-
-        drawLabel(labelForSource(s), s->origin());
-
-        GLState::current().setDepthTest(true);
-        glDisable(GL_TEXTURE_2D);
-    }*/
-
-    // Show all sources?
-    if (editShowAll)
-    {
-        map.forAllBiasSources([&nearSource] (BiasSource &source)
-        {
-            if (&source != nearSource && !source.isGrabbed())
-            {
-                drawSource(&source);
-            }
-            return LoopContinue;
-        });
-    }
-
-    GLState::current().setDepthTest(true);
-}
-#endif
 
 void Rend_UpdateLightModMatrix()
 {
@@ -5324,10 +5137,10 @@ static void drawMobjBoundingBoxes(Map &map)
 //    if (!dlBBox)
 //        dlBBox = constructBBox(0, .08f);
 
-    GLState::current().setDepthTest(false);
+    DGL_Disable(DGL_DEPTH_TEST);
     DGL_Enable(DGL_TEXTURE_2D);
     //glDisable(GL_CULL_FACE);
-    GLState::push().setCull(gl::None);
+    DGL_CullFace(DGL_NONE);
 
     MaterialAnimator &matAnimator = ClientMaterial::find(de::Uri("System", Path("bbox")))
             .getAnimator(Rend_SpriteMaterialSpec());
@@ -5383,9 +5196,9 @@ static void drawMobjBoundingBoxes(Map &map)
 
     GL_BlendMode(BM_NORMAL);
 
-    GLState::pop();
+    DGL_PopState();
     DGL_Disable(DGL_TEXTURE_2D);
-    GLState::current().setDepthTest(true);
+    DGL_Enable(DGL_DEPTH_TEST);
 }
 
 static void drawPoint(Vector3d const &origin, Vector4f const &color = Vector4f(1, 1, 1, 1))
@@ -5560,7 +5373,7 @@ static void drawSurfaceTangentVectors(Map &map)
     if (!::devSurfaceVectors) return;
 
     //glDisable(GL_CULL_FACE);
-    GLState::push().setCull(gl::None);
+    DGL_CullFace(DGL_NONE);
 
     map.forAllSectors([] (Sector &sec)
     {
@@ -5572,7 +5385,7 @@ static void drawSurfaceTangentVectors(Map &map)
     });
 
     //glEnable(GL_CULL_FACE);
-    GLState::pop();
+    DGL_PopState();
 }
 
 static void drawLumobjs(Map &map)
@@ -5581,9 +5394,9 @@ static void drawLumobjs(Map &map)
 
     if (!devDrawLums) return;
 
-    GLState::current().setDepthTest(false);
+    DGL_Disable(DGL_DEPTH_TEST);
     //glDisable(GL_CULL_FACE);
-    GLState::push().setCull(gl::None);
+    DGL_CullFace(DGL_NONE);
 
     map.forAllLumobjs([] (Lumobj &lob)
     {
@@ -5627,8 +5440,8 @@ static void drawLumobjs(Map &map)
     });
 
     //glEnable(GL_CULL_FACE);
-    GLState::pop();
-    GLState::current().setDepthTest(true);
+    DGL_PopState();
+    DGL_Enable(DGL_DEPTH_TEST);
 }
 
 static String labelForLineSideSection(LineSide &side, dint sectionId)
@@ -5665,7 +5478,7 @@ static void drawSoundEmitters(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false);
+    DGL_Disable(DGL_DEPTH_TEST);
     DGL_Enable(DGL_TEXTURE_2D);
 
     if (devSoundEmitters & SOF_SIDE)
@@ -5713,7 +5526,7 @@ static void drawSoundEmitters(Map &map)
         });
     }
 
-    GLState::current().setDepthTest(true);
+    DGL_Enable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -5764,7 +5577,7 @@ static void drawGenerators(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false);
+    DGL_Disable(DGL_DEPTH_TEST);
     DGL_Enable(DGL_TEXTURE_2D);
 
     map.forAllGenerators([] (Generator &gen)
@@ -5773,7 +5586,7 @@ static void drawGenerators(Map &map)
         return LoopContinue;
     });
 
-    GLState::current().setDepthTest(true);
+    DGL_Enable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -5846,12 +5659,12 @@ static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble ma
     }
     if (parms.drawLabel)
     {
-        GLState::current().setDepthTest(false);
+        DGL_Disable(DGL_DEPTH_TEST);
         DGL_Enable(DGL_TEXTURE_2D);
 
         drawLabel(labelForVertex(&vertex), origin, distToEye / (DENG_GAMEVIEW_WIDTH / 2), opacity);
 
-        GLState::current().setDepthTest(true);
+        DGL_Enable(DGL_DEPTH_TEST);
         DGL_Disable(DGL_TEXTURE_2D);
     }
 }
@@ -5972,7 +5785,7 @@ static void drawVertexes(Map &map)
 
     if (devVertexBars)
     {
-        GLState::current().setDepthTest(false);
+        DGL_Disable(DGL_DEPTH_TEST);
 
 #if defined (DENG_OPENGL)
         LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
@@ -5998,7 +5811,7 @@ static void drawVertexes(Map &map)
             return LoopContinue;
         });
 
-        GLState::current().setDepthTest(true);
+        DGL_Enable(DGL_DEPTH_TEST);
     }
 
     // Draw the vertex origins.
@@ -6009,7 +5822,7 @@ static void drawVertexes(Map &map)
 #endif
     DGL_SetFloat(DGL_POINT_SIZE, 6);
 
-    GLState::current().setDepthTest(false);
+    DGL_Disable(DGL_DEPTH_TEST);
 
     parms.drawnVerts->fill(false);  // Process all again.
     parms.drawOrigin = true;
@@ -6030,7 +5843,7 @@ static void drawVertexes(Map &map)
         return LoopContinue;
     });
 
-    GLState::current().setDepthTest(true);
+    DGL_Enable(DGL_DEPTH_TEST);
 
     if (devVertexIndices)
     {
@@ -6089,7 +5902,7 @@ static void drawSectors(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false);
+    DGL_Disable(DGL_DEPTH_TEST);
     DGL_Enable(DGL_TEXTURE_2D);
 
     // Draw a sector label at the center of each subsector:
@@ -6108,7 +5921,7 @@ static void drawSectors(Map &map)
         });
     });
 
-    GLState::current().setDepthTest(true);
+    DGL_Enable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
@@ -6132,7 +5945,7 @@ static void drawThinkers(Map &map)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    GLState::current().setDepthTest(false);
+    DGL_Disable(DGL_DEPTH_TEST);
     DGL_Enable(DGL_TEXTURE_2D);
 
     map.thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
@@ -6151,7 +5964,7 @@ static void drawThinkers(Map &map)
         return LoopContinue;
     });
 
-    GLState::current().setDepthTest(true);
+    DGL_Enable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_TEXTURE_2D);
 }
 

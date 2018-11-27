@@ -168,7 +168,8 @@ void Con_DrawTransition(void)
 
     GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
     LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GLState::push().setAlphaTest(false);
+    DGL_PushState();
+    DGL_Disable(DGL_ALPHA_TEST);
     DGL_Enable(DGL_TEXTURE_2D);
 
     switch (transition.style)
@@ -248,7 +249,7 @@ void Con_DrawTransition(void)
     }
 
     GL_SetNoTexture();
-    GLState::pop();
+    DGL_PopState();
 
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PopMatrix();

@@ -256,37 +256,37 @@ BitmapFont *BitmapFont::fromFile(FontManifest &manifest, String resourcePath) //
     return font;
 }
 
-int BitmapFont::ascent()
+int BitmapFont::ascent() const
 {
     glInit();
     return d->ascent;
 }
 
-int BitmapFont::descent()
+int BitmapFont::descent() const
 {
     glInit();
     return d->descent;
 }
 
-int BitmapFont::lineSpacing()
+int BitmapFont::lineSpacing() const
 {
     glInit();
     return d->leading;
 }
 
-Rectanglei const &BitmapFont::glyphPosCoords(uchar ch)
+Rectanglei const &BitmapFont::glyphPosCoords(uchar ch) const
 {
     glInit();
     return d->glyph(ch).posCoords;
 }
 
-Rectanglei const &BitmapFont::glyphTexCoords(uchar ch)
+Rectanglei const &BitmapFont::glyphTexCoords(uchar ch) const
 {
     glInit();
     return d->glyph(ch).texCoords;
 }
 
-void BitmapFont::glInit()
+void BitmapFont::glInit() const
 {
     LOG_AS("BitmapFont");
 
@@ -342,7 +342,7 @@ void BitmapFont::glInit()
     d->needGLInit = false;
 }
 
-void BitmapFont::glDeinit()
+void BitmapFont::glDeinit() const
 {
     LOG_AS("BitmapFont");
 

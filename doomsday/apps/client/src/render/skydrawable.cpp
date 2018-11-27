@@ -419,10 +419,10 @@ DENG2_PIMPL(SkyDrawable)
 
         // Disable culling, all triangles face the viewer.
         //glDisable(GL_CULL_FACE);
-        GLState::push()
-                .setCull(gl::None)
-                .setDepthTest(false)
-                .setDepthWrite(false);
+        DGL_PushState();
+        DGL_CullFace(DGL_NONE);
+        DGL_Disable(DGL_DEPTH_TEST);
+        DGL_Disable(DGL_DEPTH_WRITE);
 
         // Setup a proper matrix.
         DGL_MatrixMode(DGL_MODELVIEW);
@@ -438,7 +438,7 @@ DENG2_PIMPL(SkyDrawable)
         DGL_PopMatrix();
 
         // Restore assumed default GL state.
-        GLState::pop();
+        DGL_PopState();
     }
 
     void drawModels(Animator const *animator) const
@@ -448,9 +448,8 @@ DENG2_PIMPL(SkyDrawable)
         // Sky models use depth testing, but they won't interfere with world geometry.
         //glEnable(GL_DEPTH_TEST);
         //glDepthMask(GL_TRUE);
-        GLState::current()
-                .setDepthTest(true)
-                .setDepthWrite(true);
+        DGL_Enable(DGL_DEPTH_TEST);
+        DGL_Enable(DGL_DEPTH_WRITE);
         LIBGUI_GL.glClear(GL_DEPTH_BUFFER_BIT);
 
         DGL_MatrixMode(DGL_MODELVIEW);

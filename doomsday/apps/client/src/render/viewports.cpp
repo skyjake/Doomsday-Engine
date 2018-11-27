@@ -911,11 +911,9 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
     switch (viewState)
     {
     case PlayerView3D:
-        GLState::current()
-                .setCull(gl::Back)
-                .setDepthTest(true);
-        // The 3D projection matrix.
-        GL_ProjectionMatrix();
+        DGL_CullFace(DGL_BACK);
+        DGL_Enable(DGL_DEPTH_TEST);
+        GL_ProjectionMatrix(); // The 3D projection matrix.
         break;
 
     case PlayerSprite2D:
@@ -977,15 +975,14 @@ static void changeViewState(ViewState viewState) //, viewport_t const *port, vie
 
         // Depth testing must be disabled so that psprite 1 will be drawn
         // on top of psprite 0 (Doom plasma rifle fire).
-        GLState::current().setDepthTest(false);
+        DGL_Disable(DGL_DEPTH_TEST);
 
         break;
     }
 
     case Default2D:
-        GLState::current()
-                .setCull(gl::None)
-                .setDepthTest(false);
+        DGL_CullFace(DGL_NONE);
+        DGL_Disable(DGL_DEPTH_TEST);
         break;
     }
 
@@ -1113,6 +1110,8 @@ DENG_EXTERN_C void R_RenderPlayerView(dint num)
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PopMatrix();
 
+    DGL_Flush();
+
 #if defined (DENG_OPENGL)
     // Back from wireframe mode?
     if (renderWireframe)
@@ -1206,90 +1205,6 @@ void R_RenderViewPort(int playerNum)
     // Restore things back to normal.
     displayPlayer = oldDisplay;
 }
-
-#if 0
-void R_RenderViewPorts(ViewPortLayer layer)
-{
-    dint oldDisplay = displayPlayer;
-
-    // First clear the viewport.
-    if(layer == Player3DViewLayer)
-    {
-        clearViewPorts();
-    }
-
-    // Draw a view for all players with a visible viewport.
-    for(dint p = 0, y = 0; y < gridRows; ++y)
-    for(dint x = 0; x < gridCols; x++, ++p)
-    {
-        viewport_t const *vp = &viewportOfLocalPlayer[p];
-
-        displayPlayer = vp->console;
-        R_UseViewPort(vp);
-
-        if(displayPlayer < 0 || (DD_Player(displayPlayer)->publicData().flags & DDPF_UNDEFINED_ORIGIN))
-        {
-            if(layer == Player3DViewLayer)
-            {
-                R_RenderBlankView();
-            }
-            continue;
-        }
-
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PushMatrix();
-        DGL_LoadIdentity();
-
-        // Use an orthographic projection in real pixel dimensions.
-        DGL_Ortho(0, 0, vp->geometry.width(), vp->geometry.height(), -1, 1);
-
-        viewdata_t const *vd = &DD_Player(vp->console)->viewport();
-        RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
-                           vp->geometry.width(), vp->geometry.height());
-
-        RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
-                         vd->window.width(), vd->window.height());
-
-        switch(layer)
-        {
-        case Player3DViewLayer:
-            R_UpdateViewer(vp->console);
-            //LensFx_BeginFrame(vp->console);
-            gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 0/*layer #0*/);
-            //LensFx_EndFrame();
-            break;
-
-        case ViewBorderLayer:
-            R_RenderPlayerViewBorder();
-            break;
-
-        case HUDLayer:
-            gx.DrawViewPort(p, &vpGeometry, &vdWindow, displayPlayer, 1/*layer #1*/);
-            break;
-        }
-
-        restoreDefaultGLState();
-
-        DGL_MatrixMode(DGL_PROJECTION);
-        DGL_PopMatrix();
-    }
-
-    if(layer == Player3DViewLayer)
-    {
-        // Increment the internal frame count. This does not
-        // affect the window's FPS counter.
-        frameCount++;
-
-        // Keep reseting until a new sharp world has arrived.
-        if(resetNextViewer > 1)
-            resetNextViewer = 0;
-    }
-
-    // Restore things back to normal.
-    displayPlayer = oldDisplay;
-    R_UseViewPort(nullptr);
-}
-#endif
 
 void R_ClearViewData()
 {

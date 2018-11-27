@@ -136,15 +136,14 @@ void FinalePageWidget::draw() const
             else
             {
                 //glDisable(GL_BLEND);
-                GLState::current().setBlend(false);
+                DGL_Disable(DGL_BLEND);
             }
 
             GL_DrawRectf2TextureColor(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64,
                                       topColor, topAlpha, bottomColor, bottomAlpha);
 
             GL_SetNoTexture();
-            //glEnable(GL_BLEND);
-            GLState::current().setBlend(true);
+            DGL_Enable(DGL_BLEND);
         }
     }
 
@@ -165,8 +164,8 @@ void FinalePageWidget::draw() const
     }
 #endif
 
-    //glEnable(GL_ALPHA_TEST);
-    GLState::push().setAlphaTest(true);
+    DGL_PushState();
+    DGL_Enable(DGL_ALPHA_TEST);
 
     Vector3f worldOrigin(/*-SCREENWIDTH/2*/ - d->offset[VX].value,
                          /*-SCREENHEIGHT/2*/ - d->offset[VY].value,
@@ -178,8 +177,7 @@ void FinalePageWidget::draw() const
     }
 
     // Restore original matrices and state: back to normal 2D.
-    //glDisable(GL_ALPHA_TEST);
-    GLState::pop();
+    DGL_PopState();
 
 #if defined (DENG_OPENGL)
     // Back from wireframe mode?

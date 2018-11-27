@@ -148,6 +148,7 @@ DENG2_PIMPL(GameWidget)
 
             // End any open DGL sequence.
             DGL_End();
+            DGL_Flush();
 
             // Notify the world that we've finished rendering the frame.
             App_World().endFrame();

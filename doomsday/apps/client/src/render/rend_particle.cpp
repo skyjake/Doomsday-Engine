@@ -544,21 +544,18 @@ static void drawParticles(dint rtype, bool withBlend)
     dglprimtype_t primType = DGL_QUADS;
     if (rtype == PTC_MODEL)
     {
-        GLState::current()
-                .setDepthWrite(true)
-                .setDepthTest(true);
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
     }
     else if (tex != 0)
     {
-        GLState::current()
-                .setDepthWrite(false)
-                .setDepthFunc(gl::LessOrEqual)
-                .setCull(gl::None);
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_DepthFunc(DGL_LEQUAL);
+        DGL_CullFace(DGL_NONE);
 
         GL_BindTextureUnmanaged(tex, gl::ClampToEdge, gl::ClampToEdge);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        //glDepthFunc(GL_LEQUAL);
         DGL_Begin(primType = DGL_QUADS);
     }
     else
@@ -823,11 +820,9 @@ static void drawParticles(dint rtype, bool withBlend)
 
         if(tex != 0)
         {
-            GLState::current()
-                    .setCull(gl::Back)
-                    .setDepthWrite(true)
-                    .setDepthFunc(gl::Less);
-
+            DGL_CullFace(DGL_BACK);
+            DGL_Enable(DGL_DEPTH_WRITE);
+            DGL_DepthFunc(DGL_LESS);
             DGL_Disable(DGL_TEXTURE_2D);
         }
     }
