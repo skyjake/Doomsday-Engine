@@ -31,7 +31,7 @@ DENG2_PIMPL(GLShader)
 {
     GLuint name;
     Type   type;
-    Block  compiledSource;
+//    Block  compiledSource;
 
     Impl(Public *i) : Base(i), name(0), type(Vertex)
     {}
@@ -114,86 +114,96 @@ Block GLShader::prefixToSource(Block const &source, Block const &prefix)
     return src;
 }
 
-void GLShader::compile(Type shaderType, IByteArray const &source)
+void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 {
 #if defined (DENG_OPENGL)
-    static QByteArray const DEFAULT_VERSION("#version 330\n");
+    static const Block DEFAULT_VERSION("#version 330\n");
     // With non-ES OpenGL, ignore the precision attributes.
-    static QByteArray const PREFIX("#ifndef GL_ES\n"
-                                   "#  define lowp\n"
-                                   "#  define mediump\n"
-                                   "#  define highp\n"
-                                   "#endif\n");
+    static const Block PREFIX("#ifndef GL_ES\n"
+                              "#  define lowp\n"
+                              "#  define mediump\n"
+                              "#  define highp\n"
+                              "#endif\n");
 #else
     int const glesVer = DENG_OPENGL_ES;
-    static QByteArray const DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
-    static QByteArray const PREFIX("\n");
+    static Block const DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
+    static Block const PREFIX("\n");
 #endif
 
     DENG2_ASSERT(shaderType == Vertex || shaderType == Fragment);
 
+    Block preamble;
+    Block source = shaderSource;
+
+    if (!source.contains("#version"))
+    {
+        preamble = DEFAULT_VERSION;
+    }
+    preamble += PREFIX;
+
+//     Keep a copy of the source for possible recompilation.
+//    d->compiledSource = src;
+
     setState(NotReady);
-
-    // Keep a copy of the source for possible recompilation.
-    d->compiledSource = source;
-
     d->type = shaderType;
     d->alloc();
 
     // Additional predefined symbols for the shader.
-    QByteArray predefs;
+//    Block predefs;
     if (shaderType == Vertex)
     {
-        predefs = QByteArray("#define DENG_VERTEX_SHADER\n");
+        preamble += "#define DENG_VERTEX_SHADER\n";
 
 #if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
-        predefs += "#define DENG_VAR out\n"
-                   "#define DENG_ATTRIB in\n";
+        preamble += "#define DENG_VAR out\n"
+                    "#define DENG_ATTRIB in\n";
 #else
-        predefs += "#define DENG_VAR varying\n"
-                   "#define DENG_ATTRIB attribute\n";
+        preamble += "#define DENG_VAR varying\n"
+                    "#define DENG_ATTRIB attribute\n";
 #endif
     }
     else
     {
-        predefs = QByteArray("#define DENG_FRAGMENT_SHADER\n");
+        preamble += "#define DENG_FRAGMENT_SHADER\n";
 
 #if defined (DENG_OPENGL_ES)
         // Precision qualifiers required in fragment shaders.
-        predefs += "precision highp float;\n"
-                   "precision highp int;\n";
+        preamble += "precision highp float;\n"
+                    "precision highp int;\n";
 #endif
 
 #if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
-        predefs += "#define DENG_VAR in\n"
-                   "out vec4 out_FragColor;\n";
+        preamble += "#define DENG_VAR in\n"
+                    "out vec4 out_FragColor;\n";
 #else
-        predefs += "#define DENG_VAR varying\n"
-                   "#define out_FragColor gl_FragColor\n";
+        preamble += "#define DENG_VAR varying\n"
+                    "#define out_FragColor gl_FragColor\n";
 #endif
     }
-    predefs += "#define DENG_MAX_BATCH_UNIFORMS " + QByteArray::number(MAX_BATCH_UNIFORMS) + "\n";
+    preamble += String::format("#define DENG_MAX_BATCH_UNIFORMS %d\n", MAX_BATCH_UNIFORMS).toLatin1();
 
 #if defined (DENG_OPENGL) || (defined (DENG_OPENGL_ES) && DENG_OPENGL_ES == 30)
-    predefs += "#define DENG_LAYOUT_LOC(x) layout(location = x)\n";
+    preamble += "#define DENG_LAYOUT_LOC(x) layout(location = x)\n";
 #else
-    predefs += "#define DENG_LAYOUT_LOC(x)\n";
+    preamble += "#define DENG_LAYOUT_LOC(x)\n";
 #endif
+
+    preamble += "#line 1\n";
 
     // Prepare the shader source. This would be the time to substitute any
     // remaining symbols in the shader source.
-    Block src = prefixToSource(source, PREFIX + predefs);
+    //Block src = prefixToSource(source, PREFIX + predefs);
 
     // If version has not been specified, use the default one.
-    if (!src.contains("#version"))
-    {
-        src = DEFAULT_VERSION + src;
-    }
+//    if (!src.contains("#version"))
+//    {
+//        src = DEFAULT_VERSION + src;
+//    }
 
-    char const *srcPtr = src.constData();
-    LIBGUI_GL.glShaderSource(d->name, 1, &srcPtr, 0);
-
+    const char *srcPtr[] = {preamble.constData(), source.constData()};
+    LIBGUI_GL.glShaderSource(d->name, 2, srcPtr, 0);
     LIBGUI_GL.glCompileShader(d->name);
+    LIBGUI_ASSERT_GL_OK();
 
     // Check the compilation status.
     GLint status;
@@ -204,7 +214,7 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
         dint32 count = 0;
         LIBGUI_GL.glGetShaderiv(d->name, GL_INFO_LOG_LENGTH, &logSize);
 
-        Block log(logSize);
+        Block log{Block::Size(logSize)};
         LIBGUI_GL.glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
         throw CompilerError("GLShader::compile",
@@ -215,11 +225,11 @@ void GLShader::compile(Type shaderType, IByteArray const &source)
     setState(Ready);
 }
 
-void GLShader::recompile()
-{
-    d->release();
-    compile(d->type, d->compiledSource);
-    DENG2_ASSERT(isReady());
-}
+//void GLShader::recompile()
+//{
+//    d->release();
+//    compile(d->type, d->compiledSource);
+//    DENG2_ASSERT(isReady());
+//}
 
 } // namespace de

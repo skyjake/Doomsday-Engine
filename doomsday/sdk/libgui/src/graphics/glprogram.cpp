@@ -201,6 +201,17 @@ DENG2_PIMPL(GLProgram)
         }
     }
 
+    Block getInfoLog() const
+    {
+        dint32 logSize;
+        dint32 count;
+        LIBGUI_GL.glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
+
+        Block log{Block::Size(logSize)};
+        LIBGUI_GL.glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+        return log;
+    }
+
     void link()
     {
         DENG2_ASSERT(name != 0);
@@ -212,14 +223,7 @@ DENG2_PIMPL(GLProgram)
         LIBGUI_GL.glGetProgramiv(name, GL_LINK_STATUS, &ok);
         if (!ok)
         {
-            dint32 logSize;
-            dint32 count;
-            LIBGUI_GL.glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
-
-            Block log(logSize);
-            LIBGUI_GL.glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
-
-            throw LinkerError("GLProgram::link", "Linking failed:\n" + log);
+            throw LinkerError("GLProgram::link", "Linking failed:\n" + getInfoLog());
         }
     }
 
@@ -516,6 +520,21 @@ int GLProgram::attributeLocation(AttribSpec::Semantic semantic) const
     DENG2_ASSERT(semantic < AttribSpec::NUM_SEMANTICS);
 
     return d->attribLocation[semantic];
+}
+
+bool GLProgram::validate() const
+{
+    LIBGUI_GL.glValidateProgram(d->name);
+
+    int valid;
+    LIBGUI_GL.glGetProgramiv(d->name, GL_VALIDATE_STATUS, &valid);
+    if (valid == GL_FALSE)
+    {
+        qDebug() << "GLProgram" << d->name << this << "is not validated:";
+        qDebug() << d->getInfoLog().constData();
+        return false;
+    }
+    return true;
 }
 
 } // namespace de

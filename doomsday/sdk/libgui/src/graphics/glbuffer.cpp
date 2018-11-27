@@ -486,6 +486,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     if (d->idxName)
     {
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
+        DENG2_ASSERT(GLProgram::programInUse()->validate());
         for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
             GL.glDrawElements(Impl::glPrimitive(d->prim),
@@ -497,6 +498,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     }
     else
     {
+        DENG2_ASSERT(GLProgram::programInUse()->validate());
         for (Rangeui const &range : (ranges? *ranges : d->defaultRange))
         {
             GL.glDrawArrays(Impl::glPrimitive(d->prim), range.start, range.size());
@@ -523,6 +525,8 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
 
     d->bindArray(true);
 
+    DENG2_ASSERT(GLProgram::programInUse()->validate());
+
     GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.d->idxName);
     GL.glDrawElements(Impl::glPrimitive(indexBuffer.d->prim),
                       GLsizei(indexBuffer.d->idxCount),
@@ -544,7 +548,7 @@ void GLBuffer::drawWithIndices(gl::Primitive primitive, Index const *indices, ds
     auto &GL = LIBGUI_GL;
 
     d->bindArray(true);
-
+    DENG2_ASSERT(GLProgram::programInUse()->validate());
     GL.glDrawElements(Impl::glPrimitive(primitive), GLsizei(count), GL_UNSIGNED_SHORT, indices);
     LIBGUI_ASSERT_GL_OK();
     ++drawCounter;
@@ -576,6 +580,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         DENG2_ASSERT(count >= 0);
 
         GL.glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, d->idxName);
+        DENG2_ASSERT(GLProgram::programInUse()->validate());
         GL.glDrawElementsInstanced(Impl::glPrimitive(d->prim), count, GL_UNSIGNED_SHORT,
                                    reinterpret_cast<void const *>(dintptr(first * 2)),
                                    GLsizei(instanceAttribs.count()));
@@ -588,6 +593,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         if (first + count > d->count) count = d->count - first;
 
         DENG2_ASSERT(count >= 0);
+        DENG2_ASSERT(GLProgram::programInUse()->validate());
 
         GL.glDrawArraysInstanced(Impl::glPrimitive(d->prim), first, count,
                                  GLsizei(instanceAttribs.count()));

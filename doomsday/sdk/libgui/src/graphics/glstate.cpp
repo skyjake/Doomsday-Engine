@@ -141,7 +141,7 @@ namespace internal
 
 DENG2_PIMPL(GLState)
 {
-    BitField props;
+    BitField       props;
     GLFramebuffer *target;
 
     Impl(Public *i)
@@ -401,10 +401,15 @@ GLState::GLState() : d(new Impl(this))
 GLState::GLState(GLState const &other) : d(new Impl(this, *other.d))
 {}
 
-GLState &GLState::operator = (GLState const &other)
+GLState &GLState::operator=(GLState const &other)
 {
     d.reset(new Impl(this, *other.d));
     return *this;
+}
+
+bool GLState::operator==(const GLState &other)
+{
+    return d->target == other.d->target && d->props == other.d->props;
 }
 
 GLState &GLState::setCull(gl::Cull mode)

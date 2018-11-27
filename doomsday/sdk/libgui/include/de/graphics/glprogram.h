@@ -119,6 +119,8 @@ public:
      */
     int attributeLocation(internal::AttribSpec::Semantic semantic) const;
 
+    bool validate() const;
+
 private:
     DENG2_PRIVATE(d)
 };

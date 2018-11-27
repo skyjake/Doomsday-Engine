@@ -108,7 +108,8 @@ public:
     GLState();
 
     GLState(GLState const &other);
-    GLState &operator = (GLState const &other);
+    GLState &operator=(GLState const &other);
+    bool operator==(const GLState &);
 
     GLState &setCull(gl::Cull mode);
     GLState &setDepthTest(bool enable);
