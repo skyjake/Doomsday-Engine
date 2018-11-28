@@ -26,6 +26,7 @@
 #include <de/memory.h>
 #include <de/timer.h>
 #include <de/ByteRefArray>
+#include <de/Loop>
 
 #ifdef __CLIENT__
 #  include "network/sys_network.h"
@@ -57,21 +58,11 @@ static dint entryCount;
 // the message queue.
 static mutex_t msgMutex;
 
-// Number of bytes of outgoing data transmitted.
-static dsize numOutBytes;
-
-// Number of bytes sent over the network (compressed).
-static dsize numSentBytes;
-
 reader_s *Reader_NewWithNetworkBuffer()
 {
     return Reader_NewWithBuffer((byte const *) netBuffer.msg.data, netBuffer.length);
 }
 
-/**
- * Initialize the low-level network subsystem. This is called always
- * during startup (via Sys_Init()).
- */
 void N_Init()
 {
     // Create a mutex for the message queue.
@@ -83,10 +74,6 @@ void N_Init()
     N_MasterInit();
 }
 
-/**
- * Shut down the low-level network interface. Called during engine
- * shutdown (not before).
- */
 void N_Shutdown()
 {
     // Any queued messages will be destroyed.
@@ -106,7 +93,7 @@ void N_Shutdown()
  *
  * @return  @c true if successful.
  */
-dd_bool N_LockQueue(dd_bool doAcquire)
+static dd_bool N_LockQueue(dd_bool doAcquire)
 {
     if(doAcquire)
         Sys_Lock(msgMutex);
@@ -115,12 +102,6 @@ dd_bool N_LockQueue(dd_bool doAcquire)
     return true;
 }
 
-/**
- * Adds the given netmessage_s to the queue of received messages.
- * We use a mutex to synchronize access to the message queue.
- *
- * @note This is called in the network receiver thread.
- */
 void N_PostMessage(netmessage_t *msg)
 {
     DENG2_ASSERT(msg);
@@ -162,7 +143,7 @@ void N_PostMessage(netmessage_t *msg)
  *
  * @return  @c nullptr if no message is found.
  */
-netmessage_t *N_GetMessage()
+static netmessage_t *N_GetMessage()
 {
     // This is the message we'll return.
     netmessage_t *msg = nullptr;
@@ -205,10 +186,7 @@ netmessage_t *N_GetMessage()
     return msg;
 }
 
-/**
- * Frees the message.
- */
-void N_ReleaseMessage(netmessage_t *msg)
+static void N_ReleaseMessage(netmessage_t *msg)
 {
     DENG2_ASSERT(msg);
     if(msg->handle)
@@ -219,9 +197,6 @@ void N_ReleaseMessage(netmessage_t *msg)
     M_Free(msg);
 }
 
-/**
- * Empties the message buffers.
- */
 void N_ClearMessages()
 {
     if(!msgMutex) return;  // Not initialized yet.
@@ -244,13 +219,6 @@ void N_ClearMessages()
     ::entryCount = 0;
 }
 
-/**
- * Send the data in the netbuffer. The message is sent using an unreliable,
- * nonsequential (i.e. fast) method.
- *
- * Handles broadcasts using recursion.
- * Clients can only send stuff to the server.
- */
 void N_SendPacket(dint flags)
 {
 #ifdef __SERVER__
@@ -292,9 +260,6 @@ void N_SendPacket(dint flags)
     }
 #endif
 
-    // This is what will be sent.
-    ::numOutBytes += ::netBuffer.headerLength + ::netBuffer.length;
-
     try
     {
 #ifdef __CLIENT__
@@ -311,14 +276,11 @@ void N_SendPacket(dint flags)
     }
 }
 
-void N_AddSentBytes(dsize bytes)
-{
-    ::numSentBytes += bytes;
-}
+//void N_AddSentBytes(dsize bytes)
+//{
+//    ::numSentBytes += bytes;
+//}
 
-/**
- * @return The player number that corresponds network node @a id.
- */
 dint N_IdentifyPlayer(nodeid_t id)
 {
 #ifdef __SERVER__
@@ -344,7 +306,7 @@ dint N_IdentifyPlayer(nodeid_t id)
  * @return  The next message waiting in the incoming message queue. When the message
  * is no longer needed you must call N_ReleaseMessage() to delete it.
  */
-netmessage_t *N_GetNextMessage()
+static netmessage_t *N_GetNextMessage()
 {
     netmessage_t *msg;
     while((msg = N_GetMessage()) != nullptr)
@@ -354,11 +316,6 @@ netmessage_t *N_GetNextMessage()
     return nullptr;  // There are no more messages.
 }
 
-/**
- * An attempt is made to extract a message from the message queue.
- *
- * @return  @c true if a message successfull.
- */
 dd_bool N_GetPacket()
 {
     // If there are net events pending, let's not return any packets
@@ -399,31 +356,38 @@ dd_bool N_GetPacket()
     return true;
 }
 
-/**
- * Print low-level information about the network buffer.
- */
 void N_PrintBufferInfo()
 {
     N_PrintTransmissionStats();
-}
 
-/**
- * Print status information about the workings of data compression in the network buffer.
- *
- * @note  Currently numOutBytes excludes transmission header, while numSentBytes includes
- * every byte written to the socket. In other words, the efficiency includes protocol overhead.
- */
-void N_PrintTransmissionStats()
-{
-    if(::numOutBytes == 0)
+    double const loopRate = Loop::get().rate();
+    if (loopRate > 0)
     {
-        LOG_NET_MSG("Transmission efficiency: Nothing has been sent yet");
+        LOG_NET_MSG("Event loop frequency: up to %.1f Hz") << loopRate;
     }
     else
     {
-        LOG_NET_MSG("Transmission efficiency: %.3f%% (data: %i bytes, sent: %i bytes)")
-            << (100 - (100.0f * ::numSentBytes) / ::numOutBytes)
-            << ::numOutBytes
-            << ::numSentBytes;
+        LOG_NET_MSG("Event loop frequency: unlimited");
+    }
+}
+
+void N_PrintTransmissionStats()
+{
+    auto const dataBytes = Socket::sentUncompressedBytes();
+    auto const outBytes  = Socket::sentBytes();
+    auto const outRate   = Socket::outputBytesPerSecond();
+
+    if (outBytes == 0)
+    {
+        LOG_NET_MSG("Nothing has been sent yet over the network");
+    }
+    else
+    {
+        LOG_NET_MSG("Average compression: %.3f%% (data: %.1f KB, out: %.1f KB)\n"
+                    "Current output: %.1f KB/s")
+            << 100 * (1.0 - double(outBytes) / double(dataBytes))
+            << dataBytes/1000.0
+            << outBytes/1000.0
+            << outRate/1000.0;
     }
 }

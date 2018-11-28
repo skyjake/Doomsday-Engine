@@ -1,0 +1,16 @@
+Header set Access-Control-Allow-Origin "http://dengine.net"
+
+RewriteEngine on
+RewriteBase /1/
+
+# Be more RESTful.
+RewriteRule builds/([0-9]+)/? builds.php?number=$1&format=html [L,QSA]
+RewriteRule builds/index/? builds.php?format=html [L,QSA]
+RewriteRule builds/feed/? builds.php?format=feed [L,QSA]
+RewriteRule builds/latest/([-a-z0-9_]+)/([a-z]+)/? builds.php?latest_for=$1&type=$2 [L,QSA]
+RewriteRule builds/stats/? builds.php?stats=dl [L,QSA]
+
+# Add .php extension when needed.
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_FILENAME}.php -f
+RewriteRule ^(.*?)/?$ $1.php [L]

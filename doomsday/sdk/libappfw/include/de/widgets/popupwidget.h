@@ -103,6 +103,13 @@ public:
 
     ColorTheme colorTheme() const;
 
+    /**
+     * Sets the color of the popup outline. By default, popups do not have an outline.
+     *
+     * @param outlineColor  Outline color.
+     */
+    void setOutlineColor(DotPath const &outlineColor);
+
     void setCloseButtonVisible(bool enable);
 
     /**

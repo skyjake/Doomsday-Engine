@@ -34,16 +34,6 @@ extern "C" {
 
 void G_RendPlayerView(int player);
 
-void G_InitSpecialFilter(void);
-
-/**
- * Draws a special filter over the screen (e.g. the inversing filter used
- * when in god mode).
- */
-void G_UpdateSpecialFilter(int player);
-
-void G_UpdateSpecialFilterWithTimeDelta(int player, float delta);
-
 void D_DrawWindow(Size2Raw const *windowSize);
 
 void D_EndFrame(void);

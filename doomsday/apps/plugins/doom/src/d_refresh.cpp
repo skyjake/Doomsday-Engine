@@ -37,61 +37,6 @@
 
 float quitDarkenOpacity = 0;
 
-static float appliedFilter[MAXPLAYERS];
-
-void G_InitSpecialFilter()
-{
-    for(int i = 0; i < MAXPLAYERS; ++i)
-    {
-        appliedFilter[i] = -1;
-    }
-}
-
-void G_UpdateSpecialFilterWithTimeDelta(int player, float delta)
-{
-    // In HacX a simple blue shift is used instead.
-    if(gameMode == doom2_hacx) return;
-
-    player_t *plr = players + player;
-
-    int filter = plr->powers[PT_INVULNERABILITY];
-    if(!filter)
-    {
-        // Clear the filter.
-        if(appliedFilter[player] > 0)
-        {
-            DD_Executef(true, "postfx %i opacity 1; postfx %i none %f", player, player, delta);
-            appliedFilter[player] = -1;
-        }
-        return;
-    }
-
-    float str = 1; // Full inversion.
-    if(filter < 4 * 32 && !(filter & 8))
-    {
-        str = 0;
-    }
-
-    // Activate the filter.
-    if(appliedFilter[player] < 0)
-    {
-        DD_Executef(true, "postfx %i monochrome.inverted %f", player, delta);
-    }
-
-    // Update filter opacity.
-    if(!FEQUAL(appliedFilter[player], str))
-    {
-        DD_Executef(true, "postfx %i opacity %f", player, str);
-    }
-
-    appliedFilter[player] = str;
-}
-
-void G_UpdateSpecialFilter(int player)
-{
-    G_UpdateSpecialFilterWithTimeDelta(player, .3f);
-}
-
 dd_bool R_ViewFilterColor(float rgba[4], int filter)
 {
     if(!rgba) return false;
@@ -103,7 +48,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (COMMON_GAMESESSION->rules().deathmatch? 1.0f : cfg.common.filterStrength) * (filter+1) / (float)NUMREDPALS;
+        rgba[CA] = (gfw_Rule(deathmatch)? 1.0f : cfg.common.filterStrength) * (filter+1) / (float)NUMREDPALS;
         return true;
     }
 
@@ -274,7 +219,7 @@ void G_RendPlayerView(int player)
     }
 
     // How about fullbright?
-    DD_SetInteger(DD_FULLBRIGHT, isFullBright);
+    DD_SetInteger(DD_RENDER_FULLBRIGHT, isFullBright);
 
     // Render the view with possible custom filters.
     R_RenderPlayerView(player);

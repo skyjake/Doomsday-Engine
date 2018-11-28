@@ -23,6 +23,7 @@
 #include "../IByteArray"
 #include "../IBlock"
 #include "../ISerializable"
+#include "../Writer"
 
 #include <QByteArray>
 
@@ -136,6 +137,14 @@ public:
 public:
     static Block join(QList<Block> const &blocks, Block const &sep = Block());
 };
+
+template <typename... Args>
+Block md5Hash(Args... args) {
+    Block data;
+    Writer writer(data);
+    writer.writeMultiple(args...);
+    return data.md5Hash();
+}
 
 } // namespace de
 

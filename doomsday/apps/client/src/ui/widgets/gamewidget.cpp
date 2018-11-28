@@ -48,10 +48,15 @@
 #include "gl/gl_defer.h"
 
 #include <doomsday/console/exec.h>
+#include <de/FileSystem>
 #include <de/GLState>
 #include <de/GLTextureFramebuffer>
 #include <de/LogBuffer>
 #include <de/VRConfig>
+
+#include <QPainter>
+#include <QImage>
+#include <QBuffer>
 
 /**
  * Maximum number of milliseconds spent uploading textures at the beginning
@@ -85,6 +90,20 @@ DENG2_PIMPL(GameWidget)
             });
             return LoopContinue;
         });
+    }
+
+    void renderPlayerViewToFramebuffer(int playerNum, GLFramebuffer &dest)
+    {
+        GLState::push()
+                .setTarget(dest)
+                .setViewport(Rectangleui::fromSize(dest.size()));
+
+        dest.clear(GLFramebuffer::ColorDepthStencil);
+
+        // Rendering is done by the caller-provided callback.
+        R_RenderViewPort(playerNum);
+
+        GLState::pop();
     }
 
     /**
@@ -129,6 +148,7 @@ DENG2_PIMPL(GameWidget)
 
             // End any open DGL sequence.
             DGL_End();
+            DGL_Flush();
 
             // Notify the world that we've finished rendering the frame.
             App_World().endFrame();
@@ -161,15 +181,6 @@ GameWidget::GameWidget(String const &name)
     requestGeometry(false);
 }
 
-/*
-void GameWidget::glApplyViewport(Rectanglei const &rect)
-{
-    GLState::current()
-            .setNormalizedViewport(normalizedRect(rect))
-            .apply();
-}
-*/
-
 void GameWidget::pause()
 {
     if (App_GameLoaded() && !clientPaused)
@@ -181,6 +192,79 @@ void GameWidget::pause()
 void GameWidget::drawComposited()
 {
     d->drawComposited();
+}
+
+void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
+{
+    int const player = consolePlayer;
+    Vector2ui fbSize(size, size);
+
+    GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
+    destFb.glInit();
+
+    LOG_GL_MSG("Rendering %ix%i cube map...") << 6 * fbSize.x << fbSize.y;
+
+    // Prevent the angleclipper from clipping anything.
+    int old_devNoCulling = devNoCulling;
+    devNoCulling = 1;
+
+    // Make the player temporarily a plain camera to hide weapons etc.
+    ClientPlayer &plr = ClientApp::player(player);
+    auto const oldPlrFlags = plr.publicData().flags;
+    plr.publicData().flags |= DDPF_CAMERA;
+
+    // Notify the world that a new render frame has begun.
+    App_World().beginFrame(CPP_BOOL(R_NextViewer()));
+
+    QImage composited(QSize(6 * size, size), QImage::Format_RGB32);
+    QPainter painter(&composited);
+
+    int const baseYaw = 180;
+
+    for (int i = 0; i < 6; ++i)
+    {
+        if (i < 4)
+        {
+            Rend_SetFixedView(player, baseYaw + 90 + i * -90, 0, 90, fbSize);
+        }
+        else
+        {
+            Rend_SetFixedView(player, baseYaw, i == 4? -90 : 90, 90, fbSize);
+        }
+        d->renderPlayerViewToFramebuffer(player, destFb);
+        painter.drawImage(i * size, 0, destFb.toImage());
+    }
+
+    App_World().endFrame();
+
+    // Write the composited image to a file.
+    {
+        QBuffer buf;
+        buf.open(QBuffer::WriteOnly);
+        composited.save(&buf, outputImagePath.fileNameExtension().mid(1).toLatin1());
+
+        // Choose a unique name.
+        int counter = 0;
+        String uniquePath = outputImagePath;
+        while (FS::tryLocate<File const>(uniquePath))
+        {
+            uniquePath = outputImagePath.fileNameAndPathWithoutExtension() +
+                    String::format("-%03i", counter++) +
+                    outputImagePath.fileNameExtension();
+        }
+
+        File &outFile = FS::get().root().replaceFile(uniquePath);
+        outFile << Block(buf.data());
+        outFile.flush();
+
+        LOG_GL_MSG("Cube map saved to \"%s\"") << outFile.correspondingNativePath();
+    }
+
+    // Cleanup.
+    destFb.glDeinit();
+    Rend_UnsetFixedView();
+    devNoCulling = old_devNoCulling;
+    plr.publicData().flags = oldPlrFlags;
 }
 
 void GameWidget::viewResized()
@@ -304,4 +388,14 @@ void GameWidget::glDeinit()
     GuiWidget::glDeinit();
 
     //d->glDeinit();
+}
+
+D_CMD(CubeShot)
+{
+    DENG2_UNUSED2(src, argc);
+
+    int size = String(argv[1]).toInt();
+    if (size < 8) return false;
+    ClientWindow::main().game().renderCubeMap(size, "/home/cubeshot.png");
+    return true;
 }

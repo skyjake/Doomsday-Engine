@@ -39,6 +39,8 @@
 #include <de/Log>
 #include <de/LogBuffer>
 #include <de/NativeFile>
+#include <de/Process>
+#include <de/Script>
 #include <de/ScriptSystem>
 #include <de/Time>
 #include <de/TextValue>
@@ -106,6 +108,7 @@ D_CMD(Wait);
 D_CMD(InspectMobj);
 D_CMD(DebugCrash);
 D_CMD(DebugError);
+D_CMD(DoomsdayScript);
 
 void initVariableBindings(Binder &);
 
@@ -142,6 +145,7 @@ void Con_Register(void)
 #ifdef _DEBUG
     C_CMD("crash",          NULL,   DebugCrash);
 #endif
+    C_CMD("ds",             "s*",   DoomsdayScript);
 
     Con_DataRegister();
 }
@@ -393,7 +397,7 @@ static dd_bool Con_CheckExecBuffer(void)
 
     storage[255] = 0;
 
-    TimeDelta const now = TimeDelta::sinceStartOfProcess();
+    TimeSpan const now = TimeSpan::sinceStartOfProcess();
 
     // Execute the commands whose time has come.
     for (i = 0; i < exBuffSize; ++i)
@@ -413,7 +417,7 @@ static dd_bool Con_CheckExecBuffer(void)
                  ptr->source == CMDS_CMDLINE);
         if (isInteractive)
         {
-            Log::threadLog().beginInteractive();
+            LOG().beginInteractive();
         }
 
         if (!executeSubCmd(storage, ptr->source, ptr->isNetCmd))
@@ -423,7 +427,7 @@ static dd_bool Con_CheckExecBuffer(void)
 
         if (isInteractive)
         {
-            Log::threadLog().endInteractive();
+            LOG().endInteractive();
         }
     }
 
@@ -714,7 +718,7 @@ static int executeSubCmd(const char *subCmd, byte src, dd_bool isNetCmd)
                     break;
                 case CVT_URIPTR:
                     /// @todo Sanitize and validate against known schemas.
-                    CVar_SetUri(cvar, de::Uri(argptr, RC_NULL));
+                    CVar_SetUri(cvar, de::makeUri(argptr));
                     break;
                 default: break;
                 }
@@ -841,7 +845,7 @@ static void Con_SplitIntoSubCommands(const char *command,
         }
 
         // Queue it.
-        Con_QueueCmd(subCmd, TimeDelta::sinceStartOfProcess() + markerOffset, src, isNetCmd);
+        Con_QueueCmd(subCmd, TimeSpan::sinceStartOfProcess() + markerOffset, src, isNetCmd);
 
         scPos = 0;
     }
@@ -1168,7 +1172,7 @@ D_CMD(If)
         {"<=",  IF_LEQUAL},
         {NULL,  0}
     };
-    uint        i, oper;
+    uint        i, oper = IF_EQUAL;
     cvar_t     *var;
     dd_bool     isTrue = false;
 
@@ -1398,5 +1402,21 @@ D_CMD(ListAliases)
     uint numPrinted = 0;
     Con_IterateKnownWords(argc > 1? argv[1] : 0, WT_CALIAS, printKnownWordWorker, &numPrinted);
     LOG_SCR_MSG("Found %i aliases") << numPrinted;
+    return true;
+}
+
+D_CMD(DoomsdayScript)
+{
+    DENG_UNUSED(src);
+    DENG_UNUSED(argc);
+    String source;
+    for (int i = 1; i < argc; ++i)
+    {
+        if (source) source += " ";
+        source += String(argv[i]);
+    }
+    Script script(source);
+    Process proc(script);
+    proc.execute();
     return true;
 }

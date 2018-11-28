@@ -67,26 +67,39 @@
  */
 
 #include "de/Socket"
+#include "de/Async"
 #include "de/Message"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/data/huffman.h"
 
+#include <QThread>
+
 namespace de {
+
+struct Counters
+{
+    duint64 sentUncompressedBytes = 0;
+    duint64 sentBytes = 0;
+    duint64 sentPeriodBytes = 0;
+    double outputBytesPerSecond = 0;
+    Time periodStartedAt;
+};
+static LockableT<Counters> counters;
+static TimeSpan const sendPeriodDuration = 5;
 
 /// Maximum number of channels.
 static duint const MAX_CHANNELS = 2;
 
 static int const MAX_SIZE_SMALL  = 127; // bytes
 static int const MAX_SIZE_MEDIUM = 4095; // bytes
+static int const MAX_SIZE_BIG    = 10*MAX_SIZE_MEDIUM;
 static int const MAX_SIZE_LARGE  = DENG2_SOCKET_MAX_PAYLOAD_SIZE;
 
 /// Threshold for input data size: messages smaller than this are first compressed
 /// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
 /// the Huffman coded payload is used (unless it doesn't fit in a medium-sized packet).
-#define MAX_HUFFMAN_INPUT_SIZE  4096 // bytes
-
-#define DEFAULT_TRANSMISSION_SIZE   4096
+static int const MAX_HUFFMAN_INPUT_SIZE = 4096; // bytes
 
 #define TRMF_CONTINUE           0x80
 #define TRMF_DEFLATED           0x40
@@ -184,40 +197,30 @@ using namespace internal;
 
 DENG2_PIMPL_NOREF(Socket)
 {
-    Address target;
-    bool quiet;
+    Address peer;
+    bool quiet = false;
+    bool retainOrder = true;
 
-    enum ReceptionState {
-        ReceivingHeader,
-        ReceivingPayload
-    };
-    ReceptionState receptionState;
+    enum ReceptionState { ReceivingHeader, ReceivingPayload };
+    ReceptionState receptionState = ReceivingHeader;
     Block receivedBytes;
     MessageHeader incomingHeader;
 
     /// Number of the active channel.
     /// @todo Channel is not used at the moment.
-    duint activeChannel;
+    duint activeChannel = 0;
 
     /// Pointer to the internal socket data.
-    QTcpSocket *socket;
+    QTcpSocket *socket = nullptr;
 
     /// Buffer for incoming received messages.
     QList<Message *> receivedMessages;
 
     /// Number of bytes waiting to be written to the socket.
-    dint64 bytesToBeWritten;
+    dint64 bytesToBeWritten = 0;
 
     /// Number of bytes written to the socket so far.
-    dint64 totalBytesWritten;
-
-    Impl() :
-        quiet(false),
-        receptionState(ReceivingHeader),
-        activeChannel(0),
-        socket(0),
-        bytesToBeWritten(0),
-        totalBytesWritten(0) {}
+    dint64 totalBytesWritten = 0;
 
     ~Impl()
     {
@@ -225,11 +228,9 @@ DENG2_PIMPL_NOREF(Socket)
         foreach (Message *msg, receivedMessages) delete msg;
     }
 
-    void serializeAndSendMessage(IByteArray const &packet)
+    void serializeMessage(MessageHeader &header, Block &payload)
     {
-        Block payload(packet);
         Block huffData;
-        MessageHeader header;
 
         // Let's find the appropriate compression method of the payload. First see
         // if the encoded contents are under 128 bytes as Huffman codes.
@@ -253,7 +254,7 @@ DENG2_PIMPL_NOREF(Socket)
 
         if (!header.size) // Try deflate.
         {
-            int const level = (payload.size() < 10*MAX_SIZE_MEDIUM? 1 /*fast*/ : 9 /*best*/);
+            int const level = 1; //(payload.size() < MAX_SIZE_BIG? 1 /*fast*/ : 9 /*best*/);
             Block const deflated = payload.compressed(level);
 
             if (!deflated.size())
@@ -282,6 +283,13 @@ DENG2_PIMPL_NOREF(Socket)
                 payload = deflated;
             }
         }
+    }
+
+    void sendMessage(MessageHeader const &header,
+                     Block const &payload)
+    {
+        DENG2_ASSERT(socket != nullptr);
+        DENG2_ASSERT(QThread::currentThread() == socket->thread());
 
         // Write the message header.
         Block dest;
@@ -289,11 +297,62 @@ DENG2_PIMPL_NOREF(Socket)
         socket->write(dest);
 
         // Update totals (for statistics).
-        dsize total = dest.size() + payload.size();
-        bytesToBeWritten += total;
+        dsize const total = dest.size() + payload.size();
+        bytesToBeWritten  += total;
         totalBytesWritten += total;
 
         socket->write(payload);
+
+        // Update total counters, too.
+        {
+            DENG2_GUARD(counters);
+            counters.value.sentPeriodBytes += total;
+            counters.value.sentBytes       += total;
+            // Update Bps counter.
+            if (!counters.value.periodStartedAt.isValid()
+                || counters.value.periodStartedAt.since() > sendPeriodDuration)
+            {
+                counters.value.outputBytesPerSecond = double(counters.value.sentPeriodBytes)
+                                                    / sendPeriodDuration;
+                counters.value.sentPeriodBytes = 0;
+                counters.value.periodStartedAt = Time::currentHighPerformanceTime();
+            }
+        }
+    }
+
+    void serializeAndSendMessage(IByteArray const &packet)
+    {
+        Block payload = packet;
+        {
+            DENG2_GUARD(counters);
+            counters.value.sentUncompressedBytes += payload.size();
+        }
+
+        if (!retainOrder && packet.size() >= MAX_SIZE_BIG)
+        {
+            async([this, payload] ()
+            {
+                // Prepare for sending in a background thread, since it may take a moment.
+                MessageHeader header;
+                Block msgData = payload;
+                serializeMessage(header, msgData);
+                return std::make_pair(header, msgData);
+            },
+            [this] (std::pair<MessageHeader, Block> msg)
+            {
+                if (socket)
+                {
+                    // Write to socket in main thread.
+                    sendMessage(msg.first, msg.second);
+                }
+            });
+        }
+        else
+        {
+            MessageHeader header;
+            serializeMessage(header, payload);
+            sendMessage(header, payload);
+        }
     }
 
     /**
@@ -310,7 +369,6 @@ DENG2_PIMPL_NOREF(Socket)
                     // A message must be at least two bytes long (header + payload).
                     return;
                 }
-
                 try
                 {
                     Reader reader(receivedBytes);
@@ -378,7 +436,7 @@ Socket::Socket() : d(new Impl)
     QObject::connect(d->socket, SIGNAL(connected()), this, SIGNAL(connected()));
 }
 
-Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) // blocking
+Socket::Socket(Address const &address, TimeSpan const &timeOut) : d(new Impl) // blocking
 {
     LOG_AS("Socket");
 
@@ -387,7 +445,7 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) /
 
     // Now that the signals have been set...
     d->socket->connectToHost(address.host(), address.port());
-    if (!d->socket->waitForConnected(timeOut.asMilliSeconds()))
+    if (!d->socket->waitForConnected(int(timeOut.asMilliSeconds())))
     {
         QString msg = d->socket->errorString();
         delete d->socket;
@@ -400,13 +458,13 @@ Socket::Socket(Address const &address, TimeDelta const &timeOut) : d(new Impl) /
 
     LOG_NET_NOTE("Connection opened to %s") << address.asText();
 
-    d->target = address;
+    d->peer = address;
 
     DENG2_ASSERT(d->socket->isOpen() && d->socket->isWritable() &&
                  d->socket->state() == QAbstractSocket::ConnectedState);
 }
 
-void Socket::connect(Address const &address) // non-blocking
+void Socket::open(Address const &address) // non-blocking
 {
     DENG2_ASSERT(d->socket);
     DENG2_ASSERT(d->socket->state() == QAbstractSocket::UnconnectedState);
@@ -415,11 +473,11 @@ void Socket::connect(Address const &address) // non-blocking
     if (!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
 
     d->socket->connectToHost(address.host(), address.port());
-    d->target = address;
+    d->peer = address;
 }
 
-void Socket::connectToDomain(String const &domainNameWithOptionalPort,
-                             duint16 defaultPort) // non-blocking
+void Socket::open(String const &domainNameWithOptionalPort,
+                  duint16 defaultPort) // non-blocking
 {
     String str = domainNameWithOptionalPort;
     duint16 port = defaultPort;
@@ -432,7 +490,7 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     }
     if (str == "localhost")
     {
-        connect(Address(str.toLatin1(), port));
+        open(Address(str.toLatin1(), port));
         return;
     }
 
@@ -440,11 +498,11 @@ void Socket::connectToDomain(String const &domainNameWithOptionalPort,
     if (!host.isNull())
     {
         // Looks like a regular IP address.
-        connect(Address(str.toLatin1(), port));
+        open(Address(str.toLatin1(), port));
         return;
     }
 
-    d->target.setPort(port);
+    d->peer.setPort(port);
 
     // Looks like we will need to look this up.
     QHostInfo::lookupHost(str, this, SLOT(hostResolved(QHostInfo)));
@@ -454,7 +512,7 @@ void Socket::reconnect()
 {
     DENG2_ASSERT(!isOpen());
 
-    connect(d->target);
+    open(d->peer);
 }
 
 Socket::Socket(QTcpSocket *existingSocket) : d(new Impl)
@@ -523,6 +581,30 @@ void Socket::setQuiet(bool noLogOutput)
     d->quiet = noLogOutput;
 }
 
+void Socket::resetCounters()
+{
+    DENG2_GUARD(counters);
+    counters.value = Counters();
+}
+
+duint64 Socket::sentUncompressedBytes()
+{
+    DENG2_GUARD(counters);
+    return counters.value.sentUncompressedBytes;
+}
+
+duint64 Socket::sentBytes()
+{
+    DENG2_GUARD(counters);
+    return counters.value.sentBytes;
+}
+
+double Socket::outputBytesPerSecond()
+{
+    DENG2_GUARD(counters);
+    return counters.value.outputBytesPerSecond;
+}
+
 duint Socket::channel() const
 {
     return d->activeChannel;
@@ -532,6 +614,11 @@ void Socket::setChannel(duint number)
 {
     DENG2_ASSERT(number < MAX_CHANNELS);
     d->activeChannel = min(number, MAX_CHANNELS - 1);
+}
+
+void Socket::setRetainOrder(bool retainOrder)
+{
+    d->retainOrder = retainOrder;
 }
 
 void Socket::send(IByteArray const &packet)
@@ -553,6 +640,9 @@ void Socket::send(IByteArray const &packet, duint /*channel*/)
         throw DisconnectedError("Socket::send", "Socket is unavailable");
     }
 
+    // Sockets must be used only in their own thread.
+    DENG2_ASSERT(thread() == QThread::currentThread());
+
     d->serializeAndSendMessage(packet);
 }
 
@@ -560,7 +650,7 @@ void Socket::readIncomingBytes()
 {
     if (!d->socket) return;
 
-    int available = d->socket->bytesAvailable();
+    auto available = d->socket->bytesAvailable();
     if (available > 0)
     {
         d->receivedBytes += d->socket->read(d->socket->bytesAvailable());
@@ -585,7 +675,7 @@ void Socket::hostResolved(QHostInfo const &info)
     else
     {
         // Now we know where to connect.
-        connect(Address(info.addresses().first(), d->target.port()));
+        open(Address(info.addresses().first(), d->peer.port()));
 
         emit addressResolved();
     }
@@ -595,7 +685,7 @@ Message *Socket::receive()
 {
     if (d->receivedMessages.isEmpty())
     {
-        return 0;
+        return nullptr;
     }
     return d->receivedMessages.takeFirst();
 }
@@ -604,7 +694,7 @@ Message *Socket::peek()
 {
     if (d->receivedMessages.isEmpty())
     {
-        return 0;
+        return nullptr;
     }
     return d->receivedMessages.first();
 }
@@ -624,7 +714,7 @@ Address Socket::peerAddress() const
     {
         return Address(d->socket->peerAddress(), d->socket->peerPort());
     }
-    return d->target;
+    return d->peer;
 }
 
 bool Socket::isOpen() const
@@ -661,13 +751,18 @@ bool Socket::hasIncoming() const
 
 dsize Socket::bytesBuffered() const
 {
-    return d->bytesToBeWritten;
+    return dsize(d->bytesToBeWritten);
 }
 
 void Socket::bytesWereWritten(qint64 bytes)
 {
     d->bytesToBeWritten -= bytes;
     DENG2_ASSERT(d->bytesToBeWritten >= 0);
+
+    if (d->bytesToBeWritten == 0)
+    {
+        emit allSent();
+    }
 }
 
 } // namespace de

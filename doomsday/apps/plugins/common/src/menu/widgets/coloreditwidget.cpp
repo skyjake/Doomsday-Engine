@@ -159,7 +159,9 @@ void ColorEditWidget::draw() const
         x += width;
     }
 
-    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha);
+    const float fadeout = scrollingFadeout();
+
+    DGL_Color4f(1, 1, 1, mnRendState->pageAlpha * fadeout);
     DGL_Enable(DGL_TEXTURE_2D);
 
     DGL_SetMaterialUI((world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(borderGraphics[0])), DGL_REPEAT, DGL_REPEAT);
@@ -224,7 +226,14 @@ void ColorEditWidget::draw() const
     DGL_Disable(DGL_TEXTURE_2D);
 
     DGL_SetNoMaterial();
-    DGL_DrawRectf2Color(x, y, w, h, d->color.x, d->color.y, d->color.z, d->color.w * mnRendState->pageAlpha);
+    DGL_DrawRectf2Color(x,
+                        y,
+                        w,
+                        h,
+                        d->color.x,
+                        d->color.y,
+                        d->color.z,
+                        d->color.w * mnRendState->pageAlpha * fadeout);
 }
 
 int ColorEditWidget::handleCommand(menucommand_e cmd)

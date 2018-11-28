@@ -197,7 +197,7 @@ public:
      * Writes a fixed-size sequence of bytes to the destination buffer.
      * The size of the sequence is @em NOT included in the written data.
      * When reading, the reader must know the size beforehand
-     * (Reader::readPresetSize()).
+     * (Reader::readBytesFixedSize()).
      *
      * @param array  Array to write.
      *
@@ -208,6 +208,15 @@ public:
     /// Writes a writable object into the destination buffer.
     Writer &operator << (IWritable const &writable);
 
+    /**
+     * Begins or ends a span of data. The length of the span is written at the beginning
+     * (BeginSpan) as an uint32. Nothing is written at the end (EndSpan), however the
+     * writer is temporarily rewound for updating the length of the span.
+     *
+     * @param op  BeginSpan or EndSpan.
+     *
+     * @return Reference to the Writer.
+     */
     Writer &operator << (InlineOperation op);
 
     /**
@@ -228,6 +237,17 @@ public:
         *this << duint32(list.size());
         for (auto const &elem : list) *this << elem;
         return *this;
+    }
+
+    template <typename Type>
+    Writer &writeMultiple(Type const &value) {
+        return *this << value;
+    }
+
+    template <typename Type, typename... Args>
+    Writer &writeMultiple(Type const &value, Args... args) {
+        *this << value;
+        return writeMultiple(args...);
     }
 
     /**

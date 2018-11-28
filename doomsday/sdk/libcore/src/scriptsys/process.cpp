@@ -147,7 +147,7 @@ DENG2_PIMPL(Process)
 };
 
 /// If execution continues for longer than this, a HangError is thrown.
-static TimeDelta const MAX_EXECUTION_TIME = 10;
+static TimeSpan const MAX_EXECUTION_TIME = 10;
 
 Process::Process(Record *externalGlobalNamespace) : d(new Impl(this))
 {
@@ -387,7 +387,7 @@ void Process::call(Function const &function, ArrayValue const &arguments, Value 
         for (; b != argValues.end() && a != function.arguments().end(); ++b, ++a)
         {
             // Records must only be passed as unowned references.
-            DENG2_ASSERT(!(*b)->is<RecordValue>() || !(*b)->as<RecordValue>().hasOwnership());
+            DENG2_ASSERT(!is<RecordValue>(*b) || !(*b)->as<RecordValue>().hasOwnership());
 
             context().names().add(new Variable(*a, (*b)->duplicate()));
         }

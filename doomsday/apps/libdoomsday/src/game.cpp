@@ -58,8 +58,9 @@ String const Game::DEF_TAGS("tags");
 String const Game::DEF_LEGACYSAVEGAME_NAME_EXP("legacySavegame.nameExp");
 String const Game::DEF_LEGACYSAVEGAME_SUBFOLDER("legacySavegame.subfolder");
 String const Game::DEF_MAPINFO_PATH("mapInfoPath");
+String const Game::DEF_OPTIONS("options");
 
-DENG2_PIMPL(Game)
+DENG2_PIMPL(Game), public Lockable
 {
     pluginid_t pluginId = 0; ///< Unique identifier of the registering plugin.
     Record params;
@@ -80,27 +81,32 @@ DENG2_PIMPL(Game)
         {
             params.set(DEF_CONFIG_BINDINGS_PATH, "/home/configs"/params.gets(DEF_CONFIG_DIR)/"player/bindings.cfg");
         }
+        if (!params.has(DEF_OPTIONS))
+        {
+            params.set(DEF_OPTIONS, RecordValue::takeRecord(Record()));
+        }
 
         params.set(DEF_CONFIG_DIR, NativePath(params.gets(DEF_CONFIG_DIR)).expand().withSeparators('/'));
     }
 
     ~Impl()
     {
+        DENG2_GUARD(this);
         qDeleteAll(manifests);
     }
 
-    GameProfile const *profile() const
+    GameProfile *profile() const
     {
         return maybeAs<GameProfile>(DoomsdayApp::gameProfiles().tryFind(self().title()));
     }
 
     StringList packagesFromProfile() const
     {
-        if (auto const *prof = profile())
+        if (const auto *prof = profile())
         {
             return prof->packages();
         }
-        return StringList();
+        return {};
     }
 };
 
@@ -116,21 +122,25 @@ Game::~Game()
 
 bool Game::isNull() const
 {
+    DENG2_GUARD(d);
     return id().isEmpty();
 }
 
 String Game::id() const
 {
+    DENG2_GUARD(d);
     return d->params.gets(DEF_ID);
 }
 
 String Game::variantOf() const
 {
+    DENG2_GUARD(d);
     return d->params.gets(DEF_VARIANT_OF);
 }
 
 String Game::family() const
 {
+    DENG2_GUARD(d);
     if (d->params.has(DEF_FAMILY))
     {
         return d->params.gets(DEF_FAMILY);
@@ -144,21 +154,25 @@ String Game::family() const
 
 void Game::setRequiredPackages(StringList packageIds)
 {
+    DENG2_GUARD(d);
     d->requiredPackages = packageIds;
 }
 
 void Game::addRequiredPackage(String const &packageId)
 {
+    DENG2_GUARD(d);
     d->requiredPackages.append(packageId);
 }
 
 StringList Game::requiredPackages() const
 {
+    DENG2_GUARD(d);
     return d->requiredPackages;
 }
 
 StringList Game::localMultiplayerPackages() const
 {
+    DENG2_GUARD(d);
     return localMultiplayerPackages(id());
 }
 
@@ -202,6 +216,7 @@ void Game::setLocalMultiplayerPackages(String const &gameId, StringList packages
 
 void Game::addManifest(ResourceManifest &manifest)
 {
+    DENG2_GUARD(d);
     // Ensure we don't add duplicates.
     Manifests::const_iterator found = d->manifests.find(manifest.resourceClass(), &manifest);
     if (found == d->manifests.end())
@@ -212,6 +227,8 @@ void Game::addManifest(ResourceManifest &manifest)
 
 bool Game::allStartupFilesFound() const
 {
+    DENG2_GUARD(d);
+
     for (String const &pkg : d->requiredPackages + d->packagesFromProfile())
     {
         if (!App::packageLoader().isAvailable(pkg))
@@ -235,6 +252,7 @@ bool Game::isPlayable() const
 
 bool Game::isPlayableWithDefaultPackages() const
 {
+    DENG2_GUARD(d);
     for (String const &pkg : d->requiredPackages)
     {
         if (!App::packageLoader().isAvailable(pkg))
@@ -245,6 +263,7 @@ bool Game::isPlayableWithDefaultPackages() const
 
 Game::Status Game::status() const
 {
+    DENG2_GUARD(d);
     if (App_GameLoaded() && &DoomsdayApp::game() == this)
     {
         return Loaded;
@@ -258,6 +277,7 @@ Game::Status Game::status() const
 
 String const &Game::statusAsText() const
 {
+    DENG2_GUARD(d);
     static String const statusTexts[] = {
         "Loaded",
         "Playable",
@@ -268,6 +288,7 @@ String const &Game::statusAsText() const
 
 String Game::description() const
 {
+    DENG2_GUARD(d);
     return String(_E(b) "%1 - %2\n" _E(.)
                   _E(l) "ID: " _E(.) "%3 "
                   _E(l) "PluginId: "    _E(.) "%4\n"
@@ -287,16 +308,19 @@ String Game::description() const
 
 pluginid_t Game::pluginId() const
 {
+    DENG2_GUARD(d);
     return d->pluginId;
 }
 
 void Game::setPluginId(pluginid_t newId)
 {
+    DENG2_GUARD(d);
     d->pluginId = newId;
 }
 
 String Game::logoImageId() const
 {
+    DENG2_GUARD(d);
     return logoImageForId(id());
 }
 
@@ -322,11 +346,13 @@ String Game::logoImageForId(String const &id)
 
 String Game::legacySavegameNameExp() const
 {
-    return d->params[DEF_LEGACYSAVEGAME_NAME_EXP];
+    DENG2_GUARD(d);
+    return d->params.gets(DEF_LEGACYSAVEGAME_NAME_EXP, "");
 }
 
 String Game::legacySavegamePath() const
 {
+    DENG2_GUARD(d);
     NativePath nativeSavePath = Resources::get().nativeSavePath();
     if (nativeSavePath.isEmpty()) return "";
     if (isNull()) return "";
@@ -338,7 +364,7 @@ String Game::legacySavegamePath() const
     }
 
     // The default save path. The savegames are in a game-specific folder.
-    if (!d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER, "").isEmpty())
+    if (d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER, ""))
     {
         return App::app().nativeHomePath() / d->params.gets(DEF_LEGACYSAVEGAME_SUBFOLDER) / id();
     }
@@ -348,41 +374,50 @@ String Game::legacySavegamePath() const
 
 Path Game::mainConfig() const
 {
+    DENG2_GUARD(d);
     return d->params.gets(DEF_CONFIG_MAIN_PATH);
 }
 
 Path Game::bindingConfig() const
 {
+    DENG2_GUARD(d);
     return d->params.gets(DEF_CONFIG_BINDINGS_PATH);
 }
 
 Path Game::mainMapInfo() const
 {
+    DENG2_GUARD(d);
     return d->params.gets(DEF_MAPINFO_PATH);
 }
 
 String Game::title() const
 {
+    DENG2_GUARD(d);
     return d->params.gets(DEF_TITLE);
 }
 
 String Game::author() const
 {
+    DENG2_GUARD(d);
     return d->params.gets(DEF_AUTHOR);
 }
 
 Date Game::releaseDate() const
 {
+    DENG2_GUARD(d);
     return Date::fromText(d->params.gets(DEF_RELEASE_DATE, ""));
 }
 
 Game::Manifests const &Game::manifests() const
 {
+    DENG2_GUARD(d);
     return d->manifests;
 }
 
 bool Game::isRequiredFile(File1 &file) const
 {
+    DENG2_GUARD(d);
+
     // If this resource is from a container we must use the path of the
     // root file container instead.
     File1 &rootFile = file;
@@ -411,6 +446,8 @@ bool Game::isRequiredFile(File1 &file) const
 void Game::addResource(resourceclassid_t classId, dint rflags,
                        char const *names, void const *params)
 {
+    DENG2_GUARD(d);
+
     if (!VALID_RESOURCECLASSID(classId))
     {
         throw Error("Game::addResource",
@@ -444,8 +481,9 @@ void Game::addResource(resourceclassid_t classId, dint rflags,
     }
 }
 
-GameProfile const &Game::profile() const
+GameProfile &Game::profile() const
 {
+    DENG2_GUARD(d);
     DENG2_ASSERT(d->profile()); // all games have a matching built-in profile
     return *d->profile();
 }

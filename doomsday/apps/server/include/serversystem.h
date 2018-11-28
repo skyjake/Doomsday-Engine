@@ -82,6 +82,13 @@ public:
 
     void convertToShellUser(RemoteUser *user);
 
+    void convertToRemoteFeedUser(RemoteUser *user);
+
+    /**
+     * Returns the total number of connected users (of all types).
+     */
+    int userCount() const;
+
     /**
      * Prints the status of the server into the log.
      */
@@ -105,6 +112,6 @@ dd_bool N_ServerClose(void);
 void    N_PrintNetworkStatus(void);
 
 extern char *nptIPAddress; // cvar
-extern int nptIPPort; // cvar
+extern int   nptIPPort;    // cvar
 
 #endif // SERVERSYSTEM_H

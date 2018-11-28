@@ -19,13 +19,14 @@
 #ifndef LIBSHELL_LOCALSERVER_H
 #define LIBSHELL_LOCALSERVER_H
 
-#include "Link"
-#include <de/Error>
-#include <de/NativePath>
-#include <QStringList>
+#if !defined(DENG_MOBILE)
 
-namespace de {
-namespace shell {
+#    include "Link"
+#    include <de/Error>
+#    include <de/NativePath>
+#    include <QStringList>
+
+namespace de { namespace shell {
 
 /**
  * Utility for starting and stopping local servers.
@@ -50,8 +51,7 @@ public:
 
     void setApplicationPath(NativePath const &path);
 
-    void start(duint16 port,
-               String const &gameMode,
+    void start(duint16 port, String const &gameMode,
                QStringList additionalOptions = QStringList(),
                NativePath const &runtimePath = "");
 
@@ -80,7 +80,8 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
+
+#    endif // !DENG_MOBILE
 
 #endif // LIBSHELL_LOCALSERVER_H

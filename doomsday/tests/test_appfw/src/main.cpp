@@ -26,6 +26,7 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    TestApp::setDefaultOpenGLFormat();
     TestApp app(argc, argv);
     try
     {

@@ -331,7 +331,7 @@ public:
      * @param span        Animation transition span.
      * @param startDelay  Starting delay.
      */
-    void setOpacity(float opacity, TimeDelta span = 0, TimeDelta startDelay = 0);
+    void setOpacity(float opacity, TimeSpan span = 0, TimeSpan startDelay = 0);
 
     /**
      * Determines the widget's opacity animation.
@@ -435,7 +435,7 @@ public:
 
     MouseClickStatus handleMouseClick(Event const &event,
                                       MouseEvent::Button button = MouseEvent::Left);
-
+    
     /**
      * Requests the widget to refresh its geometry, if it has any static
      * geometry. Normally this does not need to be called. It is provided
@@ -461,6 +461,14 @@ public:
      */
     PopupWidget *findParentPopup() const;
 
+    void collectNotReadyAssets(AssetGroup &collected,
+                               CollectMode = CollectMode::OnlyVisible) override;
+
+    /**
+     * Blocks until all assets in the widget tree are Ready.
+     */
+    void waitForAssetsReady();
+
 public slots:
     /**
      * Puts the widget in garbage to be deleted at the next recycling.
@@ -479,20 +487,27 @@ public:
     static Rectanglef normalizedRect(Rectanglei const &rect,
                                      Rectanglei const &containerRect);
 
-    static float toDevicePixels(float logicalPixels);
+    static float pointsToPixels(float points);
+    static float pixelsToPoints(float pixels);
 
-    inline static int toDevicePixels(int logicalPixels) {
-        return int(toDevicePixels(float(logicalPixels)));
+    inline static int pointsToPixels(int points) {
+        return int(pointsToPixels(float(points)));
     }
 
-    inline static duint toDevicePixels(duint logicalPixels) {
-        return duint(toDevicePixels(float(logicalPixels)));
+    inline static duint pointsToPixels(duint points) {
+        return duint(pointsToPixels(float(points)));
     }
 
     template <typename Vector2>
-    static Vector2 toDevicePixels(Vector2 const &type) {
-        return Vector2(typename Vector2::ValueType(toDevicePixels(type.x)),
-                       typename Vector2::ValueType(toDevicePixels(type.y)));
+    static Vector2 pointsToPixels(Vector2 const &type) {
+        return Vector2(typename Vector2::ValueType(pointsToPixels(type.x)),
+                       typename Vector2::ValueType(pointsToPixels(type.y)));
+    }
+
+    template <typename Vector2>
+    static Vector2 pixelsToPoints(Vector2 const &type) {
+        return Vector2(typename Vector2::ValueType(pixelsToPoints(type.x)),
+                       typename Vector2::ValueType(pixelsToPoints(type.y)));
     }
 
     static ColorTheme invertColorTheme(ColorTheme theme);
@@ -503,8 +518,6 @@ public:
      * before recycling occurs.
      */
     static void recycleTrashedWidgets();
-
-    static void collectNotReadyAssets(AssetGroup &collected, Widget &widget);
 
 protected:
     /**

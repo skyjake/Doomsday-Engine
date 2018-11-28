@@ -40,8 +40,6 @@
 using namespace de;
 using namespace common;
 
-float turboMul; // Multiplier for turbo.
-
 gamemode_t gameMode;
 int gameModeBits;
 
@@ -253,7 +251,7 @@ void H_PreInit()
     cfg.common.automapBack[2] = 1.0f;
     cfg.common.automapOpacity = 1.0f;
     cfg.common.automapLineAlpha = 1.0f;
-    cfg.common.automapLineWidth = 1.1f;
+    cfg.common.automapLineWidth = 3.0f;
     cfg.common.automapShowDoors = true;
     cfg.common.automapDoorGlow = 8;
     cfg.common.automapHudDisplay = 2;
@@ -322,6 +320,34 @@ void H_PreInit()
     G_CommonPreInit();
 }
 
+static void initAmmoInfo()
+{
+    static const int defaultMaxAmmo[NUM_AMMO_TYPES] = {100, 50, 200, 200, 20, 150};
+
+    static const char *ammoName[NUM_AMMO_TYPES] = {
+        "Crystal",
+        "Arrow",
+        "Orb",
+        "Rune",
+        "FireOrb",
+        "MSphere",
+    };
+
+    for (int i = AT_FIRST; i < NUM_AMMO_TYPES; ++i)
+    {
+        const String name = ammoName[i];
+        if (const ded_value_t *value = Defs().getValueById("Player|Max ammo|" + name))
+        {
+            // Note: `maxAmmo` is a global variable from p_inter.c
+            maxAmmo[i] = String(value->text).toInt();
+        }
+        else
+        {
+            maxAmmo[i] = defaultMaxAmmo[i];
+        }
+    }
+}
+
 void H_PostInit()
 {
     CommandLine &cmdLine = DENG2_APP->commandLine();
@@ -332,49 +358,39 @@ void H_PostInit()
 
     G_CommonPostInit();
 
+    initAmmoInfo();
     P_InitWeaponInfo();
     IN_Init();
 
     // Game parameters.
     ::monsterInfight = 0;
-    if(ded_value_t const *infight = Defs().getValueById("AI|Infight"))
+    if (ded_value_t const *infight = Defs().getValueById("AI|Infight"))
     {
         ::monsterInfight = String(infight->text).toInt();
     }
 
     // Defaults for skill, episode and map.
-    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    gfw_SetDefaultRule(skill, SM_MEDIUM);
 
-    if(cmdLine.check("-deathmatch"))
+    if (cmdLine.check("-deathmatch"))
     {
         ::cfg.common.netDeathmatch = true;
     }
 
     // Apply these game rules.
-    ::defaultGameRules.noMonsters      = cmdLine.check("-nomonsters")? true : false;
-    ::defaultGameRules.respawnMonsters = cmdLine.check("-respawn")   ? true : false;
-
-    // Change the turbo multiplier?
-    ::turboMul = 1.0f;
-    if(int arg = cmdLine.check("-turbo"))
-    {
-        int scale = 200;
-        if(arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
-        {
-            scale = cmdLine.at(arg + 1).toInt();
-        }
-        scale = de::clamp(10, scale, 400);
-
-        LOG_NOTE("Turbo scale: %i%%") << scale;
-        ::turboMul = scale / 100.f;
-    }
+    gfw_SetDefaultRule(noMonsters,
+                       cmdLine.check("-nomonsters") ||
+                           gfw_GameProfile()->optionValue("noMonsters").isTrue());
+    gfw_SetDefaultRule(respawnMonsters,
+                       cmdLine.check("-respawn") ||
+                           gfw_GameProfile()->optionValue("respawn").isTrue());
 
     // Load a saved game?
-    if(int arg = cmdLine.check("-loadgame", 1))
+    if (auto arg = cmdLine.check("-loadgame", 1))
     {
-        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
+        if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(arg.params.first()))
         {
-            if(sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
+            if (sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
             {
                 // No further initialization is to be done.
                 return;
@@ -383,10 +399,10 @@ void H_PostInit()
     }
 
     // Change the default skill mode?
-    if(int arg = cmdLine.check("-skill", 1))
+    if (auto arg = cmdLine.check("-skill", 1))
     {
-        int skillNumber = cmdLine.at(arg + 1).toInt();
-        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        int const skillNumber = arg.params.first().toInt();
+        gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0 ? skillNumber - 1 : skillNumber));
     }
 
     G_AutoStartOrBeginTitleLoop();

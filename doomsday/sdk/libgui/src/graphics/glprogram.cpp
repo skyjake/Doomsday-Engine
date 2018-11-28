@@ -50,17 +50,17 @@ DENG2_PIMPL(GLProgram)
     /// in each stack is the active one at any given time.
     QHash<Block, QStack<GLUniform const *>> stacks;
 
-    Uniforms allBound;
-    Uniforms active; ///< Currently active bindings.
-    Uniforms changed;
+    Uniforms    allBound;
+    Uniforms    active; ///< Currently active bindings.
+    Uniforms    changed;
     UniformList textures;
-    bool texturesChanged;
-    int attribLocation[AttribSpec::NUM_SEMANTICS]; ///< Where each attribute is bound.
+    bool        texturesChanged;
+    int         attribLocation[AttribSpec::NUM_SEMANTICS]; ///< Where each attribute is bound.
 
-    GLuint name;
+    GLuint  name;
     Shaders shaders;
-    bool inUse;
-    bool needRebuild;
+    bool    inUse;
+    bool    needRebuild;
 
     Impl(Public *i)
         : Base(i)
@@ -201,6 +201,17 @@ DENG2_PIMPL(GLProgram)
         }
     }
 
+    Block getInfoLog() const
+    {
+        dint32 logSize;
+        dint32 count;
+        LIBGUI_GL.glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
+
+        Block log{Block::Size(logSize)};
+        LIBGUI_GL.glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
+        return log;
+    }
+
     void link()
     {
         DENG2_ASSERT(name != 0);
@@ -212,14 +223,7 @@ DENG2_PIMPL(GLProgram)
         LIBGUI_GL.glGetProgramiv(name, GL_LINK_STATUS, &ok);
         if (!ok)
         {
-            dint32 logSize;
-            dint32 count;
-            LIBGUI_GL.glGetProgramiv(name, GL_INFO_LOG_LENGTH, &logSize);
-
-            Block log(logSize);
-            LIBGUI_GL.glGetProgramInfoLog(name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
-
-            throw LinkerError("GLProgram::link", "Linking failed:\n" + log);
+            throw LinkerError("GLProgram::link", "Linking failed:\n" + getInfoLog());
         }
     }
 
@@ -453,10 +457,10 @@ GLProgram &GLProgram::unbind(GLUniform const &uniform)
 void GLProgram::beginUse() const
 {
     LIBGUI_ASSERT_GL_OK();
-    DENG2_ASSERT_IN_MAIN_THREAD();
-    DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG2_ASSERT(isReady());
     DENG2_ASSERT(!d->inUse);
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     if (d->needRebuild)
     {
@@ -482,6 +486,7 @@ void GLProgram::beginUse() const
 
 void GLProgram::endUse() const
 {
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG2_ASSERT(d->inUse);
 
     d->inUse = false;
@@ -515,6 +520,21 @@ int GLProgram::attributeLocation(AttribSpec::Semantic semantic) const
     DENG2_ASSERT(semantic < AttribSpec::NUM_SEMANTICS);
 
     return d->attribLocation[semantic];
+}
+
+bool GLProgram::validate() const
+{
+    LIBGUI_GL.glValidateProgram(d->name);
+
+    int valid;
+    LIBGUI_GL.glGetProgramiv(d->name, GL_VALIDATE_STATUS, &valid);
+    if (valid == GL_FALSE)
+    {
+        qDebug() << "GLProgram" << d->name << this << "is not validated:";
+        qDebug() << d->getInfoLog().constData();
+        return false;
+    }
+    return true;
 }
 
 } // namespace de

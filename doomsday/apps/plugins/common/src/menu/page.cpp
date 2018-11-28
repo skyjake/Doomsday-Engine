@@ -36,6 +36,8 @@
 #include "menu/widgets/labelwidget.h"
 #include "menu/widgets/mobjpreviewwidget.h"
 
+#include <de/Animation>
+
 using namespace de;
 
 namespace common {
@@ -47,24 +49,27 @@ mn_rendstate_t const *mnRendState = &rs;
 
 DENG2_PIMPL(Page)
 {
-    String name;                     ///< Symbolic name/identifier.
+    String   name; ///< Symbolic name/identifier.
     Children children;
 
-    Vector2i origin;
-    Rectanglei geometry;             ///< "Physical" geometry, in fixed 320x200 screen coordinate space.
+    Vector2i   origin;
+    Rectanglei geometry; ///< "Physical" geometry, in fixed 320x200 screen coordinate space.
+    Animation  scrollOrigin;
+    Rectanglei viewRegion;
+    int        leftColumnWidth = SCREENWIDTH * 6 / 10;
 
-    String title;                    ///< Title of this page.
-    Page *previous = nullptr;        ///< Previous page.
-    int focus      = -1;             ///< Index of the currently focused widget else @c -1
-    Flags flags    = DefaultFlags;
-    int timer      = 0;
+    String title;              ///< Title of this page.
+    Page * previous = nullptr; ///< Previous page.
+    int    focus    = -1;      ///< Index of the currently focused widget else @c -1
+    Flags  flags    = DefaultFlags;
+    int    timer    = 0;
 
     fontid_t fonts[MENU_FONT_COUNT]; ///< Predefined. Used by all widgets.
-    uint colors[MENU_COLOR_COUNT];   ///< Predefined. Used by all widgets.
+    uint     colors[MENU_COLOR_COUNT]; ///< Predefined. Used by all widgets.
 
-    OnActiveCallback onActiveCallback = nullptr;
-    OnDrawCallback drawer             = nullptr;
-    CommandResponder cmdResponder     = nullptr;
+    OnActiveCallback onActiveCallback;
+    OnDrawCallback   drawer;
+    CommandResponder cmdResponder;
 
     // User data values.
     QVariant userValue;
@@ -103,18 +108,16 @@ DENG2_PIMPL(Page)
      */
     int lineHeight(int *lineOffset = 0)
     {
-        fontid_t oldFont = FR_Font();
-
-        /// @kludge We cannot yet query line height from the font...
+        /// @todo Kludge: We cannot yet query line height from the font...
+        const fontid_t oldFont = FR_Font();
         FR_SetFont(self().predefinedFont(MENU_FONT1));
         int lh = FR_TextHeight("{case}WyQ");
-        if(lineOffset)
+        if (lineOffset)
         {
             *lineOffset = de::max(1.f, .5f + lh * .34f);
         }
         // Restore the old font.
         FR_SetFont(oldFont);
-
         return lh;
     }
 
@@ -123,101 +126,106 @@ DENG2_PIMPL(Page)
         geometry.topLeft = Vector2i(0, 0);
         geometry.setSize(Vector2ui(0, 0));
 
-        if(flags & FixedLayout)
-        {
-            for(Widget *wi : children)
-            {
-                if(wi->isHidden()) continue;
+        if (children.empty()) return;
 
-                wi->geometry().moveTopLeft(wi->fixedOrigin());
-                geometry |= wi->geometry();
+        if (flags & FixedLayout)
+        {
+            for (Widget *wi : children)
+            {
+                if (!wi->isHidden())
+                {
+                    wi->geometry().moveTopLeft(wi->fixedOrigin());
+                    geometry |= wi->geometry();
+                }
             }
             return;
         }
 
         // This page uses a dynamic layout.
-        int lineOffset;
-        int const lh = lineHeight(&lineOffset);
+        int       lineOffset;
+        const int lh = lineHeight(&lineOffset);
+        int       prevGroup = children.front()->group();
+        Widget *  prevWidget = nullptr;
+        int       usedColumns = 0; // column flags for current row
+        Vector2i  origin;
+        int       rowHeight = 0;
 
-        Vector2i origin;
-
-        for(int i = 0; i < children.count(); )
+        for (auto *wi : children)
         {
-            Widget *wi = children[i];
-            Widget *nextWi = i + 1 < children.count()? children[i + 1] : 0;
-
-            if(wi->isHidden())
+            if (wi->isHidden())
             {
-                // Proceed to the next widget.
-                i += 1;
                 continue;
             }
 
             // If the widget has a fixed position, we will ignore it while doing
             // dynamic layout.
-            if(wi->flags() & Widget::PositionFixed)
+            if (wi->flags() & Widget::PositionFixed)
             {
                 wi->geometry().moveTopLeft(wi->fixedOrigin());
                 geometry |= wi->geometry();
-
-                // Proceed to the next widget.
-                i += 1;
                 continue;
             }
 
+            // Extra spacing between object groups.
+            if (wi->group() != prevGroup)
+            {
+                origin.y += lh;
+                prevGroup = wi->group();
+            }
+
             // An additional offset requested?
-            if(wi->flags() & Widget::LayoutOffset)
+            if (wi->flags() & Widget::LayoutOffset)
             {
                 origin += wi->fixedOrigin();
             }
 
-            wi->geometry().moveTopLeft(origin);
-
-            // Orient label plus button/inline-list/textual-slider pairs about a
-            // vertical dividing line, with the label on the left, other widget
-            // on the right.
-            // @todo Do not assume pairing, a widget should designate it's label.
-            if(is<LabelWidget>(wi) && nextWi)
+            int widgetColumns = (wi->flags() & (Widget::LeftColumn | Widget::RightColumn));
+            if (widgetColumns == 0)
             {
-                if(!nextWi->isHidden() &&
-                   (is<ButtonWidget>(nextWi)         ||
-                    is<InlineListWidget>(nextWi)     ||
-                    is<ColorEditWidget>(nextWi)      ||
-                    is<InputBindingWidget>(nextWi)   ||
-                    is<CVarTextualSliderWidget>(nextWi)))
+                // Use both columns if neither specified.
+                widgetColumns = Widget::LeftColumn | Widget::RightColumn;
+            }
+
+            // If this column is already used, move to the next row.
+            if ((usedColumns & widgetColumns) != 0)
+            {
+                origin.y    += rowHeight;
+                usedColumns = 0;
+                rowHeight   = 0;
+            }
+            usedColumns |= widgetColumns;
+
+            wi->geometry().moveTopLeft(origin);
+            rowHeight = MAX_OF(rowHeight, wi->geometry().height() + lineOffset);
+
+            if (wi->flags() & Widget::RightColumn)
+            {
+                // Move widget to the right side.
+                wi->geometry().move(Vector2i(leftColumnWidth, 0));
+
+                if (prevWidget && prevWidget->flags() & Widget::LeftColumn)
                 {
-                    int const margin = lineOffset * 2;
-
-                    nextWi->geometry().moveTopLeft(Vector2i(margin + wi->geometry().width(), origin.y));
-
-                    Rectanglei const united = wi->geometry() | nextWi->geometry();
-                    geometry |= united;
-                    origin.y += united.height() + lineOffset;
-
-                    // Extra spacing between object groups.
-                    if(i + 2 < children.count() && nextWi->group() != children[i + 2]->group())
+                    // Align the shorter widget vertically.
+                    if (prevWidget->geometry().height() < wi->geometry().height())
                     {
-                        origin.y += lh;
+                        prevWidget->geometry().move(Vector2i(
+                            0, (wi->geometry().height() - prevWidget->geometry().height()) / 2));
                     }
-
-                    // Proceed to the next object!
-                    i += 2;
-                    continue;
+                    else
+                    {
+                        wi->geometry().move(Vector2i(
+                            0, (prevWidget->geometry().height() - wi->geometry().height()) / 2));
+                    }
                 }
             }
 
             geometry |= wi->geometry();
-            origin.y += wi->geometry().height() + lineOffset;
 
-            // Extra spacing between object groups.
-            if(nextWi && nextWi->group() != wi->group())
-            {
-                origin.y += lh;
-            }
-
-            // Proceed to the next object!
-            i += 1;
+            prevWidget = wi;
         }
+
+        // Center horizontally.
+        this->origin.x = SCREENWIDTH / 2 - geometry.width() / 2;
     }
 
     /// @pre @a wi is a child of this page.
@@ -331,6 +339,7 @@ DENG2_PIMPL(Page)
         }
     }
 
+#if 0
     /**
      * Determines the size of the menu cursor for a focused widget. If no widget is currently
      * focused the default cursor size (i.e., the effective line height for @c MENU_FONT1)
@@ -340,6 +349,8 @@ DENG2_PIMPL(Page)
      */
     int cursorSizeFor(Widget *focused, int lineHeight)
     {
+        return lineHeight;
+        /*
         int focusedHeight = focused? focused->geometry().height() : 0;
 
         // Ensure the cursor is at least as tall as the effective line height for
@@ -348,11 +359,16 @@ DENG2_PIMPL(Page)
         /// @note Handling this correctly would mean separate physical/visual
         /// geometries for menu widgets.
         return de::max(focusedHeight, lineHeight);
+        */
     }
+#endif
 };
 
-Page::Page(String name, Vector2i const &origin, Flags const &flags,
-    OnDrawCallback drawer, CommandResponder cmdResponder)
+Page::Page(String                  name,
+           Vector2i const &        origin,
+           Flags const &           flags,
+           const OnDrawCallback &  drawer,
+           const CommandResponder &cmdResponder)
     : d(new Impl(this))
 {
     d->origin       = origin;
@@ -386,7 +402,7 @@ Page::Children const &Page::children() const
     return d->children;
 }
 
-void Page::setOnActiveCallback(Page::OnActiveCallback newCallback)
+void Page::setOnActiveCallback(const OnActiveCallback &newCallback)
 {
     d->onActiveCallback = newCallback;
 }
@@ -489,31 +505,30 @@ void Page::draw(float alpha, bool showFocusCursor)
     }
 
     Vector2i cursorOrigin;
-    int focusedHeight = 0;
-    if(focused)
+    if (focused)
     {
-        focusedHeight = d->cursorSizeFor(focused, d->lineHeight());
-
         // Determine the origin and dimensions of the cursor.
         /// @todo Each object should define a focus origin...
         cursorOrigin.x = -1;
-        cursorOrigin.y = focused->geometry().topLeft.y;
+        cursorOrigin.y = focused->geometry().middle().y;
 
+        /*
         /// @kludge
         /// We cannot yet query the subobjects of the list for these values
         /// so we must calculate them ourselves, here.
-        if(ListWidget const *list = maybeAs<ListWidget>(focused))
+        if (ListWidget const *list = maybeAs<ListWidget>(focused))
         {
-            if(focused->isActive() && list->selectionIsVisible())
+            if (focused->isActive() && list->selectionIsVisible())
             {
                 FR_PushAttrib();
                 FR_SetFont(predefinedFont(mn_page_fontid_t(focused->font())));
-                focusedHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
-                cursorOrigin.y += (list->selection() - list->first()) * focusedHeight;
+                const int rowHeight = FR_CharHeight('A') * (1+MNDATA_LIST_LEADING);
+                //cursorOrigin.y += (list->selection() - list->first()) * rowHeight + rowHeight/2;
                 FR_PopAttrib();
             }
         }
         // kludge end
+        */
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -521,42 +536,48 @@ void Page::draw(float alpha, bool showFocusCursor)
     DGL_Translatef(d->origin.x, d->origin.y, 0);
 
     // Apply page scroll?
-    if(!(d->flags & NoScroll) && focused)
+    if (!(d->flags & NoScroll) && focused)
     {
-        Rectanglei viewRegion;
-
         // Determine available screen region for the page.
-        viewRegion.topLeft = Vector2i(0, d->origin.y);
-        viewRegion.setSize(Vector2ui(SCREENWIDTH, SCREENHEIGHT - 40/*arbitrary but enough for the help message*/));
+        d->viewRegion.topLeft = Vector2i(0, 0); //d->origin.y);
+        d->viewRegion.setSize(Vector2ui(SCREENWIDTH, SCREENHEIGHT - d->origin.y - 35 /*arbitrary but enough for the help message*/));
 
         // Is scrolling in effect?
-        if(d->geometry.height() > viewRegion.height())
+        if (d->geometry.height() > d->viewRegion.height())
         {
-            int const minY = -viewRegion.topLeft.y / 2 + viewRegion.height() / 2;
-            if(cursorOrigin.y > minY)
-            {
-                int const scrollLimitY  = d->geometry.height() - viewRegion.height() / 2;
-                int const scrollOriginY = de::min(cursorOrigin.y, scrollLimitY) - minY;
-                DGL_Translatef(0, -scrollOriginY, 0);
-            }
+            d->scrollOrigin.setValue(
+                        de::min(de::max(0, int(cursorOrigin.y - d->viewRegion.height() / 2)),
+                                int(d->geometry.height() - d->viewRegion.height())), .35);
+
+            DGL_Translatef(0, -d->scrollOrigin, 0);
         }
+    }
+    else
+    {
+        d->viewRegion = {{0, 0}, {SCREENWIDTH, SCREENHEIGHT}};
     }
 
     // Draw all child widgets that aren't hidden.
-    for(Widget *wi : d->children)
+    for (Widget *wi : d->children)
     {
-        if(wi->isHidden()) continue;
-
-        FR_PushAttrib();
-        wi->draw();
-        FR_PopAttrib();
+        if (!wi->isHidden())
+        {
+            FR_PushAttrib();
+            wi->draw();
+            FR_PopAttrib();
+        }
     }
 
     // How about a focus cursor?
     /// @todo cursor should be drawn on top of the page drawer.
-    if(showFocusCursor && focused)
+    if (showFocusCursor && focused)
     {
-        Hu_MenuDrawFocusCursor(cursorOrigin, focusedHeight, alpha);
+#if defined (__JDOOM__) || defined (__JDOOM64__)
+        const float cursorScale = .75f;
+#else
+        const float cursorScale = 1.f;
+#endif
+        Hu_MenuDrawFocusCursor(cursorOrigin, cursorScale, alpha);
     }
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -565,7 +586,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     drawTitle(d->title);
 
     // The page has its own drawer.
-    if(d->drawer)
+    if (d->drawer)
     {
         FR_PushAttrib();
         d->drawer(*this, d->origin);
@@ -573,9 +594,9 @@ void Page::draw(float alpha, bool showFocusCursor)
     }
 
     // How about some additional help/information for the focused item?
-    if(focused && !focused->helpInfo().isEmpty())
+    if (focused && !focused->helpInfo().isEmpty())
     {
-        Vector2i helpOrigin(SCREENWIDTH / 2, (SCREENHEIGHT / 2) + ((SCREENHEIGHT / 2 - 5) / cfg.common.menuScale));
+        Vector2i helpOrigin(SCREENWIDTH / 2, SCREENHEIGHT - 5 / cfg.common.menuScale);
         Hu_MenuDrawPageHelp(focused->helpInfo(), helpOrigin);
     }
 }
@@ -600,6 +621,20 @@ Vector2i Page::origin() const
     return d->origin;
 }
 
+Page::Flags Page::flags() const
+{
+    return d->flags;
+}
+
+Rectanglei Page::viewRegion() const
+{
+    if (d->flags & NoScroll)
+    {
+        return {{0, 0}, {SCREENWIDTH, SCREENHEIGHT}};
+    }
+    return d->viewRegion.moved({0, int(d->scrollOrigin)});
+}
+
 void Page::setX(int x)
 {
     d->origin.x = x;
@@ -608,6 +643,11 @@ void Page::setX(int x)
 void Page::setY(int y)
 {
     d->origin.y = y;
+}
+
+void Page::setLeftColumnWidth(float columnWidthPercentage)
+{
+    d->leftColumnWidth = int(SCREENWIDTH * columnWidthPercentage);
 }
 
 void Page::setPreviousPage(Page *newPrevious)
@@ -682,26 +722,20 @@ void Page::activate()
     // Reset page timer.
     d->timer = 0;
 
-    if(d->children.isEmpty())
-        return; // Presumably the widgets will be added later...
-
-    // (Re)init widgets.
-    for(Widget *wi : d->children)
+    if (d->children.empty())
     {
-        if(CVarToggleWidget *tog = maybeAs<CVarToggleWidget>(wi))
-        {
-            tog->setFlags(Widget::Active, tog->isDown()? SetFlags : UnsetFlags);
-        }
-        if(ListWidget *list = maybeAs<ListWidget>(wi))
-        {
-            // Determine number of potentially visible items.
-            list->updateVisibleSelection();
-        }
+        return; // Presumably the widgets will be added later...
+    }
+
+    // Notify widgets on the page.
+    for (Widget *wi : d->children)
+    {
+        wi->pageActivated();
     }
 
     d->refocus();
 
-    if(d->onActiveCallback)
+    if (d->onActiveCallback)
     {
         d->onActiveCallback(*this);
     }
@@ -710,11 +744,10 @@ void Page::activate()
 void Page::tick()
 {
     // Call the ticker of each child widget.
-    for(Widget *wi : d->children)
+    for (Widget *wi : d->children)
     {
         wi->tick();
     }
-
     d->timer++;
 }
 
@@ -770,7 +803,7 @@ int Page::handleCommand(menucommand_e cmd)
     case MCMD_NAV_UP:
     case MCMD_NAV_DOWN:
         // Page navigation requires a focused widget.
-        if(Widget *focused = focusWidget())
+        if (Widget *focused = focusWidget())
         {
             int i = 0, giveFocus = indexOf(focused);
             do
@@ -782,10 +815,11 @@ int Page::handleCommand(menucommand_e cmd)
                     giveFocus = 0;
             } while(++i < d->children.count() && (d->children[giveFocus]->flags() & (Widget::Disabled | Widget::NoFocus | Widget::Hidden)));
 
-            if(giveFocus != indexOf(focusWidget()))
+            if (giveFocus != indexOf(focusWidget()))
             {
                 S_LocalSound(cmd == MCMD_NAV_UP? SFX_MENU_NAV_UP : SFX_MENU_NAV_DOWN, NULL);
                 setFocus(d->children[giveFocus]);
+                d->timer = 0;
             }
         }
         return true;

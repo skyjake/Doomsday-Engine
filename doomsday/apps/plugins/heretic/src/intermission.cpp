@@ -105,37 +105,37 @@ void IN_Init()
     if(!episode1Locations.isEmpty()) return;
 
     episode1Locations
-        << Location( Vector2i(172,  78), de::Uri("Maps:E1M1", RC_NULL) )
-        << Location( Vector2i( 86,  90), de::Uri("Maps:E1M2", RC_NULL) )
-        << Location( Vector2i( 73,  66), de::Uri("Maps:E1M3", RC_NULL) )
-        << Location( Vector2i(159,  95), de::Uri("Maps:E1M4", RC_NULL) )
-        << Location( Vector2i(148, 126), de::Uri("Maps:E1M5", RC_NULL) )
-        << Location( Vector2i(132,  54), de::Uri("Maps:E1M6", RC_NULL) )
-        << Location( Vector2i(131,  74), de::Uri("Maps:E1M7", RC_NULL) )
-        << Location( Vector2i(208, 138), de::Uri("Maps:E1M8", RC_NULL) )
-        << Location( Vector2i( 52,  10), de::Uri("Maps:E1M9", RC_NULL) );
+        << Location( Vector2i(172,  78), de::makeUri("Maps:E1M1") )
+        << Location( Vector2i( 86,  90), de::makeUri("Maps:E1M2") )
+        << Location( Vector2i( 73,  66), de::makeUri("Maps:E1M3") )
+        << Location( Vector2i(159,  95), de::makeUri("Maps:E1M4") )
+        << Location( Vector2i(148, 126), de::makeUri("Maps:E1M5") )
+        << Location( Vector2i(132,  54), de::makeUri("Maps:E1M6") )
+        << Location( Vector2i(131,  74), de::makeUri("Maps:E1M7") )
+        << Location( Vector2i(208, 138), de::makeUri("Maps:E1M8") )
+        << Location( Vector2i( 52,  10), de::makeUri("Maps:E1M9") );
 
     episode2Locations
-        << Location( Vector2i(218,  57), de::Uri("Maps:E2M1", RC_NULL) )
-        << Location( Vector2i(137,  81), de::Uri("Maps:E2M2", RC_NULL) )
-        << Location( Vector2i(155, 124), de::Uri("Maps:E2M3", RC_NULL) )
-        << Location( Vector2i(171,  68), de::Uri("Maps:E2M4", RC_NULL) )
-        << Location( Vector2i(250,  86), de::Uri("Maps:E2M5", RC_NULL) )
-        << Location( Vector2i(136,  98), de::Uri("Maps:E2M6", RC_NULL) )
-        << Location( Vector2i(203,  90), de::Uri("Maps:E2M7", RC_NULL) )
-        << Location( Vector2i(220, 140), de::Uri("Maps:E2M8", RC_NULL) )
-        << Location( Vector2i(279, 106), de::Uri("Maps:E2M9", RC_NULL) );
+        << Location( Vector2i(218,  57), de::makeUri("Maps:E2M1") )
+        << Location( Vector2i(137,  81), de::makeUri("Maps:E2M2") )
+        << Location( Vector2i(155, 124), de::makeUri("Maps:E2M3") )
+        << Location( Vector2i(171,  68), de::makeUri("Maps:E2M4") )
+        << Location( Vector2i(250,  86), de::makeUri("Maps:E2M5") )
+        << Location( Vector2i(136,  98), de::makeUri("Maps:E2M6") )
+        << Location( Vector2i(203,  90), de::makeUri("Maps:E2M7") )
+        << Location( Vector2i(220, 140), de::makeUri("Maps:E2M8") )
+        << Location( Vector2i(279, 106), de::makeUri("Maps:E2M9") );
 
     episode3Locations
-        << Location( Vector2i( 86,  99), de::Uri("Maps:E3M1", RC_NULL) )
-        << Location( Vector2i(124, 103), de::Uri("Maps:E3M2", RC_NULL) )
-        << Location( Vector2i(154,  79), de::Uri("Maps:E3M3", RC_NULL) )
-        << Location( Vector2i(202,  83), de::Uri("Maps:E3M4", RC_NULL) )
-        << Location( Vector2i(178,  59), de::Uri("Maps:E3M5", RC_NULL) )
-        << Location( Vector2i(142,  58), de::Uri("Maps:E3M6", RC_NULL) )
-        << Location( Vector2i(219,  66), de::Uri("Maps:E3M7", RC_NULL) )
-        << Location( Vector2i(247,  57), de::Uri("Maps:E3M8", RC_NULL) )
-        << Location( Vector2i(107,  80), de::Uri("Maps:E3M9", RC_NULL) );
+        << Location( Vector2i( 86,  99), de::makeUri("Maps:E3M1") )
+        << Location( Vector2i(124, 103), de::makeUri("Maps:E3M2") )
+        << Location( Vector2i(154,  79), de::makeUri("Maps:E3M3") )
+        << Location( Vector2i(202,  83), de::makeUri("Maps:E3M4") )
+        << Location( Vector2i(178,  59), de::makeUri("Maps:E3M5") )
+        << Location( Vector2i(142,  58), de::makeUri("Maps:E3M6") )
+        << Location( Vector2i(219,  66), de::makeUri("Maps:E3M7") )
+        << Location( Vector2i(247,  57), de::makeUri("Maps:E3M8") )
+        << Location( Vector2i(107,  80), de::makeUri("Maps:E3M9") );
 }
 
 void IN_Shutdown()
@@ -210,12 +210,12 @@ static common::GameSession::VisitedMaps visitedMaps()
 {
     // Newer versions of the savegame format include a breakdown of the maps previously visited
     // during the current game session.
-    if(COMMON_GAMESESSION->allVisitedMaps().isEmpty())
+    if(gfw_Session()->allVisitedMaps().isEmpty())
     {
         // For backward compatible intermission behavior we'll have to use a specially prepared
         // version of this information, using the original map progression assumptions.
         bool isNumber;
-        int oldEpisodeNum = COMMON_GAMESESSION->episodeId().toInt(&isNumber) - 1; // 1-based
+        int oldEpisodeNum = gfw_Session()->episodeId().toInt(&isNumber) - 1; // 1-based
         DENG2_ASSERT(isNumber);
         DENG2_UNUSED(isNumber);
 
@@ -234,7 +234,7 @@ static common::GameSession::VisitedMaps visitedMaps()
         }
         return visited.toList();
     }
-    return COMMON_GAMESESSION->allVisitedMaps();
+    return gfw_Session()->allVisitedMaps();
 }
 
 void IN_End()
@@ -311,7 +311,7 @@ static void drawEnteringTitle()
  */
 static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = true)
 {
-    Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Locations const *locations = locationsForEpisode(gfw_Session()->episodeId());
     if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -931,7 +931,7 @@ void IN_Ticker()
 
 static void loadData()
 {
-    String const episodeId = COMMON_GAMESESSION->episodeId();
+    String const episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
     pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
@@ -1053,7 +1053,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     advanceState    = false;
     interTime       = 0;
     oldInterTime    = 0;
-    haveLocationMap = locationsForEpisode(COMMON_GAMESESSION->episodeId()) != 0;
+    haveLocationMap = locationsForEpisode(gfw_Session()->episodeId()) != 0;
 }
 
 void IN_Begin(wbstartstruct_t const &wbstartstruct)
@@ -1086,7 +1086,7 @@ void IN_Begin(wbstartstruct_t const &wbstartstruct)
     {
         initShowStats();
     }
-    else if( /*IS_NETGAME && */ !COMMON_GAMESESSION->rules().deathmatch)
+    else if( /*IS_NETGAME && */ !gfw_Rule(deathmatch))
     {
         initNetgameStats();
     }

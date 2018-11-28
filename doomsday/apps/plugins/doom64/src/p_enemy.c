@@ -419,7 +419,7 @@ static dd_bool shouldAvoidDropoff(mobj_t *mobj, pvec2d_t chaseDir)
     VALIDCOUNT++;
     Mobj_TouchedLinesIterator(mobj, PIT_AvoidDropoff, &parm);
 
-    if(FEQUAL(parm.direction[VX], 0) && FEQUAL(parm.direction[VY], 0))
+    if(IS_ZERO(parm.direction[VX]) && IS_ZERO(parm.direction[VY]))
         return false;
 
     // The mobj should attempt to move away from the drop off.
@@ -988,7 +988,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(!G_Ruleset_Fast())
+        if(!gfw_Rule(fast))
         {
             newChaseDir(actor);
         }
@@ -1011,7 +1011,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(G_Ruleset_Fast() || !actor->moveCount || G_Ruleset_Skill() == SM_HARD)
+        if(gfw_Rule(fast) || !actor->moveCount || gfw_Rule(skill) == SM_HARD)
         {
             if(checkMissileRange(actor))
             {

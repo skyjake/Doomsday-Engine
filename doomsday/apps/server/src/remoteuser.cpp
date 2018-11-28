@@ -119,7 +119,7 @@ DENG2_PIMPL(RemoteUser)
 
         //ddstring_t msg;
 
-        int length = command.size();
+        auto const length = command.size();
 
         // If the command is too long, it'll be considered invalid.
         if (length >= 256)
@@ -132,7 +132,7 @@ DENG2_PIMPL(RemoteUser)
         if (command == "Info?")
         {
             shell::ServerInfo const info = ServerApp::currentServerInfo();
-            Block const msg = "Info\n" + composeJSON(info);
+            Block const msg = "Info\n" + composeJSON(info.asRecord());
             LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg);
             self() << msg;
         }
@@ -150,6 +150,12 @@ DENG2_PIMPL(RemoteUser)
             Block serialized;
             Writer(serialized).withHeader() << packet;
             self() << Block("MapOutline\n" + serialized.compressed());
+        }
+        else if (command == "RemoteFeed")
+        {
+            // This connection will be only doing file system operations.
+            App_ServerSystem().convertToRemoteFeedUser(thisPublic);
+            return false;
         }
         else if (length >= 5 && command.startsWith("Shell"))
         {
@@ -246,6 +252,8 @@ String RemoteUser::name() const
 Socket *RemoteUser::takeSocket()
 {
     Socket *sock = d->socket;
+    QObject::disconnect(sock, SIGNAL(disconnected()),  this, SLOT(socketDisconnected()));
+    QObject::disconnect(sock, SIGNAL(messagesReady()), this, SLOT(handleIncomingPackets()));
     d->socket = 0;
     d->state = Disconnected; // not signaled
     return sock;

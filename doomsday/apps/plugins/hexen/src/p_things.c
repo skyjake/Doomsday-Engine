@@ -155,7 +155,7 @@ dd_bool EV_ThingProjectile(byte* args, dd_bool gravity)
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(G_Ruleset_NoMonsters() && (MOBJINFO[moType].flags & MF_COUNTKILL))
+    if(gfw_Rule(noMonsters) && (MOBJINFO[moType].flags & MF_COUNTKILL))
     {
         // Don't spawn monsters if -nomonsters
         return false;
@@ -206,7 +206,7 @@ dd_bool EV_ThingSpawn(byte *args, dd_bool fog)
     searcher = -1;
     tid = args[0];
     moType = TranslateThingType[args[1]];
-    if(G_Ruleset_NoMonsters() && (MOBJINFO[moType].flags & MF_COUNTKILL))
+    if(gfw_Rule(noMonsters) && (MOBJINFO[moType].flags & MF_COUNTKILL))
     {
         // Don't spawn monsters if -nomonsters
         return false;

@@ -43,13 +43,15 @@
 #include <de/ui/VariableToggleItem>
 #include <doomsday/doomsdayapp.h>
 
-#include <QApplication>
-#include <QCursor>
-#include <QClipboard>
+#if !defined (DENG_MOBILE)
+#  include <QApplication>
+#  include <QCursor>
+#  include <QClipboard>
+#endif
 
 using namespace de;
 
-static TimeDelta const LOG_OPEN_CLOSE_SPAN = 0.2;
+static TimeSpan const LOG_OPEN_CLOSE_SPAN = 0.2;
 
 DENG_GUI_PIMPL(ConsoleWidget)
 , DENG2_OBSERVES(Variable, Change)
@@ -158,7 +160,9 @@ DENG_GUI_PIMPL(ConsoleWidget)
             if (grabHover != RightEdge)
             {
                 grabHover = RightEdge;
+#if !defined (DENG_MOBILE)
                 self().root().window().setCursor(Qt::SizeHorCursor);
+#endif
             }
         }
         else
@@ -171,13 +175,17 @@ DENG_GUI_PIMPL(ConsoleWidget)
                 if (grabHover != TopEdge)
                 {
                     grabHover = TopEdge;
+#if !defined (DENG_MOBILE)
                     self().root().window().setCursor(Qt::SizeVerCursor);
+#endif
                 }
             }
             else if (grabHover != NotGrabbed)
             {
                 grabHover = NotGrabbed;
+#if !defined (DENG_MOBILE)
                 self().root().window().setCursor(Qt::ArrowCursor);
+#endif
             }
         }
 
@@ -219,11 +227,6 @@ DENG_GUI_PIMPL(ConsoleWidget)
         // Bottom of the console must follow the active command line height.
         self().rule().setInput(Rule::Bottom, next->rule().top() - rule(RuleBank::UNIT));
 
-        if (scriptMode == yes)
-        {
-            return; // No need to change anything else.
-        }
-
         scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
         cmdLine  ->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
 
@@ -238,9 +241,11 @@ DENG_GUI_PIMPL(ConsoleWidget)
             root().setFocus(next);
         }
 
-        scriptMode = yes;
-
-        emit self().commandModeChanged();
+        if (scriptMode != yes)
+        {
+            scriptMode = yes;
+            emit self().commandModeChanged();
+        }
     }
 
     struct RightClick : public GuiWidget::IEventHandler
@@ -272,6 +277,7 @@ DENG_GUI_PIMPL(ConsoleWidget)
 static PopupWidget *consoleShortcutPopup()
 {
     auto *pop = new PopupWidget;
+    pop->setOutlineColor("popup.outline");
     // The 'padding' widget will provide empty margins around the content.
     // Popups normally do not provide any margins.
     auto *padding = new GuiWidget;
@@ -299,7 +305,7 @@ ConsoleWidget::ConsoleWidget() : GuiWidget("console"), d(new Impl(this))
     d->button = new PopupButtonWidget;
     d->button->setSizePolicy(ui::Expand, ui::Expand);
     d->button->setImage(style().images().image("log"));
-    d->button->setOverrideImageSize(style().fonts().font("default").height().valuei());
+    d->button->setOverrideImageSize(style().fonts().font("default").height());
     d->buttons->add(d->button);
 
     d->button->rule()
@@ -639,6 +645,7 @@ void ConsoleWidget::commandWasEntered(String const &)
     }
 }
 
+#if !defined (DENG_MOBILE)
 void ConsoleWidget::copyLogPathToClipboard()
 {
     if (NativeFile *native = App::rootFolder().tryLocate<NativeFile>(LogBuffer::get().outputFile()))
@@ -646,3 +653,4 @@ void ConsoleWidget::copyLogPathToClipboard()
         qApp->clipboard()->setText(native->nativePath());
     }
 }
+#endif

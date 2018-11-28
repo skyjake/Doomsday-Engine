@@ -324,7 +324,7 @@ static Block valueToJSONWithTabNewlines(Value const &value)
 
 static Block valueToJSON(Value const &value)
 {
-    if (value.is<NoneValue>())
+    if (is<NoneValue>(value))
     {
         return "null";
     }

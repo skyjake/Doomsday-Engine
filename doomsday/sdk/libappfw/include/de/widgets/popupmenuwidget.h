@@ -35,9 +35,9 @@ public:
     PopupMenuWidget(String const &name = String());
 
     void setParentPopup(PopupWidget *parentPopup);
+    PopupWidget *parentPopup() const;
 
     MenuWidget &menu() const;
-
     ui::Data &items() { return menu().items(); }
 
     void useInfoStyle(bool yes = true);
@@ -51,6 +51,7 @@ protected:
     void glMakeGeometry(GuiVertexBuilder &verts) override;
     void preparePanelForOpening() override;
     void panelClosing() override;
+    void updateStyle() override;
 
 private:
     DENG2_PRIVATE(d)

@@ -30,11 +30,11 @@ using namespace de::internal;
 
 DENG2_PIMPL(Painter), public Asset
 {
-    GLAtlasBuffer vertexBuf;    ///< Per-frame allocations.
-    GLDrawQueue queue;
-    GLProgram batchProgram;
-    GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    Rectanglef normScissorRect;
+    GLAtlasBuffer vertexBuf; ///< Per-frame allocations.
+    GLDrawQueue   queue;
+    GLProgram     batchProgram;
+    GLUniform     uMvpMatrix{"uMvpMatrix", GLUniform::Mat4};
+    Rectanglef    normScissorRect;
 
     Impl(Public *i)
         : Base(i)
@@ -74,6 +74,7 @@ void Painter::init()
     {
         d->init();
     }
+    d->queue.beginFrame();
 }
 
 void Painter::deinit()
@@ -106,19 +107,19 @@ void Painter::setModelViewProjection(Matrix4f const &mvp)
 
 void Painter::setNormalizedScissor(Rectanglef const &normScissorRect)
 {
-    DENG2_ASSERT(normScissorRect.left()   >= 0);
-    DENG2_ASSERT(normScissorRect.right()  <= 1);
-    DENG2_ASSERT(normScissorRect.top()    >= 0);
-    DENG2_ASSERT(normScissorRect.bottom() <= 1);
+    d->normScissorRect = normScissorRect & Rectanglef(0, 0, 1, 1);
 
-    d->normScissorRect = normScissorRect;
+    DENG2_ASSERT(d->normScissorRect.left()   >= 0);
+    DENG2_ASSERT(d->normScissorRect.right()  <= 1);
+    DENG2_ASSERT(d->normScissorRect.top()    >= 0);
+    DENG2_ASSERT(d->normScissorRect.bottom() <= 1);
 
     Rectangleui const vp = GLState::current().viewport();
 
-    Rectangleui scis = Rectangleui(Vector2ui(normScissorRect.left()   * vp.width(),
-                                             normScissorRect.top()    * vp.height()),
-                                   Vector2ui(std::ceil(normScissorRect.right()  * vp.width()),
-                                             std::ceil(normScissorRect.bottom() * vp.height())))
+    Rectangleui scis = Rectangleui(Vector2ui(d->normScissorRect.left()   * vp.width(),
+                                             d->normScissorRect.top()    * vp.height()),
+                                   Vector2ui(std::ceil(d->normScissorRect.right()  * vp.width()),
+                                             std::ceil(d->normScissorRect.bottom() * vp.height())))
             .moved(vp.topLeft);
 
     scis = GLState::current().target().scaleToActiveRect(scis);

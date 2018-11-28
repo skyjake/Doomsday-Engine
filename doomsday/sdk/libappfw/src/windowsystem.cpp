@@ -18,11 +18,13 @@
 
 #include "de/WindowSystem"
 #include <de/Style>
+#include <de/BaseGuiApp> // for updating pixel ratio
 #include <QMap>
 
 namespace de {
 
 DENG2_PIMPL(WindowSystem)
+, DENG2_OBSERVES(GLWindow, PixelRatio)
 {
     typedef QMap<String, BaseWindow *> Windows;
     Windows windows;
@@ -65,6 +67,14 @@ DENG2_PIMPL(WindowSystem)
             processLatestMousePosition();
         }
     }
+
+    void windowPixelRatioChanged(GLWindow &win)
+    {
+        if (&win == &BaseWindow::main())
+        {
+            DENG2_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
+        }
+    }
 };
 
 WindowSystem::WindowSystem()
@@ -79,6 +89,7 @@ void WindowSystem::setStyle(Style *style)
 
 void WindowSystem::addWindow(String const &id, BaseWindow *window)
 {
+    window->audienceForPixelRatio() += d;
     d->windows.insert(id, window);
 }
 

@@ -21,10 +21,10 @@
 #include "de/GLWindow"
 #include "de/GuiApp"
 
-#include <QApplication>
 #include <QElapsedTimer>
 #include <QImage>
 #include <QOpenGLTimerQuery>
+#include <QScreen>
 #include <QSurfaceFormat>
 #include <QTimer>
 
@@ -40,21 +40,23 @@ static GLWindow *mainWindow = nullptr;
 
 DENG2_PIMPL(GLWindow)
 {
-    LoopCallback mainCall;
-    GLFramebuffer backing; // Represents QOpenGLWindow's framebuffer.
-    WindowEventHandler *handler = nullptr; ///< Event handler.
-    bool readyPending = false;
-    bool readyNotified = false;
-    Size currentSize;
-    Size pendingSize;
+    LoopCallback        mainCall;
+    GLFramebuffer       backing;                 // Represents QOpenGLWindow's framebuffer.
+    WindowEventHandler *handler       = nullptr; ///< Event handler.
+    bool                readyPending  = false;
+    bool                readyNotified = false;
+    Size                currentSize;
+    double              pixelRatio = 0.0;
 
-    unsigned int frameCount = 0;
-    float fps = 0;
+    uint  frameCount = 0;
+    float fps        = 0;
 
-    QOpenGLTimerQuery *timerQuery = nullptr;
-    bool timerQueryPending = false;
-    QElapsedTimer gpuTimeRecordingStartedAt;
-    QVector<TimeDelta> recordedGpuTimes;
+#if defined(DENG_HAVE_TIMER_QUERY)
+    bool               timerQueryPending = false;
+    QOpenGLTimerQuery *timerQuery        = nullptr;
+    QElapsedTimer      gpuTimeRecordingStartedAt;
+    QVector<TimeSpan>  recordedGpuTimes;
+#endif
 
     Impl(Public *i) : Base(i) {}
 
@@ -82,6 +84,7 @@ DENG2_PIMPL(GLWindow)
         self().setState(NotReady);
         readyNotified = false;
         readyPending = false;
+#if defined (DENG_HAVE_TIMER_QUERY)
         if (timerQuery)
         {
             if (timerQueryPending) timerQuery->waitForResult();
@@ -89,6 +92,7 @@ DENG2_PIMPL(GLWindow)
             timerQuery = nullptr;
             timerQueryPending = false;
         }
+#endif
         GLInfo::glDeinit();
     }
 
@@ -105,11 +109,17 @@ DENG2_PIMPL(GLWindow)
         // Print some information.
         QSurfaceFormat const fmt = self().format();
 
+#if defined (DENG_OPENGL)
         LOG_GL_NOTE("OpenGL %i.%i supported%s")
-                << fmt.majorVersion() << fmt.minorVersion()
+                << fmt.majorVersion()
+                << fmt.minorVersion()
                 << (fmt.majorVersion() > 2?
                         (fmt.profile() == QSurfaceFormat::CompatibilityProfile? " (Compatibility)"
                                                                               : " (Core)") : "");
+#else
+        LOG_GL_NOTE("OpenGL ES %i.%i supported")
+                << fmt.majorVersion() << fmt.minorVersion();
+#endif
 
         // Everybody can perform GL init now.
         DENG2_FOR_PUBLIC_AUDIENCE2(Init, i) i->windowInit(self());
@@ -122,16 +132,17 @@ DENG2_PIMPL(GLWindow)
         mainCall.enqueue([this] () { self().update(); });
     }
 
+#if defined (DENG_HAVE_TIMER_QUERY)
     bool timerQueryReady() const
     {
-        if (!GLInfo::extensions().EXT_timer_query) return false;
+        //if (!GLInfo::extensions().EXT_timer_query) return false;
         return timerQuery && !timerQueryPending;
     }
 
     void checkTimerQueryResult()
     {
         // Measure how long it takes to render a frame on average.
-        if (GLInfo::extensions().EXT_timer_query &&
+        if (//GLInfo::extensions().EXT_timer_query &&
             timerQueryPending &&
             timerQuery->isResultAvailable())
         {
@@ -147,7 +158,7 @@ DENG2_PIMPL(GLWindow)
             // a second to find out a reasonable value.
             if (gpuTimeRecordingStartedAt.elapsed() > 1000)
             {
-                TimeDelta average = 0;
+                TimeSpan average = 0;
                 for (auto dt : recordedGpuTimes) average += dt;
                 average = average / recordedGpuTimes.size();
                 recordedGpuTimes.clear();
@@ -159,6 +170,7 @@ DENG2_PIMPL(GLWindow)
             }
         }
     }
+#endif
 
     void updateFrameRateStatistics()
     {
@@ -170,37 +182,88 @@ DENG2_PIMPL(GLWindow)
         frameCount++;
 
         // Count the frames every other second.
-        TimeDelta elapsed = nowTime - lastFpsTime;
+        TimeSpan elapsed = nowTime - lastFpsTime;
         if (elapsed > 2.5)
         {
-            fps = frameCount / elapsed;
+            fps = float(frameCount / elapsed);
             lastFpsTime = nowTime;
             frameCount = 0;
         }
     }
 
+    void submitResize(const Size &pixelSize)
+    {
+        //qDebug() << "resize event:" << pixelSize.asText();
+        //qDebug() << "pixel ratio:" << pixelRatio;
+
+        // Only react if this is actually a resize.
+        if (currentSize != pixelSize)
+        {
+            currentSize = pixelSize;
+
+            if (readyNotified)
+            {
+                self().makeCurrent();
+            }
+
+            DENG2_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
+
+            if (readyNotified)
+            {
+                self().doneCurrent();
+            }
+        }
+    }
+
     DENG2_PIMPL_AUDIENCE(Init)
     DENG2_PIMPL_AUDIENCE(Resize)
+    DENG2_PIMPL_AUDIENCE(PixelRatio)
     DENG2_PIMPL_AUDIENCE(Swap)
 };
 
 DENG2_AUDIENCE_METHOD(GLWindow, Init)
 DENG2_AUDIENCE_METHOD(GLWindow, Resize)
+DENG2_AUDIENCE_METHOD(GLWindow, PixelRatio)
 DENG2_AUDIENCE_METHOD(GLWindow, Swap)
 
 GLWindow::GLWindow()
-    : QOpenGLWindow()
-    , d(new Impl(this))
+    : d(new Impl(this))
 {
-#ifdef MACOSX
+#if defined (MACOSX)
     setFlags(flags() | Qt::WindowFullscreenButtonHint);
+#endif
+
+#if defined (DENG_MOBILE)
+    setFocusPolicy(Qt::StrongFocus);
 #endif
 
     connect(this, SIGNAL(frameSwapped()), this, SLOT(frameWasSwapped()));
 
     // Create the drawing canvas for this window.
     d->handler = new WindowEventHandler(this);
+
+    d->pixelRatio = devicePixelRatio();
+
+    connect(this, &QWindow::screenChanged, [this](QScreen *scr) {
+        //qDebug() << "window screen changed:" << scr << scr->devicePixelRatio();
+        if (!fequal(d->pixelRatio, scr->devicePixelRatio()))
+        {
+            d->pixelRatio = scr->devicePixelRatio();
+            d->submitResize(pointSize() * d->pixelRatio);
+            DENG2_FOR_AUDIENCE2(PixelRatio, i)
+            {
+                i->windowPixelRatioChanged(*this);
+            }
+        }
+    });
 }
+
+#if defined (DENG_MOBILE)
+void GLWindow::setTitle(QString const &title)
+{
+    setWindowTitle(title);
+}
+#endif
 
 bool GLWindow::isGLReady() const
 {
@@ -209,22 +272,38 @@ bool GLWindow::isGLReady() const
 
 bool GLWindow::isMaximized() const
 {
+#if defined (DENG_MOBILE)
+    return false;
+#else
     return visibility() == QWindow::Maximized;
+#endif
 }
 
 bool GLWindow::isMinimized() const
 {
+#if defined (DENG_MOBILE)
+    return false;
+#else
     return visibility() == QWindow::Minimized;
+#endif
 }
 
 bool GLWindow::isFullScreen() const
 {
+#if defined (DENG_MOBILE)
+    return true;
+#else
     return visibility() == QWindow::FullScreen;
+#endif
 }
 
 bool GLWindow::isHidden() const
 {
+#if defined (DENG_MOBILE)
+    return false;
+#else
     return visibility() == QWindow::Hidden;
+#endif
 }
 
 GLFramebuffer &GLWindow::framebuffer() const
@@ -237,6 +316,11 @@ float GLWindow::frameRate() const
     return d->fps;
 }
 
+uint GLWindow::frameCount() const
+{
+    return d->frameCount;
+}
+
 GLWindow::Size GLWindow::pointSize() const
 {
     return Size(duint(de::max(0, QOpenGLWindow::width())),
@@ -246,6 +330,11 @@ GLWindow::Size GLWindow::pointSize() const
 GLWindow::Size GLWindow::pixelSize() const
 {
     return d->currentSize;
+}
+
+double GLWindow::pixelRatio() const
+{
+    return d->pixelRatio;
 }
 
 int GLWindow::pointWidth() const
@@ -335,6 +424,7 @@ bool GLWindow::event(QEvent *ev)
         return QApplication::sendEvent(&canvas(), &keyEvent);
     }
 #endif*/
+
     if (ev->type() == QEvent::Close)
     {
         windowAboutToClose();
@@ -349,7 +439,7 @@ bool GLWindow::grabToFile(NativePath const &path) const
 
 QImage GLWindow::grabImage(QSize const &outputSize) const
 {
-    return grabImage(QRect(QPoint(0, 0), geometry().size() * qApp->devicePixelRatio()), outputSize);
+    return grabImage(QRect(QPoint(0, 0), QSize(pixelWidth(), pixelHeight())), outputSize);
 }
 
 QImage GLWindow::grabImage(QRect const &area, QSize const &outputSize) const
@@ -406,7 +496,7 @@ void GLWindow::paintGL()
         if (!d->readyPending)
         {
             d->readyPending = true;
-            d->mainCall.enqueue([this] () { d->notifyReady(); });
+            d->mainCall.enqueue([this]() { d->notifyReady(); });
         }
         LIBGUI_GL.glClear(GL_COLOR_BUFFER_BIT);
         return;
@@ -414,7 +504,8 @@ void GLWindow::paintGL()
 
     DENG2_ASSERT(QOpenGLContext::currentContext() != nullptr);
 
-    if (GLInfo::extensions().EXT_timer_query)
+    //if (GLInfo::extensions().EXT_timer_query)
+#if defined (DENG_HAVE_TIMER_QUERY)
     {
         d->checkTimerQueryResult();
 
@@ -432,24 +523,26 @@ void GLWindow::paintGL()
             d->timerQuery->begin();
         }
     }
+#endif
 
     GLBuffer::resetDrawCount();
 
     LIBGUI_ASSERT_GL_OK();
 
     // Make sure any changes to the state stack are in effect.
-    GLState::current().apply();
     GLState::current().target().glBind();
 
     draw();
 
     LIBGUI_ASSERT_GL_OK();
 
+#if defined (DENG_HAVE_TIMER_QUERY)
     if (d->timerQueryReady())
     {
         d->timerQuery->end();
         d->timerQueryPending = true;
     }
+#endif
 }
 
 void GLWindow::windowAboutToClose()
@@ -457,25 +550,7 @@ void GLWindow::windowAboutToClose()
 
 void GLWindow::resizeEvent(QResizeEvent *ev)
 {
-    d->pendingSize = Size(ev->size().width(), ev->size().height()) * qApp->devicePixelRatio();
-
-    // Only react if this is actually a resize.
-    if (d->currentSize != d->pendingSize)
-    {
-        d->currentSize = d->pendingSize;
-
-        if (d->readyNotified)
-        {
-            makeCurrent();
-        }
-
-        DENG2_FOR_AUDIENCE2(Resize, i) i->windowResized(*this);
-
-        if (d->readyNotified)
-        {
-            doneCurrent();
-        }
-    }
+    d->submitResize(Size(ev->size().width(), ev->size().height()) * devicePixelRatio());
 }
 
 void GLWindow::frameWasSwapped()

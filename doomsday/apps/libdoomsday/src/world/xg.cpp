@@ -30,7 +30,7 @@ void XG_GetGameClasses()
     ::xgClassLinks = nullptr;
 
     // XG class links are provided by the game (which defines the class specific parameter names).
-    if (auto getVar = DoomsdayApp::plugins().gameExports().GetVariable)
+    if (auto getVar = DoomsdayApp::plugins().gameExports().GetPointer)
     {
         ::xgClassLinks = (xgclass_t *) getVar(DD_XGFUNC_LINK);
     }

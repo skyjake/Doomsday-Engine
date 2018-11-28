@@ -20,20 +20,19 @@
 #include "clientapp.h"
 #include "ConfigProfiles"
 
-#include <de/GridLayout>
 #include <de/CallbackAction>
+#include <de/Config>
+#include <de/GridLayout>
 #include <de/VariableChoiceWidget>
 #include <de/VariableToggleWidget>
-#include <de/App>
 
 using namespace de;
 
 DENG2_PIMPL(UISettingsDialog)
 {
     VariableChoiceWidget *uiScale;
+    VariableToggleWidget *uiTranslucency;
     VariableToggleWidget *showAnnotations;
-    VariableToggleWidget *showColumnDescription;
-    VariableToggleWidget *showUnplayable;
     VariableToggleWidget *showDoom;
     VariableToggleWidget *showHeretic;
     VariableToggleWidget *showHexen;
@@ -44,22 +43,20 @@ DENG2_PIMPL(UISettingsDialog)
     {
         auto &area = self().area();
 
-        area.add(uiScale               = new VariableChoiceWidget(App::config("ui.scaleFactor")));
-        area.add(showAnnotations       = new VariableToggleWidget(tr("Menu Annotations"),  App::config("ui.showAnnotations")));
-        area.add(showColumnDescription = new VariableToggleWidget(tr("Game Descriptions"), App::config("home.showColumnDescription")));
-        area.add(showUnplayable        = new VariableToggleWidget(tr("Unplayable Games"),  App::config("home.showUnplayableGames")));
-        area.add(showDoom              = new VariableToggleWidget(tr("Doom"),              App::config("home.columns.doom")));
-        area.add(showHeretic           = new VariableToggleWidget(tr("Heretic"),           App::config("home.columns.heretic")));
-        area.add(showHexen             = new VariableToggleWidget(tr("Hexen"),             App::config("home.columns.hexen")));
-        area.add(showOther             = new VariableToggleWidget(tr("Other Games"),       App::config("home.columns.otherGames")));
-        area.add(showMultiplayer       = new VariableToggleWidget(tr("Multiplayer"),       App::config("home.columns.multiplayer")));
+        area.add(uiScale               = new VariableChoiceWidget(Config::get("ui.scaleFactor"), VariableChoiceWidget::Number));
+        area.add(uiTranslucency        = new VariableToggleWidget("Background Translucency", Config::get("ui.translucency")));
+        area.add(showAnnotations       = new VariableToggleWidget("Menu Annotations",  Config::get("ui.showAnnotations")));
+        area.add(showDoom              = new VariableToggleWidget("Doom",              Config::get("home.columns.doom")));
+        area.add(showHeretic           = new VariableToggleWidget("Heretic",           Config::get("home.columns.heretic")));
+        area.add(showHexen             = new VariableToggleWidget("Hexen",             Config::get("home.columns.hexen")));
+        area.add(showOther             = new VariableToggleWidget("Other Games",       Config::get("home.columns.otherGames")));
+        area.add(showMultiplayer       = new VariableToggleWidget("Multiplayer",       Config::get("home.columns.multiplayer")));
 
-        uiScale->items()
-                << new ChoiceItem(tr("Huge (200%)"),   2.0)
-                << new ChoiceItem(tr("Large (150%)"),  1.5)
-                << new ChoiceItem(tr("Normal (100%)"), 1.0)
-                << new ChoiceItem(tr("Small (90%)"),   0.9)
-                << new ChoiceItem(tr("Tiny (80%)"),    0.8);
+        uiScale->items() << new ChoiceItem("Double (200%)", 2.0) << new ChoiceItem("175%", 1.75)
+                         << new ChoiceItem("150%", 1.5) << new ChoiceItem("125%", 1.25)
+                         << new ChoiceItem("110%", 1.1) << new ChoiceItem("Normal (100%)", 1.0)
+                         << new ChoiceItem("90%", 0.9) << new ChoiceItem("75%", 0.75)
+                         << new ChoiceItem("Half (50%)", 0.5);
         uiScale->updateFromVariable();
     }
 
@@ -76,13 +73,13 @@ UISettingsDialog::UISettingsDialog(String const &name)
     heading().setText(tr("UI Settings"));
     heading().setImage(style().images().image("home.icon"));
 
-    auto *library = LabelWidget::newWithText(_E(D) + tr("Game Library"), &area());
-    library->setFont("separator.label");
+//    auto *library = LabelWidget::appendSeparatorWithText(_E(D) + tr("Game Library"), &area());
+//    library->setFont("separator.label");
 
-    auto *restartNotice = LabelWidget::newWithText(tr("Takes effect only after restarting."), &area());
-    restartNotice->margins().setTop("");
-    restartNotice->setFont("separator.annotation");
-    restartNotice->setTextColor("altaccent");
+//    auto *restartNotice = LabelWidget::newWithText(tr("Changes take effect only after restarting."), &area());
+//    restartNotice->margins().setTop("");
+//    restartNotice->setFont("separator.annotation");
+//    restartNotice->setTextColor("altaccent");
 
     d->showAnnotations->margins().setBottom(RuleBank::UNIT);
 
@@ -96,25 +93,27 @@ UISettingsDialog::UISettingsDialog(String const &name)
     layout.setGridSize(2, 0);
     layout.setColumnAlignment(0, ui::AlignRight);
     layout << *LabelWidget::newWithText(tr("Scale:"), &area()) << *d->uiScale
-           << Const(0) << *restartNotice
+           << Const(0) << *d->uiTranslucency
+//           << Const(0) << *restartNotice
            << Const(0) << *d->showAnnotations
            << Const(0) << *annots;
-    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
-    layout.append(*library, 2);
+//    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+//    layout.append(*library, 2);
+    auto *library = LabelWidget::appendSeparatorWithText("Game Library", &area(), &layout);
 
-    auto *showLabel = LabelWidget::newWithText(tr("Show:"), &area());
+    auto *showLabel = LabelWidget::newWithText(tr("Enabled Tabs:"), &area());
     showLabel->rule().setLeftTop(library->rule().left(), library->rule().bottom());
 
     GridLayout showLayout(showLabel->rule().right(), showLabel->rule().top(),
                           GridLayout::RowFirst);
-    showLayout.setGridSize(2, 4);
+    showLayout.setGridSize(2, 3);
     showLayout << *d->showDoom
                << *d->showHeretic
                << *d->showHexen
                << *d->showOther
-               << *d->showMultiplayer
-               << *d->showColumnDescription
-               << *d->showUnplayable;
+               << *d->showMultiplayer;
+//               << *d->showColumnDescription
+//               << *d->showUnplayable;
 
     area().setContentSize(OperatorRule::maximum(layout.width(),
                                                 showLabel->rule().width() + showLayout.width()),

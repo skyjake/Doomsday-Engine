@@ -10,6 +10,7 @@ model.skeletal {
         variable uSpecular       { value = 1 }
         variable uEmission       { value = 0 }
         variable uGlossiness     { value = 100 }
+        variable uReflection     { value = 1 }
         variable uReflectionBlur { value = 10 }
         
         variable uMapTime {}
@@ -21,27 +22,27 @@ model.skeletal {
                         include/skeletal.glsl,
                         include/lighting.glsl>
         vertex = "
-            uniform highp mat4 uMvpMatrix;
+            uniform mat4 uMvpMatrix;
 
-            attribute highp vec4 aVertex;
-            attribute highp vec4 aColor;
-            attribute highp vec2 aUV;
-            attribute highp vec4 aBounds;   // diffuse map
-            attribute highp vec4 aBounds2;  // normal map
-            attribute highp vec4 aBounds3;  // specular map
-            attribute highp vec4 aBounds4;  // emission map
+            in vec4 aVertex;
+            in vec4 aColor;
+            in vec2 aUV;
+            in vec4 aBounds;   // diffuse map
+            in vec4 aBounds2;  // normal map
+            in vec4 aBounds3;  // specular map
+            in vec4 aBounds4;  // emission map
 
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds[4];
+            out vec4 vColor;
+            out vec2 vUV;
+            out vec4 vUVBounds[4];
 
             void main(void) 
             {
-                highp mat4 bone = vertexBoneTransform();
+                mat4 bone = vertexBoneTransform();
                 setTangentSpace(bone);
                     
                 // Vertex position.
-                highp vec4 modelPos = bone * aVertex;
+                vec4 modelPos = bone * aVertex;
                 calculateEyeDirection(modelPos);
                 
                 gl_Position = uMvpMatrix * modelPos;
@@ -54,7 +55,9 @@ model.skeletal {
                 vUVBounds[3] = aBounds4;                
             }"
 
-        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
+        defines $= {'PREDEF_TRANSFORM_UV(uv)'          : '',                    
+                    'PREDEF_TRANSFORM_EMISSION(color)' : '',
+                    'PREDEF_TRANSFORM_ALPHA(alpha)'    : ''}
         
         include.fragment <include/texture.glsl, 
                           include/tangentspace.glsl,
@@ -62,37 +65,50 @@ model.skeletal {
                           include/reflection.glsl,
                           include/fog.glsl>
         fragment = "
-            uniform highp vec3 uColor;       // diffuse color multiplier
-            uniform highp float uAlpha;      // diffuse alpha multiplier
-            uniform highp float uAlphaLimit; // alpha test to discard fragments
-            uniform highp vec2 uOffsetUV;
-            uniform highp float uMapTime;
+            uniform vec3 uColor;       // diffuse color multiplier
+            uniform float uAlpha;      // diffuse alpha multiplier
+            uniform float uAlphaLimit; // alpha test to discard fragments
+            uniform vec2 uOffsetUV;
+            uniform float uMapTime;
             
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds[4];
-            
+            in vec4 vColor;
+            in vec2 vUV;
+            in vec4 vUVBounds[4];
+                        
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = vUV + uOffsetUV;
+                vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
-                highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
-                highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
-                highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
-                highp vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
-            
-                highp vec3 msNormal = modelSpaceNormalVector(normalUV);
-                highp vec4 specGloss = specularGloss(specularUV);
                 
-                gl_FragColor = diffuseAndReflectedLight(
-                    vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
+                vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
+                vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
+                vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
+                vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
+            
+                vec3 msNormal = modelSpaceNormalVector(normalUV);
+                vec4 specGloss = specularGloss(specularUV);
+                
+                float alphaFactor = uAlpha;
+            #if defined (PREDEF_TRANSFORM_ALPHA)
+                PREDEF_TRANSFORM_ALPHA(alphaFactor);
+            #endif
+                out_FragColor = diffuseAndReflectedLight(
+                    vColor * vec4(uColor, alphaFactor), uv, specGloss, msNormal);
 
-                if(gl_FragColor.a < uAlphaLimit) discard;
+                if (out_FragColor.a < uAlphaLimit) discard;
 
-                gl_FragColor.rgb += specularLight(specGloss, msNormal);
-                gl_FragColor += emittedLight(emissiveUV);
+                out_FragColor.rgb += specularLight(specGloss, msNormal);
+
+                // Emitted light.
+                vec4 emitted = emittedLight(emissiveUV);
+            #if defined (PREDEF_TRANSFORM_EMISSION)
+                PREDEF_TRANSFORM_EMISSION(emitted);
+            #endif
+                out_FragColor += emitted;
                     
                 applyFog();
             }"
@@ -103,37 +119,39 @@ model.skeletal {
     shader opaque.generic inherits model.skeletal.generic {
         variable uAlphaLimit { value = 0.5 }
         fragment = "
-            uniform highp vec3 uColor;       // diffuse color multiplier
-            uniform highp float uAlpha;
-            uniform highp float uAlphaLimit; // alpha test to discard fragments
-            uniform highp vec2 uOffsetUV;
-            uniform highp float uMapTime;
+            uniform vec3 uColor;       // diffuse color multiplier
+            uniform float uAlpha;
+            uniform float uAlphaLimit; // alpha test to discard fragments
+            uniform vec2 uOffsetUV;
+            uniform float uMapTime;
         
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds[4];
+            in vec4 vColor;
+            in vec2 vUV;
+            in vec4 vUVBounds[4];
         
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = vUV + uOffsetUV;
+                vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
-                highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
-                highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
-                highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
-                highp vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
+                vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
+                vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
+                vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
+                vec2 emissiveUV = mapToBounds(wrappedUV, vUVBounds[3]);
         
-                highp vec3 msNormal = modelSpaceNormalVector(normalUV);
-                highp vec4 specGloss = specularGloss(specularUV);
+                vec3 msNormal = modelSpaceNormalVector(normalUV);
+                vec4 specGloss = specularGloss(specularUV);
                 
-                gl_FragColor = diffuseAndReflectedLight(
+                out_FragColor = diffuseAndReflectedLight(
                     vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
 
-                if(gl_FragColor.a < uAlphaLimit) discard;
+                if (out_FragColor.a < uAlphaLimit) discard;
             
-                gl_FragColor.rgb += specularLight(specGloss, msNormal);
-                gl_FragColor += emittedLight(emissiveUV);
+                out_FragColor.rgb += specularLight(specGloss, msNormal);
+                out_FragColor += emittedLight(emissiveUV);
                 
                 applyFog();
             }"
@@ -162,26 +180,26 @@ model.skeletal {
                         include/skeletal.glsl,
                         include/lighting.glsl>
         vertex = "
-            uniform highp mat4 uMvpMatrix;
+            uniform mat4 uMvpMatrix;
 
-            attribute highp vec4 aVertex;
-            attribute highp vec4 aColor;
-            attribute highp vec2 aUV;
-            attribute highp vec4 aBounds;   // diffuse map
-            attribute highp vec4 aBounds2;  // normal map
-            attribute highp vec4 aBounds3;  // specular map
+            in vec4 aVertex;
+            in vec4 aColor;
+            in vec2 aUV;
+            in vec4 aBounds;   // diffuse map
+            in vec4 aBounds2;  // normal map
+            in vec4 aBounds3;  // specular map
 
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds[3];
+            out vec4 vColor;
+            out vec2 vUV;
+            out vec4 vUVBounds[3];
 
             void main(void) 
             {
-                highp mat4 bone = vertexBoneTransform();
+                mat4 bone = vertexBoneTransform();
                 setTangentSpace(bone);
                     
                 // Vertex position.
-                highp vec4 modelPos = bone * aVertex;
+                vec4 modelPos = bone * aVertex;
                 calculateEyeDirection(modelPos);
 
                 gl_Position = uMvpMatrix * modelPos;
@@ -199,36 +217,38 @@ model.skeletal {
                           include/reflection.glsl,
                           include/fog.glsl>
         fragment = "
-            uniform highp float uAlphaLimit;
-            uniform highp float uAlpha;
-            uniform highp vec3 uColor;       // diffuse color multiplier
-            uniform highp vec2 uOffsetUV;
-            uniform highp float uMapTime;
+            uniform float uAlphaLimit;
+            uniform float uAlpha;
+            uniform vec3 uColor;       // diffuse color multiplier
+            uniform vec2 uOffsetUV;
+            uniform float uMapTime;
             
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds[3];
+            in vec4 vColor;
+            in vec2 vUV;
+            in vec4 vUVBounds[3];
             
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = vUV + uOffsetUV;
+                vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
-                highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
-                highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
-                highp vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
+                vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
+                vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
+                vec2 specularUV = mapToBounds(wrappedUV, vUVBounds[2]);
             
-                highp vec3 msNormal = modelSpaceNormalVector(normalUV);
-                highp vec4 specGloss = specularGloss(specularUV);
+                vec3 msNormal = modelSpaceNormalVector(normalUV);
+                vec4 specGloss = specularGloss(specularUV);
                 
-                gl_FragColor = diffuseAndReflectedLight(
+                out_FragColor = diffuseAndReflectedLight(
                     vColor * vec4(uColor, uAlpha), uv, specGloss, msNormal);
-                if(gl_FragColor.a < uAlphaLimit) discard;
+                if (out_FragColor.a < uAlphaLimit) discard;
 
-                gl_FragColor.rgb += specularLight(specGloss, msNormal);
+                out_FragColor.rgb += specularLight(specGloss, msNormal);
 
-                gl_FragColor.a = uAlpha;
+                out_FragColor.a = uAlpha;
                 
                 applyFog();
             }"        
@@ -251,25 +271,25 @@ model.skeletal {
                         include/skeletal.glsl,
                         include/lighting.glsl>
         vertex = "
-            uniform highp mat4 uMvpMatrix;
+            uniform mat4 uMvpMatrix;
 
-            attribute highp vec4 aVertex;
-            attribute highp vec4 aColor;
-            attribute highp vec2 aUV;
-            attribute highp vec4 aBounds;   // diffuse map
-            attribute highp vec4 aBounds2;  // normal map
+            in vec4 aVertex;
+            in vec4 aColor;
+            in vec2 aUV;
+            in vec4 aBounds;   // diffuse map
+            in vec4 aBounds2;  // normal map
 
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds[2];
+            out vec4 vColor;
+            out vec2 vUV;
+            out vec4 vUVBounds[2];
 
             void main(void) 
             {
-                highp mat4 bone = vertexBoneTransform();
+                mat4 bone = vertexBoneTransform();
                 setTangentSpace(bone);
                     
                 // Vertex position.
-                highp vec4 modelPos = bone * aVertex;
+                vec4 modelPos = bone * aVertex;
                 calculateEyeDirection(modelPos);
 
                 gl_Position = uMvpMatrix * modelPos;
@@ -285,31 +305,33 @@ model.skeletal {
                           include/lighting.glsl,
                           include/fog.glsl>
         fragment = "
-            uniform highp float uAlphaLimit;
-            uniform highp float uAlpha;
-            uniform highp vec3 uColor;       // diffuse color multiplier
-            uniform highp vec2 uOffsetUV;
-            uniform highp float uMapTime;
+            uniform float uAlphaLimit;
+            uniform float uAlpha;
+            uniform vec3 uColor;       // diffuse color multiplier
+            uniform vec2 uOffsetUV;
+            uniform float uMapTime;
             
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds[2];
+            in vec4 vColor;
+            in vec2 vUV;
+            in vec4 vUVBounds[2];
             
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = vUV + uOffsetUV;
+                vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
-                highp vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
-                highp vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
+                vec2 uv         = mapToBounds(wrappedUV, vUVBounds[0]);
+                vec2 normalUV   = mapToBounds(wrappedUV, vUVBounds[1]);
             
-                highp vec3 msNormal = modelSpaceNormalVector(normalUV);                
-                gl_FragColor = vColor * vec4(uColor * diffuseLight(msNormal), 1.0)
-                             * texture2D(uTex, uv);
-                if(gl_FragColor.a < uAlphaLimit) discard;
+                vec3 msNormal = modelSpaceNormalVector(normalUV);                
+                out_FragColor = vColor * vec4(uColor * diffuseLight(msNormal), 1.0)
+                             * texture(uTex, uv);
+                if (out_FragColor.a < uAlphaLimit) discard;
 
-                gl_FragColor.a = uAlpha;
+                out_FragColor.a = uAlpha;
                 
                 applyFog();
             }"        
@@ -328,27 +350,28 @@ model.skeletal {
         # Mapping when used with ModelDrawable.
         textureMapping <diffuse>
 
-        defines $= {'PREDEF_TRANSFORM_UV(uv)': ''}
+        defines $= {'PREDEF_TRANSFORM_UV(uv)'       : '',
+                    'PREDEF_TRANSFORM_ALPHA(alpha)' : ''}
         
         include.vertex <include/skeletal.glsl>
         vertex = "
-            uniform highp mat4 uMvpMatrix;
+            uniform mat4 uMvpMatrix;
 
-            attribute highp vec4 aVertex;
-            attribute highp vec4 aColor;
-            attribute highp vec2 aUV;
-            attribute highp vec4 aBounds;   // diffuse map
+            in vec4 aVertex;
+            in vec4 aColor;
+            in vec2 aUV;
+            in vec4 aBounds;   // diffuse map
 
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds;
+            out vec4 vColor;
+            out vec2 vUV;
+            out vec4 vUVBounds;
 
             void main(void) 
             {
-                highp mat4 bone = vertexBoneTransform();
+                mat4 bone = vertexBoneTransform();
                     
                 // Vertex position.
-                highp vec4 modelPos = bone * aVertex;
+                vec4 modelPos = bone * aVertex;
                 gl_Position = uMvpMatrix * modelPos;
                                                           
                 vColor = aColor;
@@ -358,28 +381,34 @@ model.skeletal {
 
         include.fragment <include/texture.glsl>
         fragment = "
-            uniform highp float uAlphaLimit;
-            uniform highp float uAlpha;
-            uniform highp vec3 uColor;       // diffuse color multiplier
-            uniform highp vec2 uOffsetUV;
-            uniform highp float uMapTime;
+            uniform float uAlphaLimit;
+            uniform float uAlpha;
+            uniform vec3 uColor;       // diffuse color multiplier
+            uniform vec2 uOffsetUV;
+            uniform float uMapTime;
             
-            varying highp vec4 vColor;
-            varying highp vec2 vUV;
-            varying highp vec4 vUVBounds;
+            in vec4 vColor;
+            in vec2 vUV;
+            in vec4 vUVBounds;
             
             void main(void) 
             {
                 // Calculate UV at the fragment (wrapped inside the bounds).
-                highp vec2 wrappedUV = vUV + uOffsetUV;
+                vec2 wrappedUV = vUV + uOffsetUV;
+            #if defined (PREDEF_TRANSFORM_UV)
                 PREDEF_TRANSFORM_UV(wrappedUV);
+            #endif
                 wrappedUV = fract(wrappedUV);
-                highp vec2 uv = mapToBounds(wrappedUV, vUVBounds);
+                vec2 uv = mapToBounds(wrappedUV, vUVBounds);
             
-                highp vec4 diffuse = vColor * texture2D(uTex, uv);
-                if(diffuse.a < uAlphaLimit) discard;
+                vec4 diffuse = vColor * texture(uTex, uv);
+                if (diffuse.a < uAlphaLimit) discard;
                 
-                gl_FragColor = diffuse * vec4(uColor, uAlpha);
+                float alphaFactor = uAlpha;
+            #if defined (PREDEF_TRANSFORM_ALPHA)
+                PREDEF_TRANSFORM_ALPHA(alphaFactor);
+            #endif
+                out_FragColor = diffuse * vec4(uColor, alphaFactor);
             }"        
     }        
 }

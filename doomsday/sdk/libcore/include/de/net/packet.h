@@ -25,6 +25,8 @@
 #include "../String"
 #include "../Reader"
 
+#include <array>
+
 namespace de {
 
 class String;
@@ -38,13 +40,17 @@ class String;
 class DENG2_PUBLIC Packet : public ISerializable
 {
 public:
+    DENG2_CAST_METHODS()
+
     /// While deserializing, an invalid type identifier was encountered. @ingroup errors
     DENG2_SUB_ERROR(DeserializationError, InvalidTypeError);
+
+    typedef std::array<char, 4> Type;
 
     /// Length of a type identifier.
     static dint const TYPE_SIZE = 4;
 
-    typedef String Type;
+    static Type typeFromString(char const *fourcc);
 
 public:
     /**
@@ -52,7 +58,7 @@ public:
      *
      * @param type  Type identifier of the packet.
      */
-    Packet(Type const &type);
+    explicit Packet(Type const &type);
 
     virtual ~Packet() {}
 
@@ -88,7 +94,7 @@ protected:
     /**
      * Sets the type identifier.
      *
-     * @param t  Type identifier. Must be exactly TYPE_SIZE characters long.
+     * @param t  Type identifier.
      */
     void setType(Type const &t);
 
@@ -100,10 +106,10 @@ public:
      * @param from  Reader.
      * @param type  Packet identifier.
      */
-    static bool checkType(Reader &from, String const &type);
+    static bool checkType(Reader &from, Type const &type);
 
     template <typename PacketType>
-    static PacketType *constructFromBlock(Block const &block, char const *packetTypeIdentifier)
+    static PacketType *constructFromBlock(Block const &block, Type const &packetTypeIdentifier)
     {
         Reader from(block);
         if (checkType(from, packetTypeIdentifier))

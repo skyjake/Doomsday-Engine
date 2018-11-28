@@ -165,7 +165,7 @@ de::String UpdaterSettings::lastCheckAgo() const
     de::Time when = lastCheckTime();
     if (!when.isValid()) return ""; // Never checked.
 
-    de::TimeDelta delta = when.since();
+    de::TimeSpan delta = when.since();
     if (delta < 0.0) return "";
 
     int t;

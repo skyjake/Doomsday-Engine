@@ -39,7 +39,7 @@
  * DED_Write() and DED_Read() routines.
  *
  * It is VERY important not to sort the data arrays in any way: the index numbers are
- * important. The Game DLL must be recompiled with the new constants if the order of the
+ * important. The game plugins must be recompiled with the new constants if the order of the
  * array items changes.
  */
 struct LIBDOOMSDAY_PUBLIC ded_s
@@ -197,12 +197,17 @@ public:
 
     ded_value_t *getValueById(char const *id) const;
     ded_value_t *getValueById(de::String const &id) const;
-
     ded_value_t *getValueByUri(de::Uri const &uri) const;
 
     ded_compositefont_t *findCompositeFontDef(de::Uri const &uri) const;
-
     ded_compositefont_t *getCompositeFont(char const *uriCString) const;
+
+    /**
+     * Finds the episode that has a specific map in it.
+     * @param mapId  Map identifier.
+     * @return Episode ID.
+     */
+    de::String findEpisode(de::String const &mapId) const;
 
 protected:
     void release();

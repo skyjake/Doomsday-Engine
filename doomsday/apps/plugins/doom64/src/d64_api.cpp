@@ -49,9 +49,6 @@
 
 using namespace de;
 
-// The interface to the Doomsday engine.
-game_export_t gx;
-
 // Identifiers given to the games we register during startup.
 static char const *gameIds[NUM_GAME_MODES] =
 {
@@ -61,7 +58,7 @@ static char const *gameIds[NUM_GAME_MODES] =
 /**
  * Register the game modes supported by this plugin.
  */
-int G_RegisterGames(int hookType, int param, void* data)
+static int G_RegisterGames(int hookType, int param, void* data)
 {
     DENG_UNUSED(hookType); DENG_UNUSED(param); DENG_UNUSED(data);
 
@@ -85,7 +82,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 /**
  * Called right after the game plugin is selected into use.
  */
-DENG_EXTERN_C void DP_Load(void)
+DENG_ENTRYPOINT void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_DOOM64);
@@ -94,12 +91,12 @@ DENG_EXTERN_C void DP_Load(void)
 /**
  * Called when the game plugin is freed from memory.
  */
-DENG_EXTERN_C void DP_Unload(void)
+DENG_ENTRYPOINT void DP_Unload(void)
 {
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-DENG_EXTERN_C void G_PreInit(char const *gameId)
+void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
@@ -126,63 +123,37 @@ dd_bool G_TryShutdown(void)
     return true;
 }
 
-/**
- * Takes a copy of the engine's entry points and exported data. Returns
- * a pointer to the structure that contains our entry points and exports.
- */
-DENG_EXTERN_C game_export_t *GetGameAPI(void)
+DENG_ENTRYPOINT void *GetGameAPI(char const *name)
 {
-    // Clear all of our exports.
-    memset(&gx, 0, sizeof(gx));
+    if (auto *ptr = Common_GetGameAPI(name))
+    {
+        return ptr;
+    }
 
-    // Fill in the data for the exports.
-    gx.apiSize = sizeof(gx);
-    gx.PreInit = G_PreInit;
-    gx.PostInit = D_PostInit;
-    gx.Shutdown = D_Shutdown;
-    gx.TryShutdown = G_TryShutdown;
-    gx.Ticker = G_Ticker;
-    gx.DrawViewPort = G_DrawViewPort;
-    gx.DrawWindow = D_DrawWindow;
-    gx.FinaleResponder = FI_PrivilegedResponder;
-    gx.PrivilegedResponder = G_PrivilegedResponder;
-    gx.Responder = G_Responder;
-    gx.EndFrame = D_EndFrame;
-    gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = Mobj_Friction;
-    gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
-    gx.MobjTryMoveXYZ = P_TryMoveXYZ;
-    gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
-    gx.UpdateState = G_UpdateState;
-    gx.GetInteger = D_GetInteger;
-    gx.GetVariable = D_GetVariable;
+    #define HASH_ENTRY(Name, Func) std::make_pair(QByteArray(Name), de::function_cast<void *>(Func))
+    static QHash<QByteArray, void *> const funcs(
+    {
+        HASH_ENTRY("DrawWindow",    D_DrawWindow),
+        HASH_ENTRY("EndFrame",      D_EndFrame),
+        HASH_ENTRY("GetInteger",    D_GetInteger),
+        HASH_ENTRY("GetPointer",    D_GetVariable),
+        HASH_ENTRY("PostInit",      D_PostInit),
+        HASH_ENTRY("PreInit",       G_PreInit),
+        HASH_ENTRY("Shutdown",      D_Shutdown),
+        HASH_ENTRY("TryShutdown",   G_TryShutdown),
+    });
+    #undef HASH_ENTRY
 
-    gx.NetServerStart = D_NetServerStarted;
-    gx.NetServerStop = D_NetServerClose;
-    gx.NetConnect = D_NetConnect;
-    gx.NetDisconnect = D_NetDisconnect;
-    gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.NetWorldEvent = D_NetWorldEvent;
-    gx.HandlePacket = D_HandlePacket;
-
-    // Data structure sizes.
-    gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(Polyobj);
-
-    gx.FinalizeMapChange = (void (*)(void const *)) P_FinalizeMapChange;
-
-    // These really need better names. Ideas?
-    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
-    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
-
-    return &gx;
+    auto found = funcs.find(name);
+    if (found != funcs.end()) return found.value();
+    return nullptr;
 }
 
 /**
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_EXTERN_C void DP_Initialize()
+DENG_ENTRYPOINT void DP_Initialize()
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
@@ -191,10 +162,25 @@ DENG_EXTERN_C void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C const char* deng_LibraryType(void)
+DENG_ENTRYPOINT const char* deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }
+
+#if defined (DENG_STATIC_LINK)
+
+DENG_EXTERN_C void *staticlib_doom64_symbol(char const *name)
+{
+    DENG_SYMBOL_PTR(name, deng_LibraryType)
+    DENG_SYMBOL_PTR(name, DP_Initialize);
+    DENG_SYMBOL_PTR(name, DP_Load);
+    DENG_SYMBOL_PTR(name, DP_Unload);
+    DENG_SYMBOL_PTR(name, GetGameAPI);
+    qWarning() << name << "not found in doom64";
+    return nullptr;
+}
+
+#else
 
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(B);
@@ -243,3 +229,5 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_THINKER, Thinker);
     DENG_GET_API(DE_API_URI, Uri);
 )
+
+#endif

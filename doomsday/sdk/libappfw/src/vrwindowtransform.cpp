@@ -36,9 +36,11 @@ DENG2_PIMPL(VRWindowTransform)
     GLTextureFramebuffer unwarpedFB;
 
     // Row-interleaved drawing:
+    GLTextureFramebuffer rowInterLeftFB;
     GLTextureFramebuffer rowInterRightFB;
     Drawable             rowInterDrawable;
     GLUniform            rowInterUniformTex { "uTex", GLUniform::Sampler2D };
+    GLUniform            rowInterUniformTex2 { "uTex2", GLUniform::Sampler2D };
     bool                 rowInterNeedRelease = true;
 
     Impl(Public *i)
@@ -49,6 +51,7 @@ DENG2_PIMPL(VRWindowTransform)
     ~Impl()
     {
         vrCfg.oculusRift().deinit();
+        rowInterLeftFB.glDeinit();
         rowInterRightFB.glDeinit();
     }
 
@@ -69,12 +72,17 @@ DENG2_PIMPL(VRWindowTransform)
 
     float displayModeDependentUIScalingFactor() const
     {
-        if (GuiWidget::toDevicePixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
+#if defined (DENG_MOBILE)
+        return 1.0f;
+#else
+        if (GuiWidget::pointsToPixels(1) == 1) return 1.0f; // Not enough pixels for good-quality scaling.
 
         // Since the UI style doesn't yet support scaling at runtime based on
         // display resolution (or any other factor).
-        return 1.f / Rangef(.5f, 1.0f).clamp((width() - GuiWidget::toDevicePixels(256.f)) /
-                                              GuiWidget::toDevicePixels(768.f));
+        return 1.f / Rangef(.5f, 1.0f)
+                         .clamp((width()) /
+                                GuiWidget::pointsToPixels(640.f));
+#endif
     }
 
     void drawContent() const
@@ -105,8 +113,7 @@ DENG2_PIMPL(VRWindowTransform)
         // Set render target to offscreen temporarily.
         GLState::push()
                 .setTarget(unwarpedFB)
-                .setViewport(Rectangleui::fromSize(unwarpedFB.size()))
-                .apply();
+                .setViewport(Rectangleui::fromSize(unwarpedFB.size()));
         unwarpedFB.unsetActiveRect(true);
 
         GLTextureFramebuffer::Size const fbSize = unwarpedFB.size();
@@ -129,7 +136,7 @@ DENG2_PIMPL(VRWindowTransform)
         }
 
         unwarpedFB.unsetActiveRect(true);
-        GLState::pop().apply();
+        GLState::pop();
 
         vrCfg.enableFrustumShift(); // restore default
     }
@@ -147,21 +154,24 @@ DENG2_PIMPL(VRWindowTransform)
         typedef GLBufferT<Vertex2Tex> VBuf;
         VBuf *buf = new VBuf;
         rowInterDrawable.addBuffer(buf);
-        rowInterDrawable.program().build(// Vertex shader:
-                                          Block("attribute highp vec4 aVertex; "
-                                                "attribute highp vec2 aUV; "
-                                                "varying highp vec2 vUV; "
-                                                "void main(void) {"
-                                                "gl_Position = aVertex; "
-                                                "vUV = aUV; }"),
-                                          // Fragment shader:
-                                          Block("uniform sampler2D uTex; "
-                                                "varying highp vec2 vUV; "
-                                                "void main(void) { "
-                                                "if(int(mod(gl_FragCoord.y - 1023.5, 2.0)) != 1) { discard; }\n"
-                                                "gl_FragColor = texture2D(uTex, vUV); }"))
-                << rowInterUniformTex;
-        buf->setVertices(gl::TriangleStrip,
+        rowInterDrawable.program().build( // Vertex shader:
+            Block("in highp vec4 aVertex; "
+                  "in highp vec2 aUV; "
+                  "out highp vec2 vUV; "
+                  "void main(void) {"
+                  "gl_Position = aVertex; "
+                  "vUV = aUV; }"),
+            // Fragment shader:
+            Block("uniform sampler2D uTex; "
+                  "uniform sampler2D uTex2; "
+                  "in highp vec2 vUV; "
+                  "void main(void) { "
+                  //"if (int(mod(gl_FragCoord.y - 1023.5, 2.0)) != 1) { discard; }\n"
+                  //"if ((int(gl_FragCoord.y) & 1) == 0) { discard; }"
+                  "out_FragColor = ((int(gl_FragCoord.y) & 1) == 0 ? texture(uTex, vUV) :"
+                  "texture(uTex2, vUV)); }"))
+            << rowInterUniformTex << rowInterUniformTex2;
+         buf->setVertices(gl::TriangleStrip,
                          VBuf::Builder().makeQuad(Rectanglef(-1, -1, 2, 2), Rectanglef(0, 0, 1, 1)),
                          gl::Static);
     }
@@ -244,25 +254,25 @@ DENG2_PIMPL(VRWindowTransform)
         case VRConfig::GreenMagenta:
             // Left eye view
             vrCfg.setCurrentEye(VRConfig::LeftEye);
-            GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha).apply(); // Left eye view green
+            GLState::push().setColorMask(gl::WriteGreen | gl::WriteAlpha); // Left eye view green
             drawContent();
             // Right eye view
             vrCfg.setCurrentEye(VRConfig::RightEye);
-            GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view magenta
+            GLState::current().setColorMask(gl::WriteRed | gl::WriteBlue | gl::WriteAlpha); // Right eye view magenta
             drawContent();
-            GLState::pop().apply();
+            GLState::pop();
             break;
 
         case VRConfig::RedCyan:
             // Left eye view
             vrCfg.setCurrentEye(VRConfig::LeftEye);
-            GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha).apply(); // Left eye view red
+            GLState::push().setColorMask(gl::WriteRed | gl::WriteAlpha); // Left eye view red
             drawContent();
             // Right eye view
             vrCfg.setCurrentEye(VRConfig::RightEye);
-            GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha).apply(); // Right eye view cyan
+            GLState::current().setColorMask(gl::WriteGreen | gl::WriteBlue | gl::WriteAlpha); // Right eye view cyan
             drawContent();
-            GLState::pop().apply();
+            GLState::pop();
             break;
 
         case VRConfig::QuadBuffered:
@@ -288,34 +298,45 @@ DENG2_PIMPL(VRWindowTransform)
             break;
 
         case VRConfig::RowInterleaved: {
+#if !defined (DENG_MOBILE)
             // Use absolute screen position of window to determine whether the
             // first scan line is odd or even.
             QPoint ulCorner(0, 0);
             ulCorner = self().window().mapToGlobal(ulCorner); // widget to screen coordinates
-            bool const rowParityIsEven = ((ulCorner.y() % 2) == 0);
+            bool const rowParityIsEven = ((int(ulCorner.y()) % 2) == 0);
 
-            // Draw left eye view directly to the screen
+            rowInterNeedRelease = false;
+
+            // Draw the left eye view.
+            rowInterLeftFB.glInit();
+            rowInterLeftFB.resize(GLFramebuffer::Size(width(), height()));
+            rowInterLeftFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            rowInterLeftFB.colorTexture().glApplyParameters();
+            GLState::push()
+                    .setTarget(rowInterLeftFB)
+                    .setViewport(Rectangleui::fromSize(rowInterLeftFB.size()));
             vrCfg.setCurrentEye(rowParityIsEven? VRConfig::LeftEye : VRConfig::RightEye);
             drawContent();
+            GLState::pop();
 
-            // Draw right eye view to FBO
-            rowInterNeedRelease = false;
+            // Draw right the eye view.
             rowInterRightFB.glInit();
             rowInterRightFB.resize(GLFramebuffer::Size(width(), height()));
             rowInterRightFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
             rowInterRightFB.colorTexture().glApplyParameters();
             GLState::push()
                     .setTarget(rowInterRightFB)
-                    .setViewport(Rectangleui::fromSize(rowInterRightFB.size()))
-                    .apply();
+                    .setViewport(Rectangleui::fromSize(rowInterRightFB.size()));
             vrCfg.setCurrentEye(rowParityIsEven ? VRConfig::RightEye : VRConfig::LeftEye);
             drawContent();
-            GLState::pop().apply();
+            GLState::pop();
 
             // Draw right eye view to the screen from FBO color texture
             vrInitRowInterleaved();
-            rowInterUniformTex = rowInterRightFB.colorTexture();
+            rowInterUniformTex  = rowInterLeftFB.colorTexture();
+            rowInterUniformTex2 = rowInterRightFB.colorTexture();
             rowInterDrawable.draw();
+#endif
             break;
           }
 
@@ -373,7 +394,7 @@ Vector2ui VRWindowTransform::logicalRootSize(Vector2ui const &physicalWindowSize
         // Adjust effective UI size for stereoscopic rendering.
         size.x = size.y * d->vrCfg.oculusRift().aspect();
         //size.y *= d->vrCfg.oculusRift().aspect();
-        size *= GuiWidget::toDevicePixels(1) * .75f;
+        size *= GuiWidget::pointsToPixels(1) * .75f;
         break;
 
     // Allow UI to squish in top/bottom and SBS mode: 3D hardware will unsquish them

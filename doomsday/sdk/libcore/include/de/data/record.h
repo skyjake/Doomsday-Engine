@@ -244,6 +244,8 @@ public:
      */
     Variable *remove(String const &variableName);
 
+    Variable *tryRemove(String const &variableName);
+
     /**
      * Adds a new variable to the record with a NoneValue. If there is an existing
      * variable with the given name, the old variable is deleted first.
@@ -252,7 +254,7 @@ public:
      *
      * @return  The new variable.
      */
-    Variable &add(String const &variableName);
+    Variable &add(String const &variableName, Variable::Flags variableFlag = Variable::DefaultMode);
 
     /**
      * Adds a number variable to the record. The variable is set up to only accept
@@ -263,7 +265,7 @@ public:
      *
      * @return  The number variable.
      */
-    Variable &addNumber(String const &variableName, Value::Number const &number);
+    Variable &addNumber(String const &variableName, Value::Number number);
 
     /**
      * Adds a number variable to the record with a Boolean semantic hint. The variable is
@@ -392,7 +394,10 @@ public:
     Variable &set(String const &name, Value::Text const &value);
 
     /// @copydoc set()
-    Variable &set(String const &name, Value::Number const &value);
+    Variable &set(String const &name, Value::Number value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, const NumberValue &value);
 
     /// @copydoc set()
     Variable &set(String const &name, dint32 value);
@@ -409,6 +414,15 @@ public:
     /// @copydoc set()
     Variable &set(String const &name, unsigned long value);
 
+    /// @copydoc set()
+    Variable &set(String const &name, Time const &value);
+
+    /// @copydoc set()
+    Variable &set(String const &name, Block const &value);
+
+    /// @copydoc set()
+    Variable &set(const String &name, const Record &value);
+
     /**
      * Sets the value of a variable, creating the variable if it doesn't exist.
      *
@@ -416,6 +430,10 @@ public:
      * @param value  Array to use as the value of the variable. Ownership taken.
      */
     Variable &set(String const &name, ArrayValue *value);
+
+    Variable &set(String const &name, Value *value);
+
+    Variable &set(String const &name, const Value &value);
 
     /**
      * Appends a word to the value of the variable.
@@ -428,6 +446,8 @@ public:
     Variable &appendWord(String const &name, String const &word, String const &separator = " ");
 
     Variable &appendUniqueWord(String const &name, String const &word, String const &separator = " ");
+
+    Variable &appendMultipleUniqueWords(String const &name, String const &words, String const &separator = " ");
 
     Variable &appendToArray(String const &name, Value *value);
 
@@ -460,6 +480,10 @@ public:
      */
     Variable const &operator [] (String const &name) const;
 
+    Variable *tryFind(String const &name);
+
+    Variable const *tryFind(String const &name) const;
+
     inline Variable &member(String const &name) {
         return (*this)[name];
     }
@@ -485,6 +509,10 @@ public:
      * @return  Subrecord (non-modifiable).
      */
     Record const &subrecord(String const &name) const;
+
+    dsize size() const;
+
+    inline bool isEmpty() const { return size() == 0; }
 
     /**
      * Returns a non-modifiable map of the members.
@@ -594,6 +622,8 @@ public:
      * @return Record containing the @a name.
      */
     Record const &parentRecordForMember(String const &name) const;
+
+    String asInfo() const;
 
     // Implements ISerializable.
     void operator >> (Writer &to) const;

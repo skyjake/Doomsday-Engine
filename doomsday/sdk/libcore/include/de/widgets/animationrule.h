@@ -47,11 +47,11 @@ public:
      * @param transition  Transition time to reach the current or future target values.
      * @param style       Animation style.
      */
-    explicit AnimationRule(Rule const &target, TimeDelta transition, Animation::Style style = Animation::EaseOut);
+    explicit AnimationRule(Rule const &target, TimeSpan transition, Animation::Style style = Animation::EaseOut);
 
-    void set(float target, TimeDelta transition = 0, TimeDelta delay = 0);
+    void set(float target, TimeSpan transition = 0, TimeSpan delay = 0);
 
-    void set(Rule const &target, TimeDelta transition = 0, TimeDelta delay = 0);
+    void set(Rule const &target, TimeSpan transition = 0, TimeSpan delay = 0);
 
     /**
      * Sets the animation style of the rule.

@@ -49,9 +49,6 @@
 
 using namespace de;
 
-// The interface to the Doomsday engine.
-game_export_t gx;
-
 // Identifiers given to the games we register during startup.
 static char const *gameIds[NUM_GAME_MODES] =
 {
@@ -60,10 +57,20 @@ static char const *gameIds[NUM_GAME_MODES] =
     "heretic-ext",
 };
 
+static void setCommonParameters(Game &game)
+{
+    Record gameplayOptions;
+    gameplayOptions.set("fast", Record::withMembers("label", "Fast Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("respawn", Record::withMembers("label", "Respawn Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("noMonsters", Record::withMembers("label", "No Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("turbo", Record::withMembers("label", "Move Speed", "type", "number", "default", 1.0, "min", 0.1, "max", 4.0, "step", 0.1));
+    game.objectNamespace().set(Game::DEF_OPTIONS, gameplayOptions);
+}
+
 /**
  * Register the game modes supported by this plugin.
  */
-int G_RegisterGames(int hookType, int param, void* data)
+static int G_RegisterGames(int hookType, int param, void* data)
 {
     Games &games = DoomsdayApp::games();
 
@@ -89,6 +96,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     extended.addResource(RC_DEFINITION, 0, "heretic-ext.ded", 0);
     extended.setRequiredPackages(StringList() << "com.ravensoftware.heretic.extended"
                                               << "net.dengine.legacy.heretic_2");
+    setCommonParameters(extended);
 
     /* Heretic */
     Game &htc = games.defineGame(gameIds[heretic],
@@ -105,6 +113,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     htc.addResource(RC_DEFINITION, 0, "heretic.ded", 0);
     htc.setRequiredPackages(StringList() << "com.ravensoftware.heretic"
                                          << "net.dengine.legacy.heretic_2");
+    setCommonParameters(htc);
 
     /* Heretic (Shareware) */
     Game &shareware = games.defineGame(gameIds[heretic_shareware],
@@ -121,6 +130,7 @@ int G_RegisterGames(int hookType, int param, void* data)
     shareware.addResource(RC_DEFINITION, 0, "heretic-share.ded", 0);
     shareware.setRequiredPackages(StringList() << "com.ravensoftware.heretic.shareware"
                                                << "net.dengine.legacy.heretic_2");
+    setCommonParameters(shareware);
     return true;
 
 #undef STARTUPPK3
@@ -130,7 +140,7 @@ int G_RegisterGames(int hookType, int param, void* data)
 /**
  * Called right after the game plugin is selected into use.
  */
-DENG_EXTERN_C void DP_Load(void)
+DENG_ENTRYPOINT void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_HERETIC);
@@ -139,12 +149,12 @@ DENG_EXTERN_C void DP_Load(void)
 /**
  * Called when the game plugin is freed from memory.
  */
-DENG_EXTERN_C void DP_Unload(void)
+DENG_ENTRYPOINT void DP_Unload(void)
 {
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-DENG_EXTERN_C void G_PreInit(char const *gameId)
+void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
@@ -171,64 +181,37 @@ dd_bool G_TryShutdown(void)
     return true;
 }
 
-/**
- * Takes a copy of the engine's entry points and exported data. Returns
- * a pointer to the structure that contains our entry points and exports.
- */
-DENG_EXTERN_C game_export_t *GetGameAPI(void)
+DENG_ENTRYPOINT void *GetGameAPI(char const *name)
 {
-    // Clear all of our exports.
-    memset(&gx, 0, sizeof(gx));
+    if (auto *ptr = Common_GetGameAPI(name))
+    {
+        return ptr;
+    }
 
-    // Fill in the data for the exports.
-    gx.apiSize = sizeof(gx);
-    gx.PreInit = G_PreInit;
-    gx.PostInit = H_PostInit;
-    gx.TryShutdown = G_TryShutdown;
-    gx.Shutdown = H_Shutdown;
-    gx.Ticker = G_Ticker;
-    gx.DrawViewPort = G_DrawViewPort;
-    gx.DrawWindow = H_DrawWindow;
-    gx.FinaleResponder = FI_PrivilegedResponder;
-    gx.PrivilegedResponder = G_PrivilegedResponder;
-    gx.Responder = G_Responder;
-    gx.EndFrame = H_EndFrame;
-    gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = Mobj_Friction;
-    gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
-    gx.MobjTryMoveXYZ = P_TryMoveXYZ;
-    gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
-    gx.UpdateState = G_UpdateState;
+    #define HASH_ENTRY(Name, Func) std::make_pair(QByteArray(Name), de::function_cast<void *>(Func))
+    static QHash<QByteArray, void *> const funcs(
+    {
+        HASH_ENTRY("DrawWindow",    H_DrawWindow),
+        HASH_ENTRY("EndFrame",      H_EndFrame),
+        HASH_ENTRY("GetInteger",    H_GetInteger),
+        HASH_ENTRY("GetPointer",    H_GetVariable),
+        HASH_ENTRY("PostInit",      H_PostInit),
+        HASH_ENTRY("PreInit",       G_PreInit),
+        HASH_ENTRY("Shutdown",      H_Shutdown),
+        HASH_ENTRY("TryShutdown",   G_TryShutdown),
+    });
+    #undef HASH_ENTRY
 
-    gx.GetInteger = H_GetInteger;
-    gx.GetVariable = H_GetVariable;
-
-    gx.NetServerStart = D_NetServerStarted;
-    gx.NetServerStop = D_NetServerClose;
-    gx.NetConnect = D_NetConnect;
-    gx.NetDisconnect = D_NetDisconnect;
-    gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.NetWorldEvent = D_NetWorldEvent;
-    gx.HandlePacket = D_HandlePacket;
-
-    // Data structure sizes.
-    gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(Polyobj);
-
-    gx.FinalizeMapChange = (void (*)(void const *)) P_FinalizeMapChange;
-
-    // These really need better names. Ideas?
-    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
-    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
-
-    return &gx;
+    auto found = funcs.find(name);
+    if (found != funcs.end()) return found.value();
+    return nullptr;
 }
 
 /**
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_EXTERN_C void DP_Initialize(void)
+DENG_ENTRYPOINT void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
@@ -237,10 +220,25 @@ DENG_EXTERN_C void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C char const *deng_LibraryType(void)
+DENG_ENTRYPOINT char const *deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }
+
+#if defined (DENG_STATIC_LINK)
+
+DENG_EXTERN_C void *staticlib_heretic_symbol(char const *name)
+{
+    DENG_SYMBOL_PTR(name, deng_LibraryType)
+    DENG_SYMBOL_PTR(name, DP_Initialize);
+    DENG_SYMBOL_PTR(name, DP_Load);
+    DENG_SYMBOL_PTR(name, DP_Unload);
+    DENG_SYMBOL_PTR(name, GetGameAPI);
+    qWarning() << name << "not found in heretic";
+    return nullptr;
+}
+
+#else
 
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(B);
@@ -289,3 +287,5 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_THINKER, Thinker);
     DENG_GET_API(DE_API_URI, Uri);
 )
+
+#endif

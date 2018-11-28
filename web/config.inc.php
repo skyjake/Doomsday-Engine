@@ -23,6 +23,8 @@
  * @author Copyright &copy; 2009-2013 Daniel Swanson <danij@dengine.net>
  */
 
+define('DENG_API_DIR', '/home/skyjake/api/1');
+
 // Framework configuration:
 $siteconfig['VisibleErrors'] = false;
 
@@ -39,4 +41,5 @@ $siteconfig['Keywords'] = array(
     'Doom', 'Heretic', 'Hexen',
     'libdoom', 'libheretic', 'libhexen',
     'jDoom', 'jHeretic', 'jHexen',
-    'sourceport', 'first person shooter', 'fps');
+    'sourceport', 'first person shooter', 'fps', 
+    'retro', 'retrogaming');

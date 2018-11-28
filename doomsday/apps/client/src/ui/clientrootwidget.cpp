@@ -24,13 +24,26 @@
 
 using namespace de;
 
+DENG2_PIMPL_NOREF(ClientRootWidget)
+{
+    PackageIconBank packageIconBank;
+};
+
 ClientRootWidget::ClientRootWidget(GLWindow *window)
     : GuiRootWidget(window)
-{}
+    , d(new Impl)
+{
+    d->packageIconBank.setDisplaySize(GuiWidget::pointsToPixels(PackageIconBank::Size(32, 32)));
+}
 
 ClientWindow &ClientRootWidget::window()
 {
     return GuiRootWidget::window().as<ClientWindow>();
+}
+
+PackageIconBank &ClientRootWidget::packageIconBank()
+{
+    return d->packageIconBank;
 }
 
 void ClientRootWidget::update()
@@ -38,6 +51,11 @@ void ClientRootWidget::update()
     if (!DoomsdayApp::app().isShuttingDown())
     {
         GuiRootWidget::update();
+
+        if (window().isGLReady() && !d->packageIconBank.atlas())
+        {
+            d->packageIconBank.setAtlas(&atlas());
+        }
     }
 }
 

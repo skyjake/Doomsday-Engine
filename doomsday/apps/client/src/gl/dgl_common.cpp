@@ -27,6 +27,8 @@
 #include <de/concurrency.h>
 #include <de/GLInfo>
 #include <de/GLState>
+#include <de/GLUniform>
+#include <de/Matrix>
 #include <doomsday/res/Textures>
 
 #include "api_gl.h"
@@ -38,6 +40,163 @@
 
 using namespace de;
 
+struct DGLState
+{
+    int matrixMode = 0;
+    QVector<Matrix4f> matrixStacks[4];
+
+    int activeTexture = 0;
+    bool enableTexture[2] { true, false };
+    int textureModulation = 1;
+    Vector4f textureModulationColor;
+
+    bool enableFog = false;
+    DGLenum fogMode = DGL_LINEAR;
+    float fogStart = 0;
+    float fogEnd = 0;
+    float fogDensity = 0;
+    Vector4f fogColor;
+    bool flushBacktrace = false;
+
+    DGLState()
+    {
+        // The matrix stacks initially contain identity matrices.
+        for (auto &stack : matrixStacks)
+        {
+            stack.append(Matrix4f());
+        }
+    }
+
+    int stackIndex(DGLenum id) const
+    {
+        switch (id)
+        {
+        case DGL_TEXTURE0:
+            return 2;
+
+        case DGL_TEXTURE1:
+            return 3;
+
+        case DGL_TEXTURE:
+            return 2 + activeTexture;
+
+        default: {
+            int const index = int(id) - DGL_MODELVIEW;
+            DENG2_ASSERT(index >= 0 && index < 2);
+            return index; }
+        }
+    }
+
+    void pushMatrix()
+    {
+        auto &stack = matrixStacks[matrixMode];
+        stack.push_back(stack.back());
+    }
+
+    void popMatrix()
+    {
+        auto &stack = matrixStacks[matrixMode];
+        DENG2_ASSERT(stack.size() > 1);
+        stack.pop_back();
+    }
+
+    void loadMatrix(Matrix4f const &mat)
+    {
+        auto &stack = matrixStacks[matrixMode];
+        DENG2_ASSERT(!stack.isEmpty());
+        stack.back() = mat;
+    }
+
+    void multMatrix(Matrix4f const &mat)
+    {
+        auto &stack = matrixStacks[matrixMode];
+        DENG2_ASSERT(!stack.isEmpty());
+        stack.back() = stack.back() * mat;
+    }
+};
+
+static DGLState dgl;
+
+Matrix4f DGL_Matrix(DGLenum matrixMode)
+{
+    return dgl.matrixStacks[dgl.stackIndex(matrixMode)].back();
+}
+
+void DGL_SetModulationColor(Vector4f const &modColor)
+{
+    dgl.textureModulationColor = modColor;
+}
+
+Vector4f DGL_ModulationColor()
+{
+    return dgl.textureModulationColor;
+}
+
+void DGL_FogParams(GLUniform &fogRange, GLUniform &fogColor)
+{
+    if (dgl.enableFog)
+    {
+        fogColor = Vector4f(dgl.fogColor[0],
+                            dgl.fogColor[1],
+                            dgl.fogColor[2],
+                            1.f);
+
+        // TODO: Implement EXP and EXP2 fog modes. This is LINEAR.
+
+        Rangef const depthPlanes = GL_DepthClipRange();
+        float const fogDepth = dgl.fogEnd - dgl.fogStart;
+        fogRange = Vector4f(dgl.fogStart,
+                            fogDepth,
+                            depthPlanes.start,
+                            depthPlanes.end);
+    }
+    else
+    {
+        fogColor = Vector4f();
+    }
+}
+
+void DGL_DepthFunc(DGLenum depthFunc)
+{
+    using namespace de::gl;
+
+    static const Comparison funcs[] = {
+        Never,
+        Always,
+        Equal,
+        NotEqual,
+        Less,
+        Greater,
+        LessOrEqual,
+        GreaterOrEqual
+    };
+
+    DENG2_ASSERT(depthFunc >= DGL_NEVER && depthFunc <= DGL_GEQUAL);
+
+    const auto f = funcs[depthFunc - DGL_NEVER];
+    if (GLState::current().depthFunc() != f)
+    {
+        DGL_Flush();
+        GLState::current().setDepthFunc(f);
+    }
+}
+
+void DGL_CullFace(DGLenum cull)
+{
+    const auto c =
+        ( cull == DGL_NONE  ? gl::None
+        : cull == DGL_BACK  ? gl::Back
+        : cull == DGL_FRONT ? gl::Front
+                            : gl::None );
+
+    if (GLState::current().cull() != c)
+    {
+        DGL_Flush();
+        GLState::current().setCull(c);
+    }
+}
+
+#if 0
 /**
  * Requires a texture environment mode that can add and multiply.
  * Nvidia's and ATI's appropriate extensions are supported, other cards will
@@ -113,15 +272,38 @@ static void envModMultiTex(int activate)
     // This is a single-pass mode. The alpha should remain unmodified
     // during the light stage.
     if(activate)
-    {   // Replace: primAlpha.
+    {
+        // Replace: primAlpha.
         LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_COMBINE_ALPHA, GL_REPLACE);
         LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_SOURCE0_ALPHA, GL_PREVIOUS);
         LIBGUI_GL.glTexEnvi(GL_TEXTURE_ENV, GL_OPERAND0_ALPHA, GL_SRC_ALPHA);
     }
 }
+#endif
 
-void GL_ModulateTexture(int mode)
+void DGL_ModulateTexture(int mode)
 {
+    dgl.textureModulation = mode;
+
+    switch (mode)
+    {
+    default:
+        qDebug() << "DGL_ModulateTexture: texture modulation mode" << mode << "not implemented";
+        break;
+
+    case 0:
+    case 1:
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+    case 8:
+    case 10:
+    case 11:
+        break;
+    }
+
+#if 0
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
@@ -305,6 +487,7 @@ void GL_ModulateTexture(int mode)
     default:
         break;
     }
+#endif
 }
 
 /*void GL_BlendOp(int op)
@@ -337,7 +520,7 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
 {
     if(!rect) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     GameWidget &game = ClientWindow::main().game();
@@ -347,11 +530,12 @@ DENG_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
     // has been set to cover the game widget area, so we can set the scissor relative
     // to it.
 
-    auto norm = GuiWidget::normalizedRect(Rectanglei(rect->origin.x, rect->origin.y,
-                                                     rect->size.width, rect->size.height),
-                                          Rectanglei::fromSize(game.rule().recti().size()));
+    auto const norm = GuiWidget::normalizedRect(Rectanglei(rect->origin.x, rect->origin.y,
+                                                           rect->size.width, rect->size.height),
+                                                Rectanglei::fromSize(game.rule().recti().size()));
 
-    GLState::current().setNormalizedScissor(norm).apply();
+    DGL_Flush();
+    GLState::current().setNormalizedScissor(norm);
 }
 
 #undef DGL_SetScissor2
@@ -368,50 +552,79 @@ DENG_EXTERN_C void DGL_SetScissor2(int x, int y, int width, int height)
 #undef DGL_GetIntegerv
 dd_bool DGL_GetIntegerv(int name, int *v)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     float color[4];
     switch(name)
     {
-    case DGL_MODULATE_ADD_COMBINE:
-        *v = GLInfo::extensions().NV_texture_env_combine4 || GLInfo::extensions().ATI_texture_env_combine3;
+    case DGL_ACTIVE_TEXTURE:
+        *v = dgl.activeTexture;
         break;
+
+    case DGL_TEXTURE_2D:
+        *v = (dgl.enableTexture[dgl.activeTexture]? 1 : 0);
+        break;
+
+    case DGL_TEXTURE0:
+        *v = dgl.enableTexture[0]? 1 : 0;
+        break;
+
+    case DGL_TEXTURE1:
+        *v = dgl.enableTexture[1]? 1 : 0;
+        break;
+
+    case DGL_MODULATE_TEXTURE:
+        *v = dgl.textureModulation;
+        break;
+
+//    case DGL_MODULATE_ADD_COMBINE:
+//        qDebug() << "DGL_GetIntegerv: tex env not available";
+//        //*v = GLInfo::extensions().NV_texture_env_combine4 || GLInfo::extensions().ATI_texture_env_combine3;
+//        break;
 
     case DGL_SCISSOR_TEST:
         *(GLint *) v = GLState::current().scissor();
         break;
 
     case DGL_FOG:
-        *v = GL_state.currentUseFog;
+        *v = (dgl.enableFog? 1 : 0);
+        break;
+
+    case DGL_FOG_MODE:
+        *v = int(dgl.fogMode);
         break;
 
     case DGL_CURRENT_COLOR_R:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[0] * 255);
         break;
 
     case DGL_CURRENT_COLOR_G:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[1] * 255);
         break;
 
     case DGL_CURRENT_COLOR_B:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[2] * 255);
         break;
 
     case DGL_CURRENT_COLOR_A:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = int(color[3] * 255);
         break;
 
     case DGL_CURRENT_COLOR_RGBA:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
-        for(int i = 0; i < 4; ++i)
+        DGL_CurrentColor(color);
+        for (int i = 0; i < 4; ++i)
         {
             v[i] = int(color[i] * 255);
         }
+        break;
+
+    case DGL_FLUSH_BACKTRACE:
+        *v = dgl.flushBacktrace ? 1 : 0;
         break;
 
     default:
@@ -432,17 +645,22 @@ int DGL_GetInteger(int name)
 #undef DGL_SetInteger
 dd_bool DGL_SetInteger(int name, int value)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + byte(value));
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+        DENG2_ASSERT(value >= 0);
+        DENG2_ASSERT(value < MAX_TEX_UNITS);
+        dgl.activeTexture = value;
+        LIBGUI_GL.glActiveTexture(GLenum(GL_TEXTURE0 + value));
         break;
 
     case DGL_MODULATE_TEXTURE:
-        GL_ModulateTexture(value);
+        DGL_ModulateTexture(value);
+        break;
+
+    case DGL_FLUSH_BACKTRACE:
+        dgl.flushBacktrace = true;
         break;
 
     default:
@@ -455,38 +673,61 @@ dd_bool DGL_SetInteger(int name, int value)
 #undef DGL_GetFloatv
 dd_bool DGL_GetFloatv(int name, float *v)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG_ASSERT_IN_MAIN_THREAD();
+    //DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     float color[4];
-    switch(name)
+    switch (name)
     {
     case DGL_CURRENT_COLOR_R:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[0];
         break;
 
     case DGL_CURRENT_COLOR_G:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[1];
         break;
 
     case DGL_CURRENT_COLOR_B:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[2];
         break;
 
     case DGL_CURRENT_COLOR_A:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
+        DGL_CurrentColor(color);
         *v = color[3];
         break;
 
     case DGL_CURRENT_COLOR_RGBA:
-        LIBGUI_GL.glGetFloatv(GL_CURRENT_COLOR, color);
-        for(int i = 0; i < 4; ++i)
+        DGL_CurrentColor(v);
+        break;
+
+    case DGL_FOG_START:
+        v[0] = dgl.fogStart;
+        break;
+
+    case DGL_FOG_END:
+        v[0] = dgl.fogEnd;
+        break;
+
+    case DGL_FOG_DENSITY:
+        v[0] = dgl.fogDensity;
+        break;
+
+    case DGL_FOG_COLOR:
+        for (int i = 0; i < 4; ++i)
         {
-            v[i] = color[i];
+            v[i] = dgl.fogColor[i];
         }
+        break;
+
+    case DGL_LINE_WIDTH:
+        v[0] = GL_state.currentLineWidth;
+        break;
+
+    case DGL_POINT_SIZE:
+        v[0] = GL_state.currentPointSize;
         break;
 
     default:
@@ -499,35 +740,35 @@ dd_bool DGL_GetFloatv(int name, float *v)
 #undef DGL_GetFloat
 float DGL_GetFloat(int name)
 {
-    switch(name)
-    {
-    case DGL_LINE_WIDTH:
-        return GL_state.currentLineWidth;
-
-    case DGL_POINT_SIZE:
-        return GL_state.currentPointSize;
-
-    default:
-        return 0;
-    }
+    float value = 0.f;
+    DGL_GetFloatv(name, &value);
+    return value;
 }
 
 #undef DGL_SetFloat
 dd_bool DGL_SetFloat(int name, float value)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
     switch(name)
     {
     case DGL_LINE_WIDTH:
-        GL_state.currentLineWidth = value;
-        LIBGUI_GL.glLineWidth(value);
+        if (!fequal(value, GL_state.currentLineWidth))
+        {
+            DGL_Flush();
+            GL_state.currentLineWidth = value;
+        }
         break;
 
     case DGL_POINT_SIZE:
         GL_state.currentPointSize = value;
+#if defined (DENG_OPENGL)
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         LIBGUI_GL.glPointSize(value);
+#endif
+        break;
+
+    case DGL_ALPHA_LIMIT:
+        // No flushing required.
+        GLState::current().setAlphaLimit(value);
         break;
 
     default:
@@ -540,158 +781,225 @@ dd_bool DGL_SetFloat(int name, float value)
 #undef DGL_PushState
 void DGL_PushState(void)
 {
+    DGL_Flush();
     GLState::push();
 }
 
 #undef DGL_PopState
 void DGL_PopState(void)
 {
+    DGL_Flush();
     GLState::pop();
-
-    // Make sure the restored state is immediately in effect.
-    GLState::current().apply();
 }
 
 #undef DGL_Enable
 int DGL_Enable(int cap)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    switch(cap)
+    switch (cap)
     {
-    case DGL_TEXTURE_2D:
-        Deferred_glEnable(GL_TEXTURE_2D);
-        break;
+        case DGL_BLEND:
+            if (!GLState::current().blend())
+            {
+                DGL_Flush();
+                GLState::current().setBlend(true);
+            }
+            break;
 
-    case DGL_FOG:
-        Deferred_glEnable(GL_FOG);
-        GL_state.currentUseFog = true;
-        break;
+        case DGL_ALPHA_TEST:
+            // No flushing required.
+            GLState::current().setAlphaTest(true);
+            break;
 
-    case DGL_SCISSOR_TEST:
-        //glEnable(GL_SCISSOR_TEST);
-        break;
+        case DGL_DEPTH_TEST:
+            if (!GLState::current().depthTest())
+            {
+                DGL_Flush();
+                GLState::current().setDepthTest(true);
+            }
+            break;
 
-    case DGL_LINE_SMOOTH:
-        Deferred_glEnable(GL_LINE_SMOOTH);
-        break;
+        case DGL_DEPTH_WRITE:
+            if (!GLState::current().depthWrite())
+            {
+                DGL_Flush();
+                GLState::current().setDepthWrite(true);
+            }
+            break;
 
-    case DGL_POINT_SMOOTH:
-        Deferred_glEnable(GL_POINT_SMOOTH);
-        break;
+        case DGL_TEXTURE_2D: dgl.enableTexture[dgl.activeTexture] = true; break;
 
-    default:
-        DENG_ASSERT(!"DGL_Enable: Invalid cap");
-        return 0;
+        case DGL_TEXTURE0:
+            DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+            dgl.enableTexture[0] = true;
+            break;
+
+        case DGL_TEXTURE1:
+            DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+            dgl.enableTexture[1] = true;
+            break;
+
+        case DGL_FOG:
+            if (!dgl.enableFog)
+            {
+                DGL_Flush();
+                dgl.enableFog = true;
+            }
+            break;
+
+        case DGL_SCISSOR_TEST:
+            //glEnable(GL_SCISSOR_TEST);
+            break;
+
+        case DGL_LINE_SMOOTH:
+#if defined(DENG_OPENGL)
+            Deferred_glEnable(GL_LINE_SMOOTH);
+#endif
+            break;
+
+        case DGL_POINT_SMOOTH:
+            //Deferred_glEnable(GL_POINT_SMOOTH);
+            // TODO: Not needed?
+            break;
+
+        default: DENG_ASSERT(!"DGL_Enable: Invalid cap"); return 0;
     }
 
+    LIBGUI_ASSERT_GL_OK();
     return 1;
 }
 
 #undef DGL_Disable
 void DGL_Disable(int cap)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    switch(cap)
+    switch (cap)
     {
-    case DGL_TEXTURE_2D:
-        Deferred_glDisable(GL_TEXTURE_2D);
-        break;
+        case DGL_BLEND:
+            if (GLState::current().blend())
+            {
+                DGL_Flush();
+                GLState::current().setBlend(false);
+            }
+            break;
 
-    case DGL_FOG:
-        Deferred_glDisable(GL_FOG);
-        GL_state.currentUseFog = false;
-        break;
+        case DGL_DEPTH_TEST:
+            if (GLState::current().depthTest())
+            {
+                DGL_Flush();
+                GLState::current().setDepthTest(false);
+            }
+            break;
 
-    case DGL_SCISSOR_TEST:
-        //glDisable(GL_SCISSOR_TEST);
-        GLState::current().clearScissor().apply();
-        break;
+        case DGL_DEPTH_WRITE:
+            if (GLState::current().depthWrite())
+            {
+                DGL_Flush();
+                GLState::current().setDepthWrite(false);
+            }
+            break;
 
-    case DGL_LINE_SMOOTH:
-        Deferred_glDisable(GL_LINE_SMOOTH);
-        break;
+        case DGL_ALPHA_TEST:
+            // No flushing required.
+            GLState::current().setAlphaTest(false);
+            break;
 
-    case DGL_POINT_SMOOTH:
-        Deferred_glDisable(GL_POINT_SMOOTH);
-        break;
+        case DGL_TEXTURE_2D: dgl.enableTexture[dgl.activeTexture] = false; break;
 
-    default:
-        DENG_ASSERT(!"DGL_Disable: Invalid cap");
-        break;
+        case DGL_TEXTURE0:
+            DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
+            dgl.enableTexture[0] = false;
+            break;
+
+        case DGL_TEXTURE1:
+            DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
+            dgl.enableTexture[1] = false;
+            break;
+
+        case DGL_FOG:
+            if (dgl.enableFog)
+            {
+                DGL_Flush();
+                dgl.enableFog = false;
+            }
+            break;
+
+        case DGL_SCISSOR_TEST:
+            DGL_Flush();
+            GLState::current().clearScissor();
+            break;
+
+        case DGL_LINE_SMOOTH:
+#if defined(DENG_OPENGL)
+            Deferred_glDisable(GL_LINE_SMOOTH);
+#endif
+            break;
+
+        case DGL_POINT_SMOOTH:
+#if defined(DENG_OPENGL)
+            Deferred_glDisable(GL_POINT_SMOOTH);
+#endif
+            break;
+
+        default: DENG_ASSERT(!"DGL_Disable: Invalid cap"); break;
     }
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 #undef DGL_BlendOp
 void DGL_BlendOp(int op)
 {
-    GLState::current().setBlendOp(op == DGL_SUBTRACT         ? gl::Subtract :
-                                  op == DGL_REVERSE_SUBTRACT ? gl::ReverseSubtract :
-                                                               gl::Add)
-            .apply();
+    const auto glop = op == DGL_SUBTRACT ? gl::Subtract :
+                                           op == DGL_REVERSE_SUBTRACT ? gl::ReverseSubtract :
+                                                                        gl::Add;
+    if (GLState::current().blendOp() != glop)
+    {
+        DGL_Flush();
+        GLState::current().setBlendOp(glop);
+    }
 }
 
 #undef DGL_BlendFunc
 void DGL_BlendFunc(int param1, int param2)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLState::current().setBlendFunc(param1 == DGL_ZERO                ? gl::Zero :
-                                    param1 == DGL_ONE                 ? gl::One  :
-                                    param1 == DGL_DST_COLOR           ? gl::DestColor :
-                                    param1 == DGL_ONE_MINUS_DST_COLOR ? gl::OneMinusDestColor :
-                                    param1 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
-                                    param1 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
-                                    param1 == DGL_DST_ALPHA           ? gl::DestAlpha :
-                                    param1 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
-                                                                        gl::Zero
-                                    ,
-                                    param2 == DGL_ZERO                ? gl::Zero :
-                                    param2 == DGL_ONE                 ? gl::One :
-                                    param2 == DGL_SRC_COLOR           ? gl::SrcColor :
-                                    param2 == DGL_ONE_MINUS_SRC_COLOR ? gl::OneMinusSrcColor :
-                                    param2 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
-                                    param2 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
-                                    param2 == DGL_DST_ALPHA           ? gl::DestAlpha :
-                                    param2 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
-                                                                        gl::Zero)
-            .apply();
+    const auto src = param1 == DGL_ZERO ? gl::Zero :
+                                          param1 == DGL_ONE                 ? gl::One  :
+                                          param1 == DGL_DST_COLOR           ? gl::DestColor :
+                                          param1 == DGL_ONE_MINUS_DST_COLOR ? gl::OneMinusDestColor :
+                                          param1 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
+                                          param1 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
+                                          param1 == DGL_DST_ALPHA           ? gl::DestAlpha :
+                                          param1 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
+                                                                              gl::Zero;
+
+    const auto dst = param2 == DGL_ZERO ? gl::Zero :
+                                          param2 == DGL_ONE                 ? gl::One :
+                                          param2 == DGL_SRC_COLOR           ? gl::SrcColor :
+                                          param2 == DGL_ONE_MINUS_SRC_COLOR ? gl::OneMinusSrcColor :
+                                          param2 == DGL_SRC_ALPHA           ? gl::SrcAlpha :
+                                          param2 == DGL_ONE_MINUS_SRC_ALPHA ? gl::OneMinusSrcAlpha :
+                                          param2 == DGL_DST_ALPHA           ? gl::DestAlpha :
+                                          param2 == DGL_ONE_MINUS_DST_ALPHA ? gl::OneMinusDestAlpha :
+                                                                              gl::Zero;
+
+    auto &st = GLState::current();
+    if (st.blendFunc() != gl::BlendFunc(src, dst))
+    {
+        DGL_Flush();
+        GLState::current().setBlendFunc(src, dst);
+    }
 }
 
 #undef DGL_BlendMode
 void DGL_BlendMode(blendmode_t mode)
 {
     GL_BlendMode(mode);
-}
-
-#undef DGL_MatrixMode
-void DGL_MatrixMode(int mode)
-{
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    DENG_ASSERT(mode == DGL_PROJECTION || mode == DGL_TEXTURE || mode == DGL_MODELVIEW);
-
-    LIBGUI_GL.glMatrixMode(mode == DGL_PROJECTION ? GL_PROJECTION :
-                 mode == DGL_TEXTURE ? GL_TEXTURE :
-                 GL_MODELVIEW);
-}
-
-#undef DGL_PushMatrix
-void DGL_PushMatrix(void)
-{
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    LIBGUI_GL.glPushMatrix();
-
-#if _DEBUG
-    if(LIBGUI_GL.glGetError() == GL_STACK_OVERFLOW)
-        App_Error("DG_PushMatrix: Stack overflow.\n");
-#endif
 }
 
 #undef DGL_SetNoMaterial
@@ -705,13 +1013,17 @@ static gl::Wrapping DGL_ToGLWrapCap(DGLint cap)
     switch(cap)
     {
     case DGL_CLAMP:
-    case DGL_CLAMP_TO_EDGE: return gl::ClampToEdge;
+    case DGL_CLAMP_TO_EDGE:
+        return gl::ClampToEdge;
 
-    case DGL_REPEAT:        return gl::Repeat;
+    case DGL_REPEAT:
+        return gl::Repeat;
+
     default:
-        App_Error("DGL_ToGLWrapCap: Unknown cap value %i.", (int)cap);
-        exit(1); // Unreachable.
+        DENG2_ASSERT(!"DGL_ToGLWrapCap: Unknown cap value");
+        break;
     }
+    return gl::ClampToEdge;
 }
 
 #undef DGL_SetMaterialUI
@@ -762,63 +1074,116 @@ void DGL_SetRawImage(lumpnum_t lumpNum, DGLint wrapS, DGLint wrapT)
     GL_SetRawImage(lumpNum, DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
 }
 
+#undef DGL_MatrixMode
+void DGL_MatrixMode(DGLenum mode)
+{
+    //DENG2_ASSERT_IN_RENDER_THREAD();
+
+    dgl.matrixMode = dgl.stackIndex(mode);
+}
+
+#undef DGL_PushMatrix
+void DGL_PushMatrix(void)
+{
+    //DENG2_ASSERT_IN_RENDER_THREAD();
+
+    dgl.pushMatrix();
+}
+
 #undef DGL_PopMatrix
 void DGL_PopMatrix(void)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glPopMatrix();
-
-#if _DEBUG
-    if(LIBGUI_GL.glGetError() == GL_STACK_UNDERFLOW)
-        App_Error("DG_PopMatrix: Stack underflow.\n");
-#endif
+    dgl.popMatrix();
 }
 
 #undef DGL_LoadIdentity
 void DGL_LoadIdentity(void)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glLoadIdentity();
+    dgl.loadMatrix(Matrix4f());
+}
+
+#undef DGL_LoadMatrix
+void DGL_LoadMatrix(float const *matrix4x4)
+{
+    //DENG2_ASSERT_IN_RENDER_THREAD();
+
+    dgl.loadMatrix(Matrix4f(matrix4x4));
 }
 
 #undef DGL_Translatef
 void DGL_Translatef(float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glTranslatef(x, y, z);
+    dgl.multMatrix(Matrix4f::translate(Vector3f(x, y, z)));
 }
 
 #undef DGL_Rotatef
 void DGL_Rotatef(float angle, float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glRotatef(angle, x, y, z);
+    dgl.multMatrix(Matrix4f::rotate(angle, Vector3f(x, y, z)));
 }
 
 #undef DGL_Scalef
 void DGL_Scalef(float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glScalef(x, y, z);
+    dgl.multMatrix(Matrix4f::scale(Vector3f(x, y, z)));
 }
 
 #undef DGL_Ortho
 void DGL_Ortho(float left, float top, float right, float bottom, float znear, float zfar)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    //DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glOrtho(left, right, bottom, top, znear, zfar);
+    dgl.multMatrix(Matrix4f::ortho(left, right, top, bottom, znear, zfar));
+}
+
+#undef DGL_Fogi
+void DGL_Fogi(DGLenum property, int value)
+{
+    switch (property)
+    {
+    case DGL_FOG_MODE:
+        dgl.fogMode = DGLenum(value);
+        break;
+    }
+}
+
+#undef DGL_Fogfv
+void DGL_Fogfv(DGLenum property, float const *values)
+{
+    switch (property)
+    {
+    case DGL_FOG_START:
+        dgl.fogStart = values[0];
+        break;
+
+    case DGL_FOG_END:
+        dgl.fogEnd = values[0];
+        break;
+
+    case DGL_FOG_DENSITY:
+        dgl.fogDensity = values[0];
+        break;
+
+    case DGL_FOG_COLOR:
+        dgl.fogColor = Vector4f(values);
+        break;
+    }
+}
+
+#undef DGL_Fogf
+void DGL_Fogf(DGLenum property, float value)
+{
+    DGL_Fogfv(property, &value);
 }
 
 #undef DGL_DeleteTextures
@@ -826,7 +1191,7 @@ void DGL_DeleteTextures(int num, DGLuint const *names)
 {
     if(!num || !names) return;
 
-    Deferred_glDeleteTextures(num, (GLuint const *) names);
+    Deferred_glDeleteTextures(num, names);
 }
 
 #undef DGL_Bind
@@ -842,6 +1207,9 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
     uint8_t const *pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)
 {
+#if defined (DENG_OPENGL_ES)
+#  define GL_CLAMP GL_CLAMP_TO_EDGE
+#endif
     return GL_NewTextureWithParams(format, width, height, (uint8_t *)pixels, flags, 0,
                                     (minFilter == DGL_LINEAR                 ? GL_LINEAR :
                                      minFilter == DGL_NEAREST                ? GL_NEAREST :
@@ -855,15 +1223,14 @@ DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
                                      wrapS == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT),
                                     (wrapT == DGL_CLAMP         ? GL_CLAMP :
                                      wrapT == DGL_CLAMP_TO_EDGE ? GL_CLAMP_TO_EDGE : GL_REPEAT));
+#if defined (DENG_OPENGL_ES)
+#  undef GL_CLAMP
+#endif
 }
 
 // dgl_draw.cpp
 DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode);
 DENG_EXTERN_C void DGL_End(void);
-DENG_EXTERN_C dd_bool DGL_NewList(DGLuint list, int mode);
-DENG_EXTERN_C DGLuint DGL_EndList(void);
-DENG_EXTERN_C void DGL_CallList(DGLuint list);
-DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range);
 DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b);
 DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec);
 DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a);
@@ -873,7 +1240,7 @@ DENG_EXTERN_C void DGL_Color3fv(const float* vec);
 DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a);
 DENG_EXTERN_C void DGL_Color4fv(const float* vec);
 DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t);
-DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float* vec);
+DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec);
 DENG_EXTERN_C void DGL_Vertex2f(float x, float y);
 DENG_EXTERN_C void DGL_Vertex2fv(const float* vec);
 DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z);
@@ -923,15 +1290,12 @@ DENG_DECLARE_API(GL) =
     DGL_PushMatrix,
     DGL_PopMatrix,
     DGL_LoadIdentity,
+    DGL_LoadMatrix,
     DGL_Translatef,
     DGL_Rotatef,
     DGL_Scalef,
     DGL_Begin,
     DGL_End,
-    DGL_NewList,
-    DGL_EndList,
-    DGL_CallList,
-    DGL_DeleteLists,
     DGL_SetNoMaterial,
     DGL_SetMaterialUI,
     DGL_SetPatch,
@@ -972,6 +1336,9 @@ DENG_DECLARE_API(GL) =
     DGL_NewTextureWithParams,
     DGL_Bind,
     DGL_DeleteTextures,
+    DGL_Fogi,
+    DGL_Fogf,
+    DGL_Fogfv,
     GL_UseFog,
     GL_SetFilter,
     GL_SetFilterColor,
@@ -979,5 +1346,5 @@ DENG_DECLARE_API(GL) =
     GL_ConfigureBorderedProjection,
     GL_BeginBorderedProjection,
     GL_EndBorderedProjection,
-    GL_ResetViewEffects
+    GL_ResetViewEffects,
 };

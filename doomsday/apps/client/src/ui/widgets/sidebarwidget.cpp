@@ -68,7 +68,7 @@ DENG_GUI_PIMPL(SidebarWidget)
         close->margins().set(rule("dialog.gap"));
         close->setImage(style().images().image("close.ringless"));
         close->setImageColor(title->textColorf());
-        close->setOverrideImageSize(title->font().height().valuei());
+        close->setOverrideImageSize(title->font().height());
         close->setAction(new SignalAction(thisPublic, SLOT(close())));
         close->setSizePolicy(ui::Expand, ui::Expand);
     }
@@ -95,6 +95,7 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
     setSizePolicy(Fixed);
     setWaitForContentReady(false);
     setOpeningDirection(Left);
+    setAnimationStyle(Smooth);
     set(Background(style().colors().colorf("background")).withSolidFillOpacity(1));
 
     d->title->setText(titleText);

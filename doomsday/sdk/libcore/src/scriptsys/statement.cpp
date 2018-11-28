@@ -44,57 +44,57 @@ Statement *Statement::constructFrom(Reader &reader)
 {
     SerialId id;
     reader.mark();
-    reader >> id;
+    reader.readAs<dbyte>(id);
     reader.rewind();
 
     std::unique_ptr<Statement> result;
     switch (id)
     {
-    case ASSIGN:
+    case SerialId::Assign:
         result.reset(new AssignStatement);
         break;
 
-    case CATCH:
+    case SerialId::Catch:
         result.reset(new CatchStatement);
         break;
 
-    case DELETE:
+    case SerialId::Delete:
         result.reset(new DeleteStatement);
         break;
 
-    case EXPRESSION:
+    case SerialId::Expression:
         result.reset(new ExpressionStatement);
         break;
 
-    case FLOW:
+    case SerialId::Flow:
         result.reset(new FlowStatement);
         break;
 
-    case FOR:
+    case SerialId::For:
         result.reset(new ForStatement);
         break;
 
-    case FUNCTION:
+    case SerialId::Function:
         result.reset(new FunctionStatement);
         break;
 
-    case IF:
+    case SerialId::If:
         result.reset(new IfStatement);
         break;
 
-    case PRINT:
+    case SerialId::Print:
         result.reset(new PrintStatement);
         break;
 
-    case TRY:
+    case SerialId::Try:
         result.reset(new TryStatement);
         break;
 
-    case WHILE:
+    case SerialId::While:
         result.reset(new WhileStatement);
         break;
 
-    case SCOPE:
+    case SerialId::Scope:
         result.reset(new ScopeStatement);
         break;
 

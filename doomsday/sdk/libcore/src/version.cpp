@@ -36,6 +36,13 @@ Version::Version()
     , build(0)
 {}
 
+Version::Version(int major, int minor, int patch, int buildNumber)
+    : major(major)
+    , minor(minor)
+    , patch(patch)
+    , build(buildNumber)
+{}
+
 Version Version::currentBuild()
 {
     Version v;
@@ -72,13 +79,6 @@ bool Version::isValid() const
            !label.isEmpty() || !gitDescription.isEmpty();
 }
 
-String Version::base() const
-{
-    String v = compactNumber();
-    if (!label.isEmpty()) v += String("-%1").arg(label);
-    return v;
-}
-
 String Version::compactNumber() const
 {
     if (patch != 0)
@@ -99,8 +99,21 @@ String Version::fullNumber() const
 
 String Version::asHumanReadableText() const
 {
-    if (!build) return base();
-    return base() + String(" [#%1]").arg(build);
+    String v = compactNumber();
+    if (label || build)
+    {
+        v += " (";
+        v += label.toLower();
+        if (build)
+        {
+            v += String::format("%sbuild %d)", label ? " " : "", build);
+        }
+        else
+        {
+            v += ")";
+        }
+    }
+    return v;
 }
 
 void Version::parseVersionString(String const &version)
@@ -151,12 +164,19 @@ bool Version::operator > (Version const &other) const
     return !(*this < other || *this == other);
 }
 
+String Version::userAgent() const
+{
+    return String("Doomsday Engine %1 (%2)").arg(fullNumber()).arg(operatingSystem());
+}
+
 String Version::operatingSystem()
 {
-#if defined(WIN32)
+#if defined (WIN32)
     return "windows";
-#elif defined(MACOSX)
+#elif defined (MACOSX)
     return "macx";
+#elif defined (DENG_IOS)
+    return "ios";
 #else
     return "unix";
 #endif

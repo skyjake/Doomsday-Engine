@@ -40,15 +40,20 @@ public:
 
 public:
     InputBindingWidget();
-    virtual ~InputBindingWidget();
+    virtual ~InputBindingWidget() override;
 
-    void draw() const;
-    void updateGeometry();
-    int handleEvent_Privileged(event_t const &event);
-    int handleCommand(menucommand_e command);
+    void draw() const override;
+    void updateGeometry() override;
+    int handleEvent_Privileged(event_t const &event) override;
+    int handleCommand(menucommand_e command) override;
 
     char const *controlName() const;
     de::String bindContext() const;
+
+    void pageActivated() override;
+
+private:
+    DENG2_PRIVATE(d)
 };
 
 } // namespace menu

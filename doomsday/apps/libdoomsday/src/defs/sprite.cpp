@@ -107,7 +107,7 @@ Record &Sprite::addView(String material, dint angle, bool mirrorX)
     def().set(VAR_FRONT_ONLY, angle <= 0);
 
     auto *view = new Record;
-    view->add(VAR_MATERIAL).set(new UriValue(de::Uri(material, RC_NULL)));
+    view->add(VAR_MATERIAL).set(new UriValue(de::makeUri(material)));
     view->addBoolean(VAR_MIRROR_X, mirrorX);
     viewsDict().add(new NumberValue(de::max(0, angle - 1)), new RecordValue(view, RecordValue::OwnsRecord));
     return *view;

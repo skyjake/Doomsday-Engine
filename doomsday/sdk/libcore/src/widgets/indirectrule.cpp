@@ -20,7 +20,7 @@
 
 namespace de {
 
-IndirectRule::IndirectRule() : _source(0)
+IndirectRule::IndirectRule() : _source(nullptr)
 {}
 
 IndirectRule::~IndirectRule()
@@ -32,26 +32,29 @@ void IndirectRule::setSource(Rule const &rule)
 {
     unsetSource();
     dependsOn(_source = &rule);
-
     invalidate();
 }
 
 void IndirectRule::unsetSource()
 {
     independentOf(_source);
-    _source = 0;
-
+    _source = nullptr;
     invalidate();
+}
+
+bool IndirectRule::hasSource() const
+{
+    return _source != nullptr;
 }
 
 void IndirectRule::update()
 {
-    setValue(_source? _source->value() : 0);
+    setValue(_source ? _source->value() : 0.f);
 }
 
 Rule const &IndirectRule::source() const
 {
-    DENG2_ASSERT(_source != 0);
+    DENG2_ASSERT(_source);
     return *_source;
 }
 
@@ -63,7 +66,7 @@ String IndirectRule::description() const
     }
     else
     {
-        return String("(null)");
+        return String("[0]");
     }
 }
 

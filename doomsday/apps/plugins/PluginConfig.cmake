@@ -23,7 +23,12 @@ macro (deng_add_plugin target)
         endif ()
         list (APPEND _src ${_winres})
     endif ()
-    add_library (${target} MODULE ${_src} ${DENG_RESOURCES})
+    if (DENG_STATIC_LINK)
+        set (_libType STATIC)
+    else ()
+        set (_libType MODULE)
+    endif ()
+    add_library (${target} ${_libType} ${_src} ${DENG_RESOURCES})
     target_include_directories (${target}
         PUBLIC "${DENG_API_DIR}"
         PRIVATE "${DENG_SOURCE_DIR}/sdk/libgui/include"
@@ -33,18 +38,39 @@ macro (deng_add_plugin target)
     set_target_properties (${target} PROPERTIES FOLDER Plugins)
 
     if (APPLE)
+        if (IOS)
+            set_property (TARGET ${target} PROPERTY XCODE_ATTRIBUTE_DEAD_CODE_STRIPPING NO)
+            link_framework (${target} PUBLIC Foundation)
+            link_framework (${target} PUBLIC CoreFoundation)
+            link_framework (${target} PUBLIC MobileCoreServices)
+            link_framework (${target} PUBLIC UIKit)
+            link_framework (${target} PUBLIC Security)
+            target_link_libraries (${target} PUBLIC
+                debug ${QT_LIBS}/libqtpcre_debug.a
+                optimized ${QT_LIBS}/libqtpcre.a
+            )
+        endif ()
         # The plugins have some messy code.
         set_property (TARGET ${target}
             APPEND PROPERTY COMPILE_OPTIONS -Wno-missing-braces
         )
+        set (_extraRPath)
+        if (NOT DENG_ENABLE_DEPLOYQT)
+            set (_extraRPath ${QT_LIBS})
+        endif ()
         set_target_properties (${target} PROPERTIES
             BUNDLE ON
             MACOSX_BUNDLE_INFO_PLIST ${DENG_SOURCE_DIR}/cmake/MacOSXPluginBundleInfo.plist.in
             BUILD_WITH_INSTALL_RPATH ON  # staging prevents CMake's own rpath fixing
-            INSTALL_RPATH "@executable_path/../Frameworks"
+            INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../Frameworks;${_extraRPath}"
         )
+        set (_extraRPath)
         macx_set_bundle_name ("net.dengine.plugin.${target}")
-        set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "${target}.bundle/Contents/MacOS/${target}")
+        if (IOS)
+            set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "${target}.bundle/${target}")
+        else ()
+            set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "${target}.bundle/Contents/MacOS/${target}")
+        endif ()
         # Stage plugins for symlinking/copying into the client app later.
         # This is needed because we want access to these even in a build where the
         # plugins are not installed yet -- the staging directory symlinks to the
@@ -57,13 +83,15 @@ macro (deng_add_plugin target)
                 "${stage}/${target}.bundle"
         )
         # Fix the Qt framework install names manually.
-        deng_bundle_install_names (${target}
-            SCRIPT_NAME "qtlibs"
-            LD_PATH "@executable_path/../Frameworks"
-            QtCore.framework/Versions/5/QtCore
-            QtNetwork.framework/Versions/5/QtNetwork
-            VERBATIM
-        )
+        if (DENG_ENABLE_DEPLOYQT)
+            deng_bundle_install_names (${target}
+                SCRIPT_NAME "qtlibs"
+                LD_PATH "@executable_path/../Frameworks"
+                QtCore.framework/Versions/5/QtCore
+                QtNetwork.framework/Versions/5/QtNetwork
+                VERBATIM
+            )
+        endif ()
         deng_xcode_attribs (${target})
         deng_bundle_resources ()
     else ()

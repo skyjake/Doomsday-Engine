@@ -5,15 +5,17 @@ cmake_minimum_required (VERSION 3.1)
 project (DENG_FLUIDSYNTH)
 include (../PluginConfig.cmake)
 
-find_package (PkgConfig)
-
 set (tgt audio_fluidsynth)
 
 # Make an embedded build by default?
-if (APPLE)
+if (APPLE OR MINGW_GLIB_DIR)
     set (embed ON)
 elseif (UNIX)
     set (embed OFF)
+endif ()
+if (WIN32 AND NOT MINGW_GLIB_DIR)
+    message (STATUS "Not building ${tgt} because the MinGW version of GLib is required on Windows (set MINGW_GLIB_DIR)")
+    return ()
 endif ()
 
 option (DENG_FLUIDSYNTH_EMBEDDED
@@ -23,11 +25,14 @@ option (DENG_FLUIDSYNTH_EMBEDDED
 if (DENG_FLUIDSYNTH_EMBEDDED)
     find_package (Glib)
 
-    # Bundle library dependencies on macOS.
-    foreach (fn ${GLIB_LIBRARIES})
-        list (APPEND macRes ${fn},Frameworks)
-    endforeach ()
-    deng_find_resources (${macRes})
+    if (APPLE)
+        # Bundle library dependencies on macOS.
+        foreach (fn ${GLIB_LIBRARIES})
+            list (APPEND macRes ${fn},Frameworks)
+        endforeach ()
+        deng_find_resources (${macRes})
+        add_definitions (-DDARWIN=1)
+    endif ()
 
     add_definitions (
         -D_BSD_SOURCE -DFLUIDSYNTH_NOT_A_DLL -DWITH_FLOAT
@@ -40,9 +45,6 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
             -DHAVE_NETINET_IN_H -DHAVE_NETINET_TCP_H
             -DHAVE_FCNTL_H -DHAVE_ERRNO_H
         )
-    endif ()
-    if (APPLE)
-        add_definitions (-DDARWIN=1)
     endif ()
 
     set (FS_DIR ${DENG_EXTERNAL_SOURCE_DIR}/fluidsynth)
@@ -95,6 +97,7 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
 
 else ()
     # We will use the libfluidsynth installed on the system.
+    find_package (PkgConfig)
     pkg_check_modules (FLUIDSYNTH fluidsynth)
     if (NOT FLUIDSYNTH_FOUND)
         message (STATUS "Not building ${tgt} because \"fluidsynth\" not found (using pkg-config).\n\
@@ -133,10 +136,3 @@ if (DENG_FLUIDSYNTH_EMBEDDED)
 else ()
     target_link_libraries (${tgt} PRIVATE ${FLUIDSYNTH_LIBRARIES})
 endif ()
-
-# win32 {
-#     RC_FILE = res/fluidsynth.rc
-#
-#     QMAKE_LFLAGS += /DEF:\"$$PWD/api/dsfluidsynth.def\"
-#     OTHER_FILES += api/dsfluidsynth.def
-# }

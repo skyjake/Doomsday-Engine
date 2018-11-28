@@ -20,15 +20,14 @@
 #include "de/shell/MenuWidget"
 #include <de/shell/TextRootWidget>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(ChoiceWidget)
 {
-    Items items;
-    int selection;
+    Items       items;
+    int         selection;
     MenuWidget *menu;
-    String prompt;
+    String      prompt;
 
     Impl(Public &i) : Base(i), selection(0)
     {}
@@ -190,5 +189,4 @@ void ChoiceWidget::menuClosed()
     add(d->menu);
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

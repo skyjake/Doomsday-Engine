@@ -42,9 +42,14 @@
 
 using namespace de;
 
-dd_bool Thinker_HasMobjFunc(thinkfunc_t func)
+bool Thinker_IsMobjFunc(thinkfunc_t func)
 {
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
+}
+
+bool Thinker_IsMobj(thinker_t const *th)
+{
+    return (th && Thinker_IsMobjFunc(th->function));
 }
 
 world::Map &Thinker_Map(thinker_t const & /*th*/)
@@ -234,7 +239,7 @@ void Thinkers::add(thinker_t &th, bool makePublic)
         throw Error("Thinkers::add", "Invalid thinker function");
 
     // Will it need an ID?
-    if (Thinker_HasMobjFunc(th.function))
+    if (Thinker_IsMobj(&th))
     {
         // It is a mobj, give it an ID (not for client mobjs, though, they
         // already have an id).
@@ -439,7 +444,7 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
     {
         Id const privateId = knownId? Id(knownId) : Id(/* get a new ID */);
 
-        if (Thinker_HasMobjFunc(th->function))
+        if (Thinker_IsMobj(th))
         {
 #ifdef __CLIENT__
             th->d = new ClientMobjThinkerData(privateId);
@@ -493,34 +498,41 @@ void Thinker_Run()
 
     App_World().map().thinkers().forAll(0x1 | 0x2, [] (thinker_t *th)
     {
-        if (Thinker_InStasis(th)) return LoopContinue; // Skip.
-
-        // Time to remove it?
-        if (th->function == (thinkfunc_t) -1)
+        try
         {
-            unlinkThinkerFromList(th);
+            if (Thinker_InStasis(th)) return LoopContinue; // Skip.
 
-            if (th->id)
+            // Time to remove it?
+            if (th->function == (thinkfunc_t) -1)
             {
-                // Recycle for reduced allocation overhead.
-                P_MobjRecycle((mobj_t *) th);
+                unlinkThinkerFromList(th);
+
+                if (th->id)
+                {
+                    // Recycle for reduced allocation overhead.
+                    P_MobjRecycle((mobj_t *) th);
+                }
+                else
+                {
+                    // Non-mobjs are just deleted right away.
+                    Thinker::destroy(th);
+                }
             }
-            else
+            else if (th->function)
             {
-                // Non-mobjs are just deleted right away.
-                Thinker::destroy(th);
+                // Create a private data instance of appropriate type.
+                if (!th->d) Thinker_InitPrivateData(th);
+
+                // Public thinker callback.
+                th->function(th);
+
+                // Private thinking.
+                if (th->d) THINKER_DATA(*th, Thinker::IData).think();
             }
         }
-        else if (th->function)
+        catch (const Error &er)
         {
-            // Create a private data instance of appropriate type.
-            if (!th->d) Thinker_InitPrivateData(th);
-
-            // Public thinker callback.
-            th->function(th);
-
-            // Private thinking.
-            if (th->d) THINKER_DATA(*th, Thinker::IData).think();
+            LOG_MAP_WARNING("Thinker %i: %s") << th->id << er.asText();
         }
         return LoopContinue;
     });

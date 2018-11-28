@@ -39,6 +39,7 @@ public:
     {
         NonAnimatedHeight = 0,
         AnimatedHeight    = 0x1,
+        WithoutIcon       = 0x2,
     };
     Q_DECLARE_FLAGS(Flags, Flag)
 

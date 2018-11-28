@@ -50,7 +50,7 @@ public:
     void add(DotPath const &path, String const &imageFilePath);
     void addFromInfo(File const &file);
 
-    Image const &image(DotPath const &path) const;
+    const Image &image(DotPath const &path) const;
 
 protected:
     ISource *newSourceFromInfo(String const &id);

@@ -7,7 +7,8 @@ project (DENG_CLIENT)
 set (DENG_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
 
-# Dependencies.
+# Dependencies --------------------------------------------------------------------------
+
 find_package (DengAppfw)
 find_package (DengDoomsday)
 find_package (Amethyst QUIET)
@@ -15,6 +16,8 @@ find_package (SDL2)
 if (WIN32)
     find_package (DirectX)
 endif ()
+
+# Sources and includes ------------------------------------------------------------------
 
 include_directories (include ${DENG_API_DIR})
 
@@ -40,7 +43,10 @@ deng_merge_sources (ui_editors    src/ui/editors/*.cpp)
 deng_merge_sources (ui_home       src/ui/home/*.cpp)
 deng_merge_sources (ui_infine     src/ui/infine/*.cpp)
 deng_merge_sources (ui_widgets    src/ui/widgets/*.cpp)
-deng_merge_sources (updater       src/updater/*.cpp)
+if (NOT IOS)
+    add_definitions (-DDENG_HAVE_UPDATER)
+    deng_merge_sources (updater   src/updater/*.cpp)
+endif ()
 deng_merge_sources (world         src/world/*.cpp)
 deng_merge_sources (world_base    src/world/base/*.cpp)
 deng_merge_sources (world_bsp     src/world/bsp/*.cpp)
@@ -61,10 +67,11 @@ if (UNIX)
     deng_merge_sources (unix src/unix/*.cpp)
 endif ()
 
+# Documentation sources.
 if (AMETHYST_FOUND)
     if (APPLE)
         set (readme "${CMAKE_CURRENT_BINARY_DIR}/Read Me.html")
-        deng_add_amedoc (HTML ${readme} ${DENG_SOURCE_DIR}/doc/readme readme.ame)
+        deng_add_amedoc (HTML "${readme}" ${DENG_SOURCE_DIR}/doc/readme readme.ame)
         install (FILES ${readme} DESTINATION .)
         list (APPEND SOURCES ${readme})
     else ()
@@ -90,12 +97,36 @@ deng_filter_platform_sources (src ${SOURCES} ${HEADERS} ${API_HEADERS})
 
 deng_add_package (net.dengine.client)
 
+if (IOS)
+    set (MACX_RESOURCES
+        doomsday.pk3
+    )
+
+    file (WRITE ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp
+        "#include <QtPlugin>
+        Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
+        Q_IMPORT_PLUGIN(QGifPlugin)
+        Q_IMPORT_PLUGIN(QICNSPlugin)
+        Q_IMPORT_PLUGIN(QJpegPlugin)
+        Q_IMPORT_PLUGIN(QTgaPlugin)")
+    list (APPEND src ${CMAKE_CURRENT_BINARY_DIR}/qt_plugin_import.cpp)
+
+    file (GLOB IOS_ICON_FILES res/ios/AppIcon*.png)
+
+    list (APPEND src
+        res/ios/LaunchScreen.xib
+        ${IOS_ICON_FILES}
+    )
+endif ()
+
 # OS X: Packages and other resources to bundle with the application.
-set (MACX_RESOURCES
-    res/macx/deng.icns
-    res/macx/English.lproj
-    doomsday.pk3
-)
+if (APPLE AND NOT IOS)
+    set (MACX_RESOURCES
+        res/macx/deng.icns
+        res/macx/English.lproj
+        doomsday.pk3
+    )
+endif ()
 
 # Windows: Use Qt resources.
 if (WIN32)
@@ -108,9 +139,57 @@ deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 # There's some old code here so relax the warnings a bit.
 relaxed_warnings (client)
 
-# Libraries.
-target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
-if (APPLE)
+# Libraries -----------------------------------------------------------------------------
+
+if (IOS)
+    link_framework (client PUBLIC CoreFoundation)
+    link_framework (client PUBLIC QuartzCore)
+    link_framework (client PUBLIC CoreGraphics)
+    link_framework (client PUBLIC CoreText)
+    link_framework (client PUBLIC Foundation)
+    link_framework (client PUBLIC ImageIO)
+    link_framework (client PUBLIC MobileCoreServices)
+    link_framework (client PUBLIC Security)
+    link_framework (client PUBLIC UIKit)
+
+    # Static Qt libraries.
+    target_link_libraries (client PUBLIC
+        debug ${QT_LIBS}/libqtlibpng_debug.a
+        debug ${QT_LIBS}/libqtharfbuzz_debug.a
+        debug ${QT_LIBS}/libqtfreetype_debug.a
+        debug ${QT_LIBS}/libqtpcre_debug.a
+        debug ${QT_LIBS}/libQt5FontDatabaseSupport_debug.a
+        debug ${QT_LIBS}/libQt5GraphicsSupport_debug.a
+        debug ${QT_LIBS}/libQt5ClipboardSupport_debug.a
+        debug ${QT_PLUGINS}/platforms/libqios_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqgif_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqicns_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqtga_debug.a
+        debug ${QT_PLUGINS}/imageformats/libqjpeg_debug.a
+
+        optimized ${QT_LIBS}/libqtlibpng.a
+        optimized ${QT_LIBS}/libqtharfbuzz.a
+        optimized ${QT_LIBS}/libqtfreetype.a
+        optimized ${QT_LIBS}/libqtpcre.a
+        optimized ${QT_LIBS}/libQt5FontDatabaseSupport.a
+        optimized ${QT_LIBS}/libQt5GraphicsSupport.a
+        optimized ${QT_LIBS}/libQt5ClipboardSupport.a
+        optimized ${QT_PLUGINS}/platforms/libqios.a
+        optimized ${QT_PLUGINS}/imageformats/libqgif.a
+        optimized ${QT_PLUGINS}/imageformats/libqicns.a
+        optimized ${QT_PLUGINS}/imageformats/libqtga.a
+        optimized ${QT_PLUGINS}/imageformats/libqjpeg.a
+
+        importdeh
+        importidtech1
+        importudmf
+        doom
+        doom64
+        heretic
+        hexen
+        audio_fmod
+    )
+elseif (APPLE)
     link_framework (client PUBLIC Cocoa)
     if (DENG_HAVE_QTKIT)
         link_framework (client PUBLIC QTKit) # MusicPlayer
@@ -126,17 +205,21 @@ if (TARGET DirectX)
     target_link_libraries (client PUBLIC DirectX)
 endif ()
 
-# Deployment -----------------------------------------------------------------
+target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
+
+# Deployment ----------------------------------------------------------------------------
 
 if (WIN32 OR APPLE)
     set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday")
-    set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
+    if (NOT IOS)
+        set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
+    endif ()
 else ()
     set_property (TARGET client PROPERTY OUTPUT_NAME "doomsday")
 endif ()
 
-if (UNIX AND NOT APPLE)
+if (UNIX_LINUX)
     configure_file (doomsday-engine.desktop.in net.dengine.Doomsday.desktop)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Doomsday.desktop
         DESTINATION share/applications)
@@ -145,11 +228,10 @@ if (UNIX AND NOT APPLE)
 endif ()
 
 if (WIN32)
-    # WIX generator requires setting this manually.
+    # WIX generator requires setting Start Menu shortcut manually.
     set_property (INSTALL "bin/$<TARGET_FILE_NAME:client>"
         PROPERTY CPACK_START_MENU_SHORTCUTS "Doomsday Engine"
     )
-
     # Also include OpenSSL support.
     if (OPENSSL_DIR)
         find_file (OPENSSL_LIBEAY libeay32.dll
@@ -166,7 +248,17 @@ if (WIN32)
     endif ()
 endif ()
 
-if (APPLE)
+if (IOS)
+    set_target_properties (client PROPERTIES
+        LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
+        RESOURCE "res/ios/LaunchScreen.xib;${IOS_ICON_FILES}"
+        MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
+        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+        XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
+    )
+endif ()
+
+if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
         Deng::libcore Deng::libshell Deng::libgui Deng::libappfw
         Deng::liblegacy Deng::libdoomsday Deng::libgamefw
@@ -178,7 +270,11 @@ if (APPLE)
     # work on them -- plugins are already self-contained.
     get_property (outName TARGET client PROPERTY OUTPUT_NAME)
     set (stageDir "${DENG_BUILD_STAGING_DIR}/DengPlugins")
-    set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
+    if (IOS)
+        set (destDir "${outName}.app/PlugIns")
+    else ()
+        set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
+    endif ()
     install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
         \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
     deng_install_deployqt (client)

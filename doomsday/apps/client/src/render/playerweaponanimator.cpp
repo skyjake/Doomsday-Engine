@@ -63,7 +63,7 @@ DENG2_PIMPL_NOREF(PlayerWeaponAnimator)
             auto &model = modelBank().model<Model>(identifier);
             model.audienceForDeletion() += this;
             animator.reset(new StateAnimator(identifier, model));
-            animator->setOwnerNamespace(player->info(), QStringLiteral("PLAYER"));
+            animator->setOwnerNamespace(player->info(), QStringLiteral("__player__"));
         }
         else
         {
@@ -120,21 +120,21 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     spr.data.model2.animator = d->animator.get();
 
     // Use the plain bob values.
-    float bob[2] = { *(float *) gx.GetVariable(DD_PSPRITE_BOB_X),
-                     *(float *) gx.GetVariable(DD_PSPRITE_BOB_Y) };
+    float bob[2] = { *(float *) gx.GetPointer(DD_PSPRITE_BOB_X),
+                     *(float *) gx.GetPointer(DD_PSPRITE_BOB_Y) };
 
     Vector2f angles(
     /* yaw: */   bob[0] * weaponOffsetScale,
     /* pitch: */ (32 - bob[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f);
 
-    TimeDelta const span = 1.0 / Timer_TicksPerSecond();
+    TimeSpan const span = 1.0 / Timer_TicksPerSecond();
     d->angleOffset.setValueIfDifferentTarget(angles, span);
 
     spr.data.model2.yawAngleOffset   = d->angleOffset.x;
     spr.data.model2.pitchAngleOffset = d->angleOffset.y;
 }
 
-void PlayerWeaponAnimator::advanceTime(TimeDelta const &elapsed)
+void PlayerWeaponAnimator::advanceTime(TimeSpan const &elapsed)
 {
     if (clientPaused) return;
 

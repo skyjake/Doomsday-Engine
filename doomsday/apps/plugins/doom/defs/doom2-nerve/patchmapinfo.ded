@@ -1,0 +1,42 @@
+#
+# DOOM2 - No Rest for the Living - Doomsday Engine definitions.
+#
+# For information about DED syntax and semantics, see http://dengine.net/manual/ded
+#
+
+Map Info Mods "MAP01" if not custom {
+    Name = "The Earth Base"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP02" if not custom {
+    Name = "The Pain Labs"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP03" if not custom {
+    Name = "Canyon of the Dead"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP04" if not custom {
+    Name = "Hell Mountain"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP05" if not custom {
+    Name = "Vivisection"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP06" if not custom {
+    Name = "Inferno of Blood"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP07" if not custom {
+    Name = "Baron's Banquet"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP08" if not custom {
+    Name = "Tomb of Malevolence"
+    Author = "Nerve Software"
+}
+Map Info Mods "MAP09" if not custom {
+    Name = "March of the Demons"
+    Author = "Nerve Software"
+}

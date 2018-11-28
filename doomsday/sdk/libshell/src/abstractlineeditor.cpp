@@ -24,16 +24,16 @@
 #include <QStringList>
 #include <QScopedPointer>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(AbstractLineEditor)
 {
-    String prompt;
-    String text;
-    int cursor; ///< Index in range [0...text.size()]
-    Lexicon lexicon;
+    String   prompt;
+    String   text;
+    int      cursor; ///< Index in range [0...text.size()]
+    Lexicon  lexicon;
     EchoMode echoMode;
+
     QScopedPointer<ILineWrapping> wraps;
 
     struct Completion {
@@ -48,10 +48,10 @@ DENG2_PIMPL(AbstractLineEditor)
             return Rangei(pos, pos + size);
         }
     };
-    Completion completion;
+    Completion  completion;
     QStringList suggestions;
-    bool suggesting;
-    bool completionNotified;
+    bool        suggesting;
+    bool        completionNotified;
 
     Impl(Public *i, ILineWrapping *lineWraps)
         : Base(i),
@@ -308,15 +308,15 @@ DENG2_PIMPL(AbstractLineEditor)
 
     QStringList completionsForBase(String base, String &commonPrefix) const
     {
-        Qt::CaseSensitivity const sensitivity =
-                lexicon.isCaseSensitive()? Qt::CaseSensitive : Qt::CaseInsensitive;
+        String::CaseSensitivity const sensitivity =
+                lexicon.isCaseSensitive()? String::CaseSensitive : String::CaseInsensitive;
 
         bool first = true;
         QStringList sugs;
 
         foreach (String term, lexicon.terms())
         {
-            if (term.startsWith(base, sensitivity) && term.size() > base.size())
+            if (term.beginsWith(base, sensitivity) && term.size() > base.size())
             {
                 sugs << term;
 
@@ -686,5 +686,4 @@ void AbstractLineEditor::updateLineWraps(LineWrapUpdateBehavior behavior)
     d->updateWraps();
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

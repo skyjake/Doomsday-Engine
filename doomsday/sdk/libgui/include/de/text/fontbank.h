@@ -58,6 +58,8 @@ public:
      */
     void setFontSizeFactor(float sizeFactor);
 
+    void reload();
+
 protected:
     virtual ISource *newSourceFromInfo(String const &id);
     virtual IData *loadFromSource(ISource &source);

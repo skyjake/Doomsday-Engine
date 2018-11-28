@@ -20,9 +20,10 @@
 #ifndef LIBDENG2_INFO_H
 #define LIBDENG2_INFO_H
 
-#include "../String"
 #include "../NativePath"
+#include "../Record"
 #include "../SourceLineTable"
+#include "../String"
 
 #include <QStringList>
 #include <QHash>
@@ -245,6 +246,12 @@ public:
          * @param destination  Block.
          */
         void moveContents(BlockElement &destination);
+
+        /**
+         * Converts the contents of the block into a Record.
+         * @return Record with block elements.
+         */
+        Record asRecord() const;
 
     private:
         Info &_info;

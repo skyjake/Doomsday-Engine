@@ -314,7 +314,7 @@ void GUI_Register()
 
 void GUI_LoadResources()
 {
-    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
+    if(Get(DD_NOVIDEO)) return;
 
     AutomapWidget::prepareAssets();
     menu::LineEditWidget::loadResources();
@@ -323,7 +323,7 @@ void GUI_LoadResources()
 
 void GUI_ReleaseResources()
 {
-    if(Get(DD_DEDICATED) || Get(DD_NOVIDEO)) return;
+    if(Get(DD_NOVIDEO)) return;
 
     AutomapWidget::prepareAssets();
 

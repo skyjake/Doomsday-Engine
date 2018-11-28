@@ -24,6 +24,7 @@
 
 #include <de/GuiApp>
 #include <de/GLShaderBank>
+#include <de/Rule>
 #include <de/WaveformBank>
 
 /**
@@ -50,8 +51,19 @@ public:
     virtual void glDeinit();
 
     void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems);
-    double dpiFactor() const;
 
+    /**
+     * The ratio of pixels per point. For example, this is 2.0 if there are two pixels per point.
+     */
+    const Rule &pixelRatio() const;
+
+    /**
+     * Sets a new pixel ratio. This replaces the initial automatically detected pixel ratio.
+     *
+     * @param pixelRatio  Pixel ratio.
+     */
+    void setPixelRatio(float pixelRatio);
+    
     /**
      * Enters the "native UI" mode that temporarily switches the main window to a
      * regular window and restores the desktop display mode. This allows the user to

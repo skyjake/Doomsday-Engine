@@ -25,8 +25,7 @@
 #include <de/String>
 #include <de/Vector>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 class Lexicon;
 
@@ -54,14 +53,14 @@ public:
      *
      * @param promptText  Text for the prompt.
      */
-    void setPrompt(String const &promptText);
+    void   setPrompt(String const &promptText);
     String prompt() const;
 
-    void setText(String const &lineText);
+    void   setText(String const &lineText);
     String text() const;
 
     void setCursor(int index);
-    int cursor() const;
+    int  cursor() const;
 
     /**
      * Determines the position of a specific character on the wrapped lines.
@@ -72,10 +71,10 @@ public:
 
     Vector2i lineCursorPos() const { return linePos(cursor()); }
 
-    bool isSuggestingCompletion() const;
-    Rangei completionRange() const;
+    bool        isSuggestingCompletion() const;
+    Rangei      completionRange() const;
     QStringList suggestedCompletions() const;
-    void acceptCompletion();
+    void        acceptCompletion();
 
     /**
      * Defines the terms and rules for auto-completion.
@@ -86,10 +85,7 @@ public:
 
     Lexicon const &lexicon() const;
 
-    enum EchoMode {
-        NormalEchoMode,
-        PasswordEchoMode
-    };
+    enum EchoMode { NormalEchoMode, PasswordEchoMode };
 
     /**
      * Determines how the entered text should be shown to the user.
@@ -100,13 +96,7 @@ public:
 
     EchoMode echoMode() const;
 
-    enum KeyModifier {
-        Unmodified = 0,
-        Shift      = 0x1,
-        Control    = 0x2,
-        Alt        = 0x4,
-        Meta       = 0x8
-    };
+    enum KeyModifier { Unmodified = 0, Shift = 0x1, Control = 0x2, Alt = 0x4, Meta = 0x8 };
     Q_DECLARE_FLAGS(KeyModifiers, KeyModifier)
 
     virtual bool handleControlKey(int qtKey, KeyModifiers const &mods = Unmodified);
@@ -127,15 +117,12 @@ protected:
 
     // Notifications:
     virtual void numberOfLinesChanged(int lineCount) = 0;
-    virtual void cursorMoved() = 0;
-    virtual void contentChanged() = 0;
+    virtual void cursorMoved()                       = 0;
+    virtual void contentChanged()                    = 0;
     virtual void autoCompletionBegan(String const &wordBase);
     virtual void autoCompletionEnded(bool accepted);
 
-    enum LineWrapUpdateBehavior {
-        RewrapNow,
-        WrapUnlessWrappedAlready
-    };
+    enum LineWrapUpdateBehavior { RewrapNow, WrapUnlessWrappedAlready };
 
     /// Request rewrapping the text.
     void updateLineWraps(LineWrapUpdateBehavior behavior);
@@ -146,7 +133,6 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(AbstractLineEditor::KeyModifiers)
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_ABSTRACTLINEEDITOR_H

@@ -103,7 +103,7 @@ static Material *findRecordMaterial(Records &records, SerialId id)
         Material *material = nullptr;
         try
         {
-            material = &world::Materials::get().material(de::Uri(records.stringRef(id), RC_NULL));
+            material = &world::Materials::get().material(de::makeUri(records.stringRef(id)));
         }
         catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.
@@ -202,7 +202,7 @@ MaterialArchive::MaterialArchive(int useSegments, bool recordSymbolicMaterials)
     if (recordSymbolicMaterials)
     {
         // The first material is the special "unknown material".
-        d->insertRecord(de::Uri(UNKNOWN_MATERIALNAME, RC_NULL));
+        d->insertRecord(de::makeUri(UNKNOWN_MATERIALNAME));
     }
 }
 

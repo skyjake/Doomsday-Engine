@@ -247,7 +247,7 @@ public:
          *
          * @param elapsed  Duration of elapsed time.
          */
-        virtual void advanceTime(TimeDelta const &elapsed);
+        virtual void advanceTime(TimeSpan const &elapsed);
 
         /**
          * Returns the time to be used when drawing the model.

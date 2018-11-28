@@ -132,7 +132,7 @@ void WI_initVariables(/*wbstartstruct_t *wbstartstruct */)
 
 void IN_Begin(wbstartstruct_t const & /*wbstartstruct*/)
 {
-    DENG2_ASSERT(G_Ruleset_Deathmatch());
+    DENG2_ASSERT(gfw_Rule(deathmatch));
 
     WI_initVariables();
     loadPics();
@@ -296,7 +296,7 @@ static void CheckForSkip()
         }
     }
 
-    if(G_Ruleset_Deathmatch() && interTime < 140)
+    if(gfw_Rule(deathmatch) && interTime < 140)
     {
         // Wait for 4 seconds before allowing a skip.
         if(skipIntermission == 1)

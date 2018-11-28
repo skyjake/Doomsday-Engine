@@ -158,7 +158,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
     float armsBGX    = 0;
     dd_bool haveArms = false;
     patchinfo_t armsInfo;
-    if(!G_Ruleset_Deathmatch())
+    if(!gfw_Rule(deathmatch))
     {
         haveArms = R_GetPatchInfo(pArmsBackground, &armsInfo);
 
@@ -742,7 +742,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     automap.clearAllPoints(true/*silent*/);
 
 #if !__JHEXEN__
-    if(G_Ruleset_Skill() == SM_BABY && cfg.common.automapBabyKeys)
+    if(gfw_Rule(skill) == SM_BABY && cfg.common.automapBabyKeys)
     {
         automap.setFlags(automap.flags() | AWF_SHOW_KEYS);
     }
@@ -754,9 +754,9 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
 #endif
 
     // Are we re-centering on a followed mobj?
-    if(mobj_t *mob = automap.followMobj())
+    if (mobj_t *mob = automap.followMobj())
     {
-        automap.setCameraOrigin(Vector2d(mob->origin));
+        automap.setCameraOrigin(Vector2d(mob->origin), true);
     }
 
     if(IS_NETGAME)

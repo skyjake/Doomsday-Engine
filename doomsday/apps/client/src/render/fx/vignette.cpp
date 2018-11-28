@@ -77,26 +77,26 @@ static void Vignette_Render(Rectanglei const &viewRect, float fov)
 
     GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_CAMERA_VIGNETTE), gl::Repeat,
                             gl::ClampToEdge);
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
 
-    LIBGUI_GL.glBegin(GL_TRIANGLE_STRIP);
+    DGL_Begin(DGL_TRIANGLE_STRIP);
     for (i = 0; i <= DIVS; ++i)
     {
         float ang = (float)(2 * de::PI * i) / (float)DIVS;
         float dx = cos(ang);
         float dy = sin(ang);
 
-        LIBGUI_GL.glColor4f(0, 0, 0, alpha);
-        LIBGUI_GL.glTexCoord2f(0, 1);
-        LIBGUI_GL.glVertex2f(cx + outer * dx, cy + outer * dy);
+        DGL_Color4f(0, 0, 0, alpha);
+        DGL_TexCoord2f(0, 0, 1);
+        DGL_Vertex2f(cx + outer * dx, cy + outer * dy);
 
-        LIBGUI_GL.glColor4f(0, 0, 0, 0);
-        LIBGUI_GL.glTexCoord2f(0, 0);
-        LIBGUI_GL.glVertex2f(cx + inner * dx, cy + inner * dy);
+        DGL_Color4f(0, 0, 0, 0);
+        DGL_TexCoord2f(0, 0, 0);
+        DGL_Vertex2f(cx + inner * dx, cy + inner * dy);
     }
-    LIBGUI_GL.glEnd();
+    DGL_End();
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 }
 
 Vignette::Vignette(int console) : ConsoleEffect(console)

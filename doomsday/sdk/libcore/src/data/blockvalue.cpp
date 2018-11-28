@@ -36,6 +36,11 @@ Block &BlockValue::block()
     return _value;
 }
 
+Block const &BlockValue::block() const
+{
+    return _value;
+}
+
 BlockValue::operator IByteArray const &() const
 {
     return _value;

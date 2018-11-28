@@ -107,6 +107,35 @@ package "com.idsoftware.doom.ultimate_1.9" {
     }
 }
 
+package "com.idsoftware.doom.bfg_2012.10.16" {
+    format: PWAD 
+    fileName: doom.wad
+    fileSize: 12487824 
+    lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
+    lumpDirCRC32: 8aed7bf2
+    info {
+        title: Ultimate DOOM (BFG Edition)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg
+    }
+}
+
+package "com.idsoftware.doom.bfg.decensor_1.0" {
+    format: IWAD 
+    fileName <udoomcen.wad, doom.wad>
+    fileSize: 12487826 
+    lumps <E4M1, E4M2, E4M3, E4M4, E4M5, E4M6, E4M7, E4M8, E4M9, M_EPI4>
+    lumpDirCRC32: e51d82df
+    info {
+        title: Ultimate DOOM (BFG Edition + decensor)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg mod uncensored
+        notes: Variant of Ultimate DOOM (BFG Edition) generated using the "bfgdecens" tool.
+    }
+}
+
 package "com.idsoftware.doom2_1.6.66" {
     format: IWAD 
     fileName: doom2.wad
@@ -117,6 +146,18 @@ package "com.idsoftware.doom2_1.6.66" {
         author: id Software
         license: All rights reserved
         tags: gamedata doom vanilla
+    }
+}
+
+package "com.idsoftware.doom2.german_1.6.66" {
+    format: IWAD 
+    fileName: doom2.wad
+    fileSize: 14824716
+    info {
+        title: DOOM 2: Hell on Earth (German)
+        author: id Software
+        license: All rights reserved
+        tags: doom vanilla german
     }
 }
 
@@ -144,6 +185,50 @@ package "com.idsoftware.doom2_1.9" {
         author: id Software
         license: All rights reserved
         tags: gamedata doom vanilla
+    }
+}
+
+package "com.idsoftware.doom2.bfg_2012.10.16" {
+    format: PWAD
+    fileName: doom2.wad
+    fileSize: 14691821 
+    lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
+    lumpDirCRC32: 2f9a0a30
+    info {
+        title: DOOM 2: Hell on Earth (BFG Edition)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg
+    }
+}
+
+package "com.idsoftware.doom2.bfg.decensor_1.0" {
+    format: IWAD
+    fileName <doom2cen.wad, doom2.wad>
+    fileSize: 14692182 
+    lumps <MAP01, MAP02, MAP03, MAP04, MAP10, MAP20, MAP25, MAP30, VILEN1, VILEO1, VILEQ1, GRNROCK>
+    lumpDirCRC32: 376c997e
+    info {
+        title: DOOM 2: Hell on Earth (BFG Edition + decensor)
+        author: id Software
+        license: All rights reserved
+        tags: gamedata doom bfg mod uncensored
+        notes: Variant of DOOM II (BFG Edition) generated using the "bfgdecens" tool.
+    }
+}
+
+package "com.nervesoftware.norestfortheliving_2012.10.16" {
+    format: PWAD
+    fileName: nerve.wad
+    fileSize: 3819855 
+    lumps <CWILV00, CWILV08, MAP01, MAP02, MAP03, MAP04, MAP09>
+    lumpDirCRC32: 29240a37
+    info {
+        title: No Rest for the Living
+        author: Nerve Software
+        license: All rights reserved
+        tags: gamedata doom bfg expansion
+        requires <com.idsoftware.doom2.bfg>
     }
 }
 
@@ -352,6 +437,20 @@ package "freedoom.phase2_0.11.2" {
     }
 }
 
+package "freedoom.phase2_0.11.3" {
+    format: IWAD 
+    fileName <freedoom2.wad>
+    fileSize: 29102220
+    lumps <MAP01, MAP32>
+    lumpDirCRC32: a8eb8bcd
+    info {
+        title: Freedoom: Phase 2
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod
+    }
+}
+
 package "freedoom.phase1_0.9" {
     format: IWAD 
     fileName: freedoom1.wad
@@ -408,6 +507,20 @@ package "freedoom.phase1_0.11.2" {
     }
 }
 
+package "freedoom.phase1_0.11.3" {
+    format: IWAD 
+    fileName: freedoom1.wad
+    fileSize: 23578720
+    lumps <E1M1, E4M9>
+    lumpDirCRC32: c03f5092
+    info {
+        title: Freedoom: Phase 1
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom mod
+    }
+}
+
 package "freedoom.freedm_0.10.1" {
     format: IWAD 
     fileName: freedm.wad
@@ -428,6 +541,20 @@ package "freedoom.freedm_0.11.2" {
     fileSize: 21103364 
     lumps <MAP01, MAP32>
     lumpDirCRC32: 68d2ddfd
+    info {
+        title: Freedoom Deathmatch
+        author: Freedoom Project
+        license: BSD
+        tags: gamedata doom2 mod multiplayer
+    }
+}
+
+package "freedoom.freedm_0.11.3" {
+    format: IWAD 
+    fileName: freedm.wad
+    fileSize: 21112116 
+    lumps <MAP01, MAP32>
+    lumpDirCRC32: 521c112b
     info {
         title: Freedoom Deathmatch
         author: Freedoom Project
@@ -513,7 +640,7 @@ package "com.ravensoftware.hexen.deathkings_1.0" {
         author: Raven Software
         license: All rights reserved
         tags: gamedata hexen vanilla expansion
-        required <com.ravensoftware.hexen>
+        requires <com.ravensoftware.hexen>
     }
 }
 
@@ -528,7 +655,7 @@ package "com.ravensoftware.hexen.deathkings_1.1" {
         author: Raven Software
         license: All rights reserved
         tags: gamedata hexen vanilla expansion
-        required <com.ravensoftware.hexen>
+        requires <com.ravensoftware.hexen>
     }
 }
 
@@ -557,6 +684,20 @@ package "com.ravensoftware.hexen_1.1" {
         author: Raven Software
         license: All rights reserved
         tags: gamedata hexen vanilla        
+    }
+}
+
+package "com.ravensoftware.hexen.mac_1.1" {
+    format: IWAD 
+    fileName: hexen.wad
+    fileSize: 21078584 
+    lumps <MAP08, MAP22, TINTTAB, FOGMAP, TRANTBLA, DARTA1, ARTIPORK, SKYFOG, TALLYTOP, GROVER>
+    lumpDirCRC32: 6340baf
+    info {
+        title: Hexen (Macintosh)
+        author: Raven Software
+        license: All rights reserved
+        tags: gamedata hexen vanilla mac
     }
 }
 

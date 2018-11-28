@@ -329,7 +329,7 @@ Reader &Reader::operator >> (Block &block)
 
 Reader &Reader::operator >> (IByteArray &byteArray)
 {
-    duint size = 0;
+    duint32 size = 0;
     *this >> size;
 
     /**

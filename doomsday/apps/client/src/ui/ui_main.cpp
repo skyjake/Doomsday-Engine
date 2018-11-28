@@ -20,6 +20,7 @@
 #include "de_base.h"
 #include "ui/ui_main.h"
 #include "ui/clientwindow.h"
+#include "sys_system.h"
 
 #include <cmath>
 #include <de/GLState>
@@ -30,6 +31,7 @@
 
 #include "api_fontrender.h"
 #include "gl/gl_main.h"
+#include "gl/gl_draw.h"
 //#include "gl/texturecontent.h"
 //#include "resource/image.h"
 #include "render/rend_main.h"
@@ -58,7 +60,7 @@ static AbstractFont *loadSystemFont(char const *name)
     DENG2_ASSERT(name != 0 && name[0]);
 
     // Compose the resource name.
-    de::Uri uri = de::Uri("System:", RC_NULL).setPath(name);
+    de::Uri uri = de::makeUri("System:").setPath(name);
 
     // Compose the resource data path.
     ddstring_t resourcePath; Str_InitStd(&resourcePath);
@@ -87,7 +89,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
     {
         try
         {
-            FontManifest &manifest = ClientResources::get().fontManifest(de::Uri(uri, RC_NULL));
+            FontManifest &manifest = ClientResources::get().fontManifest(de::makeUri(uri));
             if (manifest.hasResource())
             {
                 *fid = fontid_t(manifest.uniqueId());
@@ -105,7 +107,7 @@ static void loadFontIfNeeded(char const *uri, fontid_t *fid)
 
 void UI_LoadFonts()
 {
-    if (isDedicated) return;
+    if (novideo) return;
 
     loadFontIfNeeded(UI_ChooseFixedFont(), &fontFixed);
 }
@@ -126,12 +128,12 @@ void UI_MixColors(ui_color_t* a, ui_color_t* b, ui_color_t* dest, float amount)
 
 void UI_SetColorA(ui_color_t* color, float alpha)
 {
-    LIBGUI_GL.glColor4f(color->red, color->green, color->blue, alpha);
+    DGL_Color4f(color->red, color->green, color->blue, alpha);
 }
 
 void UI_SetColor(ui_color_t* color)
 {
-    LIBGUI_GL.glColor3f(color->red, color->green, color->blue);
+    DGL_Color3f(color->red, color->green, color->blue);
 }
 
 void UI_TextOutEx2(const char* text, const Point2Raw* origin, ui_color_t* color, float alpha,
@@ -151,49 +153,20 @@ void UI_TextOutEx(const char* text, const Point2Raw* origin, ui_color_t* color, 
 
 void UI_DrawDDBackground(Point2Raw const &origin, Size2Raw const &dimensions, float alpha)
 {
-    /*
-    ui_color_t const *dark  = UI_Color(UIC_BG_DARK);
-    ui_color_t const *light = UI_Color(UIC_BG_LIGHT);
-    float const mul = 1.5f;
+    //DGL_Disable(DGL_TEXTURE_2D);
+    DGL_PushState();
 
-    // Background gradient picture.
-    MaterialSnapshot const &ms =
-        ClientResources::get().material(de::Uri("System", Path("ui/background")))
-            .prepare(UI_MaterialSpec(TSF_MONOCHROME));
-    GL_BindTexture(&ms.texture(MTU_PRIMARY));
-    */
-
-    GLState::push();
-
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
     if (alpha < 1.0f)
     {
         GL_BlendMode(BM_NORMAL);
     }
     else
     {
-        //glDisable(GL_BLEND);
-        GLState::current().setBlend(false).apply();
+        DGL_Disable(DGL_BLEND);
     }
 
-    LIBGUI_GL.glColor4f(0, 0, 0, alpha);
-    LIBGUI_GL.glBegin(GL_QUADS);
-        // Top color.
-        //glColor4f(dark->red * mul, dark->green * mul, dark->blue * mul, alpha);
-        //glTexCoord2f(0, 0);
-        LIBGUI_GL.glVertex2f(origin.x, origin.y);
-        //glTexCoord2f(1, 0);
-        LIBGUI_GL.glVertex2f(origin.x + dimensions.width, origin.y);
+    DGL_Color4f(0, 0, 0, alpha);
+    GL_DrawRect2(origin.x, origin.y, dimensions.width, dimensions.height);
 
-        // Bottom color.
-        //glColor4f(light->red * mul, light->green * mul, light->blue * mul, alpha);
-        //glTexCoord2f(1, 1);
-        LIBGUI_GL.glVertex2f(origin.x + dimensions.width, origin.y + dimensions.height);
-        //glTexCoord2f(0, 1);
-        LIBGUI_GL.glVertex2f(0, origin.y + dimensions.height);
-    LIBGUI_GL.glEnd();
-
-    //glEnable(GL_BLEND);
-    GLState::pop().apply();
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_PopState();
 }

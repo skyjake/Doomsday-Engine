@@ -91,7 +91,7 @@ DENG2_PIMPL(ScriptSystem)
 
     ~Impl()
     {
-        qDeleteAll(modules.values());
+        qDeleteAll(modules);
     }
 
     static Value *Function_ImportPath(Context &, Function::ArgumentValues const &)
@@ -216,6 +216,30 @@ Record &ScriptSystem::nativeModule(String const &name)
     return *foundNative.value();
 }
 
+Record &ScriptSystem::operator[](const String &name)
+{
+    if (nativeModuleExists(name))
+    {
+        return nativeModule(name);
+    }
+    // Imported modules.
+    {
+        const auto &mods = d->modules;
+        auto found = mods.find(name);
+        if (found != mods.end())
+        {
+            return found.value()->names();
+        }
+    }
+    throw NotFoundError("ScriptSystem::operator[]", "Module not found: " + name);
+}
+
+bool ScriptSystem::nativeModuleExists(const String &name) const
+{
+    DENG2_GUARD_FOR(d->nativeModules, G);
+    return d->nativeModules.value.contains(name);
+}
+
 StringList ScriptSystem::nativeModules() const
 {
     DENG2_GUARD_FOR(d->nativeModules, G);
@@ -255,7 +279,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
         }
         else if (dir == "*")
         {
-            App::fileSystem().findAll(name + ".de", matching);
+            App::fileSystem().findAll(name + ".ds", matching);
             if (matching.empty())
             {
                 continue;
@@ -271,7 +295,7 @@ File const *ScriptSystem::tryFindModuleSource(String const &name, String const &
         }
         if (!found)
         {
-            found = App::rootFolder().tryLocateFile(p + ".de");
+            found = App::rootFolder().tryLocateFile(p + ".ds");
         }
         if (found)
         {

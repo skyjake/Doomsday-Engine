@@ -40,11 +40,13 @@ String const Package::VAR_ID           ("ID");
 String const Package::VAR_TITLE        ("title");
 String const Package::VAR_VERSION      ("version");
 
+static String const PACKAGE_VERSION    ("package.version");
 static String const PACKAGE_ORDER      ("package.__order__");
 static String const PACKAGE_IMPORT_PATH("package.importPath");
 static String const PACKAGE_REQUIRES   ("package.requires");
 static String const PACKAGE_RECOMMENDS ("package.recommends");
 static String const PACKAGE_EXTRAS     ("package.extras");
+static String const PACKAGE_PATH       ("package.path");
 static String const PACKAGE_TAGS       ("package.tags");
 
 static String const VAR_ID  ("ID");
@@ -68,9 +70,8 @@ String Package::Asset::absolutePath(String const &name) const
 }
 
 DENG2_PIMPL(Package)
-, DENG2_OBSERVES(File, Deletion)
 {
-    File const *file;
+    SafePtr<const File> file;
     Version version; // version of the loaded package
 
     Impl(Public *i, File const *f)
@@ -79,8 +80,6 @@ DENG2_PIMPL(Package)
     {
         if (file)
         {
-            file->audienceForDeletion() += this;
-
             // Check the file name first, then metadata.
             version = split(versionedIdentifierForFile(*file)).second;
             if (!version.isValid())
@@ -90,16 +89,11 @@ DENG2_PIMPL(Package)
         }
     }
 
-    void fileBeingDeleted(File const &)
-    {
-        file = 0;
-    }
-
     void verifyFile() const
     {
         if (!file)
         {
-            throw SourceError("Package::verify", "Package's source file missing");
+            throw SourceError("Package::verifyFile", "Package's source file missing");
         }
     }
 
@@ -143,19 +137,28 @@ File const &Package::file() const
 
 File const &Package::sourceFile() const
 {
-    return App::rootFolder().locate<File const>(objectNamespace().gets("package.path"));
+    return FS::locate<const File>(objectNamespace().gets(PACKAGE_PATH));
+}
+
+bool Package::sourceFileExists() const
+{
+    return d->file && FS::tryLocate<const File>(objectNamespace().gets(PACKAGE_PATH));
 }
 
 Folder const &Package::root() const
 {
     d->verifyFile();
-    return expectedAs<Folder>(d->file);
+    if (const Folder *f = maybeAs<Folder>(&d->file->target()))
+    {
+        return *f;
+    }
+    return *sourceFile().parent();
 }
 
 Record &Package::objectNamespace()
 {
     d->verifyFile();
-    return const_cast<File *>(d->file)->objectNamespace();
+    return const_cast<File *>(d->file.get())->objectNamespace();
 }
 
 Record const &Package::objectNamespace() const
@@ -236,7 +239,8 @@ void Package::parseMetadata(File &packageFile) // static
 
     if (Folder *folder = maybeAs<Folder>(packageFile))
     {
-        File *initializerScript = folder->tryLocateFile(QStringLiteral("__init__.de"));
+        File *initializerScript = folder->tryLocateFile(QStringLiteral("__init__.ds"));
+        if (!initializerScript) initializerScript = folder->tryLocateFile(QStringLiteral("__init__.de")); // old extension
         File *metadataInfo      = folder->tryLocateFile(QStringLiteral("Info.dei"));
         if (!metadataInfo) metadataInfo = folder->tryLocateFile(QStringLiteral("Info")); // alternate name
         Time parsedAt           = Time::invalidTime();
@@ -455,6 +459,12 @@ bool Package::equals(String const &id1, String const &id2)
 
 String Package::identifierForFile(File const &file)
 {
+    // The ID may be specified in the metadata.
+    if (auto const *pkgId = file.objectNamespace().tryFind(VAR_PACKAGE_ID))
+    {
+        return pkgId->value().asText();
+    }
+
     // Form the prefix if there are enclosing packs as parents.
     String prefix;
     Folder const *parent = file.parent();
@@ -474,6 +484,11 @@ String Package::versionedIdentifierForFile(File const &file)
     if (id_ver.second.isValid())
     {
         return String("%1_%2").arg(id).arg(id_ver.second.fullNumber());
+    }
+    // The version may be specified in metadata.
+    if (auto const *pkgVer = file.objectNamespace().tryFind(PACKAGE_VERSION))
+    {
+        return String("%1_%2").arg(id).arg(Version(pkgVer->value().asText()).fullNumber());
     }
     return id;
 }

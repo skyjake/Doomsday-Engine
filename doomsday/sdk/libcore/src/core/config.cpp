@@ -79,9 +79,11 @@ Config::Config(Path const &path) : RecordAccessor(0), d(new Impl(path))
     setAccessedRecord(objectNamespace());
 }
 
-void Config::read()
+Config::ReadStatus Config::read()
 {
-    if (d->configPath.isEmpty()) return;
+    ReadStatus readStatus = WasNotRead;
+
+    if (d->configPath.isEmpty()) return readStatus;
 
     LOG_AS("Config::read");
 
@@ -100,6 +102,7 @@ void Config::read()
     {
         // If we already have a saved copy of the config, read it.
         d->refuge.read();
+        readStatus = DifferentVersion;
 
         LOG_DEBUG("Found serialized Config:\n") << objectNamespace();
 
@@ -118,6 +121,7 @@ void Config::read()
             else
             {
                 // Versions match.
+                readStatus = SameVersion;
                 LOG_MSG("") << d->refuge.path() << " matches version " << version->asText();
             }
         }
@@ -175,6 +179,8 @@ void Config::read()
         d->config.run(script);
         d->config.execute();
     }
+
+    return readStatus;
 }
 
 void Config::write() const

@@ -104,11 +104,14 @@ static void forNativeDataFiles(DataBundle const &bundle, std::function<void (Str
         Record const &meta = bundle.packageMetadata();
         for (auto const *v : meta.geta("dataFiles").elements())
         {
-            if (File const *dataFile = App::rootFolder().tryLocate<File const>(v->asText()))
+//            LOG_RES_MSG("bundle root: %s -> trying to load %s") << bundle.rootPath()
+//                     << v->asText();
+            String const dataFilePath = bundle.rootPath() / v->asText();
+            if (File const *dataFile = FS::tryLocate<File const>(dataFilePath))
             {
                 if (is<NativeFile>(dataFile->source()))
                 {
-                    func(v->asText());
+                    func(dataFilePath);
                 }
                 else
                 {
@@ -241,23 +244,22 @@ static void parseStartupFilePathsAndAddFiles(char const *pathString)
     char *token = strtok(buffer, ATWSEPS);
     while (token)
     {
-        tryLoadFile(de::Uri(token, RC_NULL));
+        tryLoadFile(de::makeUri(token));
         token = strtok(nullptr, ATWSEPS);
     }
     M_Free(buffer);
 }
 
-static dint addListFiles(QStringList list, FileType const &ftype)
+static dint addListFiles(const StringList &list, FileType const &ftype)
 {
     dint numAdded = 0;
-    foreach (QString const &path, list)
+    for (const auto &path : list)
     {
         if (&ftype != &DD_GuessFileTypeFromFileName(path))
         {
             continue;
         }
-
-        if (tryLoadFile(de::Uri(path, RC_NULL)))
+        if (tryLoadFile(de::makeUri(path)))
         {
             numAdded += 1;
         }
@@ -284,10 +286,10 @@ int loadGameStartupResourcesBusyWorker(void *context)
         // Create default Auto mappings in the runtime directory.
 
         // Data class resources.
-        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DataPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
+        App_FileSystem().addPathMapping("auto/", de::makeUri("$(App.DataPath)/$(GamePlugin.Name)/auto/").resolved());
 
         // Definition class resources.
-        App_FileSystem().addPathMapping("auto/", de::Uri("$(App.DefsPath)/$(GamePlugin.Name)/auto/", RC_NULL).resolved());
+        App_FileSystem().addPathMapping("auto/", de::makeUri("$(App.DefsPath)/$(GamePlugin.Name)/auto/").resolved());
     }
 
     // Load data files.
@@ -371,7 +373,7 @@ static dint loadFilesFromDataGameAuto()
         // Ignore directories.
         if (i->attrib & A_SUBDIR) continue;
 
-        if (tryLoadFile(de::Uri(i->path, RC_NULL)))
+        if (tryLoadFile(de::makeUri(i->path)))
         {
             numLoaded += 1;
         }
@@ -420,7 +422,8 @@ int loadAddonResourcesBusyWorker(void *context)
         /**
          * Phase 3: Add real files from the Auto directory.
          */
-        auto &prof = AbstractSession::profile();
+        //auto &prof = AbstractSession::profile();
+        StringList resourceFiles;
 
         FS1::PathList found;
         findAllGameDataPaths(found);
@@ -430,14 +433,14 @@ int loadAddonResourcesBusyWorker(void *context)
             if (i->attrib & A_SUBDIR) continue;
 
             /// @todo Is expansion of symbolics still necessary here?
-            prof.resourceFiles << NativePath(i->path).expand().withSeparators('/');
+            resourceFiles << NativePath(i->path).expand().withSeparators('/');
         }
 
-        if (!prof.resourceFiles.isEmpty())
+        if (!resourceFiles.isEmpty())
         {
             // First ZIPs then WADs (they may contain WAD files).
-            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_ZIP"));
-            addListFiles(prof.resourceFiles, DD_FileTypeByName("FT_WAD"));
+            addListFiles(resourceFiles, DD_FileTypeByName("FT_ZIP"));
+            addListFiles(resourceFiles, DD_FileTypeByName("FT_WAD"));
         }
 
         // Final autoload round.

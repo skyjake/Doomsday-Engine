@@ -13,14 +13,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/TextRootWidget"
 #include "de/shell/TextWidget"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 TextRootWidget::TextRootWidget(TextCanvas *cv) : RootWidget(), _canvas(cv), _drawRequest(false)
 {
@@ -72,5 +71,4 @@ void TextRootWidget::draw()
     _drawRequest = false;
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

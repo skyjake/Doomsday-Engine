@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/IdentifiedPacket"
@@ -28,6 +28,11 @@ static IdentifiedPacket::Id idGen = 0;
 IdentifiedPacket::IdentifiedPacket(Type const &type, Id i)
     : Packet(type), _id(i)
 {}
+
+void IdentifiedPacket::setId(Id id)
+{
+    _id = id;
+}
 
 void IdentifiedPacket::operator >> (Writer &to) const
 {

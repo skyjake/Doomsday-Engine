@@ -21,6 +21,7 @@
 
 #include "libdoomsday.h"
 
+#include <de/IObject>
 #include <de/Profiles>
 
 class Game;
@@ -35,8 +36,12 @@ public:
     /**
      * Game profile. Identifies a specific Game and a set of packages to be loaded.
      * Profiles are serialized as plain text in "/home/configs/game.dei".
+     *
+     * When a custom data file is set, any normally required packages with the "gamedata"
+     * tag are ignored. The assumption is that the custom data file provides everything
+     * that is provided by those default gamedata packages.
      */
-    class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile
+    class LIBDOOMSDAY_PUBLIC Profile : public AbstractProfile, public de::IObject
     {
     public:
         Profile(de::String const &name = de::String());
@@ -45,17 +50,35 @@ public:
         Profile &operator = (Profile const &other);
 
         void setGame(de::String const &id);
+        void setCustomDataFile(const de::String &id);
         void setPackages(de::StringList packagesInOrder);
         void setUserCreated(bool userCreated);
         void setUseGameRequirements(bool useGameRequirements);
+        void setAutoStartMap(de::String const &map);
+        void setAutoStartSkill(int level);
+        void setLastPlayedAt(const de::Time &at = de::Time());
+        void setSaveLocationId(de::duint32 saveLocationId);
+        void setOptionValue(const de::String &option, const de::Value &value);
 
         bool appendPackage(de::String const &id);
 
         de::String gameId() const;
         Game &game() const;
+        de::String customDataFile() const;
         de::StringList packages() const;
         bool isUserCreated() const;
         bool isUsingGameRequirements() const;
+        de::String autoStartMap() const;
+        int autoStartSkill() const;
+        de::Time lastPlayedAt() const;
+        de::duint32 saveLocationId() const;
+        de::String savePath() const;
+        const de::Value &optionValue(const de::String &option) const;
+
+        void createSaveLocation();
+        void destroySaveLocation();
+        void checkSaveLocation() const;
+        bool isSaveLocationEmpty() const;
 
         /**
          * Returns a list of the game's packages in addition to the profile's
@@ -75,8 +98,12 @@ public:
 
         void unloadPackages() const;
 
-        virtual bool resetToDefaults() override;
+        virtual bool       resetToDefaults() override;
         virtual de::String toInfoSource() const override;
+
+        // Implements IObject.
+        de::Record &      objectNamespace() override;
+        const de::Record &objectNamespace() const override;
 
     private:
         DENG2_PRIVATE(d)

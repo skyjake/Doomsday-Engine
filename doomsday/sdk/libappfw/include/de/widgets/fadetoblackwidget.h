@@ -34,11 +34,11 @@ class LIBAPPFW_PUBLIC FadeToBlackWidget : public LabelWidget
 public:
     FadeToBlackWidget();
 
-    void initFadeFromBlack(TimeDelta const &span);
+    void initFadeFromBlack(TimeSpan const &span);
 
-    void initFadeToBlack(TimeDelta const &span);
+    void initFadeToBlack(TimeSpan const &span);
 
-    void start(TimeDelta const &delay = 0.0);
+    void start(TimeSpan const &delay = 0.0);
 
     void pause();
 

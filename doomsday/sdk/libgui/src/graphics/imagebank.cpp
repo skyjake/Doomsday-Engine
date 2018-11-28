@@ -18,7 +18,8 @@
 
 #include "de/ImageBank"
 #include "de/App"
-#include "de/Folder"
+#include "de/FileSystem"
+#include "de/ImageFile"
 
 #include <de/ScriptedInfo>
 
@@ -29,8 +30,12 @@ DENG2_PIMPL_NOREF(ImageBank)
     struct ImageSource : public ISource
     {
         String filePath;
+        float  pointRatio;
 
-        ImageSource(String const &path) : filePath(path) {}
+        ImageSource(String const &path, float pointRatio)
+            : filePath(path)
+            , pointRatio(pointRatio)
+        {}
 
         Time modifiedAt() const
         {
@@ -39,9 +44,12 @@ DENG2_PIMPL_NOREF(ImageBank)
 
         Image load() const
         {
-            Block imageData;
-            App::rootFolder().locate<File const>(filePath) >> imageData;
-            return Image::fromData(imageData);
+            Image img = FS::locate<const ImageFile>(filePath).image();
+            if (pointRatio > 0)
+            {
+                img.setPointRatio(pointRatio);
+            }
+            return img;
         }
     };
 
@@ -59,7 +67,7 @@ DENG2_PIMPL_NOREF(ImageBank)
 
         duint sizeInMemory() const
         {
-            return image.byteCount();
+            return duint(image.byteCount());
         }
     };
 };
@@ -69,7 +77,7 @@ ImageBank::ImageBank(Flags const &flags) : InfoBank("ImageBank", flags), d(new I
 
 void ImageBank::add(DotPath const &path, String const &imageFilePath)
 {
-    Bank::add(path, new Impl::ImageSource(imageFilePath));
+    Bank::add(path, new Impl::ImageSource(imageFilePath, 0.f));
 }
 
 void ImageBank::addFromInfo(File const &file)
@@ -87,7 +95,8 @@ Image const &ImageBank::image(DotPath const &path) const
 Bank::ISource *ImageBank::newSourceFromInfo(String const &id)
 {
     Record const &def = info()[id];
-    return new Impl::ImageSource(absolutePathInContext(def, def["path"]));
+    return new Impl::ImageSource(absolutePathInContext(def, def["path"]),
+                                 def.getf("pointRatio", 0.f));
 }
 
 Bank::IData *ImageBank::loadFromSource(ISource &source)

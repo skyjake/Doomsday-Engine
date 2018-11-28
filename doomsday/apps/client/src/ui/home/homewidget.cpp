@@ -34,6 +34,7 @@
 #include <de/FadeToBlackWidget>
 #include <de/LabelWidget>
 #include <de/Loop>
+#include <de/PackageLoader>
 #include <de/PersistentState>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
@@ -44,8 +45,8 @@
 
 using namespace de;
 
-static TimeDelta const SCROLL_SPAN = .5;
-static TimeDelta const DISMISS_SPAN = 1.5;
+static TimeSpan const SCROLL_SPAN = .5;
+static TimeSpan const DISMISS_SPAN = 1.5;
 
 DENG_GUI_PIMPL(HomeWidget)
 , DENG2_OBSERVES(App,          StartupComplete)
@@ -79,6 +80,7 @@ DENG_GUI_PIMPL(HomeWidget)
     QTimer moveShowTimer;
     ButtonWidget *taskBarHintButton;
     bool dismissing = false;
+    bool havePackages = false;
 
     int restoredOffsetTab = -1;
     int restoredActiveTab = -1;
@@ -97,7 +99,14 @@ DENG_GUI_PIMPL(HomeWidget)
         tabs = new TabWidget;
 
         tabsBackground = new LabelWidget;
-        tabsBackground->set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+        if (style().isBlurringAllowed())
+        {
+            tabsBackground->set(Background(Vector4f(1, 1, 1, 1), Background::Blurred));
+        }
+        else
+        {
+            tabsBackground->set(Background(Vector4f(0, 0, 0, 1)));
+        }
 
         // Create the column navigation buttons.
         moveLeft  = new ButtonWidget;
@@ -115,7 +124,7 @@ DENG_GUI_PIMPL(HomeWidget)
         taskBarHintButton->setSizePolicy(ui::Expand, ui::Expand);
         taskBarHintButton->margins().set("dialog.gap");
         taskBarHintButton->setText(_E(b) "ESC" _E(.) + tr(" Task Bar"));
-        taskBarHintButton->setTextColor("altaccent");
+//        taskBarHintButton->setTextColor("text");
         taskBarHintButton->setFont("small");
         taskBarHintButton->setOpacity(.66f);
         taskBarHintButton->rule()
@@ -188,7 +197,7 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void updateVisibleColumnsAndTabs()
+    void updateVisibleColumnsAndTabHeadings()
     {
         bool const gotGames = DoomsdayApp::games().numPlayable() > 0;
 
@@ -200,6 +209,10 @@ DENG_GUI_PIMPL(HomeWidget)
             if (col.configVar)
             {
                 col.widget->show(gotGames && col.configVar->value().isTrue());
+            }
+            if (is<PackagesColumnWidget>(col.widget))
+            {
+                col.widget->show(gotGames || havePackages);
             }
         }
 
@@ -247,6 +260,13 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
+    void updateVisibleTabsAndLayout()
+    {
+        updateVisibleColumnsAndTabHeadings();
+        calculateColumnCount();
+        updateLayout();
+    }
+
     void appStartupCompleted()
     {
         blanker->start(0.25);
@@ -255,10 +275,8 @@ DENG_GUI_PIMPL(HomeWidget)
     void gameReadinessUpdated()
     {
         self().root().window().glActivate();
-        
-        updateVisibleColumnsAndTabs();
-        calculateColumnCount();
-        updateLayout();
+
+        updateVisibleTabsAndLayout();
 
         // Restore previous state?
         if (restoredActiveTab >= 0)
@@ -283,7 +301,7 @@ DENG_GUI_PIMPL(HomeWidget)
         }
         else
         {
-            TimeDelta span = DISMISS_SPAN;
+            TimeSpan span = DISMISS_SPAN;
             auto &win = self().root().window().as<ClientWindow>();
             if (win.isGameMinimized())
             {
@@ -306,12 +324,10 @@ DENG_GUI_PIMPL(HomeWidget)
 
     void variableValueChanged(Variable &, Value const &)
     {
-        updateVisibleColumnsAndTabs();
-        calculateColumnCount();
-        updateLayout();
+        updateVisibleTabsAndLayout();
     }
 
-    void moveOffscreen(TimeDelta span = DISMISS_SPAN)
+    void moveOffscreen(TimeSpan span = DISMISS_SPAN)
     {
         self().disable();
         self().setBehavior(DisableEventDispatchToChildren);
@@ -328,7 +344,7 @@ DENG_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void moveOnscreen(TimeDelta span = DISMISS_SPAN)
+    void moveOnscreen(TimeSpan span = DISMISS_SPAN)
     {
         if (!fequal(dismissOffset->animation().target(), 0.f))
         {
@@ -439,7 +455,7 @@ DENG_GUI_PIMPL(HomeWidget)
      * @param pos   Column/tab index.
      * @param span  Animation duration.
      */
-    void scrollToTab(int pos, TimeDelta span)
+    void scrollToTab(int pos, TimeSpan span)
     {
         pos = de::clamp(0, pos, columns.size() - 1);
 
@@ -465,7 +481,7 @@ DENG_GUI_PIMPL(HomeWidget)
         setScrollOffset(currentOffsetTab, span);
     }
 
-    void setScrollOffset(int tab, TimeDelta const &span)
+    void setScrollOffset(int tab, TimeSpan const &span)
     {
         scrollOffset->set(*columnWidth * tab, span);
     }
@@ -482,16 +498,16 @@ DENG_GUI_PIMPL(HomeWidget)
         }
 
         // Remove the highlight.
+        const int newHighlightPos = tabs->currentItem().data().toInt();
         for (int pos = 0; pos < columns.size(); ++pos)
         {
-            if (columns[pos]->isHighlighted())
+            if (pos != newHighlightPos && columns[pos]->isHighlighted())
             {
                 columns[pos]->setHighlighted(false);
             }
         }
-
         // Set new highlight.
-        columns[tabs->currentItem().data().toInt()]->setHighlighted(true);
+        columns[newHighlightPos]->setHighlighted(true);
 
         moveShowTimer.start();
     }
@@ -536,10 +552,19 @@ HomeWidget::HomeWidget()
     column = new MultiplayerColumnWidget();
     d->addColumn(column);
 
-    column = new PackagesColumnWidget();
-    d->addColumn(column);
+    {
+        auto *packagesColumn = new PackagesColumnWidget;
+        d->addColumn(packagesColumn);
+        connect(packagesColumn,
+                &PackagesColumnWidget::availablePackageCountChanged,
+                [this] (int count)
+        {
+            d->havePackages = count > 0;
+            d->updateVisibleTabsAndLayout();
+        });
+    }
 
-    d->updateVisibleColumnsAndTabs();
+    d->updateVisibleColumnsAndTabHeadings();
     d->tabs->setCurrent(0);
 
     // Tabs on top.
@@ -614,12 +639,12 @@ bool HomeWidget::handleEvent(Event const &event)
     return false;
 }
 
-void HomeWidget::moveOnscreen(TimeDelta span)
+void HomeWidget::moveOnscreen(TimeSpan span)
 {
     d->moveOnscreen(span);
 }
 
-void HomeWidget::moveOffscreen(TimeDelta span)
+void HomeWidget::moveOffscreen(TimeSpan span)
 {
     d->moveOffscreen(span);
 }
@@ -688,6 +713,12 @@ void HomeWidget::mouseActivityInColumn(QObject const *columnWidget)
             d->tabs->setCurrent(i);
         }
     }
+}
+
+void HomeWidget::updateStyle()
+{
+    GuiWidget::updateStyle();
+    viewResized();
 }
 
 void HomeWidget::operator >> (PersistentState &toState) const

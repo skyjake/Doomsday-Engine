@@ -165,7 +165,10 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
     if(offset) DGL_Translatef(offset->x, offset->y, 0);
     DGL_Scalef(cfg.common.statusbarScale, cfg.common.statusbarScale, 1);
 
-    if(!(iconOpacity < 1))
+    const bool godEyes = ((P_GetPlayerCheats(&players[wi->player()]) & CF_GODMODE) ||
+                          players[wi->player()].powers[PT_INVULNERABILITY]);
+
+    if (!(iconOpacity < 1))
     {
         // We can just render the full thing as normal.
         // Top bits.
@@ -178,14 +181,14 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         // Faces.
         GL_DrawPatch(pStatusbar, Vector2i(ORIGINX, ORIGINY));
 
-        if(P_GetPlayerCheats(&players[wi->player()]) & CF_GODMODE)
+        if (godEyes)
         {
             GL_DrawPatch(pGodLeft,  Vector2i(ORIGINX + 16 , ORIGINY + 9));
             GL_DrawPatch(pGodRight, Vector2i(ORIGINX + 287, ORIGINY + 9));
         }
 
         patchid_t panel = Hu_InventoryIsOpen(wi->player())? pInvBar
-                        : G_Ruleset_Deathmatch()          ? pStatBar : pLifeBar;
+                        : gfw_Rule(deathmatch)          ? pStatBar : pLifeBar;
         GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -209,7 +212,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         DGL_DrawCutRectf2Tiled(ORIGINX+34, ORIGINY+33, 248, 9, 320, 42, 34, 33, ORIGINX, ORIGINY+191, 16, 8);
 
         // Faces.
-        if(P_GetPlayerCheats(&players[wi->player()]) & CF_GODMODE)
+        if (godEyes)
         {
             // If GOD mode we need to cut windows
             DGL_DrawCutRectf2Tiled(ORIGINX, ORIGINY, 34, 42, 320, 42, 0, 0, ORIGINX+16, ORIGINY+9, 16, 8);
@@ -225,7 +228,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
         }
 
         patchid_t panel = Hu_InventoryIsOpen(wi->player())? pInvBar
-                        : G_Ruleset_Deathmatch()          ? pStatBar : pLifeBar;
+                        : gfw_Rule(deathmatch)          ? pStatBar : pLifeBar;
         GL_DrawPatch(panel, Vector2i(ORIGINX + 34, ORIGINY + 2));
 
         DGL_Disable(DGL_TEXTURE_2D);
@@ -736,7 +739,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     automap.clearAllPoints(true/*silent*/);
 
 #if !__JHEXEN__
-    if(G_Ruleset_Skill() == SM_BABY && cfg.common.automapBabyKeys)
+    if(gfw_Rule(skill) == SM_BABY && cfg.common.automapBabyKeys)
     {
         automap.setFlags(automap.flags() | AWF_SHOW_KEYS);
     }
@@ -750,7 +753,7 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
     // Are we re-centering on a followed mobj?
     if(mobj_t *mob = automap.followMobj())
     {
-        automap.setCameraOrigin(Vector2d(mob->origin));
+        automap.setCameraOrigin(Vector2d(mob->origin), true);
     }
 
     if(IS_NETGAME)
@@ -1204,9 +1207,9 @@ float ST_AutomapOpacity(int localPlayer)
 
 void ST_SetAutomapCameraRotation(int localPlayer, dd_bool yes)
 {
-    if(auto *autmap = ST_TryFindAutomapWidget(localPlayer))
+    if(auto *automap = ST_TryFindAutomapWidget(localPlayer))
     {
-        autmap->setCameraRotationMode(CPP_BOOL(yes));
+        automap->setCameraRotationMode(CPP_BOOL(yes));
     }
 }
 

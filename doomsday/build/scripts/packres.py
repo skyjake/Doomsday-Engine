@@ -3,11 +3,12 @@
 # that Doomsday needs at runtime. The PK3 files are organized using the
 # traditional data/ and defs/ structure.
 
+from __future__ import print_function
 import sys, os, os.path, zipfile
 
 if len(sys.argv) < 2:
-    print "Usage: %s pk3-target-dir" % sys.argv[0]
-    print "(run in build/scripts/)"
+    print("Usage: %s pk3-target-dir" % sys.argv[0])
+    print("(run in build/scripts/)")
     sys.exit(0)
 
 # Check quiet flag.
@@ -27,7 +28,7 @@ class Pack:
         self.files += fileNamesArray
 
     def msg(self, text):
-        if not quietMode: print text
+        if not quietMode: print(text)
 
     def create(self, name):
         full_name = os.path.join(target_dir, name)
@@ -61,7 +62,7 @@ class Pack:
                 process_dir(full_src, dest)
 
         # Write it out.
-        print "Created %s (with %i files)." % (os.path.normpath(full_name), len(pk3.namelist()))
+        print("Created %s (with %i files)." % (os.path.normpath(full_name), len(pk3.namelist())))
         pk3.close()
 
 # First up, doomsday.pk3.
@@ -79,6 +80,8 @@ p.add_files(
       ('plugins/doom/data/doom1-share.mapinfo',    'data/jdoom/doom1-share.mapinfo'),
       ('plugins/doom/data/doom1-ultimate.mapinfo', 'data/jdoom/doom1-ultimate.mapinfo'),
       ('plugins/doom/data/doom1.mapinfo',          'data/jdoom/doom1.mapinfo'),
+      ('plugins/doom/data/doom2-bfg.mapinfo',      'data/jdoom/doom2-bfg.mapinfo'),
+      ('plugins/doom/data/doom2-nerve.mapinfo',    'data/jdoom/doom2-nerve.mapinfo'),
       ('plugins/doom/data/doom2-plut.mapinfo',     'data/jdoom/doom2-plut.mapinfo'),
       ('plugins/doom/data/doom2-tnt.mapinfo',      'data/jdoom/doom2-tnt.mapinfo'),
       ('plugins/doom/data/doom2-freedoom.mapinfo', 'data/jdoom/doom2-freedoom.mapinfo'),

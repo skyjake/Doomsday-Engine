@@ -157,6 +157,9 @@ public:
 
     bool isReadable() const;
 
+    inline void create() { createPath(*this); }
+    inline bool destroy() { return destroyPath(*this); }
+
     /**
      * Returns the current native working path.
      */
@@ -185,7 +188,9 @@ public:
      *
      * @param nativePath  Native directory to create.
      */
-    static void createPath(NativePath const &nativePath);
+    static void createPath(const NativePath &nativePath);
+
+    static bool destroyPath(const NativePath &nativePath);
 
     /**
      * Returns the native path separator character.

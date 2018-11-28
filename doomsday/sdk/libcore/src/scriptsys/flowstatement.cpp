@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/FlowStatement"
@@ -30,33 +30,33 @@ using namespace de;
 
 #define HAS_ARG     0x80
 #define TYPE_MASK   0x7f
- 
+
 FlowStatement::FlowStatement() : _type(PASS), _arg(0)
 {}
- 
-FlowStatement::FlowStatement(Type type, Expression *countArgument) 
-    : _type(type), _arg(countArgument) 
+
+FlowStatement::FlowStatement(Type type, Expression *countArgument)
+    : _type(type), _arg(countArgument)
 {}
- 
+
 FlowStatement::~FlowStatement()
 {
     delete _arg;
 }
-         
+
 void FlowStatement::execute(Context &context) const
 {
     Evaluator &eval = context.evaluator();
-    
+
     switch (_type)
     {
     case PASS:
         context.proceed();
         break;
-        
+
     case CONTINUE:
         context.jumpContinue();
         break;
-        
+
     case BREAK:
         if (_arg)
         {
@@ -65,9 +65,9 @@ void FlowStatement::execute(Context &context) const
         else
         {
             context.jumpBreak();
-        }        
+        }
         break;
-        
+
     case RETURN:
         if (_arg)
         {
@@ -79,23 +79,23 @@ void FlowStatement::execute(Context &context) const
             context.process().finish();
         }
         break;
-        
+
     case THROW:
         if (_arg)
         {
             throw Error("thrown in script", eval.evaluate(_arg).asText());
-        }   
+        }
         else
         {
             /// @todo  Rethrow the current error.
             context.proceed();
-        }     
+        }
     }
 }
 
 void FlowStatement::operator >> (Writer &to) const
 {
-    to << SerialId(FLOW);
+    to << dbyte(SerialId::Flow);
     duint8 header = duint8(_type);
     if (_arg)
     {
@@ -111,10 +111,10 @@ void FlowStatement::operator >> (Writer &to) const
 void FlowStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != FLOW)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::Flow)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("FlowStatement::operator <<", "Invalid ID");
     }

@@ -50,9 +50,6 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
     VariableToggleWidget *disableExtPatches;
     CVarToggleWidget *precacheModels;
     CVarToggleWidget *precacheSprites;
-    CVarToggleWidget *multiLight;
-    CVarToggleWidget *multiShiny;
-    CVarToggleWidget *multiDetail;
 
     // Developer settings.
     GridPopupWidget *devPopup;
@@ -92,16 +89,10 @@ DENG_GUI_PIMPL(RendererSettingsDialog)
 
         precacheModels  = new CVarToggleWidget("rend-model-precache",       tr("3D Models"));
         precacheSprites = new CVarToggleWidget("rend-sprite-precache",      tr("Sprites"));
-        multiLight      = new CVarToggleWidget("rend-light-multitex",       tr("Dynamic Lights"));
-        multiShiny      = new CVarToggleWidget("rend-model-shiny-multitex", tr("3D Model Shiny Surfaces"));
-        multiDetail     = new CVarToggleWidget("rend-tex-detail-multitex",  tr("Surface Details"));
 
         devPopup->addSeparatorLabel(tr("Behavior"));
         *devPopup << LabelWidget::newWithText(tr("Precaching:")) << precacheModels
-                  << Const(0) << precacheSprites
-                  << LabelWidget::newWithText(tr("Multitexturing:")) << multiLight
-                  << Const(0) << multiShiny
-                  << Const(0) << multiDetail;
+                  << Const(0) << precacheSprites;
 
         devPopup->addSeparatorLabel(tr("Diagnosis"));
         *devPopup << LabelWidget::newWithText(tr("Surface Texturing:"))
@@ -176,17 +167,18 @@ RendererSettingsDialog::RendererSettingsDialog(String const &name)
     }
 
     // Textures options.
-    LabelWidget *texturesLabel = LabelWidget::newWithText(_E(D) + tr("Textures"), &area());
-    texturesLabel->setFont("separator.label");
-    texturesLabel->margins().setTop("gap");
-    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
-    layout.append(*texturesLabel, 2);
+//    LabelWidget *texturesLabel = LabelWidget::newWithText(_E(D) + tr("Textures"), &area());
+//    texturesLabel->setFont("separator.label");
+//    texturesLabel->margins().setTop("gap");
+//    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
+//    layout.append(*texturesLabel, 2);
+    LabelWidget::appendSeparatorWithText("Textures", &area(), &layout);
 
     layout << *LabelWidget::newWithText(tr("External Images:"), &area()) << *d->enableExtWithPWADs
            << Const(0) << *d->disableExtTextures
            << Const(0) << *d->disableExtPatches;
 
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))

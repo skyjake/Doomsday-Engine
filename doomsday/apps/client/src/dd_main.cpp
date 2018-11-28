@@ -45,6 +45,7 @@
 #include <de/timer.h>
 #include <de/ArrayValue>
 #include <de/CommandLine>
+#include <de/Garbage>
 #include <de/NativeFile>
 #include <de/PackageLoader>
 #include <de/LinkFile>
@@ -138,7 +139,7 @@
 #  include "ui/home/homewidget.h"
 
 #  include "updater.h"
-#  include "updater/downloaddialog.h"
+#  include "updater/updatedownloaddialog.h"
 #endif
 #ifdef __SERVER__
 #  include "network/net_main.h"
@@ -408,8 +409,8 @@ static void createPackagesScheme()
 #undef SEP_CHAR
     }
 
-    scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/", RC_NULL), SearchPath::NoDescend));
-    scheme.addSearchPath(SearchPath(de::Uri("$(App.DataPath)/$(GamePlugin.Name)/", RC_NULL), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/"), SearchPath::NoDescend));
+    scheme.addSearchPath(SearchPath(de::makeUri("$(App.DataPath)/$(GamePlugin.Name)/"), SearchPath::NoDescend));
 }
 #endif
 
@@ -470,7 +471,7 @@ void DD_CreateFileSystemSchemes()
 
         for (dint i = 0; i < searchPathCount; ++i)
         {
-            scheme.addSearchPath(SearchPath(de::Uri(def.searchPaths[i], RC_NULL), def.searchPathFlags));
+            scheme.addSearchPath(SearchPath(de::makeUri(def.searchPaths[i]), def.searchPathFlags));
         }
 
         if (def.optOverridePath && CommandLine_CheckWith(def.optOverridePath, 1))
@@ -513,7 +514,7 @@ void App_Error(char const *error, ...)
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
         if (!ClientApp::busyRunner().inWorkerThread())
         {
             Sys_MessageBox(MBT_ERROR, DOOMSDAY_NICENAME, buff, 0);
@@ -545,7 +546,7 @@ void App_Error(char const *error, ...)
     {
         DoomsdayApp::app().busyMode().abort(buff);
 
-#ifdef __CLIENT__
+#if defined (__CLIENT__) && defined (DENG_HAVE_BUSYRUNNER)
         if (ClientApp::busyRunner().inWorkerThread())
         {
             // We should not continue to execute the worker any more.
@@ -600,6 +601,8 @@ void App_AbnormalShutdown(char const *message)
 
     //Sys_Shutdown();
     DD_Shutdown();
+
+    Garbage_ForgetAndLeak(); // At this point, it's too late.
 
     // Get outta here.
     exit(1);
@@ -794,7 +797,7 @@ int DD_ActivateGameWorker(void *context)
         }
         else
         {
-            configFile = App::rootFolder().tryLocate<File const>(App_CurrentGame().mainConfig());
+            configFile = FS::tryLocate<const File>(App_CurrentGame().mainConfig());
             Con_SetDefaultPath(App_CurrentGame().mainConfig());
 
             // This will be missing on the first launch.
@@ -811,7 +814,7 @@ int DD_ActivateGameWorker(void *context)
         ClientApp::inputSystem().bindGameDefaults();
 
         // Read bindings for this game and merge with the working set.
-        if ((configFile = App::rootFolder().tryLocate<File const>(App_CurrentGame().bindingConfig()))
+        if ((configFile = FS::tryLocate<const File>(App_CurrentGame().bindingConfig()))
                 != nullptr)
         {
             Con_ParseCommands(*configFile);
@@ -938,15 +941,25 @@ static GameProfile const *autoselectGameProfile()
         // The argument can be a game ID or a profile name.
         if (games.contains(param))
         {
-            Game &game = games[param];
-            automaticProfile = DoomsdayApp::gameProfiles().find(game.title()).as<GameProfile>();
+            auto &prof = DoomsdayApp::gameProfiles().find(games[param].title()).as<GameProfile>();
+            prof.setLastPlayedAt();
+            automaticProfile = prof;
         }
-        else if (auto const *prof = DoomsdayApp::gameProfiles().tryFind(param))
+        else if (auto *prof = maybeAs<GameProfile>(DoomsdayApp::gameProfiles().tryFind(param)))
         {
-            automaticProfile = prof->as<GameProfile>();
+            prof->setLastPlayedAt();
+            automaticProfile = *prof;
         }
 
-        // Append the packages specified on the command line.
+        // Packages from the command line.
+        foreach (String packageId, PackageLoader::get().loadedFromCommandLine())
+        {
+            StringList pkgs = automaticProfile.packages();
+            pkgs << packageId;
+            automaticProfile.setPackages(pkgs);
+        }
+
+        // Also append the packages specified as files on the command line.
         foreach (File *f, DoomsdayApp::app().filesFromCommandLine())
         {
             String packageId;
@@ -1341,13 +1354,18 @@ static dint DD_StartupWorker(void * /*context*/)
     //
 
     // Make sure all files have been found so we can determine which games are playable.
-    Folder::waitForPopulation();
-    DoomsdayApp::bundles().waitForEverythingIdentified();
+    /*Folder::waitForPopulation(
+            #if defined (__SERVER__)
+                Folder::BlockingMainThread
+            #endif
+                );
+    DoomsdayApp::bundles().waitForEverythingIdentified();*/
+    FS::waitForIdle();
 
     /*String foundPath = App_FileSystem().findPath(de::Uri("doomsday.pk3", RC_PACKAGE),
                                                  RLF_DEFAULT, App_ResourceClass(RC_PACKAGE));
     foundPath = App_BasePath() / foundPath;  // Ensure the path is absolute.
-    File1 *loadedFile = File1::tryLoad(de::Uri(foundPath, RC_NULL));
+    File1 *loadedFile = File1::tryLoad(de::makeUri(foundPath));
     DENG2_ASSERT(loadedFile);
     DENG2_UNUSED(loadedFile);*/
 
@@ -1590,71 +1608,40 @@ struct ddvalue_t
     dint *writePtr;
 };
 
-ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE - 1] = {
+static ddvalue_t ddValues[DD_LAST_VALUE - DD_FIRST_VALUE] = {
+    {&novideo, 0},
     {&netGame, 0},
-    {&isServer, 0},                         // An *open* server?
+    {&isServer, 0}, // An *open* server?
     {&isClient, 0},
+    {&consolePlayer, &consolePlayer},
+    {&displayPlayer, 0}, // use R_SetViewPortPlayer() to change
+    {&gotFrame, 0},
+    {0, 0}, // pointer updated when queried (DED sound def count)
+
 #ifdef __SERVER__
     {&allowFrames, &allowFrames},
 #else
     {0, 0},
 #endif
-    {&consolePlayer, &consolePlayer},
-    {&displayPlayer, 0 /*&displayPlayer*/}, // use R_SetViewPortPlayer() instead
-#ifdef __CLIENT__
-    {&mipmapping, 0},
-    {&filterUI, 0},
-    {0, 0}, // defResX
-    {0, 0}, // defResY
-#else
-    {0, 0},
-    {0, 0},
-    {0, 0},
-    {0, 0},
-#endif
-    {0, 0},
-    {0, 0}, //{&mouseInverseY, &mouseInverseY},
+
 #ifdef __CLIENT__
     {&levelFullBright, &levelFullBright},
-#else
-    {0, 0},
-#endif
-    {0, 0}, // &CmdReturnValue
-#ifdef __CLIENT__
     {&gameReady, &gameReady},
-#else
-    {0, 0},
-#endif
-    {&isDedicated, 0},
-    {&novideo, 0},
-    {0, 0},
-    {&gotFrame, 0},
-#ifdef __CLIENT__
     {&playback, 0},
-#else
-    {0, 0},
-#endif
-    {&DED_Definitions()->sounds.count.num, 0},
-    {0, 0},
-    {0, 0},
-#ifdef __CLIENT__
     {&clientPaused, &clientPaused},
     {&weaponOffsetScaleY, &weaponOffsetScaleY},
-#else
-    {0, 0},
-    {0, 0},
-#endif
-    {0, 0},
-#ifdef __CLIENT__
     {&gameDrawHUD, 0},
     {&symbolicEchoMode, &symbolicEchoMode},
-    {&numTexUnits, 0},
-    {&rendLightAttenuateFixedColormap, &rendLightAttenuateFixedColormap}
+    {&rendLightAttenuateFixedColormap, &rendLightAttenuateFixedColormap},
 #else
     {0, 0},
     {0, 0},
     {0, 0},
-    {0, 0}
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {0, 0},
+    {0, 0},
 #endif
 };
 
@@ -1700,10 +1687,17 @@ dint DD_GetInteger(dint ddvalue)
     default: break;
     }
 
-    if (ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    if (ddvalue >= DD_LAST_VALUE || ddvalue < DD_FIRST_VALUE)
     {
         return 0;
     }
+
+    // Update pointers.
+    if (ddvalue == DD_NUMSOUNDS)
+    {
+        ddValues[ddvalue].readPtr = &DED_Definitions()->sounds.count.num;
+    }
+
     if (ddValues[ddvalue].readPtr == 0)
     {
         return 0;
@@ -1717,7 +1711,7 @@ dint DD_GetInteger(dint ddvalue)
  */
 void DD_SetInteger(dint ddvalue, dint parm)
 {
-    if (ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
+    if (ddvalue < DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
     {
         return;
     }
@@ -1745,7 +1739,7 @@ void *DD_GetVariable(dint ddvalue)
     case DD_GAME_EXPORTS:
         return &gx;
 
-    case DD_POLYOBJ_COUNT:
+    case DD_MAP_POLYOBJ_COUNT:
         value = App_World().hasMap()? App_World().map().polyobjCount() : 0;
         return &value;
 
@@ -1779,7 +1773,7 @@ void *DD_GetVariable(dint ddvalue)
     /*case DD_CPLAYER_THRUST_MUL:
         return &cplrThrustMul;*/
 
-    case DD_GRAVITY:
+    case DD_MAP_GRAVITY:
         valueD = App_World().hasMap()? App_World().map().gravity() : 0;
         return &valueD;
 
@@ -1822,7 +1816,7 @@ void *DD_GetVariable(dint ddvalue)
     default: break;
     }
 
-    if (ddvalue >= DD_LAST_VALUE || ddvalue <= DD_FIRST_VALUE)
+    if (ddvalue >= DD_LAST_VALUE || ddvalue < DD_FIRST_VALUE)
     {
         return 0;
     }
@@ -1838,7 +1832,7 @@ void *DD_GetVariable(dint ddvalue)
 #undef DD_SetVariable
 void DD_SetVariable(dint ddvalue, void *parm)
 {
-    if (ddvalue <= DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
+    if (ddvalue < DD_FIRST_VALUE || ddvalue >= DD_LAST_VALUE)
     {
         switch (ddvalue)
         {
@@ -1846,7 +1840,7 @@ void DD_SetVariable(dint ddvalue, void *parm)
             cplrThrustMul = *(dfloat*) parm;
             return;*/
 
-        case DD_GRAVITY:
+        case DD_MAP_GRAVITY:
             if (App_World().hasMap())
                 App_World().map().setGravity(*(coord_t*) parm);
             return;
@@ -1983,28 +1977,30 @@ D_CMD(Load)
                         << String::join(game.profile().unavailablePackages(), ", ");
                 return true;
             }
-            if (!DoomsdayApp::app().changeGame(game.profile(), DD_ActivateGameWorker))
+            if (DoomsdayApp::app().changeGame(game.profile(), DD_ActivateGameWorker))
             {
-                return false;
+                game.profile().setLastPlayedAt();
+                continue;
             }
-            continue;
+            return false;
         }
 
         // It could also be a game profile.
-        if (auto const *profile = DoomsdayApp::gameProfiles().tryFind(searchTerm))
+        if (auto *profile = DoomsdayApp::gameProfiles().tryFind(searchTerm))
         {
-            auto const &gameProf = profile->as<GameProfile>();
+            auto &gameProf = profile->as<GameProfile>();
             if (!gameProf.isPlayable())
             {
                 LOG_SCR_ERROR("Profile \"%s\" is missing one or more required packages: ")
                         << String::join(gameProf.unavailablePackages(), ", ");
                 return true;
             }
-            if (!DoomsdayApp::app().changeGame(gameProf, DD_ActivateGameWorker))
+            if (DoomsdayApp::app().changeGame(gameProf, DD_ActivateGameWorker))
             {
-                return false;
+                gameProf.setLastPlayedAt();
+                continue;
             }
-            continue;
+            return false;
         }
 
         try
@@ -2174,7 +2170,7 @@ D_CMD(Unload)
                                                          RLF_MATCH_EXTENSION, App_ResourceClass(RC_PACKAGE));
             foundPath = App_BasePath() / foundPath; // Ensure the path is absolute.
 
-            if (File1::tryUnload(de::Uri(foundPath, RC_NULL)))
+            if (File1::tryUnload(de::makeUri(foundPath)))
             {
                 didUnloadFiles = true;
             }
@@ -2217,7 +2213,7 @@ D_CMD(ReloadGame)
     return true;
 }
 
-#ifdef __CLIENT__
+#if defined (DENG_HAVE_UPDATER)
 
 D_CMD(CheckForUpdates)
 {
@@ -2253,7 +2249,7 @@ D_CMD(ShowUpdateSettings)
     return true;
 }
 
-#endif // __CLIENT__
+#endif // DENG_HAVE_UPDATER
 
 D_CMD(Version)
 {
@@ -2266,7 +2262,7 @@ D_CMD(Version)
     // Print the version info of the current game if loaded.
     if (App_GameLoaded())
     {
-        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetVariable(DD_PLUGIN_VERSION_LONG);
+        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetPointer(DD_PLUGIN_VERSION_LONG);
     }
 
     // Additional information for developers.
@@ -2282,12 +2278,12 @@ D_CMD(Quit)
 {
     DENG2_UNUSED2(src, argc);
 
-#ifdef __CLIENT__
-    if (DownloadDialog::isDownloadInProgress())
+#if defined (DENG_HAVE_UPDATER)
+    if (UpdateDownloadDialog::isDownloadInProgress())
     {
         LOG_WARNING("Cannot quit while downloading an update");
         ClientWindow::main().taskBar().openAndPauseGame();
-        DownloadDialog::currentDownload().open();
+        UpdateDownloadDialog::currentDownload().open();
         return false;
     }
 #endif
@@ -2332,7 +2328,7 @@ D_CMD(Help)
 #endif
 */
 
-    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " %s Console") << Version::currentBuild().asHumanReadableText();
+    LOG_SCR_NOTE(_E(b) DOOMSDAY_NICENAME " %s Console") << Version::currentBuild().compactNumber();
 
 #define TABBED(A, B) "\n" _E(Ta) _E(b) "  " << A << " " _E(.) _E(Tb) << B
 
@@ -2475,10 +2471,13 @@ void DD_ConsoleRegister()
 
 #ifdef __CLIENT__
     C_CMD("clear",           "", Clear);
+
+#if defined (DENG_HAVE_UPDATER)
     C_CMD("update",          "", CheckForUpdates);
     C_CMD("updateandnotify", "", CheckForUpdatesAndNotify);
     C_CMD("updatesettings",  "", ShowUpdateSettings);
     C_CMD("lastupdated",     "", LastUpdated);
+#endif
 
     C_CMD_FLAGS("conclose",       "",     OpenClose,    CMDF_NO_DEDICATED);
     C_CMD_FLAGS("conopen",        "",     OpenClose,    CMDF_NO_DEDICATED);

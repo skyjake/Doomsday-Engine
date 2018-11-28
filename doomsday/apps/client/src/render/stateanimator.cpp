@@ -25,12 +25,15 @@
 
 #include <doomsday/world/thinkerdata.h>
 
+#include <de/ConditionalTrigger>
 #include <de/ScriptedInfo>
 #include <de/ScriptSystem>
 #include <de/RecordValue>
 #include <de/NoneValue>
 #include <de/NativePointerValue>
 #include <de/GLUniform>
+
+#include <QSet>
 
 using namespace de;
 
@@ -52,6 +55,8 @@ static String const VAR_ID            ("ID");           // model asset ID
 static String const VAR_ASSET         ("__asset__");    // runtime reference to asset metadata
 static String const VAR_ENABLED       ("enabled");
 static String const VAR_MATERIAL      ("material");
+
+static String const VAR_NOTIFIED_STATES("notifiedStates");
 
 static String const PASS_GLOBAL       ("");
 static String const DEFAULT_MATERIAL  ("default");
@@ -75,14 +80,14 @@ DENG2_PIMPL(StateAnimator)
 
         LoopMode looping = NotLooping;
         int priority = ANIM_DEFAULT_PRIORITY;
-        Scheduler const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
-        std::unique_ptr<Scheduler::Clock> clock;
-        TimeDelta overrideDuration = -1.0;
+        Timeline const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
+        std::unique_ptr<Timeline::Clock> clock;
+        TimeSpan overrideDuration = -1.0;
 
         Sequence() {}
 
         Sequence(int animationId, String const &rootNode, LoopMode looping, int priority,
-                 Scheduler const *timeline = nullptr)
+                 Timeline const *timeline = nullptr)
             : looping(looping)
             , priority(priority)
             , timeline(timeline)
@@ -172,32 +177,52 @@ DENG2_PIMPL(StateAnimator)
     typedef QHash<String, AnimVar *> AnimVars;
     AnimVars animVars;
 
-    Impl(Public *i, DotPath const &id) : Base(i)
+    /// Optional script callback for chosen states.
+    struct StateCallback : public ConditionalTrigger
     {
-        names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
-        names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
-                                                        QStringLiteral("StateAnimator")));
-        names.addText(VAR_ID, id).setReadOnly();
-        names.add(VAR_ASSET).set(new RecordValue(App::asset(id).accessedRecord())).setReadOnly();
+        Record &names;
 
-        initVariables();
-
-        // Set up the model drawing parameters.
-        if (!self().model().passes.isEmpty())
+        StateCallback(Record &names) : names(names)
         {
-            appearance.drawPasses = &self().model().passes;
+            setCondition(names[VAR_NOTIFIED_STATES]);
         }
-        appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
+
+        void handleTriggered(String const &trigger) override
         {
-            bindUniforms(program,
-                binding == ModelDrawable::AboutToBind? Bind : Unbind);
-        };
-        appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
+            Record ns;
+            ns.add(QStringLiteral("self")).set(new RecordValue(names));
+            Process::scriptCall(Process::IgnoreResult, ns,
+                                QStringLiteral("self.__asset__.onStateChange"),
+                                "$self",    // StateAnimator instance
+                                trigger);   // new state
+        }
+    };
+    std::unique_ptr<StateCallback> stateCallback;
+    std::unique_ptr<Scheduler> scheduler; // only created if needed for additional timelines
+
+    Impl(Public *i, DotPath const &assetId) : Base(i)
+    {
+        if (!assetId.isEmpty())
         {
-            bindPassUniforms(*self().model().currentProgram(),
-                pass.name,
-                state == ModelDrawable::PassBegun? Bind : Unbind);
-        };
+            initVariables(assetId);
+
+            // Set up the model drawing parameters.
+            if (!self().model().passes.isEmpty())
+            {
+                appearance.drawPasses = &self().model().passes;
+            }
+            appearance.programCallback = [this] (GLProgram &program, ModelDrawable::ProgramBinding binding)
+            {
+                bindUniforms(program,
+                    binding == ModelDrawable::AboutToBind? Bind : Unbind);
+            };
+            appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
+            {
+                bindPassUniforms(*self().model().currentProgram(),
+                    pass.name,
+                    state == ModelDrawable::PassBegun? Bind : Unbind);
+            };
+        }
     }
 
     ~Impl()
@@ -205,8 +230,30 @@ DENG2_PIMPL(StateAnimator)
         deinitVariables();
     }
 
-    void initVariables()
+    void initVariables(DotPath const &assetId)
     {
+        // Initialize the StateAnimator script object.
+        names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
+        names.addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Render"),
+                                                        QStringLiteral("StateAnimator")));
+        names.addText(VAR_ID, assetId).setReadOnly();
+        Record const &assetDef = App::asset(assetId).accessedRecord();
+        names.add(VAR_ASSET).set(new RecordValue(assetDef)).setReadOnly();
+        if (assetDef.has(VAR_NOTIFIED_STATES))
+        {
+            // Use the initial value for state callbacks.
+            names.add(VAR_NOTIFIED_STATES).set(assetDef.get(VAR_NOTIFIED_STATES));
+        }
+        else
+        {
+            // The states to notify can be chosen later.
+            names.addArray(VAR_NOTIFIED_STATES);
+        }
+        if (assetDef.has(QStringLiteral("onStateChange")))
+        {
+            stateCallback.reset(new StateCallback(names));
+        }
+
         int const passCount = self().model().passes.size();
 
         // Clear lookups affected by the variables.
@@ -523,13 +570,18 @@ DENG2_PIMPL(StateAnimator)
         anim.apply(spec);
         if (anim.timeline)
         {
-            anim.clock.reset(new Scheduler::Clock(*anim.timeline, &names));
+            anim.clock.reset(new Timeline::Clock(*anim.timeline, &names));
         }
         applyFlagOperation(anim.flags, Sequence::ClampToDuration,
                            anim.looping == Sequence::Looping? UnsetFlags : SetFlags);
         return anim;
     }
 };
+
+StateAnimator::StateAnimator()
+    : ModelDrawable::Animator(Impl::Sequence::make)
+    , d(new Impl(this, {}))
+{}
 
 StateAnimator::StateAnimator(DotPath const &id, Model const &model)
     : ModelDrawable::Animator(model, Impl::Sequence::make)
@@ -541,18 +593,27 @@ Model const &StateAnimator::model() const
     return static_cast<Model const &>(ModelDrawable::Animator::model());
 }
 
+Scheduler &StateAnimator::scheduler()
+{
+    if (!d->scheduler)
+    {
+        d->scheduler.reset(new Scheduler);
+    }
+    return *d->scheduler;
+}
+
 void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
 {
     d->ownerNamespaceVarName = varName;
     d->names.add(d->ownerNamespaceVarName).set(new RecordValue(names));
 
     // Call the onInit() function if there is one.
-    if (d->names.has(VAR_ASSET + QStringLiteral(".onInit")))
+    if (d->names.has(QStringLiteral("__asset__.onInit")))
     {
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            "self." + VAR_ASSET + ".onInit",
+                            "self.__asset__.onInit",
                             "$self");
     }
 }
@@ -565,6 +626,11 @@ String StateAnimator::ownerNamespaceName() const
 void StateAnimator::triggerByState(String const &stateName)
 {
     using Sequence = Impl::Sequence;
+
+    if (d->stateCallback)
+    {
+        d->stateCallback->tryTrigger(stateName);
+    }
 
     // No animations can be triggered if none are available.
     auto const *stateAnims = &model().animations;
@@ -584,12 +650,19 @@ void StateAnimator::triggerByState(String const &stateName)
         {
             // Test for the probability of this animation.
             float chance = seq.def->getf(DEF_PROBABILITY, 1.f);
-            if (frand() > chance) continue;
+            if (randf() > chance) continue;
 
             // Start the animation on the specified node (defaults to root),
             // unless it is already running.
             String const node = seq.def->gets(DEF_NODE, "");
             int animId = d->animationId(seq.name);
+
+            if (animId < 0)
+            {
+                LOG_GL_ERROR("%s: animation sequence \"%s\" not found")
+                    << ScriptedInfo::sourceLocation(*seq.def) << seq.name;
+                break;
+            }
 
             bool const alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
             if (!alwaysTrigger)
@@ -603,7 +676,7 @@ void StateAnimator::triggerByState(String const &stateName)
             int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
 
             // Look up the timeline.
-            Scheduler *timeline = seq.timeline;
+            Timeline *timeline = seq.timeline;
             if (!seq.sharedTimeline.isEmpty())
             {
                 auto tl = model().timelines.constFind(seq.sharedTimeline);
@@ -645,7 +718,7 @@ void StateAnimator::triggerByState(String const &stateName)
         }
         catch (ModelDrawable::Animator::InvalidError const &er)
         {
-            LOGDEV_GL_WARNING("Failed to start animation \"%s\": %s")
+            LOG_GL_WARNING("Failed to start animation \"%s\": %s")
                     << seq.name << er.asText();
             continue;
         }
@@ -663,7 +736,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
      * variable holds a direct pointer to the asset definition, where the
      * function is defined.
      */
-    if (d->names.has(VAR_ASSET + QStringLiteral(".onDamage")))
+    if (d->names.has(QStringLiteral("__asset__.onDamage")))
     {
         /*
          * We need to provide the StateAnimator instance to the script as an
@@ -673,22 +746,33 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
         Record ns;
         ns.add(QStringLiteral("self")).set(new RecordValue(d->names));
         Process::scriptCall(Process::IgnoreResult, ns,
-                            "self." + VAR_ASSET + ".onDamage",
+                            QStringLiteral("self.__asset__.onDamage"),
                             "$self", points,
                             inflictor? &THINKER_DATA(inflictor->thinker, ThinkerData) :
                                        nullptr);
     }
 }
 
-void StateAnimator::startSequence(int animationId, int priority, bool looping,
-                                  String const &node)
+void StateAnimator::startAnimation(int animationId, int priority, bool looping, String const &node)
 {
-    using Seq = Impl::Sequence;
-    d->start(Seq(animationId, node, looping? Seq::Looping : Seq::NotLooping,
-                 priority));
+    LOG_AS("StateAnimator::startAnimation");
+    try
+    {
+        using Seq = Impl::Sequence;
+        d->start(Seq(animationId, node, looping ? Seq::Looping : Seq::NotLooping, priority));
+    }
+    catch (const Error &er)
+    {
+        LOG_GL_ERROR("%s: %s") << d->names.gets(VAR_ID) << er.asText();
+    }
 }
 
-void StateAnimator::advanceTime(TimeDelta const &elapsed)
+int StateAnimator::animationId(String const &name) const
+{
+    return d->animationId(name);
+}
+
+void StateAnimator::advanceTime(TimeSpan const &elapsed)
 {
     ModelDrawable::Animator::advanceTime(elapsed);
 
@@ -715,7 +799,7 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
         // TODO: Determine actual time factor.
 
         // Advance the sequence.
-        TimeDelta animElapsed = factor * elapsed;
+        TimeSpan animElapsed = factor * elapsed;
         anim.time += animElapsed;
 
         if (anim.looping == Sequence::NotLooping)
@@ -767,6 +851,11 @@ void StateAnimator::advanceTime(TimeDelta const &elapsed)
                 pending.remove(node);
             }
         }
+    }
+
+    if (d->scheduler)
+    {
+        d->scheduler->advanceTime(elapsed);
     }
 
     if (retrigger && !d->currentStateName.isEmpty())

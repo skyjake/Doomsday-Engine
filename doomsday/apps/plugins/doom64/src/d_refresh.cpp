@@ -88,7 +88,7 @@ dd_bool R_ViewFilterColor(float rgba[4], int filter)
         rgba[CR] = 1;
         rgba[CG] = 0;
         rgba[CB] = 0;
-        rgba[CA] = (G_Ruleset_Deathmatch()? 1.0f : cfg.common.filterStrength) * filter / 9.f;
+        rgba[CA] = (gfw_Rule(deathmatch)? 1.0f : cfg.common.filterStrength) * filter / 9.f;
         return true;
     }
 
@@ -206,7 +206,7 @@ void G_RendPlayerView(int player)
     }
 
     // How about fullbright?
-    DD_SetInteger(DD_FULLBRIGHT, isFullBright);
+    DD_SetInteger(DD_RENDER_FULLBRIGHT, isFullBright);
 
     // Render the view with possible custom filters.
     R_RenderPlayerView(player);

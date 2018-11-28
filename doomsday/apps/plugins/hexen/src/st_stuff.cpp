@@ -208,7 +208,7 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
             {
                 GL_DrawPatch(pStatBar, Vector2i(ORIGINX + 38, ORIGINY));
 
-                if(G_Ruleset_Deathmatch())
+                if(gfw_Rule(deathmatch))
                 {
                     GL_DrawPatch(pKills, Vector2i(ORIGINX + 38, ORIGINY));
                 }
@@ -308,16 +308,16 @@ void SBarBackground_Drawer(HudWidget *wi, Point2Raw const *offset)
                 patchinfo_t pStatBarInfo;
                 if(R_GetPatchInfo(pStatBar, &pStatBarInfo))
                 {
-                    x = ORIGINX + (G_Ruleset_Deathmatch() ? 68 : 38);
+                    x = ORIGINX + (gfw_Rule(deathmatch) ? 68 : 38);
                     y = ORIGINY;
-                    w = G_Ruleset_Deathmatch()?214:244;
+                    w = gfw_Rule(deathmatch)?214:244;
                     h = 31;
                     DGL_SetPatch(pStatBar, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
-                    DGL_DrawCutRectf2Tiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, G_Ruleset_Deathmatch()?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
+                    DGL_DrawCutRectf2Tiled(x, y, w, h, pStatBarInfo.geometry.size.width, pStatBarInfo.geometry.size.height, gfw_Rule(deathmatch)?30:0, 0, ORIGINX+190, ORIGINY, 57, 30);
                 }
 
                 GL_DrawPatch(pWeaponSlot[pClass], Vector2i(ORIGINX + 190, ORIGINY));
-                if(G_Ruleset_Deathmatch())
+                if(gfw_Rule(deathmatch))
                     GL_DrawPatch(pKills, Vector2i(ORIGINX + 38, ORIGINY));
             }
             else
@@ -623,9 +623,9 @@ static void initAutomapForCurrentMap(AutomapWidget &automap)
 #endif
 
     // Are we re-centering on a followed mobj?
-    if(mobj_t *mob = automap.followMobj())
+    if (mobj_t *mob = automap.followMobj())
     {
-        automap.setCameraOrigin(Vector2d(mob->origin));
+        automap.setCameraOrigin(Vector2d(mob->origin), true);
     }
 
     if(IS_NETGAME)
@@ -676,7 +676,6 @@ void ST_Start(int localPlayer)
     // If the automap was left open; close it.
     automap.open(false, true /*instantly*/);
     initAutomapForCurrentMap(automap);
-    automap.setCameraFollowMode(CPP_BOOL(cfg.common.automapRotate));
 
     hud->stopped = false;
 }

@@ -20,6 +20,7 @@
 #include "ui/widgets/packageswidget.h"
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/dialogs/datafilesettingsdialog.h"
+#include "ui/dialogs/repositorybrowserdialog.h"
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 
@@ -47,14 +48,15 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     ButtonWidget *folderOptionsButton;
     ui::ListData actions;
     LoopCallback mainCall;
+    int totalPackageCount = 0;
 
     Impl(Public *i) : Base(i)
     {
         DoomsdayApp::app().audienceForGameChange() += this;
 
-        actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this] () -> PopupWidget *
-        {
-            return new PackageInfoDialog(packages->actionPackage());
+        actions << new ui::SubwidgetItem(tr("..."), ui::Left, [this]() -> PopupWidget * {
+            return new PackageInfoDialog(packages->actionPackage(),
+                                         PackageInfoDialog::EnableActions);
         });
 
         countLabel = new LabelWidget;
@@ -80,6 +82,8 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
             {
                 countLabel->setText(tr("%1 shown out of %2 available").arg(shown).arg(total));
             }
+            totalPackageCount = total;
+            emit self().availablePackageCountChanged(total);
         });
 
         area.add(folderOptionsButton = new ButtonWidget);
@@ -104,8 +108,21 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
         self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
-                    << new ui::ActionItem(tr("Refresh"),
-                                          new CallbackAction([this] () { packages->refreshPackages(); }));
+                    << new ui::SubwidgetItem(style().images().image("gear"),
+                                             ui::Item::ShownAsButton | ui::Item::ClosesParentPopup,
+                                             tr("Settings"), ui::Left, makePopup<DataFileSettingsDialog>)
+//                    << new ui::ActionItem(tr("Install Mods..." _E(l)_E(s)_E(D) " BETA"),
+//                                          new CallbackAction([this]() { openRepositoryBrowser(); }))
+                    << new ui::Item(ui::Item::Separator)
+                    << new ui::ActionItem("Show Recognized IWADs",
+                                          new CallbackAction([this]() { packages->searchTermsEditor().setText("gamedata"); }))
+                    << new ui::ActionItem("Show Box Contents",
+                                          new CallbackAction([this]() { packages->searchTermsEditor().setText("hidden"); }))
+                    << new ui::ActionItem("Show Core Packages",
+                                          new CallbackAction([this]() { packages->searchTermsEditor().setText("core"); }))
+                    << new ui::Item(ui::Item::Separator)
+                    << new ui::ActionItem(tr("Refresh List"),
+                                          new CallbackAction([]() { FS::get().refreshAsync(); }));
                 return menu;
         }, ui::Down);
     }
@@ -114,14 +131,21 @@ DENG_GUI_PIMPL(PackagesColumnWidget)
     {
         folderOptionsButton->show(game.isNull());
     }
+
+    void openRepositoryBrowser()
+    {
+        auto *dlg = new RepositoryBrowserDialog;
+        dlg->setDeleteAfterDismissed(true);
+        dlg->exec(root());
+    }
 };
 
 PackagesColumnWidget::PackagesColumnWidget()
     : ColumnWidget("packages-column")
     , d(new Impl(this))
 {
-    header().title().setText(_E(s) "\n" _E(.) + tr("Packages"));
-    header().info().setText(tr("Browse available packages and install new ones."));
+    header().title().setText(_E(s) "\n" _E(.) + tr("Mods"));
+    header().info().setText(tr("Browse available mods/add-ons and install new ones."));
     header().infoPanel().close(0);
 
     // Total number of packages listed.
@@ -144,9 +168,19 @@ PackagesColumnWidget::PackagesColumnWidget()
     d->packages->progress().rule().setRect(scrollArea().rule());
 }
 
+int PackagesColumnWidget::availablePackageCount() const
+{
+    return d->totalPackageCount;
+}
+
 String PackagesColumnWidget::tabHeading() const
 {
-    return tr("Packages");
+    return tr("Mods");
+}
+
+String PackagesColumnWidget::tabShortcut() const
+{
+    return QStringLiteral("s");
 }
 
 void PackagesColumnWidget::setHighlighted(bool highlighted)

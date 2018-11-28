@@ -21,101 +21,86 @@
 /**
  * Converts an RGBA value to HSVA. Hue uses degrees as the unit.
  */
-highp vec4 rgbToHsv(highp vec4 rgb)
+vec4 rgbToHsv(vec4 rgb)
 {
-    highp vec4 hsv;
+    vec4 hsv;
     hsv.a = rgb.a;    
 
-    highp float rgbMin = min(min(rgb.r, rgb.g), rgb.b);
-    highp float rgbMax = max(max(rgb.r, rgb.g), rgb.b); 
-    highp float delta  = rgbMax - rgbMin;
+    float rgbMin = min(min(rgb.r, rgb.g), rgb.b);
+    float rgbMax = max(max(rgb.r, rgb.g), rgb.b); 
+    float delta  = rgbMax - rgbMin;
 
     hsv.z = rgbMax;
 
-    if (delta < 0.00001)
-    {
+    if (delta < 0.00001) {
         hsv.xy = vec2(0.0);
         return hsv;
     }
 
-    if (rgbMax > 0.0)
-    {
+    if (rgbMax > 0.0) {
         hsv.y = delta / rgbMax;
     }
-    else 
-    {
+    else {
         hsv.xy = vec2(0.0);
         return hsv;
     }
         
-    if (rgb.r >= rgbMax)
-    {
+    if (rgb.r >= rgbMax) {
         hsv.x = (rgb.g - rgb.b) / delta;
     }
-    else
-    {
-        if (rgb.g >= rgbMax)
-        {
+    else {
+        if (rgb.g >= rgbMax) {
             hsv.x = 2.0 + (rgb.b - rgb.r) / delta;
         }
-        else
-        {
+        else {
             hsv.x = 4.0 + (rgb.r - rgb.g) / delta;
         }
     }
 
     hsv.x *= 60.0;
-    if (hsv.x < 0.0)
-    {
+    if (hsv.x < 0.0) {
         hsv.x += 360.0;
     }
     return hsv;
 }
 
-highp vec4 hsvToRgb(highp vec4 hsv)
+vec4 hsvToRgb(vec4 hsv)
 {
-    highp vec4 rgb;
+    vec4 rgb;
     rgb.a = hsv.a;
 
-    if (hsv.y <= 0.0) 
-    {
+    if (hsv.y <= 0.0)  {
        rgb.rgb = vec3(hsv.z);
        return rgb;
     }
     
-    highp float hh = hsv.x;
+    float hh = hsv.x;
     if (hh >= 360.0) hh = 0.0;
     hh /= 60.0;
     
-    highp float ff = fract(hh); 
-    highp float p = hsv.z * (1.0 -  hsv.y);
-    highp float q = hsv.z * (1.0 - (hsv.y *        ff));
-    highp float t = hsv.z * (1.0 - (hsv.y * (1.0 - ff)));
+    float ff = fract(hh); 
+    float p = hsv.z * (1.0 -  hsv.y);
+    float q = hsv.z * (1.0 - (hsv.y *        ff));
+    float t = hsv.z * (1.0 - (hsv.y * (1.0 - ff)));
 
     int i = int(hh);
 
-    if (i == 0)
-    {
+    if (i == 0) {
         rgb.rgb = vec3(hsv.z, t, p);
     }
-    else if (i == 1)
-    {
+    else if (i == 1) {
         rgb.rgb = vec3(q, hsv.z, p);
     }
-    else if (i == 2)
-    {
+    else if (i == 2) {
         rgb.rgb = vec3(p, hsv.z, t);
     }
-    else if (i == 3)
-    {
+    else if (i == 3) {
         rgb.rgb = vec3(p, q, hsv.z);
     }
-    else if (i == 4)
-    {
+    else if (i == 4) {
         rgb.rgb = vec3(t, p, hsv.z);
     }
-    else 
-    {
+    else {
         rgb.rgb = vec3(hsv.z, p, q);
     }
 

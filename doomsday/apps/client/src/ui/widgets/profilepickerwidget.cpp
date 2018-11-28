@@ -53,7 +53,7 @@ DENG_GUI_PIMPL(ProfilePickerWidget)
     {
         button->setSizePolicy(ui::Expand, ui::Expand);
         button->setImage(style().images().image("gear"));
-        button->setOverrideImageSize(style().fonts().font("default").height().valuei());
+        button->setOverrideImageSize(style().fonts().font("default").height());
     }
 
     void populate()

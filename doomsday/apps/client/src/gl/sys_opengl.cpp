@@ -32,28 +32,13 @@
 
 #ifdef WIN32
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
-#elif defined(UNIX) && !defined(MACOSX)
+#elif defined (DENG_X11)
 #   include <GL/glx.h>
 #   undef None
 #   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
 #endif
 
 gl_state_t GL_state;
-
-/*
-#ifdef WIN32
-//PFNWGLSWAPINTERVALEXTPROC      wglSwapIntervalEXT = NULL;
-PFNWGLCHOOSEPIXELFORMATARBPROC wglChoosePixelFormatARB = NULL;
-#endif
-*/
-
-/*
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-PFNGLBLENDEQUATIONEXTPROC      glBlendEquationEXT = NULL;
-PFNGLLOCKARRAYSEXTPROC         glLockArraysEXT = NULL;
-PFNGLUNLOCKARRAYSEXTPROC       glUnlockArraysEXT = NULL;
-#endif
-*/
 
 static dd_bool doneEarlyInit = false;
 static dd_bool sysOpenGLInited = false;
@@ -68,41 +53,23 @@ static void initialize(void)
         GL_state.features.texFilterAniso = false;
     }
 
-    if(ext.EXT_blend_subtract)
-    {
-#ifdef LIBGUI_USE_GLENTRYPOINTS
-        GETPROC(PFNGLBLENDEQUATIONEXTPROC, glBlendEquationEXT);
-        if(!glBlendEquationEXT)
-            GL_state.features.blendSubtract = false;
-#endif
-    }
-    else
-    {
-        GL_state.features.blendSubtract = false;
-    }
-
     if (CommandLine_Exists("-texcomp") && !CommandLine_Exists("-notexcomp"))
     {
         GL_state.features.texCompression = true;
     }
 #ifdef USE_TEXTURE_COMPRESSION_S3
     // Enabled by default if available.
-    if(ext.EXT_texture_compression_s3tc)
+    if (ext.EXT_texture_compression_s3tc)
     {
         GLint iVal;
         LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
-        if(iVal == 0 || LIBGUI_GL.glGetError() != GL_NO_ERROR)
+        LIBGUI_ASSERT_GL_OK();
+        if (iVal == 0)// || LIBGUI_GL.glGetError() != GL_NO_ERROR)
             GL_state.features.texCompression = false;
     }
 #else
     GL_state.features.texCompression = false;
 #endif
-
-    // Automatic mipmap generation.
-    if(!ext.SGIS_generate_mipmap || CommandLine_Exists("-nosgm"))
-    {
-        GL_state.features.genMipmap = false;
-    }
 }
 
 #define TABBED(A, B)  _E(Ta) "  " _E(l) A _E(.) " " _E(Tb) << B << "\n"
@@ -121,6 +88,8 @@ de::String Sys_GLDescription()
     os << TABBED("Renderer:", (char const *) LIBGUI_GL.glGetString(GL_RENDERER));
     os << TABBED("Vendor:",   (char const *) LIBGUI_GL.glGetString(GL_VENDOR));
 
+    LIBGUI_ASSERT_GL_OK();
+
     os << _E(T`) "Capabilities:\n";
 
     GLint iVal;
@@ -129,34 +98,31 @@ de::String Sys_GLDescription()
     if(de::GLInfo::extensions().EXT_texture_compression_s3tc)
     {
         LIBGUI_GL.glGetIntegerv(GL_NUM_COMPRESSED_TEXTURE_FORMATS, &iVal);
+        LIBGUI_ASSERT_GL_OK();
         os << TABBED("Compressed texture formats:", iVal);
     }
 #endif
 
     os << TABBED("Use texture compression:", (GL_state.features.texCompression? "yes" : "no"));
 
-    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_UNITS, &iVal);
-    os << TABBED("Available texture units:", iVal);
+    os << TABBED("Available texture units:", de::GLInfo::limits().maxTexUnits);
 
     if(de::GLInfo::extensions().EXT_texture_filter_anisotropic)
     {
-        LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_MAX_ANISOTROPY_EXT, &iVal);
-        os << TABBED("Maximum texture anisotropy:", iVal);
+        os << TABBED("Maximum texture anisotropy:", de::GLInfo::limits().maxTexFilterAniso);
     }
     else
     {
         os << _E(Ta) "  Variable texture anisotropy unavailable.";
     }
 
-    LIBGUI_GL.glGetIntegerv(GL_MAX_TEXTURE_SIZE, &iVal);
-    os << TABBED("Maximum texture size:", iVal);
+    os << TABBED("Maximum texture size:", de::GLInfo::limits().maxTexSize);
 
-    GLfloat fVals[2];
-    LIBGUI_GL.glGetFloatv(GL_LINE_WIDTH_GRANULARITY, fVals);
-    os << TABBED("Line width granularity:", fVals[0]);
+    os << TABBED("Line width granularity:", de::GLInfo::limits().smoothLineWidthGranularity);
 
-    LIBGUI_GL.glGetFloatv(GL_LINE_WIDTH_RANGE, fVals);
-    os << TABBED("Line width range:", fVals[0] << "..." << fVals[1]);
+    os << TABBED("Line width range:",
+                 de::GLInfo::limits().smoothLineWidth.start << "..." <<
+                 de::GLInfo::limits().smoothLineWidth.end);
 
     return str.rightStrip();
 
@@ -175,18 +141,10 @@ dd_bool Sys_GLPreInit(void)
     if(novideo) return true;
     if(doneEarlyInit) return true; // Already been here??
 
-    // Init assuming ideal configuration.
-    //GL_state.multisampleFormat = 0; // No valid default can be assumed at this time.
-
-    GL_state.features.blendSubtract = true;
-    GL_state.features.genMipmap = true;
-    //GL_state.features.multisample = false; // We'll test for availability...
     GL_state.features.texCompression = false;
     GL_state.features.texFilterAniso = true;
-
     GL_state.currentLineWidth = 1.5f;
     GL_state.currentPointSize = 1.5f;
-    GL_state.currentUseFog = false;
 
     doneEarlyInit = true;
     return true;
@@ -207,6 +165,7 @@ dd_bool Sys_GLInitialize(void)
 
     if(firstTimeInit)
     {
+#if defined (DENG_OPENGL)
         const GLubyte* versionStr = LIBGUI_GL.glGetString(GL_VERSION);
         double version = (versionStr? strtod((const char*) versionStr, NULL) : 0);
         if(version == 0)
@@ -214,7 +173,7 @@ dd_bool Sys_GLInitialize(void)
             LOG_GL_WARNING("Failed to determine OpenGL version; driver reports: %s")
                     << LIBGUI_GL.glGetString(GL_VERSION);
         }
-        else if(version < 2.0)
+        else if(version < 3.3)
         {
             if(!CommandLine_Exists("-noglcheck"))
             {
@@ -226,10 +185,11 @@ dd_bool Sys_GLInitialize(void)
             }
             else
             {
-                LOG_GL_WARNING("OpenGL may be too old (2.0+ required, "
+                LOG_GL_WARNING("OpenGL may be too old (3.3+ required, "
                                "but driver reports %s)") << LIBGUI_GL.glGetString(GL_VERSION);
             }
         }
+#endif
 
         initialize();
         printGLUInfo();
@@ -246,8 +206,8 @@ dd_bool Sys_GLInitialize(void)
      */
 
     // Use nice quality for mipmaps please.
-    if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
-        LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT_SGIS, GL_NICEST);
+    //if(GL_state.features.genMipmap && de::GLInfo::extensions().SGIS_generate_mipmap)
+    //LIBGUI_GL.glHint(GL_GENERATE_MIPMAP_HINT, GL_NICEST);
 
     assert(!Sys_GLCheckError());
 
@@ -263,6 +223,8 @@ void Sys_GLShutdown(void)
 
 void Sys_GLConfigureDefaultState(void)
 {
+    LIBGUI_ASSERT_GL_OK();
+
     GLfloat fogcol[4] = { .54f, .54f, .54f, 1 };
 
     /**
@@ -279,52 +241,58 @@ void Sys_GLConfigureDefaultState(void)
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glFrontFace(GL_CW);
-    de::GLState::current()
-            .setCull(de::gl::None)
-            .setDepthTest(false)
-            .setDepthFunc(de::gl::Less);
+    LIBGUI_ASSERT_GL_OK();
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
-    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
+    DGL_CullFace(DGL_NONE);
+    DGL_Disable(DGL_DEPTH_TEST);
+    DGL_DepthFunc(DGL_LESS);
+
+    DGL_Disable(DGL_TEXTURE_2D);
+
+#if defined (DENG_OPENGL)
+    LIBGUI_GL.glEnable(GL_TEXTURE_CUBE_MAP_SEAMLESS);
+    LIBGUI_ASSERT_GL_OK();
+#endif
 
     // The projection matrix.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadIdentity();
 
     // Initialize the modelview matrix.
-    LIBGUI_GL.glMatrixMode(GL_MODELVIEW);
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_MODELVIEW);
+    DGL_LoadIdentity();
 
     // Also clear the texture matrix.
-    LIBGUI_GL.glMatrixMode(GL_TEXTURE);
-    LIBGUI_GL.glLoadIdentity();
+    DGL_MatrixMode(DGL_TEXTURE);
+    DGL_LoadIdentity();
 
+//    de::GLInfo::setLineWidth(GL_state.currentLineWidth);
+
+#if defined (DENG_OPENGL)
     // Setup for antialiased lines/points.
     LIBGUI_GL.glEnable(GL_LINE_SMOOTH);
+    LIBGUI_ASSERT_GL_OK();
     LIBGUI_GL.glHint(GL_LINE_SMOOTH_HINT, GL_NICEST);
-    LIBGUI_GL.glLineWidth(GL_state.currentLineWidth);
+    LIBGUI_ASSERT_GL_OK();
 
-    LIBGUI_GL.glEnable(GL_POINT_SMOOTH);
-    LIBGUI_GL.glHint(GL_POINT_SMOOTH_HINT, GL_NICEST);
     LIBGUI_GL.glPointSize(GL_state.currentPointSize);
-
-    LIBGUI_GL.glShadeModel(GL_SMOOTH);
-
-    // Default state for the white fog is off.
-    LIBGUI_GL.glDisable(GL_FOG);
-    LIBGUI_GL.glFogi(GL_FOG_MODE, GL_LINEAR);
-    LIBGUI_GL.glFogi(GL_FOG_END, 2100); // This should be tweaked a bit.
-    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogcol);
-
-    LIBGUI_GL.glHint(GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);
+    LIBGUI_ASSERT_GL_OK();
 
     // Prefer good quality in texture compression.
     LIBGUI_GL.glHint(GL_TEXTURE_COMPRESSION_HINT, GL_NICEST);
+    LIBGUI_ASSERT_GL_OK();
+#endif
+
+    // Default state for the white fog is off.
+    DGL_Disable(DGL_FOG);
+    DGL_Fogi(DGL_FOG_MODE, GL_LINEAR);
+    DGL_Fogi(DGL_FOG_END, 2100); // This should be tweaked a bit.
+    DGL_Fogfv(DGL_FOG_COLOR, fogcol);
+
+    LIBGUI_ASSERT_GL_OK();
 
     // Configure the default GLState (bottom of the stack).
-    de::GLState::current()
-            .setBlendFunc(de::gl::SrcAlpha, de::gl::OneMinusSrcAlpha)
-            .apply();
+    DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
 }
 
 static de::String omitGLPrefix(de::String str)
@@ -403,17 +371,11 @@ void Sys_GLPrintExtensions(void)
     */
 }
 
-dd_bool Sys_GLCheckError()
+dd_bool Sys_GLCheckErrorArgs(char const *file, int line)
 {
+    if (novideo) return false;
 #ifdef DENG_DEBUG
-    if(!novideo)
-    {
-        GLenum error = LIBGUI_GL.glGetError();
-        if(error != GL_NO_ERROR)
-        {
-            LOGDEV_GL_ERROR("OpenGL error: 0x%x") << error;
-        }
-    }
+    de::GLInfo::checkError(file, line);
 #endif
     return false;
 }

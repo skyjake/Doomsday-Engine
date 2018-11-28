@@ -63,7 +63,7 @@ bool UriValue::contains(Value const &value) const
 {
     // We are able to look for substrings within the text, without applying automatic
     // type conversions.
-    if (value.is<TextValue>())
+    if (is<TextValue>(value))
     {
         return _uri.asText().indexOf(value.asText(), Qt::CaseSensitive) >= 0;
     }

@@ -54,10 +54,7 @@ dd_bool serverPublic = false; // cvar
 
 static QString masterUrl(char const *suffix = 0)
 {
-    String u = App::config().gets("apiUrl");
-    if (!u.startsWith("http")) u = "http://" + u;
-    if (!u.endsWith("/")) u += "/";
-    u += "master_server";
+    String u = App::apiUrl() + "master_server";
     if (suffix) u += suffix;
     return u;
 }
@@ -219,7 +216,7 @@ bool MasterWorker::parseResponse(QByteArray const &response)
             try
             {
                 std::unique_ptr<Value> entryValue(Value::constructFrom(entry));
-                if (!entryValue->is<RecordValue>())
+                if (!is<RecordValue>(*entryValue))
                 {
                     LOG_NET_WARNING("Server information was in unexpected format");
                     continue;
@@ -283,7 +280,7 @@ void N_MasterAnnounceServer(bool isOpen)
     }
 
     DENG2_ASSERT(worker);
-    worker->newJob(MasterWorker::ANNOUNCE, info);
+    worker->newJob(MasterWorker::ANNOUNCE, info.asRecord());
 #else
     DENG_UNUSED(isOpen);
 #endif

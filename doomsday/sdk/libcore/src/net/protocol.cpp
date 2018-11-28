@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Protocol"
@@ -43,13 +43,12 @@ Packet *Protocol::interpret(Block const &block) const
 {
     foreach (Constructor constructor, _constructors)
     {
-        Packet *p = constructor(block);
-        if (p)
+        if (Packet *p = constructor(block))
         {
             return p;
         }
     }
-    return 0;
+    return nullptr;
 }
 
 /*
@@ -57,7 +56,7 @@ void Protocol::syncCommand(Transmitter& to, const CommandPacket& command, Record
 {
     LOG_AS("Protocol::syncCommand");
     LOG_DEBUG("Sending: '%s' with args:\n%s") << command.command() << command.arguments();
-    
+
     to << command;
     QScopedPointer<RecordPacket> rep(to.receivePacket<RecordPacket>());
 
@@ -65,7 +64,7 @@ void Protocol::syncCommand(Transmitter& to, const CommandPacket& command, Record
     if (rep->label() == "failure")
     {
         /// @throw FailureError The response to @a command was FAILURE.
-        throw FailureError("Protocol::decree", "Command '" + command.command() + 
+        throw FailureError("Protocol::decree", "Command '" + command.command() +
             "' failed: " + rep->valueAsText("message"));
     }
     else if (rep->label() == "deny")
@@ -93,11 +92,11 @@ void Protocol::reply(Transmitter &to, Reply type, Record *record)
     case OK:
         label = "ok";
         break;
-        
+
     case FAILURE:
         label = "failure";
         break;
-        
+
     case DENY:
         label = "deny";
         break;

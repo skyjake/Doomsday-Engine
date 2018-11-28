@@ -24,71 +24,73 @@ namespace de {
 DENG2_PUBLIC BigEndianByteOrder    bigEndianByteOrder;
 DENG2_PUBLIC LittleEndianByteOrder littleEndianByteOrder;
 
-void ByteOrder::hostToNetwork(de::dint16 const &hostValue, de::dint16 &networkValue) const
+void ByteOrder::hostToNetwork(dint16 hostValue, dint16 &networkValue) const
 {
-    hostToNetwork(reinterpret_cast<de::duint16 const &>(hostValue),
-                  reinterpret_cast<      de::duint16 &>(networkValue));
+    hostToNetwork(hostValue, reinterpret_cast<duint16 &>(networkValue));
 }
 
-void ByteOrder::hostToNetwork(de::dint32 const &hostValue, de::dint32 &networkValue) const
+void ByteOrder::hostToNetwork(dint32 hostValue, dint32 &networkValue) const
 {
-    hostToNetwork(reinterpret_cast<de::duint32 const &>(hostValue),
-                  reinterpret_cast<      de::duint32 &>(networkValue));
+    hostToNetwork(hostValue, reinterpret_cast<duint32 &>(networkValue));
 }
 
-void ByteOrder::hostToNetwork(de::dint64 const &hostValue, de::dint64 &networkValue) const
+void ByteOrder::hostToNetwork(dint64 hostValue, dint64 &networkValue) const
 {
-    hostToNetwork(reinterpret_cast<de::duint64 const &>(hostValue),
-                  reinterpret_cast<      de::duint64 &>(networkValue));
+    hostToNetwork(hostValue, reinterpret_cast<duint64 &>(networkValue));
 }
 
-void ByteOrder::networkToHost(de::dint16 const &networkValue, de::dint16 &hostValue) const
+void ByteOrder::networkToHost(dint16 networkValue, dint16 &hostValue) const
 {
-    networkToHost(reinterpret_cast<de::duint16 const &>(networkValue),
-                  reinterpret_cast<      de::duint16 &>(hostValue));
+    networkToHost(networkValue, reinterpret_cast<duint16 &>(hostValue));
 }
 
-void ByteOrder::networkToHost(de::dint32 const &networkValue, de::dint32 &hostValue) const
+void ByteOrder::networkToHost(dint32 networkValue, dint32 &hostValue) const
 {
-    networkToHost(reinterpret_cast<de::duint32 const &>(networkValue),
-                  reinterpret_cast<      de::duint32 &>(hostValue));
+    networkToHost(networkValue, reinterpret_cast<duint32 &>(hostValue));
 }
 
-void ByteOrder::networkToHost(de::dint64 const &networkValue, de::dint64 &hostValue) const
+void ByteOrder::networkToHost(dint64 networkValue, dint64 &hostValue) const
 {
-    networkToHost(reinterpret_cast<de::duint64 const &>(networkValue),
-                  reinterpret_cast<      de::duint64 &>(hostValue));
+    networkToHost(networkValue, reinterpret_cast<duint64 &>(hostValue));
 }
 
-void ByteOrder::hostToNetwork(de::dfloat const &hostValue, de::dfloat &networkValue) const
+void ByteOrder::hostToNetwork(dfloat hostValue, dfloat &networkValue) const
 {
-    DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
-    hostToNetwork(reinterpret_cast<de::duint32 const &>(hostValue),
-                  reinterpret_cast<      de::duint32 &>(networkValue));
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
+    duint32 hv, net;
+    std::memcpy(&hv, &hostValue, 4);
+    hostToNetwork(hv, net);
+    std::memcpy(&networkValue, &net, 4);
 }
 
-void ByteOrder::hostToNetwork(de::ddouble const &hostValue, de::ddouble &networkValue) const
+void ByteOrder::hostToNetwork(ddouble hostValue, ddouble &networkValue) const
 {
-    DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
-    hostToNetwork(reinterpret_cast<de::duint64 const &>(hostValue),
-                  reinterpret_cast<      de::duint64 &>(networkValue));
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
+    duint64 hv, net;
+    std::memcpy(&hv, &hostValue, 8);
+    hostToNetwork(hv, net);
+    std::memcpy(&networkValue, &net, 8);
 }
 
-void ByteOrder::networkToHost(de::dfloat const &networkValue, de::dfloat &hostValue) const
+void ByteOrder::networkToHost(dfloat networkValue, dfloat &hostValue) const
 {
-    DENG2_ASSERT(sizeof(de::dfloat) == sizeof(de::duint32));
-    networkToHost(reinterpret_cast<de::duint32 const &>(networkValue),
-                  reinterpret_cast<      de::duint32 &>(hostValue));
+    DENG2_ASSERT(sizeof(dfloat) == sizeof(duint32));
+    duint32 net, hv;
+    std::memcpy(&net, &networkValue, 4);
+    networkToHost(net, hv);
+    std::memcpy(&hostValue, &hv, 4);
 }
 
-void ByteOrder::networkToHost(de::ddouble const &networkValue, de::ddouble &hostValue) const
+void ByteOrder::networkToHost(ddouble networkValue, ddouble &hostValue) const
 {
-    DENG2_ASSERT(sizeof(de::ddouble) == sizeof(de::duint64));
-    networkToHost(reinterpret_cast<de::duint64 const &>(networkValue),
-                  reinterpret_cast<      de::duint64 &>(hostValue));
+    DENG2_ASSERT(sizeof(ddouble) == sizeof(duint64));
+    duint64 net, hv;
+    std::memcpy(&net, &networkValue, 8);
+    networkToHost(net, hv);
+    std::memcpy(&hostValue, &hv, 8);
 }
 
-void BigEndianByteOrder::networkToHost(de::duint16 const &networkValue, de::duint16 &hostValue) const
+void BigEndianByteOrder::networkToHost(duint16 networkValue, duint16 &hostValue) const
 {
 #ifdef __BIG_ENDIAN__
     hostValue = networkValue;
@@ -97,7 +99,7 @@ void BigEndianByteOrder::networkToHost(de::duint16 const &networkValue, de::duin
 #endif
 }
 
-void BigEndianByteOrder::networkToHost(de::duint32 const &networkValue, de::duint32 &hostValue) const
+void BigEndianByteOrder::networkToHost(duint32 networkValue, duint32 &hostValue) const
 {
 #ifdef __BIG_ENDIAN__
     hostValue = networkValue;
@@ -106,7 +108,7 @@ void BigEndianByteOrder::networkToHost(de::duint32 const &networkValue, de::duin
 #endif
 }
 
-void BigEndianByteOrder::networkToHost(de::duint64 const &networkValue, de::duint64 &hostValue) const
+void BigEndianByteOrder::networkToHost(duint64 networkValue, duint64 &hostValue) const
 {
 #ifdef __BIG_ENDIAN__
     hostValue = networkValue;
@@ -115,7 +117,7 @@ void BigEndianByteOrder::networkToHost(de::duint64 const &networkValue, de::duin
 #endif
 }
 
-void BigEndianByteOrder::hostToNetwork(de::duint16 const &hostValue, de::duint16 &networkValue) const
+void BigEndianByteOrder::hostToNetwork(duint16 hostValue, duint16 &networkValue) const
 {
 #ifdef __BIG_ENDIAN__
     networkValue = hostValue;
@@ -124,7 +126,7 @@ void BigEndianByteOrder::hostToNetwork(de::duint16 const &hostValue, de::duint16
 #endif
 }
 
-void BigEndianByteOrder::hostToNetwork(de::duint32 const &hostValue, de::duint32 &networkValue) const
+void BigEndianByteOrder::hostToNetwork(duint32 hostValue, duint32 &networkValue) const
 {
 #ifdef __BIG_ENDIAN__
     networkValue = hostValue;
@@ -133,7 +135,7 @@ void BigEndianByteOrder::hostToNetwork(de::duint32 const &hostValue, de::duint32
 #endif
 }
 
-void BigEndianByteOrder::hostToNetwork(de::duint64 const &hostValue, de::duint64 &networkValue) const
+void BigEndianByteOrder::hostToNetwork(duint64 hostValue, duint64 &networkValue) const
 {
 #ifdef __BIG_ENDIAN__
     networkValue = hostValue;
@@ -142,7 +144,7 @@ void BigEndianByteOrder::hostToNetwork(de::duint64 const &hostValue, de::duint64
 #endif
 }
 
-void LittleEndianByteOrder::networkToHost(de::duint16 const &networkValue, de::duint16 &hostValue) const
+void LittleEndianByteOrder::networkToHost(duint16 networkValue, duint16 &hostValue) const
 {
 #ifndef __BIG_ENDIAN__
     hostValue = networkValue;
@@ -151,7 +153,7 @@ void LittleEndianByteOrder::networkToHost(de::duint16 const &networkValue, de::d
 #endif
 }
 
-void LittleEndianByteOrder::networkToHost(de::duint32 const &networkValue, de::duint32 &hostValue) const
+void LittleEndianByteOrder::networkToHost(duint32 networkValue, duint32 &hostValue) const
 {
 #ifndef __BIG_ENDIAN__
     hostValue = networkValue;
@@ -160,7 +162,7 @@ void LittleEndianByteOrder::networkToHost(de::duint32 const &networkValue, de::d
 #endif
 }
 
-void LittleEndianByteOrder::networkToHost(de::duint64 const &networkValue, de::duint64 &hostValue) const
+void LittleEndianByteOrder::networkToHost(duint64 networkValue, duint64 &hostValue) const
 {
 #ifndef __BIG_ENDIAN__
     hostValue = networkValue;
@@ -169,7 +171,7 @@ void LittleEndianByteOrder::networkToHost(de::duint64 const &networkValue, de::d
 #endif
 }
 
-void LittleEndianByteOrder::hostToNetwork(de::duint16 const &hostValue, de::duint16 &networkValue) const
+void LittleEndianByteOrder::hostToNetwork(duint16 hostValue, duint16 &networkValue) const
 {
 #ifndef __BIG_ENDIAN__
     networkValue = hostValue;
@@ -178,7 +180,7 @@ void LittleEndianByteOrder::hostToNetwork(de::duint16 const &hostValue, de::duin
 #endif
 }
 
-void LittleEndianByteOrder::hostToNetwork(de::duint32 const &hostValue, de::duint32 &networkValue) const
+void LittleEndianByteOrder::hostToNetwork(duint32 hostValue, duint32 &networkValue) const
 {
 #ifndef __BIG_ENDIAN__
     networkValue = hostValue;
@@ -187,7 +189,7 @@ void LittleEndianByteOrder::hostToNetwork(de::duint32 const &hostValue, de::duin
 #endif
 }
 
-void LittleEndianByteOrder::hostToNetwork(de::duint64 const &hostValue, de::duint64 &networkValue) const
+void LittleEndianByteOrder::hostToNetwork(duint64 hostValue, duint64 &networkValue) const
 {
 #ifndef __BIG_ENDIAN__
     networkValue = hostValue;
@@ -196,9 +198,9 @@ void LittleEndianByteOrder::hostToNetwork(de::duint64 const &hostValue, de::duin
 #endif
 }
 
-de::duint64 swap64(de::duint64 const &n)
+duint64 swap64(duint64 n)
 {
-    de::duint64 result;
+    duint64 result;
     dbyte const *in = reinterpret_cast<dbyte const *>(&n);
     dbyte *out = reinterpret_cast<dbyte *>(&result);
 

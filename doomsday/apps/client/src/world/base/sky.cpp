@@ -343,7 +343,7 @@ void Sky::configure(defn::Sky const *def)
         lyr.setOffset(lyrDef? lyrDef->getf("offset") : DEFAULT_SKY_SPHERE_XOFFSET);
         lyr.setFadeoutLimit(lyrDef? lyrDef->getf("colorLimit") : DEFAULT_SKY_SPHERE_FADEOUT_LIMIT);
 
-        de::Uri const matUri = lyrDef? de::Uri(lyrDef->gets("material")) : de::Uri(DEFAULT_SKY_SPHERE_MATERIAL, RC_NULL);
+        de::Uri const matUri = lyrDef? de::makeUri(lyrDef->gets("material")) : de::makeUri(DEFAULT_SKY_SPHERE_MATERIAL);
         world::Material *mat = 0;
         try
         {

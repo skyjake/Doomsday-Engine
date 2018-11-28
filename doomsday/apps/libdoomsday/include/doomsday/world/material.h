@@ -111,6 +111,8 @@ public:
         return (_flags & Valid) != 0;
     }
 
+    virtual bool isAnimated() const;
+
     /**
      * Change the do-not-draw property of the material according to @a yes.
      */

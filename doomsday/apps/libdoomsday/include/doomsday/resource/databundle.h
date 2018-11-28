@@ -23,6 +23,8 @@
 #include "lumpdirectory.h"
 #include <de/filesys/IInterpreter>
 #include <de/Folder>
+#include <de/Package>
+#include <de/Version>
 
 /**
  * Abstract base class for classic data files: PK3, WAD, LMP, DED, DEH.
@@ -66,10 +68,14 @@ public:
     de::File const &asFile() const;
     de::File const &sourceFile() const;
 
+    de::String rootPath() const;
+
     /**
      * Identifier of the package representing this data bundle (after being identified).
      */
     de::String packageId() const;
+
+    de::String versionedPackageId() const;
 
     /**
      * Generates appropriate packages according to the contents of the data bundle.
@@ -126,6 +132,8 @@ public:
      */
     de::String guessCompatibleGame() const;
 
+    void checkAuxiliaryNotes(de::Record &packageMetadata);
+
     // Implements IByteArray.
     Size size() const;
     void get(Offset at, Byte *values, Size count) const;
@@ -145,6 +153,8 @@ public:
     static Format packageBundleFormat(de::String const &packageId);
 
     static DataBundle const *bundleForPackage(de::String const &packageId);
+
+    static DataBundle const *tryLocateDataFile(de::Package const &package, de::String const &dataFilePath);
 
     /**
      * Compiles a list of all data bundles that have been loaded via
@@ -170,6 +180,10 @@ public:
 
     static de::StringList gameTags();
     static de::String anyGameTagPattern();
+    static de::String cleanIdentifier(de::String const &text);
+    static de::String stripVersion(de::String const &text, de::Version *version = nullptr);
+    static de::String stripRedundantParts(de::String const &id);
+    static de::String versionFromTimestamp(de::Time const &timestamp);
 
 protected:
     void setFormat(Format format);

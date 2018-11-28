@@ -75,10 +75,19 @@ DENG2_PIMPL(SaveListData)
     {
         foreach (File *file, SaveGames::get().saveIndex().files())
         {
-            GameStateFolder &save = file->as<GameStateFolder>();
-            if (shouldAddFolder(save))
+            try
             {
-                self().append(new SaveItem(save));
+                GameStateFolder &save = file->as<GameStateFolder>();
+                if (shouldAddFolder(save))
+                {
+                    self().append(new SaveItem(save));
+                }
+            }
+            catch (Error const &er)
+            {
+                LOG_ERROR("Save file %s has corrupt metadata: %s")
+                        << file->description()
+                        << er.asText();
             }
         }
     }

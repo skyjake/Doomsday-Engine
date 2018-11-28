@@ -172,7 +172,7 @@ void Rend_Draw2DPlayerSprites()
 
     if (fogParams.usingFog)
     {
-        LIBGUI_GL.glEnable(GL_FOG);
+        DGL_Enable(DGL_FOG);
     }
 
     // Draw HUD vissprites.
@@ -200,7 +200,7 @@ void Rend_Draw2DPlayerSprites()
 
     if (fogParams.usingFog)
     {
-        LIBGUI_GL.glDisable(GL_FOG);
+        DGL_Disable(DGL_FOG);
     }
 }
 

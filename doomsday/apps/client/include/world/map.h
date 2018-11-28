@@ -67,6 +67,8 @@ namespace de { class LightGrid; }
 #endif
 #endif // 0
 
+namespace de { class Info; }
+
 namespace world {
 
 class Blockmap;
@@ -201,7 +203,11 @@ public:
 
     void serializeInternalState(de::Writer &to) const override;
 
-    void deserializeInternalState(de::Reader &from, world::IThinkerMapping const &thinkerMapping) override;
+    void deserializeInternalState(de::Reader &from, IThinkerMapping const &thinkerMapping) override;
+
+    de::String objectsDescription() const;
+
+    void restoreObjects(de::Info const &objState, IThinkerMapping const &thinkerMapping) const;
 
 public:  //- Light sources --------------------------------------------------------------
 

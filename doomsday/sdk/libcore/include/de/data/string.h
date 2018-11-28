@@ -77,6 +77,8 @@ public:
 
     typedef dint size_type;
 
+    enum CaseSensitivity { CaseInsensitive, CaseSensitive };
+
 public:
     static size_type const npos;
 
@@ -122,11 +124,30 @@ public:
     /// Returns the last character of the string.
     QChar last() const;
 
-    bool beginsWith(QString const &s, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
-        return startsWith(s, cs);
+    bool beginsWith(QString const &s, CaseSensitivity cs = CaseSensitive) const {
+        return startsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
     }
-    bool beginsWith(QChar const &c, Qt::CaseSensitivity cs = Qt::CaseSensitive) const {
-        return startsWith(c, cs);
+    bool beginsWith(QChar c, CaseSensitivity cs = CaseSensitive) const {
+        return startsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool beginsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
+        return startsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool beginsWith(char const *ls, CaseSensitivity cs = CaseSensitive) const {
+        return beginsWith(QLatin1String(ls), cs);
+    }
+
+    bool endsWith(QString const &s, CaseSensitivity cs = CaseSensitive) const {
+        return QString::endsWith(s, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool endsWith(QChar c, CaseSensitivity cs = CaseSensitive) const {
+        return QString::endsWith(c, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool endsWith(QLatin1String ls, CaseSensitivity cs = CaseSensitive) const {
+        return QString::endsWith(ls, cs == CaseSensitive? Qt::CaseSensitive : Qt::CaseInsensitive);
+    }
+    bool endsWith(char const *ls, CaseSensitivity cs = CaseSensitive) const {
+        return endsWith(QLatin1String(ls), cs);
     }
 
     String substr(int position, int n = -1) const {
@@ -146,6 +167,8 @@ public:
      * @param dirChar  Directory/folder separator character.
      */
     String concatenatePath(String const &path, QChar dirChar = '/') const;
+
+    String concatenateRelativePath(String const &path, QChar dirChar = '/') const;
 
     /**
      * Does a path concatenation on this string and the argument. Note that if
@@ -185,6 +208,12 @@ public:
     /// Removes whitespace from the end of the string.
     /// @return Copy of the string without whitespace.
     String rightStrip() const;
+
+    /// Replaces all sequences of whitespace with single space characters.
+    String normalizeWhitespace() const;
+
+    /// Returns a copy of the string with matches removed.
+    String removed(QRegularExpression const &expr) const;
 
     /// Returns a lower-case version of the string.
     String lower() const;
@@ -255,7 +284,7 @@ public:
      *
      * @return  Number of characters the two strings have in common from the left.
      */
-    int commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivity = Qt::CaseSensitive) const;
+    int commonPrefixLength(String const &str, CaseSensitivity sensitivity = CaseSensitive) const;
 
     /**
      * Converts the string to UTF-8 and returns it as a byte block.
@@ -298,6 +327,20 @@ public:
      * the conversion fails (@c *ok set to @c false).
      */
     dint toInt(bool *ok = 0, int base = 10, IntConversionFlags flags = AllowOnlyWhitespace) const;
+
+    /**
+     * Converts the string to a 32-bit unsigned integer. The behavior is the same as
+     * QString::toUInt(), with the exception that the default is to autodetect the
+     * base of the number.
+     *
+     * @param ok     @c true is returned via this pointer if the conversion was
+     *               successful.
+     * @param base   Base for the number.
+     *
+     * @return 32-bit unsigned integer parsed from the string (@c *ok set to true).
+     * @c 0 if the conversion fails (@c *ok set to @c false).
+     */
+    duint32 toUInt32(bool *ok = 0, int base = 0) const;
 
     /**
      * Adds a prefix to each line in the text.

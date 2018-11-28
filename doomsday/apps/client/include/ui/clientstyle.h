@@ -28,8 +28,10 @@ class ClientStyle : public de::Style
 public:
     ClientStyle();
 
-    de::GuiWidget *sharedBlurWidget() const;
+    de::GuiWidget *sharedBlurWidget() const override;
     de::ui::Stylist &emptyMenuLabelStylist() const;
+
+    void performUpdate() override;
 
 private:
     DENG2_PRIVATE(d)

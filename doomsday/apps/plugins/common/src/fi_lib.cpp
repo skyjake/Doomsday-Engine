@@ -87,10 +87,10 @@ static void initStateConditions(fi_state_t &s)
 
 #if __JHEXEN__
     // Leaving the current hub?
-    if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
+    if(Record const *episodeDef = gfw_Session()->episodeDef())
     {
         defn::Episode epsd(*episodeDef);
-        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
+        Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
         s.conditions.leave_hub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
     }
     LOGDEV_SCR_VERBOSE("Infine state condition: leave_hub=%i") << s.conditions.leave_hub;
@@ -427,7 +427,7 @@ int Hook_FinaleScriptStop(int /*hookType*/, int finaleId, void * /*context*/)
     else if(mode == FIMODE_BEFORE) // A briefing has ended.
     {
         // Its time to start the map; cue music and begin!
-        S_MapMusic(COMMON_GAMESESSION->mapUri());
+        S_MapMusic(gfw_Session()->mapUri());
         HU_WakeWidgets(-1 /* all players */);
         G_BeginMap();
         Pause_End(); // skip forced period
@@ -499,7 +499,7 @@ int Hook_FinaleScriptEvalIf(int /*hookType*/, int finaleId, void *context)
 
     if(!qstricmp(p->token, "deathmatch"))
     {
-        p->returnVal = (COMMON_GAMESESSION->rules().deathmatch != false);
+        p->returnVal = (gfw_Rule(deathmatch) != false);
         return true;
     }
 

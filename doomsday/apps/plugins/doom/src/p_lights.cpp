@@ -397,7 +397,7 @@ void EV_LightTurnOn(Line *line, float max)
     if(!list) return;
 
     float lightLevel = 0;
-    if(!FEQUAL(max, 0))
+    if(NON_ZERO(max))
         lightLevel = max;
 
     IterList_SetIteratorDirection(list, ITERLIST_FORWARD);
@@ -408,7 +408,7 @@ void EV_LightTurnOn(Line *line, float max)
     {
         // If Max = 0 means to search for the highest light level in the
         // surrounding sector.
-        if(FEQUAL(max, 0))
+        if(IS_ZERO(max))
         {
             lightLevel = P_GetFloatp(sec, DMU_LIGHT_LEVEL);
             float otherLevel = DDMINFLOAT;

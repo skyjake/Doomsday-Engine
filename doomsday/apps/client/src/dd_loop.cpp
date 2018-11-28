@@ -327,7 +327,7 @@ void DD_WaitForOptimalUpdateTime()
 
     /// @var optimalDelta is integer on purpose: we're measuring time at a 1 ms accuracy,
     /// so we can't use fractions of a millisecond.
-    duint const optimalDelta = (::maxFrameRate > 0 ? 1000 / ::maxFrameRate : 1);
+    duint const optimalDelta = duint(::maxFrameRate > 0? 1000/::maxFrameRate : 1);
 
     if (Sys_IsShuttingDown()) return; // No need for finesse.
 

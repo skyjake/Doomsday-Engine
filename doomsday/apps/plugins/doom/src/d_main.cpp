@@ -34,11 +34,10 @@
 #include "m_argv.h"
 #include "p_map.h"
 #include "saveslots.h"
+#include "r_common.h"
 
 using namespace de;
 using namespace common;
-
-float turboMul; // Multiplier for turbo.
 
 gamemode_t gameMode;
 int gameModeBits;
@@ -243,7 +242,7 @@ void D_PreInit()
                                                     sizeof(cfg.common.hudColor)));
     cfg.common.hudColor[CA] = 1;
 
-    cfg.common.hudFog = 1;
+    cfg.common.hudFog = 5;
     cfg.common.hudIconAlpha = 1;
     cfg.common.xhairAngle = 0;
     cfg.common.xhairSize = .5f;
@@ -321,7 +320,7 @@ void D_PreInit()
     cfg.common.automapBack[2] = 0.f;
     cfg.common.automapOpacity = .7f;
     cfg.common.automapLineAlpha = .7f;
-    cfg.common.automapLineWidth = 1.1f;
+    cfg.common.automapLineWidth = 3.0f;
     cfg.common.automapShowDoors = true;
     cfg.common.automapDoorGlow = 8;
     cfg.common.automapHudDisplay = 2;
@@ -384,8 +383,6 @@ void D_PreInit()
 
     // Do the common pre init routine;
     G_CommonPreInit();
-
-    G_InitSpecialFilter();
 }
 
 void D_PostInit()
@@ -410,31 +407,36 @@ void D_PostInit()
     }
 
     // Get skill / episode / map from parms.
-    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    gfw_SetDefaultRule(skill, /*startSkill =*/ SM_MEDIUM);
 
-    if(cmdLine.check("-altdeath"))
+    if (cmdLine.check("-altdeath"))
     {
         ::cfg.common.netDeathmatch = 2;
     }
-    else if(cmdLine.check("-deathmatch"))
+    else if (cmdLine.check("-deathmatch"))
     {
         ::cfg.common.netDeathmatch = 1;
     }
 
-    ::defaultGameRules.fast = cfg.common.defaultRuleFastMonsters;
+    gfw_SetDefaultRule(fast, cfg.common.defaultRuleFastMonsters);
 
     // Apply these rules.
-    ::defaultGameRules.noMonsters      = cmdLine.check("-nomonsters")? true : false;
-    ::defaultGameRules.respawnMonsters = cmdLine.check("-respawn")   ? true : false;
-    ::defaultGameRules.fast            = cmdLine.check("-fast")      ? true : false;
+    gfw_SetDefaultRule(noMonsters,
+                       cmdLine.has("-nomonsters") ||
+                           gfw_GameProfile()->optionValue("noMonsters").isTrue());
+    gfw_SetDefaultRule(respawnMonsters,
+                       cmdLine.has("-respawn") ||
+                           gfw_GameProfile()->optionValue("respawn").isTrue());
+    gfw_SetDefaultRule(fast,
+                       cmdLine.has("-fast") || gfw_GameProfile()->optionValue("fast").isTrue());
 
-    if(::defaultGameRules.deathmatch)
+    if (gfw_DefaultRule(deathmatch))
     {
-        if(int arg = cmdLine.check("-timer", 1))
+        if (int arg = cmdLine.check("-timer", 1))
         {
             bool isNumber;
             int mins = cmdLine.at(arg + 1).toInt(&isNumber);
-            if(isNumber)
+            if (isNumber)
             {
                 LOG_NOTE("Maps will end after %i %s")
                         << mins << (mins == 1? "minute" : "minutes");
@@ -442,27 +444,12 @@ void D_PostInit()
         }
     }
 
-    // Change the turbo multiplier?
-    ::turboMul = 1.0f;
-    if(int arg = cmdLine.check("-turbo"))
-    {
-        int scale = 200;
-        if(arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
-        {
-            scale = cmdLine.at(arg + 1).toInt();
-        }
-        scale = de::clamp(10, scale, 400);
-
-        LOG_NOTE("Turbo scale: %i%%") << scale;
-        ::turboMul = scale / 100.f;
-    }
-
     // Load a saved game?
-    if(int arg = cmdLine.check("-loadgame", 1))
+    if (int arg = cmdLine.check("-loadgame", 1))
     {
-        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
+        if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
         {
-            if(sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
+            if (sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
             {
                 // No further initialization is to be done.
                 return;
@@ -471,10 +458,10 @@ void D_PostInit()
     }
 
     // Change the default skill mode?
-    if(int arg = cmdLine.check("-skill", 1))
+    if (int arg = cmdLine.check("-skill", 1))
     {
         int skillNumber = cmdLine.at(arg + 1).toInt();
-        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0? skillNumber - 1 : skillNumber));
     }
 
     G_AutoStartOrBeginTitleLoop();

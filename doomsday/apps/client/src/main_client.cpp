@@ -50,17 +50,48 @@
 #include <QTranslator>
 #include <de/EscapeParser>
 
+#if defined (DENG_STATIC_LINK)
+
+#include <QtPlugin>
+#include <de/Library>
+
+Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
+Q_IMPORT_PLUGIN(QGifPlugin)
+Q_IMPORT_PLUGIN(QJpegPlugin)
+Q_IMPORT_PLUGIN(QTgaPlugin)
+Q_IMPORT_PLUGIN(QtQuick2Plugin)
+Q_IMPORT_PLUGIN(QtQuickControls2Plugin)
+Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin)
+Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)
+Q_IMPORT_PLUGIN(QtQuick2WindowPlugin)
+
+DENG2_IMPORT_LIBRARY(importidtech1)
+DENG2_IMPORT_LIBRARY(importudmf)
+DENG2_IMPORT_LIBRARY(importdeh)
+DENG2_IMPORT_LIBRARY(audio_fmod)
+DENG2_IMPORT_LIBRARY(doom)
+//DENG2_IMPORT_LIBRARY(heretic)
+//DENG2_IMPORT_LIBRARY(hexen)
+//DENG2_IMPORT_LIBRARY(doom64)
+
+#endif
+
+#if defined (DENG_MOBILE)
+#  include <QQuickView>
+#  include "ui/clientwindow.h"
+#endif
+
 /**
  * Application entry point.
  */
-int main(int argc, char** argv)
+int main(int argc, char **argv)
 {
     int exitCode = 0;
     {
         ClientApp::setDefaultOpenGLFormat();
 
         ClientApp clientApp(argc, argv);
-
+        
         /**
          * @todo Translations are presently disabled because lupdate can't seem to
          * parse tr strings from inside private implementation classes. Workaround
@@ -76,6 +107,17 @@ int main(int argc, char** argv)
         try
         {
             clientApp.initialize();
+            
+#if defined (DENG_MOBILE)
+            // On mobile, Qt Quick is actually in charge of drawing the screen.
+            // GLWindow is just an item that draws the UI background.
+            qmlRegisterType<de::GLQuickItemT<ClientWindow>>("Doomsday", 1, 0, "ClientWindow");
+            QQuickView view;
+            view.setResizeMode(QQuickView::SizeRootObjectToView);
+            view.setSource(QUrl("qrc:///qml/main.qml"));
+            view.show();
+#endif
+            
             exitCode = clientApp.execLoop();
         }
         catch(de::Error const &er)
@@ -89,16 +131,22 @@ int main(int argc, char** argv)
     }
 
     // Check that all reference-counted objects have been deleted.
-#ifdef DENG2_DEBUG
-# ifdef DENG_USE_COUNTED_TRACING
-    if(de::Counted::totalCount > 0)
+    #if defined (DENG2_DEBUG)
     {
-        de::Counted::printAllocs();
+        #if defined (DENG_USE_COUNTED_TRACING)
+        {
+            if(de::Counted::totalCount > 0)
+            {
+                de::Counted::printAllocs();
+            }
+        }
+        #else
+        {
+            DENG2_ASSERT(de::Counted::totalCount == 0);
+        }
+        #endif
     }
-# else
-    DENG2_ASSERT(de::Counted::totalCount == 0);
-# endif
-#endif
+    #endif
 
     return exitCode;
 }

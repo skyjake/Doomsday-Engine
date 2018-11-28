@@ -88,6 +88,11 @@ public:
         _items.remove(&data);
     }
 
+    bool contains(ItemType const *data) const {
+        DENG2_GUARD(this);
+        return _items.contains(const_cast<ItemType *>(data));
+    }
+
     virtual void clear() {
         DENG2_GUARD(this);
         _items.clear();
@@ -142,8 +147,8 @@ DENG2_PIMPL(Bank)
 
             if (data.get())
             {
-                LOG_RES_VERBOSE("Item \"%s\" data cleared from memory (%i bytes)")
-                        << path(bank->d->sepChar) << data->sizeInMemory();
+                LOG_XVERBOSE("Item \"%s\" data cleared from memory (%i bytes)",
+                        path(bank->d->sepChar) << data->sizeInMemory());
                 data->aboutToUnload();
                 data.reset();
             }
@@ -162,7 +167,6 @@ DENG2_PIMPL(Bank)
         /// Load the item into memory from its current cache.
         void load()
         {
-            DENG2_GUARD(this);
             DENG2_ASSERT(cache != 0);
 
             switch (cache->format())
@@ -191,8 +195,8 @@ DENG2_PIMPL(Bank)
             // us. This may take an unspecified amount of time.
             QScopedPointer<IData> loaded(bank->loadFromSource(*source));
 
-            LOG_RES_XVERBOSE("Loaded \"%s\" from source in %.2f seconds",
-                             path(bank->d->sepChar) << startedAt.since());
+            LOG_XVERBOSE("Loaded \"%s\" from source in %.2f seconds",
+                         path(bank->d->sepChar) << startedAt.since());
 
             if (loaded.data())
             {
@@ -224,15 +228,15 @@ DENG2_PIMPL(Bank)
                     std::unique_ptr<IData> blank(bank->newData());
                     reader >> *blank->asSerializable();
                     setData(blank.release());
-                    LOG_RES_XVERBOSE("Deserialized \"%s\" in %.2f seconds",
-                                     path(bank->d->sepChar) << startedAt.since());
+                    LOG_XVERBOSE("Deserialized \"%s\" in %.2f seconds",
+                                 path(bank->d->sepChar) << startedAt.since());
                     return; // Done!
                 }
                 // We cannot use this.
             }
             catch (Error const &er)
             {
-                LOG_RES_WARNING("Failed to deserialize \"%s\":\n")
+                LOG_WARNING("Failed to deserialize \"%s\":\n")
                         << path(bank->d->sepChar) << er.asText();
             }
 
@@ -280,7 +284,7 @@ DENG2_PIMPL(Bank)
                 // to check later whether the data is still fresh.
                 serial.reset(&containingFolder.createFile(name(), Folder::ReplaceExisting));
 
-                LOG_RES_XVERBOSE("Serializing into %s", serial->description());
+                LOG_XVERBOSE("Serializing into %s", serial->description());
 
                 Writer(*serial).withHeader()
                         << source->modifiedAt()
@@ -401,15 +405,14 @@ DENG2_PIMPL(Bank)
 
             DENG2_GUARD(this);
 
-            DENG2_ASSERT(item.data.get() != 0);
-
+            DENG2_ASSERT(item.data.get() != nullptr);
             addBytes(item.data->sizeInMemory());
             DataCache::add(item);
         }
 
         void remove(Data &item)
         {
-            DENG2_ASSERT(item.data.get() != 0);
+            DENG2_ASSERT(item.data.get() != nullptr);
 
             DENG2_GUARD(this);
 
@@ -471,7 +474,7 @@ DENG2_PIMPL(Bank)
             }
             catch (Error const &er)
             {
-                LOG_RES_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
+                LOG_WARNING("Failed to load \"%s\" from source:\n") << _path << er.asText();
             }
             // Ensure a blocking load completes.
             item().post();
@@ -483,12 +486,12 @@ DENG2_PIMPL(Bank)
             {
                 DENG2_ASSERT(_bank.d->serialCache != 0);
 
-                LOG_RES_XVERBOSE("Serializing \"%s\"", _path);
+                LOG_XVERBOSE("Serializing \"%s\"", _path);
                 item().changeCache(*_bank.d->serialCache);
             }
             catch (Error const &er)
             {
-                LOG_RES_WARNING("Failed to serialize \"%s\" to hot storage:\n")
+                LOG_WARNING("Failed to serialize \"%s\" to hot storage:\n")
                         << _path << er.asText();
             }
         }
@@ -502,7 +505,7 @@ DENG2_PIMPL(Bank)
             }
             catch (Error const &er)
             {
-                LOG_RES_WARNING("Error when unloading \"%s\":\n")
+                LOG_WARNING("Error when unloading \"%s\":\n")
                         << _path << er.asText();
             }
         }
@@ -567,9 +570,9 @@ DENG2_PIMPL(Bank)
     {
         DENG2_ASSERT(serialCache);
 
+        FS::waitForIdle();
         if (Folder *folder = serialCache->folder())
         {
-            Folder::waitForPopulation();
             folder->destroyAllFilesRecursively();
         }
     }
@@ -819,7 +822,7 @@ void Bank::add(DotPath const &path, ISource *source)
 {
     LOG_AS(d->nameForLog);
 
-    QScopedPointer<ISource> src(source);
+    std::unique_ptr<ISource> src(source);
 
     // Paths are unique.
     if (d->items.has(path, PathTree::MatchFull | PathTree::NoBranch))
@@ -833,7 +836,7 @@ void Bank::add(DotPath const &path, ISource *source)
     DENG2_GUARD(item);
 
     item.bank = this;
-    item.source.reset(src.take());
+    item.source.reset(src.release());
 
     d->putInBestCache(item);
 }
@@ -846,6 +849,11 @@ void Bank::remove(DotPath const &path)
 bool Bank::has(DotPath const &path) const
 {
     return d->items.has(path);
+}
+
+Bank::ISource &Bank::source(const DotPath &path) const
+{
+    return *d->items.find(path, PathTree::MatchFull | PathTree::NoBranch).source.get();
 }
 
 dint Bank::allItems(Names &names) const
@@ -908,13 +916,13 @@ Bank::IData &Bank::data(DotPath const &path) const
     item.reset();
     item.unlock();
 
-    LOG_RES_XVERBOSE("Loading \"%s\"...", path);
+    LOG_XVERBOSE("Loading \"%s\"...", path);
 
     Time requestedAt;
     d->load(path, BeforeQueued);
     item.wait();
 
-    TimeDelta const waitTime = requestedAt.since();
+    TimeSpan const waitTime = requestedAt.since();
 
     item.lock();
     if (!item.data.get())
@@ -924,11 +932,11 @@ Bank::IData &Bank::data(DotPath const &path) const
 
     if (waitTime > 0.0)
     {
-        LOG_RES_VERBOSE("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
+        LOG_VERBOSE("\"%s\" loaded (waited %.3f seconds)") << path << waitTime;
     }
     else
     {
-        LOG_RES_VERBOSE("\"%s\" loaded") << path;
+        LOG_VERBOSE("\"%s\" loaded") << path;
     }
 
     return *item.data;
@@ -936,9 +944,11 @@ Bank::IData &Bank::data(DotPath const &path) const
 
 bool Bank::isLoaded(DotPath const &path) const
 {
-    Impl::Data &item = d->items.find(path, PathTree::MatchFull | PathTree::NoBranch);
-    DENG2_GUARD(item);
-    return bool(item.data);
+    if (Impl::Data const *item = d->items.tryFind(path, PathTree::MatchFull | PathTree::NoBranch))
+    {
+        return d->memoryCache.contains(item);
+    }
+    return false;
 }
 
 void Bank::unload(DotPath const &path, CacheLevel toLevel, Importance importance)

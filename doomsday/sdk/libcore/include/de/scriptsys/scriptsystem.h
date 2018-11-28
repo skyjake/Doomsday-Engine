@@ -68,7 +68,18 @@ public:
 
     void removeNativeModule(String const &name);
 
+    bool nativeModuleExists(const String &name) const;
+
     Record &nativeModule(String const &name);
+
+    /**
+     * Returns a native or an imported module.
+     *
+     * @param name  Name of the module.
+     *
+     * @return Module namespace.
+     */
+    Record &operator[](const String &nativeModuleName);
 
     /**
      * Returns a list of the names of all the existing native modules.

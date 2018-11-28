@@ -55,7 +55,7 @@ audiointerface_sfx_generic_t* DMFluid_Sfx()
  */
 int DS_Init(void)
 {
-    if(fsSynth)
+    if (fsSynth)
     {
         return true; // Already initialized.
     }
@@ -66,11 +66,13 @@ int DS_Init(void)
 
     // Create the synthesizer.
     fsSynth = new_fluid_synth(fsConfig);
-    if(!fsSynth)
+    if (!fsSynth)
     {
         App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to create synthesizer");
         return false;
     }
+
+    fluid_synth_set_gain(DMFluid_Synth(), MAX_SYNTH_GAIN);
 
 #ifndef FLUIDSYNTH_NOT_A_DLL
     // Create the output driver that will play the music.
@@ -82,7 +84,7 @@ int DS_Init(void)
     }
     fluid_settings_setstr(fsConfig, "audio.driver", driverName.c_str());
     fsDriver = new_fluid_audio_driver(fsConfig, fsSynth);
-    if(!fsDriver)
+    if (!fsDriver)
     {
         App_Log(DE2_AUDIO_ERROR, "[FluidSynth] Failed to load audio driver '%s'", driverName.c_str());
         return false;
@@ -100,13 +102,13 @@ int DS_Init(void)
  */
 void DS_Shutdown(void)
 {
-    if(!fsSynth) return;
+    if (!fsSynth) return;
 
     DMFluid_Shutdown();
 
     DSFLUIDSYNTH_TRACE("DS_Shutdown.");
 
-    if(fsDriver)
+    if (fsDriver)
     {
         delete_fluid_audio_driver(fsDriver);
     }
@@ -123,9 +125,9 @@ void DS_Shutdown(void)
  */
 void DS_Event(int type)
 {
-    if(!fsSynth) return;
+    if (!fsSynth) return;
 
-    if(type == SFXEV_END)
+    if (type == SFXEV_END)
     {
         // End of frame, do an update.
         DMFluid_Update();
@@ -134,14 +136,14 @@ void DS_Event(int type)
 
 int DS_Set(int prop, const void* ptr)
 {
-    //if(!fmodSystem) return false;
+    //if (!fmodSystem) return false;
 
-    switch(prop)
+    switch (prop)
     {
     case AUDIOP_SOUNDFONT_FILENAME: {
         const char* path = reinterpret_cast<const char*>(ptr);
         DSFLUIDSYNTH_TRACE("DS_Set: Soundfont = " << path);
-        if(!path || !strlen(path))
+        if (!path || !strlen(path))
         {
             // Use the default.
             path = 0;

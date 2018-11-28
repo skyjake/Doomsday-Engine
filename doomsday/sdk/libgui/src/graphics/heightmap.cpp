@@ -24,10 +24,10 @@ static float const NORMAL_Z = .2f;
 
 DENG2_PIMPL_NOREF(HeightMap)
 {
-    QImage heightImage;
-    QImage normalImage;
+    QImage   heightImage;
+    QImage   normalImage;
     Vector2f mapSize;
-    float heightRange = 1.f;
+    float    heightRange = 1.f;
 
     Vector2f pixelCoordf(Vector2f const &worldPos) const
     {

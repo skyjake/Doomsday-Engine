@@ -82,13 +82,14 @@ Image IdTech1Image::makeGameLogo(Game const &game,
 {
     try
     {
-        if (game.isPlayableWithDefaultPackages())
+        if (flags.testFlag(AlwaysTryLoad) || game.isPlayableWithDefaultPackages())
         {
             Block const playPal  = catalog.read("PLAYPAL");
             Block const title    = catalog.read("TITLE");
             Block const titlePic = catalog.read("TITLEPIC");
+            Block const interPic = catalog.read("INTERPIC");
 
-            IdTech1Image img(title.isEmpty()? titlePic : title, playPal);
+            IdTech1Image img(title? title : (titlePic? titlePic : interPic), playPal);
 
             float const scaleFactor = flags.testFlag(Downscale50Percent)? .5f : 1.f;
             Image::Size const finalSize(img.width()  * scaleFactor,
@@ -110,8 +111,9 @@ Image IdTech1Image::makeGameLogo(Game const &game,
     {
         if (flags & NullImageIfFails) return Image();
 
-        LOG_RES_WARNING("Failed to load title picture for game \"%s\": %s")
+        LOG_RES_WARNING("Failed to load title picture for game \"%s\" using {%s}: %s")
                 << game.title()
+                << String::join(catalog.packages(), " ")
                 << er.asText();
     }
     if (flags & NullImageIfFails)

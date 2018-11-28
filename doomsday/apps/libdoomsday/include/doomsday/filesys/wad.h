@@ -57,7 +57,7 @@ public:
     class LumpFile : public File1
     {
     public:
-        LumpFile(Entry &entry, FileHandle &hndl, String path, FileInfo const &info,
+        LumpFile(Entry &entry, FileHandle *hndl, String path, FileInfo const &info,
                  File1 *container);
 
         /// @return  Name of this file.

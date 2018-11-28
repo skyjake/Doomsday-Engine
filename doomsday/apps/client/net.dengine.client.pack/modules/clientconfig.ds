@@ -1,0 +1,143 @@
+# The Doomsday Engine Project -- Doomsday Client
+#
+# Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+#----------------------------------------------------------------------------
+# CONFIGURATION FOR THE DOOMSDAY CLIENT
+#
+# This module contains configuration related scripts for the client
+# application. It is automatically imported by Config and used as needed.
+
+import gui
+import Version
+import Updater
+import Log
+
+def setDefaults(d)
+    # Applies the client's defaults.
+    # - d: Record where to set the values.
+
+    gui.setDefaults(d)
+
+    # Additional Log defaults.
+    d.log.filterBySubsystem = False
+    d.log.showMetadata = False
+
+    record d.alert()
+        generic  = Log.WARNING
+        resource = Log.WARNING
+        map      = Log.WARNING
+        script   = Log.WARNING
+        gl       = Log.WARNING
+        audio    = Log.WARNING
+        input    = Log.WARNING
+        network  = Log.WARNING
+
+        # Alert notification dismissed after 3 minutes by default.
+        autoHide = 3 * 60
+    end
+
+    # Home.
+    record d.home()
+        showUnplayableGames = True
+        showColumnDescription = True
+        sortBy = 'release'
+        sortAscending = True
+        sortCustomSeparately = True
+        record columns()
+            doom = True
+            heretic = True
+            hexen = True
+            otherGames = True
+            multiplayer = True
+        end
+    end
+
+    # Input defaults.
+    record d.input()
+        record mouse
+        mouse.syncSensitivity = True
+    end
+
+    # Defaults for the automatic updater.
+    record d.updater()
+        frequency = Updater.WEEKLY
+        if Version.STABLE
+            channel = Updater.CHANNEL_STABLE
+        else
+            channel = Updater.CHANNEL_UNSTABLE
+        end
+        lastChecked = Time("")
+        onlyManually = (Version.OS == 'unix')
+        autoDownload = False
+        delete = True
+        downloadPath = "${DEFAULT}"
+        deleteAtStartup = ""
+    end
+
+    # Console defaults.
+    record d.console()
+        snap = True
+        script = False
+    end
+
+    # Resource settings.
+    record d.resource()
+        browserRepository = 'idgames mirror (Idaho, USA)'
+
+        # Local packages are disabled by default in MP games.
+        localPackages = False
+        localPackagesForGame = {}
+
+        # Textures.
+        noHighResTex = False
+        noHighResPatches = False
+        highResWithPWAD = True
+    end
+
+    # Renderer settings.
+    record d.render()
+        pixelDensity = 1.0     # Overall pixel density.
+
+        # LensFx settings.
+        record fx
+        record fx.resize
+        fx.resize.factor = 1.0
+    end
+
+    # VR/3D settings.
+    record d.vr()
+        record oculusRift
+        oculusRift.pixelDensity = 1.0
+    end
+
+    # Audio settings.
+    record d.audio()
+        output = 0
+        channels = 16
+        soundPlugin = 'fmod'
+        musicPlugin = 'fluidsynth'
+        cdPlugin = 'dummy'
+        if Version.OS == 'windows'
+            cdPlugin = 'winmm'
+        elsif Version.OS == 'ios'
+            musicPlugin = 'fmod'
+        end
+        record fmod
+        fmod.speakerMode = '' # defaults to stereo
+        pauseOnFocus = True
+    end
+end

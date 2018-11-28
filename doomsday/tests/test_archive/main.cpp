@@ -121,7 +121,7 @@ int main(int argc, char **argv)
 
         LOG_MSG("Before flushing:\n") << app.homeFolder().contentsAsText();
 
-        TimeDelta(0.5).sleep(); // make the time difference clearer
+        TimeSpan(0.5).sleep(); // make the time difference clearer
 
         // Changes were made to the archive via files. The archive won't be
         // written back to its source file until the ArchiveFolder instance
@@ -130,10 +130,10 @@ int main(int argc, char **argv)
 
         LOG_MSG("After flushing:\n") << app.homeFolder().contentsAsText();
 
-        App::fileSystem().copySerialized(updated.path(), "home/copied.zip", FS::PlainFileCopy);
+        FS::copySerialized(updated.path(), "home/copied.zip", FS::PlainFileCopy);
         LOG_MSG("Plain copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
 
-        App::fileSystem().copySerialized(updated.path(), "home/copied.zip");
+        FS::copySerialized(updated.path(), "home/copied.zip");
         LOG_MSG("Normal copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
     }
     catch (Error const &err)

@@ -27,46 +27,74 @@
 #include <QDir>
 #include <QFileInfo>
 
-using namespace de;
+namespace de {
+
+static String const fileStatusSuffix = ".doomsday_file_status";
+
+DENG2_PIMPL_NOREF(DirectoryFeed)
+{
+    NativePath nativePath;
+    Flags mode;
+    String namePattern;
+};
 
 DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
-    : _nativePath(nativePath), _mode(mode) {}
+    : d(new Impl)
+{
+    d->nativePath = nativePath;
+    d->mode = mode;
+}
 
-DirectoryFeed::~DirectoryFeed()
-{}
+void DirectoryFeed::setNamePattern(const String &namePattern)
+{
+    d->namePattern = namePattern;
+}
 
 String DirectoryFeed::description() const
 {
-    return "directory \"" + _nativePath.pretty() + "\"";
+    String desc;
+    if (d->namePattern)
+    {
+        desc = "files matching \"" + d->namePattern + "\" in ";
+    }
+    desc += "directory \"" + d->nativePath.pretty() + "\"";
+    return desc;
 }
 
-NativePath const &DirectoryFeed::nativePath() const
+const NativePath &DirectoryFeed::nativePath() const
 {
-    return _nativePath;
+    return d->nativePath;
 }
 
 Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 {
-    if (_mode & AllowWrite)
+    if (d->mode & AllowWrite)
     {
         // Automatically enable modifying the Folder.
         const_cast<Folder &>(folder).setMode(File::Write);
     }
-    if (_mode.testFlag(CreateIfMissing) && !NativePath::exists(_nativePath))
+    if (d->mode.testFlag(CreateIfMissing) && !NativePath::exists(d->nativePath))
     {
-        NativePath::createPath(_nativePath);
+        NativePath::createPath(d->nativePath);
     }
 
-    QDir dir(_nativePath);
+    QDir dir(d->nativePath);
     if (!dir.isReadable())
     {
         /// @throw NotFoundError The native directory was not accessible.
-        throw NotFoundError("DirectoryFeed::populate", "Path '" + _nativePath + "' inaccessible");
+        throw NotFoundError("DirectoryFeed::populate", "Path '" + d->nativePath + "' inaccessible");
     }
     QStringList nameFilters;
-    nameFilters << "*";
+    if (d->namePattern)
+    {
+        nameFilters << d->namePattern;
+    }
+    else
+    {
+        nameFilters << "*";
+    }
     QDir::Filters dirFlags = QDir::Files | QDir::NoDotAndDotDot;
-    if (_mode.testFlag(PopulateNativeSubfolders))
+    if (d->mode.testFlag(PopulateNativeSubfolders))
     {
         dirFlags |= QDir::Dirs;
     }
@@ -79,7 +107,10 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
         }
         else
         {
-            populateFile(folder, entry.fileName(), populated);
+            if (!entry.fileName().endsWith(fileStatusSuffix)) // ignore meta files
+            {
+                populateFile(folder, entry.fileName(), populated);
+            }
         }
     }
     return populated;
@@ -106,7 +137,7 @@ void DirectoryFeed::populateSubFolder(Folder const &folder, String const &entryN
             subFolder = &folder.locate<Folder>(entryName);
         }
 
-        if (_mode & AllowWrite)
+        if (d->mode & AllowWrite)
         {
             subFolder->setMode(File::Write);
         }
@@ -128,24 +159,21 @@ void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,
             return;
         }
 
-        NativePath const entryPath = _nativePath / entryName;
+        NativePath const entryPath = d->nativePath / entryName;
 
         // Open the native file.
         std::unique_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
         nativeFile->setStatus(fileStatus(entryPath));
-        if (_mode & AllowWrite)
+        if (d->mode & AllowWrite)
         {
             nativeFile->setMode(File::Write);
         }
 
         File *file = folder.fileSystem().interpret(nativeFile.release());
-        //folder.add(file);
 
         // We will decide on pruning this.
         file->setOriginFeed(this);
 
-        // Include files in the main index.
-        //folder.fileSystem().index(*file);
         populated << file;
     }
     catch (StatusError const &er)
@@ -164,7 +192,7 @@ bool DirectoryFeed::prune(File &file) const
     /// Rules for pruning:
     /// - A file sourced by NativeFile will be pruned if it's out of sync with the hard
     ///   drive version (size, time of last modification).
-    if (NativeFile *nativeFile = maybeAs<NativeFile>(file))
+    if (NativeFile *nativeFile = maybeAs<NativeFile>(file.source()))
     {
         try
         {
@@ -189,9 +217,9 @@ bool DirectoryFeed::prune(File &file) const
         if (subFolder->feeds().size() == 1)
         {
             DirectoryFeed *dirFeed = maybeAs<DirectoryFeed>(subFolder->feeds().front());
-            if (dirFeed && !NativePath::exists(dirFeed->_nativePath))
+            if (dirFeed && !dirFeed->d->nativePath.exists())
             {
-                LOG_RES_NOTE("Pruning \"%s\": no longer exists") << _nativePath;
+                LOG_RES_NOTE("Pruning %s: no longer exists") << dirFeed->description(); //d->nativePath;
                 return true;
             }
         }
@@ -203,7 +231,7 @@ bool DirectoryFeed::prune(File &file) const
 
 File *DirectoryFeed::createFile(String const &name)
 {
-    NativePath newPath = _nativePath / name;
+    NativePath newPath = d->nativePath / name;
     /*if (NativePath::exists(newPath))
     {
         /// @throw AlreadyExistsError  The file @a name already exists in the native directory.
@@ -217,15 +245,14 @@ File *DirectoryFeed::createFile(String const &name)
 
 void DirectoryFeed::destroyFile(String const &name)
 {
-    NativePath path = _nativePath / name;
+    NativePath path = d->nativePath / name;
 
-    if (!NativePath::exists(path))
+    if (!path.exists())
     {
         // The file doesn't exist in the native file system, we can ignore this.
         return;
     }
-
-    if (!QDir::current().remove(path))
+    if (!path.destroy())
     {
         /// @throw RemoveError  The file @a name exists but could not be removed.
         throw RemoveError("DirectoryFeed::destroyFile", "Cannot remove \"" + name +
@@ -235,12 +262,12 @@ void DirectoryFeed::destroyFile(String const &name)
 
 Feed *DirectoryFeed::newSubFeed(String const &name)
 {
-    NativePath subPath = _nativePath / name;
-    if (_mode.testFlag(CreateIfMissing) || (subPath.exists() && subPath.isReadable()))
+    NativePath subPath = d->nativePath / name;
+    if (d->mode.testFlag(CreateIfMissing) || (subPath.exists() && subPath.isReadable()))
     {
-        return new DirectoryFeed(subPath, _mode);
+        return new DirectoryFeed(subPath, d->mode);
     }
-    return 0;
+    return nullptr;
 }
 
 void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
@@ -256,7 +283,6 @@ void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
 File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 {
     QFileInfo info(nativePath);
-
     if (!info.exists())
     {
         /// @throw StatusError Determining the file status was not possible.
@@ -264,17 +290,53 @@ File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
     }
 
     // Get file status information.
-    return File::Status(info.isDir()? File::Status::FOLDER : File::Status::FILE,
-                        dsize(info.size()),
-                        info.lastModified());
+    File::Status st { info.isDir()? File::Type::Folder : File::Type::File,
+                      dsize(info.size()),
+                      info.lastModified() };
+
+    // Check for overridden status.
+    String const overrideName = nativePath + fileStatusSuffix;
+    if (QFileInfo().exists(overrideName))
+    {
+        QFile f(overrideName);
+        if (f.open(QFile::ReadOnly))
+        {
+            st.modifiedAt = Time::fromText(String::fromUtf8(f.readAll()), Time::ISOFormat);
+        }
+    }
+    return st;
+}
+
+void DirectoryFeed::setFileModifiedTime(NativePath const &nativePath, Time const &modifiedAt)
+{
+    String const overrideName = nativePath + fileStatusSuffix;
+    if (!modifiedAt.isValid())
+    {
+        QFile::remove(overrideName);
+        return;
+    }
+    QFile f(overrideName);
+    if (f.open(QFile::WriteOnly | QFile::Truncate))
+    {
+        f.write(modifiedAt.asText(Time::ISOFormat).toUtf8());
+    }
 }
 
 File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
-                                                Folder &parentFolder)
+                                                Folder &parentFolder) // static
 {
-    Folder *parent = &parentFolder;
+    const bool isExisting = nativePath.exists();
+    Folder *   parent     = &parentFolder;
 
-    File::Status const status = fileStatus(nativePath);
+    File::Status status;
+    if (isExisting)
+    {
+        status = fileStatus(nativePath);
+    }
+    else
+    {
+        status.modifiedAt = Time(); // file being created now
+    }
 
     // If we're populating a .pack, the possible container .packs must be included as
     // parent folders (in structure only, not all their contents). Otherwise the .pack
@@ -300,20 +362,33 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
         }
     }
 
-    if (status.type() == File::Status::FILE)
+    const String newFilePath = parent->path() / nativePath.fileName();
+
+    if (status.type() == File::Type::File)
     {
-        auto *source = new NativeFile(nativePath.fileName(), nativePath);
-        source->setStatus(status);
-        File *file = FileSystem::get().interpret(source);
-        parent->add(file);
-        FileSystem::get().index(*file);
-        return *file;
+        parent->clear();
+        parent->clearFeeds();
+
+        auto *feed = new DirectoryFeed(nativePath.fileNamePath());
+        feed->setNamePattern(nativePath.fileName());
+        parent->attach(feed);
+        if (isExisting)
+        {
+            parent->populate();
+        }
+        else
+        {
+            parent->replaceFile(nativePath.fileName());
+        }
+        return FS::locate<File>(newFilePath);
     }
     else
     {
-        return FS::get().makeFolderWithFeed(parent->path() / nativePath.fileName(),
+        return FS::get().makeFolderWithFeed(newFilePath,
                                             new DirectoryFeed(nativePath),
                                             Folder::PopulateFullTree,
                                             FS::DontInheritFeeds | FS::PopulateNewFolder);
     }
 }
+
+} // namespace de

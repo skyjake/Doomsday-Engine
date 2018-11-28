@@ -23,6 +23,7 @@
 
 #include "dd_share.h"
 #include <doomsday/uri.h>
+#include "common.h"
 #include "fi_lib.h"
 #include "mobj.h"
 #include "player.h"
@@ -30,10 +31,13 @@
 #if __cplusplus
 class SaveSlots;
 
-extern GameRuleset defaultGameRules;
+GameRules &gfw_DefaultGameRules();
+
+#define gfw_DefaultRule(name)           (gfw_DefaultGameRules().values.name)
+#define gfw_SetDefaultRule(name, value) GameRules_Set(gfw_DefaultGameRules(), name, value)
 
 extern de::Uri nextMapUri;
-extern uint nextMapEntryPoint;
+extern uint    nextMapEntryPoint;
 
 /**
  * Schedule a new game session (deferred).
@@ -43,7 +47,7 @@ extern uint nextMapEntryPoint;
  * @param mapUri       Map identifier.
  * @param mapEntrance  Logical map entry point number.
  */
-void G_SetGameActionNewSession(GameRuleset const &rules, de::String episodeId,
+void G_SetGameActionNewSession(GameRules const &rules, de::String episodeId,
                                de::Uri const &mapUri, uint mapEntrance = 0);
 
 /**
@@ -92,7 +96,7 @@ de::String G_EpisodeTitle(de::String episodeId);
  *
  * @todo: Should use WorldSystem::mapInfoForMapUri() instead.
  */
-de::Record const &G_MapInfoForMapUri(de::Uri const &mapUri);
+de::Record &G_MapInfoForMapUri(de::Uri const &mapUri);
 
 /**
  * @param mapUri  Identifier of the map to lookup the author of.
@@ -163,7 +167,13 @@ de::String G_DefaultGameStateFolderUserDescription(de::String const &saveName, b
 SaveSlots &G_SaveSlots();
 
 extern "C" {
-#endif
+#endif // __cplusplus
+
+/**
+ * Returns the Map Info flags of the current map in the current game session.
+ * @return MIF flags.
+ */
+unsigned int gfw_MapInfoFlags(void);
 
 /**
  * Returns @c true, if the game is currently quiting.
@@ -210,21 +220,18 @@ void G_IntermissionDone(void);
 
 AutoStr *G_CurrentMapUriPath(void);
 
-int G_Ruleset_Skill();
-#if !__JHEXEN__
-byte G_Ruleset_Fast();
-#endif
-byte G_Ruleset_Deathmatch();
-byte G_Ruleset_NoMonsters();
-#if __JHEXEN__
-byte G_Ruleset_RandomClasses();
-#else
-byte G_Ruleset_RespawnMonsters();
-#endif
-void G_Ruleset_UpdateDefaults();
+void GameRules_UpdateDefaultsFromCVars();
 
 /// @todo remove me
 void G_SetGameActionMapCompletedAndSetNextMap(void);
+
+/**
+ * Changes the automap rotation mode for all players. Also sets the cvar value so the mode
+ * will persist.
+ *
+ * @param enableRotate  Enable or disable the rotation mode.
+ */
+void G_SetAutomapRotateMode(byte enableRotate);
 
 D_CMD( CCmdMakeLocal );
 D_CMD( CCmdSetCamera );

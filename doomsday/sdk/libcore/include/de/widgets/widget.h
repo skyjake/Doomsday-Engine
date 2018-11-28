@@ -22,17 +22,19 @@
 /** @defgroup widgets  Widget Framework
  * @ingroup core */
 
-#include "../String"
+#include "../DotPath"
 #include "../Event"
+#include "../IObject"
 #include "../Id"
 #include "../Observers"
-#include "../DotPath"
+#include "../String"
 
 #include <QList>
 #include <functional>
 
 namespace de {
 
+class AssetGroup;
 class Widget;
 class RootWidget;
 
@@ -42,7 +44,7 @@ typedef QList<Widget *> WidgetList;
  * Base class for widgets.
  * @ingroup widgets
  */
-class DENG2_PUBLIC Widget
+class DENG2_PUBLIC Widget : public IObject
 {
 public:
     /// Widget that was expected to exist was not found. @ingroup errors
@@ -239,9 +241,18 @@ public:
     Children children() const;
     dsize childCount() const;
     Widget *parent() const;
-    inline Widget *parentWidget() const { return parent(); }
+    inline Widget *parentWidget() const { return parent(); }    
     bool isFirstChild() const;
     bool isLastChild() const;
+
+    template <typename Type>
+    Type *ancestorOfType() const {
+        for (Widget *w = parent(); w; w = w->parent())
+        {
+            if (auto *t = maybeAs<Type>(w)) return t;
+        }
+        return nullptr;
+    }
 
     /**
      * Calls the given callback on each widget of the tree, starting from this widget.
@@ -311,6 +322,11 @@ public:
     void notifyTreeReversed(NotifyArgs const &args);
     virtual bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
+    enum class CollectMode { OnlyVisible, All };
+    virtual void collectNotReadyAssets(AssetGroup &collected,
+                                       CollectMode collectMode = CollectMode::OnlyVisible);
+    void waitForAssetsReady();
+
     // Events.
     virtual void initialize();
     virtual void deinitialize();
@@ -323,6 +339,10 @@ public:
     virtual void preDrawChildren();
     virtual void postDrawChildren();
     virtual bool handleEvent(Event const &event);
+
+    // Implements IObject.
+    Record &      objectNamespace() override;
+    const Record &objectNamespace() const override;
 
 public:
     static void setFocusCycle(WidgetList const &order);

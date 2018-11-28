@@ -117,7 +117,8 @@ public:
             DimmedColor    = 2,
             AccentColor    = 3,
             DimAccentColor = 4,
-            AltAccentColor = 5
+            AltAccentColor = 5,
+            MaxColors
         };
 
         /**
@@ -274,6 +275,8 @@ public:
     Font(QFont const &font);
 
     //QFont toQFont() const;
+
+    void initialize(const QFont &font);
 
     /**
      * Determines the size of the given line of text, i.e., how large an area

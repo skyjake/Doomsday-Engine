@@ -30,8 +30,11 @@ endif ()
 deng_add_application (shell ${SOURCES} EXTRA_RESOURCES ${MAC_RES})
 
 if (APPLE OR WIN32)
-    set_property (TARGET shell PROPERTY OUTPUT_NAME "Doomsday Shell")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday Shell")
+    set_target_properties (shell PROPERTIES
+        OUTPUT_NAME "Doomsday Shell"
+        MACOSX_BUNDLE_INFO_PLIST ${CMAKE_CURRENT_LIST_DIR}/res/macx/Info.plist
+    )
 else ()
     set_property (TARGET shell PROPERTY OUTPUT_NAME "doomsday-shell")
 endif ()

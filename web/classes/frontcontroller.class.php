@@ -42,6 +42,7 @@ class FrontController
     private $_plugins;
     private $_actions;
     private $_contentCache = NULL;
+    private $_db = NULL;
 
     private $_visibleErrors = false;
 
@@ -105,6 +106,10 @@ class FrontController
         ini_set('display_errors', (bool) $this->_visibleErrors);
         ini_set('display_startup_errors', (bool) $this->_visibleErrors);
         set_error_handler(array(&$this,"ErrorHandler"));
+        
+        // Open a database connection.
+        require_once(DENG_API_DIR.'/include/database.inc.php');        
+        $this->_db = db_open();
 
         // Locate plugins.
         $this->_plugins = new Plugins(DIR_PLUGINS);
@@ -139,6 +144,11 @@ class FrontController
     public function &request()
     {
         return $this->_request;
+    }
+    
+    public function &database()
+    {
+        return $this->_db;
     }
 
     public function &plugins()
@@ -273,7 +283,7 @@ class FrontController
         if(ini_get('display_errors'))
         {
             printf("<br />\n<b>%s</b>: %s in <b>%s</b> on line <b>%d</b><br /><br />\n",
-                   $errortype[$errno], $errmsg, $filename, $linenum);
+                   isset($errortype[$errno])? $errortype[$errno] : "$errno", $errmsg, $filename, $linenum);
 
             return true;
         }
@@ -417,7 +427,7 @@ class FrontController
 
         $rightTabs = array();
         $rightTabs[] = array('page'=>'/addons',       'label'=>'Add-ons', 'tooltip'=>'Add-ons for games playable with the Doomsday Engine');
-        $rightTabs[] = array('page'=>'/forums',       'label'=>'Forums',  'tooltip'=>'Doomsday Engine user forums');
+        $rightTabs[] = array('page'=>'/talk/categories', 'label'=>'Forums',  'tooltip'=>'Doomsday Engine user forums');
         $rightTabs[] = array('page'=>'/masterserver', 'label'=>'Servers', 'tooltip'=>'Doomsday Engine server browser');
 
 ?>

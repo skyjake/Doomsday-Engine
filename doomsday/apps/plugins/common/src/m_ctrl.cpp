@@ -104,13 +104,13 @@ static controlconfig_t controlConfig[] =
 #endif
 
 #ifdef __JHERETIC__
-    { (char const *) TXT_TXT_INV_INVULNERABILITY, 0, 0, "impulse invulnerability", 0 },
+    { /* (char const *) TXT_TXT_INV_INVULNERABILITY */ "Invincibility", 0, 0, "impulse invulnerability", 0 },
     { (char const *) TXT_TXT_INV_INVISIBILITY, 0, 0, "impulse invisibility", 0 },
     { (char const *) TXT_TXT_INV_HEALTH, 0, 0, "impulse health", 0 },
     { (char const *) TXT_TXT_INV_SUPERHEALTH, 0, 0, "impulse superhealth", 0 },
     { (char const *) TXT_TXT_INV_TOMEOFPOWER, 0, 0, "impulse tome", 0 },
     { (char const *) TXT_TXT_INV_TORCH, 0, 0, "impulse torch", 0 },
-    { (char const *) TXT_TXT_INV_FIREBOMB, 0, 0, "impulse firebomb", 0 },
+    { /* (char const *) TXT_TXT_INV_FIREBOMB */ "Time Bomb", 0, 0, "impulse firebomb", 0 },
     { (char const *) TXT_TXT_INV_EGG, 0, 0, "impulse egg", 0 },
     { (char const *) TXT_TXT_INV_FLY, 0, 0, "impulse fly", 0 },
     { (char const *) TXT_TXT_INV_TELEPORT, 0, 0, "impulse teleport", 0 },
@@ -182,7 +182,7 @@ static controlconfig_t controlConfig[] =
     { "Smaller View", 0, 0, "sub view-size 1", CCF_REPEAT },
     { "Larger View", 0, 0, "add view-size 1", CCF_REPEAT },
 
-    { "Message Refresh", 0, 0, "impulse msgrefresh", 0 },
+    { "Msg Refresh", 0, 0, "impulse msgrefresh", 0 },
 
     { "Shortcuts", 0, 0, 0, 0 },
     { "Pause Game", 0, 0, "pause", 0 },
@@ -196,7 +196,7 @@ static controlconfig_t controlConfig[] =
     { "Quick Load", "shortcut", 0, "quickload", 0 },
     { "Sound Options", "shortcut", 0, "menu soundoptions", 0 },
     { "Toggle Messages", "shortcut", 0, "toggle msg-show", 0 },
-    { "Gamma Correction", "shortcut", 0, "togglegamma", 0 },
+    { "Gamma Adjust", "shortcut", 0, "togglegamma", 0 },
     { "Screenshot", "shortcut", 0, "screenshot", 0 },
     { "Quit", "shortcut", 0, "quit", 0 },
 
@@ -214,8 +214,8 @@ static controlconfig_t controlConfig[] =
     { "Answer No", "message", 0, "messageno", 0 },
     { "Cancel", "message", 0, "messagecancel", 0 },
 
-    { "Virtual Reality", 0, 0, 0, 0 },
-    { "Reset Tracking", 0, 0, "resetriftpose", 0 }
+//    { "Virtual Reality", 0, 0, 0, 0 },
+//    { "Reset Tracking", 0, 0, "resetriftpose", 0 }
 };
 
 static void Hu_MenuDrawControlsPage(Page const &page, Vector2i const &offset);
@@ -229,6 +229,7 @@ void Hu_MenuActivateBindingsGrab(Widget &, Widget::Action)
 void Hu_MenuInitControlsPage()
 {
     Page *page = Hu_MenuAddPage(new Page("ControlOptions", Vector2i(32, 40), 0, Hu_MenuDrawControlsPage));
+    page->setLeftColumnWidth(.4f);
     page->setTitle("Controls");
     page->setPredefinedFont(MENU_FONT1, FID(GF_FONTA));
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
@@ -240,12 +241,12 @@ void Hu_MenuInitControlsPage()
         controlconfig_t *binds = &controlConfig[i];
 
         char const *labelText = binds->text;
-        if(labelText && (PTR2INT(labelText) > 0 && PTR2INT(labelText) < NUMTEXT))
+        if (labelText && (PTR2INT(labelText) > 0 && PTR2INT(labelText) < NUMTEXT))
         {
             labelText = GET_TXT(PTR2INT(labelText));
         }
 
-        if(!binds->command && !binds->controlName)
+        if (!binds->command && !binds->controlName)
         {
             // Inert.
             page->addWidget(new LabelWidget(labelText))
@@ -255,10 +256,12 @@ void Hu_MenuInitControlsPage()
         else
         {
             page->addWidget(new LabelWidget(labelText))
+                    .setLeft()
                     .setGroup(group);
 
             InputBindingWidget *binding = new InputBindingWidget;
             binding->binds = binds;
+            binding->setRight();
             binding->setGroup(group);
             binding->setAction(Widget::Activated,   Hu_MenuActivateBindingsGrab);
             binding->setAction(Widget::FocusGained, Hu_MenuDefaultFocusAction);

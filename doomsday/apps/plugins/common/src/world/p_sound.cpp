@@ -35,11 +35,21 @@ using namespace de;
 
 void S_MapMusic(de::Uri const &mapUri)
 {
-    Block const musicIdUtf8 = G_MapInfoForMapUri(mapUri).gets("music").toUtf8();
-    if(S_StartMusic(musicIdUtf8.constData(), true))
+    String musicId = G_MapInfoForMapUri(mapUri).gets("music");
+    if (musicId.isEmpty())
+    {
+        musicId = mapUri.path();
+    }
+    if (S_StartMusic(musicId.toUtf8(), true))
     {
         // Set the game status cvar for the map music.
-        Con_SetInteger2("map-music", Defs().getMusicNum(musicIdUtf8.constData()), SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("map-music", Defs().getMusicNum(musicId.toUtf8()), SVF_WRITE_OVERRIDE);
+    }
+    else
+    {
+        // We don't have anything to play.
+        S_StopMusic();
+        Con_SetInteger2("map-music", -1, SVF_WRITE_OVERRIDE);
     }
 }
 
@@ -105,10 +115,19 @@ void SndInfoParser(ddstring_s const *path)
 
                 if(mapNumber > 0)
                 {
-                    Record const &mapInfo = G_MapInfoForMapUri(G_ComposeMapUri(0, mapNumber - 1));
-                    if(Record *music = Defs().musics.tryFind("id", mapInfo.gets("music")))
+                    Record &mapInfo = G_MapInfoForMapUri(G_ComposeMapUri(0, mapNumber - 1));
+                    if (const Record *music = Defs().musics.tryFind("id", Str_Text(lumpName)))
                     {
-                        music->set("lumpName", Str_Text(lumpName));
+                        // There is a music definition with this ID, let's use that.
+                        mapInfo.set("music", Str_Text(lumpName));
+                    }
+                    else
+                    {
+                        // Modify the map's currently used music to override the music lump.
+                        if (Record *music = Defs().musics.tryFind("id", mapInfo.gets("music")))
+                        {
+                            music->set("lumpName", Str_Text(lumpName));
+                        }
                     }
                 }
                 continue;

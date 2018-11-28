@@ -38,9 +38,9 @@ libgui requires the [Open Asset Import Library](http://assimp.sourceforge.net/li
 
 [SDL 2](http://libsdl.org) is needed for game controller input (e.g., joysticks and gamepads). Additionally, SDL2_mixer can be used for audio output (not required).
 
-### FMOD Ex
+### FMOD Studio
 
-The optional FMOD audio plugin requires the [FMOD Ex Programmer's API](http://fmod.org/).
+The optional FMOD audio plugin requires the [FMOD Studio Low-Level Programmer API](http://www.fmod.org/download).
 
 ## Branches
 

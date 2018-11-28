@@ -52,6 +52,7 @@ class ScriptSystem;
 class System;
 class UnixInfo;
 
+namespace filesys { class RemoteFeedRelay; }
 namespace game { class Game; }
 
 /**
@@ -124,8 +125,8 @@ public:
      *
      * This method must be called before initSubsystems().
      *
-     * @param path  Location of the @em Config.de script file. The default path of the
-     *              script is "/modules/Config.de".
+     * @param path  Location of the @em Config.ds script file. The default path of the
+     *              script is "/modules/Config.ds".
      */
     void setConfigScript(Path const &path);
 
@@ -220,11 +221,13 @@ public:
      */
     NativePath nativeBasePath();
 
+#if !defined (DENG_STATIC_LINK)
     /**
      * Returns the native path of where to load binaries (plugins). This
      * is where "/bin" points to.
      */
     NativePath nativePluginBinaryPath();
+#endif
 
     /**
      * Returns the native path where user-specific runtime files should be
@@ -296,6 +299,11 @@ public:
     static PackageLoader &packageLoader();
 
     /**
+     * Returns the remote feed relay that manages connections to remote file repositories.
+     */
+    static filesys::RemoteFeedRelay &remoteFeedRelay();
+
+    /**
      * Convenience method for finding all files matching a certain name or partial path
      * from all loaded packages.
      *
@@ -346,6 +354,12 @@ public:
     static Variable &config(String const &name);
 
     /**
+     * Returns the web API URL. Always includes the protocol and ends with a slash.
+     * @return Configured web API URL.
+     */
+    static String apiUrl();
+
+    /**
      * Returns the Unix system-level configuration preferences.
      */
     static UnixInfo &unixInfo();
@@ -394,7 +408,7 @@ public:
 public:
     /**
      * Determines if the currently executing thread is the application's main
-     * (UI) thread.
+     * thread.
      */
     static bool inMainThread();
 

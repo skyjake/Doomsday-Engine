@@ -252,7 +252,7 @@ void Hu_MsgStart(msgtype_t type, char const *msg, msgfunc_t callback,
         composeYesNoMessage();
     }
 
-    if(!(Get(DD_DEDICATED) || Get(DD_NOVIDEO)))
+    if(!Get(DD_NOVIDEO))
     {
         FR_ResetTypeinTimer();
     }

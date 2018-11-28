@@ -20,6 +20,8 @@
 
 #include "de/gui/displaymode_native.h"
 #include <de/libcore.h>
+#include <QGuiApplication>
+#include <QScreen>
 
 void DisplayMode_Native_Init(void)
 {
@@ -42,7 +44,12 @@ void DisplayMode_Native_GetMode(int index, DisplayMode *mode)
 
 void DisplayMode_Native_GetCurrentMode(DisplayMode *mode)
 {
-    DENG2_UNUSED(mode);
+    const auto *scr = QGuiApplication::primaryScreen();
+    
+    mode->width       = scr->geometry().width();
+    mode->height      = scr->geometry().height();
+    mode->depth       = scr->depth();
+    mode->refreshRate = scr->refreshRate();
 }
 
 int DisplayMode_Native_Change(DisplayMode const *mode, int shouldCapture)

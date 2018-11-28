@@ -638,19 +638,23 @@ bool ScriptedInfo::isFalse(RecordAccessor const &rec, String const &name, bool d
     return defaultValue;
 }
 
+bool ScriptedInfo::isFalse(String const &token) // static
+{
+    // Text values are interpreted a bit more loosely.
+    if (!token.compareWithoutCase("false") ||
+        !token.compareWithoutCase("no")    ||
+        !token.compareWithoutCase("off"))
+    {
+        return true;
+    }
+    return false;
+}
+
 bool ScriptedInfo::isFalse(Value const &value) // static
 {
     if (TextValue const *textValue = maybeAs<TextValue>(value))
     {
-        // Text values are interpreted a bit more loosely.
-        String const value = textValue->asText();
-        if (!value.compareWithoutCase("false") ||
-           !value.compareWithoutCase("no") ||
-           !value.compareWithoutCase("off"))
-        {
-            return true;
-        }
-        return false;
+        return isFalse(textValue->asText());
     }
     return !value.isTrue();
 }

@@ -28,6 +28,7 @@
 
 #include "de_base.h"
 #include "gl/gl_main.h"
+#include "api_gl.h"
 
 #include <de/concurrency.h>
 #include <de/App>
@@ -76,8 +77,6 @@ using namespace de;
 extern dint maxnumnodes;
 extern dd_bool fillOutlines;
 
-dint numTexUnits = 1;
-dd_bool envModAdd;     ///< TexEnv: modulate and add is available.
 dint test3dfx;
 dint r_detail = true;  ///< Draw detail textures (if available).
 
@@ -198,24 +197,23 @@ void GL_SetGamma()
 
 void GL_FinishFrame()
 {
-    if(ClientApp::vr().mode() == VRConfig::OculusRift) return;
+    if (ClientApp::vr().mode() == VRConfig::OculusRift) return;
+
+    DENG2_ASSERT_IN_RENDER_THREAD();
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Check for color adjustment changes.
-    if(oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
+    if (oldgamma != vid_gamma || oldcontrast != vid_contrast || oldbright != vid_bright)
     {
         GL_SetGamma();
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
+#if !defined (DENG_MOBILE)
     // Wait until the right time to show the frame so that the realized
     // frame rate is exactly right.
     LIBGUI_GL.glFlush();
     DD_WaitForOptimalUpdateTime();
-
-    // Blit screen to video.
-    //ClientWindow::main().swapBuffers();
+#endif
 }
 
 static void printConfiguration()
@@ -227,7 +225,7 @@ static void printConfiguration()
     {
         LOG_GL_VERBOSE("  Multisampling format: %i") << GL_state.multisampleFormat;
     }*/
-    LOG_GL_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
+    //LOG_GL_VERBOSE("  Multitexturing: %s") << (numTexUnits > 1? (envModAdd? "full" : "partial") : "not available");
     LOG_GL_VERBOSE("  Texture Anisotropy: %s") << (GL_state.features.texFilterAniso? "variable" : "fixed");
     LOG_GL_VERBOSE("  Texture Compression: %b") << GL_state.features.texCompression;
 }
@@ -242,11 +240,6 @@ void GL_EarlyInit()
     ClientApp::renderSystem().glInit();
 
     gamma_support = !CommandLine_Check("-noramp");
-
-    // We are simple people; two texture units is enough.
-    numTexUnits = de::min(GLInfo::limits().maxTexUnits, MAX_TEX_UNITS);
-    envModAdd = (GLInfo::extensions().NV_texture_env_combine4 ||
-                 GLInfo::extensions().ATI_texture_env_combine3);
 
     GL_InitDeferredTask();
 
@@ -337,8 +330,8 @@ void GL_Shutdown()
     Rend_ModelShutdown();
     LensFx_Shutdown();
     Rend_Reset();
-
     GL_ShutdownRefresh();
+    DGL_Shutdown();
 
     // Shutdown OpenGL.
     Sys_GLShutdown();
@@ -353,36 +346,36 @@ void GL_Init2DState()
     glFarClip  = 16500;
 
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+    //DGL_SetInteger(DGL_FLUSH_BACKTRACE, true);
 
     // Here we configure the OpenGL state and set the projection matrix.
-    GLState::current()
-            .setCull(gl::None)
-            .setDepthTest(false)
-            .apply();
-
-    //glDisable(GL_TEXTURE_1D);
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
-    LIBGUI_GL.glDisable(GL_TEXTURE_CUBE_MAP);
+    DGL_CullFace(DGL_NONE);
+    DGL_Disable(DGL_DEPTH_TEST);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // The projection matrix.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, 320, 200, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, 320, 200, -1, 1);
 
     // Default state for the white fog is off.
-    fogParams.usingFog = false;
-    LIBGUI_GL.glDisable(GL_FOG);
-    LIBGUI_GL.glFogi(GL_FOG_MODE, (fogModeDefault == 0 ? GL_LINEAR :
-                                   fogModeDefault == 1 ? GL_EXP    : GL_EXP2));
-    LIBGUI_GL.glFogf(GL_FOG_START, DEFAULT_FOG_START);
-    LIBGUI_GL.glFogf(GL_FOG_END, DEFAULT_FOG_END);
-    LIBGUI_GL.glFogf(GL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
-    fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
-    fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
-    fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
-    fogParams.fogColor[3] = 1;
-    LIBGUI_GL.glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+    {
+        fogParams.usingFog    = false;
+        fogParams.fogColor[0] = DEFAULT_FOG_COLOR_RED;
+        fogParams.fogColor[1] = DEFAULT_FOG_COLOR_GREEN;
+        fogParams.fogColor[2] = DEFAULT_FOG_COLOR_BLUE;
+        fogParams.fogColor[3] = 1.f;
+    }
+    DGL_Disable(DGL_FOG);
+    DGL_Fogi(DGL_FOG_MODE, (fogModeDefault == 0 ? DGL_LINEAR :
+                            fogModeDefault == 1 ? DGL_EXP    : DGL_EXP2));
+    DGL_Fogf(DGL_FOG_START,   DEFAULT_FOG_START);
+    DGL_Fogf(DGL_FOG_END,     DEFAULT_FOG_END);
+    DGL_Fogf(DGL_FOG_DENSITY, DEFAULT_FOG_DENSITY);
+    DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
+
+    LIBGUI_ASSERT_GL_OK();
 }
 
 Rangef GL_DepthClipRange()
@@ -390,25 +383,15 @@ Rangef GL_DepthClipRange()
     return Rangef(glNearClip, glFarClip);
 }
 
-Matrix4f GL_GetProjectionMatrix()
-{
-    dfloat const fov = Rend_FieldOfView();
-    //Vector2f const size(viewpw, viewph);
-    Vector2f const size = R_Console3DViewRect(displayPlayer).size();
-    yfov = vrCfg().verticalFieldOfView(fov, size);
-    return vrCfg().projectionMatrix(Rend_FieldOfView(), size, glNearClip, glFarClip) *
-           Matrix4f::scale(Vector3f(1, 1, -1));
-}
-
 void GL_ProjectionMatrix()
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Actually shift the player viewpoint
     // We'd like to have a left-handed coordinate system.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glLoadMatrixf(GL_GetProjectionMatrix().values());
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_LoadMatrix(Rend_GetProjectionMatrix().values());
 }
 
 void GL_SetupFogFromMapInfo(Record const *mapInfo)
@@ -455,22 +438,20 @@ DENG_EXTERN_C void GL_UseFog(dint yes)
 
 void GL_SelectTexUnits(dint count)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    for(dint i = numTexUnits - 1; i >= count; i--)
+    for (dint i = MAX_TEX_UNITS - 1; i >= count; i--)
     {
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE0 + i);
     }
 
     // Enable the selected units.
-    for(dint i = count - 1; i >= 0; i--)
+    for (dint i = count - 1; i >= 0; i--)
     {
-        if(i >= numTexUnits) continue;
+        if (i >= MAX_TEX_UNITS) continue;
 
-        LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + i);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE0 + i);
     }
 }
 
@@ -517,69 +498,59 @@ void GL_TotalRestore()
 
 void GL_BlendMode(blendmode_t mode)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     switch(mode)
     {
     case BM_ZEROALPHA:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::One, gl::Zero)
-                          .apply();
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ONE, DGL_ZERO);
         break;
 
     case BM_ADD:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::SrcAlpha, gl::One)
-                          .apply();
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE);
         break;
 
     case BM_DARK:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::DestColor, gl::OneMinusSrcAlpha)
-                          .apply();
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_DST_COLOR, DGL_ONE_MINUS_SRC_ALPHA);
         break;
 
     case BM_SUBTRACT:
-        GLState::current().setBlendOp(gl::Subtract)
-                          .setBlendFunc(gl::One, gl::SrcAlpha)
-                          .apply();
+        DGL_BlendOp(DGL_SUBTRACT);
+        DGL_BlendFunc(DGL_ONE, DGL_SRC_ALPHA);
         break;
 
     case BM_ALPHA_SUBTRACT:
-        GLState::current().setBlendOp(gl::Subtract)
-                          .setBlendFunc(gl::SrcAlpha, gl::One)
-                          .apply();
+        DGL_BlendOp(DGL_SUBTRACT);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE);
         break;
 
     case BM_REVERSE_SUBTRACT:
-        GLState::current().setBlendOp(gl::ReverseSubtract)
-                          .setBlendFunc(gl::SrcAlpha, gl::One)
-                          .apply();
+        DGL_BlendOp(DGL_REVERSE_SUBTRACT);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE);
         break;
 
     case BM_MUL:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::Zero, gl::SrcColor)
-                          .apply();
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ZERO, DGL_SRC_COLOR);
         break;
 
     case BM_INVERSE:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::OneMinusDestColor, gl::OneMinusSrcColor)
-                          .apply();
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ONE_MINUS_DST_COLOR, DGL_ONE_MINUS_SRC_COLOR);
         break;
 
     case BM_INVERSE_MUL:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::Zero, gl::OneMinusSrcColor)
-                          .apply();
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_ZERO, DGL_ONE_MINUS_SRC_COLOR);
         break;
 
     default:
-        GLState::current().setBlendOp(gl::Add)
-                          .setBlendFunc(gl::SrcAlpha, gl::OneMinusSrcAlpha)
-                          .apply();
+        DGL_BlendOp(DGL_ADD);
+        DGL_BlendFunc(DGL_SRC_ALPHA, DGL_ONE_MINUS_SRC_ALPHA);
         break;
     }
 }
@@ -783,7 +754,7 @@ static inline MaterialVariantSpec const &uiMaterialSpec(gl::Wrapping wrapS, gl::
 static inline MaterialVariantSpec const &pspriteMaterialSpec(dint tClass, dint tMap)
 {
     return resSys().materialSpec(PSpriteContext, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
-                                 0, 1, 0, false, true, true, false);
+                                 0, -2, 0, false, true, true, false);
 }
 
 void GL_SetMaterialUI2(world::Material *material, gl::Wrapping wrapS, gl::Wrapping wrapT)
@@ -826,7 +797,9 @@ void GL_SetRawImage(lumpnum_t lumpNum, gl::Wrapping wrapS, gl::Wrapping wrapT)
 
 void GL_BindTexture(TextureVariant *vtexture)
 {
-    if(ClientApp::busyRunner().inWorkerThread()) return;
+#if defined (DENG_HAVE_BUSYRUNNER)
+    if (ClientApp::busyRunner().inWorkerThread()) return;
+#endif
 
     // Ensure we have a prepared texture.
     duint glTexName = vtexture? vtexture->prepare() : 0;
@@ -836,11 +809,11 @@ void GL_BindTexture(TextureVariant *vtexture)
         return;
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glTexName);
-    Sys_GLCheckError();
+    LIBGUI_ASSERT_GL_OK();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
     TextureVariantSpec const &spec = vtexture->spec();
@@ -855,13 +828,18 @@ void GL_BindTexture(TextureVariant *vtexture)
             LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT,
                             GL_GetTexAnisoMul(spec.variant.logicalAnisoLevel()));
         }
+        LIBGUI_ASSERT_GL_OK();
     }
 }
 
 void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wrapT,
     gl::Filter filter)
 {
-    if(ClientApp::busyRunner().inWorkerThread()) return;
+#if defined (DENG_HAVE_BUSYRUNNER)
+    if (ClientApp::busyRunner().inWorkerThread()) return;
+#endif
+
+    LIBGUI_ASSERT_GL_OK();
 
     if(glName == 0)
     {
@@ -869,11 +847,11 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
         return;
     }
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     LIBGUI_GL.glBindTexture(GL_TEXTURE_2D, glName);
-    Sys_GLCheckError();
+    LIBGUI_ASSERT_GL_OK();
 
     LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_Wrap(wrapS));
     LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_Wrap(wrapT));
@@ -882,6 +860,7 @@ void GL_BindTextureUnmanaged(GLuint glName, gl::Wrapping wrapS, gl::Wrapping wra
     {
         LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAX_ANISOTROPY_EXT, GL_GetTexAnisoMul(texAniso));
     }
+    LIBGUI_ASSERT_GL_OK();
 }
 
 void GL_Bind(GLTextureUnit const &glTU)
@@ -909,17 +888,19 @@ void GL_BindTo(GLTextureUnit const &glTU, dint unit)
 {
     if(!glTU.hasTexture()) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
-    LIBGUI_GL.glActiveTexture(GL_TEXTURE0 + dbyte(unit));
+    DGL_SetInteger(DGL_ACTIVE_TEXTURE, unit);
     GL_Bind(glTU);
 }
 
 void GL_SetNoTexture()
 {
+#if defined (DENG_HAVE_BUSYRUNNER)
     if(ClientApp::busyRunner().inWorkerThread()) return;
+#endif
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     /// @todo Don't actually change the current binding. Instead we should disable
@@ -975,7 +956,7 @@ duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
 }
 
 duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informat,
-    colorpaletteid_t paletteId, dint outformat)
+                         colorpaletteid_t paletteId, dint outformat)
 {
     DENG2_ASSERT(in);
 
@@ -1225,6 +1206,8 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
     */
 }
 
+#if !defined (DENG_MOBILE)
+
 D_CMD(SetRes)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -1345,6 +1328,8 @@ D_CMD(SetBPP)
     return win->changeAttributes(attribs);
 }
 
+#endif // !DENG_MOBILE
+
 D_CMD(DisplayModeInfo)
 {
     DENG2_UNUSED3(src, argc, argv);
@@ -1371,10 +1356,13 @@ D_CMD(DisplayModeInfo)
                .arg(win->windowRect().topLeft.asText())
                .arg(win->windowRect().size().asText())
                .arg(win->fullscreenSize().asText());
+
+#if !defined (DENG_MOBILE)
     str += String("\n  fullscreen:%1 centered:%2 maximized:%3")
                .arg(DENG2_BOOL_YESNO( win->isFullScreen() ))
                .arg(DENG2_BOOL_YESNO( win->isCentered()   ))
                .arg(DENG2_BOOL_YESNO( win->isMaximized()  ));
+#endif
 
     LOG_GL_MSG("%s") << str;
     return true;
@@ -1447,7 +1435,7 @@ D_CMD(Fog)
         }
         fogParams.fogColor[3] = 1;
 
-        Deferred_glFogfv(GL_FOG_COLOR, fogParams.fogColor);
+        DGL_Fogfv(DGL_FOG_COLOR, fogParams.fogColor);
         LOG_GL_VERBOSE("Fog color set");
         return true;
     }
@@ -1455,20 +1443,20 @@ D_CMD(Fog)
     {
         fogParams.fogStart = (GLfloat) strtod(argv[2], nullptr);
 
-        Deferred_glFogf(GL_FOG_START, fogParams.fogStart);
+        DGL_Fogf(DGL_FOG_START, fogParams.fogStart);
         LOG_GL_VERBOSE("Fog start distance set");
         return true;
     }
     if(!stricmp(argv[1], "end") && argc == 3)
     {
         fogParams.fogEnd = (GLfloat) strtod(argv[2], nullptr);
-        Deferred_glFogf(GL_FOG_END, fogParams.fogEnd);
+        DGL_Fogf(DGL_FOG_END, fogParams.fogEnd);
         LOG_GL_VERBOSE("Fog end distance set");
         return true;
     }
     if(!stricmp(argv[1], "density") && argc == 3)
     {
-        Deferred_glFogf(GL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
+        DGL_Fogf(DGL_FOG_DENSITY, (GLfloat) strtod(argv[2], nullptr));
         LOG_GL_VERBOSE("Fog density set");
         return true;
     }
@@ -1476,19 +1464,19 @@ D_CMD(Fog)
     {
         if(!stricmp(argv[2], "linear"))
         {
-            Deferred_glFogi(GL_FOG_MODE, GL_LINEAR);
+            DGL_Fogi(DGL_FOG_MODE, DGL_LINEAR);
             LOG_GL_VERBOSE("Fog mode set to linear");
             return true;
         }
         if(!stricmp(argv[2], "exp"))
         {
-            Deferred_glFogi(GL_FOG_MODE, GL_EXP);
+            DGL_Fogi(DGL_FOG_MODE, DGL_EXP);
             LOG_GL_VERBOSE("Fog mode set to exp");
             return true;
         }
         if(!stricmp(argv[2], "exp2"))
         {
-            Deferred_glFogi(GL_FOG_MODE, GL_EXP2);
+            DGL_Fogi(DGL_FOG_MODE, DGL_EXP2);
             LOG_GL_VERBOSE("Fog mode set to exp2");
             return true;
         }
@@ -1500,7 +1488,9 @@ D_CMD(Fog)
 void GL_Register()
 {
     // Cvars
+#if defined (DENG_OPENGL)
     C_VAR_INT  ("rend-dev-wireframe",    &renderWireframe,  CVF_NO_ARCHIVE, 0, 2);
+#endif
     C_VAR_INT  ("rend-fog-default",      &fogModeDefault,   0, 0, 2);
 
     // * Render-HUD
@@ -1525,6 +1515,7 @@ void GL_Register()
     C_CMD_FLAGS("fog",              nullptr,   Fog,                CMDF_NO_NULLGAME|CMDF_NO_DEDICATED);
     C_CMD      ("displaymode",      "",     DisplayModeInfo);
     C_CMD      ("listdisplaymodes", "",     ListDisplayModes);
+#if !defined (DENG_MOBILE)
     C_CMD      ("setcolordepth",    "i",    SetBPP);
     C_CMD      ("setbpp",           "i",    SetBPP);
     C_CMD      ("setres",           "ii",   SetRes);
@@ -1535,4 +1526,5 @@ void GL_Register()
     C_CMD      ("togglemaximized",  "",     ToggleMaximized);
     C_CMD      ("togglecentered",   "",     ToggleCentered);
     C_CMD      ("centerwindow",     "",     CenterWindow);
+#endif
 }

@@ -75,13 +75,14 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     title->setSizePolicy(ui::Fixed, ui::Expand);
 
     LabelWidget *info = new LabelWidget;
-    String txt = String(_E(b) "%4 %5 #%6" _E(.) "\n%7%9\n\n%1 (%2-%8)%3")
+    String txt = String(_E(b) "%4 build %5" _E(.) "\n%6%8\n\n%1 (%2-%7)%3")
             .arg(version.operatingSystem() == "windows"? tr("Windows") :
-                 version.operatingSystem() == "macx"? tr("macOS") : tr("Unix"))
+                 version.operatingSystem() == "macx"? tr("macOS") :
+                 version.operatingSystem() == "ios"? tr("iOS") : tr("Unix"))
             .arg(version.cpuBits())
             .arg(version.isDebugBuild()? tr(" Debug") : "")
             .arg(DOOMSDAY_RELEASE_TYPE)
-            .arg(version.compactNumber())
+            //.arg(version.compactNumber())
             .arg(version.build)
             .arg(Time::fromText(__DATE__ " " __TIME__, Time::CompilerDateTime)
                  .asDateTime().toString(Qt::SystemLocaleShortDate))
@@ -101,7 +102,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     layout << *logo << *title << *info;
 
     // Total size of the dialog's content.
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, tr("Close"))

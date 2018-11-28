@@ -1,0 +1,266 @@
+body {
+    font-family: "Source Sans Pro";
+    font-size: 13pt;    
+    margin: 0;
+    background: #ddd url(http://dengine.net/images/doxybg.jpg) no-repeat fixed;
+    background-position: center 100%;
+    background-size: 200% 200%;
+}
+.websymbol {
+    font-family: "WebSymbolsRegular";
+    font-weight: normal; 
+    font-style: normal; 
+}
+#wrapper {
+    max-width: 85ex;
+    margin-left: auto;
+    margin-right: auto;    
+    padding-left: 1em;
+    padding-right: 1em;
+}
+#wrapper.index_page {
+    max-width: 110ex;
+}
+
+/* Common Stuff */
+
+h1, h2 {
+    font-weight: 300;
+    text-align: center;
+}
+h1 {
+    font-size: 275%;
+    margin-top: 1.4em;
+}
+h2 {
+    font-size: 200%;
+    margin-top: 1.5em;
+}
+h3 {
+    font-size: 150%;
+    margin-top: 1.5em;
+    text-align: center;
+}
+p, div.message {
+    color: #444;
+    text-align: justify;
+    -webkit-hyphens: auto;
+    -moz-hyphens: auto;
+    -ms-hyphens: auto;
+    hyphens: auto;
+}
+ul {
+    color: #666;
+}
+a {
+    color: black;
+    text-decoration: none;
+}
+a:hover {
+    text-decoration: underline;
+}
+p a {
+    font-weight: bold;
+}
+table {
+    margin: auto;
+}
+th {
+    border-bottom: 1px solid #ccc;
+}
+td, th {
+    padding: 0.5ex;
+}
+
+/* Build Index */
+
+.links {
+    text-align: center;
+}
+div.buildlist {
+    text-align: center;
+}
+div.build {
+    min-width: 5em;
+    display: inline-block;
+    border: 1px solid #bbb;
+    background-color: #eee;
+    border-radius: 1ex;
+    margin: 0.8ex 0.5ex;
+    padding: 1ex;
+    text-align: center;
+}
+div.build:hover {
+    background-color: white;
+}
+div.build.candidate {
+    border-color: #da8;
+    background: #fd8;
+    color: black;
+}
+div.build.candidate:hover {
+    background: #fe9;
+}
+div.build.stable {
+    border-color: #371;
+    background: #6a3;
+}
+div.build.stable:hover {
+    background: #8b4;
+}
+div.build a {
+    text-decoration: none;
+}
+div.build.candidate a {
+    color: #420;
+}
+div.build.stable a {
+    color: white;
+}
+.buildnumber {
+    font-size: 150%;
+}
+.builddate, .buildversion {
+    font-size: 80%;
+}
+.buildversion {
+    font-weight: 300;
+}
+#versions-subtitle {
+    margin-bottom: 0;
+}
+#other-versions {
+    text-align: center;
+}
+div.version {
+    display: inline-block;
+    margin: 0 1ex;
+}
+
+/* Downloads Table */
+
+table.downloads {
+    border-spacing: 0;
+}
+table.downloads td {
+    vertical-align: top;
+    margin: 1em;
+    padding-top: 0.5ex;
+}
+table.downloads tr.separator td {
+    padding-top: 1.5em;
+}
+table.downloads td.button {
+    padding-top: 0;
+}
+table.downloads tr.separator td.button {
+    padding-top: 1.25em;
+}
+td.platform {
+    font-weight: bold;
+    color: #777;
+}
+table.downloads td.platform.detected {
+    color: black;
+}
+div.fileinfo {
+    font-size: 75%;
+    color: #888;
+    margin-top: 1ex;
+}
+div.filename a {
+    color: black;
+}
+div.fileinfo div {
+    display: inline-block;
+    margin-right: 1em;
+    white-space: nowrap;
+}
+div.fileinfo div.filesize {
+    color: #555;
+}
+/*table.downloads tr:hover div.filesize {
+    color: black;
+} */   
+div.fileinfo a {
+    white-space: nowrap;    
+}
+div.hash .digits {
+    font-family: monospace;
+    font-size: 80%;
+}
+a.signature {
+    color: #777;
+}
+a.signature:hover {
+    color: black;
+}
+a.download {
+    display: inline-block;
+    padding: 1ex;
+    border: 1px solid #caa075;
+    border-radius: 1ex;
+    font-size: 75%;
+    min-width: 12ex;
+    text-align: center;
+    white-space: nowrap;
+    background-color: #FDD04D;
+    color: black;
+}
+a.download:hover {
+    text-decoration: none;
+    background-color: #FFE087;
+}
+a.download.mirror {
+    border: 1px solid #888;
+    background-color: #aaa;
+}
+a.download.mirror:hover {
+    background-color: #bbb;
+}
+.fext {
+    font-weight: bold;
+}
+
+/* Commits */
+
+h3.commitgroup {
+    text-align: left;
+}
+ul.commitlist li > a {
+    margin-right: 0.5ex;
+    font-weight: 300;
+}
+ul.commitlist span.title {
+    font-weight: bold;
+    color: #111;
+}
+ul.commitlist span.author {
+    font-style: italic;
+}
+div.other-groups {
+    display: block;
+    vertical-align: text-top;
+    float: right;
+}
+div.other-groups div.tag {
+    display: inline-block;
+    padding: 0.1ex 1ex;
+    margin: 0 0.5ex;
+    border-radius: 0.25ex;
+    background-color: #aaa;
+    color: #fff;
+    font-size: 70%;
+    font-weight: bold;
+    text-transform: uppercase;
+    vertical-align: baseline;
+}
+ul.commitlist div.message {
+    margin: 1ex 0 1.5ex 0;
+}
+div.message a {
+    font-weight: normal;
+}
+ul.commitlist:last-child {
+    margin-bottom: 4em;
+}

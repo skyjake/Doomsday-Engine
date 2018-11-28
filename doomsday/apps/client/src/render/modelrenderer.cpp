@@ -30,10 +30,12 @@
 #include "world/clientmobjthinkerdata.h"
 #include "world/convexsubspace.h"
 #include "clientapp.h"
+#include "world/clientserverworld.h"
 
 #include <de/App>
 #include <de/ModelBank>
 #include <de/NativePointerValue>
+#include <de/TextValue>
 
 using namespace de;
 
@@ -45,6 +47,7 @@ DENG2_PIMPL(ModelRenderer)
     render::ModelLoader loader;
 
     GLUniform uMvpMatrix        { "uMvpMatrix",        GLUniform::Mat4 };
+    GLUniform uWorldMatrix      { "uWorldMatrix",      GLUniform::Mat4 }; // included in uMvpMatrix
     GLUniform uReflectionMatrix { "uReflectionMatrix", GLUniform::Mat4 };
     GLUniform uTex              { "uTex",              GLUniform::Sampler2D };
     GLUniform uReflectionTex    { "uReflectionTex",    GLUniform::SamplerCube };
@@ -80,6 +83,7 @@ DENG2_PIMPL(ModelRenderer)
     {
         program << uMvpMatrix
                 << uReflectionMatrix
+                << uWorldMatrix
                 << uTex
                 << uReflectionTex
                 << uEyePos
@@ -138,28 +142,6 @@ DENG2_PIMPL(ModelRenderer)
         lightCount++;
     }
 
-    void setupFog()
-    {
-        if (fogParams.usingFog)
-        {
-            uFogColor = Vector4f(fogParams.fogColor[0],
-                                 fogParams.fogColor[1],
-                                 fogParams.fogColor[2],
-                                 1.f);
-
-            Rangef const depthPlanes = GL_DepthClipRange();
-            float const fogDepth = fogParams.fogEnd - fogParams.fogStart;
-            uFogRange = Vector4f(fogParams.fogStart,
-                                 fogDepth,
-                                 depthPlanes.start,
-                                 depthPlanes.end);
-        }
-        else
-        {
-            uFogColor = Vector4f();
-        }
-    }
-
     void setupPose(Vector3d const &modelWorldOrigin,
                    Vector3f const &modelOffset,
                    float yawAngle,
@@ -168,6 +150,8 @@ DENG2_PIMPL(ModelRenderer)
     {
         Vector3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
         Vector3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
+
+        // "local" == world space but with origin at model origin
 
         Matrix4f modelToLocal =
                 Matrix4f::rotate(-90 + yawAngle, Vector3f(0, 1, 0) /* vertical axis for yaw */) *
@@ -183,28 +167,33 @@ DENG2_PIMPL(ModelRenderer)
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
 
-        Matrix4f localToView =
-                Viewer_Matrix() *
+        Matrix4f const localToWorld =
                 Matrix4f::translate(origin) *
                 Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
+        Matrix4f const localToScreen = Viewer_Matrix() * localToWorld;
+
+        uWorldMatrix = localToWorld * modelToLocal;
 
         // Set up a suitable matrix for the pose.
-        setTransformation(relativePos, modelToLocal, localToView);
+        setTransformation(relativePos, modelToLocal, localToScreen);
     }
 
     /**
      * Sets up the transformation matrices.
      *
+     * "Local space" is the same as world space but relative to the object's origin.
+     * That is, (0,0,0) being the object's origin.
+     *
      * @param relativeEyePos  Position of the eye in relation to object (in world space).
      * @param modelToLocal    Transformation from model space to the object's local space
      *                        (object's local frame in world space).
-     * @param localToView     Transformation from local space to projected view space.
+     * @param localToScreen   Transformation from local space to screen (projected 2D) space.
      */
     void setTransformation(Vector3f const &relativeEyePos,
                            Matrix4f const &modelToLocal,
-                           Matrix4f const &localToView)
+                           Matrix4f const &localToScreen)
     {
-        uMvpMatrix   = localToView * modelToLocal;
+        uMvpMatrix   = localToScreen * modelToLocal;
         inverseLocal = modelToLocal.inverse();
         uEyePos      = inverseLocal * relativeEyePos;
     }
@@ -231,7 +220,7 @@ DENG2_PIMPL(ModelRenderer)
     template <typename Params> // generic to accommodate psprites and vispsprites
     void draw(Params const &p)
     {
-        setupFog();
+        DGL_FogParams(uFogRange, uFogColor);
         uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
 
         p.model->draw(&p.animator->appearance(), p.animator);
@@ -307,7 +296,7 @@ void ModelRenderer::render(vissprite_t const &spr)
     // Draw the model using the current animation state.
     GLState::push().setCull(p.model->cull);
     d->draw(p);
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
@@ -334,7 +323,7 @@ void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
 
     GLState::push().setCull(p.model->cull);
     d->draw(p);
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 //---------------------------------------------------------------------------------------
@@ -373,6 +362,54 @@ static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::Ar
     return playing.release();
 }
 
+static Value *Function_StateAnimator_StartSequence(Context &ctx, Function::ArgumentValues const &args)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    int animId = anim.animationId(args.at(0)->asText());
+    if (animId >= 0)
+    {
+        int priority = args.at(1)->asInt();
+        bool looping = args.at(2)->isTrue();
+        String node  = args.at(3)->asText();
+
+        anim.startAnimation(animId, priority, looping, node);
+    }
+    else
+    {
+        LOG_SCR_ERROR("%s has no animation \"%s\"")
+                << anim.objectNamespace().gets("ID")
+                << args.at(0)->asText();
+    }
+    return nullptr;
+}
+
+static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::ArgumentValues const &args)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    render::Model const &model = anim.model();
+    String const timelineName = args.first()->asText();
+    if (model.timelines.contains(timelineName))
+    {
+        anim.scheduler().start(*model.timelines[timelineName],
+                               &anim.objectNamespace(),
+                               timelineName);
+        return new TextValue(timelineName);
+    }
+    else
+    {
+        LOG_SCR_ERROR("%s has no timeline \"%s\"")
+            << anim.objectNamespace().gets("ID") << timelineName;
+    }
+    return nullptr;
+}
+
+static Value *Function_StateAnimator_StopTimeline(Context &ctx, Function::ArgumentValues const &args)
+{
+    render::StateAnimator &anim = animatorInstance(ctx);
+    anim.scheduler().stop(args.first()->asText());
+    return nullptr;
+}
+
 void ModelRenderer::initBindings(Binder &binder, Record &module) // static
 {
     // StateAnimator
@@ -380,6 +417,13 @@ void ModelRenderer::initBindings(Binder &binder, Record &module) // static
         Record &anim = module.addSubrecord("StateAnimator");
         binder.init(anim)
                 << DENG2_FUNC_NOARG(StateAnimator_Thing,            "thing")
-                << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences");
+                << DENG2_FUNC_NOARG(StateAnimator_PlayingSequences, "playingSequences")
+                << DENG2_FUNC_DEFS (StateAnimator_StartSequence,    "startSequence",
+                                    "sequence" << "priority" << "looping" << "node",
+                                    Function::Defaults({ std::make_pair("priority", new NumberValue(0)),
+                                                         std::make_pair("looping",  new NumberValue(0)),
+                                                         std::make_pair("node",     new TextValue) }))
+                << DENG2_FUNC      (StateAnimator_StartTimeline,    "startTimeline", "name")
+                << DENG2_FUNC      (StateAnimator_StopTimeline,     "stopTimeline", "name");
     }
 }

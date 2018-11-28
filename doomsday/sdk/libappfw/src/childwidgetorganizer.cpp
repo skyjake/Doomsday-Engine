@@ -516,7 +516,7 @@ DENG2_PIMPL(ChildWidgetOrganizer)
             // This will ensure that differences in item heights will not accumulate
             // and cause the estimated PVS to become too inaccurate.
             float error = virtualStrut->value() - estimated.start * averageItemHeight;
-            correctionPerUnit = -error / GuiWidget::toDevicePixels(100);
+            correctionPerUnit = -error / GuiWidget::pointsToPixels(100);
             totalCorrection = de::abs(error);
         }
         // Apply correction to the virtual strut.

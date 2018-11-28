@@ -73,7 +73,7 @@ next MAP10
 warptrans 9
 sky1 SKY1 0
 par 270
-music D_INCIT
+music D_IN_CIT
 titlepatch CWILV08
 
 map MAP10 lookup THUSTR_10

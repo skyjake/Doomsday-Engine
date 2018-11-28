@@ -1,0 +1,49 @@
+# Makefile for packaging all needed packages for the Xcode iOS build.
+
+ROOT 		:= $(SRCROOT)/..
+SCRIPTS 	:= $(SRCROOT)/../build/scripts
+CLIENT_DATA 	:= ${ROOT}/apps/client/data
+DOOM_DATA 	:= ${ROOT}/apps/plugins/doom/data
+HERETIC_DATA 	:= {ROOT}/apps/plugins/heretic/data
+HEXEN_DATA 	:= {ROOT}/apps/plugins/hexen/data
+DOOM64_DATA 	:= ${ROOT}/apps/plugins/doom64/data
+
+STDLIB_FILES 	 := $(shell find $(ROOT)/sdk/libcore/net.dengine.stdlib.pack)
+STDLIB_GUI_FILES := $(shell find $(ROOT)/sdk/libgui/net.dengine.stdlib.gui.pack)
+BASE_FILES 	 := $(shell find $(ROOT)/apps/libdoomsday/net.dengine.base.pack)
+CLIENT_FILES 	 := $(shell find $(ROOT)/apps/client/net.dengine.client.pack | \
+			sed -e 's/ /\\ /g')
+
+PACK_FILES := \
+	$(wildcard ${CLIENT_DATA}/fonts/*.dfn) \
+	$(wildcard ${CLIENT_DATA}/graphics/*.png) \
+	$(wildcard ${CLIENT_DATA}/graphics/*.pcx) \
+	$(wildcard ${DOOM_DATA}/lumps/*.lmp) \
+	$(wildcard ${DOOM_DATA}/*.mapinfo) \
+	$(wildcard ${DOOM_DATA}/*.txt)\
+	$(wildcard ${HERETIC_DATA}/lumps/*.lmp) \
+	$(wildcard ${HERETIC_DATA}/*.mapinfo) \
+	$(wildcard ${HERETIC_DATA}/*.txt) \
+	$(wildcard ${HEXEN_DATA}/lumps/*.lmp) \
+	$(wildcard ${HEXEN_DATA}/*.mapinfo) \
+	$(wildcard ${HEXEN_DATA}/*.txt) \
+	$(wildcard ${DOOM64_DATA}/lumps/*.lmp) \
+	$(wildcard ${DOOM64_DATA}/*.mapinfo) \
+	$(wildcard ${DOOM64_DATA}/*.txt)	
+
+all: doomsday.pk3 libdoom.pk3 libheretic.pk3 libhexen.pk3 net.dengine.stdlib.pack net.dengine.stdlib.gui.pack net.dengine.base.pack net.dengine.client.pack
+
+doomsday.pk3 libdoom.pk3 libheretic.pk3 libhexen.pk3: ${PACK_FILES}
+	cd ${SCRIPTS} && ./packres.py --quiet $(PROJECT_TEMP_DIR)
+	
+net.dengine.stdlib.pack: ${STDLIB_FILES}
+	${SCRIPTS}/buildpackage.py $(ROOT)/sdk/libcore/net.dengine.stdlib.pack $(PROJECT_TEMP_DIR)
+	
+net.dengine.stdlib.gui.pack: ${STDLIB_GUI_FILES}
+	${SCRIPTS}/buildpackage.py $(ROOT)/sdk/libgui/net.dengine.stdlib.gui.pack $(PROJECT_TEMP_DIR)
+	
+net.dengine.base.pack: ${BASE_FILES}
+	${SCRIPTS}/buildpackage.py $(ROOT)/apps/libdoomsday/net.dengine.base.pack $(PROJECT_TEMP_DIR)
+	
+net.dengine.client.pack: ${CLIENT_FILES}
+	${SCRIPTS}/buildpackage.py $(ROOT)/apps/client/net.dengine.client.pack $(PROJECT_TEMP_DIR)

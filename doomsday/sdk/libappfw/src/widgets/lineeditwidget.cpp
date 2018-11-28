@@ -28,11 +28,16 @@
 #include <de/AnimationRule>
 #include <de/Drawable>
 
+#if defined (DENG_MOBILE)
+#  include <QGuiApplication>
+#  include <QInputMethod>
+#endif
+
 namespace de {
 
 using namespace ui;
 
-static TimeDelta const HEIGHT_ANIM_SPAN = .5f;
+static TimeSpan const HEIGHT_ANIM_SPAN = .5f;
 static duint const ID_BUF_TEXT   = 1;
 static duint const ID_BUF_CURSOR = 2;
 
@@ -100,6 +105,7 @@ DENG_GUI_PIMPL(LineEditWidget)
         wraps.setFont(*font);
         wraps.clear();
         composer.setWrapping(wraps);
+        composer.forceUpdate();
 
         contentChanged(false);
     }
@@ -293,8 +299,8 @@ Rectanglei LineEditWidget::cursorRect() const
     Vector2i const cp = d->wraps.charTopLeftInPixels(cursorPos.y, cursorPos.x) +
             contentRect().topLeft;
 
-    return Rectanglei(cp + toDevicePixels(Vector2i(-1, 0)),
-                      cp + Vector2i(toDevicePixels(1), d->font->height().valuei()));
+    return Rectanglei(cp + pointsToPixels(Vector2i(-1, 0)),
+                      cp + Vector2i(pointsToPixels(1), d->font->height().valuei()));
 }
 
 void LineEditWidget::setColorTheme(ColorTheme theme)
@@ -341,7 +347,7 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
         Vector2i const startPos = linePos(comp.start);
         Vector2i const endPos   = linePos(comp.end);
 
-        Vector2i const offset = contentRect.topLeft + Vector2i(0, d->font->ascent().valuei() + toDevicePixels(2));
+        Vector2i const offset = contentRect.topLeft + Vector2i(0, d->font->ascent().valuei() + pointsToPixels(2));
 
         // It may span multiple lines.
         for (int i = startPos.y; i <= endPos.y; ++i)
@@ -350,7 +356,7 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
             Vector2i start = d->wraps.charTopLeftInPixels(i, i == startPos.y? startPos.x : span.start) + offset;
             Vector2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.y?   endPos.x   : span.end)   + offset;
 
-            verts.makeQuad(Rectanglef(start, end + toDevicePixels(Vector2i(0, 1))),
+            verts.makeQuad(Rectanglef(start, end + pointsToPixels(Vector2i(0, 1))),
                            Vector4f(1, 1, 1, 1), solidWhiteUv.middle());
         }
     }
@@ -377,10 +383,30 @@ void LineEditWidget::focusGained()
     {
         d->hint->setOpacity(0);
     }
+
+#if defined (DENG_MOBILE)
+    {
+        auto &win = root().window();
+        emit win.textEntryRequest();
+
+        // Text entry happens via OS virtual keyboard.
+        connect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
+        connect(&win, &GLWindow::userFinishedTextEntry, this, &LineEditWidget::userFinishedTextEntry);
+    }
+#endif
 }
 
 void LineEditWidget::focusLost()
 {
+#if defined (DENG_MOBILE)
+    {
+        auto &win = root().window();
+        disconnect(&win, &GLWindow::userEnteredText, this, &LineEditWidget::userEnteredText);
+        disconnect(&win, &GLWindow::userFinishedTextEntry, this, &LineEditWidget::userFinishedTextEntry);
+        emit win.textEntryDismiss();
+    }
+#endif
+
     d->contentChanged(false /* don't notify */);
 
     if (d->hint && d->showingHint())
@@ -388,6 +414,18 @@ void LineEditWidget::focusLost()
         d->hint->setOpacity(1, 1, 0.5);
     }
 }
+
+#if defined (DENG_MOBILE)
+void LineEditWidget::userEnteredText(QString text)
+{
+    setText(text);
+}
+
+void LineEditWidget::userFinishedTextEntry()
+{
+    root().popFocus();
+}
+#endif
 
 void LineEditWidget::update()
 {
@@ -455,6 +493,11 @@ bool LineEditWidget::handleEvent(Event const &event)
         default:
             break;
         }
+    }
+
+    if (is<KeyEvent>(event) && event.as<KeyEvent>().qtKey() == Qt::Key_Enter)
+    {
+        qDebug() << "LineEditWidget: Enter key" << event.type() << hasFocus();
     }
 
     // Only handle keys when focused.

@@ -6947,6 +6947,7 @@ Thing {
   Mass = 60;
   Flags = "mf_solid mf_shootable mf_countkill";
   Flags2 = "mf2_windthrust mf2_floorclip mf2_passmobj mf2_pushwall mf2_telestomp";
+  Flags3 = "mf3_nomorph";
 }
 
 Thing {
@@ -9144,6 +9145,7 @@ Thing {
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
   Flags2 = "mf2_floorclip mf2_passmobj mf2_telestomp mf2_pushwall mf2_mcross";
+  Flags3 = "mf3_nomorph";
 }
 
 Thing {
@@ -9171,6 +9173,7 @@ Thing {
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
   Flags2 = "mf2_floorclip mf2_passmobj mf2_telestomp mf2_pushwall mf2_mcross";
+  Flags3 = "mf3_nomorph";
 }
 
 Thing {
@@ -9198,6 +9201,7 @@ Thing {
   Mass = 100;
   Flags = "mf_solid mf_shootable mf_countkill";
   Flags2 = "mf2_floorclip mf2_passmobj mf2_telestomp mf2_pushwall mf2_mcross";
+  Flags3 = "mf3_nomorph";
 }
 
 Thing {

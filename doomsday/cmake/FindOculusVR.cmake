@@ -1,3 +1,7 @@
+if (IOS)
+    return ()
+endif ()
+
 # This is the version of LibOVR that is required.
 set (LIBOVR_REQUIRED_VERSION 0.5.0.1)
 

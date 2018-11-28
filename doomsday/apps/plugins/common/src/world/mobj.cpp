@@ -26,7 +26,10 @@
 
 #include <cmath>
 #include <doomsday/world/mobjthinkerdata.h>
+#include <de/String>
 #include <de/mathutil.h>
+#include <QTextStream>
+
 #include "dmu_lib.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
@@ -146,7 +149,7 @@ void Mobj_XYMoveStopping(mobj_t *mo)
         return;
     }
 
-    if(mo->origin[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
+    if (mo->origin[VZ] > mo->floorZ && !mo->onMobj && !(mo->flags2 & MF2_FLY))
     {
         // No friction when falling.
         return;
@@ -179,8 +182,8 @@ void Mobj_XYMoveStopping(mobj_t *mo)
     {
         belowStandSpeed = (INRANGE_OF(mo->mom[MX], 0, STANDSPEED) &&
                            INRANGE_OF(mo->mom[MY], 0, STANDSPEED));
-        isMovingPlayer = (!FEQUAL(player->plr->forwardMove, 0) ||
-                        !FEQUAL(player->plr->sideMove, 0));
+        isMovingPlayer = (NON_ZERO(player->plr->forwardMove) ||
+                        NON_ZERO(player->plr->sideMove));
     }
 
     // Stop player walking animation (only real players).
@@ -228,6 +231,36 @@ dd_bool Mobj_IsPlayerClMobj(mobj_t *mo)
         }
     }
     return false;
+}
+
+uint32_t Mobj_PrivateID(mobj_t const *mob)
+{
+    if (!mob)
+    {
+        return 0;
+    }
+    if (auto const *td = THINKER_DATA_MAYBE(mob->thinker, ThinkerData))
+    {
+        return td->id();
+    }
+    return 0;
+}
+
+mobj_t *Mobj_FindByPrivateID(uint32_t privateId)
+{
+    if (privateId == 0)
+    {
+        return nullptr;
+    }
+
+    if (auto *thinkerData = ThinkerData::find(de::Id(privateId)))
+    {
+        if (auto *mobjData = de::maybeAs<MobjThinkerData>(thinkerData))
+        {
+            return mobjData->mobj();
+        }
+    }
+    return nullptr;
 }
 
 dd_bool Mobj_IsPlayer(mobj_t const *mob)
@@ -615,7 +648,7 @@ void mobj_s::write(MapStateWriter *msw) const
         break;
     }
 
-    Writer_WriteInt32(writer, PTR2INT(mo->lastEnemy));
+    Writer_WriteInt32(writer, 0); //PTR2INT(mo->lastEnemy));
 #elif __JHERETIC__
     Writer_WriteInt16(writer, msw->serialIdFor(mo->generator));
 #endif
@@ -854,12 +887,16 @@ int mobj_s::read(MapStateReader *msr)
 #if __JHEXEN__
     if(ver >= 4)
     {
-        tracer    = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        // This value has not been mangled properly.
+        /*tracer = */INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        tracer = nullptr;
     }
 
     if(ver >= 4)
     {
-        lastEnemy = INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        // This value has not been mangled properly.
+        /*lastEnemy =*/ INT2PTR(mobj_t, Reader_ReadInt32(reader));
+        lastEnemy = nullptr;
     }
 #else
     if(ver >= 5)
@@ -1026,4 +1063,89 @@ void Mobj_InflictDamage(mobj_t *mob, mobj_t const *inflictor, int damage)
 
     // Notify the engine.
     THINKER_DATA(mob->thinker, MobjThinkerData).damageReceived(damage, inflictor);
+}
+
+de::String Mobj_StateAsInfo(mobj_t const *mob)
+{
+    using de::String;
+
+    QString str;
+    QTextStream os(&str);
+    os.setCodec("UTF-8");
+
+    os << "Mobj 0x" << String::number(Mobj_PrivateID(mob), 16)
+       << " {\n  target = 0x" << String::number(Mobj_PrivateID(mob->target), 16)
+       << "\n  onMobj = 0x" << String::number(Mobj_PrivateID(mob->onMobj), 16)
+       << "\n  tracer = 0x" << String::number(Mobj_PrivateID(mob->tracer), 16);
+
+    #if defined (__JHERETIC__)
+    {
+        os << "\n  generator = 0x" << String::number(Mobj_PrivateID(mob->generator), 16);
+    }
+    #endif
+
+    #if defined (__JHEXEN__)
+    {
+        os << "\n  lastEnemy = 0x" << String::number(Mobj_PrivateID(mob->lastEnemy), 16);
+    }
+    #endif
+
+    os << "\n}\n";
+
+    return str;
+}
+
+void Mobj_RestoreObjectState(mobj_t *mob, de::Info::BlockElement const &state)
+{
+    static de::String const KEY_TARGET     ("target");
+    static de::String const KEY_ON_MOBJ    ("onMobj");
+    static de::String const KEY_TRACER     ("tracer");
+    static de::String const KEY_GENERATOR  ("generator");
+    static de::String const KEY_LAST_ENEMY ("lastEnemy");
+
+    bool ok;
+    uint32_t pid;
+
+    pid = state.keyValue(KEY_TARGET).text.toUInt32(&ok, 0);
+    if (ok)
+    {
+        mob->target = Mobj_FindByPrivateID(pid);
+        //qDebug() << "mobj" << mob->thinker.id << "target" << pid << mob->target;
+    }
+
+    pid = state.keyValue(KEY_ON_MOBJ).text.toUInt32(&ok, 0);
+    if (ok)
+    {
+        mob->onMobj = Mobj_FindByPrivateID(pid);
+        //qDebug() << "mobj" << mob->thinker.id << "onMobj" << pid << mob->onMobj;
+    }
+
+    pid = state.keyValue(KEY_TRACER).text.toUInt32(&ok, 0);
+    if (ok)
+    {
+        mob->tracer = Mobj_FindByPrivateID(pid);
+        //qDebug() << "mobj" << mob->thinker.id << "tracer" << pid << mob->tracer;
+    }
+
+    #if defined (__JHERETIC__)
+    {
+        pid = state.keyValue(KEY_GENERATOR).text.toUInt32(&ok, 0);
+        if (ok)
+        {
+            mob->generator = Mobj_FindByPrivateID(pid);
+            //qDebug() << "mobj" << mob->thinker.id << "generator" << pid << mob->generator;
+        }
+    }
+    #endif
+
+    #if defined (__JHEXEN__)
+    {
+        pid = state.keyValue(KEY_LAST_ENEMY).text.toUInt32(&ok, 0);
+        if (ok)
+        {
+            mob->lastEnemy = Mobj_FindByPrivateID(pid);
+            //qDebug() << "mobj" << mob->thinker.id << "lastEnemy" << pid << mob->lastEnemy;
+        }
+    }
+    #endif
 }

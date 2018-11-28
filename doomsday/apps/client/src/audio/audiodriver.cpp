@@ -57,9 +57,7 @@ DENG2_PIMPL(AudioDriver)
             LibraryFile *found = nullptr;
             Library_ForAll([&name, &found] (LibraryFile &lib)
             {
-                // Plugins are native files.
-                if (is<NativeFile>(lib.source()) &&
-                    lib.hasUnderscoreName(name))
+                if (lib.hasUnderscoreName(name))
                 {
                     found = &lib;
                     return LoopAbort;

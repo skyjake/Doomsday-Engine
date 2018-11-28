@@ -34,6 +34,12 @@ class LIBAPPFW_PUBLIC ToggleWidget : public ButtonWidget
     Q_OBJECT
 
 public:
+    enum Flag {
+        DefaultFlags     = 0,
+        WithoutIndicator = 0x1,
+    };
+    Q_DECLARE_FLAGS(Flags, Flag)
+
     enum ToggleState {
         Active,
         Inactive
@@ -45,7 +51,7 @@ public:
     DENG2_DEFINE_AUDIENCE2(Toggle, void toggleStateChanged(ToggleWidget &toggle))
 
 public:
-    ToggleWidget(String const &name = String());
+    ToggleWidget(Flags const &flags = DefaultFlags, String const &name = String());
 
     /**
      * Sets the toggle state of the widget.
@@ -72,6 +78,8 @@ signals:
 private:
     DENG2_PRIVATE(d)
 };
+
+Q_DECLARE_OPERATORS_FOR_FLAGS(ToggleWidget::Flags)
 
 } // namespace de
 

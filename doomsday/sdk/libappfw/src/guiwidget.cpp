@@ -39,6 +39,7 @@ namespace de {
 DENG2_PIMPL(GuiWidget)
 , DENG2_OBSERVES(Widget, ChildAddition)
 , DENG2_OBSERVES(ui::Margins, Change)
+, DENG2_OBSERVES(Style, Change)
 #ifdef DENG2_DEBUG
 , DENG2_OBSERVES(Widget, ParentChange)
 #endif
@@ -98,13 +99,15 @@ DENG2_PIMPL(GuiWidget)
         self().audienceForChildAddition() += this;
         margins.audienceForChange() += this;
 
+        Style::get().audienceForChange() += this;
+
 #ifdef DENG2_DEBUG
         self().audienceForParentChange() += this;
         rule.setDebugName(self().path());
 #endif
     }
 
-    ~Impl()
+    ~Impl() override
     {
         qDeleteAll(eventHandlers);
 
@@ -125,19 +128,19 @@ DENG2_PIMPL(GuiWidget)
 #endif
     }
 
-    void marginsChanged()
+    void marginsChanged() override
     {
         flags |= StyleChanged;
     }
 
 #ifdef DENG2_DEBUG
-    void widgetParentChanged(Widget &, Widget *, Widget *)
+    void widgetParentChanged(Widget &, Widget *, Widget *) override
     {
         rule.setDebugName(self().path());
     }
 #endif
 
-    void widgetChildAdded(Widget &child)
+    void widgetChildAdded(Widget &child) override
     {
         if (self().hasRoot())
         {
@@ -172,7 +175,7 @@ DENG2_PIMPL(GuiWidget)
 
             // Clipped widgets are guaranteed to be within their rectangle.
             return !visibleArea.overlaps(self().rule().recti().expanded(
-                                             GuiWidget::toDevicePixels(CULL_SAFETY_WIDTH)));
+                                             GuiWidget::pointsToPixels(CULL_SAFETY_WIDTH)));
         }
         // Otherwise widgets may draw anywhere in the view.
         return visibleArea.isNull();
@@ -185,7 +188,7 @@ DENG2_PIMPL(GuiWidget)
         blur.reset(new BlurState);
 
         // The blurred version of the view is downsampled.
-        blur->size = (self().root().viewSize() / GuiWidget::toDevicePixels(4)).max(Vector2ui(1, 1));
+        blur->size = (self().root().viewSize() / GuiWidget::pointsToPixels(4)).max(Vector2ui(1, 1));
 
         for (int i = 0; i < 2; ++i)
         {
@@ -236,15 +239,6 @@ DENG2_PIMPL(GuiWidget)
         blur->drawable.clear();
 
         blur.reset();
-    }
-
-    void reinitBlur()
-    {
-        if (blur)
-        {
-            deinitBlur();
-            initBlur();
-        }
     }
 
     void updateBlurredBackground()
@@ -345,9 +339,9 @@ DENG2_PIMPL(GuiWidget)
     void updateOpacityForDisabledWidgets()
     {
         float const opac = (self().isDisabled()? .3f : 1.f);
-        if (opacityWhenDisabled.target() != opac)
+        if (!fequal(opacityWhenDisabled.target(), opac))
         {
-            opacityWhenDisabled.setValue(opac, .3f);
+            opacityWhenDisabled.setValue(opac, 0.3);
         }
         if ((flags & FirstUpdateAfterCreation) ||
             !attribs.testFlag(AnimateOpacityWhenEnabledOrDisabled))
@@ -469,7 +463,7 @@ DENG2_PIMPL(GuiWidget)
                 break;
             }
             // Very close edges are considered contacting.
-            if (edgeDistance >= 0 && edgeDistance < toDevicePixels(5))
+            if (edgeDistance >= 0 && edgeDistance < pointsToPixels(5))
             {
                 return edgeDistance;
             }
@@ -554,9 +548,21 @@ DENG2_PIMPL(GuiWidget)
         return bestWidget? bestWidget : thisPublic;
     }
 
-    static float toDevicePixels(double logicalPixels)
+    void styleChanged(Style &) override
     {
-        return float(logicalPixels * DENG2_BASE_GUI_APP->dpiFactor());
+        deinitBlur();
+        flags |= StyleChanged;
+        // updateStyle() will be called during the next update().
+    }
+
+    static inline float pointsToPixels(double points)
+    {
+        return float(points) * DENG2_BASE_GUI_APP->pixelRatio().value();
+    }
+
+    static inline float pixelsToPoints(double pixels)
+    {
+        return float(pixels) / DENG2_BASE_GUI_APP->pixelRatio().value();
     }
 };
 
@@ -700,9 +706,14 @@ Rectanglef GuiWidget::normalizedRect(de::Rectanglei const &rect,
                                rectf.bottom() / contSize.y));
 }
 
-float GuiWidget::toDevicePixels(float logicalPixels)
+float GuiWidget::pointsToPixels(float points)
 {
-    return Impl::toDevicePixels(logicalPixels);
+    return Impl::pointsToPixels(points);
+}
+
+float GuiWidget::pixelsToPoints(float pixels)
+{
+    return Impl::pixelsToPoints(pixels);
 }
 
 Rectanglef GuiWidget::normalizedRect() const
@@ -771,7 +782,7 @@ GuiWidget::Background const &GuiWidget::background() const
     return d->background;
 }
 
-void GuiWidget::setOpacity(float opacity, TimeDelta span, TimeDelta startDelay)
+void GuiWidget::setOpacity(float opacity, TimeSpan span, TimeSpan startDelay)
 {
     d->opacity.setValue(opacity, span, startDelay);
 }
@@ -895,7 +906,7 @@ void GuiWidget::deinitialize()
 
 void GuiWidget::viewResized()
 {
-    d->reinitBlur();
+    d->deinitBlur();
 }
 
 void GuiWidget::update()
@@ -1193,14 +1204,14 @@ PopupWidget *GuiWidget::findParentPopup() const
 void GuiWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     auto &rootWgt = root();
-    float const thick = d->toDevicePixels(d->background.thickness);
+    float const thick = d->pointsToPixels(d->background.thickness);
 
     // Is there a solid fill?
     if (d->background.solidFill.w > 0)
     {
         if (d->background.type == Background::GradientFrameWithRoundedFill)
         {
-            Rectanglei const recti = rule().recti().shrunk(d->toDevicePixels(2));
+            Rectanglei const recti = rule().recti().shrunk(d->pointsToPixels(2));
             verts.makeQuad(recti.shrunk(thick), d->background.solidFill,
                            rootWgt.atlas().imageRectf(rootWgt.solidRoundCorners()).middle());
             verts.makeFlexibleFrame(recti, thick, d->background.solidFill,
@@ -1224,19 +1235,19 @@ void GuiWidget::glMakeGeometry(GuiVertexBuilder &verts)
     case Background::GradientFrameWithThinBorder:
         if (d->background.type == Background::GradientFrameWithThinBorder)
         {
-            verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(2)),
+            verts.makeFlexibleFrame(rule().recti().shrunk(d->pointsToPixels(2)),
                                     thick,
                                     Vector4f(0, 0, 0, .5f),
                                     rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
         }
-        verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(1)),
+        verts.makeFlexibleFrame(rule().recti().shrunk(d->pointsToPixels(1)),
                                 thick,
                                 d->background.color,
                                 rootWgt.atlas().imageRectf(rootWgt.boldRoundCorners()));
         break;
 
     case Background::Rounded:
-        verts.makeFlexibleFrame(rule().recti().shrunk(d->toDevicePixels(d->background.thickness - 4)),
+        verts.makeFlexibleFrame(rule().recti().shrunk(d->pointsToPixels(d->background.thickness - 4)),
                                 thick,
                                 d->background.color,
                                 rootWgt.atlas().imageRectf(rootWgt.roundCorners()));
@@ -1307,25 +1318,17 @@ void GuiWidget::postDrawChildren()
     }
 }
 
-void GuiWidget::collectNotReadyAssets(AssetGroup &collected, Widget &widget)
+void GuiWidget::collectNotReadyAssets(AssetGroup &collected, CollectMode collectMode)
 {
-    if (auto *assetGroup = maybeAs<IAssetGroup>(widget))
+#if defined (DENG2_DEBUG)
+    if (!rule().isFullyDefined())
     {
-        if (!assetGroup->assets().isReady())
-        {
-            collected += *assetGroup;
-
-            LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)",
-                            widget.path() << &widget);
-        }
+        qDebug() << path() << "rule rectangle not fully defined";
+        qDebug("%s", rule().description().toLatin1().constData());
+        qDebug("Widget layout will be undefined");
     }
-    else
-    {
-        foreach (Widget *child, widget.children())
-        {
-            collectNotReadyAssets(collected, *child);
-        }
-    }
+#endif
+    Widget::collectNotReadyAssets(collected, collectMode);
 }
 
 } // namespace de

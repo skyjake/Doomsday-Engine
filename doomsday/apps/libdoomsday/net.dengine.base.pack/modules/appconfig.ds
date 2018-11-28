@@ -1,0 +1,58 @@
+# The Doomsday Engine Project -- Doomsday Base Library
+#
+# Copyright (c) 2013-2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 2 of the License, or
+# (at your option) any later version.
+# 
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+# 
+# You should have received a copy of the GNU General Public License
+# along with this program; if not, see <http://www.gnu.org/licenses/>.
+
+def setDefaults(d)
+    # Resource settings.
+    record d.resource()
+        iwadFolder = ''
+        packageFolder = ''
+
+        # Dictionary of folders that should be fully recursed. Affects the 
+        # folders listed in resource.packageFolder (native path -> bool).
+        recursedFolders = {}
+        
+        # Online package repositories.
+        repositories = {
+            'idgames archive (gamers.org)': 'http://www.gamers.org/pub/idgames/',
+            'idgames mirror (Idaho, USA)': 'http://mirrors.syringanetworks.net/idgames/',
+            'idgames mirror (New York, USA)': 'http://youfailit.net/pub/idgames/',
+            'idgames mirror (Germany)': 'https://www.quaddicted.com/files/idgames/',
+            'idgames mirror (Greece)': 'http://ftp.ntua.gr/pub/vendors/idgames/',
+            'idgames mirror (Texas, USA)': 'http://ftp.mancubus.net/pub/idgames/'
+        }        
+    end
+    
+    try
+        import clientconfig
+        clientconfig.setDefaults(d)
+    catch: pass
+    
+    # Game mode related information (one for each game plugin):
+    # TODO: plugins should have their own Config scripts (when libcore loads them)
+    record d.plugin()
+        record doom
+        record heretic
+        record hexen
+        record doom64
+    
+        # Single-shot load hooks.
+        doom.onNextLoad    = []
+        heretic.onNextLoad = []
+        hexen.onNextLoad   = []
+        doom64.onNextLoad  = []
+    end 
+end

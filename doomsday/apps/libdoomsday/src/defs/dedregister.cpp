@@ -156,7 +156,7 @@ DENG2_PIMPL(DEDRegister)
 
     bool isEmptyKeyValue(Value const &value) const
     {
-        return value.is<TextValue>() && value.asText().isEmpty();
+        return is<TextValue>(value) && value.asText().isEmpty();
     }
 
     bool isValidKeyValue(Value const &value) const

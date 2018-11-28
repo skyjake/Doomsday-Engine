@@ -26,11 +26,12 @@
 #include <QtAlgorithms>
 #include <de/memoryzone.h>
 #include <de/timer.h>
+#include <de/Binder>
 #include <de/Error>
 #include <de/Log>
-#include <de/Time>
-#include <de/Binder>
+#include <de/Scheduler>
 #include <de/ScriptSystem>
+#include <de/Time>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/exec.h>
@@ -146,7 +147,7 @@ public:
      */
     void setMap(Map *newMap)
     {
-        if(_map != newMap)
+        if (_map != newMap)
         {
             observeMap(false);
             _map = newMap;
@@ -178,40 +179,40 @@ public:
      */
     void writeLog()
     {
-        if(dint numToLog = maxWarnings(unclosedSectorCount()))
+        if (dint numToLog = maxWarnings(unclosedSectorCount()))
         {
             String str;
 
             UnclosedSectorMap::const_iterator it = _unclosedSectors.begin();
-            for(dint i = 0; i < numToLog; ++i, ++it)
+            for (dint i = 0; i < numToLog; ++i, ++it)
             {
-                if(i != 0) str += "\n";
+                if (i != 0) str += "\n";
                 str += String("Sector #%1 is unclosed near %2")
                            .arg(it->first).arg(it->second.asText());
             }
 
-            if(numToLog < unclosedSectorCount())
+            if (numToLog < unclosedSectorCount())
                 str += String("\n(%1 more like this)").arg(unclosedSectorCount() - numToLog);
 
-            LOG_MAP_WARNING("%s") << str;
+            LOGDEV_MAP_WARNING("%s") << str;
         }
 
-        if(dint numToLog = maxWarnings(oneWayWindowCount()))
+        if (dint numToLog = maxWarnings(oneWayWindowCount()))
         {
             String str;
 
             OneWayWindowMap::const_iterator it = _oneWayWindows.begin();
-            for(dint i = 0; i < numToLog; ++i, ++it)
+            for (dint i = 0; i < numToLog; ++i, ++it)
             {
-                if(i != 0) str += "\n";
+                if (i != 0) str += "\n";
                 str += String("Line #%1 seems to be a One-Way Window (back faces sector #%2).")
                            .arg(it->first).arg(it->second);
             }
 
-            if(numToLog < oneWayWindowCount())
+            if (numToLog < oneWayWindowCount())
                 str += String("\n(%1 more like this)").arg(oneWayWindowCount() - numToLog);
 
-            LOG_MAP_VERBOSE("%s") << str;
+            LOGDEV_MAP_MSG("%s") << str;
         }
     }
 
@@ -251,9 +252,9 @@ private:
 
     void observeMap(bool yes)
     {
-        if(!_map) return;
+        if (!_map) return;
 
-        if(yes)
+        if (yes)
         {
             _map->audienceForDeletion()          += this;
             _map->audienceForOneWayWindowFound   += this;
@@ -287,7 +288,7 @@ static String cacheIdForMap(String const &sourcePath)
     DENG2_ASSERT(!sourcePath.isEmpty());
 
     dushort id = 0;
-    for(dint i = 0; i < sourcePath.size(); ++i)
+    for (dint i = 0; i < sourcePath.size(); ++i)
     {
         id ^= sourcePath.at(i).unicode() << ((i * 3) % 11);
     }
@@ -302,6 +303,7 @@ DENG2_PIMPL(ClientServerWorld)
     Record fallbackMapInfo;      ///< Used when no effective MapInfo definition.
 
     timespan_t time = 0;         ///< World-wide time.
+    Scheduler scheduler;
 #if 0
 #ifdef __CLIENT__
     std::unique_ptr<Hand> hand;  ///< For map editing/manipulation.
@@ -347,7 +349,7 @@ DENG2_PIMPL(ClientServerWorld)
      */
     static Path cachePath(String sourcePath)
     {
-        if(sourcePath.isEmpty()) return String();
+        if (sourcePath.isEmpty()) return String();
 
         // Compose the final path.
         return mapCacheDir + App_CurrentGame().id()
@@ -367,12 +369,12 @@ DENG2_PIMPL(ClientServerWorld)
     Map *convertMap(res::MapManifest const &mapManifest, MapConversionReporter *reporter = nullptr)
     {
         // We require a map converter for this.
-        if(!Plug_CheckForHook(HOOK_MAP_CONVERT))
+        if (!Plug_CheckForHook(HOOK_MAP_CONVERT))
             return nullptr;
 
         LOG_DEBUG("Attempting \"%s\"...") << mapManifest.composeUri().path();
 
-        if(!mapManifest.sourceFile()) return nullptr;
+        if (!mapManifest.sourceFile()) return nullptr;
 
         // Initiate the conversion process.
         MPE_Begin(nullptr/*dummy*/);
@@ -382,7 +384,7 @@ DENG2_PIMPL(ClientServerWorld)
         // Associate the map with its corresponding manifest.
         newMap->setManifest(&const_cast<res::MapManifest &>(mapManifest));
 
-        if(reporter)
+        if (reporter)
         {
             // Instruct the reporter to begin observing the conversion.
             reporter->setMap(newMap);
@@ -391,7 +393,7 @@ DENG2_PIMPL(ClientServerWorld)
         // Ask each converter in turn whether the map format is recognizable
         // and if so to interpret and transfer it to us via the runtime map
         // editing interface.
-        if(!DoomsdayApp::plugins().callAllHooks(HOOK_MAP_CONVERT, 0,
+        if (!DoomsdayApp::plugins().callAllHooks(HOOK_MAP_CONVERT, 0,
                                                 const_cast<Id1MapRecognizer *>(&mapManifest.recognizer())))
             return nullptr;
 
@@ -411,7 +413,7 @@ DENG2_PIMPL(ClientServerWorld)
     bool haveCachedMap(res::MapManifest &mapManifest)
     {
         // Disabled?
-        if(!mapCache) return false;
+        if (!mapCache) return false;
         return DAM_MapIsValid(mapManifest.cachePath, mapManifest.id());
     }
 
@@ -426,7 +428,7 @@ DENG2_PIMPL(ClientServerWorld)
     {
         Uri const mapUri = mapManifest.composeUri();
         Map *map = DAM_MapRead(mapManifest.cachePath);
-        if(!map)
+        if (!map)
             /// Failed to load the map specified from the data cache.
             throw Error("loadMapFromCache", "Failed loading map \"" + mapUri.asText() + "\" from cache");
 
@@ -444,18 +446,18 @@ DENG2_PIMPL(ClientServerWorld)
     {
         LOG_AS("ClientServerWorld::loadMap");
 
-        /*if(mapManifest.lastLoadAttemptFailed && !forceRetry)
+        /*if (mapManifest.lastLoadAttemptFailed && !forceRetry)
             return nullptr;
 
         // Load from cache?
-        if(haveCachedMap(mapManifest))
+        if (haveCachedMap(mapManifest))
         {
             return loadMapFromCache(mapManifest);
         }*/
 
         // Try a JIT conversion with the help of a plugin.
         Map *map = convertMap(mapManifest, reporter);
-        if(!map)
+        if (!map)
         {
             LOG_WARNING("Failed conversion of \"%s\".") << mapManifest.composeUri().path();
             //mapManifest.lastLoadAttemptFailed = true;
@@ -470,13 +472,13 @@ DENG2_PIMPL(ClientServerWorld)
     {
         // This is now the current map (if any).
         self().setMap(map);
-        if(!map) return;
+        if (!map) return;
 
         // We cannot make an editable map current.
         DENG2_ASSERT(!map->isEditable());
 
         // Should we cache this map?
-        /*if(mapCache && !haveCachedMap(&map->def()))
+        /*if (mapCache && !haveCachedMap(&map->def()))
         {
             // Ensure the destination directory exists.
             F_MakePath(map->def().cachePath.toUtf8().constData());
@@ -508,7 +510,7 @@ DENG2_PIMPL(ClientServerWorld)
 #ifdef __CLIENT__
         // Reconfigure the sky.
         defn::Sky skyDef;
-        if(Record const *def = DED_Definitions()->skies.tryFind("id", mapInfo.gets("skyId")))
+        if (Record const *def = DED_Definitions()->skies.tryFind("id", mapInfo.gets("skyId")))
         {
             skyDef = *def;
         }
@@ -542,13 +544,13 @@ DENG2_PIMPL(ClientServerWorld)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
-        de::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : de::Uri("Maps:", RC_NULL));
-        if(gx.FinalizeMapChange)
+        de::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : de::makeUri("Maps:"));
+        if (gx.FinalizeMapChange)
         {
             gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
         }
 
-        if(gameTime > 20000000 / TICSPERSEC)
+        if (gameTime > 20000000 / TICSPERSEC)
         {
             // In very long-running games, gameTime will become so large that
             // it cannot be accurately converted to 35 Hz integer tics. Thus it
@@ -607,7 +609,7 @@ DENG2_PIMPL(ClientServerWorld)
 #endif
 
 #ifdef __SERVER__
-        if(::isServer)
+        if (::isServer)
         {
             // Init server data.
             Sv_InitPools();
@@ -642,7 +644,8 @@ DENG2_PIMPL(ClientServerWorld)
 
         // Rewind/restart material animators.
         /// @todo Only rewind animators responsible for map-surface contexts.
-        world::Materials::get().forAllMaterials([] (world::Material &material)
+        world::Materials::get().updateLookup();
+        world::Materials::get().forAnimatedMaterials([] (world::Material &material)
         {
             return material.as<ClientMaterial>().forAllAnimators([] (MaterialAnimator &animator)
             {
@@ -658,17 +661,17 @@ DENG2_PIMPL(ClientServerWorld)
 
         // Run any commands specified in MapInfo.
         String execute = mapInfo.gets("execute");
-        if(!execute.isEmpty())
+        if (!execute.isEmpty())
         {
             Con_Execute(CMDS_SCRIPT, execute.toUtf8().constData(), true, false);
         }
 
         // Run the special map setup command, which the user may alias to do
         // something useful.
-        if(!mapUri.isEmpty())
+        if (!mapUri.isEmpty())
         {
             String cmd = String("init-") + mapUri.path();
-            if(Con_IsValidCommand(cmd.toUtf8().constData()))
+            if (Con_IsValidCommand(cmd.toUtf8().constData()))
             {
                 Con_Executef(CMDS_SCRIPT, false, "%s", cmd.toUtf8().constData());
             }
@@ -703,8 +706,10 @@ DENG2_PIMPL(ClientServerWorld)
     {
         Map *map = self().mapPtr();
 
+        scheduler.clear();
+
 #ifdef __CLIENT__
-        if(map)
+        if (map)
         {
             // Remove the current map from our audiences.
             /// @todo Map should handle this.
@@ -727,7 +732,7 @@ DENG2_PIMPL(ClientServerWorld)
         Z_FreeTags(PU_MAP, PU_PURGELEVEL - 1);
 
         // Are we just unloading the current map?
-        if(!mapManifest) return true;
+        if (!mapManifest) return true;
 
         LOG_MSG("Loading map \"%s\"...") << mapManifest->composeUri().path();
 
@@ -737,7 +742,7 @@ DENG2_PIMPL(ClientServerWorld)
         // Attempt to load in the new map.
         MapConversionReporter reporter;
         Map *newMap = loadMap(*mapManifest, &reporter);
-        if(newMap)
+        if (newMap)
         {
             // The map may still be in an editable state -- switch to playable.
             bool const mapIsPlayable = newMap->endEditing();
@@ -745,7 +750,7 @@ DENG2_PIMPL(ClientServerWorld)
             // Cancel further reports about the map.
             reporter.setMap(nullptr);
 
-            if(!mapIsPlayable)
+            if (!mapIsPlayable)
             {
                 // Darn. Discard the useless data.
                 delete newMap; newMap = nullptr;
@@ -792,7 +797,7 @@ ClientServerWorld::ClientServerWorld()
 
 Map &ClientServerWorld::map() const
 {
-    if(!hasMap())
+    if (!hasMap())
     {
         /// @throw MapError Attempted with no map loaded.
         throw MapError("ClientServerWorld::map", "No map is currently loaded");
@@ -804,13 +809,13 @@ bool ClientServerWorld::changeMap(de::Uri const &mapUri)
 {
     res::MapManifest *mapDef = nullptr;
 
-    if(!mapUri.path().isEmpty())
+    if (!mapUri.path().isEmpty())
     {
         mapDef = App_Resources().mapManifests().tryFindMapManifest(mapUri);
     }
 
     // Switch to busy mode (if we haven't already) except when simply unloading.
-    if(!mapUri.path().isEmpty() && !DoomsdayApp::app().busyMode().isActive())
+    if (!mapUri.path().isEmpty() && !DoomsdayApp::app().busyMode().isActive())
     {
         /// @todo Use progress bar mode and update progress during the setup.
         return DoomsdayApp::app().busyMode().runNewTaskWithName(
@@ -831,7 +836,7 @@ void ClientServerWorld::reset()
     World::reset();
 
 #ifdef __CLIENT__
-    if(isClient)
+    if (isClient)
     {
         Cl_ResetFrame();
         Cl_InitPlayers();
@@ -847,7 +852,7 @@ void ClientServerWorld::update()
     DoomsdayApp::players().forAll([] (Player &plr)
     {
         // States have changed, the state pointers are unknown.
-        for(ddpsprite_t &pspr : plr.publicData().pSprites)
+        for (ddpsprite_t &pspr : plr.publicData().pSprites)
         {
             pspr.statePtr = nullptr;
         }
@@ -855,21 +860,26 @@ void ClientServerWorld::update()
     });
 
     // Update the current map, also.
-    if(hasMap())
+    if (hasMap())
     {
         map().update();
     }
 }
 
+Scheduler &ClientServerWorld::scheduler()
+{
+    return d->scheduler;
+}
+
 Record const &ClientServerWorld::mapInfoForMapUri(de::Uri const &mapUri) const
 {
     // Is there a MapInfo definition for the given URI?
-    if(Record const *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
+    if (Record const *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
     {
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if(Record const *def = DED_Definitions()->mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    if (Record const *def = DED_Definitions()->mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }
@@ -879,10 +889,13 @@ Record const &ClientServerWorld::mapInfoForMapUri(de::Uri const &mapUri) const
 
 void ClientServerWorld::advanceTime(timespan_t delta)
 {
-#ifdef __CLIENT__
-    if(::clientPaused) return;
+#if defined (__CLIENT__)
+    if (!::clientPaused)
 #endif
-    d->time += delta;
+    {
+        d->time += delta;
+        d->scheduler.advanceTime(TimeSpan(delta));
+    }
 }
 
 timespan_t ClientServerWorld::time() const
@@ -893,11 +906,11 @@ timespan_t ClientServerWorld::time() const
 void ClientServerWorld::tick(timespan_t elapsed)
 {
 #ifdef __CLIENT__
-    if(hasMap())
+    if (hasMap())
     {
         map().skyAnimator().advanceTime(elapsed);
 
-        if(DD_IsSharpTick())
+        if (DD_IsSharpTick())
         {
             map().thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker), 0x1, [] (thinker_t *th)
             {
@@ -916,16 +929,16 @@ void ClientServerWorld::tick(timespan_t elapsed)
 Hand &ClientServerWorld::hand(ddouble *distance) const
 {
     // Time to create the hand?
-    if(!d->hand)
+    if (!d->hand)
     {
         d->hand.reset(new Hand());
         audienceForFrameEnd() += *d->hand;
-        if(hasMap())
+        if (hasMap())
         {
             d->updateHandOrigin();
         }
     }
-    if(distance)
+    if (distance)
     {
         *distance = handDistance;
     }
@@ -942,12 +955,12 @@ void ClientServerWorld::beginFrame(bool resetNextViewer)
 void ClientServerWorld::endFrame()
 {
 #if 0
-    if(hasMap() && d->hand)
+    if (hasMap() && d->hand)
     {
         d->updateHandOrigin();
 
         // If the HueCircle is active update the current edit color.
-        if(HueCircle *hueCircle = SBE_HueCircle())
+        if (HueCircle *hueCircle = SBE_HueCircle())
         {
             viewdata_t const *viewData = &viewPlayer->viewport();
             d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));

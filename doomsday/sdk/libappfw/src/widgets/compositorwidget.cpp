@@ -184,8 +184,6 @@ void CompositorWidget::drawComposite()
 {
     if (!d->shouldBeDrawn()) return;
 
-    //LIBGUI_GL.glEnable(GL_TEXTURE_2D);
-
     DENG2_ASSERT(d->nextBufIndex > 0);
 
     Impl::Buffer *buf = d->buffers[d->nextBufIndex - 1];

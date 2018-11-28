@@ -39,12 +39,15 @@
 using namespace de;
 using namespace de::ui;
 
-#ifndef MACOSX
+#if !defined (MACOSX)
+#  define USE_REFRESH_RATE_CHOICE
 #  define USE_COLOR_DEPTH_CHOICE
 #endif
 
-DENG2_PIMPL(VideoSettingsDialog),
-DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+DENG2_PIMPL(VideoSettingsDialog)
+#if !defined (DENG_MOBILE)
+, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+#endif
 {
     ClientWindow &win;
     VariableToggleWidget *showFps;
@@ -55,8 +58,11 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
     VariableToggleWidget *vsync;
     ToggleWidget *fpsLimiter = nullptr;
     SliderWidget *fpsMax = nullptr;
-    ChoiceWidget *modes;
-    ButtonWidget *windowButton;
+    ChoiceWidget *modes = nullptr;
+    ButtonWidget *windowButton = nullptr;
+#ifdef USE_REFRESH_RATE_CHOICE
+    ChoiceWidget *refreshRates;
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
     ChoiceWidget *depths;
 #endif
@@ -78,12 +84,20 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
         area.add(centered     = new ToggleWidget);
         area.add(fsaa         = new VariableToggleWidget(App::config("window.main.fsaa")));
         area.add(vsync        = new VariableToggleWidget(App::config("window.main.vsync")));
-        area.add(modes        = new ChoiceWidget);
-        area.add(windowButton = new ButtonWidget);
-#ifdef USE_COLOR_DEPTH_CHOICE
-        area.add(depths       = new ChoiceWidget);
+        if (gotDisplayMode())
+        {
+            area.add(modes        = new ChoiceWidget("modes"));
+            area.add(windowButton = new ButtonWidget);
+        }
+#ifdef USE_REFRESH_RATE_CHOICE
+        area.add(refreshRates = new ChoiceWidget("refresh-rate"));
 #endif
+#ifdef USE_COLOR_DEPTH_CHOICE
+        area.add(depths       = new ChoiceWidget("depths"));
+#endif
+#if !defined (DENG_MOBILE)
         win.audienceForAttributeChange() += this;
+#endif
 
         if (App_GameLoaded())
         {
@@ -138,36 +152,49 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
      */
     void fetch()
     {
+#if !defined (DENG_MOBILE)
         fullscreen->setActive(win.isFullScreen());
         maximized->setActive(win.isMaximized());
         centered->setActive(win.isCentered());
 
-        windowButton->enable(!win.isFullScreen() && !win.isMaximized());
-
-        // Select the current resolution/size in the mode list.
-        GLWindow::Size current = win.fullscreenSize();
-
-        // Update selected display mode.
-        ui::Data::Pos closest = ui::Data::InvalidPos;
-        int delta = 0;
-        for (ui::Data::Pos i = 0; i < modes->items().size(); ++i)
+        if (windowButton)
         {
-            QPoint const res = modes->items().at(i).data().toPoint();
-            int dx = res.x() - current.x;
-            int dy = res.y() - current.y;
-            int d = dx*dx + dy*dy;
-            if (closest == ui::Data::InvalidPos || d < delta)
-            {
-                closest = i;
-                delta = d;
-            }
+            windowButton->enable(!win.isFullScreen() && !win.isMaximized());
         }
-        modes->setSelected(closest);
+
+        if (gotDisplayMode())
+        {
+            // Select the current resolution/size in the mode list.
+            GLWindow::Size current = win.fullscreenSize();
+
+            // Update selected display mode.
+            ui::Data::Pos closest = ui::Data::InvalidPos;
+            int delta = 0;
+            for (ui::Data::Pos i = 0; i < modes->items().size(); ++i)
+            {
+                QPoint const res = modes->items().at(i).data().toPoint();
+                int dx = res.x() - current.x;
+                int dy = res.y() - current.y;
+                int d = dx*dx + dy*dy;
+                if (closest == ui::Data::InvalidPos || d < delta)
+                {
+                    closest = i;
+                    delta = d;
+                }
+            }
+            modes->setSelected(closest);
+        }
+
+#ifdef USE_REFRESH_RATE_CHOICE
+        refreshRates->setSelected(refreshRates->items().findData(int(win.refreshRate() * 10)));
+#endif
 
 #ifdef USE_COLOR_DEPTH_CHOICE
         // Select the current color depth in the depth list.
         depths->setSelected(depths->items().findData(win.colorDepthBits()));
 #endif
+
+#endif // !DENG_MOBILE
 
         // FPS limit.
         if (fpsMax)
@@ -185,11 +212,13 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
         }
     }
 
+#if !defined (DENG_MOBILE)
     void windowAttributesChanged(PersistentGLWindow &)
     {
         fetch();
     }
-
+#endif
+    
     void applyFpsMax()
     {
         if (fpsMax)
@@ -198,13 +227,16 @@ DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
                             fpsLimiter->isActive()? int(fpsMax->value()) : 0);
         }
     }
+    
+    bool gotDisplayMode() const
+    {
+        return DisplayMode_Count() > 0;
+    }
 };
 
 VideoSettingsDialog::VideoSettingsDialog(String const &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
-    bool const gotDisplayMode = DisplayMode_Count() > 0;
-
     heading().setText(tr("Video Settings"));
     heading().setImage(style().images().image("display"));
 
@@ -224,10 +256,13 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->vsync->setText(tr("VSync"));
 
-#ifdef USE_COLOR_DEPTH_CHOICE
-    LabelWidget *colorLabel = 0;
+#ifdef USE_REFRESH_RATE_CHOICE
+    LabelWidget *refreshLabel = nullptr;
 #endif
-    if (gotDisplayMode)
+#ifdef USE_COLOR_DEPTH_CHOICE
+    LabelWidget *colorLabel = nullptr;
+#endif
+    if (d->gotDisplayMode())
     {
         // Choice of display modes + 16/32-bit color depth.
         d->modes->setOpeningDirection(ui::Up);
@@ -253,15 +288,46 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             d->modes->items() << new ChoiceItem(desc, res);
         }
 
-#ifdef USE_COLOR_DEPTH_CHOICE
-        colorLabel = new LabelWidget;
-        colorLabel->setText(tr("Colors:"));
-        area().add(colorLabel);
+#ifdef USE_REFRESH_RATE_CHOICE
+        {
+            refreshLabel = LabelWidget::newWithText(tr("Monitor Refresh:"), &area());
 
-        d->depths->items()
+            QSet<int> rates;
+            rates.insert(0);
+            for (int i = 0; i < DisplayMode_Count(); ++i)
+            {
+                rates.insert(int(DisplayMode_ByIndex(i)->refreshRate * 10));
+            }
+            foreach (int rate, rates)
+            {
+                if (rate == 0)
+                {
+                    d->refreshRates->items() << new ChoiceItem(tr("Default"), 0);
+                }
+                else
+                {
+                    d->refreshRates->items()
+                        << new ChoiceItem(tr("%1 Hz").arg(float(rate) / 10.f, 0, 'f', 1), rate);
+                }
+            }
+            d->refreshRates->items().sort([] (ui::Item const &a, ui::Item const &b) {
+                int const i = a.data().toInt();
+                int const j = b.data().toInt();
+                if (!i) return true;
+                if (!j) return false;
+                return i < j;
+            });
+        }
+#endif
+
+#ifdef USE_COLOR_DEPTH_CHOICE
+        {
+            colorLabel = LabelWidget::newWithText(tr("Colors:"), &area());
+            d->depths->items()
                 << new ChoiceItem(tr("32-bit"), 32)
                 << new ChoiceItem(tr("24-bit"), 24)
                 << new ChoiceItem(tr("16-bit"), 16);
+        }
 #endif
     }
 
@@ -270,9 +336,12 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
 
-    d->windowButton->setImage(style().images().image("window.icon"));
-    d->windowButton->setOverrideImageSize(style().fonts().font("default").height().valuei());
-    d->windowButton->setAction(new SignalAction(this, SLOT(showWindowMenu())));
+    if (d->windowButton)
+    {
+        d->windowButton->setImage(style().images().image("window.icon"));
+        d->windowButton->setOverrideImageSize(style().fonts().font("default").height());
+        d->windowButton->setAction(new SignalAction(this, SLOT(showWindowMenu())));
+    }
 
     // Layout all widgets.
     Rule const &gap = rule("dialog.gap");
@@ -295,7 +364,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     modeLayout.setGridSize(2, 0);
     modeLayout.setColumnAlignment(0, ui::AlignRight);
 
-    if (gotDisplayMode)
+    if (d->gotDisplayMode())
     {
         modeLayout << *LabelWidget::newWithText(tr("Resolution:"), &area());
 
@@ -305,6 +374,9 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
                 .setInput(Rule::Top,  d->modes->rule().top())
                 .setInput(Rule::Left, d->modes->rule().right());
 
+#ifdef USE_REFRESH_RATE_CHOICE
+        modeLayout << *refreshLabel << *d->refreshRates;
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
         modeLayout << *colorLabel << *d->depths;
 #endif
@@ -320,11 +392,13 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     if (d->inludeAspect)
     {
         // Aspect ratio options.
-        auto *aspectLabel = LabelWidget::newWithText(_E(D) + tr("Aspect Ratios"), &area());
-        aspectLabel->setFont("separator.label");
-        aspectLabel->margins().setTop("gap");
-        modeLayout.setCellAlignment(Vector2i(0, modeLayout.gridSize().y), ui::AlignLeft);
-        modeLayout.append(*aspectLabel, 2)
+//        auto *aspectLabel = LabelWidget::newWithText(_E(D) + tr("Aspect Ratios"), &area());
+//        aspectLabel->setFont("separator.label");
+//        aspectLabel->margins().setTop("gap");
+//        modeLayout.setCellAlignment(Vector2i(0, modeLayout.gridSize().y), ui::AlignLeft);
+//        modeLayout.append(*aspectLabel, 2);
+        LabelWidget::appendSeparatorWithText("Aspect Ratios", &area(), &modeLayout);
+        modeLayout
                 << *LabelWidget::newWithText(tr("Player Weapons:"), &area()) << *d->hudAspect
                 << *LabelWidget::newWithText(tr("Intermissions:"), &area()) << *d->inludeAspect
                 << *LabelWidget::newWithText(tr("Finales:"), &area()) << *d->finaleAspect
@@ -336,8 +410,14 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 
     d->fetch();
 
-    connect(d->modes,  SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeMode(uint)));
+    if (d->gotDisplayMode())
+    {
+        connect(d->modes, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeMode(uint)));
+    }
 
+#ifdef USE_REFRESH_RATE_CHOICE
+    connect(d->refreshRates, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeRefreshRate(uint)));
+#endif
 #ifdef USE_COLOR_DEPTH_CHOICE
     connect(d->depths, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeColorDepth(uint)));
 #endif
@@ -350,11 +430,15 @@ void VideoSettingsDialog::resetToDefaults()
     d->fetch();
 }
 
+#if !defined (DENG_MOBILE)
+
 void VideoSettingsDialog::changeMode(uint selected)
 {
+    DENG2_ASSERT(d->modes);
+    
     QPoint const res = d->modes->items().at(selected).data().toPoint();
 
-    int attribs[] = {
+    int const attribs[] = {
         ClientWindow::FullscreenWidth,  int(res.x()),
         ClientWindow::FullscreenHeight, int(res.y()),
         ClientWindow::End
@@ -373,6 +457,20 @@ void VideoSettingsDialog::changeColorDepth(uint selected)
 #endif
 }
 
+void VideoSettingsDialog::changeRefreshRate(uint selected)
+{
+#ifdef USE_REFRESH_RATE_CHOICE
+    float const rate = float(d->refreshRates->items().at(selected).data().toInt()) / 10.f;
+    int const attribs[] = {
+        ClientWindow::RefreshRate, int(rate * 1000), // milli-Hz
+        ClientWindow::End
+    };
+    d->win.changeAttributes(attribs);
+#else
+    DENG2_UNUSED(selected);
+#endif
+}
+
 void VideoSettingsDialog::showColorAdjustments()
 {
     d->win.showColorAdjustments();
@@ -381,6 +479,8 @@ void VideoSettingsDialog::showColorAdjustments()
 
 void VideoSettingsDialog::showWindowMenu()
 {
+    DENG2_ASSERT(d->windowButton);
+    
     PopupMenuWidget *menu = new PopupMenuWidget;
     menu->setDeleteAfterDismissed(true);
     add(menu);
@@ -404,3 +504,5 @@ void VideoSettingsDialog::applyModeToWindow()
 
     d->win.changeAttributes(attribs);
 }
+
+#endif

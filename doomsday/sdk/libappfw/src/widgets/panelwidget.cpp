@@ -30,14 +30,13 @@
 
 namespace de {
 
-static TimeDelta const OPENING_ANIM_SPAN = 0.4;
-static TimeDelta const CLOSING_ANIM_SPAN = 0.3;
+constexpr double OPENING_ANIM_SPAN           = 0.3;
+constexpr double OPENING_ANIM_SPAN_EASED_OUT = 0.18;
+constexpr double CLOSING_ANIM_SPAN           = 0.22;
 
 DENG_GUI_PIMPL(PanelWidget)
 , DENG2_OBSERVES(Asset, StateChange)
 {
-    //typedef DefaultVertexBuf VertexBuf;
-
     bool waitForContentReady = true;
     bool eatMouseEvents = true;
     bool opened = false;
@@ -45,13 +44,12 @@ DENG_GUI_PIMPL(PanelWidget)
     ui::SizePolicy secondaryPolicy = ui::Expand;
     GuiWidget *content = nullptr;
     AnimationRule *openingRule;
+    AnimationStyle openingStyle = EasedOut;
     QTimer dismissTimer;
     std::unique_ptr<AssetGroup> pendingShow;
 
     // GL objects.
     GuiVertexBuilder verts;
-    //Drawable drawable;
-    //GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
 
     Impl(Public *i) : Base(i)
     {
@@ -67,16 +65,10 @@ DENG_GUI_PIMPL(PanelWidget)
         releaseRef(openingRule);
     }
 
-    void glInit()
-    {
-        /*drawable.addBuffer(new VertexBuf);
-        shaders().build(drawable.program(), "generic.textured.color")
-                << uMvpMatrix << uAtlas();*/
-    }
+    void glInit() {}
 
     void glDeinit()
     {
-        //drawable.clear();
         verts.clear();
     }
 
@@ -87,15 +79,13 @@ DENG_GUI_PIMPL(PanelWidget)
 
     void updateLayout()
     {
-        DENG2_ASSERT(content != 0);
-
         // Widget's size depends on the opening animation.
         if (isVerticalAnimation())
         {
             self().rule().setInput(Rule::Height, *openingRule);
             if (secondaryPolicy == ui::Expand)
             {
-                self().rule().setInput(Rule::Width, content->rule().width());
+                self().rule().setInput(Rule::Width, content ? content->rule().width() : Const(0));
             }
         }
         else
@@ -103,7 +93,7 @@ DENG_GUI_PIMPL(PanelWidget)
             self().rule().setInput(Rule::Width, *openingRule);
             if (secondaryPolicy == ui::Expand)
             {
-                self().rule().setInput(Rule::Height, content->rule().height());
+                self().rule().setInput(Rule::Height, content ? content->rule().height() : Const(0));
             }
         }
     }
@@ -114,15 +104,12 @@ DENG_GUI_PIMPL(PanelWidget)
         if (self().hasChangedPlace(pos) || self().geometryRequested())
         {
             self().requestGeometry(false);
-
-            //VertexBuf::Builder verts;
             verts.clear();
             self().glMakeGeometry(verts);
-            //drawable.buffer<VertexBuf>().setVertices(gl::TriangleStrip, verts, gl::Static);
         }
     }
 
-    void startOpeningAnimation(TimeDelta span)
+    void startOpeningAnimation(TimeSpan span)
     {
         if (isVerticalAnimation())
         {
@@ -132,10 +119,16 @@ DENG_GUI_PIMPL(PanelWidget)
         {
             openingRule->set(content->rule().width(), span);
         }
-        openingRule->setStyle(Animation::Bounce, 12);
+
+        switch (openingStyle)
+        {
+        case Bouncy:   openingRule->setStyle(Animation::Bounce, 12); break;
+        case EasedOut: openingRule->setStyle(Animation::EaseOutSofter); break;
+        case Smooth:   openingRule->setStyle(Animation::EaseBoth); break;
+        }
     }
 
-    void close(TimeDelta delay)
+    void close(TimeSpan delay)
     {
         if (!opened) return;
 
@@ -145,7 +138,16 @@ DENG_GUI_PIMPL(PanelWidget)
 
         // Begin the closing animation.
         openingRule->set(0, CLOSING_ANIM_SPAN + delay, delay);
-        openingRule->setStyle(Animation::EaseIn);
+        switch (openingStyle)
+        {
+        case Bouncy:
+        case EasedOut:
+            openingRule->setStyle(Animation::EaseIn);
+            break;
+        case Smooth:
+            openingRule->setStyle(Animation::EaseBoth);
+            break;
+        }
 
         self().panelClosing();
 
@@ -157,7 +159,7 @@ DENG_GUI_PIMPL(PanelWidget)
         emit self().closed();
 
         dismissTimer.start();
-        dismissTimer.setInterval((CLOSING_ANIM_SPAN + delay).asMilliSeconds());
+        dismissTimer.setInterval(TimeSpan(CLOSING_ANIM_SPAN + delay).asMilliSeconds());
     }
 
     void waitForAssetsInContent()
@@ -170,7 +172,7 @@ DENG_GUI_PIMPL(PanelWidget)
 
         LOGDEV_XVERBOSE("Checking for assets that need waiting for...", "");
         DENG2_ASSERT(content);
-        GuiWidget::collectNotReadyAssets(*pendingShow, *content);
+        content->collectNotReadyAssets(*pendingShow);
 
         if (pendingShow->isEmpty())
         {
@@ -214,6 +216,7 @@ PanelWidget::PanelWidget(String const &name) : GuiWidget(name), d(new Impl(this)
 {
     setBehavior(ChildHitClipping);
     setBehavior(ChildVisibilityClipping);
+    d->updateLayout(); // initial, empty layout
     hide();
 }
 
@@ -222,7 +225,12 @@ void PanelWidget::setWaitForContentReady(bool yes)
     d->waitForContentReady = yes;
 }
 
-void de::PanelWidget::setEatMouseEvents(bool yes)
+void PanelWidget::setAnimationStyle(AnimationStyle style)
+{
+    d->openingStyle = style;
+}
+
+void PanelWidget::setEatMouseEvents(bool yes)
 {
     d->eatMouseEvents = yes;
 }
@@ -294,7 +302,7 @@ bool PanelWidget::isOpeningOrClosing() const
     return !d->openingRule->animation().done();
 }
 
-void PanelWidget::close(TimeDelta delayBeforeClosing)
+void PanelWidget::close(TimeSpan delayBeforeClosing)
 {
     d->close(delayBeforeClosing);
 }
@@ -302,9 +310,6 @@ void PanelWidget::close(TimeDelta delayBeforeClosing)
 void PanelWidget::viewResized()
 {
     GuiWidget::viewResized();
-
-    //d->uMvpMatrix = root().projMatrix2D();
-
     requestGeometry();
 }
 
@@ -322,7 +327,6 @@ bool PanelWidget::handleEvent(Event const &event)
         // Eat buttons that land on the panel.
         if (hitTest(mouse.pos()))
         {
-            //root().setFocus(0);
             return true;
         }
     }
@@ -346,7 +350,8 @@ void PanelWidget::open()
     preparePanelForOpening();
 
     // Start the opening animation.
-    d->startOpeningAnimation(OPENING_ANIM_SPAN);
+    d->startOpeningAnimation(d->openingStyle == EasedOut ? OPENING_ANIM_SPAN_EASED_OUT
+                                                         : OPENING_ANIM_SPAN);
 
     d->opened = true;
 

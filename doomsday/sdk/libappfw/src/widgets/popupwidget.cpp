@@ -33,11 +33,13 @@ namespace de {
 
 DENG_GUI_PIMPL(PopupWidget)
 {
-    bool flexibleDir = true;
     ColorTheme colorTheme = Normal;
+    bool flexibleDir = true;
     bool deleteAfterDismiss = false;
     bool clickToClose = true;
     bool outsideClickOngoing = false;
+    DotPath outlineColorId;
+    ColorBank::Colorf outlineColor;
     SafeWidgetPtr<Widget> realParent;
     RuleRectangle anchor;
     Rule const *marker;
@@ -194,6 +196,8 @@ DENG_GUI_PIMPL(PopupWidget)
         Style const &st = style();
         bool const opaqueBackground = (self().levelOfNesting() > 0);
 
+        outlineColor = st.colors().colorf(outlineColorId);
+
         if (colorTheme == Inverted)
         {
             self().set(self().infoStyleBackground());
@@ -329,6 +333,12 @@ GuiWidget::ColorTheme PopupWidget::colorTheme() const
     return d->colorTheme;
 }
 
+void PopupWidget::setOutlineColor(const DotPath &outlineColor)
+{
+    d->outlineColorId = outlineColor;
+    d->updateStyle();
+}
+
 void PopupWidget::setCloseButtonVisible(bool enable)
 {
     if (enable && !d->close)
@@ -431,17 +441,22 @@ void PopupWidget::glMakeGeometry(GuiVertexBuilder &verts)
     v.rgba = background().solidFill;
     v.texCoord = root().atlas().imageRectf(root().solidWhitePixel()).middle();
 
-    int marker = d->marker->valuei();
+    int const marker = d->marker->valuei();
     Vector2i anchorPos = d->anchorPos();
+    bool markerVisible = false;
 
     if (dir == ui::Up)
     {
         // Can't put the anchor too close to the edges.
         anchorPos.x = clamp(2 * marker, anchorPos.x, int(root().viewSize().x) - 2*marker);
 
-        v.pos = anchorPos; tri << v;
-        v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
-        v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
+        if (anchorPos.y > rule().bottom().valuei())
+        {
+            v.pos = anchorPos; tri << v;
+            v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
+            v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
+            markerVisible = true;
+        }
     }
     else if (dir == ui::Left)
     {
@@ -451,19 +466,109 @@ void PopupWidget::glMakeGeometry(GuiVertexBuilder &verts)
             v.pos = anchorPos; tri << v;
             v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
             v.pos = anchorPos + Vector2i(-marker, -marker); tri << v;
+            markerVisible = true;
         }
     }
     else if (dir == ui::Right)
     {
-        v.pos = anchorPos; tri << v;
-        v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
-        v.pos = anchorPos + Vector2i(marker, marker); tri << v;
+        if (anchorPos.x < rule().left().valuei())
+        {
+            v.pos = anchorPos; tri << v;
+            v.pos = anchorPos + Vector2i(marker, -marker); tri << v;
+            v.pos = anchorPos + Vector2i(marker, marker); tri << v;
+            markerVisible = true;
+        }
     }
     else
     {
-        v.pos = anchorPos; tri << v;
-        v.pos = anchorPos + Vector2i(marker, marker); tri << v;
-        v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
+        if (anchorPos.y < rule().top().valuei())
+        {
+            v.pos = anchorPos; tri << v;
+            v.pos = anchorPos + Vector2i(marker, marker); tri << v;
+            v.pos = anchorPos + Vector2i(-marker, marker); tri << v;
+            markerVisible = true;
+        }
+    }
+
+    // Outline.
+    if (d->outlineColor.w > 0.f)
+    {
+        tri << v; // discontinued
+
+        Rectanglei const rect = rule().recti();
+        int const ow = GuiWidget::pointsToPixels(2);
+        int const halfOw = ow/2;
+        int const midOw = ow + halfOw;
+
+        v.rgba = d->outlineColor;
+
+        // Top edge.
+        v.pos = rect.topLeft + Vector2i(-ow, -ow); tri << v << v;
+        v.pos = rect.topLeft; tri << v;
+
+        if (markerVisible && dir == ui::Down)
+        {
+            v.pos = Vector2i(anchorPos.x - marker - halfOw, rect.top() - ow); tri << v;
+            v.pos += Vector2i(halfOw, ow); tri << v;
+
+            v.pos = anchorPos + Vector2i(0, -midOw); tri << v;
+            v.pos.y += midOw; tri << v;
+
+            v.pos = Vector2i(anchorPos.x + marker + halfOw, rect.top() - ow); tri << v;
+            v.pos += Vector2i(-halfOw, ow); tri << v;
+        }
+
+        // Right edge.
+        v.pos = rect.topRight() + Vector2i(ow, -ow); tri << v;
+        v.pos = rect.topRight(); tri << v;
+
+        if (markerVisible && dir == ui::Left)
+        {
+            v.pos = Vector2i(rect.right() + ow, anchorPos.y - marker - halfOw); tri << v;
+            v.pos += Vector2i(-ow, halfOw); tri << v;
+
+            v.pos = anchorPos + Vector2i(midOw, 0); tri << v;
+            v.pos.x += -midOw; tri << v;
+
+            v.pos = Vector2i(rect.right() + ow, anchorPos.y + marker + halfOw); tri << v;
+            v.pos += Vector2i(-ow, -halfOw); tri << v;
+        }
+
+        // Bottom edge.
+        v.pos = rect.bottomRight + Vector2i(ow, ow); tri << v;
+        v.pos = rect.bottomRight; tri << v;
+
+        if (markerVisible && dir == ui::Up)
+        {
+            v.pos = Vector2i(anchorPos.x + marker + halfOw, rect.bottom() + ow); tri << v;
+            v.pos += Vector2i(-halfOw, -ow); tri << v;
+
+            v.pos = anchorPos + Vector2i(0, midOw); tri << v;
+            v.pos.y += -midOw; tri << v;
+
+            v.pos = Vector2i(anchorPos.x - marker - halfOw, rect.bottom() + ow); tri << v;
+            v.pos += Vector2i(halfOw, -ow); tri << v;
+        }
+
+        // Left edge.
+        v.pos = rect.bottomLeft() + Vector2i(-ow, ow); tri << v;
+        v.pos = rect.bottomLeft(); tri << v;
+
+        if (markerVisible && dir == ui::Right)
+        {
+            v.pos = Vector2i(rect.left() - ow, anchorPos.y + marker + halfOw); tri << v;
+            v.pos += Vector2i(ow, -halfOw); tri << v;
+
+            v.pos = anchorPos + Vector2i(-midOw, 0); tri << v;
+            v.pos.x += midOw; tri << v;
+
+            v.pos = Vector2i(rect.left() - ow, anchorPos.y - marker - halfOw); tri << v;
+            v.pos += Vector2i(ow, halfOw); tri << v;
+        }
+
+        // Back to top.
+        v.pos = rect.topLeft + Vector2i(-ow, -ow); tri << v;
+        v.pos = rect.topLeft; tri << v;
     }
 
     verts += tri;

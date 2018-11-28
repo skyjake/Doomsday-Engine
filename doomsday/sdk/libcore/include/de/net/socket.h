@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #ifndef LIBDENG2_SOCKET_H
@@ -41,6 +41,10 @@ class Message;
  * TCP/IP network socket.
  *
  * ListenSocket constructs Socket instances for incoming connections.
+ *
+ * Note that Socket instances must always be used in the same thread as ListenSocket.
+ * Socket uses a background thread for compressing large messages before sending. This
+ * means they may be sent out-of-order with regards to all other messages.
  *
  * @ingroup net
  */
@@ -83,7 +87,7 @@ public:
      * @param address  Address to connect to.
      * @param timeOut  Maximum time to wait for connection.
      */
-    Socket(Address const &address, TimeDelta const &timeOut);
+    Socket(Address const &address, TimeSpan const &timeOut);
 
     virtual ~Socket();
 
@@ -93,7 +97,7 @@ public:
      *
      * @param address  Address to connect to.
      */
-    void connect(Address const &address);
+    void open(Address const &address);
 
     /**
      * Opens a connection to a host and returns immediately. If the IP address
@@ -107,7 +111,7 @@ public:
      * optional port appended (e.g., "myhost.com:13209").
      * @param defaultPort  Port number to use if not specified in the first argument.
      */
-    void connectToDomain(String const &domainNameWithOptionalPort, duint16 defaultPort = 0);
+    void open(String const &domainNameWithOptionalPort, duint16 defaultPort = 0);
 
     /**
      * Returns the currently active channel.
@@ -120,6 +124,19 @@ public:
      * @param number  Channel number.
      */
     void setChannel(duint number);
+
+    /**
+     * Specifies whether all sent messages need to be written out in the order they have
+     * been sent. The default is to retain order.
+     *
+     * If the messaging protocol in use does not require messages to be ordered, setting
+     * this to @c false allows Socket to compress large messages in a background thread
+     * and send them when ready, instead of blocking.
+     *
+     * @param retainOrder  @c true to keep send order, @c false to allow order to be
+     *                     unpredictable.
+     */
+    void setRetainOrder(bool retainOrder);
 
     // Implements Transmitter.
     /**
@@ -201,12 +218,19 @@ public:
      */
     void setQuiet(bool noLogOutput);
 
+    // Statistics:
+    static void resetCounters();
+    static duint64 sentUncompressedBytes();
+    static duint64 sentBytes();
+    static double outputBytesPerSecond();
+
 signals:
     void addressResolved();
     void connected();
     void messagesReady();
     void disconnected();
     void error(QString errorMessage);
+    void allSent();
 
 public slots:
     void socketDisconnected();

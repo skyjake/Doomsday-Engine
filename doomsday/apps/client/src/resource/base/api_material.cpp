@@ -81,7 +81,7 @@ DENG_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
     {
         try
         {
-            return world::Materials::get().materialManifest(de::Uri(uriCString, RC_NULL)).id();
+            return world::Materials::get().materialManifest(de::makeUri(uriCString)).id();
         }
         catch (Resources::MissingResourceManifestError const &)
         {}  // Ignore this error.

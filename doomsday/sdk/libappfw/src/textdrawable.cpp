@@ -212,6 +212,7 @@ DENG2_PIMPL(TextDrawable)
     Font::RichFormat::IStyle const *style { nullptr };
     String styledText;
     Font const *font { nullptr };
+    float fontHeight = 0.f;
     int wrapWidth { 0 };
     Wrapper *visibleWrap; ///< For drawing.
     LockableUniquePointer<Wrapper> incoming; ///< Latest finished wrapping.
@@ -334,16 +335,16 @@ void TextDrawable::setText(String const &styledText)
     if (d->styledText != styledText)
     {
         d->styledText = styledText;
-
         d->beginWrapTask();
     }
 }
 
 void TextDrawable::setFont(Font const &font)
 {
-    if (d->font != &font)
+    if (d->font != &font || !fequal(d->fontHeight, font.height().value()))
     {
-        d->font = &font;
+        d->font       = &font;
+        d->fontHeight = font.height().value();
         d->beginWrapTask(); // Redo the contents.
     }
 }

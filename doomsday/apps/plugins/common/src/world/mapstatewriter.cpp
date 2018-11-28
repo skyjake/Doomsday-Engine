@@ -28,6 +28,7 @@
 #include "p_saveg.h"     // SV_WriteSector, SV_WriteLine
 #include "polyobjs.h"
 #include "thinkerinfo.h"
+#include "acs/system.h"
 
 #include <doomsday/world/MaterialArchive>
 #include <doomsday/world/thinkerdata.h>
@@ -238,7 +239,7 @@ DENG2_PIMPL(MapStateWriter)
     {
 #if __JHEXEN__
         beginSegment(ASEG_SCRIPTS);
-        COMMON_GAMESESSION->acsSystem().writeMapState(thisPublic);
+        gfw_Session()->acsSystem().writeMapState(thisPublic);
         // endSegment();
 #endif
     }

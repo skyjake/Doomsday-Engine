@@ -20,7 +20,6 @@
 #define LIBGUI_GUIAPP_H
 
 #include "libgui.h"
-#include <QApplication>
 #include <de/App>
 #include <de/GuiLoop>
 
@@ -28,6 +27,16 @@
  * Macro for conveniently accessing the de::GuiApp singleton instance.
  */
 #define DENG2_GUI_APP   (static_cast<de::GuiApp *>(qApp))
+
+#define DENG2_ASSERT_IN_RENDER_THREAD()   DENG2_ASSERT(de::GuiApp::inRenderThread())
+
+#if defined (DENG_MOBILE)
+#include <QGuiApplication>
+#  define LIBGUI_GUIAPP_BASECLASS  QGuiApplication
+#else
+#include <QApplication>
+#  define LIBGUI_GUIAPP_BASECLASS  QApplication
+#endif
 
 namespace de {
 
@@ -39,8 +48,9 @@ namespace de {
  *
  * @ingroup gui
  */
-class LIBGUI_PUBLIC GuiApp : public QApplication, public App,
-                             DENG2_OBSERVES(Loop, Iteration)
+class LIBGUI_PUBLIC GuiApp : public LIBGUI_GUIAPP_BASECLASS
+                           , public App
+                           , DENG2_OBSERVES(Loop, Iteration)
 {
     Q_OBJECT
 
@@ -68,6 +78,14 @@ public:
 
     GuiLoop &loop();
 
+    /**
+     * Determines if the currently executing thread is the rendering thread.
+     * This may be the same thread as the main thread.
+     */
+    static bool inRenderThread();
+    
+    static void setRenderThread(QThread *thread);    
+    
 protected:
     NativePath appDataPath() const;
 

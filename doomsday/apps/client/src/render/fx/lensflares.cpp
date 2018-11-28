@@ -72,7 +72,7 @@ struct FlareData
     {
         try
         {
-            DENG_ASSERT_IN_MAIN_THREAD();
+            DENG2_ASSERT_IN_RENDER_THREAD();
             DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
             images.addFromInfo(App::rootFolder().locate<File>("/packs/feature.lensflares/images.dei"));
@@ -517,7 +517,7 @@ void LensFlares::draw()
 
     d->uViewUnit  = Vector2f(aspect, 1.f);
     d->uPixelAsUv = Vector2f(1.f / window.pixelWidth(), 1.f / window.pixelHeight());
-    d->uMvpMatrix = Viewer_Matrix(); //GL_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
+    d->uMvpMatrix = Viewer_Matrix(); //Rend_GetProjectionMatrix() * Rend_GetModelViewMatrix(console());
 
     DENG2_ASSERT(console() == displayPlayer);
     //DENG2_ASSERT(viewPlayer - ddPlayers == displayPlayer);
@@ -550,7 +550,7 @@ void LensFlares::draw()
 
     d->drawable.draw();
 
-    GLState::pop().apply();
+    GLState::pop();
 }
 
 void LensFlares::consoleRegister()

@@ -50,6 +50,11 @@
  * drive, one must call de::FileSystem::refresh() for the changes to be reflected
  * in the de::FileSystem index and tree.
  *
+ * Refreshing the file system can be done either synchronously or asynchrously.
+ * If the async mode is used, the user must be careful because files may
+ * disappear during pruning and population of folders. de::FileSystem provides
+ * a busy level that allows monitoring whether asynchronous tasks are ongoing.
+ *
  * ZIP (PK3) archives are visible in the libcore file system as Folder and
  * File instances just like regular native files are. This allows one to deploy
  * a large collection of resources as an archive and treat it at runtime just
@@ -116,6 +121,12 @@ public:
 
     static FileSystem &get();
 
+    enum BusyStatus { Idle, Busy };
+
+    /// File system busy level has become idle or is no longer idle.
+    /// Always called in the main thread.
+    DENG2_DEFINE_AUDIENCE2(Busy, void fileSystemBusyStatusChanged(BusyStatus))
+
 public:
     /**
      * Constructs a new file system. The file system needs to be manually
@@ -140,14 +151,26 @@ public:
 
     void printIndex();
 
+    /**
+     * Returns the root folder of the file system.
+     */
     Folder &root();
 
-    Folder const &root() const;
+    /**
+     * Returns the root folder of the file system.
+     */
+    const Folder &root() const;
 
     /**
-     * Refresh the file system. Populates all folders with files from the feeds.
+     * Returns the root folder of the file system.
      */
-    void refresh();
+    static Folder &rootFolder();
+
+    /**
+     * Refresh the file system asynchronously. Populates all folders with files from
+     * the feeds.
+     */
+    void refreshAsync();
 
     enum FolderCreationBehavior {
         DontInheritFeeds   = 0,     ///< Subfolder will not have any feeds created for them.
@@ -324,6 +347,28 @@ public:
      */
     void deindex(File &file);
 
+    void timeChanged(Clock const &);
+
+    void changeBusyLevel(int increment);
+    int  busyLevel() const;
+
+public:
+    static void waitForIdle();
+
+    template <typename T>
+    static T &locate(String const &path) {
+        return get().root().locate<T>(path);
+    }
+
+    template <typename T>
+    static T *tryLocate(String const &path) {
+        return get().root().tryLocate<T>(path);
+    }
+
+    static inline bool exists(const String &path) {
+        return get().root().tryLocate<const File>(path) != nullptr;
+    }
+
     enum CopyBehavior
     {
         PlainFileCopy          = 0,
@@ -342,24 +387,11 @@ public:
      * @param destinationPath  Destination path.
      * @param behavior         Copy behavior: which members to copy.
      */
-    File &copySerialized(String const &sourcePath, String const &destinationPath,
-                         CopyBehaviors behavior = DefaultCopyBehavior);
+    static File &copySerialized(String const &sourcePath, String const &destinationPath,
+                                CopyBehaviors behavior = DefaultCopyBehavior);
 
-    String accessNativeLocation(NativePath const &nativePath,
-                                File::Flags flags = File::ReadOnly);
-
-    void timeChanged(Clock const &);
-
-public:
-    template <typename T>
-    static T &locate(String const &path) {
-        return FileSystem::get().root().locate<T>(path);
-    }
-
-    template <typename T>
-    static T *tryLocate(String const &path) {
-        return FileSystem::get().root().tryLocate<T>(path);
-    }
+    static String accessNativeLocation(NativePath const &nativePath,
+                                       File::Flags flags = File::ReadOnly);
 
 private:
     DENG2_PRIVATE(d)

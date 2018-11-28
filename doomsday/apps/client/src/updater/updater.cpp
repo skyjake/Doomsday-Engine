@@ -52,9 +52,9 @@
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "updater.h"
-#include "updater/downloaddialog.h"
 #include "updater/processcheckdialog.h"
 #include "updater/updateavailabledialog.h"
+#include "updater/updatedownloaddialog.h"
 #include "updater/updatersettings.h"
 #include "updater/updatersettingsdialog.h"
 
@@ -74,30 +74,7 @@ using namespace de;
 #  define INSTALL_SCRIPT_NAME "deng-upgrade.scpt"
 #endif
 
-/// @todo The platform ID should come from the Builder.
-#if defined(WIN32)
-#  if defined(__64BIT__)
-#    define PLATFORM_ID       "win-x64"
-#  else
-#    define PLATFORM_ID       "win-x86"
-#  endif
-
-#elif defined(MACOSX)
-#  if defined(MACOS_10_7) || defined(MACOSX_NATIVESDK)
-#    define PLATFORM_ID     "mac10_8-x86_64"
-#  elif defined(__64BIT__)
-#    define PLATFORM_ID     "mac10_6-x86-x86_64"
-#  else
-#    define PLATFORM_ID     "mac10_4-x86-ppc"
-#  endif
-
-#else
-#  if defined(__64BIT__)
-#    define PLATFORM_ID     "linux-x86_64"
-#  else
-#    define PLATFORM_ID     "linux-x86"
-#  endif
-#endif
+#define PLATFORM_ID     DENG_PLATFORM_ID
 
 static CommandLine* installerCommand;
 
@@ -167,7 +144,7 @@ DENG2_PIMPL(Updater)
 , DENG2_OBSERVES(App, StartupComplete)
 {
     QNetworkAccessManager *network = nullptr;
-    DownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
+    UpdateDownloadDialog *download = nullptr; // not owned (in the widget tree, if exists)
     UniqueWidgetPtr<UpdaterStatusWidget> status;
     UpdateAvailableDialog *availableDlg = nullptr; ///< If currently open (not owned).
     bool alwaysShowNotification;
@@ -208,12 +185,12 @@ DENG2_PIMPL(Updater)
     QString composeCheckUri()
     {
         UpdaterSettings st;
-        QString uri = QString(DOOMSDAY_HOMEURL) + "/latestbuild?";
-        uri += QString("platform=") + PLATFORM_ID;
-        uri += (st.channel() == UpdaterSettings::Stable? "&stable" : "&unstable");
-        uri += "&graph";
-
-        LOG_XVERBOSE("Check URI: ", uri);
+        String uri = String("%1builds?latest_for=%2&type=%3")
+                .arg(App::apiUrl())
+                .arg(DENG_PLATFORM_ID)
+                .arg(st.channel() == UpdaterSettings::Stable? "stable" :
+                     st.channel() == UpdaterSettings::Unstable? "unstable" : "candidate");
+        LOG_XVERBOSE("URI: ", uri);
         return uri;
     }
 
@@ -328,6 +305,7 @@ DENG2_PIMPL(Updater)
         if (!result.isValid()) return;
 
         QVariantMap const map = result.toMap();
+        if (!map.contains("direct_download_uri")) return;
 
         latestPackageUri = map["direct_download_uri"].toString();
         latestLogUri     = map["release_changeloguri"].toString();
@@ -426,7 +404,7 @@ DENG2_PIMPL(Updater)
 
         LOG_MSG("Download and install update");
 
-        download = new DownloadDialog(latestPackageUri, latestPackageUri2);
+        download = new UpdateDownloadDialog(latestPackageUri, latestPackageUri2);
         status->popupButton().setPopup(*download, ui::Down);
         QObject::connect(download, SIGNAL(closed()), thisPublic, SLOT(downloadDialogClosed()));
         QObject::connect(download, SIGNAL(downloadProgress(int)),thisPublic, SLOT(downloadProgressed(int)));

@@ -96,30 +96,27 @@ public:
     void setThinkerMapping(world::IThinkerMapping *mapping);
 
 public:
-    /**
-     * Configuration profile.
-     * @todo Remove this. Could just point to a GameProfile instead. -jk
-     */
-    struct Profile
-    {
-        // Unique identifier of the game this profile is used with.
-        de::String gameId;
+//    /**
+//     * Configuration profile.
+//     * @todo Remove this. Could just point to a GameProfile instead. -jk
+//     */
+//    struct Profile
+//    {
+//        // Unique identifier of the game this profile is used with.
+//        de::String gameId;
 
-        // List of resource files (specified via the command line or in a cfg, or found using
-        // the default search algorithm (e.g., /auto and DOOMWADDIR)).
-        QStringList resourceFiles;
-    };
+//        // List of resource files (specified via the command line or in a cfg, or found using
+//        // the default search algorithm (e.g., /auto and DOOMWADDIR)).
+//        QStringList resourceFiles;
+//    };
 
-    /**
+    /*
      * Returns the current configuration profile for the game session.
      */
-    static Profile &profile();
+//    static Profile &profile();
 
-    /// Convenient method of looking up the game identity key from the game session profile.
-    static inline de::String gameId()   { return profile().gameId; }
-
-    /// Compose the absolute path of the @em user saved session folder for the game session.
-    static inline de::String savePath() { return de::String("/home/savegames") / profile().gameId; }
+    // Convenient method of looking up the game identity key from the game session profile.
+//    static de::String gameId() const;
 
 protected:
     void setMapUri(de::Uri const &uri);

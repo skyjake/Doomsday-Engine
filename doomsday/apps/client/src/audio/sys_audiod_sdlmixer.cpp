@@ -64,7 +64,8 @@ void        DS_SDLMixer_Music_Pause(int pause);
 void        DS_SDLMixer_Music_Stop(void);
 int         DS_SDLMixer_Music_PlayFile(const char* fileName, int looped);
 
-dd_bool sdlInitOk = false;
+static dd_bool  sdlInitOk = false;
+static float    musicVolume = 1.f;
 
 audiodriver_t audiod_sdlmixer = {
     DS_SDLMixerInit,
@@ -134,7 +135,7 @@ static int getFreeChannel(void)
  */
 static unsigned int getBufLength(sfxbuffer_t* buf)
 {
-    if(!buf)
+    if (!buf)
         return 0;
 
     return 1000 * buf->sample->numSamples / buf->freq;
@@ -147,10 +148,10 @@ int DS_SDLMixerInit(void)
     SDL_version         compVer;
     const SDL_version*  linkVer;
 
-    if(sdlInitOk)
+    if (sdlInitOk)
         return true;
 
-    if(SDL_InitSubSystem(SDL_INIT_AUDIO))
+    if (SDL_InitSubSystem(SDL_INIT_AUDIO))
     {
         LOG_AUDIO_ERROR("Error initializing SDL audio: %s") << SDL_GetError();
         return false;
@@ -159,7 +160,7 @@ int DS_SDLMixerInit(void)
     SDL_MIXER_VERSION(&compVer);
     linkVer = Mix_Linked_Version();
 
-    if(SDL_VERSIONNUM(linkVer->major, linkVer->minor, linkVer->patch) >
+    if (SDL_VERSIONNUM(linkVer->major, linkVer->minor, linkVer->patch) >
        SDL_VERSIONNUM(compVer.major, compVer.minor, compVer.patch))
     {
         LOG_AUDIO_WARNING("Linked version of SDL_mixer (%u.%u.%u) is "
@@ -168,7 +169,7 @@ int DS_SDLMixerInit(void)
             << compVer.major << compVer.minor << compVer.patch;
     }
 
-    if(Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
+    if (Mix_OpenAudio(MIX_DEFAULT_FREQUENCY, MIX_DEFAULT_FORMAT, 2, 1024))
     {
         LOG_AUDIO_ERROR("Failed initializing SDL_mixer: %s") << Mix_GetError();
         return false;
@@ -198,12 +199,12 @@ int DS_SDLMixerInit(void)
 
 void DS_SDLMixerShutdown(void)
 {
-    if(!sdlInitOk)
+    if (!sdlInitOk)
         return;
 
     usedChannels.clear();
 
-    if(lastMusic)
+    if (lastMusic)
     {
         Mix_HaltMusic();
         Mix_FreeMusic(lastMusic);
@@ -265,7 +266,7 @@ void DS_SDLMixer_SFX_DestroyBuffer(sfxbuffer_t* buf)
     Mix_HaltChannel(buf->cursor);
     usedChannels[buf->cursor] = false;
 
-    if(buf)
+    if (buf)
         Z_Free(buf);
 }
 
@@ -275,14 +276,14 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     char*               conv = NULL;
     size_t              size;
 
-    if(!buf || !sample)
+    if (!buf || !sample)
         return; // Wha?
 
     // Does the buffer already have a sample loaded?
-    if(buf->sample)
+    if (buf->sample)
     {
         // Is the same one?
-        if(buf->sample->id == sample->id)
+        if (buf->sample->id == sample->id)
             return;
 
         // Free the existing data.
@@ -291,7 +292,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     }
 
     size = 8 + 4 + 8 + 16 + 8 + sample->size;
-    if(size <= sizeof(localBuf))
+    if (size <= sizeof(localBuf))
     {
         conv = localBuf;
     }
@@ -329,13 +330,13 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     memcpy(conv + 44, sample->data, sample->size);
 
     buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
-    if(!buf->ptr)
+    if (!buf->ptr)
     {
         LOG_AS("DS_SDLMixer_SFX_Load");
         LOG_AUDIO_WARNING("Failed loading sample: %s") << Mix_GetError();
     }
 
-    if(conv != localBuf)
+    if (conv != localBuf)
     {
         M_Free(conv);
     }
@@ -348,7 +349,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
  */
 void DS_SDLMixer_SFX_Reset(sfxbuffer_t* buf)
 {
-    if(!buf)
+    if (!buf)
         return;
 
     DS_SDLMixer_SFX_Stop(buf);
@@ -362,7 +363,7 @@ void DS_SDLMixer_SFX_Reset(sfxbuffer_t* buf)
 void DS_SDLMixer_SFX_Play(sfxbuffer_t* buf)
 {
     // Playing is quite impossible without a sample.
-    if(!buf || !buf->sample)
+    if (!buf || !buf->sample)
         return;
 
     // Update the volume at which the sample will be played.
@@ -378,7 +379,7 @@ void DS_SDLMixer_SFX_Play(sfxbuffer_t* buf)
 
 void DS_SDLMixer_SFX_Stop(sfxbuffer_t* buf)
 {
-    if(!buf || !buf->sample)
+    if (!buf || !buf->sample)
         return;
 
     Mix_HaltChannel(buf->cursor);
@@ -390,7 +391,7 @@ void DS_SDLMixer_SFX_Refresh(sfxbuffer_t* buf)
     unsigned int        nowTime;
 
     // Can only be done if there is a sample and the buffer is playing.
-    if(!buf || !buf->sample || !(buf->flags & SFXBF_PLAYING))
+    if (!buf || !buf->sample || !(buf->flags & SFXBF_PLAYING))
         return;
 
     nowTime = Timer_RealMilliseconds();
@@ -401,7 +402,7 @@ void DS_SDLMixer_SFX_Refresh(sfxbuffer_t* buf)
      * since the millisecond counter overflows. It only affects sounds that
      * are playing while the overflow happens, though.
      */
-    if(!(buf->flags & SFXBF_REPEAT) && nowTime >= buf->endTime)
+    if (!(buf->flags & SFXBF_REPEAT) && nowTime >= buf->endTime)
     {
         // Time for the sound to stop.
         buf->flags &= ~SFXBF_PLAYING;
@@ -412,10 +413,10 @@ void DS_SDLMixer_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {
     int                 right;
 
-    if(!buf)
+    if (!buf)
         return;
 
-    switch(prop)
+    switch (prop)
     {
     case SFXBP_VOLUME:
         // 'written' is used for storing the volume of the channel.
@@ -469,13 +470,17 @@ void DS_SDLMixer_Music_Update(void)
 
 void DS_SDLMixer_Music_Set(int prop, float value)
 {
-    if(!sdlInitOk)
+    if (!sdlInitOk)
         return;
 
-    switch(prop)
+    switch (prop)
     {
     case MUSIP_VOLUME:
-        Mix_VolumeMusic((int) (MIX_MAX_VOLUME * value));
+        musicVolume = value;
+        if (Mix_PlayingMusic())
+        {
+            Mix_VolumeMusic((int)(MIX_MAX_VOLUME * value));
+        }
         break;
 
     default:
@@ -485,10 +490,10 @@ void DS_SDLMixer_Music_Set(int prop, float value)
 
 int DS_SDLMixer_Music_Get(int prop, void* value)
 {
-    if(!sdlInitOk)
+    if (!sdlInitOk)
         return false;
 
-    switch(prop)
+    switch (prop)
     {
     case MUSIP_ID:
         strcpy((char *) value, "SDLMixer::Music");
@@ -505,10 +510,10 @@ int DS_SDLMixer_Music_Get(int prop, void* value)
 
 void DS_SDLMixer_Music_Pause(int pause)
 {
-    if(!sdlInitOk)
+    if (!sdlInitOk)
         return;
 
-    if(pause)
+    if (pause)
         Mix_PauseMusic();
     else
         Mix_ResumeMusic();
@@ -516,7 +521,7 @@ void DS_SDLMixer_Music_Pause(int pause)
 
 void DS_SDLMixer_Music_Stop(void)
 {
-    if(!sdlInitOk)
+    if (!sdlInitOk)
         return;
 
     Mix_HaltMusic();
@@ -524,24 +529,29 @@ void DS_SDLMixer_Music_Stop(void)
 
 int DS_SDLMixer_Music_PlayFile(const char* filename, int looped)
 {
-    if(!sdlInitOk)
+    if (!sdlInitOk)
         return false;
 
     // Free any previously loaded music.
-    if(lastMusic)
+    if (lastMusic)
     {
         Mix_HaltMusic();
         Mix_FreeMusic(lastMusic);
     }
 
-    if(!(lastMusic = Mix_LoadMUS(filename)))
+    if (!(lastMusic = Mix_LoadMUS(filename)))
     {
         LOG_AS("DS_SDLMixer_Music_PlayFile");
         LOG_AUDIO_ERROR("Failed to load music: %s") << Mix_GetError();
         return false;
     }
 
-    return !Mix_PlayMusic(lastMusic, looped ? -1 : 1);
+    int result = !Mix_PlayMusic(lastMusic, looped ? -1 : 1);
+    if (result)
+    {
+        Mix_VolumeMusic((int)(MIX_MAX_VOLUME * musicVolume));
+    }
+    return result;
 }
 
 #endif // DENG_DISABLE_SDLMIXER

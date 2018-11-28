@@ -27,7 +27,7 @@
 using namespace de;
 
 // Time for the progress to reach the new target (seconds).
-static de::TimeDelta const PROGRESS_DELTA_TIME = 0.5;
+static de::TimeSpan const PROGRESS_DELTA_TIME = 0.5;
 
 static ProgressWidget &progress()
 {
@@ -53,5 +53,5 @@ dd_bool Con_IsProgressAnimationCompleted(void)
 void Con_SetProgress(int progressValue)
 {
      progress().setProgress(progressValue, progressValue < progress().range().end?
-                                PROGRESS_DELTA_TIME : TimeDelta(PROGRESS_DELTA_TIME / 2));
+                                PROGRESS_DELTA_TIME : TimeSpan(PROGRESS_DELTA_TIME / 2));
 }

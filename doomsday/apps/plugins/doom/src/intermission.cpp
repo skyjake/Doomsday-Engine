@@ -58,7 +58,7 @@ namespace internal
         interludestate_t beginState;  ///< State at which this animation begins/becomes visible.
 
         Animation(Vector2i const &origin, int tics, StringList patchNames,
-                  de::Uri const &mapUri       = de::Uri("Maps:", RC_NULL),
+                  de::Uri const &mapUri       = de::makeUri("Maps:"),
                   interludestate_t beginState = ILS_SHOW_STATS)
             : origin    (origin)
             , tics      (tics)
@@ -204,37 +204,37 @@ void IN_Init()
         << Animation( Vector2i( 64,  24), 11, StringList() << String("wia00900") << String("wia00901") << String("wia00902") );
 
     episode1Locations
-        << Location( Vector2i(185, 164), de::Uri("Maps:E1M1", RC_NULL) )
-        << Location( Vector2i(148, 143), de::Uri("Maps:E1M2", RC_NULL) )
-        << Location( Vector2i( 69, 122), de::Uri("Maps:E1M3", RC_NULL) )
-        << Location( Vector2i(209, 102), de::Uri("Maps:E1M4", RC_NULL) )
-        << Location( Vector2i(116,  89), de::Uri("Maps:E1M5", RC_NULL) )
-        << Location( Vector2i(166,  55), de::Uri("Maps:E1M6", RC_NULL) )
-        << Location( Vector2i( 71,  56), de::Uri("Maps:E1M7", RC_NULL) )
-        << Location( Vector2i(135,  29), de::Uri("Maps:E1M8", RC_NULL) )
-        << Location( Vector2i( 71,  24), de::Uri("Maps:E1M9", RC_NULL) );
+        << Location( Vector2i(185, 164), de::makeUri("Maps:E1M1") )
+        << Location( Vector2i(148, 143), de::makeUri("Maps:E1M2") )
+        << Location( Vector2i( 69, 122), de::makeUri("Maps:E1M3") )
+        << Location( Vector2i(209, 102), de::makeUri("Maps:E1M4") )
+        << Location( Vector2i(116,  89), de::makeUri("Maps:E1M5") )
+        << Location( Vector2i(166,  55), de::makeUri("Maps:E1M6") )
+        << Location( Vector2i( 71,  56), de::makeUri("Maps:E1M7") )
+        << Location( Vector2i(135,  29), de::makeUri("Maps:E1M8") )
+        << Location( Vector2i( 71,  24), de::makeUri("Maps:E1M9") );
 
     episode2Anims
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10000"), de::Uri("Maps:E2M2", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10100"), de::Uri("Maps:E2M3", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10200"), de::Uri("Maps:E2M4", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10300"), de::Uri("Maps:E2M5", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M6", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::Uri("Maps:E2M9", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10500"), de::Uri("Maps:E2M7", RC_NULL) )
-        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10600"), de::Uri("Maps:E2M8", RC_NULL) )
-        << Animation( Vector2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::Uri("Maps:E2M9", RC_NULL), ILS_SHOW_NEXTMAP );
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10000"), de::makeUri("Maps:E2M2") )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10100"), de::makeUri("Maps:E2M3") )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10200"), de::makeUri("Maps:E2M4") )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10300"), de::makeUri("Maps:E2M5") )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M6") )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10400"), de::makeUri("Maps:E2M9") )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10500"), de::makeUri("Maps:E2M7") )
+        << Animation( Vector2i(128, 136),  0, StringList() << String("wia10600"), de::makeUri("Maps:E2M8") )
+        << Animation( Vector2i(192, 144), 11, StringList() << String("wia10700") << String("wia10701") << String("wia10702"), de::makeUri("Maps:E2M9"), ILS_SHOW_NEXTMAP );
 
     episode2Locations
-        << Location( Vector2i(254,  25), de::Uri("Maps:E2M1", RC_NULL) )
-        << Location( Vector2i( 97,  50), de::Uri("Maps:E2M2", RC_NULL) )
-        << Location( Vector2i(188,  64), de::Uri("Maps:E2M3", RC_NULL) )
-        << Location( Vector2i(128,  78), de::Uri("Maps:E2M4", RC_NULL) )
-        << Location( Vector2i(214,  92), de::Uri("Maps:E2M5", RC_NULL) )
-        << Location( Vector2i(133, 130), de::Uri("Maps:E2M6", RC_NULL) )
-        << Location( Vector2i(208, 136), de::Uri("Maps:E2M7", RC_NULL) )
-        << Location( Vector2i(148, 140), de::Uri("Maps:E2M8", RC_NULL) )
-        << Location( Vector2i(235, 158), de::Uri("Maps:E2M9", RC_NULL) );
+        << Location( Vector2i(254,  25), de::makeUri("Maps:E2M1") )
+        << Location( Vector2i( 97,  50), de::makeUri("Maps:E2M2") )
+        << Location( Vector2i(188,  64), de::makeUri("Maps:E2M3") )
+        << Location( Vector2i(128,  78), de::makeUri("Maps:E2M4") )
+        << Location( Vector2i(214,  92), de::makeUri("Maps:E2M5") )
+        << Location( Vector2i(133, 130), de::makeUri("Maps:E2M6") )
+        << Location( Vector2i(208, 136), de::makeUri("Maps:E2M7") )
+        << Location( Vector2i(148, 140), de::makeUri("Maps:E2M8") )
+        << Location( Vector2i(235, 158), de::makeUri("Maps:E2M9") );
 
     episode3Anims
         << Animation( Vector2i(104, 168), 11, StringList() << String("wia20000") << String("wia20001") << String("wia20002") )
@@ -245,15 +245,15 @@ void IN_Init()
         << Animation( Vector2i( 40,   0),  8, StringList() << String("wia20500") << String("wia20501") << String("wia20502") );
 
     episode3Locations
-        << Location( Vector2i(156, 168), de::Uri("Maps:E3M1", RC_NULL) )
-        << Location( Vector2i( 48, 154), de::Uri("Maps:E3M2", RC_NULL) )
-        << Location( Vector2i(174,  95), de::Uri("Maps:E3M3", RC_NULL) )
-        << Location( Vector2i(265,  75), de::Uri("Maps:E3M4", RC_NULL) )
-        << Location( Vector2i(130,  48), de::Uri("Maps:E3M5", RC_NULL) )
-        << Location( Vector2i(279,  23), de::Uri("Maps:E3M6", RC_NULL) )
-        << Location( Vector2i(198,  48), de::Uri("Maps:E3M7", RC_NULL) )
-        << Location( Vector2i(140,  25), de::Uri("Maps:E3M8", RC_NULL) )
-        << Location( Vector2i(281, 136), de::Uri("Maps:E3M9", RC_NULL) );
+        << Location( Vector2i(156, 168), de::makeUri("Maps:E3M1") )
+        << Location( Vector2i( 48, 154), de::makeUri("Maps:E3M2") )
+        << Location( Vector2i(174,  95), de::makeUri("Maps:E3M3") )
+        << Location( Vector2i(265,  75), de::makeUri("Maps:E3M4") )
+        << Location( Vector2i(130,  48), de::makeUri("Maps:E3M5") )
+        << Location( Vector2i(279,  23), de::makeUri("Maps:E3M6") )
+        << Location( Vector2i(198,  48), de::makeUri("Maps:E3M7") )
+        << Location( Vector2i(140,  25), de::makeUri("Maps:E3M8") )
+        << Location( Vector2i(281, 136), de::makeUri("Maps:E3M9") );
 }
 
 void IN_Shutdown()
@@ -345,14 +345,14 @@ static common::GameSession::VisitedMaps visitedMaps()
 {
     // Newer versions of the savegame format include a breakdown of the maps previously visited
     // during the current game session.
-    if(COMMON_GAMESESSION->allVisitedMaps().isEmpty())
+    if(gfw_Session()->allVisitedMaps().isEmpty())
     {
         // For backward compatible intermission behavior we'll have to use a specially prepared
         // version of this information, using the original map progression assumptions.
         if(!(gameModeBits & GM_ANY_DOOM2))
         {
             bool isNumber;
-            int oldEpisodeNum = COMMON_GAMESESSION->episodeId().toInt(&isNumber) - 1; // 1-based
+            int oldEpisodeNum = gfw_Session()->episodeId().toInt(&isNumber) - 1; // 1-based
             DENG2_ASSERT(isNumber);
             DENG2_UNUSED(isNumber);
 
@@ -372,7 +372,7 @@ static common::GameSession::VisitedMaps visitedMaps()
             return visited.toList();
         }
     }
-    return COMMON_GAMESESSION->allVisitedMaps();
+    return gfw_Session()->allVisitedMaps();
 }
 
 static void drawBackground()
@@ -382,7 +382,7 @@ static void drawBackground()
 
     GL_DrawPatch(pBackground, Vector2i(0, 0), ALIGN_TOPLEFT, DPF_NO_OFFSET);
 
-    if(Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId()))
+    if(Animations const *anims = animationsForEpisode(gfw_Session()->episodeId()))
     {
         FR_SetFont(FID(GF_FONTB));
         FR_LoadDefaultAttrib();
@@ -531,7 +531,7 @@ static void drawPatchIfFits(patchid_t patchId, Vector2i const &origin)
  */
 static void beginAnimations()
 {
-    Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Animations const *anims = animationsForEpisode(gfw_Session()->episodeId());
     if(!anims) return;
 
     for(int i = 0; i < anims->count(); ++i)
@@ -565,7 +565,7 @@ static void beginAnimations()
 
 static void animateBackground()
 {
-    Animations const *anims = animationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Animations const *anims = animationsForEpisode(gfw_Session()->episodeId());
     if(!anims) return;
 
     for(int i = 0; i < anims->count(); ++i)
@@ -656,7 +656,7 @@ static void tickShowNextMap()
  */
 static void drawLocationMarks()
 {
-    Locations const *locations = locationsForEpisode(COMMON_GAMESESSION->episodeId());
+    Locations const *locations = locationsForEpisode(gfw_Session()->episodeId());
     if(!locations) return;
 
     DGL_Enable(DGL_TEXTURE_2D);
@@ -1185,7 +1185,7 @@ static void initShowStats()
 
 static void tickShowStats()
 {
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         updateDeathmatchStats();
         return;
@@ -1303,7 +1303,7 @@ static void tickShowStats()
 
 static void drawStats()
 {
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         drawDeathmatchStats();
     }
@@ -1380,7 +1380,7 @@ void IN_Ticker()
 
 static void loadData()
 {
-    String const episodeId = COMMON_GAMESESSION->episodeId();
+    String const episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
     pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId).toUtf8().constData());
@@ -1520,7 +1520,7 @@ void IN_Begin(wbstartstruct_t const &wbstartstruct)
         }
     }
 
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         initDeathmatchStats();
         beginAnimations();

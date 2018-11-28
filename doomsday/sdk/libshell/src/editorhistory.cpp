@@ -13,14 +13,13 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/EditorHistory"
 #include <de/math.h>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(EditorHistory)
 {
@@ -33,7 +32,7 @@ DENG2_PIMPL(EditorHistory)
     {
         String text;
         String original; ///< For undoing editing in history.
-        int cursor; ///< Index in range [0...text.size()]
+        int    cursor;   ///< Index in range [0...text.size()]
 
         Command() : cursor(0) {}
     };
@@ -48,6 +47,25 @@ DENG2_PIMPL(EditorHistory)
     }
 
     ~Impl() {}
+
+    void restore(StringList contents)
+    {
+        history.clear();
+        if (contents.isEmpty())
+        {
+            history.append(Command());
+            historyPos = 0;
+            return;
+        }
+        foreach (String line, contents)
+        {
+            Command cmd;
+            cmd.text = cmd.original = line;
+            cmd.cursor = cmd.text.size();
+            history.append(cmd);
+        }
+        historyPos = history.size() - 1;
+    }
 
     Command &command()
     {
@@ -181,5 +199,23 @@ bool EditorHistory::handleControlKey(int qtKey)
     return false;
 }
 
-} // namespace shell
-} // namespace de
+StringList EditorHistory::fullHistory(int maxCount) const
+{
+    StringList lines;
+    foreach (auto const &cmd, d->history)
+    {
+        lines << cmd.original;
+        if (maxCount > 0 && lines.count() == maxCount)
+        {
+            break;
+        }
+    }
+    return lines;
+}
+
+void EditorHistory::setFullHistory(StringList history)
+{
+    d->restore(history);
+}
+
+}} // namespace de::shell

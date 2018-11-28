@@ -47,6 +47,10 @@ class LIBAPPFW_PUBLIC Painter
 public:
     Painter();
 
+    /**
+     * Initializes the Painter for drawing. This must be called on every frame, before 
+     * drawing anything.
+     */
     void init();
 
     void deinit();

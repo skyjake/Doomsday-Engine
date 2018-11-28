@@ -38,8 +38,11 @@ public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
     DENG2_ERROR(VariableMissingError);
 
+    enum VariableType { Number, Text };
+
 public:
-    VariableChoiceWidget(Variable &variable, String const &name = String());
+    VariableChoiceWidget(Variable &variable, VariableType variableType,
+                         String const &name = String());
 
     Variable &variable() const;
 

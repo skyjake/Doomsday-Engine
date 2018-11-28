@@ -55,22 +55,27 @@ void LabelWidget::draw() const
 {
     fontid_t fontId           = mnRendState->textFonts[font()];
     Vector4f const &textColor = mnRendState->textColors[color()];
-    float t = (isFocused()? 1 : 0);
+//    float t = (isFocused()? 1 : 0);
 
-    // Flash if focused.
-    if(isFocused() && cfg.common.menuTextFlashSpeed > 0)
-    {
-        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
-    }
+//    // Flash if focused.
+//    if(isFocused() && cfg.common.menuTextFlashSpeed > 0)
+//    {
+//        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
+//        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+//    }
 
-    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
+//    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
 
-    DGL_Color4f(1, 1, 1, color.w);
+    const Vector4f color = selectionFlashColor(textColor);
+
+    const float fadeout = scrollingFadeout();
+    if (fadeout < .001f) return;
+
+    DGL_Color4f(1, 1, 1, color.w * fadeout);
     FR_SetFont(fontId);
-    FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
+    FR_SetColorAndAlpha(color.x, color.y, color.z, color.w * fadeout);
 
-    if(d->patch)
+    if (d->patch)
     {
         String replacement;
         if(!(d->flags & MNTEXT_NO_ALTTEXT))

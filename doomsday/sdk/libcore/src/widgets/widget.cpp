@@ -19,6 +19,8 @@
 
 #include "de/Widget"
 #include "de/RootWidget"
+#include "de/Asset"
+#include "de/LogBuffer"
 #include <QList>
 #include <QMap>
 
@@ -29,6 +31,7 @@ DENG2_PIMPL(Widget)
     Id id;
     String name;
     Widget *parent = nullptr;
+    std::unique_ptr<Record> names; // IObject
     RootWidget *manualRoot = nullptr;
     Behaviors behavior;
     String focusNext;
@@ -755,6 +758,39 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
     return false;
 }
 
+void Widget::waitForAssetsReady()
+{
+    AssetGroup assets;
+    collectNotReadyAssets(assets, CollectMode::OnlyVisible);
+    if (!assets.isEmpty())
+    {
+        assets.waitForState(Asset::Ready);
+    }
+}
+
+void Widget::collectNotReadyAssets(AssetGroup &collected, CollectMode collectMode)
+{
+    if (collectMode == CollectMode::OnlyVisible && behavior().testFlag(Hidden))
+    {
+        return;
+    }
+    if (auto *assetGroup = maybeAs<IAssetGroup>(this))
+    {
+        if (!assetGroup->assets().isReady())
+        {
+            collected += *assetGroup;
+            LOGDEV_XVERBOSE("Found " _E(m) "NotReady" _E(.) " asset %s (%p)", path() << this);
+        }
+    }
+    else
+    {
+        foreach (Widget *child, children())
+        {
+            child->collectNotReadyAssets(collected, collectMode);
+        }
+    }
+}
+
 Widget::Children Widget::children() const
 {
     return d->children;
@@ -799,6 +835,20 @@ bool Widget::handleEvent(Event const &)
 {
     // Event is not handled.
     return false;
+}
+
+Record &Widget::objectNamespace()
+{
+    if (!d->names)
+    {
+        d->names.reset(new Record);
+    }
+    return *d->names;
+}
+
+const Record &Widget::objectNamespace() const
+{
+    return const_cast<Widget *>(this)->objectNamespace();
 }
 
 void Widget::setFocusCycle(WidgetList const &order)

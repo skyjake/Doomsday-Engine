@@ -29,9 +29,15 @@
 #include "clientapp.h"
 #include "ConfigProfiles"
 
-#include <de/SignalAction>
+#include <de/FoldPanelWidget>
 #include <de/GridPopupWidget>
+#include <de/ScriptSystem>
+#include <de/SequentialLayout>
+#include <de/SignalAction>
+#include <de/TextValue>
 #include <de/VariableChoiceWidget>
+#include <de/VariableSliderWidget>
+#include <de/VariableToggleWidget>
 
 using namespace de;
 using namespace de::ui;
@@ -47,17 +53,25 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
     //CVarChoiceWidget *sampleRate;
     CVarChoiceWidget *musicSource;
     CVarNativePathWidget *musicSoundfont;
+    VariableToggleWidget *pauseOnFocus;
     CVarToggleWidget     *soundInfo;
     GridPopupWidget      *devPopup;
-    VariableChoiceWidget *fmodSpeakerMode;
+    FoldPanelWidget      *backendFold;
+    GuiWidget            *backendBase;
+    VariableSliderWidget *sfxChannels;
+    VariableChoiceWidget *audioOutput;
+//    VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
+#if defined (WIN32)
     VariableChoiceWidget *cdPlugin;
-    bool audioPluginsChanged = false;
+#endif
+    bool needAudioReinit = false;
 
     Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self().area();
+        area.enableIndicatorDraw(true);
 
         if (DoomsdayApp::isGameLoaded())
         {
@@ -71,11 +85,15 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             area.add(musicSource    = new CVarChoiceWidget    ("music-source"));
             area.add(musicSoundfont = new CVarNativePathWidget("music-soundfont"));
 
-            musicSoundfont->setBlankText(tr("System default"));
+            musicSoundfont->setBlankText(tr("GeneralUser GS"));
             musicSoundfont->setFilters(StringList()
                                        << "SF2 soundfonts (*.sf2)"
                                        << "DLS soundfonts (*.dls)"
                                        << "All files (*)");
+
+            area.add(pauseOnFocus = new VariableToggleWidget("Pause on Focus Lost",
+                                                             App::config("audio.pauseOnFocus"),
+                                                             "pause-on-focus"));
 
             // Display volumes on a 0...100 scale.
             sfxVolume  ->setDisplayFactor(100.0 / 255.0);
@@ -90,16 +108,50 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
             devPopup->commit();
         }
 
-        area.add(soundPlugin    = new VariableChoiceWidget(App::config("audio.soundPlugin")));
-        area.add(musicPlugin    = new VariableChoiceWidget(App::config("audio.musicPlugin")));
-        area.add(cdPlugin       = new VariableChoiceWidget(App::config("audio.cdPlugin")));
+        backendFold = FoldPanelWidget::makeOptionsGroup("audio-backend", "Audio Backend", &area);
+        backendBase = new GuiWidget("fold-base");
+        backendFold->setContent(backendBase);
 
-        area.add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode")));
+        backendBase->add(audioOutput  = new VariableChoiceWidget(App::config("audio.output"), VariableChoiceWidget::Number));
+        backendBase->add(sfxChannels  = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
+        backendBase->add(soundPlugin  = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
+        backendBase->add(musicPlugin  = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
+#if defined (WIN32)
+        backendBase->add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
+#endif
+//        backendBase->add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
+
+        // Backend layout.
+        {
+            GridLayout layout(backendBase->rule().left(), backendBase->rule().top());
+            layout.setGridSize(2, 0);
+            layout.setColumnAlignment(0, ui::AlignRight);
+
+            layout << *LabelWidget::newWithText("SFX Plugin:", backendBase) << *soundPlugin
+                   << *LabelWidget::newWithText("Music Plugin:", backendBase) << *musicPlugin
+#if defined (WIN32)
+                   << *LabelWidget::newWithText("CD Plugin:", backendBase) << *cdPlugin
+#endif
+                   << *LabelWidget::newWithText("Output:", backendBase) << *audioOutput
+//                   << *LabelWidget::newWithText("Speaker Mode:", backendBase) << *fmodSpeakerMode
+                   << *LabelWidget::newWithText("SFX Channels:", backendBase) << *sfxChannels;
+
+            backendBase->rule().setSize(layout);
+        }
+
+        // Check currently available outputs.
+        enumerateAudioOutputs();
+
+        /*
         fmodSpeakerMode->items()
-                << new ChoiceItem(tr("Stereo"), "")
-                << new ChoiceItem(tr("5.1"), "5.1")
-                << new ChoiceItem(tr("7.1"), "7.1")
-                << new ChoiceItem(tr("SRS 5.1/Prologic"), "prologic");
+                << new ChoiceItem("Mono", "mono")
+                << new ChoiceItem("Stereo", "")
+                << new ChoiceItem("Quad", "quad")
+                << new ChoiceItem("Surround", "surround")
+                << new ChoiceItem("5.1", "5.1")
+                << new ChoiceItem("7.1", "7.1")
+                << new ChoiceItem("Raw", "raw");
+         */
 
         soundPlugin->items()
                 << new ChoiceItem(tr("FMOD"), "fmod")
@@ -113,9 +165,7 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
                 << new ChoiceItem(tr("Disabled"), "dummy");
 
         musicPlugin->items()
-           #if defined (UNIX)
                 << new ChoiceItem(tr("Fluidsynth"), "fluidsynth")
-           #endif
                 << new ChoiceItem(tr("FMOD"), "fmod")
            #if !defined (DENG_DISABLE_SDLMIXER)
                 << new ChoiceItem(tr("SDL_mixer"), "sdlmixer")
@@ -125,24 +175,49 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
            #endif
                 << new ChoiceItem(tr("Disabled"), "dummy");
 
+#if defined (WIN32)
         cdPlugin->items()
-                << new ChoiceItem(tr("FMOD"), "fmod")
-           #if defined (WIN32)
                 << new ChoiceItem(tr("Windows Multimedia"), "winmm")
-           #endif
                 << new ChoiceItem(tr("Disabled"), "dummy");
+
+        cdPlugin->updateFromVariable();
+#endif
 
         soundPlugin    ->updateFromVariable();
         musicPlugin    ->updateFromVariable();
-        cdPlugin       ->updateFromVariable();
-        fmodSpeakerMode->updateFromVariable();
+//        fmodSpeakerMode->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
-        auto changeFunc = [this] (uint) { audioPluginsChanged = true; };
+        auto changeFunc = [this](uint) {
+            needAudioReinit = true;
+            self().buttonWidget(Id2)->setText(_E(b) "Apply");
+        };
         QObject::connect(soundPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
         QObject::connect(musicPlugin,     &ChoiceWidget::selectionChangedByUser, changeFunc);
+//        QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
+#if defined (WIN32)
         QObject::connect(cdPlugin,        &ChoiceWidget::selectionChangedByUser, changeFunc);
-        QObject::connect(fmodSpeakerMode, &ChoiceWidget::selectionChangedByUser, changeFunc);
+#endif
+        QObject::connect(sfxChannels, &SliderWidget::valueChangedByUser, changeFunc);
+    }
+
+    void enumerateAudioOutputs()
+    {
+        audioOutput->items().clear();
+
+        const auto &outputs =
+            ScriptSystem::get()["Audio"]["outputs"].value<DictionaryValue>();
+
+        /// @todo Currently only FMOD has outputs.
+        const TextValue key("fmod");
+        if (outputs.contains(key))
+        {
+            const auto &names = outputs.element(key).as<ArrayValue>();
+            for (unsigned i = 0; i < names.size(); ++i)
+            {
+                audioOutput->items() << new ChoiceItem(names.at(i).asText(), i);
+            }
+        }
     }
 
     void fetch()
@@ -160,7 +235,8 @@ DENG_GUI_PIMPL(AudioSettingsDialog)
 };
 
 AudioSettingsDialog::AudioSettingsDialog(String const &name)
-    : DialogWidget(name, WithHeading), d(new Impl(this))
+    : DialogWidget(name, WithHeading)
+    , d(new Impl(this))
 {
     bool const gameLoaded = DoomsdayApp::isGameLoaded();
 
@@ -198,48 +274,43 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
         auto *sfLabel = LabelWidget::newWithText(tr("MIDI Sound Font:"), &area());
 
         // Layout.
-        layout << *sfxVolLabel      << *d->sfxVolume
-               << *musicVolLabel    << *d->musicVolume
-               << Const(0)          << *d->sound3D
-               << *rvbVolLabel      << *d->reverbVolume
+        LabelWidget::appendSeparatorWithText("Sound Effects", &area(), &layout);
+        layout << *sfxVolLabel      << *d->sfxVolume                  
                << Const(0)          << *d->overlapStop
-               //<< *rateLabel        << *d->sampleRate
-               //<< Const(0)          << *d->sound16bit
+               << Const(0)          << *d->sound3D
+               << *rvbVolLabel      << *d->reverbVolume;
+
+        LabelWidget::appendSeparatorWithText("Music", &area(), &layout);
+        layout << *musicVolLabel    << *d->musicVolume
                << *musSrcLabel      << *d->musicSource
-               << *sfLabel          << *d->musicSoundfont;
+               << *sfLabel          << *d->musicSoundfont
+               << Const(0)          << *d->pauseOnFocus;
     }
+    else
+    {
+        d->backendFold->open();
+    }
+    
+    SequentialLayout layout2(area().contentRule().left(),
+                             area().contentRule().top() + layout.height());
+    layout2.setOverrideWidth(d->backendBase->rule().width());
+    
+    layout2 << d->backendFold->title()
+            << *d->backendFold;
+    
+    area().setContentSize(OperatorRule::maximum(layout.width(), layout2.width()),
+                          layout.height() + layout2.height());
 
-    auto *soundPluginLabel = LabelWidget::newWithText(tr("SFX Plugin:"  ), &area());
-    auto *musicPluginLabel = LabelWidget::newWithText(tr("Music Plugin:"), &area());
-    auto *cdPluginLabel    = LabelWidget::newWithText(tr("CD Plugin:"   ), &area());
-
-    LabelWidget *pluginLabel = LabelWidget::newWithText(_E(D) + tr("Audio Backend"), &area());
-    pluginLabel->setFont("separator.label");
-    pluginLabel->margins().setTop("gap");
-    layout.setCellAlignment(Vector2i(0, layout.gridSize().y), ui::AlignLeft);
-    layout.append(*pluginLabel, 2);
-
-    layout << *soundPluginLabel << *d->soundPlugin
-           << *musicPluginLabel << *d->musicPlugin
-           << *cdPluginLabel    << *d->cdPlugin;
-
-    auto *padding = new GuiWidget;
-    area().add(padding);
-    padding->rule().setInput(Rule::Height, rule("dialog.gap"));
-    layout.append(*padding, 2);
-
-    auto *speakerLabel = LabelWidget::newWithText(tr("FMOD Speaker Mode:"), &area());
-    layout << *speakerLabel << *d->fmodSpeakerMode;
-
-    area().setContentSize(layout.width(), layout.height());
+    // The subheading should extend all the way.
+    d->backendFold->title().rule().setInput(Rule::Width, area().contentRule().width());
 
     buttons()
-            << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))
-            << new DialogButtonItem(DialogWidget::Action, tr("Reset to Defaults"),
+            << new DialogButtonItem(Default | Accept | Id2, tr("Close"))
+            << new DialogButtonItem(Action, tr("Reset to Defaults"),
                                     new SignalAction(this, SLOT(resetToDefaults())));
     if (gameLoaded)
     {
-        buttons() << new DialogButtonItem(DialogWidget::ActionPopup | Id1,
+        buttons() << new DialogButtonItem(ActionPopup | Id1,
                                           style().images().image("gauge"));
         popupButtonWidget(Id1)->setPopup(*d->devPopup);
     }
@@ -250,8 +321,8 @@ AudioSettingsDialog::AudioSettingsDialog(String const &name)
 void AudioSettingsDialog::resetToDefaults()
 {
     ClientApp::audioSettings().resetToDefaults();
-
     d->fetch();
+    d->needAudioReinit = true;
 }
 
 void AudioSettingsDialog::finish(int result)
@@ -259,7 +330,7 @@ void AudioSettingsDialog::finish(int result)
     DialogWidget::finish(result);
     if (result)
     {
-        if (d->audioPluginsChanged)
+        if (d->needAudioReinit)
         {
             AudioSystem::get().reinitialize();
         }

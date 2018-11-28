@@ -23,14 +23,19 @@
 #include "de/ArchiveFeed"
 #include "de/ArchiveFolder"
 #include "de/DirectoryFeed"
+#include "de/DictionaryValue"
 #include "de/Guard"
 #include "de/LibraryFile"
 #include "de/Log"
 #include "de/LogBuffer"
+#include "de/Loop"
 #include "de/NativePath"
+#include "de/ScriptSystem"
+#include "de/TextValue"
 #include "de/ZipArchive"
 
 #include <QHash>
+#include <condition_variable>
 
 namespace de {
 
@@ -38,6 +43,12 @@ static FileIndex const emptyIndex; // never contains any files
 
 DENG2_PIMPL_NOREF(FileSystem)
 {
+    std::mutex              busyMutex;
+    int                     busyLevel = 0;
+    std::condition_variable busyFinished;
+
+    Record fsModule;
+
     QList<filesys::IInterpreter const *> interpreters;
 
     /// The main index to all files in the file system.
@@ -56,6 +67,8 @@ DENG2_PIMPL_NOREF(FileSystem)
     Impl()
     {
         root.reset(new Folder);
+
+        ScriptSystem::get().addNativeModule("FS", fsModule);
     }
 
     ~Impl()
@@ -63,7 +76,7 @@ DENG2_PIMPL_NOREF(FileSystem)
         root.reset();
 
         DENG2_GUARD(typeIndex);
-        qDeleteAll(typeIndex.value.values());
+        qDeleteAll(typeIndex.value);
         typeIndex.value.clear();
     }
 
@@ -77,7 +90,11 @@ DENG2_PIMPL_NOREF(FileSystem)
         }
         return *idx;
     }
+
+    DENG2_PIMPL_AUDIENCE(Busy)
 };
+
+DENG2_AUDIENCE_METHOD(FileSystem, Busy)
 
 FileSystem::FileSystem() : d(new Impl)
 {}
@@ -87,23 +104,14 @@ void FileSystem::addInterpreter(filesys::IInterpreter const &interpreter)
     d->interpreters.prepend(&interpreter);
 }
 
-void FileSystem::refresh()
+void FileSystem::refreshAsync()
 {
-    if (Folder::isPopulatingAsync())
+    // We may need to wait until a previous population is complete.
+    Folder::afterPopulation([this] ()
     {
-        qDebug() << "FileSystem has to wait for previous population to finish...";
-    }
-
-    // Wait for a previous refresh to finish.
-    Folder::waitForPopulation();
-
-    LOG_AS("FS::refresh");
-
-    //Time startedAt;
-    d->root->populate(Folder::PopulateAsyncFullTree);
-
-    /*LOGDEV_RES_VERBOSE("Completed in %.2f seconds") << startedAt.since();
-    printIndex();*/
+        LOG_AS("FS::refresh");
+        d->root->populate(Folder::PopulateAsyncFullTree);
+    });
 }
 
 Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behavior)
@@ -300,12 +308,14 @@ void FileSystem::deindex(File &file)
 }
 
 File &FileSystem::copySerialized(String const &sourcePath, String const &destinationPath,
-                                 CopyBehaviors behavior)
+                                 CopyBehaviors behavior) // static
 {
-    Block contents;
-    *root().locate<File const>(sourcePath).source() >> contents;
+    auto &fs = get();
 
-    File *dest = &root().replaceFile(destinationPath);
+    Block contents;
+    *fs.root().locate<File const>(sourcePath).source() >> contents;
+
+    File *dest = &fs.root().replaceFile(destinationPath);
     *dest << contents;
     dest->flush();
 
@@ -327,6 +337,61 @@ File &FileSystem::copySerialized(String const &sourcePath, String const &destina
 void FileSystem::timeChanged(Clock const &)
 {
     // perform time-based processing (indexing/pruning/refreshing)
+}
+
+void FileSystem::changeBusyLevel(int increment)
+{
+    using namespace std;
+
+    bool       notify = false;
+    BusyStatus bs     = Idle;
+    {
+        lock_guard<mutex> g(d->busyMutex);
+        const int oldLevel = d->busyLevel;
+        d->busyLevel += increment;
+        if (d->busyLevel == 0)
+        {
+            notify = true;
+            bs     = Idle;
+            d->busyFinished.notify_all();
+        }
+        else if (oldLevel == 0)
+        {
+            notify = true;
+            bs     = Busy;
+        }
+    }
+    if (notify)
+    {
+        Loop::mainCall([this, bs]() {
+            lock_guard<mutex> g(d->busyMutex);
+            // Only notify if the busy level is still up to date.
+            if ((bs == Busy && d->busyLevel > 0) ||
+                (bs == Idle && d->busyLevel == 0))
+            {
+                DENG2_FOR_AUDIENCE2(Busy, i) { i->fileSystemBusyStatusChanged(bs); }
+            }
+        });
+    }
+}
+
+int FileSystem::busyLevel() const
+{
+    std::lock_guard<std::mutex> lk(d->busyMutex);
+    return d->busyLevel;
+}
+
+void FileSystem::waitForIdle() // static
+{
+    using namespace std;
+
+    auto &fs = get();
+    unique_lock<mutex> lk(fs.d->busyMutex);
+    if (fs.d->busyLevel > 0)
+    {
+        LOG_MSG("Waiting until file system is ready");
+        fs.d->busyFinished.wait(lk);
+    }
 }
 
 FileIndex const &FileSystem::indexFor(String const &typeName) const
@@ -362,24 +427,53 @@ void FileSystem::printIndex()
     }
 }
 
-String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags)
+String FileSystem::accessNativeLocation(NativePath const &nativePath, File::Flags flags) // static
 {
-    static String const folders = "/sys/folders";
+    static const String SYS_NATIVE = "/sys/native";
+    static const String VAR_MAPPING = "accessNames";
 
-    makeFolder(folders);
+    auto &fs = get();
 
-    String const path = folders / nativePath.fileNamePath().fileName();
-    if (!root().has(path))
+    Folder &sysNative = fs.makeFolder(SYS_NATIVE);
+    if (!sysNative.objectNamespace().hasMember(VAR_MAPPING))
+    {
+        sysNative.objectNamespace().addDictionary(VAR_MAPPING);
+    }
+
+//    String accessPath = SYS_NATIVE;
+
+    // The accessed paths are kept in a dictionary so we'll know when the same path is
+    // reaccessed and needs to be replaced.
+    DictionaryValue &mapping = sysNative[VAR_MAPPING].value<DictionaryValue>();
+    const TextValue key(nativePath);
+    if (!mapping.contains(key))
+    {
+        // Generate a unique access path.
+        String name;
+        do
+        {
+            name = String("%1").arg(Rangei(0, 65536).random(), 4, 16, QChar('0'));
+        } while (sysNative.has(name));
+        mapping.setElement(key, new TextValue(name));
+    }
+
+    File &f = DirectoryFeed::manuallyPopulateSingleFile(
+        nativePath, fs.makeFolder(sysNative.path() / mapping[key].asText()));
+    f.setMode(flags);
+    return f.path();
+
+    /*    String const path = folders / nativePath.fileNamePath().fileName();
+    if (!fs.root().has(path))
     {
         DirectoryFeed::Flags feedFlags = DirectoryFeed::OnlyThisFolder;
         if (flags.testFlag(File::Write)) feedFlags |= DirectoryFeed::AllowWrite;
-        makeFolderWithFeed(path,
-                           new DirectoryFeed(nativePath.fileNamePath(), feedFlags),
-                           Folder::PopulateOnlyThisFolder,
-                           FS::DontInheritFeeds | FS::PopulateNewFolder)
+        fs.makeFolderWithFeed(path,
+                              new DirectoryFeed(nativePath.fileNamePath(), feedFlags),
+                              Folder::PopulateOnlyThisFolder,
+                              FS::DontInheritFeeds | FS::PopulateNewFolder)
                 .setMode(flags);
-    }
-    return path / nativePath.fileName();
+    }*/
+    //return path / nativePath.fileName();
 }
 
 Folder &FileSystem::root()
@@ -390,6 +484,11 @@ Folder &FileSystem::root()
 Folder const &FileSystem::root() const
 {
     return *d->root;
+}
+
+Folder &FileSystem::rootFolder() // static
+{
+    return get().root();
 }
 
 FileSystem &FileSystem::get() // static

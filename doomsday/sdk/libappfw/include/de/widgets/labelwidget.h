@@ -27,6 +27,7 @@
 namespace de {
 
 class GLUniform;
+class GridLayout;
 class Image;
 
 /**
@@ -199,11 +200,19 @@ public:
      * The image's actual size will be overridden by this size.
      * @param size  Image size.
      */
-    void setOverrideImageSize(Vector2f const &size);
+    void setOverrideImageSize(const Rule &width, const Rule &height);
 
-    Vector2f overrideImageSize() const;
+    void setOverrideImageSize(const ISizeRule &size)
+    {
+        setOverrideImageSize(size.width(), size.height());
+    }
 
-    void setOverrideImageSize(float widthAndHeight);
+    void setOverrideImageSize(const Rule &widthAndHeight)
+    {
+        setOverrideImageSize(widthAndHeight, widthAndHeight);
+    }
+
+    RulePair overrideImageSize() const;
 
     void setImageScale(float scaleFactor);
 
@@ -251,7 +260,7 @@ public:
      *                    to the appropriate height in the specified time span.
      * @param span  Animation time span for the appearance.
      */
-    void setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span = 0.0);
+    void setAppearanceAnimation(AppearanceAnimation method, TimeSpan const &span = 0.0);
 
     // Events.
     void update() override;
@@ -265,7 +274,9 @@ public:
     void contentLayout(ContentLayout &layout);
 
 public:
-    static LabelWidget *newWithText(String const &label, GuiWidget *parent = 0);
+    static LabelWidget *newWithText(const String &text, GuiWidget *parent = nullptr);
+    static LabelWidget *appendSeparatorWithText(const String &text, GuiWidget *parent = nullptr,
+                                                GridLayout *appendToGrid = nullptr);
 
 protected:
     void glInit() override;

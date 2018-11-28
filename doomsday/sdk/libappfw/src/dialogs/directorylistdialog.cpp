@@ -19,7 +19,7 @@
 #include "de/DirectoryListDialog"
 #include "de/DirectoryArrayWidget"
 
-#include <de/SignalAction>
+#include <de/CallbackAction>
 
 namespace de {
 
@@ -47,7 +47,7 @@ DENG2_PIMPL(DirectoryListDialog)
         Id groupId;
         std::unique_ptr<Group> group(new Group);
 
-        self().area().add(group->title = new LabelWidget);
+        self().area().add(group->title = new LabelWidget("group-title"));
         group->title->setText(title);
         group->title->setMaximumTextWidth(self().area().rule().width() -
                                           self().margins().width());
@@ -57,7 +57,7 @@ DENG2_PIMPL(DirectoryListDialog)
         group->title->setTextColor("accent");
         group->title->margins().setTop("gap");
 
-        self().area().add(group->description = new LabelWidget);
+        self().area().add(group->description = new LabelWidget("group-desc"));
         group->description->setText(description);
         group->description->setFont("small");
         group->description->setTextColor("altaccent");
@@ -69,10 +69,10 @@ DENG2_PIMPL(DirectoryListDialog)
         group->description->margins().setBottom(ConstantRule::zero());
 
         group->array.set(new ArrayValue);
-        group->list = new DirectoryArrayWidget(group->array);
+        group->list = new DirectoryArrayWidget(group->array, "group-direc-array");
         group->list->margins().setZero();
-        //self().add(group->list->detachAddButton(self().area().rule().width()));
-        //group->list->addButton().hide();
+        self().add(group->list->detachAddButton(self().area().rule().width()));
+        group->list->addButton().hide();
         self().area().add(group->list);
 
         QObject::connect(group->list, SIGNAL(arrayChanged()),
@@ -87,11 +87,14 @@ DirectoryListDialog::DirectoryListDialog(String const &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
+    area().enableIndicatorDraw(true);
     buttons() << new DialogButtonItem(Default | Accept)
-              << new DialogButtonItem(Reject);
-              /*<< new DialogButtonItem(Action, style().images().image("create"),
+              << new DialogButtonItem(Reject)
+              << new DialogButtonItem(Action, style().images().image("create"),
                                       tr("Add Folder"),
-                                      new SignalAction(&d->list->addButton(), SLOT(trigger())));*/
+                                      new CallbackAction([this]() {
+        (*d->groups.begin())->list->addButton().trigger();
+    }));
 }
 
 Id DirectoryListDialog::addGroup(String const &title, String const &description)

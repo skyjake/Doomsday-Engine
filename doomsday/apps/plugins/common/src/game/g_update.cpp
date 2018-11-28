@@ -126,7 +126,7 @@ void G_UpdateState(int step)
 #endif
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        S_MapMusic(COMMON_GAMESESSION->mapUri());
+        S_MapMusic(gfw_Session()->mapUri());
 #endif
         break;
 

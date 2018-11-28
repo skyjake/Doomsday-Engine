@@ -22,8 +22,7 @@
 #include "libshell.h"
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Line wrapper that assumes that all characters are the same width. Width is
@@ -52,16 +51,15 @@ public:
     void wrapTextToWidth(String const &text, int maxWidth);
 
     WrappedLine line(int index) const { return _lines[index]; }
-    int width() const;
-    int height() const;
-    int rangeWidth(Rangei const &range) const;
-    int indexAtWidth(Rangei const &range, int width) const;
+    int         width() const;
+    int         height() const;
+    int         rangeWidth(Rangei const &range) const;
+    int         indexAtWidth(Rangei const &range, int width) const;
 
 private:
     QList<WrappedLine> _lines;
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_MONOSPACELINEWRAPPING_H

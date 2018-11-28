@@ -977,8 +977,8 @@ int XL_TraversePlanes(Line *line, int refType, int ref, void *data, void *contex
 {
     LOG_AS(travsectors? "XL_TraverseSectors" : "XL_TraversePlanes");
 
-    int tag;
-    mobj_t *mo;
+    int tag = 0;
+    mobj_t *mo = NULL;
     dd_bool ok, findSecTagged;
 
     if(xgDev)
@@ -1180,10 +1180,10 @@ int XL_TraverseLines(Line* line, int rtype, int ref, void* data,
     LOG_AS("XL_TraverseLines");
 
     int i;
-    int tag;
+    int tag = 0;
     int reftype = rtype;
     char buff[50];
-    Line *iter;
+    Line *iter = NULL;
     dd_bool findLineTagged;
 
     // Binary XG data from DD_XGDATA uses the old flag values.
@@ -2085,7 +2085,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
     // Is this a secret exit?
     if(info->iparm[0] > 0)
     {
-        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("secret"), 0, true);
+        G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("secret"), 0, true);
         return false;
     }
 
@@ -2095,7 +2095,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
         // (ip3) will be used to determine next map (1-based).
         if(info->iparm[3])
         {
-            newMapUri = G_ComposeMapUri(COMMON_GAMESESSION->episodeId().toInt() - 1, info->iparm[3] - 1);
+            newMapUri = G_ComposeMapUri(gfw_Session()->episodeId().toInt() - 1, info->iparm[3] - 1);
             LOG_MAP_MSG_XGDEVONLY2("Next map set to \"%s\"", newMapUri);
         }
     }
@@ -2105,13 +2105,13 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
         int const oldMapNumber = XL_ValidateLineRef(line, info->iparm[3], context2, "Map Number");
         if(oldMapNumber > 0)
         {
-            newMapUri = G_ComposeMapUri(COMMON_GAMESESSION->episodeId().toInt() - 1, oldMapNumber - 1);
+            newMapUri = G_ComposeMapUri(gfw_Session()->episodeId().toInt() - 1, oldMapNumber - 1);
         }
     }
 
     if(newMapUri.isEmpty())
     {
-        newMapUri = COMMON_GAMESESSION->mapUriForNamedExit("next");
+        newMapUri = gfw_Session()->mapUriForNamedExit("next");
         LOG_MAP_MSG_XGDEVONLY("Next map set to default for the 'next' exit");
     }
 
@@ -2120,7 +2120,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
     {
         // Backward compatibility dictates that invalid refs be interpreted to mean the start map
         // of the current episode (which is known to always exist).
-        newMapUri = de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL);
+        newMapUri = de::makeUri(gfw_Session()->episodeDef()->gets("startMap"));
     }
 
     G_SetGameActionMapCompleted(newMapUri);
@@ -2728,17 +2728,17 @@ int XL_LineEvent(int evtype, int linetype, Line* line, int sidenum,
 
     // Check skill level.
     // SM_NOTHINGS will be interpreted as SM_BABY.
-    if(COMMON_GAMESESSION->rules().skill < 1)
+    if(gfw_Rule(skill) < 1)
         i = 1;
-    else if(COMMON_GAMESESSION->rules().skill > 3)
+    else if(gfw_Rule(skill) > 3)
         i = 4;
     else
-        i = 1 << (COMMON_GAMESESSION->rules().skill - 1);
+        i = 1 << (gfw_Rule(skill) - 1);
 
     if(!(info->flags2 & (i << LTF2_SKILL_SHIFT)))
     {
         LOG_MAP_MSG_XGDEVONLY2("Line %i: ABORTING EVENT due to skill level (%i)",
-               P_ToIndex(line) << COMMON_GAMESESSION->rules().skill);
+               P_ToIndex(line) << gfw_Rule(skill));
         return false;
     }
 

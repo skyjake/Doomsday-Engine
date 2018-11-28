@@ -139,7 +139,7 @@ void R_UnloadSvgs(void)
 {
     uint i;
     if(!svgInited) return;
-    if(DD_GetInteger(DD_NOVIDEO) || DD_GetInteger(DD_DEDICATED)) return; // Nothing to do.
+    if(DD_GetInteger(DD_NOVIDEO)) return; // Nothing to do.
 
     for(i = 0; i < svgCount; ++i)
     {

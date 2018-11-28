@@ -24,8 +24,7 @@
 #include <de/String>
 #include <QFlags>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Key press event generated when the user presses a key on the keyboard.
@@ -35,36 +34,38 @@ namespace shell {
 class LIBSHELL_PUBLIC KeyEvent : public Event
 {
 public:
-    enum Modifier
-    {
-        None = 0x0,
-        Control = 0x1
-    };
+    enum Modifier { None = 0x0, Control = 0x1 };
     Q_DECLARE_FLAGS(Modifiers, Modifier)
 
 public:
-    KeyEvent(String const &keyText) : Event(KeyPress), _text(keyText), _code(0) {}
-    KeyEvent(int keyCode, Modifiers mods = None) : Event(KeyPress), _code(keyCode), _modifiers(mods) {}
+    KeyEvent(String const &keyText)
+        : Event(KeyPress)
+        , _text(keyText)
+        , _code(0)
+    {}
+    KeyEvent(int keyCode, Modifiers mods = None)
+        : Event(KeyPress)
+        , _code(keyCode)
+        , _modifiers(mods)
+    {}
 
-    String text() const { return _text; }
-    int key() const { return _code; }
+    String    text() const { return _text; }
+    int       key() const { return _code; }
     Modifiers modifiers() const { return _modifiers; }
 
-    bool operator == (KeyEvent const &other) const {
-        return _text == other._text &&
-               _code == other._code &&
-               _modifiers == other._modifiers;
+    bool operator==(KeyEvent const &other) const
+    {
+        return _text == other._text && _code == other._code && _modifiers == other._modifiers;
     }
 
 private:
-    String _text;           ///< Text to be inserted by the event.
-    int _code;              ///< Qt key code.
-    Modifiers _modifiers;   ///< Modifiers in effect.
+    String    _text;      ///< Text to be inserted by the event.
+    int       _code;      ///< Qt key code.
+    Modifiers _modifiers; ///< Modifiers in effect.
 };
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(KeyEvent::Modifiers)
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_KEYEVENT_H

@@ -21,6 +21,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/dialogs/packageinfodialog.h"
+#include "ui/dialogs/datafilesettingsdialog.h"
 #include "resource/idtech1image.h"
 #include "ui/clientwindow.h"
 #include "ui/clientstyle.h"
@@ -28,9 +29,12 @@
 
 #include <doomsday/Games>
 #include <doomsday/LumpCatalog>
+#include <doomsday/res/Bundles>
 
+#include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
+#include <de/FileSystem>
 #include <de/DocumentPopupWidget>
 #include <de/MenuWidget>
 #include <de/NativeFile>
@@ -49,7 +53,6 @@ DENG_GUI_PIMPL(PackagesDialog)
 , public PackagesWidget::IPackageStatus
 , DENG2_OBSERVES(Widget, ChildAddition)
 {
-    StringList requiredPackages; // loaded first, cannot be changed
     StringList selectedPackages;
     LabelWidget *nothingSelected;
     ui::ListData actions;
@@ -57,24 +60,34 @@ DENG_GUI_PIMPL(PackagesDialog)
     PackagesWidget *browser;
     LabelWidget *gameTitle;
     LabelWidget *gameDataFiles;
-    Game const *game = nullptr;
+    const GameProfile *gameProfile = nullptr;
     res::LumpCatalog catalog;
 
     /**
      * Information about a selected package. If the package file is not found, only
      * the ID is known.
      */
-    class SelectedPackageItem : public ui::Item
+    class SelectedPackageItem
+        : public ui::Item
+        , DENG2_OBSERVES(res::Bundles, Identify)
     {
     public:
         SelectedPackageItem(String const &packageId)
         {
             setData(packageId);
+            updatePackageInfo();
+            DoomsdayApp::bundles().audienceForIdentify() += this;
+        }
 
-            _file = App::packageLoader().select(packageId);
-            if (_file)
+        void updatePackageInfo()
+        {
+            if ((_file = App::packageLoader().select(packageId())) != nullptr)
             {
                 _info = &_file->objectNamespace().subrecord(Package::VAR_PACKAGE);
+            }
+            else
+            {
+                _info = nullptr;
             }
         }
 
@@ -91,6 +104,14 @@ DENG_GUI_PIMPL(PackagesDialog)
         File const *packageFile() const
         {
             return _file;
+        }
+
+        void dataBundlesIdentified() override
+        {
+            Loop::mainCall([this]() {
+                updatePackageInfo();
+                notifyChange();
+            });
         }
 
     private:
@@ -141,7 +162,8 @@ DENG_GUI_PIMPL(PackagesDialog)
             }
             else
             {
-                label().setText(_item->packageId());
+                label().setText(Package::splitToHumanReadable(_item->packageId()) +
+                                " " _E(D) DENG2_CHAR_MDASH " Missing");
             }
         }
 
@@ -152,7 +174,7 @@ DENG_GUI_PIMPL(PackagesDialog)
 
         PopupWidget *makeInfoPopup() const
         {
-            return new PackageInfoDialog(_item->packageFile());
+            return new PackageInfoDialog(_item->packageFile(), PackageInfoDialog::EnableActions);
         }
 
     private:
@@ -169,7 +191,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         // Indicator that is only visible when no packages have been added to the profile.
         nothingSelected = new LabelWidget;
 
-        nothingSelected->setText(tr("No Packages Selected"));
+        nothingSelected->setText(tr("No Mods Selected"));
         style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*nothingSelected);
         nothingSelected->rule()
                 .setRect(self().leftArea().rule())
@@ -222,7 +244,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
         {
             String const id = browser->actionPackage();
-            return new PackageInfoDialog(id);
+            return new PackageInfoDialog(id, PackageInfoDialog::EnableActions);
         });
 
         // Action for (de)selecting the package.
@@ -277,29 +299,40 @@ DENG_GUI_PIMPL(PackagesDialog)
 
     void updateGameTitle()
     {
-        if (game && catalog.setPackages(requiredPackages + selectedPackages))
+        if (gameProfile && catalog.setPackages(gameProfile->allRequiredPackages() + selectedPackages))
         {
-            gameTitle->setImage(IdTech1Image::makeGameLogo(*game, catalog,
-                                                           IdTech1Image::UnmodifiedAppearance));
+            gameTitle->setImage(IdTech1Image::makeGameLogo(gameProfile->game(), catalog,
+                                                           IdTech1Image::UnmodifiedAppearance |
+                                                           IdTech1Image::AlwaysTryLoad));
             // List of the native required files.
             StringList dataFiles;
-            for (String packageId : requiredPackages)
-            {
-                if (File const *file = App::packageLoader().select(packageId))
+//            if (gameProfile->customDataFile())
+//            {
+//                if (const auto *file = PackageLoader::get().select(gameProfile->customDataFile()))
+//                {
+//                    dataFiles << file->source()->description(0);
+//                }
+//            }
+//            else
+//            {
+                for (String packageId : gameProfile->allRequiredPackages())
                 {
-                    // Only list here the game data files; Doomsday's PK3s are always
-                    // there so listing them is not very helpful.
-                    if (Package::matchTags(*file, QStringLiteral("\\bgamedata\\b")))
+                    if (const File *file = PackageLoader::get().select(packageId))
                     {
-                        // Resolve indirection (symbolic links and interpretations) to
-                        // describe the actual source file of the package.
-                        dataFiles << file->source()->description(0);
+                        // Only list here the game data files; Doomsday's PK3s are always
+                        // there so listing them is not very helpful.
+                        if (Package::matchTags(*file, QStringLiteral("\\bgamedata\\b")))
+                        {
+                            // Resolve indirection (symbolic links and interpretations) to
+                            // describe the actual source file of the package.
+                            dataFiles << file->source()->description(0);
+                        }
                     }
                 }
-            }
+//            }
             if (!dataFiles.isEmpty())
             {
-                gameDataFiles->setText(_E(l) + String::format("Data file%s: ", dataFiles.size() != 1? "s" : "") +
+                gameDataFiles->setText(_E(l) + String::format("Game data file%s: ", dataFiles.size() != 1? "s" : "") +
                                        _E(.) + String::join(dataFiles, _E(l) " and " _E(.)));
             }
             else
@@ -309,12 +342,12 @@ DENG_GUI_PIMPL(PackagesDialog)
         }
     }
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *)
+    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
     {
         return new SelectedPackageWidget(item.as<SelectedPackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &)
+    void updateItemWidget(GuiWidget &widget, ui::Item const &) override
     {
         widget.as<SelectedPackageWidget>().updateContents();
     }
@@ -334,7 +367,7 @@ DENG_GUI_PIMPL(PackagesDialog)
         updateGameTitle();
     }
 
-    void widgetChildAdded(Widget &child)
+    void widgetChildAdded(Widget &child) override
     {
         ui::DataPos pos = menu->findItem(child.as<GuiWidget>());
         // We use a delay here because ScrollAreaWidget does scrolling based on
@@ -353,7 +386,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
 {
     if (titleText.isEmpty())
     {
-        heading().setText(tr("Packages"));
+        heading().setText(tr("Mods"));
     }
     else
     {
@@ -364,25 +397,37 @@ PackagesDialog::PackagesDialog(String const &titleText)
             << new DialogButtonItem(Default | Accept, tr("OK"))
             << new DialogButtonItem(Reject, tr("Cancel"))
             << new DialogButtonItem(Action, style().images().image("refresh"),
-                                    new SignalAction(this, SLOT(refreshPackages())));
+                                    new CallbackAction([]() { FS::get().refreshAsync(); }))
+            << new DialogButtonItem(Action | Id1, style().images().image("gear"),
+                                    "Data Files",
+                                    new CallbackAction([this]() {
+        // Open a Data Files dialog.
+        auto *dfsDlg = new DataFileSettingsDialog;
+        dfsDlg->setAnchorAndOpeningDirection(buttonWidget(Id1)->rule(), ui::Up);
+        dfsDlg->setDeleteAfterDismissed(true);
+        add(dfsDlg);
+        dfsDlg->open();
+    }));
 
     // The individual menus will be scrolling independently.
     leftArea() .setContentSize(d->menu->rule().width(),
                                OperatorRule::maximum(d->menu->rule().height(),
-                                                     d->nothingSelected->rule().height()) +
+                                                     d->nothingSelected->rule().height(),
+                                                     rule("dialog.packages.left.minheight")) +
                                d->gameTitle->rule().height());
-    rightArea().setContentSize(d->browser->rule().width(), d->browser->rule().height());
+    rightArea().setContentSize(d->browser->rule());
     d->browser->progress().rule().setRect(rightArea().rule());
 
+    setMaximumContentHeight(rule().width() * 0.9f);
+
     // Setup has been completed, so contents can be updated.
-    //d->browser->setPopulationEnabled(true);
-    refreshPackages();
+    d->browser->setPopulationEnabled(true);
 }
 
-void PackagesDialog::setGame(String const &gameId)
+void PackagesDialog::setProfile(const GameProfile &profile)
 {
-    d->game = &DoomsdayApp::games()[gameId];
-    d->requiredPackages = d->game->requiredPackages();
+    d->gameProfile = &profile;
+    //d->requiredPackages = d->game->requiredPackages();
     d->updateGameTitle();
 }
 
@@ -398,10 +443,10 @@ StringList PackagesDialog::selectedPackages() const
     return d->selectedPackages;
 }
 
-void PackagesDialog::refreshPackages()
-{
-    d->browser->refreshPackages();
-}
+//void PackagesDialog::refreshPackages()
+//{
+//    d->browser->refreshPackages();
+//}
 
 void PackagesDialog::preparePanelForOpening()
 {

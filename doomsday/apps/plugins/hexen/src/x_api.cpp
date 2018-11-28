@@ -49,9 +49,6 @@
 
 using namespace de;
 
-// The interface to the Doomsday engine.
-game_export_t gx;
-
 // Identifiers given to the games we register during startup.
 static char const *gameIds[NUM_GAME_MODES] =
 {
@@ -71,12 +68,17 @@ static void setCommonParameters(Game &game)
 {
     //game.addResource(RC_PACKAGE, FF_STARTUP, STARTUPPK3, 0);
     game.addRequiredPackage("net.dengine.legacy.hexen_2");
+
+    Record gameplayOptions;
+    gameplayOptions.set("noMonsters", Record::withMembers("label", "No Monsters", "type", "boolean", "default", false));
+    gameplayOptions.set("turbo", Record::withMembers("label", "Move Speed", "type", "number", "default", 1.0, "min", 0.1, "max", 4.0, "step", 0.1));
+    game.objectNamespace().set(Game::DEF_OPTIONS, gameplayOptions);
 }
 
 /**
  * Register the game modes supported by this plugin.
  */
-int G_RegisterGames(int, int, void *)
+static int G_RegisterGames(int, int, void *)
 {
     Games &games = DoomsdayApp::games();
 
@@ -90,7 +92,7 @@ int G_RegisterGames(int, int, void *)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen-dk.mapinfo"));
-    deathkings.addRequiredPackage("com.ravensoftware.hexen");
+    deathkings.addRequiredPackage("com.ravensoftware.hexen com.ravensoftware.hexen.mac");
     deathkings.addRequiredPackage("com.ravensoftware.hexen.deathkings");
     setCommonParameters(deathkings);
     //deathkings.addResource(RC_PACKAGE, FF_STARTUP, "hexdd.wad", "MAP59;MAP60");
@@ -107,7 +109,7 @@ int G_RegisterGames(int, int, void *)
                             Game::DEF_LEGACYSAVEGAME_NAME_EXP, LEGACYSAVEGAMENAMEEXP,
                             Game::DEF_LEGACYSAVEGAME_SUBFOLDER, LEGACYSAVEGAMESUBFOLDER,
                             Game::DEF_MAPINFO_PATH, "$(App.DataPath)/$(GamePlugin.Name)/hexen.mapinfo"));
-    hxn.addRequiredPackage("com.ravensoftware.hexen_1.1");
+    hxn.addRequiredPackage("com.ravensoftware.hexen_1.1 com.ravensoftware.hexen.mac_1.1");
     setCommonParameters(hxn);
     //hxn.addResource(RC_PACKAGE, FF_STARTUP, "hexen.wad", "MAP08;MAP22;TINTTAB;FOGMAP;TRANTBLA;DARTA1;ARTIPORK;SKYFOG;TALLYTOP;GROVER");
     hxn.addResource(RC_DEFINITION, 0, "hexen.ded", 0);
@@ -167,7 +169,7 @@ int G_RegisterGames(int, int, void *)
 /**
  * Called right after the game plugin is selected into use.
  */
-DENG_EXTERN_C void DP_Load(void)
+DENG_ENTRYPOINT void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_HEXEN);
@@ -176,7 +178,7 @@ DENG_EXTERN_C void DP_Load(void)
 /**
  * Called when the game plugin is freed from memory.
  */
-DENG_EXTERN_C void DP_Unload(void)
+DENG_ENTRYPOINT void DP_Unload(void)
 {
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
@@ -208,63 +210,37 @@ dd_bool G_TryShutdown(void)
     return true;
 }
 
-/**
- * Takes a copy of the engine's entry points and exported data. Returns
- * a pointer to the structure that contains our entry points and exports.
- */
-DENG_EXTERN_C game_export_t *GetGameAPI(void)
+DENG_ENTRYPOINT void *GetGameAPI(char const *name)
 {
-    // Clear all of our exports.
-    memset(&gx, 0, sizeof(gx));
+    if (auto *ptr = Common_GetGameAPI(name))
+    {
+        return ptr;
+    }
 
-    // Fill in the data for the exports.
-    gx.apiSize = sizeof(gx);
-    gx.PreInit = G_PreInit;
-    gx.PostInit = X_PostInit;
-    gx.TryShutdown = G_TryShutdown;
-    gx.Shutdown = X_Shutdown;
-    gx.Ticker = G_Ticker;
-    gx.DrawViewPort = G_DrawViewPort;
-    gx.DrawWindow = X_DrawWindow;
-    gx.FinaleResponder = FI_PrivilegedResponder;
-    gx.PrivilegedResponder = G_PrivilegedResponder;
-    gx.Responder = G_Responder;
-    gx.EndFrame = X_EndFrame;
-    gx.MobjThinker = P_MobjThinker;
-    gx.MobjFriction = Mobj_Friction;
-    gx.MobjCheckPositionXYZ = P_CheckPositionXYZ;
-    gx.MobjTryMoveXYZ = P_TryMoveXYZ;
-    gx.SectorHeightChangeNotification = P_HandleSectorHeightChange;
-    gx.UpdateState = G_UpdateState;
-    gx.GetInteger = X_GetInteger;
-    gx.GetVariable = X_GetVariable;
+    #define HASH_ENTRY(Name, Func) std::make_pair(QByteArray(Name), de::function_cast<void *>(Func))
+    static QHash<QByteArray, void *> const funcs(
+    {
+        HASH_ENTRY("DrawWindow",    X_DrawWindow),
+        HASH_ENTRY("EndFrame",      X_EndFrame),
+        HASH_ENTRY("GetInteger",    X_GetInteger),
+        HASH_ENTRY("GetPointer",    X_GetVariable),
+        HASH_ENTRY("PostInit",      X_PostInit),
+        HASH_ENTRY("PreInit",       G_PreInit),
+        HASH_ENTRY("Shutdown",      X_Shutdown),
+        HASH_ENTRY("TryShutdown",   G_TryShutdown),
+    });
+    #undef HASH_ENTRY
 
-    gx.NetServerStart = D_NetServerStarted;
-    gx.NetServerStop = D_NetServerClose;
-    gx.NetConnect = D_NetConnect;
-    gx.NetDisconnect = D_NetDisconnect;
-    gx.NetPlayerEvent = D_NetPlayerEvent;
-    gx.NetWorldEvent = D_NetWorldEvent;
-    gx.HandlePacket = D_HandlePacket;
-
-    // Data structure sizes.
-    gx.mobjSize = sizeof(mobj_t);
-    gx.polyobjSize = sizeof(Polyobj);
-
-    gx.FinalizeMapChange = (void (*)(void const *)) P_FinalizeMapChange;
-
-    // These really need better names. Ideas?
-    gx.HandleMapDataPropertyValue = P_HandleMapDataPropertyValue;
-    gx.HandleMapObjectStatusReport = P_HandleMapObjectStatusReport;
-
-    return &gx;
+    auto found = funcs.find(name);
+    if (found != funcs.end()) return found.value();
+    return nullptr;
 }
 
 /**
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DENG_EXTERN_C void DP_Initialize(void)
+DENG_ENTRYPOINT void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
@@ -273,10 +249,25 @@ DENG_EXTERN_C void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DENG_EXTERN_C char const *deng_LibraryType(void)
+DENG_ENTRYPOINT char const *deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }
+
+#if defined (DENG_STATIC_LINK)
+
+DENG_EXTERN_C void *staticlib_hexen_symbol(char const *name)
+{
+    DENG_SYMBOL_PTR(name, deng_LibraryType)
+    DENG_SYMBOL_PTR(name, DP_Initialize);
+    DENG_SYMBOL_PTR(name, DP_Load);
+    DENG_SYMBOL_PTR(name, DP_Unload);
+    DENG_SYMBOL_PTR(name, GetGameAPI);
+    qWarning() << name << "not found in hexen";
+    return nullptr;
+}
+
+#else
 
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(B);
@@ -326,3 +317,4 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_URI, Uri);
 )
 
+#endif

@@ -52,7 +52,7 @@ typedef struct thinker_s {
 } thinker_t;
 
 #define THINKER_DATA(thinker, T)        (reinterpret_cast<Thinker::IData *>((thinker).d)->as<T>())
-#define THINKER_DATA_MAYBE(thinker, T)  (maybeAs<T>(reinterpret_cast<Thinker::IData *>((thinker).d)))
+#define THINKER_DATA_MAYBE(thinker, T)  (de::maybeAs<T>(reinterpret_cast<Thinker::IData *>((thinker).d)))
 
 #ifdef __cplusplus
 extern "C" {

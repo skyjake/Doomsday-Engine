@@ -49,7 +49,7 @@ struct svg_s {
     svgid_t id;
 
     /// GL display list containing all commands for drawing all primitives (no state changes).
-    DGLuint dlist;
+    //DGLuint dlist;
 
     /// Set of lines for this graphic.
     uint lineCount;
@@ -85,119 +85,119 @@ svgid_t Svg_UniqueId(Svg* svg)
 
 static void draw(const Svg* svg)
 {
-    GLenum nextPrimType, primType = GL_LINE_STRIP;
-    const SvgLine* lIt;
-    uint i;
+    dglprimtype_t nextPrimType, primType = DGL_LINE_STRIP;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    lIt = svg->lines;
-    for(i = 0; i < svg->lineCount; ++i, lIt++)
+    SvgLine const *lIt = svg->lines;
+    for (uint i = 0; i < svg->lineCount; ++i, lIt++)
     {
-        if(lIt->numPoints != 2)
+        if (lIt->numPoints != 2)
         {
-            nextPrimType = SvgLine_IsLoop(lIt)? GL_LINE_LOOP : GL_LINE_STRIP;
+            nextPrimType = SvgLine_IsLoop(lIt)? DGL_LINE_LOOP : DGL_LINE_STRIP;
 
             // Do we need to end the current primitive?
-            if(primType == GL_LINES)
+            if (primType == DGL_LINES)
             {
-                LIBGUI_GL.glEnd(); // 2-vertex set ends.
+                DGL_End(); // 2-vertex set ends.
             }
 
             // A new n-vertex primitive begins.
-            LIBGUI_GL.glBegin(nextPrimType);
+            DGL_Begin(nextPrimType);
         }
         else
         {
             // Do we need to start a new 2-vertex primitive set?
-            if(primType != GL_LINES)
+            if (primType != DGL_LINES)
             {
-                primType = GL_LINES;
-                LIBGUI_GL.glBegin(GL_LINES);
+                primType = DGL_LINES;
+                DGL_Begin(DGL_LINES);
             }
         }
 
         // Write the vertex data.
-        if(lIt->head)
+        if (lIt->head)
         {
             const SvgLinePoint* pIt = lIt->head;
             do
             {
                 /// @todo Use TexGen?
-                LIBGUI_GL.glTexCoord2dv((const GLdouble*)pIt->coords.xy);
-                LIBGUI_GL.glVertex2dv((const GLdouble*)pIt->coords.xy);
-            } while(NULL != (pIt = pIt->next) && pIt != lIt->head);
+                DGL_TexCoord2f(0, pIt->coords.x, pIt->coords.y);;
+                DGL_Vertex2f(pIt->coords.x, pIt->coords.y);
+            }
+            while (NULL != (pIt = pIt->next) && pIt != lIt->head);
         }
 
-        if(lIt->numPoints != 2)
+        if (lIt->numPoints != 2)
         {
-            LIBGUI_GL.glEnd(); // N-vertex primitive ends.
+            DGL_End(); // N-vertex primitive ends.
         }
     }
 
-    if(primType == GL_LINES)
+    if (primType == DGL_LINES)
     {
         // Close any remaining open 2-vertex set.
-        LIBGUI_GL.glEnd();
+        DGL_End();
     }
 }
 
-static DGLuint constructDisplayList(DGLuint name, const Svg* svg)
+/*static DGLuint constructDisplayList(DGLuint name, const Svg* svg)
 {
-    if(GL_NewList(name, DGL_COMPILE))
+    if (GL_NewList(name, DGL_COMPILE))
     {
         draw(svg);
         return GL_EndList();
     }
     return 0;
-}
+}*/
 
 void Svg_Draw(Svg* svg)
 {
     assert(svg);
 
-    if(novideo || isDedicated)
+    if (novideo)
     {
         assert(0); // Should not have been called!
         return;
     }
 
     // Have we uploaded our draw-optimized representation yet?
-    if(svg->dlist)
+    /*if (svg->dlist)
     {
         // Draw!
         GL_CallList(svg->dlist);
         return;
-    }
+    }*/
 
     // Draw manually in so-called 'immediate' mode.
     draw(svg);
 }
 
-dd_bool Svg_Prepare(Svg* svg)
-{
+dd_bool Svg_Prepare(Svg *)
+{/*
     assert(svg);
-    if(!novideo && !isDedicated)
+    if (!novideo && !isDedicated)
     {
-        if(!svg->dlist)
+        if (!svg->dlist)
         {
             svg->dlist = constructDisplayList(0, svg);
         }
     }
-    return !!svg->dlist;
+    return !!svg->dlist;*/
+    return true;
 }
 
 void Svg_Unload(Svg* svg)
 {
     assert(svg);
-    if(novideo || isDedicated) return;
+    if (novideo) return;
 
-    if(svg->dlist)
+    /*if (svg->dlist)
     {
         GL_DeleteLists(svg->dlist, 1);
         svg->dlist = 0;
-    }
+    }*/
 }
 
 Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
@@ -211,31 +211,31 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     uint i, j;
     Svg* svg;
 
-    if(!lines || lineCount == 0) return NULL;
+    if (!lines || lineCount == 0) return NULL;
 
     svg = (Svg*)malloc(sizeof(*svg));
-    if(!svg) Libdeng_BadAlloc();
+    if (!svg) Libdeng_BadAlloc();
 
     svg->id = uniqueId;
-    svg->dlist = 0;
+    //svg->dlist = 0;
 
     // Count how many lines and points we actually need.
     finalLineCount = 0;
     finalPointCount = 0;
     slIt = lines;
-    for(i = 0; i < lineCount; ++i, slIt++)
+    for (i = 0; i < lineCount; ++i, slIt++)
     {
         // Skip lines with missing vertices...
-        if(slIt->numPoints < 2) continue;
+        if (slIt->numPoints < 2) continue;
 
         ++finalLineCount;
 
         finalPointCount += slIt->numPoints;
-        if(slIt->numPoints > 2)
+        if (slIt->numPoints > 2)
         {
             // If the end point is equal to the start point, we'll ommit it and
             // set this line up as a loop.
-            if(FEQUAL(slIt->points[slIt->numPoints-1].x, slIt->points[0].x) &&
+            if (FEQUAL(slIt->points[slIt->numPoints-1].x, slIt->points[0].x) &&
                FEQUAL(slIt->points[slIt->numPoints-1].y, slIt->points[0].y))
             {
                 finalPointCount -= 1;
@@ -251,30 +251,30 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
     // Allocate the final point set.
     svg->numPoints = finalPointCount;
     svg->points = (SvgLinePoint*)malloc(sizeof(*svg->points) * svg->numPoints);
-    if(!svg->points) Libdeng_BadAlloc();
+    if (!svg->points) Libdeng_BadAlloc();
 
     // Allocate the final line set.
     svg->lineCount = finalLineCount;
     svg->lines = (SvgLine*)malloc(sizeof(*svg->lines) * finalLineCount);
-    if(!svg->lines) Libdeng_BadAlloc();
+    if (!svg->lines) Libdeng_BadAlloc();
 
     // Setup the lines.
     slIt = lines;
     dlIt = svg->lines;
     dpIt = svg->points;
-    for(i = 0; i < lineCount; ++i, slIt++)
+    for (i = 0; i < lineCount; ++i, slIt++)
     {
         // Skip lines with missing vertices...
-        if(slIt->numPoints < 2) continue;
+        if (slIt->numPoints < 2) continue;
 
         // Determine how many points we'll need.
         dlIt->numPoints = slIt->numPoints;
         lineIsLoop = false;
-        if(slIt->numPoints > 2)
+        if (slIt->numPoints > 2)
         {
             // If the end point is equal to the start point, we'll ommit it and
             // set this line up as a loop.
-            if(FEQUAL(slIt->points[slIt->numPoints-1].x, slIt->points[0].x) &&
+            if (FEQUAL(slIt->points[slIt->numPoints-1].x, slIt->points[0].x) &&
                FEQUAL(slIt->points[slIt->numPoints-1].y, slIt->points[0].y))
             {
                 dlIt->numPoints -= 1;
@@ -286,7 +286,7 @@ Svg* Svg_FromDef(svgid_t uniqueId, const def_svgline_t* lines, uint lineCount)
         spIt = slIt->points;
         dlIt->head = dpIt;
         prev = NULL;
-        for(j = 0; j < dlIt->numPoints; ++j, spIt++)
+        for (j = 0; j < dlIt->numPoints; ++j, spIt++)
         {
             SvgLinePoint* next = (j < dlIt->numPoints-1)? dpIt + 1 : NULL;
 

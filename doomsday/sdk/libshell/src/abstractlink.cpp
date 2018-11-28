@@ -17,25 +17,26 @@
  */
 
 #include "de/shell/AbstractLink"
+#include <de/App>
+#include <de/Log>
 #include <de/Message>
+#include <de/Packet>
 #include <de/Socket>
 #include <de/Time>
-#include <de/Log>
-#include <de/Packet>
 #include <QTimer>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(AbstractLink)
 {
-    String tryingToConnectToHost;
-    Time startedTryingAt;
-    TimeDelta timeout;
-    Address peerAddress;
+    String   tryingToConnectToHost;
+    Time     startedTryingAt;
+    TimeSpan timeout;
+    Address  peerAddress;
+    Status   status;
+    Time     connectedAt;
+
     std::unique_ptr<Socket> socket;
-    Status status;
-    Time connectedAt;
 
     Impl(Public *i)
         : Base(i),
@@ -55,7 +56,7 @@ DENG2_PIMPL(AbstractLink)
 AbstractLink::AbstractLink() : d(new Impl(this))
 {}
 
-void AbstractLink::connectDomain(String const &domain, TimeDelta const &timeout)
+void AbstractLink::connectDomain(String const &domain, TimeSpan const &timeout)
 {
     disconnect();
 
@@ -69,7 +70,7 @@ void AbstractLink::connectDomain(String const &domain, TimeDelta const &timeout)
     // Fallback to default port.
     d->tryingToConnectToHost = domain;
     d->socket->setQuiet(true); // we'll be retrying a few times
-    d->socket->connectToDomain(d->tryingToConnectToHost, DEFAULT_PORT);
+    d->socket->open(d->tryingToConnectToHost, DEFAULT_PORT);
 
     d->status = Connecting;
     d->startedTryingAt = Time();
@@ -90,7 +91,7 @@ void AbstractLink::connectHost(Address const &address)
     // Fallback to default port.
     if (!d->peerAddress.port()) d->peerAddress.setPort(DEFAULT_PORT);
 
-    d->socket->connect(d->peerAddress);
+    d->socket->open(d->peerAddress);
 
     d->status = Connecting;
     d->startedTryingAt = Time();
@@ -211,5 +212,4 @@ void AbstractLink::socketDisconnected()
     d->connectedAt = Time::invalidTime();
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

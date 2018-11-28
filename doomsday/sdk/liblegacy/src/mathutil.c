@@ -2079,11 +2079,11 @@ slopetype_t M_SlopeTypeXY_FixedPrecision(fixed_t dx, fixed_t dy)
 
 slopetype_t M_SlopeTypeXY(double dx, double dy)
 {
-    if (FEQUAL(dx, 0))
+    if (IS_ZERO(dx))
     {
         return ST_VERTICAL;
     }
-    else if (FEQUAL(dy, 0))
+    else if (IS_ZERO(dy))
     {
         return ST_HORIZONTAL;
     }

@@ -35,6 +35,7 @@ public:
     MobjThinkerData(de::Id const &id = de::Id::none());
     MobjThinkerData(MobjThinkerData const &other);
 
+    void think() override;
     IData *duplicate() const override;
 
     mobj_t *mobj();

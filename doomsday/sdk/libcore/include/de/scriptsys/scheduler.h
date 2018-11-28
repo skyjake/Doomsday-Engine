@@ -1,6 +1,6 @@
-/** @file scheduler.h  Script scheduling utility.
+/** @file scheduler.h  Scheduler for scripts and timelines.
  *
- * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -19,23 +19,12 @@
 #ifndef LIBDENG2_SCHEDULER_H
 #define LIBDENG2_SCHEDULER_H
 
-#include "../libcore.h"
-#include "../Time"
-#include "../String"
+#include "../Timeline"
 
 namespace de {
 
-class Script;
-class Record;
-
 /**
- * Script scheduling utility.
- *
- * Scheduler owns the parsed scripts, but does not execute them. Use Scheduler::Clock
- * to execute scripts. There can be any number of Scheduler::Clock instances operating
- * on a single schedule.
- *
- * @ingroup script
+ * Scheduler for scripts and timelines.
  */
 class DENG2_PUBLIC Scheduler
 {
@@ -45,62 +34,35 @@ public:
     void clear();
 
     /**
-     * Sets the execution context, i.e., global namespace for the scripts. All
-     * scripts of the scheduler run in the same context.
+     * Starts executing a timeline. The timeline object will be deleted when the
+     * finished. The timeline's context is used for execution.
      *
-     * @param context  Global namespace.
+     * @param timeline  Timeline object. Scheduler takes ownership.
+     * @param name      Name for the started timeline. If empty, a unique name will
+     *                  be generated.
+     * @return Name of the started timeline.
      */
-    void setContext(Record &context);
-
-    Record *context() const;
+    String start(Timeline *timeline, String const &name = String());
 
     /**
-     * Adds a new script to the scheduler.
+     * Starts executing a shared timeline.
      *
-     * @param at          Point in time when the script is to be executed.
-     * @param source      Script source. This will be parsed before the method returns.
-     * @param sourcePath  Path where the source comes from.
-     *
-     * @return Scheduled Script (owned by Scheduler).
+     * @param sharedTimeline  Timeline object. Scheduler does not take ownership.
+     * @param context         Context where to execute the timeline.
+     * @param name            Name for the started timeline instance. If empty, a unique
+     *                        name will be generated.
+     * @return Name of the started timeline.
      */
-    Script &addScript(TimeDelta at, String const &source, String const &sourcePath = "");
+    String start(Timeline const &sharedTimeline, Record *context, String const &name = String());
 
-    void addFromInfo(Record const &timelineRecord);
+    /**
+     * Stops a running timeline.
+     *
+     * @param name  Timeline name.
+     */
+    void stop(String const &name);
 
-    class DENG2_PUBLIC Clock
-    {
-    public:
-        Clock(Scheduler const &schedule, Record *context = nullptr);
-
-        /**
-         * Returns the current time of the clock.
-         */
-        TimeDelta at() const;
-
-        /**
-         * Rewinds the clock back to zero.
-         *
-         * @param toTime  Rewind destination time.
-         */
-        void rewind(TimeDelta const &toTime = 0.0);
-
-        /**
-         * Advances the current time of the clock and executes any scripts whose
-         * execution time has arrived.
-         *
-         * @param elapsed  Time elapsed since the previous call.
-         */
-        void advanceTime(TimeDelta const &elapsed);
-
-        /**
-         * Checks if there are no more scheduled sheduler is out of scheduled scripts.
-         * @return
-         */
-        bool isFinished() const;
-
-    private:
-        DENG2_PRIVATE(d)
-    };
+    void advanceTime(TimeSpan const &elapsed);
 
 private:
     DENG2_PRIVATE(d)
@@ -109,4 +71,3 @@ private:
 } // namespace de
 
 #endif // LIBDENG2_SCHEDULER_H
-

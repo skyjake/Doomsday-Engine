@@ -41,6 +41,7 @@
 #include "p_map.h"
 #include "p_saveg.h"
 #include "p_start.h"
+#include "r_special.h"
 
 using namespace de;
 
@@ -298,7 +299,7 @@ void P_ShotAmmo(player_t *player)
 
     int fireMode = 0;
 #if __JHERETIC__
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if(gfw_Rule(deathmatch))
         fireMode = 0; // In deathmatch always use mode zero.
     else
         fireMode = (player->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -370,7 +371,7 @@ weapontype_t P_MaybeChangeWeapon(player_t *player, weapontype_t weapon, ammotype
 
 #if __JHERETIC__
                 // Heretic always uses lvl 0 ammo requirements in deathmatch
-                if(COMMON_GAMESESSION->rules().deathmatch &&
+                if(gfw_Rule(deathmatch) &&
                    player->ammo[ammotype].owned < winf->mode[0].perShot[ammotype])
                 {
                     // Not enough ammo of this type. Candidate is NOT good.
@@ -517,7 +518,7 @@ dd_bool P_CheckAmmo(player_t *plr)
     int fireMode = 0;
 #if __JHERETIC__
     // If deathmatch always use firemode two ammo requirements.
-    if(plr->powers[PT_WEAPONLEVEL2] && !COMMON_GAMESESSION->rules().deathmatch)
+    if(plr->powers[PT_WEAPONLEVEL2] && !gfw_Rule(deathmatch))
     {
         fireMode = 1;
     }
@@ -693,7 +694,7 @@ void P_PlayerChangeClass(player_t *player, playerclass_t newClass)
 }
 #endif
 
-void P_SetMessageWithFlags(player_t *pl, char const *msg, int flags)
+void P_SetMessageWithFlags(const player_t *pl, char const *msg, int flags)
 {
     DENG2_ASSERT(pl);
 
@@ -710,7 +711,7 @@ void P_SetMessageWithFlags(player_t *pl, char const *msg, int flags)
     NetSv_SendMessage(pl - players, msg);
 }
 
-void P_SetMessage(player_t *plr, char const *msg)
+void P_SetMessage(const player_t *plr, char const *msg)
 {
     P_SetMessageWithFlags(plr, msg, 0);
 }
@@ -1274,12 +1275,10 @@ void Player_LeaveMap(player_t *player, dd_bool newHub)
     player->update |= PSF_POWERS;
     de::zap(player->powers);
 
-#if __JDOOM__
-    G_UpdateSpecialFilterWithTimeDelta(plrNum, 0 /* instantly */);
-#endif
+    R_UpdateSpecialFilterWithTimeDelta(plrNum, 0 /* instantly */);
 
 #if __JHEXEN__
-    if(!newHub && !COMMON_GAMESESSION->rules().deathmatch)
+    if(!newHub && !gfw_Rule(deathmatch))
     {
         player->powers[PT_FLIGHT] = flightPower; // Restore flight.
     }
@@ -1290,7 +1289,7 @@ void Player_LeaveMap(player_t *player, dd_bool newHub)
     player->update |= PSF_KEYS;
     de::zap(player->keys);
 #else
-    if(!COMMON_GAMESESSION->rules().deathmatch && newHub)
+    if(!gfw_Rule(deathmatch) && newHub)
     {
         player->keys = 0;
     }
@@ -1949,6 +1948,9 @@ void Player_UpdateStatusCVars(player_t const *player)
         /* WT_SEVENTH */ { "player-weapon-bfg", CVAR_DELIM },
         /* WT_EIGHTH */  { "player-weapon-chainsaw", CVAR_DELIM },
         /* WT_NINETH */  { "player-weapon-sshotgun", CVAR_DELIM },
+    #if __JDOOM64__
+        /* WT_TENTH */   { "player-weapon-unmaker", CVAR_DELIM },
+    #endif
 #elif __JHERETIC__
         /* WT_FIRST */   { "player-weapon-staff", CVAR_DELIM },
         /* WT_SECOND */  { "player-weapon-goldwand", CVAR_DELIM },

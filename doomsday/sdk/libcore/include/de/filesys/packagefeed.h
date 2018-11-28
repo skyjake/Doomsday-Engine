@@ -23,6 +23,7 @@
 
 namespace de {
 
+class Package;
 class PackageLoader;
 
 /**
@@ -30,10 +31,17 @@ class PackageLoader;
  *
  * @ingroup fs
  */
-class PackageFeed : public Feed
+class DENG2_PUBLIC PackageFeed : public Feed
 {
 public:
-    PackageFeed(PackageLoader &loader);
+    enum LinkMode { LinkIdentifier, LinkVersionedIdentifier };
+
+    typedef std::function<bool (Package const &)> Filter;
+
+public:
+    PackageFeed(PackageLoader &loader, LinkMode linkMode = LinkIdentifier);
+
+    void setFilter(Filter filter);
 
     PackageLoader &loader();
 

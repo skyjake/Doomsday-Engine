@@ -34,9 +34,17 @@ DENG2_PIMPL(LumpCatalog)
     using Found = std::pair<DataBundle const *, LumpDirectory::Pos>;
 
     StringList packageIds;
-    QList<DataBundle const *> bundles; /// @todo Should observe for deletion. -jk
+    QList<const DataBundle *> bundles;
 
-    Impl(Public *i) : Base(i) {}
+    Impl(Public *i)
+        : Base(i)
+    {}
+    
+    Impl(Public *i, const Impl &other)
+        : Base(i)
+        , packageIds(other.packageIds)
+        , bundles(other.bundles)
+    {}
 
     void clear()
     {
@@ -70,11 +78,18 @@ DENG2_PIMPL(LumpCatalog)
         // The last bundle is checked first.
         for (int i = bundles.size() - 1; i >= 0; --i)
         {
-            auto const pos = bundles.at(i)->lumpDirectory()->find(lumpName);
-            if (pos != LumpDirectory::InvalidPos)
+            if (const auto *bundle = maybeAs<DataBundle>(bundles.at(i)))
             {
-                found = Found(bundles.at(i), pos);
-                break;
+                auto const pos = bundle->lumpDirectory()->find(lumpName);
+                if (pos != LumpDirectory::InvalidPos)
+                {
+                    found = Found(bundle, pos);
+                    break;
+                }
+            }
+            else
+            {
+                qDebug() << "LumpCatalog is outdated: a bundle has been deleted";
             }
         }
         return found;
@@ -83,6 +98,10 @@ DENG2_PIMPL(LumpCatalog)
 
 LumpCatalog::LumpCatalog()
     : d(new Impl(this))
+{}
+    
+LumpCatalog::LumpCatalog(const LumpCatalog &other)
+    : d(new Impl(this, *other.d))
 {}
 
 void LumpCatalog::clear()
@@ -101,6 +120,11 @@ bool LumpCatalog::setPackages(StringList packageIds)
     return false;
 }
 
+StringList LumpCatalog::packages() const
+{
+    return d->packageIds;
+}
+    
 Block LumpCatalog::read(String const &lumpName) const
 {
     Block data;

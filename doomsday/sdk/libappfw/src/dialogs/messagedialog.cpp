@@ -26,17 +26,18 @@ using namespace ui;
 
 DENG_GUI_PIMPL(MessageDialog)
 {
-    LabelWidget *title;
-    LabelWidget *message;
+    LabelWidget *        title;
+    LabelWidget *        message;
     DialogContentStylist buttonStylist;
+    const Rule *         layoutWidth = nullptr;
 
     Impl(Public *i) : Base(i)
     {
         ScrollAreaWidget &area = self().area();
 
         // Create widgets.
-        area.add(title   = new LabelWidget);
-        area.add(message = new LabelWidget);
+        area.add(title   = new LabelWidget("title"));
+        area.add(message = new LabelWidget("message"));
 
         // Configure style.
         title->setFont("title");
@@ -44,7 +45,7 @@ DENG_GUI_PIMPL(MessageDialog)
         title->setSizePolicy(ui::Fixed, ui::Expand);
         title->setAlignment(ui::AlignLeft);
         title->setTextAlignment(ui::AlignRight);
-        title->setOverrideImageSize(title->font().ascent().valuei());
+        title->setOverrideImageSize(title->font().ascent());
         title->setImageColor(style().colors().colorf("accent"));
         title->setTextGap("gap");
         title->setTextLineAlignment(ui::AlignLeft);
@@ -52,7 +53,14 @@ DENG_GUI_PIMPL(MessageDialog)
         message->setAlignment(ui::AlignLeft);
         message->setTextLineAlignment(ui::AlignLeft);
 
+        layoutWidth = holdRef(rule("dialog.message.width"));
+
         updateLayout();
+    }
+
+    ~Impl() override
+    {
+        releaseRef(layoutWidth);
     }
 
     void updateLayout(LayoutBehavior behavior = ExcludeHidden)
@@ -62,7 +70,7 @@ DENG_GUI_PIMPL(MessageDialog)
         // Simple vertical layout.
         SequentialLayout layout(area.contentRule().left(),
                                 area.contentRule().top());
-        layout.setOverrideWidth(rule("dialog.message.width"));
+        layout.setOverrideWidth(*layoutWidth);
 
         // Put all the widgets into the layout.
         foreach (GuiWidget *w, area.childWidgets())
@@ -74,7 +82,7 @@ DENG_GUI_PIMPL(MessageDialog)
             }
         }
 
-        area.setContentSize(layout.width(), layout.height());
+        area.setContentSize(layout);
     }
 };
 
@@ -104,6 +112,11 @@ LabelWidget &MessageDialog::title()
 LabelWidget &MessageDialog::message()
 {
     return *d->message;
+}
+
+void MessageDialog::setLayoutWidth(const Rule &layoutWidth)
+{
+    changeRef(d->layoutWidth, layoutWidth);
 }
 
 void MessageDialog::updateLayout(LayoutBehavior behavior)

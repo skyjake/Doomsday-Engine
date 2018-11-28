@@ -41,9 +41,11 @@
 
 using namespace de;
 
+static String const VAR_ID = "id";
+
 float ded_ptcstage_t::particleRadius(int ptcIDX) const
 {
-    if (radiusVariance)
+    if (radiusVariance != 0.f)
     {
         static float const rnd[16] = { .875f, .125f, .3125f, .75f, .5f, .375f,
             .5625f, .0625f, 1, .6875f, .625f, .4375f, .8125f, .1875f,
@@ -68,20 +70,20 @@ ded_s::ded_s()
     , decorations(names.addSubrecord("decorations"))
 {
     decorations.addLookupKey("texture");
-    episodes.addLookupKey("id");
-    things.addLookupKey("id", DEDRegister::OnlyFirst);
+    episodes.addLookupKey(VAR_ID);
+    things.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
     things.addLookupKey("name");
-    states.addLookupKey("id", DEDRegister::OnlyFirst);
-    finales.addLookupKey("id");
+    states.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
+    finales.addLookupKey(VAR_ID);
     finales.addLookupKey("before");
     finales.addLookupKey("after");
-    flags.addLookupKey("id");
-    mapInfos.addLookupKey("id");
-    materials.addLookupKey("id");
-    models.addLookupKey("id", DEDRegister::OnlyFirst);
+    flags.addLookupKey(VAR_ID);
+    mapInfos.addLookupKey(VAR_ID);
+    materials.addLookupKey(VAR_ID);
+    models.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
     models.addLookupKey("state");
-    musics.addLookupKey("id", DEDRegister::OnlyFirst);
-    skies.addLookupKey("id");
+    musics.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
+    skies.addLookupKey(VAR_ID);
 
     clear();
 }
@@ -99,7 +101,7 @@ void ded_s::clear()
 int ded_s::addFlag(String const &id, int value)
 {
     Record &def = flags.append();
-    def.addText("id", id);
+    def.addText(VAR_ID, id);
     def.addNumber("value", value);
     return def.geti(defn::Definition::VAR_ORDER);
 }
@@ -115,7 +117,7 @@ int ded_s::addThing(String const &id)
 {
     Record &def = things.append();
     defn::Thing(def).resetToDefaults();
-    def.set("id", id);
+    def.set(VAR_ID, id);
     return def.geti(defn::Definition::VAR_ORDER);
 }
 
@@ -123,7 +125,7 @@ int ded_s::addState(String const &id)
 {
     Record &def = states.append();
     defn::State(def).resetToDefaults();
-    def.set("id", id);
+    def.set(VAR_ID, id);
     return def.geti(defn::Definition::VAR_ORDER);
 }
 
@@ -257,7 +259,7 @@ int DED_AddTextureEnv(ded_t* ded, char const* id)
     return ded->textureEnv.indexOf(env);
 }
 
-int DED_AddCompositeFont(ded_t* ded, char const* uri)
+int DED_AddCompositeFont(ded_t* ded, char const *uri)
 {
     ded_compositefont_t* cfont = ded->compositeFonts.append();
     if (uri) cfont->uri = new de::Uri(uri, RC_NULL);
@@ -360,7 +362,7 @@ int DED_AddLineType(ded_t* ded, int id)
 
 int ded_s::getMobjNum(String const &id) const
 {
-    if (Record const *def = things.tryFind("id", id))
+    if (Record const *def = things.tryFind(VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -393,12 +395,12 @@ String ded_s::getMobjName(int num) const
 {
     if (num < 0) return "(<0)";
     if (num >= things.size()) return "(>mobjtypes)";
-    return things[num].gets("id");
+    return things[num].gets(VAR_ID);
 }
 
 int ded_s::getStateNum(String const &id) const
 {
-    if (Record const *def = states.tryFind("id", id))
+    if (Record const *def = states.tryFind(VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -424,7 +426,7 @@ dint ded_s::evalFlags(char const *ptr) const
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
-        if (Record const *flag = flags.tryFind("id", flagName.toLower()))
+        if (Record const *flag = flags.tryFind(VAR_ID, flagName.toLower()))
         {
             value |= flag->geti("value");
         }
@@ -438,7 +440,7 @@ dint ded_s::evalFlags(char const *ptr) const
 
 int ded_s::getEpisodeNum(String const &id) const
 {
-    if (Record const *def = episodes.tryFind("id", id))
+    if (Record const *def = episodes.tryFind(VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -447,7 +449,7 @@ int ded_s::getEpisodeNum(String const &id) const
 
 int ded_s::getMapInfoNum(de::Uri const &uri) const
 {
-    if (Record const *def = mapInfos.tryFind("id", uri.compose()))
+    if (Record const *def = mapInfos.tryFind(VAR_ID, uri.compose()))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -476,7 +478,7 @@ int ded_s::getMaterialNum(de::Uri const &uri) const
         /*if (idx >= 0)*/ return idx;
     }
 
-    if (Record const *def = materials.tryFind("id", uri.compose()))
+    if (Record const *def = materials.tryFind(VAR_ID, uri.compose()))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -485,7 +487,7 @@ int ded_s::getMaterialNum(de::Uri const &uri) const
 
 int ded_s::getModelNum(const char *id) const
 {
-    if (Record const *def = models.tryFind("id", id))
+    if (Record const *def = models.tryFind(VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -504,7 +506,7 @@ int ded_s::getModelNum(const char *id) const
 
 int ded_s::getSkyNum(char const *id) const
 {
-    if (Record const *def = skies.tryFind("id", id))
+    if (Record const *def = skies.tryFind(VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -570,7 +572,7 @@ int ded_s::getSpriteNum(char const *id) const
 
 int ded_s::getMusicNum(char const *id) const
 {
-    if (Record const *def = musics.tryFind("id", id))
+    if (Record const *def = musics.tryFind(VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -672,6 +674,22 @@ ded_compositefont_t *ded_s::getCompositeFont(char const *uriCString) const
         }
     }
     return def;
+}
+
+String ded_s::findEpisode(String const &mapId) const
+{
+    de::Uri mapUri(mapId, RC_NULL);
+    if (mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+
+    for (int i = 0; i < episodes.size(); ++i)
+    {
+        defn::Episode episode(episodes[i]);
+        if (episode.tryFindMapGraphNode(mapUri.compose()))
+        {
+            return episode.gets(VAR_ID);
+        }
+    }
+    return String();
 }
 
 int ded_s::getTextNum(char const *id) const

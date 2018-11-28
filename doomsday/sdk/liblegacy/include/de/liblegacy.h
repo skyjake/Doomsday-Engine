@@ -77,6 +77,18 @@
 #  define DENG_NORETURN __attribute__((__noreturn__))
 #endif
 
+#if defined (DENG_IOS)
+#  define DENG_VISIBLE_SYMBOL __attribute__((visibility("default")))
+#else
+#  define DENG_VISIBLE_SYMBOL
+#endif
+
+#if defined (DENG_STATIC_LINK)
+#  define DENG_ENTRYPOINT static
+#else
+#  define DENG_ENTRYPOINT DENG_EXTERN_C
+#endif
+
 #if !defined(_MSC_VER)
 #endif
 
@@ -141,6 +153,10 @@
 #define INRANGE_OF(x, y, r) ((x) >= (y) - (r) && (x) <= (y) + (r))
 
 #define FEQUAL(x, y)        (INRANGE_OF(x, y, FLOATEPSILON))
+
+#define IS_ZERO(x)          FEQUAL(x, 0)
+
+#define NON_ZERO(x)         (!IS_ZERO(x))
 
 #define ROUND(x)            ((int) (((x) < 0.0f)? ((x) - 0.5f) : ((x) + 0.5f)))
 

@@ -25,13 +25,35 @@
 #include <de/ArrayValue>
 #include <de/ByteArrayFile>
 #include <de/DictionaryValue>
+#include <de/FS>
 #include <de/Folder>
 #include <de/ScriptedInfo>
 #include <de/math.h>
 
+#include <QRegularExpression>
 #include <QMap>
 
 namespace de {
+
+static String processIncludes(String source, String const &sourceFolderPath)
+{
+    QRegularExpression const re("#include\\s+['\"]([^\"']+)['\"]");
+    forever
+    {
+        auto found = re.match(source);
+        if (!found.hasMatch()) break; // No more includes.
+
+        String incFilePath = sourceFolderPath / found.captured(1);
+        String incSource = String::fromUtf8(Block(App::rootFolder().locate<File const>(incFilePath)));
+        incSource = processIncludes(incSource, incFilePath.fileNamePath());
+
+        Rangei const capRange(found.capturedStart(), found.capturedEnd());
+        source = source.substr(0, capRange.start)
+               + incSource
+               + source.substr(capRange.end);
+    }
+    return source;
+}
 
 DENG2_PIMPL(GLShaderBank)
 {
@@ -72,9 +94,16 @@ DENG2_PIMPL(GLShaderBank)
             void insertDefinition(String const &macroName, String const &content)
             {
                 convertToSourceText();
-                Block combo = GLShader::prefixToSource(source.toLatin1(),
-                        Block(String("#define %1 %2\n").arg(macroName).arg(content).toLatin1()));
+                Block combo = GLShader::prefixToSource(
+                    source.toLatin1(),
+                    Block(String("#define %1 %2\n").arg(macroName).arg(content).toLatin1()));
                 source = String::fromLatin1(combo);
+            }
+
+            void insertIncludes(GLShaderBank const &bank, Record const &def)
+            {
+                convertToSourceText();
+                source = processIncludes(source, bank.absolutePathInContext(def, ".").fileNamePath());
             }
         };
 
@@ -112,7 +141,8 @@ DENG2_PIMPL(GLShaderBank)
                 return bank.d->findShader(src.source, type);
             }
             // The program will hold the only ref to this shader.
-            return refless(new GLShader(type, src.source.toLatin1()));
+            return refless(
+                new GLShader(type, bank.d->prependPredefines(Block(src.source.toLatin1()))));
         }
     };
 
@@ -137,6 +167,7 @@ DENG2_PIMPL(GLShaderBank)
 
     typedef QMap<String, GLShader *> Shaders; // path -> shader
     Shaders shaders;
+    std::unique_ptr<DictionaryValue> preDefines;
 
     Impl(Public *i) : Base(i)
     {}
@@ -156,6 +187,25 @@ DENG2_PIMPL(GLShaderBank)
         shaders.clear();
     }
 
+    Block prependPredefines(const IByteArray &source) const
+    {
+        Block sourceText = source;
+        if (preDefines)
+        {
+            Block predefs;
+            for (auto i : preDefines->elements())
+            {
+                predefs += String::format("#define %s %s\n",
+                                          i.first.value->asText().toLatin1().constData(),
+                                          i.second->asText().toLatin1().constData())
+                               .toLatin1();
+            }
+            predefs += "#line 1\n";
+            sourceText = predefs + sourceText;
+        }
+        return sourceText;
+    }
+
     GLShader *findShader(String const &path, GLShader::Type type)
     {
         /// @todo Should check the modification time of the file to determine
@@ -167,7 +217,8 @@ DENG2_PIMPL(GLShaderBank)
         }
 
         // We don't have this one yet, load and compile it now.
-        GLShader *shader = new GLShader(type, App::rootFolder().locate<ByteArrayFile const>(path));
+        GLShader *shader =
+            new GLShader(type, prependPredefines(FS::locate<const ByteArrayFile>(path)));
         shaders.insert(path, shader);
         return shader;
     }
@@ -216,6 +267,11 @@ GLProgram &GLShaderBank::build(GLProgram &program, DotPath const &path) const
     }
 
     return program;
+}
+
+void GLShaderBank::setPreprocessorDefines(const DictionaryValue &preDefines)
+{
+    d->preDefines.reset(static_cast<DictionaryValue *>(preDefines.duplicate()));
 }
 
 Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
@@ -276,9 +332,14 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(String const &id)
         }
     }
 
+    // Handle #include directives in the source.
+    vtx .insertIncludes(*this, def);
+    frag.insertIncludes(*this, def);
+
+    // Preprocessor defines (built-in and from the Info).
     if (def.has("defines"))
     {
-        DictionaryValue const &dict = def.getdt("defines");
+        const DictionaryValue &dict = def.getdt("defines");
         for (auto i : dict.elements())
         {
             String const macroName = i.first.value->asText();

@@ -62,6 +62,15 @@ response file whose contents are added to the command line.
 @deflist{
 
     @item{@opt{-center}} Center the window (when not in fullscreen mode).
+    
+    @item{@opt{-command} | @opt{-cmd}} Execute a console command during
+    startup. Multiple commands can be joined together with semicolons. Note
+    that console variables have game plugin specific values, so if you change
+    cvar values using this option without loading a game (with @opt{-game}),
+    your values will be overwritten when a game plugin is loaded.
+    
+    @item{@opt{-connect}} Attempts to connect to the server running at the
+    given network address. Equivalent to the console command @cmd{connect}.
 
     @item{@opt{-devlog} | @opt{-nodevlog}} Enables or disables developer log
     entries. These are useful for debugging and/or troubleshooting, but are too
@@ -100,17 +109,33 @@ response file whose contents are added to the command line.
     @item{@opt{-maximize} | @opt{-nomaximize}} Maximize the window, or set the
     window to non-maximized mode.
     
+    @item{@opt{-noaudio}} Disable all audio (sound effects and music).
+    
+    @item{@opt{-noautoselect}} Do not try to automatically select a game to
+    load. Only has effect when @opt{-game} is not used. Doomsday will always
+    start in the Home screen or, when starting a server, not at all.
+        
+    @item{@opt{-nodiscovery}} Disable discovery of servers on the local network.
+    
     @item{@opt{-nofsaa}} Disable antialiasing.
     
     @item{@opt{-nojoy}} Disable gamepads and other game controllers.
     
     @item{@opt{-nomouse}} Disable mouse input.
     
+    @item{@opt{-nomusic}} Disable music.
+    
+    @item{@opt{-nosfx}} Disable sound effects.
+    
     @item{@opt{-novsync}} Disable vsync.
     
     @item{@opt{-out}} Set the name of the log output file. The file is always
     written to the runtime folder. This option overrides the default
     @file{doomsday.out}.
+    
+    @item{@opt{-parse} | @opt{-p}} Load and execute the specified file that
+    contains console commands. Behavior is similar to @opt{-command} with the
+    exception that the commands are loaded from a file.
     
     @item{@opt{-packs}} Set additional folders where to find packages. Works
     similar to @opt{-iwad}.

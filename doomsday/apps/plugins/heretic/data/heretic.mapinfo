@@ -225,3 +225,15 @@ warptrans 9
 sky1 SKY3 0
 music MUS_E2M6
 cluster 3
+
+; Episode 4 ------------------------------------------------------------
+
+; This is a hidden episode.
+episode E4M1
+name ""
+  
+map E4M1 "American's Legacy"
+warptrans 1
+sky1 SKY1 0
+music MUS_E1M6
+cluster 4

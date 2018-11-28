@@ -108,6 +108,10 @@ public:
      */
     bool selectItemByValue(int itemIndex, int flags = MNLIST_SIF_NO_ACTION);
 
+    bool reorder(int itemIndex, int indexOffset);
+
+    ListWidget &setReorderingEnabled(bool reorderEnabled);
+
     /// @return  Index of the currently selected item else -1.
     int selection() const;
 
@@ -118,6 +122,8 @@ public:
     bool selectionIsVisible() const;
 
     void updateVisibleSelection();
+
+    void pageActivated() override;
 
 private:
     DENG2_PRIVATE(d)

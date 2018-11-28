@@ -154,13 +154,13 @@ void Con_DrawTransition(void)
     if (isDedicated) return;
     if (!Con_TransitionInProgress()) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, SCREENWIDTH, SCREENHEIGHT, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, SCREENWIDTH, SCREENHEIGHT, -1, 1);
 
     DENG2_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
 
@@ -168,8 +168,9 @@ void Con_DrawTransition(void)
 
     GL_BindTextureUnmanaged(texScreenshot, gl::ClampToEdge, gl::ClampToEdge);
     LIBGUI_GL.glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    GLState::push().setAlphaTest(false).apply();
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_PushState();
+    DGL_Disable(DGL_ALPHA_TEST);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     switch (transition.style)
     {
@@ -187,31 +188,31 @@ void Con_DrawTransition(void)
         x = 0;
         s = 0;
 
-        LIBGUI_GL.glBegin(GL_QUAD_STRIP);
+        DGL_Begin(DGL_TRIANGLE_STRIP);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i];
 
-            LIBGUI_GL.glColor4f(1, 1, 1, topAlpha);
-            LIBGUI_GL.glTexCoord2f(s, 1); LIBGUI_GL.glVertex2i(x, y);
-            LIBGUI_GL.glColor4f(1, 1, 1, 1);
-            LIBGUI_GL.glTexCoord2f(s, div); LIBGUI_GL.glVertex2i(x, y + h);
+            DGL_Color4f(1, 1, 1, 1);
+            DGL_TexCoord2f(0, s, div); DGL_Vertex2f(x, y + h);
+            DGL_Color4f(1, 1, 1, topAlpha);
+            DGL_TexCoord2f(0, s, 1); DGL_Vertex2f(x, y);
         }
-        LIBGUI_GL.glEnd();
+        DGL_End();
 
         x = 0;
         s = 0;
 
-        LIBGUI_GL.glColor4f(1, 1, 1, 1);
-        LIBGUI_GL.glBegin(GL_QUAD_STRIP);
+        DGL_Color4f(1, 1, 1, 1);
+        DGL_Begin(DGL_TRIANGLE_STRIP);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s += colWidth)
         {
             y = doomWipeSamples[i] + h;
 
-            LIBGUI_GL.glTexCoord2f(s, div); LIBGUI_GL.glVertex2i(x, y);
-            LIBGUI_GL.glTexCoord2f(s, 0); LIBGUI_GL.glVertex2i(x, y + (SCREENHEIGHT - h));
+            DGL_TexCoord2f(0, s, 0);   DGL_Vertex2f(x, y + (SCREENHEIGHT - h));
+            DGL_TexCoord2f(0, s, div); DGL_Vertex2f(x, y);
         }
-        LIBGUI_GL.glEnd();
+        DGL_End();
         break;
       }
     case TS_DOOM: {
@@ -221,35 +222,35 @@ void Con_DrawTransition(void)
 
         sampleDoomWipe();
 
-        LIBGUI_GL.glColor4f(1, 1, 1, 1);
-        LIBGUI_GL.glBegin(GL_QUADS);
+        DGL_Color4f(1, 1, 1, 1);
+        DGL_Begin(DGL_QUADS);
         for (i = 0; i <= SCREENWIDTH; ++i, x++, s+= colWidth)
         {
             y = doomWipeSamples[i];
 
-            LIBGUI_GL.glTexCoord2f(s, 1); LIBGUI_GL.glVertex2i(x, y);
-            LIBGUI_GL.glTexCoord2f(s+colWidth, 1); LIBGUI_GL.glVertex2i(x+1, y);
-            LIBGUI_GL.glTexCoord2f(s+colWidth, 0); LIBGUI_GL.glVertex2i(x+1, y+SCREENHEIGHT);
-            LIBGUI_GL.glTexCoord2f(s, 0); LIBGUI_GL.glVertex2i(x, y+SCREENHEIGHT);
+            DGL_TexCoord2f(0, s, 1); DGL_Vertex2f(x, y);
+            DGL_TexCoord2f(0, s+colWidth, 1); DGL_Vertex2f(x+1, y);
+            DGL_TexCoord2f(0, s+colWidth, 0); DGL_Vertex2f(x+1, y+SCREENHEIGHT);
+            DGL_TexCoord2f(0, s, 0); DGL_Vertex2f(x, y+SCREENHEIGHT);
         }
-        LIBGUI_GL.glEnd();
+        DGL_End();
         break;
       }
     case TS_CROSSFADE:
-        LIBGUI_GL.glColor4f(1, 1, 1, 1 - transition.position);
+        DGL_Color4f(1, 1, 1, 1 - transition.position);
 
-        LIBGUI_GL.glBegin(GL_QUADS);
-            LIBGUI_GL.glTexCoord2f(0, 1); LIBGUI_GL.glVertex2f(0, 0);
-            LIBGUI_GL.glTexCoord2f(0, 0); LIBGUI_GL.glVertex2f(0, SCREENHEIGHT);
-            LIBGUI_GL.glTexCoord2f(1, 0); LIBGUI_GL.glVertex2f(SCREENWIDTH, SCREENHEIGHT);
-            LIBGUI_GL.glTexCoord2f(1, 1); LIBGUI_GL.glVertex2f(SCREENWIDTH, 0);
-        LIBGUI_GL.glEnd();
+        DGL_Begin(DGL_QUADS);
+            DGL_TexCoord2f(0, 0, 1); DGL_Vertex2f(0, 0);
+            DGL_TexCoord2f(0, 0, 0); DGL_Vertex2f(0, SCREENHEIGHT);
+            DGL_TexCoord2f(0, 1, 0); DGL_Vertex2f(SCREENWIDTH, SCREENHEIGHT);
+            DGL_TexCoord2f(0, 1, 1); DGL_Vertex2f(SCREENWIDTH, 0);
+        DGL_End();
         break;
     }
 
     GL_SetNoTexture();
-    GLState::pop().apply();
+    DGL_PopState();
 
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }

@@ -47,6 +47,7 @@
 #include "p_actor.h"
 #include "player.h"
 #include "r_common.h"
+#include "r_special.h"
 #include "x_hair.h"
 
 Size2Rawf viewScale = { 1, 1 };
@@ -316,28 +317,28 @@ static void rendHUD(int player, const RectRaw* portGeometry)
 void G_DrawViewPort(int port, RectRaw const *portGeometry,
                     RectRaw const *windowGeometry, int player, int layer)
 {
-    switch(G_GameState())
+    switch (G_GameState())
     {
     case GS_MAP: {
         player_t* plr = players + player;
         dd_bool isAutomapObscuring = ST_AutomapObscures2(player, windowGeometry);
 
-        if(IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
+        if (IS_CLIENT && (!Get(DD_GAME_READY) || !Get(DD_GOTFRAME)))
             return;
 
-        if(Con_GetInteger("rend-vr-mode") == 9) // Oculus Rift mode
+        if (cfg.common.automapNeverObscure || Con_GetInteger("rend-vr-mode") == 9) // Oculus Rift mode
         {
             // Automap will not cover the full view.
             isAutomapObscuring = false;
         }
 
-        switch(layer)
+        switch (layer)
         {
         case 0: // Primary layer (3D view).
-            if(!isAutomapObscuring)
+            if (!isAutomapObscuring)
             {
                 G_RendPlayerView(player);
-#if !defined(__JDOOM__) && !defined(__JHEXEN__)
+#if defined(__JDOOM64__)
                 G_RendSpecialFilter(player, windowGeometry);
 #endif
             }
@@ -345,7 +346,7 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
 
         default: // HUD layer.
             // Crosshair.
-            if(!isAutomapObscuring && !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
+            if (!isAutomapObscuring && !(P_MobjIsCamera(plr->plr->mo) && Get(DD_PLAYBACK))) // $democam
             {
                 X_Drawer(player);
             }
@@ -357,7 +358,7 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
         break; }
 
     case GS_STARTUP:
-        if(layer == 0)
+        if (layer == 0)
         {
             DGL_DrawRectf2Color(0, 0, portGeometry->size.width, portGeometry->size.height,
                                 0, 0, 0, 1);
@@ -372,7 +373,5 @@ void G_DrawViewPort(int port, RectRaw const *portGeometry,
 void G_ResetViewEffects()
 {
     GL_ResetViewEffects();
-#if __JDOOM__
-    G_InitSpecialFilter();
-#endif
+    R_InitSpecialFilter();
 }

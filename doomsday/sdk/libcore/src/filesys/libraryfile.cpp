@@ -20,17 +20,32 @@
 #include "de/LibraryFile"
 #include "de/Library"
 #include "de/NativeFile"
+#include "de/NativePath"
 #include "de/LogBuffer"
 
 #include <QLibrary>
 
 using namespace de;
 
+DENG2_PIMPL_NOREF(LibraryFile)
+{
+    Library *library = nullptr;
+    NativePath nativePath;
+};
+
 LibraryFile::LibraryFile(File *source)
-    : File(source->name()), _library(0)
+    : File(source->name())
+    , d(new Impl)
 {
     DENG2_ASSERT(source != 0);
     setSource(source); // takes ownership
+}
+
+LibraryFile::LibraryFile(NativePath const &nativePath)
+    : File(nativePath.fileName())
+    , d(new Impl)
+{
+    d->nativePath = nativePath;
 }
 
 LibraryFile::~LibraryFile()
@@ -39,7 +54,7 @@ LibraryFile::~LibraryFile()
     audienceForDeletion().clear();
 
     deindex();
-    delete _library;
+    delete d->library;
 }
 
 String LibraryFile::describe() const
@@ -49,14 +64,26 @@ String LibraryFile::describe() const
     return desc;
 }
 
+bool LibraryFile::loaded() const
+{
+    return d->library != 0;
+}
+
 Library &LibraryFile::library()
 {
-    if (_library)
+    if (d->library)
     {
-        return *_library;
+        return *d->library;
     }
 
-    /// @todo A method for File for making a NativeFile out of any File.
+    if (!d->nativePath.isEmpty())
+    {
+        d->library = new Library(d->nativePath);
+    }
+    else
+    {
+        /// @todo A mechanism to make a NativeFile out of any File via caching?
+
     NativeFile *native = maybeAs<NativeFile>(source());
     if (!native)
     {
@@ -64,15 +91,15 @@ Library &LibraryFile::library()
         /// from native files. Other kinds of files would require a temporary native file.
         throw UnsupportedSourceError("LibraryFile::library", source()->description() +
             ": can only load from NativeFile");
+        }
+        d->library = new Library(native->nativePath());
     }
-
-    _library = new Library(native->nativePath());
-    return *_library;
+    return *d->library;
 }
 
 Library const &LibraryFile::library() const
 {
-    if (_library) return *_library;
+    if (d->library) return *d->library;
 
     /// @throw NotLoadedError Library is presently not loaded.
     throw NotLoadedError("LibraryFile::library", "Library is not loaded: " + description());
@@ -80,10 +107,10 @@ Library const &LibraryFile::library() const
 
 void LibraryFile::clear()
 {
-    if (_library)
+    if (d->library)
     {
-        delete _library;
-        _library = 0;
+        delete d->library;
+        d->library = nullptr;
     }
 }
 
@@ -95,35 +122,42 @@ bool LibraryFile::hasUnderscoreName(String const &nameAfterUnderscore) const
 
 bool LibraryFile::recognize(File const &file)
 {
-#ifdef MACOSX
-    // On macOS, plugins are in the .bundle format. The LibraryFile will point
-    // to the actual binary inside the bundle. Libraries must be loaded from
-    // native files.
-    if (NativeFile const *native = maybeAs<NativeFile>(file))
+    #if defined (DENG_APPLE)
     {
-        // Check if this in the executable folder with a matching bundle name.
-        if (native->nativePath().fileNamePath().toString().endsWith(
-                    file.name() + ".bundle/Contents/MacOS"))
+        // On macOS/iOS, plugins are in the .bundle format. The LibraryFile will point
+        // to the actual binary inside the bundle. Libraries must be loaded from
+        // native files.
+        if (NativeFile const *native = maybeAs<NativeFile>(file))
         {
-            // (name).bundle/Contents/MacOS/(name)
-            return true;
+            // Check if this in the executable folder with a matching bundle name.
+            if (native->nativePath().fileNamePath().toString()
+                .endsWith(file.name() + ".bundle/Contents/MacOS"))
+            {
+                return true;
+            }
         }
     }
-#else
+    #else // not Apple
+    {
     // Check the extension first.
     if (QLibrary::isLibrary(file.name()))
     {
 #if defined(UNIX)
+            {
         // Only actual .so files should be considered.
         if (!file.name().endsWith(".so")) // just checks the file name
         {
             return false;
         }
+            }
 #endif
+
         // Looks like a library.
         return true;
     }
+    }
 #endif
+
     return false;
 }
 

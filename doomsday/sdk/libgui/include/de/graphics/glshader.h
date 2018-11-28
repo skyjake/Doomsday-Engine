@@ -63,7 +63,7 @@ public:
 
     void compile(Type shaderType, IByteArray const &source);
 
-    void recompile();
+//    void recompile();
 
     /**
      * Prefixes a piece of shader source code to another shader source. This takes

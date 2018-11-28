@@ -46,7 +46,8 @@ public:
     enum Channel
     {
         Stable   = 0,
-        Unstable = 1
+        Unstable = 1,
+        StableOrCandidate = 2,
     };
 
 public:

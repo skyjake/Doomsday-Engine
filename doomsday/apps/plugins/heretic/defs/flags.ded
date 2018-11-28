@@ -1,4 +1,4 @@
-# libheretic: Flags
+# Heretic: Flags
 
 # Mobj flags:
 Flag { ID = "mf_special"; Value = 0x1; }
@@ -59,3 +59,5 @@ Flag { ID = "mf2_dontdraw"; Value = 0x100000; }
 # Mobj flags3:
 Flag { ID = "mf3_noinfight"; Value = 0x1; }
 Flag { ID = "mf3_clientaction"; Value = 0x2; }
+Flag { ID = "mf3_nomorph"; Value = 0x4; }
+

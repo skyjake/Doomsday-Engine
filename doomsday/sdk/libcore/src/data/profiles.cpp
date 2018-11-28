@@ -404,6 +404,7 @@ bool Profiles::AbstractProfile::setName(String const &newName)
     if (!owner || owner->rename(*this, newName))
     {
         d->name = newName;
+        notifyChange();
     }
     return true;
 }

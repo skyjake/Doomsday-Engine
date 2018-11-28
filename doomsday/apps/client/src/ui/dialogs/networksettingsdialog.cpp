@@ -44,7 +44,8 @@ DENG_GUI_PIMPL(NetworkSettingsDialog)
     {
         ScrollAreaWidget &area = self().area();
 
-        area.add(localPackages = new VariableToggleWidget(tr("Local Multiplayer Packages"), App::config("resource.localPackages")));
+        area.add(localPackages = new VariableToggleWidget(tr("Local Multiplayer Mods"),
+                                                          App::config("resource.localPackages")));
 
         // Developer options.
         self().add(devPopup = new GridPopupWidget);
@@ -91,7 +92,7 @@ NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
     caution->setTextColor("altaccent");
     layout << *caution;
 
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(Default | Accept, tr("Close"))

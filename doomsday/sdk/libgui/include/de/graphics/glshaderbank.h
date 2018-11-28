@@ -61,6 +61,14 @@ public:
      */
     GLProgram &build(GLProgram &program, DotPath const &path) const;
 
+    /**
+     * Sets additional preprocessor symbols to insert to compiled shaders.
+     * These are in addition to any defines in the shader definition itself.
+     *
+     * @param preDefines  Preprocessor defines.
+     */
+    void setPreprocessorDefines(const DictionaryValue &preDefines);
+
 protected:
     ISource *newSourceFromInfo(String const &id);
     IData *loadFromSource(ISource &source);

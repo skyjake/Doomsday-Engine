@@ -48,6 +48,7 @@ static String const VAR_LICENSE     ("license");
 static String const VAR_AUTHOR      ("author");
 static String const VAR_TITLE       ("title");
 static String const VAR_TAGS        ("tags");
+static String const VAR_NOTES       ("notes");
 static String const VAR_DATA_FILES  ("dataFiles");
 static String const VAR_BUNDLE_SCORE("bundleScore");
 static String const VAR_REQUIRES    ("requires");
@@ -95,50 +96,6 @@ DENG2_PIMPL(DataBundle), public Lockable
     static Folder &bundleFolder()
     {
         return App::rootFolder().locate<Folder>(QStringLiteral("/sys/bundles"));
-    }
-
-    static String cleanIdentifier(String const &text)
-    {
-        // Periods and underscores have special meaning in packages IDs.
-        // Whitespace is used as separator in package ID lists (see PackageLoader).
-        // Info syntax has ambiguous quote/double-quote escaping in strings, so
-        // we'll also get rid of single quotes. (For example, Info converts a string
-        // containing ['"] to ['''].)
-        String cleaned = text.toLower();
-        cleaned.replace(QRegExp("[._'\\s]"), "-");
-        return cleaned;
-    }
-
-    static String stripVersion(String const &text, Version *version = nullptr)
-    {
-        QRegExp re(".*([-_. ][0-9._-]+)$");
-        if (re.exactMatch(text))
-        {
-            if (version)
-            {
-                String str = re.cap(1).mid(1);
-                str.replace("_", ".");
-                version->parseVersionString(str);
-            }
-            return text.mid(0, text.size() - re.cap(1).size());
-        }
-        return text;
-    }
-
-    static String stripRedundantParts(String const &id)
-    {
-        DotPath const path(id);
-        String stripped = path.segment(0);
-        for (int i = 1; i < path.segmentCount(); ++i)
-        {
-            String seg = path.segment(i);
-            if (seg.startsWith(path.segment(i - 1) + "-"))
-            {
-                seg = seg.mid(path.segment(i - 1).size() + 1);
-            }
-            stripped = stripped.concatenateMember(seg);
-        }
-        return stripped;
     }
 
     /**
@@ -286,14 +243,13 @@ DENG2_PIMPL(DataBundle), public Lockable
                 container->packageMetadata().insertToSortedArray(subset, new TextValue(versionedPackageId));
 
                 /*
-                qDebug() << container->d->versionedPackageId
-                         << "[" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << "]"
-                         << "requires"
+                LOGDEV_RES_VERBOSE("%s ") << container->d->versionedPackageId
+                         << "(" << container->d->pkgLink->objectNamespace().gets("package.tags", "") << ") "
+                         << subset << " "
                          << versionedPackageId
-                         << "[" << metadata.gets("tags", "") << "]"
-                         << "from" << dataFilePath;
-                         */
-
+                         << " (" << metadata.gets("tags", "") << ") from "
+                         << self().asFile().path();
+                */
                 //Package::addRequiredPackage(containerFile, versionedPackageId);
             }
             return true;
@@ -353,8 +309,8 @@ DENG2_PIMPL(DataBundle), public Lockable
 
     Record buildMetadata()
     {
-        String const dataFilePath = self().asFile().path();
-        auto const *container = self().containerBundle();
+        const String dataFilePath = self().asFile().path();
+        const auto * container    = self().containerBundle();
 
         // Search for known data files in the bundle registry.
         res::Bundles::MatchResult matched = DoomsdayApp::bundles().match(self());
@@ -368,7 +324,8 @@ DENG2_PIMPL(DataBundle), public Lockable
         {
             // Classic data files are loaded via the "dataFiles" array (in the listed order).
             // However, collections are represented directly as Doomsday packages.
-            meta.addArray(VAR_DATA_FILES, new ArrayValue({ new TextValue(dataFilePath) }));
+            // Paths in "dataFiles" are relative to the package root.
+            meta.addArray(VAR_DATA_FILES, new ArrayValue({ new TextValue(dataFilePath.fileName()) }));
         }
         else
         {
@@ -420,10 +377,19 @@ DENG2_PIMPL(DataBundle), public Lockable
             };
 
             // Containers become part of the identifier.
-            for (DataBundle const *i = container; i; i = i->containerBundle())
+            for (const DataBundle *c = container; c; c = c->containerBundle())
             {
-                packageId = cleanIdentifier(stripVersion(i->sourceFile().name().fileNameWithoutExtension()))
-                        .concatenateMember(packageId);
+                String containedId = cleanIdentifier(
+                    stripVersion(c->sourceFile().name().fileNameWithoutExtension()));
+
+                // Additionally include the parent subfolder within the container into the ID.
+                if (c == container && dataFilePath.fileNamePath() != c->asFile().path())
+                {
+                    containedId = containedId.concatenateMember(cleanIdentifier(
+                        stripVersion(dataFilePath.fileNamePath().fileNameWithoutExtension())));
+                }
+
+                packageId = containedId.concatenateMember(packageId);
             }
 
             // The file name may contain a version number.
@@ -448,16 +414,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             auto &root = App::rootFolder();
 
             // WAD files sometimes come with a matching TXT file.
-            if (format == Pwad || format == Iwad)
-            {
-                if (File const *wadTxt = root.tryLocate<File const>(
-                            dataFilePath.fileNamePath() / dataFilePath.fileNameWithoutExtension() + ".txt"))
-                {
-                    Block txt;
-                    *wadTxt >> txt;
-                    meta.set("notes", _E(m) + String::fromCP437(txt));
-                }
-            }
+            checkAuxiliaryNotes(meta);
 
             // There may be Snowberry metadata available:
             // - Info entry inside root folder
@@ -499,6 +456,47 @@ DENG2_PIMPL(DataBundle), public Lockable
             meta.appendUniqueWord(VAR_TAGS, "hidden");
         }
 
+        // Check for built-in tags.
+        {
+            // Cached copies of remote files.
+            if (dataFilePath.startsWith("/home/cache/remote/"))
+            {
+                meta.appendUniqueWord(VAR_TAGS, "hidden");
+                meta.appendUniqueWord(VAR_TAGS, "cached");
+            }
+
+            // Master Levels of Doom.
+            {
+                static const struct {
+                    uint32_t    crc32;
+                    const char *filename;
+                } masterLevels[] = {{0xaa78f088, "attack.wad"},   {0x56bf62c2, "blacktwr.wad"},
+                                    {0xa54aee5b, "bloodsea.wad"}, {0x5a8fb0f5, "canyon.wad"},
+                                    {0x20954e50, "catwalk.wad"},  {0xb237de09, "combine.wad"},
+                                    {0x9f051374, "fistula.wad"},  {0x86491354, "garrison.wad"},
+                                    {0x60cc2385, "geryon.wad"},   {0x9755324e, "manor.wad"},
+                                    {0xcfe7d641, "mephisto.wad"}, {0xc400cf65, "minos.wad"},
+                                    {0x89386748, "nessus.wad"},   {0xac8808e9, "paradox.wad"},
+                                    {0x8a84cc17, "subspace.wad"}, {0x9ffd4024, "subterra.wad"},
+                                    {0x96919f5e, "teeth.wad"},    {0xd8d46a55, "ttrap.wad"},
+                                    {0x1726dbb7, "vesperas.wad"}, {0xd421fe9d, "virgil.wad"}};
+                if (format == Pwad)
+                {
+                    for (const auto &spec : masterLevels)
+                    {
+                        if (lumpDir->crc32() == spec.crc32 &&
+                            self().asFile().name().compareWithoutCase(spec.filename) == 0)
+                        {
+                            removeGameTags(meta);
+                            meta.appendUniqueWord(VAR_TAGS, "doom2");
+                            meta.appendUniqueWord(VAR_TAGS, "masterlevels");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
         determineGameTags(meta);
 
         LOG_RES_VERBOSE("Identified \"%s\" %s %s score: %i")
@@ -507,8 +505,22 @@ DENG2_PIMPL(DataBundle), public Lockable
                 << ::internal::formatDescriptions[format]
                    << meta.geti(VAR_BUNDLE_SCORE); // matched.bestScore;
 
-
         return meta;
+    }
+
+    void checkAuxiliaryNotes(Record &meta)
+    {
+        if (format == Pwad || format == Iwad)
+        {
+            String const dataFilePath = self().asFile().path();
+            if (File const *wadTxt = FS::tryLocate<File const>(
+                        dataFilePath.fileNameAndPathWithoutExtension() + ".txt"))
+            {
+                Block txt;
+                *wadTxt >> txt;
+                meta.set(VAR_NOTES, _E(m) + String::fromCP437(txt));
+            }
+        }
     }
 
     /**
@@ -638,7 +650,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 if (!notes.isEmpty())
                 {
                     notes.replace(QRegExp("\\s+"), " "); // normalize whitespace
-                    meta.set("notes", notes);
+                    meta.set(VAR_NOTES, notes);
                 }
             }
         }
@@ -646,8 +658,8 @@ DENG2_PIMPL(DataBundle), public Lockable
         if (parseErrorMsg)
         {
             meta.appendUniqueWord(VAR_TAGS, "error");
-            meta.set("notes", QObject::tr("There is an error in the metadata of this package: %1")
-                .arg(parseErrorMsg) + "\n\n" + meta.gets("notes", ""));
+            meta.set(VAR_NOTES, QObject::tr("There is an error in the metadata of this package: %1")
+                .arg(parseErrorMsg) + "\n\n" + meta.gets(VAR_NOTES, ""));
         }
     }
 
@@ -657,30 +669,35 @@ DENG2_PIMPL(DataBundle), public Lockable
     void parseNotesForMetadata(Record &meta)
     {
         static QRegularExpression const reTitle
-                ("^\\s*Title\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+                ("^[\\s\x1Bm]*Title\\s*:?\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reVersion
                 ("^\\s*Version\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reReleaseDate
                 ("^\\s*Release( date)?\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reAuthor
-                ("^\\s*Author(s)?\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+                ("^\\s*Author(s)?\\s*:?\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
         static QRegularExpression const reContact
-                ("^\\s*Email address\\s*:\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
+                ("^\\s*Email address\\s*:?\\s*(.*)", QRegularExpression::CaseInsensitiveOption);
 
         bool foundVersion = false;
+        bool foundTitle   = false;
 
-        foreach (String line, meta.gets("notes", "").split('\n'))
+        foreach (String line, meta.gets(VAR_NOTES, "").split('\n'))
         {
-            auto match = reTitle.match(line);
-            if (match.hasMatch())
+            if (!foundTitle)
             {
-                meta.set(VAR_TITLE, match.captured(1));
-                continue;
+                auto match = reTitle.match(line);
+                if (match.hasMatch())
+                {
+                    meta.set(VAR_TITLE, match.captured(1).trimmed());
+                    foundTitle = true;
+                    continue;
+                }
             }
 
             if (!foundVersion)
             {
-                match = reReleaseDate.match(line);
+                auto match = reReleaseDate.match(line);
                 if (match.hasMatch())
                 {
                     Date const releaseDate = Date::fromText(match.captured(2).trimmed());
@@ -695,7 +712,7 @@ DENG2_PIMPL(DataBundle), public Lockable
                 }
             }
 
-            match = reVersion.match(line);
+            auto match = reVersion.match(line);
             if (match.hasMatch())
             {
                 Version parsed(match.captured(1).trimmed());
@@ -710,14 +727,14 @@ DENG2_PIMPL(DataBundle), public Lockable
             match = reAuthor.match(line);
             if (match.hasMatch())
             {
-                meta.set(VAR_AUTHOR, match.captured(2));
+                meta.set(VAR_AUTHOR, match.captured(2).trimmed());
                 continue;
             }
 
             match = reContact.match(line);
             if (match.hasMatch())
             {
-                meta.set("contact", match.captured(1));
+                meta.set("contact", match.captured(1).trimmed());
                 continue;
             }
         }
@@ -799,15 +816,16 @@ DENG2_PIMPL(DataBundle), public Lockable
 
     static void removeGameTags(Record &meta)
     {
-        String newTags;
-        foreach (QString tag, Package::tags(meta.gets(VAR_TAGS)))
-        {
-            if (!gameTags().contains(tag))
-            {
-                if (!newTags.isEmpty()) newTags += QStringLiteral(" ");
-                newTags += tag;
-            }
-        }
+        String newTags = meta.gets(VAR_TAGS);
+        newTags.remove(QRegularExpression(anyGameTagPattern()));
+//        foreach (QString tag, Package::tags(meta.gets(VAR_TAGS)))
+//        {
+//            if (!gameTags().contains(tag))
+//            {
+//                if (!newTags.isEmpty()) newTags += QStringLiteral(" ");
+//                newTags += tag;
+//            }
+//        }
         meta.set(VAR_TAGS, newTags);
     }
 
@@ -841,7 +859,7 @@ DENG2_PIMPL(DataBundle), public Lockable
             removeGameTags(meta);
             meta.appendUniqueWord(VAR_TAGS, tag);
         }
-        else if (identifyMostLikelyGame(meta.gets("notes", ""), tag))
+        else if (identifyMostLikelyGame(meta.gets(VAR_NOTES, ""), tag))
         {
             //qDebug() << meta.gets(VAR_TITLE)<< "- from notes:" << tag;
             removeGameTags(meta);
@@ -1088,13 +1106,27 @@ File const &DataBundle::sourceFile() const
     return *asFile().source();
 }
 
+String DataBundle::rootPath() const
+{
+    return asFile().path().fileNamePath();
+}
+
 String DataBundle::packageId() const
 {
-    if (d->packageId.isEmpty())
+    if (!d->packageId)
     {
         identifyPackages();
     }
     return d->packageId;
+}
+
+String DataBundle::versionedPackageId() const
+{
+    if (!d->packageId)
+    {
+        identifyPackages();
+    }
+    return d->versionedPackageId;
 }
 
 IByteArray::Size DataBundle::size() const
@@ -1150,6 +1182,20 @@ DataBundle const *DataBundle::bundleForPackage(String const &packageId) // stati
         {
             return bundle;
         }
+    }
+    return nullptr;
+}
+
+DataBundle const *DataBundle::tryLocateDataFile(Package const &package, String const &dataFilePath)
+{
+    if (DataBundle const *bundle = package.root().tryLocate<DataBundle const>(dataFilePath))
+    {
+        return bundle;
+    }
+    // The package may itself be a link to a data bundle.
+    if (DataBundle const *bundle = maybeAs<DataBundle>(package.sourceFile().target()))
+    {
+        return bundle;
     }
     return nullptr;
 }
@@ -1233,6 +1279,12 @@ String DataBundle::guessCompatibleGame() const
 
 File *DataBundle::Interpreter::interpretFile(File *sourceData) const
 {
+    // Broken links cannot be interpreted.
+    if (LinkFile *link = maybeAs<LinkFile>(sourceData))
+    {
+        if (link->isBroken()) return nullptr;
+    }
+
     // Naive check using the file extension.
     static struct { String str; Format format; } formats[] = {
         { ".pk3.zip", Pk3 },
@@ -1246,7 +1298,7 @@ File *DataBundle::Interpreter::interpretFile(File *sourceData) const
     //String const ext = sourceData->extension();
     for (auto const &fmt : formats)
     {
-        if (sourceData->name().endsWith(fmt.str, Qt::CaseInsensitive))
+        if (sourceData->name().endsWith(fmt.str, String::CaseInsensitive))
         {
             LOG_RES_XVERBOSE("Interpreted %s as %s",
                              sourceData->description() <<
@@ -1293,7 +1345,7 @@ QList<DataBundle const *> DataBundle::loadedBundles() // static
                     String const dataFilePath = v->asText();
 
                     // Look up the data bundle file.
-                    if (DataBundle const *bundle = pkg->root().tryLocate<DataBundle const>(dataFilePath))
+                    if (DataBundle const *bundle = tryLocateDataFile(*pkg, dataFilePath))
                     {
                         // Identify it now (if not already identified). Note that data
                         // files inside packages usually aren't identified during
@@ -1344,7 +1396,7 @@ QList<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrPart
             if (bundlePath.isEmpty()) return false;
             //qDebug() << "bundle:" << path.asText() << "searchTerm:" << searchPath.fileNamePath();
             if (bundlePath.toString().endsWith(searchPath.fileNamePath(),
-                                               Qt::CaseInsensitive))
+                                               String::CaseInsensitive))
             {
                 return true;
             }
@@ -1364,4 +1416,62 @@ StringList DataBundle::gameTags()
 String DataBundle::anyGameTagPattern()
 {
     return String("\\b(%1)\\b").arg(String::join(gameTags(), "|"));
+}
+
+String DataBundle::cleanIdentifier(String const &text)
+{
+    // Periods and underscores have special meaning in packages IDs.
+    // Whitespace is used as separator in package ID lists (see PackageLoader).
+    // Info syntax has ambiguous quote/double-quote escaping in strings, so
+    // we'll also get rid of single quotes. (For example, Info converts a string
+    // containing ['"] to ['''].)
+    String cleaned = text.toLower();
+    cleaned.replace(QRegExp("[._'\\s]"), "-");
+    return cleaned;
+}
+
+String DataBundle::stripVersion(String const &text, Version *version)
+{
+    QRegExp re(".*([-_. ][0-9._-]+)$");
+    if (re.exactMatch(text))
+    {
+        if (version)
+        {
+            String str = re.cap(1).mid(1);
+            str.replace("_", ".");
+            version->parseVersionString(str);
+        }
+        return text.mid(0, text.size() - re.cap(1).size());
+    }
+    return text;
+}
+
+String DataBundle::stripRedundantParts(String const &id)
+{
+    DotPath const path(id);
+    String stripped = path.segment(0);
+    for (int i = 1; i < path.segmentCount(); ++i)
+    {
+        String seg = path.segment(i);
+        for (int k = 1; k <= i; ++k) // Check all previous segments.
+        {
+            if (seg.startsWith(path.segment(i - k) + "-"))
+            {
+                seg = seg.mid(path.segment(i - k).size() + 1);
+                break;
+            }
+        }
+        stripped = stripped.concatenateMember(seg);
+    }
+    return stripped;
+}
+
+de::String DataBundle::versionFromTimestamp(const Time &timestamp)
+{
+    return timestamp.asDateTime().toString(QStringLiteral("0.yyyy.MMdd.hhmm"));
+}
+
+void DataBundle::checkAuxiliaryNotes(Record &packageMetadata)
+{
+    d->checkAuxiliaryNotes(packageMetadata);
 }

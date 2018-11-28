@@ -35,7 +35,9 @@ DENG2_PIMPL(GLUniform)
         dint     int32;
         duint    uint32;
         dfloat   float32;
+        dint     *ints;
         dfloat   *floats;
+        Vector2f *vec2array;
         Vector3f *vec3array;
         Vector4f *vector;
         Matrix3f *mat3;
@@ -54,10 +56,12 @@ DENG2_PIMPL(GLUniform)
     {
         name.append('\0');
 
-        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == FloatArray ||
+        DENG2_ASSERT(elemCount == 1 || (elemCount > 1 && (type == IntArray   ||
+                                                          type == FloatArray ||
                                                           type == Mat4Array  ||
                                                           type == Vec4Array  ||
-                                                          type == Vec3Array )));
+                                                          type == Vec3Array  ||
+                                                          type == Vec2Array)));
         // Allocate the value type.
         zap(value);
         switch (type)
@@ -68,8 +72,16 @@ DENG2_PIMPL(GLUniform)
             value.vector = new Vector4f;
             break;
 
+        case IntArray:
+            value.ints = new int[elemCount];
+            break;
+
         case FloatArray:
             value.floats = new float[elemCount];
+            break;
+
+        case Vec2Array:
+            value.vec2array = new Vector2f[elemCount];
             break;
 
         case Vec3Array:
@@ -109,8 +121,16 @@ DENG2_PIMPL(GLUniform)
             delete value.vector;
             break;
 
+        case IntArray:
+            delete [] value.ints;
+            break;
+
         case FloatArray:
             delete [] value.floats;
+            break;
+
+        case Vec2Array:
+            delete [] value.vec2array;
             break;
 
         case Vec3Array:
@@ -403,6 +423,17 @@ GLUniform &GLUniform::set(duint elementIndex, Matrix4f const &mat)
     return *this;
 }
 
+GLUniform &GLUniform::set(const int *intArray, dsize count)
+{
+    DENG2_ASSERT(d->type == IntArray);
+    DENG2_ASSERT(count <= d->elemCount);
+
+    memcpy(d->value.ints, intArray, sizeof(int) * count);
+    d->usedElemCount = duint16(count);
+    d->markAsChanged();
+    return *this;
+}
+
 GLUniform &GLUniform::set(float const *floatArray, dsize count)
 {
     DENG2_ASSERT(d->type == FloatArray);
@@ -420,6 +451,17 @@ GLUniform &GLUniform::set(Vector4f const *vectorArray, dsize count)
     DENG2_ASSERT(count <= d->elemCount);
 
     memcpy(d->value.vector, vectorArray, sizeof(Vector4f) * count);
+    d->usedElemCount = duint16(count);
+    d->markAsChanged();
+    return *this;
+}
+
+GLUniform &GLUniform::set(const Matrix4f *mat4Array, dsize count)
+{
+    DENG2_ASSERT(d->type == Mat4Array);
+    DENG2_ASSERT(count <= d->elemCount);
+
+    memcpy(d->value.mat4, mat4Array, sizeof(Matrix4f) * count);
     d->usedElemCount = duint16(count);
     d->markAsChanged();
     return *this;
@@ -531,6 +573,8 @@ GLTexture const *GLUniform::texture() const
 
 void GLUniform::applyInProgram(GLProgram &program) const
 {
+    LIBGUI_ASSERT_GL_OK();
+
     int loc = program.glUniformLocation(d->name.constData());
     if (loc < 0)
     {
@@ -544,59 +588,69 @@ void GLUniform::applyInProgram(GLProgram &program) const
     {
     case Int:
         LIBGUI_GL.glUniform1i(loc, d->value.int32);
-        LIBGUI_ASSERT_GL_OK();
+        break;
+
+    case IntArray:
+        LIBGUI_GL.glUniform1iv(loc, d->usedElemCount, d->value.ints);
         break;
 
     case UInt:
-        LIBGUI_GL.glUniform1i(loc, d->value.uint32);
-        LIBGUI_ASSERT_GL_OK();
+        LIBGUI_GL.glUniform1ui(loc, d->value.uint32);
         break;
 
     case Float:
         LIBGUI_GL.glUniform1f(loc, d->value.float32);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case FloatArray:
         LIBGUI_GL.glUniform1fv(loc, d->usedElemCount, d->value.floats);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec2:
         LIBGUI_GL.glUniform2f(loc, d->value.vector->x, d->value.vector->y);
-        LIBGUI_ASSERT_GL_OK();
+        break;
+
+    case Vec2Array:
+        LIBGUI_GL.glUniform2fv(loc, d->usedElemCount, &d->value.vec2array->x);
         break;
 
     case Vec3:
         LIBGUI_GL.glUniform3f(loc, d->value.vector->x, d->value.vector->y, d->value.vector->z);
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec3Array:
         LIBGUI_GL.glUniform3fv(loc, d->usedElemCount, &d->value.vec3array->x); // sequentially laid out
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Vec4:
     case Vec4Array:
         LIBGUI_GL.glUniform4fv(loc, d->usedElemCount, &d->value.vector->x); // sequentially laid out
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat3:
         LIBGUI_GL.glUniformMatrix3fv(loc, 1, GL_FALSE, d->value.mat3->values());
-        LIBGUI_ASSERT_GL_OK();
         break;
 
     case Mat4:
     case Mat4Array:
         LIBGUI_GL.glUniformMatrix4fv(loc, d->usedElemCount, GL_FALSE, d->value.mat4->values()); // sequentially laid out
-        LIBGUI_ASSERT_GL_OK();
         break;
 
-    default:
+    case Sampler2D:
+    case SamplerCube:
+        // Not set here. GLProgram sets the sampler values according to where textures are bound.
         break;
     }
+
+#if defined (DENG2_DEBUG)
+    {
+        GLenum err = LIBGUI_GL.glGetError();
+        if (err != GL_NO_ERROR)
+        {
+            qDebug() << "[GLUniform] Failure with uniform:" << d->name << "loc:" << loc;
+        }
+    }
+#endif
 }
 
 } // namespace de

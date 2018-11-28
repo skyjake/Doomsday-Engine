@@ -26,6 +26,7 @@
 #include <de/Package>
 #include <de/PackageLoader>
 #include <de/ui/SubwidgetItem>
+#include <de/ToggleWidget>
 #include <de/Loop>
 
 #include "dd_main.h"
@@ -34,18 +35,21 @@ using namespace de;
 
 DENG2_PIMPL(PackageCompatibilityDialog)
 {
-    String message;
-    StringList wanted;
-    bool conflicted = false;
-    PackagesWidget *list = nullptr;
-    ui::ListData actions;
+    String          message;
+    StringList      wanted;
+    bool            conflicted    = false;
+    PackagesWidget *list          = nullptr;
+    ToggleWidget *  ignoreToggle  = nullptr;
+    LabelWidget *   ignoreWarning = nullptr;
+    ui::ListData    actions;
     ProgressWidget *updating;
-    bool ignoreCheck = false;
-    LoopCallback mainCall;
+    bool            ignoreCheck = false;
+    LoopCallback    mainCall;
 
     Impl(Public *i) : Base(i)
     {
         self().add(updating = new ProgressWidget);
+        self().area().enableIndicatorDraw(true);
         updating->setSizePolicy(ui::Expand, ui::Expand);
         updating->useMiniStyle("altaccent");
         updating->setText(tr("Updating..."));
@@ -67,9 +71,9 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         }
         if (list->itemCount() > 0)
         {
-            return _E(b) + tr("Load Packages");
+            return _E(b) + tr("Load Mods");
         }
-        return _E(b) + tr("Unload Packages");
+        return _E(b) + tr("Unload Mods");
     }
 
     void enableIgnore(bool yes)
@@ -78,6 +82,10 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         if (auto *button = self().buttonWidget(Id1))
         {
             button->setText(defaultButtonLabel());
+        }
+        if (auto *button = self().buttonWidget(Id2))
+        {
+            button->enable(ignoreCheck);
         }
     }
 
@@ -88,43 +96,154 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             delete list;
             list = nullptr;
         }
+        if (ignoreWarning)
+        {
+            delete ignoreWarning;
+            ignoreWarning = nullptr;
+        }
+        if (ignoreToggle)
+        {
+            delete ignoreToggle;
+            ignoreToggle = nullptr;
+        }
         self().buttons().clear();
 
         try
         {
             // The only action on the packages is to view information.
-            actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this] () -> PopupWidget *
-            {
-                 return new PackageInfoDialog(list->actionPackage());
+            actions << new ui::SubwidgetItem(tr("..."), ui::Up, [this]() -> PopupWidget * {
+                return new PackageInfoDialog(list->actionPackage(),
+                                             PackageInfoDialog::InformationOnly);
             });
 
-            self().area().add(list = new PackagesWidget(wanted));
+            self().area().add(ignoreToggle = new ToggleWidget);
+            ignoreToggle->setText("Ignore incompatible/missing mods");
+            ignoreToggle->setAlignment(ui::AlignLeft);
+            ignoreToggle->setActionFn([this]() {
+                enableIgnore(ignoreToggle->isActive());
+            });
+
+            self().area().add(ignoreWarning = new LabelWidget);
+            ignoreWarning->setText(_E(b) "Caution: " _E(.) "Playing without the right resources "
+                                                           "may cause a crash.");
+            ignoreWarning->setFont("separator.annotation");
+            ignoreWarning->setTextColor("altaccent");
+            ignoreWarning->setAlignment(ui::AlignLeft);
+            ignoreWarning->setTextLineAlignment(ui::AlignLeft);
+            ignoreWarning->margins().setTop(ConstantRule::zero());
+
+            // Check which of the wanted packages are actually available.
+            StringList wantedUnavailable;
+            StringList wantedAvailable;
+            QList<std::pair<String, Version>> wantedDifferentVersionAvailable;
+            {
+                auto &pkgLoader = PackageLoader::get();
+
+                for (const auto &id : wanted)
+                {
+                    if (pkgLoader.isAvailable(id))
+                    {
+                        wantedAvailable << id;
+                    }
+                    else
+                    {
+                        auto id_ver = Package::split(id);
+                        if (const auto *p = pkgLoader.select(id_ver.first))
+                        {
+                            wantedDifferentVersionAvailable.push_back(
+                                {Package::versionedIdentifierForFile(*p), id_ver.second});
+                        }
+                        else
+                        {
+                            wantedUnavailable << id;
+                        }
+                    }
+                }
+            }
+
+            // Detail the problem to the user.
+            String unavailNote;
+            if (!wantedDifferentVersionAvailable.empty())
+            {
+                unavailNote +=
+                    _E(b)_E(D) "Caution:" _E(.)_E(.) " There is a different version of "
+                                                     "the following mods available:\n";
+                for (const auto &avail_expected : wantedDifferentVersionAvailable)
+                {
+                    unavailNote +=
+                        " - " _E(>) + Package::splitToHumanReadable(avail_expected.first) +
+                        " " _E(l)_E(F) "\n(expected " +
+                        avail_expected.second.fullNumber() + _E(<) ")\n" _E(w)_E(A);
+                }
+                unavailNote += "\n";
+            }
+            if (!wantedUnavailable.empty())
+            {
+                unavailNote += "The following mods are missing:\n";
+                for (const auto &id : wantedUnavailable)
+                {
+                    unavailNote += " - " + Package::splitToHumanReadable(id) + "\n";
+                }
+                unavailNote += "\n";
+            }
+
+            StringList wantedDifferent =
+                map<StringList>(wantedDifferentVersionAvailable,
+                                [](const std::pair<String, Version> &sv) { return sv.first; });
+
+            self().area().add(list = new PackagesWidget(wantedAvailable + wantedDifferent));
+            list->setAllowPackageInfoActions(false);
+            list->setHiddenTags({"core", "gamedata"});
             list->setActionItems(actions);
             list->setActionsAlwaysShown(true);
             list->setFilterEditorMinimumY(self().area().rule().top());
 
-            StringList const loaded = DoomsdayApp::loadedPackagesAffectingGameplay();
-            //qDebug() << "Currently loaded:" << loaded;
+            const StringList loaded = DoomsdayApp::loadedPackagesAffectingGameplay();
 
             if (!GameProfiles::arePackageListsCompatible(loaded, wanted))
             {
+                // Packages needs loading and/or unloading.
                 conflicted = true;
-                if (list->itemCount() > 0)
+
+                if (list->itemCount() == 0)
                 {
-                    self().message().setText(message + "\n\n" + tr("The packages listed below "
-                                                                 "should be loaded."));
-                    self().buttons()
-                            << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
-                                                    new CallbackAction([this] () { resolvePackages(); }));
+                    list->hide();
+                }
+                if (!wantedUnavailable.empty())
+                {
+                    self().message().setText(message + "\n\n" + unavailNote +
+                                             "Please locate the missing mods before continuing. "
+                                             "You may need to add more folders in your Data Files "
+                                             "settings so the mods can be found.");
+                    if (list->itemCount() > 0)
+                    {
+                        self().message().setText(
+                            self().message().text() +
+                            "\n\nThe mods listed below are required and available, "
+                            "and should be loaded now (the highlighted ones are already loaded).");
+                    }
+                    self().buttons() << new DialogButtonItem(Default | Accept | Id2,
+                                                             _E(b) _E(D) "Ignore and Continue");
+                    self().buttonWidget(Id2)->disable();
                 }
                 else
                 {
-                    list->hide();
-                    self().message().setText(message + "\n\n" + tr("All additional packages "
-                                                                 "should be unloaded."));
-                    self().buttons()
-                               << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
-                                                       new CallbackAction([this] () { resolvePackages(); }));
+                    if (list->itemCount() > 0)
+                    {
+                        self().message().setText(message + "\n\n" + unavailNote +
+                                                 tr("All the mods listed below should be loaded."));
+                        self().buttons()
+                                << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
+                                                        new CallbackAction([this] () { resolvePackages(); }));
+                    }
+                    else
+                    {
+                        self().message().setText(message + "\n\n" + unavailNote +
+                                                 tr("All additional mods should be unloaded."));
+                        self().buttons()
+                                   << new DialogButtonItem(Default | Accept | Id1, defaultButtonLabel(),
+                                                           new CallbackAction([this] () { resolvePackages(); }));
+                    }
                 }
                 self().buttons()
                         << new DialogButtonItem(Reject, tr("Cancel"));
@@ -153,12 +272,12 @@ DENG2_PIMPL(PackageCompatibilityDialog)
     {
         if (ignoreCheck)
         {
-            LOG_RES_NOTE("Ignoring package compatibility check due to user request");
+            LOG_RES_NOTE("Ignoring package compatibility check due to user request!");
             self().accept();
             return;
         }
 
-        qDebug() << "resolving...";
+        LOG_RES_MSG("Resolving packages...");
 
         auto &pkgLoader = PackageLoader::get();
 
@@ -180,12 +299,12 @@ DENG2_PIMPL(PackageCompatibilityDialog)
             }
         }
 
-        qDebug() << "Good until:" << goodUntil;
+        LOG_RES_MSG("Good until %s") << goodUntil;
 
         // Unload excess.
         for (int i = loaded.size() - 1; i > goodUntil; --i)
         {
-            qDebug() << "unloading excess" << loaded.at(i);
+            LOG_RES_MSG("Unloading excess ") << loaded.at(i);
 
             pkgLoader.unload(loaded.at(i));
             loaded.removeAt(i);
@@ -194,12 +313,23 @@ DENG2_PIMPL(PackageCompatibilityDialog)
         // Load the remaining wanted packages.
         for (int i = goodUntil + 1; i < wanted.size(); ++i)
         {
-            qDebug() << "loading wanted" << wanted.at(i);
+            const auto &pkgId = wanted.at(i);
 
-            pkgLoader.load(wanted.at(i));
+            if (pkgLoader.isAvailable(pkgId))
+            {
+                LOG_RES_MSG("Loading wanted ") << wanted.at(i);
+                pkgLoader.load(wanted.at(i));
+            }
+            else
+            {
+                auto id_ver = Package::split(pkgId);
+                LOG_RES_MSG("Loading latest version of wanted ") << id_ver.first;
+                pkgLoader.load(id_ver.first);
+            }
         }
 
-        qDebug() << DoomsdayApp::loadedPackagesAffectingGameplay();
+        LOG_RES_MSG("Packages affecting gameplay:\n")
+            << String::join(DoomsdayApp::loadedPackagesAffectingGameplay(), "\n");
 
         self().buttonsMenu().disable();
         updating->setOpacity(1, 0.3);
@@ -212,7 +342,7 @@ PackageCompatibilityDialog::PackageCompatibilityDialog(String const &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
-    title().setText(tr("Incompatible Add-ons"));
+    title().setText(tr("Incompatible Mods"));
 }
 
 void PackageCompatibilityDialog::setMessage(String const &msg)

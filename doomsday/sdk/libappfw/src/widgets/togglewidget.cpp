@@ -25,7 +25,7 @@
 
 namespace de {
 
-static TimeDelta const SWITCH_ANIM_SPAN = 0.3;
+static TimeSpan const SWITCH_ANIM_SPAN = 0.3;
 
 DENG2_PIMPL(ToggleWidget),
 DENG2_OBSERVES(ButtonWidget, Press)
@@ -39,7 +39,8 @@ DENG2_OBSERVES(ButtonWidget, Press)
               _pos(0, Animation::EaseBoth),
               _animating(false)
         {
-            setSize(style().images().image("toggle.onoff").size());
+            const Image &img = style().images().image("toggle.onoff");
+            setPointSize(img.size() * img.pointRatio());
             updateStyle();
         }
 
@@ -48,7 +49,7 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
         void setState(ToggleState st, bool animate)
         {
-            _pos.setValue(st == Active? 1 : 0, animate? SWITCH_ANIM_SPAN : TimeDelta());
+            _pos.setValue(st == Active? 1 : 0, animate? SWITCH_ANIM_SPAN : TimeSpan());
             _animating = true;
         }
 
@@ -85,11 +86,11 @@ DENG2_OBSERVES(ButtonWidget, Press)
             verts.makeQuad(recti, _accentColor * p + _textColor * (1-p) * .8f, atlas().imageRectf(onOff));
 
             // The flipper.
-            int flipWidth = size().x - size().y + GuiWidget::toDevicePixels(2);
-            Rectanglei flip = Rectanglei::fromSize(recti.topLeft +
-                                                   Vector2i(GuiWidget::toDevicePixels(1) + de::round<int>(p * (size().x - flipWidth)),
-                                                            GuiWidget::toDevicePixels(1)),
-                                                   Vector2ui(flipWidth, size().y) - toDevicePixels(Vector2ui(2, 2)));
+            const int  flipWidth = pointSize().x - pointSize().y + 2;
+            Rectanglei flip      = Rectanglei::fromSize(
+                recti.topLeft + pointsToPixels(Vector2i(
+                                    1 + de::round<int>(p * (pointSize().x - flipWidth)), 1)),
+                pointsToPixels(Vector2ui(flipWidth, pointSize().y) - Vector2ui(2, 2)));
             verts.makeQuad(flip, _bgColor * Vector4f(1, 1, 1, 3),
                            atlas().imageRectf(_owner.root().solidWhitePixel()).middle());
         }
@@ -114,13 +115,12 @@ DENG2_OBSERVES(ButtonWidget, Press)
     ToggleProceduralImage *procImage; // not owned
     bool hasBeenUpdated = false;
 
-    Impl(Public *i)
-        : Base(i),
-          state(Inactive),
-          procImage(new ToggleProceduralImage(*i))
+    Impl(Public *i, Flags const &flags)
+        : Base(i)
+        , state(Inactive)
+        , procImage(!(flags & WithoutIndicator)? new ToggleProceduralImage(*i) : nullptr)
     {
-        self().setImage(procImage); // base class owns it
-
+        if (procImage) self().setImage(procImage); // base class owns it
         self().audienceForPress() += this;
     }
 
@@ -137,7 +137,9 @@ DENG2_OBSERVES(ButtonWidget, Press)
 
 DENG2_AUDIENCE_METHOD(ToggleWidget, Toggle)
 
-ToggleWidget::ToggleWidget(String const &name) : ButtonWidget(name), d(new Impl(this))
+ToggleWidget::ToggleWidget(Flags const &flags, String const &name)
+    : ButtonWidget(name)
+    , d(new Impl(this, flags))
 {
     setTextAlignment(ui::AlignRight);
     setTextLineAlignment(ui::AlignLeft);
@@ -148,7 +150,10 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
     if (d->state != state)
     {
         d->state = state;
-        d->procImage->setState(state, hasBeenUpdated());
+        if (d->procImage)
+        {
+            d->procImage->setState(state, hasBeenUpdated());
+        }
 
         if (notify)
         {
@@ -165,7 +170,10 @@ ToggleWidget::ToggleState ToggleWidget::toggleState() const
 
 void ToggleWidget::finishAnimation()
 {
-    d->procImage->finishAnimation();
+    if (d->procImage)
+    {
+        d->procImage->finishAnimation();
+    }
 }
 
 } // namespace de

@@ -54,8 +54,6 @@
 #define Set                 DD_SetInteger
 #define Get                 DD_GetInteger
 
-DENG_EXTERN_C game_export_t gx;
-
 //
 // Global parameters/defines.
 //
@@ -76,6 +74,9 @@ typedef enum {
     doom2_freedm,
     doom2_freedoom,
     doom_freedoom,
+    doom_bfg,
+    doom2_bfg,
+    doom2_nerve,
     NUM_GAME_MODES
 } gamemode_t;
 
@@ -91,9 +92,12 @@ typedef enum {
 #define GM_DOOM2_FREEDM     0x100
 #define GM_DOOM2_FREEDOOM   0x200
 #define GM_DOOM_FREEDOOM    0x400
+#define GM_DOOM_BFG         0x800
+#define GM_DOOM2_BFG        0x1000
+#define GM_DOOM2_NERVE      0x2000
 
-#define GM_ANY_DOOM         (GM_DOOM|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE|GM_DOOM_CHEX)
-#define GM_ANY_DOOM2        (GM_DOOM2|GM_DOOM2_PLUT|GM_DOOM2_TNT|GM_DOOM2_HACX|GM_DOOM2_FREEDM)
+#define GM_ANY_DOOM         (GM_DOOM|GM_DOOM_BFG|GM_DOOM_SHAREWARE|GM_DOOM_ULTIMATE|GM_DOOM_CHEX|GM_DOOM_FREEDOOM)
+#define GM_ANY_DOOM2        (GM_DOOM2|GM_DOOM2_BFG|GM_DOOM2_PLUT|GM_DOOM2_TNT|GM_DOOM2_NERVE|GM_DOOM2_HACX|GM_DOOM2_FREEDM|GM_DOOM2_FREEDOOM)
 #define GM_ANY              (GM_ANY_DOOM|GM_ANY_DOOM2)
 
 #define SCREENWIDTH         320

@@ -44,7 +44,7 @@ void ConstantRule::set(float newValue)
 
 String ConstantRule::description() const
 {
-    return String("Constant(%1)").arg(cachedValue());
+    return String::format("%g", cachedValue());
 }
 
 ConstantRule const &ConstantRule::zero()

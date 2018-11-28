@@ -163,7 +163,7 @@ VRSettingsDialog::VRSettingsDialog(String const &name)
     }
 #endif
 
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))

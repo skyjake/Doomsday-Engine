@@ -35,11 +35,6 @@ extern "C" {
 
 void G_RendPlayerView(int player);
 
-/**
- * Draws a special filter over the screen.
- */
-void G_RendSpecialFilter(int player, RectRaw const *region);
-
 void H_DrawViewPort(int port, RectRaw const *portGeometry, RectRaw const *windowGeometry, int player, int layer);
 
 void H_DrawWindow(Size2Raw const *windowSize);

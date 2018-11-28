@@ -192,7 +192,7 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
 Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, ClockDirection direction,
     Sector const *sector, binangle_t *diff)
 {
-    LineOwner const *cown = (direction == Anticlockwise ? &own.prev() : &own.next());
+    LineOwner const *cown = (direction == Anticlockwise ? own.prev() : own.next());
     Line *other = &cown->line();
 
     if(other == &line)
@@ -276,7 +276,7 @@ Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirec
 {
     DENG2_ASSERT(sector);
 
-    LineOwner const *cown = (direction == Anticlockwise ? &own.prev() : &own.next());
+    LineOwner const *cown = (direction == Anticlockwise ? own.prev() : own.next());
     Line *other = &cown->line();
 
     if (other == &line) return nullptr;

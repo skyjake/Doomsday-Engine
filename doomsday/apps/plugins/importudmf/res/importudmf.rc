@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2016-2017 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
- *\author Copyright © 2008-2014 Daniel Swanson <danij@dengine.net>
+ *\author Copyright (c) 2016-2018 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
+ *\author Copyright (c) 2008-2014 Daniel Swanson <danij@dengine.net>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -37,11 +37,11 @@
 VS_VERSION_INFO VERSIONINFO
 FILEVERSION     PLUGIN_VERSION_NUMBER
 PRODUCTVERSION  PLUGIN_VERSION_NUMBER
-# ifdef _DEBUG
+#ifdef _DEBUG
 FILEFLAGSMASK   VS_FF_DEBUG | VS_FF_PRERELEASE
-# else
+#else
 FILEFLAGSMASK   0
-# endif
+#endif
 FILEOS          VOS_NT_WINDOWS32
 FILETYPE        VFT_DLL
 FILESUBTYPE     VFT2_UNKNOWN
@@ -54,7 +54,7 @@ BEGIN
             VALUE "FileDescription", PLUGIN_NICENAME " (Doomsday Engine UDMF map importer plugin)\0"
             VALUE "FileVersion",    PLUGIN_VERSION_TEXT "\0"
             VALUE "InternalName",   PLUGIN_NICENAME "\0"
-            VALUE "LegalCopyright", "Copyright © 2016, deng Team\0"
+            VALUE "LegalCopyright", "Copyright (c) 2016-2018, deng Team\0"
             VALUE "OriginalFilename", "importudmf.dll\0"
             VALUE "ProductName",    PLUGIN_NICENAME "\0"
             VALUE "ProductVersion", PLUGIN_VERSION_TEXT "\0"

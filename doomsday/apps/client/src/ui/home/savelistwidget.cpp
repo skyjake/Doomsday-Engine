@@ -122,7 +122,7 @@ DENG_GUI_PIMPL(SaveListWidget)
 
         auto const &saveItem = item.as<SaveListData::SaveItem>();
         button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
-        button.setOverrideImageSize(style().fonts().font("default").height().value() * 1.4f);
+        button.setOverrideImageSize(style().fonts().font("default").height() * 1.4f);
     }
 
     void toggleSelectedItem(ButtonWidget &button)
@@ -142,6 +142,9 @@ DENG_GUI_PIMPL(SaveListWidget)
         }
 
         emit self().selectionChanged(selected);
+
+        // Keep focus on the clicked button.
+        self().root().setFocus(&self());
     }
 
     void updateItemHighlights(ButtonWidget *selectedButton)

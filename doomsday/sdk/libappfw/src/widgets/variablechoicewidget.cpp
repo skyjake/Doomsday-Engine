@@ -23,14 +23,17 @@
 
 namespace de {
 
-/// @todo Add support for TextValue in addition to NumberValue.
 DENG2_PIMPL(VariableChoiceWidget),
 DENG2_OBSERVES(Variable, Deletion),
 DENG2_OBSERVES(Variable, Change  )
 {
     Variable *var;
+    VariableType variableType;
 
-    Impl(Public *i, Variable &variable) : Base(i), var(&variable)
+    Impl(Public *i, Variable &variable, VariableType vt)
+        : Base(i)
+        , var(&variable)
+        , variableType(vt)
     {
         updateFromVariable();
 
@@ -40,9 +43,9 @@ DENG2_OBSERVES(Variable, Change  )
 
     void updateFromVariable()
     {
-        if (!var) return;
+        if (!var || self().items().isEmpty()) return;
 
-        if (var->value().is<TextValue>())
+        if (variableType == Text)
         {
             self().setSelected(self().items().findData(var->value().asText()));
         }
@@ -57,7 +60,7 @@ DENG2_OBSERVES(Variable, Change  )
         if (!var) return;
 
         var->audienceForChange() -= this;
-        if (var->value().is<TextValue>())
+        if (variableType == Text)
         {
             var->set(TextValue(self().selectedItem().data().toString()));
         }
@@ -80,8 +83,10 @@ DENG2_OBSERVES(Variable, Change  )
     }
 };
 
-VariableChoiceWidget::VariableChoiceWidget(Variable &variable, String const &name)
-    : ChoiceWidget(name), d(new Impl(this, variable))
+VariableChoiceWidget::VariableChoiceWidget(Variable &variable, VariableType variableType,
+                                           String const &name)
+    : ChoiceWidget(name)
+    , d(new Impl(this, variable, variableType))
 {
     connect(this, SIGNAL(selectionChangedByUser(uint)),
             this, SLOT(setVariableFromWidget()));

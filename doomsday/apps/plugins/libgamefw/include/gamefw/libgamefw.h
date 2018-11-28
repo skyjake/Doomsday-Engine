@@ -55,7 +55,7 @@ enum { CR, CG, CB, CA };
 #define IS_SERVER           (DD_GetInteger(DD_SERVER))
 #define IS_CLIENT           (DD_GetInteger(DD_CLIENT))
 #define IS_NETGAME          (DD_GetInteger(DD_NETGAME))
-#define IS_DEDICATED        (DD_GetInteger(DD_DEDICATED))
+#define IS_DEDICATED        (DD_GetInteger(DD_NOVIDEO))
 #define CONSOLEPLAYER       (DD_GetInteger(DD_CONSOLEPLAYER))
 #define DISPLAYPLAYER       (DD_GetInteger(DD_DISPLAYPLAYER))
 

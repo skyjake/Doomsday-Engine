@@ -157,7 +157,13 @@ public:
     Vector2 operator - () const {
         return Vector2(-x, -y);
     }
-    Vector2 operator * (ddouble scalar) const {
+    Vector2 operator * (int scalar) const {
+        return Vector2(Type(x * scalar), Type(y * scalar));
+    }
+    Vector2 operator * (float scalar) const {
+        return Vector2(Type(x * scalar), Type(y * scalar));
+    }
+    Vector2 operator * (double scalar) const {
         return Vector2(Type(x * scalar), Type(y * scalar));
     }
     Vector2 operator * (Vector2 const &other) const {
@@ -720,6 +726,11 @@ public:
     Vector2<Type> zw() const   { return swizzle(*this, AxisZ, AxisW); }
     Vector3<Type> xyz() const  { return *this; }
     Vector4<Type> zyxw() const { return swizzle(*this, AxisZ, AxisY, AxisX, AxisW); }
+    Vector4<Type> replaced(int index, Type const &value) const {
+        Vector4 v = *this;
+        v[index] = value;
+        return v;
+    }
 
 public:
     Type w;

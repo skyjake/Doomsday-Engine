@@ -156,7 +156,11 @@ static int showCriticalMessage(char const *msg)
     // This is going to be the end, I'm afraid.
     de::Loop::get().stop();
 
+#if defined (__CLIENT__)
     Sys_MessageBox(MBT_WARNING, DOOMSDAY_NICENAME, msg, 0);
+#else
+    qWarning() << msg;
+#endif
     return 0;
 }
 

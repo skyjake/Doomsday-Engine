@@ -28,6 +28,7 @@
 #include "doomsday/filesys/datafile.h"
 #include "doomsday/filesys/datafolder.h"
 #include "doomsday/filesys/virtualmappings.h"
+#include "doomsday/filesys/idgameslink.h"
 #include "doomsday/busymode.h"
 #include "doomsday/world/world.h"
 #include "doomsday/world/entitydef.h"
@@ -48,6 +49,7 @@
 #include <de/MetadataBank>
 #include <de/NativeFile>
 #include <de/PackageLoader>
+#include <de/RemoteFeedRelay>
 #include <de/ScriptSystem>
 #include <de/TextValue>
 #include <de/c_wrapper.h>
@@ -81,6 +83,7 @@ DENG2_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
+    Binder binder;
     bool initialized = false;
     bool gameBeingChanged = false;
     bool shuttingDown = false;
@@ -94,6 +97,7 @@ DENG2_PIMPL(DoomsdayApp)
     BusyMode busyMode;
     Players players;
     res::Bundles dataBundles;
+    shell::PackageDownloader packageDownloader;
     SaveGames saveGames;
     LoopCallback mainCall;
     QTimer configSaveTimer;
@@ -112,7 +116,7 @@ DENG2_PIMPL(DoomsdayApp)
         {
             ArrayValue args;
             args << DictionaryValue() << TextValue(newGame.id());
-            App::scriptSystem().nativeModule("App")["audienceForGameChange"]
+            App::scriptSystem()["App"]["audienceForGameChange"]
                     .array().callElements(args);
         }
     };
@@ -123,9 +127,12 @@ DENG2_PIMPL(DoomsdayApp)
         : Base(i)
         , players(playerConstructor)
     {
-        Record &appModule = App::scriptSystem().nativeModule("App");
+        // Script bindings.
+        Record &appModule = App::scriptSystem()["App"];
         appModule.addArray("audienceForGameChange"); // game change observers
         audienceForGameChange += scriptAudienceForGameChange;
+
+        initBindings(binder);
 
         gameProfiles.setGames(games);
         saveGames   .setGames(games);
@@ -150,26 +157,58 @@ DENG2_PIMPL(DoomsdayApp)
             }
         });
         configSaveTimer.start();
+
+        // File system extensions.
+        filesys::RemoteFeedRelay::get().defineLink(IdgamesLink::construct);
     }
 
-    ~Impl()
+    ~Impl() override
     {
         if (initialized)
         {
             // Save any changes to the game profiles.
             gameProfiles.serialize();
         }
+        // Delete the temporary folder from the system disk.
+        if (Folder *tmp = FS::tryLocate<Folder>("/tmp"))
+        {
+            tmp->destroyAllFilesRecursively();
+            tmp->correspondingNativePath().destroy();
+        }
         theDoomsdayApp = nullptr;
         Garbage_Recycle();
     }
 
-    void attachWadFeed(String const &description, NativePath const &path)
+    DirectoryFeed::Flags directoryPopulationMode(const NativePath &path) const
+    {
+        const TextValue dir{path.toString()};
+        if (Config::get().has("resource.recursedFolders"))
+        {
+            const auto &elems = Config::get().getdt("resource.recursedFolders").elements();
+            auto        i     = elems.find(&dir);
+            if (i != elems.end())
+            {
+                return i->second->isTrue() ? DirectoryFeed::PopulateNativeSubfolders
+                                           : DirectoryFeed::OnlyThisFolder;
+            }
+        }
+        return DirectoryFeed::PopulateNativeSubfolders;
+    }
+
+    void attachWadFeed(const String &       description,
+                       const NativePath &   path,
+                       DirectoryFeed::Flags populationMode = DirectoryFeed::OnlyThisFolder)
     {
         if (!path.isEmpty())
         {
             if (path.exists())
             {
-                LOG_RES_NOTE("Using %s WAD folder: %s") << description << path.pretty();
+                LOG_RES_NOTE("Using %s WAD folder%s: %s")
+                    << description
+                    << (populationMode == DirectoryFeed::OnlyThisFolder ? ""
+                                                                        : " (including subfolders)")
+                    << path.pretty();
+
                 Path folderPathBase = PATH_LOCAL_WADS;
                 if (path.segmentCount() >= 2)
                 {
@@ -178,14 +217,14 @@ DENG2_PIMPL(DoomsdayApp)
                 // Choose a unique folder name.
                 Path folderPath = folderPathBase;
                 int counter = 0;
-                while (FS::get().tryLocate<Folder>(folderPath))
+                while (FS::tryLocate<Folder>(folderPath))
                 {
                     folderPath = Path(String("%1-%2")
                             .arg(folderPathBase.toString())
                             .arg(++counter, 3, 10, QChar('0')));
                 }
                 FS::get().makeFolder(folderPath)
-                        .attach(new DirectoryFeed(path, DirectoryFeed::OnlyThisFolder));
+                        .attach(new DirectoryFeed(path, populationMode));
             }
             else
             {
@@ -195,15 +234,21 @@ DENG2_PIMPL(DoomsdayApp)
         }
     }
 
-    void attachPacksFeed(String const &description, NativePath const &path)
+    void attachPacksFeed(String const &description, NativePath const &path,
+                         DirectoryFeed::Flags populationMode)
     {
         if (!path.isEmpty())
         {
             if (path.exists())
             {
-                LOG_RES_NOTE("Using %s package folder (including subfolders): %s")
-                        << description << path.pretty();
-                App::rootFolder().locate<Folder>(PATH_LOCAL_PACKS).attach(new DirectoryFeed(path));
+                LOG_RES_NOTE("Using %s package folder%s: %s")
+                    << description
+                    << (populationMode == DirectoryFeed::OnlyThisFolder ? ""
+                                                                        : " (including subfolders)")
+                    << path.pretty();
+                App::rootFolder()
+                    .locate<Folder>(PATH_LOCAL_PACKS)
+                    .attach(new DirectoryFeed(path, populationMode));
             }
             else
             {
@@ -340,7 +385,7 @@ DENG2_PIMPL(DoomsdayApp)
         // Configured via GUI.
         for (String path : App::config().getStringList("resource.iwadFolder"))
         {
-            attachWadFeed("user-selected", path);
+            attachWadFeed("user-selected", path, directoryPopulationMode(path));
         }
 
         wads.populate(Folder::PopulateAsyncFullTree);
@@ -348,7 +393,7 @@ DENG2_PIMPL(DoomsdayApp)
 
     void initPackageFolders()
     {
-        Folder &packs = FileSystem::get().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
+        Folder &packs = FS::get().makeFolder(PATH_LOCAL_PACKS, FS::DontInheritFeeds);
         packs.clear();
         packs.clearFeeds();
 
@@ -359,7 +404,8 @@ DENG2_PIMPL(DoomsdayApp)
         if (char *fn = UnixInfo_GetConfigValue("paths", "packsdir"))
         {
             attachPacksFeed("UnixInfo " _E(i) "paths.packsdir" _E(.),
-                            cmdLine.startupPath() / fn);
+                            cmdLine.startupPath() / fn,
+                            DirectoryFeed::DefaultFlags);
             free(fn);
         }
 #endif
@@ -372,20 +418,37 @@ DENG2_PIMPL(DoomsdayApp)
                 if (cmdLine.isOption(p)) break;
 
                 cmdLine.makeAbsolutePath(p);
-                attachPacksFeed("command-line", cmdLine.at(p));
+                attachPacksFeed("command-line", cmdLine.at(p), DirectoryFeed::DefaultFlags);
             }
         }
 
         // Configured via GUI.
         for (String path : App::config().getStringList("resource.packageFolder"))
         {
-            attachPacksFeed("user-selected", path);
+            attachPacksFeed("user-selected", path, directoryPopulationMode(path));
         }
 
         packs.populate(Folder::PopulateAsyncFullTree);
     }
 
-    void folderPopulationFinished()
+    void initRemoteRepositories()
+    {
+#if 0
+        filesys::RemoteFeedRelay::get().addRepository("https://www.quaddicted.com/files/idgames/",
+                                                      "/remote/www.quaddicted.com");
+#endif
+    }
+
+//    void remoteRepositoryStatusChanged(String const &address, filesys::RemoteFeedRelay::Status status) override
+//    {
+//        foreach (auto p, filesys::RemoteFeedRelay::get().locatePackages(
+//                     StringList({"idgames.levels.doom2.deadmen"})))
+//        {
+//            qDebug() << p.link->address() << p.localPath << p.remotePath;
+//        }
+//    }
+
+    void folderPopulationFinished() override
     {
         if (initialized)
         {
@@ -426,7 +489,6 @@ DENG2_PIMPL(DoomsdayApp)
     DENG2_PIMPL_AUDIENCE(GameUnload)
     DENG2_PIMPL_AUDIENCE(GameChange)
     DENG2_PIMPL_AUDIENCE(ConsoleRegistration)
-    DENG2_PIMPL_AUDIENCE(FileRefresh)
     DENG2_PIMPL_AUDIENCE(PeriodicAutosave)
 };
 
@@ -434,7 +496,6 @@ DENG2_AUDIENCE_METHOD(DoomsdayApp, GameLoad)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameUnload)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, GameChange)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, ConsoleRegistration)
-DENG2_AUDIENCE_METHOD(DoomsdayApp, FileRefresh)
 DENG2_AUDIENCE_METHOD(DoomsdayApp, PeriodicAutosave)
 
 DoomsdayApp::DoomsdayApp(Players::Constructor playerConstructor)
@@ -480,22 +541,27 @@ void DoomsdayApp::initialize()
     d->initWadFolders();
     d->initPackageFolders();
 
-    Folder::waitForPopulation();
+    // We need to access the local file system to complete initialization.
+    Folder::waitForPopulation(Folder::BlockingMainThread);
 
     d->dataBundles.identify();
     d->gameProfiles.deserialize();
+
+    // Register some remote repositories.
+    d->initRemoteRepositories();
 
     d->initialized = true;
 }
 
 void DoomsdayApp::initWadFolders()
 {
+    FS::waitForIdle();
     d->initWadFolders();
 }
 
 void DoomsdayApp::initPackageFolders()
 {
-    DENG2_FOR_AUDIENCE2(FileRefresh, i) i->aboutToRefreshFiles();
+    FS::waitForIdle();
     d->initPackageFolders();
 }
 
@@ -530,6 +596,11 @@ DoomsdayApp &DoomsdayApp::app()
 {
     DENG2_ASSERT(theDoomsdayApp);
     return *theDoomsdayApp;
+}
+
+shell::PackageDownloader &DoomsdayApp::packageDownloader()
+{
+    return DoomsdayApp::app().d->packageDownloader;
 }
 
 res::Bundles &DoomsdayApp::bundles()
@@ -707,7 +778,7 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
             void *unloader = plugins().findEntryPoint(game().pluginId(), "DP_Unload");
             LOGDEV_MSG("Calling DP_Unload %p") << unloader;
             plugins().setActivePluginId(game().pluginId());
-            if (unloader) ((pluginfunc_t)unloader)();
+            if (unloader) reinterpret_cast<pluginfunc_t>(unloader)();
             plugins().setActivePluginId(0);
         }
 
@@ -725,7 +796,7 @@ void DoomsdayApp::unloadGame(GameProfile const &/*upcomingGame*/)
         Resources::get().clear();
 
         // We do not want to load session resources specified on the command line again.
-        AbstractSession::profile().resourceFiles.clear();
+//        AbstractSession::profile().resourceFiles.clear();
 
         // The current game is now the special "null-game".
         setGame(games().nullGame());
@@ -799,9 +870,9 @@ void DoomsdayApp::setGame(Game const &game)
     app().d->currentGame = const_cast<Game *>(&game);
 }
 
-void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
+void DoomsdayApp::makeGameCurrent(const GameProfile &profile)
 {
-    auto const &newGame = profile.game();
+    const auto &newGame = profile.game();
 
     if (!newGame.isNull())
     {
@@ -824,7 +895,8 @@ void DoomsdayApp::makeGameCurrent(GameProfile const &profile)
     // This is now the current game.
     setGame(newGame);
     d->currentProfile = &profile;
-    AbstractSession::profile().gameId = newGame.id();
+
+    profile.checkSaveLocation(); // in case it's gone missing
 
     if (!newGame.isNull())
     {
@@ -856,9 +928,9 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
                              std::function<int (void *)> gameActivationFunc,
                              Behaviors behaviors)
 {
-    auto const &newGame = profile.game();
+    const auto &newGame = profile.game();
 
-    bool const arePackagesDifferent =
+    const bool arePackagesDifferent =
             !GameProfiles::arePackageListsCompatible(DoomsdayApp::app().loadedPackagesAffectingGameplay(),
                                                      profile.packagesAffectingGameplay());
 
@@ -924,7 +996,7 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
             void *loader = plugins().findEntryPoint(game().pluginId(), "DP_Load");
             LOGDEV_MSG("Calling DP_Load %p") << loader;
             plugins().setActivePluginId(game().pluginId());
-            if (loader) ((pluginfunc_t)loader)();
+            if (loader) reinterpret_cast<pluginfunc_t>(loader)();
             plugins().setActivePluginId(0);
         }
 

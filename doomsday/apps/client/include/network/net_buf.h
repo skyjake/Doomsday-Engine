@@ -75,19 +75,64 @@ extern dd_bool  allowSending;
  */
 Reader1* Reader_NewWithNetworkBuffer(void);
 
-/**
- * Functions.
+/*
+ * Functions:
  */
-void            N_Init(void);
-void            N_Shutdown(void);
-void            N_ClearMessages(void);
-void            N_SendPacket(int flags);
-dd_bool         N_GetPacket(void);
-int             N_IdentifyPlayer(nodeid_t id);
-void            N_PrintBufferInfo(void);
-void            N_PrintTransmissionStats(void);
-void            N_PostMessage(netmessage_t *msg);
-void            N_AddSentBytes(size_t bytes);
+
+/**
+ * Initialize the low-level network subsystem. This is called always during startup (via
+ * Sys_Init()).
+ */
+void N_Init(void);
+
+/**
+ * Shut down the low-level network interface. Called during engine shutdown (not before).
+ */
+void N_Shutdown(void);
+
+/**
+ * Empties the message buffers.
+ */
+void N_ClearMessages(void);
+
+/**
+ * Send the data in the netbuffer. The message is sent over a reliable and ordered
+ * connection.
+ *
+ * Handles broadcasts using recursion.
+ * Clients can only send packets to the server.
+ */
+void N_SendPacket(int flags);
+
+/**
+ * An attempt is made to extract a message from the message queue.
+ *
+ * @return  @c true if a message successful.
+ */
+dd_bool N_GetPacket(void);
+
+/**
+ * @return The player number that corresponds network node @a id.
+ */
+int N_IdentifyPlayer(nodeid_t id);
+
+/**
+ * Print low-level information about the network buffer.
+ */
+void N_PrintBufferInfo(void);
+
+/**
+ * Print status information about the workings of data compression in the network buffer.
+ */
+void N_PrintTransmissionStats(void);
+
+/**
+ * Adds the given netmessage_s to the queue of received messages. Uses a mutex to
+ * synchronize access to the message queue.
+ *
+ * @note This is called in the network receiver thread.
+ */
+void N_PostMessage(netmessage_t *msg);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -32,7 +32,7 @@
 #include "render/playerweaponanimator.h"
 
 #include <de/AnimationValue>
-#include <de/App>
+#include <de/FS>
 #include <de/DialogContentStylist>
 #include <de/NumberValue>
 #include <de/PackageLoader>
@@ -78,7 +78,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
         App::packageLoader().audienceForActivity() += this;
 
         // The contents of the editor will scroll.
-        GuiWidget *container = &self().containerWidget();
+        ScrollAreaWidget *container = &self().containerWidget();
 
         container->add(assetChoice = new ChoiceWidget);
         assetChoice->popup().useInfoStyle();
@@ -391,17 +391,17 @@ DENG_GUI_PIMPL(ModelAssetEditor)
                     g->addSlider(var, range, step, precision);
                 }
             }
-            else if (var.value().is<TextValue>())
+            else if (is<TextValue>(var.value()))
             {
                 g->addLabel(varLabel(label));
                 g->addLineEdit(var);
             }
-            else if (var.value().is<AnimationValue>())
+            else if (is<AnimationValue>(var.value()))
             {
                 g->addLabel(varLabel(label));
                 g->addSlider(var, range, step, precision);
             }
-            else if (descend && var.value().is<RecordValue>())
+            else if (descend && is<RecordValue>(var.value()))
             {
                 populateGroup(g, var.valueAsRecord(), descend, label);
             }
@@ -462,15 +462,13 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     {
         SequentialLayout &layout = self().layout();
         layout.clear();
-        layout << *info
-               << *instLabel;
+        layout << *assetLabel << *info << *instLabel;
         foreach (Group *g, groups)
         {
             layout << g->title() << *g;
         }
-        self().updateSidebarLayout(assetLabel->rule().width() +
-                                 assetChoice->rule().width(),
-                                 assetChoice->rule().height());
+        assetChoice->rule().setLeftTop(assetLabel->rule().right(), assetLabel->rule().top());
+        self().updateSidebarLayout(assetLabel->rule().width() + assetChoice->rule().width());
     }
 
     void updateInstanceList()
@@ -550,7 +548,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
     {
         assetChoice->items().clear();
 
-        App::rootFolder().locate<Folder const>("/packs").forContents([this] (String name, File &)
+        FS::locate<Folder const>("/packs").forContents([this] (String name, File &)
         {
             QRegExp regex("asset\\.(model\\.((thing|weapon)\\..*))");
             if (regex.exactMatch(name))
@@ -587,7 +585,7 @@ DENG_GUI_PIMPL(ModelAssetEditor)
 
         if (animator)
         {
-            animator->startSequence(data.animationId, 10, false);
+            animator->startAnimation(data.animationId, 10, false);
         }
     }
 
@@ -608,24 +606,11 @@ ModelAssetEditor::ModelAssetEditor()
 {
     d->assetLabel = LabelWidget::newWithText(tr("Asset:"), &containerWidget());
 
-    // Layout.
-    d->assetLabel->rule()
-            .setInput(Rule::Left, containerWidget().contentRule().left())
-            .setInput(Rule::Top,  title().rule().bottom());
-    d->assetChoice->rule()
-            .setInput(Rule::Left, d->assetLabel->rule().right())
-            .setInput(Rule::Top,  d->assetLabel->rule().top());
-
-    // Update container size.
-    updateSidebarLayout(d->assetLabel->rule().width() +
-                        d->assetChoice->rule().width(),
-                        d->assetChoice->rule().height());
-    layout().setStartY(d->assetChoice->rule().bottom());
-
+    d->redoLayout();
     d->updateAssetsList();
 
     connect(d->assetChoice, SIGNAL(selectionChangedByUser(uint)), this, SLOT(setSelectedAsset(uint)));
-    connect(d->instChoice, SIGNAL(selectionChangedByUser(uint)), this, SLOT(setSelectedInstance(uint)));
+    connect(d->instChoice,  SIGNAL(selectionChangedByUser(uint)), this, SLOT(setSelectedInstance(uint)));
 }
 
 void ModelAssetEditor::setSelectedAsset(uint pos)

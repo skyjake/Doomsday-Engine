@@ -306,7 +306,7 @@ void GameStateFolder::Metadata::parse(String const &source)
         }
 
         // Ensure the map URI has the "Maps" scheme set.
-        if (!gets("mapUri").beginsWith("Maps:", Qt::CaseInsensitive))
+        if (!gets("mapUri").beginsWith("Maps:", String::CaseInsensitive))
         {
             set("mapUri", String("Maps:") + gets("mapUri"));
         }
@@ -318,7 +318,7 @@ void GameStateFolder::Metadata::parse(String const &source)
         if (!has("episode"))
         {
             String const mapUriPath = gets("mapUri").substr(5);
-            if (mapUriPath.beginsWith("MAP", Qt::CaseInsensitive))
+            if (mapUriPath.beginsWith("MAP", String::CaseInsensitive))
             {
                 set("episode", "1");
             }
@@ -411,7 +411,7 @@ String GameStateFolder::Metadata::asStyledText() const
  * See the Doomsday Wiki for an example of the syntax:
  * http://dengine.net/dew/index.php?title=Info
  */
-String GameStateFolder::Metadata::asTextWithInfoSyntax() const
+String GameStateFolder::Metadata::asInfo() const
 {
     /// @todo Use a more generic Record => Info conversion logic.
 
@@ -422,7 +422,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
     if (has("gameIdentityKey")) os <<   "gameIdentityKey: " << gets("gameIdentityKey");
     if (has("packages"))
     {
-        os << "\npackages " << geta("packages").asTextUsingInfoSyntax();
+        os << "\npackages " << geta("packages").asInfo();
     }
     if (has("episode"))         os << "\nepisode: "         << gets("episode");
     if (has("mapTime"))         os << "\nmapTime: "         << String::number(geti("mapTime"));
@@ -441,7 +441,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
     }
     if (has("visitedMaps"))
     {
-        os << "\nvisitedMaps " << geta("visitedMaps").asTextUsingInfoSyntax();
+        os << "\nvisitedMaps " << geta("visitedMaps").asInfo();
     }
     if (has("sessionId"))       os << "\nsessionId: "       << String::number(geti("sessionId"));
     if (has("userDescription")) os << "\nuserDescription: " << gets("userDescription");
@@ -455,7 +455,7 @@ String GameStateFolder::Metadata::asTextWithInfoSyntax() const
         {
             Value const &value = i.value()->value();
             String valueAsText = value.asText();
-            if (value.is<Value::Text>())
+            if (is<Value::Text>(value))
             {
                 valueAsText = "\"" + valueAsText.replace("\"", "''") + "\"";
             }

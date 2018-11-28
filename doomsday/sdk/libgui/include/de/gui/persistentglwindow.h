@@ -1,4 +1,4 @@
-/** @file persistentcanvaswindow.h  Canvas window with persistent state.
+/** @file persistentglwindow.h  Canvas window with persistent state.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2005-2013 Daniel Swanson <danij@dengine.net>
@@ -17,8 +17,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_PERSISTENTCANVASWINDOW_H
-#define LIBGUI_PERSISTENTCANVASWINDOW_H
+#ifndef LIBGUI_PERSISTENTGLWINDOW_H
+#define LIBGUI_PERSISTENTGLWINDOW_H
+
+#if !defined (DENG_MOBILE)
 
 #include <de/Error>
 #include <de/GLWindow>
@@ -71,6 +73,7 @@ public:
         FullscreenWidth,
         FullscreenHeight,
         ColorDepthBits,
+        RefreshRate,        // milli-Hz
 
         // Other
         FullSceneAntialias,
@@ -117,6 +120,8 @@ public:
     inline int fullscreenHeight() const { return fullscreenSize().y; }
 
     int colorDepthBits() const;
+
+    float refreshRate() const;
 
     void show(bool yes = true);
 
@@ -165,6 +170,7 @@ public:
 
 protected slots:
     void performQueuedTasks();
+    void windowVisibilityChanged();
 
     /**
      * Forms the name of a Config variable for this window. Subclasses are
@@ -183,4 +189,6 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_PERSISTENTCANVASWINDOW_H
+#endif
+
+#endif // LIBGUI_PERSISTENTGLWINDOW_H

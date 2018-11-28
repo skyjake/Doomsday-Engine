@@ -159,6 +159,14 @@ DENG2_PIMPL(MenuWidget)
             setWidget(_item.makeWidget(), _item.openingDirection());
             _widget->setDeleteAfterDismissed(true);
 
+            if (_item.semantics().testFlag(Item::ClosesParentPopup))
+            {
+                // PopupMenuWidget has a MenuWidget as content.
+                if (auto *selfPopup = maybeAs<PopupMenuWidget>(d->self().parentGuiWidget()))
+                {
+                    QObject::connect(_widget.get(), SIGNAL(closed()), selfPopup, SLOT(close()));
+                }
+            }
             SubAction::trigger();
         }
 
@@ -710,6 +718,12 @@ void MenuWidget::dismissPopups()
     {
         pop->close();
     }
+}
+
+void MenuWidget::updateStyle()
+{
+    ScrollAreaWidget::updateStyle();
+    updateLayout();
 }
 
 } // namespace de

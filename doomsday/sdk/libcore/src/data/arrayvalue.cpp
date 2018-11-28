@@ -42,6 +42,14 @@ ArrayValue::ArrayValue(ArrayValue const &other) : Value(), _iteration(0)
     }
 }
 
+ArrayValue::ArrayValue(StringList const &strings)
+{
+    for (String str : strings)
+    {
+        _elements.push_back(new TextValue(str));
+    }
+}
+
 ArrayValue::ArrayValue(std::initializer_list<Value *> values) : _iteration(0)
 {
     for (auto *v : values)
@@ -289,6 +297,18 @@ void ArrayValue::remove(dint index)
     _elements.erase(elem);
 }
 
+dint ArrayValue::indexOf(const Value &value) const
+{
+    for (int i = 0; i < _elements.size(); ++i)
+    {
+        if (!value.compare(*_elements[i]))
+        {
+            return i;
+        }
+    }
+    return -1;
+}
+
 ArrayValue &ArrayValue::operator << (Value *value)
 {
     add(value);
@@ -396,7 +416,7 @@ Value const &ArrayValue::operator [] (dint index) const
     return element(index);
 }
 
-String ArrayValue::asTextUsingInfoSyntax() const
+String ArrayValue::asInfo() const
 {
     StringList values;
     for (Value const *value : elements())

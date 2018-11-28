@@ -24,6 +24,7 @@
 #include <de/ButtonWidget>
 #include <de/Config>
 #include <de/SignalAction>
+#include <de/TextValue>
 #include <QFileDialog>
 
 using namespace de;
@@ -45,7 +46,7 @@ NoGamesColumnWidget::NoGamesColumnWidget()
             .setInput(Rule::Bottom, rule().midY());
 
     ButtonWidget *chooseIwad = new ButtonWidget;
-    chooseIwad->setText(tr("Select IWAD Folder..."));
+    chooseIwad->setText(tr("Select WAD Folder..."));
     chooseIwad->setSizePolicy(ui::Expand, ui::Expand);
     chooseIwad->rule()
             .setMidAnchorX(rule().midX())
@@ -61,29 +62,51 @@ String NoGamesColumnWidget::tabHeading() const
 
 void NoGamesColumnWidget::browseForDataFiles()
 {
+    bool reload = false;
+
+#if !defined (DENG_MOBILE)
     // Use a native dialog to select the IWAD folder.
     ClientApp::app().beginNativeUIMode();
 
-    QFileDialog dlg(nullptr,
-                    tr("Select IWAD Folder"),
-                    App::config().gets("resource.iwadFolder", ""));
+    const auto folders = Config::get().getStringList("resource.packageFolder");
+    String lastDir;
+    if (!folders.isEmpty())
+    {
+        lastDir = folders.back();
+    }
+    QFileDialog dlg(nullptr, "Select IWAD Folder", lastDir);
     dlg.setFileMode(QFileDialog::Directory);
     dlg.setReadOnly(true);
     //dlg.setNameFilter("*.wad");
     dlg.setLabelText(QFileDialog::Accept, tr("Select"));
-    bool reload = false;
     if (dlg.exec())
     {
-        App::config().set("resource.iwadFolder", dlg.selectedFiles().at(0));
+        Variable &      var = Config::get("resource.packageFolder");
+        const TextValue selDir{dlg.selectedFiles().at(0)};
+        if (is<ArrayValue>(var.value()))
+        {
+            auto &array = var.value<ArrayValue>();
+            int found = array.indexOf(TextValue(selDir));
+            if (found >= 0)
+            {
+                array.remove(found);
+            }
+            array.add(selDir);
+        }
+        else
+        {
+            var.set(selDir);
+        }
         reload = true;
     }
 
     ClientApp::app().endNativeUIMode();
+#endif
 
     // Reload packages and recheck for game availability.
     if (reload)
     {
         ClientWindow::main().console().closeLogAndUnfocusCommandLine();
-        DoomsdayApp::app().initWadFolders();
+        DoomsdayApp::app().initPackageFolders();
     }
 }

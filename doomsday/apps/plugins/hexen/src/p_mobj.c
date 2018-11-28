@@ -278,7 +278,7 @@ void P_MobjMoveXY(mobj_t* mo)
     if(P_CameraXYMovement(mo))
         return;
 
-    if(FEQUAL(mo->mom[MX], 0) && FEQUAL(mo->mom[MY], 0))
+    if(IS_ZERO(mo->mom[MX]) && IS_ZERO(mo->mom[MY]))
     {
         if(mo->flags & MF_SKULLFLY)
         {
@@ -789,14 +789,14 @@ void P_MobjMoveZ(mobj_t* mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
             mo->mom[MZ] = -(gravity / 8) * 2;
         else
             mo->mom[MZ] -= gravity / 8;
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
             mo->mom[MZ] = -gravity * 2;
         else
             mo->mom[MZ] -= gravity;
@@ -910,13 +910,13 @@ void P_MobjThinker(void *thinkerPtr)
         dd_bool changexy;
 
         // Handle movement.
-        if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
+        if(NON_ZERO(mobj->mom[MX]) || NON_ZERO(mobj->mom[MY]) || NON_ZERO(mobj->mom[MZ]) ||
            !FEQUAL(mobj->origin[VZ], mobj->floorZ))
         {
             frac[VX] = mobj->mom[MX] / 8;
             frac[VY] = mobj->mom[MY] / 8;
             frac[VZ] = mobj->mom[MZ] / 8;
-            changexy = (!FEQUAL(frac[VX], 0) || !FEQUAL(frac[VY], 0));
+            changexy = (NON_ZERO(frac[VX]) || NON_ZERO(frac[VY]));
 
             for(i = 0; i < 8; ++i)
             {
@@ -1005,7 +1005,7 @@ void P_MobjThinker(void *thinkerPtr)
 
     // Handle X and Y momentums
     tmBlockingMobj = NULL;
-    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) ||
+    if(NON_ZERO(mobj->mom[MX]) || NON_ZERO(mobj->mom[MY]) ||
        (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
@@ -1032,7 +1032,7 @@ void P_MobjThinker(void *thinkerPtr)
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0) || tmBlockingMobj)
+    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || NON_ZERO(mobj->mom[MZ]) || tmBlockingMobj)
     {
         // Handle Z momentum and gravity
         if(mobj->flags2 & MF2_PASSMOBJ)
@@ -1136,11 +1136,11 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     */
 
     // Not for deathmatch?
-    if(G_Ruleset_Deathmatch() && (info->flags & MF_NOTDMATCH))
+    if(gfw_Rule(deathmatch) && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Don't spawn any monsters?
-    if(G_Ruleset_NoMonsters() && (info->flags & MF_COUNTKILL))
+    if(gfw_Rule(noMonsters) && (info->flags & MF_COUNTKILL))
         return NULL;
 
     if(info->flags & MF_SOLID)
@@ -1162,7 +1162,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
-    if(G_Ruleset_Skill() != SM_NIGHTMARE)
+    if(gfw_Rule(skill) != SM_NIGHTMARE)
     {
         mo->reactionTime = info->reactionTime;
     }

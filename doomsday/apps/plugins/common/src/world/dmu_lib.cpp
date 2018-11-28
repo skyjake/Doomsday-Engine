@@ -641,14 +641,14 @@ void P_TranslateSideMaterialOrigin(Side *side, SideSection section, float deltaX
     uint const dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
     float origin[2];
 
-    if(FEQUAL(deltaXY[0], 0) && FEQUAL(deltaXY[1], 0)) return;
+    if(IS_ZERO(deltaXY[0]) && IS_ZERO(deltaXY[1])) return;
 
     P_GetFloatpv(side, dmuSurfaceOriginFlags, origin);
-    if(!FEQUAL(deltaXY[0], 0))
+    if(NON_ZERO(deltaXY[0]))
     {
         origin[0] += deltaXY[0];
     }
-    if(!FEQUAL(deltaXY[1], 0))
+    if(NON_ZERO(deltaXY[1]))
     {
         origin[1] += deltaXY[1];
     }
@@ -670,14 +670,14 @@ void P_TranslatePlaneMaterialOrigin(Plane *plane, float deltaXY[2])
 
     DENG_ASSERT(plane);
 
-    if(FEQUAL(deltaXY[0], 0) && FEQUAL(deltaXY[1], 0)) return;
+    if(IS_ZERO(deltaXY[0]) && IS_ZERO(deltaXY[1])) return;
 
     P_GetFloatpv(plane, DMU_OFFSET_XY, origin);
-    if(!FEQUAL(deltaXY[0], 0))
+    if(NON_ZERO(deltaXY[0]))
     {
         origin[0] += deltaXY[0];
     }
-    if(!FEQUAL(deltaXY[1], 0))
+    if(NON_ZERO(deltaXY[1]))
     {
         origin[1] += deltaXY[1];
     }

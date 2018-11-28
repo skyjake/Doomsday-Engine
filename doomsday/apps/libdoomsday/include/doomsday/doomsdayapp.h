@@ -25,8 +25,10 @@
 #include "players.h"
 #include "gameprofiles.h"
 
+#include <de/Binder>
 #include <de/NativePath>
 #include <de/Info>
+#include <de/shell/PackageDownloader>
 
 #include <QFlags>
 #include <string>
@@ -58,8 +60,6 @@ public:
 
     /// Notified when console variables and commands should be registered.
     DENG2_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
-
-    DENG2_DEFINE_AUDIENCE2(FileRefresh, void aboutToRefreshFiles())
 
     DENG2_DEFINE_AUDIENCE2(PeriodicAutosave, void periodicAutosave())
 
@@ -187,6 +187,8 @@ public:
 
 public:
     static DoomsdayApp &    app();
+    static de::shell::PackageDownloader &
+                            packageDownloader();
     static res::Bundles &   bundles();
     static Plugins &        plugins();
     static Games &          games();
@@ -225,6 +227,8 @@ public:
     static de::StringList loadedPackagesAffectingGameplay();
 
 protected:
+    static void initBindings(de::Binder &binder);
+
     /**
      * Called just before a game change is about to begin. The GameUnload
      * audience has already been notified.

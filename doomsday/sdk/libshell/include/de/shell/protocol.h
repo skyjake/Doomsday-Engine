@@ -26,8 +26,7 @@
 #include <de/Vector>
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Password challenge.
@@ -70,8 +69,8 @@ public:
     void execute() const;
 
     // Implements ISerializable.
-    void operator >> (Writer &to) const;
-    void operator << (Reader &from);
+    void operator>>(Writer &to) const;
+    void operator<<(Reader &from);
 
     static Packet *fromBlock(Block const &block);
 
@@ -86,21 +85,18 @@ private:
 class LIBSHELL_PUBLIC PlayerInfoPacket : public Packet
 {
 public:
-    struct Player
-    {
-        int number;
-        Vector2i position;
-        String name;
+    struct Player {
+        int       number;
+        Vector2i  position;
+        String    name;
         Vector3ub color;
 
-        Player(int num                   = 0,
-               Vector2i const &pos       = Vector2i(),
-               String   const &plrName   = "",
+        Player(int num = 0, Vector2i const &pos = Vector2i(), String const &plrName = "",
                Vector3ub const &plrColor = Vector3ub())
-            : number(num),
-              position(pos),
-              name(plrName),
-              color(plrColor)
+            : number(num)
+            , position(pos)
+            , name(plrName)
+            , color(plrColor)
         {}
     };
 
@@ -118,8 +114,8 @@ public:
     Players players() const;
 
     // Implements ISerializable.
-    void operator >> (Writer &to) const;
-    void operator << (Reader &from);
+    void operator>>(Writer &to) const;
+    void operator<<(Reader &from);
 
     static Packet *fromBlock(Block const &block);
 
@@ -137,13 +133,11 @@ private:
 class LIBSHELL_PUBLIC MapOutlinePacket : public Packet
 {
 public:
-    enum LineType
-    {
+    enum LineType {
         OneSidedLine = 0,
         TwoSidedLine = 1,
     };
-    struct Line
-    {
+    struct Line {
         Vector2i start;
         Vector2i end;
         LineType type;
@@ -168,8 +162,8 @@ public:
     Line const &line(int index) const;
 
     // Implements ISerializable.
-    void operator >> (Writer &to) const;
-    void operator << (Reader &from);
+    void operator>>(Writer &to) const;
+    void operator<<(Reader &from);
 
     static Packet *fromBlock(Block const &block);
 
@@ -186,8 +180,7 @@ public:
     /// Type of provided packet is incorrect. @ingroup errors
     DENG2_ERROR(TypeError);
 
-    enum PacketType
-    {
+    enum PacketType {
         Unknown,
         PasswordChallenge,
         Command,        ///< Console command (only to server).
@@ -245,13 +238,10 @@ public:
      *
      * @return Packet. Caller gets ownership.
      */
-    RecordPacket *newGameState(String const &mode,
-                               String const &rules,
-                               String const &mapId,
+    RecordPacket *newGameState(String const &mode, String const &rules, String const &mapId,
                                String const &mapTitle);
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_PROTOCOL_H

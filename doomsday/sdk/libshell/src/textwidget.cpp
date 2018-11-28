@@ -21,13 +21,12 @@
 #include "de/shell/Action"
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL_NOREF(TextWidget)
 {
-    TextCanvas *canvas;
-    RuleRectangle *rule;
+    TextCanvas *    canvas;
+    RuleRectangle * rule;
     QList<Action *> actions;
 
     Impl() : canvas(0), rule(new RuleRectangle)
@@ -178,5 +177,4 @@ bool TextWidget::handleEvent(Event const &event)
     return Widget::handleEvent(event);
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

@@ -44,6 +44,8 @@ public:
      */
     de::ui::DataPos selectedIndex() const;
 
+    const de::ui::Item *selectedItem() const;
+
     /**
      * @brief setSelectedIndex
      * @param index

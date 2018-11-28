@@ -126,7 +126,7 @@ static QString Wad_invalidIndexMessage(int invalidIdx, int lastValidIdx)
 
 using namespace internal;
 
-Wad::LumpFile::LumpFile(Entry &entry, FileHandle &hndl, String path,
+Wad::LumpFile::LumpFile(Entry &entry, FileHandle *hndl, String path,
     FileInfo const &info, File1 *container)
     : File1(hndl, path, info, container)
     , entry(entry)
@@ -182,7 +182,7 @@ DENG2_PIMPL_NOREF(Wad)
 };
 
 Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
-    : File1(hndl, path, info, container)
+    : File1(&hndl, path, info, container)
     , LumpIndex()
     , d(new Impl)
 {
@@ -212,8 +212,7 @@ Wad::Wad(FileHandle &hndl, String path, FileInfo const &info, File1 *container)
         entry.offset = lump.offset;
         entry.size   = lump.size;
 
-        FileHandle *dummy = 0; /// @todo Fixme!
-        LumpFile *lumpFile = new LumpFile(entry, *dummy, entry.path(),
+        LumpFile *lumpFile = new LumpFile(entry, nullptr, entry.path(),
                                           FileInfo(lastModified(), // Inherited from the container (note recursion).
                                                    i, entry.offset, entry.size, entry.size),
                                           this);

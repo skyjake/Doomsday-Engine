@@ -36,7 +36,7 @@ class DialogContentStylist;
  * the bottom of the dialog, for the actions available to the user.
  *
  * The contents of the dialog should be placed under the scroll area returned
- * by DialogWidget::content() and positioned in relation to its content rule.
+ * by DialogWidget::area() and positioned in relation to its content rule.
  * When the dialog is set up, one must define the size of the content scroll
  * area (width and height rules).
  *
@@ -180,6 +180,8 @@ public:
      */
     void setMinimumContentWidth(Rule const &minWidth);
 
+    void setMaximumContentHeight(Rule const &maxHeight);
+
     MenuWidget &buttonsMenu();
 
     /**
@@ -210,6 +212,8 @@ public:
      * @param action  Action to trigger after the dialog has been accepted.
      */
     void setAcceptanceAction(RefArg<de::Action> action);
+
+    de::Action *acceptanceAction() const;
 
     /**
      * Shows the dialog and blocks execution until the dialog is closed --

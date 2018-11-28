@@ -110,7 +110,7 @@ DENG2_PIMPL(Bundles)
         DENG2_ASSERT(App::rootFolder().has("/sys/bundles"));
 
         bool wasIdentified = false;
-        int count = 0;
+        int  count         = 0;
         Time startedAt;
 
         while (auto const *bundle = nextToIdentify())
@@ -130,7 +130,7 @@ DENG2_PIMPL(Bundles)
 
     void parseRegistry()
     {
-        using Info = de::Info;
+        DENG2_GUARD(this);
 
         if (!identityRegistry.isEmpty()) return;
 
@@ -141,7 +141,13 @@ DENG2_PIMPL(Bundles)
 
         for (auto *elem : identityRegistry.root().contentsInOrder())
         {
-            if (!elem->isBlock()) continue;
+            using Info = de::Info;
+
+            if (!elem->isBlock())
+        {
+                // Looking for "package" blocks.
+                continue;
+            }
 
             Info::BlockElement &block = elem->as<Info::BlockElement>();
             if (block.blockType() != QStringLiteral("package"))
@@ -202,10 +208,10 @@ Bundles::BlockElements Bundles::formatEntries(DataBundle::Format format) const
 
 void Bundles::identify()
 {
+    FS::get().changeBusyLevel(+1);
     d->tasks.start([this] ()
     {
         d->identifyAddedDataBundles();
-
         if (isEverythingIdentified())
         {
             DENG2_FOR_AUDIENCE2(Identify, i)
@@ -213,6 +219,7 @@ void Bundles::identify()
                 i->dataBundlesIdentified();
             }
         }
+        FS::get().changeBusyLevel(-1);
     });
 }
 
@@ -222,11 +229,11 @@ bool Bundles::isEverythingIdentified() const
     return d->bundlesToIdentify.isEmpty();
 }
 
-void Bundles::waitForEverythingIdentified()
+/*void Bundles::waitForEverythingIdentified()
 {
     identify();
     d->tasks.waitForDone();
-}
+}*/
 
 Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
 {
@@ -268,8 +275,8 @@ Bundles::MatchResult Bundles::match(DataBundle const &bundle) const
         // Match the file type.
         String fileType = def->keyValue(QStringLiteral("fileType"));
         if (fileType.isEmpty()) fileType = "file"; // prefer files by default
-        if ((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Status::FILE) ||
-            (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Status::FOLDER))
+        if ((!fileType.compareWithoutCase(QStringLiteral("file"))   && source.status().type() == File::Type::File) ||
+            (!fileType.compareWithoutCase(QStringLiteral("folder")) && source.status().type() == File::Type::Folder))
         {
             ++score;
         }

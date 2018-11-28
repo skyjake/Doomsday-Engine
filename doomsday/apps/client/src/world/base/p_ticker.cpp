@@ -34,7 +34,7 @@ void P_Ticker(timespan_t elapsed)
     /// @todo Each context animator should be driven by a more relevant ticker, rather
     /// than using the playsim's ticker for all contexts. (e.g., animators for the UI
     /// context should be driven separately).
-    world::Materials::get().forAllMaterials([&elapsed] (world::Material &material)
+    world::Materials::get().forAnimatedMaterials([&elapsed] (world::Material &material)
     {
         auto &mat = material.as<ClientMaterial>();
         for (int i = mat.animatorCount() - 1; i >= 0; --i)

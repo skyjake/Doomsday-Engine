@@ -40,8 +40,6 @@
 using namespace de;
 using namespace common;
 
-float turboMul; // Multiplier for turbo.
-
 gamemode_t gameMode;
 int gameModeBits;
 
@@ -167,7 +165,7 @@ void D_PreInit()
     cfg.common.hudColor[0] = 1;
     cfg.common.hudColor[1] = cfg.common.hudColor[2] = 0;
     cfg.common.hudColor[3] = 0.75f;
-    cfg.common.hudFog = 1;
+    cfg.common.hudFog = 5;
     cfg.common.hudIconAlpha = 0.5f;
     cfg.common.xhairAngle = 0;
     cfg.common.xhairSize = .5f;
@@ -260,7 +258,7 @@ void D_PreInit()
     cfg.common.automapBack[2] = 0.f;
     cfg.common.automapOpacity = .7f;
     cfg.common.automapLineAlpha = .7f;
-    cfg.common.automapLineWidth = 1.1f;
+    cfg.common.automapLineWidth = 3.0f;
     cfg.common.automapShowDoors = true;
     cfg.common.automapDoorGlow = 8;
     cfg.common.automapHudDisplay = 2;
@@ -333,7 +331,7 @@ void D_PostInit()
     }
 
     // Get skill / episode / map from parms.
-    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    gfw_SetDefaultRule(skill, /*startSkill =*/ SM_MEDIUM);
 
     if(cmdLine.check("-altdeath"))
     {
@@ -345,11 +343,11 @@ void D_PostInit()
     }
 
     // Apply these rules.
-    ::defaultGameRules.noMonsters      = cmdLine.check("-nomonsters")? true : false;
-    ::defaultGameRules.respawnMonsters = cmdLine.check("-respawn")   ? true : false;
-    ::defaultGameRules.fast            = cmdLine.check("-fast")      ? true : false;
+    gfw_SetDefaultRule(noMonsters     , cmdLine.has("-nomonsters"));
+    gfw_SetDefaultRule(respawnMonsters, cmdLine.has("-respawn")   );
+    gfw_SetDefaultRule(fast           , cmdLine.has("-fast")      );
 
-    if(::defaultGameRules.deathmatch)
+    if (gfw_DefaultRule(deathmatch))
     {
         if(int arg = cmdLine.check("-timer", 1))
         {
@@ -361,21 +359,6 @@ void D_PostInit()
                         << mins << (mins == 1? "minute" : "minutes");
             }
         }
-    }
-
-    // Change the turbo multiplier?
-    ::turboMul = 1.0f;
-    if(int arg = cmdLine.check("-turbo"))
-    {
-        int scale = 200;
-        if(arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
-        {
-            scale = cmdLine.at(arg + 1).toInt();
-        }
-        scale = de::clamp(10, scale, 400);
-
-        LOG_NOTE("Turbo scale: %i%%") << scale;
-        ::turboMul = scale / 100.f;
     }
 
     // Load a saved game?
@@ -392,10 +375,10 @@ void D_PostInit()
     }
 
     // Change the default skill mode?
-    if(int arg = cmdLine.check("-skill", 1))
+    if (auto arg = cmdLine.check("-skill", 1))
     {
-        int skillNumber = cmdLine.at(arg + 1).toInt();
-        ::defaultGameRules.skill = (skillmode_t)(skillNumber > 0? skillNumber - 1 : skillNumber);
+        int const skillNumber = arg.params.first().toInt();
+        gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0? skillNumber - 1 : skillNumber));
     }
 
     G_AutoStartOrBeginTitleLoop();

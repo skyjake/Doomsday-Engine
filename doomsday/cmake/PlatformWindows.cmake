@@ -14,10 +14,11 @@ add_definitions (
     -D_WIN32_WINNT=0x0601
     -D_CRT_SECURE_NO_WARNINGS
     -D_USE_MATH_DEFINES
+    -DDENG_PLATFORM_ID="win-${DENG_ARCH}"
 )
 
 # Code signing.
-set (DENG_SIGNTOOL_CERT "" CACHE FILEPATH "Name of the certificate for signing files.")
+set (DENG_SIGNTOOL_CERT "" CACHE STRING "Name of the certificate for signing files.")
 set (DENG_SIGNTOOL_PIN "" CACHE STRING "PIN for signing key.")
 set (DENG_SIGNTOOL_TIMESTAMP "" CACHE STRING "URL of the signing timestamp server.")
 find_program (SIGNTOOL_COMMAND signtool)

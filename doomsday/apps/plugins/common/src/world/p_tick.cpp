@@ -31,6 +31,7 @@
 #include "p_user.h"
 #include "player.h"
 #include "r_common.h"
+#include "r_special.h"
 
 using namespace common;
 
@@ -63,7 +64,7 @@ void P_DoTick()
     {
         if(!--timerGame)
         {
-            G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
+            G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("next"));
         }
     }
 
@@ -73,6 +74,7 @@ void P_DoTick()
         return;
 
     Thinker_Run();
+
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     // Extended lines and sectors.
     XG_Ticker();
@@ -98,9 +100,7 @@ void P_DoTick()
         R_UpdateConsoleView(i);
     }
 
-#ifdef __JDOOM__
-    G_UpdateSpecialFilter(DISPLAYPLAYER);
-#endif
+    R_UpdateSpecialFilter(DISPLAYPLAYER);
 
     // For par times, among other things.
     mapTime++;

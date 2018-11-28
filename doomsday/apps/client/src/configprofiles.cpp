@@ -221,11 +221,11 @@ DENG2_PIMPL(ConfigProfiles)
             DENG2_ASSERT(confDefaults.has(name));
 
             Variable const &var = confDefaults[name];
-            if (var.value().is<NumberValue>())
+            if (is<NumberValue>(var.value()))
             {
                 return var.value().asNumber();
             }
-            else if (var.value().is<TextValue>())
+            else if (is<TextValue>(var.value()))
             {
                 return var.value().asText();
             }
@@ -270,7 +270,7 @@ DENG2_PIMPL(ConfigProfiles)
 
             case ConfigVariable: {
                 Value const &cfgValue = Config::get(st.name).value();
-                if (cfgValue.is<NumberValue>())
+                if (is<NumberValue>(cfgValue))
                 {
                     val = cfgValue.asNumber();
                 }

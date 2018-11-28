@@ -218,7 +218,7 @@ float VRConfig::verticalFieldOfView(float horizFovDegrees, Vector2f const &viewP
         return radianToDegree(2.f * std::atan2(x / aspect, 1.f));
     }
 
-    return horizFovDegrees / aspect;
+    return clamp(1.f, horizFovDegrees / aspect, 179.f);
 }
 
 Matrix4f VRConfig::projectionMatrix(float fovDegrees,
@@ -232,7 +232,10 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
         return oculusRift().projection(nearClip, farClip) *
                Matrix4f::translate(oculusRift().eyeOffset() * mapUnits);
     }
+    return Matrix4f::perspective(fovDegrees, viewAspect(viewPortSize), nearClip, farClip) *
+           Matrix4f::translate(Vector3f(-eyeShift(), 0, 0));
 
+#if 0
     float const yfov = verticalFieldOfView(fovDegrees, viewPortSize);
     float const fH   = std::tan(.5f * degreeToRadian(yfov)) * nearClip;
     float const fW   = fH * viewAspect(viewPortSize);
@@ -256,6 +259,7 @@ Matrix4f VRConfig::projectionMatrix(float fovDegrees,
                              -fH, fH,
                              nearClip, farClip) *
            Matrix4f::translate(Vector3f(-eyeShift(), 0, 0));
+#endif
 }
 
 OculusRift &VRConfig::oculusRift()

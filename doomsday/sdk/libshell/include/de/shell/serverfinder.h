@@ -25,8 +25,7 @@
 #include <de/Error>
 #include <de/Address>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Looks up servers via beacon. @ingroup shell
@@ -51,8 +50,8 @@ public:
     QList<Address> foundServers() const;
 
     String name(Address const &server) const;
-    int playerCount(Address const &server) const;
-    int maxPlayers(Address const &server) const;
+    int    playerCount(Address const &server) const;
+    int    maxPlayers(Address const &server) const;
 
     /**
      * Returns the message sent by a server's beacon.
@@ -74,7 +73,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_SERVERFINDER_H

@@ -35,7 +35,7 @@
  */
 typedef enum resourceclassid_e {
     RC_NULL = -2,           ///< Not a real class.
-    RC_UNKNOWN = -1,        ///< Attempt to guess the class through evaluation of the path.
+    RC_IMPLICIT = -1,        ///< Attempt to guess the class through evaluation of the path.
     RESOURCECLASS_FIRST = 0,
     RC_PACKAGE = RESOURCECLASS_FIRST,
     RC_DEFINITION,

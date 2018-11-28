@@ -70,6 +70,7 @@ Flag { ID = "mif_fog"; Value = 0x1; }
 Flag { ID = "mif_sphere"; Value = 0x2; } # Draw the sky sphere even when models are in use.
 Flag { ID = "mif_nointermission"; Value = 0x4; }
 Flag { ID = "mif_lightning"; Value = 0x8; }
+Flag { ID = "mif_spawn_all_firemaces"; Value = 0x10; }
 
 # Sky Info
 Flag { ID = "sif_sphere"; Value = 0x1; } # Draw the sky sphere even when models are in use.

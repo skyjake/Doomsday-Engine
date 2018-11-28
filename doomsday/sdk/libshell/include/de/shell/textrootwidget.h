@@ -23,8 +23,7 @@
 #include <de/RootWidget>
 #include "TextCanvas"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 class TextWidget;
 
@@ -68,10 +67,9 @@ public:
 
 private:
     TextCanvas *_canvas;
-    bool _drawRequest;
+    bool        _drawRequest;
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_TEXTROOTWIDGET_H

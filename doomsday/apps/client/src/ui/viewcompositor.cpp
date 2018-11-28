@@ -31,6 +31,7 @@
 #include "api_render.h"
 #include "clientapp.h"
 #include "dd_main.h"
+#include "gl/gl_main.h"
 
 #include <de/Config>
 #include <de/CommandLine>
@@ -192,16 +193,14 @@ void ViewCompositor::renderGameView(std::function<void (int)> renderFunc)
 
     GLState::push()
             .setTarget(d->viewFramebuf)
-            .setViewport(Rectangleui::fromSize(d->viewFramebuf.size()))
-            .apply();
+            .setViewport(Rectangleui::fromSize(d->viewFramebuf.size()));
 
     d->viewFramebuf.clear(GLFramebuffer::ColorDepthStencil);
 
     // Rendering is done by the caller-provided callback.
     renderFunc(d->playerNum);
 
-    GLState::pop()
-            .apply();
+    GLState::pop();
 }
 
 GLTextureFramebuffer &ViewCompositor::gameView()
@@ -224,11 +223,11 @@ void ViewCompositor::drawCompositedLayers()
 
     R_UseViewPort(d->playerNum);
 
-    GLState::push()
-            .setAlphaTest(false)
-            .setBlend    (false)
-            .setDepthTest(false)
-            .setCull     (gl::None);
+    DGL_PushState();
+    DGL_Disable(DGL_ALPHA_TEST);
+    DGL_Disable(DGL_BLEND);
+    DGL_Disable(DGL_DEPTH_TEST);
+    DGL_CullFace(DGL_NONE);
 
     // 3D world view (using the previously rendered texture).
     d->postProcessing.update();
@@ -239,7 +238,7 @@ void ViewCompositor::drawCompositedLayers()
     // Some of the layers use OpenGL 2 drawing code.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
-    LIBGUI_GL.glLoadMatrixf(ClientWindow::main().root().projMatrix2D().values());
+    DGL_LoadMatrix(ClientWindow::main().root().projMatrix2D().values());
 
     // Fill around a scaled-down 3D view. The border is not visible if the 3D view
     // covers the entire area.
@@ -260,9 +259,7 @@ void ViewCompositor::drawCompositedLayers()
 
         if (gx.DrawViewPort)
         {
-            GLState::current()
-                    .setBlend(true)
-                    .apply();
+            DGL_Enable(DGL_BLEND);
 
             gx.DrawViewPort(P_ConsoleToLocal(d->playerNum),
                             &vpGeometry,
@@ -287,9 +284,8 @@ void ViewCompositor::drawCompositedLayers()
     Rectanglef const vp { normRect.topLeft     * targetSize,
                           normRect.bottomRight * targetSize };
 
-    GLState::push()
-            .setViewport(vp.toRectangleui())
-            .apply();
+    DGL_PushState();
+    GLState::current().setViewport(vp.toRectangleui());
 
     // Finale.
     {
@@ -321,7 +317,7 @@ void ViewCompositor::drawCompositedLayers()
         }
     }
 
-    GLState::pop().apply();
+    DGL_PopState();
 
     // Legacy engine/debug UIs (stuff from the old Net_Drawer).
     {
@@ -344,7 +340,7 @@ void ViewCompositor::drawCompositedLayers()
     displayPlayer = oldDisplayPlayer;
 
     GLState::considerNativeStateUndefined();
-    GLState::pop().apply();
+    DGL_PopState();
 }
 
 PostProcessing &ViewCompositor::postProcessing()

@@ -32,9 +32,10 @@ namespace menu {
 
 DENG2_PIMPL_NOREF(ButtonWidget)
 {
-    String text;              ///< Label text.
-    patchid_t patch = -1;     ///< Used when drawing this instead of text, if set.
-    bool noAltText  = false;
+    String    text;           ///< Label text.
+    patchid_t patch     = -1; ///< Used when drawing this instead of text, if set.
+    bool      noAltText = false;
+    bool      silent    = false;
 };
 
 ButtonWidget::ButtonWidget(String const &text, patchid_t patch)
@@ -57,18 +58,22 @@ void ButtonWidget::draw() const
     Vector4f const &textColor = mnRendState->textColors[color()];
     float t = (isFocused()? 1 : 0);
 
-    // Flash if focused.
-    if(isFocused() && cfg.common.menuTextFlashSpeed > 0)
-    {
-        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
-        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
-    }
+    const Vector4f color = selectionFlashColor(textColor);
 
-    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
+//    // Flash if focused.
+//    if (isFocused() && cfg.common.menuTextFlashSpeed > 0)
+//    {
+//        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
+//        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
+//    }
+//    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
+
+    const float fadeout = scrollingFadeout();
+    if (fadeout < .001f) return;
 
     FR_SetFont(fontId);
-    FR_SetColorAndAlpha(color.x, color.y, color.z, color.w);
-    DGL_Color4f(1, 1, 1, color.w);
+    FR_SetColorAndAlpha(color.x, color.y, color.z, color.w * fadeout);
+    DGL_Color4f(1, 1, 1, color.w * fadeout);
 
     if(d->patch >= 0)
     {
@@ -79,7 +84,12 @@ void ButtonWidget::draw() const
         }
 
         DGL_Enable(DGL_TEXTURE_2D);
-        WI_DrawPatch(d->patch, replacement, geometry().topLeft, ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
+        WI_DrawPatch(d->patch,
+                     replacement,
+                     geometry().topLeft,
+                     ALIGN_TOPLEFT,
+                     0,
+                     Hu_MenuMergeEffectWithDrawTextFlags(0));
         DGL_Disable(DGL_TEXTURE_2D);
 
         return;
@@ -93,23 +103,28 @@ void ButtonWidget::draw() const
 
 int ButtonWidget::handleCommand(menucommand_e cmd)
 {
-    if(cmd == MCMD_SELECT)
+    if (cmd == MCMD_SELECT)
     {
-        if(!isActive())
+        if (!isActive())
         {
             setFlags(Active);
             execAction(Activated);
         }
-
-        // We are not going to receive an "up event" so action that now.
-        S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        // We are not going to receive a separate "up event".
+        if (!d->silent)
+        {
+            S_LocalSound(SFX_MENU_ACCEPT, NULL);
+        }
         setFlags(Active, UnsetFlags);
         execAction(Deactivated);
-
         return true;
     }
-
     return false; // Not eaten.
+}
+
+void ButtonWidget::setSilent(bool silent)
+{
+    d->silent = silent;
 }
 
 void ButtonWidget::updateGeometry()

@@ -25,20 +25,13 @@
 #include <de/Vector>
 #include <de/Rectangle>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Flags for specifying alignment.
  * @ingroup textUi
  */
-enum AlignmentFlag
-{
-    AlignTop    = 0x1,
-    AlignBottom = 0x2,
-    AlignLeft   = 0x4,
-    AlignRight  = 0x8
-};
+enum AlignmentFlag { AlignTop = 0x1, AlignBottom = 0x2, AlignLeft = 0x4, AlignRight = 0x8 };
 Q_DECLARE_FLAGS(Alignment, AlignmentFlag)
 Q_DECLARE_OPERATORS_FOR_FLAGS(Alignment)
 
@@ -56,35 +49,34 @@ class LIBSHELL_PUBLIC TextCanvas
 {
 public:
     typedef Vector2ui Size;
-    typedef Vector2i Coord;
+    typedef Vector2i  Coord;
 
-    struct Char
-    {
-        enum Attrib
-        {
+    struct Char {
+        enum Attrib {
             Bold      = 0x1,
             Underline = 0x2,
             Reverse   = 0x4,
             Blink     = 0x8,
 
-            Dirty     = 0x80000000,
+            Dirty = 0x80000000,
 
             DefaultAttributes = 0,
-            VisualAttributes = Bold | Underline | Reverse | Blink
+            VisualAttributes  = Bold | Underline | Reverse | Blink
         };
         Q_DECLARE_FLAGS(Attribs, Attrib)
 
-        QChar ch;
+        QChar   ch;
         Attribs attribs;
 
     public:
         Char(QChar const &c = QChar(' '), Attribs const &at = DefaultAttributes)
-            : ch(c), attribs(at)
+            : ch(c)
+            , attribs(at)
         {
             attribs |= Dirty;
         }
 
-        bool operator < (Char const &other) const
+        bool operator<(Char const &other) const
         {
             if (ch.unicode() == other.ch.unicode())
             {
@@ -93,19 +85,19 @@ public:
             return ch.unicode() < other.ch.unicode();
         }
 
-        bool operator == (Char const &other) const
+        bool operator==(Char const &other) const
         {
             return (ch.unicode() == other.ch.unicode() &&
                     (attribs & VisualAttributes) == (other.attribs & VisualAttributes));
         }
 
-        Char &operator = (Char const &other)
+        Char &operator=(Char const &other)
         {
             bool changed = false;
 
             if (ch != other.ch)
             {
-                ch = other.ch;
+                ch      = other.ch;
                 changed = true;
             }
             if ((attribs & VisualAttributes) != (other.attribs & VisualAttributes))
@@ -122,19 +114,16 @@ public:
             return *this;
         }
 
-        bool isDirty() const
-        {
-            return attribs.testFlag(Dirty);
-        }
+        bool isDirty() const { return attribs.testFlag(Dirty); }
     };
 
 public:
     TextCanvas(Size const &size = Size(1, 1));
     virtual ~TextCanvas();
 
-    Size size() const;
-    int width() const;
-    int height() const;
+    Size       size() const;
+    int        width() const;
+    int        height() const;
     Rectanglei rect() const;
 
     virtual void resize(Size const &newSize);
@@ -170,8 +159,7 @@ public:
     void put(Coord const &pos, Char const &ch);
 
     void drawText(Coord const &pos, String const &text,
-                  Char::Attribs const &attribs = Char::DefaultAttributes,
-                  int richOffset = 0);
+                  Char::Attribs const &attribs = Char::DefaultAttributes, int richOffset = 0);
 
     /**
      * Draws line wrapped text. Use de::shell::wordWrapText() to determine
@@ -184,14 +172,15 @@ public:
      * @param lineAlignment  Alignment for lines.
      */
     void drawWrappedText(Coord const &pos, String const &text, ILineWrapping const &wraps,
-                         Char::Attribs const &attribs = Char::DefaultAttributes,
-                         Alignment lineAlignment = AlignLeft);
+                         Char::Attribs const &attribs       = Char::DefaultAttributes,
+                         Alignment            lineAlignment = AlignLeft);
 
     void clearRichFormat();
 
     void setRichFormatRange(Char::Attribs const &attribs, Rangei const &range);
 
-    void drawLineRect(Rectanglei const &rect, Char::Attribs const &attribs = Char::DefaultAttributes);
+    void drawLineRect(Rectanglei const &   rect,
+                      Char::Attribs const &attribs = Char::DefaultAttributes);
 
     /**
      * Draws the contents of a canvas onto this canvas.
@@ -223,7 +212,6 @@ private:
 
 Q_DECLARE_OPERATORS_FOR_FLAGS(TextCanvas::Char::Attribs)
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_TEXTCANVAS_H

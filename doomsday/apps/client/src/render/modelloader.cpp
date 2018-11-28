@@ -33,36 +33,38 @@ namespace render {
 
 using namespace de;
 
-String const ModelLoader::DEF_ANIMATION("animation");
-String const ModelLoader::DEF_MATERIAL ("material");
-String const ModelLoader::DEF_PASS     ("pass");
-String const ModelLoader::DEF_RENDER   ("render");
+String const ModelLoader::DEF_ANIMATION ("animation");
+String const ModelLoader::DEF_MATERIAL  ("material");
+String const ModelLoader::DEF_PASS      ("pass");
+String const ModelLoader::DEF_RENDER    ("render");
 
-static String const DEF_ALIGNMENT_PITCH("alignment.pitch");
-static String const DEF_ALIGNMENT_YAW  ("alignment.yaw");
-static String const DEF_AUTOSCALE      ("autoscale");
-static String const DEF_BLENDFUNC      ("blendFunc");
-static String const DEF_BLENDOP        ("blendOp");
-static String const DEF_DEPTHFUNC      ("depthFunc");
-static String const DEF_DEPTHWRITE     ("depthWrite");
-static String const DEF_FRONT_VECTOR   ("front");
-static String const DEF_MESHES         ("meshes");
-static String const DEF_MIRROR         ("mirror");
-static String const DEF_OFFSET         ("offset");
-static String const DEF_SEQUENCE       ("sequence");
-static String const DEF_SHADER         ("shader");
-static String const DEF_STATE          ("state");
-static String const DEF_TEXTURE_MAPPING("textureMapping");
-static String const DEF_TIMELINE       ("timeline");
-static String const DEF_UP_VECTOR      ("up");
-static String const DEF_VARIANT        ("variant");
+static String const DEF_ALIGNMENT_PITCH ("alignment.pitch");
+static String const DEF_ALIGNMENT_YAW   ("alignment.yaw");
+static String const DEF_AUTOSCALE       ("autoscale");
+static String const DEF_BLENDFUNC       ("blendFunc");
+static String const DEF_BLENDOP         ("blendOp");
+static String const DEF_DEPTHFUNC       ("depthFunc");
+static String const DEF_DEPTHWRITE      ("depthWrite");
+static String const DEF_FRONT_VECTOR    ("front");
+static String const DEF_MESHES          ("meshes");
+static String const DEF_MIRROR          ("mirror");
+static String const DEF_OFFSET          ("offset");
+static String const DEF_SEQUENCE        ("sequence");
+static String const DEF_SHADER          ("shader");
+static String const DEF_STATE           ("state");
+static String const DEF_TEXTURE_MAPPING ("textureMapping");
+static String const DEF_TIMELINE        ("timeline");
+static String const DEF_UP_VECTOR       ("up");
+static String const DEF_VARIANT         ("variant");
 
-static String const SHADER_DEFAULT     ("model.skeletal.generic");
-static String const MATERIAL_DEFAULT   ("default");
+static String const SHADER_DEFAULT      ("model.skeletal.generic");
+static String const MATERIAL_DEFAULT    ("default");
 
-static String const VAR_U_MAP_TIME     ("uMapTime");
+static String const VAR_U_MAP_TIME          ("uMapTime");
+static String const VAR_U_PROJECTION_MATRIX ("uProjectionMatrix");
+static String const VAR_U_VIEW_MATRIX       ("uViewMatrix");
 
-static Atlas::Size const MAX_ATLAS_SIZE(8192, 8192);
+static Atlas::Size const MAX_ATLAS_SIZE (8192, 8192);
 
 DENG2_PIMPL(ModelLoader)
 , DENG2_OBSERVES(filesys::AssetObserver, Availability)
@@ -123,12 +125,16 @@ DENG2_PIMPL(ModelLoader)
         // request another one.
         loadProgram(SHADER_DEFAULT);
 
+#if defined (DENG_HAVE_BUSYRUNNER)
         ClientApp::busyRunner().audienceForDeferredGLTask() += this;
+#endif
     }
 
     void deinit()
     {
+#if defined (DENG_HAVE_BUSYRUNNER)
         ClientApp::busyRunner().audienceForDeferredGLTask() -= this;
+#endif
 
         // GL resources must be accessed from the main thread only.
         bank.unloadAll(Bank::ImmediatelyInCurrentThread);
@@ -200,7 +206,7 @@ DENG2_PIMPL(ModelLoader)
     }
 
     /**
-     * Initializes one or more uninitializes models for rendering.
+     * Initializes one or more uninitialized models for rendering.
      * Must be called from the main thread.
      *
      * @param maxCount  Maximum number of models to initialize.
@@ -267,10 +273,20 @@ DENG2_PIMPL(ModelLoader)
             i->newProgramCreated(*prog);
         }
 
+        auto &render = ClientApp::renderSystem();
+
         // Built-in special uniforms.
         if (prog->def->hasMember(VAR_U_MAP_TIME))
         {
-            *prog << ClientApp::renderSystem().uMapTime();
+            *prog << render.uMapTime();
+        }
+        if (prog->def->hasMember(VAR_U_PROJECTION_MATRIX))
+        {
+            *prog << render.uProjectionMatrix();
+        }
+        if (prog->def->hasMember(VAR_U_VIEW_MATRIX))
+        {
+            *prog << render.uViewMatrix();
         }
 
         programs[name] = prog.get();
@@ -445,31 +461,41 @@ DENG2_PIMPL(ModelLoader)
         model.materialIndexForName.insert(MATERIAL_DEFAULT, 0);
         if (asset.has(DEF_MATERIAL))
         {
-            asset.subrecord(DEF_MATERIAL).forSubrecords(
-                [this, &model] (String const &blockName, Record const &block)
-            {
-                if (ScriptedInfo::blockType(block) == DEF_VARIANT)
-                {
-                    String const materialName = blockName;
-                    if (!model.materialIndexForName.contains(materialName))
+            asset.subrecord(DEF_MATERIAL)
+                .forSubrecords([this, &model](String const &blockName, Record const &block) {
+                    try
                     {
-                        // Add a new material.
-                        model.materialIndexForName.insert(materialName, model.addMaterial());
+                        if (ScriptedInfo::blockType(block) == DEF_VARIANT)
+                        {
+                            String const materialName = blockName;
+                            if (!model.materialIndexForName.contains(materialName))
+                            {
+                                // Add a new material.
+                                model.materialIndexForName.insert(materialName,
+                                                                  model.addMaterial());
+                            }
+                            block.forSubrecords([this, &model, &materialName](
+                                                    String const &matName, Record const &matDef) {
+                                setupMaterial(model,
+                                              matName,
+                                              model.materialIndexForName[materialName],
+                                              matDef);
+                                return LoopContinue;
+                            });
+                        }
+                        else
+                        {
+                            // The default material.
+                            setupMaterial(model, blockName, 0, block);
+                        }
                     }
-                    block.forSubrecords([this, &model, &materialName]
-                                        (String const &matName, Record const &matDef)
+                    catch (const Error &er)
                     {
-                        setupMaterial(model, matName, model.materialIndexForName[materialName], matDef);
-                        return LoopContinue;
-                    });
-                }
-                else
-                {
-                    // The default material.
-                    setupMaterial(model, blockName, 0, block);
-                }
-                return LoopContinue;
-            });
+                        LOG_GL_ERROR("Material variant \"%s\" is invalid: %s")
+                            << blockName << er.asText();
+                    }
+                    return LoopContinue;
+                });
         }
 
         // Set up the animation sequences for states.
@@ -504,7 +530,7 @@ DENG2_PIMPL(ModelLoader)
             auto timelines = ScriptedInfo::subrecordsOfType(DEF_TIMELINE, asset.subrecord(DEF_ANIMATION));
             DENG2_FOR_EACH_CONST(Record::Subrecords, timeline, timelines)
             {
-                Scheduler *scheduler = new Scheduler;
+                Timeline *scheduler = new Timeline;
                 scheduler->addFromInfo(*timeline.value());
                 model.timelines[timeline.key()] = scheduler;
             }
@@ -535,6 +561,12 @@ DENG2_PIMPL(ModelLoader)
                         int meshId = identifierFromText(value->asText(), [&model] (String const &text) {
                             return model.meshId(text);
                         });
+                        if (meshId < 0 || meshId >= model.meshCount())
+                        {
+                            throw DefinitionError("ModelLoader::bankLoaded",
+                                                  "Unknown mesh \"" + value->asText() + "\" in " +
+                                                      ScriptedInfo::sourceLocation(def));
+                        }
                         pass.meshes.setBit(meshId, true);
                     }
 
@@ -635,11 +667,16 @@ DENG2_PIMPL(ModelLoader)
                        duint materialIndex,
                        Record const &matDef)
     {
-        ModelDrawable::MeshId const mesh {
-            duint(identifierFromText(meshName, [&model] (String const &text) {
-                return model.meshId(text); })),
-            materialIndex
-        };
+        int mid = identifierFromText(meshName,
+                                     [&model](const String &text) { return model.meshId(text); });
+        if (mid < 0 || mid >= model.meshCount())
+        {
+            throw DefinitionError("ModelLoader::setupMaterial",
+                                  "Mesh \"" + meshName + "\" not found in " +
+                                      ScriptedInfo::sourceLocation(matDef));
+        }
+
+        const ModelDrawable::MeshId mesh{duint(mid), materialIndex};
 
         setupMaterialTexture(model, mesh, matDef, QStringLiteral("diffuseMap"),  ModelDrawable::Diffuse);
         setupMaterialTexture(model, mesh, matDef, QStringLiteral("normalMap"),   ModelDrawable::Normals);

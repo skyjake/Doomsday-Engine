@@ -62,11 +62,15 @@ public:
 
     ui::Item *makeItem(Value const &value);
 
+    // Events.
+    bool handleEvent(Event const &event) override;
+
 signals:
     void arrayChanged();
 
 protected:
     virtual String labelForElement(Value const &value) const;
+    virtual void   elementCreated(LabelWidget &, const ui::Item &);
 
 public slots:
     void updateFromVariable();

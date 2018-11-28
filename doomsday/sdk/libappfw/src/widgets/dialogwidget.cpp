@@ -31,7 +31,7 @@
 
 namespace de {
 
-static TimeDelta const FLASH_ANIM_SPAN = 0.75;
+static TimeSpan const FLASH_ANIM_SPAN = 0.75;
 
 /**
  * Compares dialog button items to determine the order in which they
@@ -102,6 +102,7 @@ DENG_GUI_PIMPL(DialogWidget)
     QScopedPointer<Untrapper> untrapper;
     DialogContentStylist stylist;
     IndirectRule *minWidth;
+    Rule const *maxContentHeight = nullptr;
 
     Impl(Public *i, Flags const &dialogFlags)
         : Base(i)
@@ -112,7 +113,7 @@ DENG_GUI_PIMPL(DialogWidget)
         , needButtonUpdate(false)
         , animatingGlow(false)
     {
-        minWidth  = new IndirectRule;
+        minWidth = new IndirectRule;
 
         // Initialize the border glow.
         normalGlow = style().colors().colorf("glow").w;
@@ -129,7 +130,7 @@ DENG_GUI_PIMPL(DialogWidget)
         buttons->setItems(mainButtonItems);
         buttons->organizer().audienceForWidgetCreation() += this;
         buttons->organizer().audienceForWidgetUpdate() += this;
-
+        
         extraButtons = new MenuWidget("extra");
         extraButtons->margins().setTop("");
         extraButtons->setItems(extraButtonItems);
@@ -166,26 +167,26 @@ DENG_GUI_PIMPL(DialogWidget)
         // Will a title be included?
         if (flags & WithHeading)
         {
-            heading = new LabelWidget;
+            heading = new LabelWidget("heading");
             heading->setFont("heading");
             heading->margins()
                     .setBottom("")
                     .setTop (rule("gap") + rule("dialog.gap"))
                     .setLeft(rule("gap") + rule("dialog.gap"));
-            heading->setSizePolicy(ui::Filled, ui::Expand);
+            heading->setSizePolicy(ui::Expand, ui::Expand);
             heading->setTextColor("accent");
             heading->setImageColor(style().colors().colorf("accent"));
-            heading->setOverrideImageSize(heading->font().ascent().valuei());
+            heading->setOverrideImageSize(heading->font().ascent());
             heading->setTextGap("dialog.gap");
+            heading->setAlignment(ui::AlignLeft);
             heading->setTextAlignment(ui::AlignRight);
             heading->setTextLineAlignment(ui::AlignLeft);
             heading->setFillMode(LabelWidget::FillWithText);
             container->add(heading);
 
             heading->rule()
-                    .setInput(Rule::Top,   self().rule().top())
-                    .setInput(Rule::Left,  self().rule().left())
-                    .setInput(Rule::Right, area->rule().right());
+                    .setInput(Rule::Top,  self().rule().top())
+                    .setInput(Rule::Left, self().rule().left());
 
             area->rule().setInput(Rule::Top, heading->rule().bottom());
         }
@@ -223,6 +224,7 @@ DENG_GUI_PIMPL(DialogWidget)
     ~Impl()
     {
         releaseRef(minWidth);
+        releaseRef(maxContentHeight);
         releaseRef(acceptAction);
     }
 
@@ -262,6 +264,10 @@ DENG_GUI_PIMPL(DialogWidget)
         if (self().openingDirection() == ui::Down)
         {
             changeRef(maxHeight, *maxHeight - self().anchor().top() - rule("gap"));
+        }
+        if (maxContentHeight)
+        {
+            changeRef(maxHeight, OperatorRule::minimum(*maxHeight, *maxContentHeight));
         }
 
         // Scrollable area content height.
@@ -340,7 +346,7 @@ DENG_GUI_PIMPL(DialogWidget)
             ButtonWidget &but = widget.as<ButtonWidget>();
 
             // Button images must be a certain size.
-            but.setOverrideImageSize(style().fonts().font("default").height().valuei());
+            but.setOverrideImageSize(style().fonts().font("default").height());
 
             // Set default label?
             if (item.label().isEmpty())
@@ -438,7 +444,7 @@ DENG_GUI_PIMPL(DialogWidget)
         {
             bg = self().infoStyleBackground();
         }
-        else if (Style::get().isBlurringAllowed())
+        else if (style().isBlurringAllowed())
         {
             /// @todo Should use the Style for this.
             bg.type = Background::SharedBlurWithBorderGlow;
@@ -460,6 +466,7 @@ DialogWidget::DialogWidget(String const &name, Flags const &flags)
     d->stylist.setContainer(area());
     setOpeningDirection(ui::NoDirection);
     d->updateBackground();
+    area().enableIndicatorDraw(true);
 }
 
 DialogWidget::Modality DialogWidget::modality() const
@@ -493,6 +500,11 @@ ScrollAreaWidget &DialogWidget::rightArea()
 void DialogWidget::setMinimumContentWidth(Rule const &minWidth)
 {
     d->minWidth->setSource(minWidth);
+}
+
+void DialogWidget::setMaximumContentHeight(const de::Rule &maxHeight)
+{
+    changeRef(d->maxContentHeight, maxHeight);
 }
 
 MenuWidget &DialogWidget::buttonsMenu()
@@ -532,7 +544,7 @@ ButtonWidget *DialogWidget::buttonWidget(int roleId) const
     {
         DialogButtonItem const &item = d->buttonItems.at(i).as<DialogButtonItem>();
 
-        if ((item.role() & IdMask) == roleId)
+        if ((item.role() & IdMask) == uint(roleId))
         {
             return &d->buttonWidget(item);
         }
@@ -567,6 +579,11 @@ void DialogWidget::setAcceptanceAction(RefArg<de::Action> action)
     changeRef(d->acceptAction, action);
 }
 
+Action *DialogWidget::acceptanceAction() const
+{
+    return d->acceptAction;
+}
+
 int DialogWidget::exec(GuiRootWidget &root)
 {
     d->modality = Modal;
@@ -577,10 +594,30 @@ int DialogWidget::exec(GuiRootWidget &root)
 
     prepare();
 
-    int result = d->subloop.exec();
+    int result = 0;
+    try
+    {
+#if defined (DENG_MOBILE)
+        // The subloop will likely access the root independently.
+        root.unlock();
+#endif
+
+        result = d->subloop.exec();
+
+#if defined (DENG_MOBILE)
+        root.lock();
+#endif
+    }
+    catch (...)
+    {
+#if defined (DENG_MOBILE)
+        // The lock needs to be reacquired in any case.
+        root.lock();
+#endif
+        throw;
+    }
 
     finish(result);
-
     return result;
 }
 

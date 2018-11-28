@@ -120,7 +120,7 @@ DENG_GUI_PIMPL(MapOutlineWidget)
         float const scale = de::min(rect.width()  / mapBounds.width(),
                                     rect.height() / mapBounds.height());
         return Matrix4f::translate(rect.middle()) *
-               Matrix4f::scale    (scale) *
+               Matrix4f::scale    (Vector3f(scale, -scale, 1)) *
                Matrix4f::translate(Vector2f(-mapBounds.middle()));
     }
 };

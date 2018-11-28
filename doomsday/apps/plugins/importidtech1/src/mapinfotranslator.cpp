@@ -224,9 +224,9 @@ namespace internal {
         String const gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic"))
         {
-            return de::Uri(String("Maps:E%1M%2").arg(episode+1).arg(map+1), RC_NULL);
+            return de::makeUri(String("Maps:E%1M%2").arg(episode+1).arg(map+1));
         }
-        return de::Uri(String("Maps:MAP%1").arg(map+1, 2, 10, QChar('0')), RC_NULL);
+        return de::makeUri(String("Maps:MAP%1").arg(map+1, 2, 10, QChar('0')));
     }
 
     static uint mapWarpNumberFor(de::Uri const &mapUri)
@@ -238,7 +238,7 @@ namespace internal {
             {
                 return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
             }
-            if(path.beginsWith("map", Qt::CaseInsensitive))
+            if(path.beginsWith("map", String::CaseInsensitive))
             {
                 return de::max(path.substr(3).toInt(0, 10, String::AllowSuffix), 1);
             }
@@ -297,8 +297,8 @@ namespace internal {
             while(lexer.readToken())
             {
                 String tok = Str_Text(lexer.token());
-                if(tok.beginsWith("cd_", Qt::CaseInsensitive) &&
-                   tok.endsWith("_track", Qt::CaseInsensitive))
+                if(tok.beginsWith("cd_", String::CaseInsensitive) &&
+                   tok.endsWith("_track", String::CaseInsensitive))
                 {
                     String const pubName = tok.substr(3, tok.length() - 6 - 3);
                     MusicMappings::const_iterator found = musicMap.constFind(pubName);
@@ -600,7 +600,7 @@ namespace internal {
             int mapNumber = String(Str_Text(tok)).toInt(&isNumber); // 1-based
             if(!isNumber)
             {
-                mapUri = de::Uri(Str_Text(tok), RC_NULL);
+                mapUri = de::makeUri(Str_Text(tok));
                 if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
                 mapInfo.set((isSecret? "secretNextMap" : "nextMap"), mapUri.compose());
             }
@@ -625,7 +625,7 @@ namespace internal {
                 int mapNumber = mapRef.toInt(&isNumber); // 1-based
                 if(!isNumber)
                 {
-                    mapUri = de::Uri(mapRef, RC_NULL);
+                    mapUri = de::makeUri(mapRef);
                     if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
                 }
                 else
@@ -752,7 +752,7 @@ namespace internal {
                     info->set("hub", hubNum);
                     continue;
                 }
-                if(String(Str_Text(lexer.token())).beginsWith("compat_", Qt::CaseInsensitive)) // ZDoom
+                if(String(Str_Text(lexer.token())).beginsWith("compat_", String::CaseInsensitive)) // ZDoom
                 {
                     LOG_WARNING("MAPINFO Map.%s is not supported.") << lexer.token();
                     lexer.readNumber();
@@ -1232,12 +1232,12 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
                 {
                     LOGDEV_MAP_VERBOSE("Warp %u translated to map %s, hub %i")
                             << map << info.gets("id") << info.geti("hub");
-                    return de::Uri(info.gets("id"), RC_NULL);
+                    return de::makeUri(info.gets("id"));
                 }
 
                 LOGDEV_MAP_VERBOSE("Warp %u matches map %s, but it has no hub")
                         << map << info.gets("id");
-                matchedWithoutHub = de::Uri(info.gets("id"), RC_NULL);
+                matchedWithoutHub = de::makeUri(info.gets("id"));
             }
         }
 
@@ -1415,35 +1415,47 @@ DENG2_PIMPL_NOREF(MapInfoTranslator)
         for(auto const pair : defs.mapInfos)
         {
             MapInfo const &info = pair.second;
-            if(custom != info.getb("custom")) continue;
+
+            const bool isCustomMapInfo = info.getb("custom");
+
+            if(custom != isCustomMapInfo) continue;
 
             de::Uri mapUri(info.gets("id"), RC_NULL);
-            if(mapUri.path().isEmpty()) continue;
+            if (mapUri.path().isEmpty()) continue;
 
-            String const mapId = toMapId(mapUri);
+            const String mapId         = toMapId(mapUri);
+            const String musicLumpName = info.gets("music");
+            bool         addedMusicDef = false;
 
-            String const musicId = mapId + "_music";
-            os << "\n\nMusic {"
-               << "\n  ID = \"" + musicId + "\";";
-            String const musicLumpName = info.gets("music");
-            if(!musicLumpName.isEmpty())
+            if (isCustomMapInfo && (!musicLumpName.isEmpty() || info.geti("cdTrack")))
             {
-               os << "\n  Lump = \"" + musicLumpName + "\";";
-            }
-            os << "\n  CD Track = " + String::number(info.geti("cdTrack")) + ";"
-               << "\n}";
+                addedMusicDef = true;
 
-            bool const doubleSky = info.getb("doubleSky");
+                // Add a music def for this custom music.
+                os << "\n\nMusic {"
+                   << "\n  ID = \"" + mapId + "\";"; // music ID == map ID
+                if (!musicLumpName.isEmpty())
+                {
+                   os << "\n  Lump = \"" + musicLumpName + "\";";
+                }
+                os << "\n  CD Track = " << info.geti("cdTrack") << ";"
+                   << "\n}";
+            }
+
+            const bool doubleSky = info.getb("doubleSky");
 
             os << "\n\nMap Info {"
                << "\n  ID = \"" + mapId + "\";"
                << "\n  Title = \"" + info.gets("title") + "\";";
-            if(!info.getb("custom"))
+            if (!isCustomMapInfo)
             {
                os << "\n  Author = \"" + String(Str_Text(gameInfo.author)) + "\";";
             }
-            os << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";"
-               << "\n  Music = \"" + musicId + "\";";
+            os << "\n  Fade Table = \"" + info.gets("fadeTable") + "\";";
+            if (addedMusicDef)
+            {
+                os << "\n  Music = \"" + mapId + "\";";
+            }
             de::Uri titleImageUri(info.gets("titleImage"), RC_NULL);
             if(!titleImageUri.path().isEmpty())
             {

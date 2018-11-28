@@ -520,7 +520,7 @@ static Vector2f lineUnitVector(Line const &line)
 
 static void drawParticles(dint rtype, bool withBlend)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     viewdata_t const *viewData = &viewPlayer->viewport();
@@ -541,35 +541,26 @@ static void drawParticles(dint rtype, bool withBlend)
         }
     }
 
-    ushort primType = GL_QUADS;
+    dglprimtype_t primType = DGL_QUADS;
     if (rtype == PTC_MODEL)
     {
-        //glDepthMask(GL_TRUE);
-        //glEnable(GL_DEPTH_TEST);
-        GLState::current()
-                .setDepthWrite(true)
-                .setDepthTest(true)
-                .apply();
+        DGL_Enable(DGL_DEPTH_WRITE);
+        DGL_Enable(DGL_DEPTH_TEST);
     }
     else if (tex != 0)
     {
-        //glDepthMask(GL_FALSE);
-        //glDisable(GL_CULL_FACE);
-        GLState::current()
-                .setDepthWrite(false)
-                .setDepthFunc(gl::LessOrEqual)
-                .setCull(gl::None)
-                .apply();
+        DGL_Disable(DGL_DEPTH_WRITE);
+        DGL_DepthFunc(DGL_LEQUAL);
+        DGL_CullFace(DGL_NONE);
 
         GL_BindTextureUnmanaged(tex, gl::ClampToEdge, gl::ClampToEdge);
-        LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+        DGL_Enable(DGL_TEXTURE_2D);
 
-        //glDepthFunc(GL_LEQUAL);
-        LIBGUI_GL.glBegin(primType = GL_QUADS);
+        DGL_Begin(primType = DGL_QUADS);
     }
     else
     {
-        LIBGUI_GL.glBegin(primType = GL_LINES);
+        DGL_Begin(primType = DGL_LINES);
     }
 
     // How many particles will be drawn?
@@ -617,9 +608,9 @@ static void drawParticles(dint rtype, bool withBlend)
 
             if(newMode != mode)
             {
-                LIBGUI_GL.glEnd();
+                DGL_End();
                 GL_BlendMode(mode = newMode);
-                LIBGUI_GL.glBegin(primType);
+                DGL_Begin(primType);
             }
         }
 
@@ -684,7 +675,7 @@ static void drawParticles(dint rtype, bool withBlend)
         if(color.w <= 0)
             continue;
 
-        LIBGUI_GL.glColor4f(color.x, color.y, color.z, color.w);
+        DGL_Color4f(color.x, color.y, color.z, color.w);
 
         bool const nearWall = (pinfo.contact && !pinfo.mov[0] && !pinfo.mov[1]);
 
@@ -732,17 +723,17 @@ static void drawParticles(dint rtype, bool withBlend)
             // Should the particle be flat against a plane?
             if(flatOnPlane)
             {
-                LIBGUI_GL.glTexCoord2f(0, 0);
-                LIBGUI_GL.glVertex3f(center.x - size, center.y, center.z - size);
+                DGL_TexCoord2f(0, 0, 0);
+                DGL_Vertex3f(center.x - size, center.y, center.z - size);
 
-                LIBGUI_GL.glTexCoord2f(1, 0);
-                LIBGUI_GL.glVertex3f(center.x + size, center.y, center.z - size);
+                DGL_TexCoord2f(0, 1, 0);
+                DGL_Vertex3f(center.x + size, center.y, center.z - size);
 
-                LIBGUI_GL.glTexCoord2f(1, 1);
-                LIBGUI_GL.glVertex3f(center.x + size, center.y, center.z + size);
+                DGL_TexCoord2f(0, 1, 1);
+                DGL_Vertex3f(center.x + size, center.y, center.z + size);
 
-                LIBGUI_GL.glTexCoord2f(0, 1);
-                LIBGUI_GL.glVertex3f(center.x - size, center.y, center.z + size);
+                DGL_TexCoord2f(0, 0, 1);
+                DGL_Vertex3f(center.x - size, center.y, center.z + size);
             }
             // Flat against a wall, then?
             else if(flatOnWall)
@@ -775,70 +766,64 @@ static void drawParticles(dint rtype, bool withBlend)
 
                 Vector2f unitVec = lineUnitVector(*pinfo.contact);
 
-                LIBGUI_GL.glTexCoord2f(0, 0);
-                LIBGUI_GL.glVertex3d(projected[0] - size * unitVec.x, center.y - size,
+                DGL_TexCoord2f(0, 0, 0);
+                DGL_Vertex3f(projected[0] - size * unitVec.x, center.y - size,
                            projected[1] - size * unitVec.y);
 
-                LIBGUI_GL.glTexCoord2f(1, 0);
-                LIBGUI_GL.glVertex3d(projected[0] - size * unitVec.x, center.y + size,
+                DGL_TexCoord2f(0, 1, 0);
+                DGL_Vertex3f(projected[0] - size * unitVec.x, center.y + size,
                            projected[1] - size * unitVec.y);
 
-                LIBGUI_GL.glTexCoord2f(1, 1);
-                LIBGUI_GL.glVertex3d(projected[0] + size * unitVec.x, center.y + size,
+                DGL_TexCoord2f(0, 1, 1);
+                DGL_Vertex3f(projected[0] + size * unitVec.x, center.y + size,
                            projected[1] + size * unitVec.y);
 
-                LIBGUI_GL.glTexCoord2f(0, 1);
-                LIBGUI_GL.glVertex3d(projected[0] + size * unitVec.x, center.y - size,
+                DGL_TexCoord2f(0, 0, 1);
+                DGL_Vertex3f(projected[0] + size * unitVec.x, center.y - size,
                            projected[1] + size * unitVec.y);
             }
             else
             {
-                LIBGUI_GL.glTexCoord2f(0, 0);
-                LIBGUI_GL.glVertex3f(center.x + size * leftoff.x,
+                DGL_TexCoord2f(0, 0, 0);
+                DGL_Vertex3f(center.x + size * leftoff.x,
                            center.y + size * leftoff.y / 1.2f,
                            center.z + size * leftoff.z);
 
-                LIBGUI_GL.glTexCoord2f(1, 0);
-                LIBGUI_GL.glVertex3f(center.x + size * rightoff.x,
+                DGL_TexCoord2f(0, 1, 0);
+                DGL_Vertex3f(center.x + size * rightoff.x,
                            center.y + size * rightoff.y / 1.2f,
                            center.z + size * rightoff.z);
 
-                LIBGUI_GL.glTexCoord2f(1, 1);
-                LIBGUI_GL.glVertex3f(center.x - size * leftoff.x,
+                DGL_TexCoord2f(0, 1, 1);
+                DGL_Vertex3f(center.x - size * leftoff.x,
                            center.y - size * leftoff.y / 1.2f,
                            center.z - size * leftoff.z);
 
-                LIBGUI_GL.glTexCoord2f(0, 1);
-                LIBGUI_GL.glVertex3f(center.x - size * rightoff.x,
+                DGL_TexCoord2f(0, 0, 1);
+                DGL_Vertex3f(center.x - size * rightoff.x,
                            center.y - size * rightoff.y / 1.2f,
                            center.z - size * rightoff.z);
             }
         }
         else  // It's a line.
         {
-            LIBGUI_GL.glVertex3f(center.x, center.y, center.z);
-            LIBGUI_GL.glVertex3f(center.x - FIX2FLT(pinfo.mov[0]),
-                       center.y - FIX2FLT(pinfo.mov[2]),
-                       center.z - FIX2FLT(pinfo.mov[1]));
+            DGL_Vertex3f(center.x, center.y, center.z);
+            DGL_Vertex3f(center.x - FIX2FLT(pinfo.mov[0]),
+                         center.y - FIX2FLT(pinfo.mov[2]),
+                         center.z - FIX2FLT(pinfo.mov[1]));
         }
     }
 
     if(rtype != PTC_MODEL)
     {
-        LIBGUI_GL.glEnd();
+        DGL_End();
 
         if(tex != 0)
         {
-            //glEnable(GL_CULL_FACE);
-            //glDepthMask(GL_TRUE);
-            //glDepthFunc(GL_LESS);
-            GLState::current()
-                    .setCull(gl::Back)
-                    .setDepthWrite(true)
-                    .setDepthFunc(gl::Less)
-                    .apply();
-
-            LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+            DGL_CullFace(DGL_BACK);
+            DGL_Enable(DGL_DEPTH_WRITE);
+            DGL_DepthFunc(DGL_LESS);
+            DGL_Disable(DGL_TEXTURE_2D);
         }
     }
 

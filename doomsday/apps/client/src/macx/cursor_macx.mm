@@ -17,6 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if !defined (DENG_IOS)
+
 #include <AppKit/AppKit.h>
 
 void Cursor_Show(bool show)
@@ -30,3 +32,5 @@ void Cursor_Show(bool show)
         [NSCursor hide];
     }
 }
+
+#endif

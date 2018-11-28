@@ -276,14 +276,18 @@ void DoError(int code)
 //  Allocates and loads in the given data.
 //===========================================================================
 void *Load(FILE *file, int offset, int len)
-{
-    void *ptr = malloc(len);
-    fseek(file, offset, SEEK_SET);
-    if (!fread(ptr, len, 1, file))
+{    
+    if (len > 0)
     {
-        DoError(MTERR_READ_FAILED);
+        void *ptr = malloc(len);
+        fseek(file, offset, SEEK_SET);
+        if (fread(ptr, len, 1, file) == 0)
+        {
+            DoError(MTERR_READ_FAILED);
+        }
+        return ptr;
     }
-    return ptr;
+    return NULL;
 }
 
 //===========================================================================

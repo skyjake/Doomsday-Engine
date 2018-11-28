@@ -40,8 +40,8 @@ public:
     bool dispatchEvent(de::Event const &event,
                        bool (de::Widget::*memberFunc)(de::Event const &)) override;
 
-    void moveOnscreen(de::TimeDelta span = 1.5);
-    void moveOffscreen(de::TimeDelta span = 1.5);
+    void moveOnscreen(de::TimeSpan span = 1.5);
+    void moveOffscreen(de::TimeSpan span = 1.5);
 
     // Events.
     void update() override;
@@ -55,6 +55,9 @@ public:
 public slots:
     void tabChanged();
     void mouseActivityInColumn(QObject const *);
+
+protected:
+    void updateStyle() override;
 
 private:
     DENG2_PRIVATE(d)

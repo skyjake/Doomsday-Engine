@@ -49,6 +49,8 @@ public:
      */
     void setTarget(File const &file);
 
+    void setTarget(File const *fileOrNull);
+
     /**
      * Returns the file's target. This is used for indirection when descending into
      * subfolders, to implement symbolic links.
@@ -74,6 +76,9 @@ public:
     bool isBroken() const;
 
     String describe() const;
+
+    // Stream access:
+    IIStream const &operator >> (IByteArray &bytes) const override;
 
     // filesys::Node overrides:
     Node const *tryFollowPath(PathRef const &path) const;

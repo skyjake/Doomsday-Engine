@@ -25,16 +25,15 @@
 #include <QCryptographicHash>
 #include <QList>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
-static String const PT_COMMAND = "shell.command";
-static String const PT_LEXICON = "shell.lexicon";
+static String const PT_COMMAND    = "shell.command";
+static String const PT_LEXICON    = "shell.lexicon";
 static String const PT_GAME_STATE = "shell.game.state";
 
 // ChallengePacket -----------------------------------------------------------
 
-static char const *CHALLENGE_PACKET_TYPE = "Psw?";
+static Packet::Type const CHALLENGE_PACKET_TYPE = Packet::typeFromString("Psw?");
 
 ChallengePacket::ChallengePacket() : Packet(CHALLENGE_PACKET_TYPE)
 {}
@@ -46,7 +45,7 @@ Packet *ChallengePacket::fromBlock(Block const &block)
 
 // LogEntryPacket ------------------------------------------------------------
 
-static char const *LOG_ENTRY_PACKET_TYPE = "LgEn";
+static Packet::Type const LOG_ENTRY_PACKET_TYPE = Packet::typeFromString("LgEn");
 
 LogEntryPacket::LogEntryPacket() : Packet(LOG_ENTRY_PACKET_TYPE)
 {}
@@ -108,7 +107,7 @@ Packet *LogEntryPacket::fromBlock(Block const &block)
 
 // PlayerInfoPacket ----------------------------------------------------------
 
-static char const *PLAYER_INFO_PACKET_TYPE = "PlrI";
+static Packet::Type const PLAYER_INFO_PACKET_TYPE = Packet::typeFromString("PlrI");
 
 DENG2_PIMPL_NOREF(PlayerInfoPacket)
 {
@@ -174,7 +173,7 @@ Packet *PlayerInfoPacket::fromBlock(Block const &block)
 
 // MapOutlinePacket ----------------------------------------------------------
 
-static char const *MAP_OUTLINE_PACKET_TYPE = "MpOL";
+static Packet::Type const MAP_OUTLINE_PACKET_TYPE = Packet::typeFromString("MpOL");
 
 DENG2_PIMPL_NOREF(MapOutlinePacket)
 {
@@ -257,31 +256,30 @@ Protocol::PacketType Protocol::recognize(Packet const *packet)
 {
     if (packet->type() == CHALLENGE_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<ChallengePacket const *>(packet) != 0);
+        DENG2_ASSERT(is<ChallengePacket>(packet));
         return PasswordChallenge;
     }
 
     if (packet->type() == LOG_ENTRY_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<LogEntryPacket const *>(packet) != 0);
+        DENG2_ASSERT(is<LogEntryPacket>(packet));
         return LogEntries;
     }
 
     if (packet->type() == MAP_OUTLINE_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<MapOutlinePacket const *>(packet) != 0);
+        DENG2_ASSERT(is<MapOutlinePacket>(packet));
         return MapOutline;
     }
 
     if (packet->type() == PLAYER_INFO_PACKET_TYPE)
     {
-        DENG2_ASSERT(dynamic_cast<PlayerInfoPacket const *>(packet) != 0);
+        DENG2_ASSERT(is<PlayerInfoPacket>(packet));
         return PlayerInfo;
     }
 
     // One of the generic-format packets?
-    RecordPacket const *rec = dynamic_cast<RecordPacket const *>(packet);
-    if (rec)
+    if (RecordPacket const *rec = maybeAs<RecordPacket>(packet))
     {
         if (rec->name() == PT_COMMAND)
         {
@@ -368,5 +366,4 @@ RecordPacket *Protocol::newGameState(String const &mode,
     return gs;
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

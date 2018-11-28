@@ -122,7 +122,7 @@ public:
     BitField(BitField const &other);
     BitField(Block const &data);
 
-    BitField &operator = (BitField const &other);
+    BitField &operator=(BitField const &other);
 
     /**
      * Sets the elements of the bit field.
@@ -165,8 +165,8 @@ public:
      */
     Block data() const;
 
-    bool operator == (BitField const &other) const;
-    bool operator != (BitField const &other) const;
+    bool operator==(BitField const &other) const;
+    bool operator!=(BitField const &other) const;
 
     /**
      * Determines which elements in this pack are different when compared to @a

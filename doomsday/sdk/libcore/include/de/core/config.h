@@ -52,6 +52,9 @@ class ArrayValue;
 class DENG2_PUBLIC Config : public RecordAccessor, public IObject
 {
 public:
+    enum ReadStatus { WasNotRead, SameVersion, DifferentVersion };
+
+public:
     /**
      * Constructs a new configuration.
      *
@@ -60,7 +63,7 @@ public:
     Config(Path const &path);
 
     /// Read configuration from files.
-    void read();
+    ReadStatus read();
 
     /// Writes the configuration to /home.
     void write() const;

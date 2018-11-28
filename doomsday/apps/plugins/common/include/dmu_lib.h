@@ -37,7 +37,7 @@
 #define numsectors              (P_Count(DMU_SECTOR))
 #define numlines                (P_Count(DMU_LINE))
 #define numsides                (P_Count(DMU_SIDE))
-#define numpolyobjs             (*(int*) DD_GetVariable(DD_POLYOBJ_COUNT))
+#define numpolyobjs             (*(int*) DD_GetVariable(DD_MAP_POLYOBJ_COUNT))
 
 // DMU property aliases. For short-hand purposes:
 #define DMU_FRONT_SECTOR        (DMU_FRONT_OF_LINE | DMU_SECTOR)

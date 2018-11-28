@@ -192,7 +192,7 @@ DENG_API_TYPEDEF(FR)
      * @param alignFlags  @ref alignmentFlags
      * @param _textFlags  @ref drawTextFlags
      */
-    void (*DrawText3)(const char* text, const Point2Raw* _origin, int alignFlags, short _textFlags);
+    void (*DrawText3)(const char* text, const Point2Raw* _origin, int alignFlags, uint16_t _textFlags);
 
     void (*DrawTextXY3)(const char* text, int x, int y, int alignFlags, short flags);
 

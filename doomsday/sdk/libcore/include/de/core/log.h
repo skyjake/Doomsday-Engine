@@ -487,6 +487,7 @@ public:
         void setValue(char const *s);
         void setValue(String const &s);
         void setValue(Base const &arg);
+        void setValue(std::array<char, 4> const &typecode);
 
         template <typename ValueType>
         Arg &set(ValueType const &s) { setValue(s); return *this; }

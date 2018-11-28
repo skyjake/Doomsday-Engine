@@ -105,7 +105,7 @@ DENG_GUI_PIMPL(AlertDialog)
         notification->setBehavior(Focusable, false);
         notification->setSizePolicy(ui::Expand, ui::Expand);
         notification->setImage(style().images().image("alert"));
-        notification->setOverrideImageSize(style().fonts().font("default").height().value());
+        notification->setOverrideImageSize(style().fonts().font("default").height());
         notification->setOpener([this] (PopupWidget *) {
             self().showListOfAlerts();
         });
@@ -117,7 +117,7 @@ DENG_GUI_PIMPL(AlertDialog)
         alerts->enableScrolling(false);
         alerts->setGridSize(1, ui::Expand, 0, ui::Expand);
         alerts->rule().setLeftTop(area.contentRule().left(), area.contentRule().top());
-        area.setContentSize(alerts->rule().width(), alerts->rule().height());
+        area.setContentSize(alerts->rule());
         area.add(alerts);
 
         area.enableIndicatorDraw(true);
@@ -208,7 +208,7 @@ DENG_GUI_PIMPL(AlertDialog)
         label.setAppearanceAnimation(LabelWidget::AppearGrowVertically, 0.5);
         label.setAlignment(ui::AlignBottom);
         label.setImage(style().images().image("alert"));
-        label.setOverrideImageSize(style().fonts().font("default").height().value());
+        label.setOverrideImageSize(style().fonts().font("default").height());
         label.setImageAlignment(ui::AlignTop);
         label.setTextAlignment(ui::AlignRight);
         label.margins()
@@ -291,6 +291,8 @@ DENG_GUI_PIMPL(AlertDialog)
 
 AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
 {
+    setOutlineColor("transparent");
+
     // The dialog is connected to the notification icon.
     d->notification->setPopup(*this, ui::Down);
 

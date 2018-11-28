@@ -193,7 +193,11 @@ public:
      *
      * @param func  Callback to make for each Material.
      */
-    de::LoopResult forAllMaterials(std::function<de::LoopResult (Material &)> func) const;
+    de::LoopResult forAllMaterials(const std::function<de::LoopResult (Material &)> &func) const;
+
+    de::LoopResult forAnimatedMaterials(const std::function<de::LoopResult (Material &)> &func) const;
+
+    void updateLookup();
 
 private:
     DENG2_PRIVATE(d)

@@ -46,14 +46,14 @@ static dsize const HEADER_SIZE  = 128;
 
 struct Header : public IReadable
 {
-    dbyte magic;
-    dbyte version;
-    dbyte encoding;
-    dbyte bitsPerPixel;
+    dbyte   magic;
+    dbyte   version;
+    dbyte   encoding;
+    dbyte   bitsPerPixel;
     duint16 xMin, yMin;
     duint16 xMax, yMax;
     duint16 hRes, vRes;
-    dbyte colorPlanes;
+    dbyte   colorPlanes;
     duint16 bytesPerLine;
     duint16 paletteType;
 
@@ -338,6 +338,7 @@ DENG2_PIMPL(Image)
     QImage image;
     Block pixels;
     ByteRefArray refPixels;
+    float pointRatio = 1.f;
 
     Impl(Public *i, QImage const &img = QImage())
         : Base(i), format(UseQImageFormat), image(img)
@@ -345,13 +346,14 @@ DENG2_PIMPL(Image)
         size = Size(img.width(), img.height());
     }
 
-    Impl(Public *i, Impl const &other)
-        : Base     (i),
-          format   (other.format),
-          size     (other.size),
-          image    (other.image),
-          pixels   (other.pixels),
-          refPixels(other.refPixels)
+    Impl(Public * i, Impl const &other)
+        : Base(i)
+        , format(other.format)
+        , size(other.size)
+        , image(other.image)
+        , pixels(other.pixels)
+        , refPixels(other.refPixels)
+        , pointRatio(other.pointRatio)
     {}
 
     Impl(Public *i, Size const &imgSize, Format imgFormat, IByteArray const &imgPixels)
@@ -367,7 +369,7 @@ Image::Image() : d(new Impl(this))
 {}
 
 Image::Image(Image const &other)
-    : de::ISerializable(), d(new Impl(this, *other.d))
+    : d(new Impl(this, *other.d))
 {}
 
 Image::Image(QImage const &image) : d(new Impl(this, image))
@@ -381,7 +383,7 @@ Image::Image(Size const &size, Format format, ByteRefArray const &refPixels)
     : d(new Impl(this, size, format, refPixels))
 {}
 
-Image &Image::operator = (Image const &other)
+Image &Image::operator=(Image const &other)
 {
     d.reset(new Impl(this, *other.d));
     return *this;
@@ -452,7 +454,7 @@ int Image::stride() const
     {
         return d->image.bytesPerLine();
     }
-    return depth()/8 * d->size.x;
+    return depth() / 8 * d->size.x;
 }
 
 int Image::byteCount() const
@@ -465,7 +467,7 @@ int Image::byteCount() const
     {
         return d->pixels.size();
     }
-    return depth()/8 * d->size.x * d->size.y;
+    return depth() / 8 * d->size.x * d->size.y;
 }
 
 void const *Image::bits() const
@@ -587,6 +589,16 @@ GLPixelFormat Image::glFormat() const
     return glFormat(d->format);
 }
 
+float Image::pointRatio() const
+{
+    return d->pointRatio;
+}
+
+void Image::setPointRatio(float pointsPerPixel)
+{
+    d->pointRatio = pointsPerPixel;
+}
+
 Image Image::subImage(Rectanglei const &subArea) const
 {
     IMAGE_ASSERT_EDITABLE(d);
@@ -601,8 +613,10 @@ void Image::resize(Size const &size)
     DENG2_ASSERT(d->image.format() != QImage::Format_Invalid);
 
     QImage resized(QSize(size.x, size.y), d->image.format());
+    resized.fill(0);
+
     QPainter painter(&resized);
-    painter.drawImage(QPoint(0, 0), d->image);
+    painter.drawImage(QRect(QPoint(0, 0), resized.size()), d->image);
     d->image = resized;
     d->size = size;
 }
@@ -669,12 +683,10 @@ Image Image::multiplied(Color const &color) const
             duint16 r = (*ptr & 0xff0000) >> 16;
             duint16 a = (*ptr & 0xff000000) >> 24;
 
-            QColor const mult((color.x + 1) * r >> 8,
-                              (color.y + 1) * g >> 8,
-                              (color.z + 1) * b >> 8,
-                              (color.w + 1) * a >> 8);
-
-            *ptr++ = mult.rgba();
+            *ptr++ = qRgba((color.x + 1) * r >> 8,
+                           (color.y + 1) * g >> 8,
+                           (color.z + 1) * b >> 8,
+                           (color.w + 1) * a >> 8);
         }
     }
     return copy;
@@ -814,8 +826,12 @@ GLPixelFormat Image::glFormat(QImage::Format format)
         return GLPixelFormat(GL_RGB, GL_UNSIGNED_BYTE, 1);
 
     case QImage::Format_RGB32:
+#if defined (DENG_OPENGL)
         /// @todo Is GL_BGR in any GL standard spec? Check for EXT_bgra.
         return GLPixelFormat(GL_BGR, GL_UNSIGNED_BYTE, 4);
+#else
+        return GLPixelFormat(GL_BGRA8_EXT, GL_UNSIGNED_BYTE, 4);
+#endif
 
     case QImage::Format_ARGB32:
         /// @todo Is GL_BGRA in any GL standard spec? Check for EXT_bgra.

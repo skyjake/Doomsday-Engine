@@ -25,7 +25,7 @@
 #include <QPainter>
 #include <QThreadStorage>
 
-#if defined(MACOSX) && defined(MACOS_10_7)
+#if defined (DENG_IOS) || (defined(MACOSX) && defined(MACOS_10_7))
 #  include "../src/text/coretextnativefont_macx.h"
 namespace de { typedef CoreTextNativeFont PlatformFont; }
 #else
@@ -54,7 +54,7 @@ namespace internal
             spec.transform = font.transform();
         }
 
-        bool operator == (FontParams const &other) const
+        bool operator==(FontParams const &other) const
         {
             return fequal(size, other.size)
                 && spec == other.spec
@@ -80,7 +80,7 @@ namespace internal
         QHash<internal::FontParams, PlatformFont *> fontMods;
 
         ~ThreadFonts() {
-            qDeleteAll(fontMods.values());
+            qDeleteAll(fontMods);
         }
     };
 }
@@ -148,10 +148,19 @@ DENG2_PIMPL(Font)
     internal::ThreadFonts &getThreadFonts()
     {
         auto &hash = fontsForThread.localData();
-        if (!hash.contains(thisPublic))
+        auto found = hash.find(thisPublic);
+        if (found != hash.end())
         {
-            hash[thisPublic].font = PlatformFont(referenceFont);
+            auto &tf = found.value();
+            if (fequal(tf.font.size(), float(referenceFont.pointSizeF())))
+            {
+                return tf;
+            }
+            // Size has changed, re-initialize the font.
+            qDeleteAll(tf.fontMods);
+            tf.fontMods.clear();
         }
+        hash[thisPublic].font = PlatformFont(referenceFont);
         return hash[thisPublic];
     }
 
@@ -267,6 +276,12 @@ Font::Font(Font const &other) : d(new Impl(this, other.d->referenceFont))
 
 Font::Font(QFont const &font) : d(new Impl(this, font))
 {}
+
+void Font::initialize(const QFont &font)
+{
+    d->referenceFont = font;
+    d->updateMetrics();
+}
 
 Rectanglei Font::measure(String const &textLine) const
 {

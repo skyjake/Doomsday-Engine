@@ -32,12 +32,12 @@ DENG2_PIMPL(GLTextureFramebuffer)
 , DENG2_OBSERVES(DefaultSampleCount, Change)
 {
     Image::Format colorFormat;
-    Size size;
-    int _samples; ///< don't touch directly (0 == default)
-    GLTexture color;
-    GLTexture depthStencil;
+    Size          size;
+    int           _samples; ///< don't touch directly (0 == default)
+    GLTexture     color;
+    GLTexture     depthStencil;
     GLFramebuffer resolvedFbo;
-    Asset texFboState;
+    Asset         texFboState;
 
     Impl(Public *i)
         : Base(i)
@@ -245,14 +245,7 @@ void GLTextureFramebuffer::glInit()
 
     LOG_AS("GLFramebuffer");
 
-    // Check for some integral OpenGL functionality.
-    if (!GLInfo::extensions().EXT_packed_depth_stencil)
-    {
-        LOG_GL_WARNING("GL_EXT_packed_depth_stencil is missing, some features may be unavailable");
-    }
-
     d->texFboState.setState(Ready);
-
     d->reconfigure();
 }
 
@@ -338,29 +331,6 @@ GLTexture *GLTextureFramebuffer::attachedTexture(Flags const &attachment) const
     }
     return GLFramebuffer::attachedTexture(attachment);
 }
-
-/*void GLTextureFramebuffer::clear(GLFramebuffer::Flags const &attachments)
-{
-    d->framebuf.clear(attachments);
-}*/
-
-/*void GLTextureFramebuffer::blit(GLFramebuffer const &target) const
-{
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_READ_FRAMEBUFFER_EXT, glName());
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_DRAW_FRAMEBUFFER_EXT, target.glName());
-
-    GLInfo::EXT_framebuffer_blit()->glBlitFramebufferEXT(
-                0, 0, size().x, size().y,
-                0, 0, target.size().x, target.size().y,
-                GL_COLOR_BUFFER_BIT, GL_LINEAR);
-
-    GLInfo::EXT_framebuffer_object()->glBindFramebufferEXT(GL_FRAMEBUFFER, 0);
-}*/
-
-/*void GLTextureFramebuffer::swapBuffers(Canvas &canvas, gl::SwapBufferMode swapMode)
-{
-    d->swapBuffers(canvas, swapMode);
-}*/
 
 /*void GLTextureFramebuffer::drawBuffer(float opacity)
 {

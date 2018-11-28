@@ -51,10 +51,12 @@
 #include <doomsday/console/cmd.h>
 #include <doomsday/console/var.h>
 #include <de/App>
+#include <de/Config>
 #include <de/CommandLine>
 #include <de/FileSystem>
 #include <de/LogBuffer>
 #include <de/NativeFile>
+#include <de/ScriptSystem>
 #include <de/timer.h>
 #include <de/c_wrapper.h>
 #include <de/concurrency.h>
@@ -190,6 +192,8 @@ DENG2_PIMPL(AudioSystem)
 , DENG2_OBSERVES(audio::SfxSampleCache, SampleRemove)
 #endif
 {
+    Record module;
+
 #ifdef __CLIENT__
     AudioDriver drivers[AUDIODRIVER_COUNT];
 
@@ -204,7 +208,7 @@ DENG2_PIMPL(AudioSystem)
      */
     audiodriverid_t chooseAudioDriver()
     {
-        CommandLine &cmdLine = App::commandLine();
+        CommandLine &cmdLine = CommandLine::get();
 
         // No audio output?
         if (::isDedicated)
@@ -310,7 +314,10 @@ DENG2_PIMPL(AudioSystem)
     {
         activeInterfaces.clear();
 
-        if (App::commandLine().has("-nosound"))
+        // The audio drivers may use Audio.outputs to declare which outputs are available.
+        module.set("outputs", new DictionaryValue);
+
+        if (CommandLine::get().has("-nosound"))
             return false;
 
         audiodriverid_t defaultDriverId = chooseAudioDriver();
@@ -338,6 +345,8 @@ DENG2_PIMPL(AudioSystem)
         {
             drivers[i].deinitialize();
         }
+
+        module.set("outputs", new DictionaryValue);
 
         // Unload the plugins after everything has been shut down.
         for (AudioDriver &driver : drivers)
@@ -466,12 +475,12 @@ DENG2_PIMPL(AudioSystem)
             activeInterfaces << ifs;  // a copy is made
         }
 
-        String userSfx   = App::config("audio.soundPlugin");
-        String userMusic = App::config("audio.musicPlugin");
-        String userCD    = App::config("audio.cdPlugin");
+        String userSfx   = Config::get("audio.soundPlugin");
+        String userMusic = Config::get("audio.musicPlugin");
+        String userCD    = Config::get("audio.cdPlugin");
 
         // Command line options may also be used to specify which plugin to use.
-        CommandLine &cmdLine = App::commandLine();
+        CommandLine &cmdLine = CommandLine::get();
         if (auto arg = cmdLine.check("-isfx", 1))
         {
             userSfx = arg.params.at(0);
@@ -640,6 +649,8 @@ DENG2_PIMPL(AudioSystem)
     {
         theAudioSystem = thisPublic;
 
+        ScriptSystem::get().addNativeModule("Audio", module);
+
 #ifdef __CLIENT__
         DoomsdayApp::app().audienceForGameUnload() += this;
         sfxSampleCache.audienceForSampleRemove() += this;
@@ -720,7 +731,8 @@ DENG2_PIMPL(AudioSystem)
                 if (iMusic->PlayFile)
                 {
                     // Write the data to disk and play from there.
-                    File &file = App::rootFolder().replaceFile(composeMusicBufferFilename(path.fileNameExtension()));
+                    File &file = FS::rootFolder().replaceFile(
+                        composeMusicBufferFilename(path.fileNameExtension()));
                     Block buf(hndl->length());
                     hndl->read(buf.data(), buf.size());
                     file << buf;
@@ -765,7 +777,7 @@ DENG2_PIMPL(AudioSystem)
             // Lump is in DOOM's MUS format. We must first convert it to MIDI.
             if (!canPlayMUS) return -1;
 
-            File &midi = App::rootFolder().replaceFile(composeMusicBufferFilename(".mid"));
+            File &midi = FS::rootFolder().replaceFile(composeMusicBufferFilename(".mid"));
 
             // Read the lump, convert to MIDI and output to a temp file in the working directory.
             // Use a filename with the .mid extension so that any player which relies on the it
@@ -812,7 +824,7 @@ DENG2_PIMPL(AudioSystem)
                     // Failed to write the lump...
                     return 0;
                 }
-                return iMusic->PlayFile(App::rootFolder().locate<File const>(bufName)
+                return iMusic->PlayFile(FS::rootFolder().locate<File const>(bufName)
                                         .as<NativeFile>().nativePath().toUtf8(), looped);
             }
 
@@ -850,7 +862,7 @@ DENG2_PIMPL(AudioSystem)
         musCurrentSong = "";
         musPaused      = false;
 
-        CommandLine &cmdLine = App::commandLine();
+        CommandLine &cmdLine = CommandLine::get();
         if (::isDedicated || cmdLine.has("-nomusic"))
         {
             LOG_AUDIO_NOTE("Music disabled");
@@ -930,7 +942,7 @@ DENG2_PIMPL(AudioSystem)
         if (sfxAvail) return;
 
         // Check if sound has been disabled with a command line option.
-        if (App::commandLine().has("-nosfx"))
+        if (CommandLine::get().has("-nosfx"))
         {
             LOG_AUDIO_NOTE("Sound effects disabled");
             return;
@@ -1089,13 +1101,18 @@ DENG2_PIMPL(AudioSystem)
     // Create channels according to the current mode.
     void initSfxChannels()
     {
-        dint numChannels = SOUND_CHANNEL_COUNT_DEFAULT;
         // The -sfxchan option can be used to change the number of channels.
         if (CommandLine_CheckWith("-sfxchan", 1))
         {
-            numChannels = de::clamp(1, String(CommandLine_Next()).toInt(), SOUND_CHANNEL_COUNT_MAX);
-            LOG_AUDIO_NOTE("Initialized %i sound effect channels") << numChannels;
+            Config::get().set("audio.channels", String(CommandLine_Next()).toInt());
+
+            //numChannels = de::clamp(1, String(CommandLine_Next()).toInt(), SOUND_CHANNEL_COUNT_MAX);
         }
+
+        dint numChannels = Config::get().geti("audio.channels", SOUND_CHANNEL_COUNT_DEFAULT);
+        numChannels = Rangei(1, SOUND_CHANNEL_COUNT_MAX).clamp(numChannels);
+
+        LOG_AUDIO_NOTE("Initializing %i sound effect channels") << numChannels;
 
         // Allocate and init the channels.
         sfxChannels.reset(new audio::SfxChannels(numChannels));
@@ -1621,7 +1638,7 @@ void AudioSystem::initPlayback()
 {
     LOG_AS("AudioSystem");
 
-    CommandLine &cmdLine = App::commandLine();
+    CommandLine &cmdLine = CommandLine::get();
     if (cmdLine.has("-nosound") || cmdLine.has("-noaudio"))
         return;
 
@@ -1752,7 +1769,10 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
 
     // We will not restart the currently playing song.
     if (definition.gets("id") == d->musCurrentSong && musicIsPlaying())
-        return false;
+    {
+        // This is not a failure, though, since the right music is played.
+        return true;
+    }
 
     // Stop the currently playing song.
     stopMusic();
@@ -1850,15 +1870,13 @@ void AudioSystem::updateMusicMidiFont()
     LOG_AS("AudioSystem");
 
     NativePath path(musMidiFontPath);
-#ifdef MACOSX
-    // On macOS we can try to use the basic DLS soundfont that's part of CoreAudio.
     if (path.isEmpty())
     {
-        path = "/System/Library/Components/CoreAudio.component/Contents/Resources/gs_instruments.dls";
+        // The bootstrap script copies the default GeneralUser GS soundfont from the
+        // client's package so it can be loaded by FluidSynth.
+        path = App::app().nativeHomePath()/"cache/default.sf2";
     }
-#endif
-
-    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toLatin1().constData());
+    d->setMusicProperty(AUDIOP_SOUNDFONT_FILENAME, path.expand().toString().toUtf8().constData());
 }
 
 bool AudioSystem::sfxIsAvailable() const
@@ -2616,6 +2634,31 @@ static void musicMidiFontChanged()
     App_AudioSystem().updateMusicMidiFont();
 }
 
+D_CMD(ReverbParameters)
+{
+    DENG2_UNUSED2(src, argc);
+
+    dfloat args[NUM_REVERB_DATA];
+
+    args[SFXLP_REVERB_VOLUME ] = String(argv[1]).toFloat();
+    args[SFXLP_REVERB_SPACE  ] = String(argv[2]).toFloat();
+    args[SFXLP_REVERB_DECAY  ] = String(argv[3]).toFloat();
+    args[SFXLP_REVERB_DAMPING] = String(argv[4]).toFloat();
+
+    LOG_SCR_MSG("Setting reverb parameters:\n"
+                "- volume: %f\n"
+                "- space: %f\n"
+                "- decay: %f\n"
+                "- damping: %f")
+            << args[SFXLP_REVERB_VOLUME ]
+            << args[SFXLP_REVERB_SPACE  ]
+            << args[SFXLP_REVERB_DECAY  ]
+            << args[SFXLP_REVERB_DAMPING];
+
+    App_AudioSystem().sfx()->Listenerv(SFXLP_REVERB, args);
+
+    return true;
+}
 #endif // __CLIENT__
 
 void AudioSystem::consoleRegister()  // static
@@ -2641,6 +2684,8 @@ void AudioSystem::consoleRegister()  // static
     C_CMD_FLAGS("pausemusic", nullptr, PauseMusic, CMDF_NO_DEDICATED);
     C_CMD_FLAGS("playmusic",  nullptr, PlayMusic,  CMDF_NO_DEDICATED);
     C_CMD_FLAGS("stopmusic",  "",      StopMusic,  CMDF_NO_DEDICATED);
+
+    C_CMD("reverbparams", "ffff", ReverbParameters);
 
     // Debug:
     C_VAR_INT     ("sound-info",          &showSoundInfo,         0, 0, 1);
@@ -2724,7 +2769,7 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 
     if (musicId >= 0 && musicId < DED_Definitions()->musics.size())
     {
-        Record const &def = DED_Definitions()->musics[musicId];
+        const Record &def = DED_Definitions()->musics[musicId];
         return Mus_Start(def, looped);
     }
     return false;

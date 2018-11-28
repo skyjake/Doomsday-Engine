@@ -62,7 +62,7 @@ DENG2_PIMPL(Games)
         {
             ArrayValue args;
             args << DictionaryValue() << TextValue(game.id());
-            App::scriptSystem().nativeModule("App")["audienceForGameAddition"]
+            App::scriptSystem()["App"]["audienceForGameAddition"]
                     .array().callElements(args);
         }
     };
@@ -78,7 +78,7 @@ DENG2_PIMPL(Games)
         nullGame = new NullGame;
 
         // Extend the native App module with a script audience for observing game addition.
-        App::scriptSystem().nativeModule("App").addArray("audienceForGameAddition");
+        App::scriptSystem()["App"].addArray("audienceForGameAddition");
 
         audienceForAddition += scriptAudienceForGameAddition;
     }
@@ -115,6 +115,12 @@ DENG2_PIMPL(Games)
 
     Game *findById(String id) const
     {
+        if (id.beginsWith("doom-"))
+        {
+            // Originally, Freedoom and BFG variants used an inconsistently named ID.
+            id = "doom1-" + id.substr(5);
+        }
+
         auto found = idLookup.constFind(id.toLower());
         if (found != idLookup.constEnd())
         {
@@ -166,6 +172,19 @@ int Games::numPlayable() const
     return count;
 }
 
+int Games::numPlayable(String const &family) const
+{
+    int count = 0;
+    foreach (Game *game, d->games)
+    {
+        if (game->isPlayableWithDefaultPackages() && game->family() == family)
+        {
+            count++;
+        }
+    }
+    return count;
+}
+
 GameProfile const *Games::firstPlayable() const
 {
     foreach (Game *game, d->games)
@@ -175,7 +194,7 @@ GameProfile const *Games::firstPlayable() const
     return nullptr;
 }
 
-Game &Games::operator [] (String const &id) const
+Game &Games::operator[](String const &id) const
 {
     if (id.isEmpty()) return *d->nullGame;
 
@@ -324,8 +343,7 @@ void Games::checkReadiness()
 */
 
     QSet<Game const *> playable;
-    forAll([this, &playable] (Game &game)
-    {
+    forAll([&playable](Game &game) {
         if (game.isPlayable()) playable.insert(&game);
         return LoopContinue;
     });

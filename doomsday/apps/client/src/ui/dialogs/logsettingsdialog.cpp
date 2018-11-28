@@ -126,8 +126,9 @@ DENG2_PIMPL(LogSettingsDialog)
         wgt.label = LabelWidget::newWithText(tr(dom.label) + ":", parent);
 
         // Minimum level for log entries.
-        parent->add(wgt.level =
-                new VariableChoiceWidget(Config::get(String("log.filter.%1.minLevel").arg(dom.name))));
+        parent->add(wgt.level = new VariableChoiceWidget(
+                        Config::get(String("log.filter.%1.minLevel").arg(dom.name)),
+                        VariableChoiceWidget::Number));
         wgt.level->setItems(levels);
         wgt.level->updateFromVariable();
         QObject::connect(wgt.level, SIGNAL(selectionChangedByUser(uint)),
@@ -242,7 +243,7 @@ LogSettingsDialog::LogSettingsDialog(String const &name)
     d->fold->content().rule().setSize(d->foldLayout.width(), d->foldLayout.height());
 
     // Dialog content size.
-    area().setContentSize(layout.width(), layout.height());
+    area().setContentSize(layout);
 
     buttons()
             << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, tr("Close"))

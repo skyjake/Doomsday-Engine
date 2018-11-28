@@ -30,6 +30,8 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/LumpCatalog>
 #include <doomsday/Games>
+
+#include <de/Async>
 #include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/MessageDialog>
@@ -42,6 +44,7 @@ using namespace de;
 
 DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
 , DENG2_OBSERVES(Games, Readiness)
+, public AsyncScope
 {
     shell::ServerInfo serverInfo;
     ButtonWidget *joinButton;
@@ -100,7 +103,7 @@ DENG_GUI_PIMPL(MultiplayerPanelButtonWidget)
         {
             i->aboutToJoinMultiplayerGame(serverInfo);
         }
-        ClientApp::serverLink().connectToServerAndChangeGame(serverInfo);
+        ClientApp::serverLink().connectToServerAndChangeGameAsync(serverInfo);
     }
 
     bool hasConfig(String const &token) const
@@ -181,7 +184,9 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 
         if (d->catalog.setPackages(game.requiredPackages()))
         {
-            icon().setImage(IdTech1Image::makeGameLogo(game, d->catalog));
+            res::LumpCatalog catalog{d->catalog};
+            *d += async([&game, catalog]() { return IdTech1Image::makeGameLogo(game, catalog); },
+                        [this](const Image &logo) { icon().setImage(logo); });
         }
     }
     else

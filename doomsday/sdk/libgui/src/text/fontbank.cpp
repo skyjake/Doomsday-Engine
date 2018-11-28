@@ -25,22 +25,27 @@
 
 namespace de {
 
+static const String BLOCK_FONT = "font";
+
 DENG2_PIMPL(FontBank)
 {
     struct FontSource : public ISource
     {
         FontBank &bank;
-        String id;
+        String    id;
 
-        FontSource(FontBank &b, String const &fontId) : bank(b), id(fontId) {}
+        FontSource(FontBank &b, String const &fontId)
+            : bank(b)
+            , id(fontId)
+        {}
+
         Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
-        Font *load() const
+        void initParams(QFont &font) const
         {
-            Record const &def = bank[id];
+            const Record &def = bank[id];
 
-            // Font family.
-            QFont font(def["family"]);
+            font.setFamily(def["family"]);
 
             // Size.
             String size = def["size"];
@@ -68,8 +73,21 @@ DENG2_PIMPL(FontBank)
             font.setCapitalization(caps == "uppercase"? QFont::AllUppercase :
                                    caps == "lowercase"? QFont::AllLowercase :
                                                         QFont::MixedCase);
+        }
 
-            return new Font(font);
+        Font *load() const
+        {
+            QFont params;
+            initParams(params);
+            return new Font(params);
+        }
+
+        void reload(Font &font)
+        {           
+            // Only the size can change when reloading.
+            QFont params;
+            initParams(params);
+            font.initialize(params);
         }
     };
 
@@ -77,11 +95,15 @@ DENG2_PIMPL(FontBank)
     {
         Font *font; // owned
 
-        FontData(Font *f = 0) : font(f) {}
+        FontData(Font *f = nullptr)
+            : font(f)
+        {}
+
         ~FontData() { delete font; }
     };
 
-    float fontSizeFactor;
+    SafePtr<const File> sourceFile;
+    float               fontSizeFactor;
 
     Impl(Public *i)
         : Base(i)
@@ -89,17 +111,20 @@ DENG2_PIMPL(FontBank)
     {}
 };
 
-FontBank::FontBank() : InfoBank("FontBank", DisableHotStorage), d(new Impl(this))
+FontBank::FontBank()
+    : InfoBank("FontBank", DisableHotStorage)
+    , d(new Impl(this))
 {}
 
-void FontBank::addFromInfo(File const &file)
+void FontBank::addFromInfo(const File &file)
 {
     LOG_AS("FontBank");
+    d->sourceFile.reset(&file);
     parse(file);
-    addFromInfoBlocks("font");
+    addFromInfoBlocks(BLOCK_FONT);
 }
 
-Font const &FontBank::font(DotPath const &path) const
+Font const &FontBank::font(const DotPath &path) const
 {
     return *data(path).as<Impl::FontData>().font;
 }
@@ -107,8 +132,20 @@ Font const &FontBank::font(DotPath const &path) const
 void FontBank::setFontSizeFactor(float sizeFactor)
 {
     // The overall UI scalefactor affects fonts.
-    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f) *
-            Config::get().getf("ui.scaleFactor", 1.f);
+    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f) * Config::get().getf("ui.scaleFactor", 1.f);
+}
+
+void FontBank::reload()
+{
+    if (d->sourceFile)
+    {
+        objectNamespace().clear();
+        parse(*d->sourceFile);
+        for (const String &id : info().allBlocksOfType(BLOCK_FONT))
+        {
+            source(id).as<Impl::FontSource>().reload(*data(id).as<Impl::FontData>().font);
+        }
+    }
 }
 
 Bank::ISource *FontBank::newSourceFromInfo(String const &id)

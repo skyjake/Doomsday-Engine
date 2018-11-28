@@ -1749,7 +1749,7 @@ FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
     if (select)
     {
         // Choose the correct selector, or selector zero if the given one not available.
-        dint const mosel = (select & DDMOBJ_SELECTOR_MASK);
+        dint const mosel = (select & DDMOBJ_SELECTOR_MASK);        
         for (FrameModelDef *it = def; it; it = it->selectNext)
         {
             if (it->select == mosel)
@@ -1831,8 +1831,9 @@ void ClientResources::initModels()
 
             // Same state and a bigger order are the requirements.
             if (other->def.order() > me->def.order() && // Defined after me.
-               other->interMark > me->interMark &&
-               other->interMark < minmark)
+                other->interMark > me->interMark &&
+                other->interMark < minmark &&
+                other->select == me->select)
             {
                 minmark = other->interMark;
                 closest = other;
@@ -1858,9 +1859,9 @@ void ClientResources::initModels()
 
             // Same state and a bigger order are the requirements.
             if (other->state == me->state &&
-               other->def.order() > me->def.order() && // Defined after me.
-               other->select > me->select && other->select < minsel &&
-               other->interMark >= me->interMark)
+                other->def.order() > me->def.order() && // Defined after me.
+                other->select > me->select && other->select < minsel &&
+                other->interMark >= me->interMark)
             {
                 minsel = other->select;
                 closest = other;

@@ -22,6 +22,7 @@
 #include "de/BlockValue"
 #include "de/DictionaryValue"
 #include "de/FunctionValue"
+#include "de/Info"
 #include "de/LogBuffer"
 #include "de/NumberValue"
 #include "de/Reader"
@@ -556,77 +557,67 @@ Variable *Record::remove(String const &variableName)
     return remove((*this)[variableName]);
 }
 
-Variable &Record::add(String const &name)
+Variable *Record::tryRemove(String const &variableName)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name)));
+    if (has(variableName))
+    {
+        return remove(variableName);
+    }
+    return nullptr;
 }
 
-Variable &Record::addNumber(String const &name, Value::Number const &number)
+Variable &Record::add(String const &name, Variable::Flags variableFlags)
 {
     return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new NumberValue(number), Variable::AllowNumber));
+            .add(new Variable(Impl::memberNameFromPath(name), nullptr, variableFlags));
+}
+
+Variable &Record::addNumber(String const &name, Value::Number number)
+{
+    return add(name, Variable::AllowNumber).set(NumberValue(number));
 }
 
 Variable &Record::addBoolean(String const &name, bool booleanValue)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new NumberValue(booleanValue, NumberValue::Boolean),
-                              Variable::AllowNumber));
+    return add(name, Variable::AllowNumber).set(NumberValue(booleanValue, NumberValue::Boolean));
 }
 
 Variable &Record::addText(String const &name, Value::Text const &text)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new TextValue(text), Variable::AllowText));
+    return add(name, Variable::AllowText).set(TextValue(text));
 }
 
 Variable &Record::addTime(String const &name, Time const &time)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new TimeValue(time), Variable::AllowTime));
+    return add(name, Variable::AllowTime).set(TimeValue(time));
 }
 
 Variable &Record::addArray(String const &name, ArrayValue *array)
 {
     // Automatically create an empty array if one is not provided.
     if (!array) array = new ArrayValue;
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              array, Variable::AllowArray));
+    return add(name, Variable::AllowArray).set(array);
 }
 
 Variable &Record::addDictionary(String const &name)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new DictionaryValue, Variable::AllowDictionary));
+    return add(name, Variable::AllowDictionary).set(new DictionaryValue);
 }
 
 Variable &Record::addBlock(String const &name)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new BlockValue, Variable::AllowBlock));
+    return add(name, Variable::AllowBlock).set(new BlockValue);
 }
 
 Variable &Record::addFunction(const String &name, Function *func)
 {
-    return d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new FunctionValue(func), Variable::AllowFunction));
+    return add(name, Variable::AllowFunction).set(new FunctionValue(func));
 }
 
 Record &Record::add(String const &name, Record *subrecord)
 {
     std::unique_ptr<Record> sub(subrecord);
-    d->parentRecordByPath(name)
-            .add(new Variable(Impl::memberNameFromPath(name),
-                              new RecordValue(sub.release(), RecordValue::OwnsRecord)));
+    add(name).set(RecordValue::takeRecord(sub.release()));
     return *subrecord;
 }
 
@@ -691,40 +682,83 @@ Variable &Record::set(String const &name, Value::Text const &value)
     return addText(name, value);
 }
 
-Variable &Record::set(String const &name, Value::Number const &value)
+Variable &Record::set(String const &name, Value::Number value)
+{
+    return set(name, NumberValue(value));
+}
+
+Variable &Record::set(const String &name, const NumberValue &value)
 {
     DENG2_GUARD(d);
 
     if (hasMember(name))
     {
-        return (*this)[name].set(NumberValue(value));
+        return (*this)[name].set(value);
     }
-    return addNumber(name, value);
+    return add(name, Variable::AllowNumber).set(value);
 }
 
 Variable &Record::set(String const &name, dint32 value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, duint32 value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, dint64 value)
 {
-  return set(name, Value::Number(value));
+  return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, duint64 value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
 }
 
 Variable &Record::set(String const &name, unsigned long value)
 {
-    return set(name, Value::Number(value));
+    return set(name, NumberValue(value));
+}
+
+Variable &Record::set(String const &name, Time const &value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(TimeValue(value));
+    }
+    return addTime(name, value);
+}
+
+Variable &Record::set(String const &name, Block const &value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(BlockValue(value));
+    }
+    Variable &var = addBlock(name);
+    var.value<BlockValue>().block() = value;
+    return var;
+}
+
+Variable &Record::set(const String &name, const Record &value)
+{
+    DENG2_GUARD(d);
+
+    std::unique_ptr<Record> dup(new Record(value));
+    if (hasMember(name))
+    {
+        return (*this)[name].set(RecordValue::takeRecord(dup.release()));
+    }
+    Variable &var = add(name);
+    var.set(RecordValue::takeRecord(dup.release()));
+    return var;
 }
 
 Variable &Record::set(String const &name, ArrayValue *value)
@@ -736,6 +770,28 @@ Variable &Record::set(String const &name, ArrayValue *value)
         return (*this)[name].set(value);
     }
     return addArray(name, value);
+}
+
+Variable &Record::set(const String &name, Value *value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(value);
+    }
+    return add(name).set(value);
+}
+
+Variable &Record::set(const String &name, const Value &value)
+{
+    DENG2_GUARD(d);
+
+    if (hasMember(name))
+    {
+        return (*this)[name].set(value);
+    }
+    return add(name).set(value);
 }
 
 Variable &Record::appendWord(String const &name, String const &word, String const &separator)
@@ -760,6 +816,15 @@ Variable &Record::appendUniqueWord(String const &name, String const &word, Strin
     return (*this)[name];
 }
 
+Variable &Record::appendMultipleUniqueWords(String const &name, String const &words, String const &separator)
+{
+    foreach (String word, words.split(separator, QString::SkipEmptyParts))
+    {
+        appendUniqueWord(name, word, separator);
+    }
+    return (*this)[name];
+}
+
 Variable &Record::appendToArray(String const &name, Value *value)
 {
     DENG2_GUARD(d);
@@ -770,7 +835,7 @@ Variable &Record::appendToArray(String const &name, Value *value)
     }
 
     Variable &var = (*this)[name];
-    DENG2_ASSERT(var.value().is<ArrayValue>());
+    DENG2_ASSERT(is<ArrayValue>(var.value()));
     var.value<ArrayValue>().add(value);
     return var;
 }
@@ -816,6 +881,16 @@ Variable const &Record::operator [] (String const &name) const
     throw NotFoundError("Record::operator []", "Variable '" + name + "' not found");
 }
 
+Variable *Record::tryFind(String const &name)
+{
+    return const_cast<Variable *>(d->findMemberByPath(name));
+}
+
+Variable const *Record::tryFind(String const &name) const
+{
+    return d->findMemberByPath(name);
+}
+
 Record &Record::subrecord(String const &name)
 {
     return const_cast<Record &>((const_cast<Record const *>(this))->subrecord(name));
@@ -836,6 +911,11 @@ Record const &Record::subrecord(String const &name) const
         return *found.value()->value<RecordValue>().record();
     }
     throw NotFoundError("Record::subrecord", "Subrecord '" + name + "' not found");
+}
+
+dsize Record::size() const
+{
+    return dsize(d->members.size());
 }
 
 Record::Members const &Record::members() const
@@ -906,7 +986,7 @@ bool Record::anyMembersChanged() const
         }
     }
 
-    return d->forSubrecords([this] (String const &, Record &rec)
+    return d->forSubrecords([](const String &, Record &rec)
     {
         if (rec.anyMembersChanged())
         {
@@ -1093,6 +1173,45 @@ Record const &Record::parentRecordForMember(String const &name) const
 
     // Omit the final segment of the dotted path to find out the parent record.
     return (*this)[lastOmitted];
+}
+
+String Record::asInfo() const
+{
+    String out;
+    QTextStream os(&out);
+    os.setCodec("UTF-8");
+    for (auto i = d->members.constBegin(); i != d->members.constEnd(); ++i)
+    {
+        if (out) os << "\n";
+
+        const Variable &var = *i.value();
+        String src = i.key();
+
+        if (is<RecordValue>(var.value()))
+        {
+            src += " {\n" + var.valueAsRecord().asInfo();
+            src.replace("\n", "\n    ");
+            src += "\n}";
+        }
+        else if (is<ArrayValue>(var.value()))
+        {
+            src += " " + var.value<ArrayValue>().asInfo();
+        }
+        else
+        {
+            String valueText = var.value().asText();
+            if (valueText.contains("\n"))
+            {
+                src += " = " + Info::quoteString(var.value().asText());
+            }
+            else
+            {
+                src += ": " + valueText;
+            }
+        }
+        os << src;
+    }
+    return out;
 }
 
 QTextStream &operator << (QTextStream &os, Record const &record)

@@ -201,6 +201,8 @@ public:
     static bool isFalse(RecordAccessor const &rec, String const &name,
                         bool defaultValue = true /* assume false if missing */);
 
+    static bool isFalse(String const &token);
+
     static bool isTrue(Value const &value);
 
     static bool isTrue(RecordAccessor const &rec, String const &name,

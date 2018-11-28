@@ -61,7 +61,7 @@ public:
      *
      * @see prev()
      */
-    inline bool hasPrev() const { return &prev() != this; }
+    inline bool hasPrev() const { return prev() != this; }
 
     /**
      * Returns @c true iff the next line owner in the ring (clockwise) is not
@@ -69,16 +69,16 @@ public:
      *
      * @see next()
      */
-    inline bool hasNext() const { return &next() != this; }
+    inline bool hasNext() const { return next() != this; }
 
     /**
      * Navigate to the adjacent line owner in the ring (if any). Note this may
      * be the same LineOwner.
      */
-    LineOwner &navigate(de::ClockDirection dir = de::Anticlockwise) { return *_link[dir]; }
+    LineOwner *navigate(de::ClockDirection dir = de::Anticlockwise) { return _link[dir]; }
 
     /// @copydoc navigate()
-    LineOwner const &navigate(de::ClockDirection dir = de::Anticlockwise) const { return *_link[dir]; }
+    const LineOwner *navigate(de::ClockDirection dir = de::Anticlockwise) const { return _link[dir]; }
 
     /**
      * Returns the previous line owner in the ring (anticlockwise). Note that
@@ -86,10 +86,10 @@ public:
      *
      * @see hasPrev()
      */
-    inline LineOwner &prev() { return navigate(de::Anticlockwise); }
+    inline LineOwner *prev() { return navigate(de::Anticlockwise); }
 
     /// @copydoc prev()
-    inline LineOwner const &prev() const { return navigate(de::Anticlockwise); }
+    inline const LineOwner *prev() const { return navigate(de::Anticlockwise); }
 
     /**
      * Returns the next line owner in the ring (clockwise). Note that this may
@@ -97,13 +97,13 @@ public:
      *
      * @see hasNext()
      */
-    inline LineOwner &next() { return navigate(de::Clockwise); }
+    inline LineOwner *next() { return navigate(de::Clockwise); }
 
     /// @copydoc next()
-    inline LineOwner const &next() const { return navigate(de::Clockwise); }
+    inline const LineOwner *next() const { return navigate(de::Clockwise); }
 
-    inline LineOwner *prevPtr() { return _link[de::Anticlockwise]; }
-    inline LineOwner *nextPtr() { return _link[de::Clockwise]; }
+//    inline LineOwner *prevPtr() { return _link[de::Anticlockwise]; }
+//    inline LineOwner *nextPtr() { return _link[de::Clockwise]; }
 
     /**
      * Returns the line "owner".

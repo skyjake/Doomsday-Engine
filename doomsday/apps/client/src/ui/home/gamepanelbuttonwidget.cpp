@@ -19,6 +19,7 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/home/savelistwidget.h"
+#include "ui/home/gamecolumnwidget.h"
 #include "ui/savelistdata.h"
 #include "ui/dialogs/packagesdialog.h"
 #include "ui/widgets/packagesbuttonwidget.h"
@@ -30,11 +31,15 @@
 #include <doomsday/Games>
 #include <doomsday/LumpCatalog>
 #include <doomsday/LumpDirectory>
+#include <doomsday/res/Bundles>
 
 #include <de/App>
+#include <de/Async>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
+#include <de/Config>
 #include <de/FileSystem>
+#include <de/Loop>
 #include <de/PopupMenuWidget>
 #include <de/ui/FilteredData>
 
@@ -42,6 +47,10 @@ using namespace de;
 
 DENG_GUI_PIMPL(GamePanelButtonWidget)
 , DENG2_OBSERVES(Profiles::AbstractProfile, Change)
+, DENG2_OBSERVES(res::Bundles, Identify)
+, DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(ButtonWidget, StateChange)
+, public AsyncScope
 {
     GameProfile &gameProfile;
     ui::FilteredDataT<SaveListData::SaveItem> savedItems;
@@ -52,6 +61,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *problemIcon;
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
+    bool playHovering = false;
 
     Impl(Public *i, GameProfile &profile, SaveListData const &allSavedItems)
         : Base(i)
@@ -69,6 +79,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             }
 
             if (!gameProfile.isPlayable()) return false;
+
+            // The file must be in the right save folder.
+            if (item.savePath().fileNamePath().compareWithoutCase(gameProfile.savePath()))
+            {
+                return false;
+            }
 
             StringList const savePacks = item.loadedPackages();
 
@@ -92,7 +108,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
         packagesButton = new PackagesButtonWidget;
         packagesButton->setGameProfile(gameProfile);
-        packagesButton->setDialogTitle(tr("Packages for %1").arg(profile.name()));
+        packagesButton->setDialogTitle(tr("Mods for %1").arg(profile.name()));
         packagesButton->setSetupCallback([this] (PackagesDialog &dialog)
         {
             // Add a button for starting the game.
@@ -120,6 +136,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         playButton->setStyleImage("play", "default");
         playButton->setImageColor(style().colors().colorf("inverted.text"));
         playButton->setActionFn([this] () { playButtonPressed(); });
+        playButton->audienceForStateChange() += this;
         self().addButton(playButton);
 
         // List of saved games.
@@ -161,7 +178,11 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                                       self().label().margins().height());
 
         self().panel().setContent(saves);
+        saves->updateLayout();
         self().panel().open();
+
+        DoomsdayApp::bundles().audienceForIdentify() += this;
+        Config::get("home.sortBy").audienceForChange() += this;
     }
 
     Game const &game() const
@@ -172,7 +193,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
     void updatePackagesIndicator()
     {
         int const  count = gameProfile.packages().size();
-        bool const shown = count > 0 && !self().isSelected();
+        bool const shown = !isMissingPackages() && count > 0 && !self().isSelected();
 
         packagesCounter->setText(String::number(count));
         packagesCounter->show(shown);
@@ -187,6 +208,12 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
         }
     }
 
+    void buttonStateChanged(ButtonWidget &/*playButton*/, ButtonWidget::State state) override
+    {
+        playHovering = (state != ButtonWidget::Up);
+        self().updateContent();
+    }
+
     void playButtonPressed()
     {
         if (playButton->isEnabled())
@@ -194,6 +221,8 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
             BusyMode_FreezeGameForBusyMode();
             //ClientWindow::main().taskBar().close();
             // TODO: Emit a signal that hides the Home and closes the taskbar.
+
+            gameProfile.setLastPlayedAt();
 
             // Switch the game.
             DoomsdayApp::app().changeGame(gameProfile, DD_ActivateGameWorker);
@@ -226,7 +255,7 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
                     String const path = savedItems.at(saves->selectedPos()).savePath();
                     self().unselectSave();
                     App::rootFolder().destroyFile(path);
-                    App::fileSystem().refresh();
+                    FS::get().refreshAsync();
                 }))
                 << new ui::ActionItem(tr("Cancel"), new Action /* nop */);
         self().add(pop);
@@ -235,12 +264,45 @@ DENG_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        self().icon().setImage(IdTech1Image::makeGameLogo(game(), catalog));
+        *this += async([this]() { return IdTech1Image::makeGameLogo(game(), catalog); },
+                       [this](const Image &gameLogo) { self().icon().setImage(gameLogo); });
     }
 
-    void profileChanged(Profiles::AbstractProfile &)
+    void profileChanged(Profiles::AbstractProfile &) override
     {
         self().updateContent();
+    }
+
+    void variableValueChanged(Variable &, Value const &) override
+    {
+        self().updateContent();
+    }
+
+    void dataBundlesIdentified() override
+    {
+        Loop::get().mainCall([this] ()
+        {
+            catalog.clear();
+            self().updateContent();
+        });
+    }
+
+    bool isMissingPackages() const
+    {
+        return !gameProfile.isPlayable() && game().isPlayableWithDefaultPackages();
+    }
+
+    String defaultSubtitle() const
+    {
+        if (gameProfile.isUserCreated())
+        {
+            return game().title();
+        }
+        if (Config::get("home.sortBy") != GameColumnWidget::SORT_RECENTLY_PLAYED)
+        {
+            return String::number(game().releaseDate().year());
+        }
+        return {};
     }
 };
 
@@ -256,16 +318,19 @@ GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData con
 
 void GamePanelButtonWidget::setSelected(bool selected)
 {
-    PanelButtonWidget::setSelected(selected);
-
-    d->playButton->enable(selected);
-
-    if (!selected)
+    if ((isSelected() && !selected) || (!isSelected() && selected))
     {
-        unselectSave();
-    }
+        PanelButtonWidget::setSelected(selected);
 
-    updateContent();
+        d->playButton->enable(selected);
+
+        if (!selected)
+        {
+            unselectSave();
+        }
+
+        updateContent();
+    }
 }
 
 void GamePanelButtonWidget::updateContent()
@@ -279,8 +344,23 @@ void GamePanelButtonWidget::updateContent()
     d->problemIcon->show(!isGamePlayable);
     d->updatePackagesIndicator();
 
-    String meta = !d->gameProfile.isUserCreated()? String::number(d->game().releaseDate().year())
-                                                 : d->game().title();
+    const String sortBy = Config::get("home.sortBy");
+
+    String meta;
+    if (sortBy == GameColumnWidget::SORT_RECENTLY_PLAYED)
+    {
+        meta = d->gameProfile.lastPlayedAt().isValid()
+                   ? "Last played " + d->gameProfile.lastPlayedAt().asText(Time::FriendlyFormat)
+                   : "";
+    }
+    else if (sortBy == GameColumnWidget::SORT_GAME_ID)
+    {
+        meta = d->game().id();
+    }
+    if (meta.isEmpty())
+    {
+        meta = d->defaultSubtitle();
+    }
 
     if (isSelected())
     {
@@ -288,19 +368,30 @@ void GamePanelButtonWidget::updateContent()
         {
             meta = _E(D) + tr("Missing data files") + _E(.);
         }
-        else if (d->saves->selectedPos() != ui::Data::InvalidPos)
+    }
+
+    if (d->playHovering)
+    {
+        if (d->saves->selectedPos() != ui::Data::InvalidPos)
         {
             meta = tr("Restore saved game");
         }
-        else if (!d->gameProfile.isUserCreated())
+        else
         {
-            meta = tr("Start new session");
+            meta = tr("Start game");
         }
     }
 
-    if (!isPlayable && isGamePlayable)
+    if (d->isMissingPackages())
     {
-        meta = _E(D) + tr("Selected packages missing") + _E(.);
+        meta = _E(D) "Missing mods" _E(.);
+        d->packagesButton->setOverrideLabel("Fix...");
+        setKeepButtonsVisible(true);
+    }
+    else
+    {
+        d->packagesButton->setOverrideLabel("");
+        setKeepButtonsVisible(false);
     }
 
     label().setText(String(_E(b) "%1\n" _E(l) "%2")

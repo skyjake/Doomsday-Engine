@@ -39,6 +39,7 @@
 #include <de/DisplayMode>
 #include <de/Drawable>
 #include <de/FadeToBlackWidget>
+#include <de/FileSystem>
 #include <de/GLTextureFramebuffer>
 #include <de/GLState>
 #include <de/GLInfo>
@@ -71,8 +72,6 @@
 
 using namespace de;
 
-static ClientWindow *mainWindow = nullptr; // The main window, set after fully constructed.
-
 DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(App, StartupComplete)
 , DENG2_OBSERVES(DoomsdayApp, GameChange)
@@ -81,8 +80,11 @@ DENG2_PIMPL(ClientWindow)
 , DENG2_OBSERVES(GLWindow, Init)
 , DENG2_OBSERVES(GLWindow, Resize)
 , DENG2_OBSERVES(GLWindow, Swap)
-, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
 , DENG2_OBSERVES(Variable, Change)
+, DENG2_OBSERVES(FileSystem, Busy)
+#if !defined (DENG_MOBILE)
+, DENG2_OBSERVES(PersistentGLWindow, AttributeChange)
+#endif
 {
     bool needMainInit            = true;
     bool needRootSizeUpdate      = false;
@@ -118,6 +120,9 @@ DENG2_PIMPL(ClientWindow)
     UniqueWidgetPtr<LabelWidget> fpsCounter;
     float oldFps = 0;
 
+    // File system notification.
+    UniqueWidgetPtr<ProgressWidget> fsBusy;
+
     /// @todo Switch dynamically between VR and plain.
     VRWindowTransform contentXf;
 
@@ -149,7 +154,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    ~Impl()
+    ~Impl() override
     {
         releaseRef(cursorX);
         releaseRef(cursorY);
@@ -157,23 +162,26 @@ DENG2_PIMPL(ClientWindow)
         releaseRef(gameHeight);
         releaseRef(homeDelta);
         releaseRef(quitX);
-
-        if (thisPublic == mainWindow)
-        {
-            mainWindow = nullptr;
-        }
     }
 
     StringList configVariableNames() const
     {
+#if !defined (DENG_MOBILE)
         return StringList()
                 << self().configName("fsaa")
                 << self().configName("vsync");
+#else
+        return StringList();
+#endif
     }
 
     void setupUI()
     {
         Style &style = ClientApp::windowSystem().style();
+
+        // This is a shared widget so it may be accessed during initialization of other widgets;
+        // create it first.
+        taskBarBlur = new LabelWidget("taskbar-blur");
 
         gameWidth ->set(root.viewWidth());
         gameHeight->set(root.viewHeight());
@@ -195,7 +203,7 @@ DENG2_PIMPL(ClientWindow)
 
         auto *miniGameControls = new LabelWidget;
         {
-            miniGameControls->set(GuiWidget::Background(style.colors().colorf("inverted.background")));
+            miniGameControls->set(GuiWidget::Background(style.colors().colorf("background")));
             miniGameControls->rule()
                     .setInput(Rule::Width,  root.viewWidth()/2 -   style.rules().rule(RuleBank::UNIT))
                     .setInput(Rule::Left,   game->rule().right() + style.rules().rule(RuleBank::UNIT))
@@ -205,13 +213,14 @@ DENG2_PIMPL(ClientWindow)
             backToGame->setText("Back to Game");
             backToGame->setSizePolicy(ui::Expand, ui::Expand);
             backToGame->setActionFn([this] () { home->moveOffscreen(1.0); });
+            backToGame->setColorTheme(GuiWidget::Inverted);
 
             nowPlaying = new LabelWidget;
             nowPlaying->setSizePolicy(ui::Expand, ui::Expand);
-            nowPlaying->margins().setLeftRight("").setBottom("dialog.gap");
+            nowPlaying->margins()/*.setLeftRight("")*/.setBottom("dialog.gap");
             nowPlaying->setMaximumTextWidth(miniGameControls->rule().width());
             nowPlaying->setTextLineAlignment(ui::AlignLeft);
-            nowPlaying->setTextColor("inverted.text");
+            nowPlaying->setTextColor("text");
             nowPlaying->setFont("heading");
 
             AutoRef<Rule> combined = nowPlaying->rule().height() + backToGame->rule().height();
@@ -242,10 +251,12 @@ DENG2_PIMPL(ClientWindow)
                     .setInput(Rule::Bottom, root.viewBottom() + *homeDelta);
         root.add(home);
 
+#if !defined (DENG_MOBILE)
         // Busy progress should be visible over the Home.
         busy->progress().orphan();
         busy->progress().rule().setRect(game->rule());
         root.add(&busy->progress());
+#endif
 
         // Common notification area.
         notifications = new NotificationAreaWidget;
@@ -262,7 +273,7 @@ DENG2_PIMPL(ClientWindow)
         quitButton->setImageColor(style.colors().colorf("accent"));
         quitButton->setTextAlignment(ui::AlignLeft);
         quitButton->set(GuiWidget::Background(style.colors().colorf("background")));
-        quitButton->setActionFn([this] () { Con_Execute(CMDS_DDAY, "quit!", false, false); });
+        quitButton->setActionFn([]() { Con_Execute(CMDS_DDAY, "quit!", false, false); });
         quitButton->rule()
                 .setInput(Rule::Top,    root.viewTop() + style.rules().rule("gap"))
                 .setInput(Rule::Left,   root.viewRight() + *quitX)
@@ -280,9 +291,19 @@ DENG2_PIMPL(ClientWindow)
         fpsCounter->setSizePolicy(ui::Expand, ui::Expand);
         fpsCounter->setAlignment(ui::AlignRight);
 
+        // File system busy indicator.
+        fsBusy.reset(new ProgressWidget);
+        fsBusy->setSizePolicy(ui::Expand, ui::Expand);
+        fsBusy->setMode(ProgressWidget::Indefinite);
+        fsBusy->useMiniStyle();
+        fsBusy->setText("Files");
+        fsBusy->setTextAlignment(ui::AlignRight);
+
         // Everything behind the task bar can be blurred with this widget.
-        taskBarBlur = new LabelWidget("taskbar-blur");
+        if (style.isBlurringAllowed())
+        {
         taskBarBlur->set(GuiWidget::Background(Vector4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
+        }
         taskBarBlur->rule().setRect(root.viewRule());
         taskBarBlur->setAttribute(GuiWidget::DontDrawContent);
         root.add(taskBarBlur);
@@ -349,10 +370,17 @@ DENG2_PIMPL(ClientWindow)
 #endif
         */
 
+#if !defined (DENG_MOBILE)
         self().audienceForAttributeChange() += this;
+#endif
     }
 
-    void appStartupCompleted()
+    void fileSystemBusyStatusChanged(FS::BusyStatus bs) override
+    {
+        notifications->showOrHide(*fsBusy, bs == FS::Busy);
+    }
+
+    void appStartupCompleted() override
     {
         taskBar->show();
 
@@ -368,10 +396,11 @@ DENG2_PIMPL(ClientWindow)
             taskBar->close();
         }
 
+        FS::get().audienceForBusy() += this;
         Loop::get().timer(1.0, [this] () { showOrHideQuitButton(); });
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(Game const &newGame) override
     {
         minimizeGame(false);
         showOrHideQuitButton();
@@ -433,8 +462,12 @@ DENG2_PIMPL(ClientWindow)
             break;
 
         case Normal:
+#if defined (DENG_HAVE_BUSYRUNNER)
             // The busy widget will hide itself after a possible transition has finished.
             busy->disable();
+#else
+            busy->hide();
+#endif
 
             game->show();
             game->enable();
@@ -446,7 +479,7 @@ DENG2_PIMPL(ClientWindow)
         mode = newMode;
     }
 
-    void windowInit(GLWindow &)
+    void windowInit(GLWindow &) override
     {
         Sys_GLConfigureDefaultState();
         GL_Init2DState();
@@ -463,7 +496,7 @@ DENG2_PIMPL(ClientWindow)
         game->enable();
 
         // Configure a viewport immediately.
-        GLState::current().setViewport(Rectangleui(0, 0, self().pixelWidth(), self().pixelHeight())).apply();
+        GLState::current().setViewport(Rectangleui(0, 0, self().pixelWidth(), self().pixelHeight()));
 
         LOG_DEBUG("GameWidget enabled");
 
@@ -471,18 +504,11 @@ DENG2_PIMPL(ClientWindow)
         {
             needMainInit = false;
 
+#if !defined (DENG_MOBILE)
             self().raise();
             self().requestActivate();
-
+#endif
             self().eventHandler().audienceForFocusChange() += this;
-
-/*#ifdef WIN32
-            if (self().isFullScreen())
-            {
-                // It would seem we must manually give our canvas focus. Bug in Qt?
-                self().canvas().setFocus();
-            }
-#endif*/
 
             DD_FinishInitializationAfterWindowReady();
 
@@ -491,7 +517,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void windowResized(GLWindow &)
+    void windowResized(GLWindow &) override
     {
         LOG_AS("ClientWindow");
 
@@ -506,7 +532,7 @@ DENG2_PIMPL(ClientWindow)
         showOrHideQuitButton();
     }
 
-    void windowSwapped(GLWindow &)
+    void windowSwapped(GLWindow &) override
     {
         if (DoomsdayApp::app().isShuttingDown()) return;
 
@@ -517,14 +543,16 @@ DENG2_PIMPL(ClientWindow)
         completeFade();
     }
 
-    void windowAttributesChanged(PersistentGLWindow &)
+#if !defined (DENG_MOBILE)
+    void windowAttributesChanged(PersistentGLWindow &) override
     {
         showOrHideQuitButton();
     }
+#endif
 
     void showOrHideQuitButton()
     {
-        TimeDelta const SPAN = 0.6;
+        TimeSpan const SPAN = 0.6;
         if (self().isFullScreen() && !DoomsdayApp::isGameLoaded())
         {
             quitX->set(-quitButton->rule().width() - Style::get().rules().rule("gap"), SPAN);
@@ -535,7 +563,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void mouseStateChanged(MouseEventSource::State state)
+    void mouseStateChanged(MouseEventSource::State state) override
     {
         Mouse_Trap(state == MouseEventSource::Trapped);
     }
@@ -586,7 +614,7 @@ DENG2_PIMPL(ClientWindow)
         return false;
     }
 
-    void windowFocusChanged(GLWindow &, bool hasFocus)
+    void windowFocusChanged(GLWindow &, bool hasFocus) override
     {
         LOG_DEBUG("windowFocusChanged focus:%b fullscreen:%b hidden:%b minimized:%b")
                 << hasFocus << self().isFullScreen() << self().isHidden() << self().isMinimized();
@@ -606,6 +634,11 @@ DENG2_PIMPL(ClientWindow)
         {
             // Trap the mouse again in fullscreen mode.
             self().eventHandler().trapMouse();
+        }
+
+        if (Config::get().getb("audio.pauseOnFocus", true))
+        {
+            AudioSystem::get().pauseMusic(!hasFocus);
         }
 
         // Generate an event about this.
@@ -628,7 +661,7 @@ DENG2_PIMPL(ClientWindow)
         }
     }
 
-    void variableValueChanged(Variable &variable, Value const &newValue)
+    void variableValueChanged(Variable &variable, Value const &newValue) override
     {
         if (variable.name() == "fsaa")
         {
@@ -711,7 +744,7 @@ DENG2_PIMPL(ClientWindow)
 
     void minimizeGame(bool mini)
     {
-        TimeDelta const SPAN = 1.0;
+        TimeSpan const SPAN = 1.0;
 
         if (mini && !isGameMini)
         {
@@ -736,6 +769,7 @@ DENG2_PIMPL(ClientWindow)
 
     void updateMouseCursor()
     {
+#if !defined (DENG_MOBILE)
         // The cursor is only needed if the content is warped.
         cursor->show(!self().eventHandler().isMouseTrapped() && VRConfig::modeAppliesDisplacement(vrCfg().mode()));
 
@@ -760,9 +794,10 @@ DENG2_PIMPL(ClientWindow)
             }
             cursorHasBeenHidden = false;
         }
+#endif
     }
 
-    void setupFade(FadeDirection fadeDir, TimeDelta const &span)
+    void setupFade(FadeDirection fadeDir, TimeSpan const &span)
     {
         if (!fader)
         {
@@ -795,23 +830,31 @@ ClientWindow::ClientWindow(String const &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
+#if defined (DENG_MOBILE)
+    setMain(this);
+    WindowSystem::get().addWindow("main", this);
+#endif
+
     audienceForInit()   += d;
     audienceForResize() += d;
     audienceForSwap()   += d;
 
-#ifdef WIN32
+#if defined (WIN32)
     // Set an icon for the window.
     setIcon(QIcon(":/doomsday.ico"));
 #endif
 
     d->setupUI();
 
-    // The first window is the main window.
-    if (!mainWindow)
+#if defined (DENG_MOBILE)
+    // Stay out from under the virtual keyboard.
+    connect(this, &GLWindow::rootDimensionsChanged, [this] (QRect rect)
     {
-        mainWindow = this;
+        d->root.rootOffset().setValue(Vector2f(0, int(rect.height()) - int(pixelSize().y)),
+                                      0.3);
+    });
+#endif
     }
-}
 
 ClientRootWidget &ClientWindow::root()
 {
@@ -898,8 +941,8 @@ void ClientWindow::preDraw()
 
     ClientApp::app().preFrame(); /// @todo what about multiwindow?
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Cursor position (if cursor is visible).
     d->updateMouseCursor();
@@ -919,13 +962,23 @@ Vector2f ClientWindow::windowContentSize() const
 
 void ClientWindow::drawWindowContent()
 {
+#if defined (DENG_MOBILE)
+    {
+
+    }
+#endif
+
+    DENG2_ASSERT_IN_RENDER_THREAD();
     root().draw();
     LIBGUI_ASSERT_GL_OK();
 }
 
 void ClientWindow::postDraw()
 {
-    /// @note This method is called during the Canvas paintGL event.
+    /// @note This method is called during the GLWindow paintGL event.
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
+    BaseWindow::postDraw();
 
     // OVR will handle presentation in Oculus Rift mode.
     if (ClientApp::vr().mode() != VRConfig::OculusRift)
@@ -934,8 +987,6 @@ void ClientWindow::postDraw()
         // swapped.
         GL_FinishFrame();
     }
-
-    BaseWindow::postDraw();
 }
 
 bool ClientWindow::setDefaultGLFormat() // static
@@ -990,14 +1041,14 @@ void ClientWindow::grab(image_t &img, bool halfSized) const
     DENG_ASSERT(img.pixelSize != 0);
 }
 
-void ClientWindow::fadeInTaskBarBlur(TimeDelta span)
+void ClientWindow::fadeInTaskBarBlur(TimeSpan span)
 {
     d->taskBarBlur->setAttribute(GuiWidget::DontDrawContent, UnsetFlags);
     d->taskBarBlur->setOpacity(0);
     d->taskBarBlur->setOpacity(1, span);
 }
 
-void ClientWindow::fadeOutTaskBarBlur(TimeDelta span)
+void ClientWindow::fadeOutTaskBarBlur(TimeSpan span)
 {
     d->taskBarBlur->setOpacity(0, span);
     QTimer::singleShot(span.asMilliSeconds(), this, SLOT(hideTaskBarBlur()));
@@ -1029,7 +1080,7 @@ ClientWindow &ClientWindow::main()
 
 bool ClientWindow::mainExists()
 {
-    return mainWindow != nullptr;
+    return BaseWindow::mainExists();
 }
 
 void ClientWindow::toggleFPSCounter()
@@ -1079,7 +1130,7 @@ bool ClientWindow::handleFallbackEvent(Event const &event)
     return d->handleFallbackEvent(event);
 }
 
-void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeDelta const &duration)
+void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeSpan const &duration)
 {
     d->setupFade(fadeDirection, duration);
 }

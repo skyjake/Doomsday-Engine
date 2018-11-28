@@ -112,17 +112,21 @@ endmacro (deng_cotire)
 
 macro (deng_target_rpath target)
     if (APPLE)
+        set (_extraRPath)
+        if (NOT DENG_ENABLE_DEPLOYQT)
+            # Not deployed; include the local Qt library path in @rpath.
+            set (_extraRPath "${QT_LIBS}")
+        endif ()
         set_target_properties (${target} PROPERTIES
-            INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../${DENG_INSTALL_LIB_DIR}"
+            INSTALL_RPATH "@loader_path/../Frameworks;@executable_path/../${DENG_INSTALL_LIB_DIR};${_extraRPath}"
         )
         if (${target} MATCHES "test_.*")
             # These won't be deployed, so we can use the full path.
-            qmake_query (_qtLibPath QT_INSTALL_LIBS)
             set_property (TARGET ${target} APPEND PROPERTY
-                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${_qtLibPath}"
+                INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR};${QT_LIBS}"
             )
-            set (_qtLibPath)
         endif ()
+        set (_extraRPath)
     elseif (UNIX)
         set_property (TARGET ${target}
             PROPERTY INSTALL_RPATH
@@ -237,6 +241,7 @@ macro (deng_merge_sources srcName globbing)
         # The original source files should not be compiled any more.
         # They remain part of the project so they are available in the IDE.
         set_property (SOURCE ${_mergingSources} PROPERTY HEADER_FILE_ONLY YES)
+        set_property (SOURCE ${_turbo} PROPERTY SKIP_AUTOMOC YES)
         list (APPEND SOURCES ${_turbo};${_mergingSources})
         set (_files)
         set (_mergingSources)
@@ -335,15 +340,25 @@ function (deng_add_package packName)
         message (FATAL_ERROR "deng_package: \"${outName}\" not found")
     endif ()
     set (outDir ${CMAKE_CURRENT_BINARY_DIR})
+    # Build the package immediately during the CMake run.
     execute_process (COMMAND ${PYTHON_EXECUTABLE}
-        "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py"
-        ${fullPath} ${outDir}
+        "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py" ${fullPath} ${outDir}
         OUTPUT_VARIABLE msg
         OUTPUT_STRIP_TRAILING_WHITESPACE
     )
     clean_paths (msg ${msg})
     message (STATUS "${msg}")
-    add_custom_target (${packName})
+    # Find all the source files for the package.
+    file (GLOB_RECURSE packSrc "${fullPath}/*")
+    list_remove_matches (packSrc ".*\\.DS_Store")
+    # Ensure the package gets rebuilt if the source files are edited.
+    add_custom_command (OUTPUT ${outDir}/${outName}
+        COMMAND "${DENG_SOURCE_DIR}/build/scripts/buildpackage.py" ${fullPath} ${outDir}
+        DEPENDS ${packSrc}
+        COMMENT "Packaging ${packName}..."
+    )
+    # The package target is used for dependency tracking and deployment.
+    add_custom_target (${packName} SOURCES ${packSrc})
     set_target_properties (${packName} PROPERTIES
         DENG_LOCATION "${outDir}/${outName}"
         FOLDER Packages
@@ -355,10 +370,12 @@ function (deng_add_package packName)
         # the packages need to be made available separately.
         set (packComponent sdk)
     endif ()
-    install (FILES ${outDir}/${outName}
-        DESTINATION ${DENG_INSTALL_DATA_DIR}
-        COMPONENT ${packComponent}
-    )
+    if (NOT IOS)
+        install (FILES ${outDir}/${outName}
+            DESTINATION ${DENG_INSTALL_DATA_DIR}
+            COMPONENT ${packComponent}
+        )
+    endif ()
     if (MSVC)
         # In addition to installing, copy the packages to the build products
         # directories so that executables can be run in them.
@@ -400,7 +417,11 @@ macro (deng_add_library target)
     sublist (_src 1 -1 ${ARGV})
     deng_filter_platform_sources (_src ${_src})
     # Define the target and namespace alias.
-    add_library (${target} SHARED ${_src})
+    if (NOT IOS)
+        add_library (${target} SHARED ${_src})
+    else ()
+        add_library (${target} STATIC ${_src})
+    endif ()
     set (_src)
     add_library (Deng::${target} ALIAS ${target})
     # Libraries use the "deng_" prefix.
@@ -412,7 +433,7 @@ macro (deng_add_library target)
     set (_outName)
     # Compiler settings.
     deng_target_defaults (${target})
-    if (APPLE)
+    if (APPLE AND NOT IOS)
         set_property (TARGET ${target} PROPERTY BUILD_WITH_INSTALL_RPATH ON)
         add_custom_command (TARGET ${target} POST_BUILD
             COMMAND ${CMAKE_COMMAND}
@@ -468,16 +489,32 @@ macro (deng_codesign target)
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/PlugIns/*/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.dylib\"
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/Contents/Frameworks/*.framework\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle/*\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/PlugIns/*.bundle\"
+                \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app/*.dylib\"
             )
             foreach (fn IN LISTS fw)
+                set (_skip NO)
+                if (fn MATCHES \".*app/PlugIns.*\" AND NOT fn MATCHES \".*\\\\.bundle$\")
+                    get_filename_component (fn2 \${fn} NAME)
+                    if (NOT fn MATCHES \".*\${fn2}.bundle/\${fn2}$\")
+                        set (_skip YES)
+                        message (STATUS \"Skipping \${fn} -- not an executable\")
+                    endif ()
+                endif ()
+                if (NOT _skip)
                 message (STATUS \"Signing \${fn}...\")
                 execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
-                    -s \"${DENG_CODESIGN_APP_CERT}\" \"\${fn}\"
+                        -s \"${DENG_CODESIGN_APP_CERT}\"
+                        ${DENG_FW_CODESIGN_EXTRA_FLAGS}
+                        \"\${fn}\"
                 )
+                endif ()
             endforeach (fn)
-            message (STATUS \"Signing ${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
+            message (STATUS \"Signing \${CMAKE_INSTALL_PREFIX}/${_outName}.app using '${DENG_CODESIGN_APP_CERT}'...\")
             execute_process (COMMAND ${CODESIGN_COMMAND} --verbose
                 --force -s \"${DENG_CODESIGN_APP_CERT}\"
+                ${DENG_CODESIGN_EXTRA_FLAGS}
                 \"\${CMAKE_INSTALL_PREFIX}/${_outName}.app\"
             )")
     endif ()
@@ -559,13 +596,15 @@ function (add_pkgconfig_interface_library target)
 endfunction (add_pkgconfig_interface_library)
 
 function (fix_bundled_install_names binaryFile)
+    if (IOS)
+        return ()
+    endif ()
     if (NOT EXISTS ${binaryFile})
         message (FATAL_ERROR "fix_bundled_install_names: ${binaryFile} not found")
     endif ()
     if (binaryFile MATCHES ".*\\.bundle")
         set (ref "@loader_path/../Frameworks")
     else ()
-        #set (ref "@executable_path/../Frameworks")
         set (ref "@rpath")
     endif ()
     sublist (libs 1 -1 ${ARGV})
@@ -622,8 +661,12 @@ function (deng_bundle_install_names target)
     file (GENERATE OUTPUT "${scriptName}" CONTENT "
 set (CMAKE_MODULE_PATH ${DENG_SOURCE_DIR}/cmake)
 set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
+set (IOS ${IOS})
+if (NOT IOS)
+    set (bundleSubDir Contents/MacOS)
+endif ()
 include (Macros)
-fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.bundle/Contents/MacOS/${target}\"
+fix_bundled_install_names (\"${CMAKE_CURRENT_BINARY_DIR}/\${INT_DIR}/${target}.bundle/\${bundleSubDir}/${target}\"
     \"${libs}\")\n")
     add_custom_command (TARGET ${target} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -DINT_DIR=${CMAKE_CFG_INTDIR} -P "${scriptName}"
@@ -633,18 +676,12 @@ endfunction (deng_bundle_install_names)
 
 # macOS: Install the libraries of a dependency target into the application bundle.
 function (deng_install_bundle_deps target)
-    if (APPLE)
+    if (APPLE AND NOT IOS)
         sublist (_deps 1 -1 ${ARGV})
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
         set (_fwDir "${_outName}.app/Contents/Frameworks")
         foreach (_dep ${_deps})
             if (TARGET ${_dep})
-                # get_property (bundleLibs TARGET ${_dep} PROPERTY MACOSX_BUNDLED_LIBRARIES)
-                # if (bundleLibs)
-                #   foreach (_lib ${bundleLibs})
-                #       message ("bundle this: ${_lib}")
-                #   endforeach (_lib)
-                # else ()
                     if (_dep MATCHES "Deng::(.*)")
                         install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
                     else ()
@@ -656,12 +693,7 @@ function (deng_install_bundle_deps target)
                                 install (FILES ${_tlib} DESTINATION ${_fwDir})
                             endif ()
                         endforeach (_tlib)
-                        # Cannot use this (CMake bug?); instead use the foreach above.
-                        # install (FILES $<TARGET_PROPERTY:${_dep},INTERFACE_LINK_LIBRARIES>
-                        #     DESTINATION ${_fwDir}
-                        # )
                     endif ()
-                #endif ()
             endif ()
         endforeach (_dep)
     endif ()
@@ -670,7 +702,10 @@ endfunction (deng_install_bundle_deps)
 # Run the Qt deploy utility on the target, resolving any local system
 # dependencies.
 function (deng_install_deployqt target)
-    if (UNIX AND NOT APPLE)
+    if (NOT DENG_ENABLE_DEPLOYQT)
+        return ()
+    endif ()
+    if (UNIX_LINUX)
         return () # No need to deploy Qt.
     endif ()
     get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)
@@ -756,7 +791,7 @@ endfunction (deng_install_tool)
 # Not applicable to macOS because libraries are not installed but instead
 # bundled with the applicatino.
 macro (deng_install_library library)
-    if (UNIX AND NOT APPLE)
+    if (UNIX_LINUX)
         string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})
         file (GLOB _links ${library}.* ${versioned})
         install (FILES ${library} ${_links}
@@ -790,6 +825,8 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
             set (pfm UNIX) # man pages are always for Unix
         elseif (type STREQUAL RTF)
             set (descText "rich text document")
+        elseif (type STREQUAL HTML)
+            set (descText "HTML document")
         else ()
             set (descText "text document")
             if (WIN32)
@@ -800,8 +837,13 @@ function (deng_add_amedoc type file ameSourceDir mainSrc)
         get_filename_component (_name ${file} NAME)
         add_custom_command (
             OUTPUT ${file}
-            COMMAND "${AMETHYST_COMMAND}" ${AMETHYST_FLAGS} -d${type} -d${pfm} ${opts}
-                -o${_name} ${ameSourceDir}/${mainSrc}
+            COMMAND "${AMETHYST_COMMAND}"
+                ${AMETHYST_FLAGS}
+                -d${type}
+                -d${pfm}
+                ${opts}
+                -o${_name}
+                ${ameSourceDir}/${mainSrc}
             DEPENDS ${_ameSrc}
             COMMENT "Compiling ${descText}..."
         )

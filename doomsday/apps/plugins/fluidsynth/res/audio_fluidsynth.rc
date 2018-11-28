@@ -3,8 +3,8 @@
  * License: GPL
  * Online License Link: http://www.gnu.org/licenses/gpl.html
  *
- *\author Copyright © 2008-2013 Daniel Swanson <danij@dengine.net>
- *\author Copyright © 2011-2017 Jaakko Ker‰nen <jaakko.keranen@iki.fi>
+ *\author Copyright (c) 2008-2013 Daniel Swanson <danij@dengine.net>
+ *\author Copyright (c) 2011-2018 Jaakko Ker√§nen <jaakko.keranen@iki.fi>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ BEGIN
     "            VALUE ""FileDescription"", PLUGIN_NICENAME "" (Doomsday Engine audio plugin)\0""\r\n"
     "            VALUE ""FileVersion"",     PLUGIN_VERSION_TEXT ""\0""\r\n"
     "            VALUE ""InternalName"",    PLUGIN_NICENAME ""\0""\r\n"
-    "            VALUE ""LegalCopyright"",  ""Copyright © 2003-2012, deng Team\0""\r\n"
+    "            VALUE ""LegalCopyright"",  ""Copyright (c) 2003-2018, deng Team\0""\r\n"
     "            VALUE ""OriginalFilename"", ""dsFluidSynth.dll\0""\r\n"
     "            VALUE ""ProductName"",     PLUGIN_NICENAME ""\0""\r\n"
     "            VALUE ""ProductVersion"",  PLUGIN_VERSION_TEXT ""\0""\r\n"
@@ -119,7 +119,7 @@ BEGIN
             VALUE "FileDescription", PLUGIN_NICENAME " (Doomsday Engine audio plugin)\0"
             VALUE "FileVersion",    PLUGIN_VERSION_TEXT "\0"
             VALUE "InternalName",   PLUGIN_NICENAME "\0"
-            VALUE "LegalCopyright", "Copyright © 2003-2012, deng Team\0"
+            VALUE "LegalCopyright", "Copyright (c) 2003-2018, deng Team\0"
             VALUE "OriginalFilename", "dsFluidSynth.dll\0"
             VALUE "ProductName",    PLUGIN_NICENAME "\0"
             VALUE "ProductVersion", PLUGIN_VERSION_TEXT "\0"

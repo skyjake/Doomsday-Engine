@@ -41,27 +41,25 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
     Rule *maxX;
     Rule *maxY;
 
-    Origin origin = Top;
-    bool pageKeysEnabled = true;
-    bool scrollingEnabled = true;
-    Animation scrollOpacity { 0 };
-    int scrollBarWidth = 0;
-    Rectanglef indicatorUv;
-    bool indicatorAnimating = false;
     String scrollBarColorId { "accent" };
     ColorBank::Colorf scrollBarColor;
     ColorBank::Colorf scrollBarHoverColor;
-    bool scrollBarGrabbed = false;
+    Animation scrollOpacity { 0 };
+    Origin origin = Top;
+    int scrollBarWidth { 0 };
     int grabOffset;
 
+    bool scrollBarGrabbed { false };
+    bool indicatorAnimating { false };
+    bool pageKeysEnabled { true };
+    bool scrollingEnabled { true };
+
     // GL objects.
-    bool indicatorDrawEnabled = false;
-    bool scrollBarHover = false;
+    bool indicatorDrawEnabled { false };
+    bool scrollBarHover { false };
+    Rectanglef indicatorUv;
     Rectanglef scrollBarVisRect;
     Rectanglef scrollBarLaneRect;
-    //Drawable drawable;
-    //GLUniform uMvpMatrix { "uMvpMatrix", GLUniform::Mat4 };
-    //GLUniform uColor     { "uColor",     GLUniform::Vec4 };
     GuiVertexBuilder verts;
 
     Impl(Public *i) : Base(i)
@@ -145,12 +143,17 @@ DENG_GUI_PIMPL(ScrollAreaWidget), public Lockable
         Vector2i const viewSize = self().viewportSize();
         if (viewSize == Vector2i()) return RectanglefPair();
 
-        auto const &margins = self().margins();
-
-        int const indHeight = de::clamp(
+        const auto &margins = self().margins();
+        const float contentHeight = float(contentRule.height().value());
+        int indHeight = 0;
+        
+        if (contentHeight > 0)
+        {
+            indHeight = de::clamp(
                     margins.height().valuei(),
-                    int(float(viewSize.y * viewSize.y) / float(contentRule.height().value())),
+                    int(float(viewSize.y * viewSize.y) / contentHeight),
                     viewSize.y / 2);
+        }
 
         float indPos = self().scrollPositionY().value() / self().maximumScrollY().value();
         if (origin == Top) indPos = 1 - indPos;
@@ -256,6 +259,13 @@ void ScrollAreaWidget::setContentSize(Rule const &width, Rule const &height)
     DENG2_GUARD(d);
     setContentWidth(width);
     setContentHeight(height);
+}
+
+void ScrollAreaWidget::setContentSize(ISizeRule const &dimensions)
+{
+    DENG2_GUARD(d);
+    setContentWidth(dimensions.width());
+    setContentHeight(dimensions.height());
 }
 
 void ScrollAreaWidget::setContentSize(Vector2i const &size)
@@ -372,24 +382,24 @@ Vector2i ScrollAreaWidget::maximumScroll() const
     return Vector2i(maximumScrollX().valuei(), maximumScrollY().valuei());
 }
 
-void ScrollAreaWidget::scroll(Vector2i const &to, TimeDelta span)
+void ScrollAreaWidget::scroll(Vector2i const &to, TimeSpan span)
 {
     scrollX(to.x, span);
     scrollY(to.y, span);
 }
 
-void ScrollAreaWidget::scrollX(int to, TimeDelta span)
+void ScrollAreaWidget::scrollX(int to, TimeSpan span)
 {
     d->x->set(de::clamp(0, to, maximumScrollX().valuei()), span);
 }
 
-void ScrollAreaWidget::scrollY(int to, TimeDelta span)
+void ScrollAreaWidget::scrollY(int to, TimeSpan span)
 {
     d->y->set(de::clamp(0, to, maximumScrollY().valuei()), span);
     d->restartScrollOpacityFade();
 }
 
-void ScrollAreaWidget::scrollY(Rule const &to, TimeDelta span)
+void ScrollAreaWidget::scrollY(Rule const &to, TimeSpan span)
 {
     d->y->set(OperatorRule::clamped(to, Const(0), maximumScrollY()), span);
     d->restartScrollOpacityFade();
@@ -418,6 +428,7 @@ void ScrollAreaWidget::enablePageKeys(bool enabled)
 void ScrollAreaWidget::enableIndicatorDraw(bool enabled)
 {
     d->indicatorDrawEnabled = enabled;
+    d->restartScrollOpacityFade();
 }
 
 bool ScrollAreaWidget::handleEvent(Event const &event)
@@ -461,7 +472,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
             if (mouse.wheelMotion() == MouseEvent::FineAngle)
             {
                 d->y->set(de::clamp(0, int(d->y->animation().target()) +
-                                    toDevicePixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
+                                    pointsToPixels(mouse.wheel().y / 2 * (d->origin == Top? -1 : 1)),
                                     d->maxY->valuei()), .05f);
                 d->restartScrollOpacityFade();
             }
@@ -489,7 +500,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
         {
             if (event.type() == Event::MousePosition)
             {
-                bool const hovering = (d->scrollBarVisRect.expanded(toDevicePixels(1))
+                bool const hovering = (d->scrollBarVisRect.expanded(pointsToPixels(1))
                                        .contains(event.as<MouseEvent>().pos()));
                 d->setScrollBarHovering(hovering);
             }
@@ -553,7 +564,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-void ScrollAreaWidget::scrollToTop(TimeDelta span)
+void ScrollAreaWidget::scrollToTop(TimeSpan span)
 {
     if (d->origin == Top)
     {
@@ -565,7 +576,7 @@ void ScrollAreaWidget::scrollToTop(TimeDelta span)
     }
 }
 
-void ScrollAreaWidget::scrollToBottom(TimeDelta span)
+void ScrollAreaWidget::scrollToBottom(TimeSpan span)
 {
     if (d->origin == Top)
     {
@@ -577,17 +588,17 @@ void ScrollAreaWidget::scrollToBottom(TimeDelta span)
     }
 }
 
-void ScrollAreaWidget::scrollToLeft(TimeDelta span)
+void ScrollAreaWidget::scrollToLeft(TimeSpan span)
 {
     scrollX(0, span);
 }
 
-void ScrollAreaWidget::scrollToRight(TimeDelta span)
+void ScrollAreaWidget::scrollToRight(TimeSpan span)
 {
     scrollX(maximumScrollX().valuei(), span);
 }
 
-void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeDelta span)
+void ScrollAreaWidget::scrollToWidget(GuiWidget const &widget, TimeSpan span)
 {
     int off = widget.rule().midY().valuei() - contentRule().top().valuei() -
               rule().height().valuei()/2;
@@ -632,7 +643,7 @@ void ScrollAreaWidget::glMakeScrollIndicatorGeometry(GuiVertexBuilder &verts,
 
     Vector4f const barOpacity { 1, 1, 1, d->scrollOpacity };
 
-    verts.makeQuad(d->scrollBarVisRect.expanded((d->scrollBarHover? toDevicePixels(1) : 0)),
+    verts.makeQuad(d->scrollBarVisRect.expanded((d->scrollBarHover ? pointsToPixels(1) : 0)),
                    barOpacity * d->scrollBarColor,
                    d->indicatorUv);
 

@@ -531,7 +531,7 @@ void P_MobjThinker(void *mobjThinkerPtr)
 #endif
 
     // Handle X and Y momentums.
-    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || (mobj->flags & MF_SKULLFLY))
+    if(NON_ZERO(mobj->mom[MX]) || NON_ZERO(mobj->mom[MY]) || (mobj->flags & MF_SKULLFLY))
     {
         P_MobjMoveXY(mobj);
 
@@ -552,7 +552,7 @@ void P_MobjThinker(void *mobjThinkerPtr)
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
+    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || NON_ZERO(mobj->mom[MZ]))
     {
         P_MobjMoveZ(mobj);
         if(mobj->thinker.function != (thinkfunc_t) P_MobjThinker) // Must've been removed.
@@ -653,7 +653,7 @@ void P_MobjThinker(void *mobjThinkerPtr)
         if(!(mobj->flags & MF_COUNTKILL))
             return;
 
-        if(!G_Ruleset_RespawnMonsters())
+        if(!gfw_Rule(respawnMonsters))
             return;
 
         mobj->moveCount++;
@@ -692,14 +692,14 @@ mobj_t *P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
         return NULL;
 
     // Not for deathmatch?
-    if(G_Ruleset_Deathmatch() && (info->flags & MF_NOTDMATCH))
+    if(gfw_Rule(deathmatch) && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
     if(IS_NETGAME)
     {
         // Cooperative weapons?
-        if(cfg.noCoopWeapons && !G_Ruleset_Deathmatch() && type >= MT_CLIP &&
+        if(cfg.noCoopWeapons && !gfw_Rule(deathmatch) && type >= MT_CLIP &&
            type <= MT_SUPERSHOTGUN)
             return NULL;
 
@@ -719,7 +719,7 @@ mobj_t *P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z, angle_t
     }
 
     // Don't spawn any monsters?
-    if(G_Ruleset_NoMonsters() && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
+    if(gfw_Rule(noMonsters) && ((info->flags & MF_COUNTKILL) || type == MT_SKULL))
         return NULL;
 
     if(info->flags & MF_SOLID)

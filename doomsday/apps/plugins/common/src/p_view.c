@@ -119,7 +119,16 @@ void P_CalcHeight(player_t *plr)
     else
     {
         angle_t angle = (FINEANGLES / 20 * mapTime) & FINEMASK;
-        target = cfg.common.bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
+        double bobView = cfg.common.bobView;
+#if __JDOOM__
+        if (gameModeBits & (GM_DOOM_BFG | GM_DOOM2_BFG | GM_DOOM2_NERVE))
+        {
+            // BFG Edition reduces view bobbing:
+            // https://doomwiki.org/wiki/Doom_3:_BFG_Edition
+            bobView *= .75;
+        }
+#endif
+        target = bobView * ((plr->bob / 2) * FIX2FLT(finesine[angle]));
     }
 
     // Do the change gradually.

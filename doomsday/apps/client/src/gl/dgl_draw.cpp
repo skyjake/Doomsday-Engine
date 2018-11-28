@@ -1,4 +1,6 @@
-/** @file dgl_draw.cpp  Drawing Operations and Vertex Arrays.
+/** @file dgl_draw.cpp  Drawing operations and vertex arrays.
+ *
+ * Emulates OpenGL 1.x drawing for legacy code.
  *
  * @authors Copyright © 2003-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @authors Copyright © 2007-2015 Daniel Swanson <danij@dengine.net>
@@ -17,8 +19,6 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#define DENG_NO_API_MACROS_GL
-
 #include "de_base.h"
 #include "gl/gl_main.h"
 
@@ -26,326 +26,903 @@
 #include <cstdlib>
 #include <de/concurrency.h>
 #include <de/GLInfo>
+#include <de/GLBuffer>
+#include <de/GLState>
+#include <de/GLProgram>
+#include <de/Matrix>
 #include "sys_system.h"
 #include "gl/gl_draw.h"
 #include "gl/sys_opengl.h"
+#include "clientapp.h"
 
 using namespace de;
 
-static int primLevel = 0;
-static DGLuint inList = 0;
-#ifdef _DEBUG
-static dd_bool inPrim = false;
-#endif
+constexpr uint MAX_TEX_COORDS = 2;
+constexpr int  MAX_BATCH      = 16;
 
-dd_bool GL_NewList(DGLuint list, int mode)
+static unsigned s_drawCallCount = 0;
+static unsigned s_primSwitchCount = 0;
+static unsigned s_minBatchLength = 0;
+static unsigned s_maxBatchLength = 0;
+static unsigned s_totalBatchCount = 0;
+
+struct DGLDrawState
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    struct Vertex
+    {
+        Vector3f  vertex;
+        Vector4ub color { 255, 255, 255, 255 };
+        Vector2f  texCoord[MAX_TEX_COORDS];
+        float     fragOffset[2] { 0, 0 }; // Multiplied by uFragmentOffset
+        float     batchIndex;
 
-    // We enter a New/End list section.
-#ifdef _DEBUG
-    if(inList)
-        App_Error("GL_NewList: Already in list");
-    Sys_GLCheckError();
-#endif
+        Vertex() {}
 
-    if(list)
-    {   // A specific list id was requested. Is it free?
-        if(LIBGUI_GL.glIsList(list))
+        Vertex(const Vertex &other)
         {
-#if _DEBUG
-            App_Error("GL_NewList: List %u already in use.", (unsigned int) list);
+            std::memcpy(this, &other, sizeof(Vertex));
+        }
+
+        Vertex &operator=(const Vertex &other)
+        {
+            std::memcpy(this, &other, sizeof(Vertex));
+            return *this;
+        }
+    };
+
+    // Indices for vertex attribute arrays.
+    enum {
+        VAA_VERTEX,
+        VAA_COLOR,
+        VAA_TEXCOORD0,
+        VAA_TEXCOORD1,
+        VAA_FRAG_OFFSET,
+        VAA_BATCH_INDEX,
+        NUM_VERTEX_ATTRIB_ARRAYS
+    };
+
+    dglprimtype_t   primType      = DGL_NO_PRIMITIVE;
+    dglprimtype_t   batchPrimType = DGL_NO_PRIMITIVE;
+    int             primIndex     = 0;
+    duint           batchMaxSize;
+    duint           currentBatchIndex;
+    bool            resetPrimitive = false;
+    Vertex          currentVertex;
+    Vertex          primVertices[4];
+    QVector<Vertex> vertices;
+
+    struct GLData
+    {
+        GLProgram shader;
+
+        GLState  batchState;
+        Matrix4f batchMvpMatrix[MAX_BATCH];
+        Matrix4f batchTexMatrix0[MAX_BATCH];
+        Matrix4f batchTexMatrix1[MAX_BATCH];
+        int      batchTexEnabled[MAX_BATCH];
+        int      batchTexMode[MAX_BATCH];
+        Vector4f batchTexModeColor[MAX_BATCH];
+        float    batchAlphaLimit[MAX_BATCH];
+        int      batchTexture0[MAX_BATCH];
+        int      batchTexture1[MAX_BATCH];
+
+        // Batched uniforms:
+        GLUniform uMvpMatrix;
+        GLUniform uTexMatrix0;
+        GLUniform uTexMatrix1;
+        GLUniform uTexEnabled;
+        GLUniform uTexMode;
+        GLUniform uTexModeColor;
+        GLUniform uAlphaLimit;
+
+        GLUniform uFragmentSize;
+        GLUniform uFogRange;
+        GLUniform uFogColor;
+
+        struct DrawBuffer
+        {
+            GLuint   vertexArray = 0;
+            GLBuffer arrayData;
+
+            void release()
+            {
+#if defined (DENG_HAVE_VAOS)
+                LIBGUI_GL.glDeleteVertexArrays(1, &vertexArray);
 #endif
-            return false;
+                arrayData.clear();
+            }
+        };
+
+        GLData(duint batchSize)
+            : uMvpMatrix    { "uMvpMatrix",    GLUniform::Mat4Array , batchSize }
+            , uTexMatrix0   { "uTexMatrix0",   GLUniform::Mat4Array , batchSize }
+            , uTexMatrix1   { "uTexMatrix1",   GLUniform::Mat4Array , batchSize }
+            , uTexEnabled   { "uTexEnabled",   GLUniform::IntArray  , batchSize }
+            , uTexMode      { "uTexMode",      GLUniform::IntArray  , batchSize }
+            , uTexModeColor { "uTexModeColor", GLUniform::Vec4Array , batchSize }
+            , uAlphaLimit   { "uAlphaLimit",   GLUniform::FloatArray, batchSize }
+            , uFragmentSize { "uFragmentSize", GLUniform::Vec2 }
+            , uFogRange     { "uFogRange",     GLUniform::Vec4 }
+            , uFogColor     { "uFogColor",     GLUniform::Vec4 }
+        {}
+
+        QVector<DrawBuffer *> buffers;
+        int bufferPos = 0;
+    };
+    std::unique_ptr<GLData> gl;
+
+    DGLDrawState()
+    {
+        clearVertices();
+    }
+
+    void checkPrimitiveReset()
+    {
+        if (resetPrimitive)
+        {
+            DENG2_ASSERT(!vertices.empty());
+            DENG2_ASSERT(glPrimitive(batchPrimType) == GL_TRIANGLE_STRIP);
+
+            // When committing multiple triangle strips, add a disconnection
+            // between batches.
+            vertices.push_back(vertices.back());
+            vertices.push_back(currentVertex);
+            resetPrimitive = false;
         }
     }
-    else
+
+    void commitLine(Vertex start, Vertex end)
     {
-        // Just get a new list id, it doesn't matter.
-        list = LIBGUI_GL.glGenLists(1);
+        const Vector2f lineDir = (end.vertex - start.vertex).normalize();
+        const Vector2f lineNormal{-lineDir.y, lineDir.x};
+
+        const bool disjoint = !vertices.empty();
+        if (disjoint)
+        {
+            vertices.push_back(vertices.back());
+        }
+
+        // Start cap.
+        {
+            start.fragOffset[0] = -lineNormal.x;
+            start.fragOffset[1] = -lineNormal.y;
+            vertices.push_back(start);
+            if (disjoint)
+            {
+                vertices.push_back(start);
+            }
+            start.fragOffset[0] = lineNormal.x;
+            start.fragOffset[1] = lineNormal.y;
+            vertices.push_back(start);
+        }
+
+        // End cap.
+        {
+            end.fragOffset[0] = -lineNormal.x;
+            end.fragOffset[1] = -lineNormal.y;
+            vertices.push_back(end);
+            end.fragOffset[0] = lineNormal.x;
+            end.fragOffset[1] = lineNormal.y;
+            vertices.push_back(end);
+        }
     }
 
-    LIBGUI_GL.glNewList(list, mode == DGL_COMPILE? GL_COMPILE : GL_COMPILE_AND_EXECUTE);
-    inList = list;
-    return true;
-}
+    void commitVertex()
+    {
+        currentVertex.batchIndex = float(currentBatchIndex);
+        ++primIndex;
 
-DGLuint GL_EndList(void)
-{
-    DGLuint currentList = inList;
+        switch (primType)
+        {
+            case DGL_QUADS:
+                primVertices[primIndex - 1] = currentVertex;
+                if (primIndex == 4)
+                {
+                    /* 4 vertices become 6:
 
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+                       0--1     0--1   5
+                       |  |      \ |   |\
+                       |  |  =>   \|   | \
+                       3--2        2   4--3  */
 
-    LIBGUI_GL.glEndList();
-#ifdef _DEBUG
-    inList = 0;
-    Sys_GLCheckError();
+                    vertices.push_back(primVertices[0]);
+                    vertices.push_back(primVertices[1]);
+                    vertices.push_back(primVertices[2]);
+
+                    vertices.push_back(primVertices[0]);
+                    vertices.push_back(primVertices[2]);
+                    vertices.push_back(primVertices[3]);
+
+                    primIndex = 0;
+                }
+                break;
+
+            case DGL_LINES:
+                primVertices[primIndex - 1] = currentVertex;
+                if (primIndex == 2)
+                {
+                    commitLine(primVertices[0], primVertices[1]);
+                    primIndex = 0;
+                }
+                break;
+
+            case DGL_LINE_LOOP:
+            case DGL_LINE_STRIP:
+                if (primIndex == 1)
+                {
+                    // Remember the first one for a loop.
+                    primVertices[0] = currentVertex;
+                }
+                if (primIndex > 1)
+                {
+                    // Continue from the previous vertex.
+                    commitLine(primVertices[1], currentVertex);
+                }
+                primVertices[1] = currentVertex;
+                break;
+
+            case DGL_TRIANGLE_FAN:
+                if (primIndex == 1)
+                {
+                    if (!vertices.empty())
+                    {
+                        resetPrimitive = true;
+                    }
+                    checkPrimitiveReset();
+
+                    // Fan origin.
+                    primVertices[0] = currentVertex;
+                }
+                else if (primIndex > 2)
+                {
+                    vertices.push_back(primVertices[0]);
+                }
+                vertices.push_back(currentVertex);
+                break;
+
+            default:
+                checkPrimitiveReset();
+                vertices.push_back(currentVertex);
+                break;
+        }
+    }
+
+    void clearPrimitive()
+    {
+        primIndex = 0;
+        primType  = DGL_NO_PRIMITIVE;
+    }
+
+    void clearVertices()
+    {
+        // currentVertex is unaffected.
+        vertices.clear();
+        clearPrimitive();
+        currentBatchIndex = 0;
+        resetPrimitive    = false;
+    }
+
+    inline int numVertices() const
+    {
+        return vertices.size();
+    }
+
+    static Vector4ub colorFromFloat(const Vector4f &color)
+    {
+        Vector4i rgba = (color * 255 + Vector4f(0.5f, 0.5f, 0.5f, 0.5f))
+                .toVector4i()
+                .max(Vector4i(0, 0, 0, 0))
+                .min(Vector4i(255, 255, 255, 255));
+        return Vector4ub(dbyte(rgba.x), dbyte(rgba.y), dbyte(rgba.z), dbyte(rgba.w));
+    }
+
+    void beginPrimitive(dglprimtype_t primitive)
+    {
+        glInit();
+
+        DENG2_ASSERT(primType == DGL_NO_PRIMITIVE);
+
+        if (batchPrimType != DGL_NO_PRIMITIVE && !isCompatible(batchPrimType, primitive))
+        {
+            ++s_primSwitchCount;
+            flushBatches();
+        }
+        else
+        {
+            if (currentBatchIndex == MAX_BATCH - 1)
+            {
+                flushBatches();
+            }
+        }
+
+        // We enter a Begin/End section.
+        batchPrimType = primType = primitive;
+
+        beginBatch();
+    }
+
+    void endPrimitive()
+    {
+        if (primType != DGL_NO_PRIMITIVE && !vertices.empty())
+        {
+            if (primType == DGL_LINE_LOOP)
+            {
+                // Close the loop.
+                commitLine(currentVertex, primVertices[0]);
+            }
+            resetPrimitive = true;
+            DENG2_ASSERT(!vertices.empty());
+            endBatch();
+        }
+        clearPrimitive();
+    }
+
+    void getBoundTextures(int &id0, int &id1)
+    {
+        auto &GL = LIBGUI_GL;
+        GL.glActiveTexture(GL_TEXTURE0);
+        GL.glGetIntegerv(GL_TEXTURE_BINDING_2D, &id0);
+        GL.glActiveTexture(GL_TEXTURE1);
+        GL.glGetIntegerv(GL_TEXTURE_BINDING_2D, &id1);
+        GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+    }
+
+    static inline bool isLinePrimitive(DGLenum p)
+    {
+        return p == DGL_LINES || p == DGL_LINE_STRIP || p == DGL_LINE_LOOP;
+    }
+
+    static inline bool isCompatible(DGLenum p1, DGLenum p2)
+    {
+        // Lines are not considered separate because they need the uFragmentSize uniform
+        // for calculating thickness offsets.
+        if (isLinePrimitive(p1) != isLinePrimitive(p2))
+        {
+            return false;
+        }
+        return glPrimitive(p1) == glPrimitive(p2);
+    }
+
+    void beginBatch()
+    {
+        const duint idx = currentBatchIndex;
+
+        auto &dynamicState = GLState::current();
+
+        if (idx == 0)
+        {
+            gl->batchState = dynamicState;
+            zap(gl->batchTexture0);
+            zap(gl->batchTexture1);
+        }
+        else
+        {
+#if defined (DENG2_DEBUG)
+            // GLState must not change while batches are begin collected.
+            // (Apart from the dynamic properties.)
+            GLState bat = gl->batchState;
+            GLState cur = dynamicState;
+            for (auto *st : {&bat, &cur})
+            {
+                st->setAlphaLimit(0.f);
+                st->setAlphaTest(false);
+            }
+            DENG2_ASSERT(bat == cur);
+#endif
+        }
+
+        gl->batchMvpMatrix[idx]  = DGL_Matrix(DGL_PROJECTION) * DGL_Matrix(DGL_MODELVIEW);
+        gl->batchTexMatrix0[idx] = DGL_Matrix(DGL_TEXTURE0);
+        gl->batchTexMatrix1[idx] = DGL_Matrix(DGL_TEXTURE1);
+        gl->batchTexEnabled[idx] =
+            (DGL_GetInteger(DGL_TEXTURE0) ? 0x1 : 0) | (DGL_GetInteger(DGL_TEXTURE1) ? 0x2 : 0);
+        gl->batchTexMode[idx]      = DGL_GetInteger(DGL_MODULATE_TEXTURE);
+        gl->batchTexModeColor[idx] = DGL_ModulationColor();
+        gl->batchAlphaLimit[idx]   = (dynamicState.alphaTest() ? dynamicState.alphaLimit() : -1.f);
+
+        // TODO: There is no need to use OpenGL to remember the bound textures.
+        // However, all DGL textures must be bound via DGL_Bind and not directly via OpenGL.
+
+        getBoundTextures(gl->batchTexture0[idx], gl->batchTexture1[idx]);
+    }
+
+    void endBatch()
+    {
+        currentBatchIndex++;
+        if (currentBatchIndex == batchMaxSize)
+        {
+            flushBatches();
+        }
+    }
+
+    void flushBatches()
+    {
+#if defined (DENG2_DEBUG)
+        if (DGL_GetInteger(DGL_FLUSH_BACKTRACE))
+        {
+            DENG2_PRINT_BACKTRACE();
+        }
+#endif
+        if (currentBatchIndex > 0)
+        {
+            drawBatches();
+        }
+        clearVertices();
+    }
+
+    void glInit()
+    {
+        DENG_ASSERT_GL_CONTEXT_ACTIVE();
+
+        if (!gl)
+        {
+            batchMaxSize = DGL_BatchMaxSize();
+
+            gl.reset(new GLData(batchMaxSize));
+
+            // Set up the shader.
+            ClientApp::shaders().build(gl->shader, "dgl.draw")
+                    << gl->uFragmentSize
+                    << gl->uMvpMatrix
+                    << gl->uTexMatrix0
+                    << gl->uTexMatrix1
+                    << gl->uTexEnabled
+                    << gl->uTexMode
+                    << gl->uTexModeColor
+                    << gl->uAlphaLimit
+                    << gl->uFogRange
+                    << gl->uFogColor;
+
+            auto &GL = LIBGUI_GL;
+
+            // Sampler uniforms.
+            {
+                int samplers[2][MAX_BATCH];
+                for (int i = 0; i < batchMaxSize; ++i)
+                {
+                    samplers[0][i] = i;
+                    samplers[1][i] = batchMaxSize + i;
+                }
+
+                auto prog = gl->shader.glName();
+                GL.glUseProgram(prog);
+                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex0[0]"), GLsizei(batchMaxSize), samplers[0]);
+                LIBGUI_ASSERT_GL_OK();
+                GL.glUniform1iv(GL.glGetUniformLocation(prog, "uTex1[0]"), GLsizei(batchMaxSize), samplers[1]);
+                LIBGUI_ASSERT_GL_OK();
+                GL.glUseProgram(0);
+            }
+        }
+    }
+
+    void glDeinit()
+    {
+        if (gl)
+        {
+            foreach (GLData::DrawBuffer *dbuf, gl->buffers)
+            {
+                dbuf->release();
+                delete dbuf;
+            }
+            gl.reset();
+        }
+    }
+
+    GLData::DrawBuffer &nextBuffer()
+    {
+        if (gl->bufferPos == gl->buffers.size())
+        {
+            auto *dbuf = new GLData::DrawBuffer;
+
+            // Vertex array object.
+#if defined (DENG_HAVE_VAOS)
+            {
+                auto &GL = LIBGUI_GL;
+                GL.glGenVertexArrays(1, &dbuf->vertexArray);
+                GL.glBindVertexArray(dbuf->vertexArray);
+                for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
+                {
+                    GL.glEnableVertexAttribArray(i);
+                }
+                GL.glBindVertexArray(0);
+            }
 #endif
 
-    return currentList;
+            gl->buffers.append(dbuf);
+        }
+        return *gl->buffers[gl->bufferPos++];
+    }
+
+    void glBindArrays()
+    {
+        const uint stride = sizeof(Vertex);
+        auto &GL = LIBGUI_GL;
+
+        // Upload the vertex data.
+        GLData::DrawBuffer &buf = nextBuffer();
+        buf.arrayData.setData(&vertices[0], sizeof(Vertex) * vertices.size(), gl::Dynamic);
+
+#if defined (DENG_HAVE_VAOS)
+        GL.glBindVertexArray(buf.vertexArray);
+#else
+        for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
+        {
+            GL.glEnableVertexAttribArray(i);
+        }
+#endif
+        LIBGUI_ASSERT_GL_OK();
+
+        GL.glBindBuffer(GL_ARRAY_BUFFER, buf.arrayData.glName());
+        LIBGUI_ASSERT_GL_OK();
+
+        // Updated pointers.
+        GL.glVertexAttribPointer(VAA_VERTEX,      3, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, vertex));
+        GL.glVertexAttribPointer(VAA_COLOR,       4, GL_UNSIGNED_BYTE, GL_TRUE,  stride, DENG2_OFFSET_PTR(Vertex, color));
+        GL.glVertexAttribPointer(VAA_TEXCOORD0,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[0]));
+        GL.glVertexAttribPointer(VAA_TEXCOORD1,   2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, texCoord[1]));
+        GL.glVertexAttribPointer(VAA_FRAG_OFFSET, 2, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, fragOffset[0]));
+        GL.glVertexAttribPointer(VAA_BATCH_INDEX, 1, GL_FLOAT,         GL_FALSE, stride, DENG2_OFFSET_PTR(Vertex, batchIndex));
+        LIBGUI_ASSERT_GL_OK();
+
+        GL.glBindBuffer(GL_ARRAY_BUFFER, 0);
+    }
+
+    void glUnbindArrays()
+    {
+        auto &GL = LIBGUI_GL;
+
+#if defined (DENG_HAVE_VAOS)
+        GL.glBindVertexArray(0);
+#else
+        for (uint i = 0; i < NUM_VERTEX_ATTRIB_ARRAYS; ++i)
+        {
+            GL.glDisableVertexAttribArray(i);
+            LIBGUI_ASSERT_GL_OK();
+        }
+#endif
+    }
+
+    void glBindBatchTextures(duint count)
+    {
+        auto &GL = LIBGUI_GL;
+        for (duint i = 0; i < count; ++i)
+        {
+            GL.glActiveTexture(GLenum(GL_TEXTURE0 + i));
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture0[i]));
+            GL.glActiveTexture(GLenum(GL_TEXTURE0 + batchMaxSize + i));
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(gl->batchTexture1[i]));
+        }
+    }
+
+    static GLenum glPrimitive(DGLenum primitive)
+    {
+        switch (primitive)
+        {
+        case DGL_POINTS:            return GL_POINTS;
+        case DGL_LINES:             return GL_TRIANGLE_STRIP;
+        case DGL_LINE_LOOP:         return GL_TRIANGLE_STRIP;
+        case DGL_LINE_STRIP:        return GL_TRIANGLE_STRIP;
+        case DGL_TRIANGLES:         return GL_TRIANGLES;
+        case DGL_TRIANGLE_FAN:      return GL_TRIANGLE_STRIP;
+        case DGL_TRIANGLE_STRIP:    return GL_TRIANGLE_STRIP;
+        case DGL_QUADS:             return GL_TRIANGLES;
+
+        case DGL_NO_PRIMITIVE:      /*DENG2_ASSERT(!"No primitive type specified");*/ break;
+        }
+        return GL_NONE;
+    }
+
+    /**
+     * Draws all the primitives currently stored in the vertex array.
+     */
+    void drawBatches()
+    {
+        const auto batchLength = duint(currentBatchIndex);
+
+        s_minBatchLength = de::min(s_minBatchLength, batchLength);
+        s_maxBatchLength = de::max(s_maxBatchLength, batchLength);
+        s_totalBatchCount += batchLength;
+
+        int oldTex[2];
+        getBoundTextures(oldTex[0], oldTex[1]);
+
+        glBindBatchTextures(batchLength);
+
+        // Batched uniforms.
+        gl->uMvpMatrix.set(gl->batchMvpMatrix, batchLength);
+        gl->uTexMatrix0.set(gl->batchTexMatrix0, batchLength);
+        gl->uTexMatrix1.set(gl->batchTexMatrix1, batchLength);
+        gl->uTexEnabled.set(gl->batchTexEnabled, batchLength);
+        gl->uTexMode.set(gl->batchTexMode, batchLength);
+        gl->uTexModeColor.set(gl->batchTexModeColor, batchLength);
+        gl->uAlphaLimit.set(gl->batchAlphaLimit, batchLength);
+
+        const GLState &glState = gl->batchState;
+
+        // Non-batched uniforms.
+        if (isLinePrimitive(batchPrimType))
+        {
+            gl->uFragmentSize = Vector2f(GL_state.currentLineWidth, GL_state.currentLineWidth) /
+                                glState.target().size();
+        }
+        else
+        {
+            gl->uFragmentSize = Vector2f();
+        }
+        DGL_FogParams(gl->uFogRange, gl->uFogColor);
+
+        auto &GL = LIBGUI_GL;
+
+        glState.apply();
+
+        glBindArrays();
+        gl->shader.beginUse();
+        DENG2_ASSERT(gl->shader.validate());
+        GL.glDrawArrays(glPrimitive(batchPrimType), 0, numVertices()); ++s_drawCallCount;
+        gl->shader.endUse();
+        LIBGUI_ASSERT_GL_OK();
+        glUnbindArrays();
+
+        // Restore the previously bound OpenGL textures.
+        {
+            GL.glActiveTexture(GL_TEXTURE0);
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[0]));
+            GL.glActiveTexture(GL_TEXTURE1);
+            GL.glBindTexture(GL_TEXTURE_2D, GLuint(oldTex[1]));
+            GL.glActiveTexture(GLenum(GL_TEXTURE0 + DGL_GetInteger(DGL_ACTIVE_TEXTURE)));
+        }
+    }
+};
+
+static DGLDrawState dglDraw;
+
+unsigned int DGL_BatchMaxSize()
+{
+    auto &GL = LIBGUI_GL;
+
+    // This determines how long DGL batch draws can be.
+    int maxFragSamplers;
+    GL.glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, &maxFragSamplers);
+
+    return duint(de::min(MAX_BATCH, de::max(8, maxFragSamplers / 2))); // DGL needs two per draw.
 }
 
-void GL_CallList(DGLuint list)
+void DGL_Shutdown()
 {
-    if(!list) return; // We do not consider zero a valid list id.
-
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
-
-    LIBGUI_GL.glCallList(list);
+    dglDraw.glDeinit();
 }
 
-void GL_DeleteLists(DGLuint list, int range)
+void DGL_BeginFrame()
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+//    qDebug() << "draw calls:" << s_drawCallCount << "prim switch:" << s_primSwitchCount
+//             << "batch min/max/avg:" << s_minBatchLength << s_maxBatchLength
+//             << (s_drawCallCount ? float(s_totalBatchCount) / float(s_drawCallCount) : 0.f);
 
-    LIBGUI_GL.glDeleteLists(list, range);
+    s_drawCallCount   = 0;
+    s_totalBatchCount = 0;
+    s_primSwitchCount = 0;
+    s_maxBatchLength  = 0;
+    s_minBatchLength  = std::numeric_limits<decltype(s_minBatchLength)>::max();
+
+    if (dglDraw.gl)
+    {
+        // Reuse buffers every frame.
+        dglDraw.gl->bufferPos = 0;
+    }
+}
+
+void DGL_Flush()
+{
+    // Finish all batched draws.
+    dglDraw.flushBatches();
+}
+
+void DGL_CurrentColor(DGLubyte *rgba)
+{
+    std::memcpy(rgba, dglDraw.currentVertex.color.constPtr(), 4);
+}
+
+void DGL_CurrentColor(float *rgba)
+{
+    Vector4f colorf = Vector4ub(dglDraw.currentVertex.color).toVector4f() / 255.0;
+    std::memcpy(rgba, colorf.constPtr(), sizeof(float) * 4);
 }
 
 #undef DGL_Color3ub
 DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor3ub(r, g, b);
+    dglDraw.currentVertex.color = Vector4ub(r, g, b, 255);
 }
 
 #undef DGL_Color3ubv
-DENG_EXTERN_C void DGL_Color3ubv(const DGLubyte* vec)
+DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor3ubv(vec);
+    dglDraw.currentVertex.color = Vector4ub(Vector3ub(vec), 255);
 }
 
 #undef DGL_Color4ub
 DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor4ub(r, g, b, a);
+    dglDraw.currentVertex.color = Vector4ub(r, g, b, a);
 }
 
 #undef DGL_Color4ubv
-DENG_EXTERN_C void DGL_Color4ubv(const DGLubyte* vec)
+DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor4ubv(vec);
+    dglDraw.currentVertex.color = Vector4ub(vec);
 }
 
 #undef DGL_Color3f
 DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor3f(r, g, b);
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, 1.f));
 }
 
 #undef DGL_Color3fv
-DENG_EXTERN_C void DGL_Color3fv(const float* vec)
+DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor3fv(vec);
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(Vector3f(vec), 1.f));
 }
 
 #undef DGL_Color4f
 DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor4f(r, g, b, a);
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, a));
 }
 
 #undef DGL_Color4fv
-DENG_EXTERN_C void DGL_Color4fv(const float* vec)
+DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glColor4fv(vec);
+    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(vec));
 }
 
 #undef DGL_TexCoord2f
 DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
+    DENG2_ASSERT(target < MAX_TEX_COORDS);
 
-    LIBGUI_GL.glMultiTexCoord2f(GL_TEXTURE0 + target, s, t);
+    if (target < MAX_TEX_COORDS)
+    {
+        dglDraw.currentVertex.texCoord[target] = Vector2f(s, t);
+    }
 }
 
 #undef DGL_TexCoord2fv
-DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float* vec)
+DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
+    DENG2_ASSERT(target < MAX_TEX_COORDS);
 
-    LIBGUI_GL.glMultiTexCoord2fv(GL_TEXTURE0 + target, vec);
+    if (target < MAX_TEX_COORDS)
+    {
+        dglDraw.currentVertex.texCoord[target] = Vector2f(vec);
+    }
 }
 
 #undef DGL_Vertex2f
 DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glVertex2f(x, y);
+    dglDraw.currentVertex.vertex = Vector3f(x, y, 0.f);
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertex2fv
 DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glVertex2fv(vec);
+    if (vec)
+    {
+        dglDraw.currentVertex.vertex = Vector3f(vec[0], vec[1], 0.f);
+    }
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertex3f
 DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glVertex3f(x, y, z);
+    dglDraw.currentVertex.vertex = Vector3f(x, y, z);
+
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertex3fv
 DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
-    LIBGUI_GL.glVertex3fv(vec);
+    if (vec)
+    {
+        dglDraw.currentVertex.vertex = Vector3f(vec);
+    }
+    dglDraw.commitVertex();
 }
 
 #undef DGL_Vertices2ftv
 DENG_EXTERN_C void DGL_Vertices2ftv(int num, const dgl_ft2vertex_t* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
+    DENG2_ASSERT_IN_RENDER_THREAD();
 
     for(; num > 0; num--, vec++)
     {
-        LIBGUI_GL.glTexCoord2fv(vec->tex);
-        LIBGUI_GL.glVertex2fv(vec->pos);
+        DGL_TexCoord2fv(0, vec->tex);
+        DGL_Vertex2fv(vec->pos);
     }
 }
 
 #undef DGL_Vertices3ftv
 DENG_EXTERN_C void DGL_Vertices3ftv(int num, const dgl_ft3vertex_t* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
     {
-        LIBGUI_GL.glTexCoord2fv(vec->tex);
-        LIBGUI_GL.glVertex3fv(vec->pos);
+        DGL_TexCoord2fv(0, vec->tex);
+        DGL_Vertex3fv(vec->pos);
     }
 }
 
 #undef DGL_Vertices3fctv
 DENG_EXTERN_C void DGL_Vertices3fctv(int num, const dgl_fct3vertex_t* vec)
 {
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     for(; num > 0; num--, vec++)
     {
-        LIBGUI_GL.glColor4fv(vec->color);
-        LIBGUI_GL.glTexCoord2fv(vec->tex);
-        LIBGUI_GL.glVertex3fv(vec->pos);
+        DGL_Color4fv(vec->color);
+        DGL_TexCoord2fv(0, vec->tex);
+        DGL_Vertex3fv(vec->pos);
     }
 }
 
 #undef DGL_Begin
 DENG_EXTERN_C void DGL_Begin(dglprimtype_t mode)
 {
-    if(novideo)
-        return;
+    if (novideo) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    // We enter a Begin/End section.
-    primLevel++;
-
-#ifdef _DEBUG
-    if(inPrim)
-        App_Error("OpenGL: already inPrim");
-    inPrim = true;
-    Sys_GLCheckError();
-#endif
-
-    LIBGUI_GL.glBegin(mode == DGL_POINTS ? GL_POINTS : mode ==
-            DGL_LINES ? GL_LINES : mode ==
-            DGL_TRIANGLES ? GL_TRIANGLES : mode ==
-            DGL_TRIANGLE_FAN ? GL_TRIANGLE_FAN : mode ==
-            DGL_TRIANGLE_STRIP ? GL_TRIANGLE_STRIP : mode ==
-            DGL_QUAD_STRIP ? GL_QUAD_STRIP : GL_QUADS);
+    dglDraw.beginPrimitive(mode);
 }
 
 void DGL_AssertNotInPrimitive(void)
 {
-    DENG_ASSERT(!inPrim);
+    DENG_ASSERT(dglDraw.primType == DGL_NO_PRIMITIVE);
 }
 
 #undef DGL_End
 DENG_EXTERN_C void DGL_End(void)
 {
-    if(novideo)
-        return;
+    if (novideo) return;
 
-    DENG_ASSERT_IN_MAIN_THREAD();
+    DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    if(primLevel > 0)
-    {
-        primLevel--;
-        LIBGUI_GL.glEnd();
-    }
-
-#ifdef _DEBUG
-    inPrim = false;
-    Sys_GLCheckError();
-#endif
-}
-
-#undef DGL_NewList
-DENG_EXTERN_C dd_bool DGL_NewList(DGLuint list, int mode)
-{
-    return GL_NewList(list, mode);
-}
-
-#undef DGL_EndList
-DENG_EXTERN_C DGLuint DGL_EndList(void)
-{
-    return GL_EndList();
-}
-
-#undef DGL_CallList
-DENG_EXTERN_C void DGL_CallList(DGLuint list)
-{
-    GL_CallList(list);
-}
-
-#undef DGL_DeleteLists
-DENG_EXTERN_C void DGL_DeleteLists(DGLuint list, int range)
-{
-    GL_DeleteLists(list, range);
+    dglDraw.endPrimitive();
 }
 
 #undef DGL_DrawLine
@@ -358,7 +935,7 @@ DENG_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
 #undef DGL_DrawRect
 DENG_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
 {
-    if(!rect) return;
+    if (!rect) return;
     GL_DrawRect(Rectanglei::fromSize(Vector2i(rect->origin.xy),
                                      Vector2ui(rect->size.width, rect->size.height)));
 }
@@ -385,9 +962,8 @@ DENG_EXTERN_C void DGL_DrawRectf2(double x, double y, double w, double h)
 DENG_EXTERN_C void DGL_DrawRectf2Color(double x, double y, double w, double h, float r, float g, float b, float a)
 {
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    LIBGUI_GL.glColor4f(r, g, b, a);
+    DGL_Color4f(r, g, b, a);
     GL_DrawRectf2(x, y, w, h);
 }
 
@@ -418,15 +994,15 @@ DENG_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
     if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
-    DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     if(color) DGL_Color4fv(color);
-    LIBGUI_GL.glBegin(GL_LINE_LOOP);
-        LIBGUI_GL.glVertex2iv((const GLint*)tl->xy);
-        LIBGUI_GL.glVertex2iv((const GLint*)tr->xy);
-        LIBGUI_GL.glVertex2iv((const GLint*)br->xy);
-        LIBGUI_GL.glVertex2iv((const GLint*)bl->xy);
-    LIBGUI_GL.glEnd();
+    DGL_Begin(DGL_LINE_STRIP);
+        DGL_Vertex2f(tl->x, tl->y);
+        DGL_Vertex2f(tr->x, tr->y);
+        DGL_Vertex2f(br->x, br->y);
+        DGL_Vertex2f(bl->x, bl->y);
+        DGL_Vertex2f(tl->x, tl->y);
+    DGL_End();
 }
 
 #undef DGL_DrawQuad2Outline

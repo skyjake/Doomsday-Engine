@@ -42,3 +42,39 @@ Music { ID = "ultima"; Lump = "D_ULTIMA"; }
 Music { ID = "read_m"; Lump = "D_READ_M"; }
 Music { ID = "dm2ttl"; Lump = "D_DM2TTL"; }
 Music { ID = "dm2int"; Lump = "D_DM2INT"; }
+
+# Fallbacks based on map IDs:
+
+Music { ID = "map01"; Lump = "D_RUNNIN"; }
+Music { ID = "map02"; Lump = "D_STALKS"; }
+Music { ID = "map03"; Lump = "D_COUNTD"; }
+Music { ID = "map04"; Lump = "D_BETWEE"; }
+Music { ID = "map05"; Lump = "D_DOOM";   }
+Music { ID = "map06"; Lump = "D_THE_DA"; }
+Music { ID = "map07"; Lump = "D_SHAWN";  }
+Music { ID = "map08"; Lump = "D_DDTBLU"; }
+Music { ID = "map09"; Lump = "D_IN_CIT"; }
+Music { ID = "map10"; Lump = "D_DEAD";   }
+Music { ID = "map11"; Lump = "D_STLKS2"; }
+Music { ID = "map12"; Lump = "D_THEDA2"; }
+Music { ID = "map13"; Lump = "D_DOOM2";  }
+Music { ID = "map14"; Lump = "D_DDTBL2"; }
+Music { ID = "map15"; Lump = "D_RUNNI2"; }
+Music { ID = "map16"; Lump = "D_DEAD2";  }
+Music { ID = "map17"; Lump = "D_STLKS3"; }
+Music { ID = "map18"; Lump = "D_ROMERO"; }
+Music { ID = "map19"; Lump = "D_SHAWN2"; }
+Music { ID = "map20"; Lump = "D_MESSAG"; }
+Music { ID = "map21"; Lump = "D_COUNT2"; }
+Music { ID = "map22"; Lump = "D_DDTBL3"; }
+Music { ID = "map23"; Lump = "D_AMPIE";  }
+Music { ID = "map24"; Lump = "D_THEDA3"; }
+Music { ID = "map25"; Lump = "D_ADRIAN"; }
+Music { ID = "map26"; Lump = "D_MESSG2"; }
+Music { ID = "map27"; Lump = "D_ROMER2"; }
+Music { ID = "map28"; Lump = "D_TENSE";  }
+Music { ID = "map29"; Lump = "D_SHAWN3"; }
+Music { ID = "map30"; Lump = "D_OPENIN"; }
+Music { ID = "map31"; Lump = "D_EVIL";   }
+Music { ID = "map32"; Lump = "D_ULTIMA"; }
+Music { ID = "map33"; Lump = "D_READ_M"; }

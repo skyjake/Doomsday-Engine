@@ -74,6 +74,7 @@ public:
     static de::String const DEF_LEGACYSAVEGAME_NAME_EXP;  ///< Regular expression used for matching legacy savegame names.
     static de::String const DEF_LEGACYSAVEGAME_SUBFOLDER; ///< Game-specific subdirectory of /home for legacy savegames.
     static de::String const DEF_MAPINFO_PATH; ///< Base relative path to the main MAPINFO definition data.
+    static de::String const DEF_OPTIONS;
 
 public:
     /**
@@ -248,7 +249,7 @@ public:
     /**
      * Returns the built-in profile of the game.
      */
-    GameProfile const &profile() const;
+    GameProfile &profile() const;
 
     // IObject.
     de::Record const &objectNamespace() const;

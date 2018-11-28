@@ -54,6 +54,7 @@ public:
     Margins &setRight (Rule const &rule);
     Margins &setTop   (Rule const &rule);
     Margins &setBottom(Rule const &rule);
+    Margins &setTopBottom(Rule const &rule) { return setTop(rule).setBottom(rule); }
     Margins &set      (ui::Direction dir, Rule const &rule);
     Margins &set      (Rule const &rule);
     Margins &setAll   (Margins const &margins);

@@ -90,14 +90,16 @@ public:
     Image &operator = (Image const &other);
     Image &operator = (QImage const &other);
 
+    inline explicit operator bool() const { return !isNull(); }
+
     Format format() const;
     QImage::Format qtFormat() const;
 
     Size size() const;
     Rectanglei rect() const;
 
-    duint width() const { return size().x; }
-    duint height() const { return size().y; }
+    inline duint width() const { return size().x; }
+    inline duint height() const { return size().y; }
 
     /**
      * Number of bits per pixel.
@@ -140,6 +142,16 @@ public:
     QImage toQImage() const;
 
     GLPixelFormat glFormat() const;
+
+    /**
+     * Returns the ratio of how many points there are for each image pixel.
+     * This can be used to scale the image appropriately for the UI.
+     *
+     * @return Points per image pixel.
+     */
+    float pointRatio() const;
+
+    void setPointRatio(float pointsPerPixel);
 
     // Drawing/editing methods.
     Image subImage(Rectanglei const &subArea) const;

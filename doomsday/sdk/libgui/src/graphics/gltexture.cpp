@@ -39,17 +39,17 @@ using namespace gl;
 
 DENG2_PIMPL(GLTexture)
 {
-    Size size;
+    Size          size;
     Image::Format format;
-    GLuint name;
-    GLenum texTarget;
-    Filter minFilter;
-    Filter magFilter;
-    MipFilter mipFilter;
-    Wraps wrap;
-    dfloat maxAnisotropy;
-    dfloat maxLevel;
-    TextureFlags flags;
+    GLuint        name;
+    GLenum        texTarget;
+    Filter        minFilter;
+    Filter        magFilter;
+    MipFilter     mipFilter;
+    Wraps         wrap;
+    dfloat        maxAnisotropy;
+    dfloat        maxLevel;
+    TextureFlags  flags;
 
     Impl(Public *i)
         : Base(i)
@@ -508,7 +508,7 @@ void GLTexture::generateMipmap()
     if (d->name)
     {
         d->glBind();
-        GLInfo::EXT_framebuffer_object()->glGenerateMipmapEXT(d->texTarget); LIBGUI_ASSERT_GL_OK();
+        LIBGUI_GL.glGenerateMipmap(d->texTarget); LIBGUI_ASSERT_GL_OK();
         d->glUnbind();
 
         d->flags |= MipmapAvailable;

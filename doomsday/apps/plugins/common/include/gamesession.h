@@ -22,10 +22,16 @@
 
 #include <de/String>
 #include <doomsday/AbstractSession>
+#include <doomsday/GameProfiles>
 #include <doomsday/uri.h>
-#include "doomsday.h"
-#include "acs/system.h"
-#include "gamerules.h"
+
+//#include "doomsday.h"
+//#include "acs/system.h"
+//#include "gamerules.h"
+
+class GameRules;
+
+namespace acs { class System; }
 
 namespace common {
 
@@ -105,7 +111,7 @@ public:
     /**
      * Returns the current ruleset for the game session.
      */
-    GameRuleset const &rules() const;
+    GameRules const &rules() const;
 
     /**
      * To be called when a new game begins to effect the game rules. Note that some of the rules
@@ -113,7 +119,7 @@ public:
      *
      * @todo Prevent this outright if the game session is already in progress!
      */
-    void applyNewRules(GameRuleset const &rules);
+    void applyNewRules(GameRules const &rules);
 
     /**
      * Determines whether saved game progress will be restored when the current map is reloaded,
@@ -144,7 +150,7 @@ public:
      *
      * @throws InProgressError if the session has already begun.
      */
-    void begin(GameRuleset const &rules, de::String const &episodeId, de::Uri const &mapUri,
+    void begin(GameRules const &rules, de::String const &episodeId, de::Uri const &mapUri,
                uint mapEntryPoint = 0);
 
     /**
@@ -233,6 +239,16 @@ private:
 /**
  * Macro for conveniently accessing the common::GameSession singleton instance.
  */
-#define COMMON_GAMESESSION  (&common::GameSession::gameSession())
+#define gfw_Session()    (&common::GameSession::gameSession())
+
+/**
+ * Returns the currently loaded game's ID.
+ */
+de::String gfw_GameId();
+
+/**
+ * Returns the current game profile, or nullptr.
+ */
+const GameProfile *gfw_GameProfile();
 
 #endif // LIBCOMMON_GAMESESSION_H

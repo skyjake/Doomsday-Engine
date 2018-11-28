@@ -19,36 +19,40 @@
 
 #include "de/Folder"
 
+#include "de/App"
+#include "de/Async"
 #include "de/DirectoryFeed"
 #include "de/FS"
 #include "de/Feed"
 #include "de/Guard"
 #include "de/LogBuffer"
 #include "de/NumberValue"
+#include "de/ScriptedInfo"
 #include "de/ScriptSystem"
 #include "de/Task"
 #include "de/TaskPool"
+#include "de/UnixInfo"
 
 namespace de {
 
 FolderPopulationAudience audienceForFolderPopulation; // public
 
-namespace internal
-{
-    static TaskPool populateTasks;
+namespace internal {
 
-    /// Forwards internal folder population notifications to the public audience.
-    struct PopulationNotifier : DENG2_OBSERVES(TaskPool, Done)
-    {
-        PopulationNotifier() {
-            populateTasks.audienceForDone() += this;
-        }
-        void taskPoolDone(TaskPool &) {
-            DENG2_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished();
-        }
-    };
-    static PopulationNotifier populationNotifier;
-}
+static TaskPool populateTasks;
+static bool     enableBackgroundPopulation = true;
+
+/// Forwards internal folder population notifications to the public audience.
+struct PopulationNotifier : DENG2_OBSERVES(TaskPool, Done)
+{
+    PopulationNotifier() { populateTasks.audienceForDone() += this; }
+    void taskPoolDone(TaskPool &) { notify(); }
+    void notify() { DENG2_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished(); }
+};
+
+static PopulationNotifier populationNotifier;
+
+} // namespace internal
 
 DENG2_PIMPL(Folder)
 {
@@ -106,7 +110,7 @@ DENG2_PIMPL(Folder)
 
 Folder::Folder(String const &name) : File(name), d(new Impl(this))
 {
-    setStatus(Status::FOLDER);
+    setStatus(Type::Folder);
     objectNamespace().addSuperRecord(ScriptSystem::builtInClass(QStringLiteral("Folder")));
 }
 
@@ -207,6 +211,8 @@ void Folder::clear()
 
 void Folder::populate(PopulationBehaviors behavior)
 {
+    fileSystem().changeBusyLevel(+1);
+
     LOG_AS("Folder");
     {
         DENG2_GUARD(this);
@@ -262,8 +268,7 @@ void Folder::populate(PopulationBehaviors behavior)
         }
     }
 
-    auto populationTask = [this, behavior] ()
-    {
+    auto populationTask = [this, behavior]() {
         Feed::PopulatedFiles newFiles;
 
         // Populate with new/updated ones.
@@ -277,13 +282,14 @@ void Folder::populate(PopulationBehaviors behavior)
             DENG2_GUARD(this);
             for (File *i : newFiles)
             {
-                if (!i) continue;
-
-                std::unique_ptr<File> file(i);
-                if (!d->contents.contains(i->name().toLower()))
+                if (i)
                 {
-                    d->add(file.release());
-                    fileSystem().index(*i);
+                    std::unique_ptr<File> file(i);
+                    if (!d->contents.contains(i->name().toLower()))
+                    {
+                        d->add(file.release());
+                        fileSystem().index(*i);
+                    }
                 }
             }
             newFiles.clear();
@@ -294,25 +300,41 @@ void Folder::populate(PopulationBehaviors behavior)
             // Call populate on subfolders.
             for (Folder *folder : d->subfolders())
             {
-                folder->populate(behavior);
+                folder->populate(behavior | PopulateCalledRecursively);
             }
         }
+
+        fileSystem().changeBusyLevel(-1);
     };
 
-    if (behavior & PopulateAsync)
+    if (internal::enableBackgroundPopulation)
     {
-        internal::populateTasks.start(populationTask, TaskPool::MediumPriority);
+        if (behavior & PopulateAsync)
+        {
+            internal::populateTasks.start(populationTask, TaskPool::MediumPriority);
+        }
+        else
+        {
+            populationTask();
+        }
     }
     else
     {
+        // Only synchronous population is enabled.
         populationTask();
+
+        // Each population gets an individual notification since they're done synchronously.
+        // However, only notify once a full hierarchy of populations has finished.
+        if (!(behavior & PopulateCalledRecursively))
+        {
+            internal::populationNotifier.notify();
+        }
     }
 }
 
 Folder::Contents Folder::contents() const
 {
     DENG2_GUARD(this);
-
     return d->contents;
 }
 
@@ -400,6 +422,23 @@ void Folder::destroyFile(String const &removePath)
     verifyWriteAccess();
 
     d->destroy(removePath, &locate<File>(removePath));
+}
+
+bool Folder::tryDestroyFile(String const &removePath)
+{
+    try
+    {
+        if (has(removePath))
+        {
+            destroyFile(removePath);
+            return true;
+        }
+    }
+    catch (Error const &)
+    {
+        // This shouldn't happen.
+    }
+    return false;
 }
 
 void Folder::destroyAllFiles()
@@ -490,14 +529,60 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
     return nullptr;
 }
 
-void Folder::waitForPopulation()
+Folder &Folder::root()
 {
-    internal::populateTasks.waitForDone();
+    return FS::get().root();
+}
+
+void Folder::waitForPopulation(WaitBehavior waitBehavior)
+{
+    if (waitBehavior == OnlyInBackground && App::inMainThread())
+    {
+        DENG2_ASSERT(!App::inMainThread());
+        throw Error("Folder::waitForPopulation", "Not allowed to block the main thread");
+    }
+    Time startedAt;
+    {
+        internal::populateTasks.waitForDone();
+    }
+    const auto elapsed = startedAt.since();
+    if (elapsed > .01)
+    {
+        LOG_MSG("Waited for %.3f seconds for file system to be ready") << elapsed;
+    }
+}
+
+AsyncTask *Folder::afterPopulation(std::function<void ()> func)
+{
+    if (!isPopulatingAsync())
+    {
+        func();
+        return nullptr;
+    }
+
+    return async([] ()
+    {
+        waitForPopulation();
+        return 0;
+    },
+    [func] (int)
+    {
+        func();
+    });
 }
 
 bool Folder::isPopulatingAsync()
 {
     return !internal::populateTasks.isDone();
+}
+
+void Folder::checkDefaultSettings()
+{
+    String mtEnabled;
+    if (App::app().unixInfo().defaults("fs:multithreaded", mtEnabled))
+    {
+        internal::enableBackgroundPopulation = !ScriptedInfo::isFalse(mtEnabled);
+    }
 }
 
 filesys::Node const *Folder::tryFollowPath(PathRef const &path) const
@@ -573,7 +658,8 @@ Folder::Feeds Folder::feeds() const
 String Folder::contentsAsText() const
 {
     QList<File const *> files;
-    forContents([&files] (String, File &f) {
+    forContents([&files] (String, File &f)
+    {
         files << &f;
         return LoopContinue;
     });

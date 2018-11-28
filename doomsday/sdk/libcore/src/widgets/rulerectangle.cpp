@@ -339,6 +339,11 @@ RuleRectangle &RuleRectangle::setSize(Rule const &width, Rule const &height)
     return *this;
 }
 
+RuleRectangle &RuleRectangle::setSize(ISizeRule const &dimensions)
+{
+    return setSize(dimensions.width(), dimensions.height());
+}
+
 RuleRectangle &RuleRectangle::setMidAnchorX(Rule const &middle)
 {
     setInput(Rule::AnchorX, middle);
@@ -365,7 +370,7 @@ Rule const &RuleRectangle::inputRule(Rule::Semantic inputRule)
     return *d->ruleRef(inputRule);
 }
 
-void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeDelta const &transition)
+void RuleRectangle::setAnchorPoint(Vector2f const &normalizedPoint, TimeSpan const &transition)
 {
     d->normalizedAnchorX()->set(normalizedPoint.x, transition);
     d->normalizedAnchorY()->set(normalizedPoint.y, transition);
@@ -404,13 +409,25 @@ void RuleRectangle::setDebugName(String const &name)
     d->debugName = name;
 }
 
+bool RuleRectangle::isFullyDefined() const
+{
+    for (const auto *out : d->outputRules)
+    {
+        if (!out->hasSource())
+        {
+            return false;
+        }
+    }
+    return true;
+}
+
 String RuleRectangle::description() const
 {
     String desc = QString("RuleRectangle '%1'").arg(d->debugName);
 
     for (int i = 0; i < int(Rule::MAX_SEMANTICS); ++i)
     {
-        desc += String("\n - ") +
+        desc += String("\n    INPUT ") +
                 (i == Rule::Left? "Left" :
                  i == Rule::Top? "Top" :
                  i == Rule::Right? "Right" :
@@ -421,12 +438,25 @@ String RuleRectangle::description() const
 
         if (d->inputRules[i])
         {
+            desc += String::format("(%g) ", d->inputRules[i]->value());
             desc += d->inputRules[i]->description();
         }
         else
         {
-            desc += "(null)";
+            desc += "(not set)";
         }
+    }
+    for (int i = 0; i < Impl::MAX_OUTPUT_RULES; ++i)
+    {
+        desc += String::format("\n    OUTPUT %s: ",
+                                 i == Impl::OutLeft ? "Left"
+                               : i == Impl::OutTop ? "Top"
+                               : i == Impl::OutRight ? "Right"
+                               : i == Impl::OutBottom ? "Bottom"
+                               : i == Impl::OutWidth ? "Width"
+                               : "Height");
+        desc += String::format("(%g) ", d->outputRules[i]->value());
+        desc += d->outputRules[i]->description();
     }
     return desc;
 }

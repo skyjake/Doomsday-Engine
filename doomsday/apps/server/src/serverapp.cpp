@@ -28,11 +28,14 @@
 
 #include <de/CommandLine>
 #include <de/Config>
+#include <de/Error>
+#include <de/FileSystem>
+#include <de/Garbage>
 #include <de/Log>
 #include <de/LogBuffer>
-#include <de/Error>
+#include <de/PackageFeed>
+#include <de/PackageLoader>
 #include <de/c_wrapper.h>
-#include <de/Garbage>
 
 #include "serverapp.h"
 #include "serverplayer.h"
@@ -56,6 +59,8 @@ using namespace de;
 
 static ServerApp *serverAppSingleton = 0;
 
+static String const PATH_SERVER_FILES = "/sys/server/public";
+
 static void handleAppTerminate(char const *msg)
 {
     LogBuffer::get().flush();
@@ -67,12 +72,14 @@ DENG2_PIMPL(ServerApp)
 , DENG2_OBSERVES(DoomsdayApp, GameUnload)
 , DENG2_OBSERVES(DoomsdayApp, ConsoleRegistration)
 , DENG2_OBSERVES(DoomsdayApp, PeriodicAutosave)
+, DENG2_OBSERVES(PackageLoader, Activity)
 {
     QScopedPointer<ServerSystem> serverSystem;
     QScopedPointer<Resources> resources;
     QScopedPointer<AudioSystem> audioSys;
     ClientServerWorld world;
     InFineSystem infineSys;
+    duint32 serverId;
 
     Impl(Public *i)
         : Base(i)
@@ -83,6 +90,12 @@ DENG2_PIMPL(ServerApp)
         self().audienceForGameUnload() += this;
         self().audienceForConsoleRegistration() += this;
         self().audienceForPeriodicAutosave() += this;
+        PackageLoader::get().audienceForActivity() += this;
+
+        // Each running server instance is given a random identifier.
+        serverId = randui32() & 0x7fffffff;
+
+        LOG_NET_NOTE("Server instance ID: %08x") << serverId;
     }
 
     ~Impl()
@@ -91,38 +104,59 @@ DENG2_PIMPL(ServerApp)
         DD_Shutdown();
     }
 
-    void publishAPIToPlugin(::Library *plugin)
+    void publishAPIToPlugin(::Library *plugin) override
     {
         DD_PublishAPIs(plugin);
     }
 
-    void consoleRegistration()
+    void consoleRegistration() override
     {
         DD_ConsoleRegister();
     }
 
-    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
+    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/) override
     {
         if (netGame && isServer)
         {
             N_ServerClose();
         }
-
         infineSystem().reset();
-
         if (App_GameLoaded())
         {
             Con_SaveDefaults();
         }
     }
 
-    void periodicAutosave()
+    void periodicAutosave() override
     {
         if (Config::exists())
         {
             Config::get().writeIfModified();
         }
         Con_SaveDefaultsIfChanged();
+    }
+
+    void initServerFiles()
+    {
+        // Packages available to clients via RemoteFeed use versioned identifiers because
+        // a client may already have a different version of the package.
+
+        Folder &files = self().fileSystem().makeFolder(PATH_SERVER_FILES);
+        auto *feed = new PackageFeed(PackageLoader::get(),
+                                     PackageFeed::LinkVersionedIdentifier);
+        feed->setFilter([] (Package const &pkg)
+        {
+            return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b");
+        });
+        files.attach(feed);
+    }
+
+    void setOfLoadedPackagesChanged() override
+    {
+        if (Folder *files = FS::tryLocate<Folder>(PATH_SERVER_FILES))
+        {
+            files->populate();
+        }
     }
 
 #ifdef UNIX
@@ -187,6 +221,11 @@ ServerApp::~ServerApp()
     serverAppSingleton = 0;
 }
 
+duint32 ServerApp::instanceId() const
+{
+    return d->serverId;
+}
+
 void ServerApp::initialize()
 {
     Libdeng_Init();
@@ -217,6 +256,8 @@ void ServerApp::initialize()
     // Load the server's packages.
     initSubsystems();
     DoomsdayApp::initialize();
+
+    d->initServerFiles();
 
     // Initialize.
 #if WIN32
@@ -250,18 +291,19 @@ void ServerApp::checkPackageCompatibility(StringList const &packageIds,
     }
 }
 
-shell::ServerInfo ServerApp::currentServerInfo()
+shell::ServerInfo ServerApp::currentServerInfo() // static
 {
     shell::ServerInfo info;
 
     // Let's figure out what we want to tell about ourselves.
+    info.setServerId(ServerApp::app().d->serverId);
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
     info.setPluginDescription(String::format("%s %s",
-                                             reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_NAME)),
-                                             reinterpret_cast<char const *>(gx.GetVariable(DD_PLUGIN_VERSION_SHORT))));
+                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
+                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
 
     info.setGameId(game().id());
-    info.setGameConfig(reinterpret_cast<char const *>(gx.GetVariable(DD_GAME_CONFIG)));
+    info.setGameConfig(reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG)));
     info.setName(serverName);
     info.setDescription(serverInfo);
 
@@ -284,6 +326,10 @@ shell::ServerInfo ServerApp::currentServerInfo()
         String const mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
         info.setMap(mapPath);
     }
+
+    // The master server will use the public IP address where an announcement came from,
+    // so we don't necessarily have to specify a valid address. The port is required, though.
+    info.setAddress({"localhost", duint16(nptIPPort)});
 
     // This will only work if the server has a public IP address.
     QHostInfo const host = QHostInfo::fromName(QHostInfo::localHostName());

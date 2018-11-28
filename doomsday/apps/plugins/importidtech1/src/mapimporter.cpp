@@ -866,7 +866,7 @@ DENG2_PIMPL(MapImporter)
                 {
                     if(i->xArgs[1] <= 0)
                     {
-                        LOG_MAP_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d)") << n + 1 << tag;
+                        LOGDEV_MAP_WARNING("Linedef missing (probably #%d) in explicit polyobj (tag:%d)") << n + 1 << tag;
                         return false;
                     }
 
@@ -892,7 +892,7 @@ DENG2_PIMPL(MapImporter)
                 {
                     if(i->xType == PO_LINE_EXPLICIT && i->xArgs[0] == tag)
                     {
-                        LOG_MAP_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d)") << n << tag;
+                        LOGDEV_MAP_WARNING("Linedef missing (#%d) in explicit polyobj (tag:%d)") << n << tag;
                         return false;
                     }
                 }
@@ -906,7 +906,7 @@ DENG2_PIMPL(MapImporter)
 
         if(polyLines.isEmpty())
         {
-            LOG_MAP_WARNING("Failed to locate a single line for polyobj (tag:%d)") << tag;
+            LOGDEV_MAP_WARNING("Failed to locate a single line for polyobj (tag:%d)") << tag;
             return false;
         }
 

@@ -22,6 +22,7 @@
 #include "ui/widgets/homeitemwidget.h"
 
 #include <de/CallbackAction>
+#include <de/FileSystem>
 #include <de/ui/ActionItem>
 
 using namespace de;
@@ -39,20 +40,24 @@ DENG_GUI_PIMPL(PackagesSidebarWidget)
         browser->rule().setInput(Rule::Width, rule("sidebar.width"));
 
         // Action for showing information about the package.
-        browser->actionItems().insert(0, new ui::ActionItem(tr("..."), new CallbackAction([this] ()
-        {
-            auto *pop = new PackageInfoDialog(browser->actionPackage());
-            root().addOnTop(pop);
-            pop->setDeleteAfterDismissed(true);
-            pop->setAnchorAndOpeningDirection(browser->actionWidget()->as<HomeItemWidget>()
-                                              .buttonWidget(0).rule(), ui::Up);
-            pop->open();
-        })));
+        browser->actionItems().insert(
+            0,
+            new ui::ActionItem(
+                tr("..."), new CallbackAction([this]() {
+                    auto *pop = new PackageInfoDialog(browser->actionPackage(),
+                                                      PackageInfoDialog::EnableActions);
+                    root().addOnTop(pop);
+                    pop->setDeleteAfterDismissed(true);
+                    pop->setAnchorAndOpeningDirection(
+                        browser->actionWidget()->as<HomeItemWidget>().buttonWidget(0).rule(),
+                        ui::Up);
+                    pop->open();
+                })));
     }
 };
 
 PackagesSidebarWidget::PackagesSidebarWidget()
-    : SidebarWidget("Packages", "packages-sidebar")
+    : SidebarWidget("Mods", "packages-sidebar")
     , d(new Impl(this))
 {
     // Button for refreshing the available packages.
@@ -64,10 +69,7 @@ PackagesSidebarWidget::PackagesSidebarWidget()
             .setInput(Rule::Top,    closeButton().rule().top())
             .setInput(Rule::Height, closeButton().rule().height());
     refreshButton->setStyleImage("refresh", "default");
-    refreshButton->setActionFn([this] ()
-    {
-        d->browser->refreshPackages();
-    });
+    refreshButton->setActionFn([]() { FS::get().refreshAsync(); });
 
     d->browser->setFilterEditorMinimumY(closeButton().rule().bottom());
 

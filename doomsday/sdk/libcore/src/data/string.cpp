@@ -39,7 +39,7 @@ String::String()
 String::String(String const &other) : QString(other)
 {}
 
-String::String(String &&moved) : QString(moved)
+String::String(String &&moved) : QString(std::move(moved))
 {}
 
 String::String(QString const &text) : QString(text)
@@ -166,15 +166,22 @@ String String::concatenatePath(String const &other, QChar dirChar) const
         // The other path is absolute - use as is.
         return other;
     }
+    return concatenateRelativePath(other, dirChar);
+}
 
-    String result = *this;
+String String::concatenateRelativePath(const String &other, QChar dirChar) const
+{
+    if (other.isEmpty()) return *this;
+
+    int const startPos = (other.first() == dirChar? 1 : 0);
 
     // Do a path combination. Check for a slash.
+    String result = *this;
     if (!empty() && last() != dirChar)
     {
         result += dirChar;
     }
-    result += other;
+    result += other.substr(startPos);
     return result;
 }
 
@@ -211,6 +218,21 @@ String String::rightStrip() const
         --beginOfSpace;
     }
     return left(beginOfSpace + 1);
+}
+
+String String::normalizeWhitespace() const
+{
+    static QRegularExpression const reg("\\s+");
+    String s = *this;
+    s.replace(reg, " ");
+    return s.strip();
+}
+
+String String::removed(const QRegularExpression &expr) const
+{
+    String s = *this;
+    s.remove(expr);
+    return s;
 }
 
 String String::lower() const
@@ -437,13 +459,13 @@ dint String::compareWithoutCase(String const &str, int n) const
     return leftRef(n).compare(str.leftRef(n), Qt::CaseInsensitive);
 }
 
-int String::commonPrefixLength(String const &str, Qt::CaseSensitivity sensitivity) const
+int String::commonPrefixLength(String const &str, CaseSensitivity sensitivity) const
 {
     int count = 0;
     int len = qMin(str.size(), size());
     for (int i = 0; i < len; ++i, ++count)
     {
-        if (sensitivity == Qt::CaseSensitive)
+        if (sensitivity == CaseSensitive)
         {
             if (at(i) != str.at(i)) break;
         }
@@ -537,6 +559,11 @@ dint String::toInt(bool *ok, int base, IntConversionFlags flags) const
     }
 
     return token.QString::toInt(ok, base);
+}
+
+duint32 String::toUInt32(bool *ok, int base) const
+{
+    return QString::toUInt(ok, base);
 }
 
 String String::addLinePrefix(String const &prefix) const

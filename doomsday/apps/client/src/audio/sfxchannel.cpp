@@ -59,20 +59,21 @@ DENG2_PIMPL_NOREF(SfxChannel)
     Vector3d findOrigin() const
     {
         // Originless sounds have no fixed/moveable emission point.
-        if(flags & SFXCF_NO_ORIGIN)
+        if (flags & SFXCF_NO_ORIGIN)
         {
             return Vector3d();
         }
 
         // When tracking an emitter - use it's origin.
-        if(emitter)
+        if (emitter)
         {
             Vector3d point(emitter->origin);
 
             // Position on the Z axis at the map-object's center?
-            if(Thinker_HasMobjFunc(emitter->thinker.function))
+            if (Thinker_IsMobj(&emitter->thinker))
+            {
                 point.z += emitter->height / 2;
-
+            }
             return point;
         }
 
@@ -99,7 +100,7 @@ bool SfxChannel::hasBuffer() const
 
 sfxbuffer_t &SfxChannel::buffer()
 {
-    if(d->buffer) return *d->buffer;
+    if (d->buffer) return *d->buffer;
     /// @throw MissingBufferError  No sound buffer is currently assigned.
     throw MissingBufferError("SfxChannel::buffer", "No sound buffer is assigned");
 }
@@ -116,7 +117,7 @@ void SfxChannel::setBuffer(sfxbuffer_t *newBuffer)
 
 void SfxChannel::stop()
 {
-    if(!d->buffer) return;
+    if (!d->buffer) return;
 
     /// @todo AudioSystem should observe. -ds
     App_AudioSystem().sfx()->Stop(d->buffer);
@@ -177,10 +178,10 @@ Vector3d SfxChannel::origin() const
 
 dfloat SfxChannel::priority() const
 {
-    if(!d->buffer || !(d->buffer->flags & SFXBF_PLAYING))
+    if (!d->buffer || !(d->buffer->flags & SFXBF_PLAYING))
         return SFX_LOWEST_PRIORITY;
 
-    if(d->flags & SFXCF_NO_ORIGIN)
+    if (d->flags & SFXCF_NO_ORIGIN)
         return App_AudioSystem().rateSoundPriority(0, 0, d->volume, d->startTime);
 
     // d->origin is set to emitter->xyz during updates.
@@ -192,13 +193,13 @@ void SfxChannel::updatePriority()
 {
     // If no sound buffer is assigned we've no need to update.
     sfxbuffer_t *sbuf = d->buffer;
-    if(!sbuf) return;
+    if (!sbuf) return;
 
     // Disabled?
-    if(d->flags & SFXCF_NO_UPDATE) return;
+    if (d->flags & SFXCF_NO_UPDATE) return;
 
     // Update the sound origin if needed.
-    if(d->emitter)
+    if (d->emitter)
     {
         d->updateOrigin();
     }
@@ -206,11 +207,11 @@ void SfxChannel::updatePriority()
     // Frequency is common to both 2D and 3D sounds.
     App_AudioSystem().sfx()->Set(sbuf, SFXBP_FREQUENCY, d->frequency);
 
-    if(sbuf->flags & SFXBF_3D)
+    if (sbuf->flags & SFXBF_3D)
     {
         // Volume is affected only by maxvol.
         App_AudioSystem().sfx()->Set(sbuf, SFXBP_VOLUME, d->volume * ::sfxVolume / 255.0f);
-        if(d->emitter && d->emitter == App_AudioSystem().sfxListener())
+        if (d->emitter && d->emitter == App_AudioSystem().sfxListener())
         {
             // Emitted by the listener object. Go to relative position mode
             // and set the position to (0,0,0).
@@ -228,8 +229,8 @@ void SfxChannel::updatePriority()
         }
 
         // If the sound is emitted by the listener, speed is zero.
-        if(d->emitter && d->emitter != App_AudioSystem().sfxListener() &&
-           Thinker_HasMobjFunc(d->emitter->thinker.function))
+        if (d->emitter && d->emitter != App_AudioSystem().sfxListener() &&
+            Thinker_IsMobj(&d->emitter->thinker))
         {
             dfloat vec[3];
             vec[0] = d->emitter->mom[0] * TICSPERSEC;
@@ -250,7 +251,7 @@ void SfxChannel::updatePriority()
         dfloat pan  = 0;
 
         // This is a 2D buffer.
-        if((d->flags & SFXCF_NO_ORIGIN) ||
+        if ((d->flags & SFXCF_NO_ORIGIN) ||
            (d->emitter && d->emitter == App_AudioSystem().sfxListener()))
         {
             dist = 1;
@@ -260,12 +261,12 @@ void SfxChannel::updatePriority()
         {
             // Calculate roll-off attenuation. [.125/(.125+x), x=0..1]
             dist = Mobj_ApproxPointDistance(App_AudioSystem().sfxListener(), d->origin);
-            if(dist < ::soundMinDist || (d->flags & SFXCF_NO_ATTENUATION))
+            if (dist < ::soundMinDist || (d->flags & SFXCF_NO_ATTENUATION))
             {
                 // No distance attenuation.
                 dist = 1;
             }
-            else if(dist > ::soundMaxDist)
+            else if (dist > ::soundMaxDist)
             {
                 // Can't be heard.
                 dist = 0;
@@ -280,16 +281,16 @@ void SfxChannel::updatePriority()
             }
 
             // And pan, too. Calculate angle from listener to emitter.
-            if(mobj_t *listener = App_AudioSystem().sfxListener())
+            if (mobj_t *listener = App_AudioSystem().sfxListener())
             {
                 dfloat angle = (M_PointToAngle2(listener->origin, d->origin) - listener->angle) / (dfloat) ANGLE_MAX * 360;
 
                 // We want a signed angle.
-                if(angle > 180)
+                if (angle > 180)
                     angle -= 360;
 
                 // Front half.
-                if(angle <= 90 && angle >= -90)
+                if (angle <= 90 && angle >= -90)
                 {
                     pan = -angle / 90;
                 }
@@ -338,10 +339,10 @@ DENG2_PIMPL(SfxChannels)
     /// @todo support dynamically resizing in both directions. -ds
     void resize(dint newSize)
     {
-        if(newSize < 0) newSize = 0;
+        if (newSize < 0) newSize = 0;
 
         clearAll();
-        for(dint i = 0; i < newSize; ++i)
+        for (dint i = 0; i < newSize; ++i)
         {
             all << new SfxChannel;
         }
@@ -365,10 +366,10 @@ dint SfxChannels::countPlaying(dint id)
     dint count = 0;
     forAll([&id, &count] (SfxChannel &ch)
     {
-        if(ch.hasBuffer())
+        if (ch.hasBuffer())
         {
             sfxbuffer_t &sbuf = ch.buffer();
-            if((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->id == id)
+            if ((sbuf.flags & SFXBF_PLAYING) && sbuf.sample && sbuf.sample->id == id)
             {
                 count += 1;
             }
@@ -380,27 +381,27 @@ dint SfxChannels::countPlaying(dint id)
 
 SfxChannel *SfxChannels::tryFindVacant(bool use3D, dint bytes, dint rate, dint sampleId) const
 {
-    for(SfxChannel *ch : d->all)
+    for (SfxChannel *ch : d->all)
     {
-        if(!ch->hasBuffer()) continue;
+        if (!ch->hasBuffer()) continue;
         sfxbuffer_t const &sbuf = ch->buffer();
 
-        if((sbuf.flags & SFXBF_PLAYING)
+        if ((sbuf.flags & SFXBF_PLAYING)
            || use3D != ((sbuf.flags & SFXBF_3D) != 0)
            || sbuf.bytes != bytes
            || sbuf.rate  != rate)
             continue;
 
         // What about the sample?
-        if(sampleId > 0)
+        if (sampleId > 0)
         {
-            if(!sbuf.sample || sbuf.sample->id != sampleId)
+            if (!sbuf.sample || sbuf.sample->id != sampleId)
                 continue;
         }
-        else if(sampleId == 0)
+        else if (sampleId == 0)
         {
             // We're trying to find a channel with no sample already loaded.
-            if(sbuf.sample)
+            if (sbuf.sample)
                 continue;
         }
 
@@ -415,7 +416,7 @@ void SfxChannels::refreshAll()
 {
     forAll([] (SfxChannel &ch)
     {
-        if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
+        if (ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {
             App_AudioSystem().sfx()->Refresh(&ch.buffer());
         }
@@ -425,9 +426,9 @@ void SfxChannels::refreshAll()
 
 LoopResult SfxChannels::forAll(std::function<LoopResult (SfxChannel &)> func) const
 {
-    for(SfxChannel *ch : d->all)
+    for (SfxChannel *ch : d->all)
     {
-        if(auto result = func(*ch)) return result;
+        if (auto result = func(*ch)) return result;
     }
     return LoopContinue;
 }
@@ -443,32 +444,32 @@ byte refMonitor;
 
 void Sfx_ChannelDrawer()
 {
-    if(!::showSoundInfo) return;
+    if (!::showSoundInfo) return;
 
     DENG_ASSERT_IN_MAIN_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Go into screen projection mode.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPushMatrix();
-    LIBGUI_GL.glLoadIdentity();
-    LIBGUI_GL.glOrtho(0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, 0, -1, 1);
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PushMatrix();
+    DGL_LoadIdentity();
+    DGL_Ortho(0, 0, DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT, -1, 1);
 
-    LIBGUI_GL.glEnable(GL_TEXTURE_2D);
+    DGL_Enable(DGL_TEXTURE_2D);
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
     dint const lh = FR_SingleLineHeight("Q");
-    if(!App_AudioSystem().sfxIsAvailable())
+    if (!App_AudioSystem().sfxIsAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);
-        LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+        DGL_Disable(DGL_TEXTURE_2D);
         return;
     }
 
-    if(::refMonitor)
+    if (::refMonitor)
         FR_DrawTextXY("!", 0, 0);
 
     // Sample cache information.
@@ -483,7 +484,7 @@ void Sfx_ChannelDrawer()
     dint idx = 0;
     App_AudioSystem().sfxChannels().forAll([&lh, &idx] (audio::SfxChannel &ch)
     {
-        if(ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
+        if (ch.hasBuffer() && (ch.buffer().flags & SFXBF_PLAYING))
         {
             FR_SetColor(1, 1, 1);
         }
@@ -493,7 +494,7 @@ void Sfx_ChannelDrawer()
         }
 
         Block emitterText;
-        if(ch.emitter())
+        if (ch.emitter())
         {
             emitterText = (  " mobj:" + String::number(ch.emitter()->thinker.id)
                            + " pos:"  + ch.origin().asText()
@@ -511,7 +512,7 @@ void Sfx_ChannelDrawer()
                 emitterText.constData());
         FR_DrawTextXY(buf, 5, lh * (1 + idx * 2));
 
-        if(ch.hasBuffer())
+        if (ch.hasBuffer())
         {
             sfxbuffer_t &sbuf = ch.buffer();
 
@@ -532,9 +533,9 @@ void Sfx_ChannelDrawer()
         return LoopContinue;
     });
 
-    LIBGUI_GL.glDisable(GL_TEXTURE_2D);
+    DGL_Disable(DGL_TEXTURE_2D);
 
     // Back to the original.
-    LIBGUI_GL.glMatrixMode(GL_PROJECTION);
-    LIBGUI_GL.glPopMatrix();
+    DGL_MatrixMode(DGL_PROJECTION);
+    DGL_PopMatrix();
 }

@@ -25,11 +25,13 @@
 #include <de/ModelDrawable>
 #include <de/GLProgram>
 #include <de/IObject>
+#include <de/Scheduler>
 
 namespace render {
 
 /**
- * State-based object animator for `ModelDrawable`s.
+ * State-based object animator for `ModelDrawable`s. Triggers animation sequences
+ * based on state changes and damage points received by the owner.
  *
  * Used for both mobjs and psprites. The state and movement of the object
  * determine which animation sequences are started.
@@ -47,9 +49,16 @@ public:
     DENG2_ERROR(DefinitionError);
 
 public:
+    StateAnimator();
     StateAnimator(de::DotPath const &id, Model const &model);
 
     Model const &model() const;
+
+    /**
+     * Returns the script scheduler specific to this animator. A new scheduler will
+     * be created the first time this is called.
+     */
+    de::Scheduler &scheduler();
 
     /**
      * Sets the namespace of the animator's owner. Available as a variable in
@@ -69,13 +78,15 @@ public:
 
     void triggerDamage(int points, struct mobj_s const *inflictor);
 
-    void startSequence(int animationId, int priority, bool looping,
-                       de::String const &node = "");
+    void startAnimation(int animationId, int priority, bool looping,
+                        de::String const &node = "");
+
+    int animationId(de::String const &name) const;
 
     de::ModelDrawable::Appearance const &appearance() const;
 
     // ModelDrawable::Animator
-    void advanceTime(de::TimeDelta const &elapsed) override;
+    void advanceTime(de::TimeSpan const &elapsed) override;
     de::ddouble currentTime(int index) const override;
     de::Vector4f extraRotationForNode(de::String const &nodeName) const override;
 

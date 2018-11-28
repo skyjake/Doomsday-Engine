@@ -57,6 +57,7 @@
 #define ANG5                (ANG90/18)
 
 dd_bool onground;
+float   turboMul = 1.0f; // Multiplier for running speed.
 
 int maxHealth; // 100
 #if __JDOOM__ || __JDOOM64__
@@ -312,9 +313,11 @@ void P_PlayerRemoteMove(player_t *player)
     if(IS_CLIENT && plrNum == CONSOLEPLAYER)
         return;
 
+#if !defined (DENG_MOBILE)
     // On server, there must be valid coordinates.
     if(IS_SERVER && !Sv_CanTrustClientPos(plrNum))
         return;
+#endif
 
     // Unless there is a pending momentum fix, clear the mobj's momentum.
     if(ddpl->fixCounter.mom == ddpl->fixAcked.mom && !(ddpl->flags & DDPF_FIXMOM))
@@ -391,12 +394,12 @@ void P_MovePlayer(player_t *player)
     if(IS_NETWORK_SERVER)
     {
         // Server starts the walking animation for remote players.
-        if((!FEQUAL(dp->forwardMove, 0) || !FEQUAL(dp->sideMove, 0)) &&
+        if((NON_ZERO(dp->forwardMove) || NON_ZERO(dp->sideMove)) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
             P_MobjChangeState(plrmo, pClassInfo->runState);
         }
-        else if(P_PlayerInWalkState(player) && FEQUAL(dp->forwardMove, 0) && FEQUAL(dp->sideMove, 0))
+        else if(P_PlayerInWalkState(player) && IS_ZERO(dp->forwardMove) && IS_ZERO(dp->sideMove))
         {
             // If in a walking frame, stop moving.
             P_MobjChangeState(plrmo, pClassInfo->normalState);
@@ -470,17 +473,17 @@ void P_MovePlayer(player_t *player)
             sideMove = 0;
         }
 
-        if(!FEQUAL(forwardMove, 0) && movemul)
+        if(NON_ZERO(forwardMove) && movemul)
         {
             P_Thrust(player, plrmo->angle, forwardMove * movemul);
         }
 
-        if(!FEQUAL(sideMove, 0) && movemul)
+        if(NON_ZERO(sideMove) && movemul)
         {
             P_Thrust(player, plrmo->angle - ANG90, sideMove * movemul);
         }
 
-        if((!FEQUAL(forwardMove, 0) || !FEQUAL(sideMove, 0)) &&
+        if((NON_ZERO(forwardMove) || NON_ZERO(sideMove)) &&
            plrmo->state == &STATES[pClassInfo->normalState])
         {
             P_MobjChangeState(plrmo, pClassInfo->runState);
@@ -700,7 +703,7 @@ void P_MorphThink(player_t *player)
         return;
 
     pmo = player->plr->mo;
-    if(FEQUAL(pmo->mom[MX], 0) && FEQUAL(pmo->mom[MY], 0) && P_Random() < 64)
+    if(IS_ZERO(pmo->mom[MX]) && IS_ZERO(pmo->mom[MY]) && P_Random() < 64)
     {   // Snout sniff
         P_SetPspriteNF(player, ps_weapon, S_SNOUTATK2);
         S_StartSound(SFX_PIG_ACTIVE1, pmo); // snort
@@ -735,7 +738,7 @@ void P_MorphThink(player_t *player)
 
     if(!IS_NETGAME || IS_CLIENT)
     {
-        if(FEQUAL(pmo->mom[MX], 0) && FEQUAL(pmo->mom[MY], 0) && P_Random() < 160)
+        if(IS_ZERO(pmo->mom[MX]) && IS_ZERO(pmo->mom[MY]) && P_Random() < 160)
         {   // Twitch view angle
             pmo->angle += (P_Random() - P_Random()) << 19;
         }
@@ -1030,7 +1033,7 @@ void P_PlayerThinkFly(player_t *player)
         plrmo->flags2 &= ~MF2_FLY;
         plrmo->flags &= ~MF_NOGRAVITY;
     }
-    else if(!FEQUAL(player->brain.upMove, 0) && player->powers[PT_FLIGHT])
+    else if(NON_ZERO(player->brain.upMove) && player->powers[PT_FLIGHT])
     {
         player->flyHeight = player->brain.upMove * 10;
         if(!(plrmo->flags2 & MF2_FLY))
@@ -1223,10 +1226,10 @@ void P_PlayerThinkWeapons(player_t *player)
     }
     else
     // Check for weapon change.
-#if __JHERETIC__ || __JHEXEN__
-    if(brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+    if (brain->changeWeapon != WT_NOCHANGE && !player->morphTics)
 #else
-    if(brain->changeWeapon != WT_NOCHANGE)
+    if (brain->changeWeapon != WT_NOCHANGE)
 #endif
     {
         // Direct slot selection.
@@ -1253,7 +1256,11 @@ void P_PlayerThinkWeapons(player_t *player)
                (cand = P_WeaponSlotCycle(cand, brain->cycleWeapon < 0)) !=
                 first);
     }
-    else if(brain->cycleWeapon)
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+    if (brain->cycleWeapon && player->morphTics == 0)
+#else
+    if (brain->cycleWeapon)
+#endif
     {
         // Linear cycle.
         newweapon = P_PlayerFindWeapon(player, brain->cycleWeapon < 0);
@@ -1332,28 +1339,24 @@ void P_PlayerThinkHUD(player_t* player)
         ST_LogRefresh(playerIdx);
 }
 
-void P_PlayerThinkMap(player_t* player)
+void P_PlayerThinkMap(player_t *player)
 {
-    uint playerIdx = player - players;
-    playerbrain_t* brain = &player->brain;
+    uint           playerIdx = player - players;
+    playerbrain_t *brain     = &player->brain;
 
-    if(brain->mapToggle)
+    if (brain->mapToggle)
         ST_AutomapOpen(playerIdx, !ST_AutomapIsOpen(playerIdx), false);
 
-    if(brain->mapFollow)
+    if (brain->mapFollow)
         ST_AutomapFollowMode(playerIdx);
 
-    if(brain->mapRotate)
-    {
-        cfg.common.automapRotate = !cfg.common.automapRotate;
-        ST_SetAutomapCameraRotation(playerIdx, cfg.common.automapRotate);
-        P_SetMessageWithFlags(player, (cfg.common.automapRotate ? AMSTR_ROTATEON : AMSTR_ROTATEOFF), LMF_NO_HIDE);
-    }
+    if (brain->mapRotate)
+        G_SetAutomapRotateMode(!cfg.common.automapRotate); // changes cvar as well
 
-    if(brain->mapZoomMax)
+    if (brain->mapZoomMax)
         ST_AutomapZoomMode(playerIdx);
 
-    if(brain->mapMarkAdd)
+    if (brain->mapMarkAdd)
     {
         mobj_t *pmo = player->plr->mo;
         ST_AutomapAddPoint(playerIdx, pmo->origin[VX], pmo->origin[VY], pmo->origin[VZ]);
@@ -1600,7 +1603,7 @@ void P_PlayerThinkLookYaw(player_t* player, timespan_t ticLength)
 
     // Check for extra speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, NULL);
-    if(!FEQUAL(vel, 0) ^ (cfg.common.alwaysRun != 0))
+    if(NON_ZERO(vel) ^ (cfg.common.alwaysRun != 0))
     {
         // Hurry, good man!
         turnSpeedPerTic = pClassInfo->turnSpeed[1];
@@ -1710,11 +1713,11 @@ void P_PlayerThinkUpdateControls(player_t *player)
 
     // Check for speed.
     P_GetControlState(playerNum, CTL_SPEED, &vel, 0);
-    brain->speed = (!FEQUAL(vel, 0));
+    brain->speed = (NON_ZERO(vel));
 
     // Check for strafe.
     //P_GetControlState(playerNum, CTL_MODIFIER_1, &vel, 0);
-    //strafe = (!FEQUAL(vel, 0));
+    //strafe = (NON_ZERO(vel));
 
     // Move status.
     P_GetControlState(playerNum, CTL_WALK, &vel, &off);

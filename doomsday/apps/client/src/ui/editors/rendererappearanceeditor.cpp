@@ -29,7 +29,6 @@
 
 #include <de/ButtonWidget>
 #include <de/ScrollAreaWidget>
-#include <de/FoldPanelWidget>
 #include <de/DialogContentStylist>
 #include <de/SequentialLayout>
 #include <de/SignalAction>
@@ -486,7 +485,7 @@ RendererAppearanceEditor::RendererAppearanceEditor()
 
     updateSidebarLayout(profLabel->rule().width() +
                         d->profile->rule().width() +
-                        d->profile->button().rule().width(), Const(0));
+                        d->profile->button().rule().width());
 
     d->fetch();
 }

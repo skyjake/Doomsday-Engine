@@ -42,6 +42,7 @@ public:
     enum Style {
         Linear,
         EaseOut,
+        EaseOutSofter,
         EaseIn,
         EaseBoth,
         Bounce,
@@ -57,11 +58,9 @@ public:
     Animation &operator = (Animation const &other);
 
     void setStyle(Style s);
-
     void setStyle(Style style, float bounce);
 
     Style style() const;
-
     float bounce() const;
 
     /**
@@ -72,9 +71,9 @@ public:
      *                        This includes @a startDelay.
      * @param startDelay      Number of seconds to wait before starting the transition.
      */
-    void setValue(float toValue, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
+    void setValue(float toValue, TimeSpan transitionSpan = 0, TimeSpan startDelay = 0);
 
-    void setValue(int toValue, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
+    void setValue(int toValue, TimeSpan transitionSpan = 0, TimeSpan startDelay = 0);
 
     /**
      * Starts a new transition.
@@ -85,7 +84,7 @@ public:
      *                        This includes @a startDelay.
      * @param startDelay      Number of seconds to wait before starting the transition.
      */
-    void setValueFrom(float fromValue, float toValue, TimeDelta transitionSpan = 0, TimeDelta startDelay = 0);
+    void setValueFrom(float fromValue, float toValue, TimeSpan transitionSpan = 0, TimeSpan startDelay = 0);
 
     /**
      * Current value.
@@ -112,12 +111,12 @@ public:
     /**
      * Number of seconds remaining in the ongoing transition.
      */
-    TimeDelta remainingTime() const;
+    TimeSpan remainingTime() const;
 
     /**
      * Number of seconds for the entire transition.
      */
-    TimeDelta transitionTime() const;
+    TimeSpan transitionTime() const;
 
     /**
      * Move the current value and the target value by @a valueDelta.
@@ -177,9 +176,9 @@ public:
      */
     static void setClock(Clock const *clock);
 
-    static Time currentTime();
+    static TimeSpan currentTime();
 
-    static Animation range(Style style, float from, float to, TimeDelta span, TimeDelta delay = 0);
+    static Animation range(Style style, float from, float to, TimeSpan span, TimeSpan delay = 0);
 
 private:
     DENG2_PRIVATE(d)

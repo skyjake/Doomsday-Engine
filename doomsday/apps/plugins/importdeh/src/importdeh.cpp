@@ -145,9 +145,10 @@ static void readPatchFiles()
     {
         if (bundle->format() == DataBundle::Dehacked)
         {
+            String const bundleRoot = bundle->rootPath();
             for (Value const *path : bundle->packageMetadata().geta("dataFiles").elements())
             {
-                readFile2(path->asText());
+                readFile2(bundleRoot / path->asText());
             }
         }
     }
@@ -177,7 +178,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-void DP_Initialize()
+DENG_ENTRYPOINT void DP_Initialize()
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
@@ -186,10 +187,22 @@ void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-extern "C" char const *deng_LibraryType()
+DENG_ENTRYPOINT char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
+
+#if defined (DENG_STATIC_LINK)
+
+DENG_EXTERN_C void *staticlib_importdeh_symbol(char const *name)
+{
+    DENG_SYMBOL_PTR(name, deng_LibraryType)
+    DENG_SYMBOL_PTR(name, DP_Initialize);
+    qWarning() << name << "not found in importdeh";
+    return nullptr;
+}
+
+#else
 
 DENG_DECLARE_API(Base);
 DENG_DECLARE_API(Con);
@@ -202,3 +215,5 @@ DENG_API_EXCHANGE(
     DENG_GET_API(DE_API_DEFINITIONS, Def);
     DENG_GET_API(DE_API_FILE_SYSTEM, F);
 )
+
+#endif

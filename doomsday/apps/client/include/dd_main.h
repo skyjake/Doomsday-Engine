@@ -39,7 +39,7 @@
 namespace de { class File1; }
 
 extern de::dint verbose;
-extern de::dint isDedicated;
+extern de::dint isDedicated; // true if __SERVER__
 #ifdef __CLIENT__
 extern de::dint symbolicEchoMode;
 #endif

@@ -18,6 +18,7 @@
 
 #include "de/CommandWidget"
 #include "de/DocumentPopupWidget"
+#include "de/PersistentState"
 #include "de/Style"
 
 #include <de/shell/EditorHistory>
@@ -28,14 +29,14 @@ namespace de {
 DENG_GUI_PIMPL(CommandWidget)
 {
     shell::EditorHistory history;
-    DocumentPopupWidget *popup; ///< Popup for autocompletions.
-    bool allowReshow;   ///< Contents must still be valid.
+    DocumentPopupWidget *popup;       ///< Popup for autocompletions.
+    bool                 allowReshow; ///< Contents must still be valid.
 
     Impl(Public *i) : Base(i), history(i), allowReshow(false)
     {
         // Popup for autocompletions.
         popup = new DocumentPopupWidget;
-        popup->document().setMaximumLineWidth(640);
+        popup->document().setMaximumLineWidth(rule("editor.completion.linewidth"));
         popup->document().setScrollBarColor("inverted.accent");
 
         // Height for the content: depends on the document height (plus margins), but at
@@ -143,6 +144,19 @@ bool CommandWidget::handleControlKey(int qtKey, KeyModifiers const &mods)
         return true;
     }
     return false;
+}
+
+void CommandWidget::operator >> (PersistentState &toState) const
+{
+    int const MAX_PERSISTENT_HISTORY = 200;
+    toState.objectNamespace().set(name().concatenateMember("history"),
+                                  new ArrayValue(d->history.fullHistory(MAX_PERSISTENT_HISTORY)));
+}
+
+void CommandWidget::operator << (PersistentState const &fromState)
+{
+    d->history.setFullHistory(fromState.objectNamespace()
+                              .getStringList(name().concatenateMember("history")));
 }
 
 void CommandWidget::dismissContentToHistory()

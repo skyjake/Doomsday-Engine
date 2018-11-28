@@ -67,6 +67,7 @@ public:
     void setContentHeight(int height);
     void setContentHeight(Rule const &height);
     void setContentSize(Rule const &width, Rule const &height);
+    void setContentSize(ISizeRule const &dimensions);
     void setContentSize(Vector2i const &size);
     void setContentSize(Vector2ui const &size);
 
@@ -109,11 +110,11 @@ public:
      * @param to    Scroll position.
      * @param span  Animation time span.
      */
-    void scroll(Vector2i const &to, TimeDelta span = 0);
+    void scroll(Vector2i const &to, TimeSpan span = 0);
 
-    void scrollX(int to, TimeDelta span = 0);
-    void scrollY(int to, TimeDelta span = 0);
-    void scrollY(Rule const &to, TimeDelta span = 0);
+    void scrollX(int to, TimeSpan span = 0);
+    void scrollY(int to, TimeSpan span = 0);
+    void scrollY(Rule const &to, TimeSpan span = 0);
 
     bool isScrollable() const;
 
@@ -153,15 +154,15 @@ public:
     bool handleEvent(Event const &event) override;
 
 public slots:
-    void scrollToTop(TimeDelta span = 0.3);
+    void scrollToTop(TimeSpan span = 0.3);
 
     /**
      * Moves the scroll offset of the widget to the bottom of the content.
      */
-    void scrollToBottom(TimeDelta span = 0.3);
+    void scrollToBottom(TimeSpan span = 0.3);
 
-    void scrollToLeft(TimeDelta span = 0.3);
-    void scrollToRight(TimeDelta span = 0.3);
+    void scrollToLeft(TimeSpan span = 0.3);
+    void scrollToRight(TimeSpan span = 0.3);
 
     /**
      * Moves the scroll offset to center on the given widget.
@@ -169,7 +170,7 @@ public slots:
      * @param widget  Widget to center on.
      * @param span    Animation duration.
      */
-    void scrollToWidget(GuiWidget const &widget, TimeDelta span = 0.3);
+    void scrollToWidget(GuiWidget const &widget, TimeSpan span = 0.3);
 
     /**
      * Finds the topmost scroll area that can be scrolled. May return this widget

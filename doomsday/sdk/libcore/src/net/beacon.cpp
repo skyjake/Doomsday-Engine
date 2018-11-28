@@ -107,7 +107,7 @@ void Beacon::stop()
     d->socket = 0;
 }
 
-void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
+void Beacon::discover(TimeSpan const &timeOut, TimeSpan const &interval)
 {
     if (d->timer) return; // Already discovering.
 
@@ -120,7 +120,7 @@ void Beacon::discover(TimeDelta const &timeOut, TimeDelta const &interval)
     int tries = 10;
     forever
     {
-        if (d->socket->bind(d->port + 1 + qrand() % 0x4000, QUdpSocket::DontShareAddress))
+        if (d->socket->bind(d->port + Rangeui16(1, 0x4000).random(), QUdpSocket::DontShareAddress))
         {
             // Got a port open successfully.
             break;

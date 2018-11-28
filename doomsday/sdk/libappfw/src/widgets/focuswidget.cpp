@@ -22,7 +22,7 @@
 
 namespace de {
 
-static TimeDelta FLASH_SPAN = .5;
+static TimeSpan FLASH_SPAN = .5;
 
 DENG2_PIMPL(FocusWidget)
 {
@@ -94,6 +94,11 @@ void FocusWidget::fadeIn()
 void FocusWidget::fadeOut()
 {
     d->fadeOpacity = 0.f;
+}
+
+bool FocusWidget::isKeyboardFocusActive() const
+{
+    return d->fadeOpacity > 0 && d->reference;
 }
 
 void FocusWidget::update()

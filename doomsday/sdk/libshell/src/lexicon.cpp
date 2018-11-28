@@ -13,19 +13,18 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/shell/Lexicon"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL_NOREF(Lexicon)
 {
-    Terms terms;
+    Terms  terms;
     String extraChars;
-    bool caseSensitive;
+    bool   caseSensitive;
 
     Impl() : caseSensitive(false) {}
 };
@@ -79,5 +78,4 @@ bool Lexicon::isCaseSensitive() const
     return d->caseSensitive;
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

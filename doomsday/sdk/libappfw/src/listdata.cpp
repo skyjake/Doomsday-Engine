@@ -57,6 +57,15 @@ Data::Pos ListData::find(Item const &item) const
     return InvalidPos;
 }
 
+Data::Pos ListData::findLabel(String const &label) const
+{
+    for (Pos i = 0; i < size(); ++i)
+    {
+        if (at(i).label() == label) return i;
+    }
+    return InvalidPos;
+}
+
 Data::Pos ListData::findData(QVariant const &data) const
 {
     for (Pos i = 0; i < size(); ++i)

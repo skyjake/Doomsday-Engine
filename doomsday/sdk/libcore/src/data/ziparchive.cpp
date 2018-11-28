@@ -376,7 +376,8 @@ DENG2_PIMPL(ZipArchive)
                 DOSDate lastModDate(header.lastModDate);
                 DOSTime lastModTime(header.lastModTime);
                 entry->modifiedAt = QDateTime(QDate(lastModDate.year + 1980, lastModDate.month, lastModDate.dayOfMonth),
-                                              QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds));
+                                              QTime(lastModTime.hours, lastModTime.minutes, lastModTime.seconds),
+                                              Qt::UTC); // buildpackage.py sets UTC for .packs
 
                 if (readingFromOriginal)
                 {
@@ -752,7 +753,7 @@ static bool recognizeZipExtension(String const &ext)
 
 bool ZipArchive::recognize(File const &file)
 {
-    if (file.status().type() == File::Status::FILE)
+    if (file.status().type() == File::Type::File)
     {
         // For now, just check the name.
         return recognizeZipExtension(file.extension().lower());

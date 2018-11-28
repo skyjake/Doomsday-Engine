@@ -159,6 +159,12 @@
 #  define DENG2_NORETURN __attribute__((__noreturn__))
 #endif
 
+#if defined (DENG_IOS)
+#  define DENG2_VISIBLE_SYMBOL __attribute__((visibility("default")))
+#else
+#  define DENG2_VISIBLE_SYMBOL
+#endif
+
 #ifndef NDEBUG
 #  define DENG2_DEBUG
    DENG2_EXTERN_C DENG2_PUBLIC void LogBuffer_Flush(void);
@@ -232,6 +238,9 @@
  */
 #define DENG2_ESC(StringLiteral) "\x1b" StringLiteral
 #define _E(Code) DENG2_ESC(#Code)
+
+#define DENG2_OFFSET_PTR(type, member) \
+    reinterpret_cast<const void *>(offsetof(type, member))
 
 /**
  * Macro for defining an opaque type in the C wrapper API.
@@ -455,12 +464,14 @@ inline X_ const *maybeAs(T_ const &obj) {
 template <typename X_, typename T_>
 inline X_ &expectedAs(T_ *ptr) {
     if (auto *t = maybeAs<X_>(ptr)) return *t;
+    DENG2_ASSERT(false);
     throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(T_)).arg(DENG2_TYPE_NAME(X_)));
 }
 
 template <typename X_, typename T_>
 inline X_ const &expectedAs(T_ const *ptr) {
     if (auto const *t = maybeAs<X_>(ptr)) return *t;
+    DENG2_ASSERT(false);
     throw CastError(QString("Cannot cast %1 to %2").arg(DENG2_TYPE_NAME(T_)).arg(DENG2_TYPE_NAME(X_)));
 }
 
@@ -574,6 +585,12 @@ inline ToType function_cast(FromType ptr)
     return forcedCast.target;
 }
 
+template <typename ToType, typename FromType>
+inline ToType functionAssign(ToType &dest, FromType src)
+{
+    return dest = de::function_cast<ToType>(src);
+}
+
 /**
  * Clears a region of memory. Size of the region is the size of Type.
  * @param t  Reference to the memory.
@@ -612,6 +629,19 @@ inline ContainerType map(ContainerType const &c,
     ContainerType out;
     for (auto i = c.begin(); i != c.end(); ++i) {
         out.push_back(func(*i));
+    }
+    return out;
+}
+
+template <typename OutContainer,
+          typename InContainer,
+          typename Func,
+          typename Inserter = std::back_insert_iterator<OutContainer>>
+inline OutContainer map(const InContainer &input, Func func) {
+    OutContainer out;
+    Inserter ins(out);
+    for (const auto &i : input) {
+        *ins++ = func(i);
     }
     return out;
 }
@@ -723,7 +753,9 @@ enum ProtocolVersion {
 
     DENG2_PROTOCOL_2_0_0  = 3,
 
-    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_2_0_0
+    DENG2_PROTOCOL_2_1_0  = 3,
+
+    DENG2_PROTOCOL_LATEST = DENG2_PROTOCOL_2_1_0
 };
 
 //@{

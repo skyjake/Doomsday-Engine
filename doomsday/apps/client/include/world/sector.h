@@ -238,7 +238,7 @@ public:
      *
      * @param callback  Function to call for each Subsector.
      */
-    de::LoopResult forAllSubsectors(std::function<de::LoopResult (world::Subsector &)> callback) const;
+    de::LoopResult forAllSubsectors(const std::function<de::LoopResult (world::Subsector &)> &callback) const;
 
     /**
      * Generate a new Subsector from the given set of map @a subspaces.

@@ -26,7 +26,7 @@ namespace internal {
 
 struct WAVChunk : public IReadable
 {
-    Block id;
+    Block   id;
     duint32 size;
 
     WAVChunk() : id(4), size(0) {}
@@ -247,7 +247,7 @@ duint Waveform::sampleRate() const
     return d->sampleRate;
 }
 
-TimeDelta Waveform::duration() const
+TimeSpan Waveform::duration() const
 {
     return d->sampleRate * d->sampleCount;
 }

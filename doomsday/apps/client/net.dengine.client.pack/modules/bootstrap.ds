@@ -1,0 +1,123 @@
+# DOOMSDAY CLIENT BOOTSTRAP
+# 
+# This script is executed after the client application has been fully
+# initialized, immediately after subsystems are all ready. No game is
+# loaded at this stage, although all plugins have been enumerated.
+# The window is not yet visible -- no GL operations can be performed.
+# Config has already been loaded from persistent storage.
+
+import Version, App, Config, Input, SavedSession
+import utils
+
+def bindDefaultConsoleTildeKey()
+    Input.bindEvent("global:key-tilde-down+key-shift-up", "taskbar")
+    Input.bindEvent("console:key-tilde-down+key-shift-up", "taskbar")
+end
+
+def bindWindowsMenuKey()
+    Input.bindEvent("global:key-winmenu-down", "taskbar")
+end
+
+def runLegacySavegameConversion(newGame)
+    if newGame == 'null-game': return
+    # Schedule conversion of all legacy savegames located.
+    # TODO: Improve this logic so that conversion tasks are done only when necessary.
+    SavedSession.convertAll(newGame)
+end
+
+def runPluginLoadHooks(newGame)
+    if newGame == 'null-game': return    
+    try
+        gameConf = Config.plugin[App.gamePlugin()]
+        for func in gameConf.onNextLoad: func()
+        # These are single-shot hooks.
+        gameConf.onNextLoad = []
+    catch: pass
+end
+
+def isUpgradedToBuild(number)
+    return Version.OLD_VERSION[3] < number and Version.BUILD >= number
+end
+
+def addOnLoadHookForAllGames(function)
+    for plug in subrecords(Config.plugin).values()
+        plug.onNextLoad += [function]
+    end    
+end
+
+def cleanPackageFolders()
+    # Config.resource.iwadFolder was used previously for IWADs
+    # (non-recursive), but now everything can be put in 
+    # Config.resource.packageFolder and recursing is specified
+    # separately.
+    try
+        res = Config.resource
+        if res.iwadFolder
+            res.packageFolder = utils.makeArray(res.packageFolder)
+            folders = utils.makeArray(res.iwadFolder)
+            print 'Cleaning up IWAD folders:', folders
+            for folder in folders
+                res.recursedFolders[folder] = False
+                if not folder in res.packageFolder
+                    res.packageFolder = [folder] + res.packageFolder
+                end
+            end
+            res.iwadFolder = ''
+            import FS
+            FS.refreshPackageFolders()
+        end
+    catch Error, er
+        print "Problem in cleanPackageFolders:", er
+    end
+end
+
+def upgradeMaintenance()
+    if not 'OLD_VERSION' in Version: return
+    
+    # Ensure that the default Tilde binding is present when upgrading
+    # from an older version.
+    if isUpgradedToBuild(920)
+        # Register a single-shot hook that ensures the binding is present
+        # after a game has been loaded the next time. This must be done
+        # per-plugin as the bindings are stored separately for each.
+        # Config is persistent so these will be remembered even after 
+        # shutting down the app.
+        addOnLoadHookForAllGames(bindDefaultConsoleTildeKey)
+    end
+    
+    # Add the default Menu key bindings.
+    if isUpgradedToBuild(1479)
+        addOnLoadHookForAllGames(bindWindowsMenuKey)
+    end
+    
+    cleanPackageFolders()
+end
+
+def cacheDataFiles()
+    # Make an unzipped copy of the default soundfont, if it is missing.
+    cacheFolder = File('/home/cache')
+    sf2Name = 'default.sf2'
+    if not cacheFolder.locate(sf2Name)
+        dest = cacheFolder.replace(sf2Name)
+        dest.write(File('/packs/net.dengine.client/audio/GeneralUser GS.471/GeneralUser GS v1.471.sf2').read())
+        dest.flush()
+    end
+end
+
+#
+# BOOT SEQUENCE
+#
+
+# During launch we will perform any necessary maintenance tasks.
+upgradeMaintenance()
+
+# Make native copies of data files.
+cacheDataFiles()
+
+# Whenever a game is added, we'll schedule legacy savegame conversion tasks.
+App.audienceForGameAddition += [runLegacySavegameConversion]
+
+# Whenever a game is loaded, we'll run pending hooks.
+App.audienceForGameChange += [runPluginLoadHooks]
+
+import controllers

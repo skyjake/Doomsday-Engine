@@ -25,6 +25,7 @@
 #include "g_game.h"
 #include "gamesession.h"
 #include "p_mapsetup.h"
+#include "acs/system.h"
 
 using namespace de;
 
@@ -118,7 +119,7 @@ dd_bool P_SectorTagIsBusy(int tag)
 void P_NotifySectorFinished(int tag)
 {
 #if __JHEXEN__
-    COMMON_GAMESESSION->acsSystem().forAllScripts([&tag] (acs::Script &script)
+    gfw_Session()->acsSystem().forAllScripts([&tag] (acs::Script &script)
     {
         script.sectorFinished(tag);
         return LoopContinue;
@@ -131,7 +132,7 @@ void P_NotifySectorFinished(int tag)
 void P_NotifyPolyobjFinished(int tag)
 {
 #if __JHEXEN__
-    COMMON_GAMESESSION->acsSystem().forAllScripts([&tag] (acs::Script &script)
+    gfw_Session()->acsSystem().forAllScripts([&tag] (acs::Script &script)
     {
         script.polyobjFinished(tag);
         return LoopContinue;

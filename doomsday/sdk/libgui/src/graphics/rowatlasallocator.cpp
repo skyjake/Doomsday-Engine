@@ -71,11 +71,11 @@ DENG2_PIMPL(RowAtlasAllocator)
         {
             Slot *next = nullptr;
             Slot *prev = nullptr;
-            Row *row;
+            Row * row;
 
-            Id id { Id::None }; ///< Id of allocation here, or Id::None if free.
-            int x = 0;          ///< Left edge of the slot.
-            duint width = 0;    ///< Width of the slot.
+            Id    id{Id::None}; ///< Id of allocation here, or Id::None if free.
+            int   x        = 0; ///< Left edge of the slot.
+            duint width    = 0; ///< Width of the slot.
             dsize usedArea = 0;
 
             Slot(Row *owner) : row(owner) {}

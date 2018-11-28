@@ -221,7 +221,7 @@ DENG_GUI_PIMPL(SliderWidget)
 
         // Range dots.
         int numDots = de::clamp(5, round<int>(range.size() / step) + 1, 11);
-        int dotSpace = (sliderArea.width() - endLabelSize) / toDevicePixels(1.f); // in logical space
+        int dotSpace = (sliderArea.width() - endLabelSize) / pointsToPixels(1.f);
         int dotX = sliderArea.topLeft.x + endLabelSize / 2;
         float altAlpha = 0;
         if (dotSpace / numDots > 30)
@@ -233,7 +233,7 @@ DENG_GUI_PIMPL(SliderWidget)
         for (int i = 0; i < numDots; ++i)
         {
             // dotSpace converted back to device pixels.
-            Vector2i dotPos(dotX + toDevicePixels(dotSpace * float(i) / float(numDots - 1)),
+            Vector2i dotPos(dotX + pointsToPixels(dotSpace * float(i) / float(numDots - 1)),
                             sliderArea.middle().y);
 
             Vector4f dotColor = textColor;
@@ -251,8 +251,8 @@ DENG_GUI_PIMPL(SliderWidget)
         Rectanglei slider = sliderValueRect();
         verts.makeQuad(slider.expanded(2), state == Grabbed? textColor : invTextColor,
                        atlas().imageRectf(root().solidWhitePixel()).middle());
-        verts.makeFlexibleFrame(slider.expanded(SliderWidget::toDevicePixels(5)),
-                                SliderWidget::toDevicePixels(6),
+        verts.makeFlexibleFrame(slider.expanded(pointsToPixels(5)),
+                                pointsToPixels(6),
                                 Vector4f(1, 1, 1, frameOpacity),
                                 atlas().imageRectf(root().boldRoundCorners()));
 
@@ -379,6 +379,8 @@ DENG_GUI_PIMPL(SliderWidget)
             self().requestGeometry();
 
             emit self().valueChanged(v);
+
+            DENG2_FOR_PUBLIC_AUDIENCE2(Change, i) i->sliderValueChanged(self());
         }
     }
 
@@ -451,7 +453,11 @@ DENG_GUI_PIMPL(SliderWidget)
             }
         }
     }
+
+    DENG2_PIMPL_AUDIENCE(Change)
 };
+
+DENG2_AUDIENCE_METHOD(SliderWidget, Change)
 
 SliderWidget::SliderWidget(String const &name)
     : GuiWidget(name), d(new Impl(this))

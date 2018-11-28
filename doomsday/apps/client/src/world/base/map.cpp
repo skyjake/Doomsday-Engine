@@ -454,7 +454,7 @@ DENG2_PIMPL(Map)
             if (de::abs(line.direction().x) < bsp::DIST_EPSILON)
                 return;
 
-            if(   (line.bounds().maxX < p.testLineCenter.x - bsp::DIST_EPSILON)
+            if (   (line.bounds().maxX < p.testLineCenter.x - bsp::DIST_EPSILON)
                || (line.bounds().minX > p.testLineCenter.x + bsp::DIST_EPSILON))
                 return;
 
@@ -638,7 +638,7 @@ DENG2_PIMPL(Map)
                             auto &leaf = cur->userData()->as<BspLeaf>();
                             if (!leaf.sectorPtr())
                             {
-                                LOG_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
+                                LOGDEV_MAP_WARNING("BSP leaf %p has degenerate geometry (%d half-edges).")
                                     << &leaf << (leaf.hasSubspace()? leaf.subspace().poly().hedgeCount() : 0);
                             }
 
@@ -660,10 +660,10 @@ DENG2_PIMPL(Map)
                                     }
                                 } while ((hedge = &hedge->next()) != subspace.poly().hedge());
 
-                                if(discontinuities)
+                                if (discontinuities)
                                 {
-                                    LOG_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
-                                                    "is not contiguous (%i gaps/overlaps).\n%s")
+                                    LOGDEV_MAP_WARNING("Face geometry for BSP leaf [%p] at %s in sector %i "
+                                                       "is not contiguous (%i gaps/overlaps).\n%s")
                                         << &leaf << subspace.poly().center().asText()
                                         << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
                                         << discontinuities
@@ -1534,7 +1534,7 @@ Map::Map(res::MapManifest *manifest)
 
 Record const &Map::mapInfo() const
 {
-    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::Uri("Maps:", RC_NULL));
+    return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : de::makeUri("Maps:"));
 }
 
 Mesh const &Map::mesh() const
@@ -1569,14 +1569,14 @@ bool Map::hasLightGrid() const
 
 LightGrid &Map::lightGrid()
 {
-    if(bool(d->lightGrid)) return *d->lightGrid;
+    if (bool(d->lightGrid)) return *d->lightGrid;
     /// @throw MissingLightGrid Attempted with no LightGrid initialized.
     throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
 }
 
 LightGrid const &Map::lightGrid() const
 {
-    if(bool(d->lightGrid)) return *d->lightGrid;
+    if (bool(d->lightGrid)) return *d->lightGrid;
     /// @throw MissingLightGrid Attempted with no LightGrid initialized.
     throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
 }
@@ -1879,16 +1879,16 @@ void Map::initRadio()
 
             Vertex const &vtx0   = line->vertex(i);
             Vertex const &vtx1   = line->vertex(i ^ 1);
-            LineOwner const &vo0 = line->vertexOwner(i)->next();
-            LineOwner const &vo1 = line->vertexOwner(i ^ 1)->prev();
+            LineOwner const *vo0 = line->vertexOwner(i)->next();
+            LineOwner const *vo1 = line->vertexOwner(i ^ 1)->prev();
 
             AABoxd bounds = line->bounds();
 
             // Use the extended points, they are wider than inoffsets.
-            Vector2d const sv0 = vtx0.origin() + vo0.extendedShadowOffset();
+            Vector2d const sv0 = vtx0.origin() + vo0->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv0.x, sv0.y);
 
-            Vector2d const sv1 = vtx1.origin() + vo1.extendedShadowOffset();
+            Vector2d const sv1 = vtx1.origin() + vo1->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv1.x, sv1.y);
 
             // Link the shadowing line to all the subspaces whose axis-aligned bounding box
@@ -2048,7 +2048,7 @@ void Map::setGravity(coord_t newGravity)
 
 Thinkers &Map::thinkers() const
 {
-    if(bool( d->thinkers )) return *d->thinkers;
+    if (bool( d->thinkers )) return *d->thinkers;
     /// @throw MissingThinkersError  The thinker lists are not yet initialized.
     throw MissingThinkersError("Map::thinkers", "Thinkers not initialized");
 }
@@ -2434,7 +2434,7 @@ LoopResult Map::forAllSectorsTouchingMobj(mobj_t &mob, std::function<LoopResult 
                 if (ld->back().hasSector())
                 {
                     Sector &backSec = ld->back().sector();
-                    if(backSec.validCount() != validCount)
+                    if (backSec.validCount() != validCount)
                     {
                         backSec.setValidCount(validCount);
                         linkStore.append(&backSec);
@@ -3111,6 +3111,114 @@ void Map::update()
 
 #ifdef __CLIENT__
 
+String Map::objectsDescription() const
+{
+    String str;
+    QTextStream os(&str);
+
+    if (gx.MobjStateAsInfo)
+    {
+        // Print out a state description for each thinker.
+        thinkers().forAll(0x3, [&os] (thinker_t *th)
+        {
+            if (Thinker_IsMobj(th))
+            {
+                os << gx.MobjStateAsInfo(reinterpret_cast<mobj_t const *>(th));
+            }
+            return LoopContinue;
+        });
+    }
+
+    return str;
+}
+
+void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMapping) const
+{
+    /// @todo Generalize from mobjs to all thinkers?
+    LOG_AS("Map::restoreObjects");
+
+    if (!gx.MobjStateAsInfo || !gx.MobjRestoreState) return;
+
+    bool problemsDetected = false;
+
+    // Look up all the mobjs.
+    QList<thinker_t const *> mobjs;
+    thinkers().forAll(0x3, [&mobjs] (thinker_t *th) {
+        if (Thinker_IsMobj(th)) mobjs << th;
+        return LoopContinue;
+    });
+
+    // Check that all objects are found in the state description.
+    if (objState.root().contents().size() != mobjs.size())
+    {
+        LOGDEV_MAP_WARNING("Different number of objects: %i in map, but got %i in restore data")
+                        << mobjs.size()
+                        << objState.root().contents().size();
+    }
+
+    // Check the cross-references.
+    for (auto i  = objState.root().contentsInOrder().begin();
+              i != objState.root().contentsInOrder().end();
+            ++i)
+    {
+        Info::BlockElement const &state = (*i)->as<Info::BlockElement>();
+        Id::Type const privateId = state.name().toUInt32();
+        DENG2_ASSERT(privateId != 0);
+
+        if (thinker_t *th = thinkerMapping.thinkerForPrivateId(privateId))
+        {
+            if (ThinkerData *found = ThinkerData::find(privateId))
+            {
+                DENG2_ASSERT(&found->thinker() == th);
+
+                // Restore the state according to the serialized info.
+                gx.MobjRestoreState(found->as<MobjThinkerData>().mobj(), state);
+
+                // Verify that the state is now correct.
+                {
+                    Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
+                    Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
+                            .first()->as<Info::BlockElement>();
+                    DENG2_ASSERT(currentState.name() == state.name());
+                    foreach (String const &key, state.contents().keys())
+                    {
+                        if (state.keyValue(key).text != currentState.keyValue(key).text)
+                        {
+                            problemsDetected = true;
+                            const String msg = String("Object %1 has mismatching '%2' (current:%3 != arch:%4)")
+                                    .arg(privateId)
+                                    .arg(key)
+                                    .arg(currentState.keyValue(key).text)
+                                    .arg(state.keyValue(key).text);
+                            LOGDEV_MAP_WARNING("%s") << msg;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                LOGDEV_MAP_ERROR("Map does not have a thinker matching ID 0x%x")
+                        << privateId;
+            }
+        }
+        else
+        {
+            LOGDEV_MAP_ERROR("Thinker mapping does not have a thinker matching ID 0x%x")
+                    << privateId;
+        }
+    }
+
+    if (problemsDetected)
+    {
+        LOG_MAP_WARNING("Map objects were not fully restored " DENG2_CHAR_MDASH
+                        " gameplay may be affected (enable Developer log entries for details)");
+    }
+    else
+    {
+        LOGDEV_MAP_MSG("State of map objects has been restored");
+    }
+}
+
 void Map::serializeInternalState(Writer &to) const
 {
     BaseMap::serializeInternalState(to);
@@ -3136,7 +3244,7 @@ void Map::serializeInternalState(Writer &to) const
     to << Id(Id::None);
 }
 
-void Map::deserializeInternalState(Reader &from, world::IThinkerMapping const &thinkerMapping)
+void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerMapping)
 {
     BaseMap::deserializeInternalState(from, thinkerMapping);
 
@@ -3497,14 +3605,14 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
             np->_link[Clockwise] = left;
             np = left;
 
-            left = left->nextPtr();
+            left = left->next();
         }
         else
         {
             np->_link[Clockwise] = right;
             np = right;
 
-            right = right->nextPtr();
+            right = right->next();
         }
     }
 
@@ -3522,7 +3630,7 @@ static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
     if (!tmp.hasNext())
         return nullptr;
 
-    return tmp.nextPtr();
+    return tmp.next();
 }
 
 static LineOwner *splitLineOwners(LineOwner *list)
@@ -3536,11 +3644,11 @@ static LineOwner *splitLineOwners(LineOwner *list)
     do
     {
         listc = listb;
-        listb = listb->nextPtr();
-        lista = lista->nextPtr();
+        listb = listb->next();
+        lista = lista->next();
         if (lista)
         {
-            lista = lista->nextPtr();
+            lista = lista->next();
         }
     } while (lista);
 
@@ -3554,7 +3662,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
 static LineOwner *sortLineOwners(LineOwner *list,
     dint (*compare) (void const *a, void const *b))
 {
-    if (list && list->nextPtr())
+    if (list && list->next())
     {
         LineOwner *p = splitLineOwners(list);
 
@@ -3576,7 +3684,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
         if (&own->line() == lineptr)
             return;  // Yes, we can exit.
 
-        own = &own->next();
+        own = own->next();
     }
 
     // Add a new owner.
@@ -3611,10 +3719,10 @@ static bool vertexHasValidLineOwnerRing(Vertex &v)
     LineOwner const *cur = base;
     do
     {
-        if (&cur->prev().next() != cur) return false;
-        if (&cur->next().prev() != cur) return false;
+        if (cur->prev()->next() != cur) return false;
+        if (cur->next()->prev() != cur) return false;
 
-    } while ((cur = &cur->next()) != base);
+    } while ((cur = cur->next()) != base);
     return true;
 }
 #endif
@@ -3656,7 +3764,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
         // and circularly linked.
         binangle_t firstAngle = v->_lineOwners->angle();
         LineOwner *last = v->_lineOwners;
-        LineOwner *p = last->nextPtr();
+        LineOwner *p = last->next();
         while (p)
         {
             p->_link[Anticlockwise] = last;
@@ -3665,7 +3773,7 @@ void buildVertexLineOwnerRings(QList<Vertex *> const &vertexs, QList<Line *> &ed
             last->_angle = last->angle() - p->angle();
 
             last = p;
-            p = p->nextPtr();
+            p = p->next();
         }
         last->_link[Clockwise] = v->_lineOwners;
         v->_lineOwners->_link[Anticlockwise] = last;
@@ -4016,7 +4124,7 @@ Polyobj *Map::createPolyobj(Vector2d const &origin)
         /// @throw EditError  Attempted when not editing.
         throw EditError("Map::createPolyobj", "Editing is not enabled");
 
-    void *region = M_Calloc(POLYOBJ_SIZE);
+    void *region = M_Calloc(gx.GetInteger(DD_POLYOBJ_SIZE));
     auto *pob = new (region) Polyobj(origin);
     d->editable.polyobjs.append(pob);
 

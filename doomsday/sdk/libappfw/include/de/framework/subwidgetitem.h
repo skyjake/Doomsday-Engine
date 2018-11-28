@@ -48,11 +48,24 @@ public:
         , _constructor(constructor)
         , _dir(openingDirection) {}
 
+    SubwidgetItem(Semantics semantics, String const &label, ui::Direction openingDirection,
+                  WidgetConstructor constructor)
+        : ImageItem(semantics, label)
+        , _constructor(constructor)
+        , _dir(openingDirection) {}
+
     SubwidgetItem(Image const &image, String const &label, ui::Direction openingDirection,
                   WidgetConstructor constructor)
         : ImageItem(ShownAsButton, image, label)
         , _constructor(constructor)
         , _dir(openingDirection) {}
+
+    SubwidgetItem(Image const &image, Semantics semantics, String const &label,
+                  ui::Direction openingDirection, WidgetConstructor constructor)
+        : ImageItem(semantics, image, label)
+        , _constructor(constructor)
+        , _dir(openingDirection)
+    {}
 
     PopupWidget *makeWidget() const { return _constructor(); }
     ui::Direction openingDirection() const { return _dir; }

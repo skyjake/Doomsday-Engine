@@ -34,6 +34,7 @@
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
+#include "de/Loop"
 #include "de/math.h"
 #include "de/MetadataBank"
 #include "de/Module"
@@ -42,7 +43,10 @@
 #include "de/PackageFeed"
 #include "de/PackageLoader"
 #include "de/Record"
+#include "de/RemoteFeedRelay"
 #include "de/ScriptSystem"
+#include "de/StaticLibraryFeed"
+#include "de/TextValue"
 #include "de/UnixInfo"
 #include "de/Version"
 #include "de/Writer"
@@ -59,10 +63,41 @@ namespace de {
 
 static App *singletonApp;
 
+static Value *Function_App_Locate(Context &, Function::ArgumentValues const &args)
+{
+    std::unique_ptr<DictionaryValue> result(new DictionaryValue);
+
+    String const packageId = args.first()->asText();
+
+    // Local packages.
+    if (File const *pkg = PackageLoader::get().select(packageId))
+    {
+        result->add(new TextValue(packageId), RecordValue::takeRecord(
+                        Record::withMembers(
+                            "localPath",   pkg->path(),
+                            "description", pkg->description()
+                        )));
+    }
+
+    // Remote packages.
+    auto found = App::remoteFeedRelay().locatePackages(StringList({ packageId }));
+    for (auto i = found.begin(); i != found.end(); ++i)
+    {
+        result->add(new TextValue(i.key()), RecordValue::takeRecord(
+                        Record::withMembers(
+                            "repository", i->link->address(),
+                            "localPath",  i->localPath,
+                            "remotePath", i->remotePath
+                        )));
+    }
+
+    return result.release();
+}
+
 DENG2_PIMPL(App)
 , DENG2_OBSERVES(PackageLoader, Activity)
 {
-    QThread *mainThread;
+    QThread *mainThread = nullptr;
 
     /// Name of the application (metadata for humans).
     String appName;
@@ -87,16 +122,20 @@ DENG2_PIMPL(App)
     QList<System *> systems;
 
     ScriptSystem scriptSys;
+    Record appModule;
+    Binder binder;
+
     FileSystem fs;
     std::unique_ptr<MetadataBank> metaBank;
     std::unique_ptr<NativeFile> basePackFile;
-    Record appModule;
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
     /// The archive is owned by the file system.
     Archive *persistentData;
 
     std::unique_ptr<UnixInfo> unixInfo;
+
+    filesys::RemoteFeedRelay remoteFeedRelay;
 
     /// The configuration.
     Path configPath;
@@ -116,15 +155,18 @@ DENG2_PIMPL(App)
         , cmdLine(args)
         , unixHomeFolder(".doomsday")
         , persistentData(0)
-        , configPath("/packs/net.dengine.stdlib/modules/Config.de")
+        , configPath("/packs/net.dengine.stdlib/modules/Config.ds")
         , config(0)
         , terminateFunc(0)
     {
 #ifdef UNIX
+        {
         // We wish to use U.S. English formatting for time and numbers (in libc).
         setlocale(LC_ALL, "en_US.UTF-8");
         setlocale(LC_NUMERIC, "C");
+        }
 #endif
+
         // Override the system number formatting.
         QLocale::setDefault(QLocale("en_US.UTF-8"));
 
@@ -149,7 +191,11 @@ DENG2_PIMPL(App)
         fs.addInterpreter(intrpZipArchive);
 
         // Native App module.
-        scriptSys.addNativeModule("App", appModule);
+        {
+            scriptSys.addNativeModule("App", appModule);
+                binder.init(appModule)
+                        << DENG2_FUNC(App_Locate, "locate", "packageId");
+        }
     }
 
     ~Impl()
@@ -178,15 +224,21 @@ DENG2_PIMPL(App)
     NativePath defaultNativeModulePath() const
     {
 #ifdef WIN32
+        {
         NativePath appDir = appPath.fileNamePath();
         return appDir / "..\\modules";
+        }
 #else
+        {
         return self().nativeBasePath() / "modules";
+        }
 #endif
     }
 
     void initFileSystem(bool allowPlugins)
     {
+        Folder::checkDefaultSettings();
+
         // Executables.
         Folder &binFolder = fs.makeFolder("/bin");
 
@@ -205,14 +257,18 @@ DENG2_PIMPL(App)
         else
         {
 #ifdef MACOSX
+            {
             NativePath appDir = appPath.fileNamePath();
             binFolder.attach(new DirectoryFeed(appDir));
             fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
+            }
 #elif WIN32
+            {
             NativePath appDir = appPath.fileNamePath();
             fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
-
+            }
 #else // UNIX
+            {
             if ((self().nativeBasePath() / "data").exists())
             {
                 fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath() / "data"));
@@ -221,7 +277,9 @@ DENG2_PIMPL(App)
             {
                 fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
             }
+            }
 #endif
+
             if (defaultNativeModulePath().exists())
             {
                 fs.makeFolder("/modules").attach(new DirectoryFeed(defaultNativeModulePath()));
@@ -230,7 +288,11 @@ DENG2_PIMPL(App)
 
         if (allowPlugins)
         {
+#if !defined (DENG_STATIC_LINK)
             binFolder.attach(new DirectoryFeed(self().nativePluginBinaryPath()));
+#else
+            binFolder.attach(new StaticLibraryFeed);
+#endif
         }
 
         // User's home folder.
@@ -246,9 +308,8 @@ DENG2_PIMPL(App)
         // Metadata for files.
         metaBank.reset(new MetadataBank);
 
-        // Populate the file system.
-        fs.refresh();
-        Folder::waitForPopulation();
+        // Populate the file system (blocking).
+        fs.root().populate(Folder::PopulateFullTree);
 
         // Ensure known subfolders exist:
         // - /home/configs is used by de::Profiles.
@@ -375,14 +436,16 @@ App::App(NativePath const &appFilePath, QStringList args)
     d->appPath = appFilePath;
 
     LOG_NOTE("Application path: ") << d->appPath;
-    LOG_NOTE("Build: ") << Version::currentBuild().asHumanReadableText();
+    LOG_NOTE("Version: ") << Version::currentBuild().asHumanReadableText();
 
-#ifdef MACOSX
-    // When the application is started through Finder, we get a special command
-    // line argument. The working directory needs to be changed.
-    if (d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
+    #if defined (MACOSX)
     {
-        DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
+        // When the application is started through Finder, we get a special command
+        // line argument. The working directory needs to be changed.
+        if (d->cmdLine.count() >= 2 && d->cmdLine.at(1).beginsWith("-psn"))
+        {
+            DirectoryFeed::changeWorkingDir(d->cmdLine.at(0).fileNamePath() + "/..");
+        }
     }
 #endif
 }
@@ -482,6 +545,7 @@ bool App::inMainThread()
     return DENG2_APP->d->mainThread == QThread::currentThread();
 }
 
+#if !defined (DENG_STATIC_LINK)
 NativePath App::nativePluginBinaryPath()
 {
     if (!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
@@ -493,24 +557,36 @@ NativePath App::nativePluginBinaryPath()
     }
 
     NativePath path;
-#ifdef WIN32
+
+    #if defined (WIN32)
+    {
     path = d->appPath.fileNamePath() / "plugins";
+        return (d->cachedPluginBinaryPath = path);
+    }
 #else
-# ifdef MACOSX
+    {
+        #if defined (MACOSX)
+        {
     path = d->appPath.fileNamePath() / "../PlugIns/Doomsday";
-# else
-    path = DENG_LIBRARY_DIR;
+        }
+        #else
+        {
+            path = d->appPath.fileNamePath() / DENG_LIBRARY_DIR;
     if (!path.exists())
     {
         // Try a fallback relative to the executable.
         path = d->appPath.fileNamePath() / "../lib/doomsday";
+            }
     }
-# endif
+        #endif
+
     // Also check the system config files.
     d->unixInfo->path("libdir", path);
+        return (d->cachedPluginBinaryPath = path);
+    }
 #endif
-    return (d->cachedPluginBinaryPath = path);
 }
+#endif
 
 NativePath App::nativeHomePath()
 {
@@ -522,16 +598,30 @@ NativePath App::nativeHomePath()
         return (d->cachedHomePath = d->cmdLine.at(opt.pos + 1));
     }
 
-#ifdef MACOSX
-    NativePath nativeHome = QDir::homePath();
+    NativePath nativeHome;
+
+    #if defined (DENG_IOS)
+    {
+        nativeHome = QDir::homePath();
+        nativeHome = nativeHome / "Documents/runtime";
+    }
+    #elif defined (MACOSX)
+    {
+        nativeHome = QDir::homePath();
     nativeHome = nativeHome / "Library/Application Support" / d->appName / "runtime";
-#elif WIN32
-    NativePath nativeHome = appDataPath();
+    }
+    #elif defined (WIN32)
+    {
+        nativeHome = appDataPath();
     nativeHome = nativeHome / "runtime";
+    }
 #else // UNIX
-    NativePath nativeHome = QDir::homePath();
+    {
+        nativeHome = QDir::homePath();
     nativeHome = nativeHome / d->unixHomeFolder / "runtime";
+    }
 #endif
+
     return (d->cachedHomePath = nativeHome);
 }
 
@@ -588,18 +678,26 @@ NativePath App::nativeBasePath()
 
     NativePath path;
 #ifdef WIN32
+    {
     path = d->appPath.fileNamePath() / "..";
+    }
 #else
-# ifdef MACOSX
+    {
+        #ifdef MACOSX
+        {
     path = d->appPath.fileNamePath() / "../Resources";
     if (!path.exists())
     {
         // Try the built-in base directory (unbundled apps).
-        path = DENG_BASE_DIR;
+                path = d->appPath.fileNamePath() / DENG_BASE_DIR;
+            }
+        }
+        #else
+        {
+            path = d->appPath.fileNamePath() / DENG_BASE_DIR;
     }
-# else
-    path = DENG_BASE_DIR;
-# endif
+        #endif
+
     if (!path.exists())
     {
         // Fall back to using the application binary path, which always exists.
@@ -610,6 +708,7 @@ NativePath App::nativeBasePath()
     }
     // Also check the system config files.
     d->unixInfo->path("basedir", path);
+    }
 #endif
     return (d->cachedBasePath = path);
 }
@@ -646,7 +745,11 @@ void App::initSubsystems(SubsystemInitFlags flags)
     d->config = new Config(d->configPath);
     d->scriptSys.addNativeModule("Config", d->config->objectNamespace());
 
-    d->config->read();
+    // Whenever the version changes, reset the cached metadata so any updates will be applied.
+    if (d->config->read() == Config::DifferentVersion)
+    {
+        LOG_RES_NOTE("Clearing cached metadata due to version change");
+        d->metaBank->clear();
 
     // Immediately after upgrading, OLD_VERSION is also present in the Version module.
     Version oldVer = d->config->upgradedFromVersion();
@@ -655,7 +758,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
         ArrayValue *old = new ArrayValue;
         *old << NumberValue(oldVer.major) << NumberValue(oldVer.minor)
              << NumberValue(oldVer.patch) << NumberValue(oldVer.build);
-        d->scriptSys.nativeModule("Version").addArray("OLD_VERSION", old).setReadOnly();
+            d->scriptSys["Version"].addArray("OLD_VERSION", old).setReadOnly();
+        }
     }
 
     // Set up the log buffer.
@@ -721,7 +825,7 @@ void App::initSubsystems(SubsystemInitFlags flags)
 #endif
     }
 
-    LOG_VERBOSE("libcore::App %s subsystems initialized") << Version::currentBuild().asHumanReadableText();
+    LOG_VERBOSE("Subsystems initialized");
 }
 
 void App::addSystem(System &system)
@@ -833,6 +937,11 @@ Folder &App::homeFolder()
     return rootFolder().locate<Folder>("home");
 }
 
+filesys::RemoteFeedRelay &App::remoteFeedRelay()
+{
+    return DENG2_APP->d->remoteFeedRelay;
+}
+
 Config &App::config()
 {
     DENG2_ASSERT(DENG2_APP->d->config != 0);
@@ -842,6 +951,14 @@ Config &App::config()
 Variable &App::config(String const &name)
 {
     return config()[name];
+}
+
+String App::apiUrl() // static
+{
+    String u = Config::get().gets(QStringLiteral("apiUrl"));
+    if (!u.startsWith("http")) u = "http://" + u;
+    if (!u.endsWith("/")) u += "/";
+    return u;
 }
 
 UnixInfo &App::unixInfo()

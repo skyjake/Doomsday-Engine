@@ -28,6 +28,7 @@
 
 namespace de {
 
+struct AsyncTask;
 class Feed;
 
 /**
@@ -73,7 +74,9 @@ public:
         PopulateFullTree       = 0x1,   ///< The full tree is populated.
         PopulateOnlyThisFolder = 0x2,   ///< Do not descend into subfolders while populating.
         PopulateAsync          = 0x4,   ///< Do not block until complete.
-        PopulateAsyncFullTree  = PopulateAsync | PopulateFullTree
+        PopulateAsyncFullTree  = PopulateAsync | PopulateFullTree,
+
+        PopulateCalledRecursively = 0x1000, // internal use
     };
     Q_DECLARE_FLAGS(PopulationBehaviors, PopulationBehavior)
 
@@ -165,7 +168,18 @@ public:
     void destroyFile(String const &name);
 
     /**
-     * Removes all files in the folder. The files will be delted. If the files
+     * Removes a file from a folder. The file will be deleted.  If it has an
+     * origin feed, the feed will be asked to remove the file as well, which
+     * means it will be removed in the source data as well as the file tree.
+     *
+     * @param name  Name of path of file to remove, relative to this folder.
+     *
+     * @return @c true, if the file was deleted. @c false, if it did not exist.
+     */
+    bool tryDestroyFile(String const &name);
+
+    /**
+     * Removes all files in the folder. The files will be deleted. If the files
      * have origin feeds, the feed will be asked to remove the files as well.
      * The folder remains locked during the entire operation.
      */
@@ -244,7 +258,18 @@ public:
 
     template <typename Type>
     Type *tryLocate(String const &path) const {
-        return dynamic_cast<Type *>(tryLocateFile(path));
+        File *f = tryLocateFile(path);
+        if (!f) return nullptr;
+        if (auto *casted = dynamic_cast<Type *>(f)) {
+            return casted;
+        }
+        if (&f->target() != f) {
+            if (auto *casted = dynamic_cast<Type *>(&f->target())) {
+                // Link target also accepted, if type matches.
+                return casted;
+            }
+        }
+        return nullptr;
     }
 
     /**
@@ -265,6 +290,11 @@ public:
         }
         if (Type *casted = dynamic_cast<Type *>(found)) {
             return *casted;
+        }
+        if (found != &found->target()) {
+            if (Type *casted = dynamic_cast<Type *>(&found->target())) {
+                return *casted;
+            }
         }
         /// @throw NotFoundError  Found file could not be cast to the
         /// requested type.
@@ -333,8 +363,28 @@ public:
     Node const *tryGetChild(String const &name) const;
 
 public:
-    static void waitForPopulation();
+    static Folder &root();
+
+    enum WaitBehavior {
+        OnlyInBackground,
+        BlockingMainThread,
+    };
+    static void waitForPopulation(WaitBehavior waitBehavior = OnlyInBackground);
+
+    /**
+     * When all folder population tasks are finished, performs a callback in the main
+     * thread. Does not block the main thread. If nothing is currently being populated,
+     * the callback is called immediately before the method returns.
+     *
+     * @param func  Callback to be called in the main thread.
+     *
+     * @return Task handle. Can be ignored or added to an AsyncScope.
+     */
+    static AsyncTask *afterPopulation(std::function<void ()> func);
+
     static bool isPopulatingAsync();
+
+    static void checkDefaultSettings();
 
 private:
     DENG2_PRIVATE(d)

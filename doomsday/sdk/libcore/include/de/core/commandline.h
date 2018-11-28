@@ -24,8 +24,12 @@
 #include <vector>
 #include <map>
 
-#include <QProcess>
 #include <QStringList>
+
+#if !defined (DENG_MOBILE)
+#  include <QProcess>
+#  define DENG_HAVE_QPROCESS
+#endif
 
 #include "../libcore.h"
 #include "../String"
@@ -224,6 +228,8 @@ public:
      */
     bool matches(String const &full, String const &fullOrAlias) const;
 
+#if defined (DENG_HAVE_QPROCESS)
+
     /**
      * Spawns a new process using the command line. The first argument
      * specifies the file name of the executable. Returns immediately
@@ -244,6 +250,8 @@ public:
     bool executeAndWait(String *output = 0) const;
 
     QProcess *executeProcess() const;
+
+#endif
 
     static CommandLine &get();
 

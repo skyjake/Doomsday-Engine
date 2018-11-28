@@ -30,7 +30,7 @@ AnimationRule::AnimationRule(float initialValue, Animation::Style style)
     , _behavior(Singleshot)
 {}
 
-AnimationRule::AnimationRule(Rule const &target, TimeDelta transition, Animation::Style style)
+AnimationRule::AnimationRule(Rule const &target, TimeSpan transition, Animation::Style style)
     : Rule(target.value())
     , _animation(target.value(), style)
     , _targetRule(0)
@@ -44,18 +44,16 @@ AnimationRule::~AnimationRule()
     independentOf(_targetRule);
 }
 
-void AnimationRule::set(float target, TimeDelta transition, TimeDelta delay)
+void AnimationRule::set(float target, TimeSpan transition, TimeSpan delay)
 {
     independentOf(_targetRule);
     _targetRule = 0;
-
     _animation.clock().audienceForPriorityTimeChange += this;
-
     _animation.setValue(target, transition, delay);
     invalidate();
 }
 
-void AnimationRule::set(Rule const &target, TimeDelta transition, TimeDelta delay)
+void AnimationRule::set(Rule const &target, TimeSpan transition, TimeSpan delay)
 {
     set(target.value(), transition, delay);
 
@@ -107,12 +105,14 @@ void AnimationRule::resume()
 
 String AnimationRule::description() const
 {
-    String desc = "Scalar(" + _animation.asText();
+    DENG2_ASSERT(!isValid() || fequal(value(), _animation));
+    
+    String desc = _animation.asText();
     if (_targetRule)
     {
-        desc += "; target: " + _targetRule->description();
+        desc += "=>" + _targetRule->description();
     }
-    return desc + ")";
+    return desc;
 }
 
 void AnimationRule::update()
@@ -129,7 +129,7 @@ void AnimationRule::update()
             // Start a new animation with the previously used transition time.
             if (!fequal(_animation.target(), _targetRule->value()))
             {
-                TimeDelta span = _animation.transitionTime();
+                TimeSpan span = _animation.transitionTime();
                 if (_behavior.testFlag(DontAnimateFromZero) && fequal(_animation.target(), 0))
                 {
                     span = 0;
@@ -141,16 +141,16 @@ void AnimationRule::update()
     }
 
     setValue(_animation);
+
+    if (_animation.done())
+    {
+        _animation.clock().audienceForPriorityTimeChange -= this;
+    }
 }
 
 void AnimationRule::timeChanged(Clock const &clock)
 {
     invalidate();
-
-    if (_animation.done())
-    {
-        clock.audienceForPriorityTimeChange -= this;
-    }
 }
 
 } // namespace de

@@ -329,7 +329,7 @@ static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing)
 
     case 52:
         // EXIT!
-        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
+        G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("next"));
         break;
 
     case 53:
@@ -412,7 +412,7 @@ static void P_CrossSpecialLine(Line *line, int side, mobj_t *thing)
 
     case 124:
         // Secret EXIT
-        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("secret"), 0, true);
+        G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("secret"), 0, true);
         break;
 
     case 125:
@@ -945,7 +945,7 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int side)
 
         P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), SFX_SWTCHX, false, 0);
         xline->special = 0;
-        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
+        G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("next"));
         break;
 
     case 14:
@@ -1061,7 +1061,7 @@ dd_bool P_UseSpecialLine2(mobj_t *mo, Line *line, int side)
 
         P_ToggleSwitch((Side *)P_GetPtrp(line, DMU_FRONT), SFX_NONE, false, 0);
         xline->special = 0;
-        G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("secret"), 0, true);
+        G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("secret"), 0, true);
         break;
 
     case 55:

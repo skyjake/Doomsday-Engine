@@ -42,6 +42,7 @@
 #include <de/LogBuffer>
 #include <de/memory.h>
 #include <de/findfile.h>
+#include <de/FileSystem>
 
 using namespace de;
 
@@ -423,7 +424,7 @@ DENG2_PIMPL(FS1)
             if (FILE *found = findAndOpenNativeFile(path, mode, foundPath))
             {
                 // Do not read files twice.
-                if (!allowDuplicate && !self().checkFileId(de::Uri(foundPath, RC_NULL)))
+                if (!allowDuplicate && !self().checkFileId(de::makeUri(foundPath)))
                 {
                     fclose(found);
                     return 0;
@@ -939,7 +940,7 @@ File1 &FS1::interpret(FileHandle &hndl, String filePath, FileInfo const &info)
     {
         // Use a generic file.
         File1 *container = (hndl.hasFile() && hndl.file().isContained())? &hndl.file().container() : 0;
-        interpretedFile = new File1(hndl, filePath, info, container);
+        interpretedFile = new File1(&hndl, filePath, info, container);
     }
 
     DENG2_ASSERT(interpretedFile);
@@ -1237,6 +1238,11 @@ D_CMD(ListFiles)
 
     LOG_RES_MSG(_E(b)"Total: " _E(.) "%i files in %i packages")
             << totalFiles << totalPackages;
+
+    if (auto *svFiles = FS::get().tryLocate<Folder const>("/sys/server/public"))
+    {
+        LOG_RES_MSG("Server files:\n" _E(m) "%s") << svFiles->contentsAsText();
+    }
 
     return true;
 }

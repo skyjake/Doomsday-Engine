@@ -56,6 +56,8 @@ public:
      */
     Version();
 
+    Version(int major, int minor, int patch, int buildNumber = 0);
+
     /**
      * Version information.
      *
@@ -78,12 +80,6 @@ public:
      * than all zeroes and empty strings.
      */
     bool isValid() const;
-
-    /**
-     * Returns a version string in the form "x.y.z". If a release
-     * label is defined, it will be included, too: "x.y.z-label".
-     */
-    String base() const;
 
     /**
      * Returns a version string in the form "x.y.z".
@@ -119,6 +115,11 @@ public:
     }
 
     bool operator > (Version const &other) const;
+
+    /**
+     * Returns a user agent string for network requests.
+     */
+    String userAgent() const;
 
     /**
      * Determines the operating system.

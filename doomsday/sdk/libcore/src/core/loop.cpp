@@ -33,7 +33,7 @@ static Loop *loopSingleton = 0;
 
 DENG2_PIMPL(Loop)
 {
-    TimeDelta interval;
+    TimeSpan interval;
     bool running;
     QTimer *timer;
     LoopCallback mainCall;    
@@ -62,10 +62,19 @@ DENG2_AUDIENCE_METHOD(Loop, Iteration)
 Loop::Loop() : d(new Impl(this))
 {}
 
-void Loop::setRate(int freqHz)
+void Loop::setRate(double freqHz)
 {
+    if (fequal(freqHz, 0.0))
+{
+        freqHz = 120.0;
+    }
     d->interval = 1.0 / freqHz;
     d->timer->setInterval(de::max(1, int(d->interval.asMilliSeconds())));
+}
+
+double Loop::rate() const
+{
+    return 1.0 / d->interval;
 }
 
 void Loop::start()
@@ -90,7 +99,7 @@ void Loop::resume()
     d->timer->start();
 }
 
-void Loop::timer(TimeDelta const &delay, std::function<void ()> func)
+void Loop::timer(TimeSpan const &delay, std::function<void ()> func)
 {
     // The timer will delete itself after it's triggered.
     internal::CallbackTimer *timer = new internal::CallbackTimer(func, qApp);

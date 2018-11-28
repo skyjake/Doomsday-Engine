@@ -43,6 +43,9 @@ public:
     // Implements ISerializable.
     void operator >> (Writer &to) const;
     void operator << (Reader &from);
+
+public:
+    static const NoneValue &none();
 };
 
 } // namespace de

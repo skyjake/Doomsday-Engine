@@ -25,6 +25,7 @@
 #include <de/shell/AbstractLink>
 #include <de/shell/Protocol>
 #include <de/shell/ServerInfo>
+#include <de/shell/PackageDownloader>
 #include <QObject>
 #include "network/net_main.h"
 
@@ -38,7 +39,7 @@ class ServerLink : public de::shell::AbstractLink
 
 public:
     DENG2_DEFINE_AUDIENCE2(DiscoveryUpdate, void linkDiscoveryUpdate(ServerLink const &link))
-    DENG2_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeDelta))
+    DENG2_DEFINE_AUDIENCE2(PingResponse,    void pingResponse(de::Address const &, de::TimeSpan))
     DENG2_DEFINE_AUDIENCE2(MapOutline,      void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
 
     DENG2_DEFINE_AUDIENCE2(Join,  void networkGameJoined())
@@ -56,6 +57,8 @@ public:
 public:
     ServerLink(Flags flags = DiscoverLocalServers);
 
+    de::shell::PackageDownloader &packageDownloader();
+
     void clear();
 
     /**
@@ -66,7 +69,7 @@ public:
      * @param info  Server to join. This should be one of the servers that have
      *              previously been found via discovery.
      */
-    void connectToServerAndChangeGame(de::shell::ServerInfo info);
+    void connectToServerAndChangeGameAsync(de::shell::ServerInfo info);
 
     /**
      * Acquire a game profile that describes the game on a multiplayer server.
@@ -82,17 +85,17 @@ public:
      *                       The callback is called in the main thread (from the app
      *                       event loop).
      */
-    void acquireServerProfile(de::Address const &address,
-                              std::function<void (GameProfile const *)> resultHandler);
+    void acquireServerProfileAsync(de::Address const &address,
+                                   std::function<void (GameProfile const *)> resultHandler);
 
-    void acquireServerProfile(de::String const &domain,
-                              std::function<void (de::Address, GameProfile const *)> resultHandler);
+    void acquireServerProfileAsync(de::String const &domain,
+                                   std::function<void (de::Address, GameProfile const *)> resultHandler);
 
     void requestMapOutline(de::Address const &address);
 
     void ping(de::Address const &address);
 
-    void connectDomain(de::String const &domain, de::TimeDelta const &timeout = 0) override;
+    void connectDomain(de::String const &domain, de::TimeSpan const &timeout = 0) override;
     void connectHost(de::Address const &address) override;
 
     /**

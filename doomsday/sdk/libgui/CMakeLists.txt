@@ -66,7 +66,7 @@ if (QT_VERSION VERSION_LESS 5.4)
 endif ()
 
 if (APPLE)
-    # Don't change display modes on macOS. We'll instead resize the
+    # Don't change display modes on macOS/iOS. We'll instead resize the
     # frame buffer and scale up.
     set (DENG_ENABLE_DISPLAYMODE_DEFAULT OFF)
 else ()
@@ -75,6 +75,13 @@ endif ()
 option (DENG_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
     ${DENG_ENABLE_DISPLAYMODE_DEFAULT}
 )
+
+# OpenGL API selection.
+set (DENG_OPENGL_API "3.3" CACHE STRING "OpenGL API selection (3.3, GLES3, GLES2)")
+
+if (IOS)
+    set (DENG_OPENGL_API "GLES3" CACHE STRING "OpenGL API selection" FORCE)
+endif ()
 
 # Dependencies.
 find_package (DengCore)
@@ -87,6 +94,18 @@ deng_add_package (net.dengine.stdlib.gui)
 
 # Definitions.
 add_definitions (-D__LIBGUI__=1)
+if (DENG_OPENGL_API STREQUAL "3.3")
+    add_definitions (-DDENG_OPENGL=330)
+    message (STATUS "Using OpenGL 3.3")
+elseif (DENG_OPENGL_API STREQUAL "GLES3")
+    add_definitions (-DDENG_OPENGL_ES=30)
+    message (STATUS "Using OpenGL ES 3.0")
+elseif (DENG_OPENGL_API STREQUAL "GLES2")
+    add_definitions (-DDENG_OPENGL_ES=20)
+    message (STATUS "Using OpenGL ES 2.0")
+else ()
+    message (FATAL_ERROR "Invalid value for OpenGL API: ${DENG_OPENGL_API}")
+endif ()
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
@@ -105,6 +124,10 @@ else ()
     list (APPEND SOURCES src/displaymode_${DENG_PLATFORM_SUFFIX})
 endif ()
 
+# Ignore mobile-only sources.
+list_remove_matches (HEADERS ".*_qml.*")
+list_remove_matches (SOURCES ".*_qml.*")
+
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
 target_link_libraries (libgui
@@ -121,7 +144,9 @@ if (UNIX AND NOT APPLE)
     target_link_libraries (libgui PUBLIC ${assimpLibs})
 endif ()
 
-if (APPLE)
+if (IOS)
+    link_framework (libgui PRIVATE OpenGLES)
+elseif (APPLE)
     link_framework (libgui PRIVATE Cocoa)
     link_framework (libgui PRIVATE OpenGL)
 endif ()

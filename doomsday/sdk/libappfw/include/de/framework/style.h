@@ -38,6 +38,9 @@ class Package;
 class LIBAPPFW_PUBLIC Style
 {
 public:
+    DENG2_DEFINE_AUDIENCE2(Change, void styleChanged(Style &))
+
+public:
     Style();
     virtual ~Style();
 
@@ -75,6 +78,8 @@ public:
     virtual bool isBlurringAllowed() const;
 
     virtual GuiWidget *sharedBlurWidget() const;
+
+    virtual void performUpdate();
 
 public:
     /**

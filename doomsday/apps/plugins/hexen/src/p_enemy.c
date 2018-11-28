@@ -535,7 +535,7 @@ void C_DECL A_Chase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(G_Ruleset_Skill() == SM_NIGHTMARE /*|| gameRules.fast*/)
+    if(gfw_Rule(skill) == SM_NIGHTMARE /*|| gameRules.fast*/)
     {
         // Monsters move faster in nightmare mode
         actor->tics -= actor->tics / 2;
@@ -575,7 +575,7 @@ void C_DECL A_Chase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(G_Ruleset_Skill() != SM_NIGHTMARE)
+        if(gfw_Rule(skill) != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -595,7 +595,7 @@ void C_DECL A_Chase(mobj_t *actor)
     // Check for missile attack.
     if((state = P_GetState(actor->type, SN_MISSILE)) != S_NULL)
     {
-        if(!(G_Ruleset_Skill() != SM_NIGHTMARE && actor->moveCount))
+        if(!(gfw_Rule(skill) != SM_NIGHTMARE && actor->moveCount))
         {
             if(P_CheckMissileRange(actor))
             {
@@ -969,7 +969,7 @@ void C_DECL A_MinotaurLook(mobj_t *actor)
 
     actor->target = 0;
 
-    if(G_Ruleset_Deathmatch())
+    if(gfw_Rule(deathmatch))
     {
         // Quick search for players.
         int i;
@@ -1684,7 +1684,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(G_Ruleset_Skill() == SM_NIGHTMARE /*|| gameRules.fast*/)
+    if(gfw_Rule(skill) == SM_NIGHTMARE /*|| gameRules.fast*/)
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
@@ -1723,7 +1723,7 @@ void C_DECL A_SerpentChase(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(G_Ruleset_Skill() != SM_NIGHTMARE)
+        if(gfw_Rule(skill) != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -1863,7 +1863,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
         actor->threshold--;
     }
 
-    if(G_Ruleset_Skill() == SM_NIGHTMARE /*|| gameRules.fast*/)
+    if(gfw_Rule(skill) == SM_NIGHTMARE /*|| gameRules.fast*/)
     {
         // Monsters move faster in nightmare mode.
         actor->tics -= actor->tics / 2;
@@ -1902,7 +1902,7 @@ void C_DECL A_SerpentWalk(mobj_t *actor)
     if(actor->flags & MF_JUSTATTACKED)
     {
         actor->flags &= ~MF_JUSTATTACKED;
-        if(G_Ruleset_Skill() != SM_NIGHTMARE)
+        if(gfw_Rule(skill) != SM_NIGHTMARE)
             P_NewChaseDir(actor);
         return;
     }
@@ -3885,7 +3885,7 @@ void C_DECL A_FastChase(mobj_t *mo)
         mo->threshold--;
     }
 
-    if(G_Ruleset_Skill() == SM_NIGHTMARE /*|| gameRules.fast*/)
+    if(gfw_Rule(skill) == SM_NIGHTMARE /*|| gameRules.fast*/)
     {
         // Monsters move faster in nightmare mode.
         mo->tics -= mo->tics / 2;
@@ -3923,7 +3923,7 @@ void C_DECL A_FastChase(mobj_t *mo)
     if(mo->flags & MF_JUSTATTACKED)
     {
         mo->flags &= ~MF_JUSTATTACKED;
-        if(G_Ruleset_Skill() != SM_NIGHTMARE)
+        if(gfw_Rule(skill) != SM_NIGHTMARE)
             P_NewChaseDir(mo);
         return;
     }
@@ -3961,7 +3961,7 @@ void C_DECL A_FastChase(mobj_t *mo)
     // Check for missile attack.
     if((state = P_GetState(mo->type, SN_MISSILE)) != S_NULL)
     {
-        if(G_Ruleset_Skill() != SM_NIGHTMARE && mo->moveCount)
+        if(gfw_Rule(skill) != SM_NIGHTMARE && mo->moveCount)
             goto nomissile;
         if(!P_CheckMissileRange(mo))
             goto nomissile;
@@ -4018,7 +4018,7 @@ void C_DECL A_MageAttack(mobj_t *mo)
 
 void C_DECL A_ClassBossHealth(mobj_t *mo)
 {
-    if(IS_NETGAME && !G_Ruleset_Deathmatch()) // Co-op only.
+    if(IS_NETGAME && !gfw_Rule(deathmatch)) // Co-op only.
     {
         if(!mo->special1)
         {
@@ -4100,7 +4100,7 @@ void C_DECL A_FreezeDeathChunks(mobj_t* mo)
     mobj_t* pmo;
     int i;
 
-    if(!FEQUAL(mo->mom[MX], 0) || !FEQUAL(mo->mom[MY], 0) || !FEQUAL(mo->mom[MZ], 0))
+    if(NON_ZERO(mo->mom[MX]) || NON_ZERO(mo->mom[MY]) || NON_ZERO(mo->mom[MZ]))
     {
         mo->tics = 105;
         return;

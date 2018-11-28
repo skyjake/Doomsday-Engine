@@ -1,4 +1,4 @@
-/** @file link.h  Network connection to a server.
+/** @file link.cpp  Network connection to a server.
  *
  * @authors Copyright © 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -24,22 +24,21 @@
 #include <de/Log>
 #include <de/ByteRefArray>
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 DENG2_PIMPL(Link)
 {
-    String    connectDomain;
-    TimeDelta connectTimeout;
-    Address   connectAddress;
+    String   connectDomain;
+    TimeSpan connectTimeout;
+    Address  connectAddress;
 
-    Protocol  protocol;
+    Protocol protocol;
 
     Impl(Public *i) : Base(i)
     {}
 };
 
-Link::Link(String const &domain, TimeDelta const &timeout) : d(new Impl(this))
+Link::Link(String const &domain, TimeSpan const &timeout) : d(new Impl(this))
 {
     d->connectDomain  = domain;
     d->connectTimeout = timeout;
@@ -87,5 +86,4 @@ void Link::initiateCommunications()
     *this << ByteRefArray("Shell", 5);
 }
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell

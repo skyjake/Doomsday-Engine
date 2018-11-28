@@ -22,6 +22,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if !defined (DENG_MOBILE)
+
 #include "de/PersistentGLWindow"
 #include "de/GuiApp"
 #include "de/DisplayMode"
@@ -34,6 +36,7 @@
 
 #include <QDesktopWidget>
 #include <QResizeEvent>
+#include <QScreen>
 #include <QTimer>
 #include <QVector>
 #include <QList>
@@ -46,11 +49,16 @@ int const PersistentGLWindow::MIN_WIDTH  = 320;
 int const PersistentGLWindow::MIN_HEIGHT = 240;
 
 static int const BREAK_CENTERING_THRESHOLD = 5;
-
 static QRect desktopRect()
 {
+    //return QApplication::desktop()->screenGeometry();
+
     /// @todo Multimonitor? This checks the default screen.
-    return QApplication::desktop()->screenGeometry();
+#if defined (DENG2_QT_5_6_OR_NEWER)
+    return QGuiApplication::primaryScreen()->geometry();
+#else
+    return QGuiApplication::screens().at(0)->geometry();
+#endif
 }
 
 static QRect centeredQRect(Vector2ui const &size)
@@ -103,11 +111,11 @@ DENG2_PIMPL(PersistentGLWindow)
         String winId;
         Rectanglei windowRect;  ///< Window geometry in windowed mode.
         Size fullSize;          ///< Dimensions in a fullscreen mode.
-        int colorDepthBits;
-        Flags flags;
+        int colorDepthBits = 0;
+        float refreshRate = 0.f;
+        Flags flags { None };
 
-        State(String const &id)
-            : winId(id), colorDepthBits(0), flags(None)
+        State(String const &id) : winId(id)
         {}
 
         bool operator == (State const &other) const
@@ -116,7 +124,8 @@ DENG2_PIMPL(PersistentGLWindow)
                     windowRect     == other.windowRect &&
                     fullSize       == other.fullSize &&
                     colorDepthBits == other.colorDepthBits &&
-                    flags          == other.flags);
+                    flags          == other.flags &&
+                    refreshRate    == other.refreshRate);
         }
 
         bool operator != (State const &other) const
@@ -195,10 +204,11 @@ DENG2_PIMPL(PersistentGLWindow)
                    << NumberValue(fullSize.y);
             config.set(configName("fullSize"), array);
 
-            config.set(configName("center"),     isCentered());
-            config.set(configName("maximize"),   isMaximized());
-            config.set(configName("fullscreen"), isFullscreen());
-            config.set(configName("colorDepth"), colorDepthBits);
+            config.set(configName("center"),      isCentered());
+            config.set(configName("maximize"),    isMaximized());
+            config.set(configName("fullscreen"),  isFullscreen());
+            config.set(configName("colorDepth"),  colorDepthBits);
+            config.set(configName("refreshRate"), refreshRate);
 
             // FSAA and vsync are saved as part of the Config.
             //config.set(configName("fsaa"),       isAntialiased());
@@ -225,7 +235,8 @@ DENG2_PIMPL(PersistentGLWindow)
                 fullSize = Size(fs.at(0).asNumber(), fs.at(1).asNumber());
             }
 
-            colorDepthBits =    config.geti(configName("colorDepth"));
+            colorDepthBits    = config.geti(configName("colorDepth"));
+            refreshRate       = config.getf(configName("refreshRate"));
             setFlag(Centered,   config.getb(configName("center")));
             setFlag(Maximized,  config.getb(configName("maximize")));
             setFlag(Fullscreen, config.getb(configName("fullscreen")));
@@ -250,7 +261,7 @@ DENG2_PIMPL(PersistentGLWindow)
         {
             if (isFullscreen())
             {
-                return DisplayMode_FindClosest(fullSize.x, fullSize.y, colorDepthBits, 0);
+                return DisplayMode_FindClosest(fullSize.x, fullSize.y, colorDepthBits, refreshRate);
             }
             return DisplayMode_OriginalMode();
         }
@@ -302,6 +313,10 @@ DENG2_PIMPL(PersistentGLWindow)
                 case PersistentGLWindow::ColorDepthBits:
                     colorDepthBits = attribs[i];
                     DENG2_ASSERT(colorDepthBits >= 8 && colorDepthBits <= 32);
+                    break;
+
+                case PersistentGLWindow::RefreshRate:
+                    refreshRate = float(de::max(0, attribs[i])) / 1000.f;                    
                     break;
 
                 case PersistentGLWindow::FullSceneAntialias:
@@ -373,6 +388,12 @@ DENG2_PIMPL(PersistentGLWindow)
             if (int arg = cmdLine.check("-bpp", 1))
             {
                 attribs << PersistentGLWindow::ColorDepthBits << de::clamp(8, cmdLine.at(arg+1).toInt(), 32);
+            }
+
+            if (int arg = cmdLine.check("-refreshrate", 1))
+            {
+                attribs << PersistentGLWindow::RefreshRate
+                    << int(cmdLine.at(arg + 1).toFloat() * 1000);
             }
 
             if (int arg = cmdLine.check("-xpos", 1))
@@ -449,11 +470,11 @@ DENG2_PIMPL(PersistentGLWindow)
 
         Type type;
         Rectanglei rect;
-        TimeDelta delay; ///< How long to wait before doing this.
+        TimeSpan delay; ///< How long to wait before doing this.
 
-        Task(Type t, TimeDelta defer = 0)
+        Task(Type t, TimeSpan defer = 0)
             : type(t), delay(defer) {}
-        Task(Rectanglei const &r, TimeDelta defer = 0)
+        Task(Rectanglei const &r, TimeSpan defer = 0)
             : type(SetGeometry), rect(r), delay(defer) {}
     };
 
@@ -524,6 +545,7 @@ DENG2_PIMPL(PersistentGLWindow)
                     return false; // Illegal value.
                 break;
 
+            case RefreshRate:
             case Centered:
             case Maximized:
                 break;
@@ -558,10 +580,11 @@ DENG2_PIMPL(PersistentGLWindow)
         State mod = state;
         mod.applyAttributes(attribs);
 
-        LOGDEV_GL_MSG("windowRect:%s fullSize:%s depth:%i flags:%x")
+        LOGDEV_GL_MSG("windowRect:%s fullSize:%s depth:%i refresh:%.1f flags:%x")
                 << mod.windowRect.asText()
                 << mod.fullSize.asText()
                 << mod.colorDepthBits
+                << mod.refreshRate
                 << mod.flags;
 
         // Apply them.
@@ -588,7 +611,7 @@ DENG2_PIMPL(PersistentGLWindow)
 
         // If the display mode needs to change, we will have to defer the rest
         // of the state changes so that everything catches up after the change.
-        TimeDelta defer = 0;
+        TimeSpan defer = 0;
         DisplayMode const *newMode = newState.displayMode();
         bool modeChanged = false;
 
@@ -606,6 +629,7 @@ DENG2_PIMPL(PersistentGLWindow)
 
             modeChanged = DisplayMode_Change(newMode, newState.shouldCaptureScreen());
             state.colorDepthBits = newMode->depth;
+            state.refreshRate    = newMode->refreshRate;
 
             // Wait a while after the mode change to let changes settle in.
 #ifdef MACOSX
@@ -772,11 +796,12 @@ DENG2_PIMPL(PersistentGLWindow)
         st.windowRect     = self().windowRect();
         st.fullSize       = state.fullSize;
         st.colorDepthBits = DisplayMode_Current()->depth;
+        st.refreshRate    = DisplayMode_Current()->refreshRate;
 
         st.flags =
                 (self().isMaximized()?  State::Maximized  : State::None) |
                 (self().isFullScreen()? State::Fullscreen : State::None) |
-                (state.isCentered()?  State::Centered   : State::None);
+                (state.isCentered()?    State::Centered   : State::None);
 
         return st;
     }
@@ -791,6 +816,7 @@ PersistentGLWindow::PersistentGLWindow(String const &id)
 {
     try
     {
+        connect(this, SIGNAL(visibilityChanged(QWindow::Visibility)), this, SLOT(windowVisibilityChanged()));
         restoreFromConfig();
     }
     catch (Error const &er)
@@ -863,6 +889,11 @@ int PersistentGLWindow::colorDepthBits() const
     return d->state.colorDepthBits;
 }
 
+float PersistentGLWindow::refreshRate() const
+{
+    return d->state.refreshRate;
+}
+
 void PersistentGLWindow::show(bool yes)
 {
     if (yes)
@@ -918,6 +949,19 @@ bool PersistentGLWindow::changeAttributes(int const *attribs)
 void PersistentGLWindow::performQueuedTasks()
 {
     d->checkQueue();
+}
+
+void PersistentGLWindow::windowVisibilityChanged()
+{
+    if (d->queue.isEmpty())
+    {
+        d->state = d->widgetState();
+    }
+
+    DENG2_FOR_AUDIENCE2(AttributeChange, i)
+    {
+        i->windowAttributesChanged(*this);
+    }
 }
 
 String PersistentGLWindow::configName(String const &key) const
@@ -976,3 +1020,5 @@ void PersistentGLWindow::resizeEvent(QResizeEvent *ev)
 }
 
 } // namespace de
+
+#endif

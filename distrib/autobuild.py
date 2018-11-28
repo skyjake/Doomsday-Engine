@@ -210,7 +210,7 @@ def build_source_package():
     # Check distribution.
     system_command("lsb_release -a | perl -n -e 'm/Codename:\s(.+)/ && print $1' > /tmp/distroname")
     hostDistro = file('/tmp/distroname', 'rt').read()
-    distros = ['xenial', 'zesty']
+    distros = ['xenial', 'bionic']
 
     for distro in distros:
         os.chdir(os.path.join(builder.config.DISTRIB_DIR))
@@ -292,137 +292,139 @@ def rebuild_apt_repository():
     os.system("~/Scripts/mirror-tree.py %s %s" % (aptDir, os.path.join(builder.config.EVENT_DIR, 'apt')))
 
 
-def write_html_page(outPath, title, content):
-    f = file(outPath, 'wt')
-    print >> f, "<html><head>"
-    print >> f, '<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">'
-    print >> f, "<title>%s</title>" % title
-    print >> f, "<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>"
-    print >> f, "<link href='http://files.dengine.net/build.css' rel='stylesheet' type='text/css'>"
-    print >> f, "</head><body><div id='content-outer'><div id='content-inner'>"
-    print >> f, "<h1>%s</h1>" % title
-    print >> f, content
-    print >> f, "</div></div></body>"
-    print >> f, "</html>"
-
-
-def write_report_html(tag):
-    ev = builder.Event(tag)
-    write_html_page(ev.file_path('index.html'), 'Build %i' % ev.number(),
-                    ev.html_description(False))
+# def write_html_page(outPath, title, content):
+#     f = file(outPath, 'wt')
+#     print >> f, "<html><head>"
+#     print >> f, '<meta http-equiv="Content-Type" content="text/html;charset=UTF-8">'
+#     print >> f, "<title>%s</title>" % title
+#     print >> f, "<link href='http://fonts.googleapis.com/css?family=Open+Sans:400italic,400,300,700' rel='stylesheet' type='text/css'>"
+#     print >> f, "<link href='http://files.dengine.net/build.css' rel='stylesheet' type='text/css'>"
+#     print >> f, "</head><body><div id='content-outer'><div id='content-inner'>"
+#     print >> f, "<h1>%s</h1>" % title
+#     print >> f, content
+#     print >> f, "</div></div></body>"
+#     print >> f, "</html>"
+#
+#
+# def write_report_html(tag):
+#     ev = builder.Event(tag)
+#     write_html_page(ev.file_path('index.html'), 'Build %i' % ev.number(),
+#                     ev.html_description(False))
 
 
 def update_feed():
     """Generate events.rss into the event directory."""
-    
-    feedName = os.path.join(builder.config.EVENT_DIR, "events.rss")
-    print "Updating feed in %s..." % feedName
-    
-    out = file(feedName, 'wt')
-    print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
-    print >> out, '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">'
-    print >> out, '<channel>'
-    
-    print >> out, '<title>Doomsday Engine Builds</title>'
-    print >> out, '<link>http://dengine.net/</link>'
-    print >> out, '<atom:link href="%s/events.rss" rel="self" type="application/rss+xml" />' % builder.config.BUILD_URI
-    print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
-    print >> out, '<language>en-us</language>'
-    print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
-    print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(builder.config.RFC_TIME, 
-        time.gmtime(builder.find_newest_event()['time']))
-    print >> out, '<generator>autobuild.py</generator>'
-    print >> out, '<ttl>180</ttl>' # 3 hours
-    
-    allEvents = []
-    
-    for timestamp, ev in builder.events_by_time():
-        allEvents.append((timestamp, ev))
-        print >> out, '<item>'
-        print >> out, '<title>Build %i</title>' % ev.number()
-        print >> out, '<link>%s/%s/</link>' % ("http://files.dengine.net/builds", ev.name)
-        print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
-        print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
-        print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
-        print >> out, '<description>%s</description>' % ev.html_description()
-        print >> out, '<guid isPermaLink="false">%s</guid>' % ev.tag()
-        print >> out, '</item>'
-        
-        write_report_html(ev.tag())
-    
-    # Close.
-    print >> out, '</channel>'
-    print >> out, '</rss>'
-    
-    # Write a index page for all the builds.
-    versions = {}
-    text = '<p class="links"><a href="events.rss">RSS Feed</a> | <a href="events.xml">XML Feed</a></p>'
-    text += '<h2>Latest Builds</h2>'
-    text += '<div class="buildlist">'    
-    for timestamp, ev in allEvents:
-        eventVersion = '.'.join(ev.version().split('.')[:2])
-        if eventVersion in versions:
-            versions[eventVersion].append(ev)
-        else:
-            versions[eventVersion] = [ev]
-        text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
-            time.strftime('%b %d', time.gmtime(timestamp)), ev.version())
-    text += '</div>'
-    
-    text += '<h2>Versions</h2>'
-    for version in versions.keys():
-        text += '<h3>%s</h3>' % version
-        text += '<div class="buildlist">'    
-        for ev in versions[version]:
-            text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
-                time.strftime('%b %d', time.gmtime(ev.timestamp())), ev.version())
-        text += '</div>'
-            
-    write_html_page(os.path.join(builder.config.EVENT_DIR, "index.html"),
-                    'Doomsday Autobuilder', text)
+    pass
+#     feedName = os.path.join(builder.config.EVENT_DIR, "events.rss")
+#     print "Updating feed in %s..." % feedName
+#
+#     out = file(feedName, 'wt')
+#     print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
+#     print >> out, '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">'
+#     print >> out, '<channel>'
+#
+#     print >> out, '<title>Doomsday Engine Builds</title>'
+#     print >> out, '<link>http://dengine.net/</link>'
+#     print >> out, '<atom:link href="%s/events.rss" rel="self" type="application/rss+xml" />' % builder.config.BUILD_URI
+#     print >> out, '<description>Automated binary builds of the Doomsday Engine.</description>'
+#     print >> out, '<language>en-us</language>'
+#     print >> out, '<webMaster>skyjake@users.sourceforge.net (Jaakko Keränen)</webMaster>'
+#     print >> out, '<lastBuildDate>%s</lastBuildDate>' % time.strftime(builder.config.RFC_TIME,
+#         time.gmtime(builder.find_newest_event()['time']))
+#     print >> out, '<generator>autobuild.py</generator>'
+#     print >> out, '<ttl>180</ttl>' # 3 hours
+#
+#     allEvents = []
+#
+#     for timestamp, ev in builder.events_by_time():
+#         allEvents.append((timestamp, ev))
+#         print >> out, '<item>'
+#         print >> out, '<title>Build %i</title>' % ev.number()
+#         print >> out, '<link>%s/%s/</link>' % ("http://files.dengine.net/builds", ev.name)
+#         print >> out, '<author>skyjake@users.sourceforge.net (skyjake)</author>'
+#         print >> out, '<pubDate>%s</pubDate>' % time.strftime(builder.config.RFC_TIME, time.gmtime(timestamp))
+#         print >> out, '<atom:summary>%s</atom:summary>' % ev.text_summary()
+#         print >> out, '<description>%s</description>' % ev.html_description()
+#         print >> out, '<guid isPermaLink="false">%s</guid>' % ev.tag()
+#         print >> out, '</item>'
+#
+#         write_report_html(ev.tag())
+#
+#     # Close.
+#     print >> out, '</channel>'
+#     print >> out, '</rss>'
+#
+#     # Write a index page for all the builds.
+#     versions = {}
+#     text = '<p class="links"><a href="events.rss">RSS Feed</a> | <a href="events.xml">XML Feed</a></p>'
+#     text += '<h2>Latest Builds</h2>'
+#     text += '<div class="buildlist">'
+#     for timestamp, ev in allEvents:
+#         eventVersion = '.'.join(ev.version().split('.')[:2])
+#         if eventVersion in versions:
+#             versions[eventVersion].append(ev)
+#         else:
+#             versions[eventVersion] = [ev]
+#         text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
+#             time.strftime('%b %d', time.gmtime(timestamp)), ev.version())
+#     text += '</div>'
+#
+#     text += '<h2>Versions</h2>'
+#     for version in versions.keys():
+#         text += '<h3>%s</h3>' % version
+#         text += '<div class="buildlist">'
+#         for ev in versions[version]:
+#             text += '<div class="build %s"><a href="http://files.dengine.net/builds/build%i"><div class="buildnumber">%i</div><div class="builddate">%s</div><div class="buildversion">%s</div></a></div>' % (ev.release_type(), ev.number(), ev.number(),
+#                 time.strftime('%b %d', time.gmtime(ev.timestamp())), ev.version())
+#         text += '</div>'
+#
+#     write_html_page(os.path.join(builder.config.EVENT_DIR, "index.html"),
+#                     'Doomsday Autobuilder', text)
     
     
 def update_xml_feed():
-    """Generate events.xml into the event directory."""
+    pass
+#     """Generate events.xml into the event directory."""
+#
+#     feedName = os.path.join(builder.config.EVENT_DIR, "events.xml")
+#     print "Updating XML feed in %s..." % feedName
+#
+#     out = file(feedName, 'wt')
+#     print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
+#     print >> out, '<log>'
+#     for timestamp, ev in builder.events_by_time():
+#         print >> out, ev.xml_description()
+#     print >> out, '</log>'
     
-    feedName = os.path.join(builder.config.EVENT_DIR, "events.xml")
-    print "Updating XML feed in %s..." % feedName
     
-    out = file(feedName, 'wt')
-    print >> out, '<?xml version="1.0" encoding="UTF-8"?>'
-    print >> out, '<log>'
-    for timestamp, ev in builder.events_by_time():
-        print >> out, ev.xml_description()    
-    print >> out, '</log>'
-    
-
-def purge_apt_repository(atLeastSeconds):
-    for d in ['i386', 'amd64']:
-        binDir = os.path.join(builder.config.APT_REPO_DIR, builder.config.APT_DIST + '/main/binary-') + d
-        print 'Pruning binary apt directory', binDir
-        # Find the old files.
-        for fn in os.listdir(binDir):
-            if fn[-4:] != '.deb': continue
-            debPath = os.path.join(binDir, fn)
-            ct = os.stat(debPath).st_ctime
-            if time.time() - ct >= atLeastSeconds:
-                print 'Deleting', debPath
-                os.remove(debPath)
+# def purge_apt_repository(atLeastSeconds):
+#     for d in ['i386', 'amd64']:
+#         binDir = os.path.join(builder.config.APT_REPO_DIR, builder.config.APT_DIST + '/main/binary-') + d
+#         print 'Pruning binary apt directory', binDir
+#         # Find the old files.
+#         for fn in os.listdir(binDir):
+#             if fn[-4:] != '.deb': continue
+#             debPath = os.path.join(binDir, fn)
+#             ct = os.stat(debPath).st_ctime
+#             if time.time() - ct >= atLeastSeconds:
+#                 print 'Deleting', debPath
+#                 os.remove(debPath)
 
 
 def purge_obsolete():
-    """Purge old builds from the event directory (old > 12 weeks)."""
-    threshold = 3600 * 24 * 7 * 12
+    """Purge old builds from the event directory (old > 4 weeks)."""
+    threshold = 3600 * 24 * 7 * 4
 
-    # Also purge the apt repository if one has been specified.
-    if builder.config.APT_REPO_DIR:
-        purge_apt_repository(threshold)
+    # We'll keep a small number of events unpurgable.
+    totalCount = len(builder.find_old_events(0))
     
     # Purge the old events.
-    print 'Deleting build events older than 12 weeks...'
+    print 'Deleting build events older than 4 weeks...'
     for ev in builder.find_old_events(threshold):
+        if totalCount > 5:
         print ev.tag()
         shutil.rmtree(ev.path()) 
+            totalCount -= 1
         
     print 'Purge done.'
 
@@ -461,29 +463,29 @@ def generate_apidoc():
     system_command('doxygen api.doxy >/dev/null 2>../../doxyissues-api.txt')
     system_command('wc -l ../../doxyissues-api.txt')
 
-    print >> sys.stderr, "\nInternal Win32 docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/client'))
-    system_command('doxygen client-win32.doxy >/dev/null 2>../../doxyissues-win32.txt')
-    system_command('wc -l ../../doxyissues-win32.txt')
-
-    print >> sys.stderr, "\nInternal Mac/Unix docs..."
-    system_command('doxygen client-mac.doxy >/dev/null 2>../../doxyissues-mac.txt')        
-    system_command('wc -l ../../doxyissues-mac.txt')
-
-    print >> sys.stderr, "\nDoom plugin docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/plugins/doom'))
-    system_command('doxygen doom.doxy >/dev/null 2>../../../doxyissues-doom.txt')
-    system_command('wc -l ../../../doxyissues-doom.txt')
-
-    print >> sys.stderr, "\nHeretic plugin docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/plugins/heretic'))
-    system_command('doxygen heretic.doxy >/dev/null 2>../../../doxyissues-heretic.txt')
-    system_command('wc -l ../../../doxyissues-heretic.txt')
-
-    print >> sys.stderr, "\nHexen plugin docs..."
-    os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/plugins/hexen'))
-    system_command('doxygen hexen.doxy >/dev/null 2>../../../doxyissues-hexen.txt')
-    system_command('wc -l ../../../doxyissues-hexen.txt')
+    # print >> sys.stderr, "\nInternal Win32 docs..."
+    # os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/client'))
+    # system_command('doxygen client-win32.doxy >/dev/null 2>../../doxyissues-win32.txt')
+    # system_command('wc -l ../../doxyissues-win32.txt')
+    #
+    # print >> sys.stderr, "\nInternal Mac/Unix docs..."
+    # system_command('doxygen client-mac.doxy >/dev/null 2>../../doxyissues-mac.txt')
+    # system_command('wc -l ../../doxyissues-mac.txt')
+    #
+    # print >> sys.stderr, "\nDoom plugin docs..."
+    # os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/plugins/doom'))
+    # system_command('doxygen doom.doxy >/dev/null 2>../../../doxyissues-doom.txt')
+    # system_command('wc -l ../../../doxyissues-doom.txt')
+    #
+    # print >> sys.stderr, "\nHeretic plugin docs..."
+    # os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/plugins/heretic'))
+    # system_command('doxygen heretic.doxy >/dev/null 2>../../../doxyissues-heretic.txt')
+    # system_command('wc -l ../../../doxyissues-heretic.txt')
+    #
+    # print >> sys.stderr, "\nHexen plugin docs..."
+    # os.chdir(os.path.join(builder.config.DISTRIB_DIR, '../doomsday/apps/plugins/hexen'))
+    # system_command('doxygen hexen.doxy >/dev/null 2>../../../doxyissues-hexen.txt')
+    # system_command('wc -l ../../../doxyissues-hexen.txt')
 
 
 def generate_wiki():

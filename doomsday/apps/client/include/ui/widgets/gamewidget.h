@@ -32,21 +32,14 @@ class GameWidget : public de::GuiWidget
 public:
     GameWidget(de::String const &name = "game");
 
-    /*
-     * Convenience method for changing and immediately applying a new GL
-     * viewport. The viewport is automatically normalized in relation to the
-     * root view size.
-     *
-     * This is only intended to support old graphics code that doesn't use libgui.
-     */
-    //void glApplyViewport(de::Rectanglei const &rect);
-
     /**
      * Pauses the game, if one is currently running and pausing is allowed.
      */
     void pause();
 
     void drawComposited();
+
+    void renderCubeMap(uint size, de::String const &outputImagePath);
 
     // Events.
     void viewResized() override;

@@ -17,9 +17,11 @@
  */
 
 #include "de/Style"
+#include "de/BaseGuiApp"
+#include "de/GuiRootWidget"
 
-#include <de/App>
 #include <de/CommandLine>
+#include <de/Config>
 #include <de/Folder>
 #include <de/Package>
 #include <de/Record>
@@ -30,17 +32,25 @@
 namespace de {
 
 DENG2_PIMPL(Style)
+, DENG2_OBSERVES(Variable, Change)
 {
-    Record module;
-    RuleBank rules;
-    FontBank fonts;
+    Record    module;
+    RuleBank  rules;
+    FontBank  fonts;
     ColorBank colors;
     ImageBank images;
+    const Package *loadedPack;
 
-    Impl(Public *i) : Base(i)
+    const Variable &pixelRatio     = ScriptSystem::get()["DisplayMode"]["PIXEL_RATIO"];
+    const Variable &uiTranslucency = Config::get("ui.translucency");
+
+    Impl(Public *i)
+        : Base(i)
+        , rules(DENG2_BASE_GUI_APP->pixelRatio())
     {
         // The Style is available as a native module.
         App::scriptSystem().addNativeModule("Style", module);
+        pixelRatio.audienceForChange() += this;
     }
 
     void clear()
@@ -51,14 +61,25 @@ DENG2_PIMPL(Style)
         images.clear();
 
         module.clear();
+
+        loadedPack = nullptr;
+    }
+
+    void updateFontSizeFactor()
+    {
+        float fontSize = 1.f;
+        if (CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
+        {
+            fontSize = arg.params.at(0).toFloat();
+        }
+        fonts.setFontSizeFactor(fontSize);
     }
 
     void load(Package const &pack)
     {
-        if (CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
-        {
-            fonts.setFontSizeFactor(arg.params.at(0).toFloat());
-        }
+        loadedPack = &pack;
+
+        updateFontSizeFactor();
 
         rules .addFromInfo(pack.root().locate<File>("rules.dei"));
         fonts .addFromInfo(pack.root().locate<File>("fonts.dei"));
@@ -71,7 +92,30 @@ DENG2_PIMPL(Style)
         module.add(new Variable("colors", new RecordValue(colors), Variable::AllowRecord));
         module.add(new Variable("images", new RecordValue(images), Variable::AllowRecord));
     }
+
+    void variableValueChanged(Variable &, const Value &) override
+    {
+        if (loadedPack)
+        {
+            LOG_MSG("UI style being updated due to pixel ratio change");
+
+#if defined (WIN32)
+            /*
+             * KLUDGE: The operating system provides fonts scaled according to the desktop
+             * scaling factor. The user's scaling factor affects the sizing of the fonts
+             * on Windows via this value; on other platforms, the font definitions use
+             * DisplayMode.PIXEL_RATIO directly. (Should do that on Windows, too?)
+             */
+            updateFontSizeFactor();
+#endif
+            self().performUpdate();
+        }
+    }
+
+    DENG2_PIMPL_AUDIENCE(Change)
 };
+
+DENG2_AUDIENCE_METHOD(Style, Change)
 
 Style::Style() : d(new Impl(this))
 {}
@@ -199,12 +243,22 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
 
 bool Style::isBlurringAllowed() const
 {
-    return true;
+    return d->uiTranslucency.value().isTrue();
 }
 
 GuiWidget *Style::sharedBlurWidget() const
 {
     return nullptr;
+}
+
+void Style::performUpdate()
+{
+    d->fonts.reload();
+
+    DENG2_FOR_AUDIENCE2(Change, i)
+    {
+        i->styleChanged(*this);
+    }
 }
 
 static Style *theAppStyle = nullptr;

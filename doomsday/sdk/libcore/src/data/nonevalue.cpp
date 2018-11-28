@@ -75,4 +75,10 @@ Value::Text NoneValue::typeId() const
     return "None";
 }
 
+const NoneValue &NoneValue::none()
+{
+    static NoneValue n;
+    return n;
+}
+
 } // namespace de

@@ -134,7 +134,7 @@ DENG_GUI_PIMPL(TabWidget)
             }
             if (sel)
             {
-                TimeDelta span = .2;
+                TimeSpan span = .2;
                 if (!selLeft)
                 {
                     // Initialize the animated rules for positioning the

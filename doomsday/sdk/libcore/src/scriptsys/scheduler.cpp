@@ -1,6 +1,6 @@
-/** @file scheduler.cpp  Script scheduling utility.
+/** @file scheduler.cpp  Scheduler for scripts and timelines.
  *
- * @authors Copyright (c) 2015-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -17,75 +17,84 @@
  */
 
 #include "de/Scheduler"
-#include "de/ScriptedInfo"
-#include "de/Record"
-#include "de/Script"
-#include "de/Process"
 
-#include <queue>
-#include <deque>
+#include <QHash>
 
 namespace de {
 
-DENG2_PIMPL(Scheduler)
-, DENG2_OBSERVES(Record, Deletion)
+DENG2_PIMPL_NOREF(Scheduler)
 {
-    Record *context = nullptr;
+    struct RunningTimeline
+    {
+        Timeline const *timeline = nullptr;
+        std::unique_ptr<Timeline::Clock> clock;
+        bool isOwned = false;
 
-    struct Event {
-        TimeDelta at;
-        Script script;
-
-        Event(TimeDelta at, String const &source, String const &sourcePath)
-            : at(at)
-            , script(source)
+        ~RunningTimeline()
         {
-            script.setPath(sourcePath); // where the source comes from
+            if (isOwned) delete timeline;
         }
-
-        struct Compare {
-            bool operator () (Event const *a, Event const *b) { return a->at > b->at; }
-        };
     };
-    typedef std::priority_queue<Event *, std::deque<Event *>, Event::Compare> Events;
-    Events events;
 
-    Impl(Public *i) : Base(i)
-    {}
+    QHash<String, RunningTimeline *> running;
+    duint64 counter = 0;
 
     ~Impl()
     {
-        setContext(nullptr);
         clear();
     }
 
     void clear()
     {
-        while (!events.empty())
+        qDeleteAll(running);
+        running.clear();
+    }
+
+    String internalName(String const &publicName)
+    {
+        if (publicName.isEmpty())
         {
-            delete events.top();
-            events.pop();
+            // Choose a name automatically.
+            return QString("__TL%1__").arg(counter++, 0, 16);
+        }
+        return publicName;
+    }
+
+    String start(RunningTimeline *run, String const &name)
+    {
+        String const intName = internalName(name);
+        stop(intName);
+        running.insert(intName, run);
+        return intName;
+    }
+
+    void stop(String const &intName)
+    {
+        if (running.contains(intName))
+        {
+            delete running[intName];
+            running.remove(intName);
         }
     }
 
-    void setContext(Record *rec)
+    void advanceTime(TimeSpan const &elapsed)
     {
-        if (context) context->audienceForDeletion() -= this;
-        context = rec;
-        if (context) context->audienceForDeletion() += this;
-    }
-
-    void recordBeingDeleted(Record &record)
-    {
-        if (context == &record)
+        QMutableHashIterator<String, RunningTimeline *> iter(running);
+        while (iter.hasNext())
         {
-            context = nullptr;
+            RunningTimeline *rt = iter.next().value();
+            rt->clock->advanceTime(elapsed);
+            if (rt->clock->isFinished())
+            {
+                delete rt;
+                iter.remove();
+            }
         }
     }
 };
 
 Scheduler::Scheduler()
-    : d(new Impl(this))
+    : d(new Impl)
 {}
 
 void Scheduler::clear()
@@ -93,112 +102,32 @@ void Scheduler::clear()
     d->clear();
 }
 
-void Scheduler::setContext(Record &context)
+String Scheduler::start(Timeline *timeline, String const &name)
 {
-    d->setContext(&context);
+    auto *run = new Impl::RunningTimeline;
+    run->isOwned = true;
+    run->timeline = timeline;
+    run->clock.reset(new Timeline::Clock(*timeline, timeline->context()));
+    return d->start(run, name);
 }
 
-Script &Scheduler::addScript(TimeDelta at, String const &source, String const &sourcePath)
+String Scheduler::start(Timeline const &sharedTimeline, Record *context, String const &name)
 {
-    auto *ev = new Impl::Event(at, source, sourcePath);
-    d->events.push(ev);
-    return ev->script;
+    auto *run = new Impl::RunningTimeline;
+    run->isOwned = false;
+    run->timeline = &sharedTimeline;
+    run->clock.reset(new Timeline::Clock(sharedTimeline, context));
+    return d->start(run, name);
 }
 
-void Scheduler::addFromInfo(Record const &timelineRecord)
+void Scheduler::stop(String const &name)
 {
-    auto scripts = ScriptedInfo::subrecordsOfType(ScriptedInfo::SCRIPT, timelineRecord);
-    for (String key : ScriptedInfo::sortRecordsBySource(scripts))
-    {
-        auto const &def = *scripts[key];
-        try
-        {
-            addScript(def.getd("at", 0.0),
-                      def.gets(ScriptedInfo::SCRIPT),
-                      ScriptedInfo::sourceLocation(def));
-        }
-        catch (Error const &er)
-        {
-            LOG_RES_ERROR("%s: Error in timeline script: %s")
-                    << ScriptedInfo::sourceLocation(def)
-                    << er.asText();
-        }
-    }
+    d->stop(name);
 }
 
-//----------------------------------------------------------------------------
-
-DENG2_PIMPL_NOREF(Scheduler::Clock)
-{
-    typedef Scheduler::Impl::Event  Event;
-    typedef Scheduler::Impl::Events Events; // Events not owned
-
-    Record *context = nullptr;
-    Scheduler const *scheduler = nullptr;
-    TimeDelta at = 0.0;
-    Events events;
-
-    void rewind(TimeDelta const &toTime)
-    {
-        at = toTime;
-
-        // Restore events into the queue.
-        events = scheduler->d->events;
-        while (!events.empty())
-        {
-            if (events.top()->at < at)
-            {
-                events.pop();
-            }
-            else break;
-        }
-    }
-
-    void advanceTime(TimeDelta const &elapsed)
-    {
-        at += elapsed;
-
-        while (!events.empty())
-        {
-            Event const *ev = events.top();
-            if (ev->at > at) break;
-
-            events.pop();
-
-            // Execute the script in the specified context.
-            Process process(context? context : scheduler->d->context);
-            process.run(ev->script);
-            process.execute();
-        }
-    }
-};
-
-Scheduler::Clock::Clock(Scheduler const &schedule, Record *context)
-    : d(new Impl)
-{
-    d->scheduler = &schedule;
-    d->context   = context;
-    d->rewind(0.0);
-}
-
-TimeDelta Scheduler::Clock::at() const
-{
-    return d->at;
-}
-
-void Scheduler::Clock::rewind(TimeDelta const &toTime)
-{
-    d->rewind(toTime);
-}
-
-void Scheduler::Clock::advanceTime(TimeDelta const &elapsed)
+void Scheduler::advanceTime(TimeSpan const &elapsed)
 {
     d->advanceTime(elapsed);
-}
-
-bool Scheduler::Clock::isFinished() const
-{
-    return d->events.empty();
 }
 
 } // namespace de

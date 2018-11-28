@@ -85,14 +85,14 @@ void FunctionStatement::execute(Context &context) const
 
 void FunctionStatement::operator >> (Writer &to) const
 {
-    to << SerialId(FUNCTION) << *_identifier << *_function << _defaults;
+    to << dbyte(SerialId::Function) << *_identifier << *_function << _defaults;
 }
 
 void FunctionStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != FUNCTION)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::Function)
     {
         /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.

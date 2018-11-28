@@ -137,14 +137,12 @@ static Vector3d mobjOriginSmoothed(mobj_t *mob)
 static void findMobjZOrigin(mobj_t &mob, bool floorAdjust, vissprite_t &vis)
 {
     validCount++;
-    Mobj_Map(mob).forAllSectorsTouchingMobj(mob, [&mob, &floorAdjust, &vis] (Sector &sector)
-    {
-        if(floorAdjust && mob.origin[2] == sector.floor().height())
+    Mobj_Map(mob).forAllSectorsTouchingMobj(mob, [&mob, &floorAdjust, &vis](Sector &sector) {
+        if (floorAdjust && fequal(mob.origin[2], sector.floor().height()))
         {
             vis.pose.origin.z = sector.floor().heightSmoothed();
         }
-
-        if(mob.origin[2] + mob.height == sector.ceiling().height())
+        if (fequal(mob.origin[2] + mob.height, sector.ceiling().height()))
         {
             vis.pose.origin.z = sector.ceiling().heightSmoothed() - mob.height;
         }
@@ -193,6 +191,7 @@ void R_ProjectSprite(mobj_t &mob)
         mf = Mobj_ModelDef(mob, &nextmf, &interp);
         if(mf)
         {
+            DENG2_ASSERT(mf->select == (mob.selector & DDMOBJ_SELECTOR_MASK))
             // Use a sprite if the object is beyond the maximum model distance.
             if(maxModelDistance && !(mf->flags & MFF_NO_DISTANCE_CHECK)
                && distFromEye > maxModelDistance)
@@ -370,7 +369,13 @@ void R_ProjectSprite(mobj_t &mob)
            !INRANGE_OF(mob.mom[2], 0, NOMOMENTUM_THRESHOLD))
         {
             // Use the object's speed to calculate a short-range offset.
-            visOff += Vector3d(mob.mom) * frameTimePos;
+            // Note that the object may have momentum but still be blocked from moving
+            // (e.g., Heretic gas pods).
+
+            visOff += Vector3d(~mob.ddFlags & DDMF_MOVEBLOCKEDX ? mob.mom[VX] : 0.0,
+                               ~mob.ddFlags & DDMF_MOVEBLOCKEDY ? mob.mom[VY] : 0.0,
+                               ~mob.ddFlags & DDMF_MOVEBLOCKEDZ ? mob.mom[VZ] : 0.0) *
+                      frameTimePos;
         }
     }
 

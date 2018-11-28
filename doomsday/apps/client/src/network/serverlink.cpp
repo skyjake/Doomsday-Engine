@@ -27,10 +27,12 @@
 #include "client/cl_def.h"
 #include "ui/clientwindow.h"
 #include "ui/widgets/taskbarwidget.h"
+#include "ui/dialogs/filedownloaddialog.h"
 #include "dd_def.h"
 #include "dd_main.h"
 #include "clientapp.h"
 
+#include <de/Async>
 #include <de/BlockPacket>
 #include <de/ByteRefArray>
 #include <de/ByteSubArray>
@@ -75,12 +77,13 @@ DENG2_PIMPL(ServerLink)
     Servers discovered;
     Servers fromMaster;
     QElapsedTimer pingTimer;
-    QList<TimeDelta> pings;
+    QList<TimeSpan> pings;
     int pingCounter;
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
-    LoopCallback mainCall;
+    shell::PackageDownloader downloader;
+    LoopCallback deferred; // for deferred actions
 
     Impl(Public *i, Flags flags)
         : Base(i)
@@ -119,7 +122,7 @@ DENG2_PIMPL(ServerLink)
             {
                 QVariant const response = parseJSON(String::fromUtf8(reply.mid(5)));
                 std::unique_ptr<Value> rec(Value::constructFrom(response.toMap()));
-                if (!rec->is<RecordValue>())
+                if (!is<RecordValue>(*rec))
                 {
                     throw Error("ServerLink::handleInfoResponse", "Failed to parse response contents");
                 }
@@ -148,7 +151,7 @@ DENG2_PIMPL(ServerLink)
                     if (prepareServerProfile(svAddress))
                     {
                         LOG_NET_MSG("Received server's game profile from ") << svAddress;
-                        mainCall.enqueue([this, svAddress] ()
+                        deferred.enqueue([this, svAddress] ()
                         {
                             if (profileResultCallback)
                             {
@@ -240,7 +243,7 @@ DENG2_PIMPL(ServerLink)
         fetching = true;
         N_MAPost(MAC_REQUEST);
         N_MAPost(MAC_WAIT);
-        mainCall.enqueue([this] () { checkMasterReply(); });
+        deferred.enqueue([this] () { checkMasterReply(); });
     }
 
     void checkMasterReply()
@@ -265,7 +268,7 @@ DENG2_PIMPL(ServerLink)
         else
         {
             // Check again later.
-            mainCall.enqueue([this] () { checkMasterReply(); });
+            deferred.enqueue([this] () { checkMasterReply(); });
         }
     }
 
@@ -357,13 +360,18 @@ ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
     connect(this, SIGNAL(disconnected()), this, SLOT(linkDisconnected()));
 }
 
+shell::PackageDownloader &ServerLink::packageDownloader()
+{
+    return d->downloader;
+}
+
 void ServerLink::clear()
 {
     d->finder->clear();
     // TODO: clear all found servers
 }
 
-void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
+void ServerLink::connectToServerAndChangeGameAsync(shell::ServerInfo info)
 {
     // Automatically leave the current MP game.
     if (netGame && isClient)
@@ -371,11 +379,16 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
         disconnect();
     }
 
-    // Get the profile for this.
-    // Use a delayed callback so that the UI is not blocked while we switch games.
-    acquireServerProfile(info.address(),
-                         [this, info] (GameProfile const *serverProfile)
+    // Forming the connection is a multi-step asynchronous procedure. The app's event
+    // loop is running between each of these steps so the UI is never frozen. The first
+    // step is to acquire the server's game profile.
+
+    acquireServerProfileAsync(info.address(),
+                              [this, info] (GameProfile const *serverProfile)
     {
+        auto &win = ClientWindow::main();
+        win.glActivate();
+
         if (!serverProfile)
         {
             // Hmm, oopsie?
@@ -386,10 +399,12 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
             return;
         }
 
-        auto &win = ClientWindow::main();
-        win.glActivate();
+        // Profile acquired! Figure out if the profile can be started locally.
+        LOG_NET_MSG("Received server's game profile");
+        LOG_NET_VERBOSE(serverProfile->toInfoSource());
 
-        // If additional packages are configured, set up the ad-hoc profile.
+        // If additional packages are configured, set up the ad-hoc profile with the
+        // local additions.
         GameProfile const *joinProfile = serverProfile;
         auto const localPackages = serverProfile->game().localMultiplayerPackages();
         if (localPackages.count())
@@ -414,36 +429,75 @@ void ServerLink::connectToServerAndChangeGame(shell::ServerInfo info)
             joinProfile = &adhoc;
         }
 
-        if (!joinProfile->isPlayable())
+        // The server makes certain packages available for clients to download.
+        d->downloader.mountServerRepository(info, [this, joinProfile, info] (filesys::Link const *)
         {
-            String const errorMsg = tr("Server's game \"%1\" is not playable on this system. "
-                                       "The following packages are unavailable:\n\n%2")
-                    .arg(info.gameId())
-                    .arg(String::join(de::map(joinProfile->unavailablePackages(),
-                                              Package::splitToHumanReadable), "\n"));
-            LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
-            d->reportError(errorMsg);
-            return;
-        }
+            // Now we know all the files that the server will be providing.
+            // If we are missing any of the packages, download a copy from the server.
 
-        BusyMode_FreezeGameForBusyMode();
-        win.taskBar().close();
+            LOG_RES_MSG("Received metadata about server files");
 
-        DoomsdayApp::app().changeGame(*joinProfile, DD_ActivateGameWorker);
+            StringList const neededPackages = joinProfile->unavailablePackages();
+            LOG_RES_MSG("Packages needed to join: ")
+                    << String::join(neededPackages, " ");
 
-        connectHost(info.address());
+            // Show the download popup.
+            auto *dlPopup = new FileDownloadDialog(d->downloader);
+            dlPopup->setDeleteAfterDismissed(true);
+            ClientWindow::main().root().addOnTop(dlPopup);
+            dlPopup->open(DialogWidget::Modal);
 
-        win.glDone();
+            // Request contents of missing packages.
+            d->downloader.download(neededPackages,
+                                   [this, dlPopup, joinProfile, info] ()
+            {
+                auto &win = ClientWindow::main();
+                win.glActivate();
+
+                dlPopup->close();
+                if (d->downloader.isCancelled())
+                {
+                    d->downloader.unmountServerRepository();
+                    return;
+                }
+
+                if (!joinProfile->isPlayable())
+                {
+                    String const errorMsg = tr("Server's game \"%1\" is not playable on this system. "
+                                               "The following packages are unavailable:\n\n%2")
+                            .arg(info.gameId())
+                            .arg(String::join(de::map(joinProfile->unavailablePackages(),
+                                                      Package::splitToHumanReadable), "\n"));
+                    LOG_NET_ERROR("Failed to join %s: ") << info.address() << errorMsg;
+                    d->downloader.unmountServerRepository();
+                    d->reportError(errorMsg);
+                    return;
+                }
+
+                // Everything is finally good to go.
+
+                BusyMode_FreezeGameForBusyMode();
+                win.taskBar().close();
+                DoomsdayApp::app().changeGame(*joinProfile, DD_ActivateGameWorker);
+                connectHost(info.address());
+
+                win.glDone();
+            });
+
+            // We must wait after the downloads have finished.
+            // The user sees a popup while downloads are progressing, and has the
+            // option of cancelling.
+        });
     });
 }
 
-void ServerLink::acquireServerProfile(Address const &address,
-                                      std::function<void (GameProfile const *)> resultHandler)
+void ServerLink::acquireServerProfileAsync(Address const &address,
+                                           std::function<void (GameProfile const *)> resultHandler)
 {
     if (d->prepareServerProfile(address))
     {
         // We already know everything that is needed for the profile.
-        d->mainCall.enqueue([this, resultHandler] ()
+        d->deferred.enqueue([this, resultHandler] ()
         {
             DENG2_ASSERT(d->serverProfile.get() != nullptr);
             resultHandler(d->serverProfile.get());
@@ -454,23 +508,23 @@ void ServerLink::acquireServerProfile(Address const &address,
         AbstractLink::connectHost(address);
         d->profileResultCallback = resultHandler;
         d->state = Discovering;
-        LOG_NET_MSG("Querying %s for full status") << address;
+        LOG_NET_MSG("Querying server %s for full status") << address;
     }
 }
 
-void ServerLink::acquireServerProfile(String const &domain,
-                                      std::function<void (Address, GameProfile const *)> resultHandler)
+void ServerLink::acquireServerProfileAsync(String const &domain,
+                                           std::function<void (Address, GameProfile const *)> resultHandler)
 {
     d->profileResultCallbackWithAddress = resultHandler;
     discover(domain);
-    LOG_NET_MSG("Querying %s for full status") << domain;
+    LOG_NET_MSG("Querying server %s for full status") << domain;
 }
 
 void ServerLink::requestMapOutline(Address const &address)
 {
     AbstractLink::connectHost(address);
     d->state = QueryingMapOutline;
-    LOG_NET_VERBOSE("Querying %s for map outline") << address;
+    LOG_NET_VERBOSE("Querying server %s for map outline") << address;
 }
 
 void ServerLink::ping(Address const &address)
@@ -483,7 +537,7 @@ void ServerLink::ping(Address const &address)
     }
 }
 
-void ServerLink::connectDomain(String const &domain, TimeDelta const &timeout)
+void ServerLink::connectDomain(String const &domain, TimeSpan const &timeout)
 {
     LOG_AS("ServerLink::connectDomain");
 
@@ -528,7 +582,7 @@ void ServerLink::disconnect()
         DENG2_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
-
+        d->downloader.unmountServerRepository();
         AbstractLink::disconnect();
 
         Net_StopGame();
@@ -698,7 +752,7 @@ void ServerLink::handleIncomingPackets()
             if (packetData.size() == 4 && packetData == "Pong" &&
                 d->pingCounter-- > 0)
             {
-                d->pings.append(TimeDelta::fromMilliSeconds(d->pingTimer.elapsed()));
+                d->pings.append(TimeSpan::fromMilliSeconds(d->pingTimer.elapsed()));
                 *this << ByteRefArray("Ping?", 5);
                 d->pingTimer.restart();
             }
@@ -711,8 +765,8 @@ void ServerLink::handleIncomingPackets()
                 // Notify about the average ping time.
                 if (d->pings.count())
                 {
-                    TimeDelta average = 0;
-                    for (TimeDelta i : d->pings) average += i;
+                    TimeSpan average = 0;
+                    for (TimeSpan i : d->pings) average += i;
                     average /= d->pings.count();
 
                     DENG2_FOR_AUDIENCE2(PingResponse, i)

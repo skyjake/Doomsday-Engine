@@ -159,7 +159,11 @@ String File::description(int verbosity) const
     // feed itself (would be redundant).
     if (originFeed() && (verbosity >= 2 || !is<DirectoryFeed>(originFeed())))
     {
-        desc += " from " + originFeed()->description();
+        String const feedDesc = originFeed()->description();
+        if (!desc.contains(feedDesc)) // A bit of a kludge; don't repeat the feed description.
+        {
+            desc += " from " + feedDesc;
+        }
     }
 
 #ifdef DENG2_DEBUG
@@ -425,7 +429,7 @@ String File::fileListAsText(QList<File const *> files)
 
         txt += flags + QString("%1 %2 %3")
                 .arg(f->size(), 9)
-                .arg(f->status().modifiedAt.asText())
+                .arg(f->status().modifiedAt.asText(), 23)
                 .arg(f->name());
 
         // Link target.
@@ -452,11 +456,7 @@ dsize File::size() const
 Block File::metaId() const
 {
     auto const &st = target().status();
-
-    Block data;
-    Writer writer(data);
-    writer << path() << duint64(st.size) << st.modifiedAt;
-    return data.md5Hash();
+    return md5Hash(path(), duint64(st.size), st.modifiedAt);
 }
 
 } // namespace de

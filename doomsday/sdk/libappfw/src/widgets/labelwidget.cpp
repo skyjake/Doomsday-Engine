@@ -21,9 +21,10 @@
 #include "de/AtlasProceduralImage"
 #include "de/StyleProceduralImage"
 
-#include <de/Drawable>
 #include <de/AtlasTexture>
 #include <de/ConstantRule>
+#include <de/Drawable>
+#include <de/GridLayout>
 
 namespace de {
 
@@ -45,7 +46,8 @@ public Font::RichFormat::IStyle
     TextShadow textShadow = NoShadow;
     DotPath textShadowColorId { "label.shadow" };
     ContentFit imageFit;
-    Vector2f overrideImageSize;
+    const Rule *overrideImageWidth = nullptr;
+    const Rule *overrideImageHeight = nullptr;
     float imageScale;
     Vector4f imageColor;
     Vector4f textGLColor;
@@ -58,7 +60,7 @@ public Font::RichFormat::IStyle
     Rule const *outHeight;
     AnimationRule *appearSize;
     LabelWidget::AppearanceAnimation appearType;
-    TimeDelta appearSpan;
+    TimeSpan appearSpan;
 
     // Style.
     DotPath gapId;
@@ -74,7 +76,6 @@ public Font::RichFormat::IStyle
     String styledText;
     TextDrawable glText;
     mutable Vector2ui latestTextSize;
-    //bool wasVisible;
 
     std::unique_ptr<ProceduralImage> image;
     std::unique_ptr<ProceduralImage> overlayImage;
@@ -100,7 +101,6 @@ public Font::RichFormat::IStyle
         , gapId       ("label.gap")
         , shaderId    ("generic.textured.color_ucolor")
         , richStyle   (0)
-        //, wasVisible  (true)
     {
         width     = new ConstantRule(0);
         height    = new ConstantRule(0);
@@ -121,11 +121,13 @@ public Font::RichFormat::IStyle
         releaseRef(outHeight);
         releaseRef(appearSize);
         releaseRef(maxTextWidth);
+        releaseRef(overrideImageWidth);
+        releaseRef(overrideImageHeight);
     }
 
     void updateStyle()
     {
-        Style const &st = self().style();
+        const Style &st = style();
 
         gap = rule(gapId).valuei();
 
@@ -226,7 +228,7 @@ public Font::RichFormat::IStyle
 
     bool hasImage() const
     {
-        return image && image->size() != ProceduralImage::Size(0, 0);
+        return image && image->pointSize() != ProceduralImage::Size(0, 0);
     }
 
     bool hasText() const
@@ -236,15 +238,16 @@ public Font::RichFormat::IStyle
 
     Vector2f imageSize() const
     {
-        Vector2f size = image? image->size() : Vector2f();
+        Vector2f size = image ? pointsToPixels(image->pointSize()) : Vector2f();
+
         // Override components separately.
-        if (overrideImageSize.x > 0)
+        if (overrideImageWidth)
         {
-            size.x = overrideImageSize.x;
+            size.x = overrideImageWidth->value();
         }
-        if (overrideImageSize.y > 0)
+        if (overrideImageHeight)
         {
-            size.y = overrideImageSize.y;
+            size.y = overrideImageHeight->value();
         }
         return size;
     }
@@ -627,7 +630,7 @@ void LabelWidget::setStyleImage(DotPath const &id, String const &heightFromFont)
         setImage(new StyleProceduralImage(id, *this));
         if (!heightFromFont.isEmpty())
         {
-            setOverrideImageSize(style().fonts().font(heightFromFont).height().value());
+            setOverrideImageSize(style().fonts().font(heightFromFont).height());
         }
     }
 }
@@ -728,6 +731,18 @@ void LabelWidget::setImageFit(ContentFit const &fit)
     d->imageFit = fit;
 }
 
+void LabelWidget::setOverrideImageSize(const Rule &width, const Rule &height)
+{
+    changeRef(d->overrideImageWidth, width);
+    changeRef(d->overrideImageHeight, height);
+}
+
+RulePair LabelWidget::overrideImageSize() const
+{
+    return {d->overrideImageWidth ? *d->overrideImageWidth : ConstantRule::zero(),
+            d->overrideImageHeight ? *d->overrideImageHeight : ConstantRule::zero()};
+}
+
 void LabelWidget::setMaximumTextWidth(int pixels)
 {
     setMaximumTextWidth(Const(pixels));
@@ -747,21 +762,6 @@ void LabelWidget::setMinimumHeight(Rule const &minHeight)
 void LabelWidget::setTextStyle(Font::RichFormat::IStyle const *richStyle)
 {
     d->richStyle = richStyle;
-}
-
-void LabelWidget::setOverrideImageSize(Vector2f const &size)
-{
-    d->overrideImageSize = size;
-}
-
-Vector2f LabelWidget::overrideImageSize() const
-{
-    return d->overrideImageSize;
-}
-
-void LabelWidget::setOverrideImageSize(float widthAndHeight)
-{
-    d->overrideImageSize = Vector2f(widthAndHeight, widthAndHeight);
 }
 
 void LabelWidget::setImageScale(float scaleFactor)
@@ -836,7 +836,7 @@ void LabelWidget::glMakeGeometry(GuiVertexBuilder &verts)
         {
             Rectanglef textBox = Rectanglef::fromSize(textSize());
             ui::applyAlignment(d->lineAlign, textBox, layout.text);
-            int const boxSize = toDevicePixels(114);
+            int const boxSize = pointsToPixels(114);
             Vector2f const off(0, textBox.height() * .08f);
             Vector2f const hoff(textBox.height()/2, 0);
             verts.makeFlexibleFrame(Rectanglef(textBox.midLeft() + hoff + off,
@@ -852,7 +852,7 @@ void LabelWidget::glMakeGeometry(GuiVertexBuilder &verts)
 
     if (d->overlayImage)
     {
-        Rectanglef rect = Rectanglef::fromSize(d->overlayImage->size());
+        Rectanglef rect = Rectanglef::fromSize(pointsToPixels(d->overlayImage->pointSize()));
         applyAlignment(d->overlayAlign, rect, contentRect());
         d->overlayImage->glMakeGeometry(verts, rect);
     }
@@ -867,12 +867,6 @@ bool LabelWidget::updateModelViewProjection(Matrix4f &)
 {
     return false;
 }
-
-/*void LabelWidget::viewResized()
-{
-    GuiWidget::viewResized();
-    updateModelViewProjection(d->uMvpMatrix);
-}*/
 
 void LabelWidget::setWidthPolicy(SizePolicy policy)
 {
@@ -900,7 +894,7 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     }
 }
 
-void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta const &span)
+void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeSpan const &span)
 {
     d->appearType = method;
     d->appearSpan = span;
@@ -915,15 +909,30 @@ void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeDelta c
     }
 }
 
-LabelWidget *LabelWidget::newWithText(String const &label, GuiWidget *parent)
+LabelWidget *LabelWidget::newWithText(const String &text, GuiWidget *parent)
 {
     LabelWidget *w = new LabelWidget;
-    w->setText(label);
+    w->setText(text);
     if (parent)
     {
         parent->add(w);
     }
     return w;
+}
+
+LabelWidget *LabelWidget::appendSeparatorWithText(const String &text, GuiWidget *parent,
+                                                  GridLayout *appendToGrid)
+{
+    std::unique_ptr<LabelWidget> w(newWithText(text, parent));
+    w->setTextColor("accent");
+    w->setFont("separator.label");
+    w->margins().setTop("gap");
+    if (appendToGrid)
+    {
+        appendToGrid->setCellAlignment(Vector2i(0, appendToGrid->gridSize().y), ui::AlignLeft);
+        appendToGrid->append(*w, 2);
+    }
+    return w.release();
 }
 
 } // namespace de

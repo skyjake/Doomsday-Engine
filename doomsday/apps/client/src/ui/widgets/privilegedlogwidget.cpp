@@ -38,10 +38,16 @@ DENG_GUI_PIMPL(PrivilegedLogWidget)
 
         closeButton = new ButtonWidget;
         closeButton->setSizePolicy(ui::Expand, ui::Expand);
-        closeButton->setImage(style().images().image("close.ringless"));
-        closeButton->setImageScale(toDevicePixels(.25f));
-        closeButton->setImageColor(style().colors().colorf("altaccent"));
         self().add(closeButton);
+
+        updateStyle();
+    }
+
+    void updateStyle()
+    {
+        closeButton->setImageScale(.25f);
+        closeButton->setImage(style().images().image("close.ringless"));
+        closeButton->setImageColor(style().colors().colorf("altaccent"));
     }
 };
 
@@ -74,4 +80,10 @@ void PrivilegedLogWidget::hideLog()
 {
     hide();
     d->log->clear();
+}
+
+void PrivilegedLogWidget::updateStyle()
+{
+    GuiWidget::updateStyle();
+    d->updateStyle();
 }

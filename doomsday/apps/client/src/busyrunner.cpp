@@ -49,7 +49,7 @@ using namespace de;
 
 static bool animatedTransitionActive(int busyMode)
 {
-    return (!novideo && !isDedicated && !netGame && !(busyMode & BUSYF_STARTUP) &&
+    return (!novideo && !netGame && !(busyMode & BUSYF_STARTUP) &&
             rTransitionTics > 0 && (busyMode & BUSYF_TRANSITION));
 }
 
@@ -347,7 +347,9 @@ void BusyMode_FreezeGameForBusyMode(void)
         DoomsdayApp::app().busyMode().taskRunner() &&
         App::inMainThread())
     {
+#if !defined (DENG_MOBILE)
         ClientWindow::main().busy().renderTransitionFrame();
+#endif
     }
 }
 

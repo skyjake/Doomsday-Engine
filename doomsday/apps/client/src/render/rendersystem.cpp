@@ -27,6 +27,7 @@
 #include <de/PackageLoader>
 #include <de/ScriptSystem>
 #include <de/ScriptedInfo>
+#include <de/TextValue>
 #include "clientapp.h"
 #include "render/environ.h"
 #include "render/rend_main.h"
@@ -68,7 +69,9 @@ DENG2_PIMPL(RenderSystem)
     Store buffer;
     DrawLists drawLists;
 
-    GLUniform uMapTime { "uMapTime", GLUniform::Float };
+    GLUniform uMapTime          { "uMapTime",          GLUniform::Float };
+    GLUniform uViewMatrix       { "uViewMatrix",       GLUniform::Mat4  };
+    GLUniform uProjectionMatrix { "uProjectionMatrix", GLUniform::Mat4  };
 
     // Texture => world surface projection lists.
     struct ProjectionLists
@@ -238,9 +241,6 @@ DENG2_PIMPL(RenderSystem)
                 .define(SReg::IntCVar,   "rend-model-mirror-hud", 0)
                 .define(SReg::IntCVar,   "rend-model-precache", 1)
                 .define(SReg::IntCVar,   "rend-sprite-precache", 1)
-                .define(SReg::IntCVar,   "rend-light-multitex", 1)
-                .define(SReg::IntCVar,   "rend-model-shiny-multitex", 1)
-                .define(SReg::IntCVar,   "rend-tex-detail-multitex", 1)
                 .define(SReg::IntCVar,   "rend-tex", 1)
                 .define(SReg::IntCVar,   "rend-dev-wireframe", 0)
                 .define(SReg::IntCVar,   "rend-dev-thinker-ids", 0)
@@ -361,23 +361,23 @@ DENG2_PIMPL(RenderSystem)
         ClientApp::shaders().removeAllFromPackage(packageId);
     }
 
-    /**
+    /*
      * Reads all shader definitions and sets up a Bank where the actual
      * compiled shaders are stored once they're needed.
      *
      * @todo This should be reworked to support unloading packages, and
      * loading of new shaders from any newly loaded packages. -jk
      */
-    void loadAllShaders()
-    {
-        // Load all the shader program definitions.
-        FS::FoundFiles found;
-        App::findInPackages("shaders.dei", found);
-        DENG2_FOR_EACH(FS::FoundFiles, i, found)
-        {
-            loadShaders(**i);
-        }
-    }
+//    void loadAllShaders()
+//    {
+//        // Load all the shader program definitions.
+//        FS::FoundFiles found;
+//        App::findInPackages("shaders.dei", found);
+//        DENG2_FOR_EACH(FS::FoundFiles, i, found)
+//        {
+//            loadShaders(**i);
+//        }
+//    }
 
     void loadShaders(File const &defs)
     {
@@ -401,6 +401,14 @@ RenderSystem::RenderSystem() : d(new Impl(this))
 
 void RenderSystem::glInit()
 {
+    // Shader defines.
+    {
+        DictionaryValue defines;
+        defines.add(new TextValue("DGL_BATCH_MAX"),
+                    new NumberValue(DGL_BatchMaxSize()));
+        shaders().setPreprocessorDefines(defines);
+    }
+
     d->models.glInit();
 }
 
@@ -423,6 +431,16 @@ ImageBank &RenderSystem::images()
 GLUniform const &RenderSystem::uMapTime() const
 {
     return d->uMapTime;
+}
+
+GLUniform &RenderSystem::uProjectionMatrix() const
+{
+    return d->uProjectionMatrix;
+}
+
+GLUniform &RenderSystem::uViewMatrix() const
+{
+    return d->uViewMatrix;
 }
 
 render::Environment &RenderSystem::environment()

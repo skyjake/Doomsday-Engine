@@ -14,17 +14,26 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/Packet"
-#include "de/Writer"
+
+#include "de/ByteRefArray"
 #include "de/Reader"
 #include "de/String"
+#include "de/Writer"
 
 #include <QByteArray>
 
 namespace de {
+
+Packet::Type Packet::typeFromString(char const *fourcc)
+{
+    Type type;
+    std::memcpy(type.data(), fourcc, 4);
+    return type;
+}
 
 Packet::Packet(Type const &t)
 {
@@ -33,25 +42,23 @@ Packet::Packet(Type const &t)
 
 void Packet::setType(Type const &t)
 {
-    DENG2_ASSERT(t.size() == TYPE_SIZE);
     _type = t;
 }
 
 void Packet::operator >> (Writer &to) const
 {
-    QByteArray bytes = _type.toLatin1();
-    to << bytes[0] << bytes[1] << bytes[2] << bytes[3];
+    to.writeBytes(ByteRefArray(_type.data(), 4));
 }
 
 void Packet::operator << (Reader &from)
 {
-    char ident[5];
-    from >> ident[0] >> ident[1] >> ident[2] >> ident[3];
-    ident[4] = 0;
-    
+    Type ident;
+    ByteRefArray ref(ident.data(), 4);
+    from.readBytesFixedSize(ref);
+
     // Having been constructed as a specific type, the identifier is already
     // set and cannot change. Let's check if it's the correct one.
-    if (_type.compareWithCase(ident))
+    if (_type != ident)
     {
         throw InvalidTypeError("Packet::operator <<", "Invalid ID");
     }
@@ -60,14 +67,14 @@ void Packet::operator << (Reader &from)
 void Packet::execute() const
 {}
 
-bool Packet::checkType(Reader &from, String const &type)
+bool Packet::checkType(Reader &from, Type const &type)
 {
-    char ident[5];
     from.mark();
-    from >> ident[0] >> ident[1] >> ident[2] >> ident[3];
-    ident[4] = 0;
+    Type ident;
+    ByteRefArray ref(ident.data(), 4);
+    from.readBytesFixedSize(ref);
     from.rewind();
-    return !type.compareWithCase(ident);
+    return type == ident;
 }
 
 } // namespace de

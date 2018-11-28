@@ -54,7 +54,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
     String domainName;
     GameProfile profile;
     shell::ServerInfo serverInfo;
-    TimeDelta ping = -1;
+    TimeSpan ping = -1;
 
     // Network queries.
     ServerLink link; // querying details from the server
@@ -166,10 +166,11 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         bg->rule().setRect(mapOutline->rule())
                   .setInput(Rule::Bottom, gameState->rule().bottom());
 
-        serverPackageActions << new ui::SubwidgetItem(tr("..."), ui::Right, [this] () -> PopupWidget *
-        {
-             return new PackageInfoDialog(serverPackages->actionPackage());
-        });
+        serverPackageActions << new ui::SubwidgetItem(
+            tr("..."), ui::Right, [this]() -> PopupWidget * {
+                return new PackageInfoDialog(serverPackages->actionPackage(),
+                                             PackageInfoDialog::EnableActions);
+            });
 
         // Popups.
 
@@ -177,11 +178,11 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         self().add(serverPopup);
         serverPackages = new PackagesWidget(PackagesWidget::PopulationDisabled);
         serverPackages->margins().set("gap");
-        serverPackages->setHiddenTags(StringList()); // show everything
+        serverPackages->setHiddenTags({"hidden"}); // show everything (top level)
         serverPackages->setActionItems(serverPackageActions);
         serverPackages->setActionsAlwaysShown(true);
         serverPackages->setPackageStatus(*this);
-        serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Packages"));
+        serverPackages->searchTermsEditor().setEmptyContentHint(tr("Filter Server Mods"));
         serverPackages->rule().setInput(Rule::Width, rule("dialog.serverinfo.popup.width"));
         serverPopup->setContent(serverPackages);
 
@@ -196,7 +197,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         localPackages = new PackagesButtonWidget;
         localPackages->setColorTheme(Inverted);
         localPackages->setLabelPrefix(tr("Local: "));
-        localPackages->setNoneLabel(tr("Local Packages..."));
+        localPackages->setNoneLabel(tr("Local Mods..."));
         localPackages->setGameProfile(profile);
         localPackages->disable();
         localPackages->rule().setLeftTop(svBut->rule().right(), svBut->rule().top());
@@ -307,7 +308,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
 
         // Local packages.
         {
-            localPackages->setDialogTitle(tr("Local Packages for %1 Multiplayer").arg(gameTitle));
+            localPackages->setDialogTitle(tr("Local Mods for %1 Multiplayer").arg(gameTitle));
             localPackages->setGameProfile(profile);
             localPackages->setPackages(Game::localMultiplayerPackages(gameId));
         }
@@ -386,7 +387,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             if (!domainName.isEmpty())
             {
                 // Begin a query for the latest details.
-                link.acquireServerProfile(domainName, [this] (Address resolvedAddress,
+                link.acquireServerProfileAsync(domainName, [this] (Address resolvedAddress,
                                                               GameProfile const *svProfile)
                 {
                     host = resolvedAddress;
@@ -395,7 +396,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
             }
             else
             {
-                link.acquireServerProfile(host, [this] (GameProfile const *svProfile)
+                link.acquireServerProfileAsync(host, [this] (GameProfile const *svProfile)
                 {
                     statusReceived(*svProfile);
                 });
@@ -436,7 +437,7 @@ DENG_GUI_PIMPL(ServerInfoDialog)
         startQuery(QueryPing);
     }
 
-    void pingResponse(Address const &, TimeDelta pingTime)
+    void pingResponse(Address const &, TimeSpan pingTime)
     {
         ping = pingTime;
         updateContent();

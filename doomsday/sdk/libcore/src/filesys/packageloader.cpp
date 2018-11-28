@@ -32,13 +32,14 @@
 #include "de/Version"
 
 #include <QMap>
-#include <QRegExp>
+#include <QRegularExpression>
 
 namespace de {
 
 static String const VAR_PACKAGE_VERSION("package.version");
 
 DENG2_PIMPL(PackageLoader)
+, DENG2_OBSERVES(File, Deletion) // loaded package source file is deleted?
 {
     LoadedPackages loaded; ///< Identifiers are unversioned; only one version can be loaded at a time.
     int loadCounter;
@@ -59,10 +60,21 @@ DENG2_PIMPL(PackageLoader)
      */
     Package *tryFindLoaded(File const &file) const
     {
+        #if 0
+        {
+            qDebug() << "tryFindLoaded:" << Package::identifierForFile(file) << file.description();
+            for (auto i = loaded.begin(); i != loaded.end(); ++i)
+            {
+                qDebug() << "  currently loaded:" << i.key() << "file:" << i.value()->file().path() << "source:" << i.value()->sourceFile().path();
+            }
+        }
+        #endif
+
         LoadedPackages::const_iterator found = loaded.constFind(Package::identifierForFile(file));
         if (found != loaded.constEnd())
         {
-            if (&found.value()->file() == &file)
+            auto const &pkg = *found.value();
+            if (&pkg.file() == &file || &pkg.sourceFile() == &file)
             {
                 return found.value();
             }
@@ -165,9 +177,21 @@ DENG2_PIMPL(PackageLoader)
         }
 
         // Each must have a version specified.
-        DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
         {
-            checkPackage(**i);
+            FS::FoundFiles checked;
+            DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
+            {
+                try
+                {
+                    checkPackage(**i);
+                    checked.push_back(*i);
+                }
+                catch (const Error &)
+                {
+                    // Packages with errors cannot be selected.
+                }
+            }
+            found = std::move(checked);
         }
 
         // If the identifier includes a version, only accept that specific version.
@@ -228,6 +252,7 @@ DENG2_PIMPL(PackageLoader)
         loaded.insert(packageId, pkg);
         pkg->setOrder(loadCounter++);
         pkg->didLoad();
+        source.audienceForDeletion() += this;
 
         return *pkg;
     }
@@ -239,10 +264,21 @@ DENG2_PIMPL(PackageLoader)
 
         Package *pkg = found.value();
         pkg->aboutToUnload();
+        if (pkg->sourceFileExists())
+        {
+            pkg->sourceFile().audienceForDeletion() -= this;
+        }
         delete pkg;
-
         loaded.remove(identifier);
         return true;
+    }
+
+    void fileBeingDeleted(const File &file) override
+    {
+        const String pkgId = Package::identifierForFile(file);
+        LOG_RES_WARNING("Unloading package \"%s\": source file has been modified or deleted")
+            << pkgId;
+        unload(pkgId);
     }
 
     void listPackagesInIndex(FileIndex const &index, StringList &list)
@@ -288,6 +324,10 @@ DENG2_PIMPL(PackageLoader)
                     LOG_RES_WARNING("\"%s\": Package has a syntax error: %s")
                             << fileName << er.asText();
                 }
+                catch (const Error &er)
+                {
+                    LOG_RES_WARNING("\"%s\": %s") << fileName << er.asText();
+                }
 
                 /// @todo Store the errors so that the UI can show a list of
                 /// problematic packages. -jk
@@ -313,16 +353,25 @@ DENG2_PIMPL(PackageLoader)
         DictionaryValue const &selPkgs = Config::get("fs.selectedPackages")
                                          .value<DictionaryValue>();
 
-        Record const &meta = Package::metadata(packageFile);
+        const Record &meta = Package::metadata(packageFile);
+        const String idVer = Package::versionedIdentifierForFile(packageFile);
 
-        // Helper function to determine if a particular pacakge is marked for loading.
-        auto isPackageSelected = [meta, &selPkgs] (TextValue const &id, bool byDefault) -> bool {
-            TextValue const key(meta.gets("ID"));
+        // Helper function to determine if a particular package is marked for loading.
+        auto isPackageSelected = [&idVer, &selPkgs] (TextValue const &id, bool byDefault) -> bool {
+            TextValue const key(idVer);
             if (selPkgs.contains(key)) {
                 auto const &sels = selPkgs.element(key).as<DictionaryValue>();
                 if (sels.contains(id)) {
                     return sels.element(id).isTrue();
                 }
+                else
+                {
+                    //LOG_MSG("'%s' not in selectedPackages of '%s'") << id << idVer;
+                }
+            }
+            else
+            {
+                //LOG_MSG("'%s' not in fs.selectedPackages") << idVer;
             }
             return byDefault;
         };
@@ -517,7 +566,7 @@ StringList PackageLoader::loadedPackageIdsInOrder(IdentifierType idType) const
         Version const pkgVersion(meta.gets("version"));
         if (idType == Versioned && pkgVersion.isValid()) // nonzero
         {
-            ids << String("%1_%2").arg(meta.gets("ID")).arg(meta.gets("version"));
+            ids << String("%1_%2").arg(meta.gets("ID")).arg(pkgVersion.fullNumber());
         }
         else
         {
@@ -567,11 +616,11 @@ void PackageLoader::sortInPackageOrder(FS::FoundFiles &filesToSort) const
     }
 }
 
-void PackageLoader::loadFromCommandLine()
+StringList PackageLoader::loadedFromCommandLine() const
 {
+    StringList pkgs;
     CommandLine &args = App::commandLine();
-
-    for (int p = 0; p < args.count(); )
+    for (duint p = 0; p < duint(args.count()); )
     {
         // Find all the -pkg options.
         if (!args.matches("-pkg", args.at(p)))
@@ -579,13 +628,13 @@ void PackageLoader::loadFromCommandLine()
             ++p;
             continue;
         }
-
         // Load all the specified packages (by identifier, not by path).
-        while (++p != args.count() && !args.isOption(p))
+        while (++p != duint(args.count()) && !args.isOption(p))
         {
-            load(args.at(p));
+            pkgs << args.at(p);
         }
     }
+    return pkgs;
 }
 
 StringList PackageLoader::findAllPackages() const
@@ -628,7 +677,7 @@ PackageLoader &PackageLoader::get()
 
 PackageLoader::IdentifierList::IdentifierList(String const &spaceSeparatedIds)
 {
-    static QRegExp anySpace("\\s");
+    static const QRegularExpression anySpace("\\s");
     for (auto const &qs : spaceSeparatedIds.split(anySpace, String::SkipEmptyParts))
     {
         ids.append(qs);

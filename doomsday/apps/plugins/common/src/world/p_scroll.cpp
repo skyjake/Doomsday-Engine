@@ -28,7 +28,7 @@ void T_Scroll(scroll_t *s)
 {
     DENG_ASSERT(s != 0);
 
-    if(FEQUAL(s->offset[0], 0) && FEQUAL(s->offset[1], 0)) return;
+    if(IS_ZERO(s->offset[0]) && IS_ZERO(s->offset[1])) return;
 
     // Side surface(s)?
     if(DMU_GetType(s->dmuObject) == DMU_SIDE)
@@ -127,7 +127,7 @@ static scroll_t *spawnMaterialOriginScroller(void *dmuObject, int elementBits, f
     if(!dmuObject || elementBits <= 0) return 0;
 
     // Don't spawn a scroller with a zero-length offset vector.
-    if(FEQUAL(offsetXY[0], 0) && FEQUAL(offsetXY[1], 0))
+    if(IS_ZERO(offsetXY[0]) && IS_ZERO(offsetXY[1]))
     {
         return 0;
     }

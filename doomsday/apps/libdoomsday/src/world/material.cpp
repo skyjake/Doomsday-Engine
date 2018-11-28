@@ -222,6 +222,11 @@ void Material::setHeight(int newHeight)
     setDimensions(Vector2ui(width(), newHeight));
 }
 
+bool Material::isAnimated() const
+{
+    return hasAnimatedTextureLayers();
+}
+
 void Material::setWidth(int newWidth)
 {
     setDimensions(Vector2ui(newWidth, height()));

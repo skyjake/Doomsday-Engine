@@ -22,6 +22,7 @@
 #include <de/ArrayValue>
 #include <de/CommandLine>
 #include <de/Config>
+#include <de/ConstantRule>
 #include <de/DictionaryValue>
 #include <de/FileSystem>
 #include <de/Function>
@@ -91,19 +92,21 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     return 0;
 }
 
-DENG2_PIMPL_NOREF(BaseGuiApp)
+DENG2_PIMPL(BaseGuiApp)
+, DENG2_OBSERVES(Variable, Change)
 {
     Binder binder;
     QScopedPointer<PersistentState> uiState;
     GLShaderBank shaders;
     WaveformBank waveforms;
     VRConfig vr;
-    double dpiFactor = 1.0;
+    float windowPixelRatio = 1.0f; ///< Without user's Config.ui.scaleConfig
+    ConstantRule *pixelRatio = new ConstantRule;
 
-#ifdef WIN32
-    Impl()
+    Impl(Public *i) : Base(i)
     {
-        // Use the Direct2D API to find out the desktop DPI factor.
+#if defined(WIN32)
+        // Use the Direct2D API to find out the desktop pixel ratio.
         ID2D1Factory *d2dFactory = nullptr;
         HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);
         if (SUCCEEDED(hr))
@@ -111,18 +114,28 @@ DENG2_PIMPL_NOREF(BaseGuiApp)
             FLOAT dpiX = 96;
             FLOAT dpiY = 96;
             d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-            dpiFactor = dpiX / 96.0;
+            windowPixelRatio = dpiX / 96.0;
             d2dFactory->Release();
             d2dFactory = nullptr;
         }
-    }
 #endif
+    }
+
+    ~Impl() override
+    {
+        releaseRef(pixelRatio);
+    }
+
+    void variableValueChanged(Variable &, const Value &) override
+    {
+        self().setPixelRatio(windowPixelRatio);
+    }
 };
 
 BaseGuiApp::BaseGuiApp(int &argc, char **argv)
-    : GuiApp(argc, argv), d(new Impl)
+    : GuiApp(argc, argv), d(new Impl(this))
 {
-    d->binder.init(scriptSystem().nativeModule("App"))
+    d->binder.init(scriptSystem()["App"])
             << DENG2_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
             << DENG2_FUNC (App_LoadFont,       "loadFont", "fileName");
 }
@@ -135,35 +148,44 @@ void BaseGuiApp::glDeinit()
     d->shaders.clear();
 }
 
-double BaseGuiApp::dpiFactor() const
-{
-    return d->dpiFactor;
-}
-
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
 
-#ifndef WIN32
-#  ifdef DENG2_QT_5_0_OR_NEWER
-    d->dpiFactor = devicePixelRatio();
-#  else
-    d->dpiFactor = 1.0;
-#  endif
+#if !defined(WIN32)
+    d->windowPixelRatio = float(devicePixelRatio());
 #endif
-
-    // The "-dpi" option overrides the detected DPI factor.
+    // The "-dpi" option overrides the detected pixel ratio.
     if (auto dpi = commandLine().check("-dpi", 1))
     {
-        d->dpiFactor = dpi.params.at(0).toDouble();
+        d->windowPixelRatio = dpi.params.at(0).toFloat();
     }
+    setPixelRatio(d->windowPixelRatio);
 
-    // Apply the overall UI scale factor.
-    d->dpiFactor *= config().getf("ui.scaleFactor", 1.f);
-
-    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
+    Config::get("ui.scaleFactor").audienceForChange() += d;
 
     d->uiState.reset(new PersistentState("UIState"));
+}
+
+const Rule &BaseGuiApp::pixelRatio() const
+{
+    return *d->pixelRatio;
+}
+
+void BaseGuiApp::setPixelRatio(float pixelRatio)
+{
+    d->windowPixelRatio = pixelRatio;
+
+    // Apply the overall UI scale factor.
+    pixelRatio *= config().getf("ui.scaleFactor", 1.0f);
+
+    if (!fequal(d->pixelRatio->value(), pixelRatio))
+    {
+        LOG_VERBOSE("Pixel ratio changed to %.1f") << pixelRatio;
+
+        d->pixelRatio->set(pixelRatio);
+        scriptSystem()["DisplayMode"].set("PIXEL_RATIO", Value::Number(pixelRatio));
+    }
 }
 
 BaseGuiApp &BaseGuiApp::app()
@@ -193,23 +215,32 @@ VRConfig &BaseGuiApp::vr()
 
 void BaseGuiApp::beginNativeUIMode()
 {
+#if !defined (DENG_MOBILE)
     // Switch temporarily to windowed mode. Not needed on macOS because the display mode
     // is never changed on that platform.
-#ifndef MACOSX
-    auto &win = static_cast<BaseWindow &>(GLWindow::main());
-    win.saveState();
-    int const windowedMode[] = {
-        BaseWindow::Fullscreen, false,
-        BaseWindow::End
-    };
-    win.changeAttributes(windowedMode);
+    #if !defined (MACOSX)
+    {
+        auto &win = static_cast<BaseWindow &>(GLWindow::main());
+        win.saveState();
+        int const windowedMode[] = {
+            BaseWindow::Fullscreen, false,
+            BaseWindow::End
+        };
+        win.changeAttributes(windowedMode);
+    }
+    #endif
 #endif
 }
 
 void BaseGuiApp::endNativeUIMode()
 {
-#ifndef MACOSX
-    static_cast<BaseWindow &>(GLWindow::main()).restoreState();
+#if !defined (DENG_MOBILE)
+    #if !defined (MACOSX)
+    {
+        static_cast<BaseWindow &>(GLWindow::main()).restoreState();
+    }
+    #endif
 #endif
-}
+}   
+
 } // namespace de

@@ -30,7 +30,6 @@
 #include "ui/dialogs/inputsettingsdialog.h"
 #include "ui/dialogs/manualconnectiondialog.h"
 #include "ui/dialogs/networksettingsdialog.h"
-#include "ui/dialogs/packagesdialog.h"
 #include "ui/dialogs/renderersettingsdialog.h"
 #include "ui/dialogs/uisettingsdialog.h"
 #include "ui/dialogs/videosettingsdialog.h"
@@ -68,7 +67,7 @@
 using namespace de;
 using namespace de::ui;
 
-static TimeDelta OPEN_CLOSE_SPAN = 0.2;
+static TimeSpan OPEN_CLOSE_SPAN = 0.2;
 
 enum MenuItemPositions
 {
@@ -78,6 +77,7 @@ enum MenuItemPositions
     POS_GAMES_SEPARATOR   = 3,
     POS_UNLOAD            = 4,
     POS_PACKAGES          = 7,
+    POS_PACKAGES_NOTE     = 8,
 
     // Config menu:
     POS_RENDERER_SETTINGS = 0,
@@ -281,6 +281,7 @@ DENG_GUI_PIMPL(TaskBarWidget)
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
         itemWidget(mainMenu, POS_GAMES_SEPARATOR)  .show(!game.isNull());
         itemWidget(mainMenu, POS_PACKAGES)         .show(!game.isNull());
+        itemWidget(mainMenu, POS_PACKAGES_NOTE)    .show(!game.isNull());
         //itemWidget(mainMenu, POS_IWAD_FOLDER)      .show(game.isNull());
         itemWidget(mainMenu, POS_HOME)             .show(!game.isNull());
         //itemWidget(mainMenu, POS_CONNECT)          .show(game.isNull());
@@ -347,21 +348,16 @@ DENG_GUI_PIMPL(TaskBarWidget)
     }
 };
 
+#if defined (DENG_HAVE_UPDATER)
 static PopupWidget *makeUpdaterSettings()
 {
     return new UpdaterSettingsDialog(UpdaterSettingsDialog::WithApplyAndCheckButton);
 }
+#endif
 
 TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 {
-#if 0
-    // GameWidget is presently too inefficient with blurring.
-    BlurWidget *blur = new BlurWidget("taskbar_blur");
-    add(blur);
-    Background bg(*blur, style().colors().colorf("background"));
-#else
     Background bg(style().colors().colorf("background"));
-#endif
 
     Rule const &gap = rule("gap");
 
@@ -371,7 +367,14 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             .setInput(Rule::Bottom, rule().bottom())
             .setInput(Rule::Right,  rule().right())
             .setInput(Rule::Top,    rule().top());
-    d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
+    if (style().isBlurringAllowed())
+    {
+        d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vector4f(1, 1, 1, 1)));
+    }
+    else
+    {
+        d->backBlur->set(Background(Vector4f(0, 0, 0, 1)));
+    }
     add(d->backBlur);
 
     d->console = new ConsoleWidget;
@@ -464,8 +467,11 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << new ui::SubwidgetItem(style().images().image("network"),   tr("Network"),        ui::Left, makePopup<NetworkSettingsDialog>)
             << new ui::Item(ui::Item::Separator)
             << new ui::SubwidgetItem(style().images().image("package.icon"), tr("Data Files"),     ui::Left, makePopup<DataFileSettingsDialog>)
-            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>)
+            << new ui::SubwidgetItem(style().images().image("home.icon"), tr("User Interface"), ui::Left, makePopup<UISettingsDialog>);
+#if defined (DENG_HAVE_UPDATER)
+    d->configMenu->items()
             << new ui::SubwidgetItem(style().images().image("updater"),   tr("Updater"),        ui::Left, makeUpdaterSettings);
+#endif
 
     auto *helpMenu = new ui::SubmenuItem(tr("Help"), ui::Left);
     helpMenu->items()
@@ -481,15 +487,24 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             << unloadMenu                           // hidden with null-game
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Resources"))
-            << new ui::ActionItem(tr("Browse Packages..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            << new ui::ActionItem(tr("Browse Mods..."), new SignalAction(this, SLOT(openPackagesSidebar())))
+            << new ui::Item(ui::Item::Annotation,
+                            tr("Load/unload data files and view package information."))
             << new ui::ActionItem(tr("Clear Cache"), new CallbackAction([] () { DoomsdayApp::app().clearCache(); }))
+            << new ui::Item(ui::Item::Annotation,
+                            tr("Forces a refresh of resource file metadata."))
             << new ui::Item(ui::Item::Separator)
             << new ui::Item(ui::Item::Separator, tr("Doomsday"))
+#if defined (DENG_HAVE_UPDATER)
             << new ui::ActionItem(tr("Check for Updates"), new CommandAction("updateandnotify"))
+#endif
             << new ui::ActionItem(tr("About Doomsday"), new SignalAction(this, SLOT(showAbout())))
             << helpMenu
+#if !defined (DENG_MOBILE)
             << new ui::Item(ui::Item::Separator)
-            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"));
+            << new ui::ActionItem(tr("Quit Doomsday"), new CommandAction("quit!"))
+#endif
+            ;
 
     d->showOrHideMenuItems();
 
@@ -772,6 +787,7 @@ void TaskBarWidget::showAbout()
     root().window().glDone();
 }
 
+#if defined (DENG_HAVE_UPDATER)
 void TaskBarWidget::showUpdaterSettings()
 {
     /// @todo This has actually little to do with the taskbar. -jk
@@ -780,6 +796,7 @@ void TaskBarWidget::showUpdaterSettings()
     root().addOnTop(dlg);
     dlg->open();
 }
+#endif
 
 void TaskBarWidget::showOrHideHome()
 {

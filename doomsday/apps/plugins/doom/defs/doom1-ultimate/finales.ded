@@ -1,0 +1,21 @@
+# Episode IV: Thy Flesh Consumed
+Finale
+{
+  After = "E4M8";
+  Script {
+    noskip # This is the end, no more levels after this.
+    music "victor"
+    flat Values:BGFLATE4
+    wait 0.5
+    textdef msg 10 10 "E4TEXT"
+    waittext msg
+    wait 7 # The original TEXTWAIT is 250 tics.
+    # Fade to the Deimos picture.
+    patch back 0 0 ENDPIC
+    alpha back 0
+    in 2 alpha back 1; textalpha msg 0
+    wait 2
+    deltext msg
+    noflat
+  };
+}

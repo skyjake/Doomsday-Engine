@@ -99,7 +99,7 @@ void Vertex::countLineOwners()
             {
                 _twosOwnerCount += 1;
             }
-        } while((own = &own->next()) != firstOwn);
+        } while((own = own->next()) != firstOwn);
     }
 }
 
@@ -198,7 +198,7 @@ void Vertex::updateShadowOffsets()
     do
     {
         Line const &lineB = own->line();
-        Line const &lineA = own->next().line();
+        Line const &lineA = own->next()->line();
 
         Vector2d const rightDir = (&lineB.from() == this?  lineB.direction() : -lineB.direction());
         Vector2d const leftDir  = (&lineA.from() == this? -lineA.direction() :  lineA.direction()) * -1;  // Always flipped.
@@ -208,7 +208,7 @@ void Vertex::updateShadowOffsets()
                           &own->_shadowOffsets.inner,
                           &own->_shadowOffsets.extended);
 
-        own = &own->next();
+        own = own->next();
     } while(own != base);
 }
 

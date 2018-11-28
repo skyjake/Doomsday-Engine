@@ -223,19 +223,19 @@ static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
         return false;
 
     // Don't spawn things flagged for Not Deathmatch if we're deathmatching.
-    if(COMMON_GAMESESSION->rules().deathmatch && (spot->flags & MSF_NOTDM))
+    if(gfw_Rule(deathmatch) && (spot->flags & MSF_NOTDM))
         return false;
 
     // Don't spawn things flagged for Not Coop if we're coop'in.
-    if(IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch && (spot->flags & MSF_NOTCOOP))
+    if(IS_NETGAME && !gfw_Rule(deathmatch) && (spot->flags & MSF_NOTCOOP))
         return false;
 
     // The special "spawn no things" skill mode means nothing is spawned.
-    if(COMMON_GAMESESSION->rules().skill == SM_NOTHINGS)
+    if(gfw_Rule(skill) == SM_NOTHINGS)
         return false;
 
     // Check for appropriate skill level.
-    if(!(spot->skillModes & (1 << COMMON_GAMESESSION->rules().skill)))
+    if(!(spot->skillModes & (1 << gfw_Rule(skill))))
         return false;
 
 #if __JHEXEN__
@@ -249,7 +249,7 @@ static dd_bool checkMapSpotSpawnFlags(mapspot_t const *spot)
             return false;
         }
     }
-    else if(!COMMON_GAMESESSION->rules().deathmatch)
+    else if(!gfw_Rule(deathmatch))
     {
         // Cooperative mode.
 
@@ -493,7 +493,7 @@ static void initMapSpots()
 
     P_DealPlayerStarts(0);
 
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if(gfw_Rule(deathmatch))
     {
         uint numDMStarts = P_GetNumPlayerStarts(true);
         uint playerCount = 0;
@@ -635,18 +635,36 @@ static void spawnMapObjects()
 #if __JHERETIC__
     // Spawn a Firemace?
     App_Log(DE2_DEV_MAP_VERBOSE, "spawnMapObjects: %i Firemace spot(s)", maceSpotCount);
-    if(!IS_CLIENT && maceSpotCount)
+    if (gfw_MapInfoFlags() & MIF_SPAWN_ALL_FIREMACES)
     {
-        // Sometimes the Firemace doesn't show up if not in deathmatch.
-        if(COMMON_GAMESESSION->rules().deathmatch || M_Random() >= 64)
+        for (uint i = 0; i < maceSpotCount; ++i)
         {
-            if(mapspot_t const *spot = P_ChooseRandomMaceSpot())
+            const mapspot_t *spot = &mapSpots[maceSpots[i]];
+            if (checkMapSpotSpawnFlags(spot))
             {
-                App_Log(DE2_DEV_MAP_VERBOSE, "spawnMapObjects: Spawning Firemace at (%g, %g, %g)",
-                        spot->origin[VX], spot->origin[VY], spot->origin[VZ]);
+                P_SpawnMobjXYZ(
+                    MT_WMACE, spot->origin[VX], spot->origin[VY], 0, spot->angle, MSF_Z_FLOOR);
+            }
+        }
+    }
+    else
+    {
+        if (!IS_CLIENT && maceSpotCount)
+        {
+            // Sometimes the Firemace doesn't show up if not in deathmatch.
+            if (gfw_Rule(deathmatch) || M_Random() >= 64)
+            {
+                if (mapspot_t const *spot = P_ChooseRandomMaceSpot())
+                {
+                    App_Log(DE2_DEV_MAP_VERBOSE,
+                            "spawnMapObjects: Spawning Firemace at (%g, %g, %g)",
+                            spot->origin[VX],
+                            spot->origin[VY],
+                            spot->origin[VZ]);
 
-                P_SpawnMobjXYZ(MT_WMACE, spot->origin[VX], spot->origin[VY], 0,
-                               spot->angle, MSF_Z_FLOOR);
+                    P_SpawnMobjXYZ(
+                        MT_WMACE, spot->origin[VX], spot->origin[VY], 0, spot->angle, MSF_Z_FLOOR);
+                }
             }
         }
     }
@@ -661,21 +679,21 @@ static void spawnMapObjects()
 
 void P_SetupMap(de::Uri const &mapUri)
 {
-    if(IS_DEDICATED)
+    if (IS_DEDICATED)
     {
-        // Whenever the map changes, update the game rule config.
-        GameRuleset newRules(COMMON_GAMESESSION->rules()); // make a copy
-        newRules.skill           = cfg.common.netSkill;
-        newRules.deathmatch      = cfg.common.netDeathmatch;
-        newRules.noMonsters      = cfg.common.netNoMonsters;
+        // Whenever the map changes, update the game rule config based on cvars.
+        GameRules newRules(gfw_Session()->rules());
+        GameRules_Set(newRules, skill,      cfg.common.netSkill);
+        GameRules_Set(newRules, deathmatch, cfg.common.netDeathmatch);
+        GameRules_Set(newRules, noMonsters, cfg.common.netNoMonsters);
         /*newRules.*/cfg.common.jumpEnabled = cfg.common.netJumping;
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        newRules.respawnMonsters = cfg.netRespawn;
+        GameRules_Set(newRules, respawnMonsters, cfg.netRespawn);
 #endif
 #if __JHEXEN__
-        newRules.randomClasses   = cfg.netRandomClass;
+        GameRules_Set(newRules, randomClasses, cfg.netRandomClass);
 #endif
-        COMMON_GAMESESSION->applyNewRules(newRules);
+        gfw_Session()->applyNewRules(newRules);
     }
 
     // If we're the server, let clients know the map will change.
@@ -685,10 +703,10 @@ void P_SetupMap(de::Uri const &mapUri)
     mapSetup = true;
 
     ::timerGame = 0;
-    if(COMMON_GAMESESSION->rules().deathmatch)
+    if (gfw_Rule(deathmatch))
     {
         int parm = CommandLine_Check("-timer");
-        if(parm && parm < CommandLine_Count() - 1)
+        if (parm && parm < CommandLine_Count() - 1)
         {
             ::timerGame = atoi(CommandLine_At(parm + 1)) * 35 * 60;
         }
@@ -696,7 +714,7 @@ void P_SetupMap(de::Uri const &mapUri)
 
     P_ResetWorldState();
 
-    if(!P_MapChange(mapUri.compose().toUtf8().constData()))
+    if (!P_MapChange(mapUri.compose().toUtf8().constData()))
     {
         Con_Error("P_SetupMap: Failed changing/loading map \"%s\".\n", mapUri.compose().toUtf8().constData());
         exit(1); // Unreachable.
@@ -910,8 +928,8 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
     XG_Init();
 #endif
 
-    COMMON_GAMESESSION->acsSystem().loadModuleForMap(mapUri);
-    COMMON_GAMESESSION->acsSystem().worldSystemMapChanged();
+    gfw_Session()->acsSystem().loadModuleForMap(mapUri);
+    gfw_Session()->acsSystem().worldSystemMapChanged();
 
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     P_FindSecrets();
@@ -1028,7 +1046,7 @@ void P_ResetWorldState()
             plr->playerState = PST_REBORN;
 
 #if __JHEXEN__
-        if(!IS_NETGAME || (IS_NETGAME != 0 && COMMON_GAMESESSION->rules().deathmatch != 0) || firstFragReset == 1)
+        if(!IS_NETGAME || (IS_NETGAME != 0 && gfw_Rule(deathmatch) != 0) || firstFragReset == 1)
         {
             memset(plr->frags, 0, sizeof(plr->frags));
             firstFragReset = 0;

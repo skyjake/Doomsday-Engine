@@ -37,6 +37,9 @@ class LIBAPPFW_PUBLIC SliderWidget : public GuiWidget
     Q_OBJECT
 
 public:
+    DENG2_DEFINE_AUDIENCE2(Change, void sliderValueChanged(SliderWidget &))
+
+public:
     SliderWidget(String const &name = String());
 
     void setRange(Rangei const &intRange, int step = 1);

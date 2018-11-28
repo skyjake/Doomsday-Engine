@@ -417,64 +417,64 @@ class Event:
         else:
             return "http://files.dengine.net/builds/" + self.name          
 
-    def xml_description(self):
-        msg = '<build>'
-        msg += '<uniqueId>%i</uniqueId>' % self.number()
-        msg += '<startDate>%s</startDate>' % self.text_timestamp()
-        msg += '<authorName>%s</authorName>' % config.BUILD_AUTHOR_NAME
-        msg += '<authorEmail>%s</authorEmail>' % config.BUILD_AUTHOR_EMAIL
-        msg += '<releaseType>%s</releaseType>' % self.release_type()
-        files = self.list_package_files()
-        msg += '<packageCount>%i</packageCount>' % len(files)
-        
-        # These logs were already linked to.
-        includedLogs = []
-        
-        distribVersion = None
-        
-        # Packages.
-        for fn in files:
-            msg += '<package type="%s">' % self.package_type(fn)
-            msg += '<name>%s</name>' % self.packageName[self.package_from_filename(fn)]
-            msg += '<version>%s</version>' % self.version_from_filename(fn)
-            msg += '<platform>%s</platform>' % self.platId[self.os_from_filename(fn)[2]]
-            msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
-            msg += '<downloadFallbackUri>%s</downloadFallbackUri>' % self.download_fallback_uri(fn)
-            logName = self.compressed_log_filename(fn)
-            if os.path.exists(self.file_path(logName)):
-                msg += self.xml_log(logName)
-                includedLogs.append(logName)
-            msg += '</package>'
-            
-            if distribVersion is None:
-                distribVersion = self.version_from_filename(fn)
-
-        # Any other logs we might want to include?
-        for osName, osExt, osIdent in self.oses:
-            for pkg in self.packages:
-                logName = log_filename(pkg, osIdent)
-                if os.path.exists(self.file_path(logName)) and logName not in includedLogs:
-                    # Add an entry for this.
-                    msg += '<package type="%s">' % self.package_type(logName)
-                    msg += '<name>%s</name>' % self.packageName[pkg]
-                    if self.version_from_filename(logName):
-                        msg += '<version>%s</version>' % self.version_from_filename(logName)
-                        if distribVersion is None:
-                            distribVersion = self.version_from_filename(logName)
-                    msg += '<platform>%s</platform>' % self.platId[osIdent]
-                    msg += self.xml_log(logName)
-                    msg += '</package>'
-                            
-        if distribVersion:
-            msg += '<releaseNotes>%s</releaseNotes>' % self.release_notes_uri(distribVersion)
-            msg += '<changeLog>%s</changeLog>' % self.changelog_uri(distribVersion)
-        
-        # Commits.
-        chgFn = self.file_path('changes.xml')
-        if os.path.exists(chgFn):
-            msg += file(chgFn, 'rt').read()
-                    
-        return msg + '</build>'
+    # def xml_description(self):
+    #     msg = '<build>'
+    #     msg += '<uniqueId>%i</uniqueId>' % self.number()
+    #     msg += '<startDate>%s</startDate>' % self.text_timestamp()
+    #     msg += '<authorName>%s</authorName>' % config.BUILD_AUTHOR_NAME
+    #     msg += '<authorEmail>%s</authorEmail>' % config.BUILD_AUTHOR_EMAIL
+    #     msg += '<releaseType>%s</releaseType>' % self.release_type()
+    #     files = self.list_package_files()
+    #     msg += '<packageCount>%i</packageCount>' % len(files)
+    #
+    #     # These logs were already linked to.
+    #     includedLogs = []
+    #
+    #     distribVersion = None
+    #
+    #     # Packages.
+    #     for fn in files:
+    #         msg += '<package type="%s">' % self.package_type(fn)
+    #         msg += '<name>%s</name>' % self.packageName[self.package_from_filename(fn)]
+    #         msg += '<version>%s</version>' % self.version_from_filename(fn)
+    #         msg += '<platform>%s</platform>' % self.platId[self.os_from_filename(fn)[2]]
+    #         msg += '<downloadUri>%s</downloadUri>' % self.download_uri(fn)
+    #         msg += '<downloadFallbackUri>%s</downloadFallbackUri>' % self.download_fallback_uri(fn)
+    #         logName = self.compressed_log_filename(fn)
+    #         if os.path.exists(self.file_path(logName)):
+    #             msg += self.xml_log(logName)
+    #             includedLogs.append(logName)
+    #         msg += '</package>'
+    #
+    #         if distribVersion is None:
+    #             distribVersion = self.version_from_filename(fn)
+    #
+    #     # Any other logs we might want to include?
+    #     for osName, osExt, osIdent in self.oses:
+    #         for pkg in self.packages:
+    #             logName = log_filename(pkg, osIdent)
+    #             if os.path.exists(self.file_path(logName)) and logName not in includedLogs:
+    #                 # Add an entry for this.
+    #                 msg += '<package type="%s">' % self.package_type(logName)
+    #                 msg += '<name>%s</name>' % self.packageName[pkg]
+    #                 if self.version_from_filename(logName):
+    #                     msg += '<version>%s</version>' % self.version_from_filename(logName)
+    #                     if distribVersion is None:
+    #                         distribVersion = self.version_from_filename(logName)
+    #                 msg += '<platform>%s</platform>' % self.platId[osIdent]
+    #                 msg += self.xml_log(logName)
+    #                 msg += '</package>'
+    #
+    #     if distribVersion:
+    #         msg += '<releaseNotes>%s</releaseNotes>' % self.release_notes_uri(distribVersion)
+    #         msg += '<changeLog>%s</changeLog>' % self.changelog_uri(distribVersion)
+    #
+    #     # Commits.
+    #     chgFn = self.file_path('changes.xml')
+    #     if os.path.exists(chgFn):
+    #         msg += file(chgFn, 'rt').read()
+    #
+    #     return msg + '</build>'
 
 
 def find_newest_event():

@@ -95,20 +95,22 @@ public:
     virtual ~Package();
 
     /**
-     * Returns the ".pack" file of the Package. In practice, this may be a ZIP folder,
-     * an regular folder, or a link to a DataBundle. You should use sourceFile() to
-     * access the file where the package's contents are stored in.
+     * Returns the ".pack" file of the Package. In practice, this may be a ZIP folder, an
+     * regular folder, or a link to a DataBundle. You should use sourceFile() to access
+     * the file in which the package's contents are actually stored.
      *
      * @return Package file.
      */
     File const &file() const;
 
     /**
-     * Returns the original source file of the package, where the package's
-     * contents are being sourced from. This is usually the file referenced
-     * by the "path" member in the package metadata.
+     * Returns the original source file of the package, where the package's contents are
+     * being sourced from. This is usually the file referenced by the "path" member in
+     * the package metadata.
      */
     File const &sourceFile() const;
+
+    bool sourceFileExists() const;
 
     /**
      * Returns the package's root folder.

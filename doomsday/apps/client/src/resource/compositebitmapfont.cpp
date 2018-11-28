@@ -73,50 +73,50 @@ CompositeBitmapFont::CompositeBitmapFont(FontManifest &manifest)
     : AbstractFont(manifest), d(new Impl(this))
 {}
 
-int CompositeBitmapFont::ascent()
+int CompositeBitmapFont::ascent() const
 {
     glInit();
     return d->ascent;
 }
 
-int CompositeBitmapFont::descent()
+int CompositeBitmapFont::descent() const
 {
     glInit();
     return d->descent;
 }
 
-int CompositeBitmapFont::lineSpacing()
+int CompositeBitmapFont::lineSpacing() const
 {
     glInit();
     return d->leading;
 }
 
-Rectanglei const &CompositeBitmapFont::glyphPosCoords(uchar ch)
+Rectanglei const &CompositeBitmapFont::glyphPosCoords(uchar ch) const
 {
     glInit();
     return d->glyph(ch).geometry;
 }
 
-Rectanglei const &CompositeBitmapFont::glyphTexCoords(uchar /*ch*/)
+Rectanglei const &CompositeBitmapFont::glyphTexCoords(uchar /*ch*/) const
 {
     static Rectanglei coords(Vector2i(0, 0), Vector2i(1, 1));
     glInit();
     return coords;
 }
 
-uint CompositeBitmapFont::glyphTextureBorder(uchar ch)
+uint CompositeBitmapFont::glyphTextureBorder(uchar ch) const
 {
     glInit();
     return d->glyph(ch).border;
 }
 
-TextureVariant *CompositeBitmapFont::glyphTexture(uchar ch)
+TextureVariant *CompositeBitmapFont::glyphTexture(uchar ch) const
 {
     glInit();
     return d->glyph(ch).tex;
 }
 
-patchid_t CompositeBitmapFont::glyphPatch(uchar ch)
+patchid_t CompositeBitmapFont::glyphPatch(uchar ch) const
 {
     glInit();
     return d->glyph(ch).patch;
@@ -139,10 +139,10 @@ static TextureVariantSpec const &glyphTextureSpec()
         GL_CLAMP_TO_EDGE, 0, -3, 0, false, false, false, false);
 }
 
-void CompositeBitmapFont::glInit()
+void CompositeBitmapFont::glInit() const
 {
     if(!d->needGLInit) return;
-    if(novideo || isDedicated || BusyMode_Active()) return;
+    if(novideo || BusyMode_Active()) return;
 
     LOG_AS("CompositeBitmapFont");
 
@@ -193,9 +193,9 @@ void CompositeBitmapFont::glInit()
     d->needGLInit = false;
 }
 
-void CompositeBitmapFont::glDeinit()
+void CompositeBitmapFont::glDeinit() const
 {
-    if(novideo || isDedicated) return;
+    if(novideo) return;
 
     d->needGLInit = true;
     if(BusyMode_Active()) return;

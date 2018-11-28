@@ -74,7 +74,7 @@ DENG_EXTERN_C de::dint modelLight;
 DENG_EXTERN_C de::dint frameInter;
 DENG_EXTERN_C de::dfloat modelAspectMod;
 DENG_EXTERN_C de::dint mirrorHudModels;
-DENG_EXTERN_C de::dint modelShinyMultitex;
+//DENG_EXTERN_C de::dint modelShinyMultitex;
 DENG_EXTERN_C de::dfloat modelSpinSpeed;
 DENG_EXTERN_C de::dint maxModelDistance;
 DENG_EXTERN_C de::dfloat rendModelLOD;

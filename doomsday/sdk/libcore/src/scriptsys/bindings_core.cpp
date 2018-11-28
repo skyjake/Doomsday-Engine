@@ -28,6 +28,7 @@
 #include "de/Path"
 #include "de/Record"
 #include "de/RecordValue"
+#include "de/RemoteFile"
 #include "de/TextValue"
 #include "de/TimeValue"
 
@@ -94,7 +95,7 @@ static Value *Function_Dictionary_Values(Context &ctx, Function::ArgumentValues 
 
 //---------------------------------------------------------------------------------------
 
-static File const &fileInstance(Context &ctx)
+static File &fileInstance(Context &ctx)
 {
     // The record is expected to have a path (e.g., File info record).
     File *file = ctx.selfInstance().get(Record::VAR_NATIVE_SELF)
@@ -106,70 +107,94 @@ static File const &fileInstance(Context &ctx)
     return *file;
 }
 
+static File const &constFileInstance(Context &ctx)
+{
+    return fileInstance(ctx);
+}
+
 static Value *Function_File_Name(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(fileInstance(ctx).name());
+    return new TextValue(constFileInstance(ctx).name());
 }
 
 static Value *Function_File_Path(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(fileInstance(ctx).path());
+    return new TextValue(constFileInstance(ctx).path());
 }
 
 static Value *Function_File_Type(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(fileInstance(ctx).status().type() == File::Status::FILE? "file" : "folder");
+    return new TextValue(constFileInstance(ctx).status().type() == File::Type::File? "file" : "folder");
 }
 
 static Value *Function_File_Size(Context &ctx, Function::ArgumentValues const &)
 {
-    return new NumberValue(fileInstance(ctx).size());
+    return new NumberValue(constFileInstance(ctx).size());
 }
 
 static Value *Function_File_ModifiedAt(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TimeValue(fileInstance(ctx).status().modifiedAt);
+    return new TimeValue(constFileInstance(ctx).status().modifiedAt);
 }
 
 static Value *Function_File_Description(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(fileInstance(ctx).description());
+    return new TextValue(constFileInstance(ctx).description());
 }
 
 static Value *Function_File_Locate(Context &ctx, Function::ArgumentValues const &args)
 {
     Path const relativePath = args.at(0)->asText();
-
-    if (File const *found = maybeAs<File>(fileInstance(ctx).tryFollowPath(relativePath)))
+    if (File const *found = maybeAs<File>(constFileInstance(ctx).tryFollowPath(relativePath)))
     {
         return new RecordValue(found->objectNamespace());
     }
     // Wasn't there, result is None.
-    return 0;
+    return nullptr;
 }
 
 static Value *Function_File_Read(Context &ctx, Function::ArgumentValues const &)
 {
     QScopedPointer<BlockValue> data(new BlockValue);
-    fileInstance(ctx) >> *data;
+    constFileInstance(ctx) >> *data;
     return data.take();
 }
 
 static Value *Function_File_ReadUtf8(Context &ctx, Function::ArgumentValues const &)
 {
     Block raw;
-    fileInstance(ctx) >> raw;
+    constFileInstance(ctx) >> raw;
     return new TextValue(String::fromUtf8(raw));
+}
+
+static Value *Function_File_Replace(Context &ctx, Function::ArgumentValues const &args)
+{
+    Folder &parentFolder = fileInstance(ctx).as<Folder>();
+    File &created = parentFolder.replaceFile(args.at(0)->asText());
+    return new RecordValue(created.objectNamespace());
+}
+
+static Value *Function_File_Write(Context &ctx, Function::ArgumentValues const &args)
+{
+    BlockValue const &data = args.at(0)->as<BlockValue>();
+    fileInstance(ctx) << data.block();
+    return nullptr;
+}
+
+static Value *Function_File_Flush(Context &ctx, Function::ArgumentValues const &)
+{
+    fileInstance(ctx).flush();
+    return nullptr;
 }
 
 static Value *Function_File_MetaId(Context &ctx, Function::ArgumentValues const &)
 {
-    return new TextValue(fileInstance(ctx).metaId().asHexadecimalText());
+    return new TextValue(constFileInstance(ctx).metaId().asHexadecimalText());
 }
 
 static Value *Function_Folder_List(Context &ctx, Function::ArgumentValues const &)
 {
-    Folder const &folder = fileInstance(ctx).as<Folder>();
+    Folder const &folder = constFileInstance(ctx).as<Folder>();
     std::unique_ptr<ArrayValue> array(new ArrayValue);
     foreach (String name, folder.contents().keys())
     {
@@ -180,8 +205,22 @@ static Value *Function_Folder_List(Context &ctx, Function::ArgumentValues const 
 
 static Value *Function_Folder_ContentSize(Context &ctx, Function::ArgumentValues const &)
 {
-    Folder const &folder = fileInstance(ctx).as<Folder>();
+    Folder const &folder = constFileInstance(ctx).as<Folder>();
     return new NumberValue(folder.contents().size());
+}
+
+static Value *Function_Folder_Contents(Context &ctx, Function::ArgumentValues const &)
+{
+    Folder const &folder = constFileInstance(ctx).as<Folder>();
+    LOG_SCR_MSG(_E(m) "%s") << folder.contentsAsText();
+    return nullptr;
+}
+
+static Value *Function_RemoteFile_Download(Context &ctx, Function::ArgumentValues const &)
+{
+    RemoteFile &rf = fileInstance(ctx).as<RemoteFile>();
+    rf.download();
+    return nullptr;
 }
 
 //---------------------------------------------------------------------------------------
@@ -232,6 +271,8 @@ static Value *Function_Animation_SetValueFrom(Context &ctx, Function::ArgumentVa
 
 void initCoreModule(Binder &binder, Record &coreModule)
 {
+    // The Core module contains classes that match native classes as closely as possible.
+
     // Dictionary
     {
 
@@ -271,12 +312,15 @@ void initCoreModule(Binder &binder, Record &coreModule)
                 << DENG2_FUNC_NOARG(File_Path, "path")
                 << DENG2_FUNC_NOARG(File_Type, "type")
                 << DENG2_FUNC_NOARG(File_Size, "size")
+                << DENG2_FUNC_NOARG(File_MetaId, "metaId")
                 << DENG2_FUNC_NOARG(File_ModifiedAt, "modifiedAt")
                 << DENG2_FUNC_NOARG(File_Description, "description")
                 << DENG2_FUNC      (File_Locate, "locate", "relativePath")
                 << DENG2_FUNC_NOARG(File_Read, "read")
                 << DENG2_FUNC_NOARG(File_ReadUtf8, "readUtf8")
-                << DENG2_FUNC_NOARG(File_MetaId, "metaId");
+                << DENG2_FUNC      (File_Replace, "replace", "relativePath")
+                << DENG2_FUNC      (File_Write, "write", "data")
+                << DENG2_FUNC_NOARG(File_Flush, "flush");
     }
 
     // Folder
@@ -284,7 +328,15 @@ void initCoreModule(Binder &binder, Record &coreModule)
         Record &folder = coreModule.addSubrecord("Folder").setFlags(Record::WontBeDeleted);
         binder.init(folder)
                 << DENG2_FUNC_NOARG(Folder_List, "list")
+                << DENG2_FUNC_NOARG(Folder_Contents, "contents")
                 << DENG2_FUNC_NOARG(Folder_ContentSize, "contentSize");
+    }
+
+    // RemoteFile
+    {
+        Record &remoteFile = coreModule.addSubrecord("RemoteFile").setFlags(Record::WontBeDeleted);
+        binder.init(remoteFile)
+                << DENG2_FUNC_NOARG(RemoteFile_Download, "download");
     }
 
     // Animation
@@ -305,6 +357,8 @@ void initCoreModule(Binder &binder, Record &coreModule)
                 << DENG2_FUNC_DEFS (Animation_SetValueFrom, "setValueFrom",
                                     "fromValue" << "toValue" << "span" << "delay", setValueFromArgs);
     }
+
+
 }
 
 } // namespace de

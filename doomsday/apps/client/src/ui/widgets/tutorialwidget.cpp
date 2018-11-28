@@ -37,7 +37,7 @@
 
 using namespace de;
 
-static TimeDelta const FLASH_SPAN = 0.6;
+static TimeSpan const FLASH_SPAN = 0.6;
 
 DENG_GUI_PIMPL(TutorialWidget)
 {
@@ -72,7 +72,7 @@ DENG_GUI_PIMPL(TutorialWidget)
         exampleAlert.reset(new LabelWidget);
         exampleAlert->setSizePolicy(ui::Expand, ui::Expand);
         exampleAlert->setImage(style().images().image("alert"));
-        exampleAlert->setOverrideImageSize(style().fonts().font("default").height().value());
+        exampleAlert->setOverrideImageSize(style().fonts().font("default").height());
         exampleAlert->setImageColor(style().colors().colorf("accent"));
 
         // Highlight rectangle.
@@ -248,12 +248,12 @@ DENG_GUI_PIMPL(TutorialWidget)
             break;
 
         case HomeScreen:
-            dlg->title().setText(tr("Home Screen"));
+            dlg->title().setText(tr("Game Library"));
             dlg->message().setText(tr("Here you can browse the library of available games "
                                       "and configure engine settings. You can also join ongoing "
-                                      "multiplayer games and manage your resource packages. "
+                                      "multiplayer games and manage your mods and resource packages. "
                                       "You can unload the current game at "
-                                      "any time to get back to the Home Screen."));
+                                      "any time to get back to the Game Library."));
             startHighlight(*root().guiFind("home"));
             break;
 
@@ -298,7 +298,7 @@ DENG_GUI_PIMPL(TutorialWidget)
                                       "the application menu. "
                                       "You can check for available updates, switch games, or look for "
                                       "ongoing multiplayer games. You can also unload the current game "
-                                      "and return to Doomsday's Home Screen."));
+                                      "and return to Doomsday's Game Library."));
             win.taskBar().openMainMenu();
             dlg->setAnchorAndOpeningDirection(root().guiFind("de-menu")->rule(), ui::Left);
             startHighlight(*root().guiFind("de-button"));

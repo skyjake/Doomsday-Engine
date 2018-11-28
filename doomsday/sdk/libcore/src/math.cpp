@@ -20,7 +20,24 @@
 #include "de/IByteArray"
 #include "de/Reader"
 
+#include <chrono>
+#include <random>
+
 namespace de {
+
+float randf()
+{
+    using namespace std;
+
+    static minstd_rand rng(uint32_t(chrono::system_clock::to_time_t(chrono::system_clock::now())));
+
+    return float(double(rng() - rng.min()) / double(rng.max() - rng.min() + 1));
+}
+
+duint32 randui32()
+{
+    return duint32(randf() * 0x10000) | (duint32(randf() * 0x10000) << 16);
+}
 
 duint32 crc32(IByteArray const &data)
 {

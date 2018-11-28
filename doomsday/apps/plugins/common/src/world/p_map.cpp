@@ -89,7 +89,7 @@ coord_t P_GetGravity()
     {
         return (coord_t) cfg.common.netGravity / 100;
     }
-    return *((coord_t *) DD_GetVariable(DD_GRAVITY));
+    return *((coord_t *) DD_GetVariable(DD_MAP_GRAVITY));
 }
 
 /**
@@ -195,7 +195,7 @@ static int PIT_StompThing(mobj_t *mo, void *context)
             return true;
 #elif __JDOOM__
         // Monsters only stomp on a boss map.
-        if(!Mobj_IsPlayer(parm.stompMobj) && COMMON_GAMESESSION->mapUri().path() != "MAP30")
+        if(!Mobj_IsPlayer(parm.stompMobj) && gfw_Session()->mapUri().path() != "MAP30")
             return true;
 #endif
     }
@@ -479,7 +479,7 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
         {
             if((thing->flags & MF_SHOOTABLE) && thing != tmThing->target)
             {
-                if(IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch && thing->player)
+                if(IS_NETGAME && !gfw_Rule(deathmatch) && thing->player)
                 {
                     return false; // don't attack other co-op players
                 }
@@ -1101,7 +1101,12 @@ static int PIT_CheckLine(Line *ld, void * /*context*/)
 
 dd_bool P_CheckPositionXYZ(mobj_t *thing, coord_t x, coord_t y, coord_t z)
 {
-#if !__JHEXEN__
+#if defined(__JHERETIC__)
+    if (thing->type != MT_POD) // vanilla onMobj behavior for pods
+    {
+        thing->onMobj = nullptr;
+    }
+#elif !__JHEXEN__
     thing->onMobj  = 0;
 #endif
     thing->wallHit = false;
@@ -1864,7 +1869,7 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
                 divisor *= 2;
 
                 // Can we get any closer?
-                if(FEQUAL(d[VZ] / divisor, 0))
+                if(IS_ZERO(d[VZ] / divisor))
                 {
                     break; // No.
                 }
@@ -2065,7 +2070,7 @@ static int PTR_AimTraverse(Intercept const *icpt, void * /*context*/)
 
 #if __JDOOM__ || __JHEXEN__ || __JDOOM64__
     if(Mobj_IsPlayer(shooterThing) && Mobj_IsPlayer(th) &&
-       IS_NETGAME && !COMMON_GAMESESSION->rules().deathmatch)
+       IS_NETGAME && !gfw_Rule(deathmatch))
     {
         // In co-op, players don't aim at fellow players (although manually aiming is
         // always possible).
@@ -3029,7 +3034,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
         {
             mo->mom[MZ] = -(P_GetGravity() / 32) * 2;
         }
@@ -3040,7 +3045,7 @@ mobj_t *P_CheckOnMobj(mobj_t *mo)
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
         {
             mo->mom[MZ] = -P_GetGravity() * 2;
         }
@@ -3249,11 +3254,11 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         }
 
         // A known ACScript?
-        if(COMMON_GAMESESSION->acsSystem().hasScript(xline->arg2))
+        if(gfw_Session()->acsSystem().hasScript(xline->arg2))
         {
             /// @todo fixme: Really interpret the first byte of xline_t::flags as a
             /// script argument? (I wonder if any scripts rely on this). -ds
-            COMMON_GAMESESSION->acsSystem()
+            gfw_Session()->acsSystem()
                     .script(xline->arg2)
                         .start(acs::Script::Args(&xline->arg3, 4/*3*/), parm.useMobj,
                                icpt->line, 0);
@@ -3281,11 +3286,11 @@ static int PTR_PuzzleItemTraverse(Intercept const *icpt, void *context)
         }
 
         // A known ACScript?
-        if(COMMON_GAMESESSION->acsSystem().hasScript(mob.args[1]))
+        if(gfw_Session()->acsSystem().hasScript(mob.args[1]))
         {
             /// @todo fixme: Really interpret the first byte of mobj_t::turnTime as a
             /// script argument? (I wonder if any scripts rely on this). -ds
-            COMMON_GAMESESSION->acsSystem()
+            gfw_Session()->acsSystem()
                     .script(mob.args[1])
                         .start(acs::Script::Args(&mob.args[2], 4/*3*/), parm.useMobj,
                                nullptr, 0);

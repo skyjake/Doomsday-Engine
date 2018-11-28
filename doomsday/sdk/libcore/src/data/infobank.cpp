@@ -141,9 +141,7 @@ void InfoBank::addFromInfoBlocks(String const &blockType)
             // Already added, from the looks of it.
             continue;
         }
-
         add(id, newSourceFromInfo(id));
-
         delete &rec[VAR_NOT_IN_BANK];
     }
 }

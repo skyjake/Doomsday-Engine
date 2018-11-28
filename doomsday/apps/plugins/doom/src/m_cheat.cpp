@@ -93,7 +93,7 @@ CHEAT_FUNC(Reveal)
 {
     DENG2_UNUSED2(args, numArgs);
 
-    if(IS_NETGAME && COMMON_GAMESESSION->rules().deathmatch)
+    if(IS_NETGAME && gfw_Rule(deathmatch))
         return false;
 
     if(player < 0 || player >= MAXPLAYERS)
@@ -198,7 +198,7 @@ D_CMD(CheatGod)
             NetCl_CheatRequest("god");
         }
         else if((IS_NETGAME && !netSvAllowCheats) ||
-                COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
+                gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -245,7 +245,7 @@ D_CMD(CheatNoClip)
             NetCl_CheatRequest("noclip");
         }
         else if((IS_NETGAME && !netSvAllowCheats) ||
-                COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
+                gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -418,7 +418,7 @@ D_CMD(CheatGive)
     }
 
     if(IS_NETGAME && !netSvAllowCheats) return false;
-    if(COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE) return false;
+    if(gfw_Rule(skill) == SM_NIGHTMARE) return false;
 
     player_t *plr = &players[player];
 
@@ -553,7 +553,7 @@ D_CMD(CheatMassacre)
             NetCl_CheatRequest("kill");
         }
         else if((IS_NETGAME && !netSvAllowCheats) ||
-                COMMON_GAMESESSION->rules().skill == SM_NIGHTMARE)
+                gfw_Rule(skill) == SM_NIGHTMARE)
         {
             return false;
         }
@@ -578,7 +578,7 @@ D_CMD(CheatWhere)
     if(!plrMo) return true;
 
     String const text = String("Map:%1 position:%2")
-                            .arg(COMMON_GAMESESSION->mapUri().asText())
+                            .arg(gfw_Session()->mapUri().asText())
                             .arg(Vector3d(plrMo->origin).asText());
     P_SetMessageWithFlags(plr, text.toUtf8().constData(), LMF_NO_HIDE);
 

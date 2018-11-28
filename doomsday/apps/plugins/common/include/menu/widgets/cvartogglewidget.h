@@ -22,6 +22,7 @@
 #define LIBCOMMON_UI_CVARTOGGLEWIDGET
 
 #include "buttonwidget.h"
+#include <functional>
 
 namespace common {
 namespace menu {
@@ -41,9 +42,9 @@ public:
     CVarToggleWidget(char const *cvarPath, int cvarValueMask = 0,
                      de::String const &downText = "Yes",
                      de::String const &upText   = "No");
-    virtual ~CVarToggleWidget();
+    virtual ~CVarToggleWidget() override;
 
-    int handleCommand(menucommand_e command);
+    int handleCommand(menucommand_e command) override;
 
     void setState(State newState);
     State state() const;
@@ -59,6 +60,10 @@ public:
 
     void setUpText(de::String const &newUpText);
     de::String upText() const;
+
+    void setStateChangeCallback(const std::function<void(State)> &stateChanged);
+
+    void pageActivated() override;
 
 private:
     DENG2_PRIVATE(d)

@@ -39,7 +39,7 @@ class LIBAPPFW_PUBLIC AtlasProceduralImage : public ProceduralImage
 {
 public:
     AtlasProceduralImage(GuiWidget &owner)
-        : _owner(owner), _atlas(0), _id(Id::None), _needUpdate(false)
+        : _owner(owner), _atlas(0), _id(Id::None), _needUpdate(false), _imageOwned(true)
     {}
 
     ~AtlasProceduralImage()
@@ -69,7 +69,10 @@ public:
     {
         if (_atlas)
         {
-            _atlas->release(_id);
+            if (_imageOwned)
+            {
+                _atlas->release(_id);
+            }
             _atlas = 0;
             _id = Id::None;
         }
@@ -79,7 +82,18 @@ public:
     {
         _image = image;
         _needUpdate = true;
-        setSize(image.size());
+        _imageOwned = true;
+        setPointSize(image.size() * image.pointRatio());
+    }
+
+    void setPreallocatedImage(Id const &id, float pointRatio = 1.f)
+    {
+        _image = Image();
+        _needUpdate = false;
+        _imageOwned = false;
+        _id = id;
+        _atlas = &ownerAtlas();
+        setPointSize(_atlas->imageRect(id).size() * pointRatio);
     }
 
     bool update()
@@ -120,6 +134,7 @@ private:
     Image _image;
     Id _id;
     bool _needUpdate;
+    bool _imageOwned;
 };
 
 } // namespace de

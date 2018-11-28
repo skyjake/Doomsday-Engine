@@ -223,7 +223,7 @@ void ShadowEdge::prepare(dint planeIndex)
     /// @todo fixme: Should use the visual plane heights of subsectors.
 
     dint const edge = lineSide.sideId() ^ d->edge;
-    LineOwner const *vo = &lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
+    LineOwner const *vo = lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
     Line const &neighborLine = vo->line();
 
     if (&neighborLine == &lineSide.line())
@@ -278,7 +278,7 @@ void ShadowEdge::prepare(dint planeIndex)
     if (d->openness < 1)
     {
         LineOwner *vo = lineSide.line().vertexOwner(lineSide.sideId() ^ d->edge);
-        if (d->edge) vo = &vo->prev();
+        if (d->edge) vo = vo->prev();
 
         d->inner = Vector3d(lineSide.vertex(d->edge).origin() + vo->innerShadowOffset(),
                             plane.heightSmoothed());

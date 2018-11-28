@@ -244,7 +244,7 @@ void P_MobjMoveXY(mobj_t *mo)
     mo->mom[MX] = mom[MX];
     mo->mom[MY] = mom[MY];
 
-    if(FEQUAL(mom[MX], 0) && FEQUAL(mom[MY], 0))
+    if(IS_ZERO(mom[MX]) && IS_ZERO(mom[MY]))
     {
         if(mo->flags & MF_SKULLFLY)
         {
@@ -383,9 +383,11 @@ void P_MobjMoveZ(mobj_t *mo)
     // Adjust height.
     mo->origin[VZ] += mo->mom[MZ];
 
-    if((mo->flags2 & MF2_FLY) &&
-       mo->onMobj && mo->origin[VZ] > mo->onMobj->origin[VZ] + mo->onMobj->height)
+    if ((mo->flags2 & MF2_FLY) && mo->onMobj &&
+        mo->origin[VZ] > mo->onMobj->origin[VZ] + mo->onMobj->height)
+    {
         mo->onMobj = NULL; // We were on a mobj, we are NOT now.
+    }
 
     if((mo->flags & MF_FLOAT) && mo->target && !P_MobjIsCamera(mo->target))
     {
@@ -447,17 +449,16 @@ void P_MobjMoveZ(mobj_t *mo)
     }
 
     // Do some fly-bobbing.
-    if(mo->player && mo->player->plr->mo == mo &&
-       (mo->flags2 & MF2_FLY) && mo->origin[VZ] > mo->floorZ &&
-       !mo->onMobj && (mapTime & 2))
+    if (mo->player && mo->player->plr->mo == mo && (mo->flags2 & MF2_FLY) &&
+        mo->origin[VZ] > mo->floorZ && !mo->onMobj && (mapTime & 2))
     {
         mo->origin[VZ] += FIX2FLT(finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK]);
     }
 
     // Clip movement. Another thing?
-    if(mo->onMobj && mo->origin[VZ] <= mo->onMobj->origin[VZ] + mo->onMobj->height)
+    if (mo->onMobj && mo->origin[VZ] <= mo->onMobj->origin[VZ] + mo->onMobj->height)
     {
-        if(mo->mom[MZ] < 0)
+        if (mo->mom[MZ] < 0)
         {
             if(mo->player && mo->mom[MZ] < -gravity * 8 && !(mo->flags2 & MF2_FLY))
             {
@@ -471,8 +472,10 @@ void P_MobjMoveZ(mobj_t *mo)
             mo->mom[MZ] = 0;
         }
 
-        if(FEQUAL(mo->mom[MZ], 0))
+        if (IS_ZERO(mo->mom[MZ]))
+        {
             mo->origin[VZ] = mo->onMobj->origin[VZ] + mo->onMobj->height;
+        }
 
         if((mo->flags & MF_MISSILE) && !(mo->flags & MF_NOCLIP))
         {
@@ -483,7 +486,8 @@ void P_MobjMoveZ(mobj_t *mo)
 
     // The floor.
     if(mo->origin[VZ] <= mo->floorZ)
-    {   // Hit the floor.
+    {
+        // Hit the floor.
         dd_bool             movingDown;
 
         // Note (id):
@@ -584,14 +588,14 @@ void P_MobjMoveZ(mobj_t *mo)
     }
     else if(mo->flags2 & MF2_LOGRAV)
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
             mo->mom[MZ] = -(gravity / 8) * 2;
         else
             mo->mom[MZ] -= gravity / 8;
     }
     else if(!(mo->flags & MF_NOGRAVITY))
     {
-        if(FEQUAL(mo->mom[MZ], 0))
+        if(IS_ZERO(mo->mom[MZ]))
             mo->mom[MZ] = -gravity * 2;
         else
             mo->mom[MZ] -= gravity;
@@ -666,43 +670,242 @@ void P_NightmareRespawn(mobj_t* mobj)
     P_MobjRemove(mobj, true);
 }
 
+// Fake the zmovement so that we can check if a move is legal
+// (from vanilla Heretic)
+static void P_FakeZMovement(mobj_t *mo)
+{
+    coord_t dist  = 0;
+    coord_t delta = 0;
+    //
+    // adjust height
+    //
+    mo->origin[VZ] += mo->mom[VZ];
+    if (mo->flags & MF_FLOAT && mo->target)
+    {
+        // float down towards target if too close
+        if (!(mo->flags & MF_SKULLFLY) && !(mo->flags & MF_INFLOAT))
+        {
+            dist  = M_ApproxDistance(mo->origin[VX] - mo->target->origin[VX],
+                                     mo->origin[VY] - mo->target->origin[VY]);
+            delta = (mo->target->origin[VZ] + (mo->height / 2)) - mo->origin[VZ];
+            if (delta < 0 && dist < -(delta * 3))
+                mo->origin[VZ] -= FLOATSPEED;
+            else if (delta > 0 && dist < (delta * 3))
+                mo->origin[VZ] += FLOATSPEED;
+        }
+    }
+    if (mo->player && mo->flags2 & MF2_FLY && !(mo->origin[VZ] <= mo->floorZ) && (mapTime & 2))
+    {
+        mo->origin[VZ] += finesine[(FINEANGLES / 20 * mapTime >> 2) & FINEMASK];
+    }
+
+    //
+    // clip movement
+    //
+    if (mo->origin[VZ] <= mo->floorZ)
+    {
+        // Hit the floor
+        mo->origin[VZ] = mo->floorZ;
+        if (mo->mom[VZ] < 0)
+        {
+            mo->mom[VZ] = 0;
+        }
+        if (mo->flags & MF_SKULLFLY)
+        {
+            // The skull slammed into something
+            mo->mom[VZ] = -mo->mom[VZ];
+        }
+        if (MOBJINFO[mo->type].states[SN_CRASH] && (mo->flags & MF_CORPSE))
+        {
+            return;
+        }
+    }
+    else if (mo->flags2 & MF2_LOGRAV)
+    {
+        coord_t GRAVITY = XS_Gravity(Mobj_Sector(mo));
+
+        if (FEQUAL(mo->mom[VZ], 0))
+            mo->mom[VZ] = -(GRAVITY / 8) * 2;
+        else
+            mo->mom[VZ] -= GRAVITY / 8;
+    }
+    else if (!(mo->flags & MF_NOGRAVITY))
+    {
+        coord_t GRAVITY = XS_Gravity(Mobj_Sector(mo));
+
+        if (FEQUAL(mo->mom[VZ], 0))
+            mo->mom[VZ] = -GRAVITY * 2;
+        else
+            mo->mom[VZ] -= GRAVITY;
+    }
+
+    if (mo->origin[VZ] + mo->height > mo->ceilingZ)
+    {
+        // hit the ceiling
+        if (mo->mom[VZ] > 0) mo->mom[VZ] = 0;
+        mo->origin[VZ] = mo->ceilingZ - mo->height;
+        if (mo->flags & MF_SKULLFLY)
+        {
+            // the skull slammed into something
+            mo->mom[VZ] = -mo->mom[VZ];
+        }
+    }
+}
+
+struct checkonmobjz_s
+{
+    mobj_t *checkThing;
+    mobj_t *onMobj;
+};
+
+static int PIT_CheckOnmobjZ(mobj_t *thing, void *dataPtr)
+{
+    struct checkonmobjz_s *data    = dataPtr;
+    const mobj_t *         tmthing = data->checkThing;
+    coord_t                blockdist;
+
+    if (thing == tmthing)
+    {
+        // Don't clip against self
+        return false;
+    }
+    if (!(thing->flags & (MF_SOLID | MF_SPECIAL | MF_SHOOTABLE)))
+    {
+        // Can't hit thing
+        return false;
+    }
+    blockdist = thing->radius + tmthing->radius;
+    if (fabs(thing->origin[VX] - tmthing->origin[VX]) >= blockdist ||
+        fabs(thing->origin[VY] - tmthing->origin[VY]) >= blockdist)
+    {
+        // Didn't hit thing
+        return false;
+    }
+    if (tmthing->origin[VZ] > thing->origin[VZ] + thing->height)
+    {
+        return false;
+    }
+    else if (tmthing->origin[VZ] + tmthing->height < thing->origin[VZ])
+    {
+        // under thing
+        return false;
+    }
+    if (thing->flags & MF_SOLID)
+    {
+        data->onMobj = thing;
+    }
+    return (thing->flags & MF_SOLID) != 0;
+}
+
+// Checks if the new Z position is legal
+// (from vanilla Heretic)
+static mobj_t *P_CheckOnmobj(mobj_t *thing)
+{
+#if 0
+    int			xl,xh,yl,yh,bx,by;
+    subsector_t		*newsubsec;
+    fixed_t x;
+    fixed_t y;
+    mobj_t oldmo;
+
+    x = thing->x;
+    y = thing->y;
+    tmthing = thing;
+    tmflags = thing->flags;
+    oldmo = *thing; // save the old mobj before the fake zmovement
+    P_FakeZMovement(tmthing);
+#endif
+
+    coord_t oldOrigin[3];
+    coord_t oldMom[3];
+    AABoxd  bounds;
+
+    struct checkonmobjz_s data = {thing, NULL};
+
+    memcpy(oldOrigin, thing->origin, sizeof(oldOrigin));
+    memcpy(oldMom, thing->mom, sizeof(oldMom));
+
+    P_FakeZMovement(thing);
+
+//    tmx = x;
+//    tmy = y;
+
+//    tmbbox[BOXTOP] = y + tmthing->radius;
+//    tmbbox[BOXBOTTOM] = y - tmthing->radius;
+//    tmbbox[BOXRIGHT] = x + tmthing->radius;
+//    tmbbox[BOXLEFT] = x - tmthing->radius;
+
+//    newsubsec = R_PointInSubsector (x,y);
+//    ceilingline = NULL;
+
+////
+//// the base floor / ceiling is from the subsector that contains the
+//// point.  Any contacted lines the step closer together will adjust them
+////
+//    tmfloorz = tmdropoffz = newsubsec->sector->floorheight;
+//    tmceilingz = newsubsec->sector->ceilingheight;
+
+//    validcount++;
+//    numspechit = 0;
+
+    if (!(thing->flags & MF_NOCLIP))
+    {
+        bounds.minX = thing->origin[VX] - thing->radius;
+        bounds.minY = thing->origin[VY] - thing->radius;
+        bounds.maxX = thing->origin[VX] + thing->radius;
+        bounds.maxY = thing->origin[VY] + thing->radius;
+
+        VALIDCOUNT++;
+        Mobj_BoxIterator(&bounds, PIT_CheckOnmobjZ, &data);
+    }
+
+    // Restore state.
+    memcpy(thing->origin, oldOrigin, sizeof(oldOrigin));
+    memcpy(thing->mom, oldMom, sizeof(oldMom));
+
+    return data.onMobj;
+}
+
 void P_MobjThinker(void *thinkerPtr)
 {
     mobj_t *mobj = thinkerPtr;
 
-    if(IS_CLIENT && !ClMobj_IsValid(mobj))
-        return; // We should not touch this right now.
+    if (IS_CLIENT && !ClMobj_IsValid(mobj)) return; // We should not touch this right now.
 
-    if(mobj->type == MT_BLASTERFX1)
+    if (mobj->type == MT_BLASTERFX1)
     {
-        int i;
+        int     i;
         coord_t frac[3];
         coord_t z;
         dd_bool changexy;
 
         // Handle movement
-        if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || !FEQUAL(mobj->mom[MZ], 0) ||
-           !FEQUAL(mobj->origin[VZ], mobj->floorZ))
+        if (NON_ZERO(mobj->mom[MX]) || NON_ZERO(mobj->mom[MY]) || NON_ZERO(mobj->mom[MZ]) ||
+            !FEQUAL(mobj->origin[VZ], mobj->floorZ))
         {
             frac[MX] = mobj->mom[MX] / 8;
             frac[MY] = mobj->mom[MY] / 8;
             frac[MZ] = mobj->mom[MZ] / 8;
 
-            changexy = (!FEQUAL(frac[MX], 0) || !FEQUAL(frac[MY], 0));
-            for(i = 0; i < 8; ++i)
+            changexy = (NON_ZERO(frac[MX]) || NON_ZERO(frac[MY]));
+            for (i = 0; i < 8; ++i)
             {
-                if(changexy)
+                if (changexy)
                 {
-                    if(!P_TryMoveXY(mobj, mobj->origin[VX] + frac[MX],
-                                          mobj->origin[VY] + frac[MY], false, false))
-                    {   // Blocked move.
+                    if (!P_TryMoveXY(mobj,
+                                     mobj->origin[VX] + frac[MX],
+                                     mobj->origin[VY] + frac[MY],
+                                     false,
+                                     false))
+                    {
+                        // Blocked move.
                         P_ExplodeMissile(mobj);
                         return;
                     }
                 }
 
                 mobj->origin[VZ] += frac[MZ];
-                if(mobj->origin[VZ] <= mobj->floorZ)
+                if (mobj->origin[VZ] <= mobj->floorZ)
                 {
                     // Hit the floor.
                     mobj->origin[VZ] = mobj->floorZ;
@@ -711,35 +914,40 @@ void P_MobjThinker(void *thinkerPtr)
                     return;
                 }
 
-                if(mobj->origin[VZ] + mobj->height > mobj->ceilingZ)
-                {   // Hit the ceiling.
+                if (mobj->origin[VZ] + mobj->height > mobj->ceilingZ)
+                {
+                    // Hit the ceiling.
                     mobj->origin[VZ] = mobj->ceilingZ - mobj->height;
                     P_ExplodeMissile(mobj);
                     return;
                 }
 
-                if(changexy && (P_Random() < 64))
+                if (changexy && (P_Random() < 64))
                 {
                     z = mobj->origin[VZ] - 8;
-                    if(z < mobj->floorZ)
+                    if (z < mobj->floorZ)
                     {
                         z = mobj->floorZ;
                     }
 
-                    P_SpawnMobjXYZ(MT_BLASTERSMOKE, mobj->origin[VX], mobj->origin[VY],
-                                  z, P_Random() << 24, 0);
+                    P_SpawnMobjXYZ(MT_BLASTERSMOKE,
+                                   mobj->origin[VX],
+                                   mobj->origin[VY],
+                                   z,
+                                   P_Random() << 24,
+                                   0);
                 }
             }
         }
 
         // Advance the state.
-        if(mobj->tics != -1)
+        if (mobj->tics != -1)
         {
             mobj->tics--;
-            while(!mobj->tics)
+            while (!mobj->tics)
             {
-                if(!P_MobjChangeState(mobj, mobj->state->nextState))
-                {   // Mobj was removed.
+                if (!P_MobjChangeState(mobj, mobj->state->nextState))
+                { // Mobj was removed.
                     return;
                 }
             }
@@ -753,69 +961,99 @@ void P_MobjThinker(void *thinkerPtr)
     P_UpdateHealthBits(mobj);
 
     // Handle X and Y momentums.
-    if(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0) || (mobj->flags & MF_SKULLFLY))
+    if (NON_ZERO(mobj->mom[MX]) || NON_ZERO(mobj->mom[MY]) || (mobj->flags & MF_SKULLFLY))
     {
-        // Detect moves into invalid positions.
-        /*
-#if _DEBUG
-        dd_bool beforeOk = P_CheckPosition(mobj, mobj->origin);
-#endif
-        */
-
         P_MobjMoveXY(mobj);
 
-        //assert(!beforeOk || P_CheckPosition(mobj, mobj->origin));
-
         //// @todo decent NOP/NULL/Nil function pointer please.
-        if(mobj->thinker.function == (thinkfunc_t) NOPFUNC)
-            return; // Mobj was removed.
+        if (mobj->thinker.function == (thinkfunc_t) NOPFUNC) return; // Mobj was removed.
     }
 
-    if(mobj->flags2 & MF2_FLOATBOB)
-    {   // Floating item bobbing motion.
+    if (mobj->flags2 & MF2_FLOATBOB)
+    {
+        // Floating item bobbing motion.
         // Keep it on the floor.
         mobj->origin[VZ] = mobj->floorZ;
 
         // Negative floorclip raises the mobj off the floor.
         mobj->floorClip = -mobj->special1;
-        if(mobj->floorClip < -MAX_BOB_OFFSET)
+        if (mobj->floorClip < -MAX_BOB_OFFSET)
         {
             // We don't want it going through the floor.
             mobj->floorClip = -MAX_BOB_OFFSET;
         }
     }
-    else if(!FEQUAL(mobj->origin[VZ], mobj->floorZ) || !FEQUAL(mobj->mom[MZ], 0))
+    else if (!FEQUAL(mobj->origin[VZ], mobj->floorZ) || NON_ZERO(mobj->mom[MZ]))
     {
         coord_t oldZ = mobj->origin[VZ];
 
-        P_MobjMoveZ(mobj);
-        if(mobj->thinker.function != (thinkfunc_t) P_MobjThinker)
-            return; // mobj was removed
+        if (mobj->type == MT_POD)
+        {
+            // Use vanilla behavior for gas pods. The newer routines do not produce the
+            // correct behavior when pods interact with each other.
+            if ((mobj->onMobj = P_CheckOnmobj(mobj)) == NULL)
+            {
+                P_MobjMoveZ(mobj);
+            }
+            else
+            {
+                // Stop pod's downward momentum when landing on something.
+                if (/*mobj->player &&*/ mobj->mom[VZ] < 0)
+                {
+                    mobj->mom[VZ] = 0;
+                }
+                // This is exclusive to pods, so the code below is not relevant.
+                /*
+                if (mobj->player && (onmo->player || onmo->type == MT_POD))
+                {
+                    mobj->mom[VX] = onmo->mom[VX];
+                    mobj->mom[VY] = onmo->mom[VY];
+                    if (onmo->origin[VZ] < onmo->floorZ)
+                    {
+                        mobj->origin[VZ] += onmo->floorZ - onmo->origin[VZ];
+                        if (onmo->player)
+                        {
+                            onmo->player->viewHeight -= onmo->floorZ - onmo->origin[VZ];
+                            onmo->player->viewHeightDelta =
+                                (VIEWHEIGHT - onmo->player->viewHeight) / 8;
+                        }
+                        onmo->origin[VZ] = onmo->floorZ;
+                    }
+                }
+                */
+            }
+        }
+        else
+        {
+            P_MobjMoveZ(mobj);
+        }
+
+        if (mobj->thinker.function != (thinkfunc_t) P_MobjThinker) return; // mobj was removed
 
         /**
          * @todo Instead of this post-move check, we should fix the root cause why
          * the SKULLFLYer is ending up in an invalid position during P_MobjMoveZ().
          * If only the movement validity checks weren't so convoluted... -jk
          */
-        if((mobj->flags & MF_SKULLFLY) && !P_CheckPosition(mobj, mobj->origin))
+        if ((mobj->flags & MF_SKULLFLY) && !P_CheckPosition(mobj, mobj->origin))
         {
             // Let's not get stuck.
-            if(mobj->origin[VZ] > oldZ && mobj->mom[VZ] > 0) mobj->mom[VZ] = 0;
-            if(mobj->origin[VZ] < oldZ && mobj->mom[VZ] < 0) mobj->mom[VZ] = 0;
+            if (mobj->origin[VZ] > oldZ && mobj->mom[VZ] > 0) mobj->mom[VZ] = 0;
+            if (mobj->origin[VZ] < oldZ && mobj->mom[VZ] < 0) mobj->mom[VZ] = 0;
             mobj->origin[VZ] = oldZ;
         }
     }
     // Non-sentient objects at rest.
-    else if(!(!FEQUAL(mobj->mom[MX], 0) || !FEQUAL(mobj->mom[MY], 0)) && !sentient(mobj) &&
-            !mobj->player && !((mobj->flags & MF_CORPSE) && cfg.slidingCorpses))
+    else if (!(NON_ZERO(mobj->mom[MX]) || NON_ZERO(mobj->mom[MY])) && !sentient(mobj) &&
+             !mobj->player && !((mobj->flags & MF_CORPSE) && cfg.slidingCorpses))
     {
         /**
          * Objects fall off ledges if they are hanging off slightly push off
          * of ledge if hanging more than halfway off.
          */
 
-        if(mobj->origin[VZ] > mobj->dropOffZ && // Only objects contacting dropoff
-           !(mobj->flags & MF_NOGRAVITY) && cfg.fallOff)
+        if (mobj->origin[VZ] > mobj->dropOffZ && // Only objects contacting dropoff
+            !(mobj->flags & MF_NOGRAVITY) && cfg.fallOff)
         {
             P_ApplyTorque(mobj);
         }
@@ -826,11 +1064,12 @@ void P_MobjThinker(void *thinkerPtr)
         }
     }
 
-    if(cfg.slidingCorpses)
+    if (cfg.slidingCorpses)
     {
-        if(((mobj->flags & MF_CORPSE) ? mobj->origin[VZ] > mobj->dropOffZ :
-                                        mobj->origin[VZ] - mobj->dropOffZ > 24) && // Only objects contacting drop off.
-           !(mobj->flags & MF_NOGRAVITY)) // Only objects which fall.
+        if (((mobj->flags & MF_CORPSE)
+                 ? mobj->origin[VZ] > mobj->dropOffZ
+                 : mobj->origin[VZ] - mobj->dropOffZ > 24) && // Only objects contacting drop off.
+            !(mobj->flags & MF_NOGRAVITY))                    // Only objects which fall.
         {
             P_ApplyTorque(mobj); // Apply torque.
         }
@@ -842,18 +1081,17 @@ void P_MobjThinker(void *thinkerPtr)
     }
 
     // $vanish: dead monsters disappear after some time.
-    if(cfg.corpseTime && (mobj->flags & MF_CORPSE) && mobj->corpseTics != -1)
+    if (cfg.corpseTime && (mobj->flags & MF_CORPSE) && mobj->corpseTics != -1)
     {
-        if(++mobj->corpseTics < cfg.corpseTime * TICSPERSEC)
+        if (++mobj->corpseTics < cfg.corpseTime * TICSPERSEC)
         {
             mobj->translucency = 0; // Opaque.
         }
-        else if(mobj->corpseTics < cfg.corpseTime * TICSPERSEC + VANISHTICS)
+        else if (mobj->corpseTics < cfg.corpseTime * TICSPERSEC + VANISHTICS)
         {
             // Translucent during vanishing.
             mobj->translucency =
-                ((mobj->corpseTics -
-                  cfg.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
+                ((mobj->corpseTics - cfg.corpseTime * TICSPERSEC) * 255) / VANISHTICS;
         }
         else
         {
@@ -864,39 +1102,33 @@ void P_MobjThinker(void *thinkerPtr)
     }
 
     // Cycle through states, calling action functions at transitions.
-    if(mobj->tics != -1)
+    if (mobj->tics != -1)
     {
         mobj->tics--;
 
         P_MobjAngleSRVOTicker(mobj); // "angle-servo"; smooth actor turning.
 
         // You can cycle through multiple states in a tic.
-        if(!mobj->tics)
+        if (!mobj->tics)
         {
             P_MobjClearSRVO(mobj);
-            if(!P_MobjChangeState(mobj, mobj->state->nextState))
-                return; // Freed itself.
+            if (!P_MobjChangeState(mobj, mobj->state->nextState)) return; // Freed itself.
         }
     }
-    else if(!IS_CLIENT)
+    else if (!IS_CLIENT)
     {
         // Check for nightmare respawn.
-        if(!(mobj->flags & MF_COUNTKILL))
-            return;
+        if (!(mobj->flags & MF_COUNTKILL)) return;
 
-        if(!G_Ruleset_RespawnMonsters())
-            return;
+        if (!gfw_Rule(respawnMonsters)) return;
 
         mobj->moveCount++;
 
-        if(mobj->moveCount < 12 * 35)
-            return;
+        if (mobj->moveCount < 12 * 35) return;
 
-        if(mapTime & 31)
-            return;
+        if (mapTime & 31) return;
 
-        if(P_Random() > 4)
-            return;
+        if (P_Random() > 4) return;
 
         P_NightmareRespawn(mobj);
     }
@@ -930,7 +1162,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
      */
 
     // Not for deathmatch?
-    if(G_Ruleset_Deathmatch() && (info->flags & MF_NOTDMATCH))
+    if(gfw_Rule(deathmatch) && (info->flags & MF_NOTDMATCH))
         return NULL;
 
     // Check for specific disabled objects.
@@ -958,7 +1190,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     }
 
     // Don't spawn any monsters?
-    if(G_Ruleset_NoMonsters() && (info->flags & MF_COUNTKILL))
+    if(gfw_Rule(noMonsters) && (info->flags & MF_COUNTKILL))
         return 0;
 
     if(info->flags & MF_SOLID)
@@ -979,7 +1211,7 @@ mobj_t* P_SpawnMobjXYZ(mobjtype_t type, coord_t x, coord_t y, coord_t z,
     mo->selector = 0;
     P_UpdateHealthBits(mo); // Set the health bits of the selector.
 
-    if(G_Ruleset_Skill() != SM_NIGHTMARE)
+    if(gfw_Rule(skill) != SM_NIGHTMARE)
         mo->reactionTime = info->reactionTime;
 
     mo->lastLook = P_Random() % MAXPLAYERS;
@@ -1055,6 +1287,12 @@ void P_RepositionMace(mobj_t *mo)
 {
     mapspot_t const *mapSpot;
     Sector *sector;
+
+    if (gfw_MapInfoFlags() & MIF_SPAWN_ALL_FIREMACES)
+    {
+        // Randomized Firemace spawning is disabled.
+        return;
+    }
 
     DENG_ASSERT(mo && mo->type == MT_WMACE);
     App_Log(DE2_DEV_MAP_MSG, "P_RepositionMace: Repositioning mobj [%p], thinkerId:%i", mo, mo->thinker.id);

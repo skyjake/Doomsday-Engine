@@ -71,6 +71,7 @@
 #include "p_user.h"
 #include "player.h"
 #include "r_common.h"
+#include "r_special.h"
 #include "saveslots.h"
 #include "x_hair.h"
 
@@ -81,8 +82,6 @@ using namespace common;
 
 void R_LoadVectorGraphics();
 int Hook_DemoStop(int hookType, int val, void *parm);
-
-GameRuleset defaultGameRules;
 
 game_config_t cfg; // The global cfg.
 
@@ -113,8 +112,6 @@ wbstartstruct_t wmInfo; // Intermission parameters.
 de::Uri nextMapUri;
 uint nextMapEntryPoint;
 
-static GameSession session;
-
 static bool quitInProgress;
 static gamestate_t gameState = GS_STARTUP;
 
@@ -124,13 +121,17 @@ static SaveSlots *sslots;
 static gameaction_t gameAction;
 
 // Game action parameters:
-static GameRuleset gaNewSessionRules;
-static String gaNewSessionEpisodeId;
+static GameRules &G_NewSessionRules()
+{
+    static GameRules gaNewSessionRules;
+    return gaNewSessionRules;
+}
+static String  gaNewSessionEpisodeId;
 static de::Uri gaNewSessionMapUri;
-static uint gaNewSessionMapEntrance;
+static uint    gaNewSessionMapEntrance;
 
 static String gaSaveSessionSlot;
-static bool gaSaveSessionGenerateDescription = true;
+static bool   gaSaveSessionGenerateDescription = true;
 static String gaSaveSessionUserDescription;
 static String gaLoadSessionSlot;
 
@@ -141,18 +142,18 @@ dd_bool G_QuitInProgress()
 
 void G_SetGameAction(gameaction_t newAction)
 {
-    if(G_QuitInProgress()) return;
+    if (G_QuitInProgress()) return;
 
-    if(::gameAction != newAction)
+    if (::gameAction != newAction)
     {
         ::gameAction = newAction;
     }
 }
 
-void G_SetGameActionNewSession(GameRuleset const &rules, String episodeId,
-    de::Uri const &mapUri, uint mapEntrance)
+void G_SetGameActionNewSession(GameRules const &rules, String episodeId, de::Uri const &mapUri,
+                               uint mapEntrance)
 {
-    ::gaNewSessionRules       = rules; // make a copy.
+    G_NewSessionRules()       = rules;
     ::gaNewSessionEpisodeId   = episodeId;
     ::gaNewSessionMapUri      = mapUri;
     ::gaNewSessionMapEntrance = mapEntrance;
@@ -162,12 +163,12 @@ void G_SetGameActionNewSession(GameRuleset const &rules, String episodeId,
 
 bool G_SetGameActionSaveSession(String slotId, String *userDescription)
 {
-    if(!COMMON_GAMESESSION->isSavingPossible()) return false;
-    if(!G_SaveSlots().has(slotId)) return false;
+    if (!gfw_Session()->isSavingPossible()) return false;
+    if (!G_SaveSlots().has(slotId)) return false;
 
     ::gaSaveSessionSlot = slotId;
 
-    if(userDescription && !userDescription->isEmpty())
+    if (userDescription && !userDescription->isEmpty())
     {
         // A new description.
         ::gaSaveSessionGenerateDescription = false;
@@ -186,7 +187,7 @@ bool G_SetGameActionSaveSession(String slotId, String *userDescription)
 
 bool G_SetGameActionLoadSession(String slotId)
 {
-    if(!COMMON_GAMESESSION->isLoadingPossible()) return false;
+    if (!gfw_Session()->isLoadingPossible()) return false;
 
     // Check whether this slot is in use. We do this here also because we need to provide our
     // caller with instant feedback. Naturally this is no guarantee that the game-save will
@@ -194,7 +195,7 @@ bool G_SetGameActionLoadSession(String slotId)
 
     auto scheduleLoad = [slotId] ()
     {
-        if(G_SaveSlots()[slotId].isLoadable())
+        if (G_SaveSlots()[slotId].isLoadable())
         {
             // Everything appears to be in order - schedule the game-save load!
             gaLoadSessionSlot = slotId;
@@ -217,7 +218,7 @@ bool G_SetGameActionLoadSession(String slotId)
             DoomsdayApp::app().checkPackageCompatibility(
                 meta.getStringList("packages"),
                 String::format("The savegame " _E(b) "%s" _E(.) " was created with "
-                               "add-ons that are different than the ones currently in use.",
+                               "mods that are different than the ones currently in use.",
                                meta.gets("userDescription").toUtf8().constData()),
                 scheduleLoad);
         }
@@ -226,7 +227,7 @@ bool G_SetGameActionLoadSession(String slotId)
             scheduleLoad();
         }
     }
-    catch(SaveSlots::MissingSlotError const &er)
+    catch (SaveSlots::MissingSlotError const &er)
     {
         LOG_RES_WARNING("Save slot '%s' not found: %s") << slotId << er.asText();
         return false;
@@ -242,11 +243,11 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
     DENG2_UNUSED(nextMapEntryPoint);
 #endif
 
-    if(IS_CLIENT) return;
-    if(::cyclingMaps && ::mapCycleNoExit) return;
+    if (IS_CLIENT) return;
+    if (::cyclingMaps && ::mapCycleNoExit) return;
 
 #if __JHEXEN__
-    if((::gameMode == hexen_betademo || ::gameMode == hexen_demo) &&
+    if ((::gameMode == hexen_betademo || ::gameMode == hexen_demo) &&
        !(nextMapUri.path() == "MAP01" ||
          nextMapUri.path() == "MAP02" ||
          nextMapUri.path() == "MAP03" ||
@@ -266,9 +267,9 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 
 # if __JDOOM__
     // If no Wolf3D maps, no secret exit!
-    if(::secretExit && (::gameModeBits & GM_ANY_DOOM2))
+    if (::secretExit && (::gameModeBits & GM_ANY_DOOM2))
     {
-        if(!P_MapExists(de::Uri("Maps:MAP31", RC_NULL).compose().toUtf8().constData()))
+        if (!P_MapExists(de::makeUri("Maps:MAP31").compose().toUtf8().constData()))
         {
             ::secretExit = false;
         }
@@ -281,7 +282,7 @@ void G_SetGameActionMapCompleted(de::Uri const &nextMapUri, uint nextMapEntryPoi
 
 void G_SetGameActionMapCompletedAndSetNextMap()
 {
-    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit("next"));
+    G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit("next"));
 }
 
 static void initSaveSlots()
@@ -297,7 +298,7 @@ static void initSaveSlots()
         menu::Widget::Id6, menu::Widget::Id7
 #endif
     };
-    for(int i = 0; i < NUMSAVESLOTS; ++i)
+    for (int i = 0; i < NUMSAVESLOTS; ++i)
     {
         sslots->add(String::number(i), true, String(SAVEGAMENAME"%1").arg(i),
                     int(gameMenuSaveSlotWidgetIds[i]));
@@ -313,13 +314,13 @@ void G_CommonPreInit()
     ::quitInProgress = false;
 
     // Apply the default game rules.
-    COMMON_GAMESESSION->applyNewRules(defaultGameRules = GameRuleset());
+    gfw_Session()->applyNewRules(gfw_DefaultGameRules() = GameRules());
 
     // Register hooks.
     Plug_AddHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
     // Setup the players.
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *pl = &players[i];
 
@@ -328,7 +329,7 @@ void G_CommonPreInit()
 
         /// @todo Only necessary because the engine does not yet unload game plugins when they
         /// are not in use; thus a game change may leave these pointers dangling.
-        for(int k = 0; k < NUMPSPRITES; ++k)
+        for (int k = 0; k < NUMPSPRITES; ++k)
         {
             pl->pSprites[k].state = nullptr;
             pl->plr->pSprites[k].statePtr = nullptr;
@@ -358,6 +359,7 @@ void G_CommonPreInit()
     IN_ConsoleRegister();         // For the interlude/intermission.
     X_Register();                 // For the crosshair.
     FI_StackRegister();           // For the InFine lib.
+    R_SpecialFilterRegister();
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
     XG_Register();
 #endif
@@ -375,14 +377,14 @@ void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap)
 {
     int mapped;
 
-    if(plrClass == PCLASS_PIG)
+    if (plrClass == PCLASS_PIG)
     {
         // A pig is never translated.
         *tclass = *tmap = 0;
         return;
     }
 
-    if(gameMode == hexen_v10)
+    if (gameMode == hexen_v10)
     {
         int const mapping[3][4] = {
             /* Fighter */ { 1, 2, 0, 3 },
@@ -412,12 +414,12 @@ void R_GetTranslation(int plrClass, int plrColor, int *tclass, int *tmap)
 void Mobj_UpdateTranslationClassAndMap(mobj_t *mo)
 {
     DENG2_ASSERT(mo);
-    if(mo->player)
+    if (mo->player)
     {
         int plrColor = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
         R_GetTranslation(mo->player->class_, plrColor, &mo->tclass, &mo->tmap);
     }
-    else if(mo->flags & MF_TRANSLATION)
+    else if (mo->flags & MF_TRANSLATION)
     {
         mo->tclass = mo->special1;
         mo->tmap   = (mo->flags & MF_TRANSLATION) >> MF_TRANSSHIFT;
@@ -456,13 +458,13 @@ void R_LoadColorPalettes()
         // per class. Thus we'll need to account for the difference.
 
         int xlatNum = 0;
-        for(int cl = 0; cl < 3; ++cl)
-        for(int i = 0; i < 7; ++i)
+        for (int cl = 0; cl < 3; ++cl)
+        for (int i = 0; i < 7; ++i)
         {
-            if(i == numPerClass) break; // Not present.
+            if (i == numPerClass) break; // Not present.
 
             String lumpName;
-            if(xlatNum < 10)
+            if (xlatNum < 10)
             {
                 lumpName = String("TRANTBL%1").arg(xlatNum);
             }
@@ -477,7 +479,7 @@ void R_LoadColorPalettes()
                              lumpName << cl << i);
 
             lumpName += ".lmp";
-            if(CentralLumpIndex().contains(lumpName))
+            if (CentralLumpIndex().contains(lumpName))
             {
                 File1 &lump = CentralLumpIndex()[CentralLumpIndex().findLast(lumpName)];
                 uint8_t const *mappings = lump.cache();
@@ -492,20 +494,20 @@ void R_LoadColorPalettes()
     // brown, red. Could be read from a lump instead?
     {
         uint8_t xlat[PALENTRIES];
-        for(int xlatNum = 0; xlatNum < 3; ++xlatNum)
+        for (int xlatNum = 0; xlatNum < 3; ++xlatNum)
         {
             // Translate just the 16 green colors.
-            for(int palIdx = 0; palIdx < 256; ++palIdx)
+            for (int palIdx = 0; palIdx < 256; ++palIdx)
             {
 #  if __JHERETIC__
-                if(palIdx >= 225 && palIdx <= 240)
+                if (palIdx >= 225 && palIdx <= 240)
                 {
                     xlat[palIdx] = xlatNum == 0? 114 + (palIdx - 225) /*yellow*/ :
                                    xlatNum == 1? 145 + (palIdx - 225) /*red*/ :
                                                  190 + (palIdx - 225) /*blue*/;
                 }
 #  else
-                if(palIdx >= 0x70 && palIdx <= 0x7f)
+                if (palIdx >= 0x70 && palIdx <= 0x7f)
                 {
                     // Map green ramp to gray, brown, red.
                     xlat[palIdx] = xlatNum == 0? 0x60 + (palIdx & 0xf) :
@@ -670,7 +672,7 @@ void R_LoadVectorGraphics()
         { 3, anglePoints }
     };
 
-    if(IS_DEDICATED) return;
+    if (IS_DEDICATED) return;
 
     R_NewSvg(VG_KEY, key, NUMITEMS(key));
     R_NewSvg(VG_TRIANGLE, thintriangle, NUMITEMS(thintriangle));
@@ -698,14 +700,14 @@ fontid_t R_MustFindFontForName(char const *name)
     uri_s *uri = Uri_NewWithPath2(name, RC_NULL);
     fontid_t fontId = Fonts_ResolveUri(uri);
     Uri_Delete(uri);
-    if(fontId) return fontId;
+    if (fontId) return fontId;
     Con_Error("Failed loading font \"%s\".", name);
     exit(1); // Unreachable.
 }
 
 void R_InitRefresh()
 {
-    if(IS_DEDICATED) return;
+    if (IS_DEDICATED) return;
 
     LOG_RES_VERBOSE("Loading data for refresh...");
 
@@ -713,14 +715,14 @@ void R_InitRefresh()
     cfg.common.screenBlocks = cfg.common.setBlocks;
     {
         uri_s *paths[9];
-        for(int i = 0; i < 9; ++i)
+        for (int i = 0; i < 9; ++i)
         {
             paths[i] = ((borderGraphics[i] && borderGraphics[i][0])? Uri_NewWithPath2(borderGraphics[i], RC_NULL) : 0);
         }
         R_SetBorderGfx((uri_s const **)paths);
-        for(int i = 0; i < 9; ++i)
+        for (int i = 0; i < 9; ++i)
         {
-            if(paths[i])
+            if (paths[i])
             {
                 Uri_Delete(paths[i]);
             }
@@ -799,6 +801,24 @@ void G_CommonPostInit()
     G_RegisterCheats();
 #endif
 
+    // Change the turbo multiplier.
+    {
+        auto &cmdLine = CommandLine::get();
+        turboMul = float(gfw_GameProfile()->optionValue("turbo").asNumber());
+        if (int arg = cmdLine.check("-turbo"))
+        {
+            int scale = 200; // Default to 2x without a numeric value.
+
+            if (arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
+            {
+                scale = cmdLine.at(arg + 1).toInt();
+            }
+            scale = de::clamp(10, scale, 400);
+            turboMul = scale / 100.f;
+            LOG_NOTE("Turbo speed: %i%%") << scale;
+        }
+    }
+
     // From this point on, the shortcuts are always active.
     DD_Execute(true, "activatebcontext shortcut");
 
@@ -814,14 +834,14 @@ void G_AutoStartOrBeginTitleLoop()
     de::Uri startMapUri;
 
     // A specific episode?
-    if(int arg = cmdLine.check("-episode", 1))
+    if (int arg = cmdLine.check("-episode", 1))
     {
         String episodeId = cmdLine.at(arg + 1);
-        if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+        if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
         {
             // Ensure this is a playable episode.
             de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-            if(P_MapExists(startMap.compose().toUtf8().constData()))
+            if (P_MapExists(startMap.compose().toUtf8().constData()))
             {
                 startEpisodeId = episodeId;
             }
@@ -829,16 +849,16 @@ void G_AutoStartOrBeginTitleLoop()
     }
 
     // A specific map?
-    if(int arg = cmdLine.check("-warp", 1))
+    if (int arg = cmdLine.check("-warp", 1))
     {
         bool haveEpisode = (arg + 2 < cmdLine.count() && !cmdLine.isOption(arg + 2));
-        if(haveEpisode)
+        if (haveEpisode)
         {
-            if(Record const *episodeDef = Defs().episodes.tryFind("id", cmdLine.at(arg + 1)))
+            if (Record const *episodeDef = Defs().episodes.tryFind("id", cmdLine.at(arg + 1)))
             {
                 // Ensure this is a playable episode.
                 de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-                if(P_MapExists(startMap.compose().toUtf8().constData()))
+                if (P_MapExists(startMap.compose().toUtf8().constData()))
                 {
                     startEpisodeId = episodeDef->gets("id");
                 }
@@ -849,17 +869,17 @@ void G_AutoStartOrBeginTitleLoop()
         bool isNumber;
         int mapWarpNumber = cmdLine.at(arg + (haveEpisode? 2 : 1)).toInt(&isNumber);
 
-        if(!isNumber)
+        if (!isNumber)
         {
             // It must be a URI, then.
             Block rawMapUri = cmdLine.at(arg + (haveEpisode? 2 : 1)).toUtf8();
             char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
             startMapUri = de::Uri::fromUserInput(args, 1);
-            if(startMapUri.scheme().isEmpty()) startMapUri.setScheme("Maps");
+            if (startMapUri.scheme().isEmpty()) startMapUri.setScheme("Maps");
         }
         else
         {
-            if(startEpisodeId.isEmpty())
+            if (startEpisodeId.isEmpty())
             {
                 // Pick the first playable episode.
                 startEpisodeId = FirstPlayableEpisodeId();
@@ -871,24 +891,24 @@ void G_AutoStartOrBeginTitleLoop()
 
     // Are we attempting an auto-start?
     bool autoStart = (IS_NETGAME || !startEpisodeId.isEmpty() || !startMapUri.isEmpty());
-    if(autoStart)
+    if (autoStart)
     {
-        if(startEpisodeId.isEmpty())
+        if (startEpisodeId.isEmpty())
         {
             // Pick the first playable episode.
             startEpisodeId = FirstPlayableEpisodeId();
         }
 
         // Ensure that the map exists.
-        if(!P_MapExists(startMapUri.compose().toUtf8().constData()))
+        if (!P_MapExists(startMapUri.compose().toUtf8().constData()))
         {
             startMapUri.clear();
 
             // Pick the start map from the episode, if specified and playable.
-            if(Record const *episodeDef = Defs().episodes.tryFind("id", startEpisodeId))
+            if (Record const *episodeDef = Defs().episodes.tryFind("id", startEpisodeId))
             {
                 de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-                if(P_MapExists(startMap.compose().toUtf8().constData()))
+                if (P_MapExists(startMap.compose().toUtf8().constData()))
                 {
                     startMapUri = startMap;
                 }
@@ -897,21 +917,21 @@ void G_AutoStartOrBeginTitleLoop()
     }
 
     // Are we auto-starting?
-    if(!startEpisodeId.isEmpty() && !startMapUri.isEmpty())
+    if (!startEpisodeId.isEmpty() && !startMapUri.isEmpty())
     {
         LOG_NOTE("Auto-starting episode '%s', map \"%s\", skill %i")
                 << startEpisodeId
                 << startMapUri
-                << ::defaultGameRules.skill;
+                << gfw_DefaultRule(skill);
 
         // Don't brief when autostarting.
         ::briefDisabled = true;
 
-        G_SetGameActionNewSession(::defaultGameRules, startEpisodeId, startMapUri);
+        G_SetGameActionNewSession(gfw_DefaultGameRules(), startEpisodeId, startMapUri);
     }
     else
     {
-        COMMON_GAMESESSION->endAndBeginTitle(); // Start up intro loop.
+        gfw_Session()->endAndBeginTitle(); // Start up intro loop.
     }
 }
 
@@ -921,7 +941,7 @@ void G_AutoStartOrBeginTitleLoop()
  */
 void G_CommonShutdown()
 {
-    COMMON_GAMESESSION->end();
+    gfw_Session()->end();
 
     Plug_RemoveHook(HOOK_DEMO_STOP, Hook_DemoStop);
 
@@ -960,9 +980,9 @@ static char const *getGameStateStr(gamestate_t state)
         { GS_INFINE,       "GS_INFINE" },
         { gamestate_t(-1), 0 }
     };
-    for(uint i = 0; stateNames[i].name; ++i)
+    for (uint i = 0; stateNames[i].name; ++i)
     {
-        if(stateNames[i].state == state)
+        if (stateNames[i].state == state)
             return stateNames[i].name;
     }
     return 0;
@@ -974,18 +994,18 @@ static char const *getGameStateStr(gamestate_t state)
 int G_UIResponder(event_t *ev)
 {
     // Handle "Press any key to continue" messages.
-    if(Hu_MsgResponder(ev))
+    if (Hu_MsgResponder(ev))
         return true;
 
-    if(ev->state != EVS_DOWN)
+    if (ev->state != EVS_DOWN)
         return false;
-    if(!(ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON || ev->type == EV_JOY_BUTTON))
+    if (!(ev->type == EV_KEY || ev->type == EV_MOUSE_BUTTON || ev->type == EV_JOY_BUTTON))
         return false;
 
-    if(!Hu_MenuIsActive() && !DD_GetInteger(DD_SHIFT_DOWN))
+    if (!Hu_MenuIsActive() && !DD_GetInteger(DD_SHIFT_DOWN))
     {
         // Any key/button down pops up menu if in demos.
-        if((gameAction == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
+        if ((gameAction == GA_NONE && !singledemo && Get(DD_PLAYBACK)) ||
            (G_GameState() == GS_INFINE && FI_IsMenuTrigger()))
         {
             Hu_MenuCommand(MCMD_OPEN);
@@ -998,15 +1018,15 @@ int G_UIResponder(event_t *ev)
 
 void G_ChangeGameState(gamestate_t state)
 {
-    if(G_QuitInProgress()) return;
+    if (G_QuitInProgress()) return;
 
-    if(state < 0 || state >= NUM_GAME_STATES)
+    if (state < 0 || state >= NUM_GAME_STATES)
     {
         DENG2_ASSERT(!"G_ChangeGameState: Invalid state");
         return;
     }
 
-    if(gameState != state)
+    if (gameState != state)
     {
         gameState = state;
         LOGDEV_NOTE("Game state changed to %s") << getGameStateStr(state);
@@ -1015,7 +1035,7 @@ void G_ChangeGameState(gamestate_t state)
     // Update the state of the gameui binding context.
     bool gameUIActive = false;
     bool gameActive   = true;
-    switch(gameState)
+    switch (gameState)
     {
     case GS_FINALE:
     case GS_STARTUP:
@@ -1031,9 +1051,9 @@ void G_ChangeGameState(gamestate_t state)
     default: break;
     }
 
-    if(!IS_DEDICATED)
+    if (!IS_DEDICATED)
     {
-        if(gameUIActive)
+        if (gameUIActive)
         {
             DD_Execute(true, "activatebcontext gameui");
             B_SetContextFallback("gameui", G_UIResponder);
@@ -1044,10 +1064,10 @@ void G_ChangeGameState(gamestate_t state)
 
 dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char const *defId)
 {
-    if(!script || !script[0])
+    if (!script || !script[0])
         return false;
 
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_LogEmpty(i);               // Clear the message queue for all local players.
         ST_CloseAll(i, true/*fast*/); // Close the HUDs left open for all local players.
@@ -1061,15 +1081,15 @@ dd_bool G_StartFinale(char const *script, int flags, finale_mode_t mode, char co
 
 void G_StartHelp()
 {
-    if(G_QuitInProgress()) return;
-    if(IS_CLIENT)
+    if (G_QuitInProgress()) return;
+    if (IS_CLIENT)
     {
         /// @todo Fix this properly: http://sf.net/p/deng/bugs/1082/
         return;
     }
 
     char const *scriptId = "help";
-    if(Record const *finale = Defs().finales.tryFind("id", scriptId))
+    if (Record const *finale = Defs().finales.tryFind("id", scriptId))
     {
         Hu_MenuCommand(MCMD_CLOSEFAST);
         G_StartFinale(finale->gets("script").toUtf8().constData(), FF_LOCAL, FIMODE_NORMAL, scriptId);
@@ -1082,7 +1102,7 @@ void G_BeginMap()
 {
     G_ChangeGameState(GS_MAP);
 
-    if(!IS_DEDICATED)
+    if (!IS_DEDICATED)
     {
         R_SetViewPortPlayer(CONSOLEPLAYER, CONSOLEPLAYER); // View the guy you are playing.
         R_ResizeViewWindow(RWF_FORCE|RWF_NO_LERP);
@@ -1099,8 +1119,8 @@ void G_BeginMap()
 
     // Print a map banner to the log.
     LOG_MSG(DE2_ESC(R));
-    LOG_NOTE("%s") << G_MapDescription(COMMON_GAMESESSION->episodeId(),
-                                       COMMON_GAMESESSION->mapUri());
+    LOG_NOTE("%s") << G_MapDescription(gfw_Session()->episodeId(),
+                                       gfw_Session()->mapUri());
     LOG_MSG(DE2_ESC(R));
 }
 
@@ -1109,19 +1129,19 @@ int G_Responder(event_t *ev)
     DENG2_ASSERT(ev);
 
     // Eat all events once shutdown has begun.
-    if(G_QuitInProgress()) return true;
+    if (G_QuitInProgress()) return true;
 
-    if(G_GameState() == GS_MAP)
+    if (G_GameState() == GS_MAP)
     {
         Pause_Responder(ev);
 
         // With the menu active, none of these should respond to input events.
-        if(!Hu_MenuIsActive() && !Hu_IsMessageActive())
+        if (!Hu_MenuIsActive() && !Hu_IsMessageActive())
         {
-            if(ST_Responder(ev))
+            if (ST_Responder(ev))
                 return true;
 
-            if(G_EventSequenceResponder(ev))
+            if (G_EventSequenceResponder(ev))
                 return true;
         }
     }
@@ -1134,17 +1154,17 @@ int G_PrivilegedResponder(event_t *ev)
     DENG2_ASSERT(ev);
 
     // Ignore all events once shutdown has begun.
-    if(G_QuitInProgress()) return false;
+    if (G_QuitInProgress()) return false;
 
-    if(Hu_MenuPrivilegedResponder(ev))
+    if (Hu_MenuPrivilegedResponder(ev))
         return true;
 
     // Process the screen shot key right away?
-    if(ev->type == EV_KEY && ev->data1 == DDKEY_F1)
+    if (ev->type == EV_KEY && ev->data1 == DDKEY_F1)
     {
-        if(CommandLine_Check("-devparm"))
+        if (CommandLine_Check("-devparm"))
         {
-            if(ev->state == EVS_DOWN)
+            if (ev->state == EVS_DOWN)
             {
                 G_SetGameAction(GA_SCREENSHOT);
             }
@@ -1158,7 +1178,7 @@ int G_PrivilegedResponder(event_t *ev)
 static sfxenum_t randomQuitSound()
 {
 #if __JDOOM__ || __JDOOM64__
-    if(cfg.menuQuitSound)
+    if (cfg.menuQuitSound)
     {
 # if __JDOOM64__
         static sfxenum_t quitSounds[] = {
@@ -1201,14 +1221,14 @@ static sfxenum_t randomQuitSound()
         int sndTableSize    = numQuitSounds;
 
 # if !__JDOOM64__
-        if(gameModeBits & GM_ANY_DOOM2)
+        if (gameModeBits & GM_ANY_DOOM2)
         {
             sndTable     = quitSounds2;
             sndTableSize = numQuitSounds2;
         }
 # endif
 
-        if(sndTable && sndTableSize > 0)
+        if (sndTable && sndTableSize > 0)
         {
             return sndTable[P_Random() & (sndTableSize - 1)];
         }
@@ -1225,12 +1245,12 @@ static sfxenum_t randomQuitSound()
 static bool intermissionEnabled()
 {
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-    if(COMMON_GAMESESSION->mapInfo().geti("flags") & MIF_NO_INTERMISSION)
+    if (gfw_MapInfoFlags() & MIF_NO_INTERMISSION)
     {
         return false;
     }
 #elif __JHEXEN__
-    if(!COMMON_GAMESESSION->rules().deathmatch)
+    if (!gfw_Rule(deathmatch))
     {
         return false;
     }
@@ -1262,11 +1282,11 @@ void G_PrepareWIData()
     info->maxFrags = 0;
 
     // See if there is a par time definition.
-    float parTime = COMMON_GAMESESSION->mapInfo().getf("parTime");
+    float parTime = gfw_Session()->mapInfo().getf("parTime");
     info->parTime = (parTime > 0? TICRATE * int(parTime) : -1 /*N/A*/);
 
     info->pNum = CONSOLEPLAYER;
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t const *p        = &players[i];
         wbplayerstruct_t *pStats = &info->plyr[i];
@@ -1288,7 +1308,7 @@ static int prepareIntermission(void * /*context*/)
     ::wmInfo.nextMapEntryPoint = ::nextMapEntryPoint;
 #endif
 #if __JDOOM__ || __JDOOM64__ || __JHERETIC__
-    ::wmInfo.currentMap        = COMMON_GAMESESSION->mapUri();
+    ::wmInfo.currentMap        = gfw_Session()->mapUri();
     ::wmInfo.didSecret         = ::players[CONSOLEPLAYER].didSecret;
 # if __JDOOM__ || __JDOOM64__
     ::wmInfo.maxKills          = de::max(1, ::totalKills);
@@ -1313,14 +1333,14 @@ static void runGameAction()
     static bool unloadTriggered = false;
 
     // Run the quit countdown?
-    if(::quitInProgress)
+    if (::quitInProgress)
     {
-        if(Timer_RealMilliseconds() > quitTime + QUITWAIT_MILLISECONDS)
+        if (Timer_RealMilliseconds() > quitTime + QUITWAIT_MILLISECONDS)
         {
-            if(!unloadTriggered)
+            if (!unloadTriggered)
             {
                 unloadTriggered = true;
-                if(CommandLine_Exists("-game"))
+                if (CommandLine_Exists("-game"))
                 {
                     // Launched directly into game, so quit the engine altogether.
                     // Sys_Quit unloads the game immediately, though, and we're deep
@@ -1346,42 +1366,44 @@ static void runGameAction()
 
     // Do things to change the game state.
     gameaction_t currentAction;
-    while((currentAction = ::gameAction) != GA_NONE)
+    while ((currentAction = ::gameAction) != GA_NONE)
     {
         BusyMode_FreezeGameForBusyMode();
 
         // The topmost action will now be processed.
         G_SetGameAction(GA_NONE);
 
-        switch(currentAction)
+        switch (currentAction)
         {
         case GA_NEWSESSION:
-            COMMON_GAMESESSION->end();
-            COMMON_GAMESESSION->begin(::gaNewSessionRules, ::gaNewSessionEpisodeId,
-                                      ::gaNewSessionMapUri, ::gaNewSessionMapEntrance);
+            gfw_Session()->end();
+            gfw_Session()->begin(G_NewSessionRules(),
+                                 ::gaNewSessionEpisodeId,
+                                 ::gaNewSessionMapUri,
+                                 ::gaNewSessionMapEntrance);
             break;
 
         case GA_LOADSESSION:
-            COMMON_GAMESESSION->end();
+            gfw_Session()->end();
 
             try
             {
                 SaveSlot const &sslot = G_SaveSlots()[::gaLoadSessionSlot];
-                COMMON_GAMESESSION->load(sslot.saveName());
+                gfw_Session()->load(sslot.saveName());
 
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_WARNING("Error loading from save slot #%s:\n")
                         << ::gaLoadSessionSlot << er.asText();
             }
 
             // Return to the title loop if loading did not succeed.
-            if(!COMMON_GAMESESSION->hasBegun())
+            if (!gfw_Session()->hasBegun())
             {
-                COMMON_GAMESESSION->endAndBeginTitle();
+                gfw_Session()->endAndBeginTitle();
             }
             break;
 
@@ -1389,12 +1411,12 @@ static void runGameAction()
             try
             {
                 SaveSlot const &sslot = G_SaveSlots()[::gaSaveSessionSlot];
-                COMMON_GAMESESSION->save(sslot.saveName(), ::gaSaveSessionUserDescription);
+                gfw_Session()->save(sslot.saveName(), ::gaSaveSessionUserDescription);
 
                 // Make note of the last used save slot.
                 Con_SetInteger2("game-save-last-slot", sslot.id().toInt(), SVF_WRITE_OVERRIDE);
             }
-            catch(Error const &er)
+            catch (Error const &er)
             {
                 LOG_RES_WARNING("Error saving to save slot #%s:\n")
                         << ::gaSaveSessionSlot << er.asText();
@@ -1408,7 +1430,7 @@ static void runGameAction()
 
             Hu_MenuCommand(MCMD_CLOSEFAST);
 
-            if(!IS_NETGAME)
+            if (!IS_NETGAME)
             {
                 // Play an exit sound if it is enabled.
                 S_LocalSound(randomQuitSound(), 0);
@@ -1418,30 +1440,30 @@ static void runGameAction()
 
         case GA_LEAVEMAP:
             // Check that the map truly exists.
-            if(!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
+            if (!P_MapExists(::nextMapUri.compose().toUtf8().constData()))
             {
-                ::nextMapUri = de::Uri(COMMON_GAMESESSION->episodeDef()->gets("startMap"), RC_NULL);
+                ::nextMapUri = de::makeUri(gfw_Session()->episodeDef()->gets("startMap"));
             }
-            COMMON_GAMESESSION->leaveMap(::nextMapUri, ::nextMapEntryPoint);
+            gfw_Session()->leaveMap(::nextMapUri, ::nextMapEntryPoint);
             break;
 
         case GA_RESTARTMAP:
-            COMMON_GAMESESSION->reloadMap();
+            gfw_Session()->reloadMap();
             break;
 
         case GA_MAPCOMPLETED: {
             // Leaving the current hub?
             dd_bool newHub = true;
 #if __JHEXEN__
-            if(Record const *episodeDef = COMMON_GAMESESSION->episodeDef())
+            if (Record const *episodeDef = gfw_Session()->episodeDef())
             {
                 defn::Episode epsd(*episodeDef);
-                Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
+                Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
                 newHub = (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()));
             }
 #endif
 
-            for(int i = 0; i < MAXPLAYERS; ++i)
+            for (int i = 0; i < MAXPLAYERS; ++i)
             {
                 ST_CloseAll(i, true/*fast*/);         // hide any HUDs left open
                 Player_LeaveMap(&players[i], newHub); // take away cards and stuff
@@ -1451,13 +1473,13 @@ static void runGameAction()
             SN_StopAllSequences();
 #endif
 
-            if(!IS_DEDICATED)
+            if (!IS_DEDICATED)
             {
                 G_ResetViewEffects();
             }
 
             // Go to an intermission?
-            if(intermissionEnabled())
+            if (intermissionEnabled())
             {
                 S_StartMusic(intermissionMusic().toUtf8().constData(), true);
                 S_PauseMusic(true);
@@ -1483,7 +1505,7 @@ static void runGameAction()
 
         case GA_SCREENSHOT: {
             // Find an unused screenshot file name.
-            String fileName = COMMON_GAMESESSION->gameId() + "-";
+            String fileName = gfw_GameId() + "-";
             int const numPos = fileName.length();
             for (int i = 0; i < 1e6; ++i) // Stop eventually...
             {
@@ -1516,7 +1538,7 @@ static void runGameAction()
 
 static int rebornLoadConfirmed(msgresponse_t response, int, void *)
 {
-    if(response == MSG_YES)
+    if (response == MSG_YES)
     {
         G_SetGameAction(GA_RESTARTMAP);
     }
@@ -1536,23 +1558,23 @@ static int rebornLoadConfirmed(msgresponse_t response, int, void *)
 static void rebornPlayers()
 {
     // Reborns are impossible if no game session is in progress.
-    if(!COMMON_GAMESESSION->hasBegun()) return;
+    if (!gfw_Session()->hasBegun()) return;
     // ...or if no map is currently loaded.
-    if(G_GameState() != GS_MAP) return;
+    if (G_GameState() != GS_MAP) return;
 
-    if(!IS_NETGAME && P_CountPlayersInGame(LocalOnly) == 1)
+    if (!IS_NETGAME && P_CountPlayersInGame(LocalOnly) == 1)
     {
-        if(Player_WaitingForReborn(&players[0]))
+        if (Player_WaitingForReborn(&players[0]))
         {
             // Are we still awaiting a response to a previous confirmation?
-            if(Hu_IsMessageActiveWithCallback(rebornLoadConfirmed))
+            if (Hu_IsMessageActiveWithCallback(rebornLoadConfirmed))
                 return;
 
             // Do we need user confirmation?
-            if(COMMON_GAMESESSION->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
+            if (gfw_Session()->progressRestoredOnReload() && cfg.common.confirmRebornLoad)
             {
                 S_LocalSound(SFX_REBORNLOAD_CONFIRM, NULL);
-                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, COMMON_GAMESESSION->userDescription().toUtf8().constData());
+                AutoStr *msg = Str_Appendf(AutoStr_NewStd(), REBORNLOAD_CONFIRM, gfw_Session()->userDescription().toUtf8().constData());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), rebornLoadConfirmed, 0, 0);
                 return;
             }
@@ -1562,23 +1584,23 @@ static void rebornPlayers()
         return;
     }
 
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         player_t *plr = &players[i];
 
-        if(Player_WaitingForReborn(plr))
+        if (Player_WaitingForReborn(plr))
         {
             P_RebornPlayerInMultiplayer(i);
         }
 
         // Player has left?
-        if((int)plr->playerState == PST_GONE)
+        if ((int)plr->playerState == PST_GONE)
         {
             plr->playerState  = PST_REBORN;
             ddplayer_t *ddplr = plr->plr;
-            if(mobj_t *plmo = ddplr->mo)
+            if (mobj_t *plmo = ddplr->mo)
             {
-                if(!IS_CLIENT)
+                if (!IS_CLIENT)
                 {
                     P_SpawnTeleFog(plmo->origin[VX], plmo->origin[VY], plmo->angle + ANG180);
                 }
@@ -1607,11 +1629,11 @@ void G_Ticker(timespan_t ticLength)
     Hu_MenuTicker(ticLength);
     Hu_MsgTicker();
 
-    if(IS_CLIENT && !Get(DD_GAME_READY)) return;
+    if (IS_CLIENT && !Get(DD_GAME_READY)) return;
 
     runGameAction();
 
-    if(!G_QuitInProgress())
+    if (!G_QuitInProgress())
     {
         // Do player reborns if needed.
         rebornPlayers();
@@ -1619,10 +1641,10 @@ void G_Ticker(timespan_t ticLength)
         // Update the viewer's look angle
         //G_LookAround(CONSOLEPLAYER);
 
-        if(!IS_CLIENT)
+        if (!IS_CLIENT)
         {
             // Enable/disable sending of frames (delta sets) to clients.
-            Set(DD_ALLOW_FRAMES, G_GameState() == GS_MAP);
+            Set(DD_SERVER_ALLOW_FRAMES, G_GameState() == GS_MAP);
 
             // Tell Doomsday when the game is paused (clients can't pause
             // the game.)
@@ -1634,14 +1656,14 @@ void G_Ticker(timespan_t ticLength)
     }
     else
     {
-        if(!IS_CLIENT)
+        if (!IS_CLIENT)
         {
             // Disable sending of frames (delta sets) to clients.
-            Set(DD_ALLOW_FRAMES, false);
+            Set(DD_SERVER_ALLOW_FRAMES, false);
         }
     }
 
-    if(G_GameState() == GS_MAP && !IS_DEDICATED)
+    if (G_GameState() == GS_MAP && !IS_DEDICATED)
     {
         ST_Ticker(ticLength);
     }
@@ -1650,14 +1672,14 @@ void G_Ticker(timespan_t ticLength)
     R_ResizeViewWindow(0);
 
     // The following is restricted to fixed 35 Hz ticks.
-    if(DD_IsSharpTick())
+    if (DD_IsSharpTick())
     {
         // Do main actions.
-        switch(G_GameState())
+        switch (G_GameState())
         {
         case GS_MAP:
             // Update in-map game status cvar.
-            if(oldGameState != GS_MAP)
+            if (oldGameState != GS_MAP)
             {
                 Con_SetInteger2("game-state-map", 1, SVF_WRITE_OVERRIDE);
             }
@@ -1668,7 +1690,7 @@ void G_Ticker(timespan_t ticLength)
             // Activate briefings once again (disabled for autostart or loading a saved game).
             briefDisabled = false;
 
-            if(IS_DEDICATED)
+            if (IS_DEDICATED)
                 break;
 
             Hu_Ticker();
@@ -1679,7 +1701,7 @@ void G_Ticker(timespan_t ticLength)
             break;
 
         default:
-            if(oldGameState != G_GameState())
+            if (oldGameState != G_GameState())
             {
                 // Update game status cvars.
                 Con_SetInteger2("game-state-map", 0,         SVF_WRITE_OVERRIDE);
@@ -1691,13 +1713,13 @@ void G_Ticker(timespan_t ticLength)
         }
 
         // Players post-ticking.
-        for(int i = 0; i < MAXPLAYERS; ++i)
+        for (int i = 0; i < MAXPLAYERS; ++i)
         {
             Player_PostTick(&players[i]);
         }
 
         // Servers will have to update player information and do such stuff.
-        if(!IS_CLIENT)
+        if (!IS_CLIENT)
         {
             NetSv_Ticker();
         }
@@ -1759,7 +1781,7 @@ static void clearPlayer(player_t *p)
  */
 void G_PlayerReborn(int player)
 {
-    if(player < 0 || player >= MAXPLAYERS)
+    if (player < 0 || player >= MAXPLAYERS)
         return; // Wha?
 
     LOGDEV_MAP_NOTE("G_PlayerReborn: reseting player %i") << player;
@@ -1799,7 +1821,7 @@ void G_PlayerReborn(int player)
     p->colorMap    = cfg.playerColor[player];
     p->class_      = P_ClassForPlayerWhenRespawning(player, false);
 #if __JHEXEN__
-    if(p->class_ == PCLASS_FIGHTER && !IS_NETGAME)
+    if (p->class_ == PCLASS_FIGHTER && !IS_NETGAME)
     {
         // In Hexen single-player, the Fighter's default color is Yellow.
         p->colorMap = 2;
@@ -1828,8 +1850,8 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
-    if(secret ||
+    de::Uri const mapUri = gfw_Session()->mapUri();
+    if (secret ||
        (mapUri.path() == "E1M9" ||
         mapUri.path() == "E2M9" ||
         mapUri.path() == "E3M9" ||
@@ -1840,7 +1862,7 @@ void G_PlayerReborn(int player)
     }
 
 #ifdef DENG2_DEBUG
-    for(int i = 0; i < NUM_WEAPON_TYPES; ++i)
+    for (int i = 0; i < NUM_WEAPON_TYPES; ++i)
     {
         LOGDEV_MAP_MSG("Player %i owns wpn %i: %i") << player << i << p->weapons[i].owned;
     }
@@ -1854,7 +1876,7 @@ void G_PlayerReborn(int player)
 
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
     // Reset maxammo.
-    for(int i = 0; i < NUM_AMMO_TYPES; ++i)
+    for (int i = 0; i < NUM_AMMO_TYPES; ++i)
     {
         p->ammo[i].max = maxAmmo[i];
     }
@@ -1880,10 +1902,10 @@ void G_PlayerReborn(int player)
 #if __JDOOM__ || __JDOOM64__
 void G_QueueBody(mobj_t *mo)
 {
-    if(!mo) return;
+    if (!mo) return;
 
     // Flush an old corpse if needed.
-    if(bodyQueueSlot >= BODYQUEUESIZE)
+    if (bodyQueueSlot >= BODYQUEUESIZE)
     {
         P_MobjRemove(bodyQueue[bodyQueueSlot % BODYQUEUESIZE], false);
     }
@@ -1893,62 +1915,19 @@ void G_QueueBody(mobj_t *mo)
 }
 #endif
 
-int G_Ruleset_Skill()
-{
-    return COMMON_GAMESESSION->rules().skill;
-}
-
-#if !__JHEXEN__
-byte G_Ruleset_Fast()
-{
-    return COMMON_GAMESESSION->rules().fast;
-}
-#endif
-
-byte G_Ruleset_Deathmatch()
-{
-    return COMMON_GAMESESSION->rules().deathmatch;
-}
-
-byte G_Ruleset_NoMonsters()
-{
-    return COMMON_GAMESESSION->rules().noMonsters;
-}
-
-#if __JHEXEN__
-byte G_Ruleset_RandomClasses()
-{
-    return COMMON_GAMESESSION->rules().randomClasses;
-}
-#endif
-
-#if !__JHEXEN__
-byte G_Ruleset_RespawnMonsters()
-{
-    return COMMON_GAMESESSION->rules().respawnMonsters;
-}
-#endif
-
-void G_Ruleset_UpdateDefaults()
-{
-#if !__JHEXEN__
-    defaultGameRules.fast = cfg.common.defaultRuleFastMonsters;
-#endif
-}
-
 /**
  * Lookup the debriefing Finale for the current episode and map (if any).
  */
 static Record const *finaleDebriefing()
 {
-    if(::briefDisabled) return 0;
+    if (::briefDisabled) return 0;
 
 #if __JHEXEN__
-    if(::cfg.overrideHubMsg && G_GameState() == GS_MAP)
+    if (::cfg.overrideHubMsg && G_GameState() == GS_MAP)
     {
-        defn::Episode epsd(*COMMON_GAMESESSION->episodeDef());
-        Record const *currentHub = epsd.tryFindHubByMapId(COMMON_GAMESESSION->mapUri().compose());
-        if(!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
+        defn::Episode epsd(*gfw_Session()->episodeDef());
+        Record const *currentHub = epsd.tryFindHubByMapId(gfw_Session()->mapUri().compose());
+        if (!currentHub || currentHub != epsd.tryFindHubByMapId(::nextMapUri.compose()))
         {
             return 0;
         }
@@ -1956,22 +1935,22 @@ static Record const *finaleDebriefing()
 #endif
 
     // In a networked game the server will schedule the debrief.
-    if(IS_CLIENT || Get(DD_PLAYBACK)) return 0;
+    if (IS_CLIENT || Get(DD_PLAYBACK)) return 0;
 
     // If we're already in the INFINE state, don't start a finale.
-    if(G_GameState() == GS_INFINE) return 0;
+    if (G_GameState() == GS_INFINE) return 0;
 
     // Is there such a finale definition?
-    return Defs().finales.tryFind("after", COMMON_GAMESESSION->mapUri().compose());
+    return Defs().finales.tryFind("after", gfw_Session()->mapUri().compose());
 }
 
 /// @todo common::GameSession should handle this -ds
 void G_IntermissionDone()
 {
     // We have left Intermission, however if there is an InFine for debriefing we should run it now.
-    if(Record const *finale = finaleDebriefing())
+    if (Record const *finale = finaleDebriefing())
     {
-        if(G_StartFinale(finale->gets("script").toUtf8().constData(), 0, FIMODE_AFTER, 0))
+        if (G_StartFinale(finale->gets("script").toUtf8().constData(), 0, FIMODE_AFTER, 0))
         {
             // The GA_ENDDEBRIEFING action is taken after the debriefing stops.
             return;
@@ -1985,7 +1964,7 @@ void G_IntermissionDone()
     FI_StackClear();
 
     // Has the player completed the game?
-    if(::nextMapUri.isEmpty())
+    if (::nextMapUri.isEmpty())
     {
         // Victorious!
         G_SetGameAction(GA_VICTORY);
@@ -1998,21 +1977,21 @@ void G_IntermissionDone()
 String G_DefaultGameStateFolderUserDescription(String const &saveName, bool autogenerate)
 {
     // If the slot is already in use then choose existing description.
-    if(!saveName.isEmpty())
+    if (!saveName.isEmpty())
     {
-        String const existing = COMMON_GAMESESSION->savedUserDescription(saveName);
-        if(!existing.isEmpty()) return existing;
+        String const existing = gfw_Session()->savedUserDescription(saveName);
+        if (!existing.isEmpty()) return existing;
     }
 
-    if(!autogenerate) return "";
+    if (!autogenerate) return "";
 
     // Autogenerate a suitable description.
     String description;
 
     // Include the source file name, for custom maps.
-    de::Uri const mapUri = COMMON_GAMESESSION->mapUri();
+    de::Uri const mapUri = gfw_Session()->mapUri();
     String mapUriAsText  = mapUri.compose();
-    if(P_MapIsCustom(mapUriAsText.toUtf8().constData()))
+    if (P_MapIsCustom(mapUriAsText.toUtf8().constData()))
     {
         String const mapSourcePath(Str_Text(P_MapSourceFile(mapUriAsText.toUtf8().constData())));
         description += mapSourcePath.fileNameWithoutExtension() + ":";
@@ -2022,7 +2001,7 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
     String mapTitle = G_MapTitle(mapUri);
     // No map title? Use the identifier. (Some tricksy modders provide us with an empty title).
     /// @todo Move this logic engine-side.
-    if(mapTitle.isEmpty() || mapTitle.at(0) == ' ')
+    if (mapTitle.isEmpty() || mapTitle.at(0) == ' ')
     {
         mapTitle = mapUri.path();
     }
@@ -2044,13 +2023,13 @@ String G_DefaultGameStateFolderUserDescription(String const &saveName, bool auto
 String G_EpisodeTitle(String episodeId)
 {
     String title;
-    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+    if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
     {
         title = episodeDef->gets("title");
 
         // Perhaps the title string is a reference to a Text definition?
         int textIdx = Defs().getTextNum(title.toUtf8().constData());
-        if(textIdx >= 0)
+        if (textIdx >= 0)
         {
             title = Defs().text[textIdx].text; // Yes, use the resolved text string.
         }
@@ -2061,20 +2040,20 @@ String G_EpisodeTitle(String episodeId)
 uint G_MapNumberFor(de::Uri const &mapUri)
 {
     String path = mapUri.path();
-    if(!path.isEmpty())
+    if (!path.isEmpty())
     {
 #if __JDOOM__ || __JHERETIC__
 # if __JDOOM__
-        if(gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
+        if (gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if(path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
+            if (path.at(0).toLower() == 'e' && path.at(2).toLower() == 'm')
             {
                 return path.substr(3).toInt() - 1;
             }
         }
 #endif
-        if(path.beginsWith("map", Qt::CaseInsensitive))
+        if (path.beginsWith("map", String::CaseInsensitive))
         {
             return path.substr(3).toInt() - 1;
         }
@@ -2084,7 +2063,7 @@ uint G_MapNumberFor(de::Uri const &mapUri)
 
 AutoStr *G_CurrentMapUriPath()
 {
-    return AutoStr_FromTextStd(COMMON_GAMESESSION->mapUri().path().toStringRef().toUtf8().constData());
+    return AutoStr_FromTextStd(gfw_Session()->mapUri().path().toStringRef().toUtf8().constData());
 }
 
 
@@ -2096,7 +2075,7 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
     DENG2_UNUSED(episode);
 #elif __JDOOM__
-    if(gameModeBits & GM_ANY_DOOM2)
+    if (gameModeBits & GM_ANY_DOOM2)
         mapId = String("map%1").arg(map+1, 2, 10, QChar('0'));
     else
         mapId = String("e%1m%2").arg(episode+1).arg(map+1);
@@ -2109,15 +2088,15 @@ de::Uri G_ComposeMapUri(uint episode, uint map)
     return de::Uri("Maps", mapId);
 }
 
-Record const &G_MapInfoForMapUri(de::Uri const &mapUri)
+Record &G_MapInfoForMapUri(de::Uri const &mapUri)
 {
     // Is there a MapInfo definition for the given URI?
-    if(Record const *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
+    if (Record *def = Defs().mapInfos.tryFind("id", mapUri.compose()))
     {
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if(Record const *def = Defs().mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
+    if (Record *def = Defs().mapInfos.tryFind("id", de::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }
@@ -2125,7 +2104,7 @@ Record const &G_MapInfoForMapUri(de::Uri const &mapUri)
     {
         static Record fallbackDef;
         static bool needInitFallbackDef = true;
-        if(needInitFallbackDef)
+        if (needInitFallbackDef)
         {
             needInitFallbackDef = false;
             defn::MapInfo(fallbackDef).resetToDefaults();
@@ -2141,17 +2120,17 @@ String G_MapTitle(de::Uri const &mapUri)
 
     // Perhaps the title string is a reference to a Text definition?
     int textIdx = Defs().getTextNum(title.toUtf8().constData());
-    if(textIdx >= 0)
+    if (textIdx >= 0)
     {
         title = Defs().text[textIdx].text; // Yes, use the resolved text string.
     }
 
     // Skip the "ExMx" part, if present.
     int idSuffixAt = title.indexOf(':');
-    if(idSuffixAt >= 0)
+    if (idSuffixAt >= 0)
     {
         int subStart = idSuffixAt + 1;
-        while(subStart < title.length() && title.at(subStart).isSpace()) { subStart++; }
+        while (subStart < title.length() && title.at(subStart).isSpace()) { subStart++; }
 
         return title.substr(subStart);
     }
@@ -2164,15 +2143,15 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
     // Perhaps a MapInfo definition exists for the map?
     String author = G_MapInfoForMapUri(mapUri).gets("author");
 
-    if(!author.isEmpty())
+    if (!author.isEmpty())
     {
         // Should we suppress the author?
         /// @todo Do not do this here.
         GameInfo gameInfo;
         DD_GameInfo(&gameInfo);
-        if(supressGameAuthor || P_MapIsCustom(mapUri.compose().toUtf8().constData()))
+        if (supressGameAuthor || P_MapIsCustom(mapUri.compose().toUtf8().constData()))
         {
-            if(!author.compareWithoutCase(Str_Text(gameInfo.author)))
+            if (!author.compareWithoutCase(Str_Text(gameInfo.author)))
                 return "";
         }
     }
@@ -2182,13 +2161,13 @@ String G_MapAuthor(de::Uri const &mapUri, bool supressGameAuthor)
 
 de::Uri G_MapTitleImage(de::Uri const &mapUri)
 {
-    return de::Uri(G_MapInfoForMapUri(mapUri).gets("titleImage"), RC_NULL);
+    return de::makeUri(G_MapInfoForMapUri(mapUri).gets("titleImage"));
 }
 
 String G_MapDescription(String episodeId, de::Uri const &mapUri)
 {
     Block mapUriUtf8 = mapUri.compose().toUtf8();
-    if(!P_MapExists(mapUriUtf8.constData()))
+    if (!P_MapExists(mapUriUtf8.constData()))
     {
         return String("Unknown map (Episode: ") + episodeId + ", Uri: " + mapUri + ")";
     }
@@ -2197,14 +2176,14 @@ String G_MapDescription(String episodeId, de::Uri const &mapUri)
     QTextStream os(&desc);
 
     String const title = G_MapTitle(mapUri);
-    if(!title.isEmpty())
+    if (!title.isEmpty())
     {
         os << "Map: " DE2_ESC(i) DE2_ESC(b) << title << DE2_ESC(.)
            << " (Uri: " << mapUri;
 
-        if(Record const *rec = Defs().episodes.tryFind("id", episodeId))
+        if (Record const *rec = Defs().episodes.tryFind("id", episodeId))
         {
-            if(Record const *mgNodeDef = defn::Episode(*rec).tryFindMapGraphNode(mapUri.compose()))
+            if (Record const *mgNodeDef = defn::Episode(*rec).tryFindMapGraphNode(mapUri.compose()))
             {
                 os << ", warp: " << String::number(mgNodeDef->geti("warpNumber"));
             }
@@ -2214,7 +2193,7 @@ String G_MapDescription(String episodeId, de::Uri const &mapUri)
     }
 
     String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUriUtf8.constData()));
-    if(!author.isEmpty())
+    if (!author.isEmpty())
     {
         os << "\n - Author: " DE2_ESC(i) << author;
     }
@@ -2240,7 +2219,7 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
 
     G_ChangeGameState(GS_WAITING);
 
-    if(!aborted && singledemo)
+    if (!aborted && singledemo)
     {
         // Playback ended normally.
         G_SetGameAction(GA_QUIT);
@@ -2249,22 +2228,22 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
 
     G_SetGameAction(GA_NONE);
 
-    if(IS_NETGAME && IS_CLIENT)
+    if (IS_NETGAME && IS_CLIENT)
     {
         // Restore normal game state.
-        GameRuleset newRules(COMMON_GAMESESSION->rules());
-        newRules.deathmatch      = false;
-        newRules.noMonsters      = false;
+        GameRules newRules(gfw_Session()->rules());
+        GameRules_Set(newRules, deathmatch, 0);
+        GameRules_Set(newRules, noMonsters, false);
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        newRules.respawnMonsters = false;
+        GameRules_Set(newRules, respawnMonsters, false);
 #endif
 #if __JHEXEN__
-        newRules.randomClasses   = false;
+        GameRules_Set(newRules, randomClasses, false);
 #endif
-        COMMON_GAMESESSION->applyNewRules(newRules);
+        gfw_Session()->applyNewRules(newRules);
     }
 
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_CloseAll(i, true/*fast*/);
     }
@@ -2274,7 +2253,7 @@ int Hook_DemoStop(int /*hookType*/, int val, void * /*context*/)
 
 static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /*userPointer*/)
 {
-    if(response == MSG_YES)
+    if (response == MSG_YES)
     {
         G_SetGameAction(GA_QUIT);
     }
@@ -2283,9 +2262,9 @@ static int quitGameConfirmed(msgresponse_t response, int /*userValue*/, void * /
 
 void G_QuitGame()
 {
-    if(G_QuitInProgress()) return;
+    if (G_QuitInProgress()) return;
 
-    if(Hu_IsMessageActiveWithCallback(quitGameConfirmed))
+    if (Hu_IsMessageActiveWithCallback(quitGameConfirmed))
     {
         // User has re-tried to quit with "quit" when the question is already on
         // the screen. Apparently we should quit...
@@ -2308,7 +2287,7 @@ D_CMD(OpenLoadMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!COMMON_GAMESESSION->isLoadingPossible()) return false;
+    if (!gfw_Session()->isLoadingPossible()) return false;
     DD_Execute(true, "menu loadgame");
     return true;
 }
@@ -2317,14 +2296,14 @@ D_CMD(OpenSaveMenu)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(!COMMON_GAMESESSION->isSavingPossible()) return false;
+    if (!gfw_Session()->isSavingPossible()) return false;
     DD_Execute(true, "menu savegame");
     return true;
 }
 
 static int endSessionConfirmed(msgresponse_t response, int /*userValue*/, void * /*context*/)
 {
-    if(response == MSG_YES)
+    if (response == MSG_YES)
     {
         DD_Execute(true, "endgame confirm");
     }
@@ -2335,17 +2314,17 @@ D_CMD(EndSession)
 {
     DENG2_UNUSED3(src, argc, argv);
 
-    if(G_QuitInProgress()) return true;
+    if (G_QuitInProgress()) return true;
 
-    if(IS_NETGAME && IS_SERVER)
+    if (IS_NETGAME && IS_SERVER)
     {
         LOG_NET_ERROR("Cannot end a networked game session. Stop the server instead");
         return false;
     }
 
-    if(!COMMON_GAMESESSION->hasBegun())
+    if (!gfw_Session()->hasBegun())
     {
-        if(IS_NETGAME && IS_CLIENT)
+        if (IS_NETGAME && IS_CLIENT)
         {
             LOG_NET_ERROR("%s") << ENDNOGAME;
         }
@@ -2358,15 +2337,15 @@ D_CMD(EndSession)
 
     // Is user confirmation required? (Never if this is a network server).
     bool const confirmed = (argc >= 2 && !qstricmp(argv[argc-1], "confirm"));
-    if(confirmed || (IS_NETGAME && IS_SERVER))
+    if (confirmed || (IS_NETGAME && IS_SERVER))
     {
-        if(IS_NETGAME && IS_CLIENT)
+        if (IS_NETGAME && IS_CLIENT)
         {
             DD_Executef(false, "net disconnect");
         }
         else
         {
-            COMMON_GAMESESSION->endAndBeginTitle();
+            gfw_Session()->endAndBeginTitle();
         }
     }
     else
@@ -2381,7 +2360,7 @@ static int loadSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
 {
     String *slotId = static_cast<String *>(context);
     DENG2_ASSERT(slotId != 0);
-    if(response == MSG_YES)
+    if (response == MSG_YES)
     {
         DD_Executef(true, "loadgame %s confirm", slotId->toUtf8().constData());
     }
@@ -2395,22 +2374,22 @@ D_CMD(LoadSession)
 
     bool const confirmed = (argc == 3 && !qstricmp(argv[2], "confirm"));
 
-    if(G_QuitInProgress()) return false;
-    if(!COMMON_GAMESESSION->isLoadingPossible()) return false;
+    if (G_QuitInProgress()) return false;
+    if (!gfw_Session()->isLoadingPossible()) return false;
 
-    if(IS_NETGAME)
+    if (IS_NETGAME)
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
         Hu_MsgStart(MSG_ANYKEY, QLOADNET, nullptr, 0, nullptr);
         return false;
     }
 
-    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
+    if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
-        if(sslot->isLoadable())
+        if (sslot->isLoadable())
         {
             // A known used slot identifier.
-            if(confirmed || !cfg.common.confirmQuickGameSave)
+            if (confirmed || !cfg.common.confirmQuickGameSave)
             {
                 // Try to schedule a GA_LOADSESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, nullptr);
@@ -2418,12 +2397,12 @@ D_CMD(LoadSession)
             }
 
             // Are we already awaiting a reponse of some kind?
-            if(Hu_IsMessageActive()) return false;
+            if (Hu_IsMessageActive()) return false;
 
             S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
 
             // Compose the confirmation message.
-            String const &existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            String const &existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QLPROMPT,
                                        sslot->id().toUtf8().constData(),
                                        existingDescription.toUtf8().constData());
@@ -2433,14 +2412,14 @@ D_CMD(LoadSession)
         }
     }
 
-    if(!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
+    if (!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
     {
         S_LocalSound(SFX_QUICKLOAD_PROMPT, nullptr);
         Hu_MsgStart(MSG_ANYKEY, QSAVESPOT, nullptr, 0, nullptr);
         return true;
     }
 
-    if(!G_SaveSlots().has(argv[1]))
+    if (!G_SaveSlots().has(argv[1]))
     {
         LOG_SCR_WARNING("Failed to determine save slot from \"%s\"") << argv[1];
     }
@@ -2450,7 +2429,7 @@ D_CMD(LoadSession)
     // Reasoning: User attempted to load a named game-save however the name
     // specified didn't match anything known. Opening the load menu allows
     // the user to see the names of the known game-saves.
-    if(src == CMDS_CONSOLE)
+    if (src == CMDS_CONSOLE)
     {
         LOG_SCR_MSG("Opening Load Game menu...");
         DD_Execute(true, "menu loadgame");
@@ -2477,7 +2456,7 @@ static int saveSessionConfirmed(msgresponse_t response, int /*userValue*/, void 
 {
     savesessionconfirmed_params_t *p = static_cast<savesessionconfirmed_params_t *>(context);
     DENG2_ASSERT(p != 0);
-    if(response == MSG_YES)
+    if (response == MSG_YES)
     {
         DD_Executef(true, "savegame %s \"%s\" confirm", p->slotId.toUtf8().constData(), p->userDescription.toUtf8().constData());
     }
@@ -2491,40 +2470,40 @@ D_CMD(SaveSession)
 
     bool const confirmed = (argc >= 3 && !qstricmp(argv[argc-1], "confirm"));
 
-    if(G_QuitInProgress()) return false;
+    if (G_QuitInProgress()) return false;
 
-    if(IS_CLIENT || IS_NETWORK_SERVER)
+    if (IS_CLIENT || IS_NETWORK_SERVER)
     {
         LOG_ERROR("Network savegames are not supported at the moment");
         return false;
     }
 
     player_t *player = &players[CONSOLEPLAYER];
-    if(player->playerState == PST_DEAD || Get(DD_PLAYBACK))
+    if (player->playerState == PST_DEAD || Get(DD_PLAYBACK))
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
         Hu_MsgStart(MSG_ANYKEY, SAVEDEAD, nullptr, 0, nullptr);
         return true;
     }
 
-    if(G_GameState() != GS_MAP)
+    if (G_GameState() != GS_MAP)
     {
         S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
         Hu_MsgStart(MSG_ANYKEY, SAVEOUTMAP, nullptr, 0, nullptr);
         return true;
     }
 
-    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
+    if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
-        if(sslot->isUserWritable())
+        if (sslot->isUserWritable())
         {
             String userDescription;
-            if(argc >= 3 && qstricmp(argv[2], "confirm"))
+            if (argc >= 3 && qstricmp(argv[2], "confirm"))
             {
                 userDescription = argv[2];
             }
 
-            if(sslot->isUnused() || confirmed || !cfg.common.confirmQuickGameSave)
+            if (sslot->isUnused() || confirmed || !cfg.common.confirmQuickGameSave)
             {
                 // Try to schedule a GA_SAVESESSION action.
                 S_LocalSound(SFX_MENU_ACCEPT, nullptr);
@@ -2532,12 +2511,12 @@ D_CMD(SaveSession)
             }
 
             // Are we already awaiting a reponse of some kind?
-            if(Hu_IsMessageActive()) return false;
+            if (Hu_IsMessageActive()) return false;
 
             S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
 
             // Compose the confirmation message.
-            String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+            String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
                                        sslot->id().toUtf8().constData(),
                                        existingDescription.toUtf8().constData());
@@ -2553,7 +2532,7 @@ D_CMD(SaveSession)
         LOG_SCR_ERROR("Save slot '%s' is non-user-writable") << sslot->id();
     }
 
-    if(!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
+    if (!qstricmp(argv[1], "quick") || !qstricmp(argv[1], "<quick>"))
     {
         // No quick-save slot has been nominated - allow doing so now.
         Hu_MenuCommand(MCMD_OPEN);
@@ -2562,7 +2541,7 @@ D_CMD(SaveSession)
         return true;
     }
 
-    if(!G_SaveSlots().has(argv[1]))
+    if (!G_SaveSlots().has(argv[1]))
     {
         LOG_SCR_WARNING("Failed to determine save slot from \"%s\"") << argv[1];
     }
@@ -2581,7 +2560,7 @@ static int deleteGameStateFolderConfirmed(msgresponse_t response, int /*userValu
 {
     String const *saveName = static_cast<de::String const *>(context);
     DENG2_ASSERT(saveName != 0);
-    if(response == MSG_YES)
+    if (response == MSG_YES)
     {
         DD_Executef(true, "deletegamesave %s confirm", saveName->toUtf8().constData());
     }
@@ -2593,29 +2572,29 @@ D_CMD(DeleteSaveGame)
 {
     DENG2_UNUSED(src);
 
-    if(G_QuitInProgress()) return false;
+    if (G_QuitInProgress()) return false;
 
     bool const confirmed = (argc >= 3 && !qstricmp(argv[argc-1], "confirm"));
-    if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
+    if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
-        if(sslot->isUserWritable())
+        if (sslot->isUserWritable())
         {
             // A known slot identifier.
-            if(sslot->isUnused()) return false;
+            if (sslot->isUnused()) return false;
 
-            if(confirmed)
+            if (confirmed)
             {
-                COMMON_GAMESESSION->removeSaved(sslot->saveName());
+                gfw_Session()->removeSaved(sslot->saveName());
             }
             else
             {
                 // Are we already awaiting a reponse of some kind?
-                if(Hu_IsMessageActive()) return false;
+                if (Hu_IsMessageActive()) return false;
 
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, nullptr);
 
                 // Compose the confirmation message.
-                String const existingDescription = COMMON_GAMESESSION->savedUserDescription(sslot->saveName());
+                String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.toUtf8().constData());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteGameStateFolderConfirmed, 0, new String(sslot->saveName()));
             }
@@ -2655,10 +2634,10 @@ D_CMD(LeaveMap)
     String exitName(argc > 1? argv[1] : "next");
 
     // Only the server operator can end the map this way.
-    if(IS_NETGAME && !IS_NETWORK_SERVER)
+    if (IS_NETGAME && !IS_NETWORK_SERVER)
         return false;
 
-    if(G_GameState() != GS_MAP)
+    if (G_GameState() != GS_MAP)
     {
 #if __JHERETIC__ || __JHEXEN__
         S_LocalSound(SFX_CHAT, nullptr);
@@ -2668,8 +2647,33 @@ D_CMD(LeaveMap)
         LOG_MAP_ERROR("Can only exit a map when in a game!");
         return false;
     }
+    
+    G_SetGameActionMapCompleted(gfw_Session()->mapUriForNamedExit(exitName));
+    return true;
+}
 
-    G_SetGameActionMapCompleted(COMMON_GAMESESSION->mapUriForNamedExit(exitName));
+D_CMD(SetDefaultSkill)
+{
+    DENG_UNUSED(src);
+
+    if (argc != 2)
+    {
+        LOG_SCR_NOTE("Usage: %s (skill)") << argv[0];
+        return true;
+    }
+    gfw_SetDefaultRule(skill, String(argv[1]).toInt() - 1);
+    if (gfw_DefaultRule(skill) < SM_BABY || gfw_DefaultRule(skill) >= NUM_SKILL_MODES)
+    {
+        gfw_SetDefaultRule(skill, SM_MEDIUM);
+    }
+    char const *skillNames[] = {
+        "Novice",
+        "Easy",
+        "Normal",
+        "Hard",
+        "Nightmare!"
+    };
+    LOG_SCR_MSG("Default skill level for new games: %s") << skillNames[gfw_DefaultRule(skill)];
     return true;
 }
 
@@ -2688,41 +2692,45 @@ D_CMD(LeaveMap)
  * changes to take effect. In single player this behavior is not necessary.
  *
  * @note "setmap" is an alias of "warp"
+ *
+ * @todo Clean up the map/episode selection logic... -jk
  */
 D_CMD(WarpMap)
 {
     // Only server operators can warp maps in network games.
     /// @todo Implement vote or similar mechanics.
-    if(IS_NETGAME && !IS_NETWORK_SERVER)
+    if (IS_NETGAME && !IS_NETWORK_SERVER)
     {
         return false;
     }
 
-    if(argc == 1)
+    if (argc == 1)
     {
         LOG_SCR_NOTE("Usage: %s (episode) (map)") << argv[0];
         return true;
     }
 
     // If a session is already in progress, the default episode is the current.
-    String episodeId = COMMON_GAMESESSION->episodeId();
+    String episodeId = gfw_Session()->episodeId();
 
     // Otherwise if only one playable episode is defined - select it.
-    if(episodeId.isEmpty() && PlayableEpisodeCount() == 1)
+    if (episodeId.isEmpty() && PlayableEpisodeCount() == 1)
     {
         episodeId = FirstPlayableEpisodeId();
     }
 
     // Has an episode been specified?
     bool const haveEpisode = (argc >= 3);
-    if(haveEpisode) episodeId = argv[1];
+    if (haveEpisode)
+    {
+        episodeId = argv[1];
 
     // Catch invalid episodes.
-    if(Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
+        if (Record const *episodeDef = Defs().episodes.tryFind("id", episodeId))
     {
         // Ensure that the episode is playable.
         de::Uri startMap(episodeDef->gets("startMap"), RC_NULL);
-        if(!P_MapExists(startMap.compose().toUtf8().constData()))
+            if (!P_MapExists(startMap.compose().toUtf8().constData()))
         {
             LOG_SCR_NOTE("Failed to locate the start map for episode '%s'."
                          " This episode is not playable") << episodeId;
@@ -2734,31 +2742,41 @@ D_CMD(WarpMap)
         LOG_SCR_NOTE("Unknown episode '%s'") << episodeId;
         return false;
     }
+    }
 
     // The map.
     de::Uri mapUri;
     bool isNumber;
     int mapWarpNumber = String(argv[haveEpisode? 2 : 1]).toInt(&isNumber);
 
-    if(!isNumber)
+    if (!isNumber)
     {
+        if (!haveEpisode)
+        {
+            // Implicit episode ID based on the map.
+            if (String implicitEpisodeId = Defs().findEpisode(argv[1]))
+    {
+                episodeId = implicitEpisodeId;
+            }
+        }
+
         // It must be a URI, then.
         Block rawMapUri = String(argv[haveEpisode? 2 : 1]).toUtf8();
         char *args[1] = { const_cast<char *>(rawMapUri.constData()) };
         mapUri = de::Uri::fromUserInput(args, 1);
-        if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
+        if (mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
     }
     else
     {
         // Map warp numbers must be translated in the context of an Episode.
         mapUri = TranslateMapWarpNumber(episodeId, mapWarpNumber);
 
-        if(mapUri.isEmpty())
+        if (mapUri.isEmpty())
         {
             // It may be a map that is outside the defined progression.
             bool isNumber;
             int episodeNum = episodeId.toInt(&isNumber);
-            if(isNumber)
+            if (isNumber)
             {
                 mapUri = G_ComposeMapUri(episodeNum, mapWarpNumber > 0? mapWarpNumber - 1 : 0);
             }
@@ -2766,10 +2784,10 @@ D_CMD(WarpMap)
     }
 
     // Catch invalid maps.
-    if(!P_MapExists(mapUri.compose().toUtf8().constData()))
+    if (!P_MapExists(mapUri.compose().toUtf8().constData()))
     {
         String msg("Unknown map");
-        if(argc >= 3) msg += String(" \"%1 %2\"").arg(argv[1]).arg(argv[2]);
+        if (argc >= 3) msg += String(" \"%1 %2\"").arg(argv[1]).arg(argv[2]);
         else          msg += String(" \"%1\"").arg(argv[1]);
 
         P_SetMessageWithFlags(&players[CONSOLEPLAYER], msg.toUtf8().constData(), LMF_NO_HIDE);
@@ -2777,9 +2795,9 @@ D_CMD(WarpMap)
     }
 
     bool forceNewSession = (IS_NETGAME != 0);
-    if(COMMON_GAMESESSION->hasBegun())
+    if (gfw_Session()->hasBegun())
     {
-        if(COMMON_GAMESESSION->episodeId().compareWithoutCase(episodeId))
+        if (gfw_Session()->episodeId().compareWithoutCase(episodeId))
         {
             forceNewSession = true;
         }
@@ -2787,7 +2805,7 @@ D_CMD(WarpMap)
 
 #if __JHEXEN__
     // Hexen does not allow warping to the current map.
-    if(!forceNewSession && COMMON_GAMESESSION->mapUri() == mapUri)
+    if (!forceNewSession && gfw_Session()->mapUri() == mapUri)
     {
         P_SetMessageWithFlags(&players[CONSOLEPLAYER], "Cannot warp to the current map.", LMF_NO_HIDE);
         return false;
@@ -2796,7 +2814,7 @@ D_CMD(WarpMap)
 
     // Close any left open UIs.
     /// @todo Still necessary here?
-    for(int i = 0; i < MAXPLAYERS; ++i)
+    for (int i = 0; i < MAXPLAYERS; ++i)
     {
         ST_CloseAll(i, true/*fast*/);
     }
@@ -2806,27 +2824,26 @@ D_CMD(WarpMap)
     ::briefDisabled = true;
 
     // So be it.
-    if(!forceNewSession && COMMON_GAMESESSION->hasBegun())
+    if (!forceNewSession && gfw_Session()->hasBegun())
     {
 #if __JHEXEN__
         ::nextMapUri        = mapUri;
         ::nextMapEntryPoint = 0;
         G_SetGameAction(GA_LEAVEMAP);
 #else
-        G_SetGameActionNewSession(COMMON_GAMESESSION->rules(), COMMON_GAMESESSION->episodeId(), mapUri);
+        G_SetGameActionNewSession(gfw_Session()->rules(), gfw_Session()->episodeId(), mapUri);
 #endif
     }
     else
     {
         // If a session is already in progress then copy the rules from it.
-        GameRuleset rules = (COMMON_GAMESESSION->hasBegun()? COMMON_GAMESESSION->rules()
-                                                           : defaultGameRules);
+        GameRules rules = (gfw_Session()->hasBegun() ? gfw_Session()->rules() : gfw_DefaultGameRules());
         if (IS_DEDICATED)
         {
             // Why is this necessary to set here? Changing the rules in P_SetupMap()
             // causes the skill change to be effective on the _next_ map load, not
             // the current one. -jk
-            rules.skill = cfg.common.netSkill;
+            GameRules_Set(rules, skill, cfg.common.netSkill);
         }
         G_SetGameActionNewSession(rules, episodeId, mapUri);
     }
@@ -2834,7 +2851,7 @@ D_CMD(WarpMap)
     // If the command source was "us" the game library then it was probably in
     // response to the local player entering a cheat event sequence, so set the
     // "CHANGING MAP" message. Somewhat of a kludge...
-    if(src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
+    if (src == CMDS_GAME && !(IS_NETGAME && IS_SERVER))
     {
 #if __JHEXEN__
         char const *msg = TXT_CHEATWARP;
@@ -2922,6 +2939,9 @@ static void registerGameStatusCVars()
         {"player-weapon-bfg", READONLYCVAR, CVT_INT, &gsvWeapons[WT_SEVENTH], 0, 0, 0},
         {"player-weapon-chainsaw", READONLYCVAR, CVT_INT, &gsvWeapons[WT_EIGHTH], 0, 0, 0},
         {"player-weapon-sshotgun", READONLYCVAR, CVT_INT, &gsvWeapons[WT_NINETH], 0, 0, 0},
+    #if __JDOOM64__
+        {"player-weapon-unmaker", READONLYCVAR, CVT_INT, &gsvWeapons[WT_TENTH], 0, 0, 0},
+    #endif
         // Keys
         {"player-key-blue", READONLYCVAR, CVT_INT, &gsvKeys[KT_BLUECARD], 0, 0, 0},
         {"player-key-yellow", READONLYCVAR, CVT_INT, &gsvKeys[KT_YELLOWCARD], 0, 0, 0},
@@ -3030,7 +3050,7 @@ static void registerGameStatusCVars()
 
 #if __JHEXEN__
     // Fourth-weapon pieces:
-    for(int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
+    for (int i = 0; i < WEAPON_FOURTH_PIECE_COUNT; ++i)
     {
         Block const cvarName = String("player-weapon-piece%1").arg(i + 1).toUtf8();
         C_VAR_INT(cvarName.constData(), &gsvWPieces[i], READONLYCVAR, 0, 1);
@@ -3069,6 +3089,7 @@ void G_ConsoleRegister()
     C_CMD("togglegamma",        "",         CycleTextureGamma);
     C_CMD("warp",               nullptr,    WarpMap);
     /* Alias */ C_CMD("setmap", nullptr,    WarpMap);
+    C_CMD("setdefaultskill",    "i",        SetDefaultSkill);
 
     registerGameStatusCVars();
 }

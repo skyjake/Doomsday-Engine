@@ -1,0 +1,56 @@
+#dengine-topbar {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;    
+    padding: 0.5ex 0;
+    background-color: rgba(0, 0, 0, 0.5);
+    font-family: "Source Sans Pro", sans-serif;
+    font-size: 12pt;
+    color: white;
+}
+#vanilla_discussion_embed #dengine-topbar {
+    display: none;
+}
+#dengine-topbar ul.site-navigation {
+    text-align: center;
+    list-style: none;
+    margin: 0 auto;
+    padding: 0;
+    color: white;
+}
+#dengine-topbar ul.site-navigation li {
+    display: inline-block;    
+    margin: 0 0.75ex;
+}
+#dengine-topbar a {
+    color: white;
+    text-decoration: none;
+    font-weight: 300;
+}
+#dengine-topbar a:hover {
+    text-decoration: underline;
+}
+#dengine-topbar a.site-link {
+    font-weight: bold;
+}
+@media only screen and (max-width: 750px) {
+    #dengine-topbar ul.site-navigation li.supplementary {
+        display: none;
+    }
+}
+@media only screen and (max-width: 520px) {
+    #dengine-topbar ul.site-navigation li.quick-download {
+        display: none;
+    }
+}
+@media only screen and (max-width: 480px) {
+    #dengine-topbar ul.site-navigation span.aux-word {
+        display: none;
+    }
+}
+@media only screen and (max-width: 320px) {
+    #dengine-topbar {
+        font-size: 10pt;
+    }
+}

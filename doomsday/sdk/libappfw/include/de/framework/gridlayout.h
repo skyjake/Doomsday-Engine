@@ -21,6 +21,7 @@
 
 #include "../ui/defs.h"
 #include "../GuiWidget"
+#include <de/ISizeRule>
 
 namespace de {
 
@@ -33,7 +34,7 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBAPPFW_PUBLIC GridLayout
+class LIBAPPFW_PUBLIC GridLayout : public ISizeRule
 {
 public:
     enum Mode {
@@ -125,8 +126,8 @@ public:
 
     int widgetCellSpan(GuiWidget const &widget) const;
 
-    Rule const &width() const;
-    Rule const &height() const;
+    Rule const &width() const override;
+    Rule const &height() const override;
     Rule const &columnLeft(int col) const;
     Rule const &columnRight(int col) const;
     Rule const &columnWidth(int col) const;

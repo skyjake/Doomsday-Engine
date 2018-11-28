@@ -23,8 +23,7 @@
 #include "TextWidget"
 #include "AbstractLineEditor"
 
-namespace de {
-namespace shell {
+namespace de { namespace shell {
 
 /**
  * Widget for word-wrapped text editing.
@@ -34,7 +33,9 @@ namespace shell {
  *
  * @ingroup textUi
  */
-class LIBSHELL_PUBLIC LineEditWidget : public TextWidget, public AbstractLineEditor
+class LIBSHELL_PUBLIC LineEditWidget
+    : public TextWidget
+    , public AbstractLineEditor
 {
     Q_OBJECT
 
@@ -68,7 +69,7 @@ signals:
     void enterPressed(de::String text);
 
 protected:
-    virtual int maximumWidth() const;
+    virtual int  maximumWidth() const;
     virtual void numberOfLinesChanged(int lineCount);
     virtual void cursorMoved();
     virtual void contentChanged();
@@ -77,7 +78,6 @@ private:
     DENG2_PRIVATE(d)
 };
 
-} // namespace shell
-} // namespace de
+}} // namespace de::shell
 
 #endif // LIBSHELL_LINEEDITWIDGET_H

@@ -14,7 +14,7 @@
  * of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser
  * General Public License for more details. You should have received a copy of
  * the GNU Lesser General Public License along with this program; if not, see:
- * http://www.gnu.org/licenses</small> 
+ * http://www.gnu.org/licenses</small>
  */
 
 #include "de/IfStatement"
@@ -80,8 +80,8 @@ void IfStatement::execute(Context &context) const
 
 void IfStatement::operator >> (Writer &to) const
 {
-    to << SerialId(IF);
-    
+    to << dbyte(SerialId::If);
+
     // Branches.
     to << duint16(_branches.size());
     for (Branches::const_iterator i = _branches.begin(); i != _branches.end(); ++i)
@@ -96,15 +96,15 @@ void IfStatement::operator >> (Writer &to) const
 void IfStatement::operator << (Reader &from)
 {
     SerialId id;
-    from >> id;
-    if (id != IF)
+    from.readAs<dbyte>(id);
+    if (id != SerialId::If)
     {
-        /// @throw DeserializationError The identifier that species the type of the 
+        /// @throw DeserializationError The identifier that species the type of the
         /// serialized statement was invalid.
         throw DeserializationError("IfStatement::operator <<", "Invalid ID");
     }
     clear();
-    
+
     // Branches.
     duint16 count;
     from >> count;
@@ -114,6 +114,6 @@ void IfStatement::operator << (Reader &from)
         setBranchCondition(Expression::constructFrom(from));
         from >> branchCompound();
     }
-    
+
     from >> _elseCompound;
 }

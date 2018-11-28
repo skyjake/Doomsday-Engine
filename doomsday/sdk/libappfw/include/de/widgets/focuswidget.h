@@ -42,6 +42,11 @@ public:
     void fadeIn();
     void fadeOut();
 
+    /**
+     * Determines whether the focus widget is active and flashing.
+     */
+    bool isKeyboardFocusActive() const;
+
     // Events.
     void update() override;
 

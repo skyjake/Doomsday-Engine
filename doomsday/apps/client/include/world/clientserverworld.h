@@ -24,6 +24,7 @@
 #include <de/liblegacy.h>
 #include <de/Error>
 #include <de/Observers>
+#include <de/Scheduler>
 #include <de/Vector>
 #include <doomsday/world/world.h>
 #include <doomsday/uri.h>
@@ -79,6 +80,8 @@ public:
      * To be called following an engine reset to update the world state.
      */
     void update();
+
+    de::Scheduler &scheduler();
 
     /**
      * Provides access to the currently loaded map.

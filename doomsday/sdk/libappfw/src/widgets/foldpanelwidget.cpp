@@ -25,7 +25,7 @@ namespace de {
 
 using namespace ui;
 
-static TimeDelta const INDICATOR_ANIM_SPAN = 0.6;
+static TimeSpan const INDICATOR_ANIM_SPAN = 0.4;
 
 DENG2_PIMPL_NOREF(FoldPanelWidget)
 {
@@ -53,7 +53,7 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
             bool changed = animating;
 
             float target = (fold.isOpen()? 0 : 90);
-            if (target != angle.target())
+            if (!fequal(target, angle.target()))
             {
                 angle.setValue(target, INDICATOR_ANIM_SPAN);
                 animating = true;
@@ -65,8 +65,8 @@ DENG2_PIMPL_NOREF(FoldPanelWidget)
                 needSize = false;
                 changed = true;
 
-                float h = fold.title().font().height().value();
-                setSize(Vector2f(h, h));
+                const float h = pixelsToPoints(fold.title().font().height().value());
+                setPointSize({h, h});
             }
 
             // Stop animating?
@@ -112,7 +112,7 @@ FoldPanelWidget::FoldPanelWidget(String const &name) : PanelWidget(name), d(new 
 
 ButtonWidget *FoldPanelWidget::makeTitle(String const &text)
 {
-    d->title.reset(new ButtonWidget);
+    d->title.reset(new ButtonWidget("fold-title"));
 
     d->title->setSizePolicy(Expand, Expand);
     d->title->setText(text);
@@ -164,6 +164,24 @@ GuiWidget &FoldPanelWidget::content() const
     return PanelWidget::content();
 }
 
+FoldPanelWidget *FoldPanelWidget::makeOptionsGroup(const String &name, const String &heading,
+                                                   GuiWidget *parent)
+{
+    auto *fold = new FoldPanelWidget(name);
+    parent->add(fold->makeTitle(heading));
+    parent->add(fold);
+    fold->title().setSizePolicy(ui::Fixed, ui::Expand);
+    fold->title().setFont("separator.label");
+    fold->title().margins().setTop("gap");
+//    fold->title().set(Background(Vector4f(1, 0, 1, .5f)));
+    fold->title().setImageAlignment(ui::AlignRight);
+    fold->title().rule()
+        .setInput(Rule::Left, fold->rule().left())
+        .setInput(Rule::Bottom, fold->rule().top())
+        .setInput(Rule::Width, fold->rule().width());
+    return fold;
+}
+
 void FoldPanelWidget::toggleFold()
 {
     if (!isOpen())
@@ -182,7 +200,7 @@ void FoldPanelWidget::preparePanelForOpening()
     {
         // Insert the content back into the panel.
         PanelWidget::setContent(d->container);
-        d->container = 0;
+        d->container = nullptr;
     }
 
     if (d->title)

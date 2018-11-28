@@ -109,15 +109,16 @@ public:
     int asInt() const;
 
     /**
+     * Convert the value to a list of strings using asText().
+     * @return List of text strings.
+     */
+    StringList asStringList() const;
+
+    /**
      * Convert the value to into a text string.  All values have
      * to implement this.
      */
     virtual Text asText() const = 0;
-
-    template <typename ValueType>
-    bool is() const {
-        return dynamic_cast<ValueType const *>(this) != 0;
-    }
 
     template <typename ValueType>
     ValueType &as() {

@@ -31,8 +31,14 @@
 namespace de {
 
 static String const ISO_FORMAT = "yyyy-MM-dd hh:mm:ss.zzz";
-static HighPerformanceTimer highPerfTimer;
-static TimeDelta currentHighPerfDelta;
+
+static HighPerformanceTimer &highPerfTimer()
+{
+    static HighPerformanceTimer hpt;
+    return hpt;
+}
+
+static TimeSpan currentHighPerfDelta;
 
 namespace internal {
 
@@ -52,37 +58,37 @@ public:
 
 } // namespace internal
 
-duint64 Time::Delta::asMicroSeconds() const
+duint64 Time::Span::asMicroSeconds() const
 {
     return duint64(_seconds * 1000000);
 }
 
-duint64 TimeDelta::asMilliSeconds() const
+duint64 TimeSpan::asMilliSeconds() const
 {
     return duint64(_seconds * 1000);
 }
 
-ddouble TimeDelta::asMinutes() const
+ddouble TimeSpan::asMinutes() const
 {
     return _seconds / 60;
 }
 
-ddouble TimeDelta::asHours() const
+ddouble TimeSpan::asHours() const
 {
     return _seconds / 3600;
 }
 
-ddouble TimeDelta::asDays() const
+ddouble TimeSpan::asDays() const
 {
     return asHours() / 24;
 }
 
-Time::Delta Time::Delta::sinceStartOfProcess()
+Time::Span Time::Span::sinceStartOfProcess()
 {
-    return highPerfTimer.elapsed();
+    return highPerfTimer().elapsed();
 }
 
-void TimeDelta::sleep() const
+void TimeSpan::sleep() const
 {
     if (_seconds < 60)
     {
@@ -94,12 +100,12 @@ void TimeDelta::sleep() const
     }
 }
 
-void TimeDelta::operator >> (Writer &to) const
+void TimeSpan::operator >> (Writer &to) const
 {
     to << _seconds;
 }
 
-void TimeDelta::operator << (Reader &from)
+void TimeSpan::operator << (Reader &from)
 {
     from >> _seconds;
 }
@@ -114,17 +120,17 @@ DENG2_PIMPL_NOREF(Time)
 
     Flags flags;
     QDateTime dateTime;
-    Delta highPerfElapsed;
+    Span highPerfElapsed;
 
     Impl()
         : flags(DateTime | HighPerformance)
         , dateTime(QDateTime::currentDateTime())
-        , highPerfElapsed(highPerfTimer.elapsed())
+        , highPerfElapsed(highPerfTimer().elapsed())
     {}
 
     Impl(QDateTime const &dt) : flags(DateTime), dateTime(dt) {}
 
-    Impl(Delta const &delta) : flags(HighPerformance), highPerfElapsed(delta) {}
+    Impl(Span const &span) : flags(HighPerformance), highPerfElapsed(span) {}
 
     Impl(Impl const &other)
         : de::IPrivate()
@@ -179,19 +185,19 @@ DENG2_PIMPL_NOREF(Time)
         if (flags.testFlag(DateTime))
         {
             // This is DateTime but other is high-perf.
-            return fequal(highPerfTimer.startedAt().asDateTime().msecsTo(dateTime)/1000.0,
+            return fequal(highPerfTimer().startedAt().asDateTime().msecsTo(dateTime)/1000.0,
                           other.highPerfElapsed);
         }
         if (flags.testFlag(HighPerformance))
         {
             // This is high-perf and the other is DateTime.
             return fequal(highPerfElapsed,
-                          highPerfTimer.startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
+                          highPerfTimer().startedAt().asDateTime().msecsTo(other.dateTime)/1000.0);
         }
         return false;
     }
 
-    void add(Delta const &delta)
+    void add(Span const &delta)
     {
         if (flags.testFlag(DateTime))
         {
@@ -203,7 +209,7 @@ DENG2_PIMPL_NOREF(Time)
         }
     }
 
-    Delta delta(Impl const &earlier) const
+    Span delta(Impl const &earlier) const
     {
         if (flags.testFlag(HighPerformance) && earlier.flags.testFlag(HighPerformance))
         {
@@ -223,7 +229,7 @@ DENG2_PIMPL_NOREF(Time)
 
     void setDateTimeFromHighPerf()
     {
-        dateTime = (highPerfTimer.startedAt() + highPerfElapsed).asDateTime();
+        dateTime = (highPerfTimer().startedAt() + highPerfElapsed).asDateTime();
         flags |= DateTime;
     }
 };
@@ -233,14 +239,14 @@ Time::Time() : d(new Impl)
 
 Time::Time(Time const &other) : d(new Impl(*other.d))
 {}
-    
+
 Time::Time(Time &&moved) : d(std::move(moved.d))
 {}
 
 Time::Time(QDateTime const &t) : d(new Impl(t))
 {}
 
-Time::Time(TimeDelta const &highPerformanceDelta)
+Time::Time(TimeSpan const &highPerformanceDelta)
     : ISerializable(), d(new Impl(highPerformanceDelta))
 {}
 
@@ -254,7 +260,7 @@ Time &Time::operator = (Time const &other)
     *d = *other.d;
     return *this;
 }
-    
+
 Time &Time::operator = (Time &&moved)
 {
     d = std::move(moved.d);
@@ -276,20 +282,20 @@ bool Time::operator == (Time const &t) const
     return d->isEqualTo(*t.d);
 }
 
-Time Time::operator + (Delta const &delta) const
+Time Time::operator + (Span const &span) const
 {
     Time result = *this;
-    result += delta;
+    result += span;
     return result;
 }
 
-Time &Time::operator += (Delta const &delta)
+Time &Time::operator += (Span const &span)
 {
-    d->add(delta);
+    d->add(span);
     return *this;
 }
 
-TimeDelta Time::operator - (Time const &earlierTime) const
+TimeSpan Time::operator - (Time const &earlierTime) const
 {
     return d->delta(*earlierTime.d);
 }
@@ -321,22 +327,34 @@ String Time::asText(Format format) const
         }
         else if (format == FriendlyFormat)
         {
-            return d->dateTime.toString(Qt::TextDate);
+            // Is it today?
+            if (d->dateTime.date() == QDateTime::currentDateTime().date())
+            {
+                return d->dateTime.toString("HH:mm");
+            }
+            else if (d->dateTime.date().year() == QDateTime::currentDateTime().date().year())
+            {
+                return d->dateTime.toString("MMM dd HH:mm");
+            }
+            else
+            {
+                return d->dateTime.toString("YYYY MMM dd");
+            }
         }
         else if (format == BuildNumberAndSecondsSinceStart ||
                  format == SecondsSinceStart)
         {
-            TimeDelta elapsed;
+            TimeSpan elapsed;
             if (d->flags.testFlag(Impl::HighPerformance))
             {
                 elapsed = d->highPerfElapsed;
             }
             else if (d->flags.testFlag(Impl::DateTime))
             {
-                elapsed = highPerfTimer.startedAt().deltaTo(Time(d->dateTime));
+                elapsed = highPerfTimer().startedAt().deltaTo(Time(d->dateTime));
             }
             int hours = int(elapsed.asHours());
-            TimeDelta sec = elapsed - hours * 3600.0;
+            TimeSpan sec = elapsed - hours * 3600.0;
             QString prefix;
             if (format == BuildNumberAndSecondsSinceStart)
             {
@@ -365,10 +383,31 @@ String Time::asText(Format format) const
     return "";
 }
 
+static int parseMonth(String const &shortName)
+{
+    static char const *months[] = {
+        "Jan", "Feb", "Mar", "Apr", "May", "Jun",
+        "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
+    };
+
+    for (int i = 0; i < 12; ++i)
+    {
+        if (shortName == months[i])
+        {
+            return i + 1;
+        }
+    }
+    return 0;
+}
+
 Time Time::fromText(String const &text, Time::Format format)
 {
-    DENG2_ASSERT(format == ISOFormat || format == ISODateOnly || format == FriendlyFormat ||
-                 format == CompilerDateTime || format == HumanDate);
+    DENG2_ASSERT(format == ISOFormat ||
+                 format == ISODateOnly ||
+                 format == FriendlyFormat ||
+                 format == CompilerDateTime ||
+                 format == HumanDate ||
+                 format == UnixLsStyleDateTime);
 
     if (format == ISOFormat)
     {
@@ -386,28 +425,48 @@ Time Time::fromText(String const &text, Time::Format format)
     {
         // Parse the text manually as it is locale-independent.
         QStringList const parts = text.split(" ", QString::SkipEmptyParts);
-        DENG2_ASSERT(parts.size() == 4);
-        char const *months[] = {
-            "Jan", "Feb", "Mar", "Apr", "May", "Jun",
-            "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"
-        };
-        int day = parts[1].toInt();
-        int year = parts[2].toInt();
-        int month = 0;
-        for (int i = 0; i < 12; ++i)
+        if (parts.size() >= 4)
         {
-            if (parts[0] == months[i])
+            int day = parts[1].toInt();
+            int year = parts[2].toInt();
+            int month = parseMonth(parts[0]);
+            QDate date(year, month, day);
+            QTime time = QTime::fromString(parts[3], "HH:mm:ss");
+            return Time(QDateTime(date, time));
+        }
+    }
+    else if (format == UnixLsStyleDateTime)
+    {
+        // Two options:
+        // Jun 2 2016
+        // Jun 2 06:30
+
+        QStringList const parts = text.split(" ", QString::SkipEmptyParts);
+        if (parts.size() >= 3)
+        {
+            int month = parseMonth(parts[0]);
+            int day = parts[1].toInt();
+            int hour = 0;
+            int minute = 0;
+            int year;
+            if (parts[2].contains(QChar(':')))
             {
-                month = i + 1;
-                break;
+                year = QDate::currentDate().year();
+                hour = parts[2].left(2).toInt();
+                minute = parts[2].right(2).toInt();
+                return Time(QDateTime(QDate(year, month, day),
+                                      QTime(hour, minute, 0)));
+            }
+            else
+            {
+                year = parts[2].toInt();
+                return Time(QDateTime(QDate(year, month, day), QTime(0, 0, 0)));
             }
         }
-        QDate date(year, month, day);
-        QTime time = QTime::fromString(parts[3], "HH:mm:ss");
-        return Time(QDateTime(date, time));
     }
     else if (format == HumanDate)
     {
+        // Note: Check use of indices below.
         static QStringList const formats({
             "M/d/yy",
             "MM/dd/yy",
@@ -419,24 +478,37 @@ Time Time::fromText(String const &text, Time::Format format)
             "dd.MM.yyyy",
             "MM.dd.yyyy", // as a fallback...
             "yyyy-MM-dd",
+
+            // Unix "ls" style:
+            "MMM d yyyy",
+            "MMM d hh:mm",
         });
+        String const normText = text.normalizeWhitespace();
         for (int i = 0; i < formats.size(); ++i)
         {
             String const fmt = formats.at(i);
             bool const isShortYear = i < 4;
-            QDate date = QDate::fromString(text, fmt);
-            if (date.isValid())
+            QDateTime dt = QDateTime::fromString(normText, fmt);
+            if (dt.isValid())
             {
-                if (isShortYear && date.year() < 1980)
+                if (i == 10) // No year specified.
                 {
-                    date.setDate(date.year() + 100, date.month(), date.day()); // Y2K?
+                    dt.setDate(QDate(QDate::currentDate().year(),
+                                     dt.date().month(),
+                                     dt.date().day()));
                 }
-                return Time(QDateTime(date));
+                else if (isShortYear && dt.date().year() < 1980)
+                {
+                    dt.setDate(QDate(dt.date().year() + 100,
+                                     dt.date().month(),
+                                     dt.date().day())); // Y2K?
+                }
+                return Time(dt);
             }
         }
-        return Time(QDateTime::fromString(text, Qt::TextDate));
+        return Time(QDateTime::fromString(normText, Qt::TextDate));
     }
-    return Time();
+    return Time::invalidTime();
 }
 
 QDateTime &de::Time::asDateTime()
@@ -449,7 +521,7 @@ QDateTime const &de::Time::asDateTime() const
 {
     if (!d->hasDateTime() && d->flags.testFlag(Impl::HighPerformance))
     {
-        d->dateTime = (highPerfTimer.startedAt() + d->highPerfElapsed).asDateTime();
+        d->dateTime = (highPerfTimer().startedAt() + d->highPerfElapsed).asDateTime();
         d->flags |= Impl::DateTime;
     }
     return d->dateTime;
@@ -491,8 +563,8 @@ void Time::operator << (Reader &from)
     if (from.version() >= DENG2_PROTOCOL_1_11_0_Time_high_performance)
     {
         /*
-         * Starting from build 926, Time can optionally contain a
-         * high-performance delta component.
+         * Starting from build 926, Time can optionally contain a high-performance delta
+         * component.
          */
 
         duint8 flags;
@@ -522,7 +594,7 @@ void Time::operator << (Reader &from)
         {
             // If both are present, the high-performance time should be synced
             // with current high-perf timer.
-            if (d->dateTime < highPerfTimer.startedAt().asDateTime())
+            if (d->dateTime < highPerfTimer().startedAt().asDateTime())
             {
                 // Current high-performance timer was started after this time;
                 // we can't represent the time as high performance delta.
@@ -530,7 +602,7 @@ void Time::operator << (Reader &from)
             }
             else
             {
-                d->highPerfElapsed = highPerfTimer.startedAt().deltaTo(d->dateTime);
+                d->highPerfElapsed = highPerfTimer().startedAt().deltaTo(d->dateTime);
             }
         }
     }
@@ -546,7 +618,7 @@ void Time::operator << (Reader &from)
     }
 }
 
-TimeDelta Time::highPerformanceTime() const
+TimeSpan Time::highPerformanceTime() const
 {
     DENG2_ASSERT(d->flags & Impl::HighPerformance);
     return d->highPerfElapsed;
@@ -559,7 +631,7 @@ Time Time::currentHighPerformanceTime() // static
 
 void Time::updateCurrentHighPerformanceTime() // static
 {
-    currentHighPerfDelta = highPerfTimer.elapsed();
+    currentHighPerfDelta = highPerfTimer().elapsed();
 }
 
 QTextStream &operator << (QTextStream &os, Time const &t)

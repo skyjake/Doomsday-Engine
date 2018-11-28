@@ -34,7 +34,7 @@
 
 using namespace de;
 
-static TimeDelta const SHOW_ANIM_SPAN = 0.3;
+static TimeSpan const SHOW_ANIM_SPAN = 0.3;
 
 DENG_GUI_PIMPL(UpdateAvailableDialog),
 DENG2_OBSERVES(ToggleWidget, Toggle)
@@ -67,7 +67,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         updateResult(latest, 0);
     }
 
-    void showProgress(bool show, TimeDelta span)
+    void showProgress(bool show, TimeSpan span)
     {
         checking->setOpacity(show? 1 : 0, span);
         self().area().setOpacity(show? 0 : 1, span);
@@ -99,16 +99,23 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
         self().updateLayout();
     }
 
-    void updateResult(Version const &latest, TimeDelta showSpan)
+    static bool isMatchingChannel(String const &channel, String const &buildType)
+    {
+        if (channel == buildType) return true;
+        if (channel == "RC/stable" && buildType != "unstable") return true;
+        return false;
+    }
+
+    void updateResult(Version const &latest, TimeSpan showSpan)
     {
         showProgress(false, showSpan);
 
         latestVersion = latest;
 
-        Version currentVersion = Version::currentBuild();
-
-        String channel     = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" : "unstable");
-        String builtInType = (String(DOOMSDAY_RELEASE_TYPE) == "Stable"? "stable" : "unstable");
+        Version const currentVersion = Version::currentBuild();
+        String const channel = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" :
+                                UpdaterSettings().channel() == UpdaterSettings::Unstable? "unstable" : "RC/stable");
+        String const builtInType = String(DOOMSDAY_RELEASE_TYPE).toLower();
         bool askUpgrade    = false;
         bool askDowngrade  = false;
 
@@ -123,7 +130,7 @@ DENG2_OBSERVES(ToggleWidget, Toggle)
                                    .arg(_E(b) + latestVersion.asHumanReadableText() + _E(.))
                                    .arg(currentVersion.asHumanReadableText()));
         }
-        else if (channel == builtInType) // same release type
+        else if (isMatchingChannel(channel, builtInType)) // same release type
         {
             self().title().setText(tr("Up to Date"));
             self().message().setText(tr("The installed %1 is the latest available %2 build.")

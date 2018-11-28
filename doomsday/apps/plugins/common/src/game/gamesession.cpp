@@ -31,7 +31,9 @@
 #include <de/ZipArchive>
 #include <doomsday/DoomsdayApp>
 #include <doomsday/GameStateFolder>
+#include <doomsday/SaveGames>
 #include <doomsday/defs/episode.h>
+#include "acs/system.h"
 #include "api_gl.h"
 #include "d_netsv.h"
 #include "g_common.h"
@@ -75,7 +77,7 @@ namespace internal
            << "\n# Date: " + now.asDateTime().toString(Qt::SystemLocaleShortDate);
 
         // Write metadata.
-        os << "\n\n" + metadata.asTextWithInfoSyntax() + "\n";
+        os << "\n\n" + metadata.asInfo() + "\n";
 
         return info;
     }
@@ -100,14 +102,13 @@ namespace internal
 
 using namespace internal;
 
-static GameSession *singleton;
-
 static String const internalSavePath = "/home/cache/internal.save";
+static GameSession theSession;
 
 DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 {
     String episodeId;
-    GameRuleset rules;
+    GameRules rules;
     duint mapEntryPoint = 0;  ///< Player entry point, for reborn.
 
     bool rememberVisitedMaps = false;
@@ -116,13 +117,12 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
     acs::System acscriptSys;  ///< The One acs::System instance.
 
     Impl(Public *i) : Base(i)
-    {
-        DENG2_ASSERT(singleton == nullptr);
-        singleton = thisPublic;
-    }
+    {}
 
-    inline String userSavePath(String const &fileName) {
-        return AbstractSession::savePath() / fileName + ".save";
+    inline String userSavePath(String const &fileName)
+    {
+        DENG_ASSERT(DoomsdayApp::currentGameProfile());
+        return SaveGames::savePath() / fileName + ".save";
     }
 
     void cleanupInternalSave()
@@ -192,12 +192,12 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         GameStateMetadata meta;
 
         meta.set("sessionId",       duint(Timer_RealMilliseconds() + (mapTime << 24)) & DDMAXINT);
-        meta.set("gameIdentityKey", AbstractSession::gameId());
+        meta.set("gameIdentityKey", gfw_GameId());
         meta.set("episode",         episodeId);
         meta.set("userDescription", "(Unsaved)");
         meta.set("mapUri",          self().mapUri().compose());
-        meta.set("mapTime",         ::mapTime);
-        meta.add("gameRules",       self().rules().toRecord());  // Takes ownership.
+        meta.set("mapTime",         mapTime);
+        meta.add("gameRules",       new Record(self().rules().asRecord()));
 
         auto *loadedPackages = new ArrayValue;
         for (String id : PackageLoader::get().loadedPackageIdsInOrder())
@@ -388,45 +388,53 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
     void applyCurrentRules()
     {
-        if (rules.skill < SM_NOTHINGS)
-            rules.skill = SM_NOTHINGS;
-        if (rules.skill > NUM_SKILL_MODES - 1)
-            rules.skill = skillmode_t( NUM_SKILL_MODES - 1 );
-
+        if (rules.values.skill < SM_NOTHINGS)
+        {
+            GameRules_Set(rules, skill, SM_NOTHINGS);
+        }
+        if (rules.values.skill > NUM_SKILL_MODES - 1)
+        {
+            GameRules_Set(rules, skill, skillmode_t(NUM_SKILL_MODES - 1));
+        }
         if (!IS_NETGAME)
         {
 #if !__JHEXEN__
-            rules.deathmatch      = false;
-            rules.respawnMonsters = dbyte( App::commandLine().has("-respawn") );
-
-            rules.noMonsters      = dbyte( App::commandLine().has("-nomonsters") );
+            GameRules_Set(rules, deathmatch, 0);
+            GameRules_Set(rules,
+                          respawnMonsters,
+                          CommandLine::get().has("-respawn") ||
+                              gfw_GameProfile()->optionValue("respawn").isTrue());
+            GameRules_Set(rules,
+                          noMonsters,
+                          CommandLine::get().has("-nomonsters") ||
+                              gfw_GameProfile()->optionValue("noMonsters").isTrue());
 #endif
 #if __JDOOM__ || __JHERETIC__
             // Is respawning enabled at all in nightmare skill?
-            if (rules.skill == SM_NIGHTMARE)
+            if (rules.values.skill == SM_NIGHTMARE)
             {
-                rules.respawnMonsters = cfg.respawnMonstersNightmare;
+                GameRules_Set(rules, respawnMonsters, cfg.respawnMonstersNightmare);
             }
 #endif
         }
         else if (IS_DEDICATED)
         {
 #if !__JHEXEN__
-            rules.deathmatch      = cfg.common.netDeathmatch;
-            rules.respawnMonsters = cfg.netRespawn;
+            GameRules_Set(rules, deathmatch, cfg.common.netDeathmatch);
+            GameRules_Set(rules, respawnMonsters, cfg.netRespawn);
 
-            rules.noMonsters      = cfg.common.netNoMonsters;
+            GameRules_Set(rules, noMonsters, cfg.common.netNoMonsters);
             /*rules.*/cfg.common.jumpEnabled = cfg.common.netJumping;
 #else
-            rules.randomClasses   = cfg.netRandomClass;
+            GameRules_Set(rules, randomClasses, cfg.netRandomClass);
 #endif
         }
 
         // Fast monsters?
 #if __JDOOM__ || __JDOOM64__
-        bool fastMonsters = CPP_BOOL(rules.fast);
+        bool fastMonsters = rules.values.fast;
 # if __JDOOM__
-        if (rules.skill == SM_NIGHTMARE)
+        if (rules.values.skill == SM_NIGHTMARE)
         {
             fastMonsters = true;
         }
@@ -436,9 +444,9 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
         // Fast missiles?
 #if __JDOOM__ || __JHERETIC__ || __JDOOM64__
-        bool fastMissiles = CPP_BOOL(rules.fast);
+        bool fastMissiles = rules.values.fast;
 # if !__JDOOM64__
-        if (rules.skill == SM_NIGHTMARE)
+        if (rules.values.skill == SM_NIGHTMARE)
         {
             fastMissiles = true;
         }
@@ -449,7 +457,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         NetSv_UpdateGameConfigDescription();
 
         // Update game status cvars:
-        Con_SetInteger2("game-skill", rules.skill, SVF_WRITE_OVERRIDE);
+        Con_SetInteger2("game-skill", rules.values.skill, SVF_WRITE_OVERRIDE);
     }
 
     /**
@@ -538,10 +546,10 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
         GameStateMetadata const &metadata = saved.metadata();
 
         // Ensure a complete game ruleset is available.
-        std::unique_ptr<GameRuleset> newRules;
+        std::unique_ptr<GameRules> newRules;
         try
         {
-            newRules.reset(GameRuleset::fromRecord(metadata.subrecord("gameRules")));
+            newRules.reset(GameRules::fromRecord(metadata.subrecord("gameRules")));
         }
         catch (Record::NotFoundError const &)
         {
@@ -553,7 +561,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
                     << saved.path();
 
             // Use the current rules as our basis.
-            newRules.reset(GameRuleset::fromRecord(metadata.subrecord("gameRules"), &rules));
+            newRules.reset(GameRules::fromRecord(metadata.subrecord("gameRules"), &rules));
         }
         rules = *newRules; // make a copy
         applyCurrentRules();
@@ -567,7 +575,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             ArrayValue const &vistedMapsArray = metadata.geta("visitedMaps");
             for (Value const *value : vistedMapsArray.elements())
             {
-                visitedMaps << de::Uri(value->as<TextValue>(), RC_NULL);
+                visitedMaps << de::makeUri(value->as<TextValue>());
             }
         }
 
@@ -581,7 +589,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
         self().setInProgress(true);
 
-        setMap(de::Uri(metadata.gets("mapUri"), RC_NULL));
+        setMap(de::makeUri(metadata.gets("mapUri")));
         //mapEntryPoint = ??; // not saved??
 
         reloadMap();
@@ -770,7 +778,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
             plr->attacker = nullptr;
             plr->poisoner = nullptr;
 
-            if (IS_NETGAME || rules.deathmatch)
+            if (IS_NETGAME || rules.values.deathmatch)
             {
                 // In a network game, force all players to be alive
                 if (plr->playerState == PST_DEAD)
@@ -778,7 +786,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
                     plr->playerState = PST_REBORN;
                 }
 
-                if (!rules.deathmatch)
+                if (!rules.values.deathmatch)
                 {
                     // Cooperative net-play; retain keys and weapons.
                     oldKeys   = plr->keys;
@@ -793,7 +801,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
 
             bool wasReborn = (plr->playerState == PST_REBORN);
 
-            if (rules.deathmatch)
+            if (rules.values.deathmatch)
             {
                 de::zap(plr->frags);
                 ddplr->mo = nullptr;
@@ -815,7 +823,7 @@ DENG2_PIMPL(GameSession), public GameStateFolder::IMapStateReaderFactory
                 }
             }
 
-            if (wasReborn && IS_NETGAME && !rules.deathmatch)
+            if (wasReborn && IS_NETGAME && !rules.values.deathmatch)
             {
                 dint bestWeapon = 0;
 
@@ -885,13 +893,11 @@ GameSession::~GameSession()
 {
     LOG_AS("~GameSession");
     d.reset();
-    singleton = nullptr;
 }
 
 GameSession &GameSession::gameSession()
 {
-    DENG2_ASSERT(singleton);
-    return *singleton;
+    return theSession;
 }
 
 bool GameSession::isLoadingPossible()
@@ -1001,18 +1007,18 @@ de::Uri GameSession::mapUriForNamedExit(String name) const
 
         if (chosenExit)
         {
-            return de::Uri(chosenExit->gets("targetMap"), RC_NULL);
+            return de::makeUri(chosenExit->gets("targetMap"));
         }
     }
     return de::Uri();
 }
 
-GameRuleset const &GameSession::rules() const
+GameRules const &GameSession::rules() const
 {
     return d->rules;
 }
 
-void GameSession::applyNewRules(GameRuleset const &newRules)
+void GameSession::applyNewRules(GameRules const &newRules)
 {
     LOG_AS("GameSession");
 
@@ -1026,7 +1032,7 @@ void GameSession::applyNewRules(GameRuleset const &newRules)
 
 bool GameSession::progressRestoredOnReload() const
 {
-    if (d->rules.deathmatch) return false; // Never.
+    if (d->rules.values.deathmatch) return false; // Never.
 #if __JHEXEN__
     return true; // Cannot be disabled.
 #else
@@ -1066,7 +1072,7 @@ void GameSession::endAndBeginTitle()
     throw Error("GameSession::endAndBeginTitle", "An InFine 'title' script must be defined");
 }
 
-void GameSession::begin(GameRuleset const &newRules, String const &episodeId,
+void GameSession::begin(GameRules const &newRules, String const &episodeId,
     de::Uri const &mapUri, uint mapEntryPoint)
 {
     if (hasBegun())
@@ -1187,13 +1193,13 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->backupPlayersInHub(playerBackup);
 
     // Disable class randomization (all players must spawn as their existing class).
-    dbyte oldRandomClassesRule = d->rules.randomClasses;
-    d->rules.randomClasses = false;
+    dbyte oldRandomClassesRule = d->rules.values.randomClasses;
+    GameRules_Set(d->rules, randomClasses, false);
 #endif
 
     // Are we saving progress?
     GameStateFolder *saved = nullptr;
-    if (!d->rules.deathmatch) // Never save in deathmatch.
+    if (!d->rules.values.deathmatch) // Never save in deathmatch.
     {
         saved = &App::rootFolder().locate<GameStateFolder>(internalSavePath);
         auto &mapsFolder = saved->locate<Folder>("maps");
@@ -1278,7 +1284,7 @@ void GameSession::leaveMap(de::Uri const &nextMapUri, uint nextMapEntryPoint)
     d->restorePlayersInHub(playerBackup);
 
     // Restore the random class rule.
-    d->rules.randomClasses = oldRandomClassesRule;
+    GameRules_Set(d->rules, randomClasses, oldRandomClassesRule);
 
     // Launch waiting scripts.
     d->acscriptSys.runDeferredTasks(mapUri());
@@ -1426,4 +1432,23 @@ void GameSession::consoleRegister()  // static
 #undef READONLYCVAR
 }
 
-}  // namespace common
+} // namespace common
+
+DENG_EXTERN_C unsigned int gfw_MapInfoFlags(void)
+{
+    return gfw_Session()->mapInfo().getui(QStringLiteral("flags"));
+}
+
+String gfw_GameId()
+{
+    if (auto *gp = DoomsdayApp::currentGameProfile())
+    {
+        return gp->gameId();
+    }
+    return {};
+}
+
+const GameProfile *gfw_GameProfile()
+{
+    return DoomsdayApp::currentGameProfile();
+}

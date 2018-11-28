@@ -32,7 +32,7 @@ namespace de {
 DENG_GUI_PIMPL(NotificationAreaWidget)
 , DENG2_OBSERVES(Widget, Deletion)
 {
-    static TimeDelta const ANIM_SPAN;
+    static TimeSpan const ANIM_SPAN;
     AnimationRule *shift;
     QMap<GuiWidget *, RelayWidget *> shown;
 
@@ -91,7 +91,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
         self().show();
     }
 
-    void hide(TimeDelta const &span = ANIM_SPAN)
+    void hide(TimeSpan const &span = ANIM_SPAN)
     {
         shift->set(self().rule().height() + rule("gap"), span);
         shift->setStyle(Animation::EaseIn);
@@ -147,7 +147,7 @@ DENG_GUI_PIMPL(NotificationAreaWidget)
     }
 };
 
-TimeDelta const NotificationAreaWidget::Impl::ANIM_SPAN = 0.5;
+TimeSpan const NotificationAreaWidget::Impl::ANIM_SPAN = 0.5;
 
 NotificationAreaWidget::NotificationAreaWidget(String const &name)
     : GuiWidget(name)

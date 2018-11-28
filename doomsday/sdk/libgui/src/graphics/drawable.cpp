@@ -24,10 +24,10 @@ namespace de {
 
 DENG2_PIMPL(Drawable)
 {
-    typedef QMap<Id, GLBuffer *> Buffers;
+    typedef QMap<Id, GLBuffer *>  Buffers;
     typedef QMap<Id, GLProgram *> Programs;
-    typedef QMap<Id, GLState *> States;
-    typedef QMap<String, Id> Names;
+    typedef QMap<Id, GLState *>   States;
+    typedef QMap<String, Id>      Names;
 
     struct BufferConfig {
         GLProgram const *program;
@@ -38,14 +38,14 @@ DENG2_PIMPL(Drawable)
     };
     typedef QMap<Id, BufferConfig> BufferConfigs;
 
-    Buffers buffers;
-    Programs programs;
-    States states;
-    Names bufferNames;
-    Names programNames;
-    Names stateNames;
+    Buffers       buffers;
+    Programs      programs;
+    States        states;
+    Names         bufferNames;
+    Names         programNames;
+    Names         stateNames;
     BufferConfigs configs;
-    GLProgram defaultProgram;
+    GLProgram     defaultProgram;
 
     Impl(Public *i) : Base(i)
     {

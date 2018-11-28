@@ -43,8 +43,6 @@
 using namespace de;
 using namespace common;
 
-float turboMul; // Multiplier for turbo.
-
 gamemode_t gameMode;
 int gameModeBits;
 
@@ -245,7 +243,7 @@ void X_PreInit()
     cfg.common.automapBack[2] = 1.0f;
     cfg.common.automapOpacity = 1.0f;
     cfg.common.automapLineAlpha = 1.0f;
-    cfg.common.automapLineWidth = 1.1f;
+    cfg.common.automapLineWidth = 3.0f;
     cfg.common.automapShowDoors = true;
     cfg.common.automapDoorGlow = 8;
     cfg.common.automapHudDisplay = 2;
@@ -310,45 +308,32 @@ void X_PostInit()
     P_InitWeaponInfo();
 
     // Defaults for skill, episode and map.
-    ::defaultGameRules.skill = /*startSkill =*/ SM_MEDIUM;
+    gfw_SetDefaultRule(skill, /*startSkill =*/ SM_MEDIUM);
 
-    ::cfg.common.netDeathmatch = cmdLine.check("-deathmatch")? true : false;
+    ::cfg.common.netDeathmatch = cmdLine.check("-deathmatch") ? true : false;
 
-    ::defaultGameRules.noMonsters    = cmdLine.check("-nomonsters")? true : false;
-    ::defaultGameRules.randomClasses = cmdLine.check("-randclass") ? true : false;
-
-    // Change the turbo multiplier?
-    ::turboMul = 1.0f;
-    if(int arg = cmdLine.check("-turbo"))
-    {
-        int scale = 200;
-        if(arg + 1 < cmdLine.count() && !cmdLine.isOption(arg + 1))
-        {
-            scale = cmdLine.at(arg + 1).toInt();
-        }
-        scale = de::clamp(10, scale, 400);
-
-        LOG_NOTE("Turbo scale: %i%%") << scale;
-        ::turboMul = scale / 100.f;
-    }
+    gfw_SetDefaultRule(noMonsters,
+                       cmdLine.has("-nomonsters") ||
+                           gfw_GameProfile()->optionValue("noMonsters").isTrue());
+    gfw_SetDefaultRule(randomClasses, cmdLine.has("-randclass"));
 
     // Process sound definitions.
     SndInfoParser(AutoStr_FromText("Lumps:SNDINFO"));
 
     // Process sound sequence scripts.
     String scriptPath("Lumps:SNDSEQ");
-    if(int arg = cmdLine.check("-scripts", 1))
+    if (auto arg = cmdLine.check("-scripts", 1))
     {
-        scriptPath = cmdLine.at(arg + 1) + "SNDSEQ.txt";
+        scriptPath = arg.params.first()/"SNDSEQ.txt";
     }
     SndSeqParser(AutoStr_FromTextStd(scriptPath.toUtf8().constData()));
 
     // Load a saved game?
-    if(int arg = cmdLine.check("-loadgame", 1))
+    if (auto arg = cmdLine.check("-loadgame", 1))
     {
-        if(SaveSlot *sslot = G_SaveSlots().slotByUserInput(cmdLine.at(arg + 1)))
+        if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(arg.params.first()))
         {
-            if(sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
+            if (sslot->isUserWritable() && G_SetGameActionLoadSession(sslot->id()))
             {
                 // No further initialization is to be done.
                 return;
@@ -357,31 +342,31 @@ void X_PostInit()
     }
 
     // Change the default skill mode?
-    if(int arg = cmdLine.check("-skill", 1))
+    if (auto arg = cmdLine.check("-skill", 1))
     {
-        int skillNumber = cmdLine.at(arg + 1).toInt();
-        ::defaultGameRules.skill = skillmode_t( skillNumber > 0? skillNumber - 1 : skillNumber );
+        int const skillNumber = arg.params.first().toInt();
+        gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0? skillNumber - 1 : skillNumber));
     }
 
     // Change the default player class?
     playerclass_t defPlayerClass = PCLASS_NONE;
-    if(int arg = cmdLine.check("-class", 1))
+    if (auto arg = cmdLine.check("-class", 1))
     {
         bool isNumber;
-        playerclass_t pClass = playerclass_t( cmdLine.at(arg + 1).toInt(&isNumber) );
-        if(isNumber && VALID_PLAYER_CLASS(pClass))
+        int const pClass = arg.params.first().toInt(&isNumber);
+        if (isNumber && VALID_PLAYER_CLASS(pClass))
         {
-            if(!PCLASS_INFO(pClass)->userSelectable)
+            if (!PCLASS_INFO(pClass)->userSelectable)
             {
-                LOG_WARNING("Non-user-selectable player class '%i' specified with -class") << int( pClass );
+                LOG_WARNING("Non-user-selectable player class '%i' specified with -class") << pClass;
             }
         }
         else
         {
-            LOG_WARNING("Invalid player class '%i' specified with -class") << int( pClass );
+            LOG_WARNING("Invalid player class '%i' specified with -class") << pClass;
         }
     }
-    if(defPlayerClass != PCLASS_NONE)
+    if (defPlayerClass != PCLASS_NONE)
     {
         ::cfg.playerClass[CONSOLEPLAYER] = defPlayerClass;
         LOG_NOTE("Player Class: '%s'") << PCLASS_INFO(defPlayerClass)->niceName;

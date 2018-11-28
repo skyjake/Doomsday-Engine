@@ -43,7 +43,7 @@ static DotPath const ID_BOLD_ROUND_CORNERS  = "GuiRootWidget.frame.bold";
 static DotPath const ID_DOT                 = "GuiRootWidget.dot";
 
 #ifdef DENG2_QT_5_0_OR_NEWER
-#  define DPI_SCALED(x)       ((x) * DENG2_BASE_GUI_APP->dpiFactor())
+#  define DPI_SCALED(x)       ((x) * DENG2_BASE_GUI_APP->pixelRatio().value())
 #else
 #  define DPI_SCALED(x)       (x)
 #endif
@@ -122,6 +122,7 @@ DENG2_PIMPL(GuiRootWidget)
     GLUniform uTexAtlas;
     TextureBank texBank; ///< Bank for the atlas contents.
     Painter painter;
+    AnimationVector2 rootOffset;
     FocusWidget *focusIndicator;
     bool noFramesDrawnYet;
     QList<SafeWidgetPtr<Widget> *> focusStack;
@@ -319,7 +320,13 @@ Painter &GuiRootWidget::painter()
 Matrix4f GuiRootWidget::projMatrix2D() const
 {
     RootWidget::Size const size = viewSize();
-    return Matrix4f::ortho(0, size.x, 0, size.y);
+    return Matrix4f::ortho(0, size.x, 0, size.y) *
+           Matrix4f::translate(d->rootOffset.value());
+}
+
+AnimationVector2 &GuiRootWidget::rootOffset()
+{
+    return d->rootOffset;
 }
 
 void GuiRootWidget::routeMouse(Widget *routeTo)
@@ -336,8 +343,9 @@ bool GuiRootWidget::processEvent(Event const &event)
 {
     window().glActivate();
 
-    if (event.type() == Event::MouseButton &&
-        event.as<MouseEvent>().state() != MouseEvent::Released)
+    if ((event.type() == Event::MouseButton &&
+         event.as<MouseEvent>().state() != MouseEvent::Released) ||
+        event.type() == Event::MouseWheel)
     {
         d->focusIndicator->fadeOut();
     }
@@ -430,6 +438,12 @@ void GuiRootWidget::update()
 
 void GuiRootWidget::draw()
 {
+#if defined (DENG_MOBILE)
+    DENG2_GUARD(this);
+#endif
+
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
     d->focusIndicator->initialize();
 
     if (d->noFramesDrawnYet)
@@ -459,6 +473,12 @@ void GuiRootWidget::draw()
 
 void GuiRootWidget::drawUntil(Widget &until)
 {
+#if defined (DENG_MOBILE)
+    DENG2_GUARD(this);
+#endif
+
+    DENG2_ASSERT_IN_RENDER_THREAD();
+
     d->painter.setNormalizedScissor();
 
     NotifyArgs args = notifyArgsForDraw();

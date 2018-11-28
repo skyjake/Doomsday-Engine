@@ -21,42 +21,20 @@
 #ifndef SERVER_SHELLUSERS_H
 #define SERVER_SHELLUSERS_H
 
-#include <QObject>
-#include <QSet>
 #include <doomsday/world/world.h>
+#include "users.h"
 #include "shelluser.h"
 
 /**
  * All remote shell users.
  */
-class ShellUsers : public QObject
-, DENG2_OBSERVES(World, MapChange)
+class ShellUsers : public Users, DENG2_OBSERVES(World, MapChange)
 {
-    Q_OBJECT
-
 public:
     ShellUsers();
 
-    ~ShellUsers();
-
-    /**
-     * Adds a new remote shell user to the set of connected users. Users are
-     * automatically removed from this collection and deleted when they are
-     * disconnected.
-     *
-     * @param user  User. Ownership transferred.
-     */
-    void add(ShellUser *user);
-
-    int count() const;
-
-    void worldMapChanged();
-
-public slots:
-    void sendPlayerInfoToAll();
-
-protected slots:
-    void userDisconnected();
+    void add(User *shellUser) override;
+    void worldMapChanged() override;
 
 private:
     DENG2_PRIVATE(d)

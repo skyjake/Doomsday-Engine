@@ -68,8 +68,8 @@ static void writeHeaderComment(de::Writer &out)
     else
     {
         out.writeText(String::format("# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
-                (char const *) gx.GetVariable(DD_PLUGIN_NAME),
-                (char const *) gx.GetVariable(DD_PLUGIN_VERSION_SHORT)));
+                (char const *) gx.GetPointer(DD_PLUGIN_NAME),
+                (char const *) gx.GetPointer(DD_PLUGIN_VERSION_SHORT)));
     }
 
     out.writeText("# This configuration file is generated automatically. Each line is a\n"
@@ -281,7 +281,14 @@ static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
 
 void Con_SetAllowed(int flags)
 {
-    flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
+    if (flags != 0)
+    {
+        flagsAllow |= flags & (CPCF_ALLOW_SAVE_STATE | CPCF_ALLOW_SAVE_BINDINGS);
+    }
+    else
+    {
+        flagsAllow = 0;
+    }
 }
 
 bool Con_ParseCommands(File const &file, int flags)
@@ -312,7 +319,7 @@ void Con_SaveDefaults()
 
     if (CommandLine_CheckWith("-config", 1))
     {
-        path = App::fileSystem().accessNativeLocation(CommandLine_NextAsPath(), File::Write);
+        path = FS::accessNativeLocation(CommandLine_NextAsPath(), File::Write);
     }
     else
     {
