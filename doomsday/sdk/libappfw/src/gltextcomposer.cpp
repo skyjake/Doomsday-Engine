@@ -33,8 +33,9 @@ DENG2_PIMPL(GLTextComposer)
     String text;
     FontLineWrapping const *wraps = nullptr;
     Font::RichFormat format;
-    bool needRedo = false;
+    bool needRedo = false; ///< Release completely and allocate.
     Rangei visibleLineRange { MAX_VISIBLE_RANGE }; ///< Only these lines will be updated/drawn.
+    bool visibleLineRangeChanged = false;
     int maxGeneratedWidth = 0;
 
     struct Line {
@@ -148,16 +149,19 @@ DENG2_PIMPL(GLTextComposer)
 
     bool allocLines()
     {
+        DENG2_GUARD(wraps);
+
         bool changed = false;
 
-        for (int i = 0; i < wraps->height(); ++i)
+        const int wrapsHeight = wraps->height();
+        for (int i = 0; i < wrapsHeight; ++i)
         {
-            FontLineWrapping::LineInfo const &info = wraps->lineInfo(i);
+            const auto &info = wraps->lineInfo(i);
 
             if (i < lines.size())
             {
                 // Is the rasterized copy up to date?
-                if (/*!isLineVisible(i) ||*/ matchingSegments(i, info))
+                if (matchingSegments(i, info))
                 {
                     // This line can be kept as is.
                     continue;
@@ -354,7 +358,7 @@ GLTextComposer::GLTextComposer() : d(new Impl(this))
 void GLTextComposer::release()
 {
     d->releaseLines();
-    d->visibleLineRange = MAX_VISIBLE_RANGE;
+    setRange(MAX_VISIBLE_RANGE);
     setState(false);
 }
 
@@ -373,7 +377,7 @@ void GLTextComposer::setWrapping(FontLineWrapping const &wrappedLines)
     if (d->wraps != &wrappedLines)
     {
         d->wraps = &wrappedLines;
-        //forceUpdate();
+        d->needRedo = true;
         setState(false);
     }
 }
@@ -387,6 +391,7 @@ void GLTextComposer::setStyledText(String const &styledText)
 {
     d->format.clear();
     d->text = d->format.initFromStyledText(styledText);
+    d->needRedo = true;
     setState(false);
 }
 
@@ -394,12 +399,17 @@ void GLTextComposer::setText(String const &text, Font::RichFormat const &format)
 {
     d->text = text;
     d->format = format;
+    d->needRedo = true;
     setState(false);
 }
 
 void GLTextComposer::setRange(Rangei const &visibleLineRange)
 {
-    d->visibleLineRange = visibleLineRange;
+    if (d->visibleLineRange != visibleLineRange)
+    {
+        d->visibleLineRange = visibleLineRange;
+        d->visibleLineRangeChanged = true;
+    }
 }
 
 Rangei GLTextComposer::range() const
@@ -409,26 +419,33 @@ Rangei GLTextComposer::range() const
 
 bool GLTextComposer::update()
 {
-    DENG2_ASSERT(d->wraps != 0);
+    DENG2_ASSERT(d->wraps);
+
+    bool changed = false;
 
     // If a font hasn't been defined, there isn't much to do.
-    if (!d->wraps->hasFont()) return false;
-
+    if (!d->wraps->hasFont())
+    {
+        return false;
+    }
     if (d->font != &d->wraps->font())
     {
         d->font = &d->wraps->font();
-        forceUpdate();
+        d->needRedo = true;
     }
-
     if (d->needRedo)
     {
         d->releaseLines();
         d->needRedo = false;
+        changed = d->allocLines();
     }
-
+    else if (d->visibleLineRangeChanged)
+    {
+        changed = d->allocLines();
+        d->visibleLineRangeChanged = false;
+    }
     setState(true);
-
-    return d->allocLines();
+    return changed;
 }
 
 void GLTextComposer::forceUpdate()
