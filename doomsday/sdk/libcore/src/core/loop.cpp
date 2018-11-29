@@ -66,7 +66,7 @@ void Loop::setRate(double freqHz)
 {
     if (fequal(freqHz, 0.0))
     {
-        freqHz = 120.0;
+        freqHz = 1000.0;
     }
     d->interval = 1.0 / freqHz;
     d->timer->setInterval(de::max(1, int(d->interval.asMilliSeconds())));

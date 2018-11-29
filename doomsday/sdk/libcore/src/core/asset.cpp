@@ -58,7 +58,7 @@ void Asset::setState(State s)
 
 void Asset::setState(bool assetReady)
 {
-    setState(assetReady? Ready : NotReady);
+    setState(assetReady ? Ready : NotReady);
 }
 
 Asset::State Asset::state() const
