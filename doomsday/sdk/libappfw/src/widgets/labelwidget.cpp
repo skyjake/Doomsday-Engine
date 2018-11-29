@@ -508,12 +508,15 @@ public Font::RichFormat::IStyle
         // Update the image on the atlas.
         if (image && image->update())
         {
+            updateSize();
             self().requestGeometry();
         }
         if (overlayImage && overlayImage->update())
         {
+            updateSize();
             self().requestGeometry();
         }
+
         glText.setLineWrapWidth(availableTextWidth());
         if (glText.update())
         {
@@ -621,6 +624,8 @@ void LabelWidget::setImage(Image const &image)
 void LabelWidget::setImage(ProceduralImage *procImage)
 {
     d->image.reset(procImage);
+    d->updateSize();
+    requestGeometry();
 }
 
 void LabelWidget::setStyleImage(DotPath const &id, String const &heightFromFont)
