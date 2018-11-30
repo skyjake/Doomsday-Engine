@@ -69,7 +69,7 @@ void LocalServer::start(duint16 port,
     }
 
     // Get rid of a previous error log in this location.
-    NativePath::deleteNativeFile(d->userDir / ERROR_LOG_NAME);
+    (d->userDir / ERROR_LOG_NAME).destroy();
 
     DE_ASSERT(d->link == nullptr);
 

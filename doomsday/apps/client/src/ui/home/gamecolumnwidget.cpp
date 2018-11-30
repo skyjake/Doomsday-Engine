@@ -21,6 +21,7 @@
 #include "ui/home/gamepanelbuttonwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/dialogs/createprofiledialog.h"
+#include "clientapp.h"
 
 #include <doomsday/DoomsdayApp>
 #include <doomsday/Games>
@@ -501,13 +502,14 @@ DE_GUI_PIMPL(GameColumnWidget)
             }
             else
             {
-                popup->items() << new ui::ActionItem("Mods...", [button]() { button->selectPackages(); });
+                popup->items() << new ui::ActionItem("Select Mods...",
+                                                     [button]() { button->selectPackages(); });
             }
 
             // Items suitable for all types of profiles.
             popup->items()
                 << new ui::ActionItem("Select Mods...",
-                                      new SignalAction(button, SLOT(selectPackages())))
+                                      [button]() { button->selectPackages(); })
                 << new ui::ActionItem("Clear Mods", [button]() { button->clearPackages(); })
                 << new ui::ActionItem(
                        "Duplicate", new CallbackAction([profileItem]() {
@@ -520,9 +522,9 @@ DE_GUI_PIMPL(GameColumnWidget)
                            {
                                String newName;
                                if (attempt > 1)
-                                   newName = String("%1 (Copy %2)").arg(dup->name()).arg(attempt);
+                                   newName = Stringf("%s (Copy %d)", dup->name().c_str(), attempt);
                                else
-                                   newName = String("%1 (Copy)").arg(dup->name());
+                                   newName = Stringf("%s (Copy)", dup->name().c_str());
                                if (!DoomsdayApp::gameProfiles().tryFind(newName))
                                {
                                    dup->setName(newName);
@@ -535,11 +537,10 @@ DE_GUI_PIMPL(GameColumnWidget)
             if (const auto *loc = FS::tryLocate<const Folder>(profileItem->profile->savePath()))
             {
                 popup->items() << new ui::Item(ui::Item::Separator)
-                               << new ui::ActionItem(
-                                      "Show Save Folder", new CallbackAction([loc]() {
-                                          QDesktopServices::openUrl(
-                                              QUrl::fromLocalFile(loc->correspondingNativePath()));
-                                      }));
+                               << new ui::ActionItem("Show Save Folder", [loc]() {
+                                      ClientApp::app().showLocalFile(
+                                          loc->correspondingNativePath());
+                                  });
             }
 
             if (isUserProfile && !profileItem->profile->saveLocationId())
@@ -571,7 +572,7 @@ DE_GUI_PIMPL(GameColumnWidget)
                 deleteSub->items()
                     << new ui::Item(ui::Item::Separator, "Are you sure?")
                     << new ui::ActionItem(
-                           tr("Delete Profile"),
+                           "Delete Profile",
                            new CallbackAction([this, button, profileItem, popup]() {
                                if (profileItem->profile->saveLocationId())
                                {
@@ -600,10 +601,9 @@ DE_GUI_PIMPL(GameColumnWidget)
                                            << new DialogButtonItem(
                                                   DialogWidget::Action,
                                                   "Show Folder",
-                                                  new CallbackAction([savePath]() {
-                                                      QDesktopServices::openUrl(
-                                                          QUrl::fromLocalFile(savePath));
-                                                  }));
+                                                  [savePath]() {
+                                                      ClientApp::app().showLocalFile(savePath);
+                                                  });
                                        if (!question->exec(root()))
                                        {
                                            // Cancelled.

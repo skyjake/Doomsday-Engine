@@ -303,15 +303,15 @@ DE_PIMPL(User)
             return;
         }
 
-        AudioSystem::get().newSound("user.falldown").setFrequency(.85f + .3f * frand()).play();
+        AudioSystem::get().newSound("user.falldown").setFrequency(.85f + .3f * randf()).play();
     }
 
     void playRandomStepSound()
     {
         AudioSystem::get()
             .newSound(Stringf("user.step%i", 1 + rand() % 5))
-            .setVolume(.4f + .2f * frand())
-            .setFrequency(.6f + frand() * .8f)
+            .setVolume(.4f + .2f * randf())
+            .setFrequency(.6f + randf() * .8f)
             .play();
     }
 

@@ -242,7 +242,7 @@ Variable &Config::set(const String &name, bool value)
 
 Variable &Config::set(const String &name, Value::Number const &value)
 {
-    return objectNamespace().set(name, value);
+    return objectNamespace().set(name, NumberValue(value));
 }
 
 Variable &Config::set(const String &name, dint value)

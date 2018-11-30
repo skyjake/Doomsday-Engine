@@ -56,7 +56,7 @@ DE_PIMPL(AssetObserver)
     void fileAdded(File const &link, FileIndex const &)
     {
         // Only matching assets cause notifications.
-        if (!std::regex_match(link.name().toStdString(), pattern)) return;
+        if (!pattern.exactMatch(link.name())) return;
 
         const String ident = assetIdentifier(link);
         Loop::mainCall([this, ident]()
@@ -71,7 +71,7 @@ DE_PIMPL(AssetObserver)
     void fileRemoved(File const &link, FileIndex const &)
     {
         // Only matching assets cause notifications.
-        if (!std::regex_match(link.name().toStdString(), pattern)) return;
+        if (!pattern.exactMatch(link.name())) return;
 
         const String ident = assetIdentifier(link);
         Loop::mainCall([this, ident]()

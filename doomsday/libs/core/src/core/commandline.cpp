@@ -212,7 +212,7 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
     if (i == d->arguments.end())
     {
         // Not found.
-        return ArgWithParams();
+        return {};
     }
 
     // It was found, check for the number of non-option parameters.

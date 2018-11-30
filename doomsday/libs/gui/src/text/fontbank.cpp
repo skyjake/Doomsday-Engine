@@ -41,12 +41,11 @@ DE_PIMPL(FontBank)
 
         Time modifiedAt() const { return bank.sourceModifiedAt(); }
 
-        void initParams(QFont &font) const
+        void initParams(FontParams &font) const
         {
             const Record &def = bank[id];
 
             // Font family.
-            FontParams font;
             font.family = def["family"];
 
             // Size.
@@ -80,7 +79,7 @@ DE_PIMPL(FontBank)
 
         Font *load() const
         {
-            QFont params;
+            FontParams params;
             initParams(params);
             return new Font(params);
         }
@@ -88,7 +87,7 @@ DE_PIMPL(FontBank)
         void reload(Font &font)
         {           
             // Only the size can change when reloading.
-            QFont params;
+            FontParams params;
             initParams(params);
             font.initialize(params);
         }

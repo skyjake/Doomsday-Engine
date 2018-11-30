@@ -135,7 +135,7 @@ DE_PIMPL(PackageCompatibilityDialog)
             // Check which of the wanted packages are actually available.
             StringList wantedUnavailable;
             StringList wantedAvailable;
-            QList<std::pair<String, Version>> wantedDifferentVersionAvailable;
+            List<std::pair<String, Version>> wantedDifferentVersionAvailable;
             {
                 auto &pkgLoader = PackageLoader::get();
 

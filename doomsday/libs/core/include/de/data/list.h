@@ -129,6 +129,11 @@ public:
         for (const T &v : other) *this << v;
         return *this;
     }
+    inline List &operator+=(const T &value)
+    {
+        Base::push_back(value);
+        return *this;
+    }
     inline List &operator+=(const List &other)
     {
         return *this << other;

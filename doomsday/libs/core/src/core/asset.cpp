@@ -75,7 +75,7 @@ void Asset::waitForState(State s) const
 {
     struct Waiter
         : public Waitable
-        , DENG2_OBSERVES(Asset, StateChange) {
+        , DE_OBSERVES(Asset, StateChange) {
         State waitingFor;
         Waiter(State wf)
             : waitingFor(wf)

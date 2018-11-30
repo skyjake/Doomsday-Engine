@@ -96,7 +96,7 @@ DE_GUI_PIMPL(PackagesWidget)
             {
                 file->audienceForDeletion() -= this;
             }
-            DENG2_GUARD(packFile);
+            DE_GUARD(packFile);
             packFile.audienceForDeletion() += this;
             file.reset(&packFile);
             if (const auto *nat = maybeAs<NativeFile>(packFile.source()))
@@ -108,7 +108,7 @@ DE_GUI_PIMPL(PackagesWidget)
                 nativePath.clear();
             }
             info = &file->objectNamespace().subrecord(Package::VAR_PACKAGE);
-            setData(Package::versionedIdentifierForFile(packFile));
+            setData(TextValue(Package::versionedIdentifierForFile(packFile)));
             setLabel(info->gets(Package::VAR_TITLE));
             notifyChange();
         }
@@ -121,7 +121,7 @@ DE_GUI_PIMPL(PackagesWidget)
 
         bool isLoaded() const
         {
-            DENG2_GUARD(file);
+            DE_GUARD(file);
             if (!file) return false;
             return PackageLoader::get().isLoaded(*file);
         }
@@ -506,14 +506,11 @@ DE_GUI_PIMPL(PackagesWidget)
         : Base(i)
         , hiddenTags({"hidden", "core", "gamedata"})
     {
-        defaultActionItems << new ui::VariantActionItem("Load", "Unload", new CallbackAction([this] ()
-    {
         defaultActionItems << new ui::VariantActionItem(
-            tr("Load"), tr("Unload"), new CallbackAction([this]() {
-            DE_ASSERT(menu->interactedItem());
+            "Load", "Unload", new CallbackAction([this]() {
+                DE_ASSERT(menu->interactedItem());
 
-                String const packageId =
-                    menu->interactedItem()->as<PackageItem>().data().asText();
+                const String packageId = menu->interactedItem()->as<PackageItem>().data().asText();
 
                 auto &loader = App::packageLoader();
                 if (loader.isLoaded(packageId))
@@ -595,7 +592,7 @@ DE_GUI_PIMPL(PackagesWidget)
                     return false;
                 }
             }
-            return filterTerms.isEmpty() || checkTerms({item.data().toString(),      // ID
+            return filterTerms.isEmpty() || checkTerms({item.data().asText(),        // ID
                                                         item.file->source()->name(), // file name
                                                         item.info->gets(VAR_TITLE),
                                                         item.info->gets(VAR_TAGS)});
@@ -855,7 +852,7 @@ DE_GUI_PIMPL(PackagesWidget)
     {
         auto &w = widget.as<PackageListItemWidget>();
         w.setItem(item.as<PackageItem>());
-        DENG2_ASSERT_IN_MAIN_THREAD();
+        DE_ASSERT_IN_MAIN_THREAD();
         w.updateContents();
     }
 

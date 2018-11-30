@@ -32,7 +32,7 @@
 namespace de {
 
 DE_PIMPL(Style)
-, DENG2_OBSERVES(Variable, Change)
+, DE_OBSERVES(Variable, Change)
 {
     Record    module;
     RuleBank  rules;
@@ -42,12 +42,12 @@ DE_PIMPL(Style)
     const Package *loadedPack;
 
     const Variable &pixelRatio     = ScriptSystem::get()["DisplayMode"]["PIXEL_RATIO"];
-    const Variable &uiTranslucency = Config::get("ui.translucency");
+    const Variable *uiTranslucency = nullptr;
     Variable        defaultTranslucency;    
     
     Impl(Public *i)
         : Base(i)
-        , rules(DENG2_BASE_GUI_APP->pixelRatio())
+        , rules(DE_BASE_GUI_APP->pixelRatio())
     {
         defaultTranslucency = new NumberValue(true);
 
@@ -115,10 +115,10 @@ DE_PIMPL(Style)
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(Change)
+    DE_PIMPL_AUDIENCE(Change)
 };
 
-DENG2_AUDIENCE_METHOD(Style, Change)
+DE_AUDIENCE_METHOD(Style, Change)
 
 Style::Style() : d(new Impl(this))
 {}
@@ -263,7 +263,7 @@ void Style::performUpdate()
 {
     d->fonts.reload();
 
-    DENG2_FOR_AUDIENCE2(Change, i)
+    DE_FOR_AUDIENCE2(Change, i)
     {
         i->styleChanged(*this);
     }

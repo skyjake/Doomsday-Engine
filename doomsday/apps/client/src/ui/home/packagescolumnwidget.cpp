@@ -109,7 +109,7 @@ DE_GUI_PIMPL(PackagesColumnWidget)
                     << new ui::ActionItem("Show Core Packages",
                                           new CallbackAction([this]() { packages->searchTermsEditor().setText("core"); }))
                     << new ui::Item(ui::Item::Separator)
-                    << new ui::ActionItem(tr("Refresh List"),
+                    << new ui::ActionItem("Refresh List",
                                           new CallbackAction([]() { FS::get().refreshAsync(); }));
                 return menu;
         }, ui::Down);

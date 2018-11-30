@@ -431,12 +431,6 @@ Record::~Record()
     }
 }
 
-bool Record::isEmpty() const
-{
-    DE_GUARD(d);
-    return d->members.size() == 0;
-}
-
 Record &Record::setFlags(Flags flags, FlagOpArg op)
 {
     applyFlagOperation(d->flags, flags, op);
@@ -570,7 +564,7 @@ Variable *Record::tryRemove(const String &variableName)
     return nullptr;
 }
 
-Variable &Record::add(const String &name, Variable::Flags variableFlags)
+Variable &Record::add(const String &name, Flags variableFlags)
 {
     return d->parentRecordByPath(name)
             .add(new Variable(Impl::memberNameFromPath(name), nullptr, variableFlags));
@@ -753,7 +747,7 @@ Variable &Record::set(const String &name, Block const &value)
 
 Variable &Record::set(const String &name, const Record &value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     std::unique_ptr<Record> dup(new Record(value));
     if (hasMember(name))
@@ -778,7 +772,7 @@ Variable &Record::set(const String &name, ArrayValue *value)
 
 Variable &Record::set(const String &name, Value *value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -787,9 +781,9 @@ Variable &Record::set(const String &name, Value *value)
     return add(name).set(value);
 }
 
-Variable &Record::set(const CString &name, const Value &value)
+Variable &Record::set(const String &name, const Value &value)
 {
-    DENG2_GUARD(d);
+    DE_GUARD(d);
 
     if (hasMember(name))
     {
@@ -1214,8 +1208,6 @@ String Record::asInfo() const
         if (out) out += "\n";
 
         Variable const &var = *i.second;
-
-        const Variable &var = *i.value();
         String src = i.first;
 
         if (is<RecordValue>(var.value()))

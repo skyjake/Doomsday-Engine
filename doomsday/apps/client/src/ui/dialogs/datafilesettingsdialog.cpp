@@ -48,19 +48,12 @@ DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
     message().hide();
 
     d->searchGroup = addGroup(
-        tr("Search Folders"),
-        tr("The following folders are searched for game IWAD files and mods like PWADs, PK3s, and "
-
-    d->iwadGroup = addGroup("IWAD Folders",
-           "Doomsday packages. Toggle the " _E(b) "Subdirs" _E(.)
-           " option to include all subfolders as well."));
+        "Search Folders",
+        "The following folders are searched for game IWAD files and mods like PWADs, PK3s, and "
+        "Doomsday packages. Toggle the " _E(b) "Subdirs" _E(.)
+        " option to include all subfolders as well.");
     setValue(d->searchGroup, d->pkgFolders.value());
 
-    d->pkgGroup = addGroup("Mod / Add-on Folders",
-                           "The following folders and all their subfolders are searched "
-                           "for mods, resource packs, and other add-ons.");
-    setValue(d->pkgGroup, d->pkgFolders.value());
-    
     updateLayout();
     audienceForChange() += [this]() { d->modified = true; };
 }

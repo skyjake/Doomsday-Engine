@@ -776,21 +776,6 @@ void LabelWidget::setTextStyle(Font::RichFormat::IStyle const *richStyle)
     d->richStyle = richStyle;
 }
 
-void LabelWidget::setOverrideImageSize(Vec2f const &size)
-{
-    d->overrideImageSize = size;
-}
-
-Vec2f LabelWidget::overrideImageSize() const
-{
-    return d->overrideImageSize;
-}
-
-void LabelWidget::setOverrideImageSize(float widthAndHeight)
-{
-    d->overrideImageSize = Vec2f(widthAndHeight, widthAndHeight);
-}
-
 void LabelWidget::setImageScale(float scaleFactor)
 {
     d->imageScale = scaleFactor;
@@ -956,7 +941,7 @@ LabelWidget *LabelWidget::appendSeparatorWithText(const String &text, GuiWidget 
     w->margins().setTop("gap");
     if (appendToGrid)
     {
-        appendToGrid->setCellAlignment(Vector2i(0, appendToGrid->gridSize().y), ui::AlignLeft);
+        appendToGrid->setCellAlignment({0, appendToGrid->gridSize().y}, ui::AlignLeft);
         appendToGrid->append(*w, 2);
     }
     return w.release();

@@ -94,9 +94,9 @@ DirectoryListDialog::DirectoryListDialog(String const &name)
     buttons() << new DialogButtonItem(Default | Accept)
               << new DialogButtonItem(Reject)
               << new DialogButtonItem(Action, style().images().image("create"),
-                                      tr("Add Folder"),
+                                      "Add Folder",
                                       new CallbackAction([this]() {
-        (*d->groups.begin())->list->addButton().trigger();
+        d->groups.begin()->second->list->addButton().trigger();
     }));
 }
 

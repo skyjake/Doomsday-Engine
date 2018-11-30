@@ -333,7 +333,7 @@ DE_PIMPL(Image)
     Size         size;
     Block        pixels;
     ByteRefArray refPixels;
-    float pointRatio = 1.f;
+    float        pointRatio = 1.f;
 
     Impl(Public *i)
         : Base(i)
@@ -344,7 +344,6 @@ DE_PIMPL(Image)
         : Base(i)
         , format(other.format)
         , size(other.size)
-        , image(other.image)
         , pixels(other.pixels)
         , refPixels(other.refPixels)
         , pointRatio(other.pointRatio)
@@ -443,7 +442,7 @@ Rectanglei Image::rect() const
     return Rectanglei(0, 0, d->size.x, d->size.y);
 }
 
-int Image::depth() const
+duint Image::depth() const
 {
     switch (d->format)
     {
@@ -487,23 +486,13 @@ int Image::depth() const
     }
 }
 
-int Image::stride() const
+dsize Image::stride() const
 {
-//    if (d->format == UseQImageFormat)
-//    {
-//        return d->image.bytesPerLine();
-//    }
     return bytesPerPixel() * d->size.x;
-    }
-    return depth() / 8 * d->size.x;
 }
 
 dsize Image::byteCount() const
 {
-//    if (d->format == UseQImageFormat)
-//    {
-//        return d->image.byteCount();
-//    }
     if (!d->pixels.isEmpty())
     {
         return d->pixels.size();
@@ -513,10 +502,6 @@ dsize Image::byteCount() const
 
 const dbyte *Image::bits() const
 {
-//    if (d->format == UseQImageFormat)
-//    {
-//        return d->image.constBits();
-//    }
     if (!d->pixels.isEmpty())
     {
         return d->pixels.constData();
@@ -655,70 +640,14 @@ Image Image::convertToFormat(Format toFormat) const
     return conv;
 }
 
-//bool Image::canConvertToQImage() const
-//{
-//    switch (d->format)
-//    {
-//    case RGB_444:
-//    case RGB_555:
-//    case RGB_565:
-//    case RGB_888:
-//    case RGBA_8888:
-//    case RGBx_8888:
-//    case UseQImageFormat:
-//        return true;
-
-//    default:
-//        return false;
-//    }
-//}
-
-//QImage Image::toQImage() const
-//{
-//    if (d->format == UseQImageFormat)
-//    {
-//        return d->image;
-//    }
-
-//    // There may be some conversions we can do.
-//    QImage::Format form = QImage::Format_Invalid;
-//    switch (d->format)
-//    {
-//    case RGB_444:
-//        form = QImage::Format_RGB444;
-//        break;
-//    case RGB_555:
-//        form = QImage::Format_RGB555;
-//        break;
-//    case RGB_565:
-//        form = QImage::Format_RGB16;
-//        break;
-//    case RGB_888:
-//        form = QImage::Format_RGB888;
-//        break;
-//    case RGBA_8888:
-//        form = QImage::Format_ARGB32;
-//        break;
-//    case RGBx_8888:
-//        form = QImage::Format_RGB32;
-//        break;
-//    default:
-//        // Cannot be done.
-//        return QImage();
-//    }
-
-//    QImage img(QSize(d->size.x, d->size.y), form);
-//    std::memcpy(const_cast<uchar *>(img.constBits()), bits(), byteCount());
-//    return img;
-//}
-
 GLPixelFormat Image::glFormat() const
 {
-//    if (d->format == UseQImageFormat)
-//    {
-//        return glFormat(d->image.format());
-//    }
     return glFormat(d->format);
+}
+
+float Image::pointRatio() const
+{
+    return d->pointRatio;
 }
 
 Image::Color Image::pixel(Vec2ui pos) const
@@ -741,8 +670,8 @@ void Image::setPointRatio(float pointsPerPixel)
 
 Image Image::subImage(Rectanglei const &subArea) const
 {
-    const int  bpp    = bytesPerPixel();
-    const auto bounds = d->rect() & subArea;
+    const dsize bpp    = bytesPerPixel();
+    const auto  bounds = d->rect() & subArea;
     Image sub(bounds.size(), d->format);
     for (duint y = 0; y < bounds.height(); ++y)
     {

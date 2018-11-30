@@ -553,9 +553,8 @@ struct TextFragment
 
 static void drawTextFragment(const TextFragment &fragment)
 {
-    DE_ASSERT(fragment != 0 && fragment[0]);
+    DE_ASSERT(fragment.text != 0 && fragment.text[0]);
 
-    AbstractFont *font = &App_Resources().font(fr.fontNum);
     fr_state_attributes_t* sat = currentAttribs();
     bool noTypein = (fragment.textFlags & DTF_NO_TYPEIN) != 0;
 
@@ -613,7 +612,7 @@ static void drawTextFragment(const TextFragment &fragment)
         {
             GL_BindTextureUnmanaged(bmapFont->textureGLName(),
                                     gfx::ClampToEdge,
-                                    gl::ClampToEdge, filterUI ? gl::Linear : gl::Nearest);
+                                    gfx::ClampToEdge,
                                     filterUI ? gfx::Linear : gfx::Nearest);
 
             DGL_MatrixMode(DGL_TEXTURE);
@@ -801,16 +800,9 @@ static void drawTextFragment(const TextFragment &fragment)
             DGL_PopMatrix();
         }
     }
-#if defined (DE_OPENGL)
-    if (renderWireframe > 1)
-    {
-        /// @todo do not assume previous state.
-        DGL_Enable(DGL_TEXTURE_2D);
-        glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
-    }
 }
 
-static void drawChar(uchar ch, float x, float y, const AbstractFont &font, int alignFlags)
+static void drawChar(dbyte ch, float x, float y, const AbstractFont &font, int alignFlags)
 {
     if (alignFlags & ALIGN_RIGHT)
     {
@@ -1491,7 +1483,7 @@ void FR_DrawText3(const char* text, const Point2Raw* _origin, int alignFlags, ui
                 DGL_Scalef(state.scaleX, state.scaleY * extraScale, 1);
 
                 // Draw it.
-                DENG2_ASSERT(fr.fontNum);
+                DE_ASSERT(fr.fontNum);
 
                 TextFragment frag{pass,
                                   App_Resources().font(fr.fontNum),

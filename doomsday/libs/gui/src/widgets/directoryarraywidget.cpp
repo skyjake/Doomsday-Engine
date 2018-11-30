@@ -76,10 +76,10 @@ static const String RECURSE_TOGGLE_NAME("recurse-toggle");
  * in the DirectoryArrayWidget items. Destroys itself after the item widget is deleted.
  */
 struct RecurseToggler
-    : DENG2_OBSERVES(ToggleWidget, Toggle)
-    , DENG2_OBSERVES(Widget, Deletion)
-    , DENG2_OBSERVES(ui::Item, Change)
-    , DENG2_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
+    : DE_OBSERVES(ToggleWidget, Toggle)
+    , DE_OBSERVES(Widget, Deletion)
+    , DE_OBSERVES(ui::Item, Change)
+    , DE_OBSERVES(ChildWidgetOrganizer, WidgetUpdate)
 {
     DirectoryArrayWidget *owner;
     ToggleWidget *        tog;
@@ -103,7 +103,7 @@ struct RecurseToggler
 
     TextValue key() const
     {
-        return {item->data().toString()};
+        return {item->data().asText()};
     }
 
     void fetch()
@@ -117,7 +117,10 @@ struct RecurseToggler
     void toggleStateChanged(ToggleWidget &toggle) override
     {
         recursed().value().setElement(key(), new NumberValue(toggle.isActive()));
-        emit owner->arrayChanged();
+        DE_FOR_EACH_OBSERVER(i, owner->audienceForChange())
+        {
+            i->variableArrayChanged(*owner);
+        }
     }
 
     void widgetBeingDeleted(Widget &) override

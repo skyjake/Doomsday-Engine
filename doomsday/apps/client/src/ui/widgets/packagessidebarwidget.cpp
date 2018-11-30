@@ -52,7 +52,7 @@ DE_GUI_PIMPL(PackagesSidebarWidget)
                         browser->actionWidget()->as<HomeItemWidget>().buttonWidget(0).rule(),
                         ui::Up);
                     pop->open();
-        }));
+        })));
     }
 };
 

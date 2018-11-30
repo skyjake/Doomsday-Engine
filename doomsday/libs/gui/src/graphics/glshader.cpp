@@ -133,11 +133,11 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
     DE_ASSERT(shaderType == Vertex || shaderType == Geometry || shaderType == Fragment);
 
     String preamble;
-    String source = shaderSource;
+    String source = String(shaderSource);
 
     if (!source.contains("#version"))
     {
-        preamble = DEFAULT_VERSION;
+        preamble += DEFAULT_VERSION;
     }
     preamble += PREFIX;
 
@@ -163,7 +163,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
     }
     else if (shaderType == Geometry)
     {
-        predefs = "#define DE_GEOMETRY_SHADER\n";
+        preamble += "#define DE_GEOMETRY_SHADER\n";
     }
     else
     {
@@ -193,7 +193,7 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
 
     preamble += "#line 1\n";
 
-    const char *srcPtr[] = {preamble.constData(), source.constData()};
+    const char *srcPtr[] = {preamble.c_str(), source.c_str()};
     glShaderSource(d->name, 2, srcPtr, 0);
     glCompileShader(d->name);
     LIBGUI_ASSERT_GL_OK();
@@ -207,13 +207,13 @@ void GLShader::compile(Type shaderType, IByteArray const &shaderSource)
         dint32 count = 0;
         glGetShaderiv(d->name, GL_INFO_LOG_LENGTH, &logSize);
 
-        Block log(logSize);
+        Block log{dsize(logSize)};
         glGetShaderInfoLog(d->name, logSize, &count, reinterpret_cast<GLchar *>(log.data()));
 
 #if defined (DE_DEBUG)
         {
             int lineNum = 1;
-            for (const auto &line : src.splitRef("\n"))
+            for (const auto &line : source.splitRef("\n"))
             {
                 debug("%4i: %s", lineNum++, line.toStdString().c_str());
             }

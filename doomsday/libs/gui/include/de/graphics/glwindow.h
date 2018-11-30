@@ -66,7 +66,7 @@ public:
     /**
      * Notified when the window pixel ratio has changed.
      */
-    DENG2_DEFINE_AUDIENCE2(PixelRatio, void windowPixelRatioChanged(GLWindow &))
+    DE_DEFINE_AUDIENCE2(PixelRatio, void windowPixelRatioChanged(GLWindow &))
 
     /**
      * Notified when the contents of the window have been swapped to the window front
@@ -120,19 +120,16 @@ public:
 
     Size pointSize() const;
     Size pixelSize() const;
+    duint pointWidth() const;
+    duint pointHeight() const;
+    duint pixelWidth() const;
+    duint pixelHeight() const;
+
     double pixelRatio() const;
 
     inline Rectanglei geometry() const { return {x(), y(), pointSize().x, pointSize().y }; }
 
     Vec2i mapToGlobal(const Vec2i &coordInsideWindow) const;
-
-    int pointWidth() const;
-    int pointHeight() const;
-    int pixelWidth() const;
-    int pixelHeight() const;
-
-    int width() const = delete;
-    int height() const = delete;
 
     /**
      * Returns a render target that renders to this window.

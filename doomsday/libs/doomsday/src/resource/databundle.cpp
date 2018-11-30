@@ -1466,16 +1466,16 @@ String DataBundle::stripVersion(String const &text, Version *version)
 
 String DataBundle::stripRedundantParts(String const &id)
 {
-    DotPath const path(id);
+    const DotPath path(id);
     String stripped = path.segment(0).toString();
     for (int i = 1; i < path.segmentCount(); ++i)
     {
-        String seg = path.segment(i);
+        String seg = path.segment(i).toString();
         for (int k = 1; k <= i; ++k) // Check all previous segments.
         {
             if (seg.beginsWith(path.segment(i - k) + "-"))
             {
-                seg = seg.substr(BytePos(CString(path.segment(i - k)).size()) + 1);
+                seg = seg.substr(BytePos(path.segment(i - k).size() + 1));
                 break;
             }
         }

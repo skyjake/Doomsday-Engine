@@ -81,7 +81,7 @@ DE_PIMPL(ClientWindow)
 , DE_OBSERVES(GLWindow, Resize)
 , DE_OBSERVES(GLWindow, Swap)
 , DE_OBSERVES(Variable, Change)
-, DENG2_OBSERVES(FileSystem, Busy)
+, DE_OBSERVES(FileSystem, Busy)
 #if !defined (DE_MOBILE)
 , DE_OBSERVES(PersistentGLWindow, AttributeChange)
 #endif

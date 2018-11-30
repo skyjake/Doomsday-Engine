@@ -103,7 +103,7 @@ String Version::asHumanReadableText() const
     if (label || build)
     {
         v += " (";
-        v += label.toLower();
+        v += label.lower();
         if (build)
         {
             v += String::format("%sbuild %d)", label ? " " : "", build);

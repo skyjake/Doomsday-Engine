@@ -125,7 +125,7 @@ DE_GUI_PIMPL(HomeWidget)
         taskBarHintButton->setBackgroundColor("");
         taskBarHintButton->setSizePolicy(ui::Expand, ui::Expand);
         taskBarHintButton->margins().set("dialog.gap");
-        taskBarHintButton->setText(_E(b) "ESC" _E(.) + " Task Bar");
+        taskBarHintButton->setText(_E(b) "ESC" _E(.) " Task Bar");
 //        taskBarHintButton->setTextColor("text");
         taskBarHintButton->setFont("small");
         taskBarHintButton->setOpacity(.66f);

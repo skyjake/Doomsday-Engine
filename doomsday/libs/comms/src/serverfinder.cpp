@@ -57,8 +57,9 @@ DE_PIMPL(ServerFinder)
             LOG_TRACE("Received a server message from %s with %i bytes",
                       host << block.size());
 
-            shell::ServerInfo receivedInfo;
-            Reader(block).withHeader() >> receivedInfo;
+            Record inf;
+            Reader(block).withHeader() >> inf;
+            shell::ServerInfo receivedInfo(inf);
 
             // We don't need to know the sender's Beacon UDP port.
             receivedInfo.setAddress(Address(host.hostName(), receivedInfo.port()));

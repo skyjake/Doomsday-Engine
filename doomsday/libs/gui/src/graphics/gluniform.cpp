@@ -32,17 +32,17 @@ DE_PIMPL(GLUniform)
     Block name;
     Type  type;
     union Value{
-        dint    int32;
-        duint   uint32;
-        dfloat  float32;
-        dint     *ints;
-        dfloat *floats;
-        Vector2f *vec2array;
-        Vec3f * vec3array;
-        Vec4f * vector;
-        Mat3f * mat3;
-        Mat4f * mat4;
-        GLTexture const *tex;
+        dint             int32;
+        duint            uint32;
+        dfloat           float32;
+        dint *           ints;
+        dfloat *         floats;
+        Vec2f *          vec2array;
+        Vec3f *          vec3array;
+        Vec4f *          vector;
+        Mat3f *          mat3;
+        Mat4f *          mat4;
+        const GLTexture *tex;
     } value;
     duint16 usedElemCount;
     duint16 elemCount;
@@ -81,7 +81,7 @@ DE_PIMPL(GLUniform)
             break;
 
         case Vec2Array:
-            value.vec2array = new Vector2f[elemCount];
+            value.vec2array = new Vec2f[elemCount];
             break;
 
         case Vec3Array:
@@ -256,12 +256,12 @@ bool GLUniform::isSampler() const
     return d->type == Sampler2D || d->type == SamplerCube || d->type == SamplerBuffer;
 }
 
-void GLUniform::bindSamplerTexture(dint unit) const
+void GLUniform::bindSamplerTexture(duint unit) const
 {
     if (d->type == SamplerBuffer)
     {
         // Buffer textures are not represented by GLTexture.
-        glActiveTexture(GL_TEXTURE0 + unit);
+        glActiveTexture(GLenum(GL_TEXTURE0 + unit));
         glBindTexture(GL_TEXTURE_BUFFER, d->value.uint32);
     }
     else
@@ -442,8 +442,8 @@ GLUniform &GLUniform::set(duint elementIndex, Mat4f const &mat)
 
 GLUniform &GLUniform::set(const int *intArray, dsize count)
 {
-    DENG2_ASSERT(d->type == IntArray);
-    DENG2_ASSERT(count <= d->elemCount);
+    DE_ASSERT(d->type == IntArray);
+    DE_ASSERT(count <= d->elemCount);
 
     memcpy(d->value.ints, intArray, sizeof(int) * count);
     d->usedElemCount = duint16(count);
@@ -484,12 +484,12 @@ GLUniform &GLUniform::set(Vec4f const *vectorArray, dsize count)
     return *this;
 }
 
-GLUniform &GLUniform::set(const Matrix4f *mat4Array, dsize count)
+GLUniform &GLUniform::set(const Mat4f *mat4Array, dsize count)
 {
-    DENG2_ASSERT(d->type == Mat4Array);
-    DENG2_ASSERT(count <= d->elemCount);
+    DE_ASSERT(d->type == Mat4Array);
+    DE_ASSERT(count <= d->elemCount);
 
-    memcpy(d->value.mat4, mat4Array, sizeof(Matrix4f) * count);
+    memcpy(d->value.mat4, mat4Array, sizeof(Mat4f) * count);
     d->usedElemCount = duint16(count);
     d->markAsChanged();
     return *this;
@@ -498,7 +498,7 @@ GLUniform &GLUniform::set(const Matrix4f *mat4Array, dsize count)
 GLUniform &GLUniform::setUsedElementCount(duint elementCount)
 {
     DE_ASSERT(elementCount <= d->elemCount);
-    d->usedElemCount = elementCount;
+    d->usedElemCount = duint16(elementCount);
     d->markAsChanged();
     return *this;
 }
@@ -642,7 +642,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
         break;
 
     case Vec2Array:
-        LIBGUI_GL.glUniform2fv(loc, d->usedElemCount, &d->value.vec2array->x);
+        glUniform2fv(loc, d->usedElemCount, &d->value.vec2array->x);
         break;
 
     case Vec3:
@@ -669,6 +669,7 @@ void GLUniform::applyInProgram(GLProgram &program) const
 
     case Sampler2D:
     case SamplerCube:
+    case SamplerBuffer:
         // Not set here. GLProgram sets the sampler values according to where textures are bound.
         break;
     }

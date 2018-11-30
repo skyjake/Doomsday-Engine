@@ -326,8 +326,12 @@ public:
     virtual bool dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &));
 
     enum class CollectMode { OnlyVisible, All };
-    virtual void collectNotReadyAssets(AssetGroup &collected,
-                                       CollectMode collectMode = CollectMode::OnlyVisible);
+    virtual void collectUnreadyAssets(AssetGroup &collected,
+                                      CollectMode collectMode = CollectMode::OnlyVisible);
+
+    /**
+     * Blocks until all assets in the widget tree are Ready.
+     */
     void waitForAssetsReady();
 
     // Events.

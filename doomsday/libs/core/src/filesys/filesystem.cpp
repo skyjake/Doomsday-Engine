@@ -34,7 +34,6 @@
 #include "de/TextValue"
 #include "de/ZipArchive"
 
-#include <QHash>
 #include <condition_variable>
 
 namespace de {
@@ -91,10 +90,10 @@ DE_PIMPL_NOREF(FileSystem)
         return *idx;
     }
 
-    DENG2_PIMPL_AUDIENCE(Busy)
+    DE_PIMPL_AUDIENCE(Busy)
 };
 
-DENG2_AUDIENCE_METHOD(FileSystem, Busy)
+DE_AUDIENCE_METHOD(FileSystem, Busy)
 
 FileSystem::FileSystem() : d(new Impl)
 {}
@@ -369,7 +368,7 @@ void FileSystem::changeBusyLevel(int increment)
             if ((bs == Busy && d->busyLevel > 0) ||
                 (bs == Idle && d->busyLevel == 0))
             {
-                DENG2_FOR_AUDIENCE2(Busy, i) { i->fileSystemBusyStatusChanged(bs); }
+                DE_FOR_AUDIENCE2(Busy, i) { i->fileSystemBusyStatusChanged(bs); }
             }
         });
     }
@@ -452,7 +451,7 @@ String FileSystem::accessNativeLocation(NativePath const &nativePath, Flags flag
         String name;
         do
         {
-            name = String("%1").arg(Rangei(0, 65536).random(), 4, 16, QChar('0'));
+            name = Stringf("%04x", Rangei(0, 65536).random());
         } while (sysNative.has(name));
         mapping.setElement(key, new TextValue(name));
     }

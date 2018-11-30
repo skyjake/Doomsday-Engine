@@ -146,6 +146,11 @@ Time Date::asTime() const
     return d->time;
 }
 
+bool Date::isSameDay(const Date &other) const
+{
+    return year() == other.year() && dayOfYear() == other.dayOfYear();
+}
+
 Date Date::currentDate()
 {
     return Time().asDate();

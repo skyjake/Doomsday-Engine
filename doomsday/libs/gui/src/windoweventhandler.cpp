@@ -22,6 +22,7 @@
 #include <de/App>
 #include <de/Log>
 #include <de/Loop>
+#include <de/Rule>
 
 #include <SDL_events.h>
 
@@ -245,7 +246,7 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseButtonEvent(const SDL_MouseButtonEvent &ev)
     {
-        const auto pos = Vec2i(ev.x, ev.y) * DE_GUI_APP->dpiFactor();
+        const auto pos = Vec2i(ev.x, ev.y) * DE_GUI_APP->pixelRatio().value();
 
         if (ev.type == SDL_MOUSEBUTTONDOWN)
         {
@@ -273,7 +274,7 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseMoveEvent(const SDL_MouseMotionEvent &ev)
     {
-        currentMousePos = Vec2i(ev.x, ev.y) * DE_GUI_APP->dpiFactor();
+        currentMousePos = Vec2i(ev.x, ev.y) * DE_GUI_APP->pixelRatio().value();
 
         // Absolute events are only emitted when the mouse is untrapped.
         if (!mouseGrabbed)

@@ -179,7 +179,7 @@ Profiles::AbstractProfile *GameProfiles::profileFromInfoBlock(Info::BlockElement
     prof->setUserCreated(!block.keyValue(VAR_USER_CREATED()).text.compareWithoutCase("True"));
     if (block.contains(VAR_CUSTOM_DATA_FILE()))
     {
-        prof->setCustomDataFile(block.keyValue(VAR_CUSTOM_DATA_FILE).text);
+        prof->setCustomDataFile(block.keyValue(VAR_CUSTOM_DATA_FILE()).text);
     }
     if (block.contains(VAR_USE_GAME_REQUIREMENTS()))
     {
@@ -510,7 +510,7 @@ StringList GameProfiles::Profile::allRequiredPackages() const
             reqs = filter(reqs, [](const String &id) {
                 if (const auto *f = PackageLoader::get().select(id))
                 {
-                    if (Package::matchTags(*f, QStringLiteral("\\bgamedata\\b")))
+                    if (Package::matchTags(*f, DE_STR("\\bgamedata\\b")))
                     {
                         return false;
                     }
@@ -594,7 +594,7 @@ String GameProfiles::Profile::toInfoSource() const
     os << VAR_GAME()                  << ": " << d->gameId << "\n"
        << VAR_PACKAGES()              << " <" << String::join(de::map(d->packages, Info::quoteString), ", ") << ">\n"
        << VAR_USER_CREATED()          << ": " << (d->userCreated? "True" : "False") << "\n"
-       << VAR_CUSTOM_DATA_FILE      << ": " << d->customDataFile << "\n"
+       << VAR_CUSTOM_DATA_FILE()      << ": " << d->customDataFile << "\n"
        << VAR_USE_GAME_REQUIREMENTS() << ": " << (d->useGameRequirements? "True" : "False");
     if (d->autoStartMap)
     {

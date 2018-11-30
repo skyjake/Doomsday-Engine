@@ -28,19 +28,16 @@ DE_PIMPL(GLTextComposer)
 
     const Font *            font  = nullptr;
     Atlas *                 atlas = nullptr;
-//    String                  text;
     FontLineWrapping const *wraps = nullptr;
     Font::RichFormat        format;
     bool                    needRedo          = false; ///< Release completely and allocate.
     int                     maxGeneratedWidth = 0;
     Rangei visibleLineRange{MAX_VISIBLE_RANGE}; ///< Only these lines will be updated/drawn.
-    bool visibleLineRangeChanged = false;
-    int maxGeneratedWidth = 0;
+    bool   visibleLineRangeChanged = false;
 
     struct Line {
         struct Segment {
             Id id;
-//            CString range;
             String text;
             int x;
             int width;
@@ -76,7 +73,7 @@ DE_PIMPL(GLTextComposer)
     {
         if (!atlas) return;
 
-        for (int i = 0; i < lines.sizei(); ++i)
+        for (dsize i = 0; i < lines.size(); ++i)
         {
             if (!isLineVisible(i))
             {
@@ -87,10 +84,10 @@ DE_PIMPL(GLTextComposer)
 
     enum ReleaseBehavior { ReleaseFully, ReleaseButKeepSegs };
 
-    void releaseLine(int index, ReleaseBehavior behavior = ReleaseFully)
+    void releaseLine(dsize index, ReleaseBehavior behavior = ReleaseFully)
     {
         Line &ln = lines[index];
-        for (int i = 0; i < ln.segs.sizei(); ++i)
+        for (dsize i = 0; i < ln.segs.size(); ++i)
         {
             if (!ln.segs[i].id.isNone())
             {
@@ -104,9 +101,9 @@ DE_PIMPL(GLTextComposer)
         }
     }
 
-    bool isLineVisible(int line) const
+    bool isLineVisible(dsize line) const
     {
-        return visibleLineRange.contains(line);
+        return visibleLineRange.contains(int(line));
     }
 
     CString segmentText(int seg, FontLineWrapping::LineInfo const &info) const
@@ -148,7 +145,7 @@ DE_PIMPL(GLTextComposer)
 
     bool allocLines()
     {
-        DENG2_GUARD(wraps);
+        DE_GUARD(wraps);
 
         bool changed = false;
 

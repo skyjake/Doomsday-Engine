@@ -30,8 +30,8 @@ namespace de {
 DE_PIMPL_NOREF(Address)
 {
     tF::ref<iAddress> addr;
-    duint16              port = 0;
-    String               textRepr;
+    duint16           port = 0;
+    String            textRepr;
 
     enum Special { Undefined, LocalHost, RemoteHost };
     Special special = Undefined;
@@ -69,7 +69,7 @@ Address Address::take(iAddress *addr)
 
 Address::Address(const Address &other) : d(new Impl)
 {
-    d->addr.reset(other.d->addr);
+    d->addr.reset(other.d->addr); // use the same object
     d->port = other.d->port;
 }
 
@@ -78,14 +78,9 @@ Address::operator const iAddress *() const
     return d->addr;
 }
 
-Address::Address(Address const &other)
-{
-    d->addr.reset(other.d->addr);
-}
-
 Address &Address::operator=(Address const &other)
 {
-    d->addr.reset(copy_Address(other.d->addr));
+    d->addr.reset(other.d->addr); // use the same object
     d->port     = other.d->port;
     d->textRepr = other.d->textRepr;
     d->special  = other.d->special;
@@ -101,6 +96,11 @@ bool Address::operator==(Address const &other) const
 {
     if (d->port != other.d->port) return false;
     return equal_Address(d->addr, other.d->addr);
+}
+
+bool Address::isNull() const
+{
+    return bool(d->addr);
 }
 
 String Address::hostName() const
@@ -120,11 +120,10 @@ bool Address::isLoopback() const
 }
 
 bool Address::isLocal() const
-    return !isNull() && isHostLocal(*this);
 {
     if (d->special == Impl::Undefined)
     {
-        d->special = isHostLocal(*d->host) ? Impl::LocalHost : Impl::RemoteHost;
+        d->special = isHostLocal(*this) ? Impl::LocalHost : Impl::RemoteHost;
     }
     return (d->special == Impl::LocalHost);
 }
@@ -136,7 +135,7 @@ duint16 Address::port() const
 
 //void Address::setPort(duint16 p)
 //{
-    d->clearCached();
+//    d->clearCached();
 //    d->port = p;
 //}
 

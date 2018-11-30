@@ -492,14 +492,13 @@ int GLProgram::attributeLocation(AttribSpec::Semantic semantic) const
 
 bool GLProgram::validate() const
 {
-    LIBGUI_GL.glValidateProgram(d->name);
+    glValidateProgram(d->name);
 
     int valid;
-    LIBGUI_GL.glGetProgramiv(d->name, GL_VALIDATE_STATUS, &valid);
-    if (valid == GL_FALSE)
+    glGetProgramiv(d->name, GL_VALIDATE_STATUS, &valid);
+    if (GLboolean(valid) == GL_FALSE)
     {
-        qDebug() << "GLProgram" << d->name << this << "is not validated:";
-        qDebug() << d->getInfoLog().constData();
+        debug("GLProgram %u %p is not validated:\n%s", d->name, this, d->getInfoLog().c_str());
         return false;
     }
     return true;

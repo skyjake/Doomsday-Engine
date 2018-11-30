@@ -33,7 +33,6 @@
 #include <de/GridPopupWidget>
 #include <de/ScriptSystem>
 #include <de/SequentialLayout>
-#include <de/SignalAction>
 #include <de/TextValue>
 #include <de/VariableChoiceWidget>
 #include <de/VariableSliderWidget>
@@ -141,17 +140,6 @@ DE_GUI_PIMPL(AudioSettingsDialog)
         // Check currently available outputs.
         enumerateAudioOutputs();
 
-        /*
-        fmodSpeakerMode->items()
-                << new ChoiceItem("Mono", "mono")
-                << new ChoiceItem("Stereo", "")
-                << new ChoiceItem("Quad", "quad")
-                << new ChoiceItem("Surround", "surround")
-                << new ChoiceItem("5.1", "5.1")
-                << new ChoiceItem("7.1", "7.1")
-                << new ChoiceItem("Raw", "raw");
-         */
-
         soundPlugin->items()
                 << new ChoiceItem("FMOD", "fmod")
            #if !defined (DE_DISABLE_SDLMIXER)
@@ -182,22 +170,22 @@ DE_GUI_PIMPL(AudioSettingsDialog)
         cdPlugin->updateFromVariable();
 #endif
 
-        soundPlugin    ->updateFromVariable();
-        musicPlugin    ->updateFromVariable();
-//        fmodSpeakerMode->updateFromVariable();
+        soundPlugin->updateFromVariable();
+        musicPlugin->updateFromVariable();
+        audioOutput->updateFromVariable();
 
         // The audio system needs reinitializing if the plugins are changed.
-        auto changeFunc = [this](uint) {
+        auto changeFunc = [this]() {
             needAudioReinit = true;
             self().buttonWidget(Id2)->setText(_E(b) "Apply");
         };
         soundPlugin->audienceForUserSelection() += changeFunc;
         musicPlugin->audienceForUserSelection() += changeFunc;
-        fmodSpeakerMode->audienceForUserSelection() += changeFunc;
+        audioOutput->audienceForUserSelection() += changeFunc;
 #if defined (WIN32)
         cdPlugin->audienceForUserSelection() += changeFunc;
 #endif
-        QObject::connect(sfxChannels, &SliderWidget::valueChangedByUser, changeFunc);
+        sfxChannels->audienceForUserValue() += changeFunc;
     }
 
     void enumerateAudioOutputs()
@@ -212,9 +200,9 @@ DE_GUI_PIMPL(AudioSettingsDialog)
         if (outputs.contains(key))
         {
             const auto &names = outputs.element(key).as<ArrayValue>();
-            for (unsigned i = 0; i < names.size(); ++i)
+            for (int i = 0; i < names.size(); ++i)
             {
-                audioOutput->items() << new ChoiceItem(names.at(i).asText(), i);
+                audioOutput->items() << new ChoiceItem(names.at(i).asText(), NumberValue(i));
             }
         }
     }

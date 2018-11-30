@@ -160,8 +160,8 @@ public:
 
     bool isReadable() const;
 
-    inline void create() { createPath(*this); }
-    inline bool destroy() { return destroyPath(*this); }
+    inline void create() const { createPath(*this); }
+    inline bool destroy() const { return destroyPath(*this); }
 
     /**
      * Deletes the native file at the path.

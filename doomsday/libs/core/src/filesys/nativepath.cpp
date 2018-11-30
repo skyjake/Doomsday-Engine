@@ -328,11 +328,11 @@ bool NativePath::destroyPath(const NativePath &nativePath) // static
     {
         if (nativePath.isDirectory())
         {
-            return QDir::current().rmdir(nativePath);
+            return rmdir_Path(nativePath.toString());
         }
         else
         {
-            return remove(nativePath.c_str()) == 0;
+            return std::remove(nativePath.c_str()) == 0;
         }
     }
     return true;

@@ -49,9 +49,9 @@ namespace internal {
     struct ThreadFonts
     {
         PlatformFont font;
-    Hash<FontParams, PlatformFont *> fontMods;
+        Hash<FontParams, PlatformFont *> fontMods;
 
-    ~ThreadFonts() { fontMods.deleteAll(); }
+        ~ThreadFonts() { fontMods.deleteAll(); }
     };
 
 } // namespace internal
@@ -132,16 +132,21 @@ DE_PIMPL(Font)
         auto found = hash.find(thisPublic);
         if (found != hash.end())
         {
-            auto &tf = found.value();
-            if (fequal(tf.font.size(), float(referenceFont.pointSizeF())))
+            auto &tf = found->second;
+            if (fequal(tf.font.size(), fontParams.size))
             {
                 return tf;
             }
             // Size has changed, re-initialize the font.
-            deleteAll(tf.fontMods);
+            tf.fontMods.deleteAll();
             tf.fontMods.clear();
         }
-        hash[thisPublic].font = PlatformFont(referenceFont);
+        auto &font = hash[thisPublic].font;
+        font.setFamily(fontParams.family);
+        font.setSize(fontParams.size);
+        font.setStyle(fontParams.spec.style);
+        font.setTransform(fontParams.spec.transform);
+        font.setWeight(fontParams.spec.weight);
         return hash[thisPublic];
     }
 
@@ -267,9 +272,9 @@ Font::Font(const FontParams &params)
     : d(new Impl(this, params))
 {}
 
-void Font::initialize(const QFont &font)
+void Font::initialize(const FontParams &params)
 {
-    d->referenceFont = font;
+    d->fontParams = params;
     d->updateMetrics();
 }
 

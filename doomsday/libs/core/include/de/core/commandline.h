@@ -52,7 +52,7 @@ public:
         StringList params;
 
         ArgWithParams();
-        operator dint () const;
+        operator dint() const;
         dint size() const;
     };
 

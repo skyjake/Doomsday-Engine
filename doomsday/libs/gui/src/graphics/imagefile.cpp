@@ -211,7 +211,7 @@ Image ImageFile::image() const
     else
     {
         Image img = Image::fromData(*source(), extension());
-        if (source()->name().contains("@2x.", Qt::CaseInsensitive))
+        if (source()->name().contains("@2x.", CaseInsensitive))
         {
             img.setPointRatio(.5f);
         }

@@ -40,7 +40,7 @@ public:
  * Pair of rules that implements the ISizeRule interface.
  * @ingroup widgets
  */
-struct DENG2_PUBLIC RulePair
+struct DE_PUBLIC RulePair
     : public std::pair<const Rule *, const Rule *>
     , public ISizeRule {
     RulePair(const Rule &a, const Rule &b)
@@ -49,12 +49,12 @@ struct DENG2_PUBLIC RulePair
     // Implements ISizeRule.
     const Rule &width() const override
     {
-        DENG2_ASSERT(first);
+        DE_ASSERT(first);
         return *first;
     }
     const Rule &height() const override
     {
-        DENG2_ASSERT(second);
+        DE_ASSERT(second);
         return *second;
     }
 };

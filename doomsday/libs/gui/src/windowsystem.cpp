@@ -24,7 +24,7 @@
 namespace de {
 
 DE_PIMPL(WindowSystem)
-, DENG2_OBSERVES(GLWindow, PixelRatio)
+, DE_OBSERVES(GLWindow, PixelRatio)
 {
     typedef Map<String, BaseWindow *> Windows;
     Windows windows;
@@ -72,7 +72,7 @@ DE_PIMPL(WindowSystem)
     {
         if (&win == &BaseWindow::main())
         {
-            DENG2_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
+            DE_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
         }
     }
 };

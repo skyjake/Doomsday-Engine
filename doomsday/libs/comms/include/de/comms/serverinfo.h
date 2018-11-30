@@ -86,7 +86,7 @@ public:
     void printToLog(int indexNumber, bool includeHeader = false) const;
 
 private:
-    DENG2_PRIVATE(d)
+    DE_PRIVATE(d)
 };
 
 }} // namespace de::shell

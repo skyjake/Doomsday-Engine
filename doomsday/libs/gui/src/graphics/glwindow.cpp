@@ -343,7 +343,7 @@ GLWindow::GLWindow()
     d->handler = new WindowEventHandler(this);
     d->handler->setKeyboardMode(WindowEventHandler::RawKeys);
     
-    d->pixelRatio = devicePixelRatio();
+//    d->pixelRatio = devicePixelRatio();
 
     d->handler->audienceForMouseStateChange() += [this]() {
         const bool trap = d->handler->isMouseTrapped();
@@ -351,6 +351,7 @@ GLWindow::GLWindow()
         SDL_SetRelativeMouseMode(trap ? SDL_TRUE : SDL_FALSE);
     };
 
+#if 0
     connect(this, &QWindow::screenChanged, [this](QScreen *scr) {
         //qDebug() << "window screen changed:" << scr << scr->devicePixelRatio();
         if (!fequal(d->pixelRatio, scr->devicePixelRatio()))
@@ -363,6 +364,7 @@ GLWindow::GLWindow()
             }
         }
     });
+#endif
 }
 
 void GLWindow::setTitle(const String &title)
@@ -532,22 +534,22 @@ double GLWindow::pixelRatio() const
     return d->pixelRatio;
 }
 
-int GLWindow::pointWidth() const
+duint GLWindow::pointWidth() const
 {
     return pointSize().x;
 }
 
-int GLWindow::pointHeight() const
+duint GLWindow::pointHeight() const
 {
     return pointSize().y;
 }
 
-int GLWindow::pixelWidth() const
+duint GLWindow::pixelWidth() const
 {
     return pixelSize().x;
 }
 
-int GLWindow::pixelHeight() const
+duint GLWindow::pixelHeight() const
 {
     return pixelSize().y;
 }

@@ -159,7 +159,7 @@ void DGL_FogParams(GLUniform &fogRange, GLUniform &fogColor)
 
 void DGL_DepthFunc(DGLenum depthFunc)
 {
-    using namespace de::gl;
+    using namespace de::gfx;
 
     static const Comparison funcs[] = {
         Never,
@@ -172,7 +172,7 @@ void DGL_DepthFunc(DGLenum depthFunc)
         GreaterOrEqual
     };
 
-    DENG2_ASSERT(depthFunc >= DGL_NEVER && depthFunc <= DGL_GEQUAL);
+    DE_ASSERT(depthFunc >= DGL_NEVER && depthFunc <= DGL_GEQUAL);
 
     const auto f = funcs[depthFunc - DGL_NEVER];
     if (GLState::current().depthFunc() != f)
@@ -185,10 +185,10 @@ void DGL_DepthFunc(DGLenum depthFunc)
 void DGL_CullFace(DGLenum cull)
 {
     const auto c =
-        ( cull == DGL_NONE  ? gl::None
-        : cull == DGL_BACK  ? gl::Back
-        : cull == DGL_FRONT ? gl::Front
-                            : gl::None );
+        ( cull == DGL_NONE  ? gfx::None
+        : cull == DGL_BACK  ? gfx::Back
+        : cull == DGL_FRONT ? gfx::Front
+                            : gfx::None );
 
     if (GLState::current().cull() != c)
     {
@@ -655,7 +655,7 @@ dd_bool DGL_SetInteger(int name, int value)
         DE_ASSERT(value >= 0);
         DE_ASSERT(value < MAX_TEX_UNITS);
         dgl.activeTexture = value;
-        glActiveTexture(GLenum(GL_TEXTURE0 + value));
+        glActiveTexture(GL_TEXTURE0 + duint(value));
         break;
 
     case DGL_MODULATE_TEXTURE:
@@ -961,7 +961,7 @@ void DGL_Disable(int cap)
 #undef DGL_BlendOp
 void DGL_BlendOp(int op)
 {
-    const auto glop = op == DGL_SUBTRACT.        ? gfx::Subtract :
+    const auto glop = op == DGL_SUBTRACT         ? gfx::Subtract :
                       op == DGL_REVERSE_SUBTRACT ? gfx::ReverseSubtract :
                                                    gfx::Add;
     if (GLState::current().blendOp() != glop)
@@ -977,28 +977,28 @@ void DGL_BlendFunc(int param1, int param2)
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    const auto src = param1 == DGL_ZERO ? gl::Zero :
-                                          param1 == DGL_ONE                 ? gfx::One  :
-                                          param1 == DGL_DST_COLOR           ? gfx::DestColor :
-                                          param1 == DGL_ONE_MINUS_DST_COLOR ? gfx::OneMinusDestColor :
-                                          param1 == DGL_SRC_ALPHA           ? gfx::SrcAlpha :
-                                          param1 == DGL_ONE_MINUS_SRC_ALPHA ? gfx::OneMinusSrcAlpha :
-                                          param1 == DGL_DST_ALPHA           ? gfx::DestAlpha :
-                                          param1 == DGL_ONE_MINUS_DST_ALPHA ? gfx::OneMinusDestAlpha :
-                                                                              gfx::Zero;
+    const auto src = param1 == DGL_ZERO                ? gfx::Zero :
+                     param1 == DGL_ONE                 ? gfx::One  :
+                     param1 == DGL_DST_COLOR           ? gfx::DestColor :
+                     param1 == DGL_ONE_MINUS_DST_COLOR ? gfx::OneMinusDestColor :
+                     param1 == DGL_SRC_ALPHA           ? gfx::SrcAlpha :
+                     param1 == DGL_ONE_MINUS_SRC_ALPHA ? gfx::OneMinusSrcAlpha :
+                     param1 == DGL_DST_ALPHA           ? gfx::DestAlpha :
+                     param1 == DGL_ONE_MINUS_DST_ALPHA ? gfx::OneMinusDestAlpha :
+                                                         gfx::Zero;
 
-    const auto dst = param2 == DGL_ZERO ? gl::Zero :
-                                          param2 == DGL_ONE                 ? gfx::One :
-                                          param2 == DGL_SRC_COLOR           ? gfx::SrcColor :
-                                          param2 == DGL_ONE_MINUS_SRC_COLOR ? gfx::OneMinusSrcColor :
-                                          param2 == DGL_SRC_ALPHA           ? gfx::SrcAlpha :
-                                          param2 == DGL_ONE_MINUS_SRC_ALPHA ? gfx::OneMinusSrcAlpha :
-                                          param2 == DGL_DST_ALPHA           ? gfx::DestAlpha :
-                                          param2 == DGL_ONE_MINUS_DST_ALPHA ? gfx::OneMinusDestAlpha :
-                                                                              gfx::Zero;
+    const auto dst = param2 == DGL_ZERO                ? gfx::Zero :
+                     param2 == DGL_ONE                 ? gfx::One :
+                     param2 == DGL_SRC_COLOR           ? gfx::SrcColor :
+                     param2 == DGL_ONE_MINUS_SRC_COLOR ? gfx::OneMinusSrcColor :
+                     param2 == DGL_SRC_ALPHA           ? gfx::SrcAlpha :
+                     param2 == DGL_ONE_MINUS_SRC_ALPHA ? gfx::OneMinusSrcAlpha :
+                     param2 == DGL_DST_ALPHA           ? gfx::DestAlpha :
+                     param2 == DGL_ONE_MINUS_DST_ALPHA ? gfx::OneMinusDestAlpha :
+                                                         gfx::Zero;
 
     auto &st = GLState::current();
-    if (st.blendFunc() != gl::BlendFunc(src, dst))
+    if (st.blendFunc() != gfx::BlendFunc(src, dst))
     {
         DGL_Flush();
         GLState::current().setBlendFunc(src, dst);

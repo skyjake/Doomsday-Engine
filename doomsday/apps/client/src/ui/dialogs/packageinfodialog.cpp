@@ -62,6 +62,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
     const DataBundle *             bundle = nullptr;
     SafeWidgetPtr<PopupWidget>     configurePopup;
     SafeWidgetPtr<PopupMenuWidget> profileMenu;
+
     enum MenuMode { AddToProfile, PlayInProfile };
     MenuMode menuMode;
 
@@ -389,6 +390,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
                                         style().images().image("create"),
                                         "Add to...",
                                         [this]() { self().addToProfile(); });
+        }
 
         if (!nativePath.isEmpty())
         {
@@ -397,11 +399,10 @@ DE_GUI_PIMPL(PackageInfoDialog)
         }
         if (mode == EnableActions && Package::hasOptionalContent(*file))
         {
-            self().buttons() << new DialogButtonItem(
-                Action | Id1,
-                style().images().image("gear"),
-                                            "Options",
-                                            [this]() { self().configure(); });
+            self().buttons() << new DialogButtonItem(Action | Id1,
+                                                     style().images().image("gear"),
+                                                     "Options",
+                                                     [this]() { self().configure(); });
         }
         return true;
     }

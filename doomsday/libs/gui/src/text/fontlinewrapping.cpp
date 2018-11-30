@@ -217,13 +217,8 @@ DE_PIMPL_NOREF(FontLineWrapping)
     }
 
     bool containsNewline(const CString &range) const
-        return range.contains('\n');
     {
-//        for (auto i = range.begin(); i != range.end(); ++i)
-//        {
-//            if (*i == NEWLINE) return true;
-//        }
-//        return false;
+        return range.contains('\n');
     }
 
     bool containsTabs(const CString &range) const

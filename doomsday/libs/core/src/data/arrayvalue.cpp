@@ -296,11 +296,11 @@ void ArrayValue::remove(dint index)
 
 dint ArrayValue::indexOf(const Value &value) const
 {
-    for (int i = 0; i < _elements.size(); ++i)
+    for (size_t i = 0; i < _elements.size(); ++i)
     {
         if (!value.compare(*_elements[i]))
         {
-            return i;
+            return int(i);
         }
     }
     return -1;

@@ -23,6 +23,7 @@
 #include "ui/widgets/homeitemwidget.h"
 #include "ui/widgets/homemenuwidget.h"
 #include "ui/dialogs/packageinfodialog.h"
+#include "ui/dialogs/datafilesettingsdialog.h"
 #include "ui/clientwindow.h"
 #include "ui/clientstyle.h"
 #include "clientapp.h"
@@ -70,7 +71,7 @@ DE_GUI_PIMPL(PackagesDialog)
      */
     class SelectedPackageItem
         : public ui::Item
-        , DENG2_OBSERVES(res::Bundles, Identify)
+        , DE_OBSERVES(res::Bundles, Identify)
     {
     public:
         SelectedPackageItem(String const &packageId)
@@ -164,7 +165,7 @@ DE_GUI_PIMPL(PackagesDialog)
             else
             {
                 label().setText(Package::splitToHumanReadable(_item->packageId()) +
-                                " " _E(D) DENG2_CHAR_MDASH " Missing");
+                                " " _E(D) DE_CHAR_MDASH " Missing");
             }
         }
 
@@ -399,7 +400,7 @@ PackagesDialog::PackagesDialog(String const &titleText)
             << new DialogButtonItem(Default | Accept, "OK")
             << new DialogButtonItem(Reject, "Cancel")
             << new DialogButtonItem(Action, style().images().image("refresh"),
-                                    [this]() { FS::get().refreshAsync(); });
+                                    []() { FS::get().refreshAsync(); })
             << new DialogButtonItem(Action | Id1, style().images().image("gear"),
                                     "Data Files",
                                     new CallbackAction([this]() {

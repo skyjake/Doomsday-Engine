@@ -30,19 +30,20 @@
 #include <de/CallbackAction>
 #include <de/ChoiceWidget>
 #include <de/DialogContentStylist>
-#include <de/GridLayout>
 #include <de/FoldPanelWidget>
+#include <de/GridLayout>
 #include <de/PackageLoader>
-#include <de/TextValue>
+#include <de/PersistentState>
 #include <de/ScriptedInfo>
 #include <de/SliderWidget>
+#include <de/TextValue>
 #include <de/ToggleWidget>
 
 using namespace de;
 
 DE_GUI_PIMPL(CreateProfileDialog)
-, DENG2_OBSERVES(ToggleWidget, Toggle)
-, DENG2_OBSERVES(SliderWidget, Change)
+, DE_OBSERVES(ToggleWidget, Toggle)
+, DE_OBSERVES(SliderWidget, Value)
 {
     GuiWidget *form;
     ChoiceWidget *gameChoice;
@@ -73,7 +74,8 @@ DE_GUI_PIMPL(CreateProfileDialog)
         {
             return;
         }
-        StringList keys = opts.keys();
+        StringList keys =
+            map<StringList>(opts, [](const std::pair<String, Variable *> &i) { return i.first; });
         // Alphabetic order based on the label.
         std::sort(keys.begin(), keys.end(), [&opts](const String &k1, const String &k2) {
             return opts[k1]->valueAsRecord().gets("label").compareWithoutCase(
@@ -105,7 +107,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
                 slider->setValue(tempProfile->optionValue(key).asNumber());
                 slider->setPrecision(step < 1 ? 1 : 0);
                 slider->objectNamespace().set("option", key);
-                slider->audienceForChange() += this;
+                slider->audienceForValue() += this;
                 layout << *LabelWidget::newWithText(optLabel + ":", optionsBase)
                        << *slider;
             }
@@ -118,9 +120,9 @@ DE_GUI_PIMPL(CreateProfileDialog)
         tempProfile->setOptionValue(widget["option"], NumberValue(widget.isActive()));
     }
 
-    void sliderValueChanged(SliderWidget &widget) override
+    void sliderValueChanged(SliderWidget &widget, double val) override
     {
-        tempProfile->setOptionValue(widget["option"], NumberValue(widget.value()));
+        tempProfile->setOptionValue(widget["option"], NumberValue(val));
     }
 
     void checkValidProfileName()
@@ -341,11 +343,11 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         GridLayout layout(form->rule().left(), form->rule().top() + rule("dialog.gap"));
         layout.setGridSize(2, 0);
         layout.setColumnAlignment(0, ui::AlignRight);
-        layout << *LabelWidget::newWithText(tr("Game:"), form)
+        layout << *LabelWidget::newWithText("Game:", form)
                << *d->gameChoice
                << *LabelWidget::newWithText("Data File:", form)
                << *d->customDataFileName
-               << *LabelWidget::newWithText(tr("Mods:"), form)
+               << *LabelWidget::newWithText("Mods:", form)
                << *d->packages;
         form->rule().setSize(layout);
     }
@@ -379,11 +381,11 @@ CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
         GridLayout layout(form->rule().left(), form->rule().top());
         layout.setGridSize(2, 0);
         layout.setColumnAlignment(0, ui::AlignRight);
-        layout << *LabelWidget::newWithText(tr("Starts in:"), form) << *d->autoStartMap
-               << *LabelWidget::newWithText(tr("Skill:"), form) << *d->autoStartSkill;
+        layout << *LabelWidget::newWithText("Starts in:", form) << *d->autoStartMap
+               << *LabelWidget::newWithText("Skill:", form) << *d->autoStartSkill;
         form->rule().setSize(layout);
-        optionsLabel->setFont("separator.label");
-        optionsLabel->margins().setTop("gap");
+//        optionsLabel->setFont("separator.label");
+//        optionsLabel->margins().setTop("gap");
         layout.setCellAlignment(Vec2i(0, layout.gridSize().y), ui::AlignLeft);
     }
 
@@ -501,9 +503,9 @@ CreateProfileDialog *CreateProfileDialog::editProfile(String const &gameFamily,
     auto *dlg = new CreateProfileDialog(gameFamily);
     dlg->d->editing = true;
     dlg->d->oldName = profile.name();
-    dlg->title().setText(tr("Edit Profile"));
+    dlg->title().setText("Edit Profile");
     delete &dlg->message();
-    dlg->buttonWidget(Id1)->setText(_E(b) + tr("OK"));
+    dlg->buttonWidget(Id1)->setText(_E(b) "OK");
     dlg->fetchFrom(profile);
     dlg->updateLayout(IncludeHidden);
     return dlg;

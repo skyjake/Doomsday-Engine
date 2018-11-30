@@ -3173,26 +3173,27 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
 
                 #if defined (DE_DEBUG)
                 {
-                    // Verify that the state is now correct.                
+                    // Verify that the state is now correct.
                     Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
-                    Info::BlockElement const &currentState = currentDesc.root().contentsInOrder()
-                            .first()->as<Info::BlockElement>();
+                    Info::BlockElement const &currentState =
+                        currentDesc.root().contentsInOrder().first()->as<Info::BlockElement>();
                     DE_ASSERT(currentState.name() == state.name());
-                for (const auto &i : state.contents())
+                    for (const auto &i : state.contents())
                     {
-                    if (state.keyValue(i.first).text != currentState.keyValue(i.first).text)
+                        if (state.keyValue(i.first).text != currentState.keyValue(i.first).text)
                         {
                             problemsDetected = true;
-                            const String msg = Stringf("Object %u has mismatching '%s' (current:%s != arch:%s)",
-                                    privateId,
-                                    i.first.c_str(),
-                                    currentState.keyValue(i.first).text.c_str(),
-                                    state.keyValue(i.first).text.c_str()));
+                            const String msg =
+                                Stringf("Object %u has mismatching '%s' (current:%s != arch:%s)",
+                                        privateId,
+                                        i.first.c_str(),
+                                        currentState.keyValue(i.first).text.c_str(),
+                                        state.keyValue(i.first).text.c_str());
                             LOGDEV_MAP_WARNING("%s") << msg;
                         }
                     }
-                 }
-                 #endif
+                }
+                #endif
             }
             else
             {

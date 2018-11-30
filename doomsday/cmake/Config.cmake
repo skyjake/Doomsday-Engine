@@ -6,9 +6,6 @@
 if (POLICY CMP0068)
     cmake_policy (SET CMP0068 OLD)  # macOS: RPATH affects install_name
 endif ()
-if (POLICY CMP0058)
-    cmake_policy (SET CMP0058 OLD)  # Resource file generation / dependencies.
-endif ()
 
 get_filename_component (_where "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
 message (STATUS "Configuring ${_where}...")

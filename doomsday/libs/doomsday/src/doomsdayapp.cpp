@@ -180,7 +180,7 @@ DE_PIMPL(DoomsdayApp)
         Garbage_Recycle();
     }
 
-    DirectoryFeed::Flags directoryPopulationMode(const NativePath &path) const
+    Flags directoryPopulationMode(const NativePath &path) const
     {
         const TextValue dir{path.toString()};
         if (Config::get().has("resource.recursedFolders"))
@@ -250,7 +250,7 @@ DE_PIMPL(DoomsdayApp)
     }
 
     void attachPacksFeed(String const &description, NativePath const &path,
-                         DirectoryFeed::Flags populationMode)
+                         Flags populationMode)
     {
         if (!path.isEmpty())
         {

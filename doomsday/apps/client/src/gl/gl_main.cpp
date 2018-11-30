@@ -842,7 +842,7 @@ void GL_BindTexture(TextureVariant *vtexture)
 }
 
 void GL_BindTextureUnmanaged(GLuint glName, gfx::Wrapping wrapS, gfx::Wrapping wrapT,
-    gfx::Filter filter)
+                             gfx::Filter filter)
 {
 #if defined (DE_HAVE_BUSYRUNNER)
     if (ClientApp::busyRunner().inWorkerThread()) return;

@@ -24,7 +24,7 @@
 
 namespace de { namespace shell {
 
-static String const VAR_SERVER_ID               ("sid");
+static const String VAR_SERVER_ID               ("sid");
 static const String VAR_VERSION                 ("ver");
 static const String VAR_COMPATIBILITY_VERSION   ("cver");
 static const String VAR_HOST                    ("host");
@@ -42,7 +42,7 @@ static const String VAR_PLAYER_COUNT            ("pnum");
 static const String VAR_MAX_PLAYERS             ("pmax");
 static const String VAR_FLAGS                   ("flags");
 
-DENG2_PIMPL(ServerInfo)
+DE_PIMPL(ServerInfo)
 {
     std::shared_ptr<Record> info;
 
@@ -55,7 +55,7 @@ DENG2_PIMPL(ServerInfo)
         {
             // Duplicate our own copy of it.
             info.reset(new Record(*info));
-            DENG2_ASSERT(info.use_count() == 1);
+            DE_ASSERT(info.use_count() == 1);
         }
     }
 
@@ -66,7 +66,7 @@ DENG2_PIMPL(ServerInfo)
         {
             if (self().address().port() != self().port())
             {
-                self().setAddress(Address(self().address().host(), self().port()));
+                self().setAddress(Address(self().address().hostName(), self().port()));
             }
         }
     }
@@ -140,9 +140,9 @@ String ServerInfo::domainName() const
 ServerInfo &ServerInfo::setAddress(Address const &address)
 {
     d->detach();
-    set(VAR_HOST, address.hostName());
-    set(VAR_PORT, address.port() ? address.port() : shell::DEFAULT_PORT);
-    checkValid(*this);
+    d->info->set(VAR_HOST, address.hostName());
+    d->info->set(VAR_PORT, address.port() ? address.port() : shell::DEFAULT_PORT);
+    d->checkValid();
     return *this;
 }
 
@@ -293,7 +293,7 @@ ServerInfo &ServerInfo::setMaxPlayers(int count)
 
 Flags ServerInfo::flags() const
 {
-    return Flags(d->info->geti(VAR_FLAGS, DefaultFlags));
+    return Flags(d->info->getui(VAR_FLAGS, DefaultFlags));
 }
 
 String ServerInfo::asStyledText() const

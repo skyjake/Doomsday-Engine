@@ -245,7 +245,7 @@ DE_PIMPL(GLBuffer)
         return GL_TRIANGLES;
     }
 
-    void setAttribPointer(GLuint index, AttribSpec const &spec, int divisor, int part = 0) const
+    void setAttribPointer(GLuint index, AttribSpec const &spec, GLuint divisor, GLuint part = 0) const
     {
         DE_ASSERT(!part || spec.type == GL_FLOAT);
 
@@ -550,7 +550,7 @@ void GLBuffer::draw(DrawRanges const *ranges) const
     }
     else
     {
-        DENG2_ASSERT(GLProgram::programInUse()->validate());
+        DE_ASSERT(GLProgram::programInUse()->validate());
         if (drawRanges.size() == 1)
         {
             glDrawArrays(d->prim, drawRanges.first[0], drawRanges.count[0]);
@@ -583,7 +583,7 @@ void GLBuffer::drawWithIndices(GLBuffer const &indexBuffer) const
 
     d->bindArray(true);
 
-    DENG2_ASSERT(GLProgram::programInUse()->validate());
+    DE_ASSERT(GLProgram::programInUse()->validate());
 
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexBuffer.d->idxName);
     glDrawElements(indexBuffer.d->prim,
@@ -604,7 +604,7 @@ void GLBuffer::drawWithIndices(gfx::Primitive primitive, Index const *indices, d
     GLState::current().target().markAsChanged();
 
     d->bindArray(true);
-    DENG2_ASSERT(GLProgram::programInUse()->validate());
+    DE_ASSERT(GLProgram::programInUse()->validate());
     glDrawElements(Impl::glPrimitive(primitive), GLsizei(count), GL_UNSIGNED_SHORT, indices);
     LIBGUI_ASSERT_GL_OK();
     ++drawCounter;
@@ -663,7 +663,7 @@ void GLBuffer::drawInstanced(GLBuffer const &instanceAttribs, duint first, dint 
         if (first + count > d->count) count = d->count - first;
 
         DE_ASSERT(count >= 0);
-        DENG2_ASSERT(GLProgram::programInUse()->validate());
+        DE_ASSERT(GLProgram::programInUse()->validate());
 
         glDrawArraysInstanced(d->prim, first, count, GLsizei(instanceAttribs.count()));
         LIBGUI_ASSERT_GL_OK();

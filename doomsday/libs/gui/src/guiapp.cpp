@@ -30,6 +30,7 @@
 #include <de/NativePath>
 #include <de/ScriptSystem>
 #include <de/Thread>
+#include <de/ConstantRule>
 
 #include <SDL.h>
 
@@ -39,14 +40,16 @@
 namespace de {
 
 DE_PIMPL(GuiApp)
+, DE_OBSERVES(Variable, Change)
 {
-    EventLoop   eventLoop;
-    GuiLoop     loop;
-    thrd_t      renderThread = nullptr;
-    double      dpiFactor = 1.0;
-    SDL_Cursor *arrowCursor;
-    SDL_Cursor *vsizeCursor;
-    SDL_Cursor *hsizeCursor;
+    EventLoop     eventLoop;
+    GuiLoop       loop;
+    thrd_t        renderThread     = nullptr;
+    float         windowPixelRatio = 1.0f; ///< Without user's Config.ui.scaleConfig
+    ConstantRule *pixelRatio       = new ConstantRule;
+    SDL_Cursor *  arrowCursor;
+    SDL_Cursor *  vsizeCursor;
+    SDL_Cursor *  hsizeCursor;
 
     Impl(Public *i) : Base(i)
     {
@@ -60,11 +63,17 @@ DE_PIMPL(GuiApp)
 
     ~Impl() override
     {
+        releaseRef(pixelRatio);
         SDL_FreeCursor(arrowCursor);
         SDL_FreeCursor(vsizeCursor);
         SDL_FreeCursor(hsizeCursor);
         DisplayMode_Shutdown();
         SDL_Quit();
+    }
+
+    void variableValueChanged(Variable &, const Value &) override
+    {
+        self().setPixelRatio(windowPixelRatio);
     }
 
     void determineDevicePixelRatio()
@@ -78,7 +87,7 @@ DE_PIMPL(GuiApp)
             FLOAT dpiX = 96;
             FLOAT dpiY = 96;
             d2dFactory->GetDesktopDpi(&dpiX, &dpiY);
-            dpiFactor = dpiX / 96.0;
+            windowPixelRatio = dpiX / 96.0;
             d2dFactory->Release();
             d2dFactory = nullptr;
         }
@@ -96,43 +105,13 @@ DE_PIMPL(GuiApp)
         SDL_GL_GetDrawableSize(temp, &pixels, nullptr);
         SDL_DestroyWindow(temp);
 
-        dpiFactor = double(pixels) / double(points);
+        windowPixelRatio = float(pixels) / float(points);
 #endif
     }
-
-    /*void matchLoopRateToDisplayMode()
-    {
-        SDL_DisplayMode mode;
-        if (SDL_GetCurrentDisplayMode(0, &mode) == 0)
-        {
-            LOG_GL_MSG("Current display mode refresh rate: %d Hz") << mode.refresh_rate;
-            self().loop().setRate(mode.refresh_rate ? mode.refresh_rate : 60.0);
-        }
-    }*/
 
     DE_PIMPL_AUDIENCE(DisplayModeChange)
 };
 DE_AUDIENCE_METHOD(GuiApp, DisplayModeChange)
-
-//void GuiApp::setDefaultOpenGLFormat() // static
-//{
-//    QSurfaceFormat fmt;
-//#if defined (DE_OPENGL_ES)
-//    fmt.setRenderableType(QSurfaceFormat::OpenGLES);
-//    fmt.setVersion(DE_OPENGL_ES / 10, DE_OPENGL_ES % 10);
-//#else
-//    fmt.setRenderableType(QSurfaceFormat::OpenGL);
-//    fmt.setProfile(QSurfaceFormat::CoreProfile);
-//    fmt.setVersion(3, 3);
-//#endif
-//    fmt.setDepthBufferSize(24);
-//    fmt.setStencilBufferSize(8);
-//    fmt.setSwapBehavior(QSurfaceFormat::DoubleBuffer);
-//#if defined (DE_DEBUG)
-//    fmt.setOption(QSurfaceFormat::DebugContext, true);
-//#endif
-//    QSurfaceFormat::setDefaultFormat(fmt);
-//}
 
 GuiApp::GuiApp(const StringList &args)
     : App(args)
@@ -149,7 +128,6 @@ GuiApp::GuiApp(const StringList &args)
     }
     DisplayMode_Init();
 
-//    d->matchLoopRateToDisplayMode();
     d->determineDevicePixelRatio();
 
     static ImageFile::Interpreter intrpImageFile;
@@ -163,21 +141,35 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
 {
     App::initSubsystems(subsystemInitFlags); // reads Config
 
-    // The "-dpi" option overrides the detected DPI factor.
+    // The "-dpi" option overrides the detected pixel ratio.
     if (auto dpi = commandLine().check("-dpi", 1))
     {
-        d->dpiFactor = dpi.params.at(0).toDouble();
+        d->windowPixelRatio = dpi.params.at(0).toFloat();
     }
+    setPixelRatio(d->windowPixelRatio);
 
-    // Apply the overall UI scale factor.
-    d->dpiFactor *= config().getd("ui.scaleFactor", 1.0);
-
-    scriptSystem().nativeModule("DisplayMode").set("DPI_FACTOR", d->dpiFactor);
+    Config::get("ui.scaleFactor").audienceForChange() += d;
 }
 
-double GuiApp::dpiFactor() const
+const Rule &GuiApp::pixelRatio() const
 {
-    return d->dpiFactor;
+    return *d->pixelRatio;
+}
+
+void GuiApp::setPixelRatio(float pixelRatio)
+{
+    d->windowPixelRatio = pixelRatio;
+
+    // Apply the overall UI scale factor.
+    pixelRatio *= config().getf("ui.scaleFactor", 1.0f);
+
+    if (!fequal(d->pixelRatio->value(), pixelRatio))
+    {
+        LOG_VERBOSE("Pixel ratio changed to %.1f") << pixelRatio;
+
+        d->pixelRatio->set(pixelRatio);
+        scriptSystem()["DisplayMode"].set("PIXEL_RATIO", Value::Number(pixelRatio));
+    }
 }
 
 void GuiApp::setMetadata(const String &orgName,

@@ -104,7 +104,7 @@ void AnimationRule::resume()
 
 String AnimationRule::description() const
 {
-    DENG2_ASSERT(!isValid() || fequal(value(), _animation));
+    DE_ASSERT(!isValid() || fequal(value(), _animation));
     
     String desc = _animation.asText();
     if (_targetRule)

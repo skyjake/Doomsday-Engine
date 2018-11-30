@@ -58,11 +58,6 @@ inline duint abs(duint a) {
     return a;
 }
 
-template <typename Type>
-inline Type sign(Type a) {
-    if (a < 0) return Type(-1); else return Type(1);
-}
-
 template <typename Integer>
 inline Integer mod(Integer a, Integer b) {
     const Integer r = a % b;
@@ -188,10 +183,10 @@ inline Sign sign(Type const &a) {
     if (a < Type(0)) return Sign::Negative;
     if (a > Type(0)) return Sign::Positive;
     return Sign::Zero;
-inline Type asNumber(Sign s) {
 }
 
 template <typename Type>
+inline Type asNumber(Sign s) {
     if (s == Sign::Negative) return -1;
     if (s == Sign::Positive) return +1;
     return 0;

@@ -22,7 +22,6 @@
 #include <de/ArrayValue>
 #include <de/CommandLine>
 #include <de/Config>
-#include <de/ConstantRule>
 #include <de/DictionaryValue>
 #include <de/FileSystem>
 #include <de/Function>
@@ -85,30 +84,17 @@ static Value *Function_App_AddFontMapping(Context &, Function::ArgumentValues co
     return nullptr;
 }
 
-DE_PIMPL(BaseGuiApp)
-, DENG2_OBSERVES(Variable, Change)
+DE_PIMPL_NOREF(BaseGuiApp)
 {
     Binder binder;
     std::unique_ptr<PersistentState> uiState;
     GLShaderBank shaders;
     WaveformBank waveforms;
     VRConfig vr;
-    float windowPixelRatio = 1.0f; ///< Without user's Config.ui.scaleConfig
-    ConstantRule *pixelRatio = new ConstantRule;
-
-    ~Impl() override
-    {
-        releaseRef(pixelRatio);
-    }
-
-    void variableValueChanged(Variable &, const Value &) override
-    {
-        self().setPixelRatio(windowPixelRatio);
-    }
 };
 
 BaseGuiApp::BaseGuiApp(const StringList &args)
-    : GuiApp(args), d(new Impl(this))
+    : GuiApp(args), d(new Impl)
 {
     d->binder.init(scriptSystem()["App"])
             << DE_FUNC (App_AddFontMapping, "addFontMapping", "family" << "mappings")
@@ -126,40 +112,7 @@ void BaseGuiApp::glDeinit()
 void BaseGuiApp::initSubsystems(SubsystemInitFlags flags)
 {
     GuiApp::initSubsystems(flags);
-
-    // FIXME: (rebasing) This was probably moved elsewhere?
-
-    // The "-dpi" option overrides the detected pixel ratio.
-    if (auto dpi = commandLine().check("-dpi", 1))
-    {
-        d->windowPixelRatio = dpi.params.at(0).toFloat();
-    }
-    setPixelRatio(d->windowPixelRatio);
-
-    Config::get("ui.scaleFactor").audienceForChange() += d;
-
     d->uiState.reset(new PersistentState("UIState"));
-}
-
-const Rule &BaseGuiApp::pixelRatio() const
-{
-    return *d->pixelRatio;
-}
-
-void BaseGuiApp::setPixelRatio(float pixelRatio)
-{
-    d->windowPixelRatio = pixelRatio;
-
-    // Apply the overall UI scale factor.
-    pixelRatio *= config().getf("ui.scaleFactor", 1.0f);
-
-    if (!fequal(d->pixelRatio->value(), pixelRatio))
-    {
-        LOG_VERBOSE("Pixel ratio changed to %.1f") << pixelRatio;
-
-        d->pixelRatio->set(pixelRatio);
-        scriptSystem()["DisplayMode"].set("PIXEL_RATIO", Value::Number(pixelRatio));
-    }
 }
 
 BaseGuiApp &BaseGuiApp::app()

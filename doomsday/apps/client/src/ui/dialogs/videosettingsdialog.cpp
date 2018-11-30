@@ -463,7 +463,7 @@ void VideoSettingsDialog::showColorAdjustments()
 
 void VideoSettingsDialog::showWindowMenu()
 {
-    DENG2_ASSERT(d->windowButton);
+    DE_ASSERT(d->windowButton);
     
     PopupMenuWidget *menu = new PopupMenuWidget;
     menu->setDeleteAfterDismissed(true);

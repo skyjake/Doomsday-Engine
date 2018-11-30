@@ -95,7 +95,7 @@ public:
     Type type() const;
 
     bool isSampler() const;
-    void bindSamplerTexture(dint unit) const;
+    void bindSamplerTexture(duint unit) const;
 
     GLUniform &operator=(dint value);
     GLUniform &operator=(duint value);
@@ -123,8 +123,7 @@ public:
     GLUniform &set(Vec2f const *vectorArray, dsize count);
     GLUniform &set(Vec3f const *vectorArray, dsize count);
     GLUniform &set(Vec4f const *vectorArray, dsize count);
-    GLUniform &set(Vector4f const *vectorArray, dsize count);
-    GLUniform &set(Matrix4f const *mat4Array, dsize count);
+    GLUniform &set(Mat4f const *mat4Array, dsize count);
 
     operator dint() const              { return toInt(); }
     operator duint() const             { return toUInt(); }

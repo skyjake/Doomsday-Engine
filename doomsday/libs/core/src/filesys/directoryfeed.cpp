@@ -33,7 +33,7 @@ namespace de {
 
 static const char *fileStatusSuffix = ".doomsday_file_status";
 
-DENG2_PIMPL_NOREF(DirectoryFeed)
+DE_PIMPL_NOREF(DirectoryFeed)
 {
     NativePath nativePath;
     Flags mode;
@@ -71,7 +71,7 @@ const NativePath &DirectoryFeed::nativePath() const
 
 Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 {
-    DE_ASSERT(!_nativePath.toString().isEmpty());
+    DE_ASSERT(!d->nativePath.toString().isEmpty());
 
     if (d->mode & AllowWrite)
     {
@@ -83,7 +83,7 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
         NativePath::createPath(d->nativePath);
     }
 
-    if (!_nativePath.exists())
+    if (!d->nativePath.exists())
     {
         /// @throw NotFoundError The native directory was not accessible.
         throw NotFoundError("DirectoryFeed::populate", "Path '" + d->nativePath + "' inaccessible");
@@ -91,17 +91,17 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 
     PopulatedFiles populated;
 
-    tF::ref<iDirFileInfo> dirInfo(new_DirFileInfo(_nativePath.toString()));
+    tF::ref<iDirFileInfo> dirInfo(new_DirFileInfo(d->nativePath.toString()));
     iForEach(DirFileInfo, i, dirInfo)
     {
         const String path = path_FileInfo(i.value);
         const CString name = path.fileName();
 
         // Filter out some files.
-        if (!_mode.testFlag(PopulateNativeSubfolders) && isDirectory_FileInfo(i.value))
-    {
+        if (!d->mode.testFlag(PopulateNativeSubfolders) && isDirectory_FileInfo(i.value))
+        {
             continue;
-    }
+        }
 
         if (isDirectory_FileInfo(i.value))
         {

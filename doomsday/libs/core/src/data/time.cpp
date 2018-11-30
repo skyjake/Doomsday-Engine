@@ -87,8 +87,8 @@ void TimeSpan::operator << (Reader &from)
 DE_PIMPL_NOREF(Time)
 {
     enum Flag {
-        SysTime         = 0x1,
-        HighPerformance = 0x2
+        SysTime         = 0x1u,
+        HighPerformance = 0x2u
     };
 
     Flags     flags;
@@ -376,18 +376,21 @@ String Time::asText(Format format) const
             // Wed May 20 03:40:13 1998
             // return asText("%a %b %d %H:%M:%S %Y");
 
+            const Date today = Date::currentDate();
+            const Date date = asDate();
+
             // Is it today?
-            if (d->dateTime.date() == QDateTime::currentDateTime().date())
+            if (date.isSameDay(today))
             {
-                return d->dateTime.toString("HH:mm");
+                return asText("%H:%M");
             }
-            else if (d->dateTime.date().year() == QDateTime::currentDateTime().date().year())
+            else if (date.year() == today.year())
             {
-                return d->dateTime.toString("MMM dd HH:mm");
+                return asText("%b %d %H:%M");
             }
             else
             {
-                return d->dateTime.toString("yyyy MMM dd");
+                return asText("%Y %b %d");
             }
         }
         else if (format == BuildNumberAndSecondsSinceStart ||
@@ -569,8 +572,8 @@ Time Time::fromText(const String &text, Time::Format format)
         return Time(year, month, mday, hour, minute, 0) + seconds;
     }
     else if (format == ISODateOnly)
-        int year = 0, month = 0, mday = 0;
     {
+        int year = 0, month = 0, mday = 0;
         std::sscanf(text, "%4d-%d-%d", &year, &month, &mday);
         return Time(year, month, mday, 0, 0, 0);
     }

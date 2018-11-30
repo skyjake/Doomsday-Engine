@@ -48,8 +48,8 @@ using namespace de;
 DE_GUI_PIMPL(GamePanelButtonWidget)
 , DE_OBSERVES(Profiles::AbstractProfile, Change)
 , DE_OBSERVES(res::Bundles, Identify)
-, DENG2_OBSERVES(Variable, Change)
-, DENG2_OBSERVES(ButtonWidget, StateChange)
+, DE_OBSERVES(Variable, Change)
+, DE_OBSERVES(ButtonWidget, StateChange)
 , public AsyncScope
 {
     GameProfile &gameProfile;
@@ -81,7 +81,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
             if (!gameProfile.isPlayable()) return false;
 
             // The file must be in the right save folder.
-            if (item.savePath().fileNamePath().compareWithoutCase(gameProfile.savePath()))
+            if (item.savePath().fileNamePath().compare(gameProfile.savePath().c_str(), CaseInsensitive))
             {
                 return false;
             }
@@ -293,9 +293,9 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
         {
             return game().title();
         }
-        if (Config::get("home.sortBy") != GameColumnWidget::SORT_RECENTLY_PLAYED)
+        if (GameColumnWidget::SORT_RECENTLY_PLAYED != Config::get("home.sortBy"))
         {
-            return String::number(game().releaseDate().year());
+            return String::asText(game().releaseDate().year());
         }
         return {};
     }

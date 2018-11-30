@@ -21,18 +21,17 @@
 #include "clientapp.h"
 
 #include <de/PopupMenuWidget>
-#include <de/SignalAction>
-#include <QFileDialog>
+#include <de/FileDialog>
 
 using namespace de;
 
-DENG2_PIMPL(NativePathWidget)
+DE_PIMPL(NativePathWidget)
 {
     NativePath       path;
-    QStringList      filters;
+    StringList       filters;
     PopupMenuWidget *menu;
     String           blankText = "(not set)";
-    String           prompt = "Select File";
+    String           prompt    = "Select File";
 
     Impl(Public *i)
         : Base(i)
@@ -49,16 +48,16 @@ DENG2_PIMPL(NativePathWidget)
 
     void notifyChange()
     {
-        DENG2_FOR_PUBLIC_AUDIENCE2(UserChange, i)
+        DE_FOR_PUBLIC_AUDIENCE2(UserChange, i)
         {
             i->pathChangedByUser(self());
         }
     }
 
-    DENG2_PIMPL_AUDIENCE(UserChange)
+    DE_PIMPL_AUDIENCE(UserChange)
 };
 
-DENG2_AUDIENCE_METHOD(NativePathWidget, UserChange)
+DE_AUDIENCE_METHOD(NativePathWidget, UserChange)
 
 NativePathWidget::NativePathWidget()
     : d(new Impl(this))
@@ -66,15 +65,15 @@ NativePathWidget::NativePathWidget()
     add(d->menu = new PopupMenuWidget);
     d->menu->setAnchorAndOpeningDirection(rule(), ui::Up);
     d->menu->items()
-            << new ui::ActionItem(tr("Browse..."),
-                                  new SignalAction(this, SLOT(chooseUsingNativeFileDialog())))
-            << new ui::ActionItem(style().images().image("close.ring"), tr("Reset"),
-                                  new SignalAction(this, SLOT(clearPath())));
+            << new ui::ActionItem("Browse...",
+                                  [this]() { chooseUsingNativeFileDialog(); })
+            << new ui::ActionItem(style().images().image("close.ring"), "Reset",
+                                  [this]() { clearPath(); });
 
-    auxiliary().setText(tr("Browse"));
+    auxiliary().setText("Browse");
 
-    connect(&auxiliary(), SIGNAL(pressed()), this, SLOT(chooseUsingNativeFileDialog()));
-    connect(this, SIGNAL(pressed()), this, SLOT(showActionsPopup()));
+    auxiliary().audienceForPress() += [this]() { chooseUsingNativeFileDialog(); };
+    audienceForPress() += [this]() { showActionsPopup(); };
 }
 
 void NativePathWidget::setFilters(StringList const &filters)
@@ -120,7 +119,7 @@ void NativePathWidget::chooseUsingNativeFileDialog()
     NativePath dir = d->path;
     if (d->path.isEmpty()) dir = NativePath::homePath();
     FileDialog dlg;
-    dlg.setTitle(Stringf("Select File for \"%s\"", d->cvar));
+    dlg.setTitle(d->prompt);
     dlg.setInitialLocation(NativePath::workPath() / dir);
     if (!d->filters.isEmpty())
     {
@@ -130,8 +129,8 @@ void NativePathWidget::chooseUsingNativeFileDialog()
     if (dlg.exec())
     {
         d->path = dlg.selectedPath();
-        setCVarValueFromWidget();
         setText(d->labelText());
+        DE_FOR_AUDIENCE2(UserChange, i) i->pathChangedByUser(*this);
     }
     
     ClientApp::app().endNativeUIMode();
@@ -150,6 +149,6 @@ void NativePathWidget::showActionsPopup()
     }
     else
     {
-        d->menu->close(0);
+        d->menu->close(0.0);
     }
 }

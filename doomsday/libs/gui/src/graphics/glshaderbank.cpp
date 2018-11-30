@@ -217,12 +217,9 @@ DE_PIMPL(GLShaderBank)
             return shaders[path];
         }
 
-        const auto *sourceFile = FS::tryLocate<ByteArrayFile const>(path);
-
         // We don't have this one yet, load and compile it now.
         GLShader *shader =
             new GLShader(type, prependPredefines(FS::locate<const ByteArrayFile>(path)));
-        auto *shader = new GLShader(type, *sourceFile);
         shaders.insert(path, shader);
         return shader;
     }

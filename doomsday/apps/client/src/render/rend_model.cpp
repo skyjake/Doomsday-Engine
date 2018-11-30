@@ -1104,7 +1104,7 @@ void Rend_DrawModel(vissprite_t const &spr)
 
     if (!parm.mf) return;
 
-    DENG2_ASSERT(parm.mf->select == (parm.selector & DDMOBJ_SELECTOR_MASK))
+    DE_ASSERT(parm.mf->select == (parm.selector & DDMOBJ_SELECTOR_MASK))
 
     // Render all the submodels of this model.
     for (uint i = 0; i < parm.mf->subCount(); ++i)

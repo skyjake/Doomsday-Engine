@@ -119,7 +119,7 @@ DE_PIMPL(Games)
        if (id.beginsWith("doom-"))
         {
             // Originally, Freedoom and BFG variants used an inconsistently named ID.
-            id = "doom1-" + id.substr(5);
+            id = "doom1-" + id.substr(BytePos(5));
         }
         auto found = idLookup.find(id.lower());
         if (found != idLookup.end())
@@ -352,7 +352,7 @@ void Games::checkReadiness()
     DE_GUARD(d);
 
     Set<Game const *> playable;
-    forAll([&playable] (Game &game)
+    forAll([&playable] (Game &game) {
         if (game.isPlayable()) playable.insert(&game);
         return LoopContinue;
     });

@@ -33,6 +33,7 @@
 namespace de {
 
 class NativePath;
+class Rule;
 class Thread;
 
 /**
@@ -57,9 +58,16 @@ public:
     void initSubsystems(SubsystemInitFlags subsystemInitFlags = DefaultSubsystems) override;
 
     /**
-     * Determines the pixel ratio of the (HiDPI) display.
+     * The ratio of pixels per point. For example, this is 2.0 if there are two pixels per point.
      */
-    double dpiFactor() const;
+    const Rule &pixelRatio() const;
+
+    /**
+     * Sets a new pixel ratio. This replaces the initial automatically detected pixel ratio.
+     *
+     * @param pixelRatio  Pixel ratio.
+     */
+    void setPixelRatio(float pixelRatio);
 
     void setMetadata(const String &orgName,
                      const String &orgDomain,

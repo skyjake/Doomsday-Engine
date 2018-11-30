@@ -60,12 +60,12 @@ DE_PIMPL(VRWindowTransform)
         return self().window().framebuffer();
     }
 
-    int width() const
+    duint width() const
     {
         return self().window().pixelWidth();
     }
 
-    int height() const
+    duint height() const
     {
         return self().window().pixelHeight();
     }
@@ -312,7 +312,7 @@ DE_PIMPL(VRWindowTransform)
             // Draw the left eye view.
             rowInterLeftFB.glInit();
             rowInterLeftFB.resize(GLFramebuffer::Size(width(), height()));
-            rowInterLeftFB.colorTexture().setFilter(gl::Linear, gl::Linear, gl::MipNone);
+            rowInterLeftFB.colorTexture().setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
             rowInterLeftFB.colorTexture().glApplyParameters();
             GLState::push()
                     .setTarget(rowInterLeftFB)

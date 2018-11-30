@@ -237,10 +237,10 @@ DE_GUI_PIMPL(TutorialWidget)
         case Welcome:
             dlg->title().setText("Welcome to Doomsday");
             dlg->message().setText("This tutorial will give you a brief walkthrough of the "
-                                      "major features of Doomsday's UI. You will also get a "
-                                      "chance to pick a shortcut key for opening the console.\n\n"
-                                    "The tutorial can be restarted later via the application menu.");
-                                   //.arg(_E(b) DOOMSDAY_NICENAME _E(.)));
+                                   "major features of Doomsday's UI. You will also get a "
+                                   "chance to pick a shortcut key for opening the console.\n\n"
+                                   "The tutorial can be restarted later via the application menu.");
+            //.arg(_E(b) DOOMSDAY_NICENAME _E(.)));
             dlg->setAnchor(self().rule().midX(), self().rule().top());
             dlg->setOpeningDirection(ui::Down);
             break;
@@ -248,10 +248,10 @@ DE_GUI_PIMPL(TutorialWidget)
         case HomeScreen:
             dlg->title().setText("Game Library");
             dlg->message().setText("Here you can browse the library of available games "
-                                      "and configure engine settings. You can also join ongoing "
-                                      "multiplayer games and manage your mods and resource packages. "
-                                      "You can unload the current game at "
-                                      "any time to get back to the Game Library."));
+                                   "and configure engine settings. You can also join ongoing "
+                                   "multiplayer games and manage your mods and resource packages. "
+                                   "You can unload the current game at "
+                                   "any time to get back to the Game Library.");
             startHighlight(*root().guiFind("home"));
             break;
 
@@ -266,9 +266,9 @@ DE_GUI_PIMPL(TutorialWidget)
             dlg->title().setText("Notifications");
             dlg->message().setText(
                 "The notification area shows the current notifications. "
-                                      "For example, this one here is an example of a warning or an error "
-                                      "that has occurred. You can click on the notification icons to "
-                                      "get more information.\n\nOther possible notifications include the current "
+                "For example, this one here is an example of a warning or an error "
+                "that has occurred. You can click on the notification icons to "
+                "get more information.\n\nOther possible notifications include the current "
                 "FPS, ongoing downloads, and available updates.");
             dlg->setAnchorAndOpeningDirection(exampleAlert->rule(), ui::Down);
             startHighlight(*exampleAlert);
@@ -276,12 +276,13 @@ DE_GUI_PIMPL(TutorialWidget)
 
         case TaskBar:
             dlg->title().setText("Task Bar");
-            dlg->message().setText(Stringf("The task bar is where you find all the important functionality: loading "
-                                      "and switching games, joining a multiplayer game, "
-                                      "configuration settings, "
-                                      "and a console command line for advanced users.\n\n"
-                                      "Press %s to access the task bar at any time.",
-                                   _E(b) "Shift-Esc" _E(.)));
+            dlg->message().setText(
+                Stringf("The task bar is where you find all the important functionality: loading "
+                        "and switching games, joining a multiplayer game, "
+                        "configuration settings, "
+                        "and a console command line for advanced users.\n\n"
+                        "Press %s to access the task bar at any time.",
+                        _E(b) "Shift-Esc" _E(.)));
 
             win.taskBar().open();
             win.taskBar().closeMainMenu();
@@ -295,10 +296,10 @@ DE_GUI_PIMPL(TutorialWidget)
             dlg->title().setText("Application Menu");
             dlg->message().setText(
                 "Click the DE icon in the bottom right corner to open "
-                                      "the application menu. "
-                                      "You can check for available updates, switch games, or look for "
-                                      "ongoing multiplayer games. You can also unload the current game "
-                                      "and return to Doomsday's Game Library."));
+                "the application menu. "
+                "You can check for available updates, switch games, or look for "
+                "ongoing multiplayer games. You can also unload the current game "
+                "and return to Doomsday's Game Library.");
             win.taskBar().openMainMenu();
             dlg->setAnchorAndOpeningDirection(root().guiFind("de-menu")->rule(), ui::Left);
             startHighlight(*root().guiFind("de-button"));

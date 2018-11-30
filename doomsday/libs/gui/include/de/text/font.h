@@ -281,7 +281,7 @@ public:
     Font(const Font &other);
     Font(const FontParams &params);
 
-    void initialize(const QFont &font);
+    void initialize(const FontParams &params);
 
     /**
      * Determines the size of the given line of text, i.e., how large an area

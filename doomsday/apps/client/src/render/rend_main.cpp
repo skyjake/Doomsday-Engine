@@ -568,7 +568,7 @@ Mat4f Rend_GetProjectionMatrix(float fixedFov)
     yfov = vrCfg().verticalFieldOfView(fov, size);
     const Rangef clip = GL_DepthClipRange();
     return vrCfg().projectionMatrix(fov, size, clip.start, clip.end) *
-           Matrix4f::scale(Vec3f(1, 1, -1));
+           Mat4f::scale(Vec3f(1, 1, -1));
 }
 
 static inline ddouble viewFacingDot(Vec2d const &v1, Vec2d const &v2)
@@ -1120,9 +1120,9 @@ static void makeWallShineGeometry(Geometry &verts, duint numVertices, Vec3f cons
     dfloat prevAngle = 0;
     for (duint i = 0; i < 2; ++i)
     {
-        Vec2f const eyeToVert = eye.xz() - (i == 0? Vec2f(topLeft) : Vec2f(bottomRight));
-        dfloat const distToEye   = eyeToVert.length();
-        Vec2f const view      = eyeToVert.normalize();
+        Vec2f const  eyeToVert = eye.xz() - (i == 0 ? Vec2f(topLeft) : Vec2f(bottomRight));
+        dfloat const distToEye = eyeToVert.length();
+        Vec2f const  view      = eyeToVert.normalize();
 
         Vec2f projected;
         dfloat const div = normal.lengthSquared();
@@ -4363,9 +4363,9 @@ static void drawSky()
     DGL_Disable(DGL_DEPTH_TEST);
     DGL_Disable(DGL_DEPTH_WRITE);
     GLState::current()
-            .setColorMask(gl::WriteNone)
-            .setStencilOp(gl::StencilOp::Replace, gl::StencilOp::Replace, gl::StencilOp::Replace)
-            .setStencilFunc(gl::Always, 1, 0xff)
+            .setColorMask(gfx::WriteNone)
+            .setStencilOp(gfx::StencilOp::Replace, gfx::StencilOp::Replace, gfx::StencilOp::Replace)
+            .setStencilFunc(gfx::Always, 1, 0xff)
             .setStencilTest(true);
     
     // Mask out stencil buffer, setting the drawn areas to 1.

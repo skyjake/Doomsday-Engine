@@ -52,8 +52,8 @@ CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
 {
     d->cvar = cvarPath;
     updateFromCVar();
-    setPrompt(QString("Select File for \"%1\"").arg(d->cvar));
-    audienceForUserChange() += d;
+    setPrompt(Stringf("Select File for \"%s\"", d->cvar));
+    audienceForUserChange() += [this]() { setCVarValueFromWidget(); };
 }
 
 char const *CVarNativePathWidget::cvarPath() const

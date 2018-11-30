@@ -387,8 +387,6 @@ DE_GUI_PIMPL(SliderWidget)
             pos.setValue(float(value), 0.1);
             self().requestGeometry();
 
-            emit self().valueChanged(v);
-
             DE_FOR_PUBLIC_AUDIENCE2(Value, i) { i->sliderValueChanged(self(), v); }
         }
     }

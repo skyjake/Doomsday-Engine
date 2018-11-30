@@ -37,7 +37,7 @@ namespace de {
 static const char *VAR_PACKAGE_VERSION("package.version");
 
 DE_PIMPL(PackageLoader)
-, DENG2_OBSERVES(File, Deletion) // loaded package source file is deleted?
+, DE_OBSERVES(File, Deletion) // loaded package source file is deleted?
 {
     LoadedPackages loaded; ///< Identifiers are unversioned; only one version can be loaded at a time.
     int loadCounter;
@@ -45,7 +45,7 @@ DE_PIMPL(PackageLoader)
     Impl(Public *i) : Base(i), loadCounter(0)
     {}
 
-    ~Impl()
+    ~Impl() override
     {
         // We own all loaded packages.
         loaded.deleteAll();
@@ -175,10 +175,9 @@ DE_PIMPL(PackageLoader)
         }
 
         // Each must have a version specified.
-        DE_FOR_EACH_CONST(FS::FoundFiles, i, found)
         {
             FS::FoundFiles checked;
-            DENG2_FOR_EACH_CONST(FS::FoundFiles, i, found)
+            DE_FOR_EACH_CONST(FS::FoundFiles, i, found)
             {
                 try
                 {

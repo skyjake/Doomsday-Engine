@@ -90,7 +90,7 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
         redirected.clear();
 
         const String path = WebRequest::pathFromUri(uri);
-        NativePath::createDirectory(NativePath::workPath() / UpdaterSettings().downloadPath()); // may not exist
+        NativePath::createPath(NativePath::workPath() / UpdaterSettings().downloadPath()); // may not exist
         savedFilePath = UpdaterSettings().downloadPath() / path.fileName().toString();
 
         //web.reset(new WebRequQNetworkRequest request(uri);

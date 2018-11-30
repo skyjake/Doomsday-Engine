@@ -170,7 +170,7 @@ DE_GUI_PIMPL(PanelWidget)
 
         LOGDEV_XVERBOSE("Checking for assets that need waiting for...", "");
         DE_ASSERT(content);
-        content->collectNotReadyAssets(*pendingShow);
+        content->collectUnreadyAssets(*pendingShow);
 
         if (pendingShow->isEmpty())
         {

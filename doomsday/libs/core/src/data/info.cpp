@@ -823,8 +823,8 @@ Record Info::BlockElement::asRecord() const
     Record rec;
     for (auto i = _contents.begin(); i != _contents.end(); ++i)
     {
-        std::unique_ptr<Variable> var(new Variable(i.key()));
-        const Element *elem = i.value();
+        std::unique_ptr<Variable> var(new Variable(i->first));
+        const Element *elem = i->second;
         if (elem->isBlock())
         {
             var->set(RecordValue::takeRecord(elem->as<BlockElement>().asRecord()));

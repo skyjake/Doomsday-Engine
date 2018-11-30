@@ -114,8 +114,6 @@ public:
 
     virtual ~Record();
 
-    bool isEmpty() const;
-
     Record &setFlags(Flags flags, FlagOpArg op = SetFlags);
 
     Flags flags() const;
@@ -248,7 +246,7 @@ public:
      *
      * @return  The new variable.
      */
-    Variable &add(const String &variableName, Variable::Flags variableFlag = Variable::DefaultMode);
+    Variable &add(const String &variableName, Flags variableFlag = Variable::DefaultMode);
 
     /**
      * Adds a number variable to the record. The variable is set up to only accept
@@ -386,7 +384,6 @@ public:
 
     /// @copydoc set()
     Variable &set(const String &name, Value::Text const &value);
-    Variable &set(const String &name, Value::Number const &value);
 
     /// @copydoc set()
     Variable &set(const String &name, Value::Number value);
@@ -394,6 +391,9 @@ public:
     /// @copydoc set()
     Variable &set(const String &name, const NumberValue &value);
     
+    /// @copydoc set()
+    Variable &set(const String &name, dint32 value);
+
     /// @copydoc set()
     Variable &set(const String &name, duint32 value);
 
@@ -425,9 +425,8 @@ public:
      * @param value  Array to use as the value of the variable. Ownership taken.
      */
     Variable &set(const String &name, ArrayValue *value);
-    Variable &set(const String &name, Value *value);
 
-    Variable &set(const CString &name, Value *value);
+    Variable &set(const String &name, Value *value);
 
     Variable &set(String const &name, const Value &value);
 

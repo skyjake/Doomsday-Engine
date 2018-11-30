@@ -697,7 +697,7 @@ NativePath App::cachePath()
     // Make sure the directory actually exists.
     if (!dir.exists())
     {
-        NativePath::createDirectory(dir);
+        dir.create();
     }
     return dir;
 }

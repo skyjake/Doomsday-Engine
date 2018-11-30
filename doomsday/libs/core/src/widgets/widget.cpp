@@ -763,14 +763,14 @@ bool Widget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event 
 void Widget::waitForAssetsReady()
 {
     AssetGroup assets;
-    collectNotReadyAssets(assets, CollectMode::OnlyVisible);
+    collectUnreadyAssets(assets, CollectMode::OnlyVisible);
     if (!assets.isEmpty())
     {
         assets.waitForState(Asset::Ready);
     }
 }
 
-void Widget::collectNotReadyAssets(AssetGroup &collected, CollectMode collectMode)
+void Widget::collectUnreadyAssets(AssetGroup &collected, CollectMode collectMode)
 {
     if (collectMode == CollectMode::OnlyVisible && behavior().testFlag(Hidden))
     {
@@ -786,9 +786,9 @@ void Widget::collectNotReadyAssets(AssetGroup &collected, CollectMode collectMod
     }
     else
     {
-        foreach (Widget *child, children())
+        for (Widget *child : children())
         {
-            child->collectNotReadyAssets(collected, collectMode);
+            child->collectUnreadyAssets(collected, collectMode);
         }
     }
 }

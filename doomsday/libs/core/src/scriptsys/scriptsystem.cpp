@@ -231,7 +231,7 @@ Record &ScriptSystem::operator[](const String &name)
         auto found = mods.find(name);
         if (found != mods.end())
         {
-            return found.value()->names();
+            return found->second->names();
         }
     }
     throw NotFoundError("ScriptSystem::operator[]", "Module not found: " + name);
@@ -239,15 +239,16 @@ Record &ScriptSystem::operator[](const String &name)
 
 bool ScriptSystem::nativeModuleExists(const String &name) const
 {
-    DENG2_GUARD_FOR(d->nativeModules, G);
+    DE_GUARD_FOR(d->nativeModules, G);
     return d->nativeModules.value.contains(name);
 }
 
 StringList ScriptSystem::nativeModules() const
 {
     DE_GUARD_FOR(d->nativeModules, G);
-    return map<StringList>(d->nativeModules.value, [](const std::pair<String, Record *> &v) { return v.first; });
-    }
+    return map<StringList>(d->nativeModules.value,
+                           [](const std::pair<String, Record *> &v) { return v.first; });
+}
 
 File const *ScriptSystem::tryFindModuleSource(String const &name, String const &localPath)
 {

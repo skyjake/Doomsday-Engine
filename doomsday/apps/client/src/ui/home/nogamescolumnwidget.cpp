@@ -24,6 +24,7 @@
 #include <de/ButtonWidget>
 #include <de/Config>
 #include <de/FileDialog>
+#include <de/TextValue>
 
 using namespace de;
 
@@ -67,13 +68,11 @@ void NoGamesColumnWidget::browseForDataFiles()
     auto &cfg = Config::get();
 
     FileDialog dlg;
-    String lastDir;
-    if (!folders.isEmpty())
-    {
-        lastDir = folders.back();
-    }
     dlg.setTitle("Select IWAD Folder");
-    dlg.setInitialLocation(cfg.gets("resource.iwadFolder", ""));
+    if (const auto folders = cfg.getStringList("resource.packageFolder"))
+    {
+        dlg.setInitialLocation(folders.back());
+    }
     dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
     dlg.setPrompt("Select");
     if (dlg.exec())

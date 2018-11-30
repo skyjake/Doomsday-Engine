@@ -37,7 +37,7 @@ namespace de {
 DE_PIMPL(GuiWidget)
 , DE_OBSERVES(Widget, ChildAddition)
 , DE_OBSERVES(ui::Margins, Change)
-, DENG2_OBSERVES(Style, Change)
+, DE_OBSERVES(Style, Change)
 #if defined (DE_DEBUG)
 , DE_OBSERVES(Widget, ParentChange)
 #endif
@@ -566,7 +566,7 @@ DE_PIMPL(GuiWidget)
 
     static inline float pixelsToPoints(double pixels)
     {
-        return float(pixels) / DENG2_BASE_GUI_APP->pixelRatio().value();
+        return float(pixels) / DE_BASE_GUI_APP->pixelRatio().value();
     }
 };
 
@@ -1324,15 +1324,15 @@ void GuiWidget::postDrawChildren()
 
 void GuiWidget::collectUnreadyAssets(AssetGroup &collected, CollectMode collectMode)
 {
-#if defined (DENG2_DEBUG)
+#if defined (DE_DEBUG)
     if (!rule().isFullyDefined())
     {
-        qDebug() << path() << "rule rectangle not fully defined";
-        qDebug("%s", rule().description().toLatin1().constData());
-        qDebug("Widget layout will be undefined");
+        debug("%s rule rectangle not fully defined", path().c_str());
+        debug("%s", rule().description().c_str());
+        debug("Widget layout will be undefined");
     }
 #endif
-    Widget::collectNotReadyAssets(collected, collectMode);
+    Widget::collectUnreadyAssets(collected, collectMode);
 }
 
 } // namespace de

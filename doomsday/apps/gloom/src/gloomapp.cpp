@@ -256,7 +256,7 @@ NativePath GloomApp::userDir() const
     const auto dir = NativePath::homePath() / unixHomeFolderName();
     if (!dir.exists())
     {
-        NativePath::createDirectory(dir);
+        dir.create();
     }
     return dir;
 }

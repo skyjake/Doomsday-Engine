@@ -69,6 +69,8 @@ public:
      */
     Time asTime() const;
 
+    bool isSameDay(const Date &) const;
+
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const override { return LogEntry::Arg::StringArgument; }
     String asText() const override { return format(); }

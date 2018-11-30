@@ -159,14 +159,14 @@ public:
     /**
      * Number of bits per pixel.
      */
-    int depth() const;
+    duint depth() const;
 
-    inline int bytesPerPixel() const { return depth() / 8; }
+    inline duint bytesPerPixel() const { return depth() / 8; }
 
     /**
      * Number of bytes between rows in the pixel data.
      */
-    int stride() const;
+    dsize stride() const;
 
     /**
      * Total number of bytes in the pixel data.
