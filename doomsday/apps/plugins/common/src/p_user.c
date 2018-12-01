@@ -1257,9 +1257,9 @@ void P_PlayerThinkWeapons(player_t *player)
                 first);
     }
 #if defined(__JHERETIC__) || defined(__JHEXEN__)
-    if (brain->cycleWeapon && player->morphTics == 0)
+    else if (brain->cycleWeapon && player->morphTics == 0)
 #else
-    if (brain->cycleWeapon)
+    else if (brain->cycleWeapon)
 #endif
     {
         // Linear cycle.
