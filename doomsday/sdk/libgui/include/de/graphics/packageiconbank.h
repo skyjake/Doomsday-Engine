@@ -47,6 +47,8 @@ public:
      */
     void setDisplaySize(Size const &displaySize);
 
+    bool packageContainsIcon(const File &packageFile) const;
+
     /**
      * Returns the ID of a package icon, if one is loaded and available in the atlas.
      * If the icon is not yet available, loading it is requested. The caller can use
@@ -56,7 +58,7 @@ public:
      *
      * @return Allocation ID, or Id::None.
      */
-    Id packageIcon(File const &packageFile);
+    Id packageIcon(const File &packageFile);
 
 private:
     DENG2_PRIVATE(d)
