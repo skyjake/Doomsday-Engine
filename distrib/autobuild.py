@@ -422,8 +422,8 @@ def purge_obsolete():
     print 'Deleting build events older than 4 weeks...'
     for ev in builder.find_old_events(threshold):
         if totalCount > 5:
-        print ev.tag()
-        shutil.rmtree(ev.path()) 
+            print ev.tag()
+            shutil.rmtree(ev.path()) 
             totalCount -= 1
         
     print 'Purge done.'
