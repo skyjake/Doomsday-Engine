@@ -247,10 +247,9 @@ DENG_GUI_PIMPL(PackagesWidget)
         {
             _iconId = Id::None;
 
-            if (_item && _item->file)
+            if (_item && _item->file && iconBank().packageContainsIcon(*_item->file))
             {
                 _packagePath = _item->file->path();
-
                 if (Id pkgIcon = iconBank().packageIcon(*_item->file))
                 {
                     setPackageIcon(pkgIcon);

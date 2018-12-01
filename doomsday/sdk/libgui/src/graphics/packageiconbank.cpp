@@ -37,7 +37,7 @@ DENG2_PIMPL_NOREF(PackageIconBank)
 
         Image load() const override
         {
-            String const iconPath = sourcePath() / QStringLiteral("icon");
+            const String iconPath = sourcePath() / QStringLiteral("icon");
 
             Image img;
             if (ImageFile const *file = FS::tryLocate<ImageFile const>(iconPath + ".jpg"))
@@ -77,6 +77,12 @@ DENG2_PIMPL_NOREF(PackageIconBank)
     };
 
     Size displaySize;
+
+    static bool doesPackageHaveIcon(const Path &packagePath)
+    {
+        return FS::exists(packagePath / "icon.jpg") ||
+               FS::exists(packagePath / "icon.png");
+    }
 };
 
 PackageIconBank::PackageIconBank()
@@ -93,7 +99,7 @@ void PackageIconBank::setDisplaySize(Size const &displaySize)
 
 Id PackageIconBank::packageIcon(File const &packageFile)
 {
-    Path const packagePath = packageFile.path();
+    const Path packagePath = packageFile.path();
     if (!has(packagePath))
     {
         add(packagePath, new Impl::PackageImageSource(packagePath, d->displaySize));
@@ -108,6 +114,11 @@ Id PackageIconBank::packageIcon(File const &packageFile)
     // Every new request goes to the front of the queue.
     load(packagePath, BeforeQueued);
     return Id::None;
+}
+
+bool PackageIconBank::packageContainsIcon(const de::File &packageFile) const
+{
+    return Impl::doesPackageHaveIcon(packageFile.path());
 }
 
 } // namespace de
