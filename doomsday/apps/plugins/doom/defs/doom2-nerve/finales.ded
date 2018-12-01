@@ -259,3 +259,8 @@ Finale
     goto castloop
   };
 }
+
+Finale
+{
+  Before = "MAP07";
+}
