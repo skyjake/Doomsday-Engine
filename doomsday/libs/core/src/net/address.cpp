@@ -146,6 +146,10 @@ duint16 Address::port() const
 
 String Address::asText() const
 {
+    if (isNull())
+    {
+        return {};
+    }
     if (!d->textRepr)
     {
         d->textRepr = (isLocal()? String("localhost") : String::take(toString_Address(d->addr)));
