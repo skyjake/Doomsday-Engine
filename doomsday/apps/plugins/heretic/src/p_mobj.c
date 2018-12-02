@@ -965,8 +965,10 @@ void P_MobjThinker(void *thinkerPtr)
     {
         P_MobjMoveXY(mobj);
 
-        //// @todo decent NOP/NULL/Nil function pointer please.
-        if (mobj->thinker.function == (thinkfunc_t) NOPFUNC) return; // Mobj was removed.
+        if (mobj->thinker.function == (thinkfunc_t) NOPFUNC)
+        {
+            return; // Mobj was removed.
+        }
     }
 
     if (mobj->flags2 & MF2_FLOATBOB)
