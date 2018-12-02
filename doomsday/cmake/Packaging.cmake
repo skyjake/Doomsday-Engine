@@ -101,14 +101,14 @@ if (NOT CPack_CMake_INCLUDED)
         INSTALL_TYPES gui
     )
     cpack_add_component (fmod
-        DISPLAY_NAME "FMOD Ex Audio Plugin"
+        DISPLAY_NAME "FMOD Audio Plugin"
         DESCRIPTION "Audio plugin supporting 3D effects and SF2 soundfonts (non-GPL)."
         DEPENDS client
         INSTALL_TYPES gui
     )
     cpack_add_component (sdk
         DISPLAY_NAME "SDK"
-        DESCRIPTION "C++ headers and build configuration files for Doomsday 2."
+        DESCRIPTION "C++ headers, libraries, and build configuration files to create Doomsday 2 plugins."
         DISABLED
         DEPENDS libs packs
         INSTALL_TYPES sdk
