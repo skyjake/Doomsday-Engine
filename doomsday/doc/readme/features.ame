@@ -13,7 +13,7 @@ User interface:
 
 Graphics:
 @list/thin{
-    @item OpenGL 2.1 renderer
+    @item OpenGL 3.3 renderer
     @item World @wikiterm{movement smoothing} (actors, monsters, missiles, surfaces) to remove the original games' limitation of 35 FPS
     @item Stereoscopic rendering modes: anaglyph, side-by-side, cross-eye and parallel viewing
     @item @wikiterm{Bloom}, @wikiterm{vignette}, and @wikiterm{fog} effects
@@ -43,7 +43,7 @@ Audio:
     @item 3D positional sound effects
     @item Environmental @wikiterm{echo and reverb} effects
     @item External @wikiterm{music files} in MP3 and other formats
-    @item Uses @link{FMOD Ex}{http://www.fmod.org/} for audio playback (sound effects, music, CD audio tracks)
+    @item Uses @link{FMOD}{http://www.fmod.org/} for audio playback (sound effects, music, CD audio tracks)
     @item Supports the open source @link{SDL_mixer}{http://www.libsdl.org/projects/SDL_mixer/} for sound effects and music files
     @ifndef{WIN32}{@item FluidSynth for MIDI playback using @wikiterm{SF2} soundfonts}
     @ifdef{WIN32}{@item DirectSound3D, EAX 2.0 (32-bit only), Windows Multimedia (for MIDI)}
@@ -63,7 +63,7 @@ Multiplayer:
 Other:
 @list/thin{
     @item @wikilink{Cross-platform}{Supported_platforms}, runs on @link{Qt}{http://qt.io/}
-    @item Open source (see @wikilink{Getting Started page}{Getting_started})
+    @item Open source (see @wikilink{Getting Started}{devel})
     @item @wikiterm{Plugin} based @wikiterm{extensible architecture}
 }
 
@@ -72,11 +72,11 @@ Other:
 @list{
     @item At least one WAD file from the original Doom, Heretic, Hexen, or other supported game
     @ifndef{UNIX}{
-        @item Minimum OS version: 
-        @ifdef{WIN32}{Windows Vista}
-        @ifdef{MACOSX}{macOS 10.8}
+        @item Minimum OS version:
+        @ifdef{WIN32}{Windows 7}
+        @ifdef{MACOSX}{macOS 10.10}
     }
     @ifdef{WIN32}{@item DirectX 8 (or newer)}
     @ifdef{MACOSX}{@item Supported CPU architectures: 64-bit/32-bit Intel}
-    @item GPU with OpenGL 2.1 hardware acceleration
+    @item GPU with OpenGL 3.3 hardware acceleration
 }

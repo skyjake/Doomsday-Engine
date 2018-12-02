@@ -13,8 +13,5 @@
     @item{@file{runtime/doomsday.out}} Log message output file.
 
     @item{@file{runtime/savegames/}} Folder containing all saved games. Each
-    game has its own subfolder for saves. Note that the subfolders are
-    game-specific rather than profile-specific; if you create custom game
-    profiles, their saves will be written in the same subfolder as saves from
-    the default game profile.
+    game has its own subfolder for saves.
 }
