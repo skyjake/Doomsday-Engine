@@ -54,6 +54,7 @@ Multiplayer:
 @list/thin{
     @item Supports up to @wikiterm{15 player games}
     @item Clients can join games in progress
+    @item Clients automatically download PWADs loaded on server
     @item Automatic discovery of servers running on the local network
     @item Central @wikiterm{master server} for discovery of servers on the internet
     @item Standalone @wikiterm{server} running as a daemon/background process

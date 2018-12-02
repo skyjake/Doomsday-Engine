@@ -145,7 +145,7 @@ Multiplayer games list. The @link{dengine.net}{http://dengine.net/} master
 server is also automatically queried for any public servers.
 
 @parag{Viewing server information.} Right-click a server in the list to view
-status information about it. The same popup can be opened by clicking the small
+information about it. The same popup can be opened by clicking the small
 @ui{...} button in the server description. The status information includes:
 @list/thin{
     @item ping time
@@ -157,7 +157,8 @@ status information about it. The same popup can be opened by clicking the small
 }
 
 @parag{Joining a game.} Join an open multiplayer game by clicking @ui{Join}
-either in the server list or in the server information popup.
+either in the server list or in the server information popup. Any missing mods
+are downloaded automatically after you click the button.
 
 @parag{Player name and color.} When a game is running (after joining a
 multiplayer game or also in single-player), go to the game's @ui{Options} menu
@@ -170,18 +171,14 @@ announced to the master server, select @ui{Connect to Server...} in the
 Multiplayer tab's actions menu (@ui{...} under the tab title), and enter the
 server's IP address or domain name.
 
-@parag{Failure to connect?} There are several reasons why you may not be able
-to join a multiplayer game. You will be notified if you don't have the same
-mods that the server is using. You can review the required mods in the
-server information popup. Connectivity problems can also be due to your
+@parag{Failure to connect?} Connectivity problems can also be due to your
 firewall or @link{network address translation
-(NAT)}{https://en.wikipedia.org/wiki/Network_address_translation}.
-
-Doomsday uses TCP network connections for multiplayer games. If you host a game
-and are behind a firewall or using NAT, you must make sure that other computers
-are able to open TCP connections to your computer. This entails opening the
-appropriate incoming TCP ports on your firewall and/or configuring the NAT so
-that the correct ports are routed to your computer.
+(NAT)}{https://en.wikipedia.org/wiki/Network_address_translation}. Doomsday uses
+TCP network connections for multiplayer games. If you host a game and are behind
+a firewall or using NAT, you must make sure that other computers are able to
+open TCP connections to your computer. This entails opening the appropriate
+incoming TCP ports on your firewall and/or configuring the NAT so that the
+correct ports are routed to your computer.
 
 Additionally, UDP ports 13209-13224 are used for detecting servers running on
 the local network; if you are experiencing problems with autodetecting local
