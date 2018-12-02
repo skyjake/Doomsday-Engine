@@ -7,7 +7,7 @@
 }
 @macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
 @macro{VERSION}{ Version 2.1 }
-@macro{AUTHOR}{ Deng Team }
+@macro{AUTHOR}{ Jaakko Keränen (skyjake), Daniel Swanson (DaniJ) & Contributors }
 @macro{LINK}{ http://dengine.net/ }
 @require{amestd}
 

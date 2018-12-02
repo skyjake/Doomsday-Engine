@@ -72,6 +72,11 @@ with Doomsday.
 	@tab doom2-tnt @tab Final Doom: TNT Evilution @row
 	@tab chex @tab Chex Quest @row
 	@tab hacx @tab HacX @row
+    @tab doom1-freedoom @tab Freedoom Phase 1 @row
+    @tab doom2-freedoom @tab Freedoom Phase 2 @row
+    @tab doom1-bfg @tab Ultimate Doom (Doom 3 BFG Edition) @row
+    @tab doom2-bfg @tab Doom 2 (Doom 3 BFG Edition)@row
+    @tab doom2-nerve @tab No Rest for the Living @row
 
 @plugin{Heretic} 
     @tab heretic-share @tab Shareware Heretic @row

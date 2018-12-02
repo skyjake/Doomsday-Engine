@@ -2,123 +2,140 @@
 
 The Home screen in Doomsday 2 is a full replacement for the separate front-end
 application that was used in earlier versions. In Home you can manage your game
-profiles, resource packs and other add-ons, and join multiplayer games.
+library, resource packs and other add-ons, and join multiplayer games.
 
-Home consists of a number of scrollable tabs. There are several ways to switch
-to a different tab:
+Home consists of a number of scrollable tabs. There are several ways to navigate
+between tabs:
 
 @list/thin{
     @item Click on the tab names in the top of the screen.
     @item Left and right arrow keys move focus to an adjacent tab.
-    @item Shortcut keys: @kbd{D}, @kbd{H}, @kbd{X}, @kbd{O}, @kbd{M}, and @kbd{P} (while not entering text in a text field.)
+    @item Shortcut keys: @kbd{D}, @kbd{H}, @kbd{X}, @kbd{O}, @kbd{M}, and
+          @kbd{S} (while not entering text in a text field.)
     @item Click on the left or right edge of the screen.
 }
 
 @section{ Game library }
 
-The game library tabs list all the available game profiles and saved games
-associated with them. Each game profile can be configured to use a set of
-additional packages (data files, resource packs).
+The game library lists all the available games and their associated save files.
+Each game can be configured to load additional mods (WADs, PK3s, data files,
+resource packs). You can also add new customized games based on one of the
+built-in games.
 
-The appearance of the game tabs can be changed in User Interface settings (see
-@ref{config}{Configuration}). You can hide the game library description texts,
-and choose whether unplayable game profiles are visible. You can also hide
-entire game tabs, if you are not interested in a particular family of games.
+In User Interface settings you can hide entire game tabs, if you are not
+interested in a particular family of games. See @ref{config}{Configuration} for
+more details.
 
-@parag{Starting a game with or without additional packages.} Click on a profile
-to select it, or move the selection with the arrow keys. When selected, Package
-and Play buttons slide in. The Package button shows a number for how many
-additional packages have been configured. Click Play or double-click the
-profile to start the game.
-    
-@parag{Selecting packages.} Click the profile's Package button to choose which
-additional packages are going to be loaded when the game is started. On the
-left side of the dialog, you have a list of the packages attached to the
-profile. On the right, you can browse the available packages. The package
-browser works similarly to the Packages tab, and it has a search field and Info
-buttons (see @ref{packages}{Packages}). To add a package to the profile, click
-the Plus button or double-click the package.
-    
-@parag{Loading a saved game.} All saved games are listed under the game profile
-they were created in. Click on a save to select it, and then press the
-profile's Play button. Clicking on an already selected save will unselect it.
+@parag{Sorting games in the library.} If you have lots of games available, it
+may be helpful to change the game library view options so you can more easily
+find the game you are looking for. Click on the @ui{...} button under the tab
+title to see the view options.
 
-@notice{Old savegames created with Doomsday 1.x do not contain information
-about which data files and packages were in use when the save was created, so
-Doomsday can't determine which profile they belong to. Such saves are listed
-under each profile of the game.}
+@parag{Starting a game with or without additional mods.} Click on a game to
+select it, or move the selection with the arrow keys. When selected, Mods and
+Play buttons slide in. The Mods button shows a number for how many additional
+mods have been selected for loading. Click Play or double-click the game to
+start the game.
+
+@parag{Selecting mods.} Click the game's Mods button to choose which additional
+mods are going to be loaded when the game is started. On the left side of the
+dialog, you have a list of the mods selected for loading. On the right, you can
+browse the available mods. The mods browser works similarly to the Mods tab, and
+it has a search field and Info buttons (see @ref{packages}{Mods}). To add a mod
+to the game, click the Plus button or double-click the mod.
+
+@parag{Loading a saved game.} All saved games are listed below the game they
+were created in. Click on a save to select it, and then press the game's Play
+button. Clicking on an already selected save will unselect it.
+
+@notice{Old savegames created with Doomsday 1.x do not contain information about
+which data files and mods were in use when the save was created, so Doomsday
+can't determine which game they belong to. Such saves are listed under each
+variant of the game.}
 
 @parag{Savegame information.} Right-click on a saved game to see information
-about the save: which data files and packages were in use, the overall game
+about the save: which data files and mods were in use, the overall game
 parameteres, current map, and other status information.
- 
+
 @parag{Deleting a saved game.} When a savegame is selected, a small X button
 appears next to it. Clicking the X lets you delete the save.
 
-@parag{Creating a new profile.} At the bottom of each profile list, there is a
-Plus button that creates a new, empty profile. In the profile parameters, you
-can choose which game will be used, and which packages are selected for
-loading. Note that game profiles cannot have a name that is identical to an
-already existing game profile name.
+@parag{Save folders.} Each game is assigned a unique save folder
+where all the save files of the game are kept. Right-click on a profile and
+select @ui{Show Save Folder} to open the folder in @ifdef{WIN32}{Windows
+Explorer}@else{@ifdef{MACOSX}{Finder}@else{operating system file browser}}.
+Note that custom games created in version 2.0 or earlier share a save
+folder with the built-in game. You can use the @ui{Create New Save Folder} menu
+item to create a new save folder for the custom game, but you will need to
+manually move the existing save files over there.
 
-@parag{Duplicate, edit, and delete profiles.} Any profile can be duplicated by
-right-clicking on it and selecting @ui{Duplicate}. Profiles can also be edited
-to change their name and the set of selected packages.
+@parag{Creating a custom game.} At the bottom of each game tab, there is a Plus
+button that creates a new customized game. In the game settings, you can choose
+which game mode will be used, and which mods are selected for loading. Note that
+game cannot have a name that is identical to an already existing game in the
+library.
 
-@a{packages}@section{ Packages }
+@parag{Duplicate, edit, and delete games.} Any game can be duplicated by
+right-clicking on it and selecting @ui{Duplicate}. Games can also be edited to
+change their name, the primary data file (IWAD), and the set of selected mods.
 
-The Packages tab is used to browse the available @wikiterm{packages}. With the
-exception of game IWAD files, the Packages tab shows all the data files that
-Doomsday can load. You can also quickly try out individual packages in one your
-existing game profiles.
+@a{packages}@section{ Mods }
 
-@parag{Configuring the folders where packages are found.} To let Doomsday know
-where your packages can be found, either select @ui{Folders} in the Packages
-tab's actions menu (the @ui{...} button under the tab title), or go to Data
-Files settings (see @ref{config}{Configuration}). The packages will not be
-copied or moved from wherever you keep them.
+The Mods tab is used to browse the available @wikiterm{mods} and other
+@wikiterm{packages}. The Mods tab shows all the data files that Doomsday knows
+about. You can also quickly try out individual mods in one your games.
 
-@parag{Searching for packages.} The packages list may contains hundreds of
-items, so you may want to find the package you're looking for by entering some
-search terms. Enter the words to search in the search field at the top of the
-list. The search is limited to package metadata; the actual file contents are
-not accessed. When entering multiple words, only packages whose metadata
-contains all the words are shown.
+@parag{Configuring the mod search folders.} To let Doomsday know where your mods
+can be found, either select @ui{Settings} in the Mods tab's actions menu (the
+@ui{...} button under the tab title), or go to Data Files settings (see
+@ref{config}{Configuration}). The mods will not be copied or moved from wherever
+you keep them.
+
+@parag{Browsing mods.} The mods list may contains hundreds of items, so you may
+want to find the mods you're looking for by entering some search terms. Enter
+the words to search for in the search field at the top of the list. The search
+is limited to metadata; the actual file contents are not accessed. When entering
+multiple words, only mods whose metadata contains all the words are shown.
 
 @parag{Special search keywords.} Some search words have a special meaning:
 @list{
-    @item @dquote{hidden}: Only packages that are normally hidden will be
-    shown. Packages that are hidden by default include, for example, packages
-    inside other packages that will get automatically loaded.
+    @item @dquote{gamedata}: Primary game data files (IWADs).
 
-    @item @dquote{loaded}: Only show currently loaded packages. This is useful
-    when browsing packages while playing a game.
+    @item @dquote{hidden}: Only mods that are normally hidden will be shown.
+    Mods that are hidden by default include, for example, mods inside other
+    packages that will get automatically loaded.
+
+    @item @dquote{loaded}: Only show currently loaded mods. This is useful when
+    browsing mods while playing a game.
+
+    @item @dquote{core}: Doomsday's own core packages. These will be
+    automatically loaded as needed.
 }
 
-@parag{Viewing information about a package.} Right-click a package or click on
+@parag{Viewing information about a mod.} Right-click a mod or click on
 the @ui{...} button to view information about it. In the case of WAD files, all
 the maps in the WAD are listed so you'll know which map to start when playing.
-The info popup also shows the game title picture found in the package, and
+The info popup also shows the game title picture found in the mod, and
 readme notes provided by the author. In some cases, Doomsday can make a guess
-about the game that the package is meant to be used with.
+about the game that the mod is meant to be used with.
 
-@parag{Quickly trying out a package.} One of the most useful features of the
-Packages tab is quickly loading a package in one your games. This will make no
-changes to your profiles. Simply open the package info popup and click on
-@ui{Play in...}. However, you should first check that the package actually is
-compatible with the game you are playing. Also be aware that if you are already
-in a game, it will be unloaded first and any unsaved progress will be lost.
+@parag{Quickly trying out a mod.} One of the most useful features of the Mods
+tab is quickly loading a mod in one your games. This will make no changes to
+your existing games. Simply open the mod info popup (as explained above) and
+click on @ui{Play in...}. However, you should first check that the mod actually
+is compatible with the game you are playing. Also be aware that if you are
+already running a game, it will be unloaded first and any unsaved progress will
+be lost.
 
-@parag{Quickly adding a package to a profile.} The @ui{Add to...} button in the
-package info popup will add the package to one of your existing game profiles.
-The profiles that already have the package are labeled @ui{ADDED} in the list.
+@parag{Quickly adding a mod to a game.} The @ui{Add to...} button in the mod
+info popup will add the mod to one of your existing games. The games that
+already have the mod are tagged @ui{ADDED} in the list.
 
-@parag{Configuring optional contents.} Some packages have optional
-subcomponents. For instance, add-ons that use the @wikiterm{Snowberry Box}
-format may include both opt-in and opt-out packages. When viewing information
-about this kind of collections, an additional @ui{Options} button is shown in
-the package info popup. This will let you enable or disable individual
-contained sub-packages.
+@parag{Configuring optional contents.} Some mods have optional subcomponents.
+For instance, add-ons that use the @wikiterm{Snowberry Box} format may include
+both opt-in and opt-out mods. When viewing information about this kind of
+collections, an additional @ui{Options} button is shown in the mod info popup.
+This will let you enable or disable individual contained mods.
 
 @section{ Multiplayer }
 
@@ -134,7 +151,7 @@ status information about it. The same popup can be opened by clicking the small
     @item ping time
     @item which game and map is currently running
     @item outline of the current map
-    @item list of packages loaded on the server
+    @item list of mods loaded on the server
     @item list of connected players
     @item server version
 }
@@ -155,7 +172,7 @@ server's IP address or domain name.
 
 @parag{Failure to connect?} There are several reasons why you may not be able
 to join a multiplayer game. You will be notified if you don't have the same
-packages that the server is using. You can review the required packages in the
+mods that the server is using. You can review the required mods in the
 server information popup. Connectivity problems can also be due to your
 firewall or @link{network address translation
 (NAT)}{https://en.wikipedia.org/wiki/Network_address_translation}.
@@ -170,9 +187,10 @@ Additionally, UDP ports 13209-13224 are used for detecting servers running on
 the local network; if you are experiencing problems with autodetecting local
 servers, check that your firewall isn't blocking these UDP ports on either end.
 
-A server opens one TCP port for listening to incoming connections. The port
-must be open for incoming TCP traffic in the firewall. The port number is
-configured with the console variable @var{net-ip-port}. By default, a server uses TCP port 13209. 
+A server opens one TCP port for listening to incoming connections. The port must
+be open for incoming TCP traffic in the firewall. The port number is configured
+with the console variable @var{net-ip-port}. By default, a server uses TCP port
+13209.
 
 Clients do not require any firewall configuration for incoming connections. A
 client only needs to be able to reach the server via the server's TCP port.

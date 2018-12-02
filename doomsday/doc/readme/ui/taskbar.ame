@@ -79,11 +79,11 @@ Video settings dialog has a set of aspect ratio options. These control the aspec
     @item @ui{Stretched}: The aspect ratio is unrestricted and adapts to window dimensions. Game elements may appear too wide or tall with this setting.
 }
 
-@parag{Audio backends.} Some of the audio options are dependent on the active
-audio backend(s). For example, a MIDI sound font is supported by the FMOD and
-Fluidsynth plugins. 3D sound and reverb are supported by FMOD, OpenAL, and
+@parag{Audio backend.} Some of the audio options are dependent on the active
+audio plugins. For example, a MIDI sound font is supported by the FMOD and
+FluidSynth plugins. 3D sound and reverb are supported by FMOD, OpenAL, and
 DirectSound. The audio backend can be reconfigured on the fly; any changes are
-applied when you close the popup.
+applied when you press the @ui{Apply} button.
 
 @parag{Game controllers.} Doomsday comes with a few preset bindings for
 different gamepads. To use one of the presets, click on the @ui{Game Controller
@@ -150,7 +150,7 @@ variable}. At any time, press @kbd{Tab} to autocomplete the word being typed.
 This will pop up a list of all possible completions, including the current
 values for any variables. You can change console variable values as follows:
 
-@samp{@cmd{sound-info 1}}
+@samp{@cmd{rend-camera-fov 110}}
 
 @parag{Shortcut key.} You should set up a console shortcut key if you find
 yourself going to the console often. The shortcut defaults to @kbd{Tilde} (U.S.

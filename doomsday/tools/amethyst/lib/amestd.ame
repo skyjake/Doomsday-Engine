@@ -1,8 +1,8 @@
-$* 
+$*
     Amethyst Standard Library
     -------------------------
 
-    The following output languages are defined by the library: 
+    The following output languages are defined by the library:
      - TXT:  plain text
      - HTML: HTML/CSS formatted text
      - RTF:  rich text format
@@ -13,8 +13,8 @@ $*
 
     Note: For everything to work properly, @begin must be called at the
     beginning of the document.
-    
-    TITLE (title of the document) must be defined prior to 
+
+    TITLE (title of the document) must be defined prior to
     @require{amestd}.
 *$
 
@@ -43,7 +43,7 @@ $ Paragraph heading.
     @ifdef{TXT}{
         __ @glue{@arg} @glue{__}
     }
-    @else{    
+    @else{
         @strong{@arg}
     }
 }
@@ -157,7 +157,7 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 	}
 	@ifdef{WIKI}{
 	    $ Mediawiki has its own page header.
-	} 
+	}
     @ifdef{DOKUWIKI}{
         ====== @TITLE ======
     }
@@ -190,9 +190,9 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 	            @large{@strong{@TITLE}} @br
 	        }
 	        @ifdef{VERSION}{
-	            @strong{@VERSION} @tag{\@apply{@n}{.}} 
+	            @strong{@VERSION} @tag{\@apply{@n}{.}}
 	        }
-			@ifdef{AUTHOR}{ 
+			@ifdef{AUTHOR}{
 			    by @ifdef{LINK}{@link{@AUTHOR}{@LINK}}@else{@AUTHOR} @br
 		    }
 			@ifdef{EMAIL}{ @mailto{@EMAIL} @br }
@@ -201,10 +201,10 @@ ul li div,ol li div@{margin-bottom:1em;@}</style></head><body>} @break
 	}
 	@ifdef{HELP}{
 	    $ Doomsday Help does not use a header.
-	} 
+	}
 }
 
-$ Specify an author with contact information. (Manual page only.) 
+$ Specify an author with contact information. (Manual page only.)
 @macro{man_author}{
     @ifdef{MAN}{
         .An @dquote{@arg{1}} Aq @sp @nsp{@arg{2}} @br
@@ -273,12 +273,12 @@ $ Doomsday Engine Wiki specific macros.
 	@macro{wikilink}{[[@glue{@arg{2}}@glue{|}@glue{@arg{1}}]]}
 }
 @else{@ifdef{HTML}{
-	@macro{wikilink}{@link{@arg{1}}{@tag{http://wiki.dengine.net/w/@glue{@arg{2}}}}}
+	@macro{wikilink}{@link{@arg{1}}{@tag{https://manual.dengine.net/@glue{@arg{2}}}}}
     @macro{wikiterm}{@wikilink{@arg}{@arg}}
 }
 @else{
 	@macro{wikiterm}{@arg}
-	@macro{wikilink}{@link{@arg{1}}{http://wiki.dengine.net/w/@arg{2}}}
+	@macro{wikilink}{@link{@arg{1}}{https://manual.dengine.net/@arg{2}}}
 }}}
 @ifdef{TXT}{
 	$ Omit the hyperlinks in TXT files.

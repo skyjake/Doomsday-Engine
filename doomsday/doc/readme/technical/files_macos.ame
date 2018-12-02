@@ -3,13 +3,11 @@ Your runtime files (savegames, screenshots) are inside a folder called
 
 @include{technical/files_common}
 
-@ifdef{MACOSX}{        
+@ifdef{MACOSX}{
     @a{paths_file} Additional files:
-    @deflist{        
-        @item{@file{~/.doomsday/paths}} Customized file path
-        configuration (@var{basedir}, @var{libdir}, @var{iwaddir}). The
-        @wikilink{syntax of the
-        file}{Configuration#Unix_system-level_config_files} is documented in
-        the wiki.    
+    @deflist{
+        @item{@file{~/.doomsday/paths}} Customized file path configuration
+        (@var{basedir}, @var{libdir}, @var{iwaddir}). The @wikilink{syntax of
+        the file}{guide/configuration} is documented in the wiki.
     }
 }
