@@ -1150,6 +1150,14 @@ void Hu_MenuInitGameplayOptionsPage()
             .setGroup(1)
             .setShortcut('w');
 
+    page->addWidget(new LabelWidget("Pushable Speed Limit"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("game-objects-pushable-limit"))
+            .setRight()
+            .setGroup(1)
+            .setShortcut('p');
+
 # if __JDOOM__ || __JDOOM64__
 
     page->addWidget(new LabelWidget("Zombie Players Can\n   Exit Maps")).setLeft()

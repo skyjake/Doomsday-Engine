@@ -314,6 +314,7 @@ void G_CommonPreInit()
     ::quitInProgress = false;
 
     // Apply the default game rules.
+    cfg.common.pushableMomentumLimitedToPusher = true;
     gfw_Session()->applyNewRules(gfw_DefaultGameRules() = GameRules());
 
     // Register hooks.

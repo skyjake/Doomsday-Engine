@@ -850,10 +850,32 @@ static int PIT_CheckThing(mobj_t *thing, void * /*context*/)
 
     if((thing->flags2 & MF2_PUSHABLE) && !(tmThing->flags2 & MF2_CANNOTPUSH))
     {
-        // Push thing
-        thing->mom[MX] += tmThing->mom[MX] / 4;
-        thing->mom[MY] += tmThing->mom[MY] / 4;
-        NetSv_PlayerMobjImpulse(thing, tmThing->mom[MX]/4, tmThing->mom[MY]/4, 0);
+        // Push thing.
+        coord_t pushImpulse[2] = {tmThing->mom[MX] / 4, tmThing->mom[MY] / 4};
+
+        for (int axis = 0; axis < 2; ++axis)
+        {
+            // Do not exceed the momentum of the thing doing the pushing.
+            if (cfg.common.pushableMomentumLimitedToPusher)
+            {
+                coord_t maxIncrement = tmThing->mom[axis] - thing->mom[axis];
+                if (thing->mom[axis] > 0 && pushImpulse[axis] > 0)
+                {
+                    pushImpulse[axis] = de::max(0.0, de::min(pushImpulse[axis], maxIncrement));
+                }
+                else if (thing->mom[axis] < 0 && pushImpulse[axis] < 0)
+                {
+                    pushImpulse[axis] = de::min(0.0, de::max(pushImpulse[axis], maxIncrement));
+                }
+            }
+
+            thing->mom[axis] += pushImpulse[axis];
+        }
+
+        if (!de::fequal(pushImpulse[MX], 0) || !de::fequal(pushImpulse[MY], 0))
+        {
+            NetSv_PlayerMobjImpulse(thing, float(pushImpulse[MX]), float(pushImpulse[MY]), 0);
+        }
     }
 
     // @fixme Kludge: Always treat blood as a solid.
