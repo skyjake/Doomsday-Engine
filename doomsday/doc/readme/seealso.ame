@@ -1,14 +1,12 @@
 @chapter{ See also }
 
-Additional documentation is available in the @link{Doomsday Engine
-Wiki}{http://wiki.dengine.net/}.
+Additional documentation is available in the @link{Doomsday Manual}{https://manual.dengine.net/}.
 
 @list{
-    @item @link{Version history}{http://wiki.dengine.net/w/Category:Releases}
-    @item @link{User's Guide: wiki articles to help play games with Doomsday}{http://wiki.dengine.net/w/Category:User%27s_Guide}
-    @item @link{Author's Guide: wiki articles for map and resource pack/addon authors}{http://wiki.dengine.net/w/Category:Author%27s_Guide}
-    @item @link{Doomsday 2 packages and assets}{http://wiki.dengine.net/w/Packages}
-    @item @link{Definitions Reference: DED and finale script syntax}{http://wiki.dengine.net/w/DED}
-    @item @link{Project roadmap and features in planning}{http://tracker.dengine.net/projects/deng/roadmap}
-    @item @link{Programmer's Guide: technical wiki articles for developers}{http://wiki.dengine.net/w/Category:Programmer%27s_Guide}
+    @item @wikilink{Getting started with Doomsday}{guide}
+    @item @wikilink{Version history}{version}
+    @item @wikilink{Doomsday 1 resources}{modding/overview_of_resources_doomsday_1.x}
+    @item @wikilink{Doomsday 2 packages and assets}{assets}
+    @item @wikilink{Definitions Reference: DED and finale script syntax}{ded}
+    @item @link{Project roadmap and features in planning}{https://tracker.dengine.net/projects/deng/roadmap}
 }
