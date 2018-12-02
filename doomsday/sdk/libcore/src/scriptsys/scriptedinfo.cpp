@@ -605,8 +605,8 @@ bool ScriptedInfo::isTrue(Value const &value) // static
         // Text values are interpreted a bit more loosely.
         String const value = textValue->asText();
         if (!value.compareWithoutCase("true") ||
-           !value.compareWithoutCase("yes") ||
-           !value.compareWithoutCase("on"))
+            !value.compareWithoutCase("yes") ||
+            !value.compareWithoutCase("on"))
         {
             return true;
         }

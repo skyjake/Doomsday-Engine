@@ -40,6 +40,7 @@ using namespace de;
 namespace render {
 
 static String const DEF_ALWAYS_TRIGGER("alwaysTrigger");
+static String const DEF_MUST_FINISH   ("mustFinish");
 static String const DEF_ANGLE         ("angle");
 static String const DEF_AXIS          ("axis");
 static String const DEF_DURATION      ("duration");
@@ -79,16 +80,19 @@ DENG2_PIMPL(StateAnimator)
         };
 
         LoopMode looping = NotLooping;
+        bool mustFinish = false; // Sequence will play to end unless higher priority started.
         int priority = ANIM_DEFAULT_PRIORITY;
         Timeline const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
         std::unique_ptr<Timeline::Clock> clock;
         TimeSpan overrideDuration = -1.0;
+        TimeSpan actualRuntime = 0.0;
 
         Sequence() {}
 
-        Sequence(int animationId, String const &rootNode, LoopMode looping, int priority,
-                 Timeline const *timeline = nullptr)
+        Sequence(int animationId, String const &rootNode, LoopMode looping, bool mustFinish,
+                 int priority, Timeline const *timeline = nullptr)
             : looping(looping)
+            , mustFinish(mustFinish)
             , priority(priority)
             , timeline(timeline)
         {
@@ -101,7 +105,7 @@ DENG2_PIMPL(StateAnimator)
             apply(other);
         }
 
-        Sequence &operator = (Sequence const &other)
+        Sequence &operator=(Sequence const &other)
         {
             apply(other);
             return *this;
@@ -114,11 +118,12 @@ DENG2_PIMPL(StateAnimator)
 
         void apply(Sequence const &other)
         {
-            animId   = other.animId;
-            node     = other.node;
-            looping  = other.looping;
-            priority = other.priority;
-            timeline = other.timeline;
+            animId     = other.animId;
+            node       = other.node;
+            looping    = other.looping;
+            mustFinish = other.mustFinish;
+            priority   = other.priority;
+            timeline   = other.timeline;
 
             if (other.overrideDuration >= 0)
             {
@@ -138,15 +143,24 @@ DENG2_PIMPL(StateAnimator)
             return !atEnd();
         }
 
-        void operator >> (Writer &to) const override
+        int loopCount() const
         {
-            ModelDrawable::Animator::OngoingSequence::operator >> (to);
+            if (duration > 0)
+            {
+                return int(actualRuntime / duration);
+            }
+            return 0;
+        }
+
+        void operator>>(Writer &to) const override
+        {
+            ModelDrawable::Animator::OngoingSequence::operator>>(to);
             to << duint8(looping) << priority;
         }
 
-        void operator << (Reader &from) override
+        void operator<<(Reader &from) override
         {
-            ModelDrawable::Animator::OngoingSequence::operator << (from);
+            ModelDrawable::Animator::OngoingSequence::operator<<(from);
             from.readAs<duint8>(looping);
             from >> priority;
         }
@@ -566,6 +580,8 @@ DENG2_PIMPL(StateAnimator)
 
     Sequence &start(Sequence const &spec)
     {
+        //qDebug() << "[StateAnimator] start id" << spec.animId;
+
         Sequence &anim = self().start(spec.animId, spec.node).as<Sequence>();
         anim.apply(spec);
         if (anim.timeline)
@@ -664,7 +680,9 @@ void StateAnimator::triggerByState(String const &stateName)
                 break;
             }
 
-            bool const alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
+            const bool alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
+            const bool mustFinish    = ScriptedInfo::isTrue(*seq.def, DEF_MUST_FINISH, false);
+
             if (!alwaysTrigger)
             {
                 // Do not restart running sequences.
@@ -690,6 +708,7 @@ void StateAnimator::triggerByState(String const &stateName)
             Sequence anim(animId, node,
                           ScriptedInfo::isTrue(*seq.def, DEF_LOOPING)? Sequence::Looping :
                                                                        Sequence::NotLooping,
+                          mustFinish,
                           priority,
                           timeline);
 
@@ -702,7 +721,9 @@ void StateAnimator::triggerByState(String const &stateName)
             // Do not override higher-priority animations.
             if (auto *existing = maybeAs<Sequence>(find(node)))
             {
-                if (priority < existing->priority)
+                if (priority < existing->priority ||
+                    (priority == existing->priority && existing->mustFinish &&
+                     !existing->atEnd() && existing->loopCount() == 0))
                 {
                     // This will be started once the higher-priority animation
                     // has finished.
@@ -722,9 +743,6 @@ void StateAnimator::triggerByState(String const &stateName)
                     << seq.name << er.asText();
             continue;
         }
-
-        //qDebug() << "Mobj starting animation: id"
-        //         << d->names.geti(d->ownerNamespaceVarName + ".__id__") << seq.name;
         break;
     }
 }
@@ -759,7 +777,11 @@ void StateAnimator::startAnimation(int animationId, int priority, bool looping, 
     try
     {
         using Seq = Impl::Sequence;
-        d->start(Seq(animationId, node, looping ? Seq::Looping : Seq::NotLooping, priority));
+        d->start(Seq(animationId,
+                     node,
+                     looping ? Seq::Looping : Seq::NotLooping,
+                     false, // same priority override allowed
+                     priority));
     }
     catch (const Error &er)
     {
@@ -801,6 +823,7 @@ void StateAnimator::advanceTime(TimeSpan const &elapsed)
         // Advance the sequence.
         TimeSpan animElapsed = factor * elapsed;
         anim.time += animElapsed;
+        anim.actualRuntime += animElapsed;
 
         if (anim.looping == Sequence::NotLooping)
         {
