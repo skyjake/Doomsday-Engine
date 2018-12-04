@@ -1050,7 +1050,7 @@ DENG2_PIMPL(AutomapWidget)
 #endif
 
         dint idx = 0;
-        Point2Raw const labelOffset;
+        const Point2Raw labelOffset{};
         for (MarkedPoint const *point : points)
         {
             String const label    = String::number(idx++);
