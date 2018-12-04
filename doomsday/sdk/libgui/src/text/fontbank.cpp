@@ -141,7 +141,7 @@ void FontBank::setFontSizeFactor(float sizeFactor)
      * does not scale fonts on Windows based on PIXEL_RATIO, and we need to apply
      * the user's UI scaling here.
      */
-    d->fontSizeFactor *= Config::get().getf("ui.scalefactor", 1.f);
+    d->fontSizeFactor *= Config::get().getf("ui.scaleFactor", 1.f);
 #endif
 }
 
