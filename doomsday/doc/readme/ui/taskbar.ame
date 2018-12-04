@@ -16,14 +16,14 @@ app menu.
 Doomsday's UI. It is only shown once, but you can manually show it again by
 selecting @ui{Help: Show Tutorial}.
 
-@parag{Browsing and loading packages.} @ui{Browse Packages...} opens the
-package list in a sidebar where packages can be loaded and unloaded manually.
-You can also view information about packages like in the Home screen. The
+@parag{Browsing and loading mods.} @ui{Browse Mods...} opens the
+mod browser in a sidebar where mods can be loaded and unloaded manually.
+You can also view information about mods like in the Home screen. The
 sidebar is only available when a game is loaded. You can use the
 @dquote{loaded} keyword to filter the list so that only the currently loaded
-packages are listed.
+mods are listed.
 
-@notice{Data from newly loaded packages may not be used until a new map is
+@notice{Data from newly loaded mods may not be used until a new map is
 started in the game. Use of external textures can be enabled and disabled in
 Renderer settings.}
 
@@ -103,11 +103,11 @@ button). This will minimize mouse input latency as much as possible. You may
 additionally want to disable mouse filtering by toggling the @ui{Filter X Axis}
 and @ui{Filter Y Axis} options.
 
-@parag{Local multiplayer packages.} By default, clients are not allowed to load
-packages in addition to what the server is using. This avoids any potential
-compatibility issues with the client's packages overriding some of the game's
-definitions. However, you can manually enable local packages in Network
-settings. You can then select additional local packages for multiplayer games
+@parag{Local multiplayer mods.} By default, clients are not allowed to load
+mods in addition to what the server is using. This avoids any potential
+compatibility issues with the client's mods overriding some of the game's
+definitions. However, you can manually enable local mods in Network
+settings. You can then select additional local mods for multiplayer games
 in the server information popup before joining the game.
 
 @parag{User Interface settings.} The @ui{Scale} setting applies to the Doomsday

@@ -20,9 +20,6 @@ lot of testing.
 @strong{David Jarvis} did early network testing with jDoom and jHeretic and
 generously contributed essential computer hardware components.
 
-@strong{Jaakko Keränen} created the Doomsday Engine and is the lead developer
-of the project.
-
 @strong{Kees Meijs} packaged Doomsday for Debian and hosted an Apt repository
 of Debian packages.
 
@@ -32,3 +29,6 @@ the jDoom Resource Pack.
 
 @strong{Vermil} regularly provides in-depth feedback and bug reports and is an
 expert in all things related to DOOM-based games.
+
+@strong{Jaakko Keränen} created the Doomsday Engine and is the lead developer
+of the project.
