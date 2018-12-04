@@ -132,7 +132,17 @@ Font const &FontBank::font(const DotPath &path) const
 void FontBank::setFontSizeFactor(float sizeFactor)
 {
     // The overall UI scalefactor affects fonts.
-    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f) * Config::get().getf("ui.scaleFactor", 1.f);
+    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f);
+
+#if defined (WIN32)
+    /*
+     * On Windows, fonts are automatically scaled by the operating system according
+     * to the display scaling factor (pixel ratio). Therefore, defaultstyle.pack
+     * does not scale fonts on Windows based on PIXEL_RATIO, and we need to apply
+     * the user's UI scaling here.
+     */
+    d->fontSizeFactor *= Config::get().getf("ui.scalefactor", 1.f);
+#endif
 }
 
 void FontBank::reload()
