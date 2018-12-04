@@ -304,14 +304,14 @@ static void stopPlayer()
 
     if (!DMFluid_Driver())
     {
+        stopWorker();
+
         // Destroy the sfx buffer.
         DENG_ASSERT(sfxBuf != 0);
         DSFLUIDSYNTH_TRACE("stopPlayer: Destroying SFX buffer " << sfxBuf);
 
         DMFluid_Sfx()->Destroy(sfxBuf);
         sfxBuf = 0;
-
-        stopWorker();
     }
 
     delete_fluid_player(fsPlayer);
