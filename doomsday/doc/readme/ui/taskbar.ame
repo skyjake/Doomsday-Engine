@@ -79,11 +79,16 @@ Video settings dialog has a set of aspect ratio options. These control the aspec
     @item @ui{Stretched}: The aspect ratio is unrestricted and adapts to window dimensions. Game elements may appear too wide or tall with this setting.
 }
 
-@parag{Audio backend.} Some of the audio options are dependent on the active
-audio plugins. For example, a MIDI sound font is supported by the FMOD and
-FluidSynth plugins. 3D sound and reverb are supported by FMOD, OpenAL, and
-DirectSound. The audio backend can be reconfigured on the fly; any changes are
-applied when you press the @ui{Apply} button.
+@parag{Audio backend.} Audio output capabilities vary based on operating system
+and audio hardware. Doomsday's audio backend can be configured according to your
+needs primarily via the selection of audio interface plugins. The recommendation
+on all platforms is FMOD for sound effects and FluidSynth for music, because
+these two enable software-based rendering of both 3D sound effects and MIDI
+music. Some of the audio options are dependent on the active audio plugins. For
+example, a MIDI sound font is supported by the FMOD and FluidSynth plugins. 3D
+sound and reverb are supported by FMOD, OpenAL, and DirectSound. The audio
+backend can be reconfigured on the fly; any changes are applied when you press
+the @ui{Apply} button.
 
 @parag{Game controllers.} Doomsday comes with a few preset bindings for
 different gamepads. To use one of the presets, click on the @ui{Game Controller
