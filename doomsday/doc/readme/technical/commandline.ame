@@ -88,8 +88,8 @@ response file whose contents are added to the command line.
     @item{@opt{-fullscreen} | @opt{-nofullscreen}} Enable or disable fullscreen
     mode.
 
-    @item{@opt{-icd} | @opt{-imusic} | @opt{-isfx}} Set the audio backend for
-    CD playback, music, and sound effects. The following audio backends are
+    @item{@opt{-icd} | @opt{-imusic} | @opt{-isfx}} Set the audio plugin for
+    CD playback, music, and sound effects. The following plugins are
     available:
     @list/thin{
         @item dummy
@@ -100,8 +100,9 @@ response file whose contents are added to the command line.
         @ifdef{WIN32}{@item dsound @item winmm}
     }
 
-    @item{@opt{-fontsize}} Set a scaling factor for UI fonts. For example:
-    @opt{-fontsize 1.5}
+    @item{@opt{-fontsize}} Set a scaling factor for UI fonts. This is applied
+    separately from the overall UI scale setting (see
+    @ref{config}{Configuration}). For example: @opt{-fontsize 1.5}
 
     @item{@opt{-loglevel}} Set the log output level. The levels are: XVerbose,
     Verbose, Message, Note, Warning, Error, Critical.
