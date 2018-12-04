@@ -51,20 +51,20 @@ enum visspritetype_t
 struct VisEntityPose
 {
     de::Vector3d origin;
-    de::dfloat topZ;              ///< Global top Z coordinate (origin Z is the bottom).
-    de::Vector3d srvo;            ///< Short-range visual offset.
-    coord_t distance;             ///< Distance from viewer.
-    de::dfloat yaw;
-    de::dfloat extraYawAngle;
-    de::dfloat yawAngleOffset;    ///< @todo We do not need three sets of angles...
-    de::dfloat pitch;
-    de::dfloat extraPitchAngle;
-    de::dfloat pitchAngleOffset;
-    de::dfloat extraScale;
-    bool viewAligned;
-    bool mirrored;                ///< If true the model will be mirrored about its Z axis (in model space).
+    float topZ = 0.f;               ///< Global top Z coordinate (origin Z is the bottom).
+    de::Vector3d srvo;              ///< Short-range visual offset.
+    coord_t distance = 0.0;         ///< Distance from viewer.
+    float yaw = 0.f;
+    float extraYawAngle = 0.f;
+    float yawAngleOffset = 0.f;     ///< @todo We do not need three sets of angles...
+    float pitch = 0.f;
+    float extraPitchAngle = 0.f;
+    float pitchAngleOffset = 0.f;
+    float extraScale = 0.f;
+    bool viewAligned = false;
+    bool mirrored = false;          ///< If true the model will be mirrored about its Z axis (in model space).
 
-    VisEntityPose() { de::zap(*this); }
+    VisEntityPose() = default;
 
     VisEntityPose(de::Vector3d const &origin_, de::Vector3d const &visOffset,
                   bool viewAlign_ = false,
@@ -99,7 +99,7 @@ struct VisEntityLighting
     de::Vector4f ambientColor;
     de::duint vLightListIdx = 0;
 
-    VisEntityLighting() {}
+    VisEntityLighting() = default;
 
     VisEntityLighting(de::Vector4f const &ambientColor, de::duint lightListIndex)
         : ambientColor(ambientColor)
@@ -115,8 +115,8 @@ struct VisEntityLighting
  */
 struct vissprite_t
 {
-    vissprite_t *prev;
-    vissprite_t *next;
+    vissprite_t *prev = nullptr;
+    vissprite_t *next = nullptr;
     visspritetype_t type;
 
     VisEntityPose pose;

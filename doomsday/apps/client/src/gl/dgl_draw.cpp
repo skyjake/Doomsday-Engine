@@ -50,24 +50,19 @@ struct DGLDrawState
 {
     struct Vertex
     {
-        Vector3f  vertex;
-        Vector4ub color { 255, 255, 255, 255 };
-        Vector2f  texCoord[MAX_TEX_COORDS];
-        float     fragOffset[2] { 0, 0 }; // Multiplied by uFragmentOffset
-        float     batchIndex;
+        float   vertex[3];
+        uint8_t color[4]; // { 255, 255, 255, 255 };
+        struct { float s, t; } texCoord[MAX_TEX_COORDS];
+        float   fragOffset[2]; // { 0, 0 }; // Multiplied by uFragmentOffset
+        float   batchIndex;
+    };
 
-        Vertex() {}
-
-        Vertex(const Vertex &other)
-        {
-            std::memcpy(this, &other, sizeof(Vertex));
-        }
-
-        Vertex &operator=(const Vertex &other)
-        {
-            std::memcpy(this, &other, sizeof(Vertex));
-            return *this;
-        }
+    static constexpr Vertex DEFAULT_VERTEX = {
+        {0.f, 0.f, 0.f},
+        {255, 255, 255, 255},
+        {{0.f, 0.f}, {0.f, 0.f}},
+        {0.f, 0.f},
+        0.f
     };
 
     // Indices for vertex attribute arrays.
@@ -87,7 +82,7 @@ struct DGLDrawState
     duint           batchMaxSize;
     duint           currentBatchIndex;
     bool            resetPrimitive = false;
-    Vertex          currentVertex;
+    Vertex          currentVertex = DEFAULT_VERTEX;
     Vertex          primVertices[4];
     QVector<Vertex> vertices;
 
@@ -173,7 +168,7 @@ struct DGLDrawState
 
     void commitLine(Vertex start, Vertex end)
     {
-        const Vector2f lineDir = (end.vertex - start.vertex).normalize();
+        const Vector2f lineDir = (Vector2f(end.vertex) - Vector2f(start.vertex)).normalize();
         const Vector2f lineNormal{-lineDir.y, lineDir.x};
 
         const bool disjoint = !vertices.empty();
@@ -719,7 +714,7 @@ void DGL_Flush()
 
 void DGL_CurrentColor(DGLubyte *rgba)
 {
-    std::memcpy(rgba, dglDraw.currentVertex.color.constPtr(), 4);
+    std::memcpy(rgba, dglDraw.currentVertex.color, 4);
 }
 
 void DGL_CurrentColor(float *rgba)
@@ -733,7 +728,10 @@ DENG_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = Vector4ub(r, g, b, 255);
+    dglDraw.currentVertex.color[0] = r;
+    dglDraw.currentVertex.color[1] = g;
+    dglDraw.currentVertex.color[2] = b;
+    dglDraw.currentVertex.color[3] = 255;
 }
 
 #undef DGL_Color3ubv
@@ -741,7 +739,10 @@ DENG_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = Vector4ub(Vector3ub(vec), 255);
+    dglDraw.currentVertex.color[0] = vec[0];
+    dglDraw.currentVertex.color[1] = vec[1];
+    dglDraw.currentVertex.color[2] = vec[2];
+    dglDraw.currentVertex.color[3] = 255;
 }
 
 #undef DGL_Color4ub
@@ -749,7 +750,10 @@ DENG_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = Vector4ub(r, g, b, a);
+    dglDraw.currentVertex.color[0] = r;
+    dglDraw.currentVertex.color[1] = g;
+    dglDraw.currentVertex.color[2] = b;
+    dglDraw.currentVertex.color[3] = a;
 }
 
 #undef DGL_Color4ubv
@@ -757,7 +761,10 @@ DENG_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = Vector4ub(vec);
+    dglDraw.currentVertex.color[0] = vec[0];
+    dglDraw.currentVertex.color[1] = vec[1];
+    dglDraw.currentVertex.color[2] = vec[2];
+    dglDraw.currentVertex.color[3] = vec[3];
 }
 
 #undef DGL_Color3f
@@ -765,7 +772,11 @@ DENG_EXTERN_C void DGL_Color3f(float r, float g, float b)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, 1.f));
+    const auto color = DGLDrawState::colorFromFloat({r, g, b, 1.f});
+    dglDraw.currentVertex.color[0] = color.x;
+    dglDraw.currentVertex.color[1] = color.y;
+    dglDraw.currentVertex.color[2] = color.z;
+    dglDraw.currentVertex.color[3] = color.w;
 }
 
 #undef DGL_Color3fv
@@ -773,7 +784,11 @@ DENG_EXTERN_C void DGL_Color3fv(float const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(Vector3f(vec), 1.f));
+    const auto color = DGLDrawState::colorFromFloat({Vector3f(vec), 1.f});
+    dglDraw.currentVertex.color[0] = color.x;
+    dglDraw.currentVertex.color[1] = color.y;
+    dglDraw.currentVertex.color[2] = color.z;
+    dglDraw.currentVertex.color[3] = color.w;
 }
 
 #undef DGL_Color4f
@@ -781,7 +796,11 @@ DENG_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(r, g, b, a));
+    const auto color = DGLDrawState::colorFromFloat({r, g, b, a});
+    dglDraw.currentVertex.color[0] = color.x;
+    dglDraw.currentVertex.color[1] = color.y;
+    dglDraw.currentVertex.color[2] = color.z;
+    dglDraw.currentVertex.color[3] = color.w;
 }
 
 #undef DGL_Color4fv
@@ -789,7 +808,11 @@ DENG_EXTERN_C void DGL_Color4fv(float const *vec)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.color = DGLDrawState::colorFromFloat(Vector4f(vec));
+    const auto color = DGLDrawState::colorFromFloat(vec);
+    dglDraw.currentVertex.color[0] = color.x;
+    dglDraw.currentVertex.color[1] = color.y;
+    dglDraw.currentVertex.color[2] = color.z;
+    dglDraw.currentVertex.color[3] = color.w;
 }
 
 #undef DGL_TexCoord2f
@@ -800,7 +823,8 @@ DENG_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 
     if (target < MAX_TEX_COORDS)
     {
-        dglDraw.currentVertex.texCoord[target] = Vector2f(s, t);
+        dglDraw.currentVertex.texCoord[target].s = s;
+        dglDraw.currentVertex.texCoord[target].t = t;
     }
 }
 
@@ -812,7 +836,8 @@ DENG_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
 
     if (target < MAX_TEX_COORDS)
     {
-        dglDraw.currentVertex.texCoord[target] = Vector2f(vec);
+        dglDraw.currentVertex.texCoord[target].s = vec[0];
+        dglDraw.currentVertex.texCoord[target].t = vec[1];
     }
 }
 
@@ -821,7 +846,9 @@ DENG_EXTERN_C void DGL_Vertex2f(float x, float y)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.vertex = Vector3f(x, y, 0.f);
+    dglDraw.currentVertex.vertex[0] = x;
+    dglDraw.currentVertex.vertex[1] = y;
+    dglDraw.currentVertex.vertex[2] = 0.f;
     dglDraw.commitVertex();
 }
 
@@ -832,7 +859,9 @@ DENG_EXTERN_C void DGL_Vertex2fv(const float* vec)
 
     if (vec)
     {
-        dglDraw.currentVertex.vertex = Vector3f(vec[0], vec[1], 0.f);
+        dglDraw.currentVertex.vertex[0] = vec[0];
+        dglDraw.currentVertex.vertex[1] = vec[1];
+        dglDraw.currentVertex.vertex[2] = 0.f;
     }
     dglDraw.commitVertex();
 }
@@ -842,7 +871,9 @@ DENG_EXTERN_C void DGL_Vertex3f(float x, float y, float z)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
 
-    dglDraw.currentVertex.vertex = Vector3f(x, y, z);
+    dglDraw.currentVertex.vertex[0] = x;
+    dglDraw.currentVertex.vertex[1] = y;
+    dglDraw.currentVertex.vertex[2] = z;
 
     dglDraw.commitVertex();
 }
@@ -854,7 +885,9 @@ DENG_EXTERN_C void DGL_Vertex3fv(const float* vec)
 
     if (vec)
     {
-        dglDraw.currentVertex.vertex = Vector3f(vec);
+        dglDraw.currentVertex.vertex[0] = vec[0];
+        dglDraw.currentVertex.vertex[1] = vec[1];
+        dglDraw.currentVertex.vertex[2] = vec[2];
     }
     dglDraw.commitVertex();
 }

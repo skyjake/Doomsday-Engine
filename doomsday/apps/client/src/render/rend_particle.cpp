@@ -711,7 +711,7 @@ static void drawParticles(dint rtype, bool withBlend)
         // Model particles are rendered using the normal model rendering routine.
         if(rtype == PTC_MODEL && stDef->model >= 0)
         {
-            vissprite_t temp; de::zap(temp);
+            vissprite_t temp;
             setupModelParamsForParticle(temp, &pinfo, st, stDef, center, dist, size, inter, color.w);
             Rend_DrawModel(temp);
             continue;

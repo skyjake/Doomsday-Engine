@@ -2179,7 +2179,7 @@ static bool projectDynlight(Vector3d const &topLeft, Vector3d const &bottomRight
                             topLeft, bottomRight, surface.tangentMatrix()))
         return false;
 
-    de::zap(projected);
+    projected = {};
     projected.texture     = tex;
     projected.topLeft     = Vector2f(s[0], t[0]);
     projected.bottomRight = Vector2f(s[1], t[1]);
@@ -2412,7 +2412,7 @@ static bool lightWithWorldLight(Vector3d const & /*point*/, Vector3f const &ambi
 {
     static Vector3f const worldLight(-.400891f, -.200445f, .601336f);
 
-    de::zap(vlight);
+    vlight = {};
     vlight.direction         = worldLight;
     vlight.color             = ambientColor;
     vlight.affectedByAmbient = false;
@@ -2448,7 +2448,7 @@ static bool lightWithLumobj(Vector3d const &point, Lumobj const &lum, VectorLigh
     }
     if (intensity < .05f) return false;
 
-    de::zap(vlight);
+    vlight = {};
     vlight.direction         = (lumCenter - point) / dist;
     vlight.color             = lum.color() * intensity;
     vlight.affectedByAmbient = true;
@@ -2485,7 +2485,7 @@ static bool lightWithPlaneGlow(Vector3d const &point, Subsector const &subsec,
     Vector3f const color = Rend_LuminousColor(glowColor, intensity);
     if (color == Vector3f()) return false;
 
-    de::zap(vlight);
+    vlight = {};
     vlight.direction         = Vector3f(surface.normal().x, surface.normal().y, -surface.normal().z);
     vlight.color             = color;
     vlight.affectedByAmbient = true;
@@ -4810,7 +4810,7 @@ static void drawLabel(String const &label, Vector3d const &origin, dfloat scale,
     DGL_Rotatef(vpitch, 1, 0, 0);
     DGL_Scalef(-scale, -scale, 1);
 
-    Point2Raw offset(2, 2);
+    Point2Raw offset = {{{2, 2}}};
     UI_TextOutEx(label.toUtf8().constData(), &offset, UI_Color(UIC_TITLE), opacity);
 
     DGL_MatrixMode(DGL_MODELVIEW);

@@ -148,7 +148,7 @@ void AnimationRule::update()
     }
 }
 
-void AnimationRule::timeChanged(Clock const &clock)
+void AnimationRule::timeChanged(const Clock &)
 {
     invalidate();
 }

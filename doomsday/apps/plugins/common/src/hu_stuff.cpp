@@ -738,7 +738,7 @@ void HU_DrawScoreBoard(int player)
     int inCount = populateScoreInfo(scoreBoard, MAXPLAYERS, player);
 
     // Determine the dimensions of the scoreboard:
-    RectRaw geom = RectRaw(0, 0, SCREENWIDTH - 32, SCREENHEIGHT - 32);
+    RectRaw geom = {{0, 0}, {SCREENWIDTH - 32, SCREENHEIGHT - 32}};
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -1111,7 +1111,7 @@ void WI_DrawPatch(patchid_t patchId, de::String const &replacement, de::Vector2i
     if(!replacement.isEmpty())
     {
         // Use the replacement string.
-        Point2Raw const originAsPoint2Raw(origin.x, origin.y);
+        const Point2Raw originAsPoint2Raw = {{{origin.x, origin.y}}};
         FR_DrawText3(replacement.toUtf8().constData(), &originAsPoint2Raw, alignFlags, textFlags);
         return;
     }
@@ -1493,8 +1493,8 @@ void Hu_MapTitleDrawer(const RectRaw* portGeometry)
                                     scalemode_t(cfg.common.menuScaleMode));
 
     // Determine origin of the title.
-    Point2Raw origin(portGeometry->size.width / 2,
-                     6 * portGeometry->size.height / SCREENHEIGHT);
+    Point2Raw origin = {{{portGeometry->size.width / 2,
+                          6 * portGeometry->size.height / SCREENHEIGHT}}};
 
     // Should the title be positioned in the bottom of the view?
     if(cfg.common.automapTitleAtBottom &&

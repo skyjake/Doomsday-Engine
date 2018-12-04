@@ -43,12 +43,6 @@ typedef struct thinker_s {
     uint32_t _flags;
     thid_t id;              ///< Only used for mobjs (zero is not an ID).
     void *d;                ///< Private data (owned).
-#ifdef __cplusplus
-    enum InitBehavior { InitializeToZero };
-    thinker_s(InitBehavior) { de::zap(*this); }
-    DENG2_NO_ASSIGN(thinker_s)
-    DENG2_NO_COPY(thinker_s)
-#endif
 } thinker_t;
 
 #define THINKER_DATA(thinker, T)        (reinterpret_cast<Thinker::IData *>((thinker).d)->as<T>())

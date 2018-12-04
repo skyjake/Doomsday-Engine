@@ -87,11 +87,11 @@ public:
     /// Implementation limits.
     struct Limits
     {
-        int maxTexFilterAniso;
-        int maxTexSize; ///< Texels.
-        int maxTexUnits;
+        int maxTexFilterAniso = 0;
+        int maxTexSize = 0; ///< Texels.
+        int maxTexUnits = 0;
         Rangef smoothLineWidth;
-        float smoothLineWidthGranularity;
+        float smoothLineWidthGranularity = 0.f;
     };
 
     GLInfo();

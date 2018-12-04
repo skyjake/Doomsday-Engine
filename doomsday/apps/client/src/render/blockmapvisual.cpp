@@ -247,10 +247,10 @@ static void drawCellInfo(Vector2d const &origin_, char const *info)
     FR_SetShadowOffset(UI_SHADOW_OFFSET, UI_SHADOW_OFFSET);
     FR_SetShadowStrength(UI_SHADOW_STRENGTH);
 
-    Size2Raw size(16 + FR_TextWidth(info),
-                  16 + FR_SingleLineHeight(info));
+    Size2Raw size = {{{16 + FR_TextWidth(info),
+                       16 + FR_SingleLineHeight(info)}}};
 
-    Point2Raw origin(origin_.x, origin_.y);
+    Point2Raw origin = {{{int(origin_.x), int(origin_.y)}}};
     origin.x -= size.width / 2;
     //UI_GradientEx(&origin, &size, 6, UI_Color(UIC_BG_MEDIUM), UI_Color(UIC_BG_LIGHT), .5f, .5f);
     //UI_DrawRectEx(&origin, &size, 6, false, UI_Color(UIC_BRD_HI), NULL, .5f, -1);
@@ -267,7 +267,7 @@ static void drawBlockmapInfo(Vector2d const &origin_, Blockmap const &blockmap)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
-    Point2Raw origin(origin_.x, origin_.y);
+    Point2Raw origin = {{{int(origin_.x), int(origin_.y)}}};
 
     FR_SetFont(fontFixed);
     FR_LoadDefaultAttrib();

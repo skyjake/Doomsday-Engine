@@ -756,7 +756,7 @@ viewport_t const *R_CurrentViewPort()
 
 void R_RenderBlankView()
 {
-    UI_DrawDDBackground(Point2Raw(0, 0), Size2Raw(320, 200), 1);
+    UI_DrawDDBackground(Point2Raw{0, 0}, Size2Raw{{{320, 200}}}, 1);
 }
 
 static void setupPlayerSprites()
@@ -1177,11 +1177,11 @@ void R_RenderViewPort(int playerNum)
     DGL_Ortho(0, 0, viewRect.width(), viewRect.height(), -1, 1);
 
     viewdata_t const *vd = &DD_Player(vp->console)->viewport();
-    RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
-                       vp->geometry.width(), vp->geometry.height());
+    RectRaw vpGeometry = {{vp->geometry.topLeft.x, vp->geometry.topLeft.y},
+                          {int(vp->geometry.width()), int(vp->geometry.height())}};
 
-    RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
-                     vd->window.width(), vd->window.height());
+    RectRaw vdWindow = {{vd->window.topLeft.x, vd->window.topLeft.y},
+                        {int(vd->window.width()), int(vd->window.height())}};
 
     R_UpdateViewer(vp->console);
 

@@ -308,7 +308,7 @@ void Rend_Draw3DPlayerSprites()
 
         if (spr.type == VPSPR_MODEL)
         {
-            vissprite_t vs; de::zap(vs);
+            vissprite_t vs;
             setupModelParamsForVisPSprite(vs, spr);
             Rend_DrawModel(vs);
         }

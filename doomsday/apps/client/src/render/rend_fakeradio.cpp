@@ -253,7 +253,7 @@ static void setTopShadowParams(WallEdge const &leftEdge, WallEdge const &rightEd
     Plane const &visFloor   = subsec.visFloor  ();
     Plane const &visCeiling = subsec.visCeiling();
 
-    de::zap(projected);
+    projected = {};
     projected.texDimensions = Vector2f(0, shadowSize);
     projected.texOrigin     = Vector2f(0, calcTexCoordY(leftEdge.top().z(), subsec.visFloor().heightSmoothed()
                                                         , subsec.visCeiling().heightSmoothed(), shadowSize));
@@ -410,7 +410,7 @@ static void setBottomShadowParams(WallEdge const &leftEdge, WallEdge const &righ
     Plane const &visFloor   = subsec.visFloor  ();
     Plane const &visCeiling = subsec.visCeiling();
 
-    de::zap(projected);
+    projected = {};
     projected.texDimensions.y = -shadowSize;
     projected.texOrigin.y     = calcTexCoordY(leftEdge.top().z(), visFloor.heightSmoothed(), visCeiling.heightSmoothed(), -shadowSize);
     projected.texture         = LST_RADIO_OO;
@@ -568,7 +568,7 @@ static void setSideShadowParams(WallEdge const &leftEdge, WallEdge const &rightE
     Plane const &visCeiling = subsec.visCeiling();
     DENG2_ASSERT(visFloor.castsShadow() || visCeiling.castsShadow());  // sanity check.
 
-    de::zap(projected);
+    projected = {};
     projected.texOrigin     = Vector2f(0, leftEdge.bottom().z() - visFloor.heightSmoothed());
     projected.texDimensions = Vector2f(0, visCeiling.heightSmoothed() - visFloor.heightSmoothed());
 

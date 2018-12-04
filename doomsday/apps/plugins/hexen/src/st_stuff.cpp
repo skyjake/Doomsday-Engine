@@ -1343,7 +1343,7 @@ static void drawUIWidgetsForPlayer(player_t *plr)
         availHeight = displayRegion.size.height - (drawnSize.height > 0 ? drawnSize.height : 0);
         HudWidget &mnGroup = GUI_FindWidgetById(hud->groupIds[UWG_MAPNAME]);
         mnGroup.setOpacity(ST_AutomapOpacity(playerNum));
-        Size2Raw size(displayRegion.size.width, availHeight);
+        Size2Raw size = {{{displayRegion.size.width, availHeight}}};
         mnGroup.setMaximumSize(size);
 
         GUI_DrawWidget(&mnGroup, &displayRegion.origin);
