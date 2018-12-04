@@ -30,8 +30,10 @@
 
 /**
  * Start the song for the specified map.
+ *
+ * @c return Music was successfully started.
  */
-void S_MapMusic(de::Uri const &mapUri);
+bool S_MapMusic(de::Uri const &mapUri);
 
 extern "C" {
 #endif

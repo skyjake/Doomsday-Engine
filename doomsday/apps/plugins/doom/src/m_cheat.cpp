@@ -36,6 +36,7 @@
 #include "gamesession.h"
 #include "hu_msg.h"
 #include "p_user.h"
+#include "p_sound.h"
 #include "player.h"
 
 using namespace de;
@@ -78,8 +79,8 @@ CHEAT_FUNC(Music)
     }
 
     // Lookup and try to enqueue the Music for the referenced episode and map.
-    Record const &mapInfo = G_MapInfoForMapUri(TranslateMapWarpNumber(episodeId, warpNumber));
-    if(S_StartMusic(mapInfo.gets("music").toUtf8().constData(), true /*loop it*/))
+    const auto mapUri = TranslateMapWarpNumber(episodeId, warpNumber);
+    if (S_MapMusic(mapUri))
     {
         P_SetMessageWithFlags(plr, STSTR_MUS, LMF_NO_HIDE);
         return true;

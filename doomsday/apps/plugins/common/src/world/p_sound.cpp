@@ -33,7 +33,7 @@
 
 using namespace de;
 
-void S_MapMusic(de::Uri const &mapUri)
+bool S_MapMusic(de::Uri const &mapUri)
 {
     String musicId = G_MapInfoForMapUri(mapUri).gets("music");
     if (musicId.isEmpty())
@@ -44,6 +44,7 @@ void S_MapMusic(de::Uri const &mapUri)
     {
         // Set the game status cvar for the map music.
         Con_SetInteger2("map-music", Defs().getMusicNum(musicId.toUtf8()), SVF_WRITE_OVERRIDE);
+        return true;
     }
     else
     {
@@ -51,6 +52,7 @@ void S_MapMusic(de::Uri const &mapUri)
         S_StopMusic();
         Con_SetInteger2("map-music", -1, SVF_WRITE_OVERRIDE);
     }
+    return false;
 }
 
 void S_SectorSound(Sector *sec, int id)
