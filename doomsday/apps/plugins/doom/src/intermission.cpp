@@ -132,14 +132,14 @@ namespace internal
     static void drawChar(QChar const ch, Vector2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
-        Point2Raw const rawOrigin(origin.x, origin.y);
+        const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawChar3(ch.toLatin1(), &rawOrigin, alignFlags, textFlags);
     }
 
     static void drawText(String const &text, Vector2i const &origin,
                          int alignFlags = ALIGN_TOPLEFT, int textFlags = DTF_NO_TYPEIN)
     {
-        Point2Raw const rawOrigin(origin.x, origin.y);
+        const Point2Raw rawOrigin = {{{origin.x, origin.y}}};
         FR_DrawText3(text.toUtf8().constData(), &rawOrigin, alignFlags, textFlags);
     }
 

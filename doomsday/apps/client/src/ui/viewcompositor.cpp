@@ -250,12 +250,12 @@ void ViewCompositor::drawCompositedLayers()
 
         /// @todo HUD rendering probably doesn't need the vdWindow (maybe for the automap?).
 
-        RectRaw vpGeometry(vp->geometry.topLeft.x, vp->geometry.topLeft.y,
-                           vp->geometry.width(), vp->geometry.height());
+        RectRaw vpGeometry = {{vp->geometry.topLeft.x, vp->geometry.topLeft.y},
+                              {int(vp->geometry.width()), int(vp->geometry.height())}};
 
         viewdata_t const *vd = &DD_Player(d->playerNum)->viewport();
-        RectRaw vdWindow(vd->window.topLeft.x, vd->window.topLeft.y,
-                         vd->window.width(), vd->window.height());
+        RectRaw vdWindow = {{vd->window.topLeft.x, vd->window.topLeft.y},
+                            {int(vd->window.width()), int(vd->window.height())}};
 
         if (gx.DrawViewPort)
         {
@@ -312,7 +312,7 @@ void ViewCompositor::drawCompositedLayers()
         // Draw any full window game graphics.
         if (gx.DrawWindow)
         {
-            Size2Raw const dimensions(DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT);
+            Size2Raw const dimensions = {{{DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT}}};
             gx.DrawWindow(&dimensions);
         }
     }

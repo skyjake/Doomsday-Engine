@@ -229,7 +229,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 
     // Draw the text.
     DGL_Enable(DGL_TEXTURE_2D);
-    Point2Raw const textOffset(BORDER, BORDER);
+    Point2Raw const textOffset = {{{BORDER, BORDER}}};
     FR_DrawText(label.toUtf8().constData(), &textOffset);
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -759,7 +759,7 @@ void I_DebugDrawer()
     };
     static inputdev_layout_t joyLayout = { joyGroups, NUMITEMS(joyGroups) };
 
-    Point2Raw origin(2, 2);
+    Point2Raw origin = {{{2, 2}}};
     Size2Raw dimensions;
 
     if (novideo || isDedicated) return; // Not for us.

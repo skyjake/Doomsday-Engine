@@ -29,7 +29,7 @@
  */
 struct ProjectedTextureData
 {
-    DGLuint texture;
+    DGLuint texture = 0;
     de::Vector2f topLeft;
     de::Vector2f bottomRight;
     de::Vector4f color;

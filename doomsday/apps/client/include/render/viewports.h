@@ -85,10 +85,11 @@ struct viewdata_t
      */
     de::Vector3f frontVec, upVec, sideVec; /* to the left */
 
-    float viewCos, viewSin;
+    float viewCos = 0.f;
+    float viewSin = 0.f;
 
     de::Rectanglei window, windowTarget, windowOld;
-    float windowInter;
+    float windowInter = 0.f;
 };
 
 enum ViewPortLayer {

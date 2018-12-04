@@ -60,7 +60,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
         spr = visSpriteP - 1;
     }
 
-    de::zapPtr(spr);
+    *spr = {};
     spr->type = type;
 
     return spr;

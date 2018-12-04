@@ -1826,7 +1826,7 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
             // Next, try non-MUS lumps.
             canPlayMUS = false;
 
-            // Note: Intentionally falls through to MUSP_MUS.
+            // Note: Intentionally falls through to MUSP_MUS.            
 
         case MUSP_MUS:
             if (d->playMusicLump(App_FileSystem().lumpNumForName(definition.gets("lumpName")),

@@ -242,7 +242,7 @@ void GUI_DrawWidget(HudWidget *wi, Point2Raw const *offset)
 
 void GUI_DrawWidgetXY(HudWidget *wi, int x, int y)
 {
-    Point2Raw origin(x, y);
+    Point2Raw origin = {{{x, y}}};
     GUI_DrawWidget(wi, &origin);
 }
 

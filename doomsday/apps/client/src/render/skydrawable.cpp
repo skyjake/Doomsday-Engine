@@ -478,7 +478,7 @@ DENG2_PIMPL(SkyDrawable)
             Animator::ModelState const &mstate = animator->model(i);
 
             // Prepare a vissprite for ordered drawing.
-            vissprite_t vis; de::zap(vis);
+            vissprite_t vis;
 
             vis.pose.origin          = vOrigin.xzy() * -Vector3f(skyModelDef.get("originOffset")).xzy();
             vis.pose.topZ            = vis.pose.origin.z;

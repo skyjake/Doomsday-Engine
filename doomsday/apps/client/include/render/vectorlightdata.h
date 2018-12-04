@@ -28,14 +28,14 @@
  */
 struct VectorLightData
 {
-    de::dfloat approxDist;   ///< Only an approximation.
-    de::Vector3f direction;  ///< Normalized vector from light origin to illumination point.
-    de::Vector3f color;      ///< How intense the light is (0..1, RGB).
-    de::dfloat offset;
-    de::dfloat lightSide;
-    de::dfloat darkSide;     ///< Factors for world light.
-    bool affectedByAmbient;
-    struct mobj_s const *sourceMobj; ///< Originating mobj, or nullptr.
+    float approxDist = 0.f;   ///< Only an approximation.
+    de::Vector3f direction;   ///< Normalized vector from light origin to illumination point.
+    de::Vector3f color;       ///< How intense the light is (0..1, RGB).
+    float offset = 0.f;
+    float lightSide = 0.f;
+    float darkSide = 0.f;     ///< Factors for world light.
+    bool affectedByAmbient = false;
+    struct mobj_s const *sourceMobj = nullptr; ///< Originating mobj, or nullptr.
 };
 
 #endif  // CLIENT_RENDER_VECTORLIGHTDATA_H

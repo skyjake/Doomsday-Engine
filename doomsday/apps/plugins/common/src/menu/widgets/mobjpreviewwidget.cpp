@@ -91,8 +91,8 @@ void MobjPreviewWidget::draw() const
     spriteinfo_t info;
     if(!R_GetSpriteInfo(sprite, spriteFrame, &info)) return;
 
-    Point2Raw origin(info.geometry.origin.x, info.geometry.origin.y);
-    Size2Raw size(info.geometry.size.width, info.geometry.size.height);
+    Point2Raw origin = {{{info.geometry.origin.x, info.geometry.origin.y}}};
+    Size2Raw size = {{{info.geometry.size.width, info.geometry.size.height}}};
 
     float scale = (size.height > size.width? (float)MNDATA_MOBJPREVIEW_HEIGHT / size.height :
                                              (float)MNDATA_MOBJPREVIEW_WIDTH  / size.width);

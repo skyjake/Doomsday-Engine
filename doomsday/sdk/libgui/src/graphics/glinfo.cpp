@@ -81,7 +81,6 @@ DENG2_PIMPL_NOREF(GLInfo), public QOpenGLFunctions_Doomsday
     Impl()
     {
         zap(ext);
-        zap(lim);
     }
 
     /**

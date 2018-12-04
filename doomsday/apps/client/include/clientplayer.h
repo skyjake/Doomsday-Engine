@@ -50,11 +50,11 @@ typedef struct clplayerstate_s {
 struct DemoTimer
 {
     bool first;
-    de::dint begintime;
+    int begintime;
     bool canwrite;  ///< @c false until Handshake packet.
-    de::dint cameratimer;
-    de::dint pausetime;
-    de::dfloat fov;
+    int cameratimer;
+    int pausetime;
+    float fov;
 };
 
 /**

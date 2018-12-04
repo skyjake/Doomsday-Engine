@@ -137,8 +137,9 @@ bool Polyobj::blocked() const
 }
 
 polyobj_s::polyobj_s(Vector2d const &origin_)
-    : thinker(thinker_s::InitializeToZero)
 {
+    zap(thinker);
+
     origin[0] = origin_.x;
     origin[1] = origin_.y;
     tag = 0;

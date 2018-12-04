@@ -225,8 +225,8 @@ static void drawUIWidgetsForPlayer(player_t* plr)
             HudWidget& mapNameGroup = GUI_FindWidgetById(hud->groupIds[UWG_MAPNAME]);
             mapNameGroup.setOpacity(ST_AutomapOpacity(playerId));
 
-            Size2Raw remainingVertical(displayRegion.size.width,
-                                       displayRegion.size.height - (regionRendered.height > 0 ? regionRendered.height : 0));
+            Size2Raw remainingVertical = {{{displayRegion.size.width,
+                                            displayRegion.size.height - (regionRendered.height > 0 ? regionRendered.height : 0)}}};
 
             mapNameGroup.setMaximumSize(remainingVertical);
 

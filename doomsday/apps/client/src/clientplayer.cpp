@@ -43,7 +43,6 @@ DENG2_PIMPL(ClientPlayer)
         : Base(i)
         , playerWeaponAnimator(i)
     {
-        zap(viewport);
         zap(clPlayerState);
         zap(demoTimer);
     }
