@@ -51,18 +51,10 @@ struct DGLDrawState
     struct Vertex
     {
         float   vertex[3];
-        uint8_t color[4]; // { 255, 255, 255, 255 };
+        uint8_t color[4];
         struct { float s, t; } texCoord[MAX_TEX_COORDS];
-        float   fragOffset[2]; // { 0, 0 }; // Multiplied by uFragmentOffset
+        float   fragOffset[2];  // Multiplied by uFragmentOffset
         float   batchIndex;
-    };
-
-    static constexpr Vertex DEFAULT_VERTEX = {
-        {0.f, 0.f, 0.f},
-        {255, 255, 255, 255},
-        {{0.f, 0.f}, {0.f, 0.f}},
-        {0.f, 0.f},
-        0.f
     };
 
     // Indices for vertex attribute arrays.
@@ -82,7 +74,12 @@ struct DGLDrawState
     duint           batchMaxSize;
     duint           currentBatchIndex;
     bool            resetPrimitive = false;
-    Vertex          currentVertex = DEFAULT_VERTEX;
+    Vertex          currentVertex  = {
+        {0.f, 0.f, 0.f},
+        {255, 255, 255, 255},
+        {{0.f, 0.f}, {0.f, 0.f}},
+        {0.f, 0.f},
+        0.f};
     Vertex          primVertices[4];
     QVector<Vertex> vertices;
 
