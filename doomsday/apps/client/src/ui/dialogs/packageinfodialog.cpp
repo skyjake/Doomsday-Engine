@@ -198,12 +198,11 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         icon->setBehavior(ContentClipping, false);
     }
 
-    void useIconFile(String const &packagePath)
+    bool useIconFromPackage(const String &packagePath)
     {
         try
         {
-            static StringList const imageExts({".jpg", ".jpeg", ".png"});
-            foreach (String ext, imageExts)
+            for (const auto *ext : {".jpg", ".jpeg", ".png"})
             {
                 String const imgPath = packagePath / "icon" + ext;
                 if (ImageFile const *img = FS::tryLocate<ImageFile const>(imgPath))
@@ -216,7 +215,7 @@ DENG_GUI_PIMPL(PackageInfoDialog)
                                         " is too large (max 512x512)");
                     }
                     setPackageIcon(iconImage);
-                    return;
+                    return true;
                 }
             }
         }
@@ -224,7 +223,15 @@ DENG_GUI_PIMPL(PackageInfoDialog)
         {
             LOG_RES_WARNING("Failed to use package icon image: %s") << er.asText();
         }
-        useDefaultIcon();
+        return false;
+    }
+
+    void useIconFile(String const &packagePath)
+    {
+        if (!useIconFromPackage(packagePath))
+        {
+            useDefaultIcon();
+        }
     }
 
     bool setup(File const *file)
@@ -253,9 +260,12 @@ DENG_GUI_PIMPL(PackageInfoDialog)
             format         = bundle->formatAsText().upperFirstChar();
             compatibleGame = bundle->guessCompatibleGame();
 
-            if (!useGameTitlePicture())
+            if (!useIconFromPackage(file->path()))
             {
-                useDefaultIcon();
+                if (!useGameTitlePicture())
+                {
+                    useDefaultIcon();
+                }
             }
 
             if (bundle->format() == DataBundle::Collection)
