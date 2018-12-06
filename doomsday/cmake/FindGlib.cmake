@@ -29,6 +29,9 @@ elseif (MINGW_GLIB_DIR)
         ${MINGW_GLIB_DIR}/${DENG_ARCH}/include/glib-2.0
         ${MINGW_GLIB_DIR}/${DENG_ARCH}/lib/glib-2.0/include
     )
+    if (DENG_ARCH STREQUAL x86)
+        deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libgcc_s_dw2-1.dll)    
+    endif ()
     deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libglib-2.0-0.dll)
     deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libgthread-2.0-0.dll)
     deng_install_library (${MINGW_GLIB_DIR}/${DENG_ARCH}/bin/libintl-8.dll)
