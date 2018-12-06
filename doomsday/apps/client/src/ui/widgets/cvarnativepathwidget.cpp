@@ -27,9 +27,13 @@
 
 using namespace de;
 
-DENG2_PIMPL_NOREF(CVarNativePathWidget)
+DENG2_PIMPL(CVarNativePathWidget)
+, DENG2_OBSERVES(NativePathWidget, UserChange)
 {
     char const *cvar;
+
+    Impl(Public *i) : Base(i)
+    {}
 
     cvar_t *var() const
     {
@@ -37,14 +41,20 @@ DENG2_PIMPL_NOREF(CVarNativePathWidget)
         DENG2_ASSERT(cv != 0);
         return cv;
     }
+
+    void pathChangedByUser(NativePathWidget &)
+    {
+        self().setCVarValueFromWidget();
+    }
 };
 
 CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
-    : d(new Impl)
+    : d(new Impl(this))
 {
     d->cvar = cvarPath;
     updateFromCVar();
     setPrompt(QString("Select File for \"%1\"").arg(d->cvar));
+    audienceForUserChange() += d;
 }
 
 char const *CVarNativePathWidget::cvarPath() const
