@@ -12,23 +12,23 @@ Header { Version = 5; }
 # A better way would just be to use "text" and define the text
 # in the script, no need to go about modifying the Text defs.
 
-InFine 
+InFine
 {
   ID = "title";
   Script {
     # There is no skipping during the titlescreen loop.
-    NoSkip 
-    
+    NoSkip
+
     # Any event shows the menu.
     Trigger
-    
+
     MARKER title_loop
 
     # Step 1.
     Patch back 0 0 "TITLEPIC"
     MusicOnce "intro"
     Wait 4.857 # Original wait is 170 tics.
-        
+
     # Step 2.
     IF MODE:doom1-share     PlayDemo "sdemo1.cdm"
     IF MODE:doom1           PlayDemo "rdemo1.cdm"
@@ -37,16 +37,25 @@ InFine
     # Step 3.
     Set back "CREDIT"
     Wait 5.714 # Original is 200 tics.
-      
+
     # Step 4.
     IF MODE:doom1-share     PlayDemo "sdemo2.cdm"
     IF MODE:doom1           PlayDemo "rdemo2.cdm"
     IF MODE:doom1-ultimate  PlayDemo "udemo2.cdm"
-    
+
     # Step 5.
-    IF MODE:doom1-ultimate Set back "CREDIT" ELSE Set back "HELP2"
+    IF MODE:doom1-ultimate DO
+      Set back "CREDIT"
+      GOTO Step5Wait
+    ;
+    IF MODE:doom1-bfg DO
+      Set back "CREDIT"
+      GOTO Step5Wait
+    ;
+    Set back "HELP2"
+    MARKER Step5Wait
     Wait 5.714 # 200 tics.
-      
+
     # Step 6.
     IF MODE:doom1-share     PlayDemo "sdemo3.cdm"
     IF MODE:doom1           PlayDemo "rdemo3.cdm"
@@ -54,7 +63,7 @@ InFine
 
     # Step 7.
     IF MODE:doom1-ultimate  PlayDemo "udemo4.cdm"
-      
+
     GOTO title_loop
   };
 }
@@ -115,10 +124,10 @@ Finale
     TextDef msg 10 10 "E1TEXT"
     WaitText msg
     Wait 7 # The original TEXTWAIT is 250 tics.
-    
+
     # Show shareware/registered or credits.
     NoFlat DelText msg
-    IF ultimate 
+    IF ultimate
       Patch back 0 0 CREDIT
     ELSE
       Patch back 0 0 HELP2
