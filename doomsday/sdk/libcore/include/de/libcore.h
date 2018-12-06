@@ -200,6 +200,8 @@
         out = ""; \
         for (i = 0; i < frames; ++i) { out.append(strs[i]); out.append('\n'); } \
         free(strs); }
+#  else
+#    define DENG2_PRINT_BACKTRACE() 
 #  endif
 #endif
 
