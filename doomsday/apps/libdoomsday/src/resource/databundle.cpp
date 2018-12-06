@@ -750,10 +750,10 @@ DENG2_PIMPL(DataBundle), public Lockable
         static QList<std::pair<String, StringList>> terms;
         if (terms.isEmpty())
         {
-            terms << std::make_pair(String("doom2"),   StringList({ "doom2|doom 2|DoomII|Doom II|final\\s*doom|plutonia|tnt" })); //, "\\bmap[0-3][0-9]\\b" }));
-            terms << std::make_pair(String("doom"),    StringList({ "^doom$|\\bdoom[^ s2][^2d]|ultimate\\s*doom|udoom" })); //, "\\be[1-4]m[1-9]\\b" }));
-            terms << std::make_pair(String("heretic"), StringList({ "jheretic|heretic", "d'sparil|serpent rider" })); //, "\\be[1-5]m[1-9]\\b" }));
-            terms << std::make_pair(String("hexen"),   StringList({ "jhexen|hexen", "korax|mage|warrior|cleric" })); //, "\\bmap[0-3][0-9]\\b" }));
+            terms << std::make_pair(String("doom2"),   StringList({ "\\b(doom2|doom 2|DoomII|Doom II|final\\s*doom|plutonia|tnt)\\b" }));
+            terms << std::make_pair(String("doom"),    StringList({ "^doom$|\\bdoom[^ s2][^2d]\\b|\\bultimate\\s*doom\\b|\\budoom\\b" }));
+            terms << std::make_pair(String("heretic"), StringList({ "\\b(jheretic|heretic)\\b", "\\b(d'sparil|serpent rider)\\b" }));
+            terms << std::make_pair(String("hexen"),   StringList({ "\\b(jhexen|hexen)\\b", "\\b(korax|mage|warrior|cleric)\\b" })); 
         }
         QHash<String, int> scores;
         for (auto i : terms) //= terms.constBegin(); i != terms.constEnd(); ++i)
@@ -1432,12 +1432,12 @@ String DataBundle::cleanIdentifier(String const &text)
 
 String DataBundle::stripVersion(String const &text, Version *version)
 {
-    QRegExp re(".*([-_. ][0-9._-]+)$");
+    QRegExp re(".*([-_. ]v?([0-9._-]+))$");
     if (re.exactMatch(text))
     {
         if (version)
         {
-            String str = re.cap(1).mid(1);
+            String str = re.cap(2);
             str.replace("_", ".");
             version->parseVersionString(str);
         }
