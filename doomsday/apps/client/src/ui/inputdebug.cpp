@@ -349,7 +349,7 @@ static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t
     origin.y = _origin? _origin->y : 0;
 
     Rect *grpGeom = nullptr;
-    RectRaw ctrlGeom;
+    RectRaw ctrlGeom{};
     for (uint i = 0; i < group->numControls; ++i)
     {
         inputdev_layout_control_t const *ctrl = group->controls + i;
@@ -416,7 +416,7 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
     FR_SetColorAndAlpha(1, 1, 1, 1);
     initDrawStateForVisual(origin);
 
-    Point2Raw offset;
+    Point2Raw offset{};
     Rect *visualGeom = nullptr;
 
     // Draw device name first.
@@ -439,7 +439,7 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
     for (uint i = 0; i < layout->numGroups; ++i)
     {
         inputdev_layout_controlgroup_t const *grp = &layout->groups[i];
-        RectRaw grpGeometry;
+        RectRaw grpGeometry{};
 
         drawControlGroup(device, grp, &offset, &grpGeometry);
 
@@ -760,7 +760,7 @@ void I_DebugDrawer()
     static inputdev_layout_t joyLayout = { joyGroups, NUMITEMS(joyGroups) };
 
     Point2Raw origin = {{{2, 2}}};
-    Size2Raw dimensions;
+    Size2Raw dimensions{};
 
     if (novideo || isDedicated) return; // Not for us.
 

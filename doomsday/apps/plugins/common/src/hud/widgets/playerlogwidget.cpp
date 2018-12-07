@@ -202,7 +202,6 @@ void PlayerLogWidget::tick(timespan_t /*tickLength*/)
 
 void PlayerLogWidget::draw(Vector2i const &offset)
 {
-
     dint pvisEntryCount = de::min(d->pvisEntryCount, de::max(0, cfg.common.msgCount));
     dint firstEntry     = d->firstPVisEntryIdx();
 
@@ -423,7 +422,7 @@ void PlayerLogWidget::updateGeometry()
     dint n = firstEntry;
     dint drawnEntryCount = 0;
 
-    RectRaw lineGeometry;
+    RectRaw lineGeometry{};
     for(dint i = 0; i < pvisEntryCount; ++i, n = d->nextEntryIdx(n))
     {
         entry = &d->entries[n];

@@ -31,7 +31,7 @@ DENG2_PIMPL_NOREF(HudWidget)
 {
     uiwidgetid_t id = 0;              ///< Unique identifier associated with this widget.
     dint alignFlags = ALIGN_TOPLEFT;  ///< @ref alignmentFlags
-    Size2Raw maxSize;                 ///< Maximum size of this widget in pixels.
+    Size2Raw maxSize{};               ///< Maximum size of this widget in pixels.
     Rect *geometry = Rect_New();      ///< Geometry of this widget in pixels.
     dint player = 0;                  ///< Local player number associated with this widget.
     fontid_t font = 0;                ///< Current font used for text child objects of this widget.
