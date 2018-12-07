@@ -55,6 +55,7 @@ public:
     {
         bool justAdded = false;
         bool dontHide  = false;
+        de::duint ticsRemain = 0;
         de::duint tics       = 0;
         de::String text;
     };
