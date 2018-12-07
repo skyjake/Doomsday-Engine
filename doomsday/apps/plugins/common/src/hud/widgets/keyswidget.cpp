@@ -247,7 +247,7 @@ void guidata_keys_t::updateGeometry()
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    RectRaw iconGeometry;
+    RectRaw iconGeometry{};
     for(int i = 0; i < NUM_KEY_TYPES; ++i)
     {
         if(!_keyBoxes[i]) continue;

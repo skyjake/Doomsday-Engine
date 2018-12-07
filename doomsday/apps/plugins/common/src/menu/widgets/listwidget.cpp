@@ -101,7 +101,7 @@ void ListWidget::updateGeometry()
     FR_PushAttrib();
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
 
-    RectRaw itemGeometry;
+    RectRaw itemGeometry{};
     for(int i = 0; i < itemCount(); ++i)
     {
         Item *item = d->items[i];
