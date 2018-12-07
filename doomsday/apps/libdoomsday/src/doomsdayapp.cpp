@@ -195,6 +195,33 @@ DENG2_PIMPL(DoomsdayApp)
         return DirectoryFeed::PopulateNativeSubfolders;
     }
 
+    /**
+     * Composes a path that currently does not exist. The returned path is a subfolder of
+     * @a base and uses segments from @a path.
+     */
+    Path composeUniqueFolderPath(Path base, const NativePath &path) const
+    {
+        if (path.segmentCount() >= 2)
+        {
+            base = base / path.lastSegment();
+        }
+        // Choose a unique folder name.
+        // First try adding another segment.
+        Path folderPath = base;
+        if (FS::tryLocate<Folder>(folderPath) && path.segmentCount() >= 3)
+        {
+            folderPath = folderPath.subPath(Rangei(0, folderPath.segmentCount() - 1)) / 
+                         path.reverseSegment(1) / folderPath.lastSegment();
+        }
+        // Add a number.
+        int counter = 0;
+        while (FS::tryLocate<Folder>(folderPath))
+        {
+            folderPath = Path(base.toString() + String::format("%03d", ++counter));
+        }
+        return folderPath;
+    }
+
     void attachWadFeed(const String &       description,
                        const NativePath &   path,
                        DirectoryFeed::Flags populationMode = DirectoryFeed::OnlyThisFolder)
@@ -209,20 +236,7 @@ DENG2_PIMPL(DoomsdayApp)
                                                                         : " (including subfolders)")
                     << path.pretty();
 
-                Path folderPathBase = PATH_LOCAL_WADS;
-                if (path.segmentCount() >= 2)
-                {
-                    folderPathBase = folderPathBase / path.lastSegment();
-                }
-                // Choose a unique folder name.
-                Path folderPath = folderPathBase;
-                int counter = 0;
-                while (FS::tryLocate<Folder>(folderPath))
-                {
-                    folderPath = Path(String("%1-%2")
-                            .arg(folderPathBase.toString())
-                            .arg(++counter, 3, 10, QChar('0')));
-                }
+                const Path folderPath = composeUniqueFolderPath(PATH_LOCAL_WADS, path);
                 FS::get().makeFolder(folderPath)
                         .attach(new DirectoryFeed(path, populationMode));
             }
@@ -246,8 +260,8 @@ DENG2_PIMPL(DoomsdayApp)
                     << (populationMode == DirectoryFeed::OnlyThisFolder ? ""
                                                                         : " (including subfolders)")
                     << path.pretty();
-                App::rootFolder()
-                    .locate<Folder>(PATH_LOCAL_PACKS)
+                const Path folderPath = composeUniqueFolderPath(PATH_LOCAL_PACKS, path);
+                FS::get().makeFolder(folderPath)
                     .attach(new DirectoryFeed(path, populationMode));
             }
             else
