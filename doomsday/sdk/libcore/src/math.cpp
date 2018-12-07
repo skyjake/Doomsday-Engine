@@ -23,13 +23,17 @@
 #include <chrono>
 #include <random>
 
+#include <QCoreApplication>
+
 namespace de {
 
 float randf()
 {
     using namespace std;
 
-    static minstd_rand rng(uint32_t(chrono::system_clock::to_time_t(chrono::system_clock::now())));
+    static minstd_rand rng(
+        uint32_t((chrono::high_resolution_clock::now().time_since_epoch().count() & 0xffffffff) ^
+                 QCoreApplication::applicationPid()));
 
     return float(double(rng() - rng.min()) / double(rng.max() - rng.min() + 1));
 }
