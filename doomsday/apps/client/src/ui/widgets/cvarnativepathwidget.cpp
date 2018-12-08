@@ -27,7 +27,7 @@
 using namespace de;
 
 DE_PIMPL(CVarNativePathWidget)
-, DENG2_OBSERVES(NativePathWidget, UserChange)
+, DE_OBSERVES(NativePathWidget, UserChange)
 {
     char const *cvar;
 

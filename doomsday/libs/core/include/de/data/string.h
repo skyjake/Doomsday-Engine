@@ -117,7 +117,7 @@ struct DE_PUBLIC mb_iterator
     const char *i;
     const char *start;
     mutable mbstate_t mb{};
-    mutable int curCharLen = 0;
+    //mutable int curCharLen = 0;
 
     mb_iterator() : i{nullptr}, start{nullptr} {}
     mb_iterator(const char *p) : i{p}, start{p} {}
@@ -144,7 +144,7 @@ struct DE_PUBLIC mb_iterator
     BytePos pos(const char *reference) const { return BytePos(i - reference); }
     BytePos pos(const String &reference) const;
 
-    Char decode(bool *ok = nullptr) const;
+    Char decode(const char **end = nullptr) const;
 };
 
 /**
@@ -634,9 +634,9 @@ public:
     Block toPercentEncoding() const;
 
     // Implements IByteArray.
-    Size size() const { return size_String(&_str); }
-    void get(Offset at, Byte *values, Size count) const;
-    void set(Offset at, const Byte *values, Size count);
+    Size size() const override { return size_String(&_str); }
+    void get(Offset at, Byte *values, Size count) const override;
+    void set(Offset at, const Byte *values, Size count) override;
 
 public:
     // Iterators.
@@ -782,7 +782,7 @@ public:
     static String asText(duint32 value) { return format("%u", value); }
     static String asText(duint64 value) { return format("%llu", value); }
     static String asText(dsize value)   { return format("%zu", value); }
-    static String asText(dfloat value)  { return format("%f", value); }
+    static String asText(dfloat value)  { return format("%f", double(value)); }
     static String asText(dfloat value, int precision);
     static String asText(ddouble value) { return format("%f", value); }
     static String asText(char value)    { return format("%c", value); }

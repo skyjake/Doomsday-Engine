@@ -484,7 +484,10 @@ Char String::first() const
 
 Char String::last() const
 {
-    return empty() ? Char() : *rbegin();
+    if (empty()) return {};
+    const Char ch = *rbegin();
+    DE_ASSERT(ch != 0);
+    return ch;
 }
 
 String String::operator/(const String &path) const
@@ -758,9 +761,9 @@ String::const_iterator String::end() const
 }
 
 String::const_reverse_iterator String::rbegin() const
-    {
+{
     return {*this};
-    }
+}
 
 String::const_reverse_iterator String::rend() const
 {
@@ -1159,30 +1162,38 @@ Char mb_iterator::operator*() const
     return decode();
 }
 
-Char mb_iterator::decode(bool *ok) const
+Char mb_iterator::decode(const char **end) const
 {
     wchar_t ch = 0;
-    curCharLen = std::mbrtowc(&ch, i, MB_CUR_MAX, &mb);
-    if (curCharLen < 0)
+    size_t rc = std::mbrtowc(&ch, i, MB_CUR_MAX, &mb);
+    if (int(rc) < 0)
     {
         // Multibyte decoding failed. Let's return something valid, though, so the iterator
         // doesn't hang due to never reaching the end of the string.
         ch = '?';
-        curCharLen = 1;
-        if (ok) *ok = false;
+//        curCharLen = 1;
+        if (end) *end = nullptr;
     }
     else
     {
-        if (ok) *ok = true;
+        if (end) *end = i + rc;
     }
     return ch;
 }
 
 mb_iterator &mb_iterator::operator++()
 {
-    if (curCharLen == 0) decode();
-    i += curCharLen;
-    curCharLen = 0;
+    const char *end;
+    //if (curCharLen == 0) decode();
+    decode(&end);
+    if (end)
+    {
+        i = end;
+    }
+    else
+    {
+        ++i;
+    }
     return *this;
 }
 
@@ -1195,24 +1206,30 @@ mb_iterator mb_iterator::operator++(int)
 
 mb_iterator &mb_iterator::operator--()
 {
-    if (i <= start)
+    while (--i > start)
     {
-        // Cannot access memory beyond the start pointer.
-        --i;
-        return *this;
+        const char *end;
+        memset(&mb, 0, sizeof(mb));
+        decode(&end);
+        if (end) break;
     }
-    for (int j = 1; j < MB_CUR_MAX; ++j)
-    {
-        mb_iterator prec = i - j;
-        bool ok;
-        prec.decode(&ok);
-        if (ok) // && prec.curCharLen == j)
-        {
-            prec.start = start;
-            *this = prec;
-            break;
-        }
-    }
+    return *this;
+
+//    bool moved = false;
+//    for (int j = 1; j < MB_CUR_MAX; ++j)
+//    {
+//        mb_iterator prec = i - j;
+//        bool ok;
+//        prec.decode(&ok);
+//        if (ok) // && prec.curCharLen == j)
+//        {
+//            moved = (prec.i != i);
+//            prec.start = start;
+//            *this = prec;
+//            break;
+//        }
+//    }
+//    DE_ASSERT(moved);
     return *this;
 }
 
@@ -1237,7 +1254,7 @@ mb_iterator &mb_iterator::operator+=(int offset)
     }
     else
     {
-    while (offset-- > 0) ++(*this);
+        while (offset-- > 0) ++(*this);
     }
     return *this;
 }

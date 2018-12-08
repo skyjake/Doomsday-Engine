@@ -248,6 +248,7 @@ DE_PIMPL(CoreTextNativeFont)
                                                      color? 2 : 1, nil, nil);
 
         CFStringRef textStr = CFStringCreateWithCString(nil, text.c_str(), kCFStringEncodingUTF8);
+        DE_ASSERT(textStr != NULL);
         CFAttributedStringRef as = CFAttributedStringCreate(nullptr, textStr, attribs);
         cache.line = CTLineCreateWithAttributedString(as);
 

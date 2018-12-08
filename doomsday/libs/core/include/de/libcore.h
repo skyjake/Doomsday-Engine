@@ -175,9 +175,8 @@
         out = ""; \
         for (i = 0; i < frames; ++i) { outStr.append(strs[i]); outStr.append('\n'); } \
         free(strs); }
-#  else
-#    define DE_PRINT_BACKTRACE() 
-#  endif
+#else
+#  define DE_PRINT_BACKTRACE()
 #endif
 
 /**

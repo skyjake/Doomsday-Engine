@@ -31,7 +31,7 @@ DE_EXTERN_C int main(int argc, char **argv)
     {
         GuiApp app(makeList(argc, argv));
         app.addInitPackage("net.dengine.test.glsandbox");
-        app.initSubsystems(App::DisablePlugins);
+        app.initSubsystems();
 
         TestWindow win;
         win.show();

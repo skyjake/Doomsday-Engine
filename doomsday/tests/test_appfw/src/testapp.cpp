@@ -61,7 +61,7 @@ TestApp::TestApp(const StringList &args)
 void TestApp::initialize()
 {
     addInitPackage("net.dengine.test.appfw");
-    initSubsystems(App::DisablePlugins);
+    initSubsystems();
 
     // Create subsystems.
     d->winSys.reset(new AppWindowSystem);

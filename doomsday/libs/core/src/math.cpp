@@ -20,10 +20,9 @@
 #include "de/IByteArray"
 #include "de/Reader"
 
+#include <the_Foundation/process.h>
 #include <chrono>
 #include <random>
-
-#include <QCoreApplication>
 
 namespace de {
 
@@ -33,7 +32,7 @@ float randf()
 
     static minstd_rand rng(
         uint32_t((chrono::high_resolution_clock::now().time_since_epoch().count() & 0xffffffff) ^
-                 QCoreApplication::applicationPid()));
+                 pid_Process(nullptr)));
 
     return float(double(rng() - rng.min()) / double(rng.max() - rng.min() + 1));
 }

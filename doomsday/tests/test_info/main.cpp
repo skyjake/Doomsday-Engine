@@ -30,7 +30,7 @@ int main(int argc, char **argv)
     try
     {
         TextApp app(makeList(argc, argv));
-        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
+        app.initSubsystems(App::DisablePersistentData);
 
         ScriptedInfo dei;
         dei.parse(app.fileSystem().find("test_info.dei"));

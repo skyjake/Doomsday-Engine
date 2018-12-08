@@ -28,7 +28,7 @@ int main(int argc, char **argv)
     try
     {
         TextApp app(makeList(argc, argv));
-        app.initSubsystems(App::DisablePlugins | App::DisablePersistentData);
+        app.initSubsystems(App::DisablePersistentData);
 
         for (int j = 0; j < 2; ++j)
         {

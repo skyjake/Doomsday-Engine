@@ -54,6 +54,7 @@ DE_PIMPL(MetadataBank), public Lockable
     {
         DE_ASSERT(!id.isEmpty());
         String const hex = id.asHexadecimalText();
+        DE_ASSERT(hex.last() != 0);
         return Stringf("%s.%lc.%s", category.c_str(), hex.last(), hex.c_str());
     }
 };

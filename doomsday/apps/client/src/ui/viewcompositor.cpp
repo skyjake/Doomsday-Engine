@@ -311,7 +311,7 @@ void ViewCompositor::drawCompositedLayers()
         // Draw any full window game graphics.
         if (gx.DrawWindow)
         {
-            Size2Raw const dimensions = {{{DENG_GAMEVIEW_WIDTH, DENG_GAMEVIEW_HEIGHT}}};
+            const Size2Raw dimensions = {{{DE_GAMEVIEW_WIDTH, DE_GAMEVIEW_HEIGHT}}};
             gx.DrawWindow(&dimensions);
         }
     }

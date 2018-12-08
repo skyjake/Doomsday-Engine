@@ -223,9 +223,9 @@ DE_PIMPL(DoomsdayApp)
         return folderPath;
     }
 
-    void attachWadFeed(const String &       description,
-                       const NativePath &   path,
-                       DirectoryFeed::Flags populationMode = DirectoryFeed::OnlyThisFolder)
+    void attachWadFeed(const String &    description,
+                       const NativePath &path,
+                       Flags             populationMode = DirectoryFeed::OnlyThisFolder)
     {
         if (!path.isEmpty())
         {
@@ -237,7 +237,7 @@ DE_PIMPL(DoomsdayApp)
                                                                         : " (including subfolders)")
                     << path.pretty();
 
-                const Path folderPath = composeUniqueFolderPath(PATH_LOCAL_WADS, path);
+                const Path folderPath = composeUniqueFolderPath(PATH_LOCAL_WADS(), path);
                 FS::get().makeFolder(folderPath)
                         .attach(new DirectoryFeed(path, populationMode));
             }
@@ -261,7 +261,7 @@ DE_PIMPL(DoomsdayApp)
                     << (populationMode == DirectoryFeed::OnlyThisFolder ? ""
                                                                         : " (including subfolders)")
                     << path.pretty();
-                const Path folderPath = composeUniqueFolderPath(PATH_LOCAL_PACKS, path);
+                const Path folderPath = composeUniqueFolderPath(PATH_LOCAL_PACKS(), path);
                 FS::get().makeFolder(folderPath)
                     .attach(new DirectoryFeed(path, populationMode));
             }
@@ -391,7 +391,7 @@ DE_PIMPL(DoomsdayApp)
         // Command line paths.
         if (auto arg = cmdLine.check("-iwad", 1)) // has at least one parameter
         {
-            for (dint p = arg.pos + 1; p < cmdLine.sizei(); ++p)
+            for (auto p = dsize(arg.pos + 1); p < cmdLine.size(); ++p)
             {
                 if (cmdLine.isOption(p)) break;
 
@@ -431,7 +431,7 @@ DE_PIMPL(DoomsdayApp)
         // Command line paths.
         if (auto arg = cmdLine.check("-packs", 1))
         {
-            for (dint p = arg.pos + 1; p < cmdLine.sizei(); ++p)
+            for (auto p = dsize(arg.pos + 1); p < cmdLine.size(); ++p)
             {
                 if (cmdLine.isOption(p)) break;
 

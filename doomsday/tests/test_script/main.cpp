@@ -34,7 +34,7 @@ int main(int argc, char **argv)
     try
     {
         TextApp app(makeList(argc, argv));
-        app.initSubsystems(App::DisablePlugins);
+        app.initSubsystems();
         cout << FS::locate<const Folder>("/data").correspondingNativePath().toString() << endl;
 
 #if 1
