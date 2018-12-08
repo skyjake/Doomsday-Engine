@@ -97,9 +97,14 @@
 #include <de/TextValue>
 #include <de/VRConfig>
 
+#include <SDL_events.h>
+#include <SDL_surface.h>
+#include <SDL_timer.h>
+#include <SDL_video.h>
+
 #include <cstdlib>
 
-//#include "ui/splash.xpm"
+#include "ui/splash.xpm"
 
 using namespace de;
 
@@ -558,6 +563,33 @@ ClientApp::ClientApp(const StringList &args)
     processEvents();
     splash->deleteLater();
 #endif*/
+
+    // Show the splash image in a separate window.
+    {
+        const Image splashImage = Image::fromXpmData(doomsdaySplashXpm);
+
+        const int w = int(splashImage.width());
+        const int h = int(splashImage.height());
+
+        SDL_Surface *splashSurface = SDL_CreateRGBSurfaceWithFormatFrom(const_cast<dbyte *>(splashImage.bits()),
+                                                                        w,
+                                                                        h,
+                                                                        splashImage.depth(),
+                                                                        splashImage.stride(),
+                                                                        SDL_PIXELFORMAT_RGBA8888);
+
+        SDL_Window *splashWindow = SDL_CreateWindow(DOOMSDAY_NICENAME,
+                                                    SDL_WINDOWPOS_CENTERED,
+                                                    SDL_WINDOWPOS_CENTERED,
+                                                    w,
+                                                    h,
+                                                    SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN |
+                                                    SDL_WINDOW_ALWAYS_ON_TOP);
+
+        SDL_BlitSurface(splashSurface, nullptr, SDL_GetWindowSurface(splashWindow), nullptr);
+        SDL_UpdateWindowSurface(splashWindow);
+        SDL_FreeSurface(splashSurface);
+    }
 }
 
 void ClientApp::initialize()
