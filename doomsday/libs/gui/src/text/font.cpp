@@ -321,9 +321,10 @@ int Font::advanceWidth(RichFormatRef const &format) const
     while (iter.hasNext())
     {
         iter.next();
-        if (iter.range().isEmpty()) continue;
-
-        advance += d->alteredFont(iter).width(iter.range());
+        if (!iter.range().isEmpty())
+        {
+            advance += d->alteredFont(iter).width(iter.range());
+        }
     }
     return advance;
 }

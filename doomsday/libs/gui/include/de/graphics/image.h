@@ -272,6 +272,8 @@ public:
      */
     static Image fromData(IByteArray const &data, String const &formatHint = "");
 
+    static Image fromXpmData(const char * const *xpmStrings);
+
     /// @copydoc fromData()
     static Image fromData(Block const &data, String const &formatHint = "");
 

@@ -126,6 +126,7 @@ GuiApp::GuiApp(const StringList &args)
     {
         throw Error("GuiApp::GuiApp", "No video displays available");
     }
+    setLocale_Foundation();
     DisplayMode_Init();
 
     d->determineDevicePixelRatio();

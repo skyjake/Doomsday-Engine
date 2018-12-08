@@ -32,6 +32,8 @@
 #include <stb/stb_image_write.h>
 #include <stb/stb_image_resize.h>
 
+#include <map>
+
 namespace de {
 
 static constexpr int JPEG_QUALITY = 85;
@@ -1220,6 +1222,36 @@ GLPixelFormat Image::glFormat(QImage::Format format)
 Image Image::fromData(IByteArray const &data, String const &formatHint)
 {
     return fromData(Block(data), formatHint);
+}
+
+Image Image::fromXpmData(const char * const *xpmStrings)
+{
+    duint width      = 0;
+    duint height     = 0;
+    int   colorCount = 0;
+    int   perPixel   = 0;
+
+    sscanf(*xpmStrings, "%d %d %d %d", &width, &height, &colorCount, &perPixel);
+    DE_ASSERT(perPixel == 1);
+
+    std::map<char, duint32> palette;
+    for (int i = 0; i < colorCount; ++i)
+    {
+        const char *  pal  = *++xpmStrings;
+        const char    pc   = pal[0];
+        const duint32 rgb = duint32(std::stoul(pal + 5, 0, 16));
+
+        palette[pc] = rgb | 0xff000000;
+    }
+    Image xpm({width, height}, RGBA_8888);
+    for (duint y = 0; y < height; ++y)
+    {
+        for (duint x = 0; x < width; ++x)
+        {
+            xpm.setPixel(x, y, unpackColor(palette[(*xpmStrings)[x]]));
+        }
+    }
+    return xpm;
 }
 
 Image Image::fromData(Block const &data, String const &formatHint)

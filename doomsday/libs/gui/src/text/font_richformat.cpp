@@ -385,6 +385,10 @@ CString Font::RichFormat::Ref::range(int index) const
     DE_ASSERT(start >= _span.ptr());
     DE_ASSERT(end <= _span.endPtr());
     DE_ASSERT(start <= end);
+    {
+        const char *okPtr;
+        DE_ASSERT((mb_iterator(start).decode(&okPtr), okPtr != nullptr));
+    }
 
     return {start, end};
 }
