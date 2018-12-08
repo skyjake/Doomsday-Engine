@@ -1244,7 +1244,7 @@ Image Image::fromXpmData(const char * const *xpmStrings)
         palette[pc] = rgb | 0xff000000;
     }
     Image xpm({width, height}, RGBA_8888);
-    for (duint y = 0; y < height; ++y)
+    for (duint y = 0; y < height; ++y, ++xpmStrings)
     {
         for (duint x = 0; x < width; ++x)
         {

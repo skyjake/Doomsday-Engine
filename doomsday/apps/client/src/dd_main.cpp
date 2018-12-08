@@ -1300,7 +1300,7 @@ void DD_FinishInitializationAfterWindowReady()
             // The rest of the initialization assumes that the main window exists.
             initializeWithWindowReady();
             // Let everyone know we're up and running.
-            /*Loop::timer(0.1, []() {*/ App::app().notifyStartupComplete(); //});
+            App::app().notifyStartupComplete();
             return;
         }
         catch (Error const &er)

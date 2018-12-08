@@ -152,12 +152,14 @@ static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
 DE_PIMPL(ClientApp)
 , DE_OBSERVES(Plugins, PublishAPI)
 , DE_OBSERVES(Plugins, Notification)
+, DE_OBSERVES(App, StartupComplete)
 , DE_OBSERVES(Games, Progress)
 , DE_OBSERVES(DoomsdayApp, GameChange)
 , DE_OBSERVES(DoomsdayApp, GameUnload)
 , DE_OBSERVES(DoomsdayApp, ConsoleRegistration)
 , DE_OBSERVES(DoomsdayApp, PeriodicAutosave)
 {
+    SDL_Window *splashWindow = nullptr;
     Binder binder;
 #if defined (DE_HAVE_UPDATER)
     std::unique_ptr<Updater> updater;
@@ -252,9 +254,10 @@ DE_PIMPL(ClientApp)
         self().audienceForConsoleRegistration() += this;
         self().games().audienceForProgress() += this;
         self().audienceForPeriodicAutosave() += this;
+        self().audienceForStartupComplete() += this;
     }
 
-    ~Impl()
+    ~Impl() override
     {
         try
         {
@@ -290,12 +293,22 @@ DE_PIMPL(ClientApp)
         clientAppSingleton = 0;
     }
 
-    void publishAPIToPlugin(::Library *plugin)
+    void appStartupCompleted() override
+    {
+        // Get rid of the splash window.
+        if (splashWindow)
+        {
+            SDL_DestroyWindow(splashWindow);
+            splashWindow = nullptr;
+        }
+    }
+
+    void publishAPIToPlugin(::Library *plugin) override
     {
         DD_PublishAPIs(plugin);
     }
 
-    void pluginSentNotification(int notification, void *data)
+    void pluginSentNotification(int notification, void *data) override
     {
         LOG_AS("ClientApp::pluginSentNotification");
 
@@ -331,17 +344,17 @@ DE_PIMPL(ClientApp)
         }
     }
 
-    void gameWorkerProgress(int progress)
+    void gameWorkerProgress(int progress) override
     {
         Con_SetProgress(progress);
     }
 
-    void consoleRegistration()
+    void consoleRegistration() override
     {
         DD_ConsoleRegister();
     }
 
-    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/)
+    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/) override
     {
         DE_ASSERT(ClientWindow::mainExists());
 
@@ -383,7 +396,7 @@ DE_PIMPL(ClientApp)
         infineSys.deinitBindingContext();
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(Game const &newGame) override
     {
         if (Sys_IsShuttingDown()) return;
 
@@ -423,7 +436,7 @@ DE_PIMPL(ClientApp)
         }
     }
 
-    void periodicAutosave()
+    void periodicAutosave() override
     {
         if (Config::exists())
         {
@@ -568,27 +581,29 @@ ClientApp::ClientApp(const StringList &args)
     {
         const Image splashImage = Image::fromXpmData(doomsdaySplashXpm);
 
-        const int w = int(splashImage.width());
-        const int h = int(splashImage.height());
+        const int imageWidth  = int(splashImage.width());
+        const int imageHeight = int(splashImage.height());
 
         SDL_Surface *splashSurface = SDL_CreateRGBSurfaceWithFormatFrom(const_cast<dbyte *>(splashImage.bits()),
-                                                                        w,
-                                                                        h,
-                                                                        splashImage.depth(),
-                                                                        splashImage.stride(),
-                                                                        SDL_PIXELFORMAT_RGBA8888);
+                                                                        imageWidth,
+                                                                        imageHeight,
+                                                                        int(splashImage.depth()),
+                                                                        int(splashImage.stride()),
+                                                                        SDL_PIXELFORMAT_ABGR8888);
 
-        SDL_Window *splashWindow = SDL_CreateWindow(DOOMSDAY_NICENAME,
-                                                    SDL_WINDOWPOS_CENTERED,
-                                                    SDL_WINDOWPOS_CENTERED,
-                                                    w,
-                                                    h,
-                                                    SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN |
-                                                    SDL_WINDOW_ALWAYS_ON_TOP);
+        d->splashWindow =
+            SDL_CreateWindow(DOOMSDAY_NICENAME,
+                             SDL_WINDOWPOS_CENTERED,
+                             SDL_WINDOWPOS_CENTERED,
+                             imageWidth,
+                             imageHeight,
+                             SDL_WINDOW_BORDERLESS | SDL_WINDOW_SHOWN | SDL_WINDOW_ALWAYS_ON_TOP);
 
-        SDL_BlitSurface(splashSurface, nullptr, SDL_GetWindowSurface(splashWindow), nullptr);
-        SDL_UpdateWindowSurface(splashWindow);
+        SDL_BlitSurface(splashSurface, nullptr, SDL_GetWindowSurface(d->splashWindow), nullptr);
+        SDL_UpdateWindowSurface(d->splashWindow);
         SDL_FreeSurface(splashSurface);
+        SDL_RaiseWindow(d->splashWindow);
+        SDL_PumpEvents(); // allow it to appear immediately
     }
 }
 

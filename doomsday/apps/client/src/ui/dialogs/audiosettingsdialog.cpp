@@ -152,7 +152,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
                 << new ChoiceItem("Disabled", "dummy");
 
         musicPlugin->items()
-                << new ChoiceItem("Fluidsynth", "fluidsynth")
+                << new ChoiceItem("FluidSynth", "fluidsynth")
                 << new ChoiceItem("FMOD", "fmod")
            #if !defined (DE_DISABLE_SDLMIXER)
                 << new ChoiceItem("SDL_mixer", "sdlmixer")
