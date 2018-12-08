@@ -112,19 +112,17 @@ using CharPos = StronglyTypedPosition<CharacterOffset>;
 /**
  * Multibyte character iterator.
  */
-struct DE_PUBLIC mb_iterator
-{
-    const char *i;
-    const char *start;
+struct DE_PUBLIC mb_iterator {
+    const char *      cur;
+    const char *      start;
     mutable mbstate_t mb{};
-    //mutable int curCharLen = 0;
 
-    mb_iterator() : i{nullptr}, start{nullptr} {}
-    mb_iterator(const char *p) : i{p}, start{p} {}
-    mb_iterator(const char *p, const char *start) : i{p}, start{start} {}
+    mb_iterator() : cur{nullptr}, start{nullptr} {}
+    mb_iterator(const char *p) : cur{p}, start{p} {}
+    mb_iterator(const char *p, const char *start) : cur{p}, start{start} {}
     mb_iterator(const String &str);
 
-    operator const char *() const { return i; }
+    operator const char *() const { return cur; }
     Char operator*() const;
     mb_iterator &operator++();
     mb_iterator operator++(int);
@@ -134,14 +132,14 @@ struct DE_PUBLIC mb_iterator
     mb_iterator &operator+=(int offset);
     mb_iterator operator-(int offset) const;
     mb_iterator &operator-=(int offset);
-    bool operator==(const char *ptr) const { return i == ptr; }
-    bool operator!=(const char *ptr) const { return i != ptr; }
-    bool operator==(const mb_iterator &other) const { return i == other.i; }
+    bool operator==(const char *ptr) const { return cur == ptr; }
+    bool operator!=(const char *ptr) const { return cur != ptr; }
+    bool operator==(const mb_iterator &other) const { return cur == other.cur; }
     bool operator!=(const mb_iterator &other) const { return !(*this == other); }
-    explicit operator bool() const { return i != nullptr; }
+    explicit operator bool() const { return cur != nullptr; }
 
-    BytePos pos() const { return BytePos(i - start); }
-    BytePos pos(const char *reference) const { return BytePos(i - reference); }
+    BytePos pos() const { return BytePos(cur - start); }
+    BytePos pos(const char *reference) const { return BytePos(cur - reference); }
     BytePos pos(const String &reference) const;
 
     Char decode(const char **end = nullptr) const;

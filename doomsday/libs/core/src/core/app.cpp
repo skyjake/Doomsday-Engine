@@ -159,6 +159,8 @@ DE_PIMPL(App)
         , config(nullptr)
         , terminateFunc(nullptr)
     {
+        DE_ASSERT(isInitialized_Foundation());
+
         appPath = cmdLine.startupPath() / cmdLine.at(0);
 
         metadata.set(APP_NAME,    "Doomsday Engine");
@@ -402,8 +404,6 @@ DE_AUDIENCE_METHOD(App, StartupComplete)
 App::App(const StringList &args)
     : d(new Impl(this, args))
 {
-    init_Foundation();
-
     d->unixInfo.reset(new UnixInfo);
 
     // Global time source for animations.

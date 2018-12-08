@@ -1153,7 +1153,7 @@ String::const_reverse_iterator::const_reverse_iterator(const String &str)
 //------------------------------------------------------------------------------------------------
 
 mb_iterator::mb_iterator(const String &str)
-    : i(str.data())
+    : cur(str.data())
     , start(str.data())
 {}
 
@@ -1165,18 +1165,18 @@ Char mb_iterator::operator*() const
 Char mb_iterator::decode(const char **end) const
 {
     wchar_t ch = 0;
-    size_t rc = std::mbrtowc(&ch, i, MB_CUR_MAX, &mb);
+    size_t rc = std::mbrtowc(&ch, cur, MB_CUR_MAX, &mb);
     if (int(rc) < 0)
     {
         // Multibyte decoding failed. Let's return something valid, though, so the iterator
         // doesn't hang due to never reaching the end of the string.
         ch = '?';
-//        curCharLen = 1;
         if (end) *end = nullptr;
     }
     else
     {
-        if (end) *end = i + rc;
+        DE_ASSERT(rc > 0 || *cur == 0);
+        if (end) *end = cur + rc;
     }
     return ch;
 }
@@ -1184,15 +1184,14 @@ Char mb_iterator::decode(const char **end) const
 mb_iterator &mb_iterator::operator++()
 {
     const char *end;
-    //if (curCharLen == 0) decode();
     decode(&end);
     if (end)
     {
-        i = end;
+        cur = end;
     }
     else
     {
-        ++i;
+        ++cur;
     }
     return *this;
 }
@@ -1206,30 +1205,13 @@ mb_iterator mb_iterator::operator++(int)
 
 mb_iterator &mb_iterator::operator--()
 {
-    while (--i > start)
+    while (--cur > start)
     {
         const char *end;
         memset(&mb, 0, sizeof(mb));
         decode(&end);
         if (end) break;
     }
-    return *this;
-
-//    bool moved = false;
-//    for (int j = 1; j < MB_CUR_MAX; ++j)
-//    {
-//        mb_iterator prec = i - j;
-//        bool ok;
-//        prec.decode(&ok);
-//        if (ok) // && prec.curCharLen == j)
-//        {
-//            moved = (prec.i != i);
-//            prec.start = start;
-//            *this = prec;
-//            break;
-//        }
-//    }
-//    DE_ASSERT(moved);
     return *this;
 }
 
@@ -1272,7 +1254,7 @@ mb_iterator &mb_iterator::operator-=(int offset)
 
 BytePos mb_iterator::pos(const String &reference) const
 {
-    return BytePos(i - reference.c_str());
+    return BytePos(cur - reference.c_str());
 }
 
 //------------------------------------------------------------------------------------------------
