@@ -30,6 +30,7 @@ using namespace de;
 
 int main(int, char **)
 {
+    init_Foundation();
     try
     {
         StringPool p;

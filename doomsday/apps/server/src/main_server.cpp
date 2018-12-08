@@ -29,6 +29,7 @@ using namespace de;
  */
 int main(int argc, char** argv)
 {
+    init_Foundation();
     ServerApp serverApp(makeList(argc, argv));
     try
     {

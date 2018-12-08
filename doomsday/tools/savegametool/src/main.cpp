@@ -163,6 +163,7 @@ static void convertSavegame(const Path& inputPath)
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     initTranslators();
 
     try

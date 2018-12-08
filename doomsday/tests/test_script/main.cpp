@@ -30,6 +30,7 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     using namespace std;
     try
     {

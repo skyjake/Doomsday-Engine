@@ -28,6 +28,7 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     try
     {
         TextApp app(makeList(argc, argv));

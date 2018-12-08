@@ -39,6 +39,7 @@ void printSet(PointerSet const &pset)
 
 int main(int, char **)
 {
+    init_Foundation();
     try
     {
         PointerSet::Pointer a = reinterpret_cast<PointerSet::Pointer>(0x1000);

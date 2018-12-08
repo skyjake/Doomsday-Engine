@@ -27,6 +27,7 @@ using namespace de;
 
 DE_EXTERN_C int main(int argc, char **argv)
 {
+    init_Foundation();
     try
     {
         GuiApp app(makeList(argc, argv));

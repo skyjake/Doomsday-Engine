@@ -25,6 +25,7 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    init_Foundation();
     try
     {
         TextApp app(makeList(argc, argv));
@@ -32,7 +33,7 @@ int main(int argc, char **argv)
 
         // Iterators.
         {
-            const String str = u8"H★llo Wörld";
+            const String str = u8"H★l—lo Wörld";
             for (Char ch : str)
             {
                 debug("Char: %x %lc", unsigned(ch), ch.unicode());

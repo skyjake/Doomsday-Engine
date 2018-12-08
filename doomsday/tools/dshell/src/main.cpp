@@ -22,6 +22,7 @@
 
 int main(int argc, char *argv[])
 {
+    init_Foundation();
     int result;
     {
         ShellApp a(argc, argv);

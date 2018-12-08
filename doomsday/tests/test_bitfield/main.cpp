@@ -24,6 +24,7 @@ using namespace de;
 
 int main(int, char **)
 {
+    init_Foundation();
     using namespace std;
     try
     {
