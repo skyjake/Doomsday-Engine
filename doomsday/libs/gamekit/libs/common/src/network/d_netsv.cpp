@@ -25,7 +25,7 @@
 #include <cctype>
 #include <cstdio>
 #include <cstring>
-#include <de/mathutil.h>
+#include <de/legacy/mathutil.h>
 
 #include "d_net.h"
 #include "gamesession.h"

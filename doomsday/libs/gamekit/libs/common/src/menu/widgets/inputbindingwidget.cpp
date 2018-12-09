@@ -224,7 +224,7 @@ DE_PIMPL(InputBindingWidget)
         }
     }
 
-    Vector2ui measureAndDraw(bool drawing = true) const
+    Vec2ui measureAndDraw(bool drawing = true) const
     {
         const auto widgetTopLeft = self().geometry().topLeft;
 

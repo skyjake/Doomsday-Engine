@@ -21,16 +21,16 @@
 
 #include <de/libcore.h>
 
-DENG2_EXTERN_C void R_SpecialFilterRegister(void);
+DE_EXTERN_C void R_SpecialFilterRegister(void);
 
-DENG2_EXTERN_C void R_InitSpecialFilter(void);
+DE_EXTERN_C void R_InitSpecialFilter(void);
 
 /**
  * Draws a special filter over the screen (e.g. the Doom inversing filter used
  * when in god mode).
  */
-DENG2_EXTERN_C void R_UpdateSpecialFilter(int player);
+DE_EXTERN_C void R_UpdateSpecialFilter(int player);
 
-DENG2_EXTERN_C void R_UpdateSpecialFilterWithTimeDelta(int player, float delta);
+DE_EXTERN_C void R_UpdateSpecialFilterWithTimeDelta(int player, float delta);
 
 #endif // LIBCOMMON_REFRESH_SPECIAL_H

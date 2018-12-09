@@ -23,7 +23,7 @@
 #include "p_inventory.h"
 
 #include <cstring>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include "d_net.h"
 #include "d_netcl.h"
 #include "g_common.h"

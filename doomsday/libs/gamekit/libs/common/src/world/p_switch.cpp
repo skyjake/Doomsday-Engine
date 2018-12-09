@@ -30,7 +30,7 @@
 #include "p_plat.h"
 #include "p_sound.h"
 #include "p_saveg.h"
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 
 /**
  * This struct is used to provide byte offsets when reading a custom

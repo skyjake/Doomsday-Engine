@@ -25,7 +25,7 @@
 #include "common.h"
 #include "p_xg.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <cstdio>
 #include <cstring>
 

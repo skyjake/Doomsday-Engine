@@ -63,11 +63,8 @@ public:
 
     using Children = WidgetList;
 
-    typedef void (*OnActiveCallback) (Page &);
-    typedef void (*OnDrawCallback)   (Page const &, de::Vec2i const &);
-
     using OnActiveCallback = std::function<void(Page &)>;
-    using OnDrawCallback   = std::function<void(Page const &, de::Vector2i const &)>;
+    using OnDrawCallback   = std::function<void(Page const &, de::Vec2i const &)>;
     using CommandResponder = std::function<int(Page &, menucommand_e)>;
 
 public:
@@ -82,7 +79,7 @@ public:
      */
     explicit Page(de::String              name,
                   const de::Vec2i &       origin       = {},
-                  Flags const &           flags        = DefaultFlags,
+                  Flags                   flags        = DefaultFlags,
                   const OnDrawCallback &  drawer       = {},
                   const CommandResponder &cmdResponder = {});
 

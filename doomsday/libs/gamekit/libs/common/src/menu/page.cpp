@@ -147,7 +147,7 @@ DE_PIMPL(Page)
         int       prevGroup = children.front()->group();
         Widget *  prevWidget = nullptr;
         int       usedColumns = 0; // column flags for current row
-        Vector2i  origin;
+        Vec2i     origin;
         int       rowHeight = 0;
 
         for (auto *wi : children)
@@ -365,8 +365,8 @@ DE_PIMPL(Page)
 };
 
 Page::Page(String                  name,
-           Vector2i const &        origin,
-           Flags const &           flags,
+           const Vec2i &           origin,
+           Flags                   flags,
            const OnDrawCallback &  drawer,
            const CommandResponder &cmdResponder)
     : d(new Impl(this))
@@ -539,8 +539,8 @@ void Page::draw(float alpha, bool showFocusCursor)
     if (!(d->flags & NoScroll) && focused)
     {
         // Determine available screen region for the page.
-        d->viewRegion.topLeft = Vector2i(0, 0); //d->origin.y);
-        d->viewRegion.setSize(Vector2ui(SCREENWIDTH, SCREENHEIGHT - d->origin.y - 35 /*arbitrary but enough for the help message*/));
+        d->viewRegion.topLeft = {0, 0}; //d->origin.y);
+        d->viewRegion.setSize(Vec2ui(SCREENWIDTH, SCREENHEIGHT - d->origin.y - 35 /*arbitrary but enough for the help message*/));
 
         // Is scrolling in effect?
         if (d->geometry.height() > d->viewRegion.height())
@@ -596,7 +596,7 @@ void Page::draw(float alpha, bool showFocusCursor)
     // How about some additional help/information for the focused item?
     if (focused && !focused->helpInfo().isEmpty())
     {
-        Vector2i helpOrigin(SCREENWIDTH / 2, SCREENHEIGHT - 5 / cfg.common.menuScale);
+        Vec2i helpOrigin(SCREENWIDTH / 2, SCREENHEIGHT - 5 / cfg.common.menuScale);
         Hu_MenuDrawPageHelp(focused->helpInfo(), helpOrigin);
     }
 }

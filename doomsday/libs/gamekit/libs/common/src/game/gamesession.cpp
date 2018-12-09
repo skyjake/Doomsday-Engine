@@ -123,7 +123,7 @@ DE_PIMPL(GameSession)
 
     inline String userSavePath(String const &fileName)
     {
-        DENG_ASSERT(DoomsdayApp::currentGameProfile());
+        DE_ASSERT(DoomsdayApp::currentGameProfile());
         return SaveGames::savePath() / fileName + ".save";
     }
 
@@ -1432,9 +1432,9 @@ void GameSession::consoleRegister()  // static
 
 } // namespace common
 
-DENG_EXTERN_C unsigned int gfw_MapInfoFlags(void)
+DE_EXTERN_C unsigned int gfw_MapInfoFlags(void)
 {
-    return gfw_Session()->mapInfo().getui(QStringLiteral("flags"));
+    return gfw_Session()->mapInfo().getui(DE_STR("flags"));
 }
 
 String gfw_GameId()

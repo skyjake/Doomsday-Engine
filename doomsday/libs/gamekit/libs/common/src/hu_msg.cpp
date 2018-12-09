@@ -23,7 +23,7 @@
 #include "common.h"
 #include <cstdlib>
 #include <cstring>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include "hu_msg.h"
 #include "hu_menu.h"
 #include "hu_stuff.h"

@@ -50,6 +50,7 @@ if (CLANG_VERSION_STRING VERSION_EQUAL 7.0 OR
     append_unique (CMAKE_CXX_FLAGS "-Wno-nested-anon-types")
 endif ()
 
+# All symbols are hidden by default.
 append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")
 
 set (DE_FIXED_ASM_DEFAULT OFF)

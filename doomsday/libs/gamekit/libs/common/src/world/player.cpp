@@ -24,7 +24,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdio>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <doomsday/plugins.h>
 #include "d_net.h"
 #include "d_netcl.h"

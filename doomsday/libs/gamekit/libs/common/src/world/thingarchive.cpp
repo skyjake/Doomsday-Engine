@@ -23,7 +23,7 @@
 
 #include "mobj.h"
 #include "p_saveg.h" /// @todo remove me
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 
 #if __JHEXEN__
 /// Symbolic identifier used to mark references to players.

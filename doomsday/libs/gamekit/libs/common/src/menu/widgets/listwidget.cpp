@@ -151,7 +151,6 @@ void ListWidget::draw() const
         do
         {
             const Item *item = d->items[itemIdx];
-            Vec4f const &color = d->selection == itemIdx? (flashSelection? flashColor : textColor) : dimColor;
 
             const Vec4f &color =
                 d->selection == itemIdx ? (flashSelection ? flashColor : textColor) : dimColor;
@@ -163,7 +162,7 @@ void ListWidget::draw() const
                                 color.y,
                                 color.z,
                                 color.w * scrollingFadeout(origin.y, origin.y + itemHeight));
-            FR_DrawTextXY3(item->text().toUtf8().constData(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
+            FR_DrawTextXY3(item->text(), origin.x, origin.y, ALIGN_TOPLEFT, Hu_MenuMergeEffectWithDrawTextFlags(0));
             origin.y += itemHeight;
         } while (++itemIdx < d->items.count() && itemIdx < d->first + d->numvis);
 

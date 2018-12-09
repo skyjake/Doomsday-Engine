@@ -57,7 +57,7 @@
 #include <doomsday/player.h>
 
 #include <de/legacy/memoryzone.h>
-#include <de/point.h>
+#include <de/legacy/point.h>
 #include <de/legacy/reader.h>
 #include <de/legacy/rect.h>
 #include <de/legacy/size.h>

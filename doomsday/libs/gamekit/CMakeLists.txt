@@ -4,6 +4,8 @@ cmake_minimum_required (VERSION 3.1)
 project (DE_LIBGAMEKIT)
 include (../../cmake/Config.cmake)
 
+add_subdirectory (libs/doom)
+
 # Definitions.
     add_definitions (
     -D__LIBGAMEFW__=1
@@ -19,6 +21,9 @@ deng_merge_sources (libgamekit src/*.cpp)
 
 deng_add_library (libgamekit ${SOURCES} ${HEADERS})
 deng_link_libraries (libgamekit PUBLIC DengCore)
+
+# Game modules.
+target_link_libraries (libgamekit PRIVATE doom)
 
 if (DE_ENABLE_SDK)
     install (DIRECTORY include/gamefw

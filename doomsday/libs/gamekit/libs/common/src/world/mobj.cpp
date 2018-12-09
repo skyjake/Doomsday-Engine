@@ -27,7 +27,7 @@
 #include <cmath>
 #include <doomsday/world/mobjthinkerdata.h>
 #include <de/String>
-#include <de/mathutil.h>
+#include <de/legacy/mathutil.h>
 
 #include "dmu_lib.h"
 #include "g_defs.h"

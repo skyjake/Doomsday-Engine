@@ -21,7 +21,7 @@
 #include "common.h"
 #include "hud/hudwidget.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include "hud/widgets/groupwidget.h"  ///< @todo remove me
 
 using namespace de;

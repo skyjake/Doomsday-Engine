@@ -29,7 +29,7 @@
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
 #include <de/String>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <cstdio>
 #include <cstring>
 

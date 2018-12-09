@@ -27,7 +27,7 @@
 #include <cstdio>
 #include <cstring>
 #include <de/Map>
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <de/RecordValue>
 #include <de/TextValue>
 #include <de/NativePointerValue>
@@ -1519,7 +1519,7 @@ void Hu_MenuInitHUDOptionsPage()
     page->addWidget(new LabelWidget("Text Color"))
             .setLeft()
             .setGroup(6);
-    page->addWidget(new CVarColorEditWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a", Vector4f(), true))
+    page->addWidget(new CVarColorEditWidget("hud-color-r", "hud-color-g", "hud-color-b", "hud-color-a", {}, true))
             .setRight()
             .setGroup(6)
             .setAction(Widget::Deactivated, CVarColorEditWidget_UpdateCVar)
