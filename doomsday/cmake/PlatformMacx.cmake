@@ -51,6 +51,7 @@ if (CLANG_VERSION_STRING VERSION_EQUAL 7.0 OR
 endif ()
 
 # All symbols are hidden by default.
+append_unique (CMAKE_C_FLAGS   "-fvisibility=hidden")
 append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")
 
 set (DE_FIXED_ASM_DEFAULT OFF)

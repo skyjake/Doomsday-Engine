@@ -1320,7 +1320,7 @@ static int parseTeamNumber(String const &str)
     return -1;
 }
 
-D_CMD(ChatOpen)
+static D_CMD(ChatOpen)
 {
     DE_UNUSED(src);
 

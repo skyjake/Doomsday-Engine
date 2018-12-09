@@ -31,6 +31,7 @@
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
 #include <gamefw/libgamefw.h>
+#include <de/Extension>
 
 #include "doomsday.h"
 
@@ -140,7 +141,7 @@ static int G_RegisterGames(int hookType, int param, void* data)
 /**
  * Called right after the game plugin is selected into use.
  */
-DE_ENTRYPOINT void DP_Load(void)
+static void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_HERETIC);
@@ -150,7 +151,7 @@ DE_ENTRYPOINT void DP_Load(void)
 /**
  * Called when the game plugin is freed from memory.
  */
-DE_ENTRYPOINT void DP_Unload(void)
+static void DP_Unload(void)
 {
     Common_Unload();
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
@@ -177,13 +178,13 @@ void G_PreInit(char const *gameId)
 /**
  * Called by the engine to initiate a soft-shutdown request.
  */
-dd_bool G_TryShutdown(void)
+static dd_bool G_TryShutdown(void)
 {
     G_QuitGame();
     return true;
 }
 
-DE_ENTRYPOINT void *GetGameAPI(char const *name)
+static void *GetGameAPI(char const *name)
 {
     if (auto *ptr = Common_GetGameAPI(name))
     {
@@ -213,7 +214,7 @@ DE_ENTRYPOINT void *GetGameAPI(char const *name)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DE_ENTRYPOINT void DP_Initialize(void)
+static void DP_Initialize(void)
 {
     Plug_AddHook(HOOK_STARTUP, G_RegisterGames);
 }
@@ -222,25 +223,10 @@ DE_ENTRYPOINT void DP_Initialize(void)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DE_ENTRYPOINT char const *deng_LibraryType(void)
+static char const *deng_LibraryType(void)
 {
     return "deng-plugin/game";
 }
-
-#if defined (DE_STATIC_LINK)
-
-DE_EXTERN_C void *staticlib_heretic_symbol(char const *name)
-{
-    DE_SYMBOL_PTR(name, deng_LibraryType)
-    DE_SYMBOL_PTR(name, DP_Initialize);
-    DE_SYMBOL_PTR(name, DP_Load);
-    DE_SYMBOL_PTR(name, DP_Unload);
-    DE_SYMBOL_PTR(name, GetGameAPI);
-    qWarning() << name << "not found in heretic";
-    return nullptr;
-}
-
-#else
 
 DE_DECLARE_API(Base);
 DE_DECLARE_API(B);
@@ -290,4 +276,14 @@ DE_API_EXCHANGE(
     DE_GET_API(DE_API_URI, Uri);
 )
 
-#endif
+DE_ENTRYPOINT void *extension_heretic_symbol(char const *name)
+{
+    DE_SYMBOL_PTR(name, deng_LibraryType);
+    DE_SYMBOL_PTR(name, deng_API);
+    DE_SYMBOL_PTR(name, DP_Initialize);
+    DE_SYMBOL_PTR(name, DP_Load);
+    DE_SYMBOL_PTR(name, DP_Unload);
+    DE_SYMBOL_PTR(name, GetGameAPI);
+    warning("\"%s\" not found in heretic", name);
+    return nullptr;
+}

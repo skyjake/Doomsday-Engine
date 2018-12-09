@@ -30,7 +30,7 @@
 #include "de/EscapeParser"
 #include "de/FileLogSink"
 #include "de/FileSystem"
-#include "de/LibraryFile"
+//#include "de/LibraryFile"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
@@ -45,7 +45,7 @@
 #include "de/Record"
 #include "de/RemoteFeedRelay"
 #include "de/ScriptSystem"
-#include "de/StaticLibraryFeed"
+//#include "de/StaticLibraryFeed"
 #include "de/TextValue"
 #include "de/UnixInfo"
 #include "de/Version"
@@ -188,9 +188,9 @@ DE_PIMPL(App)
         systems << &fs << &scriptSys;
 
         // Built-in file interpreters.
-        static LibraryFile::Interpreter intrpLibraryFile;
+//        static LibraryFile::Interpreter intrpLibraryFile;
+//        fs.addInterpreter(intrpLibraryFile);
         static ZipArchive::Interpreter  intrpZipArchive;
-        fs.addInterpreter(intrpLibraryFile);
         fs.addInterpreter(intrpZipArchive);
 
         // Native App module.

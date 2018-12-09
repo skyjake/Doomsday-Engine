@@ -19,6 +19,8 @@
  * 02110-1301 USA</small>
  */
 
+#if 0
+
 #include "doomsday/library.h"
 #include "doomsday/doomsdayapp.h"
 
@@ -194,3 +196,5 @@ de::LoopResult Library_ForAll(const std::function<de::LoopResult (de::LibraryFil
     }
     return de::LoopContinue;
 }
+
+#endif // 0

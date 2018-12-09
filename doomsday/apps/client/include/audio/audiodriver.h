@@ -108,7 +108,7 @@ public:
      * Returns the plugin library for the loaded audio driver, if any (may return
      * @c nullptr if not yet loaded, or this is a built-in driver).
      */
-    ::Library *library() const;
+    de::String extensionName() const;
 
     static bool isAvailable(de::String const &identifier);
 

@@ -905,7 +905,7 @@ void DoomsdayApp::makeGameCurrent(const GameProfile &profile)
         LOG_MSG("Loading game \"%s\"...") << profile.name();
     }
 
-    Library_ReleaseGames();
+    //Library_ReleaseGames();
 
     if (!isShuttingDown())
     {

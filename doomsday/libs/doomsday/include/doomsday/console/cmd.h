@@ -122,7 +122,7 @@ typedef struct ccmd_s {
 ///@}
 
 /// Helper macro for declaring console command functions. @ingroup console
-#define D_CMD(x)        DE_EXTERN_C int CCmd##x(byte src, int argc, char** argv)
+#define D_CMD(x)        int CCmd##x(byte src, int argc, char** argv)
 
 /**
  * Helper macro for registering new console commands.

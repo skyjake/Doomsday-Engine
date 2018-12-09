@@ -62,6 +62,12 @@ enum { CR, CG, CB, CA };
 extern "C" {
 #endif
 
+/*
+ * Initializes the GameKit library. Must be called before any other function
+ * in the library is called.
+ */
+//LIBGAMEFW_PUBLIC void gfw_Initialize();
+
 /**
  * Sets the current game.
  *

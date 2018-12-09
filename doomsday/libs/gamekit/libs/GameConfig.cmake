@@ -20,17 +20,14 @@ macro (deng_add_gamelib target)
     #     endif ()
     #     list (APPEND _src ${_winres})
     # endif ()
-    # if (DE_STATIC_LINK)
-        set (_libType STATIC)
-    # else ()
-        # set (_libType MODULE)
-    # endif ()
-    add_library (${target} STATIC ${_src} ${DE_RESOURCES})
-    target_include_directories (${target}
-        PUBLIC "${DE_API_DIR}"
-        PRIVATE "${DE_SOURCE_DIR}/libs/gui/include" "${DE_SOURCE_DIR}/libs/gamekit/include"
+    
+    # Link as a shared library so duplicate symbols are hidden.
+    add_library (${target} SHARED ${_src} ${DE_RESOURCES})
+    target_include_directories (${target} PRIVATE 
+        "${DE_API_DIR}"
+        "${DE_SOURCE_DIR}/libs/gui/include" 
     )
-    deng_link_libraries (${target} PRIVATE DengDoomsday) # DengGamefw)
+    deng_link_libraries (${target} PRIVATE DengDoomsday DengGameFw)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Plugins)
 
@@ -104,7 +101,17 @@ macro (deng_add_gamelib target)
     # endif ()
 
     # if (NOT APPLE)
-    #     install (TARGETS ${target} LIBRARY DESTINATION ${DE_INSTALL_PLUGIN_DIR})
+    install (TARGETS ${target}
+        EXPORT ${target} 
+        LIBRARY DESTINATION ${DE_INSTALL_LIB_DIR} 
+        COMPONENT libs
+    )
+    install (EXPORT ${target}
+        DESTINATION ${DE_INSTALL_CMAKE_DIR}/${target}
+        FILE ${target}-config.cmake
+        NAMESPACE GameKit::
+        COMPONENT sdk
+    )
     # endif ()
     # set (_src)
     # set (_script)

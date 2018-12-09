@@ -45,42 +45,16 @@
 #include "dd_loop.h"
 #include "dd_version.h"
 
-//#include <QDebug>
-//#include <QMessageBox>
-//#include <QTranslator>
 #include <de/EscapeParser>
-
 #include <SDL_messagebox.h>
 
 #if defined (DE_STATIC_LINK)
-
-#include <QtPlugin>
-#include <de/Library>
-
-Q_IMPORT_PLUGIN(QIOSIntegrationPlugin)
-Q_IMPORT_PLUGIN(QGifPlugin)
-Q_IMPORT_PLUGIN(QJpegPlugin)
-Q_IMPORT_PLUGIN(QTgaPlugin)
-Q_IMPORT_PLUGIN(QtQuick2Plugin)
-Q_IMPORT_PLUGIN(QtQuickControls2Plugin)
-Q_IMPORT_PLUGIN(QtQuickLayoutsPlugin)
-Q_IMPORT_PLUGIN(QtQuickTemplates2Plugin)
-Q_IMPORT_PLUGIN(QtQuick2WindowPlugin)
 
 DE_IMPORT_LIBRARY(importidtech1)
 DE_IMPORT_LIBRARY(importudmf)
 DE_IMPORT_LIBRARY(importdeh)
 DE_IMPORT_LIBRARY(audio_fmod)
-DE_IMPORT_LIBRARY(doom)
-//DE_IMPORT_LIBRARY(heretic)
-//DE_IMPORT_LIBRARY(hexen)
-//DE_IMPORT_LIBRARY(doom64)
 
-#endif
-
-#if defined (DE_MOBILE)
-#  include <QQuickView>
-#  include "ui/clientwindow.h"
 #endif
 
 using namespace de;

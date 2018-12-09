@@ -58,9 +58,9 @@ void DD_ConsoleInit(void);
 /**
  * Provides the library with the engine's public APIs.
  *
- * @param lib  Library instance.
+ * @param plugName  Plugin extension name.
  */
-void DD_PublishAPIs(Library *lib);
+void DD_PublishAPIs(const char *plugName);
 
 /**
  * Define abbreviations and aliases for command line options.

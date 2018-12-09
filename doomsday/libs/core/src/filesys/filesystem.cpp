@@ -25,7 +25,7 @@
 #include "de/DirectoryFeed"
 #include "de/DictionaryValue"
 #include "de/Guard"
-#include "de/LibraryFile"
+//#include "de/LibraryFile"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/Loop"

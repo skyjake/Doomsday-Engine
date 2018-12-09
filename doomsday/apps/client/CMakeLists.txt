@@ -128,6 +128,10 @@ if (APPLE AND NOT IOS)
         res/macx/deng.icns
         res/macx/English.lproj
         doomsday.pk3
+        libdoom.pk3
+        libdoom64.pk3
+        libheretic.pk3
+        libhexen.pk3
     )
 endif ()
 
@@ -211,7 +215,7 @@ if (CMAKE_SYSTEM_NAME MATCHES "BSD")
     target_link_libraries (client PUBLIC execinfo) 
 endif()
 
-deng_link_libraries (client PUBLIC DengGui DengDoomsday)
+deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit)
 
 # Deployment ----------------------------------------------------------------------------
 
@@ -269,30 +273,35 @@ endif ()
 if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
         the_Foundation::the_Foundation
+        SDL2
+        SDL2_mixer
         Deng::libcore
         Deng::libcomms
         Deng::libgui
         Deng::libdoomsday
         Deng::libgamekit
-        SDL2
-        SDL2_mixer
+        Deng::libgamefw
+        doom
+        doom64
+        heretic
+        hexen
     )
 
     # Plugins are bundled inside the client app. We'll run macdeployqt on the
     # installed app before the plugins are there so it won't do unnecessary
     # work on them -- plugins are already self-contained.
-    get_property (outName TARGET client PROPERTY OUTPUT_NAME)
-    set (stageDir "${DE_BUILD_STAGING_DIR}/DengPlugins")
-    if (IOS)
-        set (destDir "${outName}.app/PlugIns")
-    else ()
-        set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
-    endif ()
-    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
-        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
-    #deng_install_deployqt (client)
-    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
-        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
+#    get_property (outName TARGET client PROPERTY OUTPUT_NAME)
+#    set (stageDir "${DE_BUILD_STAGING_DIR}/DengPlugins")
+#    if (IOS)
+#        set (destDir "${outName}.app/PlugIns")
+#    else ()
+#        set (destDir "${outName}.app/Contents/PlugIns/Doomsday")
+#    endif ()
+#    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E remove_directory
+#        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
+#    #deng_install_deployqt (client)
+#    install (CODE "execute_process (COMMAND ${CMAKE_COMMAND} -E copy_directory \"${stageDir}\"
+#        \"\${CMAKE_INSTALL_PREFIX}/${destDir}\")")
 else ()
     #deng_install_deployqt (client)
 endif ()

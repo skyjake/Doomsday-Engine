@@ -28,8 +28,8 @@
 #include "dd_pinit.h"
 
 #include <cstdarg>
+#include <de/Extension>
 #include <de/String>
-#include <de/Library>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
@@ -95,14 +95,12 @@ de::String DD_ComposeMainWindowTitle()
 }
 #endif
 
-void DD_PublishAPIs(::Library *lib)
+void DD_PublishAPIs(const char *plugName)
 {
-    de::Library &library = Library_File(lib).library();
+    const auto setAPI = function_cast<void (*)(int, void *)>(extensionSymbol(plugName, "deng_API"));
 
-    if(library.hasSymbol("deng_API"))
+    if (setAPI)
     {
-        de::Library::deng_API setAPI = library.DE_SYMBOL(deng_API);
-
 #define PUBLISH(X) setAPI(X.api.id, &X)
 
         PUBLISH(_api_Base);

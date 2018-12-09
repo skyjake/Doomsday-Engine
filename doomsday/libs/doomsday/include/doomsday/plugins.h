@@ -33,10 +33,6 @@ typedef int pluginid_t;
 typedef int (*pluginfunc_t) (void);
 typedef int (*hookfunc_t) (int type, int parm, void *data);
 
-/// Maximum allowed number of plugins.
-/// @todo Remove fixed size limit.
-#define MAX_PLUGS   32
-
 /// Hook types.
 typedef enum {
     HOOK_STARTUP = 0,               ///< Called ASAP after startup.
@@ -249,7 +245,7 @@ struct GameExports
 class LIBDOOMSDAY_PUBLIC Plugins
 {
 public:
-    DE_DEFINE_AUDIENCE2(PublishAPI,   void publishAPIToPlugin(Library *))
+    DE_DEFINE_AUDIENCE2(PublishAPI,   void publishAPIToPlugin(const char *))
     DE_DEFINE_AUDIENCE2(Notification, void pluginSentNotification(int id, void *data))
 
     DE_ERROR(EntryPointError);
@@ -257,7 +253,7 @@ public:
 public:
     Plugins();
 
-    void publishAPIs(Library *lib);
+    void publishAPIs(const char *plugName);
 
     void notify(int notification, void *data);
 
@@ -267,16 +263,16 @@ public:
      */
     void loadAll();
 
-    /**
+    /*
      * Unloads all plugins.
      */
-    void unloadAll();
+    //void unloadAll();
 
     /**
      * Change the currently active plugin for the current thread to that attributed
      * with the given @a id.
      */
-    void setActivePluginId(pluginid_t id);
+    void setActivePluginId(pluginid_t pluginId);
 
     /**
      * Returns the unique identifier of the currently active plugin. The currently
@@ -284,10 +280,12 @@ public:
      */
     pluginid_t activePluginId() const;
 
-    /**
+    /*
      * Locate the LibraryFile attributed with the given @a id.
      */
-    de::LibraryFile const &fileForPlugin(pluginid_t id) const;
+//    de::LibraryFile const &fileForPlugin(pluginid_t id) const;
+
+    de::String extensionName(pluginid_t pluginId) const;
 
     /**
      * Locate the address of the named, exported procedure in the plugin.

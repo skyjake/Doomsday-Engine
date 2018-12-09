@@ -22,9 +22,11 @@
 #include "doomsday/world/actions.h"
 #include "doomsday/doomsdayapp.h"
 
-#include <de/NativeFile>
-#include <de/legacy/findfile.h>
-#include <de/legacy/strutil.h>
+//#include <de/NativeFile>
+//#include <de/legacy/findfile.h>
+//#include <de/legacy/strutil.h>
+
+#include <de/Extension>
 #include <de/List>
 #include <de/ThreadLocal>
 
@@ -66,15 +68,13 @@ pluginid_t Plugins::Hook::pluginId() const
 
 DE_PIMPL_NOREF(Plugins)
 {
+    using PluginHandle = String;
+    using HookRegister = List<Hook>;
+
     void *(*getGameAPI)(char const *) = nullptr;
-    GameExports gameExports;
-
-    typedef ::Library *PluginHandle;
-
-    ::Library *hInstPlug[MAX_PLUGS];  ///< @todo Remove arbitrary MAX_PLUGS.
-
-    typedef List<Hook> HookRegister;
-    HookRegister hooks[NUM_HOOK_TYPES];
+    GameExports               gameExports;
+    std::vector<PluginHandle> hInstPlug;
+    HookRegister              hooks[NUM_HOOK_TYPES];
 
     Impl()
     {
@@ -82,101 +82,41 @@ DE_PIMPL_NOREF(Plugins)
         zap(hInstPlug);
     }
 
-    PluginHandle *findFirstUnusedPluginHandle()
+    bool loadPlugin(const char *plugName)
     {
-        for (int i = 0; i < MAX_PLUGS; ++i)
-        {
-            if (!hInstPlug[i])
-            {
-                return &hInstPlug[i];
-            }
-        }
-        return nullptr;  // none available.
-    }
+        using PluginInitializer = void (*)(void);
+        using PluginType        = const char *(*) (void);
 
-    bool loadPlugin(LibraryFile &lib)
-    {
-        typedef void (*PluginInitializer)(void);
+        const char *plugType =
+            function_cast<PluginType>(extensionSymbol(plugName, "deng_LibraryType"))();
 
-#if !defined (DE_STATIC_LINK)
-        // We are only interested in native files.
-        if (!is<NativeFile>(lib.source()))
-        {
-            return false;
-        }
-#endif
-
-        DE_ASSERT(!lib.path().isEmpty());
-        if (lib.path().beginsWith("/bin/audio_", CaseInsensitive))
-        {
-            // Do not touch audio plugins at this point.
-            return false;
-        }
-
-        ::Library *plugin = Library_New(lib.path());
-        if (!plugin)
-        {
-#ifdef UNIX
-            String const fn = Path(lib.path()).fileName();
-            if (fn.contains("libfmod") || fn.contains("libassimp"))
-            {
-                // No need to warn about these shared libs.
-                return false;
-            }
-#endif
-            LOG_RES_WARNING("Failed to load \"%s\": %s") << lib.path() << Library_LastError();
-            return false;
-        }
-
-        if (!iCmpStr(Library_Type(plugin), "deng-plugin/audio"))
+        if (!iCmpStr(plugType, "deng-plugin/audio"))
         {
             // Audio plugins will be loaded later, on demand.
-            Library_Delete(plugin);
             return false;
         }
 
-        PluginInitializer initializer = de::function_cast<void (*)()>(Library_Symbol(plugin, "DP_Initialize"));
+        auto initializer =
+            function_cast<PluginInitializer>(extensionSymbol(plugName, "DP_Initialize"));
         if (!initializer)
         {
             LOG_RES_WARNING("Cannot load plugin \"%s\": no entrypoint called 'DP_Initialize'")
-                    << lib.path();
+                    << plugName;
 
             // Clearly not a Doomsday plugin.
-            Library_Delete(plugin);
+            //Library_Delete(plugin);
             return false;
         }
 
         // Assign a handle and ID to the plugin.
-        PluginHandle *handle    = findFirstUnusedPluginHandle();
-        pluginid_t const plugId = handle - hInstPlug + 1;
-        if (!handle)
-        {
-            LOG_RES_WARNING("Cannot load \"%s\": too many plugins loaded already loaded")
-                    << lib.path();
+        const pluginid_t plugId = hInstPlug.size() + 1; // 1-based
+        hInstPlug.push_back(plugName);
 
-            Library_Delete(plugin);
-            return false;
-        }
-
-        // This seems to be a Doomsday plugin.
-        LOGDEV_MSG("Plugin id:%i name:%s")
-                << plugId << lib.path().fileNameWithoutExtension();
-
-        *handle = plugin;
+        LOGDEV_MSG("Plugin id:%i name:%s") << plugId << plugName;
 
         setActivePluginId(plugId);
         initializer();
         setActivePluginId(0);
-        return true;
-    }
-
-    bool unloadPlugin(PluginHandle *handle)
-    {
-        DE_ASSERT(handle != nullptr);
-        if (!*handle) return false;
-
-        Library_Delete(*handle);
-        *handle = nullptr;
         return true;
     }
 
@@ -198,11 +138,11 @@ DE_AUDIENCE_METHODS(Plugins, PublishAPI, Notification)
 Plugins::Plugins() : d(new Impl)
 {}
 
-void Plugins::publishAPIs(::Library *lib)
+void Plugins::publishAPIs(const char *plugName)
 {
     DE_FOR_AUDIENCE2(PublishAPI, i)
     {
-        i->publishAPIToPlugin(lib);
+        i->publishAPIToPlugin(plugName);
     }
 }
 
@@ -217,18 +157,9 @@ void Plugins::notify(int notification, void *data)
 void Plugins::loadAll()
 {
     LOG_RES_VERBOSE("Initializing plugins...");
-
-    Library_ForAll([this](LibraryFile &lib) {
-        d->loadPlugin(lib);
-        return LoopContinue;
-    });
-}
-
-void Plugins::unloadAll()
-{
-    for (int i = 0; i < MAX_PLUGS && d->hInstPlug[i]; ++i)
+    for (const auto &plugName : de::extensions())
     {
-        d->unloadPlugin(&d->hInstPlug[i]);
+        d->loadPlugin(plugName);
     }
 }
 
@@ -237,27 +168,25 @@ pluginid_t Plugins::activePluginId() const
     return d->activePluginId();
 }
 
-void Plugins::setActivePluginId(pluginid_t id)
+String Plugins::extensionName(pluginid_t pluginId) const
 {
-    d->setActivePluginId(id);
+    return d->hInstPlug.at(pluginId - 1);
 }
 
-LibraryFile const &Plugins::fileForPlugin(pluginid_t id) const
+void Plugins::setActivePluginId(pluginid_t pluginId)
 {
-    DE_ASSERT(id > 0 && id <= MAX_PLUGS);
-    return Library_File(d->hInstPlug[id - 1]);
+    d->setActivePluginId(pluginId);
 }
 
 void *Plugins::findEntryPoint(pluginid_t pluginId, char const *fn) const
 {
     int const plugIndex = pluginId - 1;
-    DE_ASSERT(plugIndex >= 0 && plugIndex < MAX_PLUGS);
 
-    void *addr = Library_Symbol(d->hInstPlug[plugIndex], fn);
+    void *addr = extensionSymbol(d->hInstPlug.at(plugIndex), fn);
     if (!addr)
     {
-        LOGDEV_RES_WARNING("Error getting address of \"%s\": %s")
-                << fn << Library_LastError();
+        LOGDEV_RES_WARNING("Extension \"%s\" does not have a symbol called \"%s\"")
+                << d->hInstPlug.at(plugIndex) << fn;
     }
     return addr;
 }

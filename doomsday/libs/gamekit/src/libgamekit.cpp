@@ -1,6 +1,6 @@
-/** @file libgamefw.cpp  Common framework for games.
+/** @file libgamekit.cpp  GameKit.
  *
- * @authors Copyright (c) 2016-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,18 +16,10 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "gamefw/libgamefw.h"
-#include <de/libcore.h>
+//#include "gamekit/libgamekit.h"
+#include <de/Extension>
 
-static gfw_game_id_t theCurrentGame = GFW_GAME_ID_COUNT;
-
-void gfw_SetCurrentGame(gfw_game_id_t game)
-{
-    DE_ASSERT(game != GFW_STRIFE);
-    theCurrentGame = game;
-}
-
-gfw_game_id_t gfw_CurrentGame()
-{
-    return theCurrentGame;
-}
+DE_EXTENSION(doom)
+DE_EXTENSION(doom64)
+DE_EXTENSION(heretic)
+DE_EXTENSION(hexen)

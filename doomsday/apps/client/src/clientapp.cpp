@@ -137,10 +137,9 @@ static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const 
         // The null game has no plugin.
         return 0;
     }
-    String name = DoomsdayApp::plugins().fileForPlugin(App_CurrentGame().pluginId())
-            .name().fileNameWithoutExtension();
-    if (name.beginsWith("lib")) name.remove(BytePos(0), 3);
-    return new TextValue(name);
+//            .name().fileNameWithoutExtension();
+//    if (name.beginsWith("lib")) name.remove(BytePos(0), 3);
+    return new TextValue(DoomsdayApp::plugins().extensionName(App_CurrentGame().pluginId()));
 }
 
 static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
@@ -303,9 +302,9 @@ DE_PIMPL(ClientApp)
         }
     }
 
-    void publishAPIToPlugin(::Library *plugin) override
+    void publishAPIToPlugin(const char *plugName) override
     {
-        DD_PublishAPIs(plugin);
+        DD_PublishAPIs(plugName);
     }
 
     void pluginSentNotification(int notification, void *data) override

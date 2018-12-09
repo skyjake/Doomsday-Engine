@@ -341,7 +341,7 @@ void HU_DrawText(const char* str, float x, float y, float scale,
 }
 
 /// Predicate for sorting score infos.
-int scoreInfoCompare(void const *a_, void const *b_)
+static int scoreInfoCompare(void const *a_, void const *b_)
 {
     scoreinfo_t const *a = (scoreinfo_t *) a_;
     scoreinfo_t const *b = (scoreinfo_t *) b_;

@@ -46,9 +46,7 @@ static int initDGL(void)
 
 dd_bool DD_Unix_Init(void)
 {
-    dd_bool failed = true;
-
-    Library_Init();
+    bool failed = true;
 
     // Determine our basedir and other global paths.
     DoomsdayApp::app().determineGlobalPaths();
@@ -80,8 +78,9 @@ void DD_Shutdown(void)
     // Shutdown all subsystems.
     DD_ShutdownAll();
 
-    DoomsdayApp::plugins().unloadAll();
-    Library_Shutdown();
+//    DoomsdayApp::plugins().unloadAll();
+//    Library_Shutdown();
+
 #ifdef __CLIENT__
     DisplayMode_Shutdown();
 #endif

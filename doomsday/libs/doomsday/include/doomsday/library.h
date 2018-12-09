@@ -32,8 +32,9 @@
 #ifndef LIBDOOMSDAY_LIBRARY_H
 #define LIBDOOMSDAY_LIBRARY_H
 
-#include "libdoomsday.h"
+#if 0
 
+#include "libdoomsday.h"
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -97,13 +98,15 @@ LIBDOOMSDAY_PUBLIC void *Library_Symbol(Library *lib, char const *symbolName);
 }  // extern "C"
 #endif
 
-#ifdef __cplusplus
-#include <de/LibraryFile>
-#include <functional>
+//#ifdef __cplusplus
+//#include <de/LibraryFile>
+//#include <functional>
 
-LIBDOOMSDAY_PUBLIC de::LibraryFile &Library_File(Library *lib);
+//LIBDOOMSDAY_PUBLIC de::LibraryFile &Library_File(Library *lib);
 
-LIBDOOMSDAY_PUBLIC de::LoopResult Library_ForAll(const std::function<de::LoopResult (de::LibraryFile &)>& func);
+//LIBDOOMSDAY_PUBLIC de::LoopResult Library_ForAll(const std::function<de::LoopResult (de::LibraryFile &)>& func);
+//#endif
+
 #endif
 
 #endif  // LIBDOOMSDAY_LIBRARY_H

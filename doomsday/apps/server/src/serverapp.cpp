@@ -105,9 +105,9 @@ DE_PIMPL(ServerApp)
         DD_Shutdown();
     }
 
-    void publishAPIToPlugin(::Library *plugin) override
+    void publishAPIToPlugin(const char *plugName) override
     {
-        DD_PublishAPIs(plugin);
+        DD_PublishAPIs(plugName);
     }
 
     void consoleRegistration() override

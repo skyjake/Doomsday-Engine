@@ -28,7 +28,7 @@
 
 #include <math.h>
 #include <string.h>
-#include <de/binangle.h>
+#include <de/legacy/binangle.h>
 #include "d_netcl.h"
 #include "dmu_lib.h"
 #include "g_common.h"

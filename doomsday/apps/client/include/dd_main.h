@@ -20,7 +20,7 @@
 #ifndef DE_MAIN_H
 #define DE_MAIN_H
 
-#include <de/LibraryFile>
+//#include <de/LibraryFile>
 #include <de/String>
 #include <doomsday/resource/resources.h>
 #include <doomsday/gameapi.h>

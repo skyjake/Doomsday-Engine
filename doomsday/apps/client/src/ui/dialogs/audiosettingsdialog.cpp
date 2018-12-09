@@ -200,7 +200,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
         if (outputs.contains(key))
         {
             const auto &names = outputs.element(key).as<ArrayValue>();
-            for (int i = 0; i < names.size(); ++i)
+            for (dsize i = 0; i < names.size(); ++i)
             {
                 audioOutput->items() << new ChoiceItem(names.at(i).asText(), NumberValue(i));
             }
