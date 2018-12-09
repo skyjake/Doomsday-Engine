@@ -42,7 +42,7 @@ DE_PUBLIC void registerExtension(const char *name, void *(*getProcAddress)(const
             de::registerExtension(#Name, extension_##Name##_symbol); \
         } \
     }; \
-    static Extension_##Name extension_registrar_##Name;
+    static Extension_##Name extension_registrar_##Name
 
 #define DE_SYMBOL_PTR(var, symbolName) \
     if (!iCmpStr(var, #symbolName)) { \

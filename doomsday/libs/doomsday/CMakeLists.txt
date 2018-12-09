@@ -4,6 +4,11 @@ cmake_minimum_required (VERSION 3.1)
 project (DE_LIBDOOMSDAY)
 include (../../cmake/Config.cmake)
 
+# Extensions.
+add_subdirectory (libs/importdeh)
+add_subdirectory (libs/importidtech1)
+add_subdirectory (libs/importudmf)
+
 # Dependencies.
 find_package (LZSS)
 include (ZLIB)
@@ -37,7 +42,7 @@ deng_add_package (net.dengine.base)
 deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 relaxed_warnings (libdoomsday)
 deng_link_libraries (libdoomsday PUBLIC DengCore DengComms)
-target_link_libraries (libdoomsday PRIVATE lzss)
+target_link_libraries (libdoomsday PRIVATE importdeh importidtech1 importudmf lzss)
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 
 if (DE_ENABLE_SDK)

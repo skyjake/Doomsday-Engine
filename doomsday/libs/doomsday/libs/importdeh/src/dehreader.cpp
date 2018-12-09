@@ -24,7 +24,7 @@
 
 #include "dehreader.h"
 
-#include <de/memory.h>
+#include <de/legacy/memory.h>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/lumpindex.h>
 #include <doomsday/defs/thing.h>

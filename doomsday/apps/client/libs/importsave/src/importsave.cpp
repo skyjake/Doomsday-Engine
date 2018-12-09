@@ -21,6 +21,7 @@
 #include <de/CommandLine>
 #include <de/DirectoryFeed>
 #include <de/Error>
+#include <de/Extension>
 #include <de/Folder>
 #include <de/Log>
 #include <de/NativeFile>
@@ -39,7 +40,7 @@ static NativePath findSavegameTool()
 #endif
 }
 
-int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
+static int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
 {
     DE_ASSERT(data != 0);
     ddhook_savegame_convert_t const &parm = *static_cast<ddhook_savegame_convert_t *>(data);
@@ -87,7 +88,7 @@ int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
  * This function is called automatically when the plugin is loaded. We let the engine know
  * what we'd like to do.
  */
-DE_ENTRYPOINT void DP_Initialize()
+static void DP_Initialize()
 {
     Plug_AddHook(HOOK_SAVEGAME_CONVERT, SavegameConvertHook);
 }
@@ -96,13 +97,14 @@ DE_ENTRYPOINT void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called automatically
  * when the plugin is loaded.
  */
-DE_ENTRYPOINT char const *deng_LibraryType()
+static char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-DE_DECLARE_API(Base);
-
-DE_API_EXCHANGE(
-    DE_GET_API(DE_API_BASE, Base);
-)
+DE_ENTRYPOINT void *extension_importsave_symbol(const char *name)
+{
+    DE_SYMBOL_PTR(name, deng_LibraryType);
+    DE_SYMBOL_PTR(name, DP_Initialize);
+    return nullptr;
+}

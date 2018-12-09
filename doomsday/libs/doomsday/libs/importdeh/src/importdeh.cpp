@@ -26,6 +26,7 @@
 #include <de/App>
 #include <de/CommandLine>
 #include <de/Block>
+#include <de/Extension>
 #include <de/Log>
 #include <de/String>
 
@@ -157,7 +158,7 @@ static void readPatchFiles()
  * This will be called after the engine has loaded all definitions but before
  * the data they contain has been initialized.
  */
-int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
+static int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
 {
     // Grab the DED definition handle supplied by the engine.
     ded = reinterpret_cast<ded_t *>(data);
@@ -177,7 +178,7 @@ int DefsHook(int /*hook_type*/, int /*parm*/, void *data)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DE_ENTRYPOINT void DP_Initialize()
+static void DP_Initialize()
 {
     Plug_AddHook(HOOK_DEFS, DefsHook);
 }
@@ -186,33 +187,27 @@ DE_ENTRYPOINT void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DE_ENTRYPOINT char const *deng_LibraryType()
+static char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-#if defined (DE_STATIC_LINK)
+//DE_DECLARE_API(Base);
+//DE_DECLARE_API(Con);
+//DE_DECLARE_API(Def);
+//DE_DECLARE_API(F);
 
-DE_EXTERN_C void *staticlib_importdeh_symbol(char const *name)
+//DE_API_EXCHANGE(
+//    DE_GET_API(DE_API_BASE, Base);
+//    DE_GET_API(DE_API_CONSOLE, Con);
+//    DE_GET_API(DE_API_DEFINITIONS, Def);
+//    DE_GET_API(DE_API_FILE_SYSTEM, F);
+//)
+
+DE_ENTRYPOINT void *extension_importdeh_symbol(char const *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DP_Initialize);
-    qWarning() << name << "not found in importdeh";
+    warning("\"%s\" not found in importdeh", name);
     return nullptr;
 }
-
-#else
-
-DE_DECLARE_API(Base);
-DE_DECLARE_API(Con);
-DE_DECLARE_API(Def);
-DE_DECLARE_API(F);
-
-DE_API_EXCHANGE(
-    DE_GET_API(DE_API_BASE, Base);
-    DE_GET_API(DE_API_CONSOLE, Con);
-    DE_GET_API(DE_API_DEFINITIONS, Def);
-    DE_GET_API(DE_API_FILE_SYSTEM, F);
-)
-
-#endif

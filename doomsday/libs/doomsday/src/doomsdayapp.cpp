@@ -37,12 +37,19 @@
 #include "doomsday/AbstractSession"
 #include "doomsday/GameStateFolder"
 
+#include "api_def.h"
+#include "api_filesys.h"
+#include "api_mapedit.h"
+#include "api_material.h"
+#include "api_uri.h"
+
 #include <de/App>
 #include <de/ArchiveFeed>
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/DictionaryValue>
 #include <de/DirectoryFeed>
+#include <de/Extension>
 #include <de/Folder>
 #include <de/Garbage>
 #include <de/Loop>
@@ -68,6 +75,51 @@
 #endif
 
 using namespace de;
+
+DE_EXTENSION(importdeh);
+DE_EXTENSION(importidtech1);
+DE_EXTENSION(importudmf);
+
+// Public API used in extensions:
+DE_USING_API(Base);
+DE_USING_API(Def);
+DE_USING_API(F);
+DE_USING_API(Map);
+DE_USING_API(Material);
+DE_USING_API(MPE);
+DE_USING_API(Uri);
+
+DE_DECLARE_API(Base);
+DE_DECLARE_API(Def);
+DE_DECLARE_API(F);
+DE_DECLARE_API(Map);
+DE_DECLARE_API(Material);
+DE_DECLARE_API(MPE);
+DE_DECLARE_API(Uri);
+
+DE_API_EXCHANGE(
+    DE_GET_API(DE_API_BASE, Base);
+    DE_GET_API(DE_API_DEFINITIONS, Def);
+    DE_GET_API(DE_API_FILE_SYSTEM, F);
+    DE_GET_API(DE_API_MAP, Map);
+    DE_GET_API(DE_API_MATERIALS, Material);
+    DE_GET_API(DE_API_MAP_EDIT, MPE);
+    DE_GET_API(DE_API_URI, Uri);
+)
+
+static const char *deng_LibraryType(void)
+{
+    return "library/generic";
+}
+
+static void *extension_doomsday_symbol(const char *name)
+{
+    DE_SYMBOL_PTR(name, deng_LibraryType);
+    DE_SYMBOL_PTR(name, deng_API);
+    return nullptr;
+}
+
+DE_EXTENSION(doomsday); // only for acquiring the APIs
 
 DE_STATIC_STRING(PATH_LOCAL_WADS,  "/local/wads");
 DE_STATIC_STRING(PATH_LOCAL_PACKS, "/local/packs");

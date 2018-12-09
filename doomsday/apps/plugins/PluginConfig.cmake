@@ -32,7 +32,7 @@ macro (deng_add_plugin target)
     )
     deng_link_libraries (${target} PUBLIC DengDoomsday DengGamefw)
     enable_cxx11 (${target})
-    set_target_properties (${target} PROPERTIES FOLDER Plugins)
+    set_target_properties (${target} PROPERTIES FOLDER Extensions)
 
     if (APPLE)
         if (IOS)

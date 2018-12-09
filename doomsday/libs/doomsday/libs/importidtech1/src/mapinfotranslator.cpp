@@ -1443,9 +1443,8 @@ DE_PIMPL_NOREF(MapInfoTranslator)
 
             const bool isCustomMapInfo = info.getb("custom");
 
-            if(custom != isCustomMapInfo) continue;
+            if (custom != isCustomMapInfo) continue;
 
-            de::Uri mapUri(info.gets("id"), RC_NULL);
             if (mapUri.path().isEmpty()) continue;
 
             const String mapId         = toMapId(mapUri);

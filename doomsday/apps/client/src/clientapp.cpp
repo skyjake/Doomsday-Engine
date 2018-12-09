@@ -109,20 +109,22 @@
 
 using namespace de;
 
+DE_EXTENSION(importsave);
+
 #if defined (DE_HAVE_AUDIO_FMOD)
-DE_EXTENSION(fmod)
+DE_EXTENSION(fmod);
 #endif
 #if defined (DE_HAVE_AUDIO_FLUIDSYNTH)
-DE_EXTENSION(fluidsynth)
+DE_EXTENSION(fluidsynth);
 #endif
 #if defined (DE_HAVE_AUDIO_OPENAL)
-DE_EXTENSION(openal)
+DE_EXTENSION(openal);
 #endif
 #if defined (DE_HAVE_AUDIO_DIRECTSOUND)
-DE_EXTENSION(directsound)
+DE_EXTENSION(directsound);
 #endif
 #if defined (DE_HAVE_AUDIO_WINMM)
-DE_EXTENSION(winmm)
+DE_EXTENSION(winmm);
 #endif
 
 static ClientApp *clientAppSingleton = 0;

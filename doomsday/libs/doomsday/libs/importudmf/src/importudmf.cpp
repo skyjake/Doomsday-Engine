@@ -23,6 +23,7 @@
 #include <doomsday/filesys/lumpindex.h>
 #include <gamefw/mapspot.h>
 #include <de/App>
+#include <de/Extension>
 #include <de/Log>
 
 using namespace de;
@@ -334,7 +335,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DE_ENTRYPOINT void DP_Initialize()
+static void DP_Initialize()
 {
     Plug_AddHook(HOOK_MAP_CONVERT, importMapHook);
 }
@@ -343,31 +344,29 @@ DE_ENTRYPOINT void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DE_ENTRYPOINT char const *deng_LibraryType()
+static char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-#if defined (DE_STATIC_LINK)
-
-DE_EXTERN_C void *staticlib_importudmf_symbol(char const *name)
+DE_ENTRYPOINT void *extension_importudmf_symbol(char const *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DP_Initialize);
-    qWarning() << name << "not found in importudmf";
+    warning("\"%s\" not found in importudmf", name);
     return nullptr;
 }
 
-#else
+//#else
 
-DE_DECLARE_API(Map);
-DE_DECLARE_API(Material);
-DE_DECLARE_API(MPE);
+//DE_DECLARE_API(Map);
+//DE_DECLARE_API(Material);
+//DE_DECLARE_API(MPE);
 
-DE_API_EXCHANGE(
-    DE_GET_API(DE_API_MAP, Map);
-    DE_GET_API(DE_API_MATERIALS, Material);
-    DE_GET_API(DE_API_MAP_EDIT, MPE);
-)
+//DE_API_EXCHANGE(
+//    DE_GET_API(DE_API_MAP, Map);
+//    DE_GET_API(DE_API_MATERIALS, Material);
+//    DE_GET_API(DE_API_MAP_EDIT, MPE);
+//)
 
-#endif
+//#endif

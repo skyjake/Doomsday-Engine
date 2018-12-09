@@ -19,7 +19,7 @@
 //#include "gamekit/libgamekit.h"
 #include <de/Extension>
 
-DE_EXTENSION(doom)
-DE_EXTENSION(doom64)
-DE_EXTENSION(heretic)
-DE_EXTENSION(hexen)
+DE_EXTENSION(doom);
+DE_EXTENSION(doom64);
+DE_EXTENSION(heretic);
+DE_EXTENSION(hexen);

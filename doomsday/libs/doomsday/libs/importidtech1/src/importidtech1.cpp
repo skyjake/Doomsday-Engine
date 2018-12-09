@@ -23,6 +23,7 @@
 #include "mapinfotranslator.h"
 #include <doomsday/filesys/lumpindex.h>
 #include <de/App>
+#include <de/Extension>
 #include <de/Log>
 
 using namespace de;
@@ -55,7 +56,7 @@ static inline AutoStr *readFileIntoString(String const &path, bool *isCustom = 0
  * be converted, the engine will specify this identifier and the plugin will then
  * locate the recognizer with which to perform the conversion.
  */
-int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
+static int ConvertMapHook(int /*hookType*/, int /*parm*/, void *context)
 {
     DE_ASSERT(context != 0);
     const auto &recognizer = *reinterpret_cast<Id1MapRecognizer *>(context);
@@ -112,7 +113,7 @@ static void convertMapInfos(const StringList &pathsInLoadOrder, String &xlat, St
  * This function will be called when Doomsday needs to translate a MAPINFO definition set.
  * @return  @c true if successful (always).
  */
-int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
+static int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
 {
     LOG_AS("importidtech1");
     DE_ASSERT(context);
@@ -129,7 +130,7 @@ int ConvertMapInfoHook(int /*hookType*/, int /*parm*/, void *context)
  * This function is called automatically when the plugin is loaded.
  * We let the engine know what we'd like to do.
  */
-DE_ENTRYPOINT void DP_Initialize()
+static void DP_Initialize()
 {
     Plug_AddHook(HOOK_MAP_CONVERT,     ConvertMapHook);
     Plug_AddHook(HOOK_MAPINFO_CONVERT, ConvertMapInfoHook);
@@ -139,37 +140,35 @@ DE_ENTRYPOINT void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DE_ENTRYPOINT char const *deng_LibraryType()
+static char const *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }
 
-#if defined (DE_STATIC_LINK)
-
-DE_EXTERN_C void *staticlib_importidtech1_symbol(char const *name)
+DE_ENTRYPOINT void *extension_importidtech1_symbol(char const *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DP_Initialize);
-    qWarning() << name << "not found in importidtech1";
+    warning("\"%s\" not found in importidtech1", name);
     return nullptr;
 }
 
-#else
+//#else
 
-DE_DECLARE_API(Base);
-DE_DECLARE_API(F);
-DE_DECLARE_API(Map);
-DE_DECLARE_API(Material);
-DE_DECLARE_API(MPE);
-DE_DECLARE_API(Uri);
+//DE_DECLARE_API(Base);
+//DE_DECLARE_API(F);
+//DE_DECLARE_API(Map);
+//DE_DECLARE_API(Material);
+//DE_DECLARE_API(MPE);
+//DE_DECLARE_API(Uri);
 
-DE_API_EXCHANGE(
-    DE_GET_API(DE_API_BASE, Base);
-    DE_GET_API(DE_API_FILE_SYSTEM, F);
-    DE_GET_API(DE_API_MAP, Map);
-    DE_GET_API(DE_API_MATERIALS, Material);
-    DE_GET_API(DE_API_MAP_EDIT, MPE);
-    DE_GET_API(DE_API_URI, Uri);
-)
+//DE_API_EXCHANGE(
+//    DE_GET_API(DE_API_BASE, Base);
+//    DE_GET_API(DE_API_FILE_SYSTEM, F);
+//    DE_GET_API(DE_API_MAP, Map);
+//    DE_GET_API(DE_API_MATERIALS, Material);
+//    DE_GET_API(DE_API_MAP_EDIT, MPE);
+//    DE_GET_API(DE_API_URI, Uri);
+//)
 
-#endif
+//#endif

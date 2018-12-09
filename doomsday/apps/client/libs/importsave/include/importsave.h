@@ -31,8 +31,6 @@
 #include <doomsday.h>
 #include <de/libcore.h>
 
-DE_EXTERN_C void DP_Initialize(void);
-
 DE_USING_API(Base);
 
 #endif // IMPORTSAVE_H

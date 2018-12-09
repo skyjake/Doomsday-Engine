@@ -90,7 +90,12 @@ DE_PIMPL_NOREF(Plugins)
         const char *plugType =
             function_cast<PluginType>(extensionSymbol(plugName, "deng_LibraryType"))();
 
-        if (!iCmpStr(plugType, "deng-plugin/audio"))
+        if (iCmpStrN(plugType, "deng-plugin/", 12) != 0)
+        {
+            // Only try to load plugins.
+            return false;
+        }
+        if (iCmpStr(plugType, "deng-plugin/audio") == 0)
         {
             // Audio plugins will be loaded later, on demand.
             return false;
@@ -159,6 +164,7 @@ void Plugins::loadAll()
     LOG_RES_VERBOSE("Initializing plugins...");
     for (const auto &plugName : de::extensions())
     {
+        publishAPIs(plugName);
         d->loadPlugin(plugName);
     }
 }

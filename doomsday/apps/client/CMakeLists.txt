@@ -219,6 +219,7 @@ deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit)
 
 # Extensions ----------------------------------------------------------------------------
 
+add_subdirectory (libs/importsave)
 add_subdirectory (libs/fmod)
 add_subdirectory (libs/openal)
 add_subdirectory (libs/fluidsynth)
@@ -226,6 +227,8 @@ if (WIN32)
     add_subdirectory (libs/directsound)
     add_subdirectory (libs/winmm)
 endif ()
+
+target_link_libraries (client PRIVATE importsave)
 
 if (TARGET audio_fmod)
     target_link_libraries (client PRIVATE audio_fmod)

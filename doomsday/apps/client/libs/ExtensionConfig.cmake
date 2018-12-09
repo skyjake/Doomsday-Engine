@@ -16,7 +16,7 @@ macro (deng_add_extlib target)
     )
     deng_link_libraries (${target} PRIVATE DengDoomsday)
     enable_cxx11 (${target})
-    set_target_properties (${target} PROPERTIES FOLDER Plugins)
+    set_target_properties (${target} PROPERTIES FOLDER Extensions)
 
     if (APPLE)
         # if (IOS)
