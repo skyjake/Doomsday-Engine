@@ -903,6 +903,7 @@ static keyname_t const keyNames[] = {
     { DDKEY_MULTIPLY,    "multiply" },
     { DDKEY_SECTION,     "section" },
     { DDKEY_WINMENU,     "winmenu" },
+    { DDKEY_ISOEXTRAKEY, "extra" },
     { 0, nullptr}
 };
 

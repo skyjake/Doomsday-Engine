@@ -90,6 +90,7 @@ enum {
     DDKEY_MULTIPLY,     ///< '*' on the numeric keypad.
     DDKEY_SECTION,      ///< §
     DDKEY_WINMENU,      ///< Windows-specific context menu key.
+    DDKEY_ISOEXTRAKEY,  ///< Non-US: backslash, or tilde/accent, or </> (depending on country).
     DD_HIGHEST_KEYCODE
 };
 

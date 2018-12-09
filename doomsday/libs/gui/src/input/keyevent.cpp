@@ -221,6 +221,11 @@ int KeyEvent::ddKeyFromSDL(int sdlKey, int scancode)
         return sdlKey;
     }
 
+    if (scancode == SDL_SCANCODE_NONUSBACKSLASH)
+    {
+        return DDKEY_ISOEXTRAKEY;
+    }
+
     // Non-character-inserting keys.
     switch (sdlKey)
     {
