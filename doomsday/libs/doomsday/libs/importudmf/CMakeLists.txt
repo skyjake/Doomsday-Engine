@@ -8,4 +8,3 @@ include_directories (include)
 file (GLOB SOURCES src/*.cpp include/*.h)
 
 deng_add_extlib (importudmf ${SOURCES})
-deng_link_libraries (importudmf PRIVATE DengGameFw)

@@ -21,7 +21,7 @@
 #include "udmfparser.h"
 
 #include <doomsday/filesys/lumpindex.h>
-#include <gamefw/mapspot.h>
+#include <doomsday/gamefw/mapspot.h>
 #include <de/App>
 #include <de/Extension>
 #include <de/Log>

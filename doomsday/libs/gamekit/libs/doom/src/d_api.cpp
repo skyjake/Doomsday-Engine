@@ -33,7 +33,7 @@
 #include <de/String>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/games.h>
-#include <gamefw/libgamefw.h>
+#include <doomsday/gamefw/defs.h>
 
 #include "doomsday.h"
 

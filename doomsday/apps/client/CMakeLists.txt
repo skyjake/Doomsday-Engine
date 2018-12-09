@@ -318,7 +318,6 @@ if (APPLE AND NOT IOS)
         Deng::libgui
         Deng::libdoomsday
         Deng::libgamekit
-        Deng::libgamefw
         doom
         doom64
         heretic

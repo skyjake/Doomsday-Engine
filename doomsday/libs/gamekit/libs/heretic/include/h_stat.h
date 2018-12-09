@@ -39,7 +39,7 @@
 
 #include "doomdata.h"
 #include "h_player.h"
-#include <gamefw/libgamefw.h>
+#include <doomsday/gamefw/defs.h>
 
 // wipegamestate can be set to -1 to force a wipe on the next draw
 extern gamestate_t wipeGameState;

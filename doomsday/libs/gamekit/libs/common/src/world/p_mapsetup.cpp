@@ -24,7 +24,7 @@
 #include "p_mapsetup.h"
 
 #include <doomsday/world/entitydef.h>
-#include <gamefw/mapspot.h>
+#include <doomsday/gamefw/mapspot.h>
 
 #include <cmath>
 #include <cctype>  // isspace

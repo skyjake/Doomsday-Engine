@@ -45,7 +45,7 @@
 #include <de/c_wrapper.h>
 #include <de/legacy/fixedpoint.h>
 #include <de/input/ddkey.h>
-#include <gamefw/libgamefw.h>
+#include <doomsday/gamefw/defs.h>
 #include "doomsday.h"
 #include "version.h"
 #include "info.h"

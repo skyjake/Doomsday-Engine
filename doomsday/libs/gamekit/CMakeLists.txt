@@ -1,10 +1,9 @@
-# Doomsday Engine -- GameKit: base framework and common routines
+# Doomsday Engine -- GameKit: game extensions
 
 cmake_minimum_required (VERSION 3.1)
 project (DE_LIBGAMEKIT)
 include (../../cmake/Config.cmake)
 
-add_subdirectory (libs/gamefw)
 add_subdirectory (libs/doom)
 add_subdirectory (libs/doom64)
 add_subdirectory (libs/heretic)

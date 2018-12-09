@@ -8,10 +8,12 @@ include (${CMAKE_CURRENT_LIST_DIR}/../../../cmake/Config.cmake)
 macro (deng_add_extlib target)
     sublist (_src 1 -1 ${ARGV})
     
-    # Link as a shared library so duplicate symbols are hidden.
     add_library (${target} STATIC ${_src} ${DE_RESOURCES})
-    target_include_directories (${target} PRIVATE "${DE_API_DIR}")
-    deng_link_libraries (${target} PRIVATE DengDoomsday)
+    target_include_directories (${target} PRIVATE 
+        "${DE_API_DIR}"
+        ${CMAKE_CURRENT_LIST_DIR}/../../include  # libdoomsday
+    )
+    deng_link_libraries (${target} PRIVATE DengComms)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Extensions)
 

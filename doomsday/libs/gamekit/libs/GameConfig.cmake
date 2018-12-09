@@ -27,7 +27,7 @@ macro (deng_add_gamelib target)
         "${DE_API_DIR}"
         "${DE_SOURCE_DIR}/libs/gui/include" 
     )
-    deng_link_libraries (${target} PRIVATE DengDoomsday DengGameFw)
+    deng_link_libraries (${target} PRIVATE DengDoomsday)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Extensions)
 

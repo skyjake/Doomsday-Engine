@@ -40,7 +40,7 @@
 #include "g_controls.h"
 #include "r_common.h"
 
-#include <gamefw/libgamefw.h>
+#include <doomsday/gamefw/defs.h>
 
 #if __JHERETIC__
 static float PSpriteSY[NUM_PLAYER_CLASSES][NUM_WEAPON_TYPES] = {

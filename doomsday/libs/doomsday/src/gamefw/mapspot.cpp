@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "gamefw/mapspot.h"
+#include "doomsday/gamefw/mapspot.h"
 
 using namespace de;
 

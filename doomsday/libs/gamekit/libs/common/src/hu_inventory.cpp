@@ -28,7 +28,7 @@
 #include "p_tick.h"
 #include "p_inventory.h"
 
-#include <gamefw/libgamefw.h>
+#include <doomsday/gamefw/defs.h>
 #include <cmath>
 #include <cstring>
 

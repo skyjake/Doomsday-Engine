@@ -19,8 +19,7 @@
 #ifndef LIBGAMEFW_MAPSPOT_H
 #define LIBGAMEFW_MAPSPOT_H
 
-#include "libgamefw.h"
-#include <de/libcore.h>
+#include "doomsday/gamefw/defs.h"
 
 typedef uint32_t gfw_mapspot_flags_t;
 
@@ -51,9 +50,9 @@ typedef uint32_t gfw_mapspot_flags_t;
 extern "C" {
 #endif
 
-LIBGAMEFW_PUBLIC int gfw_MapSpot_TranslateFlagsToInternal(gfw_mapspot_flags_t mapSpotFlags);
+LIBDOOMSDAY_PUBLIC int gfw_MapSpot_TranslateFlagsToInternal(gfw_mapspot_flags_t mapSpotFlags);
 
-LIBGAMEFW_PUBLIC gfw_mapspot_flags_t gfw_MapSpot_TranslateFlagsFromInternal(int internalFlags);
+LIBDOOMSDAY_PUBLIC gfw_mapspot_flags_t gfw_MapSpot_TranslateFlagsFromInternal(int internalFlags);
 
 #ifdef __cplusplus
 } // extern "C"

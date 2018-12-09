@@ -20,22 +20,7 @@
 #define LIBGAMEFW_H
 
 #include <de/legacy/types.h>
-
-/*
- * The LIBGAMEFW_PUBLIC macro is used for declaring exported symbols. It must be
- * applied in all exported classes and functions. DEF files are not used for
- * exporting symbols on Windows.
- */
-#if defined(_WIN32) && defined(_MSC_VER)
-#  ifdef __LIBGAMEFW__
-// This is defined when compiling the library.
-#    define LIBGAMEFW_PUBLIC __declspec(dllexport)
-#  else
-#    define LIBGAMEFW_PUBLIC __declspec(dllimport)
-#  endif
-#else
-#  define LIBGAMEFW_PUBLIC  DE_PUBLIC
-#endif
+#include "../libdoomsday.h"
 
 typedef enum gfw_game_id_e {
     GFW_DOOM,
@@ -62,12 +47,6 @@ enum { CR, CG, CB, CA };
 extern "C" {
 #endif
 
-/*
- * Initializes the GameKit library. Must be called before any other function
- * in the library is called.
- */
-//LIBGAMEFW_PUBLIC void gfw_Initialize();
-
 /**
  * Sets the current game.
  *
@@ -79,9 +58,9 @@ extern "C" {
  *
  * @param game  Current game.
  */
-LIBGAMEFW_PUBLIC void gfw_SetCurrentGame(gfw_game_id_t game);
+LIBDOOMSDAY_PUBLIC void gfw_SetCurrentGame(gfw_game_id_t game);
 
-LIBGAMEFW_PUBLIC gfw_game_id_t gfw_CurrentGame();
+LIBDOOMSDAY_PUBLIC gfw_game_id_t gfw_CurrentGame();
 
 #ifdef __cplusplus
 } // extern "C"
