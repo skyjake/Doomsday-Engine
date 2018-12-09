@@ -56,10 +56,10 @@
 #include <de/Log>
 #include "api_console.h"
 
-DE_ENTRYPOINT int  DS_Init(void);
-DE_ENTRYPOINT void DS_Shutdown(void);
-DE_ENTRYPOINT void DS_Event(int type);
-DE_ENTRYPOINT int  DS_Set(int prop, const void* ptr);
+//DE_ENTRYPOINT int  DS_Init(void);
+//DE_ENTRYPOINT void DS_Shutdown(void);
+//DE_ENTRYPOINT void DS_Event(int type);
+//DE_ENTRYPOINT int  DS_Set(int prop, const void* ptr);
 
 #define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FMOD] ", args)
 
@@ -72,7 +72,7 @@ extern FMOD::System *fmodSystem;
 
 #include "fmod_sfx.h"
 #include "fmod_music.h"
-#include "fmod_cd.h"
+//#include "fmod_cd.h"
 #include "fmod_util.h"
 
 DE_USING_API(Con);

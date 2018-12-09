@@ -3,7 +3,7 @@
 
 cmake_minimum_required (VERSION 3.1)
 project (DE_FLUIDSYNTH)
-include (../PluginConfig.cmake)
+include (../ExtensionConfig.cmake)
 
 set (tgt audio_fluidsynth)
 
@@ -113,7 +113,7 @@ append (CMAKE_CXX_FLAGS_DEBUG "-DDE_DSFLUIDSYNTH_DEBUG")
 include_directories (include)
 file (GLOB src src/*.cpp include/*.h)
 
-deng_add_plugin (${tgt} ${src} ${SOURCES})
+deng_add_extlib (${tgt} ${src} ${SOURCES})
 
 # Additional compiler options.
 if (DE_FLUIDSYNTH_EMBEDDED)
@@ -130,9 +130,9 @@ if (DE_FLUIDSYNTH_EMBEDDED)
         )
     endif ()
 
-    if (APPLE)
-        deng_bundle_install_names (${tgt} ${GLIB_LIBRARIES})
-    endif ()
+    # if (APPLE)
+    #     deng_bundle_install_names (${tgt} ${GLIB_LIBRARIES})
+    # endif ()
 else ()
     target_link_libraries (${tgt} PRIVATE ${FLUIDSYNTH_LIBRARIES})
 endif ()

@@ -87,6 +87,7 @@
 #include <de/DictionaryValue>
 #include <de/DisplayMode>
 #include <de/Error>
+#include <de/Extension>
 #include <de/FileSystem>
 #include <de/Garbage>
 #include <de/Info>
@@ -107,6 +108,22 @@
 #include "ui/splash.xpm"
 
 using namespace de;
+
+#if defined (DE_HAVE_AUDIO_FMOD)
+DE_EXTENSION(fmod)
+#endif
+#if defined (DE_HAVE_AUDIO_FLUIDSYNTH)
+DE_EXTENSION(fluidsynth)
+#endif
+#if defined (DE_HAVE_AUDIO_OPENAL)
+DE_EXTENSION(openal)
+#endif
+#if defined (DE_HAVE_AUDIO_DIRECTSOUND)
+DE_EXTENSION(directsound)
+#endif
+#if defined (DE_HAVE_AUDIO_WINMM)
+DE_EXTENSION(winmm)
+#endif
 
 static ClientApp *clientAppSingleton = 0;
 

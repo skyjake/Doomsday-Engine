@@ -217,6 +217,42 @@ endif()
 
 deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit)
 
+# Extensions ----------------------------------------------------------------------------
+
+add_subdirectory (libs/fmod)
+add_subdirectory (libs/openal)
+add_subdirectory (libs/fluidsynth)
+if (WIN32)
+    add_subdirectory (libs/directsound)
+    add_subdirectory (libs/winmm)
+endif ()
+
+if (TARGET audio_fmod)
+    target_link_libraries (client PRIVATE audio_fmod)
+    add_definitions (-DDE_HAVE_AUDIO_FMOD=1)
+    message (STATUS "Extension: audio_fmod")
+endif ()
+if (TARGET audio_openal)
+    target_link_libraries (client PRIVATE audio_openal)
+    add_definitions (-DDE_HAVE_AUDIO_OPENAL=1)
+    message (STATUS "Extension: audio_openal")
+endif ()
+if (TARGET audio_fluidsynth)
+    target_link_libraries (client PRIVATE audio_fluidsynth)
+    add_definitions (-DDE_HAVE_AUDIO_FLUIDSYNTH=1)
+    message (STATUS "Extension: audio_fluidsynth")
+endif ()
+if (TARGET audio_directsound)
+    target_link_libraries (client PRIVATE audio_directsound)
+    add_definitions (-DDE_HAVE_AUDIO_DIRECTSOUND=1)
+    message (STATUS "Extension: audio_directsound")
+endif ()
+if (TARGET audio_winmm)
+    target_link_libraries (client PRIVATE audio_winmm)
+    add_definitions (-DDE_HAVE_AUDIO_WINMM=1)
+    message (STATUS "Extension: audio_winmm")
+endif ()
+
 # Deployment ----------------------------------------------------------------------------
 
 if (WIN32 OR APPLE)
@@ -273,7 +309,6 @@ endif ()
 if (APPLE AND NOT IOS)
     deng_install_bundle_deps (client
         the_Foundation::the_Foundation
-        SDL2
         SDL2_mixer
         Deng::libcore
         Deng::libcomms
@@ -286,6 +321,9 @@ if (APPLE AND NOT IOS)
         heretic
         hexen
     )
+    if (TARGET audio_fmod)
+        deng_install_bundle_deps (client fmodex)
+    endif ()
 
     # Plugins are bundled inside the client app. We'll run macdeployqt on the
     # installed app before the plugins are there so it won't do unnecessary

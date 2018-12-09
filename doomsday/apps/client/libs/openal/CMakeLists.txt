@@ -4,7 +4,7 @@
 cmake_minimum_required (VERSION 3.1)
 project (DE_OPENAL)
 include (CheckIncludeFile)
-include (../PluginConfig.cmake)
+include (../ExtensionConfig.cmake)
 
 find_package (OpenAL QUIET)
 
@@ -22,7 +22,7 @@ if (OPENAL_FOUND)
     include_directories (SYSTEM ${OPENAL_INCLUDE_DIR})
 
     file (GLOB SOURCES src/*.cpp include/*.h)
-    deng_add_plugin (audio_openal ${SOURCES})
+    deng_add_extlib (audio_openal ${SOURCES})
     target_link_libraries (audio_openal PRIVATE ${OPENAL_LIBRARY})
 
     if (WIN32)

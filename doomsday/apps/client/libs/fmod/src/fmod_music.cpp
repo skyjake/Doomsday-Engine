@@ -58,12 +58,12 @@ struct SongBuffer
     }
 };
 
-static FMOD::Sound* song;
-static FMOD::Channel* music;
-static bool needReleaseSong;
-static float musicVolume;
-static SongBuffer* songBuffer;
-static std::string soundFontFileName;
+static FMOD::Sound *  song;
+static FMOD::Channel *music;
+static bool           needReleaseSong;
+static float          musicVolume;
+static SongBuffer *   songBuffer;
+static std::string    soundFontFileName;
 
 static FMOD_RESULT F_CALLBACK
 musicCallback(FMOD_CHANNELCONTROL *channelcontrol,
@@ -118,7 +118,7 @@ static void releaseSongBuffer()
     }
 }
 
-void setDefaultStreamBufferSize()
+static void setDefaultStreamBufferSize()
 {
     if (!fmodSystem) return;
 
@@ -127,7 +127,7 @@ void setDefaultStreamBufferSize()
     DSFMOD_ERRCHECK(result);
 }
 
-int DM_Music_Init(void)
+int fmod_DM_Music_Init(void)
 {
     music = 0;
     song = 0;
@@ -138,7 +138,7 @@ int DM_Music_Init(void)
     return fmodSystem != 0;
 }
 
-void DMFmod_Music_Shutdown(void)
+void fmod_Music_Shutdown(void)
 {
     if (!fmodSystem) return;
 
@@ -151,13 +151,12 @@ void DMFmod_Music_Shutdown(void)
     DSFMOD_TRACE("Music_Shutdown.");
 }
 
-void DM_Music_Shutdown(void)
+void fmod_DM_Music_Shutdown(void)
 {
-    DMFmod_Music_Shutdown();
+    fmod_Music_Shutdown();
 }
 
-/// @internal
-void DMFmod_Music_SetSoundFont(char const *fileName)
+void fmod_Music_SetSoundFont(char const *fileName)
 {
     if (fileName && fileName[0])
     {
@@ -169,7 +168,7 @@ void DMFmod_Music_SetSoundFont(char const *fileName)
     }
 }
 
-void DMFmod_Music_Set(int prop, float value)
+void fmod_Music_Set(int prop, float value)
 {
     if (!fmodSystem)
         return;
@@ -187,12 +186,12 @@ void DMFmod_Music_Set(int prop, float value)
     }
 }
 
-void DM_Music_Set(int prop, float value)
+void fmod_DM_Music_Set(int prop, float value)
 {
-    DMFmod_Music_Set(prop, value);
+    fmod_Music_Set(prop, value);
 }
 
-int DMFmod_Music_Get(int prop, void* ptr)
+int fmod_Music_Get(int prop, void* ptr)
 {
     switch (prop)
     {
@@ -215,17 +214,17 @@ int DMFmod_Music_Get(int prop, void* ptr)
     return false;
 }
 
-int DM_Music_Get(int prop, void* ptr)
+int fmod_DM_Music_Get(int prop, void* ptr)
 {
-    return DMFmod_Music_Get(prop, ptr);
+    return fmod_Music_Get(prop, ptr);
 }
 
-void DM_Music_Update(void)
+void fmod_DM_Music_Update(void)
 {
     // No need to do anything. The callback handles restarting.
 }
 
-void DMFmod_Music_Stop(void)
+void fmod_Music_Stop(void)
 {
     if (!fmodSystem || !music) return;
 
@@ -234,9 +233,9 @@ void DMFmod_Music_Stop(void)
     music->stop();
 }
 
-void DM_Music_Stop(void)
+void fmod_DM_Music_Stop(void)
 {
-    DMFmod_Music_Stop();
+    fmod_Music_Stop();
 }
 
 static bool startSong()
@@ -259,8 +258,7 @@ static bool startSong()
     return true;
 }
 
-/// @internal
-bool DMFmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
+bool fmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
 {
     releaseSong();
     releaseSongBuffer();
@@ -271,7 +269,7 @@ bool DMFmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
     return startSong();
 }
 
-int DM_Music_Play(int looped)
+int fmod_DM_Music_Play(int looped)
 {
     if (!fmodSystem) return false;
 
@@ -306,19 +304,19 @@ int DM_Music_Play(int looped)
     return startSong();
 }
 
-void DMFmod_Music_Pause(int setPause)
+void fmod_Music_Pause(int setPause)
 {
     if (!fmodSystem || !music) return;
 
     music->setPaused(setPause != 0);
 }
 
-void DM_Music_Pause(int setPause)
+void fmod_DM_Music_Pause(int setPause)
 {
-    DMFmod_Music_Pause(setPause);
+    fmod_Music_Pause(setPause);
 }
 
-void* DM_Music_SongBuffer(unsigned int length)
+void* fmod_DM_Music_SongBuffer(unsigned int length)
 {
     if (!fmodSystem) return NULL;
 
@@ -332,7 +330,7 @@ void* DM_Music_SongBuffer(unsigned int length)
     return songBuffer->data;
 }
 
-int DM_Music_PlayFile(const char *filename, int looped)
+int fmod_DM_Music_PlayFile(const char *filename, int looped)
 {
     if (!fmodSystem) return false;
 

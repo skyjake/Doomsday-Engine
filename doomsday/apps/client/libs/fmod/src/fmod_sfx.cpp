@@ -179,12 +179,12 @@ static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNELCONTROL *channelcontro
     return FMOD_OK;
 }
 
-int DS_SFX_Init(void)
+int fmod_DS_SFX_Init(void)
 {
     return fmodSystem != 0;
 }
 
-sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
+sfxbuffer_t* fmod_DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
     DSFMOD_TRACE("SFX_CreateBuffer: flags=" << flags << ", bits=" << bits << ", rate=" << rate);
 
@@ -207,7 +207,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
+void fmod_DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     if (!buf) return;
 
@@ -273,7 +273,7 @@ static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, 
  * much sample data as fits. The pointer to sample is saved, so the caller
  * mustn't free it while the sample is loaded.
  */
-void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
+void fmod_DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
     if (!fmodSystem || !buf || !sample) return;
 
@@ -370,14 +370,14 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_SFX_Reset(sfxbuffer_t* buf)
+void fmod_DS_SFX_Reset(sfxbuffer_t* buf)
 {
     if (!buf)
         return;
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: sfxbuffer %p", buf);
 
-    DS_SFX_Stop(buf);
+    fmod_DS_SFX_Stop(buf);
     buf->sample = 0;
     buf->flags &= ~SFXBF_RELOAD;
 
@@ -398,7 +398,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     info = BufferInfo();
 }
 
-void DS_SFX_Play(sfxbuffer_t* buf)
+void fmod_DS_SFX_Play(sfxbuffer_t* buf)
 {
     // Playing is quite impossible without a sample.
     if (!buf || !buf->sample)
@@ -438,7 +438,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_SFX_Stop(sfxbuffer_t* buf)
+void fmod_DS_SFX_Stop(sfxbuffer_t* buf)
 {
     if (!buf) return;
 
@@ -469,7 +469,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
  * Buffer streamer. Called by the Sfx refresh thread.
  * FMOD handles this for us.
  */
-void DS_SFX_Refresh(sfxbuffer_t*)
+void fmod_DS_SFX_Refresh(sfxbuffer_t*)
 {}
 
 /**
@@ -480,7 +480,7 @@ void DS_SFX_Refresh(sfxbuffer_t*)
  *                      SFXBP_MAX_DISTANCE
  *                      SFXBP_RELATIVE_MODE
  */
-void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
+void fmod_DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {
     if (!buf)
         return;
@@ -539,7 +539,7 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
  * @param property      SFXBP_POSITION
  *                      SFXBP_VELOCITY
  */
-void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
+void fmod_DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
     if (!fmodSystem || !buf) return;
 
@@ -567,7 +567,7 @@ void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
  *                      SFXLP_DOPPLER
  *                      SFXLP_UPDATE
  */
-void DS_SFX_Listener(int prop, float value)
+void fmod_DS_SFX_Listener(int prop, float value)
 {
     switch (prop)
     {
@@ -699,7 +699,7 @@ static void updateListenerEnvironmentSettings(float *reverb)
 /**
  * @param prop  SFXLP_ORIENTATION  (yaw, pitch) in degrees.
  */
-void DS_SFX_Listenerv(int prop, float* values)
+void fmod_DS_SFX_Listenerv(int prop, float* values)
 {
     switch (prop)
     {
@@ -736,7 +736,7 @@ void DS_SFX_Listenerv(int prop, float* values)
  * @param prop    Property (SFXP_*).
  * @param values  Pointer to return value(s).
  */
-int DS_SFX_Getv(int prop, void *values)
+int fmod_DS_SFX_Getv(int prop, void *values)
 {
     switch (prop)
     {

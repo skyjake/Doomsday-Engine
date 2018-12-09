@@ -24,6 +24,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <de/c_wrapper.h>
+#include <de/Extension>
 #include <de/LogBuffer>
 
 #include "doomsday.h"
@@ -53,7 +54,7 @@ audiointerface_sfx_generic_t* DMFluid_Sfx()
 /**
  * Initialize the FluidSynth sound driver.
  */
-int DS_Init(void)
+static int DS_Init(void)
 {
     if (fsSynth)
     {
@@ -100,7 +101,7 @@ int DS_Init(void)
 /**
  * Shut everything down.
  */
-void DS_Shutdown(void)
+static void DS_Shutdown(void)
 {
     if (!fsSynth) return;
 
@@ -123,7 +124,7 @@ void DS_Shutdown(void)
  * The Event function is called to tell the driver about certain critical
  * events like the beginning and end of an update cycle.
  */
-void DS_Event(int type)
+static void DS_Event(int type)
 {
     if (!fsSynth) return;
 
@@ -134,7 +135,7 @@ void DS_Event(int type)
     }
 }
 
-int DS_Set(int prop, const void* ptr)
+static int DS_Set(int prop, const void* ptr)
 {
     //if (!fmodSystem) return false;
 
@@ -162,17 +163,35 @@ int DS_Set(int prop, const void* ptr)
     }
 }
 
-/**
+/*
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DE_ENTRYPOINT const char *deng_LibraryType(void)
+static const char *deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
 
-DE_DECLARE_API(Con);
+//DE_DECLARE_API(Con);
 
-DE_API_EXCHANGE(
-    DE_GET_API(DE_API_CONSOLE, Con);
-)
+//DE_API_EXCHANGE(
+//    DE_GET_API(DE_API_CONSOLE, Con);
+//)
+
+DE_ENTRYPOINT void *extension_fluidsynth_symbol(char const *name)
+{
+    DE_SYMBOL_PTR(name, deng_LibraryType)
+    DE_SYMBOL_PTR(name, DS_Init)
+    DE_SYMBOL_PTR(name, DS_Shutdown)
+    DE_SYMBOL_PTR(name, DS_Event)
+    DE_SYMBOL_PTR(name, DS_Set)
+    DE_EXT_SYMBOL_PTR(fluidsynth, name, DM_Music_Init)
+    DE_EXT_SYMBOL_PTR(fluidsynth, name, DM_Music_Update)
+    DE_EXT_SYMBOL_PTR(fluidsynth, name, DM_Music_Get)
+    DE_EXT_SYMBOL_PTR(fluidsynth, name, DM_Music_Set)
+    DE_EXT_SYMBOL_PTR(fluidsynth, name, DM_Music_Pause)
+    DE_EXT_SYMBOL_PTR(fluidsynth, name, DM_Music_Stop)
+    DE_EXT_SYMBOL_PTR(fluidsynth, name, DM_Music_PlayFile)
+    de::warning("\"%s\" not found in audio_fluidsynth", name);
+    return nullptr;
+}

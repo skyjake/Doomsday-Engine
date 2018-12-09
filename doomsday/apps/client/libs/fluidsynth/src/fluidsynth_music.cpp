@@ -21,10 +21,10 @@
 
 #include "driver_fluidsynth.h"
 #include "doomsday.h"
-#include <string.h>
-#include <de/concurrency.h>
+#include <de/legacy/concurrency.h>
 #include <de/c_wrapper.h>
 #include <de/LogBuffer>
+#include <string.h>
 #include <atomic>
 #include <vector>
 
@@ -322,7 +322,7 @@ static void stopPlayer()
     fluid_synth_system_reset(DMFluid_Synth());
 }
 
-int DM_Music_Init(void)
+int fluidsynth_DM_Music_Init(void)
 {
     if (blockBuffer) return true;
 
@@ -348,7 +348,7 @@ void DMFluid_Shutdown(void)
     DSFLUIDSYNTH_TRACE("Music_Shutdown.");
 }
 
-void DM_Music_Shutdown(void)
+void fluidsynth_DM_Music_Shutdown(void)
 {
     DMFluid_Shutdown();
 }
@@ -376,7 +376,7 @@ void DMFluid_SetSoundFont(const char* fileName)
     }
 }
 
-void DM_Music_Set(int prop, float value)
+void fluidsynth_DM_Music_Set(int prop, float value)
 {
     switch (prop)
     {
@@ -394,7 +394,7 @@ void DM_Music_Set(int prop, float value)
     }
 }
 
-int DM_Music_Get(int prop, void* ptr)
+int fluidsynth_DM_Music_Get(int prop, void* ptr)
 {
     switch (prop)
     {
@@ -428,17 +428,17 @@ void DMFluid_Update(void)
     // nothing to do
 }
 
-void DM_Music_Update(void)
+void fluidsynth_DM_Music_Update(void)
 {
     DMFluid_Update();
 }
 
-void DM_Music_Stop(void)
+void fluidsynth_DM_Music_Stop(void)
 {
     stopPlayer();
 }
 
-void DM_Music_Pause(int setPause)
+void fluidsynth_DM_Music_Pause(int setPause)
 {
     if (!fsPlayer || !sfxBuf) return;
 
@@ -454,7 +454,7 @@ void DM_Music_Pause(int setPause)
     }
 }
 
-int DM_Music_PlayFile(const char *filename, int looped)
+int fluidsynth_DM_Music_PlayFile(const char *filename, int looped)
 {
     if (!filename) return false;
 

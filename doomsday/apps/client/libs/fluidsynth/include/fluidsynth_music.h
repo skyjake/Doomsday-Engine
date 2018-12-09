@@ -25,16 +25,16 @@
 #include <de/libcore.h>
 #include "api_audiod_mus.h"
 
-DE_ENTRYPOINT   int     DM_Music_Init(void);
-DE_ENTRYPOINT   void    DM_Music_Shutdown(void);
-DE_ENTRYPOINT   void    DM_Music_Set(int prop, float value);
-DE_ENTRYPOINT   int     DM_Music_Get(int prop, void* ptr);
-DE_ENTRYPOINT   void    DM_Music_Update(void);
+int     fluidsynth_DM_Music_Init(void);
+void    fluidsynth_DM_Music_Shutdown(void);
+void    fluidsynth_DM_Music_Set(int prop, float value);
+int     fluidsynth_DM_Music_Get(int prop, void* ptr);
+void    fluidsynth_DM_Music_Update(void);
 //void*   DM_Music_SongBuffer(unsigned int length); // buffered play supported
 //int     DM_Music_Play(int looped);
-DE_ENTRYPOINT   void    DM_Music_Stop(void);
-DE_ENTRYPOINT   void    DM_Music_Pause(int setPause);
-DE_ENTRYPOINT   int     DM_Music_PlayFile(const char *filename, int looped);
+void    fluidsynth_DM_Music_Stop(void);
+void    fluidsynth_DM_Music_Pause(int setPause);
+int     fluidsynth_DM_Music_PlayFile(const char *filename, int looped);
 
 // Internal:
 void    DMFluid_Update();

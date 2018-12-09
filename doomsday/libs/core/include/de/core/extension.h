@@ -49,6 +49,11 @@ DE_PUBLIC void registerExtension(const char *name, void *(*getProcAddress)(const
         return de::function_cast<void *>(symbolName); \
     }
 
+#define DE_EXT_SYMBOL_PTR(ext, var, symbolName) \
+    if (!iCmpStr(var, #symbolName)) { \
+        return de::function_cast<void *>(ext##_##symbolName); \
+    }
+
 DE_PUBLIC bool isExtensionRegistered(const char *name);
 
 DE_PUBLIC StringList extensions();

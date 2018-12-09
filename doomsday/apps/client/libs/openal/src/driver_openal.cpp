@@ -58,8 +58,10 @@
 #include "doomsday.h"
 
 #include <de/c_wrapper.h>
+#include <de/Extension>
 
-DE_DECLARE_API(Con);
+DE_USING_API(Con);
+//DE_DECLARE_API(Con);
 
 #define SRC(buf) ( (ALuint) PTR2INT(buf->ptr3D) )
 #define BUF(buf) ( (ALuint) PTR2INT(buf->ptr) )
@@ -71,29 +73,27 @@ ALenum(*EAXGet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, 
 ALenum(*EAXSet) (const struct _GUID* propertySetID, ALuint prop, ALuint source, ALvoid* value, ALuint size);
 #endif
 
-// Doomsday expects symbols to be exported without mangling.
+//extern "C" {
 
-extern "C" {
+//int DS_Init(void);
+//void DS_Shutdown(void);
+//void DS_Event(int type);
 
-int DS_Init(void);
-void DS_Shutdown(void);
-void DS_Event(int type);
+//int DS_SFX_Init(void);
+//sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate);
+//void DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
+//void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
+//void DS_SFX_Reset(sfxbuffer_t* buf);
+//void DS_SFX_Play(sfxbuffer_t* buf);
+static void DS_SFX_Stop(sfxbuffer_t* buf);
+//void DS_SFX_Refresh(sfxbuffer_t* buf);
+//void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
+//void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
+//void DS_SFX_Listener(int prop, float value);
+//void DS_SFX_Listenerv(int prop, float* values);
+//int DS_SFX_Getv(int prop, void* values);
 
-int DS_SFX_Init(void);
-sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate);
-void DS_SFX_DestroyBuffer(sfxbuffer_t* buf);
-void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample);
-void DS_SFX_Reset(sfxbuffer_t* buf);
-void DS_SFX_Play(sfxbuffer_t* buf);
-void DS_SFX_Stop(sfxbuffer_t* buf);
-void DS_SFX_Refresh(sfxbuffer_t* buf);
-void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value);
-void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values);
-void DS_SFX_Listener(int prop, float value);
-void DS_SFX_Listenerv(int prop, float* values);
-int DS_SFX_Getv(int prop, void* values);
-
-} // extern "C"
+//} // extern "C"
 
 #ifdef WIN32
 // EAX 2.0 GUIDs
@@ -146,7 +146,7 @@ static void loadExtensions(void)
 #endif
 }
 
-int DS_Init(void)
+static int DS_Init(void)
 {
     // Already initialized?
     if(initOk) return true;
@@ -178,7 +178,7 @@ int DS_Init(void)
     return true;
 }
 
-void DS_Shutdown(void)
+static void DS_Shutdown(void)
 {
     if(!initOk) return;
 
@@ -191,17 +191,17 @@ void DS_Shutdown(void)
     initOk = false;
 }
 
-void DS_Event(int /*type*/)
+static void DS_Event(int /*type*/)
 {
     // Not supported.
 }
 
-int DS_SFX_Init(void)
+static int DS_SFX_Init(void)
 {
     return true;
 }
 
-sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
+static sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
 {
     sfxbuffer_t* buf;
     ALuint bufName, srcName;
@@ -249,7 +249,7 @@ sfxbuffer_t* DS_SFX_CreateBuffer(int flags, int bits, int rate)
     return buf;
 }
 
-void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
+static void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
 {
     ALuint srcName, bufName;
 
@@ -264,7 +264,7 @@ void DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
     Z_Free(buf);
 }
 
-void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
+static void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 {
     if(!buf || !sample) return;
 
@@ -293,7 +293,7 @@ void DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 /**
  * Stops the buffer and makes it forget about its sample.
  */
-void DS_SFX_Reset(sfxbuffer_t* buf)
+static void DS_SFX_Reset(sfxbuffer_t* buf)
 {
     if(!buf) return;
 
@@ -302,7 +302,7 @@ void DS_SFX_Reset(sfxbuffer_t* buf)
     buf->sample = NULL;
 }
 
-void DS_SFX_Play(sfxbuffer_t* buf)
+static void DS_SFX_Play(sfxbuffer_t* buf)
 {
     ALuint source;
 
@@ -319,7 +319,7 @@ void DS_SFX_Play(sfxbuffer_t* buf)
     buf->flags |= SFXBF_PLAYING;
 }
 
-void DS_SFX_Stop(sfxbuffer_t* buf)
+static void DS_SFX_Stop(sfxbuffer_t* buf)
 {
     if(!buf || !buf->sample) return;
 
@@ -327,7 +327,7 @@ void DS_SFX_Stop(sfxbuffer_t* buf)
     buf->flags &= ~SFXBF_PLAYING;
 }
 
-void DS_SFX_Refresh(sfxbuffer_t* buf)
+static void DS_SFX_Refresh(sfxbuffer_t* buf)
 {
     ALint state;
 
@@ -377,7 +377,7 @@ static void setPan(ALuint source, float pan)
     alSourcefv(source, AL_POSITION, pos);
 }
 
-void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
+static void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
 {
     ALuint source;
 
@@ -420,7 +420,7 @@ void DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
     }
 }
 
-void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
+static void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
 {
     ALuint source;
 
@@ -444,7 +444,7 @@ void DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
     }
 }
 
-void DS_SFX_Listener(int prop, float value)
+static void DS_SFX_Listener(int prop, float value)
 {
     switch(prop)
     {
@@ -460,7 +460,7 @@ void DS_SFX_Listener(int prop, float value)
     }
 }
 
-void DS_SFX_Listenerv(int prop, float* values)
+static void DS_SFX_Listenerv(int prop, float* values)
 {
     float ori[6];
 
@@ -498,7 +498,7 @@ void DS_SFX_Listenerv(int prop, float* values)
     }
 }
 
-int DS_SFX_Getv(int /*prop*/, void* /*values*/)
+static int DS_SFX_Getv(int /*prop*/, void* /*values*/)
 {
     // Stub.
     return 0;
@@ -508,11 +508,34 @@ int DS_SFX_Getv(int /*prop*/, void* /*values*/)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DE_EXTERN_C DE_VISIBLE_SYMBOL const char* deng_LibraryType(void)
+static const char *deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
 
-DE_API_EXCHANGE(
-        DE_GET_API(DE_API_CONSOLE, Con);
-)
+//DE_API_EXCHANGE(
+//    DE_GET_API(DE_API_CONSOLE, Con);
+//)
+
+DE_ENTRYPOINT void *extension_openal_symbol(char const *name)
+{
+    DE_SYMBOL_PTR(name, deng_LibraryType)
+    DE_SYMBOL_PTR(name, DS_Init)
+    DE_SYMBOL_PTR(name, DS_Shutdown)
+    DE_SYMBOL_PTR(name, DS_Event)
+    DE_SYMBOL_PTR(name, DS_SFX_Init)
+    DE_SYMBOL_PTR(name, DS_SFX_CreateBuffer)
+    DE_SYMBOL_PTR(name, DS_SFX_DestroyBuffer)
+    DE_SYMBOL_PTR(name, DS_SFX_Load)
+    DE_SYMBOL_PTR(name, DS_SFX_Reset)
+    DE_SYMBOL_PTR(name, DS_SFX_Play)
+    DE_SYMBOL_PTR(name, DS_SFX_Stop)
+    DE_SYMBOL_PTR(name, DS_SFX_Refresh)
+    DE_SYMBOL_PTR(name, DS_SFX_Set)
+    DE_SYMBOL_PTR(name, DS_SFX_Setv)
+    DE_SYMBOL_PTR(name, DS_SFX_Listener)
+    DE_SYMBOL_PTR(name, DS_SFX_Listenerv)
+    DE_SYMBOL_PTR(name, DS_SFX_Getv)
+    de::warning("\"%s\" not found in audio_openal", name);
+    return nullptr;
+}

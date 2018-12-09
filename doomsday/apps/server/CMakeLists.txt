@@ -139,6 +139,7 @@ deng_link_libraries (server PRIVATE
     DengCore
     DengComms
     DengDoomsday
+    DengGameKit
 )
 
 # Server is installed as part of the "client" component instead of the

@@ -46,32 +46,24 @@
 #include <fmod.hpp>
 #include "api_audiod_mus.h"
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
-int     DM_Music_Init(void);
-void    DM_Music_Shutdown(void);
-void    DM_Music_Set(int prop, float value);
-int     DM_Music_Get(int prop, void* ptr);
-void    DM_Music_Update(void);
-void*   DM_Music_SongBuffer(unsigned int length); // buffered play supported
-int     DM_Music_Play(int looped);
-void    DM_Music_Stop(void);
-void    DM_Music_Pause(int setPause);
-int     DM_Music_PlayFile(const char *filename, int looped);
-
-#ifdef __cplusplus
-}
-#endif
+int     fmod_DM_Music_Init(void);
+void    fmod_DM_Music_Shutdown(void);
+void    fmod_DM_Music_Set(int prop, float value);
+int     fmod_DM_Music_Get(int prop, void* ptr);
+void    fmod_DM_Music_Update(void);
+void*   fmod_DM_Music_SongBuffer(unsigned int length); // buffered play supported
+int     fmod_DM_Music_Play(int looped);
+void    fmod_DM_Music_Stop(void);
+void    fmod_DM_Music_Pause(int setPause);
+int     fmod_DM_Music_PlayFile(const char *filename, int looped);
 
 // Internal:
-void    DMFmod_Music_Shutdown(void);
-bool    DMFmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease);
-void    DMFmod_Music_Pause(int setPause);
-void    DMFmod_Music_Stop(void);
-void    DMFmod_Music_Set(int prop, float value);
-int     DMFmod_Music_Get(int prop, void* ptr);
-void    DMFmod_Music_SetSoundFont(const char* fileName);
+void    fmod_Music_Shutdown(void);
+bool    fmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease);
+void    fmod_Music_Pause(int setPause);
+void    fmod_Music_Stop(void);
+void    fmod_Music_Set(int prop, float value);
+int     fmod_Music_Get(int prop, void* ptr);
+void    fmod_Music_SetSoundFont(const char* fileName);
 
 #endif /* end of include guard: __DSFMOD_MUS_H__ */

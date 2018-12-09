@@ -42,6 +42,7 @@
 #include "driver_fmod.h"
 #include "api_audiod.h"
 #include "api_audiod_sfx.h"
+#include "api_audiod_mus.h"
 #include <stdio.h>
 #include <fmod.h>
 #include <fmod_errors.h>
@@ -52,11 +53,10 @@
 #include <de/ArrayValue>
 #include <de/Config>
 #include <de/DictionaryValue>
+#include <de/Extension>
 #include <de/LogBuffer>
 #include <de/ScriptSystem>
 #include <de/TextValue>
-
-FMOD::System *fmodSystem = 0;
 
 struct Driver
 {
@@ -66,6 +66,8 @@ struct Driver
     FMOD_SPEAKERMODE speakerMode;
     int              speakerModeChannels;
 };
+
+FMOD::System *          fmodSystem;
 static de::List<Driver> fmodDrivers;
 
 static const char *speakerModeText(FMOD_SPEAKERMODE mode)
@@ -88,7 +90,7 @@ static const char *speakerModeText(FMOD_SPEAKERMODE mode)
 /**
  * Initialize the FMOD Studio low-level sound driver.
  */
-int DS_Init(void)
+static int DS_Init(void)
 {
     using namespace de;
 
@@ -238,9 +240,9 @@ int DS_Init(void)
 /**
  * Shut everything down.
  */
-void DS_Shutdown(void)
+static void DS_Shutdown(void)
 {
-    DMFmod_Music_Shutdown();
+    fmod_Music_Shutdown();
     //DMFmod_CDAudio_Shutdown();
 
     DSFMOD_TRACE("DS_Shutdown.");
@@ -252,7 +254,7 @@ void DS_Shutdown(void)
  * The Event function is called to tell the driver about certain critical
  * events like the beginning and end of an update cycle.
  */
-void DS_Event(int type)
+static void DS_Event(int type)
 {
     if (!fmodSystem) return;
 
@@ -263,7 +265,7 @@ void DS_Event(int type)
     }
 }
 
-int DS_Set(int prop, const void* ptr)
+static int DS_Set(int prop, const void* ptr)
 {
     if (!fmodSystem) return false;
 
@@ -277,7 +279,7 @@ int DS_Set(int prop, const void* ptr)
             // Use the default.
             path = 0;
         }
-        DMFmod_Music_SetSoundFont(path);
+        fmod_Music_SetSoundFont(path);
         return true; }
 
     default:
@@ -290,52 +292,40 @@ int DS_Set(int prop, const void* ptr)
  * Declares the type of the plugin so the engine knows how to treat it. Called
  * automatically when the plugin is loaded.
  */
-DE_ENTRYPOINT const char* deng_LibraryType(void)
+static const char *deng_LibraryType(void)
 {
     return "deng-plugin/audio";
 }
 
-#if defined (DE_STATIC_LINK)
-
-DE_EXTERN_C void *staticlib_audio_fmod_symbol(char const *name)
+DE_ENTRYPOINT void *extension_fmod_symbol(char const *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DS_Init)
     DE_SYMBOL_PTR(name, DS_Shutdown)
     DE_SYMBOL_PTR(name, DS_Event)
     DE_SYMBOL_PTR(name, DS_Set)
-    DE_SYMBOL_PTR(name, DS_SFX_Init)
-    DE_SYMBOL_PTR(name, DS_SFX_CreateBuffer)
-    DE_SYMBOL_PTR(name, DS_SFX_DestroyBuffer)
-    DE_SYMBOL_PTR(name, DS_SFX_Load)
-    DE_SYMBOL_PTR(name, DS_SFX_Reset)
-    DE_SYMBOL_PTR(name, DS_SFX_Play)
-    DE_SYMBOL_PTR(name, DS_SFX_Stop)
-    DE_SYMBOL_PTR(name, DS_SFX_Refresh)
-    DE_SYMBOL_PTR(name, DS_SFX_Set)
-    DE_SYMBOL_PTR(name, DS_SFX_Setv)
-    DE_SYMBOL_PTR(name, DS_SFX_Listener)
-    DE_SYMBOL_PTR(name, DS_SFX_Listenerv)
-    DE_SYMBOL_PTR(name, DS_SFX_Getv)
-    DE_SYMBOL_PTR(name, DM_Music_Init)
-    DE_SYMBOL_PTR(name, DM_Music_Update)
-    DE_SYMBOL_PTR(name, DM_Music_Get)
-    DE_SYMBOL_PTR(name, DM_Music_Set)
-    DE_SYMBOL_PTR(name, DM_Music_Pause)
-    DE_SYMBOL_PTR(name, DM_Music_Stop)
-    DE_SYMBOL_PTR(name, DM_Music_SongBuffer)
-    DE_SYMBOL_PTR(name, DM_Music_Play)
-    DE_SYMBOL_PTR(name, DM_Music_PlayFile)
-    qWarning() << name << "not found in audio_fmod";
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Init)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_CreateBuffer)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_DestroyBuffer)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Load)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Reset)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Play)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Stop)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Refresh)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Set)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Setv)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Listener)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Listenerv)
+    DE_EXT_SYMBOL_PTR(fmod, name, DS_SFX_Getv)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_Init)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_Update)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_Get)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_Set)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_Pause)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_Stop)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_SongBuffer)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_Play)
+    DE_EXT_SYMBOL_PTR(fmod, name, DM_Music_PlayFile)
+    de::warning("\"%s\" not found in audio_fmod", name);
     return nullptr;
 }
-
-#else
-
-DE_DECLARE_API(Con);
-
-DE_API_EXCHANGE(
-    DE_GET_API(DE_API_CONSOLE, Con);
-)
-
-#endif

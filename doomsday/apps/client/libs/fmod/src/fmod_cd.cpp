@@ -81,7 +81,7 @@ void DM_CDAudio_Set(int prop, float value)
     switch(prop)
     {
     case MUSIP_VOLUME:
-        DMFmod_Music_Set(MUSIP_VOLUME, value);
+        fmod_Music_Set(MUSIP_VOLUME, value);
         break;
 
     default: break;
@@ -103,7 +103,7 @@ int DM_CDAudio_Get(int prop, void* ptr)
         break;
 
     case MUSIP_PLAYING:
-        return DMFmod_Music_Get(MUSIP_PLAYING, ptr);
+        return fmod_Music_Get(MUSIP_PLAYING, ptr);
 
     default:
         DE_ASSERT_FAIL("CDAudio_Get: Unknown property id");
@@ -192,17 +192,17 @@ int DM_CDAudio_Play(int track, int looped)
     }
 #endif
 
-    return DMFmod_Music_PlaySound(trackSound, needRelease); // takes ownership
+    return fmod_Music_PlaySound(trackSound, needRelease); // takes ownership
 }
 
 void DM_CDAudio_Pause(int pause)
 {
-    DMFmod_Music_Pause(pause);
+    fmod_Music_Pause(pause);
 }
 
 void DM_CDAudio_Stop()
 {
-    DMFmod_Music_Stop();
+    fmod_Music_Stop();
 
     if(cdSound)
     {

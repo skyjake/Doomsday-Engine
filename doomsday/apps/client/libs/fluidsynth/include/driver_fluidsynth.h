@@ -35,10 +35,10 @@
 #include "api_console.h"
 #include "api_audiod_sfx.h"
 
-DE_ENTRYPOINT   int     DS_Init(void);
-DE_ENTRYPOINT   void    DS_Shutdown(void);
-DE_ENTRYPOINT   void    DS_Event(int type);
-DE_ENTRYPOINT   int     DS_Set(int prop, const void* ptr);
+//DE_ENTRYPOINT   int     DS_Init(void);
+//DE_ENTRYPOINT   void    DS_Shutdown(void);
+//DE_ENTRYPOINT   void    DS_Event(int type);
+//DE_ENTRYPOINT   int     DS_Set(int prop, const void* ptr);
 
 fluid_synth_t *                 DMFluid_Synth();
 fluid_audio_driver_t *          DMFluid_Driver();
