@@ -1,11 +1,48 @@
 find_package (PkgConfig QUIET)
 
 # Prefer to use Assimp installed on the system.
-pkg_check_modules (ASSIMP GLOBAL IMPORTED_TARGET assimp)
-if (ASSIMP_FOUND)
-    message (STATUS "Assimp: ${ASSIMP_LIBRARY_DIRS}")
-    add_library (assimp ALIAS PkgConfig::ASSIMP)
-endif ()
+#pkg_check_modules (ASSIMP GLOBAL IMPORTED_TARGET assimp)
+#if (ASSIMP_FOUND)
+#    add_library (assimp ALIAS PkgConfig::ASSIMP)
+#else ()
+    set (ASSIMP_RELEASE 4.1.0)
+    message (STATUS "Assimp ${ASSIMP_RELEASE} will be downloaded and built")
+    include (ExternalProject)
+    set (assimpOpts
+        -Wno-dev
+        -DASSIMP_BUILD_ASSIMP_TOOLS=OFF
+        -DASSIMP_BUILD_TESTS=OFF)
+    set (_allAssimpFormats
+        3DS AC ASE ASSBIN ASSXML B3D BVH COLLADA DXF CSM HMP IRR LWO LWS MD2 MD3 MD5
+        MDC MDL NFF NDO OFF OBJ OGRE OPENGEX PLY MS3D COB BLEND IFC XGL FBX Q3D Q3BSP RAW SMD
+        STL TERRAGEN 3D X)
+    set (_enabledAssimpFormats 3DS COLLADA MD2 MD3 MD5 MDL OBJ BLEND FBX IRR)
+    foreach (_fmt ${_allAssimpFormats})
+        list (FIND _enabledAssimpFormats ${_fmt} _pos)
+        if (_pos GREATER -1)
+            set (_enabled YES)
+        else ()
+            set (_enabled NO)
+        endif ()
+        list (APPEND assimpOpts -DASSIMP_BUILD_${_fmt}_IMPORTER=${_enabled})
+    endforeach (_fmt)
+    ExternalProject_Add (github-assimp
+        GIT_REPOSITORY   https://github.com/assimp/assimp.git
+        GIT_TAG          v${ASSIMP_RELEASE}
+        CMAKE_ARGS       ${assimpOpts}
+        PREFIX           assimp
+        BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/code/libassimp.${ASSIMP_RELEASE}.dylib
+        INSTALL_COMMAND  ""
+    )
+    add_library (assimp INTERFACE)
+    target_include_directories (assimp INTERFACE
+        ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp/include
+        ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/include)
+    target_link_libraries (assimp INTERFACE
+        ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/code/libassimp.${ASSIMP_RELEASE}.dylib)
+    add_dependencies (assimp github-assimp)
+#endif ()
+
 
 #if (assimp_FOUND)
 #    message (STATUS "Using libassimp on the system")

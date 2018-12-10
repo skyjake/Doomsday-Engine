@@ -231,7 +231,7 @@ endmacro()
 #
 #   res/macx/shell.icns,Resources
 #
-# If the destionation is omitted, it defaults to "Resources".
+# If the destination is omitted, it defaults to "Resources".
 #
 # If the file path is the name of an existing target, its location
 # is used as the path.
@@ -253,42 +253,51 @@ function (deng_find_resources)
             set (dest Resources)
         endif ()
         if (TARGET ${fn})
-            # Use the location of the target.
-            get_property (fn TARGET ${fn} PROPERTY DE_LOCATION)
-        endif ()
-        set (origFn ${fn})
-        if (NOT IS_ABSOLUTE ${fn})
-            set (fn ${CMAKE_CURRENT_SOURCE_DIR}/${fn})
-        endif ()
-        if (NOT EXISTS ${fn})
-            # Just ignore it.
-            message (STATUS "deng_find_resources: Ignoring ${fn} -- not found")
-        elseif (NOT IS_DIRECTORY ${fn})
-            list (APPEND src ${origFn})
-            # Just add as a single file.
-            list (APPEND spec "${origFn},${dest}")
+            get_property (ptype TARGET ${fn} PROPERTY TYPE)
+            if (ptype STREQUAL INTERFACE_LIBRARY)
+                get_property (fns TARGET ${fn} PROPERTY INTERFACE_LINK_LIBRARIES)
+            else ()
+                # Use the location of the target.
+                get_property (fns TARGET ${fn} PROPERTY DE_LOCATION)
+            endif ()
         else ()
-            #list (APPEND src ${origFn})
-            # Do a glob to find all the files.
-            file (GLOB_RECURSE _all ${fn}/*)
-            # Determine length of the base path since it will be omitted
-            # from destination.
-            get_filename_component (baseDir ${fn} DIRECTORY)
-            string (LENGTH ${baseDir} baseLen)
-            math (EXPR baseLen "${baseLen} + 1")
-            foreach (path ${_all})
-                get_filename_component (subDir ${path} DIRECTORY)
-                string (SUBSTRING ${subDir} ${baseLen} -1 subDest)
-                # Omit the current source directory.
-                if (path MATCHES "${CMAKE_CURRENT_SOURCE_DIR}.*")
-                    string (SUBSTRING ${path} ${srcDirLen} -1 subPath)
-                else ()
-                    set (subPath ${path})
-                endif ()
-                list (APPEND spec "${subPath},${dest}/${subDest}")
-                list (APPEND src ${subPath})
-            endforeach (path)
+            set (fns ${fn})
         endif ()
+        foreach (fn ${fns})
+            set (origFn ${fn})
+            if (NOT IS_ABSOLUTE ${fn})
+                set (fn ${CMAKE_CURRENT_SOURCE_DIR}/${fn})
+            endif ()
+            if (NOT EXISTS ${fn})
+                # Just ignore it.
+                message (STATUS "deng_find_resources: Ignoring ${fn} -- not found")
+            elseif (NOT IS_DIRECTORY ${fn})
+                # Add as a single file.
+                list (APPEND src ${origFn})
+                list (APPEND spec "${origFn},${dest}")
+            else ()
+                #list (APPEND src ${origFn})
+                # Do a glob to find all the files.
+                file (GLOB_RECURSE _all ${fn}/*)
+                # Determine length of the base path since it will be omitted
+                # from destination.
+                get_filename_component (baseDir ${fn} DIRECTORY)
+                string (LENGTH ${baseDir} baseLen)
+                math (EXPR baseLen "${baseLen} + 1")
+                foreach (path ${_all})
+                    get_filename_component (subDir ${path} DIRECTORY)
+                    string (SUBSTRING ${subDir} ${baseLen} -1 subDest)
+                    # Omit the current source directory.
+                    if (path MATCHES "${CMAKE_CURRENT_SOURCE_DIR}.*")
+                        string (SUBSTRING ${path} ${srcDirLen} -1 subPath)
+                    else ()
+                        set (subPath ${path})
+                    endif ()
+                    list (APPEND spec "${subPath},${dest}/${subDest}")
+                    list (APPEND src ${subPath})
+                endforeach (path)
+            endif ()
+        endforeach (fn)
     endforeach (pair)
     set (_deng_resource_spec ${spec} PARENT_SCOPE)
     set (DE_RESOURCES ${src} PARENT_SCOPE)
@@ -622,6 +631,9 @@ function (fix_bundled_install_names binaryFile)
             string (STRIP ${CMAKE_MATCH_1} depPath)
             if (NOT depPath MATCHES "@rpath/")
                 message (STATUS "Changing install name: ${depPath}")
+                message (STATUS ${CMAKE_INSTALL_NAME_TOOL}
+                    -change "${depPath}" "${ref}/${base}"
+                    "${binaryFile}")
                 execute_process (COMMAND ${CMAKE_INSTALL_NAME_TOOL}
                     -change "${depPath}" "${ref}/${base}"
                     "${binaryFile}"
@@ -673,14 +685,24 @@ function (deng_install_bundle_deps target)
                     install (FILES $<TARGET_FILE:${_dep}> DESTINATION ${_fwDir})
                 else ()
                     get_property (libs TARGET ${_dep} PROPERTY INTERFACE_LINK_LIBRARIES)
+                    set (_fixInst YES)
                     if (NOT libs)
                         set (libs $<TARGET_LINKER_FILE:${_dep}>)
+                        set (_fixInst NO)
                     endif ()
                     foreach (_tlib ${libs})
                         if (IS_DIRECTORY ${_tlib})
                             install (DIRECTORY ${_tlib} DESTINATION ${_fwDir})
                         else ()
                             install (FILES ${_tlib} DESTINATION ${_fwDir})
+                            get_filename_component (_tlibname ${_tlib} NAME)
+                            if (_fixInst)
+                                install (CODE "
+                                    set (CMAKE_MODULE_PATH ${DE_SOURCE_DIR}/cmake)
+                                    set (CMAKE_INSTALL_NAME_TOOL ${CMAKE_INSTALL_NAME_TOOL})
+                                    include (Macros)
+                                    fix_bundled_install_names (\${CMAKE_INSTALL_PREFIX}/${_fwDir}/${_tlibname} ${_tlibname})")
+                            endif ()
                         endif ()
                     endforeach (_tlib)
                 endif ()

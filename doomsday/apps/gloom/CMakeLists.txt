@@ -49,13 +49,11 @@ if (APPLE)
      )
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Gloom")
     deng_install_bundle_deps (gloom
-        fmodex
+        #fmodex
         the_Foundation::the_Foundation
         Deng::libcore
         Deng::libgui
-        Deng::libappfw
-        Deng::libshell
-        Deng::liblegacy
+        Deng::libcomms
         Deng::libdoomsday
         Deng::libgloom
     )

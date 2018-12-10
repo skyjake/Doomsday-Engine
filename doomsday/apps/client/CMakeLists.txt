@@ -7,10 +7,20 @@ project (DE_CLIENT)
 set (DE_ENABLE_PK3S ON)
 include (../../cmake/Config.cmake)
 
+add_subdirectory (libs/importsave)
+add_subdirectory (libs/fmod)
+add_subdirectory (libs/openal)
+add_subdirectory (libs/fluidsynth)
+if (WIN32)
+    add_subdirectory (libs/directsound)
+    add_subdirectory (libs/winmm)
+endif ()
+
 # Dependencies --------------------------------------------------------------------------
 
 find_package (Amethyst QUIET)
 find_package (SDL2Libs)
+find_package (glbinding REQUIRED)
 if (WIN32)
     find_package (DirectX)
 endif ()
@@ -133,6 +143,19 @@ if (APPLE AND NOT IOS)
         libheretic.pk3
         libhexen.pk3
     )
+    # Frameworks to include in the bundle.
+    list (APPEND MACX_RESOURCES
+        the_Foundation::the_Foundation,Frameworks
+        glbinding::glbinding,Frameworks
+        SDL2_mixer,Frameworks
+        assimp,Frameworks
+    )
+    if (TARGET fmodex)
+        list (APPEND MACX_RESOURCES fmodex,Frameworks)
+    endif ()
+    if (TARGET audio_fluidsynth)
+        list (APPEND MACX_RESOURCES glib,Frameworks)
+    endif ()
 endif ()
 
 # Windows: Compile resources.
@@ -219,15 +242,6 @@ deng_link_libraries (client PUBLIC DengGui DengDoomsday DengGameKit)
 
 # Extensions ----------------------------------------------------------------------------
 
-add_subdirectory (libs/importsave)
-add_subdirectory (libs/fmod)
-add_subdirectory (libs/openal)
-add_subdirectory (libs/fluidsynth)
-if (WIN32)
-    add_subdirectory (libs/directsound)
-    add_subdirectory (libs/winmm)
-endif ()
-
 target_link_libraries (client PRIVATE importsave)
 
 if (TARGET audio_fmod)
@@ -310,9 +324,8 @@ if (IOS)
 endif ()
 
 if (APPLE AND NOT IOS)
+    # Install binaries built by targets in the project.
     deng_install_bundle_deps (client
-        the_Foundation::the_Foundation
-        SDL2_mixer
         Deng::libcore
         Deng::libcomms
         Deng::libgui
@@ -323,9 +336,9 @@ if (APPLE AND NOT IOS)
         heretic
         hexen
     )
-    if (TARGET audio_fmod)
-        deng_install_bundle_deps (client fmodex)
-    endif ()
+#    if (TARGET audio_fmod)
+#        deng_install_bundle_deps (client fmodex)
+#    endif ()
 
     # Plugins are bundled inside the client app. We'll run macdeployqt on the
     # installed app before the plugins are there so it won't do unnecessary
