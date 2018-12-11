@@ -12,6 +12,10 @@ find_package (PkgConfig QUIET)
         -Wno-dev
         -DASSIMP_BUILD_ASSIMP_TOOLS=OFF
         -DASSIMP_BUILD_TESTS=OFF)
+    if (MSVC)
+        # Don't bother with multiconfig, always use the release build.
+        list (APPEND assimpOpts -DCMAKE_BUILD_TYPE=Release)
+    endif ()
     set (_allAssimpFormats
         3DS AC ASE ASSBIN ASSXML B3D BVH COLLADA DXF CSM HMP IRR LWO LWS MD2 MD3 MD5
         MDC MDL NFF NDO OFF OBJ OGRE OPENGEX PLY MS3D COB BLEND IFC XGL FBX Q3D Q3BSP RAW SMD
@@ -26,12 +30,13 @@ find_package (PkgConfig QUIET)
         endif ()
         list (APPEND assimpOpts -DASSIMP_BUILD_${_fmt}_IMPORTER=${_enabled})
     endforeach (_fmt)
+    set (assimpLibName libassimp.4.dylib)
     ExternalProject_Add (github-assimp
         GIT_REPOSITORY   https://github.com/assimp/assimp.git
         GIT_TAG          v${ASSIMP_RELEASE}
         CMAKE_ARGS       ${assimpOpts}
         PREFIX           assimp
-        BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/code/libassimp.${ASSIMP_RELEASE}.dylib
+        BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/code/${assimpLibName}
         INSTALL_COMMAND  ""
     )
     add_library (assimp INTERFACE)
@@ -39,7 +44,7 @@ find_package (PkgConfig QUIET)
         ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp/include
         ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/include)
     target_link_libraries (assimp INTERFACE
-        ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/code/libassimp.${ASSIMP_RELEASE}.dylib)
+        ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/code/${assimpLibName})
     add_dependencies (assimp github-assimp)
 #endif ()
 

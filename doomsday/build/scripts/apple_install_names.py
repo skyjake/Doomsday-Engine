@@ -15,20 +15,22 @@ binaries = list(
     map(lambda n: '/Frameworks/' + n, os.listdir(root + '/Frameworks')))
 actions = {}
 for binary in binaries:
-    ver3 = re.match(r'(.*)\.((\d+)\.\d+\.\d+)\.(.*)', binary)
-    if ver3:
-        print('version found:', binary, ver3.group(3))
-        ver_symlink = root + '%s.%s.%s' % \
-            (ver3.group(1), ver3.group(3), ver3.group(4))
-        target = '%s.%s.%s' % (os.path.basename(ver3.group(1)), ver3.group(2), ver3.group(4))
-        if not os.path.exists(ver_symlink):
-            subprocess.call([ln_cmd, '-s', target, ver_symlink])
+    if binary.startswith('/Frameworks/'):
+        subprocess.check_call([chmod_cmd, '0644', root + binary])        
+    # ver3 = re.match(r'(.*)\.((\d+)\.\d+\.\d+)\.(.*)', binary)
+    # if ver3:
+    #     print('version found:', binary, ver3.group(3))
+    #     ver_symlink = root + '%s.%s.%s' % \
+    #         (ver3.group(1), ver3.group(3), ver3.group(4))
+    #     target = '%s.%s.%s' % (os.path.basename(ver3.group(1)), ver3.group(2), ver3.group(4))
+    #     if not os.path.exists(ver_symlink):
+    #         subprocess.check_call([ln_cmd, '-s', target, ver_symlink])
 while len(binaries) > 0:        
     binary = binaries[0]
     del binaries[0]
     print(binary)
     if not re.search('cmd LC_RPATH', subprocess.check_output([otool_cmd, '-l', root + binary])):
-        subprocess.call([name_cmd, '-add_rpath', '@loader_path/../Frameworks', root + binary])
+        subprocess.check_call([name_cmd, '-add_rpath', '@loader_path/../Frameworks', root + binary])
     deps = subprocess.check_output([otool_cmd, '-L', root + binary])
     dep_actions = []
     for deps_line in deps.split('\n'):
@@ -41,18 +43,20 @@ while len(binaries) > 0:
                 continue
             dep_name = os.path.basename(dep_path)
             dep_actions.append((dep_path, '@rpath/' + dep_name))
-            if not os.path.exists(os.path.join(root, 'Frameworks', dep_name)):
+            new_dep_path = os.path.join(root, 'Frameworks', dep_name)
+            if not os.path.exists(new_dep_path):
                 print('%s: missing dependency!' % dep_name)
-                shutil.copy(dep_path, os.path.join(root, 'Frameworks', dep_name))
+                shutil.copy(dep_path, new_dep_path)
+                subprocess.check_call([chmod_cmd, '0644', new_dep_path])
                 binaries.append('/Frameworks/' + dep_name)
     if dep_actions:
         actions[binary] = dep_actions
 for binary in actions:
     print(binary)
-    print(actions[binary])
+    #print(actions[binary])
     path = root + binary
-    subprocess.call([name_cmd, '-id', '@rpath/' + os.path.basename(binary), path])
+    if binary.startswith('/MacOS/'):
+        subprocess.check_call([name_cmd, '-id', '@rpath/' + os.path.basename(binary), path])
     for old_path, new_path in actions[binary]:
-        subprocess.call([chmod_cmd, '0644', path])
-        subprocess.call([name_cmd, '-change', old_path, new_path, path])
+        subprocess.check_call([name_cmd, '-change', old_path, new_path, path])
  

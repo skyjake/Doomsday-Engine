@@ -143,19 +143,6 @@ if (APPLE AND NOT IOS)
         libheretic.pk3
         libhexen.pk3
     )
-    # Frameworks to include in the bundle.
-    list (APPEND MACX_RESOURCES
-        the_Foundation::the_Foundation,Frameworks
-        glbinding::glbinding,Frameworks
-        SDL2_mixer,Frameworks
-        assimp,Frameworks
-    )
-    if (TARGET fmodex)
-        list (APPEND MACX_RESOURCES fmodex,Frameworks)
-    endif ()
-    if (TARGET audio_fluidsynth)
-        list (APPEND MACX_RESOURCES glib,Frameworks)
-    endif ()
 endif ()
 
 # Windows: Compile resources.
@@ -313,17 +300,21 @@ if (WIN32)
     endif ()
 endif ()
 
-if (IOS)
-    set_target_properties (client PROPERTIES
-        LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
-        RESOURCE "res/ios/LaunchScreen.xib;${IOS_ICON_FILES}"
-        MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
-        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
-        XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
-    )
-endif ()
+#if (IOS)
+#    set_target_properties (client PROPERTIES
+#        LINK_FLAGS "-Wl,-e,_qt_main_wrapper"
+#        RESOURCE "res/ios/LaunchScreen.xib;${IOS_ICON_FILES}"
+#        MACOSX_BUNDLE_INFO_PLIST iOSBundleInfo.plist.in
+#        XCODE_ATTRIBUTE_TARGETED_DEVICE_FAMILY "1,2"
+#        XCODE_ATTRIBUTE_COMBINE_HIDPI_IMAGES NO
+#    )
+#endif ()
 
 if (APPLE AND NOT IOS)
+    set_target_properties (client PROPERTIES
+        MACOSX_BUNDLE_BUNDLE_NAME net.dengine.doomsday
+        MACOSX_BUNDLE_INFO_PLIST  MacOSXBundleInfo.plist.in
+    )
     # Install binaries built by targets in the project.
     deng_install_bundle_deps (client
         Deng::libcore
