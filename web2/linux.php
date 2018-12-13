@@ -14,9 +14,9 @@ generate_page_header($page_title);
 <div class="block">
     <article>
         <h1>Stable</h1>
-        <p>This is the latest stable version. <?php echo(release_notes_link('ubuntu16-x86_64')); ?></p>
+        <p>This is the latest stable version. <?php echo(release_notes_link('ubuntu18-x86_64')); ?></p>
         <?php 
-        generate_badges('ubuntu16-x86_64', BT_CANDIDATE);
+        generate_badges('ubuntu18-x86_64', BT_CANDIDATE);
         generate_badges('fedora23-x86_64', BT_CANDIDATE);
         ?>
     </article>
