@@ -1,7 +1,7 @@
 $ Man page for doomsday-shell-text
 @macro{TITLE}{ doomsday-shell-text }
 @macro{ONELINER}{ Utility for controlling and monitoring Doomsday servers }
-@macro{VERSION}{ Version 2.1 }
+@macro{VERSION}{ Version 2.2 }
 @macro{AUTHOR}{ Deng Team }
 @macro{LINK}{ http://dengine.net/ }
 @require{amestd}
@@ -35,7 +35,7 @@ needed.
 @item{@opt{-game}} Sets the game to load after startup. See
 @ref{gamemode}{Game modes} for a list of available games. For example:
 
-@samp{@opt{-game doom1-ultimate}} 
+@samp{@opt{-game doom1-ultimate}}
 
 If @opt{-game} is not specified, Doomsday will start in @dquote{ringzero}
 mode: a plain console with no game loaded.
@@ -91,7 +91,7 @@ buffer, to the latest received log entry.
 @item{About} Information about the Shell utility.
 
 @item{Exit} Exit the Shell. Any running servers will not be stopped.
-        
+
 }
 
 @section { Console }
@@ -114,4 +114,4 @@ The @kbd{PageUp} and @kbd{PageDown} keys scroll the log entry history.
 doomsday(6)
 
 $ Man pages have an author section.
-@include{../author}    
+@include{../author}

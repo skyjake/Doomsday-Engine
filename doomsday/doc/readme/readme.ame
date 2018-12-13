@@ -6,7 +6,7 @@
     @macro{TITLE}{ doomsday }
 }
 @macro{ONELINER}{ Enhanced source port of Doom, Heretic and Hexen }
-@macro{VERSION}{ Version 2.1 }
+@macro{VERSION}{ Version 2.2 }
 @macro{AUTHOR}{ Jaakko Keränen (skyjake), Daniel Swanson (DaniJ) & Contributors }
 @macro{LINK}{ http://dengine.net/ }
 @require{amestd}
@@ -26,9 +26,9 @@ $ Readme-specific formatting macros.
 $-----------------------------------------------------------------------------
 @begin
 
-@ifdef{MANPAGE}{    
-    $ Man pages begin with a command line synopsis and other basic 
-    $ technical information.    
+@ifdef{MANPAGE}{
+    $ Man pages begin with a command line synopsis and other basic
+    $ technical information.
     @include{technical.ame}
 }
 

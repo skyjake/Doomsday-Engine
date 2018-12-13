@@ -235,7 +235,6 @@ void ViewCompositor::drawCompositedLayers()
                            Matrix4f::scaleThenTranslate(view3D.size(), view3D.topLeft),
                            d->viewFramebuf.colorTexture());
 
-    // Some of the layers use OpenGL 2 drawing code.
     DGL_MatrixMode(DGL_PROJECTION);
     DGL_PushMatrix();
     DGL_LoadMatrix(ClientWindow::main().root().projMatrix2D().values());
