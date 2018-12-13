@@ -634,8 +634,9 @@ struct DGLDrawState
         // Non-batched uniforms.
         if (isLinePrimitive(batchPrimType))
         {
-            gl->uFragmentSize = Vector2f(GL_state.currentLineWidth, GL_state.currentLineWidth) /
-                                glState.target().size();
+            // We can't draw a line thinner than one pixel.
+            const float lineWidth = std::max(.5f, GL_state.currentLineWidth);
+            gl->uFragmentSize     = Vector2f(lineWidth, lineWidth) / glState.target().size();
         }
         else
         {
