@@ -52,24 +52,12 @@ void X_Register(void)
 
 static float Max3F(float x, float y, float z)
 {
-    return (x > y) 
-            ? (x > z)
-                ? x
-                : z
-            : (y > z)
-                ? y
-                : z;
+    return (x > y) ? (x > z) ? x : z : (y > z) ? y : z;
 }
 
 static float Min3F(float x, float y, float z)
 {
-    return (x < y)
-            ? (x < z)
-                ? x
-                : z
-            : (y < z)
-                ? y
-                : z;
+    return (x < y) ? (x < z) ? x : z : (y < z) ? y : z;
 }
 
 static float const RGBtoHue(float const red, float const green, float const blue)
