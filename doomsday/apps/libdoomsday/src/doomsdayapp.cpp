@@ -318,7 +318,7 @@ DENG2_PIMPL(DoomsdayApp)
 
         // Check for games installed using Steam.
         NativePath const steamBase = steamBasePath();
-        if (steamBase.exists())
+        if (steamBase.exists() && !cmdLine.has("-nosteam"))
         {
             NativePath steamPath = steamBase / "SteamApps/common/";
             LOG_RES_NOTE("Detected SteamApps path: %s") << steamPath.pretty();
@@ -344,9 +344,12 @@ DENG2_PIMPL(DoomsdayApp)
         }
 
         // Check for games installed from GOG.com.
-        foreach (NativePath gogPath, gogComPaths())
+        if (!cmdLine.has("-nogog"))
         {
-            attachWadFeed("GOG.com", gogPath);
+            foreach (NativePath gogPath, gogComPaths())
+            {
+                attachWadFeed("GOG.com", gogPath);
+            }
         }
 
 #ifdef UNIX

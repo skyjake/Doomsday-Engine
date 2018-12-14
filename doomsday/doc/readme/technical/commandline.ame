@@ -120,6 +120,8 @@ response file whose contents are added to the command line.
 
     @item{@opt{-nofsaa}} Disable antialiasing.
 
+    @item{@opt{-nogog}} Disable detection of games from GOG.
+
     @item{@opt{-nojoy}} Disable gamepads and other game controllers.
 
     @item{@opt{-nomouse}} Disable mouse input.
@@ -127,6 +129,8 @@ response file whose contents are added to the command line.
     @item{@opt{-nomusic}} Disable music.
 
     @item{@opt{-nosfx}} Disable sound effects.
+
+    @item{@opt{-nosteam}} Disable detection of games from Steam.
 
     @item{@opt{-novsync}} Disable vsync.
 
