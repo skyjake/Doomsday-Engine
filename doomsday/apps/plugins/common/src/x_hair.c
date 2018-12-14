@@ -41,7 +41,7 @@ void X_Register(void)
     C_VAR_FLOAT("view-cross-g",         &cfg.common.xhairColor[1],     0, 0, 1);
     C_VAR_FLOAT("view-cross-b",         &cfg.common.xhairColor[2],     0, 0, 1);
     C_VAR_FLOAT("view-cross-a",         &cfg.common.xhairColor[3],     0, 0, 1);
-    C_VAR_FLOAT("view-cross-width",     &cfg.common.xhairWeight,       0, 0, 5);
+    C_VAR_FLOAT("view-cross-width",     &cfg.common.xhairLineWidth,    0, .5f, 5);
     C_VAR_FLOAT("view-cross-live-r",    &cfg.common.xhairLiveRed,      0, 0, 1);
     C_VAR_FLOAT("view-cross-live-g",    &cfg.common.xhairLiveGreen,    0, 0, 1);
     C_VAR_FLOAT("view-cross-live-b",    &cfg.common.xhairLiveBlue,     0, 0, 1); 
@@ -157,7 +157,7 @@ void X_Drawer(int pnum)
     scale = .125f + MINMAX_OF(0, cfg.common.xhairSize, 1) * .125f * win.size.height * ((float)80/SCREENHEIGHT);
 
     oldLineWidth = DGL_GetFloat(DGL_LINE_WIDTH);
-    DGL_SetFloat(DGL_LINE_WIDTH, cfg.common.xhairWeight);
+    DGL_SetFloat(DGL_LINE_WIDTH, cfg.common.xhairLineWidth);
 
     currentColor(player, color);
     DGL_Color4fv(color);

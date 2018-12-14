@@ -122,7 +122,7 @@ typedef struct libcommon_config_s {
     float           xhairSize;
     byte            xhairVitality;
     float           xhairColor[4];
-    float           xhairWeight;
+    float           xhairLineWidth;
 
     /// Reference hue value for the crosshair at 0% health
     float           xhairLiveRed;

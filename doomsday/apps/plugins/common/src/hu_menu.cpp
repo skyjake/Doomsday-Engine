@@ -1279,7 +1279,7 @@ void Hu_MenuInitHUDOptionsPage()
     page->addWidget(new LabelWidget("Thickness"))
             .setLeft()
             .setGroup(3);
-    page->addWidget(new CVarSliderWidget("view-cross-width", .5f, 5, .25f))
+    page->addWidget(new CVarSliderWidget("view-cross-width", .5f, 5, .5f))
             .setRight()
             .setGroup(3);
 
