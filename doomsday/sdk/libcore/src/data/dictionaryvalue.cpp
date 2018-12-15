@@ -92,6 +92,16 @@ void DictionaryValue::remove(Elements::iterator const &pos)
     _elements.erase(pos);
 }
 
+const Value *DictionaryValue::find(const Value &key) const
+{
+    auto i = _elements.find(ValueRef(&key));
+    if (i != _elements.end())
+    {
+        return i->second;
+    }
+    return nullptr;
+}
+
 ArrayValue *DictionaryValue::contentsAsArray(ContentSelection selection) const
 {
     QScopedPointer<ArrayValue> array(new ArrayValue);

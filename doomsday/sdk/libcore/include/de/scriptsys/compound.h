@@ -57,8 +57,9 @@ public:
      *
      * @param statement  Statement object. The Compound takes ownership
      *                   of the object.
+     * @param startLine  Source line on which the statement begins.
      */
-    void add(Statement *statement);
+    void add(Statement *statement, duint startLine);
 
     /**
      * Deletes all statements.

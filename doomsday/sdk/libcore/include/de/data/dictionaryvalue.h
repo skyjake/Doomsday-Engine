@@ -87,6 +87,8 @@ public:
 
     void remove(Elements::iterator const &pos);
 
+    const Value *find(const Value &key) const;
+
     enum ContentSelection { Keys, Values };
 
     /**

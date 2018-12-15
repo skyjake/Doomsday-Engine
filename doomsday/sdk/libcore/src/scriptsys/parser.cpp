@@ -109,26 +109,27 @@ void Parser::parseStatement(Compound &compound)
     DENG2_ASSERT(!_statementRange.isEmpty());
 
     Token const &firstToken = _statementRange.firstToken();
+    const auto firstTokenLine = firstToken.line();
 
     // Statements with a compound: if, for, while, def.
     if (firstToken.equals(ScriptLex::IF))
     {
-        compound.add(parseIfStatement());
+        compound.add(parseIfStatement(), firstTokenLine);
         return;
     }
     else if (firstToken.equals(ScriptLex::WHILE))
     {
-        compound.add(parseWhileStatement());
+        compound.add(parseWhileStatement(), firstTokenLine);
         return;
     }
     else if (firstToken.equals(ScriptLex::FOR))
     {
-        compound.add(parseForStatement());
+        compound.add(parseForStatement(), firstTokenLine);
         return;
     }
     else if (firstToken.equals(ScriptLex::DEF))
     {
-        compound.add(parseFunctionStatement());
+        compound.add(parseFunctionStatement(), firstTokenLine);
         return;
     }
     else if (firstToken.equals(ScriptLex::TRY))
@@ -140,23 +141,23 @@ void Parser::parseStatement(Compound &compound)
     // Statements without a compound (must advance to next statement manually).
     if (firstToken.equals(ScriptLex::IMPORT))
     {
-        compound.add(parseImportStatement());
+        compound.add(parseImportStatement(), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::RECORD))
     {
-        compound.add(parseDeclarationStatement());
+        compound.add(parseDeclarationStatement(), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::DEL))
     {
-        compound.add(parseDeleteStatement());
+        compound.add(parseDeleteStatement(), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::PASS))
     {
-        compound.add(new FlowStatement(FlowStatement::PASS));
+        compound.add(new FlowStatement(FlowStatement::PASS), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::CONTINUE))
     {
-        compound.add(new FlowStatement(FlowStatement::CONTINUE));
+        compound.add(new FlowStatement(FlowStatement::CONTINUE), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::BREAK))
     {
@@ -167,7 +168,7 @@ void Parser::parseStatement(Compound &compound)
         {
             breakCount = parseExpression(_statementRange.startingFrom(1));
         }
-        compound.add(new FlowStatement(FlowStatement::BREAK, breakCount));
+        compound.add(new FlowStatement(FlowStatement::BREAK, breakCount), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::RETURN) || firstToken.equals(ScriptLex::THROW))
     {
@@ -178,25 +179,25 @@ void Parser::parseStatement(Compound &compound)
         }
         compound.add(new FlowStatement(
             firstToken.equals(ScriptLex::RETURN)? FlowStatement::RETURN : FlowStatement::THROW,
-            argValue));
+            argValue), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::PRINT))
     {
-        compound.add(parsePrintStatement());
+        compound.add(parsePrintStatement(), firstTokenLine);
     }
     else if (_statementRange.hasBracketless(ScriptLex::ASSIGN) ||
-            _statementRange.hasBracketless(ScriptLex::SCOPE_ASSIGN) ||
-            _statementRange.hasBracketless(ScriptLex::WEAK_ASSIGN))
+             _statementRange.hasBracketless(ScriptLex::SCOPE_ASSIGN) ||
+             _statementRange.hasBracketless(ScriptLex::WEAK_ASSIGN))
     {
-        compound.add(parseAssignStatement());
+        compound.add(parseAssignStatement(), firstTokenLine);
     }
     else if (firstToken.equals(ScriptLex::EXPORT))
     {
-        compound.add(parseExportStatement());
+        compound.add(parseExportStatement(), firstTokenLine);
     }
     else
     {
-        compound.add(parseExpressionStatement());
+        compound.add(parseExpressionStatement(), firstTokenLine);
     }
 
     // We've fully parsed the current set of tokens, get the next statement.
@@ -417,9 +418,10 @@ void Parser::parseTryCatchSequence(Compound &compound)
     // "try" cond-compound catch-compound [catch-compound]*
     // catch-compound: "catch" name-expr ["," ref-name-expr] cond-compound
 
+    const duint lineNumber = _statementRange.firstToken().line();
     std::unique_ptr<TryStatement> tryStat(new TryStatement);
     parseConditionalCompound(tryStat->compound(), StayAtClosingStatement);
-    compound.add(tryStat.release());
+    compound.add(tryStat.release(), lineNumber);
 
     // One catch is required.
     if (!_statementRange.firstToken().equals(ScriptLex::CATCH))
@@ -459,7 +461,7 @@ void Parser::parseTryCatchSequence(Compound &compound)
         finalCatch = catchStat.get();
 
         // Add it to the compound.
-        compound.add(catchStat.release());
+        compound.add(catchStat.release(), lineNumber);
     }
     if (finalCatch)
     {

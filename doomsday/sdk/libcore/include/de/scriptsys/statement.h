@@ -48,6 +48,10 @@ public:
 
     void setNext(Statement *statement) { _next = statement; }
 
+    void setLineNumber(duint line);
+
+    duint lineNumber() const;
+
 public:
     /**
      * Constructs a statement by deserializing one from a reader.
@@ -79,6 +83,8 @@ private:
     /// Pointer to the statement that follows this one, or NULL if
     /// this is the final statement.
     Statement *_next;
+
+    duint _lineNumber;
 };
 
 } // namespace de

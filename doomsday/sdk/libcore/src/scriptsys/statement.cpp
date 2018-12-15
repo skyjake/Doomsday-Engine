@@ -34,7 +34,7 @@
 
 using namespace de;
 
-Statement::Statement() : _next(nullptr)
+Statement::Statement() : _next(nullptr), _lineNumber(0)
 {}
 
 Statement::~Statement()
@@ -107,4 +107,14 @@ Statement *Statement::constructFrom(Reader &reader)
     // Deserialize it.
     reader >> *result.get();
     return result.release();
+}
+
+void Statement::setLineNumber(duint line)
+{
+    _lineNumber = line;
+}
+
+duint Statement::lineNumber() const
+{
+    return _lineNumber;
 }

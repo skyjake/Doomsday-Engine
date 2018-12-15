@@ -50,8 +50,9 @@ Statement const *Compound::firstStatement() const
     return *_statements.begin();
 }
 
-void Compound::add(Statement *statement)
+void Compound::add(Statement *statement, duint lineNumber)
 {
+    statement->setLineNumber(lineNumber);
     if (_statements.size() > 0)
     {
         _statements.back()->setNext(statement);
@@ -75,6 +76,6 @@ void Compound::operator << (Reader &from)
     clear();
     while (count--)
     {
-        add(Statement::constructFrom(from));
+        add(Statement::constructFrom(from), 0 /* unknown line number */);
     }
 }
