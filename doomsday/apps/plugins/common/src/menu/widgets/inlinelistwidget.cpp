@@ -91,13 +91,17 @@ int InlineListWidget::handleCommand(menucommand_e cmd)
 
 void InlineListWidget::updateGeometry()
 {
-    Item *item = items()[selection()];
-
     FR_PushAttrib();
-    Size2Raw size;
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
-    FR_TextSize(&size, item->text().toUtf8().constData());
-    geometry().setSize(Vector2ui(size.width, size.height));
+    Size2Raw maxSize{};
+    Size2Raw size;
+    for (int i = 0; i < items().size(); ++i)
+    {
+        FR_TextSize(&size, items().at(i)->text().toUtf8().constData());
+        maxSize.width = de::max(maxSize.width, size.width);
+        maxSize.height = de::max(maxSize.height, size.height);
+    }
+    geometry().setSize(Vector2ui(maxSize.width, maxSize.height));
     FR_PopAttrib();
 }
 
