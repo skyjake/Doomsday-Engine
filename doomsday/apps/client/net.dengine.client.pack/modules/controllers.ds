@@ -52,6 +52,12 @@ record Gamepad()
             Console.set(var, 0)
         end
     end
+
+    def disableAllAxes()
+        for var in Console.listVars('input-joy-.*-factor')
+            Console.set(var, 0)
+        end
+    end
 end
 
 record GenericGamepad(Gamepad)
@@ -131,12 +137,13 @@ record PS3Gamepad(Gamepad)
             event('game', right, 'impulse nextitem')
             event('game', tri,   'impulse useitem')
         end
-        
-        self.resetDeadzones()
-        
+                
         # Deadzones.
+        self.resetDeadzones()
+        self.disableAllAxes()
         for axis in ['x', 'y', 'z', 'w']
             Console.set('input-joy-%s-deadzone' % axis, 0.15)
+            Console.set('input-joy-%s-factor' % axis, 1)
         end
     end
 end
@@ -212,12 +219,13 @@ record PS4Gamepad(Gamepad)
             event('game', right, 'impulse nextitem')
             event('game', tri,   'impulse useitem')
         end
-                
-        self.resetDeadzones()
-        
+                       
         # Deadzones.
+        self.resetDeadzones()
+        self.disableAllAxes()
         for axis in ['x', 'y', 'z', 'axis06']
             Console.set('input-joy-%s-deadzone' % axis, 0.15)
+            Console.set('input-joy-%s-factor' % axis, 1)
         end
     end
 end
@@ -292,12 +300,14 @@ record XboxWindowsGamepad(Gamepad)
             event('game', y,     'impulse useitem')
         end
 
-        self.resetDeadzones()
-
         # Deadzones.
+        self.resetDeadzones()
+        self.disableAllAxes()
         for axis in ['x', 'y', 'w', 'axis05']
             Console.set('input-joy-%s-deadzone' % axis, 0.15)
+            Console.set('input-joy-%s-factor' % axis, 1)
         end
+        Console.set('input-joy-z-factor', 1)
     end
 end
 
@@ -376,11 +386,12 @@ record XboxMacGamepad(Gamepad)
             event('game', y,     'impulse useitem')
         end
 
-        self.resetDeadzones()
-
         # Deadzones.
+        self.resetDeadzones()
+        self.disableAllAxes()
         for axis in ['x', 'y', 'w', 'axis05']
             Console.set('input-joy-%s-deadzone' % axis, 0.15)
+            Console.set('input-joy-%s-factor' % axis, 1)
         end
         
         # Thrusters are stick axes, but we want them to go from 0 to 1.
