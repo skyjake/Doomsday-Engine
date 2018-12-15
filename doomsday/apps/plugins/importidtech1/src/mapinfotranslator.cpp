@@ -320,12 +320,12 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "clearepisodes")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO ClearEpisodes directives are not supported.");
+                    LOG_MAP_WARNING("MAPINFO ClearEpisodes directives are not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "clearskills")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO ClearSkills directives are not supported.");
+                    LOG_MAP_WARNING("MAPINFO ClearSkills directives are not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "clusterdef")) // ZDoom
@@ -396,7 +396,7 @@ namespace internal {
 
         void parseCluster() // ZDoom
         {
-            LOG_WARNING("MAPINFO Cluster definitions are not supported.");
+            LOG_MAP_WARNING("MAPINFO Cluster definitions are not supported.");
 
             /*int const clusterId = (int)*/lexer.readNumber();
 
@@ -488,18 +488,18 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "remove"))
                 {
-                    LOG_WARNING("MAPINFO Episode.remove is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Episode.remove is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "noskillmenu"))
                 {
-                    LOG_WARNING("MAPINFO Episode.noskillmenu is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Episode.noskillmenu is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "optional"))
                 {
                     // All episodes are "optional".
-                    //LOG_WARNING("MAPINFO Episode.optional is not supported.");
+                    //LOG_MAP_WARNING("MAPINFO Episode.optional is not supported.");
                     continue;
                 }
 
@@ -516,7 +516,7 @@ namespace internal {
          */
         void parseEndGame(MapInfo & /*mapInfo*/) // ZDoom
         {
-            LOG_WARNING("MAPINFO Map.next[EndGame] definitions are not supported.");
+            LOG_MAP_WARNING("MAPINFO Map.next[EndGame] definitions are not supported.");
 
             lexer.readToken();
             if(Str_CompareIgnoreCase(lexer.token(), "{"))
@@ -571,7 +571,7 @@ namespace internal {
             // Perhaps a ZDoom EndGame directive?
             if(!Str_CompareIgnoreCase(tok, "endpic"))
             {
-                LOG_WARNING("MAPINFO Map.next EndGame directives are not supported.");
+                LOG_MAP_WARNING("MAPINFO Map.next EndGame directives are not supported.");
                 lexer.readString();
                 return;
             }
@@ -586,7 +586,7 @@ namespace internal {
                !Str_CompareIgnoreCase(tok, "endgamew") ||
                !Str_CompareIgnoreCase(tok, "endtitle"))
             {
-                LOG_WARNING("MAPINFO Map.next EndGame directives are not supported.");
+                LOG_MAP_WARNING("MAPINFO Map.next EndGame directives are not supported.");
                 return;
             }
             if(!Str_CompareIgnoreCase(tok, "endgame"))
@@ -675,55 +675,55 @@ namespace internal {
             {
                 if(!Str_CompareIgnoreCase(lexer.token(), "allowcrouch")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.allowCrouch is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.allowCrouch is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "allowjump")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.allowJump is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.allowJump is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "allowmonstertelefrags")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.allowMonsterTelefrags is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.allowMonsterTelefrags is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "allowrespawn")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.allowRespawn is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.allowRespawn is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "aircontrol")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.airControl is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.airControl is not supported.");
                     lexer.readNumber();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "airsupply")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.airSupply is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.airSupply is not supported.");
                     lexer.readNumber();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "autosequences")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.autosequences is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.autosequences is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "baronspecial")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.baronSpecial is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.baronSpecial is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "bordertexture")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.borderTexture is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.borderTexture is not supported.");
                     lexer.readString();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "cdid")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.cdid is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.cdid is not supported.");
                     lexer.readString();
                     continue;
                 }
@@ -734,12 +734,12 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "checkswitchrange")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.checkSwitchRange is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.checkSwitchRange is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "clipmidtextures")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.clipMidtextures is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.clipMidtextures is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
@@ -754,13 +754,13 @@ namespace internal {
                 }
                 if(String(Str_Text(lexer.token())).beginsWith("compat_", String::CaseInsensitive)) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.%s is not supported.") << lexer.token();
+                    LOG_MAP_WARNING("MAPINFO Map.%s is not supported.") << lexer.token();
                     lexer.readNumber();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "cyberdemonspecial")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.cyberdemonSpecial is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.cyberdemonSpecial is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "doublesky"))
@@ -770,24 +770,24 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "enterpic")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.enterPic is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.enterPic is not supported.");
                     lexer.readString();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "evenlighting")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.evenlighting is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.evenlighting is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "exitpic")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.exitPic is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.exitPic is not supported.");
                     lexer.readString();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "f1")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.f1 is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.f1 is not supported.");
                     lexer.readString();
                     continue;
                 }
@@ -798,61 +798,61 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "fade")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.fade is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.fade is not supported.");
                     lexer.readString();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "fallingdamage")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.fallingdamage is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.fallingdamage is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "filterstarts")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.filterStarts is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.filterStarts is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "forceFallingDamage")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.forceFallingDamage is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.forceFallingDamage is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "forceNoSkyStretch")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.forceNoSkyStretch is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.forceNoSkyStretch is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "gravity")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.gravity is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.gravity is not supported.");
                     lexer.readNumber();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "horizwallshade")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.horizwallShade is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.horizwallShade is not supported.");
                     lexer.readNumber();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "infiniteflightpowerup")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.infiniteFlightPowerup is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.infiniteFlightPowerup is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "intermusic")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.interMusic is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.interMusic is not supported.");
                     lexer.readString();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "keepfullinventory")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.keepFullInventory is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.keepFullInventory is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "laxmonsteractivation")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.laxMonsterActivation is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.laxMonsterActivation is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "lightning"))
@@ -862,22 +862,22 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "map07special")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.map07Special is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.map07Special is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "monsterfallingdamage")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.monsterFallingDamage is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.monsterFallingDamage is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "missilesactivateimpactlines")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.missilesActivateImpactLines is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.missilesActivateImpactLines is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "missileshootersactivateimpactlines")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.missileshootersActivateImpactLines is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.missileshootersActivateImpactLines is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "music")) // ZDoom
@@ -892,27 +892,27 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "noautosequences")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noAutoSequences is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noAutoSequences is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "nocheckswitchrange")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noCheckSwitchRange is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noCheckSwitchRange is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "nocrouch")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noCrouch is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noCrouch is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "nofallingdamage")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noFallingDamage is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noFallingDamage is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "noinfighting")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noInfighting is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noInfighting is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "nointermission")) // ZDoom
@@ -922,32 +922,32 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "noinventorybar")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noInventorybar is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noInventorybar is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "nojump")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noJump is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noJump is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "normalinfighting")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.normalInfighting is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.normalInfighting is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "nosoundclipping")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.noSoundClipping is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.noSoundClipping is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "oldfallingdamage")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.oldFallingDamage is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.oldFallingDamage is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "outsidefog")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.outsideFog is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.outsideFog is not supported.");
                     lexer.readString();
                     continue;
                 }
@@ -975,63 +975,69 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "skystretch")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.skyStretch is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.skyStretch is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "specialaction_exitlevel")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.specialaction_exitlevel is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.specialaction_exitlevel is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "specialaction_killmonsters")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.specialaction_killmonsters is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.specialaction_killmonsters is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "specialaction_lowerfloor")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.specialaction_lowerfloor is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.specialaction_lowerfloor is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "specialaction_opendoor")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.specialaction_opendoor is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.specialaction_opendoor is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "spidermastermindspecial")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.spidermastermindSpecial is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.spidermastermindSpecial is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "smoothlighting")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.smoothlighting is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.smoothlighting is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "strictmonsteractivation")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.strictMonsterActivation is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.strictMonsterActivation is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "strifefallingdamage")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.strifeFallingDamage is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.strifeFallingDamage is not supported.");
+                    continue;
+                }
+                if (!Str_CompareIgnoreCase(lexer.token(), "sucktime")) // ZDoom?
+                {
+                    LOG_MAP_WARNING("MAPINFO Map.suckTime is not supported.");
+                    lexer.readNumber();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "teamdamage")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.teamDamage is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.teamDamage is not supported.");
                     lexer.readNumber();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "teamplayoff")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.teamplayOff is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.teamplayOff is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "teamplayon")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.teamplayOn is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.teamplayOn is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "titlepatch")) // ZDoom
@@ -1041,23 +1047,23 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "totalinfighting")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.totalInfighting is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.totalInfighting is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "translator")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.translator is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.translator is not supported.");
                     lexer.readString();
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "unfreezesingleplayerconversations")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.unfreezeSingleplayerConversations is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.unfreezeSingleplayerConversations is not supported.");
                     continue;
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "vertwallshade")) // ZDoom
                 {
-                    LOG_WARNING("MAPINFO Map.vertwallShade is not supported.");
+                    LOG_MAP_WARNING("MAPINFO Map.vertwallShade is not supported.");
                     lexer.readNumber();
                     continue;
                 }
@@ -1075,7 +1081,7 @@ namespace internal {
 
         void parseSkill() // ZDoom
         {
-            LOG_WARNING("MAPINFO Skill definitions are not supported.");
+            LOG_MAP_WARNING("MAPINFO Skill definitions are not supported.");
 
             /*ddstring_s const *id =*/ lexer.readString();
 
@@ -1548,7 +1554,7 @@ void MapInfoTranslator::merge(ddstring_s const &definitions, String sourcePath, 
     }
     catch(MapInfoParser::ParseError const &er)
     {
-        LOG_WARNING("Failed to parse %s as MAPINFO:\n") << source << er.asText();
+        LOG_MAP_WARNING("Failed to parse %s as MAPINFO:\n") << source << er.asText();
     }
 }
 
