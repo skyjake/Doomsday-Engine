@@ -145,6 +145,9 @@ response file whose contents are added to the command line.
     @item{@opt{-packs}} Set additional folders where to find packages. Works
     similar to @opt{-iwad}.
 
+    @item{@opt{-pkg}} One or more identifiers of packages that are loaded when
+    the @opt{-game} option is used to launch directly into a game.
+
     @item{@opt{-reset}} Reset the engine configuration to default values. In
     practice, this just erases the contents of the @file{persist.pack} file
     that stores configuration variables and UI state. The affected variables
