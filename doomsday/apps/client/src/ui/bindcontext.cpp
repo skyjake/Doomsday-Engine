@@ -309,7 +309,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
     {
         if (bind.compiled().deviceId == deviceId)
         {
-            ids.insert(deviceId);
+            ids.insert(bind.geti(VAR_ID));
         }
         return LoopContinue;
     });
