@@ -184,11 +184,12 @@ void Function::mapArgumentValues(ArrayValue const &args, ArgumentValues &values)
         for (duint count = values.size(); count > 0; --count, ++i) {}
         for (; i != d->arguments.end(); ++i)
         {
-            try
+            const TextValue argName(*i);
+            if (const Value *labeledValue = labeledArgs->find(argName))
             {
-                values.push_back(&labeledArgs->element(TextValue(*i)));
+                values.push_back(labeledValue);
             }
-            catch (DictionaryValue::KeyError const &)
+            else
             {
                 // Check the defaults.
                 Defaults::const_iterator k = d->defaults.find(*i);
