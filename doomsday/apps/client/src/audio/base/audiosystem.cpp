@@ -1814,27 +1814,38 @@ dint AudioSystem::playMusic(Record const &definition, bool looped)
         case MUSP_CD:
             if (cd())
             {
-                if (d->playMusicCDTrack(defn::Music(definition).cdTrack(), looped))
+                const int cdTrack = defn::Music(definition).cdTrack();
+                if (d->playMusicCDTrack(cdTrack, looped))
+                {
+                    LOG_AUDIO_VERBOSE("Playing CD track %d") << cdTrack;
                     return true;
+                }
             }
             break;
 
         case MUSP_EXT:
             if (d->playMusicFile(App_Resources().tryFindMusicFile(definition), looped))
+            {
+                LOG_AUDIO_VERBOSE("Playing external music file \"%s\"")
+                        << definition.gets("path");
                 return true;
+            }
 
             // Next, try non-MUS lumps.
             canPlayMUS = false;
 
-            // Note: Intentionally falls through to MUSP_MUS.            
+        // fall through
 
         case MUSP_MUS:
-            if (d->playMusicLump(App_FileSystem().lumpNumForName(definition.gets("lumpName")),
-                                looped, canPlayMUS) == 1)
+        {
+            const String lump = definition.gets("lumpName");
+            if (d->playMusicLump(App_FileSystem().lumpNumForName(lump), looped, canPlayMUS) == 1)
             {
+                LOG_AUDIO_VERBOSE("Playing music lump \"%s\"") << lump;
                 return true;
             }
             break;
+        }
 
         default: DENG2_ASSERT(!"Mus_Start: Invalid value for order[i]"); break;
         }
