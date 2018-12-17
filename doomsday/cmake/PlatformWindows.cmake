@@ -57,6 +57,9 @@ if (MSVC)
         # type conversions.
         append_unique (CMAKE_C_FLAGS   "-wd4267")
         append_unique (CMAKE_CXX_FLAGS "-wd4267")
+
+        # de::Error is derived from std::runtime_error (non-dll-interface class).
+        append_unique (CMAKE_CXX_FLAGS "-wd4275")
     endif ()
 
     # Locate Visual Studio.

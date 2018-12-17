@@ -10,6 +10,8 @@ endif ()
 get_filename_component (_where "${CMAKE_CURRENT_SOURCE_DIR}" NAME)
 message (STATUS "Configuring ${_where}...")
 
+set_property (GLOBAL PROPERTY USE_FOLDERS ON)
+
 include (${CMAKE_CURRENT_LIST_DIR}/Directories.cmake)
 include (Macros)
 include (Arch)
