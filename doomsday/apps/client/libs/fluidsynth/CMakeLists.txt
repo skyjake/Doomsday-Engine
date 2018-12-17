@@ -8,7 +8,7 @@ include (../ExtensionConfig.cmake)
 set (tgt audio_fluidsynth)
 
 # Make an embedded build by default?
-if (APPLE OR TARGET glib)
+if (APPLE OR MSYS2_LIBS_DIR)
     set (embed ON)
 elseif (UNIX)
     set (embed OFF)

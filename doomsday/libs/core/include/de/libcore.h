@@ -814,7 +814,11 @@ typedef uint64_t duint64;    ///< 64-bit unsigned integer.
 typedef float    dfloat;     ///< 32-bit floating point number.
 typedef double   ddouble;    ///< 64-bit floating point number.
 typedef size_t   dsize;      // Likely unsigned long.
+#if defined (_MSC_VER)
+typedef long long dsigsize;
+#else
 typedef ssize_t  dsigsize;
+#endif
 typedef long     dlong;
 
 class DE_PUBLIC Char

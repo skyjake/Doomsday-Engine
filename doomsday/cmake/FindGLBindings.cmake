@@ -28,9 +28,11 @@ if (NOT TARGET glbinding)
     )
     add_library (glbinding INTERFACE)
     target_include_directories (glbinding INTERFACE
-        ${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding/include
-        ${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding-build/include)
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding/include>
+        $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding-build/include>)
     target_link_libraries (glbinding INTERFACE
         ${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding-build/code/${glbindingLibName})
+    install (TARGETS glbinding EXPORT glbinding)
+    install (EXPORT glbinding DESTINATION ${DE_INSTALL_LIB_DIR})
     add_dependencies (glbinding github-glbinding)
 endif ()

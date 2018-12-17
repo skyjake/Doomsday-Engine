@@ -7,11 +7,13 @@ if (MSYS2_LIBS_DIR)
     )
     target_include_directories (the_Foundation INTERFACE
         ${_tfDir}/include
-    )
+    )    
     file (GLOB _bins ${_tfDir}/lib/*.dll)
     foreach (_bin ${_bins})
         deng_install_library (${_bin})
     endforeach (_bin)
+    install (TARGETS the_Foundation EXPORT the_Foundation)
+    install (EXPORT the_Foundation DESTINATION ${DE_INSTALL_LIB_DIR})
 endif ()
 
 if (NOT TARGET the_Foundation)
