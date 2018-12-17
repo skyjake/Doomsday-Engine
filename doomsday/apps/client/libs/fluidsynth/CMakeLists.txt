@@ -8,13 +8,13 @@ include (../ExtensionConfig.cmake)
 set (tgt audio_fluidsynth)
 
 # Make an embedded build by default?
-if (APPLE OR MINGW_GLIB_DIR)
+if (APPLE OR TARGET glib)
     set (embed ON)
 elseif (UNIX)
     set (embed OFF)
 endif ()
-if (WIN32 AND NOT MINGW_GLIB_DIR)
-    message (STATUS "Not building ${tgt} because the MinGW version of GLib is required on Windows (set MINGW_GLIB_DIR)")
+if (WIN32 AND NOT MSYS2_LIBS_DIR)
+    message (STATUS "Not building ${tgt} because the MSYS2 version of glib-2.0 is required on Windows (set MSYS2_LIBS_DIR)")
     return ()
 endif ()
 

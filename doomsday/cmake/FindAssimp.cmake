@@ -1,12 +1,13 @@
 find_package (PkgConfig QUIET)
 
 # Prefer to use Assimp installed on the system.
-#pkg_check_modules (ASSIMP GLOBAL IMPORTED_TARGET assimp)
-#if (ASSIMP_FOUND)
-#    add_library (assimp ALIAS PkgConfig::ASSIMP)
-#else ()
+pkg_check_modules (ASSIMP assimp)
+if (ASSIMP_FOUND)
+    #add_library (assimp ALIAS PkgConfig::ASSIMP)
+    status (FATAL_ERROR "TODO: Add INTERFACe library target with ASSIMP libs")
+else ()
     set (ASSIMP_RELEASE 4.1.0)
-    message (STATUS "Assimp ${ASSIMP_RELEASE} will be downloaded and built")
+    message (STATUS "Open Asset Import Library ${ASSIMP_RELEASE} will be downloaded and built")
     include (ExternalProject)
     set (assimpOpts
         -Wno-dev
@@ -46,7 +47,7 @@ find_package (PkgConfig QUIET)
     target_link_libraries (assimp INTERFACE
         ${CMAKE_CURRENT_BINARY_DIR}/assimp/src/github-assimp-build/code/${assimpLibName})
     add_dependencies (assimp github-assimp)
-#endif ()
+endif ()
 
 
 #if (assimp_FOUND)

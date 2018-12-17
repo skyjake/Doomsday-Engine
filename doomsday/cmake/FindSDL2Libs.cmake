@@ -1,5 +1,9 @@
 find_package (PkgConfig QUIET)
 
+if (TARGET SDL2)
+    return ()
+endif ()
+
 if (PKG_CONFIG_FOUND AND NOT IOS)
     if (NOT TARGET SDL2)
         add_pkgconfig_interface_library (SDL2 OPTIONAL sdl2)

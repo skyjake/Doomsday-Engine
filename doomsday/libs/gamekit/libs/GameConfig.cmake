@@ -103,6 +103,7 @@ macro (deng_add_gamelib target)
     # if (NOT APPLE)
     install (TARGETS ${target}
         EXPORT ${target} 
+        DESTINATION ${DE_INSTALL_LIB_DIR}
         LIBRARY DESTINATION ${DE_INSTALL_LIB_DIR} 
         COMPONENT libs
     )

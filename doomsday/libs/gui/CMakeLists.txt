@@ -81,7 +81,7 @@ endif ()
 # Dependencies.
 find_package (SDL2Libs)
 find_package (Stb)
-find_package (glbinding REQUIRED)
+find_package (GLBindings)
 find_package (Assimp)
 if (DE_X11)
     find_package (X11 REQUIRED)
@@ -131,7 +131,7 @@ endif ()
 
 deng_link_libraries (libgui PUBLIC DengComms)
 target_link_libraries (libgui
-    PUBLIC  glbinding::glbinding
+    PUBLIC  glbinding
     PRIVATE SDL2 SDL2_ttf stb assimp
 )
 if (WIN32)

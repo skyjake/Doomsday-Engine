@@ -20,7 +20,7 @@ endif ()
 
 find_package (Amethyst QUIET)
 find_package (SDL2Libs)
-find_package (glbinding REQUIRED)
+find_package (GLBindings)
 if (WIN32)
     find_package (DirectX)
 endif ()
