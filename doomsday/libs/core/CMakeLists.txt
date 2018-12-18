@@ -73,8 +73,8 @@ deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
 target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation)
 if (WIN32)
-    # Really needed?
-    #target_link_libraries (liblegacy PRIVATE winmm)
+    # timeBeginPeriod, timeEndPeriod
+    target_link_libraries (libcore PRIVATE winmm)
 endif ()
 deng_deploy_library (libcore DengCore)
 
