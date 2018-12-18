@@ -36,7 +36,7 @@ namespace de {
 
 static char *duplicateStringAsUtf8(String const &s)
 {
-    return strdup(s);
+    return iDupStr(s);
 }
 
 DE_PIMPL(CommandLine)
@@ -229,7 +229,7 @@ CommandLine::ArgWithParams CommandLine::check(String const &arg, dint numParams)
         found.params.append(*k);
     }
 
-    found.pos = i - d->arguments.begin();
+    found.pos = dint(i - d->arguments.begin());
     return found;
 }
 

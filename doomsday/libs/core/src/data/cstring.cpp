@@ -61,7 +61,7 @@ dsize CString::indexOf(char ch, size_t from) const
 dsize CString::indexOf(const char *cStr, size_t from) const
 {
     if (from >= size_t(_range.size())) return npos;
-    const char *pos = strnstr(_range.start + from, cStr, _range.size() - from);
+    const char *pos = iStrStrN(_range.start + from, cStr, _range.size() - from);
     return pos ? (pos - _range.start) : npos;
 }
 

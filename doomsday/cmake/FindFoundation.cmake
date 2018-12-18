@@ -2,8 +2,8 @@ if (MSYS2_LIBS_DIR)
     add_library (the_Foundation INTERFACE)
     set (_tfDir ${MSYS2_LIBS_DIR}/${DE_ARCH}/the_Foundation)
     target_link_libraries (the_Foundation INTERFACE
-        debug ${_tfDir}/lib/libFoundationd.lib
-        optimized ${_tfDir}/lib/libFoundation.lib
+        debug ${_tfDir}/lib/msys-Foundationd.lib
+        optimized ${_tfDir}/lib/msys-Foundation.lib
     )
     target_include_directories (the_Foundation INTERFACE
         ${_tfDir}/include

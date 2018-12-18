@@ -48,6 +48,12 @@ if (MSVC)
     append_unique (CMAKE_C_FLAGS   "-w14505 -wd4100 -wd4748")
     append_unique (CMAKE_CXX_FLAGS "-w14505 -wd4100 -wd4748")
 
+    # de::Error is derived from std::runtime_error (non-dll-interface class).
+    append_unique (CMAKE_CXX_FLAGS "-wd4251 -wd4275")
+
+    # Possible loss of data due to number conversion.
+    append_unique (CMAKE_CXX_FLAGS "-wd4244")
+
     # Enable multi-processor compiling.
     append_unique (CMAKE_C_FLAGS   "-MP")
     append_unique (CMAKE_CXX_FLAGS "-MP")
@@ -57,9 +63,6 @@ if (MSVC)
         # type conversions.
         append_unique (CMAKE_C_FLAGS   "-wd4267")
         append_unique (CMAKE_CXX_FLAGS "-wd4267")
-
-        # de::Error is derived from std::runtime_error (non-dll-interface class).
-        append_unique (CMAKE_CXX_FLAGS "-wd4275")
     endif ()
 
     # Locate Visual Studio.

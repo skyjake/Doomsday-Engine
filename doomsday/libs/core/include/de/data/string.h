@@ -779,7 +779,9 @@ public:
     static String asText(duint16 value) { return format("%u", value); }
     static String asText(duint32 value) { return format("%u", value); }
     static String asText(duint64 value) { return format("%llu", value); }
+#if !defined (_WIN64) // size_t == uint64
     static String asText(dsize value)   { return format("%zu", value); }
+#endif
     static String asText(dfloat value)  { return format("%f", double(value)); }
     static String asText(dfloat value, int precision);
     static String asText(ddouble value) { return format("%f", value); }

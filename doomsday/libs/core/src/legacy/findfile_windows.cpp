@@ -26,8 +26,8 @@
 #include <string>
 #include <de/String>
 
-#include "de/memory.h"
-#include "de/findfile.h"
+#include "de/legacy/memory.h"
+#include "de/legacy/findfile.h"
 
 typedef struct winfinddata_s {
     struct _wfinddata_t data;
@@ -40,7 +40,7 @@ static void setdata(FindData *dta)
     dta->date = fd->data.time_write;
     dta->time = fd->data.time_write;
     dta->size = fd->data.size;
-    Str_Set(&dta->name, QString::fromWCharArray(fd->data.name).toUtf8());
+    Str_Set(&dta->name, de::String(fd->data.name));
     Str_ReplaceAll(&dta->name, '\\', '/');
     dta->attrib = 0;
     if (fd->data.attrib & _A_SUBDIR)
@@ -63,7 +63,7 @@ int FindFile_FindFirst(FindData *dta, char const *filenameUtf8)
     Str_InitStd(&dta->name);
 
     // Begin the search.
-    fd->handle = _wfindfirst(de::String(filenameUtf8).toStdWString().c_str(), &fd->data);
+    fd->handle = _wfindfirst(de::String(filenameUtf8).toWideString().c_str(), &fd->data);
 
     setdata(dta);
     return (fd->handle == (long) (-1));

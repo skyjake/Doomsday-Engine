@@ -23,6 +23,7 @@
 
 #include <chrono>
 #include <queue>
+#include <atomic>
 
 namespace sc = std::chrono;
 
@@ -135,7 +136,7 @@ struct TimerScheduler : public Thread, public Lockable
 };
 
 static LockableT<TimerScheduler *> scheduler;
-static atomic_int timerCount; // Number of timers in existence.
+static std::atomic_int timerCount; // Number of timers in existence.
 
 } // namespace internal
 

@@ -668,15 +668,17 @@ NativePath App::currentWorkPath()
 
 NativePath App::tempPath()
 {
+    NativePath sysTemp;
     #if defined (WIN32)
     {
-        DE_ASSERT_FAIL("tempPath not implemented");
+        sysTemp = NativePath::homePath() / "AppData\\Local\\Temp";
     }
     #else
     {
-        return Stringf("/tmp/%s-%i", app().reverseDomainIdentifier().c_str(), pid_Process(nullptr));
+        sysTemp = "/tmp";
     }
     #endif
+    return sysTemp / Stringf("%s-%i", app().reverseDomainIdentifier().c_str(), pid_Process(nullptr));
 }
 
 NativePath App::cachePath()

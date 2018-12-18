@@ -32,31 +32,31 @@ const NumberValue NumberValue::bTrue(true);
 const NumberValue NumberValue::bFalse(false);
 
 NumberValue::NumberValue(Number initialValue, SemanticHints semantic)
-    : _value(initialValue), _semantic(semantic)
+    : _value(Number(initialValue)), _semantic(semantic)
 {}
 
 NumberValue::NumberValue(dint64 initialInteger)
-    : _value(initialInteger), _semantic(Int)
+    : _value(Number(initialInteger)), _semantic(Int)
 {}
 
 NumberValue::NumberValue(duint64 initialUnsignedInteger)
-    : _value(initialUnsignedInteger), _semantic(UInt)
+    : _value(Number(initialUnsignedInteger)), _semantic(UInt)
 {}
 
 NumberValue::NumberValue(dint32 initialInteger, SemanticHints semantic)
-    : _value(initialInteger), _semantic(semantic)
+    : _value(Number(initialInteger)), _semantic(semantic)
 {}
 
 NumberValue::NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic)
-    : _value(initialUnsignedInteger), _semantic(semantic)
+    : _value(Number(initialUnsignedInteger)), _semantic(semantic)
 {}
 
 NumberValue::NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic)
-    : _value(initialUnsignedInteger), _semantic(semantic)
+    : _value(Number(initialUnsignedInteger)), _semantic(semantic)
 {}
 
 NumberValue::NumberValue(bool initialBoolean)
-    : _value(initialBoolean? True : False), _semantic(Boolean)
+    : _value(initialBoolean ? True : False), _semantic(Boolean)
 {}
 
 void NumberValue::setSemanticHints(SemanticHints hints)

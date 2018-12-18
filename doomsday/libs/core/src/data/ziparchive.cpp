@@ -38,6 +38,10 @@
 #include <cstring>
 #include <zlib.h>
 
+#ifdef max
+#  undef max
+#endif
+
 namespace de {
 namespace internal {
 

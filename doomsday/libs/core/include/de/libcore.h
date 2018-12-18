@@ -184,6 +184,9 @@
  */
 #define DE_TYPE_NAME(t)  (typeid(t).name())
 
+#define DE_CONCAT(x, y)         x##y
+#define DE_GLUE(x, y)           x y
+
 /**
  * @macro DE_UNUSED(...)
  * Macro for marking parameters and variables as intentionally unused, so the compiler
@@ -192,15 +195,20 @@
 #define DE_UNUSED_MANY(_0, _1, _2, _3, _4, _5, _6, _7, _8, _9, ...) \
     ((void)(_0), (void)(_1), (void)(_2), (void)(_3), (void)(_4), \
      (void)(_5), (void)(_6), (void)(_7), (void)(_8), (void)(_9))
-#define DE_UNUSED(...) DE_UNUSED_MANY(__VA_ARGS__, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
-
-// Macro trick for determining number of arguments (up to 8).
 #define DE_NUM_ARG_RSEQ_N()     8, 7, 6, 5, 4, 3, 2, 1, 0
-#define DE_NUM_ARG(...)         DE_NUM_ARG_(__VA_ARGS__, DE_NUM_ARG_RSEQ_N())
-#define DE_NUM_ARG_(...)        DE_NUM_ARG_N(__VA_ARGS__)
 #define DE_NUM_ARG_N(_1, _2, _3, _4, _5, _6, _7, _8, N, ...) N
 
-#define DE_CONCAT(x, y)         x##y
+#if !defined (_MSC_VER)
+#  define DE_UNUSED(...)        DE_UNUSED_MANY(__VA_ARGS__, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0)
+// Macro trick for determining number of arguments (up to 8).
+#  define DE_NUM_ARG(...)       DE_NUM_ARG_(__VA_ARGS__, DE_NUM_ARG_RSEQ_N())
+#  define DE_NUM_ARG_(...)      DE_NUM_ARG_N(__VA_ARGS__)
+#else // _MSC_VER
+#  define DE_UNUSED_MANY_(args) DE_UNUSED_MANY args
+#  define DE_UNUSED(...)        DE_UNUSED_MANY_((__VA_ARGS__, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
+#  define DE_NUM_ARG_(args)     DE_NUM_ARG_N args
+#  define DE_NUM_ARG(...)       DE_NUM_ARG_((__VA_ARGS__, DE_NUM_ARG_RSEQ_N()))
+#endif
 
 #define DE_PLURAL_S(Count) ((Count) != 1? "s" : "")
 
@@ -817,9 +825,10 @@ typedef size_t   dsize;      // Likely unsigned long.
 #if defined (_MSC_VER)
 typedef long long dsigsize;
 #else
-typedef ssize_t  dsigsize;
+typedef ssize_t dsigsize;
 #endif
-typedef long     dlong;
+typedef long         dlong;
+typedef unsigned int uint;
 
 class DE_PUBLIC Char
 {

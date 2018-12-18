@@ -109,24 +109,24 @@ DE_PIMPL(Beacon)
                 iRelease(from);
             }     
         });
-}
+    }
 
-    static void readDiscoveryReply(iAny *, iDatagram *sock)
-{
+    static void readDiscoveryReply(iAny *, iDatagram * sock)
+    {
         Loop::mainCall([sock]() {
-    LOG_AS("Beacon");
-            auto *d = reinterpret_cast<Beacon::Impl *>(userData_Object(sock));
+            LOG_AS("Beacon");
+            auto *    d = reinterpret_cast<Beacon::Impl *>(userData_Object(sock));
             iAddress *from;
             while (Block block = Block::take(receive_Datagram(sock, &from)))
-    {
-        try
-        {
+            {
+                try
+                {
                     if (block != discoveryMessage)
                     {
                         // Remove the service listening port from the beginning.
-//                        duint16 listenPort = 0;
-//                        Reader(block) >> listenPort;
-//                        block.remove(0, 2);
+                        //                        duint16 listenPort = 0;
+                        //                        Reader(block) >> listenPort;
+                        //                        block.remove(0, 2);
                         block = block.decompressed();
                         if (block)
                         {
@@ -138,15 +138,15 @@ DE_PIMPL(Beacon)
                             }
                         }
                     }
-        }
+                }
                 catch (const Error &)
-        {
-            // Bogus reply message, ignore.
-        }
+                {
+                    // Bogus reply message, ignore.
+                }
                 iRelease(from);
-    }
+            }
         });
-}
+    }
 
     DE_PIMPL_AUDIENCES(Discovery, Finished)
 };

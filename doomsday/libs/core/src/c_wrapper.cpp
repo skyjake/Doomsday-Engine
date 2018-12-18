@@ -266,7 +266,7 @@ int Info_FindValue(de_Info *info, char const *path, char *buffer, size_t bufSize
     de::String value = static_cast<de::Info::KeyElement const *>(element)->value();
     if (buffer)
     {
-        strncpy(buffer, value, uint(bufSize));
+        strncpy(buffer, value, bufSize);
         return true;
     }
     else
@@ -286,7 +286,7 @@ char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
         de::NativePath foundValue;
         if (info.path(key, foundValue))
         {
-            return strdup(foundValue);
+            return iDupStr(foundValue);
         }
     }
     else if (!iCmpStr(configFile, "defaults"))
@@ -294,7 +294,7 @@ char *UnixInfo_GetConfigValue(char const *configFile, char const *key)
         de::String foundValue;
         if (info.defaults(key, foundValue))
         {
-            return strdup(foundValue);
+            return iDupStr(foundValue);
         }
     }
     return nullptr;
