@@ -124,6 +124,7 @@ typedef struct jheretic_config_s {
     byte            inventorySelectMode;
     int             tomeCounter;
     int             tomeSound;
+    byte            staffPowerDamageToGhosts;
 } game_config_t;
 
 extern game_config_t cfg;      // in g_game.c

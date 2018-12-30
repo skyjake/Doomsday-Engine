@@ -124,6 +124,7 @@ void G_ConsoleRegistration()
     C_VAR_BYTE ("game-zclip",                           &cfg.moveCheckZ,                    0, 0, 1);
     C_VAR_BYTE ("game-monsters-floatoverblocking",      &cfg.allowMonsterFloatOverBlocking, 0, 0, 1);
     C_VAR_BYTE ("game-corpse-sliding",                  &cfg.slidingCorpses,                0, 0, 1);
+    C_VAR_BYTE ("player-weapon-staff-powerghostdamage", &cfg.staffPowerDamageToGhosts,      0, 0, 1);
 
     // Gameplay
     C_VAR_INT  ("game-corpse-time",                     &cfg.corpseTime,                    CVF_NO_MAX, 0, 0);
