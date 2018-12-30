@@ -1929,10 +1929,13 @@ static int PTR_ShootTraverse(Intercept const *icpt, void *context)
 
 #if __JHERETIC__
     // Check for physical attacks on a ghost.
-    if((th->flags & MF_SHADOW) && Mobj_IsPlayer(parm.shooterMobj) &&
-       parm.shooterMobj->player->readyWeapon == WT_FIRST)
+    if ((th->flags & MF_SHADOW) && Mobj_IsPlayer(parm.shooterMobj) &&
+        parm.shooterMobj->player->readyWeapon == WT_FIRST)
     {
-        return false;
+        if (!cfg.staffPowerDamageToGhosts || !parm.shooterMobj->player->powers[PT_WEAPONLEVEL2])
+        {
+            return false;
+        }
     }
 #endif
 

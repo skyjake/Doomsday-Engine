@@ -1179,6 +1179,16 @@ void Hu_MenuInitGameplayOptionsPage()
 # endif // __JDOOM__ || __JDOOM64__
 #endif // __JDOOM__ || __JHERETIC__ || __JDOOM64__
 
+#if __JHERETIC__
+    page->addWidget(new LabelWidget("Powered Staff Damages Ghosts"))
+            .setLeft()
+            .setGroup(1);
+    page->addWidget(new CVarToggleWidget("player-weapon-staff-powerghostdamage"))
+            .setRight()
+            .setGroup(1)
+            .setShortcut('g');
+#endif
+
     page->addWidget(new LabelWidget("Vanilla Switch Sound\n   Positioning"))
             .setLeft()
             .setGroup(1);
