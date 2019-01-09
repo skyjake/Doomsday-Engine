@@ -32,8 +32,6 @@
 
 namespace de {
 
-const String::size_type String::npos = String::size_type(-1);
-
 String::String()
 {
     init_String(&_str);

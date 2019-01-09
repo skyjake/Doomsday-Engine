@@ -206,7 +206,7 @@ public:
     using ByteRange  = Range<BytePos>;
     using CharRange  = Range<CharPos>;
 
-    static size_type const npos;
+    static constexpr dsize npos = std::numeric_limits<dsize>::max();
 
 public:
     String();
