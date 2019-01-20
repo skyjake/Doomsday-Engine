@@ -31,7 +31,7 @@ void Sky::resetToDefaults()
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText  ("id", "");
+    def().addText  (VAR_ID, "");
     def().addNumber("flags", 0);
     def().addNumber("height", DEFAULT_SKY_HEIGHT);
     def().addNumber("horizonOffset", DEFAULT_SKY_HORIZON_OFFSET);
@@ -87,7 +87,7 @@ Record &Sky::addModel()
 
     model->addBoolean("custom", false);
 
-    model->addText  ("id", "");
+    model->addText  (VAR_ID, "");
     model->addNumber("layer", -1);
     model->addNumber("frameInterval", 1);
     model->addNumber("yaw", 0);

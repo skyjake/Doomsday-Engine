@@ -41,8 +41,6 @@
 
 using namespace de;
 
-static String const VAR_ID = "id";
-
 float ded_ptcstage_t::particleRadius(int ptcIDX) const
 {
     if (radiusVariance != 0.f)
@@ -70,20 +68,20 @@ ded_s::ded_s()
     , decorations(names.addSubrecord("decorations"))
 {
     decorations.addLookupKey("texture");
-    episodes.addLookupKey(VAR_ID);
-    things.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
+    episodes.addLookupKey(defn::Definition::VAR_ID);
+    things.addLookupKey(defn::Definition::VAR_ID, DEDRegister::OnlyFirst);
     things.addLookupKey("name");
-    states.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
-    finales.addLookupKey(VAR_ID);
+    states.addLookupKey(defn::Definition::VAR_ID, DEDRegister::OnlyFirst);
+    finales.addLookupKey(defn::Definition::VAR_ID);
     finales.addLookupKey("before");
     finales.addLookupKey("after");
-    flags.addLookupKey(VAR_ID);
-    mapInfos.addLookupKey(VAR_ID);
-    materials.addLookupKey(VAR_ID);
-    models.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
+    flags.addLookupKey(defn::Definition::VAR_ID);
+    mapInfos.addLookupKey(defn::Definition::VAR_ID);
+    materials.addLookupKey(defn::Definition::VAR_ID);
+    models.addLookupKey(defn::Definition::VAR_ID, DEDRegister::OnlyFirst);
     models.addLookupKey("state");
-    musics.addLookupKey(VAR_ID, DEDRegister::OnlyFirst);
-    skies.addLookupKey(VAR_ID);
+    musics.addLookupKey(defn::Definition::VAR_ID, DEDRegister::OnlyFirst);
+    skies.addLookupKey(defn::Definition::VAR_ID);
 
     clear();
 }
@@ -101,7 +99,7 @@ void ded_s::clear()
 int ded_s::addFlag(String const &id, int value)
 {
     Record &def = flags.append();
-    def.addText(VAR_ID, id);
+    def.addText(defn::Definition::VAR_ID, id);
     def.addNumber("value", value);
     return def.geti(defn::Definition::VAR_ORDER);
 }
@@ -117,7 +115,7 @@ int ded_s::addThing(String const &id)
 {
     Record &def = things.append();
     defn::Thing(def).resetToDefaults();
-    def.set(VAR_ID, id);
+    def.set(defn::Definition::VAR_ID, id);
     return def.geti(defn::Definition::VAR_ORDER);
 }
 
@@ -125,7 +123,7 @@ int ded_s::addState(String const &id)
 {
     Record &def = states.append();
     defn::State(def).resetToDefaults();
-    def.set(VAR_ID, id);
+    def.set(defn::Definition::VAR_ID, id);
     return def.geti(defn::Definition::VAR_ORDER);
 }
 
@@ -362,7 +360,7 @@ int DED_AddLineType(ded_t* ded, int id)
 
 int ded_s::getMobjNum(String const &id) const
 {
-    if (Record const *def = things.tryFind(VAR_ID, id))
+    if (Record const *def = things.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -395,12 +393,12 @@ String ded_s::getMobjName(int num) const
 {
     if (num < 0) return "(<0)";
     if (num >= things.size()) return "(>mobjtypes)";
-    return things[num].gets(VAR_ID);
+    return things[num].gets(defn::Definition::VAR_ID);
 }
 
 int ded_s::getStateNum(String const &id) const
 {
-    if (Record const *def = states.tryFind(VAR_ID, id))
+    if (Record const *def = states.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -426,7 +424,7 @@ dint ded_s::evalFlags(char const *ptr) const
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
-        if (Record const *flag = flags.tryFind(VAR_ID, flagName.toLower()))
+        if (Record const *flag = flags.tryFind(defn::Definition::VAR_ID, flagName.toLower()))
         {
             value |= flag->geti("value");
         }
@@ -440,7 +438,7 @@ dint ded_s::evalFlags(char const *ptr) const
 
 int ded_s::getEpisodeNum(String const &id) const
 {
-    if (Record const *def = episodes.tryFind(VAR_ID, id))
+    if (Record const *def = episodes.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -449,7 +447,7 @@ int ded_s::getEpisodeNum(String const &id) const
 
 int ded_s::getMapInfoNum(de::Uri const &uri) const
 {
-    if (Record const *def = mapInfos.tryFind(VAR_ID, uri.compose()))
+    if (Record const *def = mapInfos.tryFind(defn::Definition::VAR_ID, uri.compose()))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -478,7 +476,7 @@ int ded_s::getMaterialNum(de::Uri const &uri) const
         /*if (idx >= 0)*/ return idx;
     }
 
-    if (Record const *def = materials.tryFind(VAR_ID, uri.compose()))
+    if (Record const *def = materials.tryFind(defn::Definition::VAR_ID, uri.compose()))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -487,7 +485,7 @@ int ded_s::getMaterialNum(de::Uri const &uri) const
 
 int ded_s::getModelNum(const char *id) const
 {
-    if (Record const *def = models.tryFind(VAR_ID, id))
+    if (Record const *def = models.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -506,7 +504,7 @@ int ded_s::getModelNum(const char *id) const
 
 int ded_s::getSkyNum(char const *id) const
 {
-    if (Record const *def = skies.tryFind(VAR_ID, id))
+    if (Record const *def = skies.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -572,7 +570,7 @@ int ded_s::getSpriteNum(char const *id) const
 
 int ded_s::getMusicNum(char const *id) const
 {
-    if (Record const *def = musics.tryFind(VAR_ID, id))
+    if (Record const *def = musics.tryFind(defn::Definition::VAR_ID, id))
     {
         return def->geti(defn::Definition::VAR_ORDER);
     }
@@ -686,7 +684,7 @@ String ded_s::findEpisode(String const &mapId) const
         defn::Episode episode(episodes[i]);
         if (episode.tryFindMapGraphNode(mapUri.compose()))
         {
-            return episode.gets(VAR_ID);
+            return episode.gets(defn::Definition::VAR_ID);
         }
     }
     return String();

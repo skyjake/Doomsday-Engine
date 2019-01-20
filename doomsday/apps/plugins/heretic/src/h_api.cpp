@@ -144,6 +144,7 @@ DENG_ENTRYPOINT void DP_Load(void)
 {
     Plug_AddHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
     gfw_SetCurrentGame(GFW_HERETIC);
+    Common_Load();
 }
 
 /**
@@ -151,6 +152,7 @@ DENG_ENTRYPOINT void DP_Load(void)
  */
 DENG_ENTRYPOINT void DP_Unload(void)
 {
+    Common_Unload();
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 

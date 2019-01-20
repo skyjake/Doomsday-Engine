@@ -31,7 +31,7 @@ void State::resetToDefaults()
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText  ("id", "");
+    def().addText  (VAR_ID, "");
     def().addText  ("sprite", "");
     def().addNumber("flags", 0);
     def().addNumber("frame", 0);

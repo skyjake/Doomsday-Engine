@@ -24,7 +24,8 @@ using namespace de;
 
 namespace defn {
 
-String const Definition::VAR_ORDER("__order__");
+const String Definition::VAR_ID("id");
+const String Definition::VAR_ORDER("__order__");
 
 Definition::~Definition()
 {}

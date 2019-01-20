@@ -27,6 +27,7 @@
 #include <de/memoryzone.h>
 #include <de/timer.h>
 #include <de/Binder>
+#include <de/Context>
 #include <de/Error>
 #include <de/Log>
 #include <de/Scheduler>
@@ -981,4 +982,17 @@ void ClientServerWorld::consoleRegister()  // static
     //C_VAR_FLOAT("edit-bias-grab-distance", &handDistance, 0, 10, 1000);
 #endif
     Map::consoleRegister();
+}
+
+mobj_t &ClientServerWorld::contextMobj(const Context &ctx) // static
+{
+    /// @todo Not necessarily always the current map. -jk
+    const int id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
+    mobj_t *mo = App_World().map().thinkers().mobjById(id);
+    if (!mo)
+    {
+        throw Map::MissingObjectError("ClientServerWorld::contextMobj",
+                                      String::format("Mobj %d does not exist", id));
+    }
+    return *mo;
 }

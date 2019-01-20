@@ -19,18 +19,47 @@
 #include "doomsday/world/actions.h"
 #include "doomsday/gameapi.h"
 #include "doomsday/doomsdayapp.h"
+#include "doomsday/world/mobjthinkerdata.h"
 
+#include <de/DictionaryValue>
+#include <de/NativePointerValue>
+#include <de/Process>
 #include <de/String>
+#include <de/TextValue>
 #include <QMap>
 
 using namespace de;
 
-typedef QMap<String, acfnptr_t> ActionMap;  ///< name => native function pointer.
-static ActionMap actions;
+static QMap<String, acfnptr_t> s_actions; ///< name => native function pointer.
+static String s_currentAction;
+
+static void C_DECL A_DoomsdayScript(struct mobj_s *mobj)
+{
+    LOG_AS("A_DoomsdayScript");
+    try
+    {
+        const ThinkerData &data = THINKER_DATA(mobj->thinker, ThinkerData);
+        Record ns;
+        ns.add(new Variable(QStringLiteral("self"), new RecordValue(data.objectNamespace())));
+        Process proc(&ns);
+        const Script script(s_currentAction);
+        proc.run(script);
+        proc.execute();
+    }
+    catch (const Error &er)
+    {
+        LOG_SCR_ERROR(er.asText());
+    }
+}
+
+static bool isScriptAction(const String &name)
+{
+    return name.contains('(') && name.contains(")");
+}
 
 void P_GetGameActions()
 {
-    ::actions.clear();
+    s_actions.clear();
 
     // Action links are provided by the game (which owns the actual action functions).
     if (auto getVar = DoomsdayApp::plugins().gameExports().GetPointer)
@@ -38,22 +67,31 @@ void P_GetGameActions()
         auto const *links = (actionlink_t const *) getVar(DD_ACTION_LINK);
         for (actionlink_t const *link = links; link && link->name; link++)
         {
-            ::actions.insert(String(link->name).toLower(), link->func);
+            s_actions.insert(String(link->name).toLower(), link->func);
         }
     }
 }
 
-acfnptr_t P_GetAction(String const &name)
+void P_SetCurrentAction(const String &name)
+{
+    s_currentAction = name;
+}
+
+acfnptr_t P_GetAction(const String &name)
 {
     if (!name.isEmpty())
     {
-        auto found = actions.find(name.toLower());
-        if (found != actions.end()) return found.value();
+        if (isScriptAction(name))
+        {
+            return de::function_cast<acfnptr_t>(A_DoomsdayScript);
+        }
+        auto found = s_actions.find(name.toLower());
+        if (found != s_actions.end()) return found.value();
     }
     return nullptr;  // Not found.
 }
 
-acfnptr_t P_GetAction(char const *name)
+acfnptr_t P_GetAction(const char *name)
 {
     return P_GetAction(String(name));
 }

@@ -162,6 +162,9 @@ public:
      */
     static void consoleRegister();
 
+    /// Scripting helper: get pointer to current instance mobj_t based on the script callstack.
+    static mobj_t &contextMobj(const de::Context &);
+
 private:
     DENG2_PRIVATE(d)
 };

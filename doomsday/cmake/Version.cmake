@@ -18,7 +18,7 @@ set (DENG_RELEASE_TYPE
     #Stable
 )
 
-set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2018 Deng Team")
+set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2019 Deng Team")
 
 # Build Configuration --------------------------------------------------------
 

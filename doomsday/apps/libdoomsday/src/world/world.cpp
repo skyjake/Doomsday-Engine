@@ -18,11 +18,13 @@
 
 #include "doomsday/world/world.h"
 #include "doomsday/world/materials.h"
+#include "doomsday/world/map.h"
 #include "doomsday/DoomsdayApp"
 #include "doomsday/players.h"
 #include "api_player.h"
 
 #include <de/App>
+#include <de/Context>
 
 using namespace de;
 using namespace world;

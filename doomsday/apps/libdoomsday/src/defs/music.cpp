@@ -31,7 +31,7 @@ void Music::resetToDefaults()
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText  ("id", "");
+    def().addText  (VAR_ID, "");
     def().addText  ("lumpName", "");
     def().addText  ("path", "");
     def().addNumber("cdTrack", 0);

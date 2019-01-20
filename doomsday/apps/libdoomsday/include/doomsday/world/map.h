@@ -38,8 +38,11 @@ class IThinkerMapping;
 class LIBDOOMSDAY_PUBLIC BaseMap
 {
 public:
-    /// No resource manifest is associated with the map.
+    /// No resource manifest is associated with the map. @ingroup errors
     DENG2_ERROR(MissingResourceManifestError);
+
+    /// Required map object is missing. @ingroup errors
+    DENG2_ERROR(MissingObjectError);
 
 public:
     /**

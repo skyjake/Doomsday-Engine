@@ -62,6 +62,7 @@ public:
      */
     virtual void resetToDefaults();
 
+    static de::String const VAR_ID;    // id
     static de::String const VAR_ORDER; // __order__
 };
 

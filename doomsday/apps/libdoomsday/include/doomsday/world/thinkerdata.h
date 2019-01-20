@@ -36,6 +36,7 @@ class LIBDOOMSDAY_PUBLIC ThinkerData
         : public Thinker::IData
         , public de::IObject
         , public de::ISerializable
+        , public de::Deletable
 {
 public:
     DENG2_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))

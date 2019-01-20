@@ -801,6 +801,8 @@ DENG2_PIMPL(DEDParser)
 
     int readData(char const *buffer, String sourceFile, bool sourceIsCustom)
     {
+        const String &VAR_ID = defn::Definition::VAR_ID;
+
         char  dummy[128], label[128], tmp[256];
         int   dummyInt, idx, retVal = true;
         int   prevEpisodeDefIdx = -1; // For "Copy".
@@ -960,7 +962,7 @@ DENG2_PIMPL(DEDParser)
                 if (qstrlen(id))
                 {
                     ded->addFlag(id, value);
-                    Record &flag = ded->flags.find("id", id);
+                    Record &flag = ded->flags.find(VAR_ID, id);
                     DENG2_ASSERT(flag.geti("value") == value); // Sanity check.
                     if (source->custom) flag.set("custom", true);
                 }
@@ -1027,7 +1029,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if (!bModify && ISLABEL("ID"))
                     {
-                        READSTR((*epsd)["id"]);
+                        READSTR((*epsd)[VAR_ID]);
                     }
                     else RV_URI("Start Map", (*epsd)["startMap"], "Maps")
                     RV_STR("Title", (*epsd)["title"])
@@ -1051,7 +1053,7 @@ DENG2_PIMPL(DEDParser)
                         forever
                         {
                             READLABEL;
-                            RV_STR("ID", (*hubRec)["id"])
+                            RV_STR("ID", (*hubRec)[VAR_ID])
                             if (ISLABEL("Map"))
                             {
                                 // Add another map.
@@ -1071,7 +1073,7 @@ DENG2_PIMPL(DEDParser)
                                 forever
                                 {
                                     READLABEL;
-                                    RV_URI("ID", mapRec["id"], "Maps")
+                                    RV_URI("ID", mapRec[VAR_ID], "Maps")
                                     RV_INT("Warp Number", mapRec["warpNumber"])
                                     if (ISLABEL("Exit"))
                                     {
@@ -1090,7 +1092,7 @@ DENG2_PIMPL(DEDParser)
                                         forever
                                         {
                                             READLABEL;
-                                            RV_STR("ID", exitRec["id"])
+                                            RV_STR("ID", exitRec[VAR_ID])
                                             RV_URI("Target Map", exitRec["targetMap"], "Maps")
                                             RV_END
                                             CHECKSC;
@@ -1126,7 +1128,7 @@ DENG2_PIMPL(DEDParser)
                         forever
                         {
                             READLABEL;
-                            RV_URI("ID", mapRec["id"], "Maps")
+                            RV_URI("ID", mapRec[VAR_ID], "Maps")
                             RV_INT("Warp Number", mapRec["warpNumber"])
                             if (ISLABEL("Exit"))
                             {
@@ -1145,7 +1147,7 @@ DENG2_PIMPL(DEDParser)
                                 forever
                                 {
                                     READLABEL;
-                                    RV_STR("ID", exitRec["id"])
+                                    RV_STR("ID", exitRec[VAR_ID])
                                     RV_URI("Target Map", exitRec["targetMap"], "Maps")
                                     RV_END
                                     CHECKSC;
@@ -1224,7 +1226,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if (!bModify && ISLABEL("ID"))
                     {
-                        READSTR((*mo)["id"]);
+                        READSTR((*mo)[VAR_ID]);
                     }
                     else RV_INT("DoomEd number", (*mo)["doomEdNum"])
                     RV_STR("Name", (*mo)["name"])
@@ -1328,7 +1330,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if (!bModify && ISLABEL("ID"))
                     {
-                        READSTR((*st)["id"]);
+                        READSTR((*st)[VAR_ID]);
                     }
                     else if (ISLABEL("Frame"))
                     {
@@ -1502,7 +1504,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if (!bModify && ISLABEL("ID"))
                     {
-                        READURI((*mat)["id"], nullptr);
+                        READURI((*mat)[VAR_ID], nullptr);
                     }
                     else
                     RV_FLAGS("Flags", (*mat)["flags"], "matf_")
@@ -1663,7 +1665,7 @@ DENG2_PIMPL(DEDParser)
                 forever
                 {
                     READLABEL;
-                    RV_STR("ID", mdl["id"])
+                    RV_STR("ID", mdl[VAR_ID])
                     RV_STR("State", mdl["state"])
                     RV_INT("Off", mdl["off"])
                     RV_STR("Sprite", mdl["sprite"])
@@ -1829,7 +1831,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if (!bModify && ISLABEL("ID"))
                     {
-                        READSTR((*music)["id"]);
+                        READSTR((*music)[VAR_ID]);
                     }
                     else RV_STR("Name", (*music)["title"])
                     RV_STR("Lump", (*music)["lumpName"])
@@ -1867,7 +1869,7 @@ DENG2_PIMPL(DEDParser)
                 forever
                 {
                     READLABEL;
-                    RV_STR("ID", sky["id"])
+                    RV_STR("ID", sky[VAR_ID])
                     RV_FLAGS("Flags", sky["flags"], "sif_")
                     RV_FLT("Height", sky["height"])
                     RV_FLT("Horizon offset", sky["horizonOffset"])
@@ -1918,7 +1920,7 @@ DENG2_PIMPL(DEDParser)
                         forever
                         {
                             READLABEL;
-                            RV_STR("ID", mdlDef["id"])
+                            RV_STR("ID", mdlDef[VAR_ID])
                             RV_INT("Layer", mdlDef["layer"])
                             RV_FLT("Frame interval", mdlDef["frameInterval"])
                             RV_FLT("Yaw", mdlDef["yaw"])
@@ -2056,7 +2058,7 @@ DENG2_PIMPL(DEDParser)
                     // ID cannot be changed when modifying
                     if (!bModify && ISLABEL("ID"))
                     {
-                        READURI((*mi)["id"], "Maps");
+                        READURI((*mi)[VAR_ID], "Maps");
                     }
                     else RV_STR("Title", (*mi)["title"])
                     RV_STR("Name", (*mi)["title"]) // Alias
@@ -2125,7 +2127,7 @@ DENG2_PIMPL(DEDParser)
                         forever
                         {
                             READLABEL;
-                            RV_STR("ID", mdlDef["id"])
+                            RV_STR("ID", mdlDef[VAR_ID])
                             RV_INT("Layer", mdlDef["layer"])
                             RV_FLT("Frame interval", mdlDef["frameInterval"])
                             RV_FLT("Yaw", mdlDef["yaw"])
@@ -2575,7 +2577,7 @@ DENG2_PIMPL(DEDParser)
                 forever
                 {
                     READLABEL;
-                    RV_STR("ID", fin["id"])
+                    RV_STR("ID", fin[VAR_ID])
                     RV_URI("Before", fin["before"], "Maps")
                     RV_URI("After", fin["after"], "Maps")
                     RV_INT("Game", dummyInt)

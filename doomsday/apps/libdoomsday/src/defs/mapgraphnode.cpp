@@ -31,7 +31,7 @@ void MapGraphNode::resetToDefaults()
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText  ("id", "");
+    def().addText  (VAR_ID, "");
     def().addNumber("warpNumber", 0);
     def().addArray ("exit", new ArrayValue);
 }
@@ -42,7 +42,7 @@ Record &MapGraphNode::addExit()
 
     exit->addBoolean("custom", false);
 
-    exit->addText("id", "");
+    exit->addText(VAR_ID, "");
     exit->addText("targetMap", "");
 
     def()["exit"].array().add(new RecordValue(exit, RecordValue::OwnsRecord));

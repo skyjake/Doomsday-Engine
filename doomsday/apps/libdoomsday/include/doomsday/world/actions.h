@@ -34,7 +34,7 @@ extern "C" {
 
 LIBDOOMSDAY_PUBLIC void P_GetGameActions();
 
-LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(char const *name);
+LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(const char *name);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -43,7 +43,8 @@ LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(char const *name);
 #ifdef __cplusplus
 
 # include <de/String>
-LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(de::String const &name);
+LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(const de::String &name);
+LIBDOOMSDAY_PUBLIC void P_SetCurrentAction(const de::String &name);
 
 #endif // __cplusplus
 

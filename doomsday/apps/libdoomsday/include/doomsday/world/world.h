@@ -21,9 +21,15 @@
 #define LIBDOOMSDAY_WORLD_H
 
 #include "../libdoomsday.h"
+#include "mobj.h"
 
 #include <de/Observers>
 #include <de/System>
+
+namespace de
+{
+    class Context;
+}
 
 namespace world
 {

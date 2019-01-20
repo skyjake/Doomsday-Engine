@@ -99,9 +99,6 @@ public:
     /// Required map element is missing. @ingroup errors
     DENG2_ERROR(MissingElementError);
 
-    /// Required map object is missing. @ingroup errors
-    DENG2_ERROR(MissingObjectError);
-
     /// Required blockmap is missing. @ingroup errors
     DENG2_ERROR(MissingBlockmapError);
 

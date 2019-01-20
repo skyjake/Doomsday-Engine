@@ -31,6 +31,7 @@
 #include <QTextStream>
 
 #include "dmu_lib.h"
+#include "g_defs.h"
 #include "mapstatereader.h"
 #include "mapstatewriter.h"
 #include "p_actor.h"
@@ -379,13 +380,12 @@ dd_bool Mobj_LookForPlayers(mobj_t *mo, dd_bool allAround)
  */
 static bool shouldCallAction(mobj_t *mobj)
 {
-    if(IS_CLIENT)
+    if (IS_CLIENT)
     {
-        if(ClMobj_LocalActionsEnabled(mobj))
-            return true;
+        if (ClMobj_LocalActionsEnabled(mobj)) return true;
     }
-    if(!(mobj->ddFlags & DDMF_REMOTE) ||    // only for local mobjs
-       (mobj->flags3 & MF3_CLIENTACTION))   // action functions allowed?
+    if (!(mobj->ddFlags & DDMF_REMOTE) ||  // only for local mobjs
+        (mobj->flags3 & MF3_CLIENTACTION)) // action functions allowed?
     {
         return true;
     }
@@ -399,7 +399,7 @@ static bool changeMobjState(mobj_t *mobj, statenum_t stateNum, bool doCallAction
     // Skip zero-tic states -- call their action but then advance to the next.
     do
     {
-        if(stateNum == S_NULL)
+        if (stateNum == S_NULL)
         {
             mobj->state = (state_t *) S_NULL;
             P_MobjRemove(mobj, false);
@@ -412,18 +412,21 @@ static bool changeMobjState(mobj_t *mobj, statenum_t stateNum, bool doCallAction
         state_t *st = &STATES[stateNum];
 
         // Call the action function?
-        if(doCallAction && st->action)
+        if (doCallAction && st->action)
         {
-            if(shouldCallAction(mobj))
+            if (shouldCallAction(mobj))
             {
-                void (*actioner)(mobj_t *);
-                actioner = de::function_cast<void (*)(mobj_t *)>(st->action);
-                actioner(mobj);
+                // Custom parameters in the action function are passed to libdoomsday this way.
+                P_SetCurrentAction(Defs().states[stateNum].gets(QStringLiteral("action")));
+
+                void (*action)(mobj_t *);
+                action = de::function_cast<void (*)(mobj_t *)>(st->action);
+                action(mobj);
             }
         }
 
         stateNum = statenum_t(st->nextState);
-    } while(!mobj->tics);
+    } while (!mobj->tics);
 
     // Return false if an action function removed the mobj.
     return mobj->thinker.function != (thinkfunc_t) NOPFUNC;

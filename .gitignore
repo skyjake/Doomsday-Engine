@@ -37,3 +37,4 @@ precompiled.h.cpp
 *.xcuserdatad
 *.xcscmblueprint
 .vscode
+compile_commands.json

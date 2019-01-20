@@ -30,7 +30,7 @@ void Thing::resetToDefaults()
     Definition::resetToDefaults();
     
     // Add all expected fields with their default values.
-    def().addText  ("id", "");
+    def().addText  (VAR_ID, "");
     def().addNumber("doomEdNum", 0);
     def().addText  ("name", "");
     def().addArray ("states").array().addMany(STATENAMES_COUNT, "");

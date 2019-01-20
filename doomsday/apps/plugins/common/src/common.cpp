@@ -20,10 +20,18 @@
 
 #include "common.h"
 #include "g_common.h"
+#include "g_defs.h"
 #include "g_update.h"
 #include "p_map.h"
 #include "polyobjs.h"
 #include "r_common.h"
+
+#include <de/Binder>
+#include <de/Context>
+#include <de/NoneValue>
+#include <de/ScriptSystem>
+#include <doomsday/defs/definition.h>
+#include <doomsday/world/map.h>
 
 int Common_GetInteger(int id)
 {
@@ -116,4 +124,72 @@ void Common_Register()
     C_VAR_BYTE2("game-monsters-fast",   &cfg.common.defaultRuleFastMonsters, 0, 0, 1, fastMonstersChanged);
 #endif
     C_VAR_BYTE ("game-objects-pushable-limit", &cfg.common.pushableMomentumLimitedToPusher, 0, 0, 1);
+}
+
+//-------------------------------------------------------------------------------------------------
+
+static de::Binder *gameBindings;
+
+static mobj_t &instanceMobj(const de::Context &ctx)
+{
+    using namespace de;
+
+    const int id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
+    if (mobj_t *mo = Mobj_ById(id))
+    {
+        return *mo;
+    }
+    throw world::BaseMap::MissingObjectError("instanceMobj",
+                                             String::format("Mobj %d does not exist", id));
+}
+
+static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    using namespace de;
+
+    mobj_t *src = &instanceMobj(ctx);
+
+    const mobjtype_t missileId = mobjtype_t(Defs().getMobjNum(args.at(0)->asText()));
+
+    if (is<NoneValue>(args.at(1))) // Fire at target mobj.
+    {
+        if (src->target)
+        {
+#if defined(__JHERETIC__)
+            P_SpawnMissile(missileId, src, src->target, true);
+#else
+            P_SpawnMissile(missileId, src, src->target);
+#endif
+        }
+    }
+    else
+    {
+#if defined(__JHERETIC__) || defined(__JHEXEN__)
+        const double angle = args.at(1)->asNumber();
+        const double momZ  = args.at(2)->asNumber();
+        P_SpawnMissileAngle(missileId, src, angle_t(angle * ANGLE_MAX), momZ);
+#endif
+    }
+    return nullptr;
+}
+
+void Common_Load()
+{
+    using namespace de;
+
+    Function::Defaults spawnMissileArgs;
+    spawnMissileArgs["angle"] = new NoneValue;
+    spawnMissileArgs["momz"] = new NumberValue(0.0);
+
+    DENG2_ASSERT(gameBindings == nullptr);
+    gameBindings = new Binder;
+    gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
+            << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+}
+
+void Common_Unload()
+{
+    DENG2_ASSERT(gameBindings != nullptr);
+    delete gameBindings;
+    gameBindings = nullptr;
 }

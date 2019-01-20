@@ -20,8 +20,10 @@
 #include "world/clientserverworld.h"
 #include "world/map.h"
 #include "world/thinkers.h"
+#include "audio/audiosystem.h"
 #include "dd_main.h"
 
+#include <doomsday/defs/ded.h>
 #include <doomsday/world/mobj.h>
 #include <de/Context>
 
@@ -29,21 +31,25 @@ using namespace de;
 
 namespace world {
 
-static mobj_t &instanceMobj(Context const &ctx)
+static Value *Function_Thing_Health(Context &ctx, const Function::ArgumentValues &)
 {
-    /// @todo Not necessarily always the current map. -jk
-    dint const id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
-    mobj_t *mo = App_World().map().thinkers().mobjById(id);
-    if(!mo)
-    {
-        throw Map::MissingObjectError("instanceMobj", QString("Mobj %1 does not exist").arg(id));
-    }
-    return *mo;
+    return new NumberValue(ClientServerWorld::contextMobj(ctx).health);
 }
 
-static Value *Function_Thing_Health(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_Thing_StartSound(Context &ctx, const Function::ArgumentValues &args)
 {
-    return new NumberValue(instanceMobj(ctx).health);
+    const mobj_t &mo     = ClientServerWorld::contextMobj(ctx);
+    const int     sound  = DED_Definitions()->getSoundNum(args.at(0)->asText());
+    const float   volume = float(args.at(1)->asNumber());
+    if (sound >= 0)
+    {
+        S_StartSoundAtVolume(sound, &mo, volume);
+    }
+    else
+    {
+        throw Error("Function_Thing_StartSound", "Undefined sound: " + args.at(0)->asText());
+    }
+    return nullptr;
 }
 
 void initBindings(Binder &binder, Record &worldModule)
@@ -51,8 +57,14 @@ void initBindings(Binder &binder, Record &worldModule)
     // Thing
     {
         Record &thing = worldModule.addSubrecord("Thing");
+
+        Function::Defaults startSoundArgs;
+        startSoundArgs["volume"] = new NumberValue(1.0);
+
         binder.init(thing)
-                << DENG2_FUNC_NOARG(Thing_Health, "health");
+                << DENG2_FUNC_NOARG(Thing_Health,     "health")
+                << DENG2_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs);
+
     }
 }
 

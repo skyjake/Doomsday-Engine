@@ -31,7 +31,7 @@ void Episode::resetToDefaults()
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText("id", "");
+    def().addText(VAR_ID, "");
     def().addText("startMap", "Maps:"); // URI. Unknown.
     def().addText("title", "Untitled");
     def().addText("menuHelpInfo", "");  // None.
@@ -47,7 +47,7 @@ Record &Episode::addHub()
 
     hub->addBoolean("custom", false);
 
-    hub->addText ("id", "");
+    hub->addText (VAR_ID, "");
     hub->addArray("map", new ArrayValue);
 
     def()["hub"].array().add(new RecordValue(hub, RecordValue::OwnsRecord));
@@ -86,7 +86,7 @@ Record *Episode::tryFindHubByMapId(String const &mapId)
             foreach (Value *mapIt, hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if (mapUri == de::makeUri(mgNodeDef.gets("id")))
+                if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
                 {
                     return &hubRec;
                 }
@@ -108,7 +108,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
             foreach (Value *mapIt, hubRec.geta("map").elements())
             {
                 Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-                if (mapUri == de::makeUri(mgNodeDef.gets("id")))
+                if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
                 {
                     return &mgNodeDef;
                 }
@@ -118,7 +118,7 @@ Record *Episode::tryFindMapGraphNode(String const &mapId)
         foreach (Value *mapIt, geta("map").elements())
         {
             Record &mgNodeDef = mapIt->as<RecordValue>().dereference();
-            if (mapUri == de::makeUri(mgNodeDef.gets("id")))
+            if (mapUri == de::makeUri(mgNodeDef.gets(VAR_ID)))
             {
                 return &mgNodeDef;
             }

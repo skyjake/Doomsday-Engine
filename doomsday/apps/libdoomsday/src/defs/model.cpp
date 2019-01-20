@@ -31,7 +31,7 @@ void Model::resetToDefaults()
     Definition::resetToDefaults();
 
     // Add all expected fields with their default values.
-    def().addText  ("id", "");
+    def().addText  (VAR_ID, "");
     def().addText  ("state", "");
     def().addNumber("off", 0);
     def().addText  ("sprite", "");
