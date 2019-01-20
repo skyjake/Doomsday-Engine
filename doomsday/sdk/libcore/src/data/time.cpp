@@ -338,7 +338,7 @@ String Time::asText(Format format) const
             }
             else
             {
-                return d->dateTime.toString("YYYY MMM dd");
+                return d->dateTime.toString("yyyy MMM dd");
             }
         }
         else if (format == BuildNumberAndSecondsSinceStart ||
