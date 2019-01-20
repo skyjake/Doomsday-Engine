@@ -173,6 +173,20 @@ static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Functi
     return nullptr;
 }
 
+#if defined(__JHERETIC__)
+static de::Value *Function_Thing_Attack(de::Context &ctx, const de::Function::ArgumentValues &args)
+{
+    using namespace de;
+
+    mobj_t *src = &instanceMobj(ctx);
+
+    const int meleeDamage = args.at(0)->asInt();
+    const mobjtype_t missileId = mobjtype_t(Defs().getMobjNum(args.at(1)->asText()));
+
+    return new NumberValue(P_Attack(src, meleeDamage, missileId));
+}
+#endif
+
 void Common_Load()
 {
     using namespace de;
@@ -181,9 +195,16 @@ void Common_Load()
     spawnMissileArgs["angle"] = new NoneValue;
     spawnMissileArgs["momz"] = new NumberValue(0.0);
 
+    Function::Defaults attackArgs;
+    attackArgs["damage"] = new NumberValue(0.0);
+    attackArgs["missile"] = new NoneValue;
+
     DENG2_ASSERT(gameBindings == nullptr);
     gameBindings = new Binder;
     gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
+#if defined(__JHERETIC__)
+            << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
+#endif
             << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
 }
 

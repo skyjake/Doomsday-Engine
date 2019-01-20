@@ -1576,6 +1576,24 @@ void C_DECL A_MntrFloorFire(mobj_t* actor)
     }
 }
 
+int P_Attack(mobj_t *actor, int meleeDamage, mobjtype_t missileType)
+{
+    if (actor->target)
+    {
+        if (P_CheckMeleeRange(actor))
+        {
+            P_DamageMobj(actor->target, actor, actor, meleeDamage, false);
+            return 1;
+        }
+        else
+        {
+            P_SpawnMissile(missileType, actor, actor->target, true);
+            return 2;
+        }
+    }
+    return 0;
+}
+
 void C_DECL A_BeastAttack(mobj_t* actor)
 {
     if(!actor->target)
