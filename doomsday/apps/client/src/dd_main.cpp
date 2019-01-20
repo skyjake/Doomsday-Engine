@@ -1883,13 +1883,20 @@ void DD_SetVariable(dint ddvalue, void *parm)
 
 void DD_ReadGameHelp()
 {
+    using namespace de;
     LOG_AS("DD_ReadGameHelp");
     try
     {
         if (App_GameLoaded())
         {
-            de::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
-            Help_ReadStrings(App::fileSystem().find(uri.resolved()));
+            const de::Uri uri(Path("$(App.DataPath)/$(GamePlugin.Name)/conhelp.txt"));
+            FS::FoundFiles found;
+            FS::get().findAll(uri.resolved(), found);
+            if (found.empty())
+            {
+                throw Error("DD_ReadGameHelp", "conhelp.txt not found");
+            }
+            Help_ReadStrings(*found.front());
         }
     }
     catch (Error const &er)
