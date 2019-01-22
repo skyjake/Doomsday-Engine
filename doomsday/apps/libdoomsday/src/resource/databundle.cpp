@@ -628,8 +628,16 @@ DENG2_PIMPL(DataBundle), public Lockable
         String category = rootBlock.keyValue("category");
         if (!category.isEmpty())
         {
-            meta.appendUniqueWord(VAR_TAGS, category);
-            meta.set(VAR_CATEGORY, category);
+            category.replace("/", "");
+            category.replace(" ", "");
+            category.replace("gamedata", "data"); // "gamedata" is a special tag
+            category.replace("core", ""); // "core" is special tag
+            category = category.trimmed();
+            if (!category.isEmpty())
+            {
+                meta.appendUniqueWord(VAR_TAGS, category);
+                meta.set(VAR_CATEGORY, category);
+            }
         }
 
         if (Info::BlockElement const *english = rootBlock.findAs<Info::BlockElement>("english"))
