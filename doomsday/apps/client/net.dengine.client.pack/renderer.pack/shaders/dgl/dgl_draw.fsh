@@ -148,9 +148,18 @@ void main()
             out_FragColor.rgb += texColor[0].a * uTexModeColor[vBatchIndex].rgb;
             out_FragColor *= texColor[1];
             break;
+        case 5:
+            // DM_TEXTURE_PLUS_LIGHT
+            out_FragColor *= texColor[0];
+            out_FragColor.rgb += texColor[1].a * uTexModeColor[vBatchIndex].rgb;
+            break;
         case 6:
             // Simple dynlight addition (add to primary color).
             out_FragColor.rgb += texColor[0].a * uTexModeColor[vBatchIndex].rgb;
+            break;
+        case 7:
+            // Dynlight without primary color.
+            out_FragColor.rgb = texColor[0].a * uTexModeColor[vBatchIndex].rgb;
             break;
         case 8:
             // Texture and Detail.
