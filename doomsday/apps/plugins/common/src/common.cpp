@@ -156,7 +156,14 @@ static de::Value *Function_Thing_SpawnMissile(de::Context &ctx, const de::Functi
         if (src->target)
         {
 #if defined(__JHERETIC__)
-            P_SpawnMissile(missileId, src, src->target, true);
+            if (mobj_t *mis = P_SpawnMissile(missileId, src, src->target, true))
+            {
+                if (missileId == MT_MUMMYFX1 || missileId == MT_WHIRLWIND)
+                {
+                    // Tracer is used to keep track of where the missile is homing.
+                    mis->tracer = src->target;
+                }
+            }
 #else
             P_SpawnMissile(missileId, src, src->target);
 #endif

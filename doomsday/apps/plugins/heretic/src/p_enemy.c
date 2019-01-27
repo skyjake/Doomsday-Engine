@@ -1587,7 +1587,15 @@ int P_Attack(mobj_t *actor, int meleeDamage, mobjtype_t missileType)
         }
         else
         {
-            P_SpawnMissile(missileType, actor, actor->target, true);
+            mobj_t *mis;
+            if ((mis = P_SpawnMissile(missileType, actor, actor->target, true)) != NULL)
+            {
+                if (missileType == MT_MUMMYFX1 || missileType == MT_WHIRLWIND)
+                {
+                    // Tracer is used to keep track of where the missile is homing.
+                    mis->tracer = actor->target;
+                }
+            }
             return 2;
         }
     }
