@@ -270,11 +270,16 @@ private:
 class DENG2_PUBLIC Binder
 {
 public:
+    enum FunctionOwnership { FunctionsOwned, FunctionsNotOwned };
+
     /**
      * @param module  Module to associate with the Binder at construction.
      *                The module is not owned by the Binder.
+     * @param ownsFunctions  Binder has ownership of created Functions and
+     *                and will delete them when the Binder object is
+     *                deleted.
      */
-    Binder(Record *module = 0);
+    Binder(Record *module = nullptr, FunctionOwnership ownership = FunctionsNotOwned);
 
     /**
      * Automatically deinitializes the Binder before destroying.
@@ -312,7 +317,9 @@ public:
 private:
     Record *_module;
     bool _isOwned;
+    FunctionOwnership _funcOwned;
     QSet<String> _boundEntryPoints;
+    QSet<Variable *> _boundFunctions;
 };
 
 } // namespace de

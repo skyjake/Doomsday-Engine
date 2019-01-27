@@ -207,7 +207,7 @@ void Common_Load()
     attackArgs["missile"] = new NoneValue;
 
     DENG2_ASSERT(gameBindings == nullptr);
-    gameBindings = new Binder;
+    gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
     gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
 #if defined(__JHERETIC__)
             << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)

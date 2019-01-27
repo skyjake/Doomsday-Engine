@@ -22,6 +22,7 @@
 #include "de/ArrayValue"
 #include "de/DictionaryValue"
 #include "de/NoneValue"
+#include "de/FunctionValue"
 #include "de/Writer"
 #include "de/Reader"
 #include "de/Log"
@@ -362,7 +363,10 @@ Function *NativeFunctionSpec::make() const
     return new Function(_nativeName, _argNames, _argDefaults);
 }
 
-Binder::Binder(Record *module) : _module(module), _isOwned(false)
+Binder::Binder(Record *module, FunctionOwnership ownership) 
+    : _module(module)
+    , _isOwned(false)
+    , _funcOwned(ownership)
 {}
 
 Binder::~Binder()
@@ -386,6 +390,14 @@ Binder &Binder::initNew()
 
 void Binder::deinit()
 {
+    if (_funcOwned == FunctionsOwned)
+    {
+        for (auto *var : _boundFunctions)
+        {
+            delete var;
+        }
+        _boundFunctions.clear();
+    }
     if (_isOwned)
     {
         delete _module;
@@ -405,12 +417,17 @@ Record &Binder::module() const
     return *_module;
 }
 
-Binder &Binder::operator << (NativeFunctionSpec const &spec)
+Binder &Binder::operator << (const NativeFunctionSpec &spec)
 {
     if (_module)
     {
         _boundEntryPoints.insert(spec.nativeName());
         *_module << spec;
+
+        if (_funcOwned == FunctionsOwned)
+        {
+            _boundFunctions.insert(&(*_module)[spec.name()]);
+        }
     }
     return *this;
 }
