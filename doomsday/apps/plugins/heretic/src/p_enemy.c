@@ -1590,10 +1590,14 @@ int P_Attack(mobj_t *actor, int meleeDamage, mobjtype_t missileType)
             mobj_t *mis;
             if ((mis = P_SpawnMissile(missileType, actor, actor->target, true)) != NULL)
             {
-                if (missileType == MT_MUMMYFX1 || missileType == MT_WHIRLWIND)
+                if (missileType == MT_MUMMYFX1)
                 {
                     // Tracer is used to keep track of where the missile is homing.
                     mis->tracer = actor->target;
+                }
+                else if (missileType == MT_WHIRLWIND)
+                {
+                    P_InitWhirlwind(mis, actor->target);
                 }
             }
             return 2;
@@ -1616,6 +1620,15 @@ void C_DECL A_BeastAttack(mobj_t* actor)
     }
 
     P_SpawnMissile(MT_BEASTBALL, actor, actor->target, true);
+}
+
+void P_InitWhirlwind(mobj_t *whirlwind, mobj_t *target)
+{
+    whirlwind->origin[VZ] -= 32;
+    whirlwind->special1 = 60;
+    whirlwind->special2 = 50; // Timer for active sound.
+    whirlwind->special3 = 20 * TICSPERSEC; // Duration.
+    whirlwind->tracer = target;
 }
 
 void C_DECL A_HeadAttack(mobj_t* actor)
@@ -1686,12 +1699,7 @@ void C_DECL A_HeadAttack(mobj_t* actor)
         // Whirlwind.
         if((mo = P_SpawnMissile(MT_WHIRLWIND, actor, target, true)))
         {
-            mo->origin[VZ] -= 32;
-            mo->tracer = target;
-            mo->special1 = 60;
-            mo->special2 = 50; // Timer for active sound.
-            mo->special3 = 20 * TICSPERSEC; // Duration.
-
+            P_InitWhirlwind(mo, target);
             S_StartSound(SFX_HEDAT3, actor);
         }
     }

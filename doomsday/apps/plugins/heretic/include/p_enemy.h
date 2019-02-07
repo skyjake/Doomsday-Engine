@@ -40,6 +40,7 @@ void        P_ClearBodyQueue(void);
 int         P_Massacre(void);
 void        P_NoiseAlert(mobj_t* target, mobj_t* emitter);
 int         P_Attack(mobj_t *actor, int meleeDamage, mobjtype_t missileType);
+void        P_InitWhirlwind(mobj_t *whirlwind, mobj_t *target);
 void        P_DSparilTeleport(mobj_t* actor);
 
 #ifdef __cplusplus
