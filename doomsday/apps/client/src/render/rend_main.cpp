@@ -3366,6 +3366,19 @@ static void writeAllWalls(HEdge &hedge)
     // is not in the void).
     if (!P_IsInVoid(viewPlayer) && coveredOpenRange(hedge, middleBottomZ, middleTopZ, wroteOpaqueMiddle))
     {
+        if (hedge.hasMapElement())
+        {
+            // IssueID #2306: Black segments appear in the sky due to polyobj walls being marked
+            // as occluding angle ranges. As a workaround, don't consider these walls occluding.
+            if (hedge.mapElementAs<LineSideSegment>().line().definesPolyobj())
+            {
+                const Polyobj &poly = hedge.mapElementAs<LineSideSegment>().line().polyobj();
+                if (poly.sector().ceiling().surface().hasSkyMaskedMaterial())
+                {
+                    return;
+                }
+            }
+        }
         ClientApp::renderSystem().angleClipper().addRangeFromViewRelPoints(hedge.origin(), hedge.twin().origin());
     }
 }
