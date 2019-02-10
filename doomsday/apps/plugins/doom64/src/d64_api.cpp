@@ -76,6 +76,15 @@ static int G_RegisterGames(int hookType, int param, void* data)
     game.setRequiredPackages(StringList()
                              << "kaiser.doom64"
                              << "net.dengine.legacy.doom64_2");
+    // Options.
+    {
+        Record gameplayOptions;
+        gameplayOptions.set("fast", Record::withMembers("label", "Fast Monsters/Missiles", "type", "boolean", "default", false));
+        gameplayOptions.set("respawn", Record::withMembers("label", "Respawn Monsters", "type", "boolean", "default", false));
+        gameplayOptions.set("noMonsters", Record::withMembers("label", "No Monsters", "type", "boolean", "default", false));
+        gameplayOptions.set("turbo", Record::withMembers("label", "Move Speed", "type", "number", "default", 1.0, "min", 0.1, "max", 4.0, "step", 0.1));
+        game.objectNamespace().set(Game::DEF_OPTIONS, gameplayOptions);
+    }
     return true;
 }
 
