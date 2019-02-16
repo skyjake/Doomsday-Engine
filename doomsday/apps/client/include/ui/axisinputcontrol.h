@@ -62,6 +62,9 @@ public:
     de::ddouble position() const;
     void setPosition(de::ddouble newPosition);
 
+    void markPosition();
+    de::ddouble markedPosition() const;
+
     /**
      * Update the position of the axis control from a "real" position.
      *

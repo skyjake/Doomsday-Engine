@@ -414,10 +414,11 @@ DENG2_PIMPL(InputSystem)
         // enough for an echo.
         if (ev.type == E_AXIS)
         {
-            InputDevice const &device = self().device(ev.device);
-            float const pos = device.axis(ev.axis.id).translateRealPosition(ev.axis.pos);
+            const InputDevice &device = self().device(ev.device);
+            const float pos = device.axis(ev.axis.id).translateRealPosition(ev.axis.pos);
+            const float markedPos = float(device.axis(ev.axis.id).markedPosition());
 
-            if ((ev.axis.type == EAXIS_ABSOLUTE && fabs(pos) < .5f) ||
+            if ((ev.axis.type == EAXIS_ABSOLUTE && fabs(pos - markedPos) < .5f) ||
                 (ev.axis.type == EAXIS_RELATIVE && fabs(pos) < .02f))
             {
                 return; // Not significant enough.
@@ -427,10 +428,10 @@ DENG2_PIMPL(InputSystem)
         // Echo the event.
         String name = "echo-" + B_EventToString(ev);
 
-        Block const nameUtf8 = name.toUtf8();
-        ddevent_t echo; de::zap(echo);
-        echo.device = uint(-1);
-        echo.type   = E_SYMBOLIC;
+        const Block nameUtf8 = name.toUtf8();
+        ddevent_t echo{};
+        echo.device        = -1;
+        echo.type          = E_SYMBOLIC;
         echo.symbolic.id   = 0;
         echo.symbolic.name = nameUtf8.constData();
 
@@ -950,8 +951,24 @@ InputSystem::InputSystem() : d(new Impl(this))
     initAllDevices();
 }
 
-void InputSystem::timeChanged(Clock const &)
-{}
+void InputSystem::timeChanged(const Clock &)
+{
+    // Symbolic echo mode is used when creating input bindings interactively.
+    // For axis controls, we need to know the difference to whatever position
+    // the axis had before symbolic mode started, so here we mark the current
+    // position.
+
+    if (!symbolicEchoMode)
+    {
+        for (auto *device : d->devices)
+        {
+            for (int i = 0; i < device->axisCount(); ++i)
+            {
+                device->axis(i).markPosition();
+            }
+        }
+    }
+}
 
 ConfigProfiles &InputSystem::settings()
 {

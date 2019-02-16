@@ -35,8 +35,9 @@ DENG2_PIMPL_NOREF(AxisInputControl)
     Type type = Pointer;
     dint flags = 0;
 
-    ddouble position     = 0;      ///< Current translated position (-1..1) including any filtering.
-    ddouble realPosition = 0;      ///< The actual latest position (-1..1).
+    ddouble position       = 0; ///< Current translated position (-1..1) including any filtering.
+    ddouble realPosition   = 0; ///< The actual latest position (-1..1).
+    ddouble markedPosition = 0;
 
     dfloat offset   = 0;           ///< Offset to add to real input value.
     dfloat scale    = 1;           ///< Scaling factor for real input values.
@@ -183,6 +184,16 @@ void AxisInputControl::setPosition(ddouble newPosition)
 {
     DENG2_GUARD(this);
     d->position = newPosition;
+}
+
+void AxisInputControl::markPosition()
+{
+    d->markedPosition = d->position;
+}
+
+ddouble AxisInputControl::markedPosition() const
+{
+    return d->markedPosition;
 }
 
 void AxisInputControl::applyRealPosition(dfloat pos)
