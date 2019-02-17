@@ -1,6 +1,6 @@
 set (DENG_VERSION_MAJOR 2)
 set (DENG_VERSION_MINOR 1)
-set (DENG_VERSION_PATCH 1)
+set (DENG_VERSION_PATCH 2)
 
 set (DENG_VERSION ${DENG_VERSION_MAJOR}.${DENG_VERSION_MINOR}.${DENG_VERSION_PATCH})
 
@@ -14,8 +14,8 @@ endif ()
 
 set (DENG_RELEASE_TYPE
     #Unstable
-    #Candidate
-    Stable
+    Candidate
+    #Stable
 )
 
 set (DENG_TEAM_COPYRIGHT "Copyright (c) 2003-2019 Deng Team")
