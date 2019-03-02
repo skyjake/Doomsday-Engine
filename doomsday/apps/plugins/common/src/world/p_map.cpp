@@ -2817,7 +2817,7 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
     {
         P_DamageMobj(thing, NULL, NULL, parm.crushDamage, false);
 
-#if __JDOOM__ || __JDOOM64__
+#if __JDOOM__ || __JDOOM64__ || __JHERETIC__
         if(!(thing->flags & MF_NOBLOOD))
 #elif __JHEXEN__
         if(!(thing->flags & MF_NOBLOOD) &&
