@@ -320,7 +320,11 @@ void P_SetPsprite(player_t *plr, int position, statenum_t stnum)
         Player_NotifyPSpriteChange(plr, position);
 
         if(state->action)
-        {   // Call action routine.
+        {
+            // Custom parameters in the action function are passed to libdoomsday this way.
+            P_SetCurrentActionState((int) stnum);
+
+            // Call action routine.
             state->action(plr, psp);
             if(!psp->state)
             {

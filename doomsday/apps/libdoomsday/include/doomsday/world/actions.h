@@ -32,9 +32,9 @@ typedef struct actionlink_s {
 extern "C" {
 #endif
 
-LIBDOOMSDAY_PUBLIC void P_GetGameActions();
-
+LIBDOOMSDAY_PUBLIC void      P_GetGameActions();
 LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(const char *name);
+LIBDOOMSDAY_PUBLIC void      P_SetCurrentActionState(int state);
 
 #ifdef __cplusplus
 } // extern "C"
@@ -42,9 +42,9 @@ LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(const char *name);
 
 #ifdef __cplusplus
 
-# include <de/String>
+#include <de/String>
 LIBDOOMSDAY_PUBLIC acfnptr_t P_GetAction(const de::String &name);
-LIBDOOMSDAY_PUBLIC void P_SetCurrentAction(const de::String &name);
+LIBDOOMSDAY_PUBLIC void      P_SetCurrentAction(const de::String &name);
 
 #endif // __cplusplus
 

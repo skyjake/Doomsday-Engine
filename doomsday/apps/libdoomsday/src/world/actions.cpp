@@ -19,7 +19,9 @@
 #include "doomsday/world/actions.h"
 #include "doomsday/gameapi.h"
 #include "doomsday/doomsdayapp.h"
+#include "doomsday/players.h"
 #include "doomsday/world/mobjthinkerdata.h"
+#include "doomsday/defs/ded.h"
 
 #include <de/DictionaryValue>
 #include <de/NativePointerValue>
@@ -33,8 +35,28 @@ using namespace de;
 static QMap<String, acfnptr_t> s_actions; ///< name => native function pointer.
 static String s_currentAction;
 
-static void C_DECL A_DoomsdayScript(struct mobj_s *mobj)
+static void C_DECL A_DoomsdayScript(void *actor)
 {
+    struct mobj_s *mobj = reinterpret_cast<struct mobj_s *>(actor);
+
+    // The actor can also be a player in the case of psprites.
+    // Look up the corresponding player.
+    {
+        auto &plrs = DoomsdayApp::players();
+        for (int i = 0; i < DDMAXPLAYERS; ++i)
+        {
+            // Note: It is assumed that the player data structure begins with a pointer to
+            // the ddplayer_t.
+
+            if (&plrs.at(i).publicData() ==
+                *reinterpret_cast<const ddplayer_t * const *>(actor))
+            {
+                // Refer to the player mobj instead.
+                mobj = plrs.at(i).publicData().mo;
+            }
+        }
+    }
+
     LOG_AS("A_DoomsdayScript");
     try
     {
@@ -75,6 +97,11 @@ void P_GetGameActions()
 void P_SetCurrentAction(const String &name)
 {
     s_currentAction = name;
+}
+
+void P_SetCurrentActionState(int state)
+{
+    P_SetCurrentAction(DED_Definitions()->states[state].gets(QStringLiteral("action")));
 }
 
 acfnptr_t P_GetAction(const String &name)

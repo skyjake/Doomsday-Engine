@@ -37,6 +37,8 @@
 #include "p_tick.h"
 #include "player.h"
 
+#include <doomsday/world/actions.h>
+
 #define LOWERSPEED          (6)
 #define RAISESPEED          (6)
 #define WEAPONBOTTOM        (128)
@@ -84,7 +86,11 @@ void P_SetPsprite(player_t *player, int position, statenum_t stnum)
         }
 
         if(state->action)
-        {   // Call action routine.
+        {
+            // Custom parameters in the action function are passed to libdoomsday this way.
+            P_SetCurrentActionState((int) stnum);
+
+            // Call action routine.
             state->action(player, psp);
             if(!psp->state)
             {

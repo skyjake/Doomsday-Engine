@@ -417,7 +417,7 @@ static bool changeMobjState(mobj_t *mobj, statenum_t stateNum, bool doCallAction
             if (shouldCallAction(mobj))
             {
                 // Custom parameters in the action function are passed to libdoomsday this way.
-                P_SetCurrentAction(Defs().states[stateNum].gets(QStringLiteral("action")));
+                P_SetCurrentActionState(stateNum);
 
                 void (*action)(mobj_t *);
                 action = de::function_cast<void (*)(mobj_t *)>(st->action);
