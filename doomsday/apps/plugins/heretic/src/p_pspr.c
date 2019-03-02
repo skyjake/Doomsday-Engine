@@ -991,10 +991,8 @@ void C_DECL A_FireSkullRodPL2(player_t *player, pspdef_t *psp)
 
     if(IS_CLIENT) return;
 
-    if((mo = P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL, true)))
-    {
-        mo->special3 = 140;
-    }
+    P_SpawnMissile(MT_HORNRODFX2, player->plr->mo, NULL, true);
+    missileMobj->special3 = 140;
 
     // Use MissileMobj instead of the return value from
     // P_SpawnMissile because we need to give info to the mobj
@@ -1030,7 +1028,7 @@ void C_DECL A_AddPlayerRain(mobj_t *actor)
 
     playerNum = IS_NETGAME ? actor->special2 : 0;
     if(!players[playerNum].plr->inGame)
-    {   // Player not left the game.
+    {   // Player left the game.
         return;
     }
 
@@ -1080,7 +1078,7 @@ void C_DECL A_SkullRodStorm(mobj_t* actor)
     player_t* player;
 
     if(actor->special3-- == 0)
-    {
+    {        
         P_MobjChangeState(actor, S_NULL);
         playerNum = (IS_NETGAME ? actor->special2 : 0);
 
