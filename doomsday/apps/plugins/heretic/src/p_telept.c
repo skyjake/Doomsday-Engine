@@ -229,15 +229,13 @@ void P_ArtiTele(player_t *player)
         P_Teleport(player->plr->mo, spot->origin[VX], spot->origin[VY], spot->angle, true);
 
 #if __JHEXEN__
-        if(player->morphTics)
-        {   // Teleporting away will undo any morph effects (pig)
+        if (player->morphTics)
+        {
+            // Teleporting away will undo any morph effects (pig)
             P_UndoPlayerMorph(player);
         }
-        //S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
 #else
-        /*S_StartSound(SFX_WPNUP, NULL); // Full volume laugh
-           NetSv_Sound(NULL, SFX_WPNUP, player-players); */
-        S_StartSound(SFX_WPNUP, NULL);
+        S_StartSound(P_GetPlayerLaughSound(player), NULL);
 #endif
     }
 }

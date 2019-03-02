@@ -120,6 +120,10 @@ void P_TouchSpecialMobj(mobj_t *special, mobj_t *toucher);
  */
 dd_bool P_MorphPlayer(player_t *player);
 
+dd_bool P_IsPlayerMorphed(const player_t *player);
+
+int P_GetPlayerLaughSound(const player_t *player);
+
 /**
  * Damages both enemies and players.
  *

@@ -45,6 +45,11 @@ int backpackAmmo[NUM_AMMO_TYPES] = { 10, 5, 10, 20, 1, 0 };
 // Number of rounds to give for each weapon type.
 int getWeaponAmmo[NUM_WEAPON_TYPES] = { 0, 25, 10, 30, 50, 2, 50, 0 };
 
+int P_GetPlayerLaughSound(const player_t *plr)
+{
+    return P_IsPlayerMorphed(plr) ? SFX_CHICDTH : SFX_WPNUP;
+}
+
 static dd_bool giveOneAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
 {
     DENG_ASSERT(plr != 0);
@@ -569,7 +574,7 @@ static dd_bool pickupWeapon(player_t *plr, weapontype_t weaponType,
 
         if(!mapSetup) // Pickup sounds are not played during map setup.
         {
-            S_ConsoleSound(SFX_WPNUP, NULL, plr - players);
+            S_ConsoleSound(P_GetPlayerLaughSound(plr), NULL, plr - players);
         }
     }
 
@@ -1061,6 +1066,11 @@ static void killMobj(mobj_t *source, mobj_t *target)
     }
 
     target->tics -= P_Random() & 3;
+}
+
+dd_bool P_IsPlayerMorphed(const player_t *player)
+{
+    return player && player->morphTics > 0;
 }
 
 dd_bool P_MorphPlayer(player_t *player)

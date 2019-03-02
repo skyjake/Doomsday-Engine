@@ -1459,7 +1459,7 @@ void C_DECL A_TombOfPower(mobj_t* mo)
         else
         {   // Succeeded.
             player->morphTics = 0;
-            S_StartSound(SFX_WPNUP, player->plr->mo);
+            S_StartSound(P_GetPlayerLaughSound(player), player->plr->mo);
         }
     }
     else
