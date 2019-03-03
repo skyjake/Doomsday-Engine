@@ -474,18 +474,44 @@ AmmoDef const *P_AmmoDef(ammotype_t type)
  */
 void P_InitWeaponInfo()
 {
-    for(auto i = int( WT_FIRST ); i < NUM_WEAPON_TYPES; ++i)
+    for (auto i = int(WT_FIRST); i < NUM_WEAPON_TYPES; ++i)
     {
-        auto const id = String::number(i);
+        const String id = String::number(i);
 
-        for(int k = 0; k < 2; ++k)  // Each firing mode.
+        for (int k = 0; k < 2; ++k) // Each firing mode.
         {
+            // Firing modes other than @c 0 use a sublevel.
+            const String mode = (k == 0 ? "" : "|" + String::number(k + 1));
+            const String key = "Weapon Info|" + id + mode + "|";
+
             weaponmodeinfo_t *wminfo = WEAPON_INFO(i, PCLASS_PLAYER, k);
             DENG2_ASSERT(wminfo);
 
-            // Firing modes other than @c 0 use a sublevel.
-            String const mode = (k == 0 ? "" : "|" + String::number(k + 1));
-            if(ded_value_t const *staticSwitch = Defs().getValueById("Weapon Info|" + id + mode + "|Static"))
+            // Per shot ammo.
+            {
+                int definedAmmoTypes = 0;
+                for (int a = AT_FIRST; a < NUM_AMMO_TYPES; ++a)
+                {
+                    if (const ded_value_t *perShot = Defs().getValueById(key + "Per shot|" + ammoName[a]))
+                    {
+                        wminfo->perShot[a] = String(perShot->text).toInt();
+                        definedAmmoTypes |= 1 << a;
+                    }
+                }
+                if (definedAmmoTypes)
+                {
+                    // Clear the other ammo amounts.
+                    for (int a = AT_FIRST; a < NUM_AMMO_TYPES; ++a)
+                    {
+                        if ((definedAmmoTypes & (1 << a)) == 0)
+                        {
+                            wminfo->perShot[a] = 0;
+                        }
+                    }
+                }
+            }
+
+            if (const ded_value_t *staticSwitch = Defs().getValueById(key + "Static"))
             {
                 wminfo->staticSwitch = String(staticSwitch->text).toInt();
             }

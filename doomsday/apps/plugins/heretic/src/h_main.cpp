@@ -43,6 +43,15 @@ using namespace common;
 gamemode_t gameMode;
 int gameModeBits;
 
+const char *ammoName[NUM_AMMO_TYPES] = {
+    "Crystal",
+    "Arrow",
+    "Orb",
+    "Rune",
+    "FireOrb",
+    "MSphere",
+};
+
 // Default font colours.
 float const defFontRGB[]  = { .425f, .986f, .378f };
 float const defFontRGB2[] = { 1, .65f, .275f };
@@ -323,15 +332,6 @@ void H_PreInit()
 static void initAmmoInfo()
 {
     static const int defaultMaxAmmo[NUM_AMMO_TYPES] = {100, 50, 200, 200, 20, 150};
-
-    static const char *ammoName[NUM_AMMO_TYPES] = {
-        "Crystal",
-        "Arrow",
-        "Orb",
-        "Rune",
-        "FireOrb",
-        "MSphere",
-    };
 
     for (int i = AT_FIRST; i < NUM_AMMO_TYPES; ++i)
     {
