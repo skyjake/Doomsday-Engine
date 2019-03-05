@@ -21,6 +21,7 @@
 #include "common.h"
 #include "menu/widgets/buttonwidget.h"
 
+#include "g_defs.h"
 #include "hu_menu.h"   // menu sounds
 #include "hu_stuff.h"
 #include "menu/page.h" // mnRendState
@@ -56,7 +57,7 @@ void ButtonWidget::draw() const
 {
     fontid_t const fontId     = mnRendState->textFonts[font()];
     Vector4f const &textColor = mnRendState->textColors[color()];
-    float t = (isFocused()? 1 : 0);
+    //float t = (isFocused()? 1 : 0);
 
     const Vector4f color = selectionFlashColor(textColor);
 
@@ -165,7 +166,15 @@ String ButtonWidget::text() const
 
 ButtonWidget &ButtonWidget::setText(String const &newText)
 {
-    d->text = newText;
+    // Widget text may be replaced with Values.
+    if (const auto *repl = Defs().getValueById("Menu Label|" + newText))
+    {
+        d->text = repl->text;
+    }
+    else
+    {
+        d->text = newText;
+    }
     return *this;
 }
 
