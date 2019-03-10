@@ -166,15 +166,7 @@ String ButtonWidget::text() const
 
 ButtonWidget &ButtonWidget::setText(String const &newText)
 {
-    // Widget text may be replaced with Values.
-    if (const auto *repl = Defs().getValueById("Menu Label|" + newText))
-    {
-        d->text = repl->text;
-    }
-    else
-    {
-        d->text = newText;
-    }
+    d->text = labelText(newText);
     return *this;
 }
 

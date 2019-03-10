@@ -237,6 +237,8 @@ public:
 
     virtual void pageActivated();
 
+    static de::String labelText(const de::String &text);
+
 private:
     DENG2_PRIVATE(d)
 };

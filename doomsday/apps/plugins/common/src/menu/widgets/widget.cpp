@@ -23,6 +23,7 @@
 #include "menu/widgets/widget.h"
 #include "menu/page.h"
 
+#include "g_defs.h"
 #include "hu_menu.h" // menu sounds
 
 using namespace de;
@@ -342,6 +343,16 @@ Vector4f Widget::selectionFlashColor(const Vector4f &noFlashColor) const
 
 void Widget::pageActivated()
 {}
+
+String Widget::labelText(const String &text) // static
+{
+    // Widget text may be replaced with Values.
+    if (const auto *repl = Defs().getValueById("Menu Label|" + text))
+    {
+        return repl->text;
+    }
+    return text;
+}
 
 } // namespace menu
 } // namespace common

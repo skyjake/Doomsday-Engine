@@ -120,9 +120,9 @@ LabelWidget &LabelWidget::setPatch(patchid_t *newPatch)
     return *this;
 }
 
-LabelWidget &LabelWidget::setText(String const &newText)
+LabelWidget &LabelWidget::setText(const String &text)
 {
-    d->text = newText;
+    d->text = labelText(text);
     return *this;
 }
 

@@ -2471,14 +2471,16 @@ void Hu_MenuDrawFocusCursor(Vector2i const &origin, float scale, float alpha)
 
 void Hu_MenuDrawPageTitle(String title, Vector2i const &origin)
 {
-    if(title.isEmpty()) return;
+    title = Widget::labelText(title);
+
+    if(title.isEmpty()) return;    
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorv(cfg.common.menuTextColors[0]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(title.toUtf8().constData(), origin.x, origin.y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(title.toLatin1(), origin.x, origin.y, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 }
@@ -2499,7 +2501,7 @@ void Hu_MenuDrawPageHelp(String helpText, Vector2i const &origin)
     FR_SetColorv(cfg.common.menuTextColors[1]);
     FR_SetAlpha(mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(helpText.toUtf8().constData(), origin.x, origin.y, ALIGN_BOTTOM, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(helpText.toLatin1(), origin.x, origin.y, ALIGN_BOTTOM, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -3145,7 +3147,7 @@ void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vector2i const &origin)
     FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
-    FR_DrawTextXY3("Load Game", SCREENWIDTH / 2, origin.y - 20, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(Widget::labelText("Load Game").toLatin1(), SCREENWIDTH / 2, origin.y - 20, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch(pLoadGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pLoadGame),
                  Vector2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
