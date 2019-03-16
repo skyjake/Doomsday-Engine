@@ -70,7 +70,7 @@ set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "client")
 
 # Prefix path is used for finding CMake config packages.
 if (NOT DENG_SDK_DIR STREQUAL "")
-    set (CMAKE_PREFIX_PATH "${DENG_SDK_DIR}/${DENG_INSTALL_LIB_DIR}")
+    set (CMAKE_PREFIX_PATH "${DENG_SDK_DIR}")
 else ()
     set (CMAKE_PREFIX_PATH "${DENG_CMAKE_DIR}/config")
 endif ()

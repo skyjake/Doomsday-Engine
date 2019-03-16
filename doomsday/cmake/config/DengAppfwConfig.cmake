@@ -6,5 +6,5 @@ find_package (DengShell REQUIRED)
 # Deng::libappfw may exist in the current build, in which case using 
 # a previously installed version is inappropriate.
 if (NOT TARGET Deng::libappfw)
-    include ("${CMAKE_CURRENT_LIST_DIR}/DengAppfw.cmake")
+    include ("${DENG_SDK_DIR}/lib/cmake/DengAppfw/DengAppfw.cmake")
 endif ()
