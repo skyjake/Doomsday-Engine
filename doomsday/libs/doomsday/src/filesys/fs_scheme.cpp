@@ -144,7 +144,7 @@ public:
         int op = 0;
         for (Char ch : str)
         {
-            Char unicode = towlower(ch);
+            Char unicode = ch.lower();
             switch (op)
             {
             case 0: hashKey ^= unicode; ++op;   break;

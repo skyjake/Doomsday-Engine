@@ -314,7 +314,7 @@ dint Sprites::toSpriteAngle(Char angleCode) // static
     }
     else if (iswalpha(angleCode))
     {
-        Char charCodeLatin1 = towupper(angleCode);
+        Char charCodeLatin1 = angleCode.upper();
         if (charCodeLatin1 >= 'A')
         {
             angle = charCodeLatin1 - 'A' + 10;

@@ -89,7 +89,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             case '[':
             case '{': {
                 // Find the matching end.
-                const char closing = (ch == '('? ')' : ch == '['? ']' : '}');
+                const Char closing = (ch == '('? ')' : ch == '['? ']' : '}');
                 while (*end != closing && *end/* != d->original.end()*/)
                 {
                     end++;

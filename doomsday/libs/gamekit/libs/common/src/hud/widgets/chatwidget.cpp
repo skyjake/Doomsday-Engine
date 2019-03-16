@@ -190,7 +190,7 @@ dint ChatWidget::handleEvent(event_t const &ev)
     dchar const ch = ev.data1;
     if(ch >= ' ' && ch <= 'z')
     {
-        d->text += Char(d->shiftDown ? ::shiftXForm[dbyte(ch)] : ch);
+        d->text += Char(uint32_t(d->shiftDown ? ::shiftXForm[dbyte(ch)] : ch));
     }
     return oldLength != d->text.length();
 }

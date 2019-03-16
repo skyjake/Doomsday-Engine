@@ -148,7 +148,7 @@ String Token::unescapeStringLiteral() const
             else if (*ptr == 'x' && (end - ptr > 2))
             {
                 const String num(ptr + 1, ptr + 3);
-                c = Char(strtoul(num, nullptr, 16));
+                c = Char(uint32_t(strtoul(num, nullptr, 16)));
                 ptr += 2;
             }
             else

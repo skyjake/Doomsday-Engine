@@ -833,14 +833,14 @@ typedef unsigned int uint;
 class DE_PUBLIC Char
 {
 public:
-    inline Char() : _ch(0) {}
-    inline Char(char ch) : _ch(uint32_t(ch)) {}
-    inline Char(uint32_t uc32) : _ch(uc32) {}
+    inline constexpr Char() : _ch(0) {}
+    inline constexpr Char(char ch) : _ch(uint32_t(ch)) {}
+    inline constexpr Char(uint32_t uc32) : _ch(uc32) {}
     inline Char(const Char &other) = default;
     inline Char(Char &&moved)      = default;
 
     inline explicit operator bool() const { return _ch != 0; }
-    inline operator int() const { return int(_ch); }
+    inline operator uint32_t() const { return _ch; }
     inline uint32_t unicode() const { return _ch; }
 
     Char &operator=(const Char &) = default;

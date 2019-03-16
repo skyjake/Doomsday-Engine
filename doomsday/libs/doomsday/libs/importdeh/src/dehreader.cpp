@@ -160,8 +160,8 @@ public:
 
     Char currentChar()
     {
-        if (atEnd()) return 0;
-        return *pos; // QChar::fromLatin1(patch.at(pos));
+        if (atEnd()) return {};
+        return *pos;
     }
 
     void skipToEOL()

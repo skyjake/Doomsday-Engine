@@ -28,7 +28,6 @@
 #include <cstdio>
 #include <cstdarg>
 #include <cerrno>
-#include <cwchar>
 
 namespace de {
 
@@ -1172,9 +1171,9 @@ Char mb_iterator::operator*() const
 
 Char mb_iterator::decode(const char **end) const
 {
-    wchar_t ch = 0;
-    size_t rc = std::mbrtowc(&ch, cur, MB_CUR_MAX, &mb);
-    if (int(rc) < 0)
+    uint32_t ch = 0;
+    int      rc = decodeBytes_MultibyteChar(cur, strnlen(cur, 8), &ch);
+    if (rc < 0)
     {
         // Multibyte decoding failed. Let's return something valid, though, so the iterator
         // doesn't hang due to never reaching the end of the string.
