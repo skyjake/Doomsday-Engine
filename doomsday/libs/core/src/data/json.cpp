@@ -66,13 +66,13 @@ public:
 
     Char peek() const
     {
-        if (atEnd()) return 0;
+        if (atEnd()) return Char();
         return *pos;
     }
 
     Char next()
     {
-        if (atEnd()) return 0;
+        if (atEnd()) return Char();
         Char c = *pos;
         advance();
         return c;
@@ -80,7 +80,7 @@ public:
 
     Char nextNoSkip()
     {
-        if (atEnd()) return 0;
+        if (atEnd()) return Char();
         return *(_previous = pos++);
     }
 

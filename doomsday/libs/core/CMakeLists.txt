@@ -71,7 +71,7 @@ deng_add_package (net.dengine.stdlib)
 
 deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
-target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation)
+target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation::the_Foundation)
 if (WIN32)
     # timeBeginPeriod, timeEndPeriod
     target_link_libraries (libcore PRIVATE winmm)

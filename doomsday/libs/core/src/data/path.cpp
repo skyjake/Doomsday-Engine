@@ -559,7 +559,7 @@ void Path::operator << (Reader &from)
     Block b;
     duint16 sep;
     from >> b >> sep;
-    set(String::fromUtf8(b), Char(sep));
+    set(String::fromUtf8(b), Char(uint32_t(sep)));
 }
 
 String Path::normalizeString(String const &text, Char replaceWith)

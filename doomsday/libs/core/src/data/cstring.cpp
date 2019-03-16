@@ -119,7 +119,7 @@ String CString::lower() const
     String low;
     for (mb_iterator i = begin(), j = end(); i != j; ++i)
     {
-        low += Char(towlower(*i));
+        low += (*i).lower();
     }
     return low;
 }
@@ -129,7 +129,7 @@ String CString::upper() const
     String up;
     for (mb_iterator i = begin(), j = end(); i != j; ++i)
     {
-        up += Char(towupper(*i));
+        up += (*i).upper();
     }
     return up;
 }

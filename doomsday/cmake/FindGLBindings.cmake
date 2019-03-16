@@ -1,12 +1,12 @@
 find_package (glbinding QUIET)
 
-if (TARGET glbinding::glbinding)
-    if (NOT TARGET glbinding)
-        add_library (glbinding ALIAS glbinding::glbinding)
-    endif ()
-endif ()
+#if (TARGET glbinding::glbinding)
+#    if (NOT TARGET glbinding)
+#        add_library (glbinding ALIAS glbinding::glbinding)
+#    endif ()
+#endif ()
 
-if (NOT TARGET glbinding)
+if (NOT TARGET glbinding::glbinding)
     set (GLBINDING_RELEASE 3.0.2)
     message (STATUS "cginternals/glbinding ${GLBINDING_RELEASE} will be downloaded and built")
     include (ExternalProject)
@@ -26,13 +26,13 @@ if (NOT TARGET glbinding)
         BUILD_BYPRODUCTS ${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding-build/code/${glbindingLibName}
         INSTALL_COMMAND  ""
     )
-    add_library (glbinding INTERFACE)
-    target_include_directories (glbinding INTERFACE
+    add_library (glbinding::glbinding INTERFACE)
+    target_include_directories (glbinding::glbinding INTERFACE
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding/include>
         $<BUILD_INTERFACE:${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding-build/include>)
-    target_link_libraries (glbinding INTERFACE
+    target_link_libraries (glbinding::glbinding INTERFACE
         ${CMAKE_CURRENT_BINARY_DIR}/glbinding/src/github-glbinding-build/code/${glbindingLibName})
-    install (TARGETS glbinding EXPORT glbinding)
-    install (EXPORT glbinding DESTINATION ${DE_INSTALL_LIB_DIR})
-    add_dependencies (glbinding github-glbinding)
+    install (TARGETS glbinding::glbinding EXPORT glbinding)
+    install (EXPORT glbinding::glbinding DESTINATION ${DE_INSTALL_LIB_DIR})
+    add_dependencies (glbinding::glbinding github-glbinding)
 endif ()

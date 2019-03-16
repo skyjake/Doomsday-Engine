@@ -463,9 +463,8 @@ private:
 class DE_PUBLIC DotPath : public Path
 {
 public:
-    DotPath(String const &path = "")        : Path(path, L'.') {}
-//    DotPath(QString const &str)             : Path(str, '.') {}
-    DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, L'.') {}
+    DotPath(String const &path = "")        : Path(path, '.') {}
+    DotPath(char const *nullTerminatedCStr) : Path(nullTerminatedCStr, '.') {}
     DotPath(Path const &other)              : Path(other) {}
     DotPath(Path &&moved)                   : Path(moved) {}
     DotPath(DotPath const &other)           : Path(other.toString(), other.separator()) {}

@@ -218,7 +218,7 @@ public:
     String(const std::string &text);
     String(const std::wstring &text);
     String(const char *nullTerminatedCStr);
-    String(const wchar_t *nullTerminatedWideStr);
+//    String(const wchar_t *nullTerminatedWideStr);
     String(const char *cStr, int length);
     String(const char *cStr, dsize length);
     String(dsize length, char ch);
@@ -487,13 +487,13 @@ public:
     String fileNameAndPathWithoutExtension(Char dirChar = '/') const;
 
     BytePos indexOf(char ch) const { return BytePos{indexOf_String(&_str, ch)}; }
-    BytePos indexOf(Char ch) const { return BytePos{indexOf_String(&_str, ch)}; }
+    BytePos indexOf(Char ch) const { return BytePos{indexOf_String(&_str, ch.unicode())}; }
     BytePos indexOf(const char *cstr) const { return BytePos{indexOfCStr_String(&_str, cstr)}; }
     BytePos indexOf(const char *cstr, BytePos from) const { return BytePos{indexOfCStrFrom_String(&_str, cstr, from.index)}; }
     BytePos indexOf(const char *cstr, Sensitivity s) const { return BytePos(indexOfCStrFromSc_String(&_str, cstr, 0, s)); }
     inline BytePos indexOf(const String &str) const { return indexOf(str.c_str()); }
     BytePos lastIndexOf(char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
-    BytePos lastIndexOf(Char ch) const { return BytePos{lastIndexOf_String(&_str, ch)}; }
+    BytePos lastIndexOf(Char ch) const { return BytePos{lastIndexOf_String(&_str, ch.unicode())}; }
     BytePos lastIndexOf(const char *cstr) const { return BytePos{lastIndexOfCStr_String(&_str, cstr)}; }
 
     bool containsWord(const String &word) const;
@@ -789,7 +789,7 @@ public:
     static String asText(Char value)
     {
         iMultibyteChar mb;
-        init_MultibyteChar(&mb, value);
+        init_MultibyteChar(&mb, value.unicode());
         return asText(mb.bytes);
     }
     static String asText(const char *value) { return format("%s", value); }

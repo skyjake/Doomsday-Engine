@@ -92,7 +92,7 @@ Char Lex::peekComment() const
             }
             p += 2; // skip the ending
             _nextPos = p + 1;
-            return (p.pos() < inputSize? *p : Char(0));
+            return (p.pos() < inputSize? *p : Char());
         }
     }
 
@@ -100,7 +100,7 @@ Char Lex::peekComment() const
     auto p = _state.pos;
     while (p.pos() < inputSize && *++p != '\n') {}
     _nextPos = p + 1;
-    return (p.pos() < inputSize? '\n' : 0);
+    return (p.pos() < inputSize? '\n' : '\0');
 }
 
 Char Lex::peek() const
@@ -108,7 +108,7 @@ Char Lex::peek() const
     if (atEnd())
     {
         // There is no more; trying to get() will throw an exception.
-        return 0;
+        return '\0';
     }
 
     if (atCommentStart())
@@ -156,7 +156,7 @@ void Lex::skipWhite()
 
 void Lex::skipWhiteExceptNewline()
 {
-    Char c = 0;
+    Char c;
     while (isWhite(c = peek()) && c != '\n')
     {
         get();

@@ -124,7 +124,7 @@ public:
     static Path::hash_type const no_hash;
 
 #ifdef DE_DEBUG
-    void debugPrint(Char separator = L'/') const;
+    void debugPrint(Char separator = '/') const;
     void debugPrintHashDistribution() const;
 #endif
 
@@ -346,7 +346,7 @@ public:
      *
      * @return Number of paths found.
      */
-    int findAllPaths(FoundPaths &found, ComparisonFlags flags = 0, Char sep = L'/') const;
+    int findAllPaths(FoundPaths &found, ComparisonFlags flags = 0, Char sep = '/') const;
 
     /**
      * Traverse the node hierarchy making a callback for visited node. Traversal

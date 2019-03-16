@@ -32,6 +32,16 @@
 
 namespace de {
 
+Char Char::upper() const
+{
+    return upper_Char(_ch);
+}
+
+Char Char::lower() const
+{
+    return lower_Char(_ch);
+}
+
 String::String()
 {
     init_String(&_str);
@@ -96,10 +106,10 @@ String::String(const char *nullTerminatedCStr)
     initCStr_String(&_str, nullTerminatedCStr ? nullTerminatedCStr : "");
 }
 
-String::String(const wchar_t *nullTerminatedWideStr)
-{
-    initWide_String(&_str, nullTerminatedWideStr ? nullTerminatedWideStr : L"");
-}
+//String::String(const wchar_t *nullTerminatedWideStr)
+//{
+//    initWide_String(&_str, nullTerminatedWideStr ? nullTerminatedWideStr : L"");
+//}
 
 String::String(char const *cStr, int length)
 {
@@ -239,7 +249,7 @@ Char String::at(CharPos pos) const
     {
         if (pos == index++) return ch;
     }
-    return 0;
+    return {};
 }
 
 String String::substr(CharPos pos, dsize count) const
@@ -638,7 +648,7 @@ String String::upperFirstChar() const
 {
     if (isEmpty()) return "";
     const_iterator i = begin();
-    String capitalized(1, Char(towupper(*i++)));
+    String capitalized(1, (*i++).upper());
     appendCStr_String(&capitalized._str, i);
     return capitalized;
 }
@@ -999,7 +1009,7 @@ String String::patternFormat(const_iterator &      formatIter,
         break;
 
     case 'c':
-        result += Char(arg.asNumber());
+        result += Char(uint32_t(arg.asNumber()));
         break;
 
     case 'i':
