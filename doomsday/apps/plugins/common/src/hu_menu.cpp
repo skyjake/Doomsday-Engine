@@ -3031,19 +3031,28 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vector2i const &origin)
                  Vector2i(origin.x + 7, origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
-#elif !defined(__JHERETIC__)
+#else
     DENG2_UNUSED(page);
+
+#if defined (__JHERETIC__)
+    String titleText;
+#else
+    String titleText = "Choose episode:";
+#endif
+
+    if (const auto *value = Defs().getValueById("Menu Label|Episode Page Title"))
+    {
+        titleText = value->text;
+    }
 
     DGL_Enable(DGL_TEXTURE_2D);
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    FR_DrawTextXY3("Choose episode:", origin.x - 32, origin.y - 42, ALIGN_TOPLEFT,
+    FR_DrawTextXY3(titleText.toLatin1(), SCREENWIDTH / 2, origin.y - 42, ALIGN_TOP,
                    Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
-#else
-    DENG2_UNUSED2(page, origin);
 #endif
 }
 
@@ -3061,10 +3070,19 @@ void Hu_MenuDrawSkillPage(Page const & /*page*/, Vector2i const &origin)
                  Vector2i(origin.x + 6,  origin.y - 25), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
-#elif __JHEXEN__
-    Hu_MenuDrawPageTitle("Choose Skill Level:", Vector2i(origin.x + 36, origin.y - 28));
 #else
-    DENG2_UNUSED(origin);
+#if defined (__JHERETIC__)
+    String titleText;
+#else
+    String titleText = "Choose Skill Level:";
+#endif
+
+    if (const auto *value = Defs().getValueById("Menu Label|Skill Page Title"))
+    {
+        titleText = value->text;
+    }
+
+    Hu_MenuDrawPageTitle(titleText, Vector2i(SCREENWIDTH / 2, origin.y - 28));
 #endif
 }
 
