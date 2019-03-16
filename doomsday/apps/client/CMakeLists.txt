@@ -327,9 +327,9 @@ if (APPLE AND NOT IOS)
         heretic
         hexen
     )
-#    if (TARGET audio_fmod)
-#        deng_install_bundle_deps (client fmodex)
-#    endif ()
+    if (TARGET audio_fmod)
+        deng_install_bundle_deps (client fmodex)
+    endif ()
 
     # Plugins are bundled inside the client app. We'll run macdeployqt on the
     # installed app before the plugins are there so it won't do unnecessary

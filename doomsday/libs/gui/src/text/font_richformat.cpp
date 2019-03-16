@@ -141,7 +141,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
             break;
 
         case 'T':
-            stack.last().tabStop = de::max(-1, *iter - 'a');
+            stack.last().tabStop = de::max(-1, int(*iter - 'a'));
             // Note: _E(T`): tabStop -1, i.e., switch to untabbed
             break;
 

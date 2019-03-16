@@ -367,7 +367,7 @@ DE_PIMPL(CursesApp)
                     }
                     else
                     {
-                        keyStr.append(Char(key));
+                        keyStr.append(Char(uint32_t(key)));
                     }
                 }
 

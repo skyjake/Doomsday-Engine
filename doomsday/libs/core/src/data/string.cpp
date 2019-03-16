@@ -1171,6 +1171,8 @@ Char mb_iterator::operator*() const
 
 Char mb_iterator::decode(const char **end) const
 {
+    if (*cur == 0) return {};
+
     uint32_t ch = 0;
     int      rc = decodeBytes_MultibyteChar(cur, strnlen(cur, 8), &ch);
     if (rc < 0)

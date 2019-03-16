@@ -121,6 +121,18 @@ struct DE_PUBLIC mb_iterator {
     mb_iterator(const char *p) : cur{p}, start{p} {}
     mb_iterator(const char *p, const char *start) : cur{p}, start{start} {}
     mb_iterator(const String &str);
+    mb_iterator(const mb_iterator &other)
+        : cur(other.cur)
+        , start(other.start)
+    {}
+
+    mb_iterator &operator=(const mb_iterator &other)
+    {
+        cur = other.cur;
+        start = other.start;
+        mb = other.mb;
+        return *this;
+    }
 
     operator const char *() const { return cur; }
     Char operator*() const;
