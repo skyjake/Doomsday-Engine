@@ -326,6 +326,7 @@ if (APPLE AND NOT IOS)
         doom64
         heretic
         hexen
+        ${GLBINDING_TARGET}
     )
     if (TARGET audio_fmod)
         deng_install_bundle_deps (client fmodex)

@@ -199,7 +199,10 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         {
             try
             {
-                glbinding::Binding::initialize(false);
+                glbinding::Binding::initialize(
+                    reinterpret_cast<glbinding::ProcAddress (*)(const char *)>(
+                        SDL_GL_GetProcAddress),
+                    false);
             }
             catch (const std::exception &x)
             {
