@@ -18,6 +18,7 @@ endif ()
 
 # Dependencies --------------------------------------------------------------------------
 
+find_package (Foundation)
 find_package (Amethyst QUIET)
 find_package (SDL2Libs)
 find_package (GLBindings)
@@ -326,6 +327,7 @@ if (APPLE AND NOT IOS)
         doom64
         heretic
         hexen
+        ${FOUNDATION_TARGET}
         ${GLBINDING_TARGET}
     )
     if (TARGET audio_fmod)
