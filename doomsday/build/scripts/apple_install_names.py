@@ -25,6 +25,7 @@ for binary in binaries:
     #     target = '%s.%s.%s' % (os.path.basename(ver3.group(1)), ver3.group(2), ver3.group(4))
     #     if not os.path.exists(ver_symlink):
     #         subprocess.check_call([ln_cmd, '-s', target, ver_symlink])
+libraries = set()
 while len(binaries) > 0:        
     binary = binaries[0]
     del binaries[0]
@@ -37,11 +38,14 @@ while len(binaries) > 0:
         dep = re.match('\\s+(.*) \\(compatibility version.*', deps_line)
         if dep:
             dep_path = dep.group(1)
+            dep_name = os.path.basename(dep_path)
+            if dep_name.startswith('lib') and not dep_path.startswith('/usr/lib') \
+                    and not dep_path.startswith('/System'): 
+                libraries.add(dep_name)
             if dep_path.startswith('@rpath') or dep_path.startswith('/System') or \
                     dep_path.startswith('/usr/lib'):
                 # Not going to touch system libraries.
                 continue
-            dep_name = os.path.basename(dep_path)
             dep_actions.append((dep_path, '@rpath/' + dep_name))
             new_dep_path = os.path.join(root, 'Frameworks', dep_name)
             if not os.path.exists(new_dep_path):
@@ -59,4 +63,17 @@ for binary in actions:
         subprocess.check_call([name_cmd, '-id', '@rpath/' + os.path.basename(binary), path])
     for old_path, new_path in actions[binary]:
         subprocess.check_call([name_cmd, '-change', old_path, new_path, path])
- 
+avail_fws = os.listdir(os.path.join(root, 'Frameworks'))
+def base_name(fn):
+    return fn[:fn.find('.')]    
+for lib in libraries:
+    if not os.path.exists(os.path.join(root, 'Frameworks', lib)):
+        print('%s: missing link' % lib)
+        name = base_name(lib)
+        for avail in avail_fws:
+            if base_name(avail) == name:
+                print(' -> to %s' % avail)
+                subprocess.check_call([ln_cmd, '-s', 
+                    avail, 
+                    os.path.join(root, 'Frameworks', lib)])
+                break

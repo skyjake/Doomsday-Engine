@@ -459,6 +459,20 @@ macro (deng_deploy_library target name)
     endif ()
 endmacro (deng_deploy_library)
 
+function (deng_deploy_target target)
+    if (NOT DE_ENABLE_DEPLOYMENT)
+        return ()
+    endif ()
+    if (APPLE)
+        get_property (outName TARGET ${target} PROPERTY OUTPUT_NAME)
+        install (CODE "
+            execute_process (COMMAND ${PYTHON_EXECUTABLE}
+                ${DE_SOURCE_DIR}/build/scripts/apple_install_names.py
+                ${DE_DISTRIB_DIR}/${outName}.app
+            )")
+    endif ()
+endfunction ()
+
 macro (deng_codesign target)
     if (APPLE AND DE_CODESIGN_APP_CERT)
         get_property (_outName TARGET ${target} PROPERTY OUTPUT_NAME)

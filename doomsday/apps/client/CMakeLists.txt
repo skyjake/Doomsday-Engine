@@ -353,6 +353,8 @@ else ()
     #deng_install_deployqt (client)
 endif ()
 
+deng_deploy_target (client)
+
 if (VC_REDIST_LIBS_DEBUG)
     install (PROGRAMS ${VC_REDIST_LIBS_DEBUG}
         DESTINATION ${DE_INSTALL_LIB_DIR}
