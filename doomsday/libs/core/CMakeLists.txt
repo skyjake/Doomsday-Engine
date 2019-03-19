@@ -5,7 +5,7 @@ project (DE_LIBCORE)
 include (../../cmake/Config.cmake)
 
 # Dependencies.
-find_package (Foundation)
+find_package (the_Foundation REQUIRED)
 include (ZLIB)
 find_package (Git QUIET)
 
@@ -71,7 +71,7 @@ deng_add_package (net.dengine.stdlib)
 
 deng_add_library (libcore ${SOURCES} ${HEADERS})
 target_include_directories (libcore PRIVATE ${ZLIB_INCLUDE_DIR})
-target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} ${FOUNDATION_TARGET})
+target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation::the_Foundation)
 if (WIN32)
     # timeBeginPeriod, timeEndPeriod
     target_link_libraries (libcore PRIVATE winmm)

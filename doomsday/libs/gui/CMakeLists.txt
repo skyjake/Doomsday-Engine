@@ -81,7 +81,7 @@ endif ()
 # Dependencies.
 find_package (SDL2Libs)
 find_package (Stb)
-find_package (GLBindings)
+find_package (glbinding REQUIRED)
 find_package (Assimp)
 if (DE_X11)
     find_package (X11 REQUIRED)
@@ -131,8 +131,8 @@ endif ()
 
 deng_link_libraries (libgui PUBLIC DengComms)
 target_link_libraries (libgui
-    PUBLIC  ${GLBINDING_TARGET}
-    PRIVATE SDL2 SDL2_ttf stb ${ASSIMP_TARGET}
+    PUBLIC  glbinding::glbinding
+    PRIVATE SDL2 SDL2_ttf stb assimp
 )
 if (WIN32)
     # Direct2D is used for DPI information.

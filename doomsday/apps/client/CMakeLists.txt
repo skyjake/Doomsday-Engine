@@ -18,10 +18,10 @@ endif ()
 
 # Dependencies --------------------------------------------------------------------------
 
-find_package (Foundation)
+find_package (the_Foundation REQUIRED)
+find_package (glbinding REQUIRED)
 find_package (Amethyst QUIET)
 find_package (SDL2Libs)
-find_package (GLBindings)
 if (WIN32)
     find_package (DirectX)
 endif ()
@@ -327,8 +327,8 @@ if (APPLE AND NOT IOS)
         doom64
         heretic
         hexen
-        ${FOUNDATION_TARGET}
-        ${GLBINDING_TARGET}
+        the_Foundation::the_Foundation
+        glbinding::glbinding
     )
     if (TARGET audio_fmod)
         deng_install_bundle_deps (client fmodex)
