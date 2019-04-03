@@ -56,7 +56,7 @@ static QString masterUrl(char const *suffix = 0)
 {
     String u = App::apiUrl() + "master_server";
     if (suffix) u += suffix;
-    return u;
+    return std::move(u);
 }
 
 DENG2_PIMPL_NOREF(MasterWorker)
