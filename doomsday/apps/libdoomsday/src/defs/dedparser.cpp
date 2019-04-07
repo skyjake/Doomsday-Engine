@@ -2080,6 +2080,7 @@ DENG2_PIMPL(DEDParser)
                     RV_STR("Sky", (*mi)["skyId"])
                     RV_FLT("Sky height", sky["height"])
                     RV_FLT("Horizon offset", sky["horizonOffset"])
+                    RV_STR("Intermission background", (*mi)["intermissionBg"])
                     RV_VEC_VAR("Sky light color", sky["color"], 3)
                     if (ISLABEL("Sky Layer 1") || ISLABEL("Sky Layer 2"))
                     {

@@ -237,7 +237,7 @@ public:
 
     virtual void pageActivated();
 
-    static de::String labelText(const de::String &text);
+    static de::String labelText(const de::String &text, const de::String &context = "Menu Label");
 
 private:
     DENG2_PRIVATE(d)

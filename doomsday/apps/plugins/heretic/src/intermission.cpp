@@ -21,7 +21,6 @@
 #include "jheretic.h"
 #include "intermission.h"
 
-#include <cstring>
 #include "d_net.h"
 #include "d_netcl.h"
 #include "d_netsv.h"
@@ -29,6 +28,10 @@
 #include "hu_stuff.h"
 #include "p_mapsetup.h"
 #include "p_tick.h"
+#include "g_defs.h"
+#include "menu/widgets/widget.h"
+
+#include <cstring>
 
 using namespace de;
 
@@ -406,6 +409,11 @@ static void initDeathmatchStats()
     }
 }
 
+static de::Block labelString(const char *text)
+{
+    return common::menu::Widget::labelText(text, "Intermission Label").toLatin1();
+}
+
 static void drawDeathmatchStats()
 {
 #define TRACKING                (1)
@@ -418,11 +426,11 @@ static void drawDeathmatchStats()
     FR_SetFont(FID(GF_FONTB));
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-    FR_DrawTextXY3("TOTAL", 265, 30, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("TOTAL"), 265, 30, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
-    FR_DrawTextXY3("VICTIMS", 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("VICTIMS"), 140, 8, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
     for(int i = 0; i < 7; ++i)
     {
@@ -567,14 +575,14 @@ static void drawNetgameStats()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3("KILLS", 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3("BONUS", 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3("SECRET", 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("KILLS"), 95, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("BONUS"), 155, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("SECRET"), 232, 35, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8(), SCREENWIDTH/2, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
-    FR_DrawTextXY3("FINISHED", SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("FINISHED"), SCREENWIDTH/2, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTB));
     FR_SetTracking(TRACKING);
@@ -635,15 +643,15 @@ static void drawSinglePlayerStats()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
 
-    FR_DrawTextXY3("KILLS", 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3("ITEMS", 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3("SECRETS", 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
-    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8().constData(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("KILLS"), 50, 65, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("ITEMS"), 50, 90, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("SECRETS"), 50, 115, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(G_MapTitle(wbs->currentMap).toUtf8(), 160, 3, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     FR_SetFont(FID(GF_FONTA));
     FR_SetColor(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2]);
 
-    FR_DrawTextXY3("FINISHED", 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
+    FR_DrawTextXY3(labelString("FINISHED"), 160, 25, ALIGN_TOP, DTF_ONLY_SHADOW);
 
     DGL_Disable(DGL_TEXTURE_2D);
 
@@ -735,7 +743,7 @@ static void drawSinglePlayerStats()
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3("TIME", 85, 160, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(labelString("TIME"), 85, 160, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
         drawTime(Vector2i(284, 160), hours, minutes, seconds, Vector4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1));
 
@@ -747,11 +755,11 @@ static void drawSinglePlayerStats()
 
         FR_SetFont(FID(GF_FONTA));
         FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
-        FR_DrawTextXY3("NOW ENTERING:", SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(labelString("NOW ENTERING:"), SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8().constData(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
         DGL_Disable(DGL_TEXTURE_2D);
 
@@ -768,8 +776,19 @@ static void initShowStats()
 
 static void drawStats()
 {
+    de::Block bgMaterial = "Flats:FLOOR16";
+
+    // Intermission background can be defined via DED.
+    {
+        const String defined = gfw_Session()->mapInfo().gets("intermissionBg", "");
+        if (!defined.empty())
+        {
+            bgMaterial = defined.toUtf8();
+        }
+    }
+
     // Draw the background.
-    DGL_SetMaterialUI((world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString("Flats:FLOOR16")), DGL_REPEAT, DGL_REPEAT);
+    DGL_SetMaterialUI((world_Material *)P_ToPtr(DMU_MATERIAL, Materials_ResolveUriCString(bgMaterial)), DGL_REPEAT, DGL_REPEAT);
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
     DGL_DrawRectf2Tiled(0, 0, SCREENWIDTH, SCREENHEIGHT, 64, 64);

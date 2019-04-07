@@ -344,10 +344,10 @@ Vector4f Widget::selectionFlashColor(const Vector4f &noFlashColor) const
 void Widget::pageActivated()
 {}
 
-String Widget::labelText(const String &text) // static
+String Widget::labelText(const String &text, const String &context) // static
 {
     // Widget text may be replaced with Values.
-    if (const auto *repl = Defs().getValueById("Menu Label|" + text))
+    if (const auto *repl = Defs().getValueById(context + "|" + text))
     {
         return repl->text;
     }
