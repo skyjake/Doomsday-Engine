@@ -751,17 +751,20 @@ static void drawSinglePlayerStats()
     }
     else
     {
-        DGL_Enable(DGL_TEXTURE_2D);
+        if (!wbs->nextMap.isEmpty())
+        {
+            DGL_Enable(DGL_TEXTURE_2D);
 
-        FR_SetFont(FID(GF_FONTA));
-        FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
-        FR_DrawTextXY3(labelString("NOW ENTERING:"), SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
+            FR_SetFont(FID(GF_FONTA));
+            FR_SetColorAndAlpha(defFontRGB3[0], defFontRGB3[1], defFontRGB3[2], 1);
+            FR_DrawTextXY3(labelString("NOW ENTERING:"), SCREENWIDTH/2, 160, ALIGN_TOP, DTF_ONLY_SHADOW);
 
-        FR_SetFont(FID(GF_FONTB));
-        FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
+            FR_SetFont(FID(GF_FONTB));
+            FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
+            FR_DrawTextXY3(G_MapTitle(wbs->nextMap).toUtf8(), 160, 170, ALIGN_TOP, DTF_ONLY_SHADOW);
 
-        DGL_Disable(DGL_TEXTURE_2D);
+            DGL_Disable(DGL_TEXTURE_2D);
+        }
 
         advanceState = false;
     }
