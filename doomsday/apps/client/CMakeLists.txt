@@ -204,6 +204,9 @@ endif ()
 if (TARGET DirectX)
     target_link_libraries (client PUBLIC DirectX)
 endif ()
+if (CMAKE_SYSTEM_NAME MATCHES "BSD")
+    target_link_libraries (client PUBLIC execinfo) 
+endif()
 
 target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 
