@@ -859,8 +859,10 @@ static void setupPlayerSprites()
             spr->data.model.pitchAngleOffset =
                 (32 - spr->psp->pos[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f;
             // Is the FOV shift in effect?
-            if(weaponFOVShift > 0 && Rend_FieldOfView() > 90)
-                spr->data.model.pitchAngleOffset -= weaponFOVShift * (Rend_FieldOfView() - 90) / 90;
+            if (weaponFOVShift > 0 && weaponFixedFOV > 90)
+            {
+                spr->data.model.pitchAngleOffset -= weaponFOVShift * (weaponFixedFOV - 90) / 90;
+            }
             // Real rotation angles.
             spr->data.model.yaw =
                 viewData->current.angle() / (dfloat) ANGLE_MAX *-360 + spr->data.model.yawAngleOffset + 90;

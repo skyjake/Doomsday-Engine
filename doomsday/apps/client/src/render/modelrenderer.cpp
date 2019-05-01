@@ -41,6 +41,8 @@ using namespace de;
 
 static int constexpr MAX_LIGHTS = 4;
 
+float weaponFixedFOV = 95.f;
+
 DENG2_PIMPL(ModelRenderer)
 , DENG2_OBSERVES(render::ModelLoader, NewProgram)
 {
@@ -167,10 +169,13 @@ DENG2_PIMPL(ModelRenderer)
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
 
-        Matrix4f const localToWorld =
-                Matrix4f::translate(origin) *
-                Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
-        Matrix4f const localToScreen = Viewer_Matrix() * localToWorld;
+        const Matrix4f localToWorld = Matrix4f::translate(origin) *
+                                      Matrix4f::scale(aspectCorrect); // Inverse aspect correction.
+
+        const Matrix4f viewProj = Rend_GetProjectionMatrix(weaponFixedFOV) *
+                                  ClientApp::renderSystem().uViewMatrix().toMatrix4f();
+
+        const Matrix4f localToScreen = viewProj * localToWorld;
 
         uWorldMatrix = localToWorld * modelToLocal;
 

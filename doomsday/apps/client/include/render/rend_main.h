@@ -182,8 +182,10 @@ de::Vector3d Rend_EyeOrigin();
 /**
  * Returns the projection matrix that is used for rendering the current frame's
  * 3D portions.
+ *
+ * @param fixedFov  If non-zero, overrides the user's FOV with a fixed value.
  */
-de::Matrix4f Rend_GetProjectionMatrix();
+de::Matrix4f Rend_GetProjectionMatrix(float fixedFov = 0.f);
 
 #define Rend_PointDist2D(c) (abs((vOrigin.z-(c)[VY])*viewsidex - (vOrigin.x-(c)[VX])*viewsidey))
 

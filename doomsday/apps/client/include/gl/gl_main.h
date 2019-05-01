@@ -124,11 +124,7 @@ void GL_TotalRestore();
  */
 void GL_Init2DState();
 
-//void GL_SwitchTo3DState(dd_bool push_state) //, viewport_t const *port, viewdata_t const *viewData);
-
-//void GL_Restore2DState(int step, viewport_t const *port, viewdata_t const *viewData);
-
-void GL_ProjectionMatrix();
+void GL_ProjectionMatrix(bool useFixedFov = false /* psprites use fixed FOV */);
 
 de::Rangef GL_DepthClipRange();
 

@@ -383,15 +383,13 @@ Rangef GL_DepthClipRange()
     return Rangef(glNearClip, glFarClip);
 }
 
-void GL_ProjectionMatrix()
+void GL_ProjectionMatrix(bool useFixedFov)
 {
     DENG2_ASSERT_IN_RENDER_THREAD();
     DENG_ASSERT_GL_CONTEXT_ACTIVE();
 
-    // Actually shift the player viewpoint
-    // We'd like to have a left-handed coordinate system.
     DGL_MatrixMode(DGL_PROJECTION);
-    DGL_LoadMatrix(Rend_GetProjectionMatrix().values());
+    DGL_LoadMatrix(Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.f).values());
 }
 
 void GL_SetupFogFromMapInfo(Record const *mapInfo)

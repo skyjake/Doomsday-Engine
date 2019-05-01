@@ -559,14 +559,14 @@ void Rend_ModelViewMatrix(bool inWorldSpace)
         Rend_GetModelViewMatrix(DoomsdayApp::players().indexOf(viewPlayer), inWorldSpace).values());
 }
 
-Matrix4f Rend_GetProjectionMatrix()
+Matrix4f Rend_GetProjectionMatrix(float fixedFov)
 {
     if (fixedView)
     {
         return fixedView->projectionMatrix;
     }
 
-    const dfloat fov = Rend_FieldOfView();
+    const dfloat fov = (fixedFov > 0 ? fixedFov : Rend_FieldOfView());
     const Vector2f size = R_Console3DViewRect(displayPlayer).size();
     yfov = vrCfg().verticalFieldOfView(fov, size);
     const Rangef clip = GL_DepthClipRange();

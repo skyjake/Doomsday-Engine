@@ -30,6 +30,7 @@
 
 #include "dd_def.h"  // finesine
 #include "clientapp.h"
+#include "gl/gl_main.h"
 #include "render/billboard.h"
 #include "render/modelrenderer.h"
 #include "render/r_main.h"
@@ -250,38 +251,10 @@ static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const &
 
 void Rend_Draw3DPlayerSprites()
 {
-    // Setup the modelview matrix.
+    GL_ProjectionMatrix(true /* fixed FOV for psprites */);
     Rend_ModelViewMatrix(false /* don't apply view angle rotation */);
 
     bool first = true;
-#if 0
-    std::unique_ptr<GLFramebuffer::AlternativeBuffer> altDepth;
-
-    static bool altDepthSupported = true;
-    /**
-     * @todo It appears that at least with the Intel OpenGL drivers on macOS, somebody is
-     * leaking texture allocations behind the scenes. Unless there is a bug in
-     * GLFramebuffer (which is entirely possible), it is not such a great idea to switch
-     * around the attachments of an FBO. It should be a better approach to create a
-     * persistent second FBO that shares the color attachment but uses an alternative
-     * depth/stencil attachment.
-     */
-
-    if (altDepthSupported)
-    {
-        try
-        {
-            altDepth.reset(new GLFramebuffer::AlternativeBuffer
-                           (GLState::current().target(), GLFramebuffer::DepthStencil));
-        }
-        catch (...)
-        {
-            // The FBO doesn't support an alternative depth target.
-            // We will not try again...
-            altDepthSupported = false;
-        }
-    }
-#endif
 
     // Draw HUD vissprites.
     for (vispsprite_t const &spr : visPSprites)
@@ -293,17 +266,9 @@ void Rend_Draw3DPlayerSprites()
         if (first)
         {
             first = false;
-            /*if (altDepth && altDepth->init())
-            {
-                // Clear the depth before first use.
-                altDepth->target().clear(GLFramebuffer::DepthStencil);
-            }
-            else*/
-            {
-                // As a fallback, just clear the depth buffer so models don't clip
-                // into walls.
-                GLState::current().target().clear(GLFramebuffer::Depth);
-            }
+
+            // Clear the depth buffer so models don't clip into walls.
+            GLState::current().target().clear(GLFramebuffer::Depth);
         }
 
         if (spr.type == VPSPR_MODEL)
@@ -321,4 +286,7 @@ void Rend_Draw3DPlayerSprites()
                     .render(lit, viewPlayer->publicData().mo);
         }
     }
+
+    // Restore normal projection matrix.
+    GL_ProjectionMatrix(false);
 }

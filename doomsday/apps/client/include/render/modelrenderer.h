@@ -38,6 +38,8 @@ struct vispsprite_t;
 
 namespace render { class ModelLoader; }
 
+extern float weaponFixedFOV; // cvar
+
 /**
  * The model renderer: draws 3D models representing map objects and psprites.
  *

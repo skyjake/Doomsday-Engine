@@ -127,8 +127,8 @@ void Rend_ModelRegister()
     C_VAR_FLOAT("rend-model-lod",            &rend_model_lod,       CVF_NO_MAX, 0, 0);
     C_VAR_INT  ("rend-model-mirror-hud",     &mirrorHudModels,      0, 0, 1);
     C_VAR_FLOAT("rend-model-spin-speed",     &modelSpinSpeed,       CVF_NO_MAX | CVF_NO_MIN, 0, 0);
-    //C_VAR_INT  ("rend-model-shiny-multitex", &modelShinyMultitex,   0, 0, 1);
     C_VAR_FLOAT("rend-model-shiny-strength", &modelShinyFactor,     0, 0, 10);
+    C_VAR_FLOAT("rend-model-fov",            &weaponFixedFOV,       0, 0, 180);
 }
 
 void Rend_ModelInit()
