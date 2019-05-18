@@ -31,7 +31,7 @@ set (CMAKE_INSTALL_DEFAULT_COMPONENT_NAME "client")
 if (NOT DE_SDK_DIR STREQUAL "")
     list (APPEND CMAKE_PREFIX_PATH "${DE_SDK_DIR}/${DE_INSTALL_LIB_DIR}")
 endif ()
-list (APPEND CMAKE_PREFIX_PATH "${DE_DISTRIB_DIR}/../deps")
+list (APPEND CMAKE_PREFIX_PATH "${DE_DISTRIB_DIR}/../deps/products")
 list (APPEND CMAKE_MODULE_PATH "${DE_DISTRIB_DIR}/../deps/products/lib/cmake/assimp-4.1")
 
 if (WIN32)
