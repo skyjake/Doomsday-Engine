@@ -123,6 +123,7 @@ DE_PIMPL(App)
     Clock clock;
 
     /// Subsystems (not owned).
+    Flags initFlags;
     List<System *> systems;
 
     ScriptSystem scriptSys;
@@ -135,7 +136,7 @@ DE_PIMPL(App)
 
     /// Archive where persistent data should be stored. Written to /home/persist.pack.
     /// The archive is owned by the file system.
-    Archive *persistentData;
+    //Archive *persistentData;
 
     std::unique_ptr<UnixInfo> unixInfo;
 
@@ -155,7 +156,7 @@ DE_PIMPL(App)
     Impl(Public *a, const StringList &args)
         : Base(a)
         , cmdLine(args)
-        , persistentData(nullptr)
+        //, persistentData(nullptr)
         , config(nullptr)
         , terminateFunc(nullptr)
     {
@@ -370,7 +371,7 @@ DE_PIMPL(App)
         }
     }
 
-    ArchiveFolder &persistPackFolder()
+    ArchiveFolder &persistPackFolder() const
     {
         return self().homeFolder().locate<ArchiveFolder>("persist.pack");
     }
@@ -631,29 +632,29 @@ NativePath App::nativeHomePath()
     return (d->cachedHomePath = nativeHome);
 }
 
-Archive const &App::persistentData()
+const Archive &App::persistentData()
 {
-    Archive const *persist = DE_APP->d->persistentData;
-    if (!persist)
+    const Impl *d = DE_APP->d;
+    if (d->initFlags & DisablePersistentData)
     {
         throw PersistentDataNotAvailable("App::persistentData", "Persistent data is disabled");
     }
-    return *persist;
+    return d->persistPackFolder().archive();
 }
 
 Archive &App::mutablePersistentData()
 {
-    Archive *persist = DE_APP->d->persistentData;
-    if (!persist)
+    const Impl *d = DE_APP->d;
+    if (d->initFlags & DisablePersistentData)
     {
         throw PersistentDataNotAvailable("App::mutablePersistentData", "Persistent data is disabled");
     }
-    return *persist;
+    return d->persistPackFolder().archive();
 }
 
 bool App::hasPersistentData()
 {
-    return DE_APP->d->persistentData != nullptr;
+    return (DE_APP->d->initFlags & DisablePersistentData) != 0;
 }
 
 ArchiveFolder &App::persistPackFolder()
@@ -759,9 +760,9 @@ NativePath App::nativeBasePath()
 
 void App::initSubsystems(SubsystemInitFlags flags)
 {
-//    bool allowPlugins = !(flags & DisablePlugins);
+    d->initFlags = flags;
 
-    d->initFileSystem(); //allowPlugins);
+    d->initFileSystem();
 
     // Load the init packages.
     for (const String &pkg : d->packagesToLoadAtInit)
@@ -781,9 +782,6 @@ void App::initSubsystems(SubsystemInitFlags flags)
             Writer(persistPack) << arch;
             persistPack.reinterpret()->as<ArchiveFolder>().populate();
         }
-
-        // Load the persistent data.
-        d->persistentData = &d->persistPackFolder().archive();
     }
 
     // The configuration.
