@@ -26,6 +26,7 @@
 #include "de/Thread"
 #include "de/Writer"
 
+#include <atomic>
 #include <ctime>
 #include <sstream>
 
@@ -37,7 +38,7 @@ static HighPerformanceTimer &highPerfTimer()
     return hpt;
 }
 
-static TimeSpan currentHighPerfDelta;
+static std::atomic<double> currentHighPerfDelta;
 
 duint64 Time::Span::asMicroSeconds() const
 {
@@ -741,17 +742,17 @@ TimeSpan Time::highPerformanceTime() const
 
 Time Time::currentHighPerformanceTime() // static
 {
-    return fromHighPerformanceDelta(currentHighPerfDelta);
+    return fromHighPerformanceDelta(currentHighPerfDelta.load());
 }
 
 void Time::updateCurrentHighPerformanceTime() // static
 {
-    currentHighPerfDelta = highPerfTimer().elapsed();
+    currentHighPerfDelta.store(highPerfTimer().elapsed());
 }
 
 Time::Span Time::currentHighPerformanceDelta()
 {
-    return currentHighPerfDelta;
+    return currentHighPerfDelta.load();
 }
 
 std::ostream &operator<<(std::ostream &os, Time const &t)

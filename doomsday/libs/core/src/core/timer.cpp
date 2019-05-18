@@ -102,6 +102,7 @@ struct TimerScheduler : public Thread, public Lockable
 
     void addPending(Timer &timer)
     {
+        DE_GUARD(this);
         const TimeSpan repeatDuration = timer.interval();
         pending.push(
             Pending{sc::system_clock::now() + sc::microseconds(dint64(repeatDuration * 1.0e6)),
@@ -145,7 +146,7 @@ DE_PIMPL_NOREF(Timer)
     TimeSpan interval     = 1.0;
     bool     isSingleShot = false;
     bool     isActive     = false;
-    bool     isPending    = false; // posted but not executed yet
+    std::atomic_bool isPending{false}; // posted but not executed yet
 
     ~Impl()
     {
