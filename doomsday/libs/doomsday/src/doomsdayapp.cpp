@@ -195,20 +195,20 @@ DE_PIMPL(DoomsdayApp)
 
         if (~appFlags & DisablePersistentConfig)
         {
-        // Periodically save the configuration files (after they've been changed).
-        configSaveTimer.setInterval(1.0);
-        configSaveTimer.setSingleShot(false);
-        configSaveTimer += [this]()
-        {
-            DE_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
+            // Periodically save the configuration files (after they've been changed).
+            configSaveTimer.setInterval(1.0);
+            configSaveTimer.setSingleShot(false);
+            configSaveTimer += [this]()
             {
-                if (!this->busyMode.isActive())
+                DE_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
                 {
-                    i->periodicAutosave();
+                    if (!this->busyMode.isActive())
+                    {
+                        i->periodicAutosave();
+                    }
                 }
-            }
-        };
-        configSaveTimer.start();
+            };
+            configSaveTimer.start();
         }
 
         // File system extensions.

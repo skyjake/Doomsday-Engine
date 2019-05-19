@@ -980,20 +980,19 @@ bool Record::anyMembersChanged() const
     auto const *const_d = d.getConst();
     for (auto i = const_d->members.begin(); i != const_d->members.end(); ++i)
     {
-        if (i->second->flags() & Variable::ValueHasChanged)
+        if (d->isSubrecord(*i->second))
+        {
+            if (i->second->valueAsRecord().anyMembersChanged())
+            {
+                return true;
+            }
+        }
+        else if (i->second->flags() & Variable::ValueHasChanged)
         {
             return true;
         }
     }
-
-    return d->forSubrecords([](const String &, Record &rec)
-    {
-        if (rec.anyMembersChanged())
-        {
-            return true;
-        }
-        return false;
-    });
+    return false;
 }
 
 void Record::markAllMembersUnchanged()
