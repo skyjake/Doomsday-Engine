@@ -1234,21 +1234,21 @@ Image Image::fromXpmData(const char * const *xpmStrings)
     sscanf(*xpmStrings, "%d %d %d %d", &width, &height, &colorCount, &perPixel);
     DE_ASSERT(perPixel == 1);
 
-    std::map<char, Color> palette;
+    Color palette[127];
     for (int i = 0; i < colorCount; ++i)
     {
-        const char *pal = *++xpmStrings;
-        const char  pc  = pal[0];
+        const char *pal = xpmStrings[1 + i];
+        const int   pc  = pal[0];
         const Color bgr = unpackColor(duint32(std::stoul(pal + 5, 0, 16)));
-
+        DE_ASSERT(pc >= 0);
         palette[pc] = Color(bgr.z, bgr.y, bgr.x, 255);
     }
     Image xpm({width, height}, RGBA_8888);
-    for (duint y = 0; y < height; ++y, ++xpmStrings)
+    for (duint y = 0; y < height; ++y)
     {
         for (duint x = 0; x < width; ++x)
         {
-            xpm.setPixel(x, y, palette[(*xpmStrings)[x]]);
+            xpm.setPixel(x, y, palette[int((xpmStrings[1 + colorCount + y])[x])]);
         }
     }
     return xpm;
