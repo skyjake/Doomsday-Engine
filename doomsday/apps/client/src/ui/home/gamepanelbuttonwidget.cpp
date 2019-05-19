@@ -50,7 +50,6 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
 , DE_OBSERVES(res::Bundles, Identify)
 , DE_OBSERVES(Variable, Change)
 , DE_OBSERVES(ButtonWidget, StateChange)
-, public AsyncScope
 {
     GameProfile &gameProfile;
     ui::FilteredDataT<SaveListData::SaveItem> savedItems;
@@ -62,7 +61,8 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
     bool playHovering = false;
-
+    AsyncScope asyncScope;
+    
     Impl(Public *i, GameProfile &profile, SaveListData const &allSavedItems)
         : Base(i)
         , gameProfile(profile)
@@ -259,8 +259,8 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        *this += async([this]() { return ClientStyle::makeGameLogo(game(), catalog); },
-                       [this](const Image &gameLogo) { self().icon().setImage(gameLogo); });
+        asyncScope += async([this]() { return ClientStyle::makeGameLogo(game(), catalog); },
+                            [this](const Image &gameLogo) { self().icon().setImage(gameLogo); });
     }
 
     void profileChanged(Profiles::AbstractProfile &) override
