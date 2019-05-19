@@ -654,7 +654,7 @@ Archive &App::mutablePersistentData()
 
 bool App::hasPersistentData()
 {
-    return (DE_APP->d->initFlags & DisablePersistentData) != 0;
+    return !(DE_APP->d->initFlags & DisablePersistentData);
 }
 
 ArchiveFolder &App::persistPackFolder()
