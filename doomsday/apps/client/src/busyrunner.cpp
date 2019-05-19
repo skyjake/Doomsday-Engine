@@ -36,12 +36,12 @@
 #include "clientapp.h"
 
 #include <doomsday/doomsdayapp.h>
-#include <de/legacy/concurrency.h>
 #include <de/Config>
 #include <de/EventLoop>
 #include <de/GLInfo>
 #include <de/Log>
 #include <de/Loop>
+#include <de/Thread>
 
 #include <atomic>
 
@@ -63,11 +63,36 @@ DE_PIMPL_NOREF(BusyRunner)
 , DE_OBSERVES(BusyMode, End)
 , DE_OBSERVES(BusyMode, TaskWillStart)
 , DE_OBSERVES(BusyMode, Abort)
+, DE_OBSERVES(Thread, Finished)
 {
-    EventLoop *eventLoop = nullptr;
-
-    thread_t    busyThread = nullptr;
-    std::atomic_bool busyDone { false };
+    class WorkThread : public Thread
+    {
+        BusyTask *task;
+        
+    public:
+        int  result  = 0;
+        bool aborted = false;
+        
+    public:
+        WorkThread(BusyTask *task) : task(task)
+        {}
+        
+        void run() override
+        {
+            try
+            {
+                result = task->worker(task->workerData);
+            }
+            catch (const Error &er)
+            {
+                aborted = true;
+            }
+        }
+    };
+    
+    EventLoop * eventLoop = nullptr;
+    const BusyTask *task = nullptr;
+    std::unique_ptr<WorkThread> busyThread;
     timespan_t  busyTime = 0;
     bool        busyWillAnimateTransition = false;
     bool        busyWasIgnoringInput = false;
@@ -86,6 +111,11 @@ DE_PIMPL_NOREF(BusyRunner)
         busy().setTaskRunner(nullptr);
     }
 
+    bool isTaskDone() const
+    {
+        return busyThread == nullptr || busyThread->isFinished();
+    }
+    
     void busyModeWillBegin(BusyTask &firstTask) override
     {
         if (auto *fader = ClientWindow::main().contentFade())
@@ -112,6 +142,9 @@ DE_PIMPL_NOREF(BusyRunner)
 
     void busyModeEnded() override
     {
+        DE_ASSERT(!eventLoop);
+        DE_ASSERT(isTaskDone());
+        
         DD_ResetTimer();
 
         // Discard input events so that any and all accumulated input events are ignored.
@@ -137,12 +170,22 @@ DE_PIMPL_NOREF(BusyRunner)
     {
         Loop::mainCall([this] ()
         {
-            debug("[BusyRunner] Killing the worker!");
-            Thread_KillAbnormally(busyThread);
+            if (busyThread)
+            {
+                debug("[BusyRunner] Killing the worker!");
+                //Thread_KillAbnormally(busyThread);
+                busyThread->terminate();
+            }
             exitEventLoop();
         });
     }
 
+    void threadFinished(Thread &) override
+    {
+        LOG_MSG("Busy work thread has finished");
+        Loop::mainCall([this]() { exitEventLoop(); });
+    }
+    
     /**
      * Exits the busy mode event loop. Called in the main thread, does not return
      * until the worker thread is stopped.
@@ -152,13 +195,11 @@ DE_PIMPL_NOREF(BusyRunner)
         DE_ASSERT_IN_MAIN_THREAD();
         DE_ASSERT(eventLoop);
 
-        busyDone = true;
-
         // Make sure the worker finishes before we continue.
-        int result = Sys_WaitThread(busyThread, busy().endedWithError()? 100 : 5000, nullptr);
-        busyThread = nullptr;
+        //int result = busyThread->
+//        busyThread = nullptr;
 
-        eventLoop->quit(result);
+        eventLoop->quit(busyThread->result);
 
         if (fadeFromBlack)
         {
@@ -186,7 +227,7 @@ BusyRunner::BusyRunner() : d(new Impl)
  *
  * @param status Exit status.
  */
-static void busyWorkerTerminated(systhreadexitstatus_t status)
+/*static void busyWorkerTerminated(systhreadexitstatus_t status)
 {
     DE_ASSERT(busy().isActive());
 
@@ -197,7 +238,7 @@ static void busyWorkerTerminated(systhreadexitstatus_t status)
 
     // This will tell the busy event loop to stop.
     busyRunner().finishTask();
-}
+}*/
 
 BusyRunner::Result BusyRunner::runTask(BusyTask *task)
 {
@@ -210,17 +251,19 @@ BusyRunner::Result BusyRunner::runTask(BusyTask *task)
     prog.setMode(task->mode & BUSYF_ACTIVITY? ProgressWidget::Indefinite :
                                               ProgressWidget::Ranged);
 
+    DE_ASSERT(!d->eventLoop);
+    d->eventLoop = new EventLoop;
+
     // Start the busy worker thread, which will process the task in the
     // background while we keep the user occupied with nice animations.
-    d->busyThread = Sys_StartThread(task->worker, task->workerData, busyWorkerTerminated);
-
-    DE_ASSERT(!d->eventLoop);
+    //d->busyThread = Sys_StartThread(task->worker, task->workerData, busyWorkerTerminated);
+    d->busyThread.reset(new Impl::WorkThread(task));
+    d->busyThread->audienceForFinished() += d;
+    d->busyThread->start();
 
     // Run a local event loop since the primary event loop is blocked while
     // we're busy. This event loop is able to handle window and input events
     // just like the primary loop.
-    d->busyDone = false;
-    d->eventLoop = new EventLoop;
     Result result(true, d->eventLoop->exec());
     delete d->eventLoop;
     d->eventLoop = nullptr;
@@ -304,39 +347,32 @@ void BusyRunner::loop()
         GL_ProcessDeferredTasks(15);
     }
 
-    if (!d->busyDone
-        || pendingRemain
-        || (canUpload && GL_DeferredTaskCount() > 0)
-        || !Con_IsProgressAnimationCompleted())
-    {
-        // Let's keep running the busy loop.
-        return;
-    }
-
-    d->exitEventLoop();
+//    if (!d->isTaskDone()
+//        || pendingRemain
+//        || (canUpload && GL_DeferredTaskCount() > 0)
+//        || !Con_IsProgressAnimationCompleted())
+//    {
+//        // Let's keep running the busy loop.
+//        return;
+//    }
+//
+//    d->exitEventLoop();
 }
 
-void BusyRunner::finishTask()
-{
-    // When BusyMode_Loop() is called, it will quit the event loop as soon as possible.
-    d->busyDone = true;
-}
+//void BusyRunner::finishTask()
+//{
+//    // When BusyMode_Loop() is called, it will quit the event loop as soon as possible.
+//    //d->busyDone = true;
+//}
 
 void BusyMode_Loop()
 {
     static_cast<BusyRunner *>(busy().taskRunner())->loop();
 }
 
-bool BusyRunner::isWorkerThread(uint threadId) const
-{
-    if (!busy().isActive() || !d->busyThread) return false;
-
-    return (Sys_ThreadId(d->busyThread) == threadId);
-}
-
 bool BusyRunner::inWorkerThread() const
 {
-    return isWorkerThread(Sys_CurrentThreadId());
+    return d->busyThread && Thread::currentThread() == d->busyThread.get();
 }
 
 #undef BusyMode_FreezeGameForBusyMode

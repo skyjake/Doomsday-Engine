@@ -53,7 +53,6 @@ public:
     BusyRunner();
 
     bool isTransitionAnimated() const;
-    bool isWorkerThread(uint threadId) const;
     bool inWorkerThread() const;
 
     /**
@@ -64,10 +63,10 @@ public:
 
     void loop();
 
-    /**
+    /*
      * Called when the background thread has exited.
      */
-    void finishTask();
+    //void finishTask();
 
 private:
     DE_PRIVATE(d)
