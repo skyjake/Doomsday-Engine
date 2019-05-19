@@ -33,12 +33,13 @@ KnownThreads &knownThreads()
 
 DE_PIMPL(Thread)
 {
-    iThread *thread;
+    tF::ref<iThread> thread;
     std::condition_variable cv;
+    volatile bool isFinished = false;
 
     Impl(Public *i) : Base(i)
     {
-        thread = new_Thread(runFunc);
+        thread.reset(new_Thread(runFunc));
         setUserData_Thread(thread, this);
         {
             auto &kt = knownThreads();
@@ -54,8 +55,6 @@ DE_PIMPL(Thread)
             DE_GUARD(kt);
             kt.value.remove(thread);
         }
-        iRelease(thread);
-        thread = nullptr;
     }
 
     static iThreadResult runFunc(iThread *thd)
@@ -63,6 +62,7 @@ DE_PIMPL(Thread)
         Thread::Impl *d = static_cast<Thread::Impl *>(userData_Thread(thd));
         auto &self = d->self();
         self.run();
+        d->isFinished = true;
         self.post();
         DE_FOR_EACH_OBSERVER(i, self.audienceForFinished())
         {
@@ -112,7 +112,7 @@ bool Thread::isRunning() const
 
 bool Thread::isFinished() const
 {
-    return isFinished_Thread(d->thread);
+    return d->isFinished;
 }
 
 bool Thread::isCurrentThread() const

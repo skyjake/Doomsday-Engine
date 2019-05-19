@@ -80,7 +80,7 @@ Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalo
             }
             return logoImage;
         }
-}
+    }
     catch (Error const &er)
     {
         if (flags & NullImageIfFails) return Image();

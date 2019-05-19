@@ -157,9 +157,10 @@ void Thread_SetCallback(thread_t thread, void (*terminationFunc)(systhreadexitst
 {
     auto *t = reinterpret_cast<CallbackThread *>(thread);
     DE_ASSERT(t);
-    if (!t) return;
-
-    t->setTerminationFunc(terminationFunc);
+    if (t)
+    {
+        t->setTerminationFunc(terminationFunc);
+    }
 }
 
 int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitStatus)
@@ -172,15 +173,15 @@ int Sys_WaitThread(thread_t handle, int timeoutMs, systhreadexitstatus_t *exitSt
 
     auto *t = reinterpret_cast<CallbackThread *>(handle);
     DE_ASSERT(!t->isCurrentThread());
-    t->wait(de::TimeSpan::fromMilliSeconds(timeoutMs));
-    if (!t->isFinished())
+    t->tryWait(de::TimeSpan::fromMilliSeconds(timeoutMs));
+    if (t->isFinished())
     {
-        LOG_WARNING("Thread did not stop in time, forcibly killing it.");
-        if (exitStatus) *exitStatus = DE_THREAD_STOPPED_WITH_FORCE;
+        if (exitStatus) *exitStatus = t->exitStatus();
     }
     else
     {
-        if (exitStatus) *exitStatus = t->exitStatus();
+        LOG_WARNING("Thread did not stop in time, forcibly killing it.");
+        if (exitStatus) *exitStatus = DE_THREAD_STOPPED_WITH_FORCE;
     }
     de::trash(t);
     return t->exitValue();
