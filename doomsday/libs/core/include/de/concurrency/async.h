@@ -20,6 +20,7 @@
 #define LIBCORE_ASYNCTASK_H
 
 #include "../App"
+#include "../Deletable"
 #include "../Loop"
 #include "../String"
 #include "../Thread"
@@ -30,7 +31,7 @@
 
 namespace de {
 
-struct DE_PUBLIC AsyncTask : public Thread
+struct DE_PUBLIC AsyncTask : public Deletable, public Thread
 {
     virtual ~AsyncTask() {}
     virtual void abort() = 0;
@@ -143,16 +144,17 @@ AsyncTask *async(Task const &task)
  * Utility for invalidating the completion callbacks of async tasks whose initiator
  * has gone out of scope.
  */
-class DE_PUBLIC AsyncScope : DE_OBSERVES(Thread, Finished)
+class DE_PUBLIC AsyncScope : DE_OBSERVES(Thread, Finished), DE_OBSERVES(Deletable, Deletion)
 {
 public:
     AsyncScope() = default;
     ~AsyncScope() override;
 
-    AsyncScope &operator += (AsyncTask *task);
+    AsyncScope &operator+=(AsyncTask *task);
     bool isAsyncFinished() const;
     void waitForFinished(const TimeSpan &timeout = 0.0);
     void threadFinished(Thread &) override;
+    void objectWasDeleted(Deletable *) override;
 
 private:
     LockableT<Set<AsyncTask *>> _tasks;

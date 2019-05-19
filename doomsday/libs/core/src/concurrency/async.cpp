@@ -38,6 +38,7 @@ AsyncScope &AsyncScope::operator+=(AsyncTask *task)
             _tasks.value.insert(task);
         }
         task->audienceForFinished() += this;
+        task->audienceForDeletion += this;
     }
     return *this;
 }
@@ -71,7 +72,16 @@ void AsyncScope::waitForFinished(const TimeSpan &timeout)
 void AsyncScope::threadFinished(Thread &thd)
 {
     DE_GUARD(_tasks);
-    _tasks.value.remove(static_cast<AsyncTask *>(&thd));
+    AsyncTask *task = static_cast<AsyncTask *>(&thd);
+    DE_ASSERT(_tasks.value.contains(task));
+    _tasks.value.remove(task);
+    task->audienceForDeletion -= this;
 }
 
+void AsyncScope::objectWasDeleted(Deletable *obj)
+{
+    DE_GUARD(_tasks);
+    _tasks.value.remove(static_cast<AsyncTask *>(obj));
+}
+    
 } // namespace de
