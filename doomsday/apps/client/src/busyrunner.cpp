@@ -62,7 +62,7 @@ DE_PIMPL_NOREF(BusyRunner)
 , DE_OBSERVES(BusyMode, Beginning)
 , DE_OBSERVES(BusyMode, End)
 , DE_OBSERVES(BusyMode, TaskWillStart)
-, DE_OBSERVES(BusyMode, Abort)
+//, DE_OBSERVES(BusyMode, Abort)
 , DE_OBSERVES(Thread, Finished)
 {
     class WorkThread : public Thread
@@ -70,8 +70,8 @@ DE_PIMPL_NOREF(BusyRunner)
         BusyTask *task;
         
     public:
-        int  result  = 0;
-        bool aborted = false;
+        int    result = 0;
+        String abortMsg;
         
     public:
         WorkThread(BusyTask *task) : task(task)
@@ -85,7 +85,7 @@ DE_PIMPL_NOREF(BusyRunner)
             }
             catch (const Error &er)
             {
-                aborted = true;
+                abortMsg = er.asText();
             }
         }
     };
@@ -103,7 +103,7 @@ DE_PIMPL_NOREF(BusyRunner)
         busy().audienceForBeginning()     += this;
         busy().audienceForEnd()           += this;
         busy().audienceForTaskWillStart() += this;
-        busy().audienceForAbort()         += this;
+//        busy().audienceForAbort()         += this;
     }
 
     ~Impl() override
@@ -166,6 +166,7 @@ DE_PIMPL_NOREF(BusyRunner)
         }
     }
 
+#if 0
     void busyModeAborted(String const &) override
     {
         Loop::mainCall([this] ()
@@ -179,11 +180,19 @@ DE_PIMPL_NOREF(BusyRunner)
             exitEventLoop();
         });
     }
+#endif
 
     void threadFinished(Thread &) override
     {
         LOG_MSG("Busy work thread has finished");
-        Loop::mainCall([this]() { exitEventLoop(); });
+        Loop::mainCall([this]()
+        {
+            if (busyThread->abortMsg)
+            {
+                busy().abort(busyThread->abortMsg);
+            }
+            exitEventLoop();
+        });
     }
     
     /**
