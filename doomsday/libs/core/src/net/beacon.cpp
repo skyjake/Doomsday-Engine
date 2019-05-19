@@ -92,7 +92,7 @@ DE_PIMPL(Beacon)
     }
 
     static void readIncoming(iAny *, iDatagram *sock)
-{
+    {
         Loop::mainCall([sock]() {
             LOG_AS("Beacon");
             auto *d = reinterpret_cast<Beacon::Impl *>(userData_Object(sock));

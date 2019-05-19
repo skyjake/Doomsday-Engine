@@ -68,9 +68,9 @@ using AnimationFlags = Flags;
 
 /// Thread-safe current time for animations.
 struct AnimationTime : DE_OBSERVES(Clock, TimeChange) {
-    double now;
+    std::atomic<double> now;
     void timeChanged(Clock const &clock) override {
-        now = clock.time().highPerformanceTime();
+        now.store(clock.time().highPerformanceTime());
     }
 };
 static AnimationTime theTime;
@@ -276,7 +276,7 @@ float Animation::value() const
     {
         return d->target;
     }
-    return d->valueAt(theTime.now);
+    return d->valueAt(theTime.now.load());
 }
 
 bool Animation::done() const

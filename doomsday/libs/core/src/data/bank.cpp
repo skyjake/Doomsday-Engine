@@ -78,10 +78,12 @@ public:
     int itemCount() const { return _items.size(); }
 
     virtual void add(ItemType &data) {
+        DE_GUARD(this);
         _items.insert(&data);
     }
 
     virtual void remove(ItemType &data) {
+        DE_GUARD(this);
         _items.remove(&data);
     }
 
