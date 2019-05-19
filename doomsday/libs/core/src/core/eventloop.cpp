@@ -110,6 +110,7 @@ int EventLoop::exec(const std::function<void ()> &postExec)
         LOG_WARNING("Event loop stopped: %s") << er.asText();
         return 0;
     }
+    DE_ASSERT(d->queue->isEmpty());
 }
 
 void EventLoop::quit(int exitCode)
