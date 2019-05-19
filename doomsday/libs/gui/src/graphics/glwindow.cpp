@@ -86,7 +86,7 @@ DE_PIMPL(GLWindow)
         self().makeCurrent();
         {
             // Perform cleanup of GL objects.
-        glDeinit();
+            glDeinit();
         }
         self().doneCurrent();
 
