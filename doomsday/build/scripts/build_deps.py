@@ -42,10 +42,61 @@ import os
 import shutil
 import subprocess
 import sys
+import json
 
-BUILD_TYPE = 'Release'
-BUILD_DIR = os.path.normpath(os.path.abspath(sys.argv[1]))
-GENERATOR = sys.argv[2]
+CFG_PATH = os.path.join(os.path.expanduser('~'), '.doomsday', 'build_deps')
+
+cfg = {
+    'build_type': 'Release',
+    'build_dir': os.path.abspath(
+        os.path.join(
+            os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'distrib', 'deps'
+        )
+    ),
+    'generator': 'Ninja'
+}
+if os.path.exists(CFG_PATH):
+    cfg = json.load(open(CFG_PATH, 'rt'))
+print(cfg)
+
+show_help = (len(sys.argv) == 1)
+do_clean = False
+idx = 1
+while idx < len(sys.argv):
+    opt = sys.argv[idx]
+    if opt == '-G':
+        idx += 1
+        cfg['generator'] = sys.argv[idx]
+    elif opt == '-t':
+        idx += 1
+        cfg['build_type'] = sys.argv[idx]
+    elif opt == '--help':
+        show_help = True
+    elif opt == 'clean':
+        do_clean = True
+    else:
+        cfg['build_dir'] = opt
+    idx += 1
+
+if show_help:
+    print("""
+Usage: build_deps.py [opts] build-dir
+
+Options:
+-G <generator>   Use CMake <generator> when configuring build.
+-t <type>        CMake build type (e.g., Release).
+--help           Show this help.
+""")
+    exit(0)
+
+if not os.path.exists(os.path.dirname(CFG_PATH)):
+    os.mkdir(os.path.dirname(CFG_PATH))
+
+json.dump(cfg, open(CFG_PATH, 'wt'))
+
+BUILD_TYPE = cfg['build_type']
+BUILD_DIR = cfg['build_dir']
+GENERATOR = cfg['generator']
 PRODUCTS_DIR = os.path.join(BUILD_DIR, 'products')
 os.makedirs(PRODUCTS_DIR, exist_ok=True)
 
@@ -61,7 +112,7 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
         subprocess.check_call(['git', 'fetch', '--tags'])
     subprocess.check_call(['git', 'checkout', git_tag])
     build_dir = os.path.join(src_dir, 'build')
-    if GENERATOR == 'clean':
+    if do_clean:
         shutil.rmtree(build_dir)
         continue
     os.makedirs(build_dir, exist_ok=True)
