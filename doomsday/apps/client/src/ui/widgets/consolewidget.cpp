@@ -224,6 +224,9 @@ DE_GUI_PIMPL(ConsoleWidget)
         // Bottom of the console must follow the active command line height.
         self().rule().setInput(Rule::Bottom, next->rule().top() - rule(RuleBank::UNIT));
 
+        scriptCmd->show(yes);
+        cmdLine->show(!yes);
+
         if (scriptMode == yes)
         {
             return; // No need to change anything else.
@@ -232,9 +235,7 @@ DE_GUI_PIMPL(ConsoleWidget)
         scriptCmd->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
         cmdLine  ->setAttribute(AnimateOpacityWhenEnabledOrDisabled, UnsetFlags);
 
-        scriptCmd->show(yes);
         scriptCmd->enable(yes);
-        cmdLine->show(!yes);
         cmdLine->disable(yes);
 
         // Transfer focus.
