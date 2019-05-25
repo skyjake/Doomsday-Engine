@@ -94,13 +94,13 @@ void InlineListWidget::updateGeometry()
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));
     Size2Raw maxSize{};
     Size2Raw size;
-    for (int i = 0; i < items().size(); ++i)
+    for (auto i = 0u; i < items().size(); ++i)
     {
         FR_TextSize(&size, items().at(i)->text());
         maxSize.width = de::max(maxSize.width, size.width);
         maxSize.height = de::max(maxSize.height, size.height);
     }
-    geometry().setSize(Vector2ui(maxSize.width, maxSize.height));
+    geometry().setSize(Vec2ui(maxSize.width, maxSize.height));
     FR_PopAttrib();
 }
 

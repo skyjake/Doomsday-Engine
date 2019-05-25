@@ -3033,7 +3033,7 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin)
 
     DGL_Disable(DGL_TEXTURE_2D);
 #else
-    DENG2_UNUSED(page);
+    DE_UNUSED(page);
 
 #if defined (__JHERETIC__)
     String titleText;
@@ -3050,7 +3050,7 @@ void Hu_MenuDrawEpisodePage(Page const &page, Vec2i const &origin)
     FR_SetFont(FID(GF_FONTB));
     FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
-    FR_DrawTextXY3(titleText.toLatin1(), SCREENWIDTH / 2, origin.y - 42, ALIGN_TOP,
+    FR_DrawTextXY3(titleText, SCREENWIDTH / 2, origin.y - 42, ALIGN_TOP,
                    Hu_MenuMergeEffectWithDrawTextFlags(0));
 
     DGL_Disable(DGL_TEXTURE_2D);
@@ -3085,7 +3085,7 @@ void Hu_MenuDrawSkillPage(Page const & /*page*/, Vec2i const &origin)
         titleText = value->text;
     }
 
-    Hu_MenuDrawPageTitle(titleText, Vector2i(SCREENWIDTH / 2, origin.y - 28));
+    Hu_MenuDrawPageTitle(titleText, Vec2i(SCREENWIDTH / 2, origin.y - 28));
 #endif
 }
 
@@ -3168,7 +3168,7 @@ void Hu_MenuDrawLoadGamePage(Page const & /*page*/, Vec2i const &origin)
     FR_SetColorAndAlpha(cfg.common.menuTextColors[0][CR], cfg.common.menuTextColors[0][CG], cfg.common.menuTextColors[0][CB], mnRendState->pageAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
-    FR_DrawTextXY3(Widget::labelText("Load Game").toLatin1(), SCREENWIDTH / 2, origin.y - 20, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
+    FR_DrawTextXY3(Widget::labelText("Load Game"), SCREENWIDTH / 2, origin.y - 20, ALIGN_TOP, Hu_MenuMergeEffectWithDrawTextFlags(0));
 #else
     WI_DrawPatch(pLoadGame, Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.menuPatchReplaceMode), pLoadGame),
                  Vec2i(origin.x - 8, origin.y - 26), ALIGN_TOPLEFT, 0, Hu_MenuMergeEffectWithDrawTextFlags(0));

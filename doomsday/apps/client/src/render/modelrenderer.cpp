@@ -169,12 +169,12 @@ DE_PIMPL(ModelRenderer)
             modelToLocal = modelToLocal * (*preModelToLocal);
         }
 
-        Mat4f const localToWorld =
+        const Mat4f localToWorld =
                 Mat4f::translate(origin) *
                 Mat4f::scale(aspectCorrect); // Inverse aspect correction.
 
         const Mat4f viewProj = Rend_GetProjectionMatrix(weaponFixedFOV) *
-                                  ClientApp::renderSystem().uViewMatrix().toMatrix4f();
+                                  ClientApp::renderSystem().uViewMatrix().toMat4f();
 
         const Mat4f localToScreen = viewProj * localToWorld;
 

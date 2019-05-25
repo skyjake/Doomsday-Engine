@@ -476,12 +476,12 @@ void P_InitWeaponInfo()
 {
     for (auto i = int(WT_FIRST); i < NUM_WEAPON_TYPES; ++i)
     {
-        const String id = String::number(i);
+        const String id = String::asText(i);
 
         for (int k = 0; k < 2; ++k) // Each firing mode.
         {
             // Firing modes other than @c 0 use a sublevel.
-            const String mode = (k == 0 ? "" : "|" + String::number(k + 1));
+            const String mode = (k == 0 ? "" : "|" + String::asText(k + 1));
             const String key = "Weapon Info|" + id + mode + "|";
 
             weaponmodeinfo_t *wminfo = WEAPON_INFO(i, PCLASS_PLAYER, k);

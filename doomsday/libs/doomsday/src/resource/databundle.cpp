@@ -647,7 +647,7 @@ DE_PIMPL(DataBundle), public Lockable
             category.replace(" ", "");
             category.replace("gamedata", "data"); // "gamedata" is a special tag
             category.replace("core", ""); // "core" is special tag
-            category = category.trimmed();
+            category = category.strip();
             if (!category.isEmpty())
             {
                 meta.appendUniqueWord(VAR_TAGS(), category);

@@ -72,6 +72,8 @@ public:
      * Determines if the asset is ready for use (immediately).
      */
     virtual bool isReady() const;
+    
+    virtual String asText() const;
 
     void waitForState(State s) const;
 
@@ -132,6 +134,8 @@ public:
         return *this;
     }
 
+    String asText() const override;
+    
     // Observes contained Assets.
     void assetBeingDeleted(Asset &);
     void assetStateChanged(Asset &);

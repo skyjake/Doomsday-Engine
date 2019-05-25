@@ -319,7 +319,7 @@ private:
     bool _isOwned;
     FunctionOwnership _funcOwned;
     Set<String> _boundEntryPoints;
-    QSet<Variable *> _boundFunctions;
+    Set<Variable *> _boundFunctions;
 };
 
 } // namespace de

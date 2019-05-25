@@ -135,7 +135,7 @@ static mobj_t &instanceMobj(const de::Context &ctx)
 {
     using namespace de;
 
-    const int id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
+    const int id = ctx.selfInstance().geti(DE_STR("__id__"), 0);
     if (mobj_t *mo = Mobj_ById(id))
     {
         return *mo;
@@ -211,18 +211,18 @@ void Common_Load()
     attackArgs["damage"] = new NumberValue(0.0);
     attackArgs["missile"] = new NoneValue;
 
-    DENG2_ASSERT(gameBindings == nullptr);
+    DE_ASSERT(gameBindings == nullptr);
     gameBindings = new Binder(nullptr, Binder::FunctionsOwned); // must delete when plugin unloaded
     gameBindings->init(ScriptSystem::get().builtInClass("World", "Thing"))
 #if defined(__JHERETIC__)
-            << DENG2_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
+            << DE_FUNC_DEFS(Thing_Attack, "attack", "damage" << "missile", attackArgs)
 #endif
-            << DENG2_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
+            << DE_FUNC_DEFS(Thing_SpawnMissile, "spawnMissile", "id" << "angle" << "momz", spawnMissileArgs);
 }
 
 void Common_Unload()
 {
-    DENG2_ASSERT(gameBindings != nullptr);
+    DE_ASSERT(gameBindings != nullptr);
     delete gameBindings;
     gameBindings = nullptr;
 }

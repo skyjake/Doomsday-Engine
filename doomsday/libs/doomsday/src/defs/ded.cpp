@@ -420,11 +420,11 @@ dint ded_s::evalFlags(char const *ptr) const
     {
         ptr = M_SkipWhite(ptr);
 
-        dsize flagNameLength = M_FindWhite(ptr) - ptr;
+        dsize flagNameLength = dsize(M_FindWhite(ptr) - ptr);
         String flagName(ptr, flagNameLength);
         ptr += flagNameLength;
 
-        if (Record const *flag = flags.tryFind(defn::Definition::VAR_ID, flagName.toLower()))
+        if (Record const *flag = flags.tryFind(defn::Definition::VAR_ID, flagName.lower()))
         {
             value |= flag->geti("value");
         }

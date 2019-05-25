@@ -57,7 +57,7 @@ static String masterUrl(const char *suffix = nullptr)
 {
     String u = App::apiUrl() + "master_server";
     if (suffix) u += suffix;
-    return std::move(u);
+    return u;
 }
 
 DE_PIMPL(MasterWorker)

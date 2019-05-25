@@ -63,7 +63,7 @@ static void C_DECL A_DoomsdayScript(void *actor)
     {
         const ThinkerData &data = THINKER_DATA(mobj->thinker, ThinkerData);
         Record ns;
-        ns.add(new Variable(QStringLiteral("self"), new RecordValue(data.objectNamespace())));
+        ns.add(new Variable(DE_STR("self"), new RecordValue(data.objectNamespace())));
         Process proc(&ns);
         const Script script(s_currentAction);
         proc.run(script);
@@ -102,13 +102,12 @@ void P_SetCurrentAction(const String &name)
 
 void P_SetCurrentActionState(int state)
 {
-    P_SetCurrentAction(DED_Definitions()->states[state].gets(QStringLiteral("action")));
+    P_SetCurrentAction(DED_Definitions()->states[state].gets(DE_STR("action")));
 }
 
 acfnptr_t P_GetAction(const String &name)
 {
     if (!name.isEmpty())
-        auto found = actions.find(name);
     {
         if (isScriptAction(name))
         {

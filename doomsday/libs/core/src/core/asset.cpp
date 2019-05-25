@@ -18,6 +18,7 @@
 
 #include "de/Asset"
 #include "de/Waitable"
+#include "de/Widget"
 
 namespace de {
 
@@ -95,6 +96,15 @@ void Asset::waitForState(State s) const
     {
         w.wait();
     }
+}
+    
+String Asset::asText() const
+{
+    if (const auto *w = dynamic_cast<const Widget *>(this))
+    {
+        return w->name();
+    }
+    return Stringf("Asset %p", this);
 }
 
 //----------------------------------------------------------------------------
@@ -214,6 +224,16 @@ void AssetGroup::assetStateChanged(Asset &)
     d->update(*this);
 }
 
+String AssetGroup::asText() const
+{
+    StringList str;
+    for (auto i = d->deps.begin(); i != d->deps.end(); ++i)
+    {
+        str.append(i->first->asText());
+    }
+    return Stringf("AssetGroup with %zu members:\n%s", str.size(), String::join(str, "\n").c_str());
+}
+    
 IAssetGroup::~IAssetGroup()
 {}
 

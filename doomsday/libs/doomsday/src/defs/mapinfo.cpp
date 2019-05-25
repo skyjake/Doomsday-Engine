@@ -48,7 +48,7 @@ void MapInfo::resetToDefaults()
     def().addNumber("gravity", 1);
     def().addText  ("skyId", "");
     def().addText  ("execute", "");
-    def().addText  (QStringLiteral("intermissionBg"), "");
+    def().addText  (DE_STR("intermissionBg"), "");
 
     std::unique_ptr<Record> sky(new Record);
     Sky(*sky).resetToDefaults();

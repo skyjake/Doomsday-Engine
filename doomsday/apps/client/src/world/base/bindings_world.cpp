@@ -62,7 +62,7 @@ void initBindings(Binder &binder, Record &worldModule)
         startSoundArgs["volume"] = new NumberValue(1.0);
 
         binder.init(thing)
-                << DE_FUNC_NOARG(Thing_Health, "health");
+                << DE_FUNC_NOARG(Thing_Health, "health")
                 << DE_FUNC_DEFS (Thing_StartSound, "startSound", "id" << "volume", startSoundArgs);
 
     }

@@ -988,11 +988,11 @@ void ClientServerWorld::consoleRegister()  // static
 mobj_t &ClientServerWorld::contextMobj(const Context &ctx) // static
 {
     /// @todo Not necessarily always the current map. -jk
-    const int id = ctx.selfInstance().geti(QStringLiteral("__id__"), 0);
+    const int id = ctx.selfInstance().geti(DE_STR("__id__"), 0);
     mobj_t *mo = App_World().map().thinkers().mobjById(id);
     if (!mo)
     {
-        throw Map::MissingObjectError("ClientServerWorld::contextMobj",
+        throw world::Map::MissingObjectError("ClientServerWorld::contextMobj",
                                       String::format("Mobj %d does not exist", id));
     }
     return *mo;

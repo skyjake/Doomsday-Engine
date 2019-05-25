@@ -221,10 +221,10 @@ DE_PIMPL_NOREF(BusyRunner)
 
 DE_AUDIENCE_METHOD(BusyRunner, DeferredGLTask)
 
-static BusyRunner &busyRunner()
-{
-    return *static_cast<BusyRunner *>(busy().taskRunner());
-}
+//static BusyRunner &busyRunner()
+//{
+//    return *static_cast<BusyRunner *>(busy().taskRunner());
+//}
 
 BusyRunner::BusyRunner() : d(new Impl)
 {

@@ -635,12 +635,12 @@ void GLWindow::update()
 void GLWindow::initializeGL()
 {
     if (!d->initialized)
-{
-    LOG_AS("GLWindow");
-    LOGDEV_GL_NOTE("Initializing OpenGL window");
+    {
+        LOG_AS("GLWindow");
+        LOGDEV_GL_NOTE("Initializing OpenGL window");
 
         d->initialized = true;
-    d->glInit();
+        d->glInit();
 
         int w, h;
         SDL_GL_GetDrawableSize(d->window, &w, &h);

@@ -410,9 +410,9 @@ static void initDeathmatchStats()
     }
 }
 
-static de::Block labelString(const char *text)
+static de::String labelString(const char *text)
 {
-    return common::menu::Widget::labelText(text, "Intermission Label").toLatin1();
+    return common::menu::Widget::labelText(text, "Intermission Label");
 }
 
 static void drawDeathmatchStats()
@@ -782,14 +782,14 @@ static void initShowStats()
 
 static void drawStats()
 {
-    de::Block bgMaterial = "Flats:FLOOR16";
+    de::String bgMaterial = "Flats:FLOOR16";
 
     // Intermission background can be defined via DED.
     {
         const String defined = gfw_Session()->mapInfo().gets("intermissionBg", "");
         if (!defined.empty())
         {
-            bgMaterial = defined.toUtf8();
+            bgMaterial = defined;
         }
     }
 
