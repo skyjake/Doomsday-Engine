@@ -60,6 +60,7 @@ if os.path.exists(CFG_PATH):
 print(cfg)
 
 show_help = (len(sys.argv) == 1)
+do_build = False
 do_clean = False
 idx = 1
 while idx < len(sys.argv):
@@ -74,18 +75,24 @@ while idx < len(sys.argv):
         show_help = True
     elif opt == 'clean':
         do_clean = True
+    elif opt == 'build':
+        do_build = True
     else:
         cfg['build_dir'] = opt
     idx += 1
 
-if show_help:
+if not do_build and show_help:
     print("""
-Usage: build_deps.py [opts] build-dir
+Usage: build_deps.py [opts] [commands] build-dir
+
+Commands:
+  build           Build using existing config.
+  clean           Clean the build directory.
 
 Options:
--G <generator>   Use CMake <generator> when configuring build.
--t <type>        CMake build type (e.g., Release).
---help           Show this help.
+  -G <generator>  Use CMake <generator> when configuring build.
+  -t <type>       CMake build type (e.g., Release).
+  --help          Show this help.
 """)
     exit(0)
 
