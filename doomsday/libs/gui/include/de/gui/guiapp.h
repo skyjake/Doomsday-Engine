@@ -59,8 +59,14 @@ public:
 
     /**
      * The ratio of pixels per point. For example, this is 2.0 if there are two pixels per point.
+     * This value is affected by the UI scaling factor setting.
      */
     const Rule &pixelRatio() const;
+    
+    /**
+     * Pixel ratio of the window. This is not affected by UI scaling.
+     */
+    float devicePixelRatio() const;
 
     /**
      * Sets a new pixel ratio. This replaces the initial automatically detected pixel ratio.

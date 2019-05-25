@@ -962,7 +962,7 @@ void ClientWindow::preDraw()
 
 Vec2f ClientWindow::windowContentSize() const
 {
-    return Vec2f(d->root.viewWidth().value(), d->root.viewHeight().value());
+    return d->root.viewRule().size();
 }
 
 void ClientWindow::drawWindowContent()

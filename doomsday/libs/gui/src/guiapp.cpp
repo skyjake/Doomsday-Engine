@@ -156,6 +156,11 @@ const Rule &GuiApp::pixelRatio() const
 {
     return *d->pixelRatio;
 }
+    
+float GuiApp::devicePixelRatio() const
+{
+    return d->windowPixelRatio;
+}
 
 void GuiApp::setPixelRatio(float pixelRatio)
 {

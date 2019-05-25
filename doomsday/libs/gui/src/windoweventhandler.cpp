@@ -246,8 +246,8 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseButtonEvent(const SDL_MouseButtonEvent &ev)
     {
-        const auto pos = Vec2i(ev.x, ev.y) * DE_GUI_APP->pixelRatio().value();
-
+        const auto pos = Vec2i(ev.x, ev.y) * DE_GUI_APP->devicePixelRatio();
+        
         if (ev.type == SDL_MOUSEBUTTONDOWN)
         {
             DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
@@ -274,7 +274,7 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseMoveEvent(const SDL_MouseMotionEvent &ev)
     {
-        currentMousePos = Vec2i(ev.x, ev.y) * DE_GUI_APP->pixelRatio().value();
+        currentMousePos = Vec2i(ev.x, ev.y) * DE_GUI_APP->devicePixelRatio();
 
         // Absolute events are only emitted when the mouse is untrapped.
         if (!mouseGrabbed)
