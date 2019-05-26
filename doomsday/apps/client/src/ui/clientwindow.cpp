@@ -840,10 +840,12 @@ ClientWindow::ClientWindow(String const &id)
     audienceForResize() += d;
     audienceForSwap()   += d;
 
-#if defined (WIN32)
-    // Set an icon for the window.
-    setIcon(QIcon(":/doomsday.ico"));
-#endif
+//#if defined (WIN32)
+//    // Set an icon for the window.
+//    setIcon(QIcon(":/doomsday.ico"));
+//#endif
+    
+    setIcon(Style::get().images().image("logo.window"));
 
     d->setupUI();
 
