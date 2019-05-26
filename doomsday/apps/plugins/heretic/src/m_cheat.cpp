@@ -34,6 +34,7 @@
 #include "p_inventory.h"
 #include "p_user.h"
 #include "player.h"
+#include "p_inter.h"
 
 typedef eventsequencehandler_t cheatfunc_t;
 
@@ -382,6 +383,81 @@ D_CMD(CheatReveal)
         else if(option != 0)
         {
             ST_SetAutomapCheatLevel(i, option -1);
+        }
+    }
+
+    return true;
+}
+
+D_CMD(CheatTake)
+{
+    DENG2_UNUSED(src);
+
+    if (G_GameState() != GS_MAP)
+    {
+        App_Log(DE2_SCR_ERROR, "Can only \"take\" when in a game!");
+        return false;
+    }
+
+    if (IS_CLIENT)
+    {
+        App_Log(DE2_SCR_ERROR, "\"take\" not supported on multiplayer client");
+        return false;
+    }
+
+    if (argc != 2 && argc != 3)
+    {
+        App_Log(DE2_SCR_NOTE, "Usage:\n  take (stuff)\n  take (stuff) (plr)");
+        App_Log(DE2_LOG_SCR, "Stuff consists of one or more of (type:id). "
+                             "If no id; take all of type:");
+        App_Log(DE2_LOG_SCR, " a - ammo");
+        App_Log(DE2_LOG_SCR, " w - weapons");
+        App_Log(DE2_LOG_SCR, "Example: 'take a' takes away all ammo.");
+        App_Log(DE2_LOG_SCR, "Example: 'take w2' takes weapon two.");
+        return true;
+    }
+
+    int player = CONSOLEPLAYER;
+    player_t *plr;
+
+    if (argc == 3)
+    {
+        player = atoi(argv[2]);
+        if (player < 0 || player >= MAXPLAYERS) return false;
+    }
+
+    if ((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
+        return false;
+
+    plr = &players[player];
+
+    // Can't take frmo a player who's not in the game.
+    if(!plr->plr->inGame) return false;
+
+    // Can't take from a dead player.
+    if(plr->health <= 0) return false;
+
+    char buf[100];
+    strcpy(buf, argv[1]); // Stuff is the 2nd arg.
+    strlwr(buf);
+    size_t stuffLen = strlen(buf);
+    for (int i = 0; buf[i]; ++i)
+    {
+        const char code = buf[i];
+        int parm = -1;
+        {
+            const char parmChar = buf[i + 1];
+            if (parmChar >= '1' && parmChar <= '9')
+            {
+                parm = parmChar - '0';
+                i++;
+            }
+        }
+        switch (code)
+        {
+            case 'a': P_TakeAmmo(plr, parm < 0 ? NUM_AMMO_TYPES : ammotype_t(parm)); break;
+            case 'w': P_TakeWeapon(plr, parm < 0 ? NUM_WEAPON_TYPES : weapontype_t(parm)); break;
+            default: break;
         }
     }
 

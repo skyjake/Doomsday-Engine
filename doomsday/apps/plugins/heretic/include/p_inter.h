@@ -90,6 +90,8 @@ dd_bool P_GiveKey(player_t *player, keytype_t keyType);
  */
 dd_bool P_GiveAmmo(player_t *player, ammotype_t ammoType, int numRounds);
 
+void P_TakeAmmo(player_t *player, ammotype_t ammoType);
+
 /**
  * @param player    Player to receive the health.
  * @param amount    Amount of health to give. Use @c -1 to fully replenish.
@@ -107,6 +109,8 @@ void P_GiveBackpack(player_t *player);
  * @return  @c true if the weapon or its ammo was accepted.
  */
 dd_bool P_GiveWeapon(player_t *player, weapontype_t weaponType);
+
+void P_TakeWeapon(player_t *player, weapontype_t weaponType);
 
 /**
  * @return  @c true iff the armor was given.

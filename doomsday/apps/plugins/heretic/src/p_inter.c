@@ -116,6 +116,25 @@ dd_bool P_GiveAmmo(player_t *plr, ammotype_t ammoType, int numRounds)
     return gaveAmmos  != 0;
 }
 
+void P_TakeAmmo(player_t *player, ammotype_t ammoType)
+{
+    if (ammoType == NUM_AMMO_TYPES)
+    {
+        for (int i = 0; i < NUM_AMMO_TYPES; ++i)
+        {
+            P_TakeAmmo(player, (ammotype_t) i);
+        }
+    }
+    else
+    {
+        if (player->ammo[ammoType].owned > 0)
+        {
+            player->ammo[ammoType].owned = 0;
+            player->update |= PSF_AMMO;
+        }
+    }
+}
+
 static dd_bool giveOneWeapon(player_t *plr, weapontype_t weaponType)
 {
     int lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
@@ -188,6 +207,32 @@ dd_bool P_GiveWeapon(player_t *plr, weapontype_t weaponType)
     }
 
     return gaveWeapons != 0;
+}
+
+void P_TakeWeapon(player_t *player, weapontype_t weapon)
+{
+    if (weapon == WT_FIRST)
+    {
+        // Cannot take away the Staff.
+        return;
+    }
+
+    if (weapon == NUM_WEAPON_TYPES)
+    {
+        for (int i = 0; i < NUM_WEAPON_TYPES; ++i)
+        {
+            P_TakeWeapon(player, (weapontype_t) i);
+        }
+    }
+    else
+    {
+        if (player->weapons[weapon].owned)
+        {
+            player->weapons[weapon].owned = false;
+            player->update |= PSF_OWNED_WEAPONS;
+            P_MaybeChangeWeapon(player, WT_FIRST, AT_NOAMMO, true);
+        }
+    }
 }
 
 static int maxPlayerHealth(dd_bool morphed)
