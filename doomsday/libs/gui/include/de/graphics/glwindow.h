@@ -39,6 +39,7 @@
 namespace de {
 
 class GLTimer;
+class Image;
 
 /**
  * Top-level window that contains an OpenGL drawing surface. @ingroup gui
@@ -83,6 +84,7 @@ public:
     GLWindow();
 
     void        setTitle(const String &title);
+    void        setIcon(const Image &image);
     void        setMinimumSize(const Size &minSize);
     void        setGeometry(const Rectanglei &rect);
     inline void setGeometry(dint x, dint y, duint width, duint height)

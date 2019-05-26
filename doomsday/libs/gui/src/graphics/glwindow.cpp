@@ -24,6 +24,7 @@
 #include "de/ElapsedTimer"
 #include "de/EventLoop"
 #include "de/CoreEvent"
+#include "de/Image"
 
 #include <de/GLBuffer>
 #include <de/GLState>
@@ -372,6 +373,17 @@ void GLWindow::setTitle(const String &title)
     SDL_SetWindowTitle(d->window, title);
 }
 
+void GLWindow::setIcon(const Image &image)
+{
+    const Image rgba = image.convertToFormat(Image::RGBA_8888);
+    SDL_Surface *icon = SDL_CreateRGBSurfaceWithFormatFrom(const_cast<dbyte *>(image.bits()),
+                                                           image.width(), image.height(),
+                                                           32, image.stride(),
+                                                           SDL_PIXELFORMAT_ABGR8888);
+    SDL_SetWindowIcon(d->window, icon);
+    SDL_FreeSurface(icon);
+}
+    
 void GLWindow::setMinimumSize(const Size &minSize)
 {
     SDL_SetWindowMinimumSize(d->window, minSize.x, minSize.y);

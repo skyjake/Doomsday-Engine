@@ -606,7 +606,7 @@ bool Image::hasAlphaChannel() const
 Image Image::convertToFormat(Format toFormat) const
 {
     if (d->format == toFormat)
-{
+    {
         // No conversion necessary.
         return *this;
     }
