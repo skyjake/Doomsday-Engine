@@ -47,7 +47,7 @@
 #pragma warning (disable: 4035 4244)
 
 #include <de/c_wrapper.h>
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 
 #include "doomsday.h"
 #include "api_audiod.h"

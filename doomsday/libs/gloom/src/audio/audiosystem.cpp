@@ -7,7 +7,7 @@
 #include <de/Hash>
 #include <de/Log>
 #include <de/Set>
-#include <fmod.hpp>
+#include <fmod.h>
 #include <fmod_errors.h>
 
 using namespace de;
@@ -99,13 +99,13 @@ DE_PIMPL(AudioSystem)
     class CachedWaveform
     {
         // Created on demand:
-        FMOD::Sound *_sound       = nullptr;
-        FMOD::Sound *_loopSound   = nullptr;
-        FMOD::Sound *_sound3D     = nullptr;
-        FMOD::Sound *_loopSound3D = nullptr;
+        FMOD_SOUND *_sound       = nullptr;
+        FMOD_SOUND *_loopSound   = nullptr;
+        FMOD_SOUND *_sound3D     = nullptr;
+        FMOD_SOUND *_loopSound3D = nullptr;
 
     public:
-        FMOD::System *  system = nullptr;
+        FMOD_SYSTEM *  system = nullptr;
         Waveform const &wf;
 
         typedef Set<AudibleSound *> PlayingSounds; // owned
@@ -117,7 +117,7 @@ DE_PIMPL(AudioSystem)
          * @param waveform  Waveform data. Does @em NOT take ownership or copy of this
          *                  object. The original waveform must exist elsewhere.
          */
-        CachedWaveform(FMOD::System *sys, Waveform const &waveform)
+        CachedWaveform(FMOD_SYSTEM *sys, Waveform const &waveform)
             : system(sys)
             , wf(waveform)
         {}
@@ -126,10 +126,10 @@ DE_PIMPL(AudioSystem)
         {
             PlayingSounds s = sounds;
             deleteAll(s); // sounds will unregister themselves
-            if(_sound)       { _sound->release();       _sound = 0; }
-            if(_loopSound)   { _loopSound->release();   _loopSound = 0; }
-            if(_sound3D)     { _sound3D->release();     _sound3D = 0; }
-            if(_loopSound3D) { _loopSound3D->release(); _loopSound3D = 0; }
+            if(_sound)       { FMOD_Sound_Release(_sound);       _sound = 0; }
+            if(_loopSound)   { FMOD_Sound_Release(_loopSound);   _loopSound = 0; }
+            if(_sound3D)     { FMOD_Sound_Release(_sound3D);     _sound3D = 0; }
+            if(_loopSound3D) { FMOD_Sound_Release(_loopSound3D); _loopSound3D = 0; }
         }
 
         enum Flag
@@ -139,7 +139,7 @@ DE_PIMPL(AudioSystem)
             Pos3D  = 0x2
         };
 
-        FMOD::Sound *create(int flags)
+        FMOD_SOUND *create(int flags)
         {
             FMOD_CREATESOUNDEXINFO info;
             zap(info);
@@ -149,7 +149,7 @@ DE_PIMPL(AudioSystem)
                     (flags & Loop  ? FMOD_LOOP_NORMAL : FMOD_LOOP_OFF) |
                     (flags & Pos3D ? FMOD_3D : FMOD_2D);
 
-            FMOD::Sound *sound = 0;
+            FMOD_SOUND *sound = 0;
             if(wf.format() == audio::PCMLittleEndian)
             {
                 info.length           = uint(wf.sampleData().size());
@@ -159,7 +159,7 @@ DE_PIMPL(AudioSystem)
                                          wf.bitsPerSample() == 16? FMOD_SOUND_FORMAT_PCM16 :
                                          wf.bitsPerSample() == 24? FMOD_SOUND_FORMAT_PCM24 :
                                                                    FMOD_SOUND_FORMAT_PCM32);
-                system->createSound(wf.sampleData().c_str(),
+                FMOD_System_CreateSound(system, wf.sampleData().c_str(),
                                     FMOD_OPENRAW | FMOD_OPENMEMORY_POINT | commonFlags,
                                     &info, &sound);
             }
@@ -174,7 +174,7 @@ DE_PIMPL(AudioSystem)
                 info.fileuserseek  = FileAdapter::seek;
 
                 // Compressed sound formats might be understood by FMOD.
-                FMOD_RESULT result = system->createSound(
+                FMOD_RESULT result = FMOD_System_CreateSound(system, 
                     wf.sourceFile()->path().c_str(),
                     /*FMOD_UNICODE |*/ FMOD_CREATECOMPRESSEDSAMPLE | commonFlags,
                     &info,
@@ -188,9 +188,9 @@ DE_PIMPL(AudioSystem)
             return sound;
         }
 
-        FMOD::Sound *getSound(int flags)
+        FMOD_SOUND *getSound(int flags)
         {
-            FMOD::Sound *ptr = 0;
+            FMOD_SOUND *ptr = 0;
             if(flags & Pos3D)
             {
                 ptr = (flags & Loop? _loopSound3D : _sound3D);
@@ -214,13 +214,13 @@ DE_PIMPL(AudioSystem)
         {
             return FMOD_OK;
         }
-        FMOD::Channel *channel = reinterpret_cast<FMOD::Channel *>(channelcontrol);
+        FMOD_CHANNEL *channel = reinterpret_cast<FMOD_CHANNEL *>(channelcontrol);
         switch (callbacktype)
         {
         case FMOD_CHANNELCONTROL_CALLBACK_END: {
             // Playback has finished on the channel.
             Sound *sound = 0;
-            channel->getUserData(reinterpret_cast<void **>(&sound));
+            FMOD_Channel_GetUserData(channel, reinterpret_cast<void **>(&sound));
             if(sound)
             {
                 sound->stop();
@@ -240,7 +240,7 @@ DE_PIMPL(AudioSystem)
     struct AudibleSound : public Sound
     {
         CachedWaveform &cached;
-        FMOD::Channel *channel;
+        FMOD_CHANNEL *channel;
         PlayingMode _mode;
         float _originalFreq;
 
@@ -271,23 +271,23 @@ DE_PIMPL(AudioSystem)
             if (_mode == Looping) flags |= CachedWaveform::Loop;
             if (positioning() != Stereo) flags |= CachedWaveform::Pos3D;
 
-            cached.system->playSound(//FMOD_CHANNEL_FREE,
-                                     cached.getSound(flags),
-                                     NULL,
-                                     true /*paused*/,
-                                     &channel);
+            FMOD_System_PlaySound(cached.system, //FMOD_Channel_FREE,
+                                  cached.getSound(flags),
+                                  NULL,
+                                  true /*paused*/,
+                                  &channel);
             //qDebug() << "sound started" << (cached.wf.sourceFile()? cached.wf.sourceFile()->path() : "") << channel;
             if (channel)
             {
-                channel->setUserData(this); // corresponding Sound instance
-                channel->setCallback(channelCallback);
+                FMOD_Channel_SetUserData(channel, this); // corresponding Sound instance
+                FMOD_Channel_SetCallback(channel, channelCallback);
 
                 _originalFreq = cached.wf.sampleRate();
                 if (_originalFreq == 0.f)
                 {
                     // Ask FMOD about the frequency.
                     float freq;
-                    channel->getFrequency(&freq);
+                    FMOD_Channel_GetFrequency(channel, &freq);
                     _originalFreq = freq;
                 }
             }
@@ -298,9 +298,9 @@ DE_PIMPL(AudioSystem)
             _mode = NotPlaying;
             if (channel)
             {
-                channel->setUserData(NULL);
-                channel->setCallback(NULL);
-                channel->stop();
+                FMOD_Channel_SetUserData(channel, NULL);
+                FMOD_Channel_SetCallback(channel, NULL);
+                FMOD_Channel_Stop(channel);
                 channel = 0;
             }
         }
@@ -317,7 +317,7 @@ DE_PIMPL(AudioSystem)
             _mode = playMode;
             alloc();
             update();
-            channel->setPaused(false);
+            FMOD_Channel_SetPaused(channel, 0);
 
             DE_FOR_AUDIENCE2(Play, i) { i->soundPlayed(*this); }
         }
@@ -344,7 +344,7 @@ DE_PIMPL(AudioSystem)
         {
             if(channel)
             {
-                channel->setPaused(true);
+                FMOD_Channel_SetPaused(channel, true);
             }
         }
 
@@ -352,7 +352,7 @@ DE_PIMPL(AudioSystem)
         {
             if(channel)
             {
-                channel->setPaused(false);
+                FMOD_Channel_SetPaused(channel, false);
             }
         }
 
@@ -361,9 +361,9 @@ DE_PIMPL(AudioSystem)
             if(!channel) return;
 
             // Apply current properties to the channel.
-            channel->setVolume(volume());
-            channel->setPan(pan());
-            channel->setFrequency(_originalFreq * frequency());
+            FMOD_Channel_SetVolume(channel, volume());
+            FMOD_Channel_SetPan(channel, pan());
+            FMOD_Channel_SetFrequency(channel, _originalFreq * frequency());
 
             if(positioning() != Stereo)
             {
@@ -377,9 +377,9 @@ DE_PIMPL(AudioSystem)
                 vel.y = velocity().y;
                 vel.z = velocity().z;
 
-                channel->set3DAttributes(&pos, &vel);
-                channel->set3DMinMaxDistance(minDistance(), 10000);
-                channel->set3DSpread(spatialSpread());
+                FMOD_Channel_Set3DAttributes(channel, &pos, &vel, NULL);
+                FMOD_Channel_Set3DMinMaxDistance(channel, minDistance(), 10000);
+                FMOD_Channel_Set3DSpread(channel, spatialSpread());
             }
         }
 
@@ -392,13 +392,13 @@ DE_PIMPL(AudioSystem)
         {
             if(!channel) return false;
 
-            bool paused = false;
-            channel->getPaused(&paused);
-            return paused;
+            FMOD_BOOL paused = 0;
+            FMOD_Channel_GetPaused(channel, &paused);
+            return paused != 0;
         }
     };
 
-    FMOD::System *system;
+    FMOD_SYSTEM *system;
     typedef Hash<const Waveform *, CachedWaveform *> Cache;
     Cache cache;
     const ICamera *listenerCamera = nullptr;
@@ -420,7 +420,7 @@ DE_PIMPL(AudioSystem)
     void init()
     {
         // Initialize FMOD.
-        FMOD_RESULT result = FMOD::System_Create(&system);
+        FMOD_RESULT result = FMOD_System_Create(&system);
         if (result != FMOD_OK)
         {
             throw NativeError("AudioSystem::init", FMOD_ErrorString(result));
@@ -429,7 +429,7 @@ DE_PIMPL(AudioSystem)
         // Configure FMOD appropriately.
         //system->setSpeakerMode(FMOD_SPEAKERMODE_STEREO);
 
-        result = system->init(100, FMOD_INIT_NORMAL, 0);
+        result = FMOD_System_Init(system, 100, FMOD_INIT_NORMAL, 0);
         if (result != FMOD_OK)
         {
             throw NativeError("AudioSystem::init", FMOD_ErrorString(result));
@@ -438,16 +438,16 @@ DE_PIMPL(AudioSystem)
         LOG_AUDIO_NOTE("FMOD Sound System © Firelight Technologies Pty, Ltd., 1994-2014");
 
         int numPlugins = 0;
-        system->getNumPlugins(FMOD_PLUGINTYPE_CODEC, &numPlugins);
+        FMOD_System_GetNumPlugins(system, FMOD_PLUGINTYPE_CODEC, &numPlugins);
         LOG_AUDIO_VERBOSE("FMOD codecs:");
         for (int i = 0; i < numPlugins; ++i)
         {
             duint handle;
-            system->getPluginHandle(FMOD_PLUGINTYPE_CODEC, i, &handle);
+            FMOD_System_GetPluginHandle(system, FMOD_PLUGINTYPE_CODEC, i, &handle);
 
             Block name(100);
             duint version = 0;
-            system->getPluginInfo(
+            FMOD_System_GetPluginInfo(system,
                 handle, 0, reinterpret_cast<char *>(name.data()), int(name.size()), &version);
             LOG_AUDIO_VERBOSE(" - %i: %s v%x") << i << String::fromLatin1(name) << version;
         }
@@ -459,7 +459,7 @@ DE_PIMPL(AudioSystem)
         cache.deleteAll();
         cache.clear();
 
-        system->release();
+        FMOD_System_Release(system);
         system = 0;
     }
 
@@ -473,14 +473,14 @@ DE_PIMPL(AudioSystem)
             const FMOD_VECTOR fwd = {cam->cameraFront().x, cam->cameraFront().y, cam->cameraFront().z};
             const FMOD_VECTOR up  = {cam->cameraUp().x,    cam->cameraUp().y,    cam->cameraUp().z};
 
-            system->set3DListenerAttributes(0, &pos, 0, &fwd, &up);
+            FMOD_System_Set3DListenerAttributes(system, 0, &pos, 0, &fwd, &up);
         }
     }
 
     void refresh()
     {
         updateListener();
-        system->update();
+        FMOD_System_Update(system);
     }
 
     Sound &load(Waveform const &waveform)

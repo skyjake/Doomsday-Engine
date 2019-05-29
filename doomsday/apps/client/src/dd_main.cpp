@@ -1056,7 +1056,7 @@ static void initializeWithWindowReady()
     static char const *AUTOEXEC_NAME = "autoexec.cfg";
 
 #ifdef __CLIENT__
-    GLWindow::main().glActivate();
+    GLWindow::glActivateMain();
     GL_EarlyInit();
 #endif
 
@@ -1813,10 +1813,10 @@ void *DD_GetVariable(dint ddvalue)
     //case DD_TORCH_ADDITIVE:
     //    return &torchAdditive;
 
-# ifdef WIN32
-    case DD_WINDOW_HANDLE:
-        return ClientWindow::main().nativeHandle();
-# endif
+//# ifdef WIN32
+//    case DD_WINDOW_HANDLE:
+//        return ClientWindow::main().nativeHandle();
+//# endif
 #endif
 
     // We have to separately calculate the 35 Hz ticks.

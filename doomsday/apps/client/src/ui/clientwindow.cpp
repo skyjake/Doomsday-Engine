@@ -1087,7 +1087,7 @@ void ClientWindow::updateRootSize()
 
 ClientWindow &ClientWindow::main()
 {
-    return static_cast<ClientWindow &>(BaseWindow::main());
+    return static_cast<ClientWindow &>(BaseWindow::getMain());
 }
 
 bool ClientWindow::mainExists()

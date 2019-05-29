@@ -223,7 +223,7 @@ DE_PIMPL(Line::Side)
             return;
 
         // We'll use a Map for sorting the segments.
-        Map<ddouble, Segment *> sortedSegs;
+        de::Map<ddouble, Segment *> sortedSegs;
         for (Segment *seg : segments)
         {
             sortedSegs.insert((seg->hedge().origin() - lineSideOrigin).length(), seg);

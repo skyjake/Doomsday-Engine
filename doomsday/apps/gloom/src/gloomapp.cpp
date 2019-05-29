@@ -1,3 +1,4 @@
+
 /** @file gloomapp.cpp  Test application.
  *
  * @authors Copyright (c) 2014-2018 Jaakko Keränen <jaakko.keranen@iki.fi>

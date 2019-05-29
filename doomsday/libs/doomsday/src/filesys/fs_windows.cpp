@@ -22,18 +22,23 @@
 
 using namespace de;
 
+static inline const wchar_t *pwstr(const Block &utf16)
+{
+    return reinterpret_cast<const wchar_t *>(utf16.data());
+}
+
 FILE *FS_Win32_fopen(char const *filenameUtf8, char const *mode)
 {
-    return _wfopen(String(filenameUtf8).toStdWString().c_str(),
-                   String(mode).toStdWString().c_str());
+    return _wfopen(pwstr(String(filenameUtf8).toUtf16()),
+                   pwstr(String(mode).toUtf16()));
 }
 
 int FS_Win32_access(char const *pathUtf8, int mode)
 {
-    return _waccess(String(pathUtf8).toStdWString().c_str(), mode);
+    return _waccess(pwstr(String(pathUtf8).toUtf16()), mode);
 }
 
 int FS_Win32_mkdir(char const *dirnameUtf8)
 {
-    return _wmkdir(String(dirnameUtf8).toStdWString().c_str());
+    return _wmkdir(pwstr(String(dirnameUtf8).toUtf16()));
 }

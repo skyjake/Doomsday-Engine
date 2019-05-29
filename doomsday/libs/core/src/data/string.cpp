@@ -1140,6 +1140,16 @@ String String::fromPercentEncoding(const Block &percentEncoded) // static
     return String::take(urlDecode_String(String(percentEncoded)));
 }
 
+Block String::toUtf16() const
+{
+    return Block::take(toUtf16_String(*this));
+}
+
+String String::fromUtf16(const Block &utf16) // static
+{
+    return String::take(newUtf16_String(reinterpret_cast<const uint16_t *>(utf16.data())));
+}
+
 //------------------------------------------------------------------------------------------------
 
 String::const_reverse_iterator::const_reverse_iterator(const Range<const char *> &range)

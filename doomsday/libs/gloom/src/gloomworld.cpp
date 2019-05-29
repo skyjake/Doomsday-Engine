@@ -56,9 +56,9 @@ struct GLScopedTimer {
     GLScopedTimer(const Id &id)
         : _id(id)
     {
-        GLWindow::main().timer().beginTimer(_id);
+        GLWindow::getMain().timer().beginTimer(_id);
     }
-    ~GLScopedTimer() { GLWindow::main().timer().endTimer(_id); }
+    ~GLScopedTimer() { GLWindow::getMain().timer().endTimer(_id); }
 };
 
 enum {
@@ -375,7 +375,7 @@ void GloomWorld::render(const ICamera &camera)
 
 #if 0
     {
-        auto &perfTimer = GLWindow::main().timer();
+        auto &perfTimer = GLWindow::getMain().timer();
         for (int i = 0; i < PerfTimerCount; ++i)
         {
             debug("Timer %i: %8llu µs", i, perfTimer.elapsedTime(d->timerId[i]).asMicroSeconds());

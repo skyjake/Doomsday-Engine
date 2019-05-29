@@ -523,7 +523,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
 
                 Loop::timer(0.1, [] {
                     // Switch the game.
-                    GLWindow::main().glActivate();
+                    GLWindow::glActivateMain();
                     BusyMode_FreezeGameForBusyMode();
                     DoomsdayApp::app().changeGame(DoomsdayApp::app().adhocProfile(),
                                                   DD_ActivateGameWorker);

@@ -644,6 +644,8 @@ public:
 
     Block toPercentEncoding() const;
 
+    Block toUtf16() const;
+
     // Implements IByteArray.
     Size size() const override { return size_String(&_str); }
     void get(Offset at, Byte *values, Size count) const override;
@@ -733,6 +735,8 @@ public:
     static String fromUtf8(const Block &block);
 
     static String fromUtf8(const char *nullTerminatedCStr);
+
+    static String fromUtf16(const Block &utf16);
 
     /**
      * Builds a String out of an array of bytes that contains a Latin1 string.

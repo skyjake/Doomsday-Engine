@@ -184,12 +184,12 @@ DE_PIMPL(VideoSettingsDialog)
         }
 
 #ifdef USE_REFRESH_RATE_CHOICE
-        refreshRates->setSelected(refreshRates->items().findData(int(win.refreshRate() * 10)));
+        refreshRates->setSelected(refreshRates->items().findData(NumberValue(int(win.refreshRate() * 10))));
 #endif
 
 #ifdef USE_COLOR_DEPTH_CHOICE
         // Select the current color depth in the depth list.
-        depths->setSelected(depths->items().findData(win.colorDepthBits()));
+        depths->setSelected(depths->items().findData(NumberValue(win.colorDepthBits())));
 #endif
 
 #endif // !DE_MOBILE
@@ -304,8 +304,8 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
                 }
             }
             d->refreshRates->items().sort([] (ui::Item const &a, ui::Item const &b) {
-                int const i = a.data().toInt();
-                int const j = b.data().toInt();
+                int const i = a.data().asInt();
+                int const j = b.data().asInt();
                 if (!i) return true;
                 if (!j) return false;
                 return i < j;
@@ -404,10 +404,12 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     }
 
 #ifdef USE_REFRESH_RATE_CHOICE
-    connect(d->refreshRates, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeRefreshRate(uint)));
+    d->refreshRates->audienceForUserSelection() += [this]() {
+                                                    changeRefreshRate(d->refreshRates->selected()); };
 #endif
 #ifdef USE_COLOR_DEPTH_CHOICE
-    connect(d->depths, SIGNAL(selectionChangedByUser(uint)), this, SLOT(changeColorDepth(uint)));
+    d->depths->audienceForUserSelection() += [this]() {
+                                                 changeColorDepth(d->depths->selected()); };
 #endif
 }
 

@@ -103,7 +103,7 @@ BaseGuiApp::BaseGuiApp(const StringList &args)
 
 void BaseGuiApp::glDeinit()
 {
-    GLWindow::glActiveMain();
+    GLWindow::glActivateMain();
 
     d->vr.oculusRift().deinit();
     d->shaders.clear();

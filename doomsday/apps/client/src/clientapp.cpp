@@ -279,7 +279,7 @@ DE_PIMPL(ClientApp)
     {
         try
         {
-            ClientWindow::glActiveMain(); // for GL deinit
+            ClientWindow::glActivateMain(); // for GL deinit
 
             LogBuffer::get().removeSink(logAlarm);
 

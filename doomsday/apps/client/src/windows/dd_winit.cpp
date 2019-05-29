@@ -32,7 +32,6 @@
 #include <cstdlib>
 #include <tchar.h>
 
-#include <QDir>
 #include <de/App>
 #ifdef __CLIENT__
 #  include <de/DisplayMode>
@@ -86,7 +85,7 @@ dd_bool DD_Win32_Init()
     // Initialize COM.
     CoInitialize(NULL);
 
-    Library_Init();
+    //Library_Init();
 
     DoomsdayApp::app().determineGlobalPaths();
 
@@ -127,8 +126,8 @@ dd_bool DD_Win32_Init()
 void DD_Shutdown()
 {
     DD_ShutdownAll(); // Stop all engine subsystems.
-    DoomsdayApp::plugins().unloadAll();
-    Library_Shutdown();
+    //DoomsdayApp::plugins().unloadAll();
+    //Library_Shutdown();
 
     // No more use of COM beyond, this point.
     CoUninitialize();

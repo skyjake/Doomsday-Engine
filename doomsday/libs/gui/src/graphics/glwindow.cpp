@@ -735,7 +735,7 @@ GLWindow &GLWindow::getMain() // static
     return *mainWindow;
 }
 
-void GLWindow::glActiveMain()
+void GLWindow::glActivateMain()
 {
     if (mainExists()) getMain().glActivate();
 }

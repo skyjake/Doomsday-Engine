@@ -11,10 +11,10 @@ add_subdirectory (libs/importsave)
 add_subdirectory (libs/fmod)
 add_subdirectory (libs/openal)
 add_subdirectory (libs/fluidsynth)
-if (WIN32)
-    add_subdirectory (libs/directsound)
-    add_subdirectory (libs/winmm)
-endif ()
+# if (WIN32)
+#     add_subdirectory (libs/directsound)
+#     add_subdirectory (libs/winmm)
+# endif ()
 
 # Dependencies --------------------------------------------------------------------------
 
@@ -22,9 +22,9 @@ find_package (the_Foundation REQUIRED)
 find_package (glbinding REQUIRED)
 find_package (Amethyst QUIET)
 find_package (SDL2Libs)
-if (WIN32)
-    find_package (DirectX)
-endif ()
+# if (WIN32)
+#     find_package (DirectX)
+# endif ()
 
 # Sources and includes ------------------------------------------------------------------
 

@@ -146,9 +146,9 @@ DE_GUI_PIMPL(AudioSettingsDialog)
                 << new ChoiceItem("SDL_mixer", "sdlmixer")
            #endif
                 << new ChoiceItem("OpenAL", "openal")
-           #if defined (WIN32)
-                << new ChoiceItem(tr("DirectSound"), "dsound")
-           #endif
+//           #if defined (WIN32)
+//                << new ChoiceItem(tr("DirectSound"), "dsound")
+//           #endif
                 << new ChoiceItem("Disabled", "dummy");
 
         musicPlugin->items()
@@ -157,15 +157,15 @@ DE_GUI_PIMPL(AudioSettingsDialog)
            #if !defined (DE_DISABLE_SDLMIXER)
                 << new ChoiceItem("SDL_mixer", "sdlmixer")
            #endif
-           #if defined (WIN32)
-                << new ChoiceItem("Windows Multimedia", "winmm")
-           #endif
+//           #if defined (WIN32)
+//                << new ChoiceItem("Windows Multimedia", "winmm")
+//           #endif
                 << new ChoiceItem("Disabled", "dummy");
 
 #if defined (WIN32)
         cdPlugin->items()
-                << new ChoiceItem(tr("Windows Multimedia"), "winmm")
-                << new ChoiceItem(tr("Disabled"), "dummy");
+            //              << new ChoiceItem(tr("Windows Multimedia"), "winmm")
+                << new ChoiceItem("Disabled", "dummy");
 
         cdPlugin->updateFromVariable();
 #endif

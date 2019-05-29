@@ -214,7 +214,7 @@ public:
 public:
     static bool      mainExists();
     static GLWindow &getMain();
-    static void      glActiveMain();
+    static void      glActivateMain();
     static void      setMain(GLWindow *window);
 
 protected:

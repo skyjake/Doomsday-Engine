@@ -22,7 +22,7 @@
 
 #include "dswinmm.h"
 #include <de/c_wrapper.h>
-#include <de/timer.h>
+#include <de/legacy/timer.h>
 #include <cmath>
 #include <cstdio>
 
