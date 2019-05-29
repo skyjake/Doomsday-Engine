@@ -729,7 +729,7 @@ bool GLWindow::mainExists() // static
     return mainWindow != nullptr;
 }
 
-GLWindow &GLWindow::main() // static
+GLWindow &GLWindow::getMain() // static
 {
     DE_ASSERT(mainWindow != nullptr);
     return *mainWindow;
@@ -737,7 +737,7 @@ GLWindow &GLWindow::main() // static
 
 void GLWindow::glActiveMain()
 {
-    if (mainExists()) main().glActivate();
+    if (mainExists()) getMain().glActivate();
 }
 
 void GLWindow::setMain(GLWindow *window) // static

@@ -213,10 +213,9 @@ public:
     };
 
 public:
-    using size_type  = dsize;
-    using SingleChar = char[2];
-    using ByteRange  = Range<BytePos>;
-    using CharRange  = Range<CharPos>;
+    using size_type = dsize;
+    using ByteRange = Range<BytePos>;
+    using CharRange = Range<CharPos>;
 
     static constexpr dsize npos = std::numeric_limits<dsize>::max();
 
@@ -324,7 +323,8 @@ public:
     }
     bool beginsWith(char ch, Sensitivity cs = CaseSensitive) const
     {
-        return beginsWith(SingleChar{ch, 0}, cs);
+        const char c[2] = {ch, 0};
+        return beginsWith(c, cs);
     }
     bool beginsWith(const char *cstr, Sensitivity cs = CaseSensitive) const
     {
@@ -333,7 +333,8 @@ public:
     bool beginsWith(Char ch, Sensitivity cs = CaseSensitive) const;
     bool endsWith(char ch, Sensitivity cs = CaseSensitive) const
     {
-        return endsWith(SingleChar{ch, 0}, cs);
+        const char c[2] = {ch, 0};
+        return endsWith(c, cs);
     }
     bool endsWith(const char *cstr, Sensitivity cs = CaseSensitive) const
     {

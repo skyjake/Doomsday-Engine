@@ -19,6 +19,7 @@
 #ifndef LIBCORE_LIST_H
 #define LIBCORE_LIST_H
 
+#include <algorithm>
 #include <vector>
 #include "../libcore.h"
 

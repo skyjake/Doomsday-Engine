@@ -146,7 +146,7 @@ void BaseGuiApp::beginNativeUIMode()
     // is never changed on that platform.
     #if !defined (MACOSX)
     {
-        auto &win = static_cast<BaseWindow &>(GLWindow::main());
+        auto &win = static_cast<BaseWindow &>(GLWindow::getMain());
         win.saveState();
         int const windowedMode[] = {
             BaseWindow::Fullscreen, false,
@@ -159,7 +159,7 @@ void BaseGuiApp::beginNativeUIMode()
 
 void BaseGuiApp::endNativeUIMode()
 {
-    auto &win = static_cast<BaseWindow &>(GLWindow::main());
+    auto &win = static_cast<BaseWindow &>(GLWindow::getMain());
 #   if !defined (MACOSX)
     {
         win.restoreState();

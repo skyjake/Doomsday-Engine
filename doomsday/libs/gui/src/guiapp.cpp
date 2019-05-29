@@ -44,7 +44,7 @@ DE_PIMPL(GuiApp)
 {
     EventLoop     eventLoop;
     GuiLoop       loop;
-    thrd_t        renderThread     = nullptr;
+    thrd_t        renderThread{};
     float         windowPixelRatio = 1.0f; ///< Without user's Config.ui.scaleConfig
     ConstantRule *pixelRatio       = new ConstantRule;
     SDL_Cursor *  arrowCursor;
@@ -78,7 +78,7 @@ DE_PIMPL(GuiApp)
 
     void determineDevicePixelRatio()
     {
-#if defined (WIN32)
+#if 0 //defined (WIN32)
         // Use the Direct2D API to find out the desktop DPI factor.
         ID2D1Factory *d2dFactory = nullptr;
         HRESULT hr = D2D1CreateFactory(D2D1_FACTORY_TYPE_SINGLE_THREADED, &d2dFactory);

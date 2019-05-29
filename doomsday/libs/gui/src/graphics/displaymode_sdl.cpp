@@ -1,7 +1,7 @@
 /** @file displaymode_sdl.cpp  DisplayMode backend based on SDL.
  * @ingroup gl
  *
- * @authors Copyright (c) 2018 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2018-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -17,7 +17,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "de/gui/displaymode_native.h"
+#include "de/graphics/displaymode_native.h"
 #include <de/libcore.h>
 
 #include <SDL_video.h>

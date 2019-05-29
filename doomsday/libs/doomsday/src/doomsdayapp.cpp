@@ -69,6 +69,7 @@
 #ifdef WIN32
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
+#  include <de/registry.h>
 #  define ENV_PATH_SEP_CHAR ';'
 #else
 #  define ENV_PATH_SEP_CHAR ':'
@@ -112,7 +113,7 @@ static const char *deng_LibraryType(void)
     return "library/generic";
 }
 
-static void *extension_doomsday_symbol(const char *name)
+DE_EXTERN_C void *extension_doomsday_symbol(const char *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType);
     DE_SYMBOL_PTR(name, deng_API);
@@ -549,9 +550,7 @@ DE_PIMPL(DoomsdayApp)
         else
         {
             // The default base directory is one level up from the bin dir.
-            String binDir = App::executablePath().fileNamePath().withSeparators('/');
-            String baseDir = String(QDir::cleanPath(binDir / String(".."))) + '/';
-            self().setDoomsdayBasePath(baseDir);
+            self().setDoomsdayBasePath(App::executableDir().fileNamePath());
         }
     }
 #endif // WIN32
@@ -717,14 +716,16 @@ NativePath DoomsdayApp::steamBasePath()
 #ifdef WIN32
     // The path to Steam can be queried from the registry.
     {
-        QSettings st("HKEY_CURRENT_USER\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
-        String path = st.value("SteamPath").toString();
-        if (!path.isEmpty()) return path;
+        const String path = WindowsRegistry::textValue(
+            "HKEY_CURRENT_USER\\Software\\Valve\\Steam",
+            "SteamPath");
+        if (path) return path;
     }
     {
-        QSettings st("HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam\\", QSettings::NativeFormat);
-        String path = st.value("InstallPath").toString();
-        if (!path.isEmpty()) return path;
+        const String path = WindowsRegistry::textValue(
+            "HKEY_LOCAL_MACHINE\\Software\\Valve\\Steam",
+            "InstallPath");
+        if (path) return path;
     }
     return "";
 #elif MACOSX
@@ -743,18 +744,18 @@ List<NativePath> DoomsdayApp::gogComPaths()
     // Look up all the Doom GOG.com paths.
     StringList const subfolders({ "", "doom2", "master\\wads", "Plutonia", "TNT" });
     StringList const gogIds    ({ "1435827232", "1435848814", "1435848742" });
-    foreach (auto gogId, gogIds)
+    for (const auto &gogId : gogIds)
     {
-        NativePath basePath = QSettings("HKEY_LOCAL_MACHINE\\Software\\GOG.com\\Games\\" + gogId,
-                                        QSettings::NativeFormat).value("PATH").toString();
+        NativePath basePath = WindowsRegistry::textValue(
+            "HKEY_LOCAL_MACHINE\\Software\\GOG.com\\Games\\" + gogId, "PATH");
         if (basePath.isEmpty())
         {
-            basePath = QSettings("HKEY_LOCAL_MACHINE\\Software\\WOW6432Node\\GOG.com\\Games\\" + gogId,
-                                 QSettings::NativeFormat).value("PATH").toString();
+            basePath = WindowsRegistry::textValue(
+                "HKEY_LOCAL_MACHINE\\Software\\WOW6432Node\\GOG.com\\Games\\" + gogId, "PATH");
         }
         if (!basePath.isEmpty())
         {
-            foreach (auto sub, subfolders)
+            for (const auto &sub : subfolders)
             {
                 NativePath path(basePath / sub);
                 if (path.exists())

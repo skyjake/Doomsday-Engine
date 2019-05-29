@@ -26,8 +26,8 @@
 #  include "../src/text/coretextnativefont_macx.h"
 namespace de { typedef CoreTextNativeFont PlatformFont; }
 #else
-#  include "../src/text/qtnativefont.h"
-namespace de { typedef QtNativeFont PlatformFont; }
+#  include "../src/text/sdlnativefont.h"
+namespace de { typedef SdlNativeFont PlatformFont; }
 #endif
 
 namespace std {

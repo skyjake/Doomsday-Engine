@@ -48,6 +48,11 @@
 #  undef Status
 #endif
 
+#if defined (WIN32)
+#  define WIN32_LEAN_AND_MEAN
+#  include <Windows.h>
+#endif
+
 namespace de {
 
 static GLInfo info;
@@ -229,7 +234,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
             if (ext.Windows_EXT_swap_control)
             {
                 wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
-                        (QOpenGLContext::currentContext()->getProcAddress("wglSwapIntervalEXT"));
+                        (wglGetProcAddress("wglSwapIntervalEXT"));
             }
         }
         #endif

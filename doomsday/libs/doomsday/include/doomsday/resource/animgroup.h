@@ -50,21 +50,21 @@ public:
         /**
          * Returns the duration of the frame in tics.
          */
-        ushort tics() const;
+        uint16_t tics() const;
 
         /**
          * Returns the additional duration of the frame in tics.
          */
-        ushort randomTics() const;
+        uint16_t randomTics() const;
 
         friend class AnimGroup;
 
     private:
-        Frame(TextureManifest &textureManifest, ushort tics, ushort randomTics);
+        Frame(TextureManifest &textureManifest, uint16_t tics, uint16_t randomTics);
 
         TextureManifest *_textureManifest;
-        ushort _tics;
-        ushort _randomTics;
+        uint16_t _tics;
+        uint16_t _randomTics;
     };
 
     typedef List<Frame *> Frames;
@@ -105,8 +105,8 @@ public:
      *
      * @return  The new frame.
      */
-    Frame &newFrame(TextureManifest &textureManifest, ushort tics,
-                    ushort randomTics = 0);
+    Frame &newFrame(TextureManifest &textureManifest, uint16_t tics,
+                    uint16_t randomTics = 0);
 
     /**
      * Clear all frames in the animation.

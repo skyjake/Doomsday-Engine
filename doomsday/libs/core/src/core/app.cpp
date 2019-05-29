@@ -103,7 +103,7 @@ static Value *Function_App_Locate(Context &, Function::ArgumentValues const &arg
 DE_PIMPL(App)
 , DE_OBSERVES(PackageLoader, Activity)
 {
-    thrd_t mainThread = nullptr;
+    thrd_t mainThread{};
 
     /// Metadata about the application.
     Record metadata;

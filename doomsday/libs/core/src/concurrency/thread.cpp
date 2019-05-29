@@ -22,6 +22,8 @@
 
 #include <the_Foundation/thread.h>
 
+#include <condition_variable>
+
 namespace de {
 
 using KnownThreads = LockableT<Hash<iThread *, Thread *>>;

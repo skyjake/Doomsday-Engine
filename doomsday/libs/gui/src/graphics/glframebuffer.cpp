@@ -720,7 +720,7 @@ Image GLFramebuffer::toImage() const
 {
     if (!d->fbo)
     {
-        return GLWindow::main().grabImage();
+        return GLWindow::getMain().grabImage();
     }
     else if (d->flags & Color0)
     {
@@ -945,7 +945,7 @@ GLFramebuffer::Size GLFramebuffer::size() const
         return d->size;
     }
     //qDebug() << "FBO" << d->fbo << "size" << GLWindow::main().canvas().size().asText();
-    return GLWindow::main().pixelSize();
+    return GLWindow::getMain().pixelSize();
 }
 
 void GLFramebuffer::setActiveRect(Rectangleui const &rect, bool applyGLState)

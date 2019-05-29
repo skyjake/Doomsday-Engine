@@ -932,19 +932,7 @@ void PersistentGLWindow::show(bool yes)
     {
         if (d->state.isFullscreen())
         {
-#ifdef WIN32
-            /*
-             * On Windows, changes to windows appear to be carried out immediately.
-             * Without this delay, sometimes (randomly) the Qt desktop widget would
-             * not have been updated to the correct size after a display mode change.
-             * (Likely due to the behavior of the event loop on Windows; the desktop
-             * widget would or would not get the resize event depending on how the
-             * events play out during engine startup and main window setup.)
-             */
-            QTimer::singleShot(100, this, SLOT(showFullScreen()));
-#else
             showFullScreen();
-#endif
         }
         else if (d->state.isMaximized())
         {
@@ -983,7 +971,7 @@ String PersistentGLWindow::configName(String const &key) const
     return d->state.configName(key);
 }
 
-PersistentGLWindow &PersistentGLWindow::main()
+PersistentGLWindow &PersistentGLWindow::getMain()
 {
     DE_ASSERT(mainExists());
     if (!mainExists())
@@ -991,7 +979,7 @@ PersistentGLWindow &PersistentGLWindow::main()
         throw InvalidIdError("PersistentGLWindow::main",
                              stringf("No window found with id \"%s\"", MAIN_WINDOW_ID));
     }
-    return static_cast<PersistentGLWindow &>(GLWindow::main());
+    return static_cast<PersistentGLWindow &>(GLWindow::getMain());
 }
 
 #if 0

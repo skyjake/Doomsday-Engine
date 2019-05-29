@@ -1,9 +1,3 @@
-#include <utility>
-
-#include <utility>
-
-#include <utility>
-
 /** @file scrollareawidget.cpp  Scrollable area.
  *
  * @todo The scroll indicator is currently only implemented for the vertical
@@ -31,6 +25,13 @@
 #include <de/MouseEvent>
 #include <de/Lockable>
 #include <de/Drawable>
+
+#include <utility>
+
+#if defined (WIN32)
+#  define WIN32_LEAN_AND_MEAN
+#  include <Windows.h>
+#endif
 
 namespace de {
 

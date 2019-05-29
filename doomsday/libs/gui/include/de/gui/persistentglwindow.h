@@ -159,7 +159,7 @@ public:
      */
     void restoreState();
 
-    static PersistentGLWindow &main();
+    static PersistentGLWindow &getMain();
 
     // Events.
 //    void moveEvent(QMoveEvent *) override;

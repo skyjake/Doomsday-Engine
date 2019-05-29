@@ -1,4 +1,7 @@
 #!/usr/bin/env python3
+import os
+
+IS_MINGW = os.getenv('MSYSTEM') == 'MINGW64'
 
 FORMATS = [ '3DS', 'AC', 'ASE', 'ASSBIN', 'ASSXML', 'B3D', 'BVH', 'COLLADA',
 'DXF', 'CSM', 'HMP', 'IRR', 'LWO', 'LWS', 'MD2', 'MD3', 'MD5', 'MDC', 'MDL', 'NFF',
@@ -18,7 +21,8 @@ dependencies = [
     (
         'the_Foundation',
         'ssh://git@github.com/skyjake/the_Foundation.git', 'origin/master',
-        ['-DUNISTRING_DIR=/usr/local']
+        ['-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX') if IS_MINGW
+         else '-DUNISTRING_DIR=/usr/local']
     ),
     (
         'Open Asset Import Library',
@@ -38,7 +42,6 @@ dependencies = [
     )
 ]
 
-import os
 import shutil
 import subprocess
 import sys
@@ -53,7 +56,7 @@ cfg = {
             os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'distrib', 'deps'
         )
     ),
-    'generator': 'Ninja'
+    'generator': 'Unix Makefiles' if IS_MINGW else 'Ninja'
 }
 if os.path.exists(CFG_PATH):
     cfg = json.load(open(CFG_PATH, 'rt'))
@@ -117,6 +120,7 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
     else:
         os.chdir(src_dir)
         subprocess.check_call(['git', 'fetch', '--tags'])
+    print(os.getcwd())
     subprocess.check_call(['git', 'checkout', git_tag])
     build_dir = os.path.join(src_dir, 'build')
     if do_clean:

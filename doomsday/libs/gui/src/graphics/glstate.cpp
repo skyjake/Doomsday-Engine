@@ -794,7 +794,7 @@ GLFramebuffer &GLState::target() const
     {
         return *d->target;
     }
-    return GLWindow::main().framebuffer();
+    return GLWindow::getMain().framebuffer();
 }
 
 Rectangleui GLState::viewport() const

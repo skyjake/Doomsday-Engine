@@ -213,7 +213,7 @@ public:
 
 public:
     static bool      mainExists();
-    static GLWindow &main();
+    static GLWindow &getMain();
     static void      glActiveMain();
     static void      setMain(GLWindow *window);
 

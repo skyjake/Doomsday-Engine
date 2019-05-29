@@ -74,7 +74,7 @@ bool AnimGroup::hasFrameFor(TextureManifest const &textureManifest) const
 }
 
 AnimGroup::Frame &AnimGroup::newFrame(TextureManifest &textureManifest,
-                                      ushort tics, ushort randomTics)
+                                      uint16_t tics, uint16_t randomTics)
 {
     d->frames.append(new Frame(textureManifest, tics, randomTics));
     return *d->frames.last();
@@ -87,7 +87,7 @@ AnimGroup::Frames const &AnimGroup::allFrames() const
 
 //---------------------------------------------------------------------------------------
 
-AnimGroup::Frame::Frame(TextureManifest &textureManifest, ushort tics, ushort randomTics)
+AnimGroup::Frame::Frame(TextureManifest &textureManifest, uint16_t tics, uint16_t randomTics)
     : _textureManifest(&textureManifest)
     , _tics(tics)
     , _randomTics(randomTics)
@@ -98,12 +98,12 @@ TextureManifest &AnimGroup::Frame::textureManifest() const
     return *_textureManifest;
 }
 
-ushort AnimGroup::Frame::tics() const
+uint16_t AnimGroup::Frame::tics() const
 {
     return _tics;
 }
 
-ushort AnimGroup::Frame::randomTics() const
+uint16_t AnimGroup::Frame::randomTics() const
 {
     return _randomTics;
 }
