@@ -58,8 +58,8 @@ struct SongBuffer
     }
 };
 
-static FMOD::Sound *  song;
-static FMOD::Channel *music;
+static FMOD_SOUND *   song;
+static FMOD_CHANNEL * music;
 static bool           needReleaseSong;
 static float          musicVolume;
 static SongBuffer *   songBuffer;
@@ -74,7 +74,7 @@ musicCallback(FMOD_CHANNELCONTROL *channelcontrol,
     if (controltype != FMOD_CHANNELCONTROL_CHANNEL)
         return FMOD_OK;
 
-    if (reinterpret_cast<FMOD::Channel *>(channelcontrol) != music)
+    if (reinterpret_cast<FMOD_CHANNEL *>(channelcontrol) != music)
         return FMOD_OK; // Safety check.
 
     switch (callbacktype)
@@ -97,7 +97,7 @@ static void releaseSong()
         if (needReleaseSong)
         {
             DSFMOD_TRACE("releaseSong: Song " << song << " will be released.");
-            song->release();
+            FMOD_Sound_Release(song);
         }
         else
         {
@@ -123,7 +123,9 @@ static void setDefaultStreamBufferSize()
     if (!fmodSystem) return;
 
     FMOD_RESULT result;
-    result = fmodSystem->setStreamBufferSize(16*1024, FMOD_TIMEUNIT_RAWBYTES);
+    result = FMOD_System_SetStreamBufferSize(fmodSystem,
+                                             16 * 1024,
+                                             FMOD_TIMEUNIT_RAWBYTES);
     DSFMOD_ERRCHECK(result);
 }
 
@@ -177,7 +179,7 @@ void fmod_Music_Set(int prop, float value)
     {
     case MUSIP_VOLUME:
         musicVolume = value;
-        if (music) music->setVolume(musicVolume);
+        if (music) FMOD_Channel_SetVolume(music, musicVolume);
         DSFMOD_TRACE("Music_Set: MUSIP_VOLUME = " << musicVolume);
         break;
 
@@ -230,7 +232,7 @@ void fmod_Music_Stop(void)
 
     DSFMOD_TRACE("Music_Stop.");
 
-    music->stop();
+    FMOD_Channel_Stop(music);
 }
 
 void fmod_DM_Music_Stop(void)
@@ -242,23 +244,23 @@ static bool startSong()
 {
     if (!fmodSystem || !song) return false;
 
-    if (music) music->stop();
+    if (music) FMOD_Channel_Stop(music);
 
     // Start playing the song.
     FMOD_RESULT result;
-    result = fmodSystem->playSound(song, nullptr, true, &music);
+    result = FMOD_System_PlaySound(fmodSystem, song, nullptr, true, &music);
     DSFMOD_ERRCHECK(result);
 
     // Properties.
-    music->setVolume(musicVolume);
-    music->setCallback(musicCallback);
+    FMOD_Channel_SetVolume(music, musicVolume);
+    FMOD_Channel_SetCallback(music, musicCallback);
 
     // Start playing.
-    music->setPaused(false);
+    FMOD_Channel_SetPaused(music, false);
     return true;
 }
 
-bool fmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease)
+bool fmod_Music_PlaySound(FMOD_SOUND* customSound, bool needRelease)
 {
     releaseSong();
     releaseSongBuffer();
@@ -290,7 +292,8 @@ int fmod_DM_Music_Play(int looped)
 
         // Load a new song.
         FMOD_RESULT result;
-        result = fmodSystem->createSound(songBuffer->data,
+        result = FMOD_System_CreateSound(fmodSystem,
+                                         songBuffer->data,
                                          FMOD_CREATESTREAM | FMOD_OPENMEMORY |
                                          (looped? FMOD_LOOP_NORMAL : 0),
                                          &extra, &song);
@@ -308,7 +311,7 @@ void fmod_Music_Pause(int setPause)
 {
     if (!fmodSystem || !music) return;
 
-    music->setPaused(setPause != 0);
+    FMOD_Channel_SetPaused(music, setPause != 0);
 }
 
 void fmod_DM_Music_Pause(int setPause)
@@ -348,7 +351,9 @@ int fmod_DM_Music_PlayFile(const char *filename, int looped)
     }
 
     FMOD_RESULT result;
-    result = fmodSystem->createSound(filename, FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0),
+    result = FMOD_System_CreateSound(fmodSystem,
+                                     filename,
+                                     FMOD_CREATESTREAM | (looped? FMOD_LOOP_NORMAL : 0),
                                      &extra, &song);
     DSFMOD_TRACE("Music_Play: loaded '" << filename << "' => Sound " << song);
     DSFMOD_ERRCHECK(result);

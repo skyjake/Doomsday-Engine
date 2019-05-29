@@ -48,18 +48,12 @@
 #define __DSFMOD_DRIVER_H__
 
 #include <fmod.h>
-#include <fmod.hpp>
 #include <fmod_errors.h>
 #include <stdio.h>
 #include <cassert>
 #include <iostream>
 #include <de/Log>
 #include "api_console.h"
-
-//DE_ENTRYPOINT int  DS_Init(void);
-//DE_ENTRYPOINT void DS_Shutdown(void);
-//DE_ENTRYPOINT void DS_Event(int type);
-//DE_ENTRYPOINT int  DS_Set(int prop, const void* ptr);
 
 #define DSFMOD_TRACE(args)  LOGDEV_AUDIO_XVERBOSE("[FMOD] ", args)
 
@@ -68,11 +62,10 @@
         LOGDEV_AUDIO_WARNING("[FMOD] Error at %s, line %i: (%d) %s") << __FILE__ << __LINE__ << result << FMOD_ErrorString(result); \
     }
 
-extern FMOD::System *fmodSystem;
+extern FMOD_SYSTEM *fmodSystem;
 
 #include "fmod_sfx.h"
 #include "fmod_music.h"
-//#include "fmod_cd.h"
 #include "fmod_util.h"
 
 DE_USING_API(Con);

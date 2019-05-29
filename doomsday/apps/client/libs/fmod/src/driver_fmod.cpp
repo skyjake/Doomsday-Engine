@@ -46,7 +46,6 @@
 #include <stdio.h>
 #include <fmod.h>
 #include <fmod_errors.h>
-#include <fmod.hpp>
 
 #include "doomsday.h"
 #include <de/c_wrapper.h>
@@ -67,7 +66,7 @@ struct Driver
     int              speakerModeChannels;
 };
 
-FMOD::System *          fmodSystem;
+FMOD_SYSTEM *           fmodSystem;
 static de::List<Driver> fmodDrivers;
 
 static const char *speakerModeText(FMOD_SPEAKERMODE mode)
@@ -101,7 +100,7 @@ static int DS_Init(void)
 
     // Create the FMOD audio system.
     FMOD_RESULT result;
-    if ((result = FMOD::System_Create(&fmodSystem)) != FMOD_OK)
+    if ((result = FMOD_System_Create(&fmodSystem)) != FMOD_OK)
     {
         LOGDEV_AUDIO_ERROR("FMOD::System_Create failed (%d) %s") << result << FMOD_ErrorString(result);
         fmodSystem = 0;
@@ -114,7 +113,7 @@ static int DS_Init(void)
     // Check what kind of drivers are available.
     {
         int numDrivers = 0;
-        fmodSystem->getNumDrivers(&numDrivers);
+        FMOD_System_GetNumDrivers(fmodSystem, &numDrivers);
         fmodDrivers.resize(numDrivers);
         std::unique_ptr<de::ArrayValue> names(new de::ArrayValue);
         for (int i = 0; i < numDrivers; ++i)
@@ -122,7 +121,7 @@ static int DS_Init(void)
             auto &drv = fmodDrivers[i];
             char nameBuf[512];
             zap(nameBuf);
-            fmodSystem->getDriverInfo(i, nameBuf, sizeof(nameBuf),
+            FMOD_System_GetDriverInfo(fmodSystem, i, nameBuf, sizeof(nameBuf),
                                       &drv.guid, &drv.systemRate,
                                       &drv.speakerMode, &drv.speakerModeChannels);
             drv.name = String::format("%s (%s)", nameBuf, speakerModeText(drv.speakerMode));
@@ -143,7 +142,7 @@ static int DS_Init(void)
         int configuredDriverIndex = Config::get().geti("audio.output", 0);
         if (configuredDriverIndex < fmodDrivers.size())
         {
-            result = fmodSystem->setDriver(configuredDriverIndex);
+            result = FMOD_System_SetDriver(fmodSystem, configuredDriverIndex);
             if (result != FMOD_OK)
             {
                 LOG_AUDIO_ERROR("Failed to select FMOD audio driver: %s")
@@ -153,54 +152,44 @@ static int DS_Init(void)
     }
 
 #if 0
-#ifdef WIN32
-    {
-        // Figure out the system's configured default speaker mode.
-        FMOD_SPEAKERMODE speakerMode;
-        result = fmodSystem->getDriverCaps(0, 0, 0, &speakerMode);
-        if (result == FMOD_OK)
-        {
-            fmodSystem->setSpeakerMode(speakerMode);
-        }
-    }
-#endif
-
     de::String const speakerMode = de::Config::get().gets("audio.fmod.speakerMode", "");
     if (speakerMode == "5.1")
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
+        FMOD_System_SetSpeakerMode(fmodSystem, FMOD_SPEAKERMODE_5POINT1);
     }
     else if (speakerMode == "7.1")
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
+        FMOD_System_SetSpeakerMode(fmodSystem, FMOD_SPEAKERMODE_7POINT1);
     }
     else if (speakerMode == "prologic")
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
+        FMOD_System_SetSpeakerMode(fmodSystem, FMOD_SPEAKERMODE_SRS5_1_MATRIX);
     }
 
     // Manual overrides.
     if (CommandLine_Exists("-speaker51"))
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_5POINT1);
+        FMOD_System_SetSpeakerMode(fmodSystem, FMOD_SPEAKERMODE_5POINT1);
     }
     if (CommandLine_Exists("-speaker71"))
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_7POINT1);
+        FMOD_System_SetSpeakerMode(fmodSystem, FMOD_SPEAKERMODE_7POINT1);
     }
     if (CommandLine_Exists("-speakerprologic"))
     {
-        fmodSystem->setSpeakerMode(FMOD_SPEAKERMODE_SRS5_1_MATRIX);
+        FMOD_System_SetSpeakerMode(fmodSystem, FMOD_SPEAKERMODE_SRS5_1_MATRIX);
     }
 #endif
 
     // Initialize FMOD.
-    if ((result = fmodSystem->init(
-             50, FMOD_INIT_NORMAL | FMOD_INIT_3D_RIGHTHANDED | FMOD_INIT_CHANNEL_LOWPASS, 0)) !=
-        FMOD_OK)
+    if ((result = FMOD_System_Init(fmodSystem,
+                                   50,
+                                   FMOD_INIT_NORMAL |
+                                   FMOD_INIT_3D_RIGHTHANDED |
+                                   FMOD_INIT_CHANNEL_LOWPASS, 0)) != FMOD_OK)
     {
         LOGDEV_AUDIO_ERROR("FMOD init failed: (%d) %s") << result << FMOD_ErrorString(result);
-        fmodSystem->release();
+        FMOD_System_Release(fmodSystem);
         fmodSystem = 0;
         return false;
     }
@@ -212,21 +201,21 @@ static int DS_Init(void)
     settings.HRTFMaxAngle = 360;
     settings.HRTFMinAngle = 180;
     settings.HRTFFreq = 11000;
-    fmodSystem->setAdvancedSettings(&settings);
+    FMOD_System_SetAdvancedSettings(fmodSystem, &settings);
 
 #ifdef _DEBUG
     int numPlugins = 0;
-    fmodSystem->getNumPlugins(FMOD_PLUGINTYPE_CODEC, &numPlugins);
+    FMOD_System_GetNumPlugins(fmodSystem, FMOD_PLUGINTYPE_CODEC, &numPlugins);
     DSFMOD_TRACE("Plugins loaded: " << numPlugins);
     for (int i = 0; i < numPlugins; i++)
     {
         unsigned int handle;
-        fmodSystem->getPluginHandle(FMOD_PLUGINTYPE_CODEC, i, &handle);
+        FMOD_System_GetPluginHandle(fmodSystem, FMOD_PLUGINTYPE_CODEC, i, &handle);
 
         FMOD_PLUGINTYPE pType;
         char pName[100];
         unsigned int pVer = 0;
-        fmodSystem->getPluginInfo(handle, &pType, pName, sizeof(pName), &pVer);
+        FMOD_System_GetPluginInfo(fmodSystem, handle, &pType, pName, sizeof(pName), &pVer);
 
         DSFMOD_TRACE("Plugin " << i << ", handle " << handle << ": type " << pType
                      << ", name:'" << pName << "', ver:" << pVer);
@@ -246,7 +235,7 @@ static void DS_Shutdown(void)
     //DMFmod_CDAudio_Shutdown();
 
     DSFMOD_TRACE("DS_Shutdown.");
-    fmodSystem->release();
+    FMOD_System_Release(fmodSystem);
     fmodSystem = 0;
 }
 
@@ -261,7 +250,7 @@ static void DS_Event(int type)
     if (type == SFXEV_END)
     {
         // End of frame, do an update.
-        fmodSystem->update();
+        FMOD_System_Update(fmodSystem);
     }
 }
 

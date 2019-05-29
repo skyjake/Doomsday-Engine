@@ -52,14 +52,8 @@ typedef struct aabox_s {
     aabox_s() : minX(DDMAXINT), minY(DDMAXINT), maxX(DDMININT), maxY(DDMININT) {}
     aabox_s(int _minX, int _minY, int _maxX, int _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
 
-    aabox_s& operator = (aabox_s const& other)
-    {
-        minX = other.minX;
-        minY = other.minY;
-        maxX = other.maxX;
-        maxY = other.maxY;
-        return *this;
-    }
+    aabox_s(const aabox_s &) = default;
+    aabox_s &operator=(const aabox_s &) = default;
 
     aabox_s& clear()
     {
@@ -99,14 +93,8 @@ typedef struct aaboxf_s {
     aaboxf_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
     aaboxf_s(float _minX, float _minY, float _maxX, float _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
 
-    aaboxf_s& operator = (aaboxf_s const& other)
-    {
-        minX = other.minX;
-        minY = other.minY;
-        maxX = other.maxX;
-        maxY = other.maxY;
-        return *this;
-    }
+    aaboxf_s(const aaboxf_s &) = default;
+    aaboxf_s &operator=(const aaboxf_s &) = default;
 
     aaboxf_s& clear()
     {
@@ -146,15 +134,9 @@ typedef struct aaboxd_s {
     aaboxd_s() : minX(DDMAXFLOAT), minY(DDMAXFLOAT), maxX(DDMINFLOAT), maxY(DDMINFLOAT) {}
     aaboxd_s(double _minX, double _minY, double _maxX, double _maxY) : minX(_minX), minY(_minY), maxX(_maxX), maxY(_maxY) {}
 
-    aaboxd_s& operator = (aaboxd_s const& other)
-    {
-        minX = other.minX;
-        minY = other.minY;
-        maxX = other.maxX;
-        maxY = other.maxY;
-        return *this;
-    }
-
+    aaboxd_s(const aaboxd_s &) = default;
+    aaboxd_s &operator=(const aaboxd_s &) = default;
+    
     aaboxd_s& clear()
     {
         minX = minY = DDMAXFLOAT;

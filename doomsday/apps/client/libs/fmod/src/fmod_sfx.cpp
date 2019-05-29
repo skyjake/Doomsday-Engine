@@ -48,13 +48,13 @@
 #include <vector>
 #include <map>
 
-typedef std::map<FMOD::Sound*, sfxbuffer_t*> Streams;
+typedef std::map<FMOD_SOUND*, sfxbuffer_t*> Streams;
 typedef std::vector<char> RawSamplePCM8;
 
 struct BufferInfo
 {
-    FMOD::Channel* channel;
-    FMOD::Sound* sound;
+    FMOD_CHANNEL* channel;
+    FMOD_SOUND* sound;
     FMOD_MODE mode;
     float pan;
     float volume;
@@ -82,7 +82,7 @@ struct BufferInfo
             mode |=  FMOD_3D_WORLDRELATIVE;
             mode &= ~FMOD_3D_HEADRELATIVE;
         }
-        if (channel) channel->setMode(mode);
+        if (channel) FMOD_Channel_SetMode(channel, mode);
     }
 };
 
@@ -154,14 +154,14 @@ static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNELCONTROL *channelcontro
         return FMOD_OK;
     }
 
-    FMOD::Channel *channel = reinterpret_cast<FMOD::Channel *>(channelcontrol);
+    FMOD_CHANNEL *channel = reinterpret_cast<FMOD_CHANNEL *>(channelcontrol);
     sfxbuffer_t *buf = 0;
 
     switch (callbacktype)
     {
     case FMOD_CHANNELCONTROL_CALLBACK_END:
         // The sound has ended, mark the channel.
-        channel->getUserData(reinterpret_cast<void **>(&buf));
+        FMOD_Channel_GetUserData(channel, reinterpret_cast<void **>(&buf));
         if (buf)
         {
             LOGDEV_AUDIO_XVERBOSE("[FMOD] channelCallback: sfxbuffer %p stops", buf);
@@ -169,8 +169,8 @@ static FMOD_RESULT F_CALLBACK channelCallback(FMOD_CHANNELCONTROL *channelcontro
             // The channel becomes invalid after the sound stops.
             bufferInfo(buf).channel = 0;
         }
-        channel->setCallback(0);
-        channel->setUserData(0);
+        FMOD_Channel_SetCallback(channel, 0);
+        FMOD_Channel_SetUserData(channel, 0);
         break;
 
     default:
@@ -217,7 +217,7 @@ void fmod_DS_SFX_DestroyBuffer(sfxbuffer_t* buf)
     if (info.sound)
     {
         DE_GUARD(streams);
-        info.sound->release();
+        FMOD_Sound_Release(info.sound);
         streams.value.erase(info.sound);
     }
 
@@ -240,7 +240,7 @@ static void toSigned8bit(const unsigned char* source, int size, RawSamplePCM8& o
 
 static FMOD_RESULT F_CALLBACK pcmReadCallback(FMOD_SOUND* soundPtr, void* data, unsigned int datalen)
 {
-    FMOD::Sound *sound = reinterpret_cast<FMOD::Sound *>(soundPtr);
+    FMOD_SOUND *sound = reinterpret_cast<FMOD_SOUND *>(soundPtr);
 
     sfxbuffer_t *buf = nullptr;
     {
@@ -301,7 +301,7 @@ void fmod_DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     {
         DE_GUARD(streams);
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: Releasing buffer's old Sound %p", info.sound);
-        info.sound->release();
+        FMOD_Sound_Release(info.sound);
         streams.value.erase(info.sound);
     }
 
@@ -339,7 +339,7 @@ void fmod_DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
 
     // Pass the sample to FMOD.
     FMOD_RESULT result;
-    result = fmodSystem->createSound(sampleData, info.mode, &params, &info.sound);
+    result = FMOD_System_CreateSound(fmodSystem, sampleData, info.mode, &params, &info.sound);
     DSFMOD_ERRCHECK(result);
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Load: created Sound %p%s",
                           info.sound << (streaming? " as streaming" : ""));
@@ -360,7 +360,7 @@ void fmod_DS_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     // Check memory.
     int currentAlloced = 0;
     int maxAlloced = 0;
-    FMOD::Memory_GetStats(&currentAlloced, &maxAlloced, false);
+    FMOD_Memory_GetStats(&currentAlloced, &maxAlloced, false);
     DSFMOD_TRACE("SFX_Load: FMOD memory alloced:" << currentAlloced << ", max:" << maxAlloced);
 #endif
 
@@ -386,14 +386,14 @@ void fmod_DS_SFX_Reset(sfxbuffer_t* buf)
     {
         DE_GUARD(streams);
         LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Reset: releasing Sound %p", info.sound);
-        info.sound->release();
+        FMOD_Sound_Release(info.sound);
         streams.value.erase(info.sound);
     }
     if (info.channel)
     {
-        info.channel->setCallback(0);
-        info.channel->setUserData(0);
-        info.channel->setMute(true);
+        FMOD_Channel_SetCallback(info.channel, 0);
+        FMOD_Channel_SetUserData(info.channel, 0);
+        FMOD_Channel_SetMute(info.channel, true);
     }
     info = BufferInfo();
 }
@@ -408,31 +408,36 @@ void fmod_DS_SFX_Play(sfxbuffer_t* buf)
     assert(info.sound != 0);
 
     FMOD_RESULT result;
-    result = fmodSystem->playSound(info.sound, nullptr, true, &info.channel);
+    result = FMOD_System_PlaySound(fmodSystem,
+                                   info.sound,
+                                   nullptr,
+                                   true,
+                                   &info.channel);
     DSFMOD_ERRCHECK(result);
 
     if (!info.channel) return;
 
     // Set the properties of the sound.
-    info.channel->setPan(info.pan);
-    info.channel->setFrequency(float(buf->freq));
-    info.channel->setVolume(info.volume);
-    info.channel->setUserData(buf);
-    info.channel->setCallback(channelCallback);
+    FMOD_Channel_SetPan(info.channel, info.pan);
+    FMOD_Channel_SetFrequency(info.channel, float(buf->freq));
+    FMOD_Channel_SetVolume(info.channel, info.volume);
+    FMOD_Channel_SetUserData(info.channel, buf);
+    FMOD_Channel_SetCallback(info.channel, channelCallback);
     if (buf->flags & SFXBF_3D)
     {
         // 3D properties.
-        info.channel->set3DMinMaxDistance(info.minDistanceMeters,
-                                          info.maxDistanceMeters);
-        info.channel->set3DAttributes(&info.position, &info.velocity);
-        info.channel->setMode(info.mode);
+        FMOD_Channel_Set3DMinMaxDistance(info.channel,
+                                         info.minDistanceMeters,
+                                         info.maxDistanceMeters);
+        FMOD_Channel_Set3DAttributes(info.channel, &info.position, &info.velocity, 0);
+        FMOD_Channel_SetMode(info.channel, info.mode);
     }
 
     LOGDEV_AUDIO_XVERBOSE("[FMOD] SFX_Play: sfxbuffer %p, pan:%f, freq:%i, vol:%f, loop:%b",
             buf << info.pan << buf->freq << info.volume << ((buf->flags & SFXBF_REPEAT) != 0));
 
     // Start playing it.
-    info.channel->setPaused(false);
+    FMOD_Channel_SetPaused(info.channel, false);
 
     // The buffer is now playing.
     buf->flags |= SFXBF_PLAYING;
@@ -450,14 +455,14 @@ void fmod_DS_SFX_Stop(sfxbuffer_t* buf)
         Streams::iterator found = streams.value.find(info.sound);
         if (found != streams.value.end() && info.channel)
         {
-            info.channel->setPaused(true);
+            FMOD_Channel_SetPaused(info.channel, true);
         }
     }
     if (info.channel)
     {
-        info.channel->setUserData(0);
-        info.channel->setCallback(0);
-        info.channel->setMute(true);
+        FMOD_Channel_SetUserData(info.channel, 0);
+        FMOD_Channel_SetCallback(info.channel, 0);
+        FMOD_Channel_SetMute(info.channel, true);
         info.channel = 0;
     }
 
@@ -493,31 +498,33 @@ void fmod_DS_SFX_Set(sfxbuffer_t* buf, int prop, float value)
         if (FEQUAL(info.volume, value)) return; // No change.
         assert(value >= 0);
         info.volume = value;
-        if (info.channel) info.channel->setVolume(info.volume);
+        if (info.channel) FMOD_Channel_SetVolume(info.channel, info.volume);
         break;
 
     case SFXBP_FREQUENCY: {
         unsigned int newFreq = (unsigned int) (buf->rate * value);
         if (buf->freq == newFreq) return; // No change.
         buf->freq = newFreq;
-        if (info.channel) info.channel->setFrequency(float(buf->freq));
+        if (info.channel) FMOD_Channel_SetFrequency(info.channel, float(buf->freq));
         break; }
 
     case SFXBP_PAN:
         if (FEQUAL(info.pan, value)) return; // No change.
         info.pan = value;
-        if (info.channel) info.channel->setPan(info.pan);
+        if (info.channel) FMOD_Channel_SetPan(info.channel, info.pan);
         break;
 
     case SFXBP_MIN_DISTANCE:
         info.minDistanceMeters = value;
-        if (info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
+        if (info.channel) FMOD_Channel_Set3DMinMaxDistance(info.channel,
+                                                           info.minDistanceMeters,
                                                            info.maxDistanceMeters);
         break;
 
     case SFXBP_MAX_DISTANCE:
         info.maxDistanceMeters = value;
-        if (info.channel) info.channel->set3DMinMaxDistance(info.minDistanceMeters,
+        if (info.channel) FMOD_Channel_Set3DMinMaxDistance(info.channel,
+                                                           info.minDistanceMeters,
                                                            info.maxDistanceMeters);
         break;
 
@@ -549,12 +556,16 @@ void fmod_DS_SFX_Setv(sfxbuffer_t* buf, int prop, float* values)
     {
     case SFXBP_POSITION:
         info.position.set(values);
-        if (info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
+        if (info.channel)
+            FMOD_Channel_Set3DAttributes(info.channel, &info.position,
+                                         &info.velocity, 0);
         break;
 
     case SFXBP_VELOCITY:
         info.velocity.set(values);
-        if (info.channel) info.channel->set3DAttributes(&info.position, &info.velocity);
+        if (info.channel)
+            FMOD_Channel_Set3DAttributes(info.channel, &info.position,
+                                         &info.velocity, 0);
         break;
 
     default:
@@ -573,19 +584,20 @@ void fmod_DS_SFX_Listener(int prop, float value)
     {
     case SFXLP_UNITS_PER_METER:
         unitsPerMeter = value;
-        fmodSystem->set3DSettings(dopplerScale, unitsPerMeter, 1.0f);
+        FMOD_System_Set3DSettings(fmodSystem, dopplerScale, unitsPerMeter, 1.0f);
         DSFMOD_TRACE("SFX_Listener: Units per meter = " << unitsPerMeter);
         break;
 
     case SFXLP_DOPPLER:
         dopplerScale = value;
-        fmodSystem->set3DSettings(dopplerScale, unitsPerMeter, 1.0f);
+        FMOD_System_Set3DSettings(fmodSystem, dopplerScale, unitsPerMeter, 1.0f);
         DSFMOD_TRACE("SFX_Listener: Doppler factor = " << value);
         break;
 
     case SFXLP_UPDATE:
         // Update the properties set with Listenerv.
-        fmodSystem->set3DListenerAttributes(0, &listener.position, &listener.velocity,
+        FMOD_System_Set3DListenerAttributes(fmodSystem, 0,
+                                            &listener.position, &listener.velocity,
                                             &listener.front, &listener.up);
         break;
 
@@ -633,7 +645,7 @@ static void updateListenerEnvironmentSettings(float *reverb)
         reverb[SFXLP_REVERB_DECAY]  == 0 && reverb[SFXLP_REVERB_DAMPING] == 0)
     {
         FMOD_REVERB_PROPERTIES noReverb = FMOD_PRESET_OFF;
-        fmodSystem->setReverbProperties(0, &noReverb);
+        FMOD_System_SetReverbProperties(fmodSystem, 0, &noReverb);
         return;
     }
 
@@ -693,7 +705,7 @@ static void updateListenerEnvironmentSettings(float *reverb)
     // A slightly increased roll-off. (Not in FMOD?)
     //props.RoomRolloffFactor = 1.3f;
 
-    fmodSystem->setReverbProperties(0, &props);
+    FMOD_System_SetReverbProperties(fmodSystem, 0, &props);
 }
 
 /**

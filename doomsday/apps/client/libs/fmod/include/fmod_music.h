@@ -59,7 +59,7 @@ int     fmod_DM_Music_PlayFile(const char *filename, int looped);
 
 // Internal:
 void    fmod_Music_Shutdown(void);
-bool    fmod_Music_PlaySound(FMOD::Sound* customSound, bool needRelease);
+bool    fmod_Music_PlaySound(FMOD_SOUND *customSound, bool needRelease);
 void    fmod_Music_Pause(int setPause);
 void    fmod_Music_Stop(void);
 void    fmod_Music_Set(int prop, float value);

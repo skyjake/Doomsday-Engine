@@ -1,7 +1,7 @@
 /** @file processcheckdialog.cpp Dialog for checking running processes on Windows.
  * @ingroup updater
  *
- * @authors Copyright © 2012-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright © 2012-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -23,6 +23,7 @@
 
 //#include <QProcess>
 #include <de/CommandLine>
+#include <de/MessageDialog>
 #include <SDL_messagebox.h>
 
 using namespace de;
@@ -31,16 +32,16 @@ using namespace de;
 
 static bool isProcessRunning(char const *name)
 {
+    String result;
     CommandLine wmic;
     wmic << "wmic.exe" << "PROCESS" << "get" << "Caption";
-    if (!wmic.waitForStarted()) return false;
-    if (!wmic.waitForFinished()) return false;
-
-    QByteArray result = wmic.readAll();
-    for (QString p : QString(result).split("\n", QString::SkipEmptyParts))
+    if (wmic.executeAndWait(&result))
     {
-        if (!p.trimmed().compare(QLatin1String(name), Qt::CaseInsensitive))
-            return true;
+        for (String p : result.split("\n"))
+        {
+            if (!p.strip().compare(name, CaseInsensitive))
+                return true;
+        }
     }
     return false;
 }
@@ -57,8 +58,8 @@ dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
                                     processName));
 
         msg->buttons()
-                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, QObject::tr("Retry"))
-                << new DialogButtonItem(DialogWidget::Reject, QObject::tr("Ignore"));
+                << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default, "Retry")
+                << new DialogButtonItem(DialogWidget::Reject, "Ignore");
 
         // Show a notification dialog.
         if (!msg->exec(ClientWindow::main().root()))

@@ -203,6 +203,7 @@ String AudioDriver::statusAsText() const
     case Loaded:      return "Loaded";
     case Initialized: return "Initialized";
     }
+    return "";
 }
 
 void AudioDriver::load(String const &identifier)

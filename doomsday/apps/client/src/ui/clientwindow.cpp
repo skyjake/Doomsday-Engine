@@ -46,7 +46,6 @@
 #include <de/LogBuffer>
 #include <de/NotificationAreaWidget>
 #include <de/NumberValue>
-//#include <de/SignalAction>
 #include <de/VRWindowTransform>
 #include <de/legacy/concurrency.h>
 #include <doomsday/console/exec.h>
@@ -66,7 +65,6 @@
 #include "ui/inputsystem.h"
 #include "ui/clientwindowsystem.h"
 #include "CommandAction"
-#include "ui/mouse_qt.h"
 #include "dd_main.h"
 #include "render/vr.h"
 

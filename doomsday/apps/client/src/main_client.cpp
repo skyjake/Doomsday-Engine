@@ -46,6 +46,7 @@
 #include "dd_version.h"
 
 #include <de/EscapeParser>
+#include <SDL_main.h>
 #include <SDL_messagebox.h>
 
 #if defined (DE_STATIC_LINK)

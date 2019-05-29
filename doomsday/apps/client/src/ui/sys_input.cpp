@@ -28,11 +28,11 @@
 
 #include "sys_system.h"
 
-#include "ui/mouse_qt.h"  // portable
-#ifdef WIN32
-#  include "directinput.h"
-#  include "mouse_win32.h"
-#endif
+// #include "ui/mouse_qt.h"  // portable
+// #ifdef WIN32
+// #  include "directinput.h"
+// #  include "mouse_win32.h"
+// #endif
 
 #define EVBUFSIZE       64
 #define KEYBUFSIZE      32
