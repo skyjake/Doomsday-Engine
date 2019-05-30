@@ -35,6 +35,8 @@ public:
 
     SdlNativeFont &operator=(const SdlNativeFont &other);
 
+    static bool load(const Block &fontData);
+
 protected:
     void commit() const override;
 
