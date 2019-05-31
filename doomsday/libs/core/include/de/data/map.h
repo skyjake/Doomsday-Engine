@@ -43,6 +43,11 @@ public:
     using reverse_iterator       = typename Base::reverse_iterator;
     using const_reverse_iterator = typename Base::const_reverse_iterator;
 
+    using Base::begin;
+    using Base::end;
+    using Base::cbegin;
+    using Base::cend;
+
     inline bool isEmpty() const { return Base::empty(); }
     inline int  sizei() const { return int(Base::size()); }
 
