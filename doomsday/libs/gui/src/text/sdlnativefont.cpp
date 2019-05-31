@@ -20,27 +20,23 @@
 #include <SDL_ttf.h>
 #include <de/Map>
 #include <de/String>
+#include <de/ThreadLocal>
 
 namespace de {
 
 struct FontSpec
 {
-    String name;
+    String name; // family followed by style
     int    size;
-    int    ttfStyle; // bold or italic
 
     bool operator<(const FontSpec &other) const
     {
         const int c = name.compareWithoutCase(other.name);
         if (c == 0)
         {
-            if (size == other.size)
-            {
-                return cmp(ttfStyle, other.ttfStyle);
-            }
-            return cmp(size, other.size);
+            return cmp(size, other.size) < 0;
         }
-        return c;
+        return c < 0;
     }
 };
 
@@ -48,50 +44,70 @@ struct FontDeleter
 {
     void operator()(TTF_Font *font)
     {
+        debug("[SdlNativeFont] closing font %p", font);
         TTF_CloseFont(font);
     }
 };
 
-struct FontCache
+static String fontName(TTF_Font *font)
+{
+    const String familyName = TTF_FontFaceFamilyName(font);
+    const String styleName  = TTF_FontFaceStyleName(font);
+    String name = familyName;
+    if (styleName)
+    {
+        name += " ";
+        name += styleName;
+    }
+    return name;
+}
+    
+struct FontDatabase
 {
     Map<String, Block, String::InsensitiveLessThan> sourceData; // TrueType
-    Map<FontSpec, std::unique_ptr<TTF_Font, FontDeleter>> fonts; // loaded fonts
 
-    FontCache()
+    FontDatabase()
     {
         TTF_Init();
     }
-
-    ~FontCache()
-    {
-        fonts.clear();
-        TTF_Quit();
-    }
-
+    
     bool addSource(const Block &source)
     {
         const int size = 16;
         if (TTF_Font *font =
-                TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), 0, size))
+            TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), 0, size))
         {
-            const String familyName = TTF_FontFaceFamilyName(font);
-            fonts[{familyName, size, TTF_STYLE_NORMAL}].reset(font);
-            sourceData[familyName] = source;
+            sourceData[fontName(font)] = source;
             return true;
         }
         return false;
     }
-
-    TTF_Font *load(const String &family, int size, int ttfStyle)
+};
+    
+static FontDatabase fontDb;
+    
+struct FontCache // thread-local
+{
+    Map<FontSpec, std::unique_ptr<TTF_Font, FontDeleter>> fonts; // loaded fonts
+    
+    void insertFont(TTF_Font *font, int size)
     {
-        auto found = fonts.find({family, size, ttfStyle});
+        const String name = fontName(font);
+        debug("[SdlNativeFont] inserting font %p '%s' size:%d", font, name.c_str(), size);
+        fonts[{name, size}].reset(font);
+    }
+
+    TTF_Font *load(const String &name, int size)
+    {
+        auto found = fonts.find({name, size});
         if (found != fonts.end())
         {
             return found->second.get();
         }
-        auto data = sourceData.find(family);
-        if (data == sourceData.end())
+        auto data = fontDb.sourceData.find(name);
+        if (data == fontDb.sourceData.end())
         {
+            debug("[SdlNativeFont] no source data for '%s'", name.c_str());
             return nullptr;
         }
         TTF_Font *font = TTF_OpenFontRW(
@@ -99,25 +115,30 @@ struct FontCache
         DE_ASSERT(font != nullptr);
         if (!font)
         {
+            debug("[SdlNativeFont] failed to open '%s' size:%d", name.c_str(), size);
             return nullptr;
         }
-        TTF_SetFontStyle(font, ttfStyle);
-        fonts[{family, size, ttfStyle}].reset(font);
+        debug("[SdlNativeFont] loaded %p '%s' size:%d", font, name.c_str(), size);
+        fonts[{name, size}].reset(font);
         return font;
     }
 
     TTF_Font *getFont(const String &family, int size, NativeFont::Weight weight,
                       NativeFont::Style style)
     {
-        int ttfStyle = TTF_STYLE_NORMAL;
-        if (weight >= NativeFont::Bold) ttfStyle |= TTF_STYLE_BOLD;
-        if (style == NativeFont::Italic) ttfStyle |= TTF_STYLE_ITALIC;
-
-        return load(family, size, ttfStyle);
+        String name = family;
+        name += (weight == NativeFont::Normal ? " Regular"
+                 : weight >= NativeFont::Bold ? " Bold"
+                 : " Light");
+        if (style == NativeFont::Italic)
+        {
+            name += " Italic";
+        }
+        return load(name.c_str(), size);
     }
 };
 
-static FontCache s_fontCache;
+static ThreadLocal<FontCache> s_fontCache;
 
 DE_PIMPL(SdlNativeFont)
 {
@@ -141,10 +162,10 @@ DE_PIMPL(SdlNativeFont)
 
     void updateFontAndMetrics()
     {
-        font = s_fontCache.getFont(self().nativeFontName(),
-                                   de::roundi(self().size()),
-                                   NativeFont::Weight(self().weight()),
-                                   self().style());
+        font = s_fontCache.get().getFont(self().nativeFontName(),
+                                         de::roundi(self().size()),
+                                         NativeFont::Weight(self().weight()),
+                                         self().style());
         if (font)
         {
             height     = TTF_FontHeight(font);
@@ -212,13 +233,14 @@ Rectanglei SdlNativeFont::nativeFontMeasure(const String &text) const
     
 int SdlNativeFont::nativeFontWidth(const String &text) const
 {
-    if (d->font)
+    /*if (d->font)
     {
         int w = 0;
         TTF_SizeUTF8(d->font, text.c_str(), &w, nullptr);
         return w;
     }
-    return 0;
+    return 0;*/
+    return int(nativeFontMeasure(text).width());
 }    
 
 Image SdlNativeFont::nativeFontRasterize(const String &      text,
@@ -236,12 +258,12 @@ Image SdlNativeFont::nativeFontRasterize(const String &      text,
     {
         return {};
     }
+    DE_ASSERT(pal->w && pal->h);
     SDL_Surface *rgba = SDL_ConvertSurfaceFormat(pal, SDL_PIXELFORMAT_ABGR32, 0);
     SDL_FreeSurface(pal);
     SDL_LockSurface(rgba);
-    Image img(Image::Size(duint(rgba->w), duint(rgba->h)),
-              Image::RGBA_8888,
-              ByteRefArray(rgba->pixels, dsize(rgba->h * rgba->pitch)));
+    const Block pixels(rgba->pixels, dsize(rgba->h * rgba->pitch));
+    const Image img{{duint(rgba->w), duint(rgba->h)}, Image::RGBA_8888, pixels};
     SDL_UnlockSurface(rgba);
     SDL_FreeSurface(rgba);
     return img;
@@ -249,7 +271,7 @@ Image SdlNativeFont::nativeFontRasterize(const String &      text,
 
 bool SdlNativeFont::load(const Block &fontData) // static
 {
-    return s_fontCache.addSource(fontData);
+    return fontDb.addSource(fontData);
 }
 
 } // namespace de
