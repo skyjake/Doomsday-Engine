@@ -364,6 +364,13 @@ DE_PIMPL(Image)
         , pixels(imgPixels)
     {}
 
+    Impl(Public *i, const Size &imgSize, Format imgFormat, const Block &imgPixels)
+        : Base(i)
+        , format(imgFormat)
+        , size(imgSize)
+        , pixels(imgPixels)
+    {}
+
     Impl(Public *i, Size const &imgSize, Format imgFormat, ByteRefArray const &imgRefPixels)
         : Base(i)
         , format(imgFormat)
@@ -394,6 +401,10 @@ Image::Image(Size const &size, Format format)
     d->pixels.resize(stride() * size.y);
 }
 
+Image::Image(const Size &size, Format format, const Block &pixels)
+    : d(new Impl(this, size, format, pixels))
+{}
+    
 Image::Image(Size const &size, Format format, IByteArray const &pixels)
     : d(new Impl(this, size, format, pixels))
 {}

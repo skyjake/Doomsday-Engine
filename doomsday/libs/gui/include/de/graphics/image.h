@@ -140,8 +140,27 @@ public:
      * @param pixels  Pixel data.
      */
     Image(Size const &size, Format format, IByteArray const &pixels);
+    
+    /**
+     * Constructs an image.
+     *
+     * Note that Blocks use copy-on-write semantics, so only a reference to the data is held.
+     *
+     * @param size    Size of the image.
+     * @param format  Data format.
+     * @param pixels  Pixel data.
+     */
+    Image(const Size &size, Format format, const Block &pixels);
 
-    Image(Size const &size, Format format, ByteRefArray const &refPixels);
+    /**
+     * Constructs an image using pixels allocated and owned by someone else.
+     * No copy is made of the pixel data.
+     *
+     * @param size       Size of the image.
+     * @param format     Data format.
+     * @param refPixels  Pixel data. No copy is made.
+     */
+    Image(const Size &size, Format format, const ByteRefArray &refPixels);
 
     Image &operator=(const Image &);
     Image &operator=(Image &&);
