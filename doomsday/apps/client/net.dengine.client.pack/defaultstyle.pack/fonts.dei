@@ -19,13 +19,15 @@ script {
             fontStyles += ['Light', 'LightItalic']
         end
         for style in fontStyles
-            App.loadFont(fontDir / ("SourceSansPro-%s.ttf" % style))
+            App.loadFont(fontDir / ("Source Sans Pro/SourceSansPro-%s.ttf" % style))
         end
+        # Monospace font, too.
+        App.loadFont(fontDir / "Source Code Pro/SourceCodePro-Regular.ttf")
     end
 }
 
 group {
-    condition: Version.OS == 'windows'
+    condition: Version.OS in ['windows', 'macx']
 
     script { loadFonts() }
 
@@ -37,13 +39,13 @@ group {
     }
 
     font monospace inherits default {
-        family: Courier New
+        family: Source Code Pro
         size: 10pt
     }
 }
 
 group {
-    condition: Version.OS == 'macx' or Version.OS == 'ios'
+    condition: False #Version.OS == 'macx' or Version.OS == 'ios'
 
     script {
         # Define mappings for native font styles and weights.
@@ -118,11 +120,11 @@ font heading inherits title {
 }
 
 script {
-    if Version.OS == 'macx' or Version.OS == 'ios'
-        # Use the larger variant.
-        title.family   = "SF UI Display"
-        heading.family = "SF UI Display"
-    end
+    #if Version.OS in ['macx', 'ios']
+    #    # Use the larger variant.
+    #    title.family   = "SF UI Display"
+    #    heading.family = "SF UI Display"
+    #end
 }
 
 font small inherits default {
