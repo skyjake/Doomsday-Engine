@@ -17,10 +17,11 @@
  */
 
 #include "sdlnativefont.h"
-#include <SDL_ttf.h>
+#include "de/GuiApp"
 #include <de/Map>
 #include <de/String>
 #include <de/ThreadLocal>
+#include <SDL_ttf.h>
 
 namespace de {
 
@@ -127,13 +128,16 @@ struct FontCache // thread-local
                       NativeFont::Style style)
     {
         String name = family;
-        name += (weight == NativeFont::Normal ? " Regular"
-                 : weight >= NativeFont::Bold ? " Bold"
-                 : " Light");
-        if (style == NativeFont::Italic)
+        if (weight == NativeFont::Normal)
         {
-            name += " Italic";
+            name += (style == NativeFont::Italic ? " Italic" : " Regular");
         }
+        else
+        {
+            name += (weight >= NativeFont::Bold ? " Bold" : " Light");
+            if (style == NativeFont::Italic) name += " Italic";
+        }
+        size *= DE_GUI_APP->devicePixelRatio();
         return load(name.c_str(), size);
     }
 };
@@ -168,10 +172,12 @@ DE_PIMPL(SdlNativeFont)
                                          self().style());
         if (font)
         {
-            height     = TTF_FontHeight(font);
-            ascent     = TTF_FontAscent(font);
-            descent    = TTF_FontDescent(font);
-            lineHeight = TTF_FontLineSkip(font);
+            const float scale = DE_GUI_APP->devicePixelRatio();
+            
+            height     = TTF_FontHeight(font) * scale;
+            ascent     = TTF_FontAscent(font) * scale;
+            descent    = TTF_FontDescent(font) * scale;
+            lineHeight = TTF_FontLineSkip(font) * scale;
         }
         else
         {
@@ -233,13 +239,6 @@ Rectanglei SdlNativeFont::nativeFontMeasure(const String &text) const
     
 int SdlNativeFont::nativeFontWidth(const String &text) const
 {
-    /*if (d->font)
-    {
-        int w = 0;
-        TTF_SizeUTF8(d->font, text.c_str(), &w, nullptr);
-        return w;
-    }
-    return 0;*/
     return int(nativeFontMeasure(text).width());
 }    
 
@@ -252,21 +251,22 @@ Image SdlNativeFont::nativeFontRasterize(const String &      text,
     SDL_Surface *pal =
         TTF_RenderUTF8_Shaded(d->font,
                               text.c_str(),
-                              SDL_Color{foreground.x, foreground.y, foreground.z, foreground.w},
-                              SDL_Color{background.x, background.y, background.z, background.w});
+                              SDL_Color{255, 255, 255, 255},
+                              SDL_Color{000, 000, 000, 255});
     if (!pal)
     {
         return {};
     }
     DE_ASSERT(pal->w && pal->h);
-    SDL_Surface *rgba = SDL_ConvertSurfaceFormat(pal, SDL_PIXELFORMAT_ABGR32, 0);
+    SDL_Surface *rgba = SDL_ConvertSurfaceFormat(pal, SDL_PIXELFORMAT_RGBA32, 0);
     SDL_FreeSurface(pal);
     SDL_LockSurface(rgba);
     const Block pixels(rgba->pixels, dsize(rgba->h * rgba->pitch));
     const Image img{{duint(rgba->w), duint(rgba->h)}, Image::RGBA_8888, pixels};
     SDL_UnlockSurface(rgba);
     SDL_FreeSurface(rgba);
-    return img;
+    const int comps[4] = {0, 0, 0, 0}; // red channel used for blending each component
+    return img.mixed(background, foreground, comps);
 }
 
 bool SdlNativeFont::load(const Block &fontData) // static
