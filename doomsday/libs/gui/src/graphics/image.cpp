@@ -923,6 +923,36 @@ Image Image::mixed(Image const &low, Image const &high) const
     }
     return mix;
 }
+    
+Image Image::mixed(const Color &zero, const Color &one, const int componentIndices[4]) const
+{
+    static const int defaultIndices[] = { 0, 1, 2, 3 };
+    const int *comps = (componentIndices ? componentIndices : defaultIndices);
+    Image mix = convertToFormat(RGBA_8888);
+    for (duint y = 0; y < height(); ++y)
+    {
+        duint32 *ptr = mix.row32(y);
+        for (duint x = 0; x < width(); ++x)
+        {
+            const auto pix = unpackColor(*ptr);
+
+            const duint mr = pix[comps[0]];
+            const duint mg = pix[comps[1]];
+            const duint mb = pix[comps[2]];
+            const duint ma = pix[comps[3]];
+
+            int red   = (one.x * mr + zero.x * (255 - mr)) / 255;
+            int green = (one.y * mg + zero.y * (255 - mg)) / 255;
+            int blue  = (one.z * mb + zero.z * (255 - mb)) / 255;
+            int alpha = (one.w * ma + zero.w * (255 - ma)) / 255;
+            
+            *ptr = packColor(makeColor(red, green, blue, alpha));
+            
+            ptr++;
+        }
+    }
+    return mix;
+}
 
 Image Image::withAlpha(Image const &grayscale) const
 {

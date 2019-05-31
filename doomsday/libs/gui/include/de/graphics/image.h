@@ -262,7 +262,8 @@ public:
     Image multiplied(Color color) const;
     Image colorized(Color color) const;
     Image invertedColor() const;
-    Image mixed(Image const &low, Image const &high) const;
+    Image mixed(const Image &low, const Image &high) const;
+    Image mixed(const Color &zero, const Color &one, const int componentIndices[4] = nullptr) const;
     Image withAlpha(Image const &grayscale) const;
     Image rgbSwapped() const;
     Image flipped() const;
