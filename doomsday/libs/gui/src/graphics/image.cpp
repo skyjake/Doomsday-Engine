@@ -524,22 +524,18 @@ const dbyte *Image::bits() const
 
 dbyte *Image::bits()
 {
-//    if (d->format == UseQImageFormat)
-//    {
-//        return d->image.bits();
-//    }
     if (!d->pixels.isEmpty())
     {
         return d->pixels.data();
     }
     return reinterpret_cast<dbyte *>(d->refPixels.base());
-    }
+}
 
 const dbyte *Image::row(duint y) const
-    {
+{
     DE_ASSERT(y < height());
     return bits() + stride() * y;
-    }
+}
 
 dbyte *Image::row(duint y)
 {

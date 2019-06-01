@@ -277,8 +277,8 @@ Image SdlNativeFont::nativeFontRasterize(const String &      text,
     SDL_Surface *rgba = SDL_ConvertSurfaceFormat(pal, SDL_PIXELFORMAT_RGBA32, 0);
     SDL_FreeSurface(pal);
     SDL_LockSurface(rgba);
-    const Block pixels(rgba->pixels, dsize(rgba->h * rgba->pitch));
-    const Image img{{duint(rgba->w), duint(rgba->h)}, Image::RGBA_8888, pixels};
+    const Image img{{duint(rgba->w), duint(rgba->h)}, Image::RGBA_8888,
+                    Block(rgba->pixels, dsize(rgba->h * rgba->pitch))};
     SDL_UnlockSurface(rgba);
     SDL_FreeSurface(rgba);
     const int comps[4] = {0, 0, 0, 0}; // red channel used for blending each component
