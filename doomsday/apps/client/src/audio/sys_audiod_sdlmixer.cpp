@@ -329,7 +329,7 @@ void DS_SDLMixer_SFX_Load(sfxbuffer_t* buf, struct sfxsample_s* sample)
     *(Uint32 *) (conv + 40) = DD_ULONG(sample->size);
     memcpy(conv + 44, sample->data, sample->size);
 
-    buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), 1);
+    buf->ptr = Mix_LoadWAV_RW(SDL_RWFromMem(conv, 44 + sample->size), SDL_TRUE);
     if (!buf->ptr)
     {
         LOG_AS("DS_SDLMixer_SFX_Load");

@@ -75,7 +75,7 @@ struct FontDatabase
     bool addSource(const Block &source)
     {
         if (TTF_Font *font =
-            TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), 0, 16))
+            TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), SDL_TRUE, 16))
         {
             sourceData[fontName(font)] = source;
             TTF_CloseFont(font);
@@ -112,7 +112,7 @@ struct FontCache // thread-local
             return nullptr;
         }
         TTF_Font *font = TTF_OpenFontRW(
-            SDL_RWFromConstMem(data->second.data(), int(data->second.size())), 0, size);
+            SDL_RWFromConstMem(data->second.data(), int(data->second.size())), SDL_TRUE, size);
         DE_ASSERT(font != nullptr);
         if (!font)
         {
@@ -182,6 +182,22 @@ DE_PIMPL(SdlNativeFont)
             height = ascent = descent = lineHeight = 0;
         }
     }
+
+    String transform(const String &str) const
+    {
+        switch (self().transform())
+        {
+            case Uppercase:
+                return str.upper();
+                
+            case Lowercase:
+                return str.lower();
+                
+            default:
+                break;
+        }
+        return str;
+    }
 };
 
 SdlNativeFont::SdlNativeFont(const String &family)
@@ -229,7 +245,7 @@ Rectanglei SdlNativeFont::nativeFontMeasure(const String &text) const
     if (d->font)
     {
         Vec2i size;
-        TTF_SizeUTF8(d->font, text.c_str(), &size.x, &size.y);
+        TTF_SizeUTF8(d->font, d->transform(text).c_str(), &size.x, &size.y);
         Rectanglei rect{{}, size};
         rect.move({0, -d->ascent});
         return rect;
@@ -239,7 +255,7 @@ Rectanglei SdlNativeFont::nativeFontMeasure(const String &text) const
     
 int SdlNativeFont::nativeFontWidth(const String &text) const
 {
-    return int(nativeFontMeasure(text).width());
+    return int(nativeFontMeasure(d->transform(text)).width());
 }    
 
 Image SdlNativeFont::nativeFontRasterize(const String &      text,
@@ -250,7 +266,7 @@ Image SdlNativeFont::nativeFontRasterize(const String &      text,
 
     SDL_Surface *pal =
         TTF_RenderUTF8_Shaded(d->font,
-                              text.c_str(),
+                              d->transform(text).c_str(),
                               SDL_Color{255, 255, 255, 255},
                               SDL_Color{000, 000, 000, 255});
     if (!pal)
