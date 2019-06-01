@@ -22,7 +22,9 @@ script {
             App.loadFont(fontDir / ("Source Sans Pro/SourceSansPro-%s.ttf" % style))
         end
         # Monospace font, too.
-        App.loadFont(fontDir / "Source Code Pro/SourceCodePro-Regular.ttf")
+        for style in ['Regular', 'Bold']
+            App.loadFont(fontDir / ("Source Code Pro/SourceCodePro-%s.ttf" % style))
+        end
     end
 }
 
