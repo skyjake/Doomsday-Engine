@@ -133,7 +133,7 @@ Font const &FontBank::font(const DotPath &path) const
 
 void FontBank::setFontSizeFactor(float sizeFactor)
 {
-    // The overall UI scalefactor affects fonts.
+    // The overall UI scale factor affects fonts.
     d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f);
 
 #if defined (WIN32)

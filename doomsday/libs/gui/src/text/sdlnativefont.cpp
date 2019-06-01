@@ -17,7 +17,6 @@
  */
 
 #include "sdlnativefont.h"
-#include <de/GuiApp>
 #include <de/Map>
 #include <de/String>
 #include <de/ThreadLocal>
@@ -77,7 +76,11 @@ struct FontDatabase
         if (TTF_Font *font =
             TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), SDL_TRUE, 16))
         {
-            sourceData[fontName(font)] = source;
+            const String name = fontName(font);
+            if (!sourceData.contains(name))
+            {
+                sourceData[name] = source;
+            }
             TTF_CloseFont(font);
             return true;
         }
@@ -137,7 +140,6 @@ struct FontCache // thread-local
             name += (weight >= NativeFont::Bold ? " Bold" : " Light");
             if (style == NativeFont::Italic) name += " Italic";
         }
-        size *= DE_GUI_APP->devicePixelRatio();
         return load(name.c_str(), size);
     }
 };
@@ -167,7 +169,7 @@ DE_PIMPL(SdlNativeFont)
     void updateFontAndMetrics()
     {
         font = s_fontCache.get().getFont(self().nativeFontName(),
-                                         de::roundi(self().size()),
+                                         roundi(self().size()),
                                          NativeFont::Weight(self().weight()),
                                          self().style());
         if (font)

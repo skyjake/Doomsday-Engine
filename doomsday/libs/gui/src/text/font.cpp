@@ -88,23 +88,6 @@ DE_PIMPL(Font)
         updateMetrics();
     }
 
-#if 0
-    Impl(Public *i, QFont const &qfont) : Base(i), referenceFont(qfont)
-    {
-#if 0
-        // Development aid: list all available fonts and styles.
-        QFontDatabase db;
-        foreach (QString fam, db.families())
-        {
-            qDebug() << "FONT FAMILY:" << fam;
-            qDebug() << "\tStyles:" << db.styles(fam);
-        }
-#endif
-        createRules();
-        updateMetrics();
-    }
-#endif
-
     ~Impl()
     {
         fontsForThread.get().remove(thisPublic); // FIXME: not removed by all threads...
