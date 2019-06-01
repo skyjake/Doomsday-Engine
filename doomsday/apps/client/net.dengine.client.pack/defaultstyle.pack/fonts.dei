@@ -29,7 +29,7 @@ script {
 }
 
 group {
-    condition: Version.OS in ['windows', 'macx']
+    condition: Version.OS == 'windows'
 
     script { loadFonts() }
 
@@ -42,12 +42,30 @@ group {
 
     font monospace inherits default {
         family: Source Code Pro
-        size: 10pt
+        size: 9pt
     }
 }
 
 group {
-    condition: False #Version.OS == 'macx' or Version.OS == 'ios'
+    condition: Version.OS == 'unix'
+
+    script { loadFonts() }
+
+    font default {
+        family: Source Sans Pro
+        size $: gui.scale("12pt", DisplayMode.PIXEL_RATIO)
+        weight: normal
+        style: normal
+    }
+
+    font monospace inherits default {
+        family: Source Code Pro
+        size $: gui.scale("9pt", DisplayMode.PIXEL_RATIO)
+    }
+}
+
+group {
+    condition: Version.OS in ['macx', 'ios']
 
     script {
         # Define mappings for native font styles and weights.
@@ -66,7 +84,7 @@ group {
             ['italic',  75]: prefix + 'Text-BoldItalic'
         })
         App.addFontMapping("SF UI Display", {
-            ['regular', 25]: prefix + 'Display-Light',
+            ['regular', 25]: prefix + 'Display-Thin',
             ['regular', 50]: prefix + 'Display-Regular',
             ['regular', 75]: prefix + 'Display-Bold',
             ['italic',  25]: prefix + 'Text-LightItalic',    # Only non-italic available.
@@ -96,22 +114,6 @@ group {
     }
 }
 
-group {
-    condition: Version.OS == 'unix'
-
-    font default {
-        family: Liberation Sans
-        size $: gui.scale("13pt", DisplayMode.PIXEL_RATIO)
-        weight: normal
-        style: normal
-    }
-
-    font monospace inherits default {
-        family: FreeMono
-        size $: gui.scale("9pt", DisplayMode.PIXEL_RATIO)
-    }
-}
-
 font title inherits default {
     size $: gui.scale(self.size, 1.75)
     weight: light
@@ -122,11 +124,11 @@ font heading inherits title {
 }
 
 script {
-    #if Version.OS in ['macx', 'ios']
-    #    # Use the larger variant.
-    #    title.family   = "SF UI Display"
-    #    heading.family = "SF UI Display"
-    #end
+    if Version.OS in ['macx', 'ios']
+        # Use the larger variant.
+        title.family   = "SF UI Display"
+        heading.family = "SF UI Display"
+    end
 }
 
 font small inherits default {
