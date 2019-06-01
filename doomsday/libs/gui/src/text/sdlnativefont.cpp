@@ -17,7 +17,7 @@
  */
 
 #include "sdlnativefont.h"
-#include "de/GuiApp"
+#include <de/GuiApp>
 #include <de/Map>
 #include <de/String>
 #include <de/ThreadLocal>
@@ -74,11 +74,11 @@ struct FontDatabase
     
     bool addSource(const Block &source)
     {
-        const int size = 16;
         if (TTF_Font *font =
-            TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), 0, size))
+            TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), 0, 16))
         {
             sourceData[fontName(font)] = source;
+            TTF_CloseFont(font);
             return true;
         }
         return false;
@@ -91,12 +91,12 @@ struct FontCache // thread-local
 {
     Map<FontSpec, std::unique_ptr<TTF_Font, FontDeleter>> fonts; // loaded fonts
     
-    void insertFont(TTF_Font *font, int size)
-    {
-        const String name = fontName(font);
-        debug("[SdlNativeFont] inserting font %p '%s' size:%d", font, name.c_str(), size);
-        fonts[{name, size}].reset(font);
-    }
+//    void insertFont(TTF_Font *font, int size)
+//    {
+//        const String name = fontName(font);
+//        debug("[SdlNativeFont] inserting font %p '%s' size:%d", font, name.c_str(), size);
+//        fonts[{name, size}].reset(font);
+//    }
 
     TTF_Font *load(const String &name, int size)
     {
@@ -172,12 +172,10 @@ DE_PIMPL(SdlNativeFont)
                                          self().style());
         if (font)
         {
-            const float scale = DE_GUI_APP->devicePixelRatio();
-            
-            height     = TTF_FontHeight(font) * scale;
-            ascent     = TTF_FontAscent(font) * scale;
-            descent    = TTF_FontDescent(font) * scale;
-            lineHeight = TTF_FontLineSkip(font) * scale;
+            height     = TTF_FontHeight(font);
+            ascent     = TTF_FontAscent(font);
+            descent    = -TTF_FontDescent(font);
+            lineHeight = TTF_FontLineSkip(font);
         }
         else
         {
@@ -232,7 +230,9 @@ Rectanglei SdlNativeFont::nativeFontMeasure(const String &text) const
     {
         Vec2i size;
         TTF_SizeUTF8(d->font, text.c_str(), &size.x, &size.y);
-        return {{}, size};
+        Rectanglei rect{{}, size};
+        rect.move({0, -d->ascent});
+        return rect;
     }
     return {};
 }

@@ -394,6 +394,7 @@ Image Font::rasterize(RichFormatRef const &format,
 
         const String part = iter.range();
 
+        /*
 #ifdef WIN32
         // Kludge: No light-weight fonts available, so reduce opacity to give the
         // illusion of thinness.
@@ -407,6 +408,7 @@ Image Font::rasterize(RichFormatRef const &format,
                 fg.w *= .925f;
         }
 #endif
+         */
 
         Image fragment = font->rasterize(part, fg, bg);
         Rectanglei const bounds = font->measure(part);
@@ -439,7 +441,7 @@ Rule const &Font::lineSpacing() const
 
 bool Font::load(const Block &data) // static
 {
-    DE_ASSERT_FAIL("Font::load not implemented");
+    return SdlNativeFont::load(data);
 }
 
 //------------------------------------------------------------------------------------------------

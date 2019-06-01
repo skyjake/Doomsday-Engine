@@ -46,9 +46,9 @@
 #  define LIBGUI_PUBLIC DE_PUBLIC
 #endif
 
-#if defined(WIN32) || defined(MACOSX)
-#  define LIBGUI_ACCURATE_TEXT_BOUNDS
-#endif
+//#if defined(WIN32) || defined(MACOSX)
+#define LIBGUI_ACCURATE_TEXT_BOUNDS
+//#endif
 
 // Assertion specific to GL errors.
 #if 0 //|| defined(DE_X11) || defined(WIN32)
