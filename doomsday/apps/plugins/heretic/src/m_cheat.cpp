@@ -391,9 +391,7 @@ D_CMD(CheatReveal)
 
 D_CMD(CheatTake)
 {
-    DENG2_UNUSED(src);
-
-    if (G_GameState() != GS_MAP)
+    if (!common::GameSession::gameSession().hasBegun())
     {
         App_Log(DE2_SCR_ERROR, "Can only \"take\" when in a game!");
         return false;
@@ -426,8 +424,11 @@ D_CMD(CheatTake)
         if (player < 0 || player >= MAXPLAYERS) return false;
     }
 
-    if ((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
-        return false;
+    if (src != CMDS_SCRIPT)
+    {
+        if ((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
+            return false;
+    }
 
     plr = &players[player];
 
@@ -466,14 +467,12 @@ D_CMD(CheatTake)
 
 D_CMD(CheatGive)
 {
-    DENG2_UNUSED(src);
-
     char buf[100];
     int player = CONSOLEPLAYER;
     player_t *plr;
     size_t i, stuffLen;
 
-    if(G_GameState() != GS_MAP)
+    if (!common::GameSession::gameSession().hasBegun())
     {
         App_Log(DE2_SCR_ERROR, "Can only \"give\" when in a game!");
         return true;
@@ -512,8 +511,11 @@ D_CMD(CheatGive)
         return true;
     }
 
-    if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
-        return false;
+    if (src != CMDS_SCRIPT)
+    {
+        if((IS_NETGAME && !netSvAllowCheats) || gfw_Rule(skill) == SM_NIGHTMARE)
+            return false;
+    }
 
     plr = &players[player];
 
