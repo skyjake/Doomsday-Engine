@@ -75,9 +75,10 @@ target_link_libraries (libcore PUBLIC ${ZLIB_LIBRARIES} the_Foundation::the_Foun
 if (WIN32)
     # timeBeginPeriod, timeEndPeriod
     target_link_libraries (libcore PRIVATE winmm)
+    install (PROGRAMS ${the_Foundation_DIR}/../../lib_Foundation.dll
+             DESTINATION bin)
 endif ()
 deng_deploy_library (libcore DengCore)
-
 deng_cotire (libcore src/precompiled.h)
 
 if (DE_ENABLE_TESTS)

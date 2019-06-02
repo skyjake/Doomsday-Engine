@@ -124,6 +124,16 @@ endif ()
 
 deng_deploy_library (libgui DengGui)
 
+if (WIN32)
+    install (
+        PROGRAMS ${ASSIMP_ROOT_DIR}/bin/libassimp.dll
+                 ${glbinding_DIR}/libglbinding.dll
+                 ${glbinding_DIR}/libglbinding-aux.dll
+        DESTINATION bin
+        COMPONENT client
+    )
+endif ()
+
 # If Assimp is part of the build, ensure that it gets compiled before libgui.
 # if (TARGET assimp)
 #     add_dependencies (libgui assimp)
