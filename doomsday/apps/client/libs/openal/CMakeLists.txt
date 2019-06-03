@@ -25,7 +25,7 @@ if (OPENAL_FOUND)
     deng_add_extlib (audio_openal ${SOURCES})
     target_link_libraries (audio_openal PRIVATE ${OPENAL_LIBRARY})
 
-    if (WIN32)
+    if (WIN32 AND NOT MINGW)
         find_program (OPENAL_DLL OpenAL32.dll)
         mark_as_advanced (OPENAL_DLL)
         deng_install_library (${OPENAL_DLL})

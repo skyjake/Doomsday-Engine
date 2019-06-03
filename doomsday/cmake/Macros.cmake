@@ -775,6 +775,9 @@ macro (deng_install_library library)
             DESTINATION ${DE_INSTALL_PLUGIN_DIR}
             PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
         )
+    elseif (MINGW)
+        message (STATUS "Library will be installed: ${library}")
+        install (PROGRAMS ${library} DESTINATION bin)
     elseif (MSVC)
         message (STATUS "Library will be installed: ${library}")
         install (PROGRAMS ${library} DESTINATION ${DE_INSTALL_LIB_DIR})
