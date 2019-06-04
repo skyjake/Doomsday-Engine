@@ -43,6 +43,7 @@ DE_PIMPL_NOREF(DirectoryFeed)
 DirectoryFeed::DirectoryFeed(NativePath const &nativePath, Flags const &mode)
     : d(new Impl)
 {
+    debug("[DirectoryFeed] %s", nativePath.c_str());
     DE_ASSERT(!nativePath.toString().isEmpty());
     d->nativePath = nativePath;
     d->mode = mode;
@@ -94,8 +95,8 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
     tF::ref<iDirFileInfo> dirInfo(new_DirFileInfo(d->nativePath.toString()));
     iForEach(DirFileInfo, i, dirInfo)
     {
-        const String path = path_FileInfo(i.value);
-        const CString name = path.fileName();
+        const NativePath path(String(path_FileInfo(i.value)));
+        const String name = path.fileName();
 
         // Filter out some files.
         if (!d->mode.testFlag(PopulateNativeSubfolders) && isDirectory_FileInfo(i.value))

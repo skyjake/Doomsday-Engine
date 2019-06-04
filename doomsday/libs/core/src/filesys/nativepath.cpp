@@ -63,6 +63,7 @@ static String toNative(String const &s)
     // (hello//world), and self-references (".").
     String cleaned(s);
     clean_Path(cleaned.i_str());
+    DE_ASSERT(!strchr(cstr_String(s), '\r'));
     return Path::normalizeString(cleaned, DIR_SEPARATOR);
 }
 
@@ -296,12 +297,13 @@ NativePath NativePath::homePath()
 #if defined (UNIX)
     return getenv("HOME");
 #elif defined (WIN32)
-    return getenv("HOMEPATH");
+    return String(getenv("HOMEDRIVE")) + getenv("HOMEPATH");
 #endif
 }
 
 bool NativePath::exists(NativePath const &nativePath)
 {
+    DE_ASSERT(!nativePath.fileName().isEmpty());
     return fileExistsCStr_FileInfo(nativePath);
 }
 

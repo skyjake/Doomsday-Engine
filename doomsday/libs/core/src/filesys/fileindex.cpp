@@ -54,8 +54,9 @@ DE_PIMPL(FileIndex), public Lockable
     void add(File const &file)
     {
         DE_GUARD(this);
-
-        index.insert(std::pair<String, File *>(indexedName(file), const_cast<File *>(&file)));
+        const String name = indexedName(file);
+        DE_ASSERT(!name.isEmpty());
+        index.insert(std::pair<String, File *>(name, const_cast<File *>(&file)));
     }
 
     void remove(File const &file)

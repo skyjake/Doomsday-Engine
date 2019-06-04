@@ -81,7 +81,7 @@ while idx < len(sys.argv):
     elif opt == 'build':
         do_build = True
     else:
-        cfg['build_dir'] = opt
+        cfg['build_dir'] = os.path.abspath(opt)
     idx += 1
 
 if not do_build and show_help:

@@ -646,7 +646,7 @@ StringList PackageLoader::findAllPackages() const
 {
     StringList all;
     for (const char *typeName : {DE_TYPE_NAME(Folder),
-                                          DE_TYPE_NAME(ArchiveFolder),
+                                 DE_TYPE_NAME(ArchiveFolder),
                                  DE_TYPE_NAME(LinkFile)})
     {
         d->listPackagesInIndex(App::fileSystem().indexFor(typeName), all);

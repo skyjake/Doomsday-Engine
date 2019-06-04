@@ -573,6 +573,7 @@ String Path::normalizeString(String const &text, Char replaceWith)
     {
         result.replace('\\', replaceWith);
     }
+    DE_ASSERT(!strchr(result, '\r'));
     return result;
 }
 
@@ -711,7 +712,7 @@ static int Path_UnitTest()
             DE_ASSERT(b.segment(1).toString() == "variable");
         }
 
-        // Test fileName().
+        // .
         {
             Path p;
             Path a("hello");
