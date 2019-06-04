@@ -38,12 +38,12 @@ DE_PIMPL_NOREF(Variable)
     String name;
 
     /// Value of the variable.
-    Value *value;
+    Value *value = nullptr;
 
     /// Mode flags.
     Flags flags;
 
-    Impl() : value(nullptr) {}
+    Impl() = default;
 
     Impl(Impl const &other)
         : de::IPrivate()
@@ -69,25 +69,19 @@ DE_AUDIENCE_METHOD(Variable, ChangeFrom)
 Variable::Variable(const String &name, Value *initial, Flags const &m)
     : d(new Impl)
 {
+    std::unique_ptr<Value> v(initial);
     d->name = name;
     d->flags = m;
-
-    std::unique_ptr<Value> v(initial);
-    if (!initial)
-    {
-        v.reset(new NoneValue);
-    }
     verifyName(d->name);
     if (initial)
     {
         verifyValid(*v);
+        d->value = v.release();
     }
-    d->value = v.release();
 }
 
 Variable::Variable(Variable const &other)
-    : ISerializable()
-    , d(new Impl(*other.d))
+    : d(new Impl(*other.d))
 {}
 
 Variable::~Variable()
@@ -144,7 +138,13 @@ Variable &Variable::set(Value *v)
         if (notify)
         {
             DE_FOR_AUDIENCE2(Change,     i) i->variableValueChanged(*this, *d->value);
-            DE_FOR_AUDIENCE2(ChangeFrom, i) i->variableValueChangedFrom(*this, *oldValue, *d->value);
+            DE_FOR_AUDIENCE2(ChangeFrom, i)
+            {
+                i->variableValueChangedFrom(
+                    *this,
+                    oldValue ? *oldValue : static_cast<const Value &>(NoneValue::none()),
+                    *d->value);
+            }
         }
     }
     return *this;
@@ -156,25 +156,32 @@ Variable &Variable::set(Value const &v)
     return *this;
 }
 
-Value const &Variable::value() const
+const Value &Variable::value() const
 {
-    DE_ASSERT(d->value);
+    if (!d->value) return NoneValue::none();
     return *d->value;
 }
 
 Value &Variable::value()
 {
-    DE_ASSERT(d->value);
-    return *d->value;
+    return *valuePtr();
 }
 
 Value *Variable::valuePtr()
 {
+    if (!d->value)
+    {
+        d->value = new NoneValue;
+    }
     return d->value;
 }
 
-Value const *Variable::valuePtr() const
+const Value *Variable::valuePtr() const
 {
+    if (!d->value)
+    {
+        return &NoneValue::none();
+    }
     return d->value;
 }
 
@@ -270,7 +277,7 @@ void Variable::verifyWritable(Value const &attemptedNewValue)
 {
     if (d->flags & ReadOnly)
     {
-        Value const &currentValue = *d->value;
+        const Value *currentValue = d->value;
         if (d->value && typeid(currentValue) == typeid(attemptedNewValue) &&
            !d->value->compare(attemptedNewValue))
         {
@@ -297,7 +304,7 @@ void Variable::operator >> (Writer &to) const
 {
     if (!(d->flags & NoSerialize))
     {
-        to << d->name << duint32(d->flags) << *d->value;
+        to << d->name << duint32(d->flags) << value();
     }
 }
 
@@ -311,10 +318,9 @@ void Variable::operator << (Reader &from)
     {
         d->value = Value::constructFrom(from);
     }
-    catch (Error const &)
+    catch (...)
     {
-        // Always need to have a value.
-        d->value = new NoneValue();
+        d->value = nullptr;
         throw;
     }
 }

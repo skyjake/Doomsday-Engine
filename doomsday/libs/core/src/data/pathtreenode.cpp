@@ -33,15 +33,19 @@ DE_PIMPL_NOREF(PathTree::Node)
     /// @c NULL for leaves, index of children for branches.
     Node::Children *children;
 
+    const String segmentText;
+
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
-    SegmentId segmentId;
+//    SegmentId segmentId;
 
-    String const *segmentText = nullptr; // owned by the PathTree
+//    String const *segmentText = nullptr; // owned by the PathTree
 
-    Impl(PathTree &_tree, bool isLeaf, SegmentId _segmentId,
-             Node *_parent)
-        : tree(_tree), parent(_parent), children(0), segmentId(_segmentId)
+    Impl(PathTree & _tree, bool isLeaf, const CString &segment, Node *_parent)
+        : tree(_tree)
+        , parent(_parent)
+        , children(0)
+        , segmentText(segment)
     {
         if (!isLeaf) children = new Node::Children;
     }
@@ -51,15 +55,15 @@ DE_PIMPL_NOREF(PathTree::Node)
         delete children;
     }
 
-    void cacheSegmentText()
-    {
-        segmentText = &tree.segmentName(segmentId);
-    }
+//    void cacheSegmentText()
+//    {
+//        segmentText = &tree.segmentName(segmentId);
+//    }
 };
 
 PathTree::Node::Node(NodeArgs const &args) : d(nullptr)
 {
-    d.reset(new Impl(args.tree, args.type == Leaf, args.segmentId, args.parent));
+    d.reset(new Impl(args.tree, args.type == Leaf, args.segment, args.parent));
 
     // Let the parent know of the new child node.
     if (d->parent) d->parent->addChild(*this);
@@ -106,16 +110,16 @@ bool PathTree::Node::isAtRootLevel() const
     return d->parent == &d->tree.rootBranch();
 }
 
-PathTree::SegmentId PathTree::Node::segmentId() const
-{
-    return d->segmentId;
-}
+//PathTree::SegmentId PathTree::Node::segmentId() const
+//{
+//    return d->segmentId;
+//}
 
 void PathTree::Node::addChild(Node &node)
 {
     DE_ASSERT(d->children != 0);
 
-    childNodes(node.type()).insert(std::make_pair(node.hash(), &node));
+    childNodes(node.type()).insert(std::make_pair(node.name(), &node));
 }
 
 void PathTree::Node::removeChild(Node &node)
@@ -123,7 +127,7 @@ void PathTree::Node::removeChild(Node &node)
     DE_ASSERT(d->children != 0);
 
     auto &hash = childNodes(node.type());
-    auto found = hash.equal_range(node.hash());
+    auto found = hash.equal_range(node.name());
     for (auto i = found.first; i != found.second; ++i)
     {
         if (i->second == &node)
@@ -134,22 +138,22 @@ void PathTree::Node::removeChild(Node &node)
     }
 }
 
-String const &PathTree::Node::name() const
+const String &PathTree::Node::name() const
 {
-    if (!d->segmentText)
-    {
-        // Cache the string, because PathTree::segmentName() locks the tree and that has
-        // performance implications. The segment text string will not change while the
-        // node exists.
-        d->cacheSegmentText();
-    }
-    return *d->segmentText;
+//    if (!d->segmentText)
+//    {
+//        // Cache the string, because PathTree::segmentName() locks the tree and that has
+//        // performance implications. The segment text string will not change while the
+//        // node exists.
+//        d->cacheSegmentText();
+//    }
+    return d->segmentText;
 }
 
-Path::hash_type PathTree::Node::hash() const
+/*Path::hash_type PathTree::Node::hash() const
 {
     return tree().segmentHash(d->segmentId);
-}
+}*/
 
 /// @todo This logic should be encapsulated in de::Path or de::Path::Segment.
 static int matchName(const CString &string, const CString &pattern)
@@ -213,10 +217,10 @@ int PathTree::Node::comparePath(Path const &searchPattern, ComparisonFlags flags
         if (!snode->hasWildCard())
         {
             // If the hashes don't match it can't possibly be this.
-            if (snode->hash() != node->hash())
-            {
-                return 1;
-            }
+//            if (snode->hash() != node->hash())
+//            {
+//                return 1;
+//            }
             if (node->name().compare(*snode, CaseInsensitive))
             {
                 return 1;

@@ -64,9 +64,11 @@ DE_PIMPL(IdgamesLink)
     {
         if (entry.name().fileNameExtension() == DE_STR(".zip"))
         {
-            Path const path = entry.path();
-            String id = DataBundle::cleanIdentifier(path.fileName().fileNameWithoutExtension()) +
-                        "_" + DataBundle::versionFromTimestamp(entry.modTime);
+            const Path path = entry.path();
+
+            String id =
+                DataBundle::cleanIdentifier(String(path.fileName()).fileNameWithoutExtension()) +
+                "_" + DataBundle::versionFromTimestamp(entry.modTime);
 
             // Remove the hour:minute part.
             id.truncate(id.sizeb() - 5);

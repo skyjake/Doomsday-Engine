@@ -1394,9 +1394,8 @@ List<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrParti
     NativePath const searchPath = NativePath(fileNameOrPartialNativePath).expand();
 
     FS::FoundFiles found;
-    FS::get().findAllOfTypes({DE_TYPE_NAME(DataFile),
-                              DE_TYPE_NAME(DataFolder) },
-                             searchPath.fileName().lower(), found);
+    FS::get().findAllOfTypes(
+        {DE_TYPE_NAME(DataFile), DE_TYPE_NAME(DataFolder)}, searchPath.fileName(), found);
     List<DataBundle const *> bundles;
     for (auto const *f : found)
     {

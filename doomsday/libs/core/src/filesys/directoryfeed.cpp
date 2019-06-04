@@ -346,7 +346,7 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
     // identifier would not be the same.
 
     if (parentFolder.extension() != ".pack" &&
-        nativePath.fileName().fileNameExtension() == ".pack")
+        String(nativePath.fileName()).fileNameExtension() == ".pack")
     {
         // Extract the portion of the path containing the parent .packs.
         int const last = nativePath.segmentCount() - 1;

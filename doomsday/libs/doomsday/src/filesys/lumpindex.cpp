@@ -245,28 +245,28 @@ LumpIndex::Id1MapRecognizer::DataType LumpIndex::Id1MapRecognizer::typeForLumpNa
 {
     static const Hash<String, DataType> lumpTypeInfo
     {
-        std::make_pair(String("THINGS"),   ThingData      ),
-        std::make_pair(String("LINEDEFS"), LineDefData    ),
-        std::make_pair(String("SIDEDEFS"), SideDefData    ),
-        std::make_pair(String("VERTEXES"), VertexData     ),
-        std::make_pair(String("SEGS"),     SegData        ),
-        std::make_pair(String("SSECTORS"), SubsectorData  ),
-        std::make_pair(String("NODES"),    NodeData       ),
-        std::make_pair(String("SECTORS"),  SectorDefData  ),
-        std::make_pair(String("REJECT"),   RejectData     ),
-        std::make_pair(String("BLOCKMAP"), BlockmapData   ),
-        std::make_pair(String("BEHAVIOR"), BehaviorData   ),
-        std::make_pair(String("SCRIPTS"),  ScriptData     ),
-        std::make_pair(String("LIGHTS"),   TintColorData  ),
-        std::make_pair(String("MACROS"),   MacroData      ),
-        std::make_pair(String("LEAFS"),    LeafData       ),
-        std::make_pair(String("GL_VERT"),  GLVertexData   ),
-        std::make_pair(String("GL_SEGS"),  GLSegData      ),
-        std::make_pair(String("GL_SSECT"), GLSubsectorData),
-        std::make_pair(String("GL_NODES"), GLNodeData     ),
-        std::make_pair(String("GL_PVS"),   GLPVSData      ),
-        std::make_pair(String("TEXTMAP"),  UDMFTextmapData),
-        std::make_pair(String("ENDMAP"),   UDMFEndmapData ),
+        {String("THINGS"),   ThingData      },
+        {String("LINEDEFS"), LineDefData    },
+        {String("SIDEDEFS"), SideDefData    },
+        {String("VERTEXES"), VertexData     },
+        {String("SEGS"),     SegData        },
+        {String("SSECTORS"), SubsectorData  },
+        {String("NODES"),    NodeData       },
+        {String("SECTORS"),  SectorDefData  },
+        {String("REJECT"),   RejectData     },
+        {String("BLOCKMAP"), BlockmapData   },
+        {String("BEHAVIOR"), BehaviorData   },
+        {String("SCRIPTS"),  ScriptData     },
+        {String("LIGHTS"),   TintColorData  },
+        {String("MACROS"),   MacroData      },
+        {String("LEAFS"),    LeafData       },
+        {String("GL_VERT"),  GLVertexData   },
+        {String("GL_SEGS"),  GLSegData      },
+        {String("GL_SSECT"), GLSubsectorData},
+        {String("GL_NODES"), GLNodeData     },
+        {String("GL_PVS"),   GLPVSData      },
+        {String("TEXTMAP"),  UDMFTextmapData},
+        {String("ENDMAP"),   UDMFEndmapData },
     };
 
     // Ignore the file extension if present.
@@ -319,6 +319,12 @@ dsize LumpIndex::Id1MapRecognizer::elementSizeForDataType(Format mapFormat, Data
     }
 }
 
+static uint32_t segmentHash(const CString &segment)
+{
+    static const uint32_t hashRange = 0xffffffff;
+    return de::crc32(segment.lower()) % hashRange;
+}
+
 DE_PIMPL(LumpIndex)
 {
     bool pathsAreUnique;
@@ -362,7 +368,7 @@ DE_PIMPL(LumpIndex)
         {
             File1 const &lump          = *(lumps[i]);
             PathTree::Node const &node = lump.directoryNode();
-            ushort k = node.hash() % (unsigned)numElements;
+            ushort k = segmentHash(node.name()) % (unsigned)numElements;
 
             (*lumpsByPath)[i].nextInLoadOrder = (*lumpsByPath)[k].head;
             (*lumpsByPath)[k].head = i;
@@ -625,7 +631,7 @@ int LumpIndex::findAll(Path const &path, FoundIndices &found) const
 
     // Perform the search.
     DE_ASSERT(d->lumpsByPath);
-    auto hash = ushort(path.lastSegment().hash() % d->lumpsByPath->size());
+    auto hash = ushort(segmentHash(path.lastSegment()) % d->lumpsByPath->size());
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
@@ -650,7 +656,7 @@ lumpnum_t LumpIndex::findLast(Path const &path) const
 
     // Perform the search.
     DE_ASSERT(d->lumpsByPath);
-    ushort hash = path.lastSegment().hash() % d->lumpsByPath->size();
+    ushort hash = ushort(segmentHash(path.lastSegment()) % d->lumpsByPath->size());
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
         idx = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {
@@ -677,7 +683,7 @@ lumpnum_t LumpIndex::findFirst(Path const &path) const
 
     // Perform the search.
     DE_ASSERT(d->lumpsByPath);
-    auto hash = ushort(path.lastSegment().hash() % d->lumpsByPath->size());
+    auto hash = ushort(segmentHash(path.lastSegment()) % d->lumpsByPath->size());
     for (int idx = (*d->lumpsByPath)[hash].head; idx != -1;
          idx     = (*d->lumpsByPath)[idx].nextInLoadOrder)
     {

@@ -25,14 +25,14 @@
 
 namespace de {
 
-Path::hash_type const PathTree::no_hash = Path::hash_range;
+//Path::hash_type const PathTree::no_hash = Path::hash_range;
 
 struct PathTree::Impl
 {
     PathTree &self;
 
     /// Path name segment intern pool.
-    StringPool segments;
+//    StringPool segments;
 
     /// Flags that determine the properties of the path tree (see PathTree::Flag).
     Flags flags;
@@ -48,9 +48,12 @@ struct PathTree::Impl
     /// Path node hashes (leaves and branches).
     NodeHash hash;
 
-    Impl(PathTree &d, int _flags)
-        : self(d), flags(_flags), size(0), numNodesOwned(0),
-          rootNode(NodeArgs(d, Branch, 0))
+    Impl(PathTree &d, Flags _flags)
+        : self(d)
+        , flags(_flags)
+        , size(0)
+        , numNodesOwned(0)
+        , rootNode(NodeArgs(d, Branch, 0))
     {}
 
     ~Impl()
@@ -67,12 +70,12 @@ struct PathTree::Impl
         DE_ASSERT(numNodesOwned == 0);
     }
 
-    SegmentId internSegmentAndUpdateIdHashMap(const String &segment, Path::hash_type hashKey)
-    {
-        SegmentId internId = segments.intern(segment);
-        segments.setUserValue(internId, hashKey);
-        return internId;
-    }
+//    SegmentId internSegmentAndUpdateIdHashMap(const String &segment, Path::hash_type hashKey)
+//    {
+//        SegmentId internId = segments.intern(segment);
+//        segments.setUserValue(internId, hashKey);
+//        return internId;
+//    }
 
     /**
      * @return Tree node that matches the name and type and which has the
@@ -85,16 +88,16 @@ struct PathTree::Impl
         const String segmentStr = segment.toString();
 
         // Have we already encountered this?
-        SegmentId segmentId = segments.isInterned(segmentStr);
-        if (segmentId)
+//        SegmentId segmentId = segments.isInterned(segmentStr);
+//        if (segmentId)
         {
             // The name is known. Perhaps we have.
-            Path::hash_type hashKey = segments.userValue(segmentId);
-            const auto found = hash.equal_range(hashKey);
+//            Path::hash_type hashKey = segments.userValue(segmentId);
+            const auto found = hash.equal_range(segmentStr);
             for (auto i = found.first; i != found.second; ++i)
             {
                 Node *node = i->second;
-                if (parent != &node->parent() || segmentId != node->segmentId())
+                if (parent != &node->parent()) // || segmentId != node->segmentId())
                 {
                     continue;
                 }
@@ -110,21 +113,21 @@ struct PathTree::Impl
          */
 
         // Do we need a new identifier (and hash)?
-        Path::hash_type hashKey;
-        if (!segmentId)
-        {
-            hashKey   = segment.hash();
-            segmentId = internSegmentAndUpdateIdHashMap(segmentStr, hashKey);
-        }
-        else
-        {
-            hashKey = self.segmentHash(segmentId);
-        }
+//        Path::hash_type hashKey;
+//        if (!segmentId)
+//        {
+//            hashKey   = segment.hash();
+//            segmentId = internSegmentAndUpdateIdHashMap(segmentStr, hashKey);
+//        }
+//        else
+//        {
+//            hashKey = self.segmentHash(segmentId);
+//        }
 
-        Node *node = self.newNode(NodeArgs(self, nodeType, segmentId, parent));
+        Node *node = self.newNode(NodeArgs(self, nodeType, segment, parent));
 
         // Insert the new node into the hash.
-        const_cast<Nodes &>(hash).insert(std::make_pair(hashKey, node));
+        const_cast<Nodes &>(hash).insert(std::make_pair(segmentStr, node));
 
         numNodesOwned++;
 
@@ -158,11 +161,11 @@ struct PathTree::Impl
         return node;
     }
 
-    Node *findInHash(Nodes &hash, Path::hash_type hashKey,
+    Node *findInHash(Nodes &hash, const String &segmentStr, //Path::hash_type hashKey,
                                Path const &searchPath,
                                ComparisonFlags compFlags)
     {
-        auto found = hash.equal_range(hashKey);
+        auto found = hash.equal_range(segmentStr);
         for (auto i = found.first; i != found.second; ++i)
         {
             Node *node = i->second;
@@ -193,17 +196,18 @@ struct PathTree::Impl
         Node *found = 0;
         if (size)
         {
-            Path::hash_type hashKey = searchPath.lastSegment().hash();
+            //Path::hash_type hashKey = searchPath.lastSegment().hash();
+            const String segmentStr = searchPath.lastSegment().toString();
 
             if (!compFlags.testFlag(NoLeaf))
             {
-                if ((found = findInHash(hash.leaves, hashKey, searchPath, compFlags)) != 0)
+                if ((found = findInHash(hash.leaves, segmentStr, searchPath, compFlags)) != 0)
                     return found;
             }
 
             if (!compFlags.testFlag(NoBranch))
             {
-                if ((found = findInHash(hash.branches, hashKey, searchPath, compFlags)) != 0)
+                if ((found = findInHash(hash.branches, segmentStr, searchPath, compFlags)) != 0)
                     return found;
             }
         }
@@ -340,19 +344,19 @@ PathTree::Node *PathTree::tryFind(Path const &path, ComparisonFlags flags)
     return d->find(path, flags);
 }
 
-String const &PathTree::segmentName(SegmentId segmentId) const
-{
-    DE_GUARD(this);
+//String const &PathTree::segmentName(SegmentId segmentId) const
+//{
+//    DE_GUARD(this);
 
-    return d->segments.stringRef(segmentId);
-}
+//    return d->segments.stringRef(segmentId);
+//}
 
-Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
-{
-    DE_GUARD(this);
+//Path::hash_type PathTree::segmentHash(SegmentId segmentId) const
+//{
+//    DE_GUARD(this);
 
-    return d->segments.userValue(segmentId);
-}
+//    return d->segments.userValue(segmentId);
+//}
 
 PathTree::Node const &PathTree::rootBranch() const
 {
@@ -398,7 +402,7 @@ int PathTree::findAllPaths(FoundPaths &found, ComparisonFlags flags, Char separa
     return found.size() - numFoundSoFar;
 }
 
-static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
+static int iteratePathsInHash(PathTree const &pathTree, //Path::hash_type hashKey,
                               PathTree::NodeType type, PathTree::ComparisonFlags flags,
                               PathTree::Node const *parent,
                               int (*callback) (PathTree::Node &, void *), void *parameters)
@@ -410,20 +414,20 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
                                                                          : pathTree.nodes(type));
 
     // Are we iterating nodes with a known hash?
-    if (hashKey != PathTree::no_hash)
-    {
-        // Yes.
-        auto found = nodes.equal_range(hashKey);
-        for (auto i = found.first; i != found.second; ++i)
-        {
-            if (!(flags.testFlag(PathTree::MatchParent) && parent != &i->second->parent()))
-            {
-                result = callback(*i->second, parameters);
-                if (result) break;
-            }
-        }
-    }
-    else
+//    if (hashKey != PathTree::no_hash)
+//    {
+//        // Yes.
+//        auto found = nodes.equal_range(hashKey);
+//        for (auto i = found.first; i != found.second; ++i)
+//        {
+//            if (!(flags.testFlag(PathTree::MatchParent) && parent != &i->second->parent()))
+//            {
+//                result = callback(*i->second, parameters);
+//                if (result) break;
+//            }
+//        }
+//    }
+//    else
     {
         // No known hash -- iterate all potential nodes.
         for (auto &i : nodes)
@@ -438,7 +442,7 @@ static int iteratePathsInHash(PathTree const &pathTree, Path::hash_type hashKey,
     return result;
 }
 
-int PathTree::traverse(ComparisonFlags flags, Node const *parent, Path::hash_type hashKey,
+int PathTree::traverse(ComparisonFlags flags, Node const *parent,
                        int (*callback) (Node &, void *), void *parameters) const
 {
     DE_GUARD(this);
@@ -447,10 +451,10 @@ int PathTree::traverse(ComparisonFlags flags, Node const *parent, Path::hash_typ
     if (callback)
     {
         if (!(flags & NoLeaf))
-            result = iteratePathsInHash(*this, hashKey, Leaf, flags, parent, callback, parameters);
+            result = iteratePathsInHash(*this, Leaf, flags, parent, callback, parameters);
 
         if (!result && !(flags & NoBranch))
-            result = iteratePathsInHash(*this, hashKey, Branch, flags, parent, callback, parameters);
+            result = iteratePathsInHash(*this, Branch, flags, parent, callback, parameters);
     }
     return result;
 }

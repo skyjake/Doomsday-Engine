@@ -720,8 +720,11 @@ DE_PIMPL(ClientResources)
             // The "first choice" directory is that in which the model file resides.
             try
             {
-                return fileSys().findPath(res::Uri("Models", modelFilePath.toString().fileNamePath() / skinPath.fileName()),
-                                          RLF_DEFAULT, self().resClass(RC_GRAPHIC));
+                return fileSys().findPath(
+                    res::Uri("Models",
+                             modelFilePath.toString().fileNamePath() / skinPath.fileName()),
+                    RLF_DEFAULT,
+                    self().resClass(RC_GRAPHIC));
             }
             catch (FS1::NotFoundError const &)
             {}  // Ignore this error.

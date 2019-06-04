@@ -52,10 +52,10 @@ public:
     DE_ERROR(OutOfBoundsError);
 
     /// Type used to represent a path segment hash key.
-    typedef duint32 hash_type;
+//    typedef duint32 hash_type;
 
     /// Range of a path segment hash key; [0..hash_range)
-    static hash_type const hash_range;
+//    static hash_type const hash_range;
 
     /**
      * Marks a segment in the path. Makes no copy of the segments in the path,
@@ -98,13 +98,13 @@ public:
          */
         dsize size() const;
 
-        /**
+        /*
          * Returns a somewhat-random number in the range [0..Path::hash_range)
          * generated from the segment.
          *
          * @return  The generated hash key.
          */
-        hash_type hash() const;
+//        hash_type hash() const;
 
         bool hasWildCard() const;
 
@@ -130,13 +130,13 @@ public:
          * Returns @c true if this segment is lexically less than @a other.
          * The test is case and separator insensitive.
          */
-        bool operator<(Segment const &other) const;
+        bool operator<(const Segment &other) const;
 
         enum Flag { GotHashKey = 0x1, WildCardChecked = 0x2, IncludesWildCard = 0x4 };
 
     private:
         mutable Flags flags;
-        mutable hash_type hashKey;
+//        mutable hash_type hashKey;
         CString range;
 
         friend class Path;
@@ -349,7 +349,7 @@ public:
     /**
      * Returns the file name portion of the path, i.e., the last segment.
      */
-    String fileName() const;
+    CString fileName() const;
 
     Block toUtf8() const;
 

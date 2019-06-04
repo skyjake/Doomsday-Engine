@@ -93,7 +93,7 @@ static int clearVariable(CVarDirectory::Node& node, void * /*context*/)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
+                cvarDirectory->traverse(PathTree::NoBranch, NULL, /*CVarDirectory::no_hash, */markVariableUserDataFreed, ptr);
                 M_Free(*ptr); *ptr = Str_Text(emptyStr);
                 break;
 
@@ -102,7 +102,7 @@ static int clearVariable(CVarDirectory::Node& node, void * /*context*/)
 
                 ptr = (void**)var->ptr;
                 /// @note Multiple vars could be using the same pointer (so only free once).
-                cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, markVariableUserDataFreed, ptr);
+                cvarDirectory->traverse(PathTree::NoBranch, NULL, /*CVarDirectory::no_hash, */markVariableUserDataFreed, ptr);
                 delete reinterpret_cast<res::Uri *>(*ptr); *ptr = emptyUri;
                 break;
 
@@ -127,7 +127,7 @@ void Con_ClearVariables()
 #endif
     if (!cvarDirectory) return;
 
-    cvarDirectory->traverse(flags, NULL, CVarDirectory::no_hash, clearVariable);
+    cvarDirectory->traverse(flags, NULL, /*CVarDirectory::no_hash, */clearVariable);
     cvarDirectory->clear();
 }
 
@@ -611,7 +611,7 @@ void Con_AddKnownWordsForVariables()
 {
     if (!cvarDirectory) return;
 
-    cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash,
+    cvarDirectory->traverse(PathTree::NoBranch, NULL, //CVarDirectory::no_hash,
                             addVariableToKnownWords);
 }
 
@@ -759,14 +759,14 @@ D_CMD(PrintVarStats)
         {
             p.count = 0;
             p.type = cvartype_t(i);
-            cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
+            cvarDirectory->traverse(PathTree::NoBranch, NULL, /*CVarDirectory::no_hash, */countVariable, &p);
             LOGDEV_SCR_MSG("%12s: %i") << Str_Text(CVar_TypeName(p.type)) << p.count;
         }
         p.count = 0;
         p.type = cvartype_t(-1);
         p.hidden = true;
 
-        cvarDirectory->traverse(PathTree::NoBranch, NULL, CVarDirectory::no_hash, countVariable, &p);
+        cvarDirectory->traverse(PathTree::NoBranch, NULL, /*CVarDirectory::no_hash, */countVariable, &p);
         numCVars = cvarDirectory->size();
         numCVarsHidden = p.count;
     }

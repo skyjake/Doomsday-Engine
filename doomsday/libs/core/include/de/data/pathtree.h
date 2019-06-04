@@ -25,7 +25,7 @@
 #include <de/String>
 #include <de/Path>
 
-#include <unordered_map>
+#include <map>
 
 namespace de {
 
@@ -67,7 +67,7 @@ class DE_PUBLIC PathTree : public Lockable
 public:
     class Node; // forward declaration
 
-    typedef std::unordered_multimap<Path::hash_type, Node *> Nodes;
+    typedef std::multimap<String, Node *, String::InsensitiveLessThan> Nodes;
     typedef StringList FoundPaths;
 
     /**
@@ -104,7 +104,7 @@ public:
     using ComparisonFlags = Flags;
 
     /// Identifier associated with each unique path segment.
-    typedef duint32 SegmentId;
+    //typedef duint32 SegmentId;
 
     /// Node type identifiers.
     enum NodeType
@@ -121,7 +121,7 @@ public:
      * a hash when the user does not wish to narrow the set of considered
      * nodes.
      */
-    static Path::hash_type const no_hash;
+//    static Path::hash_type const no_hash;
 
 #ifdef DE_DEBUG
     void debugPrint(Char separator = '/') const;
@@ -140,11 +140,11 @@ public:
     {
         PathTree &tree;
         NodeType type;
-        SegmentId segmentId;
+        CString segment;
         Node *parent;
 
-        NodeArgs(PathTree &pt, NodeType nt, SegmentId id, Node *p = 0)
-            : tree(pt), type(nt), segmentId(id), parent(p) {}
+        NodeArgs(PathTree &pt, NodeType nt, const CString &segment, /*SegmentId id, */Node *p = 0)
+            : tree(pt), type(nt), segment(segment), /*segmentId(id), */parent(p) {}
     };
 
     /**
@@ -203,7 +203,7 @@ public:
         String const &name() const;
 
         /// @return Hash for this node's path segment.
-        Path::hash_type hash() const;
+//        Path::hash_type hash() const;
 
         /**
          * @param searchPattern  Mapped search pattern (path).
@@ -239,7 +239,7 @@ public:
         friend struct PathTree::Impl;
 
     protected:
-        SegmentId segmentId() const;
+//        SegmentId segmentId() const;
         void addChild(Node &node);
         void removeChild(Node &node);
         Nodes &childNodes(NodeType type);
@@ -357,14 +357,12 @@ public:
      * @param parent      Used in combination with ComparisonFlag::MatchParent
      *                    to limit the traversal to only the child nodes of
      *                    this node.
-     * @param hashKey     If not @c PathTree::no_hash only consider nodes whose
-     *                    hashed name matches this.
      * @param callback    Callback function ptr.
      * @param parameters  Passed to the callback.
      *
      * @return  @c 0 iff iteration completed wholly.
      */
-    int traverse(ComparisonFlags flags, Node const *parent, Path::hash_type hashKey,
+    int traverse(ComparisonFlags flags, Node const *parent,
                  int (*callback) (Node &node, void *parameters), void *parameters = 0) const;
 
     /**
@@ -399,11 +397,11 @@ public:
      * Methods usually only needed by Node (or derivative classes).
      */
 
-    /// @return The path segment associated with @a segmentId.
-    String const &segmentName(SegmentId segmentId) const;
+//    /// @return The path segment associated with @a segmentId.
+//    String const &segmentName(SegmentId segmentId) const;
 
-    /// @return Hash associated with @a segmentId.
-    Path::hash_type segmentHash(SegmentId segmentId) const;
+//    /// @return Hash associated with @a segmentId.
+//    Path::hash_type segmentHash(SegmentId segmentId) const;
 
     Node const &rootBranch() const;
 
@@ -478,7 +476,7 @@ public:
         return val;
     }
 
-    Path::hash_type key() const {
+    String key() const {
         DE_ASSERT(_current != _nodes.end());
         return _current->first;
     }
@@ -501,7 +499,7 @@ class PathTreeT : public PathTree
 {
 public:
     typedef Type Node; // shadow PathTree::Node
-    typedef std::unordered_multimap<Path::hash_type, Type *> Nodes;
+    typedef std::multimap<String, Type *, String::InsensitiveLessThan> Nodes;
     typedef List<Type *> FoundNodes;
 
 public:
@@ -542,9 +540,9 @@ public:
         return found.size() - numFoundSoFar;
     }
 
-    inline int traverse(ComparisonFlags flags, Type const *parent, Path::hash_type hashKey,
+    inline int traverse(ComparisonFlags flags, Type const *parent, //Path::hash_type hashKey,
                         int (*callback) (Type &node, void *context), void *context = 0) const {
-        return PathTree::traverse(flags, parent, hashKey,
+        return PathTree::traverse(flags, parent, //hashKey,
                                   reinterpret_cast<int (*)(PathTree::Node &, void *)>(callback),
                                   context);
     }

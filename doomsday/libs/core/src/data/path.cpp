@@ -32,18 +32,18 @@ namespace de {
 
 //---------------------------------------------------------------------------------------
 
-Path::hash_type const Path::hash_range = 0xffffffff;
+//Path::hash_type const Path::hash_range = 0xffffffff;
 
-Path::hash_type Path::Segment::hash() const
-{
-    // Is it time to compute the hash?
-    if (!(flags & GotHashKey))
-    {
-        hashKey = de::crc32(range.lower()) % hash_range;
-        flags |= GotHashKey;
-    }
-    return hashKey;
-}
+//Path::hash_type Path::Segment::hash() const
+//{
+//    // Is it time to compute the hash?
+//    if (!(flags & GotHashKey))
+//    {
+//        hashKey = de::crc32(range.lower()) % hash_range;
+//        flags |= GotHashKey;
+//    }
+//    return hashKey;
+//}
 
 bool Path::Segment::hasWildCard() const
 {
@@ -57,12 +57,12 @@ bool Path::Segment::hasWildCard() const
     return isWild;
 }
 
-bool Path::Segment::operator==(Segment const &other) const
+bool Path::Segment::operator==(const Segment &other) const
 {
     return !range.compare(other.range, CaseInsensitive);
 }
 
-bool Path::Segment::operator < (Segment const &other) const
+bool Path::Segment::operator<(const Segment &other) const
 {
     return range.compare(other.range, CaseInsensitive) < 0;
 }
@@ -364,11 +364,11 @@ bool Path::operator == (Path const &other) const
     if (segmentCount() != other.segmentCount()) return false;
 
     // If the hashes are different, the segments can't be the same.
-    for (dsize i = 0; i < d->segmentCount; ++i)
-    {
-        if (segment(i).hash() != other.segment(i).hash())
-            return false;
-    }
+//    for (dsize i = 0; i < d->segmentCount; ++i)
+//    {
+//        if (segment(i).hash() != other.segment(i).hash())
+//            return false;
+//    }
 
     // Probably the same, but we have to make sure by comparing
     // the textual segments.
@@ -390,10 +390,10 @@ bool Path::operator == (Path const &other) const
 
 bool Path::operator==(const char *cstr) const
 {
-    return d->path == cstr;
+    return d->path.compareWithoutCase(cstr) == 0;
 }
 
-bool Path::operator < (Path const &other) const
+bool Path::operator<(const Path &other) const
 {
     if (d->separator == other.d->separator)
     {
@@ -536,10 +536,10 @@ void Path::addTerminatingSeparator()
     }
 }
 
-String Path::fileName() const
+CString Path::fileName() const
 {
     if (last() == d->separator) return "";
-    return lastSegment().toRange();
+    return lastSegment();
 }
 
 Block Path::toUtf8() const
@@ -712,7 +712,7 @@ static int Path_UnitTest()
             DE_ASSERT(b.segment(1).toString() == "variable");
         }
 
-        // .
+        // Test fileName().
         {
             Path p;
             Path a("hello");
