@@ -25,7 +25,7 @@
 #include <de/String>
 #include <de/Path>
 
-#include <map>
+#include <unordered_map>
 
 namespace de {
 
@@ -67,7 +67,7 @@ class DE_PUBLIC PathTree : public Lockable
 public:
     class Node; // forward declaration
 
-    typedef std::multimap<String, Node *, String::InsensitiveLessThan> Nodes;
+    typedef std::unordered_multimap<uint32_t, Node *> Nodes;
     typedef StringList FoundPaths;
 
     /**
@@ -136,14 +136,13 @@ public:
      * Not public as only PathTree itself constructs instances, others can
      * treat this as an opaque type.
      */
-    struct NodeArgs
-    {
-        PathTree &tree;
-        NodeType type;
-        CString segment;
-        Node *parent;
+    struct NodeArgs {
+        PathTree &          tree;
+        NodeType            type;
+        LowercaseHashString segment;
+        Node *              parent;
 
-        NodeArgs(PathTree &pt, NodeType nt, const CString &segment, /*SegmentId id, */Node *p = 0)
+        NodeArgs(PathTree &pt, NodeType nt, const LowercaseHashString &segment, /*SegmentId id, */Node *p = 0)
             : tree(pt), type(nt), segment(segment), /*segmentId(id), */parent(p) {}
     };
 
@@ -204,6 +203,8 @@ public:
 
         /// @return Hash for this node's path segment.
 //        Path::hash_type hash() const;
+
+        const LowercaseHashString &key() const;
 
         /**
          * @param searchPattern  Mapped search pattern (path).
@@ -427,8 +428,6 @@ private:
 template <typename PathTreeNodeType>
 inline bool comparePathTreeNodePathsAscending(PathTreeNodeType const *a, PathTreeNodeType const *b)
 {
-//    String pathA(QString(QByteArray::fromPercentEncoding(a->path().toUtf8())));
-//    String pathB(QString(QByteArray::fromPercentEncoding(b->path().toUtf8())));
     return String::fromPercentEncoding(a->path().toString()).compareWithoutCase(
                String::fromPercentEncoding(b->path().toString())) < 0;
 }
@@ -499,7 +498,7 @@ class PathTreeT : public PathTree
 {
 public:
     typedef Type Node; // shadow PathTree::Node
-    typedef std::multimap<String, Type *, String::InsensitiveLessThan> Nodes;
+    typedef std::unordered_multimap<uint32_t, Type *> Nodes;
     typedef List<Type *> FoundNodes;
 
 public:
@@ -540,9 +539,9 @@ public:
         return found.size() - numFoundSoFar;
     }
 
-    inline int traverse(ComparisonFlags flags, Type const *parent, //Path::hash_type hashKey,
+    inline int traverse(ComparisonFlags flags, Type const *parent,
                         int (*callback) (Type &node, void *context), void *context = 0) const {
-        return PathTree::traverse(flags, parent, //hashKey,
+        return PathTree::traverse(flags, parent,
                                   reinterpret_cast<int (*)(PathTree::Node &, void *)>(callback),
                                   context);
     }

@@ -32,6 +32,42 @@
 namespace de {
 
 /**
+ * Special-purpose string that is always lower-case and comes with a CRC-32 hash.
+ */
+struct LowercaseHashString
+{
+    String   str;
+    uint32_t hash;
+
+    LowercaseHashString(const String &s = {})
+        : str(s.lower())
+        , hash(crc32(str))
+    {}
+
+    LowercaseHashString(const LowercaseHashString &) = default;
+
+    inline LowercaseHashString &operator=(const LowercaseHashString &other)
+    {
+        str  = other.str;
+        hash = other.hash;
+        return *this;
+    }
+
+    inline bool operator<(const LowercaseHashString &other) const
+    {
+        return str.compare(other.str) < 0;
+    }
+
+    inline bool operator==(const LowercaseHashString &other) const
+    {
+        if (hash != other.hash) return false;
+        return str.compare(other.str) == 0;
+    }
+
+    inline bool operator!=(const LowercaseHashString &other) const { return !(*this == other); }
+};
+
+/**
  * A textual path composed of segments. @ingroup data
  *
  * A path is a case insensitive text string that is broken down into segments.
@@ -51,12 +87,6 @@ public:
     /// Segment index was out of bounds. @ingroup errors
     DE_ERROR(OutOfBoundsError);
 
-    /// Type used to represent a path segment hash key.
-//    typedef duint32 hash_type;
-
-    /// Range of a path segment hash key; [0..hash_range)
-//    static hash_type const hash_range;
-
     /**
      * Marks a segment in the path. Makes no copy of the segments in the path,
      * only stores the location within the path where they begin and end.
@@ -73,6 +103,11 @@ public:
      */
     struct DE_PUBLIC Segment
     {
+        Segment(const CString &string)
+            : range(string)
+            , _key(String(string))
+        {}
+
         /**
          * Segments are implicitly converted to text strings.
          */
@@ -84,7 +119,7 @@ public:
 //        String toString() const;
 
         inline Rangecc toRange() const { return range; }
-        inline String toString() const { return String(range); }
+        inline String toString() const { return _key.str; /*String(range);*/ }
 
         /**
          * Determines the length of the segment in characters.
@@ -105,6 +140,7 @@ public:
          * @return  The generated hash key.
          */
 //        hash_type hash() const;
+        inline const LowercaseHashString &key() const { return _key; }
 
         bool hasWildCard() const;
 
@@ -115,16 +151,22 @@ public:
          *
          * @return @c true, iff the segments are equal.
          */
-        bool operator==(Segment const &other) const;
+        bool operator==(const Segment &other) const;
 
-        bool operator!=(Segment const &other) const { return !(*this == other); }
+        inline bool operator!=(const Segment &other) const { return !(*this == other); }
 
-        bool operator==(const char *text) const
+        bool operator==(const String &text) const
         {
-            return range.compare(text, CaseInsensitive) == 0;
+            DE_ASSERT(text.lower() == text);
+            return _key.str == text;
         }
 
-        bool operator!=(const char *text) const { return !(*this == text); }
+//        bool operator==(const char *text) const
+//        {
+//            return range.compare(text, CaseInsensitive) == 0;
+//        }
+
+        inline bool operator!=(const String &text) const { return !(*this == text); }
 
         /**
          * Returns @c true if this segment is lexically less than @a other.
@@ -135,9 +177,9 @@ public:
         enum Flag { GotHashKey = 0x1, WildCardChecked = 0x2, IncludesWildCard = 0x4 };
 
     private:
-        mutable Flags flags;
-//        mutable hash_type hashKey;
-        CString range;
+        mutable Flags       flags;
+        CString             range;
+        LowercaseHashString _key;
 
         friend class Path;
     };

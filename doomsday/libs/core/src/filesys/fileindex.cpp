@@ -26,7 +26,7 @@ namespace de {
 
 DE_PIMPL(FileIndex), public Lockable
 {
-    IPredicate const *predicate;
+    const IPredicate *predicate;
     Index index;
 
     Impl(Public *i)
@@ -38,12 +38,14 @@ DE_PIMPL(FileIndex), public Lockable
         audienceForRemoval .setAdditionAllowedDuringIteration(true);
     }
 
-    static String indexedName(File const &file)
+    static String indexedName(const File &file)
     {
         String name = file.name();
 
+        DE_ASSERT(name.lower() == name);
+
         // Ignore the package version in the indexed names.
-        if (name.endsWith(".pack", CaseInsensitive))
+        if (name.endsWith(".pack"))
         {
             name = Package::split(name.fileNameWithoutExtension()).first + ".pack";
         }
@@ -95,7 +97,7 @@ DE_PIMPL(FileIndex), public Lockable
 
         DE_GUARD(this);
 
-        auto range = index.equal_range(baseName);
+        auto range = index.equal_range(baseName.lower());
         for (Index::const_iterator i = range.first; i != range.second; ++i)
         {
             File *file = i->second;

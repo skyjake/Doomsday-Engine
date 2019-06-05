@@ -33,7 +33,7 @@ DE_PIMPL_NOREF(PathTree::Node)
     /// @c NULL for leaves, index of children for branches.
     Node::Children *children;
 
-    const String segmentText;
+    const LowercaseHashString segment;
 
     /// Unique identifier for the path fragment this node represents,
     /// in the owning PathTree.
@@ -41,11 +41,11 @@ DE_PIMPL_NOREF(PathTree::Node)
 
 //    String const *segmentText = nullptr; // owned by the PathTree
 
-    Impl(PathTree & _tree, bool isLeaf, const CString &segment, Node *_parent)
+    Impl(PathTree & _tree, bool isLeaf, const LowercaseHashString &segment, Node *_parent)
         : tree(_tree)
         , parent(_parent)
         , children(0)
-        , segmentText(segment)
+        , segment(segment)
     {
         if (!isLeaf) children = new Node::Children;
     }
@@ -119,7 +119,7 @@ void PathTree::Node::addChild(Node &node)
 {
     DE_ASSERT(d->children != 0);
 
-    childNodes(node.type()).insert(std::make_pair(node.name(), &node));
+    childNodes(node.type()).insert(std::make_pair(node.key().hash, &node));
 }
 
 void PathTree::Node::removeChild(Node &node)
@@ -127,7 +127,7 @@ void PathTree::Node::removeChild(Node &node)
     DE_ASSERT(d->children != 0);
 
     auto &hash = childNodes(node.type());
-    auto found = hash.equal_range(node.name());
+    auto found = hash.equal_range(node.key().hash);
     for (auto i = found.first; i != found.second; ++i)
     {
         if (i->second == &node)
@@ -147,7 +147,12 @@ const String &PathTree::Node::name() const
 //        // node exists.
 //        d->cacheSegmentText();
 //    }
-    return d->segmentText;
+    return key().str;
+}
+
+const LowercaseHashString &PathTree::Node::key() const
+{
+    return d->segment;
 }
 
 /*Path::hash_type PathTree::Node::hash() const
@@ -206,7 +211,7 @@ int PathTree::Node::comparePath(Path const &searchPattern, ComparisonFlags flags
         return 1;
     }
 
-    Path::Segment const *snode = &searchPattern.lastSegment();
+    const Path::Segment *snode = &searchPattern.lastSegment();
 
     // In reverse order, compare each path node in the search term.
     int pathNodeCount = searchPattern.segmentCount();
@@ -221,7 +226,11 @@ int PathTree::Node::comparePath(Path const &searchPattern, ComparisonFlags flags
 //            {
 //                return 1;
 //            }
-            if (node->name().compare(*snode, CaseInsensitive))
+//            if (node->name().compare(*snode, CaseInsensitive))
+//            {
+//                return 1;
+//            }
+            if (node->key() != snode->key())
             {
                 return 1;
             }

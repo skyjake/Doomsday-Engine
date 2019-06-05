@@ -40,7 +40,7 @@ FolderPopulationAudience audienceForFolderPopulation; // public
 namespace internal {
 
 static TaskPool populateTasks;
-static bool     enableBackgroundPopulation = false; //true;
+static bool     enableBackgroundPopulation = true; // multithreaded folder population
 
 /// Forwards internal folder population notifications to the public audience.
 struct PopulationNotifier : DE_OBSERVES(TaskPool, Done)
@@ -66,6 +66,7 @@ DE_PIMPL(Folder)
 
     void add(File *file)
     {
+        DE_ASSERT(file->name().lower() == file->name());
         contents.insert(file->name(), file);
         file->setParent(thisPublic);
     }
@@ -169,17 +170,17 @@ String Folder::describeFeeds() const
     if (d->feeds.size() == 1)
     {
         desc += Stringf("contains %zu file%s from %s",
-                               d->contents.size(),
-                               DE_PLURAL_S(d->contents.size()),
-                               d->feeds.front()->description().c_str());
+                        d->contents.size(),
+                        DE_PLURAL_S(d->contents.size()),
+                        d->feeds.front()->description().c_str());
     }
     else if (d->feeds.size() > 1)
     {
         desc += Stringf("contains %zu file%s from %zu feed%s",
-                               d->contents.size(),
-                               DE_PLURAL_S(d->contents.size()),
-                               d->feeds.size(),
-                               DE_PLURAL_S(d->feeds.size()));
+                        d->contents.size(),
+                        DE_PLURAL_S(d->contents.size()),
+                        d->feeds.size(),
+                        DE_PLURAL_S(d->feeds.size()));
 
         int n = 0;
         for (auto *i : d->feeds)
@@ -286,7 +287,7 @@ void Folder::populate(PopulationBehaviors behavior)
                 if (i)
                 {
                     std::unique_ptr<File> file(i);
-                    if (!d->contents.contains(i->name()))
+                    if (!d->contents.contains(i->name().lower()))
                     {
                         d->add(file.release());
                         fileSystem().index(*i);
@@ -478,7 +479,7 @@ bool Folder::has(String const &name) const
     }
 
     DE_GUARD(this);
-    return (d->contents.find(name) != d->contents.end());
+    return (d->contents.find(name.lower()) != d->contents.end());
 }
 
 File &Folder::add(File *file)
@@ -501,8 +502,8 @@ File *Folder::remove(const String &name)
 {
     DE_GUARD(this);
 
-    DE_ASSERT(d->contents.contains(name));
-    File *removed = d->contents.take(name);
+    DE_ASSERT(d->contents.contains(name.lower()));
+    File *removed = d->contents.take(name.lower());
     removed->setParent(nullptr);
     return removed;
 }
@@ -521,7 +522,7 @@ filesys::Node const *Folder::tryGetChild(String const &name) const
 {
     DE_GUARD(this);
 
-    auto found = d->contents.find(name);
+    auto found = d->contents.find(name.lower());
     if (found != d->contents.end())
     {
         return found->second;

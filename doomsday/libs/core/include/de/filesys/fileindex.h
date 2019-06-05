@@ -21,7 +21,7 @@
 
 #include "../File"
 
-#include <map>
+#include <unordered_map>
 #include <list>
 #include <utility>
 
@@ -39,7 +39,7 @@ class Package;
 class DE_PUBLIC FileIndex
 {
 public:
-    typedef std::multimap<String, File *, String::InsensitiveLessThan> Index;
+    typedef std::unordered_multimap<String, File *> Index; // lower-case
     typedef std::pair<Index::iterator, Index::iterator> IndexRange;
     typedef std::list<File *> FoundFiles;
 

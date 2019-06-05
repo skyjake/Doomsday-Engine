@@ -53,7 +53,7 @@ struct PathTree::Impl
         , flags(_flags)
         , size(0)
         , numNodesOwned(0)
-        , rootNode(NodeArgs(d, Branch, 0))
+        , rootNode(NodeArgs(d, Branch, {}, 0))
     {}
 
     ~Impl()
@@ -81,11 +81,11 @@ struct PathTree::Impl
      * @return Tree node that matches the name and type and which has the
      * specified parent node.
      */
-    Node *nodeForSegment(Path::Segment const &segment, NodeType nodeType, Node *parent)
+    Node *nodeForSegment(const Path::Segment &segment, NodeType nodeType, Node *parent)
     {
         const auto &hash = self.nodes(nodeType);
 
-        const String segmentStr = segment.toString();
+//        const String segmentStr = segment.toString();
 
         // Have we already encountered this?
 //        SegmentId segmentId = segments.isInterned(segmentStr);
@@ -93,11 +93,11 @@ struct PathTree::Impl
         {
             // The name is known. Perhaps we have.
 //            Path::hash_type hashKey = segments.userValue(segmentId);
-            const auto found = hash.equal_range(segmentStr);
+            const auto found = hash.equal_range(segment.key().hash);
             for (auto i = found.first; i != found.second; ++i)
             {
                 Node *node = i->second;
-                if (parent != &node->parent()) // || segmentId != node->segmentId())
+                if (parent != &node->parent() || segment.key() != node->key())
                 {
                     continue;
                 }
@@ -124,10 +124,10 @@ struct PathTree::Impl
 //            hashKey = self.segmentHash(segmentId);
 //        }
 
-        Node *node = self.newNode(NodeArgs(self, nodeType, segment, parent));
+        Node *node = self.newNode(NodeArgs(self, nodeType, segment.key(), parent));
 
         // Insert the new node into the hash.
-        const_cast<Nodes &>(hash).insert(std::make_pair(segmentStr, node));
+        const_cast<Nodes &>(hash).insert({segment.key().hash, node});
 
         numNodesOwned++;
 
@@ -161,11 +161,10 @@ struct PathTree::Impl
         return node;
     }
 
-    Node *findInHash(Nodes &hash, const String &segmentStr, //Path::hash_type hashKey,
-                               Path const &searchPath,
-                               ComparisonFlags compFlags)
+    Node *findInHash(Nodes &hash, const LowercaseHashString &segment, Path const &searchPath,
+                     ComparisonFlags compFlags)
     {
-        auto found = hash.equal_range(segmentStr);
+        auto found = hash.equal_range(segment.hash);
         for (auto i = found.first; i != found.second; ++i)
         {
             Node *node = i->second;
@@ -196,18 +195,17 @@ struct PathTree::Impl
         Node *found = 0;
         if (size)
         {
-            //Path::hash_type hashKey = searchPath.lastSegment().hash();
-            const String segmentStr = searchPath.lastSegment().toString();
+            const auto &segment = searchPath.lastSegment();
 
             if (!compFlags.testFlag(NoLeaf))
             {
-                if ((found = findInHash(hash.leaves, segmentStr, searchPath, compFlags)) != 0)
+                if ((found = findInHash(hash.leaves, segment.key(), searchPath, compFlags)) != 0)
                     return found;
             }
 
             if (!compFlags.testFlag(NoBranch))
             {
-                if ((found = findInHash(hash.branches, segmentStr, searchPath, compFlags)) != 0)
+                if ((found = findInHash(hash.branches, segment.key(), searchPath, compFlags)) != 0)
                     return found;
             }
         }

@@ -23,10 +23,13 @@ namespace filesys {
 
 DE_PIMPL_NOREF(Node)
 {
-    String name;
+    String name; // lower-cased
     Node *parent;
 
-    Impl(String const &name_) : name(name_), parent(nullptr) {}
+    Impl(String const &name_)
+        : name(name_.lower())
+        , parent(nullptr)
+    {}
 };
 
 Node::Node(String const &name) : d(new Impl(name))
@@ -86,7 +89,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     }
 
     // Extract the next component.
-    Path::Segment const &component = path.firstSegment();
+    const String component = path.firstSegment().toString();
 
     // Check if this is the end of the path.
     if (path.segmentCount() == 1 && component != DOT_DOUBLE)
@@ -96,7 +99,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
             // Special case: not a child, but a reference to this node.
             return this;
         }
-        return tryGetChild(String(component));
+        return tryGetChild(component);
     }
 
     PathRef const remainder = path.subPath(Rangei(1, path.segmentCount()));
@@ -117,7 +120,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     }
 
     // Continue recursively to the next component.
-    if (Node const *child = tryGetChild(String(component)))
+    if (Node const *child = tryGetChild(component))
     {
         return child->tryFollowPath(remainder);
     }

@@ -32,7 +32,7 @@ namespace de {
 
 //---------------------------------------------------------------------------------------
 
-//Path::hash_type const Path::hash_range = 0xffffffff;
+//const uint32_t LowercaseHashString::HASH_RANGE = 0xffffffff;
 
 //Path::hash_type Path::Segment::hash() const
 //{
@@ -69,7 +69,7 @@ bool Path::Segment::operator<(const Segment &other) const
 
 int Path::Segment::length() const
 {
-    return range.size();
+    return int(range.size());
 }
 
 dsize Path::Segment::size() const
@@ -89,13 +89,24 @@ DE_PIMPL_NOREF(Path)
     Char separator;
 
     /**
+     * List of the extra segments that don't fit in segments, in reverse
+     * order.
+     */
+    List<Segment> segments;
+
+    /*
      * Total number of segments in the path. If 0, it means that the path
      * isn't parsed into segments yet -- all paths have at least one segment
      * (an empty one if nothing else).
      */
-    dsize segmentCount;
+//    dsize segmentCount;
 
-    /**
+    inline dsize segmentCount() const
+    {
+        return segments.size();
+    }
+
+    /*
      * Fixed-size array for the segments of the path.
      *
      * The segments array is composed of two parts: the first
@@ -109,23 +120,17 @@ DE_PIMPL_NOREF(Path)
      *
      * @note Contents of the array are not initialized to zero.
      */
-    std::array<Segment, 8> segments;
-
-    /**
-     * List of the extra segments that don't fit in segments, in reverse
-     * order.
-     */
-    List<Segment> extraSegments;
+    //std::array<Segment, 8> segments;
 
     Impl()
         : separator('/')
-        , segmentCount(0)
+        //, segmentCount(0)
     {}
 
     Impl(const String &p, Char sep)
         : path(p)
         , separator(sep)
-        , segmentCount(0)
+        //, segmentCount(0)
     {}
 
     ~Impl()
@@ -138,9 +143,9 @@ DE_PIMPL_NOREF(Path)
      */
     void clearSegments()
     {
-        extraSegments.clear();
-        zap(segments);
-        segmentCount = 0;
+        segments.clear();
+        //segments = {};
+        //segmentCount = 0;
     }
 
     /**
@@ -151,20 +156,23 @@ DE_PIMPL_NOREF(Path)
      */
     Segment *allocSegment(const CString &range)
     {
-        Segment *segment;
-        if (segmentCount < segments.size())
-        {
-            segment = &segments[segmentCount];
-        }
-        else
-        {
-            extraSegments << Segment();
-            segment = &extraSegments.last();
-        }
-        zapPtr(segment);
-        segment->range = range;
-        segmentCount++;
-        return segment;
+//        Segment *segment;
+//        if (segmentCount < segments.size())
+//        {
+//            segment = &segments[segmentCount];
+//        }
+//        else
+        segments.push_back(range);
+//        Segment *segment = &segments.back();
+//        {
+//            segments << Segment();
+//            segment = &extraSegments.last();
+//        }
+        //segment->flags = 0;
+//        segment->range = range;
+//        segment->_key  = String(range);
+//        segmentCount++;
+        return &segments.back();
     }
 
     /**
@@ -174,17 +182,17 @@ DE_PIMPL_NOREF(Path)
     void parse()
     {
         // Already been here?
-        if (segmentCount > 0) return;
+        if (!segments.empty()) return;
 
-        segmentCount = 0;
-        extraSegments.clear();
+//        segmentCount = 0;
+        segments.clear();
 
         if (path.isEmpty())
         {
             // There always has to be at least one segment.
             allocSegment(emptyPath);
 
-            DE_ASSERT(segmentCount > 0);
+            DE_ASSERT(!segments.empty());
             return;
         }
 
@@ -241,7 +249,7 @@ DE_PIMPL_NOREF(Path)
         }
 #endif
 
-        DE_ASSERT(segmentCount > 0);
+        DE_ASSERT(!segments.empty());
     }
 };
 
@@ -304,7 +312,7 @@ Path Path::operator+(char const *nullTerminatedCStr) const
 int Path::segmentCount() const
 {
     d->parse();
-    return d->segmentCount;
+    return d->segments.sizei();
 }
 
 Path::Segment const &Path::segment(int index) const
@@ -316,7 +324,7 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
 {
     d->parse();
 
-    if (reverseIndex < 0 || reverseIndex >= int(d->segmentCount))
+    if (reverseIndex < 0 || reverseIndex >= d->segments.sizei())
     {
         /// @throw OutOfBoundsError  Attempt to reference a nonexistent segment.
         throw OutOfBoundsError("Path::reverseSegment",
@@ -324,16 +332,16 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
     }
 
     // Is this in the static buffer?
-    if (reverseIndex < int(d->segments.size()))
-    {
-        return d->segments[reverseIndex];
-    }
+    //if (reverseIndex < int(d->segments.size()))
+//    {
+    return d->segments[size_t(reverseIndex)];
+//    }
 
     // No - an extra segment.
-    return d->extraSegments[reverseIndex - d->segments.size()];
+//    return d->extraSegments[reverseIndex - d->segments.size()];
 }
 
-Path Path::subPath(Rangei const &range) const
+Path Path::subPath(const Rangei &range) const
 {
     if (range.isEmpty())
     {
@@ -357,18 +365,18 @@ Path Path::endOmitted(int omittedSegmentCount) const
     return subPath({0, segmentCount() - omittedSegmentCount});
 }
 
-bool Path::operator == (Path const &other) const
+bool Path::operator==(const Path &other) const
 {
     if (this == &other) return true;
 
     if (segmentCount() != other.segmentCount()) return false;
 
     // If the hashes are different, the segments can't be the same.
-//    for (dsize i = 0; i < d->segmentCount; ++i)
-//    {
-//        if (segment(i).hash() != other.segment(i).hash())
-//            return false;
-//    }
+    for (int i = 0; i < d->segments.sizei(); ++i)
+    {
+        if (segment(i).key().hash != other.segment(i).key().hash)
+            return false;
+    }
 
     // Probably the same, but we have to make sure by comparing
     // the textual segments.
@@ -380,7 +388,7 @@ bool Path::operator == (Path const &other) const
     else
     {
         // Do a string-based test for each segment separately.
-        for (dsize i = 0; i < d->segmentCount; ++i)
+        for (int i = 0; i < d->segments.sizei(); ++i)
         {
             if (segment(i) != other.segment(i)) return false;
         }
@@ -403,7 +411,7 @@ bool Path::operator<(const Path &other) const
     else
     {
         // Do a string-based test for each segment separately.
-        for (dsize i = 0; i < d->segmentCount; ++i)
+        for (int i = 0; i < d->segments.sizei(); ++i)
         {
             if (!(segment(i) < other.segment(i))) return false;
         }
@@ -465,12 +473,12 @@ bool Path::isAbsolute() const
 
 int Path::length() const
 {
-    return d->path.size();
+    return int(d->path.size());
 }
 
 dsize Path::size() const
 {
-    return length();
+    return d->path.size();
 }
 
 BytePos Path::sizeb() const
@@ -596,154 +604,3 @@ Path PathRef::toPath() const
 }
 
 } // namespace de
-
-#if 0
-#ifdef _DEBUG
-#include <QDebug>
-
-using namespace de;
-
-static int Path_UnitTest()
-{
-    try
-    {
-        // Test emptiness.
-        {
-            Path p;
-            DE_ASSERT(p == Path(""));
-            DE_ASSERT(p.isEmpty());
-            DE_ASSERT(p.segmentCount() == 1);
-        }
-
-        // Equality and copying.
-        {
-            Path a("some/thing");
-            Path b("/other/thing");
-
-            DE_ASSERT(a != b);
-
-            Path c = a;
-            DE_ASSERT(c == a);
-            DE_ASSERT(c.segment(1).toString() == "thing");
-            DE_ASSERT(c.reverseSegment(1).toString() == "some");
-
-            b = a;
-            DE_ASSERT(b == a);
-            DE_ASSERT(b.segment(1).toString() == "thing");
-            DE_ASSERT(b.reverseSegment(1).toString() == "some");
-        }
-
-        // Swapping.
-        {
-            Path a("a/b/c");
-            Path b("d/e");
-
-            DE_ASSERT(a.segmentCount() == 3);
-            DE_ASSERT(a.reverseSegment(1).toString() == "b");
-
-            std::swap(a, b);
-
-            DE_ASSERT(a.segmentCount() == 2);
-            DE_ASSERT(a.reverseSegment(1).toString() == "d");
-            DE_ASSERT(b.segmentCount() == 3);
-            DE_ASSERT(b.reverseSegment(1).toString() == "b");
-        }
-
-        // Test a Windows style path with a drive plus file path.
-        {
-            Path p("c:/something.ext");
-            DE_ASSERT(p.segmentCount() == 2);
-
-            DE_ASSERT(p.reverseSegment(0).length() == 13);
-            DE_ASSERT(p.reverseSegment(0).toString() == "something.ext");
-
-            DE_ASSERT(p.reverseSegment(1).length() == 2);
-            DE_ASSERT(p.reverseSegment(1).toString() == "c:");
-        }
-
-        // Test a Unix style path with a zero-length root node name.
-        {
-            Path p("/something.ext");
-            DE_ASSERT(p.segmentCount() == 2);
-
-            DE_ASSERT(p.reverseSegment(0).length() == 13);
-            DE_ASSERT(p.reverseSegment(0).toString() == "something.ext");
-
-            DE_ASSERT(p.reverseSegment(1).length() == 0);
-            DE_ASSERT(p.reverseSegment(1).toString() == "");
-        }
-
-        // Test a relative directory.
-        {
-            Path p("some/dir/structure/");
-            DE_ASSERT(p.segmentCount() == 3);
-
-            DE_ASSERT(p.reverseSegment(0).length() == 9);
-            DE_ASSERT(p.reverseSegment(0).toString() == "structure");
-
-            DE_ASSERT(p.reverseSegment(1).length() == 3);
-            DE_ASSERT(p.reverseSegment(1).toString() == "dir");
-
-            DE_ASSERT(p.reverseSegment(2).length() == 4);
-            DE_ASSERT(p.reverseSegment(2).toString() == "some");
-        }
-
-        // Test the extra segments.
-        {
-            Path p("/30/29/28/27/26/25/24/23/22/21/20/19/18/17/16/15/14/13/12/11/10/9/8/7/6/5/4/3/2/1/0");
-            DE_ASSERT(p.segmentCount() == 32);
-
-            DE_ASSERT(p.reverseSegment(0).toString()  == "0");
-            DE_ASSERT(p.reverseSegment(23).toString() == "23");
-            DE_ASSERT(p.reverseSegment(24).toString() == "24");
-            DE_ASSERT(p.reverseSegment(30).toString() == "30");
-        }
-
-        // Test separators.
-        {
-            Path a("a.b.c.d", '.');
-            Path b("con-variable", '-');
-
-            DE_ASSERT(a.segmentCount() == 4);
-            DE_ASSERT(a.segment(1).toString() == "b");
-
-            DE_ASSERT(b.segmentCount() == 2);
-            DE_ASSERT(b.segment(0).toString() == "con");
-            DE_ASSERT(b.segment(1).toString() == "variable");
-        }
-
-        // Test fileName().
-        {
-            Path p;
-            Path a("hello");
-            Path b("hello/world");
-            Path c("hello/world/");
-            Path d("hello/world/  ");
-
-            /*
-            qDebug() << p << "=>" << p.fileName();
-            qDebug() << a << "=>" << a.fileName();
-            qDebug() << b << "=>" << b.fileName();
-            qDebug() << c << "=>" << c.fileName();
-            qDebug() << d << "=>" << d.fileName();
-            */
-
-            DE_ASSERT(p.fileName() == String(p).fileName());
-            DE_ASSERT(a.fileName() == String(a).fileName());
-            DE_ASSERT(b.fileName() == String(b).fileName());
-            DE_ASSERT(c.fileName() == String(c).fileName());
-            DE_ASSERT(d.fileName() == String(d).fileName());
-        }
-    }
-    catch (Error const &er)
-    {
-        qWarning() << er.asText();
-        return false;
-    }
-    return true;
-}
-
-static int testResult = Path_UnitTest();
-
-#endif // _DEBUG
-#endif
