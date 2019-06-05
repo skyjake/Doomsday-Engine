@@ -257,7 +257,7 @@ DE_PIMPL(FS1)
     String findPath(res::Uri const &search)
     {
         // Within a subspace scheme?
-        try
+        if (self().knownScheme(search.scheme()))
         {
             Scheme &scheme = self().scheme(search.scheme());
             LOG_RES_XVERBOSE("Using scheme '%s'...", scheme.name());
@@ -287,8 +287,6 @@ DE_PIMPL(FS1)
             /// @todo Should return not-found here but some searches are still dependent
             ///       on falling back to a wider search. -ds
         }
-        catch (UnknownSchemeError const &)
-        {} // Ignore this error.
 
         // Try a wider search of the whole virtual file system.
         std::unique_ptr<File1> file(openFile(search.path(), "rb", 0, true /* allow duplicates */));
