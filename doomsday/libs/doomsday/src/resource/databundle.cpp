@@ -580,9 +580,9 @@ DE_PIMPL(DataBundle), public Lockable
 
         for (int i = 1; i < path.segmentCount() - 3; ++i)
         {
-            if ((path.segment(i) == "Defs" || path.segment(i) == "Data") &&
-                (path.segment(i + 1) == "jDoom" || path.segment(i + 1) == "jHeretic" || path.segment(i + 1) == "jHexen") &&
-                 path.segment(i + 2) == "Auto")
+            if ((path.segment(i) == "defs" || path.segment(i) == "data") &&
+                (path.segment(i + 1) == "jdoom" || path.segment(i + 1) == "jheretic" || path.segment(i + 1) == "jhexen") &&
+                 path.segment(i + 2) == "auto")
             {
                 //qDebug() << "-> autoload";
                 return true;
