@@ -13,7 +13,16 @@ deng_link_libraries (test_appfw PRIVATE DengGui)
 
 if (APPLE)
     set_property (TARGET test_appfw PROPERTY OUTPUT_NAME test_appfw)
+    find_package (the_Foundation REQUIRED)
+    find_package (glbinding REQUIRED)
     deng_install_bundle_deps (test_appfw
-        Deng::libcore Deng::libgui Deng::libshell
+        Deng::libcore
+        Deng::libgui
+        Deng::libcomms
+        the_Foundation::the_Foundation
+        glbinding::glbinding
     )
 endif ()
+
+deng_deploy_target (test_appfw)
+

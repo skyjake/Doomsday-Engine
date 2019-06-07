@@ -9,12 +9,20 @@ group window {
 
 image fold { path = "graphics/fold.png" }
 
-image toggle.onoff { 
-    path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png")
-}
+widget {
+    image dot           { path $= gui.dpiScaledImagePath("graphics/dot.png") }
 
-group progress {
-    image wheel { path = "graphics/progress-wheel.png" }
-    image gear  { path = "graphics/progress-gear.png" }
-    image mini  { path = "graphics/progress-mini.png" }
+    image corners.thin  { path $= gui.dpiScaledImagePath("graphics/corners-thin.png") }
+    image corners.bold  { path $= gui.dpiScaledImagePath("graphics/corners-bold.png") }
+    image corners.solid { path $= gui.dpiScaledImagePath("graphics/corners-solid.png") }
+
+    image toggle.onoff {
+        path $= gui.dpiScaledImagePath("graphics/toggle-onoff.png")
+    }
+
+    group progress {
+        image wheel { path = "graphics/progress-wheel.png" }
+        image gear  { path = "graphics/progress-gear.png" }
+        image mini  { path = "graphics/progress-mini.png" }
+    }
 }
