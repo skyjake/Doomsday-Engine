@@ -326,25 +326,28 @@ DE_PIMPL(TestWindow)
 
     void updateProjection()
     {
+        const auto pointSize = self().pointSizef();
         switch (mode)
         {
         case TestRenderToTexture:
             // 3D projection.
-            projMatrix = Mat4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
+            projMatrix = Mat4f::perspective(75, pointSize.x / pointSize.y) *
                          Mat4f::lookAt(Vec3f(), Vec3f(0, 0, -5), Vec3f(0, -1, 0));
             break;
 
         case TestDynamicAtlas:
             // 2D projection.
-            projMatrix = Mat4f::ortho(-self().pointWidth()/2,  self().pointWidth()/2,
-                                         -self().pointHeight()/2, self().pointHeight()/2) *
-                         Mat4f::scale(self().pointHeight()/150.f) *
+            projMatrix = Mat4f::ortho(-pointSize.x / 2,
+                                      +pointSize.x / 2,
+                                      -pointSize.y / 2,
+                                      +pointSize.y / 2) *
+                         Mat4f::scale(pointSize.y / 150.f) *
                          Mat4f::translate(Vec2f(-50, -50));
             break;
 
         case TestModel:
             // 3D projection.
-            projMatrix = Mat4f::perspective(40, float(self().pixelWidth())/float(self().pixelHeight())) *
+            projMatrix = Mat4f::perspective(75, pointSize.x / pointSize.y) *
                          Mat4f::lookAt(Vec3f(), Vec3f(0, -3, 0), Vec3f(0, 0, 1));
             break;
         }
@@ -412,7 +415,7 @@ DE_PIMPL(TestWindow)
         // The right cube.
         uTex = frameTex;
         uMvpMatrix = projMatrix *
-                     Mat4f::translate(Vec3f(1.5f, 0, 0)) *
+                     Mat4f::translate(Vec3f(+1.5f, 0, 0)) *
                      modelMatrix;
         ob.draw();
     }
@@ -500,7 +503,7 @@ DE_PIMPL(TestWindow)
             Id chosen = ids[rand() % ids.size()];
             atlas->release(chosen);
 
-            LOG_DEBUG("Removed ") << chosen;
+            LOG_MSG("Removed ") << chosen;
         }
 #endif
 
@@ -508,10 +511,11 @@ DE_PIMPL(TestWindow)
         Image::Size imgSize(10 + rand() % 40, 10 + 10 * (rand() % 2));
         Image img(imgSize, Image::RGBA_8888);
         img.fill(Image::makeColor(rand() % 256, rand() % 256, rand() % 256));
-        img.drawRect(img.rect() /*.adjusted(0, 0, -1, -1)*/, Image::Color(255, 255, 255, 255));
+        img.drawRect(img.rect(), Image::Color(255, 255, 255, 255));
 
         Id id = atlas->alloc(img);
-        LOG_DEBUG("Allocated ") << id;
+
+        LOG_MSG("Allocated ") << id;
         if (id.isNone())
         {
             lastAtlasAdditionAt = Time() + 5.0;

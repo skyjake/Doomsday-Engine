@@ -127,6 +127,17 @@ public:
     duint pixelWidth() const;
     duint pixelHeight() const;
 
+    inline Vec2f pointSizef() const
+    {
+        const auto n = pointSize();
+        return {float(n.x), float(n.y)};
+    }
+    inline Vec2f pixelSizef() const
+    {
+        const auto p = pixelSize();
+        return {float(p.x), float(p.y)};
+    }
+
     double pixelRatio() const;
 
     inline Rectanglei geometry() const { return {x(), y(), pointSize().x, pointSize().y }; }

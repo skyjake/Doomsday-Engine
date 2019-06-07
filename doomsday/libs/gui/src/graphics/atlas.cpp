@@ -178,7 +178,7 @@ DE_PIMPL(Atlas)
             }
             backing.draw(image, noBorders.topLeft);
 
-            //backing.save(Stringf("backing-%p.png", this));
+            //backing.save(NativePath::homePath() / Stringf("backing-%p.png", this));
 
             markAsChanged(rect);
         }
