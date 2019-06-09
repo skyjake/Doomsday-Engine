@@ -821,8 +821,7 @@ typedef Vector4<dfloat>  Vec4f;  ///< 4-component vector of floating point value
 typedef Vector4<ddouble> Vec4d;  ///< 4-component vector of high-precision floating point values.
 ///@}
 
-// Qt hash functions:
-//inline quint32 qHash(Vec2i const &vec) { return vec.x * vec.y + vec.x - vec.y; }
+DE_PUBLIC Vec2i ratio(const Vec2i &);
 
 } // namespace de
 

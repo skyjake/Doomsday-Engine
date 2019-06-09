@@ -29,7 +29,6 @@
 
 #include <de/Beacon>
 #include <de/DirectoryFeed>
-#include <de/DisplayMode>
 #include <de/FileSystem>
 #include <de/Info>
 #include <de/PackageLoader>

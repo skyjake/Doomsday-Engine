@@ -33,7 +33,6 @@
 #include <de/legacy/concurrency.h>
 #include <de/App>
 #include <de/Config>
-#include <de/DisplayMode>
 #include <de/GLInfo>
 #include <de/GLState>
 #include <de/LogBuffer>
@@ -72,6 +71,8 @@
 #include "ui/ui_main.h"
 #include "ui/clientwindowsystem.h"
 
+#include <SDL_video.h>
+
 using namespace de;
 using namespace res;
 
@@ -87,7 +88,7 @@ dfloat glNearClip, glFarClip;
 static dd_bool initGLOk;
 static dd_bool initFullGLOk;
 
-static dd_bool gamma_support;
+static dd_bool isGammaRampEnabled;
 static dfloat oldgamma, oldcontrast, oldbright;
 
 static dint fogModeDefault;
@@ -109,18 +110,34 @@ dd_bool GL_IsFullyInited()
     return initFullGLOk;
 }
 
-void GL_GetGammaRamp(DisplayColorTransfer *ramp)
+struct GammaRamp
 {
-    if(!gamma_support) return;
+    duint16 red[256];
+    duint16 green[256];
+    duint16 blue[256];
+};
 
-    DisplayMode_GetColorTransfer(ramp);
-}
+//void GL_GetGammaRamp(GammaRamp *ramp)
+//{
+//    if (!isGammaRampEnabled) return;
 
-void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
+//    DE_ASSERT(GLWindow::mainExists());
+
+//    SDL_GetWindowGammaRamp(reinterpret_cast<SDL_Window *>(GLWindow::getMain().sdlWindow()),
+//                           ramp->red,
+//                           ramp->green,
+//                           ramp->blue);
+//}
+
+void GL_SetGammaRamp(const GammaRamp &ramp)
 {
-    if(!gamma_support) return;
-
-    DisplayMode_SetColorTransfer(ramp);
+    if (isGammaRampEnabled && GLWindow::mainExists())
+    {
+        SDL_SetWindowGammaRamp(reinterpret_cast<SDL_Window *>(GLWindow::getMain().sdlWindow()),
+                               ramp.red,
+                               ramp.green,
+                               ramp.blue);
+    }
 }
 
 /**
@@ -133,51 +150,48 @@ void GL_SetGammaRamp(DisplayColorTransfer const *ramp)
  * @param contrast  Steepness.
  * @param bright    Brightness, uniform offset.
  */
-void GL_MakeGammaRamp(ushort *ramp, dfloat gamma, dfloat contrast, dfloat bright)
+void GL_MakeGammaRamp(GammaRamp &ramp, dfloat gamma, dfloat contrast, dfloat bright)
 {
-    DE_ASSERT(ramp);
-
-    ddouble ideal[256];  // After processing clamped to unsigned short.
+    double ideal[256]; // After processing clamped to unsigned short.
 
     // Don't allow stupid values.
-    if(contrast < 0.1f)
-        contrast = 0.1f;
+    if (contrast < 0.1f) contrast = 0.1f;
 
-    if(bright > 0.8f)  bright = 0.8f;
-    if(bright < -0.8f) bright = -0.8f;
+    if (bright > 0.8f) bright = 0.8f;
+    if (bright < -0.8f) bright = -0.8f;
 
     // Init the ramp as a line with the steepness defined by contrast.
-    for(dint i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
         ideal[i] = i * contrast - (contrast - 1) * 127;
     }
 
     // Apply the gamma curve.
-    if(gamma != 1)
+    if (gamma != 1)
     {
-        if(gamma <= 0.1f) gamma = 0.1f;
+        if (gamma <= 0.1f) gamma = 0.1f;
 
-        ddouble norm = pow(255, 1 / ddouble( gamma ) - 1);  // Normalizing factor.
-        for(dint i = 0; i < 256; ++i)
+        double norm = pow(255, 1 / double(gamma) - 1); // Normalizing factor.
+        for (int i = 0; i < 256; ++i)
         {
-            ideal[i] = pow(ideal[i], 1 / ddouble( gamma )) / norm;
+            ideal[i] = pow(ideal[i], 1 / double(gamma)) / norm;
         }
     }
 
     // The last step is to add the brightness offset.
-    for(dint i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
         ideal[i] += bright * 128;
     }
 
     // Clamp it and write the ramp table.
-    for(dint i = 0; i < 256; ++i)
+    for (int i = 0; i < 256; ++i)
     {
-        ideal[i] *= 0x100;  // Byte => word
-        if(ideal[i] < 0)        ideal[i] = 0;
-        if(ideal[i] > 0xffff)   ideal[i] = 0xffff;
+        ideal[i] *= 0x100; // Byte => word
+        if (ideal[i] < 0) ideal[i] = 0;
+        if (ideal[i] > 0xffff) ideal[i] = 0xffff;
 
-        ramp[i] = ramp[i + 256] = ramp[i + 512] = (dushort) ideal[i];
+        ramp.red[i] = ramp.green[i] = ramp.blue[i] = duint16(ideal[i]);
     }
 }
 
@@ -186,14 +200,14 @@ void GL_MakeGammaRamp(ushort *ramp, dfloat gamma, dfloat contrast, dfloat bright
  */
 void GL_SetGamma()
 {
-    DisplayColorTransfer myramp;
+    GammaRamp myramp;
 
     oldgamma    = vid_gamma;
     oldcontrast = vid_contrast;
     oldbright   = vid_bright;
 
-    GL_MakeGammaRamp(myramp.table, vid_gamma, vid_contrast, vid_bright);
-    GL_SetGammaRamp(&myramp);
+    GL_MakeGammaRamp(myramp, vid_gamma, vid_contrast, vid_bright);
+    GL_SetGammaRamp(myramp);
 }
 
 void GL_FinishFrame()
@@ -240,7 +254,7 @@ void GL_EarlyInit()
 
     ClientApp::renderSystem().glInit();
 
-    gamma_support = !CommandLine_Check("-noramp");
+    isGammaRampEnabled = !CommandLine_Check("-noramp");
 
     GL_InitDeferredTask();
 
@@ -1347,15 +1361,19 @@ D_CMD(DisplayModeInfo)
     ClientWindow *win = ClientWindowSystem::mainPtr();
     if(!win) return false;
 
-    DisplayMode const *mode = DisplayMode_Current();
+    SDL_DisplayMode disp;
+    Vec2i ratio = de::ratio({disp.w, disp.h});
+    SDL_GetCurrentDisplayMode(win->displayIndex(), &disp);
 
     String str = Stringf("Current display mode:%ix%i depth:%i (%i:%i",
-                     mode->width, mode->height,
-                     mode->depth,
-                     mode->ratioX, mode->ratioY);
-    if(mode->refreshRate > 0)
+                         disp.w,
+                         disp.h,
+                         SDL_BITSPERPIXEL(disp.format),
+                         ratio.x,
+                         ratio.y);
+    if (disp.refresh_rate > 0)
     {
-        str += Stringf(", refresh: %.1f Hz", mode->refreshRate);
+        str += Stringf(", refresh: %d Hz", disp.refresh_rate);
     }
     str += Stringf(")\nMain window:\n  current origin:%s size:%s"
                   "\n  windowed origin:%s size:%s"
@@ -1381,21 +1399,23 @@ D_CMD(ListDisplayModes)
 {
     DE_UNUSED(src, argc, argv);
 
-    LOG_GL_MSG("There are %i display modes available:") << DisplayMode_Count();
-    for(dint i = 0; i < DisplayMode_Count(); ++i)
+    auto &win = GLWindow::getMain();
+    const auto modes = GLWindow::displayModes(win.displayIndex());
+
+    LOG_GL_MSG("There are %i display modes available:") << modes.size();
+    for (const auto &mode : modes)
     {
-        DisplayMode const *mode = DisplayMode_ByIndex(i);
-        if(mode->refreshRate > 0)
+        if (mode.refreshRate > 0)
         {
-            LOG_GL_MSG("  %i x %i x %i " _E(>) "(%i:%i, refresh: %.1f Hz)")
-                    << mode->width << mode->height << mode->depth
-                    << mode->ratioX << mode->ratioY << mode->refreshRate;
+            LOG_GL_MSG("  %i x %i x %i " _E(>) "(%i:%i, refresh: %d Hz)")
+                    << mode.resolution.x << mode.resolution.y << mode.bitDepth
+                    << mode.ratio().x << mode.ratio().y << mode.refreshRate;
         }
         else
         {
             LOG_GL_MSG("  %i x %i x %i (%i:%i)")
-                    << mode->width << mode->height << mode->depth
-                    << mode->ratioX << mode->ratioY;
+                    << mode.resolution.x << mode.resolution.y<< mode.bitDepth
+                    << mode.ratio().x << mode.ratio().y;
         }
     }
     return true;

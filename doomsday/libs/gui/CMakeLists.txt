@@ -6,17 +6,6 @@ project (DE_LIBGUI)
 # Apply Doomsday's configuration.
 include (../../cmake/Config.cmake)
 
-if (APPLE)
-    # Don't change display modes on macOS/iOS. We'll instead resize the
-    # frame buffer and scale up.
-    set (DE_ENABLE_DISPLAYMODE_DEFAULT OFF)
-else ()
-    set (DE_ENABLE_DISPLAYMODE_DEFAULT ON)
-endif ()
-option (DE_ENABLE_DISPLAYMODE "Enable/disable changing the display mode"
-    ${DE_ENABLE_DISPLAYMODE_DEFAULT}
-)
-
 # OpenGL API selection.
 set (DE_OPENGL_API "3.3" CACHE STRING "OpenGL API selection (3.3, GLES3, GLES2)")
 if (IOS)
@@ -50,14 +39,6 @@ deng_merge_sources (vr       src/vr/*.cpp)
 deng_merge_sources (widgets  src/widgets/*.cpp)
 
 list (APPEND SOURCES src/dialogs/filedialog_${DE_PLATFORM_SUFFIX})
-
-# Choose which DisplayMode sources to use.
-list_remove_matches (SOURCES ".*/displaymode_.*")
-if (NOT DE_ENABLE_DISPLAYMODE)
-    list (APPEND SOURCES src/graphics/displaymode_dummy.cpp)
-else ()
-    list (APPEND SOURCES src/graphics/displaymode_sdl.cpp)
-endif ()
 
 deng_add_library (libgui ${SOURCES} ${HEADERS})
 
@@ -104,22 +85,6 @@ endif ()
 #    target_include_directories (libgui PRIVATE ${X11_INCLUDE_DIR})
 #    target_link_libraries (libgui PRIVATE ${X11_LIBRARIES})
 #    deng_target_link_qt (libgui PRIVATE X11Extras)
-#    if (DE_ENABLE_DISPLAYMODE)
-#        if (NOT X11_Xrandr_FOUND)
-#            message (FATAL_ERROR "DisplayMode requires X11 Xrandr extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
-#        endif ()
-#        if (NOT X11_xf86vmode_FOUND)
-#            message (FATAL_ERROR "DisplayMode requires X11 xf86vmode extension (enable/disable with DE_ENABLE_DISPLAYMODE)")
-#        endif ()
-#        target_include_directories (libgui PRIVATE
-#            ${X11_Xrandr_INCLUDE_PATH}
-#            ${X11_xf86vmode_INCLUDE_PATH}
-#        )
-#        target_link_libraries (libgui PRIVATE
-#            ${X11_Xrandr_LIB}
-#            ${X11_Xxf86vm_LIB}
-#        )
-#    endif ()
 #endif ()
 
 deng_deploy_library (libgui DengGui)

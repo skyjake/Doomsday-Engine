@@ -19,6 +19,7 @@
 #include "de/math.h"
 #include "de/IByteArray"
 #include "de/Reader"
+#include "de/Vector"
 
 #include <the_Foundation/process.h>
 #include <chrono>
@@ -148,6 +149,48 @@ duint32 crc32(IByteArray const &data)
         crc32 = crc32_tab[(crc32 ^ element) & 0xff] ^ (crc32 >> 8);
     }
     return crc32;
+}
+
+Vec2i ratio(const Vec2i &values)
+{
+    int ratioX = values.x;
+    int ratioY = values.y;
+
+    float fx;
+    float fy;
+    if (values.x > values.y)
+    {
+        fx = float(values.x) / float(values.y);
+        fy = 1.f;
+    }
+    else
+    {
+        fx = 1.f;
+        fy = float(values.y) / float(values.x);
+    }
+
+    // Multiply until we arrive at a close enough integer ratio.
+    for (int mul = 2; mul < de::min(values.x, values.y); ++mul)
+    {
+        float rx = fx * mul;
+        float ry = fy * mul;
+        if (std::abs(rx - roundi(rx)) < .01f && std::abs(ry - roundi(ry)) < .01f)
+        {
+            // This seems good.
+            ratioX = roundi(rx);
+            ratioY = roundi(ry);
+            break;
+        }
+    }
+
+    if (ratioX == 8 && ratioY == 5)
+    {
+        // This is commonly referred to as 16:10.
+        ratioX *= 2;
+        ratioY *= 2;
+    }
+
+    return {ratioX, ratioY};
 }
 
 } // namespace de

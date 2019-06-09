@@ -33,7 +33,6 @@
 #include "dd_uinit.h"
 
 #ifdef __CLIENT__
-#  include <de/DisplayMode>
 #  include "gl/sys_opengl.h"
 #endif
 
@@ -81,7 +80,7 @@ void DD_Shutdown(void)
 //    DoomsdayApp::plugins().unloadAll();
 //    Library_Shutdown();
 
-#ifdef __CLIENT__
-    DisplayMode_Shutdown();
-#endif
+//#ifdef __CLIENT__
+//    DisplayMode_Shutdown();
+//#endif
 }

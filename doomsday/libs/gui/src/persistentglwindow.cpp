@@ -26,7 +26,6 @@
 
 #include "de/PersistentGLWindow"
 #include "de/GuiApp"
-#include "de/DisplayMode"
 
 #include <de/ArrayValue>
 #include <de/CommandLine>
@@ -96,17 +95,17 @@ DE_PIMPL(PersistentGLWindow)
         };
         typedef int Flags;
 
-        String winId;
-        Rectanglei windowRect;  ///< Window geometry in windowed mode.
-        Size fullSize;          ///< Dimensions in a fullscreen mode.
-        int colorDepthBits = 0;
-        float refreshRate = 0.f;
-        Flags flags { None };
+        String     winId;
+        Rectanglei windowRect; ///< Window geometry in windowed mode.
+        Size       fullSize;   ///< Dimensions in a fullscreen mode.
+        duint      colorDepthBits = 0;
+        float      refreshRate    = 0.f;
+        Flags      flags{None};
 
-        State(String const &id) : winId(id)
+        State(const String &id) : winId(id)
         {}
 
-        bool operator == (State const &other) const
+        bool operator==(const State &other) const
         {
             return (winId          == other.winId &&
                     windowRect     == other.windowRect &&
@@ -223,7 +222,7 @@ DE_PIMPL(PersistentGLWindow)
                 fullSize = Size(fs.at(0).asInt(), fs.at(1).asInt());
             }
 
-            colorDepthBits    = config.geti(configName("colorDepth"));
+            colorDepthBits    = config.getui(configName("colorDepth"));
             refreshRate       = config.getf(configName("refreshRate"));
             setFlag(Centered,   config.getb(configName("center")));
             setFlag(Maximized,  config.getb(configName("maximize")));
@@ -232,26 +231,26 @@ DE_PIMPL(PersistentGLWindow)
             setFlag(VSync,      config.getb(configName("vsync"), true));
         }
 
-        /**
-         * Determines if the window will overtake the entire screen.
-         */
-        bool shouldCaptureScreen() const
-        {
-            return isFullscreen() &&
-                   !DisplayMode_IsEqual(displayMode(), DisplayMode_OriginalMode());
-        }
+//        /**
+//         * Determines if the window will overtake the entire screen.
+//         */
+//        bool shouldCaptureScreen() const
+//        {
+//            return isFullscreen() &&
+//                   !DisplayMode_IsEqual(displayMode(), DisplayMode_OriginalMode());
+//        }
 
         /**
          * Determines the display mode that this state will use in
          * fullscreen mode.
          */
-        DisplayMode const *displayMode() const
-        {
+        GLWindow::DisplayMode displayMode() const
+        {            
             if (isFullscreen())
             {
-                return DisplayMode_FindClosest(fullSize.x, fullSize.y, colorDepthBits, refreshRate);
+                return {Vec2i(fullSize.x, fullSize.y), colorDepthBits, roundi(refreshRate)};
             }
-            return DisplayMode_OriginalMode();
+            return {};
         }
 
         void applyAttributes(int const *attribs)
@@ -567,7 +566,7 @@ DE_PIMPL(PersistentGLWindow)
 
         // Update the cached state from the authoritative source:
         // the widget itself.
-        state = widgetState();
+        state = currentState();
 
         // The new modified state.
         State mod = state;
@@ -605,8 +604,8 @@ DE_PIMPL(PersistentGLWindow)
         // If the display mode needs to change, we will have to defer the rest
         // of the state changes so that everything catches up after the change.
         TimeSpan defer = 0.0;
-        DisplayMode const *newMode = newState.displayMode();
-        bool modeChanged = false;
+        const DisplayMode newMode = newState.displayMode();
+//        bool modeChanged = false;
 
         if (!self().isVisible())
         {
@@ -615,7 +614,7 @@ DE_PIMPL(PersistentGLWindow)
         }
 
         // Change display mode, if necessary.
-        if (!DisplayMode_IsEqual(DisplayMode_Current(), newMode))
+/*        if (!newMode.isDefault() && GLWindow::getMain().fullscreenDisplayMode() != newMode)
         {
             LOG_GL_NOTE("Changing display mode to %i x %i x %i (%.1f Hz)")
                     << newMode->width << newMode->height << newMode->depth << newMode->refreshRate;
@@ -630,7 +629,11 @@ DE_PIMPL(PersistentGLWindow)
 #else
             defer = .01;
 #endif
-        }
+        }*/
+
+        const auto oldWinMode = self().fullscreenDisplayMode();
+
+        self().setFullscreenDisplayMode(newMode);
 
         if (self().isVisible())
         {
@@ -655,11 +658,11 @@ DE_PIMPL(PersistentGLWindow)
             }
             else
             {
-                if (modeChanged)
-                {
-                    queue << Task(Task::ShowNormal, defer);
-                    defer = 0.01;
-                }
+//                if (modeChanged)
+//                {
+//                    queue << Task(Task::ShowNormal, defer);
+//                    defer = 0.01;
+//                }
 
                 if (newState.isMaximized())
                 {
@@ -676,14 +679,14 @@ DE_PIMPL(PersistentGLWindow)
             defer = 0.0;
         }
 
-        if (modeChanged)
+        if (oldWinMode != newMode)
         {
-#ifdef MACOSX
-            if (newState.isFullscreen())
-            {
-                queue << Task(Task::MacRaiseOverShield);
-            }
-#endif
+//#ifdef MACOSX
+//            if (newState.isFullscreen())
+//            {
+//                queue << Task(Task::MacRaiseOverShield);
+//            }
+//#endif
             queue << Task(Task::NotifyModeChange, .1);
         }
 
@@ -780,16 +783,16 @@ DE_PIMPL(PersistentGLWindow)
     }
 
     /**
-     * Gets the current state of the Qt widget.
+     * Gets the current state of the window.
      */
-    State widgetState() const
+    State currentState() const
     {
         State st(id);
 
         st.windowRect     = self().windowRect();
         st.fullSize       = state.fullSize;
-        st.colorDepthBits = DisplayMode_Current()->depth;
-        st.refreshRate    = DisplayMode_Current()->refreshRate;
+        st.colorDepthBits = self().fullscreenDisplayMode().bitDepth;
+        st.refreshRate    = self().fullscreenDisplayMode().refreshRate;
 
         st.flags =
                 (self().isMaximized()?  State::Maximized  : State::None) |
@@ -808,7 +811,7 @@ DE_PIMPL(PersistentGLWindow)
     {
         if (queue.isEmpty())
         {
-            state = widgetState();
+            state = currentState();
         }
 
         DE_FOR_PUBLIC_AUDIENCE2(AttributeChange, i)
@@ -868,7 +871,7 @@ void PersistentGLWindow::saveToConfig()
 {
     try
     {
-        d->widgetState().saveToConfig();
+        d->currentState().saveToConfig();
     }
     catch (Error const &er)
     {
@@ -886,7 +889,7 @@ void PersistentGLWindow::restoreFromConfig()
 
 void PersistentGLWindow::saveState()
 {
-    d->savedState = d->widgetState();
+    d->savedState = d->currentState();
 }
 
 void PersistentGLWindow::restoreState()

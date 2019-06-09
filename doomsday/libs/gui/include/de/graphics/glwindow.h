@@ -27,10 +27,6 @@
 #include <de/Rectangle>
 #include <de/NativePath>
 
-#if defined (DE_MOBILE)
-#  error "glwindow.h is for desktop platforms (use glwindow_qml.h instead)"
-#endif
-
 #ifdef WIN32
 #  undef min
 #  undef max
@@ -51,6 +47,35 @@ class LIBGUI_PUBLIC GLWindow : public Asset
 public:
     using Size = Vec2ui;
 
+    struct LIBGUI_PUBLIC DisplayMode // for fullscreen use
+    {
+        Vec2i        resolution;
+        unsigned int bitDepth;
+        int          refreshRate;
+
+        bool operator==(const DisplayMode &other) const
+        {
+            return resolution == other.resolution &&
+                   (!bitDepth || !other.bitDepth || bitDepth == other.bitDepth) &&
+                   (!refreshRate || !other.refreshRate || refreshRate == other.refreshRate);
+        }
+
+        inline bool operator!=(const DisplayMode &other) const
+        {
+            return !(*this == other);
+        }
+
+        inline bool isDefault() const
+        {
+            return resolution == Vec2i();
+        }
+
+        Vec2i ratio() const
+        {
+            return de::ratio(resolution);
+        }
+    };
+
     /**
      * Notified when the window's GL state needs to be initialized. The OpenGL
      * context and drawing surface are not ready before this occurs. This gets
@@ -63,6 +88,11 @@ public:
      * Notified when a window size has changed.
      */
     DE_DEFINE_AUDIENCE2(Resize, void windowResized(GLWindow &))
+
+    /**
+     * Notified when the window's current display changes.
+     */
+    DE_DEFINE_AUDIENCE2(Display, void windowDisplayChanged(GLWindow &))
 
     /**
      * Notified when the window pixel ratio has changed.
@@ -110,7 +140,7 @@ public:
     bool isHidden() const;
 
     float frameRate() const;
-    uint frameCount() const;
+    uint  frameCount() const;
 
     inline int x() const { return pos().x; }
     inline int y() const { return pos().y; }
@@ -120,8 +150,8 @@ public:
      */
     Vec2i pos() const;
 
-    Size pointSize() const;
-    Size pixelSize() const;
+    Size  pointSize() const;
+    Size  pixelSize() const;
     duint pointWidth() const;
     duint pointHeight() const;
     duint pixelWidth() const;
@@ -139,6 +169,12 @@ public:
     }
 
     double pixelRatio() const;
+    int    displayIndex() const;
+
+    void        setFullscreenDisplayMode(const DisplayMode &mode);
+    DisplayMode fullscreenDisplayMode() const;
+    DisplayMode desktopDisplayMode() const;
+    bool        isNotDesktopDisplayMode() const;
 
     inline Rectanglei geometry() const { return {x(), y(), pointSize().x, pointSize().y }; }
 
@@ -215,18 +251,25 @@ public:
      */
     void glDone();
 
-    /*
-     * Returns a handle to the native window instance. (Platform-specific.)
+    /**
+     * Returns a handle to the SDL window instance.
      */
-//    void *nativeHandle() const;
+    void *sdlWindow() const;
 
     virtual void draw() = 0;
 
 public:
-    static bool      mainExists();
-    static GLWindow &getMain();
-    static void      glActivateMain();
-    static void      setMain(GLWindow *window);
+    static void         setMain(GLWindow *window);
+    static bool         mainExists();
+    static GLWindow &   getMain();
+    static void         glActivateMain();
+
+    /**
+     * Enumerates the available display modes of a display.
+     * @param displayIndex  Which display.
+     * @return List of supported modes.
+     */
+    static List<DisplayMode> displayModes(int displayIndex);
 
 protected:
     virtual void initializeGL();

@@ -30,13 +30,9 @@
 #include "clientapp.h"
 #include "clientplayer.h"
 
-//#include <QSurfaceFormat>
-//#include <QTimer>
-//#include <QCloseEvent>
 #include <de/CompositorWidget>
 #include <de/Config>
 #include <de/ConstantRule>
-#include <de/DisplayMode>
 #include <de/Drawable>
 #include <de/FadeToBlackWidget>
 #include <de/FileSystem>

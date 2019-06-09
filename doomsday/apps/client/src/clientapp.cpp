@@ -85,7 +85,6 @@
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/DictionaryValue>
-#include <de/DisplayMode>
 #include <de/Error>
 #include <de/Extension>
 #include <de/FileSystem>

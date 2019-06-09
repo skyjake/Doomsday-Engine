@@ -53,6 +53,7 @@ DE_PIMPL(GLWindow)
     bool                paintPending  = false;
     Size                currentSize;
     double              pixelRatio = 0.0;
+    int                 displayIndex;
 
     uint  frameCount   = 0;
     float fps          = 0;
@@ -80,6 +81,7 @@ DE_PIMPL(GLWindow)
                                   SDL_WINDOW_RESIZABLE |
                                   SDL_WINDOW_ALLOW_HIGHDPI);
         glContext = SDL_GL_CreateContext(window);
+        displayIndex = SDL_GetWindowDisplayIndex(window);
     }
 
     ~Impl()
@@ -98,6 +100,23 @@ DE_PIMPL(GLWindow)
         {
             GuiLoop::get().setWindow(nullptr); // triggers GuiLoop iterations
             mainWindow = nullptr;
+        }
+    }
+
+    void updatePixelRatio()
+    {
+        int dw, dh, w, h;
+        SDL_GetWindowSize(window, &w, &h);
+        SDL_GL_GetDrawableSize(window, &dw, &dh);
+        const double ratio = double(dw) / double(w);
+        if (!fequal(ratio, pixelRatio))
+        {
+            pixelRatio = ratio;
+            debug("[GLWindow] pixel ratio changed: %f", pixelRatio);
+            DE_FOR_PUBLIC_AUDIENCE2(PixelRatio, i)
+            {
+                i->windowPixelRatioChanged(self());
+            }
         }
     }
 
@@ -126,27 +145,9 @@ DE_PIMPL(GLWindow)
         self().makeCurrent();
 
         DE_ASSERT(SDL_GL_GetCurrentContext() != nullptr);
-
-#if 0
-        // Print some information.
-        QSurfaceFormat const fmt = self().format();
-
-#if defined (DE_OPENGL)
-        LOG_GL_NOTE("OpenGL %i.%i supported%s")
-                << fmt.majorVersion()
-                << fmt.minorVersion()
-                << (fmt.majorVersion() > 2?
-                        (fmt.profile() == QSurfaceFormat::CompatibilityProfile? " (Compatibility)"
-                                                                              : " (Core)") : "");
-#else
-        LOG_GL_NOTE("OpenGL ES %i.%i supported")
-                << fmt.majorVersion() << fmt.minorVersion();
-#endif
-#endif
-
         LIBGUI_ASSERT_GL_OK();
 
-        debug("Window pixel size at notifyReady: %s", currentSize.asText().c_str());
+        debug("[GLWindow] pixel size at notifyReady: %s", currentSize.asText().c_str());
 
         // Everybody can perform GL init now.
         DE_FOR_PUBLIC_AUDIENCE2(Init, i)   i->windowInit(self());
@@ -264,108 +265,97 @@ DE_PIMPL(GLWindow)
         }
     }
 
+    void checkWhichDisplay()
+    {
+        const int disp = SDL_GetWindowDisplayIndex(window);
+        if (disp != displayIndex)
+        {
+            displayIndex = disp;
+            debug("[GLWindow] display index changed: %d", displayIndex);
+            DE_FOR_PUBLIC_AUDIENCE2(Display, i) { i->windowDisplayChanged(self()); }
+            updatePixelRatio();
+        }
+    }
+
     void handleSDLEvent(const SDL_Event &event)
     {
         switch (event.type)
         {
-        case SDL_KEYDOWN:
-        case SDL_KEYUP:
-        case SDL_TEXTINPUT:
-        case SDL_MOUSEMOTION:
-        case SDL_MOUSEBUTTONDOWN:
-        case SDL_MOUSEBUTTONUP:
-        case SDL_MOUSEWHEEL:
-        case SDL_FINGERUP:
-        case SDL_FINGERDOWN:
-        case SDL_MULTIGESTURE:
-            handler->handleSDLEvent(&event);
-            break;
+            case SDL_KEYDOWN:
+            case SDL_KEYUP:
+            case SDL_TEXTINPUT:
+            case SDL_MOUSEMOTION:
+            case SDL_MOUSEBUTTONDOWN:
+            case SDL_MOUSEBUTTONUP:
+            case SDL_MOUSEWHEEL:
+            case SDL_FINGERUP:
+            case SDL_FINGERDOWN:
+            case SDL_MULTIGESTURE: handler->handleSDLEvent(&event); break;
 
-        case SDL_WINDOWEVENT:
-            switch (event.window.event)
-            {
-            case SDL_WINDOWEVENT_EXPOSED:
-                if (!initialized)
+            case SDL_WINDOWEVENT:
+                switch (event.window.event)
                 {
-                    self().initializeGL();
-                    self().update();
+                    case SDL_WINDOWEVENT_EXPOSED:
+                        if (!initialized)
+                        {
+                            self().initializeGL();
+                            self().update();
+                        }
+                        checkWhichDisplay();
+                        break;
+
+                    case SDL_WINDOWEVENT_MOVED:
+                        checkWhichDisplay();
+                        DE_FOR_PUBLIC_AUDIENCE2(Move, i)
+                        {
+                            i->windowMoved(self(), Vec2i(event.window.data1, event.window.data2));
+                        }
+                        break;
+
+                    case SDL_WINDOWEVENT_RESIZED:
+                        resizeEvent(event.window);
+                        checkWhichDisplay();
+                        break;
+
+                    case SDL_WINDOWEVENT_CLOSE: break;
+
+                    case SDL_WINDOWEVENT_FOCUS_GAINED:
+                    case SDL_WINDOWEVENT_FOCUS_LOST: handler->handleSDLEvent(&event); break;
+
+                    case SDL_WINDOWEVENT_MAXIMIZED:
+                    case SDL_WINDOWEVENT_MINIMIZED:
+                    case SDL_WINDOWEVENT_RESTORED:
+                    case SDL_WINDOWEVENT_HIDDEN: break;
+
+                    case SDL_WINDOWEVENT_SHOWN:
+                        checkWhichDisplay();
+                        self().update();
+                        break;
+
+                    default: break;
                 }
-                break;
-
-            case SDL_WINDOWEVENT_MOVED:
-                DE_FOR_PUBLIC_AUDIENCE2(Move, i)
-                {
-                    i->windowMoved(self(), Vec2i(event.window.data1, event.window.data2));
-                }
-                break;
-
-            case SDL_WINDOWEVENT_RESIZED: resizeEvent(event.window); break;
-
-            case SDL_WINDOWEVENT_CLOSE: break;
-
-            case SDL_WINDOWEVENT_FOCUS_GAINED:
-            case SDL_WINDOWEVENT_FOCUS_LOST:
-                handler->handleSDLEvent(&event);
-                break;
-
-            case SDL_WINDOWEVENT_MAXIMIZED:
-            case SDL_WINDOWEVENT_MINIMIZED:
-            case SDL_WINDOWEVENT_RESTORED:
-            case SDL_WINDOWEVENT_HIDDEN: break;
-
-            case SDL_WINDOWEVENT_SHOWN:
-                self().update();
                 break;
 
             default: break;
-            }
-            break;
-
-        default: break;
         }
     }
 
-    DE_PIMPL_AUDIENCES(Init, Resize, PixelRatio, Swap, Move, Visibility)
+    DE_PIMPL_AUDIENCES(Init, Resize, Display, PixelRatio, Swap, Move, Visibility)
 };
 
-DE_AUDIENCE_METHODS(GLWindow, Init, Resize, PixelRatio, Swap, Move, Visibility)
+DE_AUDIENCE_METHODS(GLWindow, Init, Resize, Display, PixelRatio, Swap, Move, Visibility)
 
 GLWindow::GLWindow()
     : d(new Impl(this))
 {
-//#if defined (MACOSX)
-//    setFlags(flags() | Qt::WindowFullscreenButtonHint);
-//#endif
-
-//#if defined (DE_MOBILE)
-//    setFocusPolicy(Qt::StrongFocus);
-//#endif
-
     d->handler = new WindowEventHandler(this);
     d->handler->setKeyboardMode(WindowEventHandler::RawKeys);
     
-//    d->pixelRatio = devicePixelRatio();
-
     d->handler->audienceForMouseStateChange() += [this]() {
         const bool trap = d->handler->isMouseTrapped();
         SDL_SetWindowGrab(d->window, trap ? SDL_TRUE : SDL_FALSE);
         SDL_SetRelativeMouseMode(trap ? SDL_TRUE : SDL_FALSE);
     };
-
-#if 0
-    connect(this, &QWindow::screenChanged, [this](QScreen *scr) {
-        //qDebug() << "window screen changed:" << scr << scr->devicePixelRatio();
-        if (!fequal(d->pixelRatio, scr->devicePixelRatio()))
-        {
-            d->pixelRatio = scr->devicePixelRatio();
-            d->submitResize(pointSize() * d->pixelRatio);
-            DENG2_FOR_AUDIENCE2(PixelRatio, i)
-            {
-                i->windowPixelRatioChanged(*this);
-            }
-        }
-    });
-#endif
 }
 
 void GLWindow::setTitle(const String &title)
@@ -421,7 +411,9 @@ void GLWindow::showMaximized()
 void GLWindow::showFullScreen()
 {
     SDL_ShowWindow(d->window);
-    SDL_SetWindowFullscreen(d->window, SDL_WINDOW_FULLSCREEN_DESKTOP);
+    const bool isDesktop = (fullscreenDisplayMode() == desktopDisplayMode());
+    SDL_SetWindowFullscreen(d->window,
+                            isDesktop ? SDL_WINDOW_FULLSCREEN_DESKTOP : SDL_WINDOW_FULLSCREEN);
 }
 
 void GLWindow::hide()
@@ -449,13 +441,6 @@ void GLWindow::setGeometry(const Rectanglei &rect)
     }
 }
 
-#if defined (DE_MOBILE)
-void GLWindow::setTitle(QString const &title)
-{
-    setWindowTitle(title);
-}
-#endif
-
 bool GLWindow::isGLReady() const
 {
     return d->readyNotified;
@@ -463,20 +448,12 @@ bool GLWindow::isGLReady() const
 
 bool GLWindow::isMaximized() const
 {
-#if defined (DE_MOBILE)
-    return false;
-#else
     return d->winFlags().testFlag(SDL_WINDOW_MAXIMIZED);
-#endif
 }
 
 bool GLWindow::isMinimized() const
 {
-#if defined (DE_MOBILE)
-    return false;
-#else
     return d->winFlags().testFlag(SDL_WINDOW_MINIMIZED);
-#endif
 }
 
 bool GLWindow::isVisible() const
@@ -486,20 +463,12 @@ bool GLWindow::isVisible() const
 
 bool GLWindow::isFullScreen() const
 {
-#if defined (DE_MOBILE)
-    return true;
-#else
     return (d->winFlags() & (SDL_WINDOW_FULLSCREEN | SDL_WINDOW_FULLSCREEN_DESKTOP)) != 0;
-#endif
 }
 
 bool GLWindow::isHidden() const
 {
-#if defined (DE_MOBILE)
-    return false;
-#else
     return d->winFlags().testFlag(SDL_WINDOW_HIDDEN);
-#endif
 }
 
 GLFramebuffer &GLWindow::framebuffer() const
@@ -544,6 +513,68 @@ GLWindow::Size GLWindow::pixelSize() const
 double GLWindow::pixelRatio() const
 {
     return d->pixelRatio;
+}
+
+int GLWindow::displayIndex() const
+{
+    DE_ASSERT(d->displayIndex == SDL_GetWindowDisplayIndex(d->window));
+    return d->displayIndex;
+}
+
+void GLWindow::setFullscreenDisplayMode(const DisplayMode &mode)
+{
+    SDL_DisplayMode wanted{};
+    wanted.w            = mode.resolution.x;
+    wanted.h            = mode.resolution.y;
+    wanted.format       = (mode.bitDepth == 16 ? SDL_PIXELFORMAT_RGB565 : SDL_PIXELFORMAT_RGB888);
+    wanted.refresh_rate = mode.refreshRate;
+
+    if (mode.isDefault())
+    {
+        SDL_GetDesktopDisplayMode(d->displayIndex, &wanted);
+    }
+
+    SDL_DisplayMode disp;
+    if (SDL_GetClosestDisplayMode(d->displayIndex, &wanted, &disp))
+    {
+        SDL_SetWindowDisplayMode(d->window, &disp);
+    }
+}
+
+static GLWindow::DisplayMode fromSdl(const SDL_DisplayMode &disp)
+{
+    return {{disp.w, disp.h}, SDL_BITSPERPIXEL(disp.format), disp.refresh_rate};
+}
+
+GLWindow::DisplayMode GLWindow::fullscreenDisplayMode() const
+{
+    SDL_DisplayMode disp;
+    SDL_GetWindowDisplayMode(d->window, &disp);
+    return fromSdl(disp);
+}
+
+GLWindow::DisplayMode GLWindow::desktopDisplayMode() const
+{
+    SDL_DisplayMode disp;
+    SDL_GetDesktopDisplayMode(d->displayIndex, &disp);
+    return fromSdl(disp);
+}
+
+bool GLWindow::isNotDesktopDisplayMode() const
+{
+    return fullscreenDisplayMode() != desktopDisplayMode();
+}
+
+List<GLWindow::DisplayMode> GLWindow::displayModes(int displayIndex)
+{
+    List<DisplayMode> modes;
+    for (int i = 0; i < SDL_GetNumDisplayModes(displayIndex); ++i)
+    {
+        SDL_DisplayMode disp;
+        SDL_GetDisplayMode(displayIndex, i, &disp);
+        modes << fromSdl(disp);
+    }
+    return modes;
 }
 
 duint GLWindow::pointWidth() const
@@ -744,6 +775,11 @@ void GLWindow::setMain(GLWindow *window) // static
 {
     mainWindow = window;
     GuiLoop::get().setWindow(window);
+}
+
+void *GLWindow::sdlWindow() const
+{
+    return d->window;
 }
 
 } // namespace de

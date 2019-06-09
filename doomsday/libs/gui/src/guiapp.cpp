@@ -23,14 +23,16 @@
 
 #include <de/CommandLine>
 #include <de/Config>
-#include <de/DisplayMode>
+#include <de/ConstantRule>
+#include <de/DictionaryValue>
 #include <de/EventLoop>
 #include <de/FileSystem>
 #include <de/Log>
 #include <de/NativePath>
+#include <de/NumberValue>
 #include <de/ScriptSystem>
+#include <de/TextValue>
 #include <de/Thread>
-#include <de/ConstantRule>
 
 #include <SDL.h>
 
@@ -39,9 +41,30 @@
 
 namespace de {
 
+static Value *Function_DisplayMode_OriginalMode(Context &, const Function::ArgumentValues &)
+{
+    SDL_DisplayMode mode;
+    SDL_GetDesktopDisplayMode(GLWindow::mainExists() ? GLWindow::getMain().displayIndex() : 0,
+                              &mode);
+    const auto dim = de::ratio({mode.w, mode.h});
+
+    auto *dict = new DictionaryValue;
+    dict->add(new TextValue("width"),       new NumberValue(mode.w));
+    dict->add(new TextValue("height"),      new NumberValue(mode.h));
+    dict->add(new TextValue("depth"),       new NumberValue(SDL_BITSPERPIXEL(mode.format)));
+    dict->add(new TextValue("refreshRate"), new NumberValue(mode.refresh_rate));
+
+    auto *ratio = new ArrayValue;
+    *ratio << NumberValue(dim.x) << NumberValue(dim.y);
+    dict->add(new TextValue("ratio"), ratio);
+
+    return dict;
+}
+
 DE_PIMPL(GuiApp)
 , DE_OBSERVES(Variable, Change)
 {
+    Binder        binder;
     EventLoop     eventLoop;
     GuiLoop       loop;
     thrd_t        renderThread{};
@@ -59,6 +82,13 @@ DE_PIMPL(GuiApp)
         arrowCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
         vsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZENS);
         hsizeCursor = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_SIZEWE);
+
+        // Script bindings.
+        {
+            binder.initNew() << DE_FUNC_NOARG(DisplayMode_OriginalMode, "originalMode");
+            self().scriptSystem().addNativeModule("DisplayMode", binder.module());
+            binder.module().addNumber("PIXEL_RATIO", 1.0);
+        }
     }
 
     ~Impl() override
@@ -67,7 +97,6 @@ DE_PIMPL(GuiApp)
         SDL_FreeCursor(arrowCursor);
         SDL_FreeCursor(vsizeCursor);
         SDL_FreeCursor(hsizeCursor);
-        DisplayMode_Shutdown();
         SDL_Quit();
     }
 
@@ -122,14 +151,25 @@ GuiApp::GuiApp(const StringList &args)
     {
         throw Error("GuiApp::GuiApp", stringf("Failed to initialize SDL: %s", SDL_GetError()));
     }
-    if (SDL_GetNumVideoDisplays() == 0)
+    const int displayCount = SDL_GetNumVideoDisplays();
+    if (displayCount == 0)
     {
         throw Error("GuiApp::GuiApp", "No video displays available");
     }
     setLocale_Foundation();
-    DisplayMode_Init();
 
-    d->determineDevicePixelRatio();
+    // List available display modes.
+    for (int i = 0; i < displayCount; ++i)
+    {
+        LOG_GL_MSG("Display %d:") << i;
+        for (const auto &mode : GLWindow::displayModes(i))
+        {
+            LOG_GL_MSG("  %d x %d (%d bits) @ %d Hz")
+                << mode.resolution.x << mode.resolution.y << mode.bitDepth << mode.refreshRate;
+        }
+    }
+
+    d->determineDevicePixelRatio();       
 
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);

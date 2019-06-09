@@ -32,15 +32,14 @@
 #include <de/ChoiceWidget>
 #include <de/SequentialLayout>
 #include <de/GridLayout>
-#include <de/DisplayMode>
 
 using namespace de;
 using namespace de::ui;
 
-#if !defined (MACOSX)
+//#if !defined (MACOSX)
 #  define USE_REFRESH_RATE_CHOICE
 #  define USE_COLOR_DEPTH_CHOICE
-#endif
+//#endif
 
 DE_PIMPL(VideoSettingsDialog)
 #if !defined (DE_MOBILE)
@@ -170,9 +169,9 @@ DE_PIMPL(VideoSettingsDialog)
             int delta = 0;
             for (ui::Data::Pos i = 0; i < modes->items().size(); ++i)
             {
-            const auto res = modes->items().at(i).data().asText().split(";");
-            int dx = res.at(0).toInt() - current.x;
-            int dy = res.at(1).toInt() - current.y;
+                const auto res = modes->items().at(i).data().asText().split(";");
+                int dx = res.at(0).toInt() - int(current.x);
+                int dy = res.at(1).toInt() - int(current.y);
                 int d = dx*dx + dy*dy;
                 if (closest == ui::Data::InvalidPos || d < delta)
                 {
@@ -225,10 +224,15 @@ DE_PIMPL(VideoSettingsDialog)
                             fpsLimiter->isActive()? int(fpsMax->value()) : 0);
         }
     }
+
+    List<GLWindow::DisplayMode> displayModes() const
+    {
+        return GLWindow::displayModes(GLWindow::getMain().displayIndex());
+    }
     
     bool gotDisplayMode() const
     {
-        return DisplayMode_Count() > 0;
+        return displayModes().size() > 0;
     }
 };
 
@@ -262,34 +266,36 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
 #endif
     if (d->gotDisplayMode())
     {
+        const auto dispModes = d->displayModes();
         // Choice of display modes + 16/32-bit color depth.
         d->modes->setOpeningDirection(ui::Up);
-        if (DisplayMode_Count() > 10)
+        if (dispModes.size() > 10)
         {
             d->modes->popup().menu().setGridSize(2, ui::Expand, 0, ui::Expand);
         }
-        for (int i = 0; i < DisplayMode_Count(); ++i)
+        // Resolutions.
         {
-            DisplayMode const *m = DisplayMode_ByIndex(i);
-            const String res = Stringf("%i;%i", m->width, m->height);
-            if (d->modes->items().findData(TextValue(res)) != ui::Data::InvalidPos)
+            for (const auto &m : dispModes)
             {
-                // Got this already.
-                continue;
+                const String res = Stringf("%d;%d", m.resolution.x, m.resolution.y);
+                if (d->modes->items().findData(TextValue(res)) != ui::Data::InvalidPos)
+                {
+                    // Got this already.
+                    continue;
+                }
+                String desc = Stringf("%d x %d (%d:%d)", m.resolution.x, m.resolution.y, m.ratio().x, m.ratio().y);
+                d->modes->items() << new ChoiceItem(desc, res);
             }
-            String desc = Stringf("%i x %i (%i:%i)", m->width, m->height, m->ratioX, m->ratioY);
-            d->modes->items() << new ChoiceItem(desc, res);
         }
-
 #ifdef USE_REFRESH_RATE_CHOICE
         {
             refreshLabel = LabelWidget::newWithText("Monitor Refresh:", &area());
 
             Set<int> rates;
             rates.insert(0);
-            for (int i = 0; i < DisplayMode_Count(); ++i)
+            for (const auto &m : dispModes)
             {
-                rates.insert(int(DisplayMode_ByIndex(i)->refreshRate * 10));
+                rates.insert(int(m.refreshRate * 10));
             }
             for (int rate : rates)
             {
@@ -312,13 +318,11 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
             });
         }
 #endif
-
 #ifdef USE_COLOR_DEPTH_CHOICE
         {
             colorLabel = LabelWidget::newWithText("Colors:", &area());
             d->depths->items()
                 << new ChoiceItem("32-bit", 32)
-                << new ChoiceItem("24-bit", 24)
                 << new ChoiceItem("16-bit", 16);
         }
 #endif
@@ -446,8 +450,8 @@ void VideoSettingsDialog::changeColorDepth(ui::DataPos selected)
 void VideoSettingsDialog::changeRefreshRate(ui::DataPos selected)
 {
 #ifdef USE_REFRESH_RATE_CHOICE
-    float const rate = d->refreshRates->items().at(selected).data().asNumber() / 10.f;
-    int const attribs[] = {
+    const double rate = d->refreshRates->items().at(selected).data().asNumber() / 10.0;
+    const int attribs[] = {
         ClientWindow::RefreshRate, int(rate * 1000), // milli-Hz
         ClientWindow::End
     };
@@ -480,15 +484,12 @@ void VideoSettingsDialog::showWindowMenu()
 
 void VideoSettingsDialog::applyModeToWindow()
 {
-//    QPoint const res = d->modes->selectedItem().data().toPoint();
     const auto res = d->modes->selectedItem().data().asText().split(";");
-
     int attribs[] = {
         ClientWindow::Width,  res.at(0).toInt(),
         ClientWindow::Height, res.at(1).toInt(),
         ClientWindow::End
     };
-
     d->win.changeAttributes(attribs);
 }
 

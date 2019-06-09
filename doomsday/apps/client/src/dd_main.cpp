@@ -55,7 +55,6 @@
 #include <de/NativePath>
 #ifdef __CLIENT__
 #  include <de/legacy/texgamma.h>
-#  include <de/DisplayMode>
 #  include <de/GLWindow>
 #endif
 #include <doomsday/AbstractSession>
@@ -507,10 +506,6 @@ void App_Error(char const *error, ...)
     // Already in an error?
     if (errorInProgress)
     {
-#ifdef __CLIENT__
-        DisplayMode_Shutdown();
-#endif
-
         va_start(argptr, error);
         dd_vsnprintf(buff, sizeof(buff), error, argptr);
         va_end(argptr);
@@ -575,7 +570,7 @@ void App_AbnormalShutdown(char const *message)
     Sys_Shutdown();
 
 #ifdef __CLIENT__
-    DisplayMode_Shutdown();
+    //DisplayMode_Shutdown();
     DE_GUI_APP->loop().pause();
 
     // This is an abnormal shutdown, we cannot continue drawing any of the
