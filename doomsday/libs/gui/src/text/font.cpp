@@ -36,7 +36,7 @@ template<>
 struct hash<de::FontParams> {
     std::size_t operator()(const de::FontParams &fp) const {
         return hash<de::String>()(fp.family)
-             ^ hash<int>()(int(100 * fp.size))
+             ^ hash<int>()(int(100 * fp.pointSize))
              ^ hash<int>()(fp.spec.weight)
              ^ hash<int>()(int(fp.spec.style))
              ^ hash<int>()(fp.spec.transform);
@@ -47,13 +47,13 @@ struct hash<de::FontParams> {
 namespace de {
 namespace internal {
 
-    struct ThreadFonts
-    {
-        PlatformFont font;
-        Hash<FontParams, PlatformFont *> fontMods;
+struct ThreadFonts
+{
+    PlatformFont font;
+    Hash<FontParams, PlatformFont *> fontMods;
 
-        ~ThreadFonts() { fontMods.deleteAll(); }
-    };
+    ~ThreadFonts() { fontMods.deleteAll(); }
+};
 
 } // namespace internal
 
@@ -81,7 +81,7 @@ DE_PIMPL(Font)
         createRules();
     }
 
-    Impl(Public * i, const FontParams &fp)
+    Impl(Public *i, const FontParams &fp)
         : Base(i)
         , fontParams(fp)
     {
@@ -117,7 +117,7 @@ DE_PIMPL(Font)
         if (found != hash.end())
         {
             auto &tf = found->second;
-            if (fequal(tf.font.size(), fontParams.size))
+            if (fequal(tf.font.pointSize(), fontParams.pointSize))
             {
                 return tf;
             }
@@ -127,7 +127,7 @@ DE_PIMPL(Font)
         }
         auto &font = hash[thisPublic].font;
         font.setFamily(fontParams.family);
-        font.setSize(fontParams.size);
+        font.setPointSize(fontParams.pointSize);
         font.setStyle(fontParams.spec.style);
         font.setTransform(fontParams.spec.transform);
         font.setWeight(fontParams.spec.weight);
@@ -158,7 +158,7 @@ DE_PIMPL(Font)
     {
         PlatformFont pf;
         pf.setFamily(params.family);
-        pf.setSize(params.size);
+        pf.setPointSize(params.pointSize);
         pf.setStyle(params.spec.style);
         pf.setWeight(params.spec.weight);
         pf.setTransform(params.spec.transform);
@@ -199,7 +199,7 @@ DE_PIMPL(Font)
             // Size change.
             if (!fequal(rich.sizeFactor(), 1.f))
             {
-                modParams.size *= rich.sizeFactor();
+                modParams.pointSize *= rich.sizeFactor();
             }
 
             // Style change (including monospace).
@@ -378,22 +378,6 @@ Image Font::rasterize(RichFormatRef const &format,
 
         const String part = iter.range();
 
-        /*
-#ifdef WIN32
-        // Kludge: No light-weight fonts available, so reduce opacity to give the
-        // illusion of thinness.
-        if (iter.weight() == RichFormat::Light)
-        {
-            if (Vec3ub(60, 60, 60) > fg) // dark
-                fg.w *= .66f;
-            else if (Vec3ub(230, 230, 230) < fg) // light
-                fg.w *= .85f;
-            else
-                fg.w *= .925f;
-        }
-#endif
-         */
-
         Image fragment = font->rasterize(part, fg, bg);
         Rectanglei const bounds = font->measure(part);
 
@@ -442,7 +426,7 @@ FontParams::FontParams()
 FontParams::FontParams(const NativeFont &font)
 {
     family         = font.family();
-    size           = font.size();
+    pointSize      = font.pointSize();
     spec.weight    = font.weight();
     spec.style     = font.style();
     spec.transform = font.transform();

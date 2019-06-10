@@ -19,19 +19,21 @@
 #include "de/NativeFont"
 #include <de/Map>
 #include <de/Hash>
+#include <de/Property>
 
 namespace de {
 
-typedef Hash<String, NativeFont::StyleMapping> Families;
-static Families families;
+static Hash<String, NativeFont::StyleMapping> s_families;
 
-static int const MAX_CACHE_STRING_LENGTH = 200;
-static int const MAX_CACHE_STRINGS       = 500;
+static constexpr int MAX_CACHE_STRING_LENGTH = 200;
+static constexpr int MAX_CACHE_STRINGS       = 500;
+
+DE_STATIC_PROPERTY(NativeFontPixelRatio, float)
 
 DE_PIMPL(NativeFont)
 {
     String    family;
-    dfloat    size;
+    float     pointSize;
     Style     style;
     int       weight;
     Transform transform;
@@ -40,11 +42,13 @@ DE_PIMPL(NativeFont)
 
     Impl(Public *i)
         : Base(i)
-        , size(12.f)
+        , pointSize(12.0f)
         , style(Regular)
         , weight(Normal)
         , transform(NoTransform)
-    {}
+    {
+        pNativeFontPixelRatio.audienceForChange() += [this]() { markNotReady(); };
+    }
 
     void prepare()
     {
@@ -65,7 +69,7 @@ DE_PIMPL(NativeFont)
 
 void NativeFont::defineMapping(String const &family, StyleMapping const &mapping)
 {
-    families.insert(family, mapping);
+    s_families.insert(family, mapping);
 }
 
 NativeFont::NativeFont(String const &family) : d(new Impl(this))
@@ -78,11 +82,11 @@ NativeFont::NativeFont(NativeFont const &other) : Asset(other), d(new Impl(this)
     *this = other;
 }
 
-NativeFont &NativeFont::operator = (NativeFont const &other)
+NativeFont &NativeFont::operator=(const NativeFont &other)
 {
     d->family    = other.d->family;
     d->style     = other.d->style;
-    d->size      = other.d->size;
+    d->pointSize = other.d->pointSize;
     d->weight    = other.d->weight;
     d->transform = other.d->transform;
     d->markNotReady();
@@ -95,9 +99,9 @@ void NativeFont::setFamily(String const &family)
     d->markNotReady();
 }
 
-void NativeFont::setSize(dfloat size)
+void NativeFont::setPointSize(float pointSize)
 {
-    d->size = size;
+    d->pointSize = pointSize;
     d->markNotReady();
 }
 
@@ -124,9 +128,9 @@ String NativeFont::family() const
     return d->family;
 }
 
-dfloat NativeFont::size() const
+float NativeFont::pointSize() const
 {
-    return d->size;
+    return d->pointSize;
 }
 
 NativeFont::Style NativeFont::style() const
@@ -147,15 +151,15 @@ NativeFont::Transform NativeFont::transform() const
 String NativeFont::nativeFontName() const
 {
     // Check the defined mappings.
-    auto found = families.find(d->family);
-    if (found != families.end())
+    auto found = s_families.find(d->family);
+    if (found != s_families.end())
     {
-        const StyleMapping &map = found->second;
+        const auto &styleMapping = found->second;
         const Spec spec(d->style, d->weight);
-        auto found = map.find(spec);
-        if (found != map.end())
+        auto mapped = styleMapping.find(spec);
+        if (mapped != styleMapping.end())
         {
-            return found->second;
+            return mapped->second;
         }
     }
     return d->family;
@@ -185,7 +189,7 @@ int NativeFont::lineSpacing() const
     return nativeFontLineSpacing();
 }
 
-Rectanglei NativeFont::measure(String const &text) const
+Rectanglei NativeFont::measure(const String &text) const
 {
     d->prepare();
 
@@ -198,7 +202,7 @@ Rectanglei NativeFont::measure(String const &text) const
         }
     }
 
-    Rectanglei const bounds = nativeFontMeasure(text);
+    const Rectanglei bounds = nativeFontMeasure(text);
 
     // Remember this for later.
     if (d->measureCache.size() > MAX_CACHE_STRINGS)
@@ -217,12 +221,22 @@ int NativeFont::width(String const &text) const
     return nativeFontWidth(text);
 }
 
-Image NativeFont::rasterize(String const &      text,
-                            Image::Color const &foreground,
-                            Image::Color const &background) const
+Image NativeFont::rasterize(const String &      text,
+                            const Image::Color &foreground,
+                            const Image::Color &background) const
 {
     d->prepare();
     return nativeFontRasterize(text, foreground, background);
+}
+
+void NativeFont::setPixelRatio(float pixelRatio)
+{
+    pNativeFontPixelRatio.setValue(pixelRatio);
+}
+
+float NativeFont::pixelRatio()
+{
+    return pNativeFontPixelRatio.value();
 }
 
 } // namespace de

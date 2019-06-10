@@ -28,6 +28,7 @@
 #include <de/EventLoop>
 #include <de/FileSystem>
 #include <de/Log>
+#include <de/NativeFont>
 #include <de/NativePath>
 #include <de/NumberValue>
 #include <de/ScriptSystem>
@@ -169,7 +170,8 @@ GuiApp::GuiApp(const StringList &args)
         }
     }
 
-    d->determineDevicePixelRatio();       
+    d->determineDevicePixelRatio();
+    NativeFont::setPixelRatio(d->windowPixelRatio);
 
     static ImageFile::Interpreter intrpImageFile;
     fileSystem().addInterpreter(intrpImageFile);
@@ -216,6 +218,8 @@ void GuiApp::setPixelRatio(float pixelRatio)
         d->pixelRatio->set(pixelRatio);
         scriptSystem()["DisplayMode"].set("PIXEL_RATIO", Value::Number(pixelRatio));
     }
+
+    NativeFont::setPixelRatio(pixelRatio);
 }
 
 void GuiApp::setMetadata(const String &orgName,

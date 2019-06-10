@@ -30,10 +30,10 @@ namespace de {
 class CoreTextNativeFont : public NativeFont
 {
 public:
-    CoreTextNativeFont(String const &family = "");
-    CoreTextNativeFont(CoreTextNativeFont const &other);
+    CoreTextNativeFont(const String &family = {});
+    CoreTextNativeFont(const CoreTextNativeFont &other);
 
-    CoreTextNativeFont &operator=(CoreTextNativeFont const &other);
+    CoreTextNativeFont &operator=(const CoreTextNativeFont &other);
 
 protected:
     void commit() const;
@@ -43,8 +43,8 @@ protected:
     int nativeFontHeight() const;
     int nativeFontLineSpacing() const;
 
-    Rectanglei nativeFontMeasure(String const &text) const;
-    int        nativeFontWidth(String const &text) const;
+    Rectanglei nativeFontMeasure(const String &text) const;
+    int        nativeFontWidth(const String &text) const;
     Image      nativeFontRasterize(const String &      text,
                                    const Image::Color &foreground,
                                    const Image::Color &background) const;

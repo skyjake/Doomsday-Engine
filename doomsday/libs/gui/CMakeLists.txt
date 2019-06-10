@@ -28,7 +28,7 @@ add_definitions (-D__LIBGUI__=1)
 
 # Source and header files.
 file (GLOB_RECURSE HEADERS include/de/*)
-file (GLOB SOURCES src/stb_impl.c src/*.cpp src/*.h src/input/*.c)
+file (GLOB SOURCES src/stb_impl.c src/*.cpp src/*.h src/input/*.c src/text/*.m)
 
 deng_merge_sources (audio    src/audio/*.cpp)
 deng_merge_sources (dialogs  src/dialogs/*.cpp)

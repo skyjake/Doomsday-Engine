@@ -27,16 +27,16 @@ namespace de {
 struct FontSpec
 {
     String name; // family followed by style
-    int    size;
+    int    pixelSize;
 
     bool operator<(const FontSpec &other) const
     {
-        const int c = name.compareWithoutCase(other.name);
-        if (c == 0)
+        const int cmp = name.compareWithoutCase(other.name);
+        if (cmp == 0)
         {
-            return cmp(size, other.size) < 0;
+            return pixelSize < other.pixelSize;
         }
-        return c < 0;
+        return cmp < 0;
     }
 };
 
@@ -94,16 +94,9 @@ struct FontCache // thread-local
 {
     Map<FontSpec, std::unique_ptr<TTF_Font, FontDeleter>> fonts; // loaded fonts
     
-//    void insertFont(TTF_Font *font, int size)
-//    {
-//        const String name = fontName(font);
-//        debug("[SdlNativeFont] inserting font %p '%s' size:%d", font, name.c_str(), size);
-//        fonts[{name, size}].reset(font);
-//    }
-
-    TTF_Font *load(const String &name, int size)
+    TTF_Font *load(const String &name, int pixelSize)
     {
-        auto found = fonts.find({name, size});
+        auto found = fonts.find({name, pixelSize});
         if (found != fonts.end())
         {
             return found->second.get();
@@ -115,19 +108,19 @@ struct FontCache // thread-local
             return nullptr;
         }
         TTF_Font *font = TTF_OpenFontRW(
-            SDL_RWFromConstMem(data->second.data(), int(data->second.size())), SDL_TRUE, size);
+            SDL_RWFromConstMem(data->second.data(), int(data->second.size())), SDL_TRUE, pixelSize);
         DE_ASSERT(font != nullptr);
         if (!font)
         {
-            debug("[SdlNativeFont] failed to open '%s' size:%d", name.c_str(), size);
+            debug("[SdlNativeFont] failed to open '%s' size:%d", name.c_str(), pixelSize);
             return nullptr;
         }
-        debug("[SdlNativeFont] loaded %p '%s' size:%d", font, name.c_str(), size);
-        fonts[{name, size}].reset(font);
+        debug("[SdlNativeFont] loaded %p '%s' size:%d", font, name.c_str(), pixelSize);
+        fonts[{name, pixelSize}].reset(font);
         return font;
     }
 
-    TTF_Font *getFont(const String &family, int size, NativeFont::Weight weight,
+    TTF_Font *getFont(const String &family, int pixelSize, NativeFont::Weight weight,
                       NativeFont::Style style)
     {
         String name = family;
@@ -140,7 +133,7 @@ struct FontCache // thread-local
             name += (weight >= NativeFont::Bold ? " Bold" : " Light");
             if (style == NativeFont::Italic) name += " Italic";
         }
-        return load(name.c_str(), size);
+        return load(name.c_str(), pixelSize);
     }
 };
 
@@ -169,7 +162,7 @@ DE_PIMPL(SdlNativeFont)
     void updateFontAndMetrics()
     {
         font = s_fontCache.get().getFont(self().nativeFontName(),
-                                         roundi(self().size()),
+                                         roundi(self().pointSize() * pixelRatio()),
                                          NativeFont::Weight(self().weight()),
                                          self().style());
         if (font)

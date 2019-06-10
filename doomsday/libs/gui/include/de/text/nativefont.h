@@ -57,16 +57,16 @@ public:
     struct Spec
     {
         Style     style;
-        dint      weight;
+        int       weight;
         Transform transform;
 
-        Spec(Style s = Regular, dint w = Normal, Transform xform = NoTransform)
+        Spec(Style s = Regular, int w = Normal, Transform xform = NoTransform)
             : style(s), weight(w), transform(xform) {}
 
-        bool operator == (Spec const &other) const {
+        bool operator == (const Spec &other) const {
             return style == other.style && weight == other.weight && transform == other.transform;
         }
-        bool operator < (Spec const &other) const { // Map key order
+        bool operator < (const Spec &other) const { // Map key order
             if (weight < other.weight) return true;
             if (weight > other.weight) return false;
             if (style == other.style) {
@@ -85,22 +85,22 @@ public:
      * @param family   Native font family name.
      * @param mapping  Mapping of styles to native font names.
      */
-    static void defineMapping(String const &family, StyleMapping const &mapping);
+    static void defineMapping(const String &family, const StyleMapping &mapping);
 
 public:
-    NativeFont(String const &family = "");
-    NativeFont(NativeFont const &other);
+    NativeFont(const String &family = "");
+    NativeFont(const NativeFont &other);
 
-    void setFamily(String const &family);
-    void setSize(dfloat size);
+    void setFamily(const String &family);
+    void setPointSize(float pointSize);
     void setStyle(Style style);
-    void setWeight(dint weight);
+    void setWeight(int weight);
     void setTransform(Transform transform);
 
     String    family() const;
-    dfloat    size() const;
+    float     pointSize() const;
     Style     style() const;
-    dint      weight() const;
+    int       weight() const;
     Transform transform() const;
 
     /**
@@ -108,37 +108,54 @@ public:
      */
     String nativeFontName() const;
 
+    // Metrics are returned as pixels:
     int ascent() const;
     int descent() const;
     int height() const;
     int lineSpacing() const;
 
     /**
-     * Measures the extents of a line of text.
+     * Measures the extents of a line of text as pixels.
      *
      * @param text  Text line.
      *
-     * @return Boundaries.
+     * @return Boundaries as pixels. The coordinat eorigin (0,0) is on the baseline.
      */
-    Rectanglei measure(String const &text) const;
+    Rectanglei measure(const String &text) const;
 
-    int width(String const &text) const;
+    /**
+     * Width of a text string as pixels.
+     *
+     * @param text  Text string.
+     *
+     * @return Pixel width.
+     */
+    int width(const String &text) const;
 
     /**
      * Draws a line of text using the font into an image.
      *
-     * @param text  Text line.
+     * @param text        Text line.
      * @param foreground  Foreground/text color.
      * @param background  Background color.
      *
      * @return Image of the text, with the same dimensions as returned by measure().
      */
-    Image rasterize(String const &      text,
-                    Image::Color const &foreground,
-                    Image::Color const &background) const;
+    Image rasterize(const String &      text,
+                    const Image::Color &foreground,
+                    const Image::Color &background) const;
+
+    /**
+     * Sets the pixels-per-point ratio for measuring and rasterizing text.
+     *
+     * @param pixelRatio  Number of pixels per point.
+     */
+    static void setPixelRatio(float pixelRatio);
+
+    static float pixelRatio();
 
 protected:
-    NativeFont &operator = (NativeFont const &other);
+    NativeFont &operator=(const NativeFont &other);
 
     /**
      * Called when the font is needed to be used but it isn't marked Ready.
@@ -150,11 +167,11 @@ protected:
     virtual int nativeFontHeight() const      = 0;
     virtual int nativeFontLineSpacing() const = 0;
 
-    virtual int        nativeFontWidth(String const &text) const                 = 0;
-    virtual Rectanglei nativeFontMeasure(String const &text) const               = 0;
-    virtual Image      nativeFontRasterize(String const &      text,
-                                           Image::Color const &foreground,
-                                           Image::Color const &background) const = 0;
+    virtual int        nativeFontWidth(const String &text) const                 = 0;
+    virtual Rectanglei nativeFontMeasure(const String &text) const               = 0;
+    virtual Image      nativeFontRasterize(const String &      text,
+                                           const Image::Color &foreground,
+                                           const Image::Color &background) const = 0;
 
 private:
     DE_PRIVATE(d)

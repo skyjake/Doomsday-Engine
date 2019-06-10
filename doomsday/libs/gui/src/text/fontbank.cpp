@@ -50,28 +50,24 @@ DE_PIMPL(FontBank)
 
             // Size.
             String size = def["size"];
+            font.pointSize = size.toInt(nullptr, 10, String::AllowSuffix) * bank.d->fontSizeFactor;
             if (size.endsWith("px"))
             {
-                DE_ASSERT_FAIL("Convert font size from pixels to points");
-                //font.setPixelSize(size.toInt(0, 10, String::AllowSuffix) * bank.d->fontSizeFactor);
-            }
-            else
-            {
-                font.size = size.toInt(nullptr, 10, String::AllowSuffix) * bank.d->fontSizeFactor;
+                font.pointSize /= NativeFont::pixelRatio();
             }
 
             // Weight.
-            String const weight = def["weight"];
+            const String weight = def["weight"];
             font.spec.weight = (weight == "light"? NativeFont::Light :
                                 weight == "bold"?  NativeFont::Bold :
                                                    NativeFont::Normal);
 
             // Style.
-            String const style = def["style"];
+            const String style = def["style"];
             font.spec.style = (style == "italic"? NativeFont::Italic : NativeFont::Regular);
 
             // Transformation function.
-            String const caps = def.gets("transform", "normal");
+            const String caps = def.gets("transform", "normal");
             font.spec.transform = (caps == "uppercase"? NativeFont::Uppercase :
                                    caps == "lowercase"? NativeFont::Lowercase :
                                                         NativeFont::NoTransform);
@@ -134,8 +130,8 @@ Font const &FontBank::font(const DotPath &path) const
 void FontBank::setFontSizeFactor(float sizeFactor)
 {
     // The overall UI scale factor affects fonts.
-    d->fontSizeFactor = clamp(.1f, sizeFactor, 20.f);
-
+    d->fontSizeFactor = clamp(0.1f, sizeFactor, 20.0f);
+#if 0
 #if defined (WIN32)
     /*
      * On Windows, fonts are automatically scaled by the operating system according
@@ -144,6 +140,7 @@ void FontBank::setFontSizeFactor(float sizeFactor)
      * the user's UI scaling here.
      */
     d->fontSizeFactor *= Config::get().getf("ui.scaleFactor", 1.f);
+#endif
 #endif
 }
 

@@ -36,15 +36,15 @@ namespace de {
 struct FontParams
 {
     String           family;
-    float            size; // points
+    float            pointSize;
     NativeFont::Spec spec;
 
     FontParams();
     FontParams(const NativeFont &font);
 
-    bool operator==(FontParams const &other) const
+    bool operator==(const FontParams &other) const
     {
-        return fequal(size, other.size) && spec == other.spec && family == other.family;
+        return fequal(pointSize, other.pointSize) && spec == other.spec && family == other.family;
     }
 };
 /**
@@ -292,7 +292,7 @@ public:
      *
      * @return Rectangle covered by the text.
      */
-    Rectanglei measure(String const &textLine) const;
+    Rectanglei measure(const String &textLine) const;
 
     /**
      * Determines the size of the given line of rich text, i.e., how large an
@@ -303,7 +303,7 @@ public:
      *
      * @return Rectangle covered by the text.
      */
-    Rectanglei measure(RichFormatRef const &format) const;
+    Rectanglei measure(const RichFormatRef &format) const;
 
     /**
      * Returns the advance width of a line of text. This may not be the same as

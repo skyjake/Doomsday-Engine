@@ -16,7 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "../src/text/coretextnativefont_macx.h"
+#include "coretextnativefont_macx.h"
+#include "fonts_macx.h"
 #include <de/Log>
 #include <de/Thread>
 #include <de/Map>
@@ -31,26 +32,24 @@ struct CoreTextFontCache : public Lockable
 {
     struct Key {
         String name;
-        dfloat size;
+        float pointSize;
 
-        Key(String const &n = "", dfloat s = 12.f)
+        Key(const String &n = {}, float s = 12.f)
             : name(n)
-            , size(s)
+            , pointSize(s)
         {}
 
         bool operator<(Key const &other) const
         {
             if (name == other.name) {
-                return size < other.size && !fequal(size, other.size);
+                return pointSize < other.pointSize && !fequal(pointSize, other.pointSize);
             }
             return name < other.name;
         }
     };
 
-    typedef Map<Key, CTFontRef> Fonts;
-    Fonts fonts;
-
-    CGColorSpaceRef _colorspace; ///< Shared by all fonts.
+    Map<Key, CTFontRef> fonts;
+    CGColorSpaceRef     _colorspace; ///< Shared by all fonts.
 
     CoreTextFontCache() : _colorspace(nullptr)
     {}
@@ -76,14 +75,13 @@ struct CoreTextFontCache : public Lockable
     void clear()
     {
         DE_GUARD(this);
-
         for (const auto &ref : fonts)
         {
             CFRelease(ref.second);
         }
     }
 
-    CTFontRef getFont(String const &postScriptName, dfloat pointSize)
+    CTFontRef getFont(const String postScriptName, float pointSize)
     {
         CTFontRef font;
 
@@ -93,17 +91,43 @@ struct CoreTextFontCache : public Lockable
         {
             DE_GUARD(this);
 
-            Key const key(postScriptName, pointSize);
+            const Key key(postScriptName, pointSize);
             if (fonts.contains(key))
             {
                 // Already got it.
                 return fonts[key];
             }
 
-            // Get a reference to the font.
-            CFStringRef name = CFStringCreateWithCString(nil, postScriptName.c_str(), kCFStringEncodingUTF8);
-            font = CTFontCreateWithName(name, pointSize, nil);
-            CFRelease(name);
+            // System fonts.
+            if (postScriptName.beginsWith("#"))
+            {
+                int weight = 50;
+                if (postScriptName.contains("-bold")) weight = 75;
+                else if (postScriptName.contains("-light")) weight = 25;
+                else if (postScriptName.contains("-black")) weight = 100;
+                else if (postScriptName.contains("-ultralight")) weight = 0;
+
+                const int italic = postScriptName.contains("-italic");
+
+                void *nsFont = nullptr;
+                if (postScriptName.beginsWith("#system"))
+                {
+                    nsFont = Apple_CreateSystemFont(pointSize, weight, italic);
+                }
+                else
+                {
+                    nsFont = Apple_CreateMonospaceSystemFont(pointSize, weight, italic);
+                }
+                font = reinterpret_cast<CTFontRef>(nsFont);                
+                CFRetain(font);
+            }
+            else
+            {
+                CFStringRef name =
+                    CFStringCreateWithCString(nil, postScriptName.c_str(), kCFStringEncodingUTF8);
+                font = CTFontCreateWithName(name, pointSize, nil);
+                CFRelease(name);
+            }
 
             fonts.insert(key, font);
         }
@@ -223,13 +247,13 @@ DE_PIMPL(CoreTextNativeFont)
         release();
 
         // Get a reference to the font.
-        font = fontCache.getFont(self().nativeFontName(), self().size());
+        font = fontCache.getFont(self().nativeFontName(), self().pointSize());
 
-        // Get basic metrics about the font.
-        ascent      = ceil(CTFontGetAscent(font));
-        descent     = ceil(CTFontGetDescent(font));
+        // Get basic metrics about the font (in points).
+        ascent      = float(CTFontGetAscent(font));
+        descent     = float(CTFontGetDescent(font));
         height      = ascent + descent;
-        lineSpacing = height + CTFontGetLeading(font);
+        lineSpacing = height + float(CTFontGetLeading(font));
     }
 
     CachedLine &makeLine(String const &text, CGColorRef color = nullptr)
@@ -267,16 +291,6 @@ CoreTextNativeFont::CoreTextNativeFont(String const &family)
     : NativeFont(family), d(new Impl(this))
 {}
 
-//CoreTextNativeFont::CoreTextNativeFont(QFont const &font)
-//    : NativeFont(font.family()), d(new Impl(this))
-//{
-//    setSize     (font.pointSizeF());
-//    setWeight   (font.weight());
-//    setStyle    (font.italic()? Italic : Regular);
-//    setTransform(font.capitalization() == QFont::AllUppercase? Uppercase :
-//                 font.capitalization() == QFont::AllLowercase? Lowercase : NoTransform);
-//}
-
 CoreTextNativeFont::CoreTextNativeFont(CoreTextNativeFont const &other)
     : NativeFont(other)
     , d(new Impl(this, *other.d))
@@ -301,22 +315,22 @@ void CoreTextNativeFont::commit() const
 
 int CoreTextNativeFont::nativeFontAscent() const
 {
-    return roundi(d->ascent);
+    return roundi(d->ascent * pixelRatio());
 }
 
 int CoreTextNativeFont::nativeFontDescent() const
 {
-    return roundi(d->descent);
+    return roundi(d->descent * pixelRatio());
 }
 
 int CoreTextNativeFont::nativeFontHeight() const
 {
-    return roundi(d->height);
+    return roundi(d->height * pixelRatio());
 }
 
 int CoreTextNativeFont::nativeFontLineSpacing() const
 {
-    return roundi(d->lineSpacing);
+    return roundi(d->lineSpacing * pixelRatio());
 }
 
 Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
@@ -325,9 +339,10 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 
     //CGLineGetImageBounds(d->line, d->gc); // more accurate but slow
 
-    Rectanglei rect(Vec2i(0, -d->ascent),
-                    Vec2i(roundi(CTLineGetTypographicBounds(d->cache.line, NULL, NULL, NULL)),
-                             d->descent));
+    Rectanglei rect(
+        Vec2i(0, roundi(-d->ascent * pixelRatio())),
+        Vec2i(roundi(CTLineGetTypographicBounds(d->cache.line, NULL, NULL, NULL) * pixelRatio()),
+              roundi(d->descent * pixelRatio())));
 
     return rect;
 }
@@ -335,7 +350,7 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
 int CoreTextNativeFont::nativeFontWidth(String const &text) const
 {
     auto &cachedLine = d->makeLine(d->applyTransformation(text));
-    return roundi(CTLineGetTypographicBounds(cachedLine.line, NULL, NULL, NULL));
+    return roundi(CTLineGetTypographicBounds(cachedLine.line, NULL, NULL, NULL) * pixelRatio());
 }
 
 Image CoreTextNativeFont::nativeFontRasterize(const String &text,
@@ -357,7 +372,7 @@ Image CoreTextNativeFont::nativeFontRasterize(const String &text,
     d->makeLine(d->applyTransformation(text), fgColor);
 
     // Set up the bitmap for drawing into.
-    Rectanglei const bounds = measure(d->cache.lineText);
+    const Rectanglei bounds = measure(d->cache.lineText);
     Image backbuffer(bounds.size(), Image::RGBA_8888);
     backbuffer.fill(background);
 
@@ -367,6 +382,7 @@ Image CoreTextNativeFont::nativeFontRasterize(const String &text,
                                             8, 4 * backbuffer.width(),
                                             fontCache.colorspace(),
                                             kCGImageAlphaPremultipliedLast);
+    CGContextScaleCTM(gc, pixelRatio(), pixelRatio());
 
     CGContextSetTextPosition(gc, 0, d->descent);
     CTLineDraw(d->cache.line, gc);

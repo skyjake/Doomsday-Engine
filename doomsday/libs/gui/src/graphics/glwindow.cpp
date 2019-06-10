@@ -105,10 +105,10 @@ DE_PIMPL(GLWindow)
 
     void updatePixelRatio()
     {
-        int dw, dh, w, h;
-        SDL_GetWindowSize(window, &w, &h);
-        SDL_GL_GetDrawableSize(window, &dw, &dh);
-        const double ratio = double(dw) / double(w);
+        int points, pixels;
+        SDL_GetWindowSize(window, &points, nullptr);
+        SDL_GL_GetDrawableSize(window, &pixels, nullptr);
+        const double ratio = double(pixels) / double(points);
         if (!fequal(ratio, pixelRatio))
         {
             pixelRatio = ratio;

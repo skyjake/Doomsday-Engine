@@ -53,14 +53,14 @@ group {
 
     font default {
         family: Source Sans Pro
-        size $: gui.scale("12pt", DisplayMode.PIXEL_RATIO)
+        size: 12pt
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
         family: Source Code Pro
-        size $: gui.scale("9pt", DisplayMode.PIXEL_RATIO)
+        size: 9pt
     }
 }
 
@@ -70,28 +70,23 @@ group {
     script {
         # Define mappings for native font styles and weights.
         import App
-        if Version.OS == 'macx'
-            prefix = '.SFNS'
-        else
-            prefix = '.SFUI'
-        end
-        App.addFontMapping("SF UI Text", {
-            ['regular', 25]: prefix + 'Text-Light',
-            ['regular', 50]: prefix + 'Text-Regular',
-            ['regular', 75]: prefix + 'Text-Bold',
-            ['italic',  25]: prefix + 'Text-LightItalic',
-            ['italic',  50]: prefix + 'Text-Italic',
-            ['italic',  75]: prefix + 'Text-BoldItalic'
+        App.addFontMapping("Apple UI", {
+            ['regular', 25]: '#system-light',
+            ['regular', 50]: '#system',
+            ['regular', 75]: '#system-bold',
+            ['italic',  25]: '#system-italic-light',
+            ['italic',  50]: '#system-italic',
+            ['italic',  75]: '#system-italic-bold'
         })
-        App.addFontMapping("SF UI Display", {
-            ['regular', 25]: prefix + 'Display-Thin',
-            ['regular', 50]: prefix + 'Display-Regular',
-            ['regular', 75]: prefix + 'Display-Bold',
-            ['italic',  25]: prefix + 'Text-LightItalic',    # Only non-italic available.
-            ['italic',  50]: prefix + 'Text-Italic',
-            ['italic',  75]: prefix + 'Text-BoldItalic'
-        })
-        App.addFontMapping("Menlo", {
+        #App.addFontMapping("SF UI Display", {
+        #    ['regular', 25]: prefix + 'Display-Thin',
+        #    ['regular', 50]: prefix + 'Display-Regular',
+        #    ['regular', 75]: prefix + 'Display-Bold',
+        #    ['italic',  25]: prefix + 'Text-LightItalic',    # Only non-italic available.
+        #    ['italic',  50]: prefix + 'Text-Italic',
+        #    ['italic',  75]: prefix + 'Text-BoldItalic'
+        #})
+        App.addFontMapping("Apple Mono", {
             ['regular', 25]: 'Menlo-Regular',
             ['regular', 50]: 'Menlo-Regular',
             ['regular', 75]: 'Menlo-Bold',
@@ -102,15 +97,15 @@ group {
     }
 
     font default {
-        family: SF UI Text
-        size $: gui.scale('16pt', DisplayMode.PIXEL_RATIO)
+        family: Apple UI
+        size: 16pt
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
-        family: Menlo
-        size $: gui.scale('12pt', DisplayMode.PIXEL_RATIO)
+        family: Apple Mono
+        size: 12pt
     }
 }
 
@@ -123,13 +118,13 @@ font heading inherits title {
     size $: gui.scale(default.size, 1.2)
 }
 
-script {
-    if Version.OS in ['macx', 'ios']
-        # Use the larger variant.
-        title.family   = "SF UI Display"
-        heading.family = "SF UI Display"
-    end
-}
+# script {
+#     if Version.OS in ['macx', 'ios']
+#         # Use the larger variant.
+#         title.family   = "SF UI Display"
+#         heading.family = "SF UI Display"
+#     end
+# }
 
 font small inherits default {
     size $: gui.scale(self.size, 0.75)

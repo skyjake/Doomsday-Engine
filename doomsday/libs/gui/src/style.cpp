@@ -70,7 +70,7 @@ DE_PIMPL(Style)
 
     void updateFontSizeFactor()
     {
-        float fontSize = 1.f;
+        float fontSize = 1.0f;
         if (CommandLine::ArgWithParams arg = App::commandLine().check("-fontsize", 1))
         {
             fontSize = arg.params.at(0).toFloat();
@@ -102,6 +102,7 @@ DE_PIMPL(Style)
         {
             LOG_MSG("UI style being updated due to pixel ratio change");
 
+#if 0
 #if defined (WIN32)
             /*
              * KLUDGE: The operating system provides fonts scaled according to the desktop
@@ -110,6 +111,7 @@ DE_PIMPL(Style)
              * DisplayMode.PIXEL_RATIO directly. (Should do that on Windows, too?)
              */
             updateFontSizeFactor();
+#endif
 #endif
             self().performUpdate();
         }
