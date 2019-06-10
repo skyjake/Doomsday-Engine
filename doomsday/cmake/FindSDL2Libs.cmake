@@ -1,5 +1,17 @@
 find_package (PkgConfig QUIET)
 
+macro (target_link_sdl2 target vis)
+    if (TARGET SDL2)
+        if (MINGW)
+            target_link_libraries (${target} ${vis} mingw32) # for SDL_main handling
+        endif ()
+        target_link_libraries (${target} ${vis} SDL2)
+    endif ()
+    if (TARGET SDL2_mixer)
+        target_link_libraries (${target} ${vis} SDL2_mixer)
+    endif ()
+endmacro ()
+
 if (TARGET SDL2)
     return ()
 endif ()

@@ -13,7 +13,7 @@ deng_add_application (test_glsandbox
     testwindow.h
 )
 
-target_link_libraries (test_glsandbox PRIVATE SDL2)
+target_link_sdl2 (test_glsandbox PUBLIC)
 deng_link_libraries (test_glsandbox PRIVATE DengGui)
 
 if (APPLE)

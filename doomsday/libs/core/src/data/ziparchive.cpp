@@ -749,10 +749,10 @@ void ZipArchive::operator >> (Writer &to) const
 }
 
 static bool recognizeZipExtension(String const &ext)
-{
+{    
     for (const char *e : {".pack", ".demo", ".save", ".addon", ".pk3", ".zip"})
     {
-        if (!iCmpStrCase(ext, e)) return true;
+        if (!iCmpStr(ext, e)) return true;
     }
     return false;
 }
@@ -769,7 +769,7 @@ bool ZipArchive::recognize(File const &file)
 
 bool ZipArchive::recognize(NativePath const &path)
 {
-    return recognizeZipExtension(path.toString().fileNameExtension());
+    return recognizeZipExtension(path.toString().fileNameExtension().lower());
 }
 
 void ZipArchive::ZipEntry::update()

@@ -475,7 +475,7 @@ public:
         return val;
     }
 
-    String key() const {
+    uint32_t key() const {
         DE_ASSERT(_current != _nodes.end());
         return _current->first;
     }
