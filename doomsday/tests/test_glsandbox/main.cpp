@@ -31,6 +31,7 @@ DE_EXTERN_C int main(int argc, char **argv)
     try
     {
         GuiApp app(makeList(argc, argv));
+        app.setMetadata("Deng Team", "dengine.net", "GLSandbox", Version().fullNumber());
         app.addInitPackage("net.dengine.test.glsandbox");
         app.initSubsystems();
 

@@ -1,33 +1,33 @@
 # Fonts for the default UI style
 #
-# - size can be "pt" or "px", defaults to "pt" 
+# - size can be "pt" or "px", defaults to "pt"
 # - weight: normal bold light
 # - style: normal italic
 
-script { 
-    import Version, DisplayMode, gui 
+script {
+    import Version, DisplayMode, gui
     # Load the Open Sans font contained in this pack.
     def loadOpenSans()
         import App, Path
         fontDir = __file__.fileNamePath() / "fonts"
         for style in ['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic']
             App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
-        end    
+        end
     end
 }
 
 group {
     condition: Version.OS == 'windows'
-    
+
     script { loadOpenSans() }
 
     font default {
         family: Open Sans
         size: 12pt
         weight: normal
-        style: normal    
+        style: normal
     }
-    
+
     font monospace inherits default {
         family: Courier New
         size: 10pt
@@ -57,17 +57,17 @@ group {
             ['italic',  75]: 'Menlo-BoldItalic'
         })
     }
-    
+
     font default {
         family: Helvetica Neue
-        size $: gui.scale('16pt', DisplayMode.PIXEL_RATIO)
+        size: 16pt
         weight: normal
         style: normal
     }
-    
+
     font monospace inherits default {
         family: Menlo
-        size $: gui.scale('13pt', DisplayMode.PIXEL_RATIO)
+        size: 13pt
     }
 }
 
