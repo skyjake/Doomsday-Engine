@@ -24,7 +24,7 @@
 #include <windowsx.h>
 
 #include "de_base.h"
-#include "dd_winit.h"
+#include "init_windows.h"
 
 #include <objbase.h>
 #include <cstring>
@@ -34,7 +34,6 @@
 
 #include <de/App>
 #ifdef __CLIENT__
-#  include <de/DisplayMode>
 #  include "gl/sys_opengl.h"
 #endif
 #include "sys_system.h"
@@ -126,13 +125,7 @@ dd_bool DD_Win32_Init()
 void DD_Shutdown()
 {
     DD_ShutdownAll(); // Stop all engine subsystems.
-    //DoomsdayApp::plugins().unloadAll();
-    //Library_Shutdown();
 
     // No more use of COM beyond, this point.
     CoUninitialize();
-
-#ifdef __CLIENT__
-    DisplayMode_Shutdown();
-#endif
 }

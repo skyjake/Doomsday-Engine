@@ -88,10 +88,10 @@ typedef unsigned int  DWORD;
 
 // Initialization code.
 #ifdef WIN32
-#  include "dd_winit.h"
+#  include "init_windows.h"
 #else
 #  ifdef UNIX
-#    include "dd_uinit.h"
+#    include "init_unix.h"
 #  endif
 #endif
 

@@ -177,7 +177,7 @@ function (deng_filter_platform_sources outName)
             endif ()
         elseif ("${fn}" MATCHES ".*_unix\\..*" OR
                 "${fn}" MATCHES ".*/unix/.*") # Unix specific files (Linux / macOS / etc.)
-            if (NOT UNIX)
+            if (NOT UNIX OR MINGW)
                 set (filtered YES)
             endif ()
         elseif ("${fn}" MATCHES ".*_x11\\..*") # X11 specific files

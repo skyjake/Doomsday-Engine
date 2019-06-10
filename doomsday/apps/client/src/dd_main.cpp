@@ -1274,10 +1274,10 @@ void DD_FinishInitializationAfterWindowReady()
     LOGDEV_MSG("Window is ready, finishing initialization");
 
 #ifdef __CLIENT__
-# ifdef WIN32
+//# ifdef WIN32
     // Now we can get the color transfer table as the window is available.
-    DisplayMode_SaveOriginalColorTransfer();
-# endif
+    //DisplayMode_SaveOriginalColorTransfer();
+//# endif
     if (!Sys_GLInitialize())
     {
         App_Error("Error initializing OpenGL.\n");

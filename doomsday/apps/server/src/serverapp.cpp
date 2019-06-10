@@ -49,12 +49,6 @@
 #include "world/map.h"
 #include "world/p_players.h"
 
-#if defined (WIN32)
-#  include "dd_winit.h"
-#elif defined (UNIX)
-#  include "dd_uinit.h"
-#endif
-
 using namespace de;
 
 static ServerApp *serverAppSingleton = nullptr;

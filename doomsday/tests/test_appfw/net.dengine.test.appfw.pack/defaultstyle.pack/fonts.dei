@@ -8,14 +8,14 @@ script {
     import Version, DisplayMode, gui
     # Load the Open Sans font contained in this pack.
     def loadOpenSans()
-        import App, Path
+        import App
         fontDir = __file__.fileNamePath() / "fonts"
         for style in ['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic']
             App.loadFont(fontDir / ("OpenSans-%s.ttf" % style))
         end
     end
 }
-
+    
 group {
     condition: Version.OS == 'windows'
 

@@ -111,12 +111,12 @@ deng_merge_sources (world_bsp     ${src}/src/world/bsp/*.cpp)
 
 if (WIN32)
     include_directories (../client/include/windows)
-    list (APPEND SHARED_WITH_CLIENT ${src}/src/windows/dd_winit.cpp)
+    list (APPEND SHARED_WITH_CLIENT ${src}/src/init_windows.cpp)
 endif ()
 
 if (UNIX)
     include_directories (../client/include/unix)
-    list (APPEND SHARED_WITH_CLIENT ${src}/src/unix/dd_uinit.cpp)
+    list (APPEND SHARED_WITH_CLIENT ${src}/src/init_unix.cpp)
 
     if (AMETHYST_FOUND)
         set (MAN_PAGE ${CMAKE_CURRENT_BINARY_DIR}/doomsday-server.6)

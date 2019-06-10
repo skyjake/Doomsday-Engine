@@ -67,12 +67,6 @@
 #include "world/map.h"
 #include "world/p_players.h"
 
-#if WIN32
-#  include "dd_winit.h"
-#elif UNIX
-#  include "dd_uinit.h"
-#endif
-
 #include <doomsday/console/exec.h>
 #include <doomsday/AbstractSession>
 #include <doomsday/GameStateFolder>
