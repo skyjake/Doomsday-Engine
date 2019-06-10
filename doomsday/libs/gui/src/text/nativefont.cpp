@@ -31,6 +31,7 @@ static constexpr int MAX_CACHE_STRINGS       = 500;
 DE_STATIC_PROPERTY(NativeFontPixelRatio, float)
 
 DE_PIMPL(NativeFont)
+, DE_OBSERVES(NativeFontPixelRatio, Change)
 {
     String    family;
     float     pointSize;
@@ -47,7 +48,7 @@ DE_PIMPL(NativeFont)
         , weight(Normal)
         , transform(NoTransform)
     {
-        pNativeFontPixelRatio.audienceForChange() += [this]() { markNotReady(); };
+        pNativeFontPixelRatio.audienceForChange() += this;
     }
 
     void prepare()
@@ -64,6 +65,11 @@ DE_PIMPL(NativeFont)
     {
         self().setState(NotReady);
         measureCache.clear();
+    }
+
+    void valueOfNativeFontPixelRatioChanged() override
+    {
+        markNotReady();
     }
 };
 
