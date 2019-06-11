@@ -373,11 +373,11 @@ String String::operator+(const CString &cStr) const
 }
 
 String String::operator+(const char *cStr) const
-    {
+{
     String cat(*this);
     appendCStr_String(&cat._str, cStr);
     return cat;
-    }
+}
 
 String &String::operator+=(char ch)
 {
@@ -392,10 +392,10 @@ String &String::operator+=(Char ch)
 }
 
 String &String::operator+=(const char *cStr)
-    {
+{
     appendCStr_String(&_str, cStr);
     return *this;
-    }
+}
 
 String &String::operator+=(const CString &s)
 {
