@@ -66,6 +66,10 @@ DE_PIMPL(GLWindow)
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
+#if defined(DE_DEBUG)
+        debug("[GLWindow] enabling debug context");
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_FLAGS, SDL_GL_CONTEXT_DEBUG_FLAG);
+#endif
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE,   5);
         SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);
@@ -381,7 +385,9 @@ void GLWindow::setMinimumSize(const Size &minSize)
 
 void GLWindow::makeCurrent()
 {
+    DE_ASSERT(d->glContext);
     SDL_GL_MakeCurrent(d->window, d->glContext);
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 }
 
 void GLWindow::doneCurrent()
@@ -669,6 +675,7 @@ void GLWindow::update()
         EventLoop::post(new CoreEvent([this]() {
             d->paintPending = false;
             makeCurrent();
+            LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
             paintGL();
             doneCurrent();
         }));
@@ -717,6 +724,7 @@ void GLWindow::paintGL()
             d->readyPending = true;
             d->mainCall.enqueue([this]() { d->notifyReady(); });
         }
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
         glClear(GL_COLOR_BUFFER_BIT);
         SDL_GL_SwapWindow(d->window);
         d->frameWasSwapped();
@@ -732,6 +740,8 @@ void GLWindow::paintGL()
     // Make sure any changes to the state stack are in effect.
     GLState::current().target().glBind();
 
+    LIBGUI_ASSERT_GL_OK();
+    
     // This will be the current time for the frame.
     {
         Time::updateCurrentHighPerformanceTime();

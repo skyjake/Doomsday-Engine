@@ -141,6 +141,8 @@ DE_PIMPL(TestWindow)
 
     void glInit()
     {
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
+        
         // Set up the default state.
         GLState &st = GLState::current();
         st.setBlend(true);
@@ -296,6 +298,8 @@ DE_PIMPL(TestWindow)
                 << uMvpMatrix
                 << uModelTex;
         model.setProgram(&modelProgram);
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void bankLoaded(DotPath const &path)
@@ -322,6 +326,8 @@ DE_PIMPL(TestWindow)
         st.setViewport(Rectangleui(0, 0, self().pixelWidth(), self().pixelHeight()));
 
         updateProjection();
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void updateProjection()
@@ -483,6 +489,8 @@ DE_PIMPL(TestWindow)
         }
 
         self().glDone();
+
+        LIBGUI_ASSERT_GL_OK();
     }
 
     void nextAtlasAlloc()

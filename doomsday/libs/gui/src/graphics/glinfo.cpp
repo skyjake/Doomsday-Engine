@@ -30,10 +30,10 @@
 #include <glbinding/gl33ext/enum.h>
 #include <glbinding/Binding.h>
 
-//#ifdef DE_DEBUG
-//#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
+#if defined(DE_DEBUG)
+#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
 //#  include <QOpenGLDebugLogger>
-//#endif
+#endif
 
 //#if defined (MACOSX)
 //#  include <OpenGL/OpenGL.h>
@@ -57,6 +57,85 @@ namespace de {
 
 static GLInfo info;
 
+#if defined(DE_ENABLE_OPENGL_DEBUG_LOGGER)
+extern "C" void APIENTRY debugMessageCallback(gl::GLenum source,
+                                                gl::GLenum type,
+                                     gl::GLuint id,
+                                     gl::GLenum severity,
+                                     gl::GLsizei length,
+                                     const gl::GLchar *message,
+                                     const void *userParam)
+{
+    using namespace gl;
+
+    DE_UNUSED(source, userParam);
+    
+    if (severity == GL_DEBUG_SEVERITY_NOTIFICATION)
+    {
+        // Too verbose.
+        return;
+    }
+
+    char const *mType = "--";
+    char const *mSeverity = "--";
+
+    switch (type)
+    {
+    case GL_DEBUG_TYPE_ERROR:
+        mType = "ERROR";
+        break;
+    case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+        mType = "Deprecated";
+        break;
+    case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+        mType = "Undefined";
+        break;
+    case GL_DEBUG_TYPE_PORTABILITY:
+        mType = "Portability";
+        break;
+    case GL_DEBUG_TYPE_PERFORMANCE:
+        mType = "Performance";
+        break;
+    case GL_DEBUG_TYPE_OTHER:
+        mType = "Other";
+        break;
+    case GL_DEBUG_TYPE_MARKER:
+        mType = "Marker";
+        break;
+    case GL_DEBUG_TYPE_PUSH_GROUP:
+        mType = "Group Push";
+        break;
+    case GL_DEBUG_TYPE_POP_GROUP:
+        mType = "Group Pop";
+        break;
+    default:
+        break;
+    }
+
+    switch (severity)
+    {
+    case GL_DEBUG_SEVERITY_HIGH:
+        mType = " HIGH ";
+        break;
+    case GL_DEBUG_SEVERITY_MEDIUM:
+        mType = "MEDIUM";
+        break;
+    case GL_DEBUG_SEVERITY_LOW:
+        mType = " low  ";
+        break;
+    case GL_DEBUG_SEVERITY_NOTIFICATION:
+        mType = " note ";
+        break;
+    default:
+        break;
+    }
+
+    const String msg(message, length);
+
+    debug("[OpenGL] %04x %s (%s): %s", id, mType, mSeverity, msg.c_str());
+}
+#endif
+    
 DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 {
     bool inited = false;
@@ -83,7 +162,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 #endif
 
 #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
-    QOpenGLDebugLogger *logger = nullptr;
+//    QOpenGLDebugLogger *logger = nullptr;
 #endif
 
     Impl()
@@ -265,131 +344,24 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 
         #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
         {
-            logger = new QOpenGLDebugLogger(&GLWindow::main());
+            gl::glDebugMessageCallback(debugMessageCallback, nullptr);
+            glEnable(gl::GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            glEnable(gl::GL_DEBUG_OUTPUT);
+            
             if (!ext.KHR_debug)
             {
-                qDebug() << "[GLInfo] GL_KHR_debug is not available";
-            }
-            else if (!logger->initialize())
-            {
-                qWarning() << "[GLInfo] Failed to initialize debug logger!";
+                debug("[GLInfo] GL_KHR_debug is not available");
             }
             else
             {
-                QObject::connect(logger, &QOpenGLDebugLogger::messageLogged,
-                                 [] (QOpenGLDebugMessage const &debugMessage)
-                {
-                    if (debugMessage.severity() == QOpenGLDebugMessage::NotificationSeverity)
-                    {
-                        // Too verbose.
-                        return;
-                    }
-
-                    char const *mType = "--";
-                    char const *mSeverity = "--";
-
-                    switch (debugMessage.type())
-                    {
-                    case QOpenGLDebugMessage::ErrorType:
-                        mType = "ERROR";
-                        break;
-                    case QOpenGLDebugMessage::DeprecatedBehaviorType:
-                        mType = "Deprecated";
-                        break;
-                    case QOpenGLDebugMessage::UndefinedBehaviorType:
-                        mType = "Undefined";
-                        break;
-                    case QOpenGLDebugMessage::PortabilityType:
-                        mType = "Portability";
-                        break;
-                    case QOpenGLDebugMessage::PerformanceType:
-                        mType = "Performance";
-                        break;
-                    case QOpenGLDebugMessage::OtherType:
-                        mType = "Other";
-                        break;
-                    case QOpenGLDebugMessage::MarkerType:
-                        mType = "Marker";
-                        break;
-                    case QOpenGLDebugMessage::GroupPushType:
-                        mType = "Group Push";
-                        break;
-                    case QOpenGLDebugMessage::GroupPopType:
-                        mType = "Group Pop";
-                        break;
-                    default:
-                        break;
-                    }
-
-                    switch (debugMessage.severity())
-                    {
-                    case QOpenGLDebugMessage::HighSeverity:
-                        mType = " HIGH ";
-                        break;
-                    case QOpenGLDebugMessage::MediumSeverity:
-                        mType = "MEDIUM";
-                        break;
-                    case QOpenGLDebugMessage::LowSeverity:
-                        mType = " low  ";
-                        break;
-                    case QOpenGLDebugMessage::NotificationSeverity:
-                        mType = " note ";
-                        break;
-                    default:
-                        break;
-                    }
-
-                    qDebug("[OpenGL] %04x %s (%s): %s",
-                           debugMessage.id(),
-                           mType,
-                           mSeverity,
-                           debugMessage.message().toLatin1().constData());
-                });
-                logger->startLogging(QOpenGLDebugLogger::SynchronousLogging);
+                debug("[GLInfo] debug output enabled");
             }
         }
         #endif
 
-        /*
-        if (ext.ARB_draw_instanced)
-        {
-            ARB_draw_instanced.reset(new QOpenGLExtension_ARB_draw_instanced);
-            ARB_draw_instanced->initializeOpenGLFunctions();
-        }
-        if (ext.ARB_instanced_arrays)
-        {
-            ARB_instanced_arrays.reset(new QOpenGLExtension_ARB_instanced_arrays);
-            ARB_instanced_arrays->initializeOpenGLFunctions();
-        }
-        if (ext.EXT_framebuffer_blit)
-        {
-            EXT_framebuffer_blit.reset(new QOpenGLExtension_EXT_framebuffer_blit);
-            EXT_framebuffer_blit->initializeOpenGLFunctions();
-        }
-        if (ext.EXT_framebuffer_multisample)
-        {
-            EXT_framebuffer_multisample.reset(new QOpenGLExtension_EXT_framebuffer_multisample);
-            EXT_framebuffer_multisample->initializeOpenGLFunctions();
-        }
-        if (ext.EXT_framebuffer_object)
-        {
-            EXT_framebuffer_object.reset(new QOpenGLExtension_EXT_framebuffer_object);
-            EXT_framebuffer_object->initializeOpenGLFunctions();
-        }*/
-
-//        #if defined (DE_OPENGL)
-//        {
-//            if (ext.NV_framebuffer_multisample_coverage)
-//            {
-//                NV_framebuffer_multisample_coverage.reset(new QOpenGLExtension_NV_framebuffer_multisample_coverage);
-//                NV_framebuffer_multisample_coverage->initializeOpenGLFunctions();
-//            }
-//        }
-//        #endif
-
         // Limits.
-        glGetIntegerv(GL_MAX_TEXTURE_SIZE,              reinterpret_cast<GLint *>(&lim.maxTexSize));
-        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS,       reinterpret_cast<GLint *>(&lim.maxTexUnits)); // at least 16
+        glGetIntegerv(GL_MAX_TEXTURE_SIZE,        reinterpret_cast<GLint *>(&lim.maxTexSize));
+        glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint *>(&lim.maxTexUnits)); // at least 16
         #if defined (DE_OPENGL)
         {
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
@@ -447,10 +419,7 @@ void GLInfo::glDeinit()
 {
     #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
     {
-        if (info.d->logger)
-        {
-            info.d->logger->stopLogging();
-        }
+        glDisable(gl::GL_DEBUG_OUTPUT);
     }
     #endif
     info.d.reset();
