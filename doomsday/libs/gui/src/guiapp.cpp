@@ -167,8 +167,8 @@ GuiApp::GuiApp(const StringList &args)
         LOG_GL_MSG("Display %d:") << i;
         for (const auto &mode : GLWindow::displayModes(i))
         {
-            LOG_GL_MSG("  %d x %d (%d bits) @ %d Hz")
-                << mode.resolution.x << mode.resolution.y << mode.bitDepth << mode.refreshRate;
+            LOG_GL_MSG("  %d x %d @ %d Hz (%d-bit)")
+                << mode.resolution.x << mode.resolution.y << mode.refreshRate << mode.bitDepth;
         }
     }
 
