@@ -42,6 +42,8 @@
 
 namespace de {
 
+DE_STATIC_STRING(VAR_UI_SCALE_FACTOR, "ui.scaleFactor");
+    
 static Value *Function_DisplayMode_OriginalMode(Context &, const Function::ArgumentValues &)
 {
     SDL_DisplayMode mode;
@@ -184,6 +186,11 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
 {
     App::initSubsystems(subsystemInitFlags); // reads Config
 
+    if (!Config::get().has(VAR_UI_SCALE_FACTOR()))
+    {
+        Config::get().set(VAR_UI_SCALE_FACTOR(), 1.0f);
+    }
+    
     // The "-dpi" option overrides the detected pixel ratio.
     if (auto dpi = commandLine().check("-dpi", 1))
     {
@@ -191,7 +198,7 @@ void GuiApp::initSubsystems(SubsystemInitFlags subsystemInitFlags)
     }
     setPixelRatio(d->windowPixelRatio);
 
-    Config::get("ui.scaleFactor").audienceForChange() += d;
+    Config::get(VAR_UI_SCALE_FACTOR()).audienceForChange() += d;
 }
 
 const Rule &GuiApp::pixelRatio() const
@@ -209,7 +216,7 @@ void GuiApp::setPixelRatio(float pixelRatio)
     d->windowPixelRatio = pixelRatio;
 
     // Apply the overall UI scale factor.
-    pixelRatio *= config().getf("ui.scaleFactor", 1.0f);
+    pixelRatio *= config().getf(VAR_UI_SCALE_FACTOR(), 1.0f);
 
     if (!fequal(d->pixelRatio->value(), pixelRatio))
     {
