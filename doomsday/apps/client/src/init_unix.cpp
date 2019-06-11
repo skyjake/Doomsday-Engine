@@ -30,7 +30,7 @@
 #include <de/App>
 
 #include "de_base.h"
-#include "dd_uinit.h"
+#include "init_unix.h"
 
 #ifdef __CLIENT__
 #  include "gl/sys_opengl.h"

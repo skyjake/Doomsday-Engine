@@ -31,7 +31,7 @@
 #include <glbinding/Binding.h>
 
 #if defined(DE_DEBUG)
-#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
+//#  define DE_ENABLE_OPENGL_DEBUG_LOGGER
 //#  include <QOpenGLDebugLogger>
 #endif
 
@@ -58,13 +58,16 @@ namespace de {
 static GLInfo info;
 
 #if defined(DE_ENABLE_OPENGL_DEBUG_LOGGER)
-extern "C" void APIENTRY debugMessageCallback(gl::GLenum source,
-                                                gl::GLenum type,
-                                     gl::GLuint id,
-                                     gl::GLenum severity,
-                                     gl::GLsizei length,
-                                     const gl::GLchar *message,
-                                     const void *userParam)
+#ifndef WIN32
+#  define APIENTRY
+#endif
+void APIENTRY debugMessageCallback(gl::GLenum source,
+                                   gl::GLenum type,
+                                   gl::GLuint id,
+                                   gl::GLenum severity,
+                                   gl::GLsizei length,
+                                   const gl::GLchar *message,
+                                   const void *userParam)
 {
     using namespace gl;
 
