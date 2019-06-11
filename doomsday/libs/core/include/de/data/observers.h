@@ -378,14 +378,11 @@ public:
     virtual ~Observers()
     {
         _disassociateAllMembers();
-        DE_GUARD(this);
     }
 
     void clear()
     {
-        DE_GUARD(this);
         _disassociateAllMembers();
-        _members.clear();
     }
 
     Observers<Type> &operator=(Observers<Type> const &other)
@@ -522,8 +519,14 @@ public:
 private:
     void _disassociateAllMembers()
     {
-        for (Type *observer : _members)
+        for (;;)
         {
+            Type *observer;
+            {
+                DE_GUARD(this);
+                if (_members.isEmpty()) break;
+                observer = _members.take();
+            }
             observer->removeMemberOf(*this);
         }
     }
