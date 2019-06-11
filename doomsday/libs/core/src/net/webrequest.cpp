@@ -40,7 +40,7 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
 
     Impl(Public *i) : Base(i)
     {
-        web.reset(new_WebRequest());
+        web = tF::make_ref(new_WebRequest());
         setUserData_Object(web, this);
         iConnect(WebRequest, web, progress,  web, notifyProgress);
         iConnect(WebRequest, web, readyRead, web, notifyReadyRead);

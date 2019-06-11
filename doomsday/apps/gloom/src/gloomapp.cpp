@@ -44,7 +44,7 @@ static const duint16 COMMAND_PORT = 14666;
 DE_PIMPL(GloomApp)
 {
     ImageBank                        images;
-    tF::ref<iDatagram>            commandSocket;
+    tF::ref<iDatagram>               commandSocket;
     Beacon                           beacon{{COMMAND_PORT, COMMAND_PORT + 4}};
     std::unique_ptr<AppWindowSystem> winSys;
     std::unique_ptr<AudioSystem>     audioSys;
@@ -59,7 +59,7 @@ DE_PIMPL(GloomApp)
 
         // GloomEd will tell us what to do via the command socket.
         {
-            commandSocket.reset(new_Datagram());
+            commandSocket = tF::make_ref(new_Datagram());
             setUserData_Object(commandSocket, this);
             iConnect(Datagram, commandSocket, message, commandSocket, receivedRemoteCommand);
             for (int attempt = 0; attempt < 12; ++attempt)

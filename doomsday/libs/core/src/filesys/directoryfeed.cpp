@@ -92,7 +92,7 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 
     PopulatedFiles populated;
 
-    tF::ref<iDirFileInfo> dirInfo(new_DirFileInfo(d->nativePath.toString()));
+    auto dirInfo = tF::make_ref(new_DirFileInfo(d->nativePath.toString()));
     iForEach(DirFileInfo, i, dirInfo)
     {
         const NativePath path(String(path_FileInfo(i.value)));
@@ -286,7 +286,7 @@ void DirectoryFeed::changeWorkingDir(NativePath const &nativePath)
 
 File::Status DirectoryFeed::fileStatus(NativePath const &nativePath)
 {
-    tF::ref<iFileInfo> info(new_FileInfo(nativePath.toString()));
+    auto info = tF::make_ref(new_FileInfo(nativePath.toString()));
     if (!exists_FileInfo(info))
     {
         /// @throw StatusError Determining the file status was not possible.

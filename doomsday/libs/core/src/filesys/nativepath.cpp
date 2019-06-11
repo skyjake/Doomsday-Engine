@@ -162,7 +162,7 @@ bool NativePath::isRelative() const
 
 bool NativePath::isDirectory() const
 {
-    tF::ref<iFileInfo> i(new_FileInfo(toString()));
+    auto i = tF::make_ref(new_FileInfo(toString()));
     return exists_FileInfo(i) && isDirectory_FileInfo(i);
 }
 

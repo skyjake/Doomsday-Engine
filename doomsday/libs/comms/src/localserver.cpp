@@ -149,7 +149,7 @@ void LocalServer::start(duint16 port,
     LOG_NET_NOTE("Starting local server on port %i using game mode '%s'")
             << port << gameMode;
 
-    d->proc.reset(cmd.executeProcess());
+    d->proc = tF::make_ref(cmd.executeProcess());
 }
 
 void LocalServer::stop()

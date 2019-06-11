@@ -124,7 +124,7 @@ DE_PIMPL(CommandLine)
         iProcess *proc = new_Process();
         setWorkingDirectory_Process(proc, initialDir.toString());
 
-        tF::ref<iStringList> args{new_StringList()};
+        auto args = tF::make_ref(new_StringList());
         for (dsize i = 0; i < self().count(); ++i)
         {
             pushBack_StringList(args, self().at(i));
@@ -487,7 +487,7 @@ bool CommandLine::execute() const
 {
     LOG_AS("CommandLine");
 
-    tF::ref<iProcess> proc{d->execute()};
+    auto proc = tF::make_ref(d->execute());
     if (!proc)
     {
         LOG_ERROR("Failed to start \"%s\"") << at(0);
@@ -496,10 +496,10 @@ bool CommandLine::execute() const
     LOG_DEBUG("Started detached process %i \"%s\"") << pid_Process(proc) << at(0);
     return true;
 }
-
+    
 bool CommandLine::executeAndWait(String *output) const
 {
-    tF::ref<iProcess> proc{d->execute()};
+    auto proc = tF::make_ref(d->execute());
     if (!proc)
     {
         return false;

@@ -82,7 +82,7 @@ DE_PIMPL_NOREF(NetworkInterfaces), public Lockable
     void update()
     {
         interfaces.clear();
-        tF::ref<iObjectList> infs(networkInterfaces_Address());
+        auto infs = tF::make_ref(networkInterfaces_Address());
         iConstForEach(ObjectList, i, infs)
         {
             interfaces << Address(reinterpret_cast<const iAddress *>(i.object));

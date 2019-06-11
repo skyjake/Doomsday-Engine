@@ -48,7 +48,7 @@ Address::Address() : d(new Impl)
 
 Address::Address(char const *address, duint16 port) : d(new Impl)
 {
-    d->addr.reset(new_Address());
+    d->addr = tF::make_ref(new_Address());
     d->port = port;
     lookupTcpCStr_Address(d->addr, address, port);
 }

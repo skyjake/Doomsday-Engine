@@ -61,7 +61,7 @@ ListenSocket::ListenSocket(duint16 port) : d(new Impl(this))
 {
     LOG_AS("ListenSocket");
 
-    d->service.reset(new_Service(port));
+    d->service = tF::make_ref(new_Service(port));
     d->port = port;
     setUserData_Object(d->service, d);
 

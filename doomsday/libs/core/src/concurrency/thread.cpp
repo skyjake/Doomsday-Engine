@@ -41,7 +41,7 @@ DE_PIMPL(Thread)
 
     Impl(Public *i) : Base(i)
     {
-        thread.reset(new_Thread(runFunc));
+        thread = tF::make_ref(new_Thread(runFunc));
         setUserData_Thread(thread, this);
         {
             auto &kt = knownThreads();

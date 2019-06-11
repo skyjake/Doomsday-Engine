@@ -168,7 +168,7 @@ void Beacon::start()
 {
     DE_ASSERT(!d->socket);
 
-    d->socket.reset(new_Datagram());
+    d->socket = tF::make_ref(new_Datagram());
     setUserData_Object(d->socket, d);
     iConnect(Datagram, d->socket, message, d->socket, Impl::readIncoming);
 
@@ -232,7 +232,7 @@ void Beacon::discover(const TimeSpan& timeOut, const TimeSpan& interval)
     d->broadcastAddresses.clear();
     for (duint p = d->udpPorts.start; p < d->udpPorts.end; ++p)
     {
-        d->broadcastAddresses << tF::ref<iAddress>{newBroadcast_Address(duint16(p))};
+        d->broadcastAddresses << tF::make_ref(newBroadcast_Address(duint16(p)));
     }
 
     // Time-out timer.

@@ -571,7 +571,7 @@ void Socket::open(Address const &address) // non-blocking
     if (!d->quiet) LOG_NET_MSG("Opening connection to %s") << address.asText();
 
     d->peer = address;
-    d->socket.reset(newAddress_Socket(address));
+    d->socket = tF::make_ref(newAddress_Socket(address));
     initialize();
 
     // Now that the signals have been set...
