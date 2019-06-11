@@ -63,6 +63,7 @@ public:
     void remove(Pointer ptr);
     bool contains(Pointer ptr) const;
     void clear();
+    Pointer take();
 
     PointerSet &operator = (PointerSet const &other);
     PointerSet &operator = (PointerSet &&moved);
@@ -145,6 +146,9 @@ public:
     }
     inline const_iterator end() const {
         return reinterpret_cast<const_iterator>(PointerSet::end());
+    }
+    inline Pointer take() {
+        return reinterpret_cast<Pointer>(PointerSet::take());
     }
 };
 

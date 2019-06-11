@@ -100,6 +100,10 @@ int main(int, char **)
         pset.insert(b);
         pset.insert(a);
         printSet(pset);
+        
+        cout << "Taking one:" << endl;
+        pset.take();
+        printSet(pset);
 
         cout << "Removing everything:" << endl;
         pset.remove(d);

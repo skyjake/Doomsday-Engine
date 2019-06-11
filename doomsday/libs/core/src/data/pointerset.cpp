@@ -209,6 +209,22 @@ void PointerSet::clear()
         _range = Rangeui16(_range.end, _range.end);
     }
 }
+    
+PointerSet::Pointer PointerSet::take()
+{
+    if (isEmpty()) return nullptr;
+    Pointer ptr = nullptr;
+    // Make room at both ends.
+    if (_size - _range.end < _range.start)
+    {
+        std::swap(ptr, _pointers[--_range.end]);
+    }
+    else
+    {
+        std::swap(ptr, _pointers[_range.start++]);
+    }
+    return ptr;
+}
 
 PointerSet &PointerSet::operator = (PointerSet const &other)
 {
