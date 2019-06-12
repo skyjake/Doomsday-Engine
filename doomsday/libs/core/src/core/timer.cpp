@@ -45,8 +45,8 @@ struct TimerScheduler : public Thread, public Lockable
         bool operator>(const Pending &other) const { return nextAt > other.nextAt; }
     };
 
-    volatile bool running = true;
-    Waitable      waiter;
+    bool     running = true;
+    Waitable waiter;
 
     std::priority_queue<Pending, std::vector<Pending>, std::greater<Pending>> pending;
 
@@ -130,8 +130,11 @@ struct TimerScheduler : public Thread, public Lockable
     void stop()
     {
         // Wake up.
-        running = false;
-        waiter.post();
+        {
+            DE_GUARD(this);
+            running = false;
+            waiter.post();
+        }
         join();
     }
 };
@@ -139,17 +142,6 @@ struct TimerScheduler : public Thread, public Lockable
 static LockableT<TimerScheduler *> scheduler;
 static std::atomic_int timerCount; // Number of timers in existence.
     
-static void deleteTimerScheduler()
-{
-    DE_GUARD(scheduler);
-    if (scheduler.value)
-    {
-        scheduler.value->stop();
-        delete scheduler.value;
-        scheduler.value = nullptr;
-    }
-}
-
 } // namespace internal
 
 DE_PIMPL_NOREF(Timer)
@@ -159,19 +151,19 @@ DE_PIMPL_NOREF(Timer)
     bool     isActive     = false;
     std::atomic_bool isPending{false}; // posted but not executed yet
 
-//    ~Impl()
-//    {
-//        using namespace internal;
-//
-//        // The timer scheduler thread is stopped after all timers have been deleted.
-//        DE_GUARD(scheduler);
-//        if (--timerCount == 0)
-//        {
-//            scheduler.value->stop();
-//            delete scheduler.value;
-//            scheduler.value = nullptr;
-//        }
-//    }
+    ~Impl()
+    {
+        using namespace internal;
+
+        // The timer scheduler thread is stopped after all timers have been deleted.
+        DE_GUARD(scheduler);
+        if (--internal::timerCount == 0)
+        {
+            scheduler.value->stop();
+            delete scheduler.value;
+            scheduler.value = nullptr;
+        }
+    }
 
     DE_PIMPL_AUDIENCE(Trigger)
 };
@@ -188,7 +180,6 @@ Timer::Timer()
     {
         scheduler.value = new TimerScheduler;
         scheduler.value->start();
-        atexit(deleteTimerScheduler);
     }
     ++timerCount;
 }
