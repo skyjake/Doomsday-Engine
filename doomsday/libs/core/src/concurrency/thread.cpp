@@ -52,11 +52,9 @@ DE_PIMPL(Thread)
 
     ~Impl()
     {
-        {
-            auto &kt = knownThreads();
-            DE_GUARD(kt);
-            kt.value.remove(thread);
-        }
+        auto &kt = knownThreads();
+        DE_GUARD(kt);
+        kt.value.remove(thread);
     }
 
     static iThreadResult runFunc(iThread *thd)
@@ -84,7 +82,9 @@ Thread::Thread()
 {}
 
 Thread::~Thread()
-{}
+{
+    join();
+}
 
 void Thread::setName(const String &name)
 {
