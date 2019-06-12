@@ -182,10 +182,14 @@ Timer::Timer()
         scheduler.value->start();
     }
     ++timerCount;
+
+    debug("[Timer] created %p (%d)", this, timerCount.load());
 }
 
 Timer::~Timer()
 {
+    debug("[~Timer] destroying %p (%d)", this, internal::timerCount.load());
+
     // The timer must be first stopped and all pending triggers must be handled.
     stop();
 
@@ -227,19 +231,20 @@ void Timer::post()
 {
     if (!d->isPending)
     {
-        if (auto *loop = EventLoop::get())
-        {
-            d->isPending = true; // not reposted before triggered
-            loop->postEvent(new CoreEvent(Event::Timer, [this]() {
-                d->isPending = false;
-                trigger();
-            }));
-        }
-        else
-        {
-//            warning("[TimerScheduler] Pending timer %p triggered with no event loop running (event "
-//                    "not posted)", this);
-        }
+        //if (auto *loop = EventLoop::get())
+        //{
+        d->isPending = true; // not reposted before triggered
+          //  debug("[TimerScheduler] Timer %p now pending with trigger event posted", this);
+        EventLoop::post(new CoreEvent(Event::Timer, [this]() {
+            d->isPending = false;
+            trigger();
+        }));
+//        }
+//        else
+//        {
+//            debug("[TimerScheduler] Pending timer %p triggered with no event loop running (event "
+//                  "not posted)", this);
+//        }
     }
 }
 

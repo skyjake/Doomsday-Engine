@@ -35,6 +35,8 @@ struct StackPusher {
     ~StackPusher()               { DE_GUARD(loopStack); loopStack.value.pop_back(); }
 };
 
+static FIFO<Event> outOfLoopEvents; // events posted when no event loops were running
+
 } // namespace internal
 
 DE_PIMPL_NOREF(EventLoop)
@@ -84,6 +86,13 @@ int EventLoop::exec(const std::function<void ()> &postExec)
     {
         internal::StackPusher sp(this);
         if (postExec) postExec();
+
+        // Queue up any events posted outside running event loops.
+        while (auto *event = internal::outOfLoopEvents.take())
+        {
+            postEvent(event);
+        }
+
         for (;;)
         {
             // Wait until an event is posted.
@@ -169,7 +178,7 @@ void EventLoop::processEvent(const Event &event)
     }
 }
 
-void EventLoop::post(Event *event)
+void EventLoop::post(Event *event) // static
 {
     if (auto *evloop = get())
     {
@@ -177,8 +186,7 @@ void EventLoop::post(Event *event)
     }
     else
     {
-        delete event;
-        warning("[EventLoop] Posted event was discarded because no event loop is running");
+        internal::outOfLoopEvents.put(event);
     }
 }
 
