@@ -25,12 +25,13 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    int exitCode;
     init_Foundation();
     TestApp app(makeList(argc, argv));
     try
     {
         app.initialize();
-        return app.exec();
+        exitCode = app.exec();
     }
     catch (const Error &er)
     {
@@ -41,11 +42,11 @@ int main(int argc, char **argv)
             SDL_MESSAGEBOX_ERROR, "test_appfw", "App init failed:\n" + esc.plainText(), nullptr);
         return -1;
     }
-
 #ifdef DE_DEBUG
     // Check that all reference-counted objects have been deleted.
     DE_ASSERT(Counted::totalCount == 0);
 #endif
+    deinit_Foundation();
     debug("Exiting main()");
-    return 0;
+    return exitCode;
 }

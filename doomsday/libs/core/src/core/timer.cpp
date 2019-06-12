@@ -50,6 +50,11 @@ struct TimerScheduler : public Thread, public Lockable
 
     std::priority_queue<Pending, std::vector<Pending>, std::greater<Pending>> pending;
 
+    TimerScheduler()
+    {
+        setName("TimerScheduler");
+    }
+
     void run() override
     {
         while (running)

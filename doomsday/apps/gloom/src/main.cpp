@@ -25,12 +25,13 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
+    int exitCode = 0;
     init_Foundation();
     GloomApp app(makeList(argc, argv));
     try
     {
         app.initialize();
-        return app.exec();
+        exitCode = app.exec();
     }
     catch (const Error &er)
     {
@@ -39,12 +40,12 @@ int main(int argc, char **argv)
         warning("App init failed: %s", esc.plainText().c_str());
         SDL_ShowSimpleMessageBox(
             SDL_MESSAGEBOX_ERROR, "Gloom", "App init failed:\n" + esc.plainText(), nullptr);
-        return -1;
+        exitCode = -1;
     }
-
-#ifdef DE_DEBUG
+#if defined (DE_DEBUG)
     // Check that all reference-counted objects have been deleted.
     DE_ASSERT(Counted::totalCount == 0);
 #endif
-    return 0;
+    deinit_Foundation();
+    return exitCode;
 }

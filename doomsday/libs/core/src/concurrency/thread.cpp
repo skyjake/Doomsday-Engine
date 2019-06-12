@@ -86,6 +86,11 @@ Thread::Thread()
 Thread::~Thread()
 {}
 
+void Thread::setName(const String &name)
+{
+    setName_Thread(d->thread, name);
+}
+
 void Thread::setTerminationEnabled(bool enable)
 {
     setTerminationEnabled_Thread(d->thread, enable);

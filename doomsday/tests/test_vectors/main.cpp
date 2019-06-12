@@ -151,7 +151,7 @@ int main(int, char **)
     {
         err.warnPlainText();
     }
-
+    deinit_Foundation();
     debug("Exiting main()...");
     return 0;
 }

@@ -27,6 +27,7 @@ using namespace de;
 
 DE_EXTERN_C int main(int argc, char **argv)
 {
+    int exitCode = -1;
     init_Foundation();
     try
     {
@@ -38,12 +39,13 @@ DE_EXTERN_C int main(int argc, char **argv)
         TestWindow win;
         win.show();
 
-        return app.exec();
+        exitCode = app.exec();
     }
     catch (Error const &err)
     {
         err.warnPlainText();
     }
+    deinit_Foundation();
     debug("Exiting main()...");
-    return 0;
+    return exitCode;
 }

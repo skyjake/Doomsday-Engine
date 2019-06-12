@@ -68,21 +68,7 @@ int main(int argc, char **argv)
     init_Foundation();
     int exitCode = 0;
     {
-//        ClientApp::setDefaultOpenGLFormat();
-
         ClientApp clientApp(makeList(argc, argv));
-
-        /**
-         * @todo Translations are presently disabled because lupdate can't seem to
-         * parse tr strings from inside private implementation classes. Workaround
-         * or fix is needed?
-         */
-/*#if 0
-        // Load the current locale's translation.
-        QTranslator translator;
-        translator.load(QString("client_") + QLocale::system().name());
-        clientApp.installTranslator(&translator);
-#endif*/
 
         try
         {
@@ -106,6 +92,7 @@ int main(int argc, char **argv)
             de::warning("App init failed:\n%s", msg.plainText().c_str());
             SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, DOOMSDAY_NICENAME,
                                      "App init failed:\n" + msg.plainText(), nullptr);
+            deinit_Foundation();
             return -1;
         }
     }
@@ -128,5 +115,6 @@ int main(int argc, char **argv)
     }
     #endif
 
+    deinit_Foundation();
     return exitCode;
 }

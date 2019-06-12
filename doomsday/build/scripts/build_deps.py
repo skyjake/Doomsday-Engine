@@ -22,7 +22,8 @@ dependencies = [
         'the_Foundation',
         'ssh://git@github.com/skyjake/the_Foundation.git', 'origin/master',
         ['-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX') if IS_MINGW
-         else '-DUNISTRING_DIR=/usr/local']
+         else '-DUNISTRING_DIR=/usr/local',
+	 '-DTFDN_ENABLE_DEBUG_OUTPUT=YES']
     ),
     (
         'Open Asset Import Library',

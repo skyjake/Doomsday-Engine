@@ -36,6 +36,7 @@ public:
 
     virtual ~Thread();
 
+    void setName(const String &name);
     void setTerminationEnabled(bool enable);
 
     void start();

@@ -29,19 +29,22 @@ using namespace de;
  */
 int main(int argc, char** argv)
 {
+    int exitCode;
     init_Foundation();
     ServerApp serverApp(makeList(argc, argv));
     try
     {
         serverApp.initialize();
-        return serverApp.exec();
+        exitCode = serverApp.exec();
     }
     catch (const Error &er)
     {
         EscapeParser esc;
         esc.parse(er.asText());
         warning("App init failed: %s", esc.plainText().c_str());
-        return -1;
+        exitCode = -1;
     }
+    deinit_Foundation();
+    return exitCode;
 }
 

@@ -30,19 +30,23 @@
 namespace de {
 namespace internal {
 
+static iThreadPool *s_pool = nullptr;
+
 static iThreadPool *globalThreadPool()
 {
-    static iThreadPool *pool = nullptr;
-    if (!pool)
+    if (!s_pool)
     {
-        pool = new_ThreadPool();
+        s_pool = new_ThreadPool();
     }
-    return pool;
+    return s_pool;
 }
 
 static void deleteThreadPool()
 {
-    iRelease(globalThreadPool());
+    if (s_pool)
+    {
+        iRelease(s_pool);
+    }
 }
 
 class CallbackTask : public Task

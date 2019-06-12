@@ -32,5 +32,6 @@ int main(int argc, char *argv[])
 #ifdef DE_DEBUG
     DE_ASSERT(de::Counted::totalCount == 0);
 #endif
+    deinit_Foundation();
     return result;
 }

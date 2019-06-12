@@ -165,7 +165,6 @@ int main(int argc, char **argv)
 {
     init_Foundation();
     initTranslators();
-
     try
     {
         TextApp app(makeList(argc, argv));
@@ -259,7 +258,7 @@ int main(int argc, char **argv)
     {
         err.warnPlainText();
     }
-
     deleteAll(translators);
+    deinit_Foundation();
     return 0;
 }

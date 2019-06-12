@@ -80,7 +80,7 @@ int main(int argc, char **argv)
     {
         err.warnPlainText();
     }
-
+    deinit_Foundation();
     debug("Exiting main()...");
     return 0;
 }

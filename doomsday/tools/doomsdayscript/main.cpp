@@ -31,8 +31,8 @@ using namespace de;
 
 int main(int argc, char **argv)
 {
-    init_Foundation();
     if (argc < 2) return -1;
+    init_Foundation();
     try
     {
         TextApp app(makeList(argc, argv));
@@ -63,7 +63,7 @@ int main(int argc, char **argv)
     {
         er.warnPlainText();
     }
-
+    deinit_Foundation();
     debug("Exiting main()...");
     return 0;
 }
