@@ -27,9 +27,9 @@ int main(int argc, char **argv)
 {
     int exitCode;
     init_Foundation();
-    TestApp app(makeList(argc, argv));
     try
     {
+        TestApp app(makeList(argc, argv));
         app.initialize();
         exitCode = app.exec();
     }
@@ -40,7 +40,7 @@ int main(int argc, char **argv)
         warning("App init failed: %s", esc.plainText().c_str());
         SDL_ShowSimpleMessageBox(
             SDL_MESSAGEBOX_ERROR, "test_appfw", "App init failed:\n" + esc.plainText(), nullptr);
-        return -1;
+        exitCode = -1;
     }
 #ifdef DE_DEBUG
     // Check that all reference-counted objects have been deleted.
