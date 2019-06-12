@@ -46,5 +46,6 @@ int main(int argc, char **argv)
     // Check that all reference-counted objects have been deleted.
     DE_ASSERT(Counted::totalCount == 0);
 #endif
+    debug("Exiting main()");
     return 0;
 }
