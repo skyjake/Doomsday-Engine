@@ -95,6 +95,11 @@ public:
      */
     bool isDone() const;
 
+    /**
+     * Called by de::App at shutdown.
+     */
+    static void deleteThreadPool();
+
 private:
     DE_PRIVATE(d)
 };

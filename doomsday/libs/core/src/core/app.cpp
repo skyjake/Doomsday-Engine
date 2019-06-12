@@ -45,7 +45,7 @@
 #include "de/Record"
 #include "de/RemoteFeedRelay"
 #include "de/ScriptSystem"
-//#include "de/StaticLibraryFeed"
+#include "de/TaskPool"
 #include "de/TextValue"
 #include "de/UnixInfo"
 #include "de/Version"
@@ -204,6 +204,8 @@ DE_PIMPL(App)
 
     ~Impl()
     {
+        debug("[App::~Impl] destroying");
+
         metaBank.reset();
 
         if (errorSink)
@@ -223,6 +225,10 @@ DE_PIMPL(App)
 
         Clock::setAppClock(nullptr);
         logBuffer.setOutputFile("");
+
+        TaskPool::deleteThreadPool();
+
+        debug("[App::~Impl] done");
     }
 
     NativePath defaultNativeModulePath() const
@@ -244,7 +250,7 @@ DE_PIMPL(App)
         Folder::checkDefaultSettings();
 
         // Executables.
-        Folder &binFolder = fs.makeFolder("/bin");
+//        Folder &binFolder = fs.makeFolder("/bin");
 
         // Initialize the built-in folders. This hooks up the default native
         // directories into the appropriate places in the file system.
@@ -263,7 +269,7 @@ DE_PIMPL(App)
             #ifdef MACOSX
             {
                 NativePath appDir = appPath.fileNamePath();
-                binFolder.attach(new DirectoryFeed(appDir));
+//                binFolder.attach(new DirectoryFeed(appDir));
                 fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
             }
             #elif WIN32

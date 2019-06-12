@@ -30,15 +30,12 @@
 namespace de {
 namespace internal {
 
-static void deleteThreadPool();
-
 static iThreadPool *globalThreadPool()
 {
     static iThreadPool *pool = nullptr;
     if (!pool)
     {
         pool = new_ThreadPool();
-        atexit(deleteThreadPool);
     }
     return pool;
 }
@@ -200,6 +197,11 @@ void TaskPool::waitForDone()
 bool TaskPool::isDone() const
 {
     return d->isEmpty();
+}
+
+void TaskPool::deleteThreadPool() // static
+{
+    internal::deleteThreadPool();
 }
 
 } // namespace de
