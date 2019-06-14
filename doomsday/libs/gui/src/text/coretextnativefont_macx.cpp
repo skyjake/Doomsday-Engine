@@ -394,4 +394,10 @@ Image CoreTextNativeFont::nativeFontRasterize(const String &text,
     return backbuffer;
 }
 
+bool CoreTextNativeFont::load(const String &, const Block &)
+{
+    warning("[CoreTextNativeFont] loading font data is not supported");
+    return false;
+}
+
 } // namespace de

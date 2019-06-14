@@ -280,8 +280,9 @@ Image SdlNativeFont::nativeFontRasterize(const String &      text,
     return img.mixed(background, foreground, comps);
 }
 
-bool SdlNativeFont::load(const Block &fontData) // static
+bool SdlNativeFont::load(const String &/*name*/, const Block &fontData) // static
 {
+    // `name` is read from the file.
     return fontDb.addSource(fontData);
 }
 

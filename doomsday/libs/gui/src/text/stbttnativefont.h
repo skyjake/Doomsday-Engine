@@ -1,4 +1,4 @@
-/** @file sdlnativefont.h
+/** @file stbttnativefont.h  Text rendering with stb_truetype.
  *
  * @authors Copyright (c) 2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -16,8 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef LIBGUI_SDLNATIVEFONT_H
-#define LIBGUI_SDLNATIVEFONT_H
+#ifndef LIBGUI_STBTTNATIVEFONT_H
+#define LIBGUI_STBTTNATIVEFONT_H
 
 #include "de/NativeFont"
 #include "de/Image"
@@ -27,15 +27,15 @@ namespace de {
 /**
  * Native font implementation that uses SDL_ttf.
  */
-class SdlNativeFont : public NativeFont
+class StbTtNativeFont : public NativeFont
 {
 public:
-    SdlNativeFont(const String &family = "");
-    SdlNativeFont(const SdlNativeFont &other);
+    StbTtNativeFont(const String &family = "");
+    StbTtNativeFont(const StbTtNativeFont &other);
 
-    SdlNativeFont &operator=(const SdlNativeFont &other);
+    StbTtNativeFont &operator=(const StbTtNativeFont &other);
 
-    static bool load(const String &name, const Block &fontData);
+    static bool load(const String &fontName, const Block &fontData);
 
 protected:
     void commit() const override;
@@ -57,5 +57,5 @@ private:
 
 } // namespace de
 
-#endif // LIBGUI_SDLNATIVEFONT_H
+#endif // LIBGUI_STBTTNATIVEFONT_H
 

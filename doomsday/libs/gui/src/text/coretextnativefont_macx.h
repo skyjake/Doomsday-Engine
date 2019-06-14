@@ -35,6 +35,8 @@ public:
 
     CoreTextNativeFont &operator=(const CoreTextNativeFont &other);
 
+    static bool load(const String &, const Block &);
+
 protected:
     void commit() const;
 

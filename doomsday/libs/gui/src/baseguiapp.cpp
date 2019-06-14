@@ -39,17 +39,13 @@ static Value *Function_App_LoadFont(Context &, Function::ArgumentValues const &a
         // Try to load the specified font file.
         const String fileName = args.at(0)->asText();
         const Block fontData(App::rootFolder().locate<const File>(fileName));
-//        int id;
-//        id = QFontDatabase::addApplicationFontFromData(data);
-        if (Font::load(fontData))
+        if (Font::load(fileName.fileNameWithoutExtension(), fontData))
         {
             LOG_RES_VERBOSE("Loaded font: %s") << fileName;
         }
         else
         {
             LOG_RES_WARNING("Failed to load font: %s") << fileName;
-            //qDebug() << args.at(0)->asText();
-            //qDebug() << "Families:" << QFontDatabase::applicationFontFamilies(id);
         }
     }
     catch (Error const &er)

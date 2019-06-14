@@ -22,13 +22,15 @@
 #include <de/Hash>
 #include <de/ThreadLocal>
 
-#if (defined(MACOSX) && defined(MACOS_10_7)) || defined (DE_IOS)
-#  include "../src/text/coretextnativefont_macx.h"
-namespace de { typedef CoreTextNativeFont PlatformFont; }
+#if 1
+#  include "stbttnativefont.h"
+namespace de { using PlatformFont = StbTtNativeFont; }
+#elif (defined(MACOSX) && defined(MACOS_10_7)) || defined (DE_IOS)
+#  include "coretextnativefont_macx.h"
+namespace de { using PlatformFont = CoreTextNativeFont; }
 #else
-#  define DE_USING_SDL_TTF
-#  include "../src/text/sdlnativefont.h"
-namespace de { typedef SdlNativeFont PlatformFont; }
+#  include "sdlnativefont.h"
+namespace de { using PlatformFont = SdlNativeFont; }
 #endif
 
 namespace std {
@@ -407,15 +409,9 @@ Rule const &Font::lineSpacing() const
     return *d->lineSpacingRule;
 }
 
-bool Font::load(const Block &data) // static
+bool Font::load(const String &name, const Block &data) // static
 {
-#if defined (DE_USING_SDL_TTF)
-    return SdlNativeFont::load(data);
-#else
-    warning("Font::load() is not implemented");
-    DE_UNUSED(data);
-    return false;
-#endif
+    return PlatformFont::load(name, data);
 }
 
 //------------------------------------------------------------------------------------------------

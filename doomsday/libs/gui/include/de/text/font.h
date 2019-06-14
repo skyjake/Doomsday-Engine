@@ -344,11 +344,12 @@ public:
     /**
      * Loads a Truetype font.
      *
+     * @param name  Name of the font (e.g., "Source Sans Pro Light").
      * @param data  Font data.
      *
      * @return @c true, if successful.
      */
-    static bool load(const Block &data);
+    static bool load(const String &name, const Block &data);
 
 private:
     DE_PRIVATE(d)
