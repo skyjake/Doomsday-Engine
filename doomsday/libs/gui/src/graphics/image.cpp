@@ -1465,4 +1465,19 @@ Image::Color Image::fromHsv(const Vec4f &hsv)
     return (rgb.min(Vec4f(1, 1, 1, 1)).max(Vec4f()) * 255.f + Vec4f(.5f, .5f, .5f, .5f)).toVec4ub();
 }
 
+Image::Color Image::mix(Color a, Color b, Color m)
+{
+    const duint mr = m.x;
+    const duint mg = m.y;
+    const duint mb = m.z;
+    const duint ma = m.w;
+    
+    int red   = (b.x * mr + a.x * (255u - mr)) / 255u;
+    int green = (b.y * mg + a.y * (255u - mg)) / 255u;
+    int blue  = (b.z * mb + a.z * (255u - mb)) / 255u;
+    int alpha = (b.w * ma + a.w * (255u - ma)) / 255u;
+    
+    return makeColor(red, green, blue, alpha);
+}
+    
 } // namespace de

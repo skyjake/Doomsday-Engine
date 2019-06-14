@@ -118,6 +118,7 @@ public:
     }
     static Vec4f hsv(Color color);          // normalized HSV
     static Color fromHsv(const Vec4f &hsv); // normalized HSV
+    static Color mix(Color a, Color b, Color m);
 
 public:
     Image();
