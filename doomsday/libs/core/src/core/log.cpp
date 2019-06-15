@@ -768,7 +768,6 @@ Log &Log::threadLog()
     if (!threadLogKey)
     {
         tss_create(&threadLogKey, deleteLog);
-        atexit(destroyThreadLog); // at end of thread
     }
     Log *log = static_cast<Log *>(tss_get(threadLogKey));
     if (!log)
