@@ -745,6 +745,37 @@ public:
     Type w;
 };
 
+// Math.
+template <typename Type>
+Vector2<Type> floor(const Vector2<Type> &vec2) {
+    return {Type(std::floor(vec2.x)), Type(std::floor(vec2.y))};
+}
+
+template <typename Type>
+Vector3<Type> floor(const Vector3<Type> &vec3) {
+    return {Type(std::floor(vec3.x)), Type(std::floor(vec3.y)), Type(std::floor(vec3.z))};
+}
+
+template <typename Type>
+Vector4<Type> floor(const Vector4<Type> &vec4) {
+    return {Type(std::floor(vec4.x)), Type(std::floor(vec4.y)), Type(std::floor(vec4.z)), Type(std::floor(vec4.w))};
+}
+
+template <typename Type>
+Vector2<Type> ceil(const Vector2<Type> &vec2) {
+    return {Type(std::ceil(vec2.x)), Type(std::ceil(vec2.y))};
+}
+
+template <typename Type>
+Vector3<Type> ceil(const Vector3<Type> &vec3) {
+    return {Type(std::ceil(vec3.x)), Type(std::ceil(vec3.y)), Type(std::ceil(vec3.z))};
+}
+
+template <typename Type>
+Vector4<Type> ceil(const Vector4<Type> &vec4) {
+    return {Type(std::ceil(vec4.x)), Type(std::ceil(vec4.y)), Type(std::ceil(vec4.z)), Type(std::ceil(vec4.w))};
+}
+
 // Swizzling.
 template <typename Type>
 typename Type::value_type swizzledComponent(Type const &vec, SwizzleAxis axis) {
