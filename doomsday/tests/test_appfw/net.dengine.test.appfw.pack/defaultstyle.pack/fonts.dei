@@ -15,21 +15,21 @@ script {
         end
     end
 }
-    
+
 group {
-    condition: Version.OS == 'windows'
+    condition: Version.OS in ['windows', 'unix']
 
     script { loadOpenSans() }
 
     font default {
-        family: Open Sans
+        family: OpenSans
         size: 12pt
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
-        family: Courier New
+        #family: Courier New
         size: 10pt
     }
 }
@@ -68,22 +68,6 @@ group {
     font monospace inherits default {
         family: Menlo
         size: 13pt
-    }
-}
-
-group {
-    condition: Version.OS == 'unix'
-
-    font default {
-        family: Liberation Sans
-        size: 13pt
-        weight: normal
-        style: normal
-    }
-
-    font monospace inherits default {
-        family: FreeMono
-        size: 12pt
     }
 }
 
