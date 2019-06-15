@@ -37,11 +37,12 @@ DE_PIMPL(GLTextComposer)
 
     struct Line {
         struct Segment {
-            Id id;
+            Id     id;
+            Vec2i  imageOrigin;
             String text;
-            int x;
-            int width;
-            bool compressed;
+            int    x;
+            int    width;
+            bool   compressed;
 
             Segment() : id(Id::None), x(0), width(0), compressed(false) {}
             int right() const { return x + width; }
@@ -196,8 +197,9 @@ DE_PIMPL(GLTextComposer)
 
                     //qDebug() << "allocating" << seg.text << seg.range.asText();
 
-                    Image const segmentImage = wraps->rasterizedSegment(i, k);
+                    const Image segmentImage = wraps->rasterizedSegment(i, k);
                     seg.id = atlas->alloc(segmentImage.multiplied(fgColor));
+                    seg.imageOrigin = segmentImage.origin();
                 }
                 line.segs << seg;
             }
@@ -540,9 +542,10 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
                     }
                 }
 
-                Rectanglef const uv = d->atlas->imageRectf(seg.id);
+                const Rectanglef uv = d->atlas->imageRectf(seg.id);
 
-                auto const segRect = Rectanglef::fromSize(linePos + Vec2f(seg.x, 0), size);
+                auto const segRect =
+                    Rectanglef::fromSize(linePos + Vec2f(seg.x, 0) + seg.imageOrigin, size);
                 triStrip.makeQuad(segRect, color, uv);
 
                 // Keep track of how wide the geometry really is.

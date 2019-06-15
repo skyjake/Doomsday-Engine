@@ -38,18 +38,18 @@ public:
     static bool load(const String &, const Block &);
 
 protected:
-    void commit() const;
+    void commit() const override;
 
-    int nativeFontAscent() const;
-    int nativeFontDescent() const;
-    int nativeFontHeight() const;
-    int nativeFontLineSpacing() const;
+    int nativeFontAscent() const override;
+    int nativeFontDescent() const override;
+    int nativeFontHeight() const override;
+    int nativeFontLineSpacing() const override;
 
-    Rectanglei nativeFontMeasure(const String &text) const;
-    int        nativeFontWidth(const String &text) const;
+    int        nativeFontAdvanceWidth(const String &text) const override;
+    Rectanglei nativeFontMeasure(const String &text) const override;
     Image      nativeFontRasterize(const String &      text,
                                    const Image::Color &foreground,
-                                   const Image::Color &background) const;
+                                   const Image::Color &background) const override;
 
 private:
     DE_PRIVATE(d)

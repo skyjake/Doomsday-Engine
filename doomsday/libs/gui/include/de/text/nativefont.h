@@ -124,13 +124,13 @@ public:
     Rectanglei measure(const String &text) const;
 
     /**
-     * Width of a text string as pixels.
+     * Advance width of a text string as pixels.
      *
      * @param text  Text string.
      *
      * @return Pixel width.
      */
-    int width(const String &text) const;
+    int advanceWidth(const String &text) const;
 
     /**
      * Draws a line of text using the font into an image.
@@ -140,6 +140,8 @@ public:
      * @param background  Background color.
      *
      * @return Image of the text, with the same dimensions as returned by measure().
+     * The image origin is set to appropriately offset its top left corner so that
+     * the (0,0) coordinates are at the baseline.
      */
     Image rasterize(const String &      text,
                     const Image::Color &foreground,
@@ -167,7 +169,7 @@ protected:
     virtual int nativeFontHeight() const      = 0;
     virtual int nativeFontLineSpacing() const = 0;
 
-    virtual int        nativeFontWidth(const String &text) const                 = 0;
+    virtual int        nativeFontAdvanceWidth(const String &text) const          = 0;
     virtual Rectanglei nativeFontMeasure(const String &text) const               = 0;
     virtual Image      nativeFontRasterize(const String &      text,
                                            const Image::Color &foreground,

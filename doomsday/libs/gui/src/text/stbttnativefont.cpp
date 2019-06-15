@@ -77,20 +77,13 @@ struct FontDatabase
 
     bool addSource(const String &name, const Block &source)
     {
-//        if (TTF_Font *font =
-//            TTF_OpenFontRW(SDL_RWFromConstMem(source.data(), int(source.size())), SDL_TRUE, 16))
-//        {
-//            const String name = fontName(font);
-//            if (!sourceData.contains(name))
-//            {
-//                sourceData[name] = source;
-//            }
-//            TTF_CloseFont(font);
-//            return true;
-//        }
-        if (!sourceData.contains(name))
+        if (sourceData.contains(name)) return true; // already got it (reloading?)
+
+        stbtt_fontinfo info;
+        if (stbtt_InitFont(&info, source.data(), 0))
         {
             sourceData[name] = source;
+            return true;
         }
         return false;
     }
@@ -178,12 +171,12 @@ DE_PIMPL(StbTtNativeFont)
 
         if (font)
         {
-            height    = roundi(self().pointSize() * pixelRatio());
-            fontScale = stbtt_ScaleForPixelHeight(font, height);
+            fontScale = stbtt_ScaleForMappingEmToPixels(font, roundi(self().pointSize() * pixelRatio()));
 
             int fontAscent, fontDescent, fontLineGap;
             stbtt_GetFontVMetrics(font, &fontAscent, &fontDescent, &fontLineGap);
 
+            height     = roundi(fontScale * (fontAscent - fontDescent));
             ascent     = roundi(fontScale * fontAscent);
             descent    = roundi(-fontScale * fontDescent);
             lineHeight = roundi(fontScale * (fontAscent - fontDescent + fontLineGap));
@@ -219,6 +212,7 @@ DE_PIMPL(StbTtNativeFont)
      * left edge of the first character.
      */
     Rectanglei rasterize(const String &text,
+                         int *         advanceWidth,
                          Image *       image,
                          const Vec2i   imageOrigin = {},
                          Image::Color  foreground = {},
@@ -242,8 +236,10 @@ DE_PIMPL(StbTtNativeFont)
             int advance;
             int leftSideBearing;
             Vec2i glyphPoint[2];
-            float xShift = xPos - std::floor(xPos);
             stbtt_GetCodepointHMetrics(font, ucp, &advance, &leftSideBearing);
+            // Why the LSB*0.5? Don't know, but it seems to work nicely...
+            float xLeft  = xPos - fontScale * leftSideBearing * 0.5f;
+            float xShift = xLeft - std::floor(xLeft);
             stbtt_GetCodepointBitmapBoxSubpixel(font,
                                                 ucp,
                                                 fontScale,
@@ -255,7 +251,7 @@ DE_PIMPL(StbTtNativeFont)
                                                 &glyphPoint[1].x,
                                                 &glyphPoint[1].y);
             Rectanglei glyphBounds{glyphPoint[0], glyphPoint[1]};
-            glyphBounds.move({int(xPos), 0});
+            glyphBounds.move({int(xLeft), 0});
             if (bounds.isNull())
             {
                 bounds = glyphBounds;
@@ -297,7 +293,12 @@ DE_PIMPL(StbTtNativeFont)
             }
 
             xPos += fontScale * advance;
+            
             previousUcp = ucp;
+        }
+        if (advanceWidth)
+        {
+            *advanceWidth = roundi(xPos);
         }
         return bounds;
     }
@@ -347,14 +348,16 @@ Rectanglei StbTtNativeFont::nativeFontMeasure(const String &text) const
 {
     if (d->font)
     {
-        return d->rasterize(text, nullptr).toRectanglei();
+        return d->rasterize(d->transform(text), nullptr, nullptr);
     }
     return {};
 }
 
-int StbTtNativeFont::nativeFontWidth(const String &text) const
+int StbTtNativeFont::nativeFontAdvanceWidth(const String &text) const
 {
-    return int(nativeFontMeasure(d->transform(text)).width());
+    int advance = 0;
+    d->rasterize(d->transform(text), &advance, nullptr);
+    return advance;
 }
 
 Image StbTtNativeFont::nativeFontRasterize(const String &      text,
@@ -363,9 +366,12 @@ Image StbTtNativeFont::nativeFontRasterize(const String &      text,
 {
     if (!d->font) return {};
 
-    const Rectanglei bounds = d->rasterize(text, nullptr);
+    const String displayText = d->transform(text);
+    Rectanglei bounds = d->rasterize(displayText, nullptr, nullptr);
     Image img{bounds.size(), Image::RGBA_8888};
-    d->rasterize(text, &img, -floor(bounds.topLeft).toVec2i(), foreground, background);
+    d->rasterize(displayText, nullptr, &img, -bounds.topLeft, foreground, background);
+    img.setOrigin(bounds.topLeft);
+//    img.save(Stringf("raster_%p.png", cstr_String(text)));
     return img;
 }
 

@@ -221,10 +221,10 @@ Rectanglei NativeFont::measure(const String &text) const
     return bounds;
 }
 
-int NativeFont::width(String const &text) const
+int NativeFont::advanceWidth(String const &text) const
 {
     d->prepare();
-    return nativeFontWidth(text);
+    return nativeFontAdvanceWidth(text);
 }
 
 Image NativeFont::rasterize(const String &      text,

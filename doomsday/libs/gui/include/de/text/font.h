@@ -325,7 +325,10 @@ public:
      * @param foreground  Text foreground color.
      * @param background  Background color.
      *
-     * @return Image containing the rasterized text.
+     * @return Image containing the rasterized text. The image origin is set to position
+     * the baseline correctly so that (0,0) is in the top left corner for drawing.
+     * If there are multiple font heights present on the line, the tallest ascent is used
+     * for setting the image origin.
      */
     Image rasterize(String const &textLine,
                     Vec4ub const &foreground = Image::Color(255, 255, 255, 255),

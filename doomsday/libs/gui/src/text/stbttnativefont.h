@@ -45,8 +45,8 @@ protected:
     int nativeFontHeight() const override;
     int nativeFontLineSpacing() const override;
 
+    int        nativeFontAdvanceWidth(const String &text) const override;
     Rectanglei nativeFontMeasure(const String &text) const override;
-    int        nativeFontWidth(const String &text) const override;
     Image      nativeFontRasterize(const String &      text,
                                    const Image::Color &foreground,
                                    const Image::Color &background) const override;

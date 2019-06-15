@@ -347,7 +347,7 @@ Rectanglei CoreTextNativeFont::nativeFontMeasure(String const &text) const
     return rect;
 }
 
-int CoreTextNativeFont::nativeFontWidth(String const &text) const
+int CoreTextNativeFont::nativeFontAdvanceWidth(String const &text) const
 {
     auto &cachedLine = d->makeLine(d->applyTransformation(text));
     return roundi(CTLineGetTypographicBounds(cachedLine.line, NULL, NULL, NULL) * pixelRatio());
@@ -374,6 +374,7 @@ Image CoreTextNativeFont::nativeFontRasterize(const String &text,
     // Set up the bitmap for drawing into.
     const Rectanglei bounds = measure(d->cache.lineText);
     Image backbuffer(bounds.size(), Image::RGBA_8888);
+    backbuffer.setOrigin(bounds.topLeft);
     backbuffer.fill(background);
 
     CGContextRef gc = CGBitmapContextCreate(backbuffer.bits(),
@@ -384,7 +385,7 @@ Image CoreTextNativeFont::nativeFontRasterize(const String &text,
                                             kCGImageAlphaPremultipliedLast);
     CGContextScaleCTM(gc, pixelRatio(), pixelRatio());
 
-    CGContextSetTextPosition(gc, 0, d->descent);
+    CGContextSetTextPosition(gc, -bounds.topLeft.x, -bounds.topLeft.y);
     CTLineDraw(d->cache.line, gc);
 
     CGColorRelease(fgColor);

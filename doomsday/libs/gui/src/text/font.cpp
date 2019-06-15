@@ -278,16 +278,16 @@ Rectanglei Font::measure(RichFormatRef const &format) const
         iter.next();
         if (iter.range().isEmpty()) continue;
 
-        PlatformFont const &altFont = d->alteredFont(iter);
+        const PlatformFont &altFont = d->alteredFont(iter);
 
         const String part = iter.range();
         Rectanglei rect = altFont.measure(part);
 
         // Combine to the total bounds.
-        rect.moveTopLeft(Vec2i(advance, rect.top()));
+        rect.move(Vec2i(advance, 0));
         bounds |= rect;
 
-        advance += altFont.width(part);
+        advance += altFont.advanceWidth(part);
     }
 
     return bounds;
@@ -307,7 +307,7 @@ int Font::advanceWidth(RichFormatRef const &format) const
         iter.next();
         if (!iter.range().isEmpty())
         {
-            advance += d->alteredFont(iter).width(iter.range());
+            advance += d->alteredFont(iter).advanceWidth(iter.range());
         }
     }
     return advance;
@@ -327,26 +327,22 @@ Image Font::rasterize(RichFormatRef const &format,
 {
     auto const &plat = d->getThreadFonts();
 
-#ifdef LIBGUI_ACCURATE_TEXT_BOUNDS
-    Rectanglei const bounds = measure(format);
-#else
-    Rectanglei const bounds(0, 0,
-                            advanceWidth(textLine, format),
-                            plat.font.height());
-#endif
+    const Rectanglei bounds = measure(format);
 
     Image::Color bgColor(background.x, background.y, background.z, background.w);
 
     Image::Color fg = foreground;
     Image::Color bg = background;
 
-    Image img(Image::Size(bounds.width(), de::max(duint(plat.font.height()), bounds.height())),
-               Image::RGBA_8888);
+    const Vec2i imgOrigin = -bounds.topLeft;
+    Image img(bounds.size(), Image::RGBA_8888);
     img.fill(bgColor);
+    img.setOrigin(bounds.topLeft);
 
     // Composite the final image by drawing each rich range first into a separate
     // bitmap and then drawing those into the final image.
     int advance = 0;
+    int ascent = 0;
     RichFormat::Iterator iter(format);
     while (iter.hasNext())
     {
@@ -377,13 +373,12 @@ Image Font::rasterize(RichFormatRef const &format,
         }
 
         const String part = iter.range();
-
-        Image fragment = font->rasterize(part, fg, bg);
-        Rectanglei const bounds = font->measure(part);
-
-        img.draw(fragment, Vec2i(advance + bounds.left(), d->ascent + bounds.top()));
-        advance += font->width(part);
+        const Image raster = font->rasterize(part, fg, bg);
+        ascent = de::max(ascent, font->ascent());
+        img.draw(raster, imgOrigin + raster.origin() + Vec2i(advance, 0));
+        advance += font->advanceWidth(part);
     }
+    img.setOrigin(img.origin() + Vec2i(0, ascent));
     return img;
 }
 
