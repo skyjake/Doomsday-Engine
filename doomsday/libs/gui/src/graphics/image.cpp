@@ -336,6 +336,7 @@ DE_PIMPL(Image)
     Block        pixels;
     ByteRefArray refPixels;
     float        pointRatio = 1.f;
+    Vec2i        origin;
 
     Impl(Public *i)
         : Base(i)
@@ -349,6 +350,7 @@ DE_PIMPL(Image)
         , pixels(other.pixels)
         , refPixels(other.refPixels)
         , pointRatio(other.pointRatio)
+        , origin(other.origin)
     {}
 
     Impl(Public *i, Size const &imgSize, Format imgFormat)
@@ -657,6 +659,16 @@ GLPixelFormat Image::glFormat() const
 float Image::pointRatio() const
 {
     return d->pointRatio;
+}
+
+void Image::setOrigin(const Vec2i &origin)
+{
+    d->origin = origin;
+}
+
+Vec2i Image::origin() const
+{
+    return d->origin;
 }
 
 Image::Color Image::pixel(Vec2ui pos) const

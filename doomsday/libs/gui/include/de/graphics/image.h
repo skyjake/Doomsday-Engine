@@ -240,6 +240,9 @@ public:
     float pointRatio() const;
     void setPointRatio(float pointsPerPixel);
 
+    Vec2i origin() const;
+    void setOrigin(const Vec2i &origin);
+
     inline Color pixel(duint x, duint y) const { return pixel(Vec2ui(x, y)); }
     Color pixel(Vec2ui pos) const;
     
