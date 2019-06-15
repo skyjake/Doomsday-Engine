@@ -25,7 +25,7 @@
 namespace de {
 
 /**
- * Native font implementation that uses SDL_ttf.
+ * Native font implementation that uses stb_truetype.
  */
 class StbTtNativeFont : public NativeFont
 {

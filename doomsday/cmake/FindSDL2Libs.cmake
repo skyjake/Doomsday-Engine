@@ -19,7 +19,7 @@ endif ()
 if (PKG_CONFIG_FOUND AND NOT IOS)
     if (NOT TARGET SDL2)
         add_pkgconfig_interface_library (SDL2 OPTIONAL sdl2)
-        add_pkgconfig_interface_library (SDL2_ttf OPTIONAL SDL2_ttf)
+        # add_pkgconfig_interface_library (SDL2_ttf OPTIONAL SDL2_ttf)
         add_pkgconfig_interface_library (SDL2_mixer OPTIONAL SDL2_mixer)
     endif ()
 

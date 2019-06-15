@@ -22,15 +22,13 @@
 #include <de/Hash>
 #include <de/ThreadLocal>
 
-#if 1
-#  include "stbttnativefont.h"
-namespace de { using PlatformFont = StbTtNativeFont; }
-#elif (defined(MACOSX) && defined(MACOS_10_7)) || defined (DE_IOS)
+#if 0
+//#elif (defined(MACOSX) && defined(MACOS_10_7)) || defined (DE_IOS)
 #  include "coretextnativefont_macx.h"
 namespace de { using PlatformFont = CoreTextNativeFont; }
 #else
-#  include "sdlnativefont.h"
-namespace de { using PlatformFont = SdlNativeFont; }
+#  include "stbttnativefont.h"
+namespace de { using PlatformFont = StbTtNativeFont; }
 #endif
 
 namespace std {

@@ -58,7 +58,7 @@ endif ()
 deng_link_libraries (libgui PUBLIC DengComms)
 target_link_libraries (libgui
     PUBLIC  glbinding::glbinding
-    PRIVATE SDL2 SDL2_ttf stb assimp
+    PRIVATE SDL2 stb assimp
 )
 if (WIN32)
     target_link_libraries (libgui PUBLIC opengl32.lib)
