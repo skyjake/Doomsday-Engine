@@ -13,11 +13,7 @@ script {
     def loadFonts()
         import App
         fontDir = __file__.fileNamePath() / "fonts"
-        fontStyles = ['Regular', 'Bold', 'Italic', 'BoldItalic']
-        # Light fonts are a bit too thin for low-res displays.
-        if DisplayMode.PIXEL_RATIO > 1
-            fontStyles += ['Light', 'LightItalic']
-        end
+        fontStyles = ['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic']
         for style in fontStyles
             App.loadFont(fontDir / ("Source Sans Pro/SourceSansPro-%s.ttf" % style))
         end
@@ -29,40 +25,40 @@ script {
 }
 
 group {
-    condition: Version.OS == 'windows'
+    condition: Version.OS in ['windows', 'unix']
 
     script { loadFonts() }
 
     font default {
-        family: Source Sans Pro
-        size: 12pt
+        family: SourceSansPro
+        size: 16pt
         weight: normal
         style: normal
     }
 
     font monospace inherits default {
-        family: Source Code Pro
-        size: 9pt
-    }
-}
-
-group {
-    condition: Version.OS == 'unix'
-
-    script { loadFonts() }
-
-    font default {
-        family: Source Sans Pro
+        family: SourceCodePro
         size: 12pt
-        weight: normal
-        style: normal
-    }
-
-    font monospace inherits default {
-        family: Source Code Pro
-        size: 9pt
     }
 }
+
+# group {
+#     condition: Version.OS == 'unix'
+#
+#     script { loadFonts() }
+#
+#     font default {
+#         family: Source Sans Pro
+#         size: 12pt
+#         weight: normal
+#         style: normal
+#     }
+#
+#     font monospace inherits default {
+#         family: Source Code Pro
+#         size: 9pt
+#     }
+# }
 
 group {
     condition: Version.OS in ['macx', 'ios']

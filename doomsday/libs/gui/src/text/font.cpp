@@ -22,13 +22,12 @@
 #include <de/Hash>
 #include <de/ThreadLocal>
 
-#if 0
-//#elif (defined(MACOSX) && defined(MACOS_10_7)) || defined (DE_IOS)
-#  include "coretextnativefont_macx.h"
-namespace de { using PlatformFont = CoreTextNativeFont; }
+#if (defined(MACOSX) && defined(MACOS_10_7)) || defined(DE_IOS)
+#   include "coretextnativefont_macx.h"
+    namespace de { using PlatformFont = CoreTextNativeFont; }
 #else
-#  include "stbttnativefont.h"
-namespace de { using PlatformFont = StbTtNativeFont; }
+#   include "stbttnativefont.h"
+    namespace de { using PlatformFont = StbTtNativeFont; }
 #endif
 
 namespace std {
@@ -36,7 +35,7 @@ template<>
 struct hash<de::FontParams> {
     std::size_t operator()(const de::FontParams &fp) const {
         return hash<de::String>()(fp.family)
-             ^ hash<int>()(int(100 * fp.pointSize))
+             ^ hash<int>()(int(100 * fp.pointSize + 0.5f))
              ^ hash<int>()(fp.spec.weight)
              ^ hash<int>()(int(fp.spec.style))
              ^ hash<int>()(fp.spec.transform);

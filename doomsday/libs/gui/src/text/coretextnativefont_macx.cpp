@@ -385,7 +385,9 @@ Image CoreTextNativeFont::nativeFontRasterize(const String &text,
                                             kCGImageAlphaPremultipliedLast);
     CGContextScaleCTM(gc, pixelRatio(), pixelRatio());
 
-    CGContextSetTextPosition(gc, -bounds.topLeft.x, -bounds.topLeft.y);
+    CGContextSetTextPosition(gc,
+                             -bounds.topLeft.x / pixelRatio(),
+                             bounds.bottom() / pixelRatio());
     CTLineDraw(d->cache.line, gc);
 
     CGColorRelease(fgColor);
