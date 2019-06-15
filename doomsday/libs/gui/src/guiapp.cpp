@@ -124,7 +124,7 @@ DE_PIMPL(GuiApp)
             d2dFactory = nullptr;
         }
 #else
-        // Use a hidden SDL window to determine pixel ratio.
+/*        // Use a hidden SDL window to determine pixel ratio.
         SDL_Window *temp =
             SDL_CreateWindow("",
                              SDL_WINDOWPOS_UNDEFINED,
@@ -138,6 +138,7 @@ DE_PIMPL(GuiApp)
         SDL_DestroyWindow(temp);
 
         windowPixelRatio = float(pixels) / float(points);
+*/
 #endif
     }
 
