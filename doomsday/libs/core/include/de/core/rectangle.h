@@ -136,13 +136,12 @@ public:
         return !(*this == other);
     }
     RectangleType operator | (RectangleType const &other) const {
-        return RectangleType(topLeft.min(other.topLeft),
-                             bottomRight.max(other.bottomRight));
+        if (isNull()) return other;
+        if (other.isNull()) return *this;
+        return {topLeft.min(other.topLeft), bottomRight.max(other.bottomRight)};
     }
     RectangleType &operator |= (RectangleType const &other) {
-        topLeft     = topLeft.min(other.topLeft);
-        bottomRight = bottomRight.max(other.bottomRight);
-        return *this;
+        return *this = *this | other;
     }
     inline bool overlaps(RectangleType const &other) const {
         return !(other.topLeft.x >= bottomRight.x ||
