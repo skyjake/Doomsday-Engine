@@ -25,8 +25,6 @@
 #include "../libgui.h"
 #include "de/graphics/opengl.h"
 
-//#define LIBGUI_GL  de::GLInfo::api()
-
 #ifndef NDEBUG
 #  define LIBGUI_ASSERT_GL_OK()     de::GLInfo::checkError(__FILE__, __LINE__)
 #else

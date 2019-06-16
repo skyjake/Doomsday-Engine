@@ -86,6 +86,7 @@ DE_PIMPL(GLWindow)
                                   SDL_WINDOW_ALLOW_HIGHDPI);
         glContext = SDL_GL_CreateContext(window);
         displayIndex = SDL_GetWindowDisplayIndex(window);
+        debug("[GLWindow] created context %p", glContext);
     }
 
     ~Impl()
@@ -126,6 +127,7 @@ DE_PIMPL(GLWindow)
 
     void glInit()
     {
+        debug("[GLWindow] glInit");
         GLInfo::glInit();
         timer.reset(new GLTimer);
         self().setState(Ready);
@@ -300,12 +302,13 @@ DE_PIMPL(GLWindow)
                 switch (event.window.event)
                 {
                     case SDL_WINDOWEVENT_EXPOSED:
-                        updatePixelRatio();
+                        debug("[GLWindow] window expose event");
                         if (!initialized)
                         {
                             self().initializeGL();
                             self().update();
                         }
+                        updatePixelRatio();
                         checkWhichDisplay();
                         break;
 
@@ -333,8 +336,6 @@ DE_PIMPL(GLWindow)
                     case SDL_WINDOWEVENT_HIDDEN: break;
 
                     case SDL_WINDOWEVENT_SHOWN:
-                        updatePixelRatio();
-                        checkWhichDisplay();
                         self().update();
                         break;
 
@@ -721,6 +722,7 @@ void GLWindow::paintGL()
     // don't want to perform a long-running operation during a paint event.
     if (!d->readyNotified)
     {
+        debug("[GLWindow] paintGL notifying ready");
         if (!d->readyPending)
         {
             d->readyPending = true;
@@ -748,9 +750,9 @@ void GLWindow::paintGL()
     {
         Time::updateCurrentHighPerformanceTime();
         Clock::get().setTime(Time::currentHighPerformanceTime());
-        LIBGUI_ASSERT_GL_OK();
         // Clock observers may have deactivated the GL context.
         makeCurrent();
+        LIBGUI_ASSERT_GL_OK();
     }
 
     // Subclass-implemented drawing method.

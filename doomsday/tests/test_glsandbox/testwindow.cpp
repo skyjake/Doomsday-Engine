@@ -457,6 +457,7 @@ DE_PIMPL(TestWindow)
     void timeChanged(Clock const &clock)
     {
         self().glActivate();
+        LIBGUI_ASSERT_GL_OK();
 
         if (!startedAt.isValid())
         {
@@ -488,9 +489,8 @@ DE_PIMPL(TestWindow)
             break;
         }
 
-        self().glDone();
-
         LIBGUI_ASSERT_GL_OK();
+        self().glDone();
     }
 
     void nextAtlasAlloc()

@@ -255,6 +255,12 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
     {
         LOG_AS("GLInfo");
 
+        debug("[GLInfo] init");
+
+        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
+
+        debug("[GLInfo] GL context active");
+        
         if (inited) return;
 
         #if defined (DE_OPENGL_ES)
@@ -286,6 +292,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         {
             try
             {
+                debug("[GLInfo] calling glbinding initialize");
                 glbinding::Binding::initialize(
                     reinterpret_cast<glbinding::ProcAddress (*)(const char *)>(
                         SDL_GL_GetProcAddress),
@@ -293,6 +300,7 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
             }
             catch (const std::exception &x)
             {
+                debug("[GLInfo] failed to init bindings");
                 throw InitError("GLInfo::init",
                                 "Failed to initialize OpenGL: " + std::string(x.what()));
             }
@@ -300,6 +308,8 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         #endif
 
         inited = true;
+
+        debug("[GLInfo] querying extensions and caps");
 
         // Extensions.
         ext.EXT_texture_compression_s3tc   = query("GL_EXT_texture_compression_s3tc");
@@ -365,13 +375,16 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         // Limits.
         glGetIntegerv(GL_MAX_TEXTURE_SIZE,        reinterpret_cast<GLint *>(&lim.maxTexSize));
         glGetIntegerv(GL_MAX_TEXTURE_IMAGE_UNITS, reinterpret_cast<GLint *>(&lim.maxTexUnits)); // at least 16
+        LIBGUI_ASSERT_GL_OK();
+        
         #if defined (DE_OPENGL)
         {
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_RANGE,       &lim.smoothLineWidth.start);
+            LIBGUI_ASSERT_GL_OK();
             glGetFloatv(GL_SMOOTH_LINE_WIDTH_GRANULARITY, &lim.smoothLineWidthGranularity);
+            LIBGUI_ASSERT_GL_OK();
         }
         #endif
-
         LIBGUI_ASSERT_GL_OK();
 
         if (ext.EXT_texture_filter_anisotropic)
@@ -555,6 +568,7 @@ bool GLInfo::isFramebufferMultisamplingSupported()
 
 void GLInfo::checkError(char const *file, int line)
 {
+    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
     GLenum error = GL_NO_ERROR;
     do
     {
@@ -562,8 +576,7 @@ void GLInfo::checkError(char const *file, int line)
         if (error != GL_NO_ERROR)
         {
             LogBuffer_Flush();
-            warning(
-                "%s:%i: OpenGL error: 0x%x (%s)", file, line, error, LIBGUI_GL_ERROR_STR(error));
+            warning("%s:%i: OpenGL error: 0x%x (%s)", file, line, error, LIBGUI_GL_ERROR_STR(error));
             DE_ASSERT_FAIL("OpenGL operation failed");
         }
     }

@@ -8,7 +8,7 @@ deng_add_package (net.dengine.test.appfw)
 file (GLOB SOURCES src/*.cpp src/*.h)
 deng_add_application (test_appfw ${SOURCES})
 
-target_link_libraries (test_appfw PRIVATE SDL2)
+target_link_sdl2 (test_appfw PUBLIC)
 deng_link_libraries (test_appfw PRIVATE DengGui)
 
 if (APPLE)
