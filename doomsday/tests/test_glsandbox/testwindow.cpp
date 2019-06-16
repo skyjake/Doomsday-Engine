@@ -74,7 +74,7 @@ DE_PIMPL(TestWindow)
     typedef GLBufferT<Vertex3TexRgba> VertexBuf;
     typedef GLBufferT<Vertex2Tex> Vertex2Buf;
 
-    Impl(Public * i)
+    Impl(Public *i)
         : Base(i)
         , mode(TestRenderToTexture)
         , uMvpMatrix("uMvpMatrix", GLUniform::Mat4)

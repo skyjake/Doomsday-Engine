@@ -166,7 +166,9 @@ function (deng_filter_platform_sources outName)
     list (REMOVE_AT ARGV 0) # outName
     foreach (fn ${ARGV})
         set (filtered NO)
-        if ("${fn}" MATCHES ".*_windows\\..*" OR
+        if ("${fn}" MATCHES ".*\\.DS_Store")
+            set (filtered YES)
+        elseif ("${fn}" MATCHES ".*_windows\\..*" OR
             "${fn}" MATCHES ".*/windows/.*") # Windows-specific
             if (NOT WIN32)
                 set (filtered YES)
