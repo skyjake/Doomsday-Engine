@@ -4,7 +4,6 @@ cmake_minimum_required (VERSION 3.1)
 project (Apps)
 include (../cmake/Config.cmake)
 
-#add_subdirectory (plugins)
 if (DE_ENABLE_SERVER AND NOT IOS)
     add_subdirectory (server)
 endif ()
