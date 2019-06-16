@@ -300,6 +300,7 @@ DE_PIMPL(GLWindow)
                 switch (event.window.event)
                 {
                     case SDL_WINDOWEVENT_EXPOSED:
+                        updatePixelRatio();
                         if (!initialized)
                         {
                             self().initializeGL();
@@ -332,6 +333,7 @@ DE_PIMPL(GLWindow)
                     case SDL_WINDOWEVENT_HIDDEN: break;
 
                     case SDL_WINDOWEVENT_SHOWN:
+                        updatePixelRatio();
                         checkWhichDisplay();
                         self().update();
                         break;
