@@ -303,7 +303,7 @@ DE_PIMPL(FS1)
         if (path.isEmpty()) return 0;
 
         // We must have an absolute path - prepend the base path if necessary.
-        path = NativePath(App_BasePath()) / path;
+        path = (NativePath(App_BasePath()) / path).withSeparators('/');
 
         // First check the Zip lump index.
         lumpnum_t lumpNum = zipFileIndex.findLast(path);
@@ -335,7 +335,7 @@ DE_PIMPL(FS1)
         DE_ASSERT(!path.isEmpty());
 
         // We must have an absolute path - prepend the CWD if necessary.
-        path = NativePath::workPath().withSeparators('/') / path;
+        path = (NativePath::workPath() / path).withSeparators('/');
 
         // Translate mymode to the C-lib's fopen() mode specifiers.
         char mode[8] = "";
@@ -345,7 +345,7 @@ DE_PIMPL(FS1)
         else if (mymode.contains('t')) strcat(mode, "t");
 
         // First try a real native file at this absolute path.
-        NativePath nativePath = NativePath(path);
+        NativePath nativePath = path;
         FILE *nativeFile = fopen(nativePath, mode);
         if (nativeFile)
         {
@@ -376,7 +376,7 @@ DE_PIMPL(FS1)
         return 0;
     }
 
-    File1 *openFile(String path, String const& mode, size_t baseOffset,
+    File1 *openFile(String path, String const &mode, size_t baseOffset,
                     bool allowDuplicate)
     {
         if (path.isEmpty()) return 0;
@@ -384,7 +384,7 @@ DE_PIMPL(FS1)
         LOG_AS("FS1::openFile");
 
         // We must have an absolute path.
-        path = App_BasePath() / path;
+        path = (NativePath(App_BasePath()) / path).withSeparators('/');
 
         LOG_RES_XVERBOSE("Trying \"%s\"...", NativePath(path).pretty());
 
