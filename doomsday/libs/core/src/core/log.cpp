@@ -754,14 +754,14 @@ static void deleteLog(void *log)
     if (log) delete static_cast<Log *>(log);
 }
 
-static void destroyThreadLog()
-{
-    if (threadLogKey)
-    {
-        deleteLog(tss_get(threadLogKey));
-        tss_set(threadLogKey, nullptr);
-    }
-}
+//static void destroyThreadLog()
+//{
+//    if (threadLogKey)
+//    {
+//        deleteLog(tss_get(threadLogKey));
+//        tss_set(threadLogKey, nullptr);
+//    }
+//}
 
 Log &Log::threadLog()
 {
