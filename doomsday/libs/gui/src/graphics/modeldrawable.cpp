@@ -29,7 +29,6 @@
 #include <de/GLState>
 #include <de/GLUniform>
 #include <de/Matrix>
-#include <de/NativePath>
 #include <de/TextureBank>
 #include <de/Hash>
 
@@ -170,7 +169,7 @@ bool ImpLogger::registered = false;
 
 struct DefaultImageLoader : public ModelDrawable::IImageLoader
 {
-    Image loadImage(String const &path)
+    Image loadImage(const String &path)
     {
         Image img = App::rootFolder().locate<ImageFile>(path).image();
         if (img.depth() == 24)
@@ -544,7 +543,10 @@ DE_PIMPL(ModelDrawable)
                 {
                     if (sceneMaterial.GetTexture(type, s, &texPath) == AI_SUCCESS)
                     {
-                        setTexture(mesh, texMap, NativePath(sourcePath.fileNamePath()) / texPath.C_Str());
+                        setTexture(
+                            mesh,
+                            texMap,
+                            Path::normalizeString(sourcePath.fileNamePath() / texPath.C_Str()));
                         break;
                     }
                 }
@@ -582,7 +584,7 @@ DE_PIMPL(ModelDrawable)
                 contentPath = contentPath.concatenatePath("HeightMap.toNormals");
             }
 
-            Path const path(contentPath);
+            const Path path(contentPath);
 
             // If this image is unknown, add it now to the bank.
             if (!textureBank.has(path))
@@ -1653,7 +1655,7 @@ int ModelDrawable::materialId(String const &name) const
     return d->findMaterial(name);
 }
 
-void ModelDrawable::setTexturePath(MeshId const &mesh, TextureMap textureMap, String const &path)
+void ModelDrawable::setTexturePath(const MeshId &mesh, TextureMap textureMap, const String &path)
 {
     if (d->glData.textureBank.atlas(textureMap))
     {

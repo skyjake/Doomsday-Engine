@@ -39,7 +39,7 @@ TextureBank::ImageSource::ImageSource(int atlasId, DotPath const &sourcePath) : 
     d->atlasId    = atlasId;
 }
 
-DotPath const &TextureBank::ImageSource::sourcePath() const
+const DotPath &TextureBank::ImageSource::sourcePath() const
 {
     return d->sourcePath;
 }
