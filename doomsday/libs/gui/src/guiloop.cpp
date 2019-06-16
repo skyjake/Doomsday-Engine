@@ -61,8 +61,8 @@ void GuiLoop::nextLoopIteration()
 {
     if (d->window)
     {
-        d->window->checkNativeEvents();
         d->window->glActivate();
+        d->window->checkNativeEvents();
     }
 
     Loop::nextLoopIteration();
