@@ -29,7 +29,10 @@ macro (deng_add_gamelib target)
     )
     deng_link_libraries (${target} PRIVATE DengDoomsday)
     enable_cxx11 (${target})
-    set_target_properties (${target} PROPERTIES FOLDER Extensions)
+    set_target_properties (${target} PROPERTIES
+        FOLDER Extensions
+        OUTPUT_NAME deng_${target}
+    )
 
     if (APPLE)
         # if (IOS)
