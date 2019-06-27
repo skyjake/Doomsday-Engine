@@ -498,10 +498,10 @@ static const StringList SoundMap = {
 int findSoundLumpNameInMap(String const &name)
 {
     /// @todo Optimize - replace linear search.
-    if(!name.isEmpty())
-    for(int i = 0; !SoundMap[i].isEmpty(); ++i)
+    if (!name.isEmpty())
+    for (int i = 0; i < SoundMap.sizei(); ++i)
     {
-        if(!SoundMap[i].compare(name, CaseInsensitive))
+        if (!SoundMap[i].compare(name, CaseInsensitive))
             return i;
     }
     return -1; // Not found.
