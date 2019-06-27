@@ -73,7 +73,7 @@ dsize CString::indexOf(const String &str, size_t from) const
 CString CString::substr(size_t start, size_t count) const
 {
     if (start > size()) return CString();
-    if (start + count > size()) count = size() - start;
+    if (count == npos || start + count > size()) count = size() - start;
     return {_range.start + start, _range.start + start + count};
 }
 
@@ -98,6 +98,7 @@ CString CString::rightStrip() const
         {
             s._range.end = i;
         }
+        else break;
     }
     return s;
 }
