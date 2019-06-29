@@ -19,18 +19,33 @@
 #include "de/FileDialog"
 
 #define WIN32_LEAN_AND_MEAN
-#include <Windows.h>
+#include <windows.h>
+#include <shobjidl.h>
 
 namespace de {
 
 DE_PIMPL_NOREF(FileDialog)
 {
-    String     title    = "Select File";
-    String     prompt   = "OK";
-    Behaviors  behavior = AcceptFiles;
+    String           title    = "Select File";
+    String           prompt   = "OK";
+    Behaviors        behavior = AcceptFiles;
     List<NativePath> selection;
-    NativePath initialLocation;
-    StringList fileTypes; // empty list: eveything allowed
+    NativePath       initialLocation;
+    FileTypes        fileTypes; // empty list: eveything allowed
+
+    using Filters = List<std::pair<Block, Block>>;
+
+    Filters filters() const
+    {
+        Filters list;
+        for (const FileType &fileType : fileTypes)
+        {
+            const String exts =
+                (fileType.extensions ? String::join(fileType.extensions, ";") : DE_STR("*"));
+            list << std::make_pair(fileType.label.toUtf16(), exts.toUtf16());
+        }
+        return list;
+    }
 };
 
 FileDialog::FileDialog() : d(new Impl)
@@ -56,9 +71,9 @@ void FileDialog::setInitialLocation(const NativePath &initialLocation)
     d->initialLocation = initialLocation;
 }
 
-void FileDialog::setFileTypes(const StringList &fileExtensions)
+void FileDialog::setFileTypes(const FileTypes &fileTypes)
 {
-    d->fileTypes = fileExtensions;
+    d->fileTypes = fileTypes;
 }
 
 NativePath FileDialog::selectedPath() const
@@ -75,43 +90,86 @@ bool FileDialog::exec()
 {
     d->selection.clear();
 
-    #if 0
-    NSOpenPanel* openDlg = [NSOpenPanel openPanel];
-    [openDlg setCanChooseFiles:(d->behavior.testFlag(AcceptFiles) ? YES : NO)];
-    [openDlg setCanChooseDirectories:(d->behavior.testFlag(AcceptDirectories) ? YES : NO)];
-    [openDlg setAllowsMultipleSelection:(d->behavior.testFlag(MultipleSelection) ? YES : NO)];
-    [openDlg setDirectoryURL:
-        [NSURL fileURLWithPath:(NSString * _Nonnull)
-                               [NSString stringWithUTF8String:d->initialLocation.c_str()]]];
-    [openDlg setMessage:[NSString stringWithUTF8String:d->title.c_str()]];
-    [openDlg setPrompt:[NSString stringWithUTF8String:d->prompt.c_str()]];
-
-    // The allowed file types.
+    IFileOpenDialog *dlg = nullptr;
+    if (FAILED(CoCreateInstance(
+            CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg))))
     {
-        NSMutableArray<NSString *> *types = nil;
-        if (d->fileTypes)
+        return false;
+    }
+
+    // Configure the dialog according to user-specified options.
+    DWORD options;
+    dlg->GetOptions(&options);
+    options |= FOS_FORCEFILESYSTEM;
+    if (d->behavior & MultipleSelection)
+    {
+        options |= FOS_ALLOWMULTISELECT;
+    }
+    if (d->behavior & AcceptFiles)
+    {
+        options |= FOS_FILEMUSTEXIST;
+    }
+    if (d->behavior & AcceptDirectories)
+    {
+        options |= FOS_PICKFOLDERS | FOS_PATHMUSTEXIST;
+    }
+    dlg->SetOptions(options);
+    {
+        const auto path = d->initialLocation.toString().toUtf16();
+        IShellItem *folder = nullptr;
+        if (SUCCEEDED(SHCreateItemFromParsingName(path.c_wstr(), nullptr, IID_PPV_ARGS(&folder))))
         {
-            types = [NSMutableArray<NSString *> array];
-            for (const auto &type : d->fileTypes)
+            dlg->SetDefaultFolder(folder);
+            folder->Release();
+        }
+    }
+    dlg->SetTitle(d->title.toUtf16().c_wstr());
+    dlg->SetOkButtonLabel(d->prompt.toUtf16().c_wstr());
+    if (d->fileTypes)
+    {
+        List<COMDLG_FILTERSPEC> filters;
+        const auto strings = d->filters();
+        for (const auto &str : strings)
+        {
+            COMDLG_FILTERSPEC spec;
+            spec.pszName = str.first.c_wstr();
+            spec.pszSpec = str.second.c_wstr();
+            filters << spec;
+        }
+        dlg->SetFileTypes(UINT(filters.size()), filters.data());
+    }
+
+    if (SUCCEEDED(dlg->Show(nullptr)))
+    {
+        IShellItemArray *results = nullptr;
+        dlg->GetResults(&results);
+        if (results)
+        {
+            DWORD resultCount = 0;
+            results->GetCount(&resultCount);
+            for (unsigned i = 0; i < resultCount; ++i)
             {
-                [types addObject:(NSString * _Nonnull)[NSString stringWithUTF8String:type.c_str()]];
+                IShellItem *result = nullptr;
+                if (SUCCEEDED(results->GetItemAt(i, &result)))
+                {
+                    PWSTR itemPath;
+                    if (SUCCEEDED(result->GetDisplayName(SIGDN_FILESYSPATH, &itemPath)))
+                    {
+                        d->selection << NativePath(
+                            String::fromUtf16(Block(itemPath, 2 * (wcslen(itemPath) + 1))));
+                        CoTaskMemFree(itemPath);
+                    }
+                    result->Release();
+                }
             }
+            results->Release();
         }
-        [openDlg setAllowedFileTypes:types];
     }
 
-    if ([openDlg runModal] == NSModalResponseOK)
-    {
-        // Check the selected paths.
-        for (NSURL *url in [openDlg URLs])
-        {
-            d->selection << [url.path UTF8String];
-        }
-        return true;
-    }
-    #endif
-    
-    return false;
+    // Cleanup.
+    dlg->Release();
+
+    return !d->selection.empty();
 }
 
 } // namespace de

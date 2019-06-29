@@ -85,9 +85,9 @@ DE_GUI_PIMPL(AudioSettingsDialog)
             area.add(musicSoundfont = new CVarNativePathWidget("music-soundfont"));
 
             musicSoundfont->setBlankText("GeneralUser GS");
-            musicSoundfont->setFilters({"SF2 soundfonts (*.sf2)",
-                                        "DLS soundfonts (*.dls)",
-                                        "All files (*)"});
+            musicSoundfont->setFilters({{"SF2 soundfonts", {"sf2"}},
+                                        {"DLS soundfonts", {"dls"}},
+                                        {"All files", {}}});
 
             area.add(pauseOnFocus = new VariableToggleWidget("Pause on Focus Lost",
                                                              App::config("audio.pauseOnFocus"),

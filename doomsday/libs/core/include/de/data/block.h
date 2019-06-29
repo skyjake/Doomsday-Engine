@@ -94,6 +94,9 @@ public:
     const Byte *cdata() const;
     inline const Byte *constData() const { return cdata(); }
     inline const char *c_str() const { return reinterpret_cast<const char *>(data()); }
+    inline const wchar_t *c_wstr() const { return reinterpret_cast<const wchar_t *>(data()); }
+    inline const uint16_t *u16Data() const { return reinterpret_cast<const uint16_t *>(data()); }
+    inline const unsigned short *ushortData() const { return reinterpret_cast<const unsigned short *>(data()); }
     inline char *writableCharPointer() { return reinterpret_cast<char *>(data()); }
 
     inline bool empty() const { return size() == 0; }

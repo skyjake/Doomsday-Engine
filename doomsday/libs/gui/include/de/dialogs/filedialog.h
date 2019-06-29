@@ -38,6 +38,19 @@ public:
     };
     using Behaviors = Flags;
 
+    struct LIBGUI_PUBLIC FileType
+    {
+        String     label;      // UI text label
+        StringList extensions; // "ext", "ext2" (without preceding dots)
+
+        FileType(const String &label, const StringList &extensions)
+            : label(label)
+            , extensions(extensions)
+        {}
+    };
+
+    using FileTypes = List<FileType>;
+
 public:
     FileDialog();
 
@@ -45,7 +58,7 @@ public:
     void setPrompt(const String &prompt);
     void setBehavior(Behaviors behaviors, FlagOp flagOp = SetFlags);
     void setInitialLocation(const NativePath &initialLocation);
-    void setFileTypes(const StringList &fileExtensions);
+    void setFileTypes(const FileTypes &fileTypes);
 
     bool exec();
 

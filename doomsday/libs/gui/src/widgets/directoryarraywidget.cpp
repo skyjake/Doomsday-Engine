@@ -46,10 +46,10 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
         auto &cfg = Config::get();
         FileDialog dlg;
         dlg.setTitle("Select Folder");
-        dlg.setInitialLocation(cfg.gets(CFG_LAST_FOLDER, NativePath::homePath()));
         dlg.setPrompt("Select");
+        dlg.setInitialLocation(cfg.gets(CFG_LAST_FOLDER, NativePath::homePath()));
         dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
-        dlg.setFileTypes({"wad"});
+        dlg.setFileTypes({{"WAD files", {"wad"}}});
         if (dlg.exec())
         {
             NativePath dir = dlg.selectedPath();

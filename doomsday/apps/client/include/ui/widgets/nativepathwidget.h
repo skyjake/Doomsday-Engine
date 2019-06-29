@@ -20,6 +20,7 @@
 #define DE_CLIENT_UI_NATIVEPATHWIDGET_H
 
 #include <de/AuxButtonWidget>
+#include <de/FileDialog>
 
 /**
  * Console variable that contains a native path.
@@ -33,14 +34,12 @@ public:
     NativePathWidget();
 
     /**
-     * Sets all the file types that can be selected using the widget. Each entry in
-     * the list should be formatted as "Description (*.ext *.ext2)".
-     *
-     * The default is "All files (*)".
+     * Sets all the file types that can be selected using the widget.
+     * The default is to show all files.
      *
      * @param filters  Allowed file types.
      */
-    void setFilters(const de::StringList &filters);
+    void setFilters(const de::FileDialog::FileTypes &filters);
 
     /**
      * Sets the text that is shown as the current selection when nothing has been

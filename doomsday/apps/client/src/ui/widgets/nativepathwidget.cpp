@@ -28,10 +28,10 @@ using namespace de;
 DE_PIMPL(NativePathWidget)
 {
     NativePath       path;
-    StringList       filters;
     PopupMenuWidget *menu;
     String           blankText = "(not set)";
     String           prompt    = "Select File";
+    FileDialog::FileTypes filters;
 
     Impl(Public *i)
         : Base(i)
@@ -76,13 +76,9 @@ NativePathWidget::NativePathWidget()
     audienceForPress() += [this]() { showActionsPopup(); };
 }
 
-void NativePathWidget::setFilters(StringList const &filters)
+void NativePathWidget::setFilters(const FileDialog::FileTypes &filters)
 {
-    d->filters.clear();
-    for (auto const &f : filters)
-    {
-        d->filters << f;
-    }
+    d->filters = filters;
 }
 
 void NativePathWidget::setBlankText(String const &text)
@@ -121,10 +117,7 @@ void NativePathWidget::chooseUsingNativeFileDialog()
     FileDialog dlg;
     dlg.setTitle(d->prompt);
     dlg.setInitialLocation(NativePath::workPath() / dir);
-    if (!d->filters.isEmpty())
-    {
-        dlg.setFileTypes(d->filters);
-    }
+    dlg.setFileTypes(d->filters);
     dlg.setPrompt("Select");
     if (dlg.exec())
     {
