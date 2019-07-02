@@ -593,7 +593,7 @@ void App_AbnormalShutdown(char const *message)
         Sys_MessageBoxWithDetailsFromFile(MBT_ERROR,
                                           DOOMSDAY_NICENAME,
                                           message,
-                                          "See Details for complete message log contents.",
+                                          "See the doomsday.out log file for more details.",
                                           LogBuffer::get().outputFile());
     }
 
