@@ -41,7 +41,7 @@ DE_PIMPL_NOREF(FileDialog)
         for (const FileType &fileType : fileTypes)
         {
             const String exts =
-                (fileType.extensions ? String::join(fileType.extensions, ";") : DE_STR("*"));
+                (fileType.extensions ? "*." + String::join(fileType.extensions, ";*.") : DE_STR("*"));
             list << std::make_pair(fileType.label.toUtf16(), exts.toUtf16());
         }
         return list;
