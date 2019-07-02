@@ -25,7 +25,8 @@ DE_EXTENSION(doom64);
 DE_EXTENSION(heretic);
 DE_EXTENSION(hexen);
 
-DE_EXTERN_C void GameKit_Init()
+DE_PUBLIC DE_EXTERN_C
+void GameKit_Init()
 {
     LOG_AS("GameKit");
     LOG_MSG("Initializing...");
