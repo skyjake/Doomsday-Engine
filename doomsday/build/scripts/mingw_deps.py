@@ -28,12 +28,5 @@ while binaries:
             if os.path.exists(dll_path) and not os.path.exists(dest_path):
                 # Copy this dependency.
                 print(dll_path)
-                shutil.copy(dll_path, dest_path)                      
+                shutil.copy(dll_path, dest_path)
                 binaries.add(dest_path)
-
-
-            
-        
-    
-
- 

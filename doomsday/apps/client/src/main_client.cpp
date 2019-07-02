@@ -60,12 +60,15 @@ DE_IMPORT_LIBRARY(audio_fmod)
 
 using namespace de;
 
+DE_EXTERN_C void GameKit_Init();
+
 /**
  * Application entry point.
  */
 int main(int argc, char **argv)
 {
     init_Foundation();
+    GameKit_Init();
     int exitCode = 0;
     {
         ClientApp clientApp(makeList(argc, argv));

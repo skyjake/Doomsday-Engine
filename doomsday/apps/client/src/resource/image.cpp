@@ -419,6 +419,7 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
     {
         String foundPath = App_FileSystem().findPath(res::Uri(RC_GRAPHIC, _searchPath),
                                                      RLF_DEFAULT, App_ResourceClass(RC_GRAPHIC));
+
         // Ensure the found path is absolute.
         foundPath = App_BasePath() / foundPath;
 

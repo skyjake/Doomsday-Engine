@@ -24,6 +24,8 @@
 
 using namespace de;
 
+DE_EXTERN_C void GameKit_Init();
+
 /**
  * Server application entry point.
  */
@@ -31,6 +33,7 @@ int main(int argc, char** argv)
 {
     int exitCode;
     init_Foundation();
+    GameKit_Init();
     ServerApp serverApp(makeList(argc, argv));
     try
     {

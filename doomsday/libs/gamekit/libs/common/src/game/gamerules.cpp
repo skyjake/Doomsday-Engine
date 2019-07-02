@@ -28,12 +28,12 @@ using namespace de;
  * These keys are used for serialization, so if changed, the only keys still need to be changed
  * when reading data.
  */
-String const GameRules::VAR_skill           = "skill";
-String const GameRules::VAR_fast            = "fast";
-String const GameRules::VAR_deathmatch      = "deathmatch";
-String const GameRules::VAR_noMonsters      = "noMonsters";
-String const GameRules::VAR_respawnMonsters = "respawnMonsters";
-String const GameRules::VAR_randomClasses   = "randomClasses";
+const char *GameRules::VAR_skill           = "skill";
+const char *GameRules::VAR_fast            = "fast";
+const char *GameRules::VAR_deathmatch      = "deathmatch";
+const char *GameRules::VAR_noMonsters      = "noMonsters";
+const char *GameRules::VAR_respawnMonsters = "respawnMonsters";
+const char *GameRules::VAR_randomClasses   = "randomClasses";
 
 DE_PIMPL_NOREF(GameRules)
 {

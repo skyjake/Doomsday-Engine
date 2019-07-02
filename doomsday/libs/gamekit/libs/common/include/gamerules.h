@@ -54,19 +54,19 @@ public:
     };
     Values const values{};
 
-    static de::String const VAR_skill;
-    static de::String const VAR_fast;
-    static de::String const VAR_deathmatch;
-    static de::String const VAR_noMonsters;
-    static de::String const VAR_respawnMonsters;
-    static de::String const VAR_randomClasses;
+    static const char *VAR_skill;
+    static const char *VAR_fast;
+    static const char *VAR_deathmatch;
+    static const char *VAR_noMonsters;
+    static const char *VAR_respawnMonsters;
+    static const char *VAR_randomClasses;
 
 public:
     GameRules();
     GameRules(GameRules const &other);
 
     //static GameRules *fromReader(Reader1 *reader);
-    static GameRules *fromRecord(de::Record const &rec, GameRules const *defaults = 0);
+    static GameRules *fromRecord(de::Record const &rec, GameRules const *defaults = nullptr);
 
     GameRules &operator = (GameRules const &other);
 
