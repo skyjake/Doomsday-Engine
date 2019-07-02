@@ -26,7 +26,7 @@ DE_PIMPL(AppWindowSystem)
 {
     Impl(Public *i) : Base(i)
     {
-        self().style().load(App::packageLoader().load("net.dengine.test.appfw.defaultstyle"));
+        self().style().load(App::packageLoader().package("net.dengine.stdlib.gui"));
     }
 };
 

@@ -1,69 +1,12 @@
 # Length rules for the default UI style
 
-script {
-    UNIT = 4.0
-}
-
-rule unit     { constant $= UNIT }
-rule halfunit { constant $= UNIT / 2 }
-rule gap      { constant $= UNIT * 3 }
-rule glow     { constant $= UNIT * 25 }
-
-label {
-    rule gap { constant $= gap.constant / 2 }
-}
-
-rule scrollarea.bar { constant $= UNIT }
-
-popup {
-    menu {
-        rule margin       { constant $= UNIT }
-        rule paddedmargin { constant $= UNIT * 8 }
-        rule width.max    { constant $= UNIT * 100 }
-    }
-}
-
-document {
-    rule progress    { constant $= UNIT * 30 }
-    rule line.width  { constant $= UNIT * 250 }
-    rule popup.width { constant $= UNIT * 120 }
-}
-
-editor {
-    rule width { constant $= UNIT * 60 }
-    completion {
-        rule height    { constant $= UNIT * 100 }
-        rule linewidth { constant $= UNIT * 80 }
-    }
-}
-
-progress {
-    rule textgap { constant $= gap.constant }
-}
-
-slider {
-    rule width  { constant $= UNIT * 55 }
-    rule label  { constant $= UNIT * 9 }
-    rule editor { constant $= UNIT * 20 }
-}
-
-choice {
-    rule item.width.max { constant $= UNIT * 100 }
-}
-
-list {
-    rule width { constant $= UNIT * 120 }
-}
+@include </packs/net.dengine.stdlib.gui/rules.dei>
 
 dialog {
-    rule gap       { constant $= UNIT * 2 }
-    rule separator { constant $= UNIT * 4 }
-
     rule about.width       { constant $= UNIT * 80 }
-    rule message.width     { constant $= UNIT * 115 }
     rule download.width    { constant $= UNIT * 115 }
     rule multiplayer.width { constant $= UNIT * 80 }
-    
+
     packages {
         rule left.minheight { constant $= UNIT * 40 }
         rule left.width     { constant $= UNIT * 100 }
@@ -105,7 +48,7 @@ console {
 home {
     rule header.logo.width    { constant $= UNIT * 40 }
     rule header.logo.height   { constant $= UNIT * 30 }
-    rule column.width         { constant $= UNIT * 125 } 
+    rule column.width         { constant $= UNIT * 125 }
     rule column.content.width { constant $= UNIT * 100 }
     rule popup.width          { constant $= UNIT * 175 }
     rule popup.height         { constant $= UNIT * 120 }

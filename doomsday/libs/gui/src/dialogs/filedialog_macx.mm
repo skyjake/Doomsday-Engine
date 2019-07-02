@@ -29,7 +29,7 @@ DE_PIMPL_NOREF(FileDialog)
     Behaviors  behavior = AcceptFiles;
     List<NativePath> selection;
     NativePath initialLocation;
-    StringList fileTypes; // empty list: eveything allowed
+    FileTypes  fileTypes; // empty list: eveything allowed
 };
 
 FileDialog::FileDialog() : d(new Impl)
@@ -55,9 +55,9 @@ void FileDialog::setInitialLocation(const NativePath &initialLocation)
     d->initialLocation = initialLocation;
 }
 
-void FileDialog::setFileTypes(const StringList &fileExtensions)
+void FileDialog::setFileTypes(const FileTypes &fileTypes)
 {
-    d->fileTypes = fileExtensions;
+    d->fileTypes = fileTypes;
 }
 
 NativePath FileDialog::selectedPath() const
@@ -92,7 +92,10 @@ bool FileDialog::exec()
             types = [NSMutableArray<NSString *> array];
             for (const auto &type : d->fileTypes)
             {
-                [types addObject:(NSString * _Nonnull)[NSString stringWithUTF8String:type.c_str()]];
+                for (const auto &ext : type.extensions)
+                {
+                    [types addObject:(NSString * _Nonnull)[NSString stringWithUTF8String:ext.c_str()]];
+                }
             }
         }
         [openDlg setAllowedFileTypes:types];
