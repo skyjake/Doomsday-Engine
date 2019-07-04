@@ -190,6 +190,11 @@ void EventLoop::post(Event *event) // static
     }
 }
 
+void EventLoop::callback(const std::function<void()> &func) // static
+{
+    post(new CoreEvent(func));
+}
+
 EventLoop *EventLoop::get()
 {
     using namespace internal;

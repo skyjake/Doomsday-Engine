@@ -80,6 +80,7 @@ public:
 
 public:
     static void post(Event *event);
+    static void callback(const std::function<void()> &);
 
 private:
     DE_PRIVATE(d)
