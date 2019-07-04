@@ -1,12 +1,12 @@
 #ifndef ABOUTDIALOG_H
 #define ABOUTDIALOG_H
 
-#include <QDialog>
+#include <de/DialogWidget>
 
-class AboutDialog : public QDialog
+class AboutDialog : public de::DialogWidget
 {
 public:
-    explicit AboutDialog(QWidget *parent = 0);
+    explicit AboutDialog();
 };
 
 #endif // ABOUTDIALOG_H

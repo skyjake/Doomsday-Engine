@@ -19,27 +19,24 @@
 #ifndef GUISHELLAPP_H
 #define GUISHELLAPP_H
 
-#include "qtguiapp.h"
+#include <de/BaseGuiApp>
+#include <de/PopupMenuWidget>
 #include <de/comms/ServerFinder>
-#include <QMenu>
 
 class LinkWindow;
 
-class GuiShellApp : public QtGuiApp
+class GuiShellApp : public de::BaseGuiApp
 {
-    Q_OBJECT
-
 public:
-    GuiShellApp(int &argc, char **argv);
+    GuiShellApp(const de::StringList &args);
 
     LinkWindow *newOrReusedConnectionWindow();
     de::shell::ServerFinder &serverFinder();
 
     static GuiShellApp &app();
-    QMenu *localServersMenu();
-    QMenu *makeHelpMenu();
+    de::PopupMenuWidget &localServersMenu();
+//    de::PopupMenuWidget *makeHelpMenu();
 
-public slots:
     void connectToServer();
     void connectToLocalServer();
     void disconnectFromServer();
@@ -49,16 +46,14 @@ public slots:
     void updateLocalServerMenu();
     void aboutShell();
     void showHelp();
-    void openWebAddress(const QString& address);
+    void openWebAddress(const de::String &address);
     void showPreferences();
     void preferencesDone();
     void updateMenu();
 
-signals:
-    void consoleFontChanged();
-    void localServerStopped(int port);
+    DE_DEFINE_AUDIENCE2(LocalServerStop, void localServerStopped(int port))
 
-protected slots:
+protected:
     void windowClosed(LinkWindow *window);
     void checkLocalServers();
 

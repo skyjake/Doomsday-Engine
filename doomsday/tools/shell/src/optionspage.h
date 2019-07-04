@@ -19,22 +19,17 @@
 #ifndef OPTIONSPAGE_H
 #define OPTIONSPAGE_H
 
-#include <QWidget>
+#include <de/GuiWidget>
 #include <de/Record>
 
-class OptionsPage : public QWidget
+class OptionsPage : public de::GuiWidget
 {
-    Q_OBJECT
-
 public:
-    explicit OptionsPage(QWidget *parent = 0);
+    explicit OptionsPage();
 
-    void updateWithGameState(de::Record const &gameState);
+    void updateWithGameState(const de::Record &gameState);
 
-signals:
-    void commandsSubmitted(QStringList commands);
-
-public slots:
+    DE_DEFINE_AUDIENCE2(Commands, void commandsSubmitted(const de::StringList &commands))
 
 private:
     DE_PRIVATE(d)

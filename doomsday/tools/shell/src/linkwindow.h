@@ -19,48 +19,48 @@
 #ifndef LINKWINDOW_H
 #define LINKWINDOW_H
 
-#include <QMainWindow>
-#include <de/String>
+#include <de/BaseWindow>
+#include <de/GuiRootWidget>
 #include <de/NativePath>
+#include <de/String>
 #include <de/comms/Link>
 
 /**
  * Window for a server link.
  */
-class LinkWindow : public QMainWindow
+class LinkWindow : public de::BaseWindow
 {
-    Q_OBJECT
-
 public:
-    LinkWindow(QWidget *parent = 0);
+    LinkWindow();
 
-    void setTitle(QString const &title);
+    de::GuiRootWidget &root();
+
+//    void setTitle(QString const &title);
 
     bool isConnected() const;
 
     // Qt events.
-    void changeEvent(QEvent *);
-    void closeEvent(QCloseEvent *);
+//    void changeEvent(QEvent *);
+//    void closeEvent(QCloseEvent *);
 
-signals:
+//signals:
     void linkOpened(LinkWindow *window);
     void linkClosed(LinkWindow *window);
     void closed(LinkWindow *window);
 
-public slots:
-    void openConnection(const QString& address);
-    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, const QString& name);
-    void openConnection(de::shell::Link *link, const de::String& name = "");
+    void openConnection(const de::String &address);
+    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, const de::String &name);
+    void openConnection(de::shell::Link *link, const de::String &name = {});
     void closeConnection();
     void sendCommandToServer(const de::String& command);
-    void sendCommandsToServer(QStringList commands);
+    void sendCommandsToServer(const de::StringList &commands);
     void switchToStatus();
     void switchToOptions();
     void switchToConsole();
     void updateWhenConnected();
-    void updateConsoleFontFromPreferences();
+    //void updateConsoleFontFromPreferences();
 
-protected slots:
+protected:
     void checkFoundServers();
     void handleIncomingPackets();
     void addressResolved();

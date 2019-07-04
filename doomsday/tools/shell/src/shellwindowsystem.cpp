@@ -1,6 +1,6 @@
-/** @file main.cpp Application startup and shutdown.
+/** @file appwindowsystem.cpp  Application window system.
  *
- * @authors Copyright © 2013-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,25 +16,37 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "guishellapp.h"
-#include <de/libcore.h>
+#include "shellwindowsystem.h"
+#include "linkwindow.h"
+#include <de/App>
+#include <de/PackageLoader>
 
 using namespace de;
 
-int main(int argc, char *argv[])
+DE_PIMPL(ShellWindowSystem)
 {
-    int result = -1;
-    init_Foundation();
-    try
+    Impl(Public *i) : Base(i)
     {
-        GuiShellApp app({argv, argv + argc});
-        app.initSubsystems();
-        result = app.exec();
+        self().style().load(App::packageLoader().package("net.dengine.stdlib.gui"));
     }
-    catch (const Error &er)
-    {
-        LOG_ERROR("Failure during init: %s") << er.asText();
-    }
-    deinit_Foundation();
-    return result;
+};
+
+ShellWindowSystem::ShellWindowSystem() : d(new Impl(this))
+{
+    setAppWindowSystem(*this);
+}
+
+LinkWindow &ShellWindowSystem::main()
+{
+    return WindowSystem::main().as<LinkWindow>();
+}
+
+bool ShellWindowSystem::rootProcessEvent(const Event &event)
+{
+    return main().root().processEvent(event);
+}
+
+void ShellWindowSystem::rootUpdate()
+{
+    main().root().update();
 }

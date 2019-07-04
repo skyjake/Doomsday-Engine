@@ -1,6 +1,6 @@
-/** @file utils.cpp
+/** @file appwindowsystem.h  Application window system.
  *
- * @authors Copyright (c) 2017 Jaakko Keränen <jaakko.keranen@iki.fi>
+ * @authors Copyright (c) 2014-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * GPL: http://www.gnu.org/licenses/gpl.html
@@ -16,18 +16,25 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "utils.h"
-#include <QApplication>
-#include <QDebug>
+#ifndef APPWINDOWSYSTEM_H
+#define APPWINDOWSYSTEM_H
 
-QString imageResourcePath(QString const &path)
+#include <de/WindowSystem>
+
+class LinkWindow;
+
+class ShellWindowSystem : public de::WindowSystem
 {
-    if (qApp->devicePixelRatio() > 1)
-    {
-        QString retina = path;
-        retina.replace(".png", "@2x.png");
-        retina.replace(".jpg", "@2x.jpg");
-        return retina;
-    }
-    return path;
-}
+public:
+    ShellWindowSystem();
+
+    static LinkWindow &main();
+
+    bool rootProcessEvent(const de::Event &event);
+    void rootUpdate();
+
+private:
+    DE_PRIVATE(d)
+};
+
+#endif // APPWINDOWSYSTEM_H

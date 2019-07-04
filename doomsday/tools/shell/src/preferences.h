@@ -19,26 +19,24 @@
 #ifndef PREFERENCES_H
 #define PREFERENCES_H
 
-#include <QDialog>
+#include <de/DialogWidget>
 #include <de/NativePath>
 
-class Preferences : public QDialog
+class Preferences : public de::DialogWidget
 {
-    Q_OBJECT
-
 public:
-    explicit Preferences(QWidget *parent = 0);
+    explicit Preferences();
     
     static de::NativePath iwadFolder();
-    static QFont consoleFont();
+//    static QFont consoleFont();
 
-signals:
-    void consoleFontChanged();
+//signals:
+//    void consoleFontChanged();
 
-public slots:
+public:
     void saveState();
     void validate();
-    void selectFont();
+//    void selectFont();
     
 private:
     DE_PRIVATE(d)

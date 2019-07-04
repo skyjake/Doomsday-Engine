@@ -18,45 +18,48 @@
 
 #include "linkwindow.h"
 #include "statuswidget.h"
-#include "qtrootwidget.h"
-#include "qttextcanvas.h"
+//#include "qtrootwidget.h"
+//#include "qttextcanvas.h"
 #include "guishellapp.h"
 #include "optionspage.h"
-#include "consolepage.h"
+//#include "consolepage.h"
 #include "preferences.h"
 #include "errorlogdialog.h"
-#include "utils.h"
+//#include "utils.h"
 
 #include <de/LogBuffer>
-#include <de/shell/LogWidget>
-#include <de/shell/CommandLineWidget>
-#include <de/shell/Link>
+#include <de/comms/LogWidget>
+#include <de/comms/CommandLineWidget>
+#include <de/comms/Link>
 #include <de/Garbage>
+#include <de/EventLoop>
+#include <de/Timer>
+#include <de/NativeFile>
 
-#include <QCloseEvent>
-#include <QDebug>
-#include <QFile>
-#include <QHBoxLayout>
-#include <QInputDialog>
-#include <QLabel>
-#include <QMenuBar>
-#include <QMessageBox>
-#include <QPushButton>
-#include <QScrollBar>
-#include <QStackedWidget>
-#include <QStatusBar>
-#include <QTimer>
-#include <QToolBar>
-#include <QToolButton>
+//#include <QCloseEvent>
+//#include <QDebug>
+//#include <QFile>
+//#include <QHBoxLayout>
+//#include <QInputDialog>
+//#include <QLabel>
+//#include <QMenuBar>
+//#include <QMessageBox>
+//#include <QPushButton>
+//#include <QScrollBar>
+//#include <QStackedWidget>
+//#include <QStatusBar>
+//#include <QTimer>
+//#include <QToolBar>
+//#include <QToolButton>
 
-#ifndef MACOSX
-#  define MENU_IN_LINK_WINDOW
-#endif
+//#ifndef MACOSX
+//#  define MENU_IN_LINK_WINDOW
+//#endif
 
 using namespace de;
 using namespace de::shell;
 
-static QString statusText(const QString& txt)
+static String statusText(const String &txt)
 {
 #ifdef MACOSX
     return "<small>" + txt + "</small>";
@@ -69,116 +72,117 @@ DE_PIMPL(LinkWindow)
 , DE_OBSERVES(shell::CommandLineWidget, Command)
 , DE_OBSERVES(shell::ServerFinder, Update)
 {
+    GuiRootWidget root;
     LogBuffer logBuffer;
     Link *link;
     duint16 waitingForLocalPort = 0;
     Time startedWaitingAt;
-    QTimer waitTimeout;
-    QString linkName;
+    Timer waitTimeout;
+    String linkName;
     NativePath errorLog;
-    QToolBar *tools;
-    QToolButton *statusButton;
-    QToolButton *optionsButton;
-    QToolButton *consoleButton;
-    QStackedWidget *stack;
-    QWidget *newLocalServerPage;
+//    QToolBar *tools;
+//    QToolButton *statusButton;
+//    QToolButton *optionsButton;
+//    QToolButton *consoleButton;
+//    QStackedWidget *stack;
+//    QWidget *newLocalServerPage;
     StatusWidget *status;
     OptionsPage *options;
-    ConsolePage *console;
-    QLabel *gameStatus;
-    QLabel *timeCounter;
-    QLabel *currentHost;
-    QAction *stopAction;
+//    ConsolePage *console;
+//    QLabel *gameStatus;
+//    QLabel *timeCounter;
+//    QLabel *currentHost;
+//    QAction *stopAction;
 #ifdef MENU_IN_LINK_WINDOW
-    QAction *disconnectAction;
+//    QAction *disconnectAction;
 #endif
 
     Impl(Public &i)
         : Base(i),
           link(0),
-          tools(0),
-          statusButton(0),
-          consoleButton(0),
-          stack(0),
-          status(0),
-          gameStatus(0),
-          timeCounter(0),
-          currentHost(0)
+//          tools(0),
+//          statusButton(0),
+//          consoleButton(0),
+//          stack(0),
+          status(0)
+//          gameStatus(0),
+//          timeCounter(0),
+//          currentHost(0)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
         logBuffer.setAutoFlushInterval(0.1);
 
         waitTimeout.setSingleShot(false);
-        waitTimeout.setInterval(1000);
+        waitTimeout.setInterval(1.0);
     }
 
     ~Impl() override
     {
         // Make sure the local sink is removed.
-        LogBuffer::get().removeSink(console->log().logSink());
+//        LogBuffer::get().removeSink(console->log().logSink());
     }
 
     void updateStyle()
     {
-        if (self().isConnected())
-        {
-            console->root().canvas().setBackgroundColor(Qt::white);
-            console->root().canvas().setForegroundColor(Qt::black);
-        }
-        else
-        {
-            console->root().canvas().setBackgroundColor(QColor(192, 192, 192));
-            console->root().canvas().setForegroundColor(QColor(64, 64, 64));
-        }
+//        if (self().isConnected())
+//        {
+//            console->root().canvas().setBackgroundColor(Qt::white);
+//            console->root().canvas().setForegroundColor(Qt::black);
+//        }
+//        else
+//        {
+//            console->root().canvas().setBackgroundColor(QColor(192, 192, 192));
+//            console->root().canvas().setForegroundColor(QColor(64, 64, 64));
+//        }
     }
 
     void updateCurrentHost()
     {
-        QString txt;
-        if (link)
-        {
-            if (self().isConnected() && !link->address().isNull())
-            {
-                txt = tr("<b>%1</b>:%2")
-                        .arg(link->address().isLocal()? "localhost"
-                                                      : QString::fromUtf8(link->address().hostName()))
-                        .arg(link->address().port());
-            }
-            else if (self().isConnected() && link->address().isNull())
-            {
-                txt = tr("Looking up host...");
-            }
-        }
-        currentHost->setText(statusText(txt));
+//        String txt;
+//        if (link)
+//        {
+//            if (self().isConnected() && !link->address().isNull())
+//            {
+//                txt = tr("<b>%1</b>:%2")
+//                        .arg(link->address().isLocal()? "localhost"
+//                                                      : QString::fromUtf8(link->address().hostName()))
+//                        .arg(link->address().port());
+//            }
+//            else if (self().isConnected() && link->address().isNull())
+//            {
+//                txt = tr("Looking up host...");
+//            }
+//        }
+//        currentHost->setText(statusText(txt));
     }
 
     void disconnected()
     {
-        self().setTitle(tr("Disconnected"));
-        console->root().setOverlaidMessage(tr("Disconnected"));
-        self().statusBar()->clearMessage();
-        stopAction->setDisabled(true);
-#ifdef MENU_IN_LINK_WINDOW
-        disconnectAction->setDisabled(true);
-#endif
+//        self().setTitle(tr("Disconnected"));
+//        console->root().setOverlaidMessage(tr("Disconnected"));
+//        self().statusBar()->clearMessage();
+//        stopAction->setDisabled(true);
+//#ifdef MENU_IN_LINK_WINDOW
+//        disconnectAction->setDisabled(true);
+//#endif
 
-        gameStatus->clear();
-        status->linkDisconnected();
-        updateCurrentHost();
-        updateStyle();
+//        gameStatus->clear();
+//        status->linkDisconnected();
+//        updateCurrentHost();
+//        updateStyle();
 
-        checkCurrentTab(false);
+//        checkCurrentTab(false);
     }
 
-    QString readErrorLogContents() const
+    String readErrorLogContents() const
     {
-        QFile logFile(convert(errorLog));
-        if (logFile.open(QFile::ReadOnly))
-        {
-            return QString::fromUtf8(logFile.readAll());
-        }
-        return QString();
+        using namespace std;
+
+        std::unique_ptr<NativeFile> file(NativeFile::newStandalone(errorLog));
+        Block text;
+        *file >> text;
+        return String::fromUtf8(text);
     }
 
     bool checkForErrors()
@@ -188,32 +192,32 @@ DE_PIMPL(LinkWindow)
 
     void showErrorLog()
     {
-        QString const text = readErrorLogContents();
-        if (!text.isEmpty())
+        const String text = readErrorLogContents();
+        if (text)
         {
-            // Show a message box.
-            ErrorLogDialog dlg;
-            dlg.setLogContent(text);
-            dlg.setMessage(tr("Failed to start the server. This may explain why:"));
-            dlg.exec();
+//            // Show a message box.
+//            ErrorLogDialog dlg;
+//            dlg.setLogContent(text);
+//            dlg.setMessage(tr("Failed to start the server. This may explain why:"));
+//            dlg.exec();
         }
     }
 
-    QToolButton *addToolButton(QString const &label, QIcon const &icon)
-    {
-        QToolButton *tb = new QToolButton;
-        tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
-        tb->setFocusPolicy(Qt::NoFocus);
-        tb->setText(label);
-        tb->setIcon(icon);
-        tb->setCheckable(true);
-#ifdef MACOSX
-        // Tighter spacing, please.
-        tb->setStyleSheet("padding-bottom:-1px");
-#endif
-        tools->addWidget(tb);
-        return tb;
-    }
+//    QToolButton *addToolButton(QString const &label, QIcon const &icon)
+//    {
+//        QToolButton *tb = new QToolButton;
+//        tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
+//        tb->setFocusPolicy(Qt::NoFocus);
+//        tb->setText(label);
+//        tb->setIcon(icon);
+//        tb->setCheckable(true);
+//#ifdef MACOSX
+//        // Tighter spacing, please.
+//        tb->setStyleSheet("padding-bottom:-1px");
+//#endif
+//        tools->addWidget(tb);
+//        return tb;
+//    }
 
     void updateStatusBarWithGameState(de::Record &rec)
     {
@@ -225,20 +229,20 @@ DE_PIMPL(LinkWindow)
         if (!mapId.isEmpty()) msg += " " + mapId;
         if (!rules.isEmpty()) msg += " (" + rules + ")";
 
-        gameStatus->setText(statusText(convert(msg)));
+//        gameStatus->setText(statusText(msg));
     }
 
-    void checkCurrentTab(bool connected)
-    {
-        if (stack->currentWidget() == newLocalServerPage && connected)
-        {
-            stack->setCurrentWidget(status);
-        }
-        else if (stack->currentWidget() == status && !connected)
-        {
-            stack->setCurrentWidget(newLocalServerPage);
-        }
-    }
+//    void checkCurrentTab(bool connected)
+//    {
+//        if (stack->currentWidget() == newLocalServerPage && connected)
+//        {
+//            stack->setCurrentWidget(status);
+//        }
+//        else if (stack->currentWidget() == status && !connected)
+//        {
+//            stack->setCurrentWidget(newLocalServerPage);
+//        }
+//    }
 
     void commandEntered(const String &command) override
     {
@@ -251,13 +255,12 @@ DE_PIMPL(LinkWindow)
     }
 };
 
-LinkWindow::LinkWindow(QWidget *parent)
-    : QMainWindow(parent), d(new Impl(*this))
+LinkWindow::LinkWindow()
+    : BaseWindow(Stringf("link-%p", this))
+    , d(new Impl(*this))
 {
-    setUnifiedTitleAndToolBarOnMac(true);
-#ifndef MACOSX
+#if 0
     setWindowIcon(QIcon(":/images/shell.png"));
-#endif
 
     GuiShellApp *app = &GuiShellApp::app();
 
@@ -385,18 +388,25 @@ LinkWindow::LinkWindow(QWidget *parent)
     connect(&GuiShellApp::app(), SIGNAL(localServerStopped(int)), this, SLOT(localServerStopped(int)));
     connect(&d->waitTimeout, SIGNAL(timeout()), this, SLOT(checkFoundServers()));
     d->waitTimeout.start();
+#endif
 }
 
-void LinkWindow::setTitle(const QString &title)
+GuiRootWidget &LinkWindow::root()
 {
-    setWindowTitle(title + " - " + tr("Doomsday Shell"));
+    return d->root;
 }
+
+//void LinkWindow::setTitle(const QString &title)
+//{
+//    setWindowTitle(title + " - " + tr("Doomsday Shell"));
+//}
 
 bool LinkWindow::isConnected() const
 {
     return d->link && d->link->status() != Link::Disconnected;
 }
 
+#if 0
 void LinkWindow::changeEvent(QEvent *ev)
 {
     if (ev->type() == QEvent::ActivationChange)
@@ -437,138 +447,139 @@ void LinkWindow::closeEvent(QCloseEvent *event)
 
     QMainWindow::closeEvent(event);
 }
+#endif
 
 void LinkWindow::waitForLocalConnection(duint16 localPort,
                                         NativePath const &errorLogPath,
-                                        const QString& name)
+                                        const String &name)
 {
-    closeConnection();
+//    closeConnection();
 
-    d->logBuffer.flush();
-    d->console->log().clear();
+//    d->logBuffer.flush();
+//    d->console->log().clear();
 
-    d->waitingForLocalPort = localPort;
-    d->startedWaitingAt = Time();
-    d->errorLog = errorLogPath;
+//    d->waitingForLocalPort = localPort;
+//    d->startedWaitingAt = Time();
+//    d->errorLog = errorLogPath;
 
-    d->linkName = name + " - "  + tr("Local Server %1").arg(localPort);
-    setTitle(d->linkName);
+//    d->linkName = name + " - "  + tr("Local Server %1").arg(localPort);
+//    setTitle(d->linkName);
 
-    d->console->root().setOverlaidMessage(tr("Waiting for local server..."));
-    statusBar()->showMessage(tr("Waiting for local server..."));
-    d->checkCurrentTab(true);
+//    d->console->root().setOverlaidMessage(tr("Waiting for local server..."));
+//    statusBar()->showMessage(tr("Waiting for local server..."));
+//    d->checkCurrentTab(true);
 }
 
 void LinkWindow::openConnection(Link *link, const String& name)
 {
-    closeConnection();
+//    closeConnection();
 
-    d->logBuffer.flush();
-    d->console->log().clear();
+//    d->logBuffer.flush();
+//    d->console->log().clear();
 
-    d->link = link;
+//    d->link = link;
 
-    d->link->audienceForAddressResolved() += [this]() { addressResolved(); };
-    d->link->audienceForConnected()       += [this]() { connected(); };
-    d->link->audienceForPacketsReady()    += [this]() { handleIncomingPackets(); };
-    d->link->audienceForDisconnected()    += [this]() { disconnected(); };
+//    d->link->audienceForAddressResolved() += [this]() { addressResolved(); };
+//    d->link->audienceForConnected()       += [this]() { connected(); };
+//    d->link->audienceForPacketsReady()    += [this]() { handleIncomingPackets(); };
+//    d->link->audienceForDisconnected()    += [this]() { disconnected(); };
 
-    if (!name.isEmpty())
-    {
-        d->linkName = convert(name);
-        setTitle(d->linkName);
-    }
-    d->console->root().setOverlaidMessage(tr("Looking up host..."));
-    statusBar()->showMessage(tr("Looking up host..."));
+//    if (!name.isEmpty())
+//    {
+//        d->linkName = convert(name);
+//        setTitle(d->linkName);
+//    }
+//    d->console->root().setOverlaidMessage(tr("Looking up host..."));
+//    statusBar()->showMessage(tr("Looking up host..."));
 
-    d->link->connectLink();
-    d->status->linkConnected(d->link);
-    d->checkCurrentTab(true);
-    d->updateStyle();
+//    d->link->connectLink();
+//    d->status->linkConnected(d->link);
+//    d->checkCurrentTab(true);
+//    d->updateStyle();
 }
 
-void LinkWindow::openConnection(const QString& address)
+void LinkWindow::openConnection(const String &address)
 {
-    qDebug() << "Opening connection to" << address;
+    debug("Opening connection to %s", address.c_str());
 
-    // Keep trying to connect to 30 seconds.
-    const String addr = convert(address);
-    openConnection(new Link(addr, 30.0), addr);
+//    // Keep trying to connect to 30 seconds.
+//    const String addr = convert(address);
+//    openConnection(new Link(addr, 30.0), addr);
 }
 
 void LinkWindow::closeConnection()
 {
-    d->waitingForLocalPort = 0;
-    d->errorLog.clear();
+//    d->waitingForLocalPort = 0;
+//    d->errorLog.clear();
 
-    if (d->link)
-    {
-        qDebug() << "Closing existing connection to" << d->link->address().asText().c_str();
+//    if (d->link)
+//    {
+//        qDebug() << "Closing existing connection to" << d->link->address().asText().c_str();
 
-        // Get rid of the old connection.
-        d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
-        d->link->audienceForDisconnected() += [this](){ disconnected(); };
+//        // Get rid of the old connection.
+//        d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
+//        d->link->audienceForDisconnected() += [this](){ disconnected(); };
 
-        delete d->link;
-        d->link = 0;
+//        delete d->link;
+//        d->link = 0;
 
-        emit linkClosed(this);
-    }
+//        emit linkClosed(this);
+//    }
 
-    d->disconnected();
+//    d->disconnected();
 }
 
 void LinkWindow::switchToStatus()
 {
-    d->optionsButton->setChecked(false);
-    d->consoleButton->setChecked(false);
-    d->stack->setCurrentWidget(d->link? d->status : d->newLocalServerPage);
+//    d->optionsButton->setChecked(false);
+//    d->consoleButton->setChecked(false);
+//    d->stack->setCurrentWidget(d->link? d->status : d->newLocalServerPage);
 }
 
 void LinkWindow::switchToOptions()
 {
-    d->statusButton->setChecked(false);
-    d->consoleButton->setChecked(false);
-    d->stack->setCurrentWidget(d->options);
+//    d->statusButton->setChecked(false);
+//    d->consoleButton->setChecked(false);
+//    d->stack->setCurrentWidget(d->options);
 }
 
 void LinkWindow::switchToConsole()
 {
-    d->statusButton->setChecked(false);
-    d->optionsButton->setChecked(false);
-    d->stack->setCurrentWidget(d->console);
-    d->console->root().setFocus();
+//    d->statusButton->setChecked(false);
+//    d->optionsButton->setChecked(false);
+//    d->stack->setCurrentWidget(d->console);
+//    d->console->root().setFocus();
 }
 
 void LinkWindow::updateWhenConnected()
 {
-    if (d->link)
-    {
-        TimeSpan elapsed = d->link->connectedAt().since();
-        QString time = QString("%1:%2:%3")
-                .arg(int(elapsed.asHours()))
-                .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
-                .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
-        d->timeCounter->setText(statusText(time));
+//    if (d->link)
+//    {
+//        TimeSpan elapsed = d->link->connectedAt().since();
+//        QString time = QString("%1:%2:%3")
+//                .arg(int(elapsed.asHours()))
+//                .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
+//                .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
+//        d->timeCounter->setText(statusText(time));
 
-        QTimer::singleShot(1000, this, SLOT(updateWhenConnected()));
-    }
+//        QTimer::singleShot(1000, this, SLOT(updateWhenConnected()));
+//    }
 }
 
 void LinkWindow::handleIncomingPackets()
 {
-    forever
+    for (;;)
     {
         DE_ASSERT(d->link != 0);
 
-        QScopedPointer<Packet> packet(d->link->nextPacket());
-        if (packet.isNull()) break;
+        std::unique_ptr<Packet> packet(d->link->nextPacket());
+        if (!packet) break;
 
         //qDebug() << "Packet:" << packet->type();
 
         // Process packet contents.
         shell::Protocol &protocol = d->link->protocol();
-        switch (protocol.recognize(packet.data()))
+        switch (protocol.recognize(packet.get()))
         {
         case shell::Protocol::PasswordChallenge:
             askForPassword();
@@ -576,8 +587,8 @@ void LinkWindow::handleIncomingPackets()
 
         case shell::Protocol::LogEntries: {
             // Add the entries into the local log buffer.
-            LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.data());
-            foreach (LogEntry *e, pkt->entries())
+            LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.get());
+            for (const LogEntry *e : pkt->entries())
             {
                 d->logBuffer.add(new LogEntry(*e, LogEntry::Remote));
             }
@@ -588,31 +599,32 @@ void LinkWindow::handleIncomingPackets()
 
         case shell::Protocol::ConsoleLexicon:
             // Terms for auto-completion.
-            d->console->cli().setLexicon(protocol.lexicon(*packet));
+//            d->console->cli().setLexicon(protocol.lexicon(*packet));
+            debug("TODO: received console lexicon");
             break;
 
         case shell::Protocol::GameState: {
-            Record &rec = static_cast<RecordPacket *>(packet.data())->record();
-            String const rules = rec["rules"];
-            QString gameType = rules.containsWord("dm")?  tr("Deathmatch")    :
-                               rules.containsWord("dm2")? tr("Deathmatch II") :
-                                                          tr("Co-op");
-            d->status->setGameState(
-                    convert(rec["mode"].value().asText()),
-                    gameType,
-                    convert(rec["mapId"].value().asText()),
-                    convert(rec["mapTitle"].value().asText()));
+            Record &rec = static_cast<RecordPacket *>(packet.get())->record();
+            const String rules = rec["rules"];
+            String gameType = rules.containsWord("dm") ?  "Deathmatch"    :
+                              rules.containsWord("dm2") ? "Deathmatch II" :
+                                                          "Co-op";
+
+            d->status->setGameState(rec["mode"].value().asText(),
+                                    gameType,
+                                    rec["mapId"].value().asText(),
+                                    rec["mapTitle"].value().asText());
 
             d->updateStatusBarWithGameState(rec);
-            d->options->updateWithGameState(rec);
+//            d->options->updateWithGameState(rec);
             break; }
 
         case shell::Protocol::MapOutline:
-            d->status->setMapOutline(*static_cast<MapOutlinePacket *>(packet.data()));
+            d->status->setMapOutline(*static_cast<MapOutlinePacket *>(packet.get()));
             break;
 
         case shell::Protocol::PlayerInfo:
-            d->status->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.data()));
+            d->status->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.get()));
             break;
 
         default:
@@ -621,7 +633,7 @@ void LinkWindow::handleIncomingPackets()
     }
 }
 
-void LinkWindow::sendCommandToServer(const de::String &command)
+void LinkWindow::sendCommandToServer(const String &command)
 {
     if (d->link)
     {
@@ -630,85 +642,85 @@ void LinkWindow::sendCommandToServer(const de::String &command)
                                    LogEntry::Args() << LogEntry::Arg::newFromPool(command));
         d->logBuffer.add(e);
 
-        QScopedPointer<Packet> packet(d->link->protocol().newCommand(command));
+        std::unique_ptr<RecordPacket> packet(d->link->protocol().newCommand(command));
         *d->link << *packet;
     }
 }
 
-void LinkWindow::sendCommandsToServer(QStringList commands)
+void LinkWindow::sendCommandsToServer(const StringList &commands)
 {
-    foreach (QString c, commands)
+    for (const String &c : commands)
     {
-        sendCommandToServer(convert(c));
+        sendCommandToServer(c);
     }
 }
 
 void LinkWindow::addressResolved()
 {
-    d->console->root().setOverlaidMessage(tr("Connecting..."));
-    statusBar()->showMessage(tr("Connecting..."));
-    d->updateCurrentHost();
-    d->updateStyle();
+//    d->console->root().setOverlaidMessage(tr("Connecting..."));
+//    statusBar()->showMessage(tr("Connecting..."));
+//    d->updateCurrentHost();
+//    d->updateStyle();
 }
 
 void LinkWindow::connected()
 {
-    // Once successfully connected, we don't want to show error log any more.
-    d->errorLog = "";
+//    // Once successfully connected, we don't want to show error log any more.
+//    d->errorLog = "";
 
-    if (d->linkName.isEmpty()) d->linkName = convert(d->link->address().asText());
-    setTitle(d->linkName);
-    d->updateCurrentHost();
-    d->console->root().setOverlaidMessage("");
-    d->status->linkConnected(d->link);
-    statusBar()->clearMessage();
-    updateWhenConnected();
-    d->stopAction->setEnabled(true);
-#ifdef MENU_IN_LINK_WINDOW
-    d->disconnectAction->setEnabled(true);
-#endif
-    d->checkCurrentTab(true);
+//    if (d->linkName.isEmpty()) d->linkName = convert(d->link->address().asText());
+//    setTitle(d->linkName);
+//    d->updateCurrentHost();
+//    d->console->root().setOverlaidMessage("");
+//    d->status->linkConnected(d->link);
+//    statusBar()->clearMessage();
+//    updateWhenConnected();
+//    d->stopAction->setEnabled(true);
+//#ifdef MENU_IN_LINK_WINDOW
+//    d->disconnectAction->setEnabled(true);
+//#endif
+//    d->checkCurrentTab(true);
 
-    emit linkOpened(this);
+//    emit linkOpened(this);
 }
 
 void LinkWindow::disconnected()
 {
-    if (!d->link) return;
+//    if (!d->link) return;
 
-    // The link was disconnected.
-    d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
+//    // The link was disconnected.
+//    d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
 
-    trash(d->link);
-    d->link = 0;
+//    trash(d->link);
+//    d->link = 0;
 
-    d->disconnected();
+//    d->disconnected();
 
-    emit linkClosed(this);
+//    emit linkClosed(this);
 }
 
 void LinkWindow::askForPassword()
 {
-    QInputDialog dlg(this);
-    dlg.setWindowTitle(tr("Password Required"));
-#ifdef WIN32
-    dlg.setWindowFlags(dlg.windowFlags() & ~Qt::WindowContextHelpButtonHint);
-#endif
-    dlg.setWindowModality(Qt::WindowModal);
-    dlg.setInputMode(QInputDialog::TextInput);
-    dlg.setTextEchoMode(QLineEdit::Password);
-    dlg.setLabelText(tr("Server password:"));
+//    QInputDialog dlg(this);
+//    dlg.setWindowTitle(tr("Password Required"));
+//#ifdef WIN32
+//    dlg.setWindowFlags(dlg.windowFlags() & ~Qt::WindowContextHelpButtonHint);
+//#endif
+//    dlg.setWindowModality(Qt::WindowModal);
+//    dlg.setInputMode(QInputDialog::TextInput);
+//    dlg.setTextEchoMode(QLineEdit::Password);
+//    dlg.setLabelText(tr("Server password:"));
 
-    if (dlg.exec() == QDialog::Accepted)
-    {
-        if (d->link)
-        {
-            *d->link << d->link->protocol().passwordResponse(convert(dlg.textValue()));
-        }
-        return;
-    }
+//    if (dlg.exec() == QDialog::Accepted)
+//    {
+//        if (d->link)
+//        {
+//            *d->link << d->link->protocol().passwordResponse(convert(dlg.textValue()));
+//        }
+//        return;
+//    }
 
-    QTimer::singleShot(1, this, SLOT(closeConnection()));
+    EventLoop::callback([this]() { closeConnection(); });
 }
 
 void LinkWindow::localServerStopped(int port)
@@ -726,23 +738,24 @@ void LinkWindow::localServerStopped(int port)
     }
 }
 
-void LinkWindow::updateConsoleFontFromPreferences()
-{
-    d->console->root().setFont(Preferences::consoleFont());
-    d->console->update();
-}
+//void LinkWindow::updateConsoleFontFromPreferences()
+//{
+//    d->console->root().setFont(Preferences::consoleFont());
+//    d->console->update();
+//}
 
 void LinkWindow::checkFoundServers()
 {
     if (!d->waitingForLocalPort) return;
 
     auto const &finder = GuiShellApp::app().serverFinder();
-    foreach (Address const &addr, finder.foundServers())
+    for (const auto &addr : finder.foundServers())
     {
         if (addr.isLocal() && addr.port() == d->waitingForLocalPort)
         {
             // This is the one!
-            QTimer::singleShot(100, [this, addr] () { openConnection(new Link(addr)); });
+            const Address dest = addr;
+            Loop::timer(0.100, [this, dest]() { openConnection(new Link(dest)); });
             d->waitingForLocalPort = 0;
         }
     }

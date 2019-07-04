@@ -146,7 +146,7 @@ ShellApp::ShellApp(int &argc, char **argv)
     auto &amd = metadata();
     amd.set(ORG_DOMAIN, "dengine.net");
     amd.set(ORG_NAME,   "Deng Team");
-    amd.set(APP_NAME,   "doomsday-shell-text");
+    amd.set(APP_NAME,   "dshell");
     amd.set(APP_VERSION, SHELL_VERSION);
 
     // Configure the log buffer.

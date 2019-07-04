@@ -1,22 +1,15 @@
 #ifndef ERRORLOGDIALOG_H
 #define ERRORLOGDIALOG_H
 
-#include <QDialog>
-#include <de/libcore.h>
+#include <de/MessageDialog>
 
-class ErrorLogDialog : public QDialog
+class ErrorLogDialog : public de::MessageDialog
 {
-    Q_OBJECT
-
 public:
-    explicit ErrorLogDialog(QWidget *parent = 0);
+    explicit ErrorLogDialog();
 
-    void setMessage(QString const &message);
-    void setLogContent(QString const &text);
-
-signals:
-
-public slots:
+    void setMessage(const de::String &message);
+    void setLogContent(const de::String &text);
 
 private:
     DE_PRIVATE(d)

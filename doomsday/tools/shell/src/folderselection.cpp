@@ -17,104 +17,100 @@
  */
 
 #include "folderselection.h"
-#include "utils.h"
-#include <QLineEdit>
-#include <QPushButton>
-#include <QHBoxLayout>
-#include <QFileDialog>
-#include <QLabel>
+//#include "utils.h"
+//#include <QLineEdit>
+//#include <QPushButton>
+//#include <QHBoxLayout>
+//#include <QFileDialog>
+//#include <QLabel>
+
+#include <de/FileDialog>
+
+using namespace de;
 
 DE_PIMPL(FolderSelection)
 {
-    QString prompt;
-    QLineEdit *edit;
-    QPushButton *button;
+    String prompt;
+//    QLineEdit *edit;
+//    QPushButton *button;
 
-    Impl(Public & i, QString extraLabel)
+    Impl(Public *i, String extraLabel)
         : Base(i)
-        , edit(0)
-        , button(0)
+//        , edit(0)
+//        , button(0)
     {
-        /*
-        // What's up with the extra spacing?
-        QPalette pal = self().palette();
-        pal.setColor(self().backgroundRole(), Qt::red);
-        self().setPalette(pal);
-        self().setAutoFillBackground(true);
-        */
+//        QHBoxLayout *layout = new QHBoxLayout;
+//        layout->setContentsMargins(0, 0, 0, 0);
+//        self().setLayout(layout);
 
-        QHBoxLayout *layout = new QHBoxLayout;
-        layout->setContentsMargins(0, 0, 0, 0);
-        self().setLayout(layout);
+//        if (!extraLabel.isEmpty())
+//        {
+//            QLabel *lab = new QLabel(extraLabel);
+//            layout->addWidget(lab, 0);
+//        }
 
-        if (!extraLabel.isEmpty())
-        {
-            QLabel *lab = new QLabel(extraLabel);
-            layout->addWidget(lab, 0);
-        }
+//        edit = new QLineEdit;
+//        edit->setMinimumWidth(280);
+//#ifdef WIN32
+//        button = new QPushButton(tr("&Browse..."));
+//#else
+//        button = new QPushButton(tr("..."));
+//#endif
+//        button->setAutoDefault(false);
 
-        edit = new QLineEdit;
-        edit->setMinimumWidth(280);
-#ifdef WIN32
-        button = new QPushButton(tr("&Browse..."));
-#else
-        button = new QPushButton(tr("..."));
-#endif
-        button->setAutoDefault(false);
-
-        layout->addWidget(edit, 1);
-        layout->addWidget(button, 0);
+//        layout->addWidget(edit, 1);
+//        layout->addWidget(button, 0);
     }
 };
 
-FolderSelection::FolderSelection(QString const &prompt, QWidget *parent)
-    : QWidget(parent), d(new Impl(*this, ""))
-{
-    d->prompt = prompt;
-    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
-    connect(d->edit, SIGNAL(textEdited(QString)), this, SIGNAL(selected()));
-}
+//FolderSelection::FolderSelection(const String &prompt)
+//    : d(new Impl(this, ""))
+//{
+//    d->prompt = prompt;
+//    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
+//    connect(d->edit, SIGNAL(textEdited(QString)), this, SIGNAL(selected()));
+//}
 
-FolderSelection::FolderSelection(QString const &prompt, QString const &extraLabel, QWidget *parent)
-    : QWidget(parent), d(new Impl(*this, extraLabel))
+FolderSelection::FolderSelection(const String &prompt, const String &extraLabel)
+    : d(new Impl(this, extraLabel))
 {
     d->prompt = prompt;
-    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
+//    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
 }
 
 void FolderSelection::setPath(de::NativePath const &path)
 {
-    d->edit->setText(QString::fromUtf8(path));
+//    d->edit->setText(QString::fromUtf8(path));
 }
 
 void FolderSelection::setEnabled(bool yes)
 {
-    d->edit->setEnabled(yes);
-    d->button->setEnabled(yes);
+//    d->edit->setEnabled(yes);
+//    d->button->setEnabled(yes);
 
-    if (yes)
-    {
-        d->edit->setStyleSheet("");
-    }
-    else
-    {
-        d->edit->setStyleSheet("background-color:#eee; color:#888;");
-    }
+//    if (yes)
+//    {
+//        d->edit->setStyleSheet("");
+//    }
+//    else
+//    {
+//        d->edit->setStyleSheet("background-color:#eee; color:#888;");
+//    }
 }
 
 de::NativePath FolderSelection::path() const
 {
-    return convert(d->edit->text());
+//    return convert(d->edit->text());
 }
 
 void FolderSelection::selectFolder()
 {
-    QString initial = d->edit->text();
-    if (initial.isEmpty()) initial = QDir::homePath();
-    QString dir = QFileDialog::getExistingDirectory(0, d->prompt, initial);
-    if (!dir.isEmpty())
-    {
-        d->edit->setText(dir);
-        emit selected();
-    }
+//    QString initial = d->edit->text();
+//    if (initial.isEmpty()) initial = QDir::homePath();
+//    QString dir = QFileDialog::getExistingDirectory(0, d->prompt, initial);
+//    if (!dir.isEmpty())
+//    {
+//        d->edit->setText(dir);
+//        emit selected();
+//    }
 }

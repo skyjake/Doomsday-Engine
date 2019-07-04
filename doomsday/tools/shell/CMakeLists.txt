@@ -8,16 +8,15 @@
 cmake_minimum_required (VERSION 3.1)
 project (DE_SHELL)
 include (../../cmake/Config.cmake)
-include (QtConfig)
 
-set (CMAKE_AUTOMOC ON)
-set (CMAKE_AUTORCC ON)
+find_package (the_Foundation REQUIRED)
+find_package (glbinding REQUIRED)
 
 add_definitions (
     -DSHELL_VERSION="${DE_VERSION}"
 )
 
-file (GLOB SOURCES src/*.cpp src/*.h res/shell.qrc)
+file (GLOB SOURCES src/*.cpp src/*.h)
 set (MAC_RES
     res/macx/shell.icns,Resources
     res/macx/English.lproj,Resources
@@ -27,7 +26,10 @@ if (WIN32)
     list (APPEND SOURCES res/windows/shell.rc)
 endif ()
 
-list (APPEND DE_REQUIRED_PACKAGES net.dengine.stdlib)
+list (APPEND DE_REQUIRED_PACKAGES
+    net.dengine.stdlib
+    net.dengine.stdlib.gui
+)
 
 deng_add_application (shell ${SOURCES} EXTRA_RESOURCES ${MAC_RES})
 
@@ -41,12 +43,18 @@ else ()
     set_property (TARGET shell PROPERTY OUTPUT_NAME "doomsday-shell")
 endif ()
 
-deng_link_libraries (shell PUBLIC DengCore DengShell)
-deng_target_link_qt (shell PUBLIC Widgets)
+target_link_sdl2 (shell PUBLIC)
+deng_link_libraries (shell PUBLIC DengCore DengComms DengGui)
 
 # Deployment.
-deng_install_bundle_deps (shell Deng::libcore Deng::libshell)
-deng_install_deployqt (shell)
+deng_install_bundle_deps (shell
+    Deng::libcore
+    Deng::libcomms
+    Deng::libgui
+    the_Foundation::the_Foundation
+    glbinding::glbinding
+)
+deng_deploy_target (shell)
 deng_codesign (shell)
 
 if (UNIX AND NOT APPLE)
