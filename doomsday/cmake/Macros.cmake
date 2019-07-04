@@ -470,7 +470,7 @@ function (deng_deploy_target target)
         install (CODE "
             execute_process (COMMAND ${PYTHON_EXECUTABLE}
                 ${DE_SOURCE_DIR}/build/scripts/apple_install_names.py
-                ${DE_DISTRIB_DIR}/${outName}.app
+                \"${DE_DISTRIB_DIR}/${outName}.app\"
             )")
     endif ()
 endfunction ()
