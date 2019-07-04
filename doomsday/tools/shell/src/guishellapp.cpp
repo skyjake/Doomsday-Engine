@@ -17,15 +17,18 @@
  */
 
 #include "guishellapp.h"
-#include "linkwindow.h"
-#include "opendialog.h"
+
 #include "aboutdialog.h"
+#include "linkwindow.h"
 #include "localserverdialog.h"
+#include "opendialog.h"
 #include "preferences.h"
+#include "shellwindowsystem.h"
 //#include "utils.h"
+#include <de/EscapeParser>
+#include <de/Id>
 #include <de/comms/LocalServer>
 #include <de/comms/ServerFinder>
-#include <de/EscapeParser>
 //#include <QMenuBar>
 //#include <QMessageBox>
 //#include <QUrl>
@@ -40,6 +43,7 @@ using namespace de::shell;
 
 DE_PIMPL_NOREF(GuiShellApp)
 {
+    std::unique_ptr<ShellWindowSystem> winSys;
     ServerFinder finder;
 
 //    QMenuBar *menuBar;
@@ -124,7 +128,13 @@ GuiShellApp::GuiShellApp(const StringList &args)
 //    connect(&d->localCheckTimer, SIGNAL(timeout()), this, SLOT(checkLocalServers()));
 //    d->localCheckTimer.start();
 
-    newOrReusedConnectionWindow();
+//    newOrReusedConnectionWindow();
+}
+
+void GuiShellApp::initSubsystems(App::SubsystemInitFlags flags)
+{
+    BaseGuiApp::initSubsystems(flags);
+    d->winSys.reset(new ShellWindowSystem);
 }
 
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
@@ -146,19 +156,19 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 //        if (!other) other = win;
 //    }
 
-//    if (!found)
-//    {
-//        found = new LinkWindow;
+    if (!found)
+    {
+        found = d->winSys->newWindow<LinkWindow>(Stringf("link%04u", Id().asUInt32()));
 //        connect(found, SIGNAL(linkOpened(LinkWindow*)),this, SLOT(updateMenu()));
 //        connect(found, SIGNAL(linkClosed(LinkWindow*)), this, SLOT(updateMenu()));
 //        connect(found, SIGNAL(closed(LinkWindow *)), this, SLOT(windowClosed(LinkWindow *)));
 
-//        // Initial position and size.
+        // Initial position and size.
 //        if (other)
 //        {
 //            found->move(other->pos() + QPoint(30, 30));
 //        }
-//    }
+    }
 
 //    d->windows.prepend(found);
 //    found->show();
@@ -314,7 +324,7 @@ void GuiShellApp::showHelp()
 //    QDesktopServices::openUrl(QUrl(tr("http://wiki.dengine.net/w/Shell_Help")));
 }
 
-void GuiShellApp::openWebAddress(const QString& url)
+void GuiShellApp::openWebAddress(const String &url)
 {
 //    QDesktopServices::openUrl(QUrl(url));
 }

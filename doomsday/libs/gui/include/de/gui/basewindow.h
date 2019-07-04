@@ -93,19 +93,8 @@ public:
 #endif
 
 protected:
-    /*
-     * Called when a draw request has been received. This method should carry out any
-     * preparations necessary before the frame can be drawn. It can also cancel the
-     * frame is needed.
-     *
-     * @return @c true to continue drawing the frame, @c false to abort the frame.
-     */
-//    virtual bool prepareForDraw();
-
     virtual void preDraw();
     virtual void postDraw();
-
-//    virtual bool handleFallbackEvent(Event const &event) = 0;
 
 private:
     DE_PRIVATE(d)

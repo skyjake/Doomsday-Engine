@@ -1,9 +1,9 @@
 #ifndef ABOUTDIALOG_H
 #define ABOUTDIALOG_H
 
-#include <de/DialogWidget>
+#include <de/MessageDialog>
 
-class AboutDialog : public de::DialogWidget
+class AboutDialog : public de::MessageDialog
 {
 public:
     explicit AboutDialog();

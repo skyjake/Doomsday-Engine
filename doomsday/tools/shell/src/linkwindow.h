@@ -31,11 +31,14 @@
 class LinkWindow : public de::BaseWindow
 {
 public:
-    LinkWindow();
+    LinkWindow(const de::String &id);
 
     de::GuiRootWidget &root();
 
-//    void setTitle(QString const &title);
+    de::Vec2f windowContentSize() const override;
+    void      drawWindowContent() override;
+
+    //    void setTitle(QString const &title);
 
     bool isConnected() const;
 
@@ -44,9 +47,9 @@ public:
 //    void closeEvent(QCloseEvent *);
 
 //signals:
-    void linkOpened(LinkWindow *window);
-    void linkClosed(LinkWindow *window);
-    void closed(LinkWindow *window);
+//    void linkOpened(LinkWindow *window);
+//    void linkClosed(LinkWindow *window);
+//    void closed(LinkWindow *window);
 
     void openConnection(const de::String &address);
     void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, const de::String &name);

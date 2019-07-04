@@ -30,6 +30,8 @@ class GuiShellApp : public de::BaseGuiApp
 public:
     GuiShellApp(const de::StringList &args);
 
+    void initSubsystems(SubsystemInitFlags flags = DefaultSubsystems) override;
+
     LinkWindow *newOrReusedConnectionWindow();
     de::shell::ServerFinder &serverFinder();
 

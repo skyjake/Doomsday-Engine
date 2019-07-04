@@ -17,7 +17,7 @@
  */
 
 #include "guishellapp.h"
-#include <de/libcore.h>
+#include "linkwindow.h"
 
 using namespace de;
 
@@ -27,8 +27,9 @@ int main(int argc, char *argv[])
     init_Foundation();
     try
     {
-        GuiShellApp app({argv, argv + argc});
+        GuiShellApp app(makeList(argc, argv));
         app.initSubsystems();
+        app.newOrReusedConnectionWindow()->show();
         result = app.exec();
     }
     catch (const Error &er)

@@ -17,14 +17,14 @@
  */
 
 #include "statuswidget.h"
-#include "utils.h"
-#include <de/libcore.h>
+//#include "utils.h"
 #include <de/String>
-#include <de/shell/DoomsdayInfo>
-#include <QPainter>
-#include <QPicture>
-#include <QTimer>
-#include <QMap>
+#include <de/Map>
+#include <de/comms/DoomsdayInfo>
+//#include <QPainter>
+//#include <QPicture>
+//#include <QTimer>
+//#include <QMap>
 
 using namespace de;
 
@@ -35,15 +35,15 @@ DE_PIMPL(StatusWidget)
 
     shell::Link *link;
 
-    QFont             smallFont;
-    QFont             largeFont;
-    QFont             playerFont;
-    QString           gameMode;
-    QString           map;
-    QPicture          mapOutline;
-    QRect             mapBounds;
-    Players           players;
-    QMap<int, QPoint> oldPlayerPositions;
+//    QFont             smallFont;
+//    QFont             largeFont;
+//    QFont             playerFont;
+    String           gameMode;
+    String           map;
+//    QPicture          mapOutline;
+    Rectangled      mapBounds;
+    Players         players;
+    Map<int, Vec2i> oldPlayerPositions;
 
     Impl(Public &i) : Base(i), link(0)
     {}
@@ -52,26 +52,26 @@ DE_PIMPL(StatusWidget)
     {
         gameMode.clear();
         map.clear();
-        mapBounds = QRect();
-        mapOutline = QPicture();
+        mapBounds = {};
+//        mapOutline = QPicture();
         oldPlayerPositions.clear();
         players.clear();
     }
 };
 
-StatusWidget::StatusWidget(QWidget *parent)
-    : QWidget(parent), d(new Impl(*this))
+StatusWidget::StatusWidget()
+    : d(new Impl(*this))
 {
-    d->playerFont = d->smallFont = d->largeFont = font();
-    d->smallFont.setPointSize(font().pointSize() * 3 / 4);
-    d->largeFont.setPointSize(font().pointSize() * 3 / 2);
-    d->largeFont.setBold(true);
-    d->playerFont.setPointSizeF(font().pointSizeF() * .8f);
+//    d->playerFont = d->smallFont = d->largeFont = font();
+//    d->smallFont.setPointSize(font().pointSize() * 3 / 4);
+//    d->largeFont.setPointSize(font().pointSize() * 3 / 2);
+//    d->largeFont.setBold(true);
+//    d->playerFont.setPointSizeF(font().pointSizeF() * .8f);
 }
 
-void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QString mapTitle)
+void StatusWidget::setGameState(String mode, String rules, String mapId, String mapTitle)
 {
-    d->gameMode = convert(shell::DoomsdayInfo::titleForGame(convert(mode)));
+    d->gameMode = shell::DoomsdayInfo::titleForGame(mode);
     if (!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
 
     d->map = mapTitle;
@@ -83,35 +83,35 @@ void StatusWidget::setGameState(QString mode, QString rules, QString mapId, QStr
     update();
 }
 
-void StatusWidget::setMapOutline(shell::MapOutlinePacket const &outline)
+void StatusWidget::setMapOutline(const shell::MapOutlinePacket &outline)
 {
-    d->mapBounds  = QRect();
-    d->mapOutline = QPicture();
+//    d->mapBounds  = QRect();
+//    d->mapOutline = QPicture();
 
-    QPainter painter(&d->mapOutline);
-    for (int i = 0; i < outline.lineCount(); ++i)
-    {
-        shell::MapOutlinePacket::Line const &ln = outline.line(i);
-        QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
-#ifdef DE_QT_5_0_OR_NEWER
-        pen.setCosmetic(true); // transformation will not affect line width
-#endif
-        painter.setPen(pen);
+//    QPainter painter(&d->mapOutline);
+//    for (int i = 0; i < outline.lineCount(); ++i)
+//    {
+//        shell::MapOutlinePacket::Line const &ln = outline.line(i);
+//        QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
+//#ifdef DE_QT_5_0_OR_NEWER
+//        pen.setCosmetic(true); // transformation will not affect line width
+//#endif
+//        painter.setPen(pen);
 
-        QPoint a(ln.start.x, -ln.start.y);
-        QPoint b(ln.end.x,   -ln.end.y);
+//        QPoint a(ln.start.x, -ln.start.y);
+//        QPoint b(ln.end.x,   -ln.end.y);
 
-        painter.drawLine(a, b);
+//        painter.drawLine(a, b);
 
-        if (!i)
-            d->mapBounds = QRect(a, QSize(1, 1));
-        else
-            d->mapBounds = d->mapBounds.united(QRect(a, QSize(1, 1)));
+//        if (!i)
+//            d->mapBounds = QRect(a, QSize(1, 1));
+//        else
+//            d->mapBounds = d->mapBounds.united(QRect(a, QSize(1, 1)));
 
-        d->mapBounds = d->mapBounds.united(QRect(b, QSize(1, 1)));
-    }
+//        d->mapBounds = d->mapBounds.united(QRect(b, QSize(1, 1)));
+//    }
 
-    update();
+//    update();
 }
 
 void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
@@ -119,13 +119,14 @@ void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
     for (const auto &plr : d->players)
     {
         d->oldPlayerPositions[plr.second.number] =
-            QPoint(plr.second.position.x, -plr.second.position.y);
+            Vec2i(plr.second.position.x, -plr.second.position.y);
     }
 
     d->players = plrInfo.players();
     update();
 }
 
+#if 0
 void StatusWidget::paintEvent(QPaintEvent *)
 {
     if (!d->link)
@@ -244,6 +245,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
         }
     }
 }
+#endif
 
 /*
 void StatusWidget::updateWhenConnected()
@@ -264,7 +266,7 @@ void StatusWidget::linkConnected(shell::Link *link)
 
 void StatusWidget::linkDisconnected()
 {
-    d->link = 0;
+    d->link = nullptr;
     d->clear();
     update();
 }

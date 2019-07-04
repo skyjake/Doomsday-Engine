@@ -255,8 +255,8 @@ DE_PIMPL(LinkWindow)
     }
 };
 
-LinkWindow::LinkWindow()
-    : BaseWindow(Stringf("link-%p", this))
+LinkWindow::LinkWindow(const String &id)
+    : BaseWindow(id)
     , d(new Impl(*this))
 {
 #if 0
@@ -394,6 +394,18 @@ LinkWindow::LinkWindow()
 GuiRootWidget &LinkWindow::root()
 {
     return d->root;
+}
+
+de::Vec2f LinkWindow::windowContentSize() const
+{
+    // Current root widget size.
+    return d->root.viewRule().size();
+}
+
+void LinkWindow::drawWindowContent()
+{
+    GLState::current().target().clear(GLFramebuffer::ColorDepth);
+    d->root.draw();
 }
 
 //void LinkWindow::setTitle(const QString &title)
