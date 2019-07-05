@@ -30,7 +30,7 @@
 #include "de/EscapeParser"
 #include "de/FileLogSink"
 #include "de/FileSystem"
-//#include "de/LibraryFile"
+#include "de/Garbage"
 #include "de/Log"
 #include "de/LogBuffer"
 #include "de/LogFilter"
@@ -456,6 +456,7 @@ App::~App()
     LOG_AS("~App");
     d.reset();
     singletonApp = nullptr;
+    Garbage_Recycle();
 }
 
 Record &App::metadata()
