@@ -29,6 +29,9 @@ public:
     ShellWindowSystem();
 
     static LinkWindow &main();
+    static LinkWindow *focusedWindow();
+
+    void setFocusedWindow(const de::String &id);
 
     bool rootProcessEvent(const de::Event &event);
     void rootUpdate();

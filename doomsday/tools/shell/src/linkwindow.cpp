@@ -98,13 +98,14 @@ DE_PIMPL(LinkWindow)
 #endif
 
     Impl(Public &i)
-        : Base(i),
-          link(0),
+        : Base(i)
+        , root(&i)
+        , link(0)
 //          tools(0),
 //          statusButton(0),
 //          consoleButton(0),
 //          stack(0),
-          status(0)
+        , status(0)
 //          gameStatus(0),
 //          timeCounter(0),
 //          currentHost(0)

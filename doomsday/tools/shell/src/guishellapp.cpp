@@ -26,6 +26,7 @@
 #include "shellwindowsystem.h"
 //#include "utils.h"
 #include <de/EscapeParser>
+#include <de/FileSystem>
 #include <de/Id>
 #include <de/comms/LocalServer>
 #include <de/comms/ServerFinder>
@@ -41,7 +42,7 @@
 using namespace de;
 using namespace de::shell;
 
-DE_PIMPL_NOREF(GuiShellApp)
+DE_PIMPL(GuiShellApp)
 {
     std::unique_ptr<ShellWindowSystem> winSys;
     ServerFinder finder;
@@ -59,7 +60,7 @@ DE_PIMPL_NOREF(GuiShellApp)
 
     Preferences *prefs;
 
-    Impl() : prefs(0)
+    Impl(Public *i) : Base(i), prefs(0)
     {
 //        localCheckTimer.setInterval(1000);
 //        localCheckTimer.setSingleShot(false);
@@ -72,11 +73,23 @@ DE_PIMPL_NOREF(GuiShellApp)
 //            delete win;
 //        }
     }
+
+    void loadAllShaders()
+    {
+        // Load all the shader program definitions.
+        FS::FoundFiles found;
+        self().findInPackages("shaders.dei", found);
+        DE_FOR_EACH(FS::FoundFiles, i, found)
+        {
+            LOG_MSG("Loading shader definitions from %s") << (*i)->description();
+            self().shaders().addFromInfo(**i);
+        }
+    }
 };
 
 GuiShellApp::GuiShellApp(const StringList &args)
     : BaseGuiApp(args)
-    , d(new Impl)
+    , d(new Impl(this))
 {
 //    setAttribute(Qt::AA_UseHighDpiPixmaps);
 
@@ -131,10 +144,13 @@ GuiShellApp::GuiShellApp(const StringList &args)
 //    newOrReusedConnectionWindow();
 }
 
-void GuiShellApp::initSubsystems(App::SubsystemInitFlags flags)
+void GuiShellApp::initialize()
 {
-    BaseGuiApp::initSubsystems(flags);
+    initSubsystems();
     d->winSys.reset(new ShellWindowSystem);
+    addSystem(*d->winSys);
+
+    d->loadAllShaders();
 }
 
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()

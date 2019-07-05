@@ -93,9 +93,9 @@ public:
      *
      * @return Window instance or @c NULL if not found.
      */
-    BaseWindow *find(String const &id) const;
+    BaseWindow *find(const String &id) const;
 
-    LoopResult forAll(const std::function<LoopResult (BaseWindow *)>& func);
+    LoopResult forAll(const std::function<LoopResult (BaseWindow *)> &func);
 
     /**
      * Closes all windows, including the main window.

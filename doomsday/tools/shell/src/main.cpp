@@ -28,8 +28,10 @@ int main(int argc, char *argv[])
     try
     {
         GuiShellApp app(makeList(argc, argv));
-        app.initSubsystems();
-        app.newOrReusedConnectionWindow()->show();
+        app.initialize();
+        auto *win = app.newOrReusedConnectionWindow();
+        GLWindow::setMain(win);
+        win->show();
         result = app.exec();
     }
     catch (const Error &er)

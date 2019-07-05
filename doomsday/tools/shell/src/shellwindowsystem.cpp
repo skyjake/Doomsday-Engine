@@ -25,6 +25,8 @@ using namespace de;
 
 DE_PIMPL(ShellWindowSystem)
 {
+    String focused;
+
     Impl(Public *i) : Base(i)
     {
         self().style().load(App::packageLoader().package("net.dengine.stdlib.gui"));
@@ -36,17 +38,38 @@ ShellWindowSystem::ShellWindowSystem() : d(new Impl(this))
     setAppWindowSystem(*this);
 }
 
-LinkWindow &ShellWindowSystem::main()
+LinkWindow &ShellWindowSystem::main() // static
 {
     return WindowSystem::main().as<LinkWindow>();
 }
 
+LinkWindow *ShellWindowSystem::focusedWindow() // static
+{
+    auto &sys = static_cast<ShellWindowSystem &>(WindowSystem::get());
+    return maybeAs<LinkWindow>(sys.find(sys.d->focused));
+}
+
+void ShellWindowSystem::setFocusedWindow(const String &id)
+{
+    d->focused = id;
+}
+
 bool ShellWindowSystem::rootProcessEvent(const Event &event)
 {
-    return main().root().processEvent(event);
+    if (auto *win = focusedWindow())
+    {
+        return win->root().processEvent(event);
+    }
+    return false;
 }
 
 void ShellWindowSystem::rootUpdate()
 {
-    main().root().update();
+    forAll([](BaseWindow *win) {
+        if (auto *linkWindow = maybeAs<LinkWindow>(win))
+        {
+            linkWindow->root().update();
+        }
+        return LoopContinue;
+    });
 }
