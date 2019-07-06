@@ -53,8 +53,8 @@ public:
     bool handleControlKey(shell::Key key, KeyModifiers const &mods) override;
 
     // IPersistent.
-    void operator >> (PersistentState &toState) const override;
-    void operator << (PersistentState const &fromState) override;
+    void operator>>(PersistentState &toState) const override;
+    void operator<<(PersistentState const &fromState) override;
 
     /**
      * Moves the current contents of the command line to the history. The

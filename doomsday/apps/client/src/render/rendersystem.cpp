@@ -220,16 +220,21 @@ DE_PIMPL(RenderSystem)
     {
         LOG_AS("RenderSystem");
 
+        auto &pkgLoader = App::packageLoader();
+
         ModelRenderer::initBindings(binder, renderModule);
-        ClientApp::scriptSystem().addNativeModule("Render", renderModule);
+        ClientApp::scriptSystem().addNativeModule("Render", renderModule);                
+
+        // General-purpose libgui shaders.
+        loadShaders(FS::locate<const File>("/packs/net.dengine.stdlib.gui/shaders.dei"));
 
         // Packages are checked for shaders when (un)loaded.
-        App::packageLoader().audienceForLoad() += this;
-        App::packageLoader().audienceForUnload() += this;
+        pkgLoader.audienceForLoad() += this;
+        pkgLoader.audienceForUnload() += this;
 
         // Load the required packages.
-        App::packageLoader().load("net.dengine.client.renderer");
-        App::packageLoader().load("net.dengine.client.renderer.lensflares");
+        pkgLoader.load("net.dengine.client.renderer");
+        pkgLoader.load("net.dengine.client.renderer.lensflares");
 
         loadImages();
 
@@ -338,12 +343,6 @@ DE_PIMPL(RenderSystem)
 
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
     }
-
-    //~Impl()
-    //{
-        //App::packageLoader().audienceForLoad()   -= this;
-        //App::packageLoader().audienceForUnload() -= this;
-    //}
 
     void packageLoaded(String const &packageId)
     {
