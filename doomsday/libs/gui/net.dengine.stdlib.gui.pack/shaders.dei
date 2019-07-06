@@ -12,9 +12,7 @@
 @include <shaders/generic.dei>
 @include <shaders/blur.dei>
 
-ui {
-
-shader guiwidget.batch {
+shader ui.guiwidget.batch {
     vertex = "
         uniform mat4  uMvpMatrix;
         uniform vec4  uColor[DE_MAX_BATCH_UNIFORMS];
@@ -69,5 +67,3 @@ shader guiwidget.batch {
             out_FragColor *= vColor;
         }"
 }
-
-} # ui
