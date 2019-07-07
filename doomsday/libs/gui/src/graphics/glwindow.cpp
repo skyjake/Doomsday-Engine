@@ -199,15 +199,20 @@ DE_PIMPL(GLWindow)
         /// @todo This is likely points, not pixels.
         debug("[GLWindow] SDL window resize event to %dx%d", w, h);
 
+        checkResize();
+    }
+
+    void checkResize()
+    {
         int pw, ph;
         SDL_GL_GetDrawableSize(window, &pw, &ph);
-        debug("[GLWindow] Drawable size is %dx%d pixels", pw, ph);
 
-        Size pendingSize = Size(pw, ph);
+        const Size pendingSize = Size(pw, ph);
 
         // Only react if this is actually a resize.
         if (currentSize != pendingSize)
         {
+            debug("[GLWindow] Drawable size is %dx%d pixels", pw, ph);
             currentSize = pendingSize;
 
             if (readyNotified)
@@ -223,6 +228,8 @@ DE_PIMPL(GLWindow)
                 self().doneCurrent();
             }
         }
+
+        updatePixelRatio();
     }
 
     void frameWasSwapped()
@@ -737,9 +744,11 @@ void GLWindow::paintGL()
 
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
-    GLBuffer::resetDrawCount();
-
+    d->checkResize();
+    makeCurrent();
     LIBGUI_ASSERT_GL_OK();
+
+    GLBuffer::resetDrawCount();
 
     // Make sure any changes to the state stack are in effect.
     GLState::current().target().glBind();

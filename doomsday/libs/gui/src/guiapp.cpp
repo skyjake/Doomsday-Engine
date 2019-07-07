@@ -216,6 +216,8 @@ void GuiApp::setPixelRatio(float pixelRatio)
 {
     d->windowPixelRatio = pixelRatio;
 
+    NativeFont::setPixelRatio(pixelRatio);
+
     // Apply the overall UI scale factor.
     pixelRatio *= config().getf(VAR_UI_SCALE_FACTOR(), 1.0f);
 
@@ -226,8 +228,6 @@ void GuiApp::setPixelRatio(float pixelRatio)
         d->pixelRatio->set(pixelRatio);
         scriptSystem()["DisplayMode"].set("PIXEL_RATIO", Value::Number(pixelRatio));
     }
-
-    NativeFont::setPixelRatio(pixelRatio);
 }
 
 void GuiApp::setMetadata(const String &orgName,

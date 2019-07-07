@@ -129,7 +129,7 @@ public Font::RichFormat::IStyle
     {
         const Style &st = style();
 
-        gap = rule(gapId).valuei();
+        gap = rule(gapId).valuei();               
 
         // Colors.
         highlightColor = st.colors().color("label.highlight");

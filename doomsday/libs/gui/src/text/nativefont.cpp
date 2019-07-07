@@ -237,7 +237,7 @@ Image NativeFont::rasterize(const String &      text,
 
 void NativeFont::setPixelRatio(float pixelRatio)
 {
-    pNativeFontPixelRatio.setValue(pixelRatio);
+    pNativeFontPixelRatio.setValue(pixelRatio);    
 }
 
 float NativeFont::pixelRatio()

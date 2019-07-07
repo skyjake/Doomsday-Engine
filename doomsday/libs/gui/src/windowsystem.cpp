@@ -70,10 +70,8 @@ DE_PIMPL(WindowSystem)
 
     void windowPixelRatioChanged(GLWindow &win)
     {
-        if (&win == &BaseWindow::getMain())
-        {
-            DE_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
-        }
+        // TODO: Different windows may have different pixel ratios.
+        DE_BASE_GUI_APP->setPixelRatio(float(win.pixelRatio()));
     }
 };
 
