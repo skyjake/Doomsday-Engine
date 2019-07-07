@@ -35,6 +35,9 @@
 #include <de/EventLoop>
 #include <de/Timer>
 #include <de/NativeFile>
+#include <de/LogWidget>
+#include <de/CommandWidget>
+#include <de/StyledLogSinkFormatter>
 
 //#include <QCloseEvent>
 //#include <QDebug>
@@ -59,14 +62,24 @@
 using namespace de;
 using namespace de::shell;
 
-static String statusText(const String &txt)
+//static String statusText(const String &txt)
+//{
+//#ifdef MACOSX
+//    return "<small>" + txt + "</small>";
+//#else
+//    return txt;
+//#endif
+//}
+
+class ServerCommandWidget : public CommandWidget
 {
-#ifdef MACOSX
-    return "<small>" + txt + "</small>";
-#else
-    return txt;
-#endif
-}
+public:
+    ServerCommandWidget()
+    {}
+
+    bool isAcceptedAsCommand(const String &) override { return true; }
+    void executeCommand(const String &) override {}
+};
 
 DE_PIMPL(LinkWindow)
 , DE_OBSERVES(shell::CommandLineWidget, Command)
@@ -85,13 +98,17 @@ DE_PIMPL(LinkWindow)
 //    QToolButton *optionsButton;
 //    QToolButton *consoleButton;
 //    QStackedWidget *stack;
-//    QWidget *newLocalServerPage;
+    GuiWidget *newLocalServerPage;
+    GuiWidget *pageContent;
+    List<GuiWidget *> pages;
     StatusWidget *status;
     OptionsPage *options;
-//    ConsolePage *console;
-//    QLabel *gameStatus;
-//    QLabel *timeCounter;
-//    QLabel *currentHost;
+    StyledLogSinkFormatter logFormatter{LogEntry::Styled | LogEntry::OmitLevel};
+    de::LogWidget *logWidget;
+    ServerCommandWidget *commandWidget;
+    LabelWidget *gameStatus;
+    LabelWidget *timeCounter;
+    LabelWidget *currentHost;
 //    QAction *stopAction;
 #ifdef MENU_IN_LINK_WINDOW
 //    QAction *disconnectAction;
@@ -122,6 +139,48 @@ DE_PIMPL(LinkWindow)
     {
         // Make sure the local sink is removed.
 //        LogBuffer::get().removeSink(console->log().logSink());
+    }
+
+    void createWidgets()
+    {
+        // Toolbar + menu bar.
+
+        // Pages.
+        pageContent = new GuiWidget;
+        pageContent->set(GuiWidget::Background());
+        pageContent->rule().setRect(root.viewRule());
+        root.add(pageContent);
+
+        logWidget = new de::LogWidget;
+        logFormatter.setShowMetadata(true);
+        logWidget->setLogFormatter(logFormatter);
+        pageContent->add(logWidget);
+
+        commandWidget = new ServerCommandWidget;
+        commandWidget->rule()
+                .setInput(Rule::Left, root.viewLeft())
+                .setInput(Rule::Right, root.viewRight())
+                .setInput(Rule::Bottom, pageContent->rule().bottom());
+        pageContent->add(commandWidget);
+        commandWidget->setEmptyContentHint("Enter commands");
+
+        logWidget->rule()
+                .setInput(Rule::Left, root.viewLeft())
+                .setInput(Rule::Right, root.viewRight())
+                .setInput(Rule::Top, root.viewTop())
+                .setInput(Rule::Bottom, commandWidget->rule().top());
+
+        auto *test = new ButtonWidget;
+        test->setText("Press This");
+        test->setSizePolicy(ui::Expand, ui::Expand);
+        test->rule()
+                .setMidAnchorX(root.viewRule().midX())
+                .setMidAnchorY(root.viewRule().midY());
+        root.add(test);
+
+        LogBuffer::get().addSink(logWidget->logSink());
+
+        // Status bar.
     }
 
     void updateStyle()
@@ -260,6 +319,17 @@ LinkWindow::LinkWindow(const String &id)
     : BaseWindow(id)
     , d(new Impl(*this))
 {
+    d->createWidgets();
+
+    audienceForResize() += [this]()
+    {
+        // Resize the root.
+        const Size size = pixelSize();
+        LOG_MSG("Window resized to %s pixels") << size.asText();
+
+        d->root.setViewSize(size);
+    };
+
 #if 0
     setWindowIcon(QIcon(":/images/shell.png"));
 
@@ -405,7 +475,12 @@ de::Vec2f LinkWindow::windowContentSize() const
 
 void LinkWindow::drawWindowContent()
 {
-    GLState::current().target().clear(GLFramebuffer::ColorDepth);
+    auto &gls = GLState::current();
+    const Size size = pixelSize();
+
+    gls.target().clear(GLFramebuffer::ColorDepth);
+    gls.setViewport(Rectangleui(0, 0, size.x, size.y));
+
     d->root.draw();
 }
 

@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
         GuiShellApp app(makeList(argc, argv));
         app.initialize();
         auto *win = app.newOrReusedConnectionWindow();
-        GLWindow::setMain(win);
+        GLWindow::setMain(win); // TODO: remove me (window doesn't appear??)
         win->show();
         result = app.exec();
     }

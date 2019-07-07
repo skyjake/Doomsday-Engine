@@ -186,6 +186,8 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 //        }
     }
 
+    d->winSys->setFocusedWindow(found->id());
+
 //    d->windows.prepend(found);
 //    found->show();
     return found;
