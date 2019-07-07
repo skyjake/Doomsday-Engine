@@ -18,14 +18,10 @@
 
 #include "linkwindow.h"
 #include "statuswidget.h"
-//#include "qtrootwidget.h"
-//#include "qttextcanvas.h"
 #include "guishellapp.h"
 #include "optionspage.h"
-//#include "consolepage.h"
 #include "preferences.h"
 #include "errorlogdialog.h"
-//#include "utils.h"
 
 #include <de/LogBuffer>
 #include <de/comms/LogWidget>
@@ -37,30 +33,14 @@
 #include <de/NativeFile>
 #include <de/LogWidget>
 #include <de/CommandWidget>
+#include <de/SequentialLayout>
 #include <de/StyledLogSinkFormatter>
-
-//#include <QCloseEvent>
-//#include <QDebug>
-//#include <QFile>
-//#include <QHBoxLayout>
-//#include <QInputDialog>
-//#include <QLabel>
-//#include <QMenuBar>
-//#include <QMessageBox>
-//#include <QPushButton>
-//#include <QScrollBar>
-//#include <QStackedWidget>
-//#include <QStatusBar>
-//#include <QTimer>
-//#include <QToolBar>
-//#include <QToolButton>
 
 //#ifndef MACOSX
 //#  define MENU_IN_LINK_WINDOW
 //#endif
 
 using namespace de;
-using namespace de::shell;
 
 //static String statusText(const String &txt)
 //{
@@ -87,24 +67,23 @@ DE_PIMPL(LinkWindow)
 {
     GuiRootWidget root;
     LogBuffer logBuffer;
-    Link *link;
+    shell::Link *link;
     duint16 waitingForLocalPort = 0;
     Time startedWaitingAt;
     Timer waitTimeout;
     String linkName;
     NativePath errorLog;
-//    QToolBar *tools;
-//    QToolButton *statusButton;
-//    QToolButton *optionsButton;
-//    QToolButton *consoleButton;
-//    QStackedWidget *stack;
+    GuiWidget *tools;
+    ButtonWidget *statusButton;
+    ButtonWidget *optionsButton;
+    ButtonWidget *consoleButton;
     GuiWidget *newLocalServerPage;
-    GuiWidget *pageContent;
+    GuiWidget *consolePage;
     List<GuiWidget *> pages;
     StatusWidget *status;
     OptionsPage *options;
     StyledLogSinkFormatter logFormatter{LogEntry::Styled | LogEntry::OmitLevel};
-    de::LogWidget *logWidget;
+    LogWidget *logWidget;
     ServerCommandWidget *commandWidget;
     LabelWidget *gameStatus;
     LabelWidget *timeCounter;
@@ -138,47 +117,82 @@ DE_PIMPL(LinkWindow)
     ~Impl() override
     {
         // Make sure the local sink is removed.
-//        LogBuffer::get().removeSink(console->log().logSink());
+        LogBuffer::get().removeSink(logWidget->logSink());
+    }
+
+    ButtonWidget *createToolbarButton(const String &label)
+    {
+        auto *button = new ButtonWidget;
+        button->setText(label);
+        button->setTextAlignment(ui::AlignRight);
+        button->setOverrideImageSize(Style::get().fonts().font("default").height());
+        button->setSizePolicy(ui::Expand, ui::Expand);
+        return button;
     }
 
     void createWidgets()
     {
         // Toolbar + menu bar.
+        {
+            tools = new GuiWidget;
+            root.add(tools);
+
+            statusButton = createToolbarButton("Status");
+            statusButton->setStyleImage("refresh");
+            tools->add(statusButton);
+
+            optionsButton = createToolbarButton("Options");
+            optionsButton->setStyleImage("gear");
+            tools->add(optionsButton);
+
+            consoleButton = createToolbarButton("Console");
+            consoleButton->setStyleImage("gauge");
+            tools->add(consoleButton);
+
+            tools->rule()
+                    .setInput(Rule::Left, root.viewLeft())
+                    .setInput(Rule::Right, root.viewRight())
+                    .setInput(Rule::Top, root.viewTop())
+                    .setInput(Rule::Height, statusButton->rule().height());
+
+            SequentialLayout layout(tools->rule().left(), tools->rule().top(), ui::Right);
+            layout << *statusButton << *optionsButton << *consoleButton;
+        }
 
         // Pages.
-        pageContent = new GuiWidget;
-        pageContent->set(GuiWidget::Background());
-        pageContent->rule().setRect(root.viewRule());
-        root.add(pageContent);
+        consolePage = new GuiWidget;
+        consolePage->set(GuiWidget::Background());
+        consolePage->rule()
+                .setRect(root.viewRule())
+                .setInput(Rule::Top, tools->rule().bottom());
+        root.add(consolePage);
+        pages.push_back(consolePage);
 
-        logWidget = new de::LogWidget;
-        logFormatter.setShowMetadata(true);
-        logWidget->setLogFormatter(logFormatter);
-        pageContent->add(logWidget);
+        // Console page.
+        {
+            const auto &pageRule = consolePage->rule();
 
-        commandWidget = new ServerCommandWidget;
-        commandWidget->rule()
-                .setInput(Rule::Left, root.viewLeft())
-                .setInput(Rule::Right, root.viewRight())
-                .setInput(Rule::Bottom, pageContent->rule().bottom());
-        pageContent->add(commandWidget);
-        commandWidget->setEmptyContentHint("Enter commands");
+            logWidget = new LogWidget;
+            logFormatter.setShowMetadata(true);
+            logWidget->setLogFormatter(logFormatter);
+            consolePage->add(logWidget);
 
-        logWidget->rule()
-                .setInput(Rule::Left, root.viewLeft())
-                .setInput(Rule::Right, root.viewRight())
-                .setInput(Rule::Top, root.viewTop())
-                .setInput(Rule::Bottom, commandWidget->rule().top());
+            commandWidget = new ServerCommandWidget;
+            commandWidget->rule()
+                    .setInput(Rule::Left, pageRule.left())
+                    .setInput(Rule::Right, pageRule.right())
+                    .setInput(Rule::Bottom, pageRule.bottom());
+            consolePage->add(commandWidget);
+            commandWidget->setEmptyContentHint("Enter commands");
 
-        auto *test = new ButtonWidget;
-        test->setText("Press This");
-        test->setSizePolicy(ui::Expand, ui::Expand);
-        test->rule()
-                .setMidAnchorX(root.viewRule().midX())
-                .setMidAnchorY(root.viewRule().midY());
-        root.add(test);
+            logWidget->rule()
+                    .setInput(Rule::Left, pageRule.left())
+                    .setInput(Rule::Right, pageRule.right())
+                    .setInput(Rule::Top, pageRule.top())
+                    .setInput(Rule::Bottom, commandWidget->rule().top());
 
-        LogBuffer::get().addSink(logWidget->logSink());
+            LogBuffer::get().addSink(logWidget->logSink());
+        }
 
         // Status bar.
     }
@@ -279,7 +293,7 @@ DE_PIMPL(LinkWindow)
 //        return tb;
 //    }
 
-    void updateStatusBarWithGameState(de::Record &rec)
+    void updateStatusBarWithGameState(Record &rec)
     {
         String gameMode = rec["mode"].value().asText();
         String mapId    = rec["mapId"].value().asText();
@@ -467,7 +481,7 @@ GuiRootWidget &LinkWindow::root()
     return d->root;
 }
 
-de::Vec2f LinkWindow::windowContentSize() const
+Vec2f LinkWindow::windowContentSize() const
 {
     // Current root widget size.
     return d->root.viewRule().size();
@@ -491,7 +505,7 @@ void LinkWindow::drawWindowContent()
 
 bool LinkWindow::isConnected() const
 {
-    return d->link && d->link->status() != Link::Disconnected;
+    return d->link && d->link->status() != shell::Link::Disconnected;
 }
 
 #if 0
@@ -558,7 +572,7 @@ void LinkWindow::waitForLocalConnection(duint16 localPort,
 //    d->checkCurrentTab(true);
 }
 
-void LinkWindow::openConnection(Link *link, const String& name)
+void LinkWindow::openConnection(shell::Link *link, const String& name)
 {
 //    closeConnection();
 
@@ -656,6 +670,8 @@ void LinkWindow::updateWhenConnected()
 
 void LinkWindow::handleIncomingPackets()
 {
+    using namespace de::shell;
+
     for (;;)
     {
         DE_ASSERT(d->link != 0);
@@ -843,7 +859,7 @@ void LinkWindow::checkFoundServers()
         {
             // This is the one!
             const Address dest = addr;
-            Loop::timer(0.100, [this, dest]() { openConnection(new Link(dest)); });
+            Loop::timer(0.100, [this, dest]() { openConnection(new shell::Link(dest)); });
             d->waitingForLocalPort = 0;
         }
     }
