@@ -57,7 +57,6 @@
 #include "ui/inputsystem.h"
 #include "ui/nativemenu.h"
 #include "ui/progress.h"
-#include "ui/styledlogsinkformatter.h"
 #include "ui/sys_input.h"
 #include "ui/viewcompositor.h"
 #include "ui/widgets/taskbarwidget.h"
@@ -88,6 +87,7 @@
 #include <de/LogSink>
 #include <de/NativeFont>
 #include <de/ScriptSystem>
+#include <de/StyledLogSinkFormatter>
 #include <de/TextValue>
 #include <de/VRConfig>
 

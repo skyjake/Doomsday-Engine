@@ -17,9 +17,9 @@
  */
 
 #include "ui/widgets/privilegedlogwidget.h"
-#include "ui/styledlogsinkformatter.h"
-#include <de/LogWidget>
 #include <de/ButtonWidget>
+#include <de/LogWidget>
+#include <de/StyledLogSinkFormatter>
 
 using namespace de;
 

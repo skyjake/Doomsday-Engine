@@ -22,7 +22,6 @@
 #include "ui/widgets/inputbindingwidget.h"
 #include "ui/dialogs/logsettingsdialog.h"
 #include "ui/clientwindow.h"
-#include "ui/styledlogsinkformatter.h"
 
 #include <de/AnimationRule>
 #include <de/App>
@@ -37,6 +36,7 @@
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/ScriptCommandWidget>
+#include <de/StyledLogSinkFormatter>
 #include <de/ToggleWidget>
 #include <de/ui/SubwidgetItem>
 #include <de/ui/VariableToggleItem>
