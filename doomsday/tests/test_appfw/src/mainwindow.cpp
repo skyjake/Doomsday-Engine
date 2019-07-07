@@ -21,6 +21,7 @@
 #include "approotwidget.h"
 #include "globalshortcuts.h"
 
+#include <de/ButtonWidget>
 #include <de/CommandLine>
 #include <de/CompositorWidget>
 #include <de/GLState>
@@ -112,6 +113,14 @@ DE_PIMPL(MainWindow)
                 .setInput(Rule::Top,   label->rule().top())
                 .setSize(label->rule().width(), label->rule().height());
         compositor->add(label2);
+
+        ButtonWidget *button = new ButtonWidget;
+        button->setSizePolicy(ui::Expand, ui::Expand);
+        button->setText("Press Me");
+        button->rule()
+                .setMidAnchorX(test->rule().midX())
+                .setInput(Rule::Bottom, test->rule().bottom());
+        compositor->add(button);
 
         // Mouse cursor.
         cursor = new LabelWidget;
