@@ -147,22 +147,9 @@ DE_PIMPL(LinkWindow)
 
             pageTabs->rule().setRect(tools->rule());
 
-//            statusButton = createToolbarButton("Status");
-//            statusButton->setStyleImage("refresh");
-//            tools->add(statusButton);
-
-//            optionsButton = createToolbarButton("Options");
-//            optionsButton->setStyleImage("gear");
-//            tools->add(optionsButton);
-
-//            consoleButton = createToolbarButton("Console");
-//            consoleButton->setStyleImage("gauge");
-//            tools->add(consoleButton);
-
             pageTabs->items() << new TabItem(style.images().image("refresh"), "Status")
                               << new TabItem(style.images().image("gear"), "Options")
                               << new TabItem(style.images().image("gauge"), "Console");
-
             pageTabs->setCurrent(0);
 
             tools->rule()
@@ -174,12 +161,8 @@ DE_PIMPL(LinkWindow)
 
         // Pages.
         consolePage = new GuiWidget;
-        consolePage->set(GuiWidget::Background());
-        consolePage->rule()
-                .setRect(root.viewRule())
-                .setInput(Rule::Top, tools->rule().bottom());
         root.add(consolePage);
-        pages.push_back(consolePage);
+        pages << consolePage;
 
         // Console page.
         {
@@ -205,6 +188,21 @@ DE_PIMPL(LinkWindow)
                     .setInput(Rule::Bottom, commandWidget->rule().top());
 
             LogBuffer::get().addSink(logWidget->logSink());
+        }
+
+        // Page for quickly starting a new local server.
+        {
+            newLocalServerPage = new GuiWidget;
+            root.add(newLocalServerPage);
+            pages << newLocalServerPage;
+
+            auto *newButton = new ButtonWidget;
+            newLocalServerPage->add(newButton);
+            newButton->setSizePolicy(ui::Expand, ui::Expand);
+            newButton->setText("New Local Server...");
+            newButton->rule().setCentered(newLocalServerPage->rule());
+
+            newButton->audienceForPress() += []() { GuiShellApp::app().startLocalServer(); };
         }
 
         auto *statusBar = new GuiWidget;
@@ -252,7 +250,21 @@ DE_PIMPL(LinkWindow)
 
         for (auto *page : pages)
         {
-            page->rule().setInput(Rule::Bottom, statusBar->rule().top());
+            page->set(GuiWidget::Background());
+            page->rule()
+                    .setRect(root.viewRule())
+                    .setInput(Rule::Top, tools->rule().bottom())
+                    .setInput(Rule::Bottom, statusBar->rule().top());
+        }
+
+        setCurrentPage(1);
+    }
+
+    void setCurrentPage(ui::DataPos page)
+    {
+        for (ui::DataPos i = 0; i < pages.size(); ++i)
+        {
+            pages[i]->show(i == page);
         }
     }
 
@@ -440,21 +452,6 @@ LinkWindow::LinkWindow(const String &id)
 #endif
 
     d->stack = new QStackedWidget;
-
-    // Page for quickly starting a new local server.
-    d->newLocalServerPage = new QWidget;
-    d->stack->addWidget(d->newLocalServerPage);
-    {
-        auto *newButton = new QPushButton(tr("New Local Server..."));
-        newButton->setMinimumWidth(200);
-        connect(newButton, SIGNAL(pressed()), &GuiShellApp::app(), SLOT(startLocalServer()));
-
-        auto *layout = new QVBoxLayout;
-        layout->addStretch(1);
-        layout->addWidget(newButton, 0, Qt::AlignCenter);
-        layout->addStretch(1);
-        d->newLocalServerPage->setLayout(layout);
-    }
 
     // Status page.
     d->status = new StatusWidget;
