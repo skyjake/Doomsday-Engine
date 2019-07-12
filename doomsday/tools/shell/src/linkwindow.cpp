@@ -35,6 +35,7 @@
 #include <de/CommandWidget>
 #include <de/SequentialLayout>
 #include <de/StyledLogSinkFormatter>
+#include <de/TabWidget>
 
 //#ifndef MACOSX
 //#  define MENU_IN_LINK_WINDOW
@@ -74,9 +75,10 @@ DE_PIMPL(LinkWindow)
     String linkName;
     NativePath errorLog;
     GuiWidget *tools;
-    ButtonWidget *statusButton;
-    ButtonWidget *optionsButton;
-    ButtonWidget *consoleButton;
+//    ButtonWidget *statusButton;
+//    ButtonWidget *optionsButton;
+//    ButtonWidget *consoleButton;
+    TabWidget *pageTabs;
     GuiWidget *newLocalServerPage;
     GuiWidget *consolePage;
     List<GuiWidget *> pages;
@@ -85,6 +87,7 @@ DE_PIMPL(LinkWindow)
     StyledLogSinkFormatter logFormatter{LogEntry::Styled | LogEntry::OmitLevel};
     LogWidget *logWidget;
     ServerCommandWidget *commandWidget;
+    LabelWidget *statusMessage;
     LabelWidget *gameStatus;
     LabelWidget *timeCounter;
     LabelWidget *currentHost;
@@ -132,31 +135,41 @@ DE_PIMPL(LinkWindow)
 
     void createWidgets()
     {
+        auto &style = Style::get();
+
         // Toolbar + menu bar.
         {
             tools = new GuiWidget;
             root.add(tools);
 
-            statusButton = createToolbarButton("Status");
-            statusButton->setStyleImage("refresh");
-            tools->add(statusButton);
+            pageTabs = new TabWidget;
+            tools->add(pageTabs);
 
-            optionsButton = createToolbarButton("Options");
-            optionsButton->setStyleImage("gear");
-            tools->add(optionsButton);
+            pageTabs->rule().setRect(tools->rule());
 
-            consoleButton = createToolbarButton("Console");
-            consoleButton->setStyleImage("gauge");
-            tools->add(consoleButton);
+//            statusButton = createToolbarButton("Status");
+//            statusButton->setStyleImage("refresh");
+//            tools->add(statusButton);
+
+//            optionsButton = createToolbarButton("Options");
+//            optionsButton->setStyleImage("gear");
+//            tools->add(optionsButton);
+
+//            consoleButton = createToolbarButton("Console");
+//            consoleButton->setStyleImage("gauge");
+//            tools->add(consoleButton);
+
+            pageTabs->items() << new TabItem(style.images().image("refresh"), "Status")
+                              << new TabItem(style.images().image("gear"), "Options")
+                              << new TabItem(style.images().image("gauge"), "Console");
+
+            pageTabs->setCurrent(0);
 
             tools->rule()
                     .setInput(Rule::Left, root.viewLeft())
                     .setInput(Rule::Right, root.viewRight())
                     .setInput(Rule::Top, root.viewTop())
-                    .setInput(Rule::Height, statusButton->rule().height());
-
-            SequentialLayout layout(tools->rule().left(), tools->rule().top(), ui::Right);
-            layout << *statusButton << *optionsButton << *consoleButton;
+                    .setInput(Rule::Height, pageTabs->rule().height());
         }
 
         // Pages.
@@ -194,7 +207,53 @@ DE_PIMPL(LinkWindow)
             LogBuffer::get().addSink(logWidget->logSink());
         }
 
+        auto *statusBar = new GuiWidget;
+
         // Status bar.
+        {
+            root.add(statusBar);
+
+            statusMessage = new LabelWidget;
+            gameStatus    = new LabelWidget;
+            timeCounter   = new LabelWidget;
+            currentHost   = new LabelWidget;
+
+            AutoRef<Rule> statusHeight{style.fonts().font("default").height() +
+                                      statusMessage->margins().height()};
+
+            timeCounter->setFont("monospace");
+            timeCounter->setText("0:00:00");
+            timeCounter->margins().setTop(style.rules().rule("gap") +
+                                          style.fonts().font("default").ascent() -
+                                          style.fonts().font("monospace").ascent());
+            timeCounter->set(GuiWidget::Background(Vec4f(1, 0, 0, 1)));
+
+            statusMessage->setText("Status message");
+            statusMessage->set(GuiWidget::Background(Vec4f(0, 0, 1, 1)));
+            gameStatus->setText("game");
+            currentHost->setText("localhost");
+
+            SequentialLayout layout(statusBar->rule().left(), statusBar->rule().top(), ui::Right);
+
+            for (auto *label : {statusMessage, gameStatus, timeCounter, currentHost})
+            {
+                label->setSizePolicy(ui::Expand, ui::Fixed);
+                label->rule().setInput(Rule::Height, statusHeight);
+                statusBar->add(label);
+                layout << *label;
+            }
+
+            statusBar->rule()
+                    .setInput(Rule::Left, root.viewLeft())
+                    .setInput(Rule::Right, root.viewRight())
+                    .setInput(Rule::Bottom, root.viewBottom())
+                    .setInput(Rule::Height, statusHeight);
+        }
+
+        for (auto *page : pages)
+        {
+            page->rule().setInput(Rule::Bottom, statusBar->rule().top());
+        }
     }
 
     void updateStyle()
@@ -213,37 +272,37 @@ DE_PIMPL(LinkWindow)
 
     void updateCurrentHost()
     {
-//        String txt;
-//        if (link)
-//        {
-//            if (self().isConnected() && !link->address().isNull())
-//            {
-//                txt = tr("<b>%1</b>:%2")
-//                        .arg(link->address().isLocal()? "localhost"
-//                                                      : QString::fromUtf8(link->address().hostName()))
-//                        .arg(link->address().port());
-//            }
-//            else if (self().isConnected() && link->address().isNull())
-//            {
-//                txt = tr("Looking up host...");
-//            }
-//        }
-//        currentHost->setText(statusText(txt));
+        String txt;
+        if (link)
+        {
+            if (self().isConnected() && !link->address().isNull())
+            {
+                txt = Stringf(_E(b) "%s" _E(.) ":%ud",
+                              link->address().isLocal() ? "localhost"
+                                                        : link->address().hostName().c_str(),
+                              link->address().port());
+            }
+            else if (self().isConnected() && link->address().isNull())
+            {
+                txt = "Looking up host...";
+            }
+        }
+        currentHost->setText(txt);
     }
 
     void disconnected()
     {
-//        self().setTitle(tr("Disconnected"));
+        self().setTitle("Disconnected");
 //        console->root().setOverlaidMessage(tr("Disconnected"));
-//        self().statusBar()->clearMessage();
+        statusMessage->setText("");
 //        stopAction->setDisabled(true);
 //#ifdef MENU_IN_LINK_WINDOW
 //        disconnectAction->setDisabled(true);
 //#endif
 
-//        gameStatus->clear();
+        gameStatus->setText("");
 //        status->linkDisconnected();
-//        updateCurrentHost();
+        updateCurrentHost();
 //        updateStyle();
 
 //        checkCurrentTab(false);
@@ -303,7 +362,7 @@ DE_PIMPL(LinkWindow)
         if (!mapId.isEmpty()) msg += " " + mapId;
         if (!rules.isEmpty()) msg += " (" + rules + ")";
 
-//        gameStatus->setText(statusText(msg));
+        gameStatus->setText(msg);
     }
 
 //    void checkCurrentTab(bool connected)
@@ -703,7 +762,7 @@ void LinkWindow::handleIncomingPackets()
 
         case shell::Protocol::ConsoleLexicon:
             // Terms for auto-completion.
-//            d->console->cli().setLexicon(protocol.lexicon(*packet));
+            d->commandWidget->setLexicon(protocol.lexicon(*packet));
             debug("TODO: received console lexicon");
             break;
 
