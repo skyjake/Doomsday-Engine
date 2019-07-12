@@ -84,6 +84,13 @@ public:
      */
     RuleRectangle &setMidAnchorY(Rule const &middle);
 
+    RuleRectangle &setCentered(const RuleRectangle &rect)
+    {
+        setMidAnchorX(rect.midX());
+        setMidAnchorY(rect.midY());
+        return *this;
+    }
+
     /**
      * Sets the outputs of another rule rectangle as the inputs of this one. Uses the
      * edge rules of @a rect; to later override width or height, make sure that one of
