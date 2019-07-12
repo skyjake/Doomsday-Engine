@@ -73,6 +73,7 @@ DE_GUI_PIMPL(TabWidget)
         ButtonWidget &btn = widget.as<ButtonWidget>();
         btn.setSizePolicy(ui::Expand, ui::Expand);
         btn.setFont("tab.label");
+        btn.setOverrideImageSize(btn.font().height());
         btn.margins().set("dialog.gap");
         btn.set(Background());
         btn.setBehavior(Focusable, UnsetFlags);
