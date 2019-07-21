@@ -663,7 +663,7 @@ static void drawSinglePlayerStats()
 
     if(sounds < 1 && interTime >= 30)
     {
-        S_LocalSound(SFX_DORCLS, NULL);
+        S_LocalSound(SFX_DORCLS, nullptr);
         sounds++;
     }
 
@@ -687,7 +687,7 @@ static void drawSinglePlayerStats()
 
     if(sounds < 2 && interTime >= 60)
     {
-        S_LocalSound(SFX_DORCLS, NULL);
+        S_LocalSound(SFX_DORCLS, nullptr);
         sounds++;
     }
 
@@ -709,7 +709,7 @@ static void drawSinglePlayerStats()
 
     if(sounds < 3 && interTime >= 90)
     {
-        S_LocalSound(SFX_DORCLS, NULL);
+        S_LocalSound(SFX_DORCLS, nullptr);
         sounds++;
     }
 
@@ -733,23 +733,25 @@ static void drawSinglePlayerStats()
 
     if(sounds < 4 && interTime >= 150)
     {
-        S_LocalSound(SFX_DORCLS, NULL);
+        S_LocalSound(SFX_DORCLS, nullptr);
         sounds++;
     }
 
-    if(gameMode != heretic_extended || haveLocationMap)
+    // Map play time.
     {
         DGL_Enable(DGL_TEXTURE_2D);
 
         FR_SetFont(FID(GF_FONTB));
         FR_SetColorAndAlpha(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1);
-        FR_DrawTextXY3(labelString("TIME"), 85, 160, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
+        FR_DrawTextXY3(labelString("TIME"), 50, 140, ALIGN_TOPLEFT, DTF_ONLY_SHADOW);
 
-        drawTime(Vector2i(284, 160), hours, minutes, seconds, Vector4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1));
+        drawTime(Vector2i(284, 140), hours, minutes, seconds, Vector4f(defFontRGB[0], defFontRGB[1], defFontRGB[2], 1));
 
         DGL_Disable(DGL_TEXTURE_2D);
     }
-    else
+
+    // Without a location map, show at least here on the stats screen what the next map will be.
+    if (!haveLocationMap && interTime > 220)
     {
         if (!wbs->nextMap.isEmpty())
         {
@@ -938,7 +940,7 @@ void IN_Ticker()
         {
             inState      = 2;
             advanceState = false;
-            S_StartSound(SFX_DORCLS, NULL);
+            S_StartSound(SFX_DORCLS, nullptr);
             NetSv_Intermission(IMF_STATE, inState, 0);
             return;
         }
@@ -946,7 +948,7 @@ void IN_Ticker()
         endIntermissionGoToNextLevel();
         stateCounter = 10;
         advanceState = false;
-        S_StartSound(SFX_DORCLS, NULL);
+        S_StartSound(SFX_DORCLS, nullptr);
         NetSv_Intermission(IMF_STATE, inState, 0);
     }
 }
@@ -987,7 +989,7 @@ void IN_Drawer()
 
     if(oldInterState != 2 && inState == 2)
     {
-        S_LocalSound(SFX_PSTOP, NULL);
+        S_LocalSound(SFX_PSTOP, nullptr);
     }
 
     if(inState != -1)
@@ -1075,7 +1077,7 @@ static void initVariables(wbstartstruct_t const &wbstartstruct)
     advanceState    = false;
     interTime       = 0;
     oldInterTime    = 0;
-    haveLocationMap = locationsForEpisode(gfw_Session()->episodeId()) != 0;
+    haveLocationMap = locationsForEpisode(gfw_Session()->episodeId()) != nullptr;
 }
 
 void IN_Begin(wbstartstruct_t const &wbstartstruct)
