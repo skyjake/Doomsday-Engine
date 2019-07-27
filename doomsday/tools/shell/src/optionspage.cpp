@@ -17,17 +17,8 @@
  */
 
 #include "optionspage.h"
-//#include "utils.h"
 #include <de/Hash>
 #include <de/comms/DoomsdayInfo>
-
-//#include <QCheckBox>
-//#include <QComboBox>
-//#include <QDialogButtonBox>
-//#include <QFormLayout>
-//#include <QLineEdit>
-//#include <QPushButton>
-//#include <QRegularExpression>
 
 using namespace de;
 
