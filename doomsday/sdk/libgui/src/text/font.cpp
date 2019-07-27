@@ -25,7 +25,7 @@
 #include <QPainter>
 #include <QThreadStorage>
 
-#if defined (DENG_IOS) || (defined(MACOSX) && defined(MACOS_10_7))
+#if (defined(MACOSX) && defined(MACOS_10_7)) || defined (DENG_IOS)
 #  include "../src/text/coretextnativefont_macx.h"
 namespace de { typedef CoreTextNativeFont PlatformFont; }
 #else
