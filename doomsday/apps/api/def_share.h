@@ -118,6 +118,7 @@ typedef struct {
 #define MIF_NO_INTERMISSION     0x4  ///< Skip any intermission between maps.
 #define MIF_LIGHTNING           0x8  ///< Lightning is used in the map.
 #define MIF_SPAWN_ALL_FIREMACES 0x10 ///< Heretic: Spawn all firemaces (disable randomness).
+#define MIF_DIM_TORCH           0x20 ///< Heretic: Use the attenuated torch (not fullbright).
 ///@}
 
 #define DDLT_MAX_APARAMS    10

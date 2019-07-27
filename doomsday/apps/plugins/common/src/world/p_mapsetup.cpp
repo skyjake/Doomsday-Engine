@@ -990,6 +990,11 @@ void P_FinalizeMapChange(uri_s const *mapUri_)
 #endif
 #if __JHERETIC__
     P_TurnGizmosAwayFromDoors();
+
+    // Torch rendering mode for the map. By default (vanilla), Heretic has a
+    // fullbright torch.
+    DD_SetInteger(DD_FIXEDCOLORMAP_ATTENUATE,
+                  (gfw_Session()->mapInfo().geti("flags") & MIF_DIM_TORCH) != 0);
 #endif
 }
 
