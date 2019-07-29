@@ -2,7 +2,7 @@
     position: absolute;
     top: 0;
     left: 0;
-    width: 100%;    
+    width: 100%;
     padding: 0.5ex 0;
     background-color: rgba(0, 0, 0, 0.5);
     font-family: "Source Sans Pro", sans-serif;
@@ -20,7 +20,7 @@
     color: white;
 }
 #dengine-topbar ul.site-navigation li {
-    display: inline-block;    
+    display: inline-block;
     margin: 0 0.75ex;
 }
 #dengine-topbar a {

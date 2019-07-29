@@ -1,4 +1,4 @@
-@import url("http://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,700");
+@import url("https://fonts.googleapis.com/css?family=Source+Sans+Pro:300,400,400italic,700");
 @import url("https://dengine.net/theme/stylesheets/topbar.css");
 @import url("https://dengine.net/theme/stylesheets/sitemap.css");
 
@@ -15,8 +15,8 @@ body {
 
 .websymbol {
     font-family: "WebSymbolsRegular";
-    font-weight: normal; 
-    font-style: normal; 
+    font-weight: normal;
+    font-style: normal;
 }
 
 #page-title {
@@ -47,17 +47,17 @@ body {
     margin: 1em auto 0 auto;
 }
 @media only screen and (max-width: 640px) {
-    #content {        
+    #content {
         max-width: none;
         margin: 1em 0 0 0;
     }
 }
 #content a {
-    color: #eb4;    
+    color: #eb4;
     text-decoration: none;
 }
 #content a:hover {
-    color: #fc0;    
+    color: #fc0;
     text-decoration: underline;
 }
 #content a.button {
@@ -101,7 +101,7 @@ body {
     width: 256px;
     height: 256px;
     background-size: 100% 100%;
-} 
+}
 #welcome .intro {
     text-align: left;
     font-size: 120%;
@@ -125,7 +125,7 @@ body {
     color: rgba(220, 255, 240, 0.5);
 }
 #welcome p {
-    margin: 0;    
+    margin: 0;
 }
 #welcome ul.supported-platforms {
     list-style: none;
@@ -152,8 +152,8 @@ body {
     text-transform: uppercase;
     color: white;
     font-weight: bold;
-    font-size: 90%;  
-    margin-right: 1ex;  
+    font-size: 90%;
+    margin-right: 1ex;
 }
 #features article {
     float: right;
@@ -232,7 +232,7 @@ div.block.blog-post {
     margin-bottom: 0;
 }
 .blog-post .post-content {
-    line-height: 1.4;    
+    line-height: 1.4;
 }
 
 #page-content {
@@ -254,7 +254,7 @@ div.block.blog-post {
 div.package-badge {
     background-image: url("https://dengine.net/theme/images/package.png");
     background-repeat: no-repeat;
-    background-size: 32px 32px;    
+    background-size: 32px 32px;
     background-position: left center;
     padding-left: 42px;
 }
@@ -329,5 +329,5 @@ img.distro-icon {
     padding-left: 1em;
     margin-top: 0.5ex;
     margin-bottom: 1em;
-    font-weight: 300;    
+    font-weight: 300;
 }
