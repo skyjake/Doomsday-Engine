@@ -857,16 +857,6 @@ static void maybeAdvanceState()
     }
 }
 
-static void nextIntermissionState()
-{
-    if(inState == 2)
-    {
-        // Prepare for busy mode.
-        BusyMode_FreezeGameForBusyMode();
-    }
-    inState++;
-}
-
 static void endIntermissionGoToNextLevel()
 {
     BusyMode_FreezeGameForBusyMode();
@@ -875,11 +865,11 @@ static void endIntermissionGoToNextLevel()
 
 void IN_Ticker()
 {
-    if(!active) return;
+    if (!active) return;
 
-    if(!IS_CLIENT)
+    if (!IS_CLIENT)
     {
-        if(inState == 3)
+        if (inState == 3)
         {
             tickNoState();
             return;
@@ -888,55 +878,51 @@ void IN_Ticker()
     maybeAdvanceState();
 
     backgroundAnimCounter++;
-
     interTime++;
-    if(oldInterTime < interTime)
-    {
-        nextIntermissionState();
 
-        if(!haveLocationMap && inState >= 1)
+    if (oldInterTime < interTime)
+    {
+        // Only show stats if no location map is available.
+        if (haveLocationMap)
         {
-            // Skip directly to the next level.
-            endIntermissionGoToNextLevel();
+            if (inState == 2)
+            {
+                // Prepare for busy mode.
+                BusyMode_FreezeGameForBusyMode();
+            }
+            inState++;
+        }
+        else
+        {
+            inState = 0;
         }
 
-        switch(inState)
+        switch (inState)
         {
-        case 0:
-            oldInterTime = interTime + 300;
-            if(!haveLocationMap)
-            {
-                oldInterTime = interTime + 1200;
-            }
-            break;
-
-        case 1:
-            oldInterTime = interTime + 200;
-            break;
-
-        case 2:
-            oldInterTime = MAXINT;
-            break;
-
-        case 3:
-            stateCounter = 10;
-            break;
-
-        default:
-            break;
+            case 0:
+                oldInterTime = interTime + 300;
+                if (!haveLocationMap)
+                {
+                    oldInterTime = interTime + 1200;
+                }
+                break;
+            case 1: oldInterTime = interTime + 200; break;
+            case 2: oldInterTime = MAXINT; break;
+            case 3: stateCounter = 10; break;
+            default: break;
         }
     }
 
-    if(advanceState)
+    if (advanceState)
     {
-        if(inState == 0 && interTime < 150)
+        if (inState == 0 && interTime < 150)
         {
             interTime    = 150;
             advanceState = false;
             NetSv_Intermission(IMF_TIME, 0, interTime);
             return;
         }
-        if(inState < 2 && haveLocationMap)
+        if (inState < 2 && haveLocationMap)
         {
             inState      = 2;
             advanceState = false;
