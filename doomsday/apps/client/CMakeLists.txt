@@ -213,11 +213,13 @@ target_link_libraries (client PUBLIC Deng::libappfw Deng::libdoomsday)
 # Deployment ----------------------------------------------------------------------------
 
 if (WIN32 OR APPLE)
-    set_property (TARGET client PROPERTY OUTPUT_NAME "Doomsday")
     set (MACOSX_BUNDLE_BUNDLE_EXECUTABLE "Doomsday")
-    if (NOT IOS)
-        set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
-    endif ()
+    set (MACOSX_BUNDLE_BUNDLE_NAME "net.dengine.doomsday")
+    set (MACOSX_BUNDLE_ICON_FILE "deng.icns")
+    set_target_properties (client PROPERTIES
+        OUTPUT_NAME "Doomsday"
+        MACOSX_BUNDLE_INFO_PLIST MacOSXBundleInfo.plist.in
+    )
 else ()
     set_property (TARGET client PROPERTY OUTPUT_NAME "doomsday")
 endif ()
