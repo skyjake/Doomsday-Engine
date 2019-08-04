@@ -556,7 +556,7 @@ function (deng_add_application target)
     set_property (TARGET ${target} PROPERTY FOLDER Apps)
     if (target MATCHES "test_.*")
         if (APPLE)
-            # Tests should be runnable from distrib/products.
+            # Tests should be runnable from products/.
             set_property (TARGET ${target} APPEND PROPERTY
                 INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_LIB_DIR};${CMAKE_INSTALL_PREFIX}/${DENG_INSTALL_PLUGIN_DIR}"
             )

@@ -38,3 +38,4 @@ precompiled.h.cpp
 *.xcscmblueprint
 .vscode
 compile_commands.json
+/products

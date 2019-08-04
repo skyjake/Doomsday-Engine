@@ -8,7 +8,7 @@ endif ()
 set (_oldPrefix ${CMAKE_INSTALL_PREFIX})
 
 # Install destination. PREFIX can be used to set the location manually.
-# By default we'll use distrib/products as the prefix.
+# By default we'll use products/ as the prefix.
 if (DEFINED PREFIX OR NOT DEFINED DENG_PREFIX_SET)
     if (DEFINED PREFIX)
         get_filename_component (PREFIX "${PREFIX}" ABSOLUTE)
