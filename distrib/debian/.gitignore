@@ -1,9 +1,0 @@
-control
-*.ex
-*.EX
-*.substvars
-*.log
-source
-files
-doomsday
-changelog
