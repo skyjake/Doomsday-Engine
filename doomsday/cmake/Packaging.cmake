@@ -19,7 +19,7 @@ set (CPACK_RPM_EXCLUDE_FROM_AUTO_FILELIST_ADDITION /usr/share/man /usr/share/man
 set (CPACK_RPM_PACKAGE_REQUIRES "qt5-qtbase-gui >= 5.2, qt5-qtx11extras >= 5.2, SDL2 >= 2.0, SDL2_mixer >= 2.0, libXrandr, libXxf86vm, libxcb, glib2, zlib, ncurses-libs, fluidsynth-libs")
 set (CPACK_RPM_PACKAGE_AUTOREQ NO)
 
-set (CPACK_WIX_LICENSE_RTF ${DENG_SOURCE_DIR}/../distrib/win32/license.rtf)
+set (CPACK_WIX_LICENSE_RTF ${DENG_SOURCE_DIR}/build/win32/license.rtf)
 set (CPACK_WIX_PRODUCT_ICON ${DENG_SOURCE_DIR}/apps/client/res/windows/doomsday.ico)
 
 if (DENG_BUILD)
@@ -44,7 +44,7 @@ endif ()
 if (APPLE)
     set (CPACK_GENERATOR DragNDrop)
     set (CPACK_DMG_FORMAT UDZO)
-    set (CPACK_DMG_BACKGROUND_IMAGE "${DENG_SOURCE_DIR}/../distrib/macx/dmg_background.jpg")
+    set (CPACK_DMG_BACKGROUND_IMAGE "${DENG_SOURCE_DIR}/build/macx/dmg_background.jpg")
     set (CPACK_DMG_DS_STORE_SETUP_SCRIPT "${DENG_CMAKE_DIR}/DMGSetup.scpt")
 elseif (UNIX)
     #set (CPACK_GENERATOR RPM;DEB)
@@ -54,8 +54,8 @@ else ()
 	set (CPACK_PACKAGE_NAME "Doomsday ${CPACK_PACKAGE_VERSION_MAJOR}.${CPACK_PACKAGE_VERSION_MINOR}.${CPACK_PACKAGE_VERSION_PATCH}")
     set (CPACK_GENERATOR WIX;ZIP)
 	set (CPACK_PROJECT_CONFIG_FILE ${CMAKE_CURRENT_LIST_DIR}/WIX.cmake)
-    set (CPACK_WIX_UI_DIALOG "${DENG_SOURCE_DIR}/../distrib/win32/installer_dialog.png")
-    set (CPACK_WIX_UI_BANNER "${DENG_SOURCE_DIR}/../distrib/win32/installer_banner.png")
+    set (CPACK_WIX_UI_DIALOG "${DENG_SOURCE_DIR}/build/win32/installer_dialog.png")
+    set (CPACK_WIX_UI_BANNER "${DENG_SOURCE_DIR}/build/win32/installer_banner.png")
 endif ()
 
 # Source packaging.

@@ -5,7 +5,7 @@ project (Tools)
 include (../cmake/Config.cmake)
 
 # Amethyst is expected to go to (e.g.) /usr/local/bin, while the rest
-# goes to distrib/products/. Compile and install it manually beforehand.
+# goes to products/. Compile and install it manually beforehand.
 #
 # add_subdirectory (amethyst)
 
