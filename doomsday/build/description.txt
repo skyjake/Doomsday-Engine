@@ -1,0 +1,6 @@
+The Doomsday Engine is a portable version of the classic first person
+shooters DOOM, Heretic, and Hexen. It lets you enjoy the original games
+using modern technology, including high-resolution OpenGL graphics, 3D
+models, and dynamic lighting effects. Data files from the original games
+are not included; you must acquire a copy of the original games from
+id Software and/or Raven Software.

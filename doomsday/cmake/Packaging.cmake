@@ -6,7 +6,7 @@ set (CPACK_PACKAGE_VERSION_MAJOR ${DENG_VERSION_MAJOR})
 set (CPACK_PACKAGE_VERSION_MINOR ${DENG_VERSION_MINOR})
 
 set (CPACK_PACKAGE_DESCRIPTION_SUMMARY "Doom/Heretic/Hexen port with enhanced graphics")
-set (CPACK_PACKAGE_DESCRIPTION_FILE ${DENG_SOURCE_DIR}/../distrib/description.txt)
+set (CPACK_PACKAGE_DESCRIPTION_FILE ${DENG_SOURCE_DIR}/build/description.txt)
 
 set (CPACK_DEBIAN_PACKAGE_MAINTAINER "Jaakko Keränen (skyjake) <jaakko.keranen@iki.fi>")
 set (CPACK_DEBIAN_PACKAGE_SECTION universe/games)
