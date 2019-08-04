@@ -39,3 +39,5 @@ precompiled.h.cpp
 .vscode
 compile_commands.json
 /products
+/debian
+
