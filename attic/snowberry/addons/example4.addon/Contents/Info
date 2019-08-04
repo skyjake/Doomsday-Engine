@@ -1,7 +1,0 @@
-name: Example Bundle 4
-category: graphics/textures
-
-toggle example4-option (
-  option: -timpani
-  default: yes
-)

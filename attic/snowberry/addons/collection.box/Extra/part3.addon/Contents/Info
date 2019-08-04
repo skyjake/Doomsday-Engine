@@ -1,6 +1,0 @@
-name: Extra Part
-category: effects
-
-toggle stupid-extra-option (
-  option: -dodo
-)

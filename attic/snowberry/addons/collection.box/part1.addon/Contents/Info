@@ -1,6 +1,0 @@
-name: Optional Part
-category: graphics/textures
-
-toggle funny-option (
-  option: -haha
-)

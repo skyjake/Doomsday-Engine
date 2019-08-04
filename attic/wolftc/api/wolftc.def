@@ -1,4 +1,0 @@
-LIBRARY			WOLFTC
-
-EXPORTS
-	GetGameAPI		@1

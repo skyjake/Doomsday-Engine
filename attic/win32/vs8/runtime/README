@@ -1,9 +1,0 @@
-Use this folder as the debug runtime folder in the IDE. Run
-packres.py to create the resource PK3s here, then use this kind of
-command line options:
-
-  -game jdoom -iwad d:\wads\doom\doom2.wad -nomouse -wnd -file doomsday.pk3 jdoom.pk3
-
-The debug executable (command) can be:
-
-  ..\bin\debug\Doomsday.exe

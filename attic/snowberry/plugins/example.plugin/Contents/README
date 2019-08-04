@@ -1,7 +1,0 @@
-Subdirectories:
-
-conf     -- Configuration files for the plugin bundle.
-example  -- Python package containing the plugin's modules.
-            MUST use the same name as the plugin (example.plugin => example)
-profiles -- New system profiles.
-

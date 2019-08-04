@@ -1,3 +1,0 @@
-excludeDirectories    = {build,template-image,dist}
-excludeInFolderSearch = {build,template-image,dist}
-encoding              = latin1

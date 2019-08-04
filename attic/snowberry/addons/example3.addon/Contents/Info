@@ -1,8 +1,0 @@
-name: Example Bundle 3
-category: graphics/3d
-
-provides: something-really-cool
-
-toggle example3-option (
-  option: -frenchhorn
-)

@@ -1,6 +1,0 @@
-name: Example Bundle 8
-category: effects
-
-toggle stupid-option8 (
-  option: -invalid
-)

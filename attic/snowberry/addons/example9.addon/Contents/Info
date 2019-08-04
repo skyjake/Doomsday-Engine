@@ -1,6 +1,0 @@
-name: Example Bundle 9
-category: effects/particle
-
-toggle stupid-option9 (
-  option: -invalid
-)

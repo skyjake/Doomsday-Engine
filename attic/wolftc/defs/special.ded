@@ -1,6 +1,0 @@
-# WolfTC: Special Effects
-# 10 Aug 2006 - Contents Identical to jDoom
-
-Header { Version = 5; }
-
-Include "particles.ded";

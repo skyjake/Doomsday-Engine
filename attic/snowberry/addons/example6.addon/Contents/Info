@@ -1,9 +1,0 @@
-name: Example Bundle 6
-category: music
-
-choice phony-sound-driver (
-  default: ds8
-  alts < ds8, ds6, dummy >
-  opts < "", "-csd", "-dummy" >
-)
-
