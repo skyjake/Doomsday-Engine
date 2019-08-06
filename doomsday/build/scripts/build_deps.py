@@ -1,29 +1,37 @@
 #!/usr/bin/env python3
-import os
+import os, platform
 
+IS_CYGWIN = platform.system().startswith('CYGWIN_NT')
 IS_MINGW = os.getenv('MSYSTEM') == 'MINGW64'
 
-FORMATS = [ '3DS', 'AC', 'ASE', 'ASSBIN', 'ASSXML', 'B3D', 'BVH', 'COLLADA',
-'DXF', 'CSM', 'HMP', 'IRR', 'LWO', 'LWS', 'MD2', 'MD3', 'MD5', 'MDC', 'MDL', 'NFF',
-'NDO', 'OFF', 'OBJ', 'OGRE', 'OPENGEX', 'PLY', 'MS3D', 'COB', 'BLEND', 'IFC', 'XGL',
-'FBX', 'Q3D', 'Q3BSP', 'RAW', 'SMD', 'STL', 'TERRAGEN', '3D', 'X']
+PATCH_DIR = os.path.abspath(os.path.dirname(__file__))
 
-ENABLED_FORMATS = ['3DS', 'COLLADA', 'MD2', 'MD3', 'MD5', 'MDL', 'OBJ', 'BLEND', 'FBX',
-'IRR']
+if IS_MINGW:
+    UNISTRING_DIR = '-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX')
+elif IS_CYGWIN:
+    UNISTRING_DIR = '' # installed on system
+else:
+    UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'
+
+FORMATS = ['3DS', 'AC', 'ASE', 'ASSBIN', 'ASSXML', 'B3D', 'BVH', 'COLLADA',
+           'DXF', 'CSM', 'HMP', 'IRR', 'LWO', 'LWS', 'MD2', 'MD3', 'MD5', 'MDC', 'MDL',
+           'NFF', 'NDO', 'OFF', 'OBJ', 'OGRE', 'OPENGEX', 'PLY', 'MS3D', 'COB', 'BLEND',
+           'IFC', 'XGL', 'FBX', 'Q3D', 'Q3BSP', 'RAW', 'SMD', 'STL', 'TERRAGEN', '3D', 'X',
+           'AMF', 'IRRMESH', 'SIB', 'X3D', '3MF', 'MMD']
+
+ENABLED_FORMATS = ['3DS', 'COLLADA', 'MD2', 'MD3', 'MD5', 'MDL', 'OBJ', 'BLEND', 'FBX', '3MF']
 
 fmt_flag = {}
 for fmt in FORMATS:
     fmt_flag[fmt] = 'YES' if fmt in ENABLED_FORMATS else 'NO'
-
+    
 # Builds dependencies using CMake.
 # The libraries are installed under the specified directory.
 dependencies = [
     (
         'the_Foundation',
         'ssh://git@github.com/skyjake/the_Foundation.git', 'origin/master',
-        ['-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX') if IS_MINGW
-         else '-DUNISTRING_DIR=/usr/local',
-	 '-DTFDN_ENABLE_DEBUG_OUTPUT=YES']
+        [UNISTRING_DIR, '-DTFDN_ENABLE_DEBUG_OUTPUT=YES']
     ),
     (
         'Open Asset Import Library',
@@ -57,7 +65,7 @@ cfg = {
             os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'distrib', 'deps'
         )
     ),
-    'generator': 'Unix Makefiles' if IS_MINGW else 'Ninja'
+    'generator': 'Unix Makefiles' if IS_MINGW or IS_CYGWIN else 'Ninja'
 }
 if os.path.exists(CFG_PATH):
     cfg = json.load(open(CFG_PATH, 'rt'))
@@ -114,6 +122,9 @@ os.makedirs(PRODUCTS_DIR, exist_ok=True)
 for long_name, git_url, git_tag, cmake_opts in dependencies:
     name = os.path.splitext(os.path.basename(git_url))[0]
     src_dir = os.path.join(BUILD_DIR, name)
+    patch_file = os.path.join(PATCH_DIR, '%s-%s.patch' % (name, git_tag))
+    if not os.path.exists(patch_file):
+        patch_file = None
     if not os.path.exists(src_dir):
         os.makedirs(src_dir, exist_ok=True)
         os.chdir(src_dir)
@@ -122,7 +133,11 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
         os.chdir(src_dir)
         subprocess.check_call(['git', 'fetch', '--tags'])
     print(os.getcwd())
+    subprocess.check_call(['git', 'reset', '--hard'])
     subprocess.check_call(['git', 'checkout', git_tag])
+    if patch_file:
+        print('Patching: %s' % os.path.basename(patch_file))
+        subprocess.check_call(['patch', '-p1', '-i', patch_file])
     build_dir = os.path.join(src_dir, 'build')
     if do_clean:
         shutil.rmtree(build_dir)

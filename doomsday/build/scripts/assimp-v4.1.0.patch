@@ -1,0 +1,29 @@
+diff --git a/code/DefaultIOSystem.cpp b/code/DefaultIOSystem.cpp
+index 8687b005..be237a37 100644
+--- a/code/DefaultIOSystem.cpp
++++ b/code/DefaultIOSystem.cpp
+@@ -54,6 +54,10 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ #include <stdlib.h>
+ #endif
+ 
++#ifdef __CYGWIN__
++extern "C" char *realpath(const char *path, char *resolved_path);
++#endif
++
+ using namespace Assimp;
+ 
+ // ------------------------------------------------------------------------------------------------
+diff --git a/code/StringComparison.h b/code/StringComparison.h
+index ed5f4bd6..5f7c76c6 100644
+--- a/code/StringComparison.h
++++ b/code/StringComparison.h
+@@ -57,6 +57,9 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
+ #include <string.h>
+ #include <stdint.h>
+ #include <string>
++#if defined (__CYGWIN__)
++#include <strings.h>
++#endif
+ 
+ namespace Assimp    {
+ 
