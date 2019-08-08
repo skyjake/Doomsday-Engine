@@ -31,7 +31,8 @@ dependencies = [
     (
         'the_Foundation',
         'ssh://git@github.com/skyjake/the_Foundation.git', 'origin/master',
-        [UNISTRING_DIR, '-DTFDN_ENABLE_DEBUG_OUTPUT=YES']
+        [UNISTRING_DIR,
+         '-DTFDN_ENABLE_DEBUG_OUTPUT=YES']
     ),
     (
         'Open Asset Import Library',
@@ -89,8 +90,10 @@ while idx < len(sys.argv):
         do_clean = True
     elif opt == 'build':
         do_build = True
-    else:
+    elif opt == '-d':
         cfg['build_dir'] = os.path.abspath(opt)
+    else:
+        raise Exception('Unknown option: ' + opt)
     idx += 1
 
 if not do_build and show_help:
@@ -103,7 +106,8 @@ Commands:
 
 Options:
   -G <generator>  Use CMake <generator> when configuring build.
-  -t <type>       CMake build type (e.g., Release).
+  -t <type>       Set CMake build type (e.g., Release).
+  -d <dir>        Set build directory.
   --help          Show this help.
 """)
     exit(0)
@@ -117,6 +121,8 @@ BUILD_TYPE = cfg['build_type']
 BUILD_DIR = cfg['build_dir']
 GENERATOR = cfg['generator']
 PRODUCTS_DIR = os.path.join(BUILD_DIR, 'products')
+if do_clean and os.path.exists(PRODUCTS_DIR):
+    shutil.rmtree(PRODUCTS_DIR)
 os.makedirs(PRODUCTS_DIR, exist_ok=True)
 
 for long_name, git_url, git_tag, cmake_opts in dependencies:
@@ -139,19 +145,20 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
         print('Patching: %s' % os.path.basename(patch_file))
         subprocess.check_call(['patch', '-p1', '-i', patch_file])
     build_dir = os.path.join(src_dir, 'build')
-    if do_clean:
+    if do_clean and os.path.exists(build_dir):
         shutil.rmtree(build_dir)
         continue
-    os.makedirs(build_dir, exist_ok=True)
-    os.chdir(build_dir)
-    print(build_dir)
-    subprocess.check_call(['cmake',
-        '-G', GENERATOR,
-        '-DCMAKE_BUILD_TYPE=' + BUILD_TYPE,
-        '-DCMAKE_INSTALL_PREFIX=' + PRODUCTS_DIR] +
-        cmake_opts +
-        ['..'])
-    subprocess.check_call(['cmake',
-        '--build', '.',
-        '--target', 'install'
+    if do_build:
+        os.makedirs(build_dir, exist_ok=True)
+        os.chdir(build_dir)
+        print(build_dir)
+        subprocess.check_call(['cmake',
+                               '-G', GENERATOR,
+                               '-DCMAKE_BUILD_TYPE=' + BUILD_TYPE,
+                               '-DCMAKE_INSTALL_PREFIX=' + PRODUCTS_DIR] +
+                              cmake_opts +
+                              ['..'])
+        subprocess.check_call(['cmake',
+                               '--build', '.',
+                               '--target', 'install'
         ])
