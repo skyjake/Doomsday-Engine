@@ -69,7 +69,7 @@
 
 // MACROS ------------------------------------------------------------------
 
-#ifndef WIN32
+#if !defined (WIN32) && !defined (__CYGWIN__)
 //Disable this on Win32 builds because of: warning: "O_BINARY" redefined on mingw
 #define O_BINARY 0
 #endif

@@ -66,7 +66,7 @@ public:
     explicit NumberValue(duint64 initialUnsignedInteger);
     explicit NumberValue(dint32 initialInteger, SemanticHints semantic = Int);
     explicit NumberValue(duint32 initialUnsignedInteger, SemanticHints semantic = UInt);
-    explicit NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic = UInt);
+    //explicit NumberValue(unsigned long initialUnsignedInteger, SemanticHints semantic = UInt);
     explicit NumberValue(bool initialBoolean);
 
     void          setSemanticHints(SemanticHints hints);

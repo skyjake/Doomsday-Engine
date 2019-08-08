@@ -632,7 +632,7 @@ NativePath App::nativeHomePath()
     #else // UNIX
     {
         nativeHome = NativePath::homePath();
-        nativeHome = nativeHome / d->unixHomeFolder / "runtime";
+        nativeHome = nativeHome / unixHomeFolderName() / "runtime";
     }
     #endif
 
@@ -729,7 +729,7 @@ NativePath App::nativeBasePath()
     }
 
     NativePath path;
-    #ifdef WIN32
+    #if defined (WIN32) || defined (__CYGWIN__)
     {
         path = d->appPath.fileNamePath() / "..";
     }

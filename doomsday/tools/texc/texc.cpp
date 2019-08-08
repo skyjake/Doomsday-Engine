@@ -47,7 +47,7 @@ patch_t			plist;
 
 // CODE --------------------------------------------------------------------
 
-#ifdef UNIX
+#if defined(UNIX) && !defined(__CYGWIN__)
 void strupr(char* str)
 {
     for (char* c = str; *c; c++) *c = toupper(*c);

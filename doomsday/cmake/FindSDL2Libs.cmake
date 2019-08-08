@@ -16,22 +16,26 @@ if (TARGET SDL2)
     return ()
 endif ()
 
-if (PKG_CONFIG_FOUND AND NOT IOS)
+if (PKG_CONFIG_FOUND AND (NOT IOS) AND (NOT CYGWIN))
     if (NOT TARGET SDL2)
         add_pkgconfig_interface_library (SDL2 OPTIONAL sdl2)
-        # add_pkgconfig_interface_library (SDL2_ttf OPTIONAL SDL2_ttf)
         add_pkgconfig_interface_library (SDL2_mixer OPTIONAL SDL2_mixer)
     endif ()
 
-elseif (WIN32)
+elseif (WIN32 OR CYGWIN)
     # Try to locate SDL2 from the local system (assuming Windows).
     set (_oldPath ${SDL2_LIBRARY})
-    file (GLOB _hints ${SDL2_DIR}/SDL2* $ENV{DENG_DEPEND_PATH}/SDL2*)
-    find_library (SDL2_LIBRARY SDL2
-        PATHS ${SDL2_DIR}
-        HINTS ${_hints} ENV DENG_DEPEND_PATH
-        PATH_SUFFIXES lib/${DE_ARCH} lib
-    )
+    if (CYGWIN)
+        # Assume it has been set manually.
+        set (SDL2_LIBRARY ${SDL2_DIR}/lib/${DE_ARCH}/SDL2.lib)
+    else ()
+        file (GLOB _hints ${SDL2_DIR}/SDL2* $ENV{DENG_DEPEND_PATH}/SDL2*)
+        find_library (SDL2_LIBRARY SDL2
+            PATHS ${SDL2_DIR}
+            HINTS ${_hints} ENV DENG_DEPEND_PATH
+            PATH_SUFFIXES lib/${DE_ARCH} lib
+        )
+    endif ()
     mark_as_advanced (SDL2_LIBRARY)
     if (NOT SDL2_LIBRARY)
         message (FATAL_ERROR "SDL2 not found. Set the SDL2_DIR variable to help locate it.\n")
@@ -48,19 +52,26 @@ elseif (WIN32)
     get_filename_component (_libDir ${SDL2_LIBRARY} DIRECTORY)
     get_filename_component (_incDir ${_libDir}/../../include REALPATH)
 
+    # message (STATUS "SDL2 include dir: ${_incDir}")
+    # message (STATUS "SDL2 library dir: ${_libDir}")
+
     target_include_directories (SDL2 INTERFACE ${_incDir})
     deng_install_library (${_libDir}/SDL2.dll)
 
     # Also attempt to locate SLD2_mixer.
     set (_oldPath ${SDL_MIXER_LIBRARY})
-    file (GLOB _hints ${SDL2_DIR}/SDL2_mixer* ${SDL2_MIXER_DIR}/SDL2_mixer*
-                 $ENV{DENG_DEPEND_PATH}/SDL2_mixer*
+    if (CYGWIN)
+        set (SDL2_MIXER_LIBRARY ${SDL2_MIXER_DIR}/lib/${DE_ARCH}/SDL2_mixer.lib)
+    else ()
+        file (GLOB _hints ${SDL2_DIR}/SDL2_mixer* ${SDL2_MIXER_DIR}/SDL2_mixer*
+              $ENV{DENG_DEPEND_PATH}/SDL2_mixer*
         )
-    find_library (SDL2_MIXER_LIBRARY SDL2_mixer
-        PATHS ${SDL2_DIR} ${SDL2_MIXER_DIR}
-        HINTS ${_hints} ENV DENG_DEPEND_PATH
-        PATH_SUFFIXES lib/${DE_ARCH} lib
-    )
+        find_library (SDL2_MIXER_LIBRARY SDL2_mixer
+            PATHS ${SDL2_DIR} ${SDL2_MIXER_DIR}
+            HINTS ${_hints} ENV DENG_DEPEND_PATH
+            PATH_SUFFIXES lib/${DE_ARCH} lib
+        )
+    endif ()
     mark_as_advanced (SDL2_MIXER_LIBRARY)
     if (NOT _oldPath STREQUAL SDL2_MIXER_LIBRARY)
         message (STATUS "Found SDL2_mixer: ${SDL2_MIXER_LIBRARY}")

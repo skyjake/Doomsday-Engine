@@ -55,6 +55,7 @@ else ()
     message (FATAL_ERROR "Invalid value for OpenGL API: ${DE_OPENGL_API}")
 endif ()
 
+# Link libraries.
 deng_link_libraries (libgui PUBLIC DengComms)
 target_link_libraries (libgui
     PUBLIC  glbinding::glbinding
@@ -62,30 +63,19 @@ target_link_libraries (libgui
 )
 if (WIN32)
     target_link_libraries (libgui PUBLIC opengl32.lib)
-    # Direct2D is used for DPI information.
-    target_link_libraries (libgui PRIVATE d2d1.lib)
+    # Direct2D was used for DPI information.
+    # target_link_libraries (libgui PRIVATE d2d1.lib)
 endif ()
-
-# if (UNIX AND NOT APPLE)
-#     # The assimp target may be linked to some system libraries that
-#     # must be linked publicly (rather than privately like is the
-#     # done for libassimp).
-#     get_property (assimpLibs TARGET libassimp PROPERTY INTERFACE_LINK_LIBRARIES)
-#     target_link_libraries (libgui PUBLIC ${assimpLibs})
-# endif ()
-
+if (CYGWIN)
+    target_compile_options (libgui PUBLIC -mwindows)
+    target_link_libraries (libgui PUBLIC ole32)
+endif ()
 if (IOS)
     link_framework (libgui PRIVATE OpenGLES)
 elseif (APPLE)
     link_framework (libgui PRIVATE Cocoa)
     link_framework (libgui PRIVATE OpenGL)
 endif ()
-
-#if (DE_X11)
-#    target_include_directories (libgui PRIVATE ${X11_INCLUDE_DIR})
-#    target_link_libraries (libgui PRIVATE ${X11_LIBRARIES})
-#    deng_target_link_qt (libgui PRIVATE X11Extras)
-#endif ()
 
 deng_deploy_library (libgui DengGui)
 

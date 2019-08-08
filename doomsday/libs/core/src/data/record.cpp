@@ -716,10 +716,10 @@ Variable &Record::set(const String &name, duint64 value)
     return set(name, NumberValue(value));
 }
 
-Variable &Record::set(const String &name, unsigned long value)
-{
-    return set(name, NumberValue(value));
-}
+// Variable &Record::set(const String &name, unsigned long value)
+// {
+//     return set(name, NumberValue(value));
+// }
 
 Variable &Record::set(const String &name, Time const &value)
 {

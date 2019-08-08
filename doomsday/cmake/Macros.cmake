@@ -183,7 +183,7 @@ function (deng_filter_platform_sources outName)
                 set (filtered YES)
             endif ()
         elseif ("${fn}" MATCHES ".*_x11\\..*") # X11 specific files
-            if (APPLE OR NOT UNIX)
+            if (APPLE OR CYGWIN OR NOT UNIX)
                 set (filtered YES)
             endif ()
         endif ()
@@ -770,14 +770,14 @@ endfunction (deng_install_tool)
 # Not applicable to macOS because libraries are not installed but instead
 # bundled with the applicatino.
 macro (deng_install_library library)
-    if (UNIX_LINUX)
+    if (UNIX_LINUX AND NOT CYGWIN)
         string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})
         file (GLOB _links ${library}.* ${versioned})
         install (FILES ${library} ${_links}
             DESTINATION ${DE_INSTALL_PLUGIN_DIR}
             PERMISSIONS OWNER_READ GROUP_READ WORLD_READ OWNER_WRITE OWNER_EXECUTE GROUP_EXECUTE WORLD_EXECUTE
         )
-    elseif (MINGW)
+    elseif (CYGWIN OR MINGW)
         message (STATUS "Library will be installed: ${library}")
         install (PROGRAMS ${library} DESTINATION bin)
     elseif (MSVC)

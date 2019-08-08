@@ -404,7 +404,7 @@ public:
     Variable &set(const String &name, duint64 value);
 
     /// @copydoc set()
-    Variable &set(const String &name, unsigned long value);
+    //Variable &set(const String &name, unsigned long value);
 
     /// @copydoc set()
     Variable &set(const String &name, Time const &value);

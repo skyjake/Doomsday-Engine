@@ -96,46 +96,32 @@ void LogEntry::Arg::clear()
     }
 }
 
-void LogEntry::Arg::setValue(dint i)
+void LogEntry::Arg::setValue(int32_t i)
 {
     clear();
     _type = IntegerArgument;
     _data.intValue = i;
 }
 
-void LogEntry::Arg::setValue(duint i)
+void LogEntry::Arg::setValue(uint32_t i)
 {
     clear();
     _type = IntegerArgument;
     _data.intValue = i;
 }
 
-void LogEntry::Arg::setValue(long int i)
+void LogEntry::Arg::setValue(int64_t i)
 {
     clear();
     _type = IntegerArgument;
     _data.intValue = i;
 }
 
-void LogEntry::Arg::setValue(long unsigned int i)
-{
-    clear();
-    _type = IntegerArgument;
-    _data.intValue = i;
-}
-
-void LogEntry::Arg::setValue(duint64 i)
+void LogEntry::Arg::setValue(uint64_t i)
 {
     clear();
     _type = IntegerArgument;
     _data.intValue = dint64(i);
-}
-
-void LogEntry::Arg::setValue(dint64 i)
-{
-    clear();
-    _type = IntegerArgument;
-    _data.intValue = i;
 }
 
 void LogEntry::Arg::setValue(ddouble d)

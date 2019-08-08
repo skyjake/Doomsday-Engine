@@ -156,7 +156,7 @@
 
 #define DE_ASSERT_FAIL(msgCStr)  DE_ASSERT(msgCStr == nullptr)
 
-#ifdef UNIX
+#if defined (UNIX) && !defined (__CYGWIN__)
 #  include <execinfo.h>
 /**
  * @macro DE_PRINT_BACKTRACE

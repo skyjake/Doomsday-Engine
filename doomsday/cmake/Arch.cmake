@@ -4,7 +4,7 @@ set (_bits)
 
 if (ARCH_BITS EQUAL 64)
     add_definitions (-DDE_64BIT_HOST=1 -D__64BIT__=1)
-    if (WIN32)
+    if (WIN32 OR CYGWIN)
         set (DE_ARCH x64)
     else ()
         set (DE_ARCH x86_64)

@@ -20,6 +20,7 @@
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <initguid.h>
 #include <shobjidl.h>
 
 namespace de {

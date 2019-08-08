@@ -476,12 +476,10 @@ public:
 
         void clear();
 
-        void setValue(dint i);
-        void setValue(duint i);
-        void setValue(long int i);
-        void setValue(long unsigned int i);
-        void setValue(duint64 i);
-        void setValue(dint64 i);
+        void setValue(int32_t i);
+        void setValue(uint32_t i);
+        void setValue(int64_t i);
+        void setValue(uint64_t i);
         void setValue(ddouble d);
         void setValue(void const *p);
         void setValue(const char *s);
