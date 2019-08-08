@@ -91,7 +91,7 @@ DE_PIMPL_NOREF(UnixInfo)
 
 UnixInfo::UnixInfo() : d(new Impl)
 {
-#ifdef UNIX
+#if defined (UNIX) && !defined(__CYGWIN__)
     /**
      * @note There is only the "paths" and "plugins" config files for now; more
      * could be added for different purposes. There could also be .ds scripts

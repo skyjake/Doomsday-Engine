@@ -294,10 +294,10 @@ bool NativePath::setWorkPath(const NativePath &cwd)
 
 NativePath NativePath::homePath()
 {
-#if defined (UNIX) && !defined (__CYGWIN__)
-    return getenv("HOME");
-#elif defined (WIN32)
+#if defined (WIN32) || defined(__CYGWIN__)
     return String(getenv("HOMEDRIVE")) + getenv("HOMEPATH");
+#else
+    return getenv("HOME");
 #endif
 }
 

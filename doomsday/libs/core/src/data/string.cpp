@@ -372,6 +372,13 @@ String String::operator+(const CString &cStr) const
     return cat;
 }
 
+String String::operator+(const String &str) const
+{
+    String cat = *this;
+    append_String(&cat._str, str);
+    return cat;
+}
+
 String String::operator+(const char *cStr) const
 {
     String cat(*this);

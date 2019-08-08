@@ -378,7 +378,7 @@ public:
     String        operator+(const char *) const;
     String        operator+(const CString &) const;
     String        operator+(const std::string &s) const;
-    inline String operator+(const String &other) const { return *this + static_cast<const char *>(other); }
+    String operator+(const String &other) const;
 
     String &operator+=(char ch);
     String &operator+=(Char ch);
