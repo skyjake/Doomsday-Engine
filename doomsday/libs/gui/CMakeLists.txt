@@ -88,6 +88,15 @@ if (WIN32)
         COMPONENT client
     )
 endif ()
+if (CYGWIN)
+    install (
+        PROGRAMS ${ASSIMP_ROOT_DIR}/bin/cygassimp-4.dll
+                 ${glbinding_DIR}/cygglbinding-3.dll
+                 ${glbinding_DIR}/cygglbinding-aux-3.dll
+        DESTINATION bin
+        COMPONENT client
+    )
+endif ()
 
 # If Assimp is part of the build, ensure that it gets compiled before libgui.
 # if (TARGET assimp)

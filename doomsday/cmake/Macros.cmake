@@ -135,6 +135,10 @@ macro (deng_target_defaults target)
     if (APPLE)
         deng_xcode_attribs (${target})
         # macOS version numbers come from the Info.plist, we don't need version symlinks.
+    elseif (CYGWIN)
+        #set_target_properties (${target} PROPERTIES
+        #    VERSION ${DE_VERSION}
+        #)
     else ()
         set_target_properties (${target} PROPERTIES
             VERSION   ${DE_VERSION}
@@ -157,7 +161,6 @@ macro (deng_target_defaults target)
     deng_target_rpath (${target})
     enable_cxx11 (${target})
     strict_warnings (${target})
-    #cotire (${target})
 endmacro (deng_target_defaults)
 
 # Checks all the files in the arguments and removes the ones that

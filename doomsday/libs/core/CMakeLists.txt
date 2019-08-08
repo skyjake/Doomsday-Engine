@@ -78,6 +78,10 @@ if (WIN32)
     install (PROGRAMS ${the_Foundation_DIR}/../../lib_Foundation.dll
              DESTINATION bin)
 endif ()
+if (CYGWIN)
+    install (PROGRAMS ${the_Foundation_DIR}/../../cyg_Foundation.dll
+             DESTINATION bin)
+endif ()
 deng_deploy_library (libcore DengCore)
 deng_cotire (libcore src/precompiled.h)
 
