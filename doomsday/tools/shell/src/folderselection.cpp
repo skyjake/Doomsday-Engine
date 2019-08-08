@@ -101,6 +101,7 @@ void FolderSelection::setEnabled(bool yes)
 de::NativePath FolderSelection::path() const
 {
 //    return convert(d->edit->text());
+    return {};
 }
 
 void FolderSelection::selectFolder()

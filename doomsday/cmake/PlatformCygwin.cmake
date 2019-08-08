@@ -16,3 +16,7 @@ add_definitions (
     -D_GNU_SOURCE=1
     -DDE_PLATFORM_ID="win-${DE_ARCH}"
 )
+
+if (CMAKE_COMPILER_IS_GNUCXX)
+    append_unique (CMAKE_CXX_FLAGS -Werror=return-type)
+endif ()

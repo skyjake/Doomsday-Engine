@@ -170,6 +170,7 @@ Mat4f Light::lightMatrix(gfx::CubeFace face) const
     case gfx::NegativeZ:
         return proj * Mat4f::lookAt(pos + Vec3f(0, 0, 1), pos, Vec3f(0, 1, 0));
     }
+    return {};
 }
 
 } // namespace gloom
