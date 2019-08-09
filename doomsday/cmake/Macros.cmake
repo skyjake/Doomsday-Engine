@@ -469,10 +469,11 @@ function (deng_deploy_target target)
         return ()
     endif ()
     if (APPLE)
+        # Application bundles need to contain all the required dependencies.
         get_property (outName TARGET ${target} PROPERTY OUTPUT_NAME)
         install (CODE "
             execute_process (COMMAND ${PYTHON_EXECUTABLE}
-                ${DE_SOURCE_DIR}/build/scripts/apple_install_names.py
+                ${DE_SOURCE_DIR}/build/scripts/apple_deps.py
                 \"${DE_DISTRIB_DIR}/${outName}.app\"
             )")
     endif ()
