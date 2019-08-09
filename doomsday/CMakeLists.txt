@@ -13,3 +13,5 @@ if (NOT IOS)
         add_subdirectory (tools)
     endif ()
 endif ()
+
+add_subdirectory (post)

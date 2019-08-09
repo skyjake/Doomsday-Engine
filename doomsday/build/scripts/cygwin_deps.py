@@ -10,7 +10,9 @@ if not platform.system().startswith('CYGWIN_'):
     raise Exception('Please run under cygwin')
 system_bin = '/bin'
 objdump_cmd = '/bin/objdump'
-root = os.path.join(sys.argv[1])
+root = os.path.abspath(sys.argv[1])
+if root.startswith('/usr'):
+    print('cygwin_deps.py will not copy system libraries to a destination under /usr')
 binaries = set(filter(lambda n: os.path.splitext(n)[1].lower() in ['.exe', '.dll'],
                       os.listdir(root)))
 while binaries:
