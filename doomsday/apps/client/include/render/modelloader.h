@@ -68,10 +68,10 @@ public:
     static int identifierFromText(de::String const &text,
                                   const std::function<int (de::String const &)>& resolver);
 
-    static de::String const DEF_ANIMATION;
-    static de::String const DEF_MATERIAL;
-    static de::String const DEF_PASS;
-    static de::String const DEF_RENDER;
+    static const char *DEF_ANIMATION;
+    static const char *DEF_MATERIAL;
+    static const char *DEF_PASS;
+    static const char *DEF_RENDER;
 
 private:
     DE_PRIVATE(d)

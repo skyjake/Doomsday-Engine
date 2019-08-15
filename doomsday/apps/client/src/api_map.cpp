@@ -71,10 +71,19 @@ public:
     DummyLine(Vertex &v1, Vertex &v2) : Line(v1, v2) {}
 };
 
-typedef Set<MapElement *> Dummies;
+/// FIXME: Get rid of global state.
+struct DummyGlobals 
+{
+    Set<MapElement *> dummies;
+    Mesh              dummyMesh;
 
-static Dummies dummies;
-static Mesh dummyMesh;
+    static inline DummyGlobals &get()
+    {
+        static DummyGlobals *s_mapGlobals = nullptr;
+        if (!s_mapGlobals) s_mapGlobals = new DummyGlobals;
+        return *s_mapGlobals;
+    }
+};
 
 #undef DMU_GetType
 int DMU_GetType(void const *ptr)
@@ -107,8 +116,9 @@ void world::Map::initDummies() // static
 {
     // TODO: free existing/old dummies here?
 
-    dummies.clear();
-    dummyMesh.clear();
+    auto &g = DummyGlobals::get();
+    g.dummies.clear();
+    g.dummyMesh.clear();
 }
 
 /**
@@ -126,7 +136,7 @@ static int dummyType(void const *dummy)
         return DMU_NONE;
     }
 
-    DE_ASSERT(dummies.contains(const_cast<MapElement *>(elem)));
+    DE_ASSERT(DummyGlobals::get().dummies.contains(const_cast<MapElement *>(elem)));
 
     return elem->type();
 }
@@ -134,22 +144,23 @@ static int dummyType(void const *dummy)
 #undef P_AllocDummy
 void *P_AllocDummy(int type, void *extraData)
 {
+    auto &g = DummyGlobals::get();
     switch(type)
     {
     case DMU_LINE: {
         // Time to allocate the dummy vertex?
-        if(dummyMesh.vertexsIsEmpty())
-            dummyMesh.newVertex();
-        Vertex &dummyVertex = *dummyMesh.vertexs().first();
+        if(g.dummyMesh.vertexsIsEmpty())
+            g.dummyMesh.newVertex();
+        Vertex &dummyVertex = *g.dummyMesh.vertexs().first();
 
         DummyLine *dl = new DummyLine(dummyVertex, dummyVertex);
-        dummies.insert(dl);
+        g.dummies.insert(dl);
         dl->extraData = extraData;
         return dl; }
 
     case DMU_SECTOR: {
         DummySector *ds = new DummySector;
-        dummies.insert(ds);
+        g.dummies.insert(ds);
         ds->extraData = extraData;
         return ds; }
 
@@ -179,9 +190,9 @@ void P_FreeDummy(void *dummy)
         App_FatalError("P_FreeDummy: Dummy is of unknown type.");
     }
 
-    DE_ASSERT(dummies.contains(elem));
+    DE_ASSERT(DummyGlobals::get().dummies.contains(elem));
 
-    dummies.remove(elem);
+    DummyGlobals::get().dummies.remove(elem);
     delete elem;
 }
 

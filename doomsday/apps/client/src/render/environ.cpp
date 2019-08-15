@@ -29,10 +29,10 @@
 
 using namespace de;
 
-static String const ID_DEFAULT       ("default");
-static String const DEF_PATH         ("path");
-static String const DEF_INTERIOR_PATH("interior.path");
-static String const DEF_EXTERIOR_PATH("exterior.path");
+static const char *ID_DEFAULT        = "default";
+static const char *DEF_PATH          = "path";
+static const char *DEF_INTERIOR_PATH = "interior.path";
+static const char *DEF_EXTERIOR_PATH = "exterior.path";
 
 namespace render {
 

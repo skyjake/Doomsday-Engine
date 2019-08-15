@@ -37,10 +37,6 @@ using namespace de;
  */
 struct Model : public ModelDrawable
 {
-    static String const DEF_TIMELINE;
-
-//---------------------------------------------------------------------------------------
-
     String identifier;
 
     /**

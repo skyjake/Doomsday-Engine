@@ -16,6 +16,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if defined (_MSC_VER)
+
 #include "doomsday/filesys/fs_windows.h"
 #include <stdio.h>
 #include <de/String>
@@ -42,3 +44,5 @@ int FS_Win32_mkdir(char const *dirnameUtf8)
 {
     return _wmkdir(pwstr(String(dirnameUtf8).toUtf16()));
 }
+
+#endif // defined (_MSC_VER)

@@ -777,8 +777,6 @@ void App::initSubsystems(SubsystemInitFlags flags)
         d->packageLoader.load(pkg);
     }
 
-    LOG_MSG("Contents of /packs:\n") << FS::locate<const Folder>("/packs").contentsAsText();
-
     if (!(flags & DisablePersistentData))
     {
         // Recreate the persistent state data package, if necessary.

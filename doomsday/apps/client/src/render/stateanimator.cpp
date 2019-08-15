@@ -38,30 +38,29 @@ using namespace de;
 
 namespace render {
 
-static String const DEF_ALWAYS_TRIGGER("alwaysTrigger");
-static String const DEF_MUST_FINISH   ("mustFinish");
-static String const DEF_ANGLE         ("angle");
-static String const DEF_AXIS          ("axis");
-static String const DEF_DURATION      ("duration");
-static String const DEF_ENABLED       ("enabled");
-static String const DEF_LOOPING       ("looping");
-static String const DEF_NODE          ("node");
-static String const DEF_PRIORITY      ("priority");
-static String const DEF_PROBABILITY   ("prob");
-static String const DEF_SPEED         ("speed");
-static String const DEF_VARIABLE      ("variable");
+DE_STATIC_STRING(DEF_ALWAYS_TRIGGER , "alwaysTrigger")
+DE_STATIC_STRING(DEF_MUST_FINISH    , "mustFinish")
+DE_STATIC_STRING(DEF_ANGLE          , "angle")
+DE_STATIC_STRING(DEF_AXIS           , "axis")
+DE_STATIC_STRING(DEF_DURATION       , "duration")
+DE_STATIC_STRING(DEF_ENABLED        , "enabled")
+DE_STATIC_STRING(DEF_LOOPING        , "looping")
+DE_STATIC_STRING(DEF_NODE           , "node")
+DE_STATIC_STRING(DEF_PRIORITY       , "priority")
+DE_STATIC_STRING(DEF_PROBABILITY    , "prob")
+DE_STATIC_STRING(DEF_SPEED          , "speed")
+DE_STATIC_STRING(DEF_VARIABLE       , "variable")
 
-static String const VAR_ID            ("ID");           // model asset ID
-static String const VAR_ASSET         ("__asset__");    // runtime reference to asset metadata
-static String const VAR_ENABLED       ("enabled");
-static String const VAR_MATERIAL      ("material");
+DE_STATIC_STRING(VAR_ID             , "ID")           // model asset ID
+DE_STATIC_STRING(VAR_ASSET          , "__asset__")    // runtime reference to asset metadata
+DE_STATIC_STRING(VAR_ENABLED        , "enabled")
+DE_STATIC_STRING(VAR_MATERIAL       , "material")
+DE_STATIC_STRING(VAR_NOTIFIED_STATES, "notifiedStates")
 
-static String const VAR_NOTIFIED_STATES("notifiedStates");
+DE_STATIC_STRING(PASS_GLOBAL        , "")
+DE_STATIC_STRING(DEFAULT_MATERIAL   , "default")
 
-static String const PASS_GLOBAL       ("");
-static String const DEFAULT_MATERIAL  ("default");
-
-static int const ANIM_DEFAULT_PRIORITY = 1;
+static const int ANIM_DEFAULT_PRIORITY = 1;
 
 DE_PIMPL(StateAnimator)
 , DE_OBSERVES(Variable, Change)
@@ -197,7 +196,7 @@ DE_PIMPL(StateAnimator)
 
         StateCallback(Record &names) : names(names)
         {
-            setCondition(names[VAR_NOTIFIED_STATES]);
+            setCondition(names[VAR_NOTIFIED_STATES()]);
         }
 
         void handleTriggered(String const &trigger) override
@@ -249,18 +248,18 @@ DE_PIMPL(StateAnimator)
         names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
         names.addSuperRecord(ScriptSystem::builtInClass(DE_STR("Render"),
                                                         DE_STR("StateAnimator")));
-        names.addText(VAR_ID, assetId).setReadOnly();
+        names.addText(VAR_ID(), assetId).setReadOnly();
         Record const &assetDef = App::asset(assetId).accessedRecord();
-        names.add(VAR_ASSET).set(new RecordValue(assetDef)).setReadOnly();
-        if (assetDef.has(VAR_NOTIFIED_STATES))
+        names.add(VAR_ASSET()).set(new RecordValue(assetDef)).setReadOnly();
+        if (assetDef.has(VAR_NOTIFIED_STATES()))
         {
             // Use the initial value for state callbacks.
-            names.add(VAR_NOTIFIED_STATES).set(assetDef.get(VAR_NOTIFIED_STATES));
+            names.add(VAR_NOTIFIED_STATES()).set(assetDef.get(VAR_NOTIFIED_STATES()));
         }
         else
         {
             // The states to notify can be chosen later.
-            names.addArray(VAR_NOTIFIED_STATES);
+            names.addArray(VAR_NOTIFIED_STATES());
         }
         if (assetDef.has(DE_STR("onStateChange")))
         {
@@ -288,10 +287,10 @@ DE_PIMPL(StateAnimator)
 
         // The main material variable should always exist. The "render" definition
         // may override this default value.
-        names.addText(VAR_MATERIAL, DEFAULT_MATERIAL);
+        names.addText(VAR_MATERIAL(), DEFAULT_MATERIAL());
 
         int passIndex = 0;
-        auto const &def = names[VAR_ASSET].valueAsRecord();
+        auto const &def = names[VAR_ASSET()].valueAsRecord();
         if (def.has(ModelLoader::DEF_RENDER))
         {
             Record const &renderBlock = def.subrecord(ModelLoader::DEF_RENDER);
@@ -308,8 +307,8 @@ DE_PIMPL(StateAnimator)
                 indexForPassName[passName] = passIndex++;
 
                 Record &passRec = names.addSubrecord(passName);
-                passRec.addBoolean(VAR_ENABLED,
-                                   ScriptedInfo::isTrue(passDef, DEF_ENABLED, true))
+                passRec.addBoolean(VAR_ENABLED(),
+                                   ScriptedInfo::isTrue(passDef, DEF_ENABLED(), true))
                        .audienceForChange() += this;
 
                 initVariablesForPass(passDef, passName);
@@ -318,7 +317,8 @@ DE_PIMPL(StateAnimator)
 
         if (def.has(ModelLoader::DEF_ANIMATION))
         {
-            auto varDefs = ScriptedInfo::subrecordsOfType(DEF_VARIABLE, def.subrecord(ModelLoader::DEF_ANIMATION));
+            auto varDefs = ScriptedInfo::subrecordsOfType(
+                DEF_VARIABLE(), def.subrecord(ModelLoader::DEF_ANIMATION));
             for (const auto &def : varDefs)
             {
                 initAnimationVariable(def.first, *def.second);
@@ -333,12 +333,12 @@ DE_PIMPL(StateAnimator)
     }
 
     void initVariablesForPass(Record const &block,
-                              String const &passName = PASS_GLOBAL)
+                              String const &passName = PASS_GLOBAL())
     {
         // Each pass has a variable for selecting the material.
         // The default value is optionally specified in the definition.
-        Variable &passMaterialVar = names.addText(passName.concatenateMember(VAR_MATERIAL),
-                                                  block.gets(ModelLoader::DEF_MATERIAL, DEFAULT_MATERIAL));
+        Variable &passMaterialVar = names.addText(passName.concatenateMember(VAR_MATERIAL()),
+                                                  block.gets(ModelLoader::DEF_MATERIAL, DEFAULT_MATERIAL()));
         passMaterialVar.audienceForChange() += this;
         passForMaterialVariable.insert(&passMaterialVar, self().model().passes.findName(passName));
 
@@ -353,7 +353,7 @@ DE_PIMPL(StateAnimator)
 
         // Create the animated variables to be used with the shader based
         // on the pass definitions.
-        for (auto &i : ScriptedInfo::subrecordsOfType(DEF_VARIABLE, block))
+        for (auto &i : ScriptedInfo::subrecordsOfType(DEF_VARIABLE(), block))
         {
             vars->initVariableFromDefinition(
                         i.first, *i.second,
@@ -368,14 +368,14 @@ DE_PIMPL(StateAnimator)
         {
             std::unique_ptr<AnimVar> var(new AnimVar);
             var->variableName = variableName;
-            var->angle.reset(new AnimationValue(Animation(variableDef.getf(DEF_ANGLE, 0.f), Animation::Linear)));
-            var->speed.reset(new AnimationValue(Animation(variableDef.getf(DEF_SPEED, 0.f), Animation::Linear)));
-            var->axis = vectorFromValue<Vec3f>(variableDef.get(DEF_AXIS));
+            var->angle.reset(new AnimationValue(Animation(variableDef.getf(DEF_ANGLE(), 0.f), Animation::Linear)));
+            var->speed.reset(new AnimationValue(Animation(variableDef.getf(DEF_SPEED(), 0.f), Animation::Linear)));
+            var->axis = vectorFromValue<Vec3f>(variableDef.get(DEF_AXIS()));
 
-            addBinding(variableName.concatenateMember(DEF_ANGLE), var->angle);
-            addBinding(variableName.concatenateMember(DEF_SPEED), var->speed);
+            addBinding(variableName.concatenateMember(DEF_ANGLE()), var->angle);
+            addBinding(variableName.concatenateMember(DEF_SPEED()), var->speed);
 
-            animVars.insert(variableDef.gets(DEF_NODE), var.get());
+            animVars.insert(variableDef.gets(DEF_NODE()), var.get());
             var.release();
 
             // The model should now be transformed even without active
@@ -414,13 +414,13 @@ DE_PIMPL(StateAnimator)
         auto const &model = self().model();
         if (!model.passes.isEmpty())
         {
-            String const varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL);
+            String const varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL());
             if (names.has(varName))
             {
                 return names[varName];
             }
         }
-        return names[VAR_MATERIAL];
+        return names[VAR_MATERIAL()];
     }
 
     void updatePassMaterials()
@@ -434,7 +434,7 @@ DE_PIMPL(StateAnimator)
 
     void variableValueChanged(Variable &var, Value const &newValue)
     {
-        if (var.name() == VAR_MATERIAL)
+        if (var.name() == VAR_MATERIAL())
         {
             // Update the corresponding pass material.
             int passIndex = passForMaterialVariable[&var];
@@ -449,7 +449,7 @@ DE_PIMPL(StateAnimator)
         }
         else
         {
-            DE_ASSERT(var.name() == VAR_ENABLED);
+            DE_ASSERT(var.name() == VAR_ENABLED());
 
             // This is called when one of the "(pass).enabled" variables is modified.
             updatePassMask();
@@ -473,15 +473,14 @@ DE_PIMPL(StateAnimator)
            return matIndex->second;
        }
        LOG_RES_WARNING("Asset \"%s\" does not have a material called '%s'")
-               << names.gets(VAR_ID) << materialName;
+           << names.gets(VAR_ID()) << materialName;
        return 0; // default material
     }
 
     void updatePassMask()
     {
-        Record::Subrecords enabledPasses = names.subrecords([] (Record const &sub) {
-            return sub.getb(DEF_ENABLED, false);
-        });
+        Record::Subrecords enabledPasses =
+            names.subrecords([](Record const &sub) { return sub.getb(DEF_ENABLED(), false); });
 
         appearance.passMask.fill(false);
         for (const auto &ep : enabledPasses)
@@ -506,8 +505,8 @@ DE_PIMPL(StateAnimator)
         for (const auto &i : animVars)
         {
             AnimVar &animVar = *i.second;
-            animVar.angle = &names[animVar.variableName.concatenateMember(DEF_ANGLE)].value<AnimationValue>();
-            animVar.speed = &names[animVar.variableName.concatenateMember(DEF_SPEED)].value<AnimationValue>();
+            animVar.angle = &names[animVar.variableName.concatenateMember(DEF_ANGLE())].value<AnimationValue>();
+            animVar.speed = &names[animVar.variableName.concatenateMember(DEF_SPEED())].value<AnimationValue>();
         }
     }
 
@@ -531,7 +530,7 @@ DE_PIMPL(StateAnimator)
      */
     void bindUniforms(de::GLProgram &program, BindOperation operation) const
     {
-        bindPassUniforms(program, PASS_GLOBAL, operation);
+        bindPassUniforms(program, PASS_GLOBAL(), operation);
     }
 
     /**
@@ -663,12 +662,12 @@ void StateAnimator::triggerByState(String const &stateName)
         try
         {
             // Test for the probability of this animation.
-            float chance = seq.def->getf(DEF_PROBABILITY, 1.f);
+            float chance = seq.def->getf(DEF_PROBABILITY(), 1.f);
             if (randf() > chance) continue;
 
             // Start the animation on the specified node (defaults to root),
             // unless it is already running.
-            String const node = seq.def->gets(DEF_NODE, "");
+            String const node = seq.def->gets(DEF_NODE(), "");
             int animId = d->animationId(seq.name);
 
             if (animId < 0)
@@ -678,8 +677,8 @@ void StateAnimator::triggerByState(String const &stateName)
                 break;
             }
 
-            const bool alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER, false);
-            const bool mustFinish    = ScriptedInfo::isTrue(*seq.def, DEF_MUST_FINISH, false);
+            const bool alwaysTrigger = ScriptedInfo::isTrue(*seq.def, DEF_ALWAYS_TRIGGER(), false);
+            const bool mustFinish    = ScriptedInfo::isTrue(*seq.def, DEF_MUST_FINISH(), false);
 
             if (!alwaysTrigger)
             {
@@ -689,7 +688,7 @@ void StateAnimator::triggerByState(String const &stateName)
                 if (isRunning(animId, node)) continue;
             }
 
-            int const priority = seq.def->geti(DEF_PRIORITY, ANIM_DEFAULT_PRIORITY);
+            int const priority = seq.def->geti(DEF_PRIORITY(), ANIM_DEFAULT_PRIORITY);
 
             // Look up the timeline.
             Timeline *timeline = seq.timeline;
@@ -704,16 +703,16 @@ void StateAnimator::triggerByState(String const &stateName)
 
             // Parameters for the new sequence.
             Sequence anim(animId, node,
-                          ScriptedInfo::isTrue(*seq.def, DEF_LOOPING)? Sequence::Looping :
+                          ScriptedInfo::isTrue(*seq.def, DEF_LOOPING())? Sequence::Looping :
                                                                        Sequence::NotLooping,
                           mustFinish,
                           priority,
                           timeline);
 
-            if (seq.def->has(DEF_DURATION))
+            if (seq.def->has(DEF_DURATION()))
             {
                 // By default, the animation duration comes from the model file.
-                anim.overrideDuration = seq.def->getd(DEF_DURATION);
+                anim.overrideDuration = seq.def->getd(DEF_DURATION());
             }
 
             // Do not override higher-priority animations.
@@ -783,7 +782,7 @@ void StateAnimator::startAnimation(int animationId, int priority, bool looping, 
     }
     catch (const Error &er)
     {
-        LOG_GL_ERROR("%s: %s") << d->names.gets(VAR_ID) << er.asText();
+        LOG_GL_ERROR("%s: %s") << d->names.gets(VAR_ID()) << er.asText();
     }
 }
 

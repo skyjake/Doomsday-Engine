@@ -66,7 +66,7 @@
 #include <de/legacy/memoryzone.h>
 #include <de/legacy/memory.h>
 
-#ifdef WIN32
+#ifdef DE_WINDOWS
 #  define WIN32_LEAN_AND_MEAN
 #  include <windows.h>
 #  include <de/registry.h>
@@ -152,9 +152,9 @@ DE_PIMPL(DoomsdayApp)
     LoopCallback             mainCall;
     Timer                    configSaveTimer;
 
-#ifdef WIN32
-    HINSTANCE hInstance = NULL;
-#endif
+// #ifdef WIN32
+//     HINSTANCE hInstance = NULL;
+// #endif
 
     /**
      * Delegates game change notifications to scripts.
@@ -188,9 +188,9 @@ DE_PIMPL(DoomsdayApp)
         gameProfiles.setGames(games);
         saveGames   .setGames(games);
 
-#ifdef WIN32
-        hInstance = GetModuleHandle(NULL);
-#endif
+// #ifdef WIN32
+//         hInstance = GetModuleHandle(NULL);
+// #endif
 
         audienceForFolderPopulation += this;
 
@@ -528,20 +528,15 @@ DE_PIMPL(DoomsdayApp)
         }
     }
 
-#ifdef UNIX
     void determineGlobalPaths()
     {
+#if !defined(DE_WINDOWS)
         // By default, make sure the working path is the home folder.
         App::setCurrentWorkPath(App::app().nativeHomePath());
 
         // libcore has determined the native base path, so let FS1 know about it.
         self().setDoomsdayBasePath(DE_APP->nativeBasePath());
-    }
-#endif // UNIX
-
-#ifdef WIN32
-    void determineGlobalPaths()
-    {
+#else
         // Use a custom base directory?
         if (CommandLine_CheckWith("-basedir", 1))
         {
@@ -552,8 +547,8 @@ DE_PIMPL(DoomsdayApp)
             // The default base directory is one level up from the bin dir.
             self().setDoomsdayBasePath(App::executableDir().fileNamePath());
         }
+#endif // DE_WINDOWS
     }
-#endif // WIN32
 
     DE_PIMPL_AUDIENCES(
         GameLoad, GameUnload, GameChange, ConsoleRegistration, FileRefresh, PeriodicAutosave)
@@ -713,7 +708,7 @@ SaveGames &DoomsdayApp::saveGames()
 
 NativePath DoomsdayApp::steamBasePath()
 {
-#ifdef WIN32
+#ifdef DE_WINDOWS
     // The path to Steam can be queried from the registry.
     {
         const String path = WindowsRegistry::textValue(
@@ -740,7 +735,7 @@ List<NativePath> DoomsdayApp::gogComPaths()
 {
     List<NativePath> paths;
 
-#ifdef WIN32
+#ifdef DE_WINDOWS
     // Look up all the Doom GOG.com paths.
     StringList const subfolders({ "", "doom2", "master\\wads", "Plutonia", "TNT" });
     StringList const gogIds    ({ "1435827232", "1435848814", "1435848742" });
@@ -798,12 +793,12 @@ void DoomsdayApp::setDoomsdayBasePath(NativePath const &path)
     d->ddBasePath = cleaned.toString().toStdString();
 }
 
-#ifdef WIN32
-void *DoomsdayApp::moduleHandle() const
-{
-    return d->hInstance;
-}
-#endif
+// #ifdef WIN32
+// void *DoomsdayApp::moduleHandle() const
+// {
+//     return d->hInstance;
+// }
+// #endif
 
 Game const &DoomsdayApp::game()
 {

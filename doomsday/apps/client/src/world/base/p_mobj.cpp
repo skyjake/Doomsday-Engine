@@ -69,7 +69,7 @@
 using namespace de;
 using namespace world;
 
-static String const VAR_MATERIAL("material");
+// static String const VAR_MATERIAL("material");
 
 static mobj_t *unusedMobjs;
 

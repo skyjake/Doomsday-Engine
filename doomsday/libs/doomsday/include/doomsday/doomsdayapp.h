@@ -137,9 +137,9 @@ public:
     bool isShuttingDown() const;
     void setShuttingDown(bool shuttingDown);
 
-#ifdef WIN32
-    void *moduleHandle() const;
-#endif
+// #ifdef WIN32
+//     void *moduleHandle() const;
+// #endif
 
     void setDoomsdayBasePath(const de::NativePath &path);
     const std::string &doomsdayBasePath() const;

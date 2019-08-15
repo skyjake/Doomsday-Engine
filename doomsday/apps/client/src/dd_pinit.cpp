@@ -75,9 +75,9 @@ using namespace de;
 DE_DECLARE_API(InternalData) =
 {
     { DE_API_INTERNAL_DATA },
-    runtimeDefs.mobjInfo.elementsPtr(),
-    runtimeDefs.states  .elementsPtr(),
-    runtimeDefs.texts   .elementsPtr(),
+    nullptr,
+    nullptr,
+    nullptr,
     &validCount
 };
 
@@ -98,6 +98,11 @@ de::String DD_ComposeMainWindowTitle()
 void DD_PublishAPIs(const char *plugName)
 {
     const auto setAPI = function_cast<void (*)(int, void *)>(extensionSymbol(plugName, "deng_API"));
+
+    // Initialize with up-to-date pointers to dynamic arrays.
+    _api_InternalData.mobjInfo = runtimeDefs.mobjInfo.elementsPtr();
+    _api_InternalData.states   = runtimeDefs.states.elementsPtr();
+    _api_InternalData.text     = runtimeDefs.texts.elementsPtr();
 
     if (setAPI)
     {

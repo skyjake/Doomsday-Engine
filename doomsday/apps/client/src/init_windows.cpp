@@ -17,6 +17,8 @@
  * http://www.gnu.org/licenses</small>
  */
 
+#if defined (_MSC_VER)
+
 #define WIN32_LEAN_AND_MEAN
 #define _WIN32_DCOM
 //#define STRICT
@@ -129,3 +131,5 @@ void DD_Shutdown()
     // No more use of COM beyond, this point.
     CoUninitialize();
 }
+
+#endif // defined (_MSC_VER)

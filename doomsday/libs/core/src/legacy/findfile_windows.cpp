@@ -18,6 +18,8 @@
  * 02110-1301 USA</small>
  */
 
+#if defined (WIN32) && defined (_MSC_VER)
+
 #include <io.h>
 #include <stdlib.h>
 #include <string.h>
@@ -94,3 +96,5 @@ void FindFile_Finish(FindData *dta)
     Str_Free(&dta->name);
     memset(dta, 0, sizeof(FindData));
 }
+
+#endif // defined (WIN32) && defined (_MSC_VER)

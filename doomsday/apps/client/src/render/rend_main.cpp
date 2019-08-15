@@ -321,20 +321,31 @@ static void drawThinkers(world::Map &map);
 static void drawVertexes(world::Map &map);
 
 // Draw state:
-static Vec3d eyeOrigin;            ///< Viewer origin.
+static Vec3d eyeOrigin;               ///< Viewer origin.
 static ConvexSubspace *curSubspace;   ///< Subspace currently being drawn.
 static Vec3f curSectorLightColor;
 static dfloat curSectorLightLevel;
 static bool firstSubspace;            ///< No range checking for the first one.
 
+using MaterialAnimatorLookup = Hash<Record const *, MaterialAnimator *>;
+
 // State lookup (for speed):
-static MaterialVariantSpec const *lookupMapSurfaceMaterialSpec = nullptr;
-static Hash<Record const *, MaterialAnimator *> lookupSpriteMaterialAnimators;
+static const MaterialVariantSpec *lookupMapSurfaceMaterialSpec = nullptr;
+static MaterialAnimatorLookup *s_lookupSpriteMaterialAnimators;
+
+static inline MaterialAnimatorLookup &spriteAnimLookup()
+{
+    if (!s_lookupSpriteMaterialAnimators)
+    {
+        s_lookupSpriteMaterialAnimators = new MaterialAnimatorLookup;
+    }
+    return *s_lookupSpriteMaterialAnimators;
+}
 
 void Rend_ResetLookups()
 {
     lookupMapSurfaceMaterialSpec = nullptr;
-    lookupSpriteMaterialAnimators.clear();
+    spriteAnimLookup().clear();
 
     if (ClientApp::world().hasMap())
     {
@@ -3832,8 +3843,8 @@ MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
     MaterialAnimator *matAnimator = nullptr;
 
     // Check the cache first.
-    auto found = lookupSpriteMaterialAnimators.find(&spriteDef);
-    if (found != lookupSpriteMaterialAnimators.end())
+    auto found = spriteAnimLookup().find(&spriteDef);
+    if (found != spriteAnimLookup().end())
     {
         matAnimator = found->second;
     }
@@ -3849,7 +3860,7 @@ MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
                 matAnimator = &mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
             }
         }
-        lookupSpriteMaterialAnimators.insert(&spriteDef, matAnimator);
+        spriteAnimLookup().insert(&spriteDef, matAnimator);
     }
     return matAnimator;
 }

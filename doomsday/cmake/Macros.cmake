@@ -173,7 +173,7 @@ function (deng_filter_platform_sources outName)
             set (filtered YES)
         elseif ("${fn}" MATCHES ".*_windows\\..*" OR
             "${fn}" MATCHES ".*/windows/.*") # Windows-specific
-            if (NOT WIN32)
+            if (NOT WIN32 AND NOT CYGWIN)
                 set (filtered YES)
             endif ()
         elseif ("${fn}" MATCHES ".*_macx\\..*") # macOS specific

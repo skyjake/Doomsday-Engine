@@ -46,10 +46,10 @@ using namespace res;
 struct GraphicFileType
 {
     /// Symbolic name of the resource type.
-    String name;
+    const char *name;
 
     /// Known file extension.
-    String ext;
+    const char *ext;
 
     bool (*interpretFunc)(FileHandle &hndl, String filePath, image_t &img);
 
@@ -81,12 +81,11 @@ static bool interpretTga(FileHandle &hndl, String /*filePath*/, image_t &img)
 }
 
 // Graphic resource types.
-static GraphicFileType const graphicTypes[] = {
+static const GraphicFileType graphicTypes[] = {
     { "PNG",    "png",      interpretPng, 0 },
     { "JPG",    "jpg",      interpretJpg, 0 }, // TODO: add alternate "jpeg" extension
     { "TGA",    "tga",      interpretTga, TGA_LastError },
-    { "PCX",    "pcx",      interpretPcx, PCX_LastError },
-    { "",       "",         0,            0 } // Terminate.
+    { "PCX",    "pcx",      interpretPcx, PCX_LastError }
 };
 
 static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
@@ -95,9 +94,8 @@ static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
     String ext = fileName.fileNameExtension();
     if (!ext.isEmpty())
     {
-        for (int i = 0; !graphicTypes[i].ext.isEmpty(); ++i)
+        for (const auto &type : graphicTypes)
         {
-            GraphicFileType const &type = graphicTypes[i];
             if (!ext.compareWithoutCase(type.ext))
             {
                 return &type;
@@ -121,14 +119,12 @@ static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
     {
         // Try each recognisable format instead.
         /// @todo Order here should be determined by the resource locator.
-        for (int i = 0; !graphicTypes[i].name.isEmpty(); ++i)
+        for (const auto &graphicType : graphicTypes)
         {
-            GraphicFileType const *graphicType = &graphicTypes[i];
-
             // Already tried this?
-            if (graphicType == rtypeGuess) continue;
+            if (&graphicType == rtypeGuess) continue;
 
-            graphicTypes[i].interpretFunc(hndl, filePath, img);
+            graphicType.interpretFunc(hndl, filePath, img);
             if (img.pixels) break;
         }
     }

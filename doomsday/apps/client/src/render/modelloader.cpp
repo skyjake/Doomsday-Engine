@@ -32,10 +32,10 @@ namespace render {
 
 using namespace de;
 
-String const ModelLoader::DEF_ANIMATION ("animation");
-String const ModelLoader::DEF_MATERIAL  ("material");
-String const ModelLoader::DEF_PASS      ("pass");
-String const ModelLoader::DEF_RENDER    ("render");
+const char *ModelLoader::DEF_ANIMATION = "animation";
+const char *ModelLoader::DEF_MATERIAL  = "material";
+const char *ModelLoader::DEF_PASS      = "pass";
+const char *ModelLoader::DEF_RENDER    = "render";
 
 DE_STATIC_STRING(DEF_ALIGNMENT_PITCH    , "alignment.pitch");
 DE_STATIC_STRING(DEF_ALIGNMENT_YAW      , "alignment.yaw");

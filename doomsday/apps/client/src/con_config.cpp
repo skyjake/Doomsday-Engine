@@ -57,8 +57,6 @@ using namespace de;
 static Path cfgFile;
 static int flagsAllow;
 
-static String const STR_COMMENT = "# ";
-
 static void writeHeaderComment(de::Writer &out)
 {
     if (!App_GameLoaded())
@@ -94,7 +92,7 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
     // First print the comment (help text).
     if (char const *str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION))
     {
-        out->writeText(String(str).addLinePrefix(STR_COMMENT) + "\n");
+        out->writeText(String(str).addLinePrefix("# ") + "\n");
     }
 
     out->writeText(Stringf("%s %s", Str_Text(path),
