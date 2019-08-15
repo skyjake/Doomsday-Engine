@@ -16,22 +16,30 @@ if (TARGET SDL2)
     return ()
 endif ()
 
-if (PKG_CONFIG_FOUND AND (NOT IOS) AND (NOT CYGWIN))
+if (PKG_CONFIG_FOUND AND (NOT CYGWIN OR IOS))
+    # The Unix Way: use pkg-config to find the SDL2 libs installed on system.
     if (NOT TARGET SDL2)
         add_pkgconfig_interface_library (SDL2 OPTIONAL sdl2)
         add_pkgconfig_interface_library (SDL2_mixer OPTIONAL SDL2_mixer)
     endif ()
 
 elseif (WIN32 OR CYGWIN)
-    # Try to locate SDL2 from the local system (assuming Windows).
+    deng_clean_path (sdlRoot ${SDL2_DIR})
+    # This is Windows, so we'll use the Windows SDL2 libraries that the user has 
+    # installed in FMOD_DIR. Note that Cygwin also uses the native SDL2 libraries
+    # and *not* the Cygwin ones, which would presumably have an X11 dependency.
     set (_oldPath ${SDL2_LIBRARY})
     if (CYGWIN)
-        # Assume it has been set manually.
-        set (SDL2_LIBRARY ${SDL2_DIR}/lib/${DE_ARCH}/SDL2.lib)
+       if (SDL2_DIR STREQUAL "")
+           message (FATAL_ERROR "SDL2_DIR must be set in Cygwin")
+       endif ()
+       # Assume it has been set manually.
+       set (SDL2_LIBRARY ${sdlRoot}/lib/${DE_ARCH}/SDL2.lib)
+       message (STATUS ${SDL2_LIBRARY})
     else ()
-        file (GLOB _hints ${SDL2_DIR}/SDL2* $ENV{DENG_DEPEND_PATH}/SDL2*)
+        file (GLOB _hints ${sdlRoot}/SDL2* $ENV{DENG_DEPEND_PATH}/SDL2*)
         find_library (SDL2_LIBRARY SDL2
-            PATHS ${SDL2_DIR}
+            PATHS ${sdlRoot}
             HINTS ${_hints} ENV DENG_DEPEND_PATH
             PATH_SUFFIXES lib/${DE_ARCH} lib
         )
@@ -47,7 +55,7 @@ elseif (WIN32 OR CYGWIN)
     # Define the target.
     add_library (SDL2 INTERFACE)
     if (CYGWIN)
-        target_link_libraries(SDL2 INTERFACE ${SDL2_DIR}/lib/${DE_ARCH}/SDL2main.lib)
+        target_link_libraries(SDL2 INTERFACE ${sdlRoot}/lib/${DE_ARCH}/SDL2main.lib)
     endif ()
     target_link_libraries (SDL2 INTERFACE ${SDL2_LIBRARY})
 
@@ -62,15 +70,19 @@ elseif (WIN32 OR CYGWIN)
     deng_install_library (${_libDir}/SDL2.dll)
 
     # Also attempt to locate SLD2_mixer.
+    deng_clean_path (sdlMixerDir ${SDL2_MIXER_DIR})
     set (_oldPath ${SDL_MIXER_LIBRARY})
     if (CYGWIN)
-        set (SDL2_MIXER_LIBRARY ${SDL2_MIXER_DIR}/lib/${DE_ARCH}/SDL2_mixer.lib)
+        if (SDL2_MIXER_DIR STREQUAL "")
+            message (FATAL_ERROR "SDL2_MIXER_DIR must be set in Cygwin")
+        endif ()
+        set (SDL2_MIXER_LIBRARY ${sdlMixerDir}/lib/${DE_ARCH}/SDL2_mixer.lib)
     else ()
-        file (GLOB _hints ${SDL2_DIR}/SDL2_mixer* ${SDL2_MIXER_DIR}/SDL2_mixer*
+        file (GLOB _hints ${sdlRoot}/SDL2_mixer* ${sdlMixerDir}/SDL2_mixer*
               $ENV{DENG_DEPEND_PATH}/SDL2_mixer*
         )
         find_library (SDL2_MIXER_LIBRARY SDL2_mixer
-            PATHS ${SDL2_DIR} ${SDL2_MIXER_DIR}
+            PATHS ${sdlRoot} ${sdlMixerDir}
             HINTS ${_hints} ENV DENG_DEPEND_PATH
             PATH_SUFFIXES lib/${DE_ARCH} lib
         )

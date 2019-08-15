@@ -2,8 +2,11 @@ set (FMOD_DIR "" CACHE PATH "Location of the FMOD Programmer's API SDK")
 
 set (_oldPath ${FMOD_FMOD_H})
 
+# We may need to clean up the provided path.
+deng_clean_path (fmodRoot ${FMOD_DIR})
+
 find_file (FMOD_FMOD_H api/lowlevel/inc/fmod.h
-    PATHS "${FMOD_DIR}"
+    PATHS "${fmodRoot}"
     HINTS ENV DENG_DEPEND_PATH
     PATH_SUFFIXES "FMOD" "FMOD Programmers API" "FMOD Studio API Windows"
     NO_DEFAULT_PATH

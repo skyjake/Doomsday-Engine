@@ -440,7 +440,7 @@ macro (deng_deploy_library target name)
         install (TARGETS ${target} EXPORT ${name}
             RUNTIME DESTINATION bin COMPONENT libs
             LIBRARY DESTINATION ${DE_INSTALL_LIB_DIR} COMPONENT libs
-            ARCHIVE DESTINATION lib COMPONENT sdk
+            ARCHIVE DESTINATION ${DE_INSTALL_LIB_DIR} COMPONENT sdk
         )
         install (EXPORT ${name} DESTINATION ${DE_INSTALL_CMAKE_DIR}/${name}
             FILE ${name}-config.cmake
@@ -454,6 +454,7 @@ macro (deng_deploy_library target name)
         if (NOT APPLE)
             # When the SDK is disabled, only the runtime binary is installed.
             install (TARGETS ${target}
+                RUNTIME DESTINATION bin COMPONENT libs
                 LIBRARY DESTINATION ${DE_INSTALL_LIB_DIR} COMPONENT libs
             )
         endif ()
@@ -774,7 +775,7 @@ endfunction (deng_install_tool)
 # Not applicable to macOS because libraries are not installed but instead
 # bundled with the applicatino.
 macro (deng_install_library library)
-    if (UNIX_LINUX AND NOT CYGWIN)
+    if (UNIX_LINUX)
         string (REGEX REPLACE "(.*)\\.so" "\\1-*.so" versioned ${library})
         file (GLOB _links ${library}.* ${versioned})
         install (FILES ${library} ${_links}
@@ -891,3 +892,16 @@ function (deng_link_libraries target visibility)
     endforeach (name)
     target_link_libraries (${target} ${visibility} ${libTargets})
 endfunction (deng_link_libraries)
+
+macro (deng_clean_path outvar)
+    if (${ARGC} GREATER 1)
+        set (${outvar} ${ARGV1})
+        if (CYGWIN)
+            execute_process (COMMAND cygpath -u ${ARGV1}
+                OUTPUT_VARIABLE ${outvar}
+                OUTPUT_STRIP_TRAILING_WHITESPACE)
+        endif ()
+    else ()
+        set (${outVar} "")
+    endif ()
+endmacro ()
