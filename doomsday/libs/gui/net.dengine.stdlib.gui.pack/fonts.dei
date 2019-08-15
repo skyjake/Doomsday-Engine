@@ -10,9 +10,11 @@ script {
     import Version, gui, DisplayMode
 
     # Load the fonts contained in this pack.
+    # Note that this pack may be included from other UI styles, so we'll use an
+    # absolute directory to find the font files.
     def loadFonts()
         import App
-        fontDir = __file__.fileNamePath() / "fonts"
+        fontDir = "/packs/net.dengine.stdlib.gui/fonts"
         fontStyles = ['Regular', 'Bold', 'Italic', 'BoldItalic', 'Light', 'LightItalic']
         for style in fontStyles
             App.loadFont(fontDir / ("Source Sans Pro/SourceSansPro-%s.ttf" % style))
