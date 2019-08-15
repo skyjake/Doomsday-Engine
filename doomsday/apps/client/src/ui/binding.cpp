@@ -25,7 +25,7 @@ using namespace de;
 
 static int idCounter = 0;
 
-static String const VAR_CONDITION("condition");
+static const char *VAR_CONDITION = "condition";
 
 Record &Binding::def()
 {

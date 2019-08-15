@@ -20,7 +20,7 @@
 #include "libcore.h"
 #include "String"
 
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
 
 namespace de {
 
@@ -30,6 +30,6 @@ public:
     static String textValue(const String &key, const String &name);
 };
 
-#endif // defined (WIN32)
+#endif // defined (DE_WINDOWS)
     
 } // namespace de

@@ -15,6 +15,7 @@ add_definitions (
     -D_CRT_SECURE_NO_WARNINGS
     -D_USE_MATH_DEFINES
     -DDE_PLATFORM_ID="win-${DE_ARCH}"
+    -DDE_WINDOWS=1
 )
 
 # Code signing.

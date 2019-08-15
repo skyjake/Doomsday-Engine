@@ -57,7 +57,7 @@ deng_install_bundle_deps (shell
 deng_deploy_target (shell)
 deng_codesign (shell)
 
-if (UNIX AND NOT APPLE)
+if (UNIX_LINUX)
     configure_file (doomsday-shell.desktop.in net.dengine.Shell.desktop)
     install (PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/net.dengine.Shell.desktop
         DESTINATION share/applications)

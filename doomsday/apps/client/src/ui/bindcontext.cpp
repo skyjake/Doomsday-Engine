@@ -32,11 +32,11 @@
 
 using namespace de;
 
-static String const VAR_ID        ("id");
-static String const VAR_TYPE      ("type");
-static String const VAR_TEST      ("test");
-static String const VAR_DEVICE_ID ("deviceId");
-static String const VAR_CONTROL_ID("controlId");
+static const char *VAR_ID         = "id";
+static const char *VAR_TYPE       = "type";
+static const char *VAR_TEST       = "test";
+static const char *VAR_DEVICE_ID  = "deviceId";
+static const char *VAR_CONTROL_ID = "controlId";
 
 DE_PIMPL(BindContext)
 {

@@ -28,7 +28,7 @@
 
 #include <utility>
 
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
 #  define WIN32_LEAN_AND_MEAN
 #  include <Windows.h>
 #endif
@@ -487,7 +487,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
             if (mouse.wheelMotion() == MouseEvent::Steps)
             {
                 unsigned int lineCount = 1;
-#ifdef WIN32
+#ifdef DE_WINDOWS
                 // Use the number of lines to scroll from system preferences.
                 SystemParametersInfo(SPI_GETWHEELSCROLLLINES, 0, &lineCount, 0);
                 if (lineCount == WHEEL_PAGESCROLL)

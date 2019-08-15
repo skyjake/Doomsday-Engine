@@ -62,7 +62,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
 //    VariableChoiceWidget *fmodSpeakerMode;
     VariableChoiceWidget *soundPlugin;
     VariableChoiceWidget *musicPlugin;
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
     VariableChoiceWidget *cdPlugin;
 #endif
     bool needAudioReinit = false;
@@ -114,7 +114,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
         backendBase->add(sfxChannels  = new VariableSliderWidget(App::config("audio.channels"), Ranged(1, 64), 1.0));
         backendBase->add(soundPlugin  = new VariableChoiceWidget(App::config("audio.soundPlugin"), VariableChoiceWidget::Text));
         backendBase->add(musicPlugin  = new VariableChoiceWidget(App::config("audio.musicPlugin"), VariableChoiceWidget::Text));
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
         backendBase->add(cdPlugin = new VariableChoiceWidget(App::config("audio.cdPlugin"), VariableChoiceWidget::Text));
 #endif
 //        backendBase->add(fmodSpeakerMode = new VariableChoiceWidget(App::config("audio.fmod.speakerMode"), VariableChoiceWidget::Text));
@@ -127,7 +127,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
 
             layout << *LabelWidget::newWithText("SFX Plugin:", backendBase) << *soundPlugin
                    << *LabelWidget::newWithText("Music Plugin:", backendBase) << *musicPlugin
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
                    << *LabelWidget::newWithText("CD Plugin:", backendBase) << *cdPlugin
 #endif
                    << *LabelWidget::newWithText("Output:", backendBase) << *audioOutput
@@ -162,7 +162,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
 //           #endif
                 << new ChoiceItem("Disabled", "dummy");
 
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
         cdPlugin->items()
             //              << new ChoiceItem(tr("Windows Multimedia"), "winmm")
                 << new ChoiceItem("Disabled", "dummy");
@@ -182,7 +182,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
         soundPlugin->audienceForUserSelection() += changeFunc;
         musicPlugin->audienceForUserSelection() += changeFunc;
         audioOutput->audienceForUserSelection() += changeFunc;
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
         cdPlugin->audienceForUserSelection() += changeFunc;
 #endif
         sfxChannels->audienceForUserValue() += changeFunc;

@@ -154,15 +154,15 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 //    std::unique_ptr<QOpenGLExtension_NV_framebuffer_multisample_coverage> NV_framebuffer_multisample_coverage;
 //#endif
 
-#ifdef WIN32
-    BOOL (APIENTRY *wglSwapIntervalEXT)(int interval) = nullptr;
-#endif
+// #ifdef WIN32
+//     BOOL (APIENTRY *wglSwapIntervalEXT)(int interval) = nullptr;
+// #endif
 
-#ifdef DE_X11
-    PFNGLXSWAPINTERVALEXTPROC  glXSwapIntervalEXT  = nullptr;
-    PFNGLXSWAPINTERVALSGIPROC  glXSwapIntervalSGI  = nullptr;
-    PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
-#endif
+// #ifdef DE_X11
+//     PFNGLXSWAPINTERVALEXTPROC  glXSwapIntervalEXT  = nullptr;
+//     PFNGLXSWAPINTERVALSGIPROC  glXSwapIntervalSGI  = nullptr;
+//     PFNGLXSWAPINTERVALMESAPROC glXSwapIntervalMESA = nullptr;
+// #endif
 
 #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
 //    QOpenGLDebugLogger *logger = nullptr;
@@ -221,14 +221,14 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         //DE_ASSERT(QOpenGLContext::currentContext() != nullptr);
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
-#if 0
-#ifdef WIN32
-        // Prefer the wgl-specific extensions.
-        if (wglGetExtensionsStringARB != nullptr &&
-           checkExtensionString(ext, (GLubyte const *)wglGetExtensionsStringARB(wglGetCurrentDC())))
-            return true;
-#endif
-#endif
+// #if 0
+// #ifdef WIN32
+//         // Prefer the wgl-specific extensions.
+//         if (wglGetExtensionsStringARB != nullptr &&
+//            checkExtensionString(ext, (GLubyte const *)wglGetExtensionsStringARB(wglGetCurrentDC())))
+//             return true;
+// #endif
+// #endif
 
 #ifdef DE_X11
         // Check GLX specific extensions.
@@ -318,18 +318,18 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
                                            = query("GL_NV_framebuffer_multisample_coverage");
         ext.KHR_debug                      = query("GL_KHR_debug");
 
-        #ifdef WIN32
-        {
-            //ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
-            ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
+        // #ifdef WIN32
+        // {
+        //     //ext.Windows_ARB_multisample        = query("WGL_ARB_multisample");
+        //     ext.Windows_EXT_swap_control       = query("WGL_EXT_swap_control");
 
-            if (ext.Windows_EXT_swap_control)
-            {
-                wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
-                        (wglGetProcAddress("wglSwapIntervalEXT"));
-            }
-        }
-        #endif
+        //     if (ext.Windows_EXT_swap_control)
+        //     {
+        //         wglSwapIntervalEXT = de::function_cast<decltype(wglSwapIntervalEXT)>
+        //                 (wglGetProcAddress("wglSwapIntervalEXT"));
+        //     }
+        // }
+        // #endif
 
         #ifdef DE_X11
         {
@@ -492,62 +492,7 @@ void GLInfo::setSwapInterval(int interval)
 {
     DE_ASSERT(info.d->inited);
     SDL_GL_SetSwapInterval(interval);
-#if 0
-    #if defined (WIN32)
-    {
-        if (extensions().Windows_EXT_swap_control)
-        {
-            info.d->wglSwapIntervalEXT(interval);
-        }
-    }
-    #elif defined (MACOSX)
-    {
-        CGLContextObj context = CGLGetCurrentContext();
-        DE_ASSERT(context != nullptr);
-        if (context)
-        {
-            GLint params[1] = { interval };
-            CGLSetParameter(context, kCGLCPSwapInterval, params);
-        }
-    }
-    #elif defined (DE_X11)
-    {
-        if (extensions().X11_SGI_swap_control)
-        {
-            info.d->glXSwapIntervalSGI(interval);
-        }
-        else if (extensions().X11_MESA_swap_control)
-        {
-            info.d->glXSwapIntervalMESA(uint(interval));
-        }
-        else if (extensions().X11_EXT_swap_control)
-        {
-            info.d->glXSwapIntervalEXT(QX11Info::display(),
-                                       GLWindow::main().winId(),
-                                       interval);
-        }
-    }
-    #endif
-#endif
 }
-
-#if 0
-void GLInfo::setLineWidth(float lineWidth)
-{
-    #if defined (DE_OPENGL)
-    {
-        LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-//        DE_ASSERT(info.d->inited);
-        glLineWidth(info.d->lim.smoothLineWidth.clamp(lineWidth));
-        LIBGUI_ASSERT_GL_OK();
-    }
-    #else
-    {
-        DE_UNUSED(lineWidth);
-    }
-    #endif
-}
-#endif
 
 GLInfo::Extensions const &GLInfo::extensions()
 {

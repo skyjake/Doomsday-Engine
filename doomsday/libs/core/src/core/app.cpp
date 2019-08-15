@@ -233,7 +233,7 @@ DE_PIMPL(App)
 
     NativePath defaultNativeModulePath() const
     {
-        #ifdef WIN32
+        #ifdef DE_WINDOWS
         {
             NativePath appDir = appPath.fileNamePath();
             return appDir / "..\\modules";
@@ -272,7 +272,7 @@ DE_PIMPL(App)
 //                binFolder.attach(new DirectoryFeed(appDir));
                 fs.makeFolder("/data").attach(new DirectoryFeed(self().nativeBasePath()));
             }
-            #elif WIN32
+            #elif DE_WINDOWS
             {
                 NativePath appDir = appPath.fileNamePath();
                 fs.makeFolder("/data").attach(new DirectoryFeed(appDir / "..\\data"));
@@ -571,7 +571,7 @@ NativePath App::nativePluginBinaryPath()
 
     NativePath path;
 
-    #if defined (WIN32)
+    #if defined (DE_WINDOWS)
     {
         path = d->appPath.fileNamePath() / "plugins";
         return (d->cachedPluginBinaryPath = path);
@@ -624,7 +624,7 @@ NativePath App::nativeHomePath()
         nativeHome = NativePath::homePath();
         nativeHome = nativeHome / "Library/Application Support" / d->metadata.gets(APP_NAME) / "runtime";
     }
-    #elif defined (WIN32)
+    #elif defined (DE_WINDOWS)
     {
         nativeHome = appDataPath();
         nativeHome = nativeHome / "runtime";
@@ -677,7 +677,7 @@ NativePath App::currentWorkPath()
 NativePath App::tempPath()
 {
     NativePath sysTemp;
-    #if defined (WIN32)
+    #if defined (DE_WINDOWS)
     {
         sysTemp = NativePath::homePath() / "AppData\\Local\\Temp";
     }
@@ -729,7 +729,7 @@ NativePath App::nativeBasePath()
     }
 
     NativePath path;
-    #if defined (WIN32) || defined (__CYGWIN__)
+    #if defined (DE_WINDOWS)
     {
         path = d->appPath.fileNamePath() / "..";
     }
@@ -776,6 +776,8 @@ void App::initSubsystems(SubsystemInitFlags flags)
     {
         d->packageLoader.load(pkg);
     }
+
+    LOG_MSG("Contents of /packs:\n") << FS::locate<const Folder>("/packs").contentsAsText();
 
     if (!(flags & DisablePersistentData))
     {

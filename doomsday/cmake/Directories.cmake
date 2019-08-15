@@ -31,6 +31,8 @@ endif ()
 if (UNIX AND NOT (APPLE OR CYGWIN))
     set (UNIX_LINUX YES)
     include (GNUInstallDirs)
+else ()
+    set (UNIX_LINUX NO)
 endif()
 
 # Install directories.

@@ -85,7 +85,7 @@ FileId::Md5Hash FileId::hash(String path)
     // Ensure we've a normalized path.
     path = App_BasePath() / path;
 
-#if defined(WIN32) || defined(MACOSX)
+#if defined(DE_WINDOWS) || defined(MACOSX)
     // This is a case insensitive operation.
     path = path.upper();
 #endif

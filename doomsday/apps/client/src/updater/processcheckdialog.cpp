@@ -28,7 +28,7 @@
 
 using namespace de;
 
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
 
 static bool isProcessRunning(char const *name)
 {

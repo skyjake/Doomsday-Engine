@@ -52,13 +52,26 @@ int consolePlayer;
 int displayPlayer;
 
 typedef Map<int, PlayerImpulse *> Impulses; // ID lookup.
-static Impulses impulses;
-
 typedef Map<String, PlayerImpulse *, String::InsensitiveLessThan> ImpulseNameMap; // Name lookup
-static ImpulseNameMap impulsesByName;
-
 typedef Map<int, ImpulseAccumulator *> ImpulseAccumulators; // ImpulseId lookup.
-static ImpulseAccumulators accumulators[DDMAXPLAYERS];
+
+struct ImpulseGlobals
+{
+    Impulses            impulses;
+    ImpulseNameMap      impulsesByName;
+    ImpulseAccumulators accumulators[DDMAXPLAYERS];
+};
+
+static ImpulseGlobals *s_impulse;
+
+static ImpulseGlobals &impulseGlobals()
+{
+    if (!s_impulse)
+    {
+        s_impulse = new ImpulseGlobals;
+    }
+    return *s_impulse;
+}
 
 static PlayerImpulse *addImpulse(int id, impulsetype_t type, const String &name, const String &bindContextName)
 {
@@ -69,8 +82,8 @@ static PlayerImpulse *addImpulse(int id, impulsetype_t type, const String &name,
     imp->name            = name;
     imp->bindContextName = bindContextName;
 
-    impulses.insert(imp->id, imp);
-    impulsesByName.insert(imp->name.lower(), imp);
+    impulseGlobals().impulses.insert(imp->id, imp);
+    impulseGlobals().impulsesByName.insert(imp->name.lower(), imp);
 
     // Generate impulse accumulators for each player.
     for(int i = 0; i < DDMAXPLAYERS; ++i)
@@ -79,7 +92,7 @@ static PlayerImpulse *addImpulse(int id, impulsetype_t type, const String &name,
             (type == IT_BINARY ? ImpulseAccumulator::Binary : ImpulseAccumulator::Analog);
         auto *accum = new ImpulseAccumulator(imp->id, accumType, type != IT_ANALOG);
         accum->setPlayerNum(i);
-        accumulators[i].insert(accum->impulseId(), accum);
+        impulseGlobals().accumulators[i].insert(accum->impulseId(), accum);
     }
 
     return imp;
@@ -90,10 +103,10 @@ static ImpulseAccumulator *accumulator(int impulseId, int playerNum)
     if(playerNum < 0 || playerNum >= DDMAXPLAYERS)
         return nullptr;
 
-    if(!accumulators[playerNum].contains(impulseId))
+    if(!impulseGlobals().accumulators[playerNum].contains(impulseId))
         return nullptr;
 
-    return accumulators[playerNum][impulseId];
+    return impulseGlobals().accumulators[playerNum][impulseId];
 }
 
 AppPlayer *DD_Player(int number)
@@ -208,20 +221,21 @@ bool P_IsInVoid(player_t *player)
 
 void P_ClearPlayerImpulses()
 {
+    auto &g = impulseGlobals();
     for (dint i = 0; i < DDMAXPLAYERS; ++i)
     {
-        accumulators[i].deleteAll();
-        accumulators[i].clear();
+        g.accumulators[i].deleteAll();
+        g.accumulators[i].clear();
     }
-    impulses.deleteAll();
-    impulses.clear();
-    impulsesByName.clear();
+    g.impulses.deleteAll();
+    g.impulses.clear();
+    g.impulsesByName.clear();
 }
 
 PlayerImpulse *P_PlayerImpulsePtr(dint id)
 {
-    auto found = impulses.find(id);
-    if (found != impulses.end()) return found->second;
+    auto found = impulseGlobals().impulses.find(id);
+    if (found != impulseGlobals().impulses.end()) return found->second;
     return nullptr;
 }
 
@@ -229,8 +243,8 @@ PlayerImpulse *P_PlayerImpulseByName(String const &name)
 {
     if (!name.isEmpty())
     {
-        auto found = impulsesByName.find(name);
-        if (found != impulsesByName.end()) return found->second;
+        auto found = impulseGlobals().impulsesByName.find(name);
+        if (found != impulseGlobals().impulsesByName.end()) return found->second;
     }
     return nullptr;
 }
@@ -241,7 +255,7 @@ D_CMD(ListImpulses)
 
     // Group the defined impulses by binding context.
     Map<String, List<PlayerImpulse *>> contextGroups;
-    for (const auto &imp : impulsesByName)
+    for (const auto &imp : impulseGlobals().impulsesByName)
     {
         if (!contextGroups.contains(imp.second->bindContextName))
         {
@@ -252,7 +266,7 @@ D_CMD(ListImpulses)
 
     LOG_MSG(_E(b) "Player impulses");
     LOG_MSG("There are " _E(b) "%i" _E(.) " impulses, in " _E(b) "%i" _E(.) " contexts")
-            << impulses.size() << contextGroups.size();
+        << impulseGlobals().impulses.size() << contextGroups.size();
 
     for (auto const &group : contextGroups)
     {
@@ -309,7 +323,7 @@ D_CMD(ClearImpulseAccumulation)
     // For all players.
     for (int i = 0; i < DDMAXPLAYERS; ++i)
     {
-        for (auto &accum : accumulators[i])
+        for (auto &accum : impulseGlobals().accumulators[i])
         {
             accum.second->clearAll();
         }
@@ -451,7 +465,8 @@ DE_EXTERN_C int P_GetImpulseControlState(int playerNum, int impulseId)
     // Ensure this is really a binary accumulator.
     if(accum->type() != ImpulseAccumulator::Binary)
     {
-        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary") << impulses[impulseId]->name;
+        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary")
+            << impulseGlobals().impulses[impulseId]->name;
         return 0;
     }
 
@@ -469,7 +484,8 @@ DE_EXTERN_C void P_Impulse(int playerNum, int impulseId)
     // Ensure this is really a binary accumulator.
     if(accum->type() != ImpulseAccumulator::Binary)
     {
-        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary") << impulses[impulseId]->name;
+        LOG_INPUT_WARNING("ImpulseAccumulator '%s' is not binary")
+            << impulseGlobals().impulses[impulseId]->name;
         return;
     }
 

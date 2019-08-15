@@ -43,7 +43,7 @@
  * are stored.
  */
 
-#if defined (WIN32) || defined (__CYGWIN__)
+#if defined (DE_WINDOWS)
 #  define NATIVE_HOME_SYMBOLIC  "%HOMEPATH%"
 #  define DIR_SEPARATOR         '\\'
 #else
@@ -237,7 +237,7 @@ String NativePath::pretty() const
                 return "(app)" + result.substr(contentsPath.sizeb());
             }
 #endif
-#if !defined (WIN32) && !defined (__CYGWIN__) // Windows users are not familiar with a symbolic home path.
+#if !defined (DE_WINDOWS) // Windows users are not familiar with a symbolic home path.
             NativePath homePath = NativePath::homePath(); // actual native home dir, not FS2 "/home"
             if (result.beginsWith(homePath.toString()))
             {
@@ -294,7 +294,7 @@ bool NativePath::setWorkPath(const NativePath &cwd)
 
 NativePath NativePath::homePath()
 {
-#if defined (WIN32) || defined(__CYGWIN__)
+#if defined (DE_WINDOWS)
     return String(getenv("HOMEDRIVE")) + getenv("HOMEPATH");
 #else
     return getenv("HOME");

@@ -37,7 +37,7 @@
 
 using namespace de;
 
-static String const CUSTOM_PROFILE = "Custom";
+DE_STATIC_STRING(CUSTOM_PROFILE, "Custom");
 
 DE_PIMPL(ConfigProfiles)
 , DE_OBSERVES(DoomsdayApp, GameUnload)
@@ -166,7 +166,7 @@ DE_PIMPL(ConfigProfiles)
     Profile defaults;
     String current;
 
-    Impl(Public *i) : Base(i), current(CUSTOM_PROFILE)
+    Impl(Public *i) : Base(i), current(CUSTOM_PROFILE())
     {
         DoomsdayApp::app().audienceForGameUnload() += this;
         DoomsdayApp::app().audienceForGameChange() += this;
@@ -348,12 +348,12 @@ DE_PIMPL(ConfigProfiles)
 
     bool addCustomProfileIfMissing()
     {
-        if (!tryFind(CUSTOM_PROFILE))
+        if (!tryFind(CUSTOM_PROFILE()))
         {
-            addProfile(CUSTOM_PROFILE);
+            addProfile(CUSTOM_PROFILE());
 
             // Use whatever values are currently in effect.
-            fetch(CUSTOM_PROFILE);
+            fetch(CUSTOM_PROFILE());
             return true;
         }
         return false; // nothing added
@@ -378,7 +378,7 @@ DE_PIMPL(ConfigProfiles)
         // have the Custom profile.
         if (addCustomProfileIfMissing())
         {
-            current = CUSTOM_PROFILE;
+            current = CUSTOM_PROFILE();
         }
 
         // Update current profile.
@@ -387,9 +387,9 @@ DE_PIMPL(ConfigProfiles)
         if (!tryFind(current))
         {
             // Fall back to the one profile we know is available.
-            if (tryFind(CUSTOM_PROFILE))
+            if (tryFind(CUSTOM_PROFILE()))
             {
-                current = CUSTOM_PROFILE;
+                current = CUSTOM_PROFILE();
             }
             else
             {

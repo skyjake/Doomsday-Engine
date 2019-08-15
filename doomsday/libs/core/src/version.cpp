@@ -173,7 +173,7 @@ String Version::userAgent() const
 
 String Version::operatingSystem()
 {
-#if defined (WIN32)
+#if defined (DE_WINDOWS)
     return "windows";
 #elif defined (MACOSX)
     return "macx";

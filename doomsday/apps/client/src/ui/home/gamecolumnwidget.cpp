@@ -48,9 +48,9 @@ const String GameColumnWidget::SORT_RECENTLY_PLAYED("recent");
 const String GameColumnWidget::SORT_RELEASE_DATE("release");
 const String GameColumnWidget::SORT_TITLE("title");
 
-static const String VAR_SORT_BY("home.sortBy");
-static const String VAR_SORT_ASCENDING("home.sortAscending");
-static const String VAR_SORT_CUSTOM_SEPARATELY("home.sortCustomSeparately");
+static const char *VAR_SORT_BY                = "home.sortBy";
+static const char *VAR_SORT_ASCENDING         = "home.sortAscending";
+static const char *VAR_SORT_CUSTOM_SEPARATELY = "home.sortCustomSeparately";
 
 DE_GUI_PIMPL(GameColumnWidget)
 , DE_OBSERVES(Games, Readiness)

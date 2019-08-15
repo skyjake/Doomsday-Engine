@@ -307,7 +307,7 @@ void GuiApp::setRenderThread()
 NativePath GuiApp::appDataPath() const
 {
     const auto &amd = metadata();
-    #if defined (WIN32)
+    #if defined (DE_WINDOWS)
     {
         return NativePath::homePath() / "AppData/Local" / amd.gets(ORG_NAME) / amd.gets(APP_NAME);
     }

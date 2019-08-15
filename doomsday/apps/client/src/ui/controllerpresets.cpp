@@ -33,7 +33,7 @@
 
 using namespace de;
 
-static String VAR_CONTROLLER_PRESETS("controllerPresets");
+static const char *VAR_CONTROLLER_PRESETS = "controllerPresets";
 
 DE_PIMPL_NOREF(ControllerPresets)
 , DE_OBSERVES(DoomsdayApp, GameChange)

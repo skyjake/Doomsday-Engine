@@ -29,16 +29,16 @@
 
 using namespace de;
 
-static String const VAR_FREQUENCY     ("updater.frequency");
-static String const VAR_CHANNEL       ("updater.channel");
-static String const VAR_LAST_CHECKED  ("updater.lastChecked");
-static String const VAR_ONLY_MANUAL   ("updater.onlyManually");
-static String const VAR_DELETE        ("updater.delete");
-static String const VAR_DOWNLOAD_PATH ("updater.downloadPath");
-static String const VAR_DELETE_PATH   ("updater.deleteAtStartup");
-static String const VAR_AUTO_DOWNLOAD ("updater.autoDownload");
+static const char *VAR_FREQUENCY     = "updater.frequency";
+static const char *VAR_CHANNEL       = "updater.channel";
+static const char *VAR_LAST_CHECKED  = "updater.lastChecked";
+static const char *VAR_ONLY_MANUAL   = "updater.onlyManually";
+static const char *VAR_DELETE        = "updater.delete";
+static const char *VAR_DOWNLOAD_PATH = "updater.downloadPath";
+static const char *VAR_DELETE_PATH   = "updater.deleteAtStartup";
+static const char *VAR_AUTO_DOWNLOAD = "updater.autoDownload";
 
-static String const SYMBOL_DEFAULT_DOWNLOAD("${DEFAULT}");
+static const char *SYMBOL_DEFAULT_DOWNLOAD = "${DEFAULT}";
 
 UpdaterSettings::UpdaterSettings()
 {}

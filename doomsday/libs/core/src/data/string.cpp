@@ -574,7 +574,8 @@ String String::operator%(const PatternArgs &args) const
 
 String String::concatenatePath(const String &other, Char dirChar) const
 {
-    if ((dirChar == '/' || dirChar == '\\') && isAbsolute_Path(&other._str))
+    if (other.beginsWith(dirChar) ||
+        (dirChar == '\\' && isAbsolute_Path(&other._str)))
     {
         // The other path is absolute - use as is.
         return other;

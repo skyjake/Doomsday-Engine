@@ -56,16 +56,16 @@ public:
 
         duint32 KHR_debug : 1;
 
-#ifdef WIN32
-        //duint32 Windows_ARB_multisample : 1;
-        duint32 Windows_EXT_swap_control : 1;
-#endif
+// #ifdef WIN32
+//         //duint32 Windows_ARB_multisample : 1;
+//         duint32 Windows_EXT_swap_control : 1;
+// #endif
 
-#ifdef DE_X11
-        duint32 X11_EXT_swap_control : 1;
-        duint32 X11_SGI_swap_control : 1;
-        duint32 X11_MESA_swap_control : 1;
-#endif
+// #ifdef DE_X11
+//         duint32 X11_EXT_swap_control : 1;
+//         duint32 X11_SGI_swap_control : 1;
+//         duint32 X11_MESA_swap_control : 1;
+// #endif
     };
 
     /// Implementation limits.
@@ -107,7 +107,6 @@ public:
 //#endif
 
     static void setSwapInterval(int interval);
-//    static void setLineWidth(float lineWidth);
 
     static void checkError(char const *file, int line);
 
