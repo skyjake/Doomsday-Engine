@@ -113,7 +113,7 @@ static char *musMidiFontPath = (char *) "";
 // When multiple sources are available this setting determines which to use (mus < ext < cd).
 static AudioSystem::MusicSource musSourcePreference = AudioSystem::MUSP_EXT;
 
-static String const driverIdentifier[AUDIODRIVER_COUNT] = {
+static const char *driverIdentifier[AUDIODRIVER_COUNT] = {
     "dummy",
     "sdlmixer",
     "openal",
@@ -127,7 +127,7 @@ static audiodriverid_t identifierToDriverId(String name)
 {
     for (dint i = 0; i < AUDIODRIVER_COUNT; ++i)
     {
-        if (!driverIdentifier[i].compareWithoutCase(name))
+        if (!name.compareWithoutCase(driverIdentifier[i]))
             return audiodriverid_t(i);
     }
     LOG_AUDIO_ERROR("'%s' is not a valid audio driver name") << name;

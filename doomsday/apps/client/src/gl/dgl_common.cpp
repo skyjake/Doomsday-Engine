@@ -116,37 +116,43 @@ struct DGLState
     }
 };
 
-static DGLState dgl;
+static DGLState *s_dgl;
+
+static inline DGLState &dgl()
+{
+    if (!s_dgl) s_dgl = new DGLState;
+    return *s_dgl;
+}
 
 Mat4f DGL_Matrix(DGLenum matrixMode)
 {
-    return dgl.matrixStacks[dgl.stackIndex(matrixMode)].back();
+    return dgl().matrixStacks[dgl().stackIndex(matrixMode)].back();
 }
 
 void DGL_SetModulationColor(Vec4f const &modColor)
 {
-    dgl.textureModulationColor = modColor;
+    dgl().textureModulationColor = modColor;
 }
 
 Vec4f DGL_ModulationColor()
 {
-    return dgl.textureModulationColor;
+    return dgl().textureModulationColor;
 }
 
 void DGL_FogParams(GLUniform &fogRange, GLUniform &fogColor)
 {
-    if (dgl.enableFog)
+    if (dgl().enableFog)
     {
-        fogColor = Vec4f(dgl.fogColor[0],
-                            dgl.fogColor[1],
-                            dgl.fogColor[2],
+        fogColor = Vec4f(dgl().fogColor[0],
+                            dgl().fogColor[1],
+                            dgl().fogColor[2],
                             1.f);
 
         // TODO: Implement EXP and EXP2 fog modes. This is LINEAR.
 
         Rangef const depthPlanes = GL_DepthClipRange();
-        float const fogDepth = dgl.fogEnd - dgl.fogStart;
-        fogRange = Vec4f(dgl.fogStart,
+        float const fogDepth = dgl().fogEnd - dgl().fogStart;
+        fogRange = Vec4f(dgl().fogStart,
                             fogDepth,
                             depthPlanes.start,
                             depthPlanes.end);
@@ -284,7 +290,7 @@ static void envModMultiTex(int activate)
 
 void DGL_ModulateTexture(int mode)
 {
-    dgl.textureModulation = mode;
+    dgl().textureModulation = mode;
 
     switch (mode)
     {
@@ -562,23 +568,23 @@ dd_bool DGL_GetIntegerv(int name, int *v)
     switch(name)
     {
     case DGL_ACTIVE_TEXTURE:
-        *v = dgl.activeTexture;
+        *v = dgl().activeTexture;
         break;
 
     case DGL_TEXTURE_2D:
-        *v = (dgl.enableTexture[dgl.activeTexture]? 1 : 0);
+        *v = (dgl().enableTexture[dgl().activeTexture]? 1 : 0);
         break;
 
     case DGL_TEXTURE0:
-        *v = dgl.enableTexture[0]? 1 : 0;
+        *v = dgl().enableTexture[0]? 1 : 0;
         break;
 
     case DGL_TEXTURE1:
-        *v = dgl.enableTexture[1]? 1 : 0;
+        *v = dgl().enableTexture[1]? 1 : 0;
         break;
 
     case DGL_MODULATE_TEXTURE:
-        *v = dgl.textureModulation;
+        *v = dgl().textureModulation;
         break;
 
 //    case DGL_MODULATE_ADD_COMBINE:
@@ -591,11 +597,11 @@ dd_bool DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_FOG:
-        *v = (dgl.enableFog? 1 : 0);
+        *v = (dgl().enableFog? 1 : 0);
         break;
 
     case DGL_FOG_MODE:
-        *v = int(dgl.fogMode);
+        *v = int(dgl().fogMode);
         break;
 
     case DGL_CURRENT_COLOR_R:
@@ -627,7 +633,7 @@ dd_bool DGL_GetIntegerv(int name, int *v)
         break;
 
     case DGL_FLUSH_BACKTRACE:
-        *v = dgl.flushBacktrace ? 1 : 0;
+        *v = dgl().flushBacktrace ? 1 : 0;
         break;
 
     default:
@@ -654,7 +660,7 @@ dd_bool DGL_SetInteger(int name, int value)
         DE_ASSERT_GL_CONTEXT_ACTIVE();
         DE_ASSERT(value >= 0);
         DE_ASSERT(value < MAX_TEX_UNITS);
-        dgl.activeTexture = value;
+        dgl().activeTexture = value;
         glActiveTexture(GL_TEXTURE0 + duint(value));
         break;
 
@@ -663,7 +669,7 @@ dd_bool DGL_SetInteger(int name, int value)
         break;
 
     case DGL_FLUSH_BACKTRACE:
-        dgl.flushBacktrace = true;
+        dgl().flushBacktrace = true;
         break;
 
     default:
@@ -707,21 +713,21 @@ dd_bool DGL_GetFloatv(int name, float *v)
         break;
 
     case DGL_FOG_START:
-        v[0] = dgl.fogStart;
+        v[0] = dgl().fogStart;
         break;
 
     case DGL_FOG_END:
-        v[0] = dgl.fogEnd;
+        v[0] = dgl().fogEnd;
         break;
 
     case DGL_FOG_DENSITY:
-        v[0] = dgl.fogDensity;
+        v[0] = dgl().fogDensity;
         break;
 
     case DGL_FOG_COLOR:
         for (int i = 0; i < 4; ++i)
         {
-            v[i] = dgl.fogColor[i];
+            v[i] = dgl().fogColor[i];
         }
         break;
 
@@ -832,23 +838,23 @@ int DGL_Enable(int cap)
             }
             break;
 
-        case DGL_TEXTURE_2D: dgl.enableTexture[dgl.activeTexture] = true; break;
+        case DGL_TEXTURE_2D: dgl().enableTexture[dgl().activeTexture] = true; break;
 
         case DGL_TEXTURE0:
             DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
-            dgl.enableTexture[0] = true;
+            dgl().enableTexture[0] = true;
             break;
 
         case DGL_TEXTURE1:
             DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
-            dgl.enableTexture[1] = true;
+            dgl().enableTexture[1] = true;
             break;
 
         case DGL_FOG:
-            if (!dgl.enableFog)
+            if (!dgl().enableFog)
             {
                 DGL_Flush();
-                dgl.enableFog = true;
+                dgl().enableFog = true;
             }
             break;
 
@@ -913,23 +919,23 @@ void DGL_Disable(int cap)
             GLState::current().setAlphaTest(false);
             break;
 
-        case DGL_TEXTURE_2D: dgl.enableTexture[dgl.activeTexture] = false; break;
+        case DGL_TEXTURE_2D: dgl().enableTexture[dgl().activeTexture] = false; break;
 
         case DGL_TEXTURE0:
             DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
-            dgl.enableTexture[0] = false;
+            dgl().enableTexture[0] = false;
             break;
 
         case DGL_TEXTURE1:
             DGL_SetInteger(DGL_ACTIVE_TEXTURE, 1);
-            dgl.enableTexture[1] = false;
+            dgl().enableTexture[1] = false;
             break;
 
         case DGL_FOG:
-            if (dgl.enableFog)
+            if (dgl().enableFog)
             {
                 DGL_Flush();
-                dgl.enableFog = false;
+                dgl().enableFog = false;
             }
             break;
 
@@ -1088,7 +1094,7 @@ void DGL_MatrixMode(DGLenum mode)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.matrixMode = dgl.stackIndex(mode);
+    dgl().matrixMode = dgl().stackIndex(mode);
 }
 
 #undef DGL_PushMatrix
@@ -1096,7 +1102,7 @@ void DGL_PushMatrix(void)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.pushMatrix();
+    dgl().pushMatrix();
 }
 
 #undef DGL_PopMatrix
@@ -1104,7 +1110,7 @@ void DGL_PopMatrix(void)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.popMatrix();
+    dgl().popMatrix();
 }
 
 #undef DGL_LoadIdentity
@@ -1112,7 +1118,7 @@ void DGL_LoadIdentity(void)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.loadMatrix(Mat4f());
+    dgl().loadMatrix(Mat4f());
 }
 
 #undef DGL_LoadMatrix
@@ -1120,7 +1126,7 @@ void DGL_LoadMatrix(float const *matrix4x4)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.loadMatrix(Mat4f(matrix4x4));
+    dgl().loadMatrix(Mat4f(matrix4x4));
 }
 
 #undef DGL_Translatef
@@ -1128,7 +1134,7 @@ void DGL_Translatef(float x, float y, float z)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Mat4f::translate(Vec3f(x, y, z)));
+    dgl().multMatrix(Mat4f::translate(Vec3f(x, y, z)));
 }
 
 #undef DGL_Rotatef
@@ -1136,7 +1142,7 @@ void DGL_Rotatef(float angle, float x, float y, float z)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Mat4f::rotate(angle, Vec3f(x, y, z)));
+    dgl().multMatrix(Mat4f::rotate(angle, Vec3f(x, y, z)));
 }
 
 #undef DGL_Scalef
@@ -1144,7 +1150,7 @@ void DGL_Scalef(float x, float y, float z)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Mat4f::scale(Vec3f(x, y, z)));
+    dgl().multMatrix(Mat4f::scale(Vec3f(x, y, z)));
 }
 
 #undef DGL_Ortho
@@ -1152,7 +1158,7 @@ void DGL_Ortho(float left, float top, float right, float bottom, float znear, fl
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
-    dgl.multMatrix(Mat4f::ortho(left, right, top, bottom, znear, zfar));
+    dgl().multMatrix(Mat4f::ortho(left, right, top, bottom, znear, zfar));
 }
 
 #undef DGL_Fogi
@@ -1161,7 +1167,7 @@ void DGL_Fogi(DGLenum property, int value)
     switch (property)
     {
     case DGL_FOG_MODE:
-        dgl.fogMode = DGLenum(value);
+        dgl().fogMode = DGLenum(value);
         break;
     }
 }
@@ -1172,19 +1178,19 @@ void DGL_Fogfv(DGLenum property, float const *values)
     switch (property)
     {
     case DGL_FOG_START:
-        dgl.fogStart = values[0];
+        dgl().fogStart = values[0];
         break;
 
     case DGL_FOG_END:
-        dgl.fogEnd = values[0];
+        dgl().fogEnd = values[0];
         break;
 
     case DGL_FOG_DENSITY:
-        dgl.fogDensity = values[0];
+        dgl().fogDensity = values[0];
         break;
 
     case DGL_FOG_COLOR:
-        dgl.fogColor = Vec4f(values);
+        dgl().fogColor = Vec4f(values);
         break;
     }
 }

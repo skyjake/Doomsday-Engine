@@ -45,7 +45,7 @@
 
 using namespace de;
 
-static String const VAR_NETWORK_ID("network.ID");
+static const char *VAR_NETWORK_ID = "network.ID";
 
 ident_t clientID;
 bool handshakeReceived;

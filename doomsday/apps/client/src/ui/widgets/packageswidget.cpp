@@ -51,11 +51,11 @@
 
 using namespace de;
 
-static const String VAR_TITLE  ("title");
-static const String VAR_TAGS   ("tags");
-static const String TAG_HIDDEN ("hidden");
-static const String TAG_LOADED ("loaded");
-static const String TAG_CACHED ("cached");
+static const char *VAR_TITLE  = "title";
+static const char *VAR_TAGS   = "tags";
+static const char *TAG_HIDDEN = "hidden";
+static const char *TAG_LOADED = "loaded";
+static const char *TAG_CACHED = "cached";
 
 static constexpr double REFILTER_DELAY = 0.2;
 

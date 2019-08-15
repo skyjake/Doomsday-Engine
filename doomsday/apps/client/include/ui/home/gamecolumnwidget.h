@@ -41,11 +41,11 @@ public:
     void operator<<(de::PersistentState const &fromState) override;
 
 public:
-    static const de::String SORT_GAME_ID;
-    static const de::String SORT_MODS;
-    static const de::String SORT_RECENTLY_PLAYED;
-    static const de::String SORT_RELEASE_DATE;
-    static const de::String SORT_TITLE;
+    static const char *SORT_GAME_ID;
+    static const char *SORT_MODS;
+    static const char *SORT_RECENTLY_PLAYED;
+    static const char *SORT_RELEASE_DATE;
+    static const char *SORT_TITLE;
 
 private:
     DE_PRIVATE(d)

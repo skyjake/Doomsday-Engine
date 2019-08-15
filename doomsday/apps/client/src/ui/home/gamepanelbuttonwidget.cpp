@@ -293,7 +293,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
         {
             return game().title();
         }
-        if (GameColumnWidget::SORT_RECENTLY_PLAYED != Config::get("home.sortBy"))
+        if (String(GameColumnWidget::SORT_RECENTLY_PLAYED) != Config::get("home.sortBy"))
         {
             return String::asText(game().releaseDate().year());
         }

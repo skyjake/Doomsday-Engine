@@ -42,11 +42,11 @@
 
 using namespace de;
 
-const String GameColumnWidget::SORT_GAME_ID("game");
-const String GameColumnWidget::SORT_MODS("mods");
-const String GameColumnWidget::SORT_RECENTLY_PLAYED("recent");
-const String GameColumnWidget::SORT_RELEASE_DATE("release");
-const String GameColumnWidget::SORT_TITLE("title");
+const char *GameColumnWidget::SORT_GAME_ID("game");
+const char *GameColumnWidget::SORT_MODS("mods");
+const char *GameColumnWidget::SORT_RECENTLY_PLAYED("recent");
+const char *GameColumnWidget::SORT_RELEASE_DATE("release");
+const char *GameColumnWidget::SORT_TITLE("title");
 
 static const char *VAR_SORT_BY                = "home.sortBy";
 static const char *VAR_SORT_ASCENDING         = "home.sortAscending";
