@@ -267,7 +267,7 @@ GLuint GL_PrepareFlaremap(res::Uri const &resourceUri)
     if (resourceUri.path().length() == 1)
     {
         // Select a system flare by numeric identifier?
-        int number = resourceUri.path().toString().first() - '0';
+        int number = resourceUri.path().toString().first().delta('0');
         if (number == 0) return 0; // automatic
         if (number >= 1 && number <= 4)
         {

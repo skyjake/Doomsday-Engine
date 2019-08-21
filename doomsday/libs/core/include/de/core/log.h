@@ -480,7 +480,8 @@ public:
         void setValue(uint32_t i);
         void setValue(int64_t i);
         void setValue(uint64_t i);
-        void setValue(ddouble d);
+        void setValue(ddouble d);        
+        inline void setValue(size_t i) { setValue(uint64_t(i)); }
         void setValue(void const *p);
         void setValue(const char *s);
         void setValue(const std::string &s);

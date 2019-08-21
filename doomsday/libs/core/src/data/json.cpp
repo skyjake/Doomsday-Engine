@@ -56,7 +56,7 @@ public:
 
     void skipWhite()
     {
-        while (!atEnd() && iswspace(*pos)) _previous = pos++;
+        while (!atEnd() && (*pos).isSpace()) _previous = pos++;
     }
 
     bool atEnd() const
@@ -126,7 +126,7 @@ public:
         {
             return parseString();
         }
-        else if (c == '-' || iswdigit(c))
+        else if (c == '-' || c.isNumeric())
         {
             return parseNumber();
         }
@@ -254,7 +254,7 @@ public:
             str.append(c);
             c = nextNoSkip();
         }
-        for (; iswdigit(c); c = nextNoSkip())
+        for (; c.isNumeric(); c = nextNoSkip())
         {
             str.append(c);
         }
@@ -264,7 +264,7 @@ public:
             str.append(c);
             hasDecimal = true;
             c = nextNoSkip();
-            for (; iswdigit(c); c = nextNoSkip())
+            for (; c.isNumeric(); c = nextNoSkip())
             {
                 str.append(c);
             }
@@ -279,7 +279,7 @@ public:
                 str.append(c);
                 c = nextNoSkip();
             }
-            for (; iswdigit(c); c = nextNoSkip())
+            for (; c.isNumeric(); c = nextNoSkip())
             {
                 str.append(c);
             }

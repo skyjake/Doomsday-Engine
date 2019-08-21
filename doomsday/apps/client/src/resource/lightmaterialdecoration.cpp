@@ -72,9 +72,9 @@ LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
     {
         // Select a system flare by numeric identifier?
         if(haloTextureUri.path().length() == 1 &&
-           iswdigit(haloTextureUri.path().toString().first()))
+           haloTextureUri.path().toString().first().isNumeric())
         {
-            haloTextureIndex = haloTextureUri.path().toString().first() - '0';
+            haloTextureIndex = haloTextureUri.path().toString().first().delta('0');
         }
         else
         {

@@ -821,14 +821,10 @@ typedef int64_t  dint64;     ///< 64-bit signed integer.
 typedef uint64_t duint64;    ///< 64-bit unsigned integer.
 typedef float    dfloat;     ///< 32-bit floating point number.
 typedef double   ddouble;    ///< 64-bit floating point number.
-typedef size_t   dsize;      // Likely unsigned long.
-#if defined (_MSC_VER)
-typedef long long dsigsize;
-#else
-typedef ssize_t dsigsize;
-#endif
-typedef long         dlong;
-typedef unsigned int uint;
+typedef uint64_t dsize;
+typedef int64_t  dsigsize;
+
+typedef unsigned int uint; // for convenience
 
 class DE_PUBLIC Char
 {
@@ -842,12 +838,18 @@ public:
     inline explicit operator bool() const { return _ch != 0; }
     inline operator uint32_t() const { return _ch; }
     inline uint32_t unicode() const { return _ch; }
+    inline int delta(Char from) const { return int(_ch) - int(from._ch); }
 
     Char &operator=(const Char &) = default;
     Char &operator=(Char &&) = default;
 
     Char upper() const;
     Char lower() const;
+
+    bool isSpace() const;
+    bool isAlpha() const;
+    bool isNumeric() const;
+    bool isAlphaNumeric() const;
 
 private:
     uint32_t _ch;
@@ -912,8 +914,8 @@ typedef unsigned char   dbyte;
 typedef unsigned int    duint;  // 32-bit
 typedef float           dfloat;
 typedef double          ddouble;
-typedef size_t          dsize;
-typedef long            dlong;
+typedef uint64_t        dsize;
+typedef int64_t         dsigsize;
 
 #endif // !__cplusplus
 

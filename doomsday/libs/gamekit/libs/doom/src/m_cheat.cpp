@@ -438,9 +438,9 @@ D_CMD(CheatGive)
             ammotype_t ammos = NUM_AMMO_TYPES; // All types.
 
             // Give one specific ammo type?
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *(++i) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < AT_FIRST || arg >= NUM_AMMO_TYPES)
                 {
                     LOG_SCR_ERROR("Ammo #%d unknown. Valid range %s")
@@ -456,9 +456,9 @@ D_CMD(CheatGive)
         case 'r': {
             int armor = 1;
 
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *( ++i ) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < 0 || arg >= 4)
                 {
                     LOG_SCR_ERROR("Armor #%d unknown. Valid range %s")
@@ -475,9 +475,9 @@ D_CMD(CheatGive)
             keytype_t keys = NUM_KEY_TYPES; // All types.
 
             // Give one specific key type?
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *( ++i ) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
                 {
                     LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
@@ -507,9 +507,9 @@ D_CMD(CheatGive)
             weapontype_t weapons = NUM_WEAPON_TYPES; // All types.
 
             // Give one specific weapon type?
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *( ++i ) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < WT_FIRST || arg >= NUM_WEAPON_TYPES)
                 {
                     LOG_SCR_ERROR("Weapon #%d unknown. Valid range %s")

@@ -97,7 +97,7 @@ public:
     String upper() const;
     std::string toStdString() const { updateEnd(); return {_range.start, _range.end}; }
 
-    static size_t npos;
+    static dsize npos;
 
 private:
     mutable Rangecc _range;

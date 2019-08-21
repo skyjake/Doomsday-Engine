@@ -7,7 +7,7 @@
 #  define strnicmp strncasecmp
 #  define stricmp strcasecmp
 #  if !defined(__CYGWIN__)
-char *strupr(char *);
+void strupr(char *);
 #  endif
 #endif
 

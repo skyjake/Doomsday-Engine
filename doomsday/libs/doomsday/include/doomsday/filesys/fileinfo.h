@@ -44,14 +44,16 @@ class File1;
  */
 struct LIBDOOMSDAY_PUBLIC FileInfo
 {
+    using dsize = de::dsize;
+
     uint lastModified; /// Unix timestamp.
     int lumpIdx; /// Relative index of this lump in the owning package else zero.
-    size_t baseOffset; /// Offset from the start of the owning package.
-    size_t size; /// Size of the uncompressed file.
-    size_t compressedSize; /// Size of the original file compressed.
+    dsize baseOffset; /// Offset from the start of the owning package.
+    dsize size; /// Size of the uncompressed file.
+    dsize compressedSize; /// Size of the original file compressed.
 
-    FileInfo(uint _lastModified = 0, int _lumpIdx = 0, size_t _baseOffset = 0,
-             size_t _size = 0, size_t _compressedSize = 0)
+    FileInfo(uint _lastModified = 0, int _lumpIdx = 0, dsize _baseOffset = 0,
+             dsize _size = 0, dsize _compressedSize = 0)
         : lastModified(_lastModified), lumpIdx(_lumpIdx), baseOffset(_baseOffset),
           size(_size), compressedSize(_compressedSize)
     {}

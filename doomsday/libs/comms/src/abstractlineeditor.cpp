@@ -244,13 +244,13 @@ DE_PIMPL(AbstractLineEditor)
 
         // First jump over any non-word chars.
         //while (pos > 0 && !text[pos].isLetterOrNumber()) pos--;
-        while (iter.pos() > 0 && !iswalnum(*iter)) { --iter; }
+        while (iter.pos() > 0 && !(*iter).isAlphaNumeric()) { --iter; }
 
         // At least move one character.
         if (iter.pos() > 0) --pos;
 
         // We're inside a word, jump to its beginning.
-        while (iter.pos() > 0 && iswalnum(*(iter - 1))) { --iter; }
+        while (iter.pos() > 0 && (*(iter - 1)).isAlphaNumeric()) { --iter; }
 
         return iter.pos();
     }
@@ -270,13 +270,13 @@ DE_PIMPL(AbstractLineEditor)
         mb_iterator iter = iterator(cursor);
 
         // If inside a word, jump to its end.
-        while (iter != last && iswalnum(*iter))
+        while (iter != last && (*iter).isAlphaNumeric())
         {
             iter++;
         }
 
         // Jump over any non-word chars.
-        while (iter != last && !iswalnum(*iter))
+        while (iter != last && !(*iter).isAlphaNumeric())
         {
             iter++;
         }

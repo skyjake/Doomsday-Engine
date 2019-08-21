@@ -131,10 +131,9 @@ struct TabFiller
             // Find the widest position for this tab stop by checking all lines.
             for (int idx = 0; idx < fills.sizei(); ++idx)
             {
-                String const &ln = fills.at(idx);
-                int w = (idx > 0? minIndent : 0);
-                //for (int i = 0; i < ln.size(); ++i)
-                iConstForEach(String, i, ln)
+                const String &ln = fills.at(idx);
+                int w = (idx > 0 ? minIndent : 0);
+                iConstForEach(String, i, ln) // TODO: Use the C++ mb_iterator instead.
                 {
                     if (i.value == '\t')
                     {
@@ -145,7 +144,7 @@ struct TabFiller
                             // continue to the tab-replacing phase.
                             goto replaceTabs;
                         }
-                        if (i.value == '+' || (i.value - 'a') == stop)
+                        if (i.value == '+' || Char(i.value).delta('a') == stop)
                         {
                             // This is it.
                             tabWidth = max(tabWidth, w);
@@ -285,8 +284,8 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(LogEntry const &entry)
 
     // The wrap indentation will be determined dynamically based on the content
     // of the line.
-    dsize wrapIndent     = wstring::npos;
-    dsize nextWrapIndent = wstring::npos;
+//    dsize wrapIndent     = wstring::npos;
+//    dsize nextWrapIndent = wstring::npos;
 
     const String minIndentStr{dsize(_minimumIndent), ' '};
 

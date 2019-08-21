@@ -394,7 +394,7 @@ void CommandLine::parse(String const &cmdLine)
 
         String word;
 
-        while (i != cmdLine.end() && (quote || !iswspace(*i)))
+        while (i != cmdLine.end() && (quote || !(*i).isSpace()))
         {
             bool copyChar = true;
             if (!quote)

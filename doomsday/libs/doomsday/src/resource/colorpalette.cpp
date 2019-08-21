@@ -59,7 +59,7 @@ static void parseColorFormat(const String &fmt, Vec3ui &compOrder, Vec3ui &compB
             // Read the number of bits.
             mb_iterator start = pos;
             ch = *pos;
-            while (iswdigit(ch) && ++pos != end)
+            while (ch.isNumeric() && ++pos != end)
             {
                 ch = *pos;
             }

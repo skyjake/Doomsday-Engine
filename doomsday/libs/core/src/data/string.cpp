@@ -41,6 +41,26 @@ Char Char::lower() const
     return lower_Char(_ch);
 }
 
+bool Char::isSpace() const
+{
+    return isSpace_Char(_ch);
+}
+
+bool Char::isAlpha() const
+{
+    return isAlpha_Char(_ch);
+}
+
+bool Char::isNumeric() const
+{
+    return isNumeric_Char(_ch);
+}
+
+bool Char::isAlphaNumeric() const
+{
+    return isAlphaNumeric_Char(_ch);
+}
+
 String::String()
 {
     init_String(&_str);
@@ -764,7 +784,7 @@ CharPos String::commonPrefixLength(const String &str, Sensitivity sensitivity) c
         }
         else
         {
-            if (towlower(*a) != towlower(*b)) break;
+            if ((*a).lower() != (*b).lower()) break;
         }
     }
     return count;
@@ -803,7 +823,7 @@ String String::take(iString *str) // static
 
 void String::skipSpace(const_iterator &i, const const_iterator &end)
 {
-    while (i != end && iswspace(*i)) ++i;
+    while (i != end && (*i).isSpace()) ++i;
 }
 
 String String::format(const char *format, ...)
@@ -988,7 +1008,7 @@ String String::patternFormat(const_iterator &      formatIter,
         advanceFormat(formatIter, formatEnd);
     }
     String::const_iterator k = formatIter;
-    while (iswdigit(*formatIter))
+    while ((*formatIter).isNumeric())
     {
         advanceFormat(formatIter, formatEnd);
     }
@@ -1002,7 +1022,7 @@ String String::patternFormat(const_iterator &      formatIter,
         advanceFormat(formatIter, formatEnd);
         k = formatIter;
         // There's also a maxWidth.
-        while (iswdigit(*formatIter))
+        while ((*formatIter).isNumeric())
         {
             advanceFormat(formatIter, formatEnd);
         }

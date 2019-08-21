@@ -69,7 +69,7 @@ String Lexicon::additionalWordChars() const
 bool Lexicon::isWordChar(Char ch) const
 {
     // Default word characters.
-    if (iswalnum(ch)) return true;
+    if (ch.isAlphaNumeric()) return true;
     return d->extraChars.contains(ch);
 }
 

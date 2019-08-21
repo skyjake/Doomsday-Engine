@@ -571,7 +571,7 @@ uint8_t const *Zip::cacheLump(int lumpIndex)
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)",
                         NativePath(composePath()).pretty()
                         << NativePath(lumpFile.composePath()).pretty()
-                        << (unsigned long) lumpFile.info().size
+                        << lumpFile.info().size
                         << (lumpFile.info().isCompressed()? ", compressed" : ""));
 
     // Time to create the cache?

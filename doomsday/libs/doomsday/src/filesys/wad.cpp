@@ -261,7 +261,7 @@ uint8_t const *Wad::cacheLump(int lumpIndex)
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s)",
                NativePath(composePath()).pretty()
             << NativePath(lumpFile.composePath()).pretty()
-            << (unsigned long) lumpFile.info().size
+            << lumpFile.info().size
             << (lumpFile.info().isCompressed()? ", compressed" : ""));
 
     // Time to create the cache?
@@ -321,7 +321,7 @@ size_t Wad::readLump(int lumpIndex, uint8_t *buffer, size_t startOffset,
     LOGDEV_RES_XVERBOSE("\"%s:%s\" (%u bytes%s) [%u +%u]",
                         NativePath(composePath()).pretty()
                         << NativePath(lumpFile.composePath()).pretty()
-                        << (unsigned long) lumpFile.size()
+                        << lumpFile.size()
                         << (lumpFile.isCompressed()? ", compressed" : "")
                         << startOffset
                         << length);

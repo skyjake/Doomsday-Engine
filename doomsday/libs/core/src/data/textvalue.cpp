@@ -113,7 +113,7 @@ bool TextValue::isTrue() const
     // If there is at least one nonwhite character, this is considered a truth.
     for (auto ch : _value)
     {
-        if (!iswspace(ch)) return true;
+        if (!ch.isSpace()) return true;
     }
     return false;
 }

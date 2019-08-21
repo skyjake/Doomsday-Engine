@@ -68,13 +68,14 @@ public:
     using Base::cend;
     using Base::push_back;
     using Base::emplace_back;
-    using Base::size;
+
     void pop_front() { removeFirst(); } // slow...
     void push_front(const T &v) { prepend(v); } // slow...
 
     // Qt style methods:
 
     inline int      count() const { return sizei(); }
+    inline dsize    size() const { return dsize(Base::size()); }
     inline int      sizei() const { return int(Base::size()); }
     void            clear() { Base::clear(); }
     bool            isEmpty() const { return Base::size() == 0; }

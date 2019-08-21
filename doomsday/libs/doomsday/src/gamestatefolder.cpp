@@ -323,14 +323,15 @@ void GameStateFolder::Metadata::parse(String const &source)
             {
                 set("episode", "1");
             }
-            else if (towlower(mapUriPath.first()) == 'e' && towlower(mapUriPath.at(BytePos(2))) == 'm')
+            else if (mapUriPath.first().lower() == 'e' && Char(mapUriPath.at(BytePos(2))).lower() == 'm')
             {
                 set("episode", mapUriPath.substr(BytePos(1), 1));
             }
             else
             {
                 // Hmm, very odd...
-                throw Error("GameStateFolder::metadata::parse", "Failed to extract episode id from map URI \"" + gets("mapUri") + "\"");
+                throw Error("GameStateFolder::metadata::parse",
+                            "Failed to extract episode id from map URI \"" + gets("mapUri") + "\"");
             }
         }
 

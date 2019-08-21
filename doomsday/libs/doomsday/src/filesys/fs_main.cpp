@@ -140,7 +140,7 @@ static bool matchFileName(String const &string, String const &pattern)
             continue;
         }
 
-        if (*st != QUESTION_MARK && towlower(*st) != towlower(*in))
+        if (*st != QUESTION_MARK && (*st).lower() != (*in).lower())
         {
             // A mismatch. Hmm. Go back to a previous '*'.
             while (st >= pattern && *st != ASTERISK) { --st; }

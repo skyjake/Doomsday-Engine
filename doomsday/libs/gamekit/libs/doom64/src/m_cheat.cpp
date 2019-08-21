@@ -339,9 +339,9 @@ D_CMD(CheatGive)
         case 'a': { // Ammo
             ammotype_t ammos = NUM_AMMO_TYPES;
 
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *(++i) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < AT_FIRST || arg >= NUM_AMMO_TYPES)
                 {
                     LOG_SCR_ERROR("Ammo #%d unknown. Valid range %s")
@@ -358,9 +358,9 @@ D_CMD(CheatGive)
         case 'r': { // Armor
             int armor = 1;
 
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *(++i) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < 0 || arg >= 4)
                 {
                     LOG_SCR_ERROR("Armor #%d unknown. Valid range %s")
@@ -376,9 +376,9 @@ D_CMD(CheatGive)
         case 'k': { // Keys
             keytype_t keys = NUM_KEY_TYPES;
 
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *(++i) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
                 {
                     LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
@@ -394,9 +394,9 @@ D_CMD(CheatGive)
         case 'w': { // Weapons
             weapontype_t weapons = NUM_WEAPON_TYPES;
 
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = *(++i) - '0';
+                int const arg = (*(++i)).delta('0');
                 if(arg < WT_FIRST || arg >= NUM_WEAPON_TYPES)
                 {
                     LOG_SCR_ERROR("Weapon #%d unknown. Valid range %s")
@@ -410,9 +410,9 @@ D_CMD(CheatGive)
         }
 
         case 'l': { // Laser Upgrades
-            if((i + 1) != stuff.end() && iswdigit(*(i + 1)))
+            if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                switch (*(++i) - '0')
+                switch ((*(++i)).delta('0'))
                 {
                     case 1: // DEMONKEY1
                         giveLaserUpgrade(plr, IIT_DEMONKEY1);

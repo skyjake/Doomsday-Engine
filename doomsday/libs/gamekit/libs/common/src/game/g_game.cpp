@@ -2039,7 +2039,7 @@ uint G_MapNumberFor(res::Uri const &mapUri)
         if (gameModeBits & (GM_ANY_DOOM | ~GM_DOOM_CHEX))
 # endif
         {
-            if (towlower(path.first()) == 'e' && towlower(path.at(CharPos(2))) == 'm')
+            if (path.first().lower() == 'e' && path.at(CharPos(2)).lower() == 'm')
             {
                 return path.substr(CharPos(3)).toInt() - 1;
             }

@@ -110,7 +110,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
             //for (int i = 1; i < code.size() - 1; ++i)
             for (auto end = range.end() - 1; iter != end; ++iter)
             {
-                tabs << (*iter - 'a' + 1);
+                tabs << ((*iter).delta('a') + 1);
             }
             break;
 
@@ -187,7 +187,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
         case 'D': // Accent color
         case 'E': // Dim Accent color
         case 'F': // Alternative Accent color
-            stack.last().colorIndex = ch - 'A';
+            stack.last().colorIndex = ch.delta('A');
             break;
 
         case '0':
@@ -199,7 +199,7 @@ DE_PIMPL_NOREF(Font::RichFormat)
         case '6':
             if (style)
             {
-                style->richStyleFormat(ch - '0',
+                style->richStyleFormat(ch.delta('0'),
                                        stack.last().sizeFactor,
                                        stack.last().weight,
                                        stack.last().style,

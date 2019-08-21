@@ -42,7 +42,7 @@ public:
     typedef dsize Offset;
 
     /// Difference between two offsets.
-    typedef dlong Delta;
+    typedef dsigsize Delta;
 
     /// The elements of the array must be of type Byte.
     typedef dbyte Byte;

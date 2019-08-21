@@ -62,7 +62,7 @@ dsize CString::indexOf(const char *cStr, size_t from) const
 {
     if (from >= size_t(_range.size())) return npos;
     const char *pos = iStrStrN(_range.start + from, cStr, _range.size() - from);
-    return pos ? (pos - _range.start) : npos;
+    return pos ? dsize(pos - _range.start) : npos;
 }
 
 dsize CString::indexOf(const String &str, size_t from) const
@@ -81,7 +81,7 @@ CString CString::leftStrip() const
 {
     CString s(*this);
     mb_iterator i = s.begin();
-    while (!s.isEmpty() && iswspace(*i))
+    while (!s.isEmpty() && (*i).isSpace())
     {
         s._range.start = ++i;
     }
@@ -94,7 +94,7 @@ CString CString::rightStrip() const
     mb_iterator i = s.end();
     while (!s.isEmpty())
     {
-        if (iswspace(*--i))
+        if ((*--i).isSpace())
         {
             s._range.end = i;
         }

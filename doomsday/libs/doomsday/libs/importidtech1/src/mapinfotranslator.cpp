@@ -233,7 +233,7 @@ namespace internal {
         String path = mapUri.path();
         if(!path.isEmpty())
         {
-            if(towlower(path.first()) == 'e' && towlower(path.at(CharPos(2))) == 'm')
+            if(path.first().lower() == 'e' && path.at(CharPos(2)).lower() == 'm')
             {
                 return de::max(path.substr(CharPos(3)).toInt(0, 10, String::AllowSuffix), 1);
             }

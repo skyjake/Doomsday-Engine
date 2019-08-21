@@ -20,6 +20,7 @@
 #define LIBCORE_HASH_H
 
 #include <unordered_map>
+#include "../libcore.h"
 
 namespace de {
 
@@ -54,6 +55,7 @@ public:
     using Base::find;
 
     bool isEmpty() const { return empty(); }
+    inline dsize size() const { return dsize(Base::size()); }
     inline int sizei() const { return int(Base::size()); }
 
     iterator insert(const Key &key, const Value &value)

@@ -177,7 +177,7 @@ static int matchName(const CString &string, const CString &pattern)
             continue;
         }
 
-        if (towlower(*pat) != towlower(*in))
+        if ((*pat).lower() != (*in).lower())
         {
             // A mismatch. Hmm. Go back to a previous '*'.
             //while (pat >= pattern && *pat != QChar('*')) { --pat; }

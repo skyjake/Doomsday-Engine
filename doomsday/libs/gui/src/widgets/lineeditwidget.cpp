@@ -553,7 +553,7 @@ bool LineEditWidget::handleEvent(Event const &event)
         }
 
         // Insert text?
-        if (!key.text().isEmpty()) // && iswprint(key.text().first()))
+        if (!key.text().isEmpty())
         {
             // Insert some text into the editor.
             insert(key.text());

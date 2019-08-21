@@ -211,7 +211,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
     {
         for (auto i = range.begin(); i != range.end(); ++i)
         {
-            if (!iswspace(*i)) return false;
+            if (!(*i).isSpace()) return false;
         }
         return true;
     }
@@ -261,7 +261,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
     bool isWrappable(mb_iterator at)
     {
         if (at == text.end()) return true;
-        if (iswspace(*at)) return true;
+        if ((*at).isSpace()) return true;
         if (at > text.begin())
         {
             Char prev = *(at - 1);
@@ -386,7 +386,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
                     end = wrapPosMax;
                 }
 
-                while (end != rangeToWrap.end() && iswspace(*end)) { ++end; }
+                while (end != rangeToWrap.end() && (*end).isSpace()) { ++end; }
                 wrappedLines << makeLine({begin, end});
                 begin = end;
             }

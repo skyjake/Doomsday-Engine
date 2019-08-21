@@ -177,8 +177,8 @@ static SpriteDefs buildSpriteFramesFromTextures(res::TextureScheme::Index const 
         for (dint i = 0; i < (haveMirror ? 2 : 1); ++i)
         {
             const String nums = desc.mid(CharPos(NAME_LENGTH + i * 2), 2);
-            dint const frameNumber = towupper(nums.first()) - Char('A');
-            dint const angleNumber = Sprites::toSpriteAngle(nums.last());
+            const dint frameNumber = nums.first().upper().delta('A');
+            const dint angleNumber = Sprites::toSpriteAngle(nums.last());
 
             if (frameNumber < 0) continue;
 
@@ -308,16 +308,16 @@ dint Sprites::toSpriteAngle(Char angleCode) // static
 
     dint angle = -1; // Unknown.
     
-    if (iswdigit(angleCode))
+    if (angleCode.isNumeric())
     {
         angle = angleCode - '0';
     }
-    else if (iswalpha(angleCode))
+    else if (angleCode.isAlpha())
     {
         Char charCodeLatin1 = angleCode.upper();
         if (charCodeLatin1 >= 'A')
         {
-            angle = charCodeLatin1 - 'A' + 10;
+            angle = charCodeLatin1.delta('A') + 10;
         }
     }
     

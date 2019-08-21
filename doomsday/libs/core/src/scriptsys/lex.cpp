@@ -249,25 +249,25 @@ bool Lex::parseLiteralNumber(Char c, TokenBuffer &output)
 
 bool Lex::isWhite(Char c)
 {
-    return iswspace(c);
+    return c.isSpace();
 }
 
 bool Lex::isAlpha(Char c)
 {
-    return iswalpha(c);
+    return c.isAlpha();
 }
 
 bool Lex::isNumeric(Char c)
 {
-    return iswdigit(c);
+    return c.isNumeric();
 }
 
 bool Lex::isHexNumeric(Char c)
 {
-    return isNumeric(c) || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
+    return c.isNumeric() || (c >= 'a' && c <= 'f') || (c >= 'A' && c <= 'F');
 }
 
 bool Lex::isAlphaNumeric(Char c)
 {
-    return iswalnum(c) || c == '_' || c == '@';
+    return c.isAlphaNumeric() || c == '_' || c == '@';
 }

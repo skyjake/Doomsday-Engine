@@ -589,8 +589,8 @@ void Hu_MenuInitSkillPage()
     for(uint i = 0; i < NUM_SKILL_MODES; ++i, y += FIXED_LINE_HEIGHT)
     {
 #if !__JHEXEN__
-        String const labelText = GET_TXT(skillButtonTexts[i]);
-        int const shortcut     = iswalnum(labelText.first())? labelText.first().unicode() : 0;
+        const String labelText = GET_TXT(skillButtonTexts[i]);
+        const int shortcut     = labelText.first().isAlphaNumeric() ? int(labelText.first().unicode()) : 0;
 #endif
 
         page->addWidget(new ButtonWidget)
@@ -2088,9 +2088,9 @@ void Hu_MenuInitEpisodePage()
         // Has a menu shortcut/hotkey been specified?
         /// @todo Validate symbolic dday key names.
         String const shortcut = episodeDef.gets("menuShortcut");
-        if(!shortcut.isEmpty() && iswalnum(shortcut.first()))
+        if(!shortcut.isEmpty() && shortcut.first().isAlphaNumeric())
         {
-            btn->setShortcut(towlower(shortcut.first()));
+            btn->setShortcut(shortcut.first().lower());
         }
 
         // Has a menu help/info text been specified?
@@ -2184,7 +2184,7 @@ void Hu_MenuInitPlayerClassPage()
 
         auto *btn = new ButtonWidget(text);
 
-        if (!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
+        if (!btn->text().isEmpty() && btn->text().first().isAlphaNumeric()) btn->setShortcut(btn->text().first());
         btn->setFixedY(y);
         btn->setAction(Widget::Deactivated, Hu_MenuSelectPlayerClass);
         btn->setAction(Widget::FocusGained, Hu_MenuFocusOnPlayerClass);
@@ -2197,7 +2197,7 @@ void Hu_MenuInitPlayerClassPage()
 
     // Random class button.
     String const labelText = GET_TXT(TXT_RANDOMPLAYERCLASS);
-    int const shortcut     = iswalnum(labelText.first())? labelText.first().unicode() : 0;
+    int const shortcut     = labelText.first().isAlphaNumeric() ? int(labelText.first()) : 0;
     page->addWidget(new ButtonWidget(labelText))
             .setFixedY(y)
             .setShortcut(shortcut)
@@ -3519,23 +3519,23 @@ void Hu_MenuSelectPlayerClass(Widget &wi, Widget::Action action)
     ButtonWidget *btn;
     btn = &skillPage.findWidget(Widget::Id0).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_BABY]));
-    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
+    if(!btn->text().isEmpty() && btn->text().first().isAlphaNumeric()) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id1).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_EASY]));
-    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
+    if(!btn->text().isEmpty() && btn->text().first().isAlphaNumeric()) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id2).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_MEDIUM]));
-    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
+    if(!btn->text().isEmpty() && btn->text().first().isAlphaNumeric()) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id3).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_HARD]));
-    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
+    if(!btn->text().isEmpty() && btn->text().first().isAlphaNumeric()) btn->setShortcut(btn->text().first());
 
     btn = &skillPage.findWidget(Widget::Id4).as<ButtonWidget>();
     btn->setText(GET_TXT(PCLASS_INFO(mnPlrClass)->skillModeName[SM_NIGHTMARE]));
-    if(!btn->text().isEmpty() && iswalnum(btn->text().first())) btn->setShortcut(btn->text().first());
+    if(!btn->text().isEmpty() && btn->text().first().isAlphaNumeric()) btn->setShortcut(btn->text().first());
 
     switch(mnPlrClass)
     {

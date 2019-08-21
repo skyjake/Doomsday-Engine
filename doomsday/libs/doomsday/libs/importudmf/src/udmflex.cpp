@@ -81,7 +81,7 @@ dsize UDMFLex::getExpressionFragment(TokenBuffer &output)
         }
 
         // Alphanumeric characters are joined into a token.
-        if (c == '_' || iswalpha(c))
+        if (c == '_' || isAlpha(c))
         {
             output.setType(Token::IDENTIFIER);
 

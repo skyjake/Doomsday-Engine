@@ -69,7 +69,7 @@ void MonospaceLineWrapping::wrapTextToWidth(const String &text, WrapWidth maxWid
 
         // Find a good break point.
         const mb_iterator lineEnding = end;
-        while (!iswspace(*end))
+        while (!(*end).isSpace())
         {
             --end;
             --curLineWidth;
@@ -89,7 +89,7 @@ void MonospaceLineWrapping::wrapTextToWidth(const String &text, WrapWidth maxWid
         }
         else
         {
-            if (iswspace(*end)) ++end;
+            if ((*end).isSpace()) ++end;
             _lines << WrappedLine(CString(begin, end), curLineWidth);
             begin = end;
         }

@@ -298,7 +298,7 @@ void TokenBuffer::appendChar(Char c)
     // token to a new pool. If the pool is new, or there are no tokens
     // in it yet, we can resize the pool in place.
     Pool &fp = _pools[_formPool];
-    if (_forming->end() - fp.chars.data() >= dint(fp.size) - iMultibyteCharMaxSize)
+    if (_forming->end() - fp.chars.data() >= int(fp.size) - int(iMultibyteCharMaxSize))
     {
         // The pool is full. Find a new pool and move the token.
         const String tok = _forming->str();

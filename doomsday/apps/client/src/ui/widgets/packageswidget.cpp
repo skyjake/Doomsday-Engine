@@ -193,7 +193,7 @@ DE_GUI_PIMPL(PackagesWidget)
                 btn->setText(_E(l) + tag);
                 btn->setActionFn([this, tag]() {
                     String terms = _owner.d->search->text();
-                    if (!terms.isEmpty() && !iswspace(terms.last())) terms += " ";
+                    if (!terms.isEmpty() && !terms.last().isSpace()) terms += " ";
                     terms += tag;
                     _owner.d->search->setText(terms);
                 });

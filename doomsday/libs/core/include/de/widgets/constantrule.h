@@ -92,9 +92,9 @@ ConstantRule::Builder<Type>::operator RefArg<Rule>() const
     return RefArg<Rule>(new ConstantRule(_number));
 }
 
-typedef ConstantRule::Builder<int>   Const;
-typedef ConstantRule::Builder<dsize> Constu;
-typedef ConstantRule::Builder<float> Constf;
+typedef ConstantRule::Builder<int32_t>  Const;
+typedef ConstantRule::Builder<uint32_t> Constu;
+typedef ConstantRule::Builder<float>    Constf;
 
 } // namespace de
 

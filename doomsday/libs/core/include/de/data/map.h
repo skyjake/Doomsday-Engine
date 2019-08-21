@@ -20,6 +20,7 @@
 #define LIBCORE_MAP_H
 
 #include <map>
+#include "../libcore.h"
 
 namespace de {
 
@@ -48,8 +49,9 @@ public:
     using Base::cbegin;
     using Base::cend;
 
-    inline bool isEmpty() const { return Base::empty(); }
-    inline int  sizei() const { return int(Base::size()); }
+    inline bool  isEmpty() const { return Base::empty(); }
+    inline dsize size() const { return dsize(Base::size()); }
+    inline int   sizei() const { return int(Base::size()); }
 
     iterator insert(const Key &key, const Value &value)
     {
