@@ -70,7 +70,10 @@ cfg = {
 }
 if os.path.exists(CFG_PATH):
     cfg = json.load(open(CFG_PATH, 'rt'))
-print(cfg)
+
+print("Configuration:")
+for key in cfg:
+    print("  %-15s %s" % (key + ':', cfg[key]))
 
 show_help = (len(sys.argv) == 1)
 do_build = False
