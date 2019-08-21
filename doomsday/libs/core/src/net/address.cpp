@@ -29,12 +29,24 @@ namespace de {
 
 DE_PIMPL_NOREF(Address)
 {
-    tF::ref<iAddress> addr;
+    String            pendingLookup;
+    tF::ref<iAddress> _addr;
     duint16           port = 0;
     String            textRepr;
 
     enum Special { Undefined, LocalHost, RemoteHost };
     Special special = Undefined;
+    
+    iAddress *get()
+    {
+        if (pendingLookup)
+        {
+            _addr = tF::make_ref(new_Address());
+            lookupTcp_Address(_addr, pendingLookup, port);
+            pendingLookup.clear();
+        }
+        return _addr;
+    }
 
     void clearCached()
     {
@@ -48,42 +60,43 @@ Address::Address() : d(new Impl)
 
 Address::Address(char const *address, duint16 port) : d(new Impl)
 {
-    d->addr = tF::make_ref(new_Address());
-    d->port = port;
-    lookupTcpCStr_Address(d->addr, address, port);
+    d->pendingLookup = address;
+    d->port          = port;
 }
 
 Address::Address(const iAddress *address) : d(new Impl)
 {
-    d->addr.reset(address);
+    d->_addr.reset(address);
     d->port = port_Address(address);
 }
 
 Address Address::take(iAddress *addr)
 {
     Address taker;
-    taker.d->addr.reset(addr);
+    taker.d->_addr.reset(addr);
     taker.d->port = port_Address(addr);
+    taker.d->pendingLookup.clear();
     return taker;
 }
 
 Address::Address(const Address &other) : d(new Impl)
 {
-    d->addr.reset(other.d->addr); // use the same object
+    d->_addr.reset(other.d->_addr); // use the same object
     d->port = other.d->port;
 }
 
 Address::operator const iAddress *() const
 {
-    return d->addr;
+    return d->get();
 }
 
 Address &Address::operator=(Address const &other)
 {
-    d->addr.reset(other.d->addr); // use the same object
-    d->port     = other.d->port;
-    d->textRepr = other.d->textRepr;
-    d->special  = other.d->special;
+    d->_addr.reset(other.d->_addr); // use the same object
+    d->port          = other.d->port;
+    d->textRepr      = other.d->textRepr;
+    d->special       = other.d->special;
+    d->pendingLookup = other.d->pendingLookup;
     return *this;
 }
 
@@ -95,17 +108,18 @@ bool Address::operator<(Address const &other) const
 bool Address::operator==(Address const &other) const
 {
     if (d->port != other.d->port) return false;
-    return equal_Address(d->addr, other.d->addr);
+    return equal_Address(d->get(), other.d->get());
 }
 
 bool Address::isNull() const
 {
-    return bool(d->addr);
+    return !bool(d->_addr);
 }
 
 String Address::hostName() const
 {
-    return String(hostName_Address(d->addr));
+    if (d->pendingLookup) return d->pendingLookup;
+    return String(hostName_Address(d->get()));
 }
 
 bool Address::isLoopback() const
@@ -152,7 +166,7 @@ String Address::asText() const
     }
     if (!d->textRepr)
     {
-        d->textRepr = (isLocal()? String("localhost") : String::take(toString_Address(d->addr)));
+        d->textRepr = (isLocal()? String("localhost") : String::take(toString_Address(d->get())));
         if (d->port)
         {
             d->textRepr += Stringf(":%u", d->port);
