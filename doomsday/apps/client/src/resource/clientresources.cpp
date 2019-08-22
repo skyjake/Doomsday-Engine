@@ -39,7 +39,6 @@
 #include <de/RecordValue>
 #include <de/StringPool>
 #include <de/Task>
-#include <de/TaskPool>
 #include <de/Time>
 
 #include <doomsday/console/cmd.h>

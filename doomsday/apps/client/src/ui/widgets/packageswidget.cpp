@@ -40,7 +40,6 @@
 #include <de/ProgressWidget>
 #include <de/RegExp>
 #include <de/SequentialLayout>
-#include <de/TaskPool>
 #include <de/Timer>
 #include <de/TextValue>
 #include <de/ui/FilteredData>
@@ -53,9 +52,9 @@ using namespace de;
 
 static const char *VAR_TITLE  = "title";
 static const char *VAR_TAGS   = "tags";
-static const char *TAG_HIDDEN = "hidden";
 static const char *TAG_LOADED = "loaded";
-static const char *TAG_CACHED = "cached";
+//static const char *TAG_HIDDEN = "hidden";
+//static const char *TAG_CACHED = "cached";
 
 static constexpr double REFILTER_DELAY = 0.2;
 

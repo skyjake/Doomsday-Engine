@@ -104,61 +104,44 @@ DE_PIMPL(App)
 , DE_OBSERVES(PackageLoader, Activity)
 {
     thrd_t mainThread{};
+    void (*terminateFunc)(char const *){};
 
-    /// Metadata about the application.
-    Record metadata;
+    Record metadata; // Metadata about the application.
 
     CommandLine cmdLine;
 
     LogFilter logFilter;
     LogBuffer logBuffer;
 
-    /// Path of the application executable.
-    NativePath appPath;
-
+    NativePath appPath; // Path of the application executable.
     NativePath cachedBasePath;
     NativePath cachedHomePath;
 
-    /// Primary (wall) clock.
-    Clock clock;
+    Clock clock; // Primary (wall) clock.
 
-    /// Subsystems (not owned).
-    Flags initFlags;
+    Flags initFlags; // Subsystems (not owned).
     List<System *> systems;
-
     ScriptSystem scriptSys;
     Record appModule;
     Binder binder;
-
     FileSystem fs;
     std::unique_ptr<MetadataBank> metaBank;
     std::unique_ptr<NativeFile> basePackFile;
-
-    /// Archive where persistent data should be stored. Written to /home/persist.pack.
-    /// The archive is owned by the file system.
-    //Archive *persistentData;
 
     std::unique_ptr<UnixInfo> unixInfo;
 
     filesys::RemoteFeedRelay remoteFeedRelay;
 
-    /// The configuration.
-    Config *config;
+    Config *config{};
 
     StringList packagesToLoadAtInit;
     PackageLoader packageLoader;
 
-    void (*terminateFunc)(char const *);
-
-    /// Optional sink for warnings and errors (set with "-errors").
-    std::unique_ptr<FileLogSink> errorSink;
+    std::unique_ptr<FileLogSink> errorSink; // Optional sink for warnings/errors (set with "-errors").
 
     Impl(Public *a, const StringList &args)
         : Base(a)
         , cmdLine(args)
-        //, persistentData(nullptr)
-        , config(nullptr)
-        , terminateFunc(nullptr)
     {
         DE_ASSERT(isInitialized_Foundation());
 
@@ -721,8 +704,7 @@ NativePath App::nativeBasePath()
 {
     if (!d->cachedBasePath.isEmpty()) return d->cachedBasePath;
 
-    int i;
-    if ((i = d->cmdLine.check("-basedir", 1)))
+    if (int i = d->cmdLine.check("-basedir", 1))
     {
         d->cmdLine.makeAbsolutePath(i + 1);
         return (d->cachedBasePath = d->cmdLine.at(i + 1));

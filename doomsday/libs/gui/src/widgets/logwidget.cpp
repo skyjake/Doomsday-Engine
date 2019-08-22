@@ -27,8 +27,6 @@
 #include <de/AtlasTexture>
 #include <de/Drawable>
 #include <de/VertexBuilder>
-#include <de/Task>
-#include <de/TaskPool>
 #include <de/App>
 #include <de/Image>
 
