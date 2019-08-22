@@ -212,7 +212,7 @@ void G_RendPlayerView(int player)
     R_RenderPlayerView(player);
 }
 
-void D_DrawWindow(Size2Raw const * /*windowSize*/)
+void D64_DrawWindow(Size2Raw const * /*windowSize*/)
 {
     if(G_GameState() == GS_INTERMISSION)
     {
@@ -228,7 +228,7 @@ void D_DrawWindow(Size2Raw const * /*windowSize*/)
     }
 }
 
-void D_EndFrame()
+void D64_EndFrame()
 {
     if(G_GameState() != GS_MAP) return;
 

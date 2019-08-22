@@ -108,7 +108,7 @@ static void DP_Unload(void)
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-void G_PreInit(char const *gameId)
+static void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
     { size_t i;
@@ -120,10 +120,10 @@ void G_PreInit(char const *gameId)
             break;
         }
     if(i == NUM_GAME_MODES)
-        Con_Error("Failed gamemode lookup for id %i.", gameId);
+        Con_Error("Failed gamemode lookup for ID %s", gameId);
     }
 
-    D_PreInit();
+    D64_PreInit();
 }
 
 /**
@@ -145,13 +145,13 @@ static void *GetGameAPI(char const *name)
     #define HASH_ENTRY(Name, Func) std::make_pair(Name, de::function_cast<void *>(Func))
     static const Hash<String, void *> funcs(
     {
-        HASH_ENTRY("DrawWindow",    D_DrawWindow),
-        HASH_ENTRY("EndFrame",      D_EndFrame),
-        HASH_ENTRY("GetInteger",    D_GetInteger),
-        HASH_ENTRY("GetPointer",    D_GetVariable),
-        HASH_ENTRY("PostInit",      D_PostInit),
+        HASH_ENTRY("DrawWindow",    D64_DrawWindow),
+        HASH_ENTRY("EndFrame",      D64_EndFrame),
+        HASH_ENTRY("GetInteger",    D64_GetInteger),
+        HASH_ENTRY("GetPointer",    D64_GetVariable),
+        HASH_ENTRY("PostInit",      D64_PostInit),
         HASH_ENTRY("PreInit",       G_PreInit),
-        HASH_ENTRY("Shutdown",      D_Shutdown),
+        HASH_ENTRY("Shutdown",      D64_Shutdown),
         HASH_ENTRY("TryShutdown",   G_TryShutdown),
     });
     #undef HASH_ENTRY

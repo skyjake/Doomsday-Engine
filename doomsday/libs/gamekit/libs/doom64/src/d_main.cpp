@@ -61,12 +61,12 @@ char const *borderGraphics[] = {
     "BRDR_BL" // Bottom left.
 };
 
-int D_GetInteger(int id)
+int D64_GetInteger(int id)
 {
     return Common_GetInteger(id);
 }
 
-void *D_GetVariable(int id)
+void *D64_GetVariable(int id)
 {
     static float bob[2];
 
@@ -119,7 +119,7 @@ void *D_GetVariable(int id)
     return 0;
 }
 
-void D_PreInit()
+void D64_PreInit()
 {
     // Config defaults. The real settings are read from the .cfg files
     // but these will be used no such files are found.
@@ -310,7 +310,7 @@ void D_PreInit()
     G_CommonPreInit();
 }
 
-void D_PostInit()
+void D64_PostInit()
 {
     CommandLine &cmdLine = DE_APP->commandLine();
 
@@ -384,7 +384,7 @@ void D_PostInit()
     G_AutoStartOrBeginTitleLoop();
 }
 
-void D_Shutdown()
+void D64_Shutdown()
 {
     P_ShutdownInventory();
     G_CommonShutdown();

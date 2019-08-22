@@ -157,21 +157,23 @@ static void DP_Unload(void)
     Plug_RemoveHook(HOOK_VIEWPORT_RESHAPE, R_UpdateViewport);
 }
 
-void G_PreInit(char const *gameId)
+static void G_PreInit(char const *gameId)
 {
     /// \todo Refactor me away.
-    { size_t i;
+    size_t i;
     for(i = 0; i < NUM_GAME_MODES; ++i)
+    {
         if(!strcmp(gameIds[i], gameId))
         {
             gameMode = (gamemode_t) i;
             gameModeBits = 1 << gameMode;
             break;
         }
-    if(i == NUM_GAME_MODES)
-        Con_Error("Failed gamemode lookup for id %i.", gameId);
     }
-
+    if(i == NUM_GAME_MODES)
+    {
+        Con_Error("Failed gamemode lookup for ID %s", gameId);
+    }
     H_PreInit();
 }
 

@@ -46,27 +46,27 @@ extern "C" {
  * Pre Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void D_PreInit(void);
+void D64_PreInit(void);
 
 /**
  * Post Game Initialization routine.
  * All game-specific actions that should take place at this time go here.
  */
-void D_PostInit(void);
+void D64_PostInit(void);
 
-void D_Shutdown(void);
+void D64_Shutdown(void);
 
-void D_EndFrame(void);
+void D64_EndFrame(void);
 
 /**
  * Get a 32-bit integer value.
  */
-int D_GetInteger(int id);
+int D64_GetInteger(int id);
 
 /**
  * Get a pointer to the value of a named variable/constant.
  */
-void *D_GetVariable(int id);
+void *D64_GetVariable(int id);
 
 #ifdef __cplusplus
 } // extern "C"
