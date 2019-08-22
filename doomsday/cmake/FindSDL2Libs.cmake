@@ -54,9 +54,6 @@ elseif (WIN32 OR CYGWIN)
 
     # Define the target.
     add_library (SDL2 INTERFACE)
-    if (CYGWIN)
-        target_link_libraries(SDL2 INTERFACE ${sdlRoot}/lib/${DE_ARCH}/SDL2main.lib)
-    endif ()
     target_link_libraries (SDL2 INTERFACE ${SDL2_LIBRARY})
 
     # Deduce the include directory.

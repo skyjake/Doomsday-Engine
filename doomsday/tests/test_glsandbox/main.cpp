@@ -21,12 +21,16 @@
 
 #include <de/GuiApp>
 #include <de/LogBuffer>
+
+#define SDL_MAIN_HANDLED
 #include <SDL_main.h>
 
 using namespace de;
 
 DE_EXTERN_C int main(int argc, char **argv)
 {
+    SDL_SetMainReady();
+
     int exitCode = -1;
     init_Foundation();
     try

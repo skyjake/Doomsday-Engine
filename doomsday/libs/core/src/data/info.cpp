@@ -627,8 +627,6 @@ DE_PIMPL(Info)
             String includePath;
             String content = finder->findIncludedInfoSource(includeName, self(), &includePath);
 
-            LOG_MSG("Including: %s") << includePath;
-
             Info included;
             included.setImplicitBlockType(implicitBlockType);
             included.setScriptBlocks(compose<StringList>(scriptBlockTypes.begin(),

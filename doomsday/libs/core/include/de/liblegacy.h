@@ -53,16 +53,20 @@
 
 #include <de/libcore.h>
 
-#if defined (DE_STATIC_LINK)
-#  define DE_ENTRYPOINT static
-#else
-#  define DE_ENTRYPOINT DE_EXTERN_C DE_PUBLIC
-#endif
-
 #ifdef __cplusplus
 #  define DE_EXTERN_C extern "C"
 #else
 #  define DE_EXTERN_C extern
+#endif
+
+#if defined (DE_STATIC_LINK)
+#  define DE_ENTRYPOINT static
+#else
+#  ifdef _MSC_VER
+#    define DE_ENTRYPOINT DE_EXTERN_C __declspec(dllexport)
+#  else
+#    define DE_ENTRYPOINT DE_EXTERN_C DE_PUBLIC
+#  endif
 #endif
 
 #ifndef NDEBUG

@@ -114,7 +114,7 @@
 #    define DE_PUBLIC   __declspec(dllimport)
 #  endif
 #  define DE_NORETURN   __declspec(noreturn)
-#elif defined (MACOSX)
+#elif defined (MACOSX) || defined(__CYGWIN__)
 //#  ifdef __LIBCORE__
 #    define DE_PUBLIC   __attribute__((visibility("default")))
 //#  else

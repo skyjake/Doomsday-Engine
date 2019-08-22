@@ -20,3 +20,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     append_unique (CMAKE_CXX_FLAGS -Werror=return-type)
     append_unique (CMAKE_CXX_FLAGS -fdiagnostics-color)
 endif ()
+
+# All symbols are hidden by default.
+append_unique (CMAKE_C_FLAGS   "-fvisibility=hidden")
+append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")

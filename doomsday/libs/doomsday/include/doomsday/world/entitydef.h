@@ -45,7 +45,12 @@ typedef struct mapentitypropertydef_s {
 /**
  * @ingroup world
  */
-typedef struct LIBDOOMSDAY_PUBLIC mapentitydef_s {
+typedef struct 
+#ifdef __cplusplus
+    LIBDOOMSDAY_PUBLIC
+#endif
+mapentitydef_s 
+{
     /// Unique identifier associated with this entity.
     int id;
 
@@ -56,7 +61,8 @@ typedef struct LIBDOOMSDAY_PUBLIC mapentitydef_s {
 #ifdef __cplusplus
     mapentitydef_s(int _id) : id(_id), numProps(0), props(0) {}
 #endif
-} MapEntityDef;
+} 
+MapEntityDef;
 
 #ifdef __cplusplus
 extern "C" {

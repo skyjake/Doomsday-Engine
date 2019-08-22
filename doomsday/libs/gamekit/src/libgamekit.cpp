@@ -19,14 +19,14 @@
 //#include "gamekit/libgamekit.h"
 #include <de/Extension>
 #include <de/Log>
+#include <de/liblegacy.h>
 
 DE_EXTENSION(doom);
 DE_EXTENSION(doom64);
 DE_EXTENSION(heretic);
 DE_EXTENSION(hexen);
 
-DE_PUBLIC DE_EXTERN_C
-void GameKit_Init()
+DE_ENTRYPOINT void GameKit_Init()
 {
     LOG_AS("GameKit");
     LOG_MSG("Initializing...");

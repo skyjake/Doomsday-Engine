@@ -261,9 +261,9 @@ void GLTextureFramebuffer::resize(Size const &newSize)
 
 void GLTextureFramebuffer::resolveSamples()
 {
-    //if (d->isMultisampled())
     if (d->resolvedFbo.isReady())
     {
+        DE_ASSERT(d->isMultisampled());
         // Copy the framebuffer contents to the textures (that have no multisampling).
         blit(d->resolvedFbo, ColorDepthStencil);
     }
