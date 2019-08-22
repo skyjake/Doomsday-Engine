@@ -115,15 +115,10 @@
 #  endif
 #  define DE_NORETURN   __declspec(noreturn)
 #elif defined (MACOSX) || defined(__CYGWIN__)
-//#  ifdef __LIBCORE__
-#    define DE_PUBLIC   __attribute__((visibility("default")))
-//#  else
-//#    define DE_PUBLIC
-//#  endif
+#  define DE_PUBLIC     __attribute__((visibility("default")))
 #  define DE_NORETURN   __attribute__((__noreturn__))
 #else
-// No need to use any special declarators.
-#  define DE_PUBLIC
+#  define DE_PUBLIC     __attribute__((visibility("default")))
 #  define DE_NORETURN   __attribute__((__noreturn__))
 #endif
 

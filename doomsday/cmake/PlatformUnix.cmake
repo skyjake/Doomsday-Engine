@@ -44,3 +44,7 @@ if (CMAKE_COMPILER_IS_GNUCXX)
     append_unique (CMAKE_CXX_FLAGS_RELWITHDEBINFO -fno-tree-fre)
     append_unique (CMAKE_CXX_FLAGS_MINSIZEREL     -fno-tree-fre)
 endif ()
+
+# All symbols are hidden by default.
+append_unique (CMAKE_C_FLAGS   "-fvisibility=hidden")
+append_unique (CMAKE_CXX_FLAGS "-fvisibility=hidden")
