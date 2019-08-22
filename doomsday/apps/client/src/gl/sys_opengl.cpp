@@ -29,13 +29,13 @@
 #include "sys_system.h"
 #include "gl/gl_main.h"
 
-#ifdef WIN32
-#   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
-#elif defined (DE_X11)
-#   include <GL/glx.h>
-#   undef None
-#   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
-#endif
+//#ifdef WIN32
+//#   define GETPROC(Type, x)   x = de::function_cast<Type>(wglGetProcAddress(#x))
+//#elif defined (DE_X11)
+//#   include <GL/glx.h>
+//#   undef None
+//#   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
+//#endif
 
 using namespace de;
 

@@ -16,7 +16,9 @@ macro (deng_add_extlib target)
     deng_link_libraries (${target} PRIVATE DengComms)
     enable_cxx11 (${target})
     set_target_properties (${target} PROPERTIES FOLDER Extensions)
-
+    if (UNIX_LINUX)
+        target_compile_options (${target} PRIVATE -fPIC)
+    endif ()
     if (APPLE)
         # The plugins have some messy code.
         set_property (TARGET ${target}

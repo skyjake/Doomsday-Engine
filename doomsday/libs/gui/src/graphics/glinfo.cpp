@@ -39,14 +39,14 @@
 //#  include <OpenGL/OpenGL.h>
 //#endif
 
-#if defined (DE_X11)
-#  include <QX11Info>
-#  include <GL/glx.h>
-#  include <GL/glxext.h>
-#  undef None
-#  undef Always
-#  undef Status
-#endif
+//#if defined (DE_X11)
+//#  include <QX11Info>
+//#  include <GL/glx.h>
+//#  include <GL/glxext.h>
+//#  undef None
+//#  undef Always
+//#  undef Status
+//#endif
 
 #if defined (WIN32)
 #  define WIN32_LEAN_AND_MEAN
@@ -230,12 +230,12 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
 // #endif
 // #endif
 
-#ifdef DE_X11
-        // Check GLX specific extensions.
-        if (checkExtensionString(ext, glXQueryExtensionsString(QX11Info::display(),
-                                                               QX11Info::appScreen())))
-            return true;
-#endif
+//#ifdef DE_X11
+//        // Check GLX specific extensions.
+//        if (checkExtensionString(ext, glXQueryExtensionsString(QX11Info::display(),
+//                                                               QX11Info::appScreen())))
+//            return true;
+//#endif
 
 //        return checkExtensionString(ext, glGetString(GL_EXTENSIONS));
 //#endif
@@ -331,29 +331,29 @@ DE_PIMPL_NOREF(GLInfo) //, public QOpenGLFunctions_Doomsday
         // }
         // #endif
 
-        #ifdef DE_X11
-        {
-            ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
-            ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
-            ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
+//        #ifdef DE_X11
+//        {
+//            ext.X11_EXT_swap_control           = query("GLX_EXT_swap_control");
+//            ext.X11_SGI_swap_control           = query("GLX_SGI_swap_control");
+//            ext.X11_MESA_swap_control          = query("GLX_MESA_swap_control");
 
-            if (ext.X11_EXT_swap_control)
-            {
-                glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
-                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
-            }
-            if (ext.X11_SGI_swap_control)
-            {
-                glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
-                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
-            }
-            if (ext.X11_MESA_swap_control)
-            {
-                glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
-                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
-            }
-        }
-        #endif
+//            if (ext.X11_EXT_swap_control)
+//            {
+//                glXSwapIntervalEXT = de::function_cast<decltype(glXSwapIntervalEXT)>
+//                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalEXT")));
+//            }
+//            if (ext.X11_SGI_swap_control)
+//            {
+//                glXSwapIntervalSGI = de::function_cast<decltype(glXSwapIntervalSGI)>
+//                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalSGI")));
+//            }
+//            if (ext.X11_MESA_swap_control)
+//            {
+//                glXSwapIntervalMESA = de::function_cast<decltype(glXSwapIntervalMESA)>
+//                        (glXGetProcAddress(reinterpret_cast<GLubyte const *>("glXSwapIntervalMESA")));
+//            }
+//        }
+//        #endif
 
         #ifdef DE_ENABLE_OPENGL_DEBUG_LOGGER
         {

@@ -204,6 +204,8 @@ DE_PIMPL(GLWindow)
 
     void checkResize()
     {
+        if (!readyNotified) return; // We'll do this later.
+
         int pw, ph;
         SDL_GL_GetDrawableSize(window, &pw, &ph);
 
@@ -215,18 +217,12 @@ DE_PIMPL(GLWindow)
             debug("[GLWindow] Drawable size is %dx%d pixels", pw, ph);
             currentSize = pendingSize;
 
-            if (readyNotified)
-            {
-                self().makeCurrent();
-            }
+            self().makeCurrent();
             DE_FOR_PUBLIC_AUDIENCE2(Resize, i)
             {
                 i->windowResized(self());
             }
-            if (readyNotified)
-            {
-                self().doneCurrent();
-            }
+            self().doneCurrent();
         }
 
         updatePixelRatio();

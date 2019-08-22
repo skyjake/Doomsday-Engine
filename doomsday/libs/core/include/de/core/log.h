@@ -480,8 +480,8 @@ public:
         void setValue(uint32_t i);
         void setValue(int64_t i);
         void setValue(uint64_t i);
-        void setValue(ddouble d);        
-#if !defined(__CYGWIN__)
+        void setValue(ddouble d);
+#if defined(MACOSX)
         inline void setValue(size_t i) { setValue(uint64_t(i)); }
 #endif
         void setValue(void const *p);

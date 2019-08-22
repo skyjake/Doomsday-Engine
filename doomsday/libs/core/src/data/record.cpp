@@ -252,7 +252,7 @@ DE_PIMPL(Record)
             if (isSubrecord(member))
             {
                 Record *rec = member.value<RecordValue>().record();
-                DE_ASSERT(rec != 0); // subrecords are owned, so cannot have been deleted
+                DE_ASSERT(rec != nullptr); // subrecords are owned, so cannot have been deleted
 
                 if (auto result = func(i.first, *rec))
                 {
@@ -497,7 +497,7 @@ bool Record::has(const String &name) const
 
 bool Record::hasMember(const String &variableName) const
 {
-    return d->findMemberByPath(variableName) != 0;
+    return d->findMemberByPath(variableName) != nullptr;
 }
 
 bool Record::hasSubrecord(const String &subrecordName) const
@@ -1010,7 +1010,7 @@ void Record::markAllMembersUnchanged()
     }
 }
 
-String Record::asText(String const &prefix, List *lines) const
+String Record::asText(String const &prefix, List<KeyValue> *lines) const
 {
     DE_GUARD(d);
 
@@ -1045,7 +1045,7 @@ String Record::asText(String const &prefix, List *lines) const
     }
 
     // Top level of the recursion.
-    List allLines;
+    List<KeyValue> allLines;
     Vec2ui maxLength;
 
     // Collect.
@@ -1053,7 +1053,7 @@ String Record::asText(String const &prefix, List *lines) const
 
     // Sort and find maximum length.
     std::sort(allLines.begin(), allLines.end());
-    for (List::iterator i = allLines.begin(); i != allLines.end(); ++i)
+    for (auto i = allLines.cbegin(); i != allLines.cend(); ++i)
     {
         maxLength = maxLength.max(Vec2ui(i->first.size(), i->second.size()));
     }

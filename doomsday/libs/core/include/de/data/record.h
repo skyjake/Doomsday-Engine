@@ -78,7 +78,6 @@ public:
     typedef Hash<String, Variable *> Members;  // unordered
     typedef Hash<String, Record *> Subrecords; // unordered
     typedef std::pair<String, String> KeyValue;
-    typedef List<KeyValue> List;
 
     enum Behavior {
         AllMembers,
@@ -294,7 +293,7 @@ public:
      *
      * @return  The array variable.
      */
-    Variable &addArray(const String &variableName, ArrayValue *array = 0);
+    Variable &addArray(const String &variableName, ArrayValue *array = nullptr);
 
     /**
      * Adds a dictionary variable to the record. The variable is set up to only accept
@@ -557,7 +556,7 @@ public:
      *
      * @return  Text representation.
      */
-    String asText(String const &prefix, List *lines) const;
+    String asText(String const &prefix, List<KeyValue> *lines) const;
 
     /**
      * Convenience template for getting the value of a variable in a

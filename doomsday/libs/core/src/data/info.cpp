@@ -229,6 +229,7 @@ DE_PIMPL(Info)
         return currentToken;
     }
 
+#if 0
     /**
      * This is the method that the user calls to retrieve the next element from
      * the source file. If there are no more elements to return, a
@@ -242,6 +243,7 @@ DE_PIMPL(Info)
         if (!e) throw OutOfElements("");
         return e;
     }
+#endif
 
     /**
      * Returns the next element from the source file.
