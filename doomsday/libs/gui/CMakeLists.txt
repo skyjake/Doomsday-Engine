@@ -97,6 +97,18 @@ if (CYGWIN)
         COMPONENT client
     )
 endif ()
+if (UNIX_LINUX)
+    install (
+        FILES ${ASSIMP_ROOT_DIR}/lib/libassimp.so.4
+              ${ASSIMP_ROOT_DIR}/lib/libassimp.so.4.1.0
+              ${glbinding_DIR}/lib/libglbinding.so.3
+              ${glbinding_DIR}/lib/libglbinding.so.3.0.2
+              ${glbinding_DIR}/lib/libglbinding-aux.so.3
+              ${glbinding_DIR}/lib/libglbinding-aux.so.3.0.2
+        DESTINATION lib
+        COMPONENT client
+    )
+endif ()
 
 # If Assimp is part of the build, ensure that it gets compiled before libgui.
 # if (TARGET assimp)

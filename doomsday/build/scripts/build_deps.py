@@ -8,10 +8,10 @@ PATCH_DIR = os.path.abspath(os.path.dirname(__file__))
 
 if IS_MINGW:
     UNISTRING_DIR = '-DUNISTRING_DIR=' + os.getenv('MINGW_PREFIX')
-elif IS_CYGWIN:
-    UNISTRING_DIR = '' # installed on system
+elif platform.system() == 'Darwin':
+    UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'    
 else:
-    UNISTRING_DIR = '-DUNISTRING_DIR=/usr/local'
+    UNISTRING_DIR = '' # installed on system
 
 FORMATS = ['3DS', 'AC', 'ASE', 'ASSBIN', 'ASSXML', 'B3D', 'BVH', 'COLLADA',
            'DXF', 'CSM', 'HMP', 'IRR', 'LWO', 'LWS', 'MD2', 'MD3', 'MD5', 'MDC', 'MDL',
@@ -125,6 +125,7 @@ BUILD_DIR = cfg['build_dir']
 GENERATOR = cfg['generator']
 PRODUCTS_DIR = os.path.join(BUILD_DIR, 'products')
 if do_clean and os.path.exists(PRODUCTS_DIR):
+    print("Deleting:", PRODUCTS_DIR)
     shutil.rmtree(PRODUCTS_DIR)
 os.makedirs(PRODUCTS_DIR, exist_ok=True)
 
@@ -149,6 +150,7 @@ for long_name, git_url, git_tag, cmake_opts in dependencies:
         subprocess.check_call(['patch', '-p1', '-i', patch_file])
     build_dir = os.path.join(src_dir, 'build')
     if do_clean and os.path.exists(build_dir):
+        print("Deleting:", build_dir)
         shutil.rmtree(build_dir)
         continue
     if do_build:
