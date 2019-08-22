@@ -481,7 +481,9 @@ public:
         void setValue(int64_t i);
         void setValue(uint64_t i);
         void setValue(ddouble d);        
+#if !defined(__CYGWIN__)
         inline void setValue(size_t i) { setValue(uint64_t(i)); }
+#endif
         void setValue(void const *p);
         void setValue(const char *s);
         void setValue(const std::string &s);
