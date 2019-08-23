@@ -31,6 +31,7 @@
 #include <de/ProgressWidget>
 #include <de/RemoteFeedRelay>
 #include <de/SequentialLayout>
+#include <de/TaskPool>
 #include <de/ToggleWidget>
 #include <de/ui/FilteredData>
 #include <de/WebRequest>
@@ -43,7 +44,6 @@ DE_STATIC_STRING(ALL_CATEGORIES, "All Categories");
 DE_GUI_PIMPL(RepositoryBrowserDialog)
 , DE_OBSERVES(filesys::RemoteFeedRelay, Status)
 , public ChildWidgetOrganizer::IWidgetFactory
-, public AsyncScope
 {
     using RFRelay = filesys::RemoteFeedRelay;
 
@@ -63,6 +63,8 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
     String connectedRepository;
     String mountPath;
     Set<String> filterTerms;
+
+    TaskPool tasks;
 
     Impl(Public *i) : Base(i)
     {
@@ -238,11 +240,11 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
 
         // Disconnecting may involve waiting for an operation to finish first, so
         // we'll do it async.
-        *this += async([this]() {
+        tasks.async([this]() {
             disconnect();
-            return 0;
+            return Variant{};
         },
-        [this, address](int) {
+        [this, address](const Variant &) {
             RFRelay::get().addRepository(address, "/remote" / WebRequest::hostNameFromUri(address));
             connectedRepository = address;
         });

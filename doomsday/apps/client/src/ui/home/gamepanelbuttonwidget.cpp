@@ -34,7 +34,6 @@
 #include <doomsday/res/Bundles>
 
 #include <de/App>
-#include <de/Async>
 #include <de/CallbackAction>
 #include <de/ChildWidgetOrganizer>
 #include <de/Config>
@@ -42,6 +41,7 @@
 #include <de/Loop>
 #include <de/PopupMenuWidget>
 #include <de/ui/FilteredData>
+#include <de/TaskPool>
 
 using namespace de;
 
@@ -61,7 +61,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
     LabelWidget *packagesCounter;
     res::LumpCatalog catalog;
     bool playHovering = false;
-    AsyncScope asyncScope;
+    TaskPool tasks;
     
     Impl(Public *i, GameProfile &profile, SaveListData const &allSavedItems)
         : Base(i)
@@ -259,8 +259,8 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
 
     void updateGameTitleImage()
     {
-        asyncScope += async([this]() { return ClientStyle::makeGameLogo(game(), catalog); },
-                            [this](const Image &gameLogo) { self().icon().setImage(gameLogo); });
+        tasks.async([this]() { return Variant(ClientStyle::makeGameLogo(game(), catalog)); },
+                    [this](const Variant &gameLogo) { self().icon().setImage(gameLogo.value<Image>()); });
     }
 
     void profileChanged(Profiles::AbstractProfile &) override

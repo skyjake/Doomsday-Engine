@@ -31,19 +31,18 @@
 #include <doomsday/LumpCatalog>
 #include <doomsday/Games>
 
-#include <de/Async>
 #include <de/charsymbols.h>
 #include <de/CallbackAction>
 #include <de/MessageDialog>
 #include <de/PopupButtonWidget>
 #include <de/PopupMenuWidget>
 #include <de/RegExp>
+#include <de/TaskPool>
 
 using namespace de;
 
 DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
 , DE_OBSERVES(Games, Readiness)
-, public AsyncScope
 {
     shell::ServerInfo  serverInfo;
     ButtonWidget *     joinButton;
@@ -52,6 +51,7 @@ DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
     PopupButtonWidget *extra;
     PopupMenuWidget *  extraMenu;
     res::LumpCatalog   catalog;
+    TaskPool           tasks;
 
     Impl(Public *i) : Base(i)
     {
@@ -180,8 +180,8 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
         if (d->catalog.setPackages(game.requiredPackages()))
         {
             res::LumpCatalog catalog{d->catalog};
-            *d += async([&game, catalog]() { return ClientStyle::makeGameLogo(game, catalog); },
-                        [this](const Image &logo) { icon().setImage(logo); });
+            d->tasks.async([&game, catalog]() { return Variant(ClientStyle::makeGameLogo(game, catalog)); },
+                           [this](const Variant &logo) { icon().setImage(logo.value<Image>()); });
         }
     }
     else
