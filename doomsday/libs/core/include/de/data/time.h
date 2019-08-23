@@ -323,6 +323,26 @@ private:
 
 typedef Time::Span TimeSpan;
 
+constexpr double operator"" _ns(unsigned long long int nanoseconds)
+{
+    return double(nanoseconds) / 1.0e9;
+}
+
+constexpr double operator"" _µs(unsigned long long int microseconds)
+{
+    return double(microseconds) / 1.0e6;
+}
+
+constexpr double operator"" _ms(unsigned long long int milliseconds)
+{
+    return double(milliseconds) / 1.0e3;
+}
+
+constexpr double operator"" _s(long double seconds)
+{
+    return double(seconds);
+}
+
 } // namespace de
 
 #endif // LIBCORE_TIME_H
