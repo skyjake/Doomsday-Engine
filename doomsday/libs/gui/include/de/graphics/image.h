@@ -39,7 +39,7 @@ class NativePath;
  *
  * @ingroup gl
  */
-class LIBGUI_PUBLIC Image : public ISerializable
+class LIBGUI_PUBLIC Image : public ISerializable, public Deletable
 {
 public:
     /**
