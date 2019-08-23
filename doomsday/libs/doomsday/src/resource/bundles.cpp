@@ -40,12 +40,12 @@ DE_STATIC_STRING(VAR_REQUIRED_SCORE, "requiredScore");
 DE_PIMPL(Bundles)
 , DE_OBSERVES(FileIndex, Addition)
 , DE_OBSERVES(FileIndex, Removal)
+, public IFolderPopulationObserver
 , public Lockable
 {
     String defPath;
     de::Info identityRegistry;
     Set<DataBundle const *> bundlesToIdentify; // lock for access
-    LoopCallback mainCall;
     Hash<int /*DataBundle::Format*/, BlockElements> formatEntries;
     TaskPool tasks;
 
@@ -77,11 +77,7 @@ DE_PIMPL(Bundles)
             DE_GUARD(this);
             bundlesToIdentify.insert(maybeAs<DataBundle>(dataFile));
         }
-        // Use a deferred call to avoid spamming.
-        if (!mainCall)
-        {
-            mainCall.enqueue([this] () { self().identify(); });
-        }
+        audienceForFolderPopulation += this;
     }
 
     void fileRemoved(File const &dataFile, FileIndex const &) override
@@ -90,6 +86,12 @@ DE_PIMPL(Bundles)
 
         DE_GUARD(this);
         bundlesToIdentify.remove(maybeAs<DataBundle>(dataFile));
+    }
+
+    void folderPopulationFinished() override
+    {
+        audienceForFolderPopulation -= this;
+        Loop::mainCall([this]() { self().identify(); });
     }
 
     DataBundle const *nextToIdentify()
