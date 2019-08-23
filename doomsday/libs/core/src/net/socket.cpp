@@ -67,10 +67,13 @@
  */
 
 #include "de/Socket"
-#include "de/Async"
+
+#include "de/Loop"
 #include "de/Message"
-#include "de/Writer"
 #include "de/Reader"
+#include "de/TaskPool"
+#include "de/Waitable"
+#include "de/Writer"
 #include "de/data/huffman.h"
 
 #include <the_Foundation/object.h>
@@ -223,6 +226,8 @@ DE_PIMPL_NOREF(Socket)
     /// Number of bytes written to the socket so far.
     dint64 totalBytesWritten = 0;
 
+    TaskPool tasks;
+
     ~Impl()
     {
         deleteAll(receivedMessages);
@@ -328,22 +333,27 @@ DE_PIMPL_NOREF(Socket)
 
         if (!retainOrder && packet.size() >= MAX_SIZE_BIG)
         {
-            async([this, payload] ()
-            {
-                // Prepare for sending in a background thread, since it may take a moment.
+            struct WorkData : public Deletable {
                 MessageHeader header;
-                Block msgData = payload;
-                serializeMessage(header, msgData);
-                return std::make_pair(header, msgData);
-            },
-            [this] (std::pair<MessageHeader, Block> msg)
-            {
-                if (socket)
-                {
-                    // Write to socket in main thread.
-                    sendMessage(msg.first, msg.second);
-                }
-            });
+                Block         payload;
+            };
+
+            // Prepare for sending in a background thread, since it may take a moment.
+            tasks.async(
+                [this, payload]() {
+                    WorkData data;
+                    data.payload = payload;
+                    serializeMessage(data.header, data.payload);
+                    return data;
+                },
+                [this](const Variant &var) {
+                    if (socket)
+                    {
+                        const auto &data = var.value<WorkData>();
+                        // Write to socket in main thread.
+                        sendMessage(data.header, data.payload);
+                    }
+                });
         }
         else
         {
