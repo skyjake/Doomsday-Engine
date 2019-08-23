@@ -349,23 +349,28 @@ void Games::checkReadiness()
         return LoopContinue;
     });
 */
-    DE_GUARD(d);
-
     Set<Game const *> playable;
-    forAll([&playable] (Game &game) {
-        if (game.isPlayable()) playable.insert(&game);
-        return LoopContinue;
-    });
+    bool changed = false;
+    {
+        DE_GUARD(d);
+        forAll([&playable] (Game &game) {
+            if (game.isPlayable()) playable.insert(&game);
+            return LoopContinue;
+        });
+        changed = (playable != d->lastCheckedPlayable);
+    }
 
     // Only notify when the set of playable games changes.
-    if (playable != d->lastCheckedPlayable)
+    if (changed)
     {
         DE_FOR_AUDIENCE2(Readiness, i)
         {
             i->gameReadinessUpdated();
         }
+
+        DE_GUARD(d);
+        d->lastCheckedPlayable = std::move(playable);
     }
-    d->lastCheckedPlayable = std::move(playable);
 }
 
 /*void Games::forgetAllResources()
