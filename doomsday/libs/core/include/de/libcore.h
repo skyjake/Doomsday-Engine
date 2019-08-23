@@ -113,12 +113,15 @@
 #  else
 #    define DE_PUBLIC   __declspec(dllimport)
 #  endif
+#  define DE_HIDDEN
 #  define DE_NORETURN   __declspec(noreturn)
 #elif defined (MACOSX) || defined(__CYGWIN__)
 #  define DE_PUBLIC     __attribute__((visibility("default")))
+#  define DE_HIDDEN     __attribute__((visibility("hidden")))
 #  define DE_NORETURN   __attribute__((__noreturn__))
 #else
 #  define DE_PUBLIC     __attribute__((visibility("default")))
+#  define DE_HIDDEN     __attribute__((visibility("hidden")))
 #  define DE_NORETURN   __attribute__((__noreturn__))
 #endif
 
@@ -161,7 +164,7 @@
         void *callstack[128]; \
         int i, frames = backtrace(callstack, 128); \
         char** strs = backtrace_symbols(callstack, frames); \
-        for (i = 0; i < frames; ++i) printf(stderr, "%s", strs[i]); \
+        for (i = 0; i < frames; ++i) fprintf(stderr, "%s", strs[i]); \
         free(strs); }
 #  define DE_BACKTRACE(n, outStr) { \
         void *callstack[n]; \
@@ -337,7 +340,7 @@
  * </pre>
  */
 #define DE_PIMPL(ClassName) \
-    struct ClassName::Impl : public de::Private<ClassName>
+    struct DE_HIDDEN ClassName::Impl : public de::Private<ClassName>
 
 /**
  * Macro for starting the definition of a private implementation struct without
@@ -345,7 +348,7 @@
  * the private implementation mostly holds member variables.
  */
 #define DE_PIMPL_NOREF(ClassName) \
-    struct ClassName::Impl : public de::IPrivate
+    struct DE_HIDDEN ClassName::Impl : public de::IPrivate
 
 /**
  * Macro for publicly declaring a pointer to the private implementation.
@@ -353,8 +356,8 @@
  * it when the PrivateAutoPtr is destroyed.
  */
 #define DE_PRIVATE(Var) \
-    struct Impl; \
-    de::PrivateAutoPtr<Impl> Var;
+    struct DE_HIDDEN Impl; \
+    DE_HIDDEN de::PrivateAutoPtr<Impl> Var;
 
 #if defined(__cplusplus) && !defined(DE_C_API_ONLY)
 namespace de {
