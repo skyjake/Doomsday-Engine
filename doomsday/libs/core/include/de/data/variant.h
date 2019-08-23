@@ -20,6 +20,8 @@
 
 #include "../Deletable"
 
+namespace de {
+
 /**
  * Opaque owned pointer of any Deletable type.
  *
@@ -81,3 +83,5 @@ public:
 private:
     Deletable *_object;
 };
+
+} // namespace de
