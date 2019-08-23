@@ -36,7 +36,16 @@ static iThreadPool *globalThreadPool()
 {
     if (!s_pool)
     {
-        s_pool = new_ThreadPool();
+        /*
+         * The application is assumed to need a few CPU cores for:
+         *  - rendering/input/UI (main thread; most time-consuming)
+         *  - audio: continuous buffer mixing, streaming
+         *  - timer: triggering timer events
+         *  - networking: receiving and sending data via sockets
+         *
+         * Always create at least two threads so the pool is useful for running background tasks.
+         */
+        s_pool = newLimits_ThreadPool(2, 3);
     }
     return s_pool;
 }
