@@ -20,6 +20,9 @@
 #define LIBCORE_TASKPOOL_H
 
 #include "../Observers"
+#include "../Time"
+#include "../Variant"
+
 #include <functional>
 
 namespace de {
@@ -52,7 +55,7 @@ public:
         HighPriority   = 2
     };
 
-    class IPool
+    class IPool : public Lockable
     {
     public:
         virtual void taskFinishedRunning(Task &) = 0;
@@ -70,6 +73,7 @@ public:
      * Destroys the task pool when all running tasks have finished. This method will
      * always return immediately and the public-facing TaskPool object will be deleted,
      * but the private instance will exist until all the tasks have finished running.
+     * Completion callbacks will not be called for any pending async tasks.
      */
     virtual ~TaskPool();
 
@@ -85,6 +89,17 @@ public:
     void start(TaskFunction taskFunction, Priority priority = LowPriority);
 
     /**
+     * Starts an asynchronous operation in a background thread and calls a completion
+     * callback in the main thread once the operation is complete.
+     *
+     * @param asyncWork  Work to do.
+     * @param completionInMainThread  Completion callback. Receives the Value returned from the
+     *                   the async work function. Always runs in the main thread.
+     */
+    void async(const std::function<Variant()> &asyncWork,
+               const std::function<void(const Variant &)> &completionInMainThread);
+
+    /**
      * Blocks execution until all running tasks have finished. A Task is considered
      * finished when it has exited its Task::runTask() method.
      */
@@ -94,6 +109,17 @@ public:
      * Determines if all started tasks have finished.
      */
     bool isDone() const;
+
+    /**
+     * Use the calling thread to perform queued tasks in any task pool.
+     *
+     * You should call this instead of sleeping in tasks, so that global thread pool doesn't get
+     * blocked by sleeping workers.
+     *
+     * @param timeout  How long to wait until queued tasks are available. Zero means to
+     *                 wait indefinitely.
+     */
+    static void yield(const TimeSpan timeout);
 
     /**
      * Called by de::App at shutdown.

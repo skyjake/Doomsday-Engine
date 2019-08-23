@@ -21,6 +21,8 @@
 #include "de/Guard"
 #include "de/Set"
 
+#include <de/App>
+#include <de/Garbage>
 #include <de/Lockable>
 #include <de/Loop>
 #include <de/Waitable>
@@ -60,22 +62,66 @@ static void deleteThreadPool()
 
 class CallbackTask : public Task
 {
-public:
-    CallbackTask(TaskPool::TaskFunction func) : _func(func) {}
-    void runTask() override { _func(); }
-private:
     TaskPool::TaskFunction _func;
+
+public:
+    CallbackTask(TaskPool::TaskFunction func)
+        : _func(func)
+    {}
+
+    void runTask() override { _func(); }
 };
 
 } // namespace internal
 
-DE_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
+DE_PIMPL(TaskPool), public Waitable, public TaskPool::IPool
 {
-    /// Private instance will be deleted when pool is empty.
-    bool deleteWhenDone = false;
+    /// Runs async worker + main-thread-completion tasks.
+    class CompletionTask : public Task
+    {
+        std::function<Variant()> _task;
+        struct Epilogue
+        {
+            std::function<void(const Variant &)> completion;
+            Variant result;
+        };
+        Epilogue *_epilogue;
 
-    /// Set of running tasks.
-    Set<Task *> tasks;
+    public:
+        CompletionTask(const std::function<Variant()> &task,
+                       const std::function<void(const Variant &)> &completion)
+            : _task(task)
+            , _epilogue(new Epilogue{completion, {}})
+        {}
+
+        ~CompletionTask() override
+        {
+            // Check that the pool is still valid.
+            {
+                TaskPool::Impl *d = static_cast<TaskPool::Impl *>(_pool);
+                DE_GUARD(d);
+                if (d->poolDestroyed)
+                {
+                    // Completion cannot be called now.
+                    delete _epilogue;
+                    return;
+                }
+            }
+            Epilogue *e = _epilogue; // deleted after the callback is done
+            Loop::mainCall([e]() {
+                e->completion(e->result);
+                delete e;
+            });
+        }
+
+        void runTask() override
+        {
+            _epilogue->result = _task();
+        }
+    };
+
+    bool        poolDestroyed = false; // Impl will be deleted when pool is empty.
+    Set<Task *> tasks;                 // Set of running tasks.
 
     Impl(Public *i) : Base(i)
     {
@@ -128,12 +174,14 @@ DE_PIMPL(TaskPool), public Lockable, public Waitable, public TaskPool::IPool
         return tasks.isEmpty();
     }
 
-    void taskFinishedRunning(Task &task)
+    void taskFinishedRunning(Task &finishedTask)
     {
+        std::unique_ptr<Task> task(&finishedTask); // We have ownership of this.
+
         lock();
-        if (remove(&task))
+        if (remove(&finishedTask))
         {
-            if (deleteWhenDone)
+            if (poolDestroyed)
             {
                 // All done, clean up!
                 unlock();
@@ -174,7 +222,7 @@ TaskPool::~TaskPool()
     {
         // Detach the private instance and make it auto-delete itself when done.
         // The ongoing tasks will report themselves finished to the private instance.
-        d.release()->deleteWhenDone = true;
+        d.release()->poolDestroyed = true;
     }
 }
 
@@ -204,7 +252,20 @@ void TaskPool::start(TaskFunction taskFunction, Priority priority)
 
 void TaskPool::waitForDone()
 {
-    d->waitForEmpty();
+    if (App::inMainThread())
+    {
+        // Main thread can sleep while waiting for tasks.
+        d->waitForEmpty();
+    }
+    else
+    {
+        // Non-main threads should not block -- this is likely a worker, so we'll yield to
+        // other tasks while waiting.
+        while (!isDone())
+        {
+            yield(250_ms);
+        }
+    }
 }
 
 bool TaskPool::isDone() const
@@ -215,6 +276,17 @@ bool TaskPool::isDone() const
 void TaskPool::deleteThreadPool() // static
 {
     internal::deleteThreadPool();
+}
+
+void TaskPool::yield(const TimeSpan timeout) // static
+{
+    yield_ThreadPool(internal::globalThreadPool(), timeout);
+}
+
+void TaskPool::async(const std::function<Variant()> &work,
+                     const std::function<void (const Variant &)> &completion)
+{
+    start(new Impl::CompletionTask(work, completion));
 }
 
 } // namespace de
