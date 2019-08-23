@@ -155,7 +155,8 @@ DE_PIMPL(RemoteFeedUser)
         // Note: This is executed in a background thread.
         try
         {
-            // Make sure the file system is ready for use.
+            // Make sure the file system is ready for use. Waiting is ok because this is
+            // called via de::async.
             FS::waitForIdle();
 
             std::unique_ptr<RemoteFeedMetadataPacket> response;

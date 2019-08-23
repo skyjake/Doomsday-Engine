@@ -101,6 +101,7 @@ Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalo
 
 void ClientStyle::performUpdate()
 {
+    // We'll use de::async since the thread will just be sleeping.
     async([]() {
         // Wait until all UI assets are finished, and thus we can sure that no background
         // operations are accessing style assets.

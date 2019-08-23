@@ -560,7 +560,6 @@ AsyncTask *Folder::afterPopulation(std::function<void ()> func)
         func();
         return nullptr;
     }
-
     return async([] ()
     {
         waitForPopulation();
