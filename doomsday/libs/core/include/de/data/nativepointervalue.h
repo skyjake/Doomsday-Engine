@@ -42,7 +42,7 @@ public:
     typedef Deletable Object;
 
 public:
-    NativePointerValue(Object *object, Record const *memberScope = nullptr);
+    NativePointerValue(Object *object, const Record *memberScope = nullptr);
 
     Object *object() const;
     void setObject(Object *object);

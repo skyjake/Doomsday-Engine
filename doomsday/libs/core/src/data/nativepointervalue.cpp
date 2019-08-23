@@ -24,7 +24,7 @@ DE_PIMPL_NOREF(NativePointerValue)
 , DE_OBSERVES(Deletable, Deletion)
 {
     Object *object = nullptr;
-    Record const *memberScope = nullptr;
+    const Record *memberScope = nullptr;
 
     ~Impl()
     {

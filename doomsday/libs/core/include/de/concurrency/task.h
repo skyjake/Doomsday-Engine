@@ -42,7 +42,7 @@ class DE_PUBLIC Task : public IRunnable, public Deletable
 {
 public:
     Task();
-    virtual ~Task() {}
+    virtual ~Task();
 
     void run();
 

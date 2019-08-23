@@ -25,6 +25,9 @@ namespace de {
 Task::Task() : _pool(nullptr)
 {}
 
+Task::~Task()
+{}
+
 void Task::run()
 {
     try
