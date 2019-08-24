@@ -106,17 +106,17 @@ struct FontCache // thread-local
         auto data = fontDb.sourceData.find(name);
         if (data == fontDb.sourceData.end())
         {
-            debug("[StbTtNativeFont] no source data for '%s'", name.c_str());
+            LOG_RES_ERROR("[StbTtNativeFont] no source data for '%s'") << name;
             return nullptr;
         }
         stbtt_fontinfo *font = &fonts[key];
         if (!stbtt_InitFont(font, data->second.data(), 0))
         {
             fonts.erase(key);
-            debug("[StbTtNativeFont] error initializing '%s'", name.c_str());
+            LOG_RES_ERROR("[StbTtNativeFont] error initializing '%s'") << name;
             return nullptr;
         }
-        debug("[StbTtNativeFont] initialized %p '%s'", font, name.c_str());
+        LOG_RES_VERBOSE("[StbTtNativeFont] initialized %p '%s'") << font << name;
         return font;
     }
 
