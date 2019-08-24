@@ -25,6 +25,7 @@
 
 #include <the_Foundation/fileinfo.h>
 #include <the_Foundation/stringlist.h>
+#include <the_Foundation/path.h> // cygwin paths
 #include <the_Foundation/process.h>
 
 #include <fstream>
@@ -158,6 +159,9 @@ CommandLine::CommandLine(const StringList &args) : d(new Impl(*this))
             d->appendArg(args.at(i));
         }
     }
+#if defined (__CYGWIN__)
+    makeAbsolutePath(0); // convert to a Windows path
+#endif
 }
 
 CommandLine::CommandLine(const CommandLine &other) : d(new Impl(*this))
@@ -327,6 +331,13 @@ void CommandLine::makeAbsolutePath(dsize pos)
     if (!isOption(pos) && !arg.beginsWith("}"))
     {
         bool converted = false;
+
+#if defined (__CYGWIN__)
+        // Cygwin gives us UNIX-like paths on the command line, so let's convert
+        // to our expected Windows paths.
+        arg = String::take(unixToWindows_Path(arg));
+#endif
+
         NativePath dir = NativePath(arg).expand(); // note: strips trailing slash
 
         if (!dir.isAbsolute())
