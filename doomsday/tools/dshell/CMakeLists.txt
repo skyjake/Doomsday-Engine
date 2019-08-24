@@ -41,3 +41,8 @@ deng_link_libraries (dshell PRIVATE DengCore DengComms)
 target_link_libraries (dshell PRIVATE ${CURSES_LIBRARIES})
 
 deng_install_tool (dshell)
+
+if (CYGWIN)
+    # Curses requires terminfo to be available.
+    install (FILES /usr/share/terminfo/63/cygwin DESTINATION share/terminfo/63)
+endif ()

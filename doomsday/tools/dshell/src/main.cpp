@@ -20,16 +20,27 @@
 #include <de/Counted>
 #include "shellapp.h"
 
+#if defined (__CYGWIN__)
+#  include <the_Foundation/path.h>
+#endif
+
 int main(int argc, char *argv[])
 {
     init_Foundation();
+#if defined (__CYGWIN__)
+    {
+        // Curses needs to have terminfo.
+        de::NativePath exePath(de::String::take(unixToWindows_Path(argv[0])));
+        setenv("TERMINFO", exePath.fileNamePath() / "..\\share\\terminfo", 1);
+    }
+#endif
     int result;
     {
         ShellApp a(argc, argv);
         a.initSubsystems();
         result = a.exec();
     }
-#ifdef DE_DEBUG
+#if defined (DE_DEBUG)
     DE_ASSERT(de::Counted::totalCount == 0);
 #endif
     deinit_Foundation();
