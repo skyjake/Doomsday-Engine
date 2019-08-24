@@ -17,6 +17,8 @@
  */
 
 #include "de/FileDialog"
+#include "de/DirectoryBrowserWidget"
+#include "de/DialogWidget"
 
 namespace de {
 
@@ -28,6 +30,8 @@ DE_PIMPL_NOREF(FileDialog)
     List<NativePath> selection;
     NativePath       initialLocation;
     FileTypes        fileTypes; // empty list: eveything allowed
+
+    DirectoryBrowserWidget *browser;
 
     // using Filters = List<std::pair<Block, Block>>;
 
@@ -42,6 +46,16 @@ DE_PIMPL_NOREF(FileDialog)
     //     }
     //     return list;
     // }
+
+    DialogWidget *makeDialog()
+    {
+        auto *dlg = new DialogWidget;
+        dlg->setDeleteAfterDismissed(true);
+
+        browser = new DirectoryBrowserWidget;
+
+        return dlg;
+    }
 };
 
 FileDialog::FileDialog() : d(new Impl)
@@ -82,7 +96,7 @@ List<NativePath> FileDialog::selectedPaths() const
     return d->selection;
 }
 
-bool FileDialog::exec()
+bool FileDialog::exec(GuiRootWidget &root)
 {
     d->selection.clear();
 
@@ -164,6 +178,13 @@ bool FileDialog::exec()
 
     // // Cleanup.
     // dlg->Release();
+
+    auto *dlg = d->makeDialog();
+    if (dlg->exec(root))
+    {
+        // Get the selected items.
+
+    }
 
     return !d->selection.empty();
 }

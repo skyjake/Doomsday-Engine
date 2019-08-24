@@ -119,7 +119,7 @@ void NativePathWidget::chooseUsingNativeFileDialog()
     dlg.setInitialLocation(NativePath::workPath() / dir);
     dlg.setFileTypes(d->filters);
     dlg.setPrompt("Select");
-    if (dlg.exec())
+    if (dlg.exec(root()))
     {
         d->path = dlg.selectedPath();
         setText(d->labelText());

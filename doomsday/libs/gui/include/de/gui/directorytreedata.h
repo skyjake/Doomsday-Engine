@@ -24,32 +24,10 @@
 
 namespace de {
 
+class DirectoryItem;
+
 class LIBGUI_PUBLIC DirectoryTreeData : public ui::TreeData
 {
-public:
-    /**
-     * Item in the directory tree data model (i.e., file or subdirectory).
-     */
-    class LIBGUI_PUBLIC DirectoryItem : public ui::Item
-    {
-    public:
-        DirectoryItem(const String &name, const File::Status &status, const Path &directory)
-            : ui::Item(DefaultSemantics, name)
-            , _status(status)
-            , _directory(directory)
-        {
-            setLabel(name);
-        }
-
-        String        name() const { return label(); }
-        File::Status  status() const { return _status; }
-        Path          path() const { return _directory / name(); }
-
-    private:
-        File::Status _status;
-        const Path & _directory;
-    };
-
 public:
     DirectoryTreeData();
 
@@ -59,6 +37,34 @@ public:
 
 private:
     DE_PRIVATE(d)
+};
+
+/**
+ * Item in the directory tree data model (i.e., file or subdirectory).
+ */
+class LIBGUI_PUBLIC DirectoryItem : public ui::Item
+{
+public:
+    DirectoryItem(const String &name, const File::Status &status, const Path &directory)
+        : ui::Item(DefaultSemantics, name)
+        , _status(status)
+        , _directory(directory)
+    {
+        setLabel(name);
+    }
+
+    String        name() const { return label(); }
+    File::Status  status() const { return _status; }
+    Path          path() const { return _directory / name(); }
+
+    bool isDirectory() const
+    {
+        return status().type() == File::Type::Folder;
+    }
+
+private:
+    File::Status _status;
+    const Path & _directory;
 };
 
 } // namespace de

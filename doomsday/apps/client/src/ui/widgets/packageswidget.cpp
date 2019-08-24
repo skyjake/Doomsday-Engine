@@ -465,12 +465,12 @@ DE_GUI_PIMPL(PackagesWidget)
 
     // Search filter:
     LineEditWidget *search;
-    Rule const *searchMinY = nullptr;
-    ButtonWidget *clearSearch;
-    Animation searchBackgroundOpacity { 0.f, Animation::Linear };
-    StringList filterTerms;
+    const Rule *    searchMinY = nullptr;
+    ButtonWidget *  clearSearch;
+    Animation       searchBackgroundOpacity{0.f, Animation::Linear};
+    StringList      filterTerms;
     Strings         hiddenTagsInEffect;
-    Timer refilterTimer;
+    Timer           refilterTimer;
 
     ProgressWidget *refreshProgress;
 

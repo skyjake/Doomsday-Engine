@@ -25,6 +25,7 @@
 namespace de {
 
 class Style;
+class Font;
 
 /**
  * Base class for GuiWidget-derived widgets' private implementation. Provides
@@ -122,9 +123,14 @@ public:
         return Base::self().style();
     }
 
-    Rule const &rule(DotPath const &path) const
+    const Rule &rule(const DotPath &path) const
     {
         return Base::self().rule(path);
+    }
+
+    const Font &font(const DotPath &path) const
+    {
+        return style().fonts().font(path);
     }
 
     void atlasContentRepositioned(Atlas &atlas)

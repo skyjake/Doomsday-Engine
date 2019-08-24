@@ -45,7 +45,7 @@ public:
      *
      * @param rule  Source rule.
      */
-    void setSource(Rule const &rule);
+    void setSource(const Rule &rule);
 
     void unsetSource();
 

@@ -63,6 +63,18 @@ public:
         }
         return Base::insert(typename Base::value_type(key, value)).first;
     }
+
+    iterator insert(const Key &key, Value &&value)
+    {
+        auto found = Base::find(key);
+        if (found != Base::end())
+        {
+            found->second = std::move(value);
+            return found;
+        }
+        return Base::insert(typename Base::value_type(key, std::move(value))).first;
+    }
+
     void           remove(const Key &key) { Base::erase(key); }
     bool           contains(const Key &key) const { return Base::find(key) != Base::end(); }
     const_iterator constFind(const Key &key) const { return Base::find(key); }

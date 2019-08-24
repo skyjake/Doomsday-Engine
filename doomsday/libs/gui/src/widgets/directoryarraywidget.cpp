@@ -50,7 +50,7 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
         dlg.setInitialLocation(cfg.gets(CFG_LAST_FOLDER, NativePath::homePath()));
         dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
         dlg.setFileTypes({{"WAD files", {"wad"}}});
-        if (dlg.exec())
+        if (dlg.exec(root()))
         {
             NativePath dir = dlg.selectedPath();
             cfg.set(CFG_LAST_FOLDER, dir.endOmitted().toString());

@@ -355,7 +355,7 @@ DE_PIMPL(LensFlares)
         // The vertex buffer will contain a number of quads.
         VBuf::Vertices verts;
         VBuf::Indices idx;
-        VBuf::Type vtx;
+//        VBuf::Type vtx;
 
         for (PVSet::const_iterator i = pvs.begin(); i != pvs.end(); ++i)
         {

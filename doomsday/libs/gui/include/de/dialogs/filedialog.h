@@ -25,6 +25,8 @@
 
 namespace de {
 
+class GuiRootWidget;
+
 /**
  * Native file chooser dialog.
  */
@@ -60,7 +62,7 @@ public:
     void setInitialLocation(const NativePath &initialLocation);
     void setFileTypes(const FileTypes &fileTypes);
 
-    bool exec();
+    bool exec(GuiRootWidget &);
 
     NativePath       selectedPath() const;
     List<NativePath> selectedPaths() const;

@@ -17,18 +17,78 @@
  */
 
 #include "de/BrowserWidget"
+#include "de/ButtonWidget"
+#include "de/MenuWidget"
+#include "de/ProgressWidget"
 
 namespace de {
 
 DE_PIMPL(BrowserWidget)
 {
-    Impl(Public *i) : Base(i)
-    {}
+    const ui::TreeData *data = nullptr;
+    Path path;
+    LabelWidget *currentPath;
+    MenuWidget *menu;
+
+    Impl(Public *i)
+        : Base(i)
+    {
+        RuleRectangle &rule = self().rule();
+
+        currentPath = new LabelWidget;
+        currentPath->rule()
+            .setInput(Rule::Width, rule.width())
+            .setLeftTop(rule.left(), rule.top());
+        currentPath->setSizePolicy(ui::Fixed, ui::Expand);
+
+        menu = new MenuWidget;
+//        menu->enableIndicatorDraw(true);
+        menu->rule()
+            .setLeftTop(rule.left(), currentPath->rule().bottom())
+            .setInput(Rule::Width, rule.width())
+            .setInput(Rule::Bottom, rule.bottom());
+
+        i->add(currentPath);
+        i->add(menu);
+    }
+
+    void changeTo(const Path &newPath)
+    {
+        DE_ASSERT(data);
+
+        // TODO: This is an async op, need to show progress widget.
+        path = newPath;
+        currentPath->setText(path);
+        const ui::Data &items = data->items(path);
+        menu->setItems(items);
+    }
 };
 
 BrowserWidget::BrowserWidget(const String &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {}
+
+void BrowserWidget::setData(const ui::TreeData &data, int averageItemHeight)
+{
+    d->data = &data;
+    d->menu->organizer().setRecyclingEnabled(true);
+    d->menu->setVirtualizationEnabled(true, averageItemHeight);
+}
+
+const ui::TreeData &BrowserWidget::data() const
+{
+    return *d->data;
+}
+
+MenuWidget &BrowserWidget::menu()
+{
+    return *d->menu;
+}
+
+void BrowserWidget::setCurrentPath(const Path &path)
+{
+    d->changeTo(path);
+}
 
 } // namespace de

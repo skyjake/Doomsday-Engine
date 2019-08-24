@@ -36,6 +36,8 @@ public:
 
     virtual bool        contains(const Path &path) const = 0;
     virtual const Data &items(const Path &path) const    = 0;
+
+    DE_CAST_METHODS()
 };
 
 } // namespace ui

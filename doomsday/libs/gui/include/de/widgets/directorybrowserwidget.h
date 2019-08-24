@@ -1,4 +1,4 @@
-/** @file browserwidget.h  Browser for tree data.
+/** @file directorybrowserwidget.h
  *
  * @authors Copyright (c) 2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -18,27 +18,14 @@
 
 #pragma once
 
-#include "../ui/TreeData"
-#include "../MenuWidget"
+#include "../BrowserWidget"
 
 namespace de {
 
-/**
- * Browser for tree data.
- *
- * @ingroup widgets
- */
-class LIBGUI_PUBLIC BrowserWidget : public GuiWidget
+class DirectoryBrowserWidget : public BrowserWidget
 {
 public:
-    BrowserWidget(const String &name = {});
-
-    void setData(const ui::TreeData &data, int averageItemHeight);
-    const ui::TreeData &data() const;
-
-    MenuWidget &menu();
-
-    void setCurrentPath(const Path &path);
+    DirectoryBrowserWidget(const String &name = {});
 
 private:
     DE_PRIVATE(d)

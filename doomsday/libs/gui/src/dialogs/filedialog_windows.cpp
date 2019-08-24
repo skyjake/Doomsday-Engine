@@ -87,7 +87,7 @@ List<NativePath> FileDialog::selectedPaths() const
     return d->selection;
 }
 
-bool FileDialog::exec()
+bool FileDialog::exec(GuiRootWidget &)
 {
     d->selection.clear();
 

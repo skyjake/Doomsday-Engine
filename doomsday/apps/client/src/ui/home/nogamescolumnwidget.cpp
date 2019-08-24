@@ -75,7 +75,7 @@ void NoGamesColumnWidget::browseForDataFiles()
     }
     dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
     dlg.setPrompt("Select");
-    if (dlg.exec())
+    if (dlg.exec(root()))
     {
         Variable &var = Config::get("resource.packageFolder");
         const TextValue selDir{dlg.selectedPath().toString()};

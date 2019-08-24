@@ -26,27 +26,33 @@ namespace de {
 
 DE_PIMPL(DirectoryTreeData)
 {
-    Map<NativePath, ui::ListDataT<DirectoryItem>> pathItems;
+    using DirList = ui::ListDataT<DirectoryItem>;
+    Map<NativePath, std::unique_ptr<DirList>> pathItems;
 
     Impl(Public *i) : Base(i)
     {}
 
     void populate(const NativePath &path)
     {
+        auto found = pathItems.find(path);
+        if (found == pathItems.end())
+        {
+            found = pathItems.insert(path, std::unique_ptr<DirList>(new DirList));
+        }
+        auto &items = *found->second;
+
         // Get rid of the previous contents.
-        auto &items = pathItems[path];
         items.clear();
 
         // Populate a folder with the directory contents.
-        dir = path;
         Folder folder(path.fileName());
-        folder.attach(new DirectoryFeed(dir));
+        folder.attach(new DirectoryFeed(path));
         folder.populate(Folder::PopulateOnlyThisFolder | Folder::DisableNotification);
 
         // Create corresponding data items.
         for (const auto &entry : folder.contents())
         {
-            items << new DirectoryItem(entry.first, entry.second->status(), dir);
+            items << new DirectoryItem(entry.first, entry.second->status(), found->first);
         }
 
         items.sort();
@@ -64,11 +70,14 @@ bool DirectoryTreeData::contains(const Path &path) const
 
 const ui::Data &DirectoryTreeData::items(const Path &path) const
 {
-    if (NativePath(path) != d->dir)
+    DE_ASSERT(contains(path));
+
+    const NativePath dir(path);
+    if (!d->pathItems.contains(dir))
     {
-        d->populate(path);
+        d->populate(dir);
     }
-    return d->items;
+    return *d->pathItems[dir];
 }
 
 } // namespace de
