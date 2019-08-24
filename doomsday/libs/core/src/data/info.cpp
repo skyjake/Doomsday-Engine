@@ -31,18 +31,19 @@
 
 namespace de {
 
-static const char *WHITESPACE_OR_COMMENT = " \t\r\n#";
-static const char *TOKEN_BREAKING_CHARS  = "#:=$(){}<>,;\" \t\r\n";
-static const char *INCLUDE_TOKEN         = "@include";
-static const char *SCRIPT_TOKEN          = "script";
-static const char *GROUP_TOKEN           = "group";
+DE_STATIC_STRING(WHITESPACE_OR_COMMENT, " \t\r\n#");
+DE_STATIC_STRING(TOKEN_BREAKING_CHARS,  "#:=$(){}<>,;\" \t\r\n");
+
+static const char *INCLUDE_TOKEN = "@include";
+static const char *SCRIPT_TOKEN  = "script";
+static const char *GROUP_TOKEN   = "group";
 
 static SourceLineTable sourceLineTable;
 
 DE_PIMPL(Info)
 {
-    DE_ERROR(OutOfElements);
-    DE_ERROR(EndOfFile);
+//    DE_ERROR(OutOfElements);
+//    DE_ERROR(EndOfFile);
 
     struct DefaultIncludeFinder : public IIncludeFinder
     {
@@ -102,21 +103,8 @@ DE_PIMPL(Info)
         currentToken = " ";
         tokenStartOffset = cursor;
 
-//        if (source.isEmpty())
-//        {
-//            content.clear();
-//            currentLine = 0;
-//        }
-
-        try
-        {
-            nextChar();
-            nextToken();
-        }
-        catch (EndOfFile const &)
-        {
-            currentToken.clear();
-        }
+        nextChar();
+        nextToken();
     }
 
     /**
@@ -127,15 +115,21 @@ DE_PIMPL(Info)
         return currentChar;
     }
 
+    bool atEnd() const
+    {
+        return cursor == content.end();
+    }
+
     /**
      * Move to the next character in the source file.
      */
     void nextChar()
     {
-        if (cursor == content.end())
+        if (atEnd())
         {
             // No more characters to read.
-            throw EndOfFile(stringf("EOF on line %i", currentLine));
+            currentChar = Char();
+            return;
         }
         if (currentChar == '\n')
         {
@@ -151,7 +145,7 @@ DE_PIMPL(Info)
     {
         String line;
         nextChar();
-        while (currentChar != '\n')
+        while (currentChar != '\n' && currentChar != 0)
         {
             line += currentChar;
             nextChar();
@@ -166,15 +160,7 @@ DE_PIMPL(Info)
     {
         cursor = tokenStartOffset;
         String line = readLine();
-        try
-        {
-            nextChar();
-        }
-        catch (EndOfFile const &)
-        {
-            // If the file ends right after the line, we'll get the EOF
-            // exception.  We can safely ignore it for now.
-        }
+        nextChar();
         return line;
     }
 
@@ -191,59 +177,44 @@ DE_PIMPL(Info)
         // Already drawn a blank?
         if (currentToken.isEmpty())
         {
-            throw EndOfFile("out of tokens");
+            return {};
+        }
+        currentToken.clear();
+
+        // Skip over any whitespace.
+        while (!atEnd() && WHITESPACE_OR_COMMENT().contains(peekChar()))
+        {
+            // Comments are considered whitespace.
+            if (peekChar() == '#') readLine();
+            nextChar();
+        }
+        if (atEnd())
+        {
+            // No tokens found yet.
+            return {};
         }
 
-        currentToken = "";
+        // Store the offset where the token begins.
+        tokenStartOffset = cursor;
 
-        try
+        // The first nonwhite is accepted.
+        currentToken += peekChar();
+        nextChar();
+
+        // Token breakers are tokens all by themselves.
+        if (TOKEN_BREAKING_CHARS().contains(currentToken.first()))
         {
-            // Skip over any whitespace.
-            while (strchr(WHITESPACE_OR_COMMENT, peekChar()))
-            {
-                // Comments are considered whitespace.
-                if (peekChar() == '#') readLine();
-                nextChar();
-            }
+            return currentToken;
+        }
 
-            // Store the offset where the token begins.
-            tokenStartOffset = cursor;
-
-            // The first nonwhite is accepted.
+        while (!atEnd() && !TOKEN_BREAKING_CHARS().contains(peekChar()))
+        {
             currentToken += peekChar();
             nextChar();
-
-            // Token breakers are tokens all by themselves.
-            if (strchr(TOKEN_BREAKING_CHARS, currentToken.first()))
-                return currentToken;
-
-            while (!strchr(TOKEN_BREAKING_CHARS, peekChar()))
-            {
-                currentToken += peekChar();
-                nextChar();
-            }
         }
-        catch (EndOfFile const &)
-        {}
 
         return currentToken;
     }
-
-#if 0
-    /**
-     * This is the method that the user calls to retrieve the next element from
-     * the source file. If there are no more elements to return, a
-     * OutOfElements exception is thrown.
-     *
-     * @return Parsed element. Caller gets owernship.
-     */
-    Element *get()
-    {
-        Element *e = parseElement();
-        if (!e) throw OutOfElements("");
-        return e;
-    }
-#endif
 
     /**
      * Returns the next element from the source file.
@@ -251,22 +222,17 @@ DE_PIMPL(Info)
      */
     Element *parseElement()
     {
-        String key;
-        String next;
-        try
-        {
-            key = peekToken();
+        String key  = peekToken();
+        String next = nextToken();
 
-            // The next token decides what kind of element we have here.
-            next = nextToken();
-        }
-        catch (EndOfFile const &)
+        // The next token decides what kind of element we have here.
+        if (!next)
         {
             // The file ended.
             return nullptr;
         }
 
-        int const elementLine = currentLine;
+        const int elementLine = currentLine;
         Element *result = nullptr;
 
         if (next == ":" || next == "=" || next == "$")
@@ -309,6 +275,12 @@ DE_PIMPL(Info)
 
         while (peekChar() != '"')
         {
+            if (peekChar() == 0)
+            {
+                throw SyntaxError("Info::parseString",
+                                  "Unexpected end-of-file inside string token");
+            }
+
             if (peekChar() == '\'')
             {
                 // Double single quotes form a double quote ('' => ").
@@ -368,6 +340,12 @@ DE_PIMPL(Info)
         }
         else
         {
+            if (atEnd())
+            {
+                throw SyntaxError("Info::parseValue",
+                                  "Expected a value token but found end-of-file");
+            }
+
             // Then it must be a single token.
             if (peekToken() != ";")
             {
@@ -409,8 +387,6 @@ DE_PIMPL(Info)
             // than a bracket; if so, skip to the next valid token.
             nextToken();
         }
-
-        //qDebug() << "now at" << content.substr(endPos - 15, endPos) << "^" << content.substr(endPos);
 
         // Whitespace is removed from beginning and end.
         return InfoValue(content.substr(startPos, int(lex.pos().pos().index) - 1).strip(),
@@ -457,6 +433,12 @@ DE_PIMPL(Info)
                 nextToken();
                 value.text = parseValue();
             }
+        }
+        else if (atEnd())
+        {
+            throw SyntaxError("Info::parseKeyElement",
+                              stringf("Expected either '=' or ':', but end-of-file found instead (on line %i).",
+                                      currentLine));
         }
         else
         {
@@ -532,95 +514,85 @@ DE_PIMPL(Info)
         std::unique_ptr<BlockElement> block;
         int startLine = currentLine;
 
-        try
+        if (!scriptBlockTypes.contains(blockType)) // script blocks are never named
         {
-            if (!scriptBlockTypes.contains(blockType)) // script blocks are never named
+            if (peekToken() != "(" && peekToken() != "{")
             {
-                if (peekToken() != "(" && peekToken() != "{")
-                {
-                    blockName = parseValue();
-                }
+                blockName = parseValue();
             }
+        }
 
-            if (!implicitBlockType.isEmpty() && blockName.isEmpty() &&
-                blockType != implicitBlockType &&
-                !scriptBlockTypes.contains(blockType))
+        if (!implicitBlockType.isEmpty() && blockName.isEmpty() &&
+            blockType != implicitBlockType &&
+            !scriptBlockTypes.contains(blockType))
+        {
+            blockName = blockType;
+            blockType = implicitBlockType;
+        }
+
+        block.reset(new BlockElement(blockType, blockName, self()));
+        startLine = currentLine;
+
+        // How about some attributes?
+        // Syntax: {token value} '('|'{'
+
+        while (peekToken() != "(" && peekToken() != "{")
+        {
+            String keyName = peekToken();
+            nextToken();
+            if (peekToken() == "(" || peekToken() == "{")
             {
-                blockName = blockType;
-                blockType = implicitBlockType;
+                throw SyntaxError(
+                    "Info::parseBlockElement",
+                    stringf("Attribute on line %i is missing a value", currentLine));
             }
+            InfoValue value = parseValue();
 
-            block.reset(new BlockElement(blockType, blockName, self()));
-            startLine = currentLine;
+            // This becomes a key element inside the block but it's
+            // flagged as Attribute.
+            block->add(new KeyElement(keyName, value, KeyElement::Attribute));
+        }
 
-            // How about some attributes?
-            // Syntax: {token value} '('|'{'
+        endToken = (peekToken() == "("? ")" : "}");
 
-            while (peekToken() != "(" && peekToken() != "{")
+        // Parse the contents of the block.
+        if (scriptBlockTypes.contains(blockType))
+        {
+            // Parse as Doomsday Script.
+            block->add(new KeyElement(SCRIPT_TOKEN, parseScript()));
+        }
+        else
+        {
+            // Move past the opening parentheses.
+            nextToken();
+
+            // Parse normally as Info.
+            while (peekToken() != endToken)
             {
-                String keyName = peekToken();
-                nextToken();
-                if (peekToken() == "(" || peekToken() == "{")
+                Element *element = parseElement();
+                if (!element)
                 {
                     throw SyntaxError(
                         "Info::parseBlockElement",
-                        stringf("Attribute on line %i is missing a value", currentLine));
+                        stringf("Block element (on line %i) was never closed, end-of-file "
+                                "encountered before '%s' was found (on line %i).",
+                                startLine,
+                                endToken.c_str(),
+                                currentLine));
                 }
-                InfoValue value = parseValue();
-
-                // This becomes a key element inside the block but it's
-                // flagged as Attribute.
-                block->add(new KeyElement(keyName, value, KeyElement::Attribute));
+                block->add(element);
             }
-
-            endToken = (peekToken() == "("? ")" : "}");
-
-            // Parse the contents of the block.
-            if (scriptBlockTypes.contains(blockType))
-            {
-                // Parse as Doomsday Script.
-                block->add(new KeyElement(SCRIPT_TOKEN, parseScript()));
-            }
-            else
-            {
-                // Move past the opening parentheses.
-                nextToken();
-
-                // Parse normally as Info.
-                while (peekToken() != endToken)
-                {
-                    Element *element = parseElement();
-                    if (!element)
-                    {
-                        throw SyntaxError(
-                            "Info::parseBlockElement",
-                            stringf("Block element (on line %i) was never closed, end of file "
-                                    "encountered before '%s' was found (on line %i).",
-                                    startLine,
-                                    endToken.c_str(),
-                                    currentLine));
-                    }
-                    block->add(element);
-                }
-            }
-
-            DE_ASSERT(peekToken() == endToken);
-
-            // Move past the closing parentheses.
-            nextToken();
         }
-        catch (EndOfFile const &)
-        {
-            throw SyntaxError("Info::parseBlockElement",
-                              stringf("End of file encountered unexpectedly while parsing a block "
-                                      "element (block started on line %i).",
-                                      startLine));
-        }
+
+        DE_ASSERT(peekToken() == endToken);
+
+        // Move past the closing parentheses.
+        nextToken();
 
         return block.release();
     }
 
-    void includeFrom(String const &includeName)
+    void includeFrom(const String &includeName)
     {
         try
         {
@@ -641,7 +613,7 @@ DE_PIMPL(Info)
             // Move the contents of the resulting root block to our root block.
             included.d->rootBlock.moveContents(rootBlock);
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             throw IIncludeFinder::NotFoundError("Info::includeFrom",
                     stringf("Cannot include '%s': %s",
@@ -650,10 +622,10 @@ DE_PIMPL(Info)
         }
     }
 
-    void parse(String const &source)
+    void parse(const String &source)
     {
         init(source);
-        for (;;)
+        while (!atEnd())
         {
             Element *e = parseElement();
             if (!e) break;
@@ -668,6 +640,7 @@ DE_PIMPL(Info)
                 }
             }
 
+            DE_ASSERT(e);
             rootBlock.add(e);
         }
     }
