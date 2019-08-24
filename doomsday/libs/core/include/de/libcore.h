@@ -95,7 +95,7 @@
  * When using the C API, the Qt string functions are not available, so we
  * must use the platform-specific functions.
  */
-#if defined(UNIX) && defined(DE_C_API_ONLY)
+#if defined (UNIX) && defined (DE_C_API_ONLY)
 #  include <strings.h> // strcasecmp etc.
 #endif
 
@@ -106,7 +106,7 @@
  * classes and functions. DEF files are not used for exporting symbols out
  * of libcore.
  */
-#if defined(_WIN32) && defined(_MSC_VER)
+#if defined (_WIN32) && defined (_MSC_VER)
 #  ifdef __LIBCORE__
 // This is defined when compiling the library.
 #    define DE_PUBLIC   __declspec(dllexport)
@@ -115,13 +115,17 @@
 #  endif
 #  define DE_HIDDEN
 #  define DE_NORETURN   __declspec(noreturn)
-#elif defined (MACOSX) || defined(__CYGWIN__)
+#elif defined (__CYGWIN__)
+#  define DE_PUBLIC     __attribute__((visibility("default")))
+#  define DE_HIDDEN     
+#  define DE_NORETURN   __attribute__((__noreturn__))
+#elif defined (MACOSX) 
 #  define DE_PUBLIC     __attribute__((visibility("default")))
 #  define DE_HIDDEN     __attribute__((visibility("hidden")))
 #  define DE_NORETURN   __attribute__((__noreturn__))
 #else
 #  define DE_PUBLIC     __attribute__((visibility("default")))
-#  define DE_HIDDEN     __attribute__((visibility("hidden")))
+#  define DE_HIDDEN 
 #  define DE_NORETURN   __attribute__((__noreturn__))
 #endif
 

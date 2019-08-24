@@ -339,11 +339,6 @@ constexpr TimeSpan operator"" _ns(unsigned long long int nanoseconds)
     return TimeSpan(double(nanoseconds) / 1.0e9);
 }
 
-constexpr TimeSpan operator"" _µs(unsigned long long int microseconds)
-{
-    return TimeSpan(double(microseconds) / 1.0e6);
-}
-
 constexpr TimeSpan operator"" _ms(unsigned long long int milliseconds)
 {
     return TimeSpan(double(milliseconds) / 1.0e3);
