@@ -256,7 +256,7 @@ void ProgressWidget::setRange(Rangei const &range, Rangef const &visualRange)
     setMode(Ranged);
 }
 
-void ProgressWidget::setProgress(int currentProgress, TimeSpan const &transitionSpan)
+void ProgressWidget::setProgress(int currentProgress, TimeSpan transitionSpan)
 {
     DE_GUARD(d);
 

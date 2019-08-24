@@ -64,7 +64,7 @@
 using namespace de;
 using namespace de::ui;
 
-static const TimeSpan OPEN_CLOSE_SPAN = 0.2;
+static constexpr TimeSpan OPEN_CLOSE_SPAN = 200_ms;
 
 enum MenuItemPositions
 {

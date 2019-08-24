@@ -26,8 +26,8 @@
 
 using namespace de;
 
-// Time for the progress to reach the new target (seconds).
-static de::TimeSpan const PROGRESS_DELTA_TIME = 0.5;
+// Time for the progress to reach the new target.
+static constexpr TimeSpan PROGRESS_DELTA_TIME = 500_ms;
 
 static ProgressWidget &progress()
 {

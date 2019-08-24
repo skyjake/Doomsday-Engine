@@ -47,11 +47,11 @@ public:
 
     /// Wait for the specified period of time to secure the
     /// resource.  If timeout occurs, an exception is thrown.
-    void wait(const TimeSpan &timeOut) const;
+    void wait(TimeSpan timeOut) const;
 
     /// Wait for the specified period of time to secure the
     /// resource.  If timeout occurs, returns @c false.
-    bool tryWait(const TimeSpan &timeOut) const;
+    bool tryWait(TimeSpan timeOut) const;
 
     /// Mark the resource as available by incrementing the
     /// semaphore value.

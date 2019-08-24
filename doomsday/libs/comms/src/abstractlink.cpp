@@ -128,7 +128,7 @@ DE_AUDIENCE_METHODS(AbstractLink, Connected, Disconnected, PacketsReady, Address
 AbstractLink::AbstractLink() : d(new Impl(this))
 {}
 
-void AbstractLink::connectDomain(String const &domain, TimeSpan const &timeout)
+void AbstractLink::connectDomain(String const &domain, TimeSpan timeout)
 {
     disconnect();
 

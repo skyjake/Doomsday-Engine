@@ -38,7 +38,7 @@ DE_PIMPL(Link)
     {}
 };
 
-Link::Link(String const &domain, TimeSpan const &timeout) : d(new Impl(this))
+Link::Link(String const &domain, TimeSpan timeout) : d(new Impl(this))
 {
     d->connectDomain  = domain;
     d->connectTimeout = timeout;

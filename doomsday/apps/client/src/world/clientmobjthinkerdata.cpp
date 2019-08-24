@@ -182,7 +182,7 @@ DE_PIMPL(ClientMobjThinkerData)
 
     }
 
-    void advanceAnimations(TimeSpan const &delta)
+    void advanceAnimations(TimeSpan delta)
     {
         if (animator)
         {

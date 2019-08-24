@@ -34,7 +34,7 @@ public:
 
     void enable(bool enabled = true);
     void disable() { enable(false); }
-    void advanceTime(de::TimeSpan const &elapsed);
+    void advanceTime(de::TimeSpan elapsed);
 
 private:
     DE_PRIVATE(d)

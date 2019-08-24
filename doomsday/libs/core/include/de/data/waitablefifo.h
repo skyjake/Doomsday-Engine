@@ -42,12 +42,12 @@ public:
         post();
     }
 
-    Type *take(TimeSpan const &timeOut = 0.0) {
+    Type *take(TimeSpan timeOut = 0.0) {
         wait(timeOut);
         return FIFO<Type>::take();
     }
 
-    Type *tryTake(TimeSpan const &timeOut = 0.0) {
+    Type *tryTake(TimeSpan timeOut = 0.0) {
         if (tryWait(timeOut)) {
             return FIFO<Type>::take();
         }

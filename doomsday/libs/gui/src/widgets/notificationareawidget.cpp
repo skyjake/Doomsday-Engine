@@ -29,10 +29,11 @@
 
 namespace de {
 
+static constexpr TimeSpan ANIM_SPAN = 500_ms;
+
 DE_GUI_PIMPL(NotificationAreaWidget)
 , DE_OBSERVES(Widget, Deletion)
 {
-    static TimeSpan const ANIM_SPAN;
     AnimationRule *shift;
     Map<GuiWidget *, RelayWidget *> shown;
 
@@ -91,7 +92,7 @@ DE_GUI_PIMPL(NotificationAreaWidget)
         self().show();
     }
 
-    void hide(TimeSpan const &span = ANIM_SPAN)
+    void hide(TimeSpan span = ANIM_SPAN)
     {
         shift->set(self().rule().height() + rule("gap"), span);
         shift->setStyle(Animation::EaseIn);
@@ -146,8 +147,6 @@ DE_GUI_PIMPL(NotificationAreaWidget)
         removeChild(*w);
     }
 };
-
-TimeSpan const NotificationAreaWidget::Impl::ANIM_SPAN = 0.5;
 
 NotificationAreaWidget::NotificationAreaWidget(String const &name)
     : GuiWidget(name)

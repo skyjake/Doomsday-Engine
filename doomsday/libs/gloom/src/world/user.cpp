@@ -74,7 +74,7 @@ DE_PIMPL(User)
         return Mat4f::rotate(yawForMove, Vec3f(0, -1, 0)) * Vec3f(0, 0, -1);
     }
 
-    void move(TimeSpan const &elapsed)
+    void move(TimeSpan elapsed)
     {
         float const turnFriction = (input & (TurnLeft | TurnRight) ? 0 : 180);
 
@@ -315,7 +315,7 @@ DE_PIMPL(User)
             .play();
     }
 
-    void playStepSounds(TimeSpan const &elapsed)
+    void playStepSounds(TimeSpan elapsed)
     {
         ddouble velocity = momentum.xz().length();
 
@@ -407,7 +407,7 @@ void User::turn(float yaw, float pitch)
     d->pitch = Rangef(-89, 89).clamp(d->pitch + pitch);
 }
 
-void User::update(TimeSpan const &elapsed)
+void User::update(TimeSpan elapsed)
 {
     d->move(elapsed);
 }

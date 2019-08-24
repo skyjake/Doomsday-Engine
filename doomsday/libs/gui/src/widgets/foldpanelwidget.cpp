@@ -24,7 +24,7 @@ namespace de {
 
 using namespace ui;
 
-static const ddouble INDICATOR_ANIM_SPAN = 0.4;
+static constexpr TimeSpan INDICATOR_ANIM_SPAN = 400_ms;
 
 DE_PIMPL_NOREF(FoldPanelWidget)
 {

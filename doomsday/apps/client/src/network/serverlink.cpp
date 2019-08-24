@@ -530,7 +530,7 @@ void ServerLink::ping(Address const &address)
     }
 }
 
-void ServerLink::connectDomain(String const &domain, TimeSpan const &timeout)
+void ServerLink::connectDomain(String const &domain, TimeSpan timeout)
 {
     LOG_AS("ServerLink::connectDomain");
 
@@ -760,7 +760,7 @@ void ServerLink::handleIncomingPackets()
                 if (d->pings.count())
                 {
                     TimeSpan average;
-                    for (const TimeSpan &i : d->pings) average += i;
+                    for (const TimeSpan i : d->pings) average += i;
                     average /= d->pings.count();
 
                     DE_FOR_AUDIENCE2(PingResponse, i)

@@ -52,7 +52,7 @@ public:
 
     virtual void setTime(Time const &currentTime);
 
-    void advanceTime(TimeSpan const &span);
+    void advanceTime(TimeSpan span);
 
     /**
      * Returns the amount of time elapsed since the clock was created.

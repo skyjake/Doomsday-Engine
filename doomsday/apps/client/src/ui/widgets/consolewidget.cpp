@@ -52,7 +52,7 @@
 
 using namespace de;
 
-static const TimeSpan LOG_OPEN_CLOSE_SPAN = 0.2;
+static constexpr TimeSpan LOG_OPEN_CLOSE_SPAN = 200_ms;
 
 DE_GUI_PIMPL(ConsoleWidget)
 , DE_OBSERVES(Variable, Change)

@@ -90,7 +90,7 @@ public:
 
     void ping(de::Address const &address);
 
-    void connectDomain(de::String const &domain, de::TimeSpan const &timeout = 0.0) override;
+    void connectDomain(de::String const &domain, de::TimeSpan timeout = 0.0) override;
     void connectHost(de::Address const &address) override;
 
     /**

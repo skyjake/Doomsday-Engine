@@ -24,7 +24,7 @@
 
 using namespace de;
 
-static const double PLAYER_INFO_INTERVAL = 2.500; // sec
+static constexpr TimeSpan PLAYER_INFO_INTERVAL = 2.5_s;
 
 DE_PIMPL_NOREF(ShellUsers)
 {

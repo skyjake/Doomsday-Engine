@@ -201,7 +201,7 @@ Timer::~Timer()
     /// @todo There might still be Timer events queued up in the event loop.
 }
 
-void Timer::setInterval(const TimeSpan &interval)
+void Timer::setInterval(TimeSpan interval)
 {
     d->interval = interval;
 }

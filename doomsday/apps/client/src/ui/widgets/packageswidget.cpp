@@ -56,7 +56,7 @@ static const char *TAG_LOADED = "loaded";
 //static const char *TAG_HIDDEN = "hidden";
 //static const char *TAG_CACHED = "cached";
 
-static constexpr double REFILTER_DELAY = 0.2;
+static constexpr TimeSpan REFILTER_DELAY = 200_ms;
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus {
     bool isPackageHighlighted(String const &packageId) const

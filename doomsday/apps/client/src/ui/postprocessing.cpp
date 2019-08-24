@@ -49,7 +49,7 @@ DE_PIMPL(PostProcessing)
         float fade;
         TimeSpan span;
 
-        QueueEntry(String const &name, float f, TimeSpan const &s)
+        QueueEntry(String const &name, float f, TimeSpan s)
             : shaderName(name), fade(f), span(s) {}
     };
     typedef List<QueueEntry> Queue;
@@ -161,12 +161,12 @@ bool PostProcessing::isActive() const
     return d->isActive();
 }
 
-void PostProcessing::fadeInShader(String const &fxPostShader, TimeSpan const &span)
+void PostProcessing::fadeInShader(String const &fxPostShader, TimeSpan span)
 {
     d->queue.append(Impl::QueueEntry(fxPostShader, 1, span));
 }
 
-void PostProcessing::fadeOut(TimeSpan const &span)
+void PostProcessing::fadeOut(TimeSpan span)
 {
     d->queue.append(Impl::QueueEntry("", 0, span));
 }

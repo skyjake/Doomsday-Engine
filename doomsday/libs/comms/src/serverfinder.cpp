@@ -29,7 +29,7 @@
 
 namespace de { namespace shell {
 
-static const TimeSpan MSG_EXPIRATION_SECS = 4.0;
+static constexpr TimeSpan MSG_EXPIRATION_SECS = 4.0_s;
 
 DE_PIMPL(ServerFinder)
 , DE_OBSERVES(Beacon, Discovery)

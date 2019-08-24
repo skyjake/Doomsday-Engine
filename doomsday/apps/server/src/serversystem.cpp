@@ -55,7 +55,7 @@ using namespace de;
 char *nptIPAddress = (char *) ""; ///< Public domain for clients to connect to (cvar).
 int   nptIPPort    = 0; ///< Server TCP port (cvar).
 
-static const TimeSpan BEACON_UPDATE_INTERVAL(2.0);
+static constexpr TimeSpan BEACON_UPDATE_INTERVAL = 2.0_s;
 
 static duint16 Server_ListenPort()
 {

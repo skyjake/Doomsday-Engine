@@ -152,7 +152,7 @@ public:
 
     AsyncScope &operator+=(AsyncTask *task);
     bool isAsyncFinished() const;
-    void waitForFinished(const TimeSpan &timeout = 0.0);
+    void waitForFinished(TimeSpan timeout = 0.0);
     void threadFinished(Thread &) override;
     void objectWasDeleted(Deletable *) override;
 

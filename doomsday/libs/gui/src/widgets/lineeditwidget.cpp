@@ -37,9 +37,9 @@ namespace de {
 
 using namespace ui;
 
-static constexpr ddouble HEIGHT_ANIM_SPAN = .5f;
-static duint const ID_BUF_TEXT   = 1;
-static duint const ID_BUF_CURSOR = 2;
+static constexpr TimeSpan HEIGHT_ANIM_SPAN = 500_ms;
+static constexpr duint    ID_BUF_TEXT      = 1;
+static constexpr duint    ID_BUF_CURSOR    = 2;
 
 DE_GUI_PIMPL(LineEditWidget)
 {

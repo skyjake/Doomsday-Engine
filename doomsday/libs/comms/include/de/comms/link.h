@@ -45,7 +45,7 @@ public:
      * @param domain   Domain/IP address of the server.
      * @param timeout  Keep trying until this much time has passed.
      */
-    Link(String const &domain, TimeSpan const &timeout = 0.0);
+    Link(String const &domain, TimeSpan timeout = 0.0);
 
     /**
      * Opens a connection to a server over the network.

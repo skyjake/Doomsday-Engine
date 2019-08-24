@@ -92,7 +92,7 @@ public:
      * @param delay  Time to wait before calling.
      * @param func   Callback to call.
      */
-    static void timer(TimeSpan const &delay, const std::function<void ()> &func);
+    static void timer(TimeSpan delay, const std::function<void ()> &func);
 
     static Loop &get();
 

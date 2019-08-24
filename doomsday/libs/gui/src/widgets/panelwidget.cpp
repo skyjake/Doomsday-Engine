@@ -29,9 +29,9 @@
 
 namespace de {
 
-static constexpr double OPENING_ANIM_SPAN           = 0.3;
-static constexpr double OPENING_ANIM_SPAN_EASED_OUT = 0.18;
-static constexpr double CLOSING_ANIM_SPAN           = 0.22;
+static constexpr TimeSpan OPENING_ANIM_SPAN           = 300_ms;
+static constexpr TimeSpan OPENING_ANIM_SPAN_EASED_OUT = 180_ms;
+static constexpr TimeSpan CLOSING_ANIM_SPAN           = 220_ms;
 
 DE_GUI_PIMPL(PanelWidget)
 , DE_OBSERVES(Asset, StateChange)

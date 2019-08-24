@@ -22,7 +22,7 @@
 
 namespace de {
 
-static constexpr ddouble FLASH_SPAN = .5;
+static constexpr TimeSpan FLASH_SPAN = 500_ms;
 
 DE_PIMPL(FocusWidget)
 {

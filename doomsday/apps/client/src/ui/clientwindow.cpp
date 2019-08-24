@@ -792,7 +792,7 @@ DE_PIMPL(ClientWindow)
 #endif
     }
 
-    void setupFade(FadeDirection fadeDir, TimeSpan const &span)
+    void setupFade(FadeDirection fadeDir, TimeSpan span)
     {
         if (!fader)
         {
@@ -1136,7 +1136,7 @@ GuiWidget &ClientWindow::sidebar(SidebarLocation location) const
 //    return d->handleFallbackEvent(event);
 //}
 
-void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeSpan const &duration)
+void ClientWindow::fadeContent(FadeDirection fadeDirection, TimeSpan duration)
 {
     d->setupFade(fadeDirection, duration);
 }

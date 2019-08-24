@@ -107,7 +107,7 @@ DE_PIMPL_NOREF(Animation)
      * @param now  Point of time at which to evaluate.
      * @return Value of the animation when the frame time is @a now.
      */
-    float valueAt(TimeSpan const &now) const
+    float valueAt(TimeSpan now) const
     {
         TimeSpan span = targetTime - setTime;
 

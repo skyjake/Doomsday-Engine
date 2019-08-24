@@ -34,7 +34,7 @@
 
 using namespace de;
 
-static TimeSpan const SHOW_ANIM_SPAN = 0.3;
+static constexpr TimeSpan SHOW_ANIM_SPAN = 300_ms;
 
 DE_GUI_PIMPL(UpdateAvailableDialog)
 , DE_OBSERVES(ToggleWidget, Toggle)

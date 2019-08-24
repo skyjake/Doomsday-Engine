@@ -34,7 +34,7 @@ void World::glInit()
 void World::glDeinit()
 {}
 
-void World::update(TimeSpan const &)
+void World::update(TimeSpan)
 {}
 
 void World::render(ICamera const &)

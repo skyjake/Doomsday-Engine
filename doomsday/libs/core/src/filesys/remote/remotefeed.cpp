@@ -32,7 +32,7 @@
 
 namespace de {
 
-static constexpr ddouble POPULATE_TIMEOUT = 15.0;
+static constexpr TimeSpan POPULATE_TIMEOUT = 15.0_s;
 
 DE_PIMPL(RemoteFeed)
 , DE_OBSERVES(filesys::RemoteFeedRelay, Status)

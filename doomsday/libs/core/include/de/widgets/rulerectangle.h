@@ -130,7 +130,7 @@ public:
      *                         (1, 1) to the bottom right.
      * @param transition       Transition time for the change.
      */
-    void setAnchorPoint(Vec2f const &normalizedPoint, TimeSpan const &transition = 0.0);
+    void setAnchorPoint(Vec2f const &normalizedPoint, TimeSpan transition = 0.0);
 
     /**
      * Returns the current rectangle as defined by the input rules.

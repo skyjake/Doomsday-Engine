@@ -25,7 +25,7 @@
 
 namespace de {
 
-static constexpr ddouble SWITCH_ANIM_SPAN = 0.3;
+static constexpr TimeSpan SWITCH_ANIM_SPAN = 300_ms;
 
 DE_PIMPL(ToggleWidget)
 , DE_OBSERVES(ButtonWidget, Press)
@@ -49,7 +49,7 @@ DE_PIMPL(ToggleWidget)
 
         void setState(ToggleState st, bool animate)
         {
-            _pos.setValue(st == Active ? 1 : 0, animate ? SWITCH_ANIM_SPAN : 0.0);
+            _pos.setValue(st == Active ? 1 : 0, animate ? SWITCH_ANIM_SPAN : 0.0_s);
             _animating = true;
         }
 

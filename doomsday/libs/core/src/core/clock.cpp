@@ -58,7 +58,7 @@ void Clock::setTime(Time const &currentTime)
     }
 }
 
-void Clock::advanceTime(TimeSpan const &span)
+void Clock::advanceTime(TimeSpan span)
 {
     setTime(d->time + span);
 }

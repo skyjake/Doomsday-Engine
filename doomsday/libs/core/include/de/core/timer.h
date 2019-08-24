@@ -33,12 +33,12 @@ public:
     Timer();
     virtual ~Timer();
 
-    void setInterval(const TimeSpan &interval);
+    void setInterval(TimeSpan interval);
     void setSingleShot(bool singleshot);
     void start();
     void stop();
 
-    inline void start(const TimeSpan &interval)
+    inline void start(TimeSpan interval)
     {
         setInterval(interval);
         start();

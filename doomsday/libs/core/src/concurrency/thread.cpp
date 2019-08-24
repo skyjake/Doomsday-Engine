@@ -131,7 +131,7 @@ bool Thread::isCurrentThread() const
     return false;
 }
     
-void Thread::sleep(const TimeSpan &span) // static
+void Thread::sleep(TimeSpan span) // static
 {
     sleep_Thread(span);
 }

@@ -86,7 +86,7 @@ public:
     de::ModelDrawable::Appearance const &appearance() const;
 
     // ModelDrawable::Animator
-    void advanceTime(de::TimeSpan const &elapsed) override;
+    void advanceTime(de::TimeSpan elapsed) override;
     de::ddouble currentTime(int index) const override;
     de::Vec4f extraRotationForNode(de::String const &nodeName) const override;
 

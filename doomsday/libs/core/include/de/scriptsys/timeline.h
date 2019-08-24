@@ -85,7 +85,7 @@ public:
          *
          * @param toTime  Rewind destination time.
          */
-        void rewind(TimeSpan const &toTime = 0.0);
+        void rewind(TimeSpan toTime = 0.0);
 
         /**
          * Advances the current time of the clock and executes any scripts whose
@@ -93,7 +93,7 @@ public:
          *
          * @param elapsed  Time elapsed since the previous call.
          */
-        void advanceTime(TimeSpan const &elapsed);
+        void advanceTime(TimeSpan elapsed);
 
         /**
          * Checks if there are no more scheduled sheduler is out of scheduled scripts.

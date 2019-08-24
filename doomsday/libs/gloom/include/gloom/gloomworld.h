@@ -52,7 +52,7 @@ public:
 
     void glInit();
     void glDeinit();
-    void update(const TimeSpan &elapsed);
+    void update(TimeSpan elapsed);
     void render(const ICamera &camera);
 
     User *    localUser() const;

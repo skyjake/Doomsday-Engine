@@ -906,7 +906,7 @@ void LabelWidget::setHeightPolicy(SizePolicy policy)
     }
 }
 
-void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeSpan const &span)
+void LabelWidget::setAppearanceAnimation(AppearanceAnimation method, TimeSpan span)
 {
     d->appearType = method;
     d->appearSpan = span;

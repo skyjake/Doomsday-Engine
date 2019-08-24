@@ -51,7 +51,7 @@ void Waitable::wait() const
     wait(0.0);
 }
 
-void Waitable::wait(TimeSpan const &timeOut) const
+void Waitable::wait(TimeSpan timeOut) const
 {
     if (!tryWait(timeOut))
     {
@@ -60,7 +60,7 @@ void Waitable::wait(TimeSpan const &timeOut) const
     }
 }
 
-bool Waitable::tryWait(const TimeSpan &timeOut) const
+bool Waitable::tryWait(TimeSpan timeOut) const
 {
     std::unique_lock<std::mutex> mtx(d->mutex);
     for (;;)

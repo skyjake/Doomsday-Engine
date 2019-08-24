@@ -35,7 +35,7 @@
 
 using namespace de;
 
-static TimeSpan const FLASH_SPAN = 0.6;
+static constexpr TimeSpan FLASH_SPAN = 600_ms;
 
 DE_GUI_PIMPL(TutorialWidget)
 {

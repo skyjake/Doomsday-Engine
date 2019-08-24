@@ -40,7 +40,7 @@ public:
 
     virtual void glInit();
     virtual void glDeinit();
-    virtual void update(const TimeSpan &elapsed);
+    virtual void update(TimeSpan elapsed);
     virtual void render(const ICamera &camera);
 
     struct POI {

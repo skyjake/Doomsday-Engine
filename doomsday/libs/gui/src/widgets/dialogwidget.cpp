@@ -30,7 +30,7 @@
 
 namespace de {
 
-static const ddouble FLASH_ANIM_SPAN = 0.75;
+static constexpr TimeSpan FLASH_ANIM_SPAN = 750_ms;
 
 /**
  * Compares dialog button items to determine the order in which they

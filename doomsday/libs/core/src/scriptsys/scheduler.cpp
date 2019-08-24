@@ -76,7 +76,7 @@ DE_PIMPL_NOREF(Scheduler)
         }
     }
 
-    void advanceTime(TimeSpan const &elapsed)
+    void advanceTime(TimeSpan elapsed)
     {
         MutableHashIterator<String, RunningTimeline *> iter(running);
         while (iter.hasNext())
@@ -124,7 +124,7 @@ void Scheduler::stop(String const &name)
     d->stop(name);
 }
 
-void Scheduler::advanceTime(TimeSpan const &elapsed)
+void Scheduler::advanceTime(TimeSpan elapsed)
 {
     d->advanceTime(elapsed);
 }

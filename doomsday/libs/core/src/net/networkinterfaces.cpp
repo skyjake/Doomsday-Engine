@@ -27,7 +27,7 @@
 namespace de {
 namespace internal {
 
-static const ddouble UPDATE_THRESHOLD = 60.0;
+static constexpr TimeSpan UPDATE_THRESHOLD = 60.0_s;
 
 DE_PIMPL_NOREF(NetworkInterfaces), public Lockable
 {

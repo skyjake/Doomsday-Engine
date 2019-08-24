@@ -54,7 +54,7 @@ public:
 
     void setupVisPSprite(vispsprite_t &spr) const;
 
-    void advanceTime(de::TimeSpan const &elapsed);
+    void advanceTime(de::TimeSpan elapsed);
 
 private:
     DE_PRIVATE(d)

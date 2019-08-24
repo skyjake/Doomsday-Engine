@@ -791,7 +791,7 @@ int StateAnimator::animationId(String const &name) const
     return d->animationId(name);
 }
 
-void StateAnimator::advanceTime(TimeSpan const &elapsed)
+void StateAnimator::advanceTime(TimeSpan elapsed)
 {
     ModelDrawable::Animator::advanceTime(elapsed);
 

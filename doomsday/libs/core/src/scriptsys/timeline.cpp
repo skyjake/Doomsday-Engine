@@ -143,7 +143,7 @@ DE_PIMPL_NOREF(Timeline::Clock)
     TimeSpan at = 0.0;
     Events events;
 
-    void rewind(TimeSpan const &toTime)
+    void rewind(TimeSpan toTime)
     {
         at = toTime;
 
@@ -159,7 +159,7 @@ DE_PIMPL_NOREF(Timeline::Clock)
         }
     }
 
-    void advanceTime(TimeSpan const &elapsed)
+    void advanceTime(TimeSpan elapsed)
     {
         at += elapsed;
 
@@ -191,12 +191,12 @@ TimeSpan Timeline::Clock::at() const
     return d->at;
 }
 
-void Timeline::Clock::rewind(TimeSpan const &toTime)
+void Timeline::Clock::rewind(TimeSpan toTime)
 {
     d->rewind(toTime);
 }
 
-void Timeline::Clock::advanceTime(TimeSpan const &elapsed)
+void Timeline::Clock::advanceTime(TimeSpan elapsed)
 {
     d->advanceTime(elapsed);
 }

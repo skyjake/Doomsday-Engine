@@ -134,7 +134,7 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     spr.data.model2.pitchAngleOffset = d->angleOffset.y;
 }
 
-void PlayerWeaponAnimator::advanceTime(TimeSpan const &elapsed)
+void PlayerWeaponAnimator::advanceTime(TimeSpan elapsed)
 {
     if (clientPaused) return;
 

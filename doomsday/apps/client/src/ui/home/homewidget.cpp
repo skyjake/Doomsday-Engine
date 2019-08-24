@@ -44,8 +44,8 @@
 
 using namespace de;
 
-static TimeSpan const SCROLL_SPAN = .5;
-static TimeSpan const DISMISS_SPAN = 1.5;
+static constexpr TimeSpan SCROLL_SPAN  = 0.5_s;
+static constexpr TimeSpan DISMISS_SPAN = 1.5_s;
 
 DE_GUI_PIMPL(HomeWidget)
 , DE_OBSERVES(App,                  StartupComplete)
@@ -478,7 +478,7 @@ DE_GUI_PIMPL(HomeWidget)
         setScrollOffset(currentOffsetTab, span);
     }
 
-    void setScrollOffset(int tab, TimeSpan const &span)
+    void setScrollOffset(int tab, TimeSpan span)
     {
         scrollOffset->set(*columnWidth * tab, span);
     }

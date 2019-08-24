@@ -137,7 +137,7 @@ public:
      */
     void grab(image_t &image, bool halfSized = false) const;
 
-    void fadeContent(FadeDirection fadeDirection, de::TimeSpan const &duration);
+    void fadeContent(FadeDirection fadeDirection, de::TimeSpan duration);
 
     de::FadeToBlackWidget *contentFade();
 

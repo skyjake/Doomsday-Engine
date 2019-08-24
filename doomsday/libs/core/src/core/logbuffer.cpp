@@ -258,7 +258,7 @@ void LogBuffer::enableFlushing(bool yes)
     d->enableAutoFlush(true);
 }
 
-void LogBuffer::setAutoFlushInterval(const TimeSpan &interval)
+void LogBuffer::setAutoFlushInterval(TimeSpan interval)
 {
     enableFlushing();
     DE_ASSERT(d->autoFlushTimer);

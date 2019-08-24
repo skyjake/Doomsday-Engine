@@ -49,7 +49,7 @@ bool AsyncScope::isAsyncFinished() const
     return _tasks.value.isEmpty();
 }
 
-void AsyncScope::waitForFinished(const TimeSpan &timeout)
+void AsyncScope::waitForFinished(TimeSpan timeout)
 {
     for (;;)
     {

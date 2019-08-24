@@ -34,10 +34,10 @@ class LIBGUI_PUBLIC FadeToBlackWidget : public LabelWidget
 public:
     FadeToBlackWidget();
 
-    void initFadeFromBlack(TimeSpan const &span);
-    void initFadeToBlack(TimeSpan const &span);
+    void initFadeFromBlack(TimeSpan span);
+    void initFadeToBlack(TimeSpan span);
 
-    void start(TimeSpan const &delay = 0.0);
+    void start(TimeSpan delay = 0.0);
     void pause();
     void resume();
     void cancel();

@@ -31,21 +31,21 @@ FadeToBlackWidget::FadeToBlackWidget() : d(new Impl)
     set(Background(Vec4f(0, 0, 0, 1)));
 }
 
-void FadeToBlackWidget::initFadeFromBlack(TimeSpan const &span)
+void FadeToBlackWidget::initFadeFromBlack(TimeSpan span)
 {
     setOpacity(1);
     d->span = span;
     d->started = false;
 }
 
-void FadeToBlackWidget::initFadeToBlack(TimeSpan const &span)
+void FadeToBlackWidget::initFadeToBlack(TimeSpan span)
 {
     setOpacity(0);
     d->span = span;
     d->started = false;
 }
 
-void FadeToBlackWidget::start(TimeSpan const &delay)
+void FadeToBlackWidget::start(TimeSpan delay)
 {
     d->started = true;
     setOpacity(fequal(opacity().target(), 1)? 0 : 1, d->span, delay);

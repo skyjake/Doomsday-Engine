@@ -62,7 +62,7 @@ public:
      */
     void stop(String const &name);
 
-    void advanceTime(TimeSpan const &elapsed);
+    void advanceTime(TimeSpan elapsed);
 
 private:
     DE_PRIVATE(d)

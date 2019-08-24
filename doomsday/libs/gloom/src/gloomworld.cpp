@@ -229,7 +229,7 @@ DE_PIMPL(GloomWorld), public Asset
     void userWarped(const User &) override
     {}
 
-    void update(const TimeSpan &elapsed)
+    void update(TimeSpan elapsed)
     {
         currentTime += elapsed;
         renderContext.uCurrentTime = float(currentTime);
@@ -237,7 +237,7 @@ DE_PIMPL(GloomWorld), public Asset
         updateEntities(elapsed);
     }
 
-    void updateEntities(const TimeSpan &)
+    void updateEntities(TimeSpan)
     {
         for (const auto &i : map.entities())
         {
@@ -269,7 +269,7 @@ void GloomWorld::glDeinit()
     d->glDeinit();
 }
 
-void GloomWorld::update(TimeSpan const &elapsed)
+void GloomWorld::update(TimeSpan elapsed)
 {
     d->update(elapsed);
     d->environ.advanceTime(elapsed);

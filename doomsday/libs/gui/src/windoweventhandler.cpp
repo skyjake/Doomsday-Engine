@@ -28,7 +28,7 @@
 
 namespace de {
 
-static constexpr ddouble GESTURE_MOMENTUM_EVAL_TIME_MS = 70;
+static constexpr TimeSpan GESTURE_MOMENTUM_EVAL_TIME = 70_ms;
 
 /**
  * Simulates momentum along a single axis for scrolling.
@@ -71,7 +71,7 @@ struct Flywheel
         for (; sampleIndex >= 0; --sampleIndex)
         {
             const auto &sample = samples[sampleIndex];
-            if (currentTime - sample.at > GESTURE_MOMENTUM_EVAL_TIME_MS)
+            if (TimeSpan::fromMilliSeconds(currentTime - sample.at) > GESTURE_MOMENTUM_EVAL_TIME)
             {
                 break;
             }
@@ -82,8 +82,8 @@ struct Flywheel
 
         if (includedSamples > 0)
         {
-            double span = double(currentTime - startTime) / 1000.0;
-            momentum /= span;
+            const auto span = TimeSpan::fromMilliSeconds(currentTime - startTime);
+            momentum /= float(span);
 //            debug("span: %f seconds (%d smp), mom: %f u/s", span, includedSamples, momentum);
         }
 
@@ -115,7 +115,7 @@ struct Flywheel
         }
     }
 
-    float advanceTime(const TimeSpan &elapsed)
+    float advanceTime(TimeSpan elapsed)
     {
         if (isReleased)
         {

@@ -64,7 +64,7 @@ public:
     void turn(float yaw, float pitch);
     void turn(const Vec2f &angles) { turn(angles.x, angles.y); }
 
-    void update(TimeSpan const &elapsed);
+    void update(TimeSpan elapsed);
 
     Vec3f  position() const; // User eye position.
     float  yaw() const;

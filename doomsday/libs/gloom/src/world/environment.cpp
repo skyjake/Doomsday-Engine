@@ -104,7 +104,7 @@ DE_PIMPL(Environment)
         //qDebug() << "started" << name << "at" << pos.asText();
     }
 
-    void update(TimeSpan const &elapsed)
+    void update(TimeSpan elapsed)
     {
         if (!enabled) return;
 
@@ -145,7 +145,7 @@ void Environment::setWorld(World *world)
     d->world = world;
 }
 
-void Environment::advanceTime(TimeSpan const &elapsed)
+void Environment::advanceTime(TimeSpan elapsed)
 {
     d->update(elapsed);
 }
