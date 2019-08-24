@@ -26,8 +26,7 @@ namespace de {
 
 DE_PIMPL(DirectoryTreeData)
 {
-    NativePath dir;
-    ui::ListDataT<DirectoryItem> items;
+    Map<NativePath, ui::ListDataT<DirectoryItem>> pathItems;
 
     Impl(Public *i) : Base(i)
     {}
@@ -35,6 +34,7 @@ DE_PIMPL(DirectoryTreeData)
     void populate(const NativePath &path)
     {
         // Get rid of the previous contents.
+        auto &items = pathItems[path];
         items.clear();
 
         // Populate a folder with the directory contents.
