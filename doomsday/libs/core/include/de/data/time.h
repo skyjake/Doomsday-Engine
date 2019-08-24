@@ -54,7 +54,7 @@ public:
     /**
      * Difference between two points in time. @ingroup types
      */
-    class DE_PUBLIC Span : public ISerializable
+    class DE_PUBLIC Span
     {
     public:
         /**
@@ -122,7 +122,7 @@ public:
 
         ddouble asDays() const;
 
-        static Span fromMilliSeconds(duint64 milliseconds) { return Span(milliseconds / 1000.0); }
+        static constexpr Span fromMilliSeconds(duint64 milliseconds) { return Span(milliseconds / 1000.0); }
 
         /**
          * Determines the amount of time passed since the beginning of the native
@@ -135,7 +135,6 @@ public:
          */
         void sleep() const;
 
-        // Implements ISerializable.
         void operator>>(Writer &to) const;
         void operator<<(Reader &from);
 
@@ -323,24 +322,36 @@ private:
 
 typedef Time::Span TimeSpan;
 
-constexpr double operator"" _ns(unsigned long long int nanoseconds)
+inline Writer &operator<<(Writer &to, TimeSpan span)
 {
-    return double(nanoseconds) / 1.0e9;
+    span >> to;
+    return to;
 }
 
-constexpr double operator"" _µs(unsigned long long int microseconds)
+inline Reader &operator>>(Reader &from, TimeSpan span)
 {
-    return double(microseconds) / 1.0e6;
+    span << from;
+    return from;
 }
 
-constexpr double operator"" _ms(unsigned long long int milliseconds)
+constexpr TimeSpan operator"" _ns(unsigned long long int nanoseconds)
 {
-    return double(milliseconds) / 1.0e3;
+    return TimeSpan(double(nanoseconds) / 1.0e9);
 }
 
-constexpr double operator"" _s(long double seconds)
+constexpr TimeSpan operator"" _µs(unsigned long long int microseconds)
 {
-    return double(seconds);
+    return TimeSpan(double(microseconds) / 1.0e6);
+}
+
+constexpr TimeSpan operator"" _ms(unsigned long long int milliseconds)
+{
+    return TimeSpan(double(milliseconds) / 1.0e3);
+}
+
+constexpr TimeSpan operator"" _s(long double seconds)
+{
+    return TimeSpan(double(seconds));
 }
 
 } // namespace de
