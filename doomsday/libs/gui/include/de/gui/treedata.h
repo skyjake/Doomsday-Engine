@@ -1,4 +1,4 @@
-/** @file browserwidget.h  Browser for tree data.
+/** @file treedata.h  Data model for a tree of lists.
  *
  * @authors Copyright (c) 2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -18,22 +18,25 @@
 
 #pragma once
 
-#include <de/GuiWidget>
+#include "../ui/Data"
+#include <de/Path>
 
 namespace de {
+namespace ui {
 
 /**
- * Browser for tree data.
+ * Data model representing a tree of lists.
  *
- * @ingroup widgets
+ * @ingroup uidata
  */
-class LIBGUI_PUBLIC BrowserWidget : public GuiWidget
+class LIBGUI_PUBLIC TreeData
 {
 public:
-    BrowserWidget(const String &name = {});
+    virtual ~TreeData() = default;
 
-private:
-    DE_PRIVATE(d)
+    virtual bool        contains(const Path &path) const = 0;
+    virtual const Data &items(const Path &path) const    = 0;
 };
 
+} // namespace ui
 } // namespace de

@@ -202,7 +202,7 @@ void Folder::clear()
     // Destroy all the file objects.
     for (Contents::iterator i = d->contents.begin(); i != d->contents.end(); ++i)
     {
-        i->second->setParent(0);
+        i->second->setParent(nullptr);
         delete i->second;
     }
     d->contents.clear();
@@ -302,7 +302,7 @@ void Folder::populate(PopulationBehaviors behavior)
             // Call populate on subfolders.
             for (Folder *folder : d->subfolders())
             {
-                folder->populate(behavior | PopulateCalledRecursively);
+                folder->populate(behavior | DisableNotification);
             }
         }
 
@@ -327,7 +327,7 @@ void Folder::populate(PopulationBehaviors behavior)
 
         // Each population gets an individual notification since they're done synchronously.
         // However, only notify once a full hierarchy of populations has finished.
-        if (!(behavior & PopulateCalledRecursively))
+        if (!(behavior & DisableNotification))
         {
             internal::populationNotifier.notify();
         }

@@ -75,7 +75,7 @@ public:
         PopulateAsync          = 0x4,   ///< Do not block until complete.
         PopulateAsyncFullTree  = PopulateAsync | PopulateFullTree,
 
-        PopulateCalledRecursively = 0x1000, // internal use
+        DisableNotification = 0x1000, // internal use
     };
     using PopulationBehaviors = Flags;
 
@@ -127,10 +127,11 @@ public:
     List<Folder *> subfolders() const;
 
     /**
-     * Empties the contents of the folder: all contained file instances are
-     * deleted. Attached feeds are not notified, which means the source data
-     * they translate into the folder remains untouched. This is called
-     * automatically when the Folder instance is deleted.
+     * Unpopulates the folder, i.e., deletes all contained File objects.
+     * The attached feeds are not notified, which means the source data they translate
+     * remains untouched.
+     *
+     * Called automatically when the Folder instance is deleted.
      */
     void clear();
 
