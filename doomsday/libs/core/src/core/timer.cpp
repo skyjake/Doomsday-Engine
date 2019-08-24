@@ -188,12 +188,12 @@ Timer::Timer()
     }
     ++timerCount;
 
-    debug("[Timer] created %p (%d)", this, timerCount.load());
+//    debug("[Timer] created %p (%d)", this, timerCount.load());
 }
 
 Timer::~Timer()
 {
-    debug("[~Timer] destroying %p (%d)", this, internal::timerCount.load());
+//    debug("[~Timer] destroying %p (%d)", this, internal::timerCount.load());
 
     // The timer must be first stopped and all pending triggers must be handled.
     stop();

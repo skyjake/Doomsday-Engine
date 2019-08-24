@@ -22,9 +22,6 @@ find_package (the_Foundation REQUIRED)
 find_package (glbinding REQUIRED)
 find_package (Amethyst QUIET)
 find_package (SDL2Libs)
-# if (WIN32)
-#     find_package (DirectX)
-# endif ()
 
 # Sources and includes ------------------------------------------------------------------
 
@@ -145,12 +142,6 @@ if (APPLE AND NOT IOS)
         libhexen.pk3
     )
 endif ()
-
-# Windows: Compile resources.
-#if (WIN32)
-#    qt5_add_resources (RCC_SOURCES res/windows/client.qrc)
-#    list (APPEND src ${RCC_SOURCES})
-#endif ()
 
 deng_add_application (client ${src} EXTRA_RESOURCES ${MACX_RESOURCES})
 
