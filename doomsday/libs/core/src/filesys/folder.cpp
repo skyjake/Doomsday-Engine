@@ -349,7 +349,7 @@ Folder::Contents Folder::contents() const
     return d->contents;
 }
 
-LoopResult Folder::forContents(std::function<LoopResult (String, File &)> func) const
+LoopResult Folder::forContents(const std::function<LoopResult (String, File &)> &func) const
 {
     DE_GUARD(this);
 

@@ -51,11 +51,11 @@ DE_PIMPL(DirectoryTreeData)
                         Folder::DisableIndexing);
 
         // Create corresponding data items.
-        for (const auto &entry : folder.contents())
-        {
-            const auto native = entry.second->correspondingNativePath();
-            items << new DirectoryItem(native.fileName(), entry.second->status(), found->first);
-        }
+        folder.forContents([&items, &found](String, File &file) {
+            const auto native = file.correspondingNativePath();
+            items << new DirectoryItem(native.fileName(), file.status(), found->first);
+            return LoopContinue;
+        });
 
         items.sort();
     }

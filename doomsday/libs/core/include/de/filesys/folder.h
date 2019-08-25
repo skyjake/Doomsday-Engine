@@ -123,7 +123,7 @@ public:
      */
     Contents contents() const;
 
-    LoopResult forContents(std::function<LoopResult (String name, File &file)> func) const;
+    LoopResult forContents(const std::function<LoopResult (String name, File &file)> &func) const;
 
     List<Folder *> subfolders() const;
 
