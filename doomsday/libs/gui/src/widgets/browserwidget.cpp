@@ -20,6 +20,7 @@
 #include "de/ButtonWidget"
 #include "de/MenuWidget"
 #include "de/ProgressWidget"
+#include "de/ScrollAreaWidget"
 
 namespace de {
 
@@ -28,6 +29,7 @@ DE_PIMPL(BrowserWidget)
     const ui::TreeData *data = nullptr;
     Path path;
     LabelWidget *currentPath;
+    ScrollAreaWidget *scroller;
     MenuWidget *menu;
 
     Impl(Public *i)
@@ -35,21 +37,32 @@ DE_PIMPL(BrowserWidget)
     {
         RuleRectangle &rule = self().rule();
 
-        currentPath = new LabelWidget;
-        currentPath->rule()
-            .setInput(Rule::Width, rule.width())
-            .setLeftTop(rule.left(), rule.top());
+        currentPath = new LabelWidget("cwd");
         currentPath->setSizePolicy(ui::Fixed, ui::Expand);
+        currentPath->rule()
+            .setLeftTop(rule.left(), rule.top())
+            .setInput(Rule::Width, rule.width());
 
-        menu = new MenuWidget;
-//        menu->enableIndicatorDraw(true);
-        menu->rule()
+        scroller = new ScrollAreaWidget("scroller");
+        scroller->rule()
             .setLeftTop(rule.left(), currentPath->rule().bottom())
             .setInput(Rule::Width, rule.width())
             .setInput(Rule::Bottom, rule.bottom());
 
+        menu = new MenuWidget("items");
+        menu->setGridSize(1, ui::Filled, 0, ui::Expand);
+        menu->rule()
+            .setLeftTop(scroller->contentRule().left(), scroller->contentRule().top())
+            .setInput(Rule::Width, rule.width());
+
+        scroller->setContentSize(menu->rule());
+        scroller->enablePageKeys(true);
+        scroller->enableScrolling(true);
+        scroller->enableIndicatorDraw(true);
+
         i->add(currentPath);
-        i->add(menu);
+        scroller->add(menu);
+        i->add(scroller);
     }
 
     void changeTo(const Path &newPath)

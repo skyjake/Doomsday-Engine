@@ -63,8 +63,6 @@ void NoGamesColumnWidget::browseForDataFiles()
 {
     bool reload = false;
 
-    // Use a native dialog to select the IWAD folder.
-    ClientApp::app().beginNativeUIMode();
     auto &cfg = Config::get();
 
     FileDialog dlg;
@@ -95,8 +93,6 @@ void NoGamesColumnWidget::browseForDataFiles()
         }
         reload = true;
     }
-
-    ClientApp::app().endNativeUIMode();
 
     // Reload packages and recheck for game availability.
     if (reload)

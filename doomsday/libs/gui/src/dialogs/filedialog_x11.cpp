@@ -18,7 +18,7 @@
 
 #include "de/FileDialog"
 #include "de/DirectoryBrowserWidget"
-#include "de/DialogWidget"
+#include "de/MessageDialog"
 
 namespace de {
 
@@ -47,12 +47,24 @@ DE_PIMPL_NOREF(FileDialog)
     //     return list;
     // }
 
-    DialogWidget *makeDialog()
+    MessageDialog *makeDialog()
     {
-        auto *dlg = new DialogWidget;
+        auto *dlg = new MessageDialog;
         dlg->setDeleteAfterDismissed(true);
+        dlg->title().setText(title);
+        dlg->message().setText("Here's what you can do.");
+        dlg->buttons() << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, prompt)
+                       << new DialogButtonItem(DialogWidget::Reject);
+
+        dlg->area().enableScrolling(false);
+        dlg->area().enableIndicatorDraw(false);
+        dlg->area().enablePageKeys(false);
 
         browser = new DirectoryBrowserWidget;
+        browser->setCurrentPath(initialLocation);
+        browser->rule().setInput(Rule::Height, browser->rule().width());
+        dlg->area().add(browser);
+        dlg->updateLayout();
 
         return dlg;
     }

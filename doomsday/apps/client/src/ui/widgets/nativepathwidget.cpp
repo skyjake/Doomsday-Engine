@@ -109,8 +109,6 @@ void NativePathWidget::setPath(const NativePath &path)
 
 void NativePathWidget::chooseUsingNativeFileDialog()
 {
-    ClientApp::app().beginNativeUIMode();
-    
     // Use a native dialog to pick the path.
     NativePath dir = d->path;
     if (d->path.isEmpty()) dir = NativePath::homePath();
@@ -125,8 +123,6 @@ void NativePathWidget::chooseUsingNativeFileDialog()
         setText(d->labelText());
         DE_FOR_AUDIENCE2(UserChange, i) i->pathChangedByUser(*this);
     }
-    
-    ClientApp::app().endNativeUIMode();
 }
 
 void NativePathWidget::clearPath()

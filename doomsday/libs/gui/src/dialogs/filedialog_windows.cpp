@@ -17,6 +17,7 @@
  */
 
 #include "de/FileDialog"
+#include "de/BaseGuiApp"
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
@@ -89,7 +90,7 @@ List<NativePath> FileDialog::selectedPaths() const
 
 bool FileDialog::exec(GuiRootWidget &)
 {
-    d->selection.clear();
+    d->selection.clear();    
 
     IFileOpenDialog *dlg = nullptr;
     if (FAILED(CoCreateInstance(
@@ -97,6 +98,8 @@ bool FileDialog::exec(GuiRootWidget &)
     {
         return false;
     }
+
+    DE_BASE_GUI_APP->beginNativeUIMode();
 
     // Configure the dialog according to user-specified options.
     DWORD options;
@@ -169,6 +172,8 @@ bool FileDialog::exec(GuiRootWidget &)
 
     // Cleanup.
     dlg->Release();
+
+    DE_BASE_GUI_APP->endNativeUIMode();
 
     return !d->selection.empty();
 }

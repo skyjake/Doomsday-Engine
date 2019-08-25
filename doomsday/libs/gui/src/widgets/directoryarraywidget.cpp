@@ -41,8 +41,6 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
     addButton().setText("Add Folder...");
     addButton().setActionFn([this] ()
     {
-        DE_BASE_GUI_APP->beginNativeUIMode();
-
         auto &cfg = Config::get();
         FileDialog dlg;
         dlg.setTitle("Select Folder");
@@ -57,8 +55,6 @@ DirectoryArrayWidget::DirectoryArrayWidget(Variable &variable, String const &nam
             elementsMenu().items() << makeItem(TextValue(dir));
             setVariableFromWidget();
         }
-
-        DE_BASE_GUI_APP->endNativeUIMode();
     });
 
     updateFromVariable();

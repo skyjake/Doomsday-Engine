@@ -25,7 +25,7 @@ namespace de {
 class DirectoryBrowserWidget : public BrowserWidget
 {
 public:
-    DirectoryBrowserWidget(const String &name = {});
+    DirectoryBrowserWidget(const String &name = "dir-browser");
 
 private:
     DE_PRIVATE(d)
