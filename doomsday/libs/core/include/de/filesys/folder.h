@@ -75,7 +75,8 @@ public:
         PopulateAsync          = 0x4,   ///< Do not block until complete.
         PopulateAsyncFullTree  = PopulateAsync | PopulateFullTree,
 
-        DisableNotification = 0x1000, // internal use
+        DisableNotification = 0x1000, // internal use: population audience not notified
+        DisableIndexing     = 0x2000, // internal use: file is not added to the FS index
     };
     using PopulationBehaviors = Flags;
 

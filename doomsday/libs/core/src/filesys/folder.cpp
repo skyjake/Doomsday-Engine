@@ -210,7 +210,10 @@ void Folder::clear()
 
 void Folder::populate(PopulationBehaviors behavior)
 {
-    fileSystem().changeBusyLevel(+1);
+    if (!behavior.testFlag(DisableIndexing))
+    {
+        fileSystem().changeBusyLevel(+1);
+    }
 
     LOG_AS("Folder");
     {
@@ -290,7 +293,10 @@ void Folder::populate(PopulationBehaviors behavior)
                     if (!d->contents.contains(i->name().lower()))
                     {
                         d->add(file.release());
-                        fileSystem().index(*i);
+                        if (!behavior.testFlag(DisableIndexing))
+                        {
+                            fileSystem().index(*i);
+                        }
                     }
                 }
             }
@@ -306,7 +312,10 @@ void Folder::populate(PopulationBehaviors behavior)
             }
         }
 
-        fileSystem().changeBusyLevel(-1);
+        if (!behavior.testFlag(DisableIndexing))
+        {
+            fileSystem().changeBusyLevel(-1);
+        }
     };
 
     if (internal::enableBackgroundPopulation)
