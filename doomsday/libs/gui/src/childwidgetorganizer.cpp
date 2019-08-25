@@ -104,9 +104,11 @@ DE_PIMPL(ChildWidgetOrganizer)
         }
 
         dataItems = ctx;
+        virtualPvs = {}; // force full update
 
         if (dataItems)
         {
+            updateVirtualHeight();
             makeWidgets();
 
             dataItems->audienceForAddition() += this;
@@ -217,9 +219,17 @@ DE_PIMPL(ChildWidgetOrganizer)
         DE_ASSERT(dataItems != nullptr);
         DE_ASSERT(container != nullptr);
 
-        for (ui::Data::Pos i = 0; i < dataItems->size(); ++i)
+        if (virtualEnabled)
         {
-            addItemWidget(i, AlwaysAppend);
+            updateVirtualization();
+        }
+        else
+        {
+            // Create a widget for each item.
+            for (ui::Data::Pos i = 0; i < dataItems->size(); ++i)
+            {
+                addItemWidget(i, AlwaysAppend);
+            }
         }
     }
 
@@ -373,7 +383,7 @@ DE_PIMPL(ChildWidgetOrganizer)
     {
         if (virtualEnabled)
         {
-            estimatedHeight->set(dataItems->size() * float(averageItemHeight));
+            estimatedHeight->set(dataItems ? dataItems->size() * float(averageItemHeight) : 0.0f);
         }
     }
 
