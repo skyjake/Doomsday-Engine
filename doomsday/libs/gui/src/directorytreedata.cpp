@@ -47,12 +47,14 @@ DE_PIMPL(DirectoryTreeData)
         // Populate a folder with the directory contents.
         Folder folder(path.fileName());
         folder.attach(new DirectoryFeed(path));
-        folder.populate(Folder::PopulateOnlyThisFolder | Folder::DisableNotification);
+        folder.populate(Folder::PopulateOnlyThisFolder | Folder::DisableNotification |
+                        Folder::DisableIndexing);
 
         // Create corresponding data items.
         for (const auto &entry : folder.contents())
         {
-            items << new DirectoryItem(entry.first, entry.second->status(), found->first);
+            const auto native = entry.second->correspondingNativePath();
+            items << new DirectoryItem(native.fileName(), entry.second->status(), found->first);
         }
 
         items.sort();

@@ -27,10 +27,11 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
 {
     DirectoryTreeData dirTree;
     IndirectRule *itemHeight = new IndirectRule;
+    LoopCallback mainCall;
 
     Impl(Public *i) : Base(i)
     {
-        itemHeight->setSource(font("default").height());
+        itemHeight->setSource(font("default").height() + rule("unit") * 2);
 
         self().menu().organizer().setWidgetFactory(*this);
         self().setData(dirTree, itemHeight->valuei());
@@ -41,12 +42,25 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
         releaseRef(itemHeight);
     }
 
-    GuiWidget *makeItemWidget(const ui::Item &, const GuiWidget *)
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *)
     {
-        auto *lab = new LabelWidget;
-        lab->setSizePolicy(ui::Fixed, ui::Fixed);
-        lab->rule().setInput(Rule::Height, itemHeight);
-        return lab;
+        const auto &dirItem = item.as<DirectoryItem>();
+
+        auto *widget = new ButtonWidget;
+        widget->setSizePolicy(ui::Fixed, ui::Fixed);
+        widget->setAlignment(ui::AlignLeft);
+        widget->rule().setInput(Rule::Height, *itemHeight);
+        widget->margins().setTopBottom(rule("unit"));
+
+        if (dirItem.isDirectory())
+        {
+            const NativePath subDir = dirItem.path();
+            widget->audienceForPress() += [this, subDir]() {
+                mainCall.enqueue([this, subDir]() { self().setCurrentPath(subDir); });
+            };
+        }
+
+        return widget;
     }
 
     void updateItemWidget(GuiWidget &widget, const ui::Item &item)
@@ -65,7 +79,7 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
                            dirItem.status().size,
                            dirItem.status().modifiedAt.asText().c_str());
         }
-        widget.as<LabelWidget>().setText(text);
+        widget.as<ButtonWidget>().setText(text);
     }
 };
 

@@ -932,13 +932,20 @@ LabelWidget *LabelWidget::newWithText(const String &text, GuiWidget *parent)
     return w;
 }
 
+void LabelWidget::useSeparatorStyle()
+{
+    setSizePolicy(ui::Expand, ui::Expand);
+    setTextColor("accent");
+    setFont("separator.label");
+    setAlignment(ui::AlignLeft);
+    margins().setTop("gap");
+}
+
 LabelWidget *LabelWidget::appendSeparatorWithText(const String &text, GuiWidget *parent,
                                                   GridLayout *appendToGrid)
 {
     std::unique_ptr<LabelWidget> w(newWithText(text, parent));
-    w->setTextColor("accent");
-    w->setFont("separator.label");
-    w->margins().setTop("gap");
+    w->useSeparatorStyle();
     if (appendToGrid)
     {
         appendToGrid->setCellAlignment({0, appendToGrid->gridSize().y}, ui::AlignLeft);

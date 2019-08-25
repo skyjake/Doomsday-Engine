@@ -21,14 +21,18 @@
 #include "de/MenuWidget"
 #include "de/ProgressWidget"
 #include "de/ScrollAreaWidget"
+#include "de/SequentialLayout"
 
 namespace de {
 
 DE_PIMPL(BrowserWidget)
+//, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
 {
     const ui::TreeData *data = nullptr;
     Path path;
+    LabelWidget *cwdLabel;
     LabelWidget *currentPath;
+    LabelWidget *menuLabel;
     ScrollAreaWidget *scroller;
     MenuWidget *menu;
 
@@ -37,16 +41,23 @@ DE_PIMPL(BrowserWidget)
     {
         RuleRectangle &rule = self().rule();
 
+        SequentialLayout layout(rule.left(), rule.top(), ui::Down);
+        layout.setOverrideWidth(rule.width());
+
+        cwdLabel = LabelWidget::appendSeparatorWithText("Path", i);
+        layout << *cwdLabel;
+
         currentPath = new LabelWidget("cwd");
         currentPath->setSizePolicy(ui::Fixed, ui::Expand);
-        currentPath->rule()
-            .setLeftTop(rule.left(), rule.top())
-            .setInput(Rule::Width, rule.width());
+        currentPath->setAlignment(ui::AlignLeft);
+        layout << *currentPath;
+
+        menuLabel = LabelWidget::appendSeparatorWithText("Contents", i);
+        layout << *menuLabel;
 
         scroller = new ScrollAreaWidget("scroller");
+        layout << *scroller;
         scroller->rule()
-            .setLeftTop(rule.left(), currentPath->rule().bottom())
-            .setInput(Rule::Width, rule.width())
             .setInput(Rule::Bottom, rule.bottom());
 
         menu = new MenuWidget("items");
@@ -54,7 +65,10 @@ DE_PIMPL(BrowserWidget)
         menu->rule()
             .setLeftTop(scroller->contentRule().left(), scroller->contentRule().top())
             .setInput(Rule::Width, rule.width());
+        menu->enableScrolling(false);
+        menu->enablePageKeys(false);
 
+        // Virtualized menu expands to virtual height, so use another scroller as a parent.
         scroller->setContentSize(menu->rule());
         scroller->enablePageKeys(true);
         scroller->enableScrolling(true);
@@ -63,18 +77,31 @@ DE_PIMPL(BrowserWidget)
         i->add(currentPath);
         scroller->add(menu);
         i->add(scroller);
+
+//        menu->organizer().audienceForWidgetCreation() += this;
     }
 
     void changeTo(const Path &newPath)
     {
         DE_ASSERT(data);
 
+        scroller->scrollY(0);
+
         // TODO: This is an async op, need to show progress widget.
         path = newPath;
         currentPath->setText(path);
         const ui::Data &items = data->items(path);
         menu->setItems(items);
+
+        // TODO: Recreate the path segment buttons.
     }
+
+//    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item) override
+//    {
+////        widget.as<ButtonWidget>().audienceForPress() += [this, &item]() {
+
+////        };
+//    }
 };
 
 BrowserWidget::BrowserWidget(const String &name)

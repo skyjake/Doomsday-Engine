@@ -188,6 +188,11 @@ public:
     void setTextStyle(Font::RichFormat::IStyle const *richStyle);
 
     /**
+     * Sets the font, text color, and margins for use as a menu/dialog separator label.
+     */
+    void useSeparatorStyle();
+
+    /**
      * Sets the alignment of the image when there is both an image
      * and a text in the label.
      *
