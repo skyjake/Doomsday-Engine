@@ -277,9 +277,9 @@ void Folder::populate(PopulationBehaviors behavior)
         Feed::PopulatedFiles newFiles;
 
         // Populate with new/updated ones.
-        for (int i = d->feeds.size() - 1; i >= 0; --i)
+        for (size_t i = 0; i < d->feeds.size(); ++i)
         {
-            newFiles.append(d->feeds.at(i)->populate(*this));
+            newFiles.append(d->feeds.atReverse(i)->populate(*this));
         }
 
         // Insert and index all new files atomically.

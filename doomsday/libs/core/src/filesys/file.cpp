@@ -371,18 +371,18 @@ File *File::reinterpret()
 
 NativePath File::correspondingNativePath() const
 {
-    if (NativeFile const *native = maybeAs<NativeFile>(source()))
+    if (const NativeFile *native = maybeAs<NativeFile>(source()))
     {
         return native->nativePath();
     }
-    else if (Folder const *folder = maybeAs<Folder>(target()))
+    else if (const Folder *folder = maybeAs<Folder>(target()))
     {
-        if (auto *feed = folder->primaryFeedMaybeAs<DirectoryFeed>())
+        if (const auto *feed = folder->primaryFeedMaybeAs<DirectoryFeed>())
         {
             return feed->nativePath();
         }
     }
-    return NativePath();
+    return {};
 }
 
 IOStream &File::operator << (IByteArray const &bytes)

@@ -107,7 +107,10 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
 
         if (isDirectory_FileInfo(i.value))
         {
-            populateSubFolder(folder, name);
+            if (auto *f = populateSubFolder(folder, name))
+            {
+                populated << f;
+            }
         }
         else
         {
@@ -120,27 +123,29 @@ Feed::PopulatedFiles DirectoryFeed::populate(Folder const &folder)
     return populated;
 }
 
-void DirectoryFeed::populateSubFolder(Folder const &folder, String const &entryName)
+Folder *DirectoryFeed::populateSubFolder(const Folder &folder, const String &entryName)
 {
     LOG_AS("DirectoryFeed::populateSubFolder");
 
     if (!entryName.beginsWith(".")) // Accounts for "." and "..", but also Unix hidden dirs.
     {
-        Folder *subFolder = nullptr;
-        if (!folder.has(entryName))
+        Folder *subFolder = folder.tryLocate<Folder>(entryName);
+        if (!subFolder)
         {
-            subFolder = &folder.fileSystem()
-                    .makeFolderWithFeed(folder.path() / entryName,
-                                        newSubFeed(entryName),
-                                        Folder::PopulateFullTree,
-                                        FS::DontInheritFeeds);
+            subFolder = new Folder(entryName.lower());
+            subFolder->attach(newSubFeed(entryName));
+            //folder.add(subFolder);
+//            subFolder = &folder.fileSystem()
+//                    .makeFolderWithFeed(folder.path() / entryName,
+//                                        newSubFeed(entryName),
+//                                        Folder::PopulateFullTree,
+//                                        FS::DontInheritFeeds);
         }
-        else
-        {
-            // Use the previously populated subfolder.
-            subFolder = &folder.locate<Folder>(entryName);
-        }
-
+//        else
+//        {
+//            // Use the previously populated subfolder.
+//            subFolder = &folder.locate<Folder>(entryName);
+//        }
         if (d->mode & AllowWrite)
         {
             subFolder->setMode(File::Write);
@@ -149,7 +154,9 @@ void DirectoryFeed::populateSubFolder(Folder const &folder, String const &entryN
         {
             subFolder->setMode(File::ReadOnly);
         }
+        return subFolder;
     }
+    return nullptr;
 }
 
 void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,

@@ -90,15 +90,12 @@ public:
     void     append(const T &v) { push_back(v); }
     void     append(const List &list) { for (const T &v : list) push_back(v); }
     void     prepend(const T &v) { Base::insert(begin(), v); }
-//    void     insert(int pos, const T &value) { Base::insert(begin() + pos, value); }
     void     insert(size_t pos, const T &value) { Base::insert(begin() + pos, value); }
     void     insert(const const_iterator &i, const T &value) { Base::insert(i, value); }
-//    const T &operator[](int pos) const    { return Base::at(pos); }
     const T &operator[](size_t pos) const { return Base::at(pos); }
-//    T &      operator[](int pos)    { return Base::operator[](pos); }
     T &      operator[](size_t pos) { return Base::operator[](pos); }
-//    const T &at(int pos) const { return Base::at(pos); }
     const T &at(size_t pos) const { return Base::at(pos); }
+    const T &atReverse(size_t pos) const { return Base::at(size() - 1 - pos); }
     const T &first() const { return Base::front(); }
     const T &last() const { return Base::back(); }
     T &      first() { return Base::front(); }
