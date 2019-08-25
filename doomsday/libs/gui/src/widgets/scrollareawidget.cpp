@@ -125,11 +125,11 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
         indicatorAnimating = true;
         if (origin == Bottom && self().isAtBottom())
         {
-            scrollOpacity.setValue(0, .7f, .2f);
+            scrollOpacity.setValue(0, 700_ms, 200_ms);
         }
         else
         {
-            scrollOpacity.setValueFrom(.8f, .333f, 5.0, 2.0);
+            scrollOpacity.setValueFrom(.8f, .333f, 5.0_s, 2.0_s);
         }
     }
 
@@ -147,8 +147,11 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
 
     RectanglefPair scrollIndicatorRects(Vec2f const &originPos) const
     {
-        Vec2i const viewSize = self().viewportSize();
-        if (viewSize == Vec2i()) return RectanglefPair();
+        const Vec2i viewSize = self().viewportSize();
+        if (viewSize == Vec2i() || self().maximumScrollY().valuei() == 0)
+        {
+            return RectanglefPair();
+        }
 
         const auto &margins = self().margins();
         const float contentHeight = float(contentRule.height().value());
@@ -165,7 +168,7 @@ DE_GUI_PIMPL(ScrollAreaWidget), public Lockable
         float indPos = self().scrollPositionY().value() / self().maximumScrollY().value();
         if (origin == Top) indPos = 1 - indPos;
 
-        float const avail = viewSize.y - indHeight;
+        const float avail = viewSize.y - indHeight;
         Rectanglef rect { originPos + Vec2f(viewSize.x + margins.left().value() - 2 * scrollBarWidth,
                                                avail - indPos * avail),
                           originPos + Vec2f(viewSize.x + margins.left().value() - scrollBarWidth,
@@ -507,7 +510,7 @@ bool ScrollAreaWidget::handleEvent(Event const &event)
         {
             if (event.type() == Event::MousePosition)
             {
-                bool const hovering = (d->scrollBarVisRect.expanded(pointsToPixels(1))
+                const bool hovering = (d->scrollBarVisRect.expanded(pointsToPixels(1))
                                        .contains(event.as<MouseEvent>().pos()));
                 d->setScrollBarHovering(hovering);
             }
