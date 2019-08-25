@@ -25,12 +25,10 @@
 #include <queue>
 #include <atomic>
 
-namespace sc = std::chrono;
-
 namespace de {
 namespace internal {
 
-using TimePoint = sc::system_clock::time_point;
+using TimePoint = std::chrono::system_clock::time_point;
 
 /**
  * Thread that posts timer events when it is time to trigger scheduled timers.
@@ -57,6 +55,8 @@ struct TimerScheduler : public Thread, public Lockable
 
     void run() override
     {
+        using namespace std::chrono;
+
         while (running)
         {
             TimeSpan timeToWait = 0.0;
@@ -66,10 +66,10 @@ struct TimerScheduler : public Thread, public Lockable
                 DE_GUARD(this);
                 while (!pending.empty())
                 {
-                    const auto now    = sc::system_clock::now();
+                    const auto now    = system_clock::now();
                     const auto nextAt = pending.top().nextAt;
 
-                    TimeSpan until = sc::duration_cast<sc::milliseconds>(nextAt - now).count() / 1.0e3;
+                    TimeSpan until = duration_cast<milliseconds>(nextAt - now).count() / 1.0e3;
                     if (until <= 0.0)
                     {
                         // Time to trigger this timer.
@@ -83,10 +83,10 @@ struct TimerScheduler : public Thread, public Lockable
                         // Schedule the next trigger.
                         if (pt.repeatDuration > 0.0)
                         {
-                            TimePoint nextAt = pt.nextAt + sc::microseconds(dint64(pt.repeatDuration * 1.0e6));
+                            TimePoint nextAt = pt.nextAt + microseconds(dint64(pt.repeatDuration * 1.0e6));
 #if defined (DE_DEBUG)
                             // Debugger may halt the process, don't bother retrying to post.
-                            nextAt = de::max(nextAt, sc::system_clock::now());
+                            nextAt = de::max(nextAt, system_clock::now());
 #endif
                             pending.push(Pending{nextAt, pt.timer, pt.repeatDuration});
                         }
@@ -107,10 +107,12 @@ struct TimerScheduler : public Thread, public Lockable
 
     void addPending(Timer &timer)
     {
+        using namespace std::chrono;
+
         DE_GUARD(this);
         const TimeSpan repeatDuration = timer.interval();
         pending.push(
-            Pending{sc::system_clock::now() + sc::microseconds(dint64(repeatDuration * 1.0e6)),
+            Pending{system_clock::now() + microseconds(dint64(repeatDuration * 1.0e6)),
                     &timer,
                     timer.isSingleShot() ? 0_ms : repeatDuration});
         waiter.post();

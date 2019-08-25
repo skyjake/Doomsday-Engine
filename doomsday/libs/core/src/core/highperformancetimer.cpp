@@ -25,11 +25,9 @@
 
 namespace de {
 
-namespace chr = std::chrono;
-
 DE_PIMPL_NOREF(HighPerformanceTimer)
 {
-    Time::TimePoint origin = chr::system_clock::now();
+    Time::TimePoint origin = std::chrono::system_clock::now();
     ElapsedTimer timer;
 
     Impl()
