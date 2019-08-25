@@ -89,9 +89,9 @@ public:
      */
     DE_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
 
-    static const char *ORG_NAME; ///< Name of the author/organization.
-    static const char *ORG_DOMAIN; ///< Network domain of the author/organization.
-    static const char *APP_NAME; ///< Name of the application, as presented to humans.
+    static const char *ORG_NAME;    ///< Name of the author/organization.
+    static const char *ORG_DOMAIN;  ///< Network domain of the author/organization.
+    static const char *APP_NAME;    ///< Name of the application, as presented to humans.
     static const char *APP_VERSION; ///< Version of the application.
     static const char *CONFIG_PATH;
     static const char *UNIX_HOME;

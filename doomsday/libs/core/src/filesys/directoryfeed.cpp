@@ -132,7 +132,12 @@ Folder *DirectoryFeed::populateSubFolder(const Folder &folder, const String &ent
         Folder *subFolder = folder.tryLocate<Folder>(entryName);
         if (!subFolder)
         {
-            subFolder = new Folder(entryName.lower());
+            subFolder = new Folder(entryName);
+
+            // Technically folders could be interpreted, but that would require knowing
+            // their source data at this time, and we only know the file name.
+            //subFolder = &folder.fileSystem().interpret(subFolder)->as<Folder>();
+
             subFolder->attach(newSubFeed(entryName));
             //folder.add(subFolder);
 //            subFolder = &folder.fileSystem()

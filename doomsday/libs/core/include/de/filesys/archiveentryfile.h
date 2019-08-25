@@ -25,7 +25,6 @@
 namespace de {
 
 class Archive;
-class ArchiveFolder;
 
 /**
  * Accesses data of an entry within an archive.
@@ -44,7 +43,7 @@ public:
      */
     ArchiveEntryFile(String const &name, Archive &archive, String const &entryPath);
 
-    ~ArchiveEntryFile();
+    ~ArchiveEntryFile() override;
 
     String describe() const override;
     String entryPath() const;

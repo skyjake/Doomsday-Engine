@@ -21,7 +21,7 @@
 
 #include "de/App"
 #include "de/ArchiveFeed"
-#include "de/ArchiveFolder"
+//#include "de/ArchiveFolder"
 #include "de/DirectoryFeed"
 #include "de/DictionaryValue"
 #include "de/Guard"
@@ -133,7 +133,12 @@ Folder &FileSystem::makeFolder(String const &path, FolderCreationBehaviors behav
 
         // Folders may be interpreted just like any other file; however, they must
         // remain instances derived from Folder.
-        subFolder = &interpret(new Folder(path.fileName()))->as<Folder>();
+
+        // Technically folders could be interpreted, but that would require knowing
+        // their source data at this time, and we only know the file name.
+        //subFolder = &interpret())->as<Folder>();
+
+        subFolder = new Folder(path.fileName());
 
         // If parent folder is writable, this will be too.
         if (parentFolder.mode() & File::Write)

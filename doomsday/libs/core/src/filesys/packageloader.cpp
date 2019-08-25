@@ -19,6 +19,7 @@
 #include "de/PackageLoader"
 
 #include "de/App"
+#include "de/ArchiveFolder"
 #include "de/CommandLine"
 #include "de/Config"
 #include "de/DictionaryValue"

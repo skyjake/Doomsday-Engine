@@ -112,7 +112,7 @@ struct TimerScheduler : public Thread, public Lockable
         pending.push(
             Pending{sc::system_clock::now() + sc::microseconds(dint64(repeatDuration * 1.0e6)),
                     &timer,
-                    timer.isSingleShot() ? TimeSpan() : repeatDuration});
+                    timer.isSingleShot() ? 0_ms : repeatDuration});
         waiter.post();
     }
 

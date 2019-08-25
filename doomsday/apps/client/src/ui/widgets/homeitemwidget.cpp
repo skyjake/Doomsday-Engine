@@ -180,7 +180,7 @@ DE_GUI_PIMPL(HomeItemWidget)
         if (buttonsShown)
         {
             labelRightMargin->set(*buttonsWidth,
-                                  labelRightMargin->animation().done()? TimeSpan(0.4) :
+                                  labelRightMargin->animation().done()? 400_ms :
                                   labelRightMargin->animation().remainingTime());
         }
     }

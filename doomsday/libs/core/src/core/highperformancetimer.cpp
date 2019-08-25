@@ -48,7 +48,7 @@ HighPerformanceTimer::HighPerformanceTimer() : d(new Impl)
 
 TimeSpan HighPerformanceTimer::elapsed() const
 {
-    return TimeSpan(d->milliSeconds() / 1000.0);
+    return TimeSpan::fromMilliSeconds(d->milliSeconds());
 }
 
 Time HighPerformanceTimer::startedAt() const

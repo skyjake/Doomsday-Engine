@@ -18,7 +18,7 @@
 
 #include "de/PackageFeed"
 #include "de/LinkFile"
-#include "de/ArchiveFolder"
+//#include "de/ArchiveFolder"
 #include "de/PackageLoader"
 #include "de/FS"
 

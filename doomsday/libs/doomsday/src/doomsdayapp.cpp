@@ -44,6 +44,7 @@
 #include "api_uri.h"
 
 #include <de/App>
+#include <de/ArchiveFolder>
 #include <de/ArchiveFeed>
 #include <de/CommandLine>
 #include <de/Config>

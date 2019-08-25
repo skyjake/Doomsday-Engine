@@ -21,7 +21,7 @@
 
 #include "../String"
 #include "../Package"
-#include "../ArchiveFolder"
+//#include "../ArchiveFolder"
 #include "../FileSystem"
 #include "../Hash"
 

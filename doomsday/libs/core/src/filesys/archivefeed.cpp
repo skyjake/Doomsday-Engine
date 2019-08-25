@@ -19,7 +19,7 @@
 
 #include "de/ArchiveFeed"
 #include "de/ArchiveEntryFile"
-#include "de/ArchiveFolder"
+//#include "de/ArchiveFolder"
 #include "de/ByteArrayFile"
 #include "de/ZipArchive"
 #include "de/Writer"
