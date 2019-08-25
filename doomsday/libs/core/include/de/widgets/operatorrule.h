@@ -45,7 +45,7 @@ public:
         Maximum,
         Minimum,
         Floor,
-        Select ///< Negative selects left, positive selects right.
+        Select, ///< Negative selects left, positive selects right.
     };
 
 public:

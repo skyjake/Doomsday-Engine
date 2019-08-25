@@ -56,6 +56,9 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
         {
             const NativePath subDir = dirItem.path();
             widget->audienceForPress() += [this, subDir]() {
+                // Changing the directory causes this widget to be deleted, so
+                // we need to postpone the change until the press has been
+                // handled.
                 mainCall.enqueue([this, subDir]() { self().setCurrentPath(subDir); });
             };
         }

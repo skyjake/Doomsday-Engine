@@ -141,12 +141,12 @@ void OperatorRule::update()
         break;
 
     case Select:
-        v = (_condition->value() < 0? leftValue : rightValue);
+        v = (_condition->value() < 0 ? leftValue : rightValue);
         break;
 
-    default:
-        v = leftValue;
-        break;
+//    default:
+//        v = leftValue;
+//        break;
     }
 
     setValue(v);
@@ -154,7 +154,7 @@ void OperatorRule::update()
 
 String OperatorRule::description() const
 {
-    static char const *texts[] = {
+    static const char *texts[] = {
         "Equals",
         "Negate",
         "1/2x",
@@ -165,23 +165,40 @@ String OperatorRule::description() const
         "/",
         "Max",
         "Min",
-        "Floor"
+        "Floor",
+        "Select",
     };
 
-    String desc = "{";
-    if (_leftOperand)
+    String desc = "{ ";
+    if (_operator == Select)
     {
-        desc += " ";
-        desc += _leftOperand->description();
+        if (_condition->value() < 0)
+        {
+            desc += "[<0] ";
+            desc += _leftOperand->description();
+        }
+        else
+        {
+            desc += "[>=0] ";
+            desc += _rightOperand->description();
+        }
     }
-    desc += " ";
-    desc += texts[_operator];
-    if (_rightOperand)
+    else
     {
-        desc += " ";
-        desc += _rightOperand->description();
+        if (_leftOperand)
+        {
+            desc += _leftOperand->description();
+            desc += " ";
+        }
+        desc += texts[_operator];
+        if (_rightOperand)
+        {
+            desc += " ";
+            desc += _rightOperand->description();
+        }
     }
-    return desc + " }";
+    desc += " }";
+    return desc;
 }
 
 } // namespace de

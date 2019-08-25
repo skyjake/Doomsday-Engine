@@ -24,6 +24,7 @@
 #include <de/ButtonWidget>
 #include <de/CommandLine>
 #include <de/CompositorWidget>
+#include <de/FlowLayout>
 #include <de/GLState>
 #include <de/Garbage>
 #include <de/LabelWidget>
@@ -122,6 +123,23 @@ DE_PIMPL(MainWindow)
                 .setInput(Rule::Bottom, test->rule().bottom());
         compositor->add(button);
 
+        // Try some flow.
+        {
+            FlowLayout flow(Const(0), Const(0), root.viewWidth() / 2);
+
+            for (int i = 0; i < 26; ++i)
+            {
+                auto *lw = new LabelWidget(i == 25 ? "test-letter" : "");
+                lw->setText(Stringf("%c", 'A' + i));
+                lw->set(GuiWidget::Background(Vec4f(randf(), randf(), randf(), 0.25f)));
+                lw->setSizePolicy(ui::Expand, ui::Expand);
+                lw->margins().set("gap");
+
+                flow << *lw;
+                compositor->add(lw);
+            }
+        }
+
         // Mouse cursor.
         cursor = new LabelWidget;
         cursor->setBehavior(Widget::Unhittable);
@@ -200,6 +218,11 @@ DE_PIMPL(MainWindow)
         GLState::current().setViewport(Rectangleui(0, 0, size.x, size.y));
 
         updateRootSize();
+
+        if (const auto *letter = root.guiFind("test-letter"))
+        {
+            debug(letter->rule().description().c_str());
+        }
     }
 };
 

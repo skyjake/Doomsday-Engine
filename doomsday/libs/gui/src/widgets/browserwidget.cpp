@@ -98,9 +98,9 @@ DE_PIMPL(BrowserWidget)
 
 //    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item) override
 //    {
-////        widget.as<ButtonWidget>().audienceForPress() += [this, &item]() {
+//        widget.as<ButtonWidget>().audienceForPress() += [this, &item]() {
 
-////        };
+//        };
 //    }
 };
 
