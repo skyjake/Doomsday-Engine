@@ -28,7 +28,7 @@ IndirectRule::~IndirectRule()
     independentOf(_source);
 }
 
-void IndirectRule::setSource(Rule const &rule)
+void IndirectRule::setSource(const Rule &rule)
 {
     unsetSource();
     dependsOn(_source = &rule);
@@ -52,7 +52,7 @@ void IndirectRule::update()
     setValue(_source ? _source->value() : 0.f);
 }
 
-Rule const &IndirectRule::source() const
+const Rule &IndirectRule::source() const
 {
     DE_ASSERT(_source);
     return *_source;

@@ -22,36 +22,41 @@
 
 namespace de {
 
+static inline int operatorBits(OperatorRule::Operator op)
+{
+    return op << Rule::BaseFlagsShift; // Base class uses the lowest bits.
+}
+
 OperatorRule::OperatorRule(Operator op, Rule const &unary)
     : Rule()
-    , _operator(op)
     , _leftOperand(&unary)
     , _rightOperand(nullptr)
     , _condition(nullptr)
-{
+{    
     DE_ASSERT(_leftOperand != 0);
-
+    _flags |= operatorBits(op);
     dependsOn(_leftOperand);
 }
 
 OperatorRule::OperatorRule(Operator op, Rule const &left, Rule const &right)
     : Rule()
-    , _operator(op)
     , _leftOperand(&left)
     , _rightOperand(&right)
     , _condition(nullptr)
 {
+    _flags |= operatorBits(op);
     dependsOn(_leftOperand);
     if (_rightOperand != _leftOperand) dependsOn(_rightOperand);
 }
 
 OperatorRule::OperatorRule(OperatorRule::Operator op, Rule const &left, Rule const &right, Rule const &condition)
     : Rule()
-    , _operator(op)
     , _leftOperand(&left)
     , _rightOperand(&right)
     , _condition(&condition)
 {
+    _flags |= operatorBits(op);
+
     DE_ASSERT(_leftOperand != _rightOperand);
     DE_ASSERT(_condition != _leftOperand);
     DE_ASSERT(_condition != _rightOperand);
@@ -73,7 +78,7 @@ void OperatorRule::update()
     float leftValue = 0;
     float rightValue = 0;
 
-    if (_operator == Select)
+    if (op() == Select)
     {
         // Only evaluate the selected operand.
         if (_condition->value() < 0)
@@ -94,7 +99,7 @@ void OperatorRule::update()
 
     float v;
 
-    switch (_operator)
+    switch (op())
     {
     case Equals:
         v = leftValue;
@@ -170,7 +175,7 @@ String OperatorRule::description() const
     };
 
     String desc = "{ ";
-    if (_operator == Select)
+    if (op() == Select)
     {
         if (_condition->value() < 0)
         {
@@ -190,7 +195,7 @@ String OperatorRule::description() const
             desc += _leftOperand->description();
             desc += " ";
         }
-        desc += texts[_operator];
+        desc += texts[op()];
         if (_rightOperand)
         {
             desc += " ";

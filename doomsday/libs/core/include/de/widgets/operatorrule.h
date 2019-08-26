@@ -53,7 +53,7 @@ public:
 
     OperatorRule(Operator op, Rule const &left, Rule const &right);
 
-    OperatorRule(Operator op, Rule const &left, Rule const &right, Rule const &condition);
+    OperatorRule(Operator op, Rule const &left, Rule const &right, Rule const &condition);       
 
 public:
     static OperatorRule &maximum(Rule const &left, Rule const &right) {
@@ -97,12 +97,16 @@ public:
 protected:
     ~OperatorRule();
 
+    inline Operator op() const
+    {
+        return Operator((_flags >> BaseFlagsShift) & 0xf);
+    }
+
     void update();
 
     String description() const;
 
 private:
-    Operator _operator;
     Rule const *_leftOperand;
     Rule const *_rightOperand;
     Rule const *_condition;

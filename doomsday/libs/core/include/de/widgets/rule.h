@@ -23,6 +23,7 @@
 #include "../libcore.h"
 #include "../Counted"
 #include "../Observers"
+#include "../PointerSet"
 #include "../String"
 
 namespace de {
@@ -60,10 +61,18 @@ public:
         MAX_SEMANTICS
     };
 
-public:
-    Rule();
+    enum { Valid = 0x1, BaseFlagsShift = 4 };
 
-    explicit Rule(float initialValue);
+public:
+    Rule()
+        : _flags(0)
+        , _value(0)
+    {}
+
+    explicit Rule(float initialValue)
+        : _flags(Valid)
+        , _value(initialValue)
+    {}
 
     /**
      * Determines the rule's current value. If it has been marked invalid,
@@ -74,7 +83,7 @@ public:
     /**
      * Determines the rule's current value (as integer). Otherwise same as value().
      */
-    int valuei() const;
+    inline int valuei() const { return de::floor(value()); }
 
     /**
      * Marks the rule invalid, causing all dependent rules to be invalid, too.
@@ -88,31 +97,38 @@ public:
      *
      * This is called automatically when needed.
      */
-    virtual void update();
+    virtual void update()
+    {
+        // This is a fixed value, so don't do anything.
+        _flags |= Valid;
+    }
 
     /**
      * Determines if the rule's value is currently valid. A rule becomes
      * invalid if any of its dependencies are invalidated, or invalidate() is
      * called directly on the rule.
      */
-    bool isValid() const;
+    inline bool isValid() const
+    {
+        return (_flags & Valid) != 0;
+    }
 
     /**
      * Links rules together. This rule will depend on @a dependency; if @a
      * dependency becomes invalid, this rule will likewise become invalid.
      * @a dependency will hold a reference to this rule.
      */
-    void dependsOn(Rule const &dependency);
+    void dependsOn(const Rule &dependency);
 
-    void dependsOn(Rule const *dependencyOrNull);
+    void dependsOn(const Rule *dependencyOrNull);
 
     /**
      * Unlinks rules. This rule will no longer depend on @a dependency.
      * @a dependency will release its reference to this rule.
      */
-    void independentOf(Rule const &dependency);
+    void independentOf(const Rule &dependency);
 
-    void independentOf(Rule const *dependencyOrNull);
+    void independentOf(const Rule *dependencyOrNull);
 
     virtual String description() const = 0;
 
@@ -133,22 +149,36 @@ public:
     static bool invalidRulesExist();
 
 protected:
-    ~Rule(); // Counted
+    ~Rule() override // not public due to being Counted
+    {
+        DE_ASSERT(_dependencies.isEmpty());
+    }
 
     /**
      * Sets the current value of the rule and marks it valid.
      *
      * @param value  New valid value.
      */
-    void setValue(float value);
+    inline void setValue(float value)
+    {
+        _value = value;
+        _flags |= Valid;
+    }
 
-    float cachedValue() const;
+    inline float cachedValue() const
+    {
+        return _value;
+    }
 
     // Implements IRuleInvalidationObserver.
     void ruleInvalidated();
 
+protected:
+    int _flags; // Derived rules use this, too.
+
 private:
-    DE_PRIVATE(d)
+    PointerSetT<Rule> _dependencies; // ref'd
+    float             _value;        // Current value of the rule.
 
     static bool _invalidRulesExist;
 };

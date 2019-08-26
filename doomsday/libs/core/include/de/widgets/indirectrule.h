@@ -53,11 +53,11 @@ public:
 
     void update();
 
-    Rule const &source() const;
+    const Rule &source() const;
     String description() const;
 
 private:
-    Rule const *_source;
+    const Rule *_source;
 };
 
 } // namespace de

@@ -49,7 +49,7 @@ public:
          * value. Caller is responsible for making sure a reference is taken
          * to the returned rule.
          */
-        operator Rule const &() const;
+        operator const Rule &() const;
 
         operator RefArg<Rule>() const;
 
@@ -69,7 +69,7 @@ public:
 
     String description() const;
 
-    static ConstantRule const &zero();
+    static const ConstantRule &zero();
 
 protected:
     void update();

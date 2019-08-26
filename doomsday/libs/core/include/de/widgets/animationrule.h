@@ -45,11 +45,11 @@ public:
      * @param transition  Transition time to reach the current or future target values.
      * @param style       Animation style.
      */
-    explicit AnimationRule(Rule const &target, TimeSpan transition, Animation::Style style = Animation::EaseOut);
+    explicit AnimationRule(const Rule &target, TimeSpan transition, Animation::Style style = Animation::EaseOut);
 
     void set(float target, TimeSpan transition = 0.0, TimeSpan delay = 0.0);
 
-    void set(Rule const &target, TimeSpan transition = 0.0, TimeSpan delay = 0.0);
+    void set(const Rule &target, TimeSpan transition = 0.0, TimeSpan delay = 0.0);
 
     /**
      * Sets the animation style of the rule.
@@ -61,9 +61,11 @@ public:
     void setStyle(Animation::Style style, float bounceSpring);
 
     enum Behavior {
-        Singleshot               = 0x1,
-        RestartWhenTargetChanges = 0x2,
-        DontAnimateFromZero      = 0x4,
+        Singleshot               = 0x10,
+        RestartWhenTargetChanges = 0x20,
+        DontAnimateFromZero      = 0x40,
+
+        FlagMask = 0xf0
     };
     using Behaviors = Flags;
 
@@ -94,24 +96,19 @@ public:
      */
     void shift(float delta);
 
-    void finish();
-
-    void pause();
-
-    void resume();
-
+    void   finish();
+    void   pause();
+    void   resume();
     String description() const;
 
 protected:
     ~AnimationRule();
     void update();
-
     void timeChanged(Clock const &);
 
 private:
     Animation _animation;
-    Rule const *_targetRule;
-    Behaviors _behavior;
+    const Rule *_targetRule;
 };
 
 } // namespace de

@@ -26,15 +26,16 @@ AnimationRule::AnimationRule(float initialValue, Animation::Style style)
     : Rule(initialValue)
     , _animation(initialValue, style)
     , _targetRule(nullptr)
-    , _behavior(Singleshot)
-{}
+{
+    _flags |= Singleshot;
+}
 
-AnimationRule::AnimationRule(Rule const &target, TimeSpan transition, Animation::Style style)
+AnimationRule::AnimationRule(const Rule &target, TimeSpan transition, Animation::Style style)
     : Rule(target.value())
     , _animation(target.value(), style)
     , _targetRule(nullptr)
-    , _behavior(RestartWhenTargetChanges | DontAnimateFromZero)
 {
+    _flags |= RestartWhenTargetChanges | DontAnimateFromZero;
     set(target, transition);
 }
 
@@ -52,7 +53,7 @@ void AnimationRule::set(float target, TimeSpan transition, TimeSpan delay)
     invalidate();
 }
 
-void AnimationRule::set(Rule const &target, TimeSpan transition, TimeSpan delay)
+void AnimationRule::set(const Rule &target, TimeSpan transition, TimeSpan delay)
 {
     set(target.value(), transition, delay);
 
@@ -73,12 +74,13 @@ void AnimationRule::setStyle(Animation::Style style, float bounceSpring)
 
 void AnimationRule::setBehavior(Behaviors behavior)
 {
-    _behavior = behavior;
+    _flags &= ~FlagMask;
+    _flags |= behavior;
 }
 
 AnimationRule::Behaviors AnimationRule::behavior() const
 {
-    return _behavior;
+    return Behaviors(_flags & FlagMask);
 }
 
 void AnimationRule::shift(float delta)
@@ -119,7 +121,7 @@ void AnimationRule::update()
     // When using a rule for the target, keep it updated.
     if (_targetRule)
     {
-        if (_behavior.testFlag(Singleshot) || !_animation.done())
+        if ((_flags & Singleshot) || !_animation.done())
         {
             _animation.adjustTarget(_targetRule->value());
         }
@@ -129,7 +131,7 @@ void AnimationRule::update()
             if (!fequal(_animation.target(), _targetRule->value()))
             {
                 TimeSpan span = _animation.transitionTime();
-                if (_behavior.testFlag(DontAnimateFromZero) && fequal(_animation.target(), 0))
+                if ((_flags & DontAnimateFromZero) && fequal(_animation.target(), 0))
                 {
                     span = 0.0;
                 }

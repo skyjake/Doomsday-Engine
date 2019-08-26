@@ -19,72 +19,23 @@
 
 #include "de/Rule"
 #include "de/math.h"
-#include "de/PointerSet"
 
 namespace de {
 
 bool Rule::_invalidRulesExist = false;
 
-DE_PIMPL_NOREF(Rule)
-{
-    typedef PointerSetT<Rule> Dependencies;
-    Dependencies dependencies; // ref'd
-
-    /// Current value of the rule.
-    float value;
-
-    /// The value is valid.
-    bool isValid;
-
-    Impl() : value(0), isValid(false)
-    {}
-
-    Impl(float initialValue) : value(initialValue), isValid(true)
-    {}
-
-    ~Impl()
-    {
-        DE_ASSERT(dependencies.isEmpty());
-    }
-};
-
-Rule::Rule() : d(new Impl)
-{}
-
-Rule::Rule(float initialValue) : d(new Impl(initialValue))
-{}
-
-Rule::~Rule()
-{}
-
 float Rule::value() const
 {
-    if (!d->isValid)
+    if (!(_flags & Valid))
     {
         // Force an update.
         const_cast<Rule *>(this)->update();
     }
 
     // It must be valid now, after the update.
-    DE_ASSERT(d->isValid);
+    DE_ASSERT(isValid());
 
-    return d->value;
-}
-
-int Rule::valuei() const
-{
-    return de::floor(value());
-}
-
-void Rule::update()
-{
-    // This is a fixed value, so don't do anything.
-    d->isValid = true;
-}
-
-bool Rule::isValid() const
-{
-    return d->isValid;
+    return _value;
 }
 
 void Rule::markRulesValid()
@@ -97,55 +48,44 @@ bool Rule::invalidRulesExist()
     return _invalidRulesExist;
 }
 
-float Rule::cachedValue() const
-{
-    return d->value;
-}
-
 void Rule::ruleInvalidated()
 {
     // A dependency was invalidated, also invalidate this value.
     invalidate();
 }
 
-void Rule::setValue(float v)
+void Rule::dependsOn(const Rule &dependency)
 {
-    d->value = v;
-    d->isValid = true;
-}
-
-void Rule::dependsOn(Rule const &dependency)
-{
-    DE_ASSERT(!d->dependencies.contains(&dependency));
-    d->dependencies.insert(de::holdRef(&dependency));
+    DE_ASSERT(!_dependencies.contains(&dependency));
+    _dependencies.insert(holdRef(&dependency));
 
     dependency.audienceForRuleInvalidation += this;
 }
 
-void Rule::dependsOn(Rule const *dependencyOrNull)
+void Rule::dependsOn(const Rule *dependencyOrNull)
 {
     if (dependencyOrNull) dependsOn(*dependencyOrNull);
 }
 
-void Rule::independentOf(Rule const &dependency)
+void Rule::independentOf(const Rule &dependency)
 {
     dependency.audienceForRuleInvalidation -= this;
 
-    DE_ASSERT(d->dependencies.contains(&dependency));
-    d->dependencies.remove(&dependency);
+    DE_ASSERT(_dependencies.contains(&dependency));
+    _dependencies.remove(&dependency);
     dependency.release();
 }
 
-void Rule::independentOf(Rule const *dependencyOrNull)
+void Rule::independentOf(const Rule *dependencyOrNull)
 {
     if (dependencyOrNull) independentOf(*dependencyOrNull);
 }
 
 void Rule::invalidate()
 {
-    if (d->isValid)
+    if (isValid())
     {
-        d->isValid = false;
+        _flags &= ~Valid;
 
         // Also set the global flag.
         Rule::_invalidRulesExist = true;
