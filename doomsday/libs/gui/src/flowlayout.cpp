@@ -81,8 +81,8 @@ DE_PIMPL(FlowLayout)
         {
             // The first one is trivial.
             rule.setLeftTop(*initialX, *initialY);
-            changeRef(posX, *initialX + w);
-            changeRef(posY, *initialY);
+            changeRef(posX, widget->rule().right());
+            changeRef(posY, widget->rule().top());
             changeRef(rowHeight, h);
             changeRef(totalHeight, h);
         }
