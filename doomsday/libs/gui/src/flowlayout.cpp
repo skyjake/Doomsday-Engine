@@ -88,8 +88,7 @@ DE_PIMPL(FlowLayout)
         }
         else
         {
-            AutoRef<Rule> rightX     = *posX + w;
-            AutoRef<Rule> isPastEdge = *rightX - *rightEdge;
+            AutoRef<Rule> isPastEdge = *posX + w - *rightEdge;
             AutoRef<Rule> nextRow    = *posY + *rowHeight;
 
             rule.setInput(Rule::Left, OperatorRule::select(*posX,
@@ -99,12 +98,8 @@ DE_PIMPL(FlowLayout)
                                                           nextRow,
                                                           isPastEdge));
 
-            changeRef(posX, OperatorRule::select(*rightX,
-                                                 *initialX + w,
-                                                 isPastEdge));
-            changeRef(posY, OperatorRule::select(*posY,
-                                                 nextRow,
-                                                 isPastEdge));
+            changeRef(posX, widget->rule().right());
+            changeRef(posY, widget->rule().top());
             changeRef(rowHeight,
                       OperatorRule::select(OperatorRule::maximum(*rowHeight, h),
                                            h,
