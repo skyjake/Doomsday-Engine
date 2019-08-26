@@ -25,26 +25,22 @@ DE_PIMPL(FlowLayout)
     GuiWidgetList widgets;
     const Rule *  maxLength;
     const Rule *  rightEdge;
-    const Rule *  rowWidth;
     const Rule *  rowHeight;
     const Rule *  initialX;
     const Rule *  initialY;
     const Rule *  posX;
     const Rule *  posY;
-//    const Rule *  totalWidth;
     const Rule *  totalHeight;
 
     Impl(Public *i, const Rule &x, const Rule &y, const Rule &maxLength)
         : Base(i)
         , maxLength(holdRef(maxLength))
         , rightEdge(new OperatorRule(OperatorRule::Sum, x, maxLength))
-        , rowWidth(nullptr)
         , rowHeight(nullptr)
         , initialX(holdRef(x))
         , initialY(holdRef(y))
         , posX(holdRef(x))
         , posY(holdRef(y))
-//        , totalWidth(new ConstantRule(0))
         , totalHeight(new ConstantRule(0))
     {}
 
@@ -52,13 +48,11 @@ DE_PIMPL(FlowLayout)
     {
         releaseRef(maxLength);
         releaseRef(rightEdge);
-        releaseRef(rowWidth);
         releaseRef(rowHeight);
         releaseRef(initialX);
         releaseRef(initialY);
         releaseRef(posX);
         releaseRef(posY);
-//        releaseRef(totalWidth);
         releaseRef(totalHeight);
     }
 
@@ -67,16 +61,8 @@ DE_PIMPL(FlowLayout)
         widgets.clear();
         changeRef(posX, *initialX);
         changeRef(posY, *initialY);
-        releaseRef(rowWidth);
         releaseRef(rowHeight);
-//        changeRef(totalWidth,  *refless(new ConstantRule(0)));
         changeRef(totalHeight, *refless(new ConstantRule(0)));
-    }
-
-    void advancePos(const Rule &amount)
-    {
-        changeRef(posX, *posX + amount);
-        changeRef(rowWidth, *rowWidth + amount);
     }
 
     void append(GuiWidget *widget, const Rule *spaceBefore)
@@ -97,7 +83,6 @@ DE_PIMPL(FlowLayout)
             rule.setLeftTop(*initialX, *initialY);
             changeRef(posX, *initialX + w);
             changeRef(posY, *initialY);
-//            changeRef(rowWidth, w);
             changeRef(rowHeight, h);
             changeRef(totalHeight, h);
         }
@@ -129,42 +114,6 @@ DE_PIMPL(FlowLayout)
         }
 
         widgets << widget;
-
-//            }
-//            else if (isVertical(dir) && !fixedWidth)
-//            {
-//                changeRef(totalWidth, OperatorRule::maximum(*totalWidth, w));
-//            }
-//        }
-
-        // Move along the movement direction for the major axis.
-//        switch (dir)
-//        {
-//            case ui::Right:
-
-//        rule.setInput(Rule::Left, *posX);
-//        advancePos(w);
-
-//                break;
-
-//            case ui::Left:
-//                rule.setInput(Rule::Right, *posX);
-//                advancePos(w);
-//                break;
-
-//            case ui::Down:
-//                rule.setInput(Rule::Top, *posY);
-//                advancePos(h);
-//                break;
-
-//            case ui::Up:
-//                rule.setInput(Rule::Bottom, *posY);
-//                advancePos(h);
-//                break;
-
-//            default:
-//                break;
-//        }
     }
 };
 

@@ -124,6 +124,9 @@ DE_PIMPL(MainWindow)
         compositor->add(button);
 
         // Try some flow.
+#if defined (DE_DEBUG)
+        const int count1 = Counted::totalCount;
+#endif
         {
             FlowLayout flow(Const(0), Const(0), root.viewWidth() / 2);
 
@@ -139,6 +142,10 @@ DE_PIMPL(MainWindow)
                 compositor->add(lw);
             }
         }
+#if defined (DE_DEBUG)
+        const int count2 = Counted::totalCount;
+        debug("de::Counted increase during FlowLayout creation: %i", count2 - count1);
+#endif
 
         // Mouse cursor.
         cursor = new LabelWidget;
