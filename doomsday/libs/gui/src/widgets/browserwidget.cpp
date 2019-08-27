@@ -18,6 +18,8 @@
 
 #include "de/BrowserWidget"
 #include "de/ButtonWidget"
+#include "de/DialogContentStylist"
+#include "de/FlowLayout"
 #include "de/MenuWidget"
 #include "de/ProgressWidget"
 #include "de/ScrollAreaWidget"
@@ -31,13 +33,17 @@ DE_PIMPL(BrowserWidget)
     const ui::TreeData *data = nullptr;
     Path path;
     LabelWidget *cwdLabel;
-    LabelWidget *currentPath;
+//    LabelWidget *currentPath;
     LabelWidget *menuLabel;
     ScrollAreaWidget *scroller;
     MenuWidget *menu;
+    std::unique_ptr<FlowLayout> pathFlow;
+    DialogContentStylist stylist;
+    Dispatch dispatch;
 
     Impl(Public *i)
         : Base(i)
+        , stylist(*i)
     {
         RuleRectangle &rule = self().rule();
 
@@ -47,20 +53,25 @@ DE_PIMPL(BrowserWidget)
         cwdLabel = LabelWidget::appendSeparatorWithText("Path", i);
         layout << *cwdLabel;
 
-        currentPath = new LabelWidget("cwd");
+        pathFlow.reset(new FlowLayout(cwdLabel->rule().left(), cwdLabel->rule().bottom(),
+                                      rule.width()));
+
+        /*currentPath = new LabelWidget("cwd");
         currentPath->setSizePolicy(ui::Fixed, ui::Expand);
         currentPath->setAlignment(ui::AlignLeft);
-        layout << *currentPath;
+        layout << *currentPath;*/
+
+        layout.append(pathFlow->height());
 
         menuLabel = LabelWidget::appendSeparatorWithText("Contents", i);
         layout << *menuLabel;
 
-        scroller = new ScrollAreaWidget("scroller");
+        scroller = &i->addNew<ScrollAreaWidget>("scroller");
         layout << *scroller;
         scroller->rule()
             .setInput(Rule::Bottom, rule.bottom());
 
-        menu = new MenuWidget("items");
+        menu = &scroller->addNew<MenuWidget>("items");
         menu->setGridSize(1, ui::Filled, 0, ui::Expand);
         menu->rule()
             .setLeftTop(scroller->contentRule().left(), scroller->contentRule().top())
@@ -74,35 +85,71 @@ DE_PIMPL(BrowserWidget)
         scroller->enableScrolling(true);
         scroller->enableIndicatorDraw(true);
 
-        i->add(currentPath);
-        scroller->add(menu);
-        i->add(scroller);
+//        i->add(currentPath);
+//        scroller->add(menu);
+//        i->add(scroller);
 
 //        menu->organizer().audienceForWidgetCreation() += this;
     }
 
     void changeTo(const Path &newPath)
     {
+        debug("[BrowserWidget] change to '%s'", newPath.c_str());
+
         DE_ASSERT(data);
 
         scroller->scrollY(0);
 
         // TODO: This is an async op, need to show progress widget.
         path = newPath;
-        currentPath->setText(path);
+        //currentPath->setText(path);
+        createPathButtons();
         const ui::Data &items = data->items(path);
         menu->setItems(items);
 
         // TODO: Recreate the path segment buttons.
     }
 
-//    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item) override
-//    {
-//        widget.as<ButtonWidget>().audienceForPress() += [this, &item]() {
+    void createPathButtons()
+    {
+        // Get rid of the old buttons.
+        for (auto *i : pathFlow->widgets())
+        {
+            GuiWidget::destroy(i);
+        }
+        pathFlow->clear();
 
-//        };
-//    }
+        // Create a new button for each segment of the path.
+        for (int i = 0; i < path.segmentCount(); ++i)
+        {
+            const auto &segment = path.segment(i);
+
+            auto &button = self().addNew<ButtonWidget>();
+            button.setSizePolicy(ui::Expand, ui::Expand);
+            button.setText(Stringf("%s/", String(segment).c_str()));
+
+            if (i == path.segmentCount() - 1)
+            {
+                button.setTextColor("accent");
+            }
+            else
+            {
+                const Path buttonPath = path.subPath({0, i + 1});
+                button.audienceForPress() += [this, buttonPath]() {
+                    dispatch += [this, buttonPath](){
+                        changeTo(buttonPath);
+                    };
+                };
+            }
+
+            pathFlow->append(button);
+        }
+    }
+
+//    DE_PIMPL_AUDIENCE(Navigation)
 };
+
+//DE_AUDIENCE_METHOD(BrowserWidget, Navigation)
 
 BrowserWidget::BrowserWidget(const String &name)
     : GuiWidget(name)

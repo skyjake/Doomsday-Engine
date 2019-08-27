@@ -27,7 +27,7 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
 {
     DirectoryTreeData dirTree;
     IndirectRule *itemHeight = new IndirectRule;
-    LoopCallback mainCall;
+    Dispatch dispatch;
 
     Impl(Public *i) : Base(i)
     {
@@ -42,26 +42,26 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
         releaseRef(itemHeight);
     }
 
-    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *)
+    GuiWidget *makeItemWidget(const ui::Item &, const GuiWidget *)
     {
-        const auto &dirItem = item.as<DirectoryItem>();
-
         auto *widget = new ButtonWidget;
         widget->setSizePolicy(ui::Fixed, ui::Fixed);
         widget->setAlignment(ui::AlignLeft);
         widget->rule().setInput(Rule::Height, *itemHeight);
         widget->margins().setTopBottom(rule("unit"));
 
-        if (dirItem.isDirectory())
-        {
-            const NativePath subDir = dirItem.path();
-            widget->audienceForPress() += [this, subDir]() {
-                // Changing the directory causes this widget to be deleted, so
-                // we need to postpone the change until the press has been
-                // handled.
-                mainCall.enqueue([this, subDir]() { self().setCurrentPath(subDir); });
-            };
-        }
+        widget->audienceForPress() += [this, widget]() {
+            // Changing the directory causes this widget to be deleted, so
+            // we need to postpone the change until the press has been
+            // handled.
+            const ui::DataPos pos     = self().menu().findItem(*widget);
+            const auto &      dirItem = self().menu().items().at(pos).as<DirectoryItem>();
+            if (dirItem.isDirectory())
+            {
+                const NativePath toDir = dirItem.path();
+                dispatch += [this, toDir]() { self().setCurrentPath(toDir); };
+            }
+        };
 
         return widget;
     }
