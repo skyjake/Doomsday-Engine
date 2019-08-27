@@ -51,7 +51,7 @@ DE_PIMPL(Profiles)
         profile->setOwner(thisPublic);
         profile->audienceForDeletion += this;
 
-        DE_FOR_PUBLIC_AUDIENCE2(Addition, i)
+        DE_FOR_PUBLIC_AUDIENCE(Addition, i)
         {
             i->profileAdded(*profile);
         }
@@ -63,7 +63,7 @@ DE_PIMPL(Profiles)
         profile.setOwner(nullptr);
         profiles.remove(profile.name());
 
-        DE_FOR_PUBLIC_AUDIENCE2(Removal, i)
+        DE_FOR_PUBLIC_AUDIENCE(Removal, i)
         {
             i->profileRemoved(profile);
         }
@@ -404,7 +404,7 @@ void Profiles::AbstractProfile::setReadOnly(bool readOnly)
 
 void Profiles::AbstractProfile::notifyChange()
 {
-    DE_FOR_AUDIENCE2(Change, i)
+    DE_FOR_AUDIENCE(Change, i)
     {
         i->profileChanged(*this);
     }

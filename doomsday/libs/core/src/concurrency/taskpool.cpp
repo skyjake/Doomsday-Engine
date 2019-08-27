@@ -195,7 +195,7 @@ DE_PIMPL(TaskPool), public Waitable, public TaskPool::IPool
                 try
                 {
 //                    emit self().allTasksDone();
-                    DE_FOR_AUDIENCE(Done, i) i->taskPoolDone(self());
+                    DE_FOR_AUDIENCE_VAR(Done, i) i->taskPoolDone(self());
                 }
                 catch (Error const &er)
                 {

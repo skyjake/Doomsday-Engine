@@ -42,9 +42,9 @@ public:
     /**
      * Audience to be notified whenever the toggle is toggled.
      */
-    DE_DEFINE_AUDIENCE2(Toggle, void toggleStateChanged(ToggleWidget &toggle))
+    DE_AUDIENCE(Toggle, void toggleStateChanged(ToggleWidget &toggle))
 
-    DE_DEFINE_AUDIENCE2(UserToggle, void toggleStateChangedByUser(ToggleState active))
+    DE_AUDIENCE(UserToggle, void toggleStateChangedByUser(ToggleState active))
 
 public:
     ToggleWidget(Flags const &flags = DefaultFlags, String const &name = String());

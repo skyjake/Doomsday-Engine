@@ -39,7 +39,7 @@ public:
     /**
      * Audience to be notified when the action is triggerd.
      */
-    DE_DEFINE_AUDIENCE2(Triggered, void actionTriggered(Action &))
+    DE_AUDIENCE(Triggered, void actionTriggered(Action &))
 
     Action();
 

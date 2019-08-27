@@ -387,7 +387,7 @@ DE_GUI_PIMPL(SliderWidget)
             pos.setValue(float(value), 0.1);
             self().requestGeometry();
 
-            DE_FOR_PUBLIC_AUDIENCE2(Value, i) { i->sliderValueChanged(self(), v); }
+            DE_FOR_PUBLIC_AUDIENCE(Value, i) { i->sliderValueChanged(self(), v); }
         }
     }
 
@@ -417,7 +417,7 @@ DE_GUI_PIMPL(SliderWidget)
         ddouble unitsPerPixel = range.size() / (area.width() - endLabelSize);
         setValue(grabValue + (ev.pos().x - grabFrom.x) * unitsPerPixel);
 
-        DE_FOR_PUBLIC_AUDIENCE2(UserValue, i)
+        DE_FOR_PUBLIC_AUDIENCE(UserValue, i)
         {
             i->sliderValueChangedByUser(self(), value);
         }
@@ -453,12 +453,12 @@ DE_GUI_PIMPL(SliderWidget)
                 if (ev.pos().x < rect.left() + endLabelSize)
                 {
                     setValue(value - clickStep());
-                    DE_FOR_PUBLIC_AUDIENCE2(UserValue, i) i->sliderValueChangedByUser(self(), value);
+                    DE_FOR_PUBLIC_AUDIENCE(UserValue, i) i->sliderValueChangedByUser(self(), value);
                 }
                 else if (ev.pos().x > rect.right() - endLabelSize)
                 {
                     setValue(value + clickStep());
-                    DE_FOR_PUBLIC_AUDIENCE2(UserValue, i) i->sliderValueChangedByUser(self(), value);
+                    DE_FOR_PUBLIC_AUDIENCE(UserValue, i) i->sliderValueChangedByUser(self(), value);
                 }
             }
         }
@@ -648,7 +648,7 @@ bool SliderWidget::handleEvent(Event const &event)
 void SliderWidget::setValueFromText(const String &text)
 {
     setValue(text.toDouble() / d->displayFactor);
-    DE_FOR_AUDIENCE2(UserValue, i)
+    DE_FOR_AUDIENCE(UserValue, i)
     {
         i->sliderValueChangedByUser(*this, d->value);
     }

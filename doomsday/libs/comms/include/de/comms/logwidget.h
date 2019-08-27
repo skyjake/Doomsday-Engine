@@ -79,8 +79,8 @@ public:
      */
     void scrollToBottom();
 
-    DE_DEFINE_AUDIENCE2(Scroll, void scrollPositionChanged(int pos))
-    DE_DEFINE_AUDIENCE2(Maximum, void scrollMaxChanged(int maximum))
+    DE_AUDIENCE(Scroll, void scrollPositionChanged(int pos))
+    DE_AUDIENCE(Maximum, void scrollMaxChanged(int maximum))
 
 private:
     DE_PRIVATE(d)

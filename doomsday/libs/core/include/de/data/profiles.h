@@ -102,7 +102,7 @@ public:
         DE_CAST_METHODS()
 
     public:
-        DE_DEFINE_AUDIENCE2(Change, void profileChanged(AbstractProfile &))
+        DE_AUDIENCE(Change, void profileChanged(AbstractProfile &))
 
     private:
         DE_PRIVATE(d)
@@ -110,8 +110,8 @@ public:
 
     DE_ERROR(NotFoundError);
 
-    DE_DEFINE_AUDIENCE2(Addition, void profileAdded  (AbstractProfile &prof))
-    DE_DEFINE_AUDIENCE2(Removal,  void profileRemoved(AbstractProfile &prof))
+    DE_AUDIENCE(Addition, void profileAdded  (AbstractProfile &prof))
+    DE_AUDIENCE(Removal,  void profileRemoved(AbstractProfile &prof))
 
 public:
     Profiles();

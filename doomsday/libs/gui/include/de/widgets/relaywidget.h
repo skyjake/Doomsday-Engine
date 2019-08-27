@@ -58,7 +58,7 @@ public:
      * Notified when the target of the relay is about to be deleted. The target
      * still exists when this method is called.
      */
-    DE_DEFINE_AUDIENCE2(Target, void relayTargetBeingDeleted(RelayWidget &))
+    DE_AUDIENCE(Target, void relayTargetBeingDeleted(RelayWidget &))
 
 private:
     DE_PRIVATE(d)

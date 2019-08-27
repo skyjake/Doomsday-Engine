@@ -33,9 +33,9 @@ public:
      * @param pos  Position of the selected item in the shared saved sessions
      *             list data model.
      */
-    DE_DEFINE_AUDIENCE2(Selection, void saveListSelectionChanged(de::ui::DataPos pos))
+    DE_AUDIENCE(Selection, void saveListSelectionChanged(de::ui::DataPos pos))
 
-    DE_DEFINE_AUDIENCE2(DoubleClick, void saveListDoubleClicked(de::ui::DataPos pos))
+    DE_AUDIENCE(DoubleClick, void saveListDoubleClicked(de::ui::DataPos pos))
 
 public:
     SaveListWidget(GamePanelButtonWidget &owner);

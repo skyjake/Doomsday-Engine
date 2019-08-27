@@ -57,14 +57,14 @@ public:
      * Notified when an item in the menu is triggered. The corresponding UI item is
      * passed as argument.
      */
-    DE_DEFINE_AUDIENCE2(ItemTriggered, void menuItemTriggered(ui::Item const &))
+    DE_AUDIENCE(ItemTriggered, void menuItemTriggered(ui::Item const &))
 
     /**
      * Called when a submenu/widget is opened by one of the items.
      *
      * @param panel  Panel that was opened.
      */
-    DE_DEFINE_AUDIENCE2(SubWidgetOpened, void subWidgetOpened(MenuWidget &, PanelWidget *subwidget))
+    DE_AUDIENCE(SubWidgetOpened, void subWidgetOpened(MenuWidget &, PanelWidget *subwidget))
 
 public:
     MenuWidget(String const &name = String());

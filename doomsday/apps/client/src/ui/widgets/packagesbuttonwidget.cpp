@@ -85,7 +85,7 @@ DE_GUI_PIMPL(PackagesButtonWidget)
             packages = dlg->selectedPackages();
             updateLabel();
 
-            DE_FOR_PUBLIC_AUDIENCE2(Selection, i)
+            DE_FOR_PUBLIC_AUDIENCE(Selection, i)
             {
                 i->packageSelectionChanged(packages);
             }

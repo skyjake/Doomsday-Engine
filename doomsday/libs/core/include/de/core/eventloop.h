@@ -43,7 +43,7 @@ namespace de {
 class DE_PUBLIC EventLoop
 {
 public:
-    DE_DEFINE_AUDIENCE2(Event, void eventPosted(const Event &))
+    DE_AUDIENCE(Event, void eventPosted(const Event &))
 
     /// Returns the current event loop. It is assumed that only one thread is running event loops.
     /// Returns nullptr if no event loop is currently running.

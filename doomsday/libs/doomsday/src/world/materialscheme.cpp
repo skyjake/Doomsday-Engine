@@ -75,7 +75,7 @@ MaterialManifest &MaterialScheme::declare(Path const &path)
     if (d->index.size() != sizeBefore)
     {
         // Notify interested parties that a new manifest was defined in the scheme.
-        DE_FOR_AUDIENCE(ManifestDefined, i) i->materialSchemeManifestDefined(*this, *newManifest);
+        DE_FOR_AUDIENCE_VAR(ManifestDefined, i) i->materialSchemeManifestDefined(*this, *newManifest);
     }
 
     return *newManifest;

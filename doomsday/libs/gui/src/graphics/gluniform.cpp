@@ -111,7 +111,7 @@ DE_PIMPL(GLUniform)
 
     ~Impl()
     {
-        DE_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->uniformDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->uniformDeleted(self());
 
         switch (type)
         {
@@ -208,7 +208,7 @@ DE_PIMPL(GLUniform)
 
     void markAsChanged()
     {
-        DE_FOR_PUBLIC_AUDIENCE2(ValueChange, i)
+        DE_FOR_PUBLIC_AUDIENCE(ValueChange, i)
         {
             i->uniformValueChanged(self());
         }

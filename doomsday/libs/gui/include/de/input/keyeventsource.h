@@ -33,7 +33,7 @@ namespace de {
 class LIBGUI_PUBLIC KeyEventSource
 {
 public:
-    DE_DEFINE_AUDIENCE2(KeyEvent, void keyEvent(KeyEvent const &))
+    DE_AUDIENCE(KeyEvent, void keyEvent(KeyEvent const &))
 
 public:
     KeyEventSource();

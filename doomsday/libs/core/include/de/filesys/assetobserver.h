@@ -46,7 +46,7 @@ public:
     AssetObserver(String const &regexPattern);
 
     /// Notified when an asset matching the provided regular expression is added or removed.
-    DE_DEFINE_AUDIENCE2(Availability, void assetAvailabilityChanged(String const &identifier, Event event))
+    DE_AUDIENCE(Availability, void assetAvailabilityChanged(String const &identifier, Event event))
 
 private:
     DE_PRIVATE(d)

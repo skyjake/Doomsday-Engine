@@ -101,7 +101,7 @@ public:
      *
      * @param file  The file object being deleted.
      */
-    DE_DEFINE_AUDIENCE2(Deletion, void fileBeingDeleted(File const &file))
+    DE_AUDIENCE(Deletion, void fileBeingDeleted(File const &file))
 
     /**
      * Stores the status of a file (size, time of last modification).

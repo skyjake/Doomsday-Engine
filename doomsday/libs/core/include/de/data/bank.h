@@ -190,13 +190,13 @@ public:
      * Notified when a data item has been loaded to memory (cache level
      * InMemory). Notification are always called in the main thread.
      */
-    DE_DEFINE_AUDIENCE2(Load, void bankLoaded(DotPath const &path))
+    DE_AUDIENCE(Load, void bankLoaded(DotPath const &path))
 
     /**
      * Notified when a data item's cache level changes (in addition to the Load
      * notification). Notification are always called in the main thread.
      */
-    DE_DEFINE_AUDIENCE2(CacheLevel, void bankCacheLevelChanged(DotPath const &path, CacheLevel level))
+    DE_AUDIENCE(CacheLevel, void bankCacheLevelChanged(DotPath const &path, CacheLevel level))
 
 public:
     /**

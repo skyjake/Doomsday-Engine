@@ -710,14 +710,14 @@ DE_PIMPL(Bank)
         switch (nt.kind)
         {
         case Notification::Loaded:
-            DE_FOR_PUBLIC_AUDIENCE2(Load, i)
+            DE_FOR_PUBLIC_AUDIENCE(Load, i)
             {
                 i->bankLoaded(nt.path);
             }
             break;
 
         case Notification::CacheChanged:
-            DE_FOR_PUBLIC_AUDIENCE2(CacheLevel, i)
+            DE_FOR_PUBLIC_AUDIENCE(CacheLevel, i)
             {
                 DE_ASSERT(nt.cache != 0);
 

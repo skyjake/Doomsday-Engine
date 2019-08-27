@@ -51,12 +51,12 @@ public:
     /**
      * Notified whenever the state of the asset changes.
      */
-    DE_DEFINE_AUDIENCE2(StateChange, void assetStateChanged(Asset &))
+    DE_AUDIENCE(StateChange, void assetStateChanged(Asset &))
 
     /**
      * Notified when the asset is being destroyed.
      */
-    DE_DEFINE_AUDIENCE2(Deletion, void assetBeingDeleted(Asset &))
+    DE_AUDIENCE(Deletion, void assetBeingDeleted(Asset &))
 
 public:
     Asset(State initialState = NotReady);

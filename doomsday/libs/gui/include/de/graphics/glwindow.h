@@ -82,31 +82,31 @@ public:
      * called immediately before drawing the contents of the WindowEventHandler for the
      * first time (during a paint event).
      */
-    DE_DEFINE_AUDIENCE2(Init, void windowInit(GLWindow &))
+    DE_AUDIENCE(Init, void windowInit(GLWindow &))
 
     /**
      * Notified when a window size has changed.
      */
-    DE_DEFINE_AUDIENCE2(Resize, void windowResized(GLWindow &))
+    DE_AUDIENCE(Resize, void windowResized(GLWindow &))
 
     /**
      * Notified when the window's current display changes.
      */
-    DE_DEFINE_AUDIENCE2(Display, void windowDisplayChanged(GLWindow &))
+    DE_AUDIENCE(Display, void windowDisplayChanged(GLWindow &))
 
     /**
      * Notified when the window pixel ratio has changed.
      */
-    DE_DEFINE_AUDIENCE2(PixelRatio, void windowPixelRatioChanged(GLWindow &))
+    DE_AUDIENCE(PixelRatio, void windowPixelRatioChanged(GLWindow &))
 
     /**
      * Notified when the contents of the window have been swapped to the window front
      * buffer and are thus visible to the user.
      */
-    DE_DEFINE_AUDIENCE2(Swap, void windowSwapped(GLWindow &))
+    DE_AUDIENCE(Swap, void windowSwapped(GLWindow &))
 
-    DE_DEFINE_AUDIENCE2(Move,       void windowMoved(GLWindow &, Vec2i))
-    DE_DEFINE_AUDIENCE2(Visibility, void windowVisibilityChanged(GLWindow &))
+    DE_AUDIENCE(Move,       void windowMoved(GLWindow &, Vec2i))
+    DE_AUDIENCE(Visibility, void windowVisibilityChanged(GLWindow &))
 
     DE_CAST_METHODS()
 

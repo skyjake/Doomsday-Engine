@@ -25,7 +25,9 @@ namespace de {
 class DirectoryBrowserWidget : public BrowserWidget
 {
 public:
-    DirectoryBrowserWidget(const String &name = "dir-browser");
+    DirectoryBrowserWidget(const String &name = "dirbrowser");
+
+    DE_AUDIENCE(Selection, void pathSelected(DirectoryBrowserWidget &, const Path &))
 
 private:
     DE_PRIVATE(d)

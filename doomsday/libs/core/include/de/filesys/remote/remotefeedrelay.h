@@ -39,7 +39,7 @@ public:
 
     enum Status { Disconnected, Connected };
 
-    DE_DEFINE_AUDIENCE2(Status, void remoteRepositoryStatusChanged(String const &address, Status))
+    DE_AUDIENCE(Status, void remoteRepositoryStatusChanged(String const &address, Status))
 
 public:
     RemoteFeedRelay();

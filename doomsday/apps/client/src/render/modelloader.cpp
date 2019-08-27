@@ -266,7 +266,7 @@ DE_PIMPL(ModelLoader)
         // Bind the mandatory common state.
         ClientApp::shaders().build(*prog, name);
 
-        DE_FOR_PUBLIC_AUDIENCE2(NewProgram, i)
+        DE_FOR_PUBLIC_AUDIENCE(NewProgram, i)
         {
             i->newProgramCreated(*prog);
         }

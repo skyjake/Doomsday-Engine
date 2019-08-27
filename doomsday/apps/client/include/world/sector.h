@@ -70,10 +70,10 @@ public:
 //- Lighting ----------------------------------------------------------------------------
 
     /// Notified whenever a light level change occurs.
-    DE_DEFINE_AUDIENCE2(LightLevelChange, void sectorLightLevelChanged(Sector &sector))
+    DE_AUDIENCE(LightLevelChange, void sectorLightLevelChanged(Sector &sector))
 
     /// Notified whenever a light color change occurs.
-    DE_DEFINE_AUDIENCE2(LightColorChange, void sectorLightColorChanged(Sector &sector))
+    DE_AUDIENCE(LightColorChange, void sectorLightColorChanged(Sector &sector))
 
     /**
      * Returns the ambient light level in the sector. The LightLevelChange audience is

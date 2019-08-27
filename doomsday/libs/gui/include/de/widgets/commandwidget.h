@@ -35,9 +35,9 @@ class PopupWidget;
 class LIBGUI_PUBLIC CommandWidget : public LineEditWidget, public IPersistent
 {
 public:
-    DE_DEFINE_AUDIENCE2(GotFocus,  void gotFocus(CommandWidget &))
-    DE_DEFINE_AUDIENCE2(LostFocus, void lostFocus(CommandWidget &))
-    DE_DEFINE_AUDIENCE2(Command,   void commandEntered(const String &command))
+    DE_AUDIENCE(GotFocus,  void gotFocus(CommandWidget &))
+    DE_AUDIENCE(LostFocus, void lostFocus(CommandWidget &))
+    DE_AUDIENCE(Command,   void commandEntered(const String &command))
 
 public:
     CommandWidget(String const &name = {});

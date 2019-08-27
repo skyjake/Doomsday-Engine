@@ -40,7 +40,7 @@ public:
 
     void setCurrentPath(const Path &path);
 
-    DE_DEFINE_AUDIENCE2(Trigger, void browserItemTriggered(const ui::Item &))
+    DE_AUDIENCE(Navigation, void browserNavigatedTo(BrowserWidget &, const Path &))
 
 private:
     DE_PRIVATE(d)

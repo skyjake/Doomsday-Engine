@@ -38,7 +38,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DE_DEFINE_AUDIENCE2(PlainText, void handlePlainText(const CString &))
+    DE_AUDIENCE(PlainText, void handlePlainText(const CString &))
 
     /**
      * Called during parsing when an escape sequence has been parsed.
@@ -46,7 +46,7 @@ public:
      *
      * @param range  Range in the original text.
      */
-    DE_DEFINE_AUDIENCE2(EscapeSequence, void handleEscapeSequence(const CString &))
+    DE_AUDIENCE(EscapeSequence, void handleEscapeSequence(const CString &))
 
 public:
     EscapeParser();

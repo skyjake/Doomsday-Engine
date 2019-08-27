@@ -111,7 +111,7 @@ GameStateFolder::GameStateFolder(File &sourceArchiveFile, String const &name)
 
 GameStateFolder::~GameStateFolder()
 {
-    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
     //Session::savedIndex().remove(path());
@@ -153,7 +153,7 @@ void GameStateFolder::cacheMetadata(Metadata const &copied)
 {
     d->metadata          = copied;
     d->needCacheMetadata = false;
-    DE_FOR_AUDIENCE2(MetadataChange, i)
+    DE_FOR_AUDIENCE(MetadataChange, i)
     {
         i->gameStateFolderMetadataChanged(*this);
     }

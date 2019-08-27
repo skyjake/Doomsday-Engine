@@ -118,7 +118,7 @@ DE_PIMPL(GLWindow)
         {
             pixelRatio = ratio;
             debug("[GLWindow] pixel ratio changed: %f", pixelRatio);
-            DE_FOR_PUBLIC_AUDIENCE2(PixelRatio, i)
+            DE_FOR_PUBLIC_AUDIENCE(PixelRatio, i)
             {
                 i->windowPixelRatioChanged(self());
             }
@@ -156,8 +156,8 @@ DE_PIMPL(GLWindow)
         debug("[GLWindow] pixel size at notifyReady: %s", currentSize.asText().c_str());
 
         // Everybody can perform GL init now.
-        DE_FOR_PUBLIC_AUDIENCE2(Init, i)   i->windowInit(self());
-        DE_FOR_PUBLIC_AUDIENCE2(Resize, i) i->windowResized(self());
+        DE_FOR_PUBLIC_AUDIENCE(Init, i)   i->windowInit(self());
+        DE_FOR_PUBLIC_AUDIENCE(Resize, i) i->windowResized(self());
 
         readyNotified = true;
 
@@ -218,7 +218,7 @@ DE_PIMPL(GLWindow)
             currentSize = pendingSize;
 
             self().makeCurrent();
-            DE_FOR_PUBLIC_AUDIENCE2(Resize, i)
+            DE_FOR_PUBLIC_AUDIENCE(Resize, i)
             {
                 i->windowResized(self());
             }
@@ -233,7 +233,7 @@ DE_PIMPL(GLWindow)
         updateFrameRateStatistics();
 
         LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
-        DE_FOR_PUBLIC_AUDIENCE2(Swap, i) { i->windowSwapped(self()); }
+        DE_FOR_PUBLIC_AUDIENCE(Swap, i) { i->windowSwapped(self()); }
     }
 
     /**
@@ -281,7 +281,7 @@ DE_PIMPL(GLWindow)
         {
             displayIndex = disp;
             debug("[GLWindow] display index changed: %d", displayIndex);
-            DE_FOR_PUBLIC_AUDIENCE2(Display, i) { i->windowDisplayChanged(self()); }
+            DE_FOR_PUBLIC_AUDIENCE(Display, i) { i->windowDisplayChanged(self()); }
             updatePixelRatio();
         }
     }
@@ -317,7 +317,7 @@ DE_PIMPL(GLWindow)
 
                     case SDL_WINDOWEVENT_MOVED:
                         checkWhichDisplay();
-                        DE_FOR_PUBLIC_AUDIENCE2(Move, i)
+                        DE_FOR_PUBLIC_AUDIENCE(Move, i)
                         {
                             i->windowMoved(self(), Vec2i(event.window.data1, event.window.data2));
                         }
@@ -449,7 +449,7 @@ void GLWindow::setGeometry(const Rectanglei &rect)
     if (d->currentSize != pixels.toVec2ui())
     {
         d->currentSize = pixels.toVec2ui();
-        DE_FOR_AUDIENCE2(Resize, i) { i->windowResized(*this); }
+        DE_FOR_AUDIENCE(Resize, i) { i->windowResized(*this); }
     }
 }
 

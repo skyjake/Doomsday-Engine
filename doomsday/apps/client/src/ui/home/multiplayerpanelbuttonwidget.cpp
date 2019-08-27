@@ -98,7 +98,7 @@ DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
     void joinButtonPressed() const
     {
         self().root().setFocus(nullptr);
-        DE_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i)
+        DE_FOR_PUBLIC_AUDIENCE(AboutToJoin, i)
         {
             i->aboutToJoinMultiplayerGame(serverInfo);
         }

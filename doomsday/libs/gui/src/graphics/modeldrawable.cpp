@@ -805,7 +805,7 @@ DE_PIMPL(ModelDrawable)
         }
 
         // Last minute notification in case some additional setup is needed.
-        DE_FOR_PUBLIC_AUDIENCE2(AboutToGLInit, i)
+        DE_FOR_PUBLIC_AUDIENCE(AboutToGLInit, i)
         {
             i->modelAboutToGLInit(self());
         }

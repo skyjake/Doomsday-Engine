@@ -242,7 +242,7 @@ RemoteUser::RemoteUser(Socket *socket) : d(new Impl(this, socket))
 
 RemoteUser::~RemoteUser()
 {
-    DE_FOR_AUDIENCE2(Destroy, i) { i->aboutToDestroyRemoteUser(*this); }
+    DE_FOR_AUDIENCE(Destroy, i) { i->aboutToDestroyRemoteUser(*this); }
 
     d->disconnect();
 }

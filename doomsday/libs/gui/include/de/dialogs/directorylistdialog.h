@@ -31,7 +31,7 @@ namespace de {
 class LIBGUI_PUBLIC DirectoryListDialog : public MessageDialog
 {
 public:
-    DE_DEFINE_AUDIENCE2(Change, void directoryListChanged())
+    DE_AUDIENCE(Change, void directoryListChanged())
 
 public:
     DirectoryListDialog(String const &name = String());

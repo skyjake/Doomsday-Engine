@@ -125,7 +125,7 @@ class DE_PUBLIC ScriptedInfo : public IObject
 public:
     typedef Set<String> Paths;
 
-    DE_DEFINE_AUDIENCE2(NamedBlock, void parsedNamedBlock(String const &name, Record &block))
+    DE_AUDIENCE(NamedBlock, void parsedNamedBlock(String const &name, Record &block))
 
 public:
     /**

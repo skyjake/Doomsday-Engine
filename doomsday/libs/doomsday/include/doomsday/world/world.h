@@ -75,7 +75,7 @@ protected:
 
 public:
     /// Notified whenever the "current" map changes.
-    DE_DEFINE_AUDIENCE2(MapChange, void worldMapChanged())
+    DE_AUDIENCE(MapChange, void worldMapChanged())
 
 public:  /// @todo make private:
     void notifyMapChange();

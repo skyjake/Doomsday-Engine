@@ -83,7 +83,7 @@ public:
      * changes are queued, the notification is made only after all the changes
      * have been applied.
      */
-    DE_DEFINE_AUDIENCE2(AttributeChange, void windowAttributesChanged(PersistentGLWindow &))
+    DE_AUDIENCE(AttributeChange, void windowAttributesChanged(PersistentGLWindow &))
 
 public:
     /**

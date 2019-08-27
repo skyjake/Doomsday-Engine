@@ -166,7 +166,7 @@ void EventLoop::postEvent(Event *event)
 
 void EventLoop::processEvent(const Event &event)
 {
-    DE_FOR_AUDIENCE2(Event, i) { i->eventPosted(event); }
+    DE_FOR_AUDIENCE(Event, i) { i->eventPosted(event); }
 
     // Handle core events.
     switch (event.type())

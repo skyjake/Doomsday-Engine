@@ -722,7 +722,7 @@ DE_GUI_PIMPL(PackagesWidget)
 
         allPackages.sort();
 
-        DE_FOR_PUBLIC_AUDIENCE2(ItemCount, i)
+        DE_FOR_PUBLIC_AUDIENCE(ItemCount, i)
         {
             i->itemCountChanged(filteredPackages.size(), allPackages.size());
         }
@@ -778,7 +778,7 @@ DE_GUI_PIMPL(PackagesWidget)
 
         filteredPackages.refilter();
 
-        DE_FOR_PUBLIC_AUDIENCE2(ItemCount, i)
+        DE_FOR_PUBLIC_AUDIENCE(ItemCount, i)
         {
             i->itemCountChanged(filteredPackages.size(), allPackages.size());
         }

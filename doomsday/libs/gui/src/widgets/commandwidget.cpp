@@ -64,7 +64,7 @@ PopupWidget &CommandWidget::autocompletionPopup()
 void CommandWidget::focusGained()
 {
     LineEditWidget::focusGained();
-    DE_FOR_AUDIENCE2(GotFocus, i) { i->gotFocus(*this); }
+    DE_FOR_AUDIENCE(GotFocus, i) { i->gotFocus(*this); }
 }
 
 void CommandWidget::focusLost()
@@ -74,7 +74,7 @@ void CommandWidget::focusLost()
     // Get rid of the autocompletion popup.
     closeAutocompletionPopup();
 
-    DE_FOR_AUDIENCE2(LostFocus, i) { i->lostFocus(*this); }
+    DE_FOR_AUDIENCE(LostFocus, i) { i->lostFocus(*this); }
 }
 
 bool CommandWidget::handleEvent(Event const &event)
@@ -107,7 +107,7 @@ bool CommandWidget::handleEvent(Event const &event)
 
                 String const entered = d->history.enter();
                 executeCommand(entered);
-                DE_FOR_AUDIENCE2(Command, i) { i->commandEntered(entered); }
+                DE_FOR_AUDIENCE(Command, i) { i->commandEntered(entered); }
             }
             return true;
         }

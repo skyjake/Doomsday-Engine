@@ -36,7 +36,7 @@ public:
      * Notified whenever the time of the clock changes. The audience members
      * will be notified in unspecified order.
      */
-    DE_DEFINE_AUDIENCE2(TimeChange, void timeChanged(Clock const &))
+    DE_AUDIENCE(TimeChange, void timeChanged(Clock const &))
 
     /**
      * Notified whenever the time of the clock changes. The entire priority

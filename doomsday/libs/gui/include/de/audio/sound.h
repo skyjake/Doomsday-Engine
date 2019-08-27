@@ -110,16 +110,16 @@ public:
     DE_CAST_METHODS()
 
     /// Audience that is notified when the sound is played.
-    DE_DEFINE_AUDIENCE2(Play, void soundPlayed(Sound const &))
+    DE_AUDIENCE(Play, void soundPlayed(Sound const &))
 
     /// Audience that is notified when the properties of the sound change.
-    DE_DEFINE_AUDIENCE2(Change, void soundPropertyChanged(Sound const &))
+    DE_AUDIENCE(Change, void soundPropertyChanged(Sound const &))
 
     /// Audience that is notified when the sound stops.
-    DE_DEFINE_AUDIENCE2(Stop, void soundStopped(Sound &))
+    DE_AUDIENCE(Stop, void soundStopped(Sound &))
 
     /// Audience that is notified when the sound instance is deleted.
-    DE_DEFINE_AUDIENCE2(Deletion, void soundBeingDeleted(Sound &))
+    DE_AUDIENCE(Deletion, void soundBeingDeleted(Sound &))
 
 protected:
     /// Called after a property value has been changed.

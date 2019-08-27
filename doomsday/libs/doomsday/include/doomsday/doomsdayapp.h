@@ -50,19 +50,19 @@ class LIBDOOMSDAY_PUBLIC DoomsdayApp
 {
 public:
     /// Notified before the current game is unloaded.
-    DE_DEFINE_AUDIENCE2(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
+    DE_AUDIENCE(GameUnload, void aboutToUnloadGame(Game const &gameBeingUnloaded))
 
-    DE_DEFINE_AUDIENCE2(GameLoad, void aboutToLoadGame(Game const &gameBeingLoaded))
+    DE_AUDIENCE(GameLoad, void aboutToLoadGame(Game const &gameBeingLoaded))
 
     /// Notified after the current game has been changed.
-    DE_DEFINE_AUDIENCE2(GameChange, void currentGameChanged(Game const &newGame))
+    DE_AUDIENCE(GameChange, void currentGameChanged(Game const &newGame))
 
     /// Notified when console variables and commands should be registered.
-    DE_DEFINE_AUDIENCE2(ConsoleRegistration, void consoleRegistration())
+    DE_AUDIENCE(ConsoleRegistration, void consoleRegistration())
 
-    DE_DEFINE_AUDIENCE2(FileRefresh, void aboutToRefreshFiles())
+    DE_AUDIENCE(FileRefresh, void aboutToRefreshFiles())
 
-    DE_DEFINE_AUDIENCE2(PeriodicAutosave, void periodicAutosave())
+    DE_AUDIENCE(PeriodicAutosave, void periodicAutosave())
 
     struct GameChangeParameters {
         /// @c true iff caller (i.e., App_ChangeGame) initiated busy mode.

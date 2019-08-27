@@ -40,7 +40,7 @@ public:
     /// Thrown when the variable is gone and someone tries to access it. @ingroup errors
     DE_ERROR(VariableMissingError);
 
-    DE_DEFINE_AUDIENCE2(Change, void variableArrayChanged(VariableArrayWidget &))
+    DE_AUDIENCE(Change, void variableArrayChanged(VariableArrayWidget &))
 
 public:
     VariableArrayWidget(Variable &variable, String const &name = String());

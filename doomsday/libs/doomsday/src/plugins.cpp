@@ -145,7 +145,7 @@ Plugins::Plugins() : d(new Impl)
 
 void Plugins::publishAPIs(const char *plugName)
 {
-    DE_FOR_AUDIENCE2(PublishAPI, i)
+    DE_FOR_AUDIENCE(PublishAPI, i)
     {
         i->publishAPIToPlugin(plugName);
     }
@@ -153,7 +153,7 @@ void Plugins::publishAPIs(const char *plugName)
 
 void Plugins::notify(int notification, void *data)
 {
-    DE_FOR_AUDIENCE2(Notification, i)
+    DE_FOR_AUDIENCE(Notification, i)
     {
         i->pluginSentNotification(notification, data);
     }

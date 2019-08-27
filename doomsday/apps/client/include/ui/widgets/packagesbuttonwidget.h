@@ -30,7 +30,7 @@
 class PackagesButtonWidget : public de::ButtonWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Selection, void packageSelectionChanged(const de::StringList &packageIds))
+    DE_AUDIENCE(Selection, void packageSelectionChanged(const de::StringList &packageIds))
 
 public:
     PackagesButtonWidget();

@@ -32,9 +32,9 @@ namespace de {
 class DE_PUBLIC WebRequest
 {
 public:
-    DE_DEFINE_AUDIENCE2(Progress,  void webRequestProgress(WebRequest &, dsize currentSize, dsize totalSize))
-    DE_DEFINE_AUDIENCE2(ReadyRead, void webRequestReadyRead(WebRequest &))
-    DE_DEFINE_AUDIENCE2(Finished,  void webRequestFinished(WebRequest &))
+    DE_AUDIENCE(Progress,  void webRequestProgress(WebRequest &, dsize currentSize, dsize totalSize))
+    DE_AUDIENCE(ReadyRead, void webRequestReadyRead(WebRequest &))
+    DE_AUDIENCE(Finished,  void webRequestFinished(WebRequest &))
 
     /// The WebRequest object is busy pending the results of a started request. @ingroup errors
     DE_ERROR(PendingError);

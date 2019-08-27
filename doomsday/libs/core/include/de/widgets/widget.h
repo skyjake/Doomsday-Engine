@@ -93,22 +93,22 @@ public:
     /**
      * Notified when the widget is about to be deleted.
      */
-    DE_DEFINE_AUDIENCE2(Deletion, void widgetBeingDeleted(Widget &widget))
+    DE_AUDIENCE(Deletion, void widgetBeingDeleted(Widget &widget))
 
     /**
      * Notified when the widget's parent changes.
      */
-    DE_DEFINE_AUDIENCE2(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
+    DE_AUDIENCE(ParentChange, void widgetParentChanged(Widget &child, Widget *oldParent, Widget *newParent))
 
     /**
      * Notified when a child is added to the widget.
      */
-    DE_DEFINE_AUDIENCE2(ChildAddition, void widgetChildAdded(Widget &child))
+    DE_AUDIENCE(ChildAddition, void widgetChildAdded(Widget &child))
 
     /**
      * Notified after a child has been removed from the widget.
      */
-    DE_DEFINE_AUDIENCE2(ChildRemoval, void widgetChildRemoved(Widget &child))
+    DE_AUDIENCE(ChildRemoval, void widgetChildRemoved(Widget &child))
 
 public:
     Widget(String const &name = String());

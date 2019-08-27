@@ -45,13 +45,13 @@ class DE_PUBLIC PackageLoader
 {
 public:
     /// Notified when any package is loaded or unloaded.
-    DE_DEFINE_AUDIENCE2(Activity, void setOfLoadedPackagesChanged())
+    DE_AUDIENCE(Activity, void setOfLoadedPackagesChanged())
 
     /// Notified when a package is loaded.
-    DE_DEFINE_AUDIENCE2(Load, void packageLoaded(String const &packageId))
+    DE_AUDIENCE(Load, void packageLoaded(String const &packageId))
 
     /// Notified when a package is unloaded.
-    DE_DEFINE_AUDIENCE2(Unload, void aboutToUnloadPackage(String const &packageId))
+    DE_AUDIENCE(Unload, void aboutToUnloadPackage(String const &packageId))
 
     /// Requested package was not found. @ingroup errors
     DE_ERROR(NotFoundError);

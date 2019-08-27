@@ -53,16 +53,16 @@ public:
     };
 
     /// Notified whenever the tint color changes.
-    DE_DEFINE_AUDIENCE2(ColorChange,   void surfaceColorChanged(Surface &sector))
+    DE_AUDIENCE(ColorChange,   void surfaceColorChanged(Surface &sector))
 
     /// Notified whenever the normal vector changes.
-    DE_DEFINE_AUDIENCE2(NormalChange,  void surfaceNormalChanged(Surface &surface))
+    DE_AUDIENCE(NormalChange,  void surfaceNormalChanged(Surface &surface))
 
     /// Notified whenever the opacity changes.
-    DE_DEFINE_AUDIENCE2(OpacityChange, void surfaceOpacityChanged(Surface &surface))
+    DE_AUDIENCE(OpacityChange, void surfaceOpacityChanged(Surface &surface))
 
     /// Notified whenever the @em sharp origin changes.
-    DE_DEFINE_AUDIENCE2(OriginChange,  void surfaceOriginChanged(Surface &surface))
+    DE_AUDIENCE(OriginChange,  void surfaceOriginChanged(Surface &surface))
 
     /**
      * Construct a new surface.
@@ -135,7 +135,7 @@ public:
     DE_ERROR(MissingMaterialError);
 
     /// Notified when the material changes.
-    DE_DEFINE_AUDIENCE2(MaterialChange, void surfaceMaterialChanged(Surface &surface))
+    DE_AUDIENCE(MaterialChange, void surfaceMaterialChanged(Surface &surface))
 
     /**
      * Returns @c true iff a material is bound to the surface.
@@ -230,7 +230,7 @@ public:
 //- Origin smoothing --------------------------------------------------------------------
 
     /// Notified when the @em sharp material origin changes.
-    DE_DEFINE_AUDIENCE2(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
+    DE_AUDIENCE(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
 
     /// Maximum speed for a smoothed material offset.
     static de::dint const MAX_SMOOTH_MATERIAL_MOVE = 8;

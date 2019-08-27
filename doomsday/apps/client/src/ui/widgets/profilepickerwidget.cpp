@@ -162,7 +162,7 @@ void ProfilePickerWidget::openMenu()
 
 void ProfilePickerWidget::edit()
 {
-    DE_FOR_AUDIENCE2(EditorRequest, i)
+    DE_FOR_AUDIENCE(EditorRequest, i)
     {
         i->profileEditorRequested();
     }

@@ -41,8 +41,8 @@ public:
     /// The UDP port was unavailable. @ingroup errors
     DE_ERROR(PortError);
 
-    DE_DEFINE_AUDIENCE2(Discovery, void beaconFoundHost(const Address &host, const Block &message))
-    DE_DEFINE_AUDIENCE2(Finished,  void beaconFinished())
+    DE_AUDIENCE(Discovery, void beaconFoundHost(const Address &host, const Block &message))
+    DE_AUDIENCE(Finished,  void beaconFinished())
 
 public:
     /**

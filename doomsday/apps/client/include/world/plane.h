@@ -55,15 +55,15 @@ public:
 #endif
 
     /// Notified when the plane is about to be deleted.
-    DE_DEFINE_AUDIENCE2(Deletion, void planeBeingDeleted(Plane const &plane))
+    DE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
 
     /// Notified whenever a @em sharp height change occurs.
-    DE_DEFINE_AUDIENCE2(HeightChange, void planeHeightChanged(Plane &plane))
+    DE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane))
 
 #ifdef __CLIENT__
 
     /// Notified whenever a @em smoothed height change occurs.
-    DE_DEFINE_AUDIENCE2(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
+    DE_AUDIENCE(HeightSmoothedChange, void planeHeightSmoothedChanged(Plane &plane))
 
 #endif
 

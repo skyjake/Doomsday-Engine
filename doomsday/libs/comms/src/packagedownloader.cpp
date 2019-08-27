@@ -129,7 +129,7 @@ DE_PIMPL(PackageDownloader)
                 totalRemaining += bytes.second.start;
             }
 
-            DE_FOR_PUBLIC_AUDIENCE2(Status, i)
+            DE_FOR_PUBLIC_AUDIENCE(Status, i)
             {
                 i->downloadStatusUpdate(Rangei64(totalRemaining, totalBytes),
                                         Rangei(downloadBytes.size(), numDownloads));
@@ -160,7 +160,7 @@ DE_PIMPL(PackageDownloader)
     void finishDownloads()
     {
         // Final status update.
-        DE_FOR_PUBLIC_AUDIENCE2(Status, i)
+        DE_FOR_PUBLIC_AUDIENCE(Status, i)
         {
             i->downloadStatusUpdate(Rangei64(0, totalBytes), Rangei(0, numDownloads));
         }
@@ -250,7 +250,7 @@ String PackageDownloader::fileRepository() const
 void PackageDownloader::cancel()
 {
     d->isCancelled = true;
-    DE_FOR_AUDIENCE2(Status, i)
+    DE_FOR_AUDIENCE(Status, i)
     {
         i->downloadStatusUpdate(Rangei64(), Rangei());
     }

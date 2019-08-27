@@ -42,7 +42,7 @@ public:
     DE_ERROR(MissingControlError);
 
     /// Notified when the active state of the device changes.
-    DE_DEFINE_AUDIENCE2(ActiveChange, void inputDeviceActiveChanged(InputDevice &device))
+    DE_AUDIENCE(ActiveChange, void inputDeviceActiveChanged(InputDevice &device))
 
     /**
      * Base class for all controls.

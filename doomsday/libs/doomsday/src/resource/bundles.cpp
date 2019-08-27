@@ -215,7 +215,7 @@ void Bundles::identify()
         d->identifyAddedDataBundles();
         if (isEverythingIdentified())
         {
-            DE_FOR_AUDIENCE2(Identify, i)
+            DE_FOR_AUDIENCE(Identify, i)
             {
                 i->dataBundlesIdentified();
             }

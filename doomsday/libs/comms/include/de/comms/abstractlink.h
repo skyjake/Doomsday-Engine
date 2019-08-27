@@ -40,10 +40,10 @@ class LIBSHELL_PUBLIC AbstractLink
 public:
     enum Status { Disconnected, Connecting, Connected };
 
-    DE_DEFINE_AUDIENCE2(AddressResolved, void addressResolved())
-    DE_DEFINE_AUDIENCE2(Connected,       void connected())
-    DE_DEFINE_AUDIENCE2(Disconnected,    void disconnected())
-    DE_DEFINE_AUDIENCE2(PacketsReady,    void packetsReady())
+    DE_AUDIENCE(AddressResolved, void addressResolved())
+    DE_AUDIENCE(Connected,       void connected())
+    DE_AUDIENCE(Disconnected,    void disconnected())
+    DE_AUDIENCE(PacketsReady,    void packetsReady())
 
 public:
     AbstractLink();

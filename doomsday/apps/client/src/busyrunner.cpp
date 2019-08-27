@@ -341,7 +341,7 @@ void BusyRunner::loop()
     bool pendingRemain = false;
     if (ClientWindow::main().home().isHidden())
     {
-        DE_FOR_AUDIENCE2(DeferredGLTask, i)
+        DE_FOR_AUDIENCE(DeferredGLTask, i)
         {
             if (i->performDeferredGLTask() == TasksPending)
             {

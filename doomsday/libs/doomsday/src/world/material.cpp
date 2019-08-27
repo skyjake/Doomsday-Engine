@@ -189,7 +189,7 @@ Material::~Material()
 {
     d->maybeCancelTextureDimensionsChangeNotification();
 
-    DE_FOR_AUDIENCE2(Deletion, i) i->materialBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->materialBeingDeleted(*this);
 }
 
 MaterialManifest &Material::manifest() const
@@ -211,7 +211,7 @@ void Material::setDimensions(Vec2ui const &newDimensions)
         d->maybeCancelTextureDimensionsChangeNotification();
 
         // Notify interested parties.
-        DE_FOR_AUDIENCE2(DimensionsChange, i) i->materialDimensionsChanged(*this);
+        DE_FOR_AUDIENCE(DimensionsChange, i) i->materialDimensionsChanged(*this);
     }
 }
 

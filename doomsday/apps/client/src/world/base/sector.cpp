@@ -479,7 +479,7 @@ void Sector::setLightLevel(dfloat newLightLevel)
     if (!de::fequal(d->lightLevel, newLightLevel))
     {
         d->lightLevel = newLightLevel;
-        DE_FOR_AUDIENCE2(LightLevelChange, i) i->sectorLightLevelChanged(*this);
+        DE_FOR_AUDIENCE(LightLevelChange, i) i->sectorLightLevelChanged(*this);
     }
 }
 
@@ -494,7 +494,7 @@ void Sector::setLightColor(Vec3f const &newLightColor)
     if (d->lightColor != newColorClamped)
     {
         d->lightColor = newColorClamped;
-        DE_FOR_AUDIENCE2(LightColorChange, i) i->sectorLightColorChanged(*this);
+        DE_FOR_AUDIENCE(LightColorChange, i) i->sectorLightColorChanged(*this);
     }
 }
 

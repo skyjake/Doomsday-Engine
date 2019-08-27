@@ -39,10 +39,10 @@ public:
         WithoutIcon       = 0x2,
     };
 
-    DE_DEFINE_AUDIENCE2(Activity,    void mouseActivity(HomeItemWidget &))
-    DE_DEFINE_AUDIENCE2(DoubleClick, void itemCoubleClicked(HomeItemWidget &))
-    DE_DEFINE_AUDIENCE2(ContextMenu, void openItemContextMenu(HomeItemWidget &))
-    DE_DEFINE_AUDIENCE2(Selection,   void itemSelected(HomeItemWidget &))
+    DE_AUDIENCE(Activity,    void mouseActivity(HomeItemWidget &))
+    DE_AUDIENCE(DoubleClick, void itemCoubleClicked(HomeItemWidget &))
+    DE_AUDIENCE(ContextMenu, void openItemContextMenu(HomeItemWidget &))
+    DE_AUDIENCE(Selection,   void itemSelected(HomeItemWidget &))
 
 public:
     HomeItemWidget(de::Flags flags = AnimatedHeight, de::String const &name = de::String());

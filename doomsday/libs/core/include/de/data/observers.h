@@ -52,12 +52,12 @@
  *
  * @param Name  Name of the audience.
  */
-#define DE_AUDIENCE(Name) \
-    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+#define DE_AUDIENCE_VAR(Name) \
+    using Name##Audience = de::Observers<DE_AUDIENCE_INTERFACE(Name)>; \
     Name##Audience audienceFor##Name;
 
 #define DE_EXTERN_AUDIENCE(Name) \
-    typedef de::Observers<DE_AUDIENCE_INTERFACE(Name)> Name##Audience; \
+    using Name##Audience = de::Observers<DE_AUDIENCE_INTERFACE(Name)>; \
     DE_PUBLIC extern Name##Audience audienceFor##Name;
 
 #define DE_DECLARE_AUDIENCE_METHOD(Name) \
@@ -88,13 +88,13 @@
  */
 #define DE_DEFINE_AUDIENCE(Name, Method) \
     DE_DECLARE_AUDIENCE(Name, Method) \
-    DE_AUDIENCE(Name)
+    DE_AUDIENCE_VAR(Name)
 
-#define DE_DEFINE_AUDIENCE2(Name, Method) \
+#define DE_AUDIENCE(Name, Method) \
     DE_DECLARE_AUDIENCE(Name, Method) \
     DE_DECLARE_AUDIENCE_METHOD(Name)
 
-#define DE_DEFINE_AUDIENCE_INLINE(Name, Method) \
+#define DE_AUDIENCE_INLINE(Name, Method) \
     DE_DECLARE_AUDIENCE(Name, Method) \
     DE_AUDIENCE_METHOD_INLINE(Name)
 
@@ -187,10 +187,10 @@
  * @param Name  Name of the audience.
  * @param Var   Variable used in the loop.
  */
-#define DE_FOR_AUDIENCE(Name, Var) \
+#define DE_FOR_AUDIENCE_VAR(Name, Var) \
     DE_FOR_EACH_OBSERVER(Var, audienceFor##Name)
 
-#define DE_FOR_AUDIENCE2(Name, Var) \
+#define DE_FOR_AUDIENCE(Name, Var) \
     DE_FOR_EACH_OBSERVER(Var, audienceFor##Name())
 
 /**
@@ -200,10 +200,10 @@
  * @param Name  Name of the audience.
  * @param Var   Variable used in the loop.
  */
-#define DE_FOR_PUBLIC_AUDIENCE(Name, Var) \
+#define DE_FOR_PUBLIC_AUDIENCE_VAR(Name, Var) \
     DE_FOR_EACH_OBSERVER(Var, self().audienceFor##Name)
 
-#define DE_FOR_PUBLIC_AUDIENCE2(Name, Var) \
+#define DE_FOR_PUBLIC_AUDIENCE(Name, Var) \
     DE_FOR_EACH_OBSERVER(Var, self().audienceFor##Name())
 
 namespace de {
@@ -264,7 +264,7 @@ private:
  * implementation of the class.
  *
  * First, define the audience in the @c public section of the class:
- * <pre>DE_DEFINE_AUDIENCE2(Deletion, ...interface-function...)</pre>
+ * <pre>DE_AUDIENCE(Deletion, ...interface-function...)</pre>
  *
  * This works like DE_DEFINE_AUDIENCE, but without a public member variable.
  * Instead, accessor methods are declared for accessing the audience.
@@ -290,9 +290,9 @@ template <typename Type>
 class Observers : public Lockable, public IAudience
 {
 public:
-    typedef PointerSetT<Type> Members; // note: ordered, array-based
-    typedef typename Members::const_iterator const_iterator;
-    typedef int size_type;
+    using Members        = PointerSetT<Type>; // note: ordered, array-based
+    using const_iterator = typename Members::const_iterator;
+    using size_type      = int;
 
     /**
      * Iteration utility for observers. This should be used when

@@ -28,7 +28,7 @@
 class NativePathWidget : public de::AuxButtonWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(UserChange, void pathChangedByUser(NativePathWidget &))
+    DE_AUDIENCE(UserChange, void pathChangedByUser(NativePathWidget &))
 
 public:
     NativePathWidget();

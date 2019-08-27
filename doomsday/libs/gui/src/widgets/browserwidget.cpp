@@ -58,6 +58,7 @@ DE_GUI_PIMPL(BrowserWidget)
         layout.setOverrideWidth(*contentWidth);
 
         cwdLabel = LabelWidget::appendSeparatorWithText("Path", i);
+
         layout << *cwdLabel;
 
         pathFlow.reset(new FlowLayout(cwdLabel->rule().left(), cwdLabel->rule().bottom(),
@@ -75,6 +76,7 @@ DE_GUI_PIMPL(BrowserWidget)
 
         menu = &scroller->addNew<MenuWidget>("items");
         menu->setGridSize(1, ui::Filled, 0, ui::Expand);
+        menu->margins().setZero();
         menu->rule()
             .setLeftTop(scroller->contentRule().left(), scroller->contentRule().top())
             .setInput(Rule::Width, *contentWidth - this->rule("scrollarea.bar"));
@@ -116,6 +118,11 @@ DE_GUI_PIMPL(BrowserWidget)
         {
             scroller->scrollY(0);
         }
+
+        DE_FOR_PUBLIC_AUDIENCE(Navigation, i)
+        {
+            i->browserNavigatedTo(self(), path);
+        }
     }
 
     void createPathButtons()
@@ -155,10 +162,10 @@ DE_GUI_PIMPL(BrowserWidget)
         }
     }
 
-    DE_PIMPL_AUDIENCE(Trigger)
+    DE_PIMPL_AUDIENCES(Navigation)
 };
 
-DE_AUDIENCE_METHOD(BrowserWidget, Trigger)
+DE_AUDIENCE_METHODS(BrowserWidget, Navigation)
 
 BrowserWidget::BrowserWidget(const String &name)
     : GuiWidget(name)

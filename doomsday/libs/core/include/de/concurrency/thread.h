@@ -52,7 +52,7 @@ public:
     static Thread *currentThread();
 
 public:
-    DE_DEFINE_AUDIENCE2(Finished, void threadFinished(Thread &))
+    DE_AUDIENCE(Finished, void threadFinished(Thread &))
 
 private:
     DE_PRIVATE(d)

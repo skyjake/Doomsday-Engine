@@ -44,7 +44,7 @@ Asset::Asset(Asset const &other) : d(new Impl(*other.d))
 
 Asset::~Asset()
 {
-    DE_FOR_AUDIENCE2(Deletion, i) i->assetBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->assetBeingDeleted(*this);
 }
 
 void Asset::setState(State s)
@@ -53,7 +53,7 @@ void Asset::setState(State s)
     d->state = s;
     if (old != d->state)
     {
-        DE_FOR_AUDIENCE2(StateChange, i) i->assetStateChanged(*this);
+        DE_FOR_AUDIENCE(StateChange, i) i->assetStateChanged(*this);
     }
 }
 

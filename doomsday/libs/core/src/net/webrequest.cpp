@@ -90,7 +90,7 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
                 DE_GUARD(this);
                 status = (ok ? Success : Failure);
             }
-            DE_FOR_PUBLIC_AUDIENCE2(Finished, i) { i->webRequestFinished(self()); }
+            DE_FOR_PUBLIC_AUDIENCE(Finished, i) { i->webRequestFinished(self()); }
         });
     }
 

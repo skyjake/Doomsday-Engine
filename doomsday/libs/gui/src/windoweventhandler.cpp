@@ -166,7 +166,7 @@ DE_PIMPL(WindowEventHandler)
         {
             LOG_INPUT_VERBOSE("Grabbing mouse") << mouseGrabbed;
             mouseGrabbed = true;
-            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i) { i->mouseStateChanged(Trapped); }
+            DE_FOR_PUBLIC_AUDIENCE(MouseStateChange, i) { i->mouseStateChanged(Trapped); }
         }
     }
 
@@ -176,14 +176,14 @@ DE_PIMPL(WindowEventHandler)
         {
             LOG_INPUT_VERBOSE("Ungrabbing mouse");
             mouseGrabbed = false;
-            DE_FOR_PUBLIC_AUDIENCE2(MouseStateChange, i) { i->mouseStateChanged(Untrapped); }
+            DE_FOR_PUBLIC_AUDIENCE(MouseStateChange, i) { i->mouseStateChanged(Untrapped); }
         }
     }
 
     void handleTextInput(const SDL_TextInputEvent &ev)
     {
         KeyEvent keyEvent(KeyEvent::Pressed, 0, 0, 0, ev.text);
-        DE_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
+        DE_FOR_PUBLIC_AUDIENCE(KeyEvent, i)
         {
             i->keyEvent(keyEvent);
         }
@@ -203,7 +203,7 @@ DE_PIMPL(WindowEventHandler)
                           String(),
                           KeyEvent::modifiersFromSDL(ev.keysym.mod));
 
-        DE_FOR_PUBLIC_AUDIENCE2(KeyEvent, i)
+        DE_FOR_PUBLIC_AUDIENCE(KeyEvent, i)
         {
             i->keyEvent(keyEvent);
 
@@ -225,7 +225,7 @@ DE_PIMPL(WindowEventHandler)
     void handleFocus(bool focusGained)
     {
         //debug("focus: %i", focusGained);
-        DE_FOR_PUBLIC_AUDIENCE2(FocusChange, i)
+        DE_FOR_PUBLIC_AUDIENCE(FocusChange, i)
         {
             i->windowFocusChanged(*window, focusGained);
         }
@@ -250,13 +250,13 @@ DE_PIMPL(WindowEventHandler)
         
         if (ev.type == SDL_MOUSEBUTTONDOWN)
         {
-            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
             {
                 i->mouseEvent(MouseEvent(translateButton(ev.button), MouseEvent::Pressed, pos));
             }
             if (ev.clicks == 2)
             {
-                DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+                DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
                 {
                     i->mouseEvent(
                         MouseEvent(translateButton(ev.button), MouseEvent::DoubleClick, pos));
@@ -265,7 +265,7 @@ DE_PIMPL(WindowEventHandler)
         }
         else
         {
-            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
             {
                 i->mouseEvent(MouseEvent(translateButton(ev.button), MouseEvent::Released, pos));
             }
@@ -279,14 +279,14 @@ DE_PIMPL(WindowEventHandler)
         // Absolute events are only emitted when the mouse is untrapped.
         if (!mouseGrabbed)
         {
-            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
             {
                 i->mouseEvent(MouseEvent(MouseEvent::Absolute, currentMousePos));
             }
         }
         else
         {
-            DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+            DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
             {
                 i->mouseEvent(MouseEvent(MouseEvent::Relative, Vec2i(ev.xrel, ev.yrel)));
             }
@@ -295,7 +295,7 @@ DE_PIMPL(WindowEventHandler)
 
     void handleMouseWheelEvent(const SDL_MouseWheelEvent &ev)
     {
-        DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+        DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
         {
             if (ev.x)
             {
@@ -318,7 +318,7 @@ DE_PIMPL(WindowEventHandler)
 
         if (!numPixels.isNull())
         {
-            DE_FOR_AUDIENCE2(MouseEvent, i)
+            DE_FOR_AUDIENCE(MouseEvent, i)
             {
                 if (numPixels.x())
                 {
@@ -336,7 +336,7 @@ DE_PIMPL(WindowEventHandler)
         QPoint const steps = d->wheelAngleAccum / 15;
         if (!steps.isNull())
         {
-            DE_FOR_AUDIENCE2(MouseEvent, i)
+            DE_FOR_AUDIENCE(MouseEvent, i)
             {
                 if (steps.x())
                 {
@@ -376,7 +376,7 @@ DE_PIMPL(WindowEventHandler)
                     const auto units = int(std::lround(delta[axis] * scr.sensitivity));
                     if (units)
                     {
-                        DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+                        DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
                         {
                             i->mouseEvent(MouseEvent(MouseEvent::Pixels,
                                                      axis == 0 ? Vec2i(units, 0) : Vec2i(0, units),
@@ -427,7 +427,7 @@ DE_PIMPL(WindowEventHandler)
                 // Generate a scroll event.
                 if (units)
                 {
-                    DE_FOR_PUBLIC_AUDIENCE2(MouseEvent, i)
+                    DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
                     {
                         i->mouseEvent(MouseEvent(MouseEvent::Pixels,
                                                  axis == 0 ? Vec2i(units, 0) : Vec2i(0, units),
@@ -541,7 +541,7 @@ void WindowEventHandler::mouseDoubleClickEvent(QMouseEvent *ev)
 {
     ev->accept();
 
-    DE_FOR_AUDIENCE2(MouseEvent, i)
+    DE_FOR_AUDIENCE(MouseEvent, i)
     {
         i->mouseEvent(MouseEvent(translateButton(ev->button()), MouseEvent::DoubleClick,
                                  d->translatePosition(ev)));
@@ -560,7 +560,7 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
 
     if (!numPixels.isNull())
     {
-        DE_FOR_AUDIENCE2(MouseEvent, i)
+        DE_FOR_AUDIENCE(MouseEvent, i)
         {
             if (numPixels.x())
             {
@@ -578,7 +578,7 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
     QPoint const steps = d->wheelAngleAccum / 15;
     if (!steps.isNull())
     {
-        DE_FOR_AUDIENCE2(MouseEvent, i)
+        DE_FOR_AUDIENCE(MouseEvent, i)
         {
             if (steps.x())
             {

@@ -34,8 +34,8 @@ class LIBGUI_PUBLIC MouseEventSource
 public:
     enum State { Untrapped, Trapped };
 
-    DE_DEFINE_AUDIENCE2(MouseStateChange, void mouseStateChanged(State))
-    DE_DEFINE_AUDIENCE2(MouseEvent,       void mouseEvent(MouseEvent const &))
+    DE_AUDIENCE(MouseStateChange, void mouseStateChanged(State))
+    DE_AUDIENCE(MouseEvent,       void mouseEvent(MouseEvent const &))
 
 public:
     MouseEventSource();

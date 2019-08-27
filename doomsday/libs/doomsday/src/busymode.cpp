@@ -128,7 +128,7 @@ void BusyMode::abort(String const &message)
     d->busyTaskEndedWithError = true;
     d->busyError = message;
 
-    DE_FOR_AUDIENCE2(Abort, i)
+    DE_FOR_AUDIENCE(Abort, i)
     {
         i->busyModeAborted(message);
     }
@@ -211,7 +211,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
     // Pick the first task.
     task = tasks;
 
-    DE_FOR_AUDIENCE2(Beginning, i)
+    DE_FOR_AUDIENCE(Beginning, i)
     {
         i->busyModeWillBegin(*task);
     }
@@ -243,7 +243,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         /**
          * Process the work.
          */
-        DE_FOR_AUDIENCE2(TaskWillStart, i)
+        DE_FOR_AUDIENCE(TaskWillStart, i)
         {
             i->busyTaskWillStart(*task);
         }
@@ -256,7 +256,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         deleteTask(tmp);
         tmp = nullptr;
 
-        DE_FOR_AUDIENCE2(TaskComplete, i)
+        DE_FOR_AUDIENCE(TaskComplete, i)
         {
             i->busyTaskCompleted(*task);
         }
@@ -264,7 +264,7 @@ int BusyMode::runTasks(BusyTask *tasks, int numTasks)
         if (result) break;
     }
 
-    DE_FOR_AUDIENCE2(End, i)
+    DE_FOR_AUDIENCE(End, i)
     {
         i->busyModeEnded();
     }

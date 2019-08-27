@@ -47,7 +47,7 @@ public:
     /// Called during the busy loop from the main thread.
     /// @return @c true, if all deferred tasks have been completed. @c false, if
     /// deferred tasks still remain afterwards.
-    DE_DEFINE_AUDIENCE2(DeferredGLTask, DeferredResult performDeferredGLTask())
+    DE_AUDIENCE(DeferredGLTask, DeferredResult performDeferredGLTask())
 
 public:
     BusyRunner();

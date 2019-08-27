@@ -289,7 +289,7 @@ public:
      *
      * @param variable  Variable.
      */
-    DE_DEFINE_AUDIENCE2(Deletion, void variableBeingDeleted(Variable &variable))
+    DE_AUDIENCE(Deletion, void variableBeingDeleted(Variable &variable))
 
     /**
      * The value of the variable has changed.
@@ -297,9 +297,9 @@ public:
      * @param variable  Variable.
      * @param newValue  New value of the variable.
      */
-    DE_DEFINE_AUDIENCE2(Change, void variableValueChanged(Variable &variable, Value const &newValue))
+    DE_AUDIENCE(Change, void variableValueChanged(Variable &variable, Value const &newValue))
 
-    DE_DEFINE_AUDIENCE2(ChangeFrom, void variableValueChangedFrom(Variable &variable, Value const &oldValue,
+    DE_AUDIENCE(ChangeFrom, void variableValueChangedFrom(Variable &variable, Value const &oldValue,
                                                                      Value const &newValue))
 
 private:

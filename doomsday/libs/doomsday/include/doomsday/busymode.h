@@ -147,11 +147,11 @@ public:
     void abort(de::String const &message);
 
 public:
-    DE_DEFINE_AUDIENCE2(Beginning, void busyModeWillBegin(BusyTask &firstTask))
-    DE_DEFINE_AUDIENCE2(End,       void busyModeEnded())
-    DE_DEFINE_AUDIENCE2(Abort,     void busyModeAborted(de::String const &message))
-    DE_DEFINE_AUDIENCE2(TaskWillStart, void busyTaskWillStart(BusyTask &task))
-    DE_DEFINE_AUDIENCE2(TaskComplete, void busyTaskCompleted(BusyTask &task))
+    DE_AUDIENCE(Beginning, void busyModeWillBegin(BusyTask &firstTask))
+    DE_AUDIENCE(End,       void busyModeEnded())
+    DE_AUDIENCE(Abort,     void busyModeAborted(de::String const &message))
+    DE_AUDIENCE(TaskWillStart, void busyTaskWillStart(BusyTask &task))
+    DE_AUDIENCE(TaskComplete, void busyTaskCompleted(BusyTask &task))
 
 private:
     DE_PRIVATE(d)

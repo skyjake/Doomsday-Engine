@@ -50,7 +50,7 @@ public:
     enum MouseCursor { None, Arrow, ResizeHorizontal, ResizeVertical };
 
     /// Emitted when the display mode has changed.
-    DE_DEFINE_AUDIENCE2(DisplayModeChange, void displayModeChanged())
+    DE_AUDIENCE(DisplayModeChange, void displayModeChanged())
 
 public:
     GuiApp(const StringList &args);

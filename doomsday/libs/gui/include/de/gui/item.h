@@ -64,7 +64,7 @@ public:
     };
     using Semantics = Flags;
 
-    DE_DEFINE_AUDIENCE2(Change, void itemChanged(Item const &item))
+    DE_AUDIENCE(Change, void itemChanged(Item const &item))
 
 public:
     Item(Semantics semantics = DefaultSemantics);

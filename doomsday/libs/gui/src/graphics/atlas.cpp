@@ -276,7 +276,7 @@ DE_PIMPL(Atlas)
         markFullyChanged();
         mayDefrag = false;
 
-        DE_FOR_PUBLIC_AUDIENCE2(Reposition, i)
+        DE_FOR_PUBLIC_AUDIENCE(Reposition, i)
         {
             i->atlasContentRepositioned(self());
         }
@@ -436,7 +436,7 @@ Id Atlas::alloc(Image const &image, Id const &chosenId)
             d->fullReportedAt = Time::currentHighPerformanceTime();
         }
 
-        DE_FOR_AUDIENCE2(OutOfSpace, i)
+        DE_FOR_AUDIENCE(OutOfSpace, i)
         {
             i->atlasOutOfSpace(*this);
         }

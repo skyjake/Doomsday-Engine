@@ -42,7 +42,7 @@ class LIBDOOMSDAY_PUBLIC GameStateFolder : public de::ArchiveFolder
 {
 public:
     /// Notified whenever the cached metadata of the saved session changes.
-    DE_DEFINE_AUDIENCE2(MetadataChange, void gameStateFolderMetadataChanged(GameStateFolder &session))
+    DE_AUDIENCE(MetadataChange, void gameStateFolderMetadataChanged(GameStateFolder &session))
 
     /**
      * Session metadata.

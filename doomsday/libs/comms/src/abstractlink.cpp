@@ -54,7 +54,7 @@ DE_PIMPL(AbstractLink)
         switch (state)
         {
         case Socket::AddressResolved:
-            DE_FOR_PUBLIC_AUDIENCE2(AddressResolved, i)
+            DE_FOR_PUBLIC_AUDIENCE(AddressResolved, i)
             {
                 i->addressResolved();
             }
@@ -81,7 +81,7 @@ DE_PIMPL(AbstractLink)
         connectedAt = Time();
         peerAddress = socket->peerAddress();
 
-        DE_FOR_PUBLIC_AUDIENCE2(Connected, i) i->connected();
+        DE_FOR_PUBLIC_AUDIENCE(Connected, i) i->connected();
     }
 
     void socketDisconnected()
@@ -113,7 +113,7 @@ DE_PIMPL(AbstractLink)
 
         status = Disconnected;
 
-        DE_FOR_PUBLIC_AUDIENCE2(Disconnected, i) i->disconnected();
+        DE_FOR_PUBLIC_AUDIENCE(Disconnected, i) i->disconnected();
 
         // Slots have now had an opportunity to observe the total
         // duration of the connection that has just ended.
@@ -135,7 +135,7 @@ void AbstractLink::connectDomain(String const &domain, TimeSpan timeout)
     d->socket.reset(new Socket);
     d->socket->audienceForStateChange() += d;
     d->socket->audienceForMessage() += [this]() {
-        DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();
+        DE_FOR_AUDIENCE(PacketsReady, i) i->packetsReady();
     };
 
     // Fallback to default port.
@@ -157,7 +157,7 @@ void AbstractLink::connectHost(Address const &address)
 
     d->socket->audienceForStateChange() += d;
     d->socket->audienceForMessage() += [this]() {
-        DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();
+        DE_FOR_AUDIENCE(PacketsReady, i) i->packetsReady();
     };
 
     // Fallback to default port.
@@ -182,7 +182,7 @@ void AbstractLink::takeOver(Socket *openSocket)
     // Note: socketConnected() not used because the socket is already open.
     d->socket->audienceForStateChange() += d;
     d->socket->audienceForMessage() += [this]() {
-        DE_FOR_AUDIENCE2(PacketsReady, i) i->packetsReady();
+        DE_FOR_AUDIENCE(PacketsReady, i) i->packetsReady();
     };
 
     d->status      = Connected;

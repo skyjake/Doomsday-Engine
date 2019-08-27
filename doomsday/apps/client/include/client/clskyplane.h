@@ -32,7 +32,7 @@ class ClSkyPlane
 {
 public:
     /// Notified whenever a @em height change occurs.
-    DE_DEFINE_AUDIENCE2(HeightChange, void clSkyPlaneHeightChanged(ClSkyPlane &skyPlane))
+    DE_AUDIENCE(HeightChange, void clSkyPlaneHeightChanged(ClSkyPlane &skyPlane))
 
     ClSkyPlane(bool isCeiling = false, de::ddouble defaultHeight = 0);
 

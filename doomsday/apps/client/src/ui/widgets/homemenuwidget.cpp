@@ -53,7 +53,7 @@ DE_GUI_PIMPL(HomeMenuWidget)
     {
         if (auto *clickedWidget = maybeAs<HomeItemWidget>(widget))
         {
-            DE_FOR_PUBLIC_AUDIENCE2(Click, i)
+            DE_FOR_PUBLIC_AUDIENCE(Click, i)
             {
                 i->menuItemClicked(self(), self().findItem(*clickedWidget));
             }
@@ -83,7 +83,7 @@ DE_GUI_PIMPL(HomeMenuWidget)
 
                 selectedIndex = previousSelectedIndex = newSelection;
 
-                DE_FOR_PUBLIC_AUDIENCE2(Selection, i)
+                DE_FOR_PUBLIC_AUDIENCE(Selection, i)
                 {
                     i->selectedIndexChanged(self(), selectedIndex);
                 }

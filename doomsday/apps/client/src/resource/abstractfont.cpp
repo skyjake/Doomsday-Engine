@@ -29,7 +29,7 @@ AbstractFont::AbstractFont(FontManifest &manifest)
 
 AbstractFont::~AbstractFont()
 {
-    DE_FOR_AUDIENCE(Deletion, i) i->fontBeingDeleted(*this);
+    DE_FOR_AUDIENCE_VAR(Deletion, i) i->fontBeingDeleted(*this);
 }
 
 void AbstractFont::glInit() const

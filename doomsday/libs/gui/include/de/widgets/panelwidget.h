@@ -40,16 +40,16 @@ namespace de {
 class LIBGUI_PUBLIC PanelWidget : public GuiWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(AboutToOpen, void panelAboutToOpen(PanelWidget &))
+    DE_AUDIENCE(AboutToOpen, void panelAboutToOpen(PanelWidget &))
 
-    DE_DEFINE_AUDIENCE2(Open, void panelOpened(PanelWidget &))
+    DE_AUDIENCE(Open, void panelOpened(PanelWidget &))
 
     /**
      * Audience to be notified when the panel is closing.
      */
-    DE_DEFINE_AUDIENCE2(Close, void panelBeingClosed(PanelWidget &))
+    DE_AUDIENCE(Close, void panelBeingClosed(PanelWidget &))
 
-    DE_DEFINE_AUDIENCE2(Dismiss, void panelDismissed(PanelWidget &))
+    DE_AUDIENCE(Dismiss, void panelDismissed(PanelWidget &))
 
     enum AnimationStyle { Bouncy, EasedOut, Smooth };
 

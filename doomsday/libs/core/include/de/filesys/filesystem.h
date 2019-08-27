@@ -124,7 +124,7 @@ public:
 
     /// File system busy level has become idle or is no longer idle.
     /// Always called in the main thread.
-    DE_DEFINE_AUDIENCE2(Busy, void fileSystemBusyStatusChanged(BusyStatus))
+    DE_AUDIENCE(Busy, void fileSystemBusyStatusChanged(BusyStatus))
 
 public:
     /**

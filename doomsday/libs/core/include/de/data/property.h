@@ -69,12 +69,12 @@ protected:
         void setValue(ValueType const &v) { \
             if (_value == v) return; \
             _value = v; \
-            DE_FOR_AUDIENCE2(Change, i) i->valueOf ## PropName ## Changed(); \
+            DE_FOR_AUDIENCE(Change, i) i->valueOf ## PropName ## Changed(); \
         } \
         PropName &operator = (ValueType const &v) { setValue(v); return *this; } \
         PropName &operator += (ValueType const &v) { setValue(_value + v); return *this; } \
         PropName &operator -= (ValueType const &v) { setValue(_value - v); return *this; } \
-        DE_DEFINE_AUDIENCE_INLINE(Change, void valueOf ## PropName ## Changed()) \
+        DE_AUDIENCE_INLINE(Change, void valueOf ## PropName ## Changed()) \
     };
 
 #define DE_PROPERTY(PropName, ValueType) \

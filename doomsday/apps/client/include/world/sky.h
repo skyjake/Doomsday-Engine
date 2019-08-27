@@ -41,13 +41,13 @@ class Sky : public MapElement
 {
 public:
     /// Notified when the sky is about to be deleted.
-    DE_DEFINE_AUDIENCE2(Deletion,            void skyBeingDeleted(Sky const &sky))
+    DE_AUDIENCE(Deletion,            void skyBeingDeleted(Sky const &sky))
 
     /// Notified whenever the height changes.
-    DE_DEFINE_AUDIENCE2(HeightChange,        void skyHeightChanged(Sky &sky))
+    DE_AUDIENCE(HeightChange,        void skyHeightChanged(Sky &sky))
 
     /// Notified whenever the horizon offset changes.
-    DE_DEFINE_AUDIENCE2(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
+    DE_AUDIENCE(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
 
     explicit Sky(defn::Sky const *definition = nullptr);
 
@@ -115,13 +115,13 @@ public:
     {
     public:
         /// Notified whenever the active-state changes.
-        DE_DEFINE_AUDIENCE2(ActiveChange,   void skyLayerActiveChanged(Layer &layer))
+        DE_AUDIENCE(ActiveChange,   void skyLayerActiveChanged(Layer &layer))
 
         /// Notified whenever the masked-state changes.
-        DE_DEFINE_AUDIENCE2(MaskedChange,   void skyLayerMaskedChanged(Layer &layer))
+        DE_AUDIENCE(MaskedChange,   void skyLayerMaskedChanged(Layer &layer))
 
         /// Notified whenever the layer material changes.
-        DE_DEFINE_AUDIENCE2(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
+        DE_AUDIENCE(MaterialChange, void skyLayerMaterialChanged(Layer &layer))
 
     public:
         /**

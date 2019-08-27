@@ -87,7 +87,7 @@ public:
 
 public:
     /// Notified when the map is about to be deleted.
-    DE_DEFINE_AUDIENCE2(Deletion, void mapBeingDeleted(BaseMap const &map))
+    DE_AUDIENCE(Deletion, void mapBeingDeleted(BaseMap const &map))
 
 private:
     DE_PRIVATE(d)

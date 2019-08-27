@@ -739,7 +739,7 @@ nextAttempt:
             modifyContentHeight(heightDelta);
             if (needHeightNotify && heightDelta > 0)
             {
-                DE_FOR_PUBLIC_AUDIENCE2(ContentHeight, i)
+                DE_FOR_PUBLIC_AUDIENCE(ContentHeight, i)
                 {
                     i->contentHeightIncreased(self(), heightDelta);
                 }

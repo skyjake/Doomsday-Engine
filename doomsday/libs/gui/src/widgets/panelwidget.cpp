@@ -151,7 +151,7 @@ DE_GUI_PIMPL(PanelWidget)
 
         self().panelClosing();
 
-        DE_FOR_PUBLIC_AUDIENCE2(Close, i)
+        DE_FOR_PUBLIC_AUDIENCE(Close, i)
         {
             i->panelBeingClosed(self());
         }
@@ -333,7 +333,7 @@ void PanelWidget::open()
 {
     if (d->opened) return;
 
-    DE_FOR_AUDIENCE2(AboutToOpen, i) { i->panelAboutToOpen(*this); }
+    DE_FOR_AUDIENCE(AboutToOpen, i) { i->panelAboutToOpen(*this); }
 
     d->dismissTimer.stop();
 
@@ -348,7 +348,7 @@ void PanelWidget::open()
 
     d->opened = true;
 
-    DE_FOR_AUDIENCE2(Open, i) { i->panelOpened(*this); }
+    DE_FOR_AUDIENCE(Open, i) { i->panelOpened(*this); }
 
     // The animation might have to be paused until all assets are prepared.
     d->waitForAssetsInContent();
@@ -383,7 +383,7 @@ void PanelWidget::dismiss()
 
     panelDismissed();
 
-    DE_FOR_AUDIENCE2(Dismiss, i) { i->panelDismissed(*this); }
+    DE_FOR_AUDIENCE(Dismiss, i) { i->panelDismissed(*this); }
 }
 
 void PanelWidget::drawContent()

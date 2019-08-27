@@ -233,7 +233,7 @@ DE_PIMPL(TextDrawable)
         sync.invalidate();
 
         // Let the background tasks know that we are gone.
-        DE_FOR_AUDIENCE(Deletion, i) i->ownerDeleted();
+        DE_FOR_AUDIENCE_VAR(Deletion, i) i->ownerDeleted();
         audienceForDeletion.clear();
 
         tasks.waitForDone();

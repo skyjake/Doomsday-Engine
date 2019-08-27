@@ -135,7 +135,7 @@ NativeFile::~NativeFile()
 {
     DE_GUARD(this);
 
-    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
 
     close();

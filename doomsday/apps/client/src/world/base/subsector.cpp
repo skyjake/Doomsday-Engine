@@ -80,7 +80,7 @@ Subsector::Subsector(const List<ConvexSubspace *> &subspaces) : d(new Impl)
 
 Subsector::~Subsector()
 {
-    DE_FOR_AUDIENCE(Deletion, i) i->subsectorBeingDeleted(*this);
+    DE_FOR_AUDIENCE_VAR(Deletion, i) i->subsectorBeingDeleted(*this);
 }
 
 String Subsector::description() const

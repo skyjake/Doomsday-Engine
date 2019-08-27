@@ -111,7 +111,7 @@ const Value &Item::data() const
 
 void Item::notifyChange() const
 {
-    DE_FOR_AUDIENCE2(Change, i)
+    DE_FOR_AUDIENCE(Change, i)
     {
         i->itemChanged(*this);
     }

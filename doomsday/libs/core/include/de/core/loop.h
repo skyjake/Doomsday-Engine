@@ -39,7 +39,7 @@ public:
     /**
      * Audience to be notified each time the loop iterates.
      */
-    DE_DEFINE_AUDIENCE2(Iteration, void loopIteration())
+    DE_AUDIENCE(Iteration, void loopIteration())
 
 public:
     /**

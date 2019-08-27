@@ -38,7 +38,7 @@ class LIBSHELL_PUBLIC LineEditWidget
     , public AbstractLineEditor
 {
 public:
-    DE_DEFINE_AUDIENCE2(Enter, void enterPressed(String text))
+    DE_AUDIENCE(Enter, void enterPressed(String text))
 
 public:
     /**

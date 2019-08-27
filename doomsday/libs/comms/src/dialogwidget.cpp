@@ -103,7 +103,7 @@ void DialogWidget::accept(int result)
     if (d->subloop.isRunning())
     {
         d->subloop.quit(result);
-        DE_FOR_AUDIENCE2(Accept, i) { i->accepted(result); }
+        DE_FOR_AUDIENCE(Accept, i) { i->accepted(result); }
     }
 }
 
@@ -112,7 +112,7 @@ void DialogWidget::reject(int result)
     if (d->subloop.isRunning())
     {
         d->subloop.quit(result);
-        DE_FOR_AUDIENCE2(Reject, i) { i->rejected(result); }
+        DE_FOR_AUDIENCE(Reject, i) { i->rejected(result); }
     }
 }
 

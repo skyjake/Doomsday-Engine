@@ -202,7 +202,7 @@ DE_PIMPL(DoomsdayApp)
             configSaveTimer.setSingleShot(false);
             configSaveTimer += [this]()
             {
-                DE_FOR_PUBLIC_AUDIENCE2(PeriodicAutosave, i)
+                DE_FOR_PUBLIC_AUDIENCE(PeriodicAutosave, i)
                 {
                     if (!this->busyMode.isActive())
                     {
@@ -922,7 +922,7 @@ void DoomsdayApp::reset()
     // Reinitialize the console.
     Con_ClearDatabases();
     Con_InitDatabases();
-    DE_FOR_AUDIENCE2(ConsoleRegistration, i)
+    DE_FOR_AUDIENCE(ConsoleRegistration, i)
     {
         i->consoleRegistration();
     }
@@ -1026,11 +1026,11 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
     d->gameBeingChanged = true;
 
     // The current game will now be unloaded.
-    DE_FOR_AUDIENCE2(GameUnload, i) i->aboutToUnloadGame(game());
+    DE_FOR_AUDIENCE(GameUnload, i) i->aboutToUnloadGame(game());
     unloadGame(profile);
 
     // Do the switch.
-    DE_FOR_AUDIENCE2(GameLoad, i) i->aboutToLoadGame(newGame);
+    DE_FOR_AUDIENCE(GameLoad, i) i->aboutToLoadGame(newGame);
     makeGameCurrent(profile);
 
     /*
@@ -1096,7 +1096,7 @@ bool DoomsdayApp::changeGame(GameProfile const &profile,
     d->gameBeingChanged = false;
 
     // Game change is complete.
-    DE_FOR_AUDIENCE2(GameChange, i)
+    DE_FOR_AUDIENCE(GameChange, i)
     {
         i->currentGameChanged(game());
     }

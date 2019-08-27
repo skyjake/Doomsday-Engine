@@ -126,7 +126,7 @@ DE_GUI_PIMPL(PackagesColumnWidget)
             countLabel->setText(Stringf("%u shown out of %u available", shown, total));
         }
         totalPackageCount = total;
-        DE_FOR_PUBLIC_AUDIENCE2(AvailableCount, i) i->availablePackageCountChanged(total);
+        DE_FOR_PUBLIC_AUDIENCE(AvailableCount, i) i->availablePackageCountChanged(total);
     }
 
     void currentGameChanged(Game const &game) override

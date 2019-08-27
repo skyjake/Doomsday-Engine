@@ -289,7 +289,7 @@ DE_PIMPL(ConfigProfiles)
         setCurrent(profileName);
         apply(current);
 
-        DE_FOR_PUBLIC_AUDIENCE(ProfileChange, i)
+        DE_FOR_PUBLIC_AUDIENCE_VAR(ProfileChange, i)
         {
             i->currentProfileChanged(profileName);
         }
@@ -476,7 +476,7 @@ void ConfigProfiles::resetToDefaults()
 {
     d->reset();
 
-    DE_FOR_AUDIENCE(ProfileChange, i)
+    DE_FOR_AUDIENCE_VAR(ProfileChange, i)
     {
         i->currentProfileChanged(d->current);
     }
@@ -493,7 +493,7 @@ bool ConfigProfiles::rename(String const &name)
     {
         d->setCurrent(name);
 
-        DE_FOR_AUDIENCE(ProfileChange, i)
+        DE_FOR_AUDIENCE_VAR(ProfileChange, i)
         {
             i->currentProfileChanged(name);
         }

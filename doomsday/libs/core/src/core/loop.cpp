@@ -100,7 +100,7 @@ void Loop::resume()
 
 void Loop::iterate()
 {
-    DE_FOR_AUDIENCE2(Iteration, i) i->loopIteration();
+    DE_FOR_AUDIENCE(Iteration, i) i->loopIteration();
 }
 
 void Loop::timer(TimeSpan delay, const std::function<void ()> &func)
@@ -134,7 +134,7 @@ void Loop::nextLoopIteration()
     {
         if (d->running)
         {
-            DE_FOR_AUDIENCE2(Iteration, i) i->loopIteration();
+            DE_FOR_AUDIENCE(Iteration, i) i->loopIteration();
         }
     }
     catch (Error const &er)

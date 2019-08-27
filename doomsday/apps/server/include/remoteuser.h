@@ -73,7 +73,7 @@ public:
     // Implements Transmitter.
     void send(de::IByteArray const &data);
 
-    DE_DEFINE_AUDIENCE2(Destroy, void aboutToDestroyRemoteUser(RemoteUser &))
+    DE_AUDIENCE(Destroy, void aboutToDestroyRemoteUser(RemoteUser &))
 
     void handleIncomingPackets();
 

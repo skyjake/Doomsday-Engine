@@ -47,7 +47,7 @@ FinaleWidget::FinaleWidget(de::String const &name) : d(new Impl)
 
 FinaleWidget::~FinaleWidget()
 {
-    DE_FOR_AUDIENCE(Deletion, i) i->finaleWidgetBeingDeleted(*this);
+    DE_FOR_AUDIENCE_VAR(Deletion, i) i->finaleWidgetBeingDeleted(*this);
 }
 
 Id FinaleWidget::id() const

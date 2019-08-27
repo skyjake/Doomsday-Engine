@@ -97,7 +97,7 @@ DE_PIMPL(ServerLink)
 
     void notifyDiscoveryUpdate()
     {
-        DE_FOR_PUBLIC_AUDIENCE2(Discovery, i) i->serversDiscovered(self());
+        DE_FOR_PUBLIC_AUDIENCE(Discovery, i) i->serversDiscovered(self());
     }
 
     bool handleInfoResponse(Block const &reply)
@@ -181,7 +181,7 @@ DE_PIMPL(ServerLink)
                     Reader src(data);
                     src.withHeader() >> outline;
                 }
-                DE_FOR_PUBLIC_AUDIENCE2(MapOutline, i)
+                DE_FOR_PUBLIC_AUDIENCE(MapOutline, i)
                 {
                     i->mapOutlineReceived(svAddress, outline);
                 }
@@ -226,7 +226,7 @@ DE_PIMPL(ServerLink)
         // Call game's NetConnect.
         gx.NetConnect(false);
 
-        DE_FOR_PUBLIC_AUDIENCE2(Join, i) i->networkGameJoined();
+        DE_FOR_PUBLIC_AUDIENCE(Join, i) i->networkGameJoined();
 
         // G'day mate!  The client is responsible for beginning the handshake.
         Cl_SendHello();
@@ -572,7 +572,7 @@ void ServerLink::disconnect()
         if (gx.NetDisconnect)
             gx.NetDisconnect(true);
 
-        DE_FOR_AUDIENCE2(Leave, i) i->networkGameLeft();
+        DE_FOR_AUDIENCE(Leave, i) i->networkGameLeft();
 
         LOG_NET_NOTE("Link to server %s disconnected") << address();
         d->downloader.unmountServerRepository();
@@ -763,7 +763,7 @@ void ServerLink::handleIncomingPackets()
                     for (const TimeSpan i : d->pings) average += i;
                     average /= d->pings.count();
 
-                    DE_FOR_AUDIENCE2(PingResponse, i)
+                    DE_FOR_AUDIENCE(PingResponse, i)
                     {
                         i->pingResponse(svAddress, average);
                     }

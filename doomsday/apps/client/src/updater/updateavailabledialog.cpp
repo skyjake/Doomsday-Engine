@@ -235,7 +235,7 @@ void UpdateAvailableDialog::editSettings()
         {
             d->autoCheck->setInactive(UpdaterSettings().onlyCheckManually());
             d->showProgress(true, SHOW_ANIM_SPAN);
-            DE_FOR_AUDIENCE2(Recheck, i) i->userRequestedSoftwareUpdateCheck();
+            DE_FOR_AUDIENCE(Recheck, i) i->userRequestedSoftwareUpdateCheck();
         }
     }
 }

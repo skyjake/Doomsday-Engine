@@ -48,7 +48,7 @@ MaterialManifest::MaterialManifest(PathTree::NodeArgs const &args)
 
 MaterialManifest::~MaterialManifest()
 {
-    DE_FOR_AUDIENCE(Deletion, i) i->materialManifestBeingDeleted(*this);
+    DE_FOR_AUDIENCE_VAR(Deletion, i) i->materialManifestBeingDeleted(*this);
 }
 
 Material *MaterialManifest::derive()
@@ -61,7 +61,7 @@ Material *MaterialManifest::derive()
         setMaterial(materialConstructor(*this));
 
         // Notify interested parties that a new material was derived from the manifest.
-        DE_FOR_AUDIENCE(MaterialDerived, i) i->materialManifestMaterialDerived(*this, material());
+        DE_FOR_AUDIENCE_VAR(MaterialDerived, i) i->materialManifestMaterialDerived(*this, material());
     }
     return &material();
 }

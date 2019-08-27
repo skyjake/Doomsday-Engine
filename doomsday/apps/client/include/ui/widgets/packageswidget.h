@@ -48,7 +48,7 @@ public:
 
     enum PopulateBehavior { PopulationDisabled, PopulationEnabled };
 
-    DE_DEFINE_AUDIENCE2(ItemCount, void itemCountChanged(unsigned int shownItems, unsigned int totalItems))
+    DE_AUDIENCE(ItemCount, void itemCountChanged(unsigned int shownItems, unsigned int totalItems))
 
 public:
     PackagesWidget(PopulateBehavior popBehavior = PopulationEnabled,

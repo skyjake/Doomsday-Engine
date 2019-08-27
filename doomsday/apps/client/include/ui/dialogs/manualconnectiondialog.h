@@ -31,7 +31,7 @@
 class ManualConnectionDialog : public de::InputDialog, public de::IPersistent
 {
 public:
-    DE_DEFINE_AUDIENCE2(Selection, void manualConnectionSelected(de::ui::Item const *))
+    DE_AUDIENCE(Selection, void manualConnectionSelected(de::ui::Item const *))
 
 public:
     ManualConnectionDialog(de::String const &name = "manualconnection");

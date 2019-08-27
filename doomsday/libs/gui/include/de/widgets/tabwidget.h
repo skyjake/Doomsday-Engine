@@ -38,7 +38,7 @@ namespace de {
 class LIBGUI_PUBLIC TabWidget : public GuiWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Tab, void currentTabChanged(TabWidget &))
+    DE_AUDIENCE(Tab, void currentTabChanged(TabWidget &))
 
     class TabItem : public ui::ImageItem
     {

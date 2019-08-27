@@ -87,7 +87,7 @@ public:
     /**
      * Notified when application startup has been fully completed.
      */
-    DE_DEFINE_AUDIENCE2(StartupComplete, void appStartupCompleted())
+    DE_AUDIENCE(StartupComplete, void appStartupCompleted())
 
     static const char *ORG_NAME;    ///< Name of the author/organization.
     static const char *ORG_DOMAIN;  ///< Network domain of the author/organization.

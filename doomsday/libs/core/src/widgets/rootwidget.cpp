@@ -129,7 +129,7 @@ void RootWidget::setFocus(Widget *widget)
     if (d->focus != oldFocus)
     {
         //qDebug() << "focus changed to" << d->focus;
-        DE_FOR_AUDIENCE2(FocusChange, i)
+        DE_FOR_AUDIENCE(FocusChange, i)
         {
             i->focusedWidgetChanged(widget);
         }

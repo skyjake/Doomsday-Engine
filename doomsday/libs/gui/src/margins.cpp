@@ -81,7 +81,7 @@ DE_PIMPL(Margins)
         changeRef(inputs[side], rule);
         updateOutput(side);
 
-        DE_FOR_AUDIENCE(Change, i)
+        DE_FOR_AUDIENCE_VAR(Change, i)
         {
             i->marginsChanged();
         }

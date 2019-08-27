@@ -53,16 +53,16 @@ public:
     /**
      * Notified when a new item is added to the data context.
      */
-    DE_DEFINE_AUDIENCE2(Addition, void dataItemAdded(Pos id, Item const &item))
+    DE_AUDIENCE(Addition, void dataItemAdded(Pos id, Item const &item))
 
     /**
      * Notified when an item has been removed from the data context. When this
      * is called @a item is no longer in the context and can be modified at
      * will.
      */
-    DE_DEFINE_AUDIENCE2(Removal, void dataItemRemoved(Pos oldId, Item &item))
+    DE_AUDIENCE(Removal, void dataItemRemoved(Pos oldId, Item &item))
 
-    DE_DEFINE_AUDIENCE2(OrderChange, void dataItemOrderChanged())
+    DE_AUDIENCE(OrderChange, void dataItemOrderChanged())
 
 public:
     Data();

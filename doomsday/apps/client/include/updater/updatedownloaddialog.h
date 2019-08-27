@@ -31,8 +31,8 @@
 class UpdateDownloadDialog : public DownloadDialog
 {
 public:
-    DE_DEFINE_AUDIENCE2(Progress, void downloadProgress(int percentage))
-    DE_DEFINE_AUDIENCE2(Failure,  void downloadFailed(const de::String &uri))
+    DE_AUDIENCE(Progress, void downloadProgress(int percentage))
+    DE_AUDIENCE(Failure,  void downloadFailed(const de::String &uri))
 
 public:
     UpdateDownloadDialog(de::String downloadUri, de::String fallbackUri);

@@ -36,7 +36,7 @@ namespace ui {
 class LIBGUI_PUBLIC Margins
 {
 public:
-    DE_DEFINE_AUDIENCE2(Change, void marginsChanged())
+    DE_AUDIENCE(Change, void marginsChanged())
 
 public:
     Margins(String const &defaultMargin = "gap");

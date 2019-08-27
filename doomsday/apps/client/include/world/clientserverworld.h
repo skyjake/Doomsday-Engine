@@ -56,10 +56,10 @@ public:
 
 #ifdef __CLIENT__
     /// Notified when a new frame begins.
-    DE_DEFINE_AUDIENCE2(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
+    DE_AUDIENCE(FrameBegin, void worldSystemFrameBegins(bool resetNextViewer))
 
     /// Notified when the "current" frame ends.
-    DE_DEFINE_AUDIENCE2(FrameEnd, void worldSystemFrameEnds())
+    DE_AUDIENCE(FrameEnd, void worldSystemFrameEnds())
 #endif
 
 public:

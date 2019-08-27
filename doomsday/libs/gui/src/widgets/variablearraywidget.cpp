@@ -287,7 +287,7 @@ void VariableArrayWidget::updateFromVariable()
 void VariableArrayWidget::setVariableFromWidget()
 {
     d->setVariableFromWidget();
-    DE_FOR_AUDIENCE2(Change, i)
+    DE_FOR_AUDIENCE(Change, i)
     {
         i->variableArrayChanged(*this);
     }

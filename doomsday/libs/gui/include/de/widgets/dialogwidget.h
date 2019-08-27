@@ -98,8 +98,8 @@ public:
     };
     using RoleFlags = Flags;
 
-    DE_DEFINE_AUDIENCE2(Accept, void dialogAccepted(DialogWidget &, int result))
-    DE_DEFINE_AUDIENCE2(Reject, void dialogRejected(DialogWidget &, int result))
+    DE_AUDIENCE(Accept, void dialogAccepted(DialogWidget &, int result))
+    DE_AUDIENCE(Reject, void dialogRejected(DialogWidget &, int result))
 
     /**
      * All buttons in a dialog must be ButtonItem instances or instances of

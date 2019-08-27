@@ -193,7 +193,7 @@ DE_PIMPL(ColorPalette)
 
     void notifyColorTableChanged()
     {
-        DE_FOR_PUBLIC_AUDIENCE(ColorTableChange, i)
+        DE_FOR_PUBLIC_AUDIENCE_VAR(ColorTableChange, i)
         {
             i->colorPaletteColorTableChanged(self());
         }

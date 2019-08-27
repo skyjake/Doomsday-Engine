@@ -35,8 +35,8 @@ namespace de {
 class LIBGUI_PUBLIC SliderWidget : public GuiWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Value,     void sliderValueChanged(SliderWidget &, double value))
-    DE_DEFINE_AUDIENCE2(UserValue, void sliderValueChangedByUser(SliderWidget &, double value))
+    DE_AUDIENCE(Value,     void sliderValueChanged(SliderWidget &, double value))
+    DE_AUDIENCE(UserValue, void sliderValueChangedByUser(SliderWidget &, double value))
 
 public:
     SliderWidget(String const &name = {});

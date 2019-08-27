@@ -702,7 +702,7 @@ void MaterialAnimator::animate(timespan_t /*ticLength*/)
     if (decorationStageChanged)
     {
         // Notify interested parties.
-        DE_FOR_AUDIENCE(DecorationStageChange, i) i->materialAnimatorDecorationStageChanged(*this);
+        DE_FOR_AUDIENCE_VAR(DecorationStageChange, i) i->materialAnimatorDecorationStageChanged(*this);
     }
 }
 

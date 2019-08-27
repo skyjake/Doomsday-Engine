@@ -225,7 +225,7 @@ DE_GUI_PIMPL(ChoiceWidget)
             self().setImage(Image());
         }
 
-        DE_FOR_PUBLIC_AUDIENCE2(Selection, i)
+        DE_FOR_PUBLIC_AUDIENCE(Selection, i)
         {
             i->selectionChanged(self(), selected);
         }

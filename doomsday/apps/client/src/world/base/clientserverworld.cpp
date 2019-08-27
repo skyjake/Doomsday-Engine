@@ -951,7 +951,7 @@ Hand &ClientServerWorld::hand(ddouble *distance) const
 void ClientServerWorld::beginFrame(bool resetNextViewer)
 {
     // Notify interested parties that a new frame has begun.
-    DE_FOR_AUDIENCE2(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
+    DE_FOR_AUDIENCE(FrameBegin, i) i->worldSystemFrameBegins(resetNextViewer);
 }
 
 void ClientServerWorld::endFrame()
@@ -971,7 +971,7 @@ void ClientServerWorld::endFrame()
 #endif
 
     // Notify interested parties that the current frame has ended.
-    DE_FOR_AUDIENCE2(FrameEnd, i) i->worldSystemFrameEnds();
+    DE_FOR_AUDIENCE(FrameEnd, i) i->worldSystemFrameEnds();
 }
 
 #endif  // __CLIENT__

@@ -35,7 +35,7 @@ Action::~Action()
 
 void Action::trigger()
 {
-    DE_FOR_AUDIENCE2(Triggered, i)
+    DE_FOR_AUDIENCE(Triggered, i)
     {
         i->actionTriggered(*this);
     }

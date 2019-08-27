@@ -230,7 +230,7 @@ DE_PIMPL(OptionsPage)
             }
         }
 
-        DE_FOR_PUBLIC_AUDIENCE2(Commands, i)
+        DE_FOR_PUBLIC_AUDIENCE(Commands, i)
         {
             i->commandsSubmitted(commands);
         }

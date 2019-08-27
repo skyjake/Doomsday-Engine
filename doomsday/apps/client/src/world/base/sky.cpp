@@ -83,7 +83,7 @@ void Sky::Layer::setActive(bool yes)
     if(d->active != yes)
     {
         d->active = yes;
-        DE_FOR_AUDIENCE2(ActiveChange, i) i->skyLayerActiveChanged(*this);
+        DE_FOR_AUDIENCE(ActiveChange, i) i->skyLayerActiveChanged(*this);
     }
 }
 
@@ -97,7 +97,7 @@ void Sky::Layer::setMasked(bool yes)
     if(d->masked != yes)
     {
         d->masked = yes;
-        DE_FOR_AUDIENCE2(MaskedChange, i) i->skyLayerMaskedChanged(*this);
+        DE_FOR_AUDIENCE(MaskedChange, i) i->skyLayerMaskedChanged(*this);
     }
 }
 
@@ -111,7 +111,7 @@ void Sky::Layer::setMaterial(Material *newMaterial)
     if(d->material != newMaterial)
     {
         d->material = newMaterial;
-        DE_FOR_AUDIENCE2(MaterialChange, i) i->skyLayerMaterialChanged(*this);
+        DE_FOR_AUDIENCE(MaterialChange, i) i->skyLayerMaterialChanged(*this);
     }
 }
 
@@ -170,7 +170,7 @@ DE_PIMPL(Sky)
 
     ~Impl()
     {
-        DE_FOR_PUBLIC_AUDIENCE2(Deletion, i) i->skyBeingDeleted(self());
+        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->skyBeingDeleted(self());
     }
 
 #ifdef __CLIENT__
@@ -442,7 +442,7 @@ void Sky::setHeight(dfloat newHeight)
     if(!de::fequal(d->height, newHeight))
     {
         d->height = newHeight;
-        DE_FOR_AUDIENCE2(HeightChange, i) i->skyHeightChanged(*this);
+        DE_FOR_AUDIENCE(HeightChange, i) i->skyHeightChanged(*this);
     }
 }
 
@@ -456,7 +456,7 @@ void Sky::setHorizonOffset(dfloat newOffset)
     if(!de::fequal(d->horizonOffset, newOffset))
     {
         d->horizonOffset = newOffset;
-        DE_FOR_AUDIENCE2(HorizonOffsetChange, i) i->skyHorizonOffsetChanged(*this);
+        DE_FOR_AUDIENCE(HorizonOffsetChange, i) i->skyHorizonOffsetChanged(*this);
     }
 }
 

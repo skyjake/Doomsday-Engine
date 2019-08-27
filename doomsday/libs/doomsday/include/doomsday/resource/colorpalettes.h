@@ -28,7 +28,7 @@ class LIBDOOMSDAY_PUBLIC ColorPalettes
 {
 public:
     /// Notified when a new palette is added to the collection.
-    DE_DEFINE_AUDIENCE2(Addition, void colorPaletteAdded(ColorPalette &))
+    DE_AUDIENCE(Addition, void colorPaletteAdded(ColorPalette &))
 
 public:
     ColorPalettes();

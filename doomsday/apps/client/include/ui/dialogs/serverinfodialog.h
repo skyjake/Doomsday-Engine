@@ -28,7 +28,7 @@
 class ServerInfoDialog : public de::DialogWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(JoinGame, void joinGame(const de::shell::ServerInfo &serverInfo))
+    DE_AUDIENCE(JoinGame, void joinGame(const de::shell::ServerInfo &serverInfo))
 
 public:
     ServerInfoDialog(const de::shell::ServerInfo &serverInfo);

@@ -141,7 +141,7 @@ DE_GUI_PIMPL(SaveListWidget)
             updateItemHighlights(&button);
         }
 
-        DE_FOR_PUBLIC_AUDIENCE2(Selection, i) i->saveListSelectionChanged(selected);
+        DE_FOR_PUBLIC_AUDIENCE(Selection, i) i->saveListSelectionChanged(selected);
 
         // Keep focus on the clicked button.
         self().root().setFocus(&self());
@@ -191,7 +191,7 @@ void SaveListWidget::setSelectedPos(ui::DataPos pos)
     {
         d->selected = pos;
         d->updateItemHighlights(&itemWidget<ButtonWidget>(items().at(pos)));
-        DE_FOR_AUDIENCE2(Selection, i) { i->saveListSelectionChanged(d->selected); }
+        DE_FOR_AUDIENCE(Selection, i) { i->saveListSelectionChanged(d->selected); }
     }
 }
 
@@ -201,6 +201,6 @@ void SaveListWidget::clearSelection()
     {
         d->selected = ui::Data::InvalidPos;
         d->updateItemHighlights(nullptr);
-        DE_FOR_AUDIENCE2(DoubleClick, i) { i->saveListDoubleClicked(d->selected); }
+        DE_FOR_AUDIENCE(DoubleClick, i) { i->saveListDoubleClicked(d->selected); }
     }
 }

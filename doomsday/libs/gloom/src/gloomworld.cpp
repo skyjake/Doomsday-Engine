@@ -257,7 +257,7 @@ void GloomWorld::glInit()
 {
     if (d->glInit())
     {
-        DE_FOR_AUDIENCE(Ready, i)
+        DE_FOR_AUDIENCE_VAR(Ready, i)
         {
             i->worldReady(*this);
         }

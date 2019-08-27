@@ -26,7 +26,7 @@
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
+    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
 
 public:
     MultiplayerPanelButtonWidget();

@@ -38,8 +38,8 @@ namespace de {
 class LIBGUI_PUBLIC ChoiceWidget : public PopupButtonWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Selection,     void selectionChanged(ChoiceWidget &, ui::DataPos pos))
-    DE_DEFINE_AUDIENCE2(UserSelection, void selectionChangedByUser(ChoiceWidget &, ui::DataPos pos))
+    DE_AUDIENCE(Selection,     void selectionChanged(ChoiceWidget &, ui::DataPos pos))
+    DE_AUDIENCE(UserSelection, void selectionChangedByUser(ChoiceWidget &, ui::DataPos pos))
 
     /**
      * The items of the widget are expected to be instanced of

@@ -58,7 +58,7 @@ DE_PIMPL(FilteredData)
             items << &item;
             reverseMapping.insert(&item, pos);
 
-            DE_FOR_PUBLIC_AUDIENCE2(Addition, i) i->dataItemAdded(pos, item);
+            DE_FOR_PUBLIC_AUDIENCE(Addition, i) i->dataItemAdded(pos, item);
         }
     }
 
@@ -85,14 +85,14 @@ DE_PIMPL(FilteredData)
                 }
             }
 
-            DE_FOR_PUBLIC_AUDIENCE2(Removal, i) i->dataItemRemoved(oldPos, item);
+            DE_FOR_PUBLIC_AUDIENCE(Removal, i) i->dataItemRemoved(oldPos, item);
         }
     }
 
     void dataItemOrderChanged()
     {
         remap();
-        DE_FOR_PUBLIC_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+        DE_FOR_PUBLIC_AUDIENCE(OrderChange, i) i->dataItemOrderChanged();
     }
 
     void applyFilter(const FilterFunc& filterFunc)
@@ -168,7 +168,7 @@ void FilteredData::refilter()
     {
         if (!d->reverseMapping.contains(iter->first))
         {
-            DE_FOR_AUDIENCE2(Removal, i)
+            DE_FOR_AUDIENCE(Removal, i)
             {
                 i->dataItemRemoved(iter->second, *const_cast<Item *>(iter->first));
             }
@@ -178,7 +178,7 @@ void FilteredData::refilter()
     {
         if (!oldMapping.contains(iter->first))
         {
-            DE_FOR_AUDIENCE2(Addition, i)
+            DE_FOR_AUDIENCE(Addition, i)
             {
                 i->dataItemAdded(iter->second, *iter->first);
             }
@@ -247,7 +247,7 @@ void FilteredData::sort(LessThanFunc lessThan)
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();
-    DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+    DE_FOR_AUDIENCE(OrderChange, i) i->dataItemOrderChanged();
 }
 
 void FilteredData::stableSort(LessThanFunc lessThan)
@@ -256,7 +256,7 @@ void FilteredData::stableSort(LessThanFunc lessThan)
         return lessThan(*a, *b);
     });
     d->updateReverseMapping();
-    DE_FOR_AUDIENCE2(OrderChange, i) i->dataItemOrderChanged();
+    DE_FOR_AUDIENCE(OrderChange, i) i->dataItemOrderChanged();
 }
 
 dsize FilteredData::size() const

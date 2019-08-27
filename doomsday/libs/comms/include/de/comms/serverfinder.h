@@ -35,7 +35,7 @@ public:
     /// Specified server was not found. @ingroup errors
     DE_ERROR(NotFoundError);
 
-    DE_DEFINE_AUDIENCE2(Update, void foundServersUpdated())
+    DE_AUDIENCE(Update, void foundServersUpdated())
 
 public:
     ServerFinder();

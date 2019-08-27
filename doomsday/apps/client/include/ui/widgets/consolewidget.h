@@ -37,8 +37,8 @@
 class ConsoleWidget : public de::GuiWidget, public de::IPersistent
 {
 public:
-    DE_DEFINE_AUDIENCE2(CommandMode, void commandModeChanged())
-    DE_DEFINE_AUDIENCE2(GotFocus,    void commandLineGotFocus())
+    DE_AUDIENCE(CommandMode, void commandModeChanged())
+    DE_AUDIENCE(GotFocus,    void commandLineGotFocus())
 
 public:
     ConsoleWidget();

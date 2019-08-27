@@ -108,7 +108,7 @@ DE_PIMPL(Games)
 
         DoomsdayApp::bundles().audienceForIdentify() += this;
 
-        DE_FOR_PUBLIC_AUDIENCE2(Addition, i)
+        DE_FOR_PUBLIC_AUDIENCE(Addition, i)
         {
             i->gameAdded(*game);
         }
@@ -363,7 +363,7 @@ void Games::checkReadiness()
     // Only notify when the set of playable games changes.
     if (changed)
     {
-        DE_FOR_AUDIENCE2(Readiness, i)
+        DE_FOR_AUDIENCE(Readiness, i)
         {
             i->gameReadinessUpdated();
         }

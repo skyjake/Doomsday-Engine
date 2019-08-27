@@ -31,7 +31,7 @@ namespace de { namespace shell {
 class LIBSHELL_PUBLIC CommandLineWidget : public LineEditWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Command, void commandEntered(const de::String &command))
+    DE_AUDIENCE(Command, void commandEntered(const de::String &command))
 
 public:
     CommandLineWidget(String const &name = String());

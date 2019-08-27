@@ -379,7 +379,7 @@ public:
     typedef List<TextureMap> Mapping;
 
     // Audiences:
-    DE_DEFINE_AUDIENCE2(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
+    DE_AUDIENCE(AboutToGLInit, void modelAboutToGLInit(ModelDrawable &))
 
 public:
     ModelDrawable();

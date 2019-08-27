@@ -193,7 +193,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
             }
 
             // Everythis is complete.
-            DE_FOR_PUBLIC_AUDIENCE(Download, i)
+            DE_FOR_PUBLIC_AUDIENCE_VAR(Download, i)
             {
                 i->downloadProgress(self(), 0);
             }

@@ -433,8 +433,8 @@ bool HomeItemWidget::handleEvent(Event const &event)
 void HomeItemWidget::focusGained()
 {
     setSelected(true);
-    DE_FOR_AUDIENCE2(Selection, i) i->itemSelected(*this);
-    DE_FOR_AUDIENCE2(Activity, i)  i->mouseActivity(*this);
+    DE_FOR_AUDIENCE(Selection, i) i->itemSelected(*this);
+    DE_FOR_AUDIENCE(Activity, i)  i->mouseActivity(*this);
 }
 
 void HomeItemWidget::focusLost()

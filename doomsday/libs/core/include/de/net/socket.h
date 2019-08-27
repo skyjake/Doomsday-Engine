@@ -51,10 +51,10 @@ class DE_PUBLIC Socket : public Transmitter
 public:
     enum SocketState { AddressResolved, Disconnected, Connected };
 
-    DE_DEFINE_AUDIENCE2(StateChange, void socketStateChanged(Socket &, SocketState state))
-    DE_DEFINE_AUDIENCE2(Message,     void messagesIncoming(Socket &))
-    DE_DEFINE_AUDIENCE2(AllSent,     void allSent(Socket &))
-    DE_DEFINE_AUDIENCE2(Error,       void error(Socket &, const String &errorMessage))
+    DE_AUDIENCE(StateChange, void socketStateChanged(Socket &, SocketState state))
+    DE_AUDIENCE(Message,     void messagesIncoming(Socket &))
+    DE_AUDIENCE(AllSent,     void allSent(Socket &))
+    DE_AUDIENCE(Error,       void error(Socket &, const String &errorMessage))
     
     /// Creating the TCP/IP connection failed. @ingroup errors
     DE_ERROR(ConnectionError);

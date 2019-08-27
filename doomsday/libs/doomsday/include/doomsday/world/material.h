@@ -50,10 +50,10 @@ class LIBDOOMSDAY_PUBLIC Material : public MapElement
 {
 public:
     /// Notified when the material is about to be deleted.
-    DE_DEFINE_AUDIENCE2(Deletion,         void materialBeingDeleted(Material const &))
+    DE_AUDIENCE(Deletion,         void materialBeingDeleted(Material const &))
 
     /// Notified whenever the logical dimensions change.
-    DE_DEFINE_AUDIENCE2(DimensionsChange, void materialDimensionsChanged(Material &))
+    DE_AUDIENCE(DimensionsChange, void materialDimensionsChanged(Material &))
 
 public:
     /**

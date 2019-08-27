@@ -1156,7 +1156,7 @@ void Line::setFlags(dint flagsToChange, FlagOp operation)
         d->flags = newFlags;
 
         // Notify interested parties of the change.
-        DE_FOR_AUDIENCE(FlagsChange, i) i->lineFlagsChanged(*this, oldFlags);
+        DE_FOR_AUDIENCE_VAR(FlagsChange, i) i->lineFlagsChanged(*this, oldFlags);
     }
 }
 

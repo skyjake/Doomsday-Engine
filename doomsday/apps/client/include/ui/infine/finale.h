@@ -43,7 +43,7 @@ class Finale
 {
 public:
     /// Notified when the finale is about to be deleted.
-    DE_DEFINE_AUDIENCE2(Deletion, void finaleBeingDeleted(Finale const &finale))
+    DE_AUDIENCE(Deletion, void finaleBeingDeleted(Finale const &finale))
 
 public:
     /**

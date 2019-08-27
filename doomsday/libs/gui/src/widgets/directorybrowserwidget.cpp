@@ -61,6 +61,13 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
                 const NativePath toDir = dirItem.path();
                 dispatch += [this, toDir]() { self().setCurrentPath(toDir); };
             }
+            else
+            {
+                DE_FOR_PUBLIC_AUDIENCE(Selection, i)
+                {
+                    i->pathSelected(self(), dirItem.path());
+                }
+            }
         };
 
         return widget;
@@ -80,11 +87,15 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
             text = Stringf("%s (%zu) %s",
                            dirItem.name().c_str(),
                            dirItem.status().size,
-                           dirItem.status().modifiedAt.asText().c_str());
+                           dirItem.status().modifiedAt.asText(Time::ISODateOnly).c_str());
         }
         widget.as<ButtonWidget>().setText(text);
     }
+
+    DE_PIMPL_AUDIENCES(Selection)
 };
+
+DE_AUDIENCE_METHODS(DirectoryBrowserWidget, Selection)
 
 DirectoryBrowserWidget::DirectoryBrowserWidget(const String &name)
     : BrowserWidget(name)

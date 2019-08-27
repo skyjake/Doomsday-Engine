@@ -31,7 +31,7 @@
 class ColumnWidget : public de::GuiWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Activity, void mouseActivity(const ColumnWidget *columnWidget))
+    DE_AUDIENCE(Activity, void mouseActivity(const ColumnWidget *columnWidget))
 
 public:
     ColumnWidget(de::String const &name = {});

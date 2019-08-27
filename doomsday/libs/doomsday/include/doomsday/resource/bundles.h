@@ -43,7 +43,7 @@ public:
     using BlockElements = List<const Info::BlockElement *>;
 
     /// Notified when a data bundle refresh/identification has been completed.
-    DE_DEFINE_AUDIENCE2(Identify, void dataBundlesIdentified())
+    DE_AUDIENCE(Identify, void dataBundlesIdentified())
 
     DE_ERROR(InvalidError);
 

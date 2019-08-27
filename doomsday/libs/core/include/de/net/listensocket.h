@@ -42,7 +42,7 @@ public:
      * Notifies when a new incoming connection is available.
      * Call accept() to get the Socket object.
      */
-    DE_DEFINE_AUDIENCE2(Incoming, void incomingConnection(ListenSocket &))
+    DE_AUDIENCE(Incoming, void incomingConnection(ListenSocket &))
 
 public:
     /// Open a listen socket on the specified port.

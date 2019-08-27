@@ -39,7 +39,7 @@ public:
 
 //signals:
 //    void selected();
-    DE_DEFINE_AUDIENCE2(Selection, void folderSelected(const de::NativePath &))
+    DE_AUDIENCE(Selection, void folderSelected(const de::NativePath &))
 
     void selectFolder();
 

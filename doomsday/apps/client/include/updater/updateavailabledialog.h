@@ -29,7 +29,7 @@
 class UpdateAvailableDialog : public de::MessageDialog
 {
 public:
-    DE_DEFINE_AUDIENCE2(Recheck, void userRequestedSoftwareUpdateCheck())
+    DE_AUDIENCE(Recheck, void userRequestedSoftwareUpdateCheck())
 
 public:
     /// The dialog is initialized with the "Checking" page visible.

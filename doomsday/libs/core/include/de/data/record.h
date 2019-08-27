@@ -94,9 +94,9 @@ public:
         DefaultFlags = 0,
     };
 
-    DE_DEFINE_AUDIENCE2(Addition, void recordMemberAdded(Record &record, Variable &member))
-    DE_DEFINE_AUDIENCE2(Removal,  void recordMemberRemoved(Record &record, Variable &member))
-    DE_DEFINE_AUDIENCE2(Deletion, void recordBeingDeleted(Record &record))
+    DE_AUDIENCE(Addition, void recordMemberAdded(Record &record, Variable &member))
+    DE_AUDIENCE(Removal,  void recordMemberRemoved(Record &record, Variable &member))
+    DE_AUDIENCE(Deletion, void recordBeingDeleted(Record &record))
 
 public:
     Record();

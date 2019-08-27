@@ -46,7 +46,7 @@ public:
     /**
      * Notified when the canvas gains or loses input focus.
      */
-    DE_DEFINE_AUDIENCE2(FocusChange, void windowFocusChanged(GLWindow &, bool hasFocus))
+    DE_AUDIENCE(FocusChange, void windowFocusChanged(GLWindow &, bool hasFocus))
 
     enum KeyboardMode { RawKeys, TextInput };
 

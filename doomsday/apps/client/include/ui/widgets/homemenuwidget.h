@@ -32,8 +32,8 @@ class ColumnWidget;
 class HomeMenuWidget : public de::MenuWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Selection, void selectedIndexChanged(HomeMenuWidget &, de::ui::DataPos index))
-    DE_DEFINE_AUDIENCE2(Click,     void menuItemClicked(HomeMenuWidget &, de::ui::DataPos index))
+    DE_AUDIENCE(Selection, void selectedIndexChanged(HomeMenuWidget &, de::ui::DataPos index))
+    DE_AUDIENCE(Click,     void menuItemClicked(HomeMenuWidget &, de::ui::DataPos index))
 
 public:
     HomeMenuWidget(de::String const &name = de::String());

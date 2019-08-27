@@ -36,8 +36,8 @@ namespace de {
 class LIBGUI_PUBLIC LineEditWidget : public GuiWidget, public shell::AbstractLineEditor
 {
 public:
-    DE_DEFINE_AUDIENCE2(Enter,         void enterPressed(const String &text))
-    DE_DEFINE_AUDIENCE2(ContentChange, void editorContentChanged(LineEditWidget &))
+    DE_AUDIENCE(Enter,         void enterPressed(const String &text))
+    DE_AUDIENCE(ContentChange, void editorContentChanged(LineEditWidget &))
 
 public:
     LineEditWidget(String const &name = String());

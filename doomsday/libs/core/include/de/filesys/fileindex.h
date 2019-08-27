@@ -57,8 +57,8 @@ public:
         virtual bool shouldIncludeInIndex(File const &file) const = 0;
     };
 
-    DE_DEFINE_AUDIENCE2(Addition, void fileAdded  (File const &, FileIndex const &))
-    DE_DEFINE_AUDIENCE2(Removal,  void fileRemoved(File const &, FileIndex const &))
+    DE_AUDIENCE(Addition, void fileAdded  (File const &, FileIndex const &))
+    DE_AUDIENCE(Removal,  void fileRemoved(File const &, FileIndex const &))
 
 public:
     FileIndex();

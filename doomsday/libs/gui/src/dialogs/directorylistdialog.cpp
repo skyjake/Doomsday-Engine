@@ -74,7 +74,7 @@ DE_PIMPL(DirectoryListDialog)
         self().area().add(group->list);
 
         group->list->audienceForChange() += [this](){
-            DE_FOR_PUBLIC_AUDIENCE2(Change, i) { i->directoryListChanged(); }
+            DE_FOR_PUBLIC_AUDIENCE(Change, i) { i->directoryListChanged(); }
         };
 
         groups.insert(groupId, group.release());

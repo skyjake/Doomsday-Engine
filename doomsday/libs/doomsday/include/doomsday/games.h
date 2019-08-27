@@ -59,13 +59,13 @@ public:
     typedef de::List<Game *> All;
 
     /// Notified when a new game is added.
-    DE_DEFINE_AUDIENCE2(Addition, void gameAdded(Game &game))
+    DE_AUDIENCE(Addition, void gameAdded(Game &game))
 
     /// Notified after game resources have been located.
-    DE_DEFINE_AUDIENCE2(Readiness, void gameReadinessUpdated())
+    DE_AUDIENCE(Readiness, void gameReadinessUpdated())
 
     /// Notified when a worker task is progressing.
-    DE_DEFINE_AUDIENCE2(Progress, void gameWorkerProgress(int progress))
+    DE_AUDIENCE(Progress, void gameWorkerProgress(int progress))
 
     static Games &get();
 

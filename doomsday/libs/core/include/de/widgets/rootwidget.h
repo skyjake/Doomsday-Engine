@@ -45,7 +45,7 @@ public:
     typedef Vec2ui Size;
 
     /// Notified when the focused widget changes.
-    DE_DEFINE_AUDIENCE2(FocusChange, void focusedWidgetChanged(Widget *))
+    DE_AUDIENCE(FocusChange, void focusedWidgetChanged(Widget *))
 
 public:
     RootWidget();

@@ -59,7 +59,7 @@ public:
      */
     Timer &operator+=(const std::function<void ()> &callback);
 
-    DE_DEFINE_AUDIENCE2(Trigger, void triggered(Timer &))
+    DE_AUDIENCE(Trigger, void triggered(Timer &))
 
 private:
     DE_PRIVATE(d)

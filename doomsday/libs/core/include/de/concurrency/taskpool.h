@@ -64,7 +64,7 @@ public:
 
     typedef std::function<void ()> TaskFunction;
 
-    DE_DEFINE_AUDIENCE2(Done, void taskPoolDone(TaskPool &))
+    DE_AUDIENCE(Done, void taskPoolDone(TaskPool &))
 
 public:
     TaskPool();

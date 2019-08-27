@@ -47,7 +47,7 @@ public:
 
     enum BorderStyle { NoBorder, LineBorder };
 
-    DE_DEFINE_AUDIENCE2(Close, void menuClosed())
+    DE_AUDIENCE(Close, void menuClosed())
 
 public:
     MenuWidget(Preset preset, String const &name = {});

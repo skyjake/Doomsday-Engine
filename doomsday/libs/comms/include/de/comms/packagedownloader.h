@@ -77,7 +77,7 @@ public:
      * remaining to download. `bytes.size()` is the number of bytes downloaded so far.
      * `bytes.end` is the total number of bytes overall.
      */
-    DE_DEFINE_AUDIENCE2(Status,
+    DE_AUDIENCE(Status,
                         void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files))
 
 private:

@@ -53,7 +53,7 @@ public:
     void preferencesDone();
     void updateMenu();
 
-    DE_DEFINE_AUDIENCE2(LocalServerStop, void localServerStopped(int port))
+    DE_AUDIENCE(LocalServerStop, void localServerStopped(int port))
 
 protected:
     void windowClosed(LinkWindow *window);

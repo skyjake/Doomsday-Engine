@@ -43,7 +43,7 @@ DE_PIMPL(Sound)
 
     void update()
     {
-        DE_FOR_PUBLIC_AUDIENCE2(Change, i)
+        DE_FOR_PUBLIC_AUDIENCE(Change, i)
         {
             i->soundPropertyChanged(self());
         }

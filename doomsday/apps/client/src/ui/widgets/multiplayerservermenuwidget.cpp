@@ -219,7 +219,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
 
     void aboutToJoinMultiplayerGame(shell::ServerInfo const &sv) override
     {
-        DE_FOR_PUBLIC_AUDIENCE2(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
+        DE_FOR_PUBLIC_AUDIENCE(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
     }
 
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------

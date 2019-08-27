@@ -245,8 +245,8 @@ struct GameExports
 class LIBDOOMSDAY_PUBLIC Plugins
 {
 public:
-    DE_DEFINE_AUDIENCE2(PublishAPI,   void publishAPIToPlugin(const char *))
-    DE_DEFINE_AUDIENCE2(Notification, void pluginSentNotification(int id, void *data))
+    DE_AUDIENCE(PublishAPI,   void publishAPIToPlugin(const char *))
+    DE_AUDIENCE(Notification, void pluginSentNotification(int id, void *data))
 
     DE_ERROR(EntryPointError);
 

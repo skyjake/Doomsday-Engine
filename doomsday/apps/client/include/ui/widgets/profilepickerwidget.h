@@ -32,8 +32,8 @@
 class ProfilePickerWidget : public de::ChoiceWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(ProfileChange, void profileChanged())
-    DE_DEFINE_AUDIENCE2(EditorRequest, void profileEditorRequested())
+    DE_AUDIENCE(ProfileChange, void profileChanged())
+    DE_AUDIENCE(EditorRequest, void profileEditorRequested())
 
 public:
     /**

@@ -29,7 +29,7 @@ public:
 
     void updateWithGameState(const de::Record &gameState);
 
-    DE_DEFINE_AUDIENCE2(Commands, void commandsSubmitted(const de::StringList &commands))
+    DE_AUDIENCE(Commands, void commandsSubmitted(const de::StringList &commands))
 
 private:
     DE_PRIVATE(d)

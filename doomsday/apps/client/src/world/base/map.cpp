@@ -383,7 +383,7 @@ DE_PIMPL(Map)
     void unclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
         // Notify interested parties that an unclosed sector was found.
-        DE_FOR_PUBLIC_AUDIENCE(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
+        DE_FOR_PUBLIC_AUDIENCE_VAR(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
     }
 
     /**
@@ -394,7 +394,7 @@ DE_PIMPL(Map)
      */
     void notifyOneWayWindowFound(Line &line, Sector &backFacingSector)
     {
-        DE_FOR_PUBLIC_AUDIENCE(OneWayWindowFound, i) i->oneWayWindowFound(line, backFacingSector);
+        DE_FOR_PUBLIC_AUDIENCE_VAR(OneWayWindowFound, i) i->oneWayWindowFound(line, backFacingSector);
     }
 
     struct testForWindowEffectParams

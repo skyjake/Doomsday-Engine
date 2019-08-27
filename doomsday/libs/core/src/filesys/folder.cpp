@@ -47,7 +47,7 @@ struct PopulationNotifier : DE_OBSERVES(TaskPool, Done)
 {
     PopulationNotifier() { populateTasks.audienceForDone() += this; }
     void taskPoolDone(TaskPool &) { notify(); }
-    void notify() { DE_FOR_AUDIENCE(FolderPopulation, i) i->folderPopulationFinished(); }
+    void notify() { DE_FOR_AUDIENCE_VAR(FolderPopulation, i) i->folderPopulationFinished(); }
 };
 
 static PopulationNotifier populationNotifier;
@@ -119,7 +119,7 @@ Folder::~Folder()
 {
     DE_GUARD(this);
 
-    DE_FOR_AUDIENCE2(Deletion, i) i->fileBeingDeleted(*this);
+    DE_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
 
     deindex();

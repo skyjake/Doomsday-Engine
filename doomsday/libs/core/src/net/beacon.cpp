@@ -72,7 +72,7 @@ DE_PIMPL(Beacon)
         {
             timer->stop();
 
-            DE_FOR_PUBLIC_AUDIENCE2(Finished, i) { i->beaconFinished(); }
+            DE_FOR_PUBLIC_AUDIENCE(Finished, i) { i->beaconFinished(); }
 
             socket.reset();
             trash(timer.release());

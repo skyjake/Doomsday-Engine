@@ -31,8 +31,8 @@ namespace de { namespace shell {
 class LIBSHELL_PUBLIC DialogWidget : public Widget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Accept, void accepted(int result))
-    DE_DEFINE_AUDIENCE2(Reject, void rejected(int result))
+    DE_AUDIENCE(Accept, void accepted(int result))
+    DE_AUDIENCE(Reject, void rejected(int result))
 
 public:
     DialogWidget(String const &name = String());

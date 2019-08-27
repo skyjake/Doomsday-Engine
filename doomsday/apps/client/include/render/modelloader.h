@@ -30,7 +30,7 @@ namespace render {
 class ModelLoader
 {
 public:
-    DE_DEFINE_AUDIENCE2(NewProgram, void newProgramCreated(de::GLProgram &))
+    DE_AUDIENCE(NewProgram, void newProgramCreated(de::GLProgram &))
 
     DE_ERROR(DefinitionError);
     DE_ERROR(TextureMappingError);

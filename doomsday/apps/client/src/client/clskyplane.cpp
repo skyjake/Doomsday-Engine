@@ -61,7 +61,7 @@ void ClSkyPlane::setHeight(ddouble newHeight)
     if (d->height != newHeight)
     {
         d->height = newHeight;
-        DE_FOR_AUDIENCE2(HeightChange, i) i->clSkyPlaneHeightChanged(*this);
+        DE_FOR_AUDIENCE(HeightChange, i) i->clSkyPlaneHeightChanged(*this);
     }
 }
 

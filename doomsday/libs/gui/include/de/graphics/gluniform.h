@@ -72,12 +72,12 @@ public:
     /**
      * Notified when the value of the uniform changes.
      */
-    DE_DEFINE_AUDIENCE2(ValueChange, void uniformValueChanged(GLUniform &))
+    DE_AUDIENCE(ValueChange, void uniformValueChanged(GLUniform &))
 
     /**
      * Notified when the uniform instance is deleted.
      */
-    DE_DEFINE_AUDIENCE2(Deletion, void uniformDeleted(GLUniform &))
+    DE_AUDIENCE(Deletion, void uniformDeleted(GLUniform &))
 
 public:
     GLUniform(const Block &nameInShader, Type uniformType, duint elements = 1);

@@ -245,7 +245,7 @@ void GuiApp::setMetadata(const String &orgName,
 
 void GuiApp::notifyDisplayModeChanged()
 {
-    DE_FOR_AUDIENCE2(DisplayModeChange, i)
+    DE_FOR_AUDIENCE(DisplayModeChange, i)
     {
         i->displayModeChanged();
     }

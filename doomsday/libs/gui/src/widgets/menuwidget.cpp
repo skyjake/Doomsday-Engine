@@ -425,7 +425,7 @@ DE_PIMPL(MenuWidget)
         w->audienceForClose()    += this;
         w->audienceForDeletion() += this;
 
-        DE_FOR_PUBLIC_AUDIENCE2(SubWidgetOpened, i)
+        DE_FOR_PUBLIC_AUDIENCE(SubWidgetOpened, i)
         {
             i->subWidgetOpened(self(), w);
         }
@@ -487,7 +487,7 @@ DE_PIMPL(MenuWidget)
 
     void buttonPressed(ButtonWidget &button)
     {
-        DE_FOR_PUBLIC_AUDIENCE2(ItemTriggered, i)
+        DE_FOR_PUBLIC_AUDIENCE(ItemTriggered, i)
         {
             if (auto *item = organizer.findItemForWidget(button))
             {

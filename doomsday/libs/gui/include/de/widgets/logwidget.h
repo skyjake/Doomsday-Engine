@@ -37,7 +37,7 @@ namespace de {
 class LIBGUI_PUBLIC LogWidget : public ScrollAreaWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(ContentHeight, void contentHeightIncreased(LogWidget &, int delta))
+    DE_AUDIENCE(ContentHeight, void contentHeightIncreased(LogWidget &, int delta))
 
 public:
     LogWidget(String const &name = {});

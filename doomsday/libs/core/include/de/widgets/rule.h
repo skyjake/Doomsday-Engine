@@ -46,7 +46,7 @@ DE_DECLARE_AUDIENCE(RuleInvalidation, void ruleInvalidated())
 class DE_PUBLIC Rule : public Counted, public DE_AUDIENCE_INTERFACE(RuleInvalidation)
 {
 public:
-    DE_AUDIENCE(RuleInvalidation)
+    DE_AUDIENCE_VAR(RuleInvalidation)
 
     /// Semantic identifiers (e.g., for RuleRectangle).
     enum Semantic {

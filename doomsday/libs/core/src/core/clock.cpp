@@ -54,7 +54,7 @@ void Clock::setTime(Time const &currentTime)
         {
             i->timeChanged(*this);
         }
-        DE_FOR_AUDIENCE2(TimeChange, i) i->timeChanged(*this);
+        DE_FOR_AUDIENCE(TimeChange, i) i->timeChanged(*this);
     }
 }
 

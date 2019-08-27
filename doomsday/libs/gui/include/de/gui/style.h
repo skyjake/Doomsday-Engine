@@ -38,7 +38,7 @@ class Package;
 class LIBGUI_PUBLIC Style
 {
 public:
-    DE_DEFINE_AUDIENCE2(Change, void styleChanged(Style &))
+    DE_AUDIENCE(Change, void styleChanged(Style &))
 
 public:
     Style();

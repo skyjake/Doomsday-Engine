@@ -139,7 +139,7 @@ void RemoteFile::download()
 
     if (d->checkExistingCache())
     {
-        DE_FOR_AUDIENCE(Download, i)
+        DE_FOR_AUDIENCE_VAR(Download, i)
         {
             i->downloadProgress(*this, 0);
         }
@@ -155,7 +155,7 @@ void RemoteFile::download()
              [this] (duint64 startOffset, Block const &chunk, duint64 remainingBytes)
     {
         DE_ASSERT_IN_MAIN_THREAD();
-        DE_FOR_AUDIENCE(Download, i)
+        DE_FOR_AUDIENCE_VAR(Download, i)
         {
             i->downloadProgress(*this, remainingBytes);
         }

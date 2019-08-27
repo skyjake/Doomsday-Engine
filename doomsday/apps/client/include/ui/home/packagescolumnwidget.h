@@ -24,7 +24,7 @@
 class PackagesColumnWidget : public ColumnWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(AvailableCount, void availablePackageCountChanged(int count))
+    DE_AUDIENCE(AvailableCount, void availablePackageCountChanged(int count))
 
 public:
     PackagesColumnWidget();

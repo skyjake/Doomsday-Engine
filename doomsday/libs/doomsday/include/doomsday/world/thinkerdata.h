@@ -39,7 +39,7 @@ class LIBDOOMSDAY_PUBLIC ThinkerData
         , public de::Deletable
 {
 public:
-    DE_DEFINE_AUDIENCE2(Deletion, void thinkerBeingDeleted(thinker_s &))
+    DE_AUDIENCE(Deletion, void thinkerBeingDeleted(thinker_s &))
 
 public:
     ThinkerData(de::Id const &id = de::Id::none());

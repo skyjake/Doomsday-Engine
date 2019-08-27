@@ -33,8 +33,8 @@
 class TaskBarWidget : public de::GuiWidget
 {
 public:
-    DE_DEFINE_AUDIENCE2(Open,  void taskBarOpened())
-    DE_DEFINE_AUDIENCE2(Close, void taskBarClosed())
+    DE_AUDIENCE(Open,  void taskBarOpened())
+    DE_AUDIENCE(Close, void taskBarClosed())
 
 public:
     TaskBarWidget();
