@@ -99,12 +99,12 @@ public:
     void   finish();
     void   pause();
     void   resume();
-    String description() const;
+    String description() const override;
 
 protected:
-    ~AnimationRule();
-    void update();
-    void timeChanged(Clock const &);
+    ~AnimationRule() override;
+    void update() override;
+    void timeChanged(Clock const &) override;
 
 private:
     Animation _animation;

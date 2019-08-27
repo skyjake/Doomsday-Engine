@@ -67,12 +67,13 @@ public:
      */
     void set(float newValue);
 
-    String description() const;
+    String description() const override;
 
+public:
     static const ConstantRule &zero();
 
 protected:
-    void update();
+    void update() override;
 
 private:
     float _pendingValue;

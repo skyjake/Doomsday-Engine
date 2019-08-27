@@ -171,7 +171,7 @@ protected:
     }
 
     // Implements IRuleInvalidationObserver.
-    void ruleInvalidated();
+    void ruleInvalidated() override;
 
 protected:
     int _flags; // Derived rules use this, too.

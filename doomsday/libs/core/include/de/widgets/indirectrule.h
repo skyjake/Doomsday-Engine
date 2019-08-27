@@ -38,7 +38,7 @@ class DE_PUBLIC IndirectRule : public Rule
 {
 public:
     IndirectRule();
-    ~IndirectRule();
+    ~IndirectRule() override;
 
     /**
      * Sets the source rule whose value this indirect rule will reflect.
@@ -49,12 +49,11 @@ public:
 
     void unsetSource();
 
-    bool hasSource() const;
-
-    void update();
-
+    bool        hasSource() const;
     const Rule &source() const;
-    String description() const;
+
+    void   update() override;
+    String description() const override;
 
 private:
     const Rule *_source;

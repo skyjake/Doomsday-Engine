@@ -95,16 +95,12 @@ public:
     }
 
 protected:
-    ~OperatorRule();
+    ~OperatorRule() override;
 
-    inline Operator op() const
-    {
-        return Operator((_flags >> BaseFlagsShift) & 0xf);
-    }
+    inline Operator op() const { return Operator((_flags >> BaseFlagsShift) & 0xf); }
 
-    void update();
-
-    String description() const;
+    void   update() override;
+    String description() const override;
 
 private:
     Rule const *_leftOperand;
