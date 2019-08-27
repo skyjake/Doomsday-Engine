@@ -113,7 +113,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         ui::Data &items = self().items();
 
         Set<String> foundHosts;
-        for (Address const &host : link.foundServers(mask))
+        for (const Address &host : link.foundServers(mask))
         {
             shell::ServerInfo info;
             if (link.foundServerInfo(host, info, mask))
@@ -125,7 +125,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         // Remove obsolete entries.
         for (ui::Data::Pos idx = 0; idx < items.size(); ++idx)
         {
-            String const id = items.at(idx).data().asText();
+            const String id = items.at(idx).data().asText();
             if (!foundHosts.contains(id))
             {
                 items.remove(idx--);

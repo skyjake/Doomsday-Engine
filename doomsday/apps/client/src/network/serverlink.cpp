@@ -253,7 +253,7 @@ DE_PIMPL(ServerLink)
             fetching = false;
 
             fromMaster.clear();
-            int const count = N_MasterGet(0, 0);
+            int const count = N_MasterGet(0, nullptr);
             for (int i = 0; i < count; i++)
             {
                 shell::ServerInfo info;
