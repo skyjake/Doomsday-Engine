@@ -209,12 +209,19 @@ public:
 
     bool isEventRouted(int type, Widget *to) const;
 
-    /*
-     * Tree organization.
+    /**
+     * Deletes all child widgets.
      */
     void clearTree();
 
     Widget &add(Widget *child);
+
+    template <typename Type, typename... Args>
+    inline Type &addNew(Args... args) {
+        std::unique_ptr<Type> w(new Type(args...));
+        add(w.get());
+        return *w.release();
+    }
 
     /**
      * Adds a child widget. It becomes the last child, meaning it is drawn on
