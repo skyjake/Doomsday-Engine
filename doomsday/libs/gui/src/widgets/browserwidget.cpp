@@ -27,40 +27,41 @@
 
 namespace de {
 
-DE_PIMPL(BrowserWidget)
-//, DE_OBSERVES(ChildWidgetOrganizer, WidgetCreation)
+DE_GUI_PIMPL(BrowserWidget)
 {
+    struct SavedState
+    {
+        int scrollPosY;
+    };
+
     const ui::TreeData *data = nullptr;
     Path path;
+    Map<Path, SavedState> savedState;
     LabelWidget *cwdLabel;
-//    LabelWidget *currentPath;
     LabelWidget *menuLabel;
     ScrollAreaWidget *scroller;
     MenuWidget *menu;
     std::unique_ptr<FlowLayout> pathFlow;
     DialogContentStylist stylist;
     Dispatch dispatch;
+    const Rule *contentWidth;
 
     Impl(Public *i)
         : Base(i)
         , stylist(*i)
     {
         RuleRectangle &rule = self().rule();
+        contentWidth = holdRef(rule.width() - self().margins().width());
 
-        SequentialLayout layout(rule.left(), rule.top(), ui::Down);
-        layout.setOverrideWidth(rule.width());
+        SequentialLayout layout(
+            rule.left() + self().margins().left(), rule.top() + self().margins().top(), ui::Down);
+        layout.setOverrideWidth(*contentWidth);
 
         cwdLabel = LabelWidget::appendSeparatorWithText("Path", i);
         layout << *cwdLabel;
 
         pathFlow.reset(new FlowLayout(cwdLabel->rule().left(), cwdLabel->rule().bottom(),
-                                      rule.width()));
-
-        /*currentPath = new LabelWidget("cwd");
-        currentPath->setSizePolicy(ui::Fixed, ui::Expand);
-        currentPath->setAlignment(ui::AlignLeft);
-        layout << *currentPath;*/
-
+                                      *contentWidth));
         layout.append(pathFlow->height());
 
         menuLabel = LabelWidget::appendSeparatorWithText("Contents", i);
@@ -70,12 +71,13 @@ DE_PIMPL(BrowserWidget)
         layout << *scroller;
         scroller->rule()
             .setInput(Rule::Bottom, rule.bottom());
+        scroller->margins().setZero();
 
         menu = &scroller->addNew<MenuWidget>("items");
         menu->setGridSize(1, ui::Filled, 0, ui::Expand);
         menu->rule()
             .setLeftTop(scroller->contentRule().left(), scroller->contentRule().top())
-            .setInput(Rule::Width, rule.width());
+            .setInput(Rule::Width, *contentWidth - this->rule("scrollarea.bar"));
         menu->enableScrolling(false);
         menu->enablePageKeys(false);
 
@@ -84,12 +86,11 @@ DE_PIMPL(BrowserWidget)
         scroller->enablePageKeys(true);
         scroller->enableScrolling(true);
         scroller->enableIndicatorDraw(true);
+    }
 
-//        i->add(currentPath);
-//        scroller->add(menu);
-//        i->add(scroller);
-
-//        menu->organizer().audienceForWidgetCreation() += this;
+    ~Impl()
+    {
+        releaseRef(contentWidth);
     }
 
     void changeTo(const Path &newPath)
@@ -98,16 +99,23 @@ DE_PIMPL(BrowserWidget)
 
         DE_ASSERT(data);
 
-        scroller->scrollY(0);
+        savedState[path].scrollPosY = scroller->scrollPosition().y;
 
         // TODO: This is an async op, need to show progress widget.
+
         path = newPath;
-        //currentPath->setText(path);
         createPathButtons();
         const ui::Data &items = data->items(path);
         menu->setItems(items);
 
-        // TODO: Recreate the path segment buttons.
+        if (savedState.contains(path))
+        {
+            scroller->scrollY(savedState[path].scrollPosY);
+        }
+        else
+        {
+            scroller->scrollY(0);
+        }
     }
 
     void createPathButtons()
@@ -126,6 +134,7 @@ DE_PIMPL(BrowserWidget)
 
             auto &button = self().addNew<ButtonWidget>();
             button.setSizePolicy(ui::Expand, ui::Expand);
+            button.setMaximumTextWidth(*contentWidth);
             button.setText(Stringf("%s/", String(segment).c_str()));
 
             if (i == path.segmentCount() - 1)
@@ -146,10 +155,10 @@ DE_PIMPL(BrowserWidget)
         }
     }
 
-//    DE_PIMPL_AUDIENCE(Navigation)
+    DE_PIMPL_AUDIENCE(Trigger)
 };
 
-//DE_AUDIENCE_METHOD(BrowserWidget, Navigation)
+DE_AUDIENCE_METHOD(BrowserWidget, Trigger)
 
 BrowserWidget::BrowserWidget(const String &name)
     : GuiWidget(name)
