@@ -53,7 +53,6 @@
 #include "ui/widgets/busywidget.h"
 #include "ui/widgets/taskbarwidget.h"
 #include "ui/widgets/consolewidget.h"
-#include "ui/widgets/privilegedlogwidget.h"
 #include "ui/home/homewidget.h"
 #include "ui/dialogs/coloradjustmentdialog.h"
 #include "ui/dialogs/alertdialog.h"
@@ -99,7 +98,6 @@ DE_PIMPL(ClientWindow)
     SafeWidgetPtr<FadeToBlackWidget> fader;
     BusyWidget *busy = nullptr;
     GuiWidget *sidebar = nullptr;
-    PrivilegedLogWidget *privLog = nullptr;
     LabelWidget *cursor = nullptr;
     ConstantRule *cursorX;
     ConstantRule *cursorY;
@@ -309,11 +307,6 @@ DE_PIMPL(ClientWindow)
         root.add(taskBar);
 
         miniGameControls->rule().setInput(Rule::Bottom, taskBar->rule().top());
-
-        // Privileged work-in-progress log.
-        privLog = new PrivilegedLogWidget;
-        privLog->rule().setRect(root.viewRule());
-        root.add(privLog);
 
         // Color adjustment dialog.
         colorAdjust = new ColorAdjustmentDialog;
