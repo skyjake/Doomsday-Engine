@@ -61,14 +61,14 @@ public:
     inline dsize size() const
     {
         updateEnd();
-        return _range.size();
+        return dsize(_range.size());
     }
     inline bool isEmpty() const { return size() == 0; }
     inline bool empty() const { return size() == 0; }
     inline void setStart(const char *p) { _range.start = p; }
     inline void setEnd(const char *p) { _range.end = p; }
-    const char *ptr(BytePos pos = BytePos(0)) const { return _range.start + pos; }
-    const char *endPtr() const { return ptr(BytePos(size())); }
+    inline const char *ptr(BytePos pos = BytePos(0)) const { return _range.start + pos; }
+    inline const char *endPtr() const { updateEnd(); return _range.end; }
     dsize length() const;
     bool contains(char ch) const;
     bool beginsWith(const CString &prefix, Sensitivity cs = CaseSensitive) const;
