@@ -48,7 +48,7 @@ DE_GUI_PIMPL(PackagesColumnWidget)
     LabelWidget *   countLabel;
     ButtonWidget *  folderOptionsButton;
     ui::ListData    actions;
-    LoopCallback    mainCall;
+    Dispatch    mainCall;
     int             totalPackageCount = 0;
 
     Impl(Public *i) : Base(i)

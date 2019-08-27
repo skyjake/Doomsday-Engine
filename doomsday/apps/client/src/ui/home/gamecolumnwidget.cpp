@@ -103,7 +103,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         DE_CAST_METHODS()
     };
 
-    LoopCallback mainCall;
+    Dispatch dispatch;
     String gameFamily;
     SaveListData const &savedItems;
     HomeMenuWidget *menu;
@@ -220,7 +220,7 @@ DE_GUI_PIMPL(GameColumnWidget)
     void profileAdded(Profiles::AbstractProfile &prof) override
     {
         // This may be called from another thread.
-        mainCall.enqueue([this, &prof] ()
+        dispatch += [this, &prof] ()
         {
             if (addItemForProfile(prof.as<GameProfile>()))
             {
@@ -231,7 +231,7 @@ DE_GUI_PIMPL(GameColumnWidget)
                 DE_ASSERT(newItem);
                 menu->setSelectedIndex(menu->items().find(*newItem));
             }
-        });
+        };
     }
 
     void profileChanged(Profiles::AbstractProfile &) override

@@ -71,7 +71,7 @@ public:
      * If information about the server at @a address is not currently available, a
      * discovery query is sent to the address.
      *
-     * After the server's profile is available, a callback is made via LoopCallback.
+     * After the server's profile is available, a callback is made via Dispatch.
      *
      * @param address        Server address.
      * @param resultHandler  Callback for receiving the server profile. ServerLink

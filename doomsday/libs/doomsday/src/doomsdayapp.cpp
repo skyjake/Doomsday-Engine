@@ -150,7 +150,7 @@ DE_PIMPL(DoomsdayApp)
     res::Bundles             dataBundles;
     shell::PackageDownloader packageDownloader;
     SaveGames                saveGames;
-    LoopCallback             mainCall;
+    Dispatch             mainCall;
     Timer                    configSaveTimer;
 
 // #ifdef WIN32

@@ -82,7 +82,7 @@ DE_PIMPL(ServerLink)
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
     shell::PackageDownloader downloader;
-    LoopCallback deferred; // for deferred actions
+    Dispatch deferred; // for deferred actions
 
     Impl(Public *i, Flags flags)
         : Base(i)

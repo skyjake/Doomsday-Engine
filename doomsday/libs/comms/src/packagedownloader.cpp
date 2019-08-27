@@ -48,7 +48,7 @@ DE_PIMPL(PackageDownloader)
     AssetGroup                      downloads;
     Hash<IDownloadable *, Rangei64> downloadBytes;
     std::function<void()>           postDownloadCallback;
-    LoopCallback                    deferred;
+    Dispatch                    deferred;
 
     Impl(Public *i) : Base(i) {}
 

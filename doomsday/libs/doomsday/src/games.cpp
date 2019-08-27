@@ -50,7 +50,7 @@ DE_PIMPL(Games)
 
     Hash<String, Game *> idLookup; // not owned, lower case
 
-    LoopCallback mainCall;
+    Dispatch dispatch;
     Set<Game const *> lastCheckedPlayable; // determines when notification sent
 
     /**
@@ -131,9 +131,9 @@ DE_PIMPL(Games)
 
     void dataBundlesIdentified()
     {
-        if (!mainCall)
+        if (!dispatch)
         {
-            mainCall.enqueue([this] () { self().checkReadiness(); });
+            dispatch += [this]() { self().checkReadiness(); };
         }
     }
 

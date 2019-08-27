@@ -63,7 +63,7 @@ DE_GUI_PIMPL(HomeWidget)
         Column(ColumnWidget *w, Variable *var) : widget(w), configVar(var) {}
     };
 
-    LoopCallback mainCall;
+    Dispatch dispatch;
     SaveListData savedItems; ///< All the available save games as items.
 
     dsize                visibleColumnCount = 2;
@@ -137,7 +137,7 @@ DE_GUI_PIMPL(HomeWidget)
         });
 
         // The task bar is created later.
-        mainCall.enqueue([this]() {
+        dispatch += [this]() {
             ClientWindow::main().taskBar().audienceForOpen() += [this]() {
                 taskBarHintButton->disable();
                 taskBarHintButton->setOpacity(0, 0.25);
@@ -146,7 +146,7 @@ DE_GUI_PIMPL(HomeWidget)
                 taskBarHintButton->enable();
                 taskBarHintButton->setOpacity(.66f, 0.5);
             };
-            });
+        };
 
         // The navigation buttons should be hidden with a delay or otherwise the user
         // may inadvertely click on them right after they're gone.

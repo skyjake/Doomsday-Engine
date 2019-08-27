@@ -544,7 +544,7 @@ DE_PIMPL(Bank)
     DataTree items;
     TaskPool jobs;
     NotifyQueue notifications;
-    LoopCallback mainCall;
+    Dispatch dispatch;
 
     Impl(Public *i, char const *name, Flags const &flg)
         : Base(i)
@@ -690,7 +690,7 @@ DE_PIMPL(Bank)
         notifications.put(new Notification(notif));
         if (isThreaded())
         {
-            mainCall.enqueue([this] () { performNotifications(); });
+            dispatch += [this] () { performNotifications(); };
         }
     }
 

@@ -223,7 +223,7 @@ DE_PIMPL(SaveSlots)
     typedef std::map<String, Slot *> Slots;
     typedef std::pair<String, Slot *> SlotItem;
     Slots sslots;
-    LoopCallback mainCall;
+    Dispatch dispatch;
 
     Impl(Public *i) : Base(i)
     {
@@ -271,17 +271,13 @@ DE_PIMPL(SaveSlots)
 
     void fileAdded(File const &saveFolder, FileIndex const &)
     {
-        mainCall.enqueue([this, &saveFolder] ()
+        dispatch += [this, &saveFolder] ()
         {
-        //for (auto i = index.begin(); i != index.end(); ++i)
-        //{
-            //auto &saveFolder = i->second->as<GameStateFolder>();
             if (SaveSlot *sslot = slotBySavePath(saveFolder.path()))
             {
                 sslot->setGameStateFolder(const_cast<GameStateFolder *>(&saveFolder.as<GameStateFolder>()));
             }
-        //}
-        });
+        };
     }
 
     void fileRemoved(File const &saveFolder, FileIndex const &)

@@ -103,20 +103,25 @@ private:
 };
 
 /**
- * Utility for deferring callbacks via the Loop.
+ * Utility for deferring callbacks via the Loop to be called later in the main thread.
+ *
+ * Use this as a member in the object where the callback occurs in, so that if the
+ * Dispatch is deleted, the callbacks will be cancelled.
  */
-class DE_PUBLIC LoopCallback : public Lockable, DE_OBSERVES(Loop, Iteration)
+class DE_PUBLIC Dispatch : public Lockable, DE_OBSERVES(Loop, Iteration)
 {
 public:
     typedef std::function<void ()> Callback;
 
-    LoopCallback();
-    ~LoopCallback() override;
+    Dispatch();
+    ~Dispatch() override;
 
     bool isEmpty() const;
     inline operator bool() const { return !isEmpty(); }
 
     void enqueue(const Callback& func);
+    inline Dispatch &operator+=(const Callback &func) { enqueue(func); return *this; }
+
     void loopIteration() override;
 
 private:

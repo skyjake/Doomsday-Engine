@@ -31,10 +31,10 @@ static Loop *loopSingleton = nullptr;
 
 DE_PIMPL(Loop)
 {
-    TimeSpan     interval;
-    bool         running;
-    Timer        timer;
-    LoopCallback mainCall;
+    TimeSpan interval;
+    bool     running;
+    Timer    timer;
+    Dispatch dispatch;
 
     Impl(Public *i) : Base(i), running(false)
     {
@@ -118,7 +118,7 @@ void Loop::mainCall(const std::function<void ()> &func) // static
     }
     else
     {
-        Loop::get().d->mainCall.enqueue(func);
+        Loop::get().d->dispatch.enqueue(func);
     }
 }
 
@@ -147,22 +147,22 @@ void Loop::nextLoopIteration()
     }
 }
 
-// LoopCallback -------------------------------------------------------------------------
+// Dispatch -------------------------------------------------------------------------
 
-LoopCallback::LoopCallback()
+Dispatch::Dispatch()
 {}
 
-LoopCallback::~LoopCallback()
+Dispatch::~Dispatch()
 {}
 
-bool LoopCallback::isEmpty() const
+bool Dispatch::isEmpty() const
 {
     DE_GUARD(this);
 
     return _funcs.isEmpty();
 }
 
-void LoopCallback::enqueue(const Callback& func)
+void Dispatch::enqueue(const Callback& func)
 {
     DE_GUARD(this);
 
@@ -171,7 +171,7 @@ void LoopCallback::enqueue(const Callback& func)
     Loop::get().audienceForIteration() += this;
 }
 
-void LoopCallback::loopIteration()
+void Dispatch::loopIteration()
 {
     List<Callback> funcs;
 

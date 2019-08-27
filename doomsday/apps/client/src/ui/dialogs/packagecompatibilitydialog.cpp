@@ -44,7 +44,7 @@ DE_PIMPL(PackageCompatibilityDialog)
     ui::ListData    actions;
     ProgressWidget *updating;
     bool            ignoreCheck = false;
-    LoopCallback    mainCall;
+    Dispatch    mainCall;
 
     Impl(Public *i) : Base(i)
     {

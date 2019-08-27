@@ -460,8 +460,8 @@ DE_GUI_PIMPL(PackagesWidget)
 
     using Strings = std::set<String>;
 
-    LoopCallback mainCall;
-    LoopCallback mainCallForIdentify;
+    Dispatch dispatch;
+    Dispatch mainCallForIdentify;
 
     // Search filter:
     LineEditWidget *search;
@@ -750,12 +750,12 @@ DE_GUI_PIMPL(PackagesWidget)
         {
             // Refiltering will potentially alter the widget tree, so doing it during
             // event handling is not a great idea.
-            mainCall.enqueue([this]() {
+            dispatch += [this]() {
                 /// @todo Parse quoted terms. -jk
                 setFilterTerms(search->text().strip().split(RegExp::WHITESPACE));
 
                 menu->setOpacity(1.f, REFILTER_DELAY);
-            });
+            };
         }
     }
 

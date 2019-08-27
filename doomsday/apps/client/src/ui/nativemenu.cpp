@@ -35,7 +35,7 @@ DE_PIMPL(NativeMenu)
 //    QMenuBar *menuBar = nullptr;
 //    QMenu *helpMenu = nullptr;
 //    QMenu *gameMenu = nullptr;
-    LoopCallback mainCall;
+    Dispatch dispatch;
 
     Impl(Public *i) : Base(i)
     {

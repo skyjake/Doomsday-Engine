@@ -44,7 +44,7 @@ DE_PIMPL(GLWindow)
     SDL_Window *   window   = nullptr;
     SDL_GLContext glContext = nullptr;
 
-    LoopCallback        mainCall;
+    Dispatch        mainCall;
     GLFramebuffer       backing;
     WindowEventHandler *handler       = nullptr; ///< Event handler.
     bool                initialized   = false;

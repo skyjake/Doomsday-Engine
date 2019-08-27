@@ -43,7 +43,7 @@ DE_PIMPL(Environment)
     enum { Interior, Exterior };
 
     filesys::AssetObserver observer { "texture\\.reflect\\..*" };
-    LoopCallback mainCall;
+    Dispatch dispatch;
 
     struct EnvMaps
     {
@@ -150,7 +150,7 @@ DE_PIMPL(Environment)
 
     void worldMapChanged()
     {
-        mainCall.enqueue([this] () { loadTexturesForCurrentMap(); });
+        dispatch += [this]() { loadTexturesForCurrentMap(); };
     }
 
     void loadTexturesForCurrentMap()

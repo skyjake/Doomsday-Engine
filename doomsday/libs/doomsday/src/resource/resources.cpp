@@ -95,7 +95,7 @@ DE_PIMPL(Resources)
     res::Textures       textures;
     res::AnimGroups     animGroups;
     res::Sprites        sprites;
-    LoopCallback        deferredReset;
+    Dispatch        deferredReset;
 
     Impl(Public *i)
         : Base(i)

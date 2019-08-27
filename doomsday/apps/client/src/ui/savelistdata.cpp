@@ -31,7 +31,7 @@ DE_PIMPL(SaveListData)
 , DE_OBSERVES(FileIndex, Addition)
 , DE_OBSERVES(FileIndex, Removal)
 {
-    LoopCallback mainCall;
+    Dispatch dispatch;
 
     Impl(Public *i) : Base(i)
     {
@@ -49,18 +49,18 @@ DE_PIMPL(SaveListData)
         GameStateFolder const &saveFolder = file.as<GameStateFolder>();
         if (shouldAddFolder(saveFolder))
         {
-            mainCall.enqueue([this, &saveFolder] ()
+            dispatch += [this, &saveFolder] ()
             {
                 // Needs to be added.
                 self().append(new SaveItem(saveFolder));
-            });
+            };
         }
     }
 
     void fileRemoved(File const &, FileIndex const &)
     {
         // Remove obsolete entries.
-        mainCall.enqueue([this] ()
+        dispatch += [this] ()
         {
             for (ui::Data::Pos idx = self().size() - 1; idx < self().size(); --idx)
             {
@@ -69,7 +69,7 @@ DE_PIMPL(SaveListData)
                     self().remove(idx);
                 }
             }
-        });
+        };
     }
 
     void addAllFromIndex()
