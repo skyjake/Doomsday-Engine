@@ -185,7 +185,15 @@ void DirectoryFeed::populateFile(Folder const &folder, String const &entryName,
             nativeFile->setMode(File::Write);
         }
 
-        File *file = folder.fileSystem().interpret(nativeFile.release());
+        File *file;
+        if (!(d->mode & DisableInterpreters))
+        {
+            file = FS::get().interpret(nativeFile.release());
+        }
+        else
+        {
+            file = nativeFile.release();
+        }
 
         // We will decide on pruning this.
         file->setOriginFeed(this);

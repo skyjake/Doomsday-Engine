@@ -54,6 +54,9 @@ public:
         /// subfolders.
         PopulateNativeSubfolders = 0x4,
 
+        /// Create all files as native files without passing through any interpreters.
+        DisableInterpreters = 0x8,
+
         OnlyThisFolder = 0,
 
         DefaultFlags = PopulateNativeSubfolders
