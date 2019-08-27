@@ -81,8 +81,11 @@ Address Address::take(iAddress *addr)
 
 Address::Address(const Address &other) : d(new Impl)
 {
-    d->_addr.reset(other.d->_addr); // use the same object
-    d->port = other.d->port;
+    d->_addr.reset(other.d->_addr); // reference the same object
+    d->port          = other.d->port;
+    d->pendingLookup = other.d->pendingLookup;
+    d->textRepr      = other.d->textRepr;
+    d->special       = other.d->special;
 }
 
 Address::operator const iAddress *() const
@@ -90,13 +93,13 @@ Address::operator const iAddress *() const
     return d->get();
 }
 
-Address &Address::operator=(Address const &other)
+Address &Address::operator=(const Address &other)
 {
-    d->_addr.reset(other.d->_addr); // use the same object
+    d->_addr.reset(other.d->_addr); // reference the same object
+    d->pendingLookup = other.d->pendingLookup;
     d->port          = other.d->port;
     d->textRepr      = other.d->textRepr;
     d->special       = other.d->special;
-    d->pendingLookup = other.d->pendingLookup;
     return *this;
 }
 
@@ -160,6 +163,15 @@ duint16 Address::port() const
 
 String Address::asText() const
 {
+    if (d->pendingLookup)
+    {
+        String str = d->pendingLookup;
+        if (d->port)
+        {
+            str += Stringf(":%u", d->port);
+        }
+        return str;
+    }
     if (isNull())
     {
         return {};

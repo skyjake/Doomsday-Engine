@@ -54,14 +54,14 @@ public:
 
     operator const iAddress *() const;
 
-    Address &operator=(Address const &other);
+    Address &operator=(const Address &other);
 
     /**
      * Returns the host name that was passed to lookup.
      */
     String hostName() const;
 
-    bool operator<(Address const &other) const;
+    bool operator<(const Address &other) const;
 
     /**
      * Checks two addresses for equality.
@@ -70,7 +70,7 @@ public:
      *
      * @return @c true if the addresses are equal.
      */
-    bool operator==(Address const &other) const;
+    bool operator==(const Address &other) const;
 
     bool isNull() const;
 
