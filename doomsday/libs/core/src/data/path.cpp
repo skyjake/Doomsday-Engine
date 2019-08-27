@@ -1,7 +1,7 @@
 /** @file path.cpp Textual path composed of segments.
  *
+ * @author Copyright © 2010-2019 Jaakko Keränen <jaakko.keranen@iki.fi>
  * @author Copyright © 2010-2013 Daniel Swanson <danij@dengine.net>
- * @author Copyright © 2010-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
  * @par License
  * LGPL: http://www.gnu.org/licenses/lgpl.html
@@ -27,23 +27,7 @@
 
 namespace de {
 
-/// Size of the fixed-size portion of the segment buffer.
-//static int const SEGMENT_BUFFER_SIZE = 8;
-
 //---------------------------------------------------------------------------------------
-
-//const uint32_t LowercaseHashString::HASH_RANGE = 0xffffffff;
-
-//Path::hash_type Path::Segment::hash() const
-//{
-//    // Is it time to compute the hash?
-//    if (!(flags & GotHashKey))
-//    {
-//        hashKey = de::crc32(range.lower()) % hash_range;
-//        flags |= GotHashKey;
-//    }
-//    return hashKey;
-//}
 
 bool Path::Segment::hasWildCard() const
 {
@@ -83,54 +67,22 @@ DE_PIMPL_NOREF(Path)
 {
     static const String emptyPath;
 
-    String path;
-
-    /// The character in Impl::path that act(s) as the segment separator.
-    Char separator;
-
-    /**
-     * List of the extra segments that don't fit in segments, in reverse
-     * order.
-     */
-    List<Segment> segments;
-
-    /*
-     * Total number of segments in the path. If 0, it means that the path
-     * isn't parsed into segments yet -- all paths have at least one segment
-     * (an empty one if nothing else).
-     */
-//    dsize segmentCount;
+    String        path;
+    Char          separator; // Character that acts as the segment separator.
+    List<Segment> segments;  // List of the segments, in reverse order.
 
     inline dsize segmentCount() const
     {
         return segments.size();
     }
 
-    /*
-     * Fixed-size array for the segments of the path.
-     *
-     * The segments array is composed of two parts: the first
-     * eight elements are placed into a fixed-size array which is
-     * allocated along with the Instance, and additional segments are allocated
-     * dynamically and linked in the extraSegments list.
-     *
-     * This optimized representation should mean that the majority of paths
-     * can be represented without dynamically allocating memory from the heap
-     * (apart from the Instance, that is).
-     *
-     * @note Contents of the array are not initialized to zero.
-     */
-    //std::array<Segment, 8> segments;
-
     Impl()
         : separator('/')
-        //, segmentCount(0)
     {}
 
     Impl(const String &p, Char sep)
         : path(p)
         , separator(sep)
-        //, segmentCount(0)
     {}
 
     ~Impl()
@@ -144,8 +96,6 @@ DE_PIMPL_NOREF(Path)
     void clearSegments()
     {
         segments.clear();
-        //segments = {};
-        //segmentCount = 0;
     }
 
     /**
@@ -156,99 +106,42 @@ DE_PIMPL_NOREF(Path)
      */
     Segment *allocSegment(const CString &range)
     {
-//        Segment *segment;
-//        if (segmentCount < segments.size())
-//        {
-//            segment = &segments[segmentCount];
-//        }
-//        else
         segments.push_back(range);
-//        Segment *segment = &segments.back();
-//        {
-//            segments << Segment();
-//            segment = &extraSegments.last();
-//        }
-        //segment->flags = 0;
-//        segment->range = range;
-//        segment->_key  = String(range);
-//        segmentCount++;
         return &segments.back();
     }
 
     /**
      * Build the segment array by splitting the path. When the path is modified,
      * the existing map is invalidated and needs to be remapped.
+     *
+     * @todo The reverse order is not really needed any more. Could just parse segment
+     * left-to-right.
      */
     void parse()
     {
         // Already been here?
         if (!segments.empty()) return;
 
-//        segmentCount = 0;
         segments.clear();
 
         if (path.isEmpty())
         {
             // There always has to be at least one segment.
             allocSegment(emptyPath);
-
-            DE_ASSERT(!segments.empty());
-            return;
         }
-
-        const auto parts = path.splitRef(separator);
-        for (auto p = parts.rbegin(); p != parts.rend(); ++p)
+        else
         {
-            allocSegment(*p);
+            const auto parts = path.splitRef(separator);
+            for (auto p = parts.rbegin(); p != parts.rend(); ++p)
+            {
+                allocSegment(*p);
+            }
+            // We expect an empty segment in the beginning for absolute paths.
+            if (path.beginsWith(separator))
+            {
+                allocSegment({path.c_str(), path.c_str()});
+            }
         }
-
-        // We expect an empty segment in the beginning for absolute paths.
-        if (path.beginsWith(separator))
-        {
-            allocSegment(emptyPath);
-        }
-
-#if 0
-        const char *                   segBegin = path.c_str();
-        String::const_reverse_iterator segEnd   = path.rbegin();
-
-        const Char SEP = separator;
-
-        // Skip over any trailing delimiters.
-        /*for (int i = path.length(); segEnd->unicode() && *segEnd == separator && i-- > 0; --segEnd)
-        {}*/
-        while (segEnd != segBegin && *segEnd == SEP) segEnd++;
-
-        // Scan the path for segments, in reverse order.
-        //char const *from;
-        while (segEnd != segBegin)
-        {
-            //if (segEnd < segBegin) break; // E.g., path is "/"
-
-            // Find the start of the next segment.
-            /*for (from = segEnd; from > segBegin && !(*from == separator); from--)
-            {}*/
-            const char *lastSep = segEnd++;
-            for (; segEnd != segBegin && *segEnd != SEP; segEnd++) {}
-
-            const char *startPtr = static_cast<const char *>(segEnd) + (*segEnd == SEP? 1 : 0); // - path.constData();
-            allocSegment(CString(startPtr, lastSep));
-
-            // Are there no more parent directories?
-            //if (segEnd == segBegin) break;
-
-            // So far so good. Move one directory level upwards.
-            // The next name ends here.
-            //segEnd++;
-        }
-
-        // Unix style zero-length root name?
-        if (*segBegin == SEP)
-        {
-            allocSegment(emptyPath);
-        }
-#endif
-
         DE_ASSERT(!segments.empty());
     }
 };
@@ -330,15 +223,7 @@ Path::Segment const &Path::reverseSegment(int reverseIndex) const
         throw OutOfBoundsError("Path::reverseSegment",
                                stringf("Reverse index %i is out of bounds", reverseIndex));
     }
-
-    // Is this in the static buffer?
-    //if (reverseIndex < int(d->segments.size()))
-//    {
     return d->segments[size_t(reverseIndex)];
-//    }
-
-    // No - an extra segment.
-//    return d->extraSegments[reverseIndex - d->segments.size()];
 }
 
 Path Path::subPath(const Rangei &range) const
@@ -347,12 +232,13 @@ Path Path::subPath(const Rangei &range) const
     {
         return Path("", d->separator);
     }
-    Path sub(String(segment(range.start)), d->separator);
-    for (int i = range.start + 1; i < range.end; ++i)
+    if (range.size() == 1 && range.start == 0 && segment(0).size() == 0)
     {
-        sub = sub / segment(i);
+        // It is the root.
+        return Path(String(1, d->separator), d->separator);
     }
-    return sub;
+    return Path(CString(segment(range.start).range.ptr(),
+                        segment(range.end - 1).range.endPtr()), d->separator);
 }
 
 Path Path::beginningOmitted(int omittedSegmentCount) const
