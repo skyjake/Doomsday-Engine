@@ -31,6 +31,7 @@ DE_PIMPL(FlowLayout)
     const Rule *  posX;
     const Rule *  posY;
     const Rule *  totalHeight;
+    IndirectRule *outHeight;
 
     Impl(Public *i, const Rule &x, const Rule &y, const Rule &maxLength)
         : Base(i)
@@ -42,10 +43,12 @@ DE_PIMPL(FlowLayout)
         , posX(holdRef(x))
         , posY(holdRef(y))
         , totalHeight(new ConstantRule(0))
+        , outHeight(new IndirectRule)
     {}
 
     ~Impl()
     {
+        releaseRef(outHeight);
         releaseRef(maxLength);
         releaseRef(rightEdge);
         releaseRef(rowHeight);
@@ -63,6 +66,7 @@ DE_PIMPL(FlowLayout)
         changeRef(posY, *initialY);
         releaseRef(rowHeight);
         changeRef(totalHeight, *refless(new ConstantRule(0)));
+        outHeight->setSource(*totalHeight);
     }
 
     void append(GuiWidget *widget, const Rule *spaceBefore)
@@ -107,6 +111,7 @@ DE_PIMPL(FlowLayout)
 
             changeRef(totalHeight, *posY + *rowHeight - *initialY);
         }
+        outHeight->setSource(*totalHeight);
 
         widgets << widget;
     }
@@ -165,7 +170,7 @@ const Rule &FlowLayout::width() const
 
 const Rule &FlowLayout::height() const
 {
-    return *d->totalHeight;
+    return *d->outHeight;
 }
 
 } // namespace de
