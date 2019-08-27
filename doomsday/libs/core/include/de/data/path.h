@@ -113,13 +113,9 @@ public:
          */
         inline operator CString() const { return range; }
 
-        /**
-         * Converts the segment to a string.
-         */
-//        String toString() const;
-
         inline Rangecc toRange() const { return range; }
-        inline String toString() const { return _key.str; /*String(range);*/ }
+        inline String  toString() const { return _key.str; }
+        inline CString toCString() const { return range; }
 
         /**
          * Determines the length of the segment in characters.

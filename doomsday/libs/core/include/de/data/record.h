@@ -625,7 +625,7 @@ public:
 
     // Implements LogEntry::Arg::Base.
     LogEntry::Arg::Type logEntryArgType() const { return LogEntry::Arg::StringArgument; }
-    String asText() const { return asText("", 0); }
+    String asText() const { return asText("", nullptr); }
 
     /*
      * Utility template for initializing a Record with an arbitrary number of
