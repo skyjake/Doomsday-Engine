@@ -66,14 +66,16 @@ public:
         Attribs attribs;
 
     public:
-        AttribChar(Char const &c = Char(' '), Attribs const &at = DefaultAttributes)
+        AttribChar(const Char c = ' ', Attribs at = DefaultAttributes)
             : ch(c)
             , attribs(at)
         {
             attribs |= Dirty;
         }
 
-        bool operator<(AttribChar const &other) const
+        AttribChar(const AttribChar &) = default;
+
+        bool operator<(const AttribChar &other) const
         {
             if (ch == other.ch)
             {
@@ -82,7 +84,7 @@ public:
             return ch < other.ch;
         }
 
-        bool operator==(AttribChar const &other) const
+        bool operator==(const AttribChar &other) const
         {
             return (ch == other.ch &&
                     (attribs & VisualAttributes) == (other.attribs & VisualAttributes));
