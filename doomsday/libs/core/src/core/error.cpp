@@ -19,9 +19,9 @@
  */
 
 #include "de/error.h"
-#include "core/logtextstyle.h"
 #include "de/EscapeParser"
 #include "de/String"
+#include "logtextstyle.h"
 
 namespace de {
 
