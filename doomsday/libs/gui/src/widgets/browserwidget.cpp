@@ -77,10 +77,10 @@ DE_GUI_PIMPL(BrowserWidget)
 
         menu = &scroller->addNew<MenuWidget>("items");
         menu->setGridSize(1, ui::Filled, 0, ui::Expand);
-        menu->margins().setZero();
+        menu->margins().setZero().setRight("dialog.gap");
         menu->rule()
             .setLeftTop(scroller->contentRule().left(), scroller->contentRule().top())
-            .setInput(Rule::Width, *contentWidth - this->rule("scrollarea.bar"));
+            .setInput(Rule::Width, *contentWidth - menu->margins().width());
         menu->enableScrolling(false);
         menu->enablePageKeys(false);
 
@@ -96,8 +96,10 @@ DE_GUI_PIMPL(BrowserWidget)
         releaseRef(contentWidth);
     }
 
-    void changeTo(const Path &newPath)
+    void changeTo(const Path &newPath, bool createButtons)
     {
+        if (path == newPath && !createButtons) return;
+
         debug("[BrowserWidget] change to '%s'", newPath.c_str());
 
         DE_ASSERT(data);
@@ -107,7 +109,10 @@ DE_GUI_PIMPL(BrowserWidget)
         // TODO: This is an async op, need to show progress widget.
 
         path = newPath;
-        createPathButtons();
+        if (createButtons)
+        {
+            createPathButtons();
+        }
         const ui::Data &items = data->items(path);
         menu->setItems(items);
 
@@ -149,17 +154,25 @@ DE_GUI_PIMPL(BrowserWidget)
             {
                 button.setTextColor("accent");
             }
-            else
-            {
-                const Path buttonPath = path.subPath({0, i + 1});
-                button.audienceForPress() += [this, buttonPath]() {
-                    dispatch += [this, buttonPath](){
-                        changeTo(buttonPath);
-                    };
+
+            const Path buttonPath = path.subPath({0, i + 1});
+            button.audienceForPress() += [this, &button, buttonPath]() {
+                resetPathButtonColors();
+                button.setTextColor("accent");
+                dispatch += [this, buttonPath](){
+                    changeTo(buttonPath, false);
                 };
-            }
+            };
 
             pathFlow->append(button);
+        }
+    }
+
+    void resetPathButtonColors()
+    {
+        for (auto *button : pathFlow->widgets())
+        {
+            button->setTextColor("text");
         }
     }
 
@@ -192,7 +205,7 @@ MenuWidget &BrowserWidget::menu()
 
 void BrowserWidget::setCurrentPath(const Path &path)
 {
-    d->changeTo(path);
+    d->changeTo(path, true);
 }
 
 } // namespace de
