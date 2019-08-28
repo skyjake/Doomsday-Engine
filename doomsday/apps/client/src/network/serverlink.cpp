@@ -45,11 +45,11 @@
 #include <de/MessageDialog>
 #include <de/PackageLoader>
 #include <de/RecordValue>
+#include <de/ServerFinder>
 #include <de/Socket>
 #include <de/Timer>
 #include <de/data/json.h>
 #include <de/legacy/memory.h>
-#include <de/comms/ServerFinder>
 
 using namespace de;
 
@@ -69,10 +69,10 @@ static int const NUM_PINGS = 5;
 
 DE_PIMPL(ServerLink)
 {
-    std::unique_ptr<shell::ServerFinder> finder; ///< Finding local servers.
+    std::unique_ptr<ServerFinder> finder; ///< Finding local servers.
     LinkState state;
     bool fetching;
-    typedef Map<Address, shell::ServerInfo> Servers;
+    typedef Map<Address, ServerInfo> Servers;
     Servers discovered;
     Servers fromMaster;
     ElapsedTimer pingTimer;
@@ -81,7 +81,7 @@ DE_PIMPL(ServerLink)
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
     std::function<void (GameProfile const *)> profileResultCallback;
     std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
-    shell::PackageDownloader downloader;
+    PackageDownloader downloader;
     Dispatch deferred; // for deferred actions
 
     Impl(Public *i, Flags flags)
@@ -91,7 +91,7 @@ DE_PIMPL(ServerLink)
     {
         if (flags & DiscoverLocalServers)
         {
-            finder.reset(new shell::ServerFinder);
+            finder.reset(new ServerFinder);
         }
     }
 
@@ -124,7 +124,7 @@ DE_PIMPL(ServerLink)
                 {
                     throw Error("ServerLink::handleInfoResponse", "Failed to parse response contents");
                 }*/
-                shell::ServerInfo svInfo(response); //*rec->as<RecordValue>().record());
+                ServerInfo svInfo(response); //*rec->as<RecordValue>().record());
 
                 LOG_NET_VERBOSE("Discovered server at ") << svAddress;
 
@@ -175,7 +175,7 @@ DE_PIMPL(ServerLink)
         {
             try
             {
-                shell::MapOutlinePacket outline;
+                network::MapOutlinePacket outline;
                 {
                     Block const data = Block(ByteSubArray(reply, 11)).decompressed();
                     Reader src(data);
@@ -256,7 +256,7 @@ DE_PIMPL(ServerLink)
             int const count = N_MasterGet(0, nullptr);
             for (int i = 0; i < count; i++)
             {
-                shell::ServerInfo info;
+                ServerInfo info;
                 N_MasterGet(i, &info);
                 fromMaster.insert(info.address(), info);
             }
@@ -275,7 +275,7 @@ DE_PIMPL(ServerLink)
         serverProfile.reset();
 
         // Do we have information about this host?
-        shell::ServerInfo info;
+        ServerInfo info;
         if (!self().foundServerInfo(host, info))
         {
             return false;
@@ -350,7 +350,7 @@ ServerLink::ServerLink(Flags flags) : d(new Impl(this, flags))
     audienceForDisconnected() += [this](){ linkDisconnected(); };
 }
 
-shell::PackageDownloader &ServerLink::packageDownloader()
+PackageDownloader &ServerLink::packageDownloader()
 {
     return d->downloader;
 }
@@ -361,7 +361,7 @@ void ServerLink::clear()
     // TODO: clear all found servers
 }
 
-void ServerLink::connectToServerAndChangeGameAsync(const shell::ServerInfo& info)
+void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
 {
     // Automatically leave the current MP game.
     if (netGame && isClient)
@@ -626,11 +626,11 @@ List<Address> ServerLink::foundServers(FoundMask mask) const
 
 bool ServerLink::isFound(Address const &host, FoundMask mask) const
 {
-    Address const addr = shell::checkPort(host);
+    Address const addr = checkPort(host);
     return d->allFound(mask).contains(addr);
 }
 
-bool ServerLink::foundServerInfo(int index, shell::ServerInfo &info, FoundMask mask) const
+bool ServerLink::foundServerInfo(int index, ServerInfo &info, FoundMask mask) const
 {
     const Impl::Servers all = d->allFound(mask);
     const auto          listed =
@@ -643,13 +643,13 @@ bool ServerLink::foundServerInfo(int index, shell::ServerInfo &info, FoundMask m
 bool ServerLink::isServerOnLocalNetwork(Address const &host) const
 {
     if (!d->finder) return host.isLocal(); // Best guess...
-    Address const addr = shell::checkPort(host);
+    Address const addr = checkPort(host);
     return d->finder->foundServers().contains(addr);
 }
 
-bool ServerLink::foundServerInfo(de::Address const &host, shell::ServerInfo &info, FoundMask mask) const
+bool ServerLink::foundServerInfo(de::Address const &host, ServerInfo &info, FoundMask mask) const
 {
-    Address const addr = shell::checkPort(host);
+    Address const addr = checkPort(host);
     Impl::Servers const all = d->allFound(mask);
     if (!all.contains(addr)) return false;
     info = all[addr];

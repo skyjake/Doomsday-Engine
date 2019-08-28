@@ -21,12 +21,12 @@
 
 #include "../widgets/panelbuttonwidget.h"
 #include <de/ButtonWidget>
-#include <de/comms/ServerInfo>
+#include <de/ServerInfo>
 
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
 public:
-    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
+    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(de::ServerInfo const &))
 
 public:
     MultiplayerPanelButtonWidget();
@@ -36,7 +36,7 @@ public:
     void setSelected(bool selected) override;
     void itemRightClicked() override;
 
-    void updateContent(de::shell::ServerInfo const &info);
+    void updateContent(de::ServerInfo const &info);
 
     void joinGame();
 

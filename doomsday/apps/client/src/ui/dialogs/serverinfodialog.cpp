@@ -52,7 +52,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
     Address host;
     String domainName;
     GameProfile profile;
-    shell::ServerInfo serverInfo;
+    ServerInfo serverInfo;
     TimeSpan ping = -1.0;
 
     // Network queries.
@@ -77,7 +77,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
     LabelWidget *gameState;
     ui::ListData serverPackageActions;
 
-    Impl(Public *i, shell::ServerInfo const &sv)
+    Impl(Public *i, ServerInfo const &sv)
         : Base(i)
         , serverInfo(sv)
         , link(ServerLink::ManualConnectionOnly)
@@ -300,7 +300,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
         }
 
         // Actions.
-        self().buttonWidget(ID_JOIN)->enable(serverInfo.flags().testFlag(shell::ServerInfo::AllowJoin));
+        self().buttonWidget(ID_JOIN)->enable(serverInfo.flags().testFlag(ServerInfo::AllowJoin));
 
         // Local packages.
         {
@@ -430,7 +430,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
         startQuery(QueryMapOutline);
     }
 
-    void mapOutlineReceived(Address const &, shell::MapOutlinePacket const &packet)
+    void mapOutlineReceived(Address const &, network::MapOutlinePacket const &packet)
     {
         mapOutline->setOutline(packet);
         startQuery(QueryPing);
@@ -448,7 +448,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
 
 DE_AUDIENCE_METHOD(ServerInfoDialog, JoinGame)
 
-ServerInfoDialog::ServerInfoDialog(shell::ServerInfo const &serverInfo)
+ServerInfoDialog::ServerInfoDialog(ServerInfo const &serverInfo)
     : d(new Impl(this, serverInfo))
 {
     d->domainName = serverInfo.domainName();

@@ -26,9 +26,9 @@
 #include "gameprofiles.h"
 
 #include <de/Binder>
-#include <de/NativePath>
 #include <de/Info>
-#include <de/comms/PackageDownloader>
+#include <de/NativePath>
+#include <de/PackageDownloader>
 
 #include <string>
 
@@ -189,15 +189,15 @@ public:
                                       const GameStateFolder &fromFolder);
 
 public:
-    static DoomsdayApp &                 app();
-    static de::shell::PackageDownloader &packageDownloader();
-    static res::Bundles &                bundles();
-    static Plugins &                     plugins();
-    static Games &                       games();
-    static GameProfiles &                gameProfiles();
-    static Players &                     players();
-    static BusyMode &                    busyMode();
-    static SaveGames &                   saveGames();
+    static DoomsdayApp &          app();
+    static de::PackageDownloader &packageDownloader();
+    static res::Bundles &         bundles();
+    static Plugins &              plugins();
+    static Games &                games();
+    static GameProfiles &         gameProfiles();
+    static Players &              players();
+    static BusyMode &             busyMode();
+    static SaveGames &            saveGames();
 
     static de::NativePath           steamBasePath();
     static de::List<de::NativePath> gogComPaths();

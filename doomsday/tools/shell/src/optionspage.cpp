@@ -18,13 +18,13 @@
 
 #include "optionspage.h"
 #include <de/Hash>
-#include <de/comms/DoomsdayInfo>
+#include <doomsday/DoomsdayInfo>
 
 using namespace de;
 
 DE_PIMPL(OptionsPage)
 {
-    using GameOption = shell::DoomsdayInfo::GameOption;
+    using GameOption = DoomsdayInfo::GameOption;
 
     String game;
 //    QWidget *base = nullptr;
@@ -61,7 +61,7 @@ DE_PIMPL(OptionsPage)
 
         clear();
         game = gameId;
-        gameOptions = shell::DoomsdayInfo::gameOptions(game);
+        gameOptions = DoomsdayInfo::gameOptions(game);
 
 //        base   = new QWidget;
 //        base->setMaximumWidth(320);
@@ -149,16 +149,16 @@ DE_PIMPL(OptionsPage)
 
         switch (opt.type)
         {
-        case shell::DoomsdayInfo::Toggle:
+        case DoomsdayInfo::Toggle:
 //            widgetValue = convert(opt.allowedValues.at
 //                    (static_cast<QCheckBox const *>(widget)->isChecked()? 1 : 0).value);
             break;
 
-        case shell::DoomsdayInfo::Choice:
+        case DoomsdayInfo::Choice:
 //            widgetValue = static_cast<QComboBox const *>(widget)->currentData().toString();
             break;
 
-        case shell::DoomsdayInfo::Text:
+        case DoomsdayInfo::Text:
 //            return GameOption::Value(convert(static_cast<QLineEdit const *>(widget)->text()));
             break;
         }
@@ -185,13 +185,13 @@ DE_PIMPL(OptionsPage)
 
             switch (opt.type)
             {
-            case shell::DoomsdayInfo::Toggle: {
+            case DoomsdayInfo::Toggle: {
                 auto const *value = selectValue(opt);
 //                QCheckBox *check = static_cast<QCheckBox *>(widget);
 //                check->setChecked(value != &opt.allowedValues.first());
                 break; }
 
-            case shell::DoomsdayInfo::Choice: {
+            case DoomsdayInfo::Choice: {
                 auto const *value = selectValue(opt);
 //                QComboBox *combo = static_cast<QComboBox *>(widget);
 //                for (int i = 0; i < opt.allowedValues.sizei(); ++i)
@@ -203,7 +203,7 @@ DE_PIMPL(OptionsPage)
 //                }
                 break; }
 
-            case shell::DoomsdayInfo::Text: {
+            case DoomsdayInfo::Text: {
 //                QLineEdit *edit = static_cast<QLineEdit *>(widget);
 //                if (!opt.defaultValue.ruleSemantic.isEmpty())
 //                {

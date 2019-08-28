@@ -19,8 +19,7 @@
 
 #include "shelluser.h"
 
-#include <de/comms/Protocol>
-#include <de/comms/Lexicon>
+#include <de/Lexicon>
 #include <de/Log>
 #include <de/LogBuffer>
 #include <de/LogSink>
@@ -28,6 +27,7 @@
 #include <doomsday/console/exec.h>
 #include <doomsday/console/knownword.h>
 #include <doomsday/games.h>
+#include <doomsday/network/Protocol>
 
 #include "api_console.h"
 
@@ -42,7 +42,7 @@ using namespace de;
 DE_PIMPL(ShellUser), public LogSink
 {
     /// Log entries to be sent are collected here.
-    LockableT<shell::LogEntryPacket> logEntryPacket;
+    LockableT<network::LogEntryPacket> logEntryPacket;
 
     Impl(Public &i) : Base(i)
     {
@@ -76,7 +76,7 @@ DE_PIMPL(ShellUser), public LogSink
         Loop::mainCall([this] ()
         {
             DE_GUARD(logEntryPacket);
-            if (!logEntryPacket.value.isEmpty() && self().status() == shell::Link::Connected)
+            if (!logEntryPacket.value.isEmpty() && self().status() == network::Link::Connected)
             {
                 self() << logEntryPacket.value;
                 logEntryPacket.value.clear();
@@ -85,7 +85,7 @@ DE_PIMPL(ShellUser), public LogSink
     }
 };
 
-ShellUser::ShellUser(Socket *socket) : shell::Link(socket), d(new Impl(*this))
+ShellUser::ShellUser(Socket *socket) : network::Link(socket), d(new Impl(*this))
 {
     audienceForDisconnected() += [this]()
     {
@@ -148,7 +148,7 @@ void ShellUser::sendMapOutline()
 {
     if (!App_World().hasMap()) return;
 
-    shell::MapOutlinePacket packet;
+    network::MapOutlinePacket packet;
     App_World().map().initMapOutlinePacket(packet);
     *this << packet;
 }
@@ -157,7 +157,7 @@ void ShellUser::sendPlayerInfo()
 {
     if (!App_World().hasMap()) return;
 
-    std::unique_ptr<shell::PlayerInfoPacket> packet(new shell::PlayerInfoPacket);
+    std::unique_ptr<network::PlayerInfoPacket> packet(new network::PlayerInfoPacket);
 
     for (uint i = 1; i < DDMAXPLAYERS; ++i)
     {
@@ -166,7 +166,7 @@ void ShellUser::sendPlayerInfo()
         if (!plr->isInGame())
             continue;
 
-        shell::PlayerInfoPacket::Player info;
+        network::PlayerInfoPacket::Player info;
 
         info.number   = i;
         info.name     = plr->name;
@@ -202,7 +202,7 @@ void ShellUser::handleIncomingPackets()
         {
             switch (protocol().recognize(packet.get()))
             {
-            case shell::Protocol::Command:
+            case network::Protocol::Command:
                 Con_Execute(CMDS_CONSOLE, protocol().command(*packet), false, true);
                 break;
 

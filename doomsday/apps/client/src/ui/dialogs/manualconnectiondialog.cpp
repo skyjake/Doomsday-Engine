@@ -84,7 +84,7 @@ DE_PIMPL(ManualConnectionDialog)
         return self().buttonWidget("Connect");
     }
 
-    void aboutToJoinMultiplayerGame(shell::ServerInfo const &) override
+    void aboutToJoinMultiplayerGame(ServerInfo const &) override
     {
         self().accept();
     }

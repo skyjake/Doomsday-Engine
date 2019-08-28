@@ -27,10 +27,10 @@
 #include <de/List>
 #include <de/Set>
 #include <doomsday/BspNode>
+#include <doomsday/network/Protocol>
+#include <doomsday/uri.h>
 #include <doomsday/world/map.h>
 #include <doomsday/world/ithinkermapping.h>
-#include <doomsday/uri.h>
-#include <de/comms/Protocol>
 #include <de/BinaryTree>
 #include <de/Id>
 #include <de/Observers>
@@ -61,10 +61,10 @@ class Surface;
 class Vertex;
 
 #if 0
-#ifdef __CLIENT__
+#  ifdef __CLIENT__
 class BiasTracker;
 namespace de { class LightGrid; }
-#endif
+#  endif
 #endif // 0
 
 namespace de { class Info; }
@@ -970,7 +970,7 @@ public:  //- Editing -----------------------------------------------------------
 
 //- Multiplayer -------------------------------------------------------------------------
 
-    void initMapOutlinePacket(de::shell::MapOutlinePacket &packet);
+    void initMapOutlinePacket(network::MapOutlinePacket &packet);
 
 private:
     DE_PRIVATE(d)

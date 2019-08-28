@@ -38,7 +38,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
 
-    static String hostId(shell::ServerInfo const &sv)
+    static String hostId(ServerInfo const &sv)
     {
         if (sv.serverId())
         {
@@ -53,7 +53,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
     class ServerListItem : public ui::Item
     {
     public:
-        ServerListItem(shell::ServerInfo const &serverInfo, bool isLocal)
+        ServerListItem(ServerInfo const &serverInfo, bool isLocal)
             : _lan(isLocal)
         {
             setData(TextValue(hostId(serverInfo)));
@@ -70,12 +70,12 @@ DE_PIMPL(MultiplayerServerMenuWidget)
             _lan = isLocal;
         }
 
-        shell::ServerInfo const &info() const
+        ServerInfo const &info() const
         {
             return _info;
         }
 
-        void setInfo(shell::ServerInfo const &serverInfo)
+        void setInfo(ServerInfo const &serverInfo)
         {
             _info = serverInfo;
             notifyChange();
@@ -92,7 +92,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         }
 
     private:
-        shell::ServerInfo _info;
+        ServerInfo _info;
         bool _lan;
     };
 
@@ -115,7 +115,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         Set<String> foundHosts;
         for (const Address &host : link.foundServers(mask))
         {
-            shell::ServerInfo info;
+            ServerInfo info;
             if (link.foundServerInfo(host, info, mask))
             {
                 foundHosts.insert(hostId(info));
@@ -135,7 +135,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         // Add new entries and update existing ones.
         for (Address const &host : link.foundServers(mask))
         {
-            shell::ServerInfo info;
+            ServerInfo info;
             if (!link.foundServerInfo(host, info, mask)) continue;
 
             ui::Data::Pos found   = items.findData(TextValue(hostId(info)));
@@ -217,7 +217,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         menuItemWidget.enable(playable);
     }
 
-    void aboutToJoinMultiplayerGame(shell::ServerInfo const &sv) override
+    void aboutToJoinMultiplayerGame(ServerInfo const &sv) override
     {
         DE_FOR_PUBLIC_AUDIENCE(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
     }

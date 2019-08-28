@@ -19,10 +19,10 @@
 #ifndef STATUSWIDGET_H
 #define STATUSWIDGET_H
 
-#include <de/comms/Widget>
-#include <de/comms/Link>
+#include <de/term/Widget>
+#include <doomsday/network/Link>
 
-class StatusWidget : public de::shell::Widget
+class StatusWidget : public de::term::Widget
 {
 public:
     StatusWidget(de::String const &name = de::String());
@@ -32,7 +32,7 @@ public:
      *
      * @param link  Shell connection.
      */
-    void setShellLink(de::shell::Link *link);
+    void setShellLink(network::Link *link);
 
     void setGameState(de::String const &mode, de::String const &rules, de::String const &mapId);
 

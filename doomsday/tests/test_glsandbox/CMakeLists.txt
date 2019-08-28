@@ -23,7 +23,6 @@ if (APPLE)
     deng_install_bundle_deps (test_glsandbox
         Deng::libcore
         Deng::libgui
-        Deng::libcomms
         the_Foundation::the_Foundation
         glbinding::glbinding
     )

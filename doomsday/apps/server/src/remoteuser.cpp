@@ -25,11 +25,12 @@
 #include "serverapp.h"
 #include "world/map.h"
 
+#include <doomsday/network/Protocol>
+
 #include <de/data/json.h>
 #include <de/legacy/memory.h>
 #include <de/Message>
 #include <de/ByteRefArray>
-#include <de/comms/Protocol>
 #include <de/Garbage>
 
 using namespace de;
@@ -64,7 +65,7 @@ DE_PIMPL(RemoteUser)
         LOG_NET_MSG("New remote user %s from socket %s (local:%b)") << id << address << isFromLocal;
     }
     
-    ~Impl()
+    ~Impl() override
     {
         delete socket;
     }
@@ -135,7 +136,7 @@ DE_PIMPL(RemoteUser)
         // Status query?
         if (command == "Info?")
         {
-            shell::ServerInfo const info = ServerApp::currentServerInfo();
+            ServerInfo const info = ServerApp::currentServerInfo();
             Block const msg = "Info\n" + composeJSON(info.asRecord());
             LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg);
             self() << msg;
@@ -146,7 +147,7 @@ DE_PIMPL(RemoteUser)
         }
         else if (command == "MapOutline?")
         {
-            shell::MapOutlinePacket packet;
+            network::MapOutlinePacket packet;
             if (ServerApp::world().hasMap())
             {
                 ServerApp::world().map().initMapOutlinePacket(packet);

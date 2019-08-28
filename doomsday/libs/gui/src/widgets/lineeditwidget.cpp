@@ -262,7 +262,7 @@ LineEditWidget::LineEditWidget(String const &name)
 
 void LineEditWidget::setText(String const &lineText)
 {
-    shell::AbstractLineEditor::setText(lineText);
+    AbstractLineEditor::setText(lineText);
 
     if (d->hint)
     {
@@ -564,9 +564,9 @@ bool LineEditWidget::handleEvent(Event const &event)
     return GuiWidget::handleEvent(event);
 }
 
-shell::Key LineEditWidget::shellKey(const KeyEvent &keyEvent) // static
+term::Key LineEditWidget::shellKey(const KeyEvent &keyEvent) // static
 {
-    using shell::Key;
+    using term::Key;
 
     if (keyEvent.modifiers() == KeyEvent::Control)
     {
@@ -620,7 +620,7 @@ shell::Key LineEditWidget::shellKey(const KeyEvent &keyEvent) // static
     }
 }
 
-shell::AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods)
+AbstractLineEditor::KeyModifiers LineEditWidget::modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods)
 {
     KeyModifiers mods;
 

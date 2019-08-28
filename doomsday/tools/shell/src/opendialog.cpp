@@ -34,12 +34,11 @@
 //Q_DECLARE_METATYPE(de::Address)
 
 using namespace de;
-using namespace de::shell;
 
 static int const MAX_HISTORY_SIZE = 10;
 
 DE_PIMPL(OpenDialog)
-, DE_OBSERVES(shell::ServerFinder, Update)
+, DE_OBSERVES(ServerFinder, Update)
 {
 //    QComboBox *address;
 //    QLabel *localCount;

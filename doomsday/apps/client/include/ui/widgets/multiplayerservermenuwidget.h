@@ -20,7 +20,7 @@
 #define DE_CLIENT_UI_MULTIPLAYERSERVERMENUWIDGET_H
 
 #include "homemenuwidget.h"
-#include <de/comms/ServerInfo>
+#include <de/ServerInfo>
 
 /**
  * Menu for listing available multiplayer servers.
@@ -28,7 +28,7 @@
 class MultiplayerServerMenuWidget : public HomeMenuWidget
 {
 public:
-    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(de::shell::ServerInfo const &))
+    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(de::ServerInfo const &))
 
     enum DiscoveryMode {
         NoDiscovery,

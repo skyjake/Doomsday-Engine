@@ -18,18 +18,17 @@
 
 #include "statuswidget.h"
 #include <de/Timer>
-#include <de/comms/TextRootWidget>
+#include <de/term/TextRootWidget>
 
 using namespace de;
-using namespace de::shell;
 
 DE_PIMPL(StatusWidget)
 {
-    Link * link{nullptr};
-    Timer  updateTimer;
-    String gameMode;
-    String rules;
-    String mapId;
+    network::Link *link{nullptr};
+    Timer          updateTimer;
+    String         gameMode;
+    String         rules;
+    String         mapId;
 
     Impl(Public * i) : Base(i) {}
 
@@ -54,7 +53,7 @@ StatusWidget::StatusWidget(String const &name)
     d->updateTimer += [this]() { d->refresh(); };
 }
 
-void StatusWidget::setShellLink(Link *link)
+void StatusWidget::setShellLink(network::Link *link)
 {
     d->link = link;
 
@@ -81,14 +80,14 @@ void StatusWidget::setGameState(String const &mode, String const &rules, String 
 void StatusWidget::draw()
 {
     Rectanglei pos = rule().recti();
-    TextCanvas buf(pos.size());
+    term::TextCanvas buf(pos.size());
 
-    if (!d->link || d->link->status() == Link::Disconnected)
+    if (!d->link || d->link->status() == network::Link::Disconnected)
     {
         String msg = "Not connected to a server";
         buf.drawText(Vec2i(buf.size().x/2 - msg.lengthi()/2), msg /*, TextCanvas::Char::Bold*/);
     }
-    else if (d->link->status() == Link::Connecting)
+    else if (d->link->status() == network::Link::Connecting)
     {
         String msg;
         if (!d->link->address().isNull())
@@ -101,7 +100,7 @@ void StatusWidget::draw()
         }
         buf.drawText(Vec2i(buf.size().x/2 - msg.lengthi()/2), msg);
     }
-    else if (d->link->status() == Link::Connected)
+    else if (d->link->status() == network::Link::Connected)
     {
         String msg = d->gameMode;
         if (!d->mapId.isEmpty()) msg += " " + d->mapId;

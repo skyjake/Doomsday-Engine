@@ -56,7 +56,7 @@ else ()
 endif ()
 
 # Link libraries.
-deng_link_libraries (libgui PUBLIC DengComms)
+deng_link_libraries (libgui PUBLIC DengCore)
 target_link_libraries (libgui
     PUBLIC  glbinding::glbinding
     PRIVATE SDL2 stb assimp

@@ -35,7 +35,7 @@
 #include <de/Config>
 #include <de/LogBuffer>
 #include <de/WebRequest>
-#include <de/comms/ServerInfo>
+#include <de/ServerInfo>
 #include <de/data/json.h>
 #include <de/legacy/memory.h>
 #include <vector>
@@ -64,7 +64,7 @@ DE_PIMPL(MasterWorker)
 , DE_OBSERVES(WebRequest, Finished)
 {
     using Jobs    = std::list<job_t>;
-    using Servers = List<de::shell::ServerInfo>;
+    using Servers = List<de::ServerInfo>;
 
     Action     currentAction = NONE;
     Jobs       jobs;
@@ -220,7 +220,7 @@ int MasterWorker::serverCount() const
     return d->servers.sizei();
 }
 
-shell::ServerInfo MasterWorker::server(int index) const
+ServerInfo MasterWorker::server(int index) const
 {
     assert(index >= 0 && index < serverCount());
     return d->servers[index];
@@ -260,10 +260,10 @@ void N_MasterAnnounceServer(bool isOpen)
     LOG_NET_MSG("Announcing server (open:%b)") << isOpen;
 
     // Let's figure out what we want to tell about ourselves.
-    shell::ServerInfo info = ServerApp::currentServerInfo();
+    ServerInfo info = ServerApp::currentServerInfo();
     if (!isOpen)
     {
-        info.setFlags(info.flags() & ~shell::ServerInfo::AllowJoin);
+        info.setFlags(info.flags() & ~ServerInfo::AllowJoin);
     }
 
     DE_ASSERT(worker);
@@ -279,7 +279,7 @@ void N_MasterRequestList(void)
     worker->newJob(MasterWorker::REQUEST_SERVERS);
 }
 
-int N_MasterGet(int index, shell::ServerInfo *info)
+int N_MasterGet(int index, ServerInfo *info)
 {
     DE_ASSERT(worker);
 
@@ -302,7 +302,7 @@ int N_MasterGet(int index, shell::ServerInfo *info)
         }
         else
         {
-            *info = shell::ServerInfo();
+            *info = ServerInfo();
             return false;
         }
     }

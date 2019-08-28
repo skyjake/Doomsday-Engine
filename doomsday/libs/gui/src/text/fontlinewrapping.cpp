@@ -38,10 +38,10 @@ DE_PIMPL_NOREF(FontLineWrapping)
      */
     struct Line
     {
-        shell::WrappedLine line;
-        LineInfo           info;
+        WrappedLine line;
+        LineInfo    info;
 
-        Line(shell::WrappedLine const &ln = {CString(), 0}, int leftIndent = 0)
+        Line(const WrappedLine &ln = {CString(), 0}, int leftIndent = 0)
             : line(ln)
         {
             info.indent = leftIndent;
@@ -161,7 +161,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
             width = rangeVisibleWidth(range);
         }
 
-        Line *line = new Line(shell::WrappedLine(range, width), indent);
+        Line *line = new Line(WrappedLine(range, width), indent);
 
         // Determine segments in the line.
         const char *pos = range.begin();
@@ -650,7 +650,7 @@ String const &FontLineWrapping::text() const
     return d->text;
 }
 
-shell::WrappedLine FontLineWrapping::line(int index) const
+WrappedLine FontLineWrapping::line(int index) const
 {
     DE_GUARD(this);
 
@@ -658,7 +658,7 @@ shell::WrappedLine FontLineWrapping::line(int index) const
     return d->lines[index]->line;
 }
 
-shell::WrapWidth FontLineWrapping::width() const
+WrapWidth FontLineWrapping::width() const
 {
     DE_GUARD(this);
 
@@ -677,7 +677,7 @@ int FontLineWrapping::height() const
     return d->lines.sizei();
 }
 
-shell::WrapWidth FontLineWrapping::rangeWidth(const CString &range) const
+WrapWidth FontLineWrapping::rangeWidth(const CString &range) const
 {
     DE_GUARD(this);
     return d->rangeAdvanceWidth(range);

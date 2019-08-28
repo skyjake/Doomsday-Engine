@@ -26,7 +26,7 @@
 #include "dd_types.h"
 #include <de/Path>
 #include <de/File>
-#include <de/comms/Lexicon> // known words
+#include <de/Lexicon>
 #include <cstdio>
 
 #define CMDLINE_SIZE        256

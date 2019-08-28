@@ -281,17 +281,17 @@ void ServerApp::checkPackageCompatibility(const StringList &           packageId
     }
 }
 
-shell::ServerInfo ServerApp::currentServerInfo() // static
+ServerInfo ServerApp::currentServerInfo() // static
 {
-    shell::ServerInfo info;
+    ServerInfo info;
 
     // Let's figure out what we want to tell about ourselves.
     info.setServerId(ServerApp::app().d->serverId);
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
     info.setPluginDescription(
         Stringf("%s %s",
-                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
-                                             reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
+                reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
+                reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
 
     info.setGameId(game().id());
     info.setGameConfig(reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG)));
@@ -306,7 +306,7 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
             && isServer != 0
             && Sv_GetNumPlayers() < svMaxPlayers)
     {
-        flags |= shell::ServerInfo::AllowJoin;
+        flags |= ServerInfo::AllowJoin;
     }
     info.setFlags(flags);
 
@@ -324,7 +324,7 @@ shell::ServerInfo ServerApp::currentServerInfo() // static
     if (const String publicHostName = nptIPAddress)
     {
         info.setDomainName(Stringf(
-            "%s:%i", publicHostName.c_str(), nptIPPort ? nptIPPort : shell::DEFAULT_PORT));
+            "%s:%i", publicHostName.c_str(), nptIPPort ? nptIPPort : DEFAULT_PORT));
     }
 
     // Let's compile a list of client names.

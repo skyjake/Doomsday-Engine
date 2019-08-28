@@ -20,7 +20,7 @@
 #define DE_CLIENT_UI_SERVERINFODIALOG_H
 
 #include <de/DialogWidget>
-#include <de/comms/ServerInfo>
+#include <de/ServerInfo>
 
 /**
  * Multiplayer server information and a mini-Shell connection.
@@ -28,10 +28,10 @@
 class ServerInfoDialog : public de::DialogWidget
 {
 public:
-    DE_AUDIENCE(JoinGame, void joinGame(const de::shell::ServerInfo &serverInfo))
+    DE_AUDIENCE(JoinGame, void joinGame(const de::ServerInfo &serverInfo))
 
 public:
-    ServerInfoDialog(const de::shell::ServerInfo &serverInfo);
+    ServerInfoDialog(const de::ServerInfo &serverInfo);
 
 private:
     DE_PRIVATE(d)

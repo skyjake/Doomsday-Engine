@@ -53,7 +53,6 @@ if (APPLE)
         the_Foundation::the_Foundation
         Deng::libcore
         Deng::libgui
-        Deng::libcomms
         Deng::libdoomsday
         Deng::libgloom
     )

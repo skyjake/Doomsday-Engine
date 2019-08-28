@@ -1224,7 +1224,7 @@ D_CMD(Net)
 
             dint index = strtoul(argv[2], 0, 10);
             //serverinfo_t info;
-            shell::ServerInfo info;
+            ServerInfo info;
             if(Net_ServerLink().foundServerInfo(index, info))
             {
                 info.printToLog(index);
@@ -1234,7 +1234,7 @@ D_CMD(Net)
         }
         else if(!stricmp(argv[1], "mconnect"))
         {
-            shell::ServerInfo info;
+            ServerInfo info;
             if(N_MasterGet(strtol(argv[2], 0, 0), &info))
             {
                 // Connect using TCP/IP.

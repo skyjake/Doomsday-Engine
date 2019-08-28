@@ -20,14 +20,14 @@
 #define CURSESAPP_H
 
 #include <de/TextApp>
-#include <de/comms/TextRootWidget>
+#include <de/term/TextRootWidget>
 
 class CursesApp : public de::TextApp
 {
 public:
     CursesApp(int &argc, char **argv);
 
-    de::shell::TextRootWidget &rootWidget();
+    de::term::TextRootWidget &rootWidget();
 
     int  exec();
     void refresh();

@@ -411,14 +411,14 @@ de::String Con_AnnotatedConsoleTerms(const StringList &terms)
 
 static int addToTerms(knownword_t const *word, void *parameters)
 {
-    shell::Lexicon *lexi = reinterpret_cast<shell::Lexicon *>(parameters);
+    Lexicon *lexi = reinterpret_cast<Lexicon *>(parameters);
     lexi->addTerm(Str_Text(Con_KnownWordToString(word)));
     return 0;
 }
 
-shell::Lexicon Con_Lexicon()
+Lexicon Con_Lexicon()
 {
-    shell::Lexicon lexi;
+    Lexicon lexi;
     Con_IterateKnownWords(nullptr, WT_ANY, addToTerms, &lexi);
     lexi.setAdditionalWordChars("-_.");
     return lexi;

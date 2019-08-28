@@ -17,10 +17,10 @@
  */
 
 #include "aboutdialog.h"
-#include <de/comms/LabelWidget>
+#include <de/term/LabelWidget>
 
 using namespace de;
-using namespace de::shell;
+using namespace de::term;
 
 AboutDialog::AboutDialog()
 {

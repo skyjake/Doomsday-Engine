@@ -24,9 +24,8 @@
 #include "errorlogdialog.h"
 
 #include <de/LogBuffer>
-#include <de/comms/LogWidget>
-#include <de/comms/CommandLineWidget>
-#include <de/comms/Link>
+#include <de/term/LogWidget>
+#include <de/term/CommandLineWidget>
 #include <de/Garbage>
 #include <de/EventLoop>
 #include <de/Timer>
@@ -63,12 +62,12 @@ public:
 };
 
 DE_PIMPL(LinkWindow)
-, DE_OBSERVES(shell::CommandLineWidget, Command)
-, DE_OBSERVES(shell::ServerFinder, Update)
+, DE_OBSERVES(term::CommandLineWidget, Command)
+, DE_OBSERVES(ServerFinder, Update)
 {
     GuiRootWidget root;
     LogBuffer logBuffer;
-    shell::Link *link;
+    network::Link *link;
     duint16 waitingForLocalPort = 0;
     Time startedWaitingAt;
     Timer waitTimeout;
@@ -561,7 +560,7 @@ void LinkWindow::drawWindowContent()
 
 bool LinkWindow::isConnected() const
 {
-    return d->link && d->link->status() != shell::Link::Disconnected;
+    return d->link && d->link->status() != network::Link::Disconnected;
 }
 
 #if 0
@@ -628,7 +627,7 @@ void LinkWindow::waitForLocalConnection(duint16 localPort,
 //    d->checkCurrentTab(true);
 }
 
-void LinkWindow::openConnection(shell::Link *link, const String& name)
+void LinkWindow::openConnection(network::Link *link, const String& name)
 {
 //    closeConnection();
 
@@ -726,7 +725,7 @@ void LinkWindow::updateWhenConnected()
 
 void LinkWindow::handleIncomingPackets()
 {
-    using namespace de::shell;
+    using namespace network;
 
     for (;;)
     {
@@ -737,15 +736,17 @@ void LinkWindow::handleIncomingPackets()
 
         //qDebug() << "Packet:" << packet->type();
 
+        using Protocol = network::Protocol;
+
         // Process packet contents.
-        shell::Protocol &protocol = d->link->protocol();
+        Protocol &protocol = d->link->protocol();
         switch (protocol.recognize(packet.get()))
         {
-        case shell::Protocol::PasswordChallenge:
+        case Protocol::PasswordChallenge:
             askForPassword();
             break;
 
-        case shell::Protocol::LogEntries: {
+        case Protocol::LogEntries: {
             // Add the entries into the local log buffer.
             LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.get());
             for (const LogEntry *e : pkt->entries())
@@ -757,13 +758,13 @@ void LinkWindow::handleIncomingPackets()
             d->logBuffer.flush();
             break; }
 
-        case shell::Protocol::ConsoleLexicon:
+        case Protocol::ConsoleLexicon:
             // Terms for auto-completion.
             d->commandWidget->setLexicon(protocol.lexicon(*packet));
             debug("TODO: received console lexicon");
             break;
 
-        case shell::Protocol::GameState: {
+        case Protocol::GameState: {
             Record &rec = static_cast<RecordPacket *>(packet.get())->record();
             const String rules = rec["rules"];
             String gameType = rules.containsWord("dm") ?  "Deathmatch"    :
@@ -779,11 +780,11 @@ void LinkWindow::handleIncomingPackets()
 //            d->options->updateWithGameState(rec);
             break; }
 
-        case shell::Protocol::MapOutline:
+        case Protocol::MapOutline:
             d->status->setMapOutline(*static_cast<MapOutlinePacket *>(packet.get()));
             break;
 
-        case shell::Protocol::PlayerInfo:
+        case Protocol::PlayerInfo:
             d->status->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.get()));
             break;
 
@@ -915,7 +916,7 @@ void LinkWindow::checkFoundServers()
         {
             // This is the one!
             const Address dest = addr;
-            Loop::timer(0.100, [this, dest]() { openConnection(new shell::Link(dest)); });
+            Loop::timer(0.100, [this, dest]() { openConnection(new network::Link(dest)); });
             d->waitingForLocalPort = 0;
         }
     }

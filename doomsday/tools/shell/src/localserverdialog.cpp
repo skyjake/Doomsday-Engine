@@ -24,7 +24,7 @@
 #include <de/Socket>
 #include <de/CommandLine>
 #include <de/Config>
-#include <de/comms/DoomsdayInfo>
+#include <doomsday/DoomsdayInfo>
 //#include <QVBoxLayout>
 //#include <QDialogButtonBox>
 //#include <QFormLayout>
@@ -40,10 +40,9 @@
 #include "preferences.h"
 
 using namespace de;
-using namespace de::shell;
 
 DE_PIMPL(LocalServerDialog)
-, DE_OBSERVES(shell::ServerFinder, Update)
+, DE_OBSERVES(ServerFinder, Update)
 {
 //    QPushButton *    yes;
 //    QLineEdit *      name;

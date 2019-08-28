@@ -19,25 +19,25 @@
 #ifndef CLIENT_SERVERLINK_H
 #define CLIENT_SERVERLINK_H
 
+#include <doomsday/network/Protocol>
 #include <de/Transmitter>
 #include <de/Address>
 #include <de/Observers>
-#include <de/comms/AbstractLink>
-#include <de/comms/Protocol>
-#include <de/comms/ServerInfo>
-#include <de/comms/PackageDownloader>
+#include <de/AbstractLink>
+#include <de/ServerInfo>
+#include <de/PackageDownloader>
 #include "network/net_main.h"
 
 /**
  * Network connection to a server.
  * @ingroup network
  */
-class ServerLink : public de::shell::AbstractLink
+class ServerLink : public de::AbstractLink
 {
 public:
     DE_AUDIENCE(Discovery,    void serversDiscovered(const ServerLink &link))
     DE_AUDIENCE(PingResponse, void pingResponse(de::Address const &, de::TimeSpan))
-    DE_AUDIENCE(MapOutline,   void mapOutlineReceived(de::Address const &, de::shell::MapOutlinePacket const &))
+    DE_AUDIENCE(MapOutline,   void mapOutlineReceived(de::Address const &, network::MapOutlinePacket const &))
 
     DE_AUDIENCE(Join,  void networkGameJoined())
     DE_AUDIENCE(Leave, void networkGameLeft())
@@ -52,7 +52,7 @@ public:
 public:
     ServerLink(de::Flags flags = DiscoverLocalServers);
 
-    de::shell::PackageDownloader &packageDownloader();
+    de::PackageDownloader &packageDownloader();
 
     void clear();
 
@@ -64,7 +64,7 @@ public:
      * @param info  Server to join. This should be one of the servers that have
      *              previously been found via discovery.
      */
-    void connectToServerAndChangeGameAsync(const de::shell::ServerInfo& info);
+    void connectToServerAndChangeGameAsync(const de::ServerInfo& info);
 
     /**
      * Acquire a game profile that describes the game on a multiplayer server.
@@ -138,13 +138,13 @@ public:
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    bool foundServerInfo(de::Address const &host, de::shell::ServerInfo &info,
+    bool foundServerInfo(de::Address const &host, de::ServerInfo &info,
                          FoundMask mask = Any) const;
 
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    bool foundServerInfo(int index, de::shell::ServerInfo &info,
+    bool foundServerInfo(int index, de::ServerInfo &info,
                          FoundMask mask = Any) const;
 
     bool isServerOnLocalNetwork(de::Address const &host) const;

@@ -44,12 +44,12 @@ else ()
 endif ()
 
 target_link_sdl2 (shell PUBLIC)
-deng_link_libraries (shell PUBLIC DengCore DengComms DengGui)
+deng_link_libraries (shell PUBLIC DengCore DengDoomsday DengGui)
 
 # Deployment.
 deng_install_bundle_deps (shell
     Deng::libcore
-    Deng::libcomms
+    Deng::libdoomsday
     Deng::libgui
     the_Foundation::the_Foundation
     glbinding::glbinding

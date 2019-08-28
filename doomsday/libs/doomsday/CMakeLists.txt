@@ -35,6 +35,7 @@ deng_merge_sources (defs        src/defs/*.cpp)
 deng_merge_sources (console     src/console/*.cpp)
 deng_merge_sources (filesys     src/filesys/*.cpp)
 deng_merge_sources (gamefw      src/gamefw/*.cpp)
+deng_merge_sources (network     src/network/*.cpp)
 deng_merge_sources (resource    src/resource/*.cpp)
 deng_merge_sources (world       src/world/*.cpp)
 
@@ -42,7 +43,7 @@ deng_add_package (net.dengine.base)
 
 deng_add_library (libdoomsday ${SOURCES} ${HEADERS})
 relaxed_warnings (libdoomsday)
-deng_link_libraries (libdoomsday PUBLIC DengCore DengComms)
+deng_link_libraries (libdoomsday PUBLIC DengCore)
 target_link_libraries (libdoomsday PRIVATE importdeh importidtech1 importudmf lzss)
 target_include_directories (libdoomsday PRIVATE ${ZLIB_INCLUDE_DIR})
 

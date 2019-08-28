@@ -137,7 +137,6 @@ relaxed_warnings (server)
 
 deng_link_libraries (server PRIVATE
     DengCore
-    DengComms
     DengDoomsday
     DengGameKit
 )

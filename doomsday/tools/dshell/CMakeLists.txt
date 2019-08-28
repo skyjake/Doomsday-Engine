@@ -37,7 +37,7 @@ set_target_properties (dshell PROPERTIES
     OUTPUT_NAME dshell
     FOLDER Tools
 )
-deng_link_libraries (dshell PRIVATE DengCore DengComms)
+deng_link_libraries (dshell PRIVATE DengCore DengDoomsday)
 target_link_libraries (dshell PRIVATE ${CURSES_LIBRARIES})
 
 deng_install_tool (dshell)

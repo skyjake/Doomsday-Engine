@@ -4143,14 +4143,14 @@ Map::Sectors const &Map::editableSectors() const
     return d->editable.sectors;
 }
 
-void Map::initMapOutlinePacket(shell::MapOutlinePacket &packet)
+void Map::initMapOutlinePacket(network::MapOutlinePacket &packet)
 {
-    forAllLines([&packet] (Line &line)
-    {
+    forAllLines([&packet](Line &line) {
         packet.addLine(line.from().origin().toVec2i(),
-                       line.to  ().origin().toVec2i(),
-                       (line.front().hasSector() && line.back().hasSector()) ?
-                           shell::MapOutlinePacket::TwoSidedLine : shell::MapOutlinePacket::OneSidedLine);
+                       line.to().origin().toVec2i(),
+                       (line.front().hasSector() && line.back().hasSector())
+                           ? network::MapOutlinePacket::TwoSidedLine
+                           : network::MapOutlinePacket::OneSidedLine);
         return LoopContinue;
     });
 }

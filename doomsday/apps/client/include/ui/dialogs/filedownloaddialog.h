@@ -20,7 +20,7 @@
 #define DE_CLIENT_FILEDOWNLOADDIALOG_H
 
 #include "downloaddialog.h"
-#include <de/comms/PackageDownloader>
+#include <de/PackageDownloader>
 
 /**
  * Dialog for monitoring file downloads.
@@ -29,7 +29,7 @@
 class FileDownloadDialog : public DownloadDialog
 {
 public:
-    FileDownloadDialog(de::shell::PackageDownloader &downloader);
+    FileDownloadDialog(de::PackageDownloader &downloader);
 
     void cancel() override;
 

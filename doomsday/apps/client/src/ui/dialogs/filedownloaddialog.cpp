@@ -24,12 +24,12 @@
 using namespace de;
 
 DE_GUI_PIMPL(FileDownloadDialog)
-, DE_OBSERVES(shell::PackageDownloader, Status)
+, DE_OBSERVES(PackageDownloader, Status)
 {
-    shell::PackageDownloader &downloader;
+    PackageDownloader &downloader;
     String message = "Downloading data files...";
 
-    Impl(Public *i, shell::PackageDownloader &downloader)
+    Impl(Public *i, PackageDownloader &downloader)
         : Base(i)
         , downloader(downloader)
     {
@@ -54,7 +54,7 @@ DE_GUI_PIMPL(FileDownloadDialog)
     }
 };
 
-FileDownloadDialog::FileDownloadDialog(shell::PackageDownloader &downloader)
+FileDownloadDialog::FileDownloadDialog(PackageDownloader &downloader)
     : d(new Impl(this, downloader))
 {}
 

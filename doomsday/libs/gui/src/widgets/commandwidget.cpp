@@ -21,14 +21,14 @@
 #include "de/PersistentState"
 #include "de/Style"
 
-#include <de/comms/EditorHistory>
+#include <de/EditorHistory>
 #include <de/KeyEvent>
 
 namespace de {
 
 DE_GUI_PIMPL(CommandWidget)
 {
-    shell::EditorHistory history;
+    EditorHistory        history;
     DocumentPopupWidget *popup;       ///< Popup for autocompletions.
     bool                 allowReshow; ///< Contents must still be valid.
 
@@ -137,7 +137,7 @@ void CommandWidget::update()
     setAttribute(FocusCyclingDisabled, !text().isEmpty());
 }
 
-bool CommandWidget::handleControlKey(shell::Key key, KeyModifiers const &mods)
+bool CommandWidget::handleControlKey(term::Key key, KeyModifiers const &mods)
 {
     if (LineEditWidget::handleControlKey(key, mods))
     {

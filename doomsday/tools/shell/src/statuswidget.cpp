@@ -20,7 +20,7 @@
 //#include "utils.h"
 #include <de/String>
 #include <de/Map>
-#include <de/comms/DoomsdayInfo>
+#include <doomsday/DoomsdayInfo>
 //#include <QPainter>
 //#include <QPicture>
 //#include <QTimer>
@@ -30,10 +30,10 @@ using namespace de;
 
 DE_PIMPL(StatusWidget)
 {
-    using Player  = shell::PlayerInfoPacket::Player;
-    using Players = shell::PlayerInfoPacket::Players;
+    using Player  = network::PlayerInfoPacket::Player;
+    using Players = network::PlayerInfoPacket::Players;
 
-    shell::Link *link;
+    network::Link *link;
 
 //    QFont             smallFont;
 //    QFont             largeFont;
@@ -71,7 +71,7 @@ StatusWidget::StatusWidget()
 
 void StatusWidget::setGameState(String mode, String rules, String mapId, String mapTitle)
 {
-    d->gameMode = shell::DoomsdayInfo::titleForGame(mode);
+    d->gameMode = DoomsdayInfo::titleForGame(mode);
     if (!rules.isEmpty()) d->gameMode = rules + " - " + d->gameMode;
 
     d->map = mapTitle;
@@ -83,7 +83,7 @@ void StatusWidget::setGameState(String mode, String rules, String mapId, String 
     update();
 }
 
-void StatusWidget::setMapOutline(const shell::MapOutlinePacket &outline)
+void StatusWidget::setMapOutline(const network::MapOutlinePacket &outline)
 {
 //    d->mapBounds  = QRect();
 //    d->mapOutline = QPicture();
@@ -114,7 +114,7 @@ void StatusWidget::setMapOutline(const shell::MapOutlinePacket &outline)
 //    update();
 }
 
-void StatusWidget::setPlayerInfo(shell::PlayerInfoPacket const &plrInfo)
+void StatusWidget::setPlayerInfo(network::PlayerInfoPacket const &plrInfo)
 {
     for (const auto &plr : d->players)
     {
@@ -258,7 +258,7 @@ void StatusWidget::updateWhenConnected()
 }
 */
 
-void StatusWidget::linkConnected(shell::Link *link)
+void StatusWidget::linkConnected(network::Link *link)
 {
     d->link = link;
     update();

@@ -23,7 +23,7 @@
 #include <de/GuiRootWidget>
 #include <de/NativePath>
 #include <de/String>
-#include <de/comms/Link>
+#include <doomsday/network/Link>
 
 /**
  * Window for a server link.
@@ -53,7 +53,7 @@ public:
 
     void openConnection(const de::String &address);
     void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, const de::String &name);
-    void openConnection(de::shell::Link *link, const de::String &name = {});
+    void openConnection(network::Link *link, const de::String &name = {});
     void closeConnection();
     void sendCommandToServer(const de::String& command);
     void sendCommandsToServer(const de::StringList &commands);

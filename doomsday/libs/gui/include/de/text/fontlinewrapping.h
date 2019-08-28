@@ -21,11 +21,11 @@
 
 #include "../libgui.h"
 
-#include <de/String>
 #include <de/Font>
+#include <de/ILineWrapping>
 #include <de/Image>
 #include <de/Lockable>
-#include <de/comms/ILineWrapping>
+#include <de/String>
 
 namespace de {
 
@@ -43,12 +43,10 @@ namespace de {
  *
  * @ingroup appfw
  */
-class LIBGUI_PUBLIC FontLineWrapping : public Lockable, public shell::ILineWrapping
+class LIBGUI_PUBLIC FontLineWrapping : public Lockable, public ILineWrapping
 {
 public:
     FontLineWrapping();
-
-    using WrapWidth = shell::WrapWidth;
 
     void        setFont(Font const &font);
     const Font &font() const;
@@ -78,13 +76,13 @@ public:
      */
     void cancel();
 
-    bool               isEmpty() const override;
-    String const &     text() const;
-    shell::WrappedLine line(int index) const override;
-    WrapWidth          width() const override;
-    int                height() const override;
-    WrapWidth          rangeWidth(const CString &range) const override;
-    BytePos            indexAtWidth(const CString &range, WrapWidth width) const override;
+    bool          isEmpty() const override;
+    const String &text() const;
+    WrappedLine   line(int index) const override;
+    WrapWidth     width() const override;
+    int           height() const override;
+    WrapWidth     rangeWidth(const CString &range) const override;
+    BytePos       indexAtWidth(const CString &range, WrapWidth width) const override;
 
     /**
      * Calculates the total height of the wrapped lined in pixels. If there are

@@ -195,7 +195,7 @@ void N_NETicker(timespan_t time)
             dint i = num;
             while(--i >= 0)
             {
-                shell::ServerInfo info;
+                ServerInfo info;
                 N_MasterGet(i, &info);
                 info.printToLog(i, i - 1 == num);
             }

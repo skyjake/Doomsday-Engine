@@ -17,16 +17,17 @@
  */
 
 #include "localserverdialog.h"
-#include <de/comms/TextRootWidget>
-#include <de/comms/LabelWidget>
-#include <de/comms/MenuWidget>
-#include <de/comms/ChoiceWidget>
-#include <de/comms/LineEditWidget>
-#include <de/comms/DoomsdayInfo>
+#include <de/term/TextRootWidget>
+#include <de/term/LabelWidget>
+#include <de/term/MenuWidget>
+#include <de/term/ChoiceWidget>
+#include <de/term/LineEditWidget>
+#include <doomsday/DoomsdayInfo>
 #include <de/Config>
+#include <de/ServerInfo>
 
 using namespace de;
-using namespace de::shell;
+using namespace de::term;
 
 DE_PIMPL_NOREF(LocalServerDialog)
 {

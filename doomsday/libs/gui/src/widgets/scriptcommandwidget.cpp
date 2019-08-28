@@ -20,7 +20,7 @@
 #include "de/PopupWidget"
 
 #include <de/charsymbols.h>
-#include <de/comms/Lexicon>
+#include <de/Lexicon>
 #include <de/App>
 #include <de/Script>
 #include <de/ScriptLex>
@@ -60,7 +60,7 @@ DE_PIMPL(ScriptCommandWidget)
 
     void updateLexicon()
     {
-        shell::Lexicon lexi;
+        Lexicon lexi;
         lexi.setCaseSensitive(true);
         lexi.setAdditionalWordChars("_");
 

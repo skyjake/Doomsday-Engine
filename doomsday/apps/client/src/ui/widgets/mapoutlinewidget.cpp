@@ -61,7 +61,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
         vbuf = nullptr;
     }
 
-    void makeOutline(shell::MapOutlinePacket const &mapOutline)
+    void makeOutline(network::MapOutlinePacket const &mapOutline)
     {
         if (!vbuf) return;
 
@@ -84,7 +84,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
         {
             auto const &line = mapOutline.line(i);
 
-            vtx.rgba = (line.type == shell::MapOutlinePacket::OneSidedLine? oneSidedColor : twoSidedColor);
+            vtx.rgba = (line.type == network::MapOutlinePacket::OneSidedLine? oneSidedColor : twoSidedColor);
 
             // Two vertices per line.
             vtx.pos = line.start; verts << vtx;
@@ -130,7 +130,7 @@ MapOutlineWidget::MapOutlineWidget(String const &name)
     , d(new Impl(this))
 {}
 
-void MapOutlineWidget::setOutline(shell::MapOutlinePacket const &mapOutline)
+void MapOutlineWidget::setOutline(network::MapOutlinePacket const &mapOutline)
 {
     d->makeOutline(mapOutline);
 }

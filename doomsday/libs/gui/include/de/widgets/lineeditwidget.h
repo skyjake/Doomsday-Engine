@@ -20,7 +20,7 @@
 #define LIBAPPFW_LINEEDITWIDGET_H
 
 #include "../GuiWidget"
-#include <de/comms/AbstractLineEditor>
+#include <de/AbstractLineEditor>
 #include <de/KeyEvent>
 
 namespace de {
@@ -33,14 +33,14 @@ namespace de {
  *
  * @ingroup guiWidgets
  */
-class LIBGUI_PUBLIC LineEditWidget : public GuiWidget, public shell::AbstractLineEditor
+class LIBGUI_PUBLIC LineEditWidget : public GuiWidget, public AbstractLineEditor
 {
 public:
     DE_AUDIENCE(Enter,         void enterPressed(const String &text))
     DE_AUDIENCE(ContentChange, void editorContentChanged(LineEditWidget &))
 
 public:
-    LineEditWidget(String const &name = String());
+    LineEditWidget(String const &name= {});
 
     void setText(String const &lineText) override;
 
@@ -49,7 +49,7 @@ public:
      *
      * @param hintText  Hint text.
      */
-    void setEmptyContentHint(String const &hintText, String const &hintFont = String());
+    void setEmptyContentHint(String const &hintText, String const &hintFont = {});
 
     /**
      * Enables or disables the signal emitted when the edit widget receives an
@@ -78,7 +78,7 @@ public:
     bool handleEvent(Event const &event) override;
 
 public:
-    static shell::Key shellKey(const KeyEvent &keyEvent);
+    static term::Key shellKey(const KeyEvent &keyEvent);
 
     static KeyModifiers modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods);
 

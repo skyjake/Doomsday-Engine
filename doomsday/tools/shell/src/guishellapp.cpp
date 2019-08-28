@@ -28,8 +28,8 @@
 #include <de/EscapeParser>
 #include <de/FileSystem>
 #include <de/Id>
-#include <de/comms/LocalServer>
-#include <de/comms/ServerFinder>
+#include <doomsday/network/LocalServer>
+#include <de/ServerFinder>
 //#include <QMenuBar>
 //#include <QMessageBox>
 //#include <QUrl>
@@ -40,7 +40,6 @@
 //Q_DECLARE_METATYPE(de::Address)
 
 using namespace de;
-using namespace de::shell;
 
 DE_PIMPL(GuiShellApp)
 {
@@ -60,7 +59,7 @@ DE_PIMPL(GuiShellApp)
 
     Preferences *prefs;
 
-    Impl(Public *i) : Base(i), prefs(0)
+    Impl(Public *i) : Base(i), prefs(nullptr)
     {
 //        localCheckTimer.setInterval(1000);
 //        localCheckTimer.setSingleShot(false);

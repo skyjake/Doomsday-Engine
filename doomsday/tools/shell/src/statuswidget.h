@@ -21,8 +21,7 @@
 
 #include <de/GuiWidget>
 #include <de/String>
-#include <de/comms/Link>
-#include <de/comms/Protocol>
+#include <doomsday/network/Link>
 
 /**
  * Widget for showing server's status.
@@ -33,12 +32,12 @@ public:
     explicit StatusWidget();
 
     void setGameState(de::String mode, de::String rules, de::String mapId, de::String mapTitle);
-    void setMapOutline(const de::shell::MapOutlinePacket &outline);
-    void setPlayerInfo(const de::shell::PlayerInfoPacket &plrInfo);
+    void setMapOutline(const network::MapOutlinePacket &outline);
+    void setPlayerInfo(const network::PlayerInfoPacket &plrInfo);
 
 //    void paintEvent(QPaintEvent *);
 
-    void linkConnected(de::shell::Link *link);
+    void linkConnected(network::Link *link);
     void linkDisconnected();
 
 private:

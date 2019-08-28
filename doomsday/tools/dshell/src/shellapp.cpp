@@ -22,23 +22,22 @@
 #include "localserverdialog.h"
 #include "aboutdialog.h"
 
-#include <de/comms/LabelWidget>
-#include <de/comms/MenuWidget>
-#include <de/comms/CommandLineWidget>
-#include <de/comms/LogWidget>
-#include <de/comms/Action>
-#include <de/comms/Link>
-#include <de/comms/LocalServer>
-#include <de/comms/ServerFinder>
-
+#include <doomsday/network/Link>
+#include <doomsday/network/LocalServer>
+#include <de/term/LabelWidget>
+#include <de/term/MenuWidget>
+#include <de/term/CommandLineWidget>
+#include <de/term/LogWidget>
+#include <de/term/Action>
 #include <de/CommandLine>
 #include <de/Config>
 #include <de/Garbage>
-#include <de/RegExp>
 #include <de/LogBuffer>
+#include <de/RegExp>
+#include <de/ServerFinder>
 
 using namespace de;
-using namespace shell;
+using namespace de::term;
 
 DE_PIMPL(ShellApp)
 , DE_OBSERVES(CommandLineWidget, Command)
@@ -48,7 +47,7 @@ DE_PIMPL(ShellApp)
     CommandLineWidget *cli;
     LabelWidget *      menuLabel;
     StatusWidget *     status;
-    Link *             link = nullptr;
+    network::Link *    link = nullptr;
     ServerFinder       finder;
 
     Impl(Public &i) : Base(i)
@@ -75,10 +74,10 @@ DE_PIMPL(ShellApp)
 
         auto openMenu = [this](){ self().openMenu(); };
 
-        menuLabel->addAction(new shell::Action(KeyEvent(Key::F9),         openMenu));
-        menuLabel->addAction(new shell::Action(KeyEvent(Key::Substitute), openMenu));
-        menuLabel->addAction(new shell::Action(KeyEvent(Key::Break),      openMenu));
-        menuLabel->addAction(new shell::Action(KeyEvent(Key::Cancel), [this](){ self().quit(); }));
+        menuLabel->addAction(new term::Action(KeyEvent(Key::F9),         openMenu));
+        menuLabel->addAction(new term::Action(KeyEvent(Key::Substitute), openMenu));
+        menuLabel->addAction(new term::Action(KeyEvent(Key::Break),      openMenu));
+        menuLabel->addAction(new term::Action(KeyEvent(Key::Cancel), [this](){ self().quit(); }));
 
         // Expanding command line widget.
         cli = new CommandLineWidget;
@@ -97,19 +96,19 @@ DE_PIMPL(ShellApp)
                 .setInput(Rule::Top,    root.viewTop())
                 .setInput(Rule::Bottom, cli->rule().top());
 
-        log->addAction(new shell::Action(KeyEvent(Key::F5), [this]() { log->scrollToBottom(); }));
+        log->addAction(new term::Action(KeyEvent(Key::F5), [this]() { log->scrollToBottom(); }));
 
         // Main menu.
         menu = new MenuWidget(MenuWidget::Popup);
-        menu->appendItem(new shell::Action("Connect to...",
+        menu->appendItem(new term::Action("Connect to...",
                                     [this]() { self().askToOpenConnection(); }));
-        menu->appendItem(new shell::Action("Disconnect", [this](){ self().closeConnection(); }));
+        menu->appendItem(new term::Action("Disconnect", [this](){ self().closeConnection(); }));
         menu->appendSeparator();
-        menu->appendItem(new shell::Action("Start local server", [this](){ self().askToStartLocalServer(); }));
+        menu->appendItem(new term::Action("Start local server", [this](){ self().askToStartLocalServer(); }));
         menu->appendSeparator();
-        menu->appendItem(new shell::Action("Scroll to bottom", [this](){ log->scrollToBottom(); }), "F5");
-        menu->appendItem(new shell::Action("About", [this]() { self().showAbout(); }));
-        menu->appendItem(new shell::Action("Quit Shell", [this]() { self().quit(); }), "Ctrl-X");
+        menu->appendItem(new term::Action("Scroll to bottom", [this](){ log->scrollToBottom(); }), "F5");
+        menu->appendItem(new term::Action("About", [this]() { self().showAbout(); }));
+        menu->appendItem(new term::Action("Quit Shell", [this]() { self().quit(); }), "Ctrl-X");
         menu->rule()
                 .setInput(Rule::Bottom, menuLabel->rule().top())
                 .setInput(Rule::Left,   menuLabel->rule().left());
@@ -178,7 +177,7 @@ void ShellApp::openConnection(String const &address)
     LOG_NET_NOTE("Opening connection to %s") << address;
 
     // Keep trying to connect to 30 seconds.
-    d->link = new Link(address, 30.0);
+    d->link = new network::Link(address, 30.0);
     d->status->setShellLink(d->link);
 
     d->link->audienceForPacketsReady() += [this]() { handleIncomingPackets(); };
@@ -246,7 +245,7 @@ void ShellApp::askToStartLocalServer()
     {
         StringList opts = dlg.text().split(RegExp::WHITESPACE);
 
-        LocalServer sv;
+        network::LocalServer sv;
         sv.start(dlg.port(), dlg.gameMode(), opts);
 
         openConnection("localhost:" + String::asText(dlg.port()));
@@ -276,7 +275,7 @@ void ShellApp::updateMenuWithFoundServers()
                 d->finder.playerCount(sv),
                 d->finder.maxPlayers(sv));
 
-        d->menu->insertItem(pos++, new shell::Action(label, [this]() { connectToFoundServer(); }));
+        d->menu->insertItem(pos++, new term::Action(label, [this]() { connectToFoundServer(); }));
     }
 
     // Update cursor position after changing menu items.
@@ -315,19 +314,19 @@ void ShellApp::handleIncomingPackets()
         packet->execute();
 
         // Process packet contents.
-        shell::Protocol &protocol = d->link->protocol();
+        network::Protocol &protocol = d->link->protocol();
         switch (protocol.recognize(packet.get()))
         {
-        case shell::Protocol::PasswordChallenge:
+        case network::Protocol::PasswordChallenge:
             askForPassword();
             break;
 
-        case shell::Protocol::ConsoleLexicon:
+        case network::Protocol::ConsoleLexicon:
             // Terms for auto-completion.
             d->cli->setLexicon(protocol.lexicon(*packet));
             break;
 
-        case shell::Protocol::GameState: {
+        case network::Protocol::GameState: {
             Record &rec = static_cast<RecordPacket *>(packet.get())->record();
             d->status->setGameState(
                     rec["mode"].value().asText(),

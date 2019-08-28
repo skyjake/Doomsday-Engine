@@ -25,16 +25,16 @@
 #include <de/Rule>
 #include <de/Vector>
 #include <de/LogBuffer>
-#include <de/comms/TextRootWidget>
-#include <de/comms/Widget>
-#include <de/comms/KeyEvent>
+#include <de/term/TextRootWidget>
+#include <de/term/Widget>
+#include <de/term/KeyEvent>
 #include <curses.h>
 #include <stdio.h>
 #include <sstream>
 #include <signal.h>
 
 using namespace de;
-using namespace shell;
+using namespace de::term;
 
 static void windowResized(int)
 {

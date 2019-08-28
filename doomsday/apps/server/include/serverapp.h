@@ -21,7 +21,7 @@
 #define SERVERAPP_H
 
 #include <de/TextApp>
-#include <de/comms/ServerInfo>
+#include <de/ServerInfo>
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/Games>
 #include <doomsday/resource/resources.h>
@@ -57,7 +57,7 @@ public:
      * Fill in a ServerInfo record with the current status of a running server.
      * @return Server information.
      */
-    static de::shell::ServerInfo currentServerInfo();
+    static de::ServerInfo currentServerInfo();
 
     static ServerApp &        app();
     static ServerSystem &     serverSystem();

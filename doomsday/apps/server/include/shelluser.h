@@ -21,7 +21,7 @@
 #define SERVER_SHELLUSER_H
 
 #include <de/Socket>
-#include <de/comms/Link>
+#include <doomsday/network/Link>
 #include "users.h"
 
 /**
@@ -35,7 +35,7 @@
  *
  * @ingroup server
  */
-class ShellUser : public de::shell::Link, public User
+class ShellUser : public network::Link, public User
 {
 public:
     /**

@@ -44,7 +44,7 @@ using namespace de;
 DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
 , DE_OBSERVES(Games, Readiness)
 {
-    shell::ServerInfo  serverInfo;
+    ServerInfo         serverInfo;
     ButtonWidget *     joinButton;
     String             gameConfig;
     LabelWidget *      info;
@@ -143,7 +143,7 @@ void MultiplayerPanelButtonWidget::itemRightClicked()
     d->extra->trigger();
 }
 
-void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
+void MultiplayerPanelButtonWidget::updateContent(ServerInfo const &info)
 {
     d->serverInfo = info;
     d->gameConfig = info.gameConfig();
@@ -191,7 +191,7 @@ void MultiplayerPanelButtonWidget::updateContent(shell::ServerInfo const &info)
 
         icon().setImage(nullptr);
     }
-    if (!info.flags().testFlag(shell::ServerInfo::AllowJoin))
+    if (!info.flags().testFlag(ServerInfo::AllowJoin))
     {
         d->joinButton->disable();
     }

@@ -21,7 +21,7 @@
 
 #include <de/BaseGuiApp>
 #include <de/PopupMenuWidget>
-#include <de/comms/ServerFinder>
+#include <de/ServerFinder>
 
 class LinkWindow;
 
@@ -33,7 +33,7 @@ public:
     void initialize();
 
     LinkWindow *newOrReusedConnectionWindow();
-    de::shell::ServerFinder &serverFinder();
+    de::ServerFinder &serverFinder();
 
     static GuiShellApp &app();
     de::PopupMenuWidget &localServersMenu();

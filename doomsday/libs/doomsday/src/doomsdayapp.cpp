@@ -133,29 +133,25 @@ DE_PIMPL(DoomsdayApp)
 {
     std::string ddBasePath; // Doomsday root directory is at...?
 
-    Flags                    appFlags;
-    Binder                   binder;
-    bool                     initialized      = false;
-    bool                     gameBeingChanged = false;
-    bool                     shuttingDown     = false;
-    Plugins                  plugins;
-    Games                    games;
-    Game *                   currentGame = nullptr;
-    GameProfile              adhocProfile;
-    GameProfile const *      currentProfile = nullptr;
-    StringList               preGamePackages;
-    GameProfiles             gameProfiles;
-    BusyMode                 busyMode;
-    Players                  players;
-    res::Bundles             dataBundles;
-    shell::PackageDownloader packageDownloader;
-    SaveGames                saveGames;
-    Dispatch             mainCall;
-    Timer                    configSaveTimer;
-
-// #ifdef WIN32
-//     HINSTANCE hInstance = NULL;
-// #endif
+    Flags              appFlags;
+    Binder             binder;
+    bool               initialized      = false;
+    bool               gameBeingChanged = false;
+    bool               shuttingDown     = false;
+    Plugins            plugins;
+    Games              games;
+    Game *             currentGame = nullptr;
+    GameProfile        adhocProfile;
+    GameProfile const *currentProfile = nullptr;
+    StringList         preGamePackages;
+    GameProfiles       gameProfiles;
+    BusyMode           busyMode;
+    Players            players;
+    res::Bundles       dataBundles;
+    PackageDownloader  packageDownloader;
+    SaveGames          saveGames;
+    Dispatch           mainCall;
+    Timer              configSaveTimer;
 
     /**
      * Delegates game change notifications to scripts.
@@ -188,10 +184,6 @@ DE_PIMPL(DoomsdayApp)
 
         gameProfiles.setGames(games);
         saveGames   .setGames(games);
-
-// #ifdef WIN32
-//         hInstance = GetModuleHandle(NULL);
-// #endif
 
         audienceForFolderPopulation += this;
 
@@ -667,7 +659,7 @@ DoomsdayApp &DoomsdayApp::app()
     return *theDoomsdayApp;
 }
 
-shell::PackageDownloader &DoomsdayApp::packageDownloader()
+PackageDownloader &DoomsdayApp::packageDownloader()
 {
     return DoomsdayApp::app().d->packageDownloader;
 }
@@ -709,7 +701,7 @@ SaveGames &DoomsdayApp::saveGames()
 
 NativePath DoomsdayApp::steamBasePath()
 {
-#ifdef DE_WINDOWS
+#if defined (DE_WINDOWS)
     // The path to Steam can be queried from the registry.
     {
         const String path = WindowsRegistry::textValue(
@@ -724,7 +716,7 @@ NativePath DoomsdayApp::steamBasePath()
         if (path) return path;
     }
     return "";
-#elif MACOSX
+#elif defined (MACOSX)
     return NativePath::homePath() / "Library/Application Support/Steam/";
 #else
     /// @todo Where are Steam apps located on Linux?

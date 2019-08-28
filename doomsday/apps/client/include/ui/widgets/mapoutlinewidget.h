@@ -19,8 +19,8 @@
 #ifndef DE_CLIENT_UI_MAPOUTLINEWIDGET_H
 #define DE_CLIENT_UI_MAPOUTLINEWIDGET_H
 
+#include <doomsday/network/Protocol>
 #include <de/GuiWidget>
-#include <de/comms/Protocol>
 
 /**
  * Map outline visualizing information from a shell::MapOutlinePacket.
@@ -30,7 +30,7 @@ class MapOutlineWidget : public de::GuiWidget
 public:
     MapOutlineWidget(de::String const &name = de::String());
 
-    void setOutline(de::shell::MapOutlinePacket const &mapOutline);
+    void setOutline(network::MapOutlinePacket const &mapOutline);
 
     // Events.
     void drawContent() override;

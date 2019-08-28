@@ -24,7 +24,7 @@
 #include "../game.h"
 #include "dd_share.h"
 #include "dd_types.h"
-#include <de/comms/Lexicon>
+#include <de/Lexicon>
 
 typedef enum {
     WT_ANY = -1,
@@ -108,7 +108,7 @@ LIBDOOMSDAY_PUBLIC de::String Con_AnnotatedConsoleTerms(const de::StringList &te
 /**
  * Collects all the known words of the console into a Lexicon.
  */
-LIBDOOMSDAY_PUBLIC de::shell::Lexicon Con_Lexicon();
+LIBDOOMSDAY_PUBLIC de::Lexicon Con_Lexicon();
 
 LIBDOOMSDAY_PUBLIC void Con_TermsRegex(de::StringList &terms, de::String const &pattern,
                                        knownwordtype_t wordType);

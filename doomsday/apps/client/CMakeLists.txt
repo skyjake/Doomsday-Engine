@@ -305,7 +305,6 @@ if (APPLE AND NOT IOS)
     # Install binaries built by targets in the project.
     deng_install_bundle_deps (client
         Deng::libcore
-        Deng::libcomms
         Deng::libgui
         Deng::libdoomsday
         Deng::libgamekit

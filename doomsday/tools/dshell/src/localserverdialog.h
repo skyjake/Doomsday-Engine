@@ -20,16 +20,15 @@
 #define LOCALSERVERDIALOG_H
 
 #include <de/libcore.h>
-#include <de/comms/InputDialogWidget>
+#include <de/term/InputDialogWidget>
 
-class LocalServerDialog : public de::shell::InputDialogWidget
+class LocalServerDialog : public de::term::InputDialogWidget
 {
 public:
     LocalServerDialog();
 
     de::duint16 port() const;
-
-    de::String gameMode() const;
+    de::String  gameMode() const;
 
 protected:
     void prepare();

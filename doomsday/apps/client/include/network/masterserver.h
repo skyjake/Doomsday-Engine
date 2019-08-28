@@ -27,7 +27,7 @@
 #include "dd_share.h"
 
 #include <de/libcore.h>
-#include <de/comms/ServerInfo>
+#include <de/ServerInfo>
 
 /**
  * Network request worker for communicating with the master server.
@@ -48,7 +48,7 @@ public:
     bool isOngoing() const;
     int  serverCount() const;
 
-    de::shell::ServerInfo server(int index) const;
+    de::ServerInfo server(int index) const;
 
 private:
     DE_PRIVATE(d)
@@ -87,6 +87,6 @@ void N_MasterRequestList(void);
  * return @c not zero, if param index was valid and the master returned info on
  * the requested server.
  */
-int N_MasterGet(int index, de::shell::ServerInfo *info);
+int N_MasterGet(int index, de::ServerInfo *info);
 
 #endif // DE_MASTER_SERVER_H

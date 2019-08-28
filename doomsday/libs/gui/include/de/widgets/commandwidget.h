@@ -50,7 +50,7 @@ public:
     bool handleEvent(Event const &event) override;
     void update() override;
 
-    bool handleControlKey(shell::Key key, KeyModifiers const &mods) override;
+    bool handleControlKey(term::Key key, KeyModifiers const &mods) override;
 
     // IPersistent.
     void operator>>(PersistentState &toState) const override;
