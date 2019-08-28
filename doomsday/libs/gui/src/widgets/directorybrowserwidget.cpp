@@ -25,6 +25,64 @@ namespace de {
 DE_GUI_PIMPL(DirectoryBrowserWidget)
 , public ChildWidgetOrganizer::IWidgetFactory
 {
+    class ItemWidget : public ButtonWidget
+    {
+//        const DirectoryItem *_item{};
+        LabelWidget *_status;
+
+    public:
+        ItemWidget(const Rule &height)
+        {
+            setSizePolicy(ui::Fixed, ui::Fixed);
+            setAlignment(ui::AlignLeft);
+            rule().setInput(Rule::Height, height);
+            margins().setTopBottom(rule("unit"));
+
+            _status = &addNew<LabelWidget>();
+            _status->setSizePolicy(ui::Expand, ui::Fixed);
+            _status->rule()
+                .setInput(Rule::Right, rule().right())
+                .setInput(Rule::Top, rule().top())
+                .setInput(Rule::Height, height);
+            _status->setTextColor("altaccent");
+
+            margins().setRight(_status->rule().width());
+        }
+
+        void updateItem(const DirectoryItem &dirItem)
+        {
+            if (dirItem.isDirectory())
+            {
+                setText(_E(F) + dirItem.name() + _E(l) "/");
+                _status->setText("(dir)");
+            }
+            else
+            {
+                setText(dirItem.name());
+
+                const auto size = dirItem.status().size;
+                String sizeText;
+                if (size < 1000)
+                {
+                    sizeText = Stringf("%zu" _E(l) " B", size);
+                }
+                else if (size < 1000000)
+                {
+                    sizeText = Stringf("%.1f" _E(l) " KB", double(size) / 1.0e3);
+                }
+                else if (size < 1000000000)
+                {
+                    sizeText = Stringf("%.1f" _E(l) " MB", double(size) / 1.0e6);
+                }
+                else
+                {
+                    sizeText = Stringf("%.1f" _E(l) " GB", double(size) / 1.0e9);
+                }
+                _status->setText(sizeText);
+            }
+        }
+    };
+
     DirectoryTreeData dirTree;
     IndirectRule *itemHeight = new IndirectRule;
     Dispatch dispatch;
@@ -44,11 +102,7 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
 
     GuiWidget *makeItemWidget(const ui::Item &, const GuiWidget *)
     {
-        auto *widget = new ButtonWidget;
-        widget->setSizePolicy(ui::Fixed, ui::Fixed);
-        widget->setAlignment(ui::AlignLeft);
-        widget->rule().setInput(Rule::Height, *itemHeight);
-        widget->margins().setTopBottom(rule("unit"));
+        auto *widget = new ItemWidget(*itemHeight);
 
         widget->audienceForPress() += [this, widget]() {
             // Changing the directory causes this widget to be deleted, so
@@ -75,21 +129,7 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
 
     void updateItemWidget(GuiWidget &widget, const ui::Item &item)
     {
-        const auto &dirItem = item.as<DirectoryItem>();
-
-        String text;
-        if (dirItem.isDirectory())
-        {
-            text = Stringf("%s/", dirItem.name().c_str());
-        }
-        else
-        {
-            text = Stringf("%s (%zu) %s",
-                           dirItem.name().c_str(),
-                           dirItem.status().size,
-                           dirItem.status().modifiedAt.asText(Time::ISODateOnly).c_str());
-        }
-        widget.as<ButtonWidget>().setText(text);
+        widget.as<ItemWidget>().updateItem(item.as<DirectoryItem>());
     }
 
     DE_PIMPL_AUDIENCES(Selection)
