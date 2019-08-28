@@ -56,7 +56,7 @@ deng_merge_sources (filesys        src/filesys/*.cpp)
 deng_merge_sources (filesys_remote src/filesys/remote/*.cpp)
 deng_merge_sources (legacy         src/legacy/*.c*)
 deng_merge_sources (net            src/net/*.cpp)
-deng_merge_sources (scriptsys      src/scriptsys/*.cpp)
+deng_merge_sources (scripting      src/scripting/*.cpp)
 deng_merge_sources (term           src/term/*.cpp)
 deng_merge_sources (widgets        src/widgets/*.cpp)
 

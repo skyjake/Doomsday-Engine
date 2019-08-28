@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "../src/scriptsys/bindings_math.h"
+#include "../src/scripting/bindings_math.h"
 #include "de/math.h"
 
 #include <de/NumberValue>

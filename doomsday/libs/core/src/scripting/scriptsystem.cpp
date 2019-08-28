@@ -32,8 +32,8 @@
 #include "de/Version"
 #include "de/math.h"
 
-#include "../src/scriptsys/bindings_core.h"
-#include "../src/scriptsys/bindings_math.h"
+#include "../src/scripting/bindings_core.h"
+#include "../src/scripting/bindings_math.h"
 
 namespace de {
 
