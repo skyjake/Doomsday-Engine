@@ -41,7 +41,6 @@
 #include "ui/nativeui.h"
 #include "ui/zonedebug.h"
 
-#include <doomsday/library.h>
 #include <doomsday/gameapi.h>
 #include <doomsday/plugins.h>
 #include <doomsday/games.h>

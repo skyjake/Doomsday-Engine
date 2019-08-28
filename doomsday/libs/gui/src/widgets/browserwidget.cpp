@@ -58,7 +58,7 @@ DE_GUI_PIMPL(BrowserWidget)
         layout.setOverrideWidth(*contentWidth);
 
         cwdLabel = LabelWidget::appendSeparatorWithText("Path", i);
-
+        cwdLabel->margins().setLeft(Const(0));
         layout << *cwdLabel;
 
         pathFlow.reset(new FlowLayout(cwdLabel->rule().left(), cwdLabel->rule().bottom(),
@@ -66,6 +66,7 @@ DE_GUI_PIMPL(BrowserWidget)
         layout.append(pathFlow->height());
 
         menuLabel = LabelWidget::appendSeparatorWithText("Contents", i);
+        menuLabel->margins().setLeft(Const(0));
         layout << *menuLabel;
 
         scroller = &i->addNew<ScrollAreaWidget>("scroller");

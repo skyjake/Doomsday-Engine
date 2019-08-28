@@ -77,7 +77,6 @@
 #include <doomsday/res/Textures>
 #include <doomsday/world/Materials>
 #include <doomsday/help.h>
-#include <doomsday/library.h>
 #include <doomsday/world/entitydef.h>
 
 #ifdef __SERVER__
@@ -199,7 +198,7 @@ dint verbose;                      ///< For debug messages (-verbose).
 dint symbolicEchoMode = false;     ///< @note Mutable via public API.
 #endif
 
-static char *startupFiles = (char *) "";  ///< List of file names, whitespace seperating (written to .cfg).
+static char *startupFiles = const_cast<char *>("");  ///< List of file names, whitespace seperating (written to .cfg).
 
 static void registerResourceFileTypes()
 {

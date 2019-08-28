@@ -106,7 +106,6 @@ typedef struct {
 #include <de/Observers>
 #include <de/Info>
 #include "libdoomsday.h"
-#include "library.h"
 #include "gameapi.h"
 
 /**

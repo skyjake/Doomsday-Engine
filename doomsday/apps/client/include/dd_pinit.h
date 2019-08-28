@@ -25,7 +25,6 @@
 
 #include "api_internaldata.h"
 #include <doomsday/gameapi.h>
-#include <doomsday/library.h>
 #include <de/c_wrapper.h>
 
 #ifdef __CLIENT__

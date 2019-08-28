@@ -25,7 +25,6 @@
 
 #include <doomsday/doomsdayapp.h>
 #include <doomsday/filesys/fs_util.h>
-#include <doomsday/library.h>
 #include <de/c_wrapper.h>
 #include <de/App>
 
