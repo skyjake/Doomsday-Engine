@@ -152,7 +152,7 @@ DE_GUI_PIMPL(BrowserWidget)
 
             if (i == path.segmentCount() - 1)
             {
-                button.setTextColor("accent");
+                button.setTextColor("accent");                
             }
 
             const Path buttonPath = path.subPath({0, i + 1});
@@ -166,6 +166,8 @@ DE_GUI_PIMPL(BrowserWidget)
 
             pathFlow->append(button);
         }
+
+        if (hasRoot()) root().setFocus(pathFlow->widgets().back());
     }
 
     void resetPathButtonColors()
