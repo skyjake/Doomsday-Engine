@@ -61,7 +61,7 @@ DE_PIMPL(NativeMenu)
     void gameReadinessUpdated() override
     {
 #ifdef MACOSX
-        mainCall.enqueue([this] () { updateGameMenuItems(); });
+        dispatch += [this]() { updateGameMenuItems(); };
 #endif
     }
 
