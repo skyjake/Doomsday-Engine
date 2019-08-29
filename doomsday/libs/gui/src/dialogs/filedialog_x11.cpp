@@ -90,7 +90,14 @@ void FileDialog::setBehavior(Behaviors behaviors, FlagOp flagOp)
 
 void FileDialog::setInitialLocation(const NativePath &initialLocation)
 {
-    d->initialLocation = initialLocation;
+    if (initialLocation.exists())
+    {
+        d->initialLocation = initialLocation;
+    }
+    else
+    {
+        d->initialLocation = NativePath::homePath();
+    }
 }
 
 void FileDialog::setFileTypes(const FileTypes &fileTypes)
