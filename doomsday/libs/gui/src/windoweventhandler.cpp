@@ -145,7 +145,7 @@ DE_PIMPL(WindowEventHandler)
 
     struct InertiaScrollState {
         bool     active      = false;
-        float    sensitivity = 1000;
+        float    sensitivity = 750;
         Flywheel pos[2];
         Vec2f    prevGesturePos;
     };
@@ -356,6 +356,8 @@ DE_PIMPL(WindowEventHandler)
         */
     }
 
+    double swipeRoundoff[2]{};
+
     void handleGestureEvent(const SDL_MultiGestureEvent &ev)
     {
         if (ev.numFingers == 2)
@@ -373,7 +375,11 @@ DE_PIMPL(WindowEventHandler)
 
                 for (int axis = 0; axis < 2; ++axis)
                 {
-                    const auto units = int(std::lround(delta[axis] * scr.sensitivity));
+                    const double units_f = delta[axis] * scr.sensitivity + swipeRoundoff[axis];
+                    const int    units   = int(units_f);
+
+                    swipeRoundoff[axis] = units_f - units;
+
                     if (units)
                     {
                         DE_FOR_PUBLIC_AUDIENCE(MouseEvent, i)
