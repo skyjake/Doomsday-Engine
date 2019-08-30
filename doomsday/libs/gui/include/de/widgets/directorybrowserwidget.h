@@ -19,6 +19,7 @@
 #pragma once
 
 #include "../BrowserWidget"
+#include "../DirectoryTreeData"
 
 namespace de {
 
@@ -33,7 +34,10 @@ public:
 public:
     DirectoryBrowserWidget(Flags flags = ShowFiles, const String &name = "dirbrowser");
 
-    DE_AUDIENCE(Selection, void pathSelected(DirectoryBrowserWidget &, const Path &))
+    NativePath       currentDirectory() const;
+    List<NativePath> selectedPaths() const;
+
+    DE_AUDIENCE(Selection, void itemSelected(DirectoryBrowserWidget &, const DirectoryItem &))
 
 private:
     DE_PRIVATE(d)

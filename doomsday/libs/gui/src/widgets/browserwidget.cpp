@@ -34,7 +34,8 @@ DE_GUI_PIMPL(BrowserWidget)
         int scrollPosY;
     };
 
-    const ui::TreeData *data = nullptr;
+    ui::TreeData *data = nullptr;
+    List<ui::DataPos> selectedItems;
     Path path;
     Map<Path, SavedState> savedState;
     LabelWidget *noContents;
@@ -110,6 +111,7 @@ DE_GUI_PIMPL(BrowserWidget)
 
         DE_ASSERT(data);
 
+        clearSelection();
         savedState[path].scrollPosY = scroller->scrollPosition().y;
 
         // TODO: This is an async op, need to show progress widget.
@@ -155,7 +157,8 @@ DE_GUI_PIMPL(BrowserWidget)
             auto &button = self().addNew<ButtonWidget>();
             button.setSizePolicy(ui::Expand, ui::Expand);
             button.setMaximumTextWidth(*contentWidth);
-            button.setText(Stringf("%s/", String(segment).c_str()));
+            const String segStr = segment.toCString();
+            button.setText(segStr.isEmpty() ? DE_STR("/") : segStr);
 
             if (i == path.segmentCount() - 1)
             {
@@ -185,6 +188,22 @@ DE_GUI_PIMPL(BrowserWidget)
         }
     }
 
+    void clearSelection()
+    {
+        if (!menu->items().isEmpty())
+        {
+            auto &items = data->items(path);
+            for (const auto pos : selectedItems)
+            {
+                if (pos < items.size())
+                {
+                    items.at(pos).setSelected(false);
+                }
+            }
+        }
+        selectedItems.clear();
+    }
+
     DE_PIMPL_AUDIENCES(Navigation)
 };
 
@@ -195,7 +214,12 @@ BrowserWidget::BrowserWidget(const String &name)
     , d(new Impl(this))
 {}
 
-void BrowserWidget::setData(const ui::TreeData &data, int averageItemHeight)
+void BrowserWidget::setEmptyContentText(const String &text)
+{
+    d->noContents->setText(text);
+}
+
+void BrowserWidget::setData(ui::TreeData &data, int averageItemHeight)
 {
     d->data = &data;
     d->menu->organizer().setRecyclingEnabled(true);
@@ -215,6 +239,29 @@ MenuWidget &BrowserWidget::menu()
 void BrowserWidget::setCurrentPath(const Path &path)
 {
     d->changeTo(path, true);
+}
+
+Path BrowserWidget::currentPath() const
+{
+    return d->path;
+}
+
+void BrowserWidget::setSelected(const ui::Item &item)
+{
+    d->clearSelection();
+
+    auto &items = d->data->items(d->path);
+    const ui::DataPos pos = items.find(item);
+    DE_ASSERT(pos != ui::Data::InvalidPos);
+    d->selectedItems.push_back(pos);
+    items.at(pos).setSelected(true);
+}
+
+List<const ui::Item *> BrowserWidget::selected() const
+{
+    return map<List<const ui::Item *>>(d->selectedItems, [this](ui::DataPos pos) {
+        return &d->data->items(d->path).at(pos);
+    });
 }
 
 } // namespace de

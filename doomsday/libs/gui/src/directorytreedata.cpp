@@ -92,8 +92,17 @@ bool DirectoryTreeData::contains(const Path &path) const
 
 const ui::Data &DirectoryTreeData::items(const Path &path) const
 {
-    DE_ASSERT(contains(path));
+    const NativePath dir(path);
+    if (d->pathItems.contains(dir))
+    {
+        return *d->pathItems[dir];
+    }
+    throw InvalidDirectoryError("DirectoryTreeData::items", "Not found: " + path.asText());
+}
 
+ui::Data &DirectoryTreeData::items(const Path &path)
+{
+    DE_ASSERT(contains(path));
     const NativePath dir(path);
     if (!d->pathItems.contains(dir))
     {

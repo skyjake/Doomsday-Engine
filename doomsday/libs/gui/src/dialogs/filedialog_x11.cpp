@@ -23,6 +23,7 @@
 namespace de {
 
 DE_PIMPL_NOREF(FileDialog)
+, DE_OBSERVES(DirectoryBrowserWidget, Selection)
 {
     String           title    = "Select File";
     String           prompt   = "OK";
@@ -62,12 +63,28 @@ DE_PIMPL_NOREF(FileDialog)
 
         browser = new DirectoryBrowserWidget(
             (behavior & AcceptFiles ? DirectoryBrowserWidget::ShowFiles : 0));
+        if (behavior.testFlag(AcceptDirectories))
+        {
+            browser->setEmptyContentText("No Subdirs");
+        }
         browser->setCurrentPath(initialLocation);
         browser->rule().setInput(Rule::Height, browser->rule().width());
+        browser->audienceForSelection() += this;
         dlg->area().add(browser);
         dlg->updateLayout();
 
         return dlg;
+    }
+
+    void itemSelected(DirectoryBrowserWidget &, const DirectoryItem &item) override
+    {
+        if (behavior.testFlag(AcceptFiles))
+        {
+            if (!item.isSelected())
+            {
+                browser->setSelected(item);
+            }
+        }
     }
 };
 
@@ -120,90 +137,21 @@ bool FileDialog::exec(GuiRootWidget &root)
 {
     d->selection.clear();
 
-    // IFileOpenDialog *dlg = nullptr;
-    // if (FAILED(CoCreateInstance(
-    //         CLSID_FileOpenDialog, nullptr, CLSCTX_INPROC_SERVER, IID_PPV_ARGS(&dlg))))
-    // {
-    //     return false;
-    // }
-
-    // // Configure the dialog according to user-specified options.
-    // DWORD options;
-    // dlg->GetOptions(&options);
-    // options |= FOS_FORCEFILESYSTEM;
-    // if (d->behavior & MultipleSelection)
-    // {
-    //     options |= FOS_ALLOWMULTISELECT;
-    // }
-    // if (d->behavior & AcceptFiles)
-    // {
-    //     options |= FOS_FILEMUSTEXIST;
-    // }
-    // if (d->behavior & AcceptDirectories)
-    // {
-    //     options |= FOS_PICKFOLDERS | FOS_PATHMUSTEXIST;
-    // }
-    // dlg->SetOptions(options);
-    // {
-    //     const auto path = d->initialLocation.toString().toUtf16();
-    //     IShellItem *folder = nullptr;
-    //     if (SUCCEEDED(SHCreateItemFromParsingName(path.c_wstr(), nullptr, IID_PPV_ARGS(&folder))))
-    //     {
-    //         dlg->SetDefaultFolder(folder);
-    //         folder->Release();
-    //     }
-    // }
-    // dlg->SetTitle(d->title.toUtf16().c_wstr());
-    // dlg->SetOkButtonLabel(d->prompt.toUtf16().c_wstr());
-    // if (d->fileTypes)
-    // {
-    //     List<COMDLG_FILTERSPEC> filters;
-    //     const auto strings = d->filters();
-    //     for (const auto &str : strings)
-    //     {
-    //         COMDLG_FILTERSPEC spec;
-    //         spec.pszName = str.first.c_wstr();
-    //         spec.pszSpec = str.second.c_wstr();
-    //         filters << spec;
-    //     }
-    //     dlg->SetFileTypes(UINT(filters.size()), filters.data());
-    // }
-
-    // if (SUCCEEDED(dlg->Show(nullptr)))
-    // {
-    //     IShellItemArray *results = nullptr;
-    //     dlg->GetResults(&results);
-    //     if (results)
-    //     {
-    //         DWORD resultCount = 0;
-    //         results->GetCount(&resultCount);
-    //         for (unsigned i = 0; i < resultCount; ++i)
-    //         {
-    //             IShellItem *result = nullptr;
-    //             if (SUCCEEDED(results->GetItemAt(i, &result)))
-    //             {
-    //                 PWSTR itemPath;
-    //                 if (SUCCEEDED(result->GetDisplayName(SIGDN_FILESYSPATH, &itemPath)))
-    //                 {
-    //                     d->selection << NativePath(
-    //                         String::fromUtf16(Block(itemPath, 2 * (wcslen(itemPath) + 1))));
-    //                     CoTaskMemFree(itemPath);
-    //                 }
-    //                 result->Release();
-    //             }
-    //         }
-    //         results->Release();
-    //     }
-    // }
-
-    // // Cleanup.
-    // dlg->Release();
-
     auto *dlg = d->makeDialog();
     if (dlg->exec(root))
     {
         // Get the selected items.
-
+        if (d->behavior & AcceptDirectories)
+        {
+            d->selection << d->browser->currentDirectory();
+        }
+        else
+        {
+            for (auto path : d->browser->selectedPaths())
+            {
+                d->selection << path;
+            }
+        }
     }
 
     return !d->selection.empty();

@@ -29,6 +29,9 @@ class DirectoryItem;
 class LIBGUI_PUBLIC DirectoryTreeData : public ui::TreeData
 {
 public:
+    DE_ERROR(InvalidDirectoryError);
+
+public:
     DirectoryTreeData();
 
     void setPopulateFiles(bool files);
@@ -36,6 +39,7 @@ public:
 
     // Implements ui::TreeData.
     bool            contains(const Path &path) const override;
+    ui::Data &      items(const Path &path) override;
     const ui::Data &items(const Path &path) const override;
 
 private:
@@ -60,7 +64,7 @@ public:
     File::Status  status() const { return _status; }
     Path          path() const { return _directory / name(); }
 
-    bool isDirectory() const
+    inline bool isDirectory() const
     {
         return status().type() == File::Type::Folder;
     }

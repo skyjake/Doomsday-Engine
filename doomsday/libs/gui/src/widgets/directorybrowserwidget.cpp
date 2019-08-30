@@ -27,7 +27,6 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
 {
     class ItemWidget : public ButtonWidget
     {
-//        const DirectoryItem *_item{};
         LabelWidget *_status;
 
     public:
@@ -44,13 +43,15 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
                 .setInput(Rule::Right, rule().right())
                 .setInput(Rule::Top, rule().top())
                 .setInput(Rule::Height, height);
-            _status->setTextColor("altaccent");
 
             margins().setRight(_status->rule().width());
         }
 
         void updateItem(const DirectoryItem &dirItem)
         {
+            setColorTheme(dirItem.isSelected() ? Inverted : Normal);
+            _status->setTextColor(dirItem.isSelected() ? "inverted.altaccent" : "altaccent");
+
             if (dirItem.isDirectory())
             {
                 setText(_E(F) + dirItem.name() + _E(l) "/");
@@ -122,7 +123,7 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
             {
                 DE_FOR_PUBLIC_AUDIENCE(Selection, i)
                 {
-                    i->pathSelected(self(), dirItem.path());
+                    i->itemSelected(self(), dirItem);
                 }
             }
         };
@@ -144,5 +145,20 @@ DirectoryBrowserWidget::DirectoryBrowserWidget(Flags flags, const String &name)
     : BrowserWidget(name)
     , d(new Impl(this, flags))
 {}
+
+NativePath DirectoryBrowserWidget::currentDirectory() const
+{
+    return BrowserWidget::currentPath();
+}
+
+List<NativePath> DirectoryBrowserWidget::selectedPaths() const
+{
+    List<NativePath> sel;
+    for (const auto *item : selected())
+    {
+        sel.push_back(item->as<DirectoryItem>().path());
+    }
+    return sel;
+}
 
 } // namespace de

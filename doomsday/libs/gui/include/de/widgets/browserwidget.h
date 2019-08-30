@@ -33,12 +33,18 @@ class LIBGUI_PUBLIC BrowserWidget : public GuiWidget
 public:
     BrowserWidget(const String &name = {});
 
-    void setData(const ui::TreeData &data, int averageItemHeight);
+    void setEmptyContentText(const String &text);
+
+    void setData(ui::TreeData &data, int averageItemHeight);
     const ui::TreeData &data() const;
+
+    void setSelected(const ui::Item &item);
+    List<const ui::Item *> selected() const;
 
     MenuWidget &menu();
 
     void setCurrentPath(const Path &path);
+    Path currentPath() const;
 
     DE_AUDIENCE(Navigation, void browserNavigatedTo(BrowserWidget &, const Path &))
 
