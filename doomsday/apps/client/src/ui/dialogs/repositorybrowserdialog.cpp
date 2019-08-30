@@ -151,7 +151,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
             bool matched = false;
             for (int i = 0; i < path.segmentCount(); ++i)
             {
-                if (path.segment(i).toString().contains(term))
+                if (path.segment(i).toLowercaseString().contains(term))
                 {
                     matched = true;
                     break;

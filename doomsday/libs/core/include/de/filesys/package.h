@@ -191,7 +191,7 @@ public:
 
     static StringList tags(String const& tagsString);
 
-    static StringList requires(File const &packageFile);
+    static StringList requiredPackages(File const &packageFile);
 
     static void addRequiredPackage(File &packageFile, String const &id);
 

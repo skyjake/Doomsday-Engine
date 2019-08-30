@@ -486,7 +486,7 @@ String App::reverseDomainIdentifier() const
     String rdi;
     for (int i = 0; i < domain.segmentCount(); ++i)
     {
-        rdi = rdi.concatenateMember(domain.reverseSegment(i).toString());
+        rdi = rdi.concatenateMember(domain.reverseSegment(i).toLowercaseString());
     }
     return rdi.concatenateMember(unixEtcFolderName());
 }

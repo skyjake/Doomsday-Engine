@@ -560,12 +560,12 @@ DE_DEFINE_UNITTEST(Uri)
 
             Uri c = a;
             DE_ASSERT(c == a);
-            DE_ASSERT(c.path().reverseSegment(1).toString() == "some");
+            DE_ASSERT(c.path().reverseSegment(1).toLowercaseString() == "some");
 
             b = a;
             DE_ASSERT(b == a);
             //qDebug() << b.reverseSegment(1);
-            DE_ASSERT(b.path().reverseSegment(1).toString() == "some");
+            DE_ASSERT(b.path().reverseSegment(1).toLowercaseString() == "some");
         }
 
         // Swapping.
@@ -574,14 +574,14 @@ DE_DEFINE_UNITTEST(Uri)
             Uri b("d/e", RC_NULL);
 
             DE_ASSERT(a.path().segmentCount() == 3);
-            DE_ASSERT(a.path().reverseSegment(1).toString() == "b");
+            DE_ASSERT(a.path().reverseSegment(1).toLowercaseString() == "b");
 
             std::swap(a, b);
 
             DE_ASSERT(a.path().segmentCount() == 2);
-            DE_ASSERT(a.path().reverseSegment(1).toString() == "d");
+            DE_ASSERT(a.path().reverseSegment(1).toLowercaseString() == "d");
             DE_ASSERT(b.path().segmentCount() == 3);
-            DE_ASSERT(b.path().reverseSegment(1).toString() == "b");
+            DE_ASSERT(b.path().reverseSegment(1).toLowercaseString() == "b");
         }
 
         // Test a Windows style path with a drive plus file path.
@@ -590,10 +590,10 @@ DE_DEFINE_UNITTEST(Uri)
             DE_ASSERT(u.path().segmentCount() == 2);
 
             DE_ASSERT(u.path().reverseSegment(0).length() == 13);
-            DE_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
+            DE_ASSERT(u.path().reverseSegment(0).toLowercaseString() == "something.ext");
 
             DE_ASSERT(u.path().reverseSegment(1).length() == 2);
-            DE_ASSERT(u.path().reverseSegment(1).toString() == "c:");
+            DE_ASSERT(u.path().reverseSegment(1).toLowercaseString() == "c:");
         }
 
         // Test a Unix style path with a zero-length root node name.
@@ -602,10 +602,10 @@ DE_DEFINE_UNITTEST(Uri)
             DE_ASSERT(u.path().segmentCount() == 2);
 
             DE_ASSERT(u.path().reverseSegment(0).length() == 13);
-            DE_ASSERT(u.path().reverseSegment(0).toString() == "something.ext");
+            DE_ASSERT(u.path().reverseSegment(0).toLowercaseString() == "something.ext");
 
             DE_ASSERT(u.path().reverseSegment(1).length() == 0);
-            DE_ASSERT(u.path().reverseSegment(1).toString() == "");
+            DE_ASSERT(u.path().reverseSegment(1).toLowercaseString() == "");
         }
 
         // Test a relative directory.
@@ -614,13 +614,13 @@ DE_DEFINE_UNITTEST(Uri)
             DE_ASSERT(u.path().segmentCount() == 3);
 
             DE_ASSERT(u.path().reverseSegment(0).length() == 9);
-            DE_ASSERT(u.path().reverseSegment(0).toString() == "structure");
+            DE_ASSERT(u.path().reverseSegment(0).toLowercaseString() == "structure");
 
             DE_ASSERT(u.path().reverseSegment(1).length() == 3);
-            DE_ASSERT(u.path().reverseSegment(1).toString() == "dir");
+            DE_ASSERT(u.path().reverseSegment(1).toLowercaseString() == "dir");
 
             DE_ASSERT(u.path().reverseSegment(2).length() == 4);
-            DE_ASSERT(u.path().reverseSegment(2).toString() == "some");
+            DE_ASSERT(u.path().reverseSegment(2).toLowercaseString() == "some");
         }
     }
     catch (Error const &er)

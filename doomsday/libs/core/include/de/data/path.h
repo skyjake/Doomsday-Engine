@@ -113,9 +113,9 @@ public:
          */
         inline operator CString() const { return range; }
 
-        inline Rangecc toRange() const { return range; }
-        inline String  toString() const { return _key.str; }
-        inline CString toCString() const { return range; }
+        inline CString       toCString() const { return range; }
+        inline const String &toLowercaseString() const { return _key.str; }
+        inline Rangecc       toRange() const { return range; }
 
         /**
          * Determines the length of the segment in characters.

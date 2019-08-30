@@ -73,7 +73,7 @@ public:
 
     inline bool isEmpty() const { return !size(); }
 
-    inline Data &operator << (Item *item) { return append(item); }
+    inline Data &operator<<(Item *item) { return append(item); }
 
     inline Data &append(Item *item) { return insert(size(), item); }
 

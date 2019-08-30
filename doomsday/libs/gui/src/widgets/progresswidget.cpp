@@ -188,7 +188,7 @@ void ProgressWidget::useMiniStyle(DotPath const &colorId)
     d->colorId = colorId;
     d->gearId = DE_STR("widget.progress.mini");
     setTextColor(colorId);
-    setRotationSpeed(40);
+    setRotationSpeed(80);
     setImageScale(1);
 
     // Resize to the height of the default font.

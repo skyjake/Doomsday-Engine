@@ -103,9 +103,9 @@ DE_PIMPL(PackageLoader)
 
         // The package may actually be inside other packages, so we need to check
         // each component of the package identifier.
-        for (int i = components.size() - 1; i >= 0; --i)
+        for (auto i = components.rbegin(); i != components.rend(); ++i)
         {
-            id = components.at(i) + (!id.isEmpty()? "." + id : "");
+            id = *i + (!id.isEmpty()? "." + id : "");
 
             FS::FoundFiles files;
             App::fileSystem().findAllOfTypes(StringList()
@@ -336,7 +336,7 @@ DE_PIMPL(PackageLoader)
 
     void loadRequirements(File const &packageFile)
     {
-        for (String const &reqId : Package::requires(packageFile))
+        for (String const &reqId : Package::requiredPackages(packageFile))
         {
             if (!self().isLoaded(reqId))
             {
@@ -662,7 +662,7 @@ StringList PackageLoader::expandDependencies(StringList const &packageIdentifier
     {
         if (File const *file = select(pkgId))
         {
-            for (String reqId : Package::requires(*file))
+            for (String reqId : Package::requiredPackages(*file))
             {
                 expanded << reqId;
             }

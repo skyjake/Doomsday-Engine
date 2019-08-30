@@ -241,7 +241,7 @@ void Id1Translator::convert(Path path)
     LOG_AS("Id1Translator");
 
     /// @todo try all known extensions at the given path, if not specified.
-    String saveName = path.lastSegment().toString();
+    String saveName = path.lastSegment().toLowercaseString();
 
     d->openFile(path);
     String const nativeFilePath = d->saveFile()->source()->as<NativeFile>().nativePath();

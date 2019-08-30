@@ -323,7 +323,7 @@ void Package::validateMetadata(Record const &packageInfo)
                                       packageInfo.gets("path").c_str()));
     }
 
-    String const &topLevelDomain = ident.segment(0).toString();
+    const String topLevelDomain = ident.segment(0).toLowercaseString();
     if (topLevelDomain == DE_STR("feature") ||
         topLevelDomain == DE_STR("asset"))
     {
@@ -394,7 +394,7 @@ StringList Package::tags(String const &tagsString)
     return filter(tagsString.split(" "), [](const String &s) { return bool(s); });
 }
 
-StringList Package::requires(File const &packageFile)
+StringList Package::requiredPackages(File const &packageFile)
 {
     return packageFile.objectNamespace().getStringList(PACKAGE_REQUIRES);
 }

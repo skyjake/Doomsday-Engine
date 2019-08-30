@@ -79,7 +79,7 @@ DE_PIMPL(IdgamesLink)
             {
                 return Stringf("%s.%s.%s",
                         DOMAIN_IDGAMES.c_str(),
-                        path.segment(1).toString().c_str(),
+                        path.segment(1).toLowercaseString().c_str(),
                         id.c_str());
             }
             if (path.segment(1) == CATEGORY_LEVELS)
@@ -90,7 +90,7 @@ DE_PIMPL(IdgamesLink)
                 return Stringf("%s.%s.%s.%s%s",
                         DOMAIN_IDGAMES.c_str(),
                         CATEGORY_LEVELS.c_str(),
-                        path.segment(2).toString().c_str(),
+                        path.segment(2).toLowercaseString().c_str(),
                         subset.c_str(),
                         id.c_str());
             }

@@ -286,7 +286,7 @@ DE_PIMPL(ClientWindow)
         fsBusy->setSizePolicy(ui::Expand, ui::Expand);
         fsBusy->setMode(ProgressWidget::Indefinite);
         fsBusy->useMiniStyle();
-        fsBusy->setText("Files");
+        fsBusy->setText("Reading Files...");
         fsBusy->setTextAlignment(ui::AlignRight);
 
         // Everything behind the task bar can be blurred with this widget.

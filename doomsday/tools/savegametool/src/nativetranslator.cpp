@@ -634,7 +634,7 @@ void NativeTranslator::convert(Path path)
     LOG_AS("NativeTranslator");
 
     /// @todo try all known extensions at the given path, if not specified.
-    String saveName = path.lastSegment().toString();
+    String saveName = path.lastSegment().toLowercaseString();
 
     d->openFile(path);
     String const nativeFilePath = DE_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();

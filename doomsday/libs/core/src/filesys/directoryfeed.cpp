@@ -373,7 +373,7 @@ File &DirectoryFeed::manuallyPopulateSingleFile(NativePath const &nativePath,
         int const last = nativePath.segmentCount() - 1;
         Rangei packRange(last, last);
         while (packRange.start > 0 &&
-               nativePath.segment(packRange.start - 1).toString()
+               nativePath.segment(packRange.start - 1).toLowercaseString()
                .endsWith(".pack", CaseInsensitive))
         {
             packRange.start--;

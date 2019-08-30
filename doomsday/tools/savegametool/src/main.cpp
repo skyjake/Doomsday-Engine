@@ -100,7 +100,7 @@ static PackageFormatter *saveFormatForGameId(String const &idKey)
 
 static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
 {
-    String ext = path.lastSegment().toString().fileNameExtension().lower();
+    String ext = path.lastSegment().toLowercaseString().fileNameExtension();
     for (PackageFormatter *fmt : translators)
     {
         if (String::contains(fmt->knownExtensions, ext, CaseInsensitive))

@@ -89,7 +89,7 @@ Node const *Node::tryFollowPath(PathRef const &path) const
     }
 
     // Extract the next component.
-    const String component = path.firstSegment().toString();
+    const String &component = path.firstSegment().toLowercaseString();
 
     // Check if this is the end of the path.
     if (path.segmentCount() == 1 && component != DOT_DOUBLE)

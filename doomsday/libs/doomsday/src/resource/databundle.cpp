@@ -550,8 +550,8 @@ DE_PIMPL(DataBundle), public Lockable
 
         if (path.segmentCount() >= 3)
         {
-            String const parent      = path.reverseSegment(1).toString().lower();
-            String const grandParent = path.reverseSegment(2).toString().lower();
+            String const parent      = path.reverseSegment(1).toLowercaseString();
+            String const grandParent = path.reverseSegment(2).toLowercaseString();
 
             if (parent.fileNameExtension() == ".pk3" ||
                 parent.fileNameExtension() == ".zip" /*||
@@ -887,7 +887,7 @@ DE_PIMPL(DataBundle), public Lockable
             Path const path(self().asFile().path());
             for (int i = 0; i < path.segmentCount(); ++i)
             {
-                if (identifyMostLikelyGame(path.segment(i).toString(), tag))
+                if (identifyMostLikelyGame(path.segment(i).toLowercaseString(), tag))
                 {
                     //qDebug() << meta.gets(VAR_TITLE())<< "- from path:" << tag;
                     meta.appendUniqueWord(VAR_TAGS(), tag);
@@ -937,8 +937,9 @@ DE_PIMPL(DataBundle), public Lockable
                     Path const filePath(dataFile.path());
                     if (filePath.segmentCount() >= 2)
                     {
-                        const String parentName =
-                            filePath.reverseSegment(1).toString().fileNameWithoutExtension();
+                        const String parentName = filePath.reverseSegment(1)
+                                                      .toLowercaseString()
+                                                      .fileNameWithoutExtension();
                         //if (attempt == 1)
                         {
                             Version parsed("");
@@ -1425,7 +1426,7 @@ List<DataBundle const *> DataBundle::findAllNative(String const &fileNameOrParti
 
 StringList DataBundle::gameTags()
 {
-    static StringList const gameTags({ "doom", "doom2", "heretic", "hexen" });
+    static const StringList gameTags({"doom", "doom2", "heretic", "hexen"});
     return gameTags;
 }
 
@@ -1466,10 +1467,10 @@ String DataBundle::stripVersion(String const &text, Version *version)
 String DataBundle::stripRedundantParts(String const &id)
 {
     const DotPath path(id);
-    String stripped = path.segment(0).toString();
+    String stripped = path.segment(0).toLowercaseString();
     for (int i = 1; i < path.segmentCount(); ++i)
     {
-        String seg = path.segment(i).toString();
+        String seg = path.segment(i).toLowercaseString();
         for (int k = 1; k <= i; ++k) // Check all previous segments.
         {
             if (seg.beginsWith(path.segment(i - k) + "-"))

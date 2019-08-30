@@ -266,7 +266,7 @@ DE_PIMPL(FS1)
             scheme.rebuild();
 
             // The in-scheme name is the file name sans extension.
-            String name = search.path().lastSegment().toString().fileNameWithoutExtension();
+            String name = search.path().lastSegment().toLowercaseString().fileNameWithoutExtension();
 
             // Perform the search.
             Scheme::FoundNodes foundNodes;

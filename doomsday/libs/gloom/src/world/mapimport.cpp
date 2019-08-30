@@ -397,12 +397,12 @@ Image MapImport::materialImage(const String &name) const
 
     if (category == DE_STR("texture"))
     {
-        const auto img = d->textureLib.textureImage(path.segment(1).toString());
+        const auto img = d->textureLib.textureImage(path.segment(1).toLowercaseString());
         return Image::fromRgbaData(img.pixelSize(), img.pixels());
     }
     else if (category == DE_STR("flat"))
     {
-        const auto img = d->flatLib.flatImage(path.segment(1).toString());
+        const auto img = d->flatLib.flatImage(path.segment(1).toLowercaseString());
         return Image::fromRgbaData(img.pixelSize(), img.pixels());
     }
 
@@ -465,7 +465,7 @@ void MapImport::exportPackage(const String &packageRootPath) const
             debug("Exporting: %s", name.c_str());
 
             const DotPath path{name};
-            const String  category  = path.segment(0).toString();
+            const String  category  = path.segment(0).toLowercaseString();
             const String  subfolder = (category == "texture" ? "textures" : "flats");
             const String  imgPath   = subfolder / path.segment(1) + "_diffuse.png";
 

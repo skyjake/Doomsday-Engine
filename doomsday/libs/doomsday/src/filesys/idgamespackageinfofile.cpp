@@ -165,7 +165,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
                     meta.set("tags", meta.gets("tags", "")
                              .removed(RegExp(DataBundle::anyGameTagPattern()))
                              .normalizeWhitespace());
-                    meta.appendUniqueWord("tags", packageId.segment(2).toString());
+                    meta.appendUniqueWord("tags", packageId.segment(2).toLowercaseString());
                 }
 
                 // Apply metadata to the folder representing the package.
