@@ -42,7 +42,7 @@ public:
     DialogContentStylist(DialogWidget &dialog);
     DialogContentStylist(GuiWidget &container);
 
-    ~DialogContentStylist();
+    ~DialogContentStylist() override;
 
     void clear();
 
@@ -59,10 +59,10 @@ public:
 
     void setAdjustMargins(bool yes);
 
-    void applyStyle(GuiWidget &widget);
+    void applyStyle(GuiWidget &widget) const override;
 
     // Observes when new children are added.
-    void widgetChildAdded(Widget &child);
+    void widgetChildAdded(Widget &child) override;
 
 private:
     DE_PRIVATE(d)

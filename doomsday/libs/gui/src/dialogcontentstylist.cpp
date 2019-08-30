@@ -91,7 +91,7 @@ void DialogContentStylist::widgetChildAdded(Widget &child)
     applyStyle(child.as<GuiWidget>());
 }
 
-void DialogContentStylist::applyStyle(GuiWidget &w)
+void DialogContentStylist::applyStyle(GuiWidget &w) const
 {
     if (d->adjustMargins)
     {

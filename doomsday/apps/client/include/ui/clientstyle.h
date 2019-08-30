@@ -45,7 +45,6 @@ public:
     ClientStyle();
 
     de::GuiWidget *sharedBlurWidget() const override;
-    de::ui::Stylist &emptyMenuLabelStylist() const;
 
     void performUpdate() override;
 

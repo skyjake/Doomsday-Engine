@@ -25,18 +25,7 @@
 using namespace de;
 
 DE_PIMPL_NOREF(ClientStyle)
-{
-    struct EmptyMenuLabelStylist : public ui::Stylist
-    {
-        void applyStyle(GuiWidget &widget) override
-        {
-            LabelWidget &label = widget.as<LabelWidget>();
-            label.setFont("menu.empty");
-            label.setOpacity(0.5f);
-        }
-    }
-    emptyMenuLabelStylist;
-};
+{};
 
 ClientStyle::ClientStyle() : d(new Impl)
 {}
@@ -45,11 +34,6 @@ GuiWidget *ClientStyle::sharedBlurWidget() const
 {
     if (!ClientWindow::mainExists()) return nullptr;
     return &ClientWindow::main().taskBarBlur();
-}
-
-ui::Stylist &ClientStyle::emptyMenuLabelStylist() const
-{
-    return d->emptyMenuLabelStylist;
 }
 
 Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalog, LogoFlags flags)

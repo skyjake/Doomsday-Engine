@@ -37,7 +37,7 @@ class LIBGUI_PUBLIC Stylist
 public:
     virtual ~Stylist() {}
 
-    virtual void applyStyle(GuiWidget &widget) = 0;
+    virtual void applyStyle(GuiWidget &widget) const = 0;
 };
 
 } // namespace ui

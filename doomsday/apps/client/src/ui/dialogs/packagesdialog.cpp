@@ -194,7 +194,7 @@ DE_GUI_PIMPL(PackagesDialog)
         nothingSelected = new LabelWidget;
 
         nothingSelected->setText("No Mods Selected");
-        style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*nothingSelected);
+        style().emptyContentLabelStylist().applyStyle(*nothingSelected);
         nothingSelected->rule()
                 .setRect(self().leftArea().rule())
                 .setInput(Rule::Top, gameTitle->rule().bottom());

@@ -29,6 +29,7 @@ namespace de {
 
 class GuiWidget;
 class Package;
+namespace ui { class Stylist; }
 
 /**
  * User interface style.
@@ -71,6 +72,8 @@ public:
                          int &colorIndex) const;
 
     Font const *richStyleFont(Font::RichFormat::Style fontStyle) const;
+
+    virtual const ui::Stylist &emptyContentLabelStylist() const;
 
     /**
      * Determines if blurred widget backgrounds are allowed.

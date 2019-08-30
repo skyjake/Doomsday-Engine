@@ -19,6 +19,8 @@
 #include "de/Style"
 #include "de/BaseGuiApp"
 #include "de/GuiRootWidget"
+#include "de/LabelWidget"
+#include "de/ui/Stylist"
 
 #include <de/CommandLine>
 #include <de/Config>
@@ -34,6 +36,19 @@ namespace de {
 DE_PIMPL(Style)
 , DE_OBSERVES(Variable, Change)
 {
+    struct EmptyContentLabelStylist : public ui::Stylist
+    {
+        void applyStyle(GuiWidget &widget) const override
+        {
+            if (auto *label = maybeAs<LabelWidget>(widget))
+            {
+                label->setFont("menu.empty");
+                label->setOpacity(0.5f);
+            }
+        }
+    }
+    emptyContentLabelStylist;
+
     Record    module;
     RuleBank  rules;
     FontBank  fonts;
@@ -244,6 +259,11 @@ Font const *Style::richStyleFont(Font::RichFormat::Style fontStyle) const
     default:
         return nullptr;
     }
+}
+
+const ui::Stylist &Style::emptyContentLabelStylist() const
+{
+    return d->emptyContentLabelStylist;
 }
 
 bool Style::isBlurringAllowed() const

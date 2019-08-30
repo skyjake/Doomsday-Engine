@@ -61,11 +61,10 @@ DE_GUI_PIMPL(MultiplayerColumnWidget)
                 .setInput(Rule::Top,   self().header().rule().bottom());
 
         // Empty content label.
-        noServers = new LabelWidget;
+        noServers = &self().addNew<LabelWidget>();
+        style().emptyContentLabelStylist().applyStyle(*noServers);
         noServers->setText("No Servers Found");
-        style().as<ClientStyle>().emptyMenuLabelStylist().applyStyle(*noServers);
         noServers->rule().setRect(self().rule());
-        self().add(noServers);
 
         menu->items().audienceForAddition() += this;
         menu->items().audienceForRemoval() += this;
