@@ -109,6 +109,20 @@ const Value &Item::data() const
     return *d->data;
 }
 
+void Item::setSelected(bool selected)
+{
+    if (selected != isSelected())
+    {
+        applyFlagOperation(d->semantics, Selected, selected);
+        notifyChange();
+    }
+}
+
+bool Item::isSelected() const
+{
+    return d->semantics.testFlag(Selected);
+}
+
 void Item::notifyChange() const
 {
     DE_FOR_AUDIENCE(Change, i)

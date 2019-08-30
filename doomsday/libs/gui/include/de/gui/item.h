@@ -60,6 +60,8 @@ public:
         Annotation            = 0x400 | Separator,
         ClosesParentPopup     = 0x800,
 
+        Selected              = 0x10000,
+
         DefaultSemantics      = ShownAsLabel
     };
     using Semantics = Flags;
@@ -80,6 +82,10 @@ public:
     void setLabel(String const &label);
 
     String label() const;
+
+    void setSelected(bool selected);
+
+    bool isSelected() const;
 
     void setDataContext(Data &context);
 
