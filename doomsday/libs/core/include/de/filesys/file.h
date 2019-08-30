@@ -263,6 +263,8 @@ public:
      */
     Status const &status() const;
 
+    inline File::Type type() const { return status().type(); }
+
     /**
      * Returns the size of the file.
      *
