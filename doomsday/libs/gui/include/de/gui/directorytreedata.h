@@ -31,6 +31,9 @@ class LIBGUI_PUBLIC DirectoryTreeData : public ui::TreeData
 public:
     DirectoryTreeData();
 
+    void setPopulateFiles(bool files);
+    void setPopulateHiddenFiles(bool hiddenFiles);
+
     // Implements ui::TreeData.
     bool            contains(const Path &path) const override;
     const ui::Data &items(const Path &path) const override;

@@ -25,7 +25,13 @@ namespace de {
 class DirectoryBrowserWidget : public BrowserWidget
 {
 public:
-    DirectoryBrowserWidget(const String &name = "dirbrowser");
+    enum Flag {
+        ShowFiles       = 0x1,
+        ShowHiddenFiles = 0x2,
+    };
+
+public:
+    DirectoryBrowserWidget(Flags flags = ShowFiles, const String &name = "dirbrowser");
 
     DE_AUDIENCE(Selection, void pathSelected(DirectoryBrowserWidget &, const Path &))
 

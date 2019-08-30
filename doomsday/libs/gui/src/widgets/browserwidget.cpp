@@ -37,6 +37,7 @@ DE_GUI_PIMPL(BrowserWidget)
     const ui::TreeData *data = nullptr;
     Path path;
     Map<Path, SavedState> savedState;
+    LabelWidget *noContents;
     LabelWidget *cwdLabel;
     LabelWidget *menuLabel;
     ScrollAreaWidget *scroller;
@@ -58,7 +59,7 @@ DE_GUI_PIMPL(BrowserWidget)
         layout.setOverrideWidth(*contentWidth);
 
         cwdLabel = LabelWidget::appendSeparatorWithText("Path", i);
-        cwdLabel->margins().setLeft(Const(0));
+        cwdLabel->margins().setLeft(Const(0)).setTop(Const(0));
         layout << *cwdLabel;
 
         pathFlow.reset(new FlowLayout(cwdLabel->rule().left(), cwdLabel->rule().bottom(),
@@ -89,6 +90,11 @@ DE_GUI_PIMPL(BrowserWidget)
         scroller->enablePageKeys(true);
         scroller->enableScrolling(true);
         scroller->enableIndicatorDraw(true);
+
+        noContents = &i->addNew<LabelWidget>();
+        noContents->setText("No Contents");
+        style().emptyContentLabelStylist().applyStyle(*noContents);
+        noContents->rule().setRect(scroller->rule());
     }
 
     ~Impl()
@@ -115,6 +121,7 @@ DE_GUI_PIMPL(BrowserWidget)
         }
         const ui::Data &items = data->items(path);
         menu->setItems(items);
+        noContents->show(items.isEmpty());
 
         if (savedState.contains(path))
         {

@@ -83,16 +83,19 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
         }
     };
 
+    Flags flags;
     DirectoryTreeData dirTree;
     IndirectRule *itemHeight = new IndirectRule;
     Dispatch dispatch;
 
-    Impl(Public *i) : Base(i)
+    Impl(Public *i, Flags f) : Base(i), flags(f)
     {
         itemHeight->setSource(font("default").height() + rule("unit") * 2);
 
         self().menu().organizer().setWidgetFactory(*this);
         self().setData(dirTree, itemHeight->valuei());
+        dirTree.setPopulateFiles(f.testFlag(ShowFiles));
+        dirTree.setPopulateHiddenFiles(f.testFlag(ShowHiddenFiles));
     }
 
     ~Impl()
@@ -137,9 +140,9 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
 
 DE_AUDIENCE_METHODS(DirectoryBrowserWidget, Selection)
 
-DirectoryBrowserWidget::DirectoryBrowserWidget(const String &name)
+DirectoryBrowserWidget::DirectoryBrowserWidget(Flags flags, const String &name)
     : BrowserWidget(name)
-    , d(new Impl(this))
+    , d(new Impl(this, flags))
 {}
 
 } // namespace de

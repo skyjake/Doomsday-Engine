@@ -28,6 +28,8 @@ DE_PIMPL(DirectoryTreeData)
 {
     using DirList = ui::ListDataT<DirectoryItem>;
     Map<NativePath, std::unique_ptr<DirList>> pathItems;
+    bool enableFiles = true;
+    bool enableHiddenFiles = false;
 
     Impl(Public *i) : Base(i)
     {}
@@ -51,8 +53,16 @@ DE_PIMPL(DirectoryTreeData)
                         Folder::DisableIndexing);
 
         // Create corresponding data items.
-        folder.forContents([&items, &found](String, File &file) {
+        folder.forContents([this, &items, &found](String, File &file) {
             const auto native = file.correspondingNativePath();
+            if (!enableFiles && file.type() == File::Type::File)
+            {
+                return LoopContinue;
+            }
+            if (!enableHiddenFiles && native.fileName().beginsWith("."))
+            {
+                return LoopContinue;
+            }
             items << new DirectoryItem(native.fileName(), file.status(), found->first);
             return LoopContinue;
         });
@@ -64,6 +74,16 @@ DE_PIMPL(DirectoryTreeData)
 DirectoryTreeData::DirectoryTreeData()
     : d(new Impl(this))
 {}
+
+void DirectoryTreeData::setPopulateFiles(bool files)
+{
+    d->enableFiles = files;
+}
+
+void DirectoryTreeData::setPopulateHiddenFiles(bool hiddenFiles)
+{
+    d->enableHiddenFiles = hiddenFiles;
+}
 
 bool DirectoryTreeData::contains(const Path &path) const
 {

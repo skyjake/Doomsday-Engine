@@ -52,7 +52,7 @@ DE_PIMPL_NOREF(FileDialog)
         auto *dlg = new MessageDialog;
         dlg->setDeleteAfterDismissed(true);
         dlg->title().setText(title);
-        dlg->message().setText("Here's what you can do.");
+        dlg->message().hide();
         dlg->buttons() << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, prompt)
                        << new DialogButtonItem(DialogWidget::Reject);
 
@@ -60,7 +60,8 @@ DE_PIMPL_NOREF(FileDialog)
         dlg->area().enableIndicatorDraw(false);
         dlg->area().enablePageKeys(false);
 
-        browser = new DirectoryBrowserWidget;
+        browser = new DirectoryBrowserWidget(
+            (behavior & AcceptFiles ? DirectoryBrowserWidget::ShowFiles : 0));
         browser->setCurrentPath(initialLocation);
         browser->rule().setInput(Rule::Height, browser->rule().width());
         dlg->area().add(browser);
