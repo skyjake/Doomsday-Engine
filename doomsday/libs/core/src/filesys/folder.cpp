@@ -210,6 +210,9 @@ void Folder::clear()
 
 void Folder::populate(PopulationBehaviors behavior)
 {
+    // Only folders in the file system tree can be populated.
+    DE_ASSERT(parent() || this == &FS::get().root());
+
     if (!behavior.testFlag(DisableIndexing))
     {
         fileSystem().changeBusyLevel(+1);
@@ -260,7 +263,7 @@ void Folder::populate(PopulationBehaviors behavior)
             }
 
             if (mustPrune)
-            {
+            {               
                 // It needs to go.
                 file->setParent(nullptr);
                 iter = d->contents.erase(iter);
@@ -289,7 +292,7 @@ void Folder::populate(PopulationBehaviors behavior)
             {
                 if (i)
                 {
-                    std::unique_ptr<File> file(i);
+                    std::unique_ptr<File> file(i);                    
                     if (!d->contents.contains(i->name().lower()))
                     {
                         d->add(file.release());
@@ -562,19 +565,19 @@ void Folder::waitForPopulation(WaitBehavior waitBehavior)
     }
 }
 
-AsyncTask *Folder::afterPopulation(std::function<void ()> func)
+AsyncTask *Folder::afterPopulation(std::function<void()> func)
 {
     if (!isPopulatingAsync())
     {
         func();
         return nullptr;
     }
-    return async([] ()
+    return async([]()
     {
         waitForPopulation();
         return 0;
     },
-    [func] (int)
+    [func](int)
     {
         func();
     });

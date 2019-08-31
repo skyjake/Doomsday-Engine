@@ -130,8 +130,8 @@ public:
     static File &manuallyPopulateSingleFile(NativePath const &nativePath, Folder &parentFolder);
 
 protected:
-    Folder *populateSubFolder(const Folder &folder, const String &entryName);
-    void    populateFile(const Folder &folder, const String &entryName, PopulatedFiles &populated);
+    void populateSubFolder(const Folder &folder, const String &entryName);
+    void populateFile(const Folder &folder, const String &entryName, PopulatedFiles &populated);
 
 private:
     DE_PRIVATE(d)
