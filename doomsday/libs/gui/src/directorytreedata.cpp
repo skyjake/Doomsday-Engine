@@ -20,6 +20,7 @@
 #include "de/ui/ListData"
 
 #include <de/DirectoryFeed>
+#include <de/FS>
 #include <de/Folder>
 
 namespace de {
@@ -46,14 +47,14 @@ DE_PIMPL(DirectoryTreeData)
         // Get rid of the previous contents.
         items.clear();
 
-        // Populate a folder with the directory contents.
-        Folder folder(path.fileName());
-        folder.attach(new DirectoryFeed(path));
-        folder.populate(Folder::PopulateOnlyThisFolder | Folder::DisableNotification |
-                        Folder::DisableIndexing);
+        // Populate a temporary system folder with the directory contents.
+        std::unique_ptr<Folder> folder(&FS::get().makeFolder(Stringf("/sys/dirtree/%p", this)));
+        folder->attach(new DirectoryFeed(path));
+        folder->populate(Folder::PopulateOnlyThisFolder | Folder::DisableNotification |
+                         Folder::DisableIndexing);
 
         // Create corresponding data items.
-        folder.forContents([this, &items, &found](String, File &file) {
+        folder->forContents([this, &items, &found](String, File &file) {
             const auto native = file.correspondingNativePath();
             if (!enableFiles && file.type() == File::Type::File)
             {
@@ -66,7 +67,6 @@ DE_PIMPL(DirectoryTreeData)
             items << new DirectoryItem(native.fileName(), file.status(), found->first);
             return LoopContinue;
         });
-
         items.sort();
     }
 };
