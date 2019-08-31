@@ -651,17 +651,17 @@ inline void deleteAll(Container &c) {
 
 template <typename ContainerType>
 inline ContainerType mapInPlace(ContainerType &c,
-                                std::function<typename ContainerType::value_type (
-                                    typename ContainerType::value_type const &)> func) {
+                                const std::function<typename ContainerType::value_type (
+                                    const typename ContainerType::value_type &)> &func) {
     for (auto i = c.begin(); i != c.end(); ++i) {
         *i = func(*i);
     }
 }
 
 template <typename ContainerType>
-inline ContainerType map(ContainerType const &c,
-                         std::function<typename ContainerType::value_type (
-                             typename ContainerType::value_type const &)> func) {
+inline ContainerType map(const ContainerType &c,
+                         const std::function<typename ContainerType::value_type (
+                             const typename ContainerType::value_type &)> &func) {
     ContainerType out;
     for (auto i = c.begin(); i != c.end(); ++i) {
         out.push_back(func(*i));
@@ -683,8 +683,8 @@ inline OutContainer map(const InContainer &input, Func func) {
 }
 
 template <typename ContainerType>
-inline ContainerType filter(ContainerType const &c,
-                            std::function<bool (typename ContainerType::value_type const &)> func) {
+inline ContainerType filter(const ContainerType &c,
+                            const std::function<bool (const typename ContainerType::value_type &)> &func) {
     ContainerType out;
     for (auto i = c.begin(); i != c.end(); ++i) {
         if (func(*i)) out.push_back(*i);
