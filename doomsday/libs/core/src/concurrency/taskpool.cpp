@@ -252,18 +252,29 @@ void TaskPool::start(TaskFunction taskFunction, Priority priority)
 
 void TaskPool::waitForDone()
 {
-    if (App::inMainThread())
+    bool allowSleep = true;
+
+    if (const iThread *cur = current_Thread())
     {
-        // Main thread can sleep while waiting for tasks.
+        if (!cmp_String(name_Thread(cur), "PooledThread"))
+        {
+            // Pooled threads cannot sleep or otherwise the thread pool would likely
+            // block, if too many / all workers are sleeping.
+            allowSleep = false;
+        }
+    }
+
+    if (allowSleep)
+    {
+        // This thread will block here until tasks are complete.
         d->waitForEmpty();
     }
     else
     {
-        // Non-main threads should not block -- this is likely a worker, so we'll yield to
-        // other tasks while waiting.
+        // Allow the thread pool to execute other tasks.
         while (!isDone())
         {
-            yield(250_ms);
+            yield(100_ms);
         }
     }
 }
