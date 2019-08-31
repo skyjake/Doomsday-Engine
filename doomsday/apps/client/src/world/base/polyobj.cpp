@@ -426,7 +426,7 @@ bool Polyobj::rotate(angle_t delta)
 
             // Apply rotation relative to the "original" coords.
             Vec2d newCoords = (*origCoordsIt);
-            rotatePoint2d(newCoords, origin, fineAngle);
+            rotatePoint2d(newCoords, Vec3d(origin), fineAngle);
             vertex->setOrigin(newCoords);
 
             origCoordsIt++;

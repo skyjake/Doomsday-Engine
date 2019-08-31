@@ -4005,7 +4005,8 @@ bool Map::endEditing()
 
     // Determine the map bounds.
     d->updateBounds();
-    LOG_MAP_VERBOSE("Geometry bounds:") << Rectangled(d->bounds.min, d->bounds.max).asText();
+    LOG_MAP_VERBOSE("Geometry bounds:")
+        << Rectangled(Vec2d(d->bounds.min), Vec2d(d->bounds.max)).asText();
 
     // Build a line blockmap.
     d->initLineBlockmap();

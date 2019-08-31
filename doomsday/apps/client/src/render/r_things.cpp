@@ -63,7 +63,7 @@ static void evaluateLighting(Vec3d const &origin, ConvexSubspace &subspaceAtOrig
 {
     if(fullbright)
     {
-        ambientColor = Vec3f(1, 1, 1);
+        ambientColor = Vec3f(1);
         *vLightListIdx = 0;
     }
     else
@@ -124,7 +124,7 @@ static Vec3d mobjOriginSmoothed(mobj_t *mob)
         Smoother_Evaluate(DD_Player(P_GetDDPlayerIdx(mob->dPlayer))->smoother(), origin);
     }
 
-    return origin;
+    return Vec3d(origin);
 }
 
 /**
@@ -216,8 +216,9 @@ void R_ProjectSprite(mobj_t &mob)
     bool matFlipT = false;
 
     //try
-    defn::Sprite const sprite(*spriteRec);
-    defn::Sprite::View const spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin), !!hasModel);
+    defn::Sprite const       sprite(*spriteRec);
+    defn::Sprite::View const spriteView =
+        sprite.nearestView(mob.angle, R_ViewPointToAngle(Vec2d(mob.origin)), !!hasModel);
     {
         if (auto *sprMat = world::Materials::get().materialPtr(*spriteView.material))
         {

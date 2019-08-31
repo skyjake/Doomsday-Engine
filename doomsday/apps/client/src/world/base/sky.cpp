@@ -185,7 +185,7 @@ DE_PIMPL(Sky)
 
         void setColor(Vec3f const &newColor, bool isCustom = true)
         {
-            color  = newColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
+            color  = newColor.min(Vec3f(1)).max(Vec3f(0.0f));
             custom = isCustom;
         }
 
@@ -366,7 +366,7 @@ void Sky::configure(defn::Sky const *def)
     if(def)
     {
         Vec3f color(def->get("color"));
-        if(color != Vec3f(0, 0, 0))
+        if(color != Vec3f(0.0f))
         {
             d->ambientLight.setColor(color);
         }

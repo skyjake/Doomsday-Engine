@@ -292,7 +292,7 @@ DE_PIMPL(ClientWindow)
         // Everything behind the task bar can be blurred with this widget.
         if (style.isBlurringAllowed())
         {
-            taskBarBlur->set(GuiWidget::Background(Vec4f(1, 1, 1, 1), GuiWidget::Background::Blurred));
+            taskBarBlur->set(GuiWidget::Background(Vec4f(1), GuiWidget::Background::Blurred));
         }
         taskBarBlur->rule().setRect(root.viewRule());
         taskBarBlur->setAttribute(GuiWidget::DontDrawContent);

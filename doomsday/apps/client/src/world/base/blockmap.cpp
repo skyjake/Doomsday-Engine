@@ -436,7 +436,7 @@ BlockmapCell Blockmap::toCell(Vec2d const &point, bool *retDidClip) const
 BlockmapCellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) const
 {
     bool didClipMin, didClipMax;
-    CellBlock block(toCell(box.min, &didClipMin), toCell(box.max, &didClipMax));
+    CellBlock block(toCell(Vec2d(box.min), &didClipMin), toCell(Vec2d(box.max), &didClipMax));
     block.max += Vec2ui(1, 1); // CellBlock is inclusive-exclusive.
     if(retDidClip) *retDidClip = didClipMin | didClipMax;
     return block;

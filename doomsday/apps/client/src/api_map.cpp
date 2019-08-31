@@ -1510,7 +1510,7 @@ DE_EXTERN_C int Sector_TouchingMobjsIterator(Sector *sector, int (*callback) (mo
 DE_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 {
     if(!App_World().hasMap()) return 0;
-    return App_World().map().bspLeafAt_FixedPrecision(point).sectorPtr();
+    return App_World().map().bspLeafAt_FixedPrecision(Vec2d(point)).sectorPtr();
 }
 
 #undef Mobj_BoxIterator
@@ -1614,7 +1614,7 @@ DE_EXTERN_C int P_PathTraverse2(const_pvec2d_t from, const_pvec2d_t to,
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
-    return Interceptor(callback, from, to, flags, context)
+    return Interceptor(callback, Vec2d(from), Vec2d(to), flags, context)
                 .trace(App_World().map());
 }
 
@@ -1624,7 +1624,7 @@ DE_EXTERN_C int P_PathTraverse(const_pvec2d_t from, const_pvec2d_t to,
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
-    return Interceptor(callback, from, to, PTF_ALL, context)
+    return Interceptor(callback, Vec2d(from), Vec2d(to), PTF_ALL, context)
                 .trace(App_World().map());
 }
 
@@ -1634,7 +1634,7 @@ DE_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coo
 {
     if(!App_World().hasMap()) return false;  // Continue iteration.
 
-    return LineSightTest(from, to, bottomSlope, topSlope, flags)
+    return LineSightTest(Vec3d(from), Vec3d(to), bottomSlope, topSlope, flags)
                 .trace(App_World().map().bspTree());
 }
 
@@ -1734,7 +1734,7 @@ DE_EXTERN_C Polyobj *Polyobj_ByTag(int tag)
 DE_EXTERN_C dd_bool Polyobj_Move(Polyobj *po, const_pvec3d_t xy)
 {
     if(!po) return false;
-    return po->move(xy);
+    return po->move(Vec3d(xy));
 }
 
 #undef Polyobj_MoveXY
@@ -1759,14 +1759,14 @@ DE_EXTERN_C Line *Polyobj_FirstLine(Polyobj *po)
 }
 
 #undef Line_PointDistance
-DE_EXTERN_C coord_t Line_PointDistance(Line *line, coord_t const point[2], coord_t *offset)
+DE_EXTERN_C coord_t Line_PointDistance(Line *line, const coord_t point[2], coord_t *offset)
 {
     DE_ASSERT(line);
-    return line->pointDistance(point, offset);
+    return line->pointDistance(Vec2d(point), offset);
 }
 
 #undef Line_PointOnSide
-DE_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
+DE_EXTERN_C coord_t Line_PointOnSide(Line const *line, const coord_t point[2])
 {
     DE_ASSERT(line);
     if(!point)
@@ -1775,7 +1775,7 @@ DE_EXTERN_C coord_t Line_PointOnSide(Line const *line, coord_t const point[2])
         LOG_DEBUG("Invalid arguments, returning >0.");
         return 1;
     }
-    return line->pointOnSide(point);
+    return line->pointOnSide(Vec2d(point));
 }
 
 #undef Line_BoxOnSide

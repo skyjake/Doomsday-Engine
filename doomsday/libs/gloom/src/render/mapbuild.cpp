@@ -176,7 +176,7 @@ DE_PIMPL_NOREF(MapBuild)
                         const ID pointID = cv.first;
 
                         f.pos      = cv.second * map.metersPerUnit();
-                        f.texCoord = Vec4f(0, 0, 0, 0); // fixed offset
+                        f.texCoord = Vec4f(); // fixed offset
                         f.expander = expanders[pointID];
 
                         DE_ASSERT(!pointIndices.contains(pointID));

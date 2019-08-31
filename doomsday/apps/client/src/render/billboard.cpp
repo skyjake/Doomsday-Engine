@@ -116,7 +116,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
         GL_BindTextureUnmanaged(renderTextures ? parms.modTex : 0,
                                 gfx::ClampToEdge, gfx::ClampToEdge);
 
-        DGL_SetModulationColor(parms.modColor);
+        DGL_SetModulationColor(Vec4f(parms.modColor));
 
         // The actual texture.
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, IS_MUL? 1 : 0);

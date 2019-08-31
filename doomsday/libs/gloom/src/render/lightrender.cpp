@@ -426,7 +426,7 @@ void LightRender::advanceTime(TimeSpan elapsed)
 
     // Testing.
     {
-        Vec3d rotPos = Mat4f::rotate(4 * float(elapsed), Vec3f(0, 1, 0)) * d->skyLight->origin();
+        Vec3d rotPos = Mat4d::rotate(4.0 * elapsed, Vec3d(0, 1, 0)) * d->skyLight->origin();
         d->skyLight->setOrigin(rotPos);
         d->skyLight->setDirection(-rotPos);
     }
@@ -450,7 +450,7 @@ void LightRender::renderLighting()
         ctx.uLightMatrix      = lightMatrix;
         d->uLightIntensity    = d->skyLight->intensity();
         d->uViewSpaceLightDir = ctx.view.uWorldToViewRotate.toMat3f() * d->skyLight->direction();
-        d->uViewSpaceLightOrigin = ctx.view.camera->cameraModelView() * d->skyLight->origin();
+        d->uViewSpaceLightOrigin = ctx.view.camera->cameraModelView() * d->skyLight->origin().toVec3f();
         d->uViewToLightMatrix    = lightMatrix * ctx.view.camera->cameraModelView().inverse();
 
         if (d->activeShadows.contains(d->skyLight.get()))
@@ -472,7 +472,7 @@ void LightRender::renderLighting()
 
                 const int promIdx  = promoted.size();
                 auto &    omni     = d->uOmniLights[promIdx];
-                omni.origin        = ctx.view.camera->cameraModelView() * light->origin();
+                omni.origin        = ctx.view.camera->cameraModelView() * light->origin().toVec3f();
                 omni.intensity     = light->intensity();
                 omni.falloffRadius = light->falloffDistance();
                 omni.shadowIndex   = shadowIndex;

@@ -107,8 +107,9 @@ public:
     typedef Type value_type;
 
 public:
-    constexpr Vector2(Type a = Type(0), Type b = Type(0)) : x(a), y(b) {}
-    Vector2(Type const *ab) : x(ab[0]), y(ab[1]) {}
+    constexpr Vector2(Type xy = Type(0)) : x(xy), y(xy) {}
+    constexpr Vector2(Type a, Type b) : x(a), y(b) {}
+    explicit Vector2(const Type *ab) : x(ab[0]), y(ab[1]) {}
     Vector2(Value const &value) { *this = vectorFromValue<Vector2<Type>>(value); }
     Vector2(Vector2 const &other) = default;
 
@@ -323,11 +324,12 @@ template <typename Type>
 class Vector3 : public Vector2<Type>
 {
 public:
-    constexpr Vector3(Type a = 0, Type b = 0, Type c = 0) : Vector2<Type>(a, b), z(c) {}
-    Vector3(Vector2<Type> const &v2, Type c = 0) : Vector2<Type>(v2), z(c) {}
-    Vector3(Type const *abc) : Vector2<Type>(abc), z(abc[2]) {}
-    Vector3(Value const &value) { *this = vectorFromValue< Vector3<Type> >(value); }
-    Vector3(Vector3 const &other) = default;
+    constexpr Vector3(Type xyz = Type(0)) : Vector2<Type>(xyz), z(xyz) {}
+    constexpr Vector3(Type a, Type b, Type c) : Vector2<Type>(a, b), z(c) {}
+    constexpr Vector3(const Vector2<Type> &v2, Type c = Type(0)) : Vector2<Type>(v2), z(c) {}
+    explicit Vector3(const Type *abc) : Vector2<Type>(abc), z(abc[2]) {}
+    Vector3(const Value &value) { *this = vectorFromValue<Vector3<Type>>(value); }
+    Vector3(const Vector3 &other) = default;
 
     /// Implicit conversion operator to a float vector.
     operator Vector3<dfloat> () const {
@@ -552,11 +554,14 @@ template <typename Type>
 class Vector4 : public Vector3<Type>
 {
 public:
-    constexpr Vector4(Type a = 0, Type b = 0, Type c = 0, Type d = 0) : Vector3<Type>(a, b, c), w(d) {}
-    Vector4(Vector3<Type> const &v3, Type d = 0) : Vector3<Type>(v3), w(d) {}
-    Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
-    Vector4(Type const *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
-    Vector4(Value const &value) { *this = vectorFromValue< Vector4<Type> >(value); }
+    constexpr Vector4(Type xyzw = Type(0)) : Vector3<Type>(xyzw, xyzw, xyzw), w(xyzw) {}
+    constexpr Vector4(Type a, Type b, Type c, Type d) : Vector3<Type>(a, b, c), w(d) {}
+    constexpr Vector4(Vector3<Type> const &v3, Type d = Type(0)) : Vector3<Type>(v3), w(d) {}
+    constexpr Vector4(Vector2<Type> const &a, Type c = Type(0), Type d = Type(0)) : Vector3<Type>(a, c), w(d) {}
+    constexpr Vector4(Vector2<Type> const &a, Vector2<Type> const &b) : Vector3<Type>(a, b.x), w(b.y) {}
+    explicit Vector4(const Type *abcd) : Vector3<Type>(abcd), w(abcd[3]) {}
+    Vector4(Value const &value4) { *this = vectorFromValue<Vector4<Type>>(value4); }
+    Vector4(Value const &value3, Type d) { *this = Vector4<Type>(vectorFromValue<Vector3<Type>>(value3), d); }
     Vector4(Vector4 const &other) = default;
 
     /// Implicit conversion operator to a float vector.
@@ -721,15 +726,17 @@ public:
         from >> w;
     }
 
+    static Vector4 fromEuclidean(Vector2<Type> const &vec2) {
+        return Vector4(vec2, Type(0), Type(1));
+    }
     static Vector4 fromEuclidean(Vector3<Type> const &vec3) {
         return Vector4(vec3, Type(1));
     }
     Vector3<Type> toEuclidean() const {
-        if (w != 0)
-        {
+        if (w != 0) {
             return Vector3<Type>(Vector2<Type>::x/w, Vector2<Type>::y/w, Vector3<Type>::z/w);
         }
-        return Vector3<Type>();
+        return {};
     }
     Vector2<Type> xy() const   { return *this; }
     Vector2<Type> zw() const   { return swizzle(*this, AxisZ, AxisW); }

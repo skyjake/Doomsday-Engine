@@ -1474,7 +1474,7 @@ Image::Color Image::fromHsv(const Vec4f &hsv)
         }
     }
 
-    return (rgb.min(Vec4f(1, 1, 1, 1)).max(Vec4f()) * 255.f + Vec4f(.5f, .5f, .5f, .5f)).toVec4ub();
+    return (rgb.min(Vec4f(1)).max(Vec4f()) * 255.f + Vec4f(.5f, .5f, .5f, .5f)).toVec4ub();
 }
 
 Image::Color Image::mix(Color a, Color b, Color m)

@@ -467,7 +467,7 @@ DE_GUI_PIMPL(LogWidget)
         //self().setIndicatorUv(root().atlas().imageRectf(root().solidWhitePixel()).middle());
 
         uTex = entryAtlas;
-        uColor = Vec4f(1, 1, 1, 1);
+        uColor = Vec4f(1);
 
         background.addBuffer(bgBuf = new VertexBuf);
         shaders().build(background.program(), "generic.textured.color")
@@ -788,7 +788,7 @@ nextAttempt:
             // Draw the text itself.
             uMvpMatrix = projMatrix * Mat4f::translate(
                          Vec2f(vp.topLeft + Vec2i(0, contentOffsetForDrawing - 1)));
-            uShadowColor = Vec4f(1, 1, 1, 1);
+            uShadowColor = Vec4f(1);
             contents.draw();
 
             GLState::pop();

@@ -85,7 +85,7 @@ static dfloat checkLightLevel(dfloat lightlevel, dfloat min, dfloat max)
 Lumobj *LightDecoration::generateLumobj() const
 {
     // Decorations with zero color intensity produce no light.
-    if (source().color() == Vec3f(0, 0, 0))
+    if (source().color() == Vec3f(0.0f))
         return nullptr;
 
     ConvexSubspace *subspace = bspLeafAtOrigin().subspacePtr();

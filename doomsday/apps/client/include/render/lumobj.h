@@ -75,8 +75,8 @@ public:
      * @param color        Color/intensity.
      */
     Lumobj(de::Vec3d const &origin = de::Vec3d(),
-           double radius              = 256,
-           de::Vec3f const &color  = de::Vec3f(1, 1, 1));
+           double radius           = 256,
+           de::Vec3f const &color  = de::Vec3f(1));
 
     /// Construct a new luminious object by copying @a other.
     Lumobj(Lumobj const &other);

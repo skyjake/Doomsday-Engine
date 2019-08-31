@@ -74,7 +74,7 @@ Record &Model::addSub()
 
     sub->addText  ("shinySkin", "");
     sub->addNumber("shiny", 0);
-    sub->addArray ("shinyColor", new ArrayValue(Vec3f(1, 1, 1)));
+    sub->addArray ("shinyColor", new ArrayValue(Vec3f(1)));
     sub->addNumber("shinyReact", 1);
     sub->addNumber("blendMode", BM_NORMAL);
 

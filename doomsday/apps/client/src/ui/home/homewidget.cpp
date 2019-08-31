@@ -103,7 +103,7 @@ DE_GUI_PIMPL(HomeWidget)
         tabsBackground = new LabelWidget;
         if (style().isBlurringAllowed())
         {
-            tabsBackground->set(Background(Vec4f(1, 1, 1, 1), Background::Blurred));
+            tabsBackground->set(Background(Vec4f(1), Background::Blurred));
         }
         else
         {

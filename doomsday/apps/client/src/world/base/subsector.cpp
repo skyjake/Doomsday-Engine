@@ -85,12 +85,11 @@ Subsector::~Subsector()
 
 String Subsector::description() const
 {
-    auto desc = Stringf(    _E(l) "Id: "     _E(.) _E(i) "%s" _E(.)
-                               " " _E(l) "Sector: " _E(.) _E(i) "%i" _E(.)
-                               " " _E(l) "Bounds: " _E(.) _E(i) "%s" _E(.),
-                    d->id.asText().c_str(),
-                    sector().indexInMap(),
-                    Rectangled(bounds().min, bounds().max).asText().c_str());
+    auto desc = Stringf(_E(l) "Id: " _E(.) _E(i) "%s" _E(.) " " _E(l) "Sector: " _E(.)
+                            _E(i) "%i" _E(.) " " _E(l) "Bounds: " _E(.) _E(i) "%s" _E(.),
+                        d->id.asText().c_str(),
+                        sector().indexInMap(),
+                        Rectangled(Vec2d(bounds().min), Vec2d(bounds().max)).asText().c_str());
 
     DE_DEBUG_ONLY(
         desc.prepend(Stringf(_E(b) "Subsector " _E(.) "[%p]\n", this));

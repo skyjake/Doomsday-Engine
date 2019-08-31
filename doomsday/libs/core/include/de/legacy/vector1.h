@@ -37,22 +37,22 @@ extern "C" {
 // Floating-point.
 typedef float vectorcompf_t;
 typedef vectorcompf_t vec2f_t[2];
-typedef float const const_pvec2f_t[2];
+typedef const float const_pvec2f_t[2];
 typedef vectorcompf_t *pvec2f_t;
 
 typedef vec2f_t *arvec2f_t;
-typedef vec2f_t const *const_arvec2f_t;
+typedef const vec2f_t *const_arvec2f_t;
 
 // Double floating-point.
 typedef double vectorcompd_t;
 typedef vectorcompd_t vec2d_t[2];
-typedef double const const_pvec2d_t[2];
+typedef const double const_pvec2d_t[2];
 typedef vectorcompd_t *pvec2d_t;
 
 typedef vec2d_t *arvec2d_t;
-typedef vec2d_t const *const_arvec2d_t;
+typedef const vec2d_t *const_arvec2d_t;
 
-typedef vectorcompd_t const *pcvec2d_t; /// @todo Remove me
+typedef const vectorcompd_t *pcvec2d_t; /// @todo Remove me
 
 DE_PUBLIC void V2x_Set(fixed_t vec[2], fixed_t x, fixed_t y);
 

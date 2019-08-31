@@ -471,7 +471,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
     // If the mobj's origin is outside the BSP leaf it is linked within, then
     // this means it is outside the playable map (and no light should be emitted).
     /// @todo Optimize: Mobj_Link() should do this and flag the mobj accordingly.
-    if (!Mobj_BspLeafAtOrigin(*mob).subspace().contains(mob->origin))
+    if (!Mobj_BspLeafAtOrigin(*mob).subspace().contains(Vec2d(mob->origin)))
         return;
 
     // Always use the front view of the Sprite when determining light properties.
@@ -515,9 +515,9 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
             lum->setZOffset(-texOrigin.y - def->offset[1]);
         }
 
-        if (Vec3f(def->color) != Vec3f(0, 0, 0))
+        if (Vec3f(def->color) != Vec3f(0.0f))
         {
-            lum->setColor(def->color);
+            lum->setColor(Vec3f(def->color));
         }
 
         lum->setLightmap(Lumobj::Side, lightmap(def->sides))
@@ -526,7 +526,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
     }
 
     // Translate to the mobj's origin in map space.
-    lum->move(mob->origin);
+    lum->move(Vec3d(mob->origin));
 
     // Does the mobj need a Z origin offset?
     coord_t zOffset = -mob->floorClip - Mobj_BobOffset(*mob);

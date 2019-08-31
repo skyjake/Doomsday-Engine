@@ -1354,8 +1354,8 @@ static void changePageBackground(FinalePageWidget &page, world::Material *newMat
     // If the page does not yet have a background set we must setup the color+alpha.
     if (newMaterial && !page.backgroundMaterial())
     {
-        page.setBackgroundTopColorAndAlpha   (Vec4f(1, 1, 1, 1))
-            .setBackgroundBottomColorAndAlpha(Vec4f(1, 1, 1, 1));
+        page.setBackgroundTopColorAndAlpha   (Vec4f(1))
+            .setBackgroundBottomColorAndAlpha(Vec4f(1));
     }
     page.setBackgroundMaterial(newMaterial);
 }

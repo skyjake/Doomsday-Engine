@@ -143,7 +143,7 @@ int main(int, char **)
                     (Mat4d::rotate(90, Vec3d(0, -1, 0)) * Vec3d(1, 0, 0)).asText() << endl;
 
         cout << "Look at (10,10,10) from (1,1,1) "
-                 << Mat4f::lookAt(Vec3f(10, 10, 10), Vec3f(1, 1, 1), Vec3f(0, 0, 1)).asText() << endl;
+                 << Mat4f::lookAt(Vec3f(10, 10, 10), Vec3f(1), Vec3f(0, 0, 1)).asText() << endl;
 
         cout << "Cross product " << Vec3f(1, 0, 0).cross(Vec3f(0, 1, 0)).asText() << endl;
     }

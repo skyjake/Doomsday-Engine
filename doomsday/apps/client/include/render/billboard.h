@@ -109,17 +109,16 @@ de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(de::dint tclass = 0, de::
  * @see H_RenderHalo()
  * @ingroup render
  */
-struct drawflareparams_t
-{
-    de::dbyte flags;       ///< @ref rendFlareFlags.
-    de::dint size;
+struct drawflareparams_t {
+    de::dbyte  flags; ///< @ref rendFlareFlags.
+    de::dint   size;
     de::dfloat color[3];
-    de::dbyte factor;
+    de::dbyte  factor;
     de::dfloat xOff;
-    DGLuint tex;           ///< Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
-    de::dfloat mul;        ///< Flare brightness factor.
-    dd_bool isDecoration;
-    de::dint lumIdx;
+    DGLuint    tex; ///< Flaremap if flareCustom ELSE (flaretexName id. Zero = automatical)
+    de::dfloat mul; ///< Flare brightness factor.
+    dd_bool    isDecoration;
+    de::dint   lumIdx;
 };
 
 DE_EXTERN_C de::dint alwaysAlign;

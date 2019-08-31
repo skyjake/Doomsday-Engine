@@ -218,7 +218,7 @@ DE_PIMPL(GloomWorld), public Asset
 
     Vec3f lightColor() const
     {
-        return Vec3f(1, 1, 1);
+        return Vec3f(1);
     }
 
     Vec3f lightDirection() const
@@ -391,7 +391,7 @@ User *GloomWorld::localUser() const
 
 World::POI GloomWorld::initialViewPosition() const
 {
-    return {Vec3f(0, 0, 0), 90};
+    return {Vec3f(0.f), 90};
 }
 
 List<World::POI> GloomWorld::pointsOfInterest() const

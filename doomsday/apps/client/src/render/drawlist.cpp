@@ -375,7 +375,7 @@ DE_PIMPL(DrawList)
                 GL_BindTo(spec.unit(TU_INTER  ), 1);
                 DGL_ModulateTexture(2);
 
-                dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                Vec4f color{0, 0, 0, spec.unit(TU_INTER).opacity};
                 DGL_SetModulationColor(color);
             }
             else if (!spec.unit(TU_PRIMARY).hasTexture())
@@ -431,7 +431,7 @@ DE_PIMPL(DrawList)
             GL_BindTo(spec.unit(TU_INTER  ), 1);
             DGL_ModulateTexture(2);
 
-            dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+            Vec4f color{0, 0, 0, spec.unit(TU_INTER).opacity};
             DGL_SetModulationColor(color);
             return SetMatrixTexture0 | SetMatrixTexture1; }
 
@@ -484,7 +484,7 @@ DE_PIMPL(DrawList)
                 GL_BindTo(spec.unit(TU_INTER  ), 1);
                 DGL_ModulateTexture(3);
 
-                dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER).opacity };
+                Vec4f color{0, 0, 0, spec.unit(TU_INTER).opacity};
                 DGL_SetModulationColor(color);
                 // Render all geometry.
                 return SetMatrixTexture0 | SetMatrixTexture1;
@@ -580,7 +580,7 @@ DE_PIMPL(DrawList)
             GL_BindTo(spec.unit(TU_PRIMARY_DETAIL), 0);
             GL_BindTo(spec.unit(TU_INTER_DETAIL  ), 1);
 
-            dfloat color[4] = { 0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity };
+            Vec4f color{0, 0, 0, spec.unit(TU_INTER_DETAIL).opacity};
             DGL_SetModulationColor(color);
             return SetMatrixDTexture0 | SetMatrixDTexture1; }
 
@@ -617,7 +617,7 @@ DE_PIMPL(DrawList)
                 GL_SelectTexUnits(2);
                 // The intertex holds the info for the mask texture.
                 GL_BindTo(spec.unit(TU_INTER), 1);
-                dfloat color[4] = { 0, 0, 0, 1 };
+                Vec4f color{0, 0, 0, 1};
                 DGL_SetModulationColor(color);
             }
 

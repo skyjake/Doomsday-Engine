@@ -81,7 +81,7 @@ Vec3d R_ClosestPointOnPlane(Vec3f const &planeNormal_,
     vec3d_t planePoint; V3d_Set(planePoint, planePoint_.x, planePoint_.y, planePoint_.z);
     vec3d_t origin; V3d_Set(origin, origin_.x, origin_.y, origin_.z);
     vec3d_t point; V3d_ClosestPointOnPlanef(point, planeNormal, planePoint, origin);
-    return point;
+    return Vec3d(point);
 }
 
 #ifdef __CLIENT__

@@ -73,7 +73,7 @@ public:
      */
     Surface(world::MapElement &owner,
             de::dfloat opacity        = 1,
-            de::Vec3f const &color = de::Vec3f(1, 1, 1));
+            de::Vec3f const &color = de::Vec3f(1));
 
     /**
      * Composes a human-friendly, styled, textual description of the surface.

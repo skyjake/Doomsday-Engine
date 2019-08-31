@@ -146,7 +146,7 @@ static int buildGeometry(float const /*dimensions*/[3], dd_bool flipTextureS,
     // | / |  Vertex layout
     // 2 - 3
 
-    posCoordBuf[0] = Vec3f(0, 0, 0);
+    posCoordBuf[0] = Vec3f(0.0f);
     posCoordBuf[1] = Vec3f(1, 0, 0);
     posCoordBuf[2] = Vec3f(0, 1, 0);
     posCoordBuf[3] = Vec3f(1, 1, 0);
@@ -331,7 +331,8 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
     offset[VX] *= scale[VX]; offset[VY] *= scale[VY]; offset[VZ] *= scale[VZ];
     V3f_Sum(originOffset, originOffset, offset);
 
-    numVerts = buildGeometry(dimensions, flipTextureS, rgba, rgba2, &posCoords, &colorCoords, &texCoords);
+    numVerts = buildGeometry(
+        dimensions, flipTextureS, Vec4f(rgba), Vec4f(rgba2), &posCoords, &colorCoords, &texCoords);
 
     // Setup the transformation.
     DGL_MatrixMode(DGL_MODELVIEW);

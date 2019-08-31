@@ -139,7 +139,7 @@ DE_GUI_PIMPL(TaskBarWidget)
         //, uMvpMatrix("uMvpMatrix", GLUniform::Mat4)
         //, uColor    ("uColor",     GLUniform::Vec4)
     {
-        //uColor = Vec4f(1, 1, 1, 1);
+        //uColor = Vec4f(1);
         self().set(Background(style().colors().colorf("background")));
 
         vertShift = new AnimationRule(0);
@@ -370,7 +370,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
             .setInput(Rule::Top,    rule().top());
     if (style().isBlurringAllowed())
     {
-        d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vec4f(1, 1, 1, 1)));
+        d->backBlur->set(Background(ClientWindow::main().taskBarBlur(), Vec4f(1)));
     }
     else
     {

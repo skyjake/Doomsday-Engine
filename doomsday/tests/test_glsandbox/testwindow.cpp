@@ -168,11 +168,11 @@ DE_PIMPL(TestWindow)
         ob.addBuffer(buf);
 
         VertexBuf::Type verts[8] = {
-            { Vec3f(-1, -1, -1), Vec2f(0, 0), Vec4f(1, 1, 1, 1) },
+            { Vec3f(-1, -1, -1), Vec2f(0, 0), Vec4f(1) },
             { Vec3f( 1, -1, -1), Vec2f(1, 0), Vec4f(1, 1, 0, 1) },
             { Vec3f( 1,  1, -1), Vec2f(1, 1), Vec4f(1, 0, 0, 1) },
             { Vec3f(-1,  1, -1), Vec2f(0, 1), Vec4f(0, 0, 1, 1) },
-            { Vec3f(-1, -1,  1), Vec2f(1, 1), Vec4f(1, 1, 1, 1) },
+            { Vec3f(-1, -1,  1), Vec2f(1, 1), Vec4f(1) },
             { Vec3f( 1, -1,  1), Vec2f(0, 1), Vec4f(1, 1, 0, 1) },
             { Vec3f( 1,  1,  1), Vec2f(0, 0), Vec4f(1, 0, 0, 1) },
             { Vec3f(-1,  1,  1), Vec2f(1, 0), Vec4f(0, 0, 1, 1) }

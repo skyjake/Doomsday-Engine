@@ -44,7 +44,7 @@ DE_PIMPL_NOREF(Lumobj)
     Source const *source = nullptr;      ///< Source of the lumobj (if any, not owned).
     mobj_t const *sourceMobj = nullptr;  ///< Mobj associated with the lumobj (if any).
     ddouble maxDistance = 0;             ///< Used when rendering to limit the number drawn lumobjs.
-    Vec3f color = Vec3f(1, 1, 1);  ///< Light color/intensity.
+    Vec3f color = Vec3f(1);  ///< Light color/intensity.
     ddouble radius = 256;                ///< Radius in map space units.
     ddouble zOffset = 0;                 ///< Z-axis origin offset in map space units.
     dfloat flareSize = 0;                ///< Scale factor.

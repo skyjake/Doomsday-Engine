@@ -303,7 +303,7 @@ void PlayerLogWidget::draw(Vec2i const &offset)
                 dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
                 // ::w is used for opacity
-                Vec4f rgba(cfg.common.msgColor, textOpacity);
+                Vec4f rgba(Vec3f(cfg.common.msgColor), textOpacity);
 
                 // Fading HUD messages:
                 // If fading, update colour opacity each pass until it has completely faded

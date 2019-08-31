@@ -199,7 +199,7 @@ DE_PIMPL(GuiWidget)
         buf->setVertices(gfx::TriangleStrip,
                          DefaultVertexBuf::Builder().makeQuad(
                              Rectanglef(0, 0, 1, 1),
-                             Vec4f(1, 1, 1, 1),
+                             Vec4f(1),
                              Rectanglef(0, 0, 1, 1)),
                          gfx::Static);
 

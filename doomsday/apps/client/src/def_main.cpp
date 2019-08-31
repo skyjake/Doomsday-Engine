@@ -1312,7 +1312,7 @@ void Def_Read()
         for (dint k = 0; k < decorDef.lightCount(); ++k)
         {
             Record const &st = defn::MaterialDecoration(decorDef.light(k)).stage(0);
-            if (Vec3f(st.geta("color")) != Vec3f(0, 0, 0))
+            if (Vec3f(st.geta("color")) != Vec3f(0.0f))
             {
                 defineLightmap(res::makeUri(st["lightmapUp"]));
                 defineLightmap(res::makeUri(st["lightmapDown"]));

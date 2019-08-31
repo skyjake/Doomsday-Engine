@@ -214,7 +214,7 @@ void ButtonWidget::setColorTheme(ColorTheme theme)
     auto bg = background();
 
     d->colorTheme = theme;
-    setTextModulationColorf(Vec4f(1, 1, 1, 1));
+    setTextModulationColorf(Vec4f(1));
     d->originalTextModColor = textModulationColorf();
     if (theme == Inverted)
     {

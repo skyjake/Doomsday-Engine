@@ -335,7 +335,7 @@ static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
     {
         // Determine the followed Mobj's blockmap coords.
         bool didClip;
-        vCell = bmap.toCell(followMobj->origin, &didClip);
+        vCell = bmap.toCell(Vec2d(followMobj->origin), &didClip);
 
         if (didClip)
             followMobj = 0; // Outside the blockmap.
@@ -583,7 +583,7 @@ void Rend_BlockmapDebug()
     {
         // About the cell the followed Mobj is in.
         bool didClip;
-        BlockmapCell cell = blockmap->toCell(followMobj->origin, &didClip);
+        BlockmapCell cell = blockmap->toCell(Vec2d(followMobj->origin), &didClip);
         if (!didClip)
         {
             drawCellInfoBox(Vec2d(DE_GAMEVIEW_WIDTH / 2, 30), *blockmap,

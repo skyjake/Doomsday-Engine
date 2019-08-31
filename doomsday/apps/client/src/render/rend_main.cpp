@@ -617,7 +617,7 @@ void Rend_ApplyTorchLight(Vec4f &color, dfloat distance)
 
 void Rend_ApplyTorchLight(dfloat *color3, dfloat distance)
 {
-    Vec4f tmp(color3, 0);
+    Vec4f tmp(Vec3f(color3), 0);
     Rend_ApplyTorchLight(tmp, distance);
     for (dint i = 0; i < 3; ++i)
     {
@@ -693,7 +693,7 @@ Vec3f Rend_SkyLightColor()
         return skyLightColor;
     }
 
-    return Vec3f(1, 1, 1);
+    return Vec3f(1);
 }
 
 /**
@@ -1179,7 +1179,7 @@ static void makeFlatShadowGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d 
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
+    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
@@ -1206,7 +1206,7 @@ static void makeWallShadowGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Ve
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
+    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
@@ -1243,7 +1243,7 @@ static void makeFlatLightGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d c
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
+    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
@@ -1269,7 +1269,7 @@ static void makeWallLightGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Vec
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1, 1, 1, 1)).max(Vec4f(0, 0, 0, 0));
+    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
@@ -2282,7 +2282,7 @@ static bool projectShadow(Vec3d const &topLeft, Vec3d const &bottomRight,
 
     // Calculate 3D distance between surface and mobj.
     Vec3d point = R_ClosestPointOnPlane(surface.tangentMatrix().column(2)/*normal*/,
-                                           topLeft, mobOrigin);
+                                        topLeft, Vec3d(mobOrigin));
     coord_t distFromSurface = (Vec3d(mobOrigin) - Vec3d(point)).length();
 
     // Too far above or below the shadowed surface?
@@ -3907,7 +3907,7 @@ Lumobj *Rend_MakeLumobj(Record const &spriteDef)
     }
 
     // Apply the auto-calculated color.
-    return &(new Lumobj(Vec3d(), pl->brightMul, pl->color.rgb))
+    return &(new Lumobj(Vec3d(), pl->brightMul, Vec3f(pl->color.rgb)))
             ->setZOffset(-texture->base().origin().y - pl->originY * matAnimator->dimensions().y);
 }
 
@@ -4432,10 +4432,10 @@ static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = fals
         occlusionFactor = (spr->data.flare.factor & 0x7f) / 127.0f;
     }
 
-    return H_RenderHalo(spr->pose.origin,
+    return H_RenderHalo(Vec3d(spr->pose.origin),
                         spr->data.flare.size,
                         spr->data.flare.tex,
-                        spr->data.flare.color,
+                        Vec3f(spr->data.flare.color),
                         spr->pose.distance,
                         occlusionFactor, spr->data.flare.mul,
                         spr->data.flare.xOff, primary,
@@ -5125,12 +5125,12 @@ static void drawMobjBBox(mobj_t &mob)
 
     // Draw a bounding box in an appropriate color.
     coord_t size = Mobj_Radius(mob);
-    Rend_DrawBBox(mob.origin, size, size, mob.height/2, 0,
+    Rend_DrawBBox(Vec3d(mob.origin), size, size, mob.height/2, 0,
                   (mob.ddFlags & DDMF_MISSILE)? yellow :
                   (mob.ddFlags & DDMF_SOLID)? green : red,
                   alpha, .08f);
 
-    Rend_DrawArrow(mob.origin, ((mob.angle + ANG45 + ANG90) / (dfloat) ANGLE_MAX *-360), size*1.25,
+    Rend_DrawArrow(Vec3d(mob.origin), ((mob.angle + ANG45 + ANG90) / (dfloat) ANGLE_MAX *-360), size*1.25,
                    (mob.ddFlags & DDMF_MISSILE)? yellow :
                    (mob.ddFlags & DDMF_SOLID)? green : red, alpha);
 }
@@ -5222,7 +5222,7 @@ static void drawMobjBoundingBoxes(world::Map &map)
     DGL_Enable(DGL_DEPTH_TEST);
 }
 
-static void drawPoint(Vec3d const &origin, Vec4f const &color = Vec4f(1, 1, 1, 1))
+static void drawPoint(Vec3d const &origin, Vec4f const &color = Vec4f(1))
 {
     DGL_Begin(DGL_POINTS);
         DGL_Color4f(color.x, color.y, color.z, color.w);
@@ -5230,7 +5230,7 @@ static void drawPoint(Vec3d const &origin, Vec4f const &color = Vec4f(1, 1, 1, 1
     DGL_End();
 }
 
-static void drawVector(Vec3f const &vector, dfloat scalar, Vec4f const &color = Vec4f(1, 1, 1, 1))
+static void drawVector(Vec3f const &vector, dfloat scalar, Vec4f const &color = Vec4f(1))
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 

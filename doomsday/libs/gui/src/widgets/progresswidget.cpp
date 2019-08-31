@@ -134,7 +134,7 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
             float const angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
             v.pos = v.pos + Vec2f(cos(angle)*radius*1.05f, sin(angle)*radius*1.05f);
             v.texCoord = rotation * (tc.topLeft + tc.size() * Vec2f(.5f + cos(angle)*.5f,
-                                                                       .5f + sin(angle)*.5f));
+                                                                    .5f + sin(angle)*.5f));
             gear << v;
         }
 

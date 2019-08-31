@@ -95,7 +95,7 @@ Record &Sky::addModel()
     model->addArray ("originOffset", new ArrayValue(Vec3f()));
     model->addArray ("rotate", new ArrayValue(Vec2f()));
     model->addText  ("execute", "");
-    model->addArray ("color", new ArrayValue(Vec4f(1, 1, 1, 1)));
+    model->addArray ("color", new ArrayValue(Vec4f(1)));
 
     def()["model"].array().add(new RecordValue(model, RecordValue::OwnsRecord));
 

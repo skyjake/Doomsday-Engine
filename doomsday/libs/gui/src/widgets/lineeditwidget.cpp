@@ -80,7 +80,7 @@ DE_GUI_PIMPL(LineEditWidget)
     {
         height = new AnimationRule(0);
 
-        self().set(Background(Vec4f(1, 1, 1, 1), Background::GradientFrame));
+        self().set(Background(Vec4f(1), Background::GradientFrame));
         self().setFont("editor.plaintext");
         updateStyle();
     }
@@ -204,7 +204,7 @@ DE_GUI_PIMPL(LineEditWidget)
         Rectanglei const caret = self().cursorRect();
 
         verts.clear();
-        verts.makeQuad(caret, Vec4f(1, 1, 1, 1),
+        verts.makeQuad(caret, Vec4f(1),
                        atlas().imageRectf(self().root().solidWhitePixel()).middle());
 
         drawable.buffer<VertexBuf>(ID_BUF_CURSOR)
@@ -365,7 +365,7 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
             Vec2i end   = d->wraps.charTopLeftInPixels(i, i == endPos.line?   endPos.x   : BytePos(span.size())) + offset;
 
             verts.makeQuad(Rectanglef(start, end + pointsToPixels(Vec2i(0, 1))),
-                           Vec4f(1, 1, 1, 1), solidWhiteUv.middle());
+                           Vec4f(1), solidWhiteUv.middle());
         }
     }
 }

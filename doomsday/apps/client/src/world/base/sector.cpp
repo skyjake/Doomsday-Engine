@@ -260,7 +260,7 @@ Sector::Sector(dfloat lightLevel, Vec3f const &lightColor)
     , _lookupPlanes(nullptr)
 {
     d->lightLevel = de::clamp(0.f, lightLevel, 1.f);
-    d->lightColor = lightColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
+    d->lightColor = lightColor.min(Vec3f(1)).max(Vec3f(0.0f));
 }
 
 void Sector::unlink(mobj_t *mob)
@@ -490,7 +490,7 @@ Vec3f const &Sector::lightColor() const
 
 void Sector::setLightColor(Vec3f const &newLightColor)
 {
-    auto newColorClamped = newLightColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
+    auto newColorClamped = newLightColor.min(Vec3f(1)).max(Vec3f(0.0f));
     if (d->lightColor != newColorClamped)
     {
         d->lightColor = newColorClamped;
@@ -636,12 +636,10 @@ D_CMD(InspectSector)
 
     LOG_SCR_MSG(_E(b) "Sector %s" _E(.) " [%p]")
             << Id(sec->indexInMap()).asText() << sec;
-    LOG_SCR_MSG(    _E(l) "Bounds: "      _E(.)_E(i) "%s" _E(.)
-                " " _E(l) "Light Color: " _E(.)_E(i) "%s" _E(.)
-                " " _E(l) "Light Level: " _E(.)_E(i) "%f")
-            << Rectangled(sec->bounds().min, sec->bounds().max).asText()
-            << sec->lightColor().asText()
-            << sec->lightLevel();
+    LOG_SCR_MSG(_E(l) "Bounds: " _E(.) _E(i) "%s" _E(.) " " _E(l) "Light Color: " _E(.)
+                    _E(i) "%s" _E(.) " " _E(l) "Light Level: " _E(.) _E(i) "%f")
+        << Rectangled(Vec2d(sec->bounds().min), Vec2d(sec->bounds().max)).asText()
+        << sec->lightColor().asText() << sec->lightLevel();
     if (sec->planeCount())
     {
         LOG_SCR_MSG(_E(D) "Planes (%i):") << sec->planeCount();

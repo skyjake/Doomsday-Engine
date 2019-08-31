@@ -63,7 +63,7 @@ DE_GUI_PIMPL(BusyWidget)
         VertexBuf *buf = new VertexBuf;
 
         VertexBuf::Builder verts;
-        verts.makeQuad(Rectanglef(0, 0, 1, 1), Vec4f(1, 1, 1, 1), Rectanglef(0, 0, 1, 1));
+        verts.makeQuad(Rectanglef(0, 0, 1, 1), Vec4f(1), Rectanglef(0, 0, 1, 1));
         buf->setVertices(gfx::TriangleStrip, verts, gfx::Static);
 
         drawable.addBuffer(buf);

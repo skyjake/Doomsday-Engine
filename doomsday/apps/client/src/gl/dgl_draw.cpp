@@ -787,11 +787,11 @@ DE_EXTERN_C void DGL_Color4f(float r, float g, float b, float a)
 }
 
 #undef DGL_Color4fv
-DE_EXTERN_C void DGL_Color4fv(float const *vec)
+DE_EXTERN_C void DGL_Color4fv(const float *vec)
 {
     DE_ASSERT_IN_RENDER_THREAD();
 
-    const auto color = DGLDrawState::colorFromFloat(vec);
+    const auto color = DGLDrawState::colorFromFloat(Vec4f(vec));
     dglDraw.currentVertex.color[0] = color.x;
     dglDraw.currentVertex.color[1] = color.y;
     dglDraw.currentVertex.color[2] = color.z;

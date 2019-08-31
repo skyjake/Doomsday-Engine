@@ -281,6 +281,9 @@ public:
                     result.at(i, j) += at(i, k) * right.at(k, j);
         return result;
     }
+    Vec2 operator * (Vec2 const &vector) const {
+        return (*this * Vec4::fromEuclidean(vector)).toEuclidean();
+    }
     Vec3 operator * (Vec3 const &vector) const {
         return (*this * Vec4::fromEuclidean(vector)).toEuclidean();
     }

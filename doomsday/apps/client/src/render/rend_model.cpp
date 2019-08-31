@@ -719,7 +719,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     FrameModel &mdl = App_Resources().model(smf.modelId);
 
     // Do not bother with infinitely small models...
-    if (mf->scale == Vec3f(0, 0, 0))
+    if (mf->scale == Vec3f(0.0f))
         return;
 
     float alpha = spr.light.ambientColor[CA];
@@ -870,7 +870,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     if (smf.testFlag(MFF_FULLBRIGHT) && !smf.testFlag(MFF_DIM))
     {
         // Submodel-specific lighting override.
-        ambient = Vec4f(1, 1, 1, 1);
+        ambient = Vec4f(1);
         Mod_FullBrightVertexColors(numVerts, modelColorCoords, alpha);
     }
     else if (!spr.light.vLightListIdx)
@@ -1061,8 +1061,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
         GL_BindTexture(renderTextures? shinyTexture : 0);
 
         // Multiply by shininess.
-        float colorv1[] = { color.x * color.w, color.y * color.w, color.z * color.w, color.w };
-        DGL_SetModulationColor(colorv1);
+        DGL_SetModulationColor({color.x * color.w, color.y * color.w, color.z * color.w, color.w});
 
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
         GL_BindTexture(renderTextures? skinTexture : 0);

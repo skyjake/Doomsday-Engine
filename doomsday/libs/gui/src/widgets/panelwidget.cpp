@@ -393,7 +393,7 @@ void PanelWidget::drawContent()
     if (d->verts)
     {
         auto &painter = root().painter();
-        painter.setColor(Vec4f(1, 1, 1, 1));
+        painter.setColor(Vec4f(1));
         painter.drawTriangleStrip(d->verts);
     }
 }

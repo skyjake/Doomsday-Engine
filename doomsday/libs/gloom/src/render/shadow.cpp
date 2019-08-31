@@ -40,7 +40,7 @@ DE_PIMPL_NOREF(Shadow)
         if (lightType == Light::Directional)
         {
             map.setWrap(gfx::ClampToBorder, gfx::ClampToBorder);
-            map.setBorderColor(Vec4f(1, 1, 1, 1));
+            map.setBorderColor(Vec4f(1));
             map.setUndefinedContent(
                 GLTexture::Size(2048, 2048),
                 GLPixelFormat(GL_DEPTH_COMPONENT16, GL_DEPTH_COMPONENT, GL_FLOAT));

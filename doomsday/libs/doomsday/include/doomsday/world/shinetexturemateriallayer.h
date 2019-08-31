@@ -41,11 +41,11 @@ public:
     {
     public:
         AnimationStage(res::Uri const &texture, int tics, float variance,
-                       res::Uri const &maskTexture         = res::Uri(),
-                       blendmode_t blendMode              = BM_ADD,
-                       float opacity                      = 1,
-                       de::Vec3f const &minColor       = de::Vec3f(0, 0, 0),
-                       de::Vec2f const &maskDimensions = de::Vec2f(1, 1));
+                       res::Uri const &maskTexture     = {},
+                       blendmode_t blendMode           = BM_ADD,
+                       float opacity                   = 1,
+                       de::Vec3f const &minColor       = {0.f},
+                       de::Vec2f const &maskDimensions = {1.f});
         AnimationStage(AnimationStage const &other);
         virtual ~AnimationStage();
 

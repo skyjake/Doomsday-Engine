@@ -65,7 +65,7 @@ public:
      * @param lightColor  Ambient light color.
      */
     Sector(de::dfloat lightLevel          = 1,
-           de::Vec3f const &lightColor = de::Vec3f(1, 1, 1));
+           de::Vec3f const &lightColor = de::Vec3f(1));
 
 //- Lighting ----------------------------------------------------------------------------
 

@@ -173,7 +173,7 @@ void SfxChannel::setFixedOrigin(Vec3d const &newOrigin)
 
 Vec3d SfxChannel::origin() const
 {
-    return d->origin;
+    return Vec3d(d->origin);
 }
 
 dfloat SfxChannel::priority() const

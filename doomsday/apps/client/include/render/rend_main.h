@@ -283,7 +283,7 @@ coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
  * @todo Does not belong here.
  */
 de::duint Rend_CollectAffectingLights(de::Vec3d const &point,
-    de::Vec3f const &ambientColor = de::Vec3f(1, 1, 1), world::ConvexSubspace *subspace = nullptr,
+    de::Vec3f const &ambientColor = de::Vec3f(1), world::ConvexSubspace *subspace = nullptr,
     bool starkLight = false);
 
 void Rend_DrawVectorLight(VectorLightData const &vlight, de::dfloat alpha);

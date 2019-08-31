@@ -57,7 +57,7 @@ DE_PIMPL(User)
 
     Impl(Public * i) : Base(i)
     {
-        pos = Vec3f(0, 0, 0);
+        pos = Vec3f(0.f);
 
         fastWind = &AudioSystem::get().newSound("user.fastwind");
         fastWind->setVolume(0).play(Sound::Looping);

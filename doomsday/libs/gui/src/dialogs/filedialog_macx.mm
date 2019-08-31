@@ -18,6 +18,10 @@
 
 #include "de/FileDialog"
 
+#if 1
+#  include "filedialog_x11.cpp"
+#else
+
 #import <Cocoa/Cocoa.h>
 
 namespace de {
@@ -114,3 +118,4 @@ bool FileDialog::exec(GuiRootWidget &)
 }
 
 } // namespace de
+#endif

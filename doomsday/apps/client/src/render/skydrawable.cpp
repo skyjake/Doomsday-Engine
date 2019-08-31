@@ -497,7 +497,7 @@ DE_PIMPL(SkyDrawable)
             visModel.shineTranslateWithViewerPos = true;
             ClientApp::resources().setModelDefFrame(*modef, mstate.frame);
 
-            vis.light.ambientColor = Vec4f(skyModelDef.get("color"), 1);
+            vis.light.ambientColor = Vec4f(skyModelDef.get("color"), 1.0f);
 
             Rend_DrawModel(vis);
         }

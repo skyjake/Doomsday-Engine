@@ -404,9 +404,9 @@ DE_PIMPL(LensFlares)
             typedef Rangef Rgf;
             static Spec const specs[] = {
                 //  axisPos id                   color                          size    intensity min/max              radius min/max          angle min/max
-                {   1,      FlareData::Burst,    Vec4f(1, 1, 1, 1),          1,      Rgf(1.0e-8f, 1.0e-6f), Rgf(),  Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
-                {   1,      FlareData::Star,     Vec4f(1, 1, 1, 1),          1,      Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
-                {   1,      FlareData::Exponent, Vec4f(1, 1, 1, 1),          2.5f,   Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Burst,    Vec4f(1),          1,      Rgf(1.0e-8f, 1.0e-6f), Rgf(),  Rgf(), Rgf(.5f, .8f),   Rgf(), Rgf() },
+                {   1,      FlareData::Star,     Vec4f(1),          1,      Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf() },
+                {   1,      FlareData::Exponent, Vec4f(1),          2.5f,   Rgf(1.0e-6f, 1.0e-5f), Rgf(),  Rgf(.1f, .2f), Rgf(),   Rgf(), Rgf() },
 
                 {  .8f,     FlareData::Halo,     Vec4f(1, 1, 1, .5f),        1,      Rgf(5.0e-6f, 5.0e-5f), Rgf(),  Rgf(.5f, .7f), Rgf(),   Rgf(), Rgf(30, 60) },
 

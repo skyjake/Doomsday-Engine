@@ -63,7 +63,7 @@ ShineTextureMaterialLayer::AnimationStage::~AnimationStage()
 void ShineTextureMaterialLayer::AnimationStage::resetToDefaults()
 {
     TextureMaterialLayer::AnimationStage::resetToDefaults();
-    //addArray("minColor", new ArrayValue(Vec3f(0, 0, 0)));
+    //addArray("minColor", new ArrayValue(Vec3f(0.0f)));
     minColor = Vec3f();
 }
 

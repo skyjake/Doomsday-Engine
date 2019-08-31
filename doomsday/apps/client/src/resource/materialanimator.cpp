@@ -233,7 +233,7 @@ void MaterialAnimator::Decoration::update()
 void MaterialAnimator::Decoration::reset()
 {
     d->origin    = Vec2i(0, 0);
-    d->color     = Vec3f(0, 0, 0);
+    d->color     = Vec3f(0.0f);
     d->elevation = 0;
     d->radius    = 0;
     de::zap(d->lightLevels);
@@ -319,7 +319,7 @@ DE_PIMPL(MaterialAnimator)
         {
             dimensions     = Vec2ui(0, 0);
             shineBlendMode = BM_NORMAL;
-            shineMinColor  = Vec3f(0, 0, 0);
+            shineMinColor  = Vec3f(0.0f);
             opaque         = true;
             glowStrength   = 0;
 
@@ -536,7 +536,7 @@ DE_PIMPL(MaterialAnimator)
                     float    const opacity  = de::lerp(stage.opacity,  next.opacity,  ls.inter);
 
                     snapshot->shineBlendMode = stage.blendMode;
-                    snapshot->shineMinColor  = minColor.min(Vec3f(1, 1, 1)).max(Vec3f(0, 0, 0));
+                    snapshot->shineMinColor  = minColor.min(Vec3f(1)).max(Vec3f(0.0f));
 
                     snapshot->units[TU_SHINE] = GLTextureUnit(*tex, Vec2f(1, 1), origin, de::clamp(0.0f, opacity, 1.0f));
 
