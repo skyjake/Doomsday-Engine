@@ -73,7 +73,7 @@ DE_PIMPL(GameStateFolder)
         try
         {
             Block raw;
-            self().locate<File const>("Info") >> raw;
+            self().locate<const File>("Info") >> raw;
 
             metadata.parse(String::fromUtf8(raw));
 
@@ -96,7 +96,7 @@ DE_PIMPL(GameStateFolder)
         {
             LOG_RES_WARNING("%s does not appear to be a .save package") << self().description();
         }
-        return 0;
+        return false;
     }
 
     DE_PIMPL_AUDIENCE(MetadataChange)
