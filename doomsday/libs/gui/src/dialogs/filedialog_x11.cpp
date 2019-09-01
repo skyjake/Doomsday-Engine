@@ -32,6 +32,7 @@ DE_PIMPL_NOREF(FileDialog)
     NativePath       initialLocation;
     FileTypes        fileTypes; // empty list: eveything allowed
 
+    SafeWidgetPtr<MessageDialog> dlg;
     DirectoryBrowserWidget *browser;
 
     // using Filters = List<std::pair<Block, Block>>;
@@ -50,11 +51,13 @@ DE_PIMPL_NOREF(FileDialog)
 
     MessageDialog *makeDialog()
     {
-        auto *dlg = new MessageDialog;
+        dlg.reset(new MessageDialog);
         dlg->setDeleteAfterDismissed(true);
         dlg->title().setText(title);
         dlg->message().hide();
-        dlg->buttons() << new DialogButtonItem(DialogWidget::Default | DialogWidget::Accept, prompt)
+        dlg->buttons() << new DialogButtonItem(DialogWidget::Id1 | DialogWidget::Default |
+                                                   DialogWidget::Accept,
+                                               prompt)
                        << new DialogButtonItem(DialogWidget::Reject);
 
         dlg->area().enableScrolling(false);
@@ -63,13 +66,19 @@ DE_PIMPL_NOREF(FileDialog)
 
         browser = new DirectoryBrowserWidget(
             (behavior & AcceptFiles ? DirectoryBrowserWidget::ShowFiles : 0));
-        if (behavior.testFlag(AcceptDirectories))
+        if (behavior & AcceptDirectories)
         {
             browser->setEmptyContentText("No Subdirs");
         }
-        browser->setCurrentPath(initialLocation);
         browser->rule().setInput(Rule::Height, browser->rule().width());
         browser->audienceForSelection() += this;
+        browser->audienceForNavigation() += [this]() {
+            if (behavior.testFlag(AcceptFiles))
+            {
+                dlg->buttonWidget(DialogWidget::Id1)->disable();
+            }
+        };
+        browser->setCurrentPath(initialLocation);
         dlg->area().add(browser);
         dlg->updateLayout();
 
@@ -84,6 +93,7 @@ DE_PIMPL_NOREF(FileDialog)
             {
                 browser->setSelected(item);
             }
+            dlg->buttonWidget(DialogWidget::Id1)->enable(!browser->selected().isEmpty());
         }
     }
 };
@@ -111,6 +121,10 @@ void FileDialog::setInitialLocation(const NativePath &initialLocation)
     if (initialLocation.exists())
     {
         d->initialLocation = initialLocation;
+        if (!initialLocation.isDirectory())
+        {
+            d->initialLocation = d->initialLocation.fileNamePath();
+        }
     }
     else
     {
