@@ -32,8 +32,6 @@ DE_PIMPL(FolderSelection)
 
     Impl(Public *i)
         : Base(i)
-//        , edit(0)
-//        , button(0)
     {
         edit = &i->addNew<LineEditWidget>();
 
@@ -49,34 +47,12 @@ DE_PIMPL(FolderSelection)
         button->rule()
             .setInput(Rule::Top, i->rule().top())
             .setInput(Rule::Right, i->rule().right());
-
-        //        if (!extraLabel.isEmpty())
-        //        {
-        //            QLabel *lab = new QLabel(extraLabel);
-        //            layout->addWidget(lab, 0);
-        //        }
-
-        //        edit = new QLineEdit;
-        //        edit->setMinimumWidth(280);
-        //#ifdef WIN32
-        //        button = new QPushButton(tr("&Browse..."));
-        //#else
-        //        button = new QPushButton(tr("..."));
-        //#endif
-        //        button->setAutoDefault(false);
-
-        //        layout->addWidget(edit, 1);
-        //        layout->addWidget(button, 0);
     }
+
+    DE_PIMPL_AUDIENCE(Selection)
 };
 
-//FolderSelection::FolderSelection(const String &prompt)
-//    : d(new Impl(this, ""))
-//{
-//    d->prompt = prompt;
-//    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
-//    connect(d->edit, SIGNAL(textEdited(QString)), this, SIGNAL(selected()));
-//}
+DE_AUDIENCE_METHOD(FolderSelection, Selection)
 
 FolderSelection::FolderSelection(const String &prompt)
     : GuiWidget("folderselection")
@@ -86,43 +62,46 @@ FolderSelection::FolderSelection(const String &prompt)
 
     rule().setInput(Rule::Height, d->edit->rule().height());
 
-//    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
+    d->button->setActionFn([this]() { selectFolder(); });
+    d->edit->audienceForContentChange() += [this]() {
+        if (path().exists())
+        {
+            DE_FOR_AUDIENCE(Selection, i)
+            {
+                i->folderSelected(path());
+            }
+        }
+    };
 }
 
 void FolderSelection::setPath(const NativePath &path)
 {
-//    d->edit->setText(QString::fromUtf8(path));
+    d->edit->setText(path);
 }
 
 void FolderSelection::setEnabled(bool yes)
 {
-//    d->edit->setEnabled(yes);
-//    d->button->setEnabled(yes);
-
-//    if (yes)
-//    {
-//        d->edit->setStyleSheet("");
-//    }
-//    else
-//    {
-//        d->edit->setStyleSheet("background-color:#eee; color:#888;");
-//    }
+    enable(yes);
 }
 
-de::NativePath FolderSelection::path() const
+NativePath FolderSelection::path() const
 {
-//    return convert(d->edit->text());
-    return {};
+    return d->edit->text();
 }
 
 void FolderSelection::selectFolder()
 {
-//    QString initial = d->edit->text();
-//    if (initial.isEmpty()) initial = QDir::homePath();
-//    QString dir = QFileDialog::getExistingDirectory(0, d->prompt, initial);
-//    if (!dir.isEmpty())
-//    {
-//        d->edit->setText(dir);
-//        emit selected();
-//    }
+    FileDialog dlg;
+    dlg.setBehavior(FileDialog::AcceptDirectories, ReplaceFlags);
+    dlg.setTitle("Select Folder");
+    dlg.setPrompt("Select");
+    dlg.setInitialLocation(path());
+    if (dlg.exec(root()))
+    {
+        setPath(dlg.selectedPath());
+        DE_FOR_AUDIENCE(Selection, i)
+        {
+            i->folderSelected(dlg.selectedPath());
+        }
+    }
 }
