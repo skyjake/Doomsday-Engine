@@ -55,7 +55,6 @@
 #include "ui/dialogs/alertdialog.h"
 #include "ui/dialogs/packagecompatibilitydialog.h"
 #include "ui/inputsystem.h"
-#include "ui/nativemenu.h"
 #include "ui/progress.h"
 #include "ui/sys_input.h"
 #include "ui/viewcompositor.h"
@@ -182,7 +181,6 @@ DE_PIMPL(ClientApp)
     ConfigProfiles              networkSettings;
     ConfigProfiles              logSettings;
     ConfigProfiles              uiSettings;
-    std::unique_ptr<NativeMenu> nativeAppMenu;
     InputSystem *               inputSys  = nullptr;
     AudioSystem *               audioSys  = nullptr;
     RenderSystem *              rendSys   = nullptr;
@@ -456,18 +454,6 @@ DE_PIMPL(ClientApp)
         Con_SaveDefaultsIfChanged();
     }
 
-    /**
-     * Set up an application-wide menu.
-     */
-    void setupAppMenu()
-    {
-        #if defined (MACOSX)
-        {
-            nativeAppMenu.reset(new NativeMenu);
-        }
-        #endif
-    }
-
     void initSettings()
     {
         using Prof = ConfigProfiles; // convenience
@@ -711,8 +697,6 @@ void ClientApp::initialize()
 #if !defined (DE_MOBILE)
     d->winSys->createWindow()->setTitle(DD_ComposeMainWindowTitle());
 #endif
-
-    d->setupAppMenu();
 
     // Create the input system.
     d->inputSys = new InputSystem;
