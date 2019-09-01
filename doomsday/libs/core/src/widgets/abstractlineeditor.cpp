@@ -184,8 +184,9 @@ DE_PIMPL(AbstractLineEditor)
 
         if (text && cursor > 0)
         {
+            const BytePos oldPos = cursor;
             cursor = (iterator(cursor) - 1).pos();
-            text.remove(cursor, CharPos(1));
+            text.remove(cursor, oldPos - cursor);
             rewrapNow();
         }
     }
@@ -207,7 +208,7 @@ DE_PIMPL(AbstractLineEditor)
     {
         if (text.sizeb() > cursor)
         {
-            text.remove(cursor, 1);
+            text.remove(cursor, CharPos(1));
             rewrapNow();
         }
     }
