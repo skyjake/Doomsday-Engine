@@ -28,8 +28,10 @@
 #include <de/EscapeParser>
 #include <de/FileSystem>
 #include <de/Id>
-#include <doomsday/network/LocalServer>
+#include <de/Config>
 #include <de/ServerFinder>
+#include <doomsday/network/LocalServer>
+#include <SDL_messagebox.h>
 //#include <QMenuBar>
 //#include <QMessageBox>
 //#include <QUrl>
@@ -40,6 +42,7 @@
 //Q_DECLARE_METATYPE(de::Address)
 
 using namespace de;
+using namespace network;
 
 DE_PIMPL(GuiShellApp)
 {
@@ -54,7 +57,7 @@ DE_PIMPL(GuiShellApp)
 //    QAction *disconnectAction;
 #endif
 //    QList<LinkWindow *> windows;
-//    QHash<int, LocalServer *> localServers; // port as key
+    Hash<int, LocalServer *> localServers; // port as key
 //    QTimer localCheckTimer;
 
     Preferences *prefs;
@@ -155,21 +158,18 @@ void GuiShellApp::initialize()
 LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 {
     LinkWindow *found = nullptr;
-//    QWidget *other = activeWindow(); // for positioning a new window
 
-//    // Look for a window with a closed connection.
-//    foreach (LinkWindow *win, d->windows)
-//    {
-//        if (!win->isConnected())
-//        {
-//            found = win;
-//            found->raise();
-//            found->activateWindow();
-//            d->windows.removeOne(win);
-//            break;
-//        }
-//        if (!other) other = win;
-//    }
+    // Look for a window with a closed connection.
+    d->winSys->forAll([&found](BaseWindow *w) {
+        auto &win = w->as<LinkWindow>();
+        if (!win.isConnected())
+        {
+            found = &win;
+            found->raise();
+            return LoopAbort;
+        }
+        return LoopContinue;
+    });
 
     if (!found)
     {
@@ -256,44 +256,48 @@ void GuiShellApp::startLocalServer()
     try
     {
 #ifdef MACOSX
-//        // App folder randomization means we can't find Doomsday.app on our own.
-//        if (!QSettings().contains("Preferences/appFolder"))
-//        {
-//            showPreferences();
-//            return;
-//        }
+        // App folder randomization means we can't find Doomsday.app on our own.
+        if (!Config::get().has("Preferences.appFolder"))
+        {
+            showPreferences();
+            return;
+        }
 #endif
-//        LocalServerDialog dlg;
-//        if (dlg.exec() == QDialog::Accepted)
-//        {
-//            QStringList opts = dlg.additionalOptions();
-//            if (!Preferences::iwadFolder().isEmpty())
-//            {
-//                opts << "-iwad" << convert(Preferences::iwadFolder());
-//            }
+        auto *win = d->winSys->focusedWindow();
+        LocalServerDialog dlg;
+        if (dlg.exec(win->root()))
+        {
+            StringList opts = dlg.additionalOptions();
+            if (!Preferences::iwadFolder().isEmpty())
+            {
+                opts << "-iwad" << Preferences::iwadFolder();
+            }
 
-//            auto *sv = new LocalServer;
-//            sv->setApplicationPath(convert(QSettings().value("Preferences/appFolder").toString()));
-//            if (!dlg.name().isEmpty())
-//            {
-//                sv->setName(convert(dlg.name()));
-//            }
-//            sv->start(dlg.port(),
-//                      convert(dlg.gameMode()),
-//                      map<StringList>(opts, convertToString), //[](const QString &s) { return convert(s); }),
-//                      dlg.runtimeFolder());
-//            d->localServers[dlg.port()] = sv;
+            auto *sv = new LocalServer;
+            sv->setApplicationPath(Config::get().gets("Preferences.appFolder"));
+            if (!dlg.name().isEmpty())
+            {
+                sv->setName(dlg.name());
+            }
+            sv->start(dlg.port(),
+                      dlg.gameMode(),
+                      opts,
+                      dlg.runtimeFolder());
+            d->localServers[dlg.port()] = sv;
 
-//            newOrReusedConnectionWindow()->waitForLocalConnection
-//                    (dlg.port(), sv->errorLogPath(), dlg.name());
-//        }
+            newOrReusedConnectionWindow()->waitForLocalConnection
+                    (dlg.port(), sv->errorLogPath(), dlg.name());
+        }
     }
     catch (const Error &er)
     {
         EscapeParser esc;
         esc.parse(er.asText());
 
-//        QMessageBox::critical(0, tr("Failed to Start Server"), esc.plainText().c_str());
+        SDL_MessageBoxData mbox{};
+        mbox.title = "Failed to Start Server";
+        mbox.message = esc.plainText();
+        SDL_ShowMessageBox(&mbox, nullptr);
 
         showPreferences();
     }
@@ -348,6 +352,12 @@ void GuiShellApp::openWebAddress(const String &url)
 
 void GuiShellApp::showPreferences()
 {
+    LinkWindow *win = d->winSys->focusedWindow();
+
+    auto *prefs = new Preferences;
+    prefs->setDeleteAfterDismissed(true);
+    prefs->exec(win->root());
+
 //    if (!d->prefs)
 //    {
 //        d->prefs = new Preferences;

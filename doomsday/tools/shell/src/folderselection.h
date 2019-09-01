@@ -19,17 +19,16 @@
 #ifndef FOLDERSELECTION_H
 #define FOLDERSELECTION_H
 
-#include <de/String>
+#include <de/GuiWidget>
 #include <de/NativePath>
-#include <de/AuxButtonWidget>
 
 /**
  * Widget for selecting a folder.
  */
-class FolderSelection : public de::AuxButtonWidget
+class FolderSelection : public de::GuiWidget
 {
 public:
-    explicit FolderSelection(const de::String &prompt, const de::String &extraLabel = {});
+    explicit FolderSelection(const de::String &prompt);
 
     void setPath(de::NativePath const &path);
     void setEnabled(bool yes);
@@ -37,8 +36,6 @@ public:
 
     de::NativePath path() const;
 
-//signals:
-//    void selected();
     DE_AUDIENCE(Selection, void folderSelected(const de::NativePath &))
 
     void selectFolder();

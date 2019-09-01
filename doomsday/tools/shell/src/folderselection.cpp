@@ -17,49 +17,56 @@
  */
 
 #include "folderselection.h"
-//#include "utils.h"
-//#include <QLineEdit>
-//#include <QPushButton>
-//#include <QHBoxLayout>
-//#include <QFileDialog>
-//#include <QLabel>
 
+#include <de/ButtonWidget>
 #include <de/FileDialog>
+#include <de/LineEditWidget>
 
 using namespace de;
 
 DE_PIMPL(FolderSelection)
 {
     String prompt;
-//    QLineEdit *edit;
-//    QPushButton *button;
+    LineEditWidget *edit;
+    ButtonWidget *button;
 
-    Impl(Public *i, String extraLabel)
+    Impl(Public *i)
         : Base(i)
 //        , edit(0)
 //        , button(0)
     {
-//        QHBoxLayout *layout = new QHBoxLayout;
-//        layout->setContentsMargins(0, 0, 0, 0);
-//        self().setLayout(layout);
+        edit = &i->addNew<LineEditWidget>();
 
-//        if (!extraLabel.isEmpty())
-//        {
-//            QLabel *lab = new QLabel(extraLabel);
-//            layout->addWidget(lab, 0);
-//        }
+        button = &i->addNew<ButtonWidget>();
+        button->setSizePolicy(ui::Expand, ui::Expand);
+        button->setText("Browse...");
 
-//        edit = new QLineEdit;
-//        edit->setMinimumWidth(280);
-//#ifdef WIN32
-//        button = new QPushButton(tr("&Browse..."));
-//#else
-//        button = new QPushButton(tr("..."));
-//#endif
-//        button->setAutoDefault(false);
+        edit->rule()
+            .setInput(Rule::Width, i->rule().width() - button->rule().width())
+            .setInput(Rule::Top, i->rule().top())
+            .setInput(Rule::Left, i->rule().left());
 
-//        layout->addWidget(edit, 1);
-//        layout->addWidget(button, 0);
+        button->rule()
+            .setInput(Rule::Top, i->rule().top())
+            .setInput(Rule::Right, i->rule().right());
+
+        //        if (!extraLabel.isEmpty())
+        //        {
+        //            QLabel *lab = new QLabel(extraLabel);
+        //            layout->addWidget(lab, 0);
+        //        }
+
+        //        edit = new QLineEdit;
+        //        edit->setMinimumWidth(280);
+        //#ifdef WIN32
+        //        button = new QPushButton(tr("&Browse..."));
+        //#else
+        //        button = new QPushButton(tr("..."));
+        //#endif
+        //        button->setAutoDefault(false);
+
+        //        layout->addWidget(edit, 1);
+        //        layout->addWidget(button, 0);
     }
 };
 
@@ -71,14 +78,18 @@ DE_PIMPL(FolderSelection)
 //    connect(d->edit, SIGNAL(textEdited(QString)), this, SIGNAL(selected()));
 //}
 
-FolderSelection::FolderSelection(const String &prompt, const String &extraLabel)
-    : d(new Impl(this, extraLabel))
+FolderSelection::FolderSelection(const String &prompt)
+    : GuiWidget("folderselection")
+    , d(new Impl(this))
 {
     d->prompt = prompt;
+
+    rule().setInput(Rule::Height, d->edit->rule().height());
+
 //    connect(d->button, SIGNAL(clicked()), this, SLOT(selectFolder()));
 }
 
-void FolderSelection::setPath(de::NativePath const &path)
+void FolderSelection::setPath(const NativePath &path)
 {
 //    d->edit->setText(QString::fromUtf8(path));
 }
