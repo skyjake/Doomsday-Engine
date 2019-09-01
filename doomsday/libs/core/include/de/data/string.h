@@ -94,6 +94,8 @@ struct StronglyTypedPosition
     Pos &operator+=(long sub)      { if (index != npos) { index += sub; } return *this; }
     Pos &operator-=(long sub)      { if (index != npos) { index -= sub; } return *this; }
 
+    Pos &operator+=(const Pos &p) { if (index != npos && p.index != npos) { index += p.index; } return *this; }
+
     Pos  operator+(const Pos &p) const { return Pos{index != npos ? index + p.index : npos}; }
     Pos  operator-(Pos p) const        { return Pos(index != npos ? index - p.index : npos); }
     Pos  operator++(int) { Pos p = *this; if (index != npos) index++; return p; }

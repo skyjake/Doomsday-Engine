@@ -173,7 +173,7 @@ DE_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
         text.insert(cursor, str);
-        cursor += str.size();
+        cursor += str.sizeb();
         rewrapNow();
     }
 
