@@ -31,6 +31,8 @@ namespace de {
  * As a graphical widget, widget placement and line wrapping is handled in
  * terms of pixels rather than characters.
  *
+ * Sets its own height based on the amount of content.
+ *
  * @ingroup guiWidgets
  */
 class LIBGUI_PUBLIC LineEditWidget : public GuiWidget, public AbstractLineEditor
@@ -78,7 +80,7 @@ public:
     bool handleEvent(Event const &event) override;
 
 public:
-    static term::Key shellKey(const KeyEvent &keyEvent);
+    static term::Key termKey(const KeyEvent &keyEvent);
 
     static KeyModifiers modifiersFromKeyEvent(KeyEvent::Modifiers const &keyMods);
 
