@@ -445,9 +445,16 @@ DE_GUI_PIMPL(DialogWidget)
         }
         else if (style().isBlurringAllowed())
         {
-            /// @todo Should use the Style for this.
-            bg.type = Background::SharedBlurWithBorderGlow;
-            bg.blur = style().sharedBlurWidget();
+            if (auto *blur = style().sharedBlurWidget())
+            {
+                bg.type = Background::SharedBlurWithBorderGlow;
+                bg.blur = blur;
+            }
+            else
+            {
+                bg.type = Background::BlurredWithBorderGlow;
+                bg.blur = nullptr;
+            }
             bg.solidFill = Vec4f(0, 0, 0, .65f);
         }
         else

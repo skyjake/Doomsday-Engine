@@ -205,8 +205,10 @@ DE_GUI_PIMPL(PopupWidget)
         else
         {
             Background bg(st.colors().colorf("background"),
-                          !opaqueBackground && st.isBlurringAllowed()?
-                              Background::SharedBlurWithBorderGlow : Background::BorderGlow,
+                          !opaqueBackground && st.isBlurringAllowed()
+                              ? (style().sharedBlurWidget() ? Background::SharedBlurWithBorderGlow
+                                                            : Background::BlurredWithBorderGlow)
+                              : Background::BorderGlow,
                           st.colors().colorf("glow"),
                           st.rules().rule("glow").valuei());
             bg.blur = style().sharedBlurWidget();
