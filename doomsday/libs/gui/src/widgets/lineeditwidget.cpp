@@ -546,25 +546,32 @@ bool LineEditWidget::handleEvent(Event const &event)
             return true;
         }
 
-        // Control character.
-        if (handleControlKey(shellKey(key), modifiersFromKeyEvent(key.modifiers())))
+        // Control keys.
+        const auto controlKey = termKey(key);
+        if (controlKey != term::Key::None)
         {
-            return true;
+            if (handleControlKey(controlKey, modifiersFromKeyEvent(key.modifiers())))
+            {
+                return true;
+            }
+            return GuiWidget::handleEvent(event);
         }
 
         // Insert text?
-        if (!key.text().isEmpty())
+        if (key.text())
         {
             // Insert some text into the editor.
             insert(key.text());
-            return true;
         }
+
+        // We have focus, so all other key presses stop here.
+        return true;
     }
 
     return GuiWidget::handleEvent(event);
 }
 
-term::Key LineEditWidget::shellKey(const KeyEvent &keyEvent) // static
+term::Key LineEditWidget::termKey(const KeyEvent &keyEvent) // static
 {
     using term::Key;
 
