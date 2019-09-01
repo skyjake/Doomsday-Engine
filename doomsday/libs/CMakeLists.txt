@@ -10,4 +10,5 @@ add_subdirectory (gamekit)
 if (DE_ENABLE_GUI)
     add_subdirectory (gui)
     add_subdirectory (gloom)
+    add_subdirectory (doomsdaygui) # static lib: common libdoomsday-dependent GUI stuff
 endif ()

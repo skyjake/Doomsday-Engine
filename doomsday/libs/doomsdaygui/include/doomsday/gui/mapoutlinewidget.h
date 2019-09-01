@@ -16,8 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#ifndef DE_CLIENT_UI_MAPOUTLINEWIDGET_H
-#define DE_CLIENT_UI_MAPOUTLINEWIDGET_H
+#pragma once
 
 #include <doomsday/network/Protocol>
 #include <de/GuiWidget>
@@ -42,5 +41,3 @@ protected:
 private:
     DE_PRIVATE(d)
 };
-
-#endif // DE_CLIENT_UI_MAPOUTLINEWIDGET_H

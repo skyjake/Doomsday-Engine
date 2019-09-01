@@ -16,7 +16,7 @@
  * http://www.gnu.org/licenses</small>
  */
 
-#include "ui/widgets/mapoutlinewidget.h"
+#include "doomsday/gui/mapoutlinewidget.h"
 
 #include <de/ProgressWidget>
 #include <de/Drawable>

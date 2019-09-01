@@ -20,11 +20,11 @@
 #include "ui/dialogs/packageinfodialog.h"
 #include "ui/widgets/packageswidget.h"
 #include "ui/widgets/homemenuwidget.h"
-#include "ui/widgets/mapoutlinewidget.h"
 #include "ui/widgets/packagesbuttonwidget.h"
 #include "network/serverlink.h"
 
 #include <doomsday/Games>
+#include <doomsday/gui/mapoutlinewidget.h>
 
 #include <de/charsymbols.h>
 #include <de/ButtonWidget>
