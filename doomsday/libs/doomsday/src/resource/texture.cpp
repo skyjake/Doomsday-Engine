@@ -67,7 +67,7 @@ DE_PIMPL(Texture)
     /// Notify iterested parties of a change in world dimensions.
     void notifyDimensionsChanged()
     {
-        DE_FOR_PUBLIC_AUDIENCE_VAR(DimensionsChange, i) i->textureDimensionsChanged(self());
+        DE_NOTIFY_PUBLIC_VAR(DimensionsChange, i) i->textureDimensionsChanged(self());
     }
 };
 
@@ -80,7 +80,7 @@ Texture::Texture(TextureManifest &manifest) : d(new Impl(this, manifest))
 
 Texture::~Texture()
 {
-    DE_FOR_AUDIENCE_VAR(Deletion, i) i->textureBeingDeleted(*this);
+    DE_NOTIFY_VAR(Deletion, i) i->textureBeingDeleted(*this);
 
     if (!manifest().schemeName().compareWithoutCase("Textures"))
     {

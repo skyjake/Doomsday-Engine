@@ -373,7 +373,7 @@ void FileSystem::changeBusyLevel(int increment)
             if ((bs == Busy && d->busyLevel > 0) ||
                 (bs == Idle && d->busyLevel == 0))
             {
-                DE_FOR_AUDIENCE(Busy, i) { i->fileSystemBusyStatusChanged(bs); }
+                DE_NOTIFY(Busy, i) { i->fileSystemBusyStatusChanged(bs); }
             }
         });
     }

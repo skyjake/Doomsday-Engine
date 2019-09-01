@@ -206,7 +206,7 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
         newManifest->audienceForDeletion += d;
 
         // Notify interested parties that a new manifest was defined in the scheme.
-        DE_FOR_AUDIENCE_VAR(ManifestDefined, i) i->fontSchemeManifestDefined(*this, *newManifest);
+        DE_NOTIFY_VAR(ManifestDefined, i) i->fontSchemeManifestDefined(*this, *newManifest);
     }
 
     return *newManifest;

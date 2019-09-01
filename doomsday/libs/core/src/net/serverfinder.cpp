@@ -82,7 +82,7 @@ DE_PIMPL(ServerFinder)
 
             //qDebug() << "Server found:\n" << receivedInfo.asText().toLatin1().constData();
 
-            DE_FOR_PUBLIC_AUDIENCE(Update, i)
+            DE_NOTIFY_PUBLIC(Update, i)
             {
                 i->foundServersUpdated();
             }
@@ -120,7 +120,7 @@ DE_PIMPL(ServerFinder)
     {
         if (removeExpired())
         {
-            DE_FOR_PUBLIC_AUDIENCE(Update, i) { i->foundServersUpdated(); }
+            DE_NOTIFY_PUBLIC(Update, i) { i->foundServersUpdated(); }
         }
         Loop::timer(1.0, [this]() { expire(); });
     }

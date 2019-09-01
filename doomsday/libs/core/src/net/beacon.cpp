@@ -72,7 +72,7 @@ DE_PIMPL(Beacon)
         {
             timer->stop();
 
-            DE_FOR_PUBLIC_AUDIENCE(Finished, i) { i->beaconFinished(); }
+            DE_NOTIFY_PUBLIC(Finished, i) { i->beaconFinished(); }
 
             socket.reset();
             trash(timer.release());
@@ -132,7 +132,7 @@ DE_PIMPL(Beacon)
                         {
                             const Address host(from);
                             d->found.insert(host, block);
-                            DE_FOR_EACH_OBSERVER(i, d->self().audienceForDiscovery())
+                            DE_FOR_OBSERVERS(i, d->self().audienceForDiscovery())
                             {
                                 i->beaconFoundHost(host, block);
                             }

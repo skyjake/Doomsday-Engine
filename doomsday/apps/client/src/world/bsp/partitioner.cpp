@@ -1075,7 +1075,7 @@ DE_PIMPL(Partitioner)
      */
     void notifyUnclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
     {
-        DE_FOR_PUBLIC_AUDIENCE_VAR(UnclosedSectorFound, i)
+        DE_NOTIFY_PUBLIC_VAR(UnclosedSectorFound, i)
         {
             i->unclosedSectorFound(sector, nearPoint);
         }

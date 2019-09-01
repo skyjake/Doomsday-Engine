@@ -231,7 +231,7 @@ DE_GUI_PIMPL(LineEditWidget)
         composer.setText(self().text());
         if (notify)
         {
-            DE_FOR_PUBLIC_AUDIENCE(ContentChange, i)
+            DE_NOTIFY_PUBLIC(ContentChange, i)
             {
                 i->editorContentChanged(self());
             }
@@ -539,7 +539,7 @@ bool LineEditWidget::handleEvent(Event const &event)
 
         if (d->signalOnEnter && (key.ddKey() == DDKEY_ENTER || key.ddKey() == DDKEY_RETURN))
         {
-            DE_FOR_AUDIENCE(Enter, i)
+            DE_NOTIFY(Enter, i)
             {
                 i->enterPressed(text());
             }

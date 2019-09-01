@@ -53,7 +53,7 @@ bool CommandLineWidget::handleEvent(Event const &event)
     if (ev.key() == Key::Enter)
     {
         String const entered = d->history.enter();
-        DE_FOR_AUDIENCE(Command, i) i->commandEntered(entered);
+        DE_NOTIFY(Command, i) i->commandEntered(entered);
         return true;
     }
 

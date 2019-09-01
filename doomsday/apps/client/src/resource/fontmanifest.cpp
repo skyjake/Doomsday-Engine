@@ -40,7 +40,7 @@ DE_OBSERVES(AbstractFont, Deletion)
 
     ~Impl()
     {
-        DE_FOR_PUBLIC_AUDIENCE_VAR(Deletion, i) i->fontManifestBeingDeleted(self());
+        DE_NOTIFY_PUBLIC_VAR(Deletion, i) i->fontManifestBeingDeleted(self());
     }
 
     // Observes AbstractFont::Deletion.
@@ -92,7 +92,7 @@ bool FontManifest::setUniqueId(int newUniqueId)
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DE_FOR_AUDIENCE_VAR(UniqueIdChange, i) i->fontManifestUniqueIdChanged(*this);
+    DE_NOTIFY_VAR(UniqueIdChange, i) i->fontManifestUniqueIdChanged(*this);
 
     return true;
 }

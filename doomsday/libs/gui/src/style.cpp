@@ -285,7 +285,7 @@ void Style::performUpdate()
 {
     d->fonts.reload();
 
-    DE_FOR_AUDIENCE(Change, i)
+    DE_NOTIFY(Change, i)
     {
         i->styleChanged(*this);
     }

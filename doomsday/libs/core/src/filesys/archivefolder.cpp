@@ -29,7 +29,7 @@ ArchiveFolder::ArchiveFolder(File &sourceArchiveFile, String const &name) : Fold
 
 ArchiveFolder::~ArchiveFolder()
 {
-    DE_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    DE_NOTIFY(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
 }

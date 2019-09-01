@@ -119,7 +119,7 @@ void ColorPalettes::addColorPalette(ColorPalette &newPalette, String const &name
         d->defaultColorPalette = newPalette.id();
     }
 
-    DE_FOR_AUDIENCE(Addition, i) i->colorPaletteAdded(newPalette);
+    DE_NOTIFY(Addition, i) i->colorPaletteAdded(newPalette);
 }
 
 Id ColorPalettes::defaultColorPalette() const

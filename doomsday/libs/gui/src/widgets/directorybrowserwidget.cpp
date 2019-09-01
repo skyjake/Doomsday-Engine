@@ -121,7 +121,7 @@ DE_GUI_PIMPL(DirectoryBrowserWidget)
             }
             else
             {
-                DE_FOR_PUBLIC_AUDIENCE(Selection, i)
+                DE_NOTIFY_PUBLIC(Selection, i)
                 {
                     i->itemSelected(self(), dirItem);
                 }

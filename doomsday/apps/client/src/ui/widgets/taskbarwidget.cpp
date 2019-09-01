@@ -677,7 +677,7 @@ void TaskBarWidget::open()
         d->vertShift->set(0, OPEN_CLOSE_SPAN);
         setOpacity(1, OPEN_CLOSE_SPAN);
 
-        DE_FOR_AUDIENCE(Open, i) i->taskBarOpened();
+        DE_NOTIFY(Open, i) i->taskBarOpened();
     }
 
     // Untrap the mouse if it is trapped.
@@ -725,7 +725,7 @@ void TaskBarWidget::close()
         // Clear focus now; callbacks/signal handlers may set the focus elsewhere.
         if (hasRoot()) root().setFocus(0);
 
-        DE_FOR_AUDIENCE(Close, i) i->taskBarClosed();
+        DE_NOTIFY(Close, i) i->taskBarClosed();
 
         // Retrap the mouse if it was trapped when opening.
         if (hasRoot())

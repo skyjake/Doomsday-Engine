@@ -89,7 +89,7 @@ ShellUser::ShellUser(Socket *socket) : network::Link(socket), d(new Impl(*this))
 {
     audienceForDisconnected() += [this]()
     {
-        DE_FOR_AUDIENCE_VAR(Disconnect, i)
+        DE_NOTIFY_VAR(Disconnect, i)
         {
             i->userDisconnected(*this);
         }

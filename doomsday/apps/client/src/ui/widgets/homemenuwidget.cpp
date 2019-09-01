@@ -53,14 +53,14 @@ DE_GUI_PIMPL(HomeMenuWidget)
     {
         if (auto *clickedWidget = maybeAs<HomeItemWidget>(widget))
         {
-            DE_FOR_PUBLIC_AUDIENCE(Click, i)
+            DE_NOTIFY_PUBLIC(Click, i)
             {
                 i->menuItemClicked(self(), self().findItem(*clickedWidget));
             }
         }
         if (auto *column = self().parentColumn())
         {
-            DE_FOR_EACH_OBSERVER(i, column->audienceForActivity())
+            DE_FOR_OBSERVERS(i, column->audienceForActivity())
             {
                 i->mouseActivity(column);
             }
@@ -83,7 +83,7 @@ DE_GUI_PIMPL(HomeMenuWidget)
 
                 selectedIndex = previousSelectedIndex = newSelection;
 
-                DE_FOR_PUBLIC_AUDIENCE(Selection, i)
+                DE_NOTIFY_PUBLIC(Selection, i)
                 {
                     i->selectedIndexChanged(self(), selectedIndex);
                 }

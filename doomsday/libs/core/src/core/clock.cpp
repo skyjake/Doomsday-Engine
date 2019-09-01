@@ -50,11 +50,11 @@ void Clock::setTime(Time const &currentTime)
     {
         d->tickCount++;
 
-        DE_FOR_EACH_OBSERVER(i, audienceForPriorityTimeChange)
+        DE_FOR_OBSERVERS(i, audienceForPriorityTimeChange)
         {
             i->timeChanged(*this);
         }
-        DE_FOR_AUDIENCE(TimeChange, i) i->timeChanged(*this);
+        DE_NOTIFY(TimeChange, i) i->timeChanged(*this);
     }
 }
 

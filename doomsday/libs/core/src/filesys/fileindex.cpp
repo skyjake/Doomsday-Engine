@@ -133,7 +133,7 @@ bool FileIndex::maybeAdd(File const &file)
     d->add(file);
 
     // Notify audience.
-    DE_FOR_AUDIENCE(Addition, i)
+    DE_NOTIFY(Addition, i)
     {
         i->fileAdded(file, *this);
     }
@@ -146,7 +146,7 @@ void FileIndex::remove(File const &file)
     d->remove(file);
 
     // Notify audience.
-    DE_FOR_AUDIENCE(Removal, i)
+    DE_NOTIFY(Removal, i)
     {
         i->fileRemoved(file, *this);
     }

@@ -247,7 +247,7 @@ DE_GUI_PIMPL(ConsoleWidget)
         if (scriptMode != yes)
         {
             scriptMode = yes;        
-            DE_FOR_PUBLIC_AUDIENCE(CommandMode, i)
+            DE_NOTIFY_PUBLIC(CommandMode, i)
             {
                 i->commandModeChanged();
             }
@@ -631,7 +631,7 @@ void ConsoleWidget::commandLineFocusGained()
     setFullyOpaque();
     openLog();
 
-    DE_FOR_AUDIENCE(GotFocus, i) i->commandLineGotFocus();
+    DE_NOTIFY(GotFocus, i) i->commandLineGotFocus();
 }
 
 void ConsoleWidget::commandLineFocusLost()

@@ -48,7 +48,7 @@ DE_PIMPL(NativePathWidget)
 
     void notifyChange()
     {
-        DE_FOR_PUBLIC_AUDIENCE(UserChange, i)
+        DE_NOTIFY_PUBLIC(UserChange, i)
         {
             i->pathChangedByUser(self());
         }
@@ -121,7 +121,7 @@ void NativePathWidget::chooseUsingNativeFileDialog()
     {
         d->path = dlg.selectedPath();
         setText(d->labelText());
-        DE_FOR_AUDIENCE(UserChange, i) i->pathChangedByUser(*this);
+        DE_NOTIFY(UserChange, i) i->pathChangedByUser(*this);
     }
 }
 

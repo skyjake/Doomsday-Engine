@@ -52,7 +52,7 @@ DE_GUI_PIMPL(ChoiceWidget)
             wd->updateItemHighlight();
             wd->choices->dismiss();
 
-            DE_FOR_EACH_OBSERVER(i, wd->self().audienceForUserSelection())
+            DE_FOR_OBSERVERS(i, wd->self().audienceForUserSelection())
             {
                 i->selectionChangedByUser(wd->self(), wd->selected);
             }
@@ -225,7 +225,7 @@ DE_GUI_PIMPL(ChoiceWidget)
             self().setImage(Image());
         }
 
-        DE_FOR_PUBLIC_AUDIENCE(Selection, i)
+        DE_NOTIFY_PUBLIC(Selection, i)
         {
             i->selectionChanged(self(), selected);
         }

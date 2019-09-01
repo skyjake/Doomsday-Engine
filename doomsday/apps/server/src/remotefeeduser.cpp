@@ -56,7 +56,7 @@ DE_PIMPL(RemoteFeedUser)
         s->audienceForStateChange() += [this]() {
             if (!socket->isOpen())
             {
-                DE_FOR_PUBLIC_AUDIENCE_VAR(Disconnect, i) { i->userDisconnected(self()); }
+                DE_NOTIFY_PUBLIC_VAR(Disconnect, i) { i->userDisconnected(self()); }
             }
         };
 

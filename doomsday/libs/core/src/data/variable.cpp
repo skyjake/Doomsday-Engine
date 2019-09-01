@@ -86,7 +86,7 @@ Variable::Variable(Variable const &other)
 
 Variable::~Variable()
 {
-    DE_FOR_AUDIENCE(Deletion, i) i->variableBeingDeleted(*this);
+    DE_NOTIFY(Deletion, i) i->variableBeingDeleted(*this);
 }
 
 String const &Variable::name() const
@@ -137,8 +137,8 @@ Variable &Variable::set(Value *v)
 
         if (notify)
         {
-            DE_FOR_AUDIENCE(Change,     i) i->variableValueChanged(*this, *d->value);
-            DE_FOR_AUDIENCE(ChangeFrom, i)
+            DE_NOTIFY(Change,     i) i->variableValueChanged(*this, *d->value);
+            DE_NOTIFY(ChangeFrom, i)
             {
                 i->variableValueChangedFrom(
                     *this,

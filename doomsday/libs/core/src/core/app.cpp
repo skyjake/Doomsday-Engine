@@ -866,7 +866,7 @@ void App::removeSystem(System &system)
 
 void App::notifyStartupComplete()
 {
-    DE_FOR_AUDIENCE(StartupComplete, i)
+    DE_NOTIFY(StartupComplete, i)
     {
         i->appStartupCompleted();
     }

@@ -177,7 +177,7 @@
  * @param Var      Variable used in the loop.
  * @param Name     Name of the observer set.
  */
-#define DE_FOR_EACH_OBSERVER(Var, Name) \
+#define DE_FOR_OBSERVERS(Var, Name) \
     Name.call(); \
     for (std::remove_reference<decltype(Name)>::type::Loop Var(Name); !Var.done(); ++Var)
 
@@ -187,11 +187,11 @@
  * @param Name  Name of the audience.
  * @param Var   Variable used in the loop.
  */
-#define DE_FOR_AUDIENCE_VAR(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Var, audienceFor##Name)
+#define DE_NOTIFY_VAR(Name, Var) \
+    DE_FOR_OBSERVERS(Var, audienceFor##Name)
 
-#define DE_FOR_AUDIENCE(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Var, audienceFor##Name())
+#define DE_NOTIFY(Name, Var) \
+    DE_FOR_OBSERVERS(Var, audienceFor##Name())
 
 /**
  * Macro for looping through the public audience members from inside a private
@@ -200,11 +200,11 @@
  * @param Name  Name of the audience.
  * @param Var   Variable used in the loop.
  */
-#define DE_FOR_PUBLIC_AUDIENCE_VAR(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Var, self().audienceFor##Name)
+#define DE_NOTIFY_PUBLIC_VAR(Name, Var) \
+    DE_FOR_OBSERVERS(Var, self().audienceFor##Name)
 
-#define DE_FOR_PUBLIC_AUDIENCE(Name, Var) \
-    DE_FOR_EACH_OBSERVER(Var, self().audienceFor##Name())
+#define DE_NOTIFY_PUBLIC(Name, Var) \
+    DE_FOR_OBSERVERS(Var, self().audienceFor##Name())
 
 namespace de {
 

@@ -109,7 +109,7 @@ void GloomWidget::setWorld(World *world)
     }
 
     d->world = world;
-    DE_FOR_AUDIENCE_VAR(Change, i) { i->currentWorldChanged(oldWorld, world); }
+    DE_NOTIFY_VAR(Change, i) { i->currentWorldChanged(oldWorld, world); }
 
     if (d->world)
     {

@@ -171,7 +171,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         }
 
         // Others may alter the widget in some way.
-        DE_FOR_PUBLIC_AUDIENCE(WidgetCreation, i)
+        DE_NOTIFY_PUBLIC(WidgetCreation, i)
         {
             i->widgetCreatedForItem(*w, item);
         }
@@ -340,7 +340,7 @@ DE_PIMPL(ChildWidgetOrganizer)
         factory->updateItemWidget(w, item);
 
         // Notify.
-        DE_FOR_PUBLIC_AUDIENCE(WidgetUpdate, i)
+        DE_NOTIFY_PUBLIC(WidgetUpdate, i)
         {
             i->widgetUpdatedForItem(w, item);
         }

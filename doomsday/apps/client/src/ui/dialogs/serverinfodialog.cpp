@@ -94,7 +94,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
                 << new DialogButtonItem(Default | Accept, "Close")
                 << new DialogButtonItem(Action | ID_JOIN, "Join Game", [this] () {
                     self().accept();
-                    DE_FOR_PUBLIC_AUDIENCE(JoinGame, i) i->joinGame(serverInfo);
+                    DE_NOTIFY_PUBLIC(JoinGame, i) i->joinGame(serverInfo);
                 })
                 << new DialogButtonItem(Action | ID_PING,
                                         style().images().image("refresh"), "Ping", [this] () {

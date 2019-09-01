@@ -108,7 +108,7 @@ DE_PIMPL(Games)
 
         DoomsdayApp::bundles().audienceForIdentify() += this;
 
-        DE_FOR_PUBLIC_AUDIENCE(Addition, i)
+        DE_NOTIFY_PUBLIC(Addition, i)
         {
             i->gameAdded(*game);
         }
@@ -332,7 +332,7 @@ void Games::checkReadiness()
             locateStartupResources(game);
 
             Games &self = *this; // MSVC 2013 cannot figure it out inside the lambda...
-            DE_FOR_EACH_OBSERVER(ProgressAudience, i, self().audienceForProgress())
+            DE_FOR_OBSERVERS(ProgressAudience, i, self().audienceForProgress())
             {
                 i->gameWorkerProgress(n * 200 / count() - 1);
             }
@@ -363,7 +363,7 @@ void Games::checkReadiness()
     // Only notify when the set of playable games changes.
     if (changed)
     {
-        DE_FOR_AUDIENCE(Readiness, i)
+        DE_NOTIFY(Readiness, i)
         {
             i->gameReadinessUpdated();
         }

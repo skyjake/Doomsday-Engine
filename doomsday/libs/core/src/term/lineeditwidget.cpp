@@ -146,7 +146,7 @@ bool LineEditWidget::handleControlKey(Key key, const KeyModifiers &mods)
         {
             if (d->signalOnEnter)
             {
-                DE_FOR_AUDIENCE(Enter, i) i->enterPressed(text());
+                DE_NOTIFY(Enter, i) i->enterPressed(text());
             }
             else
             {

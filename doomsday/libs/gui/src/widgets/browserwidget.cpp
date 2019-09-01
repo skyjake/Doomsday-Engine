@@ -134,7 +134,7 @@ DE_GUI_PIMPL(BrowserWidget)
             scroller->scrollY(0);
         }
 
-        DE_FOR_PUBLIC_AUDIENCE(Navigation, i)
+        DE_NOTIFY_PUBLIC(Navigation, i)
         {
             i->browserNavigatedTo(self(), path);
         }

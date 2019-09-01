@@ -107,7 +107,7 @@ DE_GUI_PIMPL(ButtonWidget)
             break;
         }
 
-        DE_FOR_PUBLIC_AUDIENCE(StateChange, i)
+        DE_NOTIFY_PUBLIC(StateChange, i)
         {
             i->buttonStateChanged(self(), state);
         }
@@ -171,7 +171,7 @@ DE_GUI_PIMPL(ButtonWidget)
 
     void actionTriggered(Action &)
     {
-        DE_FOR_PUBLIC_AUDIENCE(Triggered, i)
+        DE_NOTIFY_PUBLIC(Triggered, i)
         {
             i->buttonActionTriggered(self());
         }
@@ -304,7 +304,7 @@ void ButtonWidget::trigger()
     AutoRef<Action> held = holdRef(d->action);
 
     // Notify.
-    DE_FOR_AUDIENCE(Press, i) i->buttonPressed(*this);
+    DE_NOTIFY(Press, i) i->buttonPressed(*this);
 
     if (held)
     {

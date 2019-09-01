@@ -35,7 +35,7 @@ DE_PIMPL(BaseMap)
 
     ~Impl()
     {
-        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->mapBeingDeleted(self());
+        DE_NOTIFY_PUBLIC(Deletion, i) i->mapBeingDeleted(self());
     }
 
     void recordBeingDeleted(Record &record)

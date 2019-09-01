@@ -125,7 +125,7 @@ bool Item::isSelected() const
 
 void Item::notifyChange() const
 {
-    DE_FOR_AUDIENCE(Change, i)
+    DE_NOTIFY(Change, i)
     {
         i->itemChanged(*this);
     }

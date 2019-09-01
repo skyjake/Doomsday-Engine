@@ -345,7 +345,7 @@ DE_PIMPL(ScriptedInfo)
 
                 if (!isScriptBlock)
                 {
-                    DE_FOR_PUBLIC_AUDIENCE(NamedBlock, i)
+                    DE_NOTIFY_PUBLIC(NamedBlock, i)
                     {
                         i->parsedNamedBlock(varName, blockRecord);
                     }

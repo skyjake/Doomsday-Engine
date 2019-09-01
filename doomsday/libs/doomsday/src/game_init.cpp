@@ -43,7 +43,7 @@ using namespace res;
 
 static void updateProgress(int progress)
 {
-    DE_FOR_EACH_OBSERVER(i, DoomsdayApp::games().audienceForProgress())
+    DE_FOR_OBSERVERS(i, DoomsdayApp::games().audienceForProgress())
     {
         i->gameWorkerProgress(progress);
     }

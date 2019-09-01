@@ -47,7 +47,7 @@ DataFolder::DataFolder(Format format, File &sourceFile)
 
 DataFolder::~DataFolder()
 {
-    DE_FOR_AUDIENCE(Deletion, i) i->fileBeingDeleted(*this);
+    DE_NOTIFY(Deletion, i) i->fileBeingDeleted(*this);
     audienceForDeletion().clear();
     deindex();
 }

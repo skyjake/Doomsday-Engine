@@ -228,7 +228,7 @@ void BindContext::activate(bool yes)
     d->active = yes;
 
     // Notify interested parties.
-    DE_FOR_AUDIENCE(ActiveChange, i) i->bindContextActiveChanged(*this);
+    DE_NOTIFY(ActiveChange, i) i->bindContextActiveChanged(*this);
 }
 
 void BindContext::acquire(int deviceId, bool yes)
@@ -242,7 +242,7 @@ void BindContext::acquire(int deviceId, bool yes)
     if (countBefore != d->acquireDevices.size())
     {
         // Notify interested parties.
-        DE_FOR_AUDIENCE(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+        DE_NOTIFY(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
     }
 }
 
@@ -253,7 +253,7 @@ void BindContext::acquireAll(bool yes)
         d->acquireAllDevices = yes;
 
         // Notify interested parties.
-        DE_FOR_AUDIENCE(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
+        DE_NOTIFY(AcquireDeviceChange, i) i->bindContextAcquireDeviceChanged(*this);
     }
 }
 
@@ -338,7 +338,7 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
         d->deleteMatching(&bind.def(), nullptr);
 
         // Notify interested parties.
-        DE_FOR_AUDIENCE(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
+        DE_NOTIFY(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), true/*is-command*/);
 
         Con_MarkAsChanged(true);
 
@@ -372,7 +372,7 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
         d->deleteMatching(nullptr, &bind.def());
 
         // Notify interested parties.
-        DE_FOR_AUDIENCE(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
+        DE_NOTIFY(BindingAddition, i) i->bindContextBindingAdded(*this, bind.def(), false/*is-impulse*/);
 
         Con_MarkAsChanged(true);
 

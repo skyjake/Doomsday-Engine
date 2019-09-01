@@ -61,7 +61,7 @@ DE_PIMPL(AssetObserver)
         const String ident = assetIdentifier(link);
         Loop::mainCall([this, ident]()
         {
-            DE_FOR_PUBLIC_AUDIENCE(Availability, i)
+            DE_NOTIFY_PUBLIC(Availability, i)
             {
                 i->assetAvailabilityChanged(ident, Added);
             }
@@ -76,7 +76,7 @@ DE_PIMPL(AssetObserver)
         const String ident = assetIdentifier(link);
         Loop::mainCall([this, ident]()
         {
-            DE_FOR_PUBLIC_AUDIENCE(Availability, i)
+            DE_NOTIFY_PUBLIC(Availability, i)
         {
                 i->assetAvailabilityChanged(ident, Removed);
         }

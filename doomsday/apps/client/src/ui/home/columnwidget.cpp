@@ -229,7 +229,7 @@ bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(
         if ((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
             rule().recti().contains(mouse.pos()))
         {
-            DE_FOR_AUDIENCE(Activity, i) i->mouseActivity(this);
+            DE_NOTIFY(Activity, i) i->mouseActivity(this);
         }
     }
 

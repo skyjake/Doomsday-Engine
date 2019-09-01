@@ -76,7 +76,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             if (plain.size() > 0)
             {
                 DE_ASSERT(!plain.contains(escape));
-                DE_FOR_AUDIENCE(PlainText, i) { i->handlePlainText(plain); }
+                DE_NOTIFY(PlainText, i) { i->handlePlainText(plain); }
                 d->plain += plain;
             }
 
@@ -105,7 +105,7 @@ void EscapeParser::parse(String const &textWithEscapes)
                 break;
             }
 
-            DE_FOR_AUDIENCE(EscapeSequence, i)
+            DE_NOTIFY(EscapeSequence, i)
             {
                 i->handleEscapeSequence({escStart, end});
             }
@@ -120,7 +120,7 @@ void EscapeParser::parse(String const &textWithEscapes)
             if (plain.size() > 0)
             {
                 DE_ASSERT(!plain.contains(escape));
-                DE_FOR_AUDIENCE(PlainText, i) { i->handlePlainText(plain); }
+                DE_NOTIFY(PlainText, i) { i->handlePlainText(plain); }
                 d->plain += plain;
             }
             break;

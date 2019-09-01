@@ -123,5 +123,5 @@ World &World::get()
 
 void World::notifyMapChange()
 {
-    DE_FOR_AUDIENCE(MapChange, i) i->worldMapChanged();
+    DE_NOTIFY(MapChange, i) i->worldMapChanged();
 }

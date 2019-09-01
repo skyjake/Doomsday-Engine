@@ -86,7 +86,7 @@ Data &ListData::insert(Pos pos, Item *item)
 {
     _items.insert(pos, item);
     item->setDataContext(*this);
-    DE_FOR_AUDIENCE(Addition, i) { i->dataItemAdded(pos, *item); }
+    DE_NOTIFY(Addition, i) { i->dataItemAdded(pos, *item); }
     return *this;
 }
 
@@ -99,7 +99,7 @@ Item *ListData::take(Data::Pos pos)
 {
     DE_ASSERT(pos < size());
     Item *taken = _items.takeAt(pos);
-    DE_FOR_AUDIENCE(Removal, i) { i->dataItemRemoved(pos, *taken); }
+    DE_NOTIFY(Removal, i) { i->dataItemRemoved(pos, *taken); }
     return taken;
 }
 
@@ -108,7 +108,7 @@ void ListData::sort(LessThanFunc lessThan)
     std::sort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
-    DE_FOR_AUDIENCE(OrderChange, i) i->dataItemOrderChanged();
+    DE_NOTIFY(OrderChange, i) i->dataItemOrderChanged();
 }
 
 void ListData::stableSort(LessThanFunc lessThan)
@@ -116,7 +116,7 @@ void ListData::stableSort(LessThanFunc lessThan)
     std::stable_sort(_items.begin(), _items.end(), [&lessThan] (Item const *a, Item const *b) {
         return lessThan(*a, *b);
     });
-    DE_FOR_AUDIENCE(OrderChange, i) i->dataItemOrderChanged();
+    DE_NOTIFY(OrderChange, i) i->dataItemOrderChanged();
 }
 
 } // namespace de

@@ -443,7 +443,7 @@ DE_PIMPL_NOREF(Socket)
             Socket &self = *static_cast<Socket *>(userData_Object(addr));
             try
             {
-                DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+                DE_FOR_OBSERVERS(i, self.audienceForStateChange())
                 {
                     i->socketStateChanged(self, AddressResolved);
                 }
@@ -452,7 +452,7 @@ DE_PIMPL_NOREF(Socket)
             }
             catch (const Error &er)
             {
-                DE_FOR_EACH_OBSERVER(i, self.audienceForError())
+                DE_FOR_OBSERVERS(i, self.audienceForError())
                 {
                     i->error(self, "Failed to look up address: " + er.asText());
                 }
@@ -468,7 +468,7 @@ DE_PIMPL_NOREF(Socket)
             {
                 LOG_NET_WARNING("%s") << msg;
             }
-            DE_FOR_EACH_OBSERVER(i, self.audienceForError())
+            DE_FOR_OBSERVERS(i, self.audienceForError())
             {
                 i->error(self, Stringf("Socket error %i: %s", error, msg));
             }
@@ -480,7 +480,7 @@ DE_PIMPL_NOREF(Socket)
         Loop::mainCall([sock]() {
             Socket &self = *static_cast<Socket *>(userData_Object(sock));
             self.d->connecting.post();
-            DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+            DE_FOR_OBSERVERS(i, self.audienceForStateChange())
             {
                 i->socketStateChanged(self, Connected);
             }
@@ -491,7 +491,7 @@ DE_PIMPL_NOREF(Socket)
     {
         Loop::mainCall([sock]() {
             Socket &self = *static_cast<Socket *>(userData_Object(sock));
-            DE_FOR_EACH_OBSERVER(i, self.audienceForStateChange())
+            DE_FOR_OBSERVERS(i, self.audienceForStateChange())
             {
                 i->socketStateChanged(self, Disconnected);
             }
@@ -507,7 +507,7 @@ DE_PIMPL_NOREF(Socket)
             d->deserializeMessages();
             if (d->receivedMessages)
             {
-                DE_FOR_EACH_OBSERVER(i, self.audienceForMessage())
+                DE_FOR_OBSERVERS(i, self.audienceForMessage())
                 {
                     i->messagesIncoming(self);
                 }
@@ -519,7 +519,7 @@ DE_PIMPL_NOREF(Socket)
     {
         Loop::mainCall([sock]() {
             Socket *self = static_cast<Socket *>(userData_Object(sock));
-            DE_FOR_EACH_OBSERVER(i, self->audienceForAllSent())
+            DE_FOR_OBSERVERS(i, self->audienceForAllSent())
             {
                 i->allSent(*self);
             }

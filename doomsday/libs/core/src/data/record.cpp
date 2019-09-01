@@ -105,7 +105,7 @@ DE_PIMPL(Record)
                     remaining.insert(i.first, i.second);
                     continue;
                 }
-                DE_FOR_PUBLIC_AUDIENCE(Removal, o)
+                DE_NOTIFY_PUBLIC(Removal, o)
                 {
                     o->recordMemberRemoved(self(), *i.second);
                 }
@@ -151,7 +151,7 @@ DE_PIMPL(Record)
                 if (!alreadyExists)
                 {
                     // Notify about newly added members.
-                    DE_FOR_PUBLIC_AUDIENCE(Addition, i) i->recordMemberAdded(self(), *var);
+                    DE_NOTIFY_PUBLIC(Addition, i) i->recordMemberAdded(self(), *var);
                 }
 
                 /// @todo Should also notify if the value of an existing variable changes. -jk
@@ -425,7 +425,7 @@ Record::~Record()
     {
         // Notify before deleting members so that observers have full visibility
         // to the record prior to deletion.
-        DE_FOR_AUDIENCE(Deletion, i) i->recordBeingDeleted(*this);
+        DE_NOTIFY(Deletion, i) i->recordBeingDeleted(*this);
 
         clear();
     }
@@ -532,7 +532,7 @@ Variable &Record::add(Variable *variable)
         d->members[variable->name()] = var.release();
     }
 
-    DE_FOR_AUDIENCE(Addition, i) i->recordMemberAdded(*this, *variable);
+    DE_NOTIFY(Addition, i) i->recordMemberAdded(*this, *variable);
 
     return *variable;
 }
@@ -545,7 +545,7 @@ Variable *Record::remove(Variable &variable)
         d->members.remove(variable.name());
     }
 
-    DE_FOR_AUDIENCE(Removal, i) i->recordMemberRemoved(*this, variable);
+    DE_NOTIFY(Removal, i) i->recordMemberRemoved(*this, variable);
 
     return &variable;
 }

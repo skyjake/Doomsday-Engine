@@ -301,7 +301,7 @@ void MenuWidget::close()
         DE_ASSERT(hasRoot());
 
         root().setFocus(nullptr);
-        DE_FOR_AUDIENCE(Close, i) i->menuClosed();
+        DE_NOTIFY(Close, i) i->menuClosed();
         hide();
         redraw();
     }

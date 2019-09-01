@@ -90,7 +90,7 @@ void Rule::invalidate()
         // Also set the global flag.
         Rule::_invalidRulesExist = true;
 
-        DE_FOR_AUDIENCE_VAR(RuleInvalidation, i) i->ruleInvalidated();
+        DE_NOTIFY_VAR(RuleInvalidation, i) i->ruleInvalidated();
     }
 }
 

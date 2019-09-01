@@ -136,11 +136,11 @@ DE_PIMPL(Widget)
         }
 
         // Notify.
-        DE_FOR_PUBLIC_AUDIENCE(ChildAddition, i)
+        DE_NOTIFY_PUBLIC(ChildAddition, i)
         {
             i->widgetChildAdded(*child);
         }
-        DE_FOR_EACH_OBSERVER(i, child->audienceForParentChange())
+        DE_FOR_OBSERVERS(i, child->audienceForParentChange())
         {
             i->widgetParentChanged(*child, nullptr, thisPublic);
         }
@@ -246,7 +246,7 @@ Widget::~Widget()
     }
 
     // Notify everyone else.
-    DE_FOR_AUDIENCE(Deletion, i)
+    DE_NOTIFY(Deletion, i)
     {
         i->widgetBeingDeleted(*this);
     }
@@ -454,11 +454,11 @@ Widget *Widget::remove(Widget &child)
     }
 
     // Notify.
-    DE_FOR_AUDIENCE(ChildRemoval, i)
+    DE_NOTIFY(ChildRemoval, i)
     {
         i->widgetChildRemoved(child);
     }
-    DE_FOR_EACH_OBSERVER(i, child.audienceForParentChange())
+    DE_FOR_OBSERVERS(i, child.audienceForParentChange())
     {
         i->widgetParentChanged(child, this, nullptr);
     }

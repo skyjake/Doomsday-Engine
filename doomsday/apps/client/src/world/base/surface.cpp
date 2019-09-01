@@ -126,7 +126,7 @@ DE_PIMPL(Surface)
 #ifdef __CLIENT__
     void notifyOriginSmoothedChanged()
     {
-        DE_FOR_PUBLIC_AUDIENCE(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self());
+        DE_NOTIFY_PUBLIC(OriginSmoothedChange, i) i->surfaceOriginSmoothedChanged(self());
     }
 #endif
 
@@ -202,7 +202,7 @@ Surface &Surface::setNormal(Vec3f const &newNormal)
 
         // We'll need to recalculate the tangents when next referenced.
         d->needUpdateTangentMatrix = true;
-        DE_FOR_AUDIENCE(NormalChange, i) i->surfaceNormalChanged(*this);
+        DE_NOTIFY(NormalChange, i) i->surfaceNormalChanged(*this);
     }
     return *this;
 }
@@ -268,7 +268,7 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
 #endif
 
     // Notify interested parties.
-    DE_FOR_AUDIENCE(MaterialChange, i) i->surfaceMaterialChanged(*this);
+    DE_NOTIFY(MaterialChange, i) i->surfaceMaterialChanged(*this);
 
     return *this;
 }
@@ -294,7 +294,7 @@ Surface &Surface::setOrigin(Vec2f const &newOrigin)
         }
 #endif
 
-        DE_FOR_AUDIENCE(OriginChange, i) i->surfaceOriginChanged(*this);
+        DE_NOTIFY(OriginChange, i) i->surfaceOriginChanged(*this);
 
 #ifdef __CLIENT__
         if (!::ddMapSetup)
@@ -345,7 +345,7 @@ Surface &Surface::setOpacity(dfloat newOpacity)
     if (!de::fequal(d->opacity, newOpacity))
     {
         d->opacity = newOpacity;
-        DE_FOR_AUDIENCE(OpacityChange, i) i->surfaceOpacityChanged(*this);
+        DE_NOTIFY(OpacityChange, i) i->surfaceOpacityChanged(*this);
     }
     return *this;
 }
@@ -364,7 +364,7 @@ Surface &Surface::setColor(Vec3f const &newColor)
     if (d->color != newColorClamped)
     {
         d->color = newColorClamped;
-        DE_FOR_AUDIENCE(ColorChange, i) i->surfaceColorChanged(*this);
+        DE_NOTIFY(ColorChange, i) i->surfaceColorChanged(*this);
     }
     return *this;
 }

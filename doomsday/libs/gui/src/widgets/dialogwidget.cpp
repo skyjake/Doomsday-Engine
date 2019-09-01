@@ -728,11 +728,11 @@ void DialogWidget::accept(int result)
     {
         DE_ASSERT(d->modality == Modal);
         d->subloop.quit(result);
-        DE_FOR_AUDIENCE(Accept, i) { i->dialogAccepted(*this, result); }
+        DE_NOTIFY(Accept, i) { i->dialogAccepted(*this, result); }
     }
     else
     {
-        DE_FOR_AUDIENCE(Accept, i) { i->dialogAccepted(*this, result); }
+        DE_NOTIFY(Accept, i) { i->dialogAccepted(*this, result); }
         finish(result);
     }
 }
@@ -743,11 +743,11 @@ void DialogWidget::reject(int result)
     {
         DE_ASSERT(d->modality == Modal);
         d->subloop.quit(result);
-        DE_FOR_AUDIENCE(Reject, i) { i->dialogRejected(*this, result); }
+        DE_NOTIFY(Reject, i) { i->dialogRejected(*this, result); }
     }
     else
     {
-        DE_FOR_AUDIENCE(Reject, i) { i->dialogRejected(*this, result); }
+        DE_NOTIFY(Reject, i) { i->dialogRejected(*this, result); }
         finish(result);
     }
 }

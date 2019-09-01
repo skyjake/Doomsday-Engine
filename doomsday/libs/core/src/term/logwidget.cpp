@@ -121,7 +121,7 @@ DE_PIMPL(LogWidget)
         if (visibleOffset != off)
         {
             visibleOffset = off;
-            DE_FOR_PUBLIC_AUDIENCE(Scroll, i)
+            DE_NOTIFY_PUBLIC(Scroll, i)
             {
                 i->scrollPositionChanged(off);
             }
@@ -262,7 +262,7 @@ void LogWidget::draw()
     if (d->lastMaxScroll != maxScroll)
     {
         d->lastMaxScroll = maxScroll;
-        DE_FOR_AUDIENCE(Maximum, i)
+        DE_NOTIFY(Maximum, i)
         {
             i->scrollMaxChanged(maxScroll);
         }

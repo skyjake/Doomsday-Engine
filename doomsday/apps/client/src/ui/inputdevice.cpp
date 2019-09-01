@@ -73,7 +73,7 @@ void InputDevice::activate(bool yes)
         d->active = yes;
 
         // Notify interested parties.
-        DE_FOR_AUDIENCE(ActiveChange, i) i->inputDeviceActiveChanged(*this);
+        DE_NOTIFY(ActiveChange, i) i->inputDeviceActiveChanged(*this);
     }
 }
 

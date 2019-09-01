@@ -46,7 +46,7 @@ DE_PIMPL(ListenSocket)
             DE_GUARD_FOR(d->incoming, _);
             d->incoming.value << sock;
         }
-        DE_FOR_EACH_OBSERVER(i, d->self().audienceForIncoming())
+        DE_FOR_OBSERVERS(i, d->self().audienceForIncoming())
         {
             i->incomingConnection(d->self());
         }

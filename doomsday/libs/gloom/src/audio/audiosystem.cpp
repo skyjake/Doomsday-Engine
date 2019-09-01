@@ -258,7 +258,7 @@ DE_PIMPL(AudioSystem)
 
             stop();
 
-            DE_FOR_AUDIENCE(Deletion, i) i->soundBeingDeleted(*this);
+            DE_NOTIFY(Deletion, i) i->soundBeingDeleted(*this);
             cached.sounds.remove(this);
         }
 
@@ -307,7 +307,7 @@ DE_PIMPL(AudioSystem)
 
         void notifyStop()
         {
-            DE_FOR_AUDIENCE(Stop, i) i->soundStopped(*this);
+            DE_NOTIFY(Stop, i) i->soundStopped(*this);
         }
 
         void play(PlayingMode playMode)
@@ -319,7 +319,7 @@ DE_PIMPL(AudioSystem)
             update();
             FMOD_Channel_SetPaused(channel, 0);
 
-            DE_FOR_AUDIENCE(Play, i) { i->soundPlayed(*this); }
+            DE_NOTIFY(Play, i) { i->soundPlayed(*this); }
         }
 
         void stop()
@@ -519,7 +519,7 @@ Sound &AudioSystem::newSound(Waveform const &waveform)
 Sound &AudioSystem::newSound(DotPath const &appWaveform)
 {
     Sound &sound = newSound(BaseGuiApp::waveforms().waveform(appWaveform));
-    DE_FOR_AUDIENCE_VAR(NewSound, i)
+    DE_NOTIFY_VAR(NewSound, i)
     {
         i->newSoundCreated(sound, appWaveform);
     }

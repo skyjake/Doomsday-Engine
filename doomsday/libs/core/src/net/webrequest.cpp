@@ -50,7 +50,7 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
     {
         Loop::mainCall([web, current, total]() {
             auto *d = reinterpret_cast<Impl *>(userData_Object(web));
-            DE_FOR_EACH_OBSERVER(i, d->audienceForProgress)
+            DE_FOR_OBSERVERS(i, d->audienceForProgress)
             {
                 i->webRequestProgress(d->self(), current, total);
             }
@@ -61,7 +61,7 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
     {
         Loop::mainCall([web]() {
             auto *d = reinterpret_cast<Impl *>(userData_Object(web));
-            DE_FOR_EACH_OBSERVER(i, d->audienceForReadyRead)
+            DE_FOR_OBSERVERS(i, d->audienceForReadyRead)
             {
                 i->webRequestReadyRead(d->self());
             }
@@ -90,7 +90,7 @@ DE_PIMPL(WebRequest), public Lockable, public AsyncScope
                 DE_GUARD(this);
                 status = (ok ? Success : Failure);
             }
-            DE_FOR_PUBLIC_AUDIENCE(Finished, i) { i->webRequestFinished(self()); }
+            DE_NOTIFY_PUBLIC(Finished, i) { i->webRequestFinished(self()); }
         });
     }
 

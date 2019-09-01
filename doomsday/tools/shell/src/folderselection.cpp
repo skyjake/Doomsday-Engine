@@ -66,7 +66,7 @@ FolderSelection::FolderSelection(const String &prompt)
     d->edit->audienceForContentChange() += [this]() {
         if (path().exists())
         {
-            DE_FOR_AUDIENCE(Selection, i)
+            DE_NOTIFY(Selection, i)
             {
                 i->folderSelected(path());
             }
@@ -99,7 +99,7 @@ void FolderSelection::selectFolder()
     if (dlg.exec(root()))
     {
         setPath(dlg.selectedPath());
-        DE_FOR_AUDIENCE(Selection, i)
+        DE_NOTIFY(Selection, i)
         {
             i->folderSelected(dlg.selectedPath());
         }

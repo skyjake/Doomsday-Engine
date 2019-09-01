@@ -113,7 +113,7 @@ struct RecurseToggler
     void toggleStateChanged(ToggleWidget &toggle) override
     {
         recursed().value().setElement(key(), new NumberValue(toggle.isActive()));
-        DE_FOR_EACH_OBSERVER(i, owner->audienceForChange())
+        DE_FOR_OBSERVERS(i, owner->audienceForChange())
         {
             i->variableArrayChanged(*owner);
         }

@@ -65,7 +65,7 @@ DE_GUI_PIMPL(HomeItemWidget)
 
                         case MouseClickFinished:
                             owner.itemRightClicked();
-                            DE_FOR_EACH_OBSERVER(i, owner.audienceForContextMenu())
+                            DE_FOR_OBSERVERS(i, owner.audienceForContextMenu())
                             {
                                 i->openItemContextMenu(owner);
                             }
@@ -84,7 +84,7 @@ DE_GUI_PIMPL(HomeItemWidget)
                     if (mouse.state()  == MouseEvent::DoubleClick &&
                         mouse.button() == MouseEvent::Left)
                     {
-                        DE_FOR_EACH_OBSERVER(i, owner.audienceForDoubleClick())
+                        DE_FOR_OBSERVERS(i, owner.audienceForDoubleClick())
                         {
                             i->itemCoubleClicked(owner);
                         }
@@ -433,8 +433,8 @@ bool HomeItemWidget::handleEvent(Event const &event)
 void HomeItemWidget::focusGained()
 {
     setSelected(true);
-    DE_FOR_AUDIENCE(Selection, i) i->itemSelected(*this);
-    DE_FOR_AUDIENCE(Activity, i)  i->mouseActivity(*this);
+    DE_NOTIFY(Selection, i) i->itemSelected(*this);
+    DE_NOTIFY(Activity, i)  i->mouseActivity(*this);
 }
 
 void HomeItemWidget::focusLost()

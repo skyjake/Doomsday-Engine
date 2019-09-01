@@ -152,7 +152,7 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
             const auto percent = std::lround(received * 100 / total);
             self().progressIndicator().setProgress(int(percent));
 
-            DE_FOR_PUBLIC_AUDIENCE(Progress, i)
+            DE_NOTIFY_PUBLIC(Progress, i)
             {
                 i->downloadProgress(int(percent));
             }
@@ -242,7 +242,7 @@ DE_GUI_PIMPL(UpdateDownloadDialog)
         else
         {
             LOG_WARNING("Failed to write to: %s") << savedFilePath;
-            DE_FOR_PUBLIC_AUDIENCE(Failure, i) { i->downloadFailed(uri); }
+            DE_NOTIFY_PUBLIC(Failure, i) { i->downloadFailed(uri); }
         }
 
         self().buttons().clear()

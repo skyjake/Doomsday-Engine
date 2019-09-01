@@ -129,7 +129,7 @@ DE_PIMPL(ToggleWidget)
         // Toggle the state.
         self().setActive(self().isInactive());
 
-        DE_FOR_PUBLIC_AUDIENCE(UserToggle, i)
+        DE_NOTIFY_PUBLIC(UserToggle, i)
         {
             i->toggleStateChangedByUser(self().toggleState());
         }
@@ -159,7 +159,7 @@ void ToggleWidget::setToggleState(ToggleState state, bool notify)
         }
         if (notify)
         {
-            DE_FOR_AUDIENCE(Toggle, i) { i->toggleStateChanged(*this); }
+            DE_NOTIFY(Toggle, i) { i->toggleStateChanged(*this); }
         }
     }
 }

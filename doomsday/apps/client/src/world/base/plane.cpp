@@ -74,7 +74,7 @@ DE_PIMPL(Plane)
 
     ~Impl()
     {
-        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->planeBeingDeleted(self());
+        DE_NOTIFY_PUBLIC(Deletion, i) i->planeBeingDeleted(self());
 
 #ifdef __CLIENT__
         // Stop movement tracking of this plane.
@@ -139,13 +139,13 @@ DE_PIMPL(Plane)
 
     void notifyHeightChanged()
     {
-        DE_FOR_PUBLIC_AUDIENCE(HeightChange, i) i->planeHeightChanged(self());
+        DE_NOTIFY_PUBLIC(HeightChange, i) i->planeHeightChanged(self());
     }
 
 #ifdef __CLIENT__
     void notifySmoothedHeightChanged()
     {
-        DE_FOR_PUBLIC_AUDIENCE(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self());
+        DE_NOTIFY_PUBLIC(HeightSmoothedChange, i) i->planeHeightSmoothedChanged(self());
     }
 
     void surfaceMaterialChanged(Surface &suf)

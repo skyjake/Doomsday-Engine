@@ -43,7 +43,7 @@ DE_PIMPL(RelayWidget)
     {
         if (target == &w)
         {
-            DE_FOR_PUBLIC_AUDIENCE(Target, i)
+            DE_NOTIFY_PUBLIC(Target, i)
             {
                 i->relayTargetBeingDeleted(self());
             }

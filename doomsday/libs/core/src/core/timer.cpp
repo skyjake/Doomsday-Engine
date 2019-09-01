@@ -226,7 +226,7 @@ void Timer::start()
 
 void Timer::trigger()
 {
-    DE_FOR_AUDIENCE(Trigger, i) { i->triggered(*this); }
+    DE_NOTIFY(Trigger, i) { i->triggered(*this); }
 
     if (d->isSingleShot)
     {

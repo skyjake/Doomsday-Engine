@@ -776,7 +776,7 @@ DE_PIMPL(PersistentGLWindow)
         }
 
         // The queue is now empty; all modifications to state have been applied.
-        DE_FOR_PUBLIC_AUDIENCE(AttributeChange, i)
+        DE_NOTIFY_PUBLIC(AttributeChange, i)
         {
             i->windowAttributesChanged(self());
         }
@@ -814,7 +814,7 @@ DE_PIMPL(PersistentGLWindow)
             state = currentState();
         }
 
-        DE_FOR_PUBLIC_AUDIENCE(AttributeChange, i)
+        DE_NOTIFY_PUBLIC(AttributeChange, i)
         {
             i->windowAttributesChanged(self());
         }
@@ -842,7 +842,7 @@ PersistentGLWindow::PersistentGLWindow(String const &id)
                     d->state.setFlag(Impl::State::Centered, false);
 
                     // Notify.
-                    DE_FOR_AUDIENCE(AttributeChange, i)
+                    DE_NOTIFY(AttributeChange, i)
                     {
                         i->windowAttributesChanged(*this);
                     }

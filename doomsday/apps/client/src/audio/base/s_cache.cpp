@@ -476,7 +476,7 @@ DE_PIMPL(SfxSampleCache)
      */
     void notifyRemove(CacheItem &item)
     {
-        DE_FOR_PUBLIC_AUDIENCE(SampleRemove, i)
+        DE_NOTIFY_PUBLIC(SampleRemove, i)
         {
             i->sfxSampleCacheAboutToRemove(item.sample);
         }

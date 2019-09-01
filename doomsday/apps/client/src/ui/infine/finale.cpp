@@ -46,7 +46,7 @@ DE_PIMPL(Finale)
 
     ~Impl()
     {
-        DE_FOR_PUBLIC_AUDIENCE(Deletion, i) i->finaleBeingDeleted(self());
+        DE_NOTIFY_PUBLIC(Deletion, i) i->finaleBeingDeleted(self());
     }
 
     void loadScript(String const &script)

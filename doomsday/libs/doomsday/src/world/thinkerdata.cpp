@@ -49,7 +49,7 @@ DE_PIMPL(ThinkerData)
     {
         multiRemove(thinkerLookup, id, &self());
 
-        DE_FOR_PUBLIC_AUDIENCE(Deletion, i)
+        DE_NOTIFY_PUBLIC(Deletion, i)
         {
             i->thinkerBeingDeleted(*think);
         }

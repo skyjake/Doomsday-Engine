@@ -107,7 +107,7 @@ DE_GUI_PIMPL(TabWidget)
         {
             current = pos;
             updateSelected();
-            DE_FOR_PUBLIC_AUDIENCE(Tab, i)
+            DE_NOTIFY_PUBLIC(Tab, i)
             {
                 i->currentTabChanged(self());
             }

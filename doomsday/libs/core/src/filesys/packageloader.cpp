@@ -460,11 +460,11 @@ Package const &PackageLoader::load(String const &packageId)
 
     try
     {
-        DE_FOR_AUDIENCE(Load, i)
+        DE_NOTIFY(Load, i)
         {
             i->packageLoaded(id);
         }
-        DE_FOR_AUDIENCE(Activity, i)
+        DE_NOTIFY(Activity, i)
         {
             i->setOfLoadedPackagesChanged();
         }
@@ -487,14 +487,14 @@ void PackageLoader::unload(String const &packageId)
 
     if (isLoaded(id))
     {
-        DE_FOR_AUDIENCE(Unload, i)
+        DE_NOTIFY(Unload, i)
         {
             i->aboutToUnloadPackage(id);
         }
 
         d->unload(id);
 
-        DE_FOR_AUDIENCE(Activity, i)
+        DE_NOTIFY(Activity, i)
         {
             i->setOfLoadedPackagesChanged();
         }

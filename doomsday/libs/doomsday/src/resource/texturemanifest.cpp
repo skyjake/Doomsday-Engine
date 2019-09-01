@@ -48,7 +48,7 @@ DE_PIMPL(TextureManifest)
     ~Impl()
     {
         if (texture) texture->audienceForDeletion -= this;
-        DE_FOR_PUBLIC_AUDIENCE_VAR(Deletion, i) i->textureManifestBeingDeleted(self());
+        DE_NOTIFY_PUBLIC_VAR(Deletion, i) i->textureManifestBeingDeleted(self());
     }
 
     // Observes Texture Deletion.
@@ -74,7 +74,7 @@ Texture *TextureManifest::derive()
         setTexture(textureConstructor(*this));
 
         // Notify interested parties that a new texture was derived from the manifest.
-        DE_FOR_AUDIENCE_VAR(TextureDerived, i) i->textureManifestTextureDerived(*this, texture());
+        DE_NOTIFY_VAR(TextureDerived, i) i->textureManifestTextureDerived(*this, texture());
     }
     else
     {
@@ -168,7 +168,7 @@ bool TextureManifest::setUniqueId(int newUniqueId)
     d->uniqueId = newUniqueId;
 
     // Notify interested parties that the uniqueId has changed.
-    DE_FOR_AUDIENCE_VAR(UniqueIdChange, i) i->textureManifestUniqueIdChanged(*this);
+    DE_NOTIFY_VAR(UniqueIdChange, i) i->textureManifestUniqueIdChanged(*this);
 
     return true;
 }
