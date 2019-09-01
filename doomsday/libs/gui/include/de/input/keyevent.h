@@ -65,6 +65,8 @@ public:
     inline const String &text()       const { return _text; }
     inline Modifiers     modifiers()  const { return _mods; }
 
+    bool operator<(const KeyEvent &) const;
+
     /**
      * Translates an SDL key code to a Doomsday key code (see ddkey.h).
      *

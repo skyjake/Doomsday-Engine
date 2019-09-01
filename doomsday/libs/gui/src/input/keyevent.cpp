@@ -485,6 +485,47 @@ KeyEvent::State KeyEvent::state() const
     }
 }
 
+bool KeyEvent::operator<(const KeyEvent &ev) const
+{
+    if (_ddKey && ev._ddKey)
+    {
+        if (_ddKey == ev._ddKey)
+        {
+            return _mods < ev._mods;
+        }
+        return _ddKey < ev._ddKey;
+    }
+
+    if (_sdlKey && ev._sdlKey)
+    {
+        if (_sdlKey == ev._sdlKey)
+        {
+            return _mods < ev._mods;
+        }
+        return _sdlKey < ev._sdlKey;
+    }
+
+    if (_scancode && ev._scancode)
+    {
+        if (_scancode == ev._scancode)
+        {
+            return _mods < ev._mods;
+        }
+        return _scancode < ev._scancode;
+    }
+
+    if (_text && ev._text)
+    {
+        if (_text == ev._text)
+        {
+            return _mods < ev._mods;
+        }
+        return _text < ev._text;
+    }
+
+    return false;
+}
+
 bool KeyEvent::isModifier() const
 {
     switch (_sdlKey)
