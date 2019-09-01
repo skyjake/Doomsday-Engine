@@ -41,5 +41,5 @@ precompiled.h.cpp
 compile_commands.json
 /products
 /debian
-/distrib/deps
 /build
+/deps

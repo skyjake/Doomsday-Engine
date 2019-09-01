@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 import os, platform
 
+def print_config(cfg):
+    print("Configuration:")
+    for key in cfg:
+        print("  %-15s %s" % (key + ':', cfg[key]))
+
+
 IS_CYGWIN = platform.system().startswith('CYGWIN_NT')
 IS_MINGW = os.getenv('MSYSTEM') == 'MINGW64'
 
@@ -63,17 +69,13 @@ cfg = {
     'build_type': 'Release',
     'build_dir': os.path.abspath(
         os.path.join(
-            os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'distrib', 'deps'
+            os.path.dirname(os.path.abspath(__file__)), '..', '..', '..', 'deps'
         )
     ),
     'generator': 'Unix Makefiles' if IS_MINGW or IS_CYGWIN else 'Ninja'
 }
 if os.path.exists(CFG_PATH):
     cfg = json.load(open(CFG_PATH, 'rt'))
-
-print("Configuration:")
-for key in cfg:
-    print("  %-15s %s" % (key + ':', cfg[key]))
 
 show_help = (len(sys.argv) == 1)
 do_build = False
@@ -94,7 +96,8 @@ while idx < len(sys.argv):
     elif opt == 'build':
         do_build = True
     elif opt == '-d':
-        cfg['build_dir'] = os.path.abspath(opt)
+        idx += 1
+        cfg['build_dir'] = os.path.abspath(sys.argv[idx])
     else:
         raise Exception('Unknown option: ' + opt)
     idx += 1
@@ -113,11 +116,13 @@ Options:
   -d <dir>        Set build directory.
   --help          Show this help.
 """)
+    print_config(cfg)
     exit(0)
 
 if not os.path.exists(os.path.dirname(CFG_PATH)):
     os.mkdir(os.path.dirname(CFG_PATH))
 
+print_config(cfg)
 json.dump(cfg, open(CFG_PATH, 'wt'))
 
 BUILD_TYPE = cfg['build_type']
