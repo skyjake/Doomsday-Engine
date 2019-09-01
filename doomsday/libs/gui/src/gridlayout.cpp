@@ -1,4 +1,4 @@
-/** @file gridlayout.cpp Widget layout for a grid of widgets.
+﻿/** @file gridlayout.cpp Widget layout for a grid of widgets.
  *
  * @authors Copyright (c) 2013-2017 Jaakko Keränen <jaakko.keranen@iki.fi>
  *
@@ -393,17 +393,18 @@ DE_PIMPL(GridLayout)
             current->append(*space);
         }
 
-        Rule const &cellWidth = (layoutWidth? *layoutWidth : widget? widget->rule().width() : *space);
+        Rule const &cellWidth =
+            (layoutWidth ? *layoutWidth : widget ? widget->rule().width() : *space);
 
         // Update the column and row maximum width/height.
         if (mode == ColumnFirst)
         {
-            if (cellSpan == 1) updateMaximum(cols, cell.x, cellWidth);
+            updateMaximum(cols, cell.x + cellSpan - 1, cellWidth);
             if (widget) updateMaximum(rows, cell.y, widget->rule().height());
         }
         else
         {
-            if (cellSpan == 1) updateMaximum(rows, cell.y, widget? widget->rule().height() : *space);
+            updateMaximum(rows, cell.y + cellSpan - 1, widget ? widget->rule().height() : *space);
             if (widget) updateMaximum(cols, cell.x, cellWidth);
         }
 
