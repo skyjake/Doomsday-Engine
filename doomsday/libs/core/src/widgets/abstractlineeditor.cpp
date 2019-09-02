@@ -248,7 +248,7 @@ DE_PIMPL(AbstractLineEditor)
         while (iter.pos() > 0 && !(*iter).isAlphaNumeric()) { --iter; }
 
         // At least move one character.
-        if (iter.pos() > 0) --pos;
+        if (iter.pos() > 0) --iter;
 
         // We're inside a word, jump to its beginning.
         while (iter.pos() > 0 && (*(iter - 1)).isAlphaNumeric()) { --iter; }
