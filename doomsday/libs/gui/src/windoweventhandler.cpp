@@ -20,7 +20,7 @@
 #include "de/GLWindow"
 
 #include <de/App>
-#include <de/Log>
+#include <de/LogBuffer>
 #include <de/Loop>
 #include <de/Rule>
 
@@ -191,7 +191,7 @@ DE_PIMPL(WindowEventHandler)
 
     void handleKeyEvent(const SDL_KeyboardEvent &ev)
     {
-        debug("text input active: %i", SDL_IsTextInputActive());
+        LOGDEV_INPUT_XVERBOSE("text input active: %i", SDL_IsTextInputActive());
 
         const int ddKey = KeyEvent::ddKeyFromSDL(ev.keysym.sym, ev.keysym.scancode);
         KeyEvent keyEvent(ev.state == SDL_PRESSED

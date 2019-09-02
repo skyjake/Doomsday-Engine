@@ -24,6 +24,7 @@
 
 #include <de/GLBuffer>
 #include <de/GLState>
+#include <de/LogBuffer>
 
 namespace de {
 
@@ -62,7 +63,7 @@ DE_PIMPL(BaseWindow)
         /// @todo Input drivers should observe the notification instead, input
         /// subsystem passes it to window system. -jk
 
-        debug("keyEvent ev:%i", ev.type());
+        LOGDEV_INPUT_XVERBOSE("keyEvent ev:%i", ev.type());
 
         // Pass the event onto the window system.
 //        if (!
