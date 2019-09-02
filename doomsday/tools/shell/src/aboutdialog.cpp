@@ -10,6 +10,8 @@ AboutDialog::AboutDialog()
 {
     title().setText("Doomsday Shell");
 
+    buttons() << new ButtonItem(Default | Accept, "OK");
+
 //    QVBoxLayout *box = new QVBoxLayout;
 //    setLayout(box);
 //    box->setSizeConstraint(QLayout::SetFixedSize);

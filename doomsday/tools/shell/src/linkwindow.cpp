@@ -23,19 +23,20 @@
 #include "preferences.h"
 #include "errorlogdialog.h"
 
-#include <de/LogBuffer>
-#include <de/term/LogWidget>
-#include <de/term/CommandLineWidget>
-#include <de/Garbage>
-#include <de/EventLoop>
-#include <de/Timer>
-#include <de/KeyActions>
-#include <de/NativeFile>
-#include <de/LogWidget>
 #include <de/CommandWidget>
+#include <de/EventLoop>
+#include <de/Garbage>
+#include <de/KeyActions>
+#include <de/LogBuffer>
+#include <de/LogWidget>
+#include <de/NativeFile>
+#include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
 #include <de/StyledLogSinkFormatter>
 #include <de/TabWidget>
+#include <de/Timer>
+#include <de/term/CommandLineWidget>
+#include <de/term/LogWidget>
 
 //#ifndef MACOSX
 //#  define MENU_IN_LINK_WINDOW
@@ -68,30 +69,27 @@ DE_PIMPL(LinkWindow)
 {
     GuiRootWidget root;
     LogBuffer logBuffer;
-    network::Link *link;
+    network::Link *link = nullptr;
     duint16 waitingForLocalPort = 0;
     Time startedWaitingAt;
     Timer waitTimeout;
     String linkName;
     NativePath errorLog;
-    GuiWidget *tools;
-//    ButtonWidget *statusButton;
-//    ButtonWidget *optionsButton;
-//    ButtonWidget *consoleButton;
-    TabWidget *pageTabs;
-    GuiWidget *newLocalServerPage;
-    GuiWidget *consolePage;
+    GuiWidget *tools = nullptr;
+    TabWidget *pageTabs = nullptr;
+    GuiWidget *newLocalServerPage = nullptr;
+    GuiWidget *consolePage = nullptr;
     List<GuiWidget *> pages;
-    StatusWidget *status;
-    OptionsPage *options;
+    StatusWidget *status = nullptr;
+    OptionsPage *options = nullptr;
     StyledLogSinkFormatter logFormatter{LogEntry::Styled | LogEntry::OmitLevel};
-    LogWidget *logWidget;
-    ServerCommandWidget *commandWidget;
-    LabelWidget *statusMessage;
-    LabelWidget *gameStatus;
-    LabelWidget *timeCounter;
-    LabelWidget *currentHost;
-//    QAction *stopAction;
+    LogWidget *logWidget = nullptr;
+    ServerCommandWidget *commandWidget = nullptr;
+    LabelWidget *statusMessage = nullptr;
+    LabelWidget *gameStatus = nullptr;
+    LabelWidget *timeCounter = nullptr;
+    LabelWidget *currentHost = nullptr;
+    PopupMenuWidget *menu = nullptr;
 #ifdef MENU_IN_LINK_WINDOW
 //    QAction *disconnectAction;
 #endif
@@ -99,15 +97,6 @@ DE_PIMPL(LinkWindow)
     Impl(Public &i)
         : Base(i)
         , root(&i)
-        , link(0)
-//          tools(0),
-//          statusButton(0),
-//          consoleButton(0),
-//          stack(0),
-        , status(0)
-//          gameStatus(0),
-//          timeCounter(0),
-//          currentHost(0)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
@@ -214,6 +203,15 @@ DE_PIMPL(LinkWindow)
 
         // Status bar.
         {
+            menu = &root.addNew<PopupMenuWidget>();
+            menu->items()
+                << new ui::ActionItem("About Doomsday Shell", [](){ GuiShellApp::app().aboutShell(); });
+            auto *menuButton = &root.addNew<PopupButtonWidget>();
+            menuButton->setSizePolicy(ui::Expand, ui::Expand);
+            menuButton->setText("Menu");
+            menuButton->setPopup(*menu, ui::Up);
+            // menuButton->setStyleImage("", menuButton->fontId());
+
             root.add(statusBar);
 
             statusMessage = new LabelWidget;
@@ -251,6 +249,10 @@ DE_PIMPL(LinkWindow)
                     .setInput(Rule::Right, root.viewRight())
                     .setInput(Rule::Bottom, root.viewBottom())
                     .setInput(Rule::Height, statusHeight);
+
+            menuButton->rule()
+                .setInput(Rule::Right, root.viewRight())
+                .setInput(Rule::Bottom, root.viewBottom());
         }
 
         for (auto *page : pages)
@@ -535,6 +537,8 @@ LinkWindow::LinkWindow(const String &id)
     connect(&d->waitTimeout, SIGNAL(timeout()), this, SLOT(checkFoundServers()));
     d->waitTimeout.start();
 #endif
+
+    setTitle("Disconnected");
 }
 
 GuiRootWidget &LinkWindow::root()
@@ -559,10 +563,10 @@ void LinkWindow::drawWindowContent()
     d->root.draw();
 }
 
-//void LinkWindow::setTitle(const QString &title)
-//{
-//    setWindowTitle(title + " - " + tr("Doomsday Shell"));
-//}
+void LinkWindow::setTitle(const String &title)
+{
+    BaseWindow::setTitle(title + " - Doomsday Shell");
+}
 
 bool LinkWindow::isConnected() const
 {

@@ -339,7 +339,10 @@ void GuiShellApp::updateLocalServerMenu()
 
 void GuiShellApp::aboutShell()
 {
-//    AboutDialog().exec();
+    auto *win = d->winSys->focusedWindow();
+    auto *about = new AboutDialog;
+    about->setDeleteAfterDismissed(true);
+    about->exec(win->root());
 }
 
 void GuiShellApp::showHelp()

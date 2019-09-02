@@ -38,7 +38,7 @@ public:
     de::Vec2f windowContentSize() const override;
     void      drawWindowContent() override;
 
-    //    void setTitle(QString const &title);
+    void setTitle(const de::String &title);
 
     bool isConnected() const;
 
