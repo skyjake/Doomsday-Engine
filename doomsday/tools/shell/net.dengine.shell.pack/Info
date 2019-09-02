@@ -1,0 +1,6 @@
+title: Doomsday Shell
+version: 2.2
+license: GPL 3+
+tags: core shell
+
+importPath <modules>

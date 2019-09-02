@@ -1,0 +1,8 @@
+# Config for Doomsday Shell
+import gui
+
+def setDefaults(d)
+    # Applies the apps's defaults.
+    # - d: Record where to set the values.
+    gui.setDefaults(d)
+end

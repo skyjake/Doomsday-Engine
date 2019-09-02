@@ -148,6 +148,8 @@ GuiShellApp::GuiShellApp(const StringList &args)
 
 void GuiShellApp::initialize()
 {
+    addInitPackage("net.dengine.shell");
+
     initSubsystems();
     d->winSys.reset(new ShellWindowSystem);
     addSystem(*d->winSys);

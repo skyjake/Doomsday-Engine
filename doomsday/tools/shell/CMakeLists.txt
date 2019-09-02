@@ -30,6 +30,7 @@ list (APPEND DE_REQUIRED_PACKAGES
     net.dengine.stdlib
     net.dengine.stdlib.gui
 )
+deng_add_package (net.dengine.shell)
 
 deng_add_application (shell ${SOURCES} EXTRA_RESOURCES ${MAC_RES})
 
