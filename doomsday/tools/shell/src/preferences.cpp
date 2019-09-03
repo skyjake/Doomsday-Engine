@@ -135,7 +135,7 @@ void Preferences::saveState()
 {
     auto &cfg = Config::get();
 
-    //    st.setValue("Preferences/appFolder", convert(d->appFolder->path()));
+    cfg.set("Preferences.appFolder", d->appFolder->path().toString());
     cfg.set("Preferences.customIwad", d->useCustomIwad->isActive());
     cfg.set("Preferences.iwadFolder", d->iwadFolder->path().toString());
 

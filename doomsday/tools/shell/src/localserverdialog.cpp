@@ -19,86 +19,70 @@
 #include "localserverdialog.h"
 #include "folderselection.h"
 #include "guishellapp.h"
-//#include "utils.h"
-#include <de/libcore.h>
-#include <de/Socket>
+
+#include <de/ChoiceWidget>
 #include <de/CommandLine>
 #include <de/Config>
+#include <de/LineEditWidget>
+#include <de/Socket>
+#include <de/TextValue>
+#include <de/ToggleWidget>
+#include <de/FoldPanelWidget>
 #include <doomsday/DoomsdayInfo>
-//#include <QVBoxLayout>
-//#include <QDialogButtonBox>
-//#include <QFormLayout>
-//#include <QPushButton>
-//#include <QComboBox>
-//#include <QCheckBox>
-//#include <QLineEdit>
-//#include <QTextEdit>
-//#include <QLabel>
-//#include <QTabWidget>
-//#include <QFileDialog>
-//#include <QSettings>
+
 #include "preferences.h"
 
 using namespace de;
 
-DE_PIMPL(LocalServerDialog)
+DE_GUI_PIMPL(LocalServerDialog)
 , DE_OBSERVES(ServerFinder, Update)
 {
-//    QPushButton *    yes;
-//    QLineEdit *      name;
-//    QComboBox *      games;
-//    QLineEdit *      port;
-//    QLabel *         portMsg;
-//    QCheckBox *      announce;
-//    QLineEdit *      password;
-//    QLabel *         passwordMsg;
-//    QTextEdit *      options;
+    ButtonWidget *   yes;
+    LineEditWidget * name;
+    ChoiceWidget *   games;
+    LineEditWidget * port;
+    LabelWidget *    portMsg;
+    ToggleWidget *   announce;
+    LineEditWidget * password;
+    LabelWidget *    passwordMsg;
+    LineEditWidget * options;
     FolderSelection *runtime;
-    bool             portChanged;
+    FoldPanelWidget *advanced;
+    bool             portChanged = false;
 
-    Impl(Public *i) : Base(i), portChanged(false)
+    Impl(Public *i) : Base(i)
     {
-//        QSettings st;
+        auto &cfg   = Config::get();
+        auto &area  = self().area();
+        auto &rect  = area.contentRule();
+        auto &width = rule("unit") * 100;
 
-//        self().setWindowTitle(tr("Start Local Server"));
+        GridLayout layout(rect.left(), rect.top());
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight);
 
-//        QVBoxLayout *mainLayout = new QVBoxLayout;
-//        self().setLayout(mainLayout);
+        name = &area.addNew<LineEditWidget>();
+        name->rule().setInput(Rule::Width, width);
+        name->setText(cfg.gets("LocalServer.name", "Doomsday"));
+        layout << *LabelWidget::newWithText("Name:", &area) << *name;
 
-//        QTabWidget *tabs = new QTabWidget;
-//        mainLayout->addWidget(tabs, 1);
-
-//        QWidget *gameTab = new QWidget;
-//        QFormLayout *form = new QFormLayout;
-//        gameTab->setLayout(form);
-//        tabs->addTab(gameTab, tr("&Settings"));
-
-//        name = new QLineEdit;
-//        name->setMinimumWidth(240);
-//        name->setText(st.value("LocalServer/name", "Doomsday").toString());
-//        form->addRow(tr("Name:"), name);
-
-//        games = new QComboBox;
-//        games->setEditable(false);
-//        foreach (DoomsdayInfo::Game const &mode, DoomsdayInfo::allGames())
-//        {
-//            games->addItem(convert(mode.title), convert(mode.option));
-//        }
-//        games->setCurrentIndex(games->findData(st.value("LocalServer/gameMode", "doom1-share")));
-//        form->addRow(tr("&Game mode:"), games);
+        games = &area.addNew<ChoiceWidget>();
+        for (const DoomsdayInfo::Game &mode : DoomsdayInfo::allGames())
+        {
+            games->items() << new ChoiceItem(mode.title, TextValue(mode.option));
+        }
+        games->setSelected(
+            games->items().findData(TextValue(cfg.gets("LocalServer.gameMode", "doom1-share"))));
+        layout << *LabelWidget::newWithText("Game Mode:", &area)
+               << *games;
 
         /*QPushButton *opt = new QPushButton(tr("Game &Options..."));
         opt->setDisabled(true);
         form->addRow(0, opt);*/
 
-//        QHBoxLayout *hb;
-//        QPalette pal;
-
-//        hb = new QHBoxLayout;
-//        port = new QLineEdit;
-//        port->setMinimumWidth(90);
-//        port->setMaximumWidth(90);
-//        port->setText(QString::number(st.value("LocalServer/port", DEFAULT_PORT).toInt()));
+        port = &area.addNew<LineEditWidget>();
+        port->rule().setInput(Rule::Width, rule("unit") * 50);
+        port->setText(String::asText(cfg.getui("LocalServer.port", DEFAULT_PORT)));
 
         /*
         // Find an unused port.
@@ -115,75 +99,80 @@ DE_PIMPL(LocalServerDialog)
         }
         */
 
-//        portChanged = false;
+        portChanged = false;
 //        port->setToolTip(tr("The default port is %1.").arg(DEFAULT_PORT));
-//        portMsg = new QLabel;
+        portMsg = &area.addNew<LabelWidget>();
 //        portMsg->setPalette(pal);
 //        hb->addWidget(port, 0);
 //        hb->addWidget(portMsg, 1);
-//        portMsg->hide();
+        portMsg->hide();
 //        form->addRow(tr("TCP port:"), hb);
+        auto *tcpLabel = LabelWidget::newWithText("TCP Port:", &area);
+        layout << *tcpLabel << *port
+               << tcpLabel->rule().width() << *portMsg;
 
-//        form->addRow(0, announce = new QCheckBox(tr("&Public server: visible to all")));
-//        announce->setChecked(st.value("LocalServer/announce", false).toBool());
+        announce = &area.addNew<ToggleWidget>();
+        announce->setText("Public server: visible to all");
+        announce->setActive(cfg.getb("LocalServer.announce", false));
+        layout << Const(0) << *announce;
 
-//        hb = new QHBoxLayout;
-//        password = new QLineEdit;
-//        password->setMinimumWidth(90);
-//        password->setMaximumWidth(90);
-//        password->setText(st.value("LocalServer/password", "").toString());
+        password = &area.addNew<LineEditWidget>();
+        password->rule().setInput(Rule::Width, rule("unit") * 80);
+        password->setText(cfg.gets("LocalServer.password", ""));
 
-//        passwordMsg = new QLabel;
-//        pal = passwordMsg->palette();
-//        pal.setColor(passwordMsg->foregroundRole(), Qt::red);
-//        passwordMsg->setPalette(pal);
-//        hb->addWidget(password, 0);
-//        hb->addWidget(passwordMsg, 1);
-//        passwordMsg->hide();
-//        form->addRow(tr("Shell password:"), hb);
+        passwordMsg = &area.addNew<LabelWidget>();
+        passwordMsg->setTextColor("accent");
+        passwordMsg->hide();
+        layout << *LabelWidget::newWithText("Shell Password:", &area) << *password
+               << Const(0) << *passwordMsg;
 
-//        QWidget *advancedTab = new QWidget;
-//        form = new QFormLayout;
-//        advancedTab->setLayout(form);
-//        tabs->addTab(advancedTab, tr("&Advanced"));
+        // Fold panel for advanced settings.
+        {
+            advanced = &area.addNew<FoldPanelWidget>();
+            auto *content = new GuiWidget;
+            advanced->setContent(content);
 
-//        runtime = new FolderSelection(tr("Select Runtime Folder"));
-//        runtime->setPath(convert(st.value("LocalServer/runtime").toString()));
-//        if (runtime->path().isEmpty())
-//        {
-//            runtime->setPath(DoomsdayInfo::defaultServerRuntimeFolder().toString());
-//        }
-//        form->addRow(tr("Runtime folder:"), runtime);
-//        QObject::connect(runtime, SIGNAL(selected()), thisPublic, SLOT(validate()));
+            GridLayout adLayout(content->rule().left(), content->rule().top());
+            adLayout.setGridSize(2, 0);
+            adLayout.setColumnAlignment(0, ui::AlignRight);
 
-//        options = new QTextEdit;
-//        options->setTabChangesFocus(true);
-//        options->setAcceptRichText(false);
-//        options->setMinimumWidth(300);
-//        options->setMaximumHeight(QFontMetrics(options->font()).lineSpacing() * 5);
-//        options->setText(st.value("LocalServer/options").toString());
-//        form->addRow(tr("Options:"), options);
+            runtime = &content->addNew<FolderSelection>("Select Runtime Folder");
+            runtime->setPath(cfg.gets("LocalServer.runtime", ""));
+            if (runtime->path().isEmpty())
+            {
+                runtime->setPath(DoomsdayInfo::defaultServerRuntimeFolder());
+            }
+            adLayout << *LabelWidget::newWithText("Runtime Folder:", content)
+                     << *runtime;
+            runtime->audienceForSelection() += [this](){ self().validate(); };
 
-//        QDialogButtonBox *bbox = new QDialogButtonBox;
-//        mainLayout->addWidget(bbox);
-//        yes = bbox->addButton(tr("&Start Server"), QDialogButtonBox::YesRole);
-//        QPushButton* no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-//        QObject::connect(yes, SIGNAL(clicked()), thisPublic, SLOT(accept()));
-//        QObject::connect(no, SIGNAL(clicked()), thisPublic, SLOT(reject()));
-//        //QObject::connect(opt, SIGNAL(clicked()), &self, SLOT(configureGameOptions()));
-//        yes->setDefault(true);
+            options = &content->addNew<LineEditWidget>();
+            options->rule().setInput(Rule::Width, width);
+            options->setText(cfg.gets("LocalServer.options", ""));
+            adLayout << *LabelWidget::newWithText("Options:", content)
+                     << *options;
+
+            content->rule().setSize(adLayout);
+
+            auto *foldButton = advanced->makeTitle("Advanced Options");
+            area.add(foldButton);
+
+            layout.append(*foldButton, 2);
+            advanced->rule().setLeftTop(foldButton->rule().left(),
+                                        foldButton->rule().bottom());
+        }
+
+        area.setContentSize(layout.width(), layout.height() + advanced->rule().height());
     }
 
     int portNumber() const
     {
-//        QString txt = port->text().trimmed();
-//        return txt.toInt();
-        return 0;
+        return port->text().strip().toInt();
     }
 
     bool isPortInUse() const
     {
-        int const portNum = portNumber();
+        const int portNum = portNumber();
         for (const auto &sv : GuiShellApp::app().serverFinder().foundServers())
         {
             if (sv.isLocal() && sv.port() == portNum)
@@ -201,46 +190,52 @@ DE_PIMPL(LocalServerDialog)
 };
 
 LocalServerDialog::LocalServerDialog()
-    : d(new Impl(this))
+    : DialogWidget("startlocalserver", WithHeading)
+    , d(new Impl(this))
 {
-//    connect(d->port, SIGNAL(textChanged(QString)), this, SLOT(validate()));
-//    connect(d->announce, SIGNAL(stateChanged(int)), this, SLOT(validate()));
-//    connect(d->password, SIGNAL(textEdited(QString)), this, SLOT(validate()));
-//    connect(d->port, SIGNAL(textEdited(QString)), this, SLOT(portChanged())); // causes port to be saved
-//    connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
-    GuiShellApp::app().serverFinder().audienceForUpdate() += d;
+    heading().setText("Start Local Server");
 
+    buttons()
+        << new DialogButtonItem(Id1 | Default | Accept, "Start Server")
+        << new DialogButtonItem(Reject, "Cancel");
+    d->yes = buttonWidget(Id1);
+
+    GuiShellApp::app().serverFinder().audienceForUpdate() += d;
+    d->port->audienceForContentChange() += [this]() {
+        d->portChanged = true;
+        validate();
+    };
+    d->announce->audienceForToggle() += [this]() { validate(); };
+    d->password->audienceForContentChange() += [this]() { validate(); };
+    audienceForAccept() += [this]() { saveState(); };
     validate();
 }
 
 uint16_t LocalServerDialog::port() const
 {
-//    return uint16_t(d->port->text().toInt());
-    return 0;
+    return uint16_t(d->port->text().toInt());
 }
 
 String LocalServerDialog::name() const
 {
-//    return d->name->text();
-    return {};
+    return d->name->text();
 }
 
 String LocalServerDialog::gameMode() const
 {
-    //return d->games->itemData(d->games->currentIndex()).toString();
-    return {};
+    return d->games->selectedItem().data().asText();
 }
 
 StringList LocalServerDialog::additionalOptions() const
 {
     StringList opts;
-//    opts << "-cmd" << Stringf("server-password \"%s\"", d->password->text().c_str());
-//    opts << "-cmd" << Stringf("server-public %d", d->announce->isChecked()? 1 : 0);
+    opts << "-cmd" << Stringf("server-password \"%s\"", d->password->text().escaped().c_str());
+    opts << "-cmd" << Stringf("server-public %d", d->announce->isActive() ? 1 : 0);
 
     // Parse the provided options using libcore so quotes and other special
     // behavior matches Doomsday.
     CommandLine cmdLine;
-//    cmdLine.parse(convert(d->options->toPlainText()));
+    cmdLine.parse(d->options->text());
     for (dsize i = 0; i < cmdLine.count(); ++i)
     {
         opts << cmdLine.at(i);
@@ -264,56 +259,57 @@ void LocalServerDialog::configureGameOptions()
 
 void LocalServerDialog::saveState()
 {
-//    Config &st = App::config();
-//    st.set("LocalServer.name", d->name->text());
-//    st.set("LocalServer.gameMode", d->games->itemData(d->games->currentIndex()).toString());
-//    if (d->portChanged)
-//    {
-//        st.set("LocalServer.port", d->port->text().toInt());
-//    }
-//    st.set("LocalServer.announce", d->announce->isChecked());
-//    st.set("LocalServer.password", d->password->text());
-//    st.set("LocalServer.runtime", d->runtime->path().toString());
-//    st.set("LocalServer.options", d->options->toPlainText());
+    auto &cfg = Config::get();
+
+    cfg.set("LocalServer.name", d->name->text());
+    cfg.set("LocalServer.gameMode", d->games->selectedItem().data().asText());
+    if (d->portChanged)
+    {
+        cfg.set("LocalServer.port", d->port->text().toInt());
+    }
+    cfg.set("LocalServer.announce", d->announce->isActive());
+    cfg.set("LocalServer.password", d->password->text());
+    cfg.set("LocalServer.runtime", d->runtime->path().toString());
+    cfg.set("LocalServer.options", d->options->text());
 }
 
 void LocalServerDialog::validate()
 {
     bool isValid = true;
 
-//    // Check port.
-//    int port = d->portNumber();
-//    if (d->port->text().isEmpty() || port < 0 || port >= 0x10000)
-//    {
-//        isValid = false;
-//        d->portMsg->setText(tr("Must be between 0 and 65535."));
-//        d->portMsg->show();
-//    }
-//    else
-//    {
-//        // Check known running servers.
-//        bool inUse = d->isPortInUse();
-//        if (inUse)
-//        {
-//            isValid = false;
-//            d->portMsg->setText(tr("Port already in use."));
-//        }
-//        d->portMsg->setVisible(inUse);
-//    }
+    // Check port.
+    int port = d->portNumber();
+    if (d->port->text().isEmpty() || port < 0 || port >= 0x10000)
+    {
+        isValid = false;
+        d->portMsg->setText("Must be between 0 and 65535.");
+        d->portMsg->show();
+    }
+    else
+    {
+        // Check known running servers.
+        bool inUse = d->isPortInUse();
+        if (inUse)
+        {
+            isValid = false;
+            d->portMsg->setText("Port already in use.");
+        }
+        d->portMsg->show(inUse);
+    }
 
-//    if (d->announce->isChecked() && d->password->text().isEmpty())
-//    {
-//        isValid = false;
-//        d->passwordMsg->show();
-//        d->passwordMsg->setText(tr("Required."));
-//    }
-//    else
-//    {
-//        d->passwordMsg->hide();
-//    }
+    if (d->announce->isActive() && d->password->text().isEmpty())
+    {
+        isValid = false;
+        d->passwordMsg->show();
+        d->passwordMsg->setText("Required.");
+    }
+    else
+    {
+        d->passwordMsg->hide();
+    }
 
-//    if (d->runtime->path().isEmpty()) isValid = false;
+    if (d->runtime->path().isEmpty()) isValid = false;
 
-//    d->yes->setEnabled(isValid);
+    d->yes->enable(isValid);
 //    if (isValid) d->yes->setDefault(true);
 }
