@@ -58,6 +58,8 @@
 #endif
 /** @} */
 
+#define DE_CHAR_COPYRIGHT             "\u00a9"
+
 namespace de {
 
 /**
