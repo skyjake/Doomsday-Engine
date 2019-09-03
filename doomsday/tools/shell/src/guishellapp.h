@@ -20,6 +20,7 @@
 #define GUISHELLAPP_H
 
 #include <de/BaseGuiApp>
+#include <de/ImageBank>
 #include <de/PopupMenuWidget>
 #include <de/ServerFinder>
 
@@ -36,6 +37,7 @@ public:
     de::ServerFinder &serverFinder();
 
     static GuiShellApp &app();
+    static de::ImageBank &imageBank();
     de::PopupMenuWidget &localServersMenu();
 //    de::PopupMenuWidget *makeHelpMenu();
 

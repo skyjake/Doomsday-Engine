@@ -5,12 +5,27 @@
 //#include <QDialogButtonBox>
 //#include <QVBoxLayout>
 //#include <QPushButton>
+#include <de/LabelWidget>
+
+using namespace de;
 
 AboutDialog::AboutDialog()
 {
-    title().setText("Doomsday Shell");
+//    AutoRef<Rule> width = rule("unit") * 100;
 
+    title().setText("Doomsday Shell");
     buttons() << new ButtonItem(Default | Accept, "OK");
+
+    auto *logo = new LabelWidget;
+    logo->setImage(GuiShellApp::imageBank().image("logo"));
+    logo->rule().setInput(Rule::Height, logo->rule().width());
+
+    area().add(logo);
+
+    updateLayout();
+
+//    setLayoutWidth(width);
+
 
 //    QVBoxLayout *box = new QVBoxLayout;
 //    setLayout(box);

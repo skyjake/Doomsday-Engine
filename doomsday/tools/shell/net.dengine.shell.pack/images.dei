@@ -1,0 +1,10 @@
+script { import gui }
+
+image logo { path $= gui.dpiScaledImagePath("images/shell.png") }
+
+toolbar {
+    image console { path $= gui.dpiScaledImagePath("images/toolbar_console.png") }
+    image options { path $= gui.dpiScaledImagePath("images/toolbar_options.png") }
+    image status { path $= gui.dpiScaledImagePath("images/toolbar_status.png") }
+    image placeholder { path $= gui.dpiScaledImagePath("images/toolbar_placeholder.png") }
+}

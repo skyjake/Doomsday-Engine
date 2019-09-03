@@ -49,6 +49,7 @@ DE_PIMPL(GuiShellApp)
     std::unique_ptr<ShellWindowSystem> winSys;
     ServerFinder finder;
 
+    ImageBank imageBank;
 //    QMenuBar *menuBar;
 //    QMenu *localMenu;
     PopupMenuWidget *localMenu;
@@ -65,7 +66,7 @@ DE_PIMPL(GuiShellApp)
     Impl(Public *i) : Base(i), prefs(nullptr)
     {
 //        localCheckTimer.setInterval(1000);
-//        localCheckTimer.setSingleShot(false);
+//        localCheckTimer.setSingleShot(false);        
     }
 
     ~Impl()
@@ -154,6 +155,7 @@ void GuiShellApp::initialize()
     d->winSys.reset(new ShellWindowSystem);
     addSystem(*d->winSys);
 
+    d->imageBank.addFromInfo(FS::locate<const File>("/packs/net.dengine.shell/images.dei"));
     d->loadAllShaders();
 }
 
@@ -415,4 +417,9 @@ void GuiShellApp::checkLocalServers()
 //            iter.remove();
 //        }
 //    }
+}
+
+ImageBank &GuiShellApp::imageBank()
+{
+    return app().d->imageBank;
 }
