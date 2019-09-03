@@ -13,14 +13,26 @@ AboutDialog::AboutDialog()
 {
 //    AutoRef<Rule> width = rule("unit") * 100;
 
-    title().setText("Doomsday Shell");
-    buttons() << new ButtonItem(Default | Accept, "OK");
+    title().setText("Doomsday Shell " SHELL_VERSION);
+    message().hide();
+
+    buttons() << new ButtonItem(Default | Accept, "Close");
 
     auto *logo = new LabelWidget;
     logo->setImage(GuiShellApp::imageBank().image("logo"));
-    logo->rule().setInput(Rule::Height, logo->rule().width());
-
+    //logo->rule().setInput(Rule::Height, logo->rule().width());
+    logo->setSizePolicy(ui::Fixed, ui::Expand);
+    logo->setImageFit(ui::FitToSize);
     area().add(logo);
+
+    auto *text = LabelWidget::newWithText("Copyright © 2013-2019 Jaakko Keränen et al.\n\n"
+                                          "The Shell is a utility for controlling and monitoring "
+                                          "Doomsday servers.",
+                                          &area());
+    text->setSizePolicy(ui::Fixed, ui::Expand);
+    text->setTextLineAlignment(ui::AlignLeft);
+    text->setAlignment(ui::AlignLeft);
+    text->setMaximumTextWidth(text->rule().width());
 
     updateLayout();
 
