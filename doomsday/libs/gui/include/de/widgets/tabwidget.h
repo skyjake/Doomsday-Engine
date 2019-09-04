@@ -61,7 +61,7 @@ public:
             return _shortcutKey;
         }
     private:
-        int _shortcutKey; // DDKEY
+        int _shortcutKey = 0; // DDKEY
     };
 
 public:
