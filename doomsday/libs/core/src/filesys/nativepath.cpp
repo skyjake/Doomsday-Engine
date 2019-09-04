@@ -303,12 +303,18 @@ NativePath NativePath::homePath()
 
 bool NativePath::exists(NativePath const &nativePath)
 {
-    DE_ASSERT(!nativePath.fileName().isEmpty());
+//    DE_ASSERT(!nativePath.fileName().isEmpty());
+//    if (nativePath.fileName().isEmpty())
+//    {
+//        return fileExistsCStr_FileInfo(nativePath.endOmitted().toString());
+//    }
     return fileExistsCStr_FileInfo(nativePath);
 }
 
 void NativePath::createPath(NativePath const &nativePath) // static
 {
+    DE_ASSERT(!nativePath.fileName().isEmpty());
+
     NativePath parentPath = nativePath.fileNamePath();
     if (!parentPath.isEmpty() && !exists(parentPath))
     {
