@@ -435,14 +435,21 @@ DE_PIMPL(DoomsdayApp)
 #endif
 
         // Command line paths.
-        if (auto arg = cmdLine.check("-iwad", 1)) // has at least one parameter
+        for (const char *iwadArg : {"-iwad", "-iwadr"})
         {
-            for (auto p = dsize(arg.pos + 1); p < cmdLine.size(); ++p)
+            if (auto arg = cmdLine.check(iwadArg, 1)) // has at least one parameter
             {
-                if (cmdLine.isOption(p)) break;
+                for (auto p = dsize(arg.pos + 1); p < cmdLine.size(); ++p)
+                {
+                    if (cmdLine.isOption(p)) break;
 
-                cmdLine.makeAbsolutePath(p);
-                attachWadFeed("command-line", cmdLine.at(p));
+                    cmdLine.makeAbsolutePath(p);
+                    attachWadFeed("command-line",
+                                  cmdLine.at(p),
+                                  iCmpStr(iwadArg, "-iwadr") == 0
+                                      ? DirectoryFeed::PopulateNativeSubfolders
+                                      : DirectoryFeed::OnlyThisFolder);
+                }
             }
         }
 
