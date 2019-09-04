@@ -477,7 +477,11 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
     // Apply alignment within the provided rectangle.
     Vec2f p = applyAlignment(alignInRect, contentSize, rect);
 
-    DE_ASSERT(d->wraps->height() == d->lines.sizei());
+    if (d->wraps->height() != d->lines.sizei())
+    {
+        debug("[GLTextComposer] lines out of sync! -- allocating now");
+        d->allocLines();
+    }
 
     // Align segments based on tab stops.
     d->updateLineLayout(Rangei(0, d->lines.sizei()));
