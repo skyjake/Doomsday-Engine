@@ -24,22 +24,15 @@
 #include "opendialog.h"
 #include "preferences.h"
 #include "shellwindowsystem.h"
-//#include "utils.h"
+
 #include <de/EscapeParser>
 #include <de/FileSystem>
 #include <de/Id>
 #include <de/Config>
 #include <de/ServerFinder>
+#include <de/Timer>
 #include <doomsday/network/LocalServer>
 #include <SDL_messagebox.h>
-//#include <QMenuBar>
-//#include <QMessageBox>
-//#include <QUrl>
-//#include <QSettings>
-//#include <QTimer>
-//#include <QDesktopServices>
-
-//Q_DECLARE_METATYPE(de::Address)
 
 using namespace de;
 using namespace network;
@@ -59,14 +52,14 @@ DE_PIMPL(GuiShellApp)
 #endif
 //    QList<LinkWindow *> windows;
     Hash<int, LocalServer *> localServers; // port as key
-//    QTimer localCheckTimer;
+    Timer localCheckTimer;
 
     Preferences *prefs;
 
     Impl(Public *i) : Base(i), prefs(nullptr)
     {
-//        localCheckTimer.setInterval(1000);
-//        localCheckTimer.setSingleShot(false);        
+        localCheckTimer.setInterval(1.0_s);
+        localCheckTimer.setSingleShot(false);
     }
 
     ~Impl()
@@ -88,7 +81,11 @@ DE_PIMPL(GuiShellApp)
             self().shaders().addFromInfo(**i);
         }
     }
+
+    DE_PIMPL_AUDIENCE(LocalServerStop)
 };
+
+DE_AUDIENCE_METHOD(GuiShellApp, LocalServerStop)
 
 GuiShellApp::GuiShellApp(const StringList &args)
     : BaseGuiApp(args)
@@ -141,8 +138,8 @@ GuiShellApp::GuiShellApp(const StringList &args)
 //    d->menuBar->addMenu(makeHelpMenu());
 #endif
 
-//    connect(&d->localCheckTimer, SIGNAL(timeout()), this, SLOT(checkLocalServers()));
-//    d->localCheckTimer.start();
+    d->localCheckTimer.audienceForTrigger() += [this]() { checkLocalServers(); };
+    d->localCheckTimer.start();
 
 //    newOrReusedConnectionWindow();
 }
@@ -275,7 +272,8 @@ void GuiShellApp::startLocalServer()
             StringList opts = dlg->additionalOptions();
             if (!Preferences::iwadFolder().isEmpty())
             {
-                opts << "-iwad" << Preferences::iwadFolder();
+                // TODO: Make the subdir recursion a setting.
+                opts << "-iwadr" << Preferences::iwadFolder();
             }
 
             auto *sv = new LocalServer;
@@ -406,18 +404,28 @@ void GuiShellApp::windowClosed(LinkWindow *window)
 
 void GuiShellApp::checkLocalServers()
 {
-//    QMutableHashIterator<int, LocalServer *> iter(d->localServers);
-//    while (iter.hasNext())
-//    {
-//        iter.next();
-//        if (!iter.value()->isRunning())
-//        {
-//            emit localServerStopped(iter.key());
-
-//            delete iter.value();
-//            iter.remove();
-//        }
-//    }
+    List<int> stoppedPorts;
+    for (auto iter = d->localServers.begin(); iter != d->localServers.end(); )
+    {
+        LocalServer *sv = iter->second;
+        if (!sv->isRunning())
+        {
+            stoppedPorts << iter->first;
+            delete sv;
+            iter = d->localServers.erase(iter);
+        }
+        else
+        {
+            ++iter;
+        }
+    }
+    for (int port : stoppedPorts)
+    {
+        DE_NOTIFY(LocalServerStop, i)
+        {
+            i->localServerStopped(port);
+        }
+    }
 }
 
 ImageBank &GuiShellApp::imageBank()

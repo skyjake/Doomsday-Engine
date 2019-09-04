@@ -70,7 +70,6 @@ protected:
     void connected();
     void disconnected();
     void askForPassword();
-    void localServerStopped(int port);
 
 private:
     DE_PRIVATE(d)

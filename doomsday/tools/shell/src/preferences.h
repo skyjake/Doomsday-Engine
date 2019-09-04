@@ -28,6 +28,7 @@ public:
     explicit Preferences();
     
     static de::NativePath iwadFolder();
+    static bool isIwadFolderRecursive();
 //    static QFont consoleFont();
 
 //signals:

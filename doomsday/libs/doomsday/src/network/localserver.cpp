@@ -29,7 +29,7 @@ static const char *ERROR_LOG_NAME = "doomsday-errors.out";
 
 DE_PIMPL_NOREF(LocalServer)
 {
-    Link *     link = nullptr;
+//    Link *     link = nullptr;
     NativePath appPath; // where to find the server
     duint16    port = 0;
     String     name;
@@ -69,7 +69,7 @@ void LocalServer::start(duint16 port,
     // Get rid of a previous error log in this location.
     (d->userDir / ERROR_LOG_NAME).destroy();
 
-    DE_ASSERT(d->link == nullptr);
+//    DE_ASSERT(d->link == nullptr);
 
     CommandLine cmd;
     NativePath bin;
@@ -146,6 +146,11 @@ void LocalServer::start(duint16 port,
 
     LOG_NET_NOTE("Starting local server on port %i using game mode '%s'")
             << port << gameMode;
+    LOG_NET_MSG("Server command line options:");
+    for (size_t i = 1; i < cmd.size(); ++i)
+    {
+        LOG_NET_MSG(" %3d: %s") << i << cmd.at(i);
+    }
 
     d->proc = tF::make_ref(cmd.executeProcess());
 }

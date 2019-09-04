@@ -148,9 +148,9 @@ List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(String const &gameId)
 NativePath DoomsdayInfo::defaultServerRuntimeFolder()
 {
 #if defined (MACOSX)
-    return NativePath::homePath()/"Library/Application Support/Doomsday Engine/server-runtime";
+    return NativePath::homePath()/"Library/Application Support/Doomsday Server/runtime";
 #elif defined (DE_WINDOWS)
-    return NativePath::homePath()/"AppData/Local/Deng Team/Doomsday Engine/server-runtime";
+    return NativePath::homePath()/"AppData/Local/Deng Team/Doomsday Server/runtime";
 #else
     return NativePath::homePath()/".doomsday/server-runtime";
 #endif

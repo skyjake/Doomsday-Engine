@@ -21,7 +21,6 @@
 #include "guishellapp.h"
 #include "optionspage.h"
 #include "preferences.h"
-#include "errorlogdialog.h"
 
 #include <de/CommandWidget>
 #include <de/EventLoop>
@@ -29,6 +28,7 @@
 #include <de/KeyActions>
 #include <de/LogBuffer>
 #include <de/LogWidget>
+#include <de/MessageDialog>
 #include <de/NativeFile>
 #include <de/PopupMenuWidget>
 #include <de/SequentialLayout>
@@ -66,6 +66,7 @@ public:
 DE_PIMPL(LinkWindow)
 , DE_OBSERVES(term::CommandLineWidget, Command)
 , DE_OBSERVES(ServerFinder, Update)
+, DE_OBSERVES(GuiShellApp, LocalServerStop)
 {
     GuiRootWidget root;
     LogBuffer logBuffer;
@@ -100,10 +101,10 @@ DE_PIMPL(LinkWindow)
     {
         // Configure the log buffer.
         logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
-        logBuffer.setAutoFlushInterval(0.1);
+        logBuffer.setAutoFlushInterval(100_ms);
 
         waitTimeout.setSingleShot(false);
-        waitTimeout.setInterval(1.0);
+        waitTimeout.setInterval(1.0_s);
 
         auto *keys = new KeyActions;
         keys->add(KeyEvent::press(',', KeyEvent::Command),
@@ -279,16 +280,16 @@ DE_PIMPL(LinkWindow)
 
     void updateStyle()
     {
-//        if (self().isConnected())
-//        {
+        if (self().isConnected())
+        {
 //            console->root().canvas().setBackgroundColor(Qt::white);
 //            console->root().canvas().setForegroundColor(Qt::black);
-//        }
-//        else
-//        {
+        }
+        else
+        {
 //            console->root().canvas().setBackgroundColor(QColor(192, 192, 192));
 //            console->root().canvas().setForegroundColor(QColor(64, 64, 64));
-//        }
+        }
     }
 
     void updateCurrentHost()
@@ -324,7 +325,7 @@ DE_PIMPL(LinkWindow)
         gameStatus->setText("");
 //        status->linkDisconnected();
         updateCurrentHost();
-//        updateStyle();
+        updateStyle();
 
 //        checkCurrentTab(false);
     }
@@ -333,7 +334,7 @@ DE_PIMPL(LinkWindow)
     {
         using namespace std;
 
-        std::unique_ptr<NativeFile> file(NativeFile::newStandalone(errorLog));
+        std::unique_ptr<const NativeFile> file(NativeFile::newStandalone(errorLog));
         Block text;
         *file >> text;
         return String::fromUtf8(text);
@@ -349,11 +350,15 @@ DE_PIMPL(LinkWindow)
         const String text = readErrorLogContents();
         if (text)
         {
-//            // Show a message box.
-//            ErrorLogDialog dlg;
-//            dlg.setLogContent(text);
-//            dlg.setMessage(tr("Failed to start the server. This may explain why:"));
-//            dlg.exec();
+            debug("Error log from server:%s", text.c_str());
+            // Show a message box.
+            auto *dlg = new MessageDialog;
+            dlg->setDeleteAfterDismissed(true);
+            dlg->title().setText("Server Error");
+            dlg->title().setStyleImage("alert");
+            dlg->message().setText("Failed to start the server. Error log contents:\n\n" + text);
+            dlg->buttons() << new DialogButtonItem(DialogWidget::Accept | DialogWidget::Default);
+            dlg->exec(self().root());
         }
     }
 
@@ -407,6 +412,22 @@ DE_PIMPL(LinkWindow)
     {
         self().checkFoundServers();
     }
+
+    void localServerStopped(int port) override
+    {
+        if (waitingForLocalPort == port)
+        {
+            waitingForLocalPort = 0;
+            if (!errorLog.isEmpty())
+            {
+                if (checkForErrors())
+                {
+                    showErrorLog();
+                }
+            }
+            self().closeConnection();
+        }
+    }
 };
 
 LinkWindow::LinkWindow(const String &id)
@@ -423,6 +444,8 @@ LinkWindow::LinkWindow(const String &id)
 
         d->root.setViewSize(size);
     };
+
+    setIcon(GuiShellApp::app().imageBank().image("logo"));
 
 #if 0
     setWindowIcon(QIcon(":/images/shell.png"));
@@ -530,15 +553,14 @@ LinkWindow::LinkWindow(const String &id)
     resize(QSize(640, 480));
 
     d->console->root().setOverlaidMessage(tr("Disconnected"));
-    setTitle(tr("Disconnected"));
     d->stopAction->setDisabled(true);
+#endif
 
     // Observer local servers.
     GuiShellApp::app().serverFinder().audienceForUpdate() += d;
-    connect(&GuiShellApp::app(), SIGNAL(localServerStopped(int)), this, SLOT(localServerStopped(int)));
-    connect(&d->waitTimeout, SIGNAL(timeout()), this, SLOT(checkFoundServers()));
+    GuiShellApp::app().audienceForLocalServerStop() += d;
+    d->waitTimeout.audienceForTrigger() += [this]() { checkFoundServers(); };
     d->waitTimeout.start();
-#endif
 
     setTitle("Disconnected");
 }
@@ -622,80 +644,80 @@ void LinkWindow::waitForLocalConnection(duint16 localPort,
                                         NativePath const &errorLogPath,
                                         const String &name)
 {
-//    closeConnection();
+    closeConnection();
 
-//    d->logBuffer.flush();
+    d->logBuffer.flush();
 //    d->console->log().clear();
 
-//    d->waitingForLocalPort = localPort;
-//    d->startedWaitingAt = Time();
-//    d->errorLog = errorLogPath;
+    d->waitingForLocalPort = localPort;
+    d->startedWaitingAt = Time();
+    d->errorLog = errorLogPath;
 
-//    d->linkName = name + " - "  + tr("Local Server %1").arg(localPort);
-//    setTitle(d->linkName);
+    d->linkName = Stringf("%s - Local Server %d", name.c_str(), localPort);
+    setTitle(d->linkName);
 
 //    d->console->root().setOverlaidMessage(tr("Waiting for local server..."));
-//    statusBar()->showMessage(tr("Waiting for local server..."));
+    d->statusMessage->setText("Waiting for local server...");
 //    d->checkCurrentTab(true);
 }
 
 void LinkWindow::openConnection(network::Link *link, const String& name)
 {
-//    closeConnection();
+    closeConnection();
 
-//    d->logBuffer.flush();
+    d->logBuffer.flush();
 //    d->console->log().clear();
 
-//    d->link = link;
+    d->link = link;
 
-//    d->link->audienceForAddressResolved() += [this]() { addressResolved(); };
-//    d->link->audienceForConnected()       += [this]() { connected(); };
-//    d->link->audienceForPacketsReady()    += [this]() { handleIncomingPackets(); };
-//    d->link->audienceForDisconnected()    += [this]() { disconnected(); };
+    d->link->audienceForAddressResolved() += [this]() { addressResolved(); };
+    d->link->audienceForConnected()       += [this]() { connected(); };
+    d->link->audienceForPacketsReady()    += [this]() { handleIncomingPackets(); };
+    d->link->audienceForDisconnected()    += [this]() { disconnected(); };
 
-//    if (!name.isEmpty())
-//    {
-//        d->linkName = convert(name);
-//        setTitle(d->linkName);
-//    }
+    if (!name.isEmpty())
+    {
+        d->linkName = name;
+        setTitle(d->linkName);
+    }
 //    d->console->root().setOverlaidMessage(tr("Looking up host..."));
-//    statusBar()->showMessage(tr("Looking up host..."));
+    d->statusMessage->setText("Looking up host...");
 
-//    d->link->connectLink();
-//    d->status->linkConnected(d->link);
+    d->link->connectLink();
+    d->status->linkConnected(d->link);
 //    d->checkCurrentTab(true);
-//    d->updateStyle();
+    d->updateStyle();
 }
 
 void LinkWindow::openConnection(const String &address)
 {
     debug("Opening connection to %s", address.c_str());
 
-//    // Keep trying to connect to 30 seconds.
-//    const String addr = convert(address);
-//    openConnection(new Link(addr, 30.0), addr);
+    // Keep trying to connect to 30 seconds.
+    const String addr{address};
+    openConnection(new network::Link(addr, 30.0), addr);
 }
 
 void LinkWindow::closeConnection()
 {
-//    d->waitingForLocalPort = 0;
-//    d->errorLog.clear();
+    d->waitingForLocalPort = 0;
+    d->errorLog.clear();
 
-//    if (d->link)
-//    {
-//        qDebug() << "Closing existing connection to" << d->link->address().asText().c_str();
+    if (d->link)
+    {
+        debug("Closing existing connection to %s", d->link->address().asText().c_str());
 
 //        // Get rid of the old connection.
-//        d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
-//        d->link->audienceForDisconnected() += [this](){ disconnected(); };
+        d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
+        d->link->audienceForDisconnected() += [this](){ disconnected(); };
 
-//        delete d->link;
-//        d->link = 0;
+        delete d->link;
+        d->link = 0;
 
 //        emit linkClosed(this);
-//    }
+    }
 
-//    d->disconnected();
+    d->disconnected();
 }
 
 void LinkWindow::switchToStatus()
@@ -722,17 +744,16 @@ void LinkWindow::switchToConsole()
 
 void LinkWindow::updateWhenConnected()
 {
-//    if (d->link)
-//    {
-//        TimeSpan elapsed = d->link->connectedAt().since();
-//        QString time = QString("%1:%2:%3")
-//                .arg(int(elapsed.asHours()))
-//                .arg(int(elapsed.asMinutes()) % 60, 2, 10, QLatin1Char('0'))
-//                .arg(int(elapsed) % 60, 2, 10, QLatin1Char('0'));
-//        d->timeCounter->setText(statusText(time));
+    if (d->link)
+    {
+        TimeSpan elapsed = d->link->connectedAt().since();
+        String time = Stringf("%d:%02d:%02d", int(elapsed.asHours()),
+                int(elapsed.asMinutes()) % 60,
+                int(elapsed) % 60);
+        d->timeCounter->setText(time);
 
-//        QTimer::singleShot(1000, this, SLOT(updateWhenConnected()));
-//    }
+        Loop::get().timer(1000_ms, [this](){ updateWhenConnected(); });
+    }
 }
 
 void LinkWindow::handleIncomingPackets()
@@ -831,23 +852,24 @@ void LinkWindow::sendCommandsToServer(const StringList &commands)
 void LinkWindow::addressResolved()
 {
 //    d->console->root().setOverlaidMessage(tr("Connecting..."));
-//    statusBar()->showMessage(tr("Connecting..."));
-//    d->updateCurrentHost();
-//    d->updateStyle();
+    d->statusMessage->setText("Connecting...");
+    d->updateCurrentHost();
+    d->updateStyle();
 }
 
 void LinkWindow::connected()
 {
-//    // Once successfully connected, we don't want to show error log any more.
-//    d->errorLog = "";
+    // Once successfully connected, we don't want to show error log any more.
+    d->errorLog = "";
 
-//    if (d->linkName.isEmpty()) d->linkName = convert(d->link->address().asText());
-//    setTitle(d->linkName);
-//    d->updateCurrentHost();
+    if (d->linkName.isEmpty()) d->linkName = d->link->address().asText();
+    setTitle(d->linkName);
+    d->updateCurrentHost();
 //    d->console->root().setOverlaidMessage("");
-//    d->status->linkConnected(d->link);
-//    statusBar()->clearMessage();
-//    updateWhenConnected();
+    d->status->linkConnected(d->link);
+    d->statusMessage->setText("");
+
+    updateWhenConnected();
 //    d->stopAction->setEnabled(true);
 //#ifdef MENU_IN_LINK_WINDOW
 //    d->disconnectAction->setEnabled(true);
@@ -859,15 +881,15 @@ void LinkWindow::connected()
 
 void LinkWindow::disconnected()
 {
-//    if (!d->link) return;
+    if (!d->link) return;
 
-//    // The link was disconnected.
-//    d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
+    // The link was disconnected.
+    d->link->audienceForPacketsReady() += [this](){ handleIncomingPackets(); };
 
-//    trash(d->link);
-//    d->link = 0;
+    trash(d->link);
+    d->link = nullptr;
 
-//    d->disconnected();
+    d->disconnected();
 
 //    emit linkClosed(this);
 }
@@ -896,27 +918,6 @@ void LinkWindow::askForPassword()
     EventLoop::callback([this]() { closeConnection(); });
 }
 
-void LinkWindow::localServerStopped(int port)
-{
-    if (d->waitingForLocalPort == port)
-    {
-        if (!d->errorLog.isEmpty())
-        {
-            if (d->checkForErrors())
-            {
-                d->showErrorLog();
-            }
-        }
-        closeConnection();
-    }
-}
-
-//void LinkWindow::updateConsoleFontFromPreferences()
-//{
-//    d->console->root().setFont(Preferences::consoleFont());
-//    d->console->update();
-//}
-
 void LinkWindow::checkFoundServers()
 {
     if (!d->waitingForLocalPort) return;
@@ -928,7 +929,7 @@ void LinkWindow::checkFoundServers()
         {
             // This is the one!
             const Address dest = addr;
-            Loop::timer(0.100, [this, dest]() { openConnection(new network::Link(dest)); });
+            Loop::timer(100_ms, [this, dest]() { openConnection(new network::Link(dest)); });
             d->waitingForLocalPort = 0;
         }
     }
