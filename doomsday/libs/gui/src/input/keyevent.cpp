@@ -461,12 +461,12 @@ KeyEvent::KeyEvent()
     , _scancode(0)
 {}
 
-KeyEvent::KeyEvent(State            keyState,
-                   int              ddKey,
-                   int              sdlKey,
-                   int              scancode,
-                   const String &   keyText,
-                   const Modifiers &modifiers)
+KeyEvent::KeyEvent(State         keyState,
+                   int           ddKey,
+                   int           sdlKey,
+                   int           scancode,
+                   const String &keyText,
+                   Modifiers     modifiers)
     : Event(keyState == Pressed ? KeyPress : keyState == Repeat ? KeyRepeat : KeyRelease)
     , _ddKey(ddKey)
     , _sdlKey(sdlKey)
@@ -553,6 +553,11 @@ KeyEvent::Modifiers KeyEvent::modifiersFromSDL(int mods) // static
     if (mods & KMOD_CTRL)  m |= Control;
     if (mods & KMOD_GUI)   m |= Meta;
     return m;
+}
+
+KeyEvent KeyEvent::press(int ddKey, KeyEvent::Modifiers mods)
+{
+    return {Pressed, ddKey, 0, 0, "", mods};
 }
 
 } // namespace de

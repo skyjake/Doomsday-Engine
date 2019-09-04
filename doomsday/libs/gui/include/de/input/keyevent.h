@@ -44,18 +44,23 @@ public:
         Control     = 2,
         Alt         = 4,
         Meta        = 8,
+#if defined (MACOSX)
+        Command     = Meta,
+#else
+        Command     = Control,
+#endif
     };
     using Modifiers = Flags;
 
 public:
     KeyEvent();
 
-    KeyEvent(State            keyState,
-             int              ddKey,
-             int              sdlKey,
-             int              scancode,
-             const String &   keyText,
-             const Modifiers &mods = NoModifiers);
+    KeyEvent(State         keyState,
+             int           ddKey,
+             int           sdlKey,
+             int           scancode,
+             const String &keyText,
+             Modifiers     mods = NoModifiers);
 
     State                state()      const;
     bool                 isModifier() const;
@@ -78,6 +83,11 @@ public:
     static int ddKeyFromSDL(int sdlKey, int scancode);
 
     static Modifiers modifiersFromSDL(int mods);
+
+    /**
+     * Constructs a key press event for UI actions. Use with de::KeyActions.
+     */
+    static KeyEvent press(int ddKey, Modifiers mods = NoModifiers);
 
 private:
     int       _ddKey;
