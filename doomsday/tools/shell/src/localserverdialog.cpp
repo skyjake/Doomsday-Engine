@@ -81,7 +81,7 @@ DE_GUI_PIMPL(LocalServerDialog)
         form->addRow(0, opt);*/
 
         port = &area.addNew<LineEditWidget>();
-        port->rule().setInput(Rule::Width, rule("unit") * 50);
+        port->rule().setInput(Rule::Width, rule("unit") * 25);
         port->setText(String::asText(cfg.getui("LocalServer.port", DEFAULT_PORT)));
 
         /*
@@ -108,8 +108,8 @@ DE_GUI_PIMPL(LocalServerDialog)
         portMsg->hide();
 //        form->addRow(tr("TCP port:"), hb);
         auto *tcpLabel = LabelWidget::newWithText("TCP Port:", &area);
-        layout << *tcpLabel << *port
-               << tcpLabel->rule().width() << *portMsg;
+        layout << *tcpLabel << *port;
+        portMsg->rule().setLeftTop(port->rule().right(), port->rule().top());
 
         announce = &area.addNew<ToggleWidget>();
         announce->setText("Public server: visible to all");
@@ -117,14 +117,16 @@ DE_GUI_PIMPL(LocalServerDialog)
         layout << Const(0) << *announce;
 
         password = &area.addNew<LineEditWidget>();
-        password->rule().setInput(Rule::Width, rule("unit") * 80);
+        password->rule().setInput(Rule::Width, rule("unit") * 50);
         password->setText(cfg.gets("LocalServer.password", ""));
 
         passwordMsg = &area.addNew<LabelWidget>();
         passwordMsg->setTextColor("accent");
         passwordMsg->hide();
-        layout << *LabelWidget::newWithText("Shell Password:", &area) << *password
-               << Const(0) << *passwordMsg;
+        layout << *LabelWidget::newWithText("Shell Password:", &area) << *password;
+        passwordMsg->rule().setLeftTop(password->rule().right(), password->rule().top());
+
+        ButtonWidget *foldButton;
 
         // Fold panel for advanced settings.
         {
@@ -137,6 +139,7 @@ DE_GUI_PIMPL(LocalServerDialog)
             adLayout.setColumnAlignment(0, ui::AlignRight);
 
             runtime = &content->addNew<FolderSelection>("Select Runtime Folder");
+            runtime->rule().setInput(Rule::Width, width);
             runtime->setPath(cfg.gets("LocalServer.runtime", ""));
             if (runtime->path().isEmpty())
             {
@@ -153,16 +156,19 @@ DE_GUI_PIMPL(LocalServerDialog)
                      << *options;
 
             content->rule().setSize(adLayout);
-
-            auto *foldButton = advanced->makeTitle("Advanced Options");
+            foldButton = advanced->makeTitle("Advanced Options");
+            foldButton->setFont("separator.label");
+            foldButton->rule().setInput(Rule::Right, rect.right());
             area.add(foldButton);
 
-            layout.append(*foldButton, 2);
+            foldButton->rule().setLeftTop(rect.left(), password->rule().bottom());
             advanced->rule().setLeftTop(foldButton->rule().left(),
                                         foldButton->rule().bottom());
         }
 
-        area.setContentSize(layout.width(), layout.height() + advanced->rule().height());
+        area.setContentSize(layout.width(),
+                            layout.height() + foldButton->rule().height() +
+                                advanced->rule().height());
     }
 
     int portNumber() const

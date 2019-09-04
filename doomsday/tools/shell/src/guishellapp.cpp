@@ -268,10 +268,11 @@ void GuiShellApp::startLocalServer()
         }
 #endif
         auto *win = d->winSys->focusedWindow();
-        LocalServerDialog dlg;
-        if (dlg.exec(win->root()))
+        auto *dlg = new LocalServerDialog;
+        dlg->setDeleteAfterDismissed(true);
+        if (dlg->exec(win->root()))
         {
-            StringList opts = dlg.additionalOptions();
+            StringList opts = dlg->additionalOptions();
             if (!Preferences::iwadFolder().isEmpty())
             {
                 opts << "-iwad" << Preferences::iwadFolder();
@@ -279,18 +280,18 @@ void GuiShellApp::startLocalServer()
 
             auto *sv = new LocalServer;
             sv->setApplicationPath(Config::get().gets("Preferences.appFolder"));
-            if (!dlg.name().isEmpty())
+            if (!dlg->name().isEmpty())
             {
-                sv->setName(dlg.name());
+                sv->setName(dlg->name());
             }
-            sv->start(dlg.port(),
-                      dlg.gameMode(),
+            sv->start(dlg->port(),
+                      dlg->gameMode(),
                       opts,
-                      dlg.runtimeFolder());
-            d->localServers[dlg.port()] = sv;
+                      dlg->runtimeFolder());
+            d->localServers[dlg->port()] = sv;
 
-            newOrReusedConnectionWindow()->waitForLocalConnection
-                    (dlg.port(), sv->errorLogPath(), dlg.name());
+            newOrReusedConnectionWindow()->waitForLocalConnection(
+                dlg->port(), sv->errorLogPath(), dlg->name());
         }
     }
     catch (const Error &er)

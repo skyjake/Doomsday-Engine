@@ -106,8 +106,10 @@ DE_PIMPL(LinkWindow)
         waitTimeout.setInterval(1.0);
 
         auto *keys = new KeyActions;
-        keys->add(KeyEvent(KeyEvent::Pressed, ',', 0, 0, "", KeyEvent::Control),
+        keys->add(KeyEvent::press(',', KeyEvent::Command),
                   []() { GuiShellApp::app().showPreferences(); });
+        keys->add(KeyEvent::press('n', KeyEvent::Command),
+                  []() { GuiShellApp::app().startLocalServer(); });
         root.add(keys);
     }
 
