@@ -53,20 +53,23 @@ using namespace de;
 //#endif
 //}
 
-class ServerCommandWidget : public CommandWidget
+struct ServerCommandWidget : public CommandWidget
 {
-public:
-    ServerCommandWidget()
-    {}
+    DE_DEFINE_AUDIENCE(Command, void commandSubmitted(const String &))
 
     bool isAcceptedAsCommand(const String &) override { return true; }
-    void executeCommand(const String &) override {}
+    void executeCommand(const String &cmd) override
+    {
+        DE_NOTIFY_VAR(Command, i) { i->commandSubmitted(cmd); }
+    }
 };
 
 DE_PIMPL(LinkWindow)
 , DE_OBSERVES(term::CommandLineWidget, Command)
 , DE_OBSERVES(ServerFinder, Update)
 , DE_OBSERVES(GuiShellApp, LocalServerStop)
+, DE_OBSERVES(ServerCommandWidget, Command)
+, DE_OBSERVES(OptionsPage, Commands)
 {
     GuiRootWidget root;
     LogBuffer logBuffer;
@@ -144,10 +147,23 @@ DE_PIMPL(LinkWindow)
 
             pageTabs->rule().setRect(tools->rule());
 
-            pageTabs->items() << new TabItem(style.images().image("refresh"), "Status")
+            pageTabs->items() << new TabItem(style.images().image("create"), "New Server")
+                              << new TabItem(style.images().image("refresh"), "Status")
                               << new TabItem(style.images().image("gear"), "Options")
                               << new TabItem(style.images().image("gauge"), "Console");
             pageTabs->setCurrent(0);
+            pageTabs->audienceForTab() += [this]() {
+                GuiWidget *page = nullptr;
+                switch (pageTabs->current())
+                {
+                    case 0: page = newLocalServerPage; break;
+                    case 1: page = status; break;
+                    case 2: page = options; break;
+                    case 3: page = consolePage; break;
+                    default: break;
+                }
+                setCurrentPage(page);
+            };
 
             tools->rule()
                     .setInput(Rule::Left, root.viewLeft())
@@ -156,13 +172,28 @@ DE_PIMPL(LinkWindow)
                     .setInput(Rule::Height, pageTabs->rule().height());
         }
 
-        // Pages.
-        consolePage = new GuiWidget;
-        root.add(consolePage);
-        pages << consolePage;
+        // Status page.
+        {
+            status = new StatusWidget;
+            root.add(status);
+            pages << status;
+        }
+
+        // Game options page.
+        {
+            options = new OptionsPage;
+            root.add(options);
+            pages << options;
+
+            options->audienceForCommands() += this;
+        }
 
         // Console page.
         {
+            consolePage = new GuiWidget;
+            root.add(consolePage);
+            pages << consolePage;
+
             const auto &pageRule = consolePage->rule();
 
             logWidget = new LogWidget;
@@ -177,6 +208,7 @@ DE_PIMPL(LinkWindow)
                     .setInput(Rule::Bottom, pageRule.bottom());
             consolePage->add(commandWidget);
             commandWidget->setEmptyContentHint("Enter commands");
+            commandWidget->audienceForCommand += this;
 
             logWidget->rule()
                     .setInput(Rule::Left, pageRule.left())
@@ -267,14 +299,24 @@ DE_PIMPL(LinkWindow)
                     .setInput(Rule::Bottom, statusBar->rule().top());
         }
 
-        setCurrentPage(1);
+        setCurrentPage(newLocalServerPage);
     }
 
-    void setCurrentPage(ui::DataPos page)
+    void commandSubmitted(const String &command) override
     {
-        for (ui::DataPos i = 0; i < pages.size(); ++i)
+        self().sendCommandToServer(command);
+    }
+
+    void commandsSubmitted(const StringList &commands) override
+    {
+        self().sendCommandsToServer(commands);
+    }
+
+    void setCurrentPage(GuiWidget *page)
+    {
+        for (size_t i = 0; i < pages.size(); ++i)
         {
-            pages[i]->show(i == page);
+            pages[i]->show(pages[i] == page);
         }
     }
 
@@ -299,7 +341,7 @@ DE_PIMPL(LinkWindow)
         {
             if (self().isConnected() && !link->address().isNull())
             {
-                txt = Stringf(_E(b) "%s" _E(.) ":%ud",
+                txt = Stringf(_E(b) "%s" _E(.) ":%u",
                               link->address().isLocal() ? "localhost"
                                                         : link->address().hostName().c_str(),
                               link->address().port());
@@ -447,11 +489,9 @@ LinkWindow::LinkWindow(const String &id)
 
     setIcon(GuiShellApp::app().imageBank().image("logo"));
 
+    GuiShellApp &app = GuiShellApp::app();
+
 #if 0
-    setWindowIcon(QIcon(":/images/shell.png"));
-
-    GuiShellApp *app = &GuiShellApp::app();
-
     d->stopAction = new QAction(tr("S&top"), this);
     connect(d->stopAction, SIGNAL(triggered()), app, SLOT(stopServer()));
 
@@ -484,28 +524,27 @@ LinkWindow::LinkWindow(const String &id)
 #endif
 
     d->stack = new QStackedWidget;
+#endif
 
     // Status page.
-    d->status = new StatusWidget;
-    d->stack->addWidget(d->status);
+//    d->status = new StatusWidget;
+//    d->stack->addWidget(d->status);
 
     // Game options page.
-    d->options = new OptionsPage;
-    d->stack->addWidget(d->options);
-    connect(d->options, SIGNAL(commandsSubmitted(QStringList)), this, SLOT(sendCommandsToServer(QStringList)));
 
     // Console page.
-    d->console = new ConsolePage;
-    d->stack->addWidget(d->console);
-    d->logBuffer.addSink(d->console->log().logSink());
-    d->console->cli().audienceForCommand() += d;
+//    d->console = new ConsolePage;
+//    d->stack->addWidget(d->console);
+//    d->logBuffer.addSink(d->console->log().logSink());
+//    d->console->cli().audienceForCommand() += d;
 
     d->updateStyle();
 
-    d->stack->setCurrentIndex(0); // status
+//    d->stack->setCurrentIndex(0); // status
 
-    setCentralWidget(d->stack);
+//    setCentralWidget(d->stack);
 
+#if 0
     // Status bar.
 #ifdef MACOSX
     QFont statusFont(font());
@@ -661,7 +700,7 @@ void LinkWindow::waitForLocalConnection(duint16 localPort,
 //    d->checkCurrentTab(true);
 }
 
-void LinkWindow::openConnection(network::Link *link, const String& name)
+void LinkWindow::openConnection(network::Link *link, const String &name)
 {
     closeConnection();
 
@@ -925,6 +964,7 @@ void LinkWindow::checkFoundServers()
     auto const &finder = GuiShellApp::app().serverFinder();
     for (const auto &addr : finder.foundServers())
     {
+//        debug("found: %s   isLocal: %d   port: %d", addr.asText().c_str(), addr.isLocal(), addr.port());
         if (addr.isLocal() && addr.port() == d->waitingForLocalPort)
         {
             // This is the one!

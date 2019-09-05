@@ -102,6 +102,7 @@ DE_GUI_PIMPL(LocalServerDialog)
         portChanged = false;
 //        port->setToolTip(tr("The default port is %1.").arg(DEFAULT_PORT));
         portMsg = &area.addNew<LabelWidget>();
+        portMsg->setTextColor("accent");
 //        portMsg->setPalette(pal);
 //        hb->addWidget(port, 0);
 //        hb->addWidget(portMsg, 1);

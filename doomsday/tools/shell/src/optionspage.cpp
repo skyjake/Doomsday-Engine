@@ -130,7 +130,7 @@ DE_PIMPL(OptionsPage)
     GameOption::Value const *selectValue(GameOption const &opt) const
     {
         GameOption::Value const *selected = &opt.allowedValues.at(0);
-        for (int i = 1; i < opt.allowedValues.sizei(); ++i)
+        for (size_t i = 1; i < opt.allowedValues.size(); ++i)
         {
             auto const &val = opt.allowedValues.at(i);
             if (checkRuleKeyword(val.ruleSemantic))
@@ -235,7 +235,11 @@ DE_PIMPL(OptionsPage)
             i->commandsSubmitted(commands);
         }
     }
+
+    DE_PIMPL_AUDIENCE(Commands)
 };
+
+DE_AUDIENCE_METHOD(OptionsPage, Commands)
 
 OptionsPage::OptionsPage()
     : GuiWidget("options")
