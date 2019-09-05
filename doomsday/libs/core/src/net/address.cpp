@@ -29,63 +29,92 @@ namespace de {
 
 DE_PIMPL_NOREF(Address)
 {
-    String            pendingLookup;
+    String            _pendingLookup;
     tF::ref<iAddress> _addr;
     duint16           port = 0;
     String            textRepr;
 
     enum Special { Undefined, LocalHost, RemoteHost };
     Special special = Undefined;
+
+    static bool isPredefinedLoopback(const String &host)
+    {
+        static const RegExp localRegex(
+            "localhost|localhost.localdomain|::1|fe80::1|fe80::1%.*|127.0.0.1", CaseInsensitive);
+        return localRegex.exactMatch(host);
+    }
+
+    void setPending(const String &pending)
+    {
+        _pendingLookup = pending;
+
+        // Check for the known local addresses.
+        if (isPredefinedLoopback(pending))
+        {
+            special = LocalHost;
+        }
+    }
     
     iAddress *get()
     {
-        if (pendingLookup)
+        if (_pendingLookup)
         {
             _addr = tF::make_ref(new_Address());
-            lookupTcp_Address(_addr, pendingLookup, port);
-            pendingLookup.clear();
+            lookupTcp_Address(_addr, _pendingLookup, port);
+            _pendingLookup.clear();
         }
         return _addr;
     }
 
-    void clearCached()
+    String dbgstr() const
     {
-        textRepr.clear();
-        special = Impl::Undefined;
+        return Stringf("Address %p: pending='%s' addr=%p (%s) port=%d repr='%s' spec=%s",
+                       this,
+                       _pendingLookup.c_str(),
+                       static_cast<const iAddress *>(_addr),
+                       _addr ? cstr_String(hostName_Address(_addr)) : "--",
+                       port,
+                       textRepr.c_str(),
+                       special == Undefined ? "Undefined"
+                                            : special == LocalHost ? "LocalHost" : "RemoteHost");
     }
 };
 
 Address::Address() : d(new Impl)
 {}
 
-Address::Address(char const *address, duint16 port) : d(new Impl)
+Address::Address(const char *address, duint16 port) : d(new Impl)
 {
-    d->pendingLookup = address;
-    d->port          = port;
+    d->port = port;
+    d->setPending(address);
 }
 
 Address::Address(const iAddress *address) : d(new Impl)
 {
     d->_addr.reset(address);
     d->port = port_Address(address);
+    d->special =
+        Impl::isPredefinedLoopback(hostName_Address(address)) ? Impl::LocalHost : Impl::Undefined;
 }
 
-Address Address::take(iAddress *addr)
+Address Address::take(iAddress *address)
 {
     Address taker;
-    taker.d->_addr.reset(addr);
-    taker.d->port = port_Address(addr);
-    taker.d->pendingLookup.clear();
+    taker.d->_addr.reset(address);
+    taker.d->port = port_Address(address);
+    taker.d->_pendingLookup.clear();
+    taker.d->special =
+        Impl::isPredefinedLoopback(hostName_Address(address)) ? Impl::LocalHost : Impl::Undefined;
     return taker;
 }
 
 Address::Address(const Address &other) : d(new Impl)
 {
     d->_addr.reset(other.d->_addr); // reference the same object
-    d->port          = other.d->port;
-    d->pendingLookup = other.d->pendingLookup;
-    d->textRepr      = other.d->textRepr;
-    d->special       = other.d->special;
+    d->port           = other.d->port;
+    d->_pendingLookup = other.d->_pendingLookup;
+    d->textRepr       = other.d->textRepr;
+    d->special        = other.d->special;
 }
 
 Address::operator const iAddress *() const
@@ -96,10 +125,10 @@ Address::operator const iAddress *() const
 Address &Address::operator=(const Address &other)
 {
     d->_addr.reset(other.d->_addr); // reference the same object
-    d->pendingLookup = other.d->pendingLookup;
-    d->port          = other.d->port;
-    d->textRepr      = other.d->textRepr;
-    d->special       = other.d->special;
+    d->_pendingLookup = other.d->_pendingLookup;
+    d->port           = other.d->port;
+    d->textRepr       = other.d->textRepr;
+    d->special        = other.d->special;
     return *this;
 }
 
@@ -121,19 +150,17 @@ bool Address::isNull() const
 
 String Address::hostName() const
 {
-    if (d->pendingLookup) return d->pendingLookup;
+    if (d->_pendingLookup) return d->_pendingLookup;
     return String(hostName_Address(d->get()));
 }
 
 bool Address::isLoopback() const
 {
-    const String host = hostName();
-    return (host == "localhost" ||
-            host == "localhost.localdomain" ||
-            host == "127.0.0.1" ||
-            host == "::1" ||
-            host == "fe80::1" ||
-            host.beginsWith("fe80::1%"));
+    if (d->special == Impl::LocalHost)
+    {
+        return true;
+    }
+    return Impl::isPredefinedLoopback(hostName());
 }
 
 bool Address::isLocal() const
@@ -163,9 +190,9 @@ duint16 Address::port() const
 
 String Address::asText() const
 {
-    if (d->pendingLookup)
+    if (d->_pendingLookup)
     {
-        String str = d->pendingLookup;
+        String str = d->_pendingLookup;
         if (d->port)
         {
             str += Stringf(":%u", d->port);
@@ -178,7 +205,8 @@ String Address::asText() const
     }
     if (!d->textRepr)
     {
-        d->textRepr = (isLocal()? String("localhost") : String::take(toString_Address(d->get())));
+        d->textRepr = (d->special == Impl::LocalHost ? String("localhost")
+                                                     : String::take(toString_Address(d->get())));
         if (d->port)
         {
             d->textRepr += Stringf(":%u", d->port);
@@ -218,11 +246,36 @@ std::ostream &operator<<(std::ostream &os, Address const &address)
 
 bool Address::isHostLocal(const Address &host) // static
 {
-    DE_ASSERT(!host.isNull());
+    if (host.d->special == Impl::LocalHost)
+    {
+        return true;
+    }
+    else if (host.d->special == Impl::RemoteHost)
+    {
+        return false;
+    }
+    if (host.d->_pendingLookup)
+    {
+        DE_ASSERT(host.isNull());
+        // Will have to look up the IP address now.
+        host.d->get();
+    }
+//    debug("isHostLocal %s?", host.d->dbgstr().c_str());
     for (const Address &addr : internal::NetworkInterfaces::get().allAddresses())
     {
-        if (addr == host) return true;
+//        debug("- checking: %s", addr.d->dbgstr().c_str());
+        if (addr.hostName().compareWithoutCase(host.hostName()) == 0)
+        {
+            if (host.d->special == Impl::Undefined)
+            {
+                // Now we know.
+                host.d->special = Impl::LocalHost;
+            }
+//            debug("  YES");
+            return true;
+        }
     }
+//    debug("  NO");
     return false;
 }
 
