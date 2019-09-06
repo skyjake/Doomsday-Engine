@@ -38,6 +38,8 @@ DE_GUI_PIMPL(TabWidget)
     LabelWidget *  selected      = nullptr;
     AnimationRule *selLeft       = nullptr;
     AnimationRule *selWidth      = nullptr;
+    DotPath        tabFontId     = "tab.label";
+    DotPath        selTabFontId  = "tab.selected";
 
     Impl(Public *i) : Base(i)
     {
@@ -72,7 +74,7 @@ DE_GUI_PIMPL(TabWidget)
         // Set the font and style.
         ButtonWidget &btn = widget.as<ButtonWidget>();
         btn.setSizePolicy(ui::Expand, ui::Expand);
-        btn.setFont("tab.label");
+        btn.setFont(tabFontId);
         btn.setOverrideImageSize(btn.font().height());
         btn.margins().set("dialog.gap");
         btn.set(Background());
@@ -122,7 +124,7 @@ DE_GUI_PIMPL(TabWidget)
         {
             bool const sel = (i == current);
             ButtonWidget &w = buttons->itemWidget<ButtonWidget>(buttons->items().at(i));
-            w.setFont(sel? "tab.selected" : "tab.label");
+            w.setFont(sel ? selTabFontId : tabFontId);
             w.setOpacity(sel? 1.f : 0.7f, 0.4);
             if (!invertedStyle)
             {
@@ -183,6 +185,12 @@ TabWidget::TabWidget(String const &name)
     : GuiWidget(name), d(new Impl(this))
 {
     rule().setInput(Rule::Height, d->buttons->rule().height());
+}
+
+void TabWidget::setTabFont(const DotPath &fontId, const DotPath &selectedFontId)
+{
+    d->tabFontId    = fontId;
+    d->selTabFontId = selectedFontId;
 }
 
 void TabWidget::useInvertedStyle()

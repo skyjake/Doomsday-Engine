@@ -67,6 +67,8 @@ public:
 public:
     TabWidget(String const &name = String());
 
+    void setTabFont(const DotPath &fontId, const DotPath &selectedFontId);
+
     void useInvertedStyle();
 
     void clearItems();
