@@ -26,6 +26,8 @@ using namespace de;
 DE_GUI_PIMPL(MapOutlineWidget)
 {
     ProgressWidget *progress; // shown initially, before outline received
+    DotPath oneSidedColorId{"inverted.altaccent"};
+    DotPath twoSidedColorId{"altaccent"};
 
     // Outline.
     Rectanglei mapBounds;
@@ -61,7 +63,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
         vbuf = nullptr;
     }
 
-    void makeOutline(network::MapOutlinePacket const &mapOutline)
+    void makeOutline(const network::MapOutlinePacket &mapOutline)
     {
         if (!vbuf) return;
 
@@ -74,8 +76,8 @@ DE_GUI_PIMPL(MapOutlineWidget)
 
         mapBounds = Rectanglei();
 
-        Vec4f const oneSidedColor = style().colors().colorf("inverted.altaccent");
-        Vec4f const twoSidedColor = style().colors().colorf("altaccent");
+        const Vec4f oneSidedColor = style().colors().colorf(oneSidedColorId);
+        const Vec4f twoSidedColor = style().colors().colorf(twoSidedColorId);
 
         DefaultVertexBuf::Builder verts;
         DefaultVertexBuf::Type vtx;
@@ -96,7 +98,7 @@ DE_GUI_PIMPL(MapOutlineWidget)
             }
             else
             {
-                mapBounds = Rectanglei(line.start, line.start);
+                mapBounds = {line.start, line.start}; // initialize
             }
             mapBounds.include(line.end);
         }
@@ -129,6 +131,12 @@ MapOutlineWidget::MapOutlineWidget(String const &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {}
+
+void MapOutlineWidget::setColors(const DotPath &oneSidedLine, const DotPath &twoSidedLine)
+{
+    d->oneSidedColorId = oneSidedLine;
+    d->twoSidedColorId = twoSidedLine;
+}
 
 void MapOutlineWidget::setOutline(network::MapOutlinePacket const &mapOutline)
 {

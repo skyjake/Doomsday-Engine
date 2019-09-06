@@ -17,18 +17,15 @@
  */
 
 #include "statuswidget.h"
-//#include "utils.h"
 #include <de/String>
+#include <de/LabelWidget>
 #include <de/Map>
 #include <doomsday/DoomsdayInfo>
-//#include <QPainter>
-//#include <QPicture>
-//#include <QTimer>
-//#include <QMap>
+#include <doomsday/MapOutlineWidget>
 
 using namespace de;
 
-DE_PIMPL(StatusWidget)
+DE_GUI_PIMPL(StatusWidget)
 {
     using Player  = network::PlayerInfoPacket::Player;
     using Players = network::PlayerInfoPacket::Players;
@@ -41,19 +38,42 @@ DE_PIMPL(StatusWidget)
     String           gameMode;
     String           map;
 //    QPicture          mapOutline;
+    MapOutlineWidget *mapOutline;
+    LabelWidget *     stateLabel;
+    LabelWidget *   titleLabel;
     Rectangled      mapBounds;
     Players         players;
     Map<int, Vec2i> oldPlayerPositions;
 
     Impl(Public &i) : Base(i), link(0)
-    {}
+    {
+        auto &rect = i.rule();
+
+        mapOutline = &i.addNew<MapOutlineWidget>("map");
+        mapOutline->setColors("accent", "inverted.accent");
+        mapOutline->rule().setRect(rect);
+
+        stateLabel = &i.addNew<LabelWidget>("gamestate");
+        stateLabel->setSizePolicy(ui::Expand, ui::Expand);
+        stateLabel->setFont("heading");
+        stateLabel->margins().setTop(rule("gap") * 2);
+        stateLabel->rule().setMidAnchorX(rect.midX()).setInput(Rule::Top, rect.top());
+
+        titleLabel = &i.addNew<LabelWidget>("title");
+        titleLabel->setSizePolicy(ui::Expand, ui::Expand);
+        titleLabel->margins().setTop(Const(0));
+        titleLabel->setFont("title");
+        titleLabel->rule()
+            .setMidAnchorX(rect.midX())
+            .setInput(Rule::Top, stateLabel->rule().bottom());
+    }
 
     void clear()
-    {
+    {        
         gameMode.clear();
         map.clear();
         mapBounds = {};
-//        mapOutline = QPicture();
+        mapOutline->setOutline({});
         oldPlayerPositions.clear();
         players.clear();
     }
@@ -80,11 +100,16 @@ void StatusWidget::setGameState(String mode, String rules, String mapId, String 
         d->map += " (" + mapId + ")";
     }
 
-    update();
+    d->stateLabel->setText(d->gameMode);
+    d->titleLabel->setText(d->map);
 }
 
 void StatusWidget::setMapOutline(const network::MapOutlinePacket &outline)
 {
+    d->mapOutline->setOutline(outline);
+
+    // Draw player positions.
+
 //    d->mapBounds  = QRect();
 //    d->mapOutline = QPicture();
 
@@ -123,7 +148,6 @@ void StatusWidget::setPlayerInfo(network::PlayerInfoPacket const &plrInfo)
     }
 
     d->players = plrInfo.players();
-    update();
 }
 
 #if 0
@@ -261,12 +285,10 @@ void StatusWidget::updateWhenConnected()
 void StatusWidget::linkConnected(network::Link *link)
 {
     d->link = link;
-    update();
 }
 
 void StatusWidget::linkDisconnected()
 {
     d->link = nullptr;
     d->clear();
-    update();
 }

@@ -53,9 +53,15 @@ using namespace de;
 //#endif
 //}
 
+DE_STATIC_STRING(PROMPT_ID, "prompt")
+
 struct ServerCommandWidget : public CommandWidget
 {
     DE_DEFINE_AUDIENCE(Command, void commandSubmitted(const String &))
+
+    ServerCommandWidget()
+        : CommandWidget(PROMPT_ID())
+    {}
 
     bool isAcceptedAsCommand(const String &) override { return true; }
     void executeCommand(const String &cmd) override
@@ -84,8 +90,8 @@ DE_PIMPL(LinkWindow)
     GuiWidget *newLocalServerPage = nullptr;
     GuiWidget *consolePage = nullptr;
     List<GuiWidget *> pages;
-    StatusWidget *status = nullptr;
-    OptionsPage *options = nullptr;
+    StatusWidget *statusPage = nullptr;
+    OptionsPage *optionsPage = nullptr;
     StyledLogSinkFormatter logFormatter{LogEntry::Styled | LogEntry::OmitLevel};
     LogWidget *logWidget = nullptr;
     ServerCommandWidget *commandWidget = nullptr;
@@ -97,6 +103,8 @@ DE_PIMPL(LinkWindow)
 #ifdef MENU_IN_LINK_WINDOW
 //    QAction *disconnectAction;
 #endif
+
+    enum Tab { NewServer, Status, Options, Console };
 
     Impl(Public &i)
         : Base(i)
@@ -156,10 +164,10 @@ DE_PIMPL(LinkWindow)
                 GuiWidget *page = nullptr;
                 switch (pageTabs->current())
                 {
-                    case 0: page = newLocalServerPage; break;
-                    case 1: page = status; break;
-                    case 2: page = options; break;
-                    case 3: page = consolePage; break;
+                    case Tab::NewServer: page = newLocalServerPage; break;
+                    case Tab::Status: page = statusPage; break;
+                    case Tab::Options: page = optionsPage; break;
+                    case Tab::Console: page = consolePage; break;
                     default: break;
                 }
                 setCurrentPage(page);
@@ -174,18 +182,18 @@ DE_PIMPL(LinkWindow)
 
         // Status page.
         {
-            status = new StatusWidget;
-            root.add(status);
-            pages << status;
+            statusPage = new StatusWidget;
+            root.add(statusPage);
+            pages << statusPage;
         }
 
         // Game options page.
         {
-            options = new OptionsPage;
-            root.add(options);
-            pages << options;
+            optionsPage = new OptionsPage;
+            root.add(optionsPage);
+            pages << optionsPage;
 
-            options->audienceForCommands() += this;
+            optionsPage->audienceForCommands() += this;
         }
 
         // Console page.
@@ -225,7 +233,7 @@ DE_PIMPL(LinkWindow)
             root.add(newLocalServerPage);
             pages << newLocalServerPage;
 
-            auto *newButton = new ButtonWidget;
+            auto *newButton = new ButtonWidget("newserverbutton");
             newLocalServerPage->add(newButton);
             newButton->setSizePolicy(ui::Expand, ui::Expand);
             newButton->setText("New Local Server...");
@@ -317,6 +325,17 @@ DE_PIMPL(LinkWindow)
         for (size_t i = 0; i < pages.size(); ++i)
         {
             pages[i]->show(pages[i] == page);
+            pages[i]->enable(pages[i] == page);
+        }
+
+        // Focus on the appropriate widget.
+        if (page == newLocalServerPage)
+        {
+            root.setFocus(root.guiFind("newserverbutton"));
+        }
+        else if (page == consolePage)
+        {
+            root.setFocus(root.guiFind(PROMPT_ID()));
         }
     }
 
@@ -723,7 +742,7 @@ void LinkWindow::openConnection(network::Link *link, const String &name)
     d->statusMessage->setText("Looking up host...");
 
     d->link->connectLink();
-    d->status->linkConnected(d->link);
+    d->statusPage->linkConnected(d->link);
 //    d->checkCurrentTab(true);
     d->updateStyle();
 }
@@ -761,13 +780,17 @@ void LinkWindow::closeConnection()
 
 void LinkWindow::switchToStatus()
 {
+    d->pageTabs->setCurrent(Impl::Tab::Status);
+
 //    d->optionsButton->setChecked(false);
 //    d->consoleButton->setChecked(false);
 //    d->stack->setCurrentWidget(d->link? d->status : d->newLocalServerPage);
 }
 
 void LinkWindow::switchToOptions()
-{
+{    
+    d->pageTabs->setCurrent(Impl::Tab::Options);
+
 //    d->statusButton->setChecked(false);
 //    d->consoleButton->setChecked(false);
 //    d->stack->setCurrentWidget(d->options);
@@ -775,6 +798,8 @@ void LinkWindow::switchToOptions()
 
 void LinkWindow::switchToConsole()
 {
+    d->pageTabs->setCurrent(Impl::Tab::Console);
+
 //    d->statusButton->setChecked(false);
 //    d->optionsButton->setChecked(false);
 //    d->stack->setCurrentWidget(d->console);
@@ -836,28 +861,29 @@ void LinkWindow::handleIncomingPackets()
             debug("TODO: received console lexicon");
             break;
 
-        case Protocol::GameState: {
-            Record &rec = static_cast<RecordPacket *>(packet.get())->record();
-            const String rules = rec["rules"];
-            String gameType = rules.containsWord("dm") ?  "Deathmatch"    :
-                              rules.containsWord("dm2") ? "Deathmatch II" :
-                                                          "Co-op";
+        case Protocol::GameState:
+        {
+            Record &     rec      = static_cast<RecordPacket *>(packet.get())->record();
+            const String rules    = rec["rules"];
+            String       gameType = rules.containsWord("dm") ? "Deathmatch"
+                                  : rules.containsWord("dm2") ? "Deathmatch II" : "Co-op";
 
-            d->status->setGameState(rec["mode"].value().asText(),
-                                    gameType,
-                                    rec["mapId"].value().asText(),
-                                    rec["mapTitle"].value().asText());
+            d->statusPage->setGameState(rec["mode"].value().asText(),
+                                        gameType,
+                                        rec["mapId"].value().asText(),
+                                        rec["mapTitle"].value().asText());
 
             d->updateStatusBarWithGameState(rec);
-//            d->options->updateWithGameState(rec);
-            break; }
+            d->optionsPage->updateWithGameState(rec);
+            break;
+        }
 
         case Protocol::MapOutline:
-            d->status->setMapOutline(*static_cast<MapOutlinePacket *>(packet.get()));
+            d->statusPage->setMapOutline(*static_cast<MapOutlinePacket *>(packet.get()));
             break;
 
         case Protocol::PlayerInfo:
-            d->status->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.get()));
+            d->statusPage->setPlayerInfo(*static_cast<PlayerInfoPacket *>(packet.get()));
             break;
 
         default:
@@ -905,7 +931,7 @@ void LinkWindow::connected()
     setTitle(d->linkName);
     d->updateCurrentHost();
 //    d->console->root().setOverlaidMessage("");
-    d->status->linkConnected(d->link);
+    d->statusPage->linkConnected(d->link);
     d->statusMessage->setText("");
 
     updateWhenConnected();
@@ -914,7 +940,7 @@ void LinkWindow::connected()
 //    d->disconnectAction->setEnabled(true);
 //#endif
 //    d->checkCurrentTab(true);
-
+    switchToStatus();
 //    emit linkOpened(this);
 }
 
