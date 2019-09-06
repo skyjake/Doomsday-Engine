@@ -30,8 +30,8 @@ using namespace de;
 
 static struct
 {
-    char const *name;
-    char const *mode;
+    const char *name;
+    const char *mode;
 }
 const gameTable[] =
 {
@@ -41,6 +41,10 @@ const gameTable[] =
     { "DOOM II",                                "doom2" },
     { "Final DOOM: Plutonia Experiment",        "doom2-plut" },
     { "Final DOOM: TNT Evilution",              "doom2-tnt" },
+    { "Ultimate DOOM (BFG Editing)",            "doom1-bfg" },
+    { "DOOM II (BFG Edition)",                  "doom2-bfg" },
+    { "No Rest for the Living (BFG Editing)",   "doom2-nerve" },
+
     { "Chex Quest",                             "chex" },
     { "HacX",                                   "hacx" },
 
@@ -52,29 +56,27 @@ const gameTable[] =
     { "Hexen v1.0",                             "hexen-v10" },
     { "Hexen: Death Kings of Dark Citadel",     "hexen-dk" },
     { "Hexen Demo",                             "hexen-demo" },
-
-    { nullptr, nullptr }
 };
 
 List<DoomsdayInfo::Game> DoomsdayInfo::allGames()
 {
     List<Game> games;
-    for (int i = 0; gameTable[i].name; ++i)
+    for (const auto &entry : gameTable)
     {
         Game game;
-        game.title  = gameTable[i].name;
-        game.option = gameTable[i].mode;
+        game.title  = entry.name;
+        game.option = entry.mode;
         games.append(game);
     }
     return games;
 }
 
-String DoomsdayInfo::titleForGame(String const &mode)
+String DoomsdayInfo::titleForGame(const String &mode)
 {
-    for (int i = 0; gameTable[i].name; ++i)
+    for (const auto &entry : gameTable)
     {
-        if (gameTable[i].mode == mode)
-            return gameTable[i].name;
+        if (mode == entry.mode)
+            return entry.name;
     }
     return mode;
 }
