@@ -55,8 +55,8 @@ DE_GUI_PIMPL(StatusWidget)
 
         stateLabel = &i.addNew<LabelWidget>("gamestate");
         stateLabel->setSizePolicy(ui::Expand, ui::Expand);
-        stateLabel->setFont("heading");
-        stateLabel->margins().setTop(rule("gap") * 2);
+        //stateLabel->setFont("heading");
+        stateLabel->margins().setTop(rule("gap") * 2).setBottom(Const(0));
         stateLabel->rule().setMidAnchorX(rect.midX()).setInput(Rule::Top, rect.top());
 
         titleLabel = &i.addNew<LabelWidget>("title");
@@ -97,7 +97,7 @@ void StatusWidget::setGameState(String mode, String rules, String mapId, String 
     d->map = mapTitle;
     if (!mapId.isEmpty() && !mapTitle.contains(mapId))
     {
-        d->map += " (" + mapId + ")";
+        d->map += " (" + mapId.upper() + ")";
     }
 
     d->stateLabel->setText(d->gameMode);
