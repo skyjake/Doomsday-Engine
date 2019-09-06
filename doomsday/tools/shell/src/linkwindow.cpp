@@ -78,7 +78,7 @@ DE_PIMPL(LinkWindow)
 , DE_OBSERVES(OptionsPage, Commands)
 {
     GuiRootWidget root;
-    LogBuffer logBuffer;
+    LogBuffer serverLogBuffer; // remote log
     network::Link *link = nullptr;
     duint16 waitingForLocalPort = 0;
     Time startedWaitingAt;
@@ -111,8 +111,8 @@ DE_PIMPL(LinkWindow)
         , root(&i)
     {
         // Configure the log buffer.
-        logBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
-        logBuffer.setAutoFlushInterval(100_ms);
+        serverLogBuffer.setMaxEntryCount(50); // buffered here rather than appBuffer
+        serverLogBuffer.setAutoFlushInterval(100_ms);
 
         waitTimeout.setSingleShot(false);
         waitTimeout.setInterval(1.0_s);
@@ -151,6 +151,7 @@ DE_PIMPL(LinkWindow)
             root.add(tools);
 
             pageTabs = new TabWidget;
+            pageTabs->setTabFont("heading", "heading");
             tools->add(pageTabs);
 
             pageTabs->rule().setRect(tools->rule());
@@ -224,7 +225,8 @@ DE_PIMPL(LinkWindow)
                     .setInput(Rule::Top, pageRule.top())
                     .setInput(Rule::Bottom, commandWidget->rule().top());
 
-            LogBuffer::get().addSink(logWidget->logSink());
+            LogBuffer::get().addSink(logWidget->logSink()); // local log entries
+            serverLogBuffer.addSink(logWidget->logSink());
         }
 
         // Page for quickly starting a new local server.
@@ -506,9 +508,10 @@ LinkWindow::LinkWindow(const String &id)
         d->root.setViewSize(size);
     };
 
-    setIcon(GuiShellApp::app().imageBank().image("logo"));
-
     GuiShellApp &app = GuiShellApp::app();
+
+    setIcon(app.imageBank().image("logo"));
+
 
 #if 0
     d->stopAction = new QAction(tr("S&top"), this);
@@ -704,7 +707,7 @@ void LinkWindow::waitForLocalConnection(duint16 localPort,
 {
     closeConnection();
 
-    d->logBuffer.flush();
+    d->serverLogBuffer.flush();
 //    d->console->log().clear();
 
     d->waitingForLocalPort = localPort;
@@ -723,7 +726,7 @@ void LinkWindow::openConnection(network::Link *link, const String &name)
 {
     closeConnection();
 
-    d->logBuffer.flush();
+    d->serverLogBuffer.flush();
 //    d->console->log().clear();
 
     d->link = link;
@@ -848,11 +851,11 @@ void LinkWindow::handleIncomingPackets()
             LogEntryPacket *pkt = static_cast<LogEntryPacket *>(packet.get());
             for (const LogEntry *e : pkt->entries())
             {
-                d->logBuffer.add(new LogEntry(*e, LogEntry::Remote));
+                d->serverLogBuffer.add(new LogEntry(*e, LogEntry::Remote));
             }
             // Flush immediately so we don't have to wait for the autoflush
             // to occur a bit later.
-            d->logBuffer.flush();
+            d->serverLogBuffer.flush();
             break; }
 
         case Protocol::ConsoleLexicon:
@@ -899,7 +902,7 @@ void LinkWindow::sendCommandToServer(const String &command)
         // Echo the command locally.
         LogEntry *e = new LogEntry(LogEntry::Generic | LogEntry::Note, "", 0, ">",
                                    LogEntry::Args() << LogEntry::Arg::newFromPool(command));
-        d->logBuffer.add(e);
+        d->serverLogBuffer.add(e);
 
         std::unique_ptr<RecordPacket> packet(d->link->protocol().newCommand(command));
         *d->link << *packet;
