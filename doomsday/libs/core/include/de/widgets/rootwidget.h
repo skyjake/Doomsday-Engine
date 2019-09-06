@@ -74,7 +74,7 @@ public:
      *
      * @param widget  Widget to have focus. Set to @c NULL to clear focus.
      */
-    void setFocus(Widget *widget);
+    void setFocus(const Widget *widget);
 
     /**
      * Returns the current focus widget.

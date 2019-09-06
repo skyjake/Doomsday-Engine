@@ -107,7 +107,7 @@ void RootWidget::setViewSize(Size const &size)
     notifyTree(&Widget::viewResized);
 }
 
-void RootWidget::setFocus(Widget *widget)
+void RootWidget::setFocus(const Widget *widget)
 {
     if (widget == d->focus) return; // No change.
 
@@ -118,7 +118,7 @@ void RootWidget::setFocus(Widget *widget)
 
     if (widget && widget->behavior().testFlag(Focusable))
     {
-        d->focus.reset(widget);
+        d->focus.reset(const_cast<Widget *>(widget));
         if (d->focus)
         {
             //qDebug() << "focus gained by" << d->focus;
@@ -131,7 +131,7 @@ void RootWidget::setFocus(Widget *widget)
         //qDebug() << "focus changed to" << d->focus;
         DE_NOTIFY(FocusChange, i)
         {
-            i->focusedWidgetChanged(widget);
+            i->focusedWidgetChanged(const_cast<Widget *>(widget));
         }
     }
 }
