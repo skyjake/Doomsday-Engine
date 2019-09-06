@@ -27,9 +27,10 @@
 class MapOutlineWidget : public de::GuiWidget
 {
 public:
-    MapOutlineWidget(de::String const &name = de::String());
+    MapOutlineWidget(const de::String &name = {});
 
-    void setOutline(network::MapOutlinePacket const &mapOutline);
+    void setColors(const de::DotPath &oneSidedLine, const de::DotPath &twoSidedLine);
+    void setOutline(const network::MapOutlinePacket &mapOutline);
 
     // Events.
     void drawContent() override;
