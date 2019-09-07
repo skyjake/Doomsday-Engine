@@ -109,7 +109,7 @@ DE_PIMPL(OpenDialog)
     /**
      * Determines if a host is currently listed in the address combo box.
      */
-    bool isListed(Address const &host) const
+    bool isListed(const Address &host) const
     {
 //        for (int i = firstFoundIdx; i < address->count(); ++i)
 //        {
@@ -177,7 +177,7 @@ void OpenDialog::updateLocalList(bool autoselect)
 //                               .arg(finder.foundServers().size() != 1? "s" : ""));
 
 //        // Update the list of servers.
-//        foreach (Address const &sv, finder.foundServers())
+//        foreach (const Address &sv, finder.foundServers())
 //        {
 //            QString label = convert(sv.asText()) + QString(" (%1; %2/%3)")
 //                    .arg(convert(finder.name(sv).left(CharPos(20))))

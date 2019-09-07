@@ -30,7 +30,7 @@ class FolderSelection : public de::GuiWidget
 public:
     explicit FolderSelection(const de::String &prompt);
 
-    void setPath(de::NativePath const &path);
+    void setPath(const de::NativePath &path);
     void setEnabled(bool yes);
     void setDisabled(bool yes) { setEnabled(!yes); }
 

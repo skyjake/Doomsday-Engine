@@ -425,7 +425,7 @@ DE_PIMPL(LinkWindow)
         }
     }
 
-//    QToolButton *addToolButton(QString const &label, QIcon const &icon)
+//    QToolButton *addToolButton(const QString &label, const QIcon &icon)
 //    {
 //        QToolButton *tb = new QToolButton;
 //        tb->setToolButtonStyle(Qt::ToolButtonTextUnderIcon);
@@ -702,7 +702,7 @@ void LinkWindow::closeEvent(QCloseEvent *event)
 #endif
 
 void LinkWindow::waitForLocalConnection(duint16 localPort,
-                                        NativePath const &errorLogPath,
+                                        const NativePath &errorLogPath,
                                         const String &name)
 {
     closeConnection();
@@ -990,7 +990,7 @@ void LinkWindow::checkFoundServers()
 {
     if (!d->waitingForLocalPort) return;
 
-    auto const &finder = GuiShellApp::app().serverFinder();
+    const auto &finder = GuiShellApp::app().serverFinder();
     for (const auto &addr : finder.foundServers())
     {
 //        debug("found: %s   isLocal: %d   port: %d", addr.asText().c_str(), addr.isLocal(), addr.port());

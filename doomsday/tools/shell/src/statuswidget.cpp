@@ -30,20 +30,15 @@ DE_GUI_PIMPL(StatusWidget)
     using Player  = network::PlayerInfoPacket::Player;
     using Players = network::PlayerInfoPacket::Players;
 
-    network::Link *link;
-
-//    QFont             smallFont;
-//    QFont             largeFont;
-//    QFont             playerFont;
-    String           gameMode;
-    String           map;
-//    QPicture          mapOutline;
+    network::Link *   link;
+    String            gameMode;
+    String            map;
     MapOutlineWidget *mapOutline;
     LabelWidget *     stateLabel;
-    LabelWidget *   titleLabel;
-    Rectangled      mapBounds;
-    Players         players;
-    Map<int, Vec2i> oldPlayerPositions;
+    LabelWidget *     titleLabel;
+    Rectangled        mapBounds;
+    Players           players;
+    Map<int, Vec2i>   oldPlayerPositions;
 
     Impl(Public &i) : Base(i), link(0)
     {
@@ -116,7 +111,7 @@ void StatusWidget::setMapOutline(const network::MapOutlinePacket &outline)
 //    QPainter painter(&d->mapOutline);
 //    for (int i = 0; i < outline.lineCount(); ++i)
 //    {
-//        shell::MapOutlinePacket::Line const &ln = outline.line(i);
+//        const shell::MapOutlinePacket::Line &ln = outline.line(i);
 //        QPen pen(ln.type == shell::MapOutlinePacket::OneSidedLine? Qt::black : Qt::gray);
 //#ifdef DE_QT_5_0_OR_NEWER
 //        pen.setCosmetic(true); // transformation will not affect line width
@@ -139,7 +134,7 @@ void StatusWidget::setMapOutline(const network::MapOutlinePacket &outline)
 //    update();
 }
 
-void StatusWidget::setPlayerInfo(network::PlayerInfoPacket const &plrInfo)
+void StatusWidget::setPlayerInfo(const network::PlayerInfoPacket &plrInfo)
 {
     for (const auto &plr : d->players)
     {

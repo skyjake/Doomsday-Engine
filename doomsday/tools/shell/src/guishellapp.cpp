@@ -325,7 +325,7 @@ void GuiShellApp::updateLocalServerMenu()
 //    d->localMenu->setDisabled(d->finder.foundServers().isEmpty());
 //    d->localMenu->clear();
 
-//    foreach (Address const &host, d->finder.foundServers())
+//    foreach (const Address &host, d->finder.foundServers())
 //    {
 //        QString label = QString("%1 - %2 (%3/%4)")
 //                .arg(host.asText().c_str())

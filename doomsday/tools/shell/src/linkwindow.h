@@ -52,7 +52,7 @@ public:
 //    void closed(LinkWindow *window);
 
     void openConnection(const de::String &address);
-    void waitForLocalConnection(de::duint16 localPort, de::NativePath const &errorLogPath, const de::String &name);
+    void waitForLocalConnection(de::duint16 localPort, const de::NativePath &errorLogPath, const de::String &name);
     void openConnection(network::Link *link, const de::String &name = {});
     void closeConnection();
     void sendCommandToServer(const de::String& command);
