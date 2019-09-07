@@ -80,6 +80,15 @@ void TestApp::initialize()
     win->show();
 }
 
+void TestApp::createAnotherWindow()
+{
+    if (d->winSys->count() == 1)
+    {
+        auto *win = d->winSys->newWindow<MainWindow>("extra");
+        win->show();
+    }
+}
+
 TestApp &TestApp::app()
 {
     return *static_cast<TestApp *>(DE_APP);

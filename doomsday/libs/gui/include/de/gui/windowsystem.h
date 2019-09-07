@@ -79,12 +79,21 @@ public:
      */
     static BaseWindow &main();
 
+    void setFocusedWindow(const String &id);
+
+    static BaseWindow *focusedWindow();
+
     /**
      * Returns a pointer to the @em main window.
-     *
+     *0
      * @see hasMain()
      */
-    inline static BaseWindow *mainPtr() { return mainExists()? &main() : nullptr; }
+    inline static BaseWindow *mainPtr() { return mainExists() ? &main() : nullptr; }
+
+    /**
+     * @return Number of windows.
+     */
+    dsize count() const;
 
     /**
      * Find a window.
@@ -95,7 +104,7 @@ public:
      */
     BaseWindow *find(const String &id) const;
 
-    LoopResult forAll(const std::function<LoopResult (BaseWindow *)> &func);
+    LoopResult forAll(const std::function<LoopResult(BaseWindow *)> &func);
 
     /**
      * Closes all windows, including the main window.
@@ -106,6 +115,11 @@ public:
      * Returns the window system's UI style.
      */
     Style &style();
+
+    /**
+     * Poll SDL events and dispatch them to the window(s) that should handle them.
+     */
+    void pollAndDispatchEvents();
 
     /**
      * Dispatches a mouse position event with the latest mouse position. This

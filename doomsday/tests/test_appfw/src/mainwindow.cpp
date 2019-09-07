@@ -121,6 +121,9 @@ DE_PIMPL(MainWindow)
         button->rule()
                 .setMidAnchorX(test->rule().midX())
                 .setInput(Rule::Bottom, test->rule().bottom());
+        button->audienceForPress() += []() {
+            TestApp::app().createAnotherWindow();
+        };
         compositor->add(button);
 
         // Try some flow.

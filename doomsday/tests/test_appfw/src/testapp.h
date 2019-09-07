@@ -33,6 +33,7 @@ public:
     TestApp(const de::StringList &args);
 
     void initialize();
+    void createAnotherWindow();
 
     static TestApp &        app();
     static AppWindowSystem &windowSystem();

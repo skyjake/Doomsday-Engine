@@ -203,7 +203,7 @@ public:
      */
     bool ownsEventHandler(WindowEventHandler *handler) const;
 
-    void checkNativeEvents();
+//    void checkNativeEvents();
 
     enum GrabMode { GrabNormal, GrabHalfSized };
 
@@ -255,6 +255,8 @@ public:
      * Returns a handle to the SDL window instance.
      */
     void *sdlWindow() const;
+
+    void handleWindowEvent(const void *ptr);
 
     virtual void draw() = 0;
 

@@ -20,6 +20,7 @@
 #include "de/GLWindow"
 #include "de/EventLoop"
 #include "de/CoreEvent"
+#include "de/WindowSystem"
 
 namespace de {
 
@@ -31,10 +32,13 @@ DE_PIMPL(GuiLoop)
     Impl(Public *i) : Base(i)
     {}
 
-    void windowSwapped(GLWindow &) override
+    void windowSwapped(GLWindow &window) override
     {
         // Always do a loop iteration after a frame is complete.
-        EventLoop::post(new CoreEvent([this]() { self().nextLoopIteration(); }));
+        if (&window == &GLWindow::getMain())
+        {
+            EventLoop::post(new CoreEvent([this]() { self().nextLoopIteration(); }));
+        }
     }
 };
 
@@ -59,10 +63,11 @@ GuiLoop &GuiLoop::get() // static
 
 void GuiLoop::nextLoopIteration()
 {
+    WindowSystem::get().pollAndDispatchEvents();
+
     if (d->window)
     {
         d->window->glActivate();
-        d->window->checkNativeEvents();
     }
 
     Loop::nextLoopIteration();

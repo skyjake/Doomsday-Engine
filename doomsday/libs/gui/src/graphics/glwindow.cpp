@@ -31,6 +31,7 @@
 #include <de/GLFramebuffer>
 #include <de/Id>
 #include <de/Log>
+#include <de/WindowSystem>
 #include <de/c_wrapper.h>
 
 #include <SDL_events.h>
@@ -41,10 +42,10 @@ static GLWindow *mainWindow = nullptr;
 
 DE_PIMPL(GLWindow)
 {
-    SDL_Window *   window   = nullptr;
+    SDL_Window *  window    = nullptr;
     SDL_GLContext glContext = nullptr;
 
-    Dispatch        mainCall;
+    Dispatch            mainCall;
     GLFramebuffer       backing;
     WindowEventHandler *handler       = nullptr; ///< Event handler.
     bool                initialized   = false;
@@ -75,6 +76,12 @@ DE_PIMPL(GLWindow)
         SDL_GL_SetAttribute(SDL_GL_GREEN_SIZE, 6);
         SDL_GL_SetAttribute(SDL_GL_BLUE_SIZE,  5);
         SDL_GL_SetAttribute(SDL_GL_DEPTH_SIZE, 16);
+
+        if (mainWindow)
+        {
+            SDL_GL_SetAttribute(SDL_GL_SHARE_WITH_CURRENT_CONTEXT, SDL_TRUE);
+            mainWindow->glActivate();
+        }
 
         window = SDL_CreateWindow("GLWindow",
                                   SDL_WINDOWPOS_UNDEFINED,
@@ -236,44 +243,6 @@ DE_PIMPL(GLWindow)
         DE_NOTIFY_PUBLIC(Swap, i) { i->windowSwapped(self()); }
     }
 
-    /**
-     * Get events from SDL and route them to the appropriate place for handling.
-     */
-    void handleEvents()
-    {
-        try
-        {
-            SDL_Event event;
-            while (SDL_PollEvent(&event))
-            {
-                switch (event.type)
-                {
-                case SDL_QUIT:
-                    DE_GUI_APP->quit(0);
-                    break;
-
-                case SDL_WINDOWEVENT:
-                case SDL_MOUSEMOTION:
-                case SDL_MOUSEBUTTONDOWN:
-                case SDL_MOUSEBUTTONUP:
-                case SDL_MOUSEWHEEL:
-                case SDL_KEYDOWN:
-                case SDL_KEYUP:
-                case SDL_TEXTINPUT:
-                case SDL_MULTIGESTURE:
-                case SDL_FINGERUP:
-                case SDL_FINGERDOWN:
-                    handleSDLEvent(event);
-                    break;
-                }
-            }
-        }
-        catch (const Error &er)
-        {
-            LOG_WARNING("Uncaught error during event processing: %s") << er.asText();
-        }
-    }
-
     void checkWhichDisplay()
     {
         const int disp = SDL_GetWindowDisplayIndex(window);
@@ -283,70 +252,6 @@ DE_PIMPL(GLWindow)
             debug("[GLWindow] display index changed: %d", displayIndex);
             DE_NOTIFY_PUBLIC(Display, i) { i->windowDisplayChanged(self()); }
             updatePixelRatio();
-        }
-    }
-
-    void handleSDLEvent(const SDL_Event &event)
-    {
-        switch (event.type)
-        {
-            case SDL_KEYDOWN:
-            case SDL_KEYUP:
-            case SDL_TEXTINPUT:
-            case SDL_MOUSEMOTION:
-            case SDL_MOUSEBUTTONDOWN:
-            case SDL_MOUSEBUTTONUP:
-            case SDL_MOUSEWHEEL:
-            case SDL_FINGERUP:
-            case SDL_FINGERDOWN:
-            case SDL_MULTIGESTURE: handler->handleSDLEvent(&event); break;
-
-            case SDL_WINDOWEVENT:
-                switch (event.window.event)
-                {
-                    case SDL_WINDOWEVENT_EXPOSED:
-                        debug("[GLWindow] window expose event");
-                        if (!initialized)
-                        {
-                            self().initializeGL();
-                            self().update();
-                        }
-                        updatePixelRatio();
-                        checkWhichDisplay();
-                        break;
-
-                    case SDL_WINDOWEVENT_MOVED:
-                        checkWhichDisplay();
-                        DE_NOTIFY_PUBLIC(Move, i)
-                        {
-                            i->windowMoved(self(), Vec2i(event.window.data1, event.window.data2));
-                        }
-                        break;
-
-                    case SDL_WINDOWEVENT_RESIZED:
-                        resizeEvent(event.window);
-                        checkWhichDisplay();
-                        break;
-
-                    case SDL_WINDOWEVENT_CLOSE: break;
-
-                    case SDL_WINDOWEVENT_FOCUS_GAINED:
-                    case SDL_WINDOWEVENT_FOCUS_LOST: handler->handleSDLEvent(&event); break;
-
-                    case SDL_WINDOWEVENT_MAXIMIZED:
-                    case SDL_WINDOWEVENT_MINIMIZED:
-                    case SDL_WINDOWEVENT_RESTORED:
-                    case SDL_WINDOWEVENT_HIDDEN: break;
-
-                    case SDL_WINDOWEVENT_SHOWN:
-                        self().update();
-                        break;
-
-                    default: break;
-                }
-                break;
-
-            default: break;
         }
     }
 
@@ -626,9 +531,52 @@ bool GLWindow::ownsEventHandler(WindowEventHandler *handler) const
     return d->handler == handler;
 }
 
-void GLWindow::checkNativeEvents()
+void GLWindow::handleWindowEvent(const void *ptr)
 {
-    d->handleEvents();
+    const SDL_Event &event = *reinterpret_cast<const SDL_Event *>(ptr);
+
+    switch (event.window.event)
+    {
+        case SDL_WINDOWEVENT_EXPOSED:
+            debug("[GLWindow] %p window expose event", this);
+            if (!d->initialized)
+            {
+                initializeGL();
+                update();
+            }
+            d->updatePixelRatio();
+            d->checkWhichDisplay();
+            break;
+
+        case SDL_WINDOWEVENT_MOVED:
+            d->checkWhichDisplay();
+            DE_NOTIFY(Move, i)
+            {
+                i->windowMoved(*this, Vec2i(event.window.data1, event.window.data2));
+            }
+            break;
+
+        case SDL_WINDOWEVENT_RESIZED:
+            d->resizeEvent(event.window);
+            d->checkWhichDisplay();
+            break;
+
+        case SDL_WINDOWEVENT_CLOSE: break;
+
+        case SDL_WINDOWEVENT_FOCUS_GAINED:
+        case SDL_WINDOWEVENT_FOCUS_LOST: d->handler->handleSDLEvent(&event); break;
+
+        case SDL_WINDOWEVENT_MAXIMIZED:
+        case SDL_WINDOWEVENT_MINIMIZED:
+        case SDL_WINDOWEVENT_RESTORED:
+        case SDL_WINDOWEVENT_HIDDEN: break;
+
+        case SDL_WINDOWEVENT_SHOWN:
+            update();
+            break;
+
+        default: break;
+    }
 }
 
 void GLWindow::grabToFile(const NativePath &path) const
@@ -708,6 +656,10 @@ void GLWindow::initializeGL()
 
 void GLWindow::paintGL()
 {
+    DE_ASSERT(SDL_GL_GetCurrentContext() == d->glContext);
+
+    debug("[GLWindow] paintGL %p", this);
+
     GLFramebuffer::setDefaultFramebuffer(0);
 
     // Repainting of the window should continue in an indefinite loop.
@@ -717,7 +669,7 @@ void GLWindow::paintGL()
     // window content refresh.
     EventLoop::post(new CoreEvent([this]() {
         update();
-        d->handleEvents(); // process new input/window events
+        WindowSystem::get().pollAndDispatchEvents(); // process new input/window events
     }));
 
     // Do not proceed with painting the window contents until after the application
@@ -738,7 +690,7 @@ void GLWindow::paintGL()
         return;
     }
 
-    LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
+    DE_ASSERT(SDL_GL_GetCurrentContext() == d->glContext);
 
     d->checkResize();
     makeCurrent();
@@ -761,6 +713,7 @@ void GLWindow::paintGL()
     }
 
     // Subclass-implemented drawing method.
+    DE_ASSERT(SDL_GL_GetCurrentContext() == d->glContext);
     draw();
 
     LIBGUI_ASSERT_GL_OK();

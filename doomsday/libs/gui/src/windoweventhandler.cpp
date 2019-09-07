@@ -148,6 +148,7 @@ DE_PIMPL(WindowEventHandler)
         float    sensitivity = 750;
         Flywheel pos[2];
         Vec2f    prevGesturePos;
+        double   swipeRoundoff[2]{};
     };
     InertiaScrollState inertiaScroll;
 
@@ -356,8 +357,6 @@ DE_PIMPL(WindowEventHandler)
         */
     }
 
-    double swipeRoundoff[2]{};
-
     void handleGestureEvent(const SDL_MultiGestureEvent &ev)
     {
         if (ev.numFingers == 2)
@@ -375,10 +374,10 @@ DE_PIMPL(WindowEventHandler)
 
                 for (int axis = 0; axis < 2; ++axis)
                 {
-                    const double units_f = delta[axis] * scr.sensitivity + swipeRoundoff[axis];
+                    const double units_f = delta[axis] * scr.sensitivity + scr.swipeRoundoff[axis];
                     const int    units   = int(units_f);
 
-                    swipeRoundoff[axis] = units_f - units;
+                    scr.swipeRoundoff[axis] = units_f - units;
 
                     if (units)
                     {
