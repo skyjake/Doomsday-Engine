@@ -17,42 +17,51 @@
  */
 
 #include "optionspage.h"
+#include <de/ButtonWidget>
+#include <de/ChoiceWidget>
+#include <de/DialogContentStylist>
+#include <de/GridLayout>
+#include <de/LineEditWidget>
+#include <de/ToggleWidget>
 #include <de/Hash>
 #include <doomsday/DoomsdayInfo>
 
 using namespace de;
 
-DE_PIMPL(OptionsPage)
+DE_GUI_PIMPL(OptionsPage)
 {
     using GameOption = DoomsdayInfo::GameOption;
+    using OptionWidgets = Hash<const GameOption *, GuiWidget *>;
 
-    String game;
-//    QWidget *base = nullptr;
-//    QFormLayout *layout = nullptr;
-//    QVBoxLayout *vbox = nullptr;
-//    QDialogButtonBox *buttons = nullptr;
-    List<GameOption> gameOptions;
-    Hash<const GameOption *, GuiWidget *> widgets;
-    Record gameState;
+    DialogContentStylist stylist;
+    String               game;
+    ButtonWidget *       acceptButton;
+    List<GameOption>     gameOptions;
+    OptionWidgets        widgets;
+    Record               gameState;
+    IndirectRule *       layoutOrigin[2];
 
     Impl(Public *i) : Base(i)
-    {}
+    {
+        for (auto &r : layoutOrigin) r = new IndirectRule;
+        stylist.setContainer(self());
+    }
+
+    ~Impl()
+    {
+        for (auto &r : layoutOrigin) releaseRef(r);
+    }
 
     void clear()
     {
-//        qDeleteAll(widgets.values());
-//        widgets.clear();
+        for (auto &elem : widgets)
+        {
+            GuiWidget::destroy(elem.second);
+        }
+        widgets.clear();
 
-//        delete base;
-//        base = nullptr;
-
-//        delete buttons;
-//        buttons = nullptr;
-
-//        while (vbox && vbox->count() > 0)
-//        {
-//            delete vbox->takeAt(0);
-//        }
+        delete acceptButton;
+        acceptButton = nullptr;
     }
 
     void initForGame(const String &gameId)
@@ -63,68 +72,76 @@ DE_PIMPL(OptionsPage)
         game = gameId;
         gameOptions = DoomsdayInfo::gameOptions(game);
 
-//        base   = new QWidget;
-//        base->setMaximumWidth(320);
-//        layout = new QFormLayout(base);
+        auto &rect = self().rule();
 
-//        buttons = new QDialogButtonBox;
-//        buttons->setMaximumWidth(320);
-//        auto *acceptButton = buttons->addButton("Apply && Restart Map", QDialogButtonBox::AcceptRole);
-//        QObject::connect(acceptButton, &QPushButton::pressed, [this] () { apply(); });
+        GridLayout layout(*layoutOrigin[0], *layoutOrigin[1]);
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight);
 
-//        foreach (const GameOption &opt, gameOptions)
-//        {
-//            QString label = convert(opt.title + ":");
-//            QWidget *field;
+        acceptButton = &self().addNew<ButtonWidget>();
+        acceptButton->setSizePolicy(ui::Expand, ui::Expand);
+        acceptButton->setText(_E(b) "Apply & Restart Map");
+        acceptButton->setTextColor("dialog.default");
+        acceptButton->setHoverTextColor("dialog.default", ButtonWidget::ReplaceColor);
+        acceptButton->audienceForPress() += [this]() { apply(); };
 
-//            switch (opt.type)
-//            {
-//            case shell::DoomsdayInfo::Toggle: {
-//                auto *check = new QCheckBox(convert(opt.title));
-//                field = check;
-//                label = "";
-//                QObject::connect(check, &QCheckBox::toggled,
-//                                 [this] (bool) { buttons->setEnabled(true); });
-//                break; }
+        auto enableAcceptButton = [this]() { acceptButton->enable(); };
 
-//            case shell::DoomsdayInfo::Choice: {
-//                auto *combo = new QComboBox;
-//                field = combo;
-//                foreach (auto optValue, opt.allowedValues)
-//                {
-//                    combo->addItem(convert(optValue.label), convert(optValue.value));
-//                }
-//                QObject::connect(combo, static_cast<void (QComboBox::*)(int)>
-//                                        (&QComboBox::currentIndexChanged),
-//                                 [this] (int) { buttons->setEnabled(true); });
-//                break; }
+        for (const GameOption &opt : gameOptions)
+        {
+            String     label = opt.title + ":";
+            GuiWidget *field;
 
-//            case shell::DoomsdayInfo::Text: {
-//                auto *edit = new QLineEdit;
-//                edit->setMinimumWidth(180);
-//                field = edit;
-//                QObject::connect(edit, &QLineEdit::textEdited,
-//                                 [this] (QString) { buttons->setEnabled(true); });
-//                break; }
-//            }
+            switch (opt.type)
+            {
+                case DoomsdayInfo::Toggle:
+                {
+                    auto *check = &self().addNew<ToggleWidget>();
+                    check->setText(opt.title);
+                    field = check;
+                    label = "";
+                    check->audienceForUserToggle() += enableAcceptButton;
+                    break;
+                }
+                case DoomsdayInfo::Choice:
+                {
+                    auto *combo = &self().addNew<ChoiceWidget>();
+                    field       = combo;
+                    for (const auto &optValue : opt.allowedValues)
+                    {
+                        combo->items() << new ChoiceItem(optValue.label, optValue.value);
+                    }
+                    combo->audienceForUserSelection() += enableAcceptButton;
+                    break;
+                }
+                case DoomsdayInfo::Text:
+                {
+                    auto *edit = &self().addNew<LineEditWidget>();
+                    edit->rule().setInput(Rule::Width, rule("unit") * 60);
+                    field = edit;
+                    edit->audienceForContentChange() += enableAcceptButton;
+                    break;
+                }
+            }
 
-//            layout->addRow(label, field);
-//            widgets.insert(&opt, field);
-//        }
-//        base->setLayout(layout);
+            layout << *LabelWidget::newWithText(label, &self()) << *field;
+            widgets.insert(&opt, field);
+        }
 
-//        vbox->setContentsMargins(36, 36, 36, 36);
-//        vbox->addStretch(1);
-//        vbox->addWidget(base, 0, Qt::AlignCenter);
-//        vbox->addWidget(buttons, 0, Qt::AlignCenter);
-//        vbox->addStretch(1);
+        acceptButton->rule()
+            .setInput(Rule::Right, *layoutOrigin[0] + layout.width())
+            .setInput(Rule::Top, *layoutOrigin[1] + layout.height() + rule("gap"));
 
-//        buttons->setEnabled(false);
+        acceptButton->disable();
+
+        // Now that we know the full size we can position the widgets.
+        layoutOrigin[0]->setSource(rect.midX() - layout.width() / 2);
+        layoutOrigin[1]->setSource(rect.midY() - layout.height() / 2);
     }
 
     bool checkRuleKeyword(const String &keyword) const
     {
-        return gameState["rules"].value().asText().containsWord(keyword);
+        return gameState[DE_STR("rules")].value().asText().containsWord(keyword);
     }
 
     const GameOption::Value *selectValue(const GameOption &opt) const
@@ -145,28 +162,28 @@ DE_PIMPL(OptionsPage)
     GameOption::Value currentValueFromWidget(const GameOption &opt) const
     {
         const GuiWidget *widget = widgets[&opt];
-        String widgetValue;
+        String           widgetValue;
 
         switch (opt.type)
         {
-        case DoomsdayInfo::Toggle:
-//            widgetValue = convert(opt.allowedValues.at
-//                    (static_cast<const QCheckBox *>(widget)->isChecked()? 1 : 0).value);
-            break;
+            case DoomsdayInfo::Toggle:
+                widgetValue = opt.allowedValues
+                                  .at(static_cast<const ToggleWidget *>(widget)->isActive() ? 1 : 0)
+                                  .value;
+                break;
 
-        case DoomsdayInfo::Choice:
-//            widgetValue = static_cast<const QComboBox *>(widget)->currentData().toString();
-            break;
+            case DoomsdayInfo::Choice:
+                widgetValue =
+                    static_cast<const ChoiceWidget *>(widget)->selectedItem().data().asText();
+                break;
 
-        case DoomsdayInfo::Text:
-//            return GameOption::Value(convert(static_cast<const QLineEdit *>(widget)->text()));
-            break;
+            case DoomsdayInfo::Text:
+                return GameOption::Value(static_cast<const LineEditWidget *>(widget)->text());
         }
 
         for (const auto &optValue : opt.allowedValues)
         {
-            if (optValue.value == widgetValue)
-                return optValue;
+            if (optValue.value == widgetValue) return optValue;
         }
 
         return {};
@@ -185,40 +202,44 @@ DE_PIMPL(OptionsPage)
 
             switch (opt.type)
             {
-            case DoomsdayInfo::Toggle: {
-                const auto *value = selectValue(opt);
-//                QCheckBox *check = static_cast<QCheckBox *>(widget);
-//                check->setChecked(value != &opt.allowedValues.first());
-                break; }
-
-            case DoomsdayInfo::Choice: {
-                const auto *value = selectValue(opt);
-//                QComboBox *combo = static_cast<QComboBox *>(widget);
-//                for (int i = 0; i < opt.allowedValues.sizei(); ++i)
-//                {
-//                    if (value == &opt.allowedValues.at(i))
-//                    {
-//                        combo->setCurrentIndex(i);
-//                    }
-//                }
-                break; }
-
-            case DoomsdayInfo::Text: {
-//                QLineEdit *edit = static_cast<QLineEdit *>(widget);
-//                if (!opt.defaultValue.ruleSemantic.isEmpty())
-//                {
-//                    edit->setText(convert(gameState[opt.defaultValue.ruleSemantic]));
-//                }
-                break; }
+                case DoomsdayInfo::Toggle:
+                {
+                    const auto *value = selectValue(opt);
+                    auto *      check = static_cast<ToggleWidget *>(widget);
+                    check->setActive(value != &opt.allowedValues.first());
+                    break;
+                }
+                case DoomsdayInfo::Choice:
+                {
+                    const auto *value = selectValue(opt);
+                    auto *      combo = static_cast<ChoiceWidget *>(widget);
+                    for (size_t i = 0; i < opt.allowedValues.size(); ++i)
+                    {
+                        if (value == &opt.allowedValues.at(i))
+                        {
+                            combo->setSelected(i);
+                        }
+                    }
+                    break;
+                }
+                case DoomsdayInfo::Text:
+                {
+                    auto *edit = static_cast<LineEditWidget *>(widget);
+                    if (opt.defaultValue.ruleSemantic)
+                    {
+                        edit->setText(gameState[opt.defaultValue.ruleSemantic]);
+                    }
+                    break;
+                }
             }
         }
 
-//        buttons->setEnabled(false);
+        acceptButton->disable();
     }
 
     void apply()
     {
-//        buttons->setEnabled(false);
+        acceptButton->disable();
 
         StringList commands;
         for (const GameOption &opt : gameOptions)
@@ -226,7 +247,7 @@ DE_PIMPL(OptionsPage)
             auto current = currentValueFromWidget(opt);
             if (!current.value.isEmpty())
             {
-//                commands << convert(opt.command).arg(convert(current.value));
+                commands << Stringf(opt.command, current.value.c_str());
             }
         }
 
@@ -244,10 +265,7 @@ DE_AUDIENCE_METHOD(OptionsPage, Commands)
 OptionsPage::OptionsPage()
     : GuiWidget("options")
     , d(new Impl(this))
-{
-//    d->vbox = new QVBoxLayout;
-//    setLayout(d->vbox);
-}
+{}
 
 void OptionsPage::updateWithGameState(const Record &gameState)
 {
