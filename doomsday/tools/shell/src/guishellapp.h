@@ -58,7 +58,6 @@ public:
     DE_AUDIENCE(LocalServerStop, void localServerStopped(int port))
 
 protected:
-    void windowClosed(LinkWindow *window);
     void checkLocalServers();
 
 private:

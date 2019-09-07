@@ -17,79 +17,91 @@
  */
 
 #include "opendialog.h"
-//#include "utils.h"
 #include "guishellapp.h"
-#include <de/Config>
-//#include <QDialogButtonBox>
-//#include <QPushButton>
-//#include <QVBoxLayout>
-//#include <QHBoxLayout>
-//#include <QFormLayout>
-//#include <QLabel>
-//#include <QComboBox>
-//#include <QFont>
-//#include <QLayoutItem>
-//#include <QSettings>
 
-//Q_DECLARE_METATYPE(de::Address)
+#include <de/ChoiceWidget>
+#include <de/Config>
+#include <de/GridLayout>
+#include <de/PopupButtonWidget>
+#include <de/PopupMenuWidget>
+#include <de/LineEditWidget>
 
 using namespace de;
 
-static const int MAX_HISTORY_SIZE = 10;
+static constexpr int MAX_HISTORY_SIZE = 10;
 
-DE_PIMPL(OpenDialog)
+DE_GUI_PIMPL(OpenDialog)
 , DE_OBSERVES(ServerFinder, Update)
 {
-//    QComboBox *address;
-//    QLabel *localCount;
-    int firstFoundIdx;
-    StringList history;
-    bool edited = false;
+    LineEditWidget *   address;
+    PopupButtonWidget *moreButton;
+    PopupMenuWidget *  historyMenu;
+    ChoiceWidget *     localServers;
+    StringList         history;
+    bool               edited = false;
 
-    Impl(Public &i) : Base(i)
+    Impl(Public *i) : Base(i)
     {
+        auto &area = self().area();
+        auto &cRule = area.contentRule();
+
         // Restore the historical entries.
-//        QSettings st;
-//        history = st.value("OpenDialog/history", QStringList() << "localhost").toStringList();
-//        tidyUpHistory();
+        auto &cfg = Config::get();
 
-//        self().setWindowTitle(tr("Open Connection"));
-//        self().setWindowFlags(self().windowFlags() & ~Qt::WindowContextHelpButtonHint);
+        history = cfg.getStringList("OpenDialog.history", {"localhost"});
+        tidyUpHistory();
 
-//        QVBoxLayout *mainLayout = new QVBoxLayout;
-//        self().setLayout(mainLayout);
-//        mainLayout->setSizeConstraint(QLayout::SetFixedSize);
+        GridLayout layout(cRule.left(), cRule.top());
+        layout.setGridSize(2, 0);
+        layout.setColumnAlignment(0, ui::AlignRight);
 
-//        QFormLayout *form = new QFormLayout;
-//        mainLayout->addLayout(form);
+        // Combobox with addresses and local servers.
 
-//        // Combobox with addresses and local servers.
-//        address = new QComboBox;
-//        address->setEditable(true);
-//        address->setMinimumWidth(300);
-//        address->setInsertPolicy(QComboBox::NoInsert);
+        address = &area.addNew<LineEditWidget>("address");
+        address->audienceForContentChange() += [this]() { textEdited(address->text()); };
+        address->rule().setInput(Rule::Width, rule("unit") * 60);
 
-//        // Insert old user-entered addresses into the box.
-//        address->addItems(history);
-//        address->insertSeparator(address->count());
-//        firstFoundIdx = address->count();
+        layout << *LabelWidget::newWithText("Address:", &area)
+               << *address;
 
-//        form->addRow(tr("&Address:"), address);
-//        QLayoutItem* item = form->itemAt(0, QFormLayout::LabelRole);
-//        item->setAlignment(Qt::AlignBottom);
+        historyMenu = &area.addNew<PopupMenuWidget>("history");
 
-//        localCount = new QLabel;
-//        form->addRow(0, localCount);
-//        GuiShellApp::app().serverFinder().audienceForUpdate() += this;
+        moreButton = &area.addNew<PopupButtonWidget>("more");
+        moreButton->setText("...");
+        moreButton->rule().setLeftTop(address->rule().right(), address->rule().top());
+        moreButton->setPopup(*historyMenu, ui::Right);
 
-//        // Buttons.
-//        QDialogButtonBox *bbox = new QDialogButtonBox;
-//        mainLayout->addWidget(bbox);
-//        QPushButton* yes = bbox->addButton(tr("&Connect"), QDialogButtonBox::YesRole);
-//        QPushButton* no = bbox->addButton(tr("&Cancel"), QDialogButtonBox::RejectRole);
-//        QObject::connect(yes, SIGNAL(clicked()), thisPublic, SLOT(accept()));
-//        QObject::connect(no, SIGNAL(clicked()), thisPublic, SLOT(reject()));
-//        yes->setDefault(true);
+        // Insert old user-entered addresses into the box.
+        for (String addr : history)
+        {
+            historyMenu->items() << makeHistoryItem(addr);
+        }
+
+        localServers = &area.addNew<ChoiceWidget>("local");
+        localServers->setNoSelectionHint("No servers on local network");
+        localServers->setSelected(ui::Data::InvalidPos);
+        localServers->audienceForUserSelection() += [this]() {
+            address->setText(localServers->selectedItem().data().asText());
+        };
+
+        LabelWidget::appendSeparatorWithText("Local Network", &area, &layout);
+
+        layout << *LabelWidget::newWithText("Servers:", &area) << *localServers;
+
+        area.setContentSize(OperatorRule::maximum(layout.width(),
+                                                  layout.widgets().at(0)->rule().width() +
+                                                      layout.widgets().at(1)->rule().width() +
+                                                      moreButton->rule().width()),
+                            layout.height());
+
+        self().buttons()
+            << new DialogButtonItem(Accept | Default | Id1, "Connect")
+            << new DialogButtonItem(Reject, "Cancel");
+    }
+
+    ui::ActionItem *makeHistoryItem(String text)
+    {
+        return new ui::ActionItem(text, [this, text]() { address->setText(text); });
     }
 
     void tidyUpHistory()
@@ -111,14 +123,14 @@ DE_PIMPL(OpenDialog)
      */
     bool isListed(const Address &host) const
     {
-//        for (int i = firstFoundIdx; i < address->count(); ++i)
-//        {
-//            if (address->itemData(i).canConvert<Address>())
-//            {
-//                if (host == address->itemData(i).value<Address>())
-//                    return true;
-//            }
-//        }
+        const String hostStr = host.asText();
+        for (dsize i = 0; i < historyMenu->items().size(); ++i)
+        {
+            if (historyMenu->items().at(i).data().asText().compareWithoutCase(hostStr) == 0)
+            {
+                return true;
+            }
+        }
         return false;
     }
 
@@ -126,15 +138,28 @@ DE_PIMPL(OpenDialog)
     {
         self().updateLocalList();
     }
+
+    void textEdited(const String &text)
+    {
+        if (!edited)
+        {
+            edited = true;
+            historyMenu->items().insert(0, makeHistoryItem(text));
+        }
+        else
+        {
+            historyMenu->items().at(0).setLabel(text);
+        }
+    }
 };
 
 OpenDialog::OpenDialog()
-    : d(new Impl(*this))
+    : DialogWidget("open", WithHeading)
+    , d(new Impl(this))
 {
+    heading().setText("Open Connection");
     updateLocalList(true /* autoselect first found server */);
-
-//    connect(d->address, SIGNAL(editTextChanged(QString)), this, SLOT(textEdited(QString)));
-//    connect(this, SIGNAL(accepted()), this, SLOT(saveState()));
+    audienceForAccept() += [this]() { saveState(); };
 }
 
 String OpenDialog::address() const
@@ -156,91 +181,85 @@ String OpenDialog::address() const
 //    }
 
 //    text = text.trimmed();
-    String text;
-    return text;
+    return d->address->text();
 }
 
 void OpenDialog::updateLocalList(bool autoselect)
 {
-    ServerFinder &finder = GuiShellApp::app().serverFinder();
-    bool selected = false;
+    ServerFinder &       finder   = GuiShellApp::app().serverFinder();
+    bool                 selected = false;
+    auto &               items    = d->localServers->items();
+    Map<String, Address> found;
 
-    if (finder.foundServers().isEmpty())
+    for (const auto &sv : finder.foundServers())
+    {
+        found.insert(sv.asText(), sv);
+    }
+
+    if (found.empty())
     {
         // Nothing found.
-//        d->localCount->setText(tr("<small>No local servers found.</small>"));
+        d->localServers->setNoSelectionHint("No local servers found");
+        items.clear();
     }
     else
     {
+        d->localServers->setNoSelectionHint(Stringf("%d local server%s",
+                                                    found.size(),
+                                                    DE_PLURAL_S(found.size())));
 //        d->localCount->setText(tr("<small>Found %1 local server%2.</small>")
 //                               .arg(finder.foundServers().size())
 //                               .arg(finder.foundServers().size() != 1? "s" : ""));
 
-//        // Update the list of servers.
-//        foreach (const Address &sv, finder.foundServers())
-//        {
-//            QString label = convert(sv.asText()) + QString(" (%1; %2/%3)")
-//                    .arg(convert(finder.name(sv).left(CharPos(20))))
-//                    .arg(finder.playerCount(sv))
-//                    .arg(finder.maxPlayers(sv));
+        // Update the list of servers.
+        for (const auto &sv : found)
+        {
+            String label = Stringf("%s (%s; %d/%d)",
+                                   sv.first.c_str(),
+                                   finder.name(sv.second).left(CharPos(20)).c_str(),
+                                   finder.playerCount(sv.second),
+                                   finder.maxPlayers(sv.second));
 
-//            if (!d->isListed(sv))
-//            {
-//                d->address->addItem(label, QVariant::fromValue(sv));
+            if (!d->isListed(sv.second))
+            {
+                items << new ChoiceItem(label, sv.first);
 
-//                // Autoselect the first one?
-//                if (autoselect && !selected)
-//                {
-//                    d->address->setCurrentIndex(d->address->count() - 1);
-//                    selected = true;
-//                }
-//            }
-//        }
+                // Autoselect the first one?
+                if (autoselect && !selected)
+                {
+                    d->localServers->setSelected(items.size() - 1);
+                    selected = true;
+                }
+            }
+        }
     }
 
     // Remove servers no longer present.
-//    for (int i = d->firstFoundIdx; i < d->address->count(); )
-//    {
-//        if (!d->address->itemData(i).canConvert<Address>() ||
-//                !finder.foundServers().contains(d->address->itemData(i).value<Address>()))
-//        {
-//            d->address->removeItem(i);
-//            continue;
-//        }
-
-//        ++i;
-//    }
+    for (dsize i = 0; i < items.size(); )
+    {
+        if (!found.contains(items.at(i).data().asText()))
+        {
+            items.remove(i);
+            continue;
+        }
+        ++i;
+    }
 }
 
 void OpenDialog::saveState()
 {
-//    if (d->edited)
-//    {
-//        String text = d->address->itemText(0);
-//        d->history.removeAll(text);
-//        d->history.prepend(text);
+    if (d->edited)
+    {
+        const String text = d->address->text();
+        d->history.removeAll(text);
+        d->history.prepend(text);
 
-//        // Make sure there aren't too many entries.
-//        while (d->history.size() > MAX_HISTORY_SIZE)
-//        {
-//            d->history.removeLast();
-//        }
-//    }
+        // Make sure there aren't too many entries.
+        while (d->history.size() > MAX_HISTORY_SIZE)
+        {
+            d->history.removeLast();
+        }
+    }
 
-//    QSettings st;
-//    st.setValue("OpenDialog/history", d->history);
-}
-
-void OpenDialog::textEdited(const String &text)
-{
-//    if (!d->edited)
-//    {
-//        d->edited = true;
-//        d->address->insertItem(0, text);
-//        d->address->setCurrentIndex(0);
-//    }
-//    else
-//    {
-//        d->address->setItemText(0, text);
-//    }
+    Config::get().set("OpenDialog.history", new ArrayValue(d->history));
 }

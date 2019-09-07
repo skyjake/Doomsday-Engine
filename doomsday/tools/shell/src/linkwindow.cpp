@@ -122,6 +122,8 @@ DE_PIMPL(LinkWindow)
                   []() { GuiShellApp::app().showPreferences(); });
         keys->add(KeyEvent::press('n', KeyEvent::Command),
                   []() { GuiShellApp::app().startLocalServer(); });
+        keys->add(KeyEvent::press('o', KeyEvent::Command),
+                  []() { GuiShellApp::app().connectToServer(); });
         root.add(keys);
     }
 

@@ -174,10 +174,12 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 
     if (!found)
     {
-        found = d->winSys->newWindow<LinkWindow>(Stringf("link%04u", Id().asUInt32()));
+        found = d->winSys->newWindow<LinkWindow>(Stringf("link%04u", d->winSys->count()));
 //        connect(found, SIGNAL(linkOpened(LinkWindow*)),this, SLOT(updateMenu()));
 //        connect(found, SIGNAL(linkClosed(LinkWindow*)), this, SLOT(updateMenu()));
 //        connect(found, SIGNAL(closed(LinkWindow *)), this, SLOT(windowClosed(LinkWindow *)));
+
+        found->show();
 
         // Initial position and size.
 //        if (other)
@@ -186,7 +188,7 @@ LinkWindow *GuiShellApp::newOrReusedConnectionWindow()
 //        }
     }
 
-    d->winSys->setFocusedWindow(found->id());
+    d->winSys->setFocusedWindow(found->id());    
 
 //    d->windows.prepend(found);
 //    found->show();
@@ -218,14 +220,12 @@ ServerFinder &GuiShellApp::serverFinder()
 void GuiShellApp::connectToServer()
 {
     LinkWindow *win = newOrReusedConnectionWindow();
-
-//    QScopedPointer<OpenDialog> dlg(new OpenDialog(win));
-//    dlg->setWindowModality(Qt::WindowModal);
-
-//    if (dlg->exec() == OpenDialog::Accepted)
-//    {
-//        win->openConnection(dlg->address());
-//    }
+    OpenDialog *dlg = new OpenDialog;
+    dlg->setDeleteAfterDismissed(true);
+    if (dlg->exec(win->root()))
+    {
+        win->openConnection(dlg->address());
+    }
 }
 
 void GuiShellApp::connectToLocalServer()
@@ -394,12 +394,6 @@ void GuiShellApp::updateMenu()
 //    d->disconnectAction->setEnabled(win && win->isConnected());
 #endif
     updateLocalServerMenu();
-}
-
-void GuiShellApp::windowClosed(LinkWindow *window)
-{
-//    d->windows.removeAll(window);
-//    window->deleteLater();
 }
 
 void GuiShellApp::checkLocalServers()
