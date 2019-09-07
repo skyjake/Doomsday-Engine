@@ -76,7 +76,7 @@ int main(int argc, char **argv)
 
         LOG_MSG("...and as JSON:\n") << composeJSON(copied);
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

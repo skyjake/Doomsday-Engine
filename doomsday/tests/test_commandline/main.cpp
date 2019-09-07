@@ -49,7 +49,7 @@ int main(int argc, char **argv)
             LOG_WARNING("Failed to execute!");
         }
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

@@ -59,7 +59,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

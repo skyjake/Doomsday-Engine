@@ -27,7 +27,7 @@ public:
     GlobalShortcuts();
 
     // Events.
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
 private:
     DE_PRIVATE(d)

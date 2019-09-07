@@ -52,12 +52,12 @@ int main(int, char **)
 
         // Another string.
         s = String("abc");
-        String const &is = p.internAndRetrieve(s);
+        const String &is = p.internAndRetrieve(s);
         DE_ASSERT(!is.compare(s));
         DE_UNUSED(is);
 
         String s2 = String("ABC");
-        String const &is2 = p.internAndRetrieve(s2);
+        const String &is2 = p.internAndRetrieve(s2);
         DE_ASSERT(!is2.compare(s));
         DE_UNUSED(is2);
 
@@ -105,7 +105,7 @@ int main(int, char **)
         p.clear();
         DE_ASSERT(p.empty());
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

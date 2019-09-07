@@ -36,7 +36,7 @@ int main(int argc, char **argv)
         ScriptedInfo dei;
         dei.parse(app.fileSystem().find("test_info.dei"));
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

@@ -48,7 +48,7 @@ int main(int argc, char **argv)
         int code = app.exec();
         debug("Event loop returned %i", code);
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

@@ -147,7 +147,7 @@ int main(int, char **)
 
         cout << "Cross product " << Vec3f(1, 0, 0).cross(Vec3f(0, 1, 0)).asText() << endl;
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

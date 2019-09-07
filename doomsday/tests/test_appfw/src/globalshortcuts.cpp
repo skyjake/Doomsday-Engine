@@ -30,11 +30,11 @@ GlobalShortcuts::GlobalShortcuts()
     : Widget("shortcuts"), d(new Impl)
 {}
 
-bool GlobalShortcuts::handleEvent(Event const &event)
+bool GlobalShortcuts::handleEvent(const Event &event)
 {
     if (event.isKeyDown())
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
         if (key.modifiers().testFlag(KeyEvent::Control) && key.ddKey() == 'q')
         {
             TestApp::app().quit();

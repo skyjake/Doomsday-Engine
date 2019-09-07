@@ -51,7 +51,7 @@ int main(int argc, char **argv)
         LOG_VERBOSE("Verbose description: %s")   << zip.description();
         LOGDEV_MSG ("Developer description: %s") << zip.description();
 
-        File const &hello = zip.locate<File>("hello.txt");
+        const File &hello = zip.locate<File>("hello.txt");
         File::Status stats = hello.status();
         LOG_MSG("hello.txt size: %i bytes, modified at %s") << stats.size << Date(stats.modifiedAt);
 
@@ -64,7 +64,7 @@ int main(int argc, char **argv)
             File &worldTxt = zip.createFile("world.txt");
             Writer(worldTxt) << FixedByteArray(content.toUtf8());
         }
-        catch (File::OutputError const &er)
+        catch (const File::OutputError &er)
         {
             LOG_WARNING("Cannot change files in read-only mode:\n") << er.asText();
         }
@@ -110,7 +110,7 @@ int main(int argc, char **argv)
             denied.setMode(File::ReadOnly);
             Writer(denied) << content.toUtf8();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_MSG("Correctly denied access to read-only file within archive: %s")
                     << er.asText();
@@ -135,7 +135,7 @@ int main(int argc, char **argv)
         FS::copySerialized(updated.path(), "home/copied.zip");
         LOG_MSG("Normal copy: ") << App::rootFolder().locate<File const>("home/copied.zip").description();
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

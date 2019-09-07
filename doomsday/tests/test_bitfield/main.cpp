@@ -84,7 +84,7 @@ int main(int, char **)
         cout << "Delta: " << pack.delta(pack2) << endl;
         cout << "Delta (reverse): " << pack2.delta(pack) << endl;
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

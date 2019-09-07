@@ -233,7 +233,7 @@ DE_PIMPL(MainWindow)
     }
 };
 
-MainWindow::MainWindow(String const &id)
+MainWindow::MainWindow(const String &id)
     : BaseWindow(id), d(new Impl(this))
 {
 #if 0
@@ -307,7 +307,7 @@ void MainWindow::addOnTop(de::GuiWidget *widget)
     d->compositor->moveChildToLast(*d->cursor);
 }
 
-//bool MainWindow::handleFallbackEvent(Event const &)
+//bool MainWindow::handleFallbackEvent(const Event &)
 //{
 //    // Handle event at a global level, if appropriate.
 //    return false;

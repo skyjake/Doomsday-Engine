@@ -26,7 +26,7 @@
 using namespace de;
 using namespace std;
 
-void printSet(PointerSet const &pset)
+void printSet(const PointerSet &pset)
 {
     cout << "[ Size: " << pset.size() << " / " << pset.allocatedSize() << " range: "
              << pset.usedRange().asText() << " flags: " << stringf("%x", pset.flags()) << endl;
@@ -155,7 +155,7 @@ int main(int, char **)
         pset = PointerSet();
         printSet(pset);
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

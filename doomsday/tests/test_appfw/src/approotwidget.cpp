@@ -47,7 +47,7 @@ void AppRootWidget::dispatchLatestMousePosition()
     TestApp::windowSystem().dispatchLatestMousePosition();
 }
 
-void AppRootWidget::handleEventAsFallback(Event const &/*event*/)
+void AppRootWidget::handleEventAsFallback(const Event &/*event*/)
 {
     // Handle event at global level, if applicable.
 }

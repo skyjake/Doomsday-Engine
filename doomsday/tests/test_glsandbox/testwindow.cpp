@@ -302,7 +302,7 @@ DE_PIMPL(TestWindow)
         LIBGUI_ASSERT_GL_OK();
     }
 
-    void bankLoaded(DotPath const &path)
+    void bankLoaded(const DotPath &path)
     {
         LOG_RES_NOTE("Bank item \"%s\" loaded") << path;
         if (path == "rtt.cube")
@@ -454,7 +454,7 @@ DE_PIMPL(TestWindow)
         model.draw(&modelAnim);
     }
 
-    void timeChanged(Clock const &clock)
+    void timeChanged(const Clock &clock)
     {
         self().glActivate();
         LIBGUI_ASSERT_GL_OK();
@@ -533,7 +533,7 @@ DE_PIMPL(TestWindow)
         }
     }
 
-    void keyEvent(KeyEvent const &event)
+    void keyEvent(const KeyEvent &event)
     {
         debug("sdlkey %x (%s) [%s]",
               event.sdlKey(),
