@@ -55,7 +55,7 @@ public:
 
         OptionType      type;
         String          title;
-        String          command; // e.g., "setmap %1"
+        String          command; // e.g., "setmap %s"
         Value           defaultValue;
         de::List<Value> allowedValues;
 

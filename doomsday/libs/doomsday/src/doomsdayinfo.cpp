@@ -90,7 +90,7 @@ List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(const String &gameId)
     // Common options.
     opts << GameOption(Choice,
                        "Game type",
-                       "server-game-deathmatch %1",
+                       "server-game-deathmatch %s",
                        GOValue(),
                        List<GOValue>({GOValue("0", "Co-op", "coop"),
                                       GOValue("1", "Deathmatch", "dm"),
@@ -98,7 +98,7 @@ List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(const String &gameId)
 
     opts << GameOption(Choice,
                        "Skill level",
-                       "server-game-skill %1",
+                       "server-game-skill %s",
                        GOValue(),
                        List<GOValue>({GOValue("0", "Novice", "skill1"),
                                       GOValue("1", "Easy", "skill2"),
@@ -108,13 +108,13 @@ List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(const String &gameId)
 
     opts << GameOption(Toggle,
                        "Players can jump",
-                       "server-game-jump %1",
+                       "server-game-jump %s",
                        GOValue(),
                        List<GOValue>({GOValue("0"), GOValue("1", "", "jump")}));
 
     opts << GameOption(Toggle,
                        "Monsters disabled",
-                       "server-game-nomonsters %1",
+                       "server-game-nomonsters %s",
                        GOValue(),
                        List<GOValue>({GOValue("0"), GOValue("1", "", "nomonst")}));
 
@@ -122,26 +122,26 @@ List<DoomsdayInfo::GameOption> DoomsdayInfo::gameOptions(const String &gameId)
     {
         opts << GameOption(Toggle,
                            "Respawn monsters",
-                           "server-game-respawn %1",
+                           "server-game-respawn %s",
                            GOValue(),
                            List<GOValue>({GOValue("0"), GOValue("1", "", "respawn")}));
     }
 
     if (gameId.beginsWith("doom1"))
     {
-        opts << GameOption(Text, "Map", "setmap %1", GOValue("E1M1", "", "mapId"));
+        opts << GameOption(Text, "Map", "setmap %s", GOValue("E1M1", "", "mapId"));
     }
     else if (gameId.beginsWith("doom2"))
     {
-        opts << GameOption(Text, "Map", "setmap %1", GOValue("MAP01", "", "mapId"));
+        opts << GameOption(Text, "Map", "setmap %s", GOValue("MAP01", "", "mapId"));
     }
     else if (gameId.beginsWith("heretic"))
     {
-        opts << GameOption(Text, "Map", "setmap %1", GOValue("E1M1", "", "mapId"));
+        opts << GameOption(Text, "Map", "setmap %s", GOValue("E1M1", "", "mapId"));
     }
     else if (gameId.beginsWith("hexen"))
     {
-        opts << GameOption(Text, "Map", "setmap %1", GOValue("MAP01", "", "mapId"));
+        opts << GameOption(Text, "Map", "setmap %s", GOValue("MAP01", "", "mapId"));
     }
 
     return opts;
