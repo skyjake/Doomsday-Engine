@@ -46,7 +46,10 @@ DE_GUI_PIMPL(StatusWidget)
 
         mapOutline = &i.addNew<MapOutlineWidget>("map");
         mapOutline->setColors("accent", "inverted.accent");
-        mapOutline->rule().setRect(rect);
+        mapOutline->rule()
+            .setInput(Rule::Left, rect.left() + i.margins().left())
+            .setInput(Rule::Right, rect.right() - i.margins().right())
+            .setInput(Rule::Bottom, rect.bottom() - i.margins().bottom());
 
         stateLabel = &i.addNew<LabelWidget>("gamestate");
         stateLabel->setSizePolicy(ui::Expand, ui::Expand);
@@ -61,6 +64,8 @@ DE_GUI_PIMPL(StatusWidget)
         titleLabel->rule()
             .setMidAnchorX(rect.midX())
             .setInput(Rule::Top, stateLabel->rule().bottom());
+
+        mapOutline->rule().setInput(Rule::Top, titleLabel->rule().bottom());
     }
 
     void clear()
