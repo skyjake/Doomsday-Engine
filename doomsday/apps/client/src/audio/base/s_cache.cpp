@@ -85,7 +85,7 @@ static dshort inline U8_S16(duchar b)
  * find out that interpolation adds a lot of extra frequencies in the sample. It should
  * be low-pass filtered after the interpolation.
  */
-static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
+static void resample(void *dst, dint dstBytesPer, dint dstRate, const void *src,
     dint srcBytesPer, dint srcRate, dint srcNumSamples, duint srcSize)
 {
     DE_ASSERT(src && dst);
@@ -101,7 +101,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         else if (srcBytesPer == 1 && dstBytesPer == 2)
         {
             // Just changing the bytes won't do much good...
-            duchar const *sp = (duchar const *) src;
+            const duchar *sp = (const duchar *) src;
             dshort *dp       = (dshort *) dst;
 
             for (dint i = 0; i < srcNumSamples; ++i)
@@ -118,7 +118,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         if (dstBytesPer == 1)
         {
             // The source has a byte per sample as well.
-            duchar const *sp = (duchar const *) src;
+            const duchar *sp = (const duchar *) src;
             duchar *dp       = (duchar *) dst;
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
@@ -133,7 +133,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         else if (srcBytesPer == 1)
         {
             // Destination is signed 16bit. Source is 8bit.
-            duchar const *sp = (duchar const *) src;
+            const duchar *sp = (const duchar *) src;
             dshort *dp       = (dshort *) dst;
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
@@ -150,7 +150,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         else if (srcBytesPer == 2)
         {
             // Destination is signed 16bit. Source is 16bit.
-            dshort const *sp = (dshort const *) src;
+            const dshort *sp = (const dshort *) src;
             dshort *dp       = (dshort *) dst;
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
@@ -170,7 +170,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         if (dstBytesPer == 1)
         {
             // The source has a byte per sample as well.
-            duchar const *sp = (duchar const *) src;
+            const duchar *sp = (const duchar *) src;
             duchar *dp       = (duchar *) dst;
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
@@ -189,7 +189,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         else if (srcBytesPer == 1)
         {
             // Destination is signed 16bit. Source is 8bit.
-            duchar const *sp = (duchar const *) src;
+            const duchar *sp = (const duchar *) src;
             dshort *dp       = (dshort *) dst;
 
             for (int i = 0; i < srcNumSamples - 1; ++i, sp++)
@@ -210,7 +210,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
         else if (srcBytesPer == 2)
         {
             // Destination is signed 16bit. Source is 16bit.
-            dshort const *sp = (dshort const *) src;
+            const dshort *sp = (const dshort *) src;
             dshort *dp       = (dshort *) dst;
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
@@ -248,7 +248,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, void const *src,
  * @param bytesPer    Bytes per sample (1 or 2).
  * @param rate        Samples per second.
  */
-void configureSample(sfxsample_t &smp, void const *data, duint size,
+void configureSample(sfxsample_t &smp, const void *data, duint size,
                      dint numSamples, dint bytesPer, dint rate)
 {
     DE_UNUSED(data);
@@ -332,7 +332,7 @@ DE_PIMPL(SfxSampleCache)
         return hash[duint( soundId ) % CACHE_HASH_SIZE];
     }
 
-    Hash const &hashFor(dint soundId) const
+    const Hash &hashFor(dint soundId) const
     {
         return const_cast<Impl *>(this)->hashFor(soundId);
     }
@@ -414,7 +414,7 @@ DE_PIMPL(SfxSampleCache)
      *
      * @returns             Ptr to the cached sample. Always valid.
      */
-    CacheItem &insert(dint soundId, void const *data, duint size, dint numSamples,
+    CacheItem &insert(dint soundId, const void *data, duint size, dint numSamples,
         dint bytesPer, dint rate, dint group)
     {
         sfxsample_t cached;
@@ -669,7 +669,7 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
                     bytesPer /= 8;  // Was returned as bits.
                 }
             }
-            catch (FS1::NotFoundError const &)
+            catch (const FS1::NotFoundError &)
             {}  // Ignore this error.
         }
     }
@@ -695,8 +695,8 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
         if (WAV_CheckFormat(hdr))
         {
             // Load as WAV, then.
-            duint8 const *sp = lump.cache();
-            data = WAV_MemoryLoad((byte const *) sp, lump.size(), &bytesPer, &rate, &numSamples);
+            const duint8 *sp = lump.cache();
+            data = WAV_MemoryLoad((const byte *) sp, lump.size(), &bytesPer, &rate, &numSamples);
             lump.unlock();
 
             if (!data)
@@ -729,15 +729,15 @@ sfxsample_t *SfxSampleCache::cache(dint soundId)
         {
             duint8 hdr[8];
             lump.read(hdr, 0, 8);
-            dint head  = DD_SHORT(*(dshort const *) (hdr));
-            rate       = DD_SHORT(*(dshort const *) (hdr + 2));
-            numSamples = de::max(0, DD_LONG(*(dint const *) (hdr + 4)));
+            dint head  = DD_SHORT(*(const dshort *) (hdr));
+            rate       = DD_SHORT(*(const dshort *) (hdr + 2));
+            numSamples = de::max(0, DD_LONG(*(const dint *) (hdr + 4)));
             bytesPer   = 1; // 8-bit.
 
             if (head == 3 && numSamples > 0 && (unsigned) numSamples <= lumpLength - 8)
             {
                 // The sample data can be used as-is - load directly from the lump cache.
-                duint8 const *data = lump.cache() + 8;  // Skip the header.
+                const duint8 *data = lump.cache() + 8;  // Skip the header.
 
                 // Insert a copy of this into the cache.
                 CacheItem &item = d->insert(soundId, data, bytesPer * numSamples, numSamples,

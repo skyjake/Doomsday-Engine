@@ -24,7 +24,7 @@ using namespace de::ui;
 
 DE_PIMPL_NOREF(CVarLineEditWidget)
 {
-    char const *cvar;
+    const char *cvar;
 
     cvar_t *var() const
     {
@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(CVarLineEditWidget)
     }
 };
 
-CVarLineEditWidget::CVarLineEditWidget(char const *cvarPath)
+CVarLineEditWidget::CVarLineEditWidget(const char *cvarPath)
     : d(new Impl)
 {
     setSignalOnEnter(true);
@@ -54,7 +54,7 @@ void CVarLineEditWidget::contentChanged()
     }
 }
 
-char const *CVarLineEditWidget::cvarPath() const
+const char *CVarLineEditWidget::cvarPath() const
 {
     return d->cvar;
 }

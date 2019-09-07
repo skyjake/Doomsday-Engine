@@ -42,8 +42,8 @@ struct LightRange
 
     LightRange(float _min = 0, float _max = 0) : min(_min), max(_max)    {}
     LightRange(float const minMax[2]) : min(minMax[0]), max(minMax[1])   {}
-    LightRange(de::Vec2f const &minMax) : min(minMax.x), max(minMax.y) {}
-    LightRange(LightRange const &other) : min(other.min), max(other.max) {}
+    LightRange(const de::Vec2f &minMax) : min(minMax.x), max(minMax.y) {}
+    LightRange(const LightRange &other) : min(other.min), max(other.max) {}
 
     /// Returns a textual representation of the lightlevels.
     de::String asText() const {
@@ -87,8 +87,8 @@ coord_t R_ViewPointDistance(coord_t x, coord_t y);
 
 #endif
 
-de::Vec3d R_ClosestPointOnPlane(de::Vec3f const &planeNormal,
-    de::Vec3d const &planePoint, de::Vec3d const &origin);
+de::Vec3d R_ClosestPointOnPlane(const de::Vec3f &planeNormal,
+    const de::Vec3d &planePoint, const de::Vec3d &origin);
 
 #ifdef __CLIENT__
 
@@ -105,7 +105,7 @@ void R_ProjectViewRelativeLine2D(de::Vec2d const center, bool alignToViewPlane,
  */
 void R_AmplifyColor(de::Vec3f &color);
 
-void R_ScaleAmbientRGB(float *out, float const *in, float mul);
+void R_ScaleAmbientRGB(float *out, const float *in, float mul);
 
 /**
  * Generate texcoords on the surface centered on point.
@@ -121,10 +121,10 @@ void R_ScaleAmbientRGB(float *out, float const *in, float mul);
  *
  * @return  @c true if the generated coords are within bounds.
  */
-bool R_GenerateTexCoords(de::Vec2f &s, de::Vec2f &t, de::Vec3d const &point,
-    float xScale, float yScale, de::Vec3d const &v1, de::Vec3d const &v2,
-    de::Mat3f const &tangentMatrix);
+bool R_GenerateTexCoords(de::Vec2f &s, de::Vec2f &t, const de::Vec3d &point,
+    float xScale, float yScale, const de::Vec3d &v1, const de::Vec3d &v2,
+    const de::Mat3f &tangentMatrix);
 
-char const *R_NameForBlendMode(blendmode_t mode);
+const char *R_NameForBlendMode(blendmode_t mode);
 
 #endif // DE_REFRESH_UTIL_H

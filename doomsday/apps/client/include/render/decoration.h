@@ -49,8 +49,8 @@ public:
      * @param source  Source of the decoration (a material).
      * @param origin  Origin of the decoration in map space.
      */
-    Decoration(MaterialAnimator::Decoration const &source,
-               de::Vec3d const &origin = de::Vec3d());
+    Decoration(const MaterialAnimator::Decoration &source,
+               const de::Vec3d &origin = de::Vec3d());
     virtual ~Decoration();
 
     de::String description() const;
@@ -60,7 +60,7 @@ public:
      *
      * @see hasSource(), setSource()
      */
-    MaterialAnimator::Decoration const &source() const;
+    const MaterialAnimator::Decoration &source() const;
 
     /**
      * Returns @c true iff a surface is attributed for the decoration.
@@ -73,7 +73,7 @@ public:
      * Convenient method which returns the surface owner of the decoration.
      */
     Surface       &surface();
-    Surface const &surface() const;
+    const Surface &surface() const;
 
     /**
      * Change the attributed surface of the decoration.

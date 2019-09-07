@@ -35,7 +35,7 @@ struct VectorLightData
     float lightSide = 0.f;
     float darkSide = 0.f;     ///< Factors for world light.
     bool affectedByAmbient = false;
-    struct mobj_s const *sourceMobj = nullptr; ///< Originating mobj, or nullptr.
+    const struct mobj_s *sourceMobj = nullptr; ///< Originating mobj, or nullptr.
 };
 
 #endif  // CLIENT_RENDER_VECTORLIGHTDATA_H

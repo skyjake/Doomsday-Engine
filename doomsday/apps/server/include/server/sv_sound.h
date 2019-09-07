@@ -42,17 +42,17 @@ struct mobj_s;
 /**
  * Tell clients to play a sound with full volume.
  */
-void Sv_Sound(int soundId, struct mobj_s const *origin, int toPlr);
+void Sv_Sound(int soundId, const struct mobj_s *origin, int toPlr);
 
 /**
  * Tell clients to play a sound.
  */
-void Sv_SoundAtVolume(int soundIdAndFlags, struct mobj_s const *origin, float volume, int toPlr);
+void Sv_SoundAtVolume(int soundIdAndFlags, const struct mobj_s *origin, float volume, int toPlr);
 
 /**
  * To be called when the server wishes to instruct clients to stop a sound.
  */
-void Sv_StopSound(int soundId, struct mobj_s const *origin);
+void Sv_StopSound(int soundId, const struct mobj_s *origin);
 
 #ifdef __cplusplus
 } // extern "C"

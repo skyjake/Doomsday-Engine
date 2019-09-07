@@ -45,20 +45,20 @@ struct viewer_t
     de::Vec3d origin;
     float pitch;
 
-    viewer_t(de::Vec3d const &origin = de::Vec3d(),
+    viewer_t(const de::Vec3d &origin = de::Vec3d(),
              angle_t angle              = 0,
              float pitch                = 0)
         : origin(origin)
         , pitch(pitch)
         , _angle(angle)
     {}
-    viewer_t(viewer_t const &other)
+    viewer_t(const viewer_t &other)
         : origin(other.origin)
         , pitch(other.pitch)
         , _angle(other._angle)
     {}
 
-    viewer_t lerp(viewer_t const &end, float pos) const {
+    viewer_t lerp(const viewer_t &end, float pos) const {
         return viewer_t(de::lerp(origin, end.origin, pos),
                         _angle + int(pos * (int(end._angle) - int(_angle))),
                         de::lerp(pitch,  end.pitch,  pos));
@@ -128,12 +128,12 @@ void R_RenderBlankView();
 void R_RenderPlayerViewBorder();
 
 /// @return  Current viewport; otherwise @c 0.
-viewport_t const *R_CurrentViewPort();
+const viewport_t *R_CurrentViewPort();
 
 /**
  * Set the current GL viewport.
  */
-void R_UseViewPort(viewport_t const *vp);
+void R_UseViewPort(const viewport_t *vp);
 
 void R_UseViewPort(int consoleNum);
 
@@ -176,28 +176,28 @@ void R_NewSharpWorld();
  *
  * @see R_ViewerSubspaceMarkVisible()
  */
-bool R_ViewerSubspaceIsVisible(world::ConvexSubspace const &subspace);
+bool R_ViewerSubspaceIsVisible(const world::ConvexSubspace &subspace);
 
 /**
  * Mark the subspace as visible for the current frame.
  *
  * @see R_ViewerSubspaceIsVisible()
  */
-void R_ViewerSubspaceMarkVisible(world::ConvexSubspace const &subspace, bool yes = true);
+void R_ViewerSubspaceMarkVisible(const world::ConvexSubspace &subspace, bool yes = true);
 
 /**
  * Returns @c true iff the (particle) generator is marked as visible for the current frame.
  *
  * @see R_ViewerGeneratorMarkVisible()
  */
-bool R_ViewerGeneratorIsVisible(world::Generator const &generator);
+bool R_ViewerGeneratorIsVisible(const world::Generator &generator);
 
 /**
  * Mark the (particle) generator as visible for the current frame.
  *
  * @see R_ViewerGeneratorIsVisible()
  */
-void R_ViewerGeneratorMarkVisible(world::Generator const &generator, bool yes = true);
+void R_ViewerGeneratorMarkVisible(const world::Generator &generator, bool yes = true);
 
 /// @return  Distance in map space units between the lumobj and viewer.
 double R_ViewerLumobjDistance(int idx);
@@ -237,6 +237,6 @@ void R_ViewWindowTicker(int consoleNum, timespan_t ticLength);
  *
  * @return MVP matrix.
  */
-de::Mat4f const &Viewer_Matrix();
+const de::Mat4f &Viewer_Matrix();
 
 #endif // DE_CLIENT_VIEWPORTS_H

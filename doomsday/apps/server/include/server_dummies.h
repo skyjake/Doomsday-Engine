@@ -46,7 +46,7 @@ DE_EXTERN_C void BusyMode_FreezeGameForBusyMode();
 DE_EXTERN_C void GL_Shutdown();
 
 DE_EXTERN_C void R_RenderPlayerView(int num);
-DE_EXTERN_C void R_SetBorderGfx(Uri const *const *paths);
+DE_EXTERN_C void R_SetBorderGfx(const Uri *const *paths);
 DE_EXTERN_C void R_SkyParams(int layer, int param, void *data);
 DE_EXTERN_C void R_ShutdownSvgs(void);
 DE_EXTERN_C struct font_s* R_CreateFontFromDef(ded_compositefont_t* def);

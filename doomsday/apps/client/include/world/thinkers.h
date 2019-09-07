@@ -127,9 +127,9 @@ private:
 
 }  // namespace world
 
-bool Thinker_IsMobj(thinker_t const *th);
+bool Thinker_IsMobj(const thinker_t *th);
 bool Thinker_IsMobjFunc(thinkfunc_t func);
-world::Map &Thinker_Map(thinker_t const &th);
+world::Map &Thinker_Map(const thinker_t &th);
 
 /**
  * Initializes the private data object of a thinker. The type of private data is chosen

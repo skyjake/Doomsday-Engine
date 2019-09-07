@@ -30,7 +30,7 @@ DE_API_TYPEDEF(Rend)
     de_api_t api;
 
     void (*SetupFogDefaults)(void);
-    void (*SetupFog)(float start, float end, float density, float const *rgb);
+    void (*SetupFog)(float start, float end, float density, const float *rgb);
 
     /**
      * Prepare all texture resources for the specified mobjtype.
@@ -77,7 +77,7 @@ DE_API_TYPEDEF(Rend)
 
     void (*SetViewWindowGeometry)(int player, const RectRaw* geometry, dd_bool interpolate);
 
-    void (*SetBorderGfx)(UriWrapper const *const *paths);
+    void (*SetBorderGfx)(const UriWrapper *const *paths);
 
     /**
      * Retrieve the geometry of the specified viewport by console player num.

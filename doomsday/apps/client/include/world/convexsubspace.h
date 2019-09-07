@@ -80,7 +80,7 @@ public:
      *
      * @see http://www.alienryderflex.com/polygon/
      */
-    bool contains(de::Vec2d const &point) const;
+    bool contains(const de::Vec2d &point) const;
 
     /**
      * Provides access to the attributed convex geometry (a polygon).
@@ -172,14 +172,14 @@ public:
      *
      * @return  @c true= @a polyobj was linked and subsequently removed.
      */
-    bool unlink(struct polyobj_s const &polyobj);
+    bool unlink(const struct polyobj_s &polyobj);
 
     /**
      * Add the given @a polyobj to the set of those linked to the subspace. Ownership
      * is unaffected. If the polyobj is already linked in this set then nothing will
      * happen.
      */
-    void link(struct polyobj_s const &polyobj);
+    void link(const struct polyobj_s &polyobj);
 
 #ifdef __CLIENT__
 // --------------------------------------------------------------------------------------
@@ -190,7 +190,7 @@ public:
      *
      * @see bounds()
      */
-    de::Vec2d const &worldGridOffset() const;
+    const de::Vec2d &worldGridOffset() const;
 
     /**
      * Returns a pointer to the face geometry half-edge which has been chosen for use as
@@ -227,7 +227,7 @@ public:
      * Provides access to the cached audio environment characteristics of the subspace for
      * efficient accumulation.
      */
-    AudioEnvironment const &audioEnvironment() const;
+    const AudioEnvironment &audioEnvironment() const;
 
 //- Fake radio ---------------------------------------------------------------------------
 

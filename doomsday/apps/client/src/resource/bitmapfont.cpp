@@ -279,13 +279,13 @@ int BitmapFont::lineSpacing() const
     return d->leading;
 }
 
-Rectanglei const &BitmapFont::glyphPosCoords(dbyte ch) const
+const Rectanglei &BitmapFont::glyphPosCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).posCoords;
 }
 
-Rectanglei const &BitmapFont::glyphTexCoords(dbyte ch) const
+const Rectanglei &BitmapFont::glyphTexCoords(dbyte ch) const
 {
     glInit();
     return d->glyph(ch).texCoords;
@@ -358,7 +358,7 @@ void BitmapFont::glDeinit() const
 
     if(d->texGLName)
     {
-        Deferred_glDeleteTextures(1, (GLuint const *) &d->texGLName);
+        Deferred_glDeleteTextures(1, (const GLuint *) &d->texGLName);
     }
     d->texGLName = 0;
 }
@@ -377,12 +377,12 @@ uint BitmapFont::textureGLName() const
     return d->texGLName;
 }
 
-Vec2i const &BitmapFont::textureDimensions() const
+const Vec2i &BitmapFont::textureDimensions() const
 {
     return d->texDimensions;
 }
 
-Vec2ui const &BitmapFont::textureMargin() const
+const Vec2ui &BitmapFont::textureMargin() const
 {
     return d->texMargin;
 }

@@ -54,7 +54,7 @@ void Sv_StartNetGame();
 
 void Sv_StopNetGame();
 
-dd_bool Sv_PlayerArrives(nodeid_t nodeID, char const *name);
+dd_bool Sv_PlayerArrives(nodeid_t nodeID, const char *name);
 
 void Sv_PlayerLeaves(nodeid_t nodeID);
 
@@ -70,7 +70,7 @@ void Sv_GetPackets();
  * @param flags  @ref consolePrintFlags
  * @param msg    Message to send.
  */
-void Sv_SendText(de::dint to, de::dint flags, char const *msg);
+void Sv_SendText(de::dint to, de::dint flags, const char *msg);
 
 void Sv_Ticker(timespan_t ticLength);
 

@@ -38,7 +38,7 @@ using namespace world;
 
 namespace de {
 
-static ddouble skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
+static ddouble skyFixFloorZ(const Plane *frontFloor, const Plane *backFloor)
 {
     DE_UNUSED(backFloor);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
@@ -46,7 +46,7 @@ static ddouble skyFixFloorZ(Plane const *frontFloor, Plane const *backFloor)
     return frontFloor->map().skyFloor().height();
 }
 
-static ddouble skyFixCeilZ(Plane const *frontCeil, Plane const *backCeil)
+static ddouble skyFixCeilZ(const Plane *frontCeil, const Plane *backCeil)
 {
     DE_UNUSED(backCeil);
     if(devRendSkyMode || P_IsInVoid(viewPlayer))
@@ -68,7 +68,7 @@ SkyFixEdge::Event::Event(SkyFixEdge &owner, ddouble distance)
     , d(new Impl(owner, distance))
 {}
 
-bool SkyFixEdge::Event::operator < (Event const &other) const
+bool SkyFixEdge::Event::operator < (const Event &other) const
 {
     return d->distance < other.distance();
 }
@@ -101,7 +101,7 @@ DE_PIMPL(SkyFixEdge)
     Vec2f materialOrigin;
 
     Impl(Public *i, HEdge &hedge, FixType fixType, int edge,
-             Vec2f const &materialOrigin)
+             const Vec2f &materialOrigin)
         : Base(i),
           hedge(&hedge),
           fixType(fixType),
@@ -124,12 +124,12 @@ DE_PIMPL(SkyFixEdge)
         // Only edges with line segments need fixes.
         if (!hedge->hasMapElement()) return false;
 
-        auto const *space     = &hedge->face().mapElementAs<ConvexSubspace>();
-        auto const *backSpace = hedge->twin().hasFace() ? &hedge->twin().face().mapElementAs<ConvexSubspace>()
+        const auto *space     = &hedge->face().mapElementAs<ConvexSubspace>();
+        const auto *backSpace = hedge->twin().hasFace() ? &hedge->twin().face().mapElementAs<ConvexSubspace>()
                                                         : nullptr;
 
-        auto const *subsec     = &space->subsector().as<ClientSubsector>();
-        auto const *backSubsec = backSpace && backSpace->hasSubsector() ? &backSpace->subsector().as<ClientSubsector>()
+        const auto *subsec     = &space->subsector().as<ClientSubsector>();
+        const auto *backSubsec = backSpace && backSpace->hasSubsector() ? &backSpace->subsector().as<ClientSubsector>()
                                                                         : nullptr;
 
         if (backSubsec && &backSubsec->sector() == &subsec->sector())
@@ -137,13 +137,13 @@ DE_PIMPL(SkyFixEdge)
 
         // Select the relative planes for the fix type.
         dint relPlane = lower ? Sector::Floor : Sector::Ceiling;
-        Plane const *front   = &subsec->visPlane(relPlane);
-        Plane const *back    = backSubsec ? &backSubsec->visPlane(relPlane) : nullptr;
+        const Plane *front   = &subsec->visPlane(relPlane);
+        const Plane *back    = backSubsec ? &backSubsec->visPlane(relPlane) : nullptr;
 
         if (!front->surface().hasSkyMaskedMaterial())
             return false;
 
-        LineSide const &lineSide = hedge->mapElementAs<LineSideSegment>().lineSide();
+        const LineSide &lineSide = hedge->mapElementAs<LineSideSegment>().lineSide();
         bool const hasClosedBack = R_SideBackClosed(lineSide);
 
         if (!devRendSkyMode)
@@ -191,17 +191,17 @@ DE_PIMPL(SkyFixEdge)
             return;
         }
 
-        auto const *subspace     = &hedge->face().mapElementAs<ConvexSubspace>();
-        auto const *backSubspace = hedge->twin().hasFace() ? &hedge->twin().face().mapElementAs<ConvexSubspace>() : nullptr;
+        const auto *subspace     = &hedge->face().mapElementAs<ConvexSubspace>();
+        const auto *backSubspace = hedge->twin().hasFace() ? &hedge->twin().face().mapElementAs<ConvexSubspace>() : nullptr;
 
-        auto const *subsec       = &subspace->subsector().as<world::ClientSubsector>();
-        auto const *backSubsec   = backSubspace && backSubspace->hasSubsector() ? &backSubspace->subsector().as<world::ClientSubsector>()
+        const auto *subsec       = &subspace->subsector().as<world::ClientSubsector>();
+        const auto *backSubsec   = backSubspace && backSubspace->hasSubsector() ? &backSubspace->subsector().as<world::ClientSubsector>()
                                                                                 : nullptr;
 
-        Plane const *ffloor = &subsec->visFloor();
-        Plane const *fceil  = &subsec->visCeiling();
-        Plane const *bceil  = backSubsec ? &backSubsec->visCeiling() : nullptr;
-        Plane const *bfloor = backSubsec ? &backSubsec->visFloor()   : nullptr;
+        const Plane *ffloor = &subsec->visFloor();
+        const Plane *fceil  = &subsec->visCeiling();
+        const Plane *bceil  = backSubsec ? &backSubsec->visCeiling() : nullptr;
+        const Plane *bfloor = backSubsec ? &backSubsec->visFloor()   : nullptr;
 
         if (fixType == Upper)
         {
@@ -234,12 +234,12 @@ SkyFixEdge::SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOf
     d->prepare();
 }
 
-Vec3d const &SkyFixEdge::pOrigin() const
+const Vec3d &SkyFixEdge::pOrigin() const
 {
     return d->pOrigin;
 }
 
-Vec3d const &SkyFixEdge::pDirection() const
+const Vec3d &SkyFixEdge::pDirection() const
 {
     return d->pDirection;
 }
@@ -254,17 +254,17 @@ bool SkyFixEdge::isValid() const
     return d->isValid;
 }
 
-SkyFixEdge::Event const &SkyFixEdge::first() const
+const SkyFixEdge::Event &SkyFixEdge::first() const
 {
     return d->bottom;
 }
 
-SkyFixEdge::Event const &SkyFixEdge::last() const
+const SkyFixEdge::Event &SkyFixEdge::last() const
 {
     return d->top;
 }
 
-SkyFixEdge::Event const &SkyFixEdge::at(EventIndex index) const
+const SkyFixEdge::Event &SkyFixEdge::at(EventIndex index) const
 {
     if(index >= 0 && index < 2)
     {

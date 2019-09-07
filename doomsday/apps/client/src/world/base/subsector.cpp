@@ -51,9 +51,9 @@ DE_PIMPL_NOREF(Subsector)
     {
         bool inited = false;
         AABoxd bounds;
-        for (ConvexSubspace const *subspace : subspaces)
+        for (const ConvexSubspace *subspace : subspaces)
         {
-            AABoxd const &subBounds = subspace->poly().bounds();
+            const AABoxd &subBounds = subspace->poly().bounds();
             if (inited)
             {
                 V2d_UniteBox(bounds.arvec2, subBounds.arvec2);
@@ -112,7 +112,7 @@ Sector &Subsector::sector()
     return *d->sector;
 }
 
-Sector const &Subsector::sector() const
+const Sector &Subsector::sector() const
 {
     if (!d->sector)
     {
@@ -145,7 +145,7 @@ LoopResult Subsector::forAllSubspaces(const std::function<LoopResult (ConvexSubs
 List<HEdge *> Subsector::listUniqueBoundaryEdges() const
 {
     List<HEdge *> list;
-    for (ConvexSubspace const *sub : d->subspaces)
+    for (const ConvexSubspace *sub : d->subspaces)
     {
         HEdge *hedge = sub->poly().hedge();
         do
@@ -176,7 +176,7 @@ List<HEdge *> Subsector::listUniqueBoundaryEdges() const
     return list;
 }
 
-AABoxd const &Subsector::bounds() const
+const AABoxd &Subsector::bounds() const
 {
     // If the subsector is comprised of a single subspace we can use the bounding
     // box of the subspace geometry directly.
@@ -201,7 +201,7 @@ Vec2d Subsector::center() const
 
 ddouble Subsector::roughArea() const
 {
-    AABoxd const &box = bounds();
+    const AABoxd &box = bounds();
     return (box.maxX - box.minX) * (box.maxY - box.minY);
 }
 
@@ -220,7 +220,7 @@ bool Subsector::isInternalEdge(HEdge *hedge) // static
 //- SubsectorCirculator -----------------------------------------------------------------
 
 #if 0
-Subsector *SubsectorCirculator::getSubsector(HEdge const &hedge) // static
+Subsector *SubsectorCirculator::getSubsector(const HEdge &hedge) // static
 {
     if (!hedge.hasFace()) return nullptr;
     if (!hedge.face().hasMapElement()) return nullptr;
@@ -229,8 +229,8 @@ Subsector *SubsectorCirculator::getSubsector(HEdge const &hedge) // static
 }
 #endif
 
-HEdge &SubsectorCirculator::getNeighbor(HEdge const &hedge, ClockDirection direction,
-    Subsector const *subsec) // static
+HEdge &SubsectorCirculator::getNeighbor(const HEdge &hedge, ClockDirection direction,
+    const Subsector *subsec) // static
 {
     HEdge *neighbor = &hedge.neighbor(direction);
     // Skip over interior edges.

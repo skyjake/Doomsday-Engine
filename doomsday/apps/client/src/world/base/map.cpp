@@ -225,7 +225,7 @@ DE_PIMPL(Map)
          * @param bounds    Map space boundary.
          * @param cellSize  Width and height of a cell in map space units.
          */
-        ContactBlockmap(AABoxd const &bounds, duint cellSize = 128)
+        ContactBlockmap(const AABoxd &bounds, duint cellSize = 128)
             : Blockmap(bounds, cellSize)
             , spreadBlocks(width() * height())
         {}
@@ -250,7 +250,7 @@ DE_PIMPL(Map)
             }
         }
 
-        void spread(AABoxd const &region)
+        void spread(const AABoxd &region)
         {
             spreadContacts(*this, region, &spreadBlocks);
         }
@@ -380,7 +380,7 @@ DE_PIMPL(Map)
     }
 
     // Observes bsp::Partitioner UnclosedSectorFound.
-    void unclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
+    void unclosedSectorFound(Sector &sector, const Vec2d &nearPoint)
     {
         // Notify interested parties that an unclosed sector was found.
         DE_NOTIFY_PUBLIC_VAR(UnclosedSectorFound, i) i->unclosedSectorFound(sector, nearPoint);
@@ -410,7 +410,7 @@ DE_PIMPL(Map)
         Vec2d testLineCenter;
     };
 
-    static bool lineHasZeroLength(Line const &line)
+    static bool lineHasZeroLength(const Line &line)
     {
         return de::abs(line.length()) < 1.0 / 128.0;
     }
@@ -490,7 +490,7 @@ DE_PIMPL(Map)
         }
     }
 
-    bool lineMightHaveWindowEffect(Line const &line)
+    bool lineMightHaveWindowEffect(const Line &line)
     {
         if (line.definesPolyobj()) return false;
         if (line.front().hasSector() && line.back().hasSector()) return false;
@@ -622,8 +622,8 @@ DE_PIMPL(Map)
 #endif
 
             // Iterative pre-order traversal of the map element tree.
-            BspTree const *cur  = bsp.tree;
-            BspTree const *prev = nullptr;
+            const BspTree *cur  = bsp.tree;
+            const BspTree *prev = nullptr;
             while (cur)
             {
                 while (cur)
@@ -699,7 +699,7 @@ DE_PIMPL(Map)
                 }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_MAP_WARNING("%s.") << er.asText();
         }
@@ -783,13 +783,13 @@ DE_PIMPL(Map)
 
         // Build subsectors.
         dint needed = 0;
-        for (Subspaces const &subspaceSet : subspaceSets)
+        for (const Subspaces &subspaceSet : subspaceSets)
         {
             needed += subspaceSet.count();
         }
         subsectorsById.clear();
         subsectorsById.reserve(needed);
-        for (Subspaces const &subspaceSet : subspaceSets)
+        for (const Subspaces &subspaceSet : subspaceSets)
         {
             Subsector *subsec = sector.addSubsector(subspaceSet);
             DE_ASSERT(subsec != nullptr);
@@ -1001,7 +1001,7 @@ DE_PIMPL(Map)
      */
     void linkAllContacts()
     {
-        R_ForAllContacts([this] (Contact const &contact)
+        R_ForAllContacts([this] (const Contact &contact)
         {
             contactBlockmap(contact.type()).link(const_cast<Contact &>(contact));
             return LoopContinue;
@@ -1025,7 +1025,7 @@ DE_PIMPL(Map)
      *
      * @return  Pointer to the referenced Polyobj instance; otherwise @c nullptr.
      */
-    Polyobj *polyobjBySoundEmitter(SoundEmitter const &soundEmitter) const
+    Polyobj *polyobjBySoundEmitter(const SoundEmitter &soundEmitter) const
     {
         for (Polyobj *polyobj : polyobjs)
         {
@@ -1042,7 +1042,7 @@ DE_PIMPL(Map)
      *
      * @return  Pointer to the referenced Sector instance; otherwise @c nullptr.
      */
-    Sector *sectorBySoundEmitter(SoundEmitter const &soundEmitter) const
+    Sector *sectorBySoundEmitter(const SoundEmitter &soundEmitter) const
     {
         for (Sector *sector : sectors)
         {
@@ -1059,7 +1059,7 @@ DE_PIMPL(Map)
      *
      * @return  Pointer to the referenced Plane instance; otherwise @c nullptr.
      */
-    Plane *planeBySoundEmitter(SoundEmitter const &soundEmitter) const
+    Plane *planeBySoundEmitter(const SoundEmitter &soundEmitter) const
     {
         Plane *found = nullptr;  // Not found.
         for (Sector *sector : sectors)
@@ -1085,7 +1085,7 @@ DE_PIMPL(Map)
      *
      * @return  Pointer to the referenced Surface instance; otherwise @c nullptr.
      */
-    Surface *surfaceBySoundEmitter(SoundEmitter const &soundEmitter) const
+    Surface *surfaceBySoundEmitter(const SoundEmitter &soundEmitter) const
     {
         // Perhaps a wall surface?
         for (Line *line : lines)
@@ -1413,9 +1413,9 @@ DE_PIMPL(Map)
                     }
 #endif
                 }
-                catch (MaterialManifest::MissingMaterialError const &)
+                catch (const MaterialManifest::MissingMaterialError &)
                 {}  // Ignore this error.
-                catch (Resources::MissingResourceManifestError const &)
+                catch (const Resources::MissingResourceManifestError &)
                 {}  // Ignore this error.
             }
 
@@ -1485,7 +1485,7 @@ DE_PIMPL(Map)
             {
                 if (!gen) continue;
 
-                ParticleInfo const *pInfo = gen->particleInfo();
+                const ParticleInfo *pInfo = gen->particleInfo();
                 for (dint i = 0; i < gen->count; ++i, pInfo++)
                 {
                     if (pInfo->stage < 0 || !pInfo->bspLeaf)
@@ -1535,12 +1535,12 @@ Map::Map(res::MapManifest *manifest)
     , d(new Impl(this))
 {}
 
-Record const &Map::mapInfo() const
+const Record &Map::mapInfo() const
 {
     return App_World().mapInfoForMapUri(hasManifest() ? manifest().composeUri() : res::makeUri("Maps:"));
 }
 
-Mesh const &Map::mesh() const
+const Mesh &Map::mesh() const
 {
     return d->mesh;
 }
@@ -1550,7 +1550,7 @@ bool Map::hasBspTree() const
     return d->bsp.tree != nullptr;
 }
 
-BspTree const &Map::bspTree() const
+const BspTree &Map::bspTree() const
 {
     if (d->bsp.tree) return *d->bsp.tree;
     /// @throw MissingBspTreeError  Attempted with no BSP tree available.
@@ -1577,7 +1577,7 @@ LightGrid &Map::lightGrid()
     throw MissingLightGridError("Map::lightGrid", "No light grid is initialized");
 }
 
-LightGrid const &Map::lightGrid() const
+const LightGrid &Map::lightGrid() const
 {
     if (bool(d->lightGrid)) return *d->lightGrid;
     /// @throw MissingLightGrid Attempted with no LightGrid initialized.
@@ -1880,10 +1880,10 @@ void Map::initRadio()
             // Skip sides which share one or more edge with malformed geometry.
             if (!side.leftHEdge() || !side.rightHEdge()) continue;
 
-            Vertex const &vtx0   = line->vertex(i);
-            Vertex const &vtx1   = line->vertex(i ^ 1);
-            LineOwner const *vo0 = line->vertexOwner(i)->next();
-            LineOwner const *vo1 = line->vertexOwner(i ^ 1)->prev();
+            const Vertex &vtx0   = line->vertex(i);
+            const Vertex &vtx1   = line->vertex(i ^ 1);
+            const LineOwner *vo0 = line->vertexOwner(i)->next();
+            const LineOwner *vo1 = line->vertexOwner(i ^ 1)->prev();
 
             AABoxd bounds = line->bounds();
 
@@ -1907,7 +1907,7 @@ void Map::initRadio()
                     if (&sub.subsector().sector() == side.sectorPtr())
                     {
                         // Check the bounds.
-                        AABoxd const &polyBox = sub.poly().bounds();
+                        const AABoxd &polyBox = sub.poly().bounds();
                         if (!(   polyBox.maxX < bounds.minX
                               || polyBox.minX > bounds.maxX
                               || polyBox.minY > bounds.maxY
@@ -1930,7 +1930,7 @@ void Map::initContactBlockmaps()
     d->initContactBlockmaps();
 }
 
-void Map::spreadAllContacts(AABoxd const &region)
+void Map::spreadAllContacts(const AABoxd &region)
 {
     // Expand the region according by the maxium radius of each contact type.
     d->mobjContactBlockmap->
@@ -2020,14 +2020,14 @@ dint Map::clMobjIterator(dint (*callback)(mobj_t *, void *), void *context)
     return 0;
 }
 
-Map::ClMobjHash const &Map::clMobjHash() const
+const Map::ClMobjHash &Map::clMobjHash() const
 {
     return d->clMobjHash;
 }
 
 #endif // __CLIENT__
 
-AABoxd const &Map::bounds() const
+const AABoxd &Map::bounds() const
 {
     return d->bounds;
 }
@@ -2125,12 +2125,12 @@ dint Map::sectorCount() const
 }
 
 #ifdef __CLIENT__
-bool Map::isPointInVoid(de::Vec3d const &point) const
+bool Map::isPointInVoid(const de::Vec3d &point) const
 {
-    BspLeaf const &bspLeaf = bspLeafAt(point);
+    const BspLeaf &bspLeaf = bspLeafAt(point);
     if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point) && bspLeaf.subspace().hasSubsector())
     {
-        auto const &subsec = bspLeaf.subspace().subsector().as<ClientSubsector>();
+        const auto &subsec = bspLeaf.subspace().subsector().as<ClientSubsector>();
         return subsec.isHeightInVoid(point.z);
     }
     return true; // In the void.
@@ -2237,7 +2237,7 @@ dint Map::toSideIndex(dint lineIndex, dint backSide) // static
     return lineIndex * 2 + (backSide? 1 : 0);
 }
 
-bool Map::identifySoundEmitter(SoundEmitter const &emitter, Sector **sector,
+bool Map::identifySoundEmitter(const SoundEmitter &emitter, Sector **sector,
     Polyobj **poly, Plane **plane, Surface **surface) const
 {
     *sector  = nullptr;
@@ -2316,7 +2316,7 @@ LoopResult Map::forAllSectors(std::function<LoopResult (Sector &)> func) const
     return LoopContinue;
 }
 
-Subsector *Map::subsectorAt(Vec2d const &point) const
+Subsector *Map::subsectorAt(const Vec2d &point) const
 {
     BspLeaf &bspLeaf = bspLeafAt(point);
     if (bspLeaf.hasSubspace() && bspLeaf.subspace().contains(point))
@@ -2343,28 +2343,28 @@ Subsector *Map::subsectorPtr(de::Id id) const
     return nullptr;
 }
 
-Blockmap const &Map::mobjBlockmap() const
+const Blockmap &Map::mobjBlockmap() const
 {
     if (bool(d->mobjBlockmap)) return *d->mobjBlockmap;
     /// @throw MissingBlockmapError  The mobj blockmap is not yet initialized.
     throw MissingBlockmapError("Map::mobjBlockmap", "Mobj blockmap is not initialized");
 }
 
-Blockmap const &Map::polyobjBlockmap() const
+const Blockmap &Map::polyobjBlockmap() const
 {
     if (bool(d->polyobjBlockmap)) return *d->polyobjBlockmap;
     /// @throw MissingBlockmapError  The polyobj blockmap is not yet initialized.
     throw MissingBlockmapError("Map::polyobjBlockmap", "Polyobj blockmap is not initialized");
 }
 
-LineBlockmap const &Map::lineBlockmap() const
+const LineBlockmap &Map::lineBlockmap() const
 {
     if (bool(d->lineBlockmap)) return *d->lineBlockmap;
     /// @throw MissingBlockmapError  The line blockmap is not yet initialized.
     throw MissingBlockmapError("Map::lineBlockmap", "Line blockmap is not initialized");
 }
 
-Blockmap const &Map::subspaceBlockmap() const
+const Blockmap &Map::subspaceBlockmap() const
 {
     if (bool(d->subspaceBlockmap)) return *d->subspaceBlockmap;
     /// @throw MissingBlockmapError  The subspace blockmap is not yet initialized.
@@ -2504,7 +2504,7 @@ LoopResult Map::forAllMobjsTouchingSector(Sector &sector, const std::function<Lo
         }
 
         // Collate mobjs linked to the sector's lines.
-        linknode_t const *ln = d->lineNodes.nodes;
+        const linknode_t *ln = d->lineNodes.nodes;
         sector.forAllSides([this, &linkStore, &ln] (LineSide &side)
         {
             nodeindex_t root = d->lineLinks[side.line().indexInMap()];
@@ -2605,7 +2605,7 @@ void Map::link(Polyobj &polyobj)
     d->polyobjBlockmap->link(polyobj.bounds, &polyobj);
 }
 
-LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<LoopResult (Line &line)> func) const
+LoopResult Map::forAllLinesInBox(const AABoxd &box, dint flags, std::function<LoopResult (Line &line)> func) const
 {
     LoopResult result = LoopContinue;
 
@@ -2652,13 +2652,13 @@ LoopResult Map::forAllLinesInBox(AABoxd const &box, dint flags, std::function<Lo
     return result;
 }
 
-BspLeaf &Map::bspLeafAt(Vec2d const &point) const
+BspLeaf &Map::bspLeafAt(const Vec2d &point) const
 {
     if (!d->bsp.tree)
         /// @throw MissingBspTreeError  No BSP data is available.
         throw MissingBspTreeError("Map::bspLeafAt", "No BSP data available");
 
-    BspTree const *bspTree = d->bsp.tree;
+    const BspTree *bspTree = d->bsp.tree;
     while (!bspTree->isLeaf())
     {
         auto &bspNode = bspTree->userData()->as<BspNode>();
@@ -2672,7 +2672,7 @@ BspLeaf &Map::bspLeafAt(Vec2d const &point) const
     return bspTree->userData()->as<BspLeaf>();
 }
 
-BspLeaf &Map::bspLeafAt_FixedPrecision(Vec2d const &point) const
+BspLeaf &Map::bspLeafAt_FixedPrecision(const Vec2d &point) const
 {
     if (!d->bsp.tree)
         /// @throw MissingBspTreeError  No BSP data is available.
@@ -2680,10 +2680,10 @@ BspLeaf &Map::bspLeafAt_FixedPrecision(Vec2d const &point) const
 
     fixed_t pointX[2] = { DBL2FIX(point.x), DBL2FIX(point.y) };
 
-    BspTree const *bspTree = d->bsp.tree;
+    const BspTree *bspTree = d->bsp.tree;
     while (!bspTree->isLeaf())
     {
-        auto const &bspNode = bspTree->userData()->as<BspNode>();
+        const auto &bspNode = bspTree->userData()->as<BspNode>();
 
         fixed_t lineOriginX[2]    = { DBL2FIX(bspNode.origin.x),    DBL2FIX(bspNode.origin.y) };
         fixed_t lineDirectionX[2] = { DBL2FIX(bspNode.direction.x), DBL2FIX(bspNode.direction.y) };
@@ -2819,7 +2819,7 @@ ClSkyPlane &Map::skyFloor()
     return d->skyFloor;
 }
 
-ClSkyPlane const &Map::skyFloor() const
+const ClSkyPlane &Map::skyFloor() const
 {
     return d->skyFloor;
 }
@@ -2829,7 +2829,7 @@ ClSkyPlane &Map::skyCeiling()
     return d->skyCeiling;
 }
 
-ClSkyPlane const &Map::skyCeiling() const
+const ClSkyPlane &Map::skyCeiling() const
 {
     return d->skyCeiling;
 }
@@ -2898,7 +2898,7 @@ LoopResult Map::forAllGenerators(const std::function<LoopResult (Generator &)>& 
     return LoopContinue;
 }
 
-LoopResult Map::forAllGeneratorsInSector(Sector const &sector, const std::function<LoopResult (Generator &)>& func) const
+LoopResult Map::forAllGeneratorsInSector(const Sector &sector, const std::function<LoopResult (Generator &)>& func) const
 {
     if (sector.mapPtr() == this)  // Ignore 'alien' sectors.
     {
@@ -2982,7 +2982,7 @@ dint Map::biasSourceCount() const
     return d->bias.sources.count();
 }
 
-BiasSource &Map::addBiasSource(BiasSource const &biasSource)
+BiasSource &Map::addBiasSource(const BiasSource &biasSource)
 {
     if (biasSourceCount() < MAX_BIAS_SOURCES)
     {
@@ -3026,7 +3026,7 @@ BiasSource *Map::biasSourcePtr(dint index) const
  * @todo Implement a blockmap for these?
  * @todo Cache this result (MRU?).
  */
-BiasSource *Map::biasSourceNear(Vec3d const &point) const
+BiasSource *Map::biasSourceNear(const Vec3d &point) const
 {
     BiasSource *nearest = nullptr;
     ddouble minDist = 0;
@@ -3051,7 +3051,7 @@ LoopResult Map::forAllBiasSources(std::function<LoopResult (BiasSource &)> func)
     return LoopContinue;
 }
 
-dint Map::indexOf(BiasSource const &bsrc) const
+dint Map::indexOf(const BiasSource &bsrc) const
 {
     return d->bias.sources.indexOf(const_cast<BiasSource *>(&bsrc));
 }
@@ -3086,7 +3086,7 @@ void Map::update()
 #endif // __CLIENT__
 
     // Reapply values defined in MapInfo (they may have changed).
-    Record const &inf = mapInfo();
+    const Record &inf = mapInfo();
 
     _ambientLightLevel = inf.getf("ambient") * 255;
     _globalGravity     = inf.getf("gravity");
@@ -3098,7 +3098,7 @@ void Map::update()
     /// a representation on server side and a logical entity which the renderer
     /// visualizes. We also need multiple concurrent skies for BOOM support.
     defn::Sky skyDef;
-    if (Record const *def = DED_Definitions()->skies.tryFind("id", inf.gets("skyId")))
+    if (const Record *def = DED_Definitions()->skies.tryFind("id", inf.gets("skyId")))
     {
         skyDef = *def;
     }
@@ -3121,7 +3121,7 @@ String Map::objectsDescription() const
         thinkers().forAll(0x3, [&str](thinker_t *th) {
             if (Thinker_IsMobj(th))
             {
-                str += gx.MobjStateAsInfo(reinterpret_cast<mobj_t const *>(th));
+                str += gx.MobjStateAsInfo(reinterpret_cast<const mobj_t *>(th));
             }
             return LoopContinue;
         });
@@ -3129,7 +3129,7 @@ String Map::objectsDescription() const
     return str;
 }
 
-void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMapping) const
+void Map::restoreObjects(const Info &objState, const IThinkerMapping &thinkerMapping) const
 {
     /// @todo Generalize from mobjs to all thinkers?
     LOG_AS("Map::restoreObjects");
@@ -3139,7 +3139,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
     bool problemsDetected = false;
 
     // Look up all the mobjs.
-    List<thinker_t const *> mobjs;
+    List<const thinker_t *> mobjs;
     thinkers().forAll(0x3, [&mobjs] (thinker_t *th) {
         if (Thinker_IsMobj(th)) mobjs << th;
         return LoopContinue;
@@ -3158,7 +3158,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
               i != objState.root().contentsInOrder().end();
             ++i)
     {
-        Info::BlockElement const &state = (*i)->as<Info::BlockElement>();
+        const Info::BlockElement &state = (*i)->as<Info::BlockElement>();
         Id::Type const privateId = state.name().toUInt32();
         DE_ASSERT(privateId != 0);
 
@@ -3175,7 +3175,7 @@ void Map::restoreObjects(Info const &objState, IThinkerMapping const &thinkerMap
                 {
                     // Verify that the state is now correct.
                     Info const currentDesc(gx.MobjStateAsInfo(found->as<MobjThinkerData>().mobj()));
-                    Info::BlockElement const &currentState =
+                    const Info::BlockElement &currentState =
                         currentDesc.root().contentsInOrder().first()->as<Info::BlockElement>();
                     DE_ASSERT(currentState.name() == state.name());
                     for (const auto &i : state.contents())
@@ -3228,8 +3228,8 @@ void Map::serializeInternalState(Writer &to) const
     {
         if (th->d)
         {
-            ThinkerData const &thinkerData = THINKER_DATA(*th, ThinkerData);
-            if (ISerializable const *serial = THINKER_DATA_MAYBE(*th, ISerializable))
+            const ThinkerData &thinkerData = THINKER_DATA(*th, ThinkerData);
+            if (const ISerializable *serial = THINKER_DATA_MAYBE(*th, ISerializable))
             {
                 to << thinkerData.id()
                    << Writer::BeginSpan
@@ -3244,7 +3244,7 @@ void Map::serializeInternalState(Writer &to) const
     to << Id(Id::None);
 }
 
-void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerMapping)
+void Map::deserializeInternalState(Reader &from, const IThinkerMapping &thinkerMapping)
 {
     BaseMap::deserializeInternalState(from, thinkerMapping);
 
@@ -3283,7 +3283,7 @@ void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerM
                     }
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_MAP_WARNING("Error when reading state of object %s: %s")
                         << id << er.asText();
@@ -3292,7 +3292,7 @@ void Map::deserializeInternalState(Reader &from, IThinkerMapping const &thinkerM
             from.setOffset(nextOffset);
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_MAP_WARNING("Error when reading state: %s") << er.asText();
     }
@@ -3550,7 +3550,7 @@ static Vertex *rootVtx;
  * pre: rootVtx must point to the vertex common between a and b
  *      which are (lineowner_t*) ptrs.
  */
-static dint lineAngleSorter(void const *a, void const *b)
+static dint lineAngleSorter(const void *a, const void *b)
 {
     binangle_t angles[2];
 
@@ -3564,7 +3564,7 @@ static dint lineAngleSorter(void const *a, void const *b)
         else
         {
             Line *line = &own[i]->line();
-            Vertex const &otherVtx = line->vertex(&line->from() == rootVtx? 1:0);
+            const Vertex &otherVtx = line->vertex(&line->from() == rootVtx? 1:0);
 
             fixed_t dx = otherVtx.origin().x - rootVtx->origin().x;
             fixed_t dy = otherVtx.origin().y - rootVtx->origin().y;
@@ -3585,7 +3585,7 @@ static dint lineAngleSorter(void const *a, void const *b)
  * @return  The newly merged list.
  */
 static LineOwner *mergeLineOwners(LineOwner *left, LineOwner *right,
-    dint (*compare) (void const *a, void const *b))
+    dint (*compare) (const void *a, const void *b))
 {
     LineOwner tmp;
     LineOwner *np = &tmp;
@@ -3653,7 +3653,7 @@ static LineOwner *splitLineOwners(LineOwner *list)
  * This routine uses a recursive mergesort algorithm; O(NlogN)
  */
 static LineOwner *sortLineOwners(LineOwner *list,
-    dint (*compare) (void const *a, void const *b))
+    dint (*compare) (const void *a, const void *b))
 {
     if (list && list->next())
     {
@@ -3671,7 +3671,7 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
     if (!lineptr) return;
 
     // Has this line already been registered with this vertex?
-    LineOwner const *own = vtx->firstLineOwner();
+    const LineOwner *own = vtx->firstLineOwner();
     while (own)
     {
         if (&own->line() == lineptr)
@@ -3708,8 +3708,8 @@ static void setVertexLineOwner(Vertex *vtx, Line *lineptr, LineOwner **storage)
  */
 static bool vertexHasValidLineOwnerRing(Vertex &v)
 {
-    LineOwner const *base = v.firstLineOwner();
-    LineOwner const *cur = base;
+    const LineOwner *base = v.firstLineOwner();
+    const LineOwner *cur = base;
     do
     {
         if (cur->prev()->next() != cur) return false;
@@ -3778,8 +3778,8 @@ void buildVertexLineOwnerRings(List<Vertex *> const &vertexs, List<Line *> &edit
         LOG_MAP_VERBOSE("Vertex #%i: line owners #%i")
             << editmap.vertexes.indexOf(v) << v->lineOwnerCount();
 
-        LineOwner const *base = v->firstLineOwner();
-        LineOwner const *cur = base;
+        const LineOwner *base = v->firstLineOwner();
+        const LineOwner *cur = base;
         duint idx = 0;
         do
         {
@@ -3808,7 +3808,7 @@ struct VertexInfo
     duint refCount = 0;        ///< Line -> Vertex reference count.
 
     /// @todo Math here is not correct (rounding directionality). -ds
-    dint compareVertexOrigins(VertexInfo const &other) const
+    dint compareVertexOrigins(const VertexInfo &other) const
     {
         DE_ASSERT(vertex && other.vertex);
 
@@ -3825,13 +3825,13 @@ struct VertexInfo
         return dint(vertex->origin().y) - dint(other.vertex->origin().y);
     }
 
-    bool operator < (VertexInfo const &other) const
+    bool operator < (const VertexInfo &other) const
     {
         return compareVertexOrigins(other) < 0;
     }
 };
 
-void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
+void pruneVertexes(Mesh &mesh, const Map::Lines &lines)
 {
     //
     // Step 1 - Find equivalent vertexes:
@@ -3902,7 +3902,7 @@ void pruneVertexes(Mesh &mesh, Map::Lines const &lines)
     // Step 3 - Prune vertexes:
     //
     dint prunedCount = 0, numUnused = 0;
-    for (VertexInfo const &info : vertexInfo)
+    for (const VertexInfo &info : vertexInfo)
     {
         Vertex *vertex = info.vertex;
 
@@ -4056,7 +4056,7 @@ bool Map::endEditing()
     return true;
 }
 
-Vertex *Map::createVertex(Vec2d const &origin, dint archiveIndex)
+Vertex *Map::createVertex(const Vec2d &origin, dint archiveIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4094,7 +4094,7 @@ Line *Map::createLine(Vertex &v1, Vertex &v2, int flags, Sector *frontSector,
     return line;
 }
 
-Sector *Map::createSector(dfloat lightLevel, Vec3f const &lightColor, dint archiveIndex)
+Sector *Map::createSector(dfloat lightLevel, const Vec3f &lightColor, dint archiveIndex)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4112,7 +4112,7 @@ Sector *Map::createSector(dfloat lightLevel, Vec3f const &lightColor, dint archi
     return sector;
 }
 
-Polyobj *Map::createPolyobj(Vec2d const &origin)
+Polyobj *Map::createPolyobj(const Vec2d &origin)
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4128,7 +4128,7 @@ Polyobj *Map::createPolyobj(Vec2d const &origin)
     return pob;
 }
 
-Map::Lines const &Map::editableLines() const
+const Map::Lines &Map::editableLines() const
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4136,7 +4136,7 @@ Map::Lines const &Map::editableLines() const
     return d->editable.lines;
 }
 
-Map::Sectors const &Map::editableSectors() const
+const Map::Sectors &Map::editableSectors() const
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.
@@ -4156,7 +4156,7 @@ void Map::initMapOutlinePacket(network::MapOutlinePacket &packet)
     });
 }
 
-Map::Polyobjs const &Map::editablePolyobjs() const
+const Map::Polyobjs &Map::editablePolyobjs() const
 {
     if (!d->editingEnabled)
         /// @throw EditError  Attempted when not editing.

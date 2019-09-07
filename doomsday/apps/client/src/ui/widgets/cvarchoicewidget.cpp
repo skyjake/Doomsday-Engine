@@ -24,7 +24,7 @@ using namespace de::ui;
 
 DE_PIMPL_NOREF(CVarChoiceWidget)
 {
-    char const *cvar;
+    const char *cvar;
 
     cvar_t *var() const
     {
@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(CVarChoiceWidget)
     }
 };
 
-CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath)
+CVarChoiceWidget::CVarChoiceWidget(const char *cvarPath)
     : ChoiceWidget(String::format("cvar-%s", cvarPath))
     , d(new Impl)
 {
@@ -44,7 +44,7 @@ CVarChoiceWidget::CVarChoiceWidget(char const *cvarPath)
     audienceForUserSelection() += [this](){ setCVarValueFromWidget(); };
 }
 
-char const *CVarChoiceWidget::cvarPath() const
+const char *CVarChoiceWidget::cvarPath() const
 {
     return d->cvar;
 }

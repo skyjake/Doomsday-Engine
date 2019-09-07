@@ -54,6 +54,6 @@ void LensFx_Draw(int playerNum);
 /**
  * Marks a light potentially visible in the current frame.
  */
-void LensFx_MarkLightVisible(IPointLightSource const &lightSource);
+void LensFx_MarkLightVisible(const IPointLightSource &lightSource);
 
 #endif // DE_CLIENT_CAMERALENSFX_H

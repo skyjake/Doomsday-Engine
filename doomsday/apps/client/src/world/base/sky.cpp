@@ -183,7 +183,7 @@ DE_PIMPL(Sky)
         bool needUpdate = true;   /// @c true= update if not custom.
         Vec3f color;
 
-        void setColor(Vec3f const &newColor, bool isCustom = true)
+        void setColor(const Vec3f &newColor, bool isCustom = true)
         {
             color  = newColor.min(Vec3f(1)).max(Vec3f(0.0f));
             custom = isCustom;
@@ -251,17 +251,17 @@ DE_PIMPL(Sky)
 
             if(TextureVariant *tex = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
             {
-                auto const *avgColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageColorAnalysis));
+                const auto *avgColor = reinterpret_cast<const averagecolor_analysis_t *>(tex->base().analysisDataPointer(ClientTexture::AverageColorAnalysis));
                 if(!avgColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageColorAnalysis");
 
                 if(i == firstActiveLayer)
                 {
-                    auto const *avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageTopColorAnalysis));
+                    const auto *avgLineColor = reinterpret_cast<const averagecolor_analysis_t *>(tex->base().analysisDataPointer(ClientTexture::AverageTopColorAnalysis));
                     if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" + tex->base().manifest().composeUri().asText() + "\" has no AverageTopColorAnalysis");
 
                     topCapColor = Vec3f(avgLineColor->color.rgb);
 
-                    avgLineColor = reinterpret_cast<averagecolor_analysis_t const *>(tex->base().analysisDataPointer(ClientTexture::AverageBottomColorAnalysis));
+                    avgLineColor = reinterpret_cast<const averagecolor_analysis_t *>(tex->base().analysisDataPointer(ClientTexture::AverageBottomColorAnalysis));
                     if(!avgLineColor) throw Error("calculateSkyAmbientColor", "Texture \"" +  tex->base().manifest().composeUri().asText() + "\" has no AverageBottomColorAnalysis");
 
                     bottomCapColor = Vec3f(avgLineColor->color.rgb);
@@ -315,14 +315,14 @@ DE_AUDIENCE_METHOD(Sky, Deletion)
 DE_AUDIENCE_METHOD(Sky, HeightChange)
 DE_AUDIENCE_METHOD(Sky, HorizonOffsetChange)
 
-Sky::Sky(defn::Sky const *definition)
+Sky::Sky(const defn::Sky *definition)
     : MapElement(DMU_SKY)
     , d(new Impl(this))
 {
     configure(definition);
 }
 
-void Sky::configure(defn::Sky const *def)
+void Sky::configure(const defn::Sky *def)
 {
     LOG_AS("Sky");
 
@@ -334,7 +334,7 @@ void Sky::configure(defn::Sky const *def)
 
     for(dint i = 0; i < d->layers.count(); ++i)
     {
-        Record const *lyrDef = def? &def->layer(i) : 0;
+        const Record *lyrDef = def? &def->layer(i) : 0;
         Layer &lyr = *d->layers[i];
 
         lyr.setMasked(lyrDef? (lyrDef->geti("flags") & SLF_MASK) : false);
@@ -348,7 +348,7 @@ void Sky::configure(defn::Sky const *def)
         {
             mat = world::Materials::get().materialPtr(matUri);
         }
-        catch(world::MaterialManifest::MissingMaterialError const &er)
+        catch(const world::MaterialManifest::MissingMaterialError &er)
         {
             // Log if a material is specified but otherwise ignore this error.
             if(lyrDef)
@@ -378,7 +378,7 @@ void Sky::configure(defn::Sky const *def)
 #endif
 }
 
-Record const *Sky::def() const
+const Record *Sky::def() const
 {
     return d->def;
 }
@@ -406,7 +406,7 @@ Sky::Layer &Sky::layer(dint layerIndex)
     throw MissingLayerError("Sky::layer", stringf("Unknown layer #%i", layerIndex));
 }
 
-Sky::Layer const &Sky::layer(dint layerIndex) const
+const Sky::Layer &Sky::layer(dint layerIndex) const
 {
     if (Layer *layer = layerPtr(layerIndex)) return *layer;
     /// @throw MissingLayerError Unknown layerIndex specified,
@@ -422,7 +422,7 @@ LoopResult Sky::forAllLayers(const std::function<LoopResult (Layer &)>& func)
     return LoopContinue;
 }
 
-LoopResult Sky::forAllLayers(const std::function<LoopResult (Layer const &)>& func) const
+LoopResult Sky::forAllLayers(const std::function<LoopResult (const Layer &)>& func) const
 {
     for (const auto &layer : d->layers)
     {
@@ -488,7 +488,7 @@ dint Sky::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint Sky::setProperty(DmuArgs const &args)
+dint Sky::setProperty(const DmuArgs &args)
 {
     LOG_AS("Sky");
 
@@ -527,7 +527,7 @@ dint Sky::setProperty(DmuArgs const &args)
 
 #ifdef __CLIENT__
 
-Vec3f const &Sky::ambientColor() const
+const Vec3f &Sky::ambientColor() const
 {
     if(d->ambientLight.custom || rendSkyLightAuto)
     {
@@ -537,7 +537,7 @@ Vec3f const &Sky::ambientColor() const
     return AmbientLightColorDefault;
 }
 
-void Sky::setAmbientColor(Vec3f const &newColor)
+void Sky::setAmbientColor(const Vec3f &newColor)
 {
     d->ambientLight.setColor(newColor);
 }

@@ -23,7 +23,7 @@
 
 using namespace de;
 
-ButtonInputControl::ButtonInputControl(String const &name)
+ButtonInputControl::ButtonInputControl(const String &name)
 {
     setName(name);
 }

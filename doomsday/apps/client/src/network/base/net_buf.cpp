@@ -60,7 +60,7 @@ static mutex_t msgMutex;
 
 reader_s *Reader_NewWithNetworkBuffer()
 {
-    return Reader_NewWithBuffer((byte const *) netBuffer.msg.data, netBuffer.length);
+    return Reader_NewWithBuffer((const byte *) netBuffer.msg.data, netBuffer.length);
 }
 
 void N_Init()
@@ -270,7 +270,7 @@ void N_SendPacket(dint flags)
 
         out << de::ByteRefArray(&::netBuffer.msg, ::netBuffer.headerLength + ::netBuffer.length);
     }
-    catch(Error const &er)
+    catch(const Error &er)
     {
         LOGDEV_NET_WARNING("N_SendPacket failed: ") << er.asText();
     }

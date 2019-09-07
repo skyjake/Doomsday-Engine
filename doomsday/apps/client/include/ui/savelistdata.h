@@ -32,9 +32,9 @@ public:
     struct SaveItem : public de::ui::ImageItem,
                       DE_OBSERVES(de::File, Deletion)
     {
-        GameStateFolder const *saveFolder;
+        const GameStateFolder *saveFolder;
 
-        SaveItem(GameStateFolder const &saveFolder);
+        SaveItem(const GameStateFolder &saveFolder);
         ~SaveItem();
 
         bool isValid() const;
@@ -44,14 +44,14 @@ public:
         de::String name() const;
         de::StringList loadedPackages() const;
 
-        void fileBeingDeleted(de::File const &);
+        void fileBeingDeleted(const de::File &);
     };
 
 public:
     SaveListData();
 
     SaveItem &at(Pos pos) override;
-    SaveItem const &at(Pos pos) const override;
+    const SaveItem &at(Pos pos) const override;
 
 private:
     DE_PRIVATE(d)

@@ -155,7 +155,7 @@ DE_GUI_PIMPL(InputSettingsDialog)
     }
 };
 
-InputSettingsDialog::InputSettingsDialog(String const &name)
+InputSettingsDialog::InputSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText("Input Settings");

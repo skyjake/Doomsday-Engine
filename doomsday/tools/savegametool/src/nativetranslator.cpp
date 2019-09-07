@@ -176,7 +176,7 @@ DE_PIMPL(NativeTranslator)
         return saveFilePtr;
     }
 
-    LZFILE const *saveFile() const
+    const LZFILE *saveFile() const
     {
         DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
@@ -184,7 +184,7 @@ DE_PIMPL(NativeTranslator)
 
     String translateGamemode(int gamemode)
     {
-        static char const *doomGameIdentityKeys[] = {
+        static const char *doomGameIdentityKeys[] = {
             /*doom_shareware*/    "doom1-share",
             /*doom*/              "doom1",
             /*doom_ultimate*/     "doom1-ultimate",
@@ -194,12 +194,12 @@ DE_PIMPL(NativeTranslator)
             /*doom2_tnt*/         "doom2-tnt",
             /*doom2_hacx*/        "hacx"
         };
-        static char const *hereticGameIdentityKeys[] = {
+        static const char *hereticGameIdentityKeys[] = {
             /*heretic_shareware*/ "heretic-share",
             /*heretic*/           "heretic",
             /*heretic_extended*/  "heretic-ext"
         };
-        static char const *hexenGameIdentityKeys[] = {
+        static const char *hexenGameIdentityKeys[] = {
             /*hexen_demo*/        "hexen-demo",
             /*hexen*/             "hexen",
             /*hexen_deathkings*/  "hexen-dk",
@@ -266,12 +266,12 @@ DE_PIMPL(NativeTranslator)
         DE_ASSERT(saveFilePtr == 0);
         try
         {
-            NativeFile const &nativeFile = DE_TEXT_APP->fileSystem().find<NativeFile const>(path);
+            const NativeFile &nativeFile = DE_TEXT_APP->fileSystem().find<NativeFile const>(path);
             NativePath const nativeFilePath = nativeFile.nativePath();
             saveFilePtr = lzOpen(nativeFilePath, "rp");
             return;
         }
-        catch (FileSystem::NotFoundError const &)
+        catch (const FileSystem::NotFoundError &)
         {} // We'll thow our own.
 
         throw FileOpenError("NativeTranslator", "Failed opening \"" + path + "\"");
@@ -702,7 +702,7 @@ void NativeTranslator::convert(Path path)
                     delete xlatedData;
                 }
             }
-            catch (FileOpenError const &)
+            catch (const FileOpenError &)
             {} // Ignore this error.
             d->closeFile();
         }

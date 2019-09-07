@@ -55,7 +55,7 @@ public:
          * @param texture  Base Texture from which the draw-context variant is derived.
          * @param spec     Draw-context variant specification.
          */
-        Variant(ClientTexture &texture, TextureVariantSpec const &spec);
+        Variant(ClientTexture &texture, const TextureVariantSpec &spec);
 
     public:
         /**
@@ -92,7 +92,7 @@ public:
         /**
          * Returns the specification used to derive the variant.
          */
-        TextureVariantSpec const &spec() const;
+        const TextureVariantSpec &spec() const;
 
         /**
          * Returns the source of the image used to prepare the uploaded GL-texture
@@ -178,7 +178,7 @@ public:
      * @return  Chosen variant; otherwise @c NULL if none suitable and not creating.
      */
     Variant *chooseVariant(ChooseVariantMethod method,
-                           TextureVariantSpec const &spec,
+                           const TextureVariantSpec &spec,
                            bool canCreate = false);
 
     /**
@@ -196,12 +196,12 @@ public:
      *
      * @see chooseVariant()
      */
-    Variant *prepareVariant(TextureVariantSpec const &spec);
+    Variant *prepareVariant(const TextureVariantSpec &spec);
 
     /**
      * Provides access to the list of variant instances for efficent traversal.
      */
-    Variants const &variants() const;
+    const Variants &variants() const;
 
     /**
      * Returns the number of variants for the texture.

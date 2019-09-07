@@ -57,7 +57,7 @@ DE_GUI_PIMPL(InputBindingWidget)
         self().auxiliary().audienceForPress() += this;
     }
 
-    String prettyKey(String const &eventDesc)
+    String prettyKey(const String &eventDesc)
     {
         if (!eventDesc.beginsWith("key-"))
         {
@@ -99,9 +99,9 @@ DE_GUI_PIMPL(InputBindingWidget)
         for (const auto &bcName : contexts)
         {
             if (!InputSystem::get().hasContext(bcName)) continue;
-            BindContext const &context = InputSystem::get().context(bcName);
+            const BindContext &context = InputSystem::get().context(bcName);
 
-            if (Record const *rec = context.findCommandBinding(command, device))
+            if (const Record *rec = context.findCommandBinding(command, device))
             {
                 // This'll do.
                 CommandBinding bind(*rec);
@@ -113,7 +113,7 @@ DE_GUI_PIMPL(InputBindingWidget)
         self().setText(_E(b) + text);
     }
 
-    void bindCommand(String const &eventDesc)
+    void bindCommand(const String &eventDesc)
     {
         InputSystem::get().forAllContexts([this] (BindContext &context)
         {
@@ -158,13 +158,13 @@ InputBindingWidget::InputBindingWidget() : d(new Impl(this))
     auxiliary().hide();
 }
 
-void InputBindingWidget::setDefaultBinding(String const &eventDesc)
+void InputBindingWidget::setDefaultBinding(const String &eventDesc)
 {
     d->defaultEvent = eventDesc;
     auxiliary().show();
 }
 
-void InputBindingWidget::setCommand(String const &command)
+void InputBindingWidget::setCommand(const String &command)
 {
     d->command = command;
     d->updateLabel();
@@ -195,11 +195,11 @@ void InputBindingWidget::focusLost()
     invertStyle();
 }
 
-bool InputBindingWidget::handleEvent(Event const &event)
+bool InputBindingWidget::handleEvent(const Event &event)
 {
     if (hasFocus())
     {
-        if (KeyEvent const *key = maybeAs<KeyEvent>(event))
+        if (const KeyEvent *key = maybeAs<KeyEvent>(event))
         {
             if (key->state() != KeyEvent::Pressed) return false;
 
@@ -256,7 +256,7 @@ bool InputBindingWidget::handleEvent(Event const &event)
             return true;
         }
 
-        /*if (MouseEvent const *mouse = maybeAs<MouseEvent>(event))
+        /*if (const MouseEvent *mouse = maybeAs<MouseEvent>(event))
         {
             if (mouse->type()  == Event::MouseButton &&
                 mouse->state() == MouseEvent::Released &&

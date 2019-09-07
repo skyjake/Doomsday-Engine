@@ -51,7 +51,7 @@ public:
          * along the half-plane. The default implementation simply subtracts
          * the other distance from that of "this".
          */
-        virtual double operator - (IIntercept const &other) const {
+        virtual double operator - (const IIntercept &other) const {
             return distance() - other.distance();
         }
 
@@ -60,7 +60,7 @@ public:
          * for "this" intercept is logically less than that of @a other. The
          * default implementation simply compares the distance values.
          */
-        virtual bool operator < (IIntercept const &other) const {
+        virtual bool operator < (const IIntercept &other) const {
             return distance() < other.distance();
         }
 
@@ -82,13 +82,13 @@ public:
      *
      * @param newPartition  The "new" partition line to configure using.
      */
-    virtual void configure(Partition const &newPartition) = 0;
+    virtual void configure(const Partition &newPartition) = 0;
 
     /**
      * Returns the Partition (immutable) used to model the partitioning line
      * of the half-plane.
      */
-    virtual Partition const &partition() const = 0;
+    virtual const Partition &partition() const = 0;
 
     /**
      * Clear the list of intercept "points" for the half-plane.
@@ -102,7 +102,7 @@ public:
      *
      * @return  Resultant intercept if intersection occurs. Otherwise @c 0.
      */
-    virtual IIntercept const *intercept(ddouble distance) = 0;
+    virtual const IIntercept *intercept(ddouble distance) = 0;
 
     /**
      * Returns the total number of half-plane intercept points.
@@ -118,7 +118,7 @@ public:
      * @note Implementors are obligated to throw UnknownInterceptError if the
      * specified @a index is not valid.
      */
-    virtual IIntercept const &at(int index) const = 0;
+    virtual const IIntercept &at(int index) const = 0;
 };
 
 } // namespace de

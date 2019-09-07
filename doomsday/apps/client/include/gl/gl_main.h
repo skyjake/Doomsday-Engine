@@ -183,7 +183,7 @@ void GL_SetVSync(dd_bool on);
 /**
  * Reconfigure GL fog according to the setup defined in the specified @a mapInfo definition.
  */
-void GL_SetupFogFromMapInfo(de::Record const *mapInfo);
+void GL_SetupFogFromMapInfo(const de::Record *mapInfo);
 
 //void GL_BlendOp(int op);
 
@@ -221,14 +221,14 @@ void GL_BindTextureUnmanaged(GLuint            texname,
  * the @em active GL texture unit. If no texture is associated then nothing
  * will happen.
  */
-void GL_Bind(de::GLTextureUnit const &glTU);
+void GL_Bind(const de::GLTextureUnit &glTU);
 
 /**
  * Bind the associated texture and apply the texture unit configuration to
  * the specified GL texture @a unit, which, is made active during this call.
  * If no texture is associated then nothing will happen.
  */
-void GL_BindTo(de::GLTextureUnit const &glTU, int unit);
+void GL_BindTo(const de::GLTextureUnit &glTU, int unit);
 
 void GL_SetNoTexture();
 
@@ -272,13 +272,13 @@ int GL_ChooseSmartFilter(int width, int height, int flags);
 GLuint GL_NewTextureWithParams(dgltexformat_t format,
                                int            width,
                                int            height,
-                               uint8_t const *pixels,
+                               const uint8_t *pixels,
                                int            flags);
 
 GLuint GL_NewTextureWithParams(dgltexformat_t format,
                                int            width,
                                int            height,
-                               uint8_t const *pixels,
+                               const uint8_t *pixels,
                                int            flags,
                                int            grayMipmap,
                                GLenum         minFilter,
@@ -294,7 +294,7 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format,
  * 3 = RGB
  * 4 = RGBA
  */
-uint8_t *GL_ConvertBuffer(uint8_t const *src, int width, int height,
+uint8_t *GL_ConvertBuffer(const uint8_t *src, int width, int height,
     int informat, colorpaletteid_t paletteId, int outformat);
 
 /**
@@ -308,7 +308,7 @@ uint8_t *GL_ConvertBuffer(uint8_t const *src, int width, int height,
  *
  * @return  Newly allocated version of the source image if filtered else @c == @a src.
  */
-uint8_t *GL_SmartFilter(int method, uint8_t const *src, int width, int height,
+uint8_t *GL_SmartFilter(int method, const uint8_t *src, int width, int height,
     int flags, int *outWidth, int *outHeight);
 
 /**
@@ -317,7 +317,7 @@ uint8_t *GL_SmartFilter(int method, uint8_t const *src, int width, int height,
  * from adversely affecting the calculation.
  * Handles pixel sizes; 1 (==2), 3 and 4.
  */
-void GL_CalcLuminance(uint8_t const *buffer, int width, int height, int comps,
+void GL_CalcLuminance(const uint8_t *buffer, int width, int height, int comps,
     colorpaletteid_t paletteId, float *brightX, float *brightY,
     struct ColorRawf_s *color, float *lumSize);
 
@@ -332,7 +332,7 @@ de::Mat4f DGL_Matrix(DGLenum matrixMode);
 void      DGL_CurrentColor(DGLubyte *rgba);
 void      DGL_CurrentColor(float *rgba);
 void      DGL_ModulateTexture(int mode);
-void      DGL_SetModulationColor(de::Vec4f const &modColor);
+void      DGL_SetModulationColor(const de::Vec4f &modColor);
 de::Vec4f DGL_ModulationColor();
 void      DGL_FogParams(de::GLUniform &fogRange, de::GLUniform &fogColor);
 void            DGL_DepthFunc(DGLenum depthFunc);

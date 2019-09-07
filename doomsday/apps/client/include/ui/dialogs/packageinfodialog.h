@@ -30,8 +30,8 @@ public:
     enum Mode { EnableActions, InformationOnly };
 
 public:
-    PackageInfoDialog(de::String const &packageId, Mode mode);
-    PackageInfoDialog(de::File const *packageFile, Mode mode);
+    PackageInfoDialog(const de::String &packageId, Mode mode);
+    PackageInfoDialog(const de::File *packageFile, Mode mode);
 
     void playInGame();
     void addToProfile();

@@ -38,7 +38,7 @@ DE_PIMPL_NOREF(ClientMaterial::Decoration)
     Vec2i           patternOffset;      ///< Pattern skip interval offsets.
 };
 
-ClientMaterial::Decoration::Decoration(Vec2i const &patternSkip, Vec2i const &patternOffset)
+ClientMaterial::Decoration::Decoration(const Vec2i &patternSkip, const Vec2i &patternOffset)
     : d(new Impl)
 {
     d->patternSkip   = patternSkip;
@@ -56,7 +56,7 @@ ClientMaterial &ClientMaterial::Decoration::material()
     return *d->material;
 }
 
-ClientMaterial const &ClientMaterial::Decoration::material() const
+const ClientMaterial &ClientMaterial::Decoration::material() const
 {
     DE_ASSERT(d->material);
     return *d->material;
@@ -67,12 +67,12 @@ void ClientMaterial::Decoration::setMaterial(ClientMaterial *newOwner)
     d->material = newOwner;
 }
 
-Vec2i const &ClientMaterial::Decoration::patternSkip() const
+const Vec2i &ClientMaterial::Decoration::patternSkip() const
 {
     return d->patternSkip;
 }
 
-Vec2i const &ClientMaterial::Decoration::patternOffset() const
+const Vec2i &ClientMaterial::Decoration::patternOffset() const
 {
     return d->patternOffset;
 }
@@ -127,7 +127,7 @@ DE_PIMPL(ClientMaterial)
         self().clearAllDecorations();
     }
 
-    MaterialAnimator *findAnimator(MaterialVariantSpec const &spec, bool canCreate = false)
+    MaterialAnimator *findAnimator(const MaterialVariantSpec &spec, bool canCreate = false)
     {
         for (auto *iter : animators)
         {
@@ -219,12 +219,12 @@ MaterialAnimator &ClientMaterial::animator(int index) const
     return *d.getConst()->animators[index];
 }
 
-bool ClientMaterial::hasAnimator(MaterialVariantSpec const &spec)
+bool ClientMaterial::hasAnimator(const MaterialVariantSpec &spec)
 {
     return d->findAnimator(spec) != nullptr;
 }
 
-MaterialAnimator &ClientMaterial::getAnimator(MaterialVariantSpec const &spec)
+MaterialAnimator &ClientMaterial::getAnimator(const MaterialVariantSpec &spec)
 {
     return *d->findAnimator(spec, true/*create*/);
 }
@@ -244,7 +244,7 @@ void ClientMaterial::clearAllAnimators()
     d->animators.clear();
 }
 
-ClientMaterial &ClientMaterial::find(res::Uri const &uri) // static
+ClientMaterial &ClientMaterial::find(const res::Uri &uri) // static
 {
     return world::Materials::get().material(uri).as<ClientMaterial>();
 }

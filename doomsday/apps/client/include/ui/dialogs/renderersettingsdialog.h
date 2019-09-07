@@ -27,7 +27,7 @@
 class RendererSettingsDialog : public de::DialogWidget
 {
 public:
-    RendererSettingsDialog(de::String const &name = "renderersettings");
+    RendererSettingsDialog(const de::String &name = "renderersettings");
 
     void resetToDefaults();
 

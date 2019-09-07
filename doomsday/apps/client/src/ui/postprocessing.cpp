@@ -49,7 +49,7 @@ DE_PIMPL(PostProcessing)
         float fade;
         TimeSpan span;
 
-        QueueEntry(String const &name, float f, TimeSpan s)
+        QueueEntry(const String &name, float f, TimeSpan s)
             : shaderName(name), fade(f), span(s) {}
     };
     typedef List<QueueEntry> Queue;
@@ -70,7 +70,7 @@ DE_PIMPL(PostProcessing)
         program << uMvpMatrix << uFrame << uFadeInOut;
     }
 
-    bool setShader(String const &name)
+    bool setShader(const String &name)
     {
         try
         {
@@ -82,7 +82,7 @@ DE_PIMPL(PostProcessing)
             LOG_GL_MSG("Post-processing shader \"fx.post.%s\"") << name;
             return true;
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_GL_WARNING("Failed to set shader to \"fx.post.%s\":\n%s")
                     << name << er.asText();
@@ -161,7 +161,7 @@ bool PostProcessing::isActive() const
     return d->isActive();
 }
 
-void PostProcessing::fadeInShader(String const &fxPostShader, TimeSpan span)
+void PostProcessing::fadeInShader(const String &fxPostShader, TimeSpan span)
 {
     d->queue.append(Impl::QueueEntry(fxPostShader, 1, span));
 }
@@ -202,7 +202,7 @@ void PostProcessing::update()
     }
 }
 
-void PostProcessing::draw(Mat4f const &mvpMatrix, GLTexture const &frame)
+void PostProcessing::draw(const Mat4f &mvpMatrix, const GLTexture &frame)
 {
     d->uMvpMatrix = mvpMatrix;
     d->uFrame     = frame;

@@ -45,18 +45,18 @@ public:
     DE_AUDIENCE(Selection,   void itemSelected(HomeItemWidget &))
 
 public:
-    HomeItemWidget(de::Flags flags = AnimatedHeight, de::String const &name = de::String());
+    HomeItemWidget(de::Flags flags = AnimatedHeight, const de::String &name = de::String());
 
     de::AssetGroup &assets() override;
 
     de::LabelWidget &       icon();
     de::LabelWidget &       label();
-    de::LabelWidget const & label() const;
+    const de::LabelWidget & label() const;
 
     void addButton(de::GuiWidget *button);
     de::GuiWidget &buttonWidget(int index) const;
     void setKeepButtonsVisible(bool yes);
-    void setLabelMinimumRightMargin(de::Rule const &rule);
+    void setLabelMinimumRightMargin(const de::Rule &rule);
 
     virtual void setSelected(bool selected);
     bool isSelected() const;
@@ -65,14 +65,14 @@ public:
     void useInvertedStyle();
     void useColorTheme(ColorTheme style);
     void useColorTheme(ColorTheme unselected, ColorTheme selected);
-    de::DotPath const &textColorId() const;
+    const de::DotPath &textColorId() const;
 
     void acquireFocus();
 
     HomeMenuWidget *parentMenu();
 
     // Events.
-    bool handleEvent(de::Event const &event) override;
+    bool handleEvent(const de::Event &event) override;
     void focusGained() override;
     void focusLost() override;
 

@@ -248,7 +248,7 @@ DE_PIMPL(PackageCompatibilityDialog)
                 self().buttons() << new DialogButtonItem(Reject, "Cancel");
             }
         }
-        catch (PackagesWidget::UnavailableError const &er)
+        catch (const PackagesWidget::UnavailableError &er)
         {
             conflicted = true;
             self().message().setText(message + "\n\n" + er.asText());
@@ -258,7 +258,7 @@ DE_PIMPL(PackageCompatibilityDialog)
         self().updateLayout();
     }
 
-    static bool containsIdentifier(String const &identifier, StringList const &ids)
+    static bool containsIdentifier(const String &identifier, const StringList &ids)
     {
         for (String i : ids)
         {
@@ -337,14 +337,14 @@ DE_PIMPL(PackageCompatibilityDialog)
     }
 };
 
-PackageCompatibilityDialog::PackageCompatibilityDialog(String const &name)
+PackageCompatibilityDialog::PackageCompatibilityDialog(const String &name)
     : MessageDialog(name)
     , d(new Impl(this))
 {
     title().setText("Incompatible Mods");
 }
 
-void PackageCompatibilityDialog::setMessage(String const &msg)
+void PackageCompatibilityDialog::setMessage(const String &msg)
 {
     d->message = msg;
 }
@@ -362,12 +362,12 @@ bool PackageCompatibilityDialog::isCompatible() const
     return !d->conflicted;
 }
 
-bool PackageCompatibilityDialog::handleEvent(Event const &event)
+bool PackageCompatibilityDialog::handleEvent(const Event &event)
 {
     // Hold Alt to skip the check.
     if (event.isKey())
     {
-        auto const &key = event.as<KeyEvent>();
+        const auto &key = event.as<KeyEvent>();
         if (key.ddKey() == DDKEY_LALT || key.ddKey() == DDKEY_RALT)
         {
             d->enableIgnore(key.type() != Event::KeyRelease);

@@ -58,7 +58,7 @@ DE_PIMPL(ClientMobjThinkerData)
     Impl(Public *i) : Base(i)
     {}
 
-    Impl(Public *i, Impl const &other) : Base(i)
+    Impl(Public *i, const Impl &other) : Base(i)
     {
         if (other.sync)
         {
@@ -81,7 +81,7 @@ DE_PIMPL(ClientMobjThinkerData)
         return Def_GetStateName(self().mobj()->state);
     }
 
-    bool isStateInCurrentSequence(state_t const *previous)
+    bool isStateInCurrentSequence(const state_t *previous)
     {
         if (!previous) return false;
         return Def_GetState(previous->nextState) == self().mobj()->state;
@@ -116,7 +116,7 @@ DE_PIMPL(ClientMobjThinkerData)
         if (modelBank().has(modelId()))
         {
             // Prepare the animation state of the model.
-            auto const &model = modelBank().model<render::Model>(modelId());
+            const auto &model = modelBank().model<render::Model>(modelId());
             try
             {
                 model.audienceForDeletion() += this;
@@ -132,7 +132,7 @@ DE_PIMPL(ClientMobjThinkerData)
                     modelMatrix = Mat4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 model.audienceForDeletion() -= this;
 
@@ -158,7 +158,7 @@ DE_PIMPL(ClientMobjThinkerData)
      * a less than 1.0 probability for starting. The sequence may be identified either by
      * name ("walk") or index (for example, "#3").
      */
-    void triggerStateAnimations(state_t const *state = nullptr)
+    void triggerStateAnimations(const state_t *state = nullptr)
     {
         if (flags & StateChanged)
         {
@@ -205,12 +205,12 @@ DE_PIMPL(ClientMobjThinkerData)
     }
 };
 
-ClientMobjThinkerData::ClientMobjThinkerData(de::Id const &id)
+ClientMobjThinkerData::ClientMobjThinkerData(const de::Id &id)
     : MobjThinkerData(id)
     , d(new Impl(this))
 {}
 
-ClientMobjThinkerData::ClientMobjThinkerData(ClientMobjThinkerData const &other)
+ClientMobjThinkerData::ClientMobjThinkerData(const ClientMobjThinkerData &other)
     : MobjThinkerData(other)
     , d(new Impl(this, *other.d))
 {}
@@ -254,17 +254,17 @@ render::StateAnimator *ClientMobjThinkerData::animator()
     return d->animator.get();
 }
 
-render::StateAnimator const *ClientMobjThinkerData::animator() const
+const render::StateAnimator *ClientMobjThinkerData::animator() const
 {
     return d->animator.get();
 }
 
-Mat4f const &ClientMobjThinkerData::modelTransformation() const
+const Mat4f &ClientMobjThinkerData::modelTransformation() const
 {
     return d->modelMatrix;
 }
 
-void ClientMobjThinkerData::stateChanged(state_t const *previousState)
+void ClientMobjThinkerData::stateChanged(const state_t *previousState)
 {
     MobjThinkerData::stateChanged(previousState);
 
@@ -294,7 +294,7 @@ void ClientMobjThinkerData::stateChanged(state_t const *previousState)
     d->triggerParticleGenerators(justSpawned);
 }
 
-void ClientMobjThinkerData::damageReceived(int damage, mobj_t const *inflictor)
+void ClientMobjThinkerData::damageReceived(int damage, const mobj_t *inflictor)
 {
     MobjThinkerData::damageReceived(damage, inflictor);
 

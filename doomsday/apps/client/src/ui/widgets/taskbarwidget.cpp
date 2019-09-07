@@ -272,7 +272,7 @@ DE_GUI_PIMPL(TaskBarWidget)
 
     void showOrHideMenuItems()
     {
-        Game const &game = App_CurrentGame();
+        const Game &game = App_CurrentGame();
 
         //itemWidget(mainMenu, POS_GAMES)            .show(!game.isNull());
         itemWidget(mainMenu, POS_UNLOAD)           .show(!game.isNull());
@@ -297,7 +297,7 @@ DE_GUI_PIMPL(TaskBarWidget)
         }
     }
 
-    void currentGameChanged(Game const &)
+    void currentGameChanged(const Game &)
     {
         updateStatus();
         showOrHideMenuItems();
@@ -318,7 +318,7 @@ DE_GUI_PIMPL(TaskBarWidget)
 
     void updateStatus()
     {
-        if (auto const *prof = DoomsdayApp::currentGameProfile())
+        if (const auto *prof = DoomsdayApp::currentGameProfile())
         {
             status->setText(prof->name().truncateWithEllipsis(30));
         }
@@ -360,7 +360,7 @@ TaskBarWidget::TaskBarWidget() : GuiWidget("taskbar"), d(new Impl(this))
 {
     Background bg(style().colors().colorf("background"));
 
-    Rule const &gap = rule("gap");
+    const Rule &gap = rule("gap");
 
     d->backBlur = new LabelWidget;
     d->backBlur->rule()
@@ -539,7 +539,7 @@ bool TaskBarWidget::isOpen() const
     return d->opened;
 }
 
-Rule const &TaskBarWidget::shift()
+const Rule &TaskBarWidget::shift()
 {
     return *d->vertShift;
 }
@@ -572,7 +572,7 @@ void TaskBarWidget::drawContent()
     d->updateGeometry();
 }
 
-bool TaskBarWidget::handleEvent(Event const &event)
+bool TaskBarWidget::handleEvent(const Event &event)
 {
     ClientWindow &window = root().window().as<ClientWindow>();
 
@@ -582,7 +582,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
             && !window.isGameMinimized())
     {
         // Clicking outside the taskbar will trap the mouse automatically.
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
         if (mouse.state() == MouseEvent::Released && !hitTest(mouse.pos()))
         {
             /*if (root().focus())
@@ -623,7 +623,7 @@ bool TaskBarWidget::handleEvent(Event const &event)
 
     if (event.type() == Event::KeyPress)
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         // Shift-Esc opens and closes the task bar.
         if (key.ddKey() == DDKEY_ESCAPE)

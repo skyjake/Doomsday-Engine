@@ -374,7 +374,7 @@ DE_GUI_PIMPL(RendererAppearanceEditor)
 //        settings.audienceForProfileChange -= this;
 //    }
 
-    Rule const &firstColumnWidthRule() const
+    const Rule &firstColumnWidthRule() const
     {
         return self().firstColumnWidth();
     }
@@ -384,12 +384,12 @@ DE_GUI_PIMPL(RendererAppearanceEditor)
         return self().containerWidget();
     }
 
-    void resetToDefaults(String const &settingName)
+    void resetToDefaults(const String &settingName)
     {
         settings.resetSettingToDefaults(settingName);
     }
 
-    void currentProfileChanged(String const &)
+    void currentProfileChanged(const String &)
     {
         // Update with values from the new profile.
         fetch();
@@ -428,7 +428,7 @@ DE_GUI_PIMPL(RendererAppearanceEditor)
         }
     }
 
-    void restoreFoldState(PersistentState const &fromState)
+    void restoreFoldState(const PersistentState &fromState)
     {
         bool gotState = false;
 
@@ -494,7 +494,7 @@ void RendererAppearanceEditor::operator >> (PersistentState &toState) const
     d->saveFoldState(toState);
 }
 
-void RendererAppearanceEditor::operator << (PersistentState const &fromState)
+void RendererAppearanceEditor::operator << (const PersistentState &fromState)
 {
     d->restoreFoldState(fromState);
 }

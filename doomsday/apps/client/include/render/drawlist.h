@@ -115,7 +115,7 @@ public:
             return texunits[index];
         }
 
-        inline de::GLTextureUnit const &unit(int index) const {
+        inline const de::GLTextureUnit &unit(int index) const {
             DE_ASSERT(index >= 0 && index < NUM_TEXTURE_UNITS);
             return texunits[index];
         }
@@ -159,7 +159,7 @@ public:
      *
      * @param spec  List specification. A copy is made.
      */
-    DrawList(Spec const &spec);
+    DrawList(const Spec &spec);
 
     /**
      * Write indices for a (buffered) geometry primitive to the list.
@@ -172,23 +172,23 @@ public:
      * @param primParams       GL primitive parameters.
      * @param indices          Indices for the vertex elements in @a buffer. A copy is made.
      */
-    DrawList &write(Store const &          buffer,
-                    de::duint const *      indices,
+    DrawList &write(const Store &          buffer,
+                    const de::duint *      indices,
                     int                    indexCount,
-                    PrimitiveParams const &primParms);
+                    const PrimitiveParams &primParms);
 
-    DrawList &write(Store const &      buffer,
-                    de::duint const *  indices,
+    DrawList &write(const Store &      buffer,
+                    const de::duint *  indices,
                     int                indexCount,
                     de::gfx::Primitive primitiveType); // using default parameters
 
-    DrawList &write(Store const &buffer, Indices const &indices, PrimitiveParams const &primParms);
+    DrawList &write(const Store &buffer, const Indices &indices, const PrimitiveParams &primParms);
 
-    DrawList &write(Store const &      buffer,
-                    Indices const &    indices,
+    DrawList &write(const Store &      buffer,
+                    const Indices &    indices,
                     de::gfx::Primitive primitiveType); // using default parameters
 
-    void draw(DrawMode mode, TexUnitMap const &texUnitMap) const;
+    void draw(DrawMode mode, const TexUnitMap &texUnitMap) const;
 
     /**
      * Returns @c true iff there are no commands/geometries in the list.
@@ -218,7 +218,7 @@ public:
     /**
      * Provides immutable access to the list's specification.
      */
-    Spec const &spec() const;
+    const Spec &spec() const;
 
 public:
     static void reserveSpace(Indices &idx, uint count);

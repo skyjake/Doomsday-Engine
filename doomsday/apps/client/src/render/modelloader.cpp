@@ -84,7 +84,7 @@ DE_PIMPL(ModelLoader)
     struct Program : public GLProgram
     {
         String shaderName;
-        Record const *def = nullptr;
+        const Record *def = nullptr;
         int useCount = 1; ///< Number of models using the program.
     };
 
@@ -158,7 +158,7 @@ DE_PIMPL(ModelLoader)
         return atlas;
     }
 
-    void assetAvailabilityChanged(String const &identifier, filesys::AssetObserver::Event event) override
+    void assetAvailabilityChanged(const String &identifier, filesys::AssetObserver::Event event) override
     {
         LOG_RES_MSG("Model asset \"%s\" is now %s")
                 << identifier
@@ -173,10 +173,10 @@ DE_PIMPL(ModelLoader)
         }
         else
         {
-            auto const &model = bank.model<render::Model const>(identifier);
+            const auto &model = bank.model<render::Model const>(identifier);
 
             // Unload programs used by the various rendering passes.
-            for (auto const &pass : model.passes)
+            for (const auto &pass : model.passes)
             {
                 DE_ASSERT(pass.program);
                 unloadProgram(*static_cast<Program *>(pass.program));
@@ -249,7 +249,7 @@ DE_PIMPL(ModelLoader)
      *
      * @return Shader program.
      */
-    Program *loadProgram(String const &name)
+    Program *loadProgram(const String &name)
     {
         if (programs.contains(name))
         {
@@ -319,9 +319,9 @@ DE_PIMPL(ModelLoader)
         model.setAtlas(*model.textures);
     }
 
-    static gfx::Comparison textToComparison(String const &text)
+    static gfx::Comparison textToComparison(const String &text)
     {
-        static struct { char const *txt; gfx::Comparison comp; } const cs[] = {
+        static struct { const char *txt; gfx::Comparison comp; } const cs[] = {
             { "Never",          gfx::Never },
             { "Always",         gfx::Always },
             { "Equal",          gfx::Equal },
@@ -331,7 +331,7 @@ DE_PIMPL(ModelLoader)
             { "LessOrEqual",    gfx::LessOrEqual },
             { "GreaterOrEqual", gfx::GreaterOrEqual }
         };
-        for (auto const &p : cs)
+        for (const auto &p : cs)
         {
             if (text == p.txt)
             {
@@ -342,9 +342,9 @@ DE_PIMPL(ModelLoader)
                               stringf("Invalid comparison function \"%s\"", text.c_str()));
     }
 
-    static gfx::Blend textToBlendFunc(String const &text)
+    static gfx::Blend textToBlendFunc(const String &text)
     {
-        static struct { char const *txt; gfx::Blend blend; } const bs[] = {
+        static struct { const char *txt; gfx::Blend blend; } const bs[] = {
             { "Zero",              gfx::Zero },
             { "One",               gfx::One },
             { "SrcColor",          gfx::SrcColor },
@@ -356,7 +356,7 @@ DE_PIMPL(ModelLoader)
             { "DestAlpha",         gfx::DestAlpha },
             { "OneMinusDestAlpha", gfx::OneMinusDestAlpha }
         };
-        for (auto const &p : bs)
+        for (const auto &p : bs)
         {
             if (text == p.txt)
             {
@@ -367,7 +367,7 @@ DE_PIMPL(ModelLoader)
                               stringf("Invalid blending function \"%s\"", text.c_str()));
     }
 
-    static gfx::BlendOp textToBlendOp(String const &text)
+    static gfx::BlendOp textToBlendOp(const String &text)
     {
         if (text == "Add") return gfx::Add;
         if (text == "Subtract") return gfx::Subtract;
@@ -387,11 +387,11 @@ DE_PIMPL(ModelLoader)
      * @param shaderDef  Shader definition.
      */
     void composeTextureMappings(ModelDrawable::Mapping &mapping,
-                                Record const &shaderDef)
+                                const Record &shaderDef)
     {
         if (shaderDef.has(DEF_TEXTURE_MAPPING()))
         {
-            ArrayValue const &array = shaderDef.geta(DEF_TEXTURE_MAPPING());
+            const ArrayValue &array = shaderDef.geta(DEF_TEXTURE_MAPPING());
             for (uint i = 0; i < array.size(); ++i)
             {
                 ModelDrawable::TextureMap map = ModelDrawable::textToTextureMap(array.element(i).asText());
@@ -421,7 +421,7 @@ DE_PIMPL(ModelLoader)
      *
      * @param path  Model asset id.
      */
-    void bankLoaded(DotPath const &path) override
+    void bankLoaded(const DotPath &path) override
     {
         // Models use the shared atlas.
         render::Model &model = bank.model<render::Model>(path);
@@ -461,7 +461,7 @@ DE_PIMPL(ModelLoader)
         if (asset.has(DEF_MATERIAL))
         {
             asset.subrecord(DEF_MATERIAL)
-                .forSubrecords([this, &model](String const &blockName, Record const &block) {
+                .forSubrecords([this, &model](const String &blockName, const Record &block) {
                     try
                     {
                 if (ScriptedInfo::blockType(block) == DEF_VARIANT())
@@ -474,7 +474,7 @@ DE_PIMPL(ModelLoader)
                                                                   model.addMaterial());
                             }
                             block.forSubrecords([this, &model, &materialName](
-                                                    String const &matName, Record const &matDef) {
+                                                    const String &matName, const Record &matDef) {
                                 setupMaterial(model,
                                               matName,
                                               model.materialIndexForName[materialName],
@@ -541,7 +541,7 @@ DE_PIMPL(ModelLoader)
         // Rendering passes.
         if (asset.has(DEF_RENDER))
         {
-            Record const &renderBlock = asset.subrecord(DEF_RENDER);
+            const Record &renderBlock = asset.subrecord(DEF_RENDER);
             modelShader = renderBlock.gets(DEF_SHADER(), modelShader);
 
             auto passes = ScriptedInfo::subrecordsOfType(DEF_PASS, renderBlock);
@@ -549,15 +549,15 @@ DE_PIMPL(ModelLoader)
             {
                 try
                 {
-                    auto const &def = *passes[key];
+                    const auto &def = *passes[key];
 
                     ModelDrawable::Pass pass;
                     pass.name = key;
 
                     pass.meshes.resize(model.meshCount());
-                    for (Value const *value : def.geta(DEF_MESHES()).elements())
+                    for (const Value *value : def.geta(DEF_MESHES()).elements())
                     {
-                        int meshId = identifierFromText(value->asText(), [&model] (String const &text) {
+                        int meshId = identifierFromText(value->asText(), [&model] (const String &text) {
                             return model.meshId(text);
                         });
                         if (meshId < 0 || meshId >= model.meshCount())
@@ -572,7 +572,7 @@ DE_PIMPL(ModelLoader)
                     // GL state parameters.
                     if (def.has(DEF_BLENDFUNC()))
                     {
-                        ArrayValue const &blendDef = def.geta(DEF_BLENDFUNC());
+                        const ArrayValue &blendDef = def.geta(DEF_BLENDFUNC());
                         pass.blendFunc.first  = textToBlendFunc(blendDef.at(0).asText());
                         pass.blendFunc.second = textToBlendFunc(blendDef.at(1).asText());
                     }
@@ -587,7 +587,7 @@ DE_PIMPL(ModelLoader)
 
                     model.passes.append(pass);
                 }
-                catch (Error const &er)
+                catch (const Error &er)
                 {
                     LOG_RES_ERROR("Rendering pass \"%s\" in asset \"%s\" is invalid: %s")
                             << key << path << er.asText();
@@ -606,7 +606,7 @@ DE_PIMPL(ModelLoader)
                 composeTextureMappings(textureMapping,
                                        ClientApp::shaders()[modelShader]);
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_RES_ERROR("Asset \"%s\" cannot use shader \"%s\": %s")
                         << path << modelShader << er.asText();
@@ -630,7 +630,7 @@ DE_PIMPL(ModelLoader)
     }
 
 
-    render::Model::Alignment parseAlignment(RecordAccessor const &def, String const &key)
+    render::Model::Alignment parseAlignment(const RecordAccessor &def, const String &key)
     {
         if (!def.has(key)) return render::Model::NotAligned;
 
@@ -662,9 +662,9 @@ DE_PIMPL(ModelLoader)
     }
 
     void setupMaterial(ModelDrawable &model,
-                       String const &meshName,
+                       const String &meshName,
                        duint materialIndex,
-                       Record const &matDef)
+                       const Record &matDef)
     {
         int mid = identifierFromText(meshName,
                                      [&model](const String &text) { return model.meshId(text); });
@@ -685,9 +685,9 @@ DE_PIMPL(ModelLoader)
     }
 
     void setupMaterialTexture(ModelDrawable &model,
-                              ModelDrawable::MeshId const &mesh,
-                              Record const &matDef,
-                              String const &textureName,
+                              const ModelDrawable::MeshId &mesh,
+                              const Record &matDef,
+                              const String &textureName,
                               ModelDrawable::TextureMap map)
     {
         if (matDef.has(textureName))
@@ -711,7 +711,7 @@ ModelBank &ModelLoader::bank()
     return d->bank;
 }
 
-ModelBank const &ModelLoader::bank() const
+const ModelBank &ModelLoader::bank() const
 {
     return d->bank;
 }
@@ -726,18 +726,18 @@ void ModelLoader::glDeinit()
     d->deinit();
 }
 
-String ModelLoader::shaderName(GLProgram const &program) const
+String ModelLoader::shaderName(const GLProgram &program) const
 {
-    return static_cast<Impl::Program const &>(program).shaderName;
+    return static_cast<const Impl::Program &>(program).shaderName;
 }
 
-Record const &ModelLoader::shaderDefinition(GLProgram const &program) const
+const Record &ModelLoader::shaderDefinition(const GLProgram &program) const
 {
-    return *static_cast<Impl::Program const &>(program).def;
+    return *static_cast<const Impl::Program &>(program).def;
 }
 
-int ModelLoader::identifierFromText(String const &text,
-                                    const std::function<int (String const &)>& resolver) // static
+int ModelLoader::identifierFromText(const String &text,
+                                    const std::function<int (const String &)>& resolver) // static
 {
     int id = 0;
     if (text.beginsWith('@'))

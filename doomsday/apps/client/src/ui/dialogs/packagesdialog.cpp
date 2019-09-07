@@ -74,7 +74,7 @@ DE_GUI_PIMPL(PackagesDialog)
         , DE_OBSERVES(res::Bundles, Identify)
     {
     public:
-        SelectedPackageItem(String const &packageId)
+        SelectedPackageItem(const String &packageId)
         {
             setData(TextValue(packageId));
             updatePackageInfo();
@@ -98,12 +98,12 @@ DE_GUI_PIMPL(PackagesDialog)
             return data().asText();
         }
 
-        Record const *info() const
+        const Record *info() const
         {
             return _info;
         }
 
-        File const *packageFile() const
+        const File *packageFile() const
         {
             return _file;
         }
@@ -117,8 +117,8 @@ DE_GUI_PIMPL(PackagesDialog)
         }
 
     private:
-        File   const *_file = nullptr;
-        Record const *_info = nullptr;
+        const File *_file = nullptr;
+        const Record *_info = nullptr;
     };
 
     /**
@@ -128,7 +128,7 @@ DE_GUI_PIMPL(PackagesDialog)
     class SelectedPackageWidget : public HomeItemWidget
     {
     public:
-        SelectedPackageWidget(SelectedPackageItem const &item,
+        SelectedPackageWidget(const SelectedPackageItem &item,
                               PackagesDialog &owner)
             : _owner(owner)
             , _item(&item)
@@ -152,7 +152,7 @@ DE_GUI_PIMPL(PackagesDialog)
             icon().setImageFit(ui::FitToSize | ui::OriginalAspectRatio);
             icon().setStyleImage("package.icon", "default");
             icon().margins().set("dialog.gap");
-            Rule const &height = style().fonts().font("default").height();
+            const Rule &height = style().fonts().font("default").height();
             icon().rule().setInput(Rule::Width, height + rule("dialog.gap")*2);
         }
 
@@ -181,7 +181,7 @@ DE_GUI_PIMPL(PackagesDialog)
 
     private:
         PackagesDialog &_owner;
-        SelectedPackageItem const *_item;
+        const SelectedPackageItem *_item;
         ButtonWidget *_removeButton;
     };
 
@@ -345,22 +345,22 @@ DE_GUI_PIMPL(PackagesDialog)
         }
     }
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *) override
     {
         return new SelectedPackageWidget(item.as<SelectedPackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &) override
     {
         widget.as<SelectedPackageWidget>().updateContents();
     }
 
-    bool isPackageHighlighted(String const &packageId) const override
+    bool isPackageHighlighted(const String &packageId) const override
     {
         return selectedPackages.contains(packageId);
     }
 
-    void removePackage(String const &packageId)
+    void removePackage(const String &packageId)
     {
         selectedPackages.removeOne(packageId);
         auto pos = menu->items().findData(TextValue(packageId));
@@ -383,7 +383,7 @@ DE_GUI_PIMPL(PackagesDialog)
     }
 };
 
-PackagesDialog::PackagesDialog(String const &titleText)
+PackagesDialog::PackagesDialog(const String &titleText)
     : DialogWidget("packagesdialog", WithHeading)
     , d(new Impl(this))
 {

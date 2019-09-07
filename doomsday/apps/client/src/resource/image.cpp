@@ -53,7 +53,7 @@ struct GraphicFileType
 
     bool (*interpretFunc)(FileHandle &hndl, String filePath, image_t &img);
 
-    char const *(*getLastErrorFunc)(); ///< Can be NULL.
+    const char *(*getLastErrorFunc)(); ///< Can be NULL.
 };
 
 static bool interpretPcx(FileHandle &hndl, String /*filePath*/, image_t &img)
@@ -88,7 +88,7 @@ static const GraphicFileType graphicTypes[] = {
     { "PCX",    "pcx",      interpretPcx, PCX_LastError }
 };
 
-static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
+static const GraphicFileType *guessGraphicFileTypeFromFileName(String fileName)
 {
     // The path must have an extension for this.
     String ext = fileName.fileNameExtension();
@@ -108,7 +108,7 @@ static GraphicFileType const *guessGraphicFileTypeFromFileName(String fileName)
 static void interpretGraphic(FileHandle &hndl, String filePath, image_t &img)
 {
     // Firstly try the interpreter for the guessed resource types.
-    GraphicFileType const *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
+    const GraphicFileType *rtypeGuess = guessGraphicFileTypeFromFileName(filePath);
     if (rtypeGuess)
     {
         rtypeGuess->interpretFunc(hndl, filePath, img);
@@ -145,7 +145,7 @@ void Image_Init(image_t &img)
     img.pixels    = 0;
 }
 
-void Image_InitFromImage(image_t &img, Image const &guiImage)
+void Image_InitFromImage(image_t &img, const Image &guiImage)
 {
     img.size      = guiImage.size();
     img.pixelSize = guiImage.depth() / 8;
@@ -160,12 +160,12 @@ void Image_ClearPixelData(image_t &img)
     M_Free(img.pixels); img.pixels = 0;
 }
 
-image_t::Size Image_Size(image_t const &img)
+image_t::Size Image_Size(const image_t &img)
 {
     return img.size;
 }
 
-String Image_Description(image_t const &img)
+String Image_Description(const image_t &img)
 {
     return Stringf("Dimensions:%s Flags:%x %s:%i",
                           img.size.asText().c_str(),
@@ -236,7 +236,7 @@ void Image_ConvertToAlpha(image_t &img, bool makeWhite)
     img.pixelSize = 2;
 }
 
-bool Image_HasAlpha(image_t const &img)
+bool Image_HasAlpha(const image_t &img)
 {
     LOG_AS("Image_HasAlpha");
 
@@ -254,7 +254,7 @@ bool Image_HasAlpha(image_t const &img)
     if (img.pixelSize == 4)
     {
         long const numpels = img.size.x * img.size.y;
-        uint8_t const *in = img.pixels;
+        const uint8_t *in = img.pixels;
         for (long i = 0; i < numpels; ++i, in += 4)
         {
             if (in[3] < 255)
@@ -311,7 +311,7 @@ uint8_t *Image_LoadFromFile(image_t &img, FileHandle &file)
     return img.pixels;
 }
 
-bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &hndl)
+bool Image_LoadFromFileWithFormat(image_t &img, const char *format, FileHandle &hndl)
 {
     LOG_AS("Image_LoadFromFileWithFormat");
 
@@ -363,7 +363,7 @@ bool Image_LoadFromFileWithFormat(image_t &img, char const *format, FileHandle &
     return true;
 }
 
-bool Image_Save(image_t const &img, char const *filePath)
+bool Image_Save(const image_t &img, const char *filePath)
 {
     // Compose the full path.
     String fullPath = String(filePath);
@@ -407,7 +407,7 @@ uint8_t *GL_LoadImage(image_t &image, const String& nativePath)
     return 0; // Not loaded.
 }
 
-Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
+Source GL_LoadExtImage(image_t &image, const char *_searchPath, gfxmode_t mode)
 {
     DE_ASSERT(_searchPath);
 
@@ -440,7 +440,7 @@ Source GL_LoadExtImage(image_t &image, char const *_searchPath, gfxmode_t mode)
     return None;
 }
 
-static dd_bool palettedIsMasked(uint8_t const *pixels, int width, int height)
+static dd_bool palettedIsMasked(const uint8_t *pixels, int width, int height)
 {
     DE_ASSERT(pixels != 0);
     // Jump to the start of the alpha data.
@@ -501,8 +501,8 @@ static Source loadExternalTexture(image_t &image, String encodedSearchPath,
  *
  * @todo Optimize: Should be redesigned to composite whole rows -ds
  */
-static void compositePaletted(dbyte *dst, Vec2ui const &dstDimensions,
-    IByteArray const &src, Vec2ui const &srcDimensions, Vec2i const &origin)
+static void compositePaletted(dbyte *dst, const Vec2ui &dstDimensions,
+    const IByteArray &src, const Vec2ui &srcDimensions, const Vec2i &origin)
 {
     if (dstDimensions == Vec2ui()) return;
     if (srcDimensions == Vec2ui()) return;
@@ -553,11 +553,11 @@ static String toTranslationId(int tclass, int tmap)
 #undef NUM_TRANSLATION_CLASSES
 }
 
-static Block loadAndTranslatePatch(IByteArray const &data, colorpaletteid_t palId,
+static Block loadAndTranslatePatch(const IByteArray &data, colorpaletteid_t palId,
     int tclass = 0, int tmap = 0)
 {
     res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(palId);
-    if (res::ColorPaletteTranslation const *xlat = palette.translation(toTranslationId(tclass, tmap)))
+    if (const res::ColorPaletteTranslation *xlat = palette.translation(toTranslationId(tclass, tmap)))
     {
         return res::Patch::load(data, *xlat, res::Patch::ClipToLogicalDimensions);
     }
@@ -608,7 +608,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
 
             return Original;
         }
-        catch (IByteArray::OffsetError const &)
+        catch (const IByteArray::OffsetError &)
         {
             LOG_RES_WARNING("File \"%s:%s\" does not appear to be a valid Patch")
                 << NativePath(file.container().composePath()).pretty()
@@ -620,7 +620,7 @@ static Source loadPatch(image_t &image, FileHandle &hndl, int tclass = 0,
     return None;
 }
 
-static Source loadPatchComposite(image_t &image, Texture const &tex,
+static Source loadPatchComposite(image_t &image, const Texture &tex,
     bool maskZero = false, bool useZeroOriginIfOneComponent = false)
 {
     LOG_AS("image_t::loadPatchComposite");
@@ -632,7 +632,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
 
     image.pixels = (uint8_t *) M_Calloc(2 * image.size.x * image.size.y);
 
-    res::Composite const &texDef = *reinterpret_cast<res::Composite *>(tex.userDataPointer());
+    const res::Composite &texDef = *reinterpret_cast<res::Composite *>(tex.userDataPointer());
     DE_FOR_EACH_CONST(res::Composite::Components, i, texDef.components())
     {
         File1 &file           = App_FileSystem().lump(i->lumpNum());
@@ -659,7 +659,7 @@ static Source loadPatchComposite(image_t &image, Texture const &tex,
                 compositePaletted(image.pixels, image.size,
                                   patchImg, info.dimensions, origin);
             }
-            catch (IByteArray::OffsetError const &)
+            catch (const IByteArray::OffsetError &)
             {} // Ignore this error.
         }
 
@@ -744,14 +744,14 @@ static Source loadDetail(image_t &image, FileHandle &hndl)
     return Original;
 }
 
-Source GL_LoadSourceImage(image_t &image, ClientTexture const &tex,
-                          TextureVariantSpec const &spec)
+Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
+                          const TextureVariantSpec &spec)
 {
     res::FS1 &fileSys = App_FileSystem();
     auto &cfg = R_Config();
 
     Source source = None;
-    variantspecification_t const &vspec = spec.variant;
+    const variantspecification_t &vspec = spec.variant;
     if (!tex.manifest().schemeName().compareWithoutCase("Textures"))
     {
         // Attempt to load an external replacement for this composite texture?

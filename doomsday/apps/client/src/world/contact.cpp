@@ -238,7 +238,7 @@ void R_AddContact(Lumobj &lum)
     }
 }
 
-LoopResult R_ForAllContacts(std::function<LoopResult (world::Contact const &)> func)
+LoopResult R_ForAllContacts(std::function<LoopResult (const world::Contact &)> func)
 {
     for(Contact *contact = contacts; contact; contact = contact->next)
     {

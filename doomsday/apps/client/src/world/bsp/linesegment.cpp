@@ -109,7 +109,7 @@ int LineSegment::Side::lineSideId() const
     return &d->line->front() == this? LineSegment::Front : LineSegment::Back;
 }
 
-Vec2d const &LineSegment::Side::direction() const
+const Vec2d &LineSegment::Side::direction() const
 {
     return d->direction;
 }
@@ -248,7 +248,7 @@ coord_t LineSegment::Side::distance(Vec2d point) const
     return V2d_PointLineParaDistance(pointV1, directionV1, d->pPara, d->pLength);
 }
 
-void LineSegment::Side::distance(LineSegment::Side const &other, coord_t *fromDist, coord_t *toDist) const
+void LineSegment::Side::distance(const LineSegment::Side &other, coord_t *fromDist, coord_t *toDist) const
 {
     // Any work to do?
     if(!fromDist && !toDist) return;
@@ -307,7 +307,7 @@ LineRelationship lineRelationship(coord_t fromDist, coord_t toDist)
     return Intersects;
 }
 
-LineRelationship LineSegment::Side::relationship(LineSegment::Side const &other,
+LineRelationship LineSegment::Side::relationship(const LineSegment::Side &other,
     coord_t *retFromDist, coord_t *retToDist) const
 {
     coord_t fromDist, toDist;
@@ -321,7 +321,7 @@ LineRelationship LineSegment::Side::relationship(LineSegment::Side const &other,
     return rel;
 }
 
-int LineSegment::Side::boxOnSide(AABoxd const &box) const
+int LineSegment::Side::boxOnSide(const AABoxd &box) const
 {
     coord_t const fromV1[2]      = { from().origin().x, from().origin().y };
     coord_t const directionV1[2] = { d->direction.x, d->direction.y } ;
@@ -393,7 +393,7 @@ LineSegment::Side &LineSegment::side(int back)
     return back? d->back : d->front;
 }
 
-LineSegment::Side const &LineSegment::side(int back) const
+const LineSegment::Side &LineSegment::side(int back) const
 {
     return back? d->back : d->front;
 }

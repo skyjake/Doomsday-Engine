@@ -49,7 +49,7 @@ DE_PIMPL(Finale)
         DE_NOTIFY_PUBLIC(Deletion, i) i->finaleBeingDeleted(self());
     }
 
-    void loadScript(String const &script)
+    void loadScript(const String &script)
     {
         if (script.isEmpty()) return;
 
@@ -72,7 +72,7 @@ DE_PIMPL(Finale)
 
 DE_AUDIENCE_METHOD(Finale, Deletion)
 
-Finale::Finale(int flags, finaleid_t id, String const &script)
+Finale::Finale(int flags, finaleid_t id, const String &script)
     : d(new Impl(this, flags, id))
 {
     d->loadScript(script);
@@ -131,7 +131,7 @@ bool Finale::runTicks(timespan_t timeDelta)
     return false;
 }
 
-int Finale::handleEvent(ddevent_t const &ev)
+int Finale::handleEvent(const ddevent_t &ev)
 {
     if (!d->active) return false;
     return d->interpreter.handleEvent(ev);
@@ -150,7 +150,7 @@ bool Finale::isMenuTrigger() const
     return d->interpreter.isMenuTrigger();
 }
 
-FinaleInterpreter const &Finale::interpreter() const
+const FinaleInterpreter &Finale::interpreter() const
 {
     return d->interpreter;
 }

@@ -43,7 +43,7 @@ static NativePath findSavegameTool()
 static int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
 {
     DE_ASSERT(data != 0);
-    ddhook_savegame_convert_t const &parm = *static_cast<ddhook_savegame_convert_t *>(data);
+    const ddhook_savegame_convert_t &parm = *static_cast<ddhook_savegame_convert_t *>(data);
 
     LOG_AS("importsave");
 
@@ -76,7 +76,7 @@ static int SavegameConvertHook(int /*hook_type*/, int /*parm*/, void *data)
         cmd.executeAndWait();
         return true;
     }
-    catch(Error const &er)
+    catch(const Error &er)
     {
         LOG_RES_NOTE("Failed conversion of \"%s\":\n") << sourcePath << er.asText();
     }
@@ -97,7 +97,7 @@ static void DP_Initialize()
  * Declares the type of the plugin so the engine knows how to treat it. Called automatically
  * when the plugin is loaded.
  */
-static char const *deng_LibraryType()
+static const char *deng_LibraryType()
 {
     return "deng-plugin/generic";
 }

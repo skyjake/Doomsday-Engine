@@ -43,25 +43,25 @@ public:
      * @param context   Passed to the @a callback.
      */
     Interceptor(traverser_t callback,
-                de::Vec2d const &from = de::Vec2d(),
-                de::Vec2d const &to   = de::Vec2d(),
+                const de::Vec2d &from = de::Vec2d(),
+                const de::Vec2d &to   = de::Vec2d(),
                 de::dint flags           = PTF_ALL,
                 void *context            = nullptr);
 
     /**
      * Provides read-only access to the map space origin of the trace.
      */
-    de::ddouble const *origin() const;
+    const de::ddouble *origin() const;
 
     /**
      * Provides read-only access to the map space direction of the trace.
      */
-    de::ddouble const *direction() const;
+    const de::ddouble *direction() const;
 
     /**
      * Provides read-only access to the current map space opening of the trace.
      */
-    LineOpening const &opening() const;
+    const LineOpening &opening() const;
 
     /**
      * Update the "opening" state for the trace in accordance with the heights
@@ -71,7 +71,7 @@ public:
      * @return  @c true iff after the adjustment the opening range is positive,
      * i.e., the top Z coordinate is greater than the bottom Z.
      */
-    bool adjustOpening(Line const *line);
+    bool adjustOpening(const Line *line);
 
     /**
      * Execute the trace (i.e., cast the ray).
@@ -80,7 +80,7 @@ public:
      *
      * @return  Callback return value.
      */
-    de::dint trace(world::Map const &map);
+    de::dint trace(const world::Map &map);
 
 private:
     DE_PRIVATE(d)

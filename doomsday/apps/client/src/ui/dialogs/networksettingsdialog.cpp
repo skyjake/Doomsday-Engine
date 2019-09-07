@@ -67,7 +67,7 @@ DE_GUI_PIMPL(NetworkSettingsDialog)
     }
 };
 
-NetworkSettingsDialog::NetworkSettingsDialog(String const &name)
+NetworkSettingsDialog::NetworkSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText("Network Settings");

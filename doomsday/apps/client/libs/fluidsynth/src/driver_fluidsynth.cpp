@@ -178,7 +178,7 @@ static const char *deng_LibraryType(void)
 //    DE_GET_API(DE_API_CONSOLE, Con);
 //)
 
-DE_ENTRYPOINT void *extension_fluidsynth_symbol(char const *name)
+DE_ENTRYPOINT void *extension_fluidsynth_symbol(const char *name)
 {
     DE_SYMBOL_PTR(name, deng_LibraryType)
     DE_SYMBOL_PTR(name, DS_Init)

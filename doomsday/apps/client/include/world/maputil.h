@@ -36,16 +36,16 @@ class LineOwner;
  * @param side           LineSide instance.
  * @param ignoreOpacity  @c true= do not consider Material opacity.
  */
-bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity = true);
+bool R_SideBackClosed(const LineSide &side, bool ignoreOpacity = true);
 
 /**
  * A neighbor is a Line that shares a vertex with @a line and faces the given @a sector.
  */
-Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, de::ClockDirection direction,
-    Sector const *sector, binangle_t *diff = nullptr);
+Line *R_FindLineNeighbor(const Line &line, const LineOwner &own, de::ClockDirection direction,
+    const Sector *sector, binangle_t *diff = nullptr);
 
-Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, de::ClockDirection direction,
-    Sector const *sector, binangle_t *diff = nullptr);
+Line *R_FindSolidLineNeighbor(const Line &line, const LineOwner &own, de::ClockDirection direction,
+    const Sector *sector, binangle_t *diff = nullptr);
 
 #endif  // WORLD_MAPUTIL_H
 #endif  // __CLIENT__

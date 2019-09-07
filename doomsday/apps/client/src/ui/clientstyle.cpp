@@ -36,7 +36,7 @@ GuiWidget *ClientStyle::sharedBlurWidget() const
     return &ClientWindow::main().taskBarBlur();
 }
 
-Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalog, LogoFlags flags)
+Image ClientStyle::makeGameLogo(const Game &game, const res::LumpCatalog &catalog, LogoFlags flags)
 {
     try
     {
@@ -65,7 +65,7 @@ Image ClientStyle::makeGameLogo(Game const &game, res::LumpCatalog const &catalo
             return logoImage;
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         if (flags & NullImageIfFails) return Image();
 

@@ -23,8 +23,8 @@
 #include "api_filesys.h"
 
 // m_misc.c
-DE_EXTERN_C size_t M_ReadFile(char const *name, char **buffer);
-DE_EXTERN_C AutoStr* M_ReadFileIntoString(ddstring_t const *path, dd_bool *isCustom);
+DE_EXTERN_C size_t M_ReadFile(const char *name, char **buffer);
+DE_EXTERN_C AutoStr* M_ReadFileIntoString(const ddstring_t *path, dd_bool *isCustom);
 
 DE_DECLARE_API(F) =
 {

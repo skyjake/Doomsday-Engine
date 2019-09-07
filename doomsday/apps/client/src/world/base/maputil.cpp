@@ -37,7 +37,7 @@
 
 using namespace de;
 
-lineopening_s::lineopening_s(Line const &line)
+lineopening_s::lineopening_s(const Line &line)
 {
     if(!line.back().hasSector())
     {
@@ -45,8 +45,8 @@ lineopening_s::lineopening_s(Line const &line)
         return;
     }
 
-    Sector const *frontSector = line.front().sectorPtr();
-    Sector const *backSector  = line.back().sectorPtr();
+    const Sector *frontSector = line.front().sectorPtr();
+    const Sector *backSector  = line.back().sectorPtr();
     DE_ASSERT(frontSector != 0);
 
     if(backSector && backSector->ceiling().height() < frontSector->ceiling().height())
@@ -80,7 +80,7 @@ lineopening_s::lineopening_s(Line const &line)
     }
 }
 
-lineopening_s &lineopening_s::operator = (lineopening_s const &other)
+lineopening_s &lineopening_s::operator = (const lineopening_s &other)
 {
     top      = other.top;
     bottom   = other.bottom;
@@ -105,10 +105,10 @@ lineopening_s &lineopening_s::operator = (lineopening_s const &other)
  *
  * @todo fixme: Should use the visual plane heights of subsectors.
  */
-static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = nullptr, coord_t *retTop = nullptr)
+static coord_t visOpenRange(const LineSide &side, coord_t *retBottom = nullptr, coord_t *retTop = nullptr)
 {
-    Sector const *frontSec = side.sectorPtr();
-    Sector const *backSec  = side.back().sectorPtr();
+    const Sector *frontSec = side.sectorPtr();
+    const Sector *backSec  = side.back().sectorPtr();
 
     coord_t bottom;
     if(backSec && backSec->floor().heightSmoothed() > frontSec->floor().heightSmoothed())
@@ -137,7 +137,7 @@ static coord_t visOpenRange(LineSide const &side, coord_t *retBottom = nullptr, 
 }
 
 /// @todo fixme: Should use the visual plane heights of subsectors.
-bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
+bool R_SideBackClosed(const LineSide &side, bool ignoreOpacity)
 {
     if(!side.hasSections()) return false;
     if(!side.hasSector()) return false;
@@ -145,8 +145,8 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
 
     if(side.considerOneSided()) return true;
 
-    Sector const &frontSec = side.sector();
-    Sector const &backSec  = side.back().sector();
+    const Sector &frontSec = side.sector();
+    const Sector &backSec  = side.back().sector();
 
     if(backSec.floor().heightSmoothed()   >= backSec.ceiling().heightSmoothed())  return true;
     if(backSec.ceiling().heightSmoothed() <= frontSec.floor().heightSmoothed())   return true;
@@ -189,10 +189,10 @@ bool R_SideBackClosed(LineSide const &side, bool ignoreOpacity)
     return false;
 }
 
-Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, ClockDirection direction,
-    Sector const *sector, binangle_t *diff)
+Line *R_FindLineNeighbor(const Line &line, const LineOwner &own, ClockDirection direction,
+    const Sector *sector, binangle_t *diff)
 {
-    LineOwner const *cown = (direction == Anticlockwise ? own.prev() : own.next());
+    const LineOwner *cown = (direction == Anticlockwise ? own.prev() : own.next());
     Line *other = &cown->line();
 
     if(other == &line)
@@ -230,7 +230,7 @@ Line *R_FindLineNeighbor(Line const &line, LineOwner const &own, ClockDirection 
  *
  * @todo fixme: Should use the visual plane heights of subsectors.
  */
-static bool middleMaterialCoversOpening(LineSide const &side)
+static bool middleMaterialCoversOpening(const LineSide &side)
 {
     if(!side.hasSector()) return false; // Never.
 
@@ -271,12 +271,12 @@ static bool middleMaterialCoversOpening(LineSide const &side)
 }
 
 /// @todo fixme: Should use the visual plane heights of subsectors.
-Line *R_FindSolidLineNeighbor(Line const &line, LineOwner const &own, ClockDirection direction,
-    Sector const *sector, binangle_t *diff)
+Line *R_FindSolidLineNeighbor(const Line &line, const LineOwner &own, ClockDirection direction,
+    const Sector *sector, binangle_t *diff)
 {
     DE_ASSERT(sector);
 
-    LineOwner const *cown = (direction == Anticlockwise ? own.prev() : own.next());
+    const LineOwner *cown = (direction == Anticlockwise ? own.prev() : own.next());
     Line *other = &cown->line();
 
     if (other == &line) return nullptr;

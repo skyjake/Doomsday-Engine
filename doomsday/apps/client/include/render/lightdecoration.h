@@ -37,8 +37,8 @@ public:
      * @param source  Source of the decoration (a material).
      * @param origin  Origin of the decoration in map space.
      */
-    LightDecoration(MaterialAnimator::Decoration const &source,
-                    de::Vec3d const &origin = de::Vec3d());
+    LightDecoration(const MaterialAnimator::Decoration &source,
+                    const de::Vec3d &origin = de::Vec3d());
 
     de::String description() const;
 
@@ -66,7 +66,7 @@ public:
      * @return  Occlusion factor in the range [0..1], where @c 0 is fully
      * occluded and @c 1 is fully visible.
      */
-    de::dfloat occlusion(de::Vec3d const &eye) const;
+    de::dfloat occlusion(const de::Vec3d &eye) const;
 
     /**
      * Generates a new lumobj for the light decoration. A map surface must be

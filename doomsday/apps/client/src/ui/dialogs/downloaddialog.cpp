@@ -55,7 +55,7 @@ DE_GUI_PIMPL(DownloadDialog)
     }
 };
 
-DownloadDialog::DownloadDialog(String const &name)
+DownloadDialog::DownloadDialog(const String &name)
     : DialogWidget(name)
     , d(new Impl(this))
 {}

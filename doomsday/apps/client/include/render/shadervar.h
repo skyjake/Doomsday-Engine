@@ -46,7 +46,7 @@ public:
     void init(float value);
 
     template <typename VecType>
-    void init(VecType const &vec)
+    void init(const VecType &vec)
     {
         values.clear();
         for (int i = 0; i < vec.size(); ++i)
@@ -65,7 +65,7 @@ public:
     /**
      * Sets the pointers to the AnimationValue objects by looking them up from a Record.
      */
-    void updateValuePointers(de::Record &names, de::String const &varName);
+    void updateValuePointers(de::Record &names, const de::String &varName);
 };
 
 struct ShaderVars
@@ -75,11 +75,11 @@ struct ShaderVars
     DE_ERROR(DefinitionError);
 
 public:
-    void initVariableFromDefinition(de::String const &variableName,
-                                    de::Record const &valueDef,
+    void initVariableFromDefinition(const de::String &variableName,
+                                    const de::Record &valueDef,
                                     de::Record &bindingNames);
 
-    void addBinding(de::Record &names, de::String const &varName, de::AnimationValue *anim);
+    void addBinding(de::Record &names, const de::String &varName, de::AnimationValue *anim);
 };
 
 #endif // DE_CLIENT_RENDER_SHADERVAR_H

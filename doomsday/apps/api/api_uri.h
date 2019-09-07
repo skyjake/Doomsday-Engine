@@ -80,7 +80,7 @@ DE_API_TYPEDEF(Uri) // v1
      */
     UriWrapper* (*New)(void);
 
-    UriWrapper* (*NewWithPath3)(char const *defaultScheme, char const *path);
+    UriWrapper* (*NewWithPath3)(const char *defaultScheme, const char *path);
 
     /**
      * Constructs a Uri instance from @a path. The uri should be destroyed with
@@ -90,9 +90,9 @@ DE_API_TYPEDEF(Uri) // v1
      * @param defaultResourceClass  If no scheme is defined in @a path and this is not @c FC_NULL,
      *      look for an appropriate default scheme for this class of resource.
      */
-    UriWrapper* (*NewWithPath2)(char const *path, resourceclassid_t defaultResourceClass);
+    UriWrapper* (*NewWithPath2)(const char *path, resourceclassid_t defaultResourceClass);
 
-    UriWrapper* (*NewWithPath)(char const *path);
+    UriWrapper* (*NewWithPath)(const char *path);
 
     /**
      * Constructs a Uri instance by duplicating @a other. The uri should be destroyed

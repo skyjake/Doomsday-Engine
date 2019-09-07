@@ -204,7 +204,7 @@ DE_PIMPL(UpdaterSettingsDialog)
     }
 
 #if 0
-    void setDownloadPath(QString const &/*dir*/)
+    void setDownloadPath(const QString &/*dir*/)
     {
         paths->setSelected(0);
         /*
@@ -226,7 +226,7 @@ DE_PIMPL(UpdaterSettingsDialog)
 #endif
 };
 
-UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, String const &name)
+UpdaterSettingsDialog::UpdaterSettingsDialog(Mode mode, const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this, mode))
 {
     heading().setText("Updater Settings");

@@ -24,7 +24,7 @@ namespace render {
 
 DE_STATIC_STRING(DEF_TIMELINE, "timeline");
 
-Model::AnimSequence::AnimSequence(String const &name, Record const &def)
+Model::AnimSequence::AnimSequence(const String &name, const Record &def)
     : name(name)
     , def(&def)
 {

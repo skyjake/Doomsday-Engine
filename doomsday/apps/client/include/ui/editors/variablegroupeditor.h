@@ -44,9 +44,9 @@ public:
     class IOwner
     {
     public:
-        virtual de::Rule const &firstColumnWidthRule() const = 0;
+        virtual const de::Rule &firstColumnWidthRule() const = 0;
         virtual de::ScrollAreaWidget &containerWidget() = 0;
-        virtual void resetToDefaults(de::String const &name) = 0;
+        virtual void resetToDefaults(const de::String &name) = 0;
 
         virtual ~IOwner() = default;
     };
@@ -59,7 +59,7 @@ public:
      * @param titleText  Title for the group.
      * @param header     Widget to place above the variables. Takes ownership.
      */
-    VariableGroupEditor(IOwner *owner, de::String const &name, de::String const &titleText,
+    VariableGroupEditor(IOwner *owner, const de::String &name, const de::String &titleText,
                         GuiWidget *header = 0);
 
     /**
@@ -73,20 +73,20 @@ public:
     IOwner &owner();
     de::GuiWidget *header() const;
     de::ButtonWidget &resetButton();
-    de::Rule const &firstColumnWidth() const;
+    const de::Rule &firstColumnWidth() const;
 
     enum LabelType { SingleCell, EntireRow };
 
     void addSpace();
-    de::LabelWidget *addLabel(de::String const &text, LabelType labelType = SingleCell);
+    de::LabelWidget *addLabel(const de::String &text, LabelType labelType = SingleCell);
 
-    CVarToggleWidget *addToggle(char const *cvar, de::String const &label);
-    CVarChoiceWidget *addChoice(char const *cvar, de::ui::Direction opening = de::ui::Up);
-    CVarSliderWidget *addSlider(char const *cvar);
-    CVarSliderWidget *addSlider(char const *cvar, de::Ranged const &range, double step, int precision);
+    CVarToggleWidget *addToggle(const char *cvar, const de::String &label);
+    CVarChoiceWidget *addChoice(const char *cvar, de::ui::Direction opening = de::ui::Up);
+    CVarSliderWidget *addSlider(const char *cvar);
+    CVarSliderWidget *addSlider(const char *cvar, const de::Ranged &range, double step, int precision);
 
-    de::VariableToggleWidget *addToggle(de::Variable &var, de::String const &label);
-    de::VariableSliderWidget *addSlider(de::Variable &var, de::Ranged const &range, double step, int precision);
+    de::VariableToggleWidget *addToggle(de::Variable &var, const de::String &label);
+    de::VariableSliderWidget *addSlider(de::Variable &var, const de::Ranged &range, double step, int precision);
     de::VariableLineEditWidget *addLineEdit(de::Variable &var);
 
     void addWidget(GuiWidget *widget);

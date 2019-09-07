@@ -78,7 +78,7 @@ DE_GUI_PIMPL(GameColumnWidget)
             profile->audienceForDeletion += this;
         }
 
-        Game const &game() const
+        const Game &game() const
         {
             DE_ASSERT(profile != nullptr);
             return profile->game();
@@ -105,15 +105,15 @@ DE_GUI_PIMPL(GameColumnWidget)
 
     Dispatch dispatch;
     String gameFamily;
-    SaveListData const &savedItems;
+    const SaveListData &savedItems;
     HomeMenuWidget *menu;
     ButtonWidget *newProfileButton;
     int restoredSelected = -1;
     bool gotSubheading = false;
 
     Impl(Public *i,
-         String const &gameFamily,
-         SaveListData const &savedItems)
+         const String &gameFamily,
+         const SaveListData &savedItems)
         : Base(i)
         , gameFamily(gameFamily)
         , savedItems(savedItems)
@@ -166,7 +166,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         Config::get(VAR_SORT_CUSTOM_SEPARATELY).audienceForChange() += this;
     }
 
-    ui::Item *findProfileItem(GameProfile const &profile) const
+    ui::Item *findProfileItem(const GameProfile &profile) const
     {
         for (dsize i = 0; i < menu->items().size(); ++i)
         {
@@ -179,7 +179,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         return nullptr;
     }
 
-    GamePanelButtonWidget &widgetForItem(ui::Item const &item) const
+    GamePanelButtonWidget &widgetForItem(const ui::Item &item) const
     {
         DE_ASSERT(menu->items().find(item) != ui::Data::InvalidPos);
         return menu->itemWidget<GamePanelButtonWidget>(item);
@@ -188,11 +188,11 @@ DE_GUI_PIMPL(GameColumnWidget)
     int userProfileCount() const
     {
         int count = 0;
-        menu->items().forAll([&count] (ui::Item const &item)
+        menu->items().forAll([&count] (const ui::Item &item)
         {
             if (!item.semantics().testFlag(ui::Item::Separator))
             {
-                auto const *profile = item.as<ProfileItem>().profile;
+                const auto *profile = item.as<ProfileItem>().profile;
                 if (profile && profile->isUserCreated()) ++count;
             }
             return LoopContinue;
@@ -202,7 +202,7 @@ DE_GUI_PIMPL(GameColumnWidget)
 
     bool addItemForProfile(GameProfile &profile)
     {
-        auto const &games = DoomsdayApp::games();
+        const auto &games = DoomsdayApp::games();
         if (games.contains(profile.gameId()))
         {
             if (profile.game().family() == gameFamily)
@@ -227,7 +227,7 @@ DE_GUI_PIMPL(GameColumnWidget)
                 sortItems();
 
                 // Highlight the newly added item.
-                auto const *newItem = findProfileItem(prof.as<GameProfile>());
+                const auto *newItem = findProfileItem(prof.as<GameProfile>());
                 DE_ASSERT(newItem);
                 menu->setSelectedIndex(menu->items().find(*newItem));
             }
@@ -283,13 +283,13 @@ DE_GUI_PIMPL(GameColumnWidget)
         // Update or remove profiles as needed.
         for (ui::DataPos i = 0; i < menu->items().size(); ++i)
         {
-            ui::Item const &item = menu->items().at(i);
+            const ui::Item &item = menu->items().at(i);
             if (item.semantics() & ui::Item::Separator)
             {
                 // Skip the subheading.
                 continue;
             }
-            auto const &profItem = item.as<ProfileItem>();
+            const auto &profItem = item.as<ProfileItem>();
             if (profiles.contains(profItem.profile))
             {
                 // Already existing item.
@@ -315,7 +315,7 @@ DE_GUI_PIMPL(GameColumnWidget)
 
     enum Section { BuiltIn, Subheading, Custom };
 
-    static Section itemSection(ui::Item const &item)
+    static Section itemSection(const ui::Item &item)
     {
         // The list is divided into three sections.
         if (item.semantics().testFlag(ui::Item::Separator)) return Subheading;
@@ -416,7 +416,7 @@ DE_GUI_PIMPL(GameColumnWidget)
 
     void updateItems()
     {
-        menu->items().forAll([] (ui::Item const &item)
+        menu->items().forAll([] (const ui::Item &item)
         {
             if (!item.semantics().testFlag(ui::Item::Separator))
             {
@@ -442,7 +442,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         DoomsdayApp::gameProfiles().audienceForAddition() += this;
     }
 
-    void variableValueChanged(Variable &var, Value const &) override
+    void variableValueChanged(Variable &var, const Value &) override
     {
         if (var.name().beginsWith("sort"))
         {
@@ -457,7 +457,7 @@ DE_GUI_PIMPL(GameColumnWidget)
 
 //- ChildWidgetOrganizer::IWidgetFactory ------------------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *) override
     {
         if (item.semantics().testFlag(ui::Item::Separator))
         {
@@ -471,7 +471,7 @@ DE_GUI_PIMPL(GameColumnWidget)
             return heading;
         }
 
-        auto const *profileItem = &item.as<ProfileItem>();
+        const auto *profileItem = &item.as<ProfileItem>();
         auto *button = new GamePanelButtonWidget(*profileItem->profile, savedItems);
 
         // Right-clicking on game items shows additional functions.
@@ -636,7 +636,7 @@ DE_GUI_PIMPL(GameColumnWidget)
         return button;
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item) override
     {
         if (item.semantics().testFlag(ui::Item::Separator)) return; // Ignore.
 
@@ -685,8 +685,8 @@ DE_GUI_PIMPL(GameColumnWidget)
     }
 };
 
-GameColumnWidget::GameColumnWidget(String const &gameFamily,
-                                   SaveListData const &savedItems)
+GameColumnWidget::GameColumnWidget(const String &gameFamily,
+                                   const SaveListData &savedItems)
     : ColumnWidget(gameFamily.isEmpty()? "other-column"
                                        : (gameFamily.lower() + "-column"))
     , d(new Impl(this, gameFamily.lower(), savedItems))
@@ -825,8 +825,8 @@ void GameColumnWidget::operator>>(PersistentState &toState) const
     rec.set(name().concatenateMember("selected"), d->menu->selectedIndex());
 }
 
-void GameColumnWidget::operator<<(PersistentState const &fromState)
+void GameColumnWidget::operator<<(const PersistentState &fromState)
 {
-    Record const &rec = fromState.objectNamespace();
+    const Record &rec = fromState.objectNamespace();
     d->restoredSelected = rec.geti(name().concatenateMember("selected"), -1);
 }

@@ -66,7 +66,7 @@ struct VisEntityPose
 
     VisEntityPose() = default;
 
-    VisEntityPose(de::Vec3d const &origin_, de::Vec3d const &visOffset,
+    VisEntityPose(const de::Vec3d &origin_, const de::Vec3d &visOffset,
                   bool viewAlign_ = false,
                   de::dfloat topZ_ = 0,
                   de::dfloat yaw_ = 0,
@@ -101,12 +101,12 @@ struct VisEntityLighting
 
     VisEntityLighting() = default;
 
-    VisEntityLighting(de::Vec4f const &ambientColor, de::duint lightListIndex)
+    VisEntityLighting(const de::Vec4f &ambientColor, de::duint lightListIndex)
         : ambientColor(ambientColor)
         , vLightListIdx(lightListIndex)
     {}
 
-    void setupLighting(de::Vec3d const &origin, de::ddouble distance, world::BspLeaf const &bspLeaf);
+    void setupLighting(const de::Vec3d &origin, de::ddouble distance, const world::BspLeaf &bspLeaf);
 };
 
 /**
@@ -138,13 +138,13 @@ struct vissprite_t
 #define VS_MODEL2(v)        (&((v)->data.model2))
 #define VS_FLARE(v)         (&((v)->data.flare))
 
-void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
+void VisSprite_SetupSprite(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
     de::dfloat secFloor, de::dfloat secCeil, de::dfloat floorClip, de::dfloat top,
     ClientMaterial &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
     de::dint tClass, de::dint tMap, world::BspLeaf *bspLeafAtOrigin,
     bool floorAdjust, bool fitTop, bool fitBottom);
 
-void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
+void VisSprite_SetupModel(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
     FrameModelDef *mf, FrameModelDef *nextMF, de::dfloat inter,
     de::dint id, de::dint selector, world::BspLeaf *bspLeafAtOrigin, de::dint mobjDDFlags, de::dint tmap,
     bool fullBright, bool alwaysInterpolate);
@@ -163,7 +163,7 @@ struct vispsprite_t
     vispspritetype_t type;
     ddpsprite_t *psp;
     de::Vec3d origin;
-    world::BspLeaf const *bspLeaf;
+    const world::BspLeaf *bspLeaf;
     VisEntityLighting light;
 
     union vispsprite_data_u {
@@ -195,8 +195,8 @@ struct vispsprite_t
             de::dfloat inter;             ///< Frame interpolation, 0..1
         } model;
         struct vispsprite_model2_s {
-            render::Model const *model;
-            render::StateAnimator const *animator;
+            const render::Model *model;
+            const render::StateAnimator *animator;
             de::dfloat pitchAngleOffset;
             de::dfloat yawAngleOffset;
         } model2;

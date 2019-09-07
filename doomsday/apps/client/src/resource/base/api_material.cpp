@@ -29,27 +29,27 @@
 using namespace de;
 
 #undef DD_MaterialForTextureUri
-DE_EXTERN_C world_Material *DD_MaterialForTextureUri(uri_s const *textureUri)
+DE_EXTERN_C world_Material *DD_MaterialForTextureUri(const uri_s *textureUri)
 {
     if (!textureUri) return nullptr;  // Not found.
 
     try
     {
-        res::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<res::Uri const &>(*textureUri)).composeUri();
+        res::Uri uri = res::Textures::get().textureManifest(reinterpret_cast<const res::Uri &>(*textureUri)).composeUri();
         uri.setScheme(DD_MaterialSchemeNameForTextureScheme(uri.scheme()));
         return reinterpret_cast<world_Material *>(&world::Materials::get().material(uri));
     }
-    catch (world::MaterialManifest::MissingMaterialError const &er)
+    catch (const world::MaterialManifest::MissingMaterialError &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch (Resources::UnknownSchemeError const &er)
+    catch (const Resources::UnknownSchemeError &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING(er.asText() + ", ignoring.");
     }
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {}  // Ignore this error.
 
     return nullptr;  // Not found.
@@ -63,19 +63,19 @@ DE_EXTERN_C struct uri_s *Materials_ComposeUri(materialid_t materialId)
 }
 
 #undef Materials_ResolveUri
-DE_EXTERN_C materialid_t Materials_ResolveUri(struct uri_s const *uri)
+DE_EXTERN_C materialid_t Materials_ResolveUri(const struct uri_s *uri)
 {
     try
     {
-        return world::Materials::get().materialManifest(*reinterpret_cast<res::Uri const *>(uri)).id();
+        return world::Materials::get().materialManifest(*reinterpret_cast<const res::Uri *>(uri)).id();
     }
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {}  // Ignore this error.
     return NOMATERIALID;
 }
 
 #undef Materials_ResolveUriCString
-DE_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
+DE_EXTERN_C materialid_t Materials_ResolveUriCString(const char *uriCString)
 {
     if (uriCString && uriCString[0])
     {
@@ -83,7 +83,7 @@ DE_EXTERN_C materialid_t Materials_ResolveUriCString(char const *uriCString)
         {
             return world::Materials::get().materialManifest(res::makeUri(uriCString)).id();
         }
-        catch (Resources::MissingResourceManifestError const &)
+        catch (const Resources::MissingResourceManifestError &)
         {}  // Ignore this error.
     }
     return NOMATERIALID;

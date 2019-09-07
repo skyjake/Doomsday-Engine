@@ -745,8 +745,8 @@ void GL_DownMipmap8(uint8_t* in, uint8_t* fadedOut, int width, int height, float
     }
 }
 
-dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *palette,
-    dd_bool applyTexGamma, uint8_t const *in, int informat, int width, int height)
+dd_bool GL_PalettizeImage(uint8_t *out, int outformat, const res::ColorPalette *palette,
+    dd_bool applyTexGamma, const uint8_t *in, int informat, int width, int height)
 {
     DE_ASSERT(in && out && palette);
 
@@ -790,8 +790,8 @@ dd_bool GL_PalettizeImage(uint8_t *out, int outformat, res::ColorPalette const *
     return false;
 }
 
-dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, res::ColorPalette const *palette,
-    uint8_t const *in, int informat, int width, int height)
+dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, const res::ColorPalette *palette,
+    const uint8_t *in, int informat, int width, int height)
 {
     DE_ASSERT(out != 0 && in != 0 && palette != 0);
 
@@ -820,7 +820,7 @@ dd_bool GL_QuantizeImageToPalette(uint8_t *out, int outformat, res::ColorPalette
     return false;
 }
 
-void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palette,
+void GL_DeSaturatePalettedImage(uint8_t *pixels, const res::ColorPalette &palette,
     int width, int height)
 {
     DE_ASSERT(pixels != 0);
@@ -863,13 +863,13 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, res::ColorPalette const &palett
     }
 }
 
-void FindAverageLineColorIdx(uint8_t const *data, int w, int h, int line,
-    res::ColorPalette const &palette, dd_bool hasAlpha, ColorRawf *color)
+void FindAverageLineColorIdx(const uint8_t *data, int w, int h, int line,
+    const res::ColorPalette &palette, dd_bool hasAlpha, ColorRawf *color)
 {
     DE_ASSERT(data != 0 && color != 0);
 
     long i, count, numpels, avg[3] = { 0, 0, 0 };
-    uint8_t const *start, *alphaStart;
+    const uint8_t *start, *alphaStart;
 
     if(w <= 0 || h <= 0)
     {
@@ -981,13 +981,13 @@ void FindAverageColor(const uint8_t* pixels, int width, int height,
                         avg[2] / numpels * reciprocal255);
 }
 
-void FindAverageColorIdx(uint8_t const *data, int w, int h, res::ColorPalette const &palette,
+void FindAverageColorIdx(const uint8_t *data, int w, int h, const res::ColorPalette &palette,
     dd_bool hasAlpha, ColorRawf *color)
 {
     DE_ASSERT(data != 0 && color != 0);
 
     long i, numpels, count, avg[3] = { 0, 0, 0 };
-    uint8_t const *alphaStart;
+    const uint8_t *alphaStart;
 
     if(w <= 0 || h <= 0)
     {
@@ -1068,11 +1068,11 @@ void FindAverageAlpha(const uint8_t* pixels, int width, int height,
     if(coverage) *coverage = (float)alphaCount / numPels;
 }
 
-void FindAverageAlphaIdx(uint8_t const *pixels, int w, int h, float *alpha,
+void FindAverageAlphaIdx(const uint8_t *pixels, int w, int h, float *alpha,
     float *coverage)
 {
     long i, numPels, avg = 0, alphaCount = 0;
-    uint8_t const *alphaStart;
+    const uint8_t *alphaStart;
 
     if(!pixels || !alpha) return;
 

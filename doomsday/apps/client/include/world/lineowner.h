@@ -118,12 +118,12 @@ public:
     /**
      * Returns the inner shadow offset of the line owner.
      */
-    de::Vec2d const &innerShadowOffset() const { return _shadowOffsets.inner; }
+    const de::Vec2d &innerShadowOffset() const { return _shadowOffsets.inner; }
 
     /**
      * Returns the extended shadow offset of the line owner.
      */
-    de::Vec2d const &extendedShadowOffset() const { return _shadowOffsets.extended; }
+    const de::Vec2d &extendedShadowOffset() const { return _shadowOffsets.extended; }
 };
 
 #endif // DE_WORLD_LINEOWNER_H

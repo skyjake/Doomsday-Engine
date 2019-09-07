@@ -36,8 +36,8 @@ class ServerLink : public de::AbstractLink
 {
 public:
     DE_AUDIENCE(Discovery,    void serversDiscovered(const ServerLink &link))
-    DE_AUDIENCE(PingResponse, void pingResponse(de::Address const &, de::TimeSpan))
-    DE_AUDIENCE(MapOutline,   void mapOutlineReceived(de::Address const &, network::MapOutlinePacket const &))
+    DE_AUDIENCE(PingResponse, void pingResponse(const de::Address &, de::TimeSpan))
+    DE_AUDIENCE(MapOutline,   void mapOutlineReceived(const de::Address &, const network::MapOutlinePacket &))
 
     DE_AUDIENCE(Join,  void networkGameJoined())
     DE_AUDIENCE(Leave, void networkGameLeft())
@@ -80,18 +80,18 @@ public:
      *                       The callback is called in the main thread (from the app
      *                       event loop).
      */
-    void acquireServerProfileAsync(de::Address const &address,
-                                   const std::function<void (GameProfile const *)>& resultHandler);
+    void acquireServerProfileAsync(const de::Address &address,
+                                   const std::function<void (const GameProfile *)>& resultHandler);
 
-    void acquireServerProfileAsync(de::String const &domain,
-                                   std::function<void (de::Address, GameProfile const *)> resultHandler);
+    void acquireServerProfileAsync(const de::String &domain,
+                                   std::function<void (de::Address, const GameProfile *)> resultHandler);
 
-    void requestMapOutline(de::Address const &address);
+    void requestMapOutline(const de::Address &address);
 
-    void ping(de::Address const &address);
+    void ping(const de::Address &address);
 
-    void connectDomain(de::String const &domain, de::TimeSpan timeout = 0.0) override;
-    void connectHost(de::Address const &address) override;
+    void connectDomain(const de::String &domain, de::TimeSpan timeout = 0.0) override;
+    void connectHost(const de::Address &address) override;
 
     /**
      * Disconnect from the server.
@@ -104,7 +104,7 @@ public:
      *
      * @param domain
      */
-    void discover(de::String const &domain);
+    void discover(const de::String &domain);
 
     /**
      * Ask the master server for information about currently running servers.
@@ -133,12 +133,12 @@ public:
      */
     de::List<de::Address> foundServers(FoundMask mask = Any) const;
 
-    bool isFound(de::Address const &host, FoundMask mask = Any) const;
+    bool isFound(const de::Address &host, FoundMask mask = Any) const;
 
     /**
      * @param mask  Defines the sources that are enabled when querying for found servers.
      */
-    bool foundServerInfo(de::Address const &host, de::ServerInfo &info,
+    bool foundServerInfo(const de::Address &host, de::ServerInfo &info,
                          FoundMask mask = Any) const;
 
     /**
@@ -147,7 +147,7 @@ public:
     bool foundServerInfo(int index, de::ServerInfo &info,
                          FoundMask mask = Any) const;
 
-    bool isServerOnLocalNetwork(de::Address const &host) const;
+    bool isServerOnLocalNetwork(const de::Address &host) const;
 
 public:
     void handleIncomingPackets();
@@ -156,7 +156,7 @@ protected:
     void localServersFound();
     void linkDisconnected();
 
-    de::Packet *interpret(de::Message const &msg) override;
+    de::Packet *interpret(const de::Message &msg) override;
     void initiateCommunications() override;
 
 private:

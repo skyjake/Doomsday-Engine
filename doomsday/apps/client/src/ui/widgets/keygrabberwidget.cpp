@@ -48,7 +48,7 @@ DE_GUI_PIMPL(KeyGrabberWidget)
     }
 };
 
-KeyGrabberWidget::KeyGrabberWidget(String const &name)
+KeyGrabberWidget::KeyGrabberWidget(const String &name)
     : LabelWidget(name), d(new Impl(this))
 {
     setBehavior(Focusable);
@@ -56,7 +56,7 @@ KeyGrabberWidget::KeyGrabberWidget(String const &name)
     setText("Click to focus");
 }
 
-bool KeyGrabberWidget::handleEvent(Event const &event)
+bool KeyGrabberWidget::handleEvent(const Event &event)
 {
     if (!hasFocus())
     {
@@ -72,7 +72,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
     }
     else
     {
-        if (KeyEvent const *key = maybeAs<KeyEvent>(event))
+        if (const KeyEvent *key = maybeAs<KeyEvent>(event))
         {
             if (key->ddKey() == DDKEY_ESCAPE)
             {
@@ -93,7 +93,7 @@ bool KeyGrabberWidget::handleEvent(Event const &event)
             return true;
         }
 
-        if (MouseEvent const *mouse = maybeAs<MouseEvent>(event))
+        if (const MouseEvent *mouse = maybeAs<MouseEvent>(event))
         {
             if (mouse->type() == Event::MouseButton &&
                mouse->state() == MouseEvent::Released &&

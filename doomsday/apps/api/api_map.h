@@ -165,8 +165,8 @@ typedef struct lineopening_s {
 
 #ifdef __cplusplus
     lineopening_s() : top(0), bottom(0), range(0), lowFloor(0) {}
-    lineopening_s(Line const &line);
-    lineopening_s &operator = (lineopening_s const &other);
+    lineopening_s(const Line &line);
+    lineopening_s &operator = (const lineopening_s &other);
 #endif
 } LineOpening;
 
@@ -197,7 +197,7 @@ typedef struct intercept_s {
     Interceptor *trace; ///< Trace which produced the intercept.
 } Intercept;
 
-typedef int (*traverser_t) (Intercept const *intercept, void *context);
+typedef int (*traverser_t) (const Intercept *intercept, void *context);
 
 /**
  * @defgroup mobjLinkFlags Mobj Link Flags
@@ -222,7 +222,7 @@ typedef int (*traverser_t) (Intercept const *intercept, void *context);
 ///@}
 
 typedef void *MapElementPtr;
-typedef void const *MapElementPtrConst;
+typedef const void *MapElementPtrConst;
 
 #ifdef __cplusplus
 extern "C" {
@@ -238,13 +238,13 @@ DE_API_TYPEDEF(Map)
     /**
      * Determines whether the given @a uri references a known map.
      */
-    dd_bool         (*Exists)(char const *uri);
+    dd_bool         (*Exists)(const char *uri);
 
     /**
      * Determines whether the given @a uri references a known map, which, does
      * not originate form the currently loaded game.
      */
-    dd_bool         (*IsCustom)(char const *uri);
+    dd_bool         (*IsCustom)(const char *uri);
 
     /**
      * Determines whether the given @a uri references a known map and if so returns
@@ -253,7 +253,7 @@ DE_API_TYPEDEF(Map)
      * @return  Fully qualified (i.e., absolute) path to the source file if known;
      *          otherwise a zero-length string.
      */
-    AutoStr        *(*SourceFile)(char const *uri);
+    AutoStr        *(*SourceFile)(const char *uri);
 
     /**
      * Attempt to change the current map (will be loaded if necessary) to that
@@ -261,7 +261,7 @@ DE_API_TYPEDEF(Map)
      *
      * @return  @c true= the current map was changed.
      */
-    dd_bool         (*Change)(char const *uri);
+    dd_bool         (*Change)(const char *uri);
 
     // Lines
 
@@ -274,12 +274,12 @@ DE_API_TYPEDEF(Map)
      *
      * @param flags  @ref lineIteratorFlags
      */
-    int             (*L_BoxIterator)(AABoxd const *box, int flags, int (*callback) (Line *, void *), void *context);
+    int             (*L_BoxIterator)(const AABoxd *box, int flags, int (*callback) (Line *, void *), void *context);
 
-    int             (*L_BoxOnSide)(Line *line, AABoxd const *box);
-    int             (*L_BoxOnSide_FixedPrecision)(Line *line, AABoxd const *box);
+    int             (*L_BoxOnSide)(Line *line, const AABoxd *box);
+    int             (*L_BoxOnSide_FixedPrecision)(Line *line, const AABoxd *box);
     coord_t         (*L_PointDistance)(Line *line, coord_t const point[2], coord_t *offset);
-    coord_t         (*L_PointOnSide)(Line const *line, coord_t const point[2]);
+    coord_t         (*L_PointOnSide)(const Line *line, coord_t const point[2]);
     int             (*L_MobjsIterator)(Line *line, int (*callback) (struct mobj_s *, void *), void *context);
     void            (*L_Opening)(Line *line, LineOpening *opening);
 
@@ -325,7 +325,7 @@ DE_API_TYPEDEF(Map)
      * to this will be skipped over (can be used to avoid processing a mobj
      * multiple times during a complex and/or non-linear traversal.
      */
-    int             (*MO_BoxIterator)(AABoxd const *box, int (*callback) (struct mobj_s *, void *), void *context);
+    int             (*MO_BoxIterator)(const AABoxd *box, int (*callback) (struct mobj_s *, void *), void *context);
 
     /**
      * @param statenum  Must be a valid state (not null!).
@@ -347,7 +347,7 @@ DE_API_TYPEDEF(Map)
      */
     void            (*MO_Unlink)(struct mobj_s *mobj);
 
-    void            (*MO_SpawnDamageParticleGen)(struct mobj_s const *mobj, struct mobj_s const *inflictor, int amount);
+    void            (*MO_SpawnDamageParticleGen)(const struct mobj_s *mobj, const struct mobj_s *inflictor, int amount);
 
     /**
      * The callback function will be called once for each line that crosses
@@ -378,7 +378,7 @@ DE_API_TYPEDEF(Map)
      *
      * @param mobj  Mobj instance.
      */
-    Sector         *(*MO_Sector)(struct mobj_s const *mobj);
+    Sector         *(*MO_Sector)(const struct mobj_s *mobj);
 
     // Polyobjs
 
@@ -428,7 +428,7 @@ DE_API_TYPEDEF(Map)
      * to this will be skipped over (can be used to avoid processing a polyobj
      * multiple times during a complex and/or non-linear traversal.
      */
-    int             (*PO_BoxIterator)(AABoxd const *box, int (*callback) (struct polyobj_s *, void *), void *context);
+    int             (*PO_BoxIterator)(const AABoxd *box, int (*callback) (struct polyobj_s *, void *), void *context);
 
     /**
      * The po_callback is called when a (any) polyobj hits a mobj.
@@ -441,7 +441,7 @@ DE_API_TYPEDEF(Map)
      * to this will be skipped over (can be used to avoid processing a polyobj
      * multiple times during a complex and/or non-linear traversal.
      */
-    int             (*SS_BoxIterator)(AABoxd const *box, int (*callback) (struct convexsubspace_s *, void *), void *context);
+    int             (*SS_BoxIterator)(const AABoxd *box, int (*callback) (struct convexsubspace_s *, void *), void *context);
 
     // Traversers
 
@@ -466,17 +466,17 @@ DE_API_TYPEDEF(Map)
     /**
      * Provides read-only access to the origin in map space for the given @a trace.
      */
-    coord_t const * (*I_Origin)(Interceptor const *trace);
+    const coord_t * (*I_Origin)(const Interceptor *trace);
 
     /**
      * Provides read-only access to the direction in map space for the given @a trace.
      */
-    coord_t const * (*I_Direction)(Interceptor const *trace);
+    const coord_t * (*I_Direction)(const Interceptor *trace);
 
     /**
      * Provides read-only access to the line opening state for the given @a trace.
      */
-    LineOpening const *(*I_Opening)(Interceptor const *trace);
+    const LineOpening *(*I_Opening)(const Interceptor *trace);
 
     /**
      * Update the "opening" state for the specified @a trace in accordance with
@@ -500,7 +500,7 @@ DE_API_TYPEDEF(Map)
      * Translate a DMU element/property constant to a string. Primarily intended
      * for error/debug messages.
      */
-    char const     *(*Str)(uint prop);
+    const char *(*Str)(uint prop);
 
     /**
      * Determines the type of the map data object.

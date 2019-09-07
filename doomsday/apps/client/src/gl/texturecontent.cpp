@@ -109,7 +109,7 @@ void GL_InitTextureContent(texturecontent_t *content)
     content->flags       = 0;
 }
 
-texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other)
+texturecontent_t *GL_ConstructTextureContentCopy(const texturecontent_t *other)
 {
     DE_ASSERT(other);
 
@@ -144,7 +144,7 @@ void GL_DestroyTextureContent(texturecontent_t *content)
  * @return  The DGL texture format determined for the image.
  */
 static dgltexformat_t prepareImageAsTexture(image_t &image,
-    variantspecification_t const &spec)
+    const variantspecification_t &spec)
 {
     DE_ASSERT(image.pixels);
 
@@ -295,7 +295,7 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
  * @return  The DGL texture format determined for the image.
  */
 static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
-    detailvariantspecification_t const &spec, float *baMul, float *hiMul, float *loMul)
+    const detailvariantspecification_t &spec, float *baMul, float *hiMul, float *loMul)
 {
     DE_UNUSED(spec);
 
@@ -314,8 +314,8 @@ static dgltexformat_t prepareImageAsDetailTexture(image_t &image,
 void GL_PrepareTextureContent(texturecontent_t &c,
                               GLuint glTexName,
                               image_t &image,
-                              TextureVariantSpec const &spec,
-                              res::TextureManifest const &textureManifest)
+                              const TextureVariantSpec &spec,
+                              const res::TextureManifest &textureManifest)
 {
     DE_ASSERT(glTexName != 0);
     DE_ASSERT(image.pixels != 0);
@@ -327,7 +327,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
     switch (spec.type)
     {
     case TST_GENERAL: {
-        variantspecification_t const &vspec = spec.variant;
+        const variantspecification_t &vspec = spec.variant;
         bool const noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
         // If the Upscale And Sharpen filter is enabled, scaling is applied
         // implicitly by prepareImageAsTexture(), so don't do it again.
@@ -358,7 +358,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
         break; }
 
     case TST_DETAIL: {
-        detailvariantspecification_t const &dspec = spec.detailVariant;
+        const detailvariantspecification_t &dspec = spec.detailVariant;
 
         // Prepare the image for upload.
         float baMul, hiMul, loMul;
@@ -738,7 +738,7 @@ static dd_bool uploadTextureGrayMipmap(GLenum         glFormat,
 }
 
 /// @note Texture parameters will NOT be set here!
-void GL_UploadTextureContent(texturecontent_t const &content, gfx::UploadMethod method)
+void GL_UploadTextureContent(const texturecontent_t &content, gfx::UploadMethod method)
 {
     if (method == gfx::Deferred)
     {
@@ -757,7 +757,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gfx::UploadMethod 
 
     int loadWidth             = content.width;
     int loadHeight            = content.height;
-    uint8_t const *loadPixels = content.pixels;
+    const uint8_t *loadPixels = content.pixels;
     dgltexformat_t dglFormat  = content.format;
 
     // Convert a paletted source image to truecolor.
@@ -785,7 +785,7 @@ void GL_UploadTextureContent(texturecontent_t const &content, gfx::UploadMethod 
             uint8_t* dst, *localBuffer = 0;
             long const numPels = loadWidth * loadHeight;
 
-            uint8_t const *src = loadPixels;
+            const uint8_t *src = loadPixels;
             if (loadPixels == content.pixels)
             {
                 localBuffer = (uint8_t *) M_Malloc(comps * numPels);

@@ -123,7 +123,7 @@ public:
     DE_DEFINE_AUDIENCE(OneWayWindowFound, void oneWayWindowFound(Line &line, Sector &backFacingSector))
 
     /// Notified when an unclosed sector is first found.
-    DE_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, de::Vec2d const &nearPoint))
+    DE_DEFINE_AUDIENCE(UnclosedSectorFound, void unclosedSectorFound(Sector &sector, const de::Vec2d &nearPoint))
 
     /*
      * Constants:
@@ -160,14 +160,14 @@ public:
      *
      * @see WorldSystem::mapInfoForMapUri()
      */
-    de::Record const &mapInfo() const;
+    const de::Record &mapInfo() const;
 
     /**
      * Returns the points which describe the boundary of the map coordinate space, which,
      * are defined by the minimal and maximal vertex coordinates of the non-editable,
      * non-polyobj line geometries).
      */
-    AABoxd const &bounds() const;
+    const AABoxd &bounds() const;
 
     inline de::Vec2d origin    () const {
         return de::Vec2d(bounds().min);
@@ -203,11 +203,11 @@ public:
 
     void serializeInternalState(de::Writer &to) const override;
 
-    void deserializeInternalState(de::Reader &from, IThinkerMapping const &thinkerMapping) override;
+    void deserializeInternalState(de::Reader &from, const IThinkerMapping &thinkerMapping) override;
 
     de::String objectsDescription() const;
 
-    void restoreObjects(de::Info const &objState, IThinkerMapping const &thinkerMapping) const;
+    void restoreObjects(const de::Info &objState, const IThinkerMapping &thinkerMapping) const;
 
 public:  //- Light sources --------------------------------------------------------------
 
@@ -227,7 +227,7 @@ public:  //- Light sources -----------------------------------------------------
      * @see biasSourceCount()
      * @throws FullError  Once capacity is reached.
      */
-    BiasSource &addBiasSource(BiasSource const &biasSource = BiasSource());
+    BiasSource &addBiasSource(const BiasSource &biasSource = BiasSource());
 
     /**
      * Removes the specified bias light source from the map.
@@ -254,7 +254,7 @@ public:  //- Light sources -----------------------------------------------------
      *
      * @note This result is not cached. May return @c 0 if no bias sources exist.
      */
-    BiasSource *biasSourceNear(de::Vec3d const &point) const;
+    BiasSource *biasSourceNear(const de::Vec3d &point) const;
 
     /**
      * Iterate the BiasSources in the map, making a function @a callback for each.
@@ -266,7 +266,7 @@ public:  //- Light sources -----------------------------------------------------
     /**
      * Lookup the unique index for the given bias @a source.
      */
-    de::dint indexOf(BiasSource const &source) const;
+    de::dint indexOf(const BiasSource &source) const;
 
     /**
      * Returns the time in milliseconds when the current render frame began. Used for
@@ -356,13 +356,13 @@ public:  //- Lines (and Sides) -------------------------------------------------
      * @param flags     @ref lineIteratorFlags
      * @param callback  Function to call for each Line.
      */
-    de::LoopResult forAllLinesInBox(AABoxd const &box, de::dint flags,
+    de::LoopResult forAllLinesInBox(const AABoxd &box, de::dint flags,
         std::function<de::LoopResult (Line &)> callback) const;
 
     /**
      * @overload
      */
-    inline de::LoopResult forAllLinesInBox(AABoxd const &box,
+    inline de::LoopResult forAllLinesInBox(const AABoxd &box,
         std::function<de::LoopResult (Line &)> callback) const {
         return forAllLinesInBox(box, LIF_ALL, callback);
     }
@@ -469,7 +469,7 @@ public:  //- Particle generators -----------------------------------------------
      * @param sector    Sector requirement (only linked @em Generators will be processed).
      * @param callback  Function to call for each Generator.
      */
-    de::LoopResult forAllGeneratorsInSector(Sector const &sector, const std::function<de::LoopResult (Generator &)>& callback) const;
+    de::LoopResult forAllGeneratorsInSector(const Sector &sector, const std::function<de::LoopResult (Generator &)>& callback) const;
 
     void unlink(Generator &generator);
 
@@ -560,7 +560,7 @@ public:  //- Polyobjects -------------------------------------------------------
      * @return  Subsector containing the specified point if any or @c nullptr if the
      * subsectors have not yet been built.
      */
-    Subsector *subsectorAt(de::Vec2d const &point) const;
+    Subsector *subsectorAt(const de::Vec2d &point) const;
 
 //- Skies -------------------------------------------------------------------------------
 
@@ -574,15 +574,15 @@ public:  //- Polyobjects -------------------------------------------------------
     SkyDrawable::Animator &skyAnimator() const;
 
     ClSkyPlane       &skyFloor();
-    ClSkyPlane const &skyFloor()  const;
+    const ClSkyPlane &skyFloor()  const;
 
     ClSkyPlane       &skyCeiling();
-    ClSkyPlane const &skyCeiling() const;
+    const ClSkyPlane &skyCeiling() const;
 
     inline ClSkyPlane       &skyPlane(bool ceiling) {
         return ceiling ? skyCeiling() : skyFloor();
     }
-    inline ClSkyPlane const &skyPlane(bool ceiling) const {
+    inline const ClSkyPlane &skyPlane(bool ceiling) const {
         return ceiling ? skyCeiling() : skyFloor();
     }
 
@@ -612,7 +612,7 @@ public:  //- Subspaces ---------------------------------------------------------
     /**
     * Returns @c true if the given @a point is in the void (outside all map subspaces).
     */
-    bool isPointInVoid(de::Vec3d const &pos) const;
+    bool isPointInVoid(const de::Vec3d &pos) const;
 #endif
 
 public:  //- Vertexs --------------------------------------------------------------------
@@ -643,27 +643,27 @@ public:  //- Data structures ---------------------------------------------------
      * not be representable as a manifold with the primary mesh (e.g., Polyobjs and BspLeaf
      * "extra" meshes).
      */
-    de::Mesh const &mesh() const;
+    const de::Mesh &mesh() const;
 
     /**
      * Provides access to the line blockmap.
      */
-    LineBlockmap const &lineBlockmap() const;
+    const LineBlockmap &lineBlockmap() const;
 
     /**
      * Provides access to the mobj blockmap.
      */
-    Blockmap const &mobjBlockmap() const;
+    const Blockmap &mobjBlockmap() const;
 
     /**
      * Provides access to the polyobj blockmap.
      */
-    Blockmap const &polyobjBlockmap() const;
+    const Blockmap &polyobjBlockmap() const;
 
     /**
      * Provides access to the convex subspace blockmap.
      */
-    Blockmap const &subspaceBlockmap() const;
+    const Blockmap &subspaceBlockmap() const;
 
     /**
      * Provides access to the thinker lists for the map.
@@ -678,7 +678,7 @@ public:  //- Data structures ---------------------------------------------------
     /**
      * Provides access to map's BSP tree, for efficient traversal.
      */
-    BspTree const &bspTree() const;
+    const BspTree &bspTree() const;
 
     /**
      * Determine the BSP leaf on the back side of the BS partition that lies in front of
@@ -691,7 +691,7 @@ public:  //- Data structures ---------------------------------------------------
      *
      * @return  BspLeaf instance for that BSP node's leaf.
      */
-    BspLeaf &bspLeafAt(de::Vec2d const &point) const;
+    BspLeaf &bspLeafAt(const de::Vec2d &point) const;
 
     /**
      * @copydoc bspLeafAt()
@@ -700,7 +700,7 @@ public:  //- Data structures ---------------------------------------------------
      * DOOM. Note that this means there is a maximum size for the point: it cannot exceed
      * the fixed-point 16.16 range (about 65k units).
      */
-    BspLeaf &bspLeafAt_FixedPrecision(de::Vec2d const &point) const;
+    BspLeaf &bspLeafAt_FixedPrecision(const de::Vec2d &point) const;
 
     /**
      * Given an @a emitter origin, attempt to identify the map element to which it belongs.
@@ -713,7 +713,7 @@ public:  //- Data structures ---------------------------------------------------
      *
      * @return  @c true iff @a emitter is an identifiable map element.
      */
-    bool identifySoundEmitter(ddmobj_base_t const &emitter, Sector **sector,
+    bool identifySoundEmitter(const ddmobj_base_t &emitter, Sector **sector,
         Polyobj **poly, Plane **plane, Surface **surface) const;
 
 #ifdef __CLIENT__
@@ -732,7 +732,7 @@ public:  //- Data structures ---------------------------------------------------
      * @see hasLightGrid()
      */
     de::LightGrid       &lightGrid();
-    de::LightGrid const &lightGrid() const;
+    const de::LightGrid &lightGrid() const;
 
     /**
      * (Re)-initialize the light grid used for smoothed sector lighting.
@@ -771,7 +771,7 @@ public:  //- Data structures ---------------------------------------------------
     /**
      * Perform spreading of all contacts in the specified map space @a region.
      */
-    void spreadAllContacts(AABoxd const &region);
+    void spreadAllContacts(const AABoxd &region);
 
 #endif  // __CLIENT__
 
@@ -898,7 +898,7 @@ public:  /// @todo Most of the following should be private:
     /**
      * Provides readonly access to the client mobj hash.
      */
-    ClMobjHash const &clMobjHash() const;
+    const ClMobjHash &clMobjHash() const;
 
 protected:
 
@@ -925,7 +925,7 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * @see isEditable()
      */
-    Vertex *createVertex(de::Vec2d const &origin,
+    Vertex *createVertex(const de::Vec2d &origin,
                          de::dint archiveIndex = MapElement::NoIndex);
 
     /**
@@ -938,31 +938,31 @@ public:  //- Editing -----------------------------------------------------------
     /**
      * @see isEditable()
      */
-    Polyobj *createPolyobj(de::Vec2d const &origin);
+    Polyobj *createPolyobj(const de::Vec2d &origin);
 
     /**
      * @see isEditable()
      */
-    Sector *createSector(de::dfloat lightLevel, de::Vec3f const &lightColor,
+    Sector *createSector(de::dfloat lightLevel, const de::Vec3f &lightColor,
                          de::dint archiveIndex = MapElement::NoIndex);
 
     /**
      * Provides a list of all the editable lines in the map.
      */
     typedef de::List<Line *> Lines;
-    Lines const &editableLines() const;
+    const Lines &editableLines() const;
 
     /**
      * Provides a list of all the editable polyobjs in the map.
      */
     typedef de::List<Polyobj *> Polyobjs;
-    Polyobjs const &editablePolyobjs() const;
+    const Polyobjs &editablePolyobjs() const;
 
     /**
      * Provides a list of all the editable sectors in the map.
      */
     typedef de::List<Sector *> Sectors;
-    Sectors const &editableSectors() const;
+    const Sectors &editableSectors() const;
 
     inline de::dint editableLineCount   () const { return editableLines   ().count(); }
     inline de::dint editablePolyobjCount() const { return editablePolyobjs().count(); }

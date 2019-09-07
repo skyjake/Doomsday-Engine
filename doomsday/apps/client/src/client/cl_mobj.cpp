@@ -211,7 +211,7 @@ void Cl_UpdateRealPlayerMobj(mobj_t *localMobj, mobj_t *remoteClientMobj,
     }
 }
 
-dd_bool Cl_IsClientMobj(mobj_t const *mob)
+dd_bool Cl_IsClientMobj(const mobj_t *mob)
 {
     DE_ASSERT(mob);
     if (ClientMobjThinkerData *data = THINKER_DATA_MAYBE(mob->thinker, ClientMobjThinkerData))

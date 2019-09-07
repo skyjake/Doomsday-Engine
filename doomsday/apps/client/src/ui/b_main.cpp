@@ -37,7 +37,7 @@ using namespace de;
  * @return @c true if the event was eaten and can be processed by the rest of the
  * binding context stack.
  */
-static int globalContextFallback(ddevent_t const *ddev)
+static int globalContextFallback(const ddevent_t *ddev)
 {
     if (App_GameLoaded() && !BusyMode_Active())
     {

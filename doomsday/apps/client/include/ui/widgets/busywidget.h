@@ -30,7 +30,7 @@ class GameWidget;
 class BusyWidget : public de::GuiWidget
 {
 public:
-    BusyWidget(de::String const &name = de::String());
+    BusyWidget(const de::String &name = de::String());
 
     de::ProgressWidget &progress();
 
@@ -39,13 +39,13 @@ public:
     void renderTransitionFrame();
     void releaseTransitionFrame();
     void clearTransitionFrameToBlack();
-    de::GLTexture const *transitionFrame() const;
+    const de::GLTexture *transitionFrame() const;
 
     // Events.
     //void viewResized();
     void update();
     void drawContent();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
 protected:
     void glInit();

@@ -28,9 +28,9 @@
 class KeyGrabberWidget : public de::LabelWidget
 {
 public:
-    KeyGrabberWidget(de::String const &name = de::String());
+    KeyGrabberWidget(const de::String &name = de::String());
 
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
 private:
     DE_PRIVATE(d)

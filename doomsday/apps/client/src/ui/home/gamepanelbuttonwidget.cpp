@@ -63,16 +63,16 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
     bool playHovering = false;
     TaskPool tasks;
     
-    Impl(Public *i, GameProfile &profile, SaveListData const &allSavedItems)
+    Impl(Public *i, GameProfile &profile, const SaveListData &allSavedItems)
         : Base(i)
         , gameProfile(profile)
         , savedItems(allSavedItems)
     {
         // Only show the savegames relevant for this game.
-        savedItems.setFilter([this] (ui::Item const &it)
+        savedItems.setFilter([this] (const ui::Item &it)
         {
             // Only saved sessions for this game are to be included.
-            auto const &item = it.as<SaveListData::SaveItem>();
+            const auto &item = it.as<SaveListData::SaveItem>();
             if (item.gameId() != gameProfile.gameId())
             {
                 return false;
@@ -181,7 +181,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
         Config::get("home.sortBy").audienceForChange() += this;
     }
 
-    Game const &game() const
+    const Game &game() const
     {
         return gameProfile.game();
     }
@@ -226,7 +226,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
             if (saves->selectedPos() != ui::Data::InvalidPos)
             {
                 // Load a saved game.
-                auto const &saveItem = savedItems.at(saves->selectedPos());
+                const auto &saveItem = savedItems.at(saves->selectedPos());
                 Con_Execute(CMDS_DDAY, "loadgame " + saveItem.name() + " confirm",
                             false, false);
             }
@@ -268,7 +268,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
         self().updateContent();
     }
 
-    void variableValueChanged(Variable &, Value const &) override
+    void variableValueChanged(Variable &, const Value &) override
     {
         self().updateContent();
     }
@@ -301,7 +301,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
     }
 };
 
-GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, SaveListData const &savedItems)
+GamePanelButtonWidget::GamePanelButtonWidget(GameProfile &game, const SaveListData &savedItems)
     : d(new Impl(this, game, savedItems))
 {
     d->saves->audienceForSelection()   += [this](){ saveSelected(d->saves->selectedPos()); };
@@ -412,11 +412,11 @@ ButtonWidget &GamePanelButtonWidget::playButton()
     return *d->playButton;
 }
 
-bool GamePanelButtonWidget::handleEvent(Event const &event)
+bool GamePanelButtonWidget::handleEvent(const Event &event)
 {
     if (hasFocus() && event.isKey())
     {
-        auto const &key = event.as<KeyEvent>();
+        const auto &key = event.as<KeyEvent>();
         if (event.isKeyDown() &&
             (key.ddKey() == DDKEY_ENTER || key.ddKey() == DDKEY_RETURN || key.ddKey() == ' '))
         {

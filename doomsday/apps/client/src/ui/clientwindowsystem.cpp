@@ -61,7 +61,7 @@ ConfigProfiles &ClientWindowSystem::settings()
     return d->settings;
 }
 
-ClientWindow *ClientWindowSystem::createWindow(String const &id)
+ClientWindow *ClientWindowSystem::createWindow(const String &id)
 {
     return newWindow<ClientWindow>(id);
 }
@@ -84,7 +84,7 @@ void ClientWindowSystem::closingAllWindows()
     WindowSystem::closingAllWindows();
 }
 
-bool ClientWindowSystem::rootProcessEvent(Event const &event)
+bool ClientWindowSystem::rootProcessEvent(const Event &event)
 {
     /// @todo Multiwindow? -jk
     return main().root().processEvent(event);

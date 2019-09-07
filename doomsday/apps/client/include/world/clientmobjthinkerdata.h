@@ -80,14 +80,14 @@ public:
     };
 
 public:
-    ClientMobjThinkerData(de::Id const &id = de::Id::none());
-    ClientMobjThinkerData(ClientMobjThinkerData const &other);
+    ClientMobjThinkerData(const de::Id &id = de::Id::none());
+    ClientMobjThinkerData(const ClientMobjThinkerData &other);
 
     void think() override;
     IData *duplicate() const override;
 
-    void stateChanged(state_t const *previousState) override;
-    void damageReceived(int damage, mobj_t const *inflictor) override;
+    void stateChanged(const state_t *previousState) override;
+    void damageReceived(int damage, const mobj_t *inflictor) override;
 
     int stateIndex() const;
 
@@ -107,9 +107,9 @@ public:
      */
     render::StateAnimator *animator();
 
-    render::StateAnimator const *animator() const;
+    const render::StateAnimator *animator() const;
 
-    de::Mat4f const &modelTransformation() const;
+    const de::Mat4f &modelTransformation() const;
 
     void operator << (de::Reader &from) override;
     void operator >> (de::Writer &to) const override;

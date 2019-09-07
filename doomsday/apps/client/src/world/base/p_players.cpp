@@ -179,7 +179,7 @@ int P_GetDDPlayerIdx(ddplayer_t *ddpl)
 bool P_IsInVoid(player_t *player)
 {
     if (!player) return false;
-    ddplayer_t const *ddpl = &player->publicData();
+    const ddplayer_t *ddpl = &player->publicData();
 
     // Cameras are allowed to move completely freely (so check z height
     // above/below ceiling/floor).
@@ -188,14 +188,14 @@ bool P_IsInVoid(player_t *player)
         if (player->inVoid || !ddpl->mo)
             return true;
 
-        mobj_t const *mob = ddpl->mo;
+        const mobj_t *mob = ddpl->mo;
         if (!Mobj_HasSubsector(*mob))
             return true;
 
-        auto const &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
+        const auto &subsec = Mobj_Subsector(*mob).as<world::ClientSubsector>();
         if (subsec.visCeiling().surface().hasSkyMaskedMaterial())
         {
-            world::ClSkyPlane const &skyCeiling = subsec.sector().map().skyCeiling();
+            const world::ClSkyPlane &skyCeiling = subsec.sector().map().skyCeiling();
             if (skyCeiling.height() < DDMAXFLOAT && mob->origin[2] > skyCeiling.height() - 4)
                 return true;
         }
@@ -205,7 +205,7 @@ bool P_IsInVoid(player_t *player)
         }
         if (subsec.visFloor().surface().hasSkyMaskedMaterial())
         {
-            world::ClSkyPlane const &skyFloor = subsec.sector().map().skyFloor();
+            const world::ClSkyPlane &skyFloor = subsec.sector().map().skyFloor();
             if (skyFloor.height() > DDMINFLOAT && mob->origin[2] < skyFloor.height() + 4)
                 return true;
         }
@@ -239,7 +239,7 @@ PlayerImpulse *P_PlayerImpulsePtr(dint id)
     return nullptr;
 }
 
-PlayerImpulse *P_PlayerImpulseByName(String const &name)
+PlayerImpulse *P_PlayerImpulseByName(const String &name)
 {
     if (!name.isEmpty())
     {
@@ -268,7 +268,7 @@ D_CMD(ListImpulses)
     LOG_MSG("There are " _E(b) "%i" _E(.) " impulses, in " _E(b) "%i" _E(.) " contexts")
         << impulseGlobals().impulses.size() << contextGroups.size();
 
-    for (auto const &group : contextGroups)
+    for (const auto &group : contextGroups)
     {
         if (group.second.isEmpty()) continue;
 
@@ -354,26 +354,26 @@ DE_EXTERN_C ddplayer_t *DD_GetPlayer(int number)
 #undef Net_GetPlayerName
 #undef Net_GetPlayerID
 #undef Net_PlayerSmoother
-DE_EXTERN_C char const *Net_GetPlayerName(int player);
+DE_EXTERN_C const char *Net_GetPlayerName(int player);
 DE_EXTERN_C ident_t Net_GetPlayerID(int player);
 DE_EXTERN_C Smoother *Net_PlayerSmoother(int player);
 
 #undef P_NewPlayerControl
-DE_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, char const *name,
-    char const *bindContextName)
+DE_EXTERN_C void P_NewPlayerControl(int id, impulsetype_t type, const char *name,
+    const char *bindContextName)
 {
     DE_ASSERT(name && bindContextName);
     LOG_AS("P_NewPlayerControl");
 
     // Ensure the given id is unique.
-    if(PlayerImpulse const *existing = P_PlayerImpulsePtr(id))
+    if(const PlayerImpulse *existing = P_PlayerImpulsePtr(id))
     {
         LOG_INPUT_WARNING("Id: %i is already in use by impulse '%s' - Won't replace")
                 << id << existing->name;
         return;
     }
     // Ensure the given name is unique.
-    if(PlayerImpulse const *existing = P_PlayerImpulseByName(name))
+    if(const PlayerImpulse *existing = P_PlayerImpulseByName(name))
     {
         LOG_INPUT_WARNING("Name: '%s' is already in use by impulse Id: %i - Won't replace")
                 << name << existing->id;
@@ -394,7 +394,7 @@ DE_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
     int const localPlayer = P_ConsoleToLocal(playerNum);
     if(localPlayer < 0) return false;
 
-    if(PlayerImpulse const *imp = P_PlayerImpulsePtr(impulseId))
+    if(const PlayerImpulse *imp = P_PlayerImpulsePtr(impulseId))
     {
         InputSystem &isys = ClientApp::inputSystem();
 
@@ -407,12 +407,12 @@ DE_EXTERN_C int P_IsControlBound(int playerNum, int impulseId)
 
         int found = bindContext->forAllImpulseBindings(localPlayer, [&isys, &impulseId] (CompiledImpulseBindingRecord &rec)
         {
-            auto const &bind = rec.compiled();
+            const auto &bind = rec.compiled();
 
             // Wrong impulse?
             if(bind.impulseId != impulseId) return LoopContinue;
 
-            if(InputDevice const *device = isys.devicePtr(bind.deviceId))
+            if(const InputDevice *device = isys.devicePtr(bind.deviceId))
             {
                 if(device->isActive())
                 {

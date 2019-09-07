@@ -79,7 +79,7 @@ void GL_ReleaseReservedNames();
 /**
  * Returns the chosen method for uploading the given texture @a content.
  */
-de::gfx::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content);
+de::gfx::UploadMethod GL_ChooseUploadMethod(const struct texturecontent_s *content);
 
 /**
  * Adds a new deferred texture upload task to the queue.
@@ -87,7 +87,7 @@ de::gfx::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *conte
  * @param content  Texture content to upload. Caller can free its copy of the content;
  *                 a copy is made for the deferred task.
  */
-void GL_DeferTextureUpload(struct texturecontent_s const *content);
+void GL_DeferTextureUpload(const struct texturecontent_s *content);
 
 void GL_DeferSetVSync(dd_bool enableVSync);
 

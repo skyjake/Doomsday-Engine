@@ -77,7 +77,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
     LabelWidget *gameState;
     ui::ListData serverPackageActions;
 
-    Impl(Public *i, ServerInfo const &sv)
+    Impl(Public *i, const ServerInfo &sv)
         : Base(i)
         , serverInfo(sv)
         , link(ServerLink::ManualConnectionOnly)
@@ -110,7 +110,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
         self().buttonWidget(ID_PING)->disable();
     }
 
-    bool isPackageHighlighted(String const &) const
+    bool isPackageHighlighted(const String &) const
     {
         // No highlights.
         return false;
@@ -387,7 +387,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
             {
                 // Begin a query for the latest details.
                 link.acquireServerProfileAsync(domainName, [this] (Address resolvedAddress,
-                                                              GameProfile const *svProfile)
+                                                              const GameProfile *svProfile)
                 {
                     host = resolvedAddress;
                     statusReceived(*svProfile);
@@ -395,7 +395,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
             }
             else
             {
-                link.acquireServerProfileAsync(host, [this] (GameProfile const *svProfile)
+                link.acquireServerProfileAsync(host, [this] (const GameProfile *svProfile)
                 {
                     statusReceived(*svProfile);
                 });
@@ -416,7 +416,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
         }
     }
 
-    void statusReceived(GameProfile const &svProfile)
+    void statusReceived(const GameProfile &svProfile)
     {
         link.foundServerInfo(0, serverInfo);
         profile = svProfile;
@@ -430,13 +430,13 @@ DE_GUI_PIMPL(ServerInfoDialog)
         startQuery(QueryMapOutline);
     }
 
-    void mapOutlineReceived(Address const &, network::MapOutlinePacket const &packet)
+    void mapOutlineReceived(const Address &, const network::MapOutlinePacket &packet)
     {
         mapOutline->setOutline(packet);
         startQuery(QueryPing);
     }
 
-    void pingResponse(Address const &, TimeSpan pingTime)
+    void pingResponse(const Address &, TimeSpan pingTime)
     {
         ping = pingTime;
         updateContent();
@@ -448,7 +448,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
 
 DE_AUDIENCE_METHOD(ServerInfoDialog, JoinGame)
 
-ServerInfoDialog::ServerInfoDialog(ServerInfo const &serverInfo)
+ServerInfoDialog::ServerInfoDialog(const ServerInfo &serverInfo)
     : d(new Impl(this, serverInfo))
 {
     d->domainName = serverInfo.domainName();

@@ -27,7 +27,7 @@
 class AudioSettingsDialog : public de::DialogWidget
 {
 public:
-    AudioSettingsDialog(de::String const &name = "audiosettings");
+    AudioSettingsDialog(const de::String &name = "audiosettings");
 
     void resetToDefaults();
 

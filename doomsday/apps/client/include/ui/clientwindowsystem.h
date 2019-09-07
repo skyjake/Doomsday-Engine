@@ -49,14 +49,14 @@ public:
      *
      * @return ClientWindow instance. Ownership is retained by the window system.
      */
-    ClientWindow *createWindow(de::String const &id = "main");
+    ClientWindow *createWindow(const de::String &id = "main");
 
     static ClientWindow &main();
     static ClientWindow *mainPtr();
 
 protected:
     void closingAllWindows();
-    bool rootProcessEvent(de::Event const &event);
+    bool rootProcessEvent(const de::Event &event);
     void rootUpdate();
 
 private:

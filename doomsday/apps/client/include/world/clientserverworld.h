@@ -99,7 +99,7 @@ public:
      *
      * @return  @c true= the map change completed successfully.
      */
-    bool changeMap(res::Uri const &uri);
+    bool changeMap(const res::Uri &uri);
 
     /**
      * Unload the currently loaded map (if any).
@@ -114,7 +114,7 @@ public:
      *
      * @param mapUri  Unique identifier for the map to lookup map-info data for.
      */
-    de::Record const &mapInfoForMapUri(res::Uri const &mapUri) const;
+    const de::Record &mapInfoForMapUri(const res::Uri &mapUri) const;
 
     /**
      * Advance time in the world.

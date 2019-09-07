@@ -42,7 +42,7 @@ ShaderVar::~ShaderVar()
 
 float ShaderVar::currentValue(int index) const
 {
-    auto const &val = values.at(index);
+    const auto &val = values.at(index);
     float v = val.anim->animation();
     if (val.wrap.isEmpty())
     {
@@ -79,9 +79,9 @@ void ShaderVar::updateUniform()
     }
 }
 
-static char const *componentNames[] = { "x", "y", "z", "w" };
+static const char *componentNames[] = { "x", "y", "z", "w" };
 
-void ShaderVar::updateValuePointers(Record &names, String const &varName)
+void ShaderVar::updateValuePointers(Record &names, const String &varName)
 {
     if (values.size() == 1)
     {
@@ -99,8 +99,8 @@ void ShaderVar::updateValuePointers(Record &names, String const &varName)
 
 //---------------------------------------------------------------------------------------
 
-void ShaderVars::initVariableFromDefinition(String const &variableName,
-                                            Record const &valueDef,
+void ShaderVars::initVariableFromDefinition(const String &variableName,
+                                            const Record &valueDef,
                                             Record &bindingNames)
 {
     GLUniform::Type uniformType = GLUniform::Float;
@@ -108,8 +108,8 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
 
     // Initialize the appropriate type of value animation and uniform,
     // depending on the "value" key in the definition.
-    Value const &initialValue = valueDef.get("value");
-    if (auto const *array = maybeAs<ArrayValue>(initialValue))
+    const Value &initialValue = valueDef.get("value");
+    if (const auto *array = maybeAs<ArrayValue>(initialValue))
     {
         switch (array->size())
         {
@@ -177,7 +177,7 @@ void ShaderVars::initVariableFromDefinition(String const &variableName,
     members[variableName] = std::move(var);
 }
 
-void ShaderVars::addBinding(Record &names, String const &varName, AnimationValue *anim)
+void ShaderVars::addBinding(Record &names, const String &varName, AnimationValue *anim)
 {
     names.add(varName).set(anim).setReadOnly();
 }

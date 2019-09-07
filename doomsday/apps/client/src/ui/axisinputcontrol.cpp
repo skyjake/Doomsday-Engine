@@ -99,7 +99,7 @@ DE_PIMPL_NOREF(AxisInputControl)
 #endif
 };
 
-AxisInputControl::AxisInputControl(String const &name, Type type) : d(new Impl)
+AxisInputControl::AxisInputControl(const String &name, Type type) : d(new Impl)
 {
     setName(name);
     d->type = type;

@@ -31,7 +31,7 @@
 class ButtonInputControl : public InputDevice::Control
 {
 public:
-    explicit ButtonInputControl(de::String const &name = de::String());
+    explicit ButtonInputControl(const de::String &name = de::String());
     virtual ~ButtonInputControl();
 
     /**

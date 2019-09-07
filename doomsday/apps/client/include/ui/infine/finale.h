@@ -43,7 +43,7 @@ class Finale
 {
 public:
     /// Notified when the finale is about to be deleted.
-    DE_AUDIENCE(Deletion, void finaleBeingDeleted(Finale const &finale))
+    DE_AUDIENCE(Deletion, void finaleBeingDeleted(const Finale &finale))
 
 public:
     /**
@@ -51,7 +51,7 @@ public:
      * @param id      Unique identifier for the script.
      * @param script  The InFine script to be interpreted (a copy is made).
      */
-    Finale(int flags, finaleid_t id, de::String const &script);
+    Finale(int flags, finaleid_t id, const de::String &script);
 
     int flags() const;
     finaleid_t id() const;
@@ -68,14 +68,14 @@ public:
      */
     bool runTicks(timespan_t timeDelta);
 
-    int handleEvent(ddevent_t const &ev);
+    int handleEvent(const ddevent_t &ev);
     bool requestSkip();
     bool isMenuTrigger() const;
 
     /**
      * Provides access to the script interpreter. Mainly for debug purposes.
      */
-    FinaleInterpreter const &interpreter() const;
+    const FinaleInterpreter &interpreter() const;
 
 private:
     DE_PRIVATE(d)

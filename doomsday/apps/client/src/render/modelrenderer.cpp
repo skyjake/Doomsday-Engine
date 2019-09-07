@@ -96,15 +96,15 @@ DE_PIMPL(ModelRenderer)
                 << uFogColor;
     }
 
-    void setupLighting(VisEntityLighting const &lighting,
-                       mobj_t const *excludeSourceMobj)
+    void setupLighting(const VisEntityLighting &lighting,
+                       const mobj_t *excludeSourceMobj)
     {
         // Ambient color and lighting vectors.
         setAmbientLight(lighting.ambientColor * .6f);
         clearLights();
         ClientApp::renderSystem().forAllVectorLights(lighting.vLightListIdx,
                                                      [this, excludeSourceMobj]
-                                                     (VectorLightData const &vlight)
+                                                     (const VectorLightData &vlight)
         {
             if (excludeSourceMobj && vlight.sourceMobj == excludeSourceMobj)
             {
@@ -117,7 +117,7 @@ DE_PIMPL(ModelRenderer)
         });
     }
 
-    void setAmbientLight(Vec3f const &ambientIntensity)
+    void setAmbientLight(const Vec3f &ambientIntensity)
     {
         uAmbientLight = Vec4f(ambientIntensity, 1.f);
     }
@@ -133,7 +133,7 @@ DE_PIMPL(ModelRenderer)
         }
     }
 
-    void addLight(Vec3f const &direction, Vec3f const &intensity)
+    void addLight(const Vec3f &direction, const Vec3f &intensity)
     {
         if (lightCount == MAX_LIGHTS) return;
 
@@ -144,11 +144,11 @@ DE_PIMPL(ModelRenderer)
         lightCount++;
     }
 
-    void setupPose(Vec3d const &modelWorldOrigin,
-                   Vec3f const &modelOffset,
+    void setupPose(const Vec3d &modelWorldOrigin,
+                   const Vec3f &modelOffset,
                    float yawAngle,
                    float pitchAngle,
-                   Mat4f const *preModelToLocal = nullptr)
+                   const Mat4f *preModelToLocal = nullptr)
     {
         Vec3f const aspectCorrect(1.0f, 1.0f/1.2f, 1.0f);
         Vec3d origin = modelWorldOrigin + modelOffset * aspectCorrect;
@@ -195,22 +195,22 @@ DE_PIMPL(ModelRenderer)
      *                        (object's local frame in world space).
      * @param localToScreen   Transformation from local space to screen (projected 2D) space.
      */
-    void setTransformation(Vec3f const &relativeEyePos,
-                           Mat4f const &modelToLocal,
-                           Mat4f const &localToScreen)
+    void setTransformation(const Vec3f &relativeEyePos,
+                           const Mat4f &modelToLocal,
+                           const Mat4f &localToScreen)
     {
         uMvpMatrix   = localToScreen * modelToLocal;
         inverseLocal = modelToLocal.inverse();
         uEyePos      = inverseLocal * relativeEyePos;
     }
 
-    void setReflectionForSubsector(world::Subsector const *subsec)
+    void setReflectionForSubsector(const world::Subsector *subsec)
     {
         uReflectionTex = ClientApp::renderSystem()
                             .environment().reflectionInSubsector(subsec);
     }
 
-    void setReflectionForObject(mobj_t const *object)
+    void setReflectionForObject(const mobj_t *object)
     {
         if (object && Mobj_HasSubsector(*object))
         {
@@ -224,10 +224,10 @@ DE_PIMPL(ModelRenderer)
     }
 
     template <typename Params> // generic to accommodate psprites and vispsprites
-    void draw(Params const &p)
+    void draw(const Params &p)
     {
         DGL_FogParams(uFogRange, uFogColor);
-        uTex = static_cast<AtlasTexture const *>(p.model->textures->atlas());
+        uTex = static_cast<const AtlasTexture *>(p.model->textures->atlas());
 
         p.model->draw(&p.animator->appearance(), p.animator);
     }
@@ -251,7 +251,7 @@ render::ModelLoader &ModelRenderer::loader()
     return d->loader;
 }
 
-render::ModelLoader const &ModelRenderer::loader() const
+const render::ModelLoader &ModelRenderer::loader() const
 {
     return d->loader;
 }
@@ -261,9 +261,9 @@ ModelBank &ModelRenderer::bank()
     return d->loader.bank();
 }
 
-render::Model::StateAnims const *ModelRenderer::animations(DotPath const &modelId) const
+const render::Model::StateAnims *ModelRenderer::animations(const DotPath &modelId) const
 {
-    auto const &model = d->loader.bank().model<render::Model const>(modelId);
+    const auto &model = d->loader.bank().model<render::Model const>(modelId);
     if (!model.animations.isEmpty())
     {
         return &model.animations;
@@ -271,7 +271,7 @@ render::Model::StateAnims const *ModelRenderer::animations(DotPath const &modelI
     return nullptr;
 }
 
-void ModelRenderer::render(vissprite_t const &spr)
+void ModelRenderer::render(const vissprite_t &spr)
 {
     /*
      * Work in progress:
@@ -282,9 +282,9 @@ void ModelRenderer::render(vissprite_t const &spr)
      * sprite, etc.) by creating a VisSprite instance and telling it to draw itself.
      */
 
-    drawmodel2params_t const &p = spr.data.model2;
+    const drawmodel2params_t &p = spr.data.model2;
 
-    auto const *mobjData = (p.object? &THINKER_DATA(p.object->thinker, ClientMobjThinkerData) :
+    const auto *mobjData = (p.object? &THINKER_DATA(p.object->thinker, ClientMobjThinkerData) :
                                       nullptr);
 
     // Use the reflection cube map appropriate for the object's location.
@@ -305,10 +305,10 @@ void ModelRenderer::render(vissprite_t const &spr)
     GLState::pop();
 }
 
-void ModelRenderer::render(vispsprite_t const &pspr, mobj_t const *playerMobj)
+void ModelRenderer::render(const vispsprite_t &pspr, const mobj_t *playerMobj)
 {
-    auto const &p = pspr.data.model2;
-    world::ConvexSubspace const *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
+    const auto &p = pspr.data.model2;
+    const world::ConvexSubspace *sub = pspr.bspLeaf ? pspr.bspLeaf->subspacePtr() : nullptr;
 
     d->setReflectionForSubsector(sub ? sub->subsectorPtr() : nullptr);
 
@@ -347,7 +347,7 @@ static render::StateAnimator &animatorInstance(Context &ctx)
                               "Not a StateAnimator instance");
 }
 
-static Value *Function_StateAnimator_Thing(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_StateAnimator_Thing(Context &ctx, const Function::ArgumentValues &)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     if (anim.ownerNamespaceName() == DE_STR("__thing__"))
@@ -357,7 +357,7 @@ static Value *Function_StateAnimator_Thing(Context &ctx, Function::ArgumentValue
     return nullptr;
 }
 
-static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::ArgumentValues const &)
+static Value *Function_StateAnimator_PlayingSequences(Context &ctx, const Function::ArgumentValues &)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     std::unique_ptr<ArrayValue> playing(new ArrayValue);
@@ -368,7 +368,7 @@ static Value *Function_StateAnimator_PlayingSequences(Context &ctx, Function::Ar
     return playing.release();
 }
 
-static Value *Function_StateAnimator_StartSequence(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_StateAnimator_StartSequence(Context &ctx, const Function::ArgumentValues &args)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     int animId = anim.animationId(args.at(0)->asText());
@@ -389,10 +389,10 @@ static Value *Function_StateAnimator_StartSequence(Context &ctx, Function::Argum
     return nullptr;
 }
 
-static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_StateAnimator_StartTimeline(Context &ctx, const Function::ArgumentValues &args)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
-    render::Model const &model = anim.model();
+    const render::Model &model = anim.model();
     String const timelineName = args.first()->asText();
     if (model.timelines.contains(timelineName))
     {
@@ -409,7 +409,7 @@ static Value *Function_StateAnimator_StartTimeline(Context &ctx, Function::Argum
     return nullptr;
 }
 
-static Value *Function_StateAnimator_StopTimeline(Context &ctx, Function::ArgumentValues const &args)
+static Value *Function_StateAnimator_StopTimeline(Context &ctx, const Function::ArgumentValues &args)
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     anim.scheduler().stop(args.first()->asText());

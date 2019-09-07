@@ -55,7 +55,7 @@ DE_PIMPL_NOREF(LineSightTest)
         fixed_t direction[2];
         AABoxd bounds;
 
-        Ray(Vec3d const &from, Vec3d const &to)
+        Ray(const Vec3d &from, const Vec3d &to)
         {
             origin[0]    = DBL2FIX(from.x);
             origin[1]    = DBL2FIX(from.y);
@@ -70,7 +70,7 @@ DE_PIMPL_NOREF(LineSightTest)
         }
     } ray;
 
-    Impl(Vec3d const &from, Vec3d const to, dfloat bottomSlope, dfloat topSlope)
+    Impl(const Vec3d &from, Vec3d const to, dfloat bottomSlope, dfloat topSlope)
         : from       (from)
         , to         (to)
         , bottomSlope(bottomSlope)
@@ -127,8 +127,8 @@ DE_PIMPL_NOREF(LineSightTest)
         if (!side.hasSector())
             return false;
 
-        Sector const *frontSec = side.sectorPtr();
-        Sector const *backSec  = side.back().sectorPtr();
+        const Sector *frontSec = side.sectorPtr();
+        const Sector *backSec  = side.back().sectorPtr();
 
         bool noBack = side.considerOneSided();
 
@@ -230,7 +230,7 @@ DE_PIMPL_NOREF(LineSightTest)
     /**
      * @return  @c true if the ray passes @a subspace; otherwise @c false.
      */
-    bool crossSubspace(ConvexSubspace const &subspace)
+    bool crossSubspace(const ConvexSubspace &subspace)
     {
         // Check polyobj lines.
         LoopResult blocked = subspace.forAllPolyobjs([this] (Polyobj &pob)
@@ -277,14 +277,14 @@ DE_PIMPL_NOREF(LineSightTest)
     /**
      * @return  @c true if the ray passes @a bspTree; otherwise @c false.
      */
-    bool crossBspNode(BspTree const *bspTree)
+    bool crossBspNode(const BspTree *bspTree)
     {
         DE_ASSERT(bspTree);
 
         while (!bspTree->isLeaf())
         {
             DE_ASSERT(bspTree->userData());
-            auto const &bspNode = bspTree->userData()->as<BspNode>();
+            const auto &bspNode = bspTree->userData()->as<BspNode>();
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
@@ -306,7 +306,7 @@ DE_PIMPL_NOREF(LineSightTest)
         }
 
         // We've arrived at a leaf.
-        auto const &bspLeaf = bspTree->userData()->as<BspLeaf>();
+        const auto &bspLeaf = bspTree->userData()->as<BspLeaf>();
         if (bspLeaf.hasSubspace())
         {
             return crossSubspace(bspLeaf.subspace());
@@ -317,14 +317,14 @@ DE_PIMPL_NOREF(LineSightTest)
     }
 };
 
-LineSightTest::LineSightTest(Vec3d const &from, Vec3d const &to, dfloat bottomSlope,
+LineSightTest::LineSightTest(const Vec3d &from, const Vec3d &to, dfloat bottomSlope,
     dfloat topSlope, dint flags)
     : d(new Impl(from, to, bottomSlope, topSlope))
 {
     d->flags = flags;
 }
 
-bool LineSightTest::trace(BspTree const &bspRoot)
+bool LineSightTest::trace(const BspTree &bspRoot)
 {
     validCount++;
 

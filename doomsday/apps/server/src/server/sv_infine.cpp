@@ -26,7 +26,7 @@
 
 using namespace de;
 
-void Sv_Finale(finaleid_t id, dint flags, char const *script)
+void Sv_Finale(finaleid_t id, dint flags, const char *script)
 {
     if (::isClient) return;
 

@@ -42,7 +42,7 @@ DE_GUI_PIMPL(ColorAdjustmentDialog)
         area.add(contrast = new CVarSliderWidget("vid-contrast"));
         area.add(brightness = new CVarSliderWidget("vid-bright"));
 
-        Rule const &sliderWidth = rule("coloradjustment.slider");
+        const Rule &sliderWidth = rule("coloradjustment.slider");
         gamma->rule().setInput(Rule::Width, sliderWidth);
         contrast->rule().setInput(Rule::Width, sliderWidth);
         brightness->rule().setInput(Rule::Width, sliderWidth);
@@ -64,7 +64,7 @@ DE_GUI_PIMPL(ColorAdjustmentDialog)
     }
 };
 
-ColorAdjustmentDialog::ColorAdjustmentDialog(String const &name)
+ColorAdjustmentDialog::ColorAdjustmentDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText("Color Adjustments");

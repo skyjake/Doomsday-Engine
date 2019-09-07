@@ -59,7 +59,7 @@ static const char *TAG_LOADED = "loaded";
 static constexpr TimeSpan REFILTER_DELAY = 200_ms;
 
 struct PackageLoadStatus : public PackagesWidget::IPackageStatus {
-    bool isPackageHighlighted(String const &packageId) const
+    bool isPackageHighlighted(const String &packageId) const
     {
         return App::packageLoader().isLoaded(packageId);
     }
@@ -82,14 +82,14 @@ DE_GUI_PIMPL(PackagesWidget)
         const Record *      info = nullptr;
         NativePath          nativePath;
 
-        PackageItem(File const &packFile)
+        PackageItem(const File &packFile)
         {
             setFile(packFile);
             setData(TextValue(Package::versionedIdentifierForFile(packFile)));
             setLabel(info->gets(Package::VAR_TITLE));
         }
 
-        void setFile(File const &packFile)
+        void setFile(const File &packFile)
         {
             if (file)
             {
@@ -112,7 +112,7 @@ DE_GUI_PIMPL(PackagesWidget)
             notifyChange();
         }
 
-        void fileBeingDeleted(File const &)
+        void fileBeingDeleted(const File &)
         {
             info = nullptr;
             nativePath.clear();
@@ -139,7 +139,7 @@ DE_GUI_PIMPL(PackagesWidget)
         , DE_OBSERVES(Bank, Load)                           // package icons
     {
     public:
-        PackageListItemWidget(PackageItem const &item, PackagesWidget &owner)
+        PackageListItemWidget(const PackageItem &item, PackagesWidget &owner)
             : HomeItemWidget(NonAnimatedHeight) // virtualized, so don't make things difficult
             , _owner(owner)
             , _item(&item)
@@ -164,7 +164,7 @@ DE_GUI_PIMPL(PackagesWidget)
             fetchIcon();
         }
 
-        void setItem(PackageItem const &item)
+        void setItem(const PackageItem &item)
         {
             if (_item != &item)
             {
@@ -230,7 +230,7 @@ DE_GUI_PIMPL(PackagesWidget)
             _tags.clear();
         }
 
-        void updateTagButtonStyle(ButtonWidget *tag, String const &color)
+        void updateTagButtonStyle(ButtonWidget *tag, const String &color)
         {
             tag->setFont("small");
             tag->setTextColor(color);
@@ -260,19 +260,19 @@ DE_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        void widgetCreatedForItem(GuiWidget &widget, ui::Item const &) override
+        void widgetCreatedForItem(GuiWidget &widget, const ui::Item &) override
         {
             // An action button has been created.
             LabelWidget &label = widget.as<LabelWidget>();
             label.setSizePolicy(ui::Expand, ui::Expand);
         }
 
-        void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item) override
+        void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item) override
         {
             // An action button needs updating.
             LabelWidget &label = widget.as<LabelWidget>();
 
-            if (ui::VariantActionItem const *varItem = maybeAs<ui::VariantActionItem>(item))
+            if (const ui::VariantActionItem *varItem = maybeAs<ui::VariantActionItem>(item))
             {
                 label.setText(varItem->label(_actions->variantItemsEnabled()));
                 label.setStyleImage(varItem->styleImageId(_actions->variantItemsEnabled()),
@@ -281,7 +281,7 @@ DE_GUI_PIMPL(PackagesWidget)
             else
             {
                 label.setText(item.label());
-                if (ui::ImageItem const *imgItem = maybeAs<ui::ImageItem>(item))
+                if (const ui::ImageItem *imgItem = maybeAs<ui::ImageItem>(item))
                 {
                     if (imgItem->styleImageId().isEmpty())
                     {
@@ -418,7 +418,7 @@ DE_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        void bankLoaded(DotPath const &path) override
+        void bankLoaded(const DotPath &path) override
         {
             if (_iconId) return;
 
@@ -433,7 +433,7 @@ DE_GUI_PIMPL(PackagesWidget)
             }
         }
 
-        void setPackageIcon(Id const &id)
+        void setPackageIcon(const Id &id)
         {
             _iconId = id;
 
@@ -481,14 +481,14 @@ DE_GUI_PIMPL(PackagesWidget)
     ui::ListDataT<PackageItem> allPackages;
     ui::FilteredData           filteredPackages{allPackages};
     ui::ListData               defaultActionItems;
-    ui::Data const *           actionItems                 = &defaultActionItems;
+    const ui::Data *           actionItems                 = &defaultActionItems;
     bool                       populateEnabled             = true;
     bool                       showOnlyLoaded              = false;
     bool                       actionOnlyForSelection      = true;
     bool                       rightClickToOpenContextMenu = false;
     PackageInfoDialog::Mode    packageInfoMode             = PackageInfoDialog::EnableActions;
 
-    IPackageStatus const *packageStatus = &isPackageLoaded;
+    const IPackageStatus *packageStatus = &isPackageLoaded;
 
     GuiWidget::ColorTheme unselectedItem      = GuiWidget::Normal;
     GuiWidget::ColorTheme selectedItem        = GuiWidget::Normal;
@@ -522,7 +522,7 @@ DE_GUI_PIMPL(PackagesWidget)
                     {
                         loader.load(packageId);
                     }
-                    catch (Error const &er)
+                    catch (const Error &er)
                     {
                         LOG_RES_ERROR("Package \"" + packageId +
                                       "\" could not be loaded: " + er.asText());
@@ -559,7 +559,7 @@ DE_GUI_PIMPL(PackagesWidget)
         });
 
         // Filtered list of packages.
-        filteredPackages.setFilter([this](ui::Item const &it) {
+        filteredPackages.setFilter([this](const ui::Item &it) {
             auto &item = it.as<PackageItem>();
 
             // The terms are looked in:
@@ -670,7 +670,7 @@ DE_GUI_PIMPL(PackagesWidget)
         manualPackagePaths.clear();
         for (const String &id : ids)
         {
-            if (File const *file = loader.select(id))
+            if (const File *file = loader.select(id))
             {
                 manualPackagePaths << file->path();
             }
@@ -704,7 +704,7 @@ DE_GUI_PIMPL(PackagesWidget)
         }
 
         // Add/update the listed packages.
-        for (String const &path : packages)
+        for (const String &path : packages)
         {
             const File &pack = App::rootFolder().locate<File>(path);
 
@@ -842,12 +842,12 @@ DE_GUI_PIMPL(PackagesWidget)
 
     //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *) override
     {
         return new PackageListItemWidget(item.as<PackageItem>(), self());
     }
 
-    void updateItemWidget(GuiWidget & widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget & widget, const ui::Item &item) override
     {
         auto &w = widget.as<PackageListItemWidget>();
         w.setItem(item.as<PackageItem>());
@@ -860,7 +860,7 @@ DE_GUI_PIMPL(PackagesWidget)
 
 DE_AUDIENCE_METHOD(PackagesWidget, ItemCount)
 
-PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, String const &name)
+PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, const String &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
@@ -869,7 +869,7 @@ PackagesWidget::PackagesWidget(PopulateBehavior initBehavior, String const &name
     populate();
 }
 
-PackagesWidget::PackagesWidget(StringList manualPackageIds, String const &name)
+PackagesWidget::PackagesWidget(StringList manualPackageIds, const String &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
@@ -915,14 +915,14 @@ void PackagesWidget::setPopulationEnabled(bool enable)
     d->populateEnabled = enable;
 }
 
-void PackagesWidget::setFilterEditorMinimumY(Rule const &minY)
+void PackagesWidget::setFilterEditorMinimumY(const Rule &minY)
 {
     d->search->rule().setInput(Rule::Top,
                                OperatorRule::maximum(minY, rule().top() + margins().top()));
     changeRef(d->searchMinY, minY);
 }
 
-void PackagesWidget::setPackageStatus(IPackageStatus const &packageStatus)
+void PackagesWidget::setPackageStatus(const IPackageStatus &packageStatus)
 {
     d->packageStatus = &packageStatus;
 }
@@ -932,7 +932,7 @@ void PackagesWidget::showProgressIndicator()
     d->showProgressIndicator(true);
 }
 
-void PackagesWidget::setActionItems(ui::Data const &actionItems)
+void PackagesWidget::setActionItems(const ui::Data &actionItems)
 {
     d->actionItems = &actionItems;
 }
@@ -988,7 +988,7 @@ dsize PackagesWidget::itemCount() const
     return d->allPackages.size();
 }
 
-ui::Item const *PackagesWidget::itemForPackage(String const &packageId) const
+const ui::Item *PackagesWidget::itemForPackage(const String &packageId) const
 {
     ui::DataPos found = d->filteredPackages.findData(TextValue(packageId));
     if (found != ui::Data::InvalidPos)
@@ -1016,19 +1016,19 @@ GuiWidget *PackagesWidget::actionWidget() const
     return nullptr;
 }
 
-ui::Item const *PackagesWidget::actionItem() const
+const ui::Item *PackagesWidget::actionItem() const
 {
     return d->menu->interactedItem();
 }
 
-void PackagesWidget::scrollToPackage(String const &packageId) const
+void PackagesWidget::scrollToPackage(const String &packageId) const
 {
-    if (auto const *item = itemForPackage(packageId))
+    if (const auto *item = itemForPackage(packageId))
     {
         auto &scrollArea = d->menu->findTopmostScrollable();
 
         // If the widget exists currently, we can just scroll to it.
-        if (auto const *widget = d->menu->organizer().itemWidget(*item))
+        if (const auto *widget = d->menu->organizer().itemWidget(*item))
         {
             scrollArea.scrollToWidget(*widget);
         }
@@ -1088,11 +1088,11 @@ void PackagesWidget::operator>>(PersistentState &toState) const
     rec.set(name().concatenateMember("search"), d->search->text());
 }
 
-void PackagesWidget::operator<<(PersistentState const &fromState)
+void PackagesWidget::operator<<(const PersistentState &fromState)
 {
     if (name().isEmpty()) return;
 
-    Record const &rec = fromState.objectNamespace();
+    const Record &rec = fromState.objectNamespace();
     d->search->setText(rec.gets(name().concatenateMember("search"), ""));
     d->updateFilterTerms(true);
 }

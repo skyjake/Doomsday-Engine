@@ -37,8 +37,8 @@ typedef struct mislink_s {
 } mislink_t;
 
 misrecord_t    *Sv_MRFind(struct pool_s *pool, thid_t id);
-void            Sv_MRAdd(struct pool_s *pool, struct mobjdelta_s const *delta);
-int             Sv_MRCheck(struct pool_s *pool, struct mobjdelta_s const *mobj);
+void            Sv_MRAdd(struct pool_s *pool, const struct mobjdelta_s *delta);
+int             Sv_MRCheck(struct pool_s *pool, const struct mobjdelta_s *mobj);
 void            Sv_MRRemove(struct pool_s *pool, thid_t id);
 
 #endif

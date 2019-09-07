@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(CVarToggleWidget)
     }
 };
 
-CVarToggleWidget::CVarToggleWidget(const char *cvarPath, String const &labelText)
+CVarToggleWidget::CVarToggleWidget(const char *cvarPath, const String &labelText)
     : d(new Impl)
 {
     setText(labelText);
@@ -45,7 +45,7 @@ CVarToggleWidget::CVarToggleWidget(const char *cvarPath, String const &labelText
     audienceForUserToggle() += [this]() { CVar_SetInteger(d->var(), isActive() ? 1 : 0); };
 }
 
-char const *CVarToggleWidget::cvarPath() const
+const char *CVarToggleWidget::cvarPath() const
 {
     return d->cvar;
 }

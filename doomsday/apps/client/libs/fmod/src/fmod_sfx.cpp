@@ -622,7 +622,7 @@ static float logToLinear(float db)
     return std::pow(10.f, db/10.f);
 }
 
-//static float scaleLogarithmic(float db, float scale, de::Rangef const &range)
+//static float scaleLogarithmic(float db, float scale, const de::Rangef &range)
 //{
 //    return range.clamp(linearToLog(scale * logToLinear(db)));
 //}

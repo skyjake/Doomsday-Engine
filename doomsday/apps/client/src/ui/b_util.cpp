@@ -40,7 +40,7 @@ byte zeroControlUponConflict = true;
 static float STAGE_THRESHOLD = 6.f/35;
 static float STAGE_FACTOR    = .5f;
 
-bool B_ParseButtonState(Binding::ControlTest &test, char const *toggleName)
+bool B_ParseButtonState(Binding::ControlTest &test, const char *toggleName)
 {
     DE_ASSERT(toggleName);
 
@@ -74,7 +74,7 @@ bool B_ParseButtonState(Binding::ControlTest &test, char const *toggleName)
     return false; // Not recognized.
 }
 
-bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *desc)
+bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, const char *desc)
 {
     DE_ASSERT(desc);
 
@@ -107,14 +107,14 @@ bool B_ParseAxisPosition(Binding::ControlTest &test, float &pos, char const *des
     return false;
 }
 
-bool B_ParseModifierId(int &id, char const *desc)
+bool B_ParseModifierId(int &id, const char *desc)
 {
     DE_ASSERT(desc);
     id = String(desc).toInt() - 1 + CTL_MODIFIER_1;
     return (id >= CTL_MODIFIER_1 && id <= CTL_MODIFIER_4);
 }
 
-bool B_ParseKeyId(int &id, char const *desc)
+bool B_ParseKeyId(int &id, const char *desc)
 {
     DE_ASSERT(desc);
     LOG_AS("B_ParseKeyId");
@@ -145,10 +145,10 @@ bool B_ParseKeyId(int &id, char const *desc)
     return false;
 }
 
-bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
+bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, const char *desc)
 {
     DE_ASSERT(desc);
-    InputDevice const &mouse = InputSystem::get().device(IDEV_MOUSE);
+    const InputDevice &mouse = InputSystem::get().device(IDEV_MOUSE);
 
     // Maybe it's one of the named buttons?
     id = mouse.toButtonId(desc);
@@ -179,7 +179,7 @@ bool B_ParseMouseTypeAndId(ddeventtype_t &type, int &id, char const *desc)
     return false;
 }
 
-bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, InputDevice const &device, char const *desc)
+bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, const InputDevice &device, const char *desc)
 {
     DE_ASSERT(desc);
 
@@ -191,7 +191,7 @@ bool B_ParseDeviceAxisTypeAndId(ddeventtype_t &type, int &id, InputDevice const 
     return false;
 }
 
-bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char const *desc)
+bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, const char *desc)
 {
     InputDevice &device = InputSystem::get().device(deviceId);
 
@@ -226,7 +226,7 @@ bool B_ParseJoystickTypeAndId(ddeventtype_t &type, int &id, int deviceId, char c
     return B_ParseDeviceAxisTypeAndId(type, id, device, desc);
 }
 
-bool B_ParseHatAngle(float &pos, char const *desc)
+bool B_ParseHatAngle(float &pos, const char *desc)
 {
     DE_ASSERT(desc);
     if (!iCmpStrCase(desc, "center"))
@@ -243,7 +243,7 @@ bool B_ParseHatAngle(float &pos, char const *desc)
     return false;
 }
 
-bool B_ParseBindingCondition(Record &cond, char const *desc)
+bool B_ParseBindingCondition(Record &cond, const char *desc)
 {
     DE_ASSERT(desc);
 
@@ -426,12 +426,12 @@ bool B_CheckAxisPosition(Binding::ControlTest test, float testPos, float pos)
     return false;
 }
 
-bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int localNum,
-                      BindContext const *context)
+bool B_CheckCondition(const Binding::CompiledConditionRecord *condRec, int localNum,
+                      const BindContext *context)
 {
     DE_ASSERT(condRec);
 
-    auto const &cond = condRec->compiled();
+    const auto &cond = condRec->compiled();
     bool const fulfilled = !cond.negate;
 
     switch (cond.type)
@@ -442,7 +442,7 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
         break;
 
     case Binding::AxisState: {
-        AxisInputControl const &axis = InputSystem::get().device(cond.device).axis(cond.id);
+        const AxisInputControl &axis = InputSystem::get().device(cond.device).axis(cond.id);
         if (B_CheckAxisPosition(cond.test, cond.pos, axis.position()))
         {
             return fulfilled;
@@ -450,7 +450,7 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
         break; }
 
     case Binding::ButtonState: {
-        ButtonInputControl const &button = InputSystem::get().device(cond.device).button(cond.id);
+        const ButtonInputControl &button = InputSystem::get().device(cond.device).button(cond.id);
         bool isDown = button.isDown();
         if (( isDown && cond.test == Binding::ButtonStateDown) ||
             (!isDown && cond.test == Binding::ButtonStateUp))
@@ -460,7 +460,7 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
         break; }
 
     case Binding::HatState: {
-        HatInputControl const &hat = InputSystem::get().device(cond.device).hat(cond.id);
+        const HatInputControl &hat = InputSystem::get().device(cond.device).hat(cond.id);
         if (hat.position() == cond.pos)
         {
             return fulfilled;
@@ -488,7 +488,7 @@ bool B_CheckCondition(Binding::CompiledConditionRecord const *condRec, int local
 }
 
 /// @todo: Belongs in BindContext? -ds
-void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int impulseId,
+void B_EvaluateImpulseBindings(const BindContext *context, int localNum, int impulseId,
     float *pos, float *relativeOffset, bool allowTriggered)
 {
     DE_ASSERT(context); // Why call without one?
@@ -507,12 +507,12 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
     {
         // Wrong impulse?
         //ImpulseBinding bind(rec);
-        auto const &bind = rec.compiled();
+        const auto &bind = rec.compiled();
         if (bind.impulseId != impulseId) return LoopContinue;
 
         // If the binding has conditions, they may prevent using it.
         bool skip = false;
-        ArrayValue const &conds = rec.geta(DE_STR("condition"));
+        const ArrayValue &conds = rec.geta(DE_STR("condition"));
         DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
         {
             if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>
@@ -525,7 +525,7 @@ void B_EvaluateImpulseBindings(BindContext const *context, int localNum, int imp
         if (skip) return LoopContinue;
 
         // Get the device.
-        InputDevice const *device = InputSystem::get().devicePtr(bind.deviceId);
+        const InputDevice *device = InputSystem::get().devicePtr(bind.deviceId);
         if (!device || !device->isActive())
             return LoopContinue; // Not available.
 
@@ -674,7 +674,7 @@ String B_ControlDescToString(int deviceId, ddeventtype_t type, int id)
         }
         else if (device == InputSystem::get().devicePtr(IDEV_KEYBOARD))
         {
-            char const *name = B_ShortNameForKey(id);
+            const char *name = B_ShortNameForKey(id);
             if (name)
             {
                 str += name;
@@ -740,7 +740,7 @@ String B_HatAngleToString(float pos)
     return (pos < 0? "-center" : String("-angle") + String::asText(pos));
 }
 
-String B_ConditionToString(Record const &cond)
+String B_ConditionToString(const Record &cond)
 {
     String str;
 
@@ -790,7 +790,7 @@ String B_ConditionToString(Record const &cond)
     return str;
 }
 
-String B_EventToString(ddevent_t const &ev)
+String B_EventToString(const ddevent_t &ev)
 {
     String str = B_ControlDescToString(ev.device, ev.type,
                                        (  ev.type == E_TOGGLE  ? ev.toggle.id
@@ -824,7 +824,7 @@ String B_EventToString(ddevent_t const &ev)
 struct keyname_t
 {
     int key;           ///< DDKEY
-    char const *name;
+    const char *name;
 };
 static keyname_t const keyNames[] = {
     { DDKEY_PAUSE,       "pause" },
@@ -907,7 +907,7 @@ static keyname_t const keyNames[] = {
     { 0, nullptr}
 };
 
-char const *B_ShortNameForKey(int ddKey, bool forceLowercase)
+const char *B_ShortNameForKey(int ddKey, bool forceLowercase)
 {
     static char nameBuffer[40];
 
@@ -928,7 +928,7 @@ char const *B_ShortNameForKey(int ddKey, bool forceLowercase)
     return nullptr;
 }
 
-int B_KeyForShortName(char const *key)
+int B_KeyForShortName(const char *key)
 {
     DE_ASSERT(key);
 

@@ -28,8 +28,8 @@
 class CVarNativePathWidget : public NativePathWidget, public ICVarWidget
 {
 public:
-    CVarNativePathWidget(char const *cvarPath);
-    char const *cvarPath() const;
+    CVarNativePathWidget(const char *cvarPath);
+    const char *cvarPath() const;
 
     void updateFromCVar();
 

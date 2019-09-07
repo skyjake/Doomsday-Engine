@@ -37,7 +37,7 @@ public:
     public:
         virtual ~IEvent() = default;
 
-        virtual bool operator < (IEvent const &other) const {
+        virtual bool operator < (const IEvent &other) const {
             return distance() < other.distance();
         }
 
@@ -49,9 +49,9 @@ public:
 
     virtual bool isValid() const = 0;
 
-    virtual IEvent const &first() const = 0;
+    virtual const IEvent &first() const = 0;
 
-    virtual IEvent const &last() const = 0;
+    virtual const IEvent &last() const = 0;
 };
 
 /**
@@ -76,8 +76,8 @@ public:
 public:
     virtual ~AbstractEdge() {}
 
-    virtual Event const &first() const = 0;
-    virtual Event const &last() const  = 0;
+    virtual const Event &first() const = 0;
+    virtual const Event &last() const  = 0;
     virtual de::Vec2f    materialOrigin() const { return de::Vec2f(); }
     virtual de::Vec3f    normal() const { return de::Vec3f(); }
 };
@@ -105,11 +105,11 @@ public:
     /**
      * Returns the X|Y origin of the edge in the map coordinate space.
      */
-    de::Vec2d const &origin() const { return _origin; }
+    const de::Vec2d &origin() const { return _origin; }
 
-    virtual Event const &first() const              = 0;
-    virtual Event const &last() const               = 0;
-    virtual Event const &at(EventIndex index) const = 0;
+    virtual const Event &first() const              = 0;
+    virtual const Event &last() const               = 0;
+    virtual const Event &at(EventIndex index) const = 0;
 
     virtual int        divisionCount() const { return 0; }
     virtual EventIndex firstDivision() const { return InvalidIndex; }

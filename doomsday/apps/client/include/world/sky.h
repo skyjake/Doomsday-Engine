@@ -41,7 +41,7 @@ class Sky : public MapElement
 {
 public:
     /// Notified when the sky is about to be deleted.
-    DE_AUDIENCE(Deletion,            void skyBeingDeleted(Sky const &sky))
+    DE_AUDIENCE(Deletion,            void skyBeingDeleted(const Sky &sky))
 
     /// Notified whenever the height changes.
     DE_AUDIENCE(HeightChange,        void skyHeightChanged(Sky &sky))
@@ -49,7 +49,7 @@ public:
     /// Notified whenever the horizon offset changes.
     DE_AUDIENCE(HorizonOffsetChange, void skyHorizonOffsetChanged(Sky &sky))
 
-    explicit Sky(defn::Sky const *definition = nullptr);
+    explicit Sky(const defn::Sky *definition = nullptr);
 
     /**
      * Reconfigure according to the specified @a definition if not @c nullptr, otherwise,
@@ -57,7 +57,7 @@ public:
      *
      * @see configureDefault()
      */
-    void configure(defn::Sky const *definition = nullptr);
+    void configure(const defn::Sky *definition = nullptr);
 
     /**
      * Reconfigure the sky, returning all values to their defaults.
@@ -69,7 +69,7 @@ public:
     /**
      * Returns the definition used to configure the sky, if any (may return @c nullptr).
      */
-    de::Record const *def() const;
+    const de::Record *def() const;
 
     /**
      * Returns the height of the sky as a scale factor [0..1] (@c 1 covers the view).
@@ -225,7 +225,7 @@ public:
      * Lookup a layer by it's unique @a layerIndex.
      */
     Layer       &layer(de::dint layerIndex);
-    Layer const &layer(de::dint layerIndex) const;
+    const Layer &layer(de::dint layerIndex) const;
 
     /**
      * Iterate Layers of the sky.
@@ -233,7 +233,7 @@ public:
      * @param callback  Function to call for each Layer.
      */
     de::LoopResult forAllLayers(const std::function<de::LoopResult (Layer &)>& func);
-    de::LoopResult forAllLayers(const std::function<de::LoopResult (Layer const &)>& func) const;
+    de::LoopResult forAllLayers(const std::function<de::LoopResult (const Layer &)>& func) const;
 
 #ifdef __CLIENT__
 // --------------------------------------------------------------------------------------
@@ -244,7 +244,7 @@ public:
      *
      * Alternatively, this color can be overridden manually by calling @ref setAmbientColor().
      */
-    de::Vec3f const &ambientColor() const;
+    const de::Vec3f &ambientColor() const;
 
     /**
      * Override the automatically calculated ambient color.
@@ -253,13 +253,13 @@ public:
      *
      * @see ambientColor()
      */
-    void setAmbientColor(de::Vec3f const &newColor);
+    void setAmbientColor(const de::Vec3f &newColor);
 
 #endif // __CLIENT__
 
 protected:
     de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(world::DmuArgs const &args);
+    de::dint setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)

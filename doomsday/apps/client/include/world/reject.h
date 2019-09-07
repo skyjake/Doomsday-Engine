@@ -71,7 +71,7 @@ class Map;
  * Initially all sectors are in individual groups. Next, we scan the line
  * list. For each 2-sectored line, merge the two sector groups into one.
  */
-byte *BuildRejectForMap(Map const &map);
+byte *BuildRejectForMap(const Map &map);
 #endif
 
 #endif // DE_WORLD_REJECT_H

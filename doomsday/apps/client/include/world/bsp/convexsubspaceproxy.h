@@ -41,7 +41,7 @@ struct OrderedSegment
     de::ddouble fromAngle;
     de::ddouble toAngle;
 
-    bool operator == (OrderedSegment const &other) const
+    bool operator == (const OrderedSegment &other) const
     {
         return    de::fequal(fromAngle, other.fromAngle)
                && de::fequal(toAngle  , other.toAngle);
@@ -100,9 +100,9 @@ public:
     /**
      * Construct a convex subspace by duplicating @a other.
      */
-    ConvexSubspaceProxy(ConvexSubspaceProxy const &other);
+    ConvexSubspaceProxy(const ConvexSubspaceProxy &other);
 
-    ConvexSubspaceProxy &operator = (ConvexSubspaceProxy const &);
+    ConvexSubspaceProxy &operator = (const ConvexSubspaceProxy &);
 
     /**
      * Returns the total number of segments in the subspace.
@@ -140,7 +140,7 @@ public:
      *
      * @see operator<<(), addSegments()
      */
-    void addOneSegment(LineSegmentSide const &segment);
+    void addOneSegment(const LineSegmentSide &segment);
 
     /**
      * Add @a segment to the subspace which is assumed to conform to, or is
@@ -154,7 +154,7 @@ public:
      *
      * @see addOneSegment()
      */
-    inline ConvexSubspaceProxy &operator << (LineSegmentSide const &segment) {
+    inline ConvexSubspaceProxy &operator << (const LineSegmentSide &segment) {
         addOneSegment(segment);
         return *this;
     }
@@ -193,7 +193,7 @@ public:
     /**
      * Provides a clockwise ordered list of the line segments in the subspace.
      */
-    OrderedSegments const &segments() const;
+    const OrderedSegments &segments() const;
 
 private:
     DE_PRIVATE(d)

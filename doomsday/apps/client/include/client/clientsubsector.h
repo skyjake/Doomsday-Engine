@@ -91,7 +91,7 @@ public:
      * @param callback  Function to call for each edge loop.
      */
     de::LoopResult forAllEdgeLoops(const std::function<de::LoopResult (ClEdgeLoop       &)> &func);
-    de::LoopResult forAllEdgeLoops(const std::function<de::LoopResult (ClEdgeLoop const &)> &func) const;
+    de::LoopResult forAllEdgeLoops(const std::function<de::LoopResult (const ClEdgeLoop &)> &func) const;
 
 //- Audio environment -------------------------------------------------------------------
 
@@ -112,7 +112,7 @@ public:
      * Returns the environmental audio config for the subsector. Note that if a reverb
      * update is scheduled it will be done at this time (@ref markReverbDirty()).
      */
-    AudioEnvironment const &reverb() const;
+    const AudioEnvironment &reverb() const;
 
     /**
      * Request re-calculation of the environmental audio (reverb) characteristics of the
@@ -201,7 +201,7 @@ public:
      * Returns the final ambient light intensity for the source.
      * @see lightSourceColorf()
      */
-    de::dfloat lightSourceIntensity(de::Vec3d const &viewPoint = de::Vec3d(0, 0, 0)) const override;
+    de::dfloat lightSourceIntensity(const de::Vec3d &viewPoint = de::Vec3d(0, 0, 0)) const override;
 
     /**
      * Returns the final ambient light color and intensity for the source.
@@ -257,7 +257,7 @@ public:
      * @param callback  Function to call for each plane.
      */
     de::LoopResult forAllVisPlanes(const std::function<de::LoopResult (Plane &)>& func);
-    de::LoopResult forAllVisPlanes(const std::function<de::LoopResult (Plane const &)>& func) const;
+    de::LoopResult forAllVisPlanes(const std::function<de::LoopResult (const Plane &)>& func) const;
 
     /**
      * Returns the @em visual Plane of the subsector associated with @a planeIndex.
@@ -265,7 +265,7 @@ public:
      * @see visFloor(), visCeiling()
      */
     Plane       &visPlane(de::dint planeIndex);
-    Plane const &visPlane(de::dint planeIndex) const;
+    const Plane &visPlane(de::dint planeIndex) const;
 
     /**
      * Returns the @em visual floor Plane of the subsector.
@@ -273,7 +273,7 @@ public:
      * @see ceiling(), plane()
      */
     inline Plane       &visFloor()       { return visPlane(Sector::Floor); }
-    inline Plane const &visFloor() const { return visPlane(Sector::Floor); }
+    inline const Plane &visFloor() const { return visPlane(Sector::Floor); }
 
     /**
      * Returns the @em visual ceiling Plane of the subsector.
@@ -281,7 +281,7 @@ public:
      * @see floor(), plane()
      */
     inline Plane       &visCeiling()       { return visPlane(Sector::Ceiling); }
-    inline Plane const &visCeiling() const { return visPlane(Sector::Ceiling); }
+    inline const Plane &visCeiling() const { return visPlane(Sector::Ceiling); }
 
     /**
      * To be called to force re-evaluation of mapped visual planes. This is only necessary

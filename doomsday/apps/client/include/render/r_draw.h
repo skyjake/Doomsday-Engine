@@ -35,7 +35,7 @@ void R_ShutdownViewWindow();
  */
 void R_DrawViewBorder();
 
-TextureVariantSpec const &Rend_PatchTextureSpec(int               flags = 0,
+const TextureVariantSpec &Rend_PatchTextureSpec(int               flags = 0,
                                                 de::gfx::Wrapping wrapS = de::gfx::ClampToEdge,
                                                 de::gfx::Wrapping wrapT = de::gfx::ClampToEdge);
 

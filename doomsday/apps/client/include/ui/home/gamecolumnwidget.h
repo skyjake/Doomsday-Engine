@@ -28,8 +28,8 @@ class SaveListData;
 class GameColumnWidget : public ColumnWidget, public de::IPersistent
 {
 public:
-    GameColumnWidget(de::String const &gameFamily,
-                     SaveListData const &savedItems);
+    GameColumnWidget(const de::String &gameFamily,
+                     const SaveListData &savedItems);
 
     de::String tabHeading() const override;
     int tabShortcut() const override;
@@ -38,7 +38,7 @@ public:
 
     // Implements IPersistent.
     void operator>>(de::PersistentState &toState) const override;
-    void operator<<(de::PersistentState const &fromState) override;
+    void operator<<(const de::PersistentState &fromState) override;
 
 public:
     static const char *SORT_GAME_ID;

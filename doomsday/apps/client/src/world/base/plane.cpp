@@ -173,7 +173,7 @@ DE_AUDIENCE_METHOD(Plane, HeightChange)
 DE_AUDIENCE_METHOD(Plane, HeightSmoothedChange)
 #endif
 
-Plane::Plane(Sector &sector, Vec3f const &normal, ddouble height)
+Plane::Plane(Sector &sector, const Vec3f &normal, ddouble height)
     : MapElement(DMU_PLANE, &sector)
     , d(new Impl(this))
 {
@@ -203,7 +203,7 @@ Sector &Plane::sector()
     return parent().as<Sector>();
 }
 
-Sector const &Plane::sector() const
+const Sector &Plane::sector() const
 {
     return parent().as<Sector>();
 }
@@ -233,7 +233,7 @@ Surface &Plane::surface()
     return d->surface;
 }
 
-Surface const &Plane::surface() const
+const Surface &Plane::surface() const
 {
     return d->surface;
 }
@@ -243,7 +243,7 @@ Surface *Plane::surfacePtr() const
     return &d->surface;
 }
 
-void Plane::setNormal(Vec3f const &newNormal)
+void Plane::setNormal(const Vec3f &newNormal)
 {
     d->surface.setNormal(newNormal);  // will normalize
 }
@@ -253,7 +253,7 @@ SoundEmitter &Plane::soundEmitter()
     return d->soundEmitter;
 }
 
-SoundEmitter const &Plane::soundEmitter() const
+const SoundEmitter &Plane::soundEmitter() const
 {
     return d->soundEmitter;
 }
@@ -348,7 +348,7 @@ Generator &Plane::generator() const
     throw MissingGeneratorError("Plane::generator", "No generator is attached");
 }
 
-void Plane::spawnParticleGen(ded_ptcgen_t const *def)
+void Plane::spawnParticleGen(const ded_ptcgen_t *def)
 {
     //if(!useParticles) return;
 
@@ -448,11 +448,11 @@ dint Plane::property(DmuArgs &args) const
     switch(args.prop)
     {
     case DMU_EMITTER: {
-        SoundEmitter const *emitterPtr = &soundEmitter();
+        const SoundEmitter *emitterPtr = &soundEmitter();
         args.setValue(DMT_PLANE_EMITTER, &emitterPtr, 0);
         break; }
     case DMU_SECTOR: {
-        Sector const *secPtr = &sector();
+        const Sector *secPtr = &sector();
         args.setValue(DMT_PLANE_SECTOR, &secPtr, 0);
         break; }
     case DMU_HEIGHT:
@@ -471,7 +471,7 @@ dint Plane::property(DmuArgs &args) const
     return false;  // Continue iteration.
 }
 
-dint Plane::setProperty(DmuArgs const &args)
+dint Plane::setProperty(const DmuArgs &args)
 {
     switch(args.prop)
     {

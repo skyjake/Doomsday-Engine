@@ -29,8 +29,8 @@
 using namespace de;
 
 struct DomainText {
-    char const *name;
-    char const *label;
+    const char *name;
+    const char *label;
 };
 static DomainText const domainText[] = {
     { "generic",    "Minimum Level" },
@@ -105,7 +105,7 @@ DE_PIMPL(LogSettingsDialog)
 
             separately->audienceForToggle() += this;
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOGDEV_ERROR("") << er.asText();
             deinit();
@@ -119,7 +119,7 @@ DE_PIMPL(LogSettingsDialog)
         releaseRef(columnWidth);
     }
 
-    void initDomain(DomainText const &dom, DomainWidgets &wgt, GuiWidget *parent)
+    void initDomain(const DomainText &dom, DomainWidgets &wgt, GuiWidget *parent)
     {
         // Text label.
         wgt.label = LabelWidget::newWithText(CString(dom.label) + ":", parent);
@@ -181,7 +181,7 @@ DE_PIMPL(LogSettingsDialog)
         logf.write(cfg.objectNamespace().subrecord("log.filter"));
         for (uint i = 0; i < NUM_DOMAINS; ++i)
         {
-            char const *name = domainText[i].name;
+            const char *name = domainText[i].name;
             cfg.set(String("alert.") + name, int(alerts? LogEntry::Warning : (LogEntry::HighestLogLevel + 1)));
         }
     }
@@ -216,7 +216,7 @@ DE_PIMPL(LogSettingsDialog)
     }
 };
 
-LogSettingsDialog::LogSettingsDialog(String const &name)
+LogSettingsDialog::LogSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText("Log Filter & Alerts");

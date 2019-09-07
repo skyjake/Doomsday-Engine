@@ -36,7 +36,7 @@ public:
     DE_AUDIENCE(Click,     void menuItemClicked(HomeMenuWidget &, de::ui::DataPos index))
 
 public:
-    HomeMenuWidget(de::String const &name = de::String());
+    HomeMenuWidget(const de::String &name = de::String());
 
     void unselectAll();
     void restorePreviousSelection();
@@ -56,10 +56,10 @@ public:
      */
     void setSelectedIndex(de::ui::DataPos index);
 
-    de::ui::Item const *interactedItem() const;
-    de::ui::Item const *actionItem() const;
-    void setInteractedItem(de::ui::Item const *menuItem,
-                           de::ui::Item const *actionItem);
+    const de::ui::Item *interactedItem() const;
+    const de::ui::Item *actionItem() const;
+    void setInteractedItem(const de::ui::Item *menuItem,
+                           const de::ui::Item *actionItem);
 
     ColumnWidget *parentColumn() const;
 

@@ -69,7 +69,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which);
 void GL_LoadFlareTextures();
 void GL_ReleaseAllFlareTextures();
 
-GLuint GL_PrepareFlaremap(res::Uri const &resourceUri);
+GLuint GL_PrepareFlaremap(const res::Uri &resourceUri);
 GLuint GL_PrepareSysFlaremap(flaretexid_t which);
 
 

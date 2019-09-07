@@ -73,7 +73,7 @@ static inline void drawQuad(dgl_vertex_t *v, dgl_color_t *c, dgl_texcoord_t *tc)
     DGL_End();
 }
 
-void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
+void Rend_DrawMaskedWall(const drawmaskedwallparams_t &parms)
 {
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
@@ -225,7 +225,7 @@ void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms)
 /**
  * Set all the colors in the array to that specified.
  */
-static void applyUniformColor(dint count, dgl_color_t *colors, dfloat const *rgba)
+static void applyUniformColor(dint count, dgl_color_t *colors, const dfloat *rgba)
 {
     for(; count-- > 0; colors++)
     {
@@ -240,7 +240,7 @@ static void applyUniformColor(dint count, dgl_color_t *colors, dfloat const *rgb
  * Calculate vertex lighting.
  */
 static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals,
-    duint lightListIdx, dint maxLights, dfloat const *_ambient)
+    duint lightListIdx, dint maxLights, const dfloat *_ambient)
 {
     DE_ASSERT(out && normals && _ambient);
 
@@ -258,7 +258,7 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
             Vec3f accum[2];  // Begin with total darkness [color, extra].
             dint numProcessed = 0;
             ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &normal
-                                         , &accum, &numProcessed](VectorLightData const &vlight)
+                                         , &accum, &numProcessed](const VectorLightData &vlight)
             {
                 numProcessed += 1;
 
@@ -288,13 +288,13 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
     }
 }
 
-MaterialVariantSpec const &PSprite_MaterialSpec()
+const MaterialVariantSpec &PSprite_MaterialSpec()
 {
     return App_Resources().materialSpec(SpriteContext, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              1, -2, 0, false, true, true, false);
 }
 
-void Rend_DrawPSprite(rendpspriteparams_t const &parms)
+void Rend_DrawPSprite(const rendpspriteparams_t &parms)
 {
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
@@ -328,7 +328,7 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
 
     // All psprite vertices are co-plannar, so just copy the view front vector.
     // @todo: Can we do something better here?
-    Vec3f const &frontVec = viewPlayer->viewport().frontVec;
+    const Vec3f &frontVec = viewPlayer->viewport().frontVec;
     dgl_vertex_t quadNormals[4];
     for(dint i = 0; i < 4; ++i)
     {
@@ -385,15 +385,15 @@ void Rend_DrawPSprite(rendpspriteparams_t const &parms)
     }
 }
 
-MaterialVariantSpec const &Rend_SpriteMaterialSpec(dint tclass, dint tmap)
+const MaterialVariantSpec &Rend_SpriteMaterialSpec(dint tclass, dint tmap)
 {
     return App_Resources().materialSpec(SpriteContext, 0, 1, tclass, tmap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                         1, -2, -1, true, true, true, false);
 }
 
-void Rend_DrawSprite(vissprite_t const &spr)
+void Rend_DrawSprite(const vissprite_t &spr)
 {
-    drawspriteparams_t const &parm = *VS_SPRITE(&spr);
+    const drawspriteparams_t &parm = *VS_SPRITE(&spr);
 
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
@@ -615,7 +615,7 @@ void Rend_DrawSprite(vissprite_t const &spr)
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         coord_t const distFromViewer = de::abs(spr.pose.distance);
-        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if(distFromViewer < 1600 - 8)
             {

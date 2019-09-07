@@ -55,7 +55,7 @@ public:
 #endif
 
     /// Notified when the plane is about to be deleted.
-    DE_AUDIENCE(Deletion, void planeBeingDeleted(Plane const &plane))
+    DE_AUDIENCE(Deletion, void planeBeingDeleted(const Plane &plane))
 
     /// Notified whenever a @em sharp height change occurs.
     DE_AUDIENCE(HeightChange, void planeHeightChanged(Plane &plane))
@@ -79,7 +79,7 @@ public:
      * @param height  Height of the plane in map space coordinates.
      */
     Plane(Sector &sector,
-          de::Vec3f const &normal = de::Vec3f(0, 0, 1),
+          const de::Vec3f &normal = de::Vec3f(0, 0, 1),
           de::ddouble height         = 0);
 
     /**
@@ -91,7 +91,7 @@ public:
      * Returns the owning Sector of the plane.
      */
     Sector       &sector();
-    Sector const &sector() const;
+    const Sector &sector() const;
 
     /**
      * Returns the index of the plane within the owning sector.
@@ -119,7 +119,7 @@ public:
      * Returns the Surface component of the plane.
      */
     Surface       &surface();
-    Surface const &surface() const;
+    const Surface &surface() const;
 
     /**
      * Returns a pointer to the Surface component of the plane (never @c nullptr).
@@ -133,13 +133,13 @@ public:
      * @post The plane's tangent vectors and logical plane type will have been
      * updated also.
      */
-    void setNormal(de::Vec3f const &newNormal);
+    void setNormal(const de::Vec3f &newNormal);
 
     /**
      * Returns the sound emitter for the plane.
      */
     SoundEmitter       &soundEmitter();
-    SoundEmitter const &soundEmitter() const;
+    const SoundEmitter &soundEmitter() const;
 
     /**
      * Update the sound emitter origin according to the point defined by the center
@@ -230,7 +230,7 @@ public:
      * definition. Note that it may @em not be "this" plane to which the resultant
      * generator is attached as the definition may override this.
      */
-    void spawnParticleGen(ded_ptcgen_t const *def);
+    void spawnParticleGen(const ded_ptcgen_t *def);
 
     void addMover(ClPlaneMover &mover);
     void removeMover(ClPlaneMover &mover);
@@ -249,7 +249,7 @@ public:
 
 protected:
     de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(world::DmuArgs const &args);
+    de::dint setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)

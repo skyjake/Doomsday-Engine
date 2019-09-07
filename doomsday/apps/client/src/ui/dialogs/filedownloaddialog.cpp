@@ -39,7 +39,7 @@ DE_GUI_PIMPL(FileDownloadDialog)
                                            " files / " DE_CHAR_MDASH " MB");
     }
 
-    void downloadStatusUpdate(Rangei64 const &bytes, Rangei const &files)
+    void downloadStatusUpdate(const Rangei64 &bytes, const Rangei &files)
     {
         if (!bytes.end) return;
 

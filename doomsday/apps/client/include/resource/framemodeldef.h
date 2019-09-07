@@ -147,7 +147,7 @@ struct FrameModelDef
     typedef std::vector<SubmodelDef> Subs;
     Subs _sub;
 
-    FrameModelDef(char const *modelDefId = "")
+    FrameModelDef(const char *modelDefId = "")
     {
         de::zap(id);
         de::zap(interRange);
@@ -190,7 +190,7 @@ struct FrameModelDef
         return _sub[subnum];
     }
 
-    SubmodelDef const &subModelDef(unsigned int subnum) const
+    const SubmodelDef &subModelDef(unsigned int subnum) const
     {
         DE_ASSERT(hasSub(subnum));
         return _sub[subnum];
@@ -211,7 +211,7 @@ struct FrameModelDef
         return de::Vec3f();
     }
 
-    void setParticleOffset(unsigned int subnum, de::Vec3f const &off)
+    void setParticleOffset(unsigned int subnum, const de::Vec3f &off)
     {
         DE_ASSERT(hasSub(subnum));
         _ptcOffset[subnum] = off;

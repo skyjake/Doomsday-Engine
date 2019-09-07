@@ -44,8 +44,8 @@ public:
      *                     "appearance". Appears in the UI dialogs.
      * @param name         Name for the widget.
      */
-    ProfilePickerWidget(ConfigProfiles &settings, de::String const &description,
-                        de::String const &name = {});
+    ProfilePickerWidget(ConfigProfiles &settings, const de::String &description,
+                        const de::String &name = {});
 
     ButtonWidget &button();
 

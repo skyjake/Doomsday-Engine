@@ -66,7 +66,7 @@ DE_PIMPL(UISettingsDialog)
     }
 };
 
-UISettingsDialog::UISettingsDialog(String const &name)
+UISettingsDialog::UISettingsDialog(const String &name)
     : DialogWidget(name, WithHeading)
     , d(new Impl(this))
 {

@@ -32,7 +32,7 @@ extern "C" {
 dd_bool DD_Win32_Init(void);
 void DD_Shutdown(void);
 
-char const *DD_Win32_GetLastErrorMessage(void);
+const char *DD_Win32_GetLastErrorMessage(void);
 
 #ifdef __cplusplus
 } // extern "C"

@@ -135,7 +135,7 @@ DE_GUI_PIMPL(RendererSettingsDialog)
     }
 };
 
-RendererSettingsDialog::RendererSettingsDialog(String const &name)
+RendererSettingsDialog::RendererSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText("Renderer Settings");

@@ -63,7 +63,7 @@ public:
          *
          * @param eye  Position of the eye in map space.
          */
-        virtual float occlusion(de::Vec3d const &eye) const;
+        virtual float occlusion(const de::Vec3d &eye) const;
     };
 
 public:
@@ -74,12 +74,12 @@ public:
      * @param radius       Radius in map space units.
      * @param color        Color/intensity.
      */
-    Lumobj(de::Vec3d const &origin = de::Vec3d(),
+    Lumobj(const de::Vec3d &origin = de::Vec3d(),
            double radius           = 256,
-           de::Vec3f const &color  = de::Vec3f(1));
+           const de::Vec3f &color  = de::Vec3f(1));
 
     /// Construct a new luminious object by copying @a other.
-    Lumobj(Lumobj const &other);
+    Lumobj(const Lumobj &other);
 
     /**
      * To be called to register the commands and variables of this module.
@@ -101,23 +101,23 @@ public:
      *
      * @param newSource  New source to attribute. Use @c 0 to clear.
      */
-    void setSource(Source const *newSource);
+    void setSource(const Source *newSource);
 
     /**
      * Sets the mobj that is responsible for casting this light.
      *
      * @param mo  Thing.
      */
-    void setSourceMobj(struct mobj_s const *mo);
+    void setSourceMobj(const struct mobj_s *mo);
 
-    struct mobj_s const *sourceMobj() const;
+    const struct mobj_s *sourceMobj() const;
 
     /**
      * Returns the light color/intensity of the lumobj.
      *
      * @see setColor()
      */
-    de::Vec3f const &color() const;
+    const de::Vec3f &color() const;
 
     /**
      * Change the light color/intensity of the lumobj.
@@ -126,7 +126,7 @@ public:
      *
      * @see color()
      */
-    Lumobj &setColor(de::Vec3f const &newColor);
+    Lumobj &setColor(const de::Vec3f &newColor);
 
     /**
      * Returns the radius of the lumobj in map space units.
@@ -245,7 +245,7 @@ public:
      * @param eye          Position of the viewer in map space.
      * @param distFromEye  Distance between the lumobj and the viewer.
      */
-    void generateFlare(de::Vec3d const &eye, double distFromEye);
+    void generateFlare(const de::Vec3d &eye, double distFromEye);
 
 private:
     DE_PRIVATE(d)

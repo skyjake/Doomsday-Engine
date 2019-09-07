@@ -95,7 +95,7 @@ void P_InitUnusedMobjList()
 /**
  * All mobjs must be allocated through this routine. Part of the public API.
  */
-mobj_t *P_MobjCreate(thinkfunc_t function, Vec3d const &origin, angle_t angle,
+mobj_t *P_MobjCreate(thinkfunc_t function, const Vec3d &origin, angle_t angle,
     coord_t radius, coord_t height, dint ddflags)
 {
     if (!function)
@@ -174,7 +174,7 @@ void P_MobjRecycle(mobj_t* mo)
     unusedMobjs = mo;
 }
 
-bool Mobj_IsSectorLinked(mobj_t const &mob)
+bool Mobj_IsSectorLinked(const mobj_t &mob)
 {
     return (mob._bspLeaf != nullptr && mob.sPrev != nullptr);
 }
@@ -184,7 +184,7 @@ DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
 {
     if (!mob) return;
 
-    state_t const *oldState = mob->state;
+    const state_t *oldState = mob->state;
 
     DE_ASSERT(statenum >= 0 && statenum < DED_Definitions()->states.size());
 
@@ -213,7 +213,7 @@ DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
     }
 }
 
-Vec3d Mobj_Origin(mobj_t const &mob)
+Vec3d Mobj_Origin(const mobj_t &mob)
 {
     return Vec3d(mob.origin);
 }
@@ -261,7 +261,7 @@ DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mob, coord_t origin[3])
             // $voodoodolls: Must be a real player to use the smoothed origin.
             && mob->dPlayer->mo == mob)
         {
-            viewdata_t const *vd = &DD_Player(consolePlayer)->viewport();
+            const viewdata_t *vd = &DD_Player(consolePlayer)->viewport();
             V3d_Set(origin, vd->current.origin.x, vd->current.origin.y, vd->current.origin.z);
         }
         // The client may have a Smoother for this object.
@@ -273,17 +273,17 @@ DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mob, coord_t origin[3])
 #endif
 }
 
-world::Map &Mobj_Map(mobj_t const &mob)
+world::Map &Mobj_Map(const mobj_t &mob)
 {
     return Thinker_Map(mob.thinker);
 }
 
-bool Mobj_IsLinked(mobj_t const &mob)
+bool Mobj_IsLinked(const mobj_t &mob)
 {
     return mob._bspLeaf != 0;
 }
 
-BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob)
+BspLeaf &Mobj_BspLeafAtOrigin(const mobj_t &mob)
 {
     if (Mobj_IsLinked(mob))
     {
@@ -292,32 +292,32 @@ BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob)
     throw Error("Mobj_BspLeafAtOrigin", "Mobj is not yet linked");
 }
 
-bool Mobj_HasSubsector(mobj_t const &mob)
+bool Mobj_HasSubsector(const mobj_t &mob)
 {
     if (!Mobj_IsLinked(mob)) return false;
-    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(mob);
+    const BspLeaf &bspLeaf = Mobj_BspLeafAtOrigin(mob);
     if (!bspLeaf.hasSubspace()) return false;
     return bspLeaf.subspace().hasSubsector();
 }
 
-Subsector &Mobj_Subsector(mobj_t const &mob)
+Subsector &Mobj_Subsector(const mobj_t &mob)
 {
     return Mobj_BspLeafAtOrigin(mob).subspace().subsector();
 }
 
-Subsector *Mobj_SubsectorPtr(mobj_t const &mob)
+Subsector *Mobj_SubsectorPtr(const mobj_t &mob)
 {
     return Mobj_HasSubsector(mob) ? &Mobj_Subsector(mob) : nullptr;
 }
 
 #undef Mobj_Sector
-DE_EXTERN_C Sector *Mobj_Sector(mobj_t const *mob)
+DE_EXTERN_C Sector *Mobj_Sector(const mobj_t *mob)
 {
     if (!mob || !Mobj_IsLinked(*mob)) return nullptr;
     return Mobj_BspLeafAtOrigin(*mob).sectorPtr();
 }
 
-void Mobj_SpawnParticleGen(mobj_t *mob, ded_ptcgen_t const *def)
+void Mobj_SpawnParticleGen(mobj_t *mob, const ded_ptcgen_t *def)
 {
 #ifdef __CLIENT__
     DE_ASSERT(mob && def);
@@ -355,7 +355,7 @@ void Mobj_SpawnParticleGen(mobj_t *mob, ded_ptcgen_t const *def)
 }
 
 #undef Mobj_SpawnDamageParticleGen
-DE_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mob, mobj_t const *inflictor, int amount)
+DE_EXTERN_C void Mobj_SpawnDamageParticleGen(const mobj_t *mob, const mobj_t *inflictor, int amount)
 {
 #ifdef __CLIENT__
     if (!mob || !inflictor || amount <= 0) return;
@@ -363,7 +363,7 @@ DE_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mob, mobj_t const *in
     // Are particles allowed?
     //if (!useParticles) return;
 
-    ded_ptcgen_t const *def = Def_GetDamageGenerator(mob->type);
+    const ded_ptcgen_t *def = Def_GetDamageGenerator(mob->type);
     if (def)
     {
         Generator *gen = Mobj_Map(*mob).newGenerator();
@@ -428,7 +428,7 @@ void Mobj_UnlinkLumobjs(mobj_t *mob)
     mob->lumIdx = Lumobj::NoIndex;
 }
 
-static ded_light_t *lightDefByMobjState(state_t const *state)
+static ded_light_t *lightDefByMobjState(const state_t *state)
 {
     if (state)
     {
@@ -437,7 +437,7 @@ static ded_light_t *lightDefByMobjState(state_t const *state)
     return nullptr;
 }
 
-static inline ClientTexture *lightmap(res::Uri const *textureUri)
+static inline ClientTexture *lightmap(const res::Uri *textureUri)
 {
     if(!textureUri) return nullptr;
     return static_cast<ClientTexture *>
@@ -475,7 +475,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
         return;
 
     // Always use the front view of the Sprite when determining light properties.
-    Record const *spriteRec = Mobj_SpritePtr(*mob);
+    const Record *spriteRec = Mobj_SpritePtr(*mob);
     if (!spriteRec) return;
 
     // Lookup the Material for the Sprite and prepare the animator.
@@ -485,7 +485,7 @@ void Mobj_GenerateLumobjs(mobj_t *mob)
 
     TextureVariant *tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
     if (!tex) return;  // Unloadable texture?
-    Vec2i const &texOrigin = tex->base().origin();
+    const Vec2i &texOrigin = tex->base().origin();
 
     // Will the visual be allowed to go inside the floor?
     /// @todo Handle this as occlusion so that the halo fades smoothly.
@@ -592,7 +592,7 @@ void Mobj_AnimateHaloOcclussion(mobj_t &mob)
     }
 }
 
-dfloat Mobj_ShadowStrength(mobj_t const &mob)
+dfloat Mobj_ShadowStrength(const mobj_t &mob)
 {
     static dfloat const minSpriteAlphaLimit = .1f;
 
@@ -606,7 +606,7 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     if (mob.ddFlags & DDMF_ALWAYSLIT) return 0;
 
     // Evaluate the ambient light level at our map origin.
-    auto const &subsec = Mobj_Subsector(mob).as<ClientSubsector>();
+    const auto &subsec = Mobj_Subsector(mob).as<ClientSubsector>();
     dfloat ambientLightLevel;
 #if 0
     if (::useBias && subsec.sector().map().hasLightGrid())
@@ -624,14 +624,14 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     dfloat strength = .65f;  ///< Default.
     if (!::useModels || !Mobj_ModelDef(mob))
     {
-        if (Record const *spriteRec = Mobj_SpritePtr(mob))
+        if (const Record *spriteRec = Mobj_SpritePtr(mob))
         {
             auto &matAnimator = *Rend_SpriteMaterialAnimator(*spriteRec); // world::Materials::get().materialPtr(sprite.viewMaterial(0)))
             matAnimator.prepare();  // Ensure we have up-to-date info.
 
-            if (TextureVariant const *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
+            if (const TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture)
             {
-                auto const *aa = (averagealpha_analysis_t const *)texture->base().analysisDataPointer(res::Texture::AverageAlphaAnalysis);
+                const auto *aa = (const averagealpha_analysis_t *)texture->base().analysisDataPointer(res::Texture::AverageAlphaAnalysis);
                 DE_ASSERT(aa);
 
                 // We use an average which factors in the coverage ratio of
@@ -655,12 +655,12 @@ dfloat Mobj_ShadowStrength(mobj_t const &mob)
     return (0.6f - ambientLightLevel * 0.4f) * strength;
 }
 
-Record const *Mobj_SpritePtr(mobj_t const &mob)
+const Record *Mobj_SpritePtr(const mobj_t &mob)
 {
     return res::Sprites::get().spritePtr(mob.sprite, mob.frame);
 }
 
-FrameModelDef *Mobj_ModelDef(mobj_t const &mo, FrameModelDef **retNextModef, float *retInter)
+FrameModelDef *Mobj_ModelDef(const mobj_t &mo, FrameModelDef **retNextModef, float *retInter)
 {
     // By default there are no models.
     if (retNextModef) *retNextModef = 0;
@@ -820,7 +820,7 @@ DE_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
             // $voodoodolls: Must be a real player to use the smoothed angle.
             && mob->dPlayer->mo == mob)
         {
-            viewdata_t const *vd = &DD_Player(::consolePlayer)->viewport();
+            const viewdata_t *vd = &DD_Player(::consolePlayer)->viewport();
             return vd->current.angle();
         }
     }
@@ -835,7 +835,7 @@ DE_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mob)
     return mob->angle;
 }
 
-coord_t Mobj_ApproxPointDistance(mobj_t const *mob, coord_t const *point)
+coord_t Mobj_ApproxPointDistance(const mobj_t *mob, const coord_t *point)
 {
     if (!mob || !point) return 0;
     return M_ApproxDistance(point[2] - mob->origin[2],
@@ -843,7 +843,7 @@ coord_t Mobj_ApproxPointDistance(mobj_t const *mob, coord_t const *point)
                                              point[1] - mob->origin[1]));
 }
 
-coord_t Mobj_BobOffset(mobj_t const &mob)
+coord_t Mobj_BobOffset(const mobj_t &mob)
 {
     if (mob.ddFlags & DDMF_BOB)
     {
@@ -852,7 +852,7 @@ coord_t Mobj_BobOffset(mobj_t const &mob)
     return 0;
 }
 
-dfloat Mobj_Alpha(mobj_t const &mob)
+dfloat Mobj_Alpha(const mobj_t &mob)
 {
     dfloat alpha = (mob.ddFlags & DDMF_BRIGHTSHADOW)? .80f :
                    (mob.ddFlags & DDMF_SHADOW      )? .33f :
@@ -875,13 +875,13 @@ dfloat Mobj_Alpha(mobj_t const &mob)
     return alpha;
 }
 
-coord_t Mobj_Radius(mobj_t const &mobj)
+coord_t Mobj_Radius(const mobj_t &mobj)
 {
     return mobj.radius;
 }
 
 #ifdef __CLIENT__
-coord_t Mobj_ShadowRadius(mobj_t const &mobj)
+coord_t Mobj_ShadowRadius(const mobj_t &mobj)
 {
     if (useModels)
     {
@@ -898,7 +898,7 @@ coord_t Mobj_ShadowRadius(mobj_t const &mobj)
 }
 #endif
 
-coord_t Mobj_VisualRadius(mobj_t const &mob)
+coord_t Mobj_VisualRadius(const mobj_t &mob)
 {
 #ifdef __CLIENT__
     // Is a model in effect?
@@ -911,7 +911,7 @@ coord_t Mobj_VisualRadius(mobj_t const &mob)
     }
 
     // Is a sprite in effect?
-    if (Record const *sprite = Mobj_SpritePtr(mob))
+    if (const Record *sprite = Mobj_SpritePtr(mob))
     {
         return Rend_VisualRadius(*sprite);
     }
@@ -921,7 +921,7 @@ coord_t Mobj_VisualRadius(mobj_t const &mob)
     return Mobj_Radius(mob);
 }
 
-AABoxd Mobj_Bounds(mobj_t const &mobj)
+AABoxd Mobj_Bounds(const mobj_t &mobj)
 {
     Vec2d const origin = Mobj_Origin(mobj);
     ddouble const radius  = Mobj_Radius(mobj);
@@ -949,7 +949,7 @@ D_CMD(InspectMobj)
         return false;
     }
 
-    char const *mobType = "Mobj";
+    const char *mobType = "Mobj";
 #ifdef __CLIENT__
     ClientMobjThinkerData::RemoteSync *info = ClMobj_GetInfo(mob);
     if (info) mobType = "CLMOBJ";

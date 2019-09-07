@@ -49,7 +49,7 @@ void GL_InitSmartFilterHQ2x(void);
  * @param height  Height of the source image in pixels.
  * @param flags  @ref imageConversionFlags
  */
-uint8_t *GL_SmartFilterHQ2x(uint8_t const *src, int width, int height, int flags);
+uint8_t *GL_SmartFilterHQ2x(const uint8_t *src, int width, int height, int flags);
 
 ///@}
 

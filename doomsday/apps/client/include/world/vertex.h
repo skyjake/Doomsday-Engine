@@ -58,12 +58,12 @@ public: /// @todo Move to the map loader:
     uint _twosOwnerCount = 0;
 
 public:
-    Vertex(de::Mesh &mesh, de::Vec2d const &origin = de::Vec2d());
+    Vertex(de::Mesh &mesh, const de::Vec2d &origin = de::Vec2d());
 
     /**
      * Returns the origin (i.e., position) of the vertex in the map coordinate space.
      */
-    de::Vec2d const &origin() const;
+    const de::Vec2d &origin() const;
 
     /**
      * Returns the X axis origin (i.e., position) of the vertex in the map coordinate space.
@@ -81,7 +81,7 @@ public:
      *
      * @param newOrigin  New origin in map coordinate space units.
      */
-    void setOrigin(de::Vec2d const &newOrigin);
+    void setOrigin(const de::Vec2d &newOrigin);
 
     /**
      * @copydoc setOrigin()

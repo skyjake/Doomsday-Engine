@@ -58,7 +58,7 @@ struct demopacket_header_t
 
 extern dfloat netConnectTime;
 
-static char const *demoPath = "/home/demo/";
+static const char *demoPath = "/home/demo/";
 
 #if 0
 LZFILE *playdemo;
@@ -86,7 +86,7 @@ void Demo_Init()
  * Open a demo file and begin recording.
  * Returns @c false if the recording can't be begun.
  */
-dd_bool Demo_BeginRecording(char const * /*fileName*/, dint /*plrNum*/)
+dd_bool Demo_BeginRecording(const char * /*fileName*/, dint /*plrNum*/)
 {
     return false;
 
@@ -269,7 +269,7 @@ void Demo_BroadcastPacket()
     }
 }
 
-dd_bool Demo_BeginPlayback(char const *fileName)
+dd_bool Demo_BeginPlayback(const char *fileName)
 {
     // Already in playback?
     if(::playback) return false;

@@ -30,7 +30,7 @@ using namespace de;
 
 #if defined (DE_WINDOWS)
 
-static bool isProcessRunning(char const *name)
+static bool isProcessRunning(const char *name)
 {
     String result;
     CommandLine wmic;
@@ -46,7 +46,7 @@ static bool isProcessRunning(char const *name)
     return false;
 }
 
-dd_bool Updater_AskToStopProcess(char const *processName, char const *message)
+dd_bool Updater_AskToStopProcess(const char *processName, const char *message)
 {
     while (isProcessRunning(processName))
     {

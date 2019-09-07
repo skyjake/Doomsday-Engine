@@ -75,7 +75,7 @@ Line::Side &Line::Side::Segment::lineSide()
     return parent().as<Side>();
 }
 
-Line::Side const &Line::Side::Segment::lineSide() const
+const Line::Side &Line::Side::Segment::lineSide() const
 {
     return parent().as<Side>();
 }
@@ -294,7 +294,7 @@ Line &Line::Side::line()
     return parent().as<Line>();
 }
 
-Line const &Line::Side::line() const
+const Line &Line::Side::line() const
 {
     return parent().as<Line>();
 }
@@ -409,7 +409,7 @@ Surface &Line::Side::surface(dint sectionId)
     return d->sectionById(sectionId).surface;
 }
 
-Surface const &Line::Side::surface(dint sectionId) const
+const Surface &Line::Side::surface(dint sectionId) const
 {
     return d->sectionById(sectionId).surface;
 }
@@ -419,7 +419,7 @@ Surface &Line::Side::middle()
     return surface(Middle);
 }
 
-Surface const &Line::Side::middle() const
+const Surface &Line::Side::middle() const
 {
     return surface(Middle);
 }
@@ -429,7 +429,7 @@ Surface &Line::Side::bottom()
     return surface(Bottom);
 }
 
-Surface const &Line::Side::bottom() const
+const Surface &Line::Side::bottom() const
 {
     return surface(Bottom);
 }
@@ -439,7 +439,7 @@ Surface &Line::Side::top()
     return surface(Top);
 }
 
-Surface const &Line::Side::top() const
+const Surface &Line::Side::top() const
 {
     return surface(Top);
 }
@@ -462,7 +462,7 @@ SoundEmitter &Line::Side::soundEmitter(dint sectionId)
     return d->sectionById(sectionId).soundEmitter;
 }
 
-SoundEmitter const &Line::Side::soundEmitter(dint sectionId) const
+const SoundEmitter &Line::Side::soundEmitter(dint sectionId) const
 {
     return const_cast<Side *>(this)->soundEmitter(sectionId);
 }
@@ -472,7 +472,7 @@ SoundEmitter &Line::Side::middleSoundEmitter()
     return soundEmitter(Middle);
 }
 
-SoundEmitter const &Line::Side::middleSoundEmitter() const
+const SoundEmitter &Line::Side::middleSoundEmitter() const
 {
     return soundEmitter(Middle);
 }
@@ -482,7 +482,7 @@ SoundEmitter &Line::Side::bottomSoundEmitter()
     return soundEmitter(Bottom);
 }
 
-SoundEmitter const &Line::Side::bottomSoundEmitter() const
+const SoundEmitter &Line::Side::bottomSoundEmitter() const
 {
     return soundEmitter(Bottom);
 }
@@ -492,7 +492,7 @@ SoundEmitter &Line::Side::topSoundEmitter()
     return soundEmitter(Top);
 }
 
-SoundEmitter const &Line::Side::topSoundEmitter() const
+const SoundEmitter &Line::Side::topSoundEmitter() const
 {
     return soundEmitter(Top);
 }
@@ -634,8 +634,8 @@ void Line::Side::setFlags(dint flagsToChange, FlagOp operation)
     applyFlagOperation(d->flags, flagsToChange, operation);
 }
 
-void Line::Side::chooseSurfaceColors(dint sectionId, Vec3f const **topColor,
-    Vec3f const **bottomColor) const
+void Line::Side::chooseSurfaceColors(dint sectionId, const Vec3f **topColor,
+    const Vec3f **bottomColor) const
 {
     if (hasSections())
     {
@@ -702,22 +702,22 @@ void Line::Side::setShadowVisCount(dint newCount)
 
 #ifdef __CLIENT__
 
-shadowcorner_t const &Line::Side::radioCornerTop(bool right) const
+const shadowcorner_t &Line::Side::radioCornerTop(bool right) const
 {
     return d->radioData.topCorners[dint(right)];
 }
 
-shadowcorner_t const &Line::Side::radioCornerBottom(bool right) const
+const shadowcorner_t &Line::Side::radioCornerBottom(bool right) const
 {
     return d->radioData.bottomCorners[dint(right)];
 }
 
-shadowcorner_t const &Line::Side::radioCornerSide(bool right) const
+const shadowcorner_t &Line::Side::radioCornerSide(bool right) const
 {
     return d->radioData.sideCorners[dint(right)];
 }
 
-edgespan_t const &Line::Side::radioEdgeSpan(bool top) const
+const edgespan_t &Line::Side::radioEdgeSpan(bool top) const
 {
     return d->radioData.spans[dint(top)];
 }
@@ -740,15 +740,15 @@ static dfloat radioCornerOpenness(binangle_t angle)
     return (angle > BANG_90)? dfloat( BANG_90 ) / angle : dfloat( angle ) / BANG_90;
 }
 
-static inline binangle_t lineNeighborAngle(LineSide const &side, Line const *other, binangle_t diff)
+static inline binangle_t lineNeighborAngle(const LineSide &side, const Line *other, binangle_t diff)
 {
     return (other && other != &side.line()) ? diff : 0 /*Consider it coaligned*/;
 }
 
-static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool right)
+static binangle_t findSolidLineNeighborAngle(const LineSide &side, bool right)
 {
     binangle_t diff = 0;
-    Line const *other = R_FindSolidLineNeighbor(side.line(),
+    const Line *other = R_FindSolidLineNeighbor(side.line(),
                                                 *side.line().vertexOwner(dint(right) ^ side.sideId()),
                                                 right ? Anticlockwise : Clockwise, side.sectorPtr(), &diff);
     return lineNeighborAngle(side, other, diff);
@@ -757,7 +757,7 @@ static binangle_t findSolidLineNeighborAngle(LineSide const &side, bool right)
 /**
  * Returns @c true if there is open space in the sector.
  */
-static inline bool sectorIsOpen(Sector const *sector)
+static inline bool sectorIsOpen(const Sector *sector)
 {
     return (sector && sector->ceiling().height() > sector->floor().height());
 }
@@ -771,14 +771,14 @@ struct edge_t {
 
 /// @todo fixme: Should be rewritten to work at half-edge level.
 /// @todo fixme: Should use the visual plane heights of subsectors.
-static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edge)
+static void scanNeighbor(const LineSide &side, bool top, bool right, edge_t &edge)
 {
     static dint const SEP = 10;
 
     de::zap(edge);
 
     ClockDirection const direction   = (right ? Anticlockwise : Clockwise);
-    Sector const *       startSector = side.sectorPtr();
+    const Sector *       startSector = side.sectorPtr();
     ddouble const        fFloor      = side.sector().floor().heightSmoothed();
     ddouble const        fCeil       = side.sector().ceiling().heightSmoothed();
 
@@ -788,7 +788,7 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
     {
         // Select the next line.
         binangle_t diff  = (direction == Clockwise ? own->angle() : own->prev()->angle());
-        Line const *iter = &own->navigate(direction)->line();
+        const Line *iter = &own->navigate(direction)->line();
         dint scanSecSide = (iter->front().hasSector() && iter->front().sectorPtr() == startSector ? Line::Back : Line::Front);
         // Step selfreferencing lines.
         while ((!iter->front().hasSector() && !iter->back().hasSector()) || iter->isSelfReferencing())
@@ -800,13 +800,13 @@ static void scanNeighbor(LineSide const &side, bool top, bool right, edge_t &edg
         }
 
         // Determine the relative backsector.
-        LineSide const &scanSide = iter->side(scanSecSide);
-        Sector const *scanSector = scanSide.sectorPtr();
+        const LineSide &scanSide = iter->side(scanSecSide);
+        const Sector *scanSector = scanSide.sectorPtr();
 
         // Select plane heights for relative offset comparison.
         ddouble const iFFloor = iter->front().sector().floor  ().heightSmoothed();
         ddouble const iFCeil  = iter->front().sector().ceiling().heightSmoothed();
-        Sector const *bsec    = iter->back().sectorPtr();
+        const Sector *bsec    = iter->back().sectorPtr();
         ddouble const iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
         ddouble const iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
 
@@ -997,7 +997,7 @@ dint Line::Side::property(DmuArgs &args) const
         args.setValue(DMT_SIDE_SECTOR, &_sector, 0);
         break;
     case DMU_LINE: {
-        Line const *lineAdr = &line();
+        const Line *lineAdr = &line();
         args.setValue(DMT_SIDE_LINE, &lineAdr, 0);
         break; }
     case DMU_FLAGS:
@@ -1015,7 +1015,7 @@ dint Line::Side::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint Line::Side::setProperty(DmuArgs const &args)
+dint Line::Side::setProperty(const DmuArgs &args)
 {
     switch(args.prop)
     {
@@ -1083,7 +1083,7 @@ DE_PIMPL(Line)
         slopetype_t slopeType;  ///< Logical line slope (i.e., world angle) classification.
         AABoxd bounds;          ///< Axis-aligned bounding box.
 
-        GeomData(Vertex const &from, Vertex const &to)
+        GeomData(const Vertex &from, const Vertex &to)
             : direction(to.origin() - from.origin())
             , length   (direction.length())
             , angle    (bamsAtan2(dint(direction.y), dint(direction.x)))
@@ -1093,7 +1093,7 @@ DE_PIMPL(Line)
             V2d_AddToBoxXY(bounds.arvec2, to  .x(), to  .y());
         }
 
-        static ddouble calcLength(Vertex const &from, Vertex const &to)
+        static ddouble calcLength(const Vertex &from, const Vertex &to)
         {
             return (to.origin() - from.origin()).length();
         }
@@ -1211,7 +1211,7 @@ Line::Side &Line::side(dint back)
     return (back ? d->back : d->front);
 }
 
-Line::Side const &Line::side(dint back) const
+const Line::Side &Line::side(dint back) const
 {
     return (back ? d->back : d->front);
 }
@@ -1245,7 +1245,7 @@ Vertex &Line::vertex(dint to)
     return (to ? *d->to : *d->from);
 }
 
-Vertex const &Line::vertex(dint to) const
+const Vertex &Line::vertex(dint to) const
 {
     DE_ASSERT((to ? d->to : d->from) != nullptr);
     return (to ? *d->to : *d->from);
@@ -1256,7 +1256,7 @@ Vertex &Line::from()
     return vertex(From);
 }
 
-Vertex const &Line::from() const
+const Vertex &Line::from() const
 {
     return vertex(From);
 }
@@ -1266,7 +1266,7 @@ Vertex &Line::to()
     return vertex(To);
 }
 
-Vertex const &Line::to() const
+const Vertex &Line::to() const
 {
     return vertex(To);
 }
@@ -1281,7 +1281,7 @@ LoopResult Line::forAllVertexs(std::function<LoopResult(Vertex &)> func) const
     return LoopContinue;
 }
 
-AABoxd const &Line::bounds() const
+const AABoxd &Line::bounds() const
 {
     return d->geom().bounds;
 }
@@ -1297,7 +1297,7 @@ Vec2d Line::center() const
     return from().origin() + direction() / 2;
 }
 
-Vec2d const &Line::direction() const
+const Vec2d &Line::direction() const
 {
     return d->geom().direction;
 }
@@ -1313,13 +1313,13 @@ slopetype_t Line::slopeType() const
     return d->geom().slopeType;
 }
 
-dint Line::boxOnSide(AABoxd const &box) const
+dint Line::boxOnSide(const AABoxd &box) const
 {
     return M_BoxOnLineSide(&box, from().origin().data().baseAs<ddouble>(),
                            direction().data().baseAs<ddouble>());
 }
 
-int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
+int Line::boxOnSide_FixedPrecision(const AABoxd &box) const
 {
     /// Apply an offset to both the box and the line to bring everything into
     /// the 16.16 fixed-point range. We'll use the midpoint of the line as the
@@ -1345,7 +1345,7 @@ int Line::boxOnSide_FixedPrecision(AABoxd const &box) const
     return M_BoxOnLineSide_FixedPrecision(boxx, pos, delta);
 }
 
-ddouble Line::pointDistance(Vec2d const &point, ddouble *offset) const
+ddouble Line::pointDistance(const Vec2d &point, ddouble *offset) const
 {
     Vec2d lineVec = direction() - from().origin();
     ddouble len = lineVec.length();
@@ -1366,7 +1366,7 @@ ddouble Line::pointDistance(Vec2d const &point, ddouble *offset) const
     return (delta.y * lineVec.x - delta.x * lineVec.y) / len;
 }
 
-ddouble Line::pointOnSide(Vec2d const &point) const
+ddouble Line::pointOnSide(const Vec2d &point) const
 {
     Vec2d delta = from().origin() - point;
     return delta.y * direction().x - delta.x * direction().y;
@@ -1397,7 +1397,7 @@ Line::Side &Line::front()
     return side(Front);
 }
 
-Line::Side const &Line::front() const
+const Line::Side &Line::front() const
 {
     return side(Front);
 }
@@ -1407,7 +1407,7 @@ Line::Side &Line::back()
     return side(Back);
 }
 
-Line::Side const &Line::back() const
+const Line::Side &Line::back() const
 {
     return side(Back);
 }
@@ -1441,12 +1441,12 @@ dint Line::property(DmuArgs &args) const
         break;
     case DMU_FRONT: {
         /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *frontAdr = front().hasSections() ? &d->front : nullptr;
+        const Line::Side *frontAdr = front().hasSections() ? &d->front : nullptr;
         args.setValue(DDVT_PTR, &frontAdr, 0);
         break; }
     case DMU_BACK: {
         /// @todo Update the games so that sides without sections can be returned.
-        Line::Side const *backAdr  = back().hasSections() ? &d->back   : nullptr;
+        const Line::Side *backAdr  = back().hasSections() ? &d->back   : nullptr;
         args.setValue(DDVT_PTR, &backAdr, 0);
         break; }
     case DMU_VERTEX0:
@@ -1482,7 +1482,7 @@ dint Line::property(DmuArgs &args) const
         args.setValue(DMT_LINE_SLOPETYPE, &st, 0);
         break; }
     case DMU_BOUNDING_BOX: {
-        AABoxd const *boxAdr = &bounds();
+        const AABoxd *boxAdr = &bounds();
         args.setValue(DDVT_PTR, &boxAdr, 0);
         break; }
     default:
@@ -1492,7 +1492,7 @@ dint Line::property(DmuArgs &args) const
     return false; // Continue iteration.
 }
 
-dint Line::setProperty(DmuArgs const &args)
+dint Line::setProperty(const DmuArgs &args)
 {
     switch(args.prop)
     {
@@ -1532,7 +1532,7 @@ D_CMD(InspectLine)
 
     // Find the line.
     dint const index = String(argv[1]).toInt();
-    Line const *line = App_World().map().linePtr(index);
+    const Line *line = App_World().map().linePtr(index);
     if (!line)
     {
         LOG_SCR_ERROR("Line #%i not found") << index;

@@ -36,7 +36,7 @@ DE_PIMPL(ClientPlayer)
     clplayerstate_t    clPlayerState;
     DemoTimer          demoTimer;
 
-    state_t const *lastPSpriteState = nullptr;
+    const state_t *lastPSpriteState = nullptr;
     String weaponAssetId;
 
     Impl(Public *i)
@@ -82,7 +82,7 @@ viewdata_t &ClientPlayer::viewport()
     return d->viewport;
 }
 
-viewdata_t const &ClientPlayer::viewport() const
+const viewdata_t &ClientPlayer::viewport() const
 {
     return d->viewport;
 }
@@ -92,7 +92,7 @@ clplayerstate_t &ClientPlayer::clPlayerState()
     return d->clPlayerState;
 }
 
-clplayerstate_t const &ClientPlayer::clPlayerState() const
+const clplayerstate_t &ClientPlayer::clPlayerState() const
 {
     return d->clPlayerState;
 }
@@ -102,7 +102,7 @@ ConsoleEffectStack &ClientPlayer::fxStack()
     return d->effects;
 }
 
-ConsoleEffectStack const &ClientPlayer::fxStack() const
+const ConsoleEffectStack &ClientPlayer::fxStack() const
 {
     return d->effects;
 }
@@ -124,7 +124,7 @@ void ClientPlayer::tick(timespan_t elapsed)
     d->playerWeaponAnimator.advanceTime(elapsed);
 }
 
-void ClientPlayer::setWeaponAssetId(String const &id)
+void ClientPlayer::setWeaponAssetId(const String &id)
 {
     if (id != d->weaponAssetId)
     {
@@ -135,7 +135,7 @@ void ClientPlayer::setWeaponAssetId(String const &id)
     }
 }
 
-void ClientPlayer::weaponStateChanged(state_t const *state)
+void ClientPlayer::weaponStateChanged(const state_t *state)
 {
     if (state != d->lastPSpriteState)
     {

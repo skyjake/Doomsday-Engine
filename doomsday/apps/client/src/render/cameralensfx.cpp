@@ -117,7 +117,7 @@ void LensFx_Draw(int playerNum)
     GLState::push()
             .setTarget(player.viewCompositor().gameView().resolvedFramebuffer());
 
-    auto const &effects = player.fxStack().effects;
+    const auto &effects = player.fxStack().effects;
 
     // Initialize these effects if they currently are not.
     for (ConsoleEffect *effect : effects)
@@ -146,9 +146,9 @@ void LensFx_Draw(int playerNum)
     GLState::pop();
 }
 
-void LensFx_MarkLightVisibleInFrame(IPointLightSource const &lightSource)
+void LensFx_MarkLightVisibleInFrame(const IPointLightSource &lightSource)
 {
-    auto const &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
+    const auto &effects = DD_Player(fxFramePlayerNum)->fxStack().effects;
 
     static_cast<fx::LensFlares *>(effects.at(IDX_LENS_FLARES))->
             markLightPotentiallyVisibleForCurrentFrame(&lightSource);

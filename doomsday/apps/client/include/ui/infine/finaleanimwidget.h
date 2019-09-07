@@ -64,7 +64,7 @@ public:
     typedef de::List<Frame *> Frames;
 
 public:
-    FinaleAnimWidget(de::String const &name);
+    FinaleAnimWidget(const de::String &name);
     virtual ~FinaleAnimWidget();
 
     /// @todo Observe instead.
@@ -74,36 +74,36 @@ public:
 
     int newFrame(Frame::Type type, int tics, void *texRef, short sound, bool flagFlipH);
 
-    Frames const &allFrames() const;
+    const Frames &allFrames() const;
     FinaleAnimWidget &clearAllFrames();
 
     inline int frameCount() const { return allFrames().count(); }
 
     FinaleAnimWidget &resetAllColors();
 
-    animator_t const *color() const;
-    FinaleAnimWidget &setColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setColor(de::Vec3f const &newColor, int steps = 0);
+    const animator_t *color() const;
+    FinaleAnimWidget &setColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setColor(const de::Vec3f &newColor, int steps = 0);
     FinaleAnimWidget &setAlpha(float newAlpha, int steps = 0);
 
-    animator_t const *edgeColor() const;
-    FinaleAnimWidget &setEdgeColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setEdgeColor(de::Vec3f const &newColor, int steps = 0);
+    const animator_t *edgeColor() const;
+    FinaleAnimWidget &setEdgeColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setEdgeColor(const de::Vec3f &newColor, int steps = 0);
     FinaleAnimWidget &setEdgeAlpha(float newAlpha, int steps = 0);
 
-    animator_t const *otherColor() const;
-    FinaleAnimWidget &setOtherColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setOtherColor(de::Vec3f const &newColor, int steps = 0);
+    const animator_t *otherColor() const;
+    FinaleAnimWidget &setOtherColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setOtherColor(const de::Vec3f &newColor, int steps = 0);
     FinaleAnimWidget &setOtherAlpha(float newAlpha, int steps = 0);
 
-    animator_t const *otherEdgeColor() const;
-    FinaleAnimWidget &setOtherEdgeColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
-    FinaleAnimWidget &setOtherEdgeColor(de::Vec3f const &newColor, int steps = 0);
+    const animator_t *otherEdgeColor() const;
+    FinaleAnimWidget &setOtherEdgeColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
+    FinaleAnimWidget &setOtherEdgeColor(const de::Vec3f &newColor, int steps = 0);
     FinaleAnimWidget &setOtherEdgeAlpha(float newAlpha, int steps = 0);
 
 protected:
 #ifdef __CLIENT__
-    void draw(de::Vec3f const &offset);
+    void draw(const de::Vec3f &offset);
 #endif
     void runTicks(/*timespan_t timeDelta*/);
 

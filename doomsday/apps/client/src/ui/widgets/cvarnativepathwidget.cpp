@@ -28,7 +28,7 @@ using namespace de;
 DE_PIMPL(CVarNativePathWidget)
 , DE_OBSERVES(NativePathWidget, UserChange)
 {
-    char const *cvar;
+    const char *cvar;
 
     Impl(Public *i) : Base(i)
     {}
@@ -46,7 +46,7 @@ DE_PIMPL(CVarNativePathWidget)
     }
 };
 
-CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
+CVarNativePathWidget::CVarNativePathWidget(const char *cvarPath)
     : d(new Impl(this))
 {
     d->cvar = cvarPath;
@@ -55,7 +55,7 @@ CVarNativePathWidget::CVarNativePathWidget(char const *cvarPath)
     audienceForUserChange() += [this]() { setCVarValueFromWidget(); };
 }
 
-char const *CVarNativePathWidget::cvarPath() const
+const char *CVarNativePathWidget::cvarPath() const
 {
     return d->cvar;
 }

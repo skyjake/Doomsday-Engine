@@ -29,9 +29,9 @@
 class CVarChoiceWidget : public de::ChoiceWidget, public ICVarWidget
 {
 public:
-    CVarChoiceWidget(char const *cvarPath);
+    CVarChoiceWidget(const char *cvarPath);
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
 
     void updateFromCVar();
 

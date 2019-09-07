@@ -26,7 +26,7 @@
 class MultiplayerPanelButtonWidget : public PanelButtonWidget
 {
 public:
-    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(de::ServerInfo const &))
+    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(const de::ServerInfo &))
 
 public:
     MultiplayerPanelButtonWidget();
@@ -36,7 +36,7 @@ public:
     void setSelected(bool selected) override;
     void itemRightClicked() override;
 
-    void updateContent(de::ServerInfo const &info);
+    void updateContent(const de::ServerInfo &info);
 
     void joinGame();
 

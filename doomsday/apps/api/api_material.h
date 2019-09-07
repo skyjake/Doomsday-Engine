@@ -35,10 +35,10 @@ DE_API_TYPEDEF(Material)
 {
     de_api_t api;
 
-    world_Material *(*ForTextureUri)(Uri const *textureUri);
+    world_Material *(*ForTextureUri)(const Uri *textureUri);
     Uri *(*ComposeUri)(materialid_t materialId);
-    materialid_t (*ResolveUri)(Uri const *uri);
-    materialid_t (*ResolveUriCString)(char const *path);
+    materialid_t (*ResolveUri)(const Uri *uri);
+    materialid_t (*ResolveUriCString)(const char *path);
 
 }
 DE_API_T(Material);

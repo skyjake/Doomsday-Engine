@@ -46,12 +46,12 @@ bool Thinker_IsMobjFunc(thinkfunc_t func)
     return (func && func == reinterpret_cast<thinkfunc_t>(gx.MobjThinker));
 }
 
-bool Thinker_IsMobj(thinker_t const *th)
+bool Thinker_IsMobj(const thinker_t *th)
 {
     return (th && Thinker_IsMobjFunc(th->function));
 }
 
-world::Map &Thinker_Map(thinker_t const & /*th*/)
+world::Map &Thinker_Map(const thinker_t & /*th*/)
 {
     /// @todo Do not assume the current map.
     return App_World().map();

@@ -157,7 +157,7 @@ public:
         addKnownExtension(".zip");
     }
 
-    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, const FileInfo &info) const
     {
         if (Zip::recognise(hndl))
         {
@@ -177,7 +177,7 @@ public:
         addKnownExtension(".wad");
     }
 
-    File1 *interpret(FileHandle &hndl, String path, FileInfo const &info) const
+    File1 *interpret(FileHandle &hndl, String path, const FileInfo &info) const
     {
         if (Wad::recognise(hndl))
         {
@@ -417,13 +417,13 @@ void DD_CreateFileSystemSchemes()
 {
     dint const schemedef_max_searchpaths = 5;
     struct schemedef_s {
-        char const *name;
-        char const *optOverridePath;
-        char const *optFallbackPath;
+        const char *name;
+        const char *optOverridePath;
+        const char *optFallbackPath;
         Flags flags;
         Flags searchPathFlags;
         /// Priority is right to left.
-        char const *searchPaths[schemedef_max_searchpaths];
+        const char *searchPaths[schemedef_max_searchpaths];
     } defs[] = {
         { "Defs",         nullptr,           nullptr,     FS1::Scheme::Flag(0), 0,
             { "$(App.DefsPath)/", "$(App.DefsPath)/$(GamePlugin.Name)/", "$(App.DefsPath)/$(GamePlugin.Name)/$(Game.IdentityKey)/" }
@@ -460,7 +460,7 @@ void DD_CreateFileSystemSchemes()
     //createPackagesScheme();
 
     // Setup the rest...
-    for (schemedef_s const &def : defs)
+    for (const schemedef_s &def : defs)
     {
         FS1::Scheme &scheme = App_FileSystem().createScheme(def.name, def.flags);
 
@@ -489,7 +489,7 @@ void DD_CreateFileSystemSchemes()
     }
 }
 
-void App_Error(char const *error, ...)
+void App_Error(const char *error, ...)
 {
     static bool errorInProgress = false;
 
@@ -557,7 +557,7 @@ void App_Error(char const *error, ...)
     exit(-1);
 }
 
-void App_AbnormalShutdown(char const *message)
+void App_AbnormalShutdown(const char *message)
 {
     DE_ASSERT_IN_MAIN_THREAD();
 
@@ -784,7 +784,7 @@ int DD_ActivateGameWorker(void *context)
 
     if (App_GameLoaded())
     {
-        File const *configFile;
+        const File *configFile;
 
         // Parse the game's main config file.
         // If a custom top-level config is specified; let it override.
@@ -895,7 +895,7 @@ void App_ClearGames()
     DoomsdayApp::setGame(App_Games().nullGame());
 }
 
-static void populateGameInfo(GameInfo &info, Game const &game)
+static void populateGameInfo(GameInfo &info, const Game &game)
 {
     info.identityKey = AutoStr_FromTextStd(game.id());
     info.title       = AutoStr_FromTextStd(game.title());
@@ -921,14 +921,14 @@ dd_bool DD_GameInfo(GameInfo *info)
     return false;
 }
 
-Game const &App_CurrentGame()
+const Game &App_CurrentGame()
 {
     return DoomsdayApp::game();
 }
 
 static GameProfile automaticProfile;
 
-static GameProfile const *autoselectGameProfile()
+static const GameProfile *autoselectGameProfile()
 {
     if (auto arg = CommandLine::get().check("-game", 1))
     {
@@ -960,7 +960,7 @@ static GameProfile const *autoselectGameProfile()
         for (File *f : DoomsdayApp::app().filesFromCommandLine())
         {
             String packageId;
-            if (auto const *bundle = maybeAs<DataBundle>(f))
+            if (const auto *bundle = maybeAs<DataBundle>(f))
             {
                 packageId = bundle->packageId();
             }
@@ -1047,7 +1047,7 @@ static void initializeWithWindowReady()
 {
     DE_DEBUG_ONLY( assertTypeSizes(); )
 
-    static char const *AUTOEXEC_NAME = "autoexec.cfg";
+    static const char *AUTOEXEC_NAME = "autoexec.cfg";
 
 #ifdef __CLIENT__
     GLWindow::glActivateMain();
@@ -1101,7 +1101,7 @@ static void initializeWithWindowReady()
     // Attempt automatic game selection.
     if (!CommandLine_Exists("-noautoselect") || isDedicated)
     {
-        if (GameProfile const *game = autoselectGameProfile())
+        if (const GameProfile *game = autoselectGameProfile())
         {
 #ifdef __CLIENT__
             ClientWindow::main().home().moveOffscreen(0.0);
@@ -1128,7 +1128,7 @@ static void initializeWithWindowReady()
             else
             {
                 StringList ids;
-                for (GameProfile const *prof : playable) ids << prof->gameId();
+                for (const GameProfile *prof : playable) ids << prof->gameId();
                 msg += "The following games are playable: " + String::join(ids, ", ");
             }
             EscapeParser esc;
@@ -1178,7 +1178,7 @@ static void initializeWithWindowReady()
         Time begunAt;
         for (;;)
         {
-            char const *arg = CommandLine_NextAsPath();
+            const char *arg = CommandLine_NextAsPath();
             if (!arg || arg[0] == '-') break;
 
             LOG_NOTE("Additional pre-init config file \"%s\"") << NativePath(arg).pretty();
@@ -1198,7 +1198,7 @@ static void initializeWithWindowReady()
 
         for (++p; p < CommandLine_Count(); p++)
         {
-            char const *arg = CommandLine_At(p);
+            const char *arg = CommandLine_At(p);
 
             if (arg[0] == '-')
             {
@@ -1297,7 +1297,7 @@ void DD_FinishInitializationAfterWindowReady()
             App::app().notifyStartupComplete();
             return;
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             EscapeParser esc;
             esc.parse(er.asText());
@@ -1348,7 +1348,7 @@ static dint DD_StartupWorker(void * /*context*/)
 
         for (;;)
         {
-            char const *arg = CommandLine_NextAsPath();
+            const char *arg = CommandLine_NextAsPath();
             if (!arg || arg[0] == '-') break;
 
             LOG_MSG("Additional (pre-init) config file \"%s\"") << NativePath(arg).pretty();
@@ -1378,7 +1378,7 @@ static dint DD_StartupWorker(void * /*context*/)
     DE_UNUSED(loadedFile);*/
 
     // It is assumed that doomsday.pk3 is currently stored in a native file.
-    if (File const *basePack = App::packageLoader().select("net.dengine.legacy.base"))
+    if (const File *basePack = App::packageLoader().select("net.dengine.legacy.base"))
     {
         // The returned file is a symlink to the actual data file.
         // Since we're loading with FS1, we need to look up the native path.
@@ -1399,7 +1399,7 @@ static dint DD_StartupWorker(void * /*context*/)
     //Con_SetProgress(60);
 
     // Execute the startup script (Startup.cfg).
-    char const *startupConfig = "startup.cfg";
+    const char *startupConfig = "startup.cfg";
     if (F_FileExists(startupConfig))
     {
         Con_ParseCommands(startupConfig);
@@ -1687,7 +1687,7 @@ dint DD_GetInteger(dint ddvalue)
     case DD_MAP_MUSIC:
         if (App_World().hasMap())
         {
-            Record const &mapInfo = App_World().map().mapInfo();
+            const Record &mapInfo = App_World().map().mapInfo();
             return DED_Definitions()->getMusicNum(mapInfo.gets("music"));
         }
         return -1;
@@ -1907,14 +1907,14 @@ void DD_ReadGameHelp()
             Help_ReadStrings(*found.front());
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_WARNING("") << er.asText();
     }
 }
 
 /// @note Part of the Doomsday public API.
-fontschemeid_t DD_ParseFontSchemeName(char const *str)
+fontschemeid_t DD_ParseFontSchemeName(const char *str)
 {
 #ifdef __CLIENT__
     try
@@ -1929,7 +1929,7 @@ fontschemeid_t DD_ParseFontSchemeName(char const *str)
             return FS_GAME;
         }
     }
-    catch (Resources::UnknownSchemeError const &)
+    catch (const Resources::UnknownSchemeError &)
     {}
 #endif
     debug("Unknown font scheme: \"%s\", returning 'FS_INVALID'", str);
@@ -1957,7 +1957,7 @@ String DD_MaterialSchemeNameForTextureScheme(const String &textureSchemeName)
     return "";
 }
 
-AutoStr *DD_MaterialSchemeNameForTextureScheme(ddstring_t const *textureSchemeName)
+AutoStr *DD_MaterialSchemeNameForTextureScheme(const ddstring_t *textureSchemeName)
 {
     if (!textureSchemeName)
     {
@@ -1984,7 +1984,7 @@ D_CMD(Load)
         // Are we loading a game?
         if (DoomsdayApp::games().contains(searchTerm))
         {
-            Game const &game = DoomsdayApp::games()[searchTerm];
+            const Game &game = DoomsdayApp::games()[searchTerm];
             if (!game.isPlayable())
             {
                 LOG_SCR_ERROR("Game \"%s\" is missing one or more required packages: %s")
@@ -2059,7 +2059,7 @@ D_CMD(Load)
                 if (files.size() <= 10)
                 {
                     LOG_SCR_MSG("Maybe you meant:");
-                    for (auto const *f : files)
+                    for (const auto *f : files)
                     {
                         LOG_SCR_MSG("- " _E(>) "%s") << f->description();
                     }
@@ -2072,7 +2072,7 @@ D_CMD(Load)
                 return false;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_SCR_ERROR("Failed to load package \"%s\": %s") << searchTerm << er.asText();
             return false;
@@ -2125,7 +2125,7 @@ D_CMD(Unload)
                 loader.unload(searchTerm);
                 continue;
             }
-            for (DataBundle const *bundle : loadedBundles)
+            for (const DataBundle *bundle : loadedBundles)
             {
                 if (!bundle->sourceFile().name().compareWithoutCase(searchTerm))
                 {
@@ -2136,7 +2136,7 @@ D_CMD(Unload)
             }
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_SCR_ERROR("Problem while unloading: %s") << er.asText();
         return false;
@@ -2171,7 +2171,7 @@ D_CMD(Unload)
             LOG_MSG("%s is not currently loaded.") << game.id();
             return true;
         }
-        catch (Games::NotFoundError const &)
+        catch (const Games::NotFoundError &)
         {} // Ignore the error.
     }
 
@@ -2277,7 +2277,7 @@ D_CMD(Version)
     // Print the version info of the current game if loaded.
     if (App_GameLoaded())
     {
-        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (char const *) gx.GetPointer(DD_PLUGIN_VERSION_LONG);
+        LOG_SCR_MSG(_E(l) "Game: " _E(.) "%s") << (const char *) gx.GetPointer(DD_PLUGIN_VERSION_LONG);
     }
 
     // Additional information for developers.
@@ -2370,7 +2370,7 @@ D_CMD(Help)
     return true;
 }
 
-static void printHelpAbout(char const *query)
+static void printHelpAbout(const char *query)
 {
     // Try the console commands first.
     if (ccmd_t *ccmd = Con_FindCommand(query))
@@ -2378,7 +2378,7 @@ static void printHelpAbout(char const *query)
         LOG_SCR_MSG(_E(b) "%s" _E(.) " (Command)") << ccmd->name;
 
         HelpId help = DH_Find(ccmd->name);
-        if (char const *description = DH_GetString(help, HST_DESCRIPTION))
+        if (const char *description = DH_GetString(help, HST_DESCRIPTION))
         {
             LOG_SCR_MSG("") << description;
         }
@@ -2386,7 +2386,7 @@ static void printHelpAbout(char const *query)
         Con_PrintCommandUsage(ccmd);  // For all overloaded variants.
 
         // Any extra info?
-        if (char const *info = DH_GetString(help, HST_INFO))
+        if (const char *info = DH_GetString(help, HST_INFO))
         {
             LOG_SCR_MSG("  " _E(>) _E(l)) << info;
         }
@@ -2399,7 +2399,7 @@ static void printHelpAbout(char const *query)
         LOG_SCR_MSG(_E(b) "%s" _E(.) " (Variable)") << Str_Text(path);
 
         HelpId help = DH_Find(Str_Text(path));
-        if (char const *description = DH_GetString(help, HST_DESCRIPTION))
+        if (const char *description = DH_GetString(help, HST_DESCRIPTION))
         {
             LOG_SCR_MSG("") << description;
         }
@@ -2427,7 +2427,7 @@ static void printHelpAbout(char const *query)
         LOG_SCR_MSG("  " _E(>) "Enter " _E(b) "load %s" _E(.) " to load the " _E(l) "%s" _E(.) " game mode") << game.id() << game.title();
         return;
     }
-    catch (Games::NotFoundError const &)
+    catch (const Games::NotFoundError &)
     {}  // Ignore this error.
 
     LOG_SCR_NOTE("There is no help about '%s'") << query;

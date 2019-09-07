@@ -38,7 +38,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
 {
     static ServerLink &link() { return ClientApp::serverLink(); }
 
-    static String hostId(ServerInfo const &sv)
+    static String hostId(const ServerInfo &sv)
     {
         if (sv.serverId())
         {
@@ -53,7 +53,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
     class ServerListItem : public ui::Item
     {
     public:
-        ServerListItem(ServerInfo const &serverInfo, bool isLocal)
+        ServerListItem(const ServerInfo &serverInfo, bool isLocal)
             : _lan(isLocal)
         {
             setData(TextValue(hostId(serverInfo)));
@@ -70,12 +70,12 @@ DE_PIMPL(MultiplayerServerMenuWidget)
             _lan = isLocal;
         }
 
-        ServerInfo const &info() const
+        const ServerInfo &info() const
         {
             return _info;
         }
 
-        void setInfo(ServerInfo const &serverInfo)
+        void setInfo(const ServerInfo &serverInfo)
         {
             _info = serverInfo;
             notifyChange();
@@ -108,7 +108,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         self().organizer().setWidgetFactory(*this);
     }
 
-    void serversDiscovered(ServerLink const &link) override
+    void serversDiscovered(const ServerLink &link) override
     {
         ui::Data &items = self().items();
 
@@ -133,7 +133,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         }
 
         // Add new entries and update existing ones.
-        for (Address const &host : link.foundServers(mask))
+        for (const Address &host : link.foundServers(mask))
         {
             ServerInfo info;
             if (!link.foundServerInfo(host, info, mask)) continue;
@@ -160,10 +160,10 @@ DE_PIMPL(MultiplayerServerMenuWidget)
             }
         }
 
-        items.stableSort([] (ui::Item const &a, ui::Item const &b)
+        items.stableSort([] (const ui::Item &a, const ui::Item &b)
         {
-            auto const &first  = a.as<ServerListItem>();
-            auto const &second = b.as<ServerListItem>();
+            const auto &first  = a.as<ServerListItem>();
+            const auto &second = b.as<ServerListItem>();
 
             // LAN games shown first.
             if (first.isLocal() == second.isLocal())
@@ -186,7 +186,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         });
     }
 
-    void currentGameChanged(Game const &newGame) override
+    void currentGameChanged(const Game &newGame) override
     {
         if (newGame.isNull() && mode == DiscoverUsingMaster)
         {
@@ -206,7 +206,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
 
     void updateAvailability(GuiWidget &menuItemWidget)
     {
-        auto const &item = self().organizer().findItemForWidget(menuItemWidget)->as<ServerListItem>();
+        const auto &item = self().organizer().findItemForWidget(menuItemWidget)->as<ServerListItem>();
 
         bool playable = false;
         String gameId = item.gameId();
@@ -217,23 +217,23 @@ DE_PIMPL(MultiplayerServerMenuWidget)
         menuItemWidget.enable(playable);
     }
 
-    void aboutToJoinMultiplayerGame(ServerInfo const &sv) override
+    void aboutToJoinMultiplayerGame(const ServerInfo &sv) override
     {
         DE_NOTIFY_PUBLIC(AboutToJoin, i) i->aboutToJoinMultiplayerGame(sv);
     }
 
 //- ChildWidgetOrganizer::IWidgetFactory --------------------------------------
 
-    GuiWidget *makeItemWidget(ui::Item const &, GuiWidget const *) override
+    GuiWidget *makeItemWidget(const ui::Item &, const GuiWidget *) override
     {
         auto *b = new MultiplayerPanelButtonWidget;
         b->audienceForAboutToJoin() += this;
         return b;
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item) override
     {
-        auto const &serverItem = item.as<ServerListItem>();
+        const auto &serverItem = item.as<ServerListItem>();
 
         widget.as<MultiplayerPanelButtonWidget>()
                 .updateContent(serverItem.info());
@@ -248,7 +248,7 @@ DE_PIMPL(MultiplayerServerMenuWidget)
 DE_AUDIENCE_METHOD(MultiplayerServerMenuWidget, AboutToJoin);
 
 MultiplayerServerMenuWidget::MultiplayerServerMenuWidget(DiscoveryMode discovery,
-                                                         String const &name)
+                                                         const String &name)
     : HomeMenuWidget(name)
     , d(new Impl(this))
 {

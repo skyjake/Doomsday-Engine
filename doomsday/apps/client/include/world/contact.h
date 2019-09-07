@@ -141,7 +141,7 @@ ContactList &R_ContactList(ConvexSubspace &subspace, ContactType type);
 /**
  * Traverse the list of @em all contacts for the current render frame.
  */
-de::LoopResult R_ForAllContacts(std::function<de::LoopResult (Contact const &)> func);
+de::LoopResult R_ForAllContacts(std::function<de::LoopResult (const Contact &)> func);
 
 /**
  * Traverse the list of mobj contacts linked directly to the specified @a subspace,

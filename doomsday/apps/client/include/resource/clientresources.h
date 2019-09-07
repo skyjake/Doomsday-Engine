@@ -133,7 +133,7 @@ public:
      *
      * @return @c true, if a manifest exists; otherwise @a false.
      */
-    bool hasFont(res::Uri const &path) const;
+    bool hasFont(const res::Uri &path) const;
 
     /**
      * Convenient method of looking up a concrete font resource in the collection
@@ -158,7 +158,7 @@ public:
      * @param search  The search term.
      * @return Found unique identifier.
      */
-    de::FontManifest &fontManifest(res::Uri const &search) const;
+    de::FontManifest &fontManifest(const res::Uri &search) const;
 
     /**
      * Lookup a manifest by unique identifier.
@@ -188,7 +188,7 @@ public:
     /**
      * Returns a list of all the schemes for efficient traversal.
      */
-    FontSchemes const &allFontSchemes() const;
+    const FontSchemes &allFontSchemes() const;
 
     /**
      * Returns the total number of manifest schemes in the collection.
@@ -210,7 +210,7 @@ public:
      * Returns a list of pointers to all the concrete resources in the collection,
      * from all schemes.
      */
-    AllFonts const &allFonts() const;
+    const AllFonts &allFonts() const;
 
     /**
      * Declare a resource in the collection, producing a (possibly new) manifest
@@ -221,7 +221,7 @@ public:
      *
      * @return  The associated manifest for this URI.
      */
-    inline de::FontManifest &declareFont(res::Uri const &uri) {
+    inline de::FontManifest &declareFont(const res::Uri &uri) {
         return fontScheme(uri.scheme()).declare(uri.path());
     }
 
@@ -230,7 +230,7 @@ public:
      *
      * @return  Index of the definition; otherwise @c -1 if @a modelDef is unknown.
      */
-    de::dint indexOf(FrameModelDef const *modelDef);
+    de::dint indexOf(const FrameModelDef *modelDef);
 
     /**
      * Convenient method of looking up a concrete model resource in the collection
@@ -333,7 +333,7 @@ public:
      *
      * @return  The interned copy of the rationalized specification.
      */
-    de::MaterialVariantSpec const &materialSpec(MaterialContextId contextId,
+    const de::MaterialVariantSpec &materialSpec(MaterialContextId contextId,
                                                 de::dint          flags,
                                                 byte              border,
                                                 de::dint          tClass,
@@ -360,7 +360,7 @@ public:
      *
      * @return  The interned copy of the rationalized specification.
      */
-    TextureVariantSpec const &textureSpec(texturevariantusagecontext_t tc,
+    const TextureVariantSpec &textureSpec(texturevariantusagecontext_t tc,
         de::dint flags, byte border, de::dint tClass, de::dint tMap, GLenum wrapS, GLenum wrapT,
         de::dint minFilter, de::dint magFilter, de::dint anisoFilter,
         dd_bool mipmapped, dd_bool gammaCorrection, dd_bool noStretch, dd_bool toAlpha);
@@ -373,8 +373,8 @@ public:
      */
     TextureVariantSpec &detailTextureSpec(de::dfloat contrast);
 
-    AbstractFont *newFontFromDef(ded_compositefont_t const &def);
-    AbstractFont *newFontFromFile(res::Uri const &uri, const de::String& filePath);
+    AbstractFont *newFontFromDef(const ded_compositefont_t &def);
+    AbstractFont *newFontFromFile(const res::Uri &uri, const de::String& filePath);
 
     /**
      * Release all GL-textures for fonts in the identified scheme.
@@ -396,7 +396,7 @@ public:
      * @param cacheGroups   @c true= variants for all materials in any applicable
      *                      groups are desired; otherwise just specified material.
      */
-    void cache(ClientMaterial &material, de::MaterialVariantSpec const &spec,
+    void cache(ClientMaterial &material, const de::MaterialVariantSpec &spec,
                bool cacheGroups = true);
 
     /**
@@ -410,7 +410,7 @@ public:
      * @param spriteId      Unique identifier of the sprite set to cache.
      * @param materialSpec  Specification to use when caching materials.
      */
-    void cache(spritenum_t spriteId, de::MaterialVariantSpec const &materialSpec);
+    void cache(spritenum_t spriteId, const de::MaterialVariantSpec &materialSpec);
 
     /**
      * Process all queued material cache tasks.

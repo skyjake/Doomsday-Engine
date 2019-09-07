@@ -27,7 +27,7 @@
 
 using namespace de;
 
-CompiledImpulseBinding::CompiledImpulseBinding(Record const &bind)
+CompiledImpulseBinding::CompiledImpulseBinding(const Record &bind)
     : id            (bind.geti("id"))
     , deviceId      (bind.geti("deviceId"))
     , controlId     (bind.geti("controlId"))
@@ -43,9 +43,9 @@ CompiledImpulseBindingRecord &ImpulseBinding::def()
     return static_cast<CompiledImpulseBindingRecord &>(Binding::def());
 }
 
-CompiledImpulseBindingRecord const &ImpulseBinding::def() const
+const CompiledImpulseBindingRecord &ImpulseBinding::def() const
 {
-    return static_cast<CompiledImpulseBindingRecord const &>(Binding::def());
+    return static_cast<const CompiledImpulseBindingRecord &>(Binding::def());
 }
 
 void ImpulseBinding::resetToDefaults()
@@ -86,7 +86,7 @@ String ImpulseBinding::composeDescriptor()
     }
 
     // Append any state conditions.
-    ArrayValue const &conds = def().geta("condition");
+    const ArrayValue &conds = def().geta("condition");
     DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
@@ -95,7 +95,7 @@ String ImpulseBinding::composeDescriptor()
     return str;
 }
 
-static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseId, int localPlayer)
+static bool doConfigure(ImpulseBinding &bind, const char *ctrlDesc, int impulseId, int localPlayer)
 {
     DE_ASSERT(ctrlDesc);
 
@@ -187,7 +187,7 @@ static bool doConfigure(ImpulseBinding &bind, char const *ctrlDesc, int impulseI
     return true;
 }
 
-void ImpulseBinding::configure(char const *ctrlDesc, int impulseId, int localPlayer, bool assignNewId)
+void ImpulseBinding::configure(const char *ctrlDesc, int impulseId, int localPlayer, bool assignNewId)
 {
     DE_ASSERT(ctrlDesc);
     DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);

@@ -100,13 +100,13 @@ struct fi_operand_t
     union {
         int         integer;
         float       flt;
-        char const *cstring;
+        const char *cstring;
         uri_s      *uri;
     } data;
 };
 
 // Helper macro for defining infine command functions.
-#define DEFFC(name) void FIC_##name(command_t const &cmd, fi_operand_t const *ops, FinaleInterpreter &fi)
+#define DEFFC(name) void FIC_##name(const command_t &cmd, const fi_operand_t *ops, FinaleInterpreter &fi)
 
 /**
  * @defgroup finaleInterpreterCommandDirective Finale Interpreter Command Directive
@@ -119,10 +119,10 @@ struct fi_operand_t
 
 struct command_t
 {
-    char const *token;
-    char const *operands;
+    const char *token;
+    const char *operands;
 
-    typedef void (*Func) (command_t const &, fi_operand_t const *, FinaleInterpreter &);
+    typedef void (*Func) (const command_t &, const fi_operand_t *, FinaleInterpreter &);
     Func func;
 
     struct command_flags_s {
@@ -237,7 +237,7 @@ DEFFC(NoShowMenu);
  *       At this time the command names could also be hashed and chained to
  *       improve performance. -ds
  */
-static command_t const *findCommand(char const *name)
+static const command_t *findCommand(const char *name)
 {
     static command_t const commands[] = {
         // Run Control
@@ -360,7 +360,7 @@ static command_t const *findCommand(char const *name)
     };
     for (size_t i = 0; commands[i].token; ++i)
     {
-        command_t const *cmd = &commands[i];
+        const command_t *cmd = &commands[i];
         if (!iCmpStrCase(cmd->token, name))
         {
             return cmd;
@@ -384,8 +384,8 @@ DE_PIMPL(FinaleInterpreter)
     finaleid_t id = 0;                  ///< Unique identifier.
 
     ddstring_t *script      = nullptr;  ///< The script to be interpreted.
-    char const *scriptBegin = nullptr;  ///< Beginning of the script (after any directive blocks).
-    char const *cp          = nullptr;  ///< Current position in the script.
+    const char *scriptBegin = nullptr;  ///< Beginning of the script (after any directive blocks).
+    const char *cp          = nullptr;  ///< Current position in the script.
     char token[MAX_TOKEN_LENGTH];       ///< Script token read/parse buffer.
 
     /// Pages containing the widgets used to visualize the script objects.
@@ -414,12 +414,12 @@ DE_PIMPL(FinaleInterpreter)
         ddevent_t ev; // Template.
         String gotoMarker;
 
-        explicit EventHandler(ddevent_t const *evTemplate = nullptr,
-                              String const &gotoMarker    = "")
+        explicit EventHandler(const ddevent_t *evTemplate = nullptr,
+                              const String &gotoMarker    = "")
             : gotoMarker(gotoMarker) {
             std::memcpy(&ev, &evTemplate, sizeof(ev));
         }
-        EventHandler(EventHandler const &other)
+        EventHandler(const EventHandler &other)
             : gotoMarker(other.gotoMarker) {
             std::memcpy(&ev, &other.ev, sizeof(ev));
         }
@@ -499,17 +499,17 @@ DE_PIMPL(FinaleInterpreter)
 
     void findBegin()
     {
-        char const *tok;
+        const char *tok;
         while (!gotoEnd && 0 != (tok = nextToken()) && iCmpStrCase(tok, "{")) {}
     }
 
     void findEnd()
     {
-        char const *tok;
+        const char *tok;
         while (!gotoEnd && 0 != (tok = nextToken()) && iCmpStrCase(tok, "}")) {}
     }
 
-    char const *nextToken()
+    const char *nextToken()
     {
         // Skip whitespace.
         while (!atEnd() && isspace(*cp)) { cp++; }
@@ -543,7 +543,7 @@ DE_PIMPL(FinaleInterpreter)
     /// @return  @c true if the end of the script was reached.
     bool executeNextCommand()
     {
-        if (char const *tok = nextToken())
+        if (const char *tok = nextToken())
         {
             executeCommand(tok, FID_NORMAL);
             // Time to unhide the object page(s)?
@@ -557,16 +557,16 @@ DE_PIMPL(FinaleInterpreter)
         return true;
     }
 
-    static inline char const *findDefaultValueEnd(char const *str)
+    static inline const char *findDefaultValueEnd(const char *str)
     {
-        char const *defaultValueEnd;
+        const char *defaultValueEnd;
         for (defaultValueEnd = str; defaultValueEnd && *defaultValueEnd != ')'; defaultValueEnd++)
         {}
         DE_ASSERT(defaultValueEnd < str + strlen(str));
         return defaultValueEnd;
     }
 
-    static char const *nextOperand(char const *operands)
+    static const char *nextOperand(const char *operands)
     {
         if (operands && operands[0])
         {
@@ -583,7 +583,7 @@ DE_PIMPL(FinaleInterpreter)
     }
 
     /// @return Total number of command operands in the control string @a operands.
-    static int countCommandOperands(char const *operands)
+    static int countCommandOperands(const char *operands)
     {
         int count = 0;
         while (operands && operands[0])
@@ -601,16 +601,16 @@ DE_PIMPL(FinaleInterpreter)
      *
      * @return  Array of @c fi_operand_t else @c nullptr. Must be free'd with M_Free().
      */
-    fi_operand_t *prepareCommandOperands(command_t const *cmd, int *count)
+    fi_operand_t *prepareCommandOperands(const command_t *cmd, int *count)
     {
         DE_ASSERT(cmd);
 
-        char const *origCursorPos = cp;
+        const char *origCursorPos = cp;
         int const operandCount    = countCommandOperands(cmd->operands);
         if (operandCount <= 0) return nullptr;
 
         fi_operand_t *operands = (fi_operand_t *) M_Malloc(sizeof(*operands) * operandCount);
-        char const *opRover    = cmd->operands;
+        const char *opRover    = cmd->operands;
         for (fi_operand_t *op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
         {
             char const charCode = *opRover;
@@ -633,7 +633,7 @@ DE_PIMPL(FinaleInterpreter)
             switch (op->type)
             {
             case FVT_INT: {
-                char const *valueStr = haveValue? token : nullptr;
+                const char *valueStr = haveValue? token : nullptr;
                 if (!valueStr)
                 {
                     // Use the default.
@@ -645,7 +645,7 @@ DE_PIMPL(FinaleInterpreter)
                 break; }
 
             case FVT_FLOAT: {
-                char const *valueStr = haveValue? token : nullptr;
+                const char *valueStr = haveValue? token : nullptr;
                 if (!valueStr)
                 {
                     // Use the default.
@@ -657,7 +657,7 @@ DE_PIMPL(FinaleInterpreter)
                 break; }
 
             case FVT_STRING: {
-                char const *valueStr = haveValue? token : nullptr;
+                const char *valueStr = haveValue? token : nullptr;
                 int valueLen         = haveValue? strlen(token) : 0;
                 if (!valueStr)
                 {
@@ -696,7 +696,7 @@ DE_PIMPL(FinaleInterpreter)
         return operands;
     }
 
-    bool skippingCommand(command_t const *cmd)
+    bool skippingCommand(const command_t *cmd)
     {
         DE_ASSERT(cmd);
         if ((skipNext && !cmd->flags.when_condition_skipping) ||
@@ -717,7 +717,7 @@ DE_PIMPL(FinaleInterpreter)
     /**
      * Execute one (the next) command, advance script cursor.
      */
-    bool executeCommand(char const *commandString, int directive)
+    bool executeCommand(const char *commandString, int directive)
     {
         DE_ASSERT(commandString);
         bool didSkip = false;
@@ -741,7 +741,7 @@ DE_PIMPL(FinaleInterpreter)
         cmdExecuted = true;
 
         // Is this a command we know how to execute?
-        if (command_t const *cmd = findCommand(commandString))
+        if (const command_t *cmd = findCommand(commandString))
         {
             bool const requiredOperands = (cmd->operands && cmd->operands[0]);
 
@@ -808,11 +808,11 @@ DE_PIMPL(FinaleInterpreter)
         return type == FI_ANIM? Anims : Texts;
     }
 
-    FinaleWidget *locateWidget(fi_obtype_e type, String const &name)
+    FinaleWidget *locateWidget(fi_obtype_e type, const String &name)
     {
         if (!name.isEmpty())
         {
-            FinalePageWidget::Children const &children = pages[choosePageFor(type)]->children();
+            const FinalePageWidget::Children &children = pages[choosePageFor(type)]->children();
             for (FinaleWidget *widget : children)
             {
                 if (!widget->name().compareWithoutCase(name))
@@ -824,7 +824,7 @@ DE_PIMPL(FinaleInterpreter)
         return nullptr; // Not found.
     }
 
-    FinaleWidget *makeWidget(fi_obtype_e type, String const &name)
+    FinaleWidget *makeWidget(fi_obtype_e type, const String &name)
     {
         if (type == FI_ANIM)
         {
@@ -842,9 +842,9 @@ DE_PIMPL(FinaleInterpreter)
     }
 
 #if __CLIENT__
-    EventHandler *findEventHandler(ddevent_t const &ev) const
+    EventHandler *findEventHandler(const ddevent_t &ev) const
     {
-        for (EventHandler const &eh : eventHandlers)
+        for (const EventHandler &eh : eventHandlers)
         {
             if (eh.ev.device != ev.device && eh.ev.type != ev.type)
                 continue;
@@ -884,7 +884,7 @@ finaleid_t FinaleInterpreter::id() const
     return d->id;
 }
 
-void FinaleInterpreter::loadScript(char const *script)
+void FinaleInterpreter::loadScript(const char *script)
 {
     DE_ASSERT(script && script[0]);
 
@@ -1102,7 +1102,7 @@ bool FinaleInterpreter::skip()
     return (d->flags.eat_events != 0);
 }
 
-bool FinaleInterpreter::skipToMarker(String const &marker)
+bool FinaleInterpreter::skipToMarker(const String &marker)
 {
     LOG_AS("FinaleInterpreter");
 
@@ -1129,7 +1129,7 @@ bool FinaleInterpreter::lastSkipped() const
     return d->lastSkipped;
 }
 
-int FinaleInterpreter::handleEvent(ddevent_t const &ev)
+int FinaleInterpreter::handleEvent(const ddevent_t &ev)
 {
     LOG_AS("FinaleInterpreter");
 
@@ -1183,7 +1183,7 @@ int FinaleInterpreter::handleEvent(ddevent_t const &ev)
 }
 
 #ifdef __CLIENT__
-void FinaleInterpreter::addEventHandler(ddevent_t const &evTemplate, String const &gotoMarker)
+void FinaleInterpreter::addEventHandler(const ddevent_t &evTemplate, const String &gotoMarker)
 {
     // Does a handler already exist for this?
     if (d->findEventHandler(evTemplate)) return;
@@ -1191,7 +1191,7 @@ void FinaleInterpreter::addEventHandler(ddevent_t const &evTemplate, String cons
     d->eventHandlers.append(Impl::EventHandler(&evTemplate, gotoMarker));
 }
 
-void FinaleInterpreter::removeEventHandler(ddevent_t const &evTemplate)
+void FinaleInterpreter::removeEventHandler(const ddevent_t &evTemplate)
 {
     if (Impl::EventHandler *eh = d->findEventHandler(evTemplate))
     {
@@ -1212,12 +1212,12 @@ FinalePageWidget &FinaleInterpreter::page(PageIndex index)
     throw MissingPageError("FinaleInterpreter::page", "Unknown page #" + String::asText(int(index)));
 }
 
-FinalePageWidget const &FinaleInterpreter::page(PageIndex index) const
+const FinalePageWidget &FinaleInterpreter::page(PageIndex index) const
 {
-    return const_cast<FinalePageWidget const &>(const_cast<FinaleInterpreter *>(this)->page(index));
+    return const_cast<const FinalePageWidget &>(const_cast<FinaleInterpreter *>(this)->page(index));
 }
 
-FinaleWidget *FinaleInterpreter::tryFindWidget(String const &name)
+FinaleWidget *FinaleInterpreter::tryFindWidget(const String &name)
 {
     // Perhaps an Anim?
     if (FinaleWidget *found = d->locateWidget(FI_ANIM, name))
@@ -1232,7 +1232,7 @@ FinaleWidget *FinaleInterpreter::tryFindWidget(String const &name)
     return nullptr;
 }
 
-FinaleWidget &FinaleInterpreter::findWidget(fi_obtype_e type, String const &name)
+FinaleWidget &FinaleInterpreter::findWidget(fi_obtype_e type, const String &name)
 {
     if (FinaleWidget *foundWidget = d->locateWidget(type, name))
     {
@@ -1241,7 +1241,7 @@ FinaleWidget &FinaleInterpreter::findWidget(fi_obtype_e type, String const &name
     throw MissingWidgetError("FinaleInterpeter::findWidget", "Failed locating widget for name:'" + name + "'");
 }
 
-FinaleWidget &FinaleInterpreter::findOrCreateWidget(fi_obtype_e type, String const &name)
+FinaleWidget &FinaleInterpreter::findOrCreateWidget(fi_obtype_e type, const String &name)
 {
     DE_ASSERT(type >= FI_ANIM && type <= FI_TEXT);
     DE_ASSERT(!name.isEmpty());
@@ -1287,7 +1287,7 @@ void FinaleInterpreter::foundSkipHere()
     d->skipping = false;
 }
 
-void FinaleInterpreter::foundSkipMarker(String const &marker)
+void FinaleInterpreter::foundSkipMarker(const String &marker)
 {
     // Does it match the current goto torget?
     if (!d->gotoTarget.compareWithoutCase(marker))
@@ -1368,18 +1368,18 @@ DEFFC(BGMaterial)
     world::Material *material = nullptr;
     try
     {
-        if (ded_value_t *value = DED_Definitions()->getValueByUri(*reinterpret_cast<res::Uri const *>(OP_URI(0))))
+        if (ded_value_t *value = DED_Definitions()->getValueByUri(*reinterpret_cast<const res::Uri *>(OP_URI(0))))
         {
             material = &world::Materials::get().material(res::makeUri(value->text));
         }
         else
         {
-            material = &world::Materials::get().material(*reinterpret_cast<res::Uri const *>(OP_URI(0)));
+            material = &world::Materials::get().material(*reinterpret_cast<const res::Uri *>(OP_URI(0)));
         }
     }
-    catch (world::MaterialManifest::MissingMaterialError const &)
+    catch (const world::MaterialManifest::MissingMaterialError &)
     {} // Ignore this error.
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {} // Ignore this error.
 
     changePageBackground(fi.page(FinaleInterpreter::Anims), material);
@@ -1514,7 +1514,7 @@ DEFFC(If)
     DE_UNUSED(cmd, ops);
     LOG_AS("FIC_If");
 
-    char const *token = OP_CSTRING(0);
+    const char *token = OP_CSTRING(0);
     bool val          = false;
 
     // Built-in conditions.
@@ -1594,7 +1594,7 @@ DEFFC(Image)
     anim.clearAllFrames();
 
 #ifdef __CLIENT__
-    char const *name  = OP_CSTRING(1);
+    const char *name  = OP_CSTRING(1);
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
 
     if (rawtex_t *rawTex = ClientResources::get().declareRawTexture(lumpNum))
@@ -1620,7 +1620,7 @@ DEFFC(ImageAt)
         .setOrigin(Vec2f(x, y));
 
 #ifdef __CLIENT__
-    char const *name  = OP_CSTRING(3);
+    const char *name  = OP_CSTRING(3);
     lumpnum_t lumpNum = App_FileSystem().lumpNumForName(name);
 
     if (rawtex_t *rawTex = App_Resources().declareRawTexture(lumpNum))
@@ -1634,7 +1634,7 @@ DEFFC(ImageAt)
 }
 
 #ifdef __CLIENT__
-static DGLuint loadAndPrepareExtTexture(char const *fileName)
+static DGLuint loadAndPrepareExtTexture(const char *fileName)
 {
     image_t image;
     DGLuint glTexName = 0;
@@ -1667,7 +1667,7 @@ DEFFC(XImage)
 
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
 #ifdef __CLIENT__
-    char const *fileName  = OP_CSTRING(1);
+    const char *fileName  = OP_CSTRING(1);
 #endif
 
     anim.clearAllFrames();
@@ -1691,7 +1691,7 @@ DEFFC(Patch)
     LOG_AS("FIC_Patch");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    char const *encodedName = OP_CSTRING(3);
+    const char *encodedName = OP_CSTRING(3);
 
     anim.setOrigin(Vec2f(OP_FLOAT(1), OP_FLOAT(2)));
     anim.clearAllFrames();
@@ -1713,7 +1713,7 @@ DEFFC(SetPatch)
     LOG_AS("FIC_SetPatch");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    char const *encodedName = OP_CSTRING(1);
+    const char *encodedName = OP_CSTRING(1);
 
     patchid_t patchId = R_DeclarePatch(encodedName);
     if (patchId == 0)
@@ -1754,7 +1754,7 @@ DEFFC(Anim)
     LOG_AS("FIC_Anim");
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    char const *encodedName = OP_CSTRING(1);
+    const char *encodedName = OP_CSTRING(1);
     int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
 
     patchid_t patchId = R_DeclarePatch(encodedName);
@@ -1775,7 +1775,7 @@ DEFFC(AnimImage)
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
 
 #ifdef __CLIENT__
-    char const *encodedName = OP_CSTRING(1);
+    const char *encodedName = OP_CSTRING(1);
     int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
     lumpnum_t lumpNum       = App_FileSystem().lumpNumForName(encodedName);
     if (rawtex_t *rawTex = App_Resources().declareRawTexture(lumpNum))
@@ -2127,7 +2127,7 @@ DEFFC(TextFromLump)
     if (lumpNum >= 0)
     {
         File1 &lump            = App_FileSystem().lump(lumpNum);
-        uint8_t const *rawStr = lump.cache();
+        const uint8_t *rawStr = lump.cache();
 
         AutoStr *str = AutoStr_NewStd();
         Str_Reserve(str, lump.size() * 2);

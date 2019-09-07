@@ -110,7 +110,7 @@ struct Generator
 public:                                   /// @todo make private:
     thinker_t           thinker;          ///< Func = P_PtcGenThinker
     Plane *             plane;            ///< Flat-triggered.
-    ded_ptcgen_t const *def;              ///< The definition of this generator.
+    const ded_ptcgen_t *def;              ///< The definition of this generator.
     struct mobj_s *     source;           ///< If mobj-triggered.
     de::dint            srcid;            ///< Source mobj ID.
     de::dint            type;             ///< Type-triggered; mobj type number (-1=none).
@@ -144,7 +144,7 @@ public:
     /**
      * Set gen->count prior to calling this function.
      */
-    void configureFromDef(ded_ptcgen_t const *def);
+    void configureFromDef(const ded_ptcgen_t *def);
 
     /**
      * Generate and/or move the particles.
@@ -200,7 +200,7 @@ public:
     /**
      * Provides readonly access to the generator particle info data.
      */
-    ParticleInfo const *particleInfo() const;
+    const ParticleInfo *particleInfo() const;
 
 public: /// @todo make private:
     /**
@@ -225,10 +225,10 @@ public: /// @todo make private:
 
     void spinParticle(ParticleInfo &pt);
 
-    de::dfloat particleZ(ParticleInfo const &pt) const;
+    de::dfloat particleZ(const ParticleInfo &pt) const;
 
-    de::Vec3f particleOrigin(ParticleInfo const &pt) const;
-    de::Vec3f particleMomentum(ParticleInfo const &pt) const;
+    de::Vec3f particleOrigin(const ParticleInfo &pt) const;
+    de::Vec3f particleMomentum(const ParticleInfo &pt) const;
 
 public:
     /**

@@ -47,16 +47,16 @@ using namespace de;
 using namespace world;
 
 #ifdef DE_DEBUG
-static inline bool Surface_isSideMiddle(Surface const &suf)
+static inline bool Surface_isSideMiddle(const Surface &suf)
 {
     return suf.parent().type() == DMU_SIDE
            && &suf == &suf.parent().as<LineSide>().middle();
 }
 
-static inline bool Surface_isSectorExtraPlane(Surface const &suf)
+static inline bool Surface_isSectorExtraPlane(const Surface &suf)
 {
     if (suf.parent().type() != DMU_PLANE) return false;
-    auto const &plane = suf.parent().as<Plane>();
+    const auto &plane = suf.parent().as<Plane>();
     return !(plane.isSectorFloor() || plane.isSectorCeiling());
 }
 #endif
@@ -106,7 +106,7 @@ DE_PIMPL(Surface)
     bool isSectorExtraPlane() const
     {
         if (owner().type() != DMU_PLANE) return false;
-        auto const &plane = owner().as<Plane>();
+        const auto &plane = owner().as<Plane>();
         return !(plane.isSectorFloor() || plane.isSectorCeiling());
     }
 #endif
@@ -149,7 +149,7 @@ DE_AUDIENCE_METHOD(Surface, OriginChange)
 DE_AUDIENCE_METHOD(Surface, OriginSmoothedChange)
 #endif
 
-Surface::Surface(MapElement &owner, dfloat opacity, Vec3f const &color)
+Surface::Surface(MapElement &owner, dfloat opacity, const Vec3f &color)
     : MapElement(DMU_SURFACE, &owner)
     , d(new Impl(this))
 {
@@ -179,7 +179,7 @@ String Surface::description() const
     return desc;
 }
 
-Mat3f const &Surface::tangentMatrix() const
+const Mat3f &Surface::tangentMatrix() const
 {
     // Perform any scheduled update now.
     if (d->needUpdateTangentMatrix)
@@ -189,7 +189,7 @@ Mat3f const &Surface::tangentMatrix() const
     return d->tangentMatrix;
 }
 
-Surface &Surface::setNormal(Vec3f const &newNormal)
+Surface &Surface::setNormal(const Vec3f &newNormal)
 {
     Vec3f const oldNormal = normal();
     Vec3f const newNormalNormalized = newNormal.normalize();
@@ -273,12 +273,12 @@ Surface &Surface::setMaterial(Material *newMaterial, bool isMissingFix)
     return *this;
 }
 
-Vec2f const &Surface::origin() const
+const Vec2f &Surface::origin() const
 {
     return d->origin;
 }
 
-Surface &Surface::setOrigin(Vec2f const &newOrigin)
+Surface &Surface::setOrigin(const Vec2f &newOrigin)
 {
     if (d->origin != newOrigin)
     {
@@ -350,12 +350,12 @@ Surface &Surface::setOpacity(dfloat newOpacity)
     return *this;
 }
 
-Vec3f const &Surface::color() const
+const Vec3f &Surface::color() const
 {
     return d->color;
 }
 
-Surface &Surface::setColor(Vec3f const &newColor)
+Surface &Surface::setColor(const Vec3f &newColor)
 {
     Vec3f const newColorClamped(de::clamp(0.f, newColor.x, 1.f),
                                    de::clamp(0.f, newColor.y, 1.f),
@@ -494,7 +494,7 @@ dint Surface::property(DmuArgs &args) const
     return false;  // Continue iteration.
 }
 
-dint Surface::setProperty(DmuArgs const &args)
+dint Surface::setProperty(const DmuArgs &args)
 {
     switch (args.prop)
     {
@@ -591,12 +591,12 @@ void Surface::resetLookups()
     d->matAnimator = nullptr;
 }
 
-Vec2f const &Surface::originSmoothed() const
+const Vec2f &Surface::originSmoothed() const
 {
     return d->originSmoothed;
 }
 
-Vec2f const &Surface::originSmoothedAsDelta() const
+const Vec2f &Surface::originSmoothedAsDelta() const
 {
     return d->originSmoothedDelta;
 }
@@ -655,7 +655,7 @@ dfloat Surface::glow(Vec3f &color) const
 
     TextureVariant *texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     if (!texture) return 0;
-    auto const *avgColorAmplified = reinterpret_cast<averagecolor_analysis_t const *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
+    const auto *avgColorAmplified = reinterpret_cast<const averagecolor_analysis_t *>(texture->base().analysisDataPointer(ClientTexture::AverageColorAmplifiedAnalysis));
     if (!avgColorAmplified)
     {
         //throw Error("Surface::glow", "Texture \"" + texture->base().manifest().composeUri().asText() + "\" has no AverageColorAmplifiedAnalysis");

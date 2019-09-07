@@ -27,7 +27,7 @@
 class UISettingsDialog : public de::DialogWidget
 {
 public:
-    UISettingsDialog(de::String const &name = "uisettings");
+    UISettingsDialog(const de::String &name = "uisettings");
 
 private:
     DE_PRIVATE(d)

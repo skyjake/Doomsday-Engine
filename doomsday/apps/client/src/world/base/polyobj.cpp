@@ -48,7 +48,7 @@ using namespace world;
 // Function to be called when the polyobj collides with some map element.
 static void (*collisionCallback) (mobj_t *mob, void *line, void *pob);
 
-static inline bool mobCanBlockMovement(mobj_t const &mob)
+static inline bool mobCanBlockMovement(const mobj_t &mob)
 {
     return (mob.ddFlags & DDMF_SOLID) || (mob.dPlayer && !(mob.dPlayer->flags & DDPF_CAMERA));
 }
@@ -91,7 +91,7 @@ void Polyobj::NotifyCollision(Polyobj &pob, mobj_t *mob, Line *line)  // static
 
 bool Polyobj::blocked() const
 {
-    for (Line const *line : lines())
+    for (const Line *line : lines())
     {
         dint const localValidCount = ++::validCount;
 
@@ -136,7 +136,7 @@ bool Polyobj::blocked() const
     return false;  // All clear.
 }
 
-polyobj_s::polyobj_s(Vec2d const &origin_)
+polyobj_s::polyobj_s(const Vec2d &origin_)
 {
     zap(thinker);
 
@@ -167,7 +167,7 @@ PolyobjData &polyobj_s::data()
     return THINKER_DATA(thinker, PolyobjData);
 }
 
-PolyobjData const &polyobj_s::data() const
+const PolyobjData &polyobj_s::data() const
 {
     return THINKER_DATA(thinker, PolyobjData);
 }
@@ -262,9 +262,9 @@ SoundEmitter &Polyobj::soundEmitter()
     return *reinterpret_cast<SoundEmitter *>(this);
 }
 
-SoundEmitter const &Polyobj::soundEmitter() const
+const SoundEmitter &Polyobj::soundEmitter() const
 {
-    return const_cast<SoundEmitter const &>(const_cast<Polyobj &>(*this).soundEmitter());
+    return const_cast<const SoundEmitter &>(const_cast<Polyobj &>(*this).soundEmitter());
 }
 
 List<Line *> const &Polyobj::lines() const
@@ -332,7 +332,7 @@ void Polyobj::updateSurfaceTangents()
     }
 }
 
-bool Polyobj::move(Vec2d const &delta)
+bool Polyobj::move(const Vec2d &delta)
 {
     LOG_AS("Polyobj::move");
     //LOG_DEBUG("Applying delta %s to [%p]") << delta.asText() << this;
@@ -395,7 +395,7 @@ bool Polyobj::move(Vec2d const &delta)
  * @param about      Origin to rotate @a point relative to.
  * @param fineAngle  Angle to rotate (theta).
  */
-static void rotatePoint2d(Vec2d &point, Vec2d const &about, duint fineAngle)
+static void rotatePoint2d(Vec2d &point, const Vec2d &about, duint fineAngle)
 {
     ddouble const c = FIX2DBL(fineCosine[fineAngle]);
     ddouble const s = FIX2DBL(finesine[fineAngle]);

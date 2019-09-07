@@ -32,7 +32,7 @@ DE_GUI_PIMPL(PanelButtonWidget)
     }
 };
 
-PanelButtonWidget::PanelButtonWidget(Flags flags, String const &name)
+PanelButtonWidget::PanelButtonWidget(Flags flags, const String &name)
     : HomeItemWidget(flags, name)
     , d(new Impl(this))
 {

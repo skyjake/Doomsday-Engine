@@ -92,9 +92,9 @@ DE_PIMPL(ConfigProfiles)
             return static_cast<ConfigProfiles &>(AbstractProfile::owner());
         }
 
-        ConfigProfiles const &owner() const
+        const ConfigProfiles &owner() const
         {
-            return static_cast<ConfigProfiles const &>(AbstractProfile::owner());
+            return static_cast<const ConfigProfiles &>(AbstractProfile::owner());
         }
 
         bool resetToDefaults() override
@@ -109,14 +109,14 @@ DE_PIMPL(ConfigProfiles)
 
         String toInfoSource() const override
         {
-            auto const &settings = owner().d->settings;
+            const auto &settings = owner().d->settings;
 
             std::ostringstream os;
             for (const auto &val : values)
             {
                 DE_ASSERT(settings.contains(val.first));
 
-                Setting const &st = settings.find(val.first)->second;
+                const Setting &st = settings.find(val.first)->second;
 
 //                String valueText;
 //                switch (st.type)
@@ -145,11 +145,11 @@ DE_PIMPL(ConfigProfiles)
             values = profs.d->defaults.values;
 
             // Read all the setting values from the profile block.
-            for (auto const *element : block.contentsInOrder())
+            for (const auto *element : block.contentsInOrder())
             {
                 if (!element->isBlock()) continue;
 
-                de::Info::BlockElement const &setBlock = element->as<de::Info::BlockElement>();
+                const de::Info::BlockElement &setBlock = element->as<de::Info::BlockElement>();
 
                 // Only process known settings.
                 if (setBlock.blockType() == "setting" &&
@@ -174,7 +174,7 @@ DE_PIMPL(ConfigProfiles)
         addProfile(current);
     }
 
-    Profile *addProfile(String const &name)
+    Profile *addProfile(const String &name)
     {
         Profile *prof = new Profile;
         prof->setName(name);
@@ -182,7 +182,7 @@ DE_PIMPL(ConfigProfiles)
         return prof;
     }
 
-    Profile *tryFind(String const &name) const
+    Profile *tryFind(const String &name) const
     {
         return maybeAs<Profile>(self().tryFind(name));
     }
@@ -193,7 +193,7 @@ DE_PIMPL(ConfigProfiles)
     }
 
     /// Caller gets ownership of the returned Value.
-    Value *getDefaultFromConfig(String const &name)
+    Value *getDefaultFromConfig(const String &name)
     {
         try
         {
@@ -202,14 +202,14 @@ DE_PIMPL(ConfigProfiles)
             Process proc(script);
             proc.execute();
 
-            Record const &confDefaults = *proc.context().evaluator().result()
+            const Record &confDefaults = *proc.context().evaluator().result()
                     .as<RecordValue>().record();
 
             DE_ASSERT(confDefaults.has(name));
 
             return confDefaults[name].value().duplicate();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_WARNING("Failed to find default for \"%s\": %s") << name << er.asText();
         }
@@ -219,7 +219,7 @@ DE_PIMPL(ConfigProfiles)
     /**
      * Gets the current values of the settings and saves them to a profile.
      */
-    void fetch(String const &profileName)
+    void fetch(const String &profileName)
     {
         Profile &prof = self().find(profileName).as<Profile>();
         if (prof.isReadOnly()) return;
@@ -251,7 +251,7 @@ DE_PIMPL(ConfigProfiles)
         }
     }
 
-    void setCurrent(String const &name)
+    void setCurrent(const String &name)
     {
         current = name;
 
@@ -261,7 +261,7 @@ DE_PIMPL(ConfigProfiles)
         }
     }
 
-    void apply(String const &profileName)
+    void apply(const String &profileName)
     {
         Profile &profile = self().find(profileName).as<Profile>();
         for (const auto &st : settings)
@@ -270,7 +270,7 @@ DE_PIMPL(ConfigProfiles)
         }
     }
 
-    void changeTo(String const &profileName)
+    void changeTo(const String &profileName)
     {
         LOG_AS("ConfigProfiles");
         DE_ASSERT(tryFind(profileName));
@@ -321,11 +321,11 @@ DE_PIMPL(ConfigProfiles)
         return self().persistentName().concatenateMember("profile");
     }
 
-    Value *textToSettingValue(String const &text, const String &settingName) const
+    Value *textToSettingValue(const String &text, const String &settingName) const
     {
         DE_ASSERT(settings.contains(settingName));
 
-        Setting const &st = settings[settingName];
+        const Setting &st = settings[settingName];
 
         switch (st.type)
         {
@@ -365,7 +365,7 @@ DE_PIMPL(ConfigProfiles)
      *
      * @param newGame  New current game.
      */
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame)
     {
         if (!self().isPersistent() || newGame.isNull()) return;
 
@@ -411,7 +411,7 @@ DE_PIMPL(ConfigProfiles)
      *
      * @param gameBeingUnloaded  Current game.
      */
-    void aboutToUnloadGame(Game const &gameBeingUnloaded)
+    void aboutToUnloadGame(const Game &gameBeingUnloaded)
     {
         if (!self().isPersistent() || gameBeingUnloaded.isNull()) return;
 
@@ -456,7 +456,7 @@ String ConfigProfiles::currentProfile() const
     return d->current;
 }
 
-bool ConfigProfiles::saveAsProfile(String const &name)
+bool ConfigProfiles::saveAsProfile(const String &name)
 {
     if (!tryFind(name) && !name.isEmpty())
     {
@@ -467,7 +467,7 @@ bool ConfigProfiles::saveAsProfile(String const &name)
     return false;
 }
 
-void ConfigProfiles::setProfile(String const &name)
+void ConfigProfiles::setProfile(const String &name)
 {
     d->changeTo(name);
 }
@@ -482,12 +482,12 @@ void ConfigProfiles::resetToDefaults()
     }
 }
 
-void ConfigProfiles::resetSettingToDefaults(String const &settingName)
+void ConfigProfiles::resetSettingToDefaults(const String &settingName)
 {
     d->resetSetting(settingName);
 }
 
-bool ConfigProfiles::rename(String const &name)
+bool ConfigProfiles::rename(const String &name)
 {
     if (d->currentProfile().setName(name))
     {
@@ -502,7 +502,7 @@ bool ConfigProfiles::rename(String const &name)
     return false;
 }
 
-void ConfigProfiles::deleteProfile(String const &name)
+void ConfigProfiles::deleteProfile(const String &name)
 {
     // Can't delete the current profile.
     if (name == d->current) return;
@@ -515,7 +515,7 @@ void ConfigProfiles::deleteProfile(String const &name)
 }
 
 Profiles::AbstractProfile *
-ConfigProfiles::profileFromInfoBlock(de::Info::BlockElement const &block)
+ConfigProfiles::profileFromInfoBlock(const de::Info::BlockElement &block)
 {
     std::unique_ptr<Impl::Profile> prof(new Impl::Profile);
     prof->initializeFromInfoBlock(*this, block);

@@ -279,14 +279,14 @@ DE_API_TYPEDEF(GL)
      * @param rect  Geometry of the new scissor region. Coordinates are
      *              in viewport space.
      */
-    void (*SetScissor)(RectRaw const *rect);
+    void (*SetScissor)(const RectRaw *rect);
     void (*SetScissor2)(int x, int y, int width, int height);
 
     void (*MatrixMode)(DGLenum mode);
     void (*PushMatrix)(void);
     void (*PopMatrix)(void);
     void (*LoadIdentity)(void);
-    void (*LoadMatrix)(float const *matrix4x4);
+    void (*LoadMatrix)(const float *matrix4x4);
 
     void (*Translatef)(float x, float y, float z);
     void (*Rotatef)(float angle, float x, float y, float z);
@@ -316,7 +316,7 @@ DE_API_TYPEDEF(GL)
     void (*Color4fv)(const float* vec);
 
     void (*TexCoord2f)(byte target, float s, float t);
-    void (*TexCoord2fv)(byte target, float const *vec);
+    void (*TexCoord2fv)(byte target, const float *vec);
 
     void (*Vertex2f)(float x, float y);
     void (*Vertex2fv)(const float* vec);
@@ -359,7 +359,7 @@ DE_API_TYPEDEF(GL)
 
     void (*Fogi)(DGLenum property, int value);
     void (*Fogf)(DGLenum property, float value);
-    void (*Fogfv)(DGLenum property, float const *values);
+    void (*Fogfv)(DGLenum property, const float *values);
 
     void (*UseFog)(int yes);
 

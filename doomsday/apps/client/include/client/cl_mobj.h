@@ -82,6 +82,6 @@ void ClMobj_ReadNullDelta();
  *
  * @return  @c true, if the mobj is a client mobj; otherwise @c false.
  */
-dd_bool Cl_IsClientMobj(mobj_t const *mo);
+dd_bool Cl_IsClientMobj(const mobj_t *mo);
 
 #endif // DE_CLIENT_WORLD_MOBJ_H

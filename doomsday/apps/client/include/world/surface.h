@@ -73,7 +73,7 @@ public:
      */
     Surface(world::MapElement &owner,
             de::dfloat opacity        = 1,
-            de::Vec3f const &color = de::Vec3f(1));
+            const de::Vec3f &color = de::Vec3f(1));
 
     /**
      * Composes a human-friendly, styled, textual description of the surface.
@@ -84,7 +84,7 @@ public:
      * Returns the normalized tangent space matrix for the surface.
      * (col0: tangent, col1: bitangent, col2: normal)
      */
-    de::Mat3f const &tangentMatrix() const;
+    const de::Mat3f &tangentMatrix() const;
 
     inline de::Vec3f tangent()   const { return tangentMatrix().column(0); }
     inline de::Vec3f bitangent() const { return tangentMatrix().column(1); }
@@ -97,7 +97,7 @@ public:
      *
      * @param newNormal  New normal vector (will be normalized if needed).
      */
-    Surface &setNormal(de::Vec3f const &newNormal);
+    Surface &setNormal(const de::Vec3f &newNormal);
 
     /**
      * Returns the opacity of the surface. The OpacityChange audience is notified
@@ -111,8 +111,8 @@ public:
     /**
      * Returns the material origin offset for the surface.
      */
-    de::Vec2f const &origin() const;
-    Surface &setOrigin(de::Vec2f const &newOrigin);
+    const de::Vec2f &origin() const;
+    Surface &setOrigin(const de::Vec2f &newOrigin);
 
     /**
      * Returns the tint color of the surface. The ColorChange audience is
@@ -120,8 +120,8 @@ public:
      *
      * @see setColor()
      */
-    de::Vec3f const &color() const;
-    Surface &setColor(de::Vec3f const &newColor);
+    const de::Vec3f &color() const;
+    Surface &setColor(const de::Vec3f &newColor);
 
     /**
      * Returns the blendmode for the surface.
@@ -241,7 +241,7 @@ public:
      *
      * @see setOrigin()
      */
-    de::Vec2f const &originSmoothed() const;
+    const de::Vec2f &originSmoothed() const;
 
     /**
      * Returns the delta between current and the smoothed material origin for
@@ -249,7 +249,7 @@ public:
      *
      * @see setOrigin(), smoothOrigin()
      */
-    de::Vec2f const &originSmoothedAsDelta() const;
+    const de::Vec2f &originSmoothedAsDelta() const;
 
     /**
      * Perform smoothed material origin interpolation.
@@ -286,7 +286,7 @@ public:
 
 protected:
     de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(world::DmuArgs const &args);
+    de::dint setProperty(const world::DmuArgs &args);
 
 private:
     std::unique_ptr<IDecorationState> _decorationState;

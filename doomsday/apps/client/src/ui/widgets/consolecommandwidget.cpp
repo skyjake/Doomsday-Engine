@@ -50,7 +50,7 @@ DE_OBSERVES(DoomsdayApp, GameChange)
         updateLexicon();
     }
 
-    void currentGameChanged(Game const &)
+    void currentGameChanged(const Game &)
     {
         updateLexicon();
     }
@@ -61,7 +61,7 @@ DE_OBSERVES(DoomsdayApp, GameChange)
     }
 };
 
-ConsoleCommandWidget::ConsoleCommandWidget(String const &name)
+ConsoleCommandWidget::ConsoleCommandWidget(const String &name)
     : CommandWidget(name), d(new Impl(this))
 {
     d->updateLexicon();
@@ -79,7 +79,7 @@ void ConsoleCommandWidget::focusLost()
     ClientApp::inputSystem().context("console").deactivate();
 }
 
-bool ConsoleCommandWidget::handleEvent(Event const &event)
+bool ConsoleCommandWidget::handleEvent(const Event &event)
 {
     if (isDisabled()) return false;
 
@@ -96,13 +96,13 @@ bool ConsoleCommandWidget::handleEvent(Event const &event)
     return CommandWidget::handleEvent(event);
 }
 
-bool ConsoleCommandWidget::isAcceptedAsCommand(String const &)
+bool ConsoleCommandWidget::isAcceptedAsCommand(const String &)
 {
     // Everything is OK for a console command.
     return true;
 }
 
-void ConsoleCommandWidget::executeCommand(String const &text)
+void ConsoleCommandWidget::executeCommand(const String &text)
 {
     LOG_SCR_NOTE(_E(1) "> ") << text;
 
@@ -110,7 +110,7 @@ void ConsoleCommandWidget::executeCommand(String const &text)
     Con_Execute(CMDS_CONSOLE, text, false, false);
 }
 
-void ConsoleCommandWidget::autoCompletionBegan(String const &)
+void ConsoleCommandWidget::autoCompletionBegan(const String &)
 {
     // Prepare a list of annotated completions to show in the popup.
     const auto compls = suggestedCompletions();

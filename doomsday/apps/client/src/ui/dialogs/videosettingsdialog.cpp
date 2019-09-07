@@ -236,7 +236,7 @@ DE_PIMPL(VideoSettingsDialog)
     }
 };
 
-VideoSettingsDialog::VideoSettingsDialog(String const &name)
+VideoSettingsDialog::VideoSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText("Video Settings");
@@ -309,7 +309,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
                         << new ChoiceItem(Stringf("%.1f Hz", float(rate)), rate);
                 }
             }
-            d->refreshRates->items().sort([] (ui::Item const &a, ui::Item const &b) {
+            d->refreshRates->items().sort([] (const ui::Item &a, const ui::Item &b) {
                 int const i = a.data().asInt();
                 int const j = b.data().asInt();
                 if (!i) return true;
@@ -341,7 +341,7 @@ VideoSettingsDialog::VideoSettingsDialog(String const &name)
     }
 
     // Layout all widgets.
-    Rule const &gap = rule("dialog.gap");
+    const Rule &gap = rule("dialog.gap");
 
     GridLayout layout(area().contentRule().left(),
                       area().contentRule().top(), GridLayout::RowFirst);

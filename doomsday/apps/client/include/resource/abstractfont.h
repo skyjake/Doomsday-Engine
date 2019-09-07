@@ -46,7 +46,7 @@ class AbstractFont
 {
 public:
     /// Notified when the resource is about to be deleted.
-    DE_DEFINE_AUDIENCE(Deletion, void fontBeingDeleted(AbstractFont const &font))
+    DE_DEFINE_AUDIENCE(Deletion, void fontBeingDeleted(const AbstractFont &font))
 
     enum Flag {
         Colorize  = 0x1, ///< Can be colored.
@@ -77,8 +77,8 @@ public:
     virtual int ascent() const;
     virtual int descent() const;
     virtual int lineSpacing() const;
-    virtual de::Rectanglei const &glyphPosCoords(de::dbyte ch) const = 0;
-    virtual de::Rectanglei const &glyphTexCoords(de::dbyte ch) const = 0;
+    virtual const de::Rectanglei &glyphPosCoords(de::dbyte ch) const = 0;
+    virtual const de::Rectanglei &glyphTexCoords(de::dbyte ch) const = 0;
 
     virtual void glInit() const;
     virtual void glDeinit() const;

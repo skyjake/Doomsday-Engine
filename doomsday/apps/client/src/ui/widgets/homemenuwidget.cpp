@@ -40,7 +40,7 @@ DE_GUI_PIMPL(HomeMenuWidget)
         self().organizer().audienceForWidgetCreation() += this;
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &) override
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &) override
     {
         if (auto *w = maybeAs<HomeItemWidget>(widget))
         {
@@ -116,7 +116,7 @@ DE_GUI_PIMPL(HomeMenuWidget)
 
 DE_AUDIENCE_METHODS(HomeMenuWidget, Selection, Click)
 
-HomeMenuWidget::HomeMenuWidget(String const &name)
+HomeMenuWidget::HomeMenuWidget(const String &name)
     : MenuWidget(name)
     , d(new Impl(this))
 {
@@ -198,7 +198,7 @@ void HomeMenuWidget::setSelectedIndex(ui::DataPos index)
     }
 }
 
-void HomeMenuWidget::setInteractedItem(ui::Item const *menuItem, ui::Item const *actionItem)
+void HomeMenuWidget::setInteractedItem(const ui::Item *menuItem, const ui::Item *actionItem)
 {
     d->interacted       = menuItem;
     d->interactedAction = actionItem;
@@ -216,12 +216,12 @@ ColumnWidget *HomeMenuWidget::parentColumn() const
     return nullptr;
 }
 
-ui::Item const *HomeMenuWidget::interactedItem() const
+const ui::Item *HomeMenuWidget::interactedItem() const
 {
     return d->interacted;
 }
 
-ui::Item const *HomeMenuWidget::actionItem() const
+const ui::Item *HomeMenuWidget::actionItem() const
 {
     return d->interactedAction;
 }

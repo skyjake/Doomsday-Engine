@@ -47,12 +47,12 @@ HEdge *Face::hedge() const
     return d->hedge;
 }
 
-void Face::setHEdge(HEdge const *newHEdge)
+void Face::setHEdge(const HEdge *newHEdge)
 {
     d->hedge = const_cast<HEdge *>(newHEdge);
 }
 
-AABoxd const &Face::bounds() const
+const AABoxd &Face::bounds() const
 {
     return d->bounds;
 }
@@ -63,7 +63,7 @@ void Face::updateBounds()
 
     if(!d->hedge) return; // Very odd...
 
-    HEdge const *hedge = d->hedge;
+    const HEdge *hedge = d->hedge;
     V2d_InitBoxXY(d->bounds.arvec2, hedge->origin().x, hedge->origin().y);
 
     while ((hedge = &hedge->next()) != d->hedge)
@@ -72,7 +72,7 @@ void Face::updateBounds()
     }
 }
 
-Vec2d const &Face::center() const
+const Vec2d &Face::center() const
 {
     return d->center;
 }
@@ -94,7 +94,7 @@ String Face::description() const
 {
     String text = Stringf("Face [%p] comprises %i half-edges", this, _hedgeCount);
 
-    if (HEdge const *hedge = d->hedge)
+    if (const HEdge *hedge = d->hedge)
     {
         do
         {

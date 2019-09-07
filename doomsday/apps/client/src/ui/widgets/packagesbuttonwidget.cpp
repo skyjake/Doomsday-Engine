@@ -34,7 +34,7 @@ DE_GUI_PIMPL(PackagesButtonWidget)
     DotPath            dialogIcon{"package.icon"};
     String             labelPrefix;
     String             noneLabel;
-    GameProfile const *profile = nullptr;
+    const GameProfile *profile = nullptr;
     std::function<void (PackagesDialog &)> setupFunc;
     String overrideLabel;
 
@@ -111,7 +111,7 @@ PackagesButtonWidget::PackagesButtonWidget()
     d->updateLabel();
 }
 
-void PackagesButtonWidget::setGameProfile(GameProfile const &profile)
+void PackagesButtonWidget::setGameProfile(const GameProfile &profile)
 {
     d->profile = &profile;
 }
@@ -121,13 +121,13 @@ void PackagesButtonWidget::setSetupCallback(std::function<void (PackagesDialog &
     d->setupFunc = std::move(func);
 }
 
-void PackagesButtonWidget::setLabelPrefix(String const &labelPrefix)
+void PackagesButtonWidget::setLabelPrefix(const String &labelPrefix)
 {
     d->labelPrefix = labelPrefix;
     d->updateLabel();
 }
 
-void PackagesButtonWidget::setNoneLabel(String const &noneLabel)
+void PackagesButtonWidget::setNoneLabel(const String &noneLabel)
 {
     d->noneLabel = noneLabel;
     d->updateLabel();
@@ -139,12 +139,12 @@ void PackagesButtonWidget::setOverrideLabel(const String &overrideLabel)
     d->updateLabel();
 }
 
-void PackagesButtonWidget::setDialogTitle(String const &title)
+void PackagesButtonWidget::setDialogTitle(const String &title)
 {
     d->dialogTitle = title;
 }
 
-void PackagesButtonWidget::setDialogIcon(DotPath const &imageId)
+void PackagesButtonWidget::setDialogIcon(const DotPath &imageId)
 {
     d->dialogIcon = imageId;
 }

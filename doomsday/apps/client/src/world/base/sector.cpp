@@ -59,11 +59,11 @@ DE_PIMPL(Sector)
         /**
          * Returns @c true if the map-object @a mob is linked.
          */
-        bool contains(mobj_t const *mob) const
+        bool contains(const mobj_t *mob) const
         {
             if (mob)
             {
-                for (mobj_t const *it = head; it; it = it->sNext)
+                for (const mobj_t *it = head; it; it = it->sNext)
                 {
                     if (it == mob) return true;
                 }
@@ -182,7 +182,7 @@ DE_PIMPL(Sector)
     {
         bool inited = false;
         AABoxd bounds;
-        for (Subsector const *subsec : subsectors)
+        for (const Subsector *subsec : subsectors)
         {
             if (inited)
             {
@@ -203,7 +203,7 @@ DE_PIMPL(Sector)
     ddouble findRoughArea() const
     {
         ddouble roughArea = 0;
-        for (Subsector const *subsec : subsectors)
+        for (const Subsector *subsec : subsectors)
         {
             roughArea += subsec->roughArea();
         }
@@ -254,7 +254,7 @@ DE_PIMPL(Sector)
 DE_AUDIENCE_METHOD(Sector, LightLevelChange)
 DE_AUDIENCE_METHOD(Sector, LightColorChange)
 
-Sector::Sector(dfloat lightLevel, Vec3f const &lightColor)
+Sector::Sector(dfloat lightLevel, const Vec3f &lightColor)
     : MapElement(DMU_SECTOR)
     , d(new Impl(this))
     , _lookupPlanes(nullptr)
@@ -302,16 +302,16 @@ LoopResult Sector::forAllPlanes(const std::function<LoopResult (Plane &)>& func)
     return LoopContinue;
 }
 
-LoopResult Sector::forAllPlanes(const std::function<LoopResult (Plane const &)>& func) const
+LoopResult Sector::forAllPlanes(const std::function<LoopResult (const Plane &)>& func) const
 {
-    for (Plane const *plane : d->planes)
+    for (const Plane *plane : d->planes)
     {
         if(auto result = func(*plane)) return result;
     }
     return LoopContinue;
 }
 
-Plane *Sector::addPlane(Vec3f const &normal, ddouble height)
+Plane *Sector::addPlane(const Vec3f &normal, ddouble height)
 {
     auto *plane = new Plane(*this, normal, height);
 
@@ -421,9 +421,9 @@ SoundEmitter &Sector::soundEmitter()
     return d->emitter;
 }
 
-SoundEmitter const &Sector::soundEmitter() const
+const SoundEmitter &Sector::soundEmitter() const
 {
-    return const_cast<SoundEmitter const &>(const_cast<Sector &>(*this).soundEmitter());
+    return const_cast<const SoundEmitter &>(const_cast<Sector &>(*this).soundEmitter());
 }
 
 static void linkSoundEmitter(SoundEmitter &root, SoundEmitter &newEmitter)
@@ -483,12 +483,12 @@ void Sector::setLightLevel(dfloat newLightLevel)
     }
 }
 
-Vec3f const &Sector::lightColor() const
+const Vec3f &Sector::lightColor() const
 {
     return d->lightColor;
 }
 
-void Sector::setLightColor(Vec3f const &newLightColor)
+void Sector::setLightColor(const Vec3f &newLightColor)
 {
     auto newColorClamped = newLightColor.min(Vec3f(1)).max(Vec3f(0.0f));
     if (d->lightColor != newColorClamped)
@@ -508,7 +508,7 @@ void Sector::setValidCount(dint newValidCount)
     d->validCount = newValidCount;
 }
 
-AABoxd const &Sector::bounds() const
+const AABoxd &Sector::bounds() const
 {
     return d->geom().bounds;
 }
@@ -542,7 +542,7 @@ dint Sector::property(DmuArgs &args) const
         args.setValue(DMT_SECTOR_RGB, &d->lightColor.z, 0);
         break;
     case DMU_EMITTER: {
-        SoundEmitter const *emitterAdr = d->emitter;
+        const SoundEmitter *emitterAdr = d->emitter;
         args.setValue(DMT_SECTOR_EMITTER, &emitterAdr, 0);
         break; }
     case DMT_MOBJS:
@@ -566,7 +566,7 @@ dint Sector::property(DmuArgs &args) const
     return false;  // Continue iteration.
 }
 
-dint Sector::setProperty(DmuArgs const &args)
+dint Sector::setProperty(const DmuArgs &args)
 {
     switch (args.prop)
     {
@@ -627,7 +627,7 @@ D_CMD(InspectSector)
 
     // Find the sector.
     dint const index  = String(argv[1]).toInt();
-    Sector const *sec = App_World().map().sectorPtr(index);
+    const Sector *sec = App_World().map().sectorPtr(index);
     if (!sec)
     {
         LOG_SCR_ERROR("Sector #%i not found") << index;
@@ -643,7 +643,7 @@ D_CMD(InspectSector)
     if (sec->planeCount())
     {
         LOG_SCR_MSG(_E(D) "Planes (%i):") << sec->planeCount();
-        sec->forAllPlanes([] (Plane const &plane)
+        sec->forAllPlanes([] (const Plane &plane)
         {
             LOG_SCR_MSG("%s: " _E(>))
                 << Sector::planeIdAsText(plane.indexInSector()).upperFirstChar()
@@ -655,7 +655,7 @@ D_CMD(InspectSector)
     {
         LOG_SCR_MSG(_E(D) "Subsectors (%i):") << sec->subsectorCount();
         dint subsectorIndex = 0;
-        sec->forAllSubsectors([&subsectorIndex] (Subsector const &subsec)
+        sec->forAllSubsectors([&subsectorIndex] (const Subsector &subsec)
         {
             LOG_SCR_MSG("%i: " _E(>))
                 << subsectorIndex

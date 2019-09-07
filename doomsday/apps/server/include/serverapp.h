@@ -68,7 +68,7 @@ public:
 
 protected:
     void reset() override;
-    void unloadGame(GameProfile const &upcomingGame) override;
+    void unloadGame(const GameProfile &upcomingGame) override;
 
 private:
     DE_PRIVATE(d)

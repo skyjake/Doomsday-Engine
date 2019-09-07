@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(CVarSliderWidget)
     }
 };
 
-CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Impl)
+CVarSliderWidget::CVarSliderWidget(const char *cvarPath) : d(new Impl)
 {
     d->cvar = cvarPath;
 
@@ -60,7 +60,7 @@ CVarSliderWidget::CVarSliderWidget(char const *cvarPath) : d(new Impl)
     audienceForUserValue() += [this](){ setCVarValueFromWidget(); };
 }
 
-char const *CVarSliderWidget::cvarPath() const
+const char *CVarSliderWidget::cvarPath() const
 {
     return d->cvar;
 }

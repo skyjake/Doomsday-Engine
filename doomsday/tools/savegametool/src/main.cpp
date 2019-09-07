@@ -86,11 +86,11 @@ Folder &outputFolder()
     return DE_TEXT_APP->rootFolder().locate<Folder>("output");
 }
 
-static PackageFormatter *saveFormatForGameId(String const &idKey)
+static PackageFormatter *saveFormatForGameId(const String &idKey)
 {
     for (PackageFormatter *fmt : translators)
     {
-        for (String const &baseId : fmt->baseGameIds)
+        for (const String &baseId : fmt->baseGameIds)
         {
             if (idKey.beginsWith(baseId)) return fmt;
         }
@@ -98,7 +98,7 @@ static PackageFormatter *saveFormatForGameId(String const &idKey)
     return 0; // Not found.
 }
 
-static PackageFormatter *guessSaveFormatFromFileName(Path const &path)
+static PackageFormatter *guessSaveFormatFromFileName(const Path &path)
 {
     String ext = path.lastSegment().toLowercaseString().fileNameExtension();
     for (PackageFormatter *fmt : translators)
@@ -246,7 +246,7 @@ int main(int argc, char **argv)
                 {
                     convertSavegame(Path("/input") / inputPath.fileName());
                 }
-                catch (Error const &er)
+                catch (const Error &er)
                 {
                     LOG_ERROR("\"%s\" failed conversion:\n")
                             << NativePath(inputPath).pretty() << er.asText();
@@ -254,7 +254,7 @@ int main(int argc, char **argv)
             }
         }
     }
-    catch (Error const &err)
+    catch (const Error &err)
     {
         err.warnPlainText();
     }

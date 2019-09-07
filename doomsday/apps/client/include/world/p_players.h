@@ -115,7 +115,7 @@ PlayerImpulse *P_PlayerImpulsePtr(int id);
  *
  * @return  The associated PlayerImpulse if found; otherwise @c nullptr.
  */
-PlayerImpulse *P_PlayerImpulseByName(de::String const &name);
+PlayerImpulse *P_PlayerImpulseByName(const de::String &name);
 
 /**
  * Register the console commands and variables of this module.

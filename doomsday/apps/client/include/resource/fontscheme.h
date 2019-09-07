@@ -66,7 +66,7 @@ public:
     FontScheme(String symbolicName);
 
     /// @return  Symbolic name of this scheme (e.g., "System").
-    String const &name() const;
+    const String &name() const;
 
     /// @return  Total number of manifests in the scheme.
     inline int size() const { return index().size(); }
@@ -87,24 +87,24 @@ public:
      *
      * @return  The (possibly newly created) manifest at @a path.
      */
-    Manifest &declare(Path const &path);
+    Manifest &declare(const Path &path);
 
     /**
      * Determines if a manifest exists on the given @a path.
      *
      * @return @c true if a manifest exists; otherwise @a false.
      */
-    bool has(Path const &path) const;
+    bool has(const Path &path) const;
 
     /**
      * Search the scheme for a manifest matching @a path.
      *
      * @return  Found manifest.
      */
-    Manifest const &find(Path const &path) const;
+    const Manifest &find(const Path &path) const;
 
     /// @copydoc find()
-    Manifest &find(Path const &path);
+    Manifest &find(const Path &path);
 
     /**
      * Search the scheme for a manifest whose associated unique identifier
@@ -112,7 +112,7 @@ public:
      *
      * @return  Found manifest.
      */
-    Manifest const &findByUniqueId(int uniqueId) const;
+    const Manifest &findByUniqueId(int uniqueId) const;
 
     /// @copydoc findByUniqueId()
     Manifest &findByUniqueId(int uniqueId);
@@ -120,7 +120,7 @@ public:
     /**
      * Provides access to the manifest index for efficient traversal.
      */
-    Index const &index() const;
+    const Index &index() const;
 
 private:
     DE_PRIVATE(d)

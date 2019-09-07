@@ -49,17 +49,17 @@ struct AudioEnvironment
 /**
  * Lookup the symbolic name of the identified audio environment.
  */
-char const *S_AudioEnvironmentName(AudioEnvironmentId id);
+const char *S_AudioEnvironmentName(AudioEnvironmentId id);
 
 /**
  * Lookup the identified audio environment.
  */
-AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id);
+const AudioEnvironment &S_AudioEnvironment(AudioEnvironmentId id);
 
 /**
  * Lookup the audio environment associated with material @a uri. If no environment
  * is defined then @c AE_NONE is returned.
  */
-AudioEnvironmentId S_AudioEnvironmentId(res::Uri const *uri);
+AudioEnvironmentId S_AudioEnvironmentId(const res::Uri *uri);
 
 #endif // DE_SOUND_ENVIRON

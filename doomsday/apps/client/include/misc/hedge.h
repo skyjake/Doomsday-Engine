@@ -78,7 +78,7 @@ public:
      *
      * @see vertex()
      */
-    inline Vec2d const &origin() const { return vertex().origin(); }
+    inline const Vec2d &origin() const { return vertex().origin(); }
 
     /**
      * Returns @c true iff a @em twin is linked to the half-edge.

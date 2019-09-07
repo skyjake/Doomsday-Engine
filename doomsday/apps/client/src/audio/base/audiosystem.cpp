@@ -93,7 +93,7 @@ static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
 static dint const SOUND_CHANNEL_COUNT_DEFAULT  = 16;
 static dint const SOUND_CHANNEL_COUNT_MAX      = 256;
 static dint const SOUND_CHANNEL_2DCOUNT        = 4;
-static char const *MUSIC_BUFFEREDFILE          = "/tmp/dd-buffered-song";
+static const char *MUSIC_BUFFEREDFILE          = "/tmp/dd-buffered-song";
 
 static thread_t refreshHandle;
 static volatile bool allowRefresh, refreshing;
@@ -287,7 +287,7 @@ DE_PIMPL(AudioSystem)
             driver.initialize();
             return driver.isInitialized();
         }
-        catch (AudioDriver::LoadError const &er)
+        catch (const AudioDriver::LoadError &er)
         {
             LOG_AUDIO_WARNING("Failed initializing driver \"%s\":\n")
                 << AudioDriver_GetName(driverId)
@@ -296,7 +296,7 @@ DE_PIMPL(AudioSystem)
         return false;
     }
 
-    audiodriverid_t initDriverIfNeeded(String const &identifier)
+    audiodriverid_t initDriverIfNeeded(const String &identifier)
     {
         audiodriverid_t id  = identifierToDriverId(identifier);
         AudioDriver &driver = driverById(id);
@@ -399,7 +399,7 @@ DE_PIMPL(AudioSystem)
     {
         for (int i = activeInterfaces.size() - 1; i >= 0; --i)
         {
-            auto const &intf = activeInterfaces.at(i);
+            const auto &intf = activeInterfaces.at(i);
             if (intf.type != type) continue;
             return intf.i.any == ptr;
         }
@@ -536,7 +536,7 @@ DE_PIMPL(AudioSystem)
         {
             for (dint i = activeInterfaces.count(); i--> 0; )
             {
-                AudioInterface const &ifs = activeInterfaces[i];
+                const AudioInterface &ifs = activeInterfaces[i];
                 if (ifs.type == type ||
                    (type == AUDIO_IMUSIC_OR_ICD && (ifs.type == AUDIO_IMUSIC ||
                                                     ifs.type == AUDIO_ICD)))
@@ -561,7 +561,7 @@ DE_PIMPL(AudioSystem)
     {
         if (anyAudioInterface)
         {
-            for (AudioDriver const &driver : drivers)
+            for (const AudioDriver &driver : drivers)
             {
                 if ((void *)&driver.iSfx()   == anyAudioInterface ||
                    (void *)&driver.iMusic() == anyAudioInterface ||
@@ -578,7 +578,7 @@ DE_PIMPL(AudioSystem)
     {
         if (anyAudioInterface)
         {
-            for (AudioDriver const &driver : drivers)
+            for (const AudioDriver &driver : drivers)
             {
                 if ((void *)&driver.iSfx()   == anyAudioInterface) return AUDIO_ISFX;
                 if ((void *)&driver.iMusic() == anyAudioInterface) return AUDIO_IMUSIC;
@@ -592,7 +592,7 @@ DE_PIMPL(AudioSystem)
     {
         if (anyAudioInterface)
         {
-            for (AudioDriver const &driver : drivers)
+            for (const AudioDriver &driver : drivers)
             {
                 String const name = driver.interfaceName(anyAudioInterface);
                 if (!name.isEmpty()) return name;
@@ -618,7 +618,7 @@ DE_PIMPL(AudioSystem)
     struct LogicSound
     {
         //dint soundId     = 0;
-        mobj_t const *emitter     = nullptr;
+        const mobj_t *emitter     = nullptr;
         duint         endTime     = 0;
         bool          isRepeating = false;
 
@@ -670,7 +670,7 @@ DE_PIMPL(AudioSystem)
     }
 
 #ifdef __CLIENT__
-    String composeMusicBufferFilename(String const &ext = "")
+    String composeMusicBufferFilename(const String &ext = "")
     {
         // Switch the name of the buffered song file?
         static dint currentBufFile = 0;
@@ -683,7 +683,7 @@ DE_PIMPL(AudioSystem)
         return MUSIC_BUFFEREDFILE + String::asText(currentBufFile) + ext;
     }
 
-    void setMusicProperty(dint prop, void const *ptr)
+    void setMusicProperty(dint prop, const void *ptr)
     {
         forAllInterfaces(AUDIO_IMUSIC, [this, &prop, &ptr] (void *ifs)
         {
@@ -694,7 +694,7 @@ DE_PIMPL(AudioSystem)
 
         if (prop == AUDIOP_SOUNDFONT_FILENAME)
         {
-            auto *fn = (char const *) ptr;
+            auto *fn = (const char *) ptr;
             if (!fn || !fn[0]) return; // No path.
 
             if (F_FileExists(fn))
@@ -708,7 +708,7 @@ DE_PIMPL(AudioSystem)
         }
     }
 
-    dint playMusicFile(String const &virtualOrNativePath, bool looped = false)
+    dint playMusicFile(const String &virtualOrNativePath, bool looped = false)
     {
         DE_ASSERT(musAvail);
 
@@ -756,7 +756,7 @@ DE_PIMPL(AudioSystem)
             App_FileSystem().releaseFile(hndl->file());
             return didPlay;
         }
-        catch (FS1::NotFoundError const &)
+        catch (const FS1::NotFoundError &)
         {}  // Ignore this error.
         return 0;  // Continue.
     }
@@ -1200,12 +1200,12 @@ DE_PIMPL(AudioSystem)
      *
      * @return  Number of sounds stopped.
      */
-    dint sfxStopLogical(dint soundId, mobj_t const *emitter)
+    dint sfxStopLogical(dint soundId, const mobj_t *emitter)
     {
         dint stopCount = 0;
         for (auto it = sfxLogicHash.begin(); it != sfxLogicHash.end(); )
         {
-            LogicSound const &lsound = *it->second;
+            const LogicSound &lsound = *it->second;
             if (soundId)
             {
                 if (it->first != soundId)
@@ -1238,7 +1238,7 @@ DE_PIMPL(AudioSystem)
      * a different set of samples so using this information on server side (for
      * scheduling of remote playback events?) is not logical. -ds
      */
-    void sfxStartLogical(dint soundIdAndFlags, mobj_t const *emitter)
+    void sfxStartLogical(dint soundIdAndFlags, const mobj_t *emitter)
     {
         if (soundIdAndFlags <= 0) return;
 
@@ -1373,7 +1373,7 @@ DE_PIMPL(AudioSystem)
                 sfxListenerSubsector = newSubsector;
 
                 // It may be necessary to recalculate the reverb properties...
-                world::ClientSubsector::AudioEnvironment const &aenv = sfxListenerSubsector->as<world::ClientSubsector>().reverb();
+                const world::ClientSubsector::AudioEnvironment &aenv = sfxListenerSubsector->as<world::ClientSubsector>().reverb();
 
                 dfloat args[NUM_REVERB_DATA];
                 args[SFXLP_REVERB_VOLUME ] = aenv.volume * sfxReverbStrength;
@@ -1444,7 +1444,7 @@ DE_PIMPL(AudioSystem)
     }
 #endif
 
-    void sfxSampleCacheAboutToRemove(sfxsample_t const &sample)
+    void sfxSampleCacheAboutToRemove(const sfxsample_t &sample)
     {
         // Reset all channels loaded with the sample data and stop all sounds using
         // this sample (the sample data will be gone soon).
@@ -1460,7 +1460,7 @@ DE_PIMPL(AudioSystem)
         sfxClearLogical();
     }
 
-    void aboutToUnloadGame(Game const &)
+    void aboutToUnloadGame(const Game &)
     {
         reset();
     }
@@ -1475,7 +1475,7 @@ AudioSystem &AudioSystem::get()
     return *theAudioSystem;
 }
 
-void AudioSystem::timeChanged(Clock const &)
+void AudioSystem::timeChanged(const Clock &)
 {
     // Nothing to do.
 }
@@ -1517,7 +1517,7 @@ String AudioSystem::description() const
     // Include an active playback interface itemization.
     for (dint i = d->activeInterfaces.count(); i-- > 0; )
     {
-        Impl::AudioInterface const &ifs = d->activeInterfaces[i];
+        const Impl::AudioInterface &ifs = d->activeInterfaces[i];
 
         String ifName = (ifs.type == AUDIO_IMUSIC? "Music" :
                          ifs.type == AUDIO_ISFX?   "SFX" : "CD");
@@ -1664,7 +1664,7 @@ void AudioSystem::initPlayback()
         {
             d->initSfx();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_AUDIO_NOTE("Failed initializing playback for sound effects:\n")
                 << er.asText();
@@ -1675,7 +1675,7 @@ void AudioSystem::initPlayback()
         {
             d->initMusic();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_AUDIO_NOTE("Failed initializing playback for music:\n")
                 << er.asText();
@@ -1705,7 +1705,7 @@ void AudioSystem::deinitPlayback()
 
 String AudioSystem::musicSourceAsText(MusicSource source)  // static
 {
-    static char const *sourceNames[3] = {
+    static const char *sourceNames[3] = {
         /* MUSP_MUS */ "MUS lumps",
         /* MUSP_EXT */ "External files",
         /* MUSP_CD */  "CD",
@@ -1767,7 +1767,7 @@ bool AudioSystem::musicIsPaused() const
     return d->musPaused;
 }
 
-dint AudioSystem::playMusic(Record const &definition, bool looped)
+dint AudioSystem::playMusic(const Record &definition, bool looped)
 {
     if (!d->musAvail) return false;
 
@@ -1870,7 +1870,7 @@ dint AudioSystem::playMusicLump(lumpnum_t lumpNum, bool looped)
     return d->playMusicLump(lumpNum, looped);
 }
 
-dint AudioSystem::playMusicFile(String const &filePath, bool looped)
+dint AudioSystem::playMusicFile(const String &filePath, bool looped)
 {
     stopMusic();
     LOG_AS("AudioSystem");
@@ -1937,7 +1937,7 @@ bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
         const auto sounds = d->sfxLogicHash.equal_range(soundId);
         for (auto it = sounds.first; it != sounds.second; ++it)
         {
-            Impl::LogicSound const &lsound = *it->second;
+            const Impl::LogicSound &lsound = *it->second;
             if (lsound.emitter == emitter && lsound.isPlaying(nowTime))
             {
                 return true;
@@ -1949,7 +1949,7 @@ bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
         // Check if the emitter is playing any sound.
         for (const auto &s : d->sfxLogicHash)
         {
-            Impl::LogicSound const &lsound = *s.second;
+            const Impl::LogicSound &lsound = *s.second;
             if (lsound.emitter == emitter && lsound.isPlaying(nowTime))
                 return true;
         }
@@ -1991,7 +1991,7 @@ bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
 
 #ifdef __CLIENT__
 
-void AudioSystem::stopSoundGroup(dint group, mobj_t const *emitter)
+void AudioSystem::stopSoundGroup(dint group, const mobj_t *emitter)
 {
     if (!d->sfxAvail) return;
     LOG_AS("AudioSystem");
@@ -2011,7 +2011,7 @@ void AudioSystem::stopSoundGroup(dint group, mobj_t const *emitter)
     });
 }
 
-dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t const *emitter, dint defPriority)
+dint AudioSystem::stopSoundWithLowerPriority(dint id, const mobj_t *emitter, dint defPriority)
 {
     if (!d->sfxAvail) return false;
 
@@ -2060,7 +2060,7 @@ dint AudioSystem::stopSoundWithLowerPriority(dint id, mobj_t const *emitter, din
 
 #endif  // __CLIENT__
 
-void AudioSystem::stopSound(dint soundId, mobj_t const *emitter, dint flags)
+void AudioSystem::stopSound(dint soundId, const mobj_t *emitter, dint flags)
 {
     LOG_AS("AudioSystem");
 
@@ -2102,7 +2102,7 @@ void AudioSystem::stopSound(dint soundId, mobj_t const *emitter, dint flags)
 }
 
 #ifdef __CLIENT__
-dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mobj_t const *emitter,
+dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, const mobj_t *emitter,
     coord_t *fixedOrigin, dint flags)
 {
     DE_ASSERT(sample);
@@ -2363,7 +2363,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, mob
     return true;
 }
 
-dfloat AudioSystem::rateSoundPriority(mobj_t const *emitter, coord_t const *point, dfloat volume,
+dfloat AudioSystem::rateSoundPriority(const mobj_t *emitter, const coord_t *point, dfloat volume,
     dint startTic)
 {
     // In five seconds all priority of a sound is gone.
@@ -2376,7 +2376,7 @@ dfloat AudioSystem::rateSoundPriority(mobj_t const *emitter, coord_t const *poin
     }
 
     // The sound has an origin, base the points on distance.
-    coord_t const *origin;
+    const coord_t *origin;
     if (emitter)
     {
         origin = emitter->origin;
@@ -2414,7 +2414,7 @@ audiointerface_cd_t *AudioSystem::cd() const
     return found;
 }
 
-audiodriverid_t AudioSystem::toDriverId(AudioDriver const *driver) const
+audiodriverid_t AudioSystem::toDriverId(const AudioDriver *driver) const
 {
     if (driver && driver >= &d->drivers[0] && driver <= &d->drivers[AUDIODRIVER_COUNT])
     {
@@ -2469,7 +2469,7 @@ void AudioSystem::requestSfxListenerUpdate()
 
 #endif  // __CLIENT__
 
-void AudioSystem::startLogical(dint soundIdAndFlags, mobj_t const *emitter)
+void AudioSystem::startLogical(dint soundIdAndFlags, const mobj_t *emitter)
 {
     d->sfxStartLogical(soundIdAndFlags, emitter);
 }
@@ -2586,7 +2586,7 @@ D_CMD(PlayMusic)
     if (argc == 2)
     {
         // Play a file associated with the referenced music definition.
-        if (Record const *definition = DED_Definitions()->musics.tryFind("id", argv[1]))
+        if (const Record *definition = DED_Definitions()->musics.tryFind("id", argv[1]))
         {
             return Mus_Start(*definition, looped);
         }
@@ -2737,7 +2737,7 @@ void S_PauseMusic(dd_bool paused)
 #endif
 }
 
-dint Mus_Start(Record const &definition, bool looped)
+dint Mus_Start(const Record &definition, bool looped)
 {
 #ifdef __CLIENT__
     return App_AudioSystem().playMusic(definition, looped);
@@ -2757,7 +2757,7 @@ dint Mus_StartLump(lumpnum_t lumpNum, bool looped)
 #endif
 }
 
-dint Mus_StartFile(char const *filePath, bool looped)
+dint Mus_StartFile(const char *filePath, bool looped)
 {
 #ifdef __CLIENT__
     return App_AudioSystem().playMusicFile(filePath, looped);
@@ -2796,7 +2796,7 @@ dint S_StartMusicNum(dint musicId, dd_bool looped)
 }
 
 #undef S_StartMusic
-dint S_StartMusic(char const *musicId, dd_bool looped)
+dint S_StartMusic(const char *musicId, dd_bool looped)
 {
     dint idx = DED_Definitions()->getMusicNum(musicId);
     if (idx < 0)
@@ -2819,7 +2819,7 @@ mobj_t *S_GetListenerMobj()
 }
 
 #undef S_LocalSoundAtVolumeFrom
-dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t const *origin, coord_t *point, dfloat volume)
+dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, const mobj_t *origin, coord_t *point, dfloat volume)
 {
 #ifdef __CLIENT__
     LOG_AS("S_LocalSoundAtVolumeFrom");
@@ -2855,7 +2855,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t const *origin, coord_
     if (!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))
     {
         // If origin is too far, don't even think about playing the sound.
-        coord_t const *fixPoint = (origin ? origin->origin : point);
+        const coord_t *fixPoint = (origin ? origin->origin : point);
 
         if (Mobj_ApproxPointDistance(S_GetListenerMobj(), fixPoint) > soundMaxDist)
             return false;
@@ -2890,7 +2890,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t const *origin, coord_
     // iterations of this sound will stop.
     if (info->group)
     {
-        mobj_t const *emitter = ((info->flags & SF_GLOBAL_EXCLUDE) ? nullptr : origin);
+        const mobj_t *emitter = ((info->flags & SF_GLOBAL_EXCLUDE) ? nullptr : origin);
         S_StopSoundGroup(info->group, emitter);
     }
 
@@ -2908,13 +2908,13 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, mobj_t const *origin, coord_
 }
 
 #undef S_LocalSoundAtVolume
-dint S_LocalSoundAtVolume(dint soundIdAndFlags, mobj_t const *emitter, dfloat volume)
+dint S_LocalSoundAtVolume(dint soundIdAndFlags, const mobj_t *emitter, dfloat volume)
 {
     return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, volume);
 }
 
 #undef S_LocalSound
-dint S_LocalSound(dint soundIdAndFlags, mobj_t const *emitter)
+dint S_LocalSound(dint soundIdAndFlags, const mobj_t *emitter)
 {
     // Play local sound at max volume.
     return S_LocalSoundAtVolumeFrom(soundIdAndFlags, emitter, nullptr, 1);
@@ -2927,7 +2927,7 @@ dint S_LocalSoundFrom(dint soundIdAndFlags, coord_t *origin)
 }
 
 #undef S_StartSound
-dint S_StartSound(dint soundIdAndFlags, mobj_t const *emitter)
+dint S_StartSound(dint soundIdAndFlags, const mobj_t *emitter)
 {
 #ifdef __SERVER__
     // The sound is audible to everybody.
@@ -2939,7 +2939,7 @@ dint S_StartSound(dint soundIdAndFlags, mobj_t const *emitter)
 }
 
 #undef S_StartSoundEx
-dint S_StartSoundEx(dint soundIdAndFlags, mobj_t const *emitter)
+dint S_StartSoundEx(dint soundIdAndFlags, const mobj_t *emitter)
 {
 #ifdef __SERVER__
     Sv_Sound(soundIdAndFlags, emitter, SVSF_TO_ALL | SVSF_EXCLUDE_ORIGIN);
@@ -2950,7 +2950,7 @@ dint S_StartSoundEx(dint soundIdAndFlags, mobj_t const *emitter)
 }
 
 #undef S_StartSoundAtVolume
-dint S_StartSoundAtVolume(dint soundIdAndFlags, mobj_t const *emitter, dfloat volume)
+dint S_StartSoundAtVolume(dint soundIdAndFlags, const mobj_t *emitter, dfloat volume)
 {
 #ifdef __SERVER__
     Sv_SoundAtVolume(soundIdAndFlags, emitter, volume, SVSF_TO_ALL);
@@ -2978,13 +2978,13 @@ dint S_ConsoleSound(dint soundId, mobj_t *emitter, dint targetConsole)
 }
 
 #undef S_StopSound
-void S_StopSound(dint soundId, mobj_t const *emitter)
+void S_StopSound(dint soundId, const mobj_t *emitter)
 {
     App_AudioSystem().stopSound(soundId, emitter);
 }
 
 #undef S_StopSound2
-void S_StopSound2(dint soundId, mobj_t const *emitter, dint flags)
+void S_StopSound2(dint soundId, const mobj_t *emitter, dint flags)
 {
     App_AudioSystem().stopSound(soundId, emitter, flags);
 }
@@ -2997,7 +2997,7 @@ dint S_IsPlaying(dint soundId, mobj_t *emitter)
 
 #ifdef __CLIENT__
 
-void S_StopSoundGroup(dint group, mobj_t const *emitter)
+void S_StopSoundGroup(dint group, const mobj_t *emitter)
 {
     App_AudioSystem().stopSoundGroup(group, emitter);
 }

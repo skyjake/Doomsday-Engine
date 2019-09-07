@@ -31,22 +31,22 @@
 class SidebarWidget : public de::PanelWidget
 {
 public:
-    SidebarWidget(de::String const &title, de::String const &name = {});
+    SidebarWidget(const de::String &title, const de::String &name = {});
 
     de::SequentialLayout &layout();
     de::LabelWidget &     title();
     de::ScrollAreaWidget &containerWidget();
     de::ButtonWidget &    closeButton();
     de::IndirectRule &    firstColumnWidth();
-    de::Rule const &      maximumOfAllGroupFirstColumns() const;
+    const de::Rule &      maximumOfAllGroupFirstColumns() const;
 
 protected:
     /**
      * @param minWidth     Minimum width.
      * @param extraHeight  Height in addition to title and layout.
      */
-    void updateSidebarLayout(de::Rule const &minWidth    = de::ConstantRule::zero(),
-                             de::Rule const &extraHeight = de::ConstantRule::zero());
+    void updateSidebarLayout(const de::Rule &minWidth    = de::ConstantRule::zero(),
+                             const de::Rule &extraHeight = de::ConstantRule::zero());
 
     void preparePanelForOpening();
     void panelDismissed();

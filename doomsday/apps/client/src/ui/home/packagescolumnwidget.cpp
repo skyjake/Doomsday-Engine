@@ -93,7 +93,7 @@ DE_GUI_PIMPL(PackagesColumnWidget)
         }));
 
         // Column actions menu.
-        self().header().menuButton().setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
+        self().header().menuButton().setPopup([this] (const PopupButtonWidget &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
                     << new ui::SubwidgetItem(style().images().image("gear"),
@@ -129,7 +129,7 @@ DE_GUI_PIMPL(PackagesColumnWidget)
         DE_NOTIFY_PUBLIC(AvailableCount, i) i->availablePackageCountChanged(total);
     }
 
-    void currentGameChanged(Game const &game) override
+    void currentGameChanged(const Game &game) override
     {
         folderOptionsButton->show(game.isNull());
     }

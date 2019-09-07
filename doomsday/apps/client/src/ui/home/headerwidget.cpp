@@ -54,7 +54,7 @@ DE_GUI_PIMPL(HeaderWidget)
         showDescriptionVar().audienceForChange() += this;
     }
 
-    void variableValueChanged(Variable &, Value const &newValue)
+    void variableValueChanged(Variable &, const Value &newValue)
     {
         if (newValue.isTrue())
         {
@@ -66,7 +66,7 @@ DE_GUI_PIMPL(HeaderWidget)
         }
     }
 
-    static Variable const &showDescriptionVar()
+    static const Variable &showDescriptionVar()
     {
         return Config::get("home.showColumnDescription");
     }
@@ -169,14 +169,14 @@ PopupButtonWidget &HeaderWidget::menuButton()
     return *d->menuButton;
 }
 
-void HeaderWidget::setLogoImage(DotPath const &imageId)
+void HeaderWidget::setLogoImage(const DotPath &imageId)
 {
     d->logo->setStyleImage(imageId);
     d->logo->rule().setInput(Rule::Width, rule("home.header.logo.width"));
     d->title->margins().setLeft("gap");
 }
 
-void HeaderWidget::setLogoBackground(DotPath const &imageId)
+void HeaderWidget::setLogoBackground(const DotPath &imageId)
 {
     d->logoBg->setStyleImage(imageId);
 }

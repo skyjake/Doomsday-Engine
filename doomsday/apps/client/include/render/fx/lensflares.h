@@ -33,7 +33,7 @@ public:
     LensFlares(int console);
 
     void clearLights();
-    void markLightPotentiallyVisibleForCurrentFrame(IPointLightSource const *lightSource);
+    void markLightPotentiallyVisibleForCurrentFrame(const IPointLightSource *lightSource);
 
     void glInit();
     void glDeinit();

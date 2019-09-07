@@ -79,12 +79,12 @@ duint ClientTexture::variantCount() const
 }
 
 ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
-                                                     TextureVariantSpec const &spec,
+                                                     const TextureVariantSpec &spec,
                                                      bool canCreate)
 {
     for (Variant *variant : d->variants)
     {
-        TextureVariantSpec const &cand = variant->spec();
+        const TextureVariantSpec &cand = variant->spec();
         switch (method)
         {
         case MatchSpec:
@@ -125,7 +125,7 @@ ClientTexture::Variant *ClientTexture::chooseVariant(ChooseVariantMethod method,
     return d->variants.back();
 }
 
-ClientTexture::Variant *ClientTexture::prepareVariant(TextureVariantSpec const &spec)
+ClientTexture::Variant *ClientTexture::prepareVariant(const TextureVariantSpec &spec)
 {
     Variant *variant = chooseVariant(MatchSpec, spec, true /*can create*/);
     DE_ASSERT(variant);
@@ -133,7 +133,7 @@ ClientTexture::Variant *ClientTexture::prepareVariant(TextureVariantSpec const &
     return variant;
 }
 
-ClientTexture::Variants const &ClientTexture::variants() const
+const ClientTexture::Variants &ClientTexture::variants() const
 {
     return d->variants;
 }
@@ -171,7 +171,7 @@ String ClientTexture::description() const
 
         for (int variantIdx = 0; variantIdx < d->variants.sizei(); ++variantIdx)
         {
-            auto const *variant = d->variants.at(variantIdx);
+            const auto *variant = d->variants.at(variantIdx);
 
             Vec2f coords;
             variant->glCoords(&coords.x, &coords.y);

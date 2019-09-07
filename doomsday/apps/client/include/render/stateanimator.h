@@ -50,9 +50,9 @@ public:
 
 public:
     StateAnimator();
-    StateAnimator(de::DotPath const &id, Model const &model);
+    StateAnimator(const de::DotPath &id, const Model &model);
 
-    Model const &model() const;
+    const Model &model() const;
 
     /**
      * Returns the script scheduler specific to this animator. A new scheduler will
@@ -67,32 +67,32 @@ public:
      * @param names    Owner's namespace.
      * @param varName  Name of the variable that points to @a names.
      */
-    void setOwnerNamespace(de::Record &names, de::String const &varName);
+    void setOwnerNamespace(de::Record &names, const de::String &varName);
 
     /**
      * Returns the name of the variable pointing to the owning object's namespace.
      */
     de::String ownerNamespaceName() const;
 
-    void triggerByState(de::String const &stateName);
+    void triggerByState(const de::String &stateName);
 
-    void triggerDamage(int points, struct mobj_s const *inflictor);
+    void triggerDamage(int points, const struct mobj_s *inflictor);
 
     void startAnimation(int animationId, int priority, bool looping,
-                        de::String const &node = "");
+                        const de::String &node = "");
 
-    int animationId(de::String const &name) const;
+    int animationId(const de::String &name) const;
 
-    de::ModelDrawable::Appearance const &appearance() const;
+    const de::ModelDrawable::Appearance &appearance() const;
 
     // ModelDrawable::Animator
     void advanceTime(de::TimeSpan elapsed) override;
     de::ddouble currentTime(int index) const override;
-    de::Vec4f extraRotationForNode(de::String const &nodeName) const override;
+    de::Vec4f extraRotationForNode(const de::String &nodeName) const override;
 
     // Implements IObject.
     de::Record &       objectNamespace()       override;
-    de::Record const & objectNamespace() const override;
+    const de::Record & objectNamespace() const override;
 
     // ISerializable.
     void operator >> (de::Writer &to) const override;

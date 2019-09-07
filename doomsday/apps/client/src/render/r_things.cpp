@@ -58,7 +58,7 @@
 using namespace de;
 using namespace world;
 
-static void evaluateLighting(Vec3d const &origin, ConvexSubspace &subspaceAtOrigin,
+static void evaluateLighting(const Vec3d &origin, ConvexSubspace &subspaceAtOrigin,
     coord_t distToEye, bool fullbright, Vec4f &ambientColor, duint *vLightListIdx)
 {
     if(fullbright)
@@ -164,7 +164,7 @@ void R_ProjectSprite(mobj_t &mob)
     // ...in an invalid state?
     if(!mob.state || !runtimeDefs.states.indexOf(mob.state)) return;
     // ...no sprite frame is defined?
-    Record const *spriteRec = Mobj_SpritePtr(mob);
+    const Record *spriteRec = Mobj_SpritePtr(mob);
     if(!spriteRec) return;
     // ...fully transparent?
     dfloat const alpha = Mobj_Alpha(mob);
@@ -174,7 +174,7 @@ void R_ProjectSprite(mobj_t &mob)
     auto &subsec = subspace.subsector().as<ClientSubsector>();
     if(!subsec.hasWorldVolume()) return;
 
-    ClientMobjThinkerData const *mobjData = THINKER_DATA_MAYBE(mob.thinker, ClientMobjThinkerData);
+    const ClientMobjThinkerData *mobjData = THINKER_DATA_MAYBE(mob.thinker, ClientMobjThinkerData);
 
     // Determine distance to object.
     Vec3d const moPos = mobjOriginSmoothed(&mob);
@@ -184,7 +184,7 @@ void R_ProjectSprite(mobj_t &mob)
     FrameModelDef *mf = nullptr, *nextmf = nullptr;
     dfloat interp = 0;
 
-    render::StateAnimator const *animator = nullptr; // GL2 model present?
+    const render::StateAnimator *animator = nullptr; // GL2 model present?
 
     if(useModels)
     {
@@ -226,7 +226,7 @@ void R_ProjectSprite(mobj_t &mob)
         }
         matFlipS = spriteView.mirrorX;
     }
-    /*catch(defn::Sprite::MissingViewError const &er)
+    /*catch(const defn::Sprite::MissingViewError &er)
     {
         // Log but otherwise ignore this error.
         LOG_GL_WARNING("Projecting sprite '%i' frame '%i': %s")
@@ -238,7 +238,7 @@ void R_ProjectSprite(mobj_t &mob)
     // Ensure we've up to date info about the material.
     matAnimator.prepare();
 
-    Vec2ui const &matDimensions = matAnimator.dimensions();
+    const Vec2ui &matDimensions = matAnimator.dimensions();
     TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
     // A valid sprite texture in the "Sprites" scheme is required.
@@ -271,7 +271,7 @@ void R_ProjectSprite(mobj_t &mob)
 
         // If the model is close to the viewpoint we should still to draw it,
         // otherwise large models are likely to disappear too early.
-        viewdata_t const *viewData = &viewPlayer->viewport();
+        const viewdata_t *viewData = &viewPlayer->viewport();
         Vec2d delta(distFromEye, moPos.z + (mob.height / 2) - viewData->current.origin.z);
         if(M_ApproxDistance(delta.x, delta.y) > MAX_OBJECT_RADIUS)
             return;
@@ -315,7 +315,7 @@ void R_ProjectSprite(mobj_t &mob)
        (animator && animator->model().alignYaw == render::Model::AlignToView))
     {
         // Transform the origin point.
-        viewdata_t const *viewData = &viewPlayer->viewport();
+        const viewdata_t *viewData = &viewPlayer->viewport();
         Vec2d delta(moPos.y - viewData->current.origin.y,
                        moPos.x - viewData->current.origin.x);
 
@@ -345,7 +345,7 @@ void R_ProjectSprite(mobj_t &mob)
     if((mf && mf->testSubFlag(0, MFF_ALIGN_PITCH)) ||
        (animator && animator->model().alignPitch == render::Model::AlignToView))
     {
-        viewdata_t const *viewData = &viewPlayer->viewport();
+        const viewdata_t *viewData = &viewPlayer->viewport();
         Vec2d delta(vis->pose.midZ() - viewData->current.origin.z, distFromEye);
 
         pitch = -BANG2DEG(bamsAtan2(delta.x * 10, delta.y * 10));
@@ -486,7 +486,7 @@ void R_ProjectSprite(mobj_t &mob)
                     .getAnimator(Rend_SpriteMaterialSpec(mob.tclass, mob.tmap));
             matAnimator.prepare();
 
-            Vec2ui const &matDimensions = matAnimator.dimensions();
+            const Vec2ui &matDimensions = matAnimator.dimensions();
             TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
 
             // A valid sprite texture in the "Sprites" scheme is required.
@@ -495,10 +495,10 @@ void R_ProjectSprite(mobj_t &mob)
                 return;
             }
 
-            auto const *pl = (pointlight_analysis_t const *) tex->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
+            const auto *pl = (const pointlight_analysis_t *) tex->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
             DE_ASSERT(pl);
 
-            Lumobj const &lob = subsec.sector().map().lumobj(mob.lumIdx);
+            const Lumobj &lob = subsec.sector().map().lumobj(mob.lumIdx);
             vissprite_t *vis  = R_NewVisSprite(VSPR_FLARE);
 
             vis->pose.distance = distFromEye;
@@ -512,7 +512,7 @@ void R_ProjectSprite(mobj_t &mob)
             dfloat xOffset = matDimensions.x * pl->originX - -tex->base().origin().x;
 
             // Does the mobj have an active light definition?
-            ded_light_t const *def = (mob.state? runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mob.state)].light : 0);
+            const ded_light_t *def = (mob.state? runtimeDefs.stateInfo[runtimeDefs.states.indexOf(mob.state)].light : 0);
             if(def)
             {
                 if(def->size)
@@ -539,20 +539,20 @@ void R_ProjectSprite(mobj_t &mob)
 
             if (def && def->flare)
             {
-                res::Uri const &flaremapResourceUri = *def->flare;
+                const res::Uri &flaremapResourceUri = *def->flare;
                 if (flaremapResourceUri.path().toString().compareWithoutCase("-"))
                 {
                     vis->data.flare.tex = GL_PrepareFlaremap(flaremapResourceUri);
                 }
             }
         }
-        catch(defn::Sprite::MissingViewError const &er)
+        catch(const defn::Sprite::MissingViewError &er)
         {
             // Log but otherwise ignore this error.
             LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")
                     << mob.sprite << mob.frame << er.asText();
         }
-        catch(Resources::MissingResourceManifestError const &er)
+        catch(const Resources::MissingResourceManifestError &er)
         {
             // Log but otherwise ignore this error.
             LOG_GL_WARNING("Projecting flare source for sprite '%i' frame '%i': %s")

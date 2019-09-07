@@ -31,7 +31,7 @@ namespace world {
 /**
  * Performs contact spreading for the specified @a blockmap.
  */
-void spreadContacts(Blockmap const &blockmap, AABoxd const &region, de::BitArray *spreadBlocks = 0);
+void spreadContacts(const Blockmap &blockmap, const AABoxd &region, de::BitArray *spreadBlocks = 0);
 
 }  // namespace world
 

@@ -55,7 +55,7 @@ static ServerApp *serverAppSingleton = nullptr;
 
 DE_STATIC_STRING(PATH_SERVER_FILES, "/sys/server/public");
 
-static void handleAppTerminate(char const *msg)
+static void handleAppTerminate(const char *msg)
 {
     LogBuffer::get().flush();
     warning("Application terminated due to exception:\n%s\n", msg);
@@ -109,7 +109,7 @@ DE_PIMPL(ServerApp)
         DD_ConsoleRegister();
     }
 
-    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/) override
+    void aboutToUnloadGame(const Game &/*gameBeingUnloaded*/) override
     {
         if (netGame && isServer)
         {
@@ -140,7 +140,7 @@ DE_PIMPL(ServerApp)
         auto *feed = new PackageFeed(PackageLoader::get(),
                                      PackageFeed::LinkVersionedIdentifier);
         feed->setFilter(
-            [](Package const &pkg) { return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b"); });
+            [](const Package &pkg) { return !pkg.matchTags(pkg.file(), "\\b(vanilla|core)\\b"); });
         files.attach(feed);
     }
 
@@ -290,11 +290,11 @@ ServerInfo ServerApp::currentServerInfo() // static
     info.setCompatibilityVersion(DOOMSDAY_VERSION);
     info.setPluginDescription(
         Stringf("%s %s",
-                reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_NAME)),
-                reinterpret_cast<char const *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
+                reinterpret_cast<const char *>(gx.GetPointer(DD_PLUGIN_NAME)),
+                reinterpret_cast<const char *>(gx.GetPointer(DD_PLUGIN_VERSION_SHORT))));
 
     info.setGameId(game().id());
-    info.setGameConfig(reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG)));
+    info.setGameConfig(reinterpret_cast<const char *>(gx.GetPointer(DD_GAME_CONFIG)));
     info.setName(serverName);
     info.setDescription(serverInfo);
 
@@ -347,7 +347,7 @@ ServerInfo ServerApp::currentServerInfo() // static
     return info;
 }
 
-void ServerApp::unloadGame(GameProfile const &upcomingGame)
+void ServerApp::unloadGame(const GameProfile &upcomingGame)
 {
     DoomsdayApp::unloadGame(upcomingGame);
 

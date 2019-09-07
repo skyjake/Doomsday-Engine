@@ -27,7 +27,7 @@
 class LogSettingsDialog : public de::DialogWidget
 {
 public:
-    LogSettingsDialog(de::String const &name = "logsettings");
+    LogSettingsDialog(const de::String &name = "logsettings");
 
 public:
     void resetToDefaults();

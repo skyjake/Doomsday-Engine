@@ -81,7 +81,7 @@ public:
          * @see hasMapElement()
          */
         world::MapElement       &mapElement();
-        world::MapElement const &mapElement() const;
+        const world::MapElement &mapElement() const;
 
         template <class MapElementType>
         MapElementType &mapElementAs() {
@@ -89,7 +89,7 @@ public:
         }
 
         template <class MapElementType>
-        MapElementType const &mapElementAs() const {
+        const MapElementType &mapElementAs() const {
             return mapElement().as<MapElementType>();
         }
 
@@ -120,7 +120,7 @@ public:
     /**
      * Construct a new vertex.
      */
-    Vertex *newVertex(Vec2d const &origin = de::Vec2d());
+    Vertex *newVertex(const Vec2d &origin = de::Vec2d());
 
     /**
      * Construct a new half-edge.
@@ -183,17 +183,17 @@ public:
     /**
      * Provides access to the set of all vertexes in the mesh.
      */
-    Vertexs const &vertexs() const;
+    const Vertexs &vertexs() const;
 
     /**
      * Provides access to the set of all faces in the mesh.
      */
-    Faces const &faces() const;
+    const Faces &faces() const;
 
     /**
      * Provides access to the set of all half-edges in the mesh.
      */
-    HEdges const &hedges() const;
+    const HEdges &hedges() const;
 
 private:
     DE_PRIVATE(d)

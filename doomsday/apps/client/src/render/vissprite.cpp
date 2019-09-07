@@ -66,7 +66,7 @@ vissprite_t *R_NewVisSprite(visspritetype_t type)
     return spr;
 }
 
-void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
+void VisSprite_SetupSprite(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
     dfloat /*secFloor*/, dfloat /*secCeil*/, dfloat /*floorClip*/, dfloat /*top*/,
     ClientMaterial &material, bool matFlipS, bool matFlipT, blendmode_t blendMode,
     dint tClass, dint tMap, world::BspLeaf *bspLeafAtOrigin,
@@ -74,7 +74,7 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
 {
     drawspriteparams_t &p = *VS_SPRITE(spr);
 
-    MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec(tClass, tMap);
+    const MaterialVariantSpec &spec = Rend_SpriteMaterialSpec(tClass, tMap);
     MaterialAnimator *matAnimator   = &material.getAnimator(spec);
 
     DE_ASSERT((tClass == 0 && tMap == 0) ||
@@ -93,7 +93,7 @@ void VisSprite_SetupSprite(vissprite_t *spr, VisEntityPose const &pose, VisEntit
     spr->light.ambientColor[3] = (useSpriteAlpha? light.ambientColor.w : 1);
 }
 
-void VisSprite_SetupModel(vissprite_t *spr, VisEntityPose const &pose, VisEntityLighting const &light,
+void VisSprite_SetupModel(vissprite_t *spr, const VisEntityPose &pose, const VisEntityLighting &light,
     FrameModelDef *mf, FrameModelDef *nextMF, dfloat inter,
     dint id, dint selector, world::BspLeaf * /*bspLeafAtOrigin*/, dint mobjDDFlags, dint tmap,
     bool /*fullBright*/, bool alwaysInterpolate)
@@ -170,8 +170,8 @@ void R_SortVisSprites()
     }
 }
 
-void VisEntityLighting::setupLighting(Vec3d const &origin, ddouble distance,
-                                      world::BspLeaf const &bspLeaf)
+void VisEntityLighting::setupLighting(const Vec3d &origin, ddouble distance,
+                                      const world::BspLeaf &bspLeaf)
 {
 #if 0
     world::Map &map = ClientApp::world().map();
@@ -192,7 +192,7 @@ void VisEntityLighting::setupLighting(Vec3d const &origin, ddouble distance,
     else
 #endif
     {
-        auto const &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
+        const auto &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
         Vec4f const color = subsec.lightSourceColorfIntensity();
 
         // No need for distance attentuation.

@@ -49,8 +49,8 @@ public:
         Cell min;
         Cell max;
 
-        CellBlock(Cell const &min = Cell(), Cell const &max = Cell()) : min(min), max(max) {}
-        CellBlock(CellBlock const &other) : min(other.min), max(other.max) {}
+        CellBlock(const Cell &min = Cell(), const Cell &max = Cell()) : min(min), max(max) {}
+        CellBlock(const CellBlock &other) : min(other.min), max(other.max) {}
     };
 
 public:
@@ -58,7 +58,7 @@ public:
      * @param bounds    Map space boundary.
      * @param cellSize  Width and height of a cell in map space units.
      */
-    Blockmap(AABoxd const &bounds, de::duint cellSize = 128);
+    Blockmap(const AABoxd &bounds, de::duint cellSize = 128);
 
     virtual ~Blockmap();
 
@@ -70,12 +70,12 @@ public:
     /**
      * Returns the bounds of the blockmap in map space.
      */
-    AABoxd const &bounds() const;
+    const AABoxd &bounds() const;
 
     /**
      * Returns the dimensions of the blockmap in cells.
      */
-    Cell const &dimensions() const;
+    const Cell &dimensions() const;
 
     /**
      * Returns the width of the blockmap in cells.
@@ -115,7 +115,7 @@ public:
      * @param point    Map coordinate space point to be translated.
      * @param didClip  Set to @c true iff clamping was necessary.
      */
-    Cell toCell(de::Vec2d const &point, bool *didClip = 0) const;
+    Cell toCell(const de::Vec2d &point, bool *didClip = 0) const;
 
     /**
      * Given map space box XY coordinates @a box, output the blockmap cells[x, y]
@@ -125,7 +125,7 @@ public:
      * @param box      Map space coordinates to translate.
      * @param didClip  Set to @c true iff clamping was necessary.
      */
-    CellBlock toCellBlock(AABoxd const &box, bool *didClip = 0) const;
+    CellBlock toCellBlock(const AABoxd &box, bool *didClip = 0) const;
 
     /**
      * Retrieve the number of elements linked in the specified @a cell.
@@ -134,28 +134,28 @@ public:
      *
      * @return  Number of unique objects linked into the cell, or @c 0 if invalid.
      */
-    de::dint cellElementCount(Cell const &cell) const;
+    de::dint cellElementCount(const Cell &cell) const;
 
-    bool link(Cell const &cell, void *elem);
+    bool link(const Cell &cell, void *elem);
 
-    bool link(AABoxd const &region, void *elem);
+    bool link(const AABoxd &region, void *elem);
 
-    bool unlink(Cell const &cell, void *elem);
+    bool unlink(const Cell &cell, void *elem);
 
-    bool unlink(AABoxd const &region, void *elem);
+    bool unlink(const AABoxd &region, void *elem);
 
     void unlinkAll();
 
     /**
      * Iterate through all objects in the given @a cell.
      */
-    de::LoopResult forAllInCell(Cell const &cell, std::function<de::LoopResult (void *object)> func) const;
+    de::LoopResult forAllInCell(const Cell &cell, std::function<de::LoopResult (void *object)> func) const;
 
     /**
      * Iterate through all objects in all cells which intercept the given map
      * space, axis-aligned bounding @a box.
      */
-    de::LoopResult forAllInBox(AABoxd const &box, std::function<de::LoopResult (void *object)> func) const;
+    de::LoopResult forAllInBox(const AABoxd &box, std::function<de::LoopResult (void *object)> func) const;
 
     /**
      * Iterate over all objects in cells which intercept the line specified by
@@ -167,7 +167,7 @@ public:
      * @param from  Map space point defining the origin of the line.
      * @param to    Map space point defining the destination of the line.
      */
-    de::LoopResult forAllInPath(de::Vec2d const &from, de::Vec2d const &to,
+    de::LoopResult forAllInPath(const de::Vec2d &from, const de::Vec2d &to,
                                 std::function<de::LoopResult (void *object)> func) const;
 
     /**

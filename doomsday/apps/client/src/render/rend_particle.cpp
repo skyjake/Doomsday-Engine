@@ -68,7 +68,7 @@ static bool hasPointTexs[NUM_TEX_NAMES];
 
 struct OrderedParticle
 {
-    Generator const *generator;
+    const Generator *generator;
     dint particleId;
     dfloat distance;
 };
@@ -87,7 +87,7 @@ static dfloat particleDiffuse = 4;
 
 static dfloat pointDist(fixed_t const c[3])
 {
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     dfloat dist = ((viewData->current.origin.y - FIX2FLT(c[1])) * -viewData->viewSin)
                 - ((viewData->current.origin.x - FIX2FLT(c[0])) * viewData->viewCos);
 
@@ -140,7 +140,7 @@ static dbyte loadParticleTexture(duint particleTex)
         {
             auto asset = App::asset(assetId);
 
-            ImageFile const &img = App::rootFolder().locate<ImageFile const>
+            const ImageFile &img = App::rootFolder().locate<ImageFile const>
                     (asset.absolutePath(DE_STR("path")));
 
             Image_InitFromImage(image, img.image());
@@ -160,7 +160,7 @@ static dbyte loadParticleTexture(duint particleTex)
             }
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_RES_ERROR("Failed to load texture for particle %i: %s")
                 << particleTex << er.asText();
@@ -236,7 +236,7 @@ void Rend_ParticleReleaseSystemTextures()
 {
     if(novideo) return;
 
-    Deferred_glDeleteTextures(1, (GLuint const *) &pointTex);
+    Deferred_glDeleteTextures(1, (const GLuint *) &pointTex);
     pointTex = 0;
 }
 
@@ -244,17 +244,17 @@ void Rend_ParticleReleaseExtraTextures()
 {
     if(novideo) return;
 
-    Deferred_glDeleteTextures(NUM_TEX_NAMES, (GLuint const *) ptctexname);
+    Deferred_glDeleteTextures(NUM_TEX_NAMES, (const GLuint *) ptctexname);
     de::zap(ptctexname);
 }
 
 /**
  * Sorts in descending order.
  */
-static dint comparePOrder(void const *a, void const *b)
+static dint comparePOrder(const void *a, const void *b)
 {
-    auto const &ptA = *(OrderedParticle const *) a;
-    auto const &ptB = *(OrderedParticle const *) b;
+    const auto &ptA = *(const OrderedParticle *) a;
+    const auto &ptB = *(const OrderedParticle *) b;
 
     if(ptA.distance > ptB.distance) return -1;
     if(ptA.distance < ptB.distance) return 1;
@@ -289,7 +289,7 @@ static void expandOrderBuffer(size_t max)
 /**
  * Determines whether the given particle is potentially visible for the current viewer.
  */
-static bool particlePVisible(ParticleInfo const &pinfo)
+static bool particlePVisible(const ParticleInfo &pinfo)
 {
     // Never if it has already expired.
     if(pinfo.stage < 0) return false;
@@ -335,7 +335,7 @@ static dint listVisibleParticles(world::Map &map)
 
         for(dint i = 0; i < gen.count; ++i)
         {
-            ParticleInfo const &pinfo = gen.particleInfo()[i];
+            const ParticleInfo &pinfo = gen.particleInfo()[i];
 
             if(!particlePVisible(pinfo)) continue;  // Skip.
 
@@ -401,8 +401,8 @@ static dint listVisibleParticles(world::Map &map)
     return true;
 }
 
-static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pinfo,
-    GeneratorParticleStage const *st, ded_ptcstage_t const *dst, Vec3f const &origin,
+static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pinfo,
+    const GeneratorParticleStage *st, const ded_ptcstage_t *dst, const Vec3f &origin,
     dfloat dist, dfloat size, dfloat mark, dfloat alpha)
 {
     drawmodelparams_t &parm = *VS_MODEL(&spr);
@@ -509,7 +509,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, ParticleInfo const *pi
  *
  * @param unitVect  Unit vector is written here.
  */
-static Vec2f lineUnitVector(Line const &line)
+static Vec2f lineUnitVector(const Line &line)
 {
     ddouble len = M_ApproxDistance(line.direction().x, line.direction().y);
     if(len)
@@ -524,7 +524,7 @@ static void drawParticles(dint rtype, bool withBlend)
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     Vec3f const leftoff     = viewData->upVec + viewData->sideVec;
     Vec3f const rightoff    = viewData->upVec - viewData->sideVec;
 
@@ -574,12 +574,12 @@ static void drawParticles(dint rtype, bool withBlend)
     blendmode_t mode = BM_NORMAL, newMode;
     for (; i < numParts; ++i)
     {
-        OrderedParticle const *slot = &order[i];
-        Generator const *gen        = slot->generator;
-        ParticleInfo const &pinfo   = gen->particleInfo()[slot->particleId];
+        const OrderedParticle *slot = &order[i];
+        const Generator *gen        = slot->generator;
+        const ParticleInfo &pinfo   = gen->particleInfo()[slot->particleId];
 
-        GeneratorParticleStage const *st = &gen->stages[pinfo.stage];
-        ded_ptcstage_t const *stDef      = &gen->def->stages[pinfo.stage];
+        const GeneratorParticleStage *st = &gen->stages[pinfo.stage];
+        const ded_ptcstage_t *stDef      = &gen->def->stages[pinfo.stage];
 
         dshort stageType = st->type;
         if (stageType >= PTC_TEXTURE && stageType < PTC_TEXTURE + MAX_PTC_TEXTURES &&
@@ -616,7 +616,7 @@ static void drawParticles(dint rtype, bool withBlend)
         }
 
         // Is there a next stage for this particle?
-        ded_ptcstage_t const *nextStDef;
+        const ded_ptcstage_t *nextStDef;
         if (pinfo.stage >= gen->def->stages.size() - 1 ||
             !gen->stages[pinfo.stage + 1].type)
         {
@@ -740,7 +740,7 @@ static void drawParticles(dint rtype, bool withBlend)
             else if(flatOnWall)
             {
                 DE_ASSERT(pinfo.contact);
-                Line const &contact = *pinfo.contact;
+                const Line &contact = *pinfo.contact;
 
                 // There will be a slight approximation on the XY plane since
                 // the particles aren't that accurate when it comes to wall

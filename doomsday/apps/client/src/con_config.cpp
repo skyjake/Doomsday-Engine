@@ -66,8 +66,8 @@ static void writeHeaderComment(de::Writer &out)
     else
     {
         out.writeText(Stringf("# %s %s / " DOOMSDAY_NICENAME " " DOOMSDAY_VERSION_TEXT "\n",
-                (char const *) gx.GetPointer(DD_PLUGIN_NAME),
-                (char const *) gx.GetPointer(DD_PLUGIN_VERSION_SHORT)));
+                (const char *) gx.GetPointer(DD_PLUGIN_NAME),
+                (const char *) gx.GetPointer(DD_PLUGIN_VERSION_SHORT)));
     }
 
     out.writeText("# This configuration file is generated automatically. Each line is a\n"
@@ -75,7 +75,7 @@ static void writeHeaderComment(de::Writer &out)
                   "# for your own startup commands.\n\n");
 }
 
-static int writeVariableToFileWorker(knownword_t const *word, void *context)
+static int writeVariableToFileWorker(const knownword_t *word, void *context)
 {
     de::Writer *out = reinterpret_cast<de::Writer *>(context);
     DE_ASSERT(out != 0);
@@ -87,10 +87,10 @@ static int writeVariableToFileWorker(knownword_t const *word, void *context)
     if (var->flags & CVF_NO_ARCHIVE)
         return 0;
 
-    AutoStr const *path = CVar_ComposePath(var);
+    const AutoStr *path = CVar_ComposePath(var);
 
     // First print the comment (help text).
-    if (char const *str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION))
+    if (const char *str = DH_GetString(DH_Find(Str_Text(path)), HST_DESCRIPTION))
     {
         out->writeText(String(str).addLinePrefix("# ") + "\n");
     }
@@ -135,7 +135,7 @@ static void writeVariablesToFile(de::Writer &out)
     Con_IterateKnownWords(0, WT_CVAR, writeVariableToFileWorker, &out);
 }
 
-static int writeAliasToFileWorker(knownword_t const *word, void *context)
+static int writeAliasToFileWorker(const knownword_t *word, void *context)
 {
     de::Writer *out = reinterpret_cast<de::Writer *>(context);
     DE_ASSERT(out != 0);
@@ -155,7 +155,7 @@ static void writeAliasesToFile(de::Writer &out)
     Con_IterateKnownWords(0, WT_CALIAS, writeAliasToFileWorker, &out);
 }
 
-static bool writeConsoleState(Path const &filePath)
+static bool writeConsoleState(const Path &filePath)
 {
     if (filePath.isEmpty()) return false;
 
@@ -182,7 +182,7 @@ static bool writeConsoleState(Path const &filePath)
 
         file.flush();
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_SCR_WARNING("Failed to open \"%s\" for writing: %s")
                 << filePath << er.asText();
@@ -192,7 +192,7 @@ static bool writeConsoleState(Path const &filePath)
 }
 
 #ifdef __CLIENT__
-static bool writeBindingsState(Path const &filePath)
+static bool writeBindingsState(const Path &filePath)
 {
     if (filePath.isEmpty()) return false;
 
@@ -234,7 +234,7 @@ static bool writeBindingsState(Path const &filePath)
             context.forAllImpulseBindings([&out] (CompiledImpulseBindingRecord &rec)
             {
                 ImpulseBinding bind(rec);
-                PlayerImpulse const *impulse = P_PlayerImpulsePtr(rec.compiled().impulseId);
+                const PlayerImpulse *impulse = P_PlayerImpulsePtr(rec.compiled().impulseId);
                 DE_ASSERT(impulse);
 
                 out.writeText(Stringf("bindcontrol local%i-%s \"%s\"\n",
@@ -250,7 +250,7 @@ static bool writeBindingsState(Path const &filePath)
         file.flush();
         return true;
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOG_SCR_WARNING("Failed opening \"%s\" for writing: %s")
                 << filePath << er.asText();
@@ -259,7 +259,7 @@ static bool writeBindingsState(Path const &filePath)
 }
 #endif // __CLIENT__
 
-static bool writeState(Path const &filePath, Path const &bindingsFileName = "")
+static bool writeState(const Path &filePath, const Path &bindingsFileName = "")
 {
     if (!filePath.isEmpty() && (flagsAllow & CPCF_ALLOW_SAVE_STATE))
     {
@@ -289,14 +289,14 @@ void Con_SetAllowed(int flags)
     }
 }
 
-bool Con_ParseCommands(File const &file, int flags)
+bool Con_ParseCommands(const File &file, int flags)
 {
     LOG_SCR_MSG("Parsing console commands in %s...") << file.description();
 
     return Con_Parse(file, (flags & CPCF_SILENT) != 0);
 }
 
-bool Con_ParseCommands(NativePath const &nativePath, int flags)
+bool Con_ParseCommands(const NativePath &nativePath, int flags)
 {
     if (nativePath.exists())
     {
@@ -306,7 +306,7 @@ bool Con_ParseCommands(NativePath const &nativePath, int flags)
     return false;
 }
 
-void Con_SetDefaultPath(Path const &path)
+void Con_SetDefaultPath(const Path &path)
 {
     cfgFile = path;
 }

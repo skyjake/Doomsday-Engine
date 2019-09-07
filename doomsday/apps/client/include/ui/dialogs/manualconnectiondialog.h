@@ -31,10 +31,10 @@
 class ManualConnectionDialog : public de::InputDialog, public de::IPersistent
 {
 public:
-    DE_AUDIENCE(Selection, void manualConnectionSelected(de::ui::Item const *))
+    DE_AUDIENCE(Selection, void manualConnectionSelected(const de::ui::Item *))
 
 public:
-    ManualConnectionDialog(de::String const &name = "manualconnection");
+    ManualConnectionDialog(const de::String &name = "manualconnection");
 
     /**
      * Enables or disables joining the selected game when the user clicks on a
@@ -50,7 +50,7 @@ public:
 
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator << (const de::PersistentState &fromState);
 
 protected:
     void finish(int result);

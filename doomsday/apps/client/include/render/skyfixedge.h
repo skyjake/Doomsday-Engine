@@ -45,7 +45,7 @@ public:
     public:
         Event(SkyFixEdge &owner, double distance = 0);
 
-        bool operator < (Event const &other) const;
+        bool operator < (const Event &other) const;
 
         double distance() const;
 
@@ -62,8 +62,8 @@ public:
      */
     SkyFixEdge(HEdge &hedge, FixType fixType, int edge, float materialOffsetS = 0);
 
-    Vec3d const &pOrigin() const;
-    Vec3d const &pDirection() const;
+    const Vec3d &pOrigin() const;
+    const Vec3d &pDirection() const;
 
     Vec2f materialOrigin() const;
 
@@ -71,15 +71,15 @@ public:
     bool isValid() const;
 
     /// Implement IEdge.
-    Event const &first() const;
+    const Event &first() const;
 
     /// Implement IEdge.
-    Event const &last() const;
+    const Event &last() const;
 
-    inline Event const &bottom() const { return first(); }
-    inline Event const &top() const { return last(); }
+    inline const Event &bottom() const { return first(); }
+    inline const Event &top() const { return last(); }
 
-    Event const &at(EventIndex index) const;
+    const Event &at(EventIndex index) const;
 
 private:
     DE_PRIVATE(d)

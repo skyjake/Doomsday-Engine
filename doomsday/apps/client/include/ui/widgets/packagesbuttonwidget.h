@@ -35,13 +35,13 @@ public:
 public:
     PackagesButtonWidget();
 
-    void setDialogTitle(de::String const &title);
-    void setDialogIcon(de::DotPath const &imageId);
-    void setGameProfile(GameProfile const &profile);
+    void setDialogTitle(const de::String &title);
+    void setDialogIcon(const de::DotPath &imageId);
+    void setGameProfile(const GameProfile &profile);
     void setSetupCallback(std::function<void (PackagesDialog &dialog)> func);
-    void setLabelPrefix(de::String const &labelPrefix);
-    void setNoneLabel(de::String const &noneLabel);
-    void setOverrideLabel(de::String const &overrideLabel);
+    void setLabelPrefix(const de::String &labelPrefix);
+    void setNoneLabel(const de::String &noneLabel);
+    void setOverrideLabel(const de::String &overrideLabel);
     void setPackages(de::StringList packageIds);
 
     de::StringList packages() const;

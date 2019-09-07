@@ -117,16 +117,16 @@ struct variantspecification_t
     int logicalAnisoLevel() const;
 
     variantspecification_t();
-    variantspecification_t(variantspecification_t const &other);
+    variantspecification_t(const variantspecification_t &other);
 
     /**
      * Magnification, Anisotropic filter level and GL texture wrap modes are
      * handled through dynamic changes to GL's texture environment state.
      * Consequently, they are ignored during spec equality comparison.
      */
-    bool operator == (variantspecification_t const &other) const;
+    bool operator == (const variantspecification_t &other) const;
 
-    inline bool operator != (variantspecification_t const &other) const {
+    inline bool operator != (const variantspecification_t &other) const {
         return !(*this == other);
     }
 };
@@ -145,9 +145,9 @@ struct detailvariantspecification_t
 {
     uint8_t contrast;
 
-    bool operator == (detailvariantspecification_t const &other) const;
+    bool operator == (const detailvariantspecification_t &other) const;
 
-    inline bool operator != (detailvariantspecification_t const &other) const {
+    inline bool operator != (const detailvariantspecification_t &other) const {
         return !(*this == other);
     }
 };
@@ -167,11 +167,11 @@ public:
 
 public:
     TextureVariantSpec(texturevariantspecificationtype_t type = TST_GENERAL);
-    TextureVariantSpec(TextureVariantSpec const &other);
+    TextureVariantSpec(const TextureVariantSpec &other);
 
-    bool operator == (TextureVariantSpec const &other) const;
+    bool operator == (const TextureVariantSpec &other) const;
 
-    inline bool operator != (TextureVariantSpec const &other) const {
+    inline bool operator != (const TextureVariantSpec &other) const {
         return !(*this == other);
     }
 

@@ -53,7 +53,7 @@ DE_PIMPL(MainWindow)
 
     void setupUI()
     {
-        //Style const &style = Style::get();
+        //const Style &style = Style::get();
 
         shortcuts = new GlobalShortcuts;
         root.add(shortcuts);
@@ -138,7 +138,7 @@ DE_PIMPL(MainWindow)
     }
 };
 
-MainWindow::MainWindow(String const &id)
+MainWindow::MainWindow(const String &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
@@ -181,7 +181,7 @@ void MainWindow::postDraw()
     Garbage_Recycle();
 }
 
-//bool MainWindow::handleFallbackEvent(Event const &)
+//bool MainWindow::handleFallbackEvent(const Event &)
 //{
 //    // Handle event at a global level, if appropriate.
 //    return false;

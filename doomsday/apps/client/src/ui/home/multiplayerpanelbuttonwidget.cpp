@@ -88,7 +88,7 @@ DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
         self().panel().setContent(info);
         self().panel().open();
 
-        extra->setPopup([this] (PopupButtonWidget const &) -> PopupWidget * {
+        extra->setPopup([this] (const PopupButtonWidget &) -> PopupWidget * {
             auto *dlg = new ServerInfoDialog(serverInfo);
             dlg->audienceForJoinGame() += [this](){ self().joinGame(); };
             return dlg;
@@ -105,7 +105,7 @@ DE_GUI_PIMPL(MultiplayerPanelButtonWidget)
         ClientApp::serverLink().connectToServerAndChangeGameAsync(serverInfo);
     }
 
-    bool hasConfig(String const &token) const
+    bool hasConfig(const String &token) const
     {
         return gameConfig.containsWord(token);
     }
@@ -143,7 +143,7 @@ void MultiplayerPanelButtonWidget::itemRightClicked()
     d->extra->trigger();
 }
 
-void MultiplayerPanelButtonWidget::updateContent(ServerInfo const &info)
+void MultiplayerPanelButtonWidget::updateContent(const ServerInfo &info)
 {
     d->serverInfo = info;
     d->gameConfig = info.gameConfig();
@@ -173,7 +173,7 @@ void MultiplayerPanelButtonWidget::updateContent(ServerInfo const &info)
     String infoText = String(info.map()) + " " DIM_MDASH " ";
     if (DoomsdayApp::games().contains(info.gameId()))
     {
-        auto const &game = DoomsdayApp::games()[info.gameId()];
+        const auto &game = DoomsdayApp::games()[info.gameId()];
         infoText += game.title();
         d->joinButton->enable();
 

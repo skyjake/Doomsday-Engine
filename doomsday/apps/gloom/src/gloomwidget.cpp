@@ -84,7 +84,7 @@ User &GloomWidget::user()
     return d->user;
 }
 
-void GloomWidget::setCameraPosition(Vec3f const &pos)
+void GloomWidget::setCameraPosition(const Vec3f &pos)
 {
     d->user.setPosition(pos);
 }
@@ -120,7 +120,7 @@ void GloomWidget::setWorld(World *world)
             {
                 d->world->glInit();
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_ERROR("Failed to initialize world for drawing: %s") << er.asText();
             }
@@ -161,7 +161,7 @@ void GloomWidget::drawContent()
     }
 }
 
-bool GloomWidget::handleEvent(Event const &event)
+bool GloomWidget::handleEvent(const Event &event)
 {
     if (event.isKey())
     {

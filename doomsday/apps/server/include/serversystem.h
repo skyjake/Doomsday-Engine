@@ -66,9 +66,9 @@ public:
      * The client is removed from the game immediately. This is used when the
      * server needs to terminate a client's connection abnormally.
      */
-    void terminateNode(de::Id const &id);
+    void terminateNode(const de::Id &id);
 
-    RemoteUser &user(de::Id const &id) const;
+    RemoteUser &user(const de::Id &id) const;
 
     /**
      * A network node wishes to become a real client.
@@ -90,7 +90,7 @@ public:
      */
     void printStatus();
 
-    void timeChanged(de::Clock const &);
+    void timeChanged(const de::Clock &);
 
 protected:
     void handleIncomingConnection();

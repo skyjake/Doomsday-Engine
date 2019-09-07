@@ -46,7 +46,7 @@ public:
     // Events.
     void update();
     void drawContent();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
     // Implements ICamera.
     de::Vec3f cameraPosition() const;

@@ -67,7 +67,7 @@ DE_API_TYPEDEF(FR)
 {
     de_api_t api;
 
-    fontid_t (*ResolveUri)(struct uri_s const *uri);
+    fontid_t (*ResolveUri)(const struct uri_s *uri);
 
     /// @return  Unique identifier associated with the current font.
     fontid_t (*Font)(void);

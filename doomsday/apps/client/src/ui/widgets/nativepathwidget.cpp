@@ -81,7 +81,7 @@ void NativePathWidget::setFilters(const FileDialog::FileTypes &filters)
     d->filters = filters;
 }
 
-void NativePathWidget::setBlankText(String const &text)
+void NativePathWidget::setBlankText(const String &text)
 {
     d->blankText = text;
     setText(d->labelText());

@@ -73,7 +73,7 @@ DE_PIMPL(Environment)
         release();
     }
 
-    void assetAvailabilityChanged(String const &identifier,
+    void assetAvailabilityChanged(const String &identifier,
                                   filesys::AssetObserver::Event event)
     {
         LOG_RES_MSG("Texture asset \"%s\" is now %s")
@@ -94,7 +94,7 @@ DE_PIMPL(Environment)
         }
     }
 
-    void addMapsFromAsset(String const &mapId, Package::Asset const &asset)
+    void addMapsFromAsset(const String &mapId, const Package::Asset &asset)
     {
         EnvMaps env;
 
@@ -123,11 +123,11 @@ DE_PIMPL(Environment)
         }
     }
 
-    void loadCubeMap(GLTexture &tex, String const &path)
+    void loadCubeMap(GLTexture &tex, const String &path)
     {
         try
         {
-            ImageFile const &imgFile = App::rootFolder().locate<ImageFile const>(path);
+            const ImageFile &imgFile = App::rootFolder().locate<ImageFile const>(path);
 
             LOG_GL_MSG("Loading reflection cube map %s") << imgFile.description();
 
@@ -141,7 +141,7 @@ DE_PIMPL(Environment)
             tex.setImage(gfx::PositiveY, img.subImage(Rectanglei(5*size.x, 0, size.x, size.y)));
             tex.generateMipmap();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_GL_WARNING("Failed to load reflection cube map from path \"%s\": %s")
                 << path << er.asText();
@@ -178,7 +178,7 @@ DE_PIMPL(Environment)
         }
     }
 
-    void loadEnvMaps(EnvMaps const &env)
+    void loadEnvMaps(const EnvMaps &env)
     {
         DE_ASSERT(!(env.interior.isEmpty() && env.exterior.isEmpty()));
         if (!env.exterior.isEmpty())
@@ -197,12 +197,12 @@ void Environment::glDeinit()
     d->release();
 }
 
-GLTexture const &Environment::defaultReflection() const
+const GLTexture &Environment::defaultReflection() const
 {
     return d->reflectionTextures[Impl::Interior];
 }
 
-GLTexture const &Environment::reflectionInSubsector(world::Subsector const *subsec) const
+const GLTexture &Environment::reflectionInSubsector(const world::Subsector *subsec) const
 {
     if (!subsec)
     {

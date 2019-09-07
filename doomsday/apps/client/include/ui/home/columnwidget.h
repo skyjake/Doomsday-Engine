@@ -34,13 +34,13 @@ public:
     DE_AUDIENCE(Activity, void mouseActivity(const ColumnWidget *columnWidget))
 
 public:
-    ColumnWidget(de::String const &name = {});
+    ColumnWidget(const de::String &name = {});
 
-    void setBackgroundImage(de::DotPath const &imageId);
+    void setBackgroundImage(const de::DotPath &imageId);
 
     de::ScrollAreaWidget &scrollArea();
     HeaderWidget &header();
-    de::Rule const &maximumContentWidth() const;
+    const de::Rule &maximumContentWidth() const;
     de::Variable *configVariable() const;
 
     virtual de::String tabHeading() const = 0;
@@ -50,8 +50,8 @@ public:
     bool               isHighlighted() const;
 
     // Events.
-    bool dispatchEvent(de::Event const &event,
-                       bool (de::Widget::*memberFunc)(de::Event const &)) override;
+    bool dispatchEvent(const de::Event &event,
+                       bool (de::Widget::*memberFunc)(const de::Event &)) override;
     void update() override;
 
 protected:

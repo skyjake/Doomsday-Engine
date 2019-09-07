@@ -74,7 +74,7 @@ DE_API_TYPEDEF(B)
 {
     de_api_t api;
 
-    void (*SetContextFallback)(char const *name, int (*responderFunc)(event_t *));
+    void (*SetContextFallback)(const char *name, int (*responderFunc)(event_t *));
 
     /**
      * Looks through the bindings to find the ones that are bound to the
@@ -89,7 +89,7 @@ DE_API_TYPEDEF(B)
      *
      * @return  Number of bindings found for the command.
      */
-    int  (*BindingsForCommand)(char const *cmd, char *buf, size_t bufSize);
+    int  (*BindingsForCommand)(const char *cmd, char *buf, size_t bufSize);
 
     /**
      * Looks through the bindings to find the ones that are bound to the
@@ -103,7 +103,7 @@ DE_API_TYPEDEF(B)
      *
      * @return  Number of bindings found for the command.
      */
-    int  (*BindingsForControl)(int localPlayer, char const *controlName, int inverse, char *buf, size_t bufSize);
+    int  (*BindingsForControl)(int localPlayer, const char *controlName, int inverse, char *buf, size_t bufSize);
 
     /**
      * Return the key code that corresponds the given key identifier name.

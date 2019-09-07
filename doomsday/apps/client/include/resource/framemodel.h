@@ -76,7 +76,7 @@ public:
         de::Vec3f max;
         de::String name;
 
-        Frame(FrameModel &model, de::String const &name = de::String())
+        Frame(FrameModel &model, const de::String &name = de::String())
             : model(model), name(name)
         {}
 
@@ -94,7 +94,7 @@ public:
         de::String name;
         res::Texture *texture; // Not owned.
 
-        Skin(de::String const &name = de::String(), res::Texture *texture = 0)
+        Skin(const de::String &name = de::String(), res::Texture *texture = 0)
             : name(name), texture(texture)
         {}
     };
@@ -214,7 +214,7 @@ public:
     /**
      * Provides access to the model animation frames, for efficient traversal.
      */
-    Frames const &frames() const;
+    const Frames &frames() const;
 
     /**
      * Clear all model animation frames.
@@ -257,7 +257,7 @@ public:
     /**
      * Provides access to the model skins, for efficient traversal.
      */
-    Skins const &skins() const;
+    const Skins &skins() const;
 
     /**
      * Clear all model skin assignments.
@@ -269,7 +269,7 @@ public:
      * model with the highest degree of geometric fidelity (i.e., detail level
      * zero).
      */
-    Primitives const &primitives() const;
+    const Primitives &primitives() const;
 
     /**
      * Returns the total number of vertices used at detail level zero.
@@ -297,10 +297,10 @@ public:
     /**
      * Provides readonly access to the level of detail information.
      */
-    DetailLevels const &lods() const;
+    const DetailLevels &lods() const;
 
     /// @todo Refactor away.
-    de::BitArray const &lodVertexUsage() const;
+    const de::BitArray &lodVertexUsage() const;
 
 private:
     DE_PRIVATE(d)

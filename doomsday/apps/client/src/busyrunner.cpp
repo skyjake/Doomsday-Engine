@@ -167,7 +167,7 @@ DE_PIMPL_NOREF(BusyRunner)
     }
 
 #if 0
-    void busyModeAborted(String const &) override
+    void busyModeAborted(const String &) override
     {
         Loop::mainCall([this] ()
         {

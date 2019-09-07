@@ -49,7 +49,7 @@ DE_PIMPL(ManualConnectionDialog)
         ClientApp::serverLink().audienceForDiscovery() += this;
     }
 
-    void serversDiscovered(ServerLink const &link) override
+    void serversDiscovered(const ServerLink &link) override
     {
         if (querying)
         {
@@ -84,13 +84,13 @@ DE_PIMPL(ManualConnectionDialog)
         return self().buttonWidget("Connect");
     }
 
-    void aboutToJoinMultiplayerGame(ServerInfo const &) override
+    void aboutToJoinMultiplayerGame(const ServerInfo &) override
     {
         self().accept();
     }
 };
 
-ManualConnectionDialog::ManualConnectionDialog(String const &name)
+ManualConnectionDialog::ManualConnectionDialog(const String &name)
     : InputDialog(name), d(new Impl(this))
 {
     area().enableIndicatorDraw(true);
@@ -106,10 +106,10 @@ ManualConnectionDialog::ManualConnectionDialog(String const &name)
     d->servers = new MultiplayerServerMenuWidget(MultiplayerServerMenuWidget::DirectDiscoveryOnly);
     d->servers->audienceForAboutToJoin() += d;
     d->servers->margins().setLeft("dialog.gap");
-    /*connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
-            this,     SIGNAL(selected(de::ui::Item const *)));
-    connect(d->servers, SIGNAL(sessionSelected(de::ui::Item const *)),
-            this,     SLOT  (serverSelected(de::ui::Item const *)));*/
+    /*connect(d->servers, SIGNAL(sessionSelected(const de::ui::Item *)),
+            this,     SIGNAL(selected(const de::ui::Item *)));
+    connect(d->servers, SIGNAL(sessionSelected(const de::ui::Item *)),
+            this,     SLOT  (serverSelected(const de::ui::Item *)));*/
     d->servers->rule().setInput(Rule::Width, rule().width() - margins().width());
     d->fold->setContent(d->servers);
     area().add(d->fold);
@@ -147,7 +147,7 @@ void ManualConnectionDialog::operator>>(PersistentState &toState) const
     toState.objectNamespace().set(name() + ".address", d->usedAddress);
 }
 
-void ManualConnectionDialog::operator<<(PersistentState const &fromState)
+void ManualConnectionDialog::operator<<(const PersistentState &fromState)
 {
     d->usedAddress = fromState[name() + ".address"];
     editor().setText(d->usedAddress);
@@ -213,7 +213,7 @@ void ManualConnectionDialog::validate()
 }
 
 /*
-void ManualConnectionDialog::serverSelected(ui::Item const *item)
+void ManualConnectionDialog::serverSelected(const ui::Item *item)
 {
     if (d->autoJoin)
     {

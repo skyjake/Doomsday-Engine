@@ -125,7 +125,7 @@ DE_PIMPL_NOREF(ImpulseAccumulator)
         {
             db.triggered = true;
 
-            PlayerImpulse const &impulse = getImpulse();
+            const PlayerImpulse &impulse = getImpulse();
 
             // Compose the name of the symbolic event.
             String symbolicName;

@@ -107,7 +107,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
             repo->setSelected(
                 repo->items().findLabel(App::config().gets(VAR_RESOURCE_BROWSER_REPOSITORY(), "")));
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_MSG("Remote repositories not listed in configuration; "
                     "set Config.resource.repositories: %s")
@@ -141,12 +141,12 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         disconnect();
     }
 
-    bool filterItem(ui::Item const &item) const
+    bool filterItem(const ui::Item &item) const
     {
         if (filterTerms.isEmpty()) return true;
 
         DotPath const path(item.label());
-        for (String const &term : filterTerms)
+        for (const String &term : filterTerms)
         {
             bool matched = false;
             for (int i = 0; i < path.segmentCount(); ++i)
@@ -176,7 +176,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         if (oldTerms != filterTerms && shownData)
         {
             shownData->refilter();
-            shownData->stableSort([] (ui::Item const &a, ui::Item const &b)
+            shownData->stableSort([] (const ui::Item &a, const ui::Item &b)
             {
                 return a.label().compare(b.label()) < 0;
             });
@@ -184,7 +184,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         }
     }
 
-    GuiWidget *makeItemWidget(ui::Item const &item, GuiWidget const *parent) override
+    GuiWidget *makeItemWidget(const ui::Item &item, const GuiWidget *parent) override
     {
         if (parent == category)
         {
@@ -202,7 +202,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
                                   HomeItemWidget::WithoutIcon);
     }
 
-    void updateItemWidget(GuiWidget &widget, ui::Item const &item) override
+    void updateItemWidget(GuiWidget &widget, const ui::Item &item) override
     {
         if (widget.parentGuiWidget() == category)
         {
@@ -227,7 +227,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
     {
         if (repo->isValidSelection())
         {
-            auto const &selItem = repo->selectedItem();
+            const auto &selItem = repo->selectedItem();
             App::config().set(VAR_RESOURCE_BROWSER_REPOSITORY(), selItem.label());
             connect(selItem.data().asText());
         }
@@ -250,7 +250,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
         });
     }
 
-    void remoteRepositoryStatusChanged(String const &repository, RFRelay::Status status) override
+    void remoteRepositoryStatusChanged(const String &repository, RFRelay::Status status) override
     {
         if (repository == connectedRepository)
         {
@@ -297,7 +297,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
             DE_GUARD(linkBusy);
             // All packages from the remote repository are inserted to the data model.
             std::shared_ptr<ui::ListData> pkgs(new ui::ListData);
-            link().forPackageIds([&pkgs] (String const &id)
+            link().forPackageIds([&pkgs] (const String &id)
             {
                 pkgs->append(new ui::Item(ui::Item::DefaultSemantics, id));
                 return LoopContinue;
@@ -317,7 +317,7 @@ DE_GUI_PIMPL(RepositoryBrowserDialog)
 
         nameList->useDefaultItems();
         shownData.reset(new ui::FilteredData(*newData));
-        shownData->setFilter([this] (ui::Item const &i) { return filterItem(i); });
+        shownData->setFilter([this] (const ui::Item &i) { return filterItem(i); });
         data = newData;
         shownData->sort();
         nameList->setItems(*shownData);

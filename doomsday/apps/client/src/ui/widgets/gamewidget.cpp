@@ -172,7 +172,7 @@ DE_PIMPL(GameWidget)
     }
 };
 
-GameWidget::GameWidget(String const &name)
+GameWidget::GameWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     requestGeometry(false);
@@ -191,7 +191,7 @@ void GameWidget::drawComposited()
     d->drawComposited();
 }
 
-void GameWidget::renderCubeMap(uint size, String const &outputImagePath)
+void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
 {
     int const player = consolePlayer;
     Vec2ui fbSize(size, size);
@@ -323,7 +323,7 @@ void GameWidget::drawContent()
     GLState::pop();
 }
 
-bool GameWidget::handleEvent(Event const &event)
+bool GameWidget::handleEvent(const Event &event)
 {
     /**
      * @todo Event processing should occur here, not during Loop_RunTics().

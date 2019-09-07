@@ -59,14 +59,14 @@ float R_MovementXYZPitch(float momx, float momy, float momz)
 
 angle_t R_ViewPointToAngle(Vec2d point)
 {
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     point -= Vec2d(viewData->current.origin);
     return M_PointXYToAngle(point.x, point.y);
 }
 
 coord_t R_ViewPointDistance(coord_t x, coord_t y)
 {
-    Vec3d const &viewOrigin = viewPlayer->viewport().current.origin;
+    const Vec3d &viewOrigin = viewPlayer->viewport().current.origin;
     coord_t viewOriginv1[2] = { viewOrigin.x, viewOrigin.y };
     coord_t pointv1[2] = { x, y };
     return M_PointDistance(viewOriginv1, pointv1);
@@ -74,8 +74,8 @@ coord_t R_ViewPointDistance(coord_t x, coord_t y)
 
 #endif // __CLIENT__
 
-Vec3d R_ClosestPointOnPlane(Vec3f const &planeNormal_,
-    Vec3d const &planePoint_, Vec3d const &origin_)
+Vec3d R_ClosestPointOnPlane(const Vec3f &planeNormal_,
+    const Vec3d &planePoint_, const Vec3d &origin_)
 {
     vec3f_t planeNormal; V3f_Set(planeNormal, planeNormal_.x, planeNormal_.y, planeNormal_.z);
     vec3d_t planePoint; V3d_Set(planePoint, planePoint_.x, planePoint_.y, planePoint_.z);
@@ -89,7 +89,7 @@ Vec3d R_ClosestPointOnPlane(Vec3f const &planeNormal_,
 void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPlane,
     coord_t width, coord_t offset, coord_t start[2], coord_t end[2])
 {
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     float sinrv, cosrv;
 
     if(alignToViewPlane)
@@ -120,7 +120,7 @@ void R_ProjectViewRelativeLine2D(coord_t const center[2], dd_bool alignToViewPla
 void R_ProjectViewRelativeLine2D(Vec2d const center, bool alignToViewPlane,
     coord_t width, coord_t offset, Vec2d &start, Vec2d &end)
 {
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     float sinrv, cosrv;
 
     if(alignToViewPlane)
@@ -163,7 +163,7 @@ void R_AmplifyColor(de::Vec3f &rgb)
 
 #endif // __CLIENT__
 
-void R_ScaleAmbientRGB(float *out, float const *in, float mul)
+void R_ScaleAmbientRGB(float *out, const float *in, float mul)
 {
     mul = de::clamp(0.f, mul, 1.f);
     for(int i = 0; i < 3; ++i)
@@ -174,9 +174,9 @@ void R_ScaleAmbientRGB(float *out, float const *in, float mul)
     }
 }
 
-bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, Vec3d const &point,
-    float xScale, float yScale, Vec3d const &v1, Vec3d const &v2,
-    Mat3f const &tangentMatrix)
+bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, const Vec3d &point,
+    float xScale, float yScale, const Vec3d &v1, const Vec3d &v2,
+    const Mat3f &tangentMatrix)
 {
     Vec3d const v1ToPoint = v1 - point;
     s[0] = v1ToPoint.dot(tangentMatrix.column(0)/*tangent*/) * xScale + .5f;
@@ -197,9 +197,9 @@ bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, Vec3d const &point,
     return true;
 }
 
-char const *R_NameForBlendMode(blendmode_t mode)
+const char *R_NameForBlendMode(blendmode_t mode)
 {
-    static char const *names[1 + NUM_BLENDMODES] = {
+    static const char *names[1 + NUM_BLENDMODES] = {
         /* invalid */               "(invalid)",
         /* BM_ZEROALPHA */          "zero_alpha",
         /* BM_NORMAL */             "normal",

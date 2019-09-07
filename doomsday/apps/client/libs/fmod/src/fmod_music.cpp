@@ -158,7 +158,7 @@ void fmod_DM_Music_Shutdown(void)
     fmod_Music_Shutdown();
 }
 
-void fmod_Music_SetSoundFont(char const *fileName)
+void fmod_Music_SetSoundFont(const char *fileName)
 {
     if (fileName && fileName[0])
     {

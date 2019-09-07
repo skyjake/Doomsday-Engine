@@ -48,7 +48,7 @@ using namespace world;
 byte bmapShowDebug; // 1 = mobjs, 2 = lines, 3 = BSP leafs, 4 = polyobjs. cvar
 dfloat bmapDebugSize = 1.5f; // cvar
 
-static void drawMobj(mobj_t const &mob)
+static void drawMobj(const mobj_t &mob)
 {
     AABoxd const bounds = Mobj_Bounds(mob);
 
@@ -58,18 +58,18 @@ static void drawMobj(mobj_t const &mob)
     DGL_Vertex2f(bounds.minX, bounds.maxY);
 }
 
-static void drawLine(Line const &line)
+static void drawLine(const Line &line)
 {
     DGL_Vertex2f(line.from().x(), line.from().y());
     DGL_Vertex2f(line.to  ().x(), line.to  ().y());
 }
 
-static void drawSubspace(ConvexSubspace const &subspace)
+static void drawSubspace(const ConvexSubspace &subspace)
 {
     dfloat const scale = de::max(bmapDebugSize, 1.f);
     dfloat const width = (DE_GAMEVIEW_WIDTH / 16) / scale;
 
-    Face const &poly = subspace.poly();
+    const Face &poly = subspace.poly();
     HEdge *base = poly.hedge();
     HEdge *hedge = base;
     do
@@ -125,7 +125,7 @@ static void drawSubspace(ConvexSubspace const &subspace)
     } while ((hedge = &hedge->next()) != base);
 }
 
-static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
+static int drawCellLines(const Blockmap &bmap, const BlockmapCell &cell, void *)
 {
     DGL_Begin(DGL_LINES);
         bmap.forAllInCell(cell, [] (void *object)
@@ -142,7 +142,7 @@ static int drawCellLines(Blockmap const &bmap, BlockmapCell const &cell, void *)
     return false; // Continue iteration.
 }
 
-static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void * /*context*/)
+static int drawCellPolyobjs(const Blockmap &bmap, const BlockmapCell &cell, void * /*context*/)
 {
     DGL_Begin(DGL_LINES);
         bmap.forAllInCell(cell, [] (void *object)
@@ -162,7 +162,7 @@ static int drawCellPolyobjs(Blockmap const &bmap, BlockmapCell const &cell, void
     return false; // Continue iteration.
 }
 
-static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *)
+static int drawCellMobjs(const Blockmap &bmap, const BlockmapCell &cell, void *)
 {
     DGL_Begin(DGL_QUADS);
         bmap.forAllInCell(cell, [] (void *object)
@@ -179,7 +179,7 @@ static int drawCellMobjs(Blockmap const &bmap, BlockmapCell const &cell, void *)
     return false; // Continue iteration.
 }
 
-static int drawCellSubspaces(Blockmap const &bmap, BlockmapCell const &cell, void *)
+static int drawCellSubspaces(const Blockmap &bmap, const BlockmapCell &cell, void *)
 {
     bmap.forAllInCell(cell, [] (void *object)
     {
@@ -194,9 +194,9 @@ static int drawCellSubspaces(Blockmap const &bmap, BlockmapCell const &cell, voi
     return false; // Continue iteration.
 }
 
-static void drawBackground(Blockmap const &bmap)
+static void drawBackground(const Blockmap &bmap)
 {
-    BlockmapCell const &dimensions = bmap.dimensions();
+    const BlockmapCell &dimensions = bmap.dimensions();
 
     // Scale modelview matrix so we can express cell geometry
     // using a cell-sized unit coordinate space.
@@ -238,7 +238,7 @@ static void drawBackground(Blockmap const &bmap)
     DGL_PopMatrix();
 }
 
-static void drawCellInfo(Vec2d const &origin_, char const *info)
+static void drawCellInfo(const Vec2d &origin_, const char *info)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -263,7 +263,7 @@ static void drawCellInfo(Vec2d const &origin_, char const *info)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawBlockmapInfo(Vec2d const &origin_, Blockmap const &blockmap)
+static void drawBlockmapInfo(const Vec2d &origin_, const Blockmap &blockmap)
 {
     DGL_Enable(DGL_TEXTURE_2D);
 
@@ -290,7 +290,7 @@ static void drawBlockmapInfo(Vec2d const &origin_, Blockmap const &blockmap)
     UI_TextOutEx2("Blockmap", &origin, UI_Color(UIC_TITLE), 1, ALIGN_LEFT, DTF_ONLY_SHADOW);
     origin.y += th;
 
-    Vec2ui const &bmapDimensions = blockmap.dimensions();
+    const Vec2ui &bmapDimensions = blockmap.dimensions();
     char buf[80];
     dd_snprintf(buf, 80, "Dimensions:(%u, %u) #%li", bmapDimensions.x, bmapDimensions.y,
                                                     (long) bmapDimensions.y * bmapDimensions.x);
@@ -309,8 +309,8 @@ static void drawBlockmapInfo(Vec2d const &origin_, Blockmap const &blockmap)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawCellInfoBox(Vec2d const &origin, Blockmap const &blockmap,
-    char const *objectTypeName, BlockmapCell const &cell)
+static void drawCellInfoBox(const Vec2d &origin, const Blockmap &blockmap,
+    const char *objectTypeName, const BlockmapCell &cell)
 {
     uint count = blockmap.cellElementCount(cell);
     char info[160]; dd_snprintf(info, 160, "Cell:(%u, %u) %s:#%u", cell.x, cell.y, objectTypeName, count);
@@ -322,13 +322,13 @@ static void drawCellInfoBox(Vec2d const &origin, Blockmap const &blockmap,
  * @param followMobj  Mobj to center/focus the visual on. Can be @c 0.
  * @param cellDrawer  Blockmap cell content drawing callback. Can be @c 0.
  */
-static void drawBlockmap(Blockmap const &bmap, mobj_t *followMobj,
-    int (*cellDrawer) (Blockmap const &, BlockmapCell const &, void *))
+static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
+    int (*cellDrawer) (const Blockmap &, const BlockmapCell &, void *))
 {
     BlockmapCellBlock vCellBlock;
     BlockmapCell vCell;
 
-    BlockmapCell const &dimensions = bmap.dimensions();
+    const BlockmapCell &dimensions = bmap.dimensions();
     Vec2d const cellDimensions = bmap.cellDimensions();
 
     if (followMobj)
@@ -511,9 +511,9 @@ void Rend_BlockmapDebug()
     if (!App_World().hasMap()) return;
     auto &map = App_World().map();
 
-    Blockmap const *blockmap;
-    int (*cellDrawer) (Blockmap const &, BlockmapCell const &, void *);
-    char const *objectTypeName;
+    const Blockmap *blockmap;
+    int (*cellDrawer) (const Blockmap &, const BlockmapCell &, void *);
+    const char *objectTypeName;
     switch (bmapShowDebug)
     {
     default: // Mobjs.

@@ -38,16 +38,16 @@ class FinaleWidget
 {
 public:
     /// Notified when the InFine object is about to be deleted.
-    DE_DEFINE_AUDIENCE(Deletion, void finaleWidgetBeingDeleted(FinaleWidget const &widget))
+    DE_DEFINE_AUDIENCE(Deletion, void finaleWidgetBeingDeleted(const FinaleWidget &widget))
 
 public:
-    explicit FinaleWidget(de::String const &name = de::String());
+    explicit FinaleWidget(const de::String &name = de::String());
     virtual ~FinaleWidget();
 
     DE_CAST_METHODS()
 
 #ifdef __CLIENT__
-    virtual void draw(de::Vec3f const &offset) = 0;
+    virtual void draw(const de::Vec3f &offset) = 0;
 #endif
     virtual void runTicks(/*timespan_t timeDelta*/);
 
@@ -60,19 +60,19 @@ public:
      * Returns the symbolic name of the widget.
      */
     de::String name() const;
-    FinaleWidget &setName(de::String const &newName);
+    FinaleWidget &setName(const de::String &newName);
 
-    animatorvector3_t const &origin() const;
-    FinaleWidget &setOrigin(de::Vec3f const &newOrigin, int steps = 0);
+    const animatorvector3_t &origin() const;
+    FinaleWidget &setOrigin(const de::Vec3f &newOrigin, int steps = 0);
     FinaleWidget &setOriginX(float newX, int steps = 0);
     FinaleWidget &setOriginY(float newY, int steps = 0);
     FinaleWidget &setOriginZ(float newZ, int steps = 0);
 
-    animator_t const &angle() const;
+    const animator_t &angle() const;
     FinaleWidget &setAngle(float newAngle, int steps = 0);
 
-    animatorvector3_t const &scale() const;
-    FinaleWidget &setScale(de::Vec3f const &newScale, int steps = 0);
+    const animatorvector3_t &scale() const;
+    FinaleWidget &setScale(const de::Vec3f &newScale, int steps = 0);
     FinaleWidget &setScaleX(float newScaleX, int steps = 0);
     FinaleWidget &setScaleY(float newScaleY, int steps = 0);
     FinaleWidget &setScaleZ(float newScaleZ, int steps = 0);

@@ -29,11 +29,11 @@ using namespace de;
 
 DE_PIMPL_NOREF(Decoration)
 {
-    MaterialAnimator::Decoration const *source = nullptr;
+    const MaterialAnimator::Decoration *source = nullptr;
     Surface *surface = nullptr;
 };
 
-Decoration::Decoration(MaterialAnimator::Decoration const &source, Vec3d const &origin)
+Decoration::Decoration(const MaterialAnimator::Decoration &source, const Vec3d &origin)
     : MapObject(origin)
     , d(new Impl)
 {
@@ -58,7 +58,7 @@ String Decoration::description() const
     return desc;
 }
 
-MaterialAnimator::Decoration const &Decoration::source() const
+const MaterialAnimator::Decoration &Decoration::source() const
 {
     DE_ASSERT(d->source);
     return *d->source;
@@ -76,7 +76,7 @@ Surface &Decoration::surface()
     throw MissingSurfaceError("Decoration::surface", "No surface is attributed");
 }
 
-Surface const &Decoration::surface() const
+const Surface &Decoration::surface() const
 {
     if(hasSurface()) return *d->surface;
     /// @throw MissingSurfaceError Attempted with no surface attributed.

@@ -27,13 +27,13 @@
 class PackageContentOptionsWidget : public de::GuiWidget
 {
 public:
-    PackageContentOptionsWidget(de::String const &packageId,
-                                de::Rule   const &maxHeight,
-                                de::String const &name = de::String());
+    PackageContentOptionsWidget(const de::String &packageId,
+                                const de::Rule &maxHeight,
+                                const de::String &name = de::String());
 
-    static de::PopupWidget *makePopup(de::String const &packageId,
-                                      de::Rule const &width,
-                                      de::Rule const &maxHeight);
+    static de::PopupWidget *makePopup(const de::String &packageId,
+                                      const de::Rule &width,
+                                      const de::Rule &maxHeight);
 
 private:
     DE_PRIVATE(d)

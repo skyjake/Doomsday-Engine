@@ -31,19 +31,19 @@
 
 using namespace de;
 
-Vertex::Vertex(Mesh &mesh, Vec2d const &origin)
+Vertex::Vertex(Mesh &mesh, const Vec2d &origin)
     : MapElement(DMU_VERTEX)
     , MeshElement(mesh)
 {
     _origin = origin;
 }
 
-Vec2d const &Vertex::origin() const
+const Vec2d &Vertex::origin() const
 {
     return _origin;
 }
 
-void Vertex::setOrigin(Vec2d const &newOrigin)
+void Vertex::setOrigin(const Vec2d &newOrigin)
 {
     if(_origin != newOrigin)
     {
@@ -86,9 +86,9 @@ void Vertex::countLineOwners()
 {
     _onesOwnerCount = _twosOwnerCount = 0;
 
-    if(LineOwner const *firstOwn = firstLineOwner())
+    if(const LineOwner *firstOwn = firstLineOwner())
     {
-        LineOwner const *own = firstOwn;
+        const LineOwner *own = firstOwn;
         do
         {
             if(!own->line().front().hasSector() || !own->line().back().hasSector())
@@ -125,8 +125,8 @@ LineOwner *Vertex::firstLineOwner() const
  * @param point  Coordinates for the corner point are written here. Can be @c nullptr.
  * @param lp     Coordinates for the "extended" point are written here. Can be @c nullptr.
  */
-static void cornerNormalPoint(Vec2d const &lineADirection, ddouble dist1,
-                              Vec2d const &lineBDirection, ddouble dist2,
+static void cornerNormalPoint(const Vec2d &lineADirection, ddouble dist1,
+                              const Vec2d &lineBDirection, ddouble dist2,
                               Vec2d *point, Vec2d *lp)
 {
     // Any work to be done?
@@ -172,7 +172,7 @@ static void cornerNormalPoint(Vec2d const &lineADirection, ddouble dist1,
 /**
  * Returns the width (world units) of a shadow edge (scaled depending on the length of @a edge).
  */
-static ddouble shadowEdgeWidth(Vec2d const &edge)
+static ddouble shadowEdgeWidth(const Vec2d &edge)
 {
     ddouble const normalWidth = 20; //16;
     ddouble const maxWidth    = 60;
@@ -197,8 +197,8 @@ void Vertex::updateShadowOffsets()
     LineOwner *own = base;
     do
     {
-        Line const &lineB = own->line();
-        Line const &lineA = own->next()->line();
+        const Line &lineB = own->line();
+        const Line &lineA = own->next()->line();
 
         Vec2d const rightDir = (&lineB.from() == this?  lineB.direction() : -lineB.direction());
         Vec2d const leftDir  = (&lineA.from() == this? -lineA.direction() :  lineA.direction()) * -1;  // Always flipped.

@@ -114,7 +114,7 @@ DE_GUI_PIMPL(VRSettingsDialog)
     }
 };
 
-VRSettingsDialog::VRSettingsDialog(String const &name)
+VRSettingsDialog::VRSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading), d(new Impl(this))
 {
     heading().setText("3D & VR Settings");

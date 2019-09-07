@@ -104,7 +104,7 @@ static void printMissingMaterialsInDict()
  *
  * @return  Pointer to the found material; otherwise @c 0.
  */
-static Material *findMaterialInDict(String const &materialUriStr)
+static Material *findMaterialInDict(const String &materialUriStr)
 {
     if(materialUriStr.isEmpty()) return 0;
 
@@ -135,7 +135,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
         {
             material = &world::Materials::get().material(materialUri);
         }
-        catch(Resources::MissingResourceManifestError const &)
+        catch(const Resources::MissingResourceManifestError &)
         {
             // Try any scheme.
             try
@@ -143,7 +143,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
                 materialUri.setScheme("");
                 material = &world::Materials::get().material(materialUri);
             }
-            catch(Resources::MissingResourceManifestError const &)
+            catch(const Resources::MissingResourceManifestError &)
             {}
         }
 
@@ -158,7 +158,7 @@ static Material *findMaterialInDict(String const &materialUriStr)
     return material;
 }
 
-static inline Material *findMaterialInDict(ddstring_t const *materialUriStr)
+static inline Material *findMaterialInDict(const ddstring_t *materialUriStr)
 {
     if(!materialUriStr) return 0;
     return findMaterialInDict(Str_Text(materialUriStr));
@@ -177,7 +177,7 @@ world::Map *MPE_TakeMap()
 }
 
 #undef MPE_Begin
-dd_bool MPE_Begin(uri_s const * /*mapUri*/)
+dd_bool MPE_Begin(const uri_s * /*mapUri*/)
 {
     if(!editMapInited)
     {
@@ -213,7 +213,7 @@ int MPE_VertexCreate(coord_t x, coord_t y, int archiveIndex)
 }
 
 #undef MPE_VertexCreatev
-dd_bool MPE_VertexCreatev(int num, coord_t const *values, int *archiveIndices, int *retIndices)
+dd_bool MPE_VertexCreatev(int num, const coord_t *values, int *archiveIndices, int *retIndices)
 {
     ERROR_IF_NOT_INITIALIZED();
 
@@ -260,10 +260,10 @@ int MPE_LineCreate(int v1, int v2, int frontSectorIdx, int backSectorIdx, int fl
 }
 
 #undef MPE_LineAddSide
-void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *topMaterialUri,
+void MPE_LineAddSide(int lineIdx, int sideId, short flags, const ddstring_t *topMaterialUri,
     float topOffsetX, float topOffsetY, float topRed, float topGreen, float topBlue,
-    ddstring_t const *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
-    float middleGreen, float middleBlue, float middleOpacity, ddstring_t const *bottomMaterialUri,
+    const ddstring_t *middleMaterialUri, float middleOffsetX, float middleOffsetY, float middleRed,
+    float middleGreen, float middleBlue, float middleOpacity, const ddstring_t *bottomMaterialUri,
     float bottomOffsetX, float bottomOffsetY, float bottomRed, float bottomGreen,
     float bottomBlue, int archiveIndex)
 {
@@ -299,7 +299,7 @@ void MPE_LineAddSide(int lineIdx, int sideId, short flags, ddstring_t const *top
 }
 
 #undef MPE_PlaneCreate
-int MPE_PlaneCreate(int sectorIdx, coord_t height, ddstring_t const *materialUri,
+int MPE_PlaneCreate(int sectorIdx, coord_t height, const ddstring_t *materialUri,
     float matOffsetX, float matOffsetY, float tintRed, float tintGreen, float tintBlue, float opacity,
     float normalX, float normalY, float normalZ, int archiveIndex)
 {
@@ -335,7 +335,7 @@ int MPE_SectorCreate(float lightlevel, float red, float green, float blue,
 }
 
 #undef MPE_PolyobjCreate
-int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType,
+int MPE_PolyobjCreate(const int *lines, int lineCount, int tag, int sequenceType,
     coord_t originX, coord_t originY, int archiveIndex)
 {
     DE_UNUSED(archiveIndex); /// @todo Use this!
@@ -371,8 +371,8 @@ int MPE_PolyobjCreate(int const *lines, int lineCount, int tag, int sequenceType
 }
 
 #undef MPE_GameObjProperty
-dd_bool MPE_GameObjProperty(char const *entityName, int elementIndex,
-    char const *propertyName, valuetype_t valueType, void *valueAdr)
+dd_bool MPE_GameObjProperty(const char *entityName, int elementIndex,
+    const char *propertyName, valuetype_t valueType, void *valueAdr)
 {
     LOG_AS("MPE_GameObjProperty");
 
@@ -404,7 +404,7 @@ dd_bool MPE_GameObjProperty(char const *entityName, int elementIndex,
         entities.setProperty(propertyDef, elementIndex, valueType, valueAdr);
         return true;
     }
-    catch(Error const &er)
+    catch(const Error &er)
     {
         LOG_WARNING("%s. Ignoring.") << er.asText();
     }

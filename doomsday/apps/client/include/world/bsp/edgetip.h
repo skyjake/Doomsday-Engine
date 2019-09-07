@@ -118,7 +118,7 @@ public:
     ~EdgeTips() { clear(); }
 
     /// @see insert()
-    inline EdgeTips &operator << (EdgeTip const &tip) {
+    inline EdgeTips &operator << (const EdgeTip &tip) {
         insert(tip);
         return *this;
     }
@@ -133,7 +133,7 @@ public:
      * an anti-clockwise (increasing angle) order. @a epsilon is the angle
      * equivalence threshold (in degrees).
      */
-    void insert(EdgeTip const &tip, de::ddouble epsilon = 1.0 / 128) {
+    void insert(const EdgeTip &tip, de::ddouble epsilon = 1.0 / 128) {
         Tips::reverse_iterator after = _tips.rbegin();
         while(after != _tips.rend() && tip.angle() + epsilon < (*after).angle())
         {
@@ -145,22 +145,22 @@ public:
     /**
      * Returns the tip from the set with the smallest angle if not empty.
      */
-    EdgeTip const *smallest() const {
+    const EdgeTip *smallest() const {
         return _tips.empty()? nullptr : &_tips.front();
     }
 
     /**
      * Returns the tip from the set with the largest angle if not empty.
      */
-    EdgeTip const *largest() const {
+    const EdgeTip *largest() const {
         return _tips.empty()? nullptr : &_tips.back();
     }
 
     /**
      * @a epsilon is the angle equivalence threshold (in degrees).
      */
-    EdgeTip const *at(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
-        for(EdgeTip const &tip : _tips)
+    const EdgeTip *at(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
+        for(const EdgeTip &tip : _tips)
         {
             de::ddouble delta = de::abs(tip.angle() - angle);
             if(delta < epsilon || delta > (360.0 - epsilon))
@@ -174,8 +174,8 @@ public:
     /**
      * @a epsilon is the angle equivalence threshold (in degrees).
      */
-    EdgeTip const *after(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
-        for(EdgeTip const &tip : _tips)
+    const EdgeTip *after(de::ddouble angle, de::ddouble epsilon = 1.0 / 128) const {
+        for(const EdgeTip &tip : _tips)
         {
             if(angle + epsilon < tip.angle())
             {

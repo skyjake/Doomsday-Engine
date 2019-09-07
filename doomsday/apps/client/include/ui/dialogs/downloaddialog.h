@@ -31,7 +31,7 @@
 class DownloadDialog : public de::DialogWidget
 {
 public:
-    DownloadDialog(de::String const &name = de::String());
+    DownloadDialog(const de::String &name = de::String());
 
     ~DownloadDialog();
 

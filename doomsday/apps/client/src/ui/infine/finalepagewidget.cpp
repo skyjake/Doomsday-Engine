@@ -82,7 +82,7 @@ DE_PIMPL_NOREF(FinalePageWidget)
         DE_ASSERT(children.isEmpty());
     }
 
-    void finaleWidgetBeingDeleted(FinaleWidget const &widget)
+    void finaleWidgetBeingDeleted(const FinaleWidget &widget)
     {
         DE_ASSERT(children.contains(&const_cast<FinaleWidget &>(widget)));
         children.removeOne(&const_cast<FinaleWidget &>(widget));
@@ -96,7 +96,7 @@ FinalePageWidget::~FinalePageWidget()
 {}
 
 #ifdef __CLIENT__
-static inline MaterialVariantSpec const &uiMaterialSpec()
+static inline const MaterialVariantSpec &uiMaterialSpec()
 {
     return App_Resources().materialSpec(UiContext, 0, 0, 0, 0,
                                              GL_REPEAT, GL_REPEAT, 0, 1, 0,
@@ -261,7 +261,7 @@ FinaleWidget *FinalePageWidget::removeChild(FinaleWidget *widgetToRemove)
     return widgetToRemove;
 }
 
-FinalePageWidget::Children const &FinalePageWidget::children() const
+const FinalePageWidget::Children &FinalePageWidget::children() const
 {
     return d->children;
 }
@@ -277,31 +277,31 @@ FinalePageWidget &FinalePageWidget::setBackgroundMaterial(world::Material *newMa
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundTopColor(Vec3f const &newColor, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundTopColor(const Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->bg.topColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundTopColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundTopColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->bg.topColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundBottomColor(Vec3f const &newColor, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundBottomColor(const Vec3f &newColor, int steps)
 {
     AnimatorVector3_Set(d->bg.bottomColor, newColor.x, newColor.y, newColor.z, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setBackgroundBottomColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
+FinalePageWidget &FinalePageWidget::setBackgroundBottomColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->bg.bottomColor, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setOffset(Vec3f const &newOffset, int steps)
+FinalePageWidget &FinalePageWidget::setOffset(const Vec3f &newOffset, int steps)
 {
     AnimatorVector3_Set(d->offset, newOffset.x, newOffset.y, newOffset.z, steps);
     return *this;
@@ -325,13 +325,13 @@ FinalePageWidget &FinalePageWidget::setOffsetZ(float y, int steps)
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setFilterColorAndAlpha(Vec4f const &newColorAndAlpha, int steps)
+FinalePageWidget &FinalePageWidget::setFilterColorAndAlpha(const Vec4f &newColorAndAlpha, int steps)
 {
     AnimatorVector4_Set(d->filter, newColorAndAlpha.x, newColorAndAlpha.y, newColorAndAlpha.z, newColorAndAlpha.w, steps);
     return *this;
 }
 
-FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vec3f const &newColor, int steps)
+FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, const Vec3f &newColor, int steps)
 {
     if (VALID_FIPAGE_PREDEFINED_COLOR(idx))
     {
@@ -344,7 +344,7 @@ FinalePageWidget &FinalePageWidget::setPredefinedColor(uint idx, Vec3f const &ne
     return *this;
 }
 
-animatorvector3_t const *FinalePageWidget::predefinedColor(uint idx)
+const animatorvector3_t *FinalePageWidget::predefinedColor(uint idx)
 {
     if (VALID_FIPAGE_PREDEFINED_COLOR(idx))
     {

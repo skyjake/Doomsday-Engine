@@ -58,32 +58,32 @@ public:
         int sysFlareIdx;         ///< @todo Remove me
 
     public:
-        AnimationStage(int tics, float variance, de::Vec2f const &origin, float elevation,
-                       de::Vec3f const &color, float radius, float haloRadius,
-                       LightRange const &lightLevels, ClientTexture *ceilingTexture,
+        AnimationStage(int tics, float variance, const de::Vec2f &origin, float elevation,
+                       const de::Vec3f &color, float radius, float haloRadius,
+                       const LightRange &lightLevels, ClientTexture *ceilingTexture,
                        ClientTexture *floorTexture, ClientTexture *texture,
                        ClientTexture *flareTexture, int sysFlareIdx = -1);
-        AnimationStage(AnimationStage const &other);
+        AnimationStage(const AnimationStage &other);
         virtual ~AnimationStage() {}
 
         /**
          * Construct a new AnimationStage from the given @a stageDef.
          */
-        static AnimationStage *fromDef(de::Record const &stageDef);
+        static AnimationStage *fromDef(const de::Record &stageDef);
 
         de::String description() const;
     };
 
 public:
-    LightMaterialDecoration(de::Vec2i const &patternSkip   = de::Vec2i(),
-                            de::Vec2i const &patternOffset = de::Vec2i(),
+    LightMaterialDecoration(const de::Vec2i &patternSkip   = de::Vec2i(),
+                            const de::Vec2i &patternOffset = de::Vec2i(),
                             bool useInterpolation             = true);
     virtual ~LightMaterialDecoration();
 
     /**
      * Construct a new material decoration from the specified definition.
      */
-    static LightMaterialDecoration *fromDef(de::Record const &decorationDef);
+    static LightMaterialDecoration *fromDef(const de::Record &decorationDef);
 
     de::String describe() const;
 
@@ -94,7 +94,7 @@ public:
      *
      * @return  Index of the newly added stage (0 based).
      */
-    int addStage(AnimationStage const &stage);
+    int addStage(const AnimationStage &stage);
 
     /**
      * Lookup an AnimationStage by it's unique @a index.

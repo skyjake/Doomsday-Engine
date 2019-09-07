@@ -33,7 +33,7 @@
 class FinaleTextWidget : public FinaleWidget
 {
 public:
-    FinaleTextWidget(de::String const &name);
+    FinaleTextWidget(const de::String &name);
     virtual ~FinaleTextWidget();
 
     void accelerate();
@@ -47,8 +47,8 @@ public:
      */
     int visLength();
 
-    char const *text() const;
-    FinaleTextWidget &setText(char const *newText);
+    const char *text() const;
+    FinaleTextWidget &setText(const char *newText);
 
     fontid_t font() const;
     FinaleTextWidget &setFont(fontid_t newFont);
@@ -70,13 +70,13 @@ public:
     FinaleTextWidget &setPageColor(uint id);
     FinaleTextWidget &setPageFont(uint id);
 
-    FinaleTextWidget &setColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
-    FinaleTextWidget &setColor(de::Vec3f const &newColor, int steps = 0);
+    FinaleTextWidget &setColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
+    FinaleTextWidget &setColor(const de::Vec3f &newColor, int steps = 0);
     FinaleTextWidget &setAlpha(float alpha, int steps = 0);
 
 protected:
 #ifdef __CLIENT__
-    void draw(de::Vec3f const &offset);
+    void draw(const de::Vec3f &offset);
 #endif
     void runTicks();
 

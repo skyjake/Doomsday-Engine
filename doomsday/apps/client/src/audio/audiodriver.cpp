@@ -51,7 +51,7 @@ DE_PIMPL(AudioDriver)
         zap(iCd);
     }
 
-//    static LibraryFile *tryFindAudioPlugin(String const &name)
+//    static LibraryFile *tryFindAudioPlugin(const String &name)
 //    {
 //        if (!name.isEmpty())
 //        {
@@ -206,7 +206,7 @@ String AudioDriver::statusAsText() const
     return "";
 }
 
-void AudioDriver::load(String const &identifier)
+void AudioDriver::load(const String &identifier)
 {
     LOG_AS("AudioDriver");
 
@@ -285,7 +285,7 @@ String AudioDriver::extensionName() const
     return d->extension;
 }
 
-bool AudioDriver::isAvailable(String const &identifier)
+bool AudioDriver::isAvailable(const String &identifier)
 {
     if (identifier == "dummy") return true;
 #ifndef DE_DISABLE_SDLMIXER

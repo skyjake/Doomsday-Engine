@@ -146,10 +146,10 @@ struct TexModulationData
 #define SOF_SIDE                0x04
 ///@}
 
-void Rend_DrawBBox(Vec3d const &pos, coord_t w, coord_t l, coord_t h, dfloat a,
+void Rend_DrawBBox(const Vec3d &pos, coord_t w, coord_t l, coord_t h, dfloat a,
     dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase = true);
 
-void Rend_DrawArrow(Vec3d const &pos, dfloat a, dfloat s, dfloat const color3f[3], dfloat alpha);
+void Rend_DrawArrow(const Vec3d &pos, dfloat a, dfloat s, dfloat const color3f[3], dfloat alpha);
 
 D_CMD(OpenRendererAppearanceEditor);
 D_CMD(LowRes);
@@ -327,7 +327,7 @@ static Vec3f curSectorLightColor;
 static dfloat curSectorLightLevel;
 static bool firstSubspace;            ///< No range checking for the first one.
 
-using MaterialAnimatorLookup = Hash<Record const *, MaterialAnimator *>;
+using MaterialAnimatorLookup = Hash<const Record *, MaterialAnimator *>;
 
 // State lookup (for speed):
 static const MaterialVariantSpec *lookupMapSurfaceMaterialSpec = nullptr;
@@ -457,7 +457,7 @@ Vec3d Rend_EyeOrigin()
 
 void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, Vec2f viewportSize)
 {
-    viewdata_t const *viewData = &DD_Player(consoleNum)->viewport();
+    const viewdata_t *viewData = &DD_Player(consoleNum)->viewport();
 
     fixedView.reset(new FixedView);
 
@@ -483,7 +483,7 @@ void Rend_UnsetFixedView()
 
 Mat4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
 {
-    viewdata_t const *viewData = &DD_Player(consoleNum)->viewport();
+    const viewdata_t *viewData = &DD_Player(consoleNum)->viewport();
 
     /// @todo vOrigin et al. shouldn't be changed in a getter function. -jk
 
@@ -582,7 +582,7 @@ Mat4f Rend_GetProjectionMatrix(float fixedFov)
            Mat4f::scale(Vec3f(1, 1, -1));
 }
 
-static inline ddouble viewFacingDot(Vec2d const &v1, Vec2d const &v2)
+static inline ddouble viewFacingDot(const Vec2d &v1, const Vec2d &v2)
 {
     // The dot product.
     return (v1.y - v2.y) * (v1.x - Rend_EyeOrigin().x) + (v2.x - v1.x) * (v1.y - Rend_EyeOrigin().z);
@@ -666,7 +666,7 @@ Vec3f Rend_SkyLightColor()
     if (Rend_SkyLightIsEnabled() && ClientApp::world().hasMap())
     {
         Sky &sky = ClientApp::world().map().sky();
-        Vec3f const &ambientColor = sky.ambientColor();
+        const Vec3f &ambientColor = sky.ambientColor();
 
         if (rendSkyLight != oldRendSkyLight
             || !INRANGE_OF(ambientColor.x, oldSkyAmbientColor.x, .001f)
@@ -702,7 +702,7 @@ Vec3f Rend_SkyLightColor()
  * correct light color is *not* that of the subsector (e.g., where map hacks use
  * mapped planes to reference another sector).
  */
-static Vec3f Rend_AmbientLightColor(Sector const &sector)
+static Vec3f Rend_AmbientLightColor(const Sector &sector)
 {
     if (Rend_SkyLightIsEnabled() && sector.hasSkyMaskPlane())
     {
@@ -714,7 +714,7 @@ static Vec3f Rend_AmbientLightColor(Sector const &sector)
     return sector.lightColor();
 }
 
-Vec3f Rend_LuminousColor(Vec3f const &color, dfloat light)
+Vec3f Rend_LuminousColor(const Vec3f &color, dfloat light)
 {
     light = de::clamp(0.f, light, 1.f) * dynlightFactor;
 
@@ -730,7 +730,7 @@ coord_t Rend_PlaneGlowHeight(dfloat intensity)
     return de::clamp<ddouble>(0, GLOW_HEIGHT_MAX * intensity * glowHeightFactor, glowHeightMax);
 }
 
-ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
+ClientMaterial *Rend_ChooseMapSurfaceMaterial(const Surface &surface)
 {
     switch (renderTextures)
     {
@@ -769,8 +769,8 @@ ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface)
  * of sprites. This is necessary because all masked polygons must be
  * rendered back-to-front, or there will be alpha artifacts along edges.
  */
-void Rend_AddMaskedPoly(Vec3f const *rvertices, Vec4f const *rcolors,
-    coord_t wallLength, MaterialAnimator *matAnimator, Vec2f const &origin,
+void Rend_AddMaskedPoly(const Vec3f *rvertices, const Vec4f *rcolors,
+    coord_t wallLength, MaterialAnimator *matAnimator, const Vec2f &origin,
     blendmode_t blendMode, duint lightListIdx, dfloat glow)
 {
     vissprite_t *vis = R_NewVisSprite(VSPR_MASKED_WALL);
@@ -792,7 +792,7 @@ void Rend_AddMaskedPoly(Vec3f const *rvertices, Vec4f const *rcolors,
         // Ensure we've up to date info about the material.
         matAnimator->prepare();
 
-        Vec2ui const &matDimensions = matAnimator->dimensions();
+        const Vec2ui &matDimensions = matAnimator->dimensions();
 
         VS_WALL(vis)->texCoord[0][0] = VS_WALL(vis)->texOffset[0] / matDimensions.x;
         VS_WALL(vis)->texCoord[1][0] = VS_WALL(vis)->texCoord[0][0] + wallLength / matDimensions.x;
@@ -843,7 +843,7 @@ void Rend_AddMaskedPoly(Vec3f const *rvertices, Vec4f const *rcolors,
     {
         // The dynlights will have already been sorted so that the brightest
         // and largest of them is first in the list. So grab that one.
-        ClientApp::renderSystem().forAllSurfaceProjections(lightListIdx, [&vis] (ProjectedTextureData const &tp)
+        ClientApp::renderSystem().forAllSurfaceProjections(lightListIdx, [&vis] (const ProjectedTextureData &tp)
         {
             VS_WALL(vis)->modTex = tp.texture;
             VS_WALL(vis)->modTexCoord[0][0] = tp.topLeft.x;
@@ -863,7 +863,7 @@ void Rend_AddMaskedPoly(Vec3f const *rvertices, Vec4f const *rcolors,
     }
 }
 
-static void quadTexCoords(Vec2f *tc, Vec3f const *rverts, coord_t wallLength, Vec3d const &topLeft)
+static void quadTexCoords(Vec2f *tc, const Vec3f *rverts, coord_t wallLength, const Vec3d &topLeft)
 {
     DE_ASSERT(tc && rverts);
     tc[0].x = tc[1].x = rverts[0].x - topLeft.x;
@@ -873,7 +873,7 @@ static void quadTexCoords(Vec2f *tc, Vec3f const *rverts, coord_t wallLength, Ve
     tc[0].y = tc[3].y + (rverts[3].z - rverts[2].z);
 }
 
-static void lightVertex(Vec4f &color, Vec3f const &vtx, dfloat lightLevel, Vec3f const &ambientColor)
+static void lightVertex(Vec4f &color, const Vec3f &vtx, dfloat lightLevel, const Vec3f &ambientColor)
 {
     dfloat const dist = Rend_PointDist2D(vtx);
 
@@ -909,9 +909,9 @@ static void lightVertex(Vec4f &color, Vec3f const &vtx, dfloat lightLevel, Vec3f
  * @param glowing           Self-luminosity factor (normalized [0..1]).
  * @param luminosityDeltas  Edge luminosity deltas (for walls [left edge, right edge]).
  */
-static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vec3f const *posCoords,
-    MapElement &mapElement, dint /*geomGroup*/, Mat3f const &/*surfaceTangents*/,
-    Vec3f const &color, Vec3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2])
+static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, const Vec3f *posCoords,
+    MapElement &mapElement, dint /*geomGroup*/, const Mat3f &/*surfaceTangents*/,
+    const Vec3f &color, const Vec3f *color2, dfloat glowing, dfloat const luminosityDeltas[2])
 {
     bool const haveWall = is<LineSideSegment>(mapElement);
     //auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
@@ -1010,9 +1010,9 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, Vec3f co
     }
 }
 
-static void makeFlatGeometry(Geometry &verts, duint numVertices, Vec3f const *posCoords,
-    Vec3d const &topLeft, Vec3d const & /*bottomRight*/, MapElement &mapElement, dint geomGroup,
-    Mat3f const &surfaceTangents, dfloat uniformOpacity, Vec3f const &color, Vec3f const *color2,
+static void makeFlatGeometry(Geometry &verts, duint numVertices, const Vec3f *posCoords,
+    const Vec3d &topLeft, const Vec3d & /*bottomRight*/, MapElement &mapElement, dint geomGroup,
+    const Mat3f &surfaceTangents, dfloat uniformOpacity, const Vec3f &color, const Vec3f *color2,
     dfloat glowing, dfloat const luminosityDeltas[2], bool useVertexLighting = true)
 {
     DE_ASSERT(posCoords);
@@ -1046,10 +1046,10 @@ static void makeFlatGeometry(Geometry &verts, duint numVertices, Vec3f const *po
     }
 }
 
-static void makeWallGeometry(Geometry &verts, duint numVertices, Vec3f const *posCoords,
-    Vec3d const &topLeft, Vec3d const & /*bottomRight*/, coord_t sectionWidth,
-    MapElement &mapElement, dint geomGroup, Mat3f const &surfaceTangents, dfloat uniformOpacity,
-    Vec3f const &color, Vec3f const *color2, dfloat glowing, dfloat const luminosityDeltas[2],
+static void makeWallGeometry(Geometry &verts, duint numVertices, const Vec3f *posCoords,
+    const Vec3d &topLeft, const Vec3d & /*bottomRight*/, coord_t sectionWidth,
+    MapElement &mapElement, dint geomGroup, const Mat3f &surfaceTangents, dfloat uniformOpacity,
+    const Vec3f &color, const Vec3f *color2, dfloat glowing, dfloat const luminosityDeltas[2],
     bool useVertexLighting = true)
 {
     DE_ASSERT(posCoords);
@@ -1086,8 +1086,8 @@ static inline dfloat shineVertical(dfloat dy, dfloat dx)
     return ((std::atan(dy/dx) / (PI/2)) + 1) / 2;
 }
 
-static void makeFlatShineGeometry(Geometry &verts, duint numVertices, Vec3f const *posCoords,
-    Geometry const &mainVerts, Vec3f const &shineColor, dfloat shineOpacity)
+static void makeFlatShineGeometry(Geometry &verts, duint numVertices, const Vec3f *posCoords,
+    const Geometry &mainVerts, const Vec3f &shineColor, dfloat shineOpacity)
 {
     DE_ASSERT(posCoords);
 
@@ -1114,13 +1114,13 @@ static void makeFlatShineGeometry(Geometry &verts, duint numVertices, Vec3f cons
     }
 }
 
-static void makeWallShineGeometry(Geometry &verts, duint numVertices, Vec3f const *posCoords,
-    Geometry const &mainVerts, coord_t sectionWidth, Vec3f const &shineColor, dfloat shineOpactiy)
+static void makeWallShineGeometry(Geometry &verts, duint numVertices, const Vec3f *posCoords,
+    const Geometry &mainVerts, coord_t sectionWidth, const Vec3f &shineColor, dfloat shineOpactiy)
 {
     DE_ASSERT(posCoords);
 
-    Vec3f const &topLeft     = posCoords[1];
-    Vec3f const &bottomRight = posCoords[2];
+    const Vec3f &topLeft     = posCoords[1];
+    const Vec3f &bottomRight = posCoords[2];
 
     // Quad surface vector.
     Vec2f const normal = Vec2f( (bottomRight.y - topLeft.y) / sectionWidth,
@@ -1173,9 +1173,9 @@ static void makeWallShineGeometry(Geometry &verts, duint numVertices, Vec3f cons
     }
 }
 
-static void makeFlatShadowGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d const &bottomRight,
-    duint numVertices, Vec3f const *posCoords,
-    ProjectedTextureData const &tp)
+static void makeFlatShadowGeometry(Geometry &verts, const Vec3d &topLeft, const Vec3d &bottomRight,
+    duint numVertices, const Vec3f *posCoords,
+    const ProjectedTextureData &tp)
 {
     DE_ASSERT(posCoords);
 
@@ -1200,9 +1200,9 @@ static void makeFlatShadowGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d 
     std::memcpy(verts.pos, posCoords, sizeof(Vec3f) * numVertices);
 }
 
-static void makeWallShadowGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Vec3d const &/*bottomRight*/,
-    duint numVertices, Vec3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
-    ProjectedTextureData const &tp)
+static void makeWallShadowGeometry(Geometry &verts, const Vec3d &/*topLeft*/, const Vec3d &/*bottomRight*/,
+    duint numVertices, const Vec3f *posCoords, const WallEdge &leftEdge, const WallEdge &rightEdge,
+    const ProjectedTextureData &tp)
 {
     DE_ASSERT(posCoords);
 
@@ -1237,9 +1237,9 @@ static void makeWallShadowGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Ve
     }
 }
 
-static void makeFlatLightGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d const &bottomRight,
-    duint numVertices, Vec3f const *posCoords,
-    ProjectedTextureData const &tp)
+static void makeFlatLightGeometry(Geometry &verts, const Vec3d &topLeft, const Vec3d &bottomRight,
+    duint numVertices, const Vec3f *posCoords,
+    const ProjectedTextureData &tp)
 {
     DE_ASSERT(posCoords);
 
@@ -1263,9 +1263,9 @@ static void makeFlatLightGeometry(Geometry &verts, Vec3d const &topLeft, Vec3d c
     std::memcpy(verts.pos, posCoords, sizeof(Vec3f) * numVertices);
 }
 
-static void makeWallLightGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Vec3d const &/*bottomRight*/,
-    duint numVertices, Vec3f const *posCoords, WallEdge const &leftEdge, WallEdge const &rightEdge,
-    ProjectedTextureData const &tp)
+static void makeWallLightGeometry(Geometry &verts, const Vec3d &/*topLeft*/, const Vec3d &/*bottomRight*/,
+    duint numVertices, const Vec3f *posCoords, const WallEdge &leftEdge, const WallEdge &rightEdge,
+    const ProjectedTextureData &tp)
 {
     DE_ASSERT(posCoords);
 
@@ -1300,13 +1300,13 @@ static void makeWallLightGeometry(Geometry &verts, Vec3d const &/*topLeft*/, Vec
     }
 }
 
-static dfloat averageLuminosity(Vec4f const *rgbaValues, duint count)
+static dfloat averageLuminosity(const Vec4f *rgbaValues, duint count)
 {
     DE_ASSERT(rgbaValues);
     dfloat avg = 0;
     for (duint i = 0; i < count; ++i)
     {
-        Vec4f const &color = rgbaValues[i];
+        const Vec4f &color = rgbaValues[i];
         avg += color.x + color.y + color.z;
     }
     return avg / (count * 3);
@@ -1316,14 +1316,14 @@ struct rendworldpoly_params_t
 {
     bool            skyMasked;
     blendmode_t     blendMode;
-    Vec3d const *topLeft;
-    Vec3d const *bottomRight;
-    Vec2f const *materialOrigin;
-    Vec2f const *materialScale;
+    const Vec3d *topLeft;
+    const Vec3d *bottomRight;
+    const Vec2f *materialOrigin;
+    const Vec2f *materialScale;
     dfloat          alpha;
     dfloat          surfaceLuminosityDeltas[2];
-    Vec3f const *surfaceColor;
-    Mat3f const *surfaceTangentMatrix;
+    const Vec3f *surfaceColor;
+    const Mat3f *surfaceTangentMatrix;
 
     duint           lightListIdx;   ///< List of lights that affect this poly.
     duint           shadowListIdx;  ///< List of shadows that affect this poly.
@@ -1336,14 +1336,14 @@ struct rendworldpoly_params_t
 // Wall only:
     struct {
         coord_t width;
-        Vec3f const *surfaceColor2;  ///< Secondary color.
-        WallEdge const *leftEdge;
-        WallEdge const *rightEdge;
+        const Vec3f *surfaceColor2;  ///< Secondary color.
+        const WallEdge *leftEdge;
+        const WallEdge *rightEdge;
     } wall;
 };
 
-static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
-    rendworldpoly_params_t const &p, MaterialAnimator &matAnimator)
+static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
+    const rendworldpoly_params_t &p, MaterialAnimator &matAnimator)
 {
     using Parm = DrawList::PrimitiveParams;
 
@@ -1361,13 +1361,13 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
     bool const drawAsVisSprite          = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     // Map RTU configuration.
-    GLTextureUnit const *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
-    GLTextureUnit const *layer0InterRTU = (!p.skyMasked && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER) : nullptr;
-    GLTextureUnit const *detailRTU      = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL) : nullptr;
-    GLTextureUnit const *detailInterRTU = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER) : nullptr;
+    const GLTextureUnit *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
+    const GLTextureUnit *layer0InterRTU = (!p.skyMasked && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0_INTER) : nullptr;
+    const GLTextureUnit *detailRTU      = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL) : nullptr;
+    const GLTextureUnit *detailInterRTU = (r_detail && !p.skyMasked && matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_DETAIL_INTER) : nullptr;
 
-    GLTextureUnit const *shineRTU       = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
-    GLTextureUnit const *shineMaskRTU   = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
+    const GLTextureUnit *shineRTU       = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE) : nullptr;
+    const GLTextureUnit *shineMaskRTU   = (::useShinySurfaces && !skyMaskedMaterial && !drawAsVisSprite && matAnimator.texUnit(MaterialAnimator::TU_SHINE).hasTexture() && matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK).hasTexture())? &matAnimator.texUnit(MaterialAnimator::TU_SHINE_MASK) : nullptr;
 
     // Make surface geometry (position, primary texture, inter texture and color coords).
     Geometry verts;
@@ -1434,7 +1434,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
     Vec2f *modTexCoords = nullptr;
     if (useLights && Rend_IsMTexLights())
     {
-        ClientApp::renderSystem().forAllSurfaceProjections(p.lightListIdx, [&mod] (ProjectedTextureData const &dyn)
+        ClientApp::renderSystem().forAllSurfaceProjections(p.lightListIdx, [&mod] (const ProjectedTextureData &dyn)
         {
             mod.texture     = dyn.texture;
             mod.color       = dyn.color;
@@ -1475,7 +1475,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
         duint numProcessed = 0;
         ClientApp::renderSystem().forAllSurfaceProjections(p.lightListIdx,
                                            [&p, &mustSubdivide, &rvertices, &numVertices
-                                           , &skipFirst, &numProcessed] (ProjectedTextureData const &tp)
+                                           , &skipFirst, &numProcessed] (const ProjectedTextureData &tp)
         {
             if (!(skipFirst && numProcessed == 0))
             {
@@ -1579,7 +1579,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
 
         ClientApp::renderSystem().forAllSurfaceProjections(p.shadowListIdx,
                                            [&p, &mustSubdivide, &rvertices, &numVertices, &shadowList]
-                                           (ProjectedTextureData const &tp)
+                                           (const ProjectedTextureData &tp)
         {
             // Make geometry.
             Geometry verts;
@@ -1987,7 +1987,7 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
         // Use the surface texture coords with the mask.
         Geometry shineVerts = Geometry();
         {
-            Vec3f const &shineColor = matAnimator.shineMinColor();  // Shine strength.
+            const Vec3f &shineColor = matAnimator.shineMinColor();  // Shine strength.
             dfloat const shineOpacity  = shineRTU->opacity;
 
             // Allocate vertices from the pools.
@@ -2119,11 +2119,11 @@ static bool renderWorldPoly(Vec3f const *rvertices, duint numVertices,
             || !(p.alpha < 1 || !matAnimator.isOpaque() || p.blendMode > 0));
 }
 
-static Lumobj::LightmapSemantic lightmapForSurface(Surface const &surface)
+static Lumobj::LightmapSemantic lightmapForSurface(const Surface &surface)
 {
     if (surface.parent().type() == DMU_SIDE) return Lumobj::Side;
     // Must be a plane then.
-    auto const &plane = surface.parent().as<Plane>();
+    const auto &plane = surface.parent().as<Plane>();
     return plane.isSectorFloor() ? Lumobj::Down : Lumobj::Up;
 }
 
@@ -2141,8 +2141,8 @@ static DGLuint prepareLightmap(ClientTexture *tex = nullptr)
     return GL_PrepareLSTexture(LST_DYNAMIC);
 }
 
-static bool projectDynlight(Vec3d const &topLeft, Vec3d const &bottomRight,
-    Lumobj const &lum, Surface const &surface, dfloat blendFactor,
+static bool projectDynlight(const Vec3d &topLeft, const Vec3d &bottomRight,
+    const Lumobj &lum, const Surface &surface, dfloat blendFactor,
     ProjectedTextureData &projected)
 {
     if (blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
@@ -2198,8 +2198,8 @@ static bool projectDynlight(Vec3d const &topLeft, Vec3d const &bottomRight,
     return true;
 }
 
-static bool projectPlaneGlow(Vec3d const &topLeft, Vec3d const &bottomRight,
-    Plane const &plane, Vec3d const &pointOnPlane, dfloat blendFactor,
+static bool projectPlaneGlow(const Vec3d &topLeft, const Vec3d &bottomRight,
+    const Plane &plane, const Vec3d &pointOnPlane, dfloat blendFactor,
     ProjectedTextureData &projected)
 {
     if (blendFactor < OMNILIGHT_SURFACE_LUMINOSITY_ATTRIBUTION_MIN)
@@ -2241,8 +2241,8 @@ static bool projectPlaneGlow(Vec3d const &topLeft, Vec3d const &bottomRight,
     return true;
 }
 
-static bool projectShadow(Vec3d const &topLeft, Vec3d const &bottomRight,
-    mobj_t const &mob, Surface const &surface, dfloat blendFactor,
+static bool projectShadow(const Vec3d &topLeft, const Vec3d &bottomRight,
+    const mobj_t &mob, const Surface &surface, dfloat blendFactor,
     ProjectedTextureData &projected)
 {
     static Vec3f const black;  // shadows are black
@@ -2331,8 +2331,8 @@ static bool projectShadow(Vec3d const &topLeft, Vec3d const &bottomRight,
  * specified. This is due to an optimization within the lumobj management which separates
  * them by subspace.
  */
-static void projectDynamics(Surface const &surface, dfloat glowStrength,
-    Vec3d const &topLeft, Vec3d const &bottomRight,
+static void projectDynamics(const Surface &surface, dfloat glowStrength,
+    const Vec3d &topLeft, const Vec3d &bottomRight,
     bool noLights, bool noShadows, bool sortLights,
     duint &lightListIdx, duint &shadowListIdx)
 {
@@ -2369,10 +2369,10 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
         {
             // Project all plane glows affecting the given quad (world space), calculate
             // coordinates (in texture space) then store into a new list of projections.
-            auto const &subsec = curSubspace->subsector().as<world::ClientSubsector>();
+            const auto &subsec = curSubspace->subsector().as<world::ClientSubsector>();
             for (dint i = 0; i < subsec.visPlaneCount(); ++i)
             {
-                Plane const &plane = subsec.visPlane(i);
+                const Plane &plane = subsec.visPlane(i);
                 Vec3d const pointOnPlane(subsec.center(), plane.heightSmoothed());
 
                 ProjectedTextureData projected;
@@ -2417,7 +2417,7 @@ static void projectDynamics(Surface const &surface, dfloat glowStrength,
  * World light can both light and shade. Normal objects get more shade than light
  * (preventing them from ending up too bright compared to the ambient light).
  */
-static bool lightWithWorldLight(Vec3d const & /*point*/, Vec3f const &ambientColor,
+static bool lightWithWorldLight(const Vec3d & /*point*/, const Vec3f &ambientColor,
     bool starkLight, VectorLightData &vlight)
 {
     static Vec3f const worldLight(-.400891f, -.200445f, .601336f);
@@ -2443,7 +2443,7 @@ static bool lightWithWorldLight(Vec3d const & /*point*/, Vec3f const &ambientCol
     return true;
 }
 
-static bool lightWithLumobj(Vec3d const &point, Lumobj const &lum, VectorLightData &vlight)
+static bool lightWithLumobj(const Vec3d &point, const Lumobj &lum, VectorLightData &vlight)
 {
     Vec3d const lumCenter(lum.x(), lum.y(), lum.z() + lum.zOffset());
 
@@ -2470,11 +2470,11 @@ static bool lightWithLumobj(Vec3d const &point, Lumobj const &lum, VectorLightDa
     return true;
 }
 
-static bool lightWithPlaneGlow(Vec3d const &point, Subsector const &subsec,
+static bool lightWithPlaneGlow(const Vec3d &point, const Subsector &subsec,
     dint visPlaneIndex, VectorLightData &vlight)
 {
-    Plane const &plane     = subsec.as<world::ClientSubsector>().visPlane(visPlaneIndex);
-    Surface const &surface = plane.surface();
+    const Plane &plane     = subsec.as<world::ClientSubsector>().visPlane(visPlaneIndex);
+    const Surface &surface = plane.surface();
 
     // Glowing at this moment?
     Vec3f glowColor;
@@ -2507,7 +2507,7 @@ static bool lightWithPlaneGlow(Vec3d const &point, Subsector const &subsec,
     return true;
 }
 
-duint Rend_CollectAffectingLights(Vec3d const &point, Vec3f const &ambientColor,
+duint Rend_CollectAffectingLights(const Vec3d &point, const Vec3f &ambientColor,
     ConvexSubspace *subspace, bool starkLight)
 {
     duint lightListIdx = 0;
@@ -2540,7 +2540,7 @@ duint Rend_CollectAffectingLights(Vec3d const &point, Vec3f const &ambientColor,
 
         // Interpret vlights from glowing planes at the origin in the specfified
         // subspace and add them to the identified list.
-        auto const &subsec = subspace->subsector().as<world::ClientSubsector>();
+        const auto &subsec = subspace->subsector().as<world::ClientSubsector>();
         for (dint i = 0; i < subsec.sector().planeCount(); ++i)
         {
             VectorLightData vlight;
@@ -2565,7 +2565,7 @@ duint Rend_CollectAffectingLights(Vec3d const &point, Vec3f const &ambientColor,
  *
  * @return  @c true= fading was applied (see above note), otherwise @c false.
  */
-static bool applyNearFadeOpacity(WallEdge const &leftEdge, WallEdge const &rightEdge,
+static bool applyNearFadeOpacity(const WallEdge &leftEdge, const WallEdge &rightEdge,
     dfloat &opacity)
 {
     if (!leftEdge.spec().flags.testFlag(WallSpec::NearFade))
@@ -2574,8 +2574,8 @@ static bool applyNearFadeOpacity(WallEdge const &leftEdge, WallEdge const &right
     if (Rend_EyeOrigin().y < leftEdge.bottom().z() || Rend_EyeOrigin().y > rightEdge.top().z())
         return false;
 
-    mobj_t const *mo         = viewPlayer->publicData().mo;
-    Line const &line         = leftEdge.lineSide().line();
+    const mobj_t *mo         = viewPlayer->publicData().mo;
+    const Line &line         = leftEdge.lineSide().line();
 
     coord_t linePoint[2]     = { line.from().x(), line.from().y() };
     coord_t lineDirection[2] = {  line.direction().x,  line.direction().y };
@@ -2608,12 +2608,12 @@ static bool applyNearFadeOpacity(WallEdge const &leftEdge, WallEdge const &right
  *
  * @todo WallEdge should encapsulate.
  */
-static dfloat wallLuminosityDeltaFromNormal(Vec3f const &normal)
+static dfloat wallLuminosityDeltaFromNormal(const Vec3f &normal)
 {
     return (1.0f / 255) * (normal.x * 18) * ::rendLightWallAngle;
 }
 
-static void wallLuminosityDeltas(WallEdge const &leftEdge, WallEdge const &rightEdge,
+static void wallLuminosityDeltas(const WallEdge &leftEdge, const WallEdge &rightEdge,
     dfloat luminosityDeltas[2])
 {
     dfloat &leftDelta  = luminosityDeltas[0];
@@ -2647,7 +2647,7 @@ static void wallLuminosityDeltas(WallEdge const &leftEdge, WallEdge const &right
     }
 }
 
-static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
+static void writeWall(const WallEdge &leftEdge, const WallEdge &rightEdge,
     bool *retWroteOpaque = nullptr, coord_t *retBottomZ = nullptr, coord_t *retTopZ = nullptr)
 {
     DE_ASSERT(leftEdge.lineSideSegment().isFrontFacing() && leftEdge.lineSide().hasSections());
@@ -2674,7 +2674,7 @@ static void writeWall(WallEdge const &leftEdge, WallEdge const &rightEdge,
         || de::fequal(leftEdge.bottom().z(), rightEdge.top().z()))
         return;
 
-    WallSpec const &wallSpec      = leftEdge.spec();
+    const WallSpec &wallSpec      = leftEdge.spec();
     bool const didNearFade        = applyNearFadeOpacity(leftEdge, rightEdge, opacity);
     bool const skyMasked          = material->isSkyMasked() && !::devRendSkyMode;
     bool const twoSidedMiddle     = (wallSpec.section == LineSide::Middle && !leftEdge.lineSide().considerOneSided());
@@ -2800,7 +2800,7 @@ static duint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height
 {
     DE_ASSERT(verts);
 
-    Face const &poly       = curSubspace->poly();
+    const Face &poly       = curSubspace->poly();
     HEdge *fanBase         = curSubspace->fanBase();
     duint const totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
 
@@ -2833,8 +2833,8 @@ static duint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height
 
 static void writeSubspacePlane(Plane &plane)
 {
-    Face const &poly       = curSubspace->poly();
-    Surface const &surface = plane.surface();
+    const Face &poly       = curSubspace->poly();
+    const Surface &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
     dfloat const opacity = surface.opacity();
@@ -2967,7 +2967,7 @@ static void writeSubspacePlane(Plane &plane)
     R_FreeRendVertices(posCoords);
 }
 
-static void writeSkyMaskStrip(dint vertCount, Vec3f const *posCoords, Vec2f const *texCoords,
+static void writeSkyMaskStrip(dint vertCount, const Vec3f *posCoords, const Vec2f *texCoords,
     Material *material)
 {
     DE_ASSERT(posCoords);
@@ -3167,9 +3167,9 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 ///@}
 
 static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts,  gfx::Primitive &primitive,
-    ConvexSubspace const &subspace, coord_t worldZPosition = 0, ClockDirection direction = Clockwise)
+    const ConvexSubspace &subspace, coord_t worldZPosition = 0, ClockDirection direction = Clockwise)
 {
-    Face const &poly = subspace.poly();
+    const Face &poly = subspace.poly();
     HEdge *fanBase   = subspace.fanBase();
 
     // Assign indices.
@@ -3268,7 +3268,7 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
 static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middleTopZ,
     bool wroteOpaqueMiddle)
 {
-    LineSide const &front = hedge.mapElementAs<LineSideSegment>().lineSide();
+    const LineSide &front = hedge.mapElementAs<LineSideSegment>().lineSide();
 
     if (front.considerOneSided())
     {
@@ -3283,8 +3283,8 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
         return wroteOpaqueMiddle;
     }
 
-    auto const &subsec     = hedge.face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
-    auto const &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    const auto &subsec     = hedge.face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
+    const auto &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
 
     ddouble const ffloor   = subsec.visFloor().heightSmoothed();
     ddouble const fceil    = subsec.visCeiling().heightSmoothed();
@@ -3310,10 +3310,10 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     if (   (bceil  <= ffloor && (front.top   ().hasMaterial() || front.middle().hasMaterial()))
        || (bfloor >= fceil  && (front.bottom().hasMaterial() || front.middle().hasMaterial())))
     {
-        Surface const &ffloorSurface = subsec.visFloor  ().surface();
-        Surface const &fceilSurface  = subsec.visCeiling().surface();
-        Surface const &bfloorSurface = backSubsec.visFloor  ().surface();
-        Surface const &bceilSurface  = backSubsec.visCeiling().surface();
+        const Surface &ffloorSurface = subsec.visFloor  ().surface();
+        const Surface &fceilSurface  = subsec.visCeiling().surface();
+        const Surface &bfloorSurface = backSubsec.visFloor  ().surface();
+        const Surface &bceilSurface  = backSubsec.visCeiling().surface();
 
         // A closed gap?
         if (de::fequal(fceil, bfloor))
@@ -3478,7 +3478,7 @@ static void markSubspaceFrontFacingWalls()
     });
 }
 
-static inline bool canOccludeEdgeBetweenPlanes(Plane const &frontPlane, Plane const &backPlane)
+static inline bool canOccludeEdgeBetweenPlanes(const Plane &frontPlane, const Plane &backPlane)
 {
     // Do not create an occlusion between two sky-masked planes.
     // Only because the open range does not account for the sky plane height? -ds
@@ -3495,10 +3495,10 @@ static void occludeSubspace(bool frontFacing)
 
     AngleClipper &clipper = ClientApp::renderSystem().angleClipper();
 
-    auto const &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
-    HEdge const *base  = ::curSubspace->poly().hedge();
+    const auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
+    const HEdge *base  = ::curSubspace->poly().hedge();
     DE_ASSERT(base);
-    HEdge const *hedge = base;
+    const HEdge *hedge = base;
     do
     {
         // Edges without a line segment can never occlude.
@@ -3520,8 +3520,8 @@ static void occludeSubspace(bool frontFacing)
             || !hedge->twin().face().hasMapElement())
             continue;
 
-        auto const &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
-        auto const &backSubsec   = backSubspace.subsector().as<world::ClientSubsector>();
+        const auto &backSubspace = hedge->twin().face().mapElementAs<ConvexSubspace>();
+        const auto &backSubsec   = backSubspace.subsector().as<world::ClientSubsector>();
 
         // Determine the opening between plane heights at this edge.
         ddouble openBottom;
@@ -3545,8 +3545,8 @@ static void occludeSubspace(bool frontFacing)
         }
 
         // Choose start and end vertexes so that it's facing forward.
-        Vertex const &from = frontFacing ? hedge->vertex() : hedge->twin().vertex();
-        Vertex const &to   = frontFacing ? hedge->twin().vertex() : hedge->vertex();
+        const Vertex &from = frontFacing ? hedge->vertex() : hedge->twin().vertex();
+        const Vertex &to   = frontFacing ? hedge->twin().vertex() : hedge->vertex();
 
         // Does the floor create an occlusion?
         if ( (   (openBottom > subsec    .visFloor().heightSmoothed() && Rend_EyeOrigin().y <= openBottom)
@@ -3653,7 +3653,7 @@ static void projectSubspaceSprites()
 
     R_ForAllSubspaceMobContacts(*::curSubspace, [] (mobj_t &mob)
     {
-        auto const &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
+        const auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
         if (mob.addFrameCount != R_FrameCount())
         {
             mob.addFrameCount = R_FrameCount();
@@ -3666,10 +3666,10 @@ static void projectSubspaceSprites()
             if (subsec.visCeiling().surface().hasSkyMaskedMaterial())
             {
                 /// @todo fixme: Consider 3D models, also. -ds
-                if (Record const *spriteRec = Mobj_SpritePtr(mob))
+                if (const Record *spriteRec = Mobj_SpritePtr(mob))
                 {
                     defn::Sprite const sprite(*spriteRec);
-                    res::Uri const &viewMaterial = sprite.viewMaterial(0);
+                    const res::Uri &viewMaterial = sprite.viewMaterial(0);
                     if (!viewMaterial.isEmpty())
                     {
                         if (world::Material *material = world::Materials::get().materialPtr(viewMaterial))
@@ -3773,15 +3773,15 @@ static void makeCurrent(ConvexSubspace &subspace)
     }
 }
 
-static void traverseBspTreeAndDrawSubspaces(BspTree const *bspTree)
+static void traverseBspTreeAndDrawSubspaces(const BspTree *bspTree)
 {
     DE_ASSERT(bspTree);
-    AngleClipper const &clipper = ClientApp::renderSystem().angleClipper();
+    const AngleClipper &clipper = ClientApp::renderSystem().angleClipper();
 
     while (!bspTree->isLeaf())
     {
         // Descend deeper into the nodes.
-        auto const &bspNode = bspTree->userData()->as<BspNode>();
+        const auto &bspNode = bspTree->userData()->as<BspNode>();
         // Decide which side the view point is on.
         dint const eyeSide  = bspNode.pointOnSide(eyeOrigin) < 0;
 
@@ -3838,7 +3838,7 @@ static void generateDecorationFlares(world::Map &map)
     });
 }
 
-MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
+MaterialAnimator *Rend_SpriteMaterialAnimator(const Record &spriteDef)
 {
     MaterialAnimator *matAnimator = nullptr;
 
@@ -3852,7 +3852,7 @@ MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
     {
         // Look it up...
         defn::Sprite const sprite(spriteDef);
-        res::Uri const &viewMaterial = sprite.viewMaterial(0);
+        const res::Uri &viewMaterial = sprite.viewMaterial(0);
         if (!viewMaterial.isEmpty())
         {
             if (world::Material *mat = world::Materials::get().materialPtr(viewMaterial))
@@ -3865,7 +3865,7 @@ MaterialAnimator *Rend_SpriteMaterialAnimator(Record const &spriteDef)
     return matAnimator;
 }
 
-ddouble Rend_VisualRadius(Record const &spriteDef)
+ddouble Rend_VisualRadius(const Record &spriteDef)
 {
     if (auto *anim = Rend_SpriteMaterialAnimator(spriteDef))
     {
@@ -3875,12 +3875,12 @@ ddouble Rend_VisualRadius(Record const &spriteDef)
     return 0;
 }
 
-Lumobj *Rend_MakeLumobj(Record const &spriteDef)
+Lumobj *Rend_MakeLumobj(const Record &spriteDef)
 {
     LOG_AS("Rend_MakeLumobj");
 
     //defn::Sprite const sprite(spriteRec);
-    //res::Uri const &viewMaterial = sprite.viewMaterial(0);
+    //const res::Uri &viewMaterial = sprite.viewMaterial(0);
 
     // Always use the front view.
     /// @todo We could do better here...
@@ -3897,7 +3897,7 @@ Lumobj *Rend_MakeLumobj(Record const &spriteDef)
     TextureVariant *texture = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
     if (!texture) return nullptr;  // Unloadable texture?
 
-    auto const *pl = (pointlight_analysis_t const *)
+    const auto *pl = (const pointlight_analysis_t *)
             texture->base().analysisDataPointer(res::Texture::BrightPointAnalysis);
     if (!pl)
     {
@@ -4341,7 +4341,7 @@ static void popGLStateForPass(DrawMode mode)
     }
 }
 
-static void drawLists(DrawLists::FoundLists const &lists, DrawMode mode)
+static void drawLists(const DrawLists::FoundLists &lists, DrawMode mode)
 {
     if (lists.isEmpty()) return;
     // If the first list is empty -- do nothing.
@@ -4410,7 +4410,7 @@ static void drawSky()
     DGL_PopState();
 }
 
-static bool generateHaloForVisSprite(vissprite_t const *spr, bool primary = false)
+static bool generateHaloForVisSprite(const vissprite_t *spr, bool primary = false)
 {
     DE_ASSERT(spr);
 
@@ -4740,7 +4740,7 @@ void Rend_RenderMap(world::Map &map)
         // Make vissprites of all the visible decorations.
         generateDecorationFlares(map);
 
-        viewdata_t const *viewData = &viewPlayer->viewport();
+        const viewdata_t *viewData = &viewPlayer->viewport();
         eyeOrigin = viewData->current.origin;
 
         // Add the backside clipping range (if vpitch allows).
@@ -4790,7 +4790,7 @@ void Rend_RenderMap(world::Map &map)
 }
 
 #if 0
-static void drawStar(Vec3d const &origin, dfloat size, Vec4f const &color)
+static void drawStar(const Vec3d &origin, dfloat size, const Vec4f &color)
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
@@ -4820,7 +4820,7 @@ static void drawStar(Vec3d const &origin, dfloat size, Vec4f const &color)
 }
 #endif
 
-static void drawLabel(String const &label, Vec3d const &origin, dfloat scale, dfloat opacity)
+static void drawLabel(const String &label, const Vec3d &origin, dfloat scale, dfloat opacity)
 {
     if (label.isEmpty()) return;
 
@@ -4838,7 +4838,7 @@ static void drawLabel(String const &label, Vec3d const &origin, dfloat scale, df
     DGL_PopMatrix();
 }
 
-static void drawLabel(String const &label, Vec3d const &origin, ddouble maxDistance = 2000)
+static void drawLabel(const String &label, const Vec3d &origin, ddouble maxDistance = 2000)
 {
     ddouble const distToEye = (Rend_EyeOrigin().xzy() - origin).length();
     if (distToEye < maxDistance)
@@ -5031,7 +5031,7 @@ static void drawBBox(dfloat br)
  * @param br           Border amount to overlap box faces.
  * @param alignToBase  @c true= align the base of the box to the Z coordinate.
  */
-void Rend_DrawBBox(Vec3d const &pos, coord_t w, coord_t l, coord_t h,
+void Rend_DrawBBox(const Vec3d &pos, coord_t w, coord_t l, coord_t h,
     dfloat a, dfloat const color[3], dfloat alpha, dfloat br, bool alignToBase)
 {
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -5067,7 +5067,7 @@ void Rend_DrawBBox(Vec3d const &pos, coord_t w, coord_t l, coord_t h,
  * @param color  Color to make the box (uniform vertex color).
  * @param alpha  Alpha to make the box (uniform vertex color).
  */
-void Rend_DrawArrow(Vec3d const &pos, dfloat a, dfloat s, dfloat const color[3],
+void Rend_DrawArrow(const Vec3d &pos, dfloat a, dfloat s, dfloat const color[3],
                     dfloat alpha)
 {
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -5114,7 +5114,7 @@ static void drawMobjBBox(mobj_t &mob)
     // Is it vissible?
     if (!Mobj_IsLinked(mob)) return;
 
-    BspLeaf const &bspLeaf = Mobj_BspLeafAtOrigin(mob);
+    const BspLeaf &bspLeaf = Mobj_BspLeafAtOrigin(mob);
     if (!bspLeaf.hasSubspace() || !R_ViewerSubspaceIsVisible(bspLeaf.subspace()))
         return;
 
@@ -5185,7 +5185,7 @@ static void drawMobjBoundingBoxes(world::Map &map)
     {
         map.forAllPolyobjs([] (Polyobj &pob)
         {
-            Sector const &sec = pob.sector();
+            const Sector &sec = pob.sector();
 
             coord_t width  = (pob.bounds.maxX - pob.bounds.minX)/2;
             coord_t length = (pob.bounds.maxY - pob.bounds.minY)/2;
@@ -5222,7 +5222,7 @@ static void drawMobjBoundingBoxes(world::Map &map)
     DGL_Enable(DGL_DEPTH_TEST);
 }
 
-static void drawPoint(Vec3d const &origin, Vec4f const &color = Vec4f(1))
+static void drawPoint(const Vec3d &origin, const Vec4f &color = Vec4f(1))
 {
     DGL_Begin(DGL_POINTS);
         DGL_Color4f(color.x, color.y, color.z, color.w);
@@ -5230,7 +5230,7 @@ static void drawPoint(Vec3d const &origin, Vec4f const &color = Vec4f(1))
     DGL_End();
 }
 
-static void drawVector(Vec3f const &vector, dfloat scalar, Vec4f const &color = Vec4f(1))
+static void drawVector(const Vec3f &vector, dfloat scalar, const Vec4f &color = Vec4f(1))
 {
     static dfloat const black[] = { 0, 0, 0, 0 };
 
@@ -5242,7 +5242,7 @@ static void drawVector(Vec3f const &vector, dfloat scalar, Vec4f const &color = 
     DGL_End();
 }
 
-static void drawTangentVectorsForSurface(Surface const &suf, Vec3d const &origin)
+static void drawTangentVectorsForSurface(const Surface &suf, const Vec3d &origin)
 {
     static dint const VISUAL_LENGTH = 20;
     static Vec4f const red  ( 1, 0, 0, 1);
@@ -5264,14 +5264,14 @@ static void drawTangentVectorsForSurface(Surface const &suf, Vec3d const &origin
 /**
  * @todo Determine Z-axis origin from a WallEdge.
  */
-static void drawTangentVectorsForWalls(HEdge const *hedge)
+static void drawTangentVectorsForWalls(const HEdge *hedge)
 {
     if (!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
-    LineSide const &lineSide   = seg.lineSide();
-    Line const &line           = lineSide.line();
+    const LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
+    const LineSide &lineSide   = seg.lineSide();
+    const Line &line           = lineSide.line();
     Vec2d const center      = (hedge->twin().origin() + hedge->origin()) / 2;
 
     if (lineSide.considerOneSided())
@@ -5339,8 +5339,8 @@ static void drawSurfaceTangentVectors(Subsector &subsec)
 {
     subsec.forAllSubspaces([] (ConvexSubspace &space)
     {
-        HEdge const *base  = space.poly().hedge();
-        HEdge const *hedge = base;
+        const HEdge *base  = space.poly().hedge();
+        const HEdge *hedge = base;
         do
         {
             drawTangentVectorsForWalls(hedge);
@@ -5370,7 +5370,7 @@ static void drawSurfaceTangentVectors(Subsector &subsec)
     dint const planeCount = subsec.sector().planeCount();
     for (dint i = 0; i < planeCount; ++i)
     {
-        Plane const &plane = subsec.as<world::ClientSubsector>().visPlane(i);
+        const Plane &plane = subsec.as<world::ClientSubsector>().visPlane(i);
         ddouble height     = 0;
         if (plane.surface().hasSkyMaskedMaterial()
             && (plane.isSectorFloor() || plane.isSectorCeiling()))
@@ -5549,7 +5549,7 @@ static void drawSoundEmitters(world::Map &map)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
+void Rend_DrawVectorLight(const VectorLightData &vlight, dfloat alpha)
 {
     if (alpha < .0001f) return;
 
@@ -5563,12 +5563,12 @@ void Rend_DrawVectorLight(VectorLightData const &vlight, dfloat alpha)
     DGL_End();
 }
 
-static String labelForGenerator(Generator const &gen)
+static String labelForGenerator(const Generator &gen)
 {
     return String::asText(gen.id());
 }
 
-static void drawGenerator(Generator const &gen)
+static void drawGenerator(const Generator &gen)
 {
     static dint const MAX_GENERATOR_DIST = 2048;
 
@@ -5609,7 +5609,7 @@ static void drawGenerators(world::Map &map)
     DGL_Disable(DGL_TEXTURE_2D);
 }
 
-static void drawBar(Vec3d const &origin, coord_t height, dfloat opacity)
+static void drawBar(const Vec3d &origin, coord_t height, dfloat opacity)
 {
     static dint const EXTEND_DIST = 64;
     static dfloat const black[] = { 0, 0, 0, 0 };
@@ -5627,7 +5627,7 @@ static void drawBar(Vec3d const &origin, coord_t height, dfloat opacity)
     DGL_End();
 }
 
-static String labelForVertex(Vertex const *vtx)
+static String labelForVertex(const Vertex *vtx)
 {
     DE_ASSERT(vtx);
     return String::asText(vtx->indexInMap());
@@ -5642,7 +5642,7 @@ struct drawvertexvisual_parameters_t
     BitArray *drawnVerts;
 };
 
-static void drawVertexVisual(Vertex const &vertex, ddouble minHeight, ddouble maxHeight,
+static void drawVertexVisual(const Vertex &vertex, ddouble minHeight, ddouble maxHeight,
     drawvertexvisual_parameters_t &parms)
 {
     if (!parms.drawOrigin && !parms.drawBar && !parms.drawLabel)
@@ -5721,10 +5721,10 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
         while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
             // Stop if there is no back space.
-            auto const *backSpace = hedge->hasFace() ? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
+            const auto *backSpace = hedge->hasFace() ? &hedge->face().mapElementAs<ConvexSubspace>() : nullptr;
             if (!backSpace) break;
 
-            auto const &subsec = backSpace->subsector().as<world::ClientSubsector>();
+            const auto &subsec = backSpace->subsector().as<world::ClientSubsector>();
             if (subsec.visFloor().heightSmoothed() < min)
             {
                 min = subsec.visFloor().heightSmoothed();
@@ -5819,7 +5819,7 @@ static void drawVertexes(world::Map &map)
         {
             // Check the bounds.
             auto &subspace = *(ConvexSubspace *)object;
-            AABoxd const &polyBounds = subspace.poly().bounds();
+            const AABoxd &polyBounds = subspace.poly().bounds();
             if (!(   polyBounds.maxX < box.minX
                  || polyBounds.minX > box.maxX
                  || polyBounds.minY > box.maxY
@@ -5851,7 +5851,7 @@ static void drawVertexes(world::Map &map)
     {
         // Check the bounds.
         auto &subspace = *(ConvexSubspace *)object;
-        AABoxd const &polyBounds = subspace.poly().bounds();
+        const AABoxd &polyBounds = subspace.poly().bounds();
         if (!(   polyBounds.maxX < box.minX
               || polyBounds.minX > box.maxX
               || polyBounds.minY > box.maxY
@@ -5874,7 +5874,7 @@ static void drawVertexes(world::Map &map)
         {
             auto &subspace = *(ConvexSubspace *)object;
             // Check the bounds.
-            AABoxd const &polyBounds = subspace.poly().bounds();
+            const AABoxd &polyBounds = subspace.poly().bounds();
             if (!(   polyBounds.maxX < box.minX
                   || polyBounds.minX > box.maxX
                   || polyBounds.minY > box.maxY
@@ -5902,7 +5902,7 @@ static void drawVertexes(world::Map &map)
 #undef MAX_VERTEX_POINT_DIST
 }
 
-static String labelForSubsector(Subsector const &subsec)
+static String labelForSubsector(const Subsector &subsec)
 {
     return String::asText(subsec.sector().indexInMap());
 }
@@ -6021,7 +6021,7 @@ void Rend_LightGridVisual(LightGrid &lg)
             LightGrid::Index gridIndex = lg.toIndex(x, lg.dimensions().y - 1 - y);
             bool const isViewerIndex   = (viewPlayer && viewerGridIndex == gridIndex);
 
-            Vec3f const *color = 0;
+            const Vec3f *color = 0;
             if (isViewerIndex && (blink & 16))
             {
                 color = &red;
@@ -6049,13 +6049,13 @@ void Rend_LightGridVisual(LightGrid &lg)
 }
 #endif
 
-MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(GLenum wrapS, GLenum wrapT)
+const MaterialVariantSpec &Rend_MapSurfaceMaterialSpec(GLenum wrapS, GLenum wrapT)
 {
     return ClientApp::resources().materialSpec(
         MapSurfaceContext, 0, 0, 0, 0, wrapS, wrapT, -1, -1, -1, true, true, false, false);
 }
 
-MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
+const MaterialVariantSpec &Rend_MapSurfaceMaterialSpec()
 {
     if (!lookupMapSurfaceMaterialSpec)
     {
@@ -6065,19 +6065,19 @@ MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec()
 }
 
 /// Returns the texture variant specification for lightmaps.
-TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec()
+const TextureVariantSpec &Rend_MapSurfaceLightmapTextureSpec()
 {
     return ClientApp::resources().textureSpec(TC_MAPSURFACE_LIGHTMAP, 0, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                 1, -1, -1, false, false, false, true);
 }
 
-TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec()
+const TextureVariantSpec &Rend_MapSurfaceShinyTextureSpec()
 {
     return ClientApp::resources().textureSpec(TC_MAPSURFACE_REFLECTION, TSF_NO_COMPRESSION, 0, 0, 0,
                                 GL_REPEAT, GL_REPEAT, 1, 1, -1, false, false, false, false);
 }
 
-TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec()
+const TextureVariantSpec &Rend_MapSurfaceShinyMaskTextureSpec()
 {
     return ClientApp::resources().textureSpec(TC_MAPSURFACE_REFLECTIONMASK, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                 -1, -1, -1, true, false, false, false);

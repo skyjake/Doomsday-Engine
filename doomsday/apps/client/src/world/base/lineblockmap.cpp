@@ -25,7 +25,7 @@ using namespace de;
 namespace world
 {
 
-LineBlockmap::LineBlockmap(AABoxd const &bounds, duint cellSize)
+LineBlockmap::LineBlockmap(const AABoxd &bounds, duint cellSize)
     : Blockmap(bounds, cellSize)
 {}
 

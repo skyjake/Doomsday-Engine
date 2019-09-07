@@ -38,11 +38,11 @@ DE_GUI_PIMPL(ColumnWidget)
         AnimationVector3 colorAnim{Animation::Linear};
         bool needUpdate = false;
 
-        BackgroundImage(DotPath const &styleImageId, ColumnWidget &owner)
+        BackgroundImage(const DotPath &styleImageId, ColumnWidget &owner)
             : StyleProceduralImage(styleImageId, owner)
         {}
 
-        void setColor(Color const &color)
+        void setColor(const Color &color)
         {
             StyleProceduralImage::setColor(color);
             colorAnim.setValue(color, 0.5);
@@ -63,7 +63,7 @@ DE_GUI_PIMPL(ColumnWidget)
             return update;
         }
 
-        void glMakeGeometry(GuiVertexBuilder &verts, Rectanglef const &rect) override
+        void glMakeGeometry(GuiVertexBuilder &verts, const Rectanglef &rect) override
         {
             if (!allocId().isNone())
             {
@@ -93,7 +93,7 @@ DE_GUI_PIMPL(ColumnWidget)
     LabelWidget *     back;
     ScrollAreaWidget *scrollArea;
     HeaderWidget *    header;
-    Rule const *      maxContentWidth = nullptr;
+    const Rule *      maxContentWidth = nullptr;
     Vec4f             backTintColor;
     Animation         backSaturation{0.f, Animation::Linear};
 
@@ -125,7 +125,7 @@ DE_GUI_PIMPL(ColumnWidget)
 
 DE_AUDIENCE_METHOD(ColumnWidget, Activity)
 
-ColumnWidget::ColumnWidget(String const &name)
+ColumnWidget::ColumnWidget(const String &name)
     : GuiWidget(name)
     , d(new Impl(this))
 {
@@ -148,7 +148,7 @@ ColumnWidget::ColumnWidget(String const &name)
     setBehavior(ChildVisibilityClipping);
 }
 
-void ColumnWidget::setBackgroundImage(DotPath const &imageId)
+void ColumnWidget::setBackgroundImage(const DotPath &imageId)
 {
     auto *img = new Impl::BackgroundImage(imageId, *this);
     img->setColor(d->backTintColor);
@@ -165,7 +165,7 @@ HeaderWidget &ColumnWidget::header()
     return *d->header;
 }
 
-Rule const &ColumnWidget::maximumContentWidth() const
+const Rule &ColumnWidget::maximumContentWidth() const
 {
     return *d->maxContentWidth;
 }
@@ -219,13 +219,13 @@ void ColumnWidget::updateStyle()
     d->backTintColor = Vec4f(style().colors().colorf("home.background.tint"), 1.f);
 }
 
-bool ColumnWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(Event const &))
+bool ColumnWidget::dispatchEvent(const Event &event, bool (Widget::*memberFunc)(const Event &))
 {
     // Observe mouse clicks occurring in the column.
     if (event.type() == Event::MouseButton ||
         event.type() == Event::MouseWheel)
     {
-        MouseEvent const &mouse = event.as<MouseEvent>();
+        const MouseEvent &mouse = event.as<MouseEvent>();
         if ((mouse.motion() == MouseEvent::Wheel || mouse.state() == MouseEvent::Pressed) &&
             rule().recti().contains(mouse.pos()))
         {

@@ -35,7 +35,7 @@ public:
 
     void glDeinit();
 
-    de::GLTexture const &defaultReflection() const;
+    const de::GLTexture &defaultReflection() const;
 
     /**
      * Determines the reflection cube map suitable for an object whose origin lies inside
@@ -43,7 +43,7 @@ public:
      *
      * @return Reflection cube map.
      */
-    de::GLTexture const &reflectionInSubsector(world::Subsector const *subsector) const;
+    const de::GLTexture &reflectionInSubsector(const world::Subsector *subsector) const;
 
 private:
     DE_PRIVATE(d)

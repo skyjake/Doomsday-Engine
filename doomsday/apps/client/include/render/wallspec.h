@@ -86,7 +86,7 @@ public:
      * @a side and @a section of a map Line considering the current map renderer
      * configuration.
      */
-    static WallSpec fromMapSide(LineSide const &side, int section);
+    static WallSpec fromMapSide(const LineSide &side, int section);
 };
 
 #endif // DE_RENDER_WALLSPEC

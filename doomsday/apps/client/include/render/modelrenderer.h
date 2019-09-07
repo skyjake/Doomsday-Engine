@@ -70,14 +70,14 @@ public:
      */
     de::ModelBank &bank();
 
-    render::Model::StateAnims const *animations(de::DotPath const &modelId) const;
+    const render::Model::StateAnims *animations(const de::DotPath &modelId) const;
 
     /**
      * Render a GL2 model.
      *
      * @param spr  Parameters for the draw operation (as a vissprite).
      */
-    void render(vissprite_t const &spr);
+    void render(const vissprite_t &spr);
 
     /**
      * Render a GL2 model representing a psprite.
@@ -86,7 +86,7 @@ public:
      * @param playerMobj  Player object. Light originating from this is ignored on the
      *                    psprite omdel.
      */
-    void render(vispsprite_t const &pspr, struct mobj_s const *playerMobj);
+    void render(const vispsprite_t &pspr, const struct mobj_s *playerMobj);
 
 public:
     static void initBindings(de::Binder &binder, de::Record &module);

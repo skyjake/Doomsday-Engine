@@ -149,7 +149,7 @@ public:
              * @see line()
              */
             Side       &lineSide();
-            Side const &lineSide() const;
+            const Side &lineSide() const;
 
             /**
              * Accessor. Returns the Line attributed to the Side owner of the segment.
@@ -157,7 +157,7 @@ public:
              * @see lineSide()
              */
             inline Line       &line()       { return lineSide().line(); }
-            inline Line const &line() const { return lineSide().line(); }
+            inline const Line &line() const { return lineSide().line(); }
 
 #ifdef __CLIENT__
 
@@ -235,7 +235,7 @@ public:
          * Returns the Line owner of the side.
          */
         Line       &line();
-        Line const &line() const;
+        const Line &line() const;
 
         /**
          * Returns the logical side identifier for the side (Front or Back), according to
@@ -328,7 +328,7 @@ public:
          * @see middle(), bottom(), top()
          */
         Surface       &surface(de::dint sectionId);
-        Surface const &surface(de::dint sectionId) const;
+        const Surface &surface(de::dint sectionId) const;
 
         /**
          * Returns the @em Middle Surface of the side.
@@ -336,7 +336,7 @@ public:
          * @see surface(), bottom(), top()
          */
         Surface       &middle();
-        Surface const &middle() const;
+        const Surface &middle() const;
 
         /**
          * Returns the @em Bottom surface of the side.
@@ -344,7 +344,7 @@ public:
          * @see surface(), middle(), top()
          */
         Surface       &bottom();
-        Surface const &bottom() const;
+        const Surface &bottom() const;
 
         /**
          * Returns the @em Top Surface of the side.
@@ -352,7 +352,7 @@ public:
          * @see surface(), middle(), bottom()
          */
         Surface       &top();
-        Surface const &top() const;
+        const Surface &top() const;
 
         /**
          * Iterate the Surfaces of the side. If no sections are present then nothing happens.
@@ -367,8 +367,8 @@ public:
          */
         void updateAllSurfaceNormals();
 
-        void chooseSurfaceColors(de::dint sectionId, de::Vec3f const **topColor,
-                                 de::Vec3f const **bottomColor) const;
+        void chooseSurfaceColors(de::dint sectionId, const de::Vec3f **topColor,
+                                 const de::Vec3f **bottomColor) const;
 
     //- SoundEmitters -------------------------------------------------------------------
 
@@ -378,7 +378,7 @@ public:
          * @see middleSoundEmitter(), bottomSoundEmitter(), topSoundEmitter()
          */
         SoundEmitter       &soundEmitter(de::dint sectionId);
-        SoundEmitter const &soundEmitter(de::dint sectionId) const;
+        const SoundEmitter &soundEmitter(de::dint sectionId) const;
 
         /**
          * Returns the SoundEmitter of the @em Middle section.
@@ -386,7 +386,7 @@ public:
          * @see soundEmitter(), bottomSoundEmitter(), topSoundEmitter()
          */
         SoundEmitter       &middleSoundEmitter();
-        SoundEmitter const &middleSoundEmitter() const;
+        const SoundEmitter &middleSoundEmitter() const;
 
         /**
          * Returns the bottom sound emitter (tee-hee) for the side.
@@ -394,7 +394,7 @@ public:
          * @see soundEmitter(), middleSoundEmitter(), topSoundEmitter()
          */
         SoundEmitter       &bottomSoundEmitter();
-        SoundEmitter const &bottomSoundEmitter() const;
+        const SoundEmitter &bottomSoundEmitter() const;
 
         /**
          * Returns the top sound emitter for the side.
@@ -402,7 +402,7 @@ public:
          * @see soundEmitter(), middleSoundEmitter(), bottomSoundEmitter()
          */
         SoundEmitter       &topSoundEmitter();
-        SoundEmitter const &topSoundEmitter() const;
+        const SoundEmitter &topSoundEmitter() const;
 
         /**
          * Update the sound emitter origin of the specified surface section. This
@@ -470,14 +470,14 @@ public:
         /**
          * Provides access to the FakeRadio shadowcorner_t data.
          */
-        shadowcorner_t const &radioCornerTop   (bool right) const;
-        shadowcorner_t const &radioCornerBottom(bool right) const;
-        shadowcorner_t const &radioCornerSide  (bool right) const;
+        const shadowcorner_t &radioCornerTop   (bool right) const;
+        const shadowcorner_t &radioCornerBottom(bool right) const;
+        const shadowcorner_t &radioCornerSide  (bool right) const;
 
         /**
          * Provides access to the FakeRadio edgespan_t data.
          */
-        edgespan_t const &radioEdgeSpan(bool top) const;
+        const edgespan_t &radioEdgeSpan(bool top) const;
 
 #endif  // __CLIENT__
 
@@ -489,7 +489,7 @@ public:
          * @see sideId(), line()
          */
         inline Side       &back()       { return line().side(sideId() ^ 1); }
-        inline Side const &back() const { return line().side(sideId() ^ 1); }
+        inline const Side &back() const { return line().side(sideId() ^ 1); }
 
         /**
          * Returns the relative From Vertex for the side, from the Line owner.
@@ -497,7 +497,7 @@ public:
          * @see vertex(), to()
          */
         inline Vertex       &from()       { return vertex(From); }
-        inline Vertex const &from() const { return vertex(From); }
+        inline const Vertex &from() const { return vertex(From); }
 
         /**
          * Returns the relative To Vertex for the side, from the Line owner.
@@ -505,7 +505,7 @@ public:
          * @see vertex(), from()
          */
         inline Vertex       &to()       { return vertex(To); }
-        inline Vertex const &to() const { return vertex(To); }
+        inline const Vertex &to() const { return vertex(To); }
 
         /**
          * Returns the specified relative vertex from the Line owner.
@@ -513,11 +513,11 @@ public:
          * @see from(), to(),
          */
         inline Vertex       &vertex(de::dint to)       { return line().vertex(sideId() ^ to); }
-        inline Vertex const &vertex(de::dint to) const { return line().vertex(sideId() ^ to); }
+        inline const Vertex &vertex(de::dint to) const { return line().vertex(sideId() ^ to); }
 
     protected:
         de::dint property(world::DmuArgs &args) const;
-        de::dint setProperty(world::DmuArgs const &args);
+        de::dint setProperty(const world::DmuArgs &args);
 
     private:
         DE_PRIVATE(d)
@@ -618,13 +618,13 @@ public:
      * Returns the @em Front side of the line.
      */
     Side       &front();
-    Side const &front() const;
+    const Side &front() const;
 
     /**
      * Returns the @em Back side of the line.
      */
     Side       &back();
-    Side const &back() const;
+    const Side &back() const;
 
     /**
      * Returns the logical side of the line by it's fixed index.
@@ -632,7 +632,7 @@ public:
      * @param back  If not @c 0 return the Back side; otherwise the Front side.
      */
     Side       &side(de::dint back);
-    Side const &side(de::dint back) const;
+    const Side &side(de::dint back) const;
 
     /**
      * Iterate through the Sides of the line.
@@ -647,7 +647,7 @@ public:
      * Returns the axis-aligned bounding box which encompases both vertex origin points,
      * in map coordinate space units.
      */
-    AABoxd const &bounds() const;
+    const AABoxd &bounds() const;
 
     /**
      * Returns the binary angle of the line (which, is derived from the direction vector).
@@ -667,7 +667,7 @@ public:
      *
      * @see angle()
      */
-    de::Vec2d const &direction() const;
+    const de::Vec2d &direction() const;
 
     /**
      * Returns the accurate length of the line from Start to End vertex.
@@ -687,13 +687,13 @@ public:
      * Returns the @em From Vertex for the line.
      */
     Vertex       &from();
-    Vertex const &from() const;
+    const Vertex &from() const;
 
     /**
      * Returns the @em To Vertex for the line.
      */
     Vertex       &to();
-    Vertex const &to() const;
+    const Vertex &to() const;
 
     /**
      * Returns the specified Vertex of the line.
@@ -701,7 +701,7 @@ public:
      * @param to  If not @c 0 return the To vertex; otherwise the From vertex.
      */
     Vertex       &vertex(de::dint to);
-    Vertex const &vertex(de::dint to) const;
+    const Vertex &vertex(de::dint to) const;
 
     /**
      * Iterate through the edge Vertexs for the line.
@@ -720,7 +720,7 @@ public:
      * - Zero: @a box intersects the line.
      * - Positive: @a box is entirely on the right side.
      */
-    de::dint boxOnSide(AABoxd const &box) const;
+    de::dint boxOnSide(const AABoxd &box) const;
 
     /**
      * On which side of the line does the specified box lie? The test is carried out using
@@ -735,12 +735,12 @@ public:
      * - Zero: @a box intersects the line.
      * - Positive: @a box is entirely on the right side.
      */
-    de::dint boxOnSide_FixedPrecision(AABoxd const &box) const;
+    de::dint boxOnSide_FixedPrecision(const AABoxd &box) const;
 
     /**
      * @param offset  Returns the position of the nearest point along the line [0..1].
      */
-    de::ddouble pointDistance(de::Vec2d const &point, de::ddouble *offset = nullptr) const;
+    de::ddouble pointDistance(const de::Vec2d &point, de::ddouble *offset = nullptr) const;
 
     /**
      * Where does the given @a point lie relative to the line? Note that the line is considered
@@ -752,11 +752,11 @@ public:
      *         @c =0 Point lies directly on/incident with the line.
      *         @c >0 Point is to the right of the line.
      */
-    de::ddouble pointOnSide(de::Vec2d const &point) const;
+    de::ddouble pointOnSide(const de::Vec2d &point) const;
 
 protected:
     de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(world::DmuArgs const &args);
+    de::dint setProperty(const world::DmuArgs &args);
 
 public:
 #ifdef __CLIENT__
@@ -800,7 +800,7 @@ public:
      * Returns a pointer to the line owner for the specified edge @a vertex of the line.
      * If the vertex is not an edge vertex for the line then @c nullptr will be returned.
      */
-    inline LineOwner *vertexOwner(Vertex const &vertex) const {
+    inline LineOwner *vertexOwner(const Vertex &vertex) const {
         if(&vertex == &from()) return v1Owner();
         if(&vertex == &to())   return v2Owner();
         return nullptr;

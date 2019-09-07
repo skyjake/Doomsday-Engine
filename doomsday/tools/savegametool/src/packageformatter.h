@@ -63,7 +63,7 @@ public:
      *
      * @return  Formated Info data.
      */
-    de::String composeInfo(GameStateMetadata const &metadata, de::Path const &sourceFile,
+    de::String composeInfo(const GameStateMetadata &metadata, const de::Path &sourceFile,
                            de::dint32 oldSaveVersion) const;
 
     /**

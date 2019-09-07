@@ -39,7 +39,7 @@ using namespace de;
 DE_PIMPL(Id1Translator)
 {
     FormatId id;
-    File const *saveFilePtr;
+    const File *saveFilePtr;
     dint32 saveVersion;
 
     Impl(Public *i)
@@ -79,7 +79,7 @@ DE_PIMPL(Id1Translator)
         return false;
     }
 
-    File const *saveFile() const
+    const File *saveFile() const
     {
         DE_ASSERT(saveFilePtr != 0);
         return saveFilePtr;
@@ -110,7 +110,7 @@ DE_PIMPL(Id1Translator)
 
     Block *bufferFile(Reader &from) const
     {
-        IByteArray const &source = *from.source();
+        const IByteArray &source = *from.source();
         return new Block(source, from.offset(), source.size() - from.offset());
     }
 

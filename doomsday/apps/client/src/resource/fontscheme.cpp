@@ -80,7 +80,7 @@ DE_OBSERVES(FontManifest, Deletion)
     }
 
     /// @pre uniqueIdMap is large enough if initialized!
-    void unlinkInUniqueIdLut(Manifest const &manifest)
+    void unlinkInUniqueIdLut(const Manifest &manifest)
     {
         DE_ASSERT(&manifest.scheme() == thisPublic); // sanity check.
         // If the lut is already considered 'dirty' do not unlink.
@@ -156,7 +156,7 @@ DE_OBSERVES(FontManifest, Deletion)
     }
 
     // Observes FontManifest Deletion.
-    void fontManifestBeingDeleted(Manifest const &manifest)
+    void fontManifestBeingDeleted(const Manifest &manifest)
     {
         deindex(const_cast<Manifest &>(manifest));
     }
@@ -178,12 +178,12 @@ void FontScheme::clear()
     d->uniqueIdLutDirty = true;
 }
 
-String const &FontScheme::name() const
+const String &FontScheme::name() const
 {
     return d->name;
 }
 
-FontScheme::Manifest &FontScheme::declare(Path const &path)
+FontScheme::Manifest &FontScheme::declare(const Path &path)
 {
     LOG_AS("FontScheme::declare");
 
@@ -212,12 +212,12 @@ FontScheme::Manifest &FontScheme::declare(Path const &path)
     return *newManifest;
 }
 
-bool FontScheme::has(Path const &path) const
+bool FontScheme::has(const Path &path) const
 {
     return d->index.has(path, Index::NoBranch | Index::MatchFull);
 }
 
-FontScheme::Manifest const &FontScheme::find(Path const &path) const
+const FontScheme::Manifest &FontScheme::find(const Path &path) const
 {
     if(has(path))
     {
@@ -227,13 +227,13 @@ FontScheme::Manifest const &FontScheme::find(Path const &path) const
     throw NotFoundError("FontScheme::find", "Failed to locate a manifest matching \"" + path.asText() + "\"");
 }
 
-FontScheme::Manifest &FontScheme::find(Path const &path)
+FontScheme::Manifest &FontScheme::find(const Path &path)
 {
-    Manifest const &found = const_cast<FontScheme const *>(this)->find(path);
+    const Manifest &found = const_cast<const FontScheme *>(this)->find(path);
     return const_cast<Manifest &>(found);
 }
 
-FontScheme::Manifest const &FontScheme::findByUniqueId(int uniqueId) const
+const FontScheme::Manifest &FontScheme::findByUniqueId(int uniqueId) const
 {
     d->rebuildUniqueIdLut();
 
@@ -249,11 +249,11 @@ FontScheme::Manifest const &FontScheme::findByUniqueId(int uniqueId) const
 
 FontScheme::Manifest &FontScheme::findByUniqueId(int uniqueId)
 {
-    Manifest const &found = const_cast<FontScheme const *>(this)->findByUniqueId(uniqueId);
+    const Manifest &found = const_cast<const FontScheme *>(this)->findByUniqueId(uniqueId);
     return const_cast<Manifest &>(found);
 }
 
-FontScheme::Index const &FontScheme::index() const
+const FontScheme::Index &FontScheme::index() const
 {
     return d->index;
 }

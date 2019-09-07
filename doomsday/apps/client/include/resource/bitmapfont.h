@@ -41,15 +41,15 @@ public:
 
     /// @return  GL-texture name.
     uint textureGLName() const;
-    de::Vec2i const &textureDimensions() const;
-    de::Vec2ui const &textureMargin() const;
+    const de::Vec2i &textureDimensions() const;
+    const de::Vec2ui &textureMargin() const;
 
     int ascent() const override;
     int descent() const override;
     int lineSpacing() const override;
 
-    de::Rectanglei const &glyphPosCoords(de::dbyte ch) const override;
-    de::Rectanglei const &glyphTexCoords(de::dbyte ch) const override;
+    const de::Rectanglei &glyphPosCoords(de::dbyte ch) const override;
+    const de::Rectanglei &glyphTexCoords(de::dbyte ch) const override;
 
     void glInit() const override;
     void glDeinit() const override;

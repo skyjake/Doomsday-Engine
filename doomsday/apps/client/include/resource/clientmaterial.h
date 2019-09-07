@@ -100,7 +100,7 @@ public:
             float variance;  ///< Stage variance (time).
 
             Stage(int tics, float variance) : tics(tics), variance(variance) {}
-            Stage(Stage const &other) : tics(other.tics), variance(other.variance) {}
+            Stage(const Stage &other) : tics(other.tics), variance(other.variance) {}
             virtual ~Stage() {}
 
             DE_CAST_METHODS()
@@ -116,8 +116,8 @@ public:
         /**
          * Construct a new material Decoration with the given skip pattern configuration.
          */
-        Decoration(de::Vec2i const &patternSkip   = de::Vec2i(),
-                   de::Vec2i const &patternOffset = de::Vec2i());
+        Decoration(const de::Vec2i &patternSkip   = de::Vec2i(),
+                   const de::Vec2i &patternOffset = de::Vec2i());
         virtual ~Decoration();
 
         DE_CAST_METHODS()
@@ -136,7 +136,7 @@ public:
          * Returns the Material 'owner' of the material decoration.
          */
         ClientMaterial       &material();
-        ClientMaterial const &material() const;
+        const ClientMaterial &material() const;
 
         void setMaterial(ClientMaterial *newOwner);
 
@@ -145,14 +145,14 @@ public:
          *
          * @see patternOffset()
          */
-        de::Vec2i const &patternSkip() const;
+        const de::Vec2i &patternSkip() const;
 
         /**
          * Returns the pattern offset configuration for the decoration.
          *
          * @see patternSkip()
          */
-        de::Vec2i const &patternOffset() const;
+        const de::Vec2i &patternOffset() const;
 
         /**
          * Returns the total number of animation Stages for the decoration.
@@ -170,7 +170,7 @@ public:
          *
          * @return  Index of the newly added stage (0 based).
          */
-        int addStage(Stage const &stage);
+        int addStage(const Stage &stage);
 
         /**
          * Lookup an animation Stage by @a index.
@@ -228,7 +228,7 @@ public:
     /**
      * Determines if a MaterialAnimator exists for a material variant which fulfills @a spec.
      */
-    bool hasAnimator(de::MaterialVariantSpec const &spec);
+    bool hasAnimator(const de::MaterialVariantSpec &spec);
 
     /**
      * Find/create an MaterialAnimator for a material variant which fulfils @a spec
@@ -237,7 +237,7 @@ public:
      *
      * @return  The (possibly, newly created) Animator.
      */
-    MaterialAnimator &getAnimator(de::MaterialVariantSpec const &spec);
+    MaterialAnimator &getAnimator(const de::MaterialVariantSpec &spec);
 
     /**
      * Iterate through all the MaterialAnimators for the material.
@@ -251,7 +251,7 @@ public:
      */
     void clearAllAnimators();
 
-    static ClientMaterial &find(res::Uri const &uri);
+    static ClientMaterial &find(const res::Uri &uri);
 
 private:
     DE_PRIVATE(d)

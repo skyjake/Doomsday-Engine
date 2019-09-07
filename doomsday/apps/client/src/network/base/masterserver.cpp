@@ -167,7 +167,7 @@ DE_PIMPL(MasterWorker)
                         }
                         servers.push_back(entry->as<RecordValue>().dereference());
                     }
-                    catch (Error const &er)
+                    catch (const Error &er)
                     {
                         LOG_NET_WARNING("Server information in master server response has "
                                         "an error: %s") << er.asText();
@@ -175,7 +175,7 @@ DE_PIMPL(MasterWorker)
                 }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_WARNING("Failed to parse master server response: %s") << er.asText();
         }
@@ -190,7 +190,7 @@ MasterWorker::MasterWorker() : d(new Impl(this))
     d->web.audienceForFinished() += d;
 }
 
-void MasterWorker::newJob(Action action, Record const &data)
+void MasterWorker::newJob(Action action, const Record &data)
 {
     LOG_AS("MasterWorker");
 

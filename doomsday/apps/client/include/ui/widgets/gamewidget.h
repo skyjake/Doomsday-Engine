@@ -30,7 +30,7 @@
 class GameWidget : public de::GuiWidget
 {
 public:
-    GameWidget(de::String const &name = "game");
+    GameWidget(const de::String &name = "game");
 
     /**
      * Pauses the game, if one is currently running and pausing is allowed.
@@ -39,13 +39,13 @@ public:
 
     void drawComposited();
 
-    void renderCubeMap(uint size, de::String const &outputImagePath);
+    void renderCubeMap(uint size, const de::String &outputImagePath);
 
     // Events.
     void viewResized() override;
     void update() override;
     void drawContent() override;
-    bool handleEvent(de::Event const &event) override;
+    bool handleEvent(const de::Event &event) override;
 
 protected:
     void glDeinit() override;

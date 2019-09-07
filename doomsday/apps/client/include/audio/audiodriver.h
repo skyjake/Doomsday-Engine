@@ -86,7 +86,7 @@ public:
      *
      * @note Once loaded the driver must be @ref initialized before use.
      */
-    void load(de::String const &identifier);
+    void load(const de::String &identifier);
 
     /**
      * Unload the audio driver
@@ -109,7 +109,7 @@ public:
      */
     de::String extensionName() const;
 
-    static bool isAvailable(de::String const &identifier);
+    static bool isAvailable(const de::String &identifier);
 
 public:  // Interfaces: -----------------------------------------------------------
 

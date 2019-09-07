@@ -40,7 +40,7 @@ public:
 
     de::ModelBank &bank();
 
-    de::ModelBank const &bank() const;
+    const de::ModelBank &bank() const;
 
     void glInit();
 
@@ -53,7 +53,7 @@ public:
      *                 created and owned by ModelRenderer.
      * @return Name of the shader (in the shader bank).
      */
-    de::String shaderName(de::GLProgram const &program) const;
+    de::String shaderName(const de::GLProgram &program) const;
 
     /**
      * Looks up the definition of a shader based on a GLProgram instance.
@@ -62,11 +62,11 @@ public:
      *                 created and owned by ModelRenderer.
      * @return Shader definition record.
      */
-    de::Record const &shaderDefinition(de::GLProgram const &program) const;
+    const de::Record &shaderDefinition(const de::GLProgram &program) const;
 
 public:
-    static int identifierFromText(de::String const &text,
-                                  const std::function<int (de::String const &)>& resolver);
+    static int identifierFromText(const de::String &text,
+                                  const std::function<int (const de::String &)>& resolver);
 
     static const char *DEF_ANIMATION;
     static const char *DEF_MATERIAL;

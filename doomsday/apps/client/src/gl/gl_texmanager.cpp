@@ -151,7 +151,7 @@ void GL_ReleaseAllLightingSystemTextures()
 {
     if (novideo || !initedOk) return;
 
-    Deferred_glDeleteTextures(NUM_LIGHTING_TEXTURES, (GLuint const *) lightingTextures);
+    Deferred_glDeleteTextures(NUM_LIGHTING_TEXTURES, (const GLuint *) lightingTextures);
     zap(lightingTextures);
 }
 
@@ -161,7 +161,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
     if (which < 0 || which >= NUM_LIGHTING_TEXTURES) return 0;
 
     static const struct TexDef {
-        char const *name;
+        const char *name;
         gfxmode_t mode;
     } texDefs[NUM_LIGHTING_TEXTURES] = {
         /* LST_DYNAMIC */         { "dlight",     LGM_WHITE_ALPHA },
@@ -172,7 +172,7 @@ GLuint GL_PrepareLSTexture(lightingtexid_t which)
         /* LST_RADIO_OE */        { "radiooe",    LGM_WHITE_ALPHA },
         /* LST_CAMERA_VIGNETTE */ { "vignette",   LGM_NORMAL }
     };
-    struct TexDef const &def = texDefs[which];
+    const struct TexDef &def = texDefs[which];
 
     if (!lightingTextures[which])
     {
@@ -217,7 +217,7 @@ void GL_ReleaseAllFlareTextures()
 {
     if (novideo || !initedOk) return;
 
-    Deferred_glDeleteTextures(NUM_SYSFLARE_TEXTURES, (GLuint const *) sysFlareTextures);
+    Deferred_glDeleteTextures(NUM_SYSFLARE_TEXTURES, (const GLuint *) sysFlareTextures);
     zap(sysFlareTextures);
 }
 
@@ -227,14 +227,14 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
     if (which < 0 || which >= NUM_SYSFLARE_TEXTURES) return 0;
 
     static const struct TexDef {
-        char const *name;
+        const char *name;
     } texDefs[NUM_SYSFLARE_TEXTURES] = {
         /* FXT_ROUND */     { "dlight" },
         /* FXT_FLARE */     { "flare" },
         /* FXT_BRFLARE */   { "brflare" },
         /* FXT_BIGFLARE */  { "bigflare" }
     };
-    struct TexDef const &def = texDefs[which];
+    const struct TexDef &def = texDefs[which];
 
     if (!sysFlareTextures[which])
     {
@@ -262,7 +262,7 @@ GLuint GL_PrepareSysFlaremap(flaretexid_t which)
     return sysFlareTextures[which];
 }
 
-GLuint GL_PrepareFlaremap(res::Uri const &resourceUri)
+GLuint GL_PrepareFlaremap(const res::Uri &resourceUri)
 {
     if (resourceUri.path().length() == 1)
     {
@@ -276,7 +276,7 @@ GLuint GL_PrepareFlaremap(res::Uri const &resourceUri)
     }
     if (auto *tex = res::Textures::get().tryFindTextureByResourceUri(DE_STR("Flaremaps"), resourceUri))
     {
-        if (TextureVariant const *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
+        if (const TextureVariant *variant = static_cast<ClientTexture *>(tex)->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }
@@ -285,7 +285,7 @@ GLuint GL_PrepareFlaremap(res::Uri const &resourceUri)
     return 0;
 }
 
-static res::Source loadRaw(image_t &image, rawtex_t const &raw)
+static res::Source loadRaw(image_t &image, const rawtex_t &raw)
 {
     res::FS1 &fileSys = App_FileSystem();
 
@@ -340,7 +340,7 @@ static res::Source loadRaw(image_t &image, rawtex_t const &raw)
 #undef RAW_HEIGHT
 #undef RAW_WIDTH
     }
-    catch (res::LumpIndex::NotFoundError const &)
+    catch (const res::LumpIndex::NotFoundError &)
     {} // Ignore error.
 
     return res::None;
@@ -404,7 +404,7 @@ void GL_ReleaseTexturesForRawImages()
     {
         if (raw->tex)
         {
-            Deferred_glDeleteTextures(1, (GLuint const *) &raw->tex);
+            Deferred_glDeleteTextures(1, (const GLuint *) &raw->tex);
             raw->tex = 0;
         }
     }

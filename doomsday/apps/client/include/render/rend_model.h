@@ -64,9 +64,9 @@ struct drawmodelparams_t
 /// @ingroup render
 struct drawmodel2params_t
 {
-    struct mobj_s const *object;
-    render::Model const *model;
-    render::StateAnimator const *animator;
+    const struct mobj_s *object;
+    const render::Model *model;
+    const render::StateAnimator *animator;
 };
 
 DE_EXTERN_C de::dbyte useModels;
@@ -120,18 +120,18 @@ bool Rend_ModelExpandVertexBuffers(de::duint numVertices);
  * @param  noCompression  @c true= disable texture compression.
  * @return  Specification to be used when preparing such textures.
  */
-TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression);
+const TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression);
 
 /**
  * Lookup the texture specification for shiny model skins.
  *
  * @return  Specification to be used when preparing such textures.
  */
-TextureVariantSpec const &Rend_ModelShinyTextureSpec();
+const TextureVariantSpec &Rend_ModelShinyTextureSpec();
 
 /**
  * Render all the submodels of a model.
  */
-void Rend_DrawModel(vissprite_t const &spr);
+void Rend_DrawModel(const vissprite_t &spr);
 
 #endif  // CLIENT_RENDER_MODEL_H

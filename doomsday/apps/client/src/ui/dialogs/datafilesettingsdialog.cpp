@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(DataFileSettingsDialog)
     bool modified = false;
 };
 
-DataFileSettingsDialog::DataFileSettingsDialog(String const &name)
+DataFileSettingsDialog::DataFileSettingsDialog(const String &name)
     : DirectoryListDialog(name)
     , d(new Impl)
 {

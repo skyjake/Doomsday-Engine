@@ -38,7 +38,7 @@ class ShadowEdge
 public:
     ShadowEdge();
 
-    void init(HEdge const &leftMostHEdge, dint edge);
+    void init(const HEdge &leftMostHEdge, dint edge);
 
     void prepare(dint planeIndex);
 
@@ -73,7 +73,7 @@ public:
      *
      * @see inner()
      */
-    Vec3d const &outer() const;
+    const Vec3d &outer() const;
 
     /**
      * Returns the origin of the @em inner vertex (that which extends away from
@@ -81,7 +81,7 @@ public:
      *
      * @see outer()
      */
-    Vec3d const &inner() const;
+    const Vec3d &inner() const;
 
     /**
      * Returns the length of the shadow edge, which is measured as the distance

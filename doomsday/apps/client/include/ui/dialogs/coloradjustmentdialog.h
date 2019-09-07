@@ -27,7 +27,7 @@
 class ColorAdjustmentDialog : public de::DialogWidget
 {
 public:
-    ColorAdjustmentDialog(de::String const &name = "coloradjustment");
+    ColorAdjustmentDialog(const de::String &name = "coloradjustment");
 
     void resetToDefaults();
 

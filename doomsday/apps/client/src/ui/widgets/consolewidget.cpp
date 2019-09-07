@@ -107,7 +107,7 @@ DE_GUI_PIMPL(ConsoleWidget)
         releaseRef(height);
     }
 
-    void currentGameChanged(Game const &) override
+    void currentGameChanged(const Game &) override
     {
         scriptCmd->updateCompletion();
     }
@@ -137,7 +137,7 @@ DE_GUI_PIMPL(ConsoleWidget)
         }
     }
 
-    bool handleMousePositionEvent(MouseEvent const &mouse)
+    bool handleMousePositionEvent(const MouseEvent &mouse)
     {
         if (grabbed == RightEdge)
         {
@@ -189,7 +189,7 @@ DE_GUI_PIMPL(ConsoleWidget)
         return false;
     }
 
-    void variableValueChanged(Variable &, Value const &newValue) override
+    void variableValueChanged(Variable &, const Value &newValue) override
     {
         // We are listening to the 'console.script' variable.
         setScriptMode(newValue.isTrue());
@@ -260,7 +260,7 @@ DE_GUI_PIMPL(ConsoleWidget)
 
         RightClick(Impl *i) : d(i) {}
 
-        bool handleEvent(GuiWidget &widget, Event const &event)
+        bool handleEvent(GuiWidget &widget, const Event &event)
         {
             switch (widget.handleMouseClick(event, MouseEvent::Right))
             {
@@ -452,7 +452,7 @@ LogWidget &ConsoleWidget::log()
     return *d->log;
 }
 
-Rule const &ConsoleWidget::shift()
+const Rule &ConsoleWidget::shift()
 {
     return *d->horizShift;
 }
@@ -500,7 +500,7 @@ void ConsoleWidget::update()
     }
 }
 
-bool ConsoleWidget::handleEvent(Event const &event)
+bool ConsoleWidget::handleEvent(const Event &event)
 {
     // Hovering over the right edge shows the <-> cursor.
     if (event.type() == Event::MousePosition)
@@ -538,7 +538,7 @@ bool ConsoleWidget::handleEvent(Event const &event)
 
     if (event.type() == Event::KeyPress)
     {
-        KeyEvent const &key = event.as<KeyEvent>();
+        const KeyEvent &key = event.as<KeyEvent>();
 
         if (key.ddKey() == DDKEY_PGUP || key.ddKey() == DDKEY_PGDN)
         {
@@ -561,7 +561,7 @@ void ConsoleWidget::operator >> (PersistentState &toState) const
     toState.objectNamespace().set("console.width", d->width->value());
 }
 
-void ConsoleWidget::operator << (PersistentState const &fromState)
+void ConsoleWidget::operator << (const PersistentState &fromState)
 {
     d->width->set(fromState["console.width"]);
 

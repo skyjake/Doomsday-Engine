@@ -35,25 +35,25 @@ static AudioEnvironment envInfo[1 + NUM_AUDIO_ENVIRONMENTS] = {
     { "Cloth",     5,       5,      255 }
 };
 
-char const *S_AudioEnvironmentName(AudioEnvironmentId id)
+const char *S_AudioEnvironmentName(AudioEnvironmentId id)
 {
     DE_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
     return ::envInfo[1 + dint( id )].name;
 }
 
-AudioEnvironment const &S_AudioEnvironment(AudioEnvironmentId id)
+const AudioEnvironment &S_AudioEnvironment(AudioEnvironmentId id)
 {
     DE_ASSERT(id >= AE_NONE && id < NUM_AUDIO_ENVIRONMENTS);
     return ::envInfo[1 + dint( id )];
 }
 
-AudioEnvironmentId S_AudioEnvironmentId(res::Uri const *uri)
+AudioEnvironmentId S_AudioEnvironmentId(const res::Uri *uri)
 {
     if(uri)
     {
         for(dint i = 0; i < DED_Definitions()->textureEnv.size(); ++i)
         {
-            ded_tenviron_t const *env = &DED_Definitions()->textureEnv[i];
+            const ded_tenviron_t *env = &DED_Definitions()->textureEnv[i];
             for(dint k = 0; k < env->materials.size(); ++k)
             {
                 res::Uri *ref = env->materials[k].uri;
@@ -62,7 +62,7 @@ AudioEnvironmentId S_AudioEnvironmentId(res::Uri const *uri)
                 // Is this a known environment?
                 for(dint m = 0; m < NUM_AUDIO_ENVIRONMENTS; ++m)
                 {
-                    AudioEnvironment const &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
+                    const AudioEnvironment &envInfo = S_AudioEnvironment(AudioEnvironmentId(m));
                     if(!iCmpStrCase(env->id, envInfo.name))
                         return AudioEnvironmentId(m);
                 }

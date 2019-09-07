@@ -154,7 +154,7 @@ void Sys_MessageBoxWithDetailsFromFile(messageboxtype_t type,
 
         Sys_MessageBox2(type, title, msg, informativeMsg, details);
     }
-    catch (de::Error const &er)
+    catch (const de::Error &er)
     {
         de::warning("Could not read \"%s\": %s", detailsFileName, er.asText().c_str());
 

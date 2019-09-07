@@ -121,7 +121,7 @@ DE_EXTENSION(winmm);
 
 static ClientApp *clientAppSingleton = 0;
 
-DE_NORETURN static void handleLegacyCoreTerminate(char const *msg)
+DE_NORETURN static void handleLegacyCoreTerminate(const char *msg)
 {
     App_Error("Application terminated due to exception:\n%s\n", msg);
 }
@@ -141,7 +141,7 @@ static void continueInitWithEventLoopRunning()
 #endif
 }
 
-static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const &)
+static Value *Function_App_GamePlugin(Context &, const Function::ArgumentValues &)
 {
     if (App_CurrentGame().isNull())
     {
@@ -153,7 +153,7 @@ static Value *Function_App_GamePlugin(Context &, Function::ArgumentValues const 
     return new TextValue(DoomsdayApp::plugins().extensionName(App_CurrentGame().pluginId()));
 }
 
-static Value *Function_App_Quit(Context &, Function::ArgumentValues const &)
+static Value *Function_App_Quit(Context &, const Function::ArgumentValues &)
 {
     Sys_Quit();
     return 0;
@@ -207,7 +207,7 @@ DE_PIMPL(ClientApp)
             setMode(OnlyWarningEntries);
         }
 
-        LogSink &operator<<(LogEntry const &entry)
+        LogSink &operator<<(const LogEntry &entry)
         {
             if (alertMask.shouldRaiseAlert(entry.metadata()))
             {
@@ -240,7 +240,7 @@ DE_PIMPL(ClientApp)
             return *this;
         }
 
-        LogSink &operator<<(String const &plainText)
+        LogSink &operator<<(const String &plainText)
         {
             ClientApp::alert(plainText);
             return *this;
@@ -283,7 +283,7 @@ DE_PIMPL(ClientApp)
             Sys_Shutdown();
             DD_Shutdown();
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             warning("Exception during ~ClientApp: %s", er.asText().c_str());
             DE_ASSERT_FAIL("Unclean shutdown: exception in ~ClientApp");
@@ -335,7 +335,7 @@ DE_PIMPL(ClientApp)
         case DD_NOTIFY_PSPRITE_STATE_CHANGED:
             if (data)
             {
-                auto const *args = (ddnotify_psprite_state_changed_t *) data;
+                const auto *args = (ddnotify_psprite_state_changed_t *) data;
                 self().player(args->player).weaponStateChanged(args->state);
             }
             break;
@@ -343,7 +343,7 @@ DE_PIMPL(ClientApp)
         case DD_NOTIFY_PLAYER_WEAPON_CHANGED:
             if (data)
             {
-                auto const *args = (ddnotify_player_weapon_changed_t *) data;
+                const auto *args = (ddnotify_player_weapon_changed_t *) data;
                 self().player(args->player).setWeaponAssetId(args->weaponId);
             }
             break;
@@ -363,7 +363,7 @@ DE_PIMPL(ClientApp)
         DD_ConsoleRegister();
     }
 
-    void aboutToUnloadGame(Game const &/*gameBeingUnloaded*/) override
+    void aboutToUnloadGame(const Game &/*gameBeingUnloaded*/) override
     {
         DE_ASSERT(ClientWindow::mainExists());
 
@@ -405,7 +405,7 @@ DE_PIMPL(ClientApp)
         infineSys.deinitBindingContext();
     }
 
-    void currentGameChanged(Game const &newGame) override
+    void currentGameChanged(const Game &newGame) override
     {
         if (Sys_IsShuttingDown()) return;
 
@@ -432,7 +432,7 @@ DE_PIMPL(ClientApp)
         if (!newGame.isNull())
         {
             // Auto-start the game?
-            auto const *prof = self().currentGameProfile();
+            const auto *prof = self().currentGameProfile();
             if (prof && prof->autoStartMap())
             {
                 LOG_NOTE("Starting in %s as configured in the game profile")
@@ -526,12 +526,12 @@ DE_PIMPL(ClientApp)
     }
 #endif
 
-    String mapClientStatePath(String const &mapId) const
+    String mapClientStatePath(const String &mapId) const
     {
         return Stringf("maps/%sClientState", mapId.c_str());
     }
 
-    String mapObjectStatePath(String const &mapId) const
+    String mapObjectStatePath(const String &mapId) const
     {
         return Stringf("maps/%sObjectState", mapId.c_str());
     }
@@ -780,7 +780,7 @@ void ClientApp::checkPackageCompatibility(const StringList &packageIds,
     }
 }
 
-void ClientApp::gameSessionWasSaved(AbstractSession const &session,
+void ClientApp::gameSessionWasSaved(const AbstractSession &session,
                                     GameStateFolder &toFolder)
 {
     DoomsdayApp::gameSessionWasSaved(session, toFolder);
@@ -802,14 +802,14 @@ void ClientApp::gameSessionWasSaved(AbstractSession const &session,
             file << world().map().objectsDescription().toUtf8(); // plain text
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOGDEV_MAP_WARNING("Internal map state was not serialized: %s") << er.asText();
     }
 }
 
-void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
-                                     GameStateFolder const &fromFolder)
+void ClientApp::gameSessionWasLoaded(const AbstractSession &session,
+                                     const GameStateFolder &fromFolder)
 {
     DoomsdayApp::gameSessionWasLoaded(session, fromFolder);
 
@@ -818,7 +818,7 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
     // Internal map state. This might be missing.
     try
     {
-        if (File const *file = fromFolder.tryLocate<File const>(d->mapClientStatePath(mapId)))
+        if (const File *file = fromFolder.tryLocate<File const>(d->mapClientStatePath(mapId)))
         {
             DE_ASSERT(session.thinkerMapping() != nullptr);
 
@@ -827,7 +827,7 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
                                                    *session.thinkerMapping());
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOGDEV_MAP_WARNING("Internal map state not deserialized: %s") << er.asText();
     }
@@ -835,7 +835,7 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
     // Restore object state.
     try
     {
-        if (File const *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
+        if (const File *file = fromFolder.tryLocate<File const>(d->mapObjectStatePath(mapId)))
         {
             // Parse the info and cross-check with current state.
             world().map().restoreObjects(Info(*file), *session.thinkerMapping());
@@ -845,7 +845,7 @@ void ClientApp::gameSessionWasLoaded(AbstractSession const &session,
             LOGDEV_MSG("\"%s\" not found") << d->mapObjectStatePath(mapId);
         }
     }
-    catch (Error const &er)
+    catch (const Error &er)
     {
         LOGDEV_MAP_WARNING("Object state check error: %s") << er.asText();
     }
@@ -858,7 +858,7 @@ ClientPlayer &ClientApp::player(int console) // static
 
 LoopResult ClientApp::forLocalPlayers(const std::function<LoopResult (ClientPlayer &)> &func) // static
 {
-    auto const &players = DoomsdayApp::players();
+    const auto &players = DoomsdayApp::players();
     for (int i = 0; i < players.count(); ++i)
     {
         ClientPlayer &player = players.at(i).as<ClientPlayer>();
@@ -874,7 +874,7 @@ LoopResult ClientApp::forLocalPlayers(const std::function<LoopResult (ClientPlay
     return LoopContinue;
 }
 
-void ClientApp::alert(String const &msg, LogEntry::Level level)
+void ClientApp::alert(const String &msg, LogEntry::Level level)
 {
     if (ClientWindow::mainExists())
     {
@@ -1058,7 +1058,7 @@ void ClientApp::unloadGame(const GameProfile &upcomingGame)
     world::Map::initDummies();
 }
 
-void ClientApp::makeGameCurrent(GameProfile const &newGame)
+void ClientApp::makeGameCurrent(const GameProfile &newGame)
 {
     DoomsdayApp::makeGameCurrent(newGame);
 

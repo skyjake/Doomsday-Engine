@@ -83,9 +83,9 @@ public:
     /**
      * Provides a list of all child widgets of the page, in addition order.
      */
-    Children const &children() const;
+    const Children &children() const;
 
-    FinalePageWidget &setOffset(de::Vec3f const &newOffset, int steps = 0);
+    FinalePageWidget &setOffset(const de::Vec3f &newOffset, int steps = 0);
     FinalePageWidget &setOffsetX(float newOffsetX, int steps = 0);
     FinalePageWidget &setOffsetY(float newOffsetY, int steps = 0);
     FinalePageWidget &setOffsetZ(float newOffsetZ, int steps = 0);
@@ -97,25 +97,25 @@ public:
     FinalePageWidget &setBackgroundMaterial(world::Material *newMaterial);
 
     /// Sets the background top color.
-    FinalePageWidget &setBackgroundTopColor(de::Vec3f const &newColor, int steps = 0);
+    FinalePageWidget &setBackgroundTopColor(const de::Vec3f &newColor, int steps = 0);
 
     /// Sets the background top color and alpha.
-    FinalePageWidget &setBackgroundTopColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinalePageWidget &setBackgroundTopColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
 
     /// Sets the background bottom color.
-    FinalePageWidget &setBackgroundBottomColor(de::Vec3f const &newColor, int steps = 0);
+    FinalePageWidget &setBackgroundBottomColor(const de::Vec3f &newColor, int steps = 0);
 
     /// Sets the background bottom color and alpha.
-    FinalePageWidget &setBackgroundBottomColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinalePageWidget &setBackgroundBottomColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
 
     /// Sets the filter color and alpha.
-    FinalePageWidget &setFilterColorAndAlpha(de::Vec4f const &newColorAndAlpha, int steps = 0);
+    FinalePageWidget &setFilterColorAndAlpha(const de::Vec4f &newColorAndAlpha, int steps = 0);
 
     /// @return  Animator which represents the identified predefined color.
-    animatorvector3_t const *predefinedColor(uint idx);
+    const animatorvector3_t *predefinedColor(uint idx);
 
     /// Sets a predefined color.
-    FinalePageWidget &setPredefinedColor(uint idx, de::Vec3f const &newColor, int steps = 0);
+    FinalePageWidget &setPredefinedColor(uint idx, const de::Vec3f &newColor, int steps = 0);
 
     /// @return  Unique identifier of the predefined font.
     fontid_t predefinedFont(uint idx);

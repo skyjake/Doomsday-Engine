@@ -50,7 +50,7 @@ public:
      * @param topSlope     Upper limit to the Z axis angle/slope range.
      * @param flags        @ref lineSightFlags dictate trace behavior/logic.
      */
-    LineSightTest(de::Vec3d const &from, de::Vec3d const &to,
+    LineSightTest(const de::Vec3d &from, const de::Vec3d &to,
                   de::dfloat bottomSlope = -1,
                   de::dfloat topSlope    = +1,
                   de::dint flags         = 0);
@@ -63,7 +63,7 @@ public:
      * @return  @c true iff an uninterrupted path exists between the preconfigured Start
      * and End points of the trace line.
      */
-    bool trace(BspTree const &bspRoot);
+    bool trace(const BspTree &bspRoot);
 
 private:
     DE_PRIVATE(d)

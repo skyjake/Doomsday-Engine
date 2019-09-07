@@ -28,9 +28,9 @@
 class CVarLineEditWidget : public de::LineEditWidget, public ICVarWidget
 {
 public:
-    CVarLineEditWidget(char const *cvarPath);
+    CVarLineEditWidget(const char *cvarPath);
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
 
 public:
     void updateFromCVar();

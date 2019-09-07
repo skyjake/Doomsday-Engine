@@ -61,22 +61,22 @@ dfloat weaponFOVShift    = 45;
 dfloat weaponOffsetScale = 0.3183f;  // 1/Pi
 dbyte weaponScaleMode    = SCALEMODE_SMART_STRETCH;
 
-static MaterialVariantSpec const &pspriteMaterialSpec()
+static const MaterialVariantSpec &pspriteMaterialSpec()
 {
     return ClientApp::resources().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
 }
 
-static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs)
+static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs)
 {
     static dint const WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
 
     dfloat const offScaleY = ::weaponOffsetScaleY / 1000.0f;
 
     DE_ASSERT(vs.psp);
-    ddpsprite_t const &psp = *vs.psp;
+    const ddpsprite_t &psp = *vs.psp;
     DE_ASSERT(psp.statePtr);
-    state_t const &state = *psp.statePtr;
+    const state_t &state = *psp.statePtr;
 
     defn::Sprite::View const spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
 
@@ -85,9 +85,9 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
             .getAnimator(pspriteMaterialSpec());
     matAnimator.prepare();
 
-    TextureVariant const &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    Vec2i const &texOrigin             = tex.base().origin();
-    variantspecification_t const &texSpec = tex.spec().variant;
+    const TextureVariant &tex             = *matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
+    const Vec2i &texOrigin             = tex.base().origin();
+    const variantspecification_t &texSpec = tex.spec().variant;
 
     parm.pos[0] = psp.pos[0] + texOrigin.x + pspOffset[0] - texSpec.border;
     parm.pos[1] = WEAPONTOP + offScaleY * (psp.pos[1] - WEAPONTOP) + texOrigin.y
@@ -116,7 +116,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
     {
         DE_ASSERT(vs.bspLeaf);
 #if 0
-        world::Map const &map = ClientApp::world().map();
+        const world::Map &map = ClientApp::world().map();
         if (useBias && map.hasLightGrid())
         {
             // Evaluate the position in the light grid.
@@ -133,7 +133,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, vispsprite_t const &vs
         else
 #endif
         {
-            auto const &subsec   = vs.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
+            const auto &subsec   = vs.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
             Vec4f const color = subsec.lightSourceColorfIntensity();
 
             // No need for distance attentuation.
@@ -165,7 +165,7 @@ void Rend_Draw2DPlayerSprites()
 {
     if (!viewPlayer) return;
 
-    ddplayer_t const &ddpl = viewPlayer->publicData();
+    const ddplayer_t &ddpl = viewPlayer->publicData();
 
     // Cameramen have no HUD sprites.
     if (ddpl.flags & DDPF_CAMERA  ) return;
@@ -177,7 +177,7 @@ void Rend_Draw2DPlayerSprites()
     }
 
     // Draw HUD vissprites.
-    for (vispsprite_t const &vs : visPSprites)
+    for (const vispsprite_t &vs : visPSprites)
     {
         // We are only interested in sprites (models are handled elsewhere).
         if (vs.type != VPSPR_SPRITE) continue;  // No...
@@ -190,10 +190,10 @@ void Rend_Draw2DPlayerSprites()
             rendpspriteparams_t parm; setupPSpriteParams(parm, vs);
             Rend_DrawPSprite(parm);
         }
-        catch (Resources::MissingResourceManifestError const &er)
+        catch (const Resources::MissingResourceManifestError &er)
         {
             // Log but otherwise ignore this error.
-            state_t const &state = *vs.psp->statePtr;
+            const state_t &state = *vs.psp->statePtr;
             LOG_GL_WARNING("Drawing psprite '%i' frame '%i': %s")
                     << state.sprite << state.frame << er.asText();
         }
@@ -205,7 +205,7 @@ void Rend_Draw2DPlayerSprites()
     }
 }
 
-static void setupModelParamsForVisPSprite(vissprite_t &vis, vispsprite_t const &spr)
+static void setupModelParamsForVisPSprite(vissprite_t &vis, const vispsprite_t &spr)
 {
     drawmodelparams_t *params = VS_MODEL(&vis);
 
@@ -257,7 +257,7 @@ void Rend_Draw3DPlayerSprites()
     bool first = true;
 
     // Draw HUD vissprites.
-    for (vispsprite_t const &spr : visPSprites)
+    for (const vispsprite_t &spr : visPSprites)
     {
         // We are only interested in models (sprites are handled elsewhere).
         if (spr.type != VPSPR_MODEL &&

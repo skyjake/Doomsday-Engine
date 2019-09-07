@@ -73,7 +73,7 @@ public:
      * @param msg    Message to show. May contain style escapes.
      * @param level  Importance of the message.
      */
-    static void alert(de::String const &msg, de::LogEntry::Level level = de::LogEntry::Message);
+    static void alert(const de::String &msg, de::LogEntry::Level level = de::LogEntry::Message);
 
     static ClientPlayer &player(int console);
     static de::LoopResult forLocalPlayers(const std::function<de::LoopResult (ClientPlayer &)> &func);
@@ -106,10 +106,10 @@ public:
 
 protected:
     void reset() override;
-    void makeGameCurrent(GameProfile const &newGame) override;
-    void unloadGame(GameProfile const &upcomingGame) override;
-    void gameSessionWasSaved(AbstractSession const &session, GameStateFolder &toFolder) override;
-    void gameSessionWasLoaded(AbstractSession const &session, GameStateFolder const &fromFolder) override;
+    void makeGameCurrent(const GameProfile &newGame) override;
+    void unloadGame(const GameProfile &upcomingGame) override;
+    void gameSessionWasSaved(const AbstractSession &session, GameStateFolder &toFolder) override;
+    void gameSessionWasLoaded(const AbstractSession &session, const GameStateFolder &fromFolder) override;
 
 private:
     DE_PRIVATE(d)

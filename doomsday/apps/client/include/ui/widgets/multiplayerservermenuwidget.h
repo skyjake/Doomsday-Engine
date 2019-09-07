@@ -28,7 +28,7 @@
 class MultiplayerServerMenuWidget : public HomeMenuWidget
 {
 public:
-    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(de::ServerInfo const &))
+    DE_AUDIENCE(AboutToJoin, void aboutToJoinMultiplayerGame(const de::ServerInfo &))
 
     enum DiscoveryMode {
         NoDiscovery,
@@ -37,7 +37,7 @@ public:
     };
 
     MultiplayerServerMenuWidget(DiscoveryMode discovery = DiscoverUsingMaster,
-                                de::String const &name = de::String());
+                                const de::String &name = de::String());
 
 private:
     DE_PRIVATE(d)

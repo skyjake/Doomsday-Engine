@@ -37,18 +37,18 @@ class PlayerWeaponAnimator
 public:
     PlayerWeaponAnimator(ClientPlayer *plr);
 
-    void setAsset(de::String const &identifier);
+    void setAsset(const de::String &identifier);
 
     de::String assetId() const;
 
-    void stateChanged(state_s const *state);
+    void stateChanged(const state_s *state);
 
     /**
      * Determines if a 3D model has been found and is ready to be rendered.
      */
     bool hasModel() const;
 
-    Model const *model() const;
+    const Model *model() const;
 
     StateAnimator &animator();
 

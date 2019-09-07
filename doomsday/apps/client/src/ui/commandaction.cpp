@@ -22,7 +22,7 @@
 
 using namespace de;
 
-CommandAction::CommandAction(String const &cmd, int commandSource)
+CommandAction::CommandAction(const String &cmd, int commandSource)
     : _command(cmd), _source(commandSource)
 {}
 

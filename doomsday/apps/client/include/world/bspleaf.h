@@ -88,7 +88,7 @@ public:
      * the leaf, or not.
      */
     inline Sector       *sectorPtr()       { return _sector; }
-    inline Sector const *sectorPtr() const { return _sector; }
+    inline const Sector *sectorPtr() const { return _sector; }
 
     /**
      * Attribute this BSP leaf to the given world @a sector.

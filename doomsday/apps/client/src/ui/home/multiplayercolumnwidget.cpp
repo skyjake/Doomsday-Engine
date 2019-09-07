@@ -45,7 +45,7 @@ DE_GUI_PIMPL(MultiplayerColumnWidget)
         ScrollAreaWidget &area = self().scrollArea();
         area.add(menu = new MultiplayerServerMenuWidget);
 
-        self().header().menuButton().setPopup([] (PopupButtonWidget const &) -> PopupWidget * {
+        self().header().menuButton().setPopup([] (const PopupButtonWidget &) -> PopupWidget * {
             auto *menu = new PopupMenuWidget;
             menu->items()
                     << new ui::ActionItem("Connect to Server...",
@@ -70,7 +70,7 @@ DE_GUI_PIMPL(MultiplayerColumnWidget)
         menu->items().audienceForRemoval() += this;
     }
 
-    void dataItemAdded(ui::DataPos, ui::Item const &) override
+    void dataItemAdded(ui::DataPos, const ui::Item &) override
     {
         noServers->hide();
     }

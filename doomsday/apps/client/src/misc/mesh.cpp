@@ -47,7 +47,7 @@ world::MapElement &Mesh::Element::mapElement()
     throw MissingMapElementError("Mesh::Element::mapElement", "No map element is attributed");
 }
 
-world::MapElement const &Mesh::Element::mapElement() const
+const world::MapElement &Mesh::Element::mapElement() const
 {
     return const_cast<Mesh::Element *>(this)->mapElement();
 }
@@ -79,7 +79,7 @@ void Mesh::clear()
     deleteAll(d->faces); d->faces.clear();
 }
 
-Vertex *Mesh::newVertex(Vec2d const &origin)
+Vertex *Mesh::newVertex(const Vec2d &origin)
 {
     auto *vtx = new Vertex(*this, origin);
     d->vertexs.append(vtx);
@@ -124,17 +124,17 @@ void Mesh::removeFace(Face &face)
     }
 }
 
-Mesh::Vertexs const &Mesh::vertexs() const
+const Mesh::Vertexs &Mesh::vertexs() const
 {
     return d->vertexs;
 }
 
-Mesh::Faces const &Mesh::faces() const
+const Mesh::Faces &Mesh::faces() const
 {
     return d->faces;
 }
 
-Mesh::HEdges const &Mesh::hedges() const
+const Mesh::HEdges &Mesh::hedges() const
 {
     return d->hedges;
 }

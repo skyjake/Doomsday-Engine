@@ -718,7 +718,7 @@ DE_EXTERN_C void DGL_Color3ub(DGLubyte r, DGLubyte g, DGLubyte b)
 }
 
 #undef DGL_Color3ubv
-DE_EXTERN_C void DGL_Color3ubv(DGLubyte const *vec)
+DE_EXTERN_C void DGL_Color3ubv(const DGLubyte *vec)
 {
     DE_ASSERT_IN_RENDER_THREAD();
 
@@ -740,7 +740,7 @@ DE_EXTERN_C void DGL_Color4ub(DGLubyte r, DGLubyte g, DGLubyte b, DGLubyte a)
 }
 
 #undef DGL_Color4ubv
-DE_EXTERN_C void DGL_Color4ubv(DGLubyte const *vec)
+DE_EXTERN_C void DGL_Color4ubv(const DGLubyte *vec)
 {
     DE_ASSERT_IN_RENDER_THREAD();
 
@@ -763,7 +763,7 @@ DE_EXTERN_C void DGL_Color3f(float r, float g, float b)
 }
 
 #undef DGL_Color3fv
-DE_EXTERN_C void DGL_Color3fv(float const *vec)
+DE_EXTERN_C void DGL_Color3fv(const float *vec)
 {
     DE_ASSERT_IN_RENDER_THREAD();
 
@@ -812,7 +812,7 @@ DE_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t)
 }
 
 #undef DGL_TexCoord2fv
-DE_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec)
+DE_EXTERN_C void DGL_TexCoord2fv(byte target, const float *vec)
 {
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT(target < MAX_TEX_COORDS);
@@ -949,7 +949,7 @@ DE_EXTERN_C void DGL_DrawLine(float x1, float y1, float x2, float y2, float r,
 }
 
 #undef DGL_DrawRect
-DE_EXTERN_C void DGL_DrawRect(RectRaw const *rect)
+DE_EXTERN_C void DGL_DrawRect(const RectRaw *rect)
 {
     if (!rect) return;
     GL_DrawRect(Rectanglei::fromSize(Vec2i(rect->origin.xy),
@@ -963,7 +963,7 @@ DE_EXTERN_C void DGL_DrawRect2(int x, int y, int w, int h)
 }
 
 #undef DGL_DrawRectf
-DE_EXTERN_C void DGL_DrawRectf(RectRawf const *rect)
+DE_EXTERN_C void DGL_DrawRectf(const RectRawf *rect)
 {
     GL_DrawRectf(rect);
 }
@@ -990,8 +990,8 @@ DE_EXTERN_C void DGL_DrawRectf2Tiled(double x, double y, double w, double h, int
 }
 
 #undef DGL_DrawCutRectfTiled
-DE_EXTERN_C void DGL_DrawCutRectfTiled(RectRawf const *rect, int tw, int th, int txoff, int tyoff,
-    RectRawf const *cutRect)
+DE_EXTERN_C void DGL_DrawCutRectfTiled(const RectRawf *rect, int tw, int th, int txoff, int tyoff,
+    const RectRawf *cutRect)
 {
     GL_DrawCutRectfTiled(rect, tw, th, txoff, tyoff, cutRect);
 }
@@ -1004,8 +1004,8 @@ DE_EXTERN_C void DGL_DrawCutRectf2Tiled(double x, double y, double w, double h, 
 }
 
 #undef DGL_DrawQuadOutline
-DE_EXTERN_C void DGL_DrawQuadOutline(Point2Raw const *tl, Point2Raw const *tr,
-    Point2Raw const *br, Point2Raw const *bl, float const color[4])
+DE_EXTERN_C void DGL_DrawQuadOutline(const Point2Raw *tl, const Point2Raw *tr,
+    const Point2Raw *br, const Point2Raw *bl, float const color[4])
 {
     if(!tl || !tr || !br || !bl || (color && !(color[CA] > 0))) return;
 

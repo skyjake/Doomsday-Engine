@@ -37,12 +37,12 @@ DE_PIMPL_NOREF(LineSegmentBlock)
     int partCount = 0;  ///< Running total of partition-line segments at/under this node.
 };
 
-LineSegmentBlock::LineSegmentBlock(AABox const &bounds) : d(new Impl)
+LineSegmentBlock::LineSegmentBlock(const AABox &bounds) : d(new Impl)
 {
     d->bounds = bounds;
 }
 
-AABox const &LineSegmentBlock::bounds() const
+const AABox &LineSegmentBlock::bounds() const
 {
     return d->bounds;
 }
@@ -52,13 +52,13 @@ void LineSegmentBlock::link(LineSegmentSide &seg)
     d->segments.prepend(&seg);
 }
 
-void LineSegmentBlock::addRef(LineSegmentSide const &seg)
+void LineSegmentBlock::addRef(const LineSegmentSide &seg)
 {
     if(seg.hasMapSide()) d->mapCount++;
     else                 d->partCount++;
 }
 
-void LineSegmentBlock::decRef(LineSegmentSide const &seg)
+void LineSegmentBlock::decRef(const LineSegmentSide &seg)
 {
     if(seg.hasMapSide()) d->mapCount--;
     else                 d->partCount--;
@@ -90,7 +90,7 @@ int LineSegmentBlock::totalCount() const
     return d->mapCount + d->partCount;
 }
 
-LineSegmentBlock::All const &LineSegmentBlock::all() const
+const LineSegmentBlock::All &LineSegmentBlock::all() const
 {
     return d->segments;
 }

@@ -47,7 +47,7 @@ public:
      * @param name  Symbolic name of the axis.
      * @param type  Logical axis type.
      */
-    AxisInputControl(de::String const &name, Type type);
+    AxisInputControl(const de::String &name, Type type);
     virtual ~AxisInputControl();
 
     Type type() const;

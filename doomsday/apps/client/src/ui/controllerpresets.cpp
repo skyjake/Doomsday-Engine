@@ -39,7 +39,7 @@ DE_PIMPL_NOREF(ControllerPresets)
 , DE_OBSERVES(DoomsdayApp, GameChange)
 {
     Record &    inputModule;
-    char const *presetCVarPath = nullptr;
+    const char *presetCVarPath = nullptr;
     int         deviceId       = 0;
 
     Impl()
@@ -54,7 +54,7 @@ DE_PIMPL_NOREF(ControllerPresets)
 //        DoomsdayApp::app().audienceForGameChange() -= this;
 //    }
 
-    DictionaryValue const &presets() const
+    const DictionaryValue &presets() const
     {
         return inputModule.get(VAR_CONTROLLER_PRESETS).as<DictionaryValue>();
     }
@@ -64,7 +64,7 @@ DE_PIMPL_NOREF(ControllerPresets)
         Set<String> ids;
         for (auto i : presets().elements())
         {
-            if (auto const *value = maybeAs<RecordValue>(i.second))
+            if (const auto *value = maybeAs<RecordValue>(i.second))
             {
                 ids.insert(value->dereference().gets("id"));
             }
@@ -81,14 +81,14 @@ DE_PIMPL_NOREF(ControllerPresets)
      *
      * @return Object defining the gamepad default bindings, or @c nullptr if not found.
      */
-    Record const *findMatching(String const &deviceName) const
+    const Record *findMatching(const String &deviceName) const
     {
         for (auto i : presets().elements())
         {
             String const key = i.first.value->asText();
             if (!key.isEmpty() && RegExp(key, CaseInsensitive).exactMatch(deviceName))
             {
-                if (auto const *value = maybeAs<RecordValue>(i.second))
+                if (const auto *value = maybeAs<RecordValue>(i.second))
                 {
                     return value->record();
                 }
@@ -97,11 +97,11 @@ DE_PIMPL_NOREF(ControllerPresets)
         return nullptr;
     }
 
-    Record const *findById(String const &id) const
+    const Record *findById(const String &id) const
     {
         for (auto i : presets().elements())
         {
-            if (auto const *value = maybeAs<RecordValue>(i.second))
+            if (const auto *value = maybeAs<RecordValue>(i.second))
             {
                 if (value->dereference().gets("id") == id)
                 {
@@ -117,7 +117,7 @@ DE_PIMPL_NOREF(ControllerPresets)
         return Con_FindVariable(presetCVarPath);
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame)
     {
         DE_ASSERT(deviceId == IDEV_JOY1); /// @todo Expand for other devices as needed. -jk
 
@@ -127,7 +127,7 @@ DE_PIMPL_NOREF(ControllerPresets)
         {
             String const currentScheme = CVar_String(presetCVar());
 
-            if (auto const *gamepad = findMatching(Joystick_Name()))
+            if (const auto *gamepad = findMatching(Joystick_Name()))
             {
                 if (currentScheme.isEmpty())
                 {
@@ -140,7 +140,7 @@ DE_PIMPL_NOREF(ControllerPresets)
         }
     }
 
-    void applyPreset(Record const *preset)
+    void applyPreset(const Record *preset)
     {
         ClientApp::inputSystem().removeBindingsForDevice(deviceId);
 
@@ -159,7 +159,7 @@ DE_PIMPL_NOREF(ControllerPresets)
     }
 };
 
-ControllerPresets::ControllerPresets(int deviceId, char const *presetCVarPath)
+ControllerPresets::ControllerPresets(int deviceId, const char *presetCVarPath)
     : d(new Impl)
 {
     d->deviceId       = deviceId;
@@ -171,7 +171,7 @@ String ControllerPresets::currentPreset() const
     return CVar_String(d->presetCVar());
 }
 
-void ControllerPresets::applyPreset(String const &presetId)
+void ControllerPresets::applyPreset(const String &presetId)
 {
     d->applyPreset(d->findById(presetId));
 }

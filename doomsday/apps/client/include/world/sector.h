@@ -65,7 +65,7 @@ public:
      * @param lightColor  Ambient light color.
      */
     Sector(de::dfloat lightLevel          = 1,
-           de::Vec3f const &lightColor = de::Vec3f(1));
+           const de::Vec3f &lightColor = de::Vec3f(1));
 
 //- Lighting ----------------------------------------------------------------------------
 
@@ -99,7 +99,7 @@ public:
      *
      * @see setLightColor()
      */
-    de::Vec3f const &lightColor() const;
+    const de::Vec3f &lightColor() const;
 
     /**
      * Change the ambient light color in the sector. The LightColorChange audience is
@@ -109,7 +109,7 @@ public:
      *
      * @see lightColor()
      */
-    void setLightColor(de::Vec3f const &newLightColor);
+    void setLightColor(const de::Vec3f &newLightColor);
 
 //- Map objects -------------------------------------------------------------------------
 
@@ -161,7 +161,7 @@ public:
         return *_lookupPlanes[planeIndex];
     }
     
-    inline Plane const &plane(de::dint planeIndex) const
+    inline const Plane &plane(de::dint planeIndex) const
     {
         DE_ASSERT(planeIndex >= 0 && planeIndex < planeCount());
         return *_lookupPlanes[planeIndex];
@@ -171,13 +171,13 @@ public:
      * Returns the @em floor Plane of the sector.
      */
     inline Plane       &floor()         { return plane(Floor); }
-    inline Plane const &floor() const   { return plane(Floor); }
+    inline const Plane &floor() const   { return plane(Floor); }
 
     /**
      * Returns the @em ceiling Plane of the sector.
      */
     inline Plane       &ceiling()       { return plane(Ceiling); }
-    inline Plane const &ceiling() const { return plane(Ceiling); }
+    inline const Plane &ceiling() const { return plane(Ceiling); }
 
     /**
      * Iterate Planes of the sector.
@@ -185,7 +185,7 @@ public:
      * @param callback  Function to call for each Plane.
      */
     de::LoopResult forAllPlanes(const std::function<de::LoopResult (Plane &)>& func);
-    de::LoopResult forAllPlanes(const std::function<de::LoopResult (Plane const &)>& func) const;
+    de::LoopResult forAllPlanes(const std::function<de::LoopResult (const Plane &)>& func) const;
 
     /**
      * Add another Plane to the sector.
@@ -195,7 +195,7 @@ public:
      *
      * @return  The newly constructed Plane.
      */
-    Plane *addPlane(de::Vec3f const &normal, de::ddouble height);
+    Plane *addPlane(const de::Vec3f &normal, de::ddouble height);
 
 //- Subsectors --------------------------------------------------------------------------
 
@@ -209,7 +209,7 @@ public:
      *
      * @see hasSubsectors()
      */
-    AABoxd const &bounds() const;
+    const AABoxd &bounds() const;
 
     /**
      * Returns a rough approximation of the total area of all the subsector geometries.
@@ -283,7 +283,7 @@ public:
      * the emitter's thinker_t.
      */
     SoundEmitter       &soundEmitter();
-    SoundEmitter const &soundEmitter() const;
+    const SoundEmitter &soundEmitter() const;
 
     /**
      * (Re)Build the sound emitter chains for the sector. These chains are used for
@@ -313,7 +313,7 @@ public:
 
 protected:
     de::dint property(world::DmuArgs &args) const;
-    de::dint setProperty(world::DmuArgs const &args);
+    de::dint setProperty(const world::DmuArgs &args);
 
 private:
     DE_PRIVATE(d)

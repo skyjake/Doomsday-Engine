@@ -39,14 +39,14 @@ DE_PIMPL(SaveListData)
         SaveGames::get().saveIndex().audienceForRemoval()  += this;
     }
 
-    bool shouldAddFolder(GameStateFolder const &save) const
+    bool shouldAddFolder(const GameStateFolder &save) const
     {
         return save.path().beginsWith("/home/savegames"); // Ignore non-user savegames.
     }
 
-    void fileAdded(File const &file, FileIndex const &)
+    void fileAdded(const File &file, const FileIndex &)
     {
-        GameStateFolder const &saveFolder = file.as<GameStateFolder>();
+        const GameStateFolder &saveFolder = file.as<GameStateFolder>();
         if (shouldAddFolder(saveFolder))
         {
             dispatch += [this, &saveFolder] ()
@@ -57,7 +57,7 @@ DE_PIMPL(SaveListData)
         }
     }
 
-    void fileRemoved(File const &, FileIndex const &)
+    void fileRemoved(const File &, const FileIndex &)
     {
         // Remove obsolete entries.
         dispatch += [this] ()
@@ -84,7 +84,7 @@ DE_PIMPL(SaveListData)
                     self().append(new SaveItem(save));
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_ERROR("Save file %s has corrupt metadata: %s")
                         << file->description()
@@ -103,7 +103,7 @@ SaveListData::SaveListData()
 
 // SaveItem -------------------------------------------------------------------
 
-SaveListData::SaveItem::SaveItem(GameStateFolder const &saveFolder)
+SaveListData::SaveItem::SaveItem(const GameStateFolder &saveFolder)
     : ImageItem(ShownAsButton)
     , saveFolder(&saveFolder)
 {
@@ -169,7 +169,7 @@ StringList SaveListData::SaveItem::loadedPackages() const
 {
     if (saveFolder)
     {
-        Record const &meta = saveFolder->metadata();
+        const Record &meta = saveFolder->metadata();
         if (meta.has("packages"))
         {
             return meta.getStringList("packages");
@@ -178,7 +178,7 @@ StringList SaveListData::SaveItem::loadedPackages() const
     return StringList();
 }
 
-void SaveListData::SaveItem::fileBeingDeleted(File const &)
+void SaveListData::SaveItem::fileBeingDeleted(const File &)
 {
     saveFolder = nullptr;
 }
@@ -188,7 +188,7 @@ SaveListData::SaveItem &SaveListData::at(Pos pos)
     return ListData::at(pos).as<SaveItem>();
 }
 
-SaveListData::SaveItem const &SaveListData::at(Pos pos) const
+const SaveListData::SaveItem &SaveListData::at(Pos pos) const
 {
     return ListData::at(pos).as<SaveItem>();
 }

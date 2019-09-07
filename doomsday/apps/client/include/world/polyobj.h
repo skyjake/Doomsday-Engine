@@ -56,13 +56,13 @@ public:
     DD_BASE_POLYOBJ_ELEMENTS()
 
 public:
-    polyobj_s(de::Vec2d const &origin = de::Vec2d());
+    polyobj_s(const de::Vec2d &origin = de::Vec2d());
 
     /// @note: Does nothing about the user data section.
     ~polyobj_s();
 
     PolyobjData &data();
-    PolyobjData const &data() const;
+    const PolyobjData &data() const;
 
     /**
      * Returns the map in which the polyobj exists.
@@ -140,7 +140,7 @@ public:
      * Returns the sound emitter for the polyobj.
      */
     SoundEmitter       &soundEmitter();
-    SoundEmitter const &soundEmitter() const;
+    const SoundEmitter &soundEmitter() const;
 
     /**
      * Provides access to the list of Lines for the polyobj.
@@ -188,7 +188,7 @@ public:
      *
      * @param delta  Movement delta on the X|Y plane.
      */
-    bool move(de::Vec2d const &delta);
+    bool move(const de::Vec2d &delta);
 
     /**
      * @overload

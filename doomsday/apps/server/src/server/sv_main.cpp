@@ -92,7 +92,7 @@ static world::MaterialArchive *materialDict;
  * file paths in the list.
  */
 static String composeFilePathString(FS1::FileList &files, dint flags = DEFAULT_PATHTOSTRINGFLAGS,
-    String const &delimiter = ";")
+    const String &delimiter = ";")
 {
     String result;
     DE_FOR_EACH_CONST(FS1::FileList, i, files)
@@ -140,7 +140,7 @@ static bool findCustomFilesPredicate(File1 &file, void * /*parameters*/)
 /**
  * Compiles a list of file names, separated by @a delimiter.
  */
-static void composePWADFileList(char *outBuf, dsize outBufSize, char const *delimiter)
+static void composePWADFileList(char *outBuf, dsize outBufSize, const char *delimiter)
 {
     if (!outBuf || 0 == outBufSize) return;
     std::memset(outBuf, 0, outBufSize);
@@ -613,7 +613,7 @@ void Sv_GetPackets(void)
  * Assign a new console to the player. Returns true if successful.
  * Called by N_Update().
  */
-dd_bool Sv_PlayerArrives(unsigned int nodeID, char const *name)
+dd_bool Sv_PlayerArrives(unsigned int nodeID, const char *name)
 {
     LOG_AS("Sv_PlayerArrives");
     LOG_NET_NOTE("'%s' has arrived") << name;

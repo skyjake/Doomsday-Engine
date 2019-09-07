@@ -43,7 +43,7 @@ public:
     {
     public:
         virtual ~IPackageStatus();
-        virtual bool isPackageHighlighted(de::String const &packageId) const = 0;
+        virtual bool isPackageHighlighted(const de::String &packageId) const = 0;
     };
 
     enum PopulateBehavior { PopulationDisabled, PopulationEnabled };
@@ -52,10 +52,10 @@ public:
 
 public:
     PackagesWidget(PopulateBehavior popBehavior = PopulationEnabled,
-                   de::String const &name = de::String());
+                   const de::String &name = de::String());
 
     PackagesWidget(de::StringList manualPackageIds,
-                   de::String const &name = de::String());
+                   const de::String &name = de::String());
 
     HomeMenuWidget &menu();
     de::ProgressWidget &progress();
@@ -65,8 +65,8 @@ public:
     void setRightClickToOpenContextMenu(bool enable);
     void setHiddenTags(de::StringList hiddenTags);
     void setPopulationEnabled(bool enable);
-    void setFilterEditorMinimumY(de::Rule const &minY);
-    void setPackageStatus(IPackageStatus const &packageStatus);
+    void setFilterEditorMinimumY(const de::Rule &minY);
+    void setPackageStatus(const IPackageStatus &packageStatus);
     void showProgressIndicator();
 
     /**
@@ -75,7 +75,7 @@ public:
      *
      * @param actionItem  Items for action buttons.
      */
-    void setActionItems(de::ui::Data const &actionItems);
+    void setActionItems(const de::ui::Data &actionItems);
 
     de::ui::Data &actionItems();
 
@@ -94,7 +94,7 @@ public:
      * @param packageId  Package identifier.
      * @return  Item.
      */
-    de::ui::Item const *itemForPackage(de::String const &packageId) const;
+    const de::ui::Item *itemForPackage(const de::String &packageId) const;
 
     /**
      * Returns the ID of the package whose action buttons were most recently interacted
@@ -106,9 +106,9 @@ public:
 
     de::GuiWidget *actionWidget() const;
 
-    de::ui::Item const *actionItem() const;
+    const de::ui::Item *actionItem() const;
 
-    void scrollToPackage(de::String const &packageId) const;
+    void scrollToPackage(const de::String &packageId) const;
 
     de::LineEditWidget &searchTermsEditor();
 
@@ -120,7 +120,7 @@ public:
 
     // Implements IPersistent.
     void operator>>(de::PersistentState &toState) const;
-    void operator<<(de::PersistentState const &fromState);
+    void operator<<(const de::PersistentState &fromState);
 
 private:
     DE_PRIVATE(d)

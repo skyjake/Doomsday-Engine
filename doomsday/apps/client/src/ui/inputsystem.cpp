@@ -69,7 +69,7 @@ using namespace de;
 
 static char *joyControllerPreset = const_cast<char *>("");
 
-static InputDevice *makeKeyboard(String const &name, String const &title = "")
+static InputDevice *makeKeyboard(const String &name, const String &title = "")
 {
     InputDevice *keyboard = new InputDevice(name);
 
@@ -78,7 +78,7 @@ static InputDevice *makeKeyboard(String const &name, String const &title = "")
     // DDKEYs are used as button indices.
     for (int i = 0; i < 256; ++i)
     {
-        char const *shortName = B_ShortNameForKey(i, true);
+        const char *shortName = B_ShortNameForKey(i, true);
         String keyName(shortName? shortName : "");
         if (keyName.isEmpty())
         {
@@ -90,7 +90,7 @@ static InputDevice *makeKeyboard(String const &name, String const &title = "")
     return keyboard;
 }
 
-static InputDevice *makeMouse(String const &name, String const &title = "")
+static InputDevice *makeMouse(const String &name, const String &title = "")
 {
     InputDevice *mouse = new InputDevice(name);
 
@@ -124,7 +124,7 @@ static InputDevice *makeMouse(String const &name, String const &title = "")
     return mouse;
 }
 
-static InputDevice *makeJoystick(String const &name, String const &title = "")
+static InputDevice *makeJoystick(const String &name, const String &title = "")
 {
     InputDevice *joy = new InputDevice(name);
 
@@ -160,7 +160,7 @@ static InputDevice *makeJoystick(String const &name, String const &title = "")
     return joy;
 }
 
-static InputDevice *makeHeadTracker(String const &name, String const &title)
+static InputDevice *makeHeadTracker(const String &name, const String &title)
 {
     InputDevice *head = new InputDevice(name);
 
@@ -179,7 +179,7 @@ static InputDevice *makeHeadTracker(String const &name, String const &title)
     return head;
 }
 
-static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues const &args)
+static Value *Function_InputSystem_BindEvent(Context &, const Function::ArgumentValues &args)
 {
     String eventDesc = args[0]->asText();
     String command   = args[1]->asText();
@@ -194,7 +194,7 @@ static Value *Function_InputSystem_BindEvent(Context &, Function::ArgumentValues
     return new NumberValue(false);
 }
 
-static Value *Function_InputSystem_BindControl(Context &, Function::ArgumentValues const &args)
+static Value *Function_InputSystem_BindControl(Context &, const Function::ArgumentValues &args)
 {
     String control = args[0]->asText();
     String impulse = args[1]->asText();
@@ -240,14 +240,14 @@ static char *eventStrings[MAXEVENTS];
  * These are intended for strings in ddevent_t that are valid during the
  * processing of an event.
  */
-static char const *allocEventString(char const *str)
+static const char *allocEventString(const char *str)
 {
     DE_ASSERT(str);
     static int eventStringRover = 0;
 
     DE_ASSERT(eventStringRover >= 0 && eventStringRover < MAXEVENTS);
     M_Free(eventStrings[eventStringRover]);
-    char const *returnValue = eventStrings[eventStringRover] = strdup(str);
+    const char *returnValue = eventStrings[eventStringRover] = strdup(str);
 
     if (++eventStringRover >= MAXEVENTS)
     {
@@ -401,7 +401,7 @@ DE_PIMPL(InputSystem)
         return device;
     }
 
-    void echoSymbolicEvent(ddevent_t const &ev)
+    void echoSymbolicEvent(const ddevent_t &ev)
     {
         DE_ASSERT(symbolicEchoMode);
 
@@ -860,7 +860,7 @@ DE_PIMPL(InputSystem)
             context->forAllImpulseBindings([this, &context] (CompiledImpulseBindingRecord &rec)
             {
                 //ImpulseBinding bind(rec);
-                auto const &bind = rec.compiled();
+                const auto &bind = rec.compiled();
                 InputDevice &dev = self().device(bind.deviceId);
 
                 InputControl *ctrl = nullptr;
@@ -997,7 +997,7 @@ InputDevice *InputSystem::devicePtr(int id) const
     return nullptr;
 }
 
-InputDevice *InputSystem::findDevice(String const &name) const
+InputDevice *InputSystem::findDevice(const String &name) const
 {
     for (auto *device : d->devices)
     {
@@ -1220,12 +1220,12 @@ void InputSystem::processSharpEvents(timespan_t ticLength)
     }
 }
 
-bool InputSystem::tryEvent(ddevent_t const &event, String const &namedContext)
+bool InputSystem::tryEvent(const ddevent_t &event, const String &namedContext)
 {
     if (namedContext.isEmpty())
     {
         // Try all active contexts in order.
-        for (BindContext const *context : d->contexts)
+        for (const BindContext *context : d->contexts)
         {
             if (context->tryEvent(event)) return true;
         }
@@ -1241,14 +1241,14 @@ bool InputSystem::tryEvent(ddevent_t const &event, String const &namedContext)
     return false;
 }
 
-bool InputSystem::tryEvent(Event const &event, String const &namedContext)
+bool InputSystem::tryEvent(const Event &event, const String &namedContext)
 {
     ddevent_t ddev;
     convertEvent(event, ddev);
     return tryEvent(ddev, namedContext);
 }
 
-void InputSystem::trackEvent(ddevent_t const &event)
+void InputSystem::trackEvent(const ddevent_t &event)
 {
     if (event.type == E_FOCUS || event.type == E_SYMBOLIC)
         return; // Not a tracked device state.
@@ -1304,21 +1304,21 @@ void InputSystem::trackEvent(ddevent_t const &event)
     }
 }
 
-void InputSystem::trackEvent(Event const &event)
+void InputSystem::trackEvent(const Event &event)
 {
     ddevent_t ddev;
     convertEvent(event, ddev);
     trackEvent(ddev);
 }
 
-bool InputSystem::convertEvent(Event const &from, ddevent_t &to) // static
+bool InputSystem::convertEvent(const Event &from, ddevent_t &to) // static
 {
     de::zap(to);
     switch (from.type())
     {
     case Event::KeyPress:
     case Event::KeyRelease: {
-        KeyEvent const &kev = from.as<KeyEvent>();
+        const KeyEvent &kev = from.as<KeyEvent>();
 
         to.device       = IDEV_KEYBOARD;
         to.type         = E_TOGGLE;
@@ -1332,7 +1332,7 @@ bool InputSystem::convertEvent(Event const &from, ddevent_t &to) // static
     return true;
 }
 
-bool InputSystem::convertEvent(ddevent_t const &from, event_t &to) // static
+bool InputSystem::convertEvent(const ddevent_t &from, event_t &to) // static
 {
     // Copy the essentials into a cutdown version for the game.
     // Ensure the format stays the same for future compatibility!
@@ -1467,12 +1467,12 @@ ControllerPresets &InputSystem::gameControllerPresets()
     return *d->gameControllerPresets;
 }
 
-bool InputSystem::hasContext(String const &name) const
+bool InputSystem::hasContext(const String &name) const
 {
     return contextPtr(name) != nullptr;
 }
 
-BindContext &InputSystem::context(String const &name) const
+BindContext &InputSystem::context(const String &name) const
 {
     if (BindContext *context = contextPtr(name))
     {
@@ -1483,9 +1483,9 @@ BindContext &InputSystem::context(String const &name) const
 }
 
 /// @todo: Optimize O(n) search...
-BindContext *InputSystem::contextPtr(String const &name) const
+BindContext *InputSystem::contextPtr(const String &name) const
 {
-    for (BindContext const *context : d->contexts)
+    for (const BindContext *context : d->contexts)
     {
         if (!context->name().compareWithoutCase(name))
         {
@@ -1510,7 +1510,7 @@ int InputSystem::contextPositionOf(BindContext *context) const
     return (context? d->contexts.indexOf(context) : -1);
 }
 
-BindContext *InputSystem::newContext(String const &name)
+BindContext *InputSystem::newContext(const String &name)
 {
     // Ensure the given name is unique.
     if (hasContext(name))
@@ -1568,7 +1568,7 @@ void InputSystem::bindGameDefaults()
     Con_Executef(CMDS_DDAY, false, "defaultgamebindings");
 }
 
-static char const *parseContext(String &context, char const *desc)
+static const char *parseContext(String &context, const char *desc)
 {
     DE_ASSERT(desc);
 
@@ -1586,7 +1586,7 @@ static char const *parseContext(String &context, char const *desc)
     return desc;
 }
 
-Record *InputSystem::bindCommand(char const *eventDesc, char const *command)
+Record *InputSystem::bindCommand(const char *eventDesc, const char *command)
 {
     DE_ASSERT(eventDesc && command);
     LOG_AS("InputSystem");
@@ -1602,7 +1602,7 @@ Record *InputSystem::bindCommand(char const *eventDesc, char const *command)
     return nullptr;
 }
 
-Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
+Record *InputSystem::bindImpulse(const char *ctrlDesc, const char *impulseDesc)
 {
     DE_ASSERT(ctrlDesc && impulseDesc);
     LOG_AS("InputSystem");
@@ -1610,7 +1610,7 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
     // The impulse descriptor may begin with the local player number.
     int localPlayer = 0;
     AutoStr *str    = AutoStr_NewStd();
-    char const *ptr = Str_CopyDelim(str, impulseDesc, '-');
+    const char *ptr = Str_CopyDelim(str, impulseDesc, '-');
     if (!iCmpStrNCase(Str_Text(str), "local", 5) && Str_Length(str) > 5)
     {
         localPlayer = String((Str_Text(str) + 5)).toInt() - 1;
@@ -1626,7 +1626,7 @@ Record *InputSystem::bindImpulse(char const *ctrlDesc, char const *impulseDesc)
 
     // The next part must be the impulse name.
     impulseDesc = Str_CopyDelim(str, impulseDesc, '-');
-    PlayerImpulse const *impulse = P_PlayerImpulseByName(Str_Text(str));
+    const PlayerImpulse *impulse = P_PlayerImpulseByName(Str_Text(str));
     if (!impulse)
     {
         LOG_INPUT_WARNING("Player impulse \"%s\" not defined") << Str_Text(str);
@@ -1689,7 +1689,7 @@ D_CMD(ListDevices)
 D_CMD(InspectDevice)
 {
     DE_UNUSED(src, argc);
-    if (InputDevice const *device = ClientApp::inputSystem().findDevice(argv[1]))
+    if (const InputDevice *device = ClientApp::inputSystem().findDevice(argv[1]))
     {
         LOG_INPUT_MSG("") << device->description();
         return true;
@@ -1827,7 +1827,7 @@ D_CMD(ListBindings)
         context.forAllImpulseBindings(pl, [&pl] (CompiledImpulseBindingRecord &rec)
         {
             ImpulseBinding bind(rec);
-            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
+            const PlayerImpulse *impulse = P_PlayerImpulsePtr(bind.geti("impulseId"));
             DE_ASSERT(impulse);
 
             LOG_INPUT_MSG("    [%3i] " _E(>) _E(b) "%s" _E(.) " player%i %s")
@@ -1910,7 +1910,7 @@ void InputSystem::consoleRegister() // static
 }
 
 #undef B_SetContextFallback
-DE_EXTERN_C void B_SetContextFallback(char const *name, int (*responderFunc)(event_t *))
+DE_EXTERN_C void B_SetContextFallback(const char *name, int (*responderFunc)(event_t *))
 {
     InputSystem &isys = ClientApp::inputSystem();
     if (isys.hasContext(name))
@@ -1920,7 +1920,7 @@ DE_EXTERN_C void B_SetContextFallback(char const *name, int (*responderFunc)(eve
 }
 
 #undef B_BindingsForCommand
-DE_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, size_t outBufSize)
+DE_EXTERN_C int B_BindingsForCommand(const char *commandCString, char *outBuf, size_t outBufSize)
 {
     DE_ASSERT(commandCString && outBuf);
     String const command = commandCString;
@@ -1959,7 +1959,7 @@ DE_EXTERN_C int B_BindingsForCommand(char const *commandCString, char *outBuf, s
 }
 
 #undef B_BindingsForControl
-DE_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCString, int inverse,
+DE_EXTERN_C int B_BindingsForControl(int localPlayer, const char *impulseNameCString, int inverse,
     char *outBuf, size_t outBufSize)
 {
     DE_ASSERT(impulseNameCString && outBuf);
@@ -1979,10 +1979,10 @@ DE_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCSt
     {
         context.forAllImpulseBindings(localPlayer, [&] (CompiledImpulseBindingRecord &rec)
         {
-            auto const &bind = rec.compiled();
+            const auto &bind = rec.compiled();
             DE_ASSERT(bind.localPlayer == localPlayer);
 
-            PlayerImpulse const *impulse = P_PlayerImpulsePtr(bind.impulseId);
+            const PlayerImpulse *impulse = P_PlayerImpulsePtr(bind.impulseId);
             DE_ASSERT(impulse);
 
             if (!impulse->name.compareWithoutCase(impulseName))
@@ -2011,7 +2011,7 @@ DE_EXTERN_C int B_BindingsForControl(int localPlayer, char const *impulseNameCSt
 }
 
 #undef DD_GetKeyCode
-DE_EXTERN_C int DD_GetKeyCode(char const *key)
+DE_EXTERN_C int DD_GetKeyCode(const char *key)
 {
     DE_ASSERT(key);
     int code = B_KeyForShortName(key);

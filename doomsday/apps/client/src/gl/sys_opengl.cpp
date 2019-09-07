@@ -34,7 +34,7 @@
 //#elif defined (DE_X11)
 //#   include <GL/glx.h>
 //#   undef None
-//#   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((GLubyte const *)#x))
+//#   define GETPROC(Type, x)   x = de::function_cast<Type>(glXGetProcAddress((const GLubyte *)#x))
 //#endif
 
 using namespace de;
@@ -47,7 +47,7 @@ static dd_bool firstTimeInit = true;
 
 static void initialize(void)
 {
-    de::GLInfo::Extensions const &ext = de::GLInfo::extensions();
+    const de::GLInfo::Extensions &ext = de::GLInfo::extensions();
 
     if(CommandLine_Exists("-noanifilter"))
     {
@@ -364,7 +364,7 @@ void Sys_GLPrintExtensions(void)
     if(wglGetExtensionsStringARB)
     {
         LOG_GL_MSG("  Extensions (WGL):");
-        printExtensions(QString((char const *) ((GLubyte const *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
+        printExtensions(QString((const char *) ((const GLubyte *(__stdcall *)(HDC))wglGetExtensionsStringARB)(wglGetCurrentDC())).split(" ", QString::SkipEmptyParts));
     }
 #endif
 
@@ -376,7 +376,7 @@ void Sys_GLPrintExtensions(void)
     */
 }
 
-dd_bool Sys_GLCheckErrorArgs(char const *file, int line)
+dd_bool Sys_GLCheckErrorArgs(const char *file, int line)
 {
     if (novideo) return false;
 #ifdef DE_DEBUG

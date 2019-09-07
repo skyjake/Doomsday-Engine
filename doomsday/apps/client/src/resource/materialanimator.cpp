@@ -57,7 +57,7 @@ static DGLuint prepareFlaremap(ClientTexture *texture, int oldIdx)
 {
     if (texture)
     {
-        if (TextureVariant const *variant = texture->prepareVariant(Rend_HaloTextureSpec()))
+        if (const TextureVariant *variant = texture->prepareVariant(Rend_HaloTextureSpec()))
         {
             return variant->glName();
         }
@@ -97,7 +97,7 @@ DE_PIMPL_NOREF(MaterialAnimator::Decoration)
     bool useInterpolation() const
     {
         DE_ASSERT(matDecor);
-        if (auto const *light = maybeAs<LightMaterialDecoration>(matDecor))
+        if (const auto *light = maybeAs<LightMaterialDecoration>(matDecor))
         {
             return light->useInterpolation();
         }
@@ -190,7 +190,7 @@ bool MaterialAnimator::Decoration::animate()
                 d->stage = 0;
             }
 
-            MaterialDecoration::Stage const &stage = decor().stage(d->stage);
+            const MaterialDecoration::Stage &stage = decor().stage(d->stage);
             if (stage.variance != 0)
                 d->tics = stage.tics * (1 - stage.variance * RNG_RandFloat());
             else
@@ -201,7 +201,7 @@ bool MaterialAnimator::Decoration::animate()
 
         if (d->useInterpolation())
         {
-            MaterialDecoration::Stage const &stage = decor().stage(d->stage);
+            const MaterialDecoration::Stage &stage = decor().stage(d->stage);
             d->inter = 1.f - d->tics / float( stage.tics );
         }
     }
@@ -212,8 +212,8 @@ void MaterialAnimator::Decoration::update()
 {
     if (auto *lightDecor = maybeAs<LightMaterialDecoration>(decor()))
     {
-        LightMaterialDecoration::AnimationStage const &stage = lightDecor->stage(d->stage);
-        LightMaterialDecoration::AnimationStage const &next  = lightDecor->stage(d->stage + 1);
+        const LightMaterialDecoration::AnimationStage &stage = lightDecor->stage(d->stage);
+        const LightMaterialDecoration::AnimationStage &next  = lightDecor->stage(d->stage + 1);
 
         d->origin         = de::lerp(stage.origin,          next.origin,          d->inter);
         d->elevation      = de::lerp(stage.elevation,       next.elevation,       d->inter);
@@ -251,8 +251,8 @@ enum StagePropertyId { TextureProperty, MaskTextureProperty };
 /**
  * Returns the Texture in effect for the given animation stage, if any.
  */
-static ClientTexture *findTextureForAnimationStage(world::TextureMaterialLayer::AnimationStage const &stage,
-                                                   /*String const &propertyName = "texture"*/
+static ClientTexture *findTextureForAnimationStage(const world::TextureMaterialLayer::AnimationStage &stage,
+                                                   /*const String &propertyName = "texture"*/
                                                    StagePropertyId prop = TextureProperty)
 {
     try
@@ -271,7 +271,7 @@ static ClientTexture *findTextureForAnimationStage(world::TextureMaterialLayer::
 DE_PIMPL(MaterialAnimator)
 {
     ClientMaterial *material = nullptr;         ///< Material to animate (not owned).
-    MaterialVariantSpec const *spec = nullptr;  ///< Variant specification.
+    const MaterialVariantSpec *spec = nullptr;  ///< Variant specification.
 
     /// Current state of a layer animation.
     struct LayerState
@@ -361,7 +361,7 @@ DE_PIMPL(MaterialAnimator)
         {
             layers[i]->stageTextures.clear();
 
-            if (world::TextureMaterialLayer const *layer = maybeAs<world::TextureMaterialLayer>(self().material().layer(i)))
+            if (const world::TextureMaterialLayer *layer = maybeAs<world::TextureMaterialLayer>(self().material().layer(i)))
             {
                 for (int k = 0; k < layer->stageCount(); ++k)
                 {
@@ -419,13 +419,13 @@ DE_PIMPL(MaterialAnimator)
             int texLayerIndex = 0;
             for (int i = 0; i < material->layerCount(); ++i)
             {
-                world::MaterialLayer const &layer = material->layer(i);
-                LayerState const &ls       = *layers[i];
+                const world::MaterialLayer &layer = material->layer(i);
+                const LayerState &ls       = *layers[i];
 
-                if (auto const *detailLayer = maybeAs<world::DetailTextureMaterialLayer>(layer))
+                if (const auto *detailLayer = maybeAs<world::DetailTextureMaterialLayer>(layer))
                 {
-                    auto const &stage = detailLayer->stage(ls.stage).as<world::DetailTextureMaterialLayer::AnimationStage>();
-                    auto const &next  = detailLayer->stage(ls.nextStage).as<world::DetailTextureMaterialLayer::AnimationStage>();
+                    const auto &stage = detailLayer->stage(ls.stage).as<world::DetailTextureMaterialLayer::AnimationStage>();
+                    const auto &next  = detailLayer->stage(ls.nextStage).as<world::DetailTextureMaterialLayer::AnimationStage>();
 
                     if (ClientTexture *tex = ls.stageTextures[ls.stage])
                     {
@@ -444,8 +444,8 @@ DE_PIMPL(MaterialAnimator)
                 }
                 else if (is<world::ShineTextureMaterialLayer>(layer))
                 {
-                    world::TextureMaterialLayer::AnimationStage const &stage = layer.as<world::TextureMaterialLayer>().stage(ls.stage);
-                    //TextureMaterialLayer::AnimationStage const &next  = layer.stage(l.stage + 1);
+                    const world::TextureMaterialLayer::AnimationStage &stage = layer.as<world::TextureMaterialLayer>().stage(ls.stage);
+                    //const TextureMaterialLayer::AnimationStage &next  = layer.stage(l.stage + 1);
 
                     if (ClientTexture *tex = ls.stageTextures[ls.stage])
                     {
@@ -458,10 +458,10 @@ DE_PIMPL(MaterialAnimator)
                         }
                     }
                 }
-                else if (auto const *texLayer = maybeAs<world::TextureMaterialLayer>(layer))
+                else if (const auto *texLayer = maybeAs<world::TextureMaterialLayer>(layer))
                 {
-                    world::TextureMaterialLayer::AnimationStage const &stage = texLayer->stage(ls.stage);
-                    world::TextureMaterialLayer::AnimationStage const &next  = texLayer->stage(ls.nextStage);
+                    const world::TextureMaterialLayer::AnimationStage &stage = texLayer->stage(ls.stage);
+                    const world::TextureMaterialLayer::AnimationStage &next  = texLayer->stage(ls.nextStage);
 
                     if (ClientTexture *tex = ls.stageTextures[ls.stage])
                     {
@@ -491,15 +491,15 @@ DE_PIMPL(MaterialAnimator)
         int texLayerIndex = 0;
         for (int i = 0; i < material->layerCount(); ++i)
         {
-            world::MaterialLayer const &layer = material->layer(i);
-            LayerState const &ls = *layers[i];
+            const world::MaterialLayer &layer = material->layer(i);
+            const LayerState &ls = *layers[i];
 
-            if (auto const *detailLayer = maybeAs<world::DetailTextureMaterialLayer>(layer))
+            if (const auto *detailLayer = maybeAs<world::DetailTextureMaterialLayer>(layer))
             {
                 if (TextureVariant *tex = snapshot->textures[TU_DETAIL])
                 {
-                    auto const &stage = detailLayer->stage(ls.stage).as<world::DetailTextureMaterialLayer::AnimationStage>();
-                    auto const &next  = detailLayer->stage(ls.nextStage).as<world::DetailTextureMaterialLayer::AnimationStage>();
+                    const auto &stage = detailLayer->stage(ls.stage).as<world::DetailTextureMaterialLayer::AnimationStage>();
+                    const auto &next  = detailLayer->stage(ls.nextStage).as<world::DetailTextureMaterialLayer::AnimationStage>();
 
                     float scale = de::lerp(stage.scale, next.scale, ls.inter);
                     if (::detailScale > .0001f) scale *= ::detailScale; // Global scale factor.
@@ -528,8 +528,8 @@ DE_PIMPL(MaterialAnimator)
             {
                 if (TextureVariant *tex = snapshot->textures[TU_SHINE])
                 {
-                    auto const &stage = layer.stage(ls.stage)    .as<world::ShineTextureMaterialLayer::AnimationStage>();
-                    auto const &next  = layer.stage(ls.nextStage).as<world::ShineTextureMaterialLayer::AnimationStage>();
+                    const auto &stage = layer.stage(ls.stage)    .as<world::ShineTextureMaterialLayer::AnimationStage>();
+                    const auto &next  = layer.stage(ls.nextStage).as<world::ShineTextureMaterialLayer::AnimationStage>();
 
                     Vec2f const origin   = de::lerp(stage.origin,   next.origin,   ls.inter);
                     Vec3f const minColor = de::lerp(stage.minColor, next.minColor, ls.inter);
@@ -549,12 +549,12 @@ DE_PIMPL(MaterialAnimator)
                     }
                 }
             }
-            else if (auto const *texLayer = maybeAs<world::TextureMaterialLayer>(layer))
+            else if (const auto *texLayer = maybeAs<world::TextureMaterialLayer>(layer))
             {
                 if (TextureVariant *tex = snapshot->textures[TU_LAYER0 + texLayerIndex])
                 {
-                    world::TextureMaterialLayer::AnimationStage const &stage = texLayer->stage(ls.stage);
-                    world::TextureMaterialLayer::AnimationStage const &next  = texLayer->stage(ls.nextStage);
+                    const world::TextureMaterialLayer::AnimationStage &stage = texLayer->stage(ls.stage);
+                    const world::TextureMaterialLayer::AnimationStage &next  = texLayer->stage(ls.nextStage);
 
                     Vec2f const scale   = Vec2f(1, 1) / snapshot->dimensions;
                     Vec2f const origin  = de::lerp(stage.origin,  next.origin,  ls.inter);
@@ -596,7 +596,7 @@ DE_PIMPL(MaterialAnimator)
         }
     }
 
-    void rewindLayer(LayerState &ls, world::MaterialLayer const &layer)
+    void rewindLayer(LayerState &ls, const world::MaterialLayer &layer)
     {
         ls.stage = 0;
         ls.nextStage = layer.nextStageIndex(0);
@@ -604,7 +604,7 @@ DE_PIMPL(MaterialAnimator)
         ls.inter = 0;
     }
 
-    void animateLayer(LayerState &ls, world::MaterialLayer const &layer)
+    void animateLayer(LayerState &ls, const world::MaterialLayer &layer)
     {
         if (DD_IsSharpTick() && ls.tics-- <= 0)
         {
@@ -617,7 +617,7 @@ DE_PIMPL(MaterialAnimator)
             ls.nextStage = layer.nextStageIndex(ls.stage);
             ls.inter = 0;
 
-            world::MaterialLayer::Stage const &stage = layer.stage(ls.stage);
+            const world::MaterialLayer::Stage &stage = layer.stage(ls.stage);
             if (stage.variance != 0)
                 ls.tics = stage.tics * (1 - stage.variance * RNG_RandFloat());
             else
@@ -625,13 +625,13 @@ DE_PIMPL(MaterialAnimator)
         }
         else
         {
-            world::MaterialLayer::Stage const &stage = layer.stage(ls.stage);
+            const world::MaterialLayer::Stage &stage = layer.stage(ls.stage);
             ls.inter = 1.f - ls.tics / float( stage.tics );
         }
     }
 };
 
-MaterialAnimator::MaterialAnimator(ClientMaterial &material, MaterialVariantSpec const &spec)
+MaterialAnimator::MaterialAnimator(ClientMaterial &material, const MaterialVariantSpec &spec)
     : d(new Impl(this))
 {
     d->material = &material;
@@ -649,7 +649,7 @@ ClientMaterial &MaterialAnimator::material() const
     return *d->material;
 }
 
-MaterialVariantSpec const &MaterialAnimator::variantSpec() const
+const MaterialVariantSpec &MaterialAnimator::variantSpec() const
 {
     DE_ASSERT(d->spec);
     return *d->spec;
@@ -680,7 +680,7 @@ void MaterialAnimator::animate(timespan_t /*ticLength*/)
      */
     for (int i = 0; i < material().layerCount(); ++i)
     {
-        world::MaterialLayer const &layer = material().layer(i);
+        const world::MaterialLayer &layer = material().layer(i);
         if (layer.isAnimated() && is<world::TextureMaterialLayer>(layer))
         {
             d->animateLayer(*d->layers[i], layer);
@@ -734,17 +734,17 @@ void MaterialAnimator::cacheAssets()
 
     for (int i = 0; i < material().layerCount(); ++i)
     {
-        if (world::TextureMaterialLayer const *layer = maybeAs<world::TextureMaterialLayer>(material().layer(i)))
+        if (const world::TextureMaterialLayer *layer = maybeAs<world::TextureMaterialLayer>(material().layer(i)))
         {
             for (int k = 0; k < layer->stageCount(); ++k)
             {
-                auto const &stage = layer->stage(k);
+                const auto &stage = layer->stage(k);
 
                 if (ClientTexture *tex = d->layers.at(i)->stageTextures.at(k))
                 {
                     if (is<world::DetailTextureMaterialLayer>(layer))
                     {
-                        auto const &detailStage = stage.as<world::DetailTextureMaterialLayer::AnimationStage>();
+                        const auto &detailStage = stage.as<world::DetailTextureMaterialLayer::AnimationStage>();
                         float const contrast = de::clamp(0.f, detailStage.strength, 1.f) * detailFactor /*Global strength multiplier*/;
                         tex->prepareVariant(resSys().detailTextureSpec(contrast));
                     }
@@ -772,7 +772,7 @@ bool MaterialAnimator::isOpaque() const
     return d->snapshot->opaque;
 }
 
-Vec2ui const &MaterialAnimator::dimensions() const
+const Vec2ui &MaterialAnimator::dimensions() const
 {
     d->updateSnapshotIfNeeded();
     return d->snapshot->dimensions;
@@ -790,7 +790,7 @@ blendmode_t MaterialAnimator::shineBlendMode() const
     return d->snapshot->shineBlendMode;
 }
 
-Vec3f const &MaterialAnimator::shineMinColor() const
+const Vec3f &MaterialAnimator::shineMinColor() const
 {
     d->updateSnapshotIfNeeded();
     return d->snapshot->shineMinColor;

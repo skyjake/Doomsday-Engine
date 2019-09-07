@@ -86,11 +86,11 @@ struct DummyGlobals
 };
 
 #undef DMU_GetType
-int DMU_GetType(void const *ptr)
+int DMU_GetType(const void *ptr)
 {
     if(!ptr) return DMU_NONE;
 
-    MapElement const *elem = IN_ELEM_CONST(ptr);
+    const MapElement *elem = IN_ELEM_CONST(ptr);
 
     // Make sure it's valid.
     switch(elem->type())
@@ -126,11 +126,11 @@ void world::Map::initDummies() // static
  * it would be possible to look through the dummy arrays and make sure the
  * pointer refers to a real dummy.
  */
-static int dummyType(void const *dummy)
+static int dummyType(const void *dummy)
 {
-    MapElement const *elem = IN_ELEM_CONST(dummy);
+    const MapElement *elem = IN_ELEM_CONST(dummy);
 
-    if(!dynamic_cast<DummyData const *>(elem))
+    if(!dynamic_cast<const DummyData *>(elem))
     {
         // Not a dummy.
         return DMU_NONE;
@@ -173,7 +173,7 @@ void *P_AllocDummy(int type, void *extraData)
 }
 
 #undef P_IsDummy
-dd_bool P_IsDummy(void const *dummy)
+dd_bool P_IsDummy(const void *dummy)
 {
     return dummyType(dummy) != DMU_NONE;
 }
@@ -208,12 +208,12 @@ void *P_DummyExtraData(void *dummy)
 }
 
 #undef P_ToIndex
-int P_ToIndex(void const *ptr)
+int P_ToIndex(const void *ptr)
 {
     if(!ptr) return -1;
     if(P_IsDummy(ptr)) return -1;
 
-    MapElement const *elem = IN_ELEM_CONST(ptr);
+    const MapElement *elem = IN_ELEM_CONST(ptr);
 
     switch(elem->type())
     {
@@ -592,7 +592,7 @@ static void setProperty(MapElement *elem, DmuArgs &args)
     elem->setProperty(args);
 }
 
-static void getProperty(MapElement const *elem, DmuArgs &args)
+static void getProperty(const MapElement *elem, DmuArgs &args)
 {
     DE_ASSERT(elem != 0);
 
@@ -1381,17 +1381,17 @@ void P_GetPtrpv(void *ptr, uint prop, void *params)
 }
 
 #undef P_MapExists
-DE_EXTERN_C dd_bool P_MapExists(char const *uriCString)
+DE_EXTERN_C dd_bool P_MapExists(const char *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
     return App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)) != nullptr;
 }
 
 #undef P_MapIsCustom
-DE_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
+DE_EXTERN_C dd_bool P_MapIsCustom(const char *uriCString)
 {
     if(!uriCString || !uriCString[0]) return false;
-    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
+    if(const res::MapManifest *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
     {
         return mapDef->sourceFile()->hasCustom();
     }
@@ -1399,10 +1399,10 @@ DE_EXTERN_C dd_bool P_MapIsCustom(char const *uriCString)
 }
 
 #undef P_MapSourceFile
-DE_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
+DE_EXTERN_C AutoStr *P_MapSourceFile(const char *uriCString)
 {
     if(!uriCString || !uriCString[0]) return nullptr;
-    if(res::MapManifest const *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
+    if(const res::MapManifest *mapDef = App_Resources().mapManifests().tryFindMapManifest(res::makeUri(uriCString)))
     {
         return AutoStr_FromTextStd(mapDef->sourceFile()->composePath());
     }
@@ -1410,7 +1410,7 @@ DE_EXTERN_C AutoStr *P_MapSourceFile(char const *uriCString)
 }
 
 #undef P_MapChange
-DE_EXTERN_C dd_bool P_MapChange(char const *uriCString)
+DE_EXTERN_C dd_bool P_MapChange(const char *uriCString)
 {
     if(!uriCString || !uriCString[0])
     {
@@ -1514,7 +1514,7 @@ DE_EXTERN_C Sector *Sector_AtPoint_FixedPrecision(const_pvec2d_t point)
 }
 
 #undef Mobj_BoxIterator
-DE_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
+DE_EXTERN_C int Mobj_BoxIterator(const AABoxd *box,
     int (*callback) (mobj_t *, void *), void *context)
 {
     DE_ASSERT(box && callback);
@@ -1540,7 +1540,7 @@ DE_EXTERN_C int Mobj_BoxIterator(AABoxd const *box,
 }
 
 #undef Polyobj_BoxIterator
-DE_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
+DE_EXTERN_C int Polyobj_BoxIterator(const AABoxd *box,
     int (*callback) (struct polyobj_s *, void *), void *context)
 {
     DE_ASSERT(box && callback);
@@ -1566,7 +1566,7 @@ DE_EXTERN_C int Polyobj_BoxIterator(AABoxd const *box,
 }
 
 #undef Line_BoxIterator
-DE_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
+DE_EXTERN_C int Line_BoxIterator(const AABoxd *box, int flags,
     int (*callback) (Line *, void *), void *context)
 {
     DE_ASSERT(box && callback);
@@ -1579,7 +1579,7 @@ DE_EXTERN_C int Line_BoxIterator(AABoxd const *box, int flags,
 }
 
 #undef Subspace_BoxIterator
-DE_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
+DE_EXTERN_C int Subspace_BoxIterator(const AABoxd *box,
     int (*callback) (struct convexsubspace_s *, void *), void *context)
 {
     DE_ASSERT(box && callback);
@@ -1595,7 +1595,7 @@ DE_EXTERN_C int Subspace_BoxIterator(AABoxd const *box,
         {
             sub.setValidCount(localValidCount);
             // Check the bounds.
-            AABoxd const &polyBounds = sub.poly().bounds();
+            const AABoxd &polyBounds = sub.poly().bounds();
             if (!(   polyBounds.maxX < box->minX
                   || polyBounds.minX > box->maxX
                   || polyBounds.minY > box->maxY
@@ -1639,21 +1639,21 @@ DE_EXTERN_C dd_bool P_CheckLineSight(const_pvec3d_t from, const_pvec3d_t to, coo
 }
 
 #undef Interceptor_Origin
-DE_EXTERN_C coord_t const *Interceptor_Origin(Interceptor const *trace)
+DE_EXTERN_C const coord_t *Interceptor_Origin(const Interceptor *trace)
 {
     if(!trace) return 0;
     return trace->origin();
 }
 
 #undef Interceptor_Direction
-DE_EXTERN_C coord_t const *(Interceptor_Direction)(Interceptor const *trace)
+DE_EXTERN_C const coord_t *(Interceptor_Direction)(const Interceptor *trace)
 {
     if(!trace) return 0;
     return trace->direction();
 }
 
 #undef Interceptor_Opening
-DE_EXTERN_C LineOpening const *Interceptor_Opening(Interceptor const *trace)
+DE_EXTERN_C const LineOpening *Interceptor_Opening(const Interceptor *trace)
 {
     if(!trace) return 0;
     return &trace->opening();
@@ -1678,8 +1678,8 @@ DE_EXTERN_C void Mobj_Destroy(mobj_t *mobj);
 DE_EXTERN_C void Mobj_SetState(mobj_t *mobj, int statenum);
 DE_EXTERN_C angle_t Mobj_AngleSmoothed(mobj_t *mobj);
 DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mobj, coord_t origin[3]);
-DE_EXTERN_C Sector *Mobj_Sector(mobj_t const *mobj);
-DE_EXTERN_C void Mobj_SpawnDamageParticleGen(mobj_t const *mobj, mobj_t const *inflictor, int amount);
+DE_EXTERN_C Sector *Mobj_Sector(const mobj_t *mobj);
+DE_EXTERN_C void Mobj_SpawnDamageParticleGen(const mobj_t *mobj, const mobj_t *inflictor, int amount);
 
 // p_think.c
 DE_EXTERN_C struct mobj_s* Mobj_ById(int id);
@@ -1766,7 +1766,7 @@ DE_EXTERN_C coord_t Line_PointDistance(Line *line, const coord_t point[2], coord
 }
 
 #undef Line_PointOnSide
-DE_EXTERN_C coord_t Line_PointOnSide(Line const *line, const coord_t point[2])
+DE_EXTERN_C coord_t Line_PointOnSide(const Line *line, const coord_t point[2])
 {
     DE_ASSERT(line);
     if(!point)
@@ -1779,14 +1779,14 @@ DE_EXTERN_C coord_t Line_PointOnSide(Line const *line, const coord_t point[2])
 }
 
 #undef Line_BoxOnSide
-DE_EXTERN_C int Line_BoxOnSide(Line *line, AABoxd const *box)
+DE_EXTERN_C int Line_BoxOnSide(Line *line, const AABoxd *box)
 {
     DE_ASSERT(line && box);
     return line->boxOnSide(*box);
 }
 
 #undef Line_BoxOnSide_FixedPrecision
-DE_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, AABoxd const *box)
+DE_EXTERN_C int Line_BoxOnSide_FixedPrecision(Line *line, const AABoxd *box)
 {
     DE_ASSERT(line && box);
     return line->boxOnSide_FixedPrecision(*box);

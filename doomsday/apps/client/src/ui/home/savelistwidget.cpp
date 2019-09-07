@@ -41,11 +41,11 @@ DE_GUI_PIMPL(SaveListWidget)
 
         ClickHandler(SaveListWidget::Impl *d) : d(d) {}
 
-        bool handleEvent(GuiWidget &button, Event const &event)
+        bool handleEvent(GuiWidget &button, const Event &event)
         {
             if (event.type() == Event::MouseButton)
             {
-                MouseEvent const &mouse = event.as<MouseEvent>();
+                const MouseEvent &mouse = event.as<MouseEvent>();
 
                 // Check for right-clicking.
                 if (mouse.button() == MouseEvent::Right)
@@ -79,10 +79,10 @@ DE_GUI_PIMPL(SaveListWidget)
 
         void saveRightClicked(GuiWidget &saveButton)
         {
-            auto const &saveItem = d->self().organizer()
+            const auto &saveItem = d->self().organizer()
                     .findItemForWidget(saveButton)->as<SaveListData::SaveItem>();
 
-            if (GameStateFolder const *saved = FS::tryLocate<GameStateFolder>(saveItem.savePath()))
+            if (const GameStateFolder *saved = FS::tryLocate<GameStateFolder>(saveItem.savePath()))
             {
                 auto *docPop = new DocumentPopupWidget;
                 docPop->setDeleteAfterDismissed(true);
@@ -103,7 +103,7 @@ DE_GUI_PIMPL(SaveListWidget)
         self().organizer().audienceForWidgetUpdate() += this;
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         auto &button = widget.as<ButtonWidget>();
         button.setTextAlignment(ui::AlignRight);
@@ -120,7 +120,7 @@ DE_GUI_PIMPL(SaveListWidget)
         });
         button.addEventHandler(new ClickHandler(this));
 
-        auto const &saveItem = item.as<SaveListData::SaveItem>();
+        const auto &saveItem = item.as<SaveListData::SaveItem>();
         button.setImage(style().images().image(Game::logoImageForId(saveItem.gameId())));
         button.setOverrideImageSize(style().fonts().font("default").height() * 1.4f);
     }

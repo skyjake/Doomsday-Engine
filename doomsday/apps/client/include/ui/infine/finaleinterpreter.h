@@ -76,9 +76,9 @@ public:
     finaleid_t id() const;
 
     bool runTicks(timespan_t timeDelta, bool processCommands);
-    int handleEvent(ddevent_t const &ev);
+    int handleEvent(const ddevent_t &ev);
 
-    void loadScript(char const *script);
+    void loadScript(const char *script);
 
     bool isSuspended() const;
 
@@ -93,21 +93,21 @@ public:
     void allowSkip(bool yes = true);
 
     bool skip();
-    bool skipToMarker(de::String const &marker);
+    bool skipToMarker(const de::String &marker);
     bool skipInProgress() const;
     bool lastSkipped() const;
 
 #ifdef __CLIENT__
-    void addEventHandler(ddevent_t const &evTemplate, de::String const &gotoMarker);
-    void removeEventHandler(ddevent_t const &evTemplate);
+    void addEventHandler(const ddevent_t &evTemplate, const de::String &gotoMarker);
+    void removeEventHandler(const ddevent_t &evTemplate);
 #endif
 
     FinalePageWidget &page(PageIndex index);
-    FinalePageWidget const &page(PageIndex index) const;
+    const FinalePageWidget &page(PageIndex index) const;
 
-    FinaleWidget *tryFindWidget(de::String const &name);
+    FinaleWidget *tryFindWidget(const de::String &name);
 
-    FinaleWidget &findWidget(fi_obtype_e type, de::String const &name);
+    FinaleWidget &findWidget(fi_obtype_e type, const de::String &name);
 
     /**
      * Find an object of the specified type with the type-unique name.
@@ -118,7 +118,7 @@ public:
      * @return  a) Existing object associated with unique @a name.
      *          b) New object with unique @a name.
      */
-    FinaleWidget &findOrCreateWidget(fi_obtype_e type, de::String const &name);
+    FinaleWidget &findOrCreateWidget(fi_obtype_e type, const de::String &name);
 
 public: /// Script-level flow/state control (@todo make private): --------------------
 
@@ -127,7 +127,7 @@ public: /// Script-level flow/state control (@todo make private): --------------
     void pause();
     void wait(int ticksToWait = 1);
     void foundSkipHere();
-    void foundSkipMarker(de::String const &marker);
+    void foundSkipMarker(const de::String &marker);
 
     int inTime() const;
     void setInTime(int seconds);

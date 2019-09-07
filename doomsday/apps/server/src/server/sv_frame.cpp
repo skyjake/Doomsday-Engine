@@ -168,8 +168,8 @@ void Sv_Shutdown()
  */
 void Sv_WriteMobjDelta(const void* deltaPtr)
 {
-    auto const *delta  = reinterpret_cast<mobjdelta_t const *>(deltaPtr);
-    dt_mobj_t const *d = &delta->mo;
+    const auto *delta  = reinterpret_cast<const mobjdelta_t *>(deltaPtr);
+    const dt_mobj_t *d = &delta->mo;
     dint df            = delta->delta.flags;
 
     byte moreFlags = 0;
@@ -340,10 +340,10 @@ void Sv_WriteMobjDelta(const void* deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePlayerDelta(void const *deltaPtr)
+void Sv_WritePlayerDelta(const void *deltaPtr)
 {
-    auto const *delta    = reinterpret_cast<playerdelta_t const *>(deltaPtr);
-    dt_player_t const *d = &delta->player;
+    const auto *delta    = reinterpret_cast<const playerdelta_t *>(deltaPtr);
+    const dt_player_t *d = &delta->player;
     dint df              = delta->delta.flags;
 
     // First the player number. Upper three bits contain flags.
@@ -380,7 +380,7 @@ void Sv_WritePlayerDelta(void const *deltaPtr)
     {
         for (dint i = 0; i < 2; ++i)
         {
-            ddpsprite_t const &psp = d->psp[i];
+            const ddpsprite_t &psp = d->psp[i];
             dint const flags       = df >> (16 + i * 8);
 
             // First the flags.
@@ -415,10 +415,10 @@ void Sv_WritePlayerDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSectorDelta(void const *deltaPtr)
+void Sv_WriteSectorDelta(const void *deltaPtr)
 {
-    auto const *delta    = reinterpret_cast<sectordelta_t const *>(deltaPtr);
-    dt_sector_t const *d = &delta->sector;
+    const auto *delta    = reinterpret_cast<const sectordelta_t *>(deltaPtr);
+    const dt_sector_t *d = &delta->sector;
     dint              df = delta->delta.flags;
 
     // Is there need to use 4.4 fixed-point speeds?
@@ -508,10 +508,10 @@ void Sv_WriteSectorDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSideDelta(void const *deltaPtr)
+void Sv_WriteSideDelta(const void *deltaPtr)
 {
-    auto const *delta  = (sidedelta_t const *) deltaPtr;
-    dt_side_t const *d = &delta->side;
+    const auto *delta  = (const sidedelta_t *) deltaPtr;
+    const dt_side_t *d = &delta->side;
     dint            df = delta->delta.flags;
 
     // Side number first.
@@ -563,10 +563,10 @@ void Sv_WriteSideDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WritePolyDelta(void const *deltaPtr)
+void Sv_WritePolyDelta(const void *deltaPtr)
 {
-    auto const  *delta = (polydelta_t const *) deltaPtr;
-    dt_poly_t const *d = &delta->po;
+    const auto *delta = (const polydelta_t *) deltaPtr;
+    const dt_poly_t *d = &delta->po;
     dint            df = delta->delta.flags;
 
     if (d->destAngle == (unsigned) -1)
@@ -597,9 +597,9 @@ void Sv_WritePolyDelta(void const *deltaPtr)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteSoundDelta(void const *deltaPtr)
+void Sv_WriteSoundDelta(const void *deltaPtr)
 {
-    auto const *delta = (sounddelta_t const *) deltaPtr;
+    const auto *delta = (const sounddelta_t *) deltaPtr;
     dint           df = delta->delta.flags;
 
     // This is either the sound ID, emitter ID or sector index.
@@ -644,7 +644,7 @@ void Sv_WriteSoundDelta(void const *deltaPtr)
 /**
  * Write the type and possibly the set number (for Unacked deltas).
  */
-void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
+void Sv_WriteDeltaHeader(byte type, const delta_t *delta)
 {
 #ifdef DE_DEBUG
     if (type >= NUM_DELTA_TYPES)
@@ -684,7 +684,7 @@ void Sv_WriteDeltaHeader(byte type, delta_t const *delta)
 /**
  * The delta is written to the message buffer.
  */
-void Sv_WriteDelta(delta_t const *delta)
+void Sv_WriteDelta(const delta_t *delta)
 {
     DE_ASSERT(delta);
 

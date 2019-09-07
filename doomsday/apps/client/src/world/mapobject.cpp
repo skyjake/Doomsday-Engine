@@ -34,7 +34,7 @@ DE_PIMPL_NOREF(MapObject)
     Vec3d origin;             ///< Position in map space.
 };
 
-MapObject::MapObject(Vec3d const &origin) : d(new Impl)
+MapObject::MapObject(const Vec3d &origin) : d(new Impl)
 {
     d->origin = origin;
 }
@@ -42,12 +42,12 @@ MapObject::MapObject(Vec3d const &origin) : d(new Impl)
 MapObject::~MapObject()
 {}
 
-Vec3d const &MapObject::origin() const
+const Vec3d &MapObject::origin() const
 {
     return d->origin;
 }
 
-void MapObject::setOrigin(Vec3d const &newOrigin)
+void MapObject::setOrigin(const Vec3d &newOrigin)
 {
     if(d->origin != newOrigin)
     {
@@ -62,7 +62,7 @@ void MapObject::setOrigin(Vec3d const &newOrigin)
     }
 }
 
-void MapObject::move(Vec3d const &delta)
+void MapObject::move(const Vec3d &delta)
 {
     setOrigin(d->origin + delta);
 }

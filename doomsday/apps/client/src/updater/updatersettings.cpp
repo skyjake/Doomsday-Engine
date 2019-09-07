@@ -120,7 +120,7 @@ void UpdaterSettings::setChannel(UpdaterSettings::Channel channel)
     Config::get().set(VAR_CHANNEL, dint(channel));
 }
 
-void UpdaterSettings::setLastCheckTime(de::Time const &time)
+void UpdaterSettings::setLastCheckTime(const de::Time &time)
 {
     Config::get(VAR_LAST_CHECKED) = new TimeValue(time);
 }

@@ -387,7 +387,7 @@ DE_PIMPL(ClientWindow)
         Loop::timer(1.0, [this] () { showOrHideQuitButton(); });
     }
 
-    void currentGameChanged(Game const &newGame) override
+    void currentGameChanged(const Game &newGame) override
     {
         minimizeGame(false);
         showOrHideQuitButton();
@@ -431,7 +431,7 @@ DE_PIMPL(ClientWindow)
         }
     }
 
-    void setMode(Mode const &newMode)
+    void setMode(const Mode &newMode)
     {
         LOG_DEBUG("Switching to %s mode") << (newMode == Busy? "Busy" : "Normal");
 
@@ -558,7 +558,7 @@ DE_PIMPL(ClientWindow)
      *
      * @param event  Event to handle.
      */
-    bool handleFallbackEvent(Event const &ev)
+    bool handleFallbackEvent(const Event &ev)
     {
         if (const MouseEvent *mouse = maybeAs<MouseEvent>(ev))
         {
@@ -647,7 +647,7 @@ DE_PIMPL(ClientWindow)
         }
     }
 
-    void variableValueChanged(Variable &variable, Value const &newValue) override
+    void variableValueChanged(Variable &variable, const Value &newValue) override
     {
         if (variable.name() == "fsaa")
         {
@@ -737,7 +737,7 @@ DE_PIMPL(ClientWindow)
             // Get rid of the sidebar, if it's open.
             self().setSidebar(RightEdge, nullptr);
 
-            auto const &unit = Style::get().rules().rule(RuleBank::UNIT);
+            const auto &unit = Style::get().rules().rule(RuleBank::UNIT);
 
             gameWidth ->set(root.viewWidth()/2 - unit, SPAN);
             gameHeight->set(root.viewHeight()/4,       SPAN);
@@ -814,7 +814,7 @@ DE_PIMPL(ClientWindow)
     }
 };
 
-ClientWindow::ClientWindow(String const &id)
+ClientWindow::ClientWindow(const String &id)
     : BaseWindow(id)
     , d(new Impl(this))
 {
@@ -900,7 +900,7 @@ bool ClientWindow::isFPSCounterVisible() const
     return App::config().getb(configName("showFps"));
 }
 
-void ClientWindow::setMode(Mode const &mode)
+void ClientWindow::setMode(const Mode &mode)
 {
     LOG_AS("ClientWindow");
 
@@ -1124,7 +1124,7 @@ GuiWidget &ClientWindow::sidebar(SidebarLocation location) const
     return *d->sidebar;
 }
 
-//bool ClientWindow::handleFallbackEvent(Event const &event)
+//bool ClientWindow::handleFallbackEvent(const Event &event)
 //{
 //    return d->handleFallbackEvent(event);
 //}
@@ -1140,7 +1140,7 @@ FadeToBlackWidget *ClientWindow::contentFade()
 }
 
 #undef M_ScreenShot
-DE_EXTERN_C int M_ScreenShot(char const *name, int flags)
+DE_EXTERN_C int M_ScreenShot(const char *name, int flags)
 {
     de::String fullName(name);
     if(fullName.fileNameExtension().isEmpty())

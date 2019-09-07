@@ -133,7 +133,7 @@ void Net_Shutdown()
 }
 
 #undef Net_GetPlayerName
-DE_EXTERN_C char const *Net_GetPlayerName(dint player)
+DE_EXTERN_C const char *Net_GetPlayerName(dint player)
 {
     return DD_Player(player)->name;
 }
@@ -256,7 +256,7 @@ void Net_SendPlayerInfo(dint srcPlrNum, dint destPlrNum)
  * This is the public interface of the message sender.
  */
 #undef Net_SendPacket
-DE_EXTERN_C void Net_SendPacket(dint to_player, dint type, void const *data, dsize length)
+DE_EXTERN_C void Net_SendPacket(dint to_player, dint type, const void *data, dsize length)
 {
     duint flags = 0;
 
@@ -288,11 +288,11 @@ DE_EXTERN_C void Net_SendPacket(dint to_player, dint type, void const *data, dsi
 /**
  * Prints the message in the console.
  */
-void Net_ShowChatMessage(dint plrNum, char const *message)
+void Net_ShowChatMessage(dint plrNum, const char *message)
 {
     DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    char const *fromName = (plrNum > 0 ? DD_Player(plrNum)->name : "[sysop]");
-    char const *sep      = (plrNum > 0 ? ":"                    : "");
+    const char *fromName = (plrNum > 0 ? DD_Player(plrNum)->name : "[sysop]");
+    const char *sep      = (plrNum > 0 ? ":"                    : "");
     LOG_NOTE("%s%s%s %s")
         << (!plrNum? _E(1) : _E(D))
         << fromName << sep << message;
@@ -318,7 +318,7 @@ void Net_ResetTimer()
 dd_bool Net_IsLocalPlayer(dint plrNum)
 {
     DE_ASSERT(plrNum >= 0 && plrNum < DDMAXPLAYERS);
-    auto const &pd = DD_Player(plrNum)->publicData();
+    const auto &pd = DD_Player(plrNum)->publicData();
     return pd.inGame && (pd.flags & DDPF_LOCAL);
 }
 
@@ -683,10 +683,10 @@ void Net_Ticker(timespan_t time)
  *
  * @param max  Maximum allowed length of a token, including terminating \0.
  */
-static dd_bool tokenize(char const *line, char *label, char *value, int valueSize)
+static dd_bool tokenize(const char *line, char *label, char *value, int valueSize)
 {
-    char const *src   = line;
-    char const *colon = strchr(src, ':');
+    const char *src   = line;
+    const char *colon = strchr(src, ':');
 
     // The colon must exist near the beginning.
     if(!colon || colon - src >= SVINFO_VALID_LABEL_LEN || valueSize <= 0)
@@ -698,14 +698,14 @@ static dd_bool tokenize(char const *line, char *label, char *value, int valueSiz
     qstrncpy(label, src, de::min(int(colon - src + 1), valueSize));
 
     // Copy the value.
-    char const *end = line + strlen(line);
+    const char *end = line + strlen(line);
     qstrncpy(value, colon + 1, de::min(int(end - colon), valueSize));
 
     // Everything is OK.
     return true;
 }
 
-void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec)
+void ServerInfo_FromRecord(serverinfo_t *info, const de::Record &rec)
 {
     DE_ASSERT(info);
     de::zapPtr(info);
@@ -735,7 +735,7 @@ void ServerInfo_FromRecord(serverinfo_t *info, de::Record const &rec)
 #endif
 
 #if 0
-dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
+dd_bool ServerInfo_FromString(serverinfo_t *info, const char *valuePair)
 {
     char label[SVINFO_TOKEN_LEN], value[SVINFO_TOKEN_LEN];
 
@@ -837,7 +837,7 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, char const *valuePair)
 /**
  * Composes a PKT_CHAT network message.
  */
-void Net_WriteChatMessage(dint from, dint toMask, char const *message)
+void Net_WriteChatMessage(dint from, dint toMask, const char *message)
 {
     auto const len = de::min<dsize>(strlen(message), 0xffff);
 
@@ -1077,7 +1077,7 @@ D_CMD(SetConsole)
     return true;
 }
 
-dint Net_StartConnection(char const *address, dint port)
+dint Net_StartConnection(const char *address, dint port)
 {
     LOG_AS("Net_StartConnection");
     LOG_NET_MSG("Connecting to %s (port %i)...") << address << port;

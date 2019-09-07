@@ -48,7 +48,7 @@ void R_RenderPlayerView(int num)
     DE_UNUSED(num);
 }
 
-void R_SetBorderGfx(Uri const *const *paths)
+void R_SetBorderGfx(const Uri *const *paths)
 {
     DE_UNUSED(paths);
 }

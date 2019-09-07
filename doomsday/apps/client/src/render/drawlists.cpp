@@ -127,7 +127,7 @@ void DrawLists::reset()
  * (These properties are written to the primitive header and applied dynamically
  * when reading back the draw list.)
  */
-static bool compareTexUnit(GLTextureUnit const &lhs, GLTextureUnit const &rhs)
+static bool compareTexUnit(const GLTextureUnit &lhs, const GLTextureUnit &rhs)
 {
     if(lhs.texture)
     {
@@ -142,7 +142,7 @@ static bool compareTexUnit(GLTextureUnit const &lhs, GLTextureUnit const &rhs)
     return true;
 }
 
-DrawList &DrawLists::find(DrawListSpec const &spec)
+DrawList &DrawLists::find(const DrawListSpec &spec)
 {
     // Sky masked geometry is never textured; therefore no draw list hash.
     /// @todo Make hash management dynamic. -ds
@@ -226,7 +226,7 @@ int DrawLists::findAll(GeomGroup group, FoundLists &found)
     }
     else
     {
-        DrawListHash const &hash = d->listHash(group);
+        const DrawListHash &hash = d->listHash(group);
         for (const auto &list : hash)
         {
             if (!list.second->isEmpty())

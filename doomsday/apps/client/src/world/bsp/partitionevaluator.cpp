@@ -48,21 +48,21 @@ namespace internal
         int partRight = 0;
         int partLeft  = 0;
 
-        inline PartitionCost &addSegmentRight(LineSegmentSide const &seg)
+        inline PartitionCost &addSegmentRight(const LineSegmentSide &seg)
         {
             if(seg.hasMapSide()) mapRight  += 1;
             else                 partRight += 1;
             return *this;
         }
 
-        inline PartitionCost &addSegmentLeft(LineSegmentSide const &seg)
+        inline PartitionCost &addSegmentLeft(const LineSegmentSide &seg)
         {
             if(seg.hasMapSide()) mapLeft  += 1;
             else                 partLeft += 1;
             return *this;
         }
 
-        PartitionCost &operator+=(PartitionCost const &other)
+        PartitionCost &operator+=(const PartitionCost &other)
         {
             total     += other.total;
             splits    += other.splits;
@@ -75,7 +75,7 @@ namespace internal
             return *this;
         }
 
-        PartitionCost &operator=(PartitionCost const &other)
+        PartitionCost &operator=(const PartitionCost &other)
         {
             total     = other.total;
             splits    = other.splits;
@@ -88,7 +88,7 @@ namespace internal
             return *this;
         }
 
-        bool operator<(PartitionCost const &rhs) const { return total < rhs.total; }
+        bool operator<(const PartitionCost &rhs) const { return total < rhs.total; }
 
         String asText() const
         {
@@ -250,7 +250,7 @@ DE_PIMPL_NOREF(PartitionEvaluator)
         }
 
     private:
-        void costForSegment(LineSegmentSide const &seg)
+        void costForSegment(const LineSegmentSide &seg)
         {
             LineSegmentSide **partition = &candidate.line;
             PartitionCost &cost         = candidate.cost;
@@ -333,10 +333,10 @@ DE_PIMPL_NOREF(PartitionEvaluator)
          * line segments within it at once. Only when the partition line intercepts
          * the block do we need to go deeper into it.
          */
-        void costForBlock(LineSegmentBlockTreeNode const &node)
+        void costForBlock(const LineSegmentBlockTreeNode &node)
         {
-            LineSegmentBlock const &block    = *node.userData();
-            LineSegmentSide const *partition = candidate.line;
+            const LineSegmentBlock &block    = *node.userData();
+            const LineSegmentSide *partition = candidate.line;
             PartitionCost &cost              = candidate.cost;
 
             /// @todo Why are we extending the bounding box for this test? Also,
@@ -411,13 +411,13 @@ LineSegmentSide *PartitionEvaluator::choose(LineSegmentBlockTreeNode &node)
     validCount++;
 
     // Iterative pre-order traversal.
-    LineSegmentBlockTreeNode const *cur  = d->rootNode;
-    LineSegmentBlockTreeNode const *prev = nullptr;
+    const LineSegmentBlockTreeNode *cur  = d->rootNode;
+    const LineSegmentBlockTreeNode *prev = nullptr;
     while(cur)
     {
         while(cur)
         {
-            LineSegmentBlock const &segs = *cur->userData();
+            const LineSegmentBlock &segs = *cur->userData();
 
             // Test each line segment as a potential partition candidate.
             for(LineSegmentSide *candidate : segs.all())

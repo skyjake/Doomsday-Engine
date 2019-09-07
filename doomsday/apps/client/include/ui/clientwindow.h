@@ -59,7 +59,7 @@ public:
     enum FadeDirection { FadeFromBlack, FadeToBlack };
 
 public:
-    ClientWindow(de::String const &id = "main");
+    ClientWindow(const de::String &id = "main");
 
     bool isUICreated() const;
 
@@ -106,7 +106,7 @@ public:
      *
      * @param mode  Mode.
      */
-    void setMode(Mode const &mode);
+    void setMode(const Mode &mode);
 
     /**
      * Minimizes or restores the game to full size. While minimized, the Home is
@@ -157,7 +157,7 @@ public:
     void drawWindowContent() override;
     void preDraw() override;
     void postDraw() override;
-//    bool handleFallbackEvent(de::Event const &event) override;
+//    bool handleFallbackEvent(const de::Event &event) override;
 
     static ClientWindow &main();
     static bool mainExists();

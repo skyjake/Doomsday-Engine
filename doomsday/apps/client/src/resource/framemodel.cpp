@@ -203,7 +203,7 @@ DE_PIMPL(FrameModel)
         uint8_t *frameData = (uint8_t *) allocAndLoad(file, hdr.offsetFrames, hdr.frameSize * hdr.numFrames);
         for(int i = 0; i < hdr.numFrames; ++i)
         {
-            md2_packedFrame_t const *pfr = (md2_packedFrame_t const *) (frameData + hdr.frameSize * i);
+            const md2_packedFrame_t *pfr = (const md2_packedFrame_t *) (frameData + hdr.frameSize * i);
             Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
             Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
@@ -212,7 +212,7 @@ DE_PIMPL(FrameModel)
             frame->vertices.reserve(hdr.numVertices);
 
             // Scale and translate each vertex.
-            md2_triangleVertex_t const *pVtx = pfr->vertices;
+            const md2_triangleVertex_t *pVtx = pfr->vertices;
             for(int k = 0; k < hdr.numVertices; ++k, pVtx++)
             {
                 frame->vertices.append(FrameModelFrame::Vertex());
@@ -243,7 +243,7 @@ DE_PIMPL(FrameModel)
         FrameModelLOD &lod0 = *mdl->d->lods.last();
 
         uint8_t *commandData = (uint8_t *) allocAndLoad(file, hdr.offsetGlCommands, 4 * hdr.numGlCommands);
-        for(uint8_t const *pos = commandData; *pos;)
+        for(const uint8_t *pos = commandData; *pos;)
         {
             int count = DD_LONG( *(int *) pos ); pos += 4;
 
@@ -260,7 +260,7 @@ DE_PIMPL(FrameModel)
 
             while(count--)
             {
-                md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
+                const md2_commandElement_t *v = (md2_commandElement_t *) pos; pos += 12;
 
                 prim.elements.append(FrameModel::Primitive::Element());
                 FrameModel::Primitive::Element &elem = prim.elements.last();
@@ -412,7 +412,7 @@ DE_PIMPL(FrameModel)
         uint8_t *frameData = (uint8_t *) allocAndLoad(file, info.offsetFrames, info.frameSize * info.numFrames);
         for(int i = 0; i < info.numFrames; ++i)
         {
-            dmd_packedFrame_t const *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
+            const dmd_packedFrame_t *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
             Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
             Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
             String const frameName = pfr->name;
@@ -421,7 +421,7 @@ DE_PIMPL(FrameModel)
             frame->vertices.reserve(info.numVertices);
 
             // Scale and translate each vertex.
-            dmd_packedVertex_t const *pVtx = pfr->vertices;
+            const dmd_packedVertex_t *pVtx = pfr->vertices;
             for(int k = 0; k < info.numVertices; ++k, ++pVtx)
             {
                 frame->vertices.append(Frame::Vertex());
@@ -473,7 +473,7 @@ DE_PIMPL(FrameModel)
 
             uint8_t *commandData = (uint8_t *) allocAndLoad(file, lodInfo[i].offsetGlCommands,
                                                             4 * lodInfo[i].numGlCommands);
-            for(uint8_t const *pos = commandData; *pos;)
+            for(const uint8_t *pos = commandData; *pos;)
             {
                 int count = DD_LONG( *(int *) pos ); pos += 4;
 
@@ -490,7 +490,7 @@ DE_PIMPL(FrameModel)
 
                 while(count--)
                 {
-                    md2_commandElement_t const *v = (md2_commandElement_t *) pos; pos += 12;
+                    const md2_commandElement_t *v = (md2_commandElement_t *) pos; pos += 12;
 
                     prim.elements.append(Primitive::Element());
                     Primitive::Element &elem = prim.elements.last();
@@ -656,12 +656,12 @@ FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //stat
     };
 
     // Firstly, attempt to guess the resource type from the file extension.
-    ModelFileType const *rtypeGuess = 0;
+    const ModelFileType *rtypeGuess = 0;
     String filePath = hndl.file().composePath();
     String ext      = filePath.fileNameExtension();
     if (!ext.isEmpty())
     {
-        for (auto const &rtype : modelTypes)
+        for (const auto &rtype : modelTypes)
         {
             if (!rtype.ext.compareWithoutCase(ext))
             {
@@ -677,7 +677,7 @@ FrameModel *FrameModel::loadFromFile(FileHandle &hndl, float aspectScale) //stat
     }
 
     // Not yet interpreted - try each known format in order.
-    for (auto const &rtype : modelTypes)
+    for (const auto &rtype : modelTypes)
     {
         // Already tried this?
         if (&rtype == rtypeGuess) continue;
@@ -736,7 +736,7 @@ FrameModel::Frame &FrameModel::frame(int number) const
     throw MissingFrameError("FrameModel::frame", "Invalid frame number " + String::asText(number) + ", valid range is " + Rangei(0, d->frames.count()).asText());
 }
 
-FrameModel::Frames const &FrameModel::frames() const
+const FrameModel::Frames &FrameModel::frames() const
 {
     return d->frames;
 }
@@ -755,7 +755,7 @@ int FrameModel::skinNumber(const String& name) const
         // Reverse iteration so that later skins override earlier ones.
         for(int i = d->skins.count(); i--> 0; )
         {
-            Skin const &skin = d->skins.at(i);
+            const Skin &skin = d->skins.at(i);
             if(!skin.name.compareWithoutCase(name))
                 return i;
         }
@@ -781,7 +781,7 @@ FrameModel::Skin &FrameModel::newSkin(String name)
     return d->skins.last();
 }
 
-FrameModel::Skins const &FrameModel::skins() const
+const FrameModel::Skins &FrameModel::skins() const
 {
     return d->skins;
 }
@@ -802,12 +802,12 @@ FrameModel::DetailLevel &FrameModel::lod(int level) const
     throw MissingDetailLevelError("FrameModel::lod", "Invalid detail level " + String::asText(level) + ", valid range is " + Rangei(0, d->lods.count()).asText());
 }
 
-FrameModel::DetailLevels const &FrameModel::lods() const
+const FrameModel::DetailLevels &FrameModel::lods() const
 {
     return d->lods;
 }
 
-FrameModel::Primitives const &FrameModel::primitives() const
+const FrameModel::Primitives &FrameModel::primitives() const
 {
     LOG_AS("FrameModel");
     return lod(0).primitives;

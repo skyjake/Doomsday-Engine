@@ -55,7 +55,7 @@ struct drawmaskedwallparams_t
     de::dfloat modColor[4];
 };
 
-void Rend_DrawMaskedWall(drawmaskedwallparams_t const &parms);
+void Rend_DrawMaskedWall(const drawmaskedwallparams_t &parms);
 
 /**
  * Billboard drawing arguments for a "player" sprite (HUD sprite).
@@ -75,7 +75,7 @@ struct rendpspriteparams_t
     de::duint vLightListIdx;
 };
 
-void Rend_DrawPSprite(rendpspriteparams_t const &parms);
+void Rend_DrawPSprite(const rendpspriteparams_t &parms);
 
 /**
  * Billboard drawing arguments for a map entity, sprite visualization.
@@ -90,9 +90,9 @@ struct drawspriteparams_t
     world::BspLeaf *bspLeaf;
 };
 
-void Rend_DrawSprite(vissprite_t const &spr);
+void Rend_DrawSprite(const vissprite_t &spr);
 
-de::MaterialVariantSpec const &Rend_SpriteMaterialSpec(de::dint tclass = 0, de::dint tmap = 0);
+const de::MaterialVariantSpec &Rend_SpriteMaterialSpec(de::dint tclass = 0, de::dint tmap = 0);
 
 /**
  * @defgroup rendFlareFlags  Flare renderer flags

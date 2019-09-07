@@ -132,7 +132,7 @@ void Generator::clearParticles()
     _pinfo = nullptr;
 }
 
-void Generator::configureFromDef(ded_ptcgen_t const *newDef)
+void Generator::configureFromDef(const ded_ptcgen_t *newDef)
 {
     DE_ASSERT(newDef);
 
@@ -149,7 +149,7 @@ void Generator::configureFromDef(ded_ptcgen_t const *newDef)
 
     for(dint i = 0; i < def->stages.size(); ++i)
     {
-        ded_ptcstage_t const *sdef = &def->stages[i];
+        const ded_ptcstage_t *sdef = &def->stages[i];
         ParticleStage *s = &stages[i];
 
         s->bounce     = FLT2FIX(sdef->bounce);
@@ -231,7 +231,7 @@ dint Generator::activeParticleCount() const
     return numActive;
 }
 
-ParticleInfo const *Generator::particleInfo() const
+const ParticleInfo *Generator::particleInfo() const
 {
     return _pinfo;
 }
@@ -414,7 +414,7 @@ dint Generator::newParticle()
     {
         /// @todo fixme: ignorant of mapped sector planes.
         fixed_t radius = stages[pinfo->stage].radius;
-        Sector const *sector = &plane->sector();
+        const Sector *sector = &plane->sector();
 
         // Choose a random spot inside the sector, on the spawn plane.
         if(_flags & SpawnSpace)
@@ -466,7 +466,7 @@ dint Generator::newParticle()
             return -1;
         }
 
-        AABoxd const &subBounds = subspace->poly().bounds();
+        const AABoxd &subBounds = subspace->poly().bounds();
 
         // Try a couple of times to get a good random spot.
         dint tries;
@@ -588,9 +588,9 @@ static dint touchParticle(ParticleInfo *pinfo, Generator::ParticleStage *stage,
     return true;
 }
 
-dfloat Generator::particleZ(ParticleInfo const &pinfo) const
+dfloat Generator::particleZ(const ParticleInfo &pinfo) const
 {
-    auto const &subsec = pinfo.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
+    const auto &subsec = pinfo.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
     if(pinfo.origin[2] == DDMAXINT)
     {
         return subsec.visCeiling().heightSmoothed() - 2;
@@ -602,12 +602,12 @@ dfloat Generator::particleZ(ParticleInfo const &pinfo) const
     return FIX2FLT(pinfo.origin[2]);
 }
 
-Vec3f Generator::particleOrigin(ParticleInfo const &pt) const
+Vec3f Generator::particleOrigin(const ParticleInfo &pt) const
 {
     return Vec3f(FIX2FLT(pt.origin[0]), FIX2FLT(pt.origin[1]), particleZ(pt));
 }
 
-Vec3f Generator::particleMomentum(ParticleInfo const &pt) const
+Vec3f Generator::particleMomentum(const ParticleInfo &pt) const
 {
     return Vec3f(FIX2FLT(pt.mov[0]), FIX2FLT(pt.mov[1]), FIX2FLT(pt.mov[2]));
 }
@@ -617,7 +617,7 @@ void Generator::spinParticle(ParticleInfo &pinfo)
     static dint const yawSigns[4]   = { 1,  1, -1, -1 };
     static dint const pitchSigns[4] = { 1, -1,  1, -1 };
 
-    ded_ptcstage_t const *stDef = &def->stages[pinfo.stage];
+    const ded_ptcstage_t *stDef = &def->stages[pinfo.stage];
     duint const spinIndex        = uint(&pinfo - &_pinfo[id() / 8]) % 4;
 
     DE_ASSERT(spinIndex < 4);

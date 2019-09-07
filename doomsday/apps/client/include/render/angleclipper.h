@@ -44,7 +44,7 @@ struct AngleRange
      *         @c  3= @other completely contains "this".
      *         @c -1= No meaningful relationship.
      */
-    de::dint relationship(AngleRange const &other)
+    de::dint relationship(const AngleRange &other)
     {
         if(from >= other.from && to   <= other.to) return 0;
         if(from >= other.from && from <  other.to) return 1;
@@ -86,7 +86,7 @@ public:
      *
      * @param point  Map-space coordinates to test.
      */
-    de::dint isPointVisible(de::Vec3d const &point) const;
+    de::dint isPointVisible(const de::Vec3d &point) const;
 
     /**
      * Returns non-zero if @em any portion of the given map-space, convex face geometry
@@ -94,7 +94,7 @@ public:
      *
      * @param poly  Map-space convex face geometry to test.
      */
-    de::dint isPolyVisible(de::Face const &poly) const;
+    de::dint isPolyVisible(const de::Face &poly) const;
 
 public:  // ---------------------------------------------------------------------------
 
@@ -115,7 +115,7 @@ public:  // --------------------------------------------------------------------
      * @param from  Map-space coordinates describing the start-point.
      * @param to    Map-space coordinates describing the end-point.
      */
-    void addRangeFromViewRelPoints(de::Vec2d const &from, de::Vec2d const &to);
+    void addRangeFromViewRelPoints(const de::Vec2d &from, const de::Vec2d &to);
 
     /**
      * Add an occlusion segment relative to the current viewpoint.
@@ -125,7 +125,7 @@ public:  // --------------------------------------------------------------------
      * @param height
      * @param topHalf
      */
-    void addViewRelOcclusion(de::Vec2d const &from, de::Vec2d const &to,
+    void addViewRelOcclusion(const de::Vec2d &from, const de::Vec2d &to,
                              coord_t height, bool topHalf);
 
     /**
@@ -134,7 +134,7 @@ public:  // --------------------------------------------------------------------
      * @param from  Map-space coordinates for the start-point.
      * @param to    Map-space coordinates for the end-point.
      */
-    de::dint checkRangeFromViewRelPoints(de::Vec2d const &from, de::Vec2d const &to);
+    de::dint checkRangeFromViewRelPoints(const de::Vec2d &from, const de::Vec2d &to);
 
 #ifdef DE_DEBUG
     /**

@@ -71,7 +71,7 @@ public:
     de::Socket *takeSocket();
 
     // Implements Transmitter.
-    void send(de::IByteArray const &data);
+    void send(const de::IByteArray &data);
 
     DE_AUDIENCE(Destroy, void aboutToDestroyRemoteUser(RemoteUser &))
 

@@ -32,7 +32,7 @@ class GamePanelButtonWidget : public PanelButtonWidget
 {
 public:
     GamePanelButtonWidget(GameProfile &game,
-                          SaveListData const &savedItems);
+                          const SaveListData &savedItems);
 
     void setSelected(bool selected) override;
 
@@ -42,7 +42,7 @@ public:
     de::ButtonWidget &playButton();
 
     // Events.
-    bool handleEvent(de::Event const &event) override;
+    bool handleEvent(const de::Event &event) override;
 
     void play();
     void selectPackages();

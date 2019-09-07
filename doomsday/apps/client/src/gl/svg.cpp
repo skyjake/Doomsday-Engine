@@ -90,7 +90,7 @@ static void draw(const Svg* svg)
     DE_ASSERT_IN_MAIN_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
-    SvgLine const *lIt = svg->lines;
+    const SvgLine *lIt = svg->lines;
     for (uint i = 0; i < svg->lineCount; ++i, lIt++)
     {
         if (lIt->numPoints != 2)

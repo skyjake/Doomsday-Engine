@@ -50,7 +50,7 @@ namespace world {
  *         @c =0 Point lies directly on the segment.
  *         @c >0 Point is to the right/front of the segment.
  */
-static ddouble pointOnHEdgeSide(HEdge const &hedge, Vec2d const &point)
+static ddouble pointOnHEdgeSide(const HEdge &hedge, const Vec2d &point)
 {
     Vec2d const direction = hedge.twin().origin() - hedge.origin();
 
@@ -62,7 +62,7 @@ static ddouble pointOnHEdgeSide(HEdge const &hedge, Vec2d const &point)
 
 struct ContactSpreader
 {
-    world::Blockmap const &_blockmap;
+    const world::Blockmap &_blockmap;
     BitArray *_spreadBlocks = nullptr;
 
     struct SpreadState
@@ -72,7 +72,7 @@ struct ContactSpreader
     };
     SpreadState _spread;
 
-    ContactSpreader(world::Blockmap const &blockmap, BitArray *spreadBlocks = nullptr)
+    ContactSpreader(const world::Blockmap &blockmap, BitArray *spreadBlocks = nullptr)
         : _blockmap(blockmap)
     {
         _spreadBlocks = spreadBlocks;
@@ -83,7 +83,7 @@ struct ContactSpreader
      *
      * @param box   Map space region in which to perform spreading.
      */
-    void spread(AABoxd const &box)
+    void spread(const AABoxd &box)
     {
         BlockmapCellBlock const cellBlock = _blockmap.toCellBlock(box);
 
@@ -155,7 +155,7 @@ private:
         }
 
         // Is the leaf on the back side outside the origin's AABB?
-        AABoxd const &bounds = backSubspace.poly().bounds();
+        const AABoxd &bounds = backSubspace.poly().bounds();
         if (   bounds.maxX <= _spread.contactBounds.minX
             || bounds.minX >= _spread.contactBounds.maxX
             || bounds.maxY <= _spread.contactBounds.minY
@@ -179,17 +179,17 @@ private:
         // Are there line side surfaces which should prevent spreading?
         if (hedge->hasMapElement())
         {
-            LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
+            const LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
 
             // On which side of the line are we? (distance is from segment to origin).
-            LineSide const &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
+            const LineSide &facingLineSide = seg.line().side(seg.lineSide().sideId() ^ (distance < 0));
 
             // One-way window?
             if (!facingLineSide.back().hasSections())
                 return;
 
-            ClientSubsector const &fromSubsec = facingLineSide.isFront() ? subsec : backSubsec;
-            ClientSubsector const &toSubsec   = facingLineSide.isFront() ? backSubsec : subsec;
+            const ClientSubsector &fromSubsec = facingLineSide.isFront() ? subsec : backSubsec;
+            const ClientSubsector &toSubsec   = facingLineSide.isFront() ? backSubsec : subsec;
 
             // Might a material cover the opening?
             if (facingLineSide.hasSections() && facingLineSide.middle().hasMaterial())
@@ -266,7 +266,7 @@ private:
     }
 };
 
-void spreadContacts(Blockmap const &blockmap, AABoxd const &region, BitArray *spreadBlocks)
+void spreadContacts(const Blockmap &blockmap, const AABoxd &region, BitArray *spreadBlocks)
 {
     ContactSpreader(blockmap, spreadBlocks).spread(region);
 }

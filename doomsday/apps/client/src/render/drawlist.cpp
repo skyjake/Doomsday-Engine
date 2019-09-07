@@ -100,7 +100,7 @@ DE_PIMPL(DrawList)
         }
 
         struct Data {
-            Store const *buffer;
+            const Store *buffer;
 
             // Element indices into the global backing store for the geometry.
             // These are always contiguous and all are used (some are shared):
@@ -113,7 +113,7 @@ DE_PIMPL(DrawList)
             /**
              * Draw the geometry for this element.
              */
-            void draw(DrawConditions const &conditions, TexUnitMap const &texUnitMap)
+            void draw(const DrawConditions &conditions, const TexUnitMap &texUnitMap)
             {
                 DE_ASSERT(buffer);
 
@@ -192,7 +192,7 @@ DE_PIMPL(DrawList)
 
                     for (dint k = 0; k < MAX_TEX_UNITS; ++k)
                     {
-                        Vec2f const *tc = nullptr;  // No mapping.
+                        const Vec2f *tc = nullptr;  // No mapping.
                         switch (texUnitMap[k])
                         {
                         case AttributeSpec::TexCoord0:   tc = buffer->texCoords[0]; break;
@@ -210,11 +210,11 @@ DE_PIMPL(DrawList)
 
                     if (!(conditions & NoColor))
                     {
-                        Vec4ub const &color = buffer->colorCoords[index];
+                        const Vec4ub &color = buffer->colorCoords[index];
                         DGL_Color4ub(color.x, color.y, color.z, color.w);
                     }
 
-                    Vec3f const &pos = buffer->posCoords[index];
+                    const Vec3f &pos = buffer->posCoords[index];
                     DGL_Vertex3f(pos.x, pos.z, pos.y);
                 }
                 DGL_End();
@@ -261,7 +261,7 @@ DE_PIMPL(DrawList)
     duint8 *cursor = nullptr;  ///< Data pointer for reading/writing.
     Element *last  = nullptr;  ///< Last element (if any).
 
-    Impl(Public *i, Spec const &spec) : Base(i), spec(spec) {}
+    Impl(Public *i, const Spec &spec) : Base(i), spec(spec) {}
     ~Impl() { clearAllData(); }
 
     void clearAllData()
@@ -300,7 +300,7 @@ DE_PIMPL(DrawList)
         if (required > dataSize)
         {
             // Offsets must be preserved.
-            duint8 const *oldData   = data;
+            const duint8 *oldData   = data;
             dint const cursorOffset = (cursor? cursor - oldData : -1);
             dint const lastOffset   = (last? (duint8 *) last - oldData : -1);
 
@@ -736,7 +736,7 @@ DE_PIMPL(DrawList)
     }
 };
 
-DrawList::DrawList(Spec const &spec) : d(new Impl(this, spec))
+DrawList::DrawList(const Spec &spec) : d(new Impl(this, spec))
 {}
 
 bool DrawList::isEmpty() const
@@ -744,21 +744,21 @@ bool DrawList::isEmpty() const
     return d->last == nullptr;
 }
 
-DrawList &DrawList::write(Store const &            buffer,
-                          DrawList::Indices const &indices,
-                          PrimitiveParams const &  params)
+DrawList &DrawList::write(const Store &            buffer,
+                          const DrawList::Indices &indices,
+                          const PrimitiveParams &  params)
 {
     if (indices.isEmpty()) return *this;
     return write(buffer, indices.data(), indices.size(), params);
 }
 
-DrawList &DrawList::write(Store const &buffer, Indices const &indices, gfx::Primitive primitiveType)
+DrawList &DrawList::write(const Store &buffer, const Indices &indices, gfx::Primitive primitiveType)
 {
     return write(buffer, indices.data(), indices.size(), primitiveType);
 }
 
-DrawList &DrawList::write(Store const & buffer,
-                          duint const * indices,
+DrawList &DrawList::write(const Store & buffer,
+                          const duint * indices,
                           int           indexCount,
                           gfx::Primitive primitiveType)
 {
@@ -768,10 +768,10 @@ DrawList &DrawList::write(Store const & buffer,
     return write(buffer, indices, indexCount, defaultParams);
 }
 
-DrawList &DrawList::write(Store const &          buffer,
-                          duint const *          indices,
+DrawList &DrawList::write(const Store &          buffer,
+                          const duint *          indices,
                           int                    indexCount,
-                          PrimitiveParams const &params)
+                          const PrimitiveParams &params)
 {
 #ifdef DE_DEBUG
     using Parm = PrimitiveParams;
@@ -815,7 +815,7 @@ DrawList &DrawList::write(Store const &          buffer,
     return *this;
 }
 
-void DrawList::draw(DrawMode mode, TexUnitMap const &texUnitMap) const
+void DrawList::draw(DrawMode mode, const TexUnitMap &texUnitMap) const
 {
     using Parm = PrimitiveParams;
 
@@ -893,7 +893,7 @@ DrawList::Spec &DrawList::spec()
     return d->spec;
 }
 
-DrawList::Spec const &DrawList::spec() const
+const DrawList::Spec &DrawList::spec() const
 {
     return d->spec;
 }

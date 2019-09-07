@@ -44,13 +44,13 @@ DE_OBSERVES(AbstractFont, Deletion)
     }
 
     // Observes AbstractFont::Deletion.
-    void fontBeingDeleted(AbstractFont const & /*resource*/)
+    void fontBeingDeleted(const AbstractFont & /*resource*/)
     {
         resource.reset();
     }
 };
 
-FontManifest::FontManifest(PathTree::NodeArgs const &args)
+FontManifest::FontManifest(const PathTree::NodeArgs &args)
     : Node(args), d(new Impl(this))
 {}
 
@@ -66,7 +66,7 @@ FontScheme &FontManifest::scheme() const
     throw Error("FontManifest::scheme", stringf("Failed to determine scheme for manifest [%p]", this));
 }
 
-String const &FontManifest::schemeName() const
+const String &FontManifest::schemeName() const
 {
     return scheme().name();
 }

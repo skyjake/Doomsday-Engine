@@ -259,7 +259,7 @@ void ClEdgeLoop::fixSurfacesMissingMaterials()
             {
                 if (hasBackSubsector())
                 {
-                    auto const &backSubsec = backSubsector().as<ClientSubsector>();
+                    const auto &backSubsec = backSubsector().as<ClientSubsector>();
 
                     // Potential bottom section fix?
                     if (!d->owner.hasSkyFloor() && !backSubsec.hasSkyFloor())

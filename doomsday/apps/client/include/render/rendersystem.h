@@ -46,7 +46,7 @@ public:
     RenderSystem();
 
     // System.
-    void timeChanged(de::Clock const &);
+    void timeChanged(const de::Clock &);
 
     ConfigProfiles &settings();
     ConfigProfiles &appearanceSettings();
@@ -56,7 +56,7 @@ public:
 
     de::GLShaderBank &shaders();
     de::ImageBank &images();
-    de::GLUniform const &uMapTime() const;
+    const de::GLUniform &uMapTime() const;
     de::GLUniform &uProjectionMatrix() const;
     de::GLUniform &uViewMatrix() const;
     render::Environment &environment();
@@ -113,7 +113,7 @@ public:  // Texture => surface projection lists --------------------------------
      * @param listIdx  Unique identifier of the projection list to process.
      * @param func     Callback to make for each TexProjection.
      */
-    de::LoopResult forAllSurfaceProjections(de::duint listIdx, std::function<de::LoopResult (ProjectedTextureData const &)> func) const;
+    de::LoopResult forAllSurfaceProjections(de::duint listIdx, std::function<de::LoopResult (const ProjectedTextureData &)> func) const;
 
 public:  // VectorLight affection lists -------------------------------------------
 
@@ -134,7 +134,7 @@ public:  // VectorLight affection lists ----------------------------------------
      * @param listIdx  Unique identifier of the list to process.
      * @param func     Callback to make for each VectorLight.
      */
-    de::LoopResult forAllVectorLights(de::duint listIdx, std::function<de::LoopResult (VectorLightData const &)> func);
+    de::LoopResult forAllVectorLights(de::duint listIdx, std::function<de::LoopResult (const VectorLightData &)> func);
 
 public:
     /**

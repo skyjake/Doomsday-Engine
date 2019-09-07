@@ -43,7 +43,7 @@
 
 using namespace de;
 
-static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start,
+static void drawRegion(memvolume_t &volume, const Rectanglei &rect, size_t start,
     size_t size, float const color[4])
 {
     DE_ASSERT(start + size <= volume.size);
@@ -72,7 +72,7 @@ static void drawRegion(memvolume_t &volume, Rectanglei const &rect, size_t start
     }
 }
 
-void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectanglei const &rect)
+void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, const Rectanglei &rect)
 {
     float const opacity = .85f;
     float const colAppStatic[4]   = { 1, 1, 1, .65f };
@@ -102,7 +102,7 @@ void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, Rectangle
         block != &volume->zone->blockList;
         block = block->next)
     {
-        float const *color = colOther;
+        const float *color = colOther;
         if (!block->user) continue; // Free is black.
 
         // Choose the color for this block.

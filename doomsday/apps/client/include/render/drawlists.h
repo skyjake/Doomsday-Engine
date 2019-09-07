@@ -39,7 +39,7 @@ public:
      *
      * @return  The chosen list.
      */
-    DrawList &find(DrawListSpec const &spec);
+    DrawList &find(const DrawListSpec &spec);
 
     /**
      * Finds all draw lists which match the given specification. Note that only

@@ -76,7 +76,7 @@ DE_PIMPL(Partitioner)
         LineSegmentBlockTreeNode *rootNode;
 
         /// @param bounds  Map space bounding box for the root block.
-        LineSegmentBlockTree(AABox const &bounds)
+        LineSegmentBlockTree(const AABox &bounds)
             : rootNode(new LineSegmentBlockTreeNode(new LineSegmentBlock(bounds)))
         {}
 
@@ -135,7 +135,7 @@ DE_PIMPL(Partitioner)
      * Returns a newly allocated Vertex at the given map space @a origin from the
      * map geometry mesh (ownership is @em not given to the caller).
      */
-    Vertex *makeVertex(Vec2d const &origin)
+    Vertex *makeVertex(const Vec2d &origin)
     {
         Vertex *vtx = mesh->newVertex(origin);
         vertexCount += 1; // We built another one.
@@ -177,7 +177,7 @@ DE_PIMPL(Partitioner)
         for(LineSegmentBlockTreeNode *node = &node_; ;)
         {
             LineSegmentBlock &block = *node->userData();
-            AABox const &bounds     = block.bounds();
+            const AABox &bounds     = block.bounds();
 
             // The segment "touches" this node; increment the ref counters.
             block.addRef(seg);
@@ -249,7 +249,7 @@ DE_PIMPL(Partitioner)
     /**
      * Returns the EdgeTips set associated with @a vertex.
      */
-    EdgeTips &edgeTipSet(Vertex const &vertex)
+    EdgeTips &edgeTipSet(const Vertex &vertex)
     {
         EdgeTipSetMap::iterator found = edgeTipSets.find(const_cast<Vertex *>(&vertex));
         if(found == edgeTipSets.end())
@@ -303,7 +303,7 @@ DE_PIMPL(Partitioner)
      * @note If the line segment has a twin it is also split.
      */
     LineSegmentSide &splitLineSegment(LineSegmentSide &frontLeft,
-        Vec2d const &point, bool updateEdgeTips = true)
+        const Vec2d &point, bool updateEdgeTips = true)
     {
         DE_ASSERT(point != frontLeft.from().origin() &&
                      point != frontLeft.to().origin());
@@ -371,7 +371,7 @@ DE_PIMPL(Partitioner)
      * partition plane. Takes advantage of some common situations like
      * horizontal and vertical lines to choose a 'nicer' intersection point.
      */
-    Vec2d intersectPartition(LineSegmentSide const &seg, coord_t fromDist,
+    Vec2d intersectPartition(const LineSegmentSide &seg, coord_t fromDist,
                                 coord_t toDist) const
     {
         // Horizontal partition vs vertical line segment.
@@ -601,8 +601,8 @@ DE_PIMPL(Partitioner)
         // Create new line segments.
         for(int i = 0; i < hplane.interceptCount() - 1; ++i)
         {
-            HPlaneIntercept const &cur  = hplane.intercepts()[i];
-            HPlaneIntercept const &next = hplane.intercepts()[i+1];
+            const HPlaneIntercept &cur  = hplane.intercepts()[i];
+            const HPlaneIntercept &next = hplane.intercepts()[i+1];
 
             // Does this range overlap the partition line segment?
             if(partSeg && cur.distance() >= nearDist && next.distance() <= farDist)
@@ -751,7 +751,7 @@ DE_PIMPL(Partitioner)
      * Determine the axis-aligned bounding box containing the vertex coordinates
      * from all segments.
      */
-    static AABoxd segmentBounds(LineSegmentSides const &allSegments)
+    static AABoxd segmentBounds(const LineSegmentSides &allSegments)
     {
         bool initialized = false;
         AABoxd bounds;
@@ -778,19 +778,19 @@ DE_PIMPL(Partitioner)
      *
      * @return  Determined AABox (might be empty (i.e., min > max) if no segments).
      */
-    static AABoxd segmentBounds(LineSegmentBlockTreeNode const &node)
+    static AABoxd segmentBounds(const LineSegmentBlockTreeNode &node)
     {
         bool initialized = false;
         AABoxd bounds;
 
         // Iterative pre-order traversal.
-        LineSegmentBlockTreeNode const *cur  = &node;
-        LineSegmentBlockTreeNode const *prev = nullptr;
+        const LineSegmentBlockTreeNode *cur  = &node;
+        const LineSegmentBlockTreeNode *prev = nullptr;
         while(cur)
         {
             while(cur)
             {
-                LineSegmentBlock const &block = *cur->userData();
+                const LineSegmentBlock &block = *cur->userData();
 
                 if(block.totalCount())
                 {
@@ -1009,7 +1009,7 @@ DE_PIMPL(Partitioner)
                         /// that we can skip them here). Presently it is sufficient to
                         /// simply not split if the would-be split point is equal to
                         /// either of the segment's existing vertexes.
-                        Vec2d const &point = b.segment->to().origin();
+                        const Vec2d &point = b.segment->to().origin();
                         if(point == a.segment->from().origin() ||
                            point == a.segment->to().origin())
                             continue;
@@ -1034,7 +1034,7 @@ DE_PIMPL(Partitioner)
 
             // Account the new segments.
             /// @todo Refactor away.
-            for(OrderedSegment const &oseg : subspace.segments())
+            for(const OrderedSegment &oseg : subspace.segments())
             {
                 if(oseg.segment->hasHEdge())
                 {
@@ -1050,7 +1050,7 @@ DE_PIMPL(Partitioner)
          */
         for (const auto &convexSet : subspaces)
         {
-            for (OrderedSegment const &oseg : convexSet.segments())
+            for (const OrderedSegment &oseg : convexSet.segments())
             {
                 LineSegmentSide *seg = oseg.segment;
 
@@ -1073,7 +1073,7 @@ DE_PIMPL(Partitioner)
      * @param sector    The problem sector.
      * @param nearPoint  Coordinates near to where the problem was found.
      */
-    void notifyUnclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
+    void notifyUnclosedSectorFound(Sector &sector, const Vec2d &nearPoint)
     {
         DE_NOTIFY_PUBLIC_VAR(UnclosedSectorFound, i)
         {
@@ -1082,9 +1082,9 @@ DE_PIMPL(Partitioner)
     }
 
 #ifdef DE_DEBUG
-    void printSegments(LineSegmentSides const &allSegs)
+    void printSegments(const LineSegmentSides &allSegs)
     {
-        for(LineSegmentSide const *seg : allSegs)
+        for(const LineSegmentSide *seg : allSegs)
         {
             LOG_DEBUG("Build: %s line segment %p sector: %d %s -> %s")
                     << (seg->hasMapSide()? "map" : "part")
@@ -1106,7 +1106,7 @@ void Partitioner::setSplitCostFactor(int newFactor)
     d->splitCostFactor = newFactor;
 }
 
-static AABox blockmapBounds(AABoxd const &mapBounds)
+static AABox blockmapBounds(const AABoxd &mapBounds)
 {
     AABox mapBoundsi;
     mapBoundsi.minX = int( de::floor(mapBounds.minX) );

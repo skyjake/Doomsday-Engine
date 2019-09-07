@@ -83,7 +83,7 @@ DE_GUI_PIMPL(BusyWidget)
     }
 };
 
-BusyWidget::BusyWidget(String const &name)
+BusyWidget::BusyWidget(const String &name)
     : GuiWidget(name), d(new Impl(this))
 {
     requestGeometry(false);
@@ -158,7 +158,7 @@ void BusyWidget::drawContent()
     }
 }
 
-bool BusyWidget::handleEvent(Event const &)
+bool BusyWidget::handleEvent(const Event &)
 {
     // Eat events and ignore them.
     return true;
@@ -222,7 +222,7 @@ void BusyWidget::clearTransitionFrameToBlack()
     }
 }
 
-GLTexture const *BusyWidget::transitionFrame() const
+const GLTexture *BusyWidget::transitionFrame() const
 {
     if (d->haveTransitionFrame())
     {

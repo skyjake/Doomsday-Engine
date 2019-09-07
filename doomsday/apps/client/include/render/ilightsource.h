@@ -64,7 +64,7 @@ public:
      *                   the intensity may vary depending on the relative direction
      *                   and/or position of the viewer.
      */
-    virtual de::dfloat lightSourceIntensity(de::Vec3d const &viewPoint) const = 0;
+    virtual de::dfloat lightSourceIntensity(const de::Vec3d &viewPoint) const = 0;
 };
 
 /**

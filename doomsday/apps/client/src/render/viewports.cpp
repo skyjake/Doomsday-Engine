@@ -175,7 +175,7 @@ DE_EXTERN_C dint R_ViewWindowGeometry(dint player, RectRaw *geometry)
     if(!geometry) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = DD_Player(player)->viewport();
+    const viewdata_t &vd = DD_Player(player)->viewport();
     geometry->origin.x    = vd.window.topLeft.x;
     geometry->origin.y    = vd.window.topLeft.y;
     geometry->size.width  = vd.window.width();
@@ -189,7 +189,7 @@ DE_EXTERN_C dint R_ViewWindowOrigin(dint player, Point2Raw *origin)
     if(!origin) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = DD_Player(player)->viewport();
+    const viewdata_t &vd = DD_Player(player)->viewport();
     origin->x = vd.window.topLeft.x;
     origin->y = vd.window.topLeft.y;
     return true;
@@ -201,7 +201,7 @@ DE_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
     if(!size) return false;
     if(player < 0 || player >= DDMAXPLAYERS) return false;
 
-    viewdata_t const &vd = DD_Player(player)->viewport();
+    const viewdata_t &vd = DD_Player(player)->viewport();
     size->width  = vd.window.width();
     size->height = vd.window.height();
     return true;
@@ -213,12 +213,12 @@ DE_EXTERN_C dint R_ViewWindowSize(dint player, Size2Raw *size)
  * refresh only.
  */
 #undef R_SetViewWindowGeometry
-DE_EXTERN_C void R_SetViewWindowGeometry(dint player, RectRaw const *geometry, dd_bool interpolate)
+DE_EXTERN_C void R_SetViewWindowGeometry(dint player, const RectRaw *geometry, dd_bool interpolate)
 {
     dint p = P_ConsoleToLocal(player);
     if(p < 0) return;
 
-    viewport_t const *vp = &viewportOfLocalPlayer[p];
+    const viewport_t *vp = &viewportOfLocalPlayer[p];
     viewdata_t *vd = &DD_Player(player)->viewport();
 
     Rectanglei newGeom = Rectanglei::fromSize(Vec2i(de::clamp<dint>(0, geometry->origin.x, vp->geometry.width()),
@@ -266,7 +266,7 @@ DE_EXTERN_C dint R_ViewPortGeometry(dint player, RectRaw *geometry)
     dint p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t const &vp = viewportOfLocalPlayer[p];
+    const viewport_t &vp = viewportOfLocalPlayer[p];
     geometry->origin.x    = vp.geometry.topLeft.x;
     geometry->origin.y    = vp.geometry.topLeft.y;
     geometry->size.width  = vp.geometry.width();
@@ -282,7 +282,7 @@ DE_EXTERN_C dint R_ViewPortOrigin(dint player, Point2Raw *origin)
     dint p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t const &vp = viewportOfLocalPlayer[p];
+    const viewport_t &vp = viewportOfLocalPlayer[p];
     origin->x = vp.geometry.topLeft.x;
     origin->y = vp.geometry.topLeft.y;
     return true;
@@ -296,7 +296,7 @@ DE_EXTERN_C dint R_ViewPortSize(dint player, Size2Raw *size)
     dint p = P_ConsoleToLocal(player);
     if(p == -1) return false;
 
-    viewport_t const &vp = viewportOfLocalPlayer[p];
+    const viewport_t &vp = viewportOfLocalPlayer[p];
     size->width  = vp.geometry.width();
     size->height = vp.geometry.height();
     return true;
@@ -443,7 +443,7 @@ viewer_t R_SharpViewer(ClientPlayer &player)
 {
     DE_ASSERT(player.publicData().mo);
 
-    ddplayer_t const &ddpl = player.publicData();
+    const ddplayer_t &ddpl = player.publicData();
 
     viewer_t view(player.viewport().latest);
 
@@ -699,7 +699,7 @@ void R_RenderPlayerViewBorder()
     R_DrawViewBorder();
 }
 
-void R_UseViewPort(viewport_t const *vp)
+void R_UseViewPort(const viewport_t *vp)
 {
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();
@@ -736,7 +736,7 @@ Rectanglei R_ConsoleRect(int console)
     int local = P_ConsoleToLocal(console);
     if (local < 0) return Rectanglei();
 
-    auto const &port = viewportOfLocalPlayer[local];
+    const auto &port = viewportOfLocalPlayer[local];
 
     return Rectanglei(port.geometry.topLeft.x,
                       port.geometry.topLeft.y,
@@ -748,14 +748,14 @@ Rectanglei R_Console3DViewRect(int console)
 {
     Rectanglei rect = R_ConsoleRect(console);
 
-    auto const &pv = DD_Player(console)->viewport();
+    const auto &pv = DD_Player(console)->viewport();
     return Rectanglei(rect.left() + pv.window.topLeft.x,
                       rect.top()  + pv.window.topLeft.y,
                       de::min(rect.width(),  pv.window.width()),
                       de::min(rect.height(), pv.window.height()));
 }
 
-viewport_t const *R_CurrentViewPort()
+const viewport_t *R_CurrentViewPort()
 {
     return currentViewport;
 }
@@ -788,7 +788,7 @@ static void setupPlayerSprites()
     bool fullBright = CPP_BOOL(::levelFullBright);
     if(!fullBright)
     {
-        for(ddpsprite_t const &psp : ddpl->pSprites)
+        for(const ddpsprite_t &psp : ddpl->pSprites)
         {
             if(!psp.statePtr) continue;
 
@@ -800,7 +800,7 @@ static void setupPlayerSprites()
         }
     }
 
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
 
     for(dint i = 0; i < DDMAXPSPRITES; ++i)
     {
@@ -902,14 +902,14 @@ static void setupViewMatrix()
     frameViewerMatrix        = rend.uProjectionMatrix().toMat4f() * rend.uViewMatrix().toMat4f();
 }
 
-Mat4f const &Viewer_Matrix()
+const Mat4f &Viewer_Matrix()
 {
     return frameViewerMatrix;
 }
 
 enum ViewState { Default2D, PlayerView3D, PlayerSprite2D };
 
-static void changeViewState(ViewState viewState) //, viewport_t const *port, viewdata_t const *viewData)
+static void changeViewState(ViewState viewState) //, const viewport_t *port, const viewdata_t *viewData)
 {
     //DE_ASSERT(port && viewData);
 
@@ -1159,7 +1159,7 @@ void R_RenderViewPort(int playerNum)
     int localNum = P_ConsoleToLocal(playerNum);
     if (localNum < 0) return;
 
-    viewport_t const *vp = &viewportOfLocalPlayer[localNum];
+    const viewport_t *vp = &viewportOfLocalPlayer[localNum];
 
     DE_ASSERT(vp->console == playerNum);
 
@@ -1184,7 +1184,7 @@ void R_RenderViewPort(int playerNum)
     // Use an orthographic projection in real pixel dimensions.
     DGL_Ortho(0, 0, viewRect.width(), viewRect.height(), -1, 1);
 
-    viewdata_t const *vd = &DD_Player(vp->console)->viewport();
+    const viewdata_t *vd = &DD_Player(vp->console)->viewport();
     RectRaw vpGeometry = {{vp->geometry.topLeft.x, vp->geometry.topLeft.y},
                           {int(vp->geometry.width()), int(vp->geometry.height())}};
 
@@ -1252,24 +1252,24 @@ DE_EXTERN_C void R_SkyParams(dint layerIndex, dint param, void * /*data*/)
     LOG_GL_WARNING("Invalid layer #%i") << + layerIndex;
 }
 
-bool R_ViewerSubspaceIsVisible(ConvexSubspace const &subspace)
+bool R_ViewerSubspaceIsVisible(const ConvexSubspace &subspace)
 {
     DE_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
     return subspacesVisible.testBit(subspace.indexInMap());
 }
 
-void R_ViewerSubspaceMarkVisible(ConvexSubspace const &subspace, bool yes)
+void R_ViewerSubspaceMarkVisible(const ConvexSubspace &subspace, bool yes)
 {
     DE_ASSERT(subspace.indexInMap() != MapElement::NoIndex);
     subspacesVisible.setBit(subspace.indexInMap(), yes);
 }
 
-bool R_ViewerGeneratorIsVisible(Generator const &generator)
+bool R_ViewerGeneratorIsVisible(const Generator &generator)
 {
     return generatorsVisible.testBit(generator.id() - 1 /* id is 1-based index */);
 }
 
-void R_ViewerGeneratorMarkVisible(Generator const &generator, bool yes)
+void R_ViewerGeneratorMarkVisible(const Generator &generator, bool yes)
 {
     generatorsVisible.setBit(generator.id() - 1 /* id is 1-based index */, yes);
 }
@@ -1302,7 +1302,7 @@ bool R_ViewerLumobjIsHidden(dint idx)
     return false;
 }
 
-static void markLumobjClipped(Lumobj const &lob, bool yes = true)
+static void markLumobjClipped(const Lumobj &lob, bool yes = true)
 {
     dint const index = lob.indexInMap();
     DE_ASSERT(index >= 0 && index < lob.map().lumobjCount());
@@ -1334,7 +1334,7 @@ void R_BeginFrame()
     }
 
     // Update viewer => lumobj distances ready for linking and sorting.
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     map.forAllLumobjs([&viewData] (Lumobj &lob)
     {
         // Approximate the distance in 3D.

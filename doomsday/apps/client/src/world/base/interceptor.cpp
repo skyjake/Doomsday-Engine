@@ -71,7 +71,7 @@ DE_PIMPL_NOREF(Interceptor)
     vec2d_t fromV1;
     vec2d_t directionV1;
 
-    Impl(traverser_t callback, Vec2d const &from, Vec2d const &to,
+    Impl(traverser_t callback, const Vec2d &from, const Vec2d &to,
              dint flags, void *context)
         : callback(callback)
         , context (context)
@@ -83,7 +83,7 @@ DE_PIMPL_NOREF(Interceptor)
         V2d_Set(directionV1, to.x - from.x, to.y - from.y);
     }
 
-    inline bool isSentinel(ListNode const &node)
+    inline bool isSentinel(const ListNode &node)
     {
         return &node == &tail || &node == &head;
     }
@@ -235,7 +235,7 @@ DE_PIMPL_NOREF(Interceptor)
         fixed_t direction[2] = { DBL2FIX(to.x - from.x), DBL2FIX(to.y - from.y) };
 
         // Check a corner to corner crossection for hit.
-        AABoxd const &box = Mobj_Bounds(mob);
+        const AABoxd &box = Mobj_Bounds(mob);
 
         fixed_t icptFrom[2], icptTo[2];
         if ((direction[0] ^ direction[1]) > 0)
@@ -326,27 +326,27 @@ DE_PIMPL_NOREF(Interceptor)
     }
 };
 
-Interceptor::Interceptor(traverser_t callback, Vec2d const &from,
-    Vec2d const &to, dint flags, void *context)
+Interceptor::Interceptor(traverser_t callback, const Vec2d &from,
+    const Vec2d &to, dint flags, void *context)
     : d(new Impl(callback, from, to, flags, context))
 {}
 
-ddouble const *Interceptor::origin() const
+const ddouble *Interceptor::origin() const
 {
     return d->fromV1;
 }
 
-ddouble const *Interceptor::direction() const
+const ddouble *Interceptor::direction() const
 {
     return d->directionV1;
 }
 
-LineOpening const &Interceptor::opening() const
+const LineOpening &Interceptor::opening() const
 {
     return d->opening;
 }
 
-bool Interceptor::adjustOpening(Line const *line)
+bool Interceptor::adjustOpening(const Line *line)
 {
     DE_ASSERT(d->map != 0);
     if (line)
@@ -363,7 +363,7 @@ bool Interceptor::adjustOpening(Line const *line)
     return d->opening.range > 0;
 }
 
-dint Interceptor::trace(world::Map const &map)
+dint Interceptor::trace(const world::Map &map)
 {
     // Step #1: Collect and sort intercepts.
     d->map = const_cast<world::Map *>(&map);

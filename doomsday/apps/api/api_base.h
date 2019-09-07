@@ -64,7 +64,7 @@ DE_API_TYPEDEF(Base)
      * @note Game registration order defines the order of the automatic game
      * identification/selection logic.
      */
-    //gameid_t (*DefineGame)(GameDef const *definition);
+    //gameid_t (*DefineGame)(const GameDef *definition);
 
     /**
      * Adds a new resource to the list for the identified @a game.
@@ -86,7 +86,7 @@ DE_API_TYPEDEF(Base)
      *                  semicolon delimited list of identity keys.
      */
     //void (*AddGameResource)(gameid_t game, resourceclassid_t classId, int fFlags,
-    //                        char const *names, void const *params);
+    //                        const char *names, const void *params);
 
     /**
      * Retrieve extended info about the current game.
@@ -119,7 +119,7 @@ DE_API_TYPEDEF(Base)
      * @param data       Data of the packet.
      * @param length     Length of the data.
      */
-    void (*SendPacket)(int to_player, int type, void const *data, size_t length);
+    void (*SendPacket)(int to_player, int type, const void *data, size_t length);
 
     /**
      * To be called by the game after loading a save state to instruct the engine

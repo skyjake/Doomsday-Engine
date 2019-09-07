@@ -61,7 +61,7 @@ public:
      * @param script     InFine script to be interpreted.
      * @param setupCmds  InFine script for setting up the script environment on load.
      */
-    Finale &newFinale(int flags, de::String script, de::String const &setupCmds = "");
+    Finale &newFinale(int flags, de::String script, const de::String &setupCmds = "");
 
     /**
      * Returns @c true if @a id references a known Finale.
@@ -76,7 +76,7 @@ public:
     /**
      * Provides a list of all the Finales in the system, in order, for efficient traversal.
      */
-    Finales const &finales() const;
+    const Finales &finales() const;
 
 public:
 #ifdef __CLIENT__

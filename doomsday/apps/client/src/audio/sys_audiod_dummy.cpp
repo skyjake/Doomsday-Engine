@@ -372,7 +372,7 @@ void *DS_Dummy_Music_SongBuffer(unsigned int length)
     return malloc(length);
 }
 
-int DS_Dummy_Music_PlayFile(char const *, int)
+int DS_Dummy_Music_PlayFile(const char *, int)
 {
     return true;
 }

@@ -39,7 +39,7 @@ public:
     void update() override;
     void addOnTop(de::GuiWidget *widget) override;
     void dispatchLatestMousePosition() override;
-    void handleEventAsFallback(de::Event const &event) override;
+    void handleEventAsFallback(const de::Event &event) override;
 
 private:
     DE_PRIVATE(d)

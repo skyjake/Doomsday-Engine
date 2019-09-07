@@ -74,7 +74,7 @@ struct Continuity
      *
      * @todo Remove when heuristic sector selection is no longer necessary.
      */
-    bool operator < (Continuity const &other) const
+    bool operator < (const Continuity &other) const
     {
         if(norm == other.norm)
         {
@@ -86,13 +86,13 @@ struct Continuity
     /**
      * Assumes that segments are added in clockwise order.
      */
-    void addOneSegment(OrderedSegment const &oseg)
+    void addOneSegment(const OrderedSegment &oseg)
     {
         DE_ASSERT(oseg.segment->sectorPtr() == sector);
 
         // Separate the discordant duplicates.
         OrderedSegmentList *list = &orderedSegs;
-        for(OrderedSegment const *other : orderedSegs)
+        for(const OrderedSegment *other : orderedSegs)
         {
             if(oseg == *other)
             {
@@ -104,7 +104,7 @@ struct Continuity
         list->append(const_cast<OrderedSegment *>(&oseg));
 
         // Account for the new line segment.
-        LineSegmentSide const &seg = *oseg.segment;
+        const LineSegmentSide &seg = *oseg.segment;
         if(!seg.hasMapSide())
         {
             part += 1;
@@ -131,16 +131,16 @@ struct Continuity
         discordSegments = 0;
         for(int i = 0; i < orderedSegs.count() - 1; ++i)
         {
-            LineSegmentSide const &segA = *orderedSegs[i  ]->segment;
-            LineSegmentSide const &segB = *orderedSegs[i+1]->segment;
+            const LineSegmentSide &segA = *orderedSegs[i  ]->segment;
+            const LineSegmentSide &segB = *orderedSegs[i+1]->segment;
 
             if(segB.from().origin() != segA.to().origin())
                 discordSegments += 1;
         }
         if(orderedSegs.count() > 1)
         {
-            LineSegmentSide const &segB = *orderedSegs.last()->segment;
-            LineSegmentSide const &segA = *orderedSegs.first()->segment;
+            const LineSegmentSide &segB = *orderedSegs.last()->segment;
+            const LineSegmentSide &segA = *orderedSegs.first()->segment;
 
             if(segB.to().origin() != segA.from().origin())
                 discordSegments += 1;
@@ -156,11 +156,11 @@ struct Continuity
                 << coverage
                 << discordSegments;
 
-        for(OrderedSegment const *oseg : orderedSegs)
+        for(const OrderedSegment *oseg : orderedSegs)
         {
             oseg->debugPrint();
         }
-        for(OrderedSegment const *oseg : discordSegs)
+        for(const OrderedSegment *oseg : discordSegs)
         {
             oseg->debugPrint();
         }
@@ -182,7 +182,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
         , bspLeaf(nullptr)
     {}
 
-    Impl(Impl const &other)
+    Impl(const Impl &other)
         : de::IPrivate()
         , segments                  (other.segments)
         , orderedSegments           (other.orderedSegments)
@@ -196,7 +196,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
      */
     bool haveMapLineSegment() const
     {
-        for(LineSegmentSide const *seg : segments)
+        for(const LineSegmentSide *seg : segments)
         {
             if(seg->hasMapSide())
                 return true;
@@ -208,7 +208,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
     {
         Vec2d center;
         int numPoints = 0;
-        for(LineSegmentSide const *seg : segments)
+        for(const LineSegmentSide *seg : segments)
         {
             center += seg->from().origin();
             center += seg->to().origin();
@@ -228,7 +228,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
      * applied such that line segments with the same origin coordinates are
      * sorted by descending 'to' angle.
      */
-    void buildOrderedSegments(Vec2d const &point)
+    void buildOrderedSegments(const Vec2d &point)
     {
         needRebuildOrderedSegments = false;
 
@@ -256,8 +256,8 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
             bool swappedAny = false;
             for(int i = 0; i < numSegments - 1; ++i)
             {
-                OrderedSegment const &a = orderedSegments.at(i);
-                OrderedSegment const &b = orderedSegments.at(i+1);
+                const OrderedSegment &a = orderedSegments.at(i);
+                const OrderedSegment &b = orderedSegments.at(i+1);
                 if(a.fromAngle < b.fromAngle)
                 {
                     std::swap(orderedSegments[i], orderedSegments[i + 1]);
@@ -272,8 +272,8 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
             bool swappedAny = false;
             for(int i = 0; i < numSegments - 1; ++i)
             {
-                OrderedSegment const &a = orderedSegments.at(i);
-                OrderedSegment const &b = orderedSegments.at(i+1);
+                const OrderedSegment &a = orderedSegments.at(i);
+                const OrderedSegment &b = orderedSegments.at(i+1);
                 if(a.fromAngle == b.fromAngle)
                 {
                     if(b.segment->length() > a.segment->length())
@@ -289,7 +289,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
         // LOG_DEBUG("Ordered segments around %s") << point.asText();
     }
 
-    Impl &operator = (Impl const &) = delete; // no assignment
+    Impl &operator = (const Impl &) = delete; // no assignment
 };
 
 ConvexSubspaceProxy::ConvexSubspaceProxy()
@@ -302,11 +302,11 @@ ConvexSubspaceProxy::ConvexSubspaceProxy(List<LineSegmentSide *> const &segments
     addSegments(segments);
 }
 
-ConvexSubspaceProxy::ConvexSubspaceProxy(ConvexSubspaceProxy const &other)
+ConvexSubspaceProxy::ConvexSubspaceProxy(const ConvexSubspaceProxy &other)
     : d(new Impl(*other.d))
 {}
 
-ConvexSubspaceProxy &ConvexSubspaceProxy::operator=(ConvexSubspaceProxy const &other)
+ConvexSubspaceProxy &ConvexSubspaceProxy::operator=(const ConvexSubspaceProxy &other)
 {
     d.reset(new Impl(*other.d));
     return *this;
@@ -337,7 +337,7 @@ void ConvexSubspaceProxy::addSegments(List<LineSegmentSide *> const &newSegments
 #endif
 }
 
-void ConvexSubspaceProxy::addOneSegment(LineSegmentSide const &newSegment)
+void ConvexSubspaceProxy::addOneSegment(const LineSegmentSide &newSegment)
 {
     int sizeBefore = d->segments.size();
 
@@ -403,7 +403,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             Mesh *extraMesh = nullptr;
             Face *face      = nullptr;
             
-            for (OrderedSegment const *oseg : conty.discordSegs)
+            for (const OrderedSegment *oseg : conty.discordSegs)
             {
                 LineSegmentSide *lineSeg = oseg->segment;
                 LineSide *       mapSide = lineSeg->mapSidePtr();
@@ -492,7 +492,7 @@ void ConvexSubspaceProxy::buildGeometry(BspLeaf &leaf, Mesh &mesh) const
             << (leaf.sectorPtr()? leaf.sectorPtr()->indexInArchive() : -1)
             << continuities.count();
 
-    for(Continuity const &conty : continuities)
+    for(const Continuity &conty : continuities)
     {
         conty.debugPrint();
     }
@@ -592,7 +592,7 @@ int ConvexSubspaceProxy::segmentCount() const
     return d->segments.size();
 }
 
-OrderedSegments const &ConvexSubspaceProxy::segments() const
+const OrderedSegments &ConvexSubspaceProxy::segments() const
 {
     if(d->needRebuildOrderedSegments)
     {

@@ -55,7 +55,7 @@ variantspecification_t::variantspecification_t()
     , tMap(0)
 {}
 
-variantspecification_t::variantspecification_t(variantspecification_t const &other)
+variantspecification_t::variantspecification_t(const variantspecification_t &other)
     : context(other.context)
     , flags(other.flags)
     , border(other.border)
@@ -72,7 +72,7 @@ variantspecification_t::variantspecification_t(variantspecification_t const &oth
     , tMap(other.tMap)
 {}
 
-bool variantspecification_t::operator == (variantspecification_t const &other) const
+bool variantspecification_t::operator == (const variantspecification_t &other) const
 {
     if(this == &other) return 1;
     /// @todo We can be a bit cleverer here...
@@ -132,19 +132,19 @@ TextureVariantSpec::TextureVariantSpec(texturevariantspecificationtype_t type)
     : type(type)
 {}
 
-TextureVariantSpec::TextureVariantSpec(TextureVariantSpec const &other)
+TextureVariantSpec::TextureVariantSpec(const TextureVariantSpec &other)
     : type(other.type)
     , variant(other.variant)
     , detailVariant(other.detailVariant)
 {}
 
-bool detailvariantspecification_t::operator == (detailvariantspecification_t const &other) const
+bool detailvariantspecification_t::operator == (const detailvariantspecification_t &other) const
 {
     if(this == &other) return true;
     return contrast == other.contrast; // Equal.
 }
 
-bool TextureVariantSpec::operator == (TextureVariantSpec const &other) const
+bool TextureVariantSpec::operator == (const TextureVariantSpec &other) const
 {
     if(this == &other) return true; // trivial
     if(type != other.type) return false;
@@ -198,12 +198,12 @@ String TextureVariantSpec::asText() const
     switch(type)
     {
     case TST_DETAIL: {
-        detailvariantspecification_t const &spec = detailVariant;
+        const detailvariantspecification_t &spec = detailVariant;
         text += " Contrast:" + String::asText(int(.5f + spec.contrast / 255.f * 100)) + "%";
         break; }
 
     case TST_GENERAL: {
-        variantspecification_t const &spec = variant;
+        const variantspecification_t &spec = variant;
         texturevariantusagecontext_t tc = spec.context;
         DE_ASSERT(tc == TC_UNKNOWN || VALID_TEXTUREVARIANTUSAGECONTEXT(tc));
 
@@ -278,7 +278,7 @@ DE_PIMPL(ClientTexture::Variant)
     /// Prepared coordinates for the bottom right of the texture minus border.
     float s, t;
 
-    Impl(Public *i, ClientTexture &generalCase, TextureVariantSpec const &spec)
+    Impl(Public *i, ClientTexture &generalCase, const TextureVariantSpec &spec)
         : Base(i)
         , texture(generalCase)
         , spec(spec)
@@ -296,7 +296,7 @@ DE_PIMPL(ClientTexture::Variant)
     }
 };
 
-ClientTexture::Variant::Variant(ClientTexture &generalCase, TextureVariantSpec const &spec)
+ClientTexture::Variant::Variant(ClientTexture &generalCase, const TextureVariantSpec &spec)
     : d(new Impl(this, generalCase, spec))
 {}
 
@@ -309,7 +309,7 @@ ClientTexture::Variant::Variant(ClientTexture &generalCase, TextureVariantSpec c
  * @param tex           Logical texture which will hold the analysis data.
  * @param forceUpdate   Force an update of the recorded analysis data.
  */
-static void performImageAnalyses(image_t const &image,
+static void performImageAnalyses(const image_t &image,
     texturevariantusagecontext_t context, ClientTexture &tex, bool forceUpdate)
 {
     // Do we need color palette info?
@@ -594,7 +594,7 @@ void ClientTexture::Variant::release()
 {
     if (isPrepared())
     {
-        Deferred_glDeleteTextures(1, (GLuint const *) &d->glTexName);
+        Deferred_glDeleteTextures(1, (const GLuint *) &d->glTexName);
         d->glTexName = 0;
     }
 }
@@ -604,7 +604,7 @@ ClientTexture &ClientTexture::Variant::base() const
     return d->texture;
 }
 
-TextureVariantSpec const &ClientTexture::Variant::spec() const
+const TextureVariantSpec &ClientTexture::Variant::spec() const
 {
     return d->spec;
 }

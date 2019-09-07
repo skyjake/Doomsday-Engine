@@ -47,7 +47,7 @@ class Subsector
 {
 public:
     /// Notified when the subsector is about to be deleted.
-    DE_DEFINE_AUDIENCE(Deletion, void subsectorBeingDeleted(Subsector const &subsector))
+    DE_DEFINE_AUDIENCE(Deletion, void subsectorBeingDeleted(const Subsector &subsector))
 
     /**
      * Construct a new subsector comprised of the specified set of map subspace regions.
@@ -76,7 +76,7 @@ public:
      * Returns the Sector attributed to the subsector.
      */
     Sector       &sector();
-    Sector const &sector() const;
+    const Sector &sector() const;
 
     /**
      * Determines whether the specified @a hedge is an "internal" edge:
@@ -96,7 +96,7 @@ public:
     /**
      * Returns the axis-aligned bounding box of the subsector.
      */
-    AABoxd const &bounds() const;
+    const AABoxd &bounds() const;
 
     /**
      * Returns the point defined by the center of the axis-aligned bounding box in the
@@ -175,7 +175,7 @@ public:
      * when a geometry traversal requires a switch from the subsector to face boundary,
      * or when navigating the so-called "one-ring" of a vertex.
      */
-    static de::HEdge &findBackNeighbor(de::HEdge const &hedge, de::ClockDirection direction)
+    static de::HEdge &findBackNeighbor(const de::HEdge &hedge, de::ClockDirection direction)
     {
         return getNeighbor(hedge, direction, hedge.subsector()).twin();
     }
@@ -208,10 +208,10 @@ public:
 
     /// Returns @c true iff @a other references the same half-edge as "this"
     /// circulator; otherwise returns false.
-    inline bool operator == (SubsectorCirculator const &other) const {
+    inline bool operator == (const SubsectorCirculator &other) const {
         return _current == other._current;
     }
-    inline bool operator != (SubsectorCirculator const &other) const {
+    inline bool operator != (const SubsectorCirculator &other) const {
         return !(*this == other);
     }
 
@@ -239,10 +239,10 @@ public:
     de::HEdge *operator -> () { return _current; }
 
 private:
-    //static Subsector *getSubsector(de::HEdge const &hedge);
+    //static Subsector *getSubsector(const de::HEdge &hedge);
 
-    static de::HEdge &getNeighbor(de::HEdge const &hedge, de::ClockDirection direction,
-                                  Subsector const *subsector = nullptr);
+    static de::HEdge &getNeighbor(const de::HEdge &hedge, de::ClockDirection direction,
+                                  const Subsector *subsector = nullptr);
 
     de::HEdge *_hedge;
     de::HEdge *_current;

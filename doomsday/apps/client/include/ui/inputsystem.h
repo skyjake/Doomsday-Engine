@@ -74,7 +74,7 @@ public:
     ConfigProfiles &settings();
 
     // System.
-    void timeChanged(de::Clock const &);
+    void timeChanged(const de::Clock &);
 
 public: // Input devices -----------------------------------------------------
 
@@ -93,7 +93,7 @@ public: // Input devices -----------------------------------------------------
      */
     InputDevice *devicePtr(int id) const;
 
-    InputDevice *findDevice(de::String const &name) const;
+    InputDevice *findDevice(const de::String &name) const;
 
     /**
      * Iterate through all the InputDevices.
@@ -157,13 +157,13 @@ public: // Event processing --------------------------------------------------
      *
      * @return @c true if an action was triggered, @c false otherwise.
      */
-    bool tryEvent(de::Event const &event, de::String const &context = "");
-    bool tryEvent(ddevent_t const &event, de::String const &context = "");
+    bool tryEvent(const de::Event &event, const de::String &context = "");
+    bool tryEvent(const ddevent_t &event, const de::String &context = "");
 
 public:
 
-    static bool convertEvent(ddevent_t const &from, event_t &to);
-    static bool convertEvent(de::Event const &from, ddevent_t &to);
+    static bool convertEvent(const ddevent_t &from, event_t &to);
+    static bool convertEvent(const de::Event &from, ddevent_t &to);
 
     /**
      * Updates virtual input device state.
@@ -177,8 +177,8 @@ public:
      *
      * @todo make private (all widgets should belong to / own a BindContext).
      */
-    void trackEvent(de::Event const &event);
-    void trackEvent(ddevent_t const &event);
+    void trackEvent(const de::Event &event);
+    void trackEvent(const ddevent_t &event);
 
 public: // Binding (context) management --------------------------------------
 
@@ -199,7 +199,7 @@ public: // Binding (context) management --------------------------------------
      *
      * @return  Resultant command binding Record if any.
      */
-    de::Record *bindCommand(char const *eventDesc, char const *command);
+    de::Record *bindCommand(const char *eventDesc, const char *command);
 
     /**
      * Try to make a new (player) impulse binding.
@@ -212,7 +212,7 @@ public: // Binding (context) management --------------------------------------
      *
      * @return  Resultant impulse binding Record if any.
      */
-    de::Record *bindImpulse(char const *ctrlDesc, char const *impulseDesc);
+    de::Record *bindImpulse(const char *ctrlDesc, const char *impulseDesc);
 
     /**
      * Try to remove the one unique binding associated with @a id.
@@ -248,7 +248,7 @@ public: // Binding (context) management --------------------------------------
     /**
      * Returns @c true if the symbolic @a name references a known context.
      */
-    bool hasContext(de::String const &name) const;
+    bool hasContext(const de::String &name) const;
 
     /**
      * Creates a new binding context. The new context has the highest priority
@@ -258,13 +258,13 @@ public: // Binding (context) management --------------------------------------
      *
      * @return  Resultant BindContext. Ownership is retained.
      */
-    BindContext *newContext(de::String const &name);
+    BindContext *newContext(const de::String &name);
 
     /**
      * Lookup a binding context by symbolic @a name.
      */
-    BindContext &context(de::String const &name) const;
-    BindContext *contextPtr(de::String const &name) const;
+    BindContext &context(const de::String &name) const;
+    BindContext *contextPtr(const de::String &name) const;
 
     /**
      * Lookup a binding context by stack @a position.

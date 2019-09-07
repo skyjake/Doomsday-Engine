@@ -33,17 +33,17 @@
 class ConsoleCommandWidget : public de::CommandWidget
 {
 public:
-    ConsoleCommandWidget(de::String const &name = de::String());
+    ConsoleCommandWidget(const de::String &name = de::String());
 
     // Events.
     void focusGained();
     void focusLost();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
 protected:
-    bool isAcceptedAsCommand(de::String const &text);
-    void executeCommand(de::String const &text);
-    void autoCompletionBegan(de::String const &prefix);
+    bool isAcceptedAsCommand(const de::String &text);
+    void executeCommand(const de::String &text);
+    void autoCompletionBegan(const de::String &prefix);
 
 private:
     DE_PRIVATE(d)

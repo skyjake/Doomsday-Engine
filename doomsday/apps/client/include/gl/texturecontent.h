@@ -47,7 +47,7 @@
 typedef struct texturecontent_s {
     dgltexformat_t   format;
     GLuint           name;
-    uint8_t const *  pixels;
+    const uint8_t *  pixels;
     colorpaletteid_t paletteId;
     int              width;
     int              height;
@@ -64,7 +64,7 @@ typedef struct texturecontent_s {
  */
 void GL_InitTextureContent(texturecontent_t *content);
 
-texturecontent_t *GL_ConstructTextureContentCopy(texturecontent_t const *other);
+texturecontent_t *GL_ConstructTextureContentCopy(const texturecontent_t *other);
 
 void GL_DestroyTextureContent(texturecontent_t *content);
 
@@ -84,8 +84,8 @@ void GL_DestroyTextureContent(texturecontent_t *content);
 void GL_PrepareTextureContent(texturecontent_t &c,
                               GLuint glTexName,
                               image_t &image,
-                              TextureVariantSpec const &spec,
-                              res::TextureManifest const &textureManifest);
+                              const TextureVariantSpec &spec,
+                              const res::TextureManifest &textureManifest);
 
 /**
  * @param method  GL upload method. By default the upload is deferred.
@@ -93,7 +93,7 @@ void GL_PrepareTextureContent(texturecontent_t &c,
  * @note Can be rather time-consuming due to forced scaling operations and
  * the generation of mipmaps.
  */
-void GL_UploadTextureContent(texturecontent_t const &content,
+void GL_UploadTextureContent(const texturecontent_t &content,
                              de::gfx::UploadMethod method = de::gfx::Deferred);
 
 #endif // DE_CLIENT_GL_TEXTURECONTENT_H

@@ -37,7 +37,7 @@ DE_PIMPL_NOREF(AlertMask)
                 = LogEntry::AllDomains;
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         updateMask();
     }
@@ -46,7 +46,7 @@ DE_PIMPL_NOREF(AlertMask)
     {
         zap(mask);
 
-        Config const &cfg = App::config();
+        const Config &cfg = App::config();
         for(int bit = LogEntry::FirstDomainBit; bit <= LogEntry::LastDomainBit; ++bit)
         {
             int const alertLevel = cfg.geti(String("alert.") +

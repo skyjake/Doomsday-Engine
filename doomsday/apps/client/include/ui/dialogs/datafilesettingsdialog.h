@@ -27,7 +27,7 @@
 class DataFileSettingsDialog : public de::DirectoryListDialog
 {
 public:
-    DataFileSettingsDialog(de::String const &name = "datafilesettings");
+    DataFileSettingsDialog(const de::String &name = "datafilesettings");
 
 protected:
     void finish(int result) override;

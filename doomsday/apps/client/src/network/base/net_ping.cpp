@@ -31,8 +31,8 @@ using namespace de;
 void Net_ShowPingSummary(dint player)
 {
     DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
-    auto const &cl = *DD_Player(player);
-    Pinger const &ping = cl.pinger();
+    const auto &cl = *DD_Player(player);
+    const Pinger &ping = cl.pinger();
 
     if(player < 0 && ping.total > 0)
         return;

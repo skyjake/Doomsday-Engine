@@ -43,7 +43,7 @@ static void GL_CALL deng_glDisable(GLenum e)
     glDisable(e);
 }
 
-static void GL_CALL deng_glDeleteTextures(GLsizei num, GLuint const *names)
+static void GL_CALL deng_glDeleteTextures(GLsizei num, const GLuint *names)
 {
     glDeleteTextures(num, names);
 }
@@ -63,7 +63,7 @@ DE_EXTERN_C void Deferred_glDisable(GLenum e)
     GL_CALL1(e, deng_glDisable, e);
 }
 
-DE_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, GLuint const *names)
+DE_EXTERN_C void Deferred_glDeleteTextures(GLsizei num, const GLuint *names)
 {
     GL_CALL2(uintArray, deng_glDeleteTextures, num, names);
 }

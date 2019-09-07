@@ -55,14 +55,14 @@ DE_PIMPL(ShellUser), public LogSink
         LogBuffer::get().removeSink(*this);
     }
 
-    LogSink &operator << (LogEntry const &entry)
+    LogSink &operator << (const LogEntry &entry)
     {
         DE_GUARD(logEntryPacket);
         logEntryPacket.value.add(entry);
         return *this;
     }
 
-    LogSink &operator << (String const &)
+    LogSink &operator << (const String &)
     {
         return *this;
     }
@@ -124,7 +124,7 @@ void ShellUser::sendGameState()
      * state packet.
      */
 
-    String rules = reinterpret_cast<char const *>(gx.GetPointer(DD_GAME_CONFIG));
+    String rules = reinterpret_cast<const char *>(gx.GetPointer(DD_GAME_CONFIG));
 
     // Check the map's information.
     String mapId;
@@ -210,7 +210,7 @@ void ShellUser::handleIncomingPackets()
                 break;
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_WARNING("Error while processing packet from %s: %s") << packet->from() << er.asText();
         }

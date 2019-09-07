@@ -40,7 +40,7 @@ public:
     enum Level { Minor = -1, Normal = 0, Major = 1 };
 
 public:
-    AlertDialog(de::String const &name = "alerts");
+    AlertDialog(const de::String &name = "alerts");
 
     /**
      * Adds a new alert. If the same alert is already in the list, the new one is ignored.
@@ -51,7 +51,7 @@ public:
      * @param message  Alert message.
      * @param level    Severity level.
      */
-    void newAlert(de::String const &message, Level level = Normal);
+    void newAlert(const de::String &message, Level level = Normal);
 
     void update();
 

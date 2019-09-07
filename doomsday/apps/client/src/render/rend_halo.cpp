@@ -86,7 +86,7 @@ void H_Register(void)
     C_CMD_FLAGS("flareconfig", NULL, FlareConfig, CMDF_NO_DEDICATED);
 }
 
-TextureVariantSpec const &Rend_HaloTextureSpec()
+const TextureVariantSpec &Rend_HaloTextureSpec()
 {
     return App_Resources().textureSpec(TC_HALO_LUMINANCE,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE, 1, 1, 0,
@@ -132,8 +132,8 @@ static inline float fadeFactorAt(coord_t distToViewer)
     return 1;
 }
 
-bool H_RenderHalo(Vec3d const &origin, float size, DGLuint tex,
-    Vec3f const &color, coord_t distanceToViewer,
+bool H_RenderHalo(const Vec3d &origin, float size, DGLuint tex,
+    const Vec3f &color, coord_t distanceToViewer,
     float occlusionFactor, float brightnessFactor, float viewXOffset,
     bool doPrimary, bool viewRelativeRotate)
 {
@@ -148,7 +148,7 @@ bool H_RenderHalo(Vec3d const &origin, float size, DGLuint tex,
     occlusionFactor = (1 + occlusionFactor) / 2;
 
     // viewSideVec is to the left.
-    viewdata_t const *viewData = &viewPlayer->viewport();
+    const viewdata_t *viewData = &viewPlayer->viewport();
     Vec3f const leftOff  = viewData->upVec + viewData->sideVec;
     Vec3f const rightOff = viewData->upVec - viewData->sideVec;
 

@@ -27,7 +27,7 @@
 
 /// @todo: Move to public API
 typedef int (*FallbackResponderFunc)(event_t *);
-typedef int (*DDFallbackResponderFunc)(ddevent_t const *);
+typedef int (*DDFallbackResponderFunc)(const ddevent_t *);
 // todo ends
 
 struct PlayerImpulse;
@@ -61,7 +61,7 @@ public:
     /**
      * @param name  Symbolic name for the context.
      */
-    explicit BindContext(de::String const &name);
+    explicit BindContext(const de::String &name);
     ~BindContext();
 
     /**
@@ -94,7 +94,7 @@ public:
      * Returns the symbolic name of the context.
      */
     de::String name() const;
-    void setName(de::String const &newName);
+    void setName(const de::String &newName);
 
     /**
      * (De)activate the context, causing re-evaluation of the binding context stack.
@@ -125,12 +125,12 @@ public: // Binding management: -------------------------------------------------
 
     // Commands ---------------------------------------------------------------------
 
-    de::Record *bindCommand(char const *eventDesc, char const *command);
+    de::Record *bindCommand(const char *eventDesc, const char *command);
 
     /**
      * @param deviceId  (@c < 0 || >= NUM_INPUT_DEVICES) for wildcard search.
      */
-    de::Record *findCommandBinding(char const *command, int deviceId = -1) const;
+    de::Record *findCommandBinding(const char *command, int deviceId = -1) const;
 
     /**
      * Iterate through all the CommandBindings of the context.
@@ -151,7 +151,7 @@ public: // Binding management: -------------------------------------------------
      *
      * @todo: Parse the the impulse descriptor here? -ds
      */
-    de::Record *bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse,
+    de::Record *bindImpulse(const char *ctrlDesc, const PlayerImpulse &impulse,
                             int localPlayer);
 
     de::Record *findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const;
@@ -184,7 +184,7 @@ public: // Triggering: ---------------------------------------------------------
      *
      * @return  @c true if the event triggered an action or was eaten by a responder.
      */
-    bool tryEvent(ddevent_t const &event, bool respectHigherContexts = true) const;
+    bool tryEvent(const ddevent_t &event, bool respectHigherContexts = true) const;
 
     void setFallbackResponder(FallbackResponderFunc newResponderFunc);
     void setDDFallbackResponder(DDFallbackResponderFunc newResponderFunc);

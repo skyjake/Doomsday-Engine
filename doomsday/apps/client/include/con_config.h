@@ -33,11 +33,11 @@
 
 void Con_SetAllowed(int flags);
 
-bool Con_ParseCommands(de::NativePath const &nativePath, int flags = 0);
+bool Con_ParseCommands(const de::NativePath &nativePath, int flags = 0);
 
-bool Con_ParseCommands(de::File const &file, int flags = 0);
+bool Con_ParseCommands(const de::File &file, int flags = 0);
 
-void Con_SetDefaultPath(de::Path const &path);
+void Con_SetDefaultPath(const de::Path &path);
 
 /**
  * Saves all bindings, aliases and archiveable console variables.

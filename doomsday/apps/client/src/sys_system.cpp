@@ -156,7 +156,7 @@ void Sys_Shutdown()
     App_ClearGames();
 }
 
-static int showCriticalMessage(char const *msg)
+static int showCriticalMessage(const char *msg)
 {
     // This is going to be the end, I'm afraid.
     de::Loop::get().stop();

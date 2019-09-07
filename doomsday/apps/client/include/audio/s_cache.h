@@ -40,7 +40,7 @@ class SfxSampleCache
 {
 public:
     /// Notified when a sound sample is about to be removed from the cache.
-    DE_AUDIENCE(SampleRemove, void sfxSampleCacheAboutToRemove(sfxsample_t const &sample))
+    DE_AUDIENCE(SampleRemove, void sfxSampleCacheAboutToRemove(const sfxsample_t &sample))
 
     struct CacheItem
     {

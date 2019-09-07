@@ -57,7 +57,7 @@ public:
     };
 
     /// Notified when the current profile has changed.
-    DE_DEFINE_AUDIENCE(ProfileChange, void currentProfileChanged(de::String const &name))
+    DE_DEFINE_AUDIENCE(ProfileChange, void currentProfileChanged(const de::String &name))
 
 public:
     ConfigProfiles();
@@ -99,14 +99,14 @@ public:
      * @return @c true if a new profile was created. @c false, if the operation
      * failed (e.g., name already in use).
      */
-    bool saveAsProfile(de::String const &name);
+    bool saveAsProfile(const de::String &name);
 
     /**
      * Changes the current settings profile.
      *
      * @param name  Name of the profile to use.
      */
-    void setProfile(de::String const &name);
+    void setProfile(const de::String &name);
 
     /**
      * Resets the current profile to default values.
@@ -118,7 +118,7 @@ public:
      *
      * @param settingName  Name of the setting.
      */
-    void resetSettingToDefaults(de::String const &settingName);
+    void resetSettingToDefaults(const de::String &settingName);
 
     /**
      * Renames the current profile.
@@ -127,18 +127,18 @@ public:
      *
      * @return @c true, if renamed successfully.
      */
-    bool rename(de::String const &name);
+    bool rename(const de::String &name);
 
     /**
      * Deletes a profile. The current profile cannot be deleted.
      *
      * @param name  Name of the profile to delete.
      */
-    void deleteProfile(de::String const &name);
+    void deleteProfile(const de::String &name);
 
 protected:
     AbstractProfile *profileFromInfoBlock(
-            de::Info::BlockElement const &block) override;
+            const de::Info::BlockElement &block) override;
 
 private:
     DE_PRIVATE(d)

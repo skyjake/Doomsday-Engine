@@ -27,15 +27,15 @@
 class PackageCompatibilityDialog : public de::MessageDialog
 {
 public:
-    PackageCompatibilityDialog(de::String const &name = "");
+    PackageCompatibilityDialog(const de::String &name = "");
 
-    void setMessage(de::String const &msg);
+    void setMessage(const de::String &msg);
     void setWantedPackages(const de::StringList& packages);
 
     bool isCompatible() const;
 
     // Events.
-    bool handleEvent(de::Event const &event) override;
+    bool handleEvent(const de::Event &event) override;
 
 private:
     DE_PRIVATE(d)

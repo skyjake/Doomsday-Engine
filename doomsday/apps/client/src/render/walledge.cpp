@@ -65,14 +65,14 @@ WallEdge::Event::Event(WallEdge &owner, ddouble distance)
     , _owner(&owner)
 {}
 
-WallEdge::Event &WallEdge::Event::operator = (Event const &other)
+WallEdge::Event &WallEdge::Event::operator = (const Event &other)
 {
     _owner    = other._owner;
     _distance = other._distance;
     return *this;
 }
 
-bool WallEdge::Event::operator < (Event const &other) const
+bool WallEdge::Event::operator < (const Event &other) const
 {
     return distance() < other.distance();
 }
@@ -144,7 +144,7 @@ struct WallEdge::Impl : public IHPlane
             size = 0;
         }
 
-        void append(Event const &event)
+        void append(const Event &event)
         {
             if (size < Base::sizei())
             {
@@ -195,7 +195,7 @@ struct WallEdge::Impl : public IHPlane
         needUpdateNormal = true;
     }
 
-    void init(WallEdge *i, WallSpec const &wallSpec, HEdge &hedge, dint edge)
+    void init(WallEdge *i, const WallSpec &wallSpec, HEdge &hedge, dint edge)
     {
         self = i;
 
@@ -207,13 +207,13 @@ struct WallEdge::Impl : public IHPlane
 
         // Determine the map space Z coordinates of the wall section.
         LineSideSegment &seg   = lineSideSegment();
-        Line const &line       = seg.line();
+        const Line &line       = seg.line();
         bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
         bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
-        ConvexSubspace const &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
+        const ConvexSubspace &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
                                                              : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
-        auto const &subsec = space.subsector().as<world::ClientSubsector>();
+        const auto &subsec = space.subsector().as<world::ClientSubsector>();
 
         if (seg.lineSide().considerOneSided()
             || // Mapping errors may result in a line segment missing a back face.
@@ -238,15 +238,15 @@ struct WallEdge::Impl : public IHPlane
         else
         {
             // Two sided.
-            auto const &backSubsec =
+            const auto &backSubsec =
                 line.definesPolyobj() ? subsec
                                       : wallHEdge->twin().face().mapElementAs<world::ConvexSubspace>()
                                             .subsector().as<world::ClientSubsector>();
 
-            Plane const *ffloor = &subsec.visFloor();
-            Plane const *fceil  = &subsec.visCeiling();
-            Plane const *bfloor = &backSubsec.visFloor();
-            Plane const *bceil  = &backSubsec.visCeiling();
+            const Plane *ffloor = &subsec.visFloor();
+            const Plane *fceil  = &subsec.visCeiling();
+            const Plane *bfloor = &backSubsec.visFloor();
+            const Plane *bceil  = &backSubsec.visCeiling();
 
             switch (spec.section)
             {
@@ -328,8 +328,8 @@ struct WallEdge::Impl : public IHPlane
                 break;
 
             case LineSide::Middle: {
-                LineSide const &lineSide = seg.lineSide();
-                Surface const &middle    = lineSide.middle();
+                const LineSide &lineSide = seg.lineSide();
+                const Surface &middle    = lineSide.middle();
 
                 if (!line.isSelfReferencing() && ffloor == &subsec.sector().floor())
                 {
@@ -449,13 +449,13 @@ struct WallEdge::Impl : public IHPlane
     }
 
     // Implements IHPlane
-    void configure(Partition const &newPartition)
+    void configure(const Partition &newPartition)
     {
         hplane = newPartition;
     }
 
     // Implements IHPlane
-    Partition const &partition() const
+    const Partition &partition() const
     {
         return hplane;
     }
@@ -476,7 +476,7 @@ struct WallEdge::Impl : public IHPlane
     {
         if (needSortEvents)
         {
-            std::sort(events.begin(), events.end(), [] (WorldEdge::Event const &a, WorldEdge::Event const &b) {
+            std::sort(events.begin(), events.end(), [] (const WorldEdge::Event &a, const WorldEdge::Event &b) {
                 return a < b;
             });
             needSortEvents = false;
@@ -493,7 +493,7 @@ struct WallEdge::Impl : public IHPlane
     }
 
     // Implements IHPlane
-    Event const &at(EventIndex index) const
+    const Event &at(EventIndex index) const
     {
         if(index >= 0 && index < interceptCount())
         {
@@ -517,7 +517,7 @@ struct WallEdge::Impl : public IHPlane
     void printIntercepts() const
     {
         EventIndex index = 0;
-        for (Event const &icpt : events)
+        for (const Event &icpt : events)
         {
             LOGDEV_MAP_MSG(" %u: >%1.2f ") << (index++) << icpt.distance();
         }
@@ -530,7 +530,7 @@ struct WallEdge::Impl : public IHPlane
     void assertInterceptsInRange(ddouble low, ddouble hi) const
     {
 #ifdef DE_DEBUG
-        for (Event const &icpt : events)
+        for (const Event &icpt : events)
         {
             DE_ASSERT(icpt.distance() >= low && icpt.distance() <= hi);
         }
@@ -548,21 +548,21 @@ struct WallEdge::Impl : public IHPlane
     {
         ClockDirection const direction = edge ? Clockwise : Anticlockwise;
 
-        HEdge const *hedge = wallHEdge;
+        const HEdge *hedge = wallHEdge;
         while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
         {
             // Stop if there is no space on the back side.
             if (!hedge->hasFace() || !hedge->hasMapElement())
                 break;
 
-            auto const &backSpace = hedge->face().mapElementAs<ConvexSubspace>();
-            auto const &subsec    = backSpace.subsector().as<world::ClientSubsector>();
+            const auto &backSpace = hedge->face().mapElementAs<ConvexSubspace>();
+            const auto &subsec    = backSpace.subsector().as<world::ClientSubsector>();
 
             if (subsec.hasWorldVolume())
             {
                 for (dint i = 0; i < subsec.visPlaneCount(); ++i)
                 {
-                    Plane const &plane = subsec.visPlane(i);
+                    const Plane &plane = subsec.visPlane(i);
 
                     if (plane.heightSmoothed() > bottom && plane.heightSmoothed() < top)
                     {
@@ -672,14 +672,14 @@ struct WallEdge::Impl : public IHPlane
         if(spec.flags.testFlag(WallSpec::NoEdgeNormalSmoothing))
             return nullptr;
 
-        LineSide const &lineSide = lineSideSegment().lineSide();
+        const LineSide &lineSide = lineSideSegment().lineSide();
 
         // Polyobj lines have no owner rings.
         if(lineSide.line().definesPolyobj())
             return nullptr;
 
         ClockDirection const direction = (edge? Anticlockwise : Clockwise);
-        LineOwner const &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
+        const LineOwner &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
         Line *neighbor;
         if(R_SideBackClosed(lineSide))
         {
@@ -735,7 +735,7 @@ struct WallEdge::Impl : public IHPlane
     }
 };
 
-WallEdge::WallEdge(WallSpec const &spec, HEdge &hedge, int edge)
+WallEdge::WallEdge(const WallSpec &spec, HEdge &hedge, int edge)
     : WorldEdge((edge? hedge.twin() : hedge).origin())
     , d(getRecycledImpl())
 {
@@ -747,12 +747,12 @@ WallEdge::~WallEdge()
     recycleImpl(d);
 }
 
-Vec3d const &WallEdge::pOrigin() const
+const Vec3d &WallEdge::pOrigin() const
 {
     return d->pOrigin;
 }
 
-Vec3d const &WallEdge::pDirection() const
+const Vec3d &WallEdge::pDirection() const
 {
     return d->pDirection;
 }
@@ -771,7 +771,7 @@ Vec3f WallEdge::normal() const
     return d->normal;
 }
 
-WallSpec const &WallEdge::spec() const
+const WallSpec &WallEdge::spec() const
 {
     return d->spec;
 }
@@ -806,7 +806,7 @@ WallEdge::EventIndex WallEdge::lastDivision() const
     return divisionCount()? (d->interceptCount() - 2) : InvalidIndex;
 }
 
-WallEdge::Event const &WallEdge::at(EventIndex index) const
+const WallEdge::Event &WallEdge::at(EventIndex index) const
 {
     return d->events.at(index);
 }
@@ -816,12 +816,12 @@ bool WallEdge::isValid() const
     return d->hi > d->lo;
 }
 
-WallEdge::Event const &WallEdge::first() const
+const WallEdge::Event &WallEdge::first() const
 {
     return d->bottom;
 }
 
-WallEdge::Event const &WallEdge::last() const
+const WallEdge::Event &WallEdge::last() const
 {
     return d->top;
 }

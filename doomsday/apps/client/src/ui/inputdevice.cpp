@@ -52,7 +52,7 @@ DE_PIMPL(InputDevice)
 
 DE_AUDIENCE_METHOD(InputDevice, ActiveChange)
 
-InputDevice::InputDevice(String const &name) : d(new Impl(this))
+InputDevice::InputDevice(const String &name) : d(new Impl(this))
 {
     DE_ASSERT(!name.isEmpty());
     d->name = name;
@@ -87,7 +87,7 @@ String InputDevice::title() const
     return (d->title.isEmpty()? d->name : d->title);
 }
 
-void InputDevice::setTitle(String const &newTitle)
+void InputDevice::setTitle(const String &newTitle)
 {
     d->title = newTitle;
 }
@@ -106,7 +106,7 @@ String InputDevice::description() const
     {
         desc += Stringf("\n  " _E(b) "%i axes:" _E(.), count);
         int idx = 0;
-        for (Control const *axis : d->axes)
+        for (const Control *axis : d->axes)
         {
             desc += Stringf("\n    [%3i] " _E(>) "%s" _E(<), idx++,
                                    axis->description().c_str());
@@ -117,7 +117,7 @@ String InputDevice::description() const
     {
         desc += Stringf("\n  " _E(b) "%i buttons:" _E(.), count);
         int idx = 0;
-        for (Control const *button : d->buttons)
+        for (const Control *button : d->buttons)
         {
             desc += Stringf("\n    [%03i] " _E(>) "%s" _E(<), idx++,
                                    button->description().c_str());
@@ -128,7 +128,7 @@ String InputDevice::description() const
     {
         desc += Stringf("\n  " _E(b) "%i hats:" _E(.), count);
         int idx = 0;
-        for (Control const *hat : d->hats)
+        for (const Control *hat : d->hats)
         {
             desc += Stringf("\n    [%3i] " _E(>) "%s" _E(<), idx++,
                                    hat->description().c_str());
@@ -180,7 +180,7 @@ LoopResult InputDevice::forAllControls(const std::function<de::LoopResult (Contr
     return LoopContinue;
 }
 
-dint InputDevice::toAxisId(String const &name) const
+dint InputDevice::toAxisId(const String &name) const
 {
     if (!name.isEmpty())
     {
@@ -193,7 +193,7 @@ dint InputDevice::toAxisId(String const &name) const
     return -1;
 }
 
-dint InputDevice::toButtonId(String const &name) const
+dint InputDevice::toButtonId(const String &name) const
 {
     if (!name.isEmpty())
     {
@@ -319,7 +319,7 @@ String InputDevice::Control::name() const
     return d->name;
 }
 
-void InputDevice::Control::setName(String const &newName)
+void InputDevice::Control::setName(const String &newName)
 {
     DE_GUARD(this);
     d->name = newName;
@@ -372,7 +372,7 @@ InputDevice::Control::BindContextAssociation InputDevice::Control::bindContextAs
     return d->flags;
 }
 
-void InputDevice::Control::setBindContextAssociation(BindContextAssociation const &flagsToChange, FlagOp op)
+void InputDevice::Control::setBindContextAssociation(const BindContextAssociation &flagsToChange, FlagOp op)
 {
     DE_GUARD(this);
     applyFlagOperation(d->flags, flagsToChange, op);

@@ -28,9 +28,9 @@
 class CVarSliderWidget : public de::SliderWidget, public ICVarWidget
 {
 public:
-    CVarSliderWidget(char const *cvarPath);
+    CVarSliderWidget(const char *cvarPath);
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
 
     void updateFromCVar();
     void setCVarValueFromWidget();

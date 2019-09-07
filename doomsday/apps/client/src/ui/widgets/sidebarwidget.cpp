@@ -77,7 +77,7 @@ DE_GUI_PIMPL(SidebarWidget)
         releaseRef(firstColumnWidth);
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame)
     {
         if (newGame.isNull())
         {
@@ -87,7 +87,7 @@ DE_GUI_PIMPL(SidebarWidget)
     }
 };
 
-SidebarWidget::SidebarWidget(String const &titleText, String const &name)
+SidebarWidget::SidebarWidget(const String &titleText, const String &name)
     : PanelWidget(name)
     , d(new Impl(this))
 {
@@ -118,7 +118,7 @@ SidebarWidget::SidebarWidget(String const &titleText, String const &name)
                                  rule().height());    
     setContent(d->container);
 
-    RuleRectangle const &area = d->sidebarContent->contentRule();
+    const RuleRectangle &area = d->sidebarContent->contentRule();
     d->layout.reset(new SequentialLayout(area.left(), area.top(), Down));
 
     // Install the editor.
@@ -135,9 +135,9 @@ LabelWidget &SidebarWidget::title()
     return *d->title;
 }
 
-Rule const &SidebarWidget::maximumOfAllGroupFirstColumns() const
+const Rule &SidebarWidget::maximumOfAllGroupFirstColumns() const
 {
-    Rule const *max = nullptr;
+    const Rule *max = nullptr;
     for (GuiWidget *child : d->sidebarContent->childWidgets())
     {
         if (auto *g = maybeAs<VariableGroupEditor>(child))
@@ -178,8 +178,8 @@ void SidebarWidget::panelDismissed()
     ClientWindow::main().unsetSidebar(ClientWindow::RightEdge);
 }
 
-void SidebarWidget::updateSidebarLayout(Rule const &minWidth,
-                                        Rule const &extraHeight)
+void SidebarWidget::updateSidebarLayout(const Rule &minWidth,
+                                        const Rule &extraHeight)
 {
     d->firstColumnWidth->setSource(maximumOfAllGroupFirstColumns());
 

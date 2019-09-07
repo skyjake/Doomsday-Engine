@@ -194,9 +194,9 @@ DE_GUI_PIMPL(CreateProfileDialog)
         // Create menu items for the Start Map choice.
         for (auto i = packageIds.rbegin(); i != packageIds.rend(); ++i)
         {
-            if (File const *pkgFile = PackageLoader::get().select(*i))
+            if (const File *pkgFile = PackageLoader::get().select(*i))
             {
-                DataBundle const *bundle = maybeAs<DataBundle>(pkgFile->target());
+                const DataBundle *bundle = maybeAs<DataBundle>(pkgFile->target());
                 if (!bundle || !bundle->lumpDirectory())
                 {
                     continue;
@@ -250,7 +250,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
     }
 };
 
-CreateProfileDialog::CreateProfileDialog(String const &gameFamily)
+CreateProfileDialog::CreateProfileDialog(const String &gameFamily)
     : InputDialog("create-profile")
     , d(new Impl(this))
 {
@@ -431,7 +431,7 @@ GameProfile *CreateProfileDialog::makeProfile() const
     return prof;
 }
 
-void CreateProfileDialog::fetchFrom(GameProfile const &profile)
+void CreateProfileDialog::fetchFrom(const GameProfile &profile)
 {
     editor().setText(profile.name());
     d->gameChoice->setSelected(d->gameChoice->items().findData(TextValue(profile.gameId())));
@@ -497,7 +497,7 @@ void CreateProfileDialog::operator<<(const PersistentState &fromState)
     }
 }
 
-CreateProfileDialog *CreateProfileDialog::editProfile(String const &gameFamily,
+CreateProfileDialog *CreateProfileDialog::editProfile(const String &gameFamily,
                                                       GameProfile &profile)
 {
     auto *dlg = new CreateProfileDialog(gameFamily);

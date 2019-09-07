@@ -35,7 +35,7 @@ public:
     MainWindow &window();
 
     void dispatchLatestMousePosition();
-    void handleEventAsFallback(de::Event const &event);
+    void handleEventAsFallback(const de::Event &event);
 
 private:
     DE_PRIVATE(d)

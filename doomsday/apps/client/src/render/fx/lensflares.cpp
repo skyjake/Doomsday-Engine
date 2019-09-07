@@ -86,7 +86,7 @@ struct FlareData
             flare[Ring]     = atlas.alloc(flareImage("ring"));
             flare[Burst]    = atlas.alloc(flareImage("burst"));
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_GL_ERROR("Failed to initialize shared lens flare resources: %s")
                     << er.asText();
@@ -101,7 +101,7 @@ struct FlareData
         LOGDEV_GL_XVERBOSE("Releasing shared data", "");
     }
 
-    Image const &flareImage(String const &name)
+    const Image &flareImage(const String &name)
     {
         return images.image("fx.lensflares." + name);
     }
@@ -156,7 +156,7 @@ public:
     Colorf lightSourceColorf() const {
         return color;
     }
-    dfloat lightSourceIntensity(de::Vec3d const &) const {
+    dfloat lightSourceIntensity(const de::Vec3d &) const {
         return intensity;
     }
 };
@@ -189,7 +189,7 @@ D_CMD(TestLight)
 }
 #endif
 
-static float linearRangeFactor(float value, Rangef const &low, Rangef const &high)
+static float linearRangeFactor(float value, const Rangef &low, const Rangef &high)
 {
     if (low.size() > 0)
     {
@@ -228,7 +228,7 @@ DE_PIMPL(LensFlares)
      */
     struct PVLight
     {
-        IPointLightSource const *light;
+        const IPointLightSource *light;
         int seenFrame; // R_FrameCount()
 
         PVLight() : light(0), seenFrame(0)
@@ -298,7 +298,7 @@ DE_PIMPL(LensFlares)
         pvs.clear();
     }
 
-    void addToPvs(IPointLightSource const *light)
+    void addToPvs(const IPointLightSource *light)
     {
         PVSet::iterator found = pvs.find(light->lightSourceId());
         if (found == pvs.end())
@@ -317,7 +317,7 @@ DE_PIMPL(LensFlares)
                    float              axisPos,
                    float              radius,
                    Vec4f           color,
-                   PVLight const *    pvl)
+                   const PVLight *    pvl)
     {
         Rectanglef const uvRect = res->uvRect(id);
         int const firstIdx = verts.size();
@@ -359,7 +359,7 @@ DE_PIMPL(LensFlares)
 
         for (PVSet::const_iterator i = pvs.begin(); i != pvs.end(); ++i)
         {
-            PVLight const *pvl = i->second;
+            const PVLight *pvl = i->second;
 
             // Skip lights that are not visible right now.
             /// @todo If so, it might be time to purge it from the PVS.
@@ -423,7 +423,7 @@ DE_PIMPL(LensFlares)
 
             for (uint i = 0; i < sizeof(specs)/sizeof(specs[0]); ++i)
             {
-                Spec const &spec = specs[i];
+                const Spec &spec = specs[i];
 
                 float size = radius * spec.size;
                 Vec4f color = spec.color;
@@ -467,7 +467,7 @@ void LensFlares::clearLights()
     d->clearPvs();
 }
 
-void LensFlares::markLightPotentiallyVisibleForCurrentFrame(IPointLightSource const *lightSource)
+void LensFlares::markLightPotentiallyVisibleForCurrentFrame(const IPointLightSource *lightSource)
 {
     d->addToPvs(lightSource);
 }
@@ -507,7 +507,7 @@ void LensFlares::draw()
 
     if (!viewPlayer) return; /// @todo How'd we get here? -ds
 
-    viewdata_t const *viewData = &DD_Player(console())->viewport();
+    const viewdata_t *viewData = &DD_Player(console())->viewport();
     d->eyeFront = Vec3f(viewData->frontVec);
 
     Rectanglef const rect = viewRect();

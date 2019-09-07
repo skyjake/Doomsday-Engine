@@ -166,7 +166,7 @@ DE_PIMPL(Blockmap)
          * @param cell  Cell coordinates for the node.
          * @param size  Size of the cell.
          */
-        Node(Cell const &cell, duint size)
+        Node(const Cell &cell, duint size)
             : cell(cell)
             , size(size)
         {
@@ -187,7 +187,7 @@ DE_PIMPL(Blockmap)
         /**
          * In which child quadrant is the given @a point?
          */
-        Quadrant quadrant(Cell const &point) const
+        Quadrant quadrant(const Cell &point) const
         {
             duint const subSize = size >> 1;
             if(point.x < cell.x + subSize)
@@ -208,7 +208,7 @@ DE_PIMPL(Blockmap)
 
     Nodes nodes;      ///< Quadtree nodes. The first being the root.
 
-    Impl(Public *i, AABoxd const &bounds, duint cellSize)
+    Impl(Public *i, const AABoxd &bounds, duint cellSize)
         : Base(i)
         , bounds    (bounds)
         , cellSize  (cellSize)
@@ -308,13 +308,13 @@ DE_PIMPL(Blockmap)
         return didClipMin | didClipMax;
     }
 
-    Node *newNode(Cell const &at, duint size)
+    Node *newNode(const Cell &at, duint size)
     {
         nodes.emplace_back(at, size);
         return &nodes.back();
     }
 
-    Node *findLeaf(Node *node, Cell const &at, bool canSubdivide)
+    Node *findLeaf(Node *node, const Cell &at, bool canSubdivide)
     {
         if(node->isLeaf()) return node;
 
@@ -351,7 +351,7 @@ DE_PIMPL(Blockmap)
         return findLeaf(*childAdr, at, canSubdivide);
     }
 
-    inline Node *findLeaf(Cell const &at, bool canCreate = false)
+    inline Node *findLeaf(const Cell &at, bool canCreate = false)
     {
         return findLeaf(&nodes.front(), at, canCreate);
     }
@@ -366,7 +366,7 @@ DE_PIMPL(Blockmap)
      * @return  User data for the identified cell else @c 0if an invalid
      *          reference or no there is no data present (and not allocating).
      */
-    CellData *cellData(Cell const &cell, bool canCreate = false)
+    CellData *cellData(const Cell &cell, bool canCreate = false)
     {
         // Outside our boundary?
         if(cell.x >= dimensions.x || cell.y >= dimensions.y)
@@ -393,7 +393,7 @@ DE_PIMPL(Blockmap)
     }
 };
 
-Blockmap::Blockmap(AABoxd const &bounds, duint cellSize)
+Blockmap::Blockmap(const AABoxd &bounds, duint cellSize)
     : d(new Impl(this, bounds, cellSize))
 {}
 
@@ -405,12 +405,12 @@ Vec2d Blockmap::origin() const
     return Vec2d(d->bounds.min);
 }
 
-AABoxd const &Blockmap::bounds() const
+const AABoxd &Blockmap::bounds() const
 {
     return d->bounds;
 }
 
-BlockmapCell const &Blockmap::dimensions() const
+const BlockmapCell &Blockmap::dimensions() const
 {
     return d->dimensions;
 }
@@ -425,7 +425,7 @@ dint Blockmap::toCellIndex(duint cellX, duint cellY) const
     return d->toCellIndex(cellX, cellY);
 }
 
-BlockmapCell Blockmap::toCell(Vec2d const &point, bool *retDidClip) const
+BlockmapCell Blockmap::toCell(const Vec2d &point, bool *retDidClip) const
 {
     bool didClipX, didClipY;
     Cell cell(d->toCellX(point.x, didClipX), d->toCellY(point.y, didClipY));
@@ -433,7 +433,7 @@ BlockmapCell Blockmap::toCell(Vec2d const &point, bool *retDidClip) const
     return cell;
 }
 
-BlockmapCellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) const
+BlockmapCellBlock Blockmap::toCellBlock(const AABoxd &box, bool *retDidClip) const
 {
     bool didClipMin, didClipMax;
     CellBlock block(toCell(Vec2d(box.min), &didClipMin), toCell(Vec2d(box.max), &didClipMax));
@@ -442,7 +442,7 @@ BlockmapCellBlock Blockmap::toCellBlock(AABoxd const &box, bool *retDidClip) con
     return block;
 }
 
-bool Blockmap::link(Cell const &cell, void *elem)
+bool Blockmap::link(const Cell &cell, void *elem)
 {
     if(!elem) return false; // Huh?
 
@@ -453,7 +453,7 @@ bool Blockmap::link(Cell const &cell, void *elem)
     return false; // Outside the blockmap?
 }
 
-bool Blockmap::link(AABoxd const &region, void *elem)
+bool Blockmap::link(const AABoxd &region, void *elem)
 {
     if(!elem) return false; // Huh?
 
@@ -478,7 +478,7 @@ bool Blockmap::link(AABoxd const &region, void *elem)
     return didLink;
 }
 
-bool Blockmap::unlink(Cell const &cell, void *elem)
+bool Blockmap::unlink(const Cell &cell, void *elem)
 {
     if(!elem) return false; // Huh?
 
@@ -489,7 +489,7 @@ bool Blockmap::unlink(Cell const &cell, void *elem)
     return false;
 }
 
-bool Blockmap::unlink(AABoxd const &region, void *elem)
+bool Blockmap::unlink(const AABoxd &region, void *elem)
 {
     if(!elem) return false; // Huh?
 
@@ -528,7 +528,7 @@ void Blockmap::unlinkAll()
     }
 }
 
-dint Blockmap::cellElementCount(Cell const &cell) const
+dint Blockmap::cellElementCount(const Cell &cell) const
 {
     if(auto *cellData = d->cellData(cell))
     {
@@ -537,7 +537,7 @@ dint Blockmap::cellElementCount(Cell const &cell) const
     return 0;
 }
 
-LoopResult Blockmap::forAllInCell(Cell const &cell, std::function<LoopResult (void *object)> func) const
+LoopResult Blockmap::forAllInCell(const Cell &cell, std::function<LoopResult (void *object)> func) const
 {
     if(auto *cellData = d->cellData(cell))
     {
@@ -555,7 +555,7 @@ LoopResult Blockmap::forAllInCell(Cell const &cell, std::function<LoopResult (vo
     return LoopContinue;
 }
 
-LoopResult Blockmap::forAllInBox(AABoxd const &box, std::function<LoopResult (void *object)> func) const
+LoopResult Blockmap::forAllInBox(const AABoxd &box, std::function<LoopResult (void *object)> func) const
 {
     CellBlock cellBlock = toCellBlock(box);
     d->clipBlock(cellBlock);
@@ -569,7 +569,7 @@ LoopResult Blockmap::forAllInBox(AABoxd const &box, std::function<LoopResult (vo
     return LoopContinue;
 }
 
-LoopResult Blockmap::forAllInPath(Vec2d const &from_, Vec2d const &to_,
+LoopResult Blockmap::forAllInPath(const Vec2d &from_, const Vec2d &to_,
     std::function<LoopResult (void *object)> func) const
 {
     // We may need to clip and/or adjust these points.
@@ -736,7 +736,7 @@ void Blockmap::drawDebugVisual() const
      * Draw the Quadtree.
      */
     DGL_Color4f(1.f, 1.f, 1.f, 1.f / d->nodes.front().size);
-    for (Impl::Node const &node : d->nodes)
+    for (const Impl::Node &node : d->nodes)
     {
         // Only leafs with user data.
         if(!node.isLeaf()) continue;

@@ -66,14 +66,14 @@ public:
          */
         Intercept(de::ddouble distance, LineSegmentSide &lineSeg, de::dint edge);
 
-        bool operator < (Intercept const &other) const {
+        bool operator < (const Intercept &other) const {
             return _distance < other._distance;
         }
 
         /**
          * Determine the distance between "this" and the @a other intercept.
          */
-        de::ddouble operator - (Intercept const &other) const {
+        de::ddouble operator - (const Intercept &other) const {
             return _distance - other._distance;
         }
 
@@ -140,14 +140,14 @@ public:
     /**
      * Construct a new half-plane from the given @a partition line.
      */
-    explicit HPlane(de::Partition const &partition = de::Partition());
+    explicit HPlane(const de::Partition &partition = de::Partition());
 
     /**
      * Reconfigure the half-plane according to the given line segment.
      *
      * @param newLineSeg  The "new" line segment to configure using.
      */
-    void configure(LineSegmentSide const &newLineSeg);
+    void configure(const LineSegmentSide &newLineSeg);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg
@@ -161,7 +161,7 @@ public:
      * @return  Distance to intersection point along the half-plane (relative
      *          to the origin).
      */
-    de::ddouble intersect(LineSegmentSide const &lineSeg, de::dint edge);
+    de::ddouble intersect(const LineSegmentSide &lineSeg, de::dint edge);
 
     /**
      * Perform intersection of the half-plane with the specified @a lineSeg.
@@ -179,8 +179,8 @@ public:
      *
      * @return  The resultant new intercept; otherwise @c nullptr.
      */
-    Intercept *intercept(LineSegmentSide const &lineSeg, de::dint edge,
-                         EdgeTips const &edgeTips);
+    Intercept *intercept(const LineSegmentSide &lineSeg, de::dint edge,
+                         const EdgeTips &edgeTips);
 
     /**
      * Sort and then merge near-intercepts from the given list.
@@ -215,7 +215,7 @@ public:
      *
      * @see configure()
      */
-    de::Partition const &partition() const;
+    const de::Partition &partition() const;
 
     /**
      * Returns the world angle of the partition line (which, is derived from the
@@ -260,7 +260,7 @@ public:
      * @param fromDist  (Returned) Perpendicular distance from the "from" vertex. Can be @c nullptr.
      * @param toDist    (Returned) Perpendicular distance from the "to" vertex. Can be @c nullptr.
      */
-    void distance(LineSegmentSide const &lineSegment, de::ddouble *fromDist = nullptr,
+    void distance(const LineSegmentSide &lineSegment, de::ddouble *fromDist = nullptr,
                   de::ddouble *toDist = nullptr) const;
 
     /**
@@ -274,7 +274,7 @@ public:
      *
      * @return LineRelationship between the partition line and the line segment.
      */
-    LineRelationship relationship(LineSegmentSide const &lineSegment,
+    LineRelationship relationship(const LineSegmentSide &lineSegment,
                                   de::ddouble *retFromDist = nullptr,
                                   de::ddouble *retToDist   = nullptr) const;
 
@@ -286,7 +286,7 @@ public:
      *
      * @see interceptLineSegmentSide()
      */
-    Intercepts const &intercepts() const;
+    const Intercepts &intercepts() const;
 
     /**
      * Returns the current number of half-plane intercepts.

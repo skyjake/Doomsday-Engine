@@ -135,13 +135,13 @@ DE_PIMPL(ServerSystem)
         clearUsers();
     }
 
-    RemoteUser &findUser(Id const &id) const
+    RemoteUser &findUser(const Id &id) const
     {
         DE_ASSERT(users.contains(id));
         return *users[id];
     }
 
-    void updateBeacon(Clock const &clock)
+    void updateBeacon(const Clock &clock)
     {
         if (lastBeaconUpdateAt.since() > BEACON_UPDATE_INTERVAL)
         {
@@ -161,7 +161,7 @@ DE_PIMPL(ServerSystem)
      * The client is removed from the game immediately. This is used when
      * the server needs to terminate a client's connection abnormally.
      */
-    void terminateNode(Id const &id)
+    void terminateNode(const Id &id)
     {
         if (id)
         {
@@ -253,12 +253,12 @@ bool ServerSystem::isListening() const
     return d->isStarted();
 }
 
-void ServerSystem::terminateNode(Id const &id)
+void ServerSystem::terminateNode(const Id &id)
 {
     d->terminateNode(id);
 }
 
-RemoteUser &ServerSystem::user(Id const &id) const
+RemoteUser &ServerSystem::user(const Id &id) const
 {
     if (!d->users.contains(id))
     {
@@ -303,7 +303,7 @@ int ServerSystem::userCount() const
     return d->remoteFeedUsers.count() + d->shellUsers.count() + d->users.size();
 }
 
-void ServerSystem::timeChanged(Clock const &clock)
+void ServerSystem::timeChanged(const Clock &clock)
 {
     if (Sys_IsShuttingDown())
         return; // Shouldn't run this while shutting down.

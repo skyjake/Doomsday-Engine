@@ -49,9 +49,9 @@ void     DD_ConsoleRegister();
 /**
  * Print an error message and quit.
  */
-DE_NORETURN void App_Error(char const *error, ...);
+DE_NORETURN void App_Error(const char *error, ...);
 
-DE_NORETURN void App_AbnormalShutdown(char const *error);
+DE_NORETURN void App_AbnormalShutdown(const char *error);
 
 /// Returns the application's global audio subsystem.
 AudioSystem &App_AudioSystem();
@@ -95,7 +95,7 @@ Games &App_Games();
 /**
  * Returns the current game from the application's global collection.
  */
-Game const &App_CurrentGame();
+const Game &App_CurrentGame();
 
 /**
  * Frees the info structures for all registered games.
@@ -112,13 +112,13 @@ void App_ClearGames();
 void DD_ReadGameHelp();
 
 /// @return  Symbolic name of the material scheme associated with @a textureSchemeName.
-AutoStr *DD_MaterialSchemeNameForTextureScheme(Str const *textureSchemeName);
+AutoStr *DD_MaterialSchemeNameForTextureScheme(const Str *textureSchemeName);
 
 /// @overload
 de::String DD_MaterialSchemeNameForTextureScheme(const de::String& textureSchemeName);
 
 #ifdef __CLIENT__
-fontschemeid_t DD_ParseFontSchemeName(char const *str);
+fontschemeid_t DD_ParseFontSchemeName(const char *str);
 #endif
 
 #endif  // DE_MAIN_H

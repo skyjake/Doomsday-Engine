@@ -27,7 +27,7 @@
 class InputSettingsDialog : public de::DialogWidget
 {
 public:
-    InputSettingsDialog(de::String const &name = "inputsettings");
+    InputSettingsDialog(const de::String &name = "inputsettings");
 
     void resetToDefaults();
 

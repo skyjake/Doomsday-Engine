@@ -117,7 +117,7 @@ public:
      * @param material  Material to animate.
      * @param spec      Draw-context variant specification.
      */
-    MaterialAnimator(ClientMaterial &material, de::MaterialVariantSpec const &variantSpec);
+    MaterialAnimator(ClientMaterial &material, const de::MaterialVariantSpec &variantSpec);
 
     /**
      * Returns the Material being animated.
@@ -127,7 +127,7 @@ public:
     /**
      * Returns the MaterialVariantSpec for the associated usage context.
      */
-    de::MaterialVariantSpec const &variantSpec() const;
+    const de::MaterialVariantSpec &variantSpec() const;
 
     /**
      * Process a system tick event. If not currently paused and still valid; the material's
@@ -175,7 +175,7 @@ public:
     /**
      * Returns the current dimension metrics for the animated Material.
      */
-    de::Vec2ui const &dimensions() const;
+    const de::Vec2ui &dimensions() const;
 
     /**
      * Returns the current glow strength factor for the animated Material.
@@ -190,7 +190,7 @@ public:
     /**
      * Returns the current shine effect minimum color for the animated Material.
      */
-    de::Vec3f const &shineMinColor() const;
+    const de::Vec3f &shineMinColor() const;
 
     /**
      * Lookup a prepared GLTextureUnit by it's unique @a unitIndex.

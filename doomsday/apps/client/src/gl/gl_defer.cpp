@@ -450,7 +450,7 @@ void GL_ProcessDeferredTasks(uint timeOutMilliSeconds)
     GL_ReserveNames();
 }
 
-gfx::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content)
+gfx::UploadMethod GL_ChooseUploadMethod(const struct texturecontent_s *content)
 {
     DE_ASSERT(content != 0);
 
@@ -463,7 +463,7 @@ gfx::UploadMethod GL_ChooseUploadMethod(struct texturecontent_s const *content)
     return gfx::Deferred;
 }
 
-void GL_DeferTextureUpload(struct texturecontent_s const *content)
+void GL_DeferTextureUpload(const struct texturecontent_s *content)
 {
     if(novideo) return;
 

@@ -323,7 +323,7 @@ public:
          * Returns a direction vector for "this" side of the line segment,
          * from the From/Start vertex origin to the To/End vertex origin.
          */
-        de::Vec2d const &direction() const;
+        const de::Vec2d &direction() const;
 
         /**
          * Returns the logical @em slopetype for "this" side of the line
@@ -374,7 +374,7 @@ public:
          * @param toDist    Perpendicular distance from the "to" vertex.
          *                  Can be @c nullptr.
          */
-        void distance(Side const &other, coord_t *fromDist = nullptr,
+        void distance(const Side &other, coord_t *fromDist = nullptr,
                       coord_t *toDist = nullptr) const;
 
         /**
@@ -395,11 +395,11 @@ public:
          *
          * @see distance()
          */
-        LineRelationship relationship(Side const &other, coord_t *retFromDist,
+        LineRelationship relationship(const Side &other, coord_t *retFromDist,
                                       coord_t *retToDist) const;
 
         /// @see M_BoxOnLineSide2()
-        int boxOnSide(AABoxd const &box) const;
+        int boxOnSide(const AABoxd &box) const;
 
         /**
          * Returns the axis-aligned bounding box of the line segment (derived
@@ -476,19 +476,19 @@ public:
      * @param back  If not @c nullptr return the Back side; otherwise the Front side.
      */
     Side       &side(int back);
-    Side const &side(int back) const;
+    const Side &side(int back) const;
 
     /**
      * Returns the logical Front side of the line segment.
      */
     inline Side       &front()       { return side(Front); }
-    inline Side const &front() const { return side(Front); }
+    inline const Side &front() const { return side(Front); }
 
     /**
      * Returns the logical Back side of the line segment.
      */
     inline Side       &back()        { return side(Back); }
-    inline Side const &back() const  { return side(Back); }
+    inline const Side &back() const  { return side(Back); }
 
     /**
      * Returns the specified edge vertex of the line segment.
@@ -503,7 +503,7 @@ public:
      *
      * @see vertex()
      */
-    inline de::Vec2d const &vertexOrigin(int to) const {
+    inline const de::Vec2d &vertexOrigin(int to) const {
         return vertex(to).origin();
     }
 
@@ -518,7 +518,7 @@ public:
      *
      * @see from()
      */
-    inline de::Vec2d const &fromOrigin() const { return from().origin(); }
+    inline const de::Vec2d &fromOrigin() const { return from().origin(); }
 
     /**
      * Returns the To/End vertex for the line segment.
@@ -531,7 +531,7 @@ public:
      *
      * @see to()
      */
-    inline de::Vec2d const &toOrigin() const { return to().origin(); }
+    inline const de::Vec2d &toOrigin() const { return to().origin(); }
 
     /**
      * Returns the axis-aligned bounding box of the line segment (derived from

@@ -27,7 +27,7 @@
 class NetworkSettingsDialog : public de::DialogWidget
 {
 public:
-    NetworkSettingsDialog(de::String const &name = "networksettings");
+    NetworkSettingsDialog(const de::String &name = "networksettings");
 
 public:
     void resetToDefaults();

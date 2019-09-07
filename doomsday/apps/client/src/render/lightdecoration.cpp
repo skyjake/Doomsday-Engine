@@ -38,7 +38,7 @@ using namespace world;
 static dfloat angleFadeFactor = .1f; ///< cvar
 static dfloat brightFactor    = 1;   ///< cvar
 
-LightDecoration::LightDecoration(MaterialAnimator::Decoration const &source, Vec3d const &origin)
+LightDecoration::LightDecoration(const MaterialAnimator::Decoration &source, const Vec3d &origin)
     : Decoration(source, origin)
     , Source()
 {}
@@ -52,7 +52,7 @@ String LightDecoration::description() const
     return Decoration::description() + "\n" + desc;
 }
 
-dfloat LightDecoration::occlusion(Vec3d const &eye) const
+dfloat LightDecoration::occlusion(const Vec3d &eye) const
 {
     // Halo brightness drops as the angle gets too big.
     if (source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?

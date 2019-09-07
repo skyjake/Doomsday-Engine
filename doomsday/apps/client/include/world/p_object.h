@@ -50,7 +50,7 @@ class MobjThinker : public ThinkerT<mobj_t>
 {
 public:
     MobjThinker(AllocMethod alloc = AllocateStandard) : ThinkerT(MOBJ_SIZE, alloc) {}
-    MobjThinker(mobj_t const &existingToCopy) : ThinkerT(existingToCopy, MOBJ_SIZE) {}
+    MobjThinker(const mobj_t &existingToCopy) : ThinkerT(existingToCopy, MOBJ_SIZE) {}
     MobjThinker(mobj_t *existingToTake) : ThinkerT(existingToTake, MOBJ_SIZE) {}
 
     static void zap(mobj_t &mob) { ThinkerT::zap(mob, MOBJ_SIZE); }
@@ -70,7 +70,7 @@ void P_InitUnusedMobjList();
  */
 void Mobj_ConsoleRegister();
 
-mobj_t *P_MobjCreate(thinkfunc_t function, de::Vec3d const &origin, angle_t angle,
+mobj_t *P_MobjCreate(thinkfunc_t function, const de::Vec3d &origin, angle_t angle,
     coord_t radius, coord_t height, de::dint ddflags);
 
 void P_MobjRecycle(mobj_t *mob);
@@ -82,7 +82,7 @@ void P_MobjRecycle(mobj_t *mob);
  *
  * @see Thinker_Map()
  */
-world::Map &Mobj_Map(mobj_t const &mob);
+world::Map &Mobj_Map(const mobj_t &mob);
 
 /**
  * Returns @c true if the map-object has been linked into the map. The only time this is
@@ -92,12 +92,12 @@ world::Map &Mobj_Map(mobj_t const &mob);
  *
  * @todo Automatically link all new mobjs into the map (making this redundant).
  */
-bool Mobj_IsLinked(mobj_t const &mob);
+bool Mobj_IsLinked(const mobj_t &mob);
 
 /**
  * Returns a copy of the map-object's origin in map space.
  */
-de::Vec3d Mobj_Origin(mobj_t const &mob);
+de::Vec3d Mobj_Origin(const mobj_t &mob);
 
 /**
  * Returns the map-object's visual center (i.e., origin plus z-height offset).
@@ -122,7 +122,7 @@ dd_bool Mobj_SetOrigin(mobj_t *mob, coord_t x, coord_t y, coord_t z);
  *
  * @see Mobj_IsLinked(), Mobj_SetOrigin()
  */
-world::BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob);
+world::BspLeaf &Mobj_BspLeafAtOrigin(const mobj_t &mob);
 
 /**
  * Returns @c true if the BSP leaf at the map-object's origin is known (i.e., it has been
@@ -130,7 +130,7 @@ world::BspLeaf &Mobj_BspLeafAtOrigin(mobj_t const &mob);
  *
  * @param mob  Map-object.
  */
-bool Mobj_HasSubsector(mobj_t const &mob);
+bool Mobj_HasSubsector(const mobj_t &mob);
 
 /**
  * Returns the subsector in which the map-object currently resides.
@@ -139,7 +139,7 @@ bool Mobj_HasSubsector(mobj_t const &mob);
  *
  * @see Mobj_HasSubsector()
  */
-world::Subsector &Mobj_Subsector(mobj_t const &mob);
+world::Subsector &Mobj_Subsector(const mobj_t &mob);
 
 /**
  * Returns a pointer to subsector in which the mobj currently resides, or @c nullptr
@@ -149,13 +149,13 @@ world::Subsector &Mobj_Subsector(mobj_t const &mob);
  *
  * @see Mobj_HasSubsector()
  */
-world::Subsector *Mobj_SubsectorPtr(mobj_t const &mob);
+world::Subsector *Mobj_SubsectorPtr(const mobj_t &mob);
 
 /**
  * Creates a new map-object triggered particle generator based on the given definition.
  * The generator is added to the list of active ptcgens.
  */
-void Mobj_SpawnParticleGen(mobj_t *source, ded_ptcgen_t const *def);
+void Mobj_SpawnParticleGen(mobj_t *source, const ded_ptcgen_t *def);
 
 #ifdef __CLIENT__
 
@@ -185,13 +185,13 @@ void Mobj_AnimateHaloOcclussion(mobj_t &mob);
  * @note Implemented using a greatly simplified version of the lighting equation;
  *       no light diminishing or light range compression.
  */
-de::dfloat Mobj_ShadowStrength(mobj_t const &mob);
+de::dfloat Mobj_ShadowStrength(const mobj_t &mob);
 
 /**
  * Determines which of the available sprites is in effect for the current map-object state
  * and frame. May return @c nullptr if the state and/or frame is not valid.
  */
-de::Record const *Mobj_SpritePtr(mobj_t const &mob);
+const de::Record *Mobj_SpritePtr(const mobj_t &mob);
 
 /**
  * Determines which of the available model definitions (if any), are in effect for the
@@ -203,7 +203,7 @@ de::Record const *Mobj_SpritePtr(mobj_t const &mob);
  *
  * @return  Active model definition for the current frame (if any).
  */
-FrameModelDef *Mobj_ModelDef(mobj_t const &mob, FrameModelDef **nextModef = nullptr,
+FrameModelDef *Mobj_ModelDef(const mobj_t &mob, FrameModelDef **nextModef = nullptr,
                         de::dfloat *interp = nullptr);
 
 /**
@@ -213,24 +213,24 @@ FrameModelDef *Mobj_ModelDef(mobj_t const &mob, FrameModelDef **nextModef = null
  *
  * @return Radius for shadow.
  */
-coord_t Mobj_ShadowRadius(mobj_t const &mob);
+coord_t Mobj_ShadowRadius(const mobj_t &mob);
 
 #endif // __CLIENT__
 
-coord_t Mobj_ApproxPointDistance(mobj_t const *mob, coord_t const *point);
+coord_t Mobj_ApproxPointDistance(const mobj_t *mob, const coord_t *point);
 
 /**
  * Returns @c true if the map-object is physically inside (and @em presently linked to)
  * some Sector of the owning Map.
  */
-bool Mobj_IsSectorLinked(mobj_t const &mob);
+bool Mobj_IsSectorLinked(const mobj_t &mob);
 
 /**
  * Returns the current "float bob" offset (if enabled); otherwise @c 0.
  */
-coord_t Mobj_BobOffset(mobj_t const &mob);
+coord_t Mobj_BobOffset(const mobj_t &mob);
 
-de::dfloat Mobj_Alpha(mobj_t const &mob);
+de::dfloat Mobj_Alpha(const mobj_t &mob);
 
 /**
  * Returns the physical radius of the mobj.
@@ -239,7 +239,7 @@ de::dfloat Mobj_Alpha(mobj_t const &mob);
  *
  * @see Mobj_VisualRadius()
  */
-coord_t Mobj_Radius(mobj_t const &mob);
+coord_t Mobj_Radius(const mobj_t &mob);
 
 /**
  * Returns the radius of the mobj as it would visually appear to be, according
@@ -249,7 +249,7 @@ coord_t Mobj_Radius(mobj_t const &mob);
  *
  * @see Mobj_Radius()
  */
-coord_t Mobj_VisualRadius(mobj_t const &mob);
+coord_t Mobj_VisualRadius(const mobj_t &mob);
 
 /**
  * Returns an axis-aligned bounding box for the mobj in map space, centered
@@ -259,6 +259,6 @@ coord_t Mobj_VisualRadius(mobj_t const &mob);
  *
  * @see Mobj_Radius()
  */
-AABoxd Mobj_Bounds(mobj_t const &mob);
+AABoxd Mobj_Bounds(const mobj_t &mob);
 
 #endif  // WORLD_P_OBJECT_H

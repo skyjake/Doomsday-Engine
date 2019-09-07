@@ -48,7 +48,7 @@ using namespace de;
 
 // m_misc.c
 #undef M_ScreenShot
-DE_EXTERN_C dint M_ScreenShot(char const *name, dint flags);
+DE_EXTERN_C dint M_ScreenShot(const char *name, dint flags);
 
 #undef Models_CacheForState
 DE_EXTERN_C void Models_CacheForState(dint stateIndex)
@@ -61,7 +61,7 @@ DE_EXTERN_C void Models_CacheForState(dint stateIndex)
 
 // r_draw.cpp
 #undef R_SetBorderGfx
-DE_EXTERN_C void R_SetBorderGfx(struct uri_s const *const *paths);
+DE_EXTERN_C void R_SetBorderGfx(const struct uri_s *const *paths);
 
 #undef Rend_CacheForMobjType
 DE_EXTERN_C void Rend_CacheForMobjType(dint num)
@@ -72,7 +72,7 @@ DE_EXTERN_C void Rend_CacheForMobjType(dint num)
     if (!((::useModels && ::precacheSkins) || ::precacheSprites)) return;
     if (num < 0 || num >= ::runtimeDefs.mobjInfo.size()) return;
 
-    de::MaterialVariantSpec const &spec = Rend_SpriteMaterialSpec();
+    const de::MaterialVariantSpec &spec = Rend_SpriteMaterialSpec();
 
     /// @todo Optimize: Traverses the entire state list!
     for (dint i = 0; i < DED_Definitions()->states.size(); ++i)
@@ -114,7 +114,7 @@ DE_EXTERN_C void R_SetViewPitch(dint consoleNum, dfloat pitch);
 DE_EXTERN_C dint R_ViewWindowGeometry(dint consoleNum, RectRaw *geometry);
 DE_EXTERN_C dint R_ViewWindowOrigin(dint consoleNum, Point2Raw *origin);
 DE_EXTERN_C dint R_ViewWindowSize(dint consoleNum, Size2Raw *size);
-DE_EXTERN_C void R_SetViewWindowGeometry(dint consoleNum, RectRaw const *geometry, dd_bool interpolate);
+DE_EXTERN_C void R_SetViewWindowGeometry(dint consoleNum, const RectRaw *geometry, dd_bool interpolate);
 DE_EXTERN_C dint R_ViewPortGeometry(dint consoleNum, RectRaw *geometry);
 DE_EXTERN_C dint R_ViewPortOrigin(dint consoleNum, Point2Raw *origin);
 DE_EXTERN_C dint R_ViewPortSize(dint consoleNum, Size2Raw *size);
@@ -124,7 +124,7 @@ DE_EXTERN_C void R_SetViewPortPlayer(dint consoleNum, dint viewPlayer);
 #undef R_SkyParams
 DE_EXTERN_C void R_SkyParams(dint layer, dint param, void *data);
 
-static inline MaterialVariantSpec const &pspriteMaterialSpec_GetSpriteInfo()
+static inline const MaterialVariantSpec &pspriteMaterialSpec_GetSpriteInfo()
 {
     return App_Resources().materialSpec(PSpriteContext, 0, 1, 0, 0, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                              0, -2, -1, false, true, true, false);
@@ -137,7 +137,7 @@ DE_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
 
     de::zapPtr(info);
 
-    auto const *sprDef = res::Sprites::get().spritePtr(id, frame);
+    const auto *sprDef = res::Sprites::get().spritePtr(id, frame);
     if (!sprDef)
     {
         LOG_RES_WARNING("Invalid sprite id:%i and/or frame:%i") << id << frame;
@@ -163,9 +163,9 @@ DE_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
             .getAnimator(pspriteMaterialSpec_GetSpriteInfo());
     matAnimator.prepare();  // Ensure we have up-to-date info.
 
-    Vec2ui const &matDimensions = matAnimator.dimensions();
+    const Vec2ui &matDimensions = matAnimator.dimensions();
     TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-    Vec2i const &texDimensions  = tex->base().origin();
+    const Vec2i &texDimensions  = tex->base().origin();
     dint const texBorder           = tex->spec().variant.border;
 
     info->geometry.origin.x    = -texDimensions.x + -texBorder;
@@ -188,7 +188,7 @@ DE_EXTERN_C scalemode_t R_ChooseScaleMode2(dint width, dint height, dint availWi
 DE_EXTERN_C scalemode_t R_ChooseScaleMode(dint width, dint height, dint availWidth, dint availHeight, scalemode_t overrideMode);
 
 #undef R_SetupFog
-DE_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, dfloat const *rgb)
+DE_EXTERN_C void R_SetupFog(dfloat start, dfloat end, dfloat density, const dfloat *rgb)
 {
     DE_ASSERT(rgb);
     Con_Execute(CMDS_DDAY, "fog on", true, false);

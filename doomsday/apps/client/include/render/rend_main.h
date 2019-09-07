@@ -264,7 +264,7 @@ de::Vec3f Rend_SkyLightColor();
  *
  * @return  Calculated result.
  */
-de::Vec3f Rend_LuminousColor(de::Vec3f const &color, de::dfloat light);
+de::Vec3f Rend_LuminousColor(const de::Vec3f &color, de::dfloat light);
 
 /**
  * Given an @a intensity determine the height of the plane glow, applying any
@@ -282,20 +282,20 @@ coord_t Rend_PlaneGlowHeight(de::dfloat intensity);
  *
  * @todo Does not belong here.
  */
-de::duint Rend_CollectAffectingLights(de::Vec3d const &point,
-    de::Vec3f const &ambientColor = de::Vec3f(1), world::ConvexSubspace *subspace = nullptr,
+de::duint Rend_CollectAffectingLights(const de::Vec3d &point,
+    const de::Vec3f &ambientColor = de::Vec3f(1), world::ConvexSubspace *subspace = nullptr,
     bool starkLight = false);
 
-void Rend_DrawVectorLight(VectorLightData const &vlight, de::dfloat alpha);
+void Rend_DrawVectorLight(const VectorLightData &vlight, de::dfloat alpha);
 
-MaterialAnimator *Rend_SpriteMaterialAnimator(de::Record const &spriteDef);
+MaterialAnimator *Rend_SpriteMaterialAnimator(const de::Record &spriteDef);
 
 /**
  * Returns the radius of the given @a sprite, as it would visually appear to be.
  *
  * @note Presently considers rotation 0 only!
  */
-de::ddouble Rend_VisualRadius(de::Record const &sprite);
+de::ddouble Rend_VisualRadius(const de::Record &sprite);
 
 /**
  * Produce a luminous object from the given @a sprite configuration. The properties of
@@ -305,29 +305,29 @@ de::ddouble Rend_VisualRadius(de::Record const &sprite);
  *
  * @return  Newly generated Lumobj otherwise @c nullptr.
  */
-Lumobj *Rend_MakeLumobj(de::Record const &sprite);
+Lumobj *Rend_MakeLumobj(const de::Record &sprite);
 
 /**
  * Selects a Material for the given map @a surface considering the current map
  * renderer configuration.
  */
-ClientMaterial *Rend_ChooseMapSurfaceMaterial(Surface const &surface);
+ClientMaterial *Rend_ChooseMapSurfaceMaterial(const Surface &surface);
 
-de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec();
-de::MaterialVariantSpec const &Rend_MapSurfaceMaterialSpec(GLenum wrapS, GLenum wrapT);
+const de::MaterialVariantSpec &Rend_MapSurfaceMaterialSpec();
+const de::MaterialVariantSpec &Rend_MapSurfaceMaterialSpec(GLenum wrapS, GLenum wrapT);
 
-TextureVariantSpec const &Rend_MapSurfaceLightmapTextureSpec();
+const TextureVariantSpec &Rend_MapSurfaceLightmapTextureSpec();
 
-TextureVariantSpec const &Rend_MapSurfaceShinyTextureSpec();
-TextureVariantSpec const &Rend_MapSurfaceShinyMaskTextureSpec();
+const TextureVariantSpec &Rend_MapSurfaceShinyTextureSpec();
+const TextureVariantSpec &Rend_MapSurfaceShinyMaskTextureSpec();
 
-void R_DivVerts(de::Vec3f *dst, de::Vec3f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge);
+void R_DivVerts(de::Vec3f *dst, const de::Vec3f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge);
 
-void R_DivTexCoords(de::Vec2f *dst, de::Vec2f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge);
+void R_DivTexCoords(de::Vec2f *dst, const de::Vec2f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge);
 
-void R_DivVertColors(de::Vec4f *dst, de::Vec4f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge);
+void R_DivVertColors(de::Vec4f *dst, const de::Vec4f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge);
 
 #endif // CLIENT_RENDER_MAIN_H

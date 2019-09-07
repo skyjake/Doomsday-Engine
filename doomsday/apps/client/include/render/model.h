@@ -45,11 +45,11 @@ struct Model : public ModelDrawable
     struct AnimSequence
     {
         String name;        ///< Name of the sequence.
-        Record const *def;  ///< Record describing the sequence (in asset metadata).
+        const Record *def;  ///< Record describing the sequence (in asset metadata).
         Timeline *timeline = nullptr; ///< Script timeline (owned).
         String sharedTimeline; ///< Name of shared timeline (if specified).
 
-        AnimSequence(String const &n, Record const &d);
+        AnimSequence(const String &n, const Record &d);
     };
 
     struct StateAnims : public Map<String, List<AnimSequence>>

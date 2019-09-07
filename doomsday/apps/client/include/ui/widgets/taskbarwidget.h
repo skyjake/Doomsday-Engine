@@ -44,13 +44,13 @@ public:
     de::ButtonWidget & logoButton();
 
     bool isOpen() const;
-    de::Rule const &shift();
+    const de::Rule &shift();
 
     // Events.
     //void viewResized();
     void update();
     void drawContent();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
 public:
     void open();

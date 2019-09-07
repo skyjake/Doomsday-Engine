@@ -84,7 +84,7 @@ public:
          * @see hasLayer()
          */
         LayerState       &layer(de::dint index);
-        LayerState const &layer(de::dint index) const;
+        const LayerState &layer(de::dint index) const;
 
         /**
          * Determines whether the specified animation model state @a index is valid.
@@ -97,7 +97,7 @@ public:
          * @see hasModel()
          */
         ModelState       &model(de::dint index);
-        ModelState const &model(de::dint index) const;
+        const ModelState &model(de::dint index) const;
 
         /**
          * Advances the animation state.
@@ -116,24 +116,24 @@ public:
      *
      * @param sky  Sky to visualize, if any (may be @c nullptr to configure layer).
      */
-    explicit SkyDrawable(world::Sky const *sky = nullptr);
+    explicit SkyDrawable(const world::Sky *sky = nullptr);
 
     /**
      * Reconfigure the drawable for visualizing the given @a sky.
      *
      * @return Reference to this drawable, for caller convenience.
      */
-    SkyDrawable &configure(world::Sky const *sky = nullptr);
+    SkyDrawable &configure(const world::Sky *sky = nullptr);
 
     /**
      * Returns a pointer to the configured sky, if any (may be @c nullptr).
      */
-    world::Sky const *sky() const;
+    const world::Sky *sky() const;
 
     /**
      * Render the sky.
      */
-    void draw(Animator const *animator = nullptr) const;
+    void draw(const Animator *animator = nullptr) const;
 
     /**
      * Cache all the assets needed for visualizing the sky.
@@ -148,7 +148,7 @@ public:
     FrameModelDef *modelDef(de::dint modelIndex) const;
 
 public:
-    static de::MaterialVariantSpec const &layerMaterialSpec(bool masked);
+    static const de::MaterialVariantSpec &layerMaterialSpec(bool masked);
 
     /// Register the console commands, variables, etc..., of this module.
     static void consoleRegister();

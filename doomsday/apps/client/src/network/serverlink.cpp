@@ -79,8 +79,8 @@ DE_PIMPL(ServerLink)
     List<TimeSpan> pings;
     int pingCounter;
     std::unique_ptr<GameProfile> serverProfile; ///< Profile used when joining.
-    std::function<void (GameProfile const *)> profileResultCallback;
-    std::function<void (Address, GameProfile const *)> profileResultCallbackWithAddress;
+    std::function<void (const GameProfile *)> profileResultCallback;
+    std::function<void (Address, const GameProfile *)> profileResultCallbackWithAddress;
     PackageDownloader downloader;
     Dispatch deferred; // for deferred actions
 
@@ -100,7 +100,7 @@ DE_PIMPL(ServerLink)
         DE_NOTIFY_PUBLIC(Discovery, i) i->serversDiscovered(self());
     }
 
-    bool handleInfoResponse(Block const &reply)
+    bool handleInfoResponse(const Block &reply)
     {
         DE_ASSERT(state == WaitingForInfoResponse);
 
@@ -166,7 +166,7 @@ DE_PIMPL(ServerLink)
                 }
                 return true;
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_NET_WARNING("Info reply from %s was invalid: %s") << svAddress << er.asText();
             }
@@ -186,7 +186,7 @@ DE_PIMPL(ServerLink)
                     i->mapOutlineReceived(svAddress, outline);
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_NET_WARNING("MapOutline reply from %s was invalid: %s") << svAddress << er.asText();
             }
@@ -202,7 +202,7 @@ DE_PIMPL(ServerLink)
      * Handles the server's response to a client's join request.
      * @return @c false to stop processing further messages.
      */
-    bool handleJoinResponse(Block const &reply)
+    bool handleJoinResponse(const Block &reply)
     {
         if (reply.size() < 5 || reply != "Enter")
         {
@@ -270,7 +270,7 @@ DE_PIMPL(ServerLink)
         }
     }
 
-    bool prepareServerProfile(Address const &host)
+    bool prepareServerProfile(const Address &host)
     {
         serverProfile.reset();
 
@@ -294,13 +294,13 @@ DE_PIMPL(ServerLink)
         return true; // profile available
     }
 
-    Servers allFound(FoundMask const &mask) const
+    Servers allFound(const FoundMask &mask) const
     {
         Servers all;
         if (finder && mask.testFlag(LocalNetwork))
         {
             // Append the ones from the server finder.
-            for (Address const &sv : finder->foundServers())
+            for (const Address &sv : finder->foundServers())
             {
                 all.insert(sv, finder->messageFromServer(sv));
             }
@@ -323,7 +323,7 @@ DE_PIMPL(ServerLink)
         return all;
     }
 
-    void reportError(String const &msg)
+    void reportError(const String &msg)
     {
         // Show the error message in a dialog box.
         MessageDialog *dlg = new MessageDialog;
@@ -374,7 +374,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
     // step is to acquire the server's game profile.
 
     acquireServerProfileAsync(info.address(),
-                              [this, info] (GameProfile const *serverProfile)
+                              [this, info] (const GameProfile *serverProfile)
     {
         auto &win = ClientWindow::main();
         win.glActivate();
@@ -395,12 +395,12 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
 
         // If additional packages are configured, set up the ad-hoc profile with the
         // local additions.
-        GameProfile const *joinProfile = serverProfile;
+        const GameProfile *joinProfile = serverProfile;
         auto const localPackages = serverProfile->game().localMultiplayerPackages();
         if (localPackages.count())
         {
             // Make sure the packages are available.
-            for (String const &pkg : localPackages)
+            for (const String &pkg : localPackages)
             {
                 if (!PackageLoader::get().select(pkg))
                 {
@@ -421,7 +421,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
         }
 
         // The server makes certain packages available for clients to download.
-        d->downloader.mountServerRepository(info, [this, joinProfile, info] (filesys::Link const *)
+        d->downloader.mountServerRepository(info, [this, joinProfile, info] (const filesys::Link *)
         {
             // Now we know all the files that the server will be providing.
             // If we are missing any of the packages, download a copy from the server.
@@ -484,8 +484,8 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
     });
 }
 
-void ServerLink::acquireServerProfileAsync(Address const &address,
-                                           const std::function<void (GameProfile const *)>& resultHandler)
+void ServerLink::acquireServerProfileAsync(const Address &address,
+                                           const std::function<void (const GameProfile *)>& resultHandler)
 {
     if (d->prepareServerProfile(address))
     {
@@ -505,22 +505,22 @@ void ServerLink::acquireServerProfileAsync(Address const &address,
     }
 }
 
-void ServerLink::acquireServerProfileAsync(String const &domain,
-                                           std::function<void (Address, GameProfile const *)> resultHandler)
+void ServerLink::acquireServerProfileAsync(const String &domain,
+                                           std::function<void (Address, const GameProfile *)> resultHandler)
 {
     d->profileResultCallbackWithAddress = std::move(resultHandler);
     discover(domain);
     LOG_NET_MSG("Querying server %s for full status") << domain;
 }
 
-void ServerLink::requestMapOutline(Address const &address)
+void ServerLink::requestMapOutline(const Address &address)
 {
     AbstractLink::connectHost(address);
     d->state = QueryingMapOutline;
     LOG_NET_VERBOSE("Querying server %s for map outline") << address;
 }
 
-void ServerLink::ping(Address const &address)
+void ServerLink::ping(const Address &address)
 {
     if (d->state != Pinging &&
         d->state != WaitingForPong)
@@ -530,7 +530,7 @@ void ServerLink::ping(Address const &address)
     }
 }
 
-void ServerLink::connectDomain(String const &domain, TimeSpan timeout)
+void ServerLink::connectDomain(const String &domain, TimeSpan timeout)
 {
     LOG_AS("ServerLink::connectDomain");
 
@@ -538,7 +538,7 @@ void ServerLink::connectDomain(String const &domain, TimeSpan timeout)
     d->state = Joining;
 }
 
-void ServerLink::connectHost(Address const &address)
+void ServerLink::connectHost(const Address &address)
 {
     LOG_AS("ServerLink::connectHost");
 
@@ -593,7 +593,7 @@ void ServerLink::disconnect()
     }
 }
 
-void ServerLink::discover(String const &domain)
+void ServerLink::discover(const String &domain)
 {
     AbstractLink::connectDomain(domain, 5.0 /*timeout*/);
 
@@ -624,7 +624,7 @@ List<Address> ServerLink::foundServers(FoundMask mask) const
                               [](const Impl::Servers::value_type &v) { return v.first; });
 }
 
-bool ServerLink::isFound(Address const &host, FoundMask mask) const
+bool ServerLink::isFound(const Address &host, FoundMask mask) const
 {
     Address const addr = checkPort(host);
     return d->allFound(mask).contains(addr);
@@ -640,14 +640,14 @@ bool ServerLink::foundServerInfo(int index, ServerInfo &info, FoundMask mask) co
     return true;
 }
 
-bool ServerLink::isServerOnLocalNetwork(Address const &host) const
+bool ServerLink::isServerOnLocalNetwork(const Address &host) const
 {
     if (!d->finder) return host.isLocal(); // Best guess...
     Address const addr = checkPort(host);
     return d->finder->foundServers().contains(addr);
 }
 
-bool ServerLink::foundServerInfo(de::Address const &host, ServerInfo &info, FoundMask mask) const
+bool ServerLink::foundServerInfo(const de::Address &host, ServerInfo &info, FoundMask mask) const
 {
     Address const addr = checkPort(host);
     Impl::Servers const all = d->allFound(mask);
@@ -656,7 +656,7 @@ bool ServerLink::foundServerInfo(de::Address const &host, ServerInfo &info, Foun
     return true;
 }
 
-Packet *ServerLink::interpret(Message const &msg)
+Packet *ServerLink::interpret(const Message &msg)
 {
     return new BlockPacket(msg);
 }
@@ -730,7 +730,7 @@ void ServerLink::handleIncomingPackets()
         std::unique_ptr<BlockPacket> packet(static_cast<BlockPacket *>(nextPacket()));
         if (!packet) break;
 
-        Block const &packetData = packet->block();
+        const Block &packetData = packet->block();
 
         switch (d->state)
         {

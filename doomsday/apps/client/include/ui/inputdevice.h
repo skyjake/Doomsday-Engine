@@ -99,7 +99,7 @@ public:
         /**
          * Change the symbolic name of the control to @a newName.
          */
-        void setName(de::String const &newName);
+        void setName(const de::String &newName);
 
         /**
          * Compose the full symbolic name of the control including the device name
@@ -173,7 +173,7 @@ public:
          * @param flagsToChange  Association flags to change.
          * @param op             Logical operation to perform.
          */
-        void setBindContextAssociation(BindContextAssociation const &flagsToChange,
+        void setBindContextAssociation(const BindContextAssociation &flagsToChange,
                                        de::FlagOp op = de::SetFlags);
 
         void clearBindContextAssociation();
@@ -195,7 +195,7 @@ public:
      *
      * @param name  Symbolic name of the device.
      */
-    InputDevice(de::String const &name);
+    InputDevice(const de::String &name);
     virtual ~InputDevice();
 
     /**
@@ -228,7 +228,7 @@ public:
      * Change the title of the device, intended for human-readable descriptions,
      * to @a newTitle.
      */
-    void setTitle(de::String const &newTitle);
+    void setTitle(const de::String &newTitle);
 
     /**
      * Returns information about the device as styled text.
@@ -251,7 +251,7 @@ public:
      *
      * @return  Index of the named axis control if found, otherwise @c -1.
      */
-    de::dint toAxisId(de::String const &name) const;
+    de::dint toAxisId(const de::String &name) const;
 
     /**
      * Returns @c true if @a id is a known axis control.
@@ -284,7 +284,7 @@ public:
      *
      * @return  Index of the named key control if found, otherwise @c -1.
      */
-    de::dint toButtonId(de::String const &name) const;
+    de::dint toButtonId(const de::String &name) const;
 
     /**
      * Returns @c true if @a id is a known button control.

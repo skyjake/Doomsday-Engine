@@ -33,7 +33,7 @@ class UpdaterSettingsDialog : public de::DialogWidget
 public:
     enum Mode { Normal = 0, WithApplyAndCheckButton = 1 };
 
-    UpdaterSettingsDialog(Mode mode = Normal, de::String const &name = "updatersettings");
+    UpdaterSettingsDialog(Mode mode = Normal, const de::String &name = "updatersettings");
 
     /**
      * Determines whether settings have changed.

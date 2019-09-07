@@ -81,7 +81,7 @@ DE_GUI_PIMPL(ProfilePickerWidget)
 
 DE_AUDIENCE_METHODS(ProfilePickerWidget, ProfileChange, EditorRequest)
 
-ProfilePickerWidget::ProfilePickerWidget(ConfigProfiles &settings, String const &description, String const &name)
+ProfilePickerWidget::ProfilePickerWidget(ConfigProfiles &settings, const String &description, const String &name)
     : ChoiceWidget(name), d(new Impl(this, settings))
 {
     d->description = description;
@@ -134,7 +134,7 @@ void ProfilePickerWidget::openMenu()
                               [this](){ remove(); });
     add(menu);
 
-    ChildWidgetOrganizer const &org = menu->menu().organizer();
+    const ChildWidgetOrganizer &org = menu->menu().organizer();
 
     // Enable or disable buttons depending on the selected profile.
     String selProf = selectedItem().data().asText();

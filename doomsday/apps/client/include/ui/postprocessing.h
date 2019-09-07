@@ -50,7 +50,7 @@ public:
      * @param fxPostShader  Name of the shader under "fx.post".
      * @param span          Duration of the fade in animation.
      */
-    void fadeInShader(de::String const &fxPostShader, de::TimeSpan span);
+    void fadeInShader(const de::String &fxPostShader, de::TimeSpan span);
 
     void fadeOut(de::TimeSpan span);
 
@@ -64,7 +64,7 @@ public:
     void glInit();
     void glDeinit();
     void update();
-    void draw(de::Mat4f const &mvpMatrix, de::GLTexture const &frame);
+    void draw(const de::Mat4f &mvpMatrix, const de::GLTexture &frame);
 
 public:
     static void consoleRegister();

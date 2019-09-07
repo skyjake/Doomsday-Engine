@@ -92,7 +92,7 @@ DE_API_TYPEDEF(Player)
     /**
      * @return The name of player @a player.
      */
-    char const *(*GetPlayerName)(int player);
+    const char *(*GetPlayerName)(int player);
 
     /**
      * @return Client identifier for player @a player.
@@ -123,7 +123,7 @@ DE_API_TYPEDEF(Player)
      * @param bindContext  Symbolic name of the binding context in which the impulse
      *                     is effective.
      */
-    void (*NewControl)(int id, impulsetype_t type, char const *name, char const *bindContext);
+    void (*NewControl)(int id, impulsetype_t type, const char *name, const char *bindContext);
 
     /**
      * Determines if one or more bindings exist for a player and impulse Id in

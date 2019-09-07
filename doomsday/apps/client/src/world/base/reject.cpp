@@ -31,7 +31,7 @@
 
 using namespace de;
 
-void BuildRejectForMap(Map const &map)
+void BuildRejectForMap(const Map &map)
 {
     int *secGroups = M_Malloc(sizeof(int) * map.sectorCount());
     int group = 0;

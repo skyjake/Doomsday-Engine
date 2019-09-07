@@ -120,7 +120,7 @@ DE_PIMPL(RemoteUser)
      *
      * @return @c false to stop processing further incoming messages (for now).
      */
-    bool handleRequest(Block const &command)
+    bool handleRequest(const Block &command)
     {
         LOG_AS("handleRequest");
 
@@ -268,7 +268,7 @@ Socket *RemoteUser::takeSocket()
     return sock;
 }
 
-void RemoteUser::send(IByteArray const &data)
+void RemoteUser::send(const IByteArray &data)
 {
     if (d->state != Disconnected && d->socket->isOpen())
     {

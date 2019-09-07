@@ -46,7 +46,7 @@ DE_GUI_PIMPL(AlertDialog)
     class AlertItem : public ui::ActionItem
     {
     public:
-        AlertItem(String const &msg, Level level)
+        AlertItem(const String &msg, Level level)
             : ui::ActionItem(ShownAsLabel, msg)
             , _level(level)
         {}
@@ -139,7 +139,7 @@ DE_GUI_PIMPL(AlertDialog)
         return App::config().getd(VAR_AUTOHIDE(), 3 * 60);
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         // Update the auto-hide timer.
         if (!fequal(autoHideAfterSeconds(), 0))
@@ -154,7 +154,7 @@ DE_GUI_PIMPL(AlertDialog)
         }
     }
 
-    void queueAlert(String const &msg, Level level)
+    void queueAlert(const String &msg, Level level)
     {
         pending.put(new AlertItem(msg, level));
     }
@@ -190,7 +190,7 @@ DE_GUI_PIMPL(AlertDialog)
         alerts->items().insert(0, alert);
     }
 
-    void widgetCreatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetCreatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         // Background is provided by the popup.
         widget.set(Background());
@@ -214,7 +214,7 @@ DE_GUI_PIMPL(AlertDialog)
                 .setRight("")
                 .setBottom("");
 
-        AlertItem const &alert = item.as<AlertItem>();
+        const AlertItem &alert = item.as<AlertItem>();
         switch (alert.level())
         {
         case Minor:
@@ -232,7 +232,7 @@ DE_GUI_PIMPL(AlertDialog)
         }
     }
 
-    void widgetUpdatedForItem(GuiWidget &widget, ui::Item const &item)
+    void widgetUpdatedForItem(GuiWidget &widget, const ui::Item &item)
     {
         DE_UNUSED(widget);
         DE_UNUSED(item);
@@ -287,7 +287,7 @@ DE_GUI_PIMPL(AlertDialog)
     }
 };
 
-AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
+AlertDialog::AlertDialog(const String &/*name*/) : d(new Impl(this))
 {
     setOutlineColor("transparent");
 
@@ -305,7 +305,7 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
     d->stylist.setContainer(*this);
     auto &gearButton = *popupButtonWidget(DialogWidget::Id1);
 
-    gearButton.setPopup([](PopupButtonWidget const &) {
+    gearButton.setPopup([](const PopupButtonWidget &) {
         return new LogSettingsDialog;
     }, ui::Left);
     gearButton.setOpener([this] (PopupWidget *pop) {
@@ -343,7 +343,7 @@ AlertDialog::AlertDialog(String const &/*name*/) : d(new Impl(this))
     d->autohideTimes->audienceForUserSelection() += [this]() { autohideTimeChanged(); };
 }
 
-void AlertDialog::newAlert(String const &message, Level level)
+void AlertDialog::newAlert(const String &message, Level level)
 {
     d->queueAlert(message, level);
 }

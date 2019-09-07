@@ -75,13 +75,13 @@ DE_EXTERN_C byte devFakeRadioUpdate;
  * @param rightEdge     Geometry for the right edge of the wall section.
  * @param ambientLight  Ambient light level/luminosity.
  */
-void Rend_DrawWallRadio(WallEdge const &leftEdge, WallEdge const &rightEdge, de::dfloat ambientLight);
+void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, de::dfloat ambientLight);
 
 /**
  * Render FakeRadio for the given subspace. Draws all shadow geometry linked to the ConvexSubspace,
  * that has not already been rendered.
  */
-void Rend_DrawFlatRadio(world::ConvexSubspace const &subspace);
+void Rend_DrawFlatRadio(const world::ConvexSubspace &subspace);
 
 /**
  * Register the console commands, variables, etc..., of this module.

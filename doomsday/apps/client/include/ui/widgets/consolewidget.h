@@ -48,7 +48,7 @@ public:
     de::CommandWidget &commandLine();
     de::LogWidget &log();
 
-    de::Rule const &shift();
+    const de::Rule &shift();
 
     bool isLogOpen() const;
 
@@ -64,11 +64,11 @@ public:
     // Events.
     void viewResized();
     void update();
-    bool handleEvent(de::Event const &event);
+    bool handleEvent(const de::Event &event);
 
     // Implements IPersistent.
     void operator>>(de::PersistentState &toState) const;
-    void operator<<(de::PersistentState const &fromState);
+    void operator<<(const de::PersistentState &fromState);
 
 public:
     void openLog();
@@ -82,7 +82,7 @@ public:
     void commandLineFocusLost();
     void focusOnCommandLine();
     void closeMenu();
-    void commandWasEntered(de::String const &);
+    void commandWasEntered(const de::String &);
     void copyLogPathToClipboard();
 
 protected:

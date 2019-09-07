@@ -67,7 +67,7 @@ public:
     void renderGameView(std::function<void (int)> renderFunc);
 
     de::GLTextureFramebuffer       & gameView();
-    de::GLTextureFramebuffer const & gameView() const;
+    const de::GLTextureFramebuffer & gameView() const;
 
     /**
      * Draws the game view and additional view layers into the current render target,

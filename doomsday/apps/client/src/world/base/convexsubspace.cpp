@@ -38,7 +38,7 @@ using namespace de;
 #ifdef __CLIENT__
 
 /// Compute the area of a triangle defined by three 2D point vectors.
-ddouble triangleArea(Vec2d const &v1, Vec2d const &v2, Vec2d const &v3)
+ddouble triangleArea(const Vec2d &v1, const Vec2d &v2, const Vec2d &v3)
 {
     Vec2d a = v2 - v1;
     Vec2d b = v3 - v1;
@@ -115,7 +115,7 @@ DE_PIMPL(ConvexSubspace)
         if(self().poly().hedgeCount() > 3)
         {
             // Splines with higher vertex counts demand checking.
-            Vertex const *base, *a, *b;
+            const Vertex *base, *a, *b;
 
             // Search for a good base.
             do
@@ -199,13 +199,13 @@ Face &ConvexSubspace::poly() const
     return *d->poly;
 }
 
-bool ConvexSubspace::contains(Vec2d const &point) const
+bool ConvexSubspace::contains(const Vec2d &point) const
 {
-    HEdge const *hedge = poly().hedge();
+    const HEdge *hedge = poly().hedge();
     do
     {
-        Vertex const &va = hedge->vertex();
-        Vertex const &vb = hedge->next().vertex();
+        const Vertex &va = hedge->vertex();
+        const Vertex &vb = hedge->next().vertex();
 
         if(((va.origin().y - point.y) * (vb.origin().x - va.origin().x) -
             (va.origin().x - point.x) * (vb.origin().y - va.origin().y)) < 0)
@@ -262,12 +262,12 @@ LoopResult ConvexSubspace::forAllPolyobjs(const std::function<LoopResult (Polyob
     return LoopContinue;
 }
 
-void ConvexSubspace::link(Polyobj const &polyobj)
+void ConvexSubspace::link(const Polyobj &polyobj)
 {
     d->polyobjs.insert(const_cast<Polyobj *>(&polyobj));
 }
 
-bool ConvexSubspace::unlink(Polyobj const &polyobj)
+bool ConvexSubspace::unlink(const Polyobj &polyobj)
 {
     dint sizeBefore = d->polyobjs.size();
     d->polyobjs.remove(const_cast<Polyobj *>(&polyobj));
@@ -303,7 +303,7 @@ void ConvexSubspace::setValidCount(dint newValidCount)
 
 #ifdef __CLIENT__
 
-Vec2d const &ConvexSubspace::worldGridOffset() const
+const Vec2d &ConvexSubspace::worldGridOffset() const
 {
     return d->worldGridOffset;
 }
@@ -386,7 +386,7 @@ dint ConvexSubspace::fanVertexCount() const
     return poly().hedgeCount() + (fanBase()? 0 : 2);
 }
 
-static void accumReverbForWallSections(HEdge const *hedge,
+static void accumReverbForWallSections(const HEdge *hedge,
                                        dfloat envSpaceAccum[NUM_AUDIO_ENVIRONMENTS],
                                        dfloat &total)
 {
@@ -394,7 +394,7 @@ static void accumReverbForWallSections(HEdge const *hedge,
     if(!hedge || !hedge->hasMapElement())
         return;
 
-    LineSideSegment const &seg = hedge->mapElementAs<LineSideSegment>();
+    const LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
     if(!seg.lineSide().hasSections() || !seg.lineSide().middle().hasMaterial())
         return;
 
@@ -423,7 +423,7 @@ bool ConvexSubspace::updateAudioEnvironment()
     dfloat contrib[NUM_AUDIO_ENVIRONMENTS]; de::zap(contrib);
 
     // Space is the rough volume of the bounding box.
-    AABoxd const &bounds = poly().bounds();
+    const AABoxd &bounds = poly().bounds();
     env.space = dint(subsector().sector().ceiling().height() - subsector().sector().floor().height())
               * ((bounds.maxX - bounds.minX) * (bounds.maxY - bounds.minY));
 
@@ -462,7 +462,7 @@ bool ConvexSubspace::updateAudioEnvironment()
     dint damping = 0;
     for(dint i = AE_FIRST; i < NUM_AUDIO_ENVIRONMENTS; ++i)
     {
-        ::AudioEnvironment const &envDef = S_AudioEnvironment(AudioEnvironmentId(i));
+        const ::AudioEnvironment &envDef = S_AudioEnvironment(AudioEnvironmentId(i));
         volume  += envDef.volume  * contrib[i];
         decay   += envDef.decay   * contrib[i];
         damping += envDef.damping * contrib[i];
@@ -474,7 +474,7 @@ bool ConvexSubspace::updateAudioEnvironment()
     return true;
 }
 
-AudioEnvironment const &ConvexSubspace::audioEnvironment() const
+const AudioEnvironment &ConvexSubspace::audioEnvironment() const
 {
     return d->audioEnvironment;
 }

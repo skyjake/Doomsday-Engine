@@ -70,7 +70,7 @@ void ClientRootWidget::dispatchLatestMousePosition()
     ClientApp::windowSystem().dispatchLatestMousePosition();
 }
 
-void ClientRootWidget::handleEventAsFallback(Event const &event)
+void ClientRootWidget::handleEventAsFallback(const Event &event)
 {
     // The bindings might have use for this event.
     ClientApp::inputSystem().tryEvent(event, "global");

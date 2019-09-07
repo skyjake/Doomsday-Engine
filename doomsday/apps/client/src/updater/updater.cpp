@@ -116,7 +116,7 @@ public:
 
     virtual ~UpdaterStatusWidget() = default;
 
-    void showIcon(DotPath const &path)
+    void showIcon(const DotPath &path)
     {
         _icon->setImageColor(ClientApp::windowSystem().style().colors().colorf(path));
     }

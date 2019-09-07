@@ -48,7 +48,7 @@ DE_PIMPL_NOREF(SfxChannel)
     dfloat frequency = 0;           ///< Frequency adjustment: 1.0 is normal.
     dfloat volume = 0;              ///< Sound volume: 1.0 is max.
 
-    mobj_t const *emitter = nullptr;///< Mobj emitter for the sound, if any (not owned).
+    const mobj_t *emitter = nullptr;///< Mobj emitter for the sound, if any (not owned).
     coord_t origin[3];              ///< Emit from here (synced with emitter).
 
     sfxbuffer_t *buffer = nullptr;  ///< Assigned sound buffer, if any (not owned).
@@ -105,7 +105,7 @@ sfxbuffer_t &SfxChannel::buffer()
     throw MissingBufferError("SfxChannel::buffer", "No sound buffer is assigned");
 }
 
-sfxbuffer_t const &SfxChannel::buffer() const
+const sfxbuffer_t &SfxChannel::buffer() const
 {
     return const_cast<SfxChannel *>(this)->buffer();
 }
@@ -154,17 +154,17 @@ void SfxChannel::setVolume(dfloat newVolume)
     d->volume = newVolume;
 }
 
-mobj_t const *SfxChannel::emitter() const
+const mobj_t *SfxChannel::emitter() const
 {
     return d->emitter;
 }
 
-void SfxChannel::setEmitter(mobj_t const *newEmitter)
+void SfxChannel::setEmitter(const mobj_t *newEmitter)
 {
     d->emitter = newEmitter;
 }
 
-void SfxChannel::setFixedOrigin(Vec3d const &newOrigin)
+void SfxChannel::setFixedOrigin(const Vec3d &newOrigin)
 {
     d->origin[0] = newOrigin.x;
     d->origin[1] = newOrigin.y;
@@ -384,7 +384,7 @@ SfxChannel *SfxChannels::tryFindVacant(bool use3D, dint bytes, dint rate, dint s
     for (SfxChannel *ch : d->all)
     {
         if (!ch->hasBuffer()) continue;
-        sfxbuffer_t const &sbuf = ch->buffer();
+        const sfxbuffer_t &sbuf = ch->buffer();
 
         if ((sbuf.flags & SFXBF_PLAYING)
            || use3D != ((sbuf.flags & SFXBF_3D) != 0)

@@ -23,7 +23,7 @@
 
 using namespace de;
 
-HatInputControl::HatInputControl(String const &name)
+HatInputControl::HatInputControl(const String &name)
 {
     setName(name);
 }

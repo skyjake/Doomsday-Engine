@@ -88,7 +88,7 @@ struct ddevent_t
         } angle;
         struct {
             int id;                       ///< Console that originated the event.
-            char const *name;             ///< Symbolic name of the event.
+            const char *name;             ///< Symbolic name of the event.
         } symbolic;
         struct {
             dd_bool gained;                ///< Gained or lost focus.

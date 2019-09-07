@@ -321,20 +321,20 @@ static void drawArrayElement(int index)
     {
         if (arrays[AR_TEXCOORD0 + i].enabled)
         {
-            Vec2f const &texCoord = reinterpret_cast<Vec2f const *>(arrays[AR_TEXCOORD0 + i].data)[index];
+            const Vec2f &texCoord = reinterpret_cast<const Vec2f *>(arrays[AR_TEXCOORD0 + i].data)[index];
             DGL_TexCoord2fv(byte(i), texCoord.constPtr());
         }
     }
 
     if (arrays[AR_COLOR].enabled)
     {
-        Vec4ub const &colorCoord = reinterpret_cast<Vec4ub const *>(arrays[AR_COLOR].data)[index];
+        const Vec4ub &colorCoord = reinterpret_cast<const Vec4ub *>(arrays[AR_COLOR].data)[index];
         DGL_Color4ubv(colorCoord.constPtr());
     }
 
     if (arrays[AR_VERTEX].enabled)
     {
-        Vec3f const &posCoord = reinterpret_cast<Vec3f const *>(arrays[AR_VERTEX].data)[index];
+        const Vec3f &posCoord = reinterpret_cast<const Vec3f *>(arrays[AR_VERTEX].data)[index];
         DGL_Vertex3fv(posCoord.constPtr());
     }
 }
@@ -351,7 +351,7 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
                             modef.subCount(),
                             subnumber));
     }
-    SubmodelDef const &sub = modef.subModelDef(subnumber);
+    const SubmodelDef &sub = modef.subModelDef(subnumber);
 
     int curFrame = sub.frame;
     if (modef.flags & MFF_IDFRAME)
@@ -366,7 +366,7 @@ static FrameModelFrame &visibleModelFrame(FrameModelDef &modef, int subnumber, i
  * Render a set of 3D model primitives using the given data.
  */
 static void drawPrimitives(rendcmd_t mode,
-                           FrameModel::Primitives const &primitives,
+                           const FrameModel::Primitives &primitives,
                            Vec3f *posCoords,
                            Vec4ub *colorCoords,
                            Vec2f *texCoords = 0)
@@ -397,10 +397,10 @@ static void drawPrimitives(rendcmd_t mode,
         break;
     }
 
-    FrameModel::Primitive::Element const *firstElem = nullptr;
+    const FrameModel::Primitive::Element *firstElem = nullptr;
     bool joining = false;
 
-    auto submitElement = [mode, &firstElem] (FrameModel::Primitive::Element const &elem)
+    auto submitElement = [mode, &firstElem] (const FrameModel::Primitive::Element &elem)
     {
         if (!firstElem)
         {
@@ -420,7 +420,7 @@ static void drawPrimitives(rendcmd_t mode,
     // begins with the same winding.
 
     DGL_Begin(DGL_TRIANGLE_STRIP);
-    for (FrameModel::Primitive const &prim : primitives)
+    for (const FrameModel::Primitive &prim : primitives)
     {
         DGLenum const primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
 
@@ -437,7 +437,7 @@ static void drawPrimitives(rendcmd_t mode,
         if (primType == DGL_TRIANGLE_STRIP)
         {
             lastLength = prim.elements.size();
-            for (FrameModel::Primitive::Element const &elem : prim.elements)
+            for (const FrameModel::Primitive::Element &elem : prim.elements)
             {
                 submitElement(elem);
                 if (joining)
@@ -468,8 +468,8 @@ static void drawPrimitives(rendcmd_t mode,
 /**
  * Interpolate linearly between two sets of vertices.
  */
-static void Mod_LerpVertices(float inter, int count, FrameModelFrame const &from,
-    FrameModelFrame const &to, Vec3f *posOut, Vec3f *normOut)
+static void Mod_LerpVertices(float inter, int count, const FrameModelFrame &from,
+    const FrameModelFrame &to, Vec3f *posOut, Vec3f *normOut)
 {
     DE_ASSERT(&from.model == &to.model); // sanity check.
     DE_ASSERT(!activeLod || &activeLod->model == &from.model); // sanity check.
@@ -521,7 +521,7 @@ static void Mod_MirrorCoords(dint count, Vec3f *coords, dint axis)
  *
  * @todo Construct a rotation matrix once and use it for all lights.
  */
-static Vec3f rotateLightVector(VectorLightData const &vlight, dfloat yaw, dfloat pitch,
+static Vec3f rotateLightVector(const VectorLightData &vlight, dfloat yaw, dfloat pitch,
     bool invert = false)
 {
     dfloat rotated[3]; vlight.direction.decompose(rotated);
@@ -540,8 +540,8 @@ static Vec3f rotateLightVector(VectorLightData const &vlight, dfloat yaw, dfloat
 /**
  * Calculate vertex lighting.
  */
-static void Mod_VertexColors(Vec4ub *out, dint count, Vec3f const *normCoords,
-    duint lightListIdx, duint maxLights, Vec4f const &ambient, bool invert,
+static void Mod_VertexColors(Vec4ub *out, dint count, const Vec3f *normCoords,
+    duint lightListIdx, duint maxLights, const Vec4f &ambient, bool invert,
     dfloat rotateYaw, dfloat rotatePitch)
 {
     Vec4f const saturated(1, 1, 1, 1);
@@ -551,14 +551,14 @@ static void Mod_VertexColors(Vec4ub *out, dint count, Vec3f const *normCoords,
         if (activeLod && !activeLod->hasVertex(i))
             continue;
 
-        Vec3f const &normal = *normCoords;
+        const Vec3f &normal = *normCoords;
 
         // Accumulate contributions from all affecting lights.
         dint numProcessed = 0;
         Vec3f accum[2];  // Begin with total darkness [color, extra].
         ClientApp::renderSystem().forAllVectorLights(lightListIdx, [&maxLights, &invert, &rotateYaw
                                                       , &rotatePitch, &normal
-                                                      , &accum, &numProcessed] (VectorLightData const &vlight)
+                                                      , &accum, &numProcessed] (const VectorLightData &vlight)
         {
             numProcessed += 1;
 
@@ -602,7 +602,7 @@ static void Mod_FullBrightVertexColors(dint count, Vec4ub *colorCoords, dfloat a
 /**
  * Set all the colors into the array to the same values.
  */
-static void Mod_FixedVertexColors(dint count, Vec4ub *colorCoords, Vec4ub const &color)
+static void Mod_FixedVertexColors(dint count, Vec4ub *colorCoords, const Vec4ub &color)
 {
     DE_ASSERT(colorCoords);
     for (; count-- > 0; colorCoords++)
@@ -614,7 +614,7 @@ static void Mod_FixedVertexColors(dint count, Vec4ub *colorCoords, Vec4ub const 
 /**
  * Calculate cylindrically mapped, shiny texture coordinates.
  */
-static void Mod_ShinyCoords(Vec2f *out, int count, Vec3f const *normCoords,
+static void Mod_ShinyCoords(Vec2f *out, int count, const Vec3f *normCoords,
     float normYaw, float normPitch, float shinyAng, float shinyPnt, float reactSpeed)
 {
     for (int i = 0; i < count; ++i, out++, normCoords++)
@@ -703,18 +703,18 @@ static int chooseSkin(FrameModelDef &mf, int submodel, int id, int selector, int
     return skin;
 }
 
-static inline MaterialVariantSpec const &modelSkinMaterialSpec()
+static inline const MaterialVariantSpec &modelSkinMaterialSpec()
 {
     return ClientApp::resources().materialSpec(ModelSkinContext, 0, 0, 0, 0, GL_REPEAT, GL_REPEAT,
                                  1, -2, -1, true, true, false, false);
 }
 
-static void drawSubmodel(uint number, vissprite_t const &spr)
+static void drawSubmodel(uint number, const vissprite_t &spr)
 {
-    drawmodelparams_t const &parm = *VS_MODEL(&spr);
+    const drawmodelparams_t &parm = *VS_MODEL(&spr);
     int const zSign = (spr.pose.mirrored? -1 : 1);
     FrameModelDef *mf = parm.mf, *mfNext = parm.nextMF;
-    SubmodelDef const &smf = mf->subModelDef(number);
+    const SubmodelDef &smf = mf->subModelDef(number);
 
     FrameModel &mdl = App_Resources().model(smf.modelId);
 
@@ -997,7 +997,7 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     }
     DGL_Enable(DGL_TEXTURE_2D);
 
-    FrameModel::Primitives const &primitives =
+    const FrameModel::Primitives &primitives =
         activeLod? activeLod->primitives : mdl.primitives();
 
     // Render using multiple passes?
@@ -1093,9 +1093,9 @@ static void drawSubmodel(uint number, vissprite_t const &spr)
     GL_BlendMode(BM_NORMAL);
 }
 
-void Rend_DrawModel(vissprite_t const &spr)
+void Rend_DrawModel(const vissprite_t &spr)
 {
-    drawmodelparams_t const &parm = *VS_MODEL(&spr);
+    const drawmodelparams_t &parm = *VS_MODEL(&spr);
 
     DE_ASSERT(inited);
     DE_ASSERT_IN_MAIN_THREAD();
@@ -1140,7 +1140,7 @@ void Rend_DrawModel(vissprite_t const &spr)
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
         coord_t const distFromViewer = de::abs(spr.pose.distance);
-        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (VectorLightData const &vlight)
+        ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if (distFromViewer < 1600 - 8)
             {
@@ -1156,14 +1156,14 @@ void Rend_DrawModel(vissprite_t const &spr)
     }
 }
 
-TextureVariantSpec const &Rend_ModelDiffuseTextureSpec(bool noCompression)
+const TextureVariantSpec &Rend_ModelDiffuseTextureSpec(bool noCompression)
 {
     return ClientApp::resources().textureSpec(TC_MODELSKIN_DIFFUSE,
         (noCompression? TSF_NO_COMPRESSION : 0), 0, 0, 0, GL_REPEAT, GL_REPEAT,
         1, -2, -1, true, true, false, false);
 }
 
-TextureVariantSpec const &Rend_ModelShinyTextureSpec()
+const TextureVariantSpec &Rend_ModelShinyTextureSpec()
 {
     return ClientApp::resources().textureSpec(TC_MODELSKIN_REFLECTION,
         TSF_NO_COMPRESSION, 0, 0, 0, GL_REPEAT, GL_REPEAT, 1, -2, -1, false,

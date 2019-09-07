@@ -64,7 +64,7 @@ DE_API_TYPEDEF(F)
      *                  written here (i.e., @c true= the file was @em not loaded
      *                  from some resource of the current game).
      */
-    AutoStr*        (*ReadFileIntoString)(Str const *path, dd_bool *isCustom);
+    AutoStr*        (*ReadFileIntoString)(const Str *path, dd_bool *isCustom);
 
     /**
      * Returns a pointer to the global WAD lump index.

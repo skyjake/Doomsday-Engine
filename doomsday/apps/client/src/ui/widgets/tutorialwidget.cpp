@@ -83,7 +83,7 @@ DE_GUI_PIMPL(TutorialWidget)
         flashing.setInterval(FLASH_SPAN);
     }
 
-    void startHighlight(GuiWidget const &w)
+    void startHighlight(const GuiWidget &w)
     {
         highlight->rule().setRect(w.rule());
         highlight->setOpacity(0);
@@ -467,7 +467,7 @@ void TutorialWidget::flashHighlight()
     d->flash();
 }
 
-bool TutorialWidget::handleEvent(Event const &event)
+bool TutorialWidget::handleEvent(const Event &event)
 {
     GuiWidget::handleEvent(event);
 

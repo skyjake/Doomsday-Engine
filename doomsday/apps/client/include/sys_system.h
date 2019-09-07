@@ -52,7 +52,7 @@ void Sys_Sleep(de::dint millisecs);
  */
 void Sys_BlockUntilRealTime(de::duint realTimeMs);
 
-de::dint Sys_CriticalMessage(char const *msg);
-de::dint Sys_CriticalMessagef(char const *format, ...) PRINTF_F(1,2);
+de::dint Sys_CriticalMessage(const char *msg);
+de::dint Sys_CriticalMessagef(const char *format, ...) PRINTF_F(1,2);
 
 #endif  // DE_CORE_SYSTEM_H

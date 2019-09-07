@@ -99,7 +99,7 @@ typedef struct {
 } drawtextstate_t;
 
 static void drawChar(dbyte ch, float posX, float posY, const AbstractFont &font, int alignFlags); //, short textFlags);
-static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright);
+static void drawFlash(const Point2Raw *origin, const Size2Raw *size, bool bright);
 
 static int initedFont = false;
 
@@ -174,7 +174,7 @@ void FR_SetFont(fontid_t num)
             fr.fontNum = num;
             return;
         }
-        catch (ClientResources::UnknownFontIdError const &)
+        catch (const ClientResources::UnknownFontIdError &)
         {}
     }
     else
@@ -451,7 +451,7 @@ int FR_CharHeight(dbyte ch)
     return 0;
 }
 
-int FR_SingleLineHeight(char const *text)
+int FR_SingleLineHeight(const char *text)
 {
     errorIfNotInited("FR_SingleLineHeight");
     if (fr.fontNum == 0 || !text)
@@ -463,7 +463,7 @@ int FR_SingleLineHeight(char const *text)
     return font.glyphPosCoords((dbyte)text[0]).height();
 }
 
-int FR_GlyphTopToAscent(char const *text)
+int FR_GlyphTopToAscent(const char *text)
 {
     errorIfNotInited("FR_GlyphTopToAscent");
     if (fr.fontNum == 0 || !text)
@@ -507,7 +507,7 @@ struct TextFragment
 
             // Just add them together.
             int i = 0;
-            char const *ch = text;
+            const char *ch = text;
             dbyte c;
             while (i++ < length && (c = *ch++) != 0 && c != '\n')
             {
@@ -521,7 +521,7 @@ struct TextFragment
 
             // Find the greatest height.
             int i = 0;
-            char const *ch = text;
+            const char *ch = text;
             dbyte c;
             while (i++ < length && (c = *ch++) != 0 && c != '\n')
             {
@@ -860,7 +860,7 @@ static void drawChar(dbyte ch, float x, float y, const AbstractFont &font, int a
     DGL_Translatef(-x, -y, 0);
 }
 
-static void drawFlash(Point2Raw const *origin, Size2Raw const *size, bool bright)
+static void drawFlash(const Point2Raw *origin, const Size2Raw *size, bool bright)
 {
     float fsize = 4.f + bright;
     float fw = fsize * size->width  / 2.0f;
@@ -1085,7 +1085,7 @@ static void parseParamaterBlock(const char **strPtr, drawtextstate_t* state, int
                         state->fontNum = App_Resources().fontManifest(res::makeUri(buf)).uniqueId();
                         continue;
                     }
-                    catch (Resources::MissingResourceManifestError const &)
+                    catch (const Resources::MissingResourceManifestError &)
                     {}
                 }
 
@@ -1620,14 +1620,14 @@ void FR_Init(void)
 }
 
 #undef Fonts_ResolveUri
-DE_EXTERN_C fontid_t Fonts_ResolveUri(uri_s const *uri)
+DE_EXTERN_C fontid_t Fonts_ResolveUri(const uri_s *uri)
 {
     if (!uri) return NOFONTID;
     try
     {
-        return App_Resources().fontManifest(*reinterpret_cast<res::Uri const *>(uri)).uniqueId();
+        return App_Resources().fontManifest(*reinterpret_cast<const res::Uri *>(uri)).uniqueId();
     }
-    catch (Resources::MissingResourceManifestError const &)
+    catch (const Resources::MissingResourceManifestError &)
     {}
     return NOFONTID;
 }

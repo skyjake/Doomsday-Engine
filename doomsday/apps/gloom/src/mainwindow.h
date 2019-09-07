@@ -26,7 +26,7 @@
 class MainWindow : public de::BaseWindow
 {
 public:
-    MainWindow(de::String const &id = "main");
+    MainWindow(const de::String &id = "main");
 
     AppRootWidget &root();
 
@@ -38,7 +38,7 @@ public:
     void postDraw() override;
 
 protected:
-//    bool handleFallbackEvent(de::Event const &event) override;
+//    bool handleFallbackEvent(const de::Event &event) override;
 
 private:
     DE_PRIVATE(d)

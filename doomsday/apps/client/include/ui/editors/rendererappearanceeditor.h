@@ -36,7 +36,7 @@ public:
     RendererAppearanceEditor();
 
     void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator << (const de::PersistentState &fromState);
 
 private:
     DE_PRIVATE(d)

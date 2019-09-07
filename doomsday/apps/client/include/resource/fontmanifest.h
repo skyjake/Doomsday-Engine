@@ -48,13 +48,13 @@ public:
     DE_ERROR(MissingFontError);
 
     /// Notified when the manifest is about to be deleted.
-    DE_DEFINE_AUDIENCE(Deletion, void fontManifestBeingDeleted(FontManifest const &manifest))
+    DE_DEFINE_AUDIENCE(Deletion, void fontManifestBeingDeleted(const FontManifest &manifest))
 
     /// Notified whenever the unique identifier changes.
     DE_DEFINE_AUDIENCE(UniqueIdChange, void fontManifestUniqueIdChanged(FontManifest &manifest))
 
 public:
-    FontManifest(PathTree::NodeArgs const &args);
+    FontManifest(const PathTree::NodeArgs &args);
 
     /**
      * Returns the owning scheme of the manifest.
@@ -66,7 +66,7 @@ public:
      *
      * @see scheme(), FontScheme::name()
      */
-    String const &schemeName() const;
+    const String &schemeName() const;
 
     /**
      * Compose a URI of the form "scheme:path" for the manifest.

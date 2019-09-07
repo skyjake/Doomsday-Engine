@@ -28,9 +28,9 @@
 class PackagesDialog : public de::DialogWidget
 {
 public:
-    PackagesDialog(de::String const &titleText = "");
+    PackagesDialog(const de::String &titleText = "");
 
-//    void setGame(de::String const &gameId);
+//    void setGame(const de::String &gameId);
     void setProfile(const GameProfile &profile);
     void setSelectedPackages(de::StringList packages);
     de::StringList selectedPackages() const;

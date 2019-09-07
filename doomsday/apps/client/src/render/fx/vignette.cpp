@@ -39,7 +39,7 @@ static byte  vignetteEnabled  = true;
 static float vignetteDarkness = 1.0f;
 static float vignetteWidth    = 1.0f;
 
-static void Vignette_Render(Rectanglei const &viewRect, float fov)
+static void Vignette_Render(const Rectanglei &viewRect, float fov)
 {
     const int DIVS = 60;
     vec2f_t vec;

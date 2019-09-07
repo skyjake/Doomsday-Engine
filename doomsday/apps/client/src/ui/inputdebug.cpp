@@ -92,7 +92,7 @@ static void initKeyMappingsOnce()
     }
 }
 
-static void initDrawStateForVisual(Point2Raw const *origin)
+static void initDrawStateForVisual(const Point2Raw *origin)
 {
     FR_PushAttrib();
 
@@ -105,7 +105,7 @@ static void initDrawStateForVisual(Point2Raw const *origin)
     }
 }
 
-static void endDrawStateForVisual(Point2Raw const *origin)
+static void endDrawStateForVisual(const Point2Raw *origin)
 {
     // Ignore zero offsets.
     if (origin && !(origin->x == 0 && origin->y == 0))
@@ -161,7 +161,7 @@ static dbyte modKey(int ddkey)
     return dbyte(ddkey);
 }
 
-void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw const *_origin,
+void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, const Point2Raw *_origin,
     RectRaw *geometry)
 {
 #define BORDER 4
@@ -177,7 +177,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
         geometry->size.width = geometry->size.height = 0;
     }
 
-    ButtonInputControl const &button = device.button(buttonID);
+    const ButtonInputControl &button = device.button(buttonID);
 
     Point2Raw origin;
     origin.x = _origin? _origin->x : 0;
@@ -271,7 +271,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, Point2Raw c
 #undef BORDER
 }
 
-void Rend_RenderAxisStateVisual(InputDevice & /*device*/, int /*axisID*/, Point2Raw const *origin,
+void Rend_RenderAxisStateVisual(InputDevice & /*device*/, int /*axisID*/, const Point2Raw *origin,
     RectRaw *geometry)
 {
     if (geometry)
@@ -280,14 +280,14 @@ void Rend_RenderAxisStateVisual(InputDevice & /*device*/, int /*axisID*/, Point2
         geometry->size.width = geometry->size.height = 0;
     }
 
-    //inputdevaxis_t const &axis = device.axis(axisID);
+    //const inputdevaxis_t &axis = device.axis(axisID);
 
     initDrawStateForVisual(origin);
 
     endDrawStateForVisual(origin);
 }
 
-void Rend_RenderHatStateVisual(InputDevice & /*device*/, int /*hatID*/, Point2Raw const *origin,
+void Rend_RenderHatStateVisual(InputDevice & /*device*/, int /*hatID*/, const Point2Raw *origin,
     RectRaw *geometry)
 {
     if (geometry)
@@ -296,7 +296,7 @@ void Rend_RenderHatStateVisual(InputDevice & /*device*/, int /*hatID*/, Point2Ra
         geometry->size.width = geometry->size.height = 0;
     }
 
-    //inputdevhat_t const &hat = device.hat(hatID);
+    //const inputdevhat_t &hat = device.hat(hatID);
 
     initDrawStateForVisual(origin);
 
@@ -331,7 +331,7 @@ struct inputdev_layout_t
     uint numGroups;
 };
 
-static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t const *group,
+static void drawControlGroup(InputDevice &device, const inputdev_layout_controlgroup_t *group,
     Point2Raw *_origin, RectRaw *retGeometry)
 {
 #define SPACING  2
@@ -352,7 +352,7 @@ static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t
     RectRaw ctrlGeom{};
     for (uint i = 0; i < group->numControls; ++i)
     {
-        inputdev_layout_control_t const *ctrl = group->controls + i;
+        const inputdev_layout_control_t *ctrl = group->controls + i;
 
         switch (ctrl->type)
         {
@@ -391,8 +391,8 @@ static void drawControlGroup(InputDevice &device, inputdev_layout_controlgroup_t
 /**
  * Render a visual representation of the current state of the specified device.
  */
-void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t const *layout,
-    Point2Raw const *origin, Size2Raw *retVisualDimensions)
+void Rend_RenderInputDeviceStateVisual(InputDevice &device, const inputdev_layout_t *layout,
+    const Point2Raw *origin, Size2Raw *retVisualDimensions)
 {
 #define SPACING  2
 
@@ -436,7 +436,7 @@ void Rend_RenderInputDeviceStateVisual(InputDevice &device, inputdev_layout_t co
     // Draw control groups.
     for (uint i = 0; i < layout->numGroups; ++i)
     {
-        inputdev_layout_controlgroup_t const *grp = &layout->groups[i];
+        const inputdev_layout_controlgroup_t *grp = &layout->groups[i];
         RectRaw grpGeometry{};
 
         drawControlGroup(device, grp, &offset, &grpGeometry);

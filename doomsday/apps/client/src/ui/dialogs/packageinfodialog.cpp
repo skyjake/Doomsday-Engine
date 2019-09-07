@@ -154,7 +154,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
         area.setContentSize(layout.width() + rightLayout.width(), contentHeight);
     }
 
-    void setPackageIcon(Image const &iconImage)
+    void setPackageIcon(const Image &iconImage)
     {
         icon->setImage(iconImage);
         icon->setImageColor(Vec4f(1));
@@ -172,7 +172,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
             return false;
         }
 
-        Game const &game = Games::get()[compatibleGame];
+        const Game &game = Games::get()[compatibleGame];
 
         res::LumpCatalog catalog;
         catalog.setPackages(game.requiredPackages() + StringList({packageId}));
@@ -203,7 +203,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
             for (const auto *ext : {".jpg", ".jpeg", ".png"})
             {
                 String const imgPath = packagePath / "icon" + ext;
-                if (ImageFile const *img = FS::tryLocate<ImageFile const>(imgPath))
+                if (const ImageFile *img = FS::tryLocate<ImageFile const>(imgPath))
                 {
                     Image iconImage = img->image();
                     if (iconImage.width() > 512 || iconImage.height() > 512)
@@ -217,14 +217,14 @@ DE_GUI_PIMPL(PackageInfoDialog)
                 }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_RES_WARNING("Failed to use package icon image: %s") << er.asText();
         }
         return false;
     }
 
-    void useIconFile(String const &packagePath)
+    void useIconFile(const String &packagePath)
     {
         if (!useIconFromPackage(packagePath))
         {
@@ -232,19 +232,19 @@ DE_GUI_PIMPL(PackageInfoDialog)
         }
     }
 
-    bool setup(File const *file)
+    bool setup(const File *file)
     {
         self().setOutlineColor("popup.outline");
 
         if (!file) return false; // Not a package?
 
         // Look up the package metadata.
-        Record const &names = file->objectNamespace();
+        const Record &names = file->objectNamespace();
         if (!names.has(Package::VAR_PACKAGE))
         {
             return false;
         }
-        Record const &meta = names.subrecord(Package::VAR_PACKAGE);
+        const Record &meta = names.subrecord(Package::VAR_PACKAGE);
 
         packageId       = Package::versionedIdentifierForFile(*file);
         nativePath      = file->correspondingNativePath();
@@ -359,8 +359,8 @@ DE_GUI_PIMPL(PackageInfoDialog)
             if (meta.has("requires"))
             {
                 msg += "\n\nRequires:";
-                ArrayValue const &reqs = meta.geta("requires");
-                for (Value const *val : reqs.elements())
+                const ArrayValue &reqs = meta.geta("requires");
+                for (const Value *val : reqs.elements())
                 {
                     msg += "\n - " _E(>) + val->asText() + _E(<);
                 }
@@ -368,8 +368,8 @@ DE_GUI_PIMPL(PackageInfoDialog)
             if (meta.has("dataFiles") && meta.geta("dataFiles").size() > 0)
             {
                 msg += "\n\nData files:";
-                ArrayValue const &files = meta.geta("dataFiles");
-                for (Value const *val : files.elements())
+                const ArrayValue &files = meta.geta("dataFiles");
+                for (const Value *val : files.elements())
                 {
                     msg += "\n - " _E(>) + val->asText() + _E(<);
                 }
@@ -407,7 +407,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
         return true;
     }
 
-    static String visibleFamily(String const &family)
+    static String visibleFamily(const String &family)
     {
         if (family.isEmpty()) return "Other";
         return family.upperFirstChar();
@@ -420,7 +420,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
      * @param anchor        Popup menu anchor.
      * @param playableOnly  Only show profiles that can be started at the moment.
      */
-    void openProfileMenu(RuleRectangle const &anchor, bool playableOnly)
+    void openProfileMenu(const RuleRectangle &anchor, bool playableOnly)
     {
         if (profileMenu) return;
 
@@ -535,7 +535,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
     }
 };
 
-PackageInfoDialog::PackageInfoDialog(String const &packageId, Mode mode)
+PackageInfoDialog::PackageInfoDialog(const String &packageId, Mode mode)
     : DialogWidget("packagepopup")
     , d(new Impl(this, mode))
 {
@@ -545,7 +545,7 @@ PackageInfoDialog::PackageInfoDialog(String const &packageId, Mode mode)
     }
 }
 
-PackageInfoDialog::PackageInfoDialog(File const *packageFile, Mode mode)
+PackageInfoDialog::PackageInfoDialog(const File *packageFile, Mode mode)
     : DialogWidget("packagepopup")
     , d(new Impl(this, mode))
 {

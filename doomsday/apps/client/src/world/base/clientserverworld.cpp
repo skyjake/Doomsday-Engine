@@ -220,7 +220,7 @@ public:
 
 protected:
     /// Observes Map UnclosedSectorFound.
-    void unclosedSectorFound(Sector &sector, Vec2d const &nearPoint)
+    void unclosedSectorFound(Sector &sector, const Vec2d &nearPoint)
     {
         _unclosedSectors.insert(std::make_pair(sector.indexInArchive(), nearPoint.toVec2i()));
     }
@@ -232,7 +232,7 @@ protected:
     }
 
     /// Observes Map Deletion.
-    void mapBeingDeleted(BaseMap const &map)
+    void mapBeingDeleted(const BaseMap &map)
     {
         DE_ASSERT(&map == _map);  // sanity check.
         DE_UNUSED(map);
@@ -282,10 +282,10 @@ dd_bool ddMapSetup;
 // Should we be caching successfully loaded maps?
 //static byte mapCache = true; // cvar
 
-static char const *mapCacheDir = "mapcache/";
+static const char *mapCacheDir = "mapcache/";
 
 /// Determine the identity key for maps loaded from the specified @a sourcePath.
-static String cacheIdForMap(String const &sourcePath)
+static String cacheIdForMap(const String &sourcePath)
 {
     DE_ASSERT(!sourcePath.isEmpty());
     dushort id = 0;
@@ -367,7 +367,7 @@ DE_PIMPL(ClientServerWorld)
      *
      * @return  The newly converted map (if any).
      */
-    world::Map *convertMap(res::MapManifest const &mapManifest,
+    world::Map *convertMap(const res::MapManifest &mapManifest,
                            MapConversionReporter * reporter = nullptr)
     {
         // We require a map converter for this.
@@ -503,7 +503,7 @@ DE_PIMPL(ClientServerWorld)
         LOG_MAP_NOTE("%s") << map->elementSummaryAsStyledText();
 
         // See what MapInfo says about this map.
-        Record const &mapInfo = map->mapInfo();
+        const Record &mapInfo = map->mapInfo();
 
         map->_ambientLightLevel = mapInfo.getf("ambient") * 255;
         map->_globalGravity     = mapInfo.getf("gravity");
@@ -512,7 +512,7 @@ DE_PIMPL(ClientServerWorld)
 #ifdef __CLIENT__
         // Reconfigure the sky.
         defn::Sky skyDef;
-        if (Record const *def = DED_Definitions()->skies.tryFind("id", mapInfo.gets("skyId")))
+        if (const Record *def = DED_Definitions()->skies.tryFind("id", mapInfo.gets("skyId")))
         {
             skyDef = *def;
         }
@@ -549,7 +549,7 @@ DE_PIMPL(ClientServerWorld)
         res::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : res::makeUri("Maps:"));
         if (gx.FinalizeMapChange)
         {
-            gx.FinalizeMapChange(reinterpret_cast<uri_s const *>(&mapUri));
+            gx.FinalizeMapChange(reinterpret_cast<const uri_s *>(&mapUri));
         }
 
         if (gameTime > 20000000 / TICSPERSEC)
@@ -572,11 +572,11 @@ DE_PIMPL(ClientServerWorld)
 
             // Determine the "invoid" status.
             client.inVoid = true;
-            if (mobj_t const *mob = plr.publicData().mo)
+            if (const mobj_t *mob = plr.publicData().mo)
             {
                 if (Mobj_HasSubsector(*mob))
                 {
-                    auto const &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
+                    const auto &subsec = Mobj_Subsector(*mob).as<ClientSubsector>();
                     if (   mob->origin[2] >= subsec.visFloor  ().heightSmoothed()
                         && mob->origin[2] <  subsec.visCeiling().heightSmoothed() - 4)
                     {
@@ -777,7 +777,7 @@ DE_PIMPL(ClientServerWorld)
     {
         DE_ASSERT(hand != nullptr && self().hasMap());
 
-        viewdata_t const *viewData = &::viewPlayer->viewport();
+        const viewdata_t *viewData = &::viewPlayer->viewport();
         hand->setOrigin(viewData->current.origin + viewData->frontVec.xzy() * handDistance);
     }
 #endif // 0
@@ -807,7 +807,7 @@ world::Map &ClientServerWorld::map() const
     return World::map().as<world::Map>();
 }
 
-bool ClientServerWorld::changeMap(res::Uri const &mapUri)
+bool ClientServerWorld::changeMap(const res::Uri &mapUri)
 {
     res::MapManifest *mapDef = nullptr;
 
@@ -873,15 +873,15 @@ Scheduler &ClientServerWorld::scheduler()
     return d->scheduler;
 }
 
-Record const &ClientServerWorld::mapInfoForMapUri(res::Uri const &mapUri) const
+const Record &ClientServerWorld::mapInfoForMapUri(const res::Uri &mapUri) const
 {
     // Is there a MapInfo definition for the given URI?
-    if (Record const *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
+    if (const Record *def = DED_Definitions()->mapInfos.tryFind("id", mapUri.compose()))
     {
         return *def;
     }
     // Is there is a default definition (for all maps)?
-    if (Record const *def = DED_Definitions()->mapInfos.tryFind("id", res::Uri("Maps", Path("*")).compose()))
+    if (const Record *def = DED_Definitions()->mapInfos.tryFind("id", res::Uri("Maps", Path("*")).compose()))
     {
         return *def;
     }
@@ -964,7 +964,7 @@ void ClientServerWorld::endFrame()
         // If the HueCircle is active update the current edit color.
         if (HueCircle *hueCircle = SBE_HueCircle())
         {
-            viewdata_t const *viewData = &viewPlayer->viewport();
+            const viewdata_t *viewData = &viewPlayer->viewport();
             d->hand->setEditColor(hueCircle->colorAt(viewData->frontVec));
         }
     }

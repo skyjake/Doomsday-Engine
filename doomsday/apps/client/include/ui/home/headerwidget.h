@@ -36,8 +36,8 @@ public:
     de::PanelWidget &infoPanel();
     de::PopupButtonWidget &menuButton();
 
-    void setLogoImage(de::DotPath const &imageId);
-    void setLogoBackground(de::DotPath const &imageId);
+    void setLogoImage(const de::DotPath &imageId);
+    void setLogoBackground(const de::DotPath &imageId);
 
 private:
     DE_PRIVATE(d)

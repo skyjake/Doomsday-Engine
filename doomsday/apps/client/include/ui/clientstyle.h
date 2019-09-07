@@ -57,8 +57,8 @@ public:
      *
      * @return Lgoo image.
      */
-    static de::Image makeGameLogo(Game const &            game,
-                                  res::LumpCatalog const &catalog,
+    static de::Image makeGameLogo(const Game &            game,
+                                  const res::LumpCatalog &catalog,
                                   LogoFlags               flags = DefaultLogoFlags);
 
 private:

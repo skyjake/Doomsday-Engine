@@ -34,9 +34,9 @@ public:
     HomeWidget();
 
     void viewResized() override;
-    bool handleEvent(de::Event const &event) override;
-    bool dispatchEvent(de::Event const &event,
-                       bool (de::Widget::*memberFunc)(de::Event const &)) override;
+    bool handleEvent(const de::Event &event) override;
+    bool dispatchEvent(const de::Event &event,
+                       bool (de::Widget::*memberFunc)(const de::Event &)) override;
 
     void moveOnscreen(de::TimeSpan span = 1.5);
     void moveOffscreen(de::TimeSpan span = 1.5);
@@ -49,7 +49,7 @@ public:
 
     // Implements IPersistent.
     void operator >> (de::PersistentState &toState) const;
-    void operator << (de::PersistentState const &fromState);
+    void operator << (const de::PersistentState &fromState);
 
     static de::PopupWidget *makeSettingsPopup();
 

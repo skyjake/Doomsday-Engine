@@ -61,7 +61,7 @@ public:
      * Returns the sound buffer assigned to the channel.
      */
     sfxbuffer_t       &buffer();
-    sfxbuffer_t const &buffer() const;
+    const sfxbuffer_t &buffer() const;
     void setBuffer(sfxbuffer_t *newBuffer);
 
     /**
@@ -88,10 +88,10 @@ public:
     /**
      * Returns the attributed sound emitter if any (may be @c nullptr).
      */
-    struct mobj_s const *emitter() const;
-    void setEmitter(struct mobj_s const *newEmitter);
+    const struct mobj_s *emitter() const;
+    void setEmitter(const struct mobj_s *newEmitter);
 
-    void setFixedOrigin(de::Vec3d const &newOrigin);
+    void setFixedOrigin(const de::Vec3d &newOrigin);
 
     /**
      * Returns the @em effective origin point in the soundstage for the channel. This point

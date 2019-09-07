@@ -101,14 +101,14 @@ struct DGLState
         stack.pop_back();
     }
 
-    void loadMatrix(Mat4f const &mat)
+    void loadMatrix(const Mat4f &mat)
     {
         auto &stack = matrixStacks[matrixMode];
         DE_ASSERT(!stack.isEmpty());
         stack.back() = mat;
     }
 
-    void multMatrix(Mat4f const &mat)
+    void multMatrix(const Mat4f &mat)
     {
         auto &stack = matrixStacks[matrixMode];
         DE_ASSERT(!stack.isEmpty());
@@ -129,7 +129,7 @@ Mat4f DGL_Matrix(DGLenum matrixMode)
     return dgl().matrixStacks[dgl().stackIndex(matrixMode)].back();
 }
 
-void DGL_SetModulationColor(Vec4f const &modColor)
+void DGL_SetModulationColor(const Vec4f &modColor)
 {
     dgl().textureModulationColor = modColor;
 }
@@ -525,7 +525,7 @@ void GL_SetVSync(dd_bool on)
 }
 
 #undef DGL_SetScissor
-DE_EXTERN_C void DGL_SetScissor(RectRaw const *rect)
+DE_EXTERN_C void DGL_SetScissor(const RectRaw *rect)
 {
     if(!rect) return;
 
@@ -1058,13 +1058,13 @@ void DGL_SetPatch(patchid_t id, DGLint wrapS, DGLint wrapT)
         if(!manifest.hasTexture()) return;
 
         res::Texture &tex = manifest.texture();
-        TextureVariantSpec const &texSpec =
+        const TextureVariantSpec &texSpec =
             Rend_PatchTextureSpec(0 | (tex.isFlagged(res::Texture::Monochrome)        ? TSF_MONOCHROME : 0)
                                     | (tex.isFlagged(res::Texture::UpscaleAndSharpen) ? TSF_UPSCALE_AND_SHARPEN : 0),
                                   DGL_ToGLWrapCap(wrapS), DGL_ToGLWrapCap(wrapT));
         GL_BindTexture(static_cast<ClientTexture &>(tex).prepareVariant(texSpec));
     }
-    catch(res::TextureScheme::NotFoundError const &er)
+    catch(const res::TextureScheme::NotFoundError &er)
     {
         // Log but otherwise ignore this error.
         LOG_RES_WARNING("Cannot use patch ID %i: %s") << id << er.asText();
@@ -1122,7 +1122,7 @@ void DGL_LoadIdentity(void)
 }
 
 #undef DGL_LoadMatrix
-void DGL_LoadMatrix(float const *matrix4x4)
+void DGL_LoadMatrix(const float *matrix4x4)
 {
     //DE_ASSERT_IN_RENDER_THREAD();
 
@@ -1173,7 +1173,7 @@ void DGL_Fogi(DGLenum property, int value)
 }
 
 #undef DGL_Fogfv
-void DGL_Fogfv(DGLenum property, float const *values)
+void DGL_Fogfv(DGLenum property, const float *values)
 {
     switch (property)
     {
@@ -1202,7 +1202,7 @@ void DGL_Fogf(DGLenum property, float value)
 }
 
 #undef DGL_DeleteTextures
-void DGL_DeleteTextures(int num, DGLuint const *names)
+void DGL_DeleteTextures(int num, const DGLuint *names)
 {
     if(!num || !names) return;
 
@@ -1219,7 +1219,7 @@ int DGL_Bind(DGLuint texture)
 
 #undef DGL_NewTextureWithParams
 DGLuint DGL_NewTextureWithParams(dgltexformat_t format, int width, int height,
-    uint8_t const *pixels, int flags, int minFilter, int magFilter,
+    const uint8_t *pixels, int flags, int minFilter, int magFilter,
     int anisoFilter, int wrapS, int wrapT)
 {
     return GL_NewTextureWithParams(format, width, height, pixels, flags, 0,
@@ -1249,7 +1249,7 @@ DE_EXTERN_C void DGL_Color3fv(const float* vec);
 DE_EXTERN_C void DGL_Color4f(float r, float g, float b, float a);
 DE_EXTERN_C void DGL_Color4fv(const float* vec);
 DE_EXTERN_C void DGL_TexCoord2f(byte target, float s, float t);
-DE_EXTERN_C void DGL_TexCoord2fv(byte target, float const *vec);
+DE_EXTERN_C void DGL_TexCoord2fv(byte target, const float *vec);
 DE_EXTERN_C void DGL_Vertex2f(float x, float y);
 DE_EXTERN_C void DGL_Vertex2fv(const float* vec);
 DE_EXTERN_C void DGL_Vertex3f(float x, float y, float z);

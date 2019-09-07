@@ -33,7 +33,7 @@ struct RightClickHandler : public GuiWidget::IEventHandler
     RightClickHandler(VariableGroupEditor *editor) : editor(*editor)
     {}
 
-    bool handleEvent(GuiWidget &widget, Event const &event)
+    bool handleEvent(GuiWidget &widget, const Event &event)
     {
         switch (widget.handleMouseClick(event, MouseEvent::Right))
         {
@@ -65,7 +65,7 @@ DE_PIMPL(VariableGroupEditor)
     GuiWidget *content;
     GuiWidget *header;
     GridLayout layout;
-    Rule const *firstColumnWidth;
+    const Rule *firstColumnWidth;
 
     Impl(Public *i, IOwner *owner)
         : Base(i)
@@ -93,8 +93,8 @@ DE_PIMPL(VariableGroupEditor)
     }
 };
 
-VariableGroupEditor::VariableGroupEditor(IOwner *owner, String const &name,
-                                         String const &titleText, GuiWidget *header)
+VariableGroupEditor::VariableGroupEditor(IOwner *owner, const String &name,
+                                         const String &titleText, GuiWidget *header)
     : FoldPanelWidget(name)
     , d(new Impl(this, owner))
 {
@@ -167,7 +167,7 @@ ButtonWidget &VariableGroupEditor::resetButton()
     return *d->resetButton;
 }
 
-Rule const &VariableGroupEditor::firstColumnWidth() const
+const Rule &VariableGroupEditor::firstColumnWidth() const
 {
     return *d->firstColumnWidth;
 }
@@ -192,7 +192,7 @@ void VariableGroupEditor::addSpace()
     d->layout << Const(0);
 }
 
-LabelWidget *VariableGroupEditor::addLabel(String const &text, LabelType labelType)
+LabelWidget *VariableGroupEditor::addLabel(const String &text, LabelType labelType)
 {
     LabelWidget *w = LabelWidget::newWithText(text, d->content);
     if (labelType == SingleCell)
@@ -207,7 +207,7 @@ LabelWidget *VariableGroupEditor::addLabel(String const &text, LabelType labelTy
     return w;
 }
 
-CVarToggleWidget *VariableGroupEditor::addToggle(char const *cvar, String const &label)
+CVarToggleWidget *VariableGroupEditor::addToggle(const char *cvar, const String &label)
 {
     CVarToggleWidget *w = new CVarToggleWidget(cvar, label);
     d->content->add(w);
@@ -215,7 +215,7 @@ CVarToggleWidget *VariableGroupEditor::addToggle(char const *cvar, String const 
     return w;
 }
 
-CVarChoiceWidget *VariableGroupEditor::addChoice(char const *cvar, ui::Direction opening)
+CVarChoiceWidget *VariableGroupEditor::addChoice(const char *cvar, ui::Direction opening)
 {
     CVarChoiceWidget *w = new CVarChoiceWidget(cvar);
     w->setOpeningDirection(opening);
@@ -225,7 +225,7 @@ CVarChoiceWidget *VariableGroupEditor::addChoice(char const *cvar, ui::Direction
     return w;
 }
 
-CVarSliderWidget *VariableGroupEditor::addSlider(char const *cvar)
+CVarSliderWidget *VariableGroupEditor::addSlider(const char *cvar)
 {
     auto *w = new CVarSliderWidget(cvar);
     d->content->add(w);
@@ -233,7 +233,7 @@ CVarSliderWidget *VariableGroupEditor::addSlider(char const *cvar)
     return w;
 }
 
-CVarSliderWidget *VariableGroupEditor::addSlider(char const *cvar, Ranged const &range, double step, int precision)
+CVarSliderWidget *VariableGroupEditor::addSlider(const char *cvar, const Ranged &range, double step, int precision)
 {
     auto *w = addSlider(cvar);
     w->setRange(range, step);
@@ -241,7 +241,7 @@ CVarSliderWidget *VariableGroupEditor::addSlider(char const *cvar, Ranged const 
     return w;
 }
 
-VariableToggleWidget *VariableGroupEditor::addToggle(Variable &var, String const &label)
+VariableToggleWidget *VariableGroupEditor::addToggle(Variable &var, const String &label)
 {
     auto *w = new VariableToggleWidget(label, var);
     d->content->add(w);
@@ -249,7 +249,7 @@ VariableToggleWidget *VariableGroupEditor::addToggle(Variable &var, String const
     return w;
 }
 
-VariableSliderWidget *VariableGroupEditor::addSlider(Variable &var, Ranged const &range, double step, int precision)
+VariableSliderWidget *VariableGroupEditor::addSlider(Variable &var, const Ranged &range, double step, int precision)
 {
     auto *w = new VariableSliderWidget(var, range, step);
     w->setPrecision(precision);
@@ -284,7 +284,7 @@ void VariableGroupEditor::commit()
     // Calculate the maximum rule for the first column items.
     for (int i = 0; i < d->layout.gridSize().y; ++i)
     {
-        GuiWidget const *w = d->layout.at(Vec2i(0, i));
+        const GuiWidget *w = d->layout.at(Vec2i(0, i));
         if (w && d->layout.widgetCellSpan(*w) == 1)
         {
             changeRef(d->firstColumnWidth,

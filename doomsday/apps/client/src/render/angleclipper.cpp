@@ -35,7 +35,7 @@ namespace internal
     /**
      * @param point  @em View-relative point in map-space.
      */
-    static inline binangle_t pointToAngle(Vec2d const &point)
+    static inline binangle_t pointToAngle(const Vec2d &point)
     {
         // Shift for more accuracy;
         return bamsAtan2(dint(point.y * 100), dint(point.x * 100));
@@ -454,7 +454,7 @@ DE_PIMPL_NOREF(AngleClipper)
         occNodes.release(orange);
     }
 
-    Occluder *newOcclusionRange(binangle_t from, binangle_t to, Vec3f const &normal,
+    Occluder *newOcclusionRange(binangle_t from, binangle_t to, const Vec3f &normal,
         bool topHalf)
     {
         // Perhaps a previously-used occluder can be reused?
@@ -479,7 +479,7 @@ DE_PIMPL_NOREF(AngleClipper)
     /**
      * @pre The given range is "safe".
      */
-    void addOcclusionRange(binangle_t from, binangle_t to, Vec3f const &normal,
+    void addOcclusionRange(binangle_t from, binangle_t to, const Vec3f &normal,
         bool topHalf)
     {
         // Is the range valid?
@@ -534,7 +534,7 @@ DE_PIMPL_NOREF(AngleClipper)
      * If necessary, cut the given range in two.
      */
     void safeAddOcclusionRange(binangle_t startAngle, binangle_t endAngle,
-                               Vec3f const &normal, bool tophalf)
+                               const Vec3f &normal, bool tophalf)
     {
         // Is this range already clipped?
         if(!safeCheckRange(startAngle, endAngle)) return;
@@ -775,7 +775,7 @@ dint AngleClipper::isAngleVisible(binangle_t bang) const
 {
     if(::devNoCulling) return true;
 
-    for(Impl::Clipper const *crange = d->clipHead; crange; crange = crange->next)
+    for(const Impl::Clipper *crange = d->clipHead; crange; crange = crange->next)
     {
         if(bang > crange->from && bang < crange->to)
             return false;
@@ -784,7 +784,7 @@ dint AngleClipper::isAngleVisible(binangle_t bang) const
     return true;  // Not occluded.
 }
 
-dint AngleClipper::isPointVisible(Vec3d const &point) const
+dint AngleClipper::isPointVisible(const Vec3d &point) const
 {
     if(::devNoCulling) return true;
 
@@ -794,7 +794,7 @@ dint AngleClipper::isPointVisible(Vec3d const &point) const
     if(!isAngleVisible(angle)) return false;
 
     // Not clipped by the clipnodes. Perhaps it's occluded by an orange.
-    for(Impl::Occluder const *orange = d->occHead; orange; orange = orange->next)
+    for(const Impl::Occluder *orange = d->occHead; orange; orange = orange->next)
     {
         if(angle >= orange->from && angle <= orange->to)
         {
@@ -811,7 +811,7 @@ dint AngleClipper::isPointVisible(Vec3d const &point) const
     return true;  // Not occluded.
 }
 
-dint AngleClipper::isPolyVisible(Face const &poly) const
+dint AngleClipper::isPolyVisible(const Face &poly) const
 {
     DE_ASSERT(poly.isConvex());
 
@@ -826,7 +826,7 @@ dint AngleClipper::isPolyVisible(Face const &poly) const
     // Find angles to all corners.
     Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
     dint n = 0;
-    HEdge const *hedge = poly.hedge();
+    const HEdge *hedge = poly.hedge();
     do
     {
         d->angleBuf[n++] = pointToAngle(hedge->origin() - eyeOrigin);
@@ -887,7 +887,7 @@ dint AngleClipper::safeAddRange(binangle_t from, binangle_t to)
     return true;
 }
 
-void AngleClipper::addRangeFromViewRelPoints(Vec2d const &from, Vec2d const &to)
+void AngleClipper::addRangeFromViewRelPoints(const Vec2d &from, const Vec2d &to)
 {
     Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
     safeAddRange(pointToAngle(to   - eyeOrigin),
@@ -895,7 +895,7 @@ void AngleClipper::addRangeFromViewRelPoints(Vec2d const &from, Vec2d const &to)
 }
 
 /// @todo Optimize:: Check if the given line is already occluded?
-void AngleClipper::addViewRelOcclusion(Vec2d const &from, Vec2d const &to,
+void AngleClipper::addViewRelOcclusion(const Vec2d &from, const Vec2d &to,
     coord_t height, bool topHalf)
 {
     // Calculate the occlusion plane normal.
@@ -928,7 +928,7 @@ void AngleClipper::addViewRelOcclusion(Vec2d const &from, Vec2d const &to,
     d->safeAddOcclusionRange(startAngle, endAngle, normal, topHalf);
 }
 
-dint AngleClipper::checkRangeFromViewRelPoints(Vec2d const &from, Vec2d const &to)
+dint AngleClipper::checkRangeFromViewRelPoints(const Vec2d &from, const Vec2d &to)
 {
     if(::devNoCulling) return true;
 

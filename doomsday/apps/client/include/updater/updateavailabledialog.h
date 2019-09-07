@@ -39,7 +39,7 @@ public:
     UpdateAvailableDialog(de::Version const& latestVersion, de::String changeLogUri);
 
 public:
-    void showResult(de::Version const &latestVersion, de::String changeLogUri);
+    void showResult(const de::Version &latestVersion, de::String changeLogUri);
     void showWhatsNew();
     void editSettings();
 

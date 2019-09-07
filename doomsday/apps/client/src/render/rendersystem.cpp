@@ -344,7 +344,7 @@ DE_PIMPL(RenderSystem)
                 .define(SReg::FloatCVar, "rend-sky-distance", 1600);
     }
 
-    void packageLoaded(String const &packageId)
+    void packageLoaded(const String &packageId)
     {
         FS::FoundFiles found;
         App::packageLoader().package(packageId).findPartialPath("shaders.dei", found);
@@ -355,7 +355,7 @@ DE_PIMPL(RenderSystem)
         }
     }
 
-    void aboutToUnloadPackage(String const &packageId)
+    void aboutToUnloadPackage(const String &packageId)
     {
         ClientApp::shaders().removeAllFromPackage(packageId);
     }
@@ -378,7 +378,7 @@ DE_PIMPL(RenderSystem)
 //        }
 //    }
 
-    void loadShaders(File const &defs)
+    void loadShaders(const File &defs)
     {
         LOG_MSG("Loading shader definitions from %s") << defs.description();
         ClientApp::shaders().addFromInfo(defs);
@@ -390,7 +390,7 @@ DE_PIMPL(RenderSystem)
      */
     void loadImages()
     {
-        //Folder const &renderPack = App::fileSystem().find<Folder>("renderer.pack");
+        //const Folder &renderPack = App::fileSystem().find<Folder>("renderer.pack");
         //images.addFromInfo(renderPack.locate<File>("images.dei"));
     }
 };
@@ -427,7 +427,7 @@ ImageBank &RenderSystem::images()
     return d->images;
 }
 
-GLUniform const &RenderSystem::uMapTime() const
+const GLUniform &RenderSystem::uMapTime() const
 {
     return d->uMapTime;
 }
@@ -457,7 +457,7 @@ SkyDrawable &RenderSystem::sky()
     return d->sky;
 }
 
-void RenderSystem::timeChanged(Clock const &)
+void RenderSystem::timeChanged(const Clock &)
 {
     // Update the current map time for shaders.
     d->uMapTime = ClientApp::world().time();
@@ -523,7 +523,7 @@ ProjectionList &RenderSystem::findSurfaceProjectionList(duint *listIdx, bool sor
     return d->projector.findOrCreateList(listIdx, sortByLuma);
 }
 
-LoopResult RenderSystem::forAllSurfaceProjections(duint listIdx, std::function<LoopResult (ProjectedTextureData const &)> func) const
+LoopResult RenderSystem::forAllSurfaceProjections(duint listIdx, std::function<LoopResult (const ProjectedTextureData &)> func) const
 {
     if(ProjectionList *list = d->projector.tryFindList(listIdx))
     {
@@ -541,7 +541,7 @@ VectorLightList &RenderSystem::findVectorLightList(duint *listIdx)
     return d->vlights.findOrCreateList(listIdx);
 }
 
-LoopResult RenderSystem::forAllVectorLights(duint listIdx, std::function<LoopResult (VectorLightData const &)> func)
+LoopResult RenderSystem::forAllVectorLights(duint listIdx, std::function<LoopResult (const VectorLightData &)> func)
 {
     if(VectorLightList *list = d->vlights.tryFindList(listIdx))
     {

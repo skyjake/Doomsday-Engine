@@ -57,13 +57,13 @@ public:
     /**
      * Change the first half-edge in the face geometry.
      */
-    void setHEdge(HEdge const *newHEdge);
+    void setHEdge(const HEdge *newHEdge);
 
     /**
      * Returns the axis-aligned bounding box which encompases all the vertexes
      * which define the face geometry.
      */
-    AABoxd const &bounds() const;
+    const AABoxd &bounds() const;
 
     /**
      * Update the face geometry's axis-aligned bounding box to encompass all vertexes.
@@ -74,7 +74,7 @@ public:
      * Returns the point described by the average origin coordinates of all the
      * vertexes which define the geometry.
      */
-    Vec2d const &center() const;
+    const Vec2d &center() const;
 
     /**
      * Update the center point of the geometry.

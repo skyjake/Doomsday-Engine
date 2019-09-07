@@ -97,7 +97,7 @@ DE_PIMPL(RemoteFeedUser)
                     });
                 }
             }
-            catch (Error const &er)
+            catch (const Error &er)
             {
                 LOG_NET_ERROR("Error during query: %s") << er.asText();
             }
@@ -142,7 +142,7 @@ DE_PIMPL(RemoteFeedUser)
                 socket->sendPacket(*response);
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_ERROR("Error during file transfer to %s: %s")
                     << socket->peerAddress().asText()
@@ -150,7 +150,7 @@ DE_PIMPL(RemoteFeedUser)
         }
     }
 
-    Packet *handleQueryAsync(RemoteFeedQueryPacket const &query)
+    Packet *handleQueryAsync(const RemoteFeedQueryPacket &query)
     {
         // Note: This is executed in a background thread.
         try
@@ -166,7 +166,7 @@ DE_PIMPL(RemoteFeedUser)
             case RemoteFeedQueryPacket::ListFiles:
                 response.reset(new RemoteFeedMetadataPacket);
                 response->setId(query.id());
-                if (auto const *folder = FS::tryLocate<Folder const>(query.path()))
+                if (const auto *folder = FS::tryLocate<Folder const>(query.path()))
                 {
                     response->addFolder(*folder);
                 }
@@ -179,7 +179,7 @@ DE_PIMPL(RemoteFeedUser)
 
             case RemoteFeedQueryPacket::FileContents: {
                 Transfer xfer(query.id());
-                if (auto const *file = FS::tryLocate<File const>(query.path()))
+                if (const auto *file = FS::tryLocate<File const>(query.path()))
                 {
                     *file >> xfer.data;
                 }
@@ -195,7 +195,7 @@ DE_PIMPL(RemoteFeedUser)
                 break; }
             }
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_NET_ERROR("Error while handling remote feed query from %s: %s")
                     << query.from().asText() << er.asText();

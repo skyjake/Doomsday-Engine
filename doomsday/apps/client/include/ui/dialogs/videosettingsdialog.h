@@ -27,7 +27,7 @@
 class VideoSettingsDialog : public de::DialogWidget
 {
 public:
-    VideoSettingsDialog(de::String const &name = "videosettings");
+    VideoSettingsDialog(const de::String &name = "videosettings");
 
 protected:
     void resetToDefaults();

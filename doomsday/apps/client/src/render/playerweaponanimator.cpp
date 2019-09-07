@@ -46,7 +46,7 @@ DE_PIMPL_NOREF(PlayerWeaponAnimator)
         : player(plr)
     {}
 
-    void setupAsset(String const &identifier)
+    void setupAsset(const String &identifier)
     {
         this->identifier = identifier;
         angleOffset = Vec2f();
@@ -87,7 +87,7 @@ PlayerWeaponAnimator::PlayerWeaponAnimator(ClientPlayer *plr)
     : d(new Impl(plr))
 {}
 
-void PlayerWeaponAnimator::setAsset(String const &identifier)
+void PlayerWeaponAnimator::setAsset(const String &identifier)
 {
     d->setupAsset(identifier);
 }
@@ -97,7 +97,7 @@ String PlayerWeaponAnimator::assetId() const
     return d->identifier;
 }
 
-void PlayerWeaponAnimator::stateChanged(state_s const *state)
+void PlayerWeaponAnimator::stateChanged(const state_s *state)
 {
     if (d->animator)
     {
@@ -149,7 +149,7 @@ bool PlayerWeaponAnimator::hasModel() const
     return bool(d->animator);
 }
 
-Model const *PlayerWeaponAnimator::model() const
+const Model *PlayerWeaponAnimator::model() const
 {
     if (!hasModel()) return nullptr;
     return &d->animator->model();

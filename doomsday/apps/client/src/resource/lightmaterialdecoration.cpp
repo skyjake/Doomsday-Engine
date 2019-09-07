@@ -26,8 +26,8 @@
 using namespace de;
 
 LightMaterialDecoration::AnimationStage::AnimationStage(int tics, float variance,
-    Vec2f const &origin, float elevation, Vec3f const &color, float radius,
-    float haloRadius, LightRange const &lightLevels, ClientTexture *ceilingTexture,
+    const Vec2f &origin, float elevation, const Vec3f &color, float radius,
+    float haloRadius, const LightRange &lightLevels, ClientTexture *ceilingTexture,
     ClientTexture *floorTexture, ClientTexture *texture, ClientTexture *flareTexture, int sysFlareIdx)
     : Stage(tics, variance)
     , origin     (origin)
@@ -43,7 +43,7 @@ LightMaterialDecoration::AnimationStage::AnimationStage(int tics, float variance
     , sysFlareIdx(sysFlareIdx)
 {}
 
-LightMaterialDecoration::AnimationStage::AnimationStage(AnimationStage const &other)
+LightMaterialDecoration::AnimationStage::AnimationStage(const AnimationStage &other)
     : Stage(other)
     , origin     (other.origin)
     , elevation  (other.elevation)
@@ -59,7 +59,7 @@ LightMaterialDecoration::AnimationStage::AnimationStage(AnimationStage const &ot
 {}
 
 LightMaterialDecoration::AnimationStage *
-LightMaterialDecoration::AnimationStage::fromDef(Record const &stageDef)
+LightMaterialDecoration::AnimationStage::fromDef(const Record &stageDef)
 {
     ClientTexture *lightmapUp   = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapUp"  ))));
     ClientTexture *lightmapDown = static_cast<ClientTexture *>(res::Textures::get().tryFindTextureByResourceUri("Lightmaps", res::makeUri(stageDef.gets("lightmapDown"))));
@@ -104,8 +104,8 @@ String LightMaterialDecoration::AnimationStage::description() const
 
 // ------------------------------------------------------------------------------------
 
-LightMaterialDecoration::LightMaterialDecoration(Vec2i const &patternSkip,
-    Vec2i const &patternOffset, bool useInterpolation)
+LightMaterialDecoration::LightMaterialDecoration(const Vec2i &patternSkip,
+    const Vec2i &patternOffset, bool useInterpolation)
     : Decoration(patternSkip, patternOffset)
     , _useInterpolation(useInterpolation)
 {}
@@ -113,7 +113,7 @@ LightMaterialDecoration::LightMaterialDecoration(Vec2i const &patternSkip,
 LightMaterialDecoration::~LightMaterialDecoration()
 {}
 
-LightMaterialDecoration *LightMaterialDecoration::fromDef(Record const &definition)
+LightMaterialDecoration *LightMaterialDecoration::fromDef(const Record &definition)
 {
     defn::MaterialDecoration decorDef(definition);
 
@@ -126,7 +126,7 @@ LightMaterialDecoration *LightMaterialDecoration::fromDef(Record const &definiti
     return decor;
 }
 
-int LightMaterialDecoration::addStage(AnimationStage const &stageToCopy)
+int LightMaterialDecoration::addStage(const AnimationStage &stageToCopy)
 {
     _stages.append(new AnimationStage(stageToCopy));
     return _stages.count() - 1;

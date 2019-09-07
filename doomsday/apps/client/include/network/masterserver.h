@@ -42,7 +42,7 @@ public:
 public:
     MasterWorker();
 
-    void newJob(Action action, de::Record const &data = de::Record());
+    void newJob(Action action, const de::Record &data = de::Record());
 
     bool isAllDone() const;
     bool isOngoing() const;

@@ -56,8 +56,8 @@ public:
         Event();
         Event(WallEdge &owner, de::ddouble distance = 0);
 
-        Event &operator = (Event const &other);
-        bool operator < (Event const &other) const;
+        Event &operator = (const Event &other);
+        bool operator < (const Event &other) const;
         de::ddouble distance() const;
         de::Vec3d origin() const;
 
@@ -71,22 +71,22 @@ public:
      *
      * @param hedge  Assumed to have a mapped LineSideSegment with sections.
      */
-    WallEdge(WallSpec const &spec, de::HEdge &hedge, int edge);
+    WallEdge(const WallSpec &spec, de::HEdge &hedge, int edge);
 
     virtual ~WallEdge();
 
-    inline Event const &operator [] (EventIndex index) const {
+    inline const Event &operator [] (EventIndex index) const {
         return at(index);
     }
 
-    de::Vec3d const &pOrigin() const;
-    de::Vec3d const &pDirection() const;
+    const de::Vec3d &pOrigin() const;
+    const de::Vec3d &pDirection() const;
 
     de::Vec2f materialOrigin() const;
 
     de::Vec3f normal() const;
 
-    WallSpec const &spec() const;
+    const WallSpec &spec() const;
 
     inline LineSide &lineSide() const {
         return lineSideSegment().lineSide();
@@ -100,10 +100,10 @@ public:
     bool isValid() const;
 
     /// Implement IEdge.
-    Event const &first() const;
+    const Event &first() const;
 
     /// Implement IEdge.
-    Event const &last() const;
+    const Event &last() const;
 
     int divisionCount() const;
 
@@ -111,12 +111,12 @@ public:
 
     EventIndex lastDivision() const;
 
-    inline Event const &bottom() const { return first(); }
-    inline Event const &top   () const { return last();  }
+    inline const Event &bottom() const { return first(); }
+    inline const Event &top   () const { return last();  }
 
-    //Events const &events() const;
+    //const Events &events() const;
 
-    Event const &at(EventIndex index) const;
+    const Event &at(EventIndex index) const;
 
 private:
     struct Impl;

@@ -31,7 +31,7 @@
 class CommandAction : public de::Action
 {
 public:
-    CommandAction(de::String const &cmd, int commandSource = CMDS_DDAY);
+    CommandAction(const de::String &cmd, int commandSource = CMDS_DDAY);
 
     de::String command() const { return _command; }
 

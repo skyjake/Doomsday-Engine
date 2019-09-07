@@ -29,9 +29,9 @@ class InputBindingWidget : public de::AuxButtonWidget
 public:
     InputBindingWidget();
 
-    void setDefaultBinding(de::String const &eventDesc);
+    void setDefaultBinding(const de::String &eventDesc);
 
-    void setCommand(de::String const &command);
+    void setCommand(const de::String &command);
 
     /**
      * Enables or disables explicitly specified modifier conditions. Bindings can be
@@ -50,7 +50,7 @@ public:
     // Events.
     void focusGained() override;
     void focusLost() override;
-    bool handleEvent(de::Event const &event) override;
+    bool handleEvent(const de::Event &event) override;
 
 public:
     static InputBindingWidget *newTaskBarShortcut();

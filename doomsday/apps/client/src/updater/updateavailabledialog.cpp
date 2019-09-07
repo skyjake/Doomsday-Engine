@@ -50,7 +50,7 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
         initForChecking();
     }
 
-    Impl(Public *d, Version const &latest) : Base(*d)
+    Impl(Public *d, const Version &latest) : Base(*d)
     {
         initForResult(latest);
     }
@@ -61,7 +61,7 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
         showProgress(true, 0.0);
     }
 
-    void initForResult(Version const &latest)
+    void initForResult(const Version &latest)
     {
         init();
         updateResult(latest, 0.0);
@@ -99,14 +99,14 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
         self().updateLayout();
     }
 
-    static bool isMatchingChannel(String const &channel, String const &buildType)
+    static bool isMatchingChannel(const String &channel, const String &buildType)
     {
         if (channel == buildType) return true;
         if (channel == "RC/stable" && buildType != "unstable") return true;
         return false;
     }
 
-    void updateResult(Version const &latest, TimeSpan showSpan)
+    void updateResult(const Version &latest, TimeSpan showSpan)
     {
         showProgress(false, showSpan);
 
@@ -204,13 +204,13 @@ UpdateAvailableDialog::UpdateAvailableDialog()
     : MessageDialog("updateavailable"), d(new Impl(this))
 {}
 
-UpdateAvailableDialog::UpdateAvailableDialog(Version const &latestVersion, String changeLogUri)
+UpdateAvailableDialog::UpdateAvailableDialog(const Version &latestVersion, String changeLogUri)
     : MessageDialog("updateavailable"), d(new Impl(this, latestVersion))
 {
     d->changeLog = changeLogUri;
 }
 
-void UpdateAvailableDialog::showResult(Version const &latestVersion, String changeLogUri)
+void UpdateAvailableDialog::showResult(const Version &latestVersion, String changeLogUri)
 {
     d->changeLog = changeLogUri;
     d->updateResult(latestVersion, SHOW_ANIM_SPAN);

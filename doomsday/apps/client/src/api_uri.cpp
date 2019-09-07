@@ -44,7 +44,7 @@ static void readUri(Uri *uri, Reader1 *reader, de::String defaultScheme = "")
     self->readUri(reader, defaultScheme);
 }
 
-static void writeUri(Uri const *uri, Writer1 *writer, int omitComponents = 0)
+static void writeUri(const Uri *uri, Writer1 *writer, int omitComponents = 0)
 {
     SELF_CONST(uri);
     self->writeUri(writer, omitComponents);
@@ -72,7 +72,7 @@ Uri* Uri_SetPath(Uri* uri, char const* path)
 }
 
 #undef Uri_NewWithPath3
-Uri* Uri_NewWithPath3(char const *defaultScheme, char const *path)
+Uri* Uri_NewWithPath3(const char *defaultScheme, const char *path)
 {
     res::Uri *uri = new res::Uri(defaultScheme);
     uri->setUri(path, RC_NULL);

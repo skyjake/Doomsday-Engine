@@ -59,14 +59,14 @@ public:
             , wrapT(wrapT)
             , filter(filter)
         {}
-        Unmanaged(Unmanaged const &other)
+        Unmanaged(const Unmanaged &other)
             : glName(other.glName)
             , wrapS(other.wrapS)
             , wrapT(other.wrapT)
             , filter(other.filter)
         {}
 
-        Unmanaged &operator = (Unmanaged const &other) {
+        Unmanaged &operator = (const Unmanaged &other) {
             glName = other.glName;
             wrapS  = other.wrapS;
             wrapT  = other.wrapT;
@@ -74,7 +74,7 @@ public:
             return *this;
         }
 
-        bool operator == (Unmanaged const &other) const {
+        bool operator == (const Unmanaged &other) const {
             if(glName != other.glName) return false;
             if(wrapS != other.wrapS)   return false;
             if(wrapT != other.wrapT)   return false;
@@ -82,7 +82,7 @@ public:
             return true;
         }
 
-        bool operator != (Unmanaged const &other) const {
+        bool operator != (const Unmanaged &other) const {
             return !(*this == other);
         }
     } unmanaged;
@@ -98,8 +98,8 @@ public:
         , scale(1, 1)
     {}
     GLTextureUnit(TextureVariant &textureVariant,
-                  Vec2f const &scale          = Vec2f(1, 1),
-                  Vec2f const &offset         = Vec2f(0, 0),
+                  const Vec2f &scale          = Vec2f(1, 1),
+                  const Vec2f &offset         = Vec2f(0, 0),
                   float opacity               = 1)
         : texture(&textureVariant)
         , opacity(opacity)
@@ -113,7 +113,7 @@ public:
         , opacity(1)
         , scale(1, 1)
     {}
-    GLTextureUnit(GLTextureUnit const &other)
+    GLTextureUnit(const GLTextureUnit &other)
         : texture(other.texture)
         , unmanaged(other.unmanaged)
         , opacity(other.opacity)
@@ -121,7 +121,7 @@ public:
         , offset(other.offset)
     {}
 
-    GLTextureUnit &operator = (GLTextureUnit const &other) {
+    GLTextureUnit &operator = (const GLTextureUnit &other) {
         texture   = other.texture;
         unmanaged = other.unmanaged;
         opacity   = other.opacity;
@@ -130,7 +130,7 @@ public:
         return *this;
     }
 
-    bool operator == (GLTextureUnit const &other) const {
+    bool operator == (const GLTextureUnit &other) const {
         if(texture)
         {
             if(texture != other.texture) return false;

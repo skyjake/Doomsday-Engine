@@ -221,7 +221,7 @@ DE_GUI_PIMPL(AudioSettingsDialog)
     }
 };
 
-AudioSettingsDialog::AudioSettingsDialog(String const &name)
+AudioSettingsDialog::AudioSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading)
     , d(new Impl(this))
 {

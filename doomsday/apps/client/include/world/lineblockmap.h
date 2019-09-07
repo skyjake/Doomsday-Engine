@@ -40,7 +40,7 @@ public:
      * @param bounds    Map space boundary.
      * @param cellSize  Width and height of a cell in map space units.
      */
-    LineBlockmap(AABoxd const &bounds, de::duint cellSize = 128);
+    LineBlockmap(const AABoxd &bounds, de::duint cellSize = 128);
 
     /// @note Assumes @a line is not yet linked!
     void link(Line &line);

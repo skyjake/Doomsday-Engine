@@ -28,9 +28,9 @@
 class CVarToggleWidget : public de::ToggleWidget, public ICVarWidget
 {
 public:
-    CVarToggleWidget(char const *cvarPath, de::String const &labelText = "");
+    CVarToggleWidget(const char *cvarPath, const de::String &labelText = "");
 
-    char const *cvarPath() const;
+    const char *cvarPath() const;
 
     void updateFromCVar();
 

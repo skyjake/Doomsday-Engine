@@ -43,7 +43,7 @@ public:
     typedef de::List<LineSegmentSide *> All;
 
 public:
-    LineSegmentBlock(AABox const &bounds);
+    LineSegmentBlock(const AABox &bounds);
 
     /**
      * Retrieve the axis-aligned bounding box of the block in the blockmap.
@@ -52,13 +52,13 @@ public:
      *
      * @return  Axis-aligned bounding box of the block.
      */
-    AABox const &bounds() const;
+    const AABox &bounds() const;
 
     void link(LineSegmentSide &seg);
 
-    void addRef(LineSegmentSide const &seg);
+    void addRef(const LineSegmentSide &seg);
 
-    void decRef(LineSegmentSide const &seg);
+    void decRef(const LineSegmentSide &seg);
 
     /**
      * Pop (unlink) the next line segment from the FIFO list of segments
@@ -80,7 +80,7 @@ public:
      * Provides access to the list of line segments in the block, for efficient
      * traversal.
      */
-    All const &all() const;
+    const All &all() const;
 
 private:
     DE_PRIVATE(d)

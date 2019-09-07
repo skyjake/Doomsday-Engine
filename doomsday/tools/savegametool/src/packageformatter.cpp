@@ -37,8 +37,8 @@ PackageFormatter::PackageFormatter(StringList knownExtensions, StringList baseGa
 PackageFormatter::~PackageFormatter() // virtual
 {}
 
-String PackageFormatter::composeInfo(GameStateMetadata const &metadata,
-                                     Path const &             sourceFile,
+String PackageFormatter::composeInfo(const GameStateMetadata &metadata,
+                                     const Path &             sourceFile,
                                      dint32                   oldSaveVersion) const
 {
     String info;

@@ -29,6 +29,6 @@
  *
  * @param musData  The MUS data to convert.
  */
-de::Block M_Mus2Midi(de::Block const &musData);
+de::Block M_Mus2Midi(const de::Block &musData);
 
 #endif

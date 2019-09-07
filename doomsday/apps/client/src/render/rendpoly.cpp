@@ -313,8 +313,8 @@ void R_FreeRendTexCoords(Vec2f *rtexcoords)
     LOGDEV_GL_WARNING("R_FreeRendPoly: Dangling poly ptr!");
 }
 
-void R_DivVerts(Vec3f *dst, Vec3f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
+void R_DivVerts(Vec3f *dst, const Vec3f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge)
 {
     int const numR = 3 + rightEdge.divisionCount();
     int const numL = 3 + leftEdge.divisionCount();
@@ -328,7 +328,7 @@ void R_DivVerts(Vec3f *dst, Vec3f const *src,
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        const WorldEdge::Event &icpt = rightEdge.at(rightEdge.lastDivision() - n);
         dst[numL + 2 + n] = icpt.origin();
     }
 
@@ -339,13 +339,13 @@ void R_DivVerts(Vec3f *dst, Vec3f const *src,
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        const WorldEdge::Event &icpt = leftEdge.at(leftEdge.firstDivision() + n);
         dst[2 + n] = icpt.origin();
     }
 }
 
-void R_DivTexCoords(Vec2f *dst, Vec2f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
+void R_DivTexCoords(Vec2f *dst, const Vec2f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge)
 {
     int const numR = 3 + rightEdge.divisionCount();
     int const numL = 3 + leftEdge.divisionCount();
@@ -359,7 +359,7 @@ void R_DivTexCoords(Vec2f *dst, Vec2f const *src,
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        const WorldEdge::Event &icpt = rightEdge.at(rightEdge.lastDivision() - n);
         dst[numL + 2 + n].x = src[3].x;
         dst[numL + 2 + n].y = src[2].y + (src[3].y - src[2].y) * icpt.distance();
     }
@@ -371,14 +371,14 @@ void R_DivTexCoords(Vec2f *dst, Vec2f const *src,
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        const WorldEdge::Event &icpt = leftEdge.at(leftEdge.firstDivision() + n);
         dst[2 + n].x = src[0].x;
         dst[2 + n].y = src[0].y + (src[1].y - src[0].y) * icpt.distance();
     }
 }
 
-void R_DivVertColors(Vec4f *dst, Vec4f const *src,
-    WorldEdge const &leftEdge, WorldEdge const &rightEdge)
+void R_DivVertColors(Vec4f *dst, const Vec4f *src,
+    const WorldEdge &leftEdge, const WorldEdge &rightEdge)
 {
     int const numR = 3 + rightEdge.divisionCount();
     int const numL = 3 + leftEdge.divisionCount();
@@ -392,7 +392,7 @@ void R_DivVertColors(Vec4f *dst, Vec4f const *src,
 
     for(int n = 0; n < rightEdge.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = rightEdge.at(rightEdge.lastDivision() - n);
+        const WorldEdge::Event &icpt = rightEdge.at(rightEdge.lastDivision() - n);
         dst[numL + 2 + n] = src[2] + (src[3] - src[2]) * icpt.distance();
     }
 
@@ -403,7 +403,7 @@ void R_DivVertColors(Vec4f *dst, Vec4f const *src,
 
     for(int n = 0; n < leftEdge.divisionCount(); ++n)
     {
-        WorldEdge::Event const &icpt = leftEdge.at(leftEdge.firstDivision() + n);
+        const WorldEdge::Event &icpt = leftEdge.at(leftEdge.firstDivision() + n);
         dst[2 + n] = src[0] + (src[1] - src[0]) * icpt.distance();
     }
 }

@@ -407,7 +407,7 @@ void GL_ProjectionMatrix(bool useFixedFov)
     DGL_LoadMatrix(Rend_GetProjectionMatrix(useFixedFov ? weaponFixedFOV : 0.f).values());
 }
 
-void GL_SetupFogFromMapInfo(Record const *mapInfo)
+void GL_SetupFogFromMapInfo(const Record *mapInfo)
 {
     if(mapInfo)
     {
@@ -428,7 +428,7 @@ void GL_SetupFogFromMapInfo(Record const *mapInfo)
     String fadeTable = (mapInfo? mapInfo->gets("fadeTable") : "");
     if(!fadeTable.isEmpty())
     {
-        LumpIndex const &lumps = App_FileSystem().nameIndex();
+        const LumpIndex &lumps = App_FileSystem().nameIndex();
         dint lumpNum = lumps.findLast(fadeTable + ".lmp");
         if(lumpNum == lumps.findLast("COLORMAP.lmp"))
         {
@@ -704,7 +704,7 @@ dint GL_GetTexAnisoMul(dint level)
     return de::min(mul, GLInfo::limits().maxTexFilterAniso);
 }
 
-static void uploadContentUnmanaged(texturecontent_t const &content)
+static void uploadContentUnmanaged(const texturecontent_t &content)
 {
     LOG_AS("uploadContentUnmanaged");
     if(novideo) return;
@@ -721,7 +721,7 @@ static void uploadContentUnmanaged(texturecontent_t const &content)
 }
 
 GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
-    duint8 const *pixels, dint flags)
+    const duint8 *pixels, dint flags)
 {
     texturecontent_t c;
     GL_InitTextureContent(&c);
@@ -739,7 +739,7 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format, dint width, dint height,
 GLuint GL_NewTextureWithParams(dgltexformat_t format,
                                dint           width,
                                dint           height,
-                               uint8_t const *pixels,
+                               const uint8_t *pixels,
                                dint           flags,
                                dint           grayMipmap,
                                GLenum         minFilter,
@@ -768,13 +768,13 @@ GLuint GL_NewTextureWithParams(dgltexformat_t format,
     return c.name;
 }
 
-static inline MaterialVariantSpec const &uiMaterialSpec(gfx::Wrapping wrapS, gfx::Wrapping wrapT)
+static inline const MaterialVariantSpec &uiMaterialSpec(gfx::Wrapping wrapS, gfx::Wrapping wrapT)
 {
     return resSys().materialSpec(UiContext, 0, 1, 0, 0, GL_Wrap(wrapS), GL_Wrap(wrapT),
                                  0, 1, 0, false, false, false, false);
 }
 
-static inline MaterialVariantSpec const &pspriteMaterialSpec(dint tClass, dint tMap)
+static inline const MaterialVariantSpec &pspriteMaterialSpec(dint tClass, dint tMap)
 {
     return resSys().materialSpec(PSpriteContext, 0, 1, tClass, tMap, GL_CLAMP_TO_EDGE, GL_CLAMP_TO_EDGE,
                                  0, -2, 0, false, true, true, false);
@@ -839,7 +839,7 @@ void GL_BindTexture(TextureVariant *vtexture)
     LIBGUI_ASSERT_GL_OK();
 
     // Apply dynamic adjustments to the GL texture state according to our spec.
-    TextureVariantSpec const &spec = vtexture->spec();
+    const TextureVariantSpec &spec = vtexture->spec();
     if(spec.type == TST_GENERAL)
     {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, spec.variant.wrapS);
@@ -887,7 +887,7 @@ void GL_BindTextureUnmanaged(GLuint glName, gfx::Wrapping wrapS, gfx::Wrapping w
     LIBGUI_ASSERT_GL_OK();
 }
 
-void GL_Bind(GLTextureUnit const &glTU)
+void GL_Bind(const GLTextureUnit &glTU)
 {
     if(!glTU.hasTexture()) return;
 
@@ -908,7 +908,7 @@ void GL_Bind(GLTextureUnit const &glTU)
     }
 }
 
-void GL_BindTo(GLTextureUnit const &glTU, dint unit)
+void GL_BindTo(const GLTextureUnit &glTU, dint unit)
 {
     if(!glTU.hasTexture()) return;
 
@@ -939,7 +939,7 @@ dint GL_ChooseSmartFilter(dint width, dint height, dint /*flags*/)
     return 1;  // nearest neighbor.
 }
 
-duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
+duint8 *GL_SmartFilter(dint method, const duint8 *src, dint width, dint height,
     dint flags, dint *outWidth, dint *outHeight)
 {
     dint newWidth, newHeight;
@@ -979,7 +979,7 @@ duint8 *GL_SmartFilter(dint method, duint8 const *src, dint width, dint height,
     return out;
 }
 
-duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informat,
+duint8 *GL_ConvertBuffer(const duint8 *in, dint width, dint height, dint informat,
                          colorpaletteid_t paletteId, dint outformat)
 {
     DE_ASSERT(in);
@@ -1017,7 +1017,7 @@ duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informa
     if(informat == 3 && outformat == 4)
     {
         long const numPels = width * height;
-        duint8 const *src  = in;
+        const duint8 *src  = in;
         duint8 *dst        = out;
         for(long i = 0; i < numPels; ++i)
         {
@@ -1033,7 +1033,7 @@ duint8 *GL_ConvertBuffer(duint8 const *in, dint width, dint height, dint informa
     return out;
 }
 
-void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelSize,
+void GL_CalcLuminance(const duint8 *buffer, dint width, dint height, dint pixelSize,
     colorpaletteid_t paletteId, dfloat *retBrightX, dfloat *retBrightY,
     ColorRawf *retColor, dfloat *retLumSize)
 {
@@ -1079,9 +1079,9 @@ void GL_CalcLuminance(duint8 const *buffer, dint width, dint height, dint pixelS
         lowAvg[i]  = 0;
     }
 
-    duint8 const *src = buffer;
+    const duint8 *src = buffer;
     // In paletted mode, the alpha channel follows the actual image.
-    duint8 const *alphaSrc = &buffer[width * height];
+    const duint8 *alphaSrc = &buffer[width * height];
 
     // Skip to the start of the first column.
     if(region[2] > 0)

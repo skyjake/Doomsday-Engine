@@ -203,7 +203,7 @@ DE_GUI_PIMPL(HomeWidget)
         allColumns.at(0).widget->show(!gotGames);
         for (int i = 1; i < allColumns.sizei(); ++i)
         {
-            Column const &col = allColumns.at(i);
+            const Column &col = allColumns.at(i);
             if (col.configVar)
             {
                 col.widget->show(gotGames && col.configVar->value().isTrue());
@@ -223,7 +223,7 @@ DE_GUI_PIMPL(HomeWidget)
         int visibleIndex = 0;
         for (int index = 0; index < allColumns.sizei(); ++index)
         {
-            Column const &col = allColumns.at(index);
+            const Column &col = allColumns.at(index);
             if (!col.widget->behavior().testFlag(Widget::Hidden))
             {
                 TabSpec ts;
@@ -238,7 +238,7 @@ DE_GUI_PIMPL(HomeWidget)
             bool differenceFound = false;
             for (dsize pos = 0; pos < tabs->items().size(); ++pos)
             {
-                auto const &item = tabs->items().at(pos);
+                const auto &item = tabs->items().at(pos);
                 if (item.label() != specs.at(pos).col->widget->tabHeading() ||
                     item.data().asInt() != specs.at(pos).visibleIndex)
                 {
@@ -288,7 +288,7 @@ DE_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void aboutToLoadGame(Game const &gameBeingLoaded)
+    void aboutToLoadGame(const Game &gameBeingLoaded)
     {
         self().root().clearFocusStack();
         self().root().setFocus(nullptr);
@@ -310,7 +310,7 @@ DE_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void currentGameChanged(Game const &newGame)
+    void currentGameChanged(const Game &newGame)
     {
         if (!newGame.isNull())
         {
@@ -320,7 +320,7 @@ DE_GUI_PIMPL(HomeWidget)
         }
     }
 
-    void variableValueChanged(Variable &, Value const &)
+    void variableValueChanged(Variable &, const Value &)
     {
         updateVisibleTabsAndLayout();
     }
@@ -595,7 +595,7 @@ HomeWidget::HomeWidget()
     add(d->blanker);
 
     // Define widget layout.
-    Rule const &gap = rule("gap");
+    const Rule &gap = rule("gap");
     d->tabsBackground->rule()
             .setInput(Rule::Left,   rule().left())
             .setInput(Rule::Top,    rule().top() + *d->dismissOffset)
@@ -618,7 +618,7 @@ void HomeWidget::viewResized()
     d->updateLayout();
 }
 
-bool HomeWidget::handleEvent(Event const &event)
+bool HomeWidget::handleEvent(const Event &event)
 {
     if (event.isKeyDown())
     {
@@ -686,14 +686,14 @@ PopupWidget *HomeWidget::makeSettingsPopup()
     return menu;
 }
 
-bool HomeWidget::dispatchEvent(Event const &event, bool (Widget::*memberFunc)(const Event &))
+bool HomeWidget::dispatchEvent(const Event &event, bool (Widget::*memberFunc)(const Event &))
 {
     if (event.type() == Event::MouseWheel)
     {
         if (event.isMouse())
         {
 #if 0
-            MouseEvent const &mouse = event.as<MouseEvent>();
+            const MouseEvent &mouse = event.as<MouseEvent>();
             if (event.type() == Event::MouseWheel &&
                mouse.wheelMotion() == MouseEvent::Steps)
             {
@@ -727,9 +727,9 @@ void HomeWidget::operator >> (PersistentState &toState) const
     rec.set(name().concatenateMember("activeTab"), d->highlightedTab());
 }
 
-void HomeWidget::operator << (PersistentState const &fromState)
+void HomeWidget::operator << (const PersistentState &fromState)
 {
-    Record const &rec = fromState.objectNamespace();
+    const Record &rec = fromState.objectNamespace();
     d->restoredOffsetTab = rec.geti(name().concatenateMember("firstTab"), -1);
     d->restoredActiveTab = rec.geti(name().concatenateMember("activeTab"), -1);
 }

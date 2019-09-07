@@ -27,13 +27,13 @@
 class ControllerPresets
 {
 public:
-    ControllerPresets(int deviceId, char const *presetCVarPath);
+    ControllerPresets(int deviceId, const char *presetCVarPath);
 
     de::String currentPreset() const;
 
     de::StringList ids() const;
 
-    void applyPreset(de::String const &presetId);
+    void applyPreset(const de::String &presetId);
 
 private:
     DE_PRIVATE(d)

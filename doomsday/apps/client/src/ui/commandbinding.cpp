@@ -67,7 +67,7 @@ String CommandBinding::composeDescriptor()
     }
 
     // Append any state conditions.
-    ArrayValue const &conds = def().geta("condition");
+    const ArrayValue &conds = def().geta("condition");
     DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         str += " + " + B_ConditionToString(*(*i)->as<RecordValue>().record());
@@ -79,7 +79,7 @@ String CommandBinding::composeDescriptor()
 /**
  * Parse the main part of the event descriptor, with no conditions included.
  */
-static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const *command)
+static bool doConfigure(CommandBinding &bind, const char *eventDesc, const char *command)
 {
     DE_ASSERT(eventDesc);
     //InputSystem &isys = ClientApp::inputSystem();
@@ -227,7 +227,7 @@ static bool doConfigure(CommandBinding &bind, char const *eventDesc, char const 
     return true;
 }
 
-void CommandBinding::configure(char const *eventDesc, char const *command, bool assignNewId)
+void CommandBinding::configure(const char *eventDesc, const char *command, bool assignNewId)
 {
     DE_ASSERT(eventDesc);
     LOG_AS("CommandBinding");
@@ -272,7 +272,7 @@ void CommandBinding::configure(char const *eventDesc, char const *command, bool 
  * @param event    Event data.
  * @param out      String with placeholders replaced.
  */
-static void substituteInCommand(String const &command, ddevent_t const &event, ddstring_t *out)
+static void substituteInCommand(const String &command, const ddevent_t &event, ddstring_t *out)
 {
     DE_ASSERT(out);
     for (auto ptr = command.begin(); ptr != command.end(); ++ptr)
@@ -321,12 +321,12 @@ static void substituteInCommand(String const &command, ddevent_t const &event, d
     }
 }
 
-Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &context,
+Action *CommandBinding::makeAction(const ddevent_t &event, const BindContext &context,
     bool respectHigherContexts) const
 {
     if (geti("type") != event.type) return nullptr;
 
-    InputDevice const *dev = nullptr;
+    const InputDevice *dev = nullptr;
     if (event.type != E_SYMBOLIC)
     {
         if (geti("deviceId") != event.device) return nullptr;
@@ -425,7 +425,7 @@ Action *CommandBinding::makeAction(ddevent_t const &event, BindContext const &co
     }
 
     // Any conditions on the current state of the input devices?
-    ArrayValue const &conds = def().geta("condition");
+    const ArrayValue &conds = def().geta("condition");
     DE_FOR_EACH_CONST(ArrayValue::Elements, i, conds.elements())
     {
         if (!B_CheckCondition(static_cast<Binding::CompiledConditionRecord *>

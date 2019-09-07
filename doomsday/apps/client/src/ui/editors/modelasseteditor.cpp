@@ -106,7 +106,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
     const Rule &firstColumnWidthRule() const override { return self().firstColumnWidth(); }
     ScrollAreaWidget &containerWidget() override { return self().containerWidget(); }
 
-    void resetToDefaults(String const &/*settingName*/) override
+    void resetToDefaults(const String &/*settingName*/) override
     {}
 
     static const char *pluralSuffix(int count, const char *suffix = "s")
@@ -129,7 +129,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         asset = App::asset(id);
 
         // Collect some information about the model asset.
-        render::Model const &model = ClientApp::renderSystem().modelRenderer()
+        const render::Model &model = ClientApp::renderSystem().modelRenderer()
                 .bank().model<render::Model>(id);
 
         StringList animNames;
@@ -193,7 +193,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         label.setAlignment(ui::AlignLeft);
         label.set(GuiWidget::Background(style().colors().colorf("altaccent") *
                                         Vec4f(1, 1, 1, .2f)));
-        Rule const &maxWidth = rule("sidebar.width");
+        const Rule &maxWidth = rule("sidebar.width");
         label.rule().setInput(Rule::Width, maxWidth);
         label.setMaximumTextWidth(maxWidth);
     }
@@ -240,7 +240,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         }
         else
         {
-            if (mobj_t const *mo = ClientApp::world().map().thinkers().mobjById(idNum))
+            if (const mobj_t *mo = ClientApp::world().map().thinkers().mobjById(idNum))
             {
                 auto &mobjData = THINKER_DATA(mo->thinker, ClientMobjThinkerData);
                 return mobjData.animator();
@@ -262,7 +262,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
             groups << g;
             g->addLabel("Play:");
             animChoice.reset(new ChoiceWidget);
-            render::Model const &model = anim->model();
+            const render::Model &model = anim->model();
             for (int i = 0; i < model.animationCount(); ++i)
             {
                 // NOTE: PlayData objects allocated here; must be deleted manually later.
@@ -313,7 +313,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
             // Make a variable group for each subrecord.
             Map<String, Group *> orderedGroups;
-            ns.forSubrecords([this, anim, &orderedGroups] (String const &name, Record &rec)
+            ns.forSubrecords([this, anim, &orderedGroups] (const String &name, Record &rec)
             {
                 orderedGroups.insert(name, makeGroup(*anim, rec, name, true));
                 return LoopContinue;
@@ -325,7 +325,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         }
     }
 
-    static String varLabel(String const &name)
+    static String varLabel(const String &name)
     {
         return _E(m) + name + _E(.) + ":";
     }
@@ -337,7 +337,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
     static coord_t distanceToMobj(thid_t id)
     {
-        mobj_t const *mo = Mobj_ById(id);
+        const mobj_t *mo = Mobj_ById(id);
         if (mo)
         {
             return (Rend_EyeOrigin().xzy() - Vec3d(mo->origin)).length();
@@ -345,13 +345,13 @@ DE_GUI_PIMPL(ModelAssetEditor)
         return -1;
     }
 
-    void populateGroup(Group *g, Record &rec, bool descend, String const &namePrefix = "")
+    void populateGroup(Group *g, Record &rec, bool descend, const String &namePrefix = "")
     {
         auto names = map<StringList>(
             rec.members(), [](const Record::Members::value_type &v) { return v.first; });
         names.sort();
 
-        for (String const &name : names)
+        for (const String &name : names)
         {
             if (name.beginsWith("__") || name == "ID" || name == "uMapTime")
                 continue;
@@ -385,7 +385,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
 
             String label = namePrefix.concatenateMember(name);
 
-            if (NumberValue const *num = maybeAs<NumberValue>(var.value()))
+            if (const NumberValue *num = maybeAs<NumberValue>(var.value()))
             {
                 if (num->semanticHints().testFlag(NumberValue::Boolean))
                 {
@@ -427,10 +427,10 @@ DE_GUI_PIMPL(ModelAssetEditor)
             titleText = Stringf("Render Pass \"%s\"", titleText.c_str());
 
             // Look up the shader.
-            auto const &pass = animator.model().passes.at(passIndex);
+            const auto &pass = animator.model().passes.at(passIndex);
             auto &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
             String shaderName = modelLoader.shaderName(*pass.program);
-            Record const &shaderDef = modelLoader.shaderDefinition(*pass.program);
+            const Record &shaderDef = modelLoader.shaderDefinition(*pass.program);
 
             // Check the variable declarations.
             auto vars =
@@ -438,7 +438,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
                                 [](const Record::Subrecords::value_type &v) { return v.first; });
             vars.sort();
             StringList names;
-            for (String const &n : vars)
+            for (const String &n : vars)
             {
                 // Used variables are shown in bold.
                 if (rec.has(n))
@@ -506,10 +506,10 @@ DE_GUI_PIMPL(ModelAssetEditor)
         {
             ClientApp::world().map().thinkers().forAll(0x1 /* public */, [this] (thinker_t *th)
             {
-                auto const *mobjData = THINKER_DATA_MAYBE(*th, ClientMobjThinkerData);
+                const auto *mobjData = THINKER_DATA_MAYBE(*th, ClientMobjThinkerData);
                 if (mobjData && mobjData->animator())
                 {
-                    render::StateAnimator const *anim = mobjData->animator();
+                    const render::StateAnimator *anim = mobjData->animator();
 
                     if (anim && (*anim)["ID"] == assetId)
                     {
@@ -536,7 +536,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
             a.as<ChoiceItem>().setLabel(mobjItemLabel(a.data().asInt()));
             return LoopContinue;
         });
-        instChoice->items().sort([] (Item const &a, Item const &b)
+        instChoice->items().sort([] (const Item &a, const Item &b)
         {
             return distanceToMobj(a.data().asInt()) < distanceToMobj(b.data().asInt());
         });
@@ -584,7 +584,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
         }
         else
         {
-            if (mobj_t const *mo = Mobj_ById(data.mobjId))
+            if (const mobj_t *mo = Mobj_ById(data.mobjId))
             {
                 if (auto *thinker = THINKER_DATA_MAYBE(mo->thinker, ClientMobjThinkerData))
                 {

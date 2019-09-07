@@ -71,7 +71,7 @@ DE_PIMPL(BindContext)
      *
      * @return  @c true if a match is found.
      */
-    bool findMatchingBinding(Record const *matchCmdRec, Record const *matchImpRec,
+    bool findMatchingBinding(const Record *matchCmdRec, const Record *matchImpRec,
         Record **cmdResult, Record **impResult) const
     {
         DE_ASSERT(cmdResult && impResult);
@@ -87,7 +87,7 @@ DE_PIMPL(BindContext)
         ImpulseBinding matchImp;
         if (matchImpRec) matchImp = matchImpRec;
 
-        for (Record const *rec : commandBinds)
+        for (const Record *rec : commandBinds)
         {
             CommandBinding bind(*rec);
 
@@ -121,9 +121,9 @@ DE_PIMPL(BindContext)
         }
 
         for (int i = 0; i < DDMAXPLAYERS; ++i)
-        for (auto const *rec : impulseBinds[i])
+        for (const auto *rec : impulseBinds[i])
         {
-            auto const &bind = rec->compiled();
+            const auto &bind = rec->compiled();
 
             if (matchCmd)
             {
@@ -157,7 +157,7 @@ DE_PIMPL(BindContext)
     /**
      * Delete all other bindings matching either @a cmdBinding or @a impBinding.
      */
-    void deleteMatching(Record const *cmdBinding, Record const *impBinding)
+    void deleteMatching(const Record *cmdBinding, const Record *impBinding)
     {
         Record *foundCmd = nullptr;
         Record *foundImp = nullptr;
@@ -184,7 +184,7 @@ DE_AUDIENCE_METHOD(BindContext, ActiveChange)
 DE_AUDIENCE_METHOD(BindContext, AcquireDeviceChange)
 DE_AUDIENCE_METHOD(BindContext, BindingAddition)
 
-BindContext::BindContext(String const &name) : d(new Impl(this))
+BindContext::BindContext(const String &name) : d(new Impl(this))
 {
     setName(name);
 }
@@ -214,7 +214,7 @@ String BindContext::name() const
     return d->name;
 }
 
-void BindContext::setName(String const &newName)
+void BindContext::setName(const String &newName)
 {
     d->name = newName;
 }
@@ -294,7 +294,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
 {
     // Collect all the bindings that should be deleted.
     Set<int> ids;
-    forAllCommandBindings([&ids, &deviceId] (Record const &bind)
+    forAllCommandBindings([&ids, &deviceId] (const Record &bind)
     {
         if (bind.geti(VAR_DEVICE_ID) == deviceId)
         {
@@ -302,7 +302,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
         }
         return LoopContinue;
     });
-    forAllImpulseBindings([&ids, &deviceId] (CompiledImpulseBindingRecord const &bind)
+    forAllImpulseBindings([&ids, &deviceId] (const CompiledImpulseBindingRecord &bind)
     {
         if (bind.compiled().deviceId == deviceId)
         {
@@ -317,7 +317,7 @@ void BindContext::clearBindingsForDevice(int deviceId)
     }
 }
 
-Record *BindContext::bindCommand(char const *eventDesc, char const *command)
+Record *BindContext::bindCommand(const char *eventDesc, const char *command)
 {
     DE_ASSERT(eventDesc && command && command[0]);
     LOG_AS("BindContext");
@@ -344,12 +344,12 @@ Record *BindContext::bindCommand(char const *eventDesc, char const *command)
 
         return &bind.def();
     }
-    catch (Binding::ConfigureError const &)
+    catch (const Binding::ConfigureError &)
     {}
     return nullptr;
 }
 
-Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impulse, int localPlayer)
+Record *BindContext::bindImpulse(const char *ctrlDesc, const PlayerImpulse &impulse, int localPlayer)
 {
     DE_ASSERT(ctrlDesc);
     DE_ASSERT(localPlayer >= 0 && localPlayer < DDMAXPLAYERS);
@@ -378,16 +378,16 @@ Record *BindContext::bindImpulse(char const *ctrlDesc, PlayerImpulse const &impu
 
         return &bind.def();
     }
-    catch (Binding::ConfigureError const &)
+    catch (const Binding::ConfigureError &)
     {}
     return nullptr;
 }
 
-Record *BindContext::findCommandBinding(char const *command, int deviceId) const
+Record *BindContext::findCommandBinding(const char *command, int deviceId) const
 {
     if (command && command[0])
     {
-        for (Record const *rec : d->commandBinds)
+        for (const Record *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
             if (bind.gets(DE_STR("command")).compareWithoutCase(command)) continue;
@@ -404,9 +404,9 @@ Record *BindContext::findCommandBinding(char const *command, int deviceId) const
 Record *BindContext::findImpulseBinding(int deviceId, ibcontroltype_t bindType, int controlId) const
 {
     for (int i = 0; i < DDMAXPLAYERS; ++i)
-    for (auto const *rec : d->impulseBinds[i])
+    for (const auto *rec : d->impulseBinds[i])
     {
-        auto const &bind = rec->compiled();
+        const auto &bind = rec->compiled();
         if (bind.type      == bindType &&
             bind.deviceId  == deviceId &&
             bind.controlId == controlId)
@@ -447,7 +447,7 @@ bool BindContext::deleteBinding(int id)
     return false;
 }
 
-bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) const
+bool BindContext::tryEvent(const ddevent_t &event, bool respectHigherContexts) const
 {
     LOG_AS("BindContext");
 
@@ -458,7 +458,7 @@ bool BindContext::tryEvent(ddevent_t const &event, bool respectHigherContexts) c
     if (event.type != E_FOCUS)
     {
         // See if the command bindings will have it.
-        for (Record const *rec : d->commandBinds)
+        for (const Record *rec : d->commandBinds)
         {
             CommandBinding bind(*rec);
             AutoRef<Action> act(bind.makeAction(event, *this, respectHigherContexts));

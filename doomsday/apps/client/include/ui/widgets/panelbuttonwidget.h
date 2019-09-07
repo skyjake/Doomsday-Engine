@@ -29,7 +29,7 @@
 class PanelButtonWidget : public HomeItemWidget
 {
 public:
-    PanelButtonWidget(de::Flags flags = AnimatedHeight, de::String const &name = {});
+    PanelButtonWidget(de::Flags flags = AnimatedHeight, const de::String &name = {});
 
     de::PanelWidget &panel();
 

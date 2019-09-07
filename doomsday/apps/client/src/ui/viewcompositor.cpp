@@ -48,8 +48,8 @@ static Ranged const FACTOR_RANGE(1.0 / 16.0, 1.0);
 DE_PIMPL(ViewCompositor)
 , DE_OBSERVES(Variable, Change)
 {
-    mutable Variable const *pixelDensity = nullptr;
-    mutable Variable const *resizeFactor = nullptr;
+    mutable const Variable *pixelDensity = nullptr;
+    mutable const Variable *resizeFactor = nullptr;
 
     int playerNum = 0;
 
@@ -130,7 +130,7 @@ DE_PIMPL(ViewCompositor)
         viewFramebuf.setSampleCount(sampleCount);
     }
 
-    void variableValueChanged(Variable &, Value const &) override
+    void variableValueChanged(Variable &, const Value &) override
     {
         updateSampleCount();
     }
@@ -208,7 +208,7 @@ GLTextureFramebuffer &ViewCompositor::gameView()
     return d->viewFramebuf;
 }
 
-GLTextureFramebuffer const &ViewCompositor::gameView() const
+const GLTextureFramebuffer &ViewCompositor::gameView() const
 {
     return d->viewFramebuf;
 }
@@ -243,7 +243,7 @@ void ViewCompositor::drawCompositedLayers()
     // covers the entire area.
 
     // Game HUD.
-    if (auto const *vp = R_CurrentViewPort())
+    if (const auto *vp = R_CurrentViewPort())
     {
         R_RenderPlayerViewBorder();
 
@@ -252,7 +252,7 @@ void ViewCompositor::drawCompositedLayers()
         RectRaw vpGeometry = {{vp->geometry.topLeft.x, vp->geometry.topLeft.y},
                               {int(vp->geometry.width()), int(vp->geometry.height())}};
 
-        viewdata_t const *vd = &DD_Player(d->playerNum)->viewport();
+        const viewdata_t *vd = &DD_Player(d->playerNum)->viewport();
         RectRaw vdWindow = {{vd->window.topLeft.x, vd->window.topLeft.y},
                             {int(vd->window.width()), int(vd->window.height())}};
 

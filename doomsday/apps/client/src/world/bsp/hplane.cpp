@@ -108,7 +108,7 @@ DE_PIMPL(HPlane)
     Intercepts intercepts;                   ///< Points along the half-plane.
     bool needSortIntercepts = false;         ///< @c true= @var intercepts requires sorting.
 
-    Impl(Public *i, Partition const &partition)
+    Impl(Public *i, const Partition &partition)
         : Base(i)
         , partition  (partition)
         , length     (partition.direction.length())
@@ -122,9 +122,9 @@ DE_PIMPL(HPlane)
     /**
      * Find an intercept by @a vertex.
      */
-    Intercept *interceptByVertex(Vertex const &vertex)
+    Intercept *interceptByVertex(const Vertex &vertex)
     {
-        for(Intercept const &icpt : intercepts)
+        for(const Intercept &icpt : intercepts)
         {
             if(&icpt.vertex() == &vertex)
                 return const_cast<Intercept *>(&icpt);
@@ -135,7 +135,7 @@ DE_PIMPL(HPlane)
     /**
      * Merges @a next into @a cur.
      */
-    static void mergeIntercepts(Intercept &cur, Intercept const &next)
+    static void mergeIntercepts(Intercept &cur, const Intercept &next)
     {
         /*
         LOG_AS("HPlane::mergeIntercepts");
@@ -169,7 +169,7 @@ DE_PIMPL(HPlane)
     }
 };
 
-HPlane::HPlane(Partition const &partition) : d(new Impl(this, partition))
+HPlane::HPlane(const Partition &partition) : d(new Impl(this, partition))
 {}
 
 void HPlane::clearIntercepts()
@@ -179,7 +179,7 @@ void HPlane::clearIntercepts()
     d->needSortIntercepts = false;
 }
 
-void HPlane::configure(LineSegmentSide const &newBaseSeg)
+void HPlane::configure(const LineSegmentSide &newBaseSeg)
 {
     // Only map line segments are suitable.
     DE_ASSERT(newBaseSeg.hasMapSide());
@@ -219,7 +219,7 @@ void HPlane::configure(LineSegmentSide const &newBaseSeg)
  *
  * @return  The "open" sector at this angle; otherwise @c 0 (closed).
  */
-static LineSegmentSide *lineSegAtAngle(EdgeTips const &tips, coord_t angle)
+static LineSegmentSide *lineSegAtAngle(const EdgeTips &tips, coord_t angle)
 {
     // Is there a tip exactly at this angle?
     if(tips.at(angle))
@@ -227,14 +227,14 @@ static LineSegmentSide *lineSegAtAngle(EdgeTips const &tips, coord_t angle)
 
     // Find the first tip after (larger) than this angle. If present the side
     // we're interested in is the front.
-    if(EdgeTip const *tip = tips.after(angle))
+    if(const EdgeTip *tip = tips.after(angle))
     {
         return tip->hasFront()? &tip->front() : nullptr;
     }
 
     // The open sector must therefore be on the back of the tip with the largest
     // angle (if present).
-    if(EdgeTip const *tip = tips.largest())
+    if(const EdgeTip *tip = tips.largest())
     {
         return tip->hasBack()? &tip->back() : nullptr;
     }
@@ -242,7 +242,7 @@ static LineSegmentSide *lineSegAtAngle(EdgeTips const &tips, coord_t angle)
     return nullptr; // No edge tips.
 }
 
-double HPlane::intersect(LineSegmentSide const &lineSeg, int edge)
+double HPlane::intersect(const LineSegmentSide &lineSeg, int edge)
 {
     Vertex &vertex = lineSeg.vertex(edge);
     coord_t pointV1[2]     = { vertex.origin().x, vertex.origin().y };
@@ -250,8 +250,8 @@ double HPlane::intersect(LineSegmentSide const &lineSeg, int edge)
     return V2d_PointLineParaDistance(pointV1, directionV1, d->para, d->length);
 }
 
-HPlane::Intercept *HPlane::intercept(LineSegmentSide const &lineSeg, int edge,
-    EdgeTips const &edgeTips)
+HPlane::Intercept *HPlane::intercept(const LineSegmentSide &lineSeg, int edge,
+    const EdgeTips &edgeTips)
 {
     bool const selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
@@ -322,7 +322,7 @@ void HPlane::sortAndMergeIntercepts()
     d->needSortIntercepts = false;
 }
 
-Partition const &HPlane::partition() const
+const Partition &HPlane::partition() const
 {
     return d->partition;
 }
@@ -347,7 +347,7 @@ LineSegmentSide *HPlane::lineSegment() const
     return d->lineSegment;
 }
 
-void HPlane::distance(LineSegmentSide const &lineSeg, coord_t *fromDist, coord_t *toDist) const
+void HPlane::distance(const LineSegmentSide &lineSeg, coord_t *fromDist, coord_t *toDist) const
 {
     // Any work to do?
     if(!fromDist && !toDist) return;
@@ -377,7 +377,7 @@ void HPlane::distance(LineSegmentSide const &lineSeg, coord_t *fromDist, coord_t
     }
 }
 
-LineRelationship HPlane::relationship(LineSegmentSide const &lineSeg,
+LineRelationship HPlane::relationship(const LineSegmentSide &lineSeg,
     coord_t *retFromDist, coord_t *retToDist) const
 {
     coord_t fromDist, toDist;
@@ -391,7 +391,7 @@ LineRelationship HPlane::relationship(LineSegmentSide const &lineSeg,
     return rel;
 }
 
-HPlane::Intercepts const &HPlane::intercepts() const
+const HPlane::Intercepts &HPlane::intercepts() const
 {
     return d->intercepts;
 }
@@ -400,7 +400,7 @@ HPlane::Intercepts const &HPlane::intercepts() const
 void HPlane::printIntercepts() const
 {
     uint index = 0;
-    for(Intercept const &icpt : d->intercepts)
+    for(const Intercept &icpt : d->intercepts)
     {
         LOG_DEBUG(" %u: >%1.2f") << (index++) << icpt.distance();
         icpt.debugPrint();

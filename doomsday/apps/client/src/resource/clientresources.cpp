@@ -153,9 +153,9 @@ DE_PIMPL(ClientResources)
     struct MaterialCacheTask : public CacheTask
     {
         ClientMaterial *material;
-        MaterialVariantSpec const *spec; /// Interned context specification.
+        const MaterialVariantSpec *spec; /// Interned context specification.
 
-        MaterialCacheTask(ClientMaterial &resource, MaterialVariantSpec const &contextSpec)
+        MaterialCacheTask(ClientMaterial &resource, const MaterialVariantSpec &contextSpec)
             : CacheTask()
             , material(&resource)
             , spec(&contextSpec)
@@ -257,7 +257,7 @@ DE_PIMPL(ClientResources)
         materialSpecs.clear();
     }
 
-    MaterialVariantSpec *findMaterialSpec(MaterialVariantSpec const &tpl,
+    MaterialVariantSpec *findMaterialSpec(const MaterialVariantSpec &tpl,
         bool canCreate)
     {
         for (MaterialVariantSpec *spec : materialSpecs)
@@ -301,7 +301,7 @@ DE_PIMPL(ClientResources)
         default: DE_ASSERT_FAIL("Invalid material context ID");
         }
 
-        TextureVariantSpec const &primarySpec =
+        const TextureVariantSpec &primarySpec =
             self().textureSpec(primaryContext, flags, border, tClass, tMap,
                              wrapS, wrapT, minFilter, magFilter,
                              anisoFilter, mipmapped, gammaCorrection,
@@ -314,7 +314,7 @@ DE_PIMPL(ClientResources)
         return *findMaterialSpec(tpl, true);
     }
 
-    static int hashDetailTextureSpec(detailvariantspecification_t const &spec)
+    static int hashDetailTextureSpec(const detailvariantspecification_t &spec)
     {
         return (spec.contrast * (1/255.f) * DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR + .5f);
     }
@@ -389,7 +389,7 @@ DE_PIMPL(ClientResources)
         return *spec;
     }
 
-    TextureVariantSpec *findTextureSpec(TextureVariantSpec const &tpl, bool canCreate)
+    TextureVariantSpec *findTextureSpec(const TextureVariantSpec &tpl, bool canCreate)
     {
         // Do we already have a concrete version of the template specification?
         switch (tpl.type)
@@ -461,7 +461,7 @@ DE_PIMPL(ClientResources)
         return findTextureSpec(tpl, true);
     }
 
-    bool textureSpecInUse(TextureVariantSpec const &spec)
+    bool textureSpecInUse(const TextureVariantSpec &spec)
     {
         for (res::Texture *texture : self().textures().allTextures())
         {
@@ -534,7 +534,7 @@ DE_PIMPL(ClientResources)
     }
 
     void queueCacheTasksForMaterial(ClientMaterial &material,
-                                    MaterialVariantSpec const &contextSpec,
+                                    const MaterialVariantSpec &contextSpec,
                                     bool cacheGroups = true)
     {
         // Already in the queue?
@@ -584,7 +584,7 @@ DE_PIMPL(ClientResources)
     }
 
     void queueCacheTasksForSprite(spritenum_t id,
-                                  MaterialVariantSpec const &contextSpec,
+                                  const MaterialVariantSpec &contextSpec,
                                   bool cacheGroups = true)
     {
         if (const auto *sprites = self().sprites().tryFindSpriteSet(id))
@@ -592,9 +592,9 @@ DE_PIMPL(ClientResources)
             for (const auto &sprite : *sprites)
             {
                 defn::Sprite const spriteDef(sprite.second);
-                for (auto const &view : spriteDef.def().compiled().views)
+                for (const auto &view : spriteDef.def().compiled().views)
                 {
-                    //res::Uri const &viewMaterial = ; // spriteDef.viewMaterial(iter->first.value->asInt());
+                    //const res::Uri &viewMaterial = ; // spriteDef.viewMaterial(iter->first.value->asInt());
                     if (world::Material *material = world::Materials::get().materialPtr(view.uri))
                     {
                         queueCacheTasksForMaterial(material->as<ClientMaterial>(),
@@ -616,7 +616,7 @@ DE_PIMPL(ClientResources)
             if (!mdl) continue;
 
             // Load all skins.
-            for (FrameModelSkin const &skin : mdl->skins())
+            for (const FrameModelSkin &skin : mdl->skins())
             {
                 if (ClientTexture *tex = static_cast<ClientTexture *>(skin.texture))
                 {
@@ -652,7 +652,7 @@ DE_PIMPL(ClientResources)
         return reinterpret_cast<FrameModel *>(modelRepository->userPointer(id));
     }
 
-    inline String const &findModelPath(modelid_t id)
+    inline const String &findModelPath(modelid_t id)
     {
         return modelRepository->stringRef(id);
     }
@@ -688,7 +688,7 @@ DE_PIMPL(ClientResources)
         }
 
         // First try to find an existing modef.
-        for (FrameModelDef const &modef : modefs)
+        for (const FrameModelDef &modef : modefs)
         {
             if (modef.state == &runtimeDefs.states[state] &&
                fequal(modef.interMark, interMark) && modef.select == select)
@@ -709,7 +709,7 @@ DE_PIMPL(ClientResources)
         return md;
     }
 
-    String findSkinPath(Path const &skinPath, Path const &modelFilePath)
+    String findSkinPath(const Path &skinPath, const Path &modelFilePath)
     {
         //DE_ASSERT(!skinPath.isEmpty());
 
@@ -725,7 +725,7 @@ DE_PIMPL(ClientResources)
                     RLF_DEFAULT,
                     self().resClass(RC_GRAPHIC));
             }
-            catch (FS1::NotFoundError const &)
+            catch (const FS1::NotFoundError &)
             {}  // Ignore this error.
         }
 
@@ -737,7 +737,7 @@ DE_PIMPL(ClientResources)
     /**
      * Allocate room for a new skin file name.
      */
-    short defineSkinAndAddToModelIndex(FrameModel &mdl, Path const &skinPath)
+    short defineSkinAndAddToModelIndex(FrameModel &mdl, const Path &skinPath)
     {
         if (ClientTexture *tex = static_cast<ClientTexture *>(self().textures().defineTexture("ModelSkins", res::Uri(skinPath))))
         {
@@ -758,7 +758,7 @@ DE_PIMPL(ClientResources)
 
     void defineAllSkins(FrameModel &mdl)
     {
-        String const &modelFilePath = findModelPath(mdl.modelId());
+        const String &modelFilePath = findModelPath(mdl.modelId());
 
         dint numFoundSkins = 0;
         for (dint i = 0; i < mdl.skinCount(); ++i)
@@ -773,7 +773,7 @@ DE_PIMPL(ClientResources)
                 // We have found one more skin for this model.
                 numFoundSkins += 1;
             }
-            catch (FS1::NotFoundError const &)
+            catch (const FS1::NotFoundError &)
             {
                 LOG_RES_VERBOSE("Failed to locate \"%s\" (#%i) for model \"%s\"")
                         << skin.name << i << NativePath(modelFilePath).pretty();
@@ -799,7 +799,7 @@ DE_PIMPL(ClientResources)
                     << NativePath(foundPath).pretty()
                     << NativePath(modelFilePath).pretty();
             }
-            catch (FS1::NotFoundError const &)
+            catch (const FS1::NotFoundError &)
             {}  // Ignore this error.
         }
 
@@ -812,9 +812,9 @@ DE_PIMPL(ClientResources)
 #ifdef DE_DEBUG
         LOGDEV_RES_XVERBOSE("Model \"%s\" skins:", NativePath(modelFilePath).pretty());
         dint skinIdx = 0;
-        for (FrameModelSkin const &skin : mdl.skins())
+        for (const FrameModelSkin &skin : mdl.skins())
         {
-            res::TextureManifest const *texManifest = skin.texture? &skin.texture->manifest() : 0;
+            const res::TextureManifest *texManifest = skin.texture? &skin.texture->manifest() : 0;
             LOGDEV_RES_XVERBOSE("  %i: %s %s",
                        (skinIdx++) << skin.name
                     << (texManifest? (String("\"") + texManifest->composeUri() + "\"") : "(missing texture)")
@@ -847,7 +847,7 @@ DE_PIMPL(ClientResources)
         mf.offset.y = -bottom * scale + offset;
     }
 
-    void scaleModelToSprite(FrameModelDef &mf, Record const *spriteRec)
+    void scaleModelToSprite(FrameModelDef &mf, const Record *spriteRec)
     {
         if (!spriteRec) return;
 
@@ -860,7 +860,7 @@ DE_PIMPL(ClientResources)
         MaterialAnimator &matAnimator = mat->as<ClientMaterial>().getAnimator(Rend_SpriteMaterialSpec());
         matAnimator.prepare();  // Ensure we have up-to-date info.
 
-        ClientTexture const &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
+        const ClientTexture &texture = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture->base();
         dint off = de::max(0, -texture.origin().y - int(matAnimator.dimensions().y));
 
         scaleModel(mf, matAnimator.dimensions().y, off);
@@ -900,7 +900,7 @@ DE_PIMPL(ClientResources)
      * Model DEDs, each State that has a model will have a pointer to the one
      * with the smallest intermark (start of a chain).
      */
-    void setupModel(defn::Model const &def)
+    void setupModel(const defn::Model &def)
     {
         LOG_AS("setupModel");
 
@@ -939,7 +939,7 @@ DE_PIMPL(ClientResources)
         modef->clearSubs();
         for (dint i = 0; i < def.subCount(); ++i)
         {
-            Record const &subdef = def.sub(i);
+            const Record &subdef = def.sub(i);
             SubmodelDef *sub = modef->addSub();
 
             sub->modelId = 0;
@@ -1038,15 +1038,15 @@ DE_PIMPL(ClientResources)
                 if (!subdef.gets("skinFilename").isEmpty())
                 {
                     // A specific file name has been given for the skin.
-                    String const &skinFilePath  = res::Uri(subdef.gets("skinFilename")).path();
-                    String const &modelFilePath = findModelPath(sub->modelId);
+                    const String &skinFilePath  = res::Uri(subdef.gets("skinFilename")).path();
+                    const String &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
                         Path foundResourcePath(findSkinPath(skinFilePath, modelFilePath));
 
                         sub->skin = defineSkinAndAddToModelIndex(*mdl, foundResourcePath);
                     }
-                    catch (FS1::NotFoundError const &)
+                    catch (const FS1::NotFoundError &)
                     {
                         LOG_RES_WARNING("Failed to locate skin \"%s\" for model \"%s\"")
                             << subdef.gets("skinFilename") << NativePath(modelFilePath).pretty();
@@ -1065,15 +1065,15 @@ DE_PIMPL(ClientResources)
 
                 if (!subdef.gets("shinySkin").isEmpty())
                 {
-                    String const &skinFilePath  = res::Uri(subdef.gets("shinySkin")).path();
-                    String const &modelFilePath = findModelPath(sub->modelId);
+                    const String &skinFilePath  = res::Uri(subdef.gets("shinySkin")).path();
+                    const String &modelFilePath = findModelPath(sub->modelId);
                     try
                     {
                         res::Uri foundResourceUri(Path(findSkinPath(skinFilePath, modelFilePath)));
 
                         sub->shinySkin = self().textures().defineTexture("ModelReflectionSkins", foundResourceUri);
                     }
-                    catch (FS1::NotFoundError const &)
+                    catch (const FS1::NotFoundError &)
                     {
                         LOG_RES_WARNING("Failed to locate skin \"%s\" for model \"%s\"")
                             << skinFilePath << NativePath(modelFilePath).pretty();
@@ -1091,7 +1091,7 @@ DE_PIMPL(ClientResources)
                     mdl->setFlags(FrameModel::NoTextureCompression);
                 }
             }
-            catch (FS1::NotFoundError const &)
+            catch (const FS1::NotFoundError &)
             {
                 LOG_RES_WARNING("Failed to locate \"%s\"") << searchPath;
             }
@@ -1114,7 +1114,7 @@ DE_PIMPL(ClientResources)
                 sprFrame = modef->state->frame;
             }
 
-            if (Record const *sprite = self().sprites().spritePtr(sprNum, sprFrame))
+            if (const Record *sprite = self().sprites().spritePtr(sprNum, sprFrame))
             {
                 scaleModelToSprite(*modef, sprite);
             }
@@ -1213,7 +1213,7 @@ DE_PIMPL(ClientResources)
 #endif
 
     /// Observes FontManifest Deletion.
-    void fontManifestBeingDeleted(FontManifest const &manifest)
+    void fontManifestBeingDeleted(const FontManifest &manifest)
     {
         fontManifestIdMap[manifest.uniqueId() - 1 /*1-based*/] = 0;
 
@@ -1222,7 +1222,7 @@ DE_PIMPL(ClientResources)
     }
 
     /// Observes AbstractFont Deletion.
-    void fontBeingDeleted(AbstractFont const &font)
+    void fontBeingDeleted(const AbstractFont &font)
     {
         fonts.removeOne(const_cast<AbstractFont *>(&font));
     }
@@ -1295,7 +1295,7 @@ void ClientResources::initSystemTextures()
 
     LOG_RES_VERBOSE("Initializing System textures...");
 
-    for (auto const &def : texDefs)
+    for (const auto &def : texDefs)
     {
         textures().declareSystemTexture(def.path, res::Uri("Graphics", def.graphicName));
     }
@@ -1452,7 +1452,7 @@ void ClientResources::pruneUnusedTextureSpecs()
         << numPruned << (numPruned == 1? "specification" : "specifications");
 }
 
-TextureVariantSpec const &ClientResources::textureSpec(texturevariantusagecontext_t tc,
+const TextureVariantSpec &ClientResources::textureSpec(texturevariantusagecontext_t tc,
                                                        dint    flags,
                                                        byte    border,
                                                        dint    tClass,
@@ -1510,24 +1510,24 @@ bool ClientResources::knownFontScheme(const String& name) const
     return false;
 }
 
-ClientResources::FontSchemes const &ClientResources::allFontSchemes() const
+const ClientResources::FontSchemes &ClientResources::allFontSchemes() const
 {
     return d->fontSchemes;
 }
 
-bool ClientResources::hasFont(res::Uri const &path) const
+bool ClientResources::hasFont(const res::Uri &path) const
 {
     try
     {
         fontManifest(path);
         return true;
     }
-    catch (MissingResourceManifestError const &)
+    catch (const MissingResourceManifestError &)
     {}  // Ignore this error.
     return false;
 }
 
-FontManifest &ClientResources::fontManifest(res::Uri const &uri) const
+FontManifest &ClientResources::fontManifest(const res::Uri &uri) const
 {
     LOG_AS("ClientResources::findFont");
 
@@ -1546,14 +1546,14 @@ FontManifest &ClientResources::fontManifest(res::Uri const &uri) const
             {
                 return fontScheme(schemeName).findByUniqueId(uniqueId);
             }
-            catch (FontScheme::NotFoundError const &)
+            catch (const FontScheme::NotFoundError &)
             {}  // Ignore, we'll throw our own...
         }
     }
     else
     {
         // No, this is a URI.
-        String const &path = uri.path();
+        const String &path = uri.path();
 
         // Does the user want a manifest in a specific scheme?
         if (!uri.scheme().isEmpty())
@@ -1562,7 +1562,7 @@ FontManifest &ClientResources::fontManifest(res::Uri const &uri) const
             {
                 return fontScheme(uri.scheme()).find(path);
             }
-            catch (FontScheme::NotFoundError const &)
+            catch (const FontScheme::NotFoundError &)
             {}  // Ignore, we'll throw our own...
         }
         else
@@ -1574,7 +1574,7 @@ FontManifest &ClientResources::fontManifest(res::Uri const &uri) const
                 {
                     return scheme->find(path);
                 }
-                catch (FontScheme::NotFoundError const &)
+                catch (const FontScheme::NotFoundError &)
                 {}  // Ignore, we'll throw our own...
             }
         }
@@ -1602,17 +1602,17 @@ FontManifest &ClientResources::toFontManifest(fontid_t id) const
         stringf("Invalid font ID %u, valid range [1..%u)", id, d->fontManifestCount + 1));
 }
 
-ClientResources::AllFonts const &ClientResources::allFonts() const
+const ClientResources::AllFonts &ClientResources::allFonts() const
 {
     return d->fonts;
 }
 
-AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
+AbstractFont *ClientResources::newFontFromDef(const ded_compositefont_t &def)
 {
     LOG_AS("ClientResources::newFontFromDef");
 
     if (!def.uri) return nullptr;
-    res::Uri const &uri = *def.uri;
+    const res::Uri &uri = *def.uri;
 
     try
     {
@@ -1648,12 +1648,12 @@ AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
         LOG_RES_WARNING("Failed defining new Font for \"%s\"")
             << NativePath(uri.asText()).pretty();
     }
-    catch (UnknownSchemeError const &er)
+    catch (const UnknownSchemeError &er)
     {
         LOG_RES_WARNING("Failed declaring font \"%s\": %s")
             << NativePath(uri.asText()).pretty() << er.asText();
     }
-    catch (FontScheme::InvalidPathError const &er)
+    catch (const FontScheme::InvalidPathError &er)
     {
         LOG_RES_WARNING("Failed declaring font \"%s\": %s")
             << NativePath(uri.asText()).pretty() << er.asText();
@@ -1662,7 +1662,7 @@ AbstractFont *ClientResources::newFontFromDef(ded_compositefont_t const &def)
     return nullptr;
 }
 
-AbstractFont *ClientResources::newFontFromFile(res::Uri const &uri, const String& filePath)
+AbstractFont *ClientResources::newFontFromFile(const res::Uri &uri, const String& filePath)
 {
     LOG_AS("ClientResources::newFontFromFile");
 
@@ -1707,12 +1707,12 @@ AbstractFont *ClientResources::newFontFromFile(res::Uri const &uri, const String
         LOG_RES_WARNING("Failed defining new Font for \"%s\"")
             << NativePath(uri.asText()).pretty();
     }
-    catch (UnknownSchemeError const &er)
+    catch (const UnknownSchemeError &er)
     {
         LOG_RES_WARNING("Failed declaring font \"%s\": %s")
             << NativePath(uri.asText()).pretty() << er.asText();
     }
-    catch (FontScheme::InvalidPathError const &er)
+    catch (const FontScheme::InvalidPathError &er)
     {
         LOG_RES_WARNING("Failed declaring font \"%s\": %s")
             << NativePath(uri.asText()).pretty() << er.asText();
@@ -1747,7 +1747,7 @@ bool ClientResources::hasModelDef(String id) const
 {
     if (!id.isEmpty())
     {
-        for (FrameModelDef const &modef : d->modefs)
+        for (const FrameModelDef &modef : d->modefs)
         {
             if (!id.compareWithoutCase(modef.id))
             {
@@ -1769,7 +1769,7 @@ FrameModelDef &ClientResources::modelDef(String id)
 {
     if (!id.isEmpty())
     {
-        for (FrameModelDef const &modef : d->modefs)
+        for (const FrameModelDef &modef : d->modefs)
         {
             if (!id.compareWithoutCase(modef.id))
             {
@@ -1922,7 +1922,7 @@ void ClientResources::initModels()
     LOG_RES_MSG("Model init completed in %.2f seconds") << begunAt.since();
 }
 
-dint ClientResources::indexOf(FrameModelDef const *modelDef)
+dint ClientResources::indexOf(const FrameModelDef *modelDef)
 {
     dint index = dint(modelDef - &d->modefs[0]);
     return (index >= 0 && index < d->modefs.count() ? index : -1);
@@ -1951,13 +1951,13 @@ void ClientResources::processCacheQueue()
     d->processCacheQueue();
 }
 
-void ClientResources::cache(ClientMaterial &material, MaterialVariantSpec const &spec,
+void ClientResources::cache(ClientMaterial &material, const MaterialVariantSpec &spec,
                             bool cacheGroups)
 {
     d->queueCacheTasksForMaterial(material, spec, cacheGroups);
 }
 
-void ClientResources::cache(spritenum_t spriteId, MaterialVariantSpec const &spec)
+void ClientResources::cache(spritenum_t spriteId, const MaterialVariantSpec &spec)
 {
     d->queueCacheTasksForSprite(spriteId, spec);
 }
@@ -1968,7 +1968,7 @@ void ClientResources::cache(FrameModelDef *modelDef)
     d->queueCacheTasksForModel(*modelDef);
 }
 
-MaterialVariantSpec const &ClientResources::materialSpec(MaterialContextId contextId,
+const MaterialVariantSpec &ClientResources::materialSpec(MaterialContextId contextId,
     dint flags, byte border, dint tClass, dint tMap, GLenum wrapS, GLenum wrapT,
     dint minFilter, dint magFilter, dint anisoFilter,
     bool mipmapped, bool gammaCorrection, bool noStretch, bool toAlpha)
@@ -1987,7 +1987,7 @@ void ClientResources::cacheForCurrentMap()
 
     if (precacheMapMaterials)
     {
-        MaterialVariantSpec const &spec = Rend_MapSurfaceMaterialSpec();
+        const MaterialVariantSpec &spec = Rend_MapSurfaceMaterialSpec();
 
         map.forAllLines([this, &spec] (Line &line)
         {
@@ -2028,7 +2028,7 @@ void ClientResources::cacheForCurrentMap()
 
     if (precacheSprites)
     {
-        MaterialVariantSpec const &matSpec = Rend_SpriteMaterialSpec();
+        const MaterialVariantSpec &matSpec = Rend_SpriteMaterialSpec();
 
         for (dint i = 0; i < sprites().spriteCount(); ++i)
         {
@@ -2038,7 +2038,7 @@ void ClientResources::cacheForCurrentMap()
             LoopResult found = map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                                                      0x1/*public*/, [&sprite] (thinker_t *th)
             {
-                auto const &mob = *reinterpret_cast<mobj_t *>(th);
+                const auto &mob = *reinterpret_cast<mobj_t *>(th);
                 if (mob.type >= 0 && mob.type < runtimeDefs.mobjInfo.size())
                 {
                     /// @todo optimize: traverses the entire state list!
@@ -2071,7 +2071,7 @@ void ClientResources::cacheForCurrentMap()
         map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
                               0x1/*public*/, [this] (thinker_t *th)
         {
-            auto const &mob = *reinterpret_cast<mobj_t *>(th);
+            const auto &mob = *reinterpret_cast<mobj_t *>(th);
             // Check through all the model definitions.
             for (dint i = 0; i < modelDefCount(); ++i)
             {
@@ -2094,7 +2094,7 @@ void ClientResources::cacheForCurrentMap()
  * @param like      Resource path search term.
  * @param composeUriFlags  Flags governing how URIs should be composed.
  */
-static int printFontIndex2(FontScheme *scheme, Path const &like,
+static int printFontIndex2(FontScheme *scheme, const Path &like,
     res::Uri::ComposeAsTextFlags composeUriFlags)
 {
     FontScheme::Index::FoundNodes found;
@@ -2139,7 +2139,7 @@ static int printFontIndex2(FontScheme *scheme, Path const &like,
     return found.count();
 }
 
-static void printFontIndex(res::Uri const &search,
+static void printFontIndex(const res::Uri &search,
     res::Uri::ComposeAsTextFlags flags = res::Uri::DefaultComposeAsTextFlags)
 {
     int printTotal = 0;
@@ -2203,7 +2203,7 @@ D_CMD(PrintFontStats)
     LOG_MSG(_E(b) "Font Statistics:");
     for (const auto &scheme : App_Resources().allFontSchemes())
     {
-        FontScheme::Index const &index = scheme.second->index();
+        const FontScheme::Index &index = scheme.second->index();
 
         uint const count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")

@@ -80,15 +80,15 @@ DE_PIMPL(StateAnimator)
         LoopMode looping = NotLooping;
         bool mustFinish = false; // Sequence will play to end unless higher priority started.
         int priority = ANIM_DEFAULT_PRIORITY;
-        Timeline const *timeline = nullptr; // owned by ModelRenderer::AnimSequence
+        const Timeline *timeline = nullptr; // owned by ModelRenderer::AnimSequence
         std::unique_ptr<Timeline::Clock> clock;
         TimeSpan overrideDuration = -1.0;
         TimeSpan actualRuntime = 0.0;
 
         Sequence() {}
 
-        Sequence(int animationId, String const &rootNode, LoopMode looping, bool mustFinish,
-                 int priority, Timeline const *timeline = nullptr)
+        Sequence(int animationId, const String &rootNode, LoopMode looping, bool mustFinish,
+                 int priority, const Timeline *timeline = nullptr)
             : looping(looping)
             , mustFinish(mustFinish)
             , priority(priority)
@@ -98,12 +98,12 @@ DE_PIMPL(StateAnimator)
             node   = rootNode;
         }
 
-        Sequence(Sequence const &other) : OngoingSequence(other)
+        Sequence(const Sequence &other) : OngoingSequence(other)
         {
             apply(other);
         }
 
-        Sequence &operator=(Sequence const &other)
+        Sequence &operator=(const Sequence &other)
         {
             apply(other);
             return *this;
@@ -114,7 +114,7 @@ DE_PIMPL(StateAnimator)
             ModelDrawable::Animator::OngoingSequence::initialize();
         }
 
-        void apply(Sequence const &other)
+        void apply(const Sequence &other)
         {
             animId     = other.animId;
             node       = other.node;
@@ -199,7 +199,7 @@ DE_PIMPL(StateAnimator)
             setCondition(names[VAR_NOTIFIED_STATES()]);
         }
 
-        void handleTriggered(String const &trigger) override
+        void handleTriggered(const String &trigger) override
         {
             Record ns;
             ns.add(DE_STR("self")).set(new RecordValue(names));
@@ -212,7 +212,7 @@ DE_PIMPL(StateAnimator)
     std::unique_ptr<StateCallback> stateCallback;
     std::unique_ptr<Scheduler> scheduler; // only created if needed for additional timelines
 
-    Impl(Public *i, DotPath const &assetId) : Base(i)
+    Impl(Public *i, const DotPath &assetId) : Base(i)
     {
         if (!assetId.isEmpty())
         {
@@ -228,7 +228,7 @@ DE_PIMPL(StateAnimator)
                 bindUniforms(program,
                     binding == ModelDrawable::AboutToBind? Bind : Unbind);
             };
-            appearance.passCallback = [this] (ModelDrawable::Pass const &pass, ModelDrawable::PassState state)
+            appearance.passCallback = [this] (const ModelDrawable::Pass &pass, ModelDrawable::PassState state)
             {
                 bindPassUniforms(*self().model().currentProgram(),
                     pass.name,
@@ -242,14 +242,14 @@ DE_PIMPL(StateAnimator)
         deinitVariables();
     }
 
-    void initVariables(DotPath const &assetId)
+    void initVariables(const DotPath &assetId)
     {
         // Initialize the StateAnimator script object.
         names.add(Record::VAR_NATIVE_SELF).set(new NativePointerValue(thisPublic)).setReadOnly();
         names.addSuperRecord(ScriptSystem::builtInClass(DE_STR("Render"),
                                                         DE_STR("StateAnimator")));
         names.addText(VAR_ID(), assetId).setReadOnly();
-        Record const &assetDef = App::asset(assetId).accessedRecord();
+        const Record &assetDef = App::asset(assetId).accessedRecord();
         names.add(VAR_ASSET()).set(new RecordValue(assetDef)).setReadOnly();
         if (assetDef.has(VAR_NOTIFIED_STATES()))
         {
@@ -290,10 +290,10 @@ DE_PIMPL(StateAnimator)
         names.addText(VAR_MATERIAL(), DEFAULT_MATERIAL());
 
         int passIndex = 0;
-        auto const &def = names[VAR_ASSET()].valueAsRecord();
+        const auto &def = names[VAR_ASSET()].valueAsRecord();
         if (def.has(ModelLoader::DEF_RENDER))
         {
-            Record const &renderBlock = def.subrecord(ModelLoader::DEF_RENDER);
+            const Record &renderBlock = def.subrecord(ModelLoader::DEF_RENDER);
 
             initVariablesForPass(renderBlock);
 
@@ -302,7 +302,7 @@ DE_PIMPL(StateAnimator)
             auto passes = ScriptedInfo::subrecordsOfType(ModelLoader::DEF_PASS, renderBlock);
             for (const String &passName : ScriptedInfo::sortRecordsBySource(passes))
             {
-                Record const &passDef = *passes[passName];
+                const Record &passDef = *passes[passName];
 
                 indexForPassName[passName] = passIndex++;
 
@@ -332,8 +332,8 @@ DE_PIMPL(StateAnimator)
         updatePassMaterials();
     }
 
-    void initVariablesForPass(Record const &block,
-                              String const &passName = PASS_GLOBAL())
+    void initVariablesForPass(const Record &block,
+                              const String &passName = PASS_GLOBAL())
     {
         // Each pass has a variable for selecting the material.
         // The default value is optionally specified in the definition.
@@ -361,8 +361,8 @@ DE_PIMPL(StateAnimator)
         }
     }
 
-    void initAnimationVariable(String const &variableName,
-                               Record const &variableDef)
+    void initAnimationVariable(const String &variableName,
+                               const Record &variableDef)
     {
         try
         {
@@ -382,14 +382,14 @@ DE_PIMPL(StateAnimator)
             // animation sequences so that the variables are applied.
             self().setFlags(AlwaysTransformNodes);
         }
-        catch (Error const &er)
+        catch (const Error &er)
         {
             LOG_GL_WARNING("%s: %s") << ScriptedInfo::sourceLocation(variableDef)
                                      << er.asText();
         }
     }
 
-    void addBinding(String const &varName, AnimationValue *anim)
+    void addBinding(const String &varName, AnimationValue *anim)
     {
         names.add(varName).set(anim).setReadOnly(); // ownership of anim taken
                 //.set(new NativePointerValue(&anim, &ScriptSystem::builtInClass("Animation")))
@@ -409,9 +409,9 @@ DE_PIMPL(StateAnimator)
         animVars.clear();
     }
 
-    Variable const &materialVariableForPass(duint passIndex) const
+    const Variable &materialVariableForPass(duint passIndex) const
     {
-        auto const &model = self().model();
+        const auto &model = self().model();
         if (!model.passes.isEmpty())
         {
             String const varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL());
@@ -432,7 +432,7 @@ DE_PIMPL(StateAnimator)
         }
     }
 
-    void variableValueChanged(Variable &var, Value const &newValue)
+    void variableValueChanged(Variable &var, const Value &newValue)
     {
         if (var.name() == VAR_MATERIAL())
         {
@@ -464,9 +464,9 @@ DE_PIMPL(StateAnimator)
      *
      * @return Material index.
      */
-    duint materialForUserProvidedName(String const &materialName) const
+    duint materialForUserProvidedName(const String &materialName) const
     {
-       auto const &model = self().model();
+       const auto &model = self().model();
        auto const matIndex = model.materialIndexForName.find(materialName);
        if (matIndex != model.materialIndexForName.end())
        {
@@ -480,7 +480,7 @@ DE_PIMPL(StateAnimator)
     void updatePassMask()
     {
         Record::Subrecords enabledPasses =
-            names.subrecords([](Record const &sub) { return sub.getb(DEF_ENABLED(), false); });
+            names.subrecords([](const Record &sub) { return sub.getb(DEF_ENABLED(), false); });
 
         appearance.passMask.fill(false);
         for (const auto &ep : enabledPasses)
@@ -517,7 +517,7 @@ DE_PIMPL(StateAnimator)
      * @param uniform  Uniform.
      * @return @c true, if a variable exists matching @a uniform.
      */
-    static bool hasDeclaredVariable(Record const &shaderDef, GLUniform const &uniform)
+    static bool hasDeclaredVariable(const Record &shaderDef, const GLUniform &uniform)
     {
         return shaderDef.hasMember(String::fromUtf8(uniform.name()));
     }
@@ -542,10 +542,10 @@ DE_PIMPL(StateAnimator)
      * @param operation  Bind or unbind.
      */
     void bindPassUniforms(de::GLProgram &program,
-                          de::String const &passName,
+                          const de::String &passName,
                           BindOperation operation) const
     {
-        auto const &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
+        const auto &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
 
         auto const vars = passVars.find(passName);
         if (vars != passVars.end())
@@ -568,14 +568,14 @@ DE_PIMPL(StateAnimator)
         }
     }
 
-    int animationId(String const &name) const
+    int animationId(const String &name) const
     {
-        return ModelLoader::identifierFromText(name, [this] (String const &name) {
+        return ModelLoader::identifierFromText(name, [this] (const String &name) {
             return self().model().animationIdForName(name);
         });
     }
 
-    Sequence &start(Sequence const &spec)
+    Sequence &start(const Sequence &spec)
     {
         //qDebug() << "[StateAnimator] start id" << spec.animId;
 
@@ -596,14 +596,14 @@ StateAnimator::StateAnimator()
     , d(new Impl(this, {}))
 {}
 
-StateAnimator::StateAnimator(DotPath const &id, Model const &model)
+StateAnimator::StateAnimator(const DotPath &id, const Model &model)
     : ModelDrawable::Animator(model, Impl::Sequence::make)
     , d(new Impl(this, id))
 {}
 
-Model const &StateAnimator::model() const
+const Model &StateAnimator::model() const
 {
-    return static_cast<Model const &>(ModelDrawable::Animator::model());
+    return static_cast<const Model &>(ModelDrawable::Animator::model());
 }
 
 Scheduler &StateAnimator::scheduler()
@@ -615,7 +615,7 @@ Scheduler &StateAnimator::scheduler()
     return *d->scheduler;
 }
 
-void StateAnimator::setOwnerNamespace(Record &names, String const &varName)
+void StateAnimator::setOwnerNamespace(Record &names, const String &varName)
 {
     d->ownerNamespaceVarName = varName;
     d->names.add(d->ownerNamespaceVarName).set(new RecordValue(names));
@@ -636,7 +636,7 @@ String StateAnimator::ownerNamespaceName() const
     return d->ownerNamespaceVarName;
 }
 
-void StateAnimator::triggerByState(String const &stateName)
+void StateAnimator::triggerByState(const String &stateName)
 {
     using Sequence = Impl::Sequence;
 
@@ -646,7 +646,7 @@ void StateAnimator::triggerByState(String const &stateName)
     }
 
     // No animations can be triggered if none are available.
-    auto const *stateAnims = &model().animations;
+    const auto *stateAnims = &model().animations;
     if (!stateAnims) return;
 
     auto found = stateAnims->find(stateName);
@@ -657,7 +657,7 @@ void StateAnimator::triggerByState(String const &stateName)
 
     d->currentStateName = stateName;
 
-    for (Model::AnimSequence const &seq : found->second)
+    for (const Model::AnimSequence &seq : found->second)
     {
         try
         {
@@ -734,7 +734,7 @@ void StateAnimator::triggerByState(String const &stateName)
             // Start a new sequence.
             d->start(anim);
         }
-        catch (ModelDrawable::Animator::InvalidError const &er)
+        catch (const ModelDrawable::Animator::InvalidError &er)
         {
             LOG_GL_WARNING("Failed to start animation \"%s\": %s")
                     << seq.name << er.asText();
@@ -744,7 +744,7 @@ void StateAnimator::triggerByState(String const &stateName)
     }
 }
 
-void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
+void StateAnimator::triggerDamage(int points, const struct mobj_s *inflictor)
 {
     /*
      * Here we check for the onDamage() function in the asset. The __asset__
@@ -768,7 +768,7 @@ void StateAnimator::triggerDamage(int points, struct mobj_s const *inflictor)
     }
 }
 
-void StateAnimator::startAnimation(int animationId, int priority, bool looping, String const &node)
+void StateAnimator::startAnimation(int animationId, int priority, bool looping, const String &node)
 {
     LOG_AS("StateAnimator::startAnimation");
     try
@@ -786,7 +786,7 @@ void StateAnimator::startAnimation(int animationId, int priority, bool looping, 
     }
 }
 
-int StateAnimator::animationId(String const &name) const
+int StateAnimator::animationId(const String &name) const
 {
     return d->animationId(name);
 }
@@ -892,12 +892,12 @@ ddouble StateAnimator::currentTime(int index) const
     return ModelDrawable::Animator::currentTime(index); // + frameTimePos;
 }
 
-Vec4f StateAnimator::extraRotationForNode(String const &nodeName) const
+Vec4f StateAnimator::extraRotationForNode(const String &nodeName) const
 {
     auto found = d->animVars.find(nodeName);
     if (found != d->animVars.end())
     {
-        Impl::AnimVar const &var = *found->second;
+        const Impl::AnimVar &var = *found->second;
         if (var.angle)
         {
             return Vec4f(var.axis, var.angle->animation());
@@ -906,7 +906,7 @@ Vec4f StateAnimator::extraRotationForNode(String const &nodeName) const
     return Vec4f();
 }
 
-ModelDrawable::Appearance const &StateAnimator::appearance() const
+const ModelDrawable::Appearance &StateAnimator::appearance() const
 {
     return d->appearance;
 }
@@ -916,7 +916,7 @@ Record &StateAnimator::objectNamespace()
     return d->names;
 }
 
-Record const &StateAnimator::objectNamespace() const
+const Record &StateAnimator::objectNamespace() const
 {
     return d->names;
 }
