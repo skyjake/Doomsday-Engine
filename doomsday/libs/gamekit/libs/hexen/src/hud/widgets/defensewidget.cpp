@@ -71,7 +71,7 @@ void guidata_defense_t::tick(timespan_t /*elapsed*/)
 
 void guidata_defense_t::draw(const Vec2i &offset) const
 {
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(_patchId == 0) return;
 

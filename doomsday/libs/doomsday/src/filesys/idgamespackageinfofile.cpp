@@ -46,7 +46,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
 
     String cacheFolderPath() const
     {
-        String const hex = dataFile->metaId().asHexadecimalText();
+        const String hex = dataFile->metaId().asHexadecimalText();
         return RemoteFile::CACHE_PATH / hex.right(CharPos(1)) / hex;
     }
 
@@ -97,7 +97,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
                 zip->populate();
                 zip->forContents([this, &dataFiles] (String name, File &file)
                 {
-                    String const ext = name.fileNameExtension().lower();
+                    const String ext = name.fileNameExtension().lower();
                     if (ext == ".wad" || ext == ".deh" || ext == ".lmp" || ext == ".pk3")
                     {
                         File &copied = FS::copySerialized
@@ -177,7 +177,7 @@ DE_PIMPL(IdgamesPackageInfoFile)
                     Record info { pkgMeta, Record::IgnoreDoubleUnderscoreMembers };
                     delete info.remove("ID");
                     delete info.remove("path");
-                    String const cachePath = cacheFolderPath();
+                    const String cachePath = cacheFolderPath();
                     ArrayValue *pkgData = new ArrayValue;
                     for (String path : info.getStringList("dataFiles"))
                     {

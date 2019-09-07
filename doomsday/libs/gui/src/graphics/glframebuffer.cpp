@@ -460,7 +460,7 @@ DE_PIMPL(GLFramebuffer)
         glBindFramebuffer(GL_DRAW_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
 //        glBindFramebuffer(GL_READ_FRAMEBUFFER, fbo); LIBGUI_ASSERT_GL_OK();
 
-        int const count = colorAttachmentCount();
+        const int count = colorAttachmentCount();
 
         static const GLenum drawBufs[4] = {
             GL_COLOR_ATTACHMENT0, GL_COLOR_ATTACHMENT1, GL_COLOR_ATTACHMENT2, GL_COLOR_ATTACHMENT3
@@ -693,7 +693,7 @@ void GLFramebuffer::glBind() const
         d->glRelease();
     }
 
-//    GLuint const fbo = (d->fbo? d->fbo : defaultFramebuffer);
+//    const GLuint fbo = (d->fbo? d->fbo : defaultFramebuffer);
 
 //    glBindFramebuffer(GL_FRAMEBUFFER, fbo);
 //    LIBGUI_ASSERT_GL_OK();
@@ -990,7 +990,7 @@ Rectangleui GLFramebuffer::scaleToActiveRect(const Rectangleui &rectInTarget) co
         return rectInTarget;
     }
 
-    Vec2f const scaling = activeRectScale();
+    const Vec2f scaling = activeRectScale();
 
     return Rectangleui(d->activeRect.left()  + scaling.x * rectInTarget.left(),
                        d->activeRect.top()   + scaling.y * rectInTarget.top(),

@@ -163,8 +163,8 @@ namespace internal
         {
             origin.x -= 22;
 
-            int const seconds = t % 60;
-            int const minutes = t / 60 % 60;
+            const int seconds = t % 60;
+            const int minutes = t / 60 % 60;
 
             drawChar(':', origin);
             if(minutes > 0)
@@ -268,7 +268,7 @@ static String backgroundPatchForEpisode(const String &episodeId)
     if(!(gameModeBits & GM_ANY_DOOM2))
     {
         bool isNumber;
-        int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
+        const int oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
         if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
         {
             return Stringf("WIMAP%i", oldEpisodeNum);
@@ -411,8 +411,8 @@ static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 
     patchid_t titlePatchId = 0;
 
-    String const title       = G_MapTitle(wbs->currentMap);
-    res::Uri const titleImage = G_MapTitleImage(wbs->currentMap);
+    const String title       = G_MapTitle(wbs->currentMap);
+    const res::Uri titleImage = G_MapTitleImage(wbs->currentMap);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
@@ -427,7 +427,7 @@ static void drawFinishedTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
-    String const text = patchReplacementText(titlePatchId, title);
+    const String text = patchReplacementText(titlePatchId, title);
     if(!text.isEmpty())
     {
         // Draw title text.
@@ -463,8 +463,8 @@ static void drawEnteringTitle(Vec2i origin = Vec2i(SCREENWIDTH / 2, WI_TITLEY))
 
     patchid_t patchId = 0;
 
-    String const title       = G_MapTitle(wbs->nextMap);
-    res::Uri const titleImage = G_MapTitleImage(wbs->nextMap);
+    const String title       = G_MapTitle(wbs->nextMap);
+    const res::Uri titleImage = G_MapTitleImage(wbs->nextMap);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))
@@ -501,10 +501,10 @@ static bool patchFits(patchid_t patchId, const Vec2i &origin)
     patchinfo_t info;
     if(!R_GetPatchInfo(patchId, &info)) return false;
 
-    int const left   = origin.x + info.geometry.origin.x;
-    int const top    = origin.y + info.geometry.origin.y;
-    int const right  = left + info.geometry.size.width;
-    int const bottom = top + info.geometry.size.height;
+    const int left   = origin.x + info.geometry.origin.x;
+    const int top    = origin.y + info.geometry.origin.y;
+    const int right  = left + info.geometry.size.width;
+    const int bottom = top + info.geometry.size.height;
     return (left >= 0 && right < SCREENWIDTH && top >= 0 && bottom < SCREENHEIGHT);
 }
 
@@ -678,7 +678,7 @@ static void drawLocationMarks()
     {
         if(const Location *loc = tryFindLocationForMap(locations, wbs->nextMap))
         {
-            patchid_t const yahPatchId = chooseYouAreHerePatch(loc->origin);
+            const patchid_t yahPatchId = chooseYouAreHerePatch(loc->origin);
             WI_DrawPatch(yahPatchId, patchReplacementText(yahPatchId),
                          loc->origin, ALIGN_TOPLEFT, 0, DTF_NO_TYPEIN);
         }
@@ -817,8 +817,8 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
         {
             FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-            patchid_t const patchId  = pTeamBackgrounds[i];
-            String const replacement = patchReplacementText(patchId);
+            const patchid_t patchId  = pTeamBackgrounds[i];
+            const String replacement = patchReplacementText(patchId);
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
@@ -834,7 +834,7 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
             // If more than 1 member, show the member count.
             if(1 > teamInfo[i].playerCount)
             {
-                String const count = String::asText(teamInfo[i].playerCount);
+                const String count = String::asText(teamInfo[i].playerCount);
 
                 FR_SetFont(FID(GF_FONTA));
                 drawText(count, Vec2i(origin.x   - info.geometry.size.width / 2 + 1, DM_MATRIXY - WI_SPACINGY + info.geometry.size.height - 8));
@@ -845,8 +845,8 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
         {
             FR_SetColorAndAlpha(defFontRGB[CR], defFontRGB[CG], defFontRGB[CB], 1);
 
-            patchid_t const patchId  = pTeamIcons[i];
-            String const replacement = patchReplacementText(patchId);
+            const patchid_t patchId  = pTeamIcons[i];
+            const String replacement = patchReplacementText(patchId);
 
             patchinfo_t info;
             R_GetPatchInfo(patchId, &info);
@@ -862,7 +862,7 @@ static void drawDeathmatchStats(Vec2i origin = Vec2i(DM_MATRIXX + DM_SPACINGX, D
     origin.y = DM_MATRIXY + 10;
     FR_SetFont(FID(GF_SMALL));
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
-    int const w = FR_CharWidth('0');
+    const int w = FR_CharWidth('0');
 
     for(int i = 0; i < NUMTEAMS; ++i)
     {
@@ -1014,7 +1014,7 @@ static void updateNetgameStats()
         {
             cntFrags[i] += 1;
 
-            int const fsum = teamInfo[i].totalFrags;
+            const int fsum = teamInfo[i].totalFrags;
             if(cntFrags[i] >= fsum)
                 cntFrags[i] = fsum;
             else
@@ -1063,10 +1063,10 @@ static void drawNetgameStats()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(defFontRGB2[CR], defFontRGB2[CG], defFontRGB2[CB], 1);
 
-    int const pwidth = FR_CharWidth('%');
+    const int pwidth = FR_CharWidth('%');
     patchinfo_t info;
     R_GetPatchInfo(pFaceAlive, &info);
-    int const starWidth = info.geometry.size.width;
+    const int starWidth = info.geometry.size.width;
 
     // Draw stat titles (top line).
     R_GetPatchInfo(pKills, &info);
@@ -1136,7 +1136,7 @@ static void drawNetgameStats()
 
 static void drawSinglePlayerStats()
 {
-    int const lh = (3 * FR_CharHeight('0')) / 2; // Line height.
+    const int lh = (3 * FR_CharHeight('0')) / 2; // Line height.
 
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
@@ -1381,7 +1381,7 @@ void IN_Ticker()
 
 static void loadData()
 {
-    String const episodeId = gfw_Session()->episodeId();
+    const String episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
     pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId));

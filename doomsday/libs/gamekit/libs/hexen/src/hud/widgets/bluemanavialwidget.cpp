@@ -86,9 +86,9 @@ void guidata_bluemanavial_t::draw(const Vec2i &offset) const
 
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    dint const activeHud     = ST_ActiveHud(player());
-    dfloat const yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(player());
+    const dfloat yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(player())) return;
     if(ST_AutomapIsOpen(player())) return;

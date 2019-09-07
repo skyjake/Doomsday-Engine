@@ -344,7 +344,7 @@ void X_PostInit()
     // Change the default skill mode?
     if (auto arg = cmdLine.check("-skill", 1))
     {
-        int const skillNumber = arg.params.first().toInt();
+        const int skillNumber = arg.params.first().toInt();
         gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0? skillNumber - 1 : skillNumber));
     }
 
@@ -353,7 +353,7 @@ void X_PostInit()
     if (auto arg = cmdLine.check("-class", 1))
     {
         bool isNumber;
-        int const pClass = arg.params.first().toInt(&isNumber);
+        const int pClass = arg.params.first().toInt(&isNumber);
         if (isNumber && VALID_PLAYER_CLASS(pClass))
         {
             if (!PCLASS_INFO(pClass)->userSelectable)

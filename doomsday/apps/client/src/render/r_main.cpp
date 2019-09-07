@@ -69,16 +69,16 @@ static const MaterialVariantSpec &pspriteMaterialSpec()
 
 static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs)
 {
-    static dint const WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
+    static const dint WEAPONTOP = 32;  /// @todo Currently hardcoded here and in the plugins.
 
-    dfloat const offScaleY = ::weaponOffsetScaleY / 1000.0f;
+    const dfloat offScaleY = ::weaponOffsetScaleY / 1000.0f;
 
     DE_ASSERT(vs.psp);
     const ddpsprite_t &psp = *vs.psp;
     DE_ASSERT(psp.statePtr);
     const state_t &state = *psp.statePtr;
 
-    defn::Sprite::View const spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
+    const defn::Sprite::View spriteView = defn::Sprite(res::Sprites::get().sprite(state.sprite, state.frame)).view(0);
 
     // Lookup the Material for this Sprite and prepare the animator.
     MaterialAnimator &matAnimator = ClientMaterial::find(*spriteView.material)
@@ -93,7 +93,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs
     parm.pos[1] = WEAPONTOP + offScaleY * (psp.pos[1] - WEAPONTOP) + texOrigin.y
                 + pspOffset[1] - texSpec.border;
 
-    Vec2ui const dimensions = matAnimator.dimensions() + Vec2ui(texSpec.border, texSpec.border) * 2;
+    const Vec2ui dimensions = matAnimator.dimensions() + Vec2ui(texSpec.border, texSpec.border) * 2;
     parm.width  = dimensions.x;
     parm.height = dimensions.y;
 
@@ -134,7 +134,7 @@ static void setupPSpriteParams(rendpspriteparams_t &parm, const vispsprite_t &vs
 #endif
         {
             const auto &subsec   = vs.bspLeaf->subspace().subsector().as<world::ClientSubsector>();
-            Vec4f const color = subsec.lightSourceColorfIntensity();
+            const Vec4f color = subsec.lightSourceColorfIntensity();
 
             // No need for distance attentuation.
             dfloat lightLevel = color.w;

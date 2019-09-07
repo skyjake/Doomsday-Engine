@@ -235,7 +235,7 @@ void Hu_MenuInitControlsPage()
     page->setPreviousPage(Hu_MenuPagePtr("Options"));
 
     int group = 0;
-    int const configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
+    const int configCount = sizeof(controlConfig) / sizeof(controlConfig[0]);
     for(int i = 0; i < configCount; ++i)
     {
         controlconfig_t *binds = &controlConfig[i];

@@ -98,7 +98,7 @@ void Sv_TransmitFrame()
     Sv_GenerateFrameDeltas();
 
     // How many players currently in the game?
-    dint const numInGame = Sv_GetNumPlayers();
+    const dint numInGame = Sv_GetNumPlayers();
 
     dint pCount = 0;
     for (dint i = 0; i < DDMAXPLAYERS; ++i)
@@ -367,7 +367,7 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
     if (df & PDF_EXTRALIGHT)
     {
         // Three bits is enough for fixedcolormap.
-        dint const cmap = de::clamp(0, d->fixedColorMap, 7);
+        const dint cmap = de::clamp(0, d->fixedColorMap, 7);
         // Write the five upper bytes of extraLight.
         Writer_WriteByte(::msgWriter, cmap | (d->extraLight & 0xf8));
     }
@@ -381,7 +381,7 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
         for (dint i = 0; i < 2; ++i)
         {
             const ddpsprite_t &psp = d->psp[i];
-            dint const flags       = df >> (16 + i * 8);
+            const dint flags       = df >> (16 + i * 8);
 
             // First the flags.
             Writer_WriteByte(::msgWriter, flags);
@@ -391,12 +391,12 @@ void Sv_WritePlayerDelta(const void *deltaPtr)
             }
             /*if (flags & PSDF_LIGHT)
             {
-                dint const light = de::clamp(0, psp.light * 255, 255);
+                const dint light = de::clamp(0, psp.light * 255, 255);
                 Writer_WriteByte(::msgWriter, light);
             }*/
             if (flags & PSDF_ALPHA)
             {
-                dint const alpha = de::clamp(0.f, psp.alpha * 255, 255.f);
+                const dint alpha = de::clamp(0.f, psp.alpha * 255, 255.f);
                 Writer_WriteByte(::msgWriter, alpha);
             }
             if (flags & PSDF_STATE)
@@ -426,7 +426,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     byte floorSpd = 0;
     if (df & SDF_FLOOR_SPEED)
     {
-        dint const spd = FLT2FIX(fabs(d->planes[PLN_FLOOR].speed));
+        const dint spd = FLT2FIX(fabs(d->planes[PLN_FLOOR].speed));
         floorSpd = spd >> 15;
         if (!floorSpd)
         {
@@ -437,7 +437,7 @@ void Sv_WriteSectorDelta(const void *deltaPtr)
     byte ceilSpd = 0;
     if (df & SDF_CEILING_SPEED)
     {
-        dint const spd = FLT2FIX(fabs(d->planes[PLN_CEILING].speed));
+        const dint spd = FLT2FIX(fabs(d->planes[PLN_CEILING].speed));
         ceilSpd = spd >> 15;
         if (!ceilSpd)
         {
@@ -690,7 +690,7 @@ void Sv_WriteDelta(const delta_t *delta)
 
 #ifdef _NETDEBUG
     // Extra length field in debug builds.
-    dint const lengthOffset = Msg_Offset();
+    const dint lengthOffset = Msg_Offset();
     Msg_WriteLong(0);
 #endif
 
@@ -820,7 +820,7 @@ void Sv_SendFrame(dint plrNum)
     while ((delta = Sv_PoolQueueExtract(pool)) != nullptr &&
           (lastStart = Writer_Size(::msgWriter)) < maxFrameSize)
     {
-        byte const oldResend = pool->resendDealer;
+        const byte oldResend = pool->resendDealer;
 
         // Is this going to be a resent?
         if (delta->state == DELTA_UNACKED && !delta->resend)

@@ -179,7 +179,7 @@ bool Token::isInteger() const
 {
     if (_type != LITERAL_NUMBER) return false;
 
-    String const string = str();
+    const String string = str();
     if (string.beginsWith("0x") || string.beginsWith("0X"))
     {
         return true;

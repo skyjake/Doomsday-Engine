@@ -62,7 +62,7 @@ void ColorFilter::draw()
 {
     if (drawFilter && filterColor.w > 0)
     {
-        Rectanglei const rect = viewRect();
+        const Rectanglei rect = viewRect();
 
         DGL_Color4f(filterColor.x, filterColor.y, filterColor.z, filterColor.w);
         DGL_Begin(DGL_QUADS);

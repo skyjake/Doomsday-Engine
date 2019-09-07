@@ -179,8 +179,8 @@ DE_PIMPL(OculusRift)
 
         framebuffer().resize(GLTextureFramebuffer::Size(size[0].w + size[1].w,
                                                  max(size[0].h, size[1].h)));
-        uint const w = framebuffer().size().x;
-        uint const h = framebuffer().size().y;
+        const uint w = framebuffer().size().x;
+        const uint h = framebuffer().size().y;
 
         framebuffer().colorTexture().setFilter(gfx::Linear, gfx::Linear, gfx::MipNone);
         framebuffer().colorTexture().glApplyParameters();
@@ -378,7 +378,7 @@ DE_PIMPL(OculusRift)
     bool isWindowOnHMD() const
     {
         if (!window) return false;
-        QRect const hmdRect = screenGeometry(HMDScreen);
+        const QRect hmdRect = screenGeometry(HMDScreen);
         return hmdRect.contains(window->geometry());
     }
 

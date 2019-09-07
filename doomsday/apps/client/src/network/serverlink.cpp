@@ -65,7 +65,7 @@ enum LinkState {
     InGame
 };
 
-static int const NUM_PINGS = 5;
+static const int NUM_PINGS = 5;
 
 DE_PIMPL(ServerLink)
 {
@@ -177,7 +177,7 @@ DE_PIMPL(ServerLink)
             {
                 network::MapOutlinePacket outline;
                 {
-                    Block const data = Block(ByteSubArray(reply, 11)).decompressed();
+                    const Block data = Block(ByteSubArray(reply, 11)).decompressed();
                     Reader src(data);
                     src.withHeader() >> outline;
                 }
@@ -253,7 +253,7 @@ DE_PIMPL(ServerLink)
             fetching = false;
 
             fromMaster.clear();
-            int const count = N_MasterGet(0, nullptr);
+            const int count = N_MasterGet(0, nullptr);
             for (int i = 0; i < count; i++)
             {
                 ServerInfo info;
@@ -382,7 +382,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
         if (!serverProfile)
         {
             // Hmm, oopsie?
-            String const errorMsg =
+            const String errorMsg =
                 "Not enough information known about server " + info.address().asText();
             LOG_NET_ERROR("Failed to join: ") << errorMsg;
             d->reportError(errorMsg);
@@ -396,7 +396,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
         // If additional packages are configured, set up the ad-hoc profile with the
         // local additions.
         const GameProfile *joinProfile = serverProfile;
-        auto const localPackages = serverProfile->game().localMultiplayerPackages();
+        const auto localPackages = serverProfile->game().localMultiplayerPackages();
         if (localPackages.count())
         {
             // Make sure the packages are available.
@@ -404,7 +404,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
             {
                 if (!PackageLoader::get().select(pkg))
                 {
-                    String const errorMsg =
+                    const String errorMsg =
                         Stringf("The configured local multiplayer "
                                        "package %s is unavailable.",
                                        Package::splitToHumanReadable(pkg).c_str());
@@ -428,7 +428,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
 
             LOG_RES_MSG("Received metadata about server files");
 
-            StringList const neededPackages = joinProfile->unavailablePackages();
+            const StringList neededPackages = joinProfile->unavailablePackages();
             LOG_RES_MSG("Packages needed to join: ")
                     << String::join(neededPackages, " ");
 
@@ -454,7 +454,7 @@ void ServerLink::connectToServerAndChangeGameAsync(const ServerInfo& info)
 
                 if (!joinProfile->isPlayable())
                 {
-                    String const errorMsg =
+                    const String errorMsg =
                         Stringf("Server's game \"%s\" is not playable on this system. "
                                        "The following packages are unavailable:\n\n",
                                        info.gameId().c_str()) +
@@ -626,7 +626,7 @@ List<Address> ServerLink::foundServers(FoundMask mask) const
 
 bool ServerLink::isFound(const Address &host, FoundMask mask) const
 {
-    Address const addr = checkPort(host);
+    const Address addr = checkPort(host);
     return d->allFound(mask).contains(addr);
 }
 
@@ -643,14 +643,14 @@ bool ServerLink::foundServerInfo(int index, ServerInfo &info, FoundMask mask) co
 bool ServerLink::isServerOnLocalNetwork(const Address &host) const
 {
     if (!d->finder) return host.isLocal(); // Best guess...
-    Address const addr = checkPort(host);
+    const Address addr = checkPort(host);
     return d->finder->foundServers().contains(addr);
 }
 
 bool ServerLink::foundServerInfo(const de::Address &host, ServerInfo &info, FoundMask mask) const
 {
-    Address const addr = checkPort(host);
-    Impl::Servers const all = d->allFound(mask);
+    const Address addr = checkPort(host);
+    const Impl::Servers all = d->allFound(mask);
     if (!all.contains(addr)) return false;
     info = all[addr];
     return true;
@@ -752,7 +752,7 @@ void ServerLink::handleIncomingPackets()
             }
             else
             {
-                Address const svAddress = address();
+                const Address svAddress = address();
 
                 disconnect();
 

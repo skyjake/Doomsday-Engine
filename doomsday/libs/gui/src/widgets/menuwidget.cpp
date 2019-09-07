@@ -698,7 +698,7 @@ bool MenuWidget::handleEvent(const Event &event)
         {
             root().focusIndicator().fadeIn();
 
-            auto const children = childWidgets();
+            const auto children = childWidgets();
 
             for (int ordinal = children.indexOf(root().focus());
                  ordinal >= 0 && ordinal < int(childCount());

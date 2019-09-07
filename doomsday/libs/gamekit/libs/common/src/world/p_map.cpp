@@ -101,9 +101,9 @@ static dd_bool checkReject(Sector *sec1, Sector *sec2)
     if(rejectMatrix)
     {
         // Determine BSP leaf entries in REJECT table.
-        int const pnum = P_ToIndex(sec1) * numsectors + P_ToIndex(sec2);
-        int const bytenum = pnum >> 3;
-        int const bitnum = 1 << (pnum & 7);
+        const int pnum = P_ToIndex(sec1) * numsectors + P_ToIndex(sec2);
+        const int bytenum = pnum >> 3;
+        const int bitnum = 1 << (pnum & 7);
 
         // Check in REJECT table.
         if(rejectMatrix[bytenum] & bitnum)
@@ -177,7 +177,7 @@ static int PIT_StompThing(mobj_t *mo, void *context)
     if(!(mo->flags & MF_SHOOTABLE)) return false;
 
     // Out of range?
-    coord_t const dist = mo->radius + parm.stompMobj->radius;
+    const coord_t dist = mo->radius + parm.stompMobj->radius;
     if(fabs(mo->origin[VX] - parm.location[VX]) >= dist ||
        fabs(mo->origin[VY] - parm.location[VY]) >= dist)
     {
@@ -218,7 +218,7 @@ dd_bool P_TeleportMove(mobj_t *mobj, coord_t x, coord_t y, dd_bool alwaysStomp)
     V2d_Set(parm.location, x, y);
     parm.alwaysStomp = CPP_BOOL(alwaysStomp);
 
-    coord_t const dist = mobj->radius + MAXRADIUS;
+    const coord_t dist = mobj->radius + MAXRADIUS;
     AABoxd const box(x - dist, y - dist, x + dist, y + dist);
 
     VALIDCOUNT++;
@@ -341,9 +341,9 @@ static int untouched(Line *line, mobj_t *mobj)
 {
     DE_ASSERT(line != 0 && mobj != 0);
 
-    coord_t const x      = mobj->origin[VX];
-    coord_t const y      = mobj->origin[VY];
-    coord_t const radius = mobj->radius;
+    const coord_t x      = mobj->origin[VX];
+    const coord_t y      = mobj->origin[VY];
+    const coord_t radius = mobj->radius;
     const AABoxd *ldBox  = (AABoxd *)P_GetPtrp(line, DMU_BOUNDING_BOX);
     AABoxd moBox;
 
@@ -1264,7 +1264,7 @@ static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y)
 static dd_bool P_TryMove2(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff)
 #endif
 {
-    dd_bool const isRemotePlayer = Mobj_IsRemotePlayer(thing);
+    const dd_bool isRemotePlayer = Mobj_IsRemotePlayer(thing);
 
     // $dropoff_fix: tmFellDown.
     tmFloatOk  = false;
@@ -1606,7 +1606,7 @@ dd_bool P_TryMoveXY(mobj_t *thing, coord_t x, coord_t y, dd_bool dropoff, dd_boo
 
 dd_bool P_TryMoveXYZ(mobj_t* thing, coord_t x, coord_t y, coord_t z)
 {
-    coord_t const oldZ = thing->origin[VZ];
+    const coord_t oldZ = thing->origin[VZ];
 
     // Go to the new Z height.
     thing->origin[VZ] = z;
@@ -1632,7 +1632,7 @@ static mobj_t *spawnPuff(mobjtype_t type, const_pvec3d_t pos, bool noSpark = fal
     DE_UNUSED(noSpark);
 #endif
 
-    angle_t const angle = P_Random() << 24;
+    const angle_t angle = P_Random() << 24;
 
 #if !__JHEXEN__
     // Clients do not spawn puffs.
@@ -1732,7 +1732,7 @@ struct ptr_shoottraverse_params_t
  */
 static int PTR_ShootTraverse(const Intercept *icpt, void *context)
 {
-    vec3d_t const tracePos = {
+    const vec3d_t tracePos = {
         Interceptor_Origin(icpt->trace)[VX], Interceptor_Origin(icpt->trace)[VY], shootZ
     };
 
@@ -2035,7 +2035,7 @@ static int PTR_ShootTraverse(const Intercept *icpt, void *context)
  */
 static int PTR_AimTraverse(const Intercept *icpt, void * /*context*/)
 {
-    vec3d_t const tracePos = {
+    const vec3d_t tracePos = {
         Interceptor_Origin(icpt->trace)[VX], Interceptor_Origin(icpt->trace)[VY], shootZ
     };
 
@@ -2364,7 +2364,7 @@ void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance, dd_b
 void P_RadiusAttack(mobj_t *bomb, mobj_t *source, int damage, int distance)
 #endif
 {
-    coord_t const dist = distance + MAXRADIUS;
+    const coord_t dist = distance + MAXRADIUS;
     AABoxd const box(bomb->origin[VX] - dist, bomb->origin[VY] - dist,
                      bomb->origin[VX] + dist, bomb->origin[VY] + dist);
 
@@ -2712,7 +2712,7 @@ static int PIT_ChangeSector(mobj_t *thing, void *context)
     // fits in the opening between floor and ceiling.
     if(!P_MobjIsCamera(thing))
     {
-        bool const onfloor = (thing->origin[VZ] == thing->floorZ);
+        const bool onfloor = (thing->origin[VZ] == thing->floorZ);
 
         P_CheckPosition(thing, thing->origin);
         thing->floorZ   = tmFloorZ;
@@ -2862,7 +2862,7 @@ void P_HandleSectorHeightChange(int sectorIdx)
 #if __JHERETIC__ || __JHEXEN__
 dd_bool P_TestMobjLocation(mobj_t *mo)
 {
-    int const oldFlags = mo->flags;
+    const int oldFlags = mo->flags;
 
     mo->flags &= ~MF_PICKUP;
     if(!P_CheckPositionXY(mo, mo->origin[VX], mo->origin[VY]))
@@ -2911,7 +2911,7 @@ void P_ThrustSpike(mobj_t *mobj)
 {
     if(!mobj) return;
 
-    coord_t const radius = mobj->info->radius + MAXRADIUS;
+    const coord_t radius = mobj->info->radius + MAXRADIUS;
     AABoxd const box(mobj->origin[VX] - radius, mobj->origin[VY] - radius,
                      mobj->origin[VX] + radius, mobj->origin[VY] + radius);
 
@@ -3201,7 +3201,7 @@ void P_BounceWall(mobj_t *mo)
 
     if(parm.bestLine)
     {
-        int const side = Line_PointOnSide(parm.bestLine, mo->origin) < 0;
+        const int side = Line_PointOnSide(parm.bestLine, mo->origin) < 0;
         vec2d_t lineDirection; P_GetDoublepv(parm.bestLine, DMU_DXY, lineDirection);
 
         angle_t lineAngle  = M_PointToAngle(lineDirection) + (side? ANG180 : 0);
@@ -3243,7 +3243,7 @@ struct ptr_puzzleitemtraverse_params_t
 
 static int PTR_PuzzleItemTraverse(const Intercept *icpt, void *context)
 {
-    int const USE_PUZZLE_ITEM_SPECIAL = 129;
+    const int USE_PUZZLE_ITEM_SPECIAL = 129;
 
     auto &parm = *static_cast<ptr_puzzleitemtraverse_params_t *>(context);
 

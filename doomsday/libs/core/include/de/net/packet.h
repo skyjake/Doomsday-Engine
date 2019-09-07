@@ -48,7 +48,7 @@ public:
     typedef std::array<char, 4> Type;
 
     /// Length of a type identifier.
-    static dint const TYPE_SIZE = 4;
+    static const dint TYPE_SIZE = 4;
 
     static Type typeFromString(const char *fourcc);
 

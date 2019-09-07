@@ -118,8 +118,8 @@ DE_PIMPL_NOREF(ImpulseAccumulator)
         }
 
         // We have an potential activation!
-        uint const threshold = uint( de::max(0, pimpDoubleClickThreshold) );
-        uint const nowTime   = Timer_RealMilliseconds();
+        const uint threshold = uint( de::max(0, pimpDoubleClickThreshold) );
+        const uint nowTime   = Timer_RealMilliseconds();
 
         if(newState == db.previousClickState && nowTime - db.previousClickTime < threshold)
         {
@@ -138,7 +138,7 @@ DE_PIMPL_NOREF(ImpulseAccumulator)
             }
             symbolicName += impulse.name;
 
-            int const localPlayer = P_ConsoleToLocal(playerNum);
+            const int localPlayer = P_ConsoleToLocal(playerNum);
             DE_ASSERT(localPlayer >= 0);
             LOG_INPUT_XVERBOSE("Triggered " _E(b) "'%s'" _E(.) " for player%i state: %i threshold: %i\n  %s",
                                impulse.name << (localPlayer + 1) << newState

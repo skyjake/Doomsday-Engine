@@ -316,7 +316,7 @@ String Line::Side::description() const
     String flagsString;
     if (!flagNames.isEmpty())
     {
-        String const flagsAsText = String::join(flagNames, "|");
+        const String flagsAsText = String::join(flagNames, "|");
         flagsString = Stringf(_E(l) " Flags: " _E(.)_E(i) "%s" _E(.), flagsAsText.c_str());
     }
 
@@ -557,8 +557,8 @@ void Line::Side::updateSoundEmitterOrigin(dint sectionId)
     emitter.origin[1] = lineCenter.y;
 
     DE_ASSERT(_sector);
-    ddouble const ffloor = _sector->floor().height();
-    ddouble const fceil  = _sector->ceiling().height();
+    const ddouble ffloor = _sector->floor().height();
+    const ddouble fceil  = _sector->ceiling().height();
 
     /// @todo fixme what if considered one-sided?
     switch (sectionId)
@@ -773,14 +773,14 @@ struct edge_t {
 /// @todo fixme: Should use the visual plane heights of subsectors.
 static void scanNeighbor(const LineSide &side, bool top, bool right, edge_t &edge)
 {
-    static dint const SEP = 10;
+    static const dint SEP = 10;
 
     de::zap(edge);
 
-    ClockDirection const direction   = (right ? Anticlockwise : Clockwise);
+    const ClockDirection direction   = (right ? Anticlockwise : Clockwise);
     const Sector *       startSector = side.sectorPtr();
-    ddouble const        fFloor      = side.sector().floor().heightSmoothed();
-    ddouble const        fCeil       = side.sector().ceiling().heightSmoothed();
+    const ddouble fFloor      = side.sector().floor().heightSmoothed();
+    const ddouble fCeil       = side.sector().ceiling().heightSmoothed();
 
     ddouble gap    = 0;
     LineOwner *own = side.line().vertexOwner(side.vertex(dint(right)));
@@ -804,11 +804,11 @@ static void scanNeighbor(const LineSide &side, bool top, bool right, edge_t &edg
         const Sector *scanSector = scanSide.sectorPtr();
 
         // Select plane heights for relative offset comparison.
-        ddouble const iFFloor = iter->front().sector().floor  ().heightSmoothed();
-        ddouble const iFCeil  = iter->front().sector().ceiling().heightSmoothed();
+        const ddouble iFFloor = iter->front().sector().floor  ().heightSmoothed();
+        const ddouble iFCeil  = iter->front().sector().ceiling().heightSmoothed();
         const Sector *bsec    = iter->back().sectorPtr();
-        ddouble const iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
-        ddouble const iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
+        const ddouble iBFloor = (bsec ? bsec->floor  ().heightSmoothed() : 0);
+        const ddouble iBCeil  = (bsec ? bsec->ceiling().heightSmoothed() : 0);
 
         // Determine whether the relative back sector is closed.
         bool closed = false;
@@ -972,7 +972,7 @@ void Line::Side::updateRadioForFrame(dint frameNumber)
     // to find the extent of the coalignable surfaces for texture mapping/selection.
     for (dint i = 0; i < 2; ++i)
     {
-        bool const rightEdge = i != 0;
+        const bool rightEdge = i != 0;
 
         edge_t bottom; scanNeighbor(*this, false/*bottom*/, rightEdge, bottom);
         edge_t top;    scanNeighbor(*this, true/*top*/    , rightEdge, top   );
@@ -1531,7 +1531,7 @@ D_CMD(InspectLine)
     }
 
     // Find the line.
-    dint const index = String(argv[1]).toInt();
+    const dint index = String(argv[1]).toInt();
     const Line *line = App_World().map().linePtr(index);
     if (!line)
     {

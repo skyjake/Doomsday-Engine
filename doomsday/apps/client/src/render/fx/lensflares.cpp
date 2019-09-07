@@ -319,8 +319,8 @@ DE_PIMPL(LensFlares)
                    Vec4f           color,
                    const PVLight *    pvl)
     {
-        Rectanglef const uvRect = res->uvRect(id);
-        int const firstIdx = verts.size();
+        const Rectanglef uvRect = res->uvRect(id);
+        const int firstIdx = verts.size();
 
         VBuf::Type vtx;
         vtx.pos  = pvl->light->lightSourceOrigin().xzy();
@@ -350,7 +350,7 @@ DE_PIMPL(LensFlares)
 
     void makeVerticesForPVS()
     {
-        int const thisFrame = R_FrameCount();
+        const int thisFrame = R_FrameCount();
 
         // The vertex buffer will contain a number of quads.
         VBuf::Vertices verts;
@@ -365,19 +365,19 @@ DE_PIMPL(LensFlares)
             /// @todo If so, it might be time to purge it from the PVS.
             if (pvl->seenFrame != thisFrame) continue;
 
-            coord_t const distanceSquared = (Rend_EyeOrigin() - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
-            coord_t const distance = std::sqrt(distanceSquared);
+            const coord_t distanceSquared = (Rend_EyeOrigin() - pvl->light->lightSourceOrigin().xzy()).lengthSquared();
+            const coord_t distance = std::sqrt(distanceSquared);
 
             // Light intensity is always quadratic per distance.
             float intensity = pvl->light->lightSourceIntensity(Rend_EyeOrigin()) / distanceSquared;
 
             // Projected radius of the light.
-            float const RADIUS_FACTOR = 128; // Light radius of 1 at this distance produces a visible radius of 1.
+            const float RADIUS_FACTOR = 128; // Light radius of 1 at this distance produces a visible radius of 1.
             /// @todo The factor should be FOV-dependent.
             float radius = pvl->light->lightSourceRadius() / distance * RADIUS_FACTOR;
 
-            float const dot = (pvl->light->lightSourceOrigin().xzy() - Rend_EyeOrigin()).normalize().dot(eyeFront);
-            float const angle = radianToDegree(std::acos(dot));
+            const float dot = (pvl->light->lightSourceOrigin().xzy() - Rend_EyeOrigin()).normalize().dot(eyeFront);
+            const float angle = radianToDegree(std::acos(dot));
 
             //qDebug() << "i:" << intensity << "r:" << radius << "IR:" << radius*intensity;
 
@@ -444,12 +444,12 @@ DE_PIMPL(LensFlares)
 
             /*
             // Project viewtocenter vector onto viewSideVec.
-            Vec3f const eyeToFlare = pvl->lightSourceOrigin() - eyePos;
+            const Vec3f eyeToFlare = pvl->lightSourceOrigin() - eyePos;
 
             // Calculate the 'mirror' vector.
-            float const scale = viewToCenter.dot(viewData->frontVec)
+            const float scale = viewToCenter.dot(viewData->frontVec)
                                 / Vec3f(viewData->frontVec).dot(viewData->frontVec);
-            Vec3f const mirror =
+            const Vec3f mirror =
                 (Vec3f(viewData->frontVec) * scale - viewToCenter) * 2;
             */
         }
@@ -510,8 +510,8 @@ void LensFlares::draw()
     const viewdata_t *viewData = &DD_Player(console())->viewport();
     d->eyeFront = Vec3f(viewData->frontVec);
 
-    Rectanglef const rect = viewRect();
-    float const aspect = rect.height() / rect.width();
+    const Rectanglef rect = viewRect();
+    const float aspect = rect.height() / rect.width();
 
     GLWindow &window = ClientWindow::main();
 

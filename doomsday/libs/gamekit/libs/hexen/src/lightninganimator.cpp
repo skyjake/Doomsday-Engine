@@ -95,7 +95,7 @@ void LightningAnimator::advanceTime()
                 Sector *sec = (Sector *)P_ToPtr(DMU_SECTOR, i);
                 if(!isLightningSector(sec)) continue;
 
-                float const ll = P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
+                const float ll = P_GetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL);
                 if(d->sectorLightLevels.at(lightLevelsIdx++) < ll - (4.f / 255))
                 {
                     P_SetFloat(DMU_SECTOR, i, DMU_LIGHT_LEVEL, ll - (1.f / 255) * 4);
@@ -125,7 +125,7 @@ void LightningAnimator::advanceTime()
 
     d->flash = (P_Random() & 7) + 8;
 
-    float const flashLight = (float) (200 + (P_Random() & 31)) / 255.0f;
+    const float flashLight = (float) (200 + (P_Random() & 31)) / 255.0f;
     int lightLevelsIdx = 0;
     bool foundSec = false;
     for(int i = 0; i < numsectors; ++i)

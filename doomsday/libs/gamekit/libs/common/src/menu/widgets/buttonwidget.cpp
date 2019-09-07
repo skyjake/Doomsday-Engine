@@ -55,7 +55,7 @@ ButtonWidget::~ButtonWidget()
 
 void ButtonWidget::draw() const
 {
-    fontid_t const fontId  = mnRendState->textFonts[font()];
+    const fontid_t fontId  = mnRendState->textFonts[font()];
     const Vec4f &textColor = mnRendState->textColors[color()];
     float t = (isFocused()? 1 : 0);
 
@@ -64,10 +64,10 @@ void ButtonWidget::draw() const
 //    // Flash if focused.
 //    if (isFocused() && cfg.common.menuTextFlashSpeed > 0)
 //    {
-//        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
+//        const float speed = cfg.common.menuTextFlashSpeed / 2.f;
 //        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
 //    }
-//    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
+//    const Vector4f color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
 
     const float fadeout = scrollingFadeout();
     if (fadeout < .001f) return;

@@ -244,7 +244,7 @@ void T_MovePoly(void *polyThinker)
 
     if(Polyobj_MoveXY(po, pe->speed[MX], pe->speed[MY]))
     {
-        uint const absSpeed = abs(pe->intSpeed);
+        const uint absSpeed = abs(pe->intSpeed);
 
         pe->dist -= absSpeed;
         if(int(pe->dist) <= 0)

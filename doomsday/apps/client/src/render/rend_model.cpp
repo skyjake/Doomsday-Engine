@@ -422,7 +422,7 @@ static void drawPrimitives(rendcmd_t mode,
     DGL_Begin(DGL_TRIANGLE_STRIP);
     for (const FrameModel::Primitive &prim : primitives)
     {
-        DGLenum const primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
+        const DGLenum primType = (prim.triFan? DGL_TRIANGLE_FAN : DGL_TRIANGLE_STRIP);
 
         joining = false;
         if (lastLength > 0)
@@ -712,7 +712,7 @@ static inline const MaterialVariantSpec &modelSkinMaterialSpec()
 static void drawSubmodel(uint number, const vissprite_t &spr)
 {
     const drawmodelparams_t &parm = *VS_MODEL(&spr);
-    int const zSign = (spr.pose.mirrored? -1 : 1);
+    const int zSign = (spr.pose.mirrored? -1 : 1);
     FrameModelDef *mf = parm.mf, *mfNext = parm.nextMF;
     const SubmodelDef &smf = mf->subModelDef(number);
 
@@ -1139,7 +1139,7 @@ void Rend_DrawModel(const vissprite_t &spr)
 
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
-        coord_t const distFromViewer = de::abs(spr.pose.distance);
+        const coord_t distFromViewer = de::abs(spr.pose.distance);
         ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if (distFromViewer < 1600 - 8)

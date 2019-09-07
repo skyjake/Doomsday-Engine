@@ -141,8 +141,8 @@ void System::loadModuleForMap(const res::Uri &mapUri)
     if(mapUri.isEmpty()) return;
 
     /// @todo Should be using MapManifest here...
-    lumpnum_t const markerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
-    lumpnum_t const moduleLumpNum = markerLumpNum + 11 /*ML_BEHAVIOR*/;
+    const lumpnum_t markerLumpNum = CentralLumpIndex().findLast(mapUri.path() + ".lmp");
+    const lumpnum_t moduleLumpNum = markerLumpNum + 11 /*ML_BEHAVIOR*/;
     if(!CentralLumpIndex().hasLump(moduleLumpNum)) return;
 
     res::File1 &file = CentralLumpIndex()[moduleLumpNum];
@@ -336,7 +336,7 @@ D_CMD(InspectACScript)
 {
     DE_UNUSED(src, argc);
     System &scriptSys       = gfw_Session()->acsSystem();
-    dint const scriptNumber = String(argv[1]).toInt();
+    const dint scriptNumber = String(argv[1]).toInt();
 
     if(!scriptSys.hasScript(scriptNumber))
     {

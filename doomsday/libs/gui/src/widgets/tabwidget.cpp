@@ -122,7 +122,7 @@ DE_GUI_PIMPL(TabWidget)
                                                                       : "tab.selected")));
         for (ui::Data::Pos i = 0; i < buttons->items().size(); ++i)
         {
-            bool const sel = (i == current);
+            const bool sel = (i == current);
             ButtonWidget &w = buttons->itemWidget<ButtonWidget>(buttons->items().at(i));
             w.setFont(sel ? selTabFontId : tabFontId);
             w.setOpacity(sel? 1.f : 0.7f, 0.4);

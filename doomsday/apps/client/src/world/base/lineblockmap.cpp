@@ -35,7 +35,7 @@ void LineBlockmap::link(Line &line)
     if(line.definesPolyobj()) return;
 
     // Determine the block of cells we'll be working within.
-    BlockmapCellBlock const cellBlock = toCellBlock(line.bounds());
+    const BlockmapCellBlock cellBlock = toCellBlock(line.bounds());
     BlockmapCell cell;
     for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
     for(cell.x = cellBlock.min.x; cell.x < cellBlock.max.x; ++cell.x)

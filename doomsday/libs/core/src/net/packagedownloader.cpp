@@ -31,8 +31,8 @@
 
 namespace de {
 
-static String const PATH_REMOTE_PACKS  = "/remote/packs";
-static String const PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
+static const String PATH_REMOTE_PACKS  = "/remote/packs";
+static const String PATH_REMOTE_SERVER = "/remote/server"; // local folder for RemoteFeed
 
 DE_PIMPL(PackageDownloader)
 , DE_OBSERVES(filesys::RemoteFeedRelay, Status)
@@ -310,10 +310,10 @@ void PackageDownloader::download(const StringList& packageIds, const std::functi
 {
     d->downloads.clear();
 
-    auto const pkgPaths = filesys::RemoteFeedRelay::get().locatePackages(packageIds);
+    const auto pkgPaths = filesys::RemoteFeedRelay::get().locatePackages(packageIds);
 
     // The set of found packages may not contain all the requested packages.
-//    StringList const foundIds = pkgPaths.keys();
+//    const StringList foundIds = pkgPaths.keys();
     for (auto found = pkgPaths.begin(); found != pkgPaths.end(); ++found)
     {
         if (File *file = found->second.link->populateRemotePath(found->first, found->second))

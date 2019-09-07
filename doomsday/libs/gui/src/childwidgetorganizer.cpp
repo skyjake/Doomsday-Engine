@@ -431,17 +431,17 @@ DE_PIMPL(ChildWidgetOrganizer)
         }
 
         PvsRange const fullRange { 0, int(dataItems->size()) };
-        PvsRange const oldPvs = virtualPvs;
+        const PvsRange oldPvs = virtualPvs;
 
         // Calculate position delta to compared to last update.
         float delta = virtualTop->value() - lastTop;
         lastTop = virtualTop->value();
 
         // Estimate a new PVS range based on the average item height and the visible area.
-        float const y1 = de::max(0.f, virtualMin->value() - virtualTop->value());
-        float const y2 = de::max(0.f, virtualMax->value() - virtualTop->value());
+        const float y1 = de::max(0.f, virtualMin->value() - virtualTop->value());
+        const float y2 = de::max(0.f, virtualMax->value() - virtualTop->value());
 
-        int const spareItems = 3;
+        const int spareItems = 3;
         PvsRange estimated = PvsRange(y1 / averageItemHeight - spareItems,
                                       y2 / averageItemHeight + spareItems)
                              .intersection(fullRange);

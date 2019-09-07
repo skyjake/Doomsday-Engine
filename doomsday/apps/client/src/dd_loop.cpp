@@ -258,7 +258,7 @@ static void advanceTime(timespan_t delta)
 {
     ::sysTime += delta;
 
-    dint const oldGameTic = SECONDS_TO_TICKS(::gameTime);
+    const dint oldGameTic = SECONDS_TO_TICKS(::gameTime);
 
     // The difference between gametic and demotic is that demotic
     // is not altered at any point. Gametic changes at handshakes.
@@ -327,12 +327,12 @@ void DD_WaitForOptimalUpdateTime()
 
     /// @var optimalDelta is integer on purpose: we're measuring time at a 1 ms accuracy,
     /// so we can't use fractions of a millisecond.
-    duint const optimalDelta = duint(::maxFrameRate > 0? 1000/::maxFrameRate : 1);
+    const duint optimalDelta = duint(::maxFrameRate > 0? 1000/::maxFrameRate : 1);
 
     if (Sys_IsShuttingDown()) return; // No need for finesse.
 
     // This is when we would ideally like to make the update.
-    duint const targetUpdateTime = prevUpdateTime + optimalDelta;
+    const duint targetUpdateTime = prevUpdateTime + optimalDelta;
 
     // Check the current time.
     duint nowTime = Timer_RealMilliseconds();
@@ -340,7 +340,7 @@ void DD_WaitForOptimalUpdateTime()
 
     if (elapsed < optimalDelta)
     {
-        duint const needSleepMs = optimalDelta - elapsed;
+        const duint needSleepMs = optimalDelta - elapsed;
 
         // We need to wait until the optimal time has passed.
         if (needSleepMs > 5)
@@ -391,7 +391,7 @@ void Loop_RunTics()
     }
 
     // Let's see how much time has passed. This is affected by "settics".
-    ddouble const nowTime = Timer_Seconds();
+    const ddouble nowTime = Timer_Seconds();
 
     ddouble elapsedTime = nowTime - ::lastRunTicsTime;
     if(elapsedTime > MAX_ELAPSED_TIME)

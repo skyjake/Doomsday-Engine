@@ -63,7 +63,7 @@ void guidata_items_t::draw(const Vec2i &offset) const
 {
 #if !__JHEXEN__
 
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(!(::cfg.common.hudShownCheatCounters & (CCH_ITEMS | CCH_ITEMS_PRCNT))) return;
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;

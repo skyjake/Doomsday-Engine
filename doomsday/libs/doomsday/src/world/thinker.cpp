@@ -103,7 +103,7 @@ DE_PIMPL_NOREF(Thinker)
 
     static void clearBaseToZero(thinker_s *base, dsize size)
     {
-        bool const stdAlloc = CPP_BOOL(base->_flags & THINKF_STD_MALLOC);
+        const bool stdAlloc = CPP_BOOL(base->_flags & THINKF_STD_MALLOC);
         memset(base, 0, size);
         if (stdAlloc) base->_flags |= THINKF_STD_MALLOC;
     }

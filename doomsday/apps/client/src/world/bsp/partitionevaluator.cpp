@@ -254,7 +254,7 @@ DE_PIMPL_NOREF(PartitionEvaluator)
         {
             LineSegmentSide **partition = &candidate.line;
             PartitionCost &cost         = candidate.cost;
-            int const splitCostFactor   = evaluator.splitCostFactor;
+            const int splitCostFactor   = evaluator.splitCostFactor;
 
             /// Determine the relationship between @a seg and the partition plane.
             coord_t fromDist, toDist;

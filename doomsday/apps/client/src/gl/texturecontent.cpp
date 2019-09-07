@@ -148,8 +148,8 @@ static dgltexformat_t prepareImageAsTexture(image_t &image,
 {
     DE_ASSERT(image.pixels);
 
-    bool const monochrome = (spec.flags & TSF_MONOCHROME) != 0;
-    bool const scaleSharp = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
+    const bool monochrome = (spec.flags & TSF_MONOCHROME) != 0;
+    const bool scaleSharp = (spec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
 
     if (spec.toAlpha)
     {
@@ -328,10 +328,10 @@ void GL_PrepareTextureContent(texturecontent_t &c,
     {
     case TST_GENERAL: {
         const variantspecification_t &vspec = spec.variant;
-        bool const noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
+        const bool noCompression = (vspec.flags & TSF_NO_COMPRESSION) != 0;
         // If the Upscale And Sharpen filter is enabled, scaling is applied
         // implicitly by prepareImageAsTexture(), so don't do it again.
-        bool const noSmartFilter = (vspec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
+        const bool noSmartFilter = (vspec.flags & TSF_UPSCALE_AND_SHARPEN) != 0;
 
         // Prepare the image for upload.
         dgltexformat_t dglFormat = prepareImageAsTexture(image, vspec);
@@ -369,9 +369,9 @@ void GL_PrepareTextureContent(texturecontent_t &c,
         if (baMul != 1 || hiMul != 1 || loMul != 1)
         {
             // Integrate the normalization factor with contrast.
-            float const hiContrast = 1 - 1. / hiMul;
-            float const loContrast = 1 - loMul;
-            float const shift = ((hiContrast + loContrast) / 2);
+            const float hiContrast = 1 - 1. / hiMul;
+            const float loContrast = 1 - loMul;
+            const float shift = ((hiContrast + loContrast) / 2);
 
             grayMipmapFactor = int(255 * de::clamp(0.f, dspec.contrast / 255.f - shift, 1.f));
 
@@ -783,7 +783,7 @@ void GL_UploadTextureContent(const texturecontent_t &content, gfx::UploadMethod 
         if (applyTexGamma && texGamma > .0001f)
         {
             uint8_t* dst, *localBuffer = 0;
-            long const numPels = loadWidth * loadHeight;
+            const long numPels = loadWidth * loadHeight;
 
             const uint8_t *src = loadPixels;
             if (loadPixels == content.pixels)
@@ -850,7 +850,7 @@ void GL_UploadTextureContent(const texturecontent_t &content, gfx::UploadMethod 
     if (dglFormat == DGL_LUMINANCE && (content.flags & TXCF_CONVERT_8BIT_TO_ALPHA))
     {
         // Needs converting. This adds some overhead.
-        long const numPixels = content.width * content.height;
+        const long numPixels = content.width * content.height;
         uint8_t *localBuffer = (uint8_t *) M_Malloc(4 * numPixels);
 
         // Move the average color to the alpha channel, make the actual color white.
@@ -873,7 +873,7 @@ void GL_UploadTextureContent(const texturecontent_t &content, gfx::UploadMethod 
     else if (dglFormat == DGL_LUMINANCE)
     {
         // Needs converting. This adds some overhead.
-        long const numPixels = content.width * content.height;
+        const long numPixels = content.width * content.height;
         uint8_t *localBuffer = (uint8_t *) M_Malloc(3 * numPixels);
 
         // Move the average color to the alpha channel, make the actual color white.
@@ -896,7 +896,7 @@ void GL_UploadTextureContent(const texturecontent_t &content, gfx::UploadMethod 
     if (dglFormat == DGL_LUMINANCE_PLUS_A8)
     {
         // Needs converting. This adds some overhead.
-        long const numPixels = content.width * content.height;
+        const long numPixels = content.width * content.height;
         uint8_t *localBuffer = (uint8_t *) M_Malloc(4 * numPixels);
 
         uint8_t *pixel = localBuffer;

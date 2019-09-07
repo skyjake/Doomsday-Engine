@@ -638,7 +638,7 @@ int Con_GetVariableInteger(const Path &varPath)
 
 static Value *Function_Console_Get(Context &, const Function::ArgumentValues &args)
 {
-    String const name = args.at(0)->asText();
+    const String name = args.at(0)->asText();
     cvar_t *var = Con_FindVariable(name.c_str());
     if (!var)
     {
@@ -670,7 +670,7 @@ static Value *Function_Console_Get(Context &, const Function::ArgumentValues &ar
 
 static Value *Function_Console_Set(Context &, const Function::ArgumentValues &args)
 {
-    String const name = args.at(0)->asText();
+    const String name = args.at(0)->asText();
     cvar_t *var = Con_FindVariable(name.c_str());
     if (!var)
     {

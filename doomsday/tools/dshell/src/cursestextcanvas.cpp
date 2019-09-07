@@ -42,7 +42,7 @@ void CursesTextCanvas::setCursorPosition(const Vec2i &pos)
 
 void CursesTextCanvas::show()
 {
-    Size const dims = size();
+    const Size dims = size();
 
     // All dirty characters are drawn.
     for (duint row = 0; row < dims.y; ++row)

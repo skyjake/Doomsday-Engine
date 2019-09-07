@@ -35,7 +35,7 @@
 
 using namespace de;
 
-static int const MAX_HISTORY_SIZE = 10;
+static const int MAX_HISTORY_SIZE = 10;
 
 DE_PIMPL(OpenDialog)
 , DE_OBSERVES(ServerFinder, Update)

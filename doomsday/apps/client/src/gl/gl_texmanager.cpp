@@ -97,7 +97,7 @@ void GL_InitTextureManager()
 
 static int reloadTextures(void *context)
 {
-    bool const usingBusyMode = *static_cast<bool *>(context);
+    const bool usingBusyMode = *static_cast<bool *>(context);
 
     /// @todo re-upload ALL textures currently in use.
     GL_LoadLightingSystemTextures();
@@ -317,14 +317,14 @@ static res::Source loadRaw(image_t &image, const rawtex_t &raw)
 #define RAW_WIDTH           320
 #define RAW_HEIGHT          200
 
-        size_t const fileLength = file.length();
+        const size_t fileLength = file.length();
 
         Image_Init(image);
         image.size      = Vec2ui(RAW_WIDTH, fileLength / RAW_WIDTH);
         image.pixelSize = 1;
 
         // Load the raw image data.
-        size_t const numPels = RAW_WIDTH * RAW_HEIGHT;
+        const size_t numPels = RAW_WIDTH * RAW_HEIGHT;
         image.pixels = (uint8_t *) M_Malloc(3 * numPels);
         if (fileLength < 3 * numPels)
         {

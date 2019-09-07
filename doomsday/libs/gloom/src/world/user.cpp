@@ -76,7 +76,7 @@ DE_PIMPL(User)
 
     void move(TimeSpan elapsed)
     {
-        float const turnFriction = (input & (TurnLeft | TurnRight) ? 0 : 180);
+        const float turnFriction = (input & (TurnLeft | TurnRight) ? 0 : 180);
 
         int turnSpeed = ((input & TurnLeft ? -1 : 0) + (input & TurnRight ? 1 : 0)) * (input & Shift ? 400 : 100);
         int accel =     ((input & Forward ?   1 : 0) + (input & Backward ? -1 : 0)) * (input & Shift ? 30 : 5);

@@ -173,7 +173,7 @@ static int patchReplacementValueIndex(patchid_t patchId, bool canCreate = true)
 
     // No. Look it up.
     dint valueIndex = -1;
-    auto const patchPath = String(Str_Text(R_ComposePatchPath(patchId)));
+    const auto patchPath = String(Str_Text(R_ComposePatchPath(patchId)));
     if(!patchPath.isEmpty())
     {
         valueIndex = Defs().getValueNum("Patch Replacement|" + patchPath);
@@ -1276,8 +1276,8 @@ static void drawFogEffect(void)
 
 void Hu_Drawer()
 {
-    bool const menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
-    bool const pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
+    const bool menuOrMessageVisible = (Hu_MenuIsVisible() || Hu_IsMessageActive());
+    const bool pauseGraphicVisible = Pause_IsUserPaused() && !FI_StackActive();
 
     if(!menuOrMessageVisible && !pauseGraphicVisible)
         return;
@@ -1381,7 +1381,7 @@ int Hu_MapTitleFirstLineHeight()
 
 dd_bool Hu_IsMapTitleAuthorVisible()
 {
-    de::String const author = G_MapAuthor(gfw_Session()->mapUri(), CPP_BOOL(cfg.common.hideIWADAuthor));
+    const de::String author = G_MapAuthor(gfw_Session()->mapUri(), CPP_BOOL(cfg.common.hideIWADAuthor));
     return !author.isEmpty() && (actualMapTime <= 6 * TICSPERSEC);
 }
 
@@ -1400,9 +1400,9 @@ int Hu_MapTitleHeight(void)
 
 void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 {
-    res::Uri const mapUri    = gfw_Session()->mapUri();
-    de::String const title  = G_MapTitle(mapUri);
-    de::String const author = G_MapAuthor(mapUri, CPP_BOOL(cfg.common.hideIWADAuthor));
+    const res::Uri mapUri    = gfw_Session()->mapUri();
+    const de::String title  = G_MapTitle(mapUri);
+    const de::String author = G_MapAuthor(mapUri, CPP_BOOL(cfg.common.hideIWADAuthor));
 
     float y = 0;
 
@@ -1415,7 +1415,7 @@ void Hu_DrawMapTitle(float alpha, dd_bool mapIdInsteadOfAuthor)
 
 #if __JDOOM__ || __JDOOM64__
     patchid_t patchId = 0;
-    res::Uri const titleImage = G_MapTitleImage(mapUri);
+    const res::Uri titleImage = G_MapTitleImage(mapUri);
     if(!titleImage.isEmpty())
     {
         if(!titleImage.scheme().compareWithoutCase("Patches"))

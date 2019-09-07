@@ -25,7 +25,7 @@
 
 namespace de {
 
-//Path::hash_type const PathTree::no_hash = Path::hash_range;
+//const Path::hash_type PathTree::no_hash = Path::hash_range;
 
 struct PathTree::Impl
 {

@@ -813,8 +813,8 @@ static void drawChar(dbyte ch, float x, float y, const AbstractFont &font, int a
         x -= font.glyphPosCoords(ch).width() / 2;
     }
 
-    int const ascent = font.ascent();
-    int const lineHeight = ascent ? ascent : font.glyphPosCoords(ch).height();
+    const int ascent = font.ascent();
+    const int lineHeight = ascent ? ascent : font.glyphPosCoords(ch).height();
     if (alignFlags & ALIGN_BOTTOM)
     {
         y -= topToAscent(font) + lineHeight;

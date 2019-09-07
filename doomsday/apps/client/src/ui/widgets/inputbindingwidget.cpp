@@ -72,7 +72,7 @@ DE_GUI_PIMPL(InputBindingWidget)
         auto idx = eventDesc.indexOf("+");
         if (idx > 0)
         {
-            String const conds = eventDesc.substr(idx + 1);
+            const String conds = eventDesc.substr(idx + 1);
             if (conds.contains("key-alt-down"))
             {
                 name = String(DE_CHAR_ALT_KEY) + name;

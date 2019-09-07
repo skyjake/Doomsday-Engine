@@ -227,7 +227,7 @@ void R_DrawViewBorder()
     if (vd->window.isNull()) return;
     if (vd->window.size() >= port->geometry.size()) return;
 
-    Vec2i const origin = port->geometry.topLeft;
+    const Vec2i origin = port->geometry.topLeft;
 
     DE_ASSERT_IN_RENDER_THREAD();
     DE_ASSERT_GL_CONTEXT_ACTIVE();

@@ -38,10 +38,10 @@ namespace world {
 namespace bsp {
 
 /// Minimum length of a half-edge post partitioning. Used in cost evaluation.
-static de::ddouble const SHORT_HEDGE_EPSILON = 4.0;
+static const de::ddouble SHORT_HEDGE_EPSILON = 4.0;
 
 /// Smallest distance between two points before being considered equal.
-static de::ddouble const DIST_EPSILON        = 1.0 / 128.0;
+static const de::ddouble DIST_EPSILON        = 1.0 / 128.0;
 
 /**
  * World map binary space partitioner (BSP).

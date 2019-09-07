@@ -156,7 +156,7 @@ void DirectoryFeed::populateFile(const Folder &folder, const String &entryName,
             return;
         }
 
-        NativePath const entryPath = d->nativePath / entryName;
+        const NativePath entryPath = d->nativePath / entryName;
 
         // Open the native file.
         std::unique_ptr<NativeFile> nativeFile(new NativeFile(entryName, entryPath));
@@ -301,7 +301,7 @@ File::Status DirectoryFeed::fileStatus(const NativePath &nativePath)
                       Time(lastModified_FileInfo(info)) };
 
     // Check for overridden status.
-    String const overrideName = nativePath + fileStatusSuffix;
+    const String overrideName = nativePath + fileStatusSuffix;
     if (fileExistsCStr_FileInfo(overrideName))
     {
         if (std::ifstream f{overrideName.c_str()})
@@ -351,7 +351,7 @@ File &DirectoryFeed::manuallyPopulateSingleFile(const NativePath &nativePath,
         String(nativePath.fileName()).fileNameExtension() == ".pack")
     {
         // Extract the portion of the path containing the parent .packs.
-        int const last = nativePath.segmentCount() - 1;
+        const int last = nativePath.segmentCount() - 1;
         Rangei packRange(last, last);
         while (packRange.start > 0 &&
                nativePath.segment(packRange.start - 1).toLowercaseString()

@@ -638,7 +638,7 @@ void P_TranslateSideMaterialOrigin(Side *side, SideSection section, float deltaX
     DE_ASSERT(side);
     DE_ASSERT(VALID_SIDESECTION(section));
 
-    uint const dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
+    const uint dmuSurfaceOriginFlags = DMU_OFFSET_XY | DMU_FLAG_FOR_SIDESECTION(section);
     float origin[2];
 
     if(IS_ZERO(deltaXY[0]) && IS_ZERO(deltaXY[1])) return;

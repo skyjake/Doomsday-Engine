@@ -49,7 +49,7 @@ Asset::~Asset()
 
 void Asset::setState(State s)
 {
-    State const old = d->state;
+    const State old = d->state;
     d->state = s;
     if (old != d->state)
     {

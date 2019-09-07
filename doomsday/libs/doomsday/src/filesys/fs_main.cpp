@@ -388,7 +388,7 @@ DE_PIMPL(FS1)
 
         LOG_RES_XVERBOSE("Trying \"%s\"...", NativePath(path).pretty());
 
-        bool const reqNativeFile = mode.contains('f');
+        const bool reqNativeFile = mode.contains('f');
 
         FileHandle *hndl = 0;
         FileInfo info; // The temporary info descriptor.
@@ -792,7 +792,7 @@ int FS1::findAll(bool (*predicate)(File1 &file, void *parameters),
 
 int FS1::findAllPaths(Path searchPattern, int flags, FS1::PathList &found)
 {
-    int const numFoundSoFar = found.count();
+    const int numFoundSoFar = found.count();
 
     // We must have an absolute path - prepend the base path if necessary.
     searchPattern = Path(App_BasePath()) / searchPattern;
@@ -1169,8 +1169,8 @@ D_CMD(ListLumps)
     if (!fileSystem) return false;
 
     const LumpIndex &lumpIndex = App_FileSystem().nameIndex();
-    int const numRecords       = lumpIndex.size();
-//    int const numIndexDigits   = de::max(3, M_NumDigits(numRecords));
+    const int numRecords       = lumpIndex.size();
+//    const int numIndexDigits   = de::max(3, M_NumDigits(numRecords));
 
     LOG_RES_MSG("LumpIndex %p (%i records):") << &lumpIndex << numRecords;
 

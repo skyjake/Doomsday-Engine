@@ -88,11 +88,11 @@ DE_EXTERN_C audiointerface_music_t audiodQuickTimeMusic;
 
 static AudioSystem *theAudioSystem;
 
-static duint const SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
+static const duint SOUND_LOGICAL_PURGEINTERVAL = 2000;  ///< 2 seconds
 #ifdef __CLIENT__
-static dint const SOUND_CHANNEL_COUNT_DEFAULT  = 16;
-static dint const SOUND_CHANNEL_COUNT_MAX      = 256;
-static dint const SOUND_CHANNEL_2DCOUNT        = 4;
+static const dint SOUND_CHANNEL_COUNT_DEFAULT  = 16;
+static const dint SOUND_CHANNEL_COUNT_MAX      = 256;
+static const dint SOUND_CHANNEL_2DCOUNT        = 4;
 static const char *MUSIC_BUFFEREDFILE          = "/tmp/dd-buffered-song";
 
 static thread_t refreshHandle;
@@ -253,7 +253,7 @@ DE_PIMPL(AudioSystem)
         LOG_AS("AudioSystem");
         try
         {
-            String const idStr = driverIdentifier[driverId];
+            const String idStr = driverIdentifier[driverId];
             if (!AudioDriver::isAvailable(idStr))
             {
                 return false;
@@ -594,7 +594,7 @@ DE_PIMPL(AudioSystem)
         {
             for (const AudioDriver &driver : drivers)
             {
-                String const name = driver.interfaceName(anyAudioInterface);
+                const String name = driver.interfaceName(anyAudioInterface);
                 if (!name.isEmpty()) return name;
             }
         }
@@ -716,7 +716,7 @@ DE_PIMPL(AudioSystem)
             return 0;
 
         // Relative paths are relative to the native working directory.
-        String const path  = (NativePath::workPath() / NativePath(virtualOrNativePath).expand()).withSeparators('/');
+        const String path  = (NativePath::workPath() / NativePath(virtualOrNativePath).expand()).withSeparators('/');
         LOG_AUDIO_VERBOSE("Attempting to play music file \"%s\"")
             << NativePath(virtualOrNativePath).pretty();
 
@@ -743,7 +743,7 @@ DE_PIMPL(AudioSystem)
                 else if (iMusic->Play && iMusic->SongBuffer)
                 {
                     // Buffer the data using the driver's own facility.
-                    dsize const len = hndl->length();
+                    const dsize len = hndl->length();
                     hndl->read((duint8 *) iMusic->SongBuffer(len), len);
 
                     return iMusic->Play(looped);
@@ -810,7 +810,7 @@ DE_PIMPL(AudioSystem)
             {
                 // Buffer the data using the driver's own facility.
                 std::unique_ptr<FileHandle> hndl(&App_FileSystem().openLump(lump));
-                dsize const length  = hndl->length();
+                const dsize length  = hndl->length();
                 hndl->read((duint8 *) iMusic->SongBuffer(length), length);
                 App_FileSystem().releaseFile(hndl->file());
 
@@ -1167,7 +1167,7 @@ DE_PIMPL(AudioSystem)
     void sfxPurgeLogical()
     {
         // Too soon?
-        duint const nowTime = Timer_RealMilliseconds();
+        const duint nowTime = Timer_RealMilliseconds();
         if (nowTime - sfxLogicLastPurge < SOUND_LOGICAL_PURGEINTERVAL) return;
 
         // Peform the purge now.
@@ -1242,13 +1242,13 @@ DE_PIMPL(AudioSystem)
     {
         if (soundIdAndFlags <= 0) return;
 
-        dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+        const dint soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
 
         // Cache the sound sample associated with @a soundId (if necessary)
         // so that we can determine it's length.
         if (sfxsample_t *sample = sfxSampleCache.cache(soundId))
         {
-            bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) ||
+            const bool isRepeating = (soundIdAndFlags & DDSF_REPEAT) ||
                                      Def_SoundIsRepeating(soundId);
 
             duint length = (1000 * sample->numSamples) / sample->rate;
@@ -1345,7 +1345,7 @@ DE_PIMPL(AudioSystem)
         {
             {
                 // Origin. At eye-level.
-                auto const origin = Vec4f(getSfxListenerOrigin().toVec3f(), 0);
+                const auto origin = Vec4f(getSfxListenerOrigin().toVec3f(), 0);
                 dfloat vec[4];
                 origin.decompose(vec);
                 self().sfx()->Listenerv(SFXLP_POSITION, vec);
@@ -1360,7 +1360,7 @@ DE_PIMPL(AudioSystem)
             }
             {
                 // Velocity. The unit is world distance units per second
-                auto const velocity = Vec4f(Vec3d(sfxListener->mom).toVec3f(), 0) * TICSPERSEC;
+                const auto velocity = Vec4f(Vec3d(sfxListener->mom).toVec3f(), 0) * TICSPERSEC;
                 dfloat vec[4];
                 velocity.decompose(vec);
                 self().sfx()->Listenerv(SFXLP_VELOCITY, vec);
@@ -1424,8 +1424,8 @@ DE_PIMPL(AudioSystem)
         // Do we need to change the sample format?
         if (old16Bit != sfx16Bit || oldRate != sfxSampleRate)
         {
-            dint const newBits = sfx16Bit ? 16 : 8;
-            dint const newRate = sfxSampleRate;
+            const dint newBits = sfx16Bit ? 16 : 8;
+            const dint newRate = sfxSampleRate;
             if (::sfxBits != newBits || ::sfxRate != newRate)
             {
                 LOG_AUDIO_VERBOSE("Switching sound rate to %iHz (%i-bit)..") << newRate << newBits;
@@ -1931,7 +1931,7 @@ bool AudioSystem::soundIsPlaying(dint soundId, mobj_t *emitter) const
 
     // Use the logic sound hash to determine whether the referenced sound is being
     // played currently. We don't care whether its audible or not.
-    duint const nowTime = Timer_RealMilliseconds();
+    const duint nowTime = Timer_RealMilliseconds();
     if (soundId)
     {
         const auto sounds = d->sfxLogicHash.equal_range(soundId);
@@ -2108,7 +2108,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, con
     DE_ASSERT(sample);
     if (!d->sfxAvail) return false;
 
-    bool const play3D = sfx3D && (emitter || fixedOrigin);
+    const bool play3D = sfx3D && (emitter || fixedOrigin);
 
     LOG_AS("AudioSystem");
     if (sample->id < 1 || sample->id >= DED_Definitions()->sounds.size()) return false;
@@ -2129,8 +2129,8 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, con
     }
 
     // Calculate the new sound's priority.
-    dint const nowTime  = Timer_Ticks();
-    dfloat const myPrio = rateSoundPriority(emitter, fixedOrigin, volume, nowTime);
+    const dint nowTime  = Timer_Ticks();
+    const dfloat myPrio = rateSoundPriority(emitter, fixedOrigin, volume, nowTime);
 
     bool haveChannelPrios = false;
     dfloat channelPrios[256/*MAX_CHANNEL_COUNT*/];
@@ -2154,7 +2154,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, con
             d->sfxChannels->forAll([&sample, &myPrio, &channelPrios,
                                     &selCh, &lowPrio, &idx] (audio::SfxChannel &ch)
             {
-                dfloat const chPriority = channelPrios[idx++];
+                const dfloat chPriority = channelPrios[idx++];
 
                 if (ch.hasBuffer())
                 {
@@ -2235,7 +2235,7 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, con
         d->sfxChannels->forAll([&play3D, &myPrio, &channelPrios,
                                 &selCh, &prioCh, &lowPrio, &idx] (audio::SfxChannel &ch)
         {
-            dfloat const chPriority = channelPrios[idx++];
+            const dfloat chPriority = channelPrios[idx++];
 
             if (ch.hasBuffer())
             {
@@ -2341,8 +2341,8 @@ dint AudioSystem::playSound(sfxsample_t *sample, dfloat volume, dfloat freq, con
     {
         // Init the buffer's min/max distances.
         // This is only done once, when the sound is started (i.e., here).
-        dfloat const minDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 10000 : ::soundMinDist;
-        dfloat const maxDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 20000 : ::soundMaxDist;
+        const dfloat minDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 10000 : ::soundMinDist;
+        const dfloat maxDist = (selCh->flags() & SFXCF_NO_ATTENUATION) ? 20000 : ::soundMaxDist;
 
         sfx()->Set(&sbuf, SFXBP_MIN_DISTANCE, minDist);
         sfx()->Set(&sbuf, SFXBP_MAX_DISTANCE, maxDist);
@@ -2367,7 +2367,7 @@ dfloat AudioSystem::rateSoundPriority(const mobj_t *emitter, const coord_t *poin
     dint startTic)
 {
     // In five seconds all priority of a sound is gone.
-    dfloat const timeoff  = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
+    const dfloat timeoff  = 1000 * (Timer_Ticks() - startTic) / (5.0f * TICSPERSEC);
 
     if (!d->sfxListener || (!emitter && !point))
     {
@@ -2524,7 +2524,7 @@ D_CMD(PlaySound)
     dint p = 0;
 
     // The sound ID is always first.
-    dint const id = DED_Definitions()->getSoundNum(argv[1]);
+    const dint id = DED_Definitions()->getSoundNum(argv[1]);
 
     // The second argument may be a volume.
     dfloat volume = 1;
@@ -2581,7 +2581,7 @@ D_CMD(PlayMusic)
         return false;
     }
 
-    bool const looped = true;
+    const bool looped = true;
 
     if (argc == 2)
     {
@@ -2831,7 +2831,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, const mobj_t *origin, coord_
     if (DoomsdayApp::app().busyMode().isActive())
         return false;
 
-    dint const soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
+    const dint soundId = (soundIdAndFlags & ~DDSF_FLAG_MASK);
     if (soundId <= 0 || soundId >= DED_Definitions()->sounds.size())
         return false;
 
@@ -2849,7 +2849,7 @@ dint S_LocalSoundAtVolumeFrom(dint soundIdAndFlags, const mobj_t *origin, coord_
     sfxinfo_t *info = Def_GetSoundInfo(soundId, &freq, &volume);
     if (!info) return false;  // Hmm? This ID is not defined.
 
-    bool const isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
+    const bool isRepeating = (soundIdAndFlags & DDSF_REPEAT) || Def_SoundIsRepeating(soundId);
 
     // Check the distance (if applicable).
     if (!(info->flags & SF_NO_ATTENUATION) && !(soundIdAndFlags & DDSF_NO_ATTENUATION))

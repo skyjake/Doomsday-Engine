@@ -244,7 +244,7 @@ static void Spr_VertexColors(dint count, dgl_color_t *out, dgl_vertex_t *normals
 {
     DE_ASSERT(out && normals && _ambient);
 
-    dbyte const opacity = 255 * _ambient[3];
+    const dbyte opacity = 255 * _ambient[3];
     Vec3f const ambient(_ambient);
     Vec3f const saturated(1, 1, 1);
 
@@ -410,7 +410,7 @@ void Rend_DrawSprite(const vissprite_t &spr)
         matAnimator->prepare();
 
         tex = matAnimator->texUnit(MaterialAnimator::TU_LAYER0).texture;
-        dint const texBorder = tex->spec().variant.border;
+        const dint texBorder = tex->spec().variant.border;
 
         size        = matAnimator->dimensions() + Vec2ui(texBorder * 2, texBorder * 2);
         viewOffsetX = -size.x / 2 + -tex->base().origin().x;
@@ -614,7 +614,7 @@ void Rend_DrawSprite(const vissprite_t &spr)
 
         DGL_Translatef(spr.pose.origin[0], spr.pose.origin[2], spr.pose.origin[1]);
 
-        coord_t const distFromViewer = de::abs(spr.pose.distance);
+        const coord_t distFromViewer = de::abs(spr.pose.distance);
         ClientApp::renderSystem().forAllVectorLights(spr.light.vLightListIdx, [&distFromViewer] (const VectorLightData &vlight)
         {
             if(distFromViewer < 1600 - 8)

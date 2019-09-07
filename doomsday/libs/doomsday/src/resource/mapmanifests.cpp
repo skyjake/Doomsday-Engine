@@ -83,7 +83,7 @@ void MapManifests::initMapManifests()
         if (recognizer->format() != Id1MapRecognizer::UnknownFormat)
         {
             File1 *sourceFile  = recognizer->sourceFile();
-            String const mapId = recognizer->id();
+            const String mapId = recognizer->id();
 
             res::MapManifest &manifest = d->manifests.insert(mapId);
             manifest.set("id", mapId);

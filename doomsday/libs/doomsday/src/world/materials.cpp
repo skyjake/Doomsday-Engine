@@ -115,7 +115,7 @@ DE_PIMPL(Materials)
     void materialSchemeManifestDefined(MaterialScheme & /*scheme*/, MaterialManifest &manifest)
     {
         /// Number of elements to block-allocate in the material index to material manifest map.
-        int const MANIFESTIDMAP_BLOCK_ALLOC = 32;
+        const int MANIFESTIDMAP_BLOCK_ALLOC = 32;
 
         // We want notification when the manifest is derived to produce a material.
         manifest.audienceForMaterialDerived += this;
@@ -124,7 +124,7 @@ DE_PIMPL(Materials)
         manifest.audienceForDeletion += this;
 
         // Acquire a new unique identifier for the manifest.
-        materialid_t const id = materialid_t(++materialManifestCount); // 1-based.
+        const materialid_t id = materialid_t(++materialManifestCount); // 1-based.
         manifest.setId(id);
 
         // Add the new manifest to the id index/map.

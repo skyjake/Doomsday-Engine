@@ -239,13 +239,13 @@ void LogWidget::draw()
     }
 
     // Draw the scroll indicator.
-    int const maxScroll = d->maxVisibleOffset(buf.height());
+    const int maxScroll = d->maxVisibleOffset(buf.height());
     if (d->showScrollIndicator && d->visibleOffset > 0)
     {
-        int const indHeight = de::clamp(2, de::floor(float(buf.height() * buf.height()) /
+        const int indHeight = de::clamp(2, de::floor(float(buf.height() * buf.height()) /
                                                float(d->totalHeight())), buf.height() / 2);
-        float const indPos = float(d->visibleOffset) / float(maxScroll);
-        int const avail = buf.height() - indHeight;
+        const float indPos = float(d->visibleOffset) / float(maxScroll);
+        const int avail = buf.height() - indHeight;
         for (int i = 0; i < indHeight; ++i)
         {
             buf.put(Vec2i(buf.width() - 1, i + avail - indPos * avail),

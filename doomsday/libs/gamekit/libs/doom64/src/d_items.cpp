@@ -185,7 +185,7 @@ void P_InitAmmoInfo()
 {
     for(auto i = int( AT_FIRST ); i < NUM_AMMO_TYPES; ++i)
     {
-        String const name = ammoTypeName(i);
+        const String name = ammoTypeName(i);
 
         if(const ded_value_t *maxAmmo = Defs().getValueById("Player|Max ammo|" + name))
         {
@@ -203,7 +203,7 @@ void P_InitWeaponInfo()
 {
     for(auto i = int( WT_FIRST ); i < NUM_WEAPON_TYPES; ++i)
     {
-        auto const id = String::asText(i);
+        const auto id = String::asText(i);
 
         weaponmodeinfo_t *wminfo = WEAPON_INFO(i, PCLASS_PLAYER, 0);
         DE_ASSERT(wminfo);

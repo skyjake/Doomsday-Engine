@@ -421,7 +421,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         // Intentional fall-through.
 
     case 80: /* ACS_Execute */ {
-        dint const scriptNumber = args[0];
+        const dint scriptNumber = args[0];
         acs::Script::Args const scriptArgs(&args[2], 3);
 
         // Assume the referenced map is from the current episode.
@@ -429,7 +429,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         if(epIdx > 0) epIdx -= 1;
 
         dint mapIdx = args[1];
-        res::Uri const mapUri = (mapIdx == 0? gfw_Session()->mapUri()
+        const res::Uri mapUri = (mapIdx == 0? gfw_Session()->mapUri()
                                            : G_ComposeMapUri(epIdx, mapIdx - 1) );
         if(gfw_Session()->mapUri() == mapUri)
         {
@@ -445,7 +445,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break; }
 
     case 81: /* ACS_Suspend */ {
-        int const scriptNumber = args[0];
+        const int scriptNumber = args[0];
         if(acscriptSys().hasScript(scriptNumber))
         {
             success = acscriptSys().script(scriptNumber).suspend();
@@ -453,7 +453,7 @@ dd_bool P_ExecuteLineSpecial(int special, byte args[5], Line *line, int side, mo
         break; }
 
     case 82: /* ACS_Terminate */ {
-        int const scriptNumber = args[0];
+        const int scriptNumber = args[0];
         if(acscriptSys().hasScript(scriptNumber))
         {
             success = acscriptSys().script(scriptNumber).terminate();
@@ -582,7 +582,7 @@ dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
     if(IS_CLIENT) return false;
 
     xline_t *xline           = P_ToXLine(line);
-    int const lineActivation = GET_SPAC(xline->flags);
+    const int lineActivation = GET_SPAC(xline->flags);
     if(lineActivation != activationType)
         return false;
 
@@ -595,8 +595,8 @@ dd_bool P_ActivateLine(Line *line, mobj_t *mo, int side, int activationType)
         if(xline->flags & ML_SECRET) return false;
     }
 
-    bool const repeat        = ((xline->flags & ML_REPEAT_SPECIAL)? true : false);
-    bool const buttonSuccess = P_ExecuteLineSpecial(xline->special, &xline->arg1, line, side, mo);
+    const bool repeat        = ((xline->flags & ML_REPEAT_SPECIAL)? true : false);
+    const bool buttonSuccess = P_ExecuteLineSpecial(xline->special, &xline->arg1, line, side, mo);
 
     if(!repeat && buttonSuccess)
     {

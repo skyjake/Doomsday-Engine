@@ -309,7 +309,7 @@ D_CMD(CheatGive)
     {
         if(argc < 2) return false;
 
-        String const request = String("give ") + argv[1];
+        const String request = String("give ") + argv[1];
         NetCl_CheatRequest(request);
         return true;
     }
@@ -330,10 +330,10 @@ D_CMD(CheatGive)
     if(plr->health <= 0) return false;
 
     // Stuff is the 2nd arg.
-    String const stuff = String(argv[1]).lower();
+    const String stuff = String(argv[1]).lower();
     for (mb_iterator i = stuff.begin(); i != stuff.end(); ++i)
     {
-        Char const mnemonic = *i;
+        const Char mnemonic = *i;
         switch (mnemonic)
         {
         case 'a': { // Ammo
@@ -341,7 +341,7 @@ D_CMD(CheatGive)
 
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < AT_FIRST || arg >= NUM_AMMO_TYPES)
                 {
                     LOG_SCR_ERROR("Ammo #%d unknown. Valid range %s")
@@ -360,7 +360,7 @@ D_CMD(CheatGive)
 
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < 0 || arg >= 4)
                 {
                     LOG_SCR_ERROR("Armor #%d unknown. Valid range %s")
@@ -378,7 +378,7 @@ D_CMD(CheatGive)
 
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
                 {
                     LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
@@ -396,7 +396,7 @@ D_CMD(CheatGive)
 
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < WT_FIRST || arg >= NUM_WEAPON_TYPES)
                 {
                     LOG_SCR_ERROR("Weapon #%d unknown. Valid range %s")

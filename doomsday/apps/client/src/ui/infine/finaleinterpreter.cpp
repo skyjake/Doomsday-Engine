@@ -606,18 +606,18 @@ DE_PIMPL(FinaleInterpreter)
         DE_ASSERT(cmd);
 
         const char *origCursorPos = cp;
-        int const operandCount    = countCommandOperands(cmd->operands);
+        const int operandCount    = countCommandOperands(cmd->operands);
         if (operandCount <= 0) return nullptr;
 
         fi_operand_t *operands = (fi_operand_t *) M_Malloc(sizeof(*operands) * operandCount);
         const char *opRover    = cmd->operands;
         for (fi_operand_t *op = operands; opRover && opRover[0]; opRover = nextOperand(opRover), op++)
         {
-            char const charCode = *opRover;
+            const char charCode = *opRover;
 
             op->type = operandTypeForCharCode(charCode);
-            bool const opHasDefaultValue = (opRover < cmd->operands + (strlen(cmd->operands) - 2) && opRover[1] == '(');
-            bool const haveValue         = !!nextToken();
+            const bool opHasDefaultValue = (opRover < cmd->operands + (strlen(cmd->operands) - 2) && opRover[1] == '(');
+            const bool haveValue         = !!nextToken();
 
             if (!haveValue && !opHasDefaultValue)
             {
@@ -637,7 +637,7 @@ DE_PIMPL(FinaleInterpreter)
                 if (!valueStr)
                 {
                     // Use the default.
-                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
                     AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
                     valueStr = Str_Text(defaultValue);
                 }
@@ -649,7 +649,7 @@ DE_PIMPL(FinaleInterpreter)
                 if (!valueStr)
                 {
                     // Use the default.
-                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
                     AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
                     valueStr = Str_Text(defaultValue);
                 }
@@ -662,7 +662,7 @@ DE_PIMPL(FinaleInterpreter)
                 if (!valueStr)
                 {
                     // Use the default.
-                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
                     AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
                     valueStr = Str_Text(defaultValue);
                     valueLen = defaultValueLen;
@@ -676,7 +676,7 @@ DE_PIMPL(FinaleInterpreter)
                 // Always apply the default as it may contain a default scheme.
                 if (opHasDefaultValue)
                 {
-                    int const defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
+                    const int defaultValueLen = (findDefaultValueEnd(opRover + 2) - opRover) - 1;
                     AutoStr *defaultValue     = Str_PartAppend(AutoStr_NewStd(), opRover + 2, 0, defaultValueLen);
                     Uri_SetUri2(uri, Str_Text(defaultValue), RC_NULL);
                 }
@@ -743,7 +743,7 @@ DE_PIMPL(FinaleInterpreter)
         // Is this a command we know how to execute?
         if (const command_t *cmd = findCommand(commandString))
         {
-            bool const requiredOperands = (cmd->operands && cmd->operands[0]);
+            const bool requiredOperands = (cmd->operands && cmd->operands[0]);
 
             // Is this command supported for this directive?
             if (directive != 0 && cmd->excludeDirectives != 0 &&
@@ -1755,7 +1755,7 @@ DEFFC(Anim)
 
     FinaleAnimWidget &anim  = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
     const char *encodedName = OP_CSTRING(1);
-    int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
+    const int tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
 
     patchid_t patchId = R_DeclarePatch(encodedName);
     if (!patchId)
@@ -1776,7 +1776,7 @@ DEFFC(AnimImage)
 
 #ifdef __CLIENT__
     const char *encodedName = OP_CSTRING(1);
-    int const tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
+    const int tics          = FRACSECS_TO_TICKS(OP_FLOAT(2));
     lumpnum_t lumpNum       = App_FileSystem().lumpNumForName(encodedName);
     if (rawtex_t *rawTex = App_Resources().declareRawTexture(lumpNum))
     {
@@ -1824,7 +1824,7 @@ DEFFC(PicSound)
 {
     DE_UNUSED(cmd);
     FinaleAnimWidget &anim = fi.findOrCreateWidget(FI_ANIM, OP_CSTRING(0)).as<FinaleAnimWidget>();
-    int const sound        = DED_Definitions()->getSoundNum(OP_CSTRING(1));
+    const int sound        = DED_Definitions()->getSoundNum(OP_CSTRING(1));
 
     if (!anim.frameCount())
     {
@@ -1888,7 +1888,7 @@ DEFFC(ObjectAlpha)
     DE_UNUSED(cmd);
     if (FinaleWidget *wi = fi.tryFindWidget(OP_CSTRING(0)))
     {
-        float const alpha = OP_FLOAT(1);
+        const float alpha = OP_FLOAT(1);
         if (FinaleTextWidget *text = maybeAs<FinaleTextWidget>(wi))
         {
             text->setAlpha(alpha, fi.inTime());
@@ -2052,8 +2052,8 @@ DEFFC(Sound)
 DEFFC(SoundAt)
 {
     DE_UNUSED(cmd, fi);
-    dint const soundId = DED_Definitions()->getSoundNum(OP_CSTRING(0));
-    dfloat const vol   = de::min(OP_FLOAT(1), 1.f);
+    const dint soundId = DED_Definitions()->getSoundNum(OP_CSTRING(0));
+    const dfloat vol   = de::min(OP_FLOAT(1), 1.f);
     S_LocalSoundAtVolume(soundId, nullptr, vol);
 }
 
@@ -2197,10 +2197,10 @@ DEFFC(PredefinedFont)
     DE_UNUSED(cmd);
     LOG_AS("FIC_PredefinedFont");
 
-    fontid_t const fontNum = Fonts_ResolveUri(OP_URI(1));
+    const fontid_t fontNum = Fonts_ResolveUri(OP_URI(1));
     if (fontNum)
     {
-        int const idx = de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS) - 1;
+        const int idx = de::clamp(1, OP_INT(0), FIPAGE_NUM_PREDEFINED_FONTS) - 1;
         fi.page(FinaleInterpreter::Anims).setPredefinedFont(idx, fontNum);
         fi.page(FinaleInterpreter::Texts).setPredefinedFont(idx, fontNum);
         return;

@@ -105,7 +105,7 @@ DE_PIMPL_NOREF(GLAtlasBuffer)
         GLSubBuffer *sub = nullptr;
         for (auto *host : hostBuffers)
         {
-            auto const bestRange = host->findBestAvailable(elementCount);
+            const auto bestRange = host->findBestAvailable(elementCount);
             if (!bestRange.isEmpty())
             {
                 sub = new GLSubBuffer(bestRange, host->buffer);

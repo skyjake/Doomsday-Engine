@@ -57,7 +57,7 @@ dfloat LightDecoration::occlusion(const Vec3d &eye) const
     // Halo brightness drops as the angle gets too big.
     if (source().elevation() < 2 && ::angleFadeFactor > 0) // Close the surface?
     {
-        Vec3d const vecFromOriginToEye = (origin() - eye).normalize();
+        const Vec3d vecFromOriginToEye = (origin() - eye).normalize();
 
         auto dot = dfloat( -surface().normal().dot(vecFromOriginToEye) );
         if (dot < ::angleFadeFactor / 2)

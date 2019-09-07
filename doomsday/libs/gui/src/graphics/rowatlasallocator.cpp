@@ -56,7 +56,7 @@ void unlink(Type *object)
 }
 
 /// The allocations are only optimized if less than 70% of the area is being utilized.
-static float const OPTIMIZATION_USAGE_THRESHOLD = .7f;
+static const float OPTIMIZATION_USAGE_THRESHOLD = .7f;
 
 DE_PIMPL(RowAtlasAllocator)
 {
@@ -99,7 +99,7 @@ DE_PIMPL(RowAtlasAllocator)
                 DE_ASSERT(isEmpty());
                 DE_ASSERT(width >= widthWithMargin);
 
-                int const remainder = width - widthWithMargin;
+                const int remainder = width - widthWithMargin;
 
                 id    = allocId;
                 width = widthWithMargin;
@@ -194,7 +194,7 @@ DE_PIMPL(RowAtlasAllocator)
                 DE_ASSERT(isEmpty());
                 DE_ASSERT(newHeight <= height);
 
-                duint const remainder = height - newHeight;
+                const duint remainder = height - newHeight;
                 height = newHeight;
                 if (remainder > 0)
                 {
@@ -315,7 +315,7 @@ DE_PIMPL(RowAtlasAllocator)
             // This slot will be taken into use.
             removeVacant(slot);
 
-            Atlas::Size const needed = size + Atlas::Size(d->margin, d->margin);
+            const Atlas::Size needed = size + Atlas::Size(d->margin, d->margin);
 
             // The first allocation determines the initial row height. The remainder
             // is split into a new empty row (if something remains).

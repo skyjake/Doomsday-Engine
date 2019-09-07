@@ -82,7 +82,7 @@ struct DGLState
             return 2 + activeTexture;
 
         default: {
-            int const index = int(id) - DGL_MODELVIEW;
+            const int index = int(id) - DGL_MODELVIEW;
             DE_ASSERT(index >= 0 && index < 2);
             return index; }
         }
@@ -150,8 +150,8 @@ void DGL_FogParams(GLUniform &fogRange, GLUniform &fogColor)
 
         // TODO: Implement EXP and EXP2 fog modes. This is LINEAR.
 
-        Rangef const depthPlanes = GL_DepthClipRange();
-        float const fogDepth = dgl().fogEnd - dgl().fogStart;
+        const Rangef depthPlanes = GL_DepthClipRange();
+        const float fogDepth = dgl().fogEnd - dgl().fogStart;
         fogRange = Vec4f(dgl().fogStart,
                             fogDepth,
                             depthPlanes.start,
@@ -539,7 +539,7 @@ DE_EXTERN_C void DGL_SetScissor(const RectRaw *rect)
     // has been set to cover the game widget area, so we can set the scissor relative
     // to it.
 
-    auto const norm = GuiWidget::normalizedRect(Rectanglei(rect->origin.x, rect->origin.y,
+    const auto norm = GuiWidget::normalizedRect(Rectanglei(rect->origin.x, rect->origin.y,
                                                            rect->size.width, rect->size.height),
                                                 Rectanglei::fromSize(game.rule().recti().size()));
 

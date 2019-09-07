@@ -42,7 +42,7 @@ DE_PIMPL(Profiles)
 
     void add(AbstractProfile *profile)
     {
-        String const key = profile->name();
+        const String key = profile->name();
         if (profiles.contains(key))
         {
             delete profiles[key];

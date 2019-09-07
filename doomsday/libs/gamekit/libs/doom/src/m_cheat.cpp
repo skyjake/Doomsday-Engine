@@ -58,7 +58,7 @@ CHEAT_FUNC(Music)
 
     player_t *plr = &players[player];
 
-    int const numEpisodes = PlayableEpisodeCount();
+    const int numEpisodes = PlayableEpisodeCount();
     if(!numEpisodes) return false;
 
     // The number of episodes determines how to interpret the arguments.
@@ -140,7 +140,7 @@ CHEAT_FUNC(Powerup2)
         /*PT_ALLMAP*/           { 'a', 'm' },
         /*PT_INFRARED*/         { 'l', 'g' }
     };
-    static int const numMnemonics = int(sizeof(mnemonics) / sizeof(mnemonics[0]));
+    static const int numMnemonics = int(sizeof(mnemonics) / sizeof(mnemonics[0]));
 
     for(int i = 0; i < numMnemonics; ++i)
     {
@@ -160,7 +160,7 @@ CHEAT_FUNC(MyPos)
         return false;
 
     const mobj_t *mob = players[CONSOLEPLAYER].plr->mo;
-    String const  text =
+    const String text =
         Stringf("angle:0x%x position:%s", mob->angle, Vec3d(mob->origin).asText().c_str());
     P_SetMessageWithFlags(&players[player], text, LMF_NO_HIDE);
     return true;
@@ -174,7 +174,7 @@ D_CMD(Cheat)
     DE_UNUSED(src, argc);
 
     // Give each of the characters in argument two to the ST event handler.
-    int const len = strlen(argv[1]);
+    const int len = strlen(argv[1]);
     for(int i = 0; i < len; ++i)
     {
         event_t ev; de::zap(ev);
@@ -328,7 +328,7 @@ D_CMD(CheatReveal)
     if(IS_NETGAME && !IS_NETWORK_SERVER)
         return false;
 
-    int const option = String(argv[1]).toInt();
+    const int option = String(argv[1]).toInt();
     if(option < 0 || option > 3) return false;
 
     for(int i = 0; i < MAXPLAYERS; ++i)
@@ -412,7 +412,7 @@ D_CMD(CheatGive)
     {
         if(argc < 2) return false;
 
-        String const request = String("give ") + argv[1];
+        const String request = String("give ") + argv[1];
         NetCl_CheatRequest(request);
         return true;
     }
@@ -427,7 +427,7 @@ D_CMD(CheatGive)
     // Can't give to a dead player.
     if(plr->health <= 0) return false;
 
-    String const stuff = String(argv[1]).lower(); // Stuff is the 2nd arg.
+    const String stuff = String(argv[1]).lower(); // Stuff is the 2nd arg.
     for (mb_iterator i = stuff.begin(); i != stuff.end(); ++i)
     {
         const Char mnemonic = *i;
@@ -440,7 +440,7 @@ D_CMD(CheatGive)
             // Give one specific ammo type?
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < AT_FIRST || arg >= NUM_AMMO_TYPES)
                 {
                     LOG_SCR_ERROR("Ammo #%d unknown. Valid range %s")
@@ -458,7 +458,7 @@ D_CMD(CheatGive)
 
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < 0 || arg >= 4)
                 {
                     LOG_SCR_ERROR("Armor #%d unknown. Valid range %s")
@@ -477,7 +477,7 @@ D_CMD(CheatGive)
             // Give one specific key type?
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < KT_FIRST || arg >= NUM_KEY_TYPES)
                 {
                     LOG_SCR_ERROR("Key #%d unknown. Valid range %s")
@@ -509,7 +509,7 @@ D_CMD(CheatGive)
             // Give one specific weapon type?
             if((i + 1) != stuff.end() && (*(i + 1)).isNumeric())
             {
-                int const arg = (*(++i)).delta('0');
+                const int arg = (*(++i)).delta('0');
                 if(arg < WT_FIRST || arg >= NUM_WEAPON_TYPES)
                 {
                     LOG_SCR_ERROR("Weapon #%d unknown. Valid range %s")
@@ -559,7 +559,7 @@ D_CMD(CheatMassacre)
         }
         else
         {
-            int const killCount = P_Massacre();
+            const int killCount = P_Massacre();
             LOG_SCR_MSG("%i monsters killed") << killCount;
         }
     }
@@ -577,7 +577,7 @@ D_CMD(CheatWhere)
     mobj_t *plrMo = plr->plr->mo;
     if(!plrMo) return true;
 
-    String const text = Stringf("Map:%s position:%s",
+    const String text = Stringf("Map:%s position:%s",
                                        gfw_Session()->mapUri().asText().c_str(),
                                        Vec3d(plrMo->origin).asText().c_str());
     P_SetMessageWithFlags(plr, text, LMF_NO_HIDE);

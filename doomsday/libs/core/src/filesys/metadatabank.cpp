@@ -53,7 +53,7 @@ DE_PIMPL(MetadataBank), public Lockable
     static DotPath pathFromId(const String &category, const Block &id)
     {
         DE_ASSERT(!id.isEmpty());
-        String const hex = id.asHexadecimalText();
+        const String hex = id.asHexadecimalText();
         DE_ASSERT(hex.last() != 0);
         return Stringf("%s.%lc.%s", category.c_str(), hex.last(), hex.c_str());
     }
@@ -77,7 +77,7 @@ MetadataBank &MetadataBank::get() // static
 Block MetadataBank::check(const String &category, const Block &id)
 {
     DE_GUARD(d);
-    DotPath const path = Impl::pathFromId(category, id);
+    const DotPath path = Impl::pathFromId(category, id);
     if (!has(path))
     {
         Bank::add(path, new Impl::Source(id));
@@ -88,7 +88,7 @@ Block MetadataBank::check(const String &category, const Block &id)
 void MetadataBank::setMetadata(const String &category, const Block &id, const Block &metadata)
 {
     DE_GUARD(d);
-    DotPath const path = Impl::pathFromId(category, id);
+    const DotPath path = Impl::pathFromId(category, id);
     if (!has(path))
     {
         Bank::add(path, new Impl::Source(id));

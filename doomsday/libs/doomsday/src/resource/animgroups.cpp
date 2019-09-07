@@ -62,7 +62,7 @@ void AnimGroups::clearAllAnimGroups()
 res::AnimGroup &AnimGroups::newAnimGroup(dint flags)
 {
     LOG_AS("AnimGroups");
-    dint const uniqueId = d->animGroups.count() + 1; // 1-based.
+    const dint uniqueId = d->animGroups.count() + 1; // 1-based.
     // Allocating one by one is inefficient but it doesn't really matter.
     d->animGroups.append(new res::AnimGroup(uniqueId, flags));
     return *d->animGroups.last();

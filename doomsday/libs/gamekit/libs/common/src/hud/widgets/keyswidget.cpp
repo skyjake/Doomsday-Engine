@@ -88,8 +88,8 @@ void guidata_keys_t::draw(const Vec2i &offset) const
         SPR_BKEY, SPR_YKEY, SPR_RKEY, SPR_BSKU, SPR_YSKU, SPR_RSKU
     };
 
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
-    //dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    //const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(!::cfg.hudShown[HUD_KEYS]) return;
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
@@ -135,7 +135,7 @@ void guidata_keys_t::draw(const Vec2i &offset) const
 
 #elif __JHERETIC__  // __JDOOM__
 
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(!::cfg.hudShown[HUD_KEYS]) return;
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
@@ -187,8 +187,8 @@ void guidata_keys_t::draw(const Vec2i &offset) const
 #define ORIGINX             (-ST_WIDTH / 2 )
 #define ORIGINY             (-ST_HEIGHT * ST_StatusBarShown(player()) )
 
-    dint const activeHud     = ST_ActiveHud(player());
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(player());
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(player()) || !ST_AutomapIsOpen(player())) return;
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;

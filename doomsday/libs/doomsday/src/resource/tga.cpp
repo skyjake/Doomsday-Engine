@@ -146,7 +146,7 @@ uint8_t *TGA_Load(FileHandle &file, Vec2ui &outSize, int &pixelSize)
 {
     uint8_t *dstBuf = 0;
 
-    size_t const initPos = file.tell();
+    const size_t initPos = file.tell();
 
     tga_header_t header;
     readHeader(&header, file);
@@ -171,12 +171,12 @@ uint8_t *TGA_Load(FileHandle &file, Vec2ui &outSize, int &pixelSize)
     }
 
     // Determine format.
-    //int const format = (imageSpec.pixelDepth == 24? TGA_TARGA24 : TGA_TARGA32);
+    //const int format = (imageSpec.pixelDepth == 24? TGA_TARGA24 : TGA_TARGA32);
 
     pixelSize = (imageSpec.pixelDepth == 24? 3 : 4);
 
     // Read the pixel data.
-    int const numPels = outSize.x * outSize.y;
+    const int numPels = outSize.x * outSize.y;
     uint8_t *srcBuf = (uint8_t *) M_Malloc(numPels * pixelSize);
     file.read(srcBuf, numPels * pixelSize);
 

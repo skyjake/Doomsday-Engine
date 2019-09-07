@@ -42,7 +42,7 @@ static double timeOffset = 0;
 
 static de::Time startedAt;
 
-//static uint const TIMER_WARP_INTERVAL = 12*60*60*1000;
+//static const uint TIMER_WARP_INTERVAL = 12*60*60*1000;
 
 void Timer_Shutdown(void)
 {
@@ -123,7 +123,7 @@ unsigned int Timer_RealMilliseconds(void)
 #endif
 
     de::Time::updateCurrentHighPerformanceTime();
-    de::TimeSpan const delta = de::Time::currentHighPerformanceTime() - startedAt;
+    const de::TimeSpan delta = de::Time::currentHighPerformanceTime() - startedAt;
     return (unsigned int) delta.asMilliSeconds();
 }
 

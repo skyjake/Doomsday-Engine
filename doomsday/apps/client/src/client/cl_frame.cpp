@@ -129,7 +129,7 @@ void Cl_Frame2Received(int packetType)
     // Read and process the message.
     while (!Reader_AtEnd(msgReader))
     {
-        byte const deltaType = Reader_ReadByte(msgReader);
+        const byte deltaType = Reader_ReadByte(msgReader);
 
         switch (deltaType)
         {

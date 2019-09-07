@@ -62,7 +62,7 @@ enum DrawCondition
 
 using DrawConditions = Flags;
 
-static duint32 const BLEND_MODE_MASK = 0xf;
+static const duint32 BLEND_MODE_MASK = 0xf;
 
 DrawList::PrimitiveParams::PrimitiveParams(gfx::Primitive type,
                                            de::Vec2f      texScale,
@@ -188,7 +188,7 @@ DE_PIMPL(DrawList)
                 DGL_Begin(primitive.type == gfx::TriangleStrip? DGL_TRIANGLE_STRIP : DGL_TRIANGLE_FAN);
                 for (duint i = 0; i < numIndices; ++i)
                 {
-                    duint const index = indices[i];
+                    const duint index = indices[i];
 
                     for (dint k = 0; k < MAX_TEX_UNITS; ++k)
                     {
@@ -286,23 +286,23 @@ DE_PIMPL(DrawList)
     void *allocateData(dsize bytes)
     {
         // Number of extra bytes to keep allocated in the end of each list.
-        dint const PADDING = 16;
+        const dint PADDING = 16;
 
         if (!bytes) return nullptr;
 
         // We require the extra bytes because we want that the end of the list data is
         // always safe for writing-in-advance. This is needed when the 'end of data'
         // marker is written.
-        dint const startOffset = cursor - data;
-        dsize const required   = startOffset + bytes + PADDING;
+        const dint startOffset = cursor - data;
+        const dsize required   = startOffset + bytes + PADDING;
 
         // First check that the data buffer of the list is large enough.
         if (required > dataSize)
         {
             // Offsets must be preserved.
             const duint8 *oldData   = data;
-            dint const cursorOffset = (cursor? cursor - oldData : -1);
-            dint const lastOffset   = (last? (duint8 *) last - oldData : -1);
+            const dint cursorOffset = (cursor? cursor - oldData : -1);
+            const dint lastOffset   = (last? (duint8 *) last - oldData : -1);
 
             // Allocate more memory for the data buffer.
             if (dataSize == 0)
@@ -823,7 +823,7 @@ void DrawList::draw(DrawMode mode, const TexUnitMap &texUnitMap) const
     LIBGUI_ASSERT_GL_CONTEXT_ACTIVE();
 
     // Setup GL state for this list.
-    DrawConditions const conditions = d->pushGLState(mode);
+    const DrawConditions conditions = d->pushGLState(mode);
 
     // Should we just skip all this?
     if (conditions & Skip) return; // Assume no state changes were made.

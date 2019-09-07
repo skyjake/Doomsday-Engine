@@ -755,9 +755,9 @@ dd_bool GL_PalettizeImage(uint8_t *out, int outformat, const res::ColorPalette *
 
     if(informat <= 2 && outformat >= 3)
     {
-        long const numPels = width * height;
-        int const inSize   = (informat == 2 ? 1 : informat);
-        int const outSize  = (outformat == 2 ? 1 : outformat);
+        const long numPels = width * height;
+        const int inSize   = (informat == 2 ? 1 : informat);
+        const int outSize  = (outformat == 2 ? 1 : outformat);
 
         for(long i = 0; i < numPels; ++i)
         {
@@ -827,7 +827,7 @@ void GL_DeSaturatePalettedImage(uint8_t *pixels, const res::ColorPalette &palett
 
     if(!width || !height)  return;
 
-    long const numPels = width * height;
+    const long numPels = width * height;
 
     // What is the maximum color value?
     int max = 0;
@@ -1088,7 +1088,7 @@ void FindAverageAlphaIdx(const uint8_t *pixels, int w, int h, float *alpha,
     alphaStart = pixels + numPels;
     for(i = 0; i < numPels; ++i)
     {
-        uint8_t const val = alphaStart[i];
+        const uint8_t val = alphaStart[i];
         avg += val;
         if(val < 255)
         {
@@ -1532,7 +1532,7 @@ uint8_t *ApplyColorKeying(uint8_t *buf, int width, int height, int pixelSize)
     // required number of color components.
     if(pixelSize < 4)
     {
-        long const numpels = width * height;
+        const long numpels = width * height;
         uint8_t *ckdest = (uint8_t *) M_Malloc(4 * numpels);
         uint8_t *in, *out;
         long i;

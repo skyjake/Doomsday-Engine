@@ -878,7 +878,7 @@ void DoomV9MapStateReader::read(const String & /*mapUriStr*/)
     d->readThinkers();
     d->readSpecials();
 
-    byte const consistency = Reader_ReadByte(d->reader);
+    const byte consistency = Reader_ReadByte(d->reader);
     Reader_Delete(d->reader); d->reader = 0;
 
     if(consistency != 0x1d)

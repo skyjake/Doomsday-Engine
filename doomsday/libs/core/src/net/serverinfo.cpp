@@ -364,7 +364,7 @@ void ServerInfo::printToLog(int indexNumber, bool includeHeader) const
         LOG_NET_MSG(_E(m)"    %-20s P/M  L Ver:  Game:            Location:") << "Name:";
     }
 
-    auto const plrs = players();
+    const auto plrs = players();
 
     LOG_NET_MSG(_E(m)"%-2i: %-20s %i/%-2i %c %-5i %-16s %s")
             << indexNumber

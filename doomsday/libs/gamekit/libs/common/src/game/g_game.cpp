@@ -454,7 +454,7 @@ void R_LoadColorPalettes()
 #if __JHEXEN__
     // Load the translation tables.
     {
-        int const numPerClass = (gameMode == hexen_v10? 3 : 7);
+        const int numPerClass = (gameMode == hexen_v10? 3 : 7);
 
         // In v1.0, the color translations are a bit different. There are only
         // three translation maps per class, whereas Doomsday assumes seven maps
@@ -1845,7 +1845,7 @@ void G_PlayerReborn(int player)
     p->weapons[WT_SECOND].owned = true;
     p->ammo[AT_CRYSTAL].owned = 50;
 
-    res::Uri const mapUri = gfw_Session()->mapUri();
+    const res::Uri mapUri = gfw_Session()->mapUri();
     if (secret ||
        (mapUri.path() == "E1M9" ||
         mapUri.path() == "E2M9" ||
@@ -1974,7 +1974,7 @@ String G_DefaultGameStateFolderUserDescription(const String &saveName, bool auto
     // If the slot is already in use then choose existing description.
     if (!saveName.isEmpty())
     {
-        String const existing = gfw_Session()->savedUserDescription(saveName);
+        const String existing = gfw_Session()->savedUserDescription(saveName);
         if (!existing.isEmpty()) return existing;
     }
 
@@ -1984,7 +1984,7 @@ String G_DefaultGameStateFolderUserDescription(const String &saveName, bool auto
     String description;
 
     // Include the source file name, for custom maps.
-    res::Uri const mapUri = gfw_Session()->mapUri();
+    const res::Uri mapUri = gfw_Session()->mapUri();
     String mapUriAsText  = mapUri.compose();
     if (P_MapIsCustom(mapUriAsText))
     {
@@ -2004,9 +2004,9 @@ String G_DefaultGameStateFolderUserDescription(const String &saveName, bool auto
 
     // Include the game time also.
     int time = mapTime / TICRATE;
-    int const hours   = time / 3600; time -= hours * 3600;
-    int const minutes = time / 60;   time -= minutes * 60;
-    int const seconds = time;
+    const int hours   = time / 3600; time -= hours * 3600;
+    const int minutes = time / 60;   time -= minutes * 60;
+    const int seconds = time;
     description += Stringf(" %02i:%02i:%02i", hours, minutes, seconds);
 
     return description;
@@ -2163,7 +2163,7 @@ String G_MapDescription(const String& episodeId, const res::Uri &mapUri)
 
     std::ostringstream os;
 
-    String const title = G_MapTitle(mapUri);
+    const String title = G_MapTitle(mapUri);
     if (!title.isEmpty())
     {
         os << "Map: " DE2_ESC(i) DE2_ESC(b) << title << DE2_ESC(.)
@@ -2180,7 +2180,7 @@ String G_MapDescription(const String& episodeId, const res::Uri &mapUri)
         os << ")" << DE2_ESC(.);
     }
 
-    String const author = G_MapAuthor(mapUri, P_MapIsCustom(mapUri.compose()));
+    const String author = G_MapAuthor(mapUri, P_MapIsCustom(mapUri.compose()));
     if (!author.isEmpty())
     {
         os << "\n - Author: " DE2_ESC(i) << author;
@@ -2324,7 +2324,7 @@ D_CMD(EndSession)
     }
 
     // Is user confirmation required? (Never if this is a network server).
-    bool const confirmed = (argc >= 2 && !iCmpStrCase(argv[argc-1], "confirm"));
+    const bool confirmed = (argc >= 2 && !iCmpStrCase(argv[argc-1], "confirm"));
     if (confirmed || (IS_NETGAME && IS_SERVER))
     {
         if (IS_NETGAME && IS_CLIENT)
@@ -2360,7 +2360,7 @@ D_CMD(LoadSession)
 {
     DE_UNUSED(src);
 
-    bool const confirmed = (argc == 3 && !iCmpStrCase(argv[2], "confirm"));
+    const bool confirmed = (argc == 3 && !iCmpStrCase(argv[2], "confirm"));
 
     if (G_QuitInProgress()) return false;
     if (!gfw_Session()->isLoadingPossible()) return false;
@@ -2456,7 +2456,7 @@ D_CMD(SaveSession)
 {
     DE_UNUSED(src);
 
-    bool const confirmed = (argc >= 3 && !iCmpStrCase(argv[argc-1], "confirm"));
+    const bool confirmed = (argc >= 3 && !iCmpStrCase(argv[argc-1], "confirm"));
 
     if (G_QuitInProgress()) return false;
 
@@ -2504,7 +2504,7 @@ D_CMD(SaveSession)
             S_LocalSound(SFX_QUICKSAVE_PROMPT, nullptr);
 
             // Compose the confirmation message.
-            String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
+            const String existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
             AutoStr *msg = Str_Appendf(AutoStr_NewStd(), QSPROMPT,
                                        sslot->id().c_str(),
                                        existingDescription.c_str());
@@ -2562,7 +2562,7 @@ D_CMD(DeleteSaveGame)
 
     if (G_QuitInProgress()) return false;
 
-    bool const confirmed = (argc >= 3 && !iCmpStrCase(argv[argc-1], "confirm"));
+    const bool confirmed = (argc >= 3 && !iCmpStrCase(argv[argc-1], "confirm"));
     if (SaveSlot *sslot = G_SaveSlots().slotByUserInput(argv[1]))
     {
         if (sslot->isUserWritable())
@@ -2582,7 +2582,7 @@ D_CMD(DeleteSaveGame)
                 S_LocalSound(SFX_DELETESAVEGAME_CONFIRM, nullptr);
 
                 // Compose the confirmation message.
-                String const existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
+                const String existingDescription = gfw_Session()->savedUserDescription(sslot->saveName());
                 AutoStr *msg = Str_Appendf(AutoStr_NewStd(), DELETESAVEGAME_CONFIRM, existingDescription.c_str());
                 Hu_MsgStart(MSG_YESNO, Str_Text(msg), deleteGameStateFolderConfirmed, 0, new String(sslot->saveName()));
             }
@@ -2708,7 +2708,7 @@ D_CMD(WarpMap)
     }
 
     // Has an episode been specified?
-    bool const haveEpisode = (argc >= 3);
+    const bool haveEpisode = (argc >= 3);
     if (haveEpisode)
     {
         episodeId = argv[1];

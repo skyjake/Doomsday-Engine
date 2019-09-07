@@ -44,9 +44,9 @@ namespace internal {
 
 namespace pcx {
 
-static dbyte const MAGIC        = 0x0a;
-static dbyte const RLE_ENCODING = 1;
-static dsize const HEADER_SIZE  = 128;
+static const dbyte MAGIC        = 0x0a;
+static const dbyte RLE_ENCODING = 1;
+static const dsize HEADER_SIZE  = 128;
 
 struct Header : public IReadable
 {
@@ -250,12 +250,12 @@ static Image load(const Block &data)
     Reader input(data);
     input >> header;
 
-    int const pixelSize = header.depth / 8;
+    const int pixelSize = header.depth / 8;
     Image img(Image::Size(header.size.x, header.size.y),
                pixelSize == 4? Image::RGBA_8888 : Image::RGB_888);
     dbyte *base = reinterpret_cast<dbyte *>(img.bits());
 
-    bool const isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
+    const bool isUpperOrigin = header.flags.testFlag(Header::ScreenOriginUpper);
 
     // RGB can be read line by line.
     if (header.imageType == Header::RGB)

@@ -129,7 +129,7 @@ struct Hemisphere
                                                                              : res::Texture::AverageBottomColorAnalysis)));
             if (!avgColor)
             {
-                res::Uri const pTexUri = pTex.manifest().composeUri();
+                const res::Uri pTexUri = pTex.manifest().composeUri();
                 throw Error("Hemisphere::capColor",
                             stringf("Texture \"%s\" has no Average%sColorAnalysis",
                                     pTexUri.pathCStr(),
@@ -138,7 +138,7 @@ struct Hemisphere
 
             // Is the colored fadeout in use?
             Vec3f color(avgColor->color.rgb);
-            dfloat const fadeOutLimit = layer.fadeOutLimit();
+            const dfloat fadeOutLimit = layer.fadeOutLimit();
             if (color.x >= fadeOutLimit || color.y >= fadeOutLimit || color.z >= fadeOutLimit)
             {
                 if (needFadeOut) *needFadeOut = true;
@@ -193,7 +193,7 @@ struct Hemisphere
         if (verts.isEmpty()) return;
         if (firstActiveLayer < 0) return;
 
-        bool const yflip = (hemisphere == LowerHemisphere);
+        const bool yflip = (hemisphere == LowerHemisphere);
         if (yflip)
         {
             // The lower hemisphere must be flipped.
@@ -317,17 +317,17 @@ struct Hemisphere
 
         verts.resize(columns * (rows + 1));
 
-        float const maxSideAngle = float(de::PI / 2 * height);
-        float const sideOffset   = float(de::PI / 2 * horizonOffset);
+        const float maxSideAngle = float(de::PI / 2 * height);
+        const float sideOffset   = float(de::PI / 2 * horizonOffset);
 
         for(int r = 0; r < rows + 1; ++r)
         for(int c = 0; c < columns; ++c)
         {
             Vec3f &svtx = verts[r * columns + c % columns];
 
-            float const topAngle  = ((c / float(columns)) * 2) * PI;
-            float const sideAngle = sideOffset + maxSideAngle * (rows - r) / float(rows);
-            float const radius    = cos(sideAngle);
+            const float topAngle  = ((c / float(columns)) * 2) * PI;
+            const float sideAngle = sideOffset + maxSideAngle * (rows - r) / float(rows);
+            const float radius    = cos(sideAngle);
 
             svtx = Vec3f(radius * cos(topAngle),
                             sin(sideAngle), // The height.
@@ -469,7 +469,7 @@ DE_PIMPL(SkyDrawable)
 
             // If the associated layer is not active then the model won't be drawn.
             const Record &skyModelDef = defn::Sky(*sky->def()).model(i);
-            int const layerNum        = skyModelDef.geti("layer");
+            const int layerNum        = skyModelDef.geti("layer");
             if(layerNum > 0 && layerNum <= MAX_LAYERS)
             {
                 if(!layers[layerNum - 1].active)
@@ -836,7 +836,7 @@ void SkyDrawable::Animator::advanceTime(timespan_t /*elapsed*/)
             mstate.timer = 0;
 
             // Execute a console command?
-            String const execute = skyModelDef.gets("execute");
+            const String execute = skyModelDef.gets("execute");
             if(!execute.isEmpty())
             {
                 Con_Execute(CMDS_SCRIPT, execute, true, false);

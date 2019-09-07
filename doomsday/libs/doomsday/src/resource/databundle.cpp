@@ -209,7 +209,7 @@ DE_PIMPL(DataBundle), public Lockable
             }
         }
 
-        Record const meta = cachedMetadata();
+        const Record meta = cachedMetadata();
         packageId = meta.gets(Package::VAR_ID);
         versionedPackageId = packageId;
 
@@ -527,7 +527,7 @@ DE_PIMPL(DataBundle), public Lockable
     {
         if (format == Pwad || format == Iwad)
         {
-            String const dataFilePath = self().asFile().path();
+            const String dataFilePath = self().asFile().path();
             if (const auto *wadTxt = FS::tryLocate<File const>(
                         dataFilePath.fileNameAndPathWithoutExtension() + ".txt"))
             {
@@ -550,8 +550,8 @@ DE_PIMPL(DataBundle), public Lockable
 
         if (path.segmentCount() >= 3)
         {
-            String const parent      = path.reverseSegment(1).toLowercaseString();
-            String const grandParent = path.reverseSegment(2).toLowercaseString();
+            const String parent      = path.reverseSegment(1).toLowercaseString();
+            const String grandParent = path.reverseSegment(2).toLowercaseString();
 
             if (parent.fileNameExtension() == ".pk3" ||
                 parent.fileNameExtension() == ".zip" /*||
@@ -717,7 +717,7 @@ DE_PIMPL(DataBundle), public Lockable
             {
                 if (reReleaseDate.match(line, match))
                 {
-                    Date const releaseDate = Date::fromText(match.captured(2).strip());
+                    const Date releaseDate = Date::fromText(match.captured(2).strip());
                     if (releaseDate.isValid())
                     {
                         meta.set(VAR_VERSION(), Stringf("%i.%i.%i",
@@ -858,7 +858,7 @@ DE_PIMPL(DataBundle), public Lockable
             return;
         }
 
-        String const oldTags = meta.gets(VAR_TAGS());
+        const String oldTags = meta.gets(VAR_TAGS());
 
         String tag;
         if (identifyMostLikelyGame(meta.gets(VAR_TITLE()), tag))
@@ -1040,7 +1040,7 @@ DE_PIMPL(DataBundle), public Lockable
             }
         }*/
 
-        res::LumpDirectory::MapType const mapType = lumpDir? lumpDir->mapType()
+        const res::LumpDirectory::MapType mapType = lumpDir? lumpDir->mapType()
                                                            : res::LumpDirectory::None;
 
         if (tags.contains("doom") || tags.contains("doom2"))
@@ -1360,7 +1360,7 @@ List<const DataBundle *> DataBundle::loadedBundles() // static
             {
                 for (const Value *v : meta.geta(VAR_DATA_FILES()).elements())
                 {
-                    String const dataFilePath = v->asText();
+                    const String dataFilePath = v->asText();
 
                     // Look up the data bundle file.
                     if (const DataBundle *bundle = tryLocateDataFile(*pkg, dataFilePath))
@@ -1392,7 +1392,7 @@ List<const DataBundle *> DataBundle::loadedBundles() // static
 
 List<const DataBundle *> DataBundle::findAllNative(const String &fileNameOrPartialNativePath)
 {
-    NativePath const searchPath = NativePath(fileNameOrPartialNativePath).expand();
+    const NativePath searchPath = NativePath(fileNameOrPartialNativePath).expand();
 
     FS::FoundFiles found;
     FS::get().findAllOfTypes(
@@ -1409,7 +1409,7 @@ List<const DataBundle *> DataBundle::findAllNative(const String &fileNameOrParti
     {
         bundles = de::filter(bundles, [&searchPath] (const DataBundle *b)
         {
-            NativePath const bundlePath = b->asFile().correspondingNativePath().fileNamePath();
+            const NativePath bundlePath = b->asFile().correspondingNativePath().fileNamePath();
             if (bundlePath.isEmpty()) return false;
             //qDebug() << "bundle:" << path.asText() << "searchTerm:" << searchPath.fileNamePath();
             if (bundlePath.toString().endsWith(searchPath.fileNamePath().toString(),

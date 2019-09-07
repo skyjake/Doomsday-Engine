@@ -186,7 +186,7 @@ DE_PIMPL(MainWindow)
 
         needRootSizeUpdate = false;
 
-        Vec2ui const size = contentXf.logicalRootSize(self().pixelSize());
+        const Vec2ui size = contentXf.logicalRootSize(self().pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);

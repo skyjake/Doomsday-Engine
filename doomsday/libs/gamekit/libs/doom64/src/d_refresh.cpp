@@ -51,7 +51,7 @@ void G_RendSpecialFilter(int player, const RectRaw *region)
     DE_ASSERT(region != 0);
 
     player_t *plr = players + player;
-    int const filter = plr->powers[PT_INVULNERABILITY];
+    const int filter = plr->powers[PT_INVULNERABILITY];
     if(!filter) return;
 
     float str = 1; // Full inversion.

@@ -66,7 +66,7 @@ DE_PIMPL(ScriptSystem)
 
         // Setup the Version module.
         {
-            Version const ver = Version::currentBuild();
+            const Version ver = Version::currentBuild();
             Record &mod = versionModule;
             ArrayValue *num = new ArrayValue;
             *num << NumberValue(ver.major) << NumberValue(ver.minor)

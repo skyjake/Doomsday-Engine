@@ -154,7 +154,7 @@ typedef Hash<String, SpriteFrameDefs> SpriteDefs;        ///< sprite name => fra
  */
 static SpriteDefs buildSpriteFramesFromTextures(const res::TextureScheme::Index &texIndex)
 {
-    static dint const NAME_LENGTH = 4;
+    static const dint NAME_LENGTH = 4;
 
     SpriteDefs frameSets;
 //    frameSets.reserve(texIndex.leafNodes().count() / 8);  // overestimate.
@@ -164,16 +164,16 @@ static SpriteDefs buildSpriteFramesFromTextures(const res::TextureScheme::Index 
     {
         const res::TextureManifest &texManifest = iter.next();
 
-        String const material   = res::Uri("Sprites", texManifest.path()).compose();
+        const String material   = res::Uri("Sprites", texManifest.path()).compose();
         // Decode the sprite frame descriptor.
-        String const desc       = String::fromPercentEncoding(texManifest.path().toString());
+        const String desc       = String::fromPercentEncoding(texManifest.path().toString());
 
         // Find/create a new sprite frame set.
-        String const spriteName = desc.left(CharPos(NAME_LENGTH)).lower();
+        const String spriteName = desc.left(CharPos(NAME_LENGTH)).lower();
         SpriteFrameDefs *frames = &frameSets[spriteName];
 
         // The descriptor may define either one or two frames.
-        bool const haveMirror = desc.length() >= 8;
+        const bool haveMirror = desc.length() >= 8;
         for (dint i = 0; i < (haveMirror ? 2 : 1); ++i)
         {
             const String nums = desc.mid(CharPos(NAME_LENGTH + i * 2), 2);
@@ -220,7 +220,7 @@ static SpriteDefs buildSpriteFramesFromTextures(const res::TextureScheme::Index 
  */
 static Sprites::SpriteSet buildSprites(const std::multimap<dint, SpriteFrameDef> &frameDefs)
 {
-    static de::dint const MAX_ANGLES = 16;
+    static const de::dint MAX_ANGLES = 16;
 
     Sprites::SpriteSet frames;
 
@@ -304,7 +304,7 @@ void Sprites::initSprites()
 
 dint Sprites::toSpriteAngle(Char angleCode) // static
 {
-    static dint const MAX_ANGLES = 16;
+    static const dint MAX_ANGLES = 16;
 
     dint angle = -1; // Unknown.
     

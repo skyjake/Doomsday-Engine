@@ -289,7 +289,7 @@ void Sv_HandlePacket()
 {
     LOG_AS("Sv_HandlePacket");
 
-    dint const from  = ::netBuffer.player;
+    const dint from  = ::netBuffer.player;
     DE_ASSERT(from >= 0 && from < DDMAXPLAYERS);
     player_t *sender = DD_Player(from);
     ddplayer_t *ddpl = &sender->publicData();
@@ -383,9 +383,9 @@ void Sv_HandlePacket()
 
     case PKT_CHAT: {
         // The first byte contains the sender.
-        dint const msgfrom = Reader_ReadByte(::msgReader);
+        const dint msgfrom = Reader_ReadByte(::msgReader);
         // Is the message for us?
-        dint const mask    = Reader_ReadUInt32(::msgReader);
+        const dint mask    = Reader_ReadUInt32(::msgReader);
 
         // Copy the message into a buffer.
         dsize len = Reader_ReadUInt16(::msgReader);
@@ -413,8 +413,8 @@ void Sv_HandlePacket()
         break; }
 
     case PCL_FINALE_REQUEST: {
-        finaleid_t const fid = Reader_ReadUInt32(::msgReader);
-        duint16 const params = Reader_ReadUInt16(::msgReader);
+        const finaleid_t fid = Reader_ReadUInt32(::msgReader);
+        const duint16 params = Reader_ReadUInt16(::msgReader);
         LOGDEV_NET_MSG("PCL_FINALE_REQUEST: fid=%i params=%i") << fid << params;
         if (params == 1)
         {

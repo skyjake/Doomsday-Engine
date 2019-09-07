@@ -273,7 +273,7 @@ void PlayerLogWidget::draw(const Vec2i &offset)
 
             FR_SetFont(font());
             /// @todo Query line height from the font.
-            dint const lineHeight = FR_CharHeight('Q') + 1;
+            const dint lineHeight = FR_CharHeight('Q') + 1;
 
             // Scroll offset is calculated using the timeout of the first visible entry.
             LogEntry *entry = &d->entries[firstEntry];
@@ -300,7 +300,7 @@ void PlayerLogWidget::draw(const Vec2i &offset)
                 if(!cfg.hudShown[HUD_LOG] && !entry->dontHide)
                     continue;
 
-                dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+                const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
                 // ::w is used for opacity
                 Vec4f rgba(Vec3f(cfg.common.msgColor), textOpacity);
@@ -317,12 +317,12 @@ void PlayerLogWidget::draw(const Vec2i &offset)
                 // Will either set the message text to white every n tics, or transition to the correct value
                 if(entry->justAdded && cfg.common.msgBlink)
                 {
-                    duint const blinkSpeed = cfg.common.msgBlink;
-                    duint const msgTics    = entry->tics - entry->ticsRemain;
+                    const duint blinkSpeed = cfg.common.msgBlink;
+                    const duint msgTics    = entry->tics - entry->ticsRemain;
 
                     if(msgTics < blinkSpeed)
                     {
-                        duint const td = (cfg.common.msgUptime * TICSPERSEC) - entry->ticsRemain;
+                        const duint td = (cfg.common.msgUptime * TICSPERSEC) - entry->ticsRemain;
                         if(n == lastEntry && (0 == msgTics || (td & 2)))
                         {
                             // Use the "flash" color.
@@ -332,7 +332,7 @@ void PlayerLogWidget::draw(const Vec2i &offset)
                     else if(msgTics < blinkSpeed + LOG_MESSAGE_FLASHFADETICS && msgTics >= blinkSpeed)
                     {
                         // Fade color to normal.
-                        dfloat const fade = (blinkSpeed + LOG_MESSAGE_FLASHFADETICS - msgTics);
+                        const dfloat fade = (blinkSpeed + LOG_MESSAGE_FLASHFADETICS - msgTics);
                         rgba.x += (1.0f - rgba.x) / LOG_MESSAGE_FLASHFADETICS * fade;
                         rgba.y += (1.0f - rgba.y) / LOG_MESSAGE_FLASHFADETICS * fade;
                         rgba.z += (1.0f - rgba.z) / LOG_MESSAGE_FLASHFADETICS * fade;
@@ -341,8 +341,8 @@ void PlayerLogWidget::draw(const Vec2i &offset)
 
                 // Draw entry text
                 {
-                    dint const alignFlags    = ALIGN_TOP| ((cfg.common.msgAlign == 0)? ALIGN_LEFT : (cfg.common.msgAlign == 2)? ALIGN_RIGHT : 0);
-                    dshort const textFlags   = DTF_NO_EFFECTS;
+                    const dint alignFlags    = ALIGN_TOP| ((cfg.common.msgAlign == 0)? ALIGN_LEFT : (cfg.common.msgAlign == 2)? ALIGN_RIGHT : 0);
+                    const dshort textFlags   = DTF_NO_EFFECTS;
                     FR_SetColorAndAlpha(rgba.x, rgba.y, rgba.z, rgba.w);
                     FR_DrawTextXY3(entry->text, 0, y, alignFlags, textFlags);
                 }
@@ -405,7 +405,7 @@ void PlayerLogWidget::updateGeometry()
 
     FR_SetFont(FID(GF_FONTA));
     /// @todo Query line height from the font.
-    dint const lineHeight = FR_CharHeight('Q') + 1;
+    const dint lineHeight = FR_CharHeight('Q') + 1;
 
     // Scroll offset is calculated using the timeout of the first visible message.
     dfloat scrollFactor;

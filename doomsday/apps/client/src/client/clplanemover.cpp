@@ -85,11 +85,11 @@ void ClPlaneMover::think()
     DE_ASSERT(_plane != 0);
 
     // The move is cancelled if the consolePlayer becomes obstructed.
-    bool const freeMove = ClPlayer_IsFreeToMove(consolePlayer);
+    const bool freeMove = ClPlayer_IsFreeToMove(consolePlayer);
 
     // How's the gap?
     bool remove = false;
-    coord_t const original = P_GetDoublep(_plane, DMU_HEIGHT);
+    const coord_t original = P_GetDoublep(_plane, DMU_HEIGHT);
     if (de::abs(_speed) > 0 && de::abs(_destination - original) > de::abs(_speed))
     {
         // Do the move.

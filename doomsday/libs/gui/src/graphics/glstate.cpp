@@ -341,7 +341,7 @@ DE_PIMPL(GLState)
 
         case internal::ColorMask:
         {
-            gfx::ColorMask const mask = self().colorMask();
+            const gfx::ColorMask mask = self().colorMask();
             glColorMask((mask & gfx::WriteRed) != 0,
                            (mask & gfx::WriteGreen) != 0,
                            (mask & gfx::WriteBlue) != 0,
@@ -405,7 +405,7 @@ DE_PIMPL(GLState)
                     origScr = Rectangleui::fromSize(self().target().size());
                 }
 
-                Rectangleui const scr = self().target().scaleToActiveRect(origScr);
+                const Rectangleui scr = self().target().scaleToActiveRect(origScr);
                 glScissor(scr.left(), self().target().size().y - scr.bottom(),
                                     scr.width(), scr.height());
             }
@@ -421,7 +421,7 @@ DE_PIMPL(GLState)
         case internal::ViewportWidth:
         case internal::ViewportHeight:
         {
-            Rectangleui const vp = self().target().scaleToActiveRect(self().viewport());
+            const Rectangleui vp = self().target().scaleToActiveRect(self().viewport());
             glViewport(vp.left(), self().target().size().y - vp.bottom(),
                                  vp.width(), vp.height());
             break;
@@ -643,7 +643,7 @@ GLState &GLState::setViewport(const Rectangleui &viewportRect)
 
 GLState &GLState::setNormalizedViewport(const Rectanglef &normViewportRect)
 {
-    GLFramebuffer::Size const size = target().size();
+    const GLFramebuffer::Size size = target().size();
     Rectangleui vp(Vec2ui(normViewportRect.left() * size.x,
                           normViewportRect.top() * size.y),
                    Vec2ui(std::ceil(normViewportRect.right() * size.x),
@@ -807,8 +807,8 @@ Rectangleui GLState::viewport() const
 
 Rectanglef GLState::normalizedViewport() const
 {
-    GLFramebuffer::Size const size = target().size();
-    Rectangleui const vp = viewport();
+    const GLFramebuffer::Size size = target().size();
+    const Rectangleui vp = viewport();
     return {float(vp.left())   / float(size.x),
             float(vp.top())    / float(size.y),
             float(vp.width())  / float(size.x),

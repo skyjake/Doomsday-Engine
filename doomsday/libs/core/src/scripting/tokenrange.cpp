@@ -23,7 +23,7 @@
 namespace de {
 
 /// This position is used for marking an undefined position in the range.
-static duint const UNDEFINED_POS = 0xffffffff;
+static const duint UNDEFINED_POS = 0xffffffff;
 
 TokenRange::TokenRange() : _tokens(nullptr), _start(0), _end(0)
 {}

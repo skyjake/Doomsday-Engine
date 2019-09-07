@@ -54,7 +54,7 @@ DE_PIMPL(Environment)
     {
         if (const auto *cam = AudioSystem::get().listener())
         {
-            Vec3f const pos = cam->cameraPosition();
+            const Vec3f pos = cam->cameraPosition();
             for (Sound *snd : sounds)
             {
                 if ((pos - snd->position()).length() > maxDist)

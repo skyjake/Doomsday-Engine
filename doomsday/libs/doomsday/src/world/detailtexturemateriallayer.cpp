@@ -75,7 +75,7 @@ void DetailTextureMaterialLayer::AnimationStage::resetToDefaults()
 DetailTextureMaterialLayer::AnimationStage *
 DetailTextureMaterialLayer::AnimationStage::fromDef(const ded_detail_stage_t &def)
 {
-    res::Uri const texture = findTextureForDetailStage(def);
+    const res::Uri texture = findTextureForDetailStage(def);
     return new AnimationStage(texture, def.tics, def.variance,
                               def.scale, def.strength, def.maxDistance);
 }

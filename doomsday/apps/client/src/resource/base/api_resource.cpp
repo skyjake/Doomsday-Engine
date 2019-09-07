@@ -154,11 +154,11 @@ DE_EXTERN_C void R_CreateColorPaletteTranslation(colorpaletteid_t paletteId,
         res::ColorPalette &palette = App_Resources().colorPalettes().colorPalette(paletteId);
 
         // Convert the mapping table.
-        int const colorCount  = palette.colorCount();
+        const int colorCount  = palette.colorCount();
         res::ColorPaletteTranslation mappings(colorCount);
         for(int i = 0; i < colorCount; ++i)
         {
-            int const palIdx = mappings_[i];
+            const int palIdx = mappings_[i];
             DE_ASSERT(palIdx >= 0 && palIdx < colorCount);
             mappings[i] = palIdx;
         }

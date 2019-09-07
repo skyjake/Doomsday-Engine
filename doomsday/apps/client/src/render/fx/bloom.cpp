@@ -108,7 +108,7 @@ DE_PIMPL(Bloom)
 
         // Determine the dimensions of the viewport and the target.
         //Rectanglef const rectf(0, 0, 1, 1); //= GLState::current().normalizedViewport();
-        Vec2ui const targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVec2ui();
+        const Vec2ui targetSize = colorTex->size(); // (rectf.size() * target.rectInUse().size()).toVec2ui();
 
         // Quarter resolution is used for better efficiency (without significant loss
         // of quality).
@@ -167,7 +167,7 @@ DE_PIMPL(Bloom)
 
         // Divert rendering to the work area (full or partial area used).
         //GLFramebuffer &target = GLState::current().target();
-        Vec2ui const workSize = workFB.size() * bloomSize;
+        const Vec2ui workSize = workFB.size() * bloomSize;
         GLState::push()
                 .setTarget(workFB)
                 .setViewport(Rectangleui::fromSize(workSize));

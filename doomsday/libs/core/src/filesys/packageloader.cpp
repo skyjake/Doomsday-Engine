@@ -198,9 +198,9 @@ DE_PIMPL(PackageLoader)
 
         if (mustMatchExactVersion)
         {
-            auto const idVer = Package::split(packageId);
+            const auto idVer = Package::split(packageId);
             found.remove_if([&idVer] (File *f) {
-                Version const pkgVer = f->objectNamespace().gets(VAR_PACKAGE_VERSION);
+                const Version pkgVer = f->objectNamespace().gets(VAR_PACKAGE_VERSION);
                 return (pkgVer != idVer.second); // Ignore other versions.
             });
             // Did we run out of candidates?
@@ -286,7 +286,7 @@ DE_PIMPL(PackageLoader)
         {
             if (shouldIgnoreFile(*indexedFile)) continue;
 
-            String const fileName = indexedFile->name();
+            const String fileName = indexedFile->name();
             if (fileName.fileNameExtension() == ".pack")
             {
                 try
@@ -379,7 +379,7 @@ DE_PIMPL(PackageLoader)
         {
             for (const auto *id : meta.geta("recommends").elements())
             {
-                String const pkgId = id->asText();
+                const String pkgId = id->asText();
                 if (isPackageSelected(pkgId, true))
                 {
                     callback(pkgId);
@@ -390,7 +390,7 @@ DE_PIMPL(PackageLoader)
         {
             for (const auto *id : meta.geta("extras").elements())
             {
-                String const pkgId = id->asText();
+                const String pkgId = id->asText();
                 if (isPackageSelected(pkgId, false))
                 {
                     callback(pkgId);
@@ -455,7 +455,7 @@ const Package &PackageLoader::load(const String &packageId)
 
     // Use the identifier computed from the file because @a packageId may
     // actually list multiple alternatives.
-    String const id = Package::identifierForFile(*packFile);
+    const String id = Package::identifierForFile(*packFile);
     d->load(id, *packFile);
 
     try
@@ -521,7 +521,7 @@ void PackageLoader::refresh()
 bool PackageLoader::isLoaded(const String &packageId) const
 {
     // Split ID, check version too if specified.
-    auto const id_ver = Package::split(packageId);
+    const auto id_ver = Package::split(packageId);
     auto found = d->loaded.find(id_ver.first);
     if (found == d->loaded.end())
     {

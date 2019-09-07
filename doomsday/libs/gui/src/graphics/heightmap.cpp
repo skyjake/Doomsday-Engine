@@ -20,7 +20,7 @@
 
 namespace de {
 
-static float const NORMAL_Z = .2f;
+static const float NORMAL_Z = .2f;
 
 DE_PIMPL_NOREF(HeightMap)
 {
@@ -37,8 +37,8 @@ DE_PIMPL_NOREF(HeightMap)
 
     Vec3f normalAtCoord(const Vec2i &pos) const
     {
-        int const w = heightImage.width();
-        int const h = heightImage.height();
+        const int w = heightImage.width();
+        const int h = heightImage.height();
 
         int x0 = max(pos.x - 1, 0);
         int y0 = max(pos.y - 1, 0);
@@ -81,8 +81,8 @@ Image HeightMap::makeNormalMap() const
 
     Image img(heightMap.size(), Image::RGBA_8888);
 
-    int const w = heightMap.width();
-    int const h = heightMap.height();
+    const int w = heightMap.width();
+    const int h = heightMap.height();
 
     for (int y = 0; y < h; y++)
     {
@@ -133,7 +133,7 @@ float HeightMap::heightAtPosition(const Vec2f &worldPos) const
 
 Vec3f HeightMap::normalAtPosition(const Vec2f &worldPos) const
 {
-    Vec2i const pos = d->pixelCoordf(worldPos).toVec2i();
+    const Vec2i pos = d->pixelCoordf(worldPos).toVec2i();
     return d->normalAtCoord(pos); // * Vec3f(1, 1, NORMAL_Z)).normalize();
 }
 

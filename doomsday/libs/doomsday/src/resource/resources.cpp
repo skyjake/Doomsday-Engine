@@ -335,12 +335,12 @@ String Resources::tryFindMusicFile(const Record &definition)
     }
 
     // Try the resource locator.
-    String const lumpName = music.gets("lumpName");
+    const String lumpName = music.gets("lumpName");
     if (!lumpName.isEmpty())
     {
         try
         {
-            String const foundPath = App_FileSystem().findPath(res::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
+            const String foundPath = App_FileSystem().findPath(res::Uri(lumpName, RC_MUSIC), RLF_DEFAULT,
                                                                App_ResourceClass(RC_MUSIC));
             return App_BasePath() / foundPath;  // Ensure the path is absolute.
         }
@@ -371,7 +371,7 @@ static dint printMapsIndex2(const Path &like, res::Uri::ComposeAsTextFlags compo
             .findAll(found, res::pathBeginsWithComparator, const_cast<Path *>(&like));
     if (found.isEmpty()) return 0;
 
-    //bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
+    //const bool printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known maps";
@@ -383,7 +383,7 @@ static dint printMapsIndex2(const Path &like, res::Uri::ComposeAsTextFlags compo
 
     // Print the result index.
     std::sort(found.begin(), found.end(), comparePathTreeNodePathsAscending<res::MapManifest>);
-//    dint const numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
+//    const dint numFoundDigits = de::max(3/*idx*/, M_NumDigits(found.count()));
     dint idx = 0;
     for (res::MapManifest *mapManifest : found)
     {
@@ -421,7 +421,7 @@ static int printMaterialIndex2(world::MaterialScheme *scheme, const Path &like,
     }
     if (found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
+    const bool printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known materials";
@@ -472,7 +472,7 @@ static int printTextureIndex2(res::TextureScheme *scheme, const Path &like,
     }
     if (found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
+    const bool printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known textures";
@@ -678,7 +678,7 @@ D_CMD(PrintTextureStats)
     {
         const res::TextureScheme::Index &index = s.second->index();
 
-        uint const count = index.count();
+        const uint count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
             << s.second->name() << count << (count == 1? "texture" : "textures");
         index.debugPrintHashDistribution();

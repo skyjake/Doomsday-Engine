@@ -314,7 +314,7 @@ ServerInfo ServerApp::currentServerInfo() // static
     if (world().hasMap())
     {
         auto &map = world().map();
-        String const mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
+        const String mapPath = (map.hasManifest() ? map.manifest().composeUri().path() : "(unknown map)");
         info.setMap(mapPath);
     }
 

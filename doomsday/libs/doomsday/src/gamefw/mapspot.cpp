@@ -37,7 +37,7 @@ static int const defaultInternalFlags[GFW_GAME_ID_COUNT] =
     0x0,    // GFW_STRIFE
 };
 
-static gfw_mapspot_flags_t const defaultMapSpotFlags =
+static const gfw_mapspot_flags_t defaultMapSpotFlags =
         GFW_MAPSPOT_SINGLE |
         GFW_MAPSPOT_COOP   |
         GFW_MAPSPOT_DM;

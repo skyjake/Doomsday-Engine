@@ -204,7 +204,7 @@ void GLDrawQueue::flush()
 #endif
         GLState::current().apply();
 
-        dsize const batchCount = d->batchIndex;
+        const dsize batchCount = d->batchIndex;
 
         /*qDebug() << "[GLDrawQueue] Flushing" << d->indices.size() << "elements"
                  << "consisting of" << batchCount << "batches";*/

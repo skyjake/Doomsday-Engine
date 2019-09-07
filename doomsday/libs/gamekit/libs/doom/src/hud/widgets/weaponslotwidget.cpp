@@ -123,10 +123,10 @@ void guidata_weaponslot_t::draw(const Vec2i &offset) const
 
     const Vec2i &element = elements[_slot - 1];
 
-    int const activeHud     = ST_ActiveHud(player());
-    int const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
-    float const textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
-    //float const iconOpacity = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
+    const int activeHud     = ST_ActiveHud(player());
+    const int yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
+    const float textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
+    //const float iconOpacity = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
 
     if(gfw_Rule(deathmatch)) return;
     if(ST_AutomapIsOpen(player()) && cfg.common.automapHudDisplay == 0) return;
@@ -170,7 +170,7 @@ void guidata_weaponslot_t::updateGeometry()
     if(P_MobjIsCamera(players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
     patchinfo_t info;
-    String const text = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.hudPatchReplaceMode), _patchId);
+    const String text = Hu_ChoosePatchReplacement(patchreplacemode_t(cfg.common.hudPatchReplaceMode), _patchId);
     if(text.isEmpty() && !R_GetPatchInfo(_patchId, &info)) return;
 
     if(!text.isEmpty())

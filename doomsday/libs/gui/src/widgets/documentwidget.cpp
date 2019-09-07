@@ -208,7 +208,7 @@ public Font::RichFormat::IStyle
             // Determine visible range of lines.
             const Font &font     = self().font();
             int contentHeight    = de::min(self().contentHeight(), self().rule().height().valuei());
-            int const extraLines = 1;
+            const int extraLines = 1;
             int numVisLines      = contentHeight / font.lineSpacing().valuei() + 2 * extraLines;
             int firstVisLine     = scrollY / font.lineSpacing().valuei() - extraLines + 1;
 
@@ -239,7 +239,7 @@ public Font::RichFormat::IStyle
     {
         updateGeometry();
 
-        Vec4f const color = Vec4f(1, 1, 1, self().visibleOpacity());
+        const Vec4f color = Vec4f(1, 1, 1, self().visibleOpacity());
 
         auto &painter = root().painter();
         if (bgVerts)
@@ -252,7 +252,7 @@ public Font::RichFormat::IStyle
             painter.setModelViewProjection(scrollMvpMatrix);
 
             // Update the scissor for the text.
-            auto const oldClip = painter.normalizedScissor();
+            const auto oldClip = painter.normalizedScissor();
             painter.setNormalizedScissor(oldClip & self().normalizedContentRect());
             painter.setColor(color);
             painter.drawTriangleStrip(textVerts);

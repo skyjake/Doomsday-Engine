@@ -249,7 +249,7 @@ DE_PIMPL(GuiWidget)
     {
         if (blur)
         {
-            auto const now = Time::currentHighPerformanceTime();
+            const auto now = Time::currentHighPerformanceTime();
             if (blur->updatedAt == now)
             {
                 return;
@@ -264,7 +264,7 @@ DE_PIMPL(GuiWidget)
         // Make sure blurring is initialized.
         initBlur();
 
-        auto const oldClip = painter.normalizedScissor();
+        const auto oldClip = painter.normalizedScissor();
 
         DE_ASSERT(blur->fb[0]->isReady());
 
@@ -342,7 +342,7 @@ DE_PIMPL(GuiWidget)
 
     void updateOpacityForDisabledWidgets()
     {
-        float const opac = (self().isDisabled()? .3f : 1.f);
+        const float opac = (self().isDisabled()? .3f : 1.f);
         if (!fequal(opacityWhenDisabled.target(), opac))
         {
             opacityWhenDisabled.setValue(opac, 0.3);
@@ -390,7 +390,7 @@ DE_PIMPL(GuiWidget)
     GuiWidget *findNextWidgetToFocus(WalkDirection dir)
     {
         PopupWidget *parentPopup = self().findParentPopup();
-        Rectanglei const viewRect = self().root().viewRule().recti();
+        const Rectanglei viewRect = self().root().viewRule().recti();
         bool escaped = false;
         auto *widget = self().walkInOrder(dir, [&viewRect, parentPopup, &escaped] (Widget &widget)
         {
@@ -425,10 +425,10 @@ DE_PIMPL(GuiWidget)
             return -1;
         }
 
-        Rectanglef const viewRect  = self().root().viewRule().rect();
-        Rectanglef const selfRect  = self().hitRule().rect();
-        Rectanglef const otherRect = widget.hitRule().rect();
-        Vec2f const otherMiddle =
+        const Rectanglef viewRect  = self().root().viewRule().rect();
+        const Rectanglef selfRect  = self().hitRule().rect();
+        const Rectanglef otherRect = widget.hitRule().rect();
+        const Vec2f otherMiddle =
                 (dir == ui::Up?   otherRect.midBottom() :
                  dir == ui::Down? otherRect.midTop()    :
                  dir == ui::Left? otherRect.midRight()  :
@@ -440,7 +440,7 @@ DE_PIMPL(GuiWidget)
             return -1;
         }
 
-        bool const axisOverlap =
+        const bool axisOverlap =
                 (isHorizontal(dir) && !selfRect.vertical()  .intersection(otherRect.vertical())  .isEmpty()) ||
                 (isVertical(dir)   && !selfRect.horizontal().intersection(otherRect.horizontal()).isEmpty());
 
@@ -473,12 +473,12 @@ DE_PIMPL(GuiWidget)
             }
         }
 
-        Vec2f const middle    = (dir == ui::Up?   selfRect.midTop()    :
+        const Vec2f middle    = (dir == ui::Up?   selfRect.midTop()    :
                                     dir == ui::Down? selfRect.midBottom() :
                                     dir == ui::Left? selfRect.midLeft()   :
                                                      selfRect.midRight() );
-        Vec2f const delta     = otherMiddle - middle;
-        Vec2f const dirVector = directionVector(dir);
+        const Vec2f delta     = otherMiddle - middle;
+        const Vec2f dirVector = directionVector(dir);
         float dotProd = float(delta.normalize().dot(dirVector));
         if (dotProd <= 0)
         {
@@ -675,7 +675,7 @@ RuleRectangle &GuiWidget::rule()
 
 Rectanglei GuiWidget::contentRect() const
 {
-    Vec4i const pad = margins().toVector();
+    const Vec4i pad = margins().toVector();
     return rule().recti().adjusted(pad.xy(), -pad.zw());
 }
 
@@ -702,8 +702,8 @@ const ui::Margins &GuiWidget::margins() const
 Rectanglef GuiWidget::normalizedRect(const de::Rectanglei &rect,
                                      const de::Rectanglei &containerRect) // static
 {
-    Rectanglef const rectf = rect.moved(-containerRect.topLeft);
-    Vec2f const contSize = containerRect.size();
+    const Rectanglef rectf = rect.moved(-containerRect.topLeft);
+    const Vec2f contSize = containerRect.size();
     return Rectanglef(Vec2f(rectf.left()   / contSize.x,
                                rectf.top()    / contSize.y),
                       Vec2f(rectf.right()  / contSize.x,
@@ -734,7 +734,7 @@ Rectanglef GuiWidget::normalizedRect(const Rectanglei &viewSpaceRect) const
 
 Rectanglef GuiWidget::normalizedContentRect() const
 {
-    Rectanglef const rect = rule().rect().adjusted( Vec2f(margins().left().value(),
+    const Rectanglef rect = rule().rect().adjusted( Vec2f(margins().left().value(),
                                                              margins().top().value()),
                                                    -Vec2f(margins().right().value(),
                                                              margins().bottom().value()));
@@ -924,7 +924,7 @@ void GuiWidget::update()
         applyFlagOperation(d->flags, Impl::StyleChanged, false);
         updateStyle();
     }
-    auto const familyAttribs = familyAttributes();
+    const auto familyAttribs = familyAttributes();
     if ( familyAttribs.testFlag(AutomaticOpacity) ||
         !familyAttribs.testFlag(ManualOpacity))
     {
@@ -939,7 +939,7 @@ void GuiWidget::draw()
     {
 #ifdef DE_DEBUG
         // Detect mistakes in GLState stack usage.
-        dsize const depthBeforeDrawingWidget = GLState::stackDepth();
+        const dsize depthBeforeDrawingWidget = GLState::stackDepth();
 #endif
         if (!d->attribs.testFlag(DontDrawContent))
         {
@@ -948,7 +948,7 @@ void GuiWidget::draw()
             auto &painter = root().painter();
             painter.setSaturation(d->saturation);
 
-            Rectanglef const oldClip = painter.normalizedScissor();
+            const Rectanglef oldClip = painter.normalizedScissor();
             if (isClipped())
             {
                 painter.setNormalizedScissor(oldClip & normalizedRect());
@@ -1058,7 +1058,7 @@ bool GuiWidget::hitTest(const Event &event) const
 
 const GuiWidget *GuiWidget::treeHitTest(const Vec2i &pos) const
 {
-    Children const childs = childWidgets();
+    const Children childs = childWidgets();
     for (int i = childs.sizei() - 1; i >= 0; --i)
     {
         // Check children first.
@@ -1139,7 +1139,7 @@ void GuiWidget::drawBlurredRect(const Rectanglei &rect, const Vec4f &color, floa
 
     root().painter().flush();
 
-    Vec2ui const viewSize = root().viewSize();
+    const Vec2ui viewSize = root().viewSize();
 
     blur->uTex = blur->fb[1]->colorTexture();
     blur->uColor = Vec4f((1 - color.w) + color.x * color.w,
@@ -1208,14 +1208,14 @@ PopupWidget *GuiWidget::findParentPopup() const
 void GuiWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     auto &rootWgt = root();
-    float const thick = d->pointsToPixels(d->background.thickness);
+    const float thick = d->pointsToPixels(d->background.thickness);
 
     // Is there a solid fill?
     if (d->background.solidFill.w > 0)
     {
         if (d->background.type == Background::GradientFrameWithRoundedFill)
         {
-            Rectanglei const recti = rule().recti().shrunk(d->pointsToPixels(2));
+            const Rectanglei recti = rule().recti().shrunk(d->pointsToPixels(2));
             verts.makeQuad(recti.shrunk(thick), d->background.solidFill,
                            rootWgt.atlas().imageRectf(rootWgt.solidRoundCorners()).middle());
             verts.makeFlexibleFrame(recti, thick, d->background.solidFill,

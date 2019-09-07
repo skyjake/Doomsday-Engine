@@ -174,8 +174,8 @@ static void cornerNormalPoint(const Vec2d &lineADirection, ddouble dist1,
  */
 static ddouble shadowEdgeWidth(const Vec2d &edge)
 {
-    ddouble const normalWidth = 20; //16;
-    ddouble const maxWidth    = 60;
+    const ddouble normalWidth = 20; //16;
+    const ddouble maxWidth    = 60;
 
     // A long edge?
     ddouble length = edge.length();
@@ -200,8 +200,8 @@ void Vertex::updateShadowOffsets()
         const Line &lineB = own->line();
         const Line &lineA = own->next()->line();
 
-        Vec2d const rightDir = (&lineB.from() == this?  lineB.direction() : -lineB.direction());
-        Vec2d const leftDir  = (&lineA.from() == this? -lineA.direction() :  lineA.direction()) * -1;  // Always flipped.
+        const Vec2d rightDir = (&lineB.from() == this?  lineB.direction() : -lineB.direction());
+        const Vec2d leftDir  = (&lineA.from() == this? -lineA.direction() :  lineA.direction()) * -1;  // Always flipped.
 
         cornerNormalPoint(leftDir,  shadowEdgeWidth(leftDir),
                           rightDir, shadowEdgeWidth(rightDir),

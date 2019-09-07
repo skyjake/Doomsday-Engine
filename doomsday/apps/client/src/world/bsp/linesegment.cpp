@@ -280,7 +280,7 @@ void LineSegment::Side::distance(const LineSegment::Side &other, coord_t *fromDi
 
 LineRelationship lineRelationship(coord_t fromDist, coord_t toDist)
 {
-    static coord_t const distEpsilon = LINESEGMENT_INCIDENT_DISTANCE_EPSILON;
+    static const coord_t distEpsilon = LINESEGMENT_INCIDENT_DISTANCE_EPSILON;
 
     // Collinear with "this" line?
     if(de::abs(fromDist) <= distEpsilon && de::abs(toDist) <= distEpsilon)

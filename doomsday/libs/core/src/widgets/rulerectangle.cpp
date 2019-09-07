@@ -399,7 +399,7 @@ Vec2ui RuleRectangle::sizeui() const
 
 Rectanglei RuleRectangle::recti() const
 {
-    Rectanglef const r = rect();
+    const Rectanglef r = rect();
     return Rectanglei(Vec2i(de::floor(r.topLeft.x),     de::floor(r.topLeft.y)),
                       Vec2i(de::floor(r.bottomRight.x), de::floor(r.bottomRight.y)));
 }

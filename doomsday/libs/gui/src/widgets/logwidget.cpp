@@ -108,7 +108,7 @@ DE_GUI_PIMPL(LogWidget)
          */
         int update()
         {
-            int const old = _height;
+            const int old = _height;
             if (drawable.update())
             {
                 _height = drawable.wraps().height() * drawable.font().lineSpacing().valuei();
@@ -166,8 +166,8 @@ DE_GUI_PIMPL(LogWidget)
             }
 
             // Determine which lines might be visible.
-            int const lineSpacing = drawable.font().lineSpacing().value();
-            int const yTop = yBottom - _height;
+            const int lineSpacing = drawable.font().lineSpacing().value();
+            const int yTop = yBottom - _height;
             Rangei range;
 
             if (yBottom < visiblePixels.start || yTop > visiblePixels.end)
@@ -291,7 +291,7 @@ DE_GUI_PIMPL(LogWidget)
             while (_width > 0 && _next >= 0 && _next < entryCount())
             {
                 const LogEntry &ent = entry(_next);
-                String const styled = d->formatter->logEntryToTextLines(ent).at(0);
+                const String styled = d->formatter->logEntryToTextLines(ent).at(0);
 
                 CacheEntry *cached = new CacheEntry(*d->font, *d, *d->entryAtlas);
                 cached->setupWrap(styled, _width);
@@ -626,7 +626,7 @@ DE_GUI_PIMPL(LogWidget)
 
     Rangei extendPixelRangeWithPadding(const Rangei &range)
     {
-        int const padding = range.size() / 2;
+        const int padding = range.size() / 2;
         return Rangei(range.start - padding, range.end + padding);
     }
 
@@ -634,7 +634,7 @@ DE_GUI_PIMPL(LogWidget)
     {
         bool needHeightNotify = false; // if changed as entries are updated
         int heightDelta = 0;
-        Vec2i const contentSize = self().viewportSize();
+        const Vec2i contentSize = self().viewportSize();
 
         // If the width of the widget changes, text needs to be reflowed with the
         // new width.

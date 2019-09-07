@@ -362,7 +362,7 @@ bool TextDrawable::update()
 
     // Check for a completed background task.
     bool swapped = d->swap();
-    bool const wasNotReady = !isReady();
+    const bool wasNotReady = !isReady();
     return GLTextComposer::update() || swapped || (isReady() && wasNotReady);
 }
 

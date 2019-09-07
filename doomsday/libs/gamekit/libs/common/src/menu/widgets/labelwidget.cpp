@@ -60,11 +60,11 @@ void LabelWidget::draw() const
 //    // Flash if focused.
 //    if(isFocused() && cfg.common.menuTextFlashSpeed > 0)
 //    {
-//        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
+//        const float speed = cfg.common.menuTextFlashSpeed / 2.f;
 //        t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
 //    }
 
-//    Vector4f const color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
+//    const Vector4f color = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
 
     const Vec4f color = selectionFlashColor(textColor);
 

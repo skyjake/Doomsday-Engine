@@ -127,7 +127,7 @@ void PlayerWeaponAnimator::setupVisPSprite(vispsprite_t &spr) const
     /* yaw: */   bob[0] * weaponOffsetScale,
     /* pitch: */ (32 - bob[1]) * weaponOffsetScale * weaponOffsetScaleY / 1000.0f);
 
-    TimeSpan const span = 1.0 / Timer_TicksPerSecond();
+    const TimeSpan span = 1.0 / Timer_TicksPerSecond();
     d->angleOffset.setValueIfDifferentTarget(angles, span);
 
     spr.data.model2.yawAngleOffset   = d->angleOffset.x;

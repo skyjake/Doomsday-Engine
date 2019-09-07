@@ -40,7 +40,7 @@ DE_PIMPL(ColorEditWidget)
 
     bool setRed(float red, int flags)
     {
-        float const oldRed = color.x;
+        const float oldRed = color.x;
 
         color.x = red;
         if(color.x != oldRed)
@@ -56,7 +56,7 @@ DE_PIMPL(ColorEditWidget)
 
     bool setGreen(float green, int flags)
     {
-        float const oldGreen = color.y;
+        const float oldGreen = color.y;
 
         color.y = green;
         if(color.y != oldGreen)
@@ -72,7 +72,7 @@ DE_PIMPL(ColorEditWidget)
 
     bool setBlue(float blue, int flags)
     {
-        float const oldBlue = color.z;
+        const float oldBlue = color.z;
 
         color.z = blue;
         if(color.z != oldBlue)
@@ -90,7 +90,7 @@ DE_PIMPL(ColorEditWidget)
     {
         if(rgbaMode)
         {
-            float const oldAlpha = color.w;
+            const float oldAlpha = color.w;
             color.w = alpha;
             if(color.w != oldAlpha)
             {
@@ -123,7 +123,7 @@ ColorEditWidget::~ColorEditWidget()
 void ColorEditWidget::draw() const
 {
     patchinfo_t t, b, l, r, tl, tr, br, bl;
-    int const up = 1;
+    const int up = 1;
 
     R_GetPatchInfo(borderPatches[0], &t);
     R_GetPatchInfo(borderPatches[2], &b);
@@ -347,7 +347,7 @@ bool ColorEditWidget::rgbaMode() const
 ColorEditWidget &ColorEditWidget::setColor(const Vec4f &newColor, int flags)
 {
     int setComps = 0;
-    int const setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
+    const int setCompFlags = (flags | MNCOLORBOX_SCF_NO_ACTION);
 
     if(d->setRed  (newColor.x, setCompFlags)) setComps |= 0x1;
     if(d->setGreen(newColor.y, setCompFlags)) setComps |= 0x2;

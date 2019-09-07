@@ -203,7 +203,7 @@ Writer &Writer::operator << (const Block &block)
 
 Writer &Writer::writeText(const String &text)
 {
-    Block const utf8 = text.toUtf8();
+    const Block utf8 = text.toUtf8();
     d->write(utf8.cdata(), utf8.size());
     return *this;
 }
@@ -295,8 +295,8 @@ Writer &Writer::endIndeterminateSpan()
     {
         throw SeekError("Writer::endIndeterminateSpan", "Not possible in a stream");
     }
-    auto const oldOffset = d->offset;
-    duint32 const delta = duint32(d->offset - d->markOffset) - 4;
+    const auto oldOffset = d->offset;
+    const duint32 delta = duint32(d->offset - d->markOffset) - 4;
     rewind();
     *this << delta;
     setOffset(oldOffset);

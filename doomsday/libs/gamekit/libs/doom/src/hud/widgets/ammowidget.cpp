@@ -71,17 +71,17 @@ void guidata_ammo_t::draw(const Vec2i &offset) const
         { 288, 5 + 6 * 0 }, { 288, 5 + 6 * 1 }, { 288, 5 + 6 * 3 }, { 288, 5 + 6 * 2 },
     };
 
-    dint const activeHud     = ST_ActiveHud(player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
-    dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
+    const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
     if(_value == 1994) return;
 
-    Vec2i const pos     = origin + offsets[dint( _ammotype )];
-    auto const valueAsText = String::asText(_value);
+    const Vec2i pos     = origin + offsets[dint( _ammotype )];
+    const auto valueAsText = String::asText(_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();

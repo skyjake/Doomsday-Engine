@@ -114,7 +114,7 @@ void Painter::setNormalizedScissor(const Rectanglef &normScissorRect)
     DE_ASSERT(d->normScissorRect.top()    >= 0);
     DE_ASSERT(d->normScissorRect.bottom() <= 1);
 
-    Rectangleui const vp = GLState::current().viewport();
+    const Rectangleui vp = GLState::current().viewport();
 
     Rectangleui scis = Rectangleui(Vec2ui(d->normScissorRect.left() * vp.width(),
                                           d->normScissorRect.top()  * vp.height()),

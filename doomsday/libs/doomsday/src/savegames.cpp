@@ -106,7 +106,7 @@ DE_PIMPL(SaveGames)
             if (DoomsdayApp::games().contains(gameId))
             {
                 // Ensure the output folder exists if it doesn't already.
-                String const outputPath = String("/home/savegames") / gameId;
+                const String outputPath = String("/home/savegames") / gameId;
                 FileSystem::get().makeFolder(outputPath);
 
                 Str_Set(Str_InitStd(&parm.sourcePath),     sourcePath);
@@ -161,7 +161,7 @@ DE_PIMPL(SaveGames)
     void locateLegacySavegames(const String &gameId)
     {
         LOG_AS("SaveGames");
-        String const legacySavePath = String("/sys/legacysavegames") / gameId;
+        const String legacySavePath = String("/sys/legacysavegames") / gameId;
         if (Folder *oldSaveFolder = FileSystem::tryLocate<Folder>(legacySavePath))
         {
             // Add any new legacy savegames which may have appeared in this folder.
@@ -173,7 +173,7 @@ DE_PIMPL(SaveGames)
             {
                 // Make and setup a feed for the /sys/legacysavegames/<gameId> subfolder if the game
                 // might have legacy savegames we may need to convert later.
-                NativePath const oldSavePath = DoomsdayApp::games()[gameId].legacySavegamePath();
+                const NativePath oldSavePath = DoomsdayApp::games()[gameId].legacySavegamePath();
                 if (oldSavePath.exists() && oldSavePath.isReadable())
                 {
                     FileSystem::get().makeFolderWithFeed(legacySavePath,

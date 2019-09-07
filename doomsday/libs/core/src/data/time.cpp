@@ -656,8 +656,8 @@ Date Time::asDate() const
 }
 
 // Flags for serialization.
-static duint8 const HAS_DATETIME  = 0x01;
-static duint8 const HAS_HIGH_PERF = 0x02;
+static const duint8 HAS_DATETIME  = 0x01;
+static const duint8 HAS_HIGH_PERF = 0x02;
 
 void Time::operator>>(Writer &to) const
 {

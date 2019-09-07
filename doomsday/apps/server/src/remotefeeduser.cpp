@@ -121,7 +121,7 @@ DE_PIMPL(RemoteFeedUser)
 
                 response.reset(new RemoteFeedFileContentsPacket);
 
-                dsize const blockSize = 128 * 1024;
+                const dsize blockSize = 128 * 1024;
                 auto &xfer = transfers.value.front();
 
                 response->setId(xfer.queryId);

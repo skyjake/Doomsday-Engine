@@ -66,7 +66,7 @@ void guidata_bluemanaicon_t::tick(timespan_t /*elapsed*/)
 void BlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, const Point2Raw *offset)
 {
     DE_ASSERT(icon);
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(icon->_iconIdx < 0) return;
 
@@ -96,9 +96,9 @@ void SBarBlueManaIconWidget_Draw(guidata_bluemanaicon_t *icon, const Point2Raw *
     DE_ASSERT(icon);
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    dint const activeHud     = ST_ActiveHud(icon->player());
-    dfloat const yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(icon->player()));
-    dfloat const iconOpacity = (activeHud  == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(icon->player());
+    const dfloat yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(icon->player()));
+    const dfloat iconOpacity = (activeHud  == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(icon->_iconIdx < 0) return;
 

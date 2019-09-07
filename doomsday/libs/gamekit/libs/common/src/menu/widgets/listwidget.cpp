@@ -122,7 +122,7 @@ void ListWidget::updateGeometry()
 
 void ListWidget::draw() const
 {
-    bool const flashSelection = (isActive() && selectionIsVisible());
+    const bool flashSelection = (isActive() && selectionIsVisible());
     const Vec4f &textColor = mnRendState->textColors[color()];
     float t = flashSelection? 1 : 0;
 
@@ -130,7 +130,7 @@ void ListWidget::draw() const
 
     if (flashSelection) /* && cfg.common.menuTextFlashSpeed > 0)
     {
-        float const speed = cfg.common.menuTextFlashSpeed / 2.f;
+        const float speed = cfg.common.menuTextFlashSpeed / 2.f;
         t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
     }*/
     {
@@ -138,8 +138,8 @@ void ListWidget::draw() const
     }
 
 
-//    Vector4f const flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
-    Vec4f const dimColor = Vec4f(Vec3f(textColor) * MNDATA_LIST_NONSELECTION_LIGHT, textColor.w);
+//    const Vector4f flashColor = de::lerp(textColor, Vector4f(Vector3f(cfg.common.menuTextFlashColor), textColor.w), t);
+    const Vec4f dimColor = Vec4f(Vec3f(textColor) * MNDATA_LIST_NONSELECTION_LIGHT, textColor.w);
 
     if(d->first < d->items.count() && d->numvis > 0)
     {

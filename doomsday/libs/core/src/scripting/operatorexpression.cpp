@@ -331,8 +331,8 @@ Value *OperatorExpression::evaluate(Evaluator &evaluator) const
 }
 
 // Flags for serialization:
-static duint8 const HAS_LEFT_OPERAND = 0x80;
-static duint8 const OPERATOR_MASK    = 0x7f;
+static const duint8 HAS_LEFT_OPERAND = 0x80;
+static const duint8 OPERATOR_MASK    = 0x7f;
 
 void OperatorExpression::operator >> (Writer &to) const
 {

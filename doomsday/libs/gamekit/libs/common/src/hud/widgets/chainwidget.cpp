@@ -73,7 +73,7 @@ void guidata_chain_t::tick(timespan_t /*elapsed*/)
     if(Pause_IsPaused() || !DD_IsSharpTick()) return;
 
     const player_t *plr  = &::players[player()];
-    dint const curHealth = de::max(plr->plr->mo->health, 0);
+    const dint curHealth = de::max(plr->plr->mo->health, 0);
 
     // Health marker chain animates up to the actual health value.
     dint delta = 0;
@@ -132,9 +132,9 @@ void guidata_chain_t::draw(const Vec2i &offset) const
         /*Green*/ 220, /*Yellow*/ 144, /*Red*/ 150, /*Blue*/ 197
     };
 
-    dint const activeHud     = ST_ActiveHud(player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
@@ -151,9 +151,9 @@ void guidata_chain_t::draw(const Vec2i &offset) const
     patchinfo_t pGemInfo;
     if(!R_GetPatchInfo(::pGem[teamColor], &pGemInfo)) return;
 
-    dint const chainY      = -9 + _wiggle;
-    dfloat const healthPos = de::clamp(0.f, _healthMarker / 100.f, 1.f);
-    dfloat const gemglow   = healthPos;
+    const dint chainY      = -9 + _wiggle;
+    const dfloat healthPos = de::clamp(0.f, _healthMarker / 100.f, 1.f);
+    const dfloat gemglow   = healthPos;
 
     // Draw the chain.
     dint x = ORIGINX + 21;
@@ -171,7 +171,7 @@ void guidata_chain_t::draw(const Vec2i &offset) const
     DGL_SetPatch(pChain, DGL_REPEAT, DGL_CLAMP);
     DGL_Color4f(1, 1, 1, iconOpacity);
 
-    dfloat const gemXOffset = (w - pGemInfo.geometry.size.width) * healthPos;
+    const dfloat gemXOffset = (w - pGemInfo.geometry.size.width) * healthPos;
     if(gemXOffset > 0)
     {
         // Left chain section.
@@ -246,15 +246,15 @@ void guidata_chain_t::draw(const Vec2i &offset) const
        /*Jade*/ 215, /*White*/  32, /*Hazel*/  106, /*Purple*/ 234
    };
 
-   dint const activeHud     = ST_ActiveHud(player());
-   dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
-   dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+   const dint activeHud     = ST_ActiveHud(player());
+   const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
+   const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
    if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
    if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
    // Original player class (i.e. not pig).
-   dint const plrClass = ::cfg.playerClass[player()];
+   const dint plrClass = ::cfg.playerClass[player()];
 
    patchinfo_t pChainInfo;
    if(!R_GetPatchInfo(::pChain[plrClass], &pChainInfo)) return;
@@ -270,8 +270,8 @@ void guidata_chain_t::draw(const Vec2i &offset) const
    patchinfo_t pGemInfo;
    if(!R_GetPatchInfo(::pGem[plrClass][teamColor], &pGemInfo)) return;
 
-   dfloat const healthPos = de::clamp(0.f, _healthMarker / 100.f, 100.f);
-   dfloat const gemglow   = healthPos;
+   const dfloat healthPos = de::clamp(0.f, _healthMarker / 100.f, 100.f);
+   const dfloat gemglow   = healthPos;
 
    // Draw the chain.
    dint x = ORIGINX + 43;
@@ -289,7 +289,7 @@ void guidata_chain_t::draw(const Vec2i &offset) const
    DGL_SetPatch(pChainInfo.id, DGL_CLAMP_TO_EDGE, DGL_CLAMP_TO_EDGE);
    DGL_Color4f(1, 1, 1, iconOpacity);
 
-   dfloat const gemXOffset = 7 + de::roundf((w - 14) * healthPos) - pGemInfo.geometry.size.width/2;
+   const dfloat gemXOffset = 7 + de::roundf((w - 14) * healthPos) - pGemInfo.geometry.size.width/2;
    if(gemXOffset > 0)
    {
        // Left chain section.

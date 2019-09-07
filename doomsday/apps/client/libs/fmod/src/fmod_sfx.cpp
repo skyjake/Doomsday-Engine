@@ -649,12 +649,12 @@ static void updateListenerEnvironmentSettings(float *reverb)
         return;
     }
 
-    static FMOD_REVERB_PROPERTIES const presetPlain       = FMOD_PRESET_PLAIN;
-    static FMOD_REVERB_PROPERTIES const presetConcertHall = FMOD_PRESET_CONCERTHALL;
-    static FMOD_REVERB_PROPERTIES const presetAuditorium  = FMOD_PRESET_AUDITORIUM;
-    static FMOD_REVERB_PROPERTIES const presetCave        = FMOD_PRESET_CAVE;
-    static FMOD_REVERB_PROPERTIES const presetGeneric     = FMOD_PRESET_GENERIC;
-    static FMOD_REVERB_PROPERTIES const presetRoom        = FMOD_PRESET_ROOM;
+    static const FMOD_REVERB_PROPERTIES presetPlain       = FMOD_PRESET_PLAIN;
+    static const FMOD_REVERB_PROPERTIES presetConcertHall = FMOD_PRESET_CONCERTHALL;
+    static const FMOD_REVERB_PROPERTIES presetAuditorium  = FMOD_PRESET_AUDITORIUM;
+    static const FMOD_REVERB_PROPERTIES presetCave        = FMOD_PRESET_CAVE;
+    static const FMOD_REVERB_PROPERTIES presetGeneric     = FMOD_PRESET_GENERIC;
+    static const FMOD_REVERB_PROPERTIES presetRoom        = FMOD_PRESET_ROOM;
 
     float space = reverb[SFXLP_REVERB_SPACE];
     if (reverb[SFXLP_REVERB_DECAY] > .5)
@@ -685,14 +685,14 @@ static void updateListenerEnvironmentSettings(float *reverb)
     //setEAXdw(DSPROPERTY_EAXLISTENER_ROOM, volLinearToLog(rev[SFXLP_REVERB_VOLUME]));
 
     // Reverb decay.
-    float const decayFactor = 1.f + (reverb[SFXLP_REVERB_DECAY] - .5f) * 1.5f;
+    const float decayFactor = 1.f + (reverb[SFXLP_REVERB_DECAY] - .5f) * 1.5f;
     props.DecayTime = std::min(std::max(100.f, props.DecayTime * decayFactor), 20000.f);
     //mulEAXf(DSPROPERTY_EAXLISTENER_DECAYTIME, val, EAXLISTENER_MINDECAYTIME, EAXLISTENER_MAXDECAYTIME);
 
     // Damping.
     //props.HighCut = de::Rangef(20, 20000).clamp(20000 * std::pow(1.f - reverb[SFXLP_REVERB_DAMPING], 2.f));
     props.HighCut = de::Rangef(20, 20000).clamp(props.HighCut * std::pow(1.f - reverb[SFXLP_REVERB_DAMPING], 2.f));
-    //float const damping = std::max(.1f, 1.1f * (1.2f - reverb[SFXLP_REVERB_DAMPING]));
+    //const float damping = std::max(.1f, 1.1f * (1.2f - reverb[SFXLP_REVERB_DAMPING]));
     //props.RoomHF = linearToLog(std::pow(10.f, props.RoomHF / 2000.f) * damping);
     //mulEAXdw(DSPROPERTY_EAXLISTENER_ROOMHF, val);
 

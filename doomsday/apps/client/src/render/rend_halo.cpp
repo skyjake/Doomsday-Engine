@@ -149,27 +149,27 @@ bool H_RenderHalo(const Vec3d &origin, float size, DGLuint tex,
 
     // viewSideVec is to the left.
     const viewdata_t *viewData = &viewPlayer->viewport();
-    Vec3f const leftOff  = viewData->upVec + viewData->sideVec;
-    Vec3f const rightOff = viewData->upVec - viewData->sideVec;
+    const Vec3f leftOff  = viewData->upVec + viewData->sideVec;
+    const Vec3f rightOff = viewData->upVec - viewData->sideVec;
 
     // Calculate the center of the flare.
     // Apply the flare's X offset. (Positive is to the right.)
-    Vec3f const center = Vec3f(origin.x, origin.z, origin.y)
+    const Vec3f center = Vec3f(origin.x, origin.z, origin.y)
                           - viewData->sideVec * viewXOffset;
 
     // Calculate the mirrored position.
     // Project viewtocenter vector onto viewSideVec.
-    Vec3f const viewToCenter = center - Rend_EyeOrigin();
+    const Vec3f viewToCenter = center - Rend_EyeOrigin();
 
     // Calculate the 'mirror' vector.
-    float const scale = viewToCenter.dot(viewData->frontVec)
+    const float scale = viewToCenter.dot(viewData->frontVec)
                         / viewData->frontVec.dot(viewData->frontVec);
-    Vec3f const mirror =
+    const Vec3f mirror =
         (viewData->frontVec * scale - viewToCenter) * 2;
 
     // Calculate dimming factors.
-    float const fadeFactor    = fadeFactorAt(distanceToViewer);
-    float const secFadeFactor = viewToCenter.normalize().dot(viewData->frontVec);
+    const float fadeFactor    = fadeFactorAt(distanceToViewer);
+    const float secFadeFactor = viewToCenter.normalize().dot(viewData->frontVec);
 
     // Calculate texture turn angle.
     float turnAngle = 0;
@@ -195,10 +195,10 @@ bool H_RenderHalo(const Vec3d &origin, float size, DGLuint tex,
     }
 
     // The overall brightness of the flare (average color).
-    float const luminosity = (color.x + color.y + color.z) / 3;
+    const float luminosity = (color.x + color.y + color.z) / 3;
 
     // Small flares have stronger dimming.
-    float const distanceDim = distanceDimFactorAt(distanceToViewer, size);
+    const float distanceDim = distanceDimFactorAt(distanceToViewer, size);
 
     // Setup GL state.
     if(doPrimary)
@@ -219,7 +219,7 @@ bool H_RenderHalo(const Vec3d &origin, float size, DGLuint tex,
     flare_t *fl = flares;
     for(int i = 0; i < haloMode && i < NUM_FLARES; ++i, fl++)
     {
-        bool const secondary = i != 0;
+        const bool secondary = i != 0;
 
         if(doPrimary && secondary)
             break;
@@ -318,8 +318,8 @@ bool H_RenderHalo(const Vec3d &origin, float size, DGLuint tex,
         GL_BindTextureUnmanaged(renderTextures? tex : 0, gfx::ClampToEdge, gfx::ClampToEdge);
         DGL_Enable(DGL_TEXTURE_2D);
 
-        float const radX = radius * fl->size;
-        float const radY = radX / 1.2f; // Aspect correction.
+        const float radX = radius * fl->size;
+        const float radY = radX / 1.2f; // Aspect correction.
 
         DGL_Color4f(color.x, color.y, color.z, alpha);
         DGL_Begin(DGL_QUADS);

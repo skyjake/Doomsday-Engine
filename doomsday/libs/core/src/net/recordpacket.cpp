@@ -25,7 +25,7 @@
 
 namespace de {
 
-static Packet::Type const RECORD_PACKET_TYPE = Packet::typeFromString("RECO");
+static const Packet::Type RECORD_PACKET_TYPE = Packet::typeFromString("RECO");
 
 RecordPacket::RecordPacket(const String &name, Id i)
     : IdentifiedPacket(RECORD_PACKET_TYPE, i), _name(name), _record(0)

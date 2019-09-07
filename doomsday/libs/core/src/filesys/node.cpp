@@ -102,7 +102,7 @@ const Node *Node::tryFollowPath(const PathRef &path) const
         return tryGetChild(component);
     }
 
-    PathRef const remainder = path.subPath(Rangei(1, path.segmentCount()));
+    const PathRef remainder = path.subPath(Rangei(1, path.segmentCount()));
 
     // Check for some special cases.
     if (component == DOT_SINGLE)

@@ -120,7 +120,7 @@ DE_PIMPL(FilteredData)
      */
     void remap()
     {
-        PosMapping const oldMapping = reverseMapping;
+        const PosMapping oldMapping = reverseMapping;
         applyFilter([&oldMapping] (const Item &item)
         {
             // All items already mapped will be included in the filtered items.
@@ -159,7 +159,7 @@ void FilteredData::setFilter(std::function<bool (const Item &item)> isItemAccept
 
 void FilteredData::refilter()
 {
-    auto const oldMapping = d->reverseMapping;
+    const auto oldMapping = d->reverseMapping;
 
     d->applyFilter(d->isItemAccepted);
 

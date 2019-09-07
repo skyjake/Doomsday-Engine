@@ -73,7 +73,7 @@ static Value *Function_App_Locate(Context &, const Function::ArgumentValues &arg
 {
     std::unique_ptr<DictionaryValue> result(new DictionaryValue);
 
-    String const packageId = args.first()->asText();
+    const String packageId = args.first()->asText();
 
     // Local packages.
     if (const File *pkg = PackageLoader::get().select(packageId))
@@ -546,7 +546,7 @@ NativePath App::nativePluginBinaryPath()
 {
     if (!d->cachedPluginBinaryPath.isEmpty()) return d->cachedPluginBinaryPath;
 
-    if (auto const opt = d->cmdLine.check("-libdir", 1))
+    if (const auto opt = d->cmdLine.check("-libdir", 1))
     {
         d->cmdLine.makeAbsolutePath(opt.pos + 1);
         return (d->cachedPluginBinaryPath = d->cmdLine.at(opt.pos + 1));
@@ -589,7 +589,7 @@ NativePath App::nativeHomePath()
 {
     if (!d->cachedHomePath.isEmpty()) return d->cachedHomePath;
 
-    if (auto const opt = d->cmdLine.check("-userdir", 1))
+    if (const auto opt = d->cmdLine.check("-userdir", 1))
     {
         d->cmdLine.makeAbsolutePath(opt.pos + 1);
         return (d->cachedHomePath = d->cmdLine.at(opt.pos + 1));

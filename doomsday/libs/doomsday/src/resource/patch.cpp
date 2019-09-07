@@ -84,7 +84,7 @@ typedef List<dint32> ColumnOffsets;
  */
 static bool readNextPost(Post &post, Reader &reader)
 {
-    static int const END_OF_POSTS = 0xff;
+    static const int END_OF_POSTS = 0xff;
 
     // Any more?
     reader.mark();
@@ -190,8 +190,8 @@ static Block compositeImage(Reader &                       reader,
                             const Patch::Metadata &        meta,
                             Flags                          flags)
 {
-    bool const maskZero                = flags.testFlag(Patch::MaskZero);
-    bool const clipToLogicalDimensions = flags.testFlag(Patch::ClipToLogicalDimensions);
+    const bool maskZero                = flags.testFlag(Patch::MaskZero);
+    const bool clipToLogicalDimensions = flags.testFlag(Patch::ClipToLogicalDimensions);
 
 #ifdef DE_DEBUG
     // Is the "logical" height of the image equal to the actual height of the
@@ -212,9 +212,9 @@ static Block compositeImage(Reader &                       reader,
 
     // Determine the dimensions of the output buffer.
     const Vec2ui &dimensions = clipToLogicalDimensions? meta.logicalDimensions : meta.dimensions;
-    int const w = dimensions.x;
-    int const h = dimensions.y;
-    size_t const pels = w * h;
+    const int w = dimensions.x;
+    const int h = dimensions.y;
+    const size_t pels = w * h;
 
     // Create the output buffer and fill with default color (black) and alpha (transparent).
     Block output{2 * pels};

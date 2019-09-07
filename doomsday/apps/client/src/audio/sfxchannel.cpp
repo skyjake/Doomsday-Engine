@@ -273,7 +273,7 @@ void SfxChannel::updatePriority()
             }
             else
             {
-                dfloat const normdist = (dist - ::soundMinDist) / (::soundMaxDist - ::soundMinDist);
+                const dfloat normdist = (dist - ::soundMinDist) / (::soundMaxDist - ::soundMinDist);
 
                 // Apply the linear factor so that at max distance there
                 // really is silence.
@@ -461,7 +461,7 @@ void Sfx_ChannelDrawer()
     FR_LoadDefaultAttrib();
     FR_SetColorAndAlpha(1, 1, 0, 1);
 
-    dint const lh = FR_SingleLineHeight("Q");
+    const dint lh = FR_SingleLineHeight("Q");
     if (!App_AudioSystem().sfxIsAvailable())
     {
         FR_DrawTextXY("Sfx disabled", 0, 0);

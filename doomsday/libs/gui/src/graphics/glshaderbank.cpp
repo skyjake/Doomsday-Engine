@@ -330,8 +330,8 @@ Bank::ISource *GLShaderBank::newSourceFromInfo(const String &id)
         const DictionaryValue &dict = def.getdt("defines");
         for (const auto &i : dict.elements())
         {
-            String const macroName = i.first.value->asText();
-            String const content   = i.second->asText();
+            const String macroName = i.first.value->asText();
+            const String content   = i.second->asText();
             for (auto &ss : sources)
             {
                 ss.insertDefinition(macroName, content);

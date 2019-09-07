@@ -238,7 +238,7 @@ DE_GUI_PIMPL(PackagesDialog)
         // Action for showing information about the package.
         actions << new ui::SubwidgetItem("...", ui::Up, [this] () -> PopupWidget *
         {
-            String const id = browser->actionPackage();
+            const String id = browser->actionPackage();
             return new PackageInfoDialog(id, PackageInfoDialog::EnableActions);
         });
 
@@ -249,7 +249,7 @@ DE_GUI_PIMPL(PackagesDialog)
                                              String(),
                                              new CallbackAction([this] ()
         {
-            String const packageId = browser->actionPackage();
+            const String packageId = browser->actionPackage();
             if (!selectedPackages.contains(packageId))
             {
                 selectedPackages.append(packageId);

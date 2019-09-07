@@ -121,7 +121,7 @@ int DED_Read(ded_t *ded, const String& path)
 
         File1 &file = hndl->file();
         /// @todo Custom status for contained files is not inherited from the container?
-        bool const isCustom = (file.isContained()? file.container().hasCustom() : file.hasCustom());
+        const bool isCustom = (file.isContained()? file.container().hasCustom() : file.hasCustom());
 
         // Copy the file into the local buffer and parse definitions.
         hndl->read((uint8_t *)bufferedDef, bufferedDefSize);

@@ -2087,14 +2087,14 @@ void Hu_MenuInitEpisodePage()
 
         // Has a menu shortcut/hotkey been specified?
         /// @todo Validate symbolic dday key names.
-        String const shortcut = episodeDef.gets("menuShortcut");
+        const String shortcut = episodeDef.gets("menuShortcut");
         if(!shortcut.isEmpty() && shortcut.first().isAlphaNumeric())
         {
             btn->setShortcut(shortcut.first().lower());
         }
 
         // Has a menu help/info text been specified?
-        String const helpInfo = episodeDef.gets("menuHelpInfo");
+        const String helpInfo = episodeDef.gets("menuHelpInfo");
         if (!helpInfo.isEmpty())
         {
             btn->setHelpInfo(helpInfo);
@@ -2196,8 +2196,8 @@ void Hu_MenuInitPlayerClassPage()
     }
 
     // Random class button.
-    String const labelText = GET_TXT(TXT_RANDOMPLAYERCLASS);
-    int const shortcut     = labelText.first().isAlphaNumeric() ? int(labelText.first()) : 0;
+    const String labelText = GET_TXT(TXT_RANDOMPLAYERCLASS);
+    const int shortcut     = labelText.first().isAlphaNumeric() ? int(labelText.first()) : 0;
     page->addWidget(new ButtonWidget(labelText))
             .setFixedY(y)
             .setShortcut(shortcut)
@@ -2437,15 +2437,15 @@ void Hu_MenuDrawFocusCursor(const Vec2i &origin, float scale, float alpha)
 # define OFFSET_Y         (1)
 #endif
 
-    float const angle   = cursor.angle;
-    int const cursorIdx = cursor.animFrame;
+    const float angle   = cursor.angle;
+    const int cursorIdx = cursor.animFrame;
     patchid_t pCursor   = pCursors[cursorIdx % MENU_CURSOR_FRAMECOUNT];
 
     patchinfo_t info;
     if(!R_GetPatchInfo(pCursor, &info))
         return;
 
-//    float const scale = /*de::min((focusObjectHeight * 1.267f) /*/ 1; //info.geometry.size.height; //, 1.f);
+//    const float scale = /*de::min((focusObjectHeight * 1.267f) /*/ 1; //info.geometry.size.height; //, 1.f);
     Vec2i pos = origin + Vec2i(OFFSET_X, OFFSET_Y) * scale;
 //    pos.y -= info.geometry.size.height / 2;
 
@@ -3097,7 +3097,7 @@ void Hu_MenuSelectSaveSlot(Widget &wi, Widget::Action action)
     if(action != Widget::Deactivated) return;
 
     LineEditWidget &edit = wi.as<LineEditWidget>();
-    String const saveSlotId = edit.userValue().asText();
+    const String saveSlotId = edit.userValue().asText();
 
     if(menuNominatingQuickSaveSlot)
     {
@@ -3248,7 +3248,7 @@ void Hu_MenuUpdateColorWidgetColor(Widget &wi, Widget::Action action)
     float value = sldr.value();
     ColorEditWidget &cboxMix = Hu_MenuPage("ColorWidget").findWidget(Widget::Id0).as<ColorEditWidget>();
 
-    int const component = wi.userValue2().asInt();
+    const int component = wi.userValue2().asInt();
     switch(component)
     {
     case CR: cboxMix.setRed  (value); break;

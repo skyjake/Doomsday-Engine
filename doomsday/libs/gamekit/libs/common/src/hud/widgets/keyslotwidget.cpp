@@ -116,9 +116,9 @@ void guidata_keyslot_t::draw(const Vec2i &offset) const
 {
     Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    dint const activeHud     = ST_ActiveHud(player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;

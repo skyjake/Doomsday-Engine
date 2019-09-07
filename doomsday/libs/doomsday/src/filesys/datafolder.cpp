@@ -57,7 +57,7 @@ String DataFolder::describe() const
     String desc = DataBundle::description();
 
     // The folder contents (if any) are produced by feeds.
-    String const feedDesc = describeFeeds();
+    const String feedDesc = describeFeeds();
     if (!feedDesc.isEmpty())
     {
         desc += Stringf(" (%s)", feedDesc.c_str());

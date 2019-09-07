@@ -80,7 +80,7 @@ RemoteFeedMetadataPacket::RemoteFeedMetadataPacket()
 void RemoteFeedMetadataPacket::addFile(const File &file, const String &prefix)
 {
     const auto &ns = file.target().objectNamespace();
-    auto const status = file.target().status();
+    const auto status = file.target().status();
 
     std::unique_ptr<Record> fileMeta(new Record);
 

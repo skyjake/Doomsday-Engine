@@ -144,7 +144,7 @@ static Value *Function_File_Description(Context &ctx, const Function::ArgumentVa
 
 static Value *Function_File_Locate(Context &ctx, const Function::ArgumentValues &args)
 {
-    Path const relativePath = args.at(0)->asText();
+    const Path relativePath = args.at(0)->asText();
     if (const File *found = maybeAs<File>(constFileInstance(ctx).tryFollowPath(relativePath)))
     {
         return new RecordValue(found->objectNamespace());

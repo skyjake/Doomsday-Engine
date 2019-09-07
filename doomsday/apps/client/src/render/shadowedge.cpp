@@ -153,7 +153,7 @@ static bool middleMaterialCoversOpening(const LineSide &side)
 
 void ShadowEdge::prepare(dint planeIndex)
 {
-    dint const otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
+    const dint otherPlaneIndex = planeIndex == Sector::Floor? Sector::Ceiling : Sector::Floor;
     const HEdge &hedge = *d->leftMostHEdge;
     const auto &subsec = hedge.face().mapElementAs<ConvexSubspace>()
                             .subsector().as<world::ClientSubsector>();
@@ -222,7 +222,7 @@ void ShadowEdge::prepare(dint planeIndex)
     // 'openness' of it's plane heights vs those of "this" wall section.
     /// @todo fixme: Should use the visual plane heights of subsectors.
 
-    dint const edge = lineSide.sideId() ^ d->edge;
+    const dint edge = lineSide.sideId() ^ d->edge;
     const LineOwner *vo = lineSide.line().vertexOwner(edge)->navigate(ClockDirection(d->edge ^ 1));
     const Line &neighborLine = vo->line();
 

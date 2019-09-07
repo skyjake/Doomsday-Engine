@@ -164,7 +164,7 @@ void Con_DrawTransition(void)
 
     DE_ASSERT(ClientWindow::main().busy().transitionFrame() != 0);
 
-    GLuint const texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
+    const GLuint texScreenshot = ClientWindow::main().busy().transitionFrame()->glName();
 
     GL_BindTextureUnmanaged(texScreenshot, gfx::ClampToEdge, gfx::ClampToEdge);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);

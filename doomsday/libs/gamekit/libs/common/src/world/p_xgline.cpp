@@ -2102,7 +2102,7 @@ int XLTrav_LeaveMap(Line *line, dd_bool /*ceiling*/, void * /*context*/, void *c
     // We might possibly have a data reference to evaluate.
     else if(line)
     {
-        int const oldMapNumber = XL_ValidateLineRef(line, info->iparm[3], context2, "Map Number");
+        const int oldMapNumber = XL_ValidateLineRef(line, info->iparm[3], context2, "Map Number");
         if(oldMapNumber > 0)
         {
             newMapUri = G_ComposeMapUri(gfw_Session()->episodeId().toInt() - 1, oldMapNumber - 1);

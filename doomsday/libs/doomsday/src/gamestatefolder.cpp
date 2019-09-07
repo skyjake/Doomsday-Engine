@@ -36,14 +36,14 @@
 
 using namespace de;
 
-static String const BLOCK_GROUP    = "group";
-static String const BLOCK_GAMERULE = "gamerule";
+static const String BLOCK_GROUP    = "group";
+static const String BLOCK_GAMERULE = "gamerule";
 
 /// @todo Refactor this to use ScriptedInfo. -jk
 
 static Value *makeValueFromInfoValue(const de::Info::Element::Value &v)
 {
-    String const text = v;
+    const String text = v;
     if (!text.compareWithoutCase("True"))
     {
         return new NumberValue(true, NumberValue::Boolean);
@@ -318,7 +318,7 @@ void GameStateFolder::Metadata::parse(const String &source)
         // is encoded in the map URI and extract it.
         if (!has("episode"))
         {
-            String const mapUriPath = gets("mapUri").substr(BytePos(5));
+            const String mapUriPath = gets("mapUri").substr(BytePos(5));
             if (mapUriPath.beginsWith("MAP", CaseInsensitive))
             {
                 set("episode", "1");
@@ -375,9 +375,9 @@ String GameStateFolder::Metadata::asStyledText() const
     if (has("mapTime"))
     {
         int time = geti("mapTime") / 35 /*TICRATE*/;
-        int const hours   = time / 3600; time -= hours * 3600;
-        int const minutes = time / 60;   time -= minutes * 60;
-        int const seconds = time;
+        const int hours   = time / 3600; time -= hours * 3600;
+        const int minutes = time / 60;   time -= minutes * 60;
+        const int seconds = time;
         currentMapText += Stringf(
             "\n" _E(Ta) _E(l) "  Time: " _E(.) _E(Tb) "%02d:%02d:%02d", hours, minutes, seconds);
     }

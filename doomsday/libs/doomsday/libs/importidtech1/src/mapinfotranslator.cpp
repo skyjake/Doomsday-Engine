@@ -40,7 +40,7 @@ namespace internal {
 
     static inline String defaultSkyMaterial()
     {
-        String const gameIdKey = DoomsdayApp::game().id();
+        const String gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey == "hexen-demo" || gameIdKey == "hexen-betademo")
         {
             return "Textures:SKY2";
@@ -54,7 +54,7 @@ namespace internal {
      */
     static bool interpretHubNumberAsEpisodeId()
     {
-        String const gameIdKey = DoomsdayApp::game().id();
+        const String gameIdKey = DoomsdayApp::game().id();
         return (gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic") ||
                 gameIdKey.beginsWith("chex"));
     }
@@ -220,7 +220,7 @@ namespace internal {
 
     static res::Uri composeMapUri(uint episode, uint map)
     {
-        String const gameIdKey = DoomsdayApp::game().id();
+        const String gameIdKey = DoomsdayApp::game().id();
         if(gameIdKey.beginsWith("doom1") || gameIdKey.beginsWith("heretic"))
         {
             return res::makeUri(Stringf("Maps:E%iM%i", episode+1, map+1));
@@ -299,12 +299,12 @@ namespace internal {
                 if(tok.beginsWith("cd_", CaseInsensitive) &&
                    tok.endsWith("_track", CaseInsensitive))
                 {
-                    String const pubName = tok.substr(BytePos(3), tok.size() - 6 - 3);
+                    const String pubName = tok.substr(BytePos(3), tok.size() - 6 - 3);
                     MusicMappings::const_iterator found = musicMap.constFind(pubName);
                     if(found != musicMap.end())
                     {
                         // Lookup an existing music from the database.
-                        String const songId = found->second;
+                        const String songId = found->second;
                         Music *music = db.getMusic(songId);
                         if(!music)
                         {
@@ -399,7 +399,7 @@ namespace internal {
         {
             LOG_MAP_WARNING("MAPINFO Cluster definitions are not supported.");
 
-            /*int const clusterId = (int)*/lexer.readNumber();
+            /*const int clusterId = (int)*/lexer.readNumber();
 
             // Process optional tokens.
             while(lexer.readToken())
@@ -457,7 +457,7 @@ namespace internal {
             if(mapUri.scheme().isEmpty()) mapUri.setScheme("Maps");
 
             // A new episode info.
-            String const id = String::asText(db.episodeInfos.size() + 1);
+            const String id = String::asText(db.episodeInfos.size() + 1);
             EpisodeInfo *info = &db.episodeInfos[id.toStdString()];
 
             if(sourceIsCustom) info->set("custom", true);
@@ -622,7 +622,7 @@ namespace internal {
             if(!info)
             {
                 res::Uri mapUri;
-                String const mapRef = String(Str_Text(lexer.readString()));
+                const String mapRef = String(Str_Text(lexer.readString()));
 
                 bool isNumber;
                 int mapNumber = mapRef.toInt(&isNumber); // 1-based
@@ -748,7 +748,7 @@ namespace internal {
                 }
                 if(!Str_CompareIgnoreCase(lexer.token(), "cluster"))
                 {
-                    int const hubNum = (int)lexer.readNumber();
+                    const int hubNum = (int)lexer.readNumber();
                     if(hubNum < 1)
                     {
                         throw ParseError(stringf("Invalid 'cluster' (i.e., hub) number '%s' on line #%i",
@@ -1205,7 +1205,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
 
     MapInfos buildHubMapInfoTable(const String &episodeId)
     {
-        bool const hubNumberIsEpisodeId = interpretHubNumberAsEpisodeId();
+        const bool hubNumberIsEpisodeId = interpretHubNumberAsEpisodeId();
 
         MapInfos set;
         for (HexDefs::MapInfos::const_iterator it = defs.mapInfos.begin();
@@ -1327,7 +1327,7 @@ DE_PIMPL_NOREF(MapInfoTranslator)
         // Output episode defs.
         for (const auto &pair : defs.episodeInfos)
         {
-            String const episodeId  = pair.first;
+            const String episodeId  = pair.first;
             const EpisodeInfo &info = pair.second;
 
             res::Uri startMapUri(info.gets("startMap"), RC_NULL);
@@ -1561,7 +1561,7 @@ void MapInfoTranslator::merge(const ddstring_s &definitions,
 
     if (Str_IsEmpty(&definitions)) return;
 
-    String const source = sourcePath.isEmpty() ? "[definition-data]"
+    const String source = sourcePath.isEmpty() ? "[definition-data]"
                                               : ("\"" + NativePath(sourcePath).pretty() + "\"");
     try
     {

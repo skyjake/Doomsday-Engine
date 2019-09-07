@@ -82,7 +82,7 @@ public:
     typedef ushort hash_type;
 
     /// Number of buckets in the hash table.
-    static hash_type const hash_range = 512;
+    static const hash_type hash_range = 512;
 
     struct Node
     {
@@ -230,7 +230,7 @@ struct FS1::Scheme::Impl
         // Try to make it a relative path.
         if (NativePath(path).isAbsolute())
         {
-            String const basePath = App_BasePath();
+            const String basePath = App_BasePath();
             if (path.beginsWith(basePath))
             {
                 path = path.substr(basePath.sizeb() + 1);

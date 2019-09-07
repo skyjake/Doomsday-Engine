@@ -384,7 +384,7 @@ bool R_SetViewGrid(dint numCols, dint numRows)
         // The console number is -1 if the viewport belongs to no one.
         viewport_t *vp = &viewportOfLocalPlayer[p];
 
-        dint const console = P_LocalToConsole(p);
+        const dint console = P_LocalToConsole(p);
         if(console != -1)
         {
             vp->console = DD_Player(console)->viewConsole;
@@ -417,7 +417,7 @@ dint R_NextViewer()
  */
 void R_CheckViewerLimits(viewer_t *src, viewer_t *dst)
 {
-    dint const MAXMOVE = 32;
+    const dint MAXMOVE = 32;
 
     /// @todo Remove this snapping. The game should determine this and disable the
     ///       the interpolation as required.
@@ -453,7 +453,7 @@ viewer_t R_SharpViewer(ClientPlayer &player)
         // This needs to be fleshed out with a proper third person
         // camera control setup. Currently we simply project the viewer's
         // position a set distance behind the ddpl.
-        dfloat const distance = 90;
+        const dfloat distance = 90;
 
         duint angle = view.angle() >> ANGLETOFINESHIFT;
         duint pitch = angle_t(LOOKDIR2DEG(view.pitch) / 360 * ANGLE_MAX) >> ANGLETOFINESHIFT;
@@ -525,7 +525,7 @@ void R_UpdateViewer(dint consoleNum)
 {
     DE_ASSERT(consoleNum >= 0 && consoleNum < DDMAXPLAYERS);
 
-    dint const VIEWPOS_MAX_SMOOTHDISTANCE = 172;
+    const dint VIEWPOS_MAX_SMOOTHDISTANCE = 172;
 
     player_t *player = DD_Player(consoleNum);
     viewdata_t *vd   = &player->viewport();
@@ -623,15 +623,15 @@ void R_UpdateViewer(dint consoleNum)
     }
 
     // Update viewer.
-    angle_t const viewYaw = vd->current.angle();
+    const angle_t viewYaw = vd->current.angle();
 
-    duint const an = viewYaw >> ANGLETOFINESHIFT;
+    const duint an = viewYaw >> ANGLETOFINESHIFT;
     vd->viewSin = FIX2FLT(finesine[an]);
     vd->viewCos = FIX2FLT(fineCosine[an]);
 
     // Calculate the front, up and side unit vectors.
-    dfloat const yawRad   = ((viewYaw / (dfloat) ANGLE_MAX) *2) * PI;
-    dfloat const pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
+    const dfloat yawRad   = ((viewYaw / (dfloat) ANGLE_MAX) *2) * PI;
+    const dfloat pitchRad = vd->current.pitch * 85 / 110.f / 180 * PI;
 
     // The front vector.
     vd->frontVec.x = cos(yawRad) * cos(pitchRad);
@@ -926,10 +926,10 @@ static void changeViewState(ViewState viewState) //, const viewport_t *port, con
 
     case PlayerSprite2D:
     {
-        auto const conRect  = R_ConsoleRect(displayPlayer);
-        auto const viewRect = R_Console3DViewRect(displayPlayer);
+        const auto conRect  = R_ConsoleRect(displayPlayer);
+        const auto viewRect = R_Console3DViewRect(displayPlayer);
 
-        dint const height = dint(SCREENHEIGHT
+        const dint height = dint(SCREENHEIGHT
                 * ( float(conRect.width()) * float(viewRect.height())
                                            / float(viewRect.width()) )
                 / float(conRect.height()));
@@ -1000,7 +1000,7 @@ static void changeViewState(ViewState viewState) //, const viewport_t *port, con
     //viewpx = port->geometry.topLeft.x + viewData->window.topLeft.x;
     //viewpy = port->geometry.topLeft.y + viewData->window.topLeft.y;
 
-    /*auto const viewRect = R_Console3DViewRect(displayPlayer);
+    /*const auto viewRect = R_Console3DViewRect(displayPlayer);
     viewpx = 0;
     viewpy = 0;
     viewpw = int(viewRect.width());
@@ -1163,7 +1163,7 @@ void R_RenderViewPort(int playerNum)
 
     DE_ASSERT(vp->console == playerNum);
 
-    dint const oldDisplay = displayPlayer;
+    const dint oldDisplay = displayPlayer;
     displayPlayer = vp->console;
     //R_UseViewPort(vp);
     //currentViewport = vp;
@@ -1304,7 +1304,7 @@ bool R_ViewerLumobjIsHidden(dint idx)
 
 static void markLumobjClipped(const Lumobj &lob, bool yes = true)
 {
-    dint const index = lob.indexInMap();
+    const dint index = lob.indexInMap();
     DE_ASSERT(index >= 0 && index < lob.map().lumobjCount());
     DE_ASSERT(index < frameLuminous.sizei());
     frameLuminous[index].isClipped = yes? 1 : 0;
@@ -1403,7 +1403,7 @@ void R_ViewerClipLumobj(Lumobj *lum)
     {
         markLumobjClipped(*lum);
 
-        Vec3d const eye = Rend_EyeOrigin().xzy();
+        const Vec3d eye = Rend_EyeOrigin().xzy();
         if (LineSightTest(eye, origin, -1, 1, LS_PASSLEFT | LS_PASSOVER | LS_PASSUNDER)
                 .trace(lum->map().bspTree()))
         {
@@ -1422,7 +1422,7 @@ void R_ViewerClipLumobjBySight(Lumobj *lob, ConvexSubspace *subspace)
 
     // We need to figure out if any of the polyobj's segments lies
     // between the viewpoint and the lumobj.
-    Vec3d const eye = Rend_EyeOrigin().xzy();
+    const Vec3d eye = Rend_EyeOrigin().xzy();
 
     subspace->forAllPolyobjs([&lob, &eye] (Polyobj &pob)
     {

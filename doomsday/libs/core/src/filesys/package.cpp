@@ -448,7 +448,7 @@ std::pair<String, Version> Package::split(const String &identifier_version)
 
 String Package::splitToHumanReadable(const String &identifier_version)
 {
-    auto const id_ver = split(identifier_version);
+    const auto id_ver = split(identifier_version);
     return Stringf("%s " _E(C) "(%s)" _E(.),
                           id_ver.first.c_str(),
                           id_ver.second.isValid()
@@ -484,7 +484,7 @@ String Package::versionedIdentifierForFile(const File &file)
 {
     String id = identifierForFile(file);
     if (id.isEmpty()) return String();
-    auto const id_ver = split(file.name().fileNameWithoutExtension());
+    const auto id_ver = split(file.name().fileNameWithoutExtension());
     if (id_ver.second.isValid())
     {
         return Stringf("%s_%s", id.c_str(), id_ver.second.fullNumber().c_str());

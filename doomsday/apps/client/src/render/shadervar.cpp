@@ -157,7 +157,7 @@ void ShaderVars::initVariableFromDefinition(const String &variableName,
     {
         for (int k = 0; k < 4; ++k)
         {
-            String const varName = DEF_WRAP() + "." + componentNames[k];
+            const String varName = DEF_WRAP() + "." + componentNames[k];
             if (valueDef.has(varName))
             {
                 var->values[k].wrap = rangeFromValue<Rangef>(valueDef.geta(varName));

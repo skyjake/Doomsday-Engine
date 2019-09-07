@@ -46,8 +46,8 @@ DE_PIMPL(WebHostedLink)
 
     void handleFileListQueryAsync(Query query)
     {
-        QueryId const id = query.id;
-        String const queryPath = query.path;
+        const QueryId id = query.id;
+        const String queryPath = query.path;
         self().scope() += async([this, queryPath] () -> std::shared_ptr<DictionaryValue>
         {
             DE_GUARD(this);

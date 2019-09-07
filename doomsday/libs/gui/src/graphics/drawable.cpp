@@ -270,7 +270,7 @@ Drawable::Id Drawable::addBuffer(GLBuffer *buffer)
 
 Drawable::Id Drawable::addBuffer(const std::shared_ptr<GLBuffer>& buffer)
 {
-    Id const id = d->nextBufferId();
+    const Id id = d->nextBufferId();
     addBuffer(id, buffer);
     return id;
 }
@@ -278,10 +278,10 @@ Drawable::Id Drawable::addBuffer(const std::shared_ptr<GLBuffer>& buffer)
 Drawable::Id Drawable::addBufferWithNewProgram(GLBuffer *buffer, const Name &programName)
 {
     // Take ownership of the buffer.
-    Id const bufId = d->nextBufferId();
+    const Id bufId = d->nextBufferId();
     addBuffer(bufId, buffer);
     // Assign a new program to the buffer.
-    Id const progId = addProgram(programName);
+    const Id progId = addProgram(programName);
     setProgram(bufId, program(progId));
     return bufId;
 }
@@ -296,8 +296,8 @@ void Drawable::addBufferWithNewProgram(Id id, GLBuffer *buffer, const Name &prog
 Drawable::Id Drawable::addBufferWithNewProgram(const Name &bufferName, GLBuffer *buffer,
                                                const Name &programName)
 {
-    Id const progId = addProgram(programName);
-    Id const bufId = addBuffer(bufferName, buffer);
+    const Id progId = addProgram(programName);
+    const Id bufId = addBuffer(bufferName, buffer);
     setProgram(bufId, program(progId));
     return bufId;
 }
@@ -317,7 +317,7 @@ GLProgram &Drawable::addProgram(Id id)
 
 Drawable::Id Drawable::addProgram(const Name &programName)
 {
-    Id const id = d->nextProgramId();
+    const Id id = d->nextProgramId();
     addProgram(id);
     if (!programName.isEmpty())
     {
@@ -336,7 +336,7 @@ GLState &Drawable::addState(Id id, const GLState &state)
 
 Drawable::Id Drawable::addState(const Name &stateName, const GLState &state)
 {
-    Id const id = d->nextStateId();
+    const Id id = d->nextStateId();
     addState(id, state);
     d->stateNames.insert(stateName, id);
     return id;
@@ -375,21 +375,21 @@ void Drawable::removeState(Id id)
 
 void Drawable::removeBuffer(const Name &bufferName)
 {
-    Id const id = bufferId(bufferName);
+    const Id id = bufferId(bufferName);
     removeBuffer(id);
     d->removeName(d->bufferNames, id);
 }
 
 void Drawable::removeProgram(const Name &programName)
 {
-    Id const id = programId(programName);
+    const Id id = programId(programName);
     removeProgram(id);
     d->removeName(d->programNames, id);
 }
 
 void Drawable::removeState(const Name &stateName)
 {
-    Id const id = stateId(stateName);
+    const Id id = stateId(stateName);
     removeState(id);
     d->removeName(d->stateNames, id);
 }

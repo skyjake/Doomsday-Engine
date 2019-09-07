@@ -194,7 +194,7 @@ DE_GUI_PIMPL(PopupWidget)
     void updateStyle()
     {
         const Style &st = style();
-        bool const opaqueBackground = (self().levelOfNesting() > 0);
+        const bool opaqueBackground = (self().levelOfNesting() > 0);
 
         outlineColor = st.colors().colorf(outlineColorId);
 
@@ -394,7 +394,7 @@ bool PopupWidget::handleEvent(const Event &event)
     if (event.type() == Event::MouseButton)
     {
         //const MouseEvent &mouse = event.as<MouseEvent>();
-        bool const inside = hitTest(event);
+        const bool inside = hitTest(event);
 
         if (!inside && d->clickToClose)
         {
@@ -433,7 +433,7 @@ void PopupWidget::glMakeGeometry(GuiVertexBuilder &verts)
 
     PanelWidget::glMakeGeometry(verts);
 
-    ui::Direction const dir = openingDirection();
+    const ui::Direction dir = openingDirection();
     if (dir == ui::NoDirection) return;
 
     // Anchor triangle.
@@ -443,7 +443,7 @@ void PopupWidget::glMakeGeometry(GuiVertexBuilder &verts)
     v.rgba = background().solidFill;
     v.texCoord = root().atlas().imageRectf(root().solidWhitePixel()).middle();
 
-    int const marker = d->marker->valuei();
+    const int marker = d->marker->valuei();
     Vec2i anchorPos = d->anchorPos();
     bool markerVisible = false;
 
@@ -497,10 +497,10 @@ void PopupWidget::glMakeGeometry(GuiVertexBuilder &verts)
     {
         tri << v; // discontinued
 
-        Rectanglei const rect = rule().recti();
-        int const ow = GuiWidget::pointsToPixels(2);
-        int const halfOw = ow/2;
-        int const midOw = ow + halfOw;
+        const Rectanglei rect = rule().recti();
+        const int ow = GuiWidget::pointsToPixels(2);
+        const int halfOw = ow/2;
+        const int midOw = ow + halfOw;
 
         v.rgba = d->outlineColor;
 

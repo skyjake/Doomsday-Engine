@@ -206,7 +206,7 @@ DE_PIMPL(FrameModel)
             const md2_packedFrame_t *pfr = (const md2_packedFrame_t *) (frameData + hdr.frameSize * i);
             Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
             Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
-            String const frameName = pfr->name;
+            const String frameName = pfr->name;
 
             FrameModelFrame *frame = new FrameModelFrame(*mdl, frameName);
             frame->vertices.reserve(hdr.numVertices);
@@ -345,9 +345,9 @@ DE_PIMPL(FrameModel)
      */
     static Vec3f unpackVector(ushort packed)
     {
-        float const yaw   = (packed & 511) / 512.0f * 2 * PI;
-        float const pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
-        float const cosp  = float(cos(pitch));
+        const float yaw   = (packed & 511) / 512.0f * 2 * PI;
+        const float pitch = ((packed >> 9) / 127.0f - 0.5f) * PI;
+        const float cosp  = float(cos(pitch));
         return Vec3f(cos(yaw) * cosp, sin(yaw) * cosp, sin(pitch));
     }
 
@@ -415,7 +415,7 @@ DE_PIMPL(FrameModel)
             const dmd_packedFrame_t *pfr = (dmd_packedFrame_t *) (frameData + info.frameSize * i);
             Vec3f const scale(DD_FLOAT(pfr->scale[0]), DD_FLOAT(pfr->scale[2]), DD_FLOAT(pfr->scale[1]));
             Vec3f const translation(DD_FLOAT(pfr->translate[0]), DD_FLOAT(pfr->translate[2]), DD_FLOAT(pfr->translate[1]));
-            String const frameName = pfr->name;
+            const String frameName = pfr->name;
 
             Frame *frame = new Frame(*mdl, frameName);
             frame->vertices.reserve(info.numVertices);
@@ -533,8 +533,8 @@ DE_PIMPL(FrameModel)
         // Renormalizing?
         if(!CommandLine_Check("-renorm")) return;
 
-        int const tris  = mdl.lodInfo[0].numTriangles;
-        int const verts = mdl.info.numVertices;
+        const int tris  = mdl.lodInfo[0].numTriangles;
+        const int verts = mdl.info.numVertices;
 
         vector_t* normals = (vector_t*) Z_Malloc(sizeof(vector_t) * tris, PU_APPSTATIC, 0);
         vector_t norm;

@@ -39,8 +39,8 @@ void Cl_Finale(Reader1 *msg)
 
     byte *script = 0;
 
-    int const flags           = Reader_ReadByte(msg);
-    finaleid_t const finaleId = Reader_ReadUInt32(msg);
+    const int flags           = Reader_ReadByte(msg);
+    const finaleid_t finaleId = Reader_ReadUInt32(msg);
 
     if (flags & FINF_SCRIPT)
     {

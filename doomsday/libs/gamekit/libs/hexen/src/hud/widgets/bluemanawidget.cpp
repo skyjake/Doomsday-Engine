@@ -54,7 +54,7 @@ void BlueManaWidget_Draw(guidata_bluemana_t *mana, const Point2Raw *offset)
 #define TRACKING                ( 1 )
 
     DE_ASSERT(mana);
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(mana->_value == 1994) return;
 
@@ -62,7 +62,7 @@ void BlueManaWidget_Draw(guidata_bluemana_t *mana, const Point2Raw *offset)
     if(ST_AutomapIsOpen(mana->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(mana->_value);
+    const auto valueAsText = String::asText(mana->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -91,9 +91,9 @@ void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, const Point2Raw *offset)
     DE_ASSERT(mana);
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    dint const activeHud     = ST_ActiveHud(mana->player());
-    dfloat const yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(mana->player()));
-    dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(mana->player());
+    const dfloat yOffset     = ST_HEIGHT * (1 - ST_StatusBarShown(mana->player()));
+    const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(mana->_value == 1994) return;
     if(mana->_value <= 0) return;
@@ -102,7 +102,7 @@ void SBarBlueManaWidget_Draw(guidata_bluemana_t *mana, const Point2Raw *offset)
     if(ST_AutomapIsOpen(mana->player())) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(mana->_value);
+    const auto valueAsText = String::asText(mana->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -138,7 +138,7 @@ void BlueMana_UpdateGeometry(guidata_bluemana_t *mana)
     if(ST_AutomapIsOpen(mana->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(mana->_value);
+    const auto valueAsText = String::asText(mana->_value);
 
     FR_SetFont(mana->font());
     FR_SetTracking(TRACKING);
@@ -163,7 +163,7 @@ void SBarBlueManaWidget_UpdateGeometry(guidata_bluemana_t *mana)
     if(ST_AutomapIsOpen(mana->player())) return;
     if(P_MobjIsCamera(::players[mana->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(mana->_value);
+    const auto valueAsText = String::asText(mana->_value);
 
     FR_SetFont(mana->font());
     FR_SetTracking(TRACKING);

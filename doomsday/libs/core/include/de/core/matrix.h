@@ -347,10 +347,10 @@ public:
     }
     static Matrix4 frustum(Type left, Type right, Type bottom, Type top, Type zNear, Type zFar) {
         // This is identical to glFrustum.
-        Type const A = (right + left) / (right - left);
-        Type const B = (top + bottom) / (top - bottom);
-        Type const C = - (zFar + zNear) / (zFar - zNear);
-        Type const D = - (Type(2) * zFar * zNear) / (zFar - zNear);
+        const Type A = (right + left) / (right - left);
+        const Type B = (top + bottom) / (top - bottom);
+        const Type C = - (zFar + zNear) / (zFar - zNear);
+        const Type D = - (Type(2) * zFar * zNear) / (zFar - zNear);
         Matrix4 m(Zero);
         m.at(0, 0) = (Type(2) * zNear) / (right - left);
         m.at(1, 1) = (Type(2) * zNear) / (top - bottom);
@@ -375,12 +375,12 @@ public:
         return m;
     }
     static Matrix4 perspectiveZoom(Type width, Type height, Type nearDist = 1.f, Type farDist = 1000.f, Type zoom = 1.f) {
-        Type const zoomHalf =  zoom / 2;
-        Type const aspect   =  width / height;
-        Type const left     = -zoomHalf;
-        Type const right    =  zoomHalf;
-        Type const bottom   = -zoomHalf / aspect;
-        Type const top      =  zoomHalf / aspect;
+        const Type zoomHalf =  zoom / 2;
+        const Type aspect   =  width / height;
+        const Type left     = -zoomHalf;
+        const Type right    =  zoomHalf;
+        const Type bottom   = -zoomHalf / aspect;
+        const Type top      =  zoomHalf / aspect;
         Type m[16] = {
             2 * nearDist / (right - left), 0, 0, 0,
             0, 2 * nearDist / (top - bottom), 0, 0,
@@ -390,9 +390,9 @@ public:
         return m;
     }
     static Matrix4 rotate(Type angleDegrees, const Vec3 &unitAxis = Vec3(0, 0, 1)) {
-        Type const ang = degreeToRadian(angleDegrees);
-        Type const c   = std::cos(ang);
-        Type const s   = std::sin(ang);
+        const Type ang = degreeToRadian(angleDegrees);
+        const Type c   = std::cos(ang);
+        const Type s   = std::sin(ang);
         Type m[16] = {
             unitAxis.x*unitAxis.x*(1-c)+c,            unitAxis.x*unitAxis.y*(1-c)+unitAxis.z*s, unitAxis.x*unitAxis.z*(1-c)-unitAxis.y*s, 0,
             unitAxis.x*unitAxis.y*(1-c)-unitAxis.z*s, unitAxis.y*unitAxis.y*(1-c)+c,            unitAxis.y*unitAxis.z*(1-c)+unitAxis.x*s, 0,

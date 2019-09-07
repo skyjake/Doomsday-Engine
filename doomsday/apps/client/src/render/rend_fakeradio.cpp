@@ -58,11 +58,11 @@ enum WallShadow
     RightShadow
 };
 
-static dfloat const MIN_OPEN            = 0.1f;
-static ddouble const MINDIFF            = 8;       ///< Min plane height difference (world units).
-static ddouble const INDIFF             = 8;       ///< Max plane height for indifference offset.
-static dfloat const MIN_SHADOW_DARKNESS = .0001f;  ///< Minimum to qualify.
-static ddouble const MIN_SHADOW_SIZE    = 1;       ///< In map units.
+static const dfloat MIN_OPEN            = 0.1f;
+static const ddouble MINDIFF            = 8;       ///< Min plane height difference (world units).
+static const ddouble INDIFF             = 8;       ///< Max plane height for indifference offset.
+static const dfloat MIN_SHADOW_DARKNESS = .0001f;  ///< Minimum to qualify.
+static const ddouble MIN_SHADOW_SIZE    = 1;       ///< In map units.
 
 dint rendFakeRadio              = true;  ///< cvar
 static dfloat fakeRadioDarkness = 1.2f;  ///< cvar
@@ -628,8 +628,8 @@ static void setSideShadowParams(const WallEdge &leftEdge, const WallEdge &rightE
         if (bSpace.hasSubsector())
         {
             const auto &bSubsec  = bSpace.subsector().as<world::ClientSubsector>();
-            ddouble const bFloor = bSubsec.visFloor  ().heightSmoothed();
-            ddouble const bCeil  = bSubsec.visCeiling().heightSmoothed();
+            const ddouble bFloor = bSubsec.visFloor  ().heightSmoothed();
+            const ddouble bCeil  = bSubsec.visCeiling().heightSmoothed();
             if (bFloor > visFloor.heightSmoothed() && bCeil < visCeiling.heightSmoothed())
             {
                 if (visFloor.castsShadow() && visCeiling.castsShadow())
@@ -764,8 +764,8 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
         Store &buffer = ClientApp::renderSystem().buffer();
         // Right fan.
         {
-            duint const numVerts = 3 + rightEdge.divisionCount();
-            duint const base     = buffer.allocateVertices(numVerts);
+            const duint numVerts = 3 + rightEdge.divisionCount();
+            const duint base     = buffer.allocateVertices(numVerts);
             if (indices.size() < numVerts) indices.resize(numVerts);
             for(duint i = 0; i < numVerts; ++i)
             {
@@ -804,8 +804,8 @@ static void drawWallShadow(const Vec3f *posCoords, const WallEdge &leftEdge, con
         }
         // Left fan.
         {
-            duint const numVerts = 3 + leftEdge .divisionCount();
-            duint const base     = buffer.allocateVertices(numVerts);
+            const duint numVerts = 3 + leftEdge .divisionCount();
+            const duint base     = buffer.allocateVertices(numVerts);
             if (indices.size() < numVerts) indices.resize(numVerts);
             for (duint i = 0; i < numVerts; ++i)
             {
@@ -877,12 +877,12 @@ void Rend_DrawWallRadio(const WallEdge &leftEdge, const WallEdge &rightEdge, dfl
         return;
 
     // Skip if the surface is not lit with ambient light.
-    dfloat const shadowDark = calcShadowDarkness(ambientLight);
+    const dfloat shadowDark = calcShadowDarkness(ambientLight);
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
     // Skip if the determined shadow size is too small.
-    dfloat const shadowSize = calcShadowSize(ambientLight);
+    const dfloat shadowSize = calcShadowSize(ambientLight);
     if(shadowSize < MIN_SHADOW_SIZE)
         return;
 
@@ -973,7 +973,7 @@ static uint makeFlatShadowGeometry(DrawList::Indices &indices,
 
     // What vertex winding order (0 = left, 1 = right)? (For best results, the cross edge
     // should always be the shortest.)
-    duint const winding = (edges[1].length() > edges[0].length()? 1 : 0);
+    const duint winding = (edges[1].length() > edges[0].length()? 1 : 0);
     const duint *order  = (haveFloor ? floorOrder[winding] : ceilOrder[winding]);
 
     // Assign indices.
@@ -1022,7 +1022,7 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
     const auto &subsec = subspace.subsector().as<world::ClientSubsector>();
 
     // Determine the shadow properties.
-    dfloat const shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
+    const dfloat shadowDark = calcShadowDarkness(subsec.lightSourceIntensity());
     if(shadowDark < MIN_SHADOW_DARKNESS)
         return;
 
@@ -1030,7 +1030,7 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
     static ShadowEdge shadowEdges[2/*left, right*/];  // Keep these around (needed often).
 
     // Can skip drawing for Planes that do not face the viewer - find the 2D vector to subspace center.
-    auto const eyeToSubspace = Vec2f(Rend_EyeOrigin().xz() - subspace.poly().center());
+    const auto eyeToSubspace = Vec2f(Rend_EyeOrigin().xz() - subspace.poly().center());
 
     // All shadow geometry uses the same texture (i.e., none) - use the same list.
     DrawList &shadowList = ClientApp::renderSystem().drawLists().find(
@@ -1066,7 +1066,7 @@ void Rend_DrawFlatRadio(const ConvexSubspace &subspace)
 
                     if (prepareFlatShadowEdges(shadowEdges, hEdges, pln, shadowDark))
                     {
-                        bool const haveFloor = plane.surface().normal()[2] > 0;
+                        const bool haveFloor = plane.surface().normal()[2] > 0;
 
                         // Build geometry.
                         Store &buffer = ClientApp::renderSystem().buffer();

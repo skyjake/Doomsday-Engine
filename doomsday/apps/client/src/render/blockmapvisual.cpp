@@ -50,7 +50,7 @@ dfloat bmapDebugSize = 1.5f; // cvar
 
 static void drawMobj(const mobj_t &mob)
 {
-    AABoxd const bounds = Mobj_Bounds(mob);
+    const AABoxd bounds = Mobj_Bounds(mob);
 
     DGL_Vertex2f(bounds.minX, bounds.minY);
     DGL_Vertex2f(bounds.maxX, bounds.minY);
@@ -66,8 +66,8 @@ static void drawLine(const Line &line)
 
 static void drawSubspace(const ConvexSubspace &subspace)
 {
-    dfloat const scale = de::max(bmapDebugSize, 1.f);
-    dfloat const width = (DE_GAMEVIEW_WIDTH / 16) / scale;
+    const dfloat scale = de::max(bmapDebugSize, 1.f);
+    const dfloat width = (DE_GAMEVIEW_WIDTH / 16) / scale;
 
     const Face &poly = subspace.poly();
     HEdge *base = poly.hedge();
@@ -85,7 +85,7 @@ static void drawSubspace(const ConvexSubspace &subspace)
         ddouble length = (end - start).length();
         if (length > 0)
         {
-            Vec2d const unit = (end - start) / length;
+            const Vec2d unit = (end - start) / length;
             Vec2d const normal(-unit.y, unit.x);
 
             GL_BindTextureUnmanaged(GL_PrepareLSTexture(LST_DYNAMIC));
@@ -329,7 +329,7 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
     BlockmapCell vCell;
 
     const BlockmapCell &dimensions = bmap.dimensions();
-    Vec2d const cellDimensions = bmap.cellDimensions();
+    const Vec2d cellDimensions = bmap.cellDimensions();
 
     if (followMobj)
     {
@@ -389,8 +389,8 @@ static void drawBlockmap(const Blockmap &bmap, mobj_t *followMobj,
                 DGL_Color4f(.33f, .33f, .66f, .33f);
             }
 
-            Vec2d const start = cellDimensions * cell;
-            Vec2d const end   = start + cellDimensions;
+            const Vec2d start = cellDimensions * cell;
+            const Vec2d end   = start + cellDimensions;
 
             DGL_Vertex2f(start.x, start.y);
             DGL_Vertex2f(  end.x, start.y);

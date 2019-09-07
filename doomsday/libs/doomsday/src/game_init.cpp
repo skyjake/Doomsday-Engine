@@ -106,7 +106,7 @@ static void forNativeDataFiles(const DataBundle &bundle, std::function<void (con
         {
 //            LOG_RES_MSG("bundle root: %s -> trying to load %s") << bundle.rootPath()
 //                     << v->asText();
-            String const dataFilePath = bundle.rootPath() / v->asText();
+            const String dataFilePath = bundle.rootPath() / v->asText();
             if (const File *dataFile = FS::tryLocate<File const>(dataFilePath))
             {
                 if (is<NativeFile>(dataFile->source()))
@@ -347,11 +347,11 @@ static dint findAllGameDataPaths(FS1::PathList &found)
         "WAD", "LMP", "PK3", "ZIP", "DEH" // upper case alternatives
 #endif
     };
-    dint const numFoundSoFar = found.count();
+    const dint numFoundSoFar = found.count();
     for (const String &ext : extensions)
     {
         DE_ASSERT(!ext.isEmpty());
-        String const searchPath = res::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
+        const String searchPath = res::Uri(Path("$(App.DataPath)/$(GamePlugin.Name)/auto/*." + ext)).resolved();
         App_FileSystem().findAllPaths(searchPath, 0, found);
     }
     return found.count() - numFoundSoFar;

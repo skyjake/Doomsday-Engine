@@ -26,7 +26,7 @@
 
 namespace de {
 
-static coord_t const SHADOWEDGE_OPEN_THRESHOLD = 8;  ///< World units (Z axis).
+static const coord_t SHADOWEDGE_OPEN_THRESHOLD = 8;  ///< World units (Z axis).
 
 class HEdge;
 

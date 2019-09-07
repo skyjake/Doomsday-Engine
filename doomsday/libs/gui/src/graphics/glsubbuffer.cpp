@@ -50,7 +50,7 @@ void GLSubBuffer::setVertices(dsize count, const void *data)
 {
     DE_ASSERT(count <= dsize(d->hostRange.size()));
 
-    dsize const elementSize = d->format.first->stride;
+    const dsize elementSize = d->format.first->stride;
     d->host->setData(elementSize * d->hostRange.start, data,
                      elementSize * count);
     d->size = count;
@@ -60,7 +60,7 @@ void GLSubBuffer::setBatchVertices(int batchIndex, dsize elementCount, void *dat
 {
     DE_ASSERT(d->batchIndexOffset >= 0);
 
-    dsize const elementSize = d->format.first->stride;
+    const dsize elementSize = d->format.first->stride;
     duint8 *elems = reinterpret_cast<duint8 *>(data);
     for (dsize i = 0; i < elementCount; ++i)
     {

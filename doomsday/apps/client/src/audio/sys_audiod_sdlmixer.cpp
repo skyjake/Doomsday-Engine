@@ -242,7 +242,7 @@ sfxbuffer_t* DS_SDLMixer_SFX_CreateBuffer(int flags, int bits, int rate)
 
     // The cursor is used to keep track of the channel on which the sample
     // is playing.
-    int const freeChannelIndex = getFreeChannel();
+    const int freeChannelIndex = getFreeChannel();
     if (freeChannelIndex >= 0)
     {
         usedChannels.setBit(buf->cursor = freeChannelIndex, true);

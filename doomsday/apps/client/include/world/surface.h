@@ -233,7 +233,7 @@ public:
     DE_AUDIENCE(OriginSmoothedChange, void surfaceOriginSmoothedChanged(Surface &surface))
 
     /// Maximum speed for a smoothed material offset.
-    static de::dint const MAX_SMOOTH_MATERIAL_MOVE = 8;
+    static const de::dint MAX_SMOOTH_MATERIAL_MOVE = 8;
 
     /**
      * Returns the current smoothed (interpolated) material origin for the

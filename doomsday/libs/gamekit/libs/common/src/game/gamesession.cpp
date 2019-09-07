@@ -478,7 +478,7 @@ DE_PIMPL(GameSession)
 
         std::unique_ptr<GameStateFolder::MapStateReader> p;
         reader_s *reader = SV_NewReader();
-        dint const magic = Reader_ReadInt32(reader);
+        const dint magic = Reader_ReadInt32(reader);
         if (magic == MY_SAVE_MAGIC || magic == MY_CLIENT_SAVE_MAGIC)  // Native format.
         {
             p.reset(new MapStateReader(session));
@@ -599,7 +599,7 @@ DE_PIMPL(GameSession)
         ::mapTime = metadata.geti("mapTime");
 #endif
 
-        String const mapUriAsText = self().mapUri().compose();
+        const String mapUriAsText = self().mapUri().compose();
         std::unique_ptr<GameStateFolder::MapStateReader> mapReader(makeMapStateReader(saved, mapUriAsText));
         self().setThinkerMapping(mapReader.get());
         mapReader->read(mapUriAsText);
@@ -613,7 +613,7 @@ DE_PIMPL(GameSession)
 
         self().setMapUri(newMapUri);
 
-        res::Uri const mapUri = self().mapUri();
+        const res::Uri mapUri = self().mapUri();
 
         if (rememberVisitedMaps)
         {
@@ -692,7 +692,7 @@ DE_PIMPL(GameSession)
             targetPlayerAddrs = nullptr; // player mobj redirection...
 #endif
 
-            String const mapUriAsText = self().mapUri().compose();
+            const String mapUriAsText = self().mapUri().compose();
             const auto &saved = App::rootFolder().locate<GameStateFolder>(internalSavePath());
             std::unique_ptr<GameStateFolder::MapStateReader> reader(makeMapStateReader(saved, mapUriAsText));
             self().setThinkerMapping(reader.get());
@@ -1261,7 +1261,7 @@ void GameSession::leaveMap(const res::Uri &nextMapUri, uint nextMapEntryPoint)
     d->setMapAndEntryPoint(nextMapUri, nextMapEntryPoint);
 
     // Are we revisiting a previous map?
-    bool const revisit = saved && saved->hasState(String("maps") / mapUri().path());
+    const bool revisit = saved && saved->hasState(String("maps") / mapUri().path());
 
     d->reloadMap(revisit);
 
@@ -1346,7 +1346,7 @@ void GameSession::save(const String &saveName, const String &userDescription)
         throw InProgressError("GameSession::save", "No game session is in progress");
     }
 
-    String const savePath = d->userSavePath(saveName);
+    const String savePath = d->userSavePath(saveName);
     LOG_MSG("Saving game to \"%s\"...") << savePath;
 
     try
@@ -1381,7 +1381,7 @@ void GameSession::save(const String &saveName, const String &userDescription)
 /// @todo Use busy mode here.
 void GameSession::load(const String &saveName)
 {
-    String const savePath = d->userSavePath(saveName);
+    const String savePath = d->userSavePath(saveName);
     LOG_MSG("Loading game from \"%s\"...") << savePath;
     d->loadSaved(savePath);
     P_SetMessage(&players[CONSOLEPLAYER], "Game loaded");
@@ -1400,7 +1400,7 @@ void GameSession::removeSaved(const String &saveName)
 
 String GameSession::savedUserDescription(const String &saveName)
 {
-    String const savePath = d->userSavePath(saveName);
+    const String savePath = d->userSavePath(saveName);
     if (const auto *saved = App::rootFolder().tryLocate<GameStateFolder>(savePath))
     {
         return saved->metadata().gets("userDescription", "");

@@ -69,7 +69,7 @@ static bool load(FileHandle &file, int width, int height, uint8_t *dstBuf)
     int x, y, dataByte, runLength;
     bool result = false;
 
-    size_t const len = file.length();
+    const size_t len = file.length();
     uint8_t *raw = (uint8_t *) M_Malloc(len);
 
     file.read(raw, len);
@@ -128,7 +128,7 @@ uint8_t *PCX_Load(FileHandle &file, de::Vec2ui &outSize, int &pixelSize)
 {
     uint8_t *dstBuf = 0;
 
-    size_t const initPos = file.tell();
+    const size_t initPos = file.tell();
 
     header_t hdr;
     if (file.read((uint8_t *)&hdr, sizeof(hdr)) >= sizeof(hdr))

@@ -46,7 +46,7 @@ String ArchiveFolder::describe() const
 
     String desc = Stringf("archive \"%s\"", name().c_str());
 
-    String const feedDesc = describeFeeds();
+    const String feedDesc = describeFeeds();
     if (!feedDesc.isEmpty())
     {
         desc += " (";

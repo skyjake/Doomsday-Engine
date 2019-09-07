@@ -443,7 +443,7 @@ void Thinker_InitPrivateData(thinker_t *th, Id::Type knownId)
 
     if (th->d == nullptr)
     {
-        Id const privateId = knownId? Id(knownId) : Id(/* get a new ID */);
+        const Id privateId = knownId? Id(knownId) : Id(/* get a new ID */);
 
         if (Thinker_IsMobj(th))
         {

@@ -52,7 +52,7 @@ static const int maxIncludeDepth = de::max(0, DEHREADER_INCLUDE_DEPTH_MAX);
 
 /// Mask containing only those reader flags which should be passed from the current
 /// parser to any child parsers for file include statements.
-static DehReaderFlag const DehReaderFlagsIncludeMask = IgnoreEOF;
+static const DehReaderFlag DehReaderFlagsIncludeMask = IgnoreEOF;
 
 // Helper for managing a dummy definition allocated on the stack.
 template <typename T>
@@ -284,8 +284,8 @@ public:
                         Record *mobj;
                         Record dummyMobj;
 
-                        String const arg  = line.substr(5).leftStrip();
-                        int const mobjNum = parseMobjNum(arg);
+                        const String arg  = line.substr(5).leftStrip();
+                        const int mobjNum = parseMobjNum(arg);
                         if(mobjNum >= 0)
                         {
                             mobj = &ded->things[mobjNum];
@@ -305,8 +305,8 @@ public:
                         Record *state;
                         Record dummyState;
 
-                        String const arg   = line.substr(5).leftStrip();
-                        int const stateNum = parseStateNum(arg);
+                        const String arg   = line.substr(5).leftStrip();
+                        const int stateNum = parseStateNum(arg);
                         if(stateNum >= 0)
                         {
                             state = &ded->states[stateNum];
@@ -326,8 +326,8 @@ public:
                         Record *state;
                         Record dummyState;
 
-                        String const arg   = line.substr(7).leftStrip();
-                        int const stateNum = parseStateNumFromActionOffset(arg);
+                        const String arg   = line.substr(7).leftStrip();
+                        const int stateNum = parseStateNumFromActionOffset(arg);
                         if(stateNum >= 0)
                         {
                             state = &ded->states[stateNum];
@@ -347,8 +347,8 @@ public:
                         ded_sprid_t *sprite;
                         Dummy<ded_sprid_t> dummySprite;
 
-                        String const arg    = line.substr(6).leftStrip();
-                        int const spriteNum = parseSpriteNum(arg);
+                        const String arg    = line.substr(6).leftStrip();
+                        const int spriteNum = parseSpriteNum(arg);
                         if(spriteNum >= 0)
                         {
                             sprite = &ded->sprites[spriteNum];
@@ -365,10 +365,10 @@ public:
                     }
                     else if (line.beginsWith("Ammo", CaseInsensitive))
                     {
-                        String const arg          = line.substr(4).leftStrip();
+                        const String arg          = line.substr(4).leftStrip();
                         int ammoNum               = 0;
-                        bool const isKnownAmmoNum = parseAmmoNum(arg, &ammoNum);
-                        bool const ignore         = !isKnownAmmoNum;
+                        const bool isKnownAmmoNum = parseAmmoNum(arg, &ammoNum);
+                        const bool ignore         = !isKnownAmmoNum;
 
                         if(!isKnownAmmoNum)
                         {
@@ -380,10 +380,10 @@ public:
                     }
                     else if (line.beginsWith("Weapon", CaseInsensitive))
                     {
-                        String const arg            = line.substr(6).leftStrip();
+                        const String arg            = line.substr(6).leftStrip();
                         int weaponNum               = 0;
-                        bool const isKnownWeaponNum = parseWeaponNum(arg, &weaponNum);
-                        bool const ignore           = !isKnownWeaponNum;
+                        const bool isKnownWeaponNum = parseWeaponNum(arg, &weaponNum);
+                        const bool ignore           = !isKnownWeaponNum;
 
                         if(!isKnownWeaponNum)
                         {
@@ -398,8 +398,8 @@ public:
                         ded_sound_t *sound;
                         Dummy<ded_sound_t> dummySound;
 
-                        String const arg   = line.substr(5).leftStrip();
-                        int const soundNum = parseSoundNum(arg);
+                        const String arg   = line.substr(5).leftStrip();
+                        const int soundNum = parseSoundNum(arg);
                         if(soundNum >= 0)
                         {
                             sound = &ded->sounds[soundNum];
@@ -425,7 +425,7 @@ public:
                         }
 
                         bool isNumber;
-                        int const oldSize = args.toInt(&isNumber, 10, String::AllowSuffix);
+                        const int oldSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
                             throw SyntaxError(
@@ -436,7 +436,7 @@ public:
 
                         args.remove(BytePos(0), firstArgEnd + 1);
 
-                        int const newSize = args.toInt(&isNumber, 10, String::AllowSuffix);
+                        const int newSize = args.toInt(&isNumber, 10, String::AllowSuffix);
                         if(!isNumber)
                         {
                             throw SyntaxError(
@@ -562,35 +562,35 @@ public:
 
     int parseMobjNum(const String &str)
     {
-        int const num = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
+        const int num = str.toInt(0, 0, String::AllowSuffix) - 1; // Patch indices are 1-based.
         if(num < 0 || num >= ded->things.size()) return -1;
         return num;
     }
 
     int parseSoundNum(const String &str)
     {
-        int const num = str.toInt(0, 0, String::AllowSuffix);
+        const int num = str.toInt(0, 0, String::AllowSuffix);
         if(num < 0 || num >= ded->sounds.size()) return -1;
         return num;
     }
 
     int parseSpriteNum(const String &str)
     {
-        int const num = str.toInt(0, 0, String::AllowSuffix);
+        const int num = str.toInt(0, 0, String::AllowSuffix);
         if(num < 0 || num >= NUMSPRITES) return -1;
         return num;
     }
 
     int parseStateNum(const String &str)
     {
-        int const num = str.toInt(0, 0, String::AllowSuffix);
+        const int num = str.toInt(0, 0, String::AllowSuffix);
         if(num < 0 || num >= ded->states.size()) return -1;
         return num;
     }
 
     int parseStateNumFromActionOffset(const String &str)
     {
-        int const num = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
+        const int num = stateIndexForActionOffset(str.toInt(0, 0, String::AllowSuffix));
         if(num < 0 || num >= ded->states.size()) return -1;
         return num;
     }
@@ -797,7 +797,7 @@ public:
     {
         LOG_AS("parseThing");
 
-        int const thingNum = mobj.geti(defn::Definition::VAR_ORDER);
+        const int thingNum = mobj.geti(defn::Definition::VAR_ORDER);
         bool hadHeight     = false, checkHeight = false;
 
         for(; lineInCurrentSection(); skipToNextLine())
@@ -808,7 +808,7 @@ public:
             if(var.endsWith(" frame", CaseInsensitive))
             {
                 const StateMapping *mapping;
-                String const dehStateName = var.left(var.sizeb() - 6);
+                const String dehStateName = var.left(var.sizeb() - 6);
                 if(!parseMobjTypeState(dehStateName, &mapping))
                 {
                     if(!ignore)
@@ -818,7 +818,7 @@ public:
                 }
                 else
                 {
-                    int const value = expr.toInt(0, 0, String::AllowSuffix);
+                    const int value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
                         if(value < 0 || value >= ded->states.size())
@@ -827,7 +827,7 @@ public:
                         }
                         else
                         {
-                            int const stateIdx = value;
+                            const int stateIdx = value;
                             const Record &state = ded->states[stateIdx];
 
                             DE_ASSERT(mapping->id >= 0 && mapping->id < STATENAMES_COUNT);
@@ -846,7 +846,7 @@ public:
             else if(var.endsWith(" sound", CaseInsensitive))
             {
                 const SoundMapping *mapping;
-                String const dehSoundName = var.left(var.sizeb() - 6);
+                const String dehSoundName = var.left(var.sizeb() - 6);
                 if(!parseMobjTypeSound(dehSoundName, &mapping))
                 {
                     if(!ignore)
@@ -856,7 +856,7 @@ public:
                 }
                 else
                 {
-                    int const value = expr.toInt(0, 0, String::AllowSuffix);
+                    const int value = expr.toInt(0, 0, String::AllowSuffix);
                     if(!ignore)
                     {
                         if(value < 0 || value >= ded->sounds.size())
@@ -871,7 +871,7 @@ public:
                                             stringf("Thing Sound %i unknown", mapping->id));
                             }
 
-                            int const soundsIdx = value;
+                            const int soundsIdx = value;
                             const ded_sound_t &sound = ded->sounds[soundsIdx];
                             mobj.setSound(mapping->id, sound.id);
 
@@ -940,7 +940,7 @@ public:
             }
             else if(!var.compareWithoutCase("ID #"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("doomEdNum", value);
@@ -949,7 +949,7 @@ public:
             }
             else if(!var.compareWithoutCase("Height"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("height", value / float(0x10000));
@@ -959,7 +959,7 @@ public:
             }
             else if(!var.compareWithoutCase("Hit points"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("spawnHealth", value);
@@ -968,7 +968,7 @@ public:
             }
             else if(!var.compareWithoutCase("Mass"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("mass", value);
@@ -977,7 +977,7 @@ public:
             }
             else if(!var.compareWithoutCase("Missile damage"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("damage", value);
@@ -986,7 +986,7 @@ public:
             }
             else if(!var.compareWithoutCase("Pain chance"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("painChance", value);
@@ -995,7 +995,7 @@ public:
             }
             else if(!var.compareWithoutCase("Reaction time"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("reactionTime", value);
@@ -1004,7 +1004,7 @@ public:
             }
             else if(!var.compareWithoutCase("Speed"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     /// @todo Is this right??
@@ -1014,14 +1014,14 @@ public:
             }
             else if(!var.compareWithoutCase("Translucency")) // Eternity
             {
-                //int const value = expr.toInt(0, 10, String::AllowSuffix);
-                //float const opacity = de::clamp(0, value, 65536) / 65536.f;
+                //const int value = expr.toInt(0, 10, String::AllowSuffix);
+                //const float opacity = de::clamp(0, value, 65536) / 65536.f;
                 /// @todo Support this extension.
                 LOG_WARNING("DeHackEd Thing.Translucency is not supported");
             }
             else if(!var.compareWithoutCase("Width"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     mobj.def().set("radius", value / float(0x10000));
@@ -1045,7 +1045,7 @@ public:
     void parseFrame(defn::State state, bool ignore = false)
     {
         LOG_AS("parseFrame");
-        int const stateNum = state.geti(defn::Definition::VAR_ORDER);
+        const int stateNum = state.geti(defn::Definition::VAR_ORDER);
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1054,7 +1054,7 @@ public:
 
             if(!var.compareWithoutCase("Duration"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     state.def().set("tics", value);
@@ -1064,7 +1064,7 @@ public:
             }
             else if(!var.compareWithoutCase("Next frame"))
             {
-                int const value = expr.toInt(0, 0, String::AllowSuffix);
+                const int value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value >= ded->states.size())
@@ -1073,7 +1073,7 @@ public:
                     }
                     else
                     {
-                        int const nextStateIdx = value;
+                        const int nextStateIdx = value;
                         state.def().set("nextState", ded->states[nextStateIdx].gets("id"));
                         LOG_DEBUG("State #%i \"%s\" nextState => \"%s\" (#%i)")
                                 << stateNum << state.gets("id") << state.gets("nextState")
@@ -1088,7 +1088,7 @@ public:
             }
             else if(!var.compareWithoutCase("Sprite number"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value > ded->sprites.size())
@@ -1097,7 +1097,7 @@ public:
                     }
                     else
                     {
-                        int const spriteIdx = value;
+                        const int spriteIdx = value;
                         const ded_sprid_t &sprite = ded->sprites[spriteIdx];
                         state.def().set("sprite", sprite.id);
                         LOG_DEBUG("State #%i \"%s\" sprite => \"%s\" (#%i)")
@@ -1108,10 +1108,10 @@ public:
             }
             else if(!var.compareWithoutCase("Sprite subnumber"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
-                    int const FF_FULLBRIGHT = 0x8000;
+                    const int FF_FULLBRIGHT = 0x8000;
 
                     // Translate the old fullbright bit.
                     int stateFlags = state.geti("flags");
@@ -1126,8 +1126,8 @@ public:
             }
             else if(var.beginsWith("Unknown ", CaseInsensitive))
             {
-                int const miscIdx = var.substr(BytePos(8)).toInt(0, 10, String::AllowSuffix);
-                int const value   = expr.toInt(0, 10, String::AllowSuffix);
+                const int miscIdx = var.substr(BytePos(8)).toInt(0, 10, String::AllowSuffix);
+                const int value   = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(miscIdx < 0 || miscIdx >= NUM_STATE_MISC)
@@ -1157,7 +1157,7 @@ public:
 
     void parseSprite(ded_sprid_t *sprite, bool ignore = false)
     {
-        int const sprNum = ded->sprites.indexOf(sprite);
+        const int sprNum = ded->sprites.indexOf(sprite);
         LOG_AS("parseSprite");
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1166,7 +1166,7 @@ public:
 
             if(!var.compareWithoutCase("Offset"))
             {
-                int const value = expr.toInt(0, 0, String::AllowSuffix);
+                const int value = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     // Calculate offset from beginning of sprite names.
@@ -1202,7 +1202,7 @@ public:
     void parseSound(ded_sound_t *sound, bool ignore = false)
     {
         LOG_AS("parseSound");
-        int const soundNum = ded->sounds.indexOf(sound);
+        const int soundNum = ded->sounds.indexOf(sound);
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1215,7 +1215,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero/One"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->group = value;
@@ -1225,7 +1225,7 @@ public:
             }
             else if(!var.compareWithoutCase("Value"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->priority = value;
@@ -1239,7 +1239,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 2"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->linkPitch = value;
@@ -1249,7 +1249,7 @@ public:
             }
             else if(!var.compareWithoutCase("Zero 3"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     sound->linkVolume = value;
@@ -1267,11 +1267,11 @@ public:
             }
             else if(!var.compareWithoutCase("Neg. One 2"))
             {
-                int const lumpNum = expr.toInt(0, 0, String::AllowSuffix);
+                const int lumpNum = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     const LumpIndex &lumpIndex = *reinterpret_cast<const LumpIndex *>(F_LumpIndex());
-                    int const numLumps = lumpIndex.size();
+                    const int numLumps = lumpIndex.size();
                     if(lumpNum < 0 || lumpNum >= numLumps)
                     {
                         LOG_WARNING("DeHackEd Neg. One 2 #%i out of range") << lumpNum;
@@ -1304,7 +1304,7 @@ public:
 
             if(!var.compareWithoutCase("Max ammo"))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore) createValueDef(Stringf("Player|Max ammo|%s", theAmmo), String::asText(value));
             }
             else if(!var.compareWithoutCase("Per ammo"))
@@ -1330,8 +1330,8 @@ public:
 
             if(var.endsWith(" frame", CaseInsensitive))
             {
-                String const dehStateName = var.left(var.sizeb() - 6);
-                int const value           = expr.toInt(0, 0, String::AllowSuffix);
+                const String dehStateName = var.left(var.sizeb() - 6);
+                const int value           = expr.toInt(0, 0, String::AllowSuffix);
 
                 const WeaponStateMapping *weapon;
                 if(!parseWeaponState(dehStateName, &weapon))
@@ -1364,7 +1364,7 @@ public:
             else if (!var.compareWithoutCase("Ammo type"))
             {
                 static const char *ammotypes[] = { "clip", "shell", "cell", "misl", "-", "noammo" };
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(value < 0 || value >= 6)
@@ -1380,7 +1380,7 @@ public:
             }
             else if(!var.compareWithoutCase("Ammo per shot")) // Eternity
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 if (!ignore)
                     createValueDef(Stringf("Weapon Info|%i|Per shot", weapNum),
                                    String::asText(value));
@@ -1396,7 +1396,7 @@ public:
     void parsePointer(defn::State state, bool ignore)
     {
         LOG_AS("parsePointer");
-        int const stateNum = state.geti(defn::Definition::VAR_ORDER);
+        const int stateNum = state.geti(defn::Definition::VAR_ORDER);
 
         for(; lineInCurrentSection(); skipToNextLine())
         {
@@ -1405,7 +1405,7 @@ public:
 
             if(!var.compareWithoutCase("Codep Frame"))
             {
-                int const actionIdx = expr.toInt(0, 0, String::AllowSuffix);
+                const int actionIdx = expr.toInt(0, 0, String::AllowSuffix);
                 if(!ignore)
                 {
                     if(actionIdx < 0 || actionIdx >= NUMSTATES)
@@ -1439,7 +1439,7 @@ public:
             const ValueMapping *mapping;
             if(parseMiscValue(var, &mapping))
             {
-                int const value = expr.toInt(0, 10, String::AllowSuffix);
+                const int value = expr.toInt(0, 10, String::AllowSuffix);
                 createValueDef(mapping->valuePath, String::asText(value));
             }
             else
@@ -1462,7 +1462,7 @@ public:
             {
                 if (line.beginsWith("par", CaseInsensitive))
                 {
-                    String const argStr = line.substr(3).leftStrip();
+                    const String argStr = line.substr(3).leftStrip();
                     if (argStr.isEmpty())
                     {
                         throw SyntaxError(
@@ -1479,7 +1479,7 @@ public:
                      * three arguments and then apply atoi()-like de::String::toIntLeft()
                      * on the last.
                      */
-                    int const maxArgs = 3;
+                    const int maxArgs = 3;
                     StringList args = splitMax(argStr, ' ', maxArgs);
 
                     // If the third argument is a comment remove it.
@@ -1504,7 +1504,7 @@ public:
                     float parTime = float(String(args.at(arg++)).toInt(0, 10, String::AllowSuffix));
 
                     // Apply.
-                    res::Uri const uri = composeMapUri(episode, map);
+                    const res::Uri uri = composeMapUri(episode, map);
                     int idx = ded->getMapInfoNum(uri);
                     if(idx >= 0)
                     {
@@ -1617,7 +1617,7 @@ public:
 
             if(var.beginsWith("Frame ", CaseInsensitive))
             {
-                int const stateNum = var.substr(BytePos(6)).toInt(0, 0, String::AllowSuffix);
+                const int stateNum = var.substr(BytePos(6)).toInt(0, 0, String::AllowSuffix);
                 if(stateNum < 0 || stateNum >= ded->states.size())
                 {
                     LOG_WARNING("DeHackEd Frame #%d out of range\n(Create more State defs!)")
@@ -1667,8 +1667,8 @@ public:
     {
         LOG_AS("parseText");
 
-        String const oldStr = readTextBlob(oldSize);
-        String const newStr = readTextBlob(newSize);
+        const String oldStr = readTextBlob(oldSize);
+        const String newStr = readTextBlob(newSize);
 
         if(!(flags & NoText)) // Disabled?
         {

@@ -300,7 +300,7 @@ void RecordValue::call(Process &process, const Value &arguments, Value *) const
 }
 
 // Flags for serialization:
-static duint8 const OWNS_RECORD = 0x1;
+static const duint8 OWNS_RECORD = 0x1;
 
 void RecordValue::operator >> (Writer &to) const
 {

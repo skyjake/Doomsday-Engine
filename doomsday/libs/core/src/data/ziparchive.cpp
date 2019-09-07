@@ -313,7 +313,7 @@ DE_PIMPL(ZipArchive)
     {
         reader >> zipSummary;
 
-        duint const entryCount = zipSummary.totalEntryCount;
+        const duint entryCount = zipSummary.totalEntryCount;
 
         // The ZIP must have only one part, all entries in the same archive.
         if (entryCount != zipSummary.diskEntryCount)
@@ -341,7 +341,7 @@ DE_PIMPL(ZipArchive)
 
             Block latin1Name;
             reader.readBytes(header.fileNameSize, latin1Name);
-            String const fileName = String::fromLatin1(latin1Name); /// @todo UTF-8?
+            const String fileName = String::fromLatin1(latin1Name); /// @todo UTF-8?
 
             // Advance the cursor past the variable sized fields.
             reader.seek(header.extraFieldSize + header.commentSize);
@@ -453,7 +453,7 @@ DE_PIMPL(ZipArchive)
         for (PathTreeIterator<Index> iter(self().index().leafNodes()); iter.hasNext(); )
         {
             const ZipEntry &entry = iter.next();
-            String const fullPath = entry.path();
+            const String fullPath = entry.path();
 
             CentralFileHeader header;
             header.signature = SIG_CENTRAL_FILE_HEADER;
@@ -501,7 +501,7 @@ DE_PIMPL(ZipArchive)
 
         try
         {
-            if (Block const meta = bank.check(ZIPARCHIVE_META_CATEGORY(), directoryCacheId))
+            if (const Block meta = bank.check(ZIPARCHIVE_META_CATEGORY(), directoryCacheId))
             {
                 Reader reader(meta);
                 if (!seekToCentralEnd(reader))
@@ -650,7 +650,7 @@ void ZipArchive::operator >> (Writer &to) const
         ZipEntry &entry = iter.next();
         entry.update();
 
-        String const fullPath = entry.path();
+        const String fullPath = entry.path();
 
         // This is where the local file header is located.
         entry.localHeaderOffset = writer.offset();

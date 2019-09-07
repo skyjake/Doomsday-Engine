@@ -75,9 +75,9 @@ void guidata_readyammoicon_t::tick(timespan_t /*elapsed*/)
     if(!VALID_WEAPONTYPE(plr->readyWeapon)) return;
 
 #if __JHERETIC__
-    dint const lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
+    const dint lvl = (plr->powers[PT_WEAPONLEVEL2]? 1 : 0);
 #else
-    dint const lvl = 0;
+    const dint lvl = 0;
 #endif
 
     for(dint i = 0; i < NUM_AMMO_TYPES; ++i)
@@ -99,7 +99,7 @@ void ReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, const Point2Raw *
 {
     DE_ASSERT(icon);
 
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
 #if !__JDOOM64__
     if(ST_StatusBarIsActive(icon->player())) return;
@@ -149,10 +149,10 @@ void SBarReadyAmmoIconWidget_Drawer(guidata_readyammoicon_t *icon, const Point2R
 
     DE_ASSERT(icon);
 
-    dint const activeHud     = ST_ActiveHud(icon->player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(icon->player()));
-    //dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(icon->player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(icon->player()));
+    //const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(icon->player())) return;
     if(ST_AutomapIsOpen(icon->player()) && ::cfg.common.automapHudDisplay == 0) return;

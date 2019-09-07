@@ -44,7 +44,7 @@ public:
                        float variance                     = 0,
                        float glowStrength                 = 0,
                        float glowStrengthVariance         = 0,
-                       de::Vec2f const origin          = de::Vec2f(),
+                       const de::Vec2f origin          = de::Vec2f(),
                        const res::Uri &maskTexture         = res::Uri(),
                        const de::Vec2f &maskDimensions = de::Vec2f(1, 1),
                        blendmode_t blendMode              = BM_NORMAL,

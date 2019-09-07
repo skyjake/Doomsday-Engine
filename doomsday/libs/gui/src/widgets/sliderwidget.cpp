@@ -182,7 +182,7 @@ DE_GUI_PIMPL(SliderWidget)
     /// Determines the total area where the slider is moving.
     Rectanglei sliderRect() const
     {
-        Rectanglei const rect = self().contentRect();
+        const Rectanglei rect = self().contentRect();
         return Rectanglei(Vec2i(rect.topLeft.x + endLabelSize,     rect.topLeft.y),
                           Vec2i(rect.bottomRight.x - endLabelSize, rect.bottomRight.y));
     }
@@ -190,7 +190,7 @@ DE_GUI_PIMPL(SliderWidget)
     /// Determines the area where the slider currently is.
     Rectanglei sliderValueRect() const
     {
-        Rectanglei const area = sliderRect();
+        const Rectanglei area = sliderRect();
         ddouble i = range.size() > 0? (pos - range.start) / range.size() : 0;
         return Rectanglei::fromSize(Vec2i(area.topLeft.x +
                                              (area.width() - endLabelSize) * i,
@@ -218,7 +218,7 @@ DE_GUI_PIMPL(SliderWidget)
 
         if (!self().geometryRequested()) return;
 
-        Vec4i const margin = self().margins().toVector();
+        const Vec4i margin = self().margins().toVector();
         rect = rect.adjusted(margin.xy(), -margin.zw());
 
         //DefaultVertexBuf::Builder verts;
@@ -238,7 +238,7 @@ DE_GUI_PIMPL(SliderWidget)
             altAlpha = .5f;
             numDots = 2 * numDots + 1;
         }
-        Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
+        const Image::Size dotSize = atlas().imageRect(root().tinyDot()).size();
         for (int i = 0; i < numDots; ++i)
         {
             // dotSpace converted back to device pixels.
@@ -310,7 +310,7 @@ DE_GUI_PIMPL(SliderWidget)
     {
         if (state == st) return;
 
-        //State const prev = state;
+        //const State prev = state;
         state = st;
         animating = true;
 
@@ -413,7 +413,7 @@ DE_GUI_PIMPL(SliderWidget)
 
         //qDebug() << "delta" << (ev.pos() - grabFrom).asText();
 
-        Rectanglei const area = sliderRect();
+        const Rectanglei area = sliderRect();
         ddouble unitsPerPixel = range.size() / (area.width() - endLabelSize);
         setValue(grabValue + (ev.pos().x - grabFrom.x) * unitsPerPixel);
 
@@ -442,7 +442,7 @@ DE_GUI_PIMPL(SliderWidget)
         }
         else
         {
-            Rectanglei const rect = self().contentRect();
+            const Rectanglei rect = self().contentRect();
 
             //qDebug() << "click step:" << clickStep() << "value:" << value << "range:"
             //   << range.asText() << "new value:" << value - clickStep();

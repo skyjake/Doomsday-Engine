@@ -193,7 +193,7 @@ void GameWidget::drawComposited()
 
 void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
 {
-    int const player = consolePlayer;
+    const int player = consolePlayer;
     Vec2ui fbSize(size, size);
 
     GLTextureFramebuffer destFb(Image::RGB_888, fbSize, 1);
@@ -207,7 +207,7 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
 
     // Make the player temporarily a plain camera to hide weapons etc.
     ClientPlayer &plr = ClientApp::player(player);
-    auto const oldPlrFlags = plr.publicData().flags;
+    const auto oldPlrFlags = plr.publicData().flags;
     plr.publicData().flags |= DDPF_CAMERA;
 
     // Notify the world that a new render frame has begun.
@@ -216,7 +216,7 @@ void GameWidget::renderCubeMap(uint size, const String &outputImagePath)
     Image composited(Image::Size(6 * size, size), Image::RGB_888);
 //    QPainter painter(&composited);
 
-    int const baseYaw = 180;
+    const int baseYaw = 180;
 
     for (int i = 0; i < 6; ++i)
     {

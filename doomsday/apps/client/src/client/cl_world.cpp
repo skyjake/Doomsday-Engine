@@ -258,8 +258,8 @@ void Cl_ReadSideDelta(dint /*deltaType*/)
     /// @todo Do not assume the CURRENT map.
     world::Map &map = App_World().map();
 
-    dint const index = Reader_ReadUInt16(msgReader);
-    dint const df    = Reader_ReadPackedUInt32(msgReader); // Flags.
+    const dint index = Reader_ReadUInt16(msgReader);
+    const dint df    = Reader_ReadPackedUInt32(msgReader); // Flags.
 
     LineSide *side = map.sidePtr(index);
     DE_ASSERT(side != 0);
@@ -349,7 +349,7 @@ void Cl_ReadPolyDelta()
     world::Map &map = App_World().map();
     Polyobj &pob    = map.polyobj(Reader_ReadPackedUInt16(msgReader));
 
-    dint const df = Reader_ReadByte(msgReader); // Flags.
+    const dint df = Reader_ReadByte(msgReader); // Flags.
     if (df & PODF_DEST_X)
     {
         pob.dest[VX] = Reader_ReadFloat(msgReader);

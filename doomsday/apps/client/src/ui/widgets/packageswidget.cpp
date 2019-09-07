@@ -331,7 +331,7 @@ DE_GUI_PIMPL(PackagesWidget)
             }
             label().setText(labelText);
 
-            bool const highlight = _owner.d->packageStatus->isPackageHighlighted(packageId());
+            const bool highlight = _owner.d->packageStatus->isPackageHighlighted(packageId());
             _actions->setVariantItemsEnabled(highlight);
 
             for (GuiWidget *w : _actions->childWidgets())
@@ -391,7 +391,7 @@ DE_GUI_PIMPL(PackagesWidget)
 
         float estimatedHeight() const override
         {
-            float const fontHeight = style().fonts().font("default").height().value();
+            const float fontHeight = style().fonts().font("default").height().value();
             float       estimate   = fontHeight * 2 + label().margins().height().value();
             return estimate;
         }
@@ -1034,7 +1034,7 @@ void PackagesWidget::scrollToPackage(const String &packageId) const
         }
         else
         {
-            auto const pos = d->filteredPackages.find(*item);
+            const auto pos = d->filteredPackages.find(*item);
 
             // Estimate the position.
             scrollArea.scrollY(pos * d->menu->organizer().averageChildHeight() -
@@ -1061,7 +1061,7 @@ void PackagesWidget::update()
 
     if (d->searchMinY)
     {
-        TimeSpan const SPAN = 0.3;
+        const TimeSpan SPAN = 0.3;
 
         // Time to show or hide the background?
         if (d->searchBackgroundOpacity.target() < .5f &&

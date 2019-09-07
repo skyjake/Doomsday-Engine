@@ -871,7 +871,7 @@ void SV_LoadGameClient(uint /*sessionId*/)
 
     Reader1 *reader = SV_NewReader();
 
-    int const saveVersion = (*metadata)["version"].value().asNumber();
+    const int saveVersion = (*metadata)["version"].value().asNumber();
     Uri *mapUri           = Uri_NewWithPath2((*metadata)["mapUri"].value().asText(), RC_NULL);
     GameRules *rules    = 0;
     if(metadata->hasSubrecord("gameRules"))

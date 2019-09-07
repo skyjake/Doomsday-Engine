@@ -124,7 +124,7 @@ DE_PIMPL(RemoteUser)
     {
         LOG_AS("handleRequest");
 
-        auto const length = command.size();
+        const auto length = command.size();
 
         // If the command is too long, it'll be considered invalid.
         if (length >= 256)
@@ -136,8 +136,8 @@ DE_PIMPL(RemoteUser)
         // Status query?
         if (command == "Info?")
         {
-            ServerInfo const info = ServerApp::currentServerInfo();
-            Block const msg = "Info\n" + composeJSON(info.asRecord());
+            const ServerInfo info = ServerApp::currentServerInfo();
+            const Block msg = "Info\n" + composeJSON(info.asRecord());
             LOGDEV_NET_VERBOSE("Info reply:\n%s") << String::fromUtf8(msg);
             self() << msg;
         }

@@ -42,14 +42,14 @@ Image ClientStyle::makeGameLogo(const Game &game, const res::LumpCatalog &catalo
     {
         if (game.isPlayableWithDefaultPackages())
         {
-            Block const playPal  = catalog.read("PLAYPAL");
-            Block const title    = catalog.read("TITLE");
-            Block const titlePic = catalog.read("TITLEPIC");
-            Block const interPic = catalog.read("INTERPIC");
+            const Block playPal  = catalog.read("PLAYPAL");
+            const Block title    = catalog.read("TITLE");
+            const Block titlePic = catalog.read("TITLEPIC");
+            const Block interPic = catalog.read("INTERPIC");
 
             res::IdTech1Image img(title? title : (titlePic? titlePic : interPic), playPal);
 
-            int const sizeDiv = flags.testFlag(Downscale50Percent)? 2 : 1;
+            const int sizeDiv = flags.testFlag(Downscale50Percent)? 2 : 1;
             Image::Size const finalSize(    img.pixelSize().x        / sizeDiv,
                                         int(img.pixelSize().y * 1.2f / sizeDiv)); // VGA aspect
 
@@ -58,7 +58,7 @@ Image ClientStyle::makeGameLogo(const Game &game, const res::LumpCatalog &catalo
 
             if (flags & ColorizedByFamily)
             {
-                String const colorId = "home.icon." +
+                const String colorId = "home.icon." +
                         (game.family().isEmpty()? "other" : game.family());
                 return logoImage.colorized(Style::get().colors().color(colorId));
             }

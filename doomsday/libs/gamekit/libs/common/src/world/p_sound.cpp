@@ -112,7 +112,7 @@ void SndInfoParser(const ddstring_s *path)
             {
                 // $map int(map-number) string(lump-name)
                 // Associate a music lump to a map.
-                int const mapNumber        = (int)lexer.readNumber();
+                const int mapNumber        = (int)lexer.readNumber();
                 const ddstring_t *lumpName = lexer.readString();
 
                 if(mapNumber > 0)
@@ -149,7 +149,7 @@ void SndInfoParser(const ddstring_s *path)
 
             // string(sound-id) string(lump-name | '?')
             // A sound definition.
-            int const soundIndex       = Defs().getSoundNumForName(Str_Text(lexer.readString()));
+            const int soundIndex       = Defs().getSoundNumForName(Str_Text(lexer.readString()));
             const ddstring_t *lumpName = lexer.readString();
 
             if(soundIndex)

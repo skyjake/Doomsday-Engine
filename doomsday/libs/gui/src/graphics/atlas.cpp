@@ -106,7 +106,7 @@ DE_PIMPL(Atlas)
     {
         if (!needCommit || totalSize == Size(0, 0)) return 0.0f;
 
-        duint const totalPx = totalSize.x * totalSize.y;
+        const duint totalPx = totalSize.x * totalSize.y;
         duint changedPx = 0;
         for (const Rectanglei &rect : changedAreas)
         {
@@ -148,8 +148,8 @@ DE_PIMPL(Atlas)
             image.save(p);
         }*/
 
-        Rectanglei const noBorders  = rect.shrunk(border);
-        Rectanglei const withMargin = rect.expanded(margin);
+        const Rectanglei noBorders  = rect.shrunk(border);
+        const Rectanglei withMargin = rect.expanded(margin);
 
         if (hasBacking())
         {
@@ -252,7 +252,7 @@ DE_PIMPL(Atlas)
     {
         DE_ASSERT(hasBacking());
 
-        IAllocator::Allocations const oldLayout = allocator->allocs();
+        const IAllocator::Allocations oldLayout = allocator->allocs();
         if (!allocator->optimize())
         {
             // Optimization did not work out.
@@ -496,7 +496,7 @@ Rectanglef Atlas::imageRectf(const Id &id) const
     DE_GUARD(this);
     DE_ASSERT(d->allocator.get());
 
-    Rectanglei const rect = d->rectWithoutBorder(id);
+    const Rectanglei rect = d->rectWithoutBorder(id);
 
     // Normalize within the atlas area.
     return Rectanglef(float(rect.topLeft.x) / float(d->totalSize.x),

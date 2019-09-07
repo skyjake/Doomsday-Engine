@@ -280,7 +280,7 @@ DE_PIMPL(ScriptedInfo)
             }
         }
 
-        bool const isScriptBlock = (block.blockType() == BLOCK_SCRIPT);
+        const bool isScriptBlock = (block.blockType() == BLOCK_SCRIPT);
 
         // Script blocks are executed now. This includes only the unqualified script
         // blocks that have only a single "script" key in them.
@@ -320,7 +320,7 @@ DE_PIMPL(ScriptedInfo)
                 if (isScriptBlock)
                 {
                     // Qualified scripts get automatically generated names.
-                    String const parentVarName = variableName(*block.parent());
+                    const String parentVarName = variableName(*block.parent());
                     varName = parentVarName.concatenateMember(chooseScriptName(ns[parentVarName]));
                 }
                 else
@@ -568,7 +568,7 @@ String ScriptedInfo::absolutePathInContext(const Record &context, const String &
 {
     if (context.has(VAR_SOURCE))
     {
-        auto const sourceLocation = Info::sourceLineTable().sourcePathAndLineNumber(
+        const auto sourceLocation = Info::sourceLineTable().sourcePathAndLineNumber(
                     context.getui(VAR_SOURCE));
 
         String absPath = sourceLocation.first.fileNamePath() / relativePath;
@@ -601,7 +601,7 @@ bool ScriptedInfo::isTrue(const Value &value) // static
     if (const TextValue *textValue = maybeAs<TextValue>(value))
     {
         // Text values are interpreted a bit more loosely.
-        String const value = textValue->asText();
+        const String value = textValue->asText();
         if (!value.compareWithoutCase("true") ||
             !value.compareWithoutCase("yes") ||
             !value.compareWithoutCase("on"))
@@ -678,8 +678,8 @@ StringList ScriptedInfo::sortRecordsBySource(const Record::Subrecords &subrecs)
 
     std::sort(keys.begin(), keys.end(), [&subrecs] (const String &a, const String &b) -> bool
     {
-        auto const src1 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[a]->getui(VAR_SOURCE, 0));
-        auto const src2 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[b]->getui(VAR_SOURCE, 0));
+        const auto src1 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[a]->getui(VAR_SOURCE, 0));
+        const auto src2 = Info::sourceLineTable().sourcePathAndLineNumber(subrecs[b]->getui(VAR_SOURCE, 0));
         if (!String(src1.first).compareWithoutCase(src2.first))
         {
             // Path is the same, compare line numbers.

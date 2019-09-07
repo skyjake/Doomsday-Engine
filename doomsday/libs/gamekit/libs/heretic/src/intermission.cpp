@@ -150,7 +150,7 @@ void IN_Shutdown()
 static String backgroundPatchForEpisode(const String &episodeId)
 {
     bool isNumber;
-    int const oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
+    const int oldEpisodeNum = episodeId.toInt(&isNumber) - 1; // 1-based
     if(isNumber && oldEpisodeNum >= 0 && oldEpisodeNum <= 2)
     {
         return Stringf("MAPE%d", oldEpisodeNum + 1);
@@ -321,7 +321,7 @@ static void drawLocationMarks(bool drawYouAreHere = false, bool flashCurrent = t
     DGL_Enable(DGL_TEXTURE_2D);
     DGL_Color4f(1, 1, 1, 1);
 
-    common::GameSession::VisitedMaps const visited = visitedMaps();
+    const common::GameSession::VisitedMaps visited = visitedMaps();
     for(const res::Uri &visitedMap : visited)
     {
         if(const Location *loc = tryFindLocationForMap(locations, visitedMap))
@@ -358,7 +358,7 @@ static void initDeathmatchStats()
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
-        int const team = playerTeam[i];
+        const int team = playerTeam[i];
 
         if(players[i].plr->inGame)
         {
@@ -543,21 +543,21 @@ static void initNetgameStats()
 
         if(totalKills)
         {
-            int const percent = players[i].killCount * 100 / totalKills;
+            const int percent = players[i].killCount * 100 / totalKills;
             if(percent > cntKills[playerTeam[i]])
                 cntKills[playerTeam[i]] = percent;
         }
 
         if(totalItems)
         {
-            int const percent = players[i].itemCount * 100 / totalItems;
+            const int percent = players[i].itemCount * 100 / totalItems;
             if(percent > cntItems[playerTeam[i]])
                 cntItems[playerTeam[i]] = percent;
         }
 
         if(totalSecret)
         {
-            int const percent = players[i].secretCount * 100 / totalSecret;
+            const int percent = players[i].secretCount * 100 / totalSecret;
             if(percent > cntSecret[playerTeam[i]])
                 cntSecret[playerTeam[i]] = percent;
         }
@@ -942,7 +942,7 @@ void IN_Ticker()
 
 static void loadData()
 {
-    String const episodeId = gfw_Session()->episodeId();
+    const String episodeId = gfw_Session()->episodeId();
 
     // Determine which patch to use for the background.
     pBackground = R_DeclarePatch(backgroundPatchForEpisode(episodeId));

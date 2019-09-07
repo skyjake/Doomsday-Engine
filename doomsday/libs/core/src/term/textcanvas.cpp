@@ -282,7 +282,7 @@ void TextCanvas::draw(const TextCanvas &canvas, const Coord &topLeft)
         for (duint x = 0; x < canvas.d->size.x; ++x)
         {
             Coord const xy(x, y);
-            Coord const p = topLeft + xy;
+            const Coord p = topLeft + xy;
             if (isValid(p))
             {
                 at(p) = canvas.at(xy);

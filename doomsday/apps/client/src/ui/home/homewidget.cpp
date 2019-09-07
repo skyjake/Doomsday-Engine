@@ -197,7 +197,7 @@ DE_GUI_PIMPL(HomeWidget)
 
     void updateVisibleColumnsAndTabHeadings()
     {
-        bool const gotGames = DoomsdayApp::games().numPlayable() > 0;
+        const bool gotGames = DoomsdayApp::games().numPlayable() > 0;
 
         // Show columns depending on whether there are playable games.
         allColumns.at(0).widget->show(!gotGames);
@@ -432,7 +432,7 @@ DE_GUI_PIMPL(HomeWidget)
     {
         if (scrollInstantly && dir)
         {
-            Rangei const vis = visibleTabRange();
+            const Rangei vis = visibleTabRange();
             tabs->setCurrent(dir < 0? vis.start : vis.end - 1);
         }
 

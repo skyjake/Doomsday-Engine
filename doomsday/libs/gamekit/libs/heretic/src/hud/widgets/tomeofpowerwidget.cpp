@@ -73,7 +73,7 @@ void guidata_tomeofpower_t::tick(timespan_t /*elapsed*/)
     d->countdownSeconds = 0;
 
     const player_t *plr  = &::players[player()];
-    dint const ticsRemain = plr->powers[PT_WEAPONLEVEL2];
+    const dint ticsRemain = plr->powers[PT_WEAPONLEVEL2];
     if(ticsRemain <= 0 || 0 != plr->morphTics) return;
 
     // Time to play the countdown sound?
@@ -131,8 +131,8 @@ void guidata_tomeofpower_t::draw(const Vec2i &offset) const
 
     if(d->countdownSeconds != 0)
     {
-        auto const counterAsText = String::asText(d->countdownSeconds);
-        dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+        const auto counterAsText = String::asText(d->countdownSeconds);
+        const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
         DGL_Enable(DGL_TEXTURE_2D);
 
@@ -160,7 +160,7 @@ void guidata_tomeofpower_t::updateGeometry()
     if(P_MobjIsCamera(::players[player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
     const player_t *plr   = &::players[player()];
-    dint const ticsRemain = plr->powers[PT_WEAPONLEVEL2];
+    const dint ticsRemain = plr->powers[PT_WEAPONLEVEL2];
     if(ticsRemain <= 0 || 0 != plr->morphTics) return;
 
     if(d->patchId != 0)
@@ -170,7 +170,7 @@ void guidata_tomeofpower_t::updateGeometry()
     }
     else
     {
-        auto const counterAsText = String::asText(d->countdownSeconds);
+        const auto counterAsText = String::asText(d->countdownSeconds);
 
         FR_SetFont(font());
         FR_SetTracking(TRACKING);

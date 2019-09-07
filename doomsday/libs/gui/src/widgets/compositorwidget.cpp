@@ -61,7 +61,7 @@ DE_GUI_PIMPL(CompositorWidget)
         }
 
         Buffer *buf = buffers[nextBufIndex];
-        Vec2ui const size = GLState::current().target().rectInUse().size();
+        const Vec2ui size = GLState::current().target().rectInUse().size();
         //qDebug() << "compositor" << nextBufIndex << "should be" << size.asText();
         //qDebug() << buf->texture.size().asText() << size.asText();
         if (buf->texture.size() != size)

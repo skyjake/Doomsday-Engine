@@ -53,7 +53,7 @@ public:
         Shadowed  = 0x2  ///< A shadow is embedded in the font.
     };
 
-    static int const MAX_CHARS = 256; // Normal 256 ANSI characters.
+    static const int MAX_CHARS = 256; // Normal 256 ANSI characters.
 
 public:
     /// Resource manifest for the font.

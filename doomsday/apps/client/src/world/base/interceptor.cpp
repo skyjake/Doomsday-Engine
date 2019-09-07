@@ -270,7 +270,7 @@ DE_PIMPL_NOREF(Interceptor)
     void runTrace()
     {
         clearIntercepts();
-        dint const localValidCount = ++validCount;
+        const dint localValidCount = ++validCount;
 
         if(flags & PTF_LINE)
         {

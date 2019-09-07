@@ -534,7 +534,7 @@ DE_PIMPL(ClientWindow)
 
     void showOrHideQuitButton()
     {
-        TimeSpan const SPAN = 0.6;
+        const TimeSpan SPAN = 0.6;
         if (self().isFullScreen() && !DoomsdayApp::isGameLoaded())
         {
             quitX->set(-quitButton->rule().width() - Style::get().rules().rule("gap"), SPAN);
@@ -722,7 +722,7 @@ DE_PIMPL(ClientWindow)
 
         needRootSizeUpdate = false;
 
-        Vec2ui const size = contentXf.logicalRootSize(self().pixelSize());
+        const Vec2ui size = contentXf.logicalRootSize(self().pixelSize());
 
         // Tell the widgets.
         root.setViewSize(size);
@@ -730,7 +730,7 @@ DE_PIMPL(ClientWindow)
 
     void minimizeGame(bool mini)
     {
-        TimeSpan const SPAN = 1.0;
+        const TimeSpan SPAN = 1.0;
 
         if (mini && !isGameMini)
         {

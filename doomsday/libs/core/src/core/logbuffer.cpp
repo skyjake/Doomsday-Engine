@@ -34,7 +34,7 @@
 
 namespace de {
 
-TimeSpan const FLUSH_INTERVAL = .2; // seconds
+const TimeSpan FLUSH_INTERVAL = .2; // seconds
 
 DE_PIMPL(LogBuffer)
 {

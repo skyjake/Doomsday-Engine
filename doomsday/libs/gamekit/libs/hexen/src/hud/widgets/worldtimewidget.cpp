@@ -76,21 +76,21 @@ void guidata_worldtime_t::draw(const Vec2i &offset) const
 {
 #define LEADING         ( 0.5 )
 
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(!ST_AutomapIsOpen(player())) return;
 
-    auto const secondsAsText = Stringf("%02i", d->seconds);
-    auto const minutesAsText = Stringf("%02i", d->minutes);
-    auto const hoursAsText   = Stringf("%02i", d->hours);
+    const auto secondsAsText = Stringf("%02i", d->seconds);
+    const auto minutesAsText = Stringf("%02i", d->minutes);
+    const auto hoursAsText   = Stringf("%02i", d->hours);
 
     FR_SetFont(font());
     FR_SetTracking(0);
     FR_SetColorAndAlpha(1, 1, 1, textOpacity);
 
-    dint const counterWidth = FR_TextWidth("00");
-    dint const spacerWidth  = FR_TextWidth(" : ");
-    dint const lineHeight   = FR_TextHeight("00");
+    const dint counterWidth = FR_TextWidth("00");
+    const dint spacerWidth  = FR_TextWidth(" : ");
+    const dint lineHeight   = FR_TextHeight("00");
 
     dint x = -counterWidth;
     dint y = 0;
@@ -119,7 +119,7 @@ void guidata_worldtime_t::draw(const Vec2i &offset) const
 
     if(d->days)
     {
-        auto const daysAsText = Stringf("%02i", d->days) + " day" + DE_PLURAL_S(d->days);
+        const auto daysAsText = Stringf("%02i", d->days) + " day" + DE_PLURAL_S(d->days);
 
         y += lineHeight * LEADING;  // Extra padding.
 
@@ -152,9 +152,9 @@ void guidata_worldtime_t::updateGeometry()
     FR_SetFont(font());
     FR_SetTracking(0);
 
-    dint const counterWidth = FR_TextWidth("00");
-    dint const spacerWidth  = FR_TextWidth(" : ");
-    dint const lineHeight   = FR_TextHeight("00");
+    const dint counterWidth = FR_TextWidth("00");
+    const dint spacerWidth  = FR_TextWidth(" : ");
+    const dint lineHeight   = FR_TextHeight("00");
 
     dint x = -(counterWidth * 2 + spacerWidth * 3);
     dint y = lineHeight;

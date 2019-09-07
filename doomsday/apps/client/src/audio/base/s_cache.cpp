@@ -41,15 +41,15 @@ namespace audio {
 
 // The cached samples are stored in a hash. When a sample is purged, its data will stay
 // in the hash (sample lengths needed by the Logical Sound Manager).
-static dint const CACHE_HASH_SIZE  = 64;
+static const dint CACHE_HASH_SIZE  = 64;
 
-static timespan_t const PURGE_TIME = 10 * TICSPERSEC;
+static const timespan_t PURGE_TIME = 10 * TICSPERSEC;
 
 // 1 Mb = about 12 sec of 44KHz 16bit sound in the cache.
-static dint const MAX_CACHE_KB     = 4096;
+static const dint MAX_CACHE_KB     = 4096;
 
 // Even one minute of silence is quite a long time during gameplay.
-static dint const MAX_CACHE_TICS   = TICSPERSEC * 60 * 4;  // 4 minutes.
+static const dint MAX_CACHE_TICS   = TICSPERSEC * 60 * 4;  // 4 minutes.
 
 #if 0
 /**
@@ -138,7 +138,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, const void *src,
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
-                dshort const first = U8_S16(*sp);
+                const dshort first = U8_S16(*sp);
 
                 *dp++ = first;
                 *dp++ = (first + U8_S16(sp[1])) >> 1;
@@ -175,7 +175,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, const void *src,
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
-                duchar const mid = (*sp + sp[1]) >> 1;
+                const duchar mid = (*sp + sp[1]) >> 1;
 
                 *dp++ = *sp;
                 *dp++ = (*sp + mid) >> 1;
@@ -194,9 +194,9 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, const void *src,
 
             for (int i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
-                dshort const first = U8_S16(*sp);
-                dshort const last  = U8_S16(sp[1]);
-                dshort const mid   = (first + last) >> 1;
+                const dshort first = U8_S16(*sp);
+                const dshort last  = U8_S16(sp[1]);
+                const dshort mid   = (first + last) >> 1;
 
                 *dp++ = first;
                 *dp++ = (first + mid) >> 1;
@@ -215,7 +215,7 @@ static void resample(void *dst, dint dstBytesPer, dint dstRate, const void *src,
 
             for (dint i = 0; i < srcNumSamples - 1; ++i, sp++)
             {
-                dshort const mid = (*sp + sp[1]) >> 1;
+                const dshort mid = (*sp + sp[1]) >> 1;
 
                 *dp++ = *sp;
                 *dp++ = (*sp + mid) >> 1;
@@ -262,7 +262,7 @@ void configureSample(sfxsample_t &smp, const void *data, duint size,
 
 #if 0
     // Apply the upsample factor.
-    dint const rsfactor = upsampleFactor(rate);
+    const dint rsfactor = upsampleFactor(rate);
     smp.rate       *= rsfactor;
     smp.numSamples *= rsfactor;
     smp.size       *= rsfactor;
@@ -506,7 +506,7 @@ void SfxSampleCache::maybeRunPurge()
 #endif
 
     // Is it time for a purge?
-    dint const nowTime = Timer_Ticks();
+    const dint nowTime = Timer_Ticks();
     if (nowTime - d->lastPurge < PURGE_TIME) return;  // No.
 
     d->lastPurge = nowTime;
@@ -529,7 +529,7 @@ void SfxSampleCache::maybeRunPurge()
         totalSize += it->sample.size + sizeof(*it);
     }
 
-    dint const maxSize = MAX_CACHE_KB * 1024;
+    const dint maxSize = MAX_CACHE_KB * 1024;
     dint lowHits = 0;
     CacheItem *lowest;
     while(totalSize > maxSize)

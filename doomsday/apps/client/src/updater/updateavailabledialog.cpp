@@ -112,10 +112,10 @@ DE_GUI_PIMPL(UpdateAvailableDialog)
 
         latestVersion = latest;
 
-        Version const currentVersion = Version::currentBuild();
-        String const channel = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" :
+        const Version currentVersion = Version::currentBuild();
+        const String channel = (UpdaterSettings().channel() == UpdaterSettings::Stable? "stable" :
                                 UpdaterSettings().channel() == UpdaterSettings::Unstable? "unstable" : "RC/stable");
-        String const builtInType = CString(DOOMSDAY_RELEASE_TYPE).lower();
+        const String builtInType = CString(DOOMSDAY_RELEASE_TYPE).lower();
         bool askUpgrade    = false;
         bool askDowngrade  = false;
 

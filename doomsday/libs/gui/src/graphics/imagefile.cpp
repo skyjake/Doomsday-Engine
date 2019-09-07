@@ -162,7 +162,7 @@ Image ImageFile::image() const
         }
         else if (d->filter == Multiply)
         {
-            String const refPath = d->filterSource().path().fileNamePath();
+            const String refPath = d->filterSource().path().fileNamePath();
             Image factorImg = App::rootFolder().locate<ImageFile const>
                     (refPath / d->filterParameter).image();
 

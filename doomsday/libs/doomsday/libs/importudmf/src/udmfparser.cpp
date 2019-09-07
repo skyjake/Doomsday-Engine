@@ -50,7 +50,7 @@ void UDMFParser::parse(const String &input)
     {
         if (_range.lastToken().equals(UDMFLex::BRACKET_OPEN))
         {
-            String const blockType = _range.firstToken().str().lower();
+            const String blockType = _range.firstToken().str().lower();
 
             Block block;
             parseBlock(block);
@@ -113,7 +113,7 @@ void UDMFParser::parseAssignment(Block &block)
                           _range.token(1).asText());
     }
 
-    String const identifier = _range.firstToken().str().lower();
+    const String identifier = _range.firstToken().str().lower();
     const Token &valueToken = _range.token(2);
 
     // Store the assigned value into a variant.

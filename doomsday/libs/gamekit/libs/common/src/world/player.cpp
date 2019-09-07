@@ -1226,7 +1226,7 @@ D_CMD(SpawnMobj)
 void Player_LeaveMap(player_t *player, dd_bool newHub)
 {
     DE_ASSERT(player);
-    int const plrNum = player - players;
+    const int plrNum = player - players;
 #if !__JHEXEN__
     DE_UNUSED(newHub);
 #endif
@@ -1235,7 +1235,7 @@ void Player_LeaveMap(player_t *player, dd_bool newHub)
 
 #if __JHEXEN__
     // Remember if flying.
-    int const flightPower = player->powers[PT_FLIGHT];
+    const int flightPower = player->powers[PT_FLIGHT];
 #endif
 
 #if __JHERETIC__
@@ -1360,7 +1360,7 @@ angle_t Player_ViewYawAngle(int playerNum)
 void player_s::write(writer_s *writer, playerheader_t &plrHdr) const
 {
 #if __JDOOM64__ || __JHERETIC__ || __JHEXEN__
-    int const plrnum = P_GetPlayerNum(this);
+    const int plrnum = P_GetPlayerNum(this);
 #endif
 
     player_t temp, *p = &temp;
@@ -1540,7 +1540,7 @@ void player_s::write(writer_s *writer, playerheader_t &plrHdr) const
 
 void player_s::read(reader_s *reader, playerheader_t &plrHdr)
 {
-    int const plrnum = P_GetPlayerNum(this);
+    const int plrnum = P_GetPlayerNum(this);
 
     byte ver = Reader_ReadByte(reader);
 
@@ -1826,7 +1826,7 @@ void Player_PostTick(player_t *player)
 {
     if(!player->plr->inGame) return;
 
-    int const console = player - players;
+    const int console = player - players;
 
     // Update the game status cvars for player data.
     if(console == CONSOLEPLAYER)
@@ -1885,7 +1885,7 @@ void Player_UpdateStatusCVars(const player_t *player)
 
     // Armor.
 #if __JHEXEN__
-    int const armorPoints = FixedDiv(PCLASS_INFO(player->class_)->autoArmorSave
+    const int armorPoints = FixedDiv(PCLASS_INFO(player->class_)->autoArmorSave
                                      + player->armorPoints[ARMOR_ARMOR]
                                      + player->armorPoints[ARMOR_SHIELD]
                                      + player->armorPoints[ARMOR_HELMET]
@@ -2059,7 +2059,7 @@ void Player_UpdateStatusCVars(const player_t *player)
         /* IIT_PUZZGEAR4 */         { "player-artifact-gear4", CVAR_DELIM },
 #  endif
     };
-    int const plrNum = player - players;
+    const int plrNum = player - players;
     for(int i = IIT_FIRST; i < NUM_INVENTORYITEM_TYPES; ++i)
     {
         //String cvarName = String("player-artifact-%1").arg(invItemIds[i - 1]);

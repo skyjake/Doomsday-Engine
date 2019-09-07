@@ -154,7 +154,7 @@ DrawList &DrawLists::find(const DrawListSpec &spec)
     DrawList *convertable = 0;
 
     // Find/create a list in the hash.
-    GLuint const  key  = spec.unit(TU_PRIMARY).getTextureGLName();
+    const GLuint key  = spec.unit(TU_PRIMARY).getTextureGLName();
     DrawListHash &hash = d->listHash(spec.group);
     const auto    keys = hash.equal_range(key);
     for (auto it = keys.first; it != keys.second; ++it)

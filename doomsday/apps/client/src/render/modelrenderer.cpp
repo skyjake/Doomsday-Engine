@@ -393,7 +393,7 @@ static Value *Function_StateAnimator_StartTimeline(Context &ctx, const Function:
 {
     render::StateAnimator &anim = animatorInstance(ctx);
     const render::Model &model = anim.model();
-    String const timelineName = args.first()->asText();
+    const String timelineName = args.first()->asText();
     if (model.timelines.contains(timelineName))
     {
         anim.scheduler().start(*model.timelines[timelineName],

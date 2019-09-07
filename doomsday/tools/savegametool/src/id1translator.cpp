@@ -244,7 +244,7 @@ void Id1Translator::convert(Path path)
     String saveName = path.lastSegment().toLowercaseString();
 
     d->openFile(path);
-    String const nativeFilePath = d->saveFile()->source()->as<NativeFile>().nativePath();
+    const String nativeFilePath = d->saveFile()->source()->as<NativeFile>().nativePath();
     std::unique_ptr<Reader> from(new Reader(*d->saveFile()));
 
     // Read and translate the game session metadata.

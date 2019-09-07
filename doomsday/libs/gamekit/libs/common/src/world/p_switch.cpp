@@ -301,11 +301,11 @@ void T_MaterialChanger(void *materialChangerThinker)
 
     if(!(--mchanger->timer))
     {
-        uint const sectionFlags = DMU_FLAG_FOR_SIDESECTION(mchanger->section);
+        const uint sectionFlags = DMU_FLAG_FOR_SIDESECTION(mchanger->section);
 
         P_SetPtrp(mchanger->side, sectionFlags | DMU_MATERIAL, mchanger->material);
 
-        int const sound =
+        const int sound =
 #if __JDOOM__ || __JDOOM64__
             SFX_SWTCHN;
 #elif __JHERETIC__
@@ -432,7 +432,7 @@ static int chooseDefaultSound(const switchlist_t *info)
 
 dd_bool P_ToggleSwitch2(Side *side, SideSection section, int sound, dd_bool silent, int tics)
 {
-    uint const sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
+    const uint sectionFlags = DMU_FLAG_FOR_SIDESECTION(section);
     world_Material *current = reinterpret_cast<world_Material *>
                               (P_GetPtrp(side, sectionFlags | DMU_MATERIAL));
 

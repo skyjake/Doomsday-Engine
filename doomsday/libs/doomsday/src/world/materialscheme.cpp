@@ -66,7 +66,7 @@ MaterialManifest &MaterialScheme::declare(const Path &path)
         throw InvalidPathError("MaterialScheme::declare", "Missing/zero-length path was supplied");
     }
 
-    int const sizeBefore = d->index.size();
+    const int sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
     DE_ASSERT(newManifest);
 

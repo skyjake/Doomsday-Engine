@@ -106,7 +106,7 @@ void CVarToggleWidget_UpdateCVar(Widget &wi, Widget::Action action)
     }
 
     int value;
-    if(int const valueMask = tog->cvarValueMask())
+    if(const int valueMask = tog->cvarValueMask())
     {
         value = Con_GetInteger(tog->cvarPath());
         if(tog->isDown())

@@ -466,7 +466,7 @@ String FileSystem::accessNativeLocation(const NativePath &nativePath, Flags flag
     f.setMode(flags);
     return f.path();
 
-    /*    String const path = folders / nativePath.fileNamePath().fileName();
+    /*    const String path = folders / nativePath.fileNamePath().fileName();
     if (!fs.root().has(path))
     {
         Flags feedFlags = DirectoryFeed::OnlyThisFolder;

@@ -229,14 +229,14 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, const Point
 
     // Draw the text.
     DGL_Enable(DGL_TEXTURE_2D);
-    Point2Raw const textOffset = {{{BORDER, BORDER}}};
+    const Point2Raw textOffset = {{{BORDER, BORDER}}};
     FR_DrawText(label, &textOffset);
     DGL_Disable(DGL_TEXTURE_2D);
 
     // Mark expired?
     if (button.bindContextAssociation() & InputControl::Expired)
     {
-        int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
+        const int markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
         DGL_Color3fv(expiredMarkColor);
         DGL_Begin(DGL_TRIANGLES);
@@ -249,7 +249,7 @@ void Rend_RenderButtonStateVisual(InputDevice &device, int buttonID, const Point
     // Mark triggered?
     if (button.bindContextAssociation() & InputControl::Triggered)
     {
-        int const markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
+        const int markSize = .5f + de::min(textGeom.width(), textGeom.height()) / 3.f;
 
         DGL_Color3fv(triggeredMarkColor);
         DGL_Begin(DGL_TRIANGLES);

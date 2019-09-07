@@ -201,7 +201,7 @@ void N_ClearMessages()
 {
     if(!msgMutex) return;  // Not initialized yet.
 
-    dfloat const oldSim = ::netSimulatedLatencySeconds;
+    const dfloat oldSim = ::netSimulatedLatencySeconds;
 
     // No simulated latency now.
     ::netSimulatedLatencySeconds = 0;
@@ -360,7 +360,7 @@ void N_PrintBufferInfo()
 {
     N_PrintTransmissionStats();
 
-    double const loopRate = Loop::get().rate();
+    const double loopRate = Loop::get().rate();
     if (loopRate > 0)
     {
         LOG_NET_MSG("Event loop frequency: up to %.1f Hz") << loopRate;
@@ -373,9 +373,9 @@ void N_PrintBufferInfo()
 
 void N_PrintTransmissionStats()
 {
-    auto const dataBytes = Socket::sentUncompressedBytes();
-    auto const outBytes  = Socket::sentBytes();
-    auto const outRate   = Socket::outputBytesPerSecond();
+    const auto dataBytes = Socket::sentUncompressedBytes();
+    const auto outBytes  = Socket::sentBytes();
+    const auto outRate   = Socket::outputBytesPerSecond();
 
     if (outBytes == 0)
     {

@@ -146,9 +146,9 @@ void SBarBackground_Drawer(HudWidget *wi, const Point2Raw *offset)
 
     float x = ORIGINX, y  = ORIGINY, w = WIDTH, h = HEIGHT;
 
-    int const activeHud     = ST_ActiveHud(wi->player());
-    //float const textOpacity = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
-    float const iconOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
+    const int activeHud     = ST_ActiveHud(wi->player());
+    //const float textOpacity = (fullscreen == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
+    const float iconOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
 
     float cw, cw2, ch;
 
@@ -419,7 +419,7 @@ int ST_Responder(event_t *ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    dd_bool const isSharpTic = DD_IsSharpTick();
+    const dd_bool isSharpTic = DD_IsSharpTick();
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
@@ -502,8 +502,8 @@ static void drawUIWidgetsForPlayer(player_t *plr)
 
 #define DISPLAY_BORDER      (2) /// Units in fixed 320x200 screen space.
 
-    int const localPlayer   = plr - players;
-    int const displayMode = ST_ActiveHud(localPlayer);
+    const int localPlayer   = plr - players;
+    const int displayMode = ST_ActiveHud(localPlayer);
     hudstate_t *hud       = &hudStates[localPlayer];
 
     Size2Raw portSize;    R_ViewPortSize  (localPlayer, &portSize);
@@ -541,7 +541,7 @@ static void drawUIWidgetsForPlayer(player_t *plr)
 
         if(hud->statusbarActive)
         {
-            float const statusbarOpacity = (1 - hud->hideAmount) * hud->showBar;
+            const float statusbarOpacity = (1 - hud->hideAmount) * hud->showBar;
 
             HudWidget &sbGroup = GUI_FindWidgetById(hud->groupIds[UWG_STATUSBAR]);
             sbGroup.setOpacity(statusbarOpacity);
@@ -1294,7 +1294,7 @@ static int parseMacroId(const String &str) // static
     if(!str.isEmpty())
     {
         bool isNumber = false;
-        int const id  = str.toInt(&isNumber);
+        const int id  = str.toInt(&isNumber);
         if(isNumber && id >= 0 && id <= 9)
         {
             return id;
@@ -1311,7 +1311,7 @@ static int parseTeamNumber(const String &str)
     if(!str.isEmpty())
     {
         bool isNumber = false;
-        int const num = str.toInt(&isNumber);
+        const int num = str.toInt(&isNumber);
         if(isNumber && num >= 0 && num <= NUMTEAMS)
         {
             return num;
@@ -1353,7 +1353,7 @@ D_CMD(ChatAction)
     ChatWidget *chat = ST_TryFindChatWidget(CONSOLEPLAYER);
     if(!chat || !chat->isActive()) return false;
 
-    auto const cmd = String(argv[0] + 4);
+    const auto cmd = String(argv[0] + 4);
     if(!cmd.compareWithoutCase("complete")) // Send the message.
     {
         return chat->handleMenuCommand(MCMD_SELECT);

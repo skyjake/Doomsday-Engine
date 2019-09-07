@@ -55,7 +55,7 @@ void guidata_healthicon_t::tick(timespan_t /*elapsed*/)
 
 void guidata_healthicon_t::draw(const Vec2i &offset) const
 {
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(!::cfg.hudShown[HUD_HEALTH]) return;
     if(ST_AutomapIsOpen(player()) && ::cfg.common.automapHudDisplay == 0) return;

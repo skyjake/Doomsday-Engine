@@ -29,7 +29,7 @@
 
 using namespace de;
 
-static String const VAR_ORDER = "order";
+static const String VAR_ORDER = "order";
 
 DE_PIMPL(DEDRegister)
 , DE_OBSERVES(Record, Deletion)

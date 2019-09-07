@@ -234,7 +234,7 @@ void BindContext::activate(bool yes)
 void BindContext::acquire(int deviceId, bool yes)
 {
     DE_ASSERT(deviceId >= 0 && deviceId < NUM_INPUT_DEVICES);
-    int const countBefore = d->acquireDevices.size();
+    const int countBefore = d->acquireDevices.size();
 
     if (yes) d->acquireDevices.insert(deviceId);
     else     d->acquireDevices.remove(deviceId);
@@ -479,7 +479,7 @@ bool BindContext::tryEvent(const ddevent_t &event, bool respectHigherContexts) c
     if (d->fallbackResponder)
     {
         event_t ev;
-        if (/*bool const validGameEvent =*/ InputSystem::convertEvent(event, ev))
+        if (/*const bool validGameEvent =*/ InputSystem::convertEvent(event, ev))
         {
             if (d->fallbackResponder(&ev))
                 return true;

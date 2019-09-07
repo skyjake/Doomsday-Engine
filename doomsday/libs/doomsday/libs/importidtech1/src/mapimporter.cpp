@@ -913,7 +913,7 @@ DE_PIMPL(MapImporter)
         }
 
         LineDef *line = &lines[ polyLines.first() ];
-        dint8 const sequenceType = line->xArgs[3];
+        const dint8 sequenceType = line->xArgs[3];
 
         // Setup the mirror if it exists.
         line->xArgs[1] = line->xArgs[2];
@@ -934,7 +934,7 @@ DE_PIMPL(MapImporter)
                 // A polyobj anchor?
                 if(i->doomEdNum == PO_ANCHOR_DOOMEDNUM)
                 {
-                    dint const tag = i->angle;
+                    const dint tag = i->angle;
                     findAndCreatePolyobj(tag, i->origin[VX], i->origin[VY]);
                 }
             }
@@ -946,7 +946,7 @@ DE_PIMPL(MapImporter)
     void transferVertexes()
     {
         LOGDEV_MAP_XVERBOSE("Transfering vertexes...", "");
-        dint const numVertexes = vertexCount();
+        const dint numVertexes = vertexCount();
         dint *indices = new dint[numVertexes];
         for(int i = 0; i < numVertexes; ++i)
         {
@@ -1186,7 +1186,7 @@ MapImporter::MapImporter(const Id1MapRecognizer &recognized)
         if(!elemSize) continue;
 
         // Process this data lump.
-        duint const elemCount = lumpLength / elemSize;
+        const duint elemCount = lumpLength / elemSize;
         ByteRefArray lumpData(lump->cache(), lumpLength);
         de::Reader reader(lumpData);
         reader.setVersion(d->format);

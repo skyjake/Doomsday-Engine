@@ -229,7 +229,7 @@ DE_GUI_PIMPL(ModelAssetEditor)
             return nullptr;
         }
 
-        int const idNum = idNumber();
+        const int idNum = idNumber();
         if (isWeaponAsset())
         {
             auto &weaponAnim = ClientApp::player(idNum).playerWeaponAnimator();

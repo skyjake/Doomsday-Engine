@@ -166,8 +166,8 @@ static void drawUIWidgetsForPlayer(player_t* plr)
 
     DE_ASSERT(plr);
 
-    int const playerId    = (plr - players);
-    int const hudMode     = ST_ActiveHud(playerId);
+    const int playerId    = (plr - players);
+    const int hudMode     = ST_ActiveHud(playerId);
     hudstate_t* hud       = &hudStates[playerId];
 
     Size2Raw portSize;    R_ViewPortSize(playerId, &portSize);
@@ -558,7 +558,7 @@ static int parseTeamNumber(const String &str)
     if(!str.isEmpty())
     {
         bool isNumber = false;
-        int const num = str.toInt(&isNumber);
+        const int num = str.toInt(&isNumber);
         if(isNumber && num >= 0 && num <= NUMTEAMS)
         {
             return num;
@@ -572,7 +572,7 @@ static int parseMacroId(const String &str) // static
     if(!str.isEmpty())
     {
         bool isNumber = false;
-        int const id  = str.toInt(&isNumber);
+        const int id  = str.toInt(&isNumber);
         if(isNumber && id >= 0 && id <= 9)
         {
             return id;
@@ -638,7 +638,7 @@ D_CMD(ChatAction)
     // TODO Design a more extensible and modular means of doing this
     if (chat && !chat->isActive())
     {
-        String const command = String(argv[0] + 4 /* ghetto substring */);
+        const String command = String(argv[0] + 4 /* ghetto substring */);
 
         if (command.compareWithoutCase("complete") == 0)
         {
@@ -821,7 +821,7 @@ int ST_Responder(event_t* ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    dd_bool const isSharpTic = DD_IsSharpTick();
+    const dd_bool isSharpTic = DD_IsSharpTick();
 
     for(int i = 0; i < MAXPLAYERS; ++i)
     {

@@ -316,7 +316,7 @@ DE_PIMPL(Bank)
                 fromCache.remove(*this);
                 cache = &toCache;
 
-                Path const itemPath = path(bank->d->sepChar);
+                const Path itemPath = path(bank->d->sepChar);
 
                 LOGDEV_RES_XVERBOSE("Item \"%s\" moved to %s cache",
                                     itemPath << Cache::formatAsText(toCache.format()));
@@ -679,7 +679,7 @@ DE_PIMPL(Bank)
     {
         if (toLevel < InMemory)
         {
-            Job::Task const task = (toLevel == InHotStorage && serialCache?
+            const Job::Task task = (toLevel == InHotStorage && serialCache?
                                     Job::Serialize : Job::Unload);
             beginJob(new Job(self(), task, path), importance);
         }
@@ -921,7 +921,7 @@ Bank::IData &Bank::data(const DotPath &path) const
     d->load(path, BeforeQueued);
     item.wait();
 
-    TimeSpan const waitTime = requestedAt.since();
+    const TimeSpan waitTime = requestedAt.since();
 
     item.lock();
     if (!item.data.get())

@@ -129,7 +129,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
     {
         bool valid = false;
 
-        String const entry = self().profileName();
+        const String entry = self().profileName();
         if (!entry.isEmpty())
         {
             if (editing && oldName == entry)
@@ -202,12 +202,12 @@ DE_GUI_PIMPL(CreateProfileDialog)
                     continue;
                 }
 
-                auto const maps = bundle->lumpDirectory()->findMapLumpNames();
+                const auto maps = bundle->lumpDirectory()->findMapLumpNames();
                 if (!maps.isEmpty())
                 {
                     mapItems << new ui::Item(ui::Item::Separator);
 
-                    String const wadName = Package::metadata(*pkgFile).gets(Package::VAR_TITLE);
+                    const String wadName = Package::metadata(*pkgFile).gets(Package::VAR_TITLE);
                     for (const String &mapId : maps)
                     {
                         // Only show each map identifier once; only the last lump can
@@ -224,7 +224,7 @@ DE_GUI_PIMPL(CreateProfileDialog)
             }
         }
 
-        auto const pos = mapItems.findData(TextValue(oldChoice));
+        const auto pos = mapItems.findData(TextValue(oldChoice));
         autoStartMap->setSelected(pos != ui::Data::InvalidPos? pos : 0);
     }
 

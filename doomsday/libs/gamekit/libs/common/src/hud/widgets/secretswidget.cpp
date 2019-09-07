@@ -55,7 +55,7 @@ void guidata_secrets_t::draw(const Vec2i &offset) const
 {
 #if !__JHEXEN__
 
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(_value == 1994) return;
 

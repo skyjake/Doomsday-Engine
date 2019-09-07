@@ -135,7 +135,7 @@ static dbyte loadParticleTexture(duint particleTex)
     try
     {
         // First check if there is a texture asset for this particle.
-        String const assetId = Stringf("texture.particle.%02i", particleTex);
+        const String assetId = Stringf("texture.particle.%02i", particleTex);
         if (App::assetExists(assetId))
         {
             auto asset = App::asset(assetId);
@@ -340,7 +340,7 @@ static dint listVisibleParticles(world::Map &map)
             if(!particlePVisible(pinfo)) continue;  // Skip.
 
             // Skip particles too far from, or near to, the viewer.
-            dfloat const dist = de::max(pointDist(pinfo.origin), 1.f);
+            const dfloat dist = de::max(pointDist(pinfo.origin), 1.f);
             if(gen.def->maxDist != 0 && dist > gen.def->maxDist) continue;
             if(dist < dfloat( ::particleNearLimit )) continue;
 
@@ -352,7 +352,7 @@ static dint listVisibleParticles(world::Map &map)
 
             // Determine what type of particle this is, as this will affect how
             // we go order our render passes and manipulate the render state.
-            dint const psType = gen.stages[pinfo.stage].type;
+            const dint psType = gen.stages[pinfo.stage].type;
             if(psType == PTC_POINT)
             {
                 ::hasPoints = true;
@@ -473,7 +473,7 @@ static void setupModelParamsForParticle(vissprite_t &spr, const ParticleInfo *pi
         else
 #endif
         {
-            Vec4f const color = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>()
+            const Vec4f color = pinfo->bspLeaf->subspace().subsector().as<world::ClientSubsector>()
                                        .lightSourceColorfIntensity();
 
             dfloat lightLevel = color.w;
@@ -525,8 +525,8 @@ static void drawParticles(dint rtype, bool withBlend)
     DE_ASSERT_GL_CONTEXT_ACTIVE();
 
     const viewdata_t *viewData = &viewPlayer->viewport();
-    Vec3f const leftoff     = viewData->upVec + viewData->sideVec;
-    Vec3f const rightoff    = viewData->upVec - viewData->sideVec;
+    const Vec3f leftoff     = viewData->upVec + viewData->sideVec;
+    const Vec3f rightoff    = viewData->upVec - viewData->sideVec;
 
     // Should we use a texture?
     DGLuint tex = 0;
@@ -629,7 +629,7 @@ static void drawParticles(dint rtype, bool withBlend)
         }
 
         // Where is intermark?
-        dfloat const inter = 1 - dfloat( pinfo.tics ) / stDef->tics;
+        const dfloat inter = 1 - dfloat( pinfo.tics ) / stDef->tics;
 
         // Calculate size and color.
         dfloat size = de::lerp(    stDef->particleRadius(slot->particleId),
@@ -646,14 +646,14 @@ static void drawParticles(dint rtype, bool withBlend)
             // range compression).
             if (world::ConvexSubspace *subspace = pinfo.bspLeaf->subspacePtr())
             {
-                dfloat const intensity = subspace->subsector().as<world::ClientSubsector>()
+                const dfloat intensity = subspace->subsector().as<world::ClientSubsector>()
                                             .lightSourceIntensity();
                 color *= Vec4f(intensity, intensity, intensity, 1);
             }
         }
 
-        dfloat const maxDist = gen->def->maxDist;
-        dfloat const dist    = order[i].distance;
+        const dfloat maxDist = gen->def->maxDist;
+        const dfloat dist    = order[i].distance;
 
         // Far diffuse?
         if(maxDist)
@@ -678,7 +678,7 @@ static void drawParticles(dint rtype, bool withBlend)
 
         DGL_Color4f(color.x, color.y, color.z, color.w);
 
-        bool const nearWall = (pinfo.contact && !pinfo.mov[0] && !pinfo.mov[1]);
+        const bool nearWall = (pinfo.contact && !pinfo.mov[0] && !pinfo.mov[1]);
 
         bool nearPlane = false;
         if (world::ConvexSubspace *space = pinfo.bspLeaf->subspacePtr())
@@ -756,7 +756,7 @@ static void drawParticles(dint rtype, bool withBlend)
                                   contact.direction().data().baseAs<ddouble>());
 
                 // Move away from the wall to avoid the worst Z-fighting.
-                ddouble const gap = -1;  // 1 map unit.
+                const ddouble gap = -1;  // 1 map unit.
                 ddouble diff[2], dist;
                 V2d_Subtract(diff, projected, origin);
                 if((dist = V2d_Length(diff)) != 0)

@@ -350,7 +350,7 @@ Reader &Reader::operator >> (FixedByteArray &fixedByteArray)
      * because the destination byte array is not guaranteed to be
      * a memory buffer where you can copy the contents directly.
      */
-    dsize const size = fixedByteArray.size();
+    const dsize size = fixedByteArray.size();
     Block data(size);
     d->readBytes(data.data(), size);
     fixedByteArray.set(0, data.cdata(), size);
@@ -439,7 +439,7 @@ void Reader::seek(IByteArray::Delta count)
         throw SeekError("Reader::seek", "Cannot seek when reading from a stream");
     }
 
-    auto const seeked = IByteArray::Offset(IByteArray::Delta(d->offset) + count);
+    const auto seeked = IByteArray::Offset(IByteArray::Delta(d->offset) + count);
     if (seeked >= d->source->size())
     {
         throw IByteArray::OffsetError("Reader::seek", "Seek past bounds of source data");

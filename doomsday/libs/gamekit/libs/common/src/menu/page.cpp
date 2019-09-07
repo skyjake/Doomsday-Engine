@@ -417,8 +417,8 @@ static inline String subpageText(int page = 0, int totalPages = 0)
 
 static void drawNavigation(Vec2i const origin)
 {
-    int const currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
-    int const totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
+    const int currentPage = 0;//(page->firstObject + page->numVisObjects/2) / page->numVisObjects + 1;
+    const int totalPages  = 1;//(int)ceil((float)page->objectsCount/page->numVisObjects);
 #if __JDOOM__ || __JDOOM64__
     DE_UNUSED(currentPage);
 #endif
@@ -767,7 +767,7 @@ void Page::setPredefinedFont(mn_page_fontid_t id, fontid_t fontId)
 Vec3f Page::predefinedColor(mn_page_colorid_t id)
 {
     DE_ASSERT(VALID_MNPAGE_COLORID(id));
-    uint const colorIndex = d->colors[id];
+    const uint colorIndex = d->colors[id];
     return Vec3f(cfg.common.menuTextColors[colorIndex]);
 }
 

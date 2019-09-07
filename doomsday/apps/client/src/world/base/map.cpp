@@ -169,7 +169,7 @@ DE_PIMPL(Map)
         std::array<Generator *, MAX_GENERATORS> activeGens;
 
         // We can link 64 generators each into four lists each before running out of links.
-        static dint const LINKSTORE_SIZE = 4 * MAX_GENERATORS;
+        static const dint LINKSTORE_SIZE = 4 * MAX_GENERATORS;
         ListNode *linkStore = nullptr;
         duint linkStoreCursor = 0;
 
@@ -904,7 +904,7 @@ DE_PIMPL(Map)
      */
     void linkMobjToLines(mobj_t &mob)
     {
-        AABoxd const box = Mobj_Bounds(mob);
+        const AABoxd box = Mobj_Bounds(mob);
 
         // Get a new root node.
         mob.lineRoot = NP_New(&mobjNodes, NP_ROOT_NODE);
@@ -1592,7 +1592,7 @@ void Map::initLightGrid()
 
     // Diagonal in maze arrangement of natural numbers.
     // Up to 65 samples per-block(!)
-    static dint const MSFACTORS = 7;
+    static const dint MSFACTORS = 7;
     static dint multisample[] = { 1, 5, 9, 17, 25, 37, 49, 65 };
 
     // Time to initialize the LightGrid?
@@ -1609,7 +1609,7 @@ void Map::initLightGrid()
 
     // Determine how many subsector samples we'll make per block and
     // allocate the tempoary storage.
-    dint const numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
+    const dint numSamples = multisample[de::clamp(0, lgMXSample, MSFACTORS)];
     List<Vec2d> samplePoints(numSamples);
     List<dint>     sampleHits(numSamples);
 
@@ -1680,7 +1680,7 @@ void Map::initLightGrid()
     for (dint y = 0; y < lg.dimensions().y; ++y)
     for (dint x = 0; x < lg.dimensions().x; ++x)
     {
-        LightGrid::Index const blk = lg.toIndex(x, y);
+        const LightGrid::Index blk = lg.toIndex(x, y);
         Vec2d const off(x * lg.blockSize(), y * lg.blockSize());
 
         dint sampleOffset = 0;
@@ -1752,7 +1752,7 @@ void Map::initLightGrid()
         /// still require it.
         ///
         /// For now we'll make use of it to clarify the code.
-        dint const sampleOffset = lg.toIndex(x, y) * numSamples;
+        const dint sampleOffset = lg.toIndex(x, y) * numSamples;
         for (dint i = 0; i < numSamples; ++i)
         {
             blkSampleSubsectors[i] = ssamples[i + sampleOffset];
@@ -1824,7 +1824,7 @@ void Map::initBias()
 
     if (hasManifest())
     {
-        String const oldUniqueId = manifest().composeUniqueId(App_CurrentGame());
+        const String oldUniqueId = manifest().composeUniqueId(App_CurrentGame());
         auto &defs = *DED_Definitions();
 
         // Load light sources from Light definitions.
@@ -1888,16 +1888,16 @@ void Map::initRadio()
             AABoxd bounds = line->bounds();
 
             // Use the extended points, they are wider than inoffsets.
-            Vec2d const sv0 = vtx0.origin() + vo0->extendedShadowOffset();
+            const Vec2d sv0 = vtx0.origin() + vo0->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv0.x, sv0.y);
 
-            Vec2d const sv1 = vtx1.origin() + vo1->extendedShadowOffset();
+            const Vec2d sv1 = vtx1.origin() + vo1->extendedShadowOffset();
             V2d_AddToBoxXY(bounds.arvec2, sv1.x, sv1.y);
 
             // Link the shadowing line to all the subspaces whose axis-aligned bounding box
             // intersects 'bounds'.
             ::validCount++;
-            dint const localValidCount = ::validCount;
+            const dint localValidCount = ::validCount;
             subspaceBlockmap().forAllInBox(bounds, [&bounds, &side, &localValidCount] (void *object)
             {
                 auto &sub = *(ConvexSubspace *)object;
@@ -2612,7 +2612,7 @@ LoopResult Map::forAllLinesInBox(const AABoxd &box, dint flags, std::function<Lo
     // Process polyobj lines?
     if ((flags & LIF_POLYOBJ) && polyobjCount())
     {
-        dint const localValidCount = validCount;
+        const dint localValidCount = validCount;
         result = polyobjBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
         {
             auto &pob = *reinterpret_cast<Polyobj *>(object);
@@ -2636,7 +2636,7 @@ LoopResult Map::forAllLinesInBox(const AABoxd &box, dint flags, std::function<Lo
     // Process sector lines?
     if (!result && (flags & LIF_SECTOR))
     {
-        dint const localValidCount = validCount;
+        const dint localValidCount = validCount;
         result = lineBlockmap().forAllInBox(box, [&func, &localValidCount] (void *object)
         {
             auto &line = *reinterpret_cast<Line *>(object);
@@ -2740,8 +2740,8 @@ void Map::initSkyFix()
     {
         if (!sector->sideCount()) continue;
 
-        bool const skyFloor = sector->floor  ().surface().hasSkyMaskedMaterial();
-        bool const skyCeil  = sector->ceiling().surface().hasSkyMaskedMaterial();
+        const bool skyFloor = sector->floor  ().surface().hasSkyMaskedMaterial();
+        const bool skyCeil  = sector->ceiling().surface().hasSkyMaskedMaterial();
 
         if (!skyFloor && !skyCeil) continue;
 
@@ -2902,7 +2902,7 @@ LoopResult Map::forAllGeneratorsInSector(const Sector &sector, const std::functi
 {
     if (sector.mapPtr() == this)  // Ignore 'alien' sectors.
     {
-        duint const listIndex = sector.indexInMap();
+        const duint listIndex = sector.indexInMap();
 
         Impl::Generators &gens = d->getGenerators();
         for (Impl::Generators::ListNode *it = gens.lists[listIndex]; it; it = it->next)
@@ -3159,7 +3159,7 @@ void Map::restoreObjects(const Info &objState, const IThinkerMapping &thinkerMap
             ++i)
     {
         const Info::BlockElement &state = (*i)->as<Info::BlockElement>();
-        Id::Type const privateId = state.name().toUInt32();
+        const Id::Type privateId = state.name().toUInt32();
         DE_ASSERT(privateId != 0);
 
         if (thinker_t *th = thinkerMapping.thinkerForPrivateId(privateId))
@@ -3261,7 +3261,7 @@ void Map::deserializeInternalState(Reader &from, const IThinkerMapping &thinkerM
             duint32 size = 0;
             from >> size;
 
-            auto const nextOffset = from.offset() + size;
+            const auto nextOffset = from.offset() + size;
 
             //qDebug() << "Found serialized internal state for private ID" << id.asText() << "size" << size;
 
@@ -3358,7 +3358,7 @@ void Map::worldSystemFrameBegins(bool resetNextViewer)
 /// @return  @c false= Continue iteration.
 static dint expireClMobjsWorker(mobj_t *mob, void *context)
 {
-    duint const nowTime = *static_cast<duint *>(context);
+    const duint nowTime = *static_cast<duint *>(context);
 
     // Already deleted?
     if (mob->thinker.function == (thinkfunc_t)-1)

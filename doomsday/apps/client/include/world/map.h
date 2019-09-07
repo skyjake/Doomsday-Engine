@@ -129,10 +129,10 @@ public:
      * Constants:
      */
 #ifdef __CLIENT__
-    static de::dint const MAX_BIAS_SOURCES = 8 * 32;  // Hard limit due to change tracking.
+    static const de::dint MAX_BIAS_SOURCES = 8 * 32;  // Hard limit due to change tracking.
 
     /// Maximum number of generators per map.
-    static de::dint const MAX_GENERATORS = 512;
+    static const de::dint MAX_GENERATORS = 512;
 
     typedef Set<Plane *> PlaneSet;
     typedef Set<Surface *> SurfaceSet;

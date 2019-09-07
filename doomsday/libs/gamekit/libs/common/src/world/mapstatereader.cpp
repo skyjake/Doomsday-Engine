@@ -339,7 +339,7 @@ DE_PIMPL(MapStateReader)
 #if __JHEXEN__
         beginSegment(ASEG_POLYOBJS);
 
-        int const writtenPolyobjCount = Reader_ReadInt32(reader);
+        const int writtenPolyobjCount = Reader_ReadInt32(reader);
         DE_ASSERT(writtenPolyobjCount == numpolyobjs);
         for (int i = 0; i < writtenPolyobjCount; ++i)
         {
@@ -515,7 +515,7 @@ DE_PIMPL(MapStateReader)
 #define PRE_VER5_END_SPECIALS  7
 #endif
 
-        bool const formatHasStasisInfo = (mapVersion >= 6);
+        const bool formatHasStasisInfo = (mapVersion >= 6);
 
 #if __JHEXEN__
         if (mapVersion < 4)
@@ -624,7 +624,7 @@ DE_PIMPL(MapStateReader)
             // Private identifier of the thinker.
             if (saveVersion >= 15)
             {
-                Id::Type const privateId = Reader_ReadUInt32(reader);
+                const Id::Type privateId = Reader_ReadUInt32(reader);
                 archivedThinkerIds.insert(privateId, th);
             }
 

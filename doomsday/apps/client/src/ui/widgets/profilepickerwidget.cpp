@@ -270,7 +270,7 @@ void ProfilePickerWidget::remove()
     if (!dlg->exec(root())) return;
 
     // We've got the permission.
-    String const profToDelete = d->currentProfile();
+    const String profToDelete = d->currentProfile();
 
     items().remove(selected());
 

@@ -117,7 +117,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
     {
         Font::RichFormatRef rich = format.subRange(range);
         Font::RichFormat::Iterator iter(rich);
-        int const origIndent = indent;
+        const int origIndent = indent;
         while (iter.hasNext())
         {
             iter.next();
@@ -239,7 +239,7 @@ DE_PIMPL_NOREF(FontLineWrapping)
         mb_iterator end = begin;
         while (end != text.end() && *end != NEWLINE)
         {
-            int const charWidth = rangeAdvanceWidth({end, end + 1});
+            const int charWidth = rangeAdvanceWidth({end, end + 1});
             if (width + charWidth > availableWidth)
             {
                 // Does not fit any more.
@@ -446,8 +446,8 @@ DE_PIMPL_NOREF(FontLineWrapping)
             for (int k = 0; k < line->info.segs.sizei(); ++k)
             {
                 const LineInfo::Segment &seg = line->info.segs[k];
-                int const tab = seg.tabStop;
-                int const stopWidth = (tab >= 0? stopMaxWidths[tab] : seg.width);
+                const int tab = seg.tabStop;
+                const int stopWidth = (tab >= 0? stopMaxWidths[tab] : seg.width);
 
                 if (curLeft + stopWidth >= maxWidth)
                 {
@@ -712,7 +712,7 @@ int FontLineWrapping::totalHeightInPixels() const
 
     if (!d->font) return 0;
 
-    int const lines = height();
+    const int lines = height();
     int pixels = 0;
 
     if (lines > 1)

@@ -626,7 +626,7 @@ D_CMD(InspectSector)
     }
 
     // Find the sector.
-    dint const index  = String(argv[1]).toInt();
+    const dint index  = String(argv[1]).toInt();
     const Sector *sec = App_World().map().sectorPtr(index);
     if (!sec)
     {

@@ -395,7 +395,7 @@ static dd_bool Con_CheckExecBuffer(void)
 
     storage[255] = 0;
 
-    TimeSpan const now = TimeSpan::sinceStartOfProcess();
+    const TimeSpan now = TimeSpan::sinceStartOfProcess();
 
     // Execute the commands whose time has come.
     for (i = 0; i < exBuffSize; ++i)
@@ -410,7 +410,7 @@ static dd_bool Con_CheckExecBuffer(void)
         ptr->used = false;
         strncpy(storage, ptr->subCmd, BUFFSIZE - 1);
 
-        bool const isInteractive =
+        const bool isInteractive =
                 (ptr->source == CMDS_CONSOLE ||
                  ptr->source == CMDS_CMDLINE);
         if (isInteractive)
@@ -891,7 +891,7 @@ bool Con_Parse(const File &file, bool silently)
     for (const auto &lineRef : contents.splitRef("\n"))
     {
         // Each line is a command.
-        String const line = String(lineRef).leftStrip();
+        const String line = String(lineRef).leftStrip();
         if (!line.isEmpty() && line.first() != '#')
         {
             // Execute the commands silently.

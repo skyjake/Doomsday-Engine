@@ -27,9 +27,9 @@ using namespace de;
 
 namespace defn {
 
-static String const VAR_TEXTURE = "texture";
-static String const VAR_FLAGS   = "flags";
-static String const VAR_LIGHT   = "light";
+static const String VAR_TEXTURE = "texture";
+static const String VAR_FLAGS   = "flags";
+static const String VAR_LIGHT   = "light";
 
 void Decoration::resetToDefaults()
 {

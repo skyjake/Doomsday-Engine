@@ -62,7 +62,7 @@ String Material::Layer::describe() const
 
 String Material::Layer::description() const
 {
-    int const numStages = stageCount();
+    const int numStages = stageCount();
     String str = _E(b) + describe() + _E(.) + " (" + String::asText(numStages) + " stage" + DE_PLURAL_S(numStages) + "):";
     for (int i = 0; i < numStages; ++i)
     {

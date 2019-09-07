@@ -81,7 +81,7 @@ DE_PIMPL(Environment)
             << (event == filesys::AssetObserver::Added ? "available" : "unavailable");
 
         // Register available reflection maps.
-        String const mapId = identifier.substr(BytePos(16)).lower();
+        const String mapId = identifier.substr(BytePos(16)).lower();
         switch (event)
         {
         case filesys::AssetObserver::Added:
@@ -159,7 +159,7 @@ DE_PIMPL(Environment)
 
         release();
 
-        String const mapId = ClientApp::world().map().id().lower();
+        const String mapId = ClientApp::world().map().id().lower();
 
         // Check which reflection maps are available for the new map.
         auto found = maps.find(mapId);

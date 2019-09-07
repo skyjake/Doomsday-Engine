@@ -230,7 +230,7 @@ public:
         *this = *this / length() * len;
     }
     Vector2 normalize() const {
-        ddouble const len = length();
+        const ddouble len = length();
         if (!fequal(len, 0.0)) {
             return *this / len;
         }
@@ -445,7 +445,7 @@ public:
         return Vector2<Type>::x*Vector2<Type>::x + Vector2<Type>::y*Vector2<Type>::y + z*z;
     }
     Vector3 normalize() const {
-        ddouble const len = length();
+        const ddouble len = length();
         if (!fequal(len, 0.0)) {
             return *this / len;
         }

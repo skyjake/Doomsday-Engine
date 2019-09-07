@@ -217,7 +217,7 @@ int main(int argc, char **argv)
 
                 // Process the named savegame on this input path.
                 args.makeAbsolutePath(i);
-                Path const inputPath = NativePath(args.at(i)).withSeparators('/');
+                const Path inputPath = NativePath(args.at(i)).withSeparators('/');
 
                 // A file name is required.
                 if (inputPath.fileName().isEmpty())

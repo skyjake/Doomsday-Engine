@@ -112,7 +112,7 @@ DE_PIMPL(IdgamesLink)
             const auto &fileEntry = iter.next();
             if (String pkg = packageIdentifierForFileEntry(fileEntry))
             {
-                auto const id_ver = Package::split(pkg);
+                const auto id_ver = Package::split(pkg);
                 auto &pkgEntry = packageIndex.insert(DotPath(id_ver.first));
                 pkgEntry.file    = &fileEntry;
                 pkgEntry.version = id_ver.second;
@@ -124,7 +124,7 @@ DE_PIMPL(IdgamesLink)
 
     const PackageIndexEntry *findPackage(const String &packageId) const
     {
-        auto const id_ver = Package::split(packageId);
+        const auto id_ver = Package::split(packageId);
         if (auto *found = packageIndex.tryFind(DotPath(id_ver.first),
                                                PathTree::MatchFull | PathTree::NoBranch))
         {
@@ -197,10 +197,10 @@ void IdgamesLink::parseRepositoryIndex(const Block &data)
                     RegExpMatch match;
                     if (reFile.match(line, match))
                     {
-                        bool const isFolder = (match.captured(1) == DE_STR("d"));
+                        const bool isFolder = (match.captured(1) == DE_STR("d"));
                         if (!isFolder)
                         {
-                            String const name = match.captured(4);
+                            const String name = match.captured(4);
                             if (name.beginsWith('.') || name.contains(" -> "))
                                 continue;
 

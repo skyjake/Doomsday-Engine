@@ -28,7 +28,7 @@
 
 using namespace de;
 
-static dfloat const AXIS_NORMALIZE = 1.f / float(IJOY_AXISMAX); // Normalize from SDL's range
+static const dfloat AXIS_NORMALIZE = 1.f / float(IJOY_AXISMAX); // Normalize from SDL's range
 
 DE_PIMPL_NOREF(AxisInputControl)
 {
@@ -200,8 +200,8 @@ void AxisInputControl::applyRealPosition(dfloat pos)
 {
     DE_GUARD(this);
 
-    dfloat const oldRealPos  = d->realPosition;
-    dfloat const transformed = translateRealPosition(pos);
+    const dfloat oldRealPos  = d->realPosition;
+    const dfloat transformed = translateRealPosition(pos);
 
     // The unfiltered position.
     d->realPosition = transformed;

@@ -255,6 +255,6 @@ void InputSettingsDialog::mouseTogglesChanged()
 
 void InputSettingsDialog::applyControllerPreset()
 {
-    String const presetId = d->gamepad->selectedItem().data().asText();
+    const String presetId = d->gamepad->selectedItem().data().asText();
     ClientApp::inputSystem().gameControllerPresets().applyPreset(presetId);
 }

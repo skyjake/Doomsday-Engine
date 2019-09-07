@@ -224,7 +224,7 @@ dd_bool Smoother_Evaluate(const Smoother *sm, coord_t *xyz)
     }
 
     // We're somewhere between past and now.
-    float const t = (sm->at - past->time) / (now->time - past->time);
+    const float t = (sm->at - past->time) / (now->time - past->time);
     for (int i = 0; i < 3; ++i)
     {
         // Linear interpolation.

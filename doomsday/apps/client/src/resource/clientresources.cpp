@@ -365,7 +365,7 @@ DE_PIMPL(ClientResources)
     static detailvariantspecification_t &configureDetailTextureSpec(
         detailvariantspecification_t &spec, float contrast)
     {
-        int const quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
+        const int quantFactor = DETAILTEXTURE_CONTRAST_QUANTIZATION_FACTOR;
 
         spec.contrast = 255 * de::clamp<int>(0, contrast * quantFactor + .5f, quantFactor) * (1 / float(quantFactor));
         return spec;
@@ -906,8 +906,8 @@ DE_PIMPL(ClientResources)
 
         auto &defs = *DED_Definitions();
 
-        dint const modelScopeFlags = def.geti("flags") | defs.modelFlags;
-        dint const statenum = defs.getStateNum(def.gets("state"));
+        const dint modelScopeFlags = def.geti("flags") | defs.modelFlags;
+        const dint statenum = defs.getStateNum(def.gets("state"));
 
         // Is this an ID'd model?
         FrameModelDef *modef = getModelDefWithId(def.gets("id"));
@@ -1186,7 +1186,7 @@ DE_PIMPL(ClientResources)
         manifest.audienceForDeletion += this;
 
         // Acquire a new unique identifier for the manifest.
-        fontid_t const id = ++fontManifestCount; // 1-based.
+        const fontid_t id = ++fontManifestCount; // 1-based.
         manifest.setUniqueId(id);
 
         // Add the new manifest to the id index/map.
@@ -1797,7 +1797,7 @@ FrameModelDef *ClientResources::modelDefForState(dint stateIndex, dint select)
     if (select)
     {
         // Choose the correct selector, or selector zero if the given one not available.
-        dint const mosel = (select & DDMOBJ_SELECTOR_MASK);        
+        const dint mosel = (select & DDMOBJ_SELECTOR_MASK);        
         for (FrameModelDef *it = def; it; it = it->selectNext)
         {
             if (it->select == mosel)
@@ -2032,7 +2032,7 @@ void ClientResources::cacheForCurrentMap()
 
         for (dint i = 0; i < sprites().spriteCount(); ++i)
         {
-            auto const sprite = spritenum_t(i);
+            const auto sprite = spritenum_t(i);
 
             // Is this sprite used by a state of at least one mobj?
             LoopResult found = map.thinkers().forAll(reinterpret_cast<thinkfunc_t>(gx.MobjThinker),
@@ -2111,7 +2111,7 @@ static int printFontIndex2(FontScheme *scheme, const Path &like,
     }
     if (found.isEmpty()) return 0;
 
-    bool const printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
+    const bool printSchemeName = !(composeUriFlags & res::Uri::OmitScheme);
 
     // Print a heading.
     String heading = "Known fonts";
@@ -2205,7 +2205,7 @@ D_CMD(PrintFontStats)
     {
         const FontScheme::Index &index = scheme.second->index();
 
-        uint const count = index.count();
+        const uint count = index.count();
         LOG_MSG("Scheme: %s (%u %s)")
             << scheme.second->name() << count << (count == 1? "font" : "fonts");
         index.debugPrintHashDistribution();

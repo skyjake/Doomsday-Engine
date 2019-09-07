@@ -265,7 +265,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
 
                 const Vec2ui &matDimensions = matAnimator.dimensions();
                 TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
-                int const texBorder            = tex->spec().variant.border;
+                const int texBorder            = tex->spec().variant.border;
 
                 GL_BindTexture(tex);
                 DGL_Enable(DGL_TEXTURE_2D);
@@ -276,7 +276,7 @@ static void drawPicFrame(FinaleAnimWidget *p, uint frame, float const _origin[3]
                 tex->glCoords(&texScale[VX], &texScale[VY]);
 
                 // Apply a sprite-texture origin offset?
-                bool const texIsSprite = !tex->base().manifest().scheme().name().compareWithoutCase("Sprites");
+                const bool texIsSprite = !tex->base().manifest().scheme().name().compareWithoutCase("Sprites");
                 if (texIsSprite)
                 {
                     V3f_Set(offset, tex->base().origin().x, tex->base().origin().y, 0);

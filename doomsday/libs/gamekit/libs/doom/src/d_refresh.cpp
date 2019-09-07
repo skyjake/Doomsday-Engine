@@ -120,8 +120,8 @@ void R_UpdateViewFilter(int player)
     if(gameMode == doom2_hacx && plr->powers[PT_INVULNERABILITY])
     {
         // A blue shift is used in HacX.
-        int const max = 10;
-        int const cnt = plr->powers[PT_INVULNERABILITY];
+        const int max = 10;
+        const int cnt = plr->powers[PT_INVULNERABILITY];
 
         if(cnt < max)
             palette = .5f + (NUMINVULPALS-1) * ((float)cnt / max);

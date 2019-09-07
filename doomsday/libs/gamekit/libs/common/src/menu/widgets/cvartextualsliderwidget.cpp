@@ -74,7 +74,7 @@ DE_PIMPL(CVarTextualSliderWidget)
 
     String valueAsText(float emptyValue = 0, int precision = 0)
     {
-        float const value = de::clamp(self().min(), self().value(), self().max()); /// @todo clamp necessary?
+        const float value = de::clamp(self().min(), self().value(), self().max()); /// @todo clamp necessary?
 
         // Is the empty-value-string in use?
         if(!emptyText.isEmpty() && INRANGE_OF(value, emptyValue, .0001f))
@@ -82,8 +82,8 @@ DE_PIMPL(CVarTextualSliderWidget)
             return emptyText;
         }
 
-        String const suffix      = chooseSuffix(value);
-        String const valueAsText = composeTextualValue(value, precision);
+        const String suffix      = chooseSuffix(value);
+        const String valueAsText = composeTextualValue(value, precision);
 
 #if 0
         // Are we substituting the textual value into a template?
@@ -136,7 +136,7 @@ CVarTextualSliderWidget::~CVarTextualSliderWidget()
 void CVarTextualSliderWidget::draw() const
 {
     const Vec2i &origin    = geometry().topLeft;
-    String const valueAsText  = d->valueAsText();
+    const String valueAsText  = d->valueAsText();
     const Vec4f &textColor = mnRendState->textColors[color()];
 
     DGL_MatrixMode(DGL_MODELVIEW);
@@ -156,7 +156,7 @@ void CVarTextualSliderWidget::draw() const
 
 void CVarTextualSliderWidget::updateGeometry()
 {
-    String const valueAsText = d->valueAsText();
+    const String valueAsText = d->valueAsText();
 
     FR_PushAttrib();
     FR_SetFont(page().predefinedFont(mn_page_fontid_t(font())));

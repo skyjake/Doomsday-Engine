@@ -255,7 +255,7 @@ void FI_StackExecuteWithId(const char *scriptSrc, int flags, finale_mode_t mode,
         return;
     }
 
-    gamestate_t const prevGamestate = G_GameState();
+    const gamestate_t prevGamestate = G_GameState();
     fi_state_t *prevTopScript = stackTop();
 
     // Configure the predefined fonts.

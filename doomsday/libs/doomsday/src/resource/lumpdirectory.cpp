@@ -90,7 +90,7 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
             // If there are a map lumps, check which kind it is.
             if (mapType == None)
             {
-                String const lumpName = String::fromLatin1(entries.at(i).name);
+                const String lumpName = String::fromLatin1(entries.at(i).name);
                 if (regExMy.hasMatch(lumpName))
                 {
                     mapType = ExMy;
@@ -112,7 +112,7 @@ DE_PIMPL_NOREF(LumpDirectory), public ISerializable
     {
         try
         {
-            if (Block const data = MetadataBank::get().check(CACHE_CATEGORY(), id))
+            if (const Block data = MetadataBank::get().check(CACHE_CATEGORY(), id))
             {
                 // We're in luck.
                 Reader reader(data);
@@ -288,7 +288,7 @@ StringList LumpDirectory::findMapLumpNames() const
 StringList LumpDirectory::mapsInContiguousRangesAsText() const
 {
     StringList mapRanges;
-    auto const maps = findMapLumpNames();
+    const auto maps = findMapLumpNames();
     static const StringList prefixes(
         {"MAP", "E1M", "E2M", "E3M", "E4M", "E5M", "E6M", "E7M", "E8M", "E9M"});
 
@@ -307,7 +307,7 @@ StringList LumpDirectory::mapsInContiguousRangesAsText() const
         auto mapNumberText = [] (int num, int fieldWidth) {
             return Stringf(fieldWidth == 2? "%02i" : "%i", num);
         };
-        int const numFieldWidth = (prefix == DE_STR("MAP")? 2 : 0);
+        const int numFieldWidth = (prefix == DE_STR("MAP")? 2 : 0);
 
         for (const Rangei &range : Rangei::findContiguousRanges(numbers))
         {

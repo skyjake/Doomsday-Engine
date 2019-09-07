@@ -209,7 +209,7 @@ float VRConfig::viewAspect(const Vec2f &viewPortSize) const
 float VRConfig::verticalFieldOfView(float horizFovDegrees, const Vec2f &viewPortSize) const
 {
     // We're assuming pixels are squares.
-    float const aspect = viewAspect(viewPortSize);
+    const float aspect = viewAspect(viewPortSize);
 
     if (mode() == OculusRift)
     {
@@ -228,7 +228,7 @@ Mat4f VRConfig::projectionMatrix(float fovDegrees,
     if (mode() == OculusRift && oculusRift().isReady())
     {
         // OVR will calculate our projection matrix.
-        float const mapUnits = d->mapUnitsPerMeter();
+        const float mapUnits = d->mapUnitsPerMeter();
         return oculusRift().projection(nearClip, farClip) *
                Mat4f::translate(oculusRift().eyeOffset() * mapUnits);
     }
@@ -236,9 +236,9 @@ Mat4f VRConfig::projectionMatrix(float fovDegrees,
            Mat4f::translate(Vec3f(-eyeShift(), 0, 0));
 
 #if 0
-    float const yfov = verticalFieldOfView(fovDegrees, viewPortSize);
-    float const fH   = std::tan(.5f * degreeToRadian(yfov)) * nearClip;
-    float const fW   = fH * viewAspect(viewPortSize);
+    const float yfov = verticalFieldOfView(fovDegrees, viewPortSize);
+    const float fH   = std::tan(.5f * degreeToRadian(yfov)) * nearClip;
+    const float fW   = fH * viewAspect(viewPortSize);
 
     /*
      * Asymmetric frustum shift is computed to realign screen-depth items after view point has shifted.

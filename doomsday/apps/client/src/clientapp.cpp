@@ -461,7 +461,7 @@ DE_PIMPL(ClientApp)
         // Log filter and alert settings.
         for (int i = LogEntry::FirstDomainBit; i <= LogEntry::LastDomainBit; ++i)
         {
-            String const name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
+            const String name = LogFilter::domainRecordName(LogEntry::Context(1 << i));
             logSettings
                     .define(Prof::ConfigVariable, Stringf("log.filter.%s.minLevel", name.c_str()))
                     .define(Prof::ConfigVariable, Stringf("log.filter.%s.allowDev", name.c_str()))
@@ -787,7 +787,7 @@ void ClientApp::gameSessionWasSaved(const AbstractSession &session,
 
     try
     {
-        String const mapId = session.mapUri().path();
+        const String mapId = session.mapUri().path();
 
         // Internal map state.
         {
@@ -813,7 +813,7 @@ void ClientApp::gameSessionWasLoaded(const AbstractSession &session,
 {
     DoomsdayApp::gameSessionWasLoaded(session, fromFolder);
 
-    String const mapId = session.mapUri().path();
+    const String mapId = session.mapUri().path();
 
     // Internal map state. This might be missing.
     try

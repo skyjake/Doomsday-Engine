@@ -52,7 +52,7 @@ namespace world {
  */
 static ddouble pointOnHEdgeSide(const HEdge &hedge, const Vec2d &point)
 {
-    Vec2d const direction = hedge.twin().origin() - hedge.origin();
+    const Vec2d direction = hedge.twin().origin() - hedge.origin();
 
     ddouble pointV1[2]      = { point.x, point.y };
     ddouble fromOriginV1[2] = { hedge.origin().x, hedge.origin().y };
@@ -85,7 +85,7 @@ struct ContactSpreader
      */
     void spread(const AABoxd &box)
     {
-        BlockmapCellBlock const cellBlock = _blockmap.toCellBlock(box);
+        const BlockmapCellBlock cellBlock = _blockmap.toCellBlock(box);
 
         BlockmapCell cell;
         for(cell.y = cellBlock.min.y; cell.y < cellBlock.max.y; ++cell.y)
@@ -163,8 +163,8 @@ private:
             return;
 
         // Too far from the edge?
-        coord_t const length   = (hedge->twin().origin() - hedge->origin()).length();
-        coord_t const distance = pointOnHEdgeSide(*hedge, _spread.contact->objectOrigin()) / length;
+        const coord_t length   = (hedge->twin().origin() - hedge->origin()).length();
+        const coord_t distance = pointOnHEdgeSide(*hedge, _spread.contact->objectOrigin()) / length;
         if (abs(distance) >= _spread.contact->objectRadius())
             return;
 

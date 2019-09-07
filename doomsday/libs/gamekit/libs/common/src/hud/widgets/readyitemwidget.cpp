@@ -53,7 +53,7 @@ void guidata_readyitem_t::tick(timespan_t /*elapsed*/)
     _patchId = 0;
 
 #if __JHERETIC__ || __JHEXEN__
-    dint const flashCounter = ST_ReadyItemFlashCounter(player());
+    const dint flashCounter = ST_ReadyItemFlashCounter(player());
     if(flashCounter > 0)
     {
         _patchId = ::pIcons[flashCounter % FLASH_FRAME_COUNT];
@@ -76,8 +76,8 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
 #define TRACKING                ( 2 )
 
     DE_ASSERT(item);
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(!::cfg.hudShown[HUD_READYITEM]) return;
     if(Hu_InventoryIsOpen(item->player())) return;
@@ -118,7 +118,7 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
             duint count = P_InventoryCount(item->player(), readyItem);
             if(count > 1)
             {
-                auto const countAsText = String::asText(count);
+                const auto countAsText = String::asText(count);
                 FR_SetFont(item->font());
                 FR_SetTracking(TRACKING);
                 FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
@@ -151,9 +151,9 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
 
     DE_ASSERT(item);
 
-    dint const activeHud     = ST_ActiveHud(item->player());
-    dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(item->player());
+    const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(item->player())) return;
     if(ST_AutomapIsOpen(item->player()) && ::cfg.common.automapHudDisplay == 0) return;
@@ -188,7 +188,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
         duint count = P_InventoryCount(item->player(), readyItem);
         if(count > 1)
         {
-            auto const countAsText = String::asText(count);
+            const auto countAsText = String::asText(count);
             FR_SetFont(item->font());
             FR_SetTracking(TRACKING);
             FR_SetColorAndAlpha(::defFontRGB2[0], ::defFontRGB2[1], ::defFontRGB2[2], textOpacity);
@@ -256,8 +256,8 @@ void SBarReadyItem_UpdateGeometry(guidata_readyitem_t *item)
 void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw* offset)
 {
     DE_ASSERT(item);
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(!::cfg.hudShown[HUD_READYITEM]) return;
     if(Hu_InventoryIsOpen(item->player())) return;
@@ -299,7 +299,7 @@ void ReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw* offset)
         duint count = P_InventoryCount(item->player(), readyItem);
         if(count > 1)
         {
-            auto const countAsText = String::asText(count);
+            const auto countAsText = String::asText(count);
 
             FR_SetFont(item->font());
             FR_SetTracking(0);
@@ -326,10 +326,10 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
 
     DE_ASSERT(item);
 
-    dint const activeHud     = ST_ActiveHud(item->player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(item->player()));
-    dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(item->player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(item->player()));
+    const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(item->player()) || ST_AutomapIsOpen(item->player())) return;
     if(ST_AutomapIsOpen(item->player()) && ::cfg.common.automapHudDisplay == 0) return;
@@ -369,7 +369,7 @@ void SBarReadyItem_Drawer(guidata_readyitem_t *item, const Point2Raw *offset)
         duint count = P_InventoryCount(item->player(), readyItem);
         if(count > 1)
         {
-            auto const countAsText = String::asText(count);
+            const auto countAsText = String::asText(count);
 
             FR_SetFont(item->font());
             FR_SetTracking(0);

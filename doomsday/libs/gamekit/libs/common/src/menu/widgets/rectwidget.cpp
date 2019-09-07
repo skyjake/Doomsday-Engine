@@ -49,7 +49,7 @@ RectWidget::~RectWidget()
 
 void RectWidget::draw() const
 {
-    Vec2i const origin = geometry().topLeft;
+    const Vec2i origin = geometry().topLeft;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_Translatef(origin.x, origin.y, 0);

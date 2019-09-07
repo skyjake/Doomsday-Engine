@@ -335,7 +335,7 @@ DE_PIMPL(Textures)
         if (!pnames.count()) return Composites();
 
         // Collate an ordered list of all the definition files we intend to process.
-        auto const defFiles = collectPatchCompositeDefinitionFiles();
+        const auto defFiles = collectPatchCompositeDefinitionFiles();
 
         /**
          * Definitions are read into two discreet sets.
@@ -573,7 +573,7 @@ DE_PIMPL(Textures)
                  */
                 Vec2ui dimensions(64, 64);
                 Vec2i origin(0, 0);
-                int const uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
+                const int uniqueId  = lumpNum - (firstFlatMarkerLumpNum + 1);
                 res::Uri resourceUri = LumpIndex::composeResourceUrn(lumpNum);
 
                 self().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
@@ -669,7 +669,7 @@ DE_PIMPL(Textures)
                 file.unlock();
             }
 
-            res::Uri const resourceUri = LumpIndex::composeResourceUrn(i);
+            const res::Uri resourceUri = LumpIndex::composeResourceUrn(i);
             try
             {
                 self().declareTexture(uri, flags, dimensions, origin, uniqueId, &resourceUri);
@@ -860,7 +860,7 @@ const Textures::AllTextures &Textures::allTextures() const
 TextureManifest &Textures::declareSystemTexture(const Path &texturePath, const res::Uri &resourceUri)
 {
     auto &scheme = textureScheme(DE_STR("System"));
-    dint const uniqueId = scheme.count() + 1;
+    const dint uniqueId = scheme.count() + 1;
     return scheme.declare(texturePath,
                           Texture::Custom,
                           Vec2ui(),
@@ -976,7 +976,7 @@ patchid_t Textures::declarePatch(const String &encodedName)
         return 0;
     }
 
-    lumpnum_t const lumpNum = fs1.nameIndex().findLast(lumpPath);
+    const lumpnum_t lumpNum = fs1.nameIndex().findLast(lumpPath);
     File1 &file = fs1.lump(lumpNum);
 
     Flags flags;

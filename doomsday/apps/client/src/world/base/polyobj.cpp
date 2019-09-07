@@ -93,7 +93,7 @@ bool Polyobj::blocked() const
 {
     for (const Line *line : lines())
     {
-        dint const localValidCount = ++::validCount;
+        const dint localValidCount = ++::validCount;
 
         bool collision = false;
         map().mobjBlockmap().forAllInBox(AABoxd(line->bounds().minX - DDMOBJ_RADIUS_MAX,
@@ -397,8 +397,8 @@ bool Polyobj::move(const Vec2d &delta)
  */
 static void rotatePoint2d(Vec2d &point, const Vec2d &about, duint fineAngle)
 {
-    ddouble const c = FIX2DBL(fineCosine[fineAngle]);
-    ddouble const s = FIX2DBL(finesine[fineAngle]);
+    const ddouble c = FIX2DBL(fineCosine[fineAngle]);
+    const ddouble s = FIX2DBL(finesine[fineAngle]);
 
     Vec2d orig = point;
 

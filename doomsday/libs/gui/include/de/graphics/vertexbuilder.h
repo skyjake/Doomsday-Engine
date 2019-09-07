@@ -162,7 +162,7 @@ struct VertexBuilder
             VertexType v;
             v.rgba = color;
             for (int i = 0; i <= divisions; ++i) {
-                float const ang = 2.f * PIf * (i == divisions? 0 : i) / divisions;
+                const float ang = 2.f * PIf * (i == divisions? 0 : i) / divisions;
                 Vec2f r(cos(ang), sin(ang));
                 // Outer.
                 v.pos = center + r * outerRadius;
@@ -181,7 +181,7 @@ struct VertexBuilder
         }
         Vertices &makeFlexibleFrame(const Rectanglef &rect, float cornerThickness,
                                     const Vec4f &color, const Rectanglef &uv) {
-            Vec2f const uvOff = uv.size() / 2;
+            const Vec2f uvOff = uv.size() / 2;
             Vertices verts;
             VertexType v;
 

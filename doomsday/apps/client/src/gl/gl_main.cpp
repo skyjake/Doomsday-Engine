@@ -1016,7 +1016,7 @@ duint8 *GL_ConvertBuffer(const duint8 *in, dint width, dint height, dint informa
 
     if(informat == 3 && outformat == 4)
     {
-        long const numPels = width * height;
+        const long numPels = width * height;
         const duint8 *src  = in;
         duint8 *dst        = out;
         for(long i = 0; i < numPels; ++i)
@@ -1039,7 +1039,7 @@ void GL_CalcLuminance(const duint8 *buffer, dint width, dint height, dint pixelS
 {
     DE_ASSERT(buffer && retBrightX && retBrightY && retColor && retLumSize);
 
-    static duint8 const sizeLimit = 192, brightLimit = 224, colLimit = 192;
+    static const duint8 sizeLimit = 192, brightLimit = 224, colLimit = 192;
 
     res::ColorPalette *palette = (pixelSize == 1? &resSys().colorPalettes().colorPalette(paletteId) : nullptr);
 
@@ -1105,7 +1105,7 @@ void GL_CalcLuminance(const duint8 *buffer, dint width, dint height, dint pixelS
         for(dint x = region[0]; x <= region[1]; ++x, src += pixelSize, alphaSrc++)
         {
             // Alpha pixels don't count. Why? -ds
-            dd_bool const pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
+            const dd_bool pixelIsTransparent = (pixelSize == 1? *alphaSrc < 255 :
                                                 pixelSize == 4?    src[3] < 255 : false);
 
             if(pixelIsTransparent) continue;

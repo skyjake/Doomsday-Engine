@@ -193,8 +193,8 @@ DE_PIMPL(Partitioner)
             }
 
             // Determine whether the node should be split and on which axis.
-            int const splitAxis = (dimensions.x < dimensions.y); // x=0, y=1
-            int const midOnAxis = (bounds.min[splitAxis] + bounds.max[splitAxis]) / 2;
+            const int splitAxis = (dimensions.x < dimensions.y); // x=0, y=1
+            const int midOnAxis = (bounds.min[splitAxis] + bounds.max[splitAxis]) / 2;
             LineSegmentBlockTreeNode::ChildId fromSide = LineSegmentBlockTreeNode::ChildId(seg.from().origin()[splitAxis] >= midOnAxis);
             LineSegmentBlockTreeNode::ChildId toSide   = LineSegmentBlockTreeNode::ChildId(seg.to  ().origin()[splitAxis] >= midOnAxis);
 
@@ -210,7 +210,7 @@ DE_PIMPL(Partitioner)
             // Do we need to create the child node?
             if(!node->hasChild(fromSide))
             {
-                bool const toLeft = (fromSide == LineSegmentBlockTreeNode::Left);
+                const bool toLeft = (fromSide == LineSegmentBlockTreeNode::Left);
 
                 AABox childBounds;
                 if(splitAxis)
@@ -510,7 +510,7 @@ DE_PIMPL(Partitioner)
          * @todo Revise this algorithm so that @var segments is not modified
          * during the partitioning process.
          */
-        int const totalSegs = node.userData()->totalCount();
+        const int totalSegs = node.userData()->totalCount();
         DE_ASSERT(totalSegs != 0);
         DE_UNUSED(totalSegs);
 
@@ -979,7 +979,7 @@ DE_PIMPL(Partitioner)
              * segments enabling the use of single pass algorithm here.
              */
             OrderedSegments convexSet = subspace.segments();
-            int const numSegments = convexSet.count();
+            const int numSegments = convexSet.count();
             for(int i = 0; i < numSegments - 1; ++i)
             {
                 // Determine the indice range of the partially overlapping segments.

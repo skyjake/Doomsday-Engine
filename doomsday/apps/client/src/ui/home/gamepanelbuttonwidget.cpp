@@ -86,7 +86,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
                 return false;
             }
 
-            StringList const savePacks = item.loadedPackages();
+            const StringList savePacks = item.loadedPackages();
 
             // Fallback for older saves without package metadata.
             if (savePacks.isEmpty())
@@ -246,7 +246,7 @@ DE_GUI_PIMPL(GamePanelButtonWidget)
                                            [this, pop]() {
                     pop->detachAnchor();
                     // Delete the savegame file; the UI will be automatically updated.
-                                               String const path =
+                                               const String path =
                                                    savedItems.at(saves->selectedPos()).savePath();
                     self().unselectSave();
                     App::rootFolder().destroyFile(path);
@@ -331,8 +331,8 @@ void GamePanelButtonWidget::setSelected(bool selected)
 
 void GamePanelButtonWidget::updateContent()
 {
-    bool const isPlayable     = d->gameProfile.isPlayable();
-    bool const isGamePlayable = d->game().isPlayableWithDefaultPackages();
+    const bool isPlayable     = d->gameProfile.isPlayable();
+    const bool isGamePlayable = d->game().isPlayableWithDefaultPackages();
 
     playButton().enable(isPlayable);
     playButton().show(isPlayable);

@@ -221,8 +221,8 @@ D_CMD(PostFx)
     DE_UNUSED(src);
 
     int console = String(argv[1]).toInt();
-    String const shader = argv[2];
-    TimeSpan const span = (argc == 4? String(argv[3]).toDouble() : 0);
+    const String shader = argv[2];
+    const TimeSpan span = (argc == 4? String(argv[3]).toDouble() : 0);
 
     if (console < 0 || console >= DDMAXPLAYERS)
     {

@@ -68,7 +68,7 @@ void HealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset)
 #endif
 
     DE_ASSERT(hlth);
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(hlth->_value == 1994) return;
 
@@ -76,7 +76,7 @@ void HealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset)
     if(ST_AutomapIsOpen(hlth->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[hlth->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(hlth->_value) + SUFFIX;
+    const auto valueAsText = String::asText(hlth->_value) + SUFFIX;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -133,10 +133,10 @@ void SBarHealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset)
 
     if(hlth->_value == 1994) return;
 
-    dint const activeHud     = ST_ActiveHud(hlth->player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(hlth->player()));
-    dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
-    //dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(hlth->player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(hlth->player()));
+    const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    //const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
 #if __JHERETIC__ || __JHEXEN__
     if(gfw_Rule(deathmatch)) return;
@@ -150,7 +150,7 @@ void SBarHealthWidget_Draw(guidata_health_t *hlth, const Point2Raw *offset)
 #endif
     if(P_MobjIsCamera(::players[hlth->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(hlth->_value);
+    const auto valueAsText = String::asText(hlth->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -205,7 +205,7 @@ void HealthWidget_UpdateGeometry(guidata_health_t *hlth)
     if(ST_AutomapIsOpen(hlth->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[hlth->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(hlth->_value) + SUFFIX;
+    const auto valueAsText = String::asText(hlth->_value) + SUFFIX;
 
     FR_SetFont(hlth->font());
     FR_SetTracking(TRACKING);
@@ -243,7 +243,7 @@ void SBarHealthWidget_UpdateGeometry(guidata_health_t *hlth)
 #endif
     if(P_MobjIsCamera(::players[hlth->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(hlth->_value);
+    const auto valueAsText = String::asText(hlth->_value);
 
     FR_SetFont(hlth->font());
     FR_SetTracking(TRACKING);

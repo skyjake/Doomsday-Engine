@@ -125,7 +125,7 @@ void GLShader::compile(Type shaderType, const IByteArray &shaderSource)
                                "#  define highp\n"
                                "#endif\n");
 #else
-    int const glesVer = DE_OPENGL_ES;
+    const int glesVer = DE_OPENGL_ES;
     static Block const DEFAULT_VERSION(glesVer == 30? "#version 300 es\n" : "#version 100\n");
     static Block const PREFIX("\n");
 #endif

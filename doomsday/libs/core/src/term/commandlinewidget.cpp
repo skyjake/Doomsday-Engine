@@ -52,7 +52,7 @@ bool CommandLineWidget::handleEvent(const Event &event)
     // Override the editor's normal Enter handling.
     if (ev.key() == Key::Enter)
     {
-        String const entered = d->history.enter();
+        const String entered = d->history.enter();
         DE_NOTIFY(Command, i) i->commandEntered(entered);
         return true;
     }

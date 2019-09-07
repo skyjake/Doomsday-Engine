@@ -202,7 +202,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
         {
             for (const auto *ext : {".jpg", ".jpeg", ".png"})
             {
-                String const imgPath = packagePath / "icon" + ext;
+                const String imgPath = packagePath / "icon" + ext;
                 if (const ImageFile *img = FS::tryLocate<ImageFile const>(imgPath))
                 {
                     Image iconImage = img->image();
@@ -332,7 +332,7 @@ DE_GUI_PIMPL(PackageInfoDialog)
             if (bundle && bundle->lumpDirectory() &&
                 bundle->lumpDirectory()->mapType() != res::LumpDirectory::None)
             {
-                int const mapCount = bundle->lumpDirectory()->findMaps().count();
+                const int mapCount = bundle->lumpDirectory()->findMaps().count();
                 msg += Stringf("\n\nContains %i map%s: ",
                     mapCount,
                     DE_PLURAL_S(mapCount),
@@ -561,7 +561,7 @@ void PackageInfoDialog::prepare()
 
     // Monospace text implies that there is an DOS-style readme text
     // file included in the notes.
-    bool const useWideLayout = d->description->text().contains(_E(m)) &&
+    const bool useWideLayout = d->description->text().contains(_E(m)) &&
                                d->description->text().size() > 200; // reasonably long?
 
     // Update the width of the dialog. Don't let it get wider than the window.

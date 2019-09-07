@@ -239,7 +239,7 @@ bool Game::allStartupFilesFound() const
 
     for (const auto &i : d->manifests)
     {
-        int const flags = i.second->fileFlags();
+        const int flags = i.second->fileFlags();
 
         if ((flags & FF_STARTUP) && !(flags & FF_FOUND))
             return false;
@@ -515,14 +515,14 @@ String Game::filesAsText(int rflags, bool withStatus) const
     const Manifests &manifs = manifests();
     for (uint i = 0; i < RESOURCECLASS_COUNT; ++i)
     {
-        resourceclassid_t const classId = resourceclassid_t(i);
+        const resourceclassid_t classId = resourceclassid_t(i);
         const auto range = manifs.equal_range(classId);
         for (auto i = range.first; i != range.second; ++i)
         {
             ResourceManifest &manifest = *i->second;
             if (rflags >= 0 && (rflags & manifest.fileFlags()))
             {
-                bool const resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
+                const bool resourceFound = (manifest.fileFlags() & FF_FOUND) != 0;
 
                 if (!text.isEmpty()) text += "\n" _E(0);
 

@@ -196,7 +196,7 @@ DE_PIMPL(VideoSettingsDialog)
         // FPS limit.
         if (fpsMax)
         {
-            int const max = CVar_Integer(Con_FindVariable("refresh-rate-maximum"));
+            const int max = CVar_Integer(Con_FindVariable("refresh-rate-maximum"));
             fpsLimiter->setActive(max != 0);
             fpsMax->enable(max != 0);
             fpsMax->setValue(!max ? 35 : max);
@@ -310,8 +310,8 @@ VideoSettingsDialog::VideoSettingsDialog(const String &name)
                 }
             }
             d->refreshRates->items().sort([] (const ui::Item &a, const ui::Item &b) {
-                int const i = a.data().asInt();
-                int const j = b.data().asInt();
+                const int i = a.data().asInt();
+                const int j = b.data().asInt();
                 if (!i) return true;
                 if (!j) return false;
                 return i < j;

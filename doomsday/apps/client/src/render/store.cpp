@@ -53,7 +53,7 @@ void Store::clear()
 
 duint Store::allocateVertices(duint count)
 {
-    duint const base = _vertCount;
+    const duint base = _vertCount;
 
     // Do we need to allocate more memory?
     _vertCount += count;

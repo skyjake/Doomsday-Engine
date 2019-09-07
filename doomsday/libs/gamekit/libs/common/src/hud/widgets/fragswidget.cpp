@@ -70,7 +70,7 @@ void FragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset)
 #endif
 
     DE_ASSERT(frags);
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
 #if __JDOOM__ || __JDOOM64__
     if(!::cfg.hudShown[HUD_FRAGS]) return;
@@ -82,7 +82,7 @@ void FragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = Stringf("Frags: %i", frags->_value);
+    const auto valueAsText = Stringf("Frags: %i", frags->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -124,7 +124,7 @@ void FragsWidget_UpdateGeometry(guidata_frags_t *frags)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = Stringf("Frags: %i", frags->_value);
+    const auto valueAsText = Stringf("Frags: %i", frags->_value);
 
     FR_SetFont(frags->font());
     FR_SetTracking(TRACKING);
@@ -161,10 +161,10 @@ void SBarFragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset)
 
     DE_ASSERT(frags);
 
-    dint const activeHud     = ST_ActiveHud(frags->player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(frags->player()));
-    dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
-    //dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(frags->player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(frags->player()));
+    const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    //const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(!gfw_Rule(deathmatch)) return;
 #if __JHERETIC__ || __JHEXEN__
@@ -180,7 +180,7 @@ void SBarFragsWidget_Draw(guidata_frags_t *frags, const Point2Raw *offset)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String::asText(frags->_value);
+    const auto valueAsText = String::asText(frags->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -241,7 +241,7 @@ void SBarFragsWidget_UpdateGeometry(guidata_frags_t *frags)
 
     if(frags->_value == 1994) return;
 
-    auto const valueAsText = String::asText(frags->_value);
+    const auto valueAsText = String::asText(frags->_value);
 
     FR_SetFont(frags->font());
     FR_SetTracking(TRACKING);

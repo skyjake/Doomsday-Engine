@@ -158,8 +158,8 @@ size_t FileHandle::length()
     }
     else
     {
-        size_t const currentPosition = seek(0, SeekEnd);
-        size_t const length = tell();
+        const size_t currentPosition = seek(0, SeekEnd);
+        const size_t length = tell();
         seek(currentPosition, SeekSet);
         return length;
     }

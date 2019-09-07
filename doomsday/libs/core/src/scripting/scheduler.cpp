@@ -61,7 +61,7 @@ DE_PIMPL_NOREF(Scheduler)
 
     String start(RunningTimeline *run, const String &name)
     {
-        String const intName = internalName(name);
+        const String intName = internalName(name);
         stop(intName);
         running.insert(intName, run);
         return intName;

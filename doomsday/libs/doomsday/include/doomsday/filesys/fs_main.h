@@ -140,7 +140,7 @@ public:
     {
     public:
         /// Symbolic names must be at least this number of characters.
-        static int const min_name_length = URI_MINSCHEMELENGTH;
+        static const int min_name_length = URI_MINSCHEMELENGTH;
 
         enum Flag
         {

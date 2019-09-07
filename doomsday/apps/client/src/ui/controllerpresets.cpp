@@ -85,7 +85,7 @@ DE_PIMPL_NOREF(ControllerPresets)
     {
         for (auto i : presets().elements())
         {
-            String const key = i.first.value->asText();
+            const String key = i.first.value->asText();
             if (!key.isEmpty() && RegExp(key, CaseInsensitive).exactMatch(deviceName))
             {
                 if (const auto *value = maybeAs<RecordValue>(i.second))
@@ -125,7 +125,7 @@ DE_PIMPL_NOREF(ControllerPresets)
         // the connected game controller (unless a specific scheme is already set).
         if (!newGame.isNull() && !Joystick_Name().isEmpty())
         {
-            String const currentScheme = CVar_String(presetCVar());
+            const String currentScheme = CVar_String(presetCVar());
 
             if (const auto *gamepad = findMatching(Joystick_Name()))
             {

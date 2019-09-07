@@ -153,9 +153,9 @@ void SBarBackground_Drawer(HudWidget *wi, const Point2Raw *offset)
 #define ORIGINX         int(-WIDTH / 2 )
 #define ORIGINY         int(-HEIGHT * ST_StatusBarShown(wi->player()) )
 
-    int const activeHud     = ST_ActiveHud(wi->player());
-    //float const textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
-    float const iconOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
+    const int activeHud     = ST_ActiveHud(wi->player());
+    //const float textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
+    const float iconOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarOpacity);
 
     if(ST_AutomapIsOpen(wi->player()) && cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(players[wi->player()].plr->mo) && Get(DD_PLAYBACK)) return;
@@ -261,10 +261,10 @@ void SBarInventory_Drawer(HudWidget *wi, const Point2Raw *offset)
 #define X_OFFSET            ( 50 )
 #define Y_OFFSET            (  2 )
 
-    int const activeHud     = ST_ActiveHud(wi->player());
-    int const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(wi->player()));
-    //float const textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
-    float const iconOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
+    const int activeHud     = ST_ActiveHud(wi->player());
+    const int yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(wi->player()));
+    //const float textOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
+    const float iconOpacity = (activeHud == 0? 1 : uiRendState->pageAlpha * cfg.common.statusbarCounterAlpha);
 
     if(!Hu_InventoryIsOpen(wi->player())) return;
     if(ST_AutomapIsOpen(wi->player()) && cfg.common.automapHudDisplay == 0) return;
@@ -319,7 +319,7 @@ int ST_Responder(event_t *ev)
 
 void ST_Ticker(timespan_t ticLength)
 {
-    dd_bool const isSharpTic = DD_IsSharpTick();
+    const dd_bool isSharpTic = DD_IsSharpTick();
     if(isSharpTic)
     {
         Hu_InventoryTicker();
@@ -433,8 +433,8 @@ void Inventory_Drawer(HudWidget *wi, const Point2Raw *offset)
 #define EXTRA_SCALE         .75f
 
     DE_ASSERT(wi);
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(!Hu_InventoryIsOpen(wi->player())) return;
     if(ST_AutomapIsOpen(wi->player()) && ::cfg.common.automapHudDisplay == 0) return;
@@ -482,8 +482,8 @@ static void drawUIWidgetsForPlayer(player_t *plr)
 #define PADDING             (2)
 
     DE_ASSERT(plr);
-    int const playerNum   = plr - players;
-    int const displayMode = ST_ActiveHud(playerNum);
+    const int playerNum   = plr - players;
+    const int displayMode = ST_ActiveHud(playerNum);
     hudstate_t *hud       = hudStates + playerNum;
     float scale;
 
@@ -522,7 +522,7 @@ static void drawUIWidgetsForPlayer(player_t *plr)
 
         if(hud->statusbarActive)
         {
-            float const statusbarOpacity = (1 - hud->hideAmount) * hud->showBar;
+            const float statusbarOpacity = (1 - hud->hideAmount) * hud->showBar;
 
             HudWidget &sbGroup = GUI_FindWidgetById(hud->groupIds[UWG_STATUSBAR]);
             sbGroup.setOpacity(statusbarOpacity);
@@ -1144,8 +1144,8 @@ dd_bool ST_AutomapObscures2(int localPlayer, const RectRaw * /*region*/)
             else
             {
                 // We'll have to compare the dimensions.
-                int const scrwidth  = Get(DD_WINDOW_WIDTH);
-                int const scrheight = Get(DD_WINDOW_HEIGHT);
+                const int scrwidth  = Get(DD_WINDOW_WIDTH);
+                const int scrheight = Get(DD_WINDOW_HEIGHT);
 
                 const Rect *rect = UIWidget_Geometry(automap);
                 float fx = FIXXTOSCREENX(region->origin.x);
@@ -1295,7 +1295,7 @@ static int parseMacroId(const String &str) // static
     if(!str.isEmpty())
     {
         bool isNumber = false;
-        int const id  = str.toInt(&isNumber);
+        const int id  = str.toInt(&isNumber);
         if(isNumber && id >= 0 && id <= 9)
         {
             return id;
@@ -1312,7 +1312,7 @@ static int parseTeamNumber(const String &str)
     if(!str.isEmpty())
     {
         bool isNumber = false;
-        int const num = str.toInt(&isNumber);
+        const int num = str.toInt(&isNumber);
         if(isNumber && num >= 0 && num <= NUMTEAMS)
         {
             return num;
@@ -1354,7 +1354,7 @@ D_CMD(ChatAction)
     ChatWidget *chat = ST_TryFindChatWidget(CONSOLEPLAYER);
     if(!chat || !chat->isActive()) return false;
 
-    auto const cmd = String(argv[0] + 4);
+    const auto cmd = String(argv[0] + 4);
     if(!cmd.compareWithoutCase("complete")) // Send the message.
     {
         return chat->handleMenuCommand(MCMD_SELECT);

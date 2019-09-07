@@ -82,7 +82,7 @@ DE_PIMPL(ViewCompositor)
     {
         getConfig();
 
-        double const rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
+        const double rf = (*resizeFactor > 0? 1.0 / *resizeFactor : 1.0);
         return FACTOR_RANGE.clamp(*pixelDensity * rf);
     }
 
@@ -215,8 +215,8 @@ const GLTextureFramebuffer &ViewCompositor::gameView() const
 
 void ViewCompositor::drawCompositedLayers()
 {
-    Rectanglei const view3D = R_Console3DViewRect(d->playerNum);
-    auto const oldDisplayPlayer = displayPlayer;
+    const Rectanglei view3D = R_Console3DViewRect(d->playerNum);
+    const auto oldDisplayPlayer = displayPlayer;
 
     // View border around the game view.
     displayPlayer = d->playerNum;
@@ -275,11 +275,11 @@ void ViewCompositor::drawCompositedLayers()
     // normalized window coordinates first because the rendering target may not be
     // the window (the target may thus have any resolution).
 
-    Rectanglef const normRect = GuiWidget::normalizedRect(
+    const Rectanglef normRect = GuiWidget::normalizedRect(
                 R_ConsoleRect(d->playerNum),
                 Rectanglei::fromSize(ClientWindow::main().root().viewSize()));
 
-    auto const targetSize = GLState::current().target().size();
+    const auto targetSize = GLState::current().target().size();
     Rectanglef const vp { normRect.topLeft     * targetSize,
                           normRect.bottomRight * targetSize };
 

@@ -2704,7 +2704,7 @@ DE_PIMPL(DEDParser)
                     READLABEL;
                     if (ISLABEL("Texture") || ISLABEL("Flat"))
                     {
-                        bool const haveTexture = ISLABEL("Texture");
+                        const bool haveTexture = ISLABEL("Texture");
 
                         // Need to allocate new stage?
                         if (sub >= grp->members.size())

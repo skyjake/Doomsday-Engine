@@ -86,7 +86,7 @@ static void evaluateLighting(const Vec3d &origin, ConvexSubspace &subspaceAtOrig
         else
 #endif
         {
-            Vec4f const color = subsec.lightSourceColorfIntensity();
+            const Vec4f color = subsec.lightSourceColorfIntensity();
 
             dfloat lightLevel = color.w;
             /* if(spr->type == VSPR_DECORATION)
@@ -167,7 +167,7 @@ void R_ProjectSprite(mobj_t &mob)
     const Record *spriteRec = Mobj_SpritePtr(mob);
     if(!spriteRec) return;
     // ...fully transparent?
-    dfloat const alpha = Mobj_Alpha(mob);
+    const dfloat alpha = Mobj_Alpha(mob);
     if(alpha <= 0) return;
     // ...origin lies in a sector with no volume?
     ConvexSubspace &subspace = Mobj_BspLeafAtOrigin(mob).subspace();
@@ -177,8 +177,8 @@ void R_ProjectSprite(mobj_t &mob)
     const ClientMobjThinkerData *mobjData = THINKER_DATA_MAYBE(mob.thinker, ClientMobjThinkerData);
 
     // Determine distance to object.
-    Vec3d const moPos = mobjOriginSmoothed(&mob);
-    coord_t const distFromEye = Rend_PointDist2D(moPos);
+    const Vec3d moPos = mobjOriginSmoothed(&mob);
+    const coord_t distFromEye = Rend_PointDist2D(moPos);
 
     // Should we use a 3D model?
     FrameModelDef *mf = nullptr, *nextmf = nullptr;
@@ -207,7 +207,7 @@ void R_ProjectSprite(mobj_t &mob)
         }
     }
 
-    bool const hasModel = (mf || animator);
+    const bool hasModel = (mf || animator);
 
     // Decide which material to use according to the sprite's angle and position
     // relative to that of the viewer.
@@ -217,7 +217,7 @@ void R_ProjectSprite(mobj_t &mob)
 
     //try
     defn::Sprite const       sprite(*spriteRec);
-    defn::Sprite::View const spriteView =
+    const defn::Sprite::View spriteView =
         sprite.nearestView(mob.angle, R_ViewPointToAngle(Vec2d(mob.origin)), !!hasModel);
     {
         if (auto *sprMat = world::Materials::get().materialPtr(*spriteView.material))
@@ -247,7 +247,7 @@ void R_ProjectSprite(mobj_t &mob)
         return;
     }
 
-    bool const fullbright = ((mob.state->flags & STF_FULLBRIGHT) != 0 || levelFullBright);
+    const bool fullbright = ((mob.state->flags & STF_FULLBRIGHT) != 0 || levelFullBright);
     // Align to the view plane? (Means scaling down Z with models)
     bool viewAlign  = (!hasModel && ((mob.ddFlags & DDMF_VIEWALIGN) || alwaysAlign == 1))
                        || alwaysAlign == 3;
@@ -255,7 +255,7 @@ void R_ProjectSprite(mobj_t &mob)
     // Perform visibility checking by projecting a view-aligned line segment
     // relative to the viewer and determining if the whole of the segment has
     // been clipped away according to the 360 degree angle clipper.
-    coord_t const visWidth = Mobj_VisualRadius(mob) * 2;  /// @todo ignorant of rotation...
+    const coord_t visWidth = Mobj_VisualRadius(mob) * 2;  /// @todo ignorant of rotation...
     Vec2d v1, v2;
     R_ProjectViewRelativeLine2D(moPos, hasModel || viewAlign, visWidth,
                                 (hasModel? 0 : coord_t(-tex->base().origin().x) - (visWidth / 2.0f)),
@@ -264,7 +264,7 @@ void R_ProjectSprite(mobj_t &mob)
     // Not visible?
     if(!ClientApp::renderSystem().angleClipper().checkRangeFromViewRelPoints(v1, v2))
     {
-        coord_t const MAX_OBJECT_RADIUS = 128;
+        const coord_t MAX_OBJECT_RADIUS = 128;
 
         // Sprite visibility is absolute.
         if(!hasModel) return;
@@ -383,9 +383,9 @@ void R_ProjectSprite(mobj_t &mob)
     // Will it be drawn as a 2D sprite?
     if(!hasModel)
     {
-        bool const brightShadow = (mob.ddFlags & DDMF_BRIGHTSHADOW) != 0;
-        bool const fitTop       = (mob.ddFlags & DDMF_FITTOP)       != 0;
-        bool const fitBottom    = (mob.ddFlags & DDMF_NOFITBOTTOM)  == 0;
+        const bool brightShadow = (mob.ddFlags & DDMF_BRIGHTSHADOW) != 0;
+        const bool fitTop       = (mob.ddFlags & DDMF_FITTOP)       != 0;
+        const bool fitBottom    = (mob.ddFlags & DDMF_NOFITBOTTOM)  == 0;
 
         // Additive blending?
         blendmode_t blendMode;
@@ -479,7 +479,7 @@ void R_ProjectSprite(mobj_t &mob)
         /// @todo mark this light source visible for LensFx
         try
         {
-            //defn::Sprite::View const spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
+            //const defn::Sprite::View spriteView = sprite.nearestView(mob.angle, R_ViewPointToAngle(mob.origin));
 
             // Lookup the Material for this Sprite and prepare the animator.
             MaterialAnimator &matAnimator = ClientMaterial::find(*spriteView.material)

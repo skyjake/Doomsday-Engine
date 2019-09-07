@@ -152,7 +152,7 @@ DE_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
         return false;
     }
 
-    defn::Sprite::View const spriteView = sprite.view(0);
+    const defn::Sprite::View spriteView = sprite.view(0);
     info->material = world::Materials::get().materialPtr(*spriteView.material);
     info->flip     = spriteView.mirrorX;
 
@@ -166,7 +166,7 @@ DE_EXTERN_C dd_bool R_GetSpriteInfo(dint id, dint frame, spriteinfo_t *info)
     const Vec2ui &matDimensions = matAnimator.dimensions();
     TextureVariant *tex            = matAnimator.texUnit(MaterialAnimator::TU_LAYER0).texture;
     const Vec2i &texDimensions  = tex->base().origin();
-    dint const texBorder           = tex->spec().variant.border;
+    const dint texBorder           = tex->spec().variant.border;
 
     info->geometry.origin.x    = -texDimensions.x + -texBorder;
     info->geometry.origin.y    = -texDimensions.y +  texBorder;

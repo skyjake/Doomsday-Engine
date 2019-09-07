@@ -36,8 +36,8 @@ struct font_s;
 // Internal:
 extern ded_t *ded; // @todo Remove me.
 
-int const NUMSPRITES = 138;
-int const NUMSTATES  = 968;
+const int NUMSPRITES = 138;
+const int NUMSTATES  = 968;
 extern ded_sprid_t  origSpriteNames[NUMSPRITES];
 extern de::String origActionNames[NUMSTATES];
 

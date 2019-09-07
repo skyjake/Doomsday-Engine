@@ -72,10 +72,10 @@ void guidata_armoricons_t::draw(const Vec2i &offset) const
 
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    dint const plrClass      = ::cfg.playerClass[player()];  // Original player class (i.e. not pig).
-    dint const activeHud     = ST_ActiveHud(player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint plrClass      = ::cfg.playerClass[player()];  // Original player class (i.e. not pig).
+    const dint activeHud     = ST_ActiveHud(player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(player()));
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(Hu_InventoryIsOpen(player())) return;
     if(!ST_AutomapIsOpen(player())) return;

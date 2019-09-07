@@ -443,7 +443,7 @@ DE_PIMPL(InputSystem)
      */
     void dispatchEvents(EventQueue *q, timespan_t ticLength, bool updateAxes = true)
     {
-        bool const callGameResponders = App_GameLoaded();
+        const bool callGameResponders = App_GameLoaded();
 
         ddevent_t *ddev;
         while ((ddev = q->getNext()))
@@ -539,9 +539,9 @@ DE_PIMPL(InputSystem)
         ev.toggle.state = ETOG_REPEAT;
 
         // Read the new keyboard events, convert to ddevents and post them.
-        int const QUEUESIZE = 32;
+        const int QUEUESIZE = 32;
         keyevent_t keyevs[QUEUESIZE];
-        size_t const numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
+        const size_t numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
         for (size_t n = 0; n < numkeyevs; ++n)
         {
             keyevent_t *ke = &keyevs[n];
@@ -786,7 +786,7 @@ DE_PIMPL(InputSystem)
         ev.type      = E_AXIS;
         ev.axis.type = EAXIS_ABSOLUTE;
 
-        Vec3f const pry = vrCfg().oculusRift().headOrientation();
+        const Vec3f pry = vrCfg().oculusRift().headOrientation();
 
         // Yaw (1.0 means 180 degrees).
         ev.axis.id  = 0; // Yaw.
@@ -887,7 +887,7 @@ DE_PIMPL(InputSystem)
             for (int i = 0; i < devices.count(); ++i)
             {
                 InputDevice *device = devices.at(i);
-                int const deviceId = i;
+                const int deviceId = i;
 
                 if (device->isActive() && context->willAcquire(deviceId))
                 {
@@ -929,7 +929,7 @@ DE_PIMPL(InputSystem)
         for (int i = 0; i < devices.count(); ++i)
         {
             InputDevice *device = devices.at(i);
-            int const deviceId  = i;
+            const int deviceId  = i;
 
             if (context.willAcquire(deviceId))
             {
@@ -1048,7 +1048,7 @@ void InputSystem::initAllDevices()
 bool InputSystem::ignoreEvents(bool yes)
 {
     LOG_AS("InputSystem");
-    bool const oldIgnoreInput = d->ignoreInput;
+    const bool oldIgnoreInput = d->ignoreInput;
 
     d->ignoreInput = yes;
     LOG_INPUT_VERBOSE("Ignoring events: %b") << yes;
@@ -1080,9 +1080,9 @@ void InputSystem::postKeyboardEvent(const KeyEvent &event)
 //    ev.toggle.state = ETOG_REPEAT;
 
     // Read the new keyboard events, convert to ddevents and post them.
-//    int const QUEUESIZE = 32;
+//    const int QUEUESIZE = 32;
 //    keyevent_t keyevs[QUEUESIZE];
-//    size_t const numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
+//    const size_t numkeyevs = Keyboard_GetEvents(keyevs, QUEUESIZE);
 //    for (size_t n = 0; n < numkeyevs; ++n)
     {
 //        keyevent_t *ke = &keyevs[n];
@@ -1742,8 +1742,8 @@ D_CMD(ActivateContext)
     DE_UNUSED(src, argc);
     InputSystem &isys = ClientApp::inputSystem();
 
-    bool const doActivate = !String(argv[0]).compareWithoutCase("activatebcontext");
-    String const name     = argv[1];
+    const bool doActivate = !String(argv[0]).compareWithoutCase("activatebcontext");
+    const String name     = argv[1];
 
     if (!isys.hasContext(name))
     {
@@ -1794,8 +1794,8 @@ D_CMD(ListBindings)
 
     isys.forAllContexts([] (BindContext &context)
     {
-        int const cmdCount = context.commandBindingCount();
-        int const impCount = context.impulseBindingCount();
+        const int cmdCount = context.commandBindingCount();
+        const int impCount = context.impulseBindingCount();
 
         // Skip empty contexts.
         if (cmdCount + impCount == 0) return LoopContinue;
@@ -1853,7 +1853,7 @@ D_CMD(RemoveBinding)
 {
     DE_UNUSED(src, argc);
 
-    int const id = String(argv[1]).toInt();
+    const int id = String(argv[1]).toInt();
     if (ClientApp::inputSystem().removeBinding(id))
     {
         LOG_INPUT_MSG("Binding " _E(b) "%i" _E(.) " deleted") << id;
@@ -1923,7 +1923,7 @@ DE_EXTERN_C void B_SetContextFallback(const char *name, int (*responderFunc)(eve
 DE_EXTERN_C int B_BindingsForCommand(const char *commandCString, char *outBuf, size_t outBufSize)
 {
     DE_ASSERT(commandCString && outBuf);
-    String const command = commandCString;
+    const String command = commandCString;
 
     *outBuf = 0;
 
@@ -1963,7 +1963,7 @@ DE_EXTERN_C int B_BindingsForControl(int localPlayer, const char *impulseNameCSt
     char *outBuf, size_t outBufSize)
 {
     DE_ASSERT(impulseNameCString && outBuf);
-    String const impulseName = impulseNameCString;
+    const String impulseName = impulseNameCString;
 
     *outBuf = 0;
 

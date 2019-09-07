@@ -118,8 +118,8 @@ DE_GUI_PIMPL(MapOutlineWidget)
 
         if (mapBounds.isNull()) return Mat4f();
 
-        Rectanglef const rect = self().contentRect();
-        float const scale = de::min(rect.width()  / mapBounds.width(),
+        const Rectanglef rect = self().contentRect();
+        const float scale = de::min(rect.width()  / mapBounds.width(),
                                     rect.height() / mapBounds.height());
         return Mat4f::translate(rect.middle()) *
                Mat4f::scale    (Vec3f(scale, -scale, 1)) *

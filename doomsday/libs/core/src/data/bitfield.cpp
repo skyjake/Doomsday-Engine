@@ -60,7 +60,7 @@ DE_PIMPL(BitField)
 
         while (written < eNumBits)
         {
-            dbyte const mask = elementMask(eNumBits, written) << shift;
+            const dbyte mask = elementMask(eNumBits, written) << shift;
 
             dbyte pv = packed[packedIdx] & ~mask;
             pv |= mask & ((value >> written) << shift);
@@ -91,7 +91,7 @@ DE_PIMPL(BitField)
 
         while (read < eNumBits)
         {
-            dbyte const mask = elementMask(eNumBits, read) << shift;
+            const dbyte mask = elementMask(eNumBits, read) << shift;
 
             value |= ((packed[packedIdx] & mask) >> shift) << read;
 
@@ -126,7 +126,7 @@ DE_PIMPL(BitField)
                 continue;
 
             // The elements on this byte are different; which are they?
-            Ids const lookup = elements->idsLaidOutOnByte(pos);
+            const Ids lookup = elements->idsLaidOutOnByte(pos);
             DE_FOR_EACH_CONST(Ids, i, lookup)
             {
                 const Id &id = *i;

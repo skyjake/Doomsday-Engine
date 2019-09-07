@@ -46,7 +46,7 @@ namespace de {
 /// When converting records to a human-readable text representation, this is the
 /// maximum number of lines that a subrecord can have before it is shown as a short
 /// excerpt.
-int const SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
+const int SUBRECORD_CONTENT_EXCERPT_THRESHOLD = 100; // lines
 
 const char *Record::VAR_SUPER       = "__super__";
 const char *Record::VAR_FILE        = "__file__";
@@ -193,7 +193,7 @@ DE_PIMPL(Record)
                     else
                     {
                         // Ignore read-only flags.
-                        Flags const oldFlags = var->flags();
+                        const Flags oldFlags = var->flags();
                         var->setFlags(Variable::ReadOnly, false);
 
                         // Just make a copy.
@@ -245,7 +245,7 @@ DE_PIMPL(Record)
 
     LoopResult forSubrecords(std::function<LoopResult (const String &, Record &)> func) const
     {
-        Members const unmodifiedMembers = members; // In case a callback removes members.
+        const Members unmodifiedMembers = members; // In case a callback removes members.
         for (auto &i : unmodifiedMembers)
         {
             const Variable &member = *i.second;
@@ -806,7 +806,7 @@ Variable &Record::appendUniqueWord(const String &name, const String &word, const
 {
     DE_GUARD(d);
 
-    String const value = gets(name, "");
+    const String value = gets(name, "");
     if (!value.containsWord(word))
     {
         appendWord(name, word, separator);
@@ -1192,7 +1192,7 @@ Record &Record::operator << (const NativeFunctionSpec &spec)
 
 const Record &Record::parentRecordForMember(const String &name) const
 {
-    String const lastOmitted = name.fileNamePath('.');
+    const String lastOmitted = name.fileNamePath('.');
     if (lastOmitted.isEmpty()) return *this;
 
     // Omit the final segment of the dotted path to find out the parent record.

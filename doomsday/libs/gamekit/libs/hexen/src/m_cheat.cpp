@@ -231,7 +231,7 @@ D_CMD(Cheat)
     DE_UNUSED(src, argc);
 
     // Give each of the characters in argument two to the SB event handler.
-    int const len = (int) strlen(argv[1]);
+    const int len = (int) strlen(argv[1]);
     for(int i = 0; i < len; ++i)
     {
         event_t ev;
@@ -471,7 +471,7 @@ D_CMD(CheatGive)
 
     char buf[100]; strcpy(buf, argv[1]); // Stuff is the 2nd arg.
     strlwr(buf);
-    size_t const stuffLen = strlen(buf);
+    const size_t stuffLen = strlen(buf);
     for(size_t i = 0; buf[i]; ++i)
     {
         switch(buf[i])

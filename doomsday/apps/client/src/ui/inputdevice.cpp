@@ -102,7 +102,7 @@ String InputDevice::description() const
     desc += Stringf(
         _E(b) "%s" _E(.) _E(l) " (%s)" _E(.), name().c_str(), isActive() ? "active" : "inactive");
 
-    if (int const count = axisCount())
+    if (const int count = axisCount())
     {
         desc += Stringf("\n  " _E(b) "%i axes:" _E(.), count);
         int idx = 0;
@@ -113,7 +113,7 @@ String InputDevice::description() const
         }
     }
 
-    if (int const count = buttonCount())
+    if (const int count = buttonCount())
     {
         desc += Stringf("\n  " _E(b) "%i buttons:" _E(.), count);
         int idx = 0;
@@ -124,7 +124,7 @@ String InputDevice::description() const
         }
     }
 
-    if (int const count = hatCount())
+    if (const int count = hatCount())
     {
         desc += Stringf("\n  " _E(b) "%i hats:" _E(.), count);
         int idx = 0;

@@ -71,14 +71,14 @@ DE_GUI_PIMPL(ColumnWidget)
                 Vec2f const reduction(uv.width() / 40, uv.height() / 40);
                 uv = uv.adjusted(reduction, -reduction);
 
-                Rectanglef const norm = owner().normalizedRect();
+                const Rectanglef norm = owner().normalizedRect();
                 verts.makeQuad(rect,
                                Vec4f(colorAnim.value(), 1.f),
                                Rectanglef(uv.topLeft + norm.topLeft     * uv.size(),
                                           uv.topLeft + norm.bottomRight * uv.size()));
 
-                int const edgeWidth = GuiWidget::pointsToPixels(1);
-                auto const edgeUv = owner().root().atlas().imageRectf(owner().root().solidWhitePixel());
+                const int edgeWidth = GuiWidget::pointsToPixels(1);
+                const auto edgeUv = owner().root().atlas().imageRectf(owner().root().solidWhitePixel());
                 verts.makeQuad(Rectanglef(rect.left(), rect.top(),
                                           edgeWidth, rect.height()),
                                Vec4f(0, 0, 0, 1), edgeUv);

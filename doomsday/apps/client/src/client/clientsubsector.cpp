@@ -753,7 +753,7 @@ DE_PIMPL(ClientSubsector)
 
         // Link all convex subspaces whose axis-aligned bounding box intersects
         // with the affection bounds to the reverb set.
-        dint const localValidCount = ++validCount;
+        const dint localValidCount = ++validCount;
         map.subspaceBlockmap().forAllInBox(box, [this, &box, &localValidCount] (void *object)
         {
             auto &sub = *(ConvexSubspace *)object;
@@ -878,7 +878,7 @@ DE_PIMPL(ClientSubsector)
             if (!leftHEdge || !rightHEdge) return false;
 
             // Is the wall section potentially visible?
-            WallSpec const wallSpec = WallSpec::fromMapSide(side, section);
+            const WallSpec wallSpec = WallSpec::fromMapSide(side, section);
             WallEdge leftEdge(wallSpec, *leftHEdge, Line::From);
             WallEdge rightEdge(wallSpec, *rightHEdge, Line::To);
 
@@ -923,7 +923,7 @@ DE_PIMPL(ClientSubsector)
         if (de::fequal(delta.length(), 0)) return;
 
         ClientMaterial &material = matAnimator.material();
-        dint const axis = suf.normal().maxAxis();
+        const dint axis = suf.normal().maxAxis();
 
         Vec2d sufDimensions;
         if (axis == 0 || axis == 1)
@@ -973,7 +973,7 @@ DE_PIMPL(ClientSubsector)
 
                 for (; t < sufDimensions.y; t += repeat.y)
                 {
-                    auto const offset = Vec2f(s, t) / sufDimensions;
+                    const auto offset = Vec2f(s, t) / sufDimensions;
                     Vec3d patternOffset(offset.x,
                                            axis == 2 ? offset.y : offset.x,
                                            axis == 2 ? offset.x : offset.y);
@@ -1212,7 +1212,7 @@ DE_PIMPL(ClientSubsector)
         // We may need to project new decorations.
         markDependentSurfacesForRedecoration(plane);
 
-        bool const planeIsInterior = (&plane == &self().visPlane(plane.indexInSector()));
+        const bool planeIsInterior = (&plane == &self().visPlane(plane.indexInSector()));
         if (planeIsInterior)
         {
             // We'll need to recalculate environmental audio characteristics.
@@ -1606,7 +1606,7 @@ bool ClientSubsector::isHeightInVoid(ddouble height) const
 
 bool ClientSubsector::hasWorldVolume(bool useSmoothedHeights) const
 {
-    auto const currentFrame = R_FrameCount();
+    const auto currentFrame = R_FrameCount();
     if (d->validFrame != currentFrame)
     {
         d->validFrame = currentFrame;
@@ -1797,7 +1797,7 @@ bool ClientSubsector::updateBiasContributors(Shard *shard)
             const Surface &surface = seg.lineSide().middle();
             const Vec2d &from   = seg.hedge().origin();
             const Vec2d &to     = seg.hedge().twin().origin();
-            Vec2d const center  = (from + to) / 2;
+            const Vec2d center  = (from + to) / 2;
 
             map.forAllBiasSources([&tracker, &surface, &from, &to, &center] (BiasSource &source)
             {

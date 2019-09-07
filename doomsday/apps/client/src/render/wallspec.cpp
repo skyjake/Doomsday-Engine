@@ -49,7 +49,7 @@ static bool useWallSectionLightLevelDeltas(const LineSide &side, dint section)
 
 WallSpec WallSpec::fromMapSide(const LineSide &side, dint section) // static
 {
-    bool const isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
+    const bool isTwoSidedMiddle = (section == LineSide::Middle && !side.considerOneSided());
 
     WallSpec spec(section);
 

@@ -351,7 +351,7 @@ void StringPool::setUserValue(Id id, uint value)
 {
     if (id == 0) return;
 
-    InternalId const internalId = IMPORT_ID(id);
+    const InternalId internalId = IMPORT_ID(id);
 
     DE_GUARD(d);
 
@@ -365,7 +365,7 @@ uint StringPool::userValue(Id id) const
 {
     if (id == 0) return 0;
 
-    InternalId const internalId = IMPORT_ID(id);
+    const InternalId internalId = IMPORT_ID(id);
 
     DE_GUARD(d);
 
@@ -379,7 +379,7 @@ void StringPool::setUserPointer(Id id, void *ptr)
 {
     if (id == 0) return;
 
-    InternalId const internalId = IMPORT_ID(id);
+    const InternalId internalId = IMPORT_ID(id);
 
     DE_GUARD(d);
 
@@ -393,7 +393,7 @@ void *StringPool::userPointer(Id id) const
 {
     if (id == 0) return nullptr;
 
-    InternalId const internalId = IMPORT_ID(id);
+    const InternalId internalId = IMPORT_ID(id);
 
     DE_GUARD(d);
 
@@ -436,7 +436,7 @@ const String &StringPool::stringRef(StringPool::Id id) const
 
     DE_GUARD(d);
 
-    InternalId const internalId = IMPORT_ID(id);
+    const InternalId internalId = IMPORT_ID(id);
     DE_ASSERT(internalId < d->idMap.size());
     return d->idMap[internalId]->str;
 }
@@ -460,7 +460,7 @@ bool StringPool::removeById(Id id)
 
     DE_GUARD(d);
 
-    InternalId const internalId = IMPORT_ID(id);
+    const InternalId internalId = IMPORT_ID(id);
     if (id >= d->idMap.size()) return false;
 
     auto *intern = d->idMap[internalId];

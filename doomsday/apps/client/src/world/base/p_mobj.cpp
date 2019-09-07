@@ -195,7 +195,7 @@ DE_EXTERN_C void Mobj_SetState(mobj_t *mob, int statenum)
 
     if (!(mob->ddFlags & DDMF_REMOTE))
     {
-        String const exec = DED_Definitions()->states[statenum].gets("execute");
+        const String exec = DED_Definitions()->states[statenum].gets("execute");
         if (!exec.isEmpty())
         {
             Con_Execute(CMDS_SCRIPT, exec, true, false);
@@ -245,7 +245,7 @@ DE_EXTERN_C void Mobj_OriginSmoothed(mobj_t *mob, coord_t origin[3])
     // Apply a Short Range Visual Offset?
     if (useSRVO && mob->state && mob->tics >= 0)
     {
-        ddouble const mul = mob->tics / dfloat( mob->state->tics );
+        const ddouble mul = mob->tics / dfloat( mob->state->tics );
         vec3d_t srvo;
 
         V3d_Copy(srvo, mob->srvo);
@@ -594,7 +594,7 @@ void Mobj_AnimateHaloOcclussion(mobj_t &mob)
 
 dfloat Mobj_ShadowStrength(const mobj_t &mob)
 {
-    static dfloat const minSpriteAlphaLimit = .1f;
+    static const dfloat minSpriteAlphaLimit = .1f;
 
     // A shadow is not cast if the map-object is not linked in the map.
     if (!Mobj_HasSubsector(mob)) return 0;
@@ -923,8 +923,8 @@ coord_t Mobj_VisualRadius(const mobj_t &mob)
 
 AABoxd Mobj_Bounds(const mobj_t &mobj)
 {
-    Vec2d const origin = Mobj_Origin(mobj);
-    ddouble const radius  = Mobj_Radius(mobj);
+    const Vec2d origin = Mobj_Origin(mobj);
+    const ddouble radius  = Mobj_Radius(mobj);
     return AABoxd(origin.x - radius, origin.y - radius,
                   origin.x + radius, origin.y + radius);
 }
@@ -940,7 +940,7 @@ D_CMD(InspectMobj)
     }
 
     // Get the ID.
-    auto const id = thid_t( String(argv[1]).toInt() );
+    const auto id = thid_t( String(argv[1]).toInt() );
     // Find the map-object.
     mobj_t *mob   = App_World().map().thinkers().mobjById(id);
     if (!mob)

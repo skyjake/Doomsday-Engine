@@ -393,8 +393,8 @@ void NetCl_UpdatePlayerState(reader_s *msg, int plrNum)
         {
             s = Reader_ReadUInt16(msg);
 
-            inventoryitemtype_t const type = inventoryitemtype_t(s & 0xff);
-            uint const num                 = s >> 8;
+            const inventoryitemtype_t type = inventoryitemtype_t(s & 0xff);
+            const uint num                 = s >> 8;
 
             for(uint j = 0; j < num; ++j)
             {

@@ -69,8 +69,8 @@ bool AnimationValue::isTrue() const
 dint AnimationValue::compare(const Value &value) const
 {
     // Compare using the current numerical value.
-    Number const a = asNumber();
-    Number const b = value.asNumber();
+    const Number a = asNumber();
+    const Number b = value.asNumber();
     if (fequal(a, b)) return 0;
     return (a < b? -1 : +1);
 }

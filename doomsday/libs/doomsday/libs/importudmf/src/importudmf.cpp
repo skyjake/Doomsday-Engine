@@ -92,7 +92,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     if (ident == UDMFLex::NAMESPACE)
                     {
                         LOG_MAP_VERBOSE("UDMF namespace: %s") << value.asText();
-                        String const ns = value.asText().lower();
+                        const String ns = value.asText().lower();
                         if (ns == "hexen")
                         {
                             importState.isHexen = true;
@@ -108,7 +108,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                 {
                     if (type == UDMFLex::THING)
                     {
-                        int const index = importState.thingCount++;
+                        const int index = importState.thingCount++;
 
                         // Properties common to all games.
                         gmoSetThingProperty<DDVT_DOUBLE>(index, "X", block["x"]->asNumber());
@@ -169,7 +169,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     }
                     else if (type == UDMFLex::VERTEX)
                     {
-                        int const index = importState.vertexCount++;
+                        const int index = importState.vertexCount++;
 
                         MPE_VertexCreate(block["x"]->asNumber(), block["y"]->asNumber(), index);
                     }
@@ -183,7 +183,7 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     }
                     else if (type == UDMFLex::SECTOR)
                     {
-                        int const index = importState.sectorCount++;
+                        const int index = importState.sectorCount++;
 
                         int lightlevel = block.contains("lightlevel")? block["lightlevel"]->asInt() : 160;
 
@@ -233,10 +233,10 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     int ddLineFlags = 0;
                     short sideFlags = 0;
                     {
-                        bool const blocking      = linedef["blocking"]->isTrue();
-                        bool const dontpegtop    = linedef["dontpegtop"]->isTrue();
-                        bool const dontpegbottom = linedef["dontpegbottom"]->isTrue();
-                        bool const twosided      = linedef["twosided"]->isTrue();
+                        const bool blocking      = linedef["blocking"]->isTrue();
+                        const bool dontpegtop    = linedef["dontpegtop"]->isTrue();
+                        const bool dontpegbottom = linedef["dontpegbottom"]->isTrue();
+                        const bool twosided      = linedef["twosided"]->isTrue();
 
                         if (blocking)      ddLineFlags |= DDLF_BLOCKING;
                         if (dontpegtop)    ddLineFlags |= DDLF_DONTPEGTOP;
@@ -262,8 +262,8 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
 
                     // Front side.
                     {
-                        int const offsetx = front["offsetx"]->asInt();
-                        int const offsety = front["offsety"]->asInt();
+                        const int offsetx = front["offsetx"]->asInt();
+                        const int offsety = front["offsety"]->asInt();
                         float opacity = 1.f;
 
                         MPE_LineAddSide(
@@ -279,8 +279,8 @@ static int importMapHook(int /*hookType*/, int /*parm*/, void *context)
                     // Back side.
                     if (back)
                     {
-                        int const offsetx = (*back)["offsetx"]->asInt();
-                        int const offsety = (*back)["offsety"]->asInt();
+                        const int offsetx = (*back)["offsetx"]->asInt();
+                        const int offsety = (*back)["offsety"]->asInt();
                         float opacity = 1.f;
 
                         MPE_LineAddSide(

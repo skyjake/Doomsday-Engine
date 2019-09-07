@@ -199,7 +199,7 @@ DE_PIMPL(MapStateWriter)
         Writer_WriteByte(p.msw->writer(), Thinker_InStasis(th)? 1 : 0); // In stasis?
 
         // Private identifier of the thinker.
-        de::Id::Type const privateId = (th->d? THINKER_DATA(*th, ThinkerData).id().asUInt32() : 0);
+        const de::Id::Type privateId = (th->d? THINKER_DATA(*th, ThinkerData).id().asUInt32() : 0);
         Writer_WriteUInt32(p.msw->writer(), privateId);
 
         // Write the thinker data.

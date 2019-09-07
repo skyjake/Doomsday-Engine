@@ -327,7 +327,7 @@ void BusyRunner::loop()
     BusyTask *const busyTask = busy().currentTask();
     if (!busyTask || !busy().isActive()) return;
 
-    bool const canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
+    const bool canUpload = !(busyTask->mode & BUSYF_NO_UPLOADS);
 
     // Post and discard all input events.
     ClientApp::inputSystem().processEvents(0);

@@ -181,10 +181,10 @@ void NumberValue::modulo(const Value &divisor)
 }
 
 // Flags for serialization:
-static duint8 const SEMANTIC_BOOLEAN = 0x01;
-static duint8 const SEMANTIC_HEX     = 0x02;
-static duint8 const SEMANTIC_INT     = 0x04;
-static duint8 const SEMANTIC_UINT    = 0x08;
+static const duint8 SEMANTIC_BOOLEAN = 0x01;
+static const duint8 SEMANTIC_HEX     = 0x02;
+static const duint8 SEMANTIC_INT     = 0x04;
+static const duint8 SEMANTIC_UINT    = 0x08;
 
 void NumberValue::operator >> (Writer &to) const
 {

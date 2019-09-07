@@ -178,7 +178,7 @@ bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, const Vec3d &point,
     float xScale, float yScale, const Vec3d &v1, const Vec3d &v2,
     const Mat3f &tangentMatrix)
 {
-    Vec3d const v1ToPoint = v1 - point;
+    const Vec3d v1ToPoint = v1 - point;
     s[0] = v1ToPoint.dot(tangentMatrix.column(0)/*tangent*/) * xScale + .5f;
     t[0] = v1ToPoint.dot(tangentMatrix.column(1)/*bitangent*/) * yScale + .5f;
 
@@ -186,7 +186,7 @@ bool R_GenerateTexCoords(Vec2f &s, Vec2f &t, const Vec3d &point,
     if(s[0] >= 1 || t[0] >= 1)
         return false; // Right on the X axis or below on the Y axis.
 
-    Vec3d const v2ToPoint = v2 - point;
+    const Vec3d v2ToPoint = v2 - point;
     s[1] = v2ToPoint.dot(tangentMatrix.column(0)) * xScale + .5f;
     t[1] = v2ToPoint.dot(tangentMatrix.column(1)) * yScale + .5f;
 
@@ -248,8 +248,8 @@ DE_EXTERN_C dd_bool R_ChooseAlignModeAndScaleFactor(float *scale, int width, int
 DE_EXTERN_C scalemode_t R_ChooseScaleMode2(int width, int height, int availWidth, int availHeight,
     scalemode_t overrideMode, float stretchEpsilon)
 {
-    float const availRatio = float(availWidth) / availHeight;
-    float const origRatio  = float(width) / (height * 1.2f);
+    const float availRatio = float(availWidth) / availHeight;
+    const float origRatio  = float(width) / (height * 1.2f);
 
     // Considered identical?
     if(INRANGE_OF(availRatio, origRatio, .001f))

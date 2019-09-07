@@ -238,7 +238,7 @@ DE_EXTERN_C Smoother* Net_PlayerSmoother(dint player)
 void Net_SendPlayerInfo(dint srcPlrNum, dint destPlrNum)
 {
     DE_ASSERT(srcPlrNum >= 0 && srcPlrNum < DDMAXPLAYERS);
-    dsize const nameLen = strlen(DD_Player(srcPlrNum)->name);
+    const dsize nameLen = strlen(DD_Player(srcPlrNum)->name);
 
     LOG_AS("Net_SendPlayerInfo");
     LOGDEV_NET_VERBOSE("src=%i dest=%i name=%s")
@@ -336,7 +336,7 @@ static void Net_DoUpdate()
     // send ticcmds or coordinates to the server.
 
     // Check time.
-    dint const nowTime = Timer_Ticks();
+    const dint nowTime = Timer_Ticks();
 
     // Clock reset?
     if(::firstNetUpdate)
@@ -345,7 +345,7 @@ static void Net_DoUpdate()
         lastTime = nowTime;
     }
 
-    dint const newTics = nowTime - lastTime;
+    const dint newTics = nowTime - lastTime;
     if(newTics <= 0) return;  // Nothing new to update.
 
     lastTime = nowTime;
@@ -551,8 +551,8 @@ static dd_bool recordingDemo()
 
 void Net_DrawDemoOverlay()
 {
-    dint const x = DE_GAMEVIEW_WIDTH - 10;
-    dint const y = 10;
+    const dint x = DE_GAMEVIEW_WIDTH - 10;
+    const dint y = 10;
 
     if(!recordingDemo() || !(SECONDS_TO_TICKS(::gameTime) & 8))
         return;
@@ -839,7 +839,7 @@ dd_bool ServerInfo_FromString(serverinfo_t *info, const char *valuePair)
  */
 void Net_WriteChatMessage(dint from, dint toMask, const char *message)
 {
-    auto const len = de::min<dsize>(strlen(message), 0xffff);
+    const auto len = de::min<dsize>(strlen(message), 0xffff);
 
     Msg_Begin(PKT_CHAT);
     Writer_WriteByte(::msgWriter, from);

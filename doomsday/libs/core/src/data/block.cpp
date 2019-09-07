@@ -328,7 +328,7 @@ String Block::asHexadecimalText() const
     String hex;
     for (size_t i = 0; i < size(); i++)
     {
-        auto const ch = at(i);
+        const auto ch = at(i);
         hex += asciiHexNumber(ch >> 4);
         hex += asciiHexNumber(ch & 0xf);
     }

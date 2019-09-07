@@ -98,12 +98,12 @@ void Net_SendPing(dint player, dint count)
 // Called when a ping packet comes in.
 void Net_PingResponse()
 {
-    dint const player = ::netBuffer.player;
+    const dint player = ::netBuffer.player;
     DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
     Pinger &ping = DD_Player(player)->pinger();
 
     // Is this a response to our ping?
-    dint const time = Reader_ReadUInt32(msgReader);
+    const dint time = Reader_ReadUInt32(msgReader);
     if(time == ping.sent)
     {
         // Record the time and send the next ping.

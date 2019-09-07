@@ -68,7 +68,7 @@ public:
 #endif
 
     /// Maximum speed for a smoothed plane.
-    static de::dint const MAX_SMOOTH_MOVE = 64;
+    static const de::dint MAX_SMOOTH_MOVE = 64;
 
 public:
     /**

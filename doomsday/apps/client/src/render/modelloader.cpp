@@ -215,7 +215,7 @@ DE_PIMPL(ModelLoader)
 
         while (!pendingModels.value.isEmpty() && maxCount > 0)
         {
-            String const identifier = *pendingModels.value.begin();
+            const String identifier = *pendingModels.value.begin();
             pendingModels.value.remove(identifier);
 
             if (!bank.has(identifier))
@@ -427,7 +427,7 @@ DE_PIMPL(ModelLoader)
         render::Model &model = bank.model<render::Model>(path);
         model.audienceForAboutToGLInit() += this;
 
-        auto const asset = App::asset(path);
+        const auto asset = App::asset(path);
 
         // Determine the coordinate system of the model.
         Vec3f front(0, 0, 1);
@@ -466,7 +466,7 @@ DE_PIMPL(ModelLoader)
                     {
                 if (ScriptedInfo::blockType(block) == DEF_VARIANT())
                         {
-                            String const materialName = blockName;
+                            const String materialName = blockName;
                             if (!model.materialIndexForName.contains(materialName))
                             {
                                 // Add a new material.
@@ -504,7 +504,7 @@ DE_PIMPL(ModelLoader)
             for (auto &state : states)
             {
                 // Sequences are added in source order.
-                auto const seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE(), *state.second);
+                const auto seqs = ScriptedInfo::subrecordsOfType(DEF_SEQUENCE(), *state.second);
                 if (!seqs.isEmpty())
                 {
                     if (model.animationCount() > 0)
@@ -580,7 +580,7 @@ DE_PIMPL(ModelLoader)
                     pass.depthFunc = textToComparison(def.gets(DEF_DEPTHFUNC(), "Less"));
                     pass.depthWrite = ScriptedInfo::isTrue(def, DEF_DEPTHWRITE(), true);
 
-                    String const passShader = def.gets(DEF_SHADER(), modelShader);
+                    const String passShader = def.gets(DEF_SHADER(), modelShader);
                     pass.program = loadProgram(passShader);
                     composeTextureMappings(textureMapping,
                                            ClientApp::shaders()[passShader]);
@@ -634,7 +634,7 @@ DE_PIMPL(ModelLoader)
     {
         if (!def.has(key)) return render::Model::NotAligned;
 
-        String const value = def.gets(key);
+        const String value = def.gets(key);
         if (!value.compareWithoutCase("movement"))
         {
             return render::Model::AlignToMomentum;
@@ -692,7 +692,7 @@ DE_PIMPL(ModelLoader)
     {
         if (matDef.has(textureName))
         {
-            String const path = ScriptedInfo::absolutePathInContext(matDef, matDef.gets(textureName));
+            const String path = ScriptedInfo::absolutePathInContext(matDef, matDef.gets(textureName));
             model.setTexturePath(mesh, map, path);
         }
     }

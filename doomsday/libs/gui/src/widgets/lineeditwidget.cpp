@@ -112,7 +112,7 @@ DE_GUI_PIMPL(LineEditWidget)
 
     int calculateHeight()
     {
-        int const hgt = de::max(font->height().valuei(), wraps.totalHeightInPixels());
+        const int hgt = de::max(font->height().valuei(), wraps.totalHeightInPixels());
         return hgt + self().margins().height().valuei();
     }
 
@@ -127,7 +127,7 @@ DE_GUI_PIMPL(LineEditWidget)
         if (self().background().type == Background::GradientFrame)
         {
             Background bg;
-            Vec3f const frameColor = style().colors().colorf(colorTheme == Normal? "text" : "inverted.text");
+            const Vec3f frameColor = style().colors().colorf(colorTheme == Normal? "text" : "inverted.text");
             if (!self().hasFocus())
             {
                 bg = Background(Background::GradientFrame, Vec4f(frameColor, .15f + hovering * .2f), 6);
@@ -201,7 +201,7 @@ DE_GUI_PIMPL(LineEditWidget)
                 .setVertices(gfx::TriangleStrip, verts, gfx::Static);
 
         // Cursor.
-        Rectanglei const caret = self().cursorRect();
+        const Rectanglei caret = self().cursorRect();
 
         verts.clear();
         verts.makeQuad(caret, Vec4f(1),
@@ -303,7 +303,7 @@ void LineEditWidget::setSignalOnEnter(bool enterSignal)
 Rectanglei LineEditWidget::cursorRect() const
 {
     const auto cursorPos = lineCursorPos();
-    Vec2i const cp = d->wraps.charTopLeftInPixels(cursorPos.line, cursorPos.x) +
+    const Vec2i cp = d->wraps.charTopLeftInPixels(cursorPos.line, cursorPos.x) +
             contentRect().topLeft;
 
     return Rectanglei(cp + pointsToPixels(Vec2i(-1, 0)),
@@ -341,8 +341,8 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
 {
     GuiWidget::glMakeGeometry(verts);
 
-    Rectanglei const contentRect = this->contentRect();
-    Rectanglef const solidWhiteUv = d->atlas().imageRectf(root().solidWhitePixel());
+    const Rectanglei contentRect = this->contentRect();
+    const Rectanglef solidWhiteUv = d->atlas().imageRectf(root().solidWhitePixel());
 
     // Text lines.
     d->composer.makeVertices(verts, contentRect, AlignLeft, AlignLeft, d->textColor);
@@ -354,7 +354,7 @@ void LineEditWidget::glMakeGeometry(GuiVertexBuilder &verts)
         const auto startPos = linePos(comp.start);
         const auto endPos   = linePos(comp.end);
 
-        Vec2i const offset =
+        const Vec2i offset =
             contentRect.topLeft + Vec2i(0, d->font->ascent().valuei() + pointsToPixels(2));
 
         // It may span multiple lines.
@@ -463,7 +463,7 @@ void LineEditWidget::drawContent()
 
     GLState::push().setNormalizedScissor(painter.normalizedScissor());
 
-    float const opac = visibleOpacity();
+    const float opac = visibleOpacity();
     d->uColor = Vec4f(1, 1, 1, opac); // Overall opacity.
 
     // Blink the cursor.

@@ -116,7 +116,7 @@ DE_PIMPL(VRWindowTransform)
                 .setViewport(Rectangleui::fromSize(unwarpedFB.size()));
         unwarpedFB.unsetActiveRect(true);
 
-        GLTextureFramebuffer::Size const fbSize = unwarpedFB.size();
+        const GLTextureFramebuffer::Size fbSize = unwarpedFB.size();
 
         // Left eye view on left side of screen.
         for (int eyeIdx = 0; eyeIdx < 2; ++eyeIdx)
@@ -305,7 +305,7 @@ DE_PIMPL(VRWindowTransform)
             // first scan line is odd or even.
             Vec2i ulCorner(0, 0);
             ulCorner = self().window().mapToGlobal(ulCorner); // widget to screen coordinates
-            bool const rowParityIsEven = ((ulCorner.y % 2) == 0);
+            const bool rowParityIsEven = ((ulCorner.y % 2) == 0);
 
             rowInterNeedRelease = false;
 
@@ -418,7 +418,7 @@ Vec2f VRWindowTransform::windowToLogicalCoords(const Vec2i &winPos) const
 
     Vec2f pos = winPos;
 
-    Vec2f const size = window().pixelSize();
+    const Vec2f size = window().pixelSize();
     Vec2f viewSize = window().windowContentSize();
 
     switch (d->vrCfg.mode())
@@ -461,7 +461,7 @@ Vec2f VRWindowTransform::logicalToWindowCoords(const Vec2i &logicalPos) const
 {
     Vec2f pos = logicalPos;
 
-    Vec2f const size = window().pixelSize();
+    const Vec2f size = window().pixelSize();
     Vec2f viewSize = window().windowContentSize();
 
     // Scale to pixel size.

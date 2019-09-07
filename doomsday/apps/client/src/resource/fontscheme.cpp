@@ -65,7 +65,7 @@ DE_OBSERVES(FontManifest, Deletion)
         while(iter.hasNext())
         {
             Manifest &manifest = iter.next();
-            int const uniqueId = manifest.uniqueId();
+            const int uniqueId = manifest.uniqueId();
             if(minId && uniqueId < *minId) *minId = uniqueId;
             if(maxId && uniqueId > *maxId) *maxId = uniqueId;
         }
@@ -193,7 +193,7 @@ FontScheme::Manifest &FontScheme::declare(const Path &path)
         throw InvalidPathError("FontScheme::declare", "Missing/zero-length path was supplied");
     }
 
-    int const sizeBefore = d->index.size();
+    const int sizeBefore = d->index.size();
     Manifest *newManifest = &d->index.insert(path);
     DE_ASSERT(newManifest != 0);
 

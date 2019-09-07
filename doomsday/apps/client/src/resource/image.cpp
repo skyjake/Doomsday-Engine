@@ -253,7 +253,7 @@ bool Image_HasAlpha(const image_t &img)
 
     if (img.pixelSize == 4)
     {
-        long const numpels = img.size.x * img.size.y;
+        const long numpels = img.size.x * img.size.y;
         const uint8_t *in = img.pixels;
         for (long i = 0; i < numpels; ++i, in += 4)
         {
@@ -507,13 +507,13 @@ static void compositePaletted(dbyte *dst, const Vec2ui &dstDimensions,
     if (dstDimensions == Vec2ui()) return;
     if (srcDimensions == Vec2ui()) return;
 
-    int const       srcW = srcDimensions.x;
-    int const       srcH = srcDimensions.y;
-    size_t const srcPels = srcW * srcH;
+    const int srcW = srcDimensions.x;
+    const int srcH = srcDimensions.y;
+    const size_t srcPels = srcW * srcH;
 
-    int const       dstW = dstDimensions.x;
-    int const       dstH = dstDimensions.y;
-    size_t const dstPels = dstW * dstH;
+    const int dstW = dstDimensions.x;
+    const int dstH = dstDimensions.y;
+    const size_t dstPels = dstW * dstH;
 
     int dstX, dstY;
 
@@ -771,8 +771,8 @@ Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
             }
             else
             {
-                bool const zeroMask = (vspec.flags & TSF_ZEROMASK) != 0;
-                bool const useZeroOriginIfOneComponent = true;
+                const bool zeroMask = (vspec.flags & TSF_ZEROMASK) != 0;
+                const bool useZeroOriginIfOneComponent = true;
                 source = loadPatchComposite(image, tex, zeroMask, useZeroOriginIfOneComponent);
             }
         }
@@ -803,7 +803,7 @@ Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
                 {
                     try
                     {
-                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        const lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                         FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadFlat(image, hndl);
@@ -843,7 +843,7 @@ Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
                 {
                     try
                     {
-                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        const lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                         FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
@@ -899,7 +899,7 @@ Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
                 {
                     try
                     {
-                        lumpnum_t const lumpNum = resourceUri.path().toString().toInt();
+                        const lumpnum_t lumpNum = resourceUri.path().toString().toInt();
                         FileHandle &hndl    = fileSys.openLump(fileSys.lump(lumpNum));
 
                         source = loadPatch(image, hndl, tclass, tmap, vspec.border);
@@ -924,7 +924,7 @@ Source GL_LoadSourceImage(image_t &image, const ClientTexture &tex,
             }
             else
             {
-                lumpnum_t const lumpNum = fileSys.lumpNumForName(resourceUri.path());
+                const lumpnum_t lumpNum = fileSys.lumpNumForName(resourceUri.path());
                 try
                 {
                     File1 &lump = fileSys.lump(lumpNum);

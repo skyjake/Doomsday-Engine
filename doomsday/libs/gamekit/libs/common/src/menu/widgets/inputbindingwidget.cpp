@@ -300,7 +300,7 @@ DE_PIMPL(InputBindingWidget)
                             isInverse ? '-' : '+',
                             name);
 
-                    int const width = FR_TextWidth(buf) * SMALL_SCALE;
+                    const int width = FR_TextWidth(buf) * SMALL_SCALE;
 
                     if (ctx.origin.x + width > maxWidth)
                     {
@@ -431,7 +431,7 @@ int InputBindingWidget::handleEvent_Privileged(const event_t &event)
         return false;
     }
 
-    String const context = bindContext();
+    const String context = bindContext();
 
     // The Delete key in the Menu context is reserved for deleting bindings
     if((!context.compareWithCase("menu") || !context.compareWithCase("shortcut")) &&
@@ -468,7 +468,7 @@ int InputBindingWidget::handleEvent_Privileged(const event_t &event)
         {
             throw Error("InputBindingWidget::handleEvent_Privileged", "Invalid symbol:" + symbol);
         }
-        String const name = symbol.left(endOfName);
+        const String name = symbol.left(endOfName);
 
         // Staged?
         if (binds->flags & CCF_STAGED)

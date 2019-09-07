@@ -49,7 +49,7 @@ public:
     DE_DEFINE_AUDIENCE(ManifestDefined, void textureSchemeManifestDefined(TextureScheme &scheme, Manifest &manifest))
 
     /// Minimum length of a symbolic name.
-    static int const min_name_length = DE_URI_MIN_SCHEME_LENGTH;
+    static const int min_name_length = DE_URI_MIN_SCHEME_LENGTH;
 
     /// Manifests in the scheme are placed into a tree.
     typedef de::PathTreeT<Manifest> Index;

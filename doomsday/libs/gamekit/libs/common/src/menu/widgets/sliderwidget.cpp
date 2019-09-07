@@ -193,7 +193,7 @@ int SliderWidget::handleCommand(menucommand_e cmd)
     {
     case MCMD_NAV_LEFT:
     case MCMD_NAV_RIGHT: {
-        float const oldvalue = d->value;
+        const float oldvalue = d->value;
 
         if(MCMD_NAV_LEFT == cmd)
         {

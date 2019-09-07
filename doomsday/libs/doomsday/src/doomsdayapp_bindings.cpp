@@ -25,7 +25,7 @@ using namespace de;
 
 static Value *Function_App_Download(Context &, const Function::ArgumentValues &args)
 {
-    String const packageId = args.first()->asText();
+    const String packageId = args.first()->asText();
     DoomsdayApp::packageDownloader().download(StringList({ packageId }), [packageId] ()
     {
         LOG().beginInteractive();

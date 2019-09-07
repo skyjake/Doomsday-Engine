@@ -238,7 +238,7 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
         Set<String> categories;
         contents->items().forAll([&categories](const ui::Item &i)
         {
-            String const cat = i.as<Item>().category;
+            const String cat = i.as<Item>().category;
             if (!cat.isEmpty()) categories.insert(cat);
             return LoopContinue;
         });
@@ -255,10 +255,10 @@ DE_GUI_PIMPL(PackageContentOptionsWidget)
                 const Item &a = s.as<Item>();
                 const Item &b = t.as<Item>();
 
-                int const catComp = a.category.compareWithoutCase(b.category);
+                const int catComp = a.category.compareWithoutCase(b.category);
                 if (!catComp)
                 {
-                    int const nameComp = a.label().compareWithoutCase(b.label());
+                    const int nameComp = a.label().compareWithoutCase(b.label());
                     return nameComp < 0;
                 }
                 return catComp < 0;

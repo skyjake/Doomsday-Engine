@@ -346,7 +346,7 @@ bool ScrollAreaWidget::isScrolling() const
 
 Rectanglei ScrollAreaWidget::viewport() const
 {
-    Vec4i const margin = margins().toVector();
+    const Vec4i margin = margins().toVector();
 
     Rectanglei vp = rule().recti().moved(margin.xy());
     if (int(vp.width()) <= margin.x + margin.z)
@@ -448,7 +448,7 @@ bool ScrollAreaWidget::handleEvent(const Event &event)
         // Update position.
         if (event.type() == Event::MousePosition)
         {
-            int const mouseY = event.as<MouseEvent>().pos().y;
+            const int mouseY = event.as<MouseEvent>().pos().y;
             int topEdge = mouseY - d->scrollBarLaneRect.top() - d->grabOffset;
             float relativePos = topEdge / (d->scrollBarLaneRect.height() - d->scrollBarVisRect.height());
             if (d->origin == Bottom)

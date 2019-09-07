@@ -310,7 +310,7 @@ DE_PIMPL(WindowEventHandler)
         }
 
         /*
-        float const devicePixels = d->window->devicePixelRatio();
+        const float devicePixels = d->window->devicePixelRatio();
 
         QPoint numPixels = ev->pixelDelta();
         QPoint numDegrees = ev->angleDelta() / 8;
@@ -333,7 +333,7 @@ DE_PIMPL(WindowEventHandler)
             }
         }
 
-        QPoint const steps = d->wheelAngleAccum / 15;
+        const QPoint steps = d->wheelAngleAccum / 15;
         if (!steps.isNull())
         {
             DE_NOTIFY(MouseEvent, i)
@@ -558,7 +558,7 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
 {
     ev->accept();
 
-    float const devicePixels = d->window->devicePixelRatio();
+    const float devicePixels = d->window->devicePixelRatio();
 
     QPoint numPixels = ev->pixelDelta();
     QPoint numDegrees = ev->angleDelta() / 8;
@@ -581,7 +581,7 @@ void WindowEventHandler::wheelEvent(QWheelEvent *ev)
         }
     }
 
-    QPoint const steps = d->wheelAngleAccum / 15;
+    const QPoint steps = d->wheelAngleAccum / 15;
     if (!steps.isNull())
     {
         DE_NOTIFY(MouseEvent, i)

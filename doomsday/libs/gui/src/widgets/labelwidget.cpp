@@ -268,9 +268,9 @@ public Font::RichFormat::IStyle
      */
     void contentPlacement(ContentLayout &layout) const
     {
-        Rectanglei const contentRect = self().contentRect();
+        const Rectanglei contentRect = self().contentRect();
 
-        Vec2f const imgSize = imageSize() * imageScale;
+        const Vec2f imgSize = imageSize() * imageScale;
 
         // Determine the sizes of the elements first.
         layout.image = Rectanglef::fromSize(imgSize);
@@ -318,7 +318,7 @@ public Font::RichFormat::IStyle
         if (hasImage())
         {
             // Figure out how much room is left for the image.
-            Rectanglef const rect = layout.image;
+            const Rectanglef rect = layout.image;
 
             // Fit the image.
             if (!imageFit.testFlag(FitToWidth)  || imageFit.testFlag(OriginalAspectRatio))
@@ -332,8 +332,8 @@ public Font::RichFormat::IStyle
 
             // The width and height of the image have now been set. Now we'll apply
             // a suitable scaling factor.
-            float const horizScale = rect.width() / layout.image.width();
-            float const vertScale  = rect.height() / layout.image.height();
+            const float horizScale = rect.width() / layout.image.width();
+            const float vertScale  = rect.height() / layout.image.height();
             float scale = 1;
 
             if (imageFit.testFlag(CoverArea))
@@ -495,7 +495,7 @@ public Font::RichFormat::IStyle
     {
         if (appearType != AppearInstantly)
         {
-            float const target = (appearType == AppearGrowHorizontally? width->value() : height->value());
+            const float target = (appearType == AppearGrowHorizontally? width->value() : height->value());
             if (!fequal(appearSize->animation().target(), target))
             {
                 appearSize->set(target, appearSpan);
@@ -543,7 +543,7 @@ public Font::RichFormat::IStyle
             auto &painter = root().painter();
 
             Mat4f mvp;
-            bool const isCustomMvp = self().updateModelViewProjection(mvp);
+            const bool isCustomMvp = self().updateModelViewProjection(mvp);
             if (isCustomMvp)
             {
                 painter.setModelViewProjection(mvp);
@@ -848,7 +848,7 @@ void LabelWidget::glMakeGeometry(GuiVertexBuilder &verts)
         {
             Rectanglef textBox = Rectanglef::fromSize(textSize());
             ui::applyAlignment(d->lineAlign, textBox, layout.text);
-            int const boxSize = pointsToPixels(114);
+            const int boxSize = pointsToPixels(114);
             Vec2f const off(0, textBox.height() * .08f);
             Vec2f const hoff(textBox.height()/2, 0);
             verts.makeFlexibleFrame(Rectanglef(textBox.midLeft() + hoff + off,

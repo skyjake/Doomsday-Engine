@@ -223,7 +223,7 @@ void ConvexSubspace::assignExtraMesh(Mesh &newMesh)
 {
     LOG_AS("ConvexSubspace");
 
-    dint const sizeBefore = d->extraMeshes.size();
+    const dint sizeBefore = d->extraMeshes.size();
 
     d->extraMeshes.insert(&newMesh);
 

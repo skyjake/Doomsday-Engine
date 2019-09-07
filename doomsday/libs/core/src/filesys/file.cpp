@@ -159,7 +159,7 @@ String File::description(int verbosity) const
     // feed itself (would be redundant).
     if (originFeed() && (verbosity >= 2 || !is<DirectoryFeed>(originFeed())))
     {
-        String const feedDesc = originFeed()->description();
+        const String feedDesc = originFeed()->description();
         if (!desc.contains(feedDesc)) // A bit of a kludge; don't repeat the feed description.
         {
             desc += " from " + feedDesc;

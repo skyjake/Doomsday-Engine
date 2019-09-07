@@ -51,7 +51,7 @@ void guidata_armor_t::tick(timespan_t /*elapsed*/)
 
 #if __JHEXEN__
     const player_t *plr = &::players[player()];
-    dint const pClass   = ::cfg.playerClass[player()];  // Original player class (i.e. not pig).
+    const dint pClass   = ::cfg.playerClass[player()];  // Original player class (i.e. not pig).
     _value = FixedDiv(PCLASS_INFO(pClass)->autoArmorSave
                       + plr->armorPoints[ARMOR_ARMOR ]
                       + plr->armorPoints[ARMOR_SHIELD]
@@ -77,7 +77,7 @@ void ArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset)
 #endif
 
     DE_ASSERT(armor);
-    dfloat const textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
+    const dfloat textOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudColor[3];
 
     if(armor->_value == 1994) return;
 
@@ -88,7 +88,7 @@ void ArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset)
     if(ST_AutomapIsOpen(armor->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(armor->_value) + SUFFIX;
+    const auto valueAsText = String::asText(armor->_value) + SUFFIX;
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -137,9 +137,9 @@ void SBarArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset)
 
     static Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    dint const activeHud     = ST_ActiveHud(armor->player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(armor->player()));
-    dfloat const textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(armor->player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(armor->player()));
+    const dfloat textOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(armor->_value == 1994) return;
 
@@ -153,7 +153,7 @@ void SBarArmorWidget_Draw(guidata_armor_t *armor, const Point2Raw *offset)
 #endif
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(armor->_value);
+    const auto valueAsText = String::asText(armor->_value);
 
     DGL_MatrixMode(DGL_MODELVIEW);
     DGL_PushMatrix();
@@ -208,7 +208,7 @@ void Armor_UpdateGeometry(guidata_armor_t *armor)
     if(ST_AutomapIsOpen(armor->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(armor->_value) + "%";
+    const auto valueAsText = String::asText(armor->_value) + "%";
 
     FR_SetFont(armor->font());
     FR_SetTracking(TRACKING);
@@ -242,7 +242,7 @@ void SBarArmor_UpdateGeometry(guidata_armor_t *armor)
 #endif
     if(P_MobjIsCamera(::players[armor->player()].plr->mo) && Get(DD_PLAYBACK)) return;
 
-    auto const valueAsText = String::asText(armor->_value);
+    const auto valueAsText = String::asText(armor->_value);
 
     FR_SetFont(armor->font());
     FR_SetTracking(TRACKING);

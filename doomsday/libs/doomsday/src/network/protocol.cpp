@@ -26,13 +26,13 @@
 
 namespace network {
 
-static String const PT_COMMAND    = "shell.command";
-static String const PT_LEXICON    = "shell.lexicon";
-static String const PT_GAME_STATE = "shell.game.state";
+static const String PT_COMMAND    = "shell.command";
+static const String PT_LEXICON    = "shell.lexicon";
+static const String PT_GAME_STATE = "shell.game.state";
 
 // ChallengePacket -----------------------------------------------------------
 
-static Packet::Type const CHALLENGE_PACKET_TYPE = Packet::typeFromString("Psw?");
+static const Packet::Type CHALLENGE_PACKET_TYPE = Packet::typeFromString("Psw?");
 
 ChallengePacket::ChallengePacket() : Packet(CHALLENGE_PACKET_TYPE)
 {}
@@ -44,7 +44,7 @@ Packet *ChallengePacket::fromBlock(const Block &block)
 
 // LogEntryPacket ------------------------------------------------------------
 
-static Packet::Type const LOG_ENTRY_PACKET_TYPE = Packet::typeFromString("LgEn");
+static const Packet::Type LOG_ENTRY_PACKET_TYPE = Packet::typeFromString("LgEn");
 
 LogEntryPacket::LogEntryPacket() : Packet(LOG_ENTRY_PACKET_TYPE)
 {}
@@ -106,7 +106,7 @@ Packet *LogEntryPacket::fromBlock(const Block &block)
 
 // PlayerInfoPacket ----------------------------------------------------------
 
-static Packet::Type const PLAYER_INFO_PACKET_TYPE = Packet::typeFromString("PlrI");
+static const Packet::Type PLAYER_INFO_PACKET_TYPE = Packet::typeFromString("PlrI");
 
 DE_PIMPL_NOREF(PlayerInfoPacket)
 {
@@ -173,7 +173,7 @@ Packet *PlayerInfoPacket::fromBlock(const Block &block)
 
 // MapOutlinePacket ----------------------------------------------------------
 
-static Packet::Type const MAP_OUTLINE_PACKET_TYPE = Packet::typeFromString("MpOL");
+static const Packet::Type MAP_OUTLINE_PACKET_TYPE = Packet::typeFromString("MpOL");
 
 DE_PIMPL_NOREF(MapOutlinePacket)
 {

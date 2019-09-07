@@ -152,7 +152,7 @@ static int DS_Init(void)
     }
 
 #if 0
-    de::String const speakerMode = de::Config::get().gets("audio.fmod.speakerMode", "");
+    const de::String speakerMode = de::Config::get().gets("audio.fmod.speakerMode", "");
     if (speakerMode == "5.1")
     {
         FMOD_System_SetSpeakerMode(fmodSystem, FMOD_SPEAKERMODE_5POINT1);

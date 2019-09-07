@@ -250,7 +250,7 @@ DE_PIMPL_NOREF(ConvexSubspaceProxy)
         // Sort algorithm: "double bubble".
 
         // Order by descending 'from' angle.
-        int const numSegments = orderedSegments.count();
+        const int numSegments = orderedSegments.count();
         for(int pass = 0; pass < numSegments - 1; ++pass)
         {
             bool swappedAny = false;

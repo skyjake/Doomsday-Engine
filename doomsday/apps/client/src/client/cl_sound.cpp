@@ -50,8 +50,8 @@ void Cl_ReadSoundDelta(deltatype_t type)
     LineSide *side = 0;
     mobj_t *emitter = 0;
 
-    duint16 const deltaId = Reader_ReadUInt16(::msgReader);
-    byte const flags      = Reader_ReadByte(::msgReader);
+    const duint16 deltaId = Reader_ReadUInt16(::msgReader);
+    const byte flags      = Reader_ReadByte(::msgReader);
 
     bool skip = false;
     if (type == DT_SOUND)
@@ -228,7 +228,7 @@ void Cl_Sound()
     /// @todo Do not assume the CURRENT map.
     world::Map &map = App_World().map();
 
-    byte const flags = Reader_ReadByte(::msgReader);
+    const byte flags = Reader_ReadByte(::msgReader);
 
     // Sound ID.
     dint sound;
@@ -291,7 +291,7 @@ void Cl_Sound()
     }
     else if (flags & SNDF_PLAYER)
     {
-        dint const player = (flags & 0xf0) >> 4;
+        const dint player = (flags & 0xf0) >> 4;
         DE_ASSERT(player >= 0 && player < DDMAXPLAYERS);
         S_LocalSoundAtVolume(sound, DD_Player(player)->publicData().mo, volume / 127.0f);
     }

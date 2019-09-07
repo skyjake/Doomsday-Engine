@@ -85,7 +85,7 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
         float gradientThick = layout.image.width() * 2.f;
         float solidThick    = layout.image.width() * .53f;
 
-        Vec4f const shadowColor = style().colors().colorf(shadowColorId);
+        const Vec4f shadowColor = style().colors().colorf(shadowColorId);
         verts.makeRing(layout.image.middle(),
                        solidThick, 0, 30,
                        shadowColor,
@@ -104,7 +104,7 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
         }
 
         // Draw the rotating indicator on the label's image.
-        Rectanglef const tc = atlas().imageRectf(gearTex);
+        const Rectanglef tc = atlas().imageRectf(gearTex);
         float pos = 1;
         if (mode != Indefinite)
         {
@@ -114,10 +114,10 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
         // Map to the visual range.
         pos = visualRange.start + pos * visualRange.size();
 
-        int const edgeCount = de::max(1, int(pos * 30));
-        float const radius = layout.image.width() / 2;
+        const int edgeCount = de::max(1, int(pos * 30));
+        const float radius = layout.image.width() / 2;
 
-        Mat4f const rotation = Mat4f::rotateAround(tc.middle(), -angle);
+        const Mat4f rotation = Mat4f::rotateAround(tc.middle(), -angle);
 
         GuiVertexBuilder gear;
         GuiVertex v;
@@ -131,7 +131,7 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
             gear << v;
 
             // Outer vertex.
-            float const angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
+            const float angle = 2 * PI * pos * (i / (float)edgeCount) + PI/2;
             v.pos = v.pos + Vec2f(cos(angle)*radius*1.05f, sin(angle)*radius*1.05f);
             v.texCoord = rotation * (tc.topLeft + tc.size() * Vec2f(.5f + cos(angle)*.5f,
                                                                     .5f + sin(angle)*.5f));
@@ -143,13 +143,13 @@ DE_GUI_PIMPL(ProgressWidget), public Lockable
 
     void makeDotsGeometry(GuiVertexBuilder &verts)
     {
-        Image::Size const dotSize = atlas().imageRect(root().tinyDot()).size();
+        const Image::Size dotSize = atlas().imageRect(root().tinyDot()).size();
 
         Rectanglei rect = self().contentRect().shrunk(dotSize.x / 2);
-        int const midY  = rect.middle().y;
+        const int midY  = rect.middle().y;
         int count       = range.size();
         Vec4f color  = style().colors().colorf(colorId);
-        int const gap   = rule(RuleBank::UNIT).valuei();
+        const int gap   = rule(RuleBank::UNIT).valuei();
         int totalWidth  = count * dotSize.x + (count - 1) * gap;
 
         for (int i = 0; i < count; ++i)
@@ -275,9 +275,9 @@ void ProgressWidget::update()
     if (d->mode != Dots)
     {
         // Keep rotating the wheel.
-        Time const now = Time();
+        const Time now = Time();
         if (!d->updateAt.isValid()) d->updateAt = now;
-        TimeSpan const elapsed = d->updateAt.since();
+        const TimeSpan elapsed = d->updateAt.since();
         d->updateAt = now;
 
         d->angle = de::wrap(d->angle + float(elapsed * d->rotationSpeed), 0.f, 360.f);

@@ -48,17 +48,17 @@ static void drawRegion(memvolume_t &volume, const Rectanglei &rect, size_t start
 {
     DE_ASSERT(start + size <= volume.size);
 
-    int const bytesPerRow = (volume.size - sizeof(memzone_t)) / rect.height();
-    float const toPixelScale = (float)rect.width() / (float)bytesPerRow;
-    size_t const edge = rect.topLeft.x + rect.width();
+    const int bytesPerRow = (volume.size - sizeof(memzone_t)) / rect.height();
+    const float toPixelScale = (float)rect.width() / (float)bytesPerRow;
+    const size_t edge = rect.topLeft.x + rect.width();
     int x = (start % bytesPerRow) * toPixelScale + rect.topLeft.x;
     int y = start / bytesPerRow + rect.topLeft.y;
     int pixels = de::max<dint>(1, std::ceil(size * toPixelScale));
 
     while (pixels > 0)
     {
-        int const availPixels = edge - x;
-        int const usedPixels = de::min(availPixels, pixels);
+        const int availPixels = edge - x;
+        const int usedPixels = de::min(availPixels, pixels);
 
         DGL_Color4fv(color);
         DGL_Vertex2f(x, y);
@@ -74,7 +74,7 @@ static void drawRegion(memvolume_t &volume, const Rectanglei &rect, size_t start
 
 void Z_DebugDrawVolume(MemoryZonePrivateData *pd, memvolume_t *volume, const Rectanglei &rect)
 {
-    float const opacity = .85f;
+    const float opacity = .85f;
     float const colAppStatic[4]   = { 1, 1, 1, .65f };
     float const colGameStatic[4]  = { 1, 0, 0, .65f };
     float const colMap[4]         = { 0, 1, 0, .65f };

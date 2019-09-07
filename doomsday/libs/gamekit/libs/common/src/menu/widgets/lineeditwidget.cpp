@@ -133,7 +133,7 @@ void LineEditWidget::draw() const
 
     const float fadeout = scrollingFadeout();
 
-    //int const numVisCharacters = de::clamp(0, useText.isNull()? 0 : useText.length(), d->maxVisibleChars);
+    //const int numVisCharacters = de::clamp(0, useText.isNull()? 0 : useText.length(), d->maxVisibleChars);
 
     drawEditBackground(origin + Vec2i(MNDATA_EDIT_BACKGROUND_OFFSET_X, MNDATA_EDIT_BACKGROUND_OFFSET_Y),
                        geometry().width(), mnRendState->pageAlpha * fadeout);
@@ -146,7 +146,7 @@ void LineEditWidget::draw() const
         // Flash if focused?
         if (!isActive()) /* && isFocused() && cfg.common.menuTextFlashSpeed > 0)
         {
-            float const speed = cfg.common.menuTextFlashSpeed / 2.f;
+            const float speed = cfg.common.menuTextFlashSpeed / 2.f;
             t = (1 + sin(page().timer() / (float)TICSPERSEC * speed * DD_PI)) / 2;
         }*/
         {

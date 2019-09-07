@@ -191,7 +191,7 @@ void N_NETicker(timespan_t time)
             break;
 
         case MAC_LIST: {
-            dint const num = N_MasterGet(0, 0);
+            const dint num = N_MasterGet(0, 0);
             dint i = num;
             while(--i >= 0)
             {

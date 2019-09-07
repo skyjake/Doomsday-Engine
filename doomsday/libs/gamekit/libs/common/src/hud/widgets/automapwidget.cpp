@@ -79,8 +79,8 @@ namespace internal
 {
     static Vec2d rotate(const Vec2d &point, ddouble radian)
     {
-        ddouble const c = std::cos(radian);
-        ddouble const s = std::sin(radian);
+        const ddouble c = std::cos(radian);
+        const ddouble s = std::sin(radian);
         return Vec2d(c * point.x - s * point.y, s * point.x + c * point.y);
     }
 
@@ -191,7 +191,7 @@ namespace internal
         if (!plrMob) return;
 
         coord_t origin[3]; Mobj_OriginSmoothed(plrMob, origin);
-        dfloat const angle = Mobj_AngleSmoothed(plrMob) / (dfloat) ANGLE_MAX * 360; /* $unifiedangles */
+        const dfloat angle = Mobj_AngleSmoothed(plrMob) / (dfloat) ANGLE_MAX * 360; /* $unifiedangles */
 
         dfloat color[3]; R_GetColorPaletteRGBf(0, playerPaletteColor(consoleNum), color, false);
 
@@ -305,15 +305,15 @@ DE_PIMPL(AutomapWidget)
      */
     void updateViewScale()
     {
-        float const oldMinScale = minScaleMTOF;
+        const float oldMinScale = minScaleMTOF;
 
         Vec2d const topRight  (bounds[BOXRIGHT], bounds[BOXTOP   ]);
         Vec2d const bottomLeft(bounds[BOXLEFT ], bounds[BOXBOTTOM]);
-        coord_t const dist = de::abs((topRight - bottomLeft).length());
+        const coord_t dist = de::abs((topRight - bottomLeft).length());
 
         Vec2f const dimensions(Rect_Width (&self().geometry()),
                                   Rect_Height(&self().geometry()));
-        Vec2f const scale = dimensions / dist;
+        const Vec2f scale = dimensions / dist;
 
         minScaleMTOF = (scale.x < scale.y ? scale.x : scale.y);
         maxScaleMTOF = dimensions.y / minScale;
@@ -337,7 +337,7 @@ DE_PIMPL(AutomapWidget)
     {
         opacity *= uiRendState->pageAlpha;
 
-        Vec2d const unit = (to - from).normalize();
+        const Vec2d unit = (to - from).normalize();
         Vec2d const normal(unit.y, -unit.x);
 
         if (de::abs(unit.length()) <= 0) return;
@@ -347,7 +347,7 @@ DE_PIMPL(AutomapWidget)
         // Is this a glowing line?
         if (glowOnly && glowType != GLOW_NONE)
         {
-            //dint const tex = Get(DD_DYNLIGHT_TEXTURE);
+            //const dint tex = Get(DD_DYNLIGHT_TEXTURE);
 
             // Scale line thickness relative to zoom level?
             dfloat thickness;
@@ -361,10 +361,10 @@ DE_PIMPL(AutomapWidget)
             // Draw a "cap" at the start of the line?
             if (caps)
             {
-                Vec2f const v1 = from -   unit * thickness + normal * thickness;
-                Vec2f const v2 = from + normal * thickness;
-                Vec2f const v3 = from - normal * thickness;
-                Vec2f const v4 = from -   unit * thickness - normal * thickness;
+                const Vec2f v1 = from -   unit * thickness + normal * thickness;
+                const Vec2f v2 = from + normal * thickness;
+                const Vec2f v3 = from - normal * thickness;
+                const Vec2f v4 = from -   unit * thickness - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -400,10 +400,10 @@ DE_PIMPL(AutomapWidget)
             switch (glowType)
             {
             case GLOW_BOTH: {
-                Vec2f const v1 = from + normal * thickness;
-                Vec2f const v2 =   to + normal * thickness;
-                Vec2f const v3 =   to - normal * thickness;
-                Vec2f const v4 = from - normal * thickness;
+                const Vec2f v1 = from + normal * thickness;
+                const Vec2f v2 =   to + normal * thickness;
+                const Vec2f v3 =   to - normal * thickness;
+                const Vec2f v4 = from - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -436,8 +436,8 @@ DE_PIMPL(AutomapWidget)
                 break; }
 
             case GLOW_BACK: {
-                Vec2f const v1 = from + normal * thickness;
-                Vec2f const v2 =   to + normal * thickness;
+                const Vec2f v1 = from + normal * thickness;
+                const Vec2f v2 =   to + normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -470,8 +470,8 @@ DE_PIMPL(AutomapWidget)
                 break; }
 
             case GLOW_FRONT: {
-                Vec2f const v3 =   to - normal * thickness;
-                Vec2f const v4 = from - normal * thickness;
+                const Vec2f v3 =   to - normal * thickness;
+                const Vec2f v4 = from - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -510,10 +510,10 @@ DE_PIMPL(AutomapWidget)
 
             if (caps)
             {
-                Vec2f const v1 = to + normal * thickness;
-                Vec2f const v2 = to +   unit * thickness + normal * thickness;
-                Vec2f const v3 = to +   unit * thickness - normal * thickness;
-                Vec2f const v4 = to - normal * thickness;
+                const Vec2f v1 = to + normal * thickness;
+                const Vec2f v2 = to +   unit * thickness + normal * thickness;
+                const Vec2f v3 = to +   unit * thickness - normal * thickness;
+                const Vec2f v4 = to - normal * thickness;
 
                 //if (!addToLists)
                 {
@@ -567,8 +567,8 @@ DE_PIMPL(AutomapWidget)
             {
 #define NORMTAIL_LENGTH         8
 
-                Vec2f const v1 = (from + to) / 2;
-                Vec2d const v2 = v1 + normal * NORMTAIL_LENGTH;
+                const Vec2f v1 = (from + to) / 2;
+                const Vec2d v2 = v1 + normal * NORMTAIL_LENGTH;
 
                 //if (!addToLists)
                 {
@@ -735,7 +735,7 @@ DE_PIMPL(AutomapWidget)
         {
             // No. As the map lists are considered static we want them to contain all
             // walls, not just those visible *now* (note rotation).
-            dint const numSubspaces = P_Count(DMU_SUBSPACE);
+            const dint numSubspaces = P_Count(DMU_SUBSPACE);
             for (dint i = 0; i < numSubspaces; ++i)
             {
                 P_Iteratep(P_ToPtr(DMU_SUBSPACE, i), DMU_LINE, drawLineWorker, const_cast<Impl *>(this));
@@ -806,7 +806,7 @@ DE_PIMPL(AutomapWidget)
         const auto *inst = static_cast<Impl *>(context);
         DE_ASSERT(inst);
 
-        dfloat const opacity = uiRendState->pageAlpha;
+        const dfloat opacity = uiRendState->pageAlpha;
 
         xline_t *xline = P_ToXLine(line);
         if (!xline) return false;
@@ -1020,7 +1020,7 @@ DE_PIMPL(AutomapWidget)
         if (!(flags & (AWF_SHOW_THINGS | AWF_SHOW_KEYS)))
             return;
 
-        dfloat const alpha = uiRendState->pageAlpha;
+        const dfloat alpha = uiRendState->pageAlpha;
 
         drawthingpoint_params_t parm; de::zap(parm);
         parm.flags   = flags;
@@ -1037,7 +1037,7 @@ DE_PIMPL(AutomapWidget)
 
     void drawAllPoints(dfloat scale = 1) const
     {
-        dfloat const alpha = uiRendState->pageAlpha;
+        const dfloat alpha = uiRendState->pageAlpha;
 
         if (points.isEmpty()) return;
 
@@ -1052,8 +1052,8 @@ DE_PIMPL(AutomapWidget)
         const Point2Raw labelOffset{};
         for (const MarkedPoint *point : points)
         {
-            String const label    = String::asText(idx++);
-            Vec2d const origin = fitPointInRectangle(point->origin(), topLeft, topRight, bottomRight, bottomLeft, view);
+            const String label    = String::asText(idx++);
+            const Vec2d origin = fitPointInRectangle(point->origin(), topLeft, topRight, bottomRight, bottomLeft, view);
 
             DGL_MatrixMode(DGL_MODELVIEW);
             DGL_PushMatrix();
@@ -1190,8 +1190,8 @@ DE_PIMPL(AutomapWidget)
                     SPR_ART1, SPR_ART2, SPR_ART3
                 };
 
-                dfloat const iconOpacity = de::clamp(.0f, alpha, .5f);
-                dfloat const spacing     = geom.size.height / num;
+                const dfloat iconOpacity = de::clamp(.0f, alpha, .5f);
+                const dfloat spacing     = geom.size.height / num;
 
                 spriteinfo_t sprInfo;
                 dfloat y = 0;
@@ -1203,10 +1203,10 @@ DE_PIMPL(AutomapWidget)
                         DGL_SetPSprite(sprInfo.material);
                         DGL_Enable(DGL_TEXTURE_2D);
 
-                        dfloat const scale = geom.size.height / (sprInfo.geometry.size.height * num);
-                        dfloat const x     = geom.size.width - sprInfo.geometry.size.width * scale;
-                        dfloat const w     = sprInfo.geometry.size.width;
-                        dfloat const h     = sprInfo.geometry.size.height;
+                        const dfloat scale = geom.size.height / (sprInfo.geometry.size.height * num);
+                        const dfloat x     = geom.size.width - sprInfo.geometry.size.width * scale;
+                        const dfloat w     = sprInfo.geometry.size.width;
+                        const dfloat h     = sprInfo.geometry.size.height;
 
                         DGL_Color4f(1, 1, 1, iconOpacity);
                         DGL_Begin(DGL_QUADS);
@@ -1235,7 +1235,7 @@ DE_PIMPL(AutomapWidget)
 
         // Setup the scissor clipper.
         /// @todo Do this in the UI module.
-        dint const border = .5f + UIAUTOMAP_BORDER * aspectScale;
+        const dint border = .5f + UIAUTOMAP_BORDER * aspectScale;
         RectRaw clipRegion; Rect_Raw(&self().geometry(), &clipRegion);
         clipRegion.origin.x += border;
         clipRegion.origin.y += border;
@@ -1261,7 +1261,7 @@ DE_PIMPL(AutomapWidget)
         DGL_Color4f(.2f, .5f, 1, uiRendState->pageAlpha);
 
         DGL_Enable(DGL_POINT_SMOOTH);
-        dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
+        const dfloat oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
         DGL_SetFloat(DGL_POINT_SIZE, 4 * aspectScale);
 
         dfloat v[2];
@@ -1351,7 +1351,7 @@ AutomapStyle *AutomapWidget::style() const
 
 void AutomapWidget::draw(const Vec2i &offset) const
 {
-    float const alpha = uiRendState->pageAlpha;
+    const float alpha = uiRendState->pageAlpha;
     player_t *plr = &players[player()];
 
     if (!plr->plr->inGame) return;
@@ -1407,7 +1407,7 @@ void AutomapWidget::draw(const Vec2i &offset) const
 
     if (amMaskTexture)
     {
-        dint const border = .5f + UIAUTOMAP_BORDER * aspectScale;
+        const dint border = .5f + UIAUTOMAP_BORDER * aspectScale;
 
         DGL_SetInteger(DGL_ACTIVE_TEXTURE, 0);
         DGL_MatrixMode(DGL_TEXTURE);
@@ -1530,7 +1530,7 @@ void AutomapWidget::open(bool yes, bool instantly)
 
 void AutomapWidget::tick(timespan_t elapsed)
 {
-    dint const plrNum = player();
+    const dint plrNum = player();
     mobj_t *followMob = followMobj();
 
     // Check the state of the controls. Done here so that offsets don't accumulate
@@ -1592,7 +1592,7 @@ void AutomapWidget::tick(timespan_t elapsed)
                                         (2 * cfg.common.automapPanSpeed));
 
         /// @todo Fix sensitivity for relative axes.
-        Vec2d const delta = rotate(Vec2d(panX[0], panY[0]) * panUnitsPerSecond * elapsed +
+        const Vec2d delta = rotate(Vec2d(panX[0], panY[0]) * panUnitsPerSecond * elapsed +
                                           Vec2d(panX[1], panY[1]),
                                       degreeToRadian(d->angle));
         moveCameraOrigin(delta, true /*instant move*/);
@@ -1600,7 +1600,7 @@ void AutomapWidget::tick(timespan_t elapsed)
     else
     {
         // Camera follow mode.
-        dfloat const angle = (d->rotate ? (followMob->angle - ANGLE_90) / (dfloat) ANGLE_MAX * 360
+        const dfloat angle = (d->rotate ? (followMob->angle - ANGLE_90) / (dfloat) ANGLE_MAX * 360
                                         : 0); /* $unifiedangles */
         coord_t origin[3]; Mobj_OriginSmoothed(followMob, origin);
         setCameraOrigin(Vec2d(origin));
@@ -1675,15 +1675,15 @@ void AutomapWidget::tick(timespan_t elapsed)
 
     // Calculate the coordinates of the rotated view window.
     // Determine fixed to screen space scaling factors.
-    dint const border         = .5f + UIAUTOMAP_BORDER * aspectScale;
+    const dint border         = .5f + UIAUTOMAP_BORDER * aspectScale;
 
-    ddouble const ang         = degreeToRadian(d->angle);
-    Vec2d const origin     = cameraOrigin();
+    const ddouble ang         = degreeToRadian(d->angle);
+    const Vec2d origin     = cameraOrigin();
 
-    auto const dimensions     = Vec2d(frameToMap(Rect_Width (&geometry())),
+    const auto dimensions     = Vec2d(frameToMap(Rect_Width (&geometry())),
                                          frameToMap(Rect_Height(&geometry()))) / 2;
 
-    auto const viewDimensions = Vec2d(frameToMap(Rect_Width (&geometry()) - border * 2),
+    const auto viewDimensions = Vec2d(frameToMap(Rect_Width (&geometry()) - border * 2),
                                          frameToMap(Rect_Height(&geometry()) - border * 2)) / 2;
 
     d->topLeft     = origin + rotate(Vec2d(-viewDimensions.x,  viewDimensions.y), ang);
@@ -1767,7 +1767,7 @@ void AutomapWidget::setCameraOrigin(const Vec2d &newOrigin, bool instantly)
     // If the delta is too great - perform the move instantly.
     if (!instantly && d->maxViewPositionDelta > 0)
     {
-        coord_t const dist = de::abs((cameraOrigin() - newOrigin).length());
+        const coord_t dist = de::abs((cameraOrigin() - newOrigin).length());
         if (dist > d->maxViewPositionDelta)
         {
             instantly = true;
@@ -1892,7 +1892,7 @@ bool AutomapWidget::cameraZoomMode() const
 void AutomapWidget::setCameraZoomMode(bool yes)
 {
     LOG_AS("AutomapWidget");
-    bool const oldZoomMax = d->forceMaxScale;
+    const bool oldZoomMax = d->forceMaxScale;
 
     if (d->needViewScaleUpdate)
     {

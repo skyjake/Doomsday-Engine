@@ -38,7 +38,7 @@ bool ButtonInputControl::isDown() const
 
 void ButtonInputControl::setDown(bool yes)
 {
-    bool const oldDown = _isDown;
+    const bool oldDown = _isDown;
 
     _isDown = yes;
 

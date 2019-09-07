@@ -360,12 +360,12 @@ DE_PIMPL(DoomsdayApp)
         wads.clearFeeds();
 
         CommandLine &cmdLine = App::commandLine();
-        NativePath const startupPath = cmdLine.startupPath();
+        const NativePath startupPath = cmdLine.startupPath();
 
         // Feeds are added in ascending priority.
 
         // Check for games installed using Steam.
-        NativePath const steamBase = steamBasePath();
+        const NativePath steamBase = steamBasePath();
         if (steamBase.exists() && !cmdLine.has("-nosteam"))
         {
             NativePath steamPath = steamBase / "SteamApps/common/";
@@ -383,7 +383,7 @@ DE_PIMPL(DoomsdayApp)
 
             for (const auto &appDir : appDirs)
             {
-                NativePath const p = steamPath / appDir;
+                const NativePath p = steamPath / appDir;
                 if (p.exists())
                 {
                     attachWadFeed("Steam", p);
@@ -1044,7 +1044,7 @@ bool DoomsdayApp::changeGame(const GameProfile &profile,
          * shutdown immediately; Sys_Shutdown will call back to load the special
          * "null-game" game).
          */
-        dint const busyMode = BUSYF_PROGRESS_BAR; //  | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
+        const dint busyMode = BUSYF_PROGRESS_BAR; //  | (verbose? BUSYF_CONSOLE_OUTPUT : 0);
         GameChangeParameters p;
         BusyTask gameChangeTasks[] =
         {

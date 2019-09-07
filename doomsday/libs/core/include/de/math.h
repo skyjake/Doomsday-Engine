@@ -104,7 +104,7 @@ inline Type clamp(Type value, Type lowHighLimit) {
 template <typename Type>
 Type wrap(Type value, Type low, Type high) {
     DE_ASSERT(high > low);
-    Type const range = high - low;
+    const Type range = high - low;
     while (value < low) value += range;
     while (value >= high) value -= range;
     return value;

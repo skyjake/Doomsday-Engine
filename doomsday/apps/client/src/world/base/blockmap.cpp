@@ -189,7 +189,7 @@ DE_PIMPL(Blockmap)
          */
         Quadrant quadrant(const Cell &point) const
         {
-            duint const subSize = size >> 1;
+            const duint subSize = size >> 1;
             if(point.x < cell.x + subSize)
             {
                 return (point.y < cell.y + subSize)? TopLeft  : BottomLeft;
@@ -303,8 +303,8 @@ DE_PIMPL(Blockmap)
      */
     bool clipBlock(CellBlock &block)
     {
-        bool const didClipMin = clipCell(block.min);
-        bool const didClipMax = clipCell(block.max);
+        const bool didClipMin = clipCell(block.min);
+        const bool didClipMax = clipCell(block.max);
         return didClipMin | didClipMax;
     }
 
@@ -328,7 +328,7 @@ DE_PIMPL(Blockmap)
             if(!canSubdivide) return nullptr;
 
             // Subdivide the space.
-            duint const subSize = node->size >> 1;
+            const duint subSize = node->size >> 1;
             switch(q)
             {
             case Node::TopLeft:
@@ -598,10 +598,10 @@ LoopResult Blockmap::forAllInPath(const Vec2d &from_, const Vec2d &to_,
      * side of the axis parallel line. Note that the same logic is applied to all
      * of the blockmaps and not just the line blockmap.
      */
-    ddouble const epsilon = FIX2FLT(FRACUNIT);
-    ddouble const offset  = FIX2FLT(FRACUNIT);
+    const ddouble epsilon = FIX2FLT(FRACUNIT);
+    const ddouble offset  = FIX2FLT(FRACUNIT);
 
-    Vec2d const delta = (to - origin()) / d->cellSize;
+    const Vec2d delta = (to - origin()) / d->cellSize;
     if(de::fequal(delta.x, 0, epsilon)) to.x += offset;
     if(de::fequal(delta.y, 0, epsilon)) to.y += offset;
 
@@ -645,8 +645,8 @@ LoopResult Blockmap::forAllInPath(const Vec2d &from_, const Vec2d &to_,
         to   = Vec2d(toV1);
     }
 
-    BlockmapCell const originCell = toCell(from);
-    BlockmapCell const destCell   = toCell(to);
+    const BlockmapCell originCell = toCell(from);
+    const BlockmapCell destCell   = toCell(to);
 
     // Determine the starting point in blockmap space (preserving the fractional part).
     Vec2d intercept = (from - origin()) / d->cellSize;
@@ -742,8 +742,8 @@ void Blockmap::drawDebugVisual() const
         if(!node.isLeaf()) continue;
         if(!node.leafData) continue;
 
-        Vec2f const topLeft     = node.cell * UNIT_SIZE;
-        Vec2f const bottomRight = topLeft + Vec2f(UNIT_SIZE, UNIT_SIZE);
+        const Vec2f topLeft     = node.cell * UNIT_SIZE;
+        const Vec2f bottomRight = topLeft + Vec2f(UNIT_SIZE, UNIT_SIZE);
 
         DGL_Begin(DGL_LINE_STRIP);
             DGL_Vertex2f(topLeft.x,     topLeft.y);

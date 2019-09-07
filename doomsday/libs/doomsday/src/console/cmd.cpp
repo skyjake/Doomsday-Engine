@@ -410,7 +410,7 @@ D_CMD(MappedConfigVariable)
     DE_UNUSED(src);
 
     // Look up the variable.
-    auto const found = mappedConfigVariables.find(argv[0]);
+    const auto found = mappedConfigVariables.find(argv[0]);
     DE_ASSERT(found != mappedConfigVariables.end()); // mapping must be defined
 
     Variable &var = Config::get(found->second);

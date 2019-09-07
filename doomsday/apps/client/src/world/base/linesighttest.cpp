@@ -191,11 +191,11 @@ DE_PIMPL_NOREF(LineSightTest)
         // Test a partially closed top range?
         if (ranges & RTOP)
         {
-            dfloat const top =                                      noBack ? frontSec->ceiling().height() :
+            const dfloat top =                                      noBack ? frontSec->ceiling().height() :
                  frontSec->ceiling().height() < backSec->ceiling().height()? frontSec->ceiling().height() :
                                                                              backSec->ceiling().height();
 
-            dfloat const slope = (top - from.z) / frac;
+            const dfloat slope = (top - from.z) / frac;
 
             if ((slope < topSlope) ^ (noBack && !(flags & LS_PASSOVER))
                 || (noBack && topSlope > (frontSec->floor().height() - from.z) / frac))
@@ -209,10 +209,10 @@ DE_PIMPL_NOREF(LineSightTest)
         // Test a partially closed bottom range?
         if (ranges & RBOTTOM)
         {
-            dfloat const bottom =                                noBack? frontSec->floor().height() :
+            const dfloat bottom =                                noBack? frontSec->floor().height() :
                  frontSec->floor().height() > backSec->floor().height()? frontSec->floor().height() :
                                                                          backSec ->floor().height();
-            dfloat const slope = (bottom - from.z) / frac;
+            const dfloat slope = (bottom - from.z) / frac;
 
             if (slope > bottomSlope)
                 bottomSlope = slope;
@@ -288,8 +288,8 @@ DE_PIMPL_NOREF(LineSightTest)
 
             // Does the ray intersect the partition?
             /// @todo Optionally use the fixed precision version -ds
-            dint const fromSide = bspNode.pointOnSide(Vec2d(from.x, from.y)) < 0;
-            dint const toSide   = bspNode.pointOnSide(Vec2d(to.x, to.y)) < 0;
+            const dint fromSide = bspNode.pointOnSide(Vec2d(from.x, from.y)) < 0;
+            const dint toSide   = bspNode.pointOnSide(Vec2d(to.x, to.y)) < 0;
             if (fromSide != toSide)
             {
                 // Yes.

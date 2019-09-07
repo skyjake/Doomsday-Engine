@@ -294,7 +294,7 @@ Value *Value::constructFrom(const Value &value)
 
     if (variant.canConvert<QVariantMap>())
     {
-        auto const map = variant.toMap();
+        const auto map = variant.toMap();
         if (map.contains(DE_STR("__obj__")) &&
             map[DE_STR("__obj__")] == DE_STR("Record"))
         {

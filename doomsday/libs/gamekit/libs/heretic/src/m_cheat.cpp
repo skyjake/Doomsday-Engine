@@ -206,7 +206,7 @@ D_CMD(Cheat)
     DE_UNUSED(src, argc);
 
     // Give each of the characters in argument two to the SB event handler.
-    int const len = (int) strlen(argv[1]);
+    const int len = (int) strlen(argv[1]);
     for(int i = 0; i < len; ++i)
     {
         event_t ev;

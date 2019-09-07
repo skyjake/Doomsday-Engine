@@ -27,7 +27,7 @@
 
 #if __JHEXEN__
 /// Symbolic identifier used to mark references to players.
-static ThingArchive::SerialId const TargetPlayerId = -2;
+static const ThingArchive::SerialId TargetPlayerId = -2;
 #endif
 
 DE_PIMPL(ThingArchive)

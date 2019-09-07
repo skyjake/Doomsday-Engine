@@ -149,7 +149,7 @@ public:
     {
         DE_ASSERT(addedCount >= 0);
 
-        int const first = count.num;
+        const int first = count.num;
 
         count.num += addedCount;
         if (count.num > count.max)

@@ -397,7 +397,7 @@ DE_GUI_PIMPL(RendererAppearanceEditor)
 
     void fetch()
     {
-        bool const isReadOnly = settings.find(settings.currentProfile()).isReadOnly();
+        const bool isReadOnly = settings.find(settings.currentProfile()).isReadOnly();
 
         for (GuiWidget *child : self().containerWidget().childWidgets())
         {
@@ -436,7 +436,7 @@ DE_GUI_PIMPL(RendererAppearanceEditor)
         {
             if (Group *g = maybeAs<Group>(child))
             {
-                String const var = self().name() + "." + g->name() + ".open";
+                const String var = self().name() + "." + g->name() + ".open";
                 if (fromState.objectNamespace().has(var))
                 {
                     gotState = true;

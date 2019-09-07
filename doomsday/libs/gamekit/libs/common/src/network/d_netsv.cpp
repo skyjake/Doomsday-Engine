@@ -216,7 +216,7 @@ void NetSv_Ticker()
 
 static void NetSv_CycleToMapNum(const res::Uri &mapUri)
 {
-    de::String const warpCommand = de::String("warp ") + mapUri.compose(res::Uri::DecodePath);
+    const de::String warpCommand = de::String("warp ") + mapUri.compose(res::Uri::DecodePath);
     DD_Execute(false, warpCommand);
 
     // In a couple of seconds, send everyone the rules of this map.
@@ -1253,9 +1253,9 @@ void NetSv_TemporaryPlacedCallback(mobj_t *thing, void *param, coord_t tempOrigi
     angle_t angle, void (*callback)(mobj_t *, void *))
 {
     coord_t const oldOrigin[3] = { thing->origin[VX], thing->origin[VY], thing->origin[VZ] };
-    coord_t const oldFloorZ    = thing->floorZ;
-    coord_t const oldCeilingZ  = thing->ceilingZ;
-    angle_t const oldAngle     = thing->angle;
+    const coord_t oldFloorZ    = thing->floorZ;
+    const coord_t oldCeilingZ  = thing->ceilingZ;
+    const angle_t oldAngle     = thing->angle;
 
     // We will temporarily move the object to the temp coords.
     if(P_CheckPosition(thing, tempOrigin))

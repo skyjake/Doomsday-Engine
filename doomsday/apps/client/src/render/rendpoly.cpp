@@ -316,8 +316,8 @@ void R_FreeRendTexCoords(Vec2f *rtexcoords)
 void R_DivVerts(Vec3f *dst, const Vec3f *src,
     const WorldEdge &leftEdge, const WorldEdge &rightEdge)
 {
-    int const numR = 3 + rightEdge.divisionCount();
-    int const numL = 3 + leftEdge.divisionCount();
+    const int numR = 3 + rightEdge.divisionCount();
+    const int numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -347,8 +347,8 @@ void R_DivVerts(Vec3f *dst, const Vec3f *src,
 void R_DivTexCoords(Vec2f *dst, const Vec2f *src,
     const WorldEdge &leftEdge, const WorldEdge &rightEdge)
 {
-    int const numR = 3 + rightEdge.divisionCount();
-    int const numL = 3 + leftEdge.divisionCount();
+    const int numR = 3 + rightEdge.divisionCount();
+    const int numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 
@@ -380,8 +380,8 @@ void R_DivTexCoords(Vec2f *dst, const Vec2f *src,
 void R_DivVertColors(Vec4f *dst, const Vec4f *src,
     const WorldEdge &leftEdge, const WorldEdge &rightEdge)
 {
-    int const numR = 3 + rightEdge.divisionCount();
-    int const numL = 3 + leftEdge.divisionCount();
+    const int numR = 3 + rightEdge.divisionCount();
+    const int numL = 3 + leftEdge.divisionCount();
 
     if(numR + numL == 6) return; // Nothing to do.
 

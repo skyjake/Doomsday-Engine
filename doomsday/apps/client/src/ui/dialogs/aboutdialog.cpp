@@ -60,7 +60,7 @@ AboutDialog::AboutDialog() : DialogWidget("about"), d(new Impl(this))
     logo->setImage(style().images().image("logo.px256"));
     logo->setSizePolicy(ui::Fixed, ui::Expand);
 
-    de::Version const version = de::Version::currentBuild();
+    const de::Version version = de::Version::currentBuild();
 
     // Set up the contents of the widget.
     LabelWidget *title = LabelWidget::newWithText(

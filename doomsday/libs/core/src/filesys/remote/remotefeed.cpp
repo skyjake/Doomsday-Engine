@@ -50,7 +50,7 @@ DE_PIMPL(RemoteFeed)
         PopulatedFiles populated;
         for (const auto &i : fileMetadata->elements())
         {
-            String const path = remotePath / i.first.value->asText();
+            const String path = remotePath / i.first.value->asText();
 
             if (const RecordValue *meta = maybeAs<RecordValue>(i.second))
             {

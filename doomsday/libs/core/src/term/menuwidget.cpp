@@ -313,7 +313,7 @@ void MenuWidget::draw()
     TextCanvas buf(pos.size());
     buf.clear(AChar(' ', d->backgroundAttr));
 
-    int const border = (d->borderStyle == NoBorder? 0 : 1);
+    const int border = (d->borderStyle == NoBorder? 0 : 1);
     int y = border;
     for (int i = 0; i < d->items.sizei(); ++i)
     {

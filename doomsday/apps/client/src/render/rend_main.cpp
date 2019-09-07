@@ -470,7 +470,7 @@ void Rend_SetFixedView(int consoleNum, float yaw, float pitch, float fov, Vec2f 
             Mat4f::scale(Vec3f(1.0f, 1.2f, 1.0f)) * // This is the aspect correction.
             Mat4f::translate(-viewData->current.origin.xzy());
 
-    Rangef const clip = GL_DepthClipRange();
+    const Rangef clip = GL_DepthClipRange();
     fixedView->projectionMatrix = BaseGuiApp::app().vr()
             .projectionMatrix(fov, viewportSize, clip.start, clip.end) *
             Mat4f::scale(Vec3f(1, 1, -1));
@@ -503,7 +503,7 @@ Mat4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
     dfloat bodyAngle = viewData->current.angleWithoutHeadTracking() / (dfloat) ANGLE_MAX * 360 - 90;
 
     OculusRift &ovr = vrCfg().oculusRift();
-    bool const applyHead = (vrCfg().mode() == VRConfig::OculusRift && ovr.isReady());
+    const bool applyHead = (vrCfg().mode() == VRConfig::OculusRift && ovr.isReady());
 
     Mat4f modelView;
     Mat4f headOrientation;
@@ -534,7 +534,7 @@ Mat4f Rend_GetModelViewMatrix(dint consoleNum, bool inWorldSpace)
         if (applyHead)
         {
             // Use angles directly from the Rift for best response.
-            Vec3f const pry = ovr.headOrientation();
+            const Vec3f pry = ovr.headOrientation();
             roll  = -radianToDegree(pry[1]);
             pitch =  radianToDegree(pry[0]);
         }
@@ -875,7 +875,7 @@ static void quadTexCoords(Vec2f *tc, const Vec3f *rverts, coord_t wallLength, co
 
 static void lightVertex(Vec4f &color, const Vec3f &vtx, dfloat lightLevel, const Vec3f &ambientColor)
 {
-    dfloat const dist = Rend_PointDist2D(vtx);
+    const dfloat dist = Rend_PointDist2D(vtx);
 
     // Apply distance attenuation.
     lightLevel = Rend_AttenuateLightLevel(dist, lightLevel);
@@ -913,13 +913,13 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, const Ve
     MapElement &mapElement, dint /*geomGroup*/, const Mat3f &/*surfaceTangents*/,
     const Vec3f &color, const Vec3f *color2, dfloat glowing, dfloat const luminosityDeltas[2])
 {
-    bool const haveWall = is<LineSideSegment>(mapElement);
+    const bool haveWall = is<LineSideSegment>(mapElement);
     //auto &subsec = ::curSubspace->subsector().as<world::ClientSubsector>();
 
     // Uniform color?
     if (::levelFullBright || !(glowing < 1))
     {
-        dfloat const lum = de::clamp(0.f, ::curSectorLightLevel + (::levelFullBright? 1 : glowing), 1.f);
+        const dfloat lum = de::clamp(0.f, ::curSectorLightLevel + (::levelFullBright? 1 : glowing), 1.f);
         Vec4f const uniformColor(lum, lum, lum, 0);
         for (duint i = 0; i < numVertices; ++i)
         {
@@ -970,9 +970,9 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, const Ve
 #endif
     {
         // Blend sector light color with the surface color tint.
-        Vec3f const colorBlended = ::curSectorLightColor * color;
-        dfloat const lumLeft  = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[0] + glowing, 1.f);
-        dfloat const lumRight = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[1] + glowing, 1.f);
+        const Vec3f colorBlended = ::curSectorLightColor * color;
+        const dfloat lumLeft  = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[0] + glowing, 1.f);
+        const dfloat lumRight = de::clamp(0.f, ::curSectorLightLevel + luminosityDeltas[1] + glowing, 1.f);
 
         if (haveWall && !de::fequal(lumLeft, lumRight))
         {
@@ -993,7 +993,7 @@ static void lightWallOrFlatGeometry(Geometry &verts, duint numVertices, const Ve
         if (haveWall && color2)
         {
             // Blend the secondary surface color tint with the sector light color.
-            Vec3f const color2Blended = ::curSectorLightColor * (*color2);
+            const Vec3f color2Blended = ::curSectorLightColor * (*color2);
             lightVertex(verts.color[0], posCoords[0], lumLeft,  color2Blended);
             lightVertex(verts.color[2], posCoords[2], lumRight, color2Blended);
         }
@@ -1093,7 +1093,7 @@ static void makeFlatShineGeometry(Geometry &verts, duint numVertices, const Vec3
 
     for (duint i = 0; i < numVertices; ++i)
     {
-        Vec3f const eye = Rend_EyeOrigin();
+        const Vec3f eye = Rend_EyeOrigin();
 
         // Determine distance to viewer.
         dfloat distToEye = (eye.xz() - Vec2f(posCoords[i])).normalize().length();
@@ -1123,26 +1123,26 @@ static void makeWallShineGeometry(Geometry &verts, duint numVertices, const Vec3
     const Vec3f &bottomRight = posCoords[2];
 
     // Quad surface vector.
-    Vec2f const normal = Vec2f( (bottomRight.y - topLeft.y) / sectionWidth,
+    const Vec2f normal = Vec2f( (bottomRight.y - topLeft.y) / sectionWidth,
                                      -(bottomRight.x - topLeft.x) / sectionWidth);
 
     // Calculate coordinates based on viewpoint and surface normal.
-    Vec3f const eye = Rend_EyeOrigin();
+    const Vec3f eye = Rend_EyeOrigin();
     dfloat prevAngle = 0;
     for (duint i = 0; i < 2; ++i)
     {
-        Vec2f const  eyeToVert = eye.xz() - (i == 0 ? Vec2f(topLeft) : Vec2f(bottomRight));
-        dfloat const distToEye = eyeToVert.length();
-        Vec2f const  view      = eyeToVert.normalize();
+        const Vec2f eyeToVert = eye.xz() - (i == 0 ? Vec2f(topLeft) : Vec2f(bottomRight));
+        const dfloat distToEye = eyeToVert.length();
+        const Vec2f view      = eyeToVert.normalize();
 
         Vec2f projected;
-        dfloat const div = normal.lengthSquared();
+        const dfloat div = normal.lengthSquared();
         if (div != 0)
         {
             projected = normal * view.dot(normal) / div;
         }
 
-        Vec2f const reflected = view + (projected - view) * 2;
+        const Vec2f reflected = view + (projected - view) * 2;
         dfloat angle = std::acos(reflected.y) / PI;
         if (reflected.x < 0)
         {
@@ -1179,14 +1179,14 @@ static void makeFlatShadowGeometry(Geometry &verts, const Vec3d &topLeft, const 
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
+    const Vec4f colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
     }
 
-    dfloat const width  = bottomRight.x - topLeft.x;
-    dfloat const height = bottomRight.y - topLeft.y;
+    const dfloat width  = bottomRight.x - topLeft.x;
+    const dfloat height = bottomRight.y - topLeft.y;
 
     for (duint i = 0; i < numVertices; ++i)
     {
@@ -1206,7 +1206,7 @@ static void makeWallShadowGeometry(Geometry &verts, const Vec3d &/*topLeft*/, co
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
+    const Vec4f colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
@@ -1243,14 +1243,14 @@ static void makeFlatLightGeometry(Geometry &verts, const Vec3d &topLeft, const V
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
+    const Vec4f colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
     }
 
-    dfloat const width  = bottomRight.x - topLeft.x;
-    dfloat const height = bottomRight.y - topLeft.y;
+    const dfloat width  = bottomRight.x - topLeft.x;
+    const dfloat height = bottomRight.y - topLeft.y;
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.tex[i].x = ((bottomRight.x - posCoords[i].x) / width * tp.topLeft.x) +
@@ -1269,7 +1269,7 @@ static void makeWallLightGeometry(Geometry &verts, const Vec3d &/*topLeft*/, con
 {
     DE_ASSERT(posCoords);
 
-    Vec4f const colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
+    const Vec4f colorClamped = tp.color.min(Vec4f(1)).max(Vec4f());
     for (duint i = 0; i < numVertices; ++i)
     {
         verts.color[i] = colorClamped;
@@ -1355,10 +1355,10 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
     matAnimator.prepare();
 
     // Sky-masked polys (flats and walls)
-    bool const skyMaskedMaterial        = (p.skyMasked || (matAnimator.material().isSkyMasked()));
+    const bool skyMaskedMaterial        = (p.skyMasked || (matAnimator.material().isSkyMasked()));
 
     // Masked polys (walls) get a special treatment (=> vissprite).
-    bool const drawAsVisSprite          = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
+    const bool drawAsVisSprite          = (!p.forceOpaque && !p.skyMasked && (!matAnimator.isOpaque() || p.alpha < 1 || p.blendMode > 0));
 
     // Map RTU configuration.
     const GLTextureUnit *layer0RTU      = (!p.skyMasked)? &matAnimator.texUnit(MaterialAnimator::TU_LAYER0) : nullptr;
@@ -1371,8 +1371,8 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
 
     // Make surface geometry (position, primary texture, inter texture and color coords).
     Geometry verts;
-    bool const mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
-    duint const numVerts     = (mustSubdivide && !drawAsVisSprite?   3 + p.wall.leftEdge ->divisionCount()
+    const bool mustSubdivide = (p.isWall && (p.wall.leftEdge->divisionCount() || p.wall.rightEdge->divisionCount()));
+    const duint numVerts     = (mustSubdivide && !drawAsVisSprite?   3 + p.wall.leftEdge ->divisionCount()
                                                                    + 3 + p.wall.rightEdge->divisionCount()
                                                                  : numVertices);
     // Allocate vertices from the pools.
@@ -1417,7 +1417,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
     bool useShadows = (p.shadowListIdx && !skyMaskedMaterial && !drawAsVisSprite && p.glowing < 1? true : false);
     if (useLights || useShadows)
     {
-        dfloat const avg = averageLuminosity(verts.color, numVertices);
+        const dfloat avg = averageLuminosity(verts.color, numVertices);
         if (avg > 0.98f)  // Fully bright.
         {
             useLights = false;  // Skip lights.
@@ -1470,7 +1470,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
     {
         // Write projected lights.
         // Multitexturing can be used for the first light.
-        bool const skipFirst = Rend_IsMTexLights();
+        const bool skipFirst = Rend_IsMTexLights();
 
         duint numProcessed = 0;
         ClientApp::renderSystem().forAllSurfaceProjections(p.lightListIdx,
@@ -1488,7 +1488,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
 
                 // Make geometry.
                 Geometry verts;
-                duint const numVerts = mustSubdivide ?   3 + p.wall.leftEdge ->divisionCount()
+                const duint numVerts = mustSubdivide ?   3 + p.wall.leftEdge ->divisionCount()
                                                        + 3 + p.wall.rightEdge->divisionCount()
                                                      : numVertices;
                 // Allocate verts from the pools.
@@ -1511,8 +1511,8 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
                 if (mustSubdivide)
                 {
                     DE_ASSERT(p.isWall);
-                    duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
-                    duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
+                    const duint numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
+                    const duint numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
                     Store &buffer = ClientApp::renderSystem().buffer();
                     {
@@ -1583,7 +1583,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
         {
             // Make geometry.
             Geometry verts;
-            duint const numVerts = mustSubdivide ?   3 + p.wall.leftEdge ->divisionCount()
+            const duint numVerts = mustSubdivide ?   3 + p.wall.leftEdge ->divisionCount()
                                                    + 3 + p.wall.rightEdge->divisionCount()
                                                  : numVertices;
             // Allocate verts from the pools.
@@ -1606,8 +1606,8 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
             if (mustSubdivide)
             {
                 DE_ASSERT(p.isWall);
-                duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
-                duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
+                const duint numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
+                const duint numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
                 Store &buffer = ClientApp::renderSystem().buffer();
                 {
@@ -1664,8 +1664,8 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
     if (mustSubdivide)
     {
         DE_ASSERT(p.isWall);
-        duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
-        duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
+        const duint numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
+        const duint numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
         // Need to swap indices around into fans set the position of the division
         // vertices, interpolate texcoords and color.
@@ -1988,7 +1988,7 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
         Geometry shineVerts = Geometry();
         {
             const Vec3f &shineColor = matAnimator.shineMinColor();  // Shine strength.
-            dfloat const shineOpacity  = shineRTU->opacity;
+            const dfloat shineOpacity  = shineRTU->opacity;
 
             // Allocate vertices from the pools.
             shineVerts.color = R_AllocRendColors(numVerts);
@@ -2036,8 +2036,8 @@ static bool renderWorldPoly(const Vec3f *rvertices, duint numVertices,
         if (mustSubdivide)
         {
             DE_ASSERT(p.isWall);
-            duint const numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
-            duint const numRightVerts = 3 + p.wall.rightEdge->divisionCount();
+            const duint numLeftVerts  = 3 + p.wall.leftEdge ->divisionCount();
+            const duint numRightVerts = 3 + p.wall.rightEdge->divisionCount();
 
             {
                 Vec2f orig[4]; std::memcpy(orig, shineVerts.tex, sizeof(orig));
@@ -2184,7 +2184,7 @@ static bool projectDynlight(const Vec3d &topLeft, const Vec3d &bottomRight,
 
     // Project, counteracting aspect correction slightly.
     Vec2f s, t;
-    dfloat const scale = 1.0f / ((2.f * lum.radius()) - distToLum);
+    const dfloat scale = 1.0f / ((2.f * lum.radius()) - distToLum);
     if (!R_GenerateTexCoords(s, t, pointOnPlane, scale, scale * 1.08f,
                             topLeft, bottomRight, surface.tangentMatrix()))
         return false;
@@ -2313,7 +2313,7 @@ static bool projectShadow(const Vec3d &topLeft, const Vec3d &bottomRight,
 
     // Project, counteracting aspect correction slightly.
     Vec2f s, t;
-    dfloat const scale = 1.0f / ((2.f * shadowRadius) - distFromSurface);
+    const dfloat scale = 1.0f / ((2.f * shadowRadius) - distFromSurface);
     if (!R_GenerateTexCoords(s, t, point, scale, scale * 1.08f,
                             topLeft, bottomRight, surface.tangentMatrix()))
         return false;
@@ -2344,7 +2344,7 @@ static void projectDynamics(const Surface &surface, dfloat glowStrength,
     // lights?
     if (!noLights)
     {
-        dfloat const blendFactor = 1;
+        const dfloat blendFactor = 1;
 
         if (::useDynLights)
         {
@@ -2448,7 +2448,7 @@ static bool lightWithLumobj(const Vec3d &point, const Lumobj &lum, VectorLightDa
     Vec3d const lumCenter(lum.x(), lum.y(), lum.z() + lum.zOffset());
 
     // Is this light close enough?
-    ddouble const dist = M_ApproxDistance(M_ApproxDistance(lumCenter.x - point.x,
+    const ddouble dist = M_ApproxDistance(M_ApproxDistance(lumCenter.x - point.x,
                                                            lumCenter.y - point.y),
                                           point.z - lumCenter.z);
     dfloat intensity = 0;
@@ -2481,18 +2481,18 @@ static bool lightWithPlaneGlow(const Vec3d &point, const Subsector &subsec,
     dfloat intensity = surface.glow(glowColor);
     if (intensity < .05f) return false;
 
-    coord_t const glowHeight = Rend_PlaneGlowHeight(intensity);
+    const coord_t glowHeight = Rend_PlaneGlowHeight(intensity);
     if (glowHeight < 2) return false;  // Not too small!
 
     // In front of the plane?
     Vec3d const pointOnPlane(subsec.center(), plane.heightSmoothed());
-    ddouble const dist = (point - pointOnPlane).dot(surface.normal());
+    const ddouble dist = (point - pointOnPlane).dot(surface.normal());
     if (dist < 0) return false;
 
     intensity *= 1 - dist / glowHeight;
     if (intensity < .05f) return false;
 
-    Vec3f const color = Rend_LuminousColor(glowColor, intensity);
+    const Vec3f color = Rend_LuminousColor(glowColor, intensity);
     if (color == Vec3f()) return false;
 
     vlight = {};
@@ -2585,7 +2585,7 @@ static bool applyNearFadeOpacity(const WallEdge &leftEdge, const WallEdge &right
     if (!(pos > 0 && pos < 1))
         return false;
 
-    coord_t const maxDistance = Mobj_Radius(*mo) * .8f;
+    const coord_t maxDistance = Mobj_Radius(*mo) * .8f;
 
     auto delta       = Vec2d(result) - Vec2d(mo->origin);
     coord_t distance = delta.length();
@@ -2637,9 +2637,9 @@ static void wallLuminosityDeltas(const WallEdge &leftEdge, const WallEdge &right
 
         // Linearly interpolate to find the light level delta values for the
         // vertical edges of this wall section.
-        coord_t const lineLength    = leftEdge.lineSide().line().length();
-        coord_t const sectionOffset = leftEdge.lineSideOffset();
-        coord_t const sectionWidth  = de::abs(Vec2d(rightEdge.origin() - leftEdge.origin()).length());
+        const coord_t lineLength    = leftEdge.lineSide().line().length();
+        const coord_t sectionOffset = leftEdge.lineSideOffset();
+        const coord_t sectionWidth  = de::abs(Vec2d(rightEdge.origin() - leftEdge.origin()).length());
 
         dfloat deltaDiff = rightDelta - leftDelta;
         rightDelta = leftDelta + ((sectionOffset + sectionWidth) / lineLength) * deltaDiff;
@@ -2675,15 +2675,15 @@ static void writeWall(const WallEdge &leftEdge, const WallEdge &rightEdge,
         return;
 
     const WallSpec &wallSpec      = leftEdge.spec();
-    bool const didNearFade        = applyNearFadeOpacity(leftEdge, rightEdge, opacity);
-    bool const skyMasked          = material->isSkyMasked() && !::devRendSkyMode;
-    bool const twoSidedMiddle     = (wallSpec.section == LineSide::Middle && !leftEdge.lineSide().considerOneSided());
+    const bool didNearFade        = applyNearFadeOpacity(leftEdge, rightEdge, opacity);
+    const bool skyMasked          = material->isSkyMasked() && !::devRendSkyMode;
+    const bool twoSidedMiddle     = (wallSpec.section == LineSide::Middle && !leftEdge.lineSide().considerOneSided());
 
     MaterialAnimator &matAnimator = material->getAnimator(Rend_MapSurfaceMaterialSpec());
-    Vec2f const materialScale  = surface.materialScale();
-    Vec3f const materialOrigin = leftEdge.materialOrigin();
-    Vec3d const topLeft        = leftEdge .top   ().origin();
-    Vec3d const bottomRight    = rightEdge.bottom().origin();
+    const Vec2f materialScale  = surface.materialScale();
+    const Vec3f materialOrigin = leftEdge.materialOrigin();
+    const Vec3d topLeft        = leftEdge .top   ().origin();
+    const Vec3d bottomRight    = rightEdge.bottom().origin();
 
     rendworldpoly_params_t parm; de::zap(parm);
     parm.skyMasked            = skyMasked;
@@ -2761,7 +2761,7 @@ static void writeWall(const WallEdge &leftEdge, const WallEdge &rightEdge,
     };
 
     // Draw this wall.
-    bool const wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
+    const bool wroteOpaque = renderWorldPoly(posCoords, 4, parm, matAnimator);
 
     // Draw FakeRadio for this wall?
     if (wroteOpaque && !skyMasked && !(parm.glowing > 0))
@@ -2772,7 +2772,7 @@ static void writeWall(const WallEdge &leftEdge, const WallEdge &rightEdge,
     if (twoSidedMiddle && side.sectorPtr() != &subsec.sector())
     {
         // Undo temporary draw state changes.
-        Vec4f const color = subsec.lightSourceColorfIntensity();
+        const Vec4f color = subsec.lightSourceColorfIntensity();
         curSectorLightColor = color.toVec3f();
         curSectorLightLevel = color.w;
     }
@@ -2802,7 +2802,7 @@ static duint buildSubspacePlaneGeometry(ClockDirection direction, coord_t height
 
     const Face &poly       = curSubspace->poly();
     HEdge *fanBase         = curSubspace->fanBase();
-    duint const totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
+    const duint totalVerts = poly.hedgeCount() + (!fanBase? 2 : 0);
 
     *verts = R_AllocRendVertices(totalVerts);
 
@@ -2837,7 +2837,7 @@ static void writeSubspacePlane(Plane &plane)
     const Surface &surface = plane.surface();
 
     // Skip nearly transparent surfaces.
-    dfloat const opacity = surface.opacity();
+    const dfloat opacity = surface.opacity();
     if (opacity < .001f) return;
 
     // Determine which Material to use (a drawable material is required).
@@ -2861,7 +2861,7 @@ static void writeSubspacePlane(Plane &plane)
     }
     materialOrigin.y = -materialOrigin.y;
 
-    Vec2f const materialScale = surface.materialScale();
+    const Vec2f materialScale = surface.materialScale();
 
     // Set the texture origin, Y is flipped for the ceiling.
     Vec3d topLeft(poly.bounds().minX,
@@ -2959,7 +2959,7 @@ static void writeSubspacePlane(Plane &plane)
     if (&plane.sector() != &curSubspace->subsector().sector())
     {
         // Undo temporary draw state changes.
-        Vec4f const color = curSubspace->subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
+        const Vec4f color = curSubspace->subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
         curSectorLightColor = color.toVec3f();
         curSectorLightLevel = color.w;
     }
@@ -3032,11 +3032,11 @@ static void writeSkyMaskStrip(dint vertCount, const Vec3f *posCoords, const Vec2
 static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
 {
     // Determine strip generation behavior.
-    ClockDirection const direction   = Clockwise;
-    bool const splitOnMaterialChange = (::devRendSkyMode && ::renderTextures != 2);
+    const ClockDirection direction   = Clockwise;
+    const bool splitOnMaterialChange = (::devRendSkyMode && ::renderTextures != 2);
 
     // Determine the relative sky plane (for monitoring material changes).
-    dint const relPlane = (fixType == SkyFixEdge::Upper ? Sector::Ceiling : Sector::Floor);
+    const dint relPlane = (fixType == SkyFixEdge::Upper ? Sector::Ceiling : Sector::Floor);
 
     // Configure the strip builder wrt vertex attributes.
     TriangleStripBuilder stripBuilder(CPP_BOOL(::devRendSkyMode));
@@ -3134,7 +3134,7 @@ static void writeSubspaceSkyMaskStrips(SkyFixEdge::FixType fixType)
                 // Take ownership of the built geometry.
                 PositionBuffer *positions = nullptr;
                 TexCoordBuffer *texcoords = nullptr;
-                dint const numVerts = stripBuilder.take(&positions, &texcoords);
+                const dint numVerts = stripBuilder.take(&positions, &texcoords);
 
                 // Write the strip geometry to the render lists.
                 writeSkyMaskStrip(numVerts, positions->data(),
@@ -3173,8 +3173,8 @@ static uint makeFlatSkyMaskGeometry(DrawList::Indices &indices, Store &verts,  g
     HEdge *fanBase   = subspace.fanBase();
 
     // Assign indices.
-    duint const vertCount = poly.hedgeCount() + (!fanBase? 2 : 0);
-    duint const base      = verts.allocateVertices(vertCount);
+    const duint vertCount = poly.hedgeCount() + (!fanBase? 2 : 0);
+    const duint base      = verts.allocateVertices(vertCount);
     DrawList::reserveSpace(indices, vertCount);
     for (duint i = 0; i < vertCount; ++i)
     {
@@ -3228,7 +3228,7 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
         // Draw a cap? (handled as a regular plane in sky-debug mode).
         if (!::devRendSkyMode)
         {
-            ddouble const height =
+            const ddouble height =
                 P_IsInVoid(::viewPlayer) ? subsec.visFloor().heightSmoothed() : skyFloor.height();
 
             // Make geometry.
@@ -3251,7 +3251,7 @@ static void writeSubspaceSkyMask(dint skyCap = SKYCAP_LOWER | SKYCAP_UPPER)
         // Draw a cap? (handled as a regular plane in sky-debug mode).
         if (!::devRendSkyMode)
         {
-            ddouble const height =
+            const ddouble height =
                 P_IsInVoid(::viewPlayer) ? subsec.visCeiling().heightSmoothed() : skyCeiling.height();
 
             // Make geometry.
@@ -3286,11 +3286,11 @@ static bool coveredOpenRange(HEdge &hedge, coord_t middleBottomZ, coord_t middle
     const auto &subsec     = hedge.face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
     const auto &backSubsec = hedge.twin().face().mapElementAs<ConvexSubspace>().subsector().as<world::ClientSubsector>();
 
-    ddouble const ffloor   = subsec.visFloor().heightSmoothed();
-    ddouble const fceil    = subsec.visCeiling().heightSmoothed();
+    const ddouble ffloor   = subsec.visFloor().heightSmoothed();
+    const ddouble fceil    = subsec.visCeiling().heightSmoothed();
 
-    ddouble const bfloor   = backSubsec.visFloor().heightSmoothed();
-    ddouble const bceil    = backSubsec.visCeiling().heightSmoothed();
+    const ddouble bfloor   = backSubsec.visFloor().heightSmoothed();
+    const ddouble bceil    = backSubsec.visCeiling().heightSmoothed();
 
     bool middleCoversOpening = false;
     if (wroteOpaqueMiddle)
@@ -3760,14 +3760,14 @@ static void drawCurrentSubspace()
  */
 static void makeCurrent(ConvexSubspace &subspace)
 {
-    bool const subsecChanged = (!::curSubspace || ::curSubspace->subsectorPtr() != subspace.subsectorPtr());
+    const bool subsecChanged = (!::curSubspace || ::curSubspace->subsectorPtr() != subspace.subsectorPtr());
 
     ::curSubspace = &subspace;
 
     // Update draw state.
     if (subsecChanged)
     {
-        Vec4f const color = subspace.subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
+        const Vec4f color = subspace.subsector().as<world::ClientSubsector>().lightSourceColorfIntensity();
         ::curSectorLightColor = color.toVec3f();
         ::curSectorLightLevel = color.w;
     }
@@ -3783,7 +3783,7 @@ static void traverseBspTreeAndDrawSubspaces(const BspTree *bspTree)
         // Descend deeper into the nodes.
         const auto &bspNode = bspTree->userData()->as<BspNode>();
         // Decide which side the view point is on.
-        dint const eyeSide  = bspNode.pointOnSide(eyeOrigin) < 0;
+        const dint eyeSide  = bspNode.pointOnSide(eyeOrigin) < 0;
 
         // Recursively divide front space.
         traverseBspTreeAndDrawSubspaces(bspTree->childPtr(BspTree::ChildId(eyeSide)));
@@ -3828,7 +3828,7 @@ static void traverseBspTreeAndDrawSubspaces(const BspTree *bspTree)
  */
 static void generateDecorationFlares(world::Map &map)
 {
-    Vec3d const viewPos = Rend_EyeOrigin().xzy();
+    const Vec3d viewPos = Rend_EyeOrigin().xzy();
     map.forAllLumobjs([&viewPos] (Lumobj &lob)
     {
         lob.generateFlare(viewPos, R_ViewerLumobjDistance(lob.indexInMap()));
@@ -4687,7 +4687,7 @@ static void drawAllLists(world::Map &map)
     //
     // Pass: Shadow geometries (objects and Fake Radio).
     //
-    dint const oldRenderTextures = renderTextures;
+    const dint oldRenderTextures = renderTextures;
 
     renderTextures = true;
 
@@ -4840,7 +4840,7 @@ static void drawLabel(const String &label, const Vec3d &origin, dfloat scale, df
 
 static void drawLabel(const String &label, const Vec3d &origin, ddouble maxDistance = 2000)
 {
-    ddouble const distToEye = (Rend_EyeOrigin().xzy() - origin).length();
+    const ddouble distToEye = (Rend_EyeOrigin().xzy() - origin).length();
     if (distToEye < maxDistance)
     {
         drawLabel(label, origin, distToEye / (DE_GAMEVIEW_WIDTH / 2), 1 - distToEye / maxDistance);
@@ -5118,7 +5118,7 @@ static void drawMobjBBox(mobj_t &mob)
     if (!bspLeaf.hasSubspace() || !R_ViewerSubspaceIsVisible(bspLeaf.subspace()))
         return;
 
-    ddouble const distToEye = (eyeOrigin - Mobj_Origin(mob)).length();
+    const ddouble distToEye = (eyeOrigin - Mobj_Origin(mob)).length();
     dfloat alpha = 1 - ((distToEye / (DE_GAMEVIEW_WIDTH/2)) / 4);
     if (alpha < .25f)
         alpha = .25f; // Don't make them totally invisible.
@@ -5195,7 +5195,7 @@ static void drawMobjBoundingBoxes(world::Map &map)
                          pob.bounds.minY + length,
                          sec.floor().height());
 
-            ddouble const distToEye = (eyeOrigin - pos).length();
+            const ddouble distToEye = (eyeOrigin - pos).length();
             dfloat alpha = 1 - ((distToEye / (DE_GAMEVIEW_WIDTH/2)) / 4);
             if (alpha < .25f)
                 alpha = .25f; // Don't make them totally invisible.
@@ -5244,7 +5244,7 @@ static void drawVector(const Vec3f &vector, dfloat scalar, const Vec4f &color = 
 
 static void drawTangentVectorsForSurface(const Surface &suf, const Vec3d &origin)
 {
-    static dint const VISUAL_LENGTH = 20;
+    static const dint VISUAL_LENGTH = 20;
     static Vec4f const red  ( 1, 0, 0, 1);
     static Vec4f const green( 0, 1, 0, 1);
     static Vec4f const blue ( 0, 0, 1, 1);
@@ -5272,7 +5272,7 @@ static void drawTangentVectorsForWalls(const HEdge *hedge)
     const LineSideSegment &seg = hedge->mapElementAs<LineSideSegment>();
     const LineSide &lineSide   = seg.lineSide();
     const Line &line           = lineSide.line();
-    Vec2d const center      = (hedge->twin().origin() + hedge->origin()) / 2;
+    const Vec2d center      = (hedge->twin().origin() + hedge->origin()) / 2;
 
     if (lineSide.considerOneSided())
     {
@@ -5281,8 +5281,8 @@ static void drawTangentVectorsForWalls(const HEdge *hedge)
                                    : hedge->face().mapElementAs<ConvexSubspace>())
                 .subsector().as<world::ClientSubsector>();
 
-        ddouble const bottom = subsec.  visFloor().heightSmoothed();
-        ddouble const top    = subsec.visCeiling().heightSmoothed();
+        const ddouble bottom = subsec.  visFloor().heightSmoothed();
+        const ddouble top    = subsec.visCeiling().heightSmoothed();
 
         drawTangentVectorsForSurface(lineSide.middle(),
                                      Vec3d(center, bottom + (top - bottom) / 2));
@@ -5301,8 +5301,8 @@ static void drawTangentVectorsForWalls(const HEdge *hedge)
 
         if (lineSide.middle().hasMaterial())
         {
-            ddouble const bottom = subsec.  visFloor().heightSmoothed();
-            ddouble const top    = subsec.visCeiling().heightSmoothed();
+            const ddouble bottom = subsec.  visFloor().heightSmoothed();
+            const ddouble top    = subsec.visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.middle(),
                                          Vec3d(center, bottom + (top - bottom) / 2));
@@ -5312,8 +5312,8 @@ static void drawTangentVectorsForWalls(const HEdge *hedge)
            !(subsec.    visCeiling().surface().hasSkyMaskedMaterial() &&
              backSubsec.visCeiling().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = backSubsec.visCeiling().heightSmoothed();
-            coord_t const top    = subsec.    visCeiling().heightSmoothed();
+            const coord_t bottom = backSubsec.visCeiling().heightSmoothed();
+            const coord_t top    = subsec.    visCeiling().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.top(),
                                          Vec3d(center, bottom + (top - bottom) / 2));
@@ -5323,8 +5323,8 @@ static void drawTangentVectorsForWalls(const HEdge *hedge)
            !(subsec.    visFloor().surface().hasSkyMaskedMaterial() &&
              backSubsec.visFloor().surface().hasSkyMaskedMaterial()))
         {
-            coord_t const bottom = subsec.    visFloor().heightSmoothed();
-            coord_t const top    = backSubsec.visFloor().heightSmoothed();
+            const coord_t bottom = subsec.    visFloor().heightSmoothed();
+            const coord_t top    = backSubsec.visFloor().heightSmoothed();
 
             drawTangentVectorsForSurface(lineSide.bottom(),
                                          Vec3d(center, bottom + (top - bottom) / 2));
@@ -5367,7 +5367,7 @@ static void drawSurfaceTangentVectors(Subsector &subsec)
         return LoopContinue;
     });
 
-    dint const planeCount = subsec.sector().planeCount();
+    const dint planeCount = subsec.sector().planeCount();
     for (dint i = 0; i < planeCount; ++i)
     {
         const Plane &plane = subsec.as<world::ClientSubsector>().visPlane(i);
@@ -5488,7 +5488,7 @@ static String labelForSectorPlane(Plane &plane)
  */
 static void drawSoundEmitters(world::Map &map)
 {
-    static ddouble const MAX_DISTANCE = 384;
+    static const ddouble MAX_DISTANCE = 384;
 
     if (!devSoundEmitters) return;
 
@@ -5553,7 +5553,7 @@ void Rend_DrawVectorLight(const VectorLightData &vlight, dfloat alpha)
 {
     if (alpha < .0001f) return;
 
-    dfloat const unitLength = 100;
+    const dfloat unitLength = 100;
 
     DGL_Begin(DGL_LINES);
         DGL_Color4f(vlight.color.x, vlight.color.y, vlight.color.z, alpha);
@@ -5570,12 +5570,12 @@ static String labelForGenerator(const Generator &gen)
 
 static void drawGenerator(const Generator &gen)
 {
-    static dint const MAX_GENERATOR_DIST = 2048;
+    static const dint MAX_GENERATOR_DIST = 2048;
 
     if (gen.source || gen.isUntriggered())
     {
-        Vec3d const origin   = gen.origin();
-        ddouble const distToEye = (eyeOrigin - origin).length();
+        const Vec3d origin   = gen.origin();
+        const ddouble distToEye = (eyeOrigin - origin).length();
         if (distToEye < MAX_GENERATOR_DIST)
         {
             drawLabel(labelForGenerator(gen), origin, distToEye / (DE_GAMEVIEW_WIDTH / 2)
@@ -5611,7 +5611,7 @@ static void drawGenerators(world::Map &map)
 
 static void drawBar(const Vec3d &origin, coord_t height, dfloat opacity)
 {
-    static dint const EXTEND_DIST = 64;
+    static const dint EXTEND_DIST = 64;
     static dfloat const black[] = { 0, 0, 0, 0 };
 
     DGL_Begin(DGL_LINES);
@@ -5666,7 +5666,7 @@ static void drawVertexVisual(const Vertex &vertex, ddouble minHeight, ddouble ma
         return;
 
     Vec3d const origin(vertex.origin(), minHeight);
-    dfloat const opacity = 1 - distToEye / parms.maxDistance;
+    const dfloat opacity = 1 - distToEye / parms.maxDistance;
 
     if (parms.drawBar)
     {
@@ -5716,7 +5716,7 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
     // Process neighbors?
     if (!Subsector::isInternalEdge(base))
     {
-        ClockDirection const direction = edge? Clockwise : Anticlockwise;
+        const ClockDirection direction = edge? Clockwise : Anticlockwise;
         HEdge *hedge = base;
         while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != base)
         {
@@ -5741,8 +5741,8 @@ static void findMinMaxPlaneHeightsAtVertex(HEdge *base, dint edge,
 static void drawSubspaceVertexs(ConvexSubspace &sub, drawvertexvisual_parameters_t &parms)
 {
     auto &subsec = sub.subsector().as<world::ClientSubsector>();
-    ddouble const min = subsec.  visFloor().heightSmoothed();
-    ddouble const max = subsec.visCeiling().heightSmoothed();
+    const ddouble min = subsec.  visFloor().heightSmoothed();
+    const ddouble max = subsec.visCeiling().heightSmoothed();
 
     HEdge *base  = sub.poly().hedge();
     HEdge *hedge = base;
@@ -5834,7 +5834,7 @@ static void drawVertexes(world::Map &map)
     }
 
     // Draw the vertex origins.
-    dfloat const oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
+    const dfloat oldPointSize = DGL_GetFloat(DGL_POINT_SIZE);
 
 //#if defined (DE_OPENGL)
 //    glEnable(GL_POINT_SMOOTH);
@@ -5912,7 +5912,7 @@ static String labelForSubsector(const Subsector &subsec)
  */
 static void drawSectors(world::Map &map)
 {
-    static ddouble const MAX_LABEL_DIST = 1280;
+    static const ddouble MAX_LABEL_DIST = 1280;
 
     if (!devSectorIndices) return;
 
@@ -5930,7 +5930,7 @@ static void drawSectors(world::Map &map)
         return sec.forAllSubsectors([] (Subsector &subsec)
         {
             Vec3d const origin(subsec.center(), subsec.as<world::ClientSubsector>().visFloor().heightSmoothed());
-            ddouble const distToEye = (eyeOrigin - origin).length();
+            const ddouble distToEye = (eyeOrigin - origin).length();
             if (distToEye < MAX_LABEL_DIST)
             {
                 drawLabel(labelForSubsector(subsec), origin, distToEye / (DE_GAMEVIEW_WIDTH / 2)
@@ -5955,7 +5955,7 @@ static String labelForThinker(thinker_t *thinker)
  */
 static void drawThinkers(world::Map &map)
 {
-    static ddouble const MAX_THINKER_DIST = 2048;
+    static const ddouble MAX_THINKER_DIST = 2048;
 
     if (!devThinkerIds) return;
 
@@ -5972,8 +5972,8 @@ static void drawThinkers(world::Map &map)
         // Ignore non-mobjs.
         if (Thinker_IsMobj(th))
         {
-            Vec3d const origin   = Mobj_Center(*(mobj_t *)th);
-            ddouble const distToEye = (eyeOrigin - origin).length();
+            const Vec3d origin   = Mobj_Center(*(mobj_t *)th);
+            const ddouble distToEye = (eyeOrigin - origin).length();
             if (distToEye < MAX_THINKER_DIST)
             {
                 drawLabel(labelForThinker(th), origin,  distToEye / (DE_GAMEVIEW_WIDTH / 2)
@@ -6019,7 +6019,7 @@ void Rend_LightGridVisual(LightGrid &lg)
         for (dint x = 0; x < lg.dimensions().x; ++x)
         {
             LightGrid::Index gridIndex = lg.toIndex(x, lg.dimensions().y - 1 - y);
-            bool const isViewerIndex   = (viewPlayer && viewerGridIndex == gridIndex);
+            const bool isViewerIndex   = (viewPlayer && viewerGridIndex == gridIndex);
 
             const Vec3f *color = 0;
             if (isViewerIndex && (blink & 16))

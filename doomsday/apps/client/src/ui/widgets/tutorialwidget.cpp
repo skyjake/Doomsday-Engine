@@ -198,8 +198,8 @@ DE_GUI_PIMPL(TutorialWidget)
         }
 
         current = s;
-        bool const isFirstStep = (current == Welcome);
-        bool const isLastStep  = (current == Finish - 1);
+        const bool isFirstStep = (current == Welcome);
+        const bool isLastStep  = (current == Finish - 1);
 
         dlg = new MessageDialog;
         dlg->useInfoStyle();

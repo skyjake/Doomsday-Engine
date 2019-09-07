@@ -56,7 +56,7 @@ bool Lex::atCommentStart() const
         return false;
     }
 
-    Char const c = *_state.pos;
+    const Char c = *_state.pos;
     if (c == _lineCommentChar)
     {
         if (!(_mode & DoubleCharComment)) return true;

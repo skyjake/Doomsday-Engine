@@ -402,7 +402,7 @@ Wad::LumpFile &Wad::Entry::file() const
 void Wad::Entry::update()
 {
     crc = uint(file().size());
-    String const lumpName = Node::name();
+    const String lumpName = Node::name();
     for (Char ch : lumpName)
     {
         crc += uint(ch);

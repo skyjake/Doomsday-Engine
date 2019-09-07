@@ -432,7 +432,7 @@ bool B_CheckCondition(const Binding::CompiledConditionRecord *condRec, int local
     DE_ASSERT(condRec);
 
     const auto &cond = condRec->compiled();
-    bool const fulfilled = !cond.negate;
+    const bool fulfilled = !cond.negate;
 
     switch (cond.type)
     {
@@ -499,7 +499,7 @@ void B_EvaluateImpulseBindings(const BindContext *context, int localNum, int imp
 
     if (localNum < 0 || localNum >= DDMAXPLAYERS) return; // No local player specified.
 
-    uint const nowTime = Timer_RealMilliseconds();
+    const uint nowTime = Timer_RealMilliseconds();
     bool conflicted[NUM_IBD_TYPES]; de::zap(conflicted);
     bool appliedState[NUM_IBD_TYPES]; de::zap(appliedState);
 
@@ -605,7 +605,7 @@ void B_EvaluateImpulseBindings(const BindContext *context, int localNum, int imp
             }
         }
 
-        int const bflags = bind.flags;
+        const int bflags = bind.flags;
 
         // Apply further modifications based on flags.
         if (bflags & IBDF_INVERSE)

@@ -267,7 +267,7 @@ DE_PIMPL(NativeTranslator)
         try
         {
             const NativeFile &nativeFile = DE_TEXT_APP->fileSystem().find<NativeFile const>(path);
-            NativePath const nativeFilePath = nativeFile.nativePath();
+            const NativePath nativeFilePath = nativeFile.nativePath();
             saveFilePtr = lzOpen(nativeFilePath, "rp");
             return;
         }
@@ -637,7 +637,7 @@ void NativeTranslator::convert(Path path)
     String saveName = path.lastSegment().toLowercaseString();
 
     d->openFile(path);
-    String const nativeFilePath = DE_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();
+    const String nativeFilePath = DE_TEXT_APP->fileSystem().find<NativeFile const>(path).nativePath();
     LZReader from(d->saveFile());
 
     ZipArchive arch;
@@ -661,7 +661,7 @@ void NativeTranslator::convert(Path path)
         // Update the metadata with the present player info (this is not needed by Hexen
         // but we'll include it for the sake of uniformity).
         ArrayValue *array = new de::ArrayValue;
-        int const presentPlayersOffset = (d->saveVersion < 4? 0 : 4 + 1 + (8 * 4) + 4);
+        const int presentPlayersOffset = (d->saveVersion < 4? 0 : 4 + 1 + (8 * 4) + 4);
         for (int i = 0; i < 8/*MAXPLAYERS*/; ++i)
         {
             dbyte playerPresent = xlatedPlayerData->at(presentPlayersOffset + i);
@@ -670,7 +670,7 @@ void NativeTranslator::convert(Path path)
         metadata.set("players", array);
 
         // Serialized map states are in similarly named "side car" files.
-        int const maxHubMaps = 99;
+        const int maxHubMaps = 99;
         for (int i = 0; i < maxHubMaps; ++i)
         {
             try
@@ -681,7 +681,7 @@ void NativeTranslator::convert(Path path)
 
                 if (Block *xlatedData = d->bufferFile())
                 {
-                    String const mapUriPath = composeMapUriPath(0, i + 1);
+                    const String mapUriPath = composeMapUriPath(0, i + 1);
 
                     // If this is the "current" map extract the map time for the metadata.
                     if (!mapUriPath.compareWithoutCase(metadata.gets("mapUri")))

@@ -191,8 +191,8 @@ const Mat3f &Surface::tangentMatrix() const
 
 Surface &Surface::setNormal(const Vec3f &newNormal)
 {
-    Vec3f const oldNormal = normal();
-    Vec3f const newNormalNormalized = newNormal.normalize();
+    const Vec3f oldNormal = normal();
+    const Vec3f newNormalNormalized = newNormal.normalize();
     if (oldNormal != newNormalNormalized)
     {
         for (dint i = 0; i < 3; ++i)

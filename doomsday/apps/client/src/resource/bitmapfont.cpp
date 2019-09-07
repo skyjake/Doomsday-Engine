@@ -151,7 +151,7 @@ DE_PIMPL(BitmapFont)
         }
 
         // Read the glyph atlas texture.
-        int const numPels = texDimensions.x * texDimensions.y;
+        const int numPels = texDimensions.x * texDimensions.y;
         uint32_t *image = (uint32_t *) M_Calloc(numPels * 4);
         int c, i;
         for(c = i = 0; i < (numPels + 7) / 8; ++i)
@@ -215,7 +215,7 @@ DE_PIMPL(BitmapFont)
         missingGlyph.posCoords.setSize(findMissingGlyphSize());
 
         // Read the glyph atlas texture.
-        int const numPels = texDimensions.x * texDimensions.y;
+        const int numPels = texDimensions.x * texDimensions.y;
         uint32_t *image = (uint32_t *) M_Calloc(numPels * 4);
         if(bitmapFormat == 0)
         {

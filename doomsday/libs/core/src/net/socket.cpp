@@ -92,17 +92,17 @@ static LockableT<Counters> counters;
 static constexpr TimeSpan sendPeriodDuration = 5.0_s;
 
 /// Maximum number of channels.
-static duint const MAX_CHANNELS = 2;
+static const duint MAX_CHANNELS = 2;
 
-static int const MAX_SIZE_SMALL  = 127; // bytes
-static int const MAX_SIZE_MEDIUM = 4095; // bytes
-static int const MAX_SIZE_BIG    = 10*MAX_SIZE_MEDIUM;
-static int const MAX_SIZE_LARGE  = DE_SOCKET_MAX_PAYLOAD_SIZE;
+static const int MAX_SIZE_SMALL  = 127; // bytes
+static const int MAX_SIZE_MEDIUM = 4095; // bytes
+static const int MAX_SIZE_BIG    = 10*MAX_SIZE_MEDIUM;
+static const int MAX_SIZE_LARGE  = DE_SOCKET_MAX_PAYLOAD_SIZE;
 
 /// Threshold for input data size: messages smaller than this are first compressed
 /// with Doomsday's Huffman codes. If the result is smaller than the deflated data,
 /// the Huffman coded payload is used (unless it doesn't fit in a medium-sized packet).
-static int const MAX_HUFFMAN_INPUT_SIZE = 4096; // bytes
+static const int MAX_HUFFMAN_INPUT_SIZE = 4096; // bytes
 
 #define TRMF_CONTINUE           0x80
 #define TRMF_DEFLATED           0x40
@@ -259,8 +259,8 @@ DE_PIMPL_NOREF(Socket)
 
         if (!header.size) // Try deflate.
         {
-            int const level = 1; //(payload.size() < MAX_SIZE_BIG? 1 /*fast*/ : 9 /*best*/);
-            Block const deflated = payload.compressed(level);
+            const int level = 1; //(payload.size() < MAX_SIZE_BIG? 1 /*fast*/ : 9 /*best*/);
+            const Block deflated = payload.compressed(level);
 
             if (!deflated.size())
             {

@@ -286,7 +286,7 @@ dint Generator::newParticle()
         _spawnCP -= count;
     }
 
-    dint const newParticleIdx = _spawnCP;
+    const dint newParticleIdx = _spawnCP;
 
     // Set the particle's data.
     ParticleInfo *pinfo = &_pinfo[_spawnCP];
@@ -367,9 +367,9 @@ dint Generator::newParticle()
         pinfo->origin[2] -= FLT2FIX(Mobj_BobOffset(*source));
 
         // Calculate XY center with mobj angle.
-        angle_t const angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[1]) / 180.0f * ANG180);
-        duint const an      = angle >> ANGLETOFINESHIFT;
-        duint const an2     = (angle + ANG90) >> ANGLETOFINESHIFT;
+        const angle_t angle = Mobj_AngleSmoothed(source) + (fixed_t) (FIX2FLT(originAtSpawn[1]) / 180.0f * ANG180);
+        const duint an      = angle >> ANGLETOFINESHIFT;
+        const duint an2     = (angle + ANG90) >> ANGLETOFINESHIFT;
 
         pinfo->origin[0] += FixedMul(fineCosine[an], originAtSpawn[0]);
         pinfo->origin[1] += FixedMul(finesine[an], originAtSpawn[0]);
@@ -618,12 +618,12 @@ void Generator::spinParticle(ParticleInfo &pinfo)
     static dint const pitchSigns[4] = { 1, -1,  1, -1 };
 
     const ded_ptcstage_t *stDef = &def->stages[pinfo.stage];
-    duint const spinIndex        = uint(&pinfo - &_pinfo[id() / 8]) % 4;
+    const duint spinIndex        = uint(&pinfo - &_pinfo[id() / 8]) % 4;
 
     DE_ASSERT(spinIndex < 4);
 
-    dint const yawSign   =   yawSigns[spinIndex];
-    dint const pitchSign = pitchSigns[spinIndex];
+    const dint yawSign   =   yawSigns[spinIndex];
+    const dint pitchSign = pitchSigns[spinIndex];
 
     if(stDef->spin[0] != 0)
     {
@@ -833,7 +833,7 @@ void Generator::moveParticle(dint index)
 
             if(front && back && abs(pinfo->mov[2]) < FRACUNIT / 2)
             {
-                coord_t const pz = particleZ(*pinfo);
+                const coord_t pz = particleZ(*pinfo);
 
                 coord_t fz;
                 if(front->floor().height() > back->floor().height())

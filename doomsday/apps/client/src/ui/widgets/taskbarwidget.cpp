@@ -227,7 +227,7 @@ DE_GUI_PIMPL(TaskBarWidget)
 
         if (layoutMode == NormalLayout)
         {
-            Version const currentVersion = Version::currentBuild();
+            const Version currentVersion = Version::currentBuild();
             if (String(DOOMSDAY_RELEASE_TYPE) == "Stable")
             {
                 text = _E(b) + currentVersion.compactNumber();

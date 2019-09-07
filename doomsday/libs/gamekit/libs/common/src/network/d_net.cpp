@@ -66,7 +66,7 @@ String D_NetDefaultEpisode()
 
 res::Uri D_NetDefaultMap()
 {
-    String const episodeId = D_NetDefaultEpisode();
+    const String episodeId = D_NetDefaultEpisode();
 
     res::Uri map("Maps:", RC_NULL);
     if(!episodeId.isEmpty())

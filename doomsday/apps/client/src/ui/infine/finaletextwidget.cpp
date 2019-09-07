@@ -259,7 +259,7 @@ int FinaleTextWidget::visLength()
     int count = 0;
     if (d->text)
     {
-        float const secondLen = (d->wait? TICRATE / d->wait : 0);
+        const float secondLen = (d->wait? TICRATE / d->wait : 0);
 
         for (const char *ptr = d->text; *ptr; ptr++)
         {
@@ -299,7 +299,7 @@ FinaleTextWidget &FinaleTextWidget::setText(const char *newText)
         d->text = (char *) Z_Malloc(len, PU_APPSTATIC, 0);
         std::memcpy(d->text, newText, len);
     }
-    int const visLen = visLength();
+    const int visLen = visLength();
     if (d->cursorPos > visLen)
     {
         d->cursorPos = visLen;

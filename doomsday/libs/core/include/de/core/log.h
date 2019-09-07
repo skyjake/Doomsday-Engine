@@ -322,7 +322,7 @@ public:
 
     static String contextToText(Flags context)
     {
-        String const suffix = (context & Dev? "Dev" : "");
+        const String suffix = (context & Dev? "Dev" : "");
         switch (context & DomainMask)
         {
         case Resource: return "Resource" + suffix;

@@ -292,13 +292,13 @@ angle_t Mobj_AimAtTarget(mobj_t *mob)
 
 dd_bool Mobj_LookForPlayers(mobj_t *mo, dd_bool allAround)
 {
-    int const playerCount = P_CountPlayersInGame();
+    const int playerCount = P_CountPlayersInGame();
 
     // Nobody to target?
     if(!playerCount) return false;
 
-    int const from = mo->lastLook % MAXPLAYERS;
-    int const to   = (from + MAXPLAYERS - 1) % MAXPLAYERS;
+    const int from = mo->lastLook % MAXPLAYERS;
+    const int to   = (from + MAXPLAYERS - 1) % MAXPLAYERS;
 
     int cand         = from;
     int tries        = 0;
@@ -585,7 +585,7 @@ void mobj_s::write(MapStateWriter *msw) const
 
     // Additional info record for player avatars only (only valid if type is MT_PLAYER).
     {
-        int const playerNum = (mo->player? int(mo->player - players + 1) : 0);
+        const int playerNum = (mo->player? int(mo->player - players + 1) : 0);
         Writer_WriteInt32(writer, playerNum /*PTR2INT(mo->player)*/);
     }
 

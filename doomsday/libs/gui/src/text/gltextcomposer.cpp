@@ -498,7 +498,7 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
             */
 
         Impl::Line::Segment &seg = line.segs.last();
-        int const leeway = 3;
+        const int leeway = 3;
         if (seg.right() > d->wraps->maximumWidth() + leeway)
         {
             // Needs compressing (up to 10%).
@@ -548,7 +548,7 @@ void GLTextComposer::makeVertices(GuiVertexBuilder &triStrip,
 
                 const Rectanglef uv = d->atlas->imageRectf(seg.id);
 
-                auto const segRect =
+                const auto segRect =
                     Rectanglef::fromSize(linePos + Vec2f(seg.x, 0) + seg.imageOrigin, size);
                 triStrip.makeQuad(segRect, color, uv);
 

@@ -127,7 +127,7 @@ static void readFile2(const String &path, bool sourceIsCustom = true)
 
 static void readPatchLumps(const LumpIndex &lumpIndex)
 {
-    bool const readAll = DE_APP->commandLine().check("-alldehs");
+    const bool readAll = DE_APP->commandLine().check("-alldehs");
     for (int i = lumpIndex.size() - 1; i >= 0; i--)
     {
         if (lumpIndex[i].name().fileNameExtension().compare(".deh", CaseInsensitive) == 0)
@@ -145,7 +145,7 @@ static void readPatchFiles()
     {
         if (bundle->format() == DataBundle::Dehacked)
         {
-            String const bundleRoot = bundle->rootPath();
+            const String bundleRoot = bundle->rootPath();
             for (const Value *path : bundle->packageMetadata().geta("dataFiles").elements())
             {
                 readFile2(bundleRoot / path->asText());

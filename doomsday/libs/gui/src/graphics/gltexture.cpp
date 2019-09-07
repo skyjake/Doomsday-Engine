@@ -229,7 +229,7 @@ DE_PIMPL(GLTexture)
         glPixelStorei(GL_UNPACK_ALIGNMENT,  GLint(glFormat.rowStartAlignment));
         glPixelStorei(GL_UNPACK_ROW_LENGTH, GLint(image.width()));
 
-        int const bytesPerPixel = image.depth() / 8;
+        const int bytesPerPixel = image.depth() / 8;
 
         glTexSubImage2D(isCube() ? glFace(face) : texTarget,
                         level,

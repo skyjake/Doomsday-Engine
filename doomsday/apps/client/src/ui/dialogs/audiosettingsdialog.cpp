@@ -225,7 +225,7 @@ AudioSettingsDialog::AudioSettingsDialog(const String &name)
     : DialogWidget(name, WithHeading)
     , d(new Impl(this))
 {
-    bool const gameLoaded = DoomsdayApp::isGameLoaded();
+    const bool gameLoaded = DoomsdayApp::isGameLoaded();
 
     heading().setText("Audio Settings");
     heading().setImage(style().images().image("audio"));

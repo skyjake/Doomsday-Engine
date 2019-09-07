@@ -68,7 +68,7 @@ AutoStr *M_ReadFileIntoString(const ddstring_t *path, dd_bool *isCustom)
     if (Str_StartsWith(path, "LumpIndex:"))
     {
         bool isNumber;
-        lumpnum_t const lumpNum    = String(Str_Text(path) + 10).toInt(&isNumber);
+        const lumpnum_t lumpNum    = String(Str_Text(path) + 10).toInt(&isNumber);
         const LumpIndex &lumpIndex = App_FileSystem().nameIndex();
         if (isNumber && lumpIndex.hasLump(lumpNum))
         {

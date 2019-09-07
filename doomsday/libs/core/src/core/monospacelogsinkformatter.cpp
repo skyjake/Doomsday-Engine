@@ -212,7 +212,7 @@ nextStop:;
         // The fast way out.
         if (!hasTabs) return esc.plainText();
 
-        int const maxStop = highestTabStop();
+        const int maxStop = highestTabStop();
 
         StringList fills = lines;
         while (!fillTabs(fills, maxStop, minIndent)) {}
@@ -326,7 +326,7 @@ StringList MonospaceLogSinkFormatter::logEntryToTextLines(const LogEntry &entry)
         // Find the length of the current line.
         dsize next = message.find(L'\n', pos);
         dsize lineLen = (next == wstring::npos ? (message.size() - pos) : (next - pos));
-        dsize const maxLen = (pos > 0? _maxLength - wrapIndent : _maxLength);
+        const dsize maxLen = (pos > 0? _maxLength - wrapIndent : _maxLength);
         if (lineLen > maxLen)
         {
             // Wrap overly long lines.

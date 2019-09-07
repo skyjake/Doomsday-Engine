@@ -1585,7 +1585,7 @@ DE_EXTERN_C int Subspace_BoxIterator(const AABoxd *box,
     DE_ASSERT(box && callback);
     if (!App_World().hasMap()) return LoopContinue;
 
-    dint const localValidCount = validCount;
+    const dint localValidCount = validCount;
 
     return App_World().map().subspaceBlockmap()
         .forAllInBox(*box, [&box, &callback, &context, &localValidCount] (void *object)

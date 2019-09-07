@@ -253,7 +253,7 @@ double HPlane::intersect(const LineSegmentSide &lineSeg, int edge)
 HPlane::Intercept *HPlane::intercept(const LineSegmentSide &lineSeg, int edge,
     const EdgeTips &edgeTips)
 {
-    bool const selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
+    const bool selfRef = (lineSeg.hasMapSide() && lineSeg.mapLine().isSelfReferencing());
 
     // Already present for this vertex?
     Intercept *icpt;

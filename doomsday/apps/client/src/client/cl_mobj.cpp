@@ -334,8 +334,8 @@ void ClMobj_ReadDelta()
     /// @todo Do not assume the CURRENT map.
     world::Map &map = App_World().map();
 
-    thid_t const id = Reader_ReadUInt16(msgReader); // Read the ID.
-    dint const df   = Reader_ReadUInt16(msgReader); // Flags.
+    const thid_t id = Reader_ReadUInt16(msgReader); // Read the ID.
+    const dint df   = Reader_ReadUInt16(msgReader); // Flags.
 
     // More flags?
     byte moreFlags = 0, fastMom = false;

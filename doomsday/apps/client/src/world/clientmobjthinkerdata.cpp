@@ -128,7 +128,7 @@ DE_PIMPL(ClientMobjThinkerData)
                 modelMatrix = model.transformation;
                 if (model.flags & render::Model::AutoscaleToThingHeight)
                 {
-                    Vec3f const dims = modelMatrix * model.dimensions();
+                    const Vec3f dims = modelMatrix * model.dimensions();
                     modelMatrix = Mat4f::scale(self().mobj()->height / dims.y * 1.2f /*aspect correct*/) * modelMatrix;
                 }
             }
@@ -268,7 +268,7 @@ void ClientMobjThinkerData::stateChanged(const state_t *previousState)
 {
     MobjThinkerData::stateChanged(previousState);
 
-    bool const justSpawned = !previousState;
+    const bool justSpawned = !previousState;
 
     d->initOnce();
     if ((d->flags & StateChanged) && d->isStateInCurrentSequence(previousState))
@@ -347,7 +347,7 @@ void ClientMobjThinkerData::operator >> (Writer &to) const
 
     MobjThinkerData::operator >> (to);
 
-    duint16 const flags = (d->animator? Impl::HasAnimator : 0);
+    const duint16 flags = (d->animator? Impl::HasAnimator : 0);
     to << flags;
 
     if (d->animator)

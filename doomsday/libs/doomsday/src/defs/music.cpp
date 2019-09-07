@@ -42,7 +42,7 @@ dint Music::cdTrack() const
     if (dint track = geti("cdTrack"))
         return track;
 
-    String const path = gets("path");
+    const String path = gets("path");
     if (!path.compareWithoutCase("cd"))
     {
         bool ok;

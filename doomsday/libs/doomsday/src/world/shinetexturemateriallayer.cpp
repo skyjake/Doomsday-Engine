@@ -70,8 +70,8 @@ void ShineTextureMaterialLayer::AnimationStage::resetToDefaults()
 ShineTextureMaterialLayer::AnimationStage *
 ShineTextureMaterialLayer::AnimationStage::fromDef(const ded_shine_stage_t &def)
 {
-    res::Uri const texture     = findTextureForShineStage(def, false/*not mask*/);
-    res::Uri const maskTexture = findTextureForShineStage(def, true/*mask*/);
+    const res::Uri texture     = findTextureForShineStage(def, false/*not mask*/);
+    const res::Uri maskTexture = findTextureForShineStage(def, true/*mask*/);
 
     return new AnimationStage(texture, def.tics, def.variance, maskTexture,
                               def.blendMode, def.shininess, Vec3f(def.minColor),

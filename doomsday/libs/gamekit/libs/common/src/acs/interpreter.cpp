@@ -1054,7 +1054,7 @@ namespace internal
             cmdSetLineTexture, cmdSetLineBlocking, cmdSetLineSpecial,
             cmdThingSound, cmdEndPrintBold
         };
-        static int const numCmds = sizeof(cmds) / sizeof(cmds[0]);
+        static const int numCmds = sizeof(cmds) / sizeof(cmds[0]);
         if(name >= 0 && name < numCmds) return cmds[name];
         /// @throw Error  Invalid command name specified.
         throw Error("acs::Interpreter::findCommand", "Unknown command #" + String::asText(name));

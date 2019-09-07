@@ -54,7 +54,7 @@ public:
 
     size_t Read(void *pvBuffer, size_t pSize, size_t pCount)
     {
-        size_t const num = pSize * pCount;
+        const size_t num = pSize * pCount;
         _file.get(_pos, reinterpret_cast<IByteArray::Byte *>(pvBuffer), num);
         _pos += num;
         return pCount;
@@ -133,7 +133,7 @@ struct ImpIOSystem : public Assimp::IOSystem
 
     Assimp::IOStream *Open(const char *pFile, const char *)
     {
-        Path const path = resolvePath(pFile);
+        const Path path = resolvePath(pFile);
         return new ImpIOStream(App::rootFolder().locate<ByteArrayFile const>(path));
     }
 
@@ -187,9 +187,9 @@ static DefaultImageLoader defaultImageLoader;
 } // namespace internal
 using namespace internal;
 
-static int const MAX_BONES = 64;
-static int const MAX_BONES_PER_VERTEX = 4;
-static int const MAX_TEXTURES = 4;
+static const int MAX_BONES = 64;
+static const int MAX_BONES_PER_VERTEX = 4;
+static const int MAX_TEXTURES = 4;
 
 static ModelDrawable::TextureMap const TEXTURE_MAP_TYPES[4]{
     ModelDrawable::Diffuse,
@@ -236,7 +236,7 @@ static Mat4f convertMatrix(const aiMatrix4x4 &aiMat)
 
 static ddouble secondsToTicks(ddouble seconds, const aiAnimation &anim)
 {
-    ddouble const ticksPerSec = anim.mTicksPerSecond != 0.f? anim.mTicksPerSecond : 25.0;
+    const ddouble ticksPerSec = anim.mTicksPerSecond != 0.f? anim.mTicksPerSecond : 25.0;
     return seconds * ticksPerSec;
 }
 
@@ -515,7 +515,7 @@ DE_PIMPL(ModelDrawable)
             const aiMaterial &sceneMaterial = *scene->mMaterials[sceneMesh.mMaterialIndex];
 
             const auto &meshTextures = materials.at(mesh.material)->meshTextures[mesh.index];
-            TextureMap const texMap = textureMapType(type);
+            const TextureMap texMap = textureMapType(type);
 
             try
             {
@@ -667,7 +667,7 @@ DE_PIMPL(ModelDrawable)
             String anims;
             if (file.extension() == ".md5mesh")
             {
-                String const baseName = file.name().fileNameWithoutExtension() + "_";
+                const String baseName = file.name().fileNameWithoutExtension() + "_";
                 file.parent()->forContents([&anims, &baseName] (String fileName, File &)
                 {
                     if (fileName.beginsWith(baseName) &&
@@ -736,7 +736,7 @@ DE_PIMPL(ModelDrawable)
                     << i << scene->mAnimations[i]->mName.C_Str()
                     << scene->mAnimations[i]->mTicksPerSecond;
 
-            String const name = scene->mAnimations[i]->mName.C_Str();
+            const String name = scene->mAnimations[i]->mName.C_Str();
             if (!name.isEmpty())
             {
                 animNameToIndex.insert(name, i);
@@ -759,7 +759,7 @@ DE_PIMPL(ModelDrawable)
 
     void buildNodeLookup(const aiNode &node)
     {
-        String const name = node.mName.C_Str();
+        const String name = node.mName.C_Str();
 #ifdef DE_DEBUG
         debug("Node: %s", name.c_str());
 #endif
@@ -925,7 +925,7 @@ DE_PIMPL(ModelDrawable)
             {
                 const aiBone &bone = *mesh.mBones[i];
 
-                duint const boneIndex = addOrFindBone(bone.mName.C_Str());
+                const duint boneIndex = addOrFindBone(bone.mName.C_Str());
                 bones[boneIndex].offset = convertMatrix(bone.mOffsetMatrix);
 
                 for (duint w = 0; w < bone.mNumWeights; ++w)
@@ -939,7 +939,7 @@ DE_PIMPL(ModelDrawable)
         else
         {
             // No bones; make one dummy bone so we can render it the same way.
-            duint const boneIndex = addOrFindBone(DUMMY_BONE_NAME);
+            const duint boneIndex = addOrFindBone(DUMMY_BONE_NAME);
             bones[boneIndex].offset = Mat4f();
 
             // All vertices fully affected by this bone.
@@ -1135,14 +1135,14 @@ DE_PIMPL(ModelDrawable)
         Mat4f nodeTransform = convertMatrix(node.mTransformation);
 
         // Additional rotation?
-        Vec4f const axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
+        const Vec4f axisAngle = data.animator.extraRotationForNode(node.mName.C_Str());
 
         // Transform according to the animation sequence.
         if (const aiNodeAnim *anim = data.findNodeAnim(node))
         {
             // Interpolate for this point in time.
-            Mat4f const translation = Mat4f::translate(interpolatePosition(data.time, *anim));
-            Mat4f const scaling     = Mat4f::scale(interpolateScaling(data.time, *anim));
+            const Mat4f translation = Mat4f::translate(interpolatePosition(data.time, *anim));
+            const Mat4f scaling     = Mat4f::scale(interpolateScaling(data.time, *anim));
             Mat4f       rotation    = convertMatrix(aiMatrix4x4(interpolateRotation(data.time, *anim).GetMatrix()));
 
             if (!fequal(axisAngle.w, 0))
@@ -1526,7 +1526,7 @@ String ModelDrawable::animationName(int id) const
     {
         return "";
     }
-    String const name = d->scene->mAnimations[id]->mName.C_Str();
+    const String name = d->scene->mAnimations[id]->mName.C_Str();
     if (name.isEmpty())
     {
         return Stringf("@%d", id);
@@ -1565,7 +1565,7 @@ String ModelDrawable::meshName(int id) const
     {
         return "";
     }
-    String const name = d->scene->mMeshes[id]->mName.C_Str();
+    const String name = d->scene->mMeshes[id]->mName.C_Str();
     if (name.isEmpty())
     {
         return Stringf("@%d", id);

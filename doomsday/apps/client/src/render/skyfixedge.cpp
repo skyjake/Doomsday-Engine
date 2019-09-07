@@ -119,7 +119,7 @@ DE_PIMPL(SkyFixEdge)
     {
         DE_ASSERT(hedge->hasFace());
 
-        bool const lower = fixType == SkyFixEdge::Lower;
+        const bool lower = fixType == SkyFixEdge::Lower;
 
         // Only edges with line segments need fixes.
         if (!hedge->hasMapElement()) return false;
@@ -144,7 +144,7 @@ DE_PIMPL(SkyFixEdge)
             return false;
 
         const LineSide &lineSide = hedge->mapElementAs<LineSideSegment>().lineSide();
-        bool const hasClosedBack = R_SideBackClosed(lineSide);
+        const bool hasClosedBack = R_SideBackClosed(lineSide);
 
         if (!devRendSkyMode)
         {

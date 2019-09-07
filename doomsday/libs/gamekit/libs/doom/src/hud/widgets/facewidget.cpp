@@ -295,8 +295,8 @@ void Face_Drawer(guidata_face_t *face, const Point2Raw *offset)
 #define Y_OFFSET                (   0 )
 #define SCALE                   ( 0.7 )
 
-    //dint const activeHud = ST_ActiveHud(face->player());
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    //const dint activeHud = ST_ActiveHud(face->player());
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(!::cfg.hudShown[HUD_FACE]) return;
     if(ST_AutomapIsOpen(face->player()) && ::cfg.common.automapHudDisplay == 0) return;
@@ -346,9 +346,9 @@ void SBarFace_Drawer(guidata_face_t *face, const Point2Raw *offset)
 
     Vec2i const origin(-ST_WIDTH / 2, -ST_HEIGHT);
 
-    dint const activeHud     = ST_ActiveHud(face->player());
-    dint const yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(face->player()));
-    dfloat const iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
+    const dint activeHud     = ST_ActiveHud(face->player());
+    const dint yOffset       = ST_HEIGHT * (1 - ST_StatusBarShown(face->player()));
+    const dfloat iconOpacity = (activeHud == 0? 1 : ::uiRendState->pageAlpha * ::cfg.common.statusbarCounterAlpha);
 
     if(ST_AutomapIsOpen(face->player()) && ::cfg.common.automapHudDisplay == 0) return;
     if(P_MobjIsCamera(::players[face->player()].plr->mo) && Get(DD_PLAYBACK)) return;

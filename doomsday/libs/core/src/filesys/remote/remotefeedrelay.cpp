@@ -128,7 +128,7 @@ PackagePaths RemoteFeedRelay::locatePackages(const StringList &packageIds) const
         auto *repo = r.second;
         if (repo->state() == Link::Ready)
         {
-            auto const paths = repo->locatePackages(packageIds);
+            const auto paths = repo->locatePackages(packageIds);
             for (auto i = paths.begin(); i != paths.end(); ++i)
             {
                 if (!located.contains(i->first))

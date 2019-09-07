@@ -76,7 +76,7 @@ const ResourceClass::FileTypes &ResourceClass::fileTypes() const
 
 bool ResourceClass::isNull() const
 {
-    static String const nullName = "RC_NULL";
+    static const String nullName = "RC_NULL";
     return d->name == nullName;
 }
 

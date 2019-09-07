@@ -275,7 +275,7 @@ private:
     OneWayWindowMap   _oneWayWindows;
 };
 
-dint const MapConversionReporter::maxWarningsPerType = 10;
+const dint MapConversionReporter::maxWarningsPerType = 10;
 
 dd_bool ddMapSetup;
 
@@ -428,7 +428,7 @@ DE_PIMPL(ClientServerWorld)
      */
     Map *loadMapFromCache(MapManifest &mapManifest)
     {
-        Uri const mapUri = mapManifest.composeUri();
+        const Uri mapUri = mapManifest.composeUri();
         Map *map = DAM_MapRead(mapManifest.cachePath);
         if (!map)
             /// Failed to load the map specified from the data cache.
@@ -546,7 +546,7 @@ DE_PIMPL(ClientServerWorld)
 
         // The game may need to perform it's own finalization now that the
         // "current" map has changed.
-        res::Uri const mapUri = (map->hasManifest() ? map->manifest().composeUri() : res::makeUri("Maps:"));
+        const res::Uri mapUri = (map->hasManifest() ? map->manifest().composeUri() : res::makeUri("Maps:"));
         if (gx.FinalizeMapChange)
         {
             gx.FinalizeMapChange(reinterpret_cast<const uri_s *>(&mapUri));
@@ -747,7 +747,7 @@ DE_PIMPL(ClientServerWorld)
         if (newMap)
         {
             // The map may still be in an editable state -- switch to playable.
-            bool const mapIsPlayable = newMap->endEditing();
+            const bool mapIsPlayable = newMap->endEditing();
 
             // Cancel further reports about the map.
             reporter.setMap(nullptr);

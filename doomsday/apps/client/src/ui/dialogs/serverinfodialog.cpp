@@ -257,7 +257,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
 
         // Additional information.
         {
-            auto const players = serverInfo.players();
+            const auto players = serverInfo.players();
             String plrDesc;
             if (players.isEmpty())
             {
@@ -282,7 +282,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
             description->setText(msg);
         }
 
-        String const gameId = serverInfo.gameId();
+        const String gameId = serverInfo.gameId();
         String gameTitle = gameId;
         if (Games::get().contains(gameId))
         {
@@ -322,7 +322,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
                 }
                 else
                 {
-                    auto const id_ver = Package::split(pkgId);
+                    const auto id_ver = Package::split(pkgId);
                     pkgId = Package::splitToHumanReadable(pkgId);
                     Version localVersion;
                     if (id_ver.second.isValid())
@@ -377,7 +377,7 @@ DE_GUI_PIMPL(ServerInfoDialog)
 
     void beginPendingQuery()
     {
-        Query const handling = pendingQuery;
+        const Query handling = pendingQuery;
         pendingQuery = QueryNone;
 
         switch (handling)

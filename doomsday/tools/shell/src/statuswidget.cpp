@@ -194,7 +194,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
         painter.drawPicture(0, 0, d->mapOutline);
 
         // Draw player markers.
-        float const factor = float(d->mapBounds.width()) / float(viewSize.width());
+        const float factor = float(d->mapBounds.width()) / float(viewSize.width());
         QFontMetrics const metrics(d->playerFont);
         for (const auto &iter : d->players)
         {
@@ -211,13 +211,13 @@ void StatusWidget::paintEvent(QPaintEvent *)
 
             if (d->oldPlayerPositions.contains(plr.number))
             {
-                QPointF const start = d->oldPlayerPositions[plr.number];
-                QPointF const end   = plrPos;
-                QPointF const delta = end - start;
+                const QPointF start = d->oldPlayerPositions[plr.number];
+                const QPointF end   = plrPos;
+                const QPointF delta = end - start;
 
                 /// @todo Qt has no gradient support for drawing lines?
 
-                int const STOPS = 64;
+                const int STOPS = 64;
                 for (int i = 0; i < STOPS; ++i)
                 {
                     QColor grad = color;
@@ -245,7 +245,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
             if (label.size() > 20) label = label.left(20);
 
             QRect textBounds = metrics.boundingRect(label);
-            int const gap = 3;
+            const int gap = 3;
             textBounds.moveTopLeft(QPoint(-textBounds.width()/2, 10 + gap));
             QRect boxBounds = textBounds.adjusted(-gap, -gap, gap, metrics.descent() + gap);
             painter.setPen(Qt::NoPen);
@@ -254,7 +254,7 @@ void StatusWidget::paintEvent(QPaintEvent *)
             painter.setFont(d->playerFont);
 
             // Label text with a shadow.
-            bool const isDark = ((color.red() + color.green()*2 + color.blue())/3 < 140);
+            const bool isDark = ((color.red() + color.green()*2 + color.blue())/3 < 140);
             painter.setPen(isDark? Qt::black : Qt::white);
             painter.drawText(textBounds.topLeft() + QPoint(0, metrics.ascent()), label);
             painter.setPen(isDark? Qt::white : Qt::black);

@@ -60,7 +60,7 @@ DE_GUI_PIMPL(ButtonWidget)
     {
         if (state == st) return;
 
-        State const prev = state;
+        const State prev = state;
         state = st;
         animating = true;
 
@@ -179,7 +179,7 @@ DE_GUI_PIMPL(ButtonWidget)
 
     void setTemporaryTextColor(const DotPath &id)
     {
-        DotPath const original = originalTextColor;
+        const DotPath original = originalTextColor;
         self().setTextColor(id); // originalTextColor changes...
         originalTextColor = original;
     }

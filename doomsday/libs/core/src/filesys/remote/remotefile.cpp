@@ -31,7 +31,7 @@ namespace de {
 
 using namespace de::filesys;
 
-String const RemoteFile::CACHE_PATH = "/home/cache/remote";
+const String RemoteFile::CACHE_PATH = "/home/cache/remote";
 
 DE_PIMPL(RemoteFile)
 {
@@ -53,7 +53,7 @@ DE_PIMPL(RemoteFile)
 
     String cachePath() const
     {
-        String const hex = remoteMetaId.asHexadecimalText();
+        const String hex = remoteMetaId.asHexadecimalText();
         String path = CACHE_PATH / hex.right(CharPos(1));
         String original = self().objectNamespace().gets("package.path", remotePath);
         return path / hex + "_" + original.fileName();
@@ -175,7 +175,7 @@ void RemoteFile::download()
 
             d->fetching = nullptr;
 
-            String const fn = d->cachePath();
+            const String fn = d->cachePath();
             Folder &cacheFolder = FS::get().makeFolder(fn.fileNamePath());
             File &data = cacheFolder.replaceFile(fn);
             data << d->buffer;

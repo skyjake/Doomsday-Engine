@@ -177,7 +177,7 @@ DE_PIMPL(Bundles)
             // How many rules required?
             if (!block.contains(VAR_REQUIRED_SCORE()))
             {
-                int const ruleCount = block.size() - 1; // not counting "info"
+                const int ruleCount = block.size() - 1; // not counting "info"
                 block.add(new Info::KeyElement(
                     VAR_REQUIRED_SCORE(), Stringf("%i", de::min(MATCH_MAXIMUM_SCORE, ruleCount))));
             }
@@ -357,7 +357,7 @@ Bundles::MatchResult Bundles::match(const DataBundle &bundle) const
             match.bestMatch = def;
             match.bestScore = score;
 
-            auto const idVer = Package::split(def->name());
+            const auto idVer = Package::split(def->name());
 
             match.packageId = idVer.first;
             // If the specified CRC32 doesn't match, we can't be certain of

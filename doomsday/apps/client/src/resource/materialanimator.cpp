@@ -429,7 +429,7 @@ DE_PIMPL(MaterialAnimator)
 
                     if (ClientTexture *tex = ls.stageTextures[ls.stage])
                     {
-                        float const contrast = de::clamp(0.f, stage.strength, 1.f) * ::detailFactor /*Global strength multiplier*/;
+                        const float contrast = de::clamp(0.f, stage.strength, 1.f) * ::detailFactor /*Global strength multiplier*/;
                         snapshot->textures[TU_DETAIL] = tex->prepareVariant(resSys().detailTextureSpec(contrast));
                     }
                     // Smooth Texture Animation?
@@ -437,7 +437,7 @@ DE_PIMPL(MaterialAnimator)
                     {
                         if (ClientTexture *tex = ls.stageTextures[ls.nextStage])
                         {
-                            float const contrast = de::clamp(0.f, next.strength, 1.f) * ::detailFactor /*Global strength multiplier*/;
+                            const float contrast = de::clamp(0.f, next.strength, 1.f) * ::detailFactor /*Global strength multiplier*/;
                             snapshot->textures[TU_DETAIL_INTER] = tex->prepareVariant(resSys().detailTextureSpec(contrast));
                         }
                     }
@@ -531,9 +531,9 @@ DE_PIMPL(MaterialAnimator)
                     const auto &stage = layer.stage(ls.stage)    .as<world::ShineTextureMaterialLayer::AnimationStage>();
                     const auto &next  = layer.stage(ls.nextStage).as<world::ShineTextureMaterialLayer::AnimationStage>();
 
-                    Vec2f const origin   = de::lerp(stage.origin,   next.origin,   ls.inter);
-                    Vec3f const minColor = de::lerp(stage.minColor, next.minColor, ls.inter);
-                    float    const opacity  = de::lerp(stage.opacity,  next.opacity,  ls.inter);
+                    const Vec2f origin   = de::lerp(stage.origin,   next.origin,   ls.inter);
+                    const Vec3f minColor = de::lerp(stage.minColor, next.minColor, ls.inter);
+                    const float opacity  = de::lerp(stage.opacity,  next.opacity,  ls.inter);
 
                     snapshot->shineBlendMode = stage.blendMode;
                     snapshot->shineMinColor  = minColor.min(Vec3f(1)).max(Vec3f(0.0f));
@@ -556,9 +556,9 @@ DE_PIMPL(MaterialAnimator)
                     const world::TextureMaterialLayer::AnimationStage &stage = texLayer->stage(ls.stage);
                     const world::TextureMaterialLayer::AnimationStage &next  = texLayer->stage(ls.nextStage);
 
-                    Vec2f const scale   = Vec2f(1, 1) / snapshot->dimensions;
-                    Vec2f const origin  = de::lerp(stage.origin,  next.origin,  ls.inter);
-                    float    const opacity = de::lerp(stage.opacity, next.opacity, ls.inter);
+                    const Vec2f scale   = Vec2f(1, 1) / snapshot->dimensions;
+                    const Vec2f origin  = de::lerp(stage.origin,  next.origin,  ls.inter);
+                    const float opacity = de::lerp(stage.opacity, next.opacity, ls.inter);
 
                     snapshot->units[TU_LAYER0 + texLayerIndex] = GLTextureUnit(*tex, scale, origin, de::clamp(0.0f, opacity, 1.0f));
 
@@ -745,7 +745,7 @@ void MaterialAnimator::cacheAssets()
                     if (is<world::DetailTextureMaterialLayer>(layer))
                     {
                         const auto &detailStage = stage.as<world::DetailTextureMaterialLayer::AnimationStage>();
-                        float const contrast = de::clamp(0.f, detailStage.strength, 1.f) * detailFactor /*Global strength multiplier*/;
+                        const float contrast = de::clamp(0.f, detailStage.strength, 1.f) * detailFactor /*Global strength multiplier*/;
                         tex->prepareVariant(resSys().detailTextureSpec(contrast));
                     }
                     else if (is<world::ShineTextureMaterialLayer>(layer))

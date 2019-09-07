@@ -139,7 +139,7 @@ static void loadAnimDefs(const TextureAnimDef *defs, bool customDefs)
     bool lastIsTexture = false;
     for(int i = 0; defs[i].flags != -1; ++i)
     {
-        bool const isTexture = (defs[i].flags & TexturesScheme) != 0;
+        const bool isTexture = (defs[i].flags & TexturesScheme) != 0;
 
         // Scheme change?
         if(i == 0 || isTexture != lastIsTexture)
@@ -157,12 +157,12 @@ static void loadAnimDefs(const TextureAnimDef *defs, bool customDefs)
         Uri_SetPath(endUri, Str_Text(endPath));
 
         // Are both frames in the animation known?
-        int const startFrame = Textures_UniqueId2(startUri, !customDefs);
-        int const endFrame   = Textures_UniqueId2(endUri,   !customDefs);
+        const int startFrame = Textures_UniqueId2(startUri, !customDefs);
+        const int endFrame   = Textures_UniqueId2(endUri,   !customDefs);
         if(-1 == startFrame || -1 == endFrame) continue;
 
         // Is the defined range valid?
-        int const numFrames = endFrame - startFrame + 1;
+        const int numFrames = endFrame - startFrame + 1;
         if(numFrames < 2)
         {
             LOG_RES_WARNING("Bad cycle from '%s' to '%s' in sequence #%i")
@@ -175,10 +175,10 @@ static void loadAnimDefs(const TextureAnimDef *defs, bool customDefs)
         // as we go. (DOOM only required the start/end texture/flat numbers and would animate
         // all textures/flats inbetween).
 
-        int const groupNum     = R_CreateAnimGroup(AGF_SMOOTH);
+        const int groupNum     = R_CreateAnimGroup(AGF_SMOOTH);
         const AutoStr *from    = Uri_ToString(startUri);
         const AutoStr *to      = Uri_ToString(endUri);
-        int const ticsPerFrame = DD_LONG(defs[i].speed);
+        const int ticsPerFrame = DD_LONG(defs[i].speed);
 
         LOG_RES_AT_LEVEL(customDefs? LogEntry::Verbose : LogEntry::XVerbose,
                          "  %d: From:\"%s\" To:\"%s\" Tics:%i")
@@ -242,9 +242,9 @@ static void AnimDefsParser(const ddstring_s *path)
         if(const char *scheme = textureScheme(lexer.token()))
         {
             res::Uri uri = lexer.readUri(scheme);
-            int const texNumBase = Textures_UniqueId2(reinterpret_cast<uri_s *>(&uri), !isCustom);
+            const int texNumBase = Textures_UniqueId2(reinterpret_cast<uri_s *>(&uri), !isCustom);
 
-            bool const ignore = (texNumBase == -1);
+            const bool ignore = (texNumBase == -1);
             int groupNumber = 0;
             if(!ignore)
             {

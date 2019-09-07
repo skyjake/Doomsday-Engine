@@ -208,8 +208,8 @@ struct WallEdge::Impl : public IHPlane
         // Determine the map space Z coordinates of the wall section.
         LineSideSegment &seg   = lineSideSegment();
         const Line &line       = seg.line();
-        bool const unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
-        bool const unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
+        const bool unpegBottom = (line.flags() & DDLF_DONTPEGBOTTOM) != 0;
+        const bool unpegTop    = (line.flags() & DDLF_DONTPEGTOP)    != 0;
 
         const ConvexSubspace &space = (line.definesPolyobj() ? line.polyobj().bspLeaf().subspace()
                                                              : wallHEdge->face().mapElementAs<world::ConvexSubspace>());
@@ -282,7 +282,7 @@ struct WallEdge::Impl : public IHPlane
                 // Self-referencing lines only ever get a middle.
                 if (!line.isSelfReferencing())
                 {
-                    bool const raiseToBackFloor =
+                    const bool raiseToBackFloor =
                         (   fceil->surface().hasSkyMaskedMaterial()
                          && bceil->surface().hasSkyMaskedMaterial()
                          && fceil ->heightSmoothed() < bceil->heightSmoothed()
@@ -388,8 +388,8 @@ struct WallEdge::Impl : public IHPlane
                         }
 
                         // Clip it?
-                        bool const clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
-                        bool const clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
+                        const bool clipBottom = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && ffloor->surface().hasSkyMaskedMaterial() && bfloor->surface().hasSkyMaskedMaterial());
+                        const bool clipTop    = !(!(devRendSkyMode || P_IsInVoid(viewPlayer)) && fceil->surface().hasSkyMaskedMaterial()  && bceil->surface().hasSkyMaskedMaterial());
                         if (clipTop || clipBottom)
                         {
                             if (clipBottom && lo < openBottom)
@@ -546,7 +546,7 @@ struct WallEdge::Impl : public IHPlane
 
     void addNeighborIntercepts(ddouble bottom, ddouble top)
     {
-        ClockDirection const direction = edge ? Clockwise : Anticlockwise;
+        const ClockDirection direction = edge ? Clockwise : Anticlockwise;
 
         const HEdge *hedge = wallHEdge;
         while ((hedge = &SubsectorCirculator::findBackNeighbor(*hedge, direction)) != wallHEdge)
@@ -678,7 +678,7 @@ struct WallEdge::Impl : public IHPlane
         if(lineSide.line().definesPolyobj())
             return nullptr;
 
-        ClockDirection const direction = (edge? Anticlockwise : Clockwise);
+        const ClockDirection direction = (edge? Anticlockwise : Clockwise);
         const LineOwner &farVertOwner  = *lineSide.line().vertexOwner(lineSide.sideId() ^ edge);
         Line *neighbor;
         if(R_SideBackClosed(lineSide))

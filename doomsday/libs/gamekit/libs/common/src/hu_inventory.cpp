@@ -101,8 +101,8 @@ static uint maxVisibleSlots()
 static void rebuildInventory(hud_inventory_t *inv)
 {
     DE_ASSERT(inv);
-    int const plrNum = inv - hudInventories;
-    inventoryitemtype_t const selectedType = P_GetInvItem(inv->invSlots[inv->selected])->type;
+    const int plrNum = inv - hudInventories;
+    const inventoryitemtype_t selectedType = P_GetInvItem(inv->invSlots[inv->selected])->type;
 
     inv->selected = 0;
 
@@ -255,15 +255,15 @@ void Hu_InventoryDraw(int player, int x, int y, float textOpacity, float iconOpa
     player_t *plr = &players[player];
 
     const hud_inventory_t *inv = &hudInventories[player];
-    uint const maxVisSlots     = maxVisibleSlots();
+    const uint maxVisSlots     = maxVisibleSlots();
 
     uint first, selected, startSlot, endSlot;
     inventoryIndexes(plr, inv, maxVisSlots, inv->varCursorPos, &first, &selected, &startSlot, &endSlot);
 
-    uint const numVisSlots = maxVisSlots;
-    float const availWidth = SCREENWIDTH - 50 * 2, width = (numVisSlots * ST_INVSLOTWIDTH);
-    float const invScale   = (width > availWidth)? availWidth / width : 1;
-    float const lightDelta = ((maxVisSlots % 2)? 1.f / maxVisSlots : 1.f / (maxVisSlots - 1)) * 2;
+    const uint numVisSlots = maxVisSlots;
+    const float availWidth = SCREENWIDTH - 50 * 2, width = (numVisSlots * ST_INVSLOTWIDTH);
+    const float invScale   = (width > availWidth)? availWidth / width : 1;
+    const float lightDelta = ((maxVisSlots % 2)? 1.f / maxVisSlots : 1.f / (maxVisSlots - 1)) * 2;
 
     uint idx = first;
     uint slot = (cfg.inventorySlotShowEmpty? 0 : startSlot);
@@ -405,7 +405,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
         if(i >= startSlot && i < endSlot)
         {
             const invitem_t *item = P_GetInvItem(inv->invSlots[idx]);
-            uint const count      = P_InventoryCount(player, item->type);
+            const uint count      = P_InventoryCount(player, item->type);
             if(count)
             {
                 DGL_Color4f(1, 1, 1, alpha);
@@ -456,7 +456,7 @@ void Hu_InventoryDraw2(int player, int x, int y, float alpha)
 static void inventoryMove(hud_inventory_t *inv, int dir, dd_bool canWrap)
 {
     DE_ASSERT(inv);
-    uint const maxVisSlots = maxVisibleSlots();
+    const uint maxVisSlots = maxVisibleSlots();
 
     if(dir == 1)
     {
@@ -669,7 +669,7 @@ void Hu_InventoryTicker()
 
 void ST_ResizeInventory()
 {
-    uint const maxVisSlots = maxVisibleSlots();
+    const uint maxVisSlots = maxVisibleSlots();
     for(int i = 0; i < MAXPLAYERS; ++i)
     {
         hud_inventory_t *inv = &hudInventories[i];

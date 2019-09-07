@@ -207,7 +207,7 @@ DE_GUI_PIMPL(HomeItemWidget)
             }
         }
 
-        TimeSpan const SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
+        const TimeSpan SPAN = (self().hasBeenUpdated()? 0.4 : 0.0);
         if (show)
         {
             labelRightMargin->set(*buttonsWidth, SPAN/2);

@@ -184,7 +184,7 @@ String InfoBank::absolutePathInContext(const Record &context, const String &rela
         return relativePath;
     }
 
-    String const path = ScriptedInfo::absolutePathInContext(context, relativePath);
+    const String path = ScriptedInfo::absolutePathInContext(context, relativePath);
     if (path == relativePath)
     {
         return bankRootPath() / relativePath;

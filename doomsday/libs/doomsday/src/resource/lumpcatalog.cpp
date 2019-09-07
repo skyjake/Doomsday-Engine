@@ -75,7 +75,7 @@ DE_PIMPL(LumpCatalog)
         // The last bundle is checked first.
         for (auto i = bundles.rbegin(); i != bundles.rend(); ++i)
         {
-            auto const pos = (*i)->lumpDirectory()->find(name);
+            const auto pos = (*i)->lumpDirectory()->find(name);
             if (pos != LumpDirectory::InvalidPos)
             {
                 found = {*i, pos};

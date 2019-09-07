@@ -261,7 +261,7 @@ ColorPalette &ColorPalette::replaceColorTable(const ColorTable &colorTable)
 {
     LOG_AS("ColorPalette");
 
-    int const colorCountBefore = colorCount();
+    const int colorCountBefore = colorCount();
 
     // We may need a new 18 => 8 bit xlat table.
     d->need18To8Update = true;

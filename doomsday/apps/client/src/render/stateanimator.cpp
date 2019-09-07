@@ -266,7 +266,7 @@ DE_PIMPL(StateAnimator)
             stateCallback.reset(new StateCallback(names));
         }
 
-        int const passCount = self().model().passes.size();
+        const int passCount = self().model().passes.size();
 
         // Clear lookups affected by the variables.
         indexForPassName.clear();
@@ -414,7 +414,7 @@ DE_PIMPL(StateAnimator)
         const auto &model = self().model();
         if (!model.passes.isEmpty())
         {
-            String const varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL());
+            const String varName = model.passes.at(passIndex).name.concatenateMember(VAR_MATERIAL());
             if (names.has(varName))
             {
                 return names[varName];
@@ -467,7 +467,7 @@ DE_PIMPL(StateAnimator)
     duint materialForUserProvidedName(const String &materialName) const
     {
        const auto &model = self().model();
-       auto const matIndex = model.materialIndexForName.find(materialName);
+       const auto matIndex = model.materialIndexForName.find(materialName);
        if (matIndex != model.materialIndexForName.end())
        {
            return matIndex->second;
@@ -547,7 +547,7 @@ DE_PIMPL(StateAnimator)
     {
         const auto &modelLoader = ClientApp::renderSystem().modelRenderer().loader();
 
-        auto const vars = passVars.find(passName);
+        const auto vars = passVars.find(passName);
         if (vars != passVars.end())
         {
             for (auto &i : vars->second->members)
@@ -667,7 +667,7 @@ void StateAnimator::triggerByState(const String &stateName)
 
             // Start the animation on the specified node (defaults to root),
             // unless it is already running.
-            String const node = seq.def->gets(DEF_NODE(), "");
+            const String node = seq.def->gets(DEF_NODE(), "");
             int animId = d->animationId(seq.name);
 
             if (animId < 0)
@@ -688,7 +688,7 @@ void StateAnimator::triggerByState(const String &stateName)
                 if (isRunning(animId, node)) continue;
             }
 
-            int const priority = seq.def->geti(DEF_PRIORITY(), ANIM_DEFAULT_PRIORITY);
+            const int priority = seq.def->geti(DEF_PRIORITY(), ANIM_DEFAULT_PRIORITY);
 
             // Look up the timeline.
             Timeline *timeline = seq.timeline;
@@ -853,7 +853,7 @@ void StateAnimator::advanceTime(TimeSpan elapsed)
         // Stop finished animations.
         if (!anim.isRunning())
         {
-            String const node = anim.node;
+            const String node = anim.node;
 
             // Keep the last animation intact so there's something to update the
             // model state with (ModelDrawable being shared with multiple objects,
@@ -942,7 +942,7 @@ void StateAnimator::operator << (Reader &from)
     Record storedNames;
     from >> storedNames;
 
-    Record const oldNames = d->names;
+    const Record oldNames = d->names;
     try
     {
         // Initialize matching variables with new values, and add variables that are not

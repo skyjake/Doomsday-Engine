@@ -168,7 +168,7 @@ DE_PIMPL(Widget)
 
             // During the first round, we will skip the starting point widget but allow
             // descending into its children.
-            bool const onlyDescend = (verticalDir == 0 && first);
+            const bool onlyDescend = (verticalDir == 0 && first);
 
             // When we run out of siblings, try to ascend to parent and continue from
             // there without handling the parent again.
@@ -726,7 +726,7 @@ bool Widget::dispatchEvent(const Event &event, bool (Widget::*memberFunc)(const 
     }
 
     // Focus only affects key events.
-    bool const thisHasFocus = (hasRoot() && root().focus() == this && event.isKey());
+    const bool thisHasFocus = (hasRoot() && root().focus() == this && event.isKey());
 
     if (d->behavior.testFlag(HandleEventsOnlyWhenFocused) && !thisHasFocus)
     {

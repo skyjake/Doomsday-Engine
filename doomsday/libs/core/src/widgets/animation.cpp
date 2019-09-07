@@ -25,7 +25,7 @@
 
 namespace de {
 
-static float const DEFAULT_SPRING = 3.f;
+static const float DEFAULT_SPRING = 3.f;
 
 namespace internal {
 
@@ -131,9 +131,9 @@ DE_PIMPL_NOREF(Animation)
         else
         {
             span -= startDelay;
-            TimeSpan const elapsed = now - setTime - startDelay;
-            TimeSpan const t = clamp(0.0, elapsed/span, 1.0);
-            float const delta = target - value;
+            const TimeSpan elapsed = now - setTime - startDelay;
+            const TimeSpan t = clamp(0.0, elapsed/span, 1.0);
+            const float delta = target - value;
             switch (style)
             {
             case EaseOut:
@@ -236,7 +236,7 @@ void Animation::setValue(float v, TimeSpan transitionSpan, TimeSpan startDelay)
 {
     resume();
 
-    TimeSpan const now = d->currentTime();
+    const TimeSpan now = d->currentTime();
 
     if (transitionSpan <= 0)
     {
@@ -298,7 +298,7 @@ void Animation::adjustTarget(float newTarget)
 
 TimeSpan Animation::remainingTime() const
 {
-    TimeSpan const now = d->currentTime();
+    const TimeSpan now = d->currentTime();
     if (now >= d->targetTime)
     {
         return 0.0;
@@ -331,7 +331,7 @@ void Animation::resume()
 
     d->flags &= ~Paused;
 
-    TimeSpan const delta = d->currentTime() - d->pauseTime;
+    const TimeSpan delta = d->currentTime() - d->pauseTime;
     d->setTime    += delta;
     d->targetTime += delta;
 }
@@ -359,7 +359,7 @@ const Clock &Animation::clock()
 
 void Animation::operator >> (Writer &to) const
 {
-    TimeSpan const now = currentTime();
+    const TimeSpan now = currentTime();
 
     to << d->value << d->target;
     // Write times relative to current frame time.
@@ -370,7 +370,7 @@ void Animation::operator >> (Writer &to) const
 
 void Animation::operator << (Reader &from)
 {
-    TimeSpan const now = currentTime();
+    const TimeSpan now = currentTime();
 
     from >> d->value >> d->target;
 

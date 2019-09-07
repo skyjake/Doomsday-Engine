@@ -59,7 +59,7 @@ static Rectanglei desktopRect()
 static Rectanglei centeredRect(const Vec2ui &size)
 {
     Vec2ui const screenSize(desktopRect().size().x, desktopRect().size().y);
-    Vec2ui const clamped = size.min(screenSize);
+    const Vec2ui clamped = size.min(screenSize);
 
     LOGDEV_GL_XVERBOSE("centeredGeometry: Current desktop rect %i x %i",
                        screenSize.x << screenSize.y);

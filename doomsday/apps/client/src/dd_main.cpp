@@ -415,7 +415,7 @@ static void createPackagesScheme()
 
 void DD_CreateFileSystemSchemes()
 {
-    dint const schemedef_max_searchpaths = 5;
+    const dint schemedef_max_searchpaths = 5;
     struct schemedef_s {
         const char *name;
         const char *optOverridePath;
@@ -932,7 +932,7 @@ static const GameProfile *autoselectGameProfile()
 {
     if (auto arg = CommandLine::get().check("-game", 1))
     {
-        String const param = arg.params.first();
+        const String param = arg.params.first();
         Games &games = DoomsdayApp::games();
 
         // The argument can be a game ID or a profile name.
@@ -1118,7 +1118,7 @@ static void initializeWithWindowReady()
             /// @todo Allow shell connections in Home, too.
             String msg = "Could not determine which game to start. "
                          "Please specify one with the " _E(b) "-game" _E(.) " option. ";
-            auto const playable = DoomsdayApp::gameProfiles().allPlayableProfiles();
+            const auto playable = DoomsdayApp::gameProfiles().allPlayableProfiles();
             if (playable.isEmpty())
             {
                 msg += "However, it seems all games are missing required data files. "
@@ -1474,7 +1474,7 @@ void DD_CheckTimeDemo()
 static dint DD_UpdateEngineStateWorker(void *context)
 {
     DE_ASSERT(context);
-    auto const initiatedBusyMode = *static_cast<bool *>(context);
+    const auto initiatedBusyMode = *static_cast<bool *>(context);
 
 #ifdef __CLIENT__
     if (!novideo)

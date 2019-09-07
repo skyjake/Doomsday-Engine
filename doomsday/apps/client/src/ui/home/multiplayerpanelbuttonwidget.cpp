@@ -152,7 +152,7 @@ void MultiplayerPanelButtonWidget::updateContent(const ServerInfo &info)
 
     //label().setText(info.name);
     String meta;
-    int const playerCount = info.playerCount();
+    const int playerCount = info.playerCount();
     if (playerCount > 0)
     {
         meta = Stringf("%i player%s " DIM_MDASH " ", playerCount, DE_PLURAL_S(playerCount));
@@ -197,7 +197,7 @@ void MultiplayerPanelButtonWidget::updateContent(const ServerInfo &info)
     }
     infoText += "\n" _E(C) + info.description() + _E(.);
 
-    int const localCount = Game::localMultiplayerPackages(info.gameId()).sizei();
+    const int localCount = Game::localMultiplayerPackages(info.gameId()).sizei();
     if (localCount)
     {
         infoText += "\n" _E(D) _E(b) +

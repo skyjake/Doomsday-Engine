@@ -178,7 +178,7 @@ NativePath NativePath::expand(bool *didExpand) const
     {
         if (didExpand) *didExpand = true;
 
-        String const path = toString();
+        const String path = toString();
         auto firstSlash = path.indexOf('/');
         if (firstSlash > 1)
         {

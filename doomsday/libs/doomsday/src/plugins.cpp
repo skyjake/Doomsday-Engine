@@ -52,7 +52,7 @@ bool Plugins::Hook::operator == (const Hook &other) const
 int Plugins::Hook::execute(int parm, void *data) const
 {
     Plugins &plugins           = DoomsdayApp::plugins();
-    pluginid_t const oldPlugin = plugins.activePluginId();
+    const pluginid_t oldPlugin = plugins.activePluginId();
 
     plugins.setActivePluginId(_pluginId);
     int result = _function(_type, parm, data);
@@ -186,7 +186,7 @@ void Plugins::setActivePluginId(pluginid_t pluginId)
 
 void *Plugins::findEntryPoint(pluginid_t pluginId, const char *fn) const
 {
-    int const plugIndex = pluginId - 1;
+    const int plugIndex = pluginId - 1;
 
     void *addr = extensionSymbol(d->hInstPlug.at(plugIndex), fn);
     if (!addr)

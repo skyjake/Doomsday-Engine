@@ -53,12 +53,12 @@ DE_PIMPL_NOREF(PackageIconBank)
                 // Cut to square aspect first.
                 if (img.height() > img.width())
                 {
-                    duint const off = img.height() - img.width();
+                    const duint off = img.height() - img.width();
                     img = img.subImage(Rectanglei(0, off/2, img.width(), img.width()));
                 }
                 else if (img.width() > img.height())
                 {
-                    duint const off = img.width() - img.height();
+                    const duint off = img.width() - img.height();
                     img = img.subImage(Rectanglei(off/2, 0, img.height(), img.height()));
                 }
 

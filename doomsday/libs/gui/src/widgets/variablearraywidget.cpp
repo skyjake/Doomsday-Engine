@@ -113,7 +113,7 @@ DE_GUI_PIMPL(VariableArrayWidget)
         }
         else
         {
-            String const value = var->value().asText();
+            const String value = var->value().asText();
             if (!value.isEmpty())
             {
                 menu->items() << self().makeItem(var->value());
@@ -269,7 +269,7 @@ bool VariableArrayWidget::handleEvent(const Event &event)
     if (event.isMouse())
     {
         const MouseEvent &mouse = event.as<MouseEvent>();
-        bool const isInside = rule().recti().contains(mouse.pos());
+        const bool isInside = rule().recti().contains(mouse.pos());
         if (d->mouseWasInside && !isInside)
         {
             d->deleteButton->hide();

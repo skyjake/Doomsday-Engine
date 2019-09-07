@@ -62,7 +62,7 @@ DE_PIMPL(ChatWidget)
 
     void sendMessage()
     {
-        String const msg = self().messageAsText();
+        const String msg = self().messageAsText();
         if(msg.isEmpty()) return;
 
         if(destination == 0)
@@ -122,7 +122,7 @@ bool ChatWidget::isActive() const
 
 void ChatWidget::activate(bool yes)
 {
-    bool const oldActive = isActive();
+    const bool oldActive = isActive();
 
     if(d->active)
     {
@@ -186,8 +186,8 @@ dint ChatWidget::handleEvent(const event_t &ev)
     //
     // Append character(s) to the input buffer.
     //
-    dint const oldLength = d->text.length();
-    dchar const ch = ev.data1;
+    const dint oldLength = d->text.length();
+    const dchar ch = ev.data1;
     if(ch >= ' ' && ch <= 'z')
     {
         d->text += Char(uint32_t(d->shiftDown ? ::shiftXForm[dbyte(ch)] : ch));
@@ -239,8 +239,8 @@ String ChatWidget::messageAsText() const
 
 void ChatWidget::draw(const Vec2i &offset) const
 {
-    dfloat const textOpacity = uiRendState->pageAlpha * cfg.common.hudColor[3];
-    //dfloat const iconOpacity = uiRendState->pageAlpha * cfg.common.hudIconAlpha;
+    const dfloat textOpacity = uiRendState->pageAlpha * cfg.common.hudColor[3];
+    //const dfloat iconOpacity = uiRendState->pageAlpha * cfg.common.hudIconAlpha;
 
     if(!isActive()) return;
 
@@ -253,8 +253,8 @@ void ChatWidget::draw(const Vec2i &offset) const
     FR_SetColorAndAlpha(cfg.common.hudColor[0], cfg.common.hudColor[1], cfg.common.hudColor[2], textOpacity);
 
     const String text      = messageAsText();
-    dint const textWidth   = FR_TextWidth(text);
-    dint const cursorWidth = FR_CharWidth('_');
+    const dint textWidth   = FR_TextWidth(text);
+    const dint cursorWidth = FR_CharWidth('_');
 
     dint xOffset = 0;
     if(cfg.common.msgAlign == 1)

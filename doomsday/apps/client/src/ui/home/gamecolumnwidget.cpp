@@ -332,8 +332,8 @@ DE_GUI_PIMPL(GameColumnWidget)
 
         menu->items().sort([&sortBy, sortAscending, sortCustomSeparately](const ui::Item &a,
                                                                           const ui::Item &b) {
-            Section const section1 = itemSection(a);
-            Section const section2 = itemSection(b);
+            const Section section1 = itemSection(a);
+            const Section section2 = itemSection(b);
 
             if (sortCustomSeparately)
             {
@@ -482,7 +482,7 @@ DE_GUI_PIMPL(GameColumnWidget)
             popup->setDeleteAfterDismissed(true);
             popup->setAnchorAndOpeningDirection(button->label().rule(), ui::Down);
 
-            bool const isUserProfile = profileItem->profile->isUserCreated();
+            const bool isUserProfile = profileItem->profile->isUserCreated();
 
             if (isUserProfile)
             {
@@ -662,7 +662,7 @@ DE_GUI_PIMPL(GameColumnWidget)
 
     void buttonStateChanged(ButtonWidget &button, ButtonWidget::State state) override
     {
-        TimeSpan const SPAN = 0.25;
+        const TimeSpan SPAN = 0.25;
         switch (state)
         {
         case ButtonWidget::Up:

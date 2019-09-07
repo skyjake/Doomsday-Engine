@@ -105,7 +105,7 @@ bool CommandWidget::handleEvent(const Event &event)
                 // We must make sure that the ongoing autocompletion ends.
                 acceptCompletion();
 
-                String const entered = d->history.enter();
+                const String entered = d->history.enter();
                 executeCommand(entered);
                 DE_NOTIFY(Command, i) { i->commandEntered(entered); }
             }
@@ -152,7 +152,7 @@ bool CommandWidget::handleControlKey(term::Key key, const KeyModifiers &mods)
 
 void CommandWidget::operator>>(PersistentState &toState) const
 {
-    int const MAX_PERSISTENT_HISTORY = 200;
+    const int MAX_PERSISTENT_HISTORY = 200;
     toState.objectNamespace().set(name().concatenateMember("history"),
                                   new ArrayValue(d->history.fullHistory(MAX_PERSISTENT_HISTORY)));
 }

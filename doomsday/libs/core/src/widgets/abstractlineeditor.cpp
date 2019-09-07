@@ -299,7 +299,7 @@ DE_PIMPL(AbstractLineEditor)
     {
         acceptCompletion();
 
-        WrappedLine const span = lineSpan(lineCursorPos().line);
+        const WrappedLine span = lineSpan(lineCursorPos().line);
         mb_iterator p = span.range.end();
         if (!span.isFinal)
         {
@@ -419,7 +419,7 @@ DE_PIMPL(AbstractLineEditor)
 
             // Replace the current completion with another suggestion.
             cursor = completion.pos;
-            String const base = wordBehindCursor();
+            const String base = wordBehindCursor();
 
             if (completion.ordinal < 0)
             {

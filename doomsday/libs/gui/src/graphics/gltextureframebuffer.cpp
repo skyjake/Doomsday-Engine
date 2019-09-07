@@ -311,7 +311,7 @@ bool GLTextureFramebuffer::setDefaultMultisampling(int sampleCount)
 {
     LOG_AS("GLFramebuffer");
 
-    int const newCount = max(1, sampleCount);
+    const int newCount = max(1, sampleCount);
     if (pDefaultSampleCount != newCount)
     {
         pDefaultSampleCount = newCount;

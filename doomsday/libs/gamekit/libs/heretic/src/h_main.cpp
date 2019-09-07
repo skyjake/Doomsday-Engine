@@ -401,7 +401,7 @@ void H_PostInit()
     // Change the default skill mode?
     if (auto arg = cmdLine.check("-skill", 1))
     {
-        int const skillNumber = arg.params.first().toInt();
+        const int skillNumber = arg.params.first().toInt();
         gfw_SetDefaultRule(skill, skillmode_t(skillNumber > 0 ? skillNumber - 1 : skillNumber));
     }
 

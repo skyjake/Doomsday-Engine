@@ -21,11 +21,11 @@
 
 namespace de {
 
-static duint16          const POINTERSET_MIN_ALLOC      = 2;
-static duint16          const POINTERSET_MAX_SIZE       = 0xffff;
-static PointerSet::Flag const POINTERSET_ITERATION_MASK = 0x00ff;
+static const duint16 POINTERSET_MIN_ALLOC      = 2;
+static const duint16 POINTERSET_MAX_SIZE       = 0xffff;
+static const PointerSet::Flag POINTERSET_ITERATION_MASK = 0x00ff;
 
-PointerSet::Flag const PointerSet::AllowInsertionDuringIteration = 0x8000;
+const PointerSet::Flag PointerSet::AllowInsertionDuringIteration = 0x8000;
 
 PointerSet::PointerSet()
     : _pointers(nullptr)
@@ -40,7 +40,7 @@ PointerSet::PointerSet(const PointerSet &other)
     , _size (other._size)
     , _range(other._range)
 {
-    auto const bytes = sizeof(Pointer) * _size;
+    const auto bytes = sizeof(Pointer) * _size;
     _pointers = reinterpret_cast<Pointer *>(malloc(bytes));
     std::memcpy(_pointers, other._pointers, bytes);
 }
@@ -77,14 +77,14 @@ void PointerSet::insert(Pointer ptr)
     if (_range.isEmpty())
     {
         // Nothing is currently allocated. Place the first item in the middle.
-        duint16 const pos = _size / 2;
+        const duint16 pos = _size / 2;
         _pointers[pos] = ptr;
         _range.start = pos;
         _range.end = pos + 1;
     }
     else
     {
-        auto const loc = locate(ptr);
+        const auto loc = locate(ptr);
         if (!loc.isEmpty()) return; // Already got it.
 
         if (isBeingIterated())
@@ -111,7 +111,7 @@ void PointerSet::insert(Pointer ptr)
             if (_size == POINTERSET_MAX_SIZE) return; // Can't do it.
 
             Pointer *oldBase = _pointers;
-            duint const oldSize = _size;
+            const duint oldSize = _size;
 
             _size = (_size < 0x8000? (_size * 2) : POINTERSET_MAX_SIZE);
             _pointers = reinterpret_cast<Pointer *>(realloc(_pointers, sizeof(Pointer) * _size));
@@ -125,7 +125,7 @@ void PointerSet::insert(Pointer ptr)
         }
 
         // Addition to the ends with room to spare?
-        duint16 const pos = loc.start;
+        const duint16 pos = loc.start;
         if (pos == _range.start && _range.start > 0)
         {
             _pointers[--_range.start] = ptr;
@@ -139,7 +139,7 @@ void PointerSet::insert(Pointer ptr)
             // We need to move existing items first to make room for the insertion.
 
             // Figure out the smallest portion of the range that needs to move.
-            duint16 const middle = (_range.start + _range.end + 1)/2;
+            const duint16 middle = (_range.start + _range.end + 1)/2;
             if ((pos > middle && _range.end < _size) || // Less stuff to move toward the end.
                 _range.start == 0)
             {
@@ -168,7 +168,7 @@ void PointerSet::insert(Pointer ptr)
 
 void PointerSet::remove(Pointer ptr)
 {
-    auto const loc = locate(ptr);
+    const auto loc = locate(ptr);
 
     if (!loc.isEmpty())
     {
@@ -228,7 +228,7 @@ PointerSet::Pointer PointerSet::take()
 
 PointerSet &PointerSet::operator = (const PointerSet &other)
 {
-    auto const bytes = sizeof(Pointer) * other._size;
+    const auto bytes = sizeof(Pointer) * other._size;
 
     if (_size != other._size)
     {
@@ -308,7 +308,7 @@ Rangeui16 PointerSet::locate(Pointer ptr) const
 
         // Narrow down the search by a half.
         Rangeui16 const rightHalf((span.start + span.end + 1) / 2, span.end);
-        Pointer const mid = at(rightHalf.start);
+        const Pointer mid = at(rightHalf.start);
         if (ptr == mid)
         {
             // Oh, it's here.

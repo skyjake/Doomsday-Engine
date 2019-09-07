@@ -120,7 +120,7 @@ void R_SortVisSprites()
 {
     if(!visSpriteP) return;
 
-    dint const count = visSpriteP - visSprites;
+    const dint count = visSpriteP - visSprites;
     if(count <= 0) return;
 
     vissprite_t unsorted;
@@ -193,7 +193,7 @@ void VisEntityLighting::setupLighting(const Vec3d &origin, ddouble distance,
 #endif
     {
         const auto &subsec   = bspLeaf.subspace().subsector().as<world::ClientSubsector>();
-        Vec4f const color = subsec.lightSourceColorfIntensity();
+        const Vec4f color = subsec.lightSourceColorfIntensity();
 
         // No need for distance attentuation.
         dfloat lightLevel = color.w;

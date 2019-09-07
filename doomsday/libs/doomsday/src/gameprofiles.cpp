@@ -572,7 +572,7 @@ void GameProfiles::Profile::loadPackages() const
 
 void GameProfiles::Profile::unloadPackages() const
 {
-    StringList const allPackages = allRequiredPackages();
+    const StringList allPackages = allRequiredPackages();
     for (int i = allPackages.sizei() - 1; i >= 0; --i)
     {
         PackageLoader::get().unload(allPackages.at(i));

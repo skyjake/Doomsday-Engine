@@ -127,7 +127,7 @@ DE_GUI_PIMPL(SaveListWidget)
 
     void toggleSelectedItem(ButtonWidget &button)
     {
-        auto const buttonItemPos = self().items().find(*self().organizer().findItemForWidget(button));
+        const auto buttonItemPos = self().items().find(*self().organizer().findItemForWidget(button));
 
         if (selected == buttonItemPos)
         {

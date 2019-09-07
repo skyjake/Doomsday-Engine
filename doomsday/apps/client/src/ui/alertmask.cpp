@@ -49,7 +49,7 @@ DE_PIMPL_NOREF(AlertMask)
         const Config &cfg = App::config();
         for(int bit = LogEntry::FirstDomainBit; bit <= LogEntry::LastDomainBit; ++bit)
         {
-            int const alertLevel = cfg.geti(String("alert.") +
+            const int alertLevel = cfg.geti(String("alert.") +
                                             LogFilter::domainRecordName(LogEntry::Context(1 << bit)));
             for(int i = LogEntry::LowestLogLevel; i <= LogEntry::HighestLogLevel; ++i)
             {
@@ -76,6 +76,6 @@ void AlertMask::init()
 
 bool AlertMask::shouldRaiseAlert(duint32 entryMetadata) const
 {
-    int const level = entryMetadata & LogEntry::LevelMask;
+    const int level = entryMetadata & LogEntry::LevelMask;
     return ((entryMetadata & LogEntry::DomainMask) & d->mask[level]) != 0;
 }

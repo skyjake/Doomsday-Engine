@@ -24,8 +24,8 @@
 
 namespace de {
 
-static int const SOURCE_SHIFT = 17;
-static int const NUMBER_MASK = 0x1ffff;
+static const int SOURCE_SHIFT = 17;
+static const int NUMBER_MASK = 0x1ffff;
 
 DE_PIMPL_NOREF(SourceLineTable), public Lockable
 {
@@ -64,13 +64,13 @@ SourceLineTable::LineId SourceLineTable::lineId(const String &path, duint lineNu
 
 String SourceLineTable::sourceLocation(LineId sourceId) const
 {
-    auto const location = sourcePathAndLineNumber(sourceId);
+    const auto location = sourcePathAndLineNumber(sourceId);
     return Stringf("%s:%u", location.first.c_str(), location.second);
 }
 
 SourceLineTable::PathAndLine SourceLineTable::sourcePathAndLineNumber(LineId sourceId) const
 {
-    duint const lineNumber = (NUMBER_MASK & sourceId);
+    const duint lineNumber = (NUMBER_MASK & sourceId);
 
     DE_GUARD(d);
 

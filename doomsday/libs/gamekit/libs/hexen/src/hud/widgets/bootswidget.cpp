@@ -72,7 +72,7 @@ void guidata_boots_t::tick(timespan_t /*elapsed*/)
 void guidata_boots_t::draw(const Vec2i &offset) const
 {
     const player_t &plr      = ::players[player()];
-    dfloat const iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
+    const dfloat iconOpacity = ::uiRendState->pageAlpha * ::cfg.common.hudIconAlpha;
 
     if(_patchId == 0) return;
 

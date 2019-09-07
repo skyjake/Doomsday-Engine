@@ -76,7 +76,7 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(const LumpIndex &lumpIndex, lumpnu
     LOG_RES_XVERBOSE("Locating data lumps...", "");
 
     // Keep checking lumps to see if its a map data lump.
-    dint const numLumps = lumpIndex.size();
+    const dint numLumps = lumpIndex.size();
     String sourceFile;
     for (d->lastLump = de::max(lumpIndexOffset, 0); d->lastLump < numLumps; ++d->lastLump)
     {
@@ -153,12 +153,12 @@ LumpIndex::Id1MapRecognizer::Id1MapRecognizer(const LumpIndex &lumpIndex, lumpnu
         duint numVertexes = 0, numThings = 0, numLines = 0, numSides = 0, numSectors = 0, numLights = 0;
         DE_FOR_EACH_CONST(Lumps, i, d->lumps)
         {
-            DataType const dataType = i->first;
+            const DataType dataType = i->first;
             const File1 &lump       = *i->second;
 
             // Determine the number of map data objects of each data type.
             duint *elemCountAddr = 0;
-            dsize const elemSize = elementSizeForDataType(d->format, dataType);
+            const dsize elemSize = elementSizeForDataType(d->format, dataType);
 
             switch (dataType)
             {
@@ -280,19 +280,19 @@ LumpIndex::Id1MapRecognizer::DataType LumpIndex::Id1MapRecognizer::typeForLumpNa
 
 dsize LumpIndex::Id1MapRecognizer::elementSizeForDataType(Format mapFormat, DataType dataType) // static
 {
-    dsize const SIZEOF_64VERTEX  = (4 * 2);
-    dsize const SIZEOF_VERTEX    = (2 * 2);
-    dsize const SIZEOF_SIDEDEF   = (2 * 3 + 8 * 3);
-    dsize const SIZEOF_64SIDEDEF = (2 * 6);
-    dsize const SIZEOF_LINEDEF   = (2 * 7);
-    dsize const SIZEOF_64LINEDEF = (2 * 6 + 1 * 4);
-    dsize const SIZEOF_XLINEDEF  = (2 * 5 + 1 * 6);
-    dsize const SIZEOF_SECTOR    = (2 * 5 + 8 * 2);
-    dsize const SIZEOF_64SECTOR  = (2 * 12);
-    dsize const SIZEOF_THING     = (2 * 5);
-    dsize const SIZEOF_64THING   = (2 * 7);
-    dsize const SIZEOF_XTHING    = (2 * 7 + 1 * 6);
-    dsize const SIZEOF_LIGHT     = (1 * 6);
+    const dsize SIZEOF_64VERTEX  = (4 * 2);
+    const dsize SIZEOF_VERTEX    = (2 * 2);
+    const dsize SIZEOF_SIDEDEF   = (2 * 3 + 8 * 3);
+    const dsize SIZEOF_64SIDEDEF = (2 * 6);
+    const dsize SIZEOF_LINEDEF   = (2 * 7);
+    const dsize SIZEOF_64LINEDEF = (2 * 6 + 1 * 4);
+    const dsize SIZEOF_XLINEDEF  = (2 * 5 + 1 * 6);
+    const dsize SIZEOF_SECTOR    = (2 * 5 + 8 * 2);
+    const dsize SIZEOF_64SECTOR  = (2 * 12);
+    const dsize SIZEOF_THING     = (2 * 5);
+    const dsize SIZEOF_64THING   = (2 * 7);
+    const dsize SIZEOF_XTHING    = (2 * 7 + 1 * 6);
+    const dsize SIZEOF_LIGHT     = (1 * 6);
 
     switch (dataType)
     {
@@ -353,7 +353,7 @@ DE_PIMPL(LumpIndex)
     {
         if (lumpsByPath) return;
 
-        int const numElements = lumps.size();
+        const int numElements = lumps.size();
         lumpsByPath.reset(new PathHash(numElements));
 
         // Clear the chains.
@@ -387,7 +387,7 @@ DE_PIMPL(LumpIndex)
     {
         DE_ASSERT(pruneFlags.size() == lumps.size());
 
-        int const numRecords = lumps.size();
+        const int numRecords = lumps.size();
         int numFlagged = 0;
         for (int i = 0; i < numRecords; ++i)
         {
@@ -412,7 +412,7 @@ DE_PIMPL(LumpIndex)
         if (!pathsAreUnique) return 0;
         if (!needPruneDuplicateLumps) return 0;
 
-        int const numRecords = lumps.size();
+        const int numRecords = lumps.size();
         if (numRecords <= 1) return 0;
 
         // Sort in descending load order for pruning.
@@ -489,7 +489,7 @@ DE_PIMPL(LumpIndex)
         if (!needPruneDuplicateLumps) return;
         needPruneDuplicateLumps = false;
 
-        int const numRecords = lumps.sizei();
+        const int numRecords = lumps.sizei();
         if (numRecords <= 1) return;
 
         BitArray pruneFlags(numRecords);
@@ -547,7 +547,7 @@ int LumpIndex::pruneByFile(File1 &file)
 {
     if (d->lumps.empty()) return 0;
 
-    int const numRecords = d->lumps.sizei();
+    const int numRecords = d->lumps.sizei();
     BitArray pruneFlags(numRecords);
 
     // We may need to prune path-duplicate lumps. We'll fold those into this

@@ -788,8 +788,8 @@ dint AngleClipper::isPointVisible(const Vec3d &point) const
 {
     if(::devNoCulling) return true;
 
-    Vec3d const viewRelPoint = point - Rend_EyeOrigin().xzy();
-    binangle_t const angle      = pointToAngle(viewRelPoint);
+    const Vec3d viewRelPoint = point - Rend_EyeOrigin().xzy();
+    const binangle_t angle      = pointToAngle(viewRelPoint);
 
     if(!isAngleVisible(angle)) return false;
 
@@ -824,7 +824,7 @@ dint AngleClipper::isPolyVisible(const Face &poly) const
     }
 
     // Find angles to all corners.
-    Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
+    const Vec2d eyeOrigin = Rend_EyeOrigin().xz();
     dint n = 0;
     const HEdge *hedge = poly.hedge();
     do
@@ -889,7 +889,7 @@ dint AngleClipper::safeAddRange(binangle_t from, binangle_t to)
 
 void AngleClipper::addRangeFromViewRelPoints(const Vec2d &from, const Vec2d &to)
 {
-    Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
+    const Vec2d eyeOrigin = Rend_EyeOrigin().xz();
     safeAddRange(pointToAngle(to   - eyeOrigin),
                  pointToAngle(from - eyeOrigin));
 }
@@ -900,18 +900,18 @@ void AngleClipper::addViewRelOcclusion(const Vec2d &from, const Vec2d &to,
 {
     // Calculate the occlusion plane normal.
     // We'll use the game's coordinate system (left-handed, but Y and Z are swapped).
-    Vec3d const eyeOrigin    = Rend_EyeOrigin().xzy();
-    auto const eyeToV1          = Vec3d(from, height) - eyeOrigin;
-    auto const eyeToV2          = Vec3d(to,   height) - eyeOrigin;
+    const Vec3d eyeOrigin    = Rend_EyeOrigin().xzy();
+    const auto eyeToV1          = Vec3d(from, height) - eyeOrigin;
+    const auto eyeToV2          = Vec3d(to,   height) - eyeOrigin;
 
-    binangle_t const startAngle = pointToAngle(eyeToV2);
-    binangle_t const endAngle   = pointToAngle(eyeToV1);
+    const binangle_t startAngle = pointToAngle(eyeToV2);
+    const binangle_t endAngle   = pointToAngle(eyeToV1);
 
     // Do not attempt to occlude with a zero-length range.
     if(startAngle == endAngle) return;
 
     // The normal points to the half we want to occlude.
-    Vec3f const normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
+    const Vec3f normal = (topHalf? eyeToV2 : eyeToV1).cross(topHalf? eyeToV1 : eyeToV2);
 
 #ifdef DE_DEBUG
     if(Vec3f(0, 0, (topHalf ? 1000 : -1000)).dot(normal) < 0)
@@ -932,7 +932,7 @@ dint AngleClipper::checkRangeFromViewRelPoints(const Vec2d &from, const Vec2d &t
 {
     if(::devNoCulling) return true;
 
-    Vec2d const eyeOrigin = Rend_EyeOrigin().xz();
+    const Vec2d eyeOrigin = Rend_EyeOrigin().xz();
     return d->safeCheckRange(pointToAngle(to   - eyeOrigin) - BANG_45/90,
                              pointToAngle(from - eyeOrigin) + BANG_45/90);
 }

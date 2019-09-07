@@ -153,7 +153,7 @@ Value::Text DictionaryValue::asText() const
     {
         const String label = i->first.value->asText() + ": ";
         String content = i->second->asText();
-        bool const multiline = content.contains("\n");
+        const bool multiline = content.contains("\n");
         if (!isFirst)
         {
             if (hadNewline || multiline) s << "\n";

@@ -160,7 +160,7 @@ int FileIndex::size() const
 
 static bool fileNotInAnyLoadedPackage(File *file)
 {
-    String const identifier = Package::identifierForContainerOfFile(*file);
+    const String identifier = Package::identifierForContainerOfFile(*file);
     return !App::packageLoader().isLoaded(identifier);
 }
 

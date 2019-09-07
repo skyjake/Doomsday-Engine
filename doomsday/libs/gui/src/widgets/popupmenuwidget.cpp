@@ -213,7 +213,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
 
     void setButtonColors(ButtonWidget &button)
     {
-        /*bool const hovering = (hover == &button);
+        /*const bool hovering = (hover == &button);
         button.setTextColor(!hovering ^ (colorTheme == Inverted)? "text" : "inverted.text");
         button.setHoverTextColor(!hovering ^ (colorTheme == Inverted)? "inverted.text" : "text",
                                  ButtonWidget::ReplaceColor);*/
@@ -268,7 +268,7 @@ DE_GUI_PIMPL(PopupMenuWidget)
      */
     void updateItemMargins()
     {
-        bool const useExtraPadding = hasButtonsWithImages();
+        const bool useExtraPadding = hasButtonsWithImages();
 
         const auto &padding = rule("popup.menu.paddedmargin");
         const auto &none    = rule("popup.menu.margin");
